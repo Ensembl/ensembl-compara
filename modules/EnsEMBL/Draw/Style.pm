@@ -37,6 +37,8 @@ package EnsEMBL::Draw::Style;
 use strict;
 use warnings;
 
+use POSIX qw(ceil);
+
 use EnsEMBL::Draw::Utils::Text;
 use EnsEMBL::Draw::Utils::LocalCache;
 
