@@ -219,13 +219,8 @@ sub pipeline_analyses {
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::LoadDnafragRegions',
               -parameters => { 
                               'input_file' => '#synteny_dir#/all.#maxDist1#.#minSize1#.BuildSynteny',
-                              'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'), 
                               'synteny_mlss_id' => $self->o('synteny_mlss_id'),
                               'ref_species' => $self->o('ref_species'),
-                              'master_db' => $self->o('master_db'),
-                              'pipeline_db' => $self->o('pipeline_db'),
-                              'compara_url' => $self->o('compara_url'),
-                              'output_file' => '#synteny_dir#/all.#maxDist1#.#minSize1#.BuildSynteny',
                              },
               -flow_into => ['FetchMLSS'],
             },
