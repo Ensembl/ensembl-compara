@@ -84,13 +84,6 @@ sub default_options {
             'DumpGFFAlignmentsForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl",
             'BuildSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/BuildSynteny.jar",
 
-            #
-            #Resource requirements
-            #
-            'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
-            'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara5, but will have to be set manually otherwise
-            'synteny_capacity' => 1000,
-
            };
 }
 
@@ -108,13 +101,12 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     
-    my $host = $self->o('pipeline_db')->{host};
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
-            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('synteny_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
-            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600 && '.$self->o('dbresource').'<'.$self->o('synteny_capacity').'] rusage[mem=3600,'.$self->o('dbresource').'=10:duration=3]"' },
+            '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
+            '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+            '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
+            '3.6Gb' => { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
     };
 }
 
