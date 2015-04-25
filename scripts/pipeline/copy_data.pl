@@ -485,7 +485,7 @@ sub copy_genomic_align_blocks {
 
   exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild, assembly_default", "genome_db_id IN ($gdb_ids)" );
   #ignore ancestral dnafrags, will add those later
-  if (!check_table("dnafrag", $from_dba, $to_dba, undef, "genome_db_id != 63")) {
+  if (!check_table("dnafrag", $from_dba, $to_dba, undef, "genome_db_id != 63 AND genome_db_id IN ($gdb_ids)")) {
       $fix_dnafrag = 1;
       if ($fix_dnafrag && !$trust_to) {
           print " To fix the dnafrags in the genomic_align table, you can use the trust_to flag\n\n";
