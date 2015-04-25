@@ -98,6 +98,13 @@ sub pipeline_create_commands {
     ];
 }
 
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        'synteny_dir'   => $self->o('synteny_dir'),
+    };
+}
+
 sub resource_classes {
     my ($self) = @_;
     
@@ -139,9 +146,8 @@ sub pipeline_analyses {
                               'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                               'level'      => $self->o('level'),
                               'force'      => $self->o('force'),
-                              'output_dir' => $self->o('synteny_dir') . "/",
                               'non_ref_coord_system_name' => $self->o('non_ref_coord_system_name'),
-                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --non_ref_coord_system_name #non_ref_coord_system_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region# --force #force# --output_dir #output_dir#",
+                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --non_ref_coord_system_name #non_ref_coord_system_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region# --force #force# --output_dir #synteny_dir#",
                               },
                 -flow_into => {
                                '1' => [ 'build_synteny' ],
@@ -154,14 +160,13 @@ sub pipeline_analyses {
               -module => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::BuildSynteny',
               -parameters => {
                               'program' => 'java -Xmx2000M -classpath ' . $self->o('BuildSynteny_exe') . ' BuildSynteny',
-                              'output_dir' => $self->o('synteny_dir') . "/",
-                              'gff_file' => '#output_dir##seq_region#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
+                              'gff_file' => '#synteny_dir#/#seq_region#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
                               'maxDist1' => $self->o('maxDist1'),
                               'minSize1' => $self->o('minSize1'),
                               'maxDist2' => $self->o('maxDist2'),
                               'minSize2' => $self->o('minSize2'),
                               'orient' => $self->o('orient'),
-                              'output_file' => '#output_dir##seq_region#.#maxDist1#.#minSize1#.BuildSynteny.out',
+                              'output_file' => '#synteny_dir#/#seq_region#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
               -rc_name => '1.8Gb',
             },
@@ -169,11 +174,10 @@ sub pipeline_analyses {
             { -logic_name => 'concat_files',
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
               -parameters => { 
-                              'output_dir' => $self->o('synteny_dir') . "/",
                               'maxDist' => $self->o('maxDist1'),
                               'minSize' => $self->o('minSize1'),
-                              'output_file' => '#output_dir#all.#maxDist#.#minSize#.BuildSynteny',
-                              'cmd' => 'cat #output_dir#*.BuildSynteny.out | grep cluster > #output_file#',
+                              'output_file' => '#synteny_dir#/all.#maxDist#.#minSize#.BuildSynteny',
+                              'cmd' => 'cat #synteny_dir#/*.BuildSynteny.out | grep cluster > #output_file#',
                              },
              -flow_into => { 
                               '1' => [ 'copy_tables_factory' ],
@@ -219,17 +223,16 @@ sub pipeline_analyses {
             { -logic_name => 'load_dnafrag_regions',
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::LoadDnafragRegions',
               -parameters => { 
-                              'input_file' => '#output_dir#all.#maxDist#.#minSize#.BuildSynteny',
+                              'input_file' => '#synteny_dir#/all.#maxDist#.#minSize#.BuildSynteny',
                               'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'), 
                               'synteny_mlss_id' => $self->o('synteny_mlss_id'),
                               'ref_species' => $self->o('ref_species'),
                               'master_db' => $self->o('master_db'),
                               'pipeline_db' => $self->o('pipeline_db'),
                               'compara_url' => $self->o('compara_url'),
-                              'output_dir' => $self->o('synteny_dir'),
                               'maxDist' => $self->o('maxDist1'),
                               'minSize' => $self->o('minSize1'),
-                              'output_file' => '#output_dir#all.#maxDist#.#minSize#.BuildSynteny',
+                              'output_file' => '#synteny_dir#/all.#maxDist#.#minSize#.BuildSynteny',
                              },
               -flow_into => ['FetchMLSS'],
             },
