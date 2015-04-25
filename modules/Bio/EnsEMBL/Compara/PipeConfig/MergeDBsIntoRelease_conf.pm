@@ -76,11 +76,11 @@ sub default_options {
             'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara5/'.$self->o('dbowner').'_ensembl_compara_'.$self->o('ensembl_release'),
 
             'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_78',   # <----- make sure this refers to the previous release!
+            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_79',   # <----- make sure this refers to the previous release!
 
             # make sure that for the rest of the databases you have servers' and owners' names right:
             'protein_db'    => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
-            'ncrna_db'      => 'mysql://ensro@compara3/mm14_compara_nctrees_'.$self->o('ensembl_release').'b',
+            'ncrna_db'      => 'mysql://ensro@compara1/mm14_compara_nctrees_'.$self->o('ensembl_release').'b',
             'family_db'     => 'mysql://ensro@compara2/lg4_families_'.$self->o('ensembl_release'),
             'projection_db' => 'mysql://ensro@compara1/mm14_homology_projections_'.$self->o('ensembl_release'),
         },
@@ -105,6 +105,7 @@ sub default_options {
         # In these databases, ignore these tables
         'ignored_tables'    => {
             #'protein_db'        => [qw(gene_tree_node)],
+            #'family_db' => [qw(gene_member seq_member sequence)],
         },
 
         # When everything is copied and merged, apply the following scripts
