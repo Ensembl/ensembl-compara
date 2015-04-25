@@ -164,20 +164,21 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
         }
         
         # print out a in gff format
-        print SYN  
-          $qy_dnafrag->name . "\t" .
-            "synteny\t" .
-              "similarity\t" .
-                $qy_ga->dnafrag_start . "\t" .
-                  $qy_ga->dnafrag_end . "\t" .
-                    $gab->score . "\t" .
-                      $strand . "\t" .
-                        ".\t" .
-                          $tg_dnafrag->name . "\t" .
-                            $tg_ga->dnafrag_start . "\t" .
-                              $tg_ga->dnafrag_end . "\t" .
-                                $hstrand . "\t" .
-                                  ".\n";
+        print SYN join("\t",
+            $qy_dnafrag->name,
+            'synteny',
+            'similarity',
+            $qy_ga->dnafrag_start,
+            $qy_ga->dnafrag_end,
+            $gab->score,
+            $strand,
+            '.',
+            $tg_dnafrag->name,
+            $tg_ga->dnafrag_start,
+            $tg_ga->dnafrag_end,
+            $hstrand,
+            '.',
+        ), "\n";
       }
       $start += $chunk;
     }
