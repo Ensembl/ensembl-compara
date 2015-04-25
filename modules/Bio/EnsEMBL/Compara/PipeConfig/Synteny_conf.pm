@@ -66,10 +66,9 @@ sub default_options {
             'compara_url' => undef, #pairwise database to calculate the syntenies from
             'ref_species' => undef, #reference species
             'method_link_type' => 'LASTZ_NET', #pairwise alignment type
-            'non_ref_coord_system_name' => 'chromosome', #which seq_regions to run syntenies on
 
             #DumpGFFAlignmentsForSynteny parameters
-            'force' => 0, #over-ride check for has_karyotype in DumpGFFAlignmentsForSynteny
+            'force' => 0, #over-ride check for has_karyotype in ListChromosomes and DumpGFFAlignmentsForSynteny
             'level' => 1, #which GenomicAlignBlock level_id to use. Level=>1 will only use level 1 blocks, level=>2 will use level 1 and level 2 blocks. For human vs chimp, we would use level=>2
 
             #BuildSynteny parameters
@@ -151,8 +150,7 @@ sub pipeline_analyses {
                               'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                               'level'      => $self->o('level'),
                               'force'      => $self->o('force'),
-                              'non_ref_coord_system_name' => $self->o('non_ref_coord_system_name'),
-                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --non_ref_coord_system_name #non_ref_coord_system_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region# --force #force# --output_dir #synteny_dir#",
+                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region# --force #force# --output_dir #synteny_dir#",
                               },
                 -flow_into => {
                                '1' => [ 'build_synteny' ],
