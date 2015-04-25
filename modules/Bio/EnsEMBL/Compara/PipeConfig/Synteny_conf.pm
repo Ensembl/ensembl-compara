@@ -199,7 +199,6 @@ sub pipeline_analyses {
               -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
               -parameters    => {
                                  'src_db_conn'   => $self->o('compara_url'),
-                                 'dest_db_conn'  => $self->o('pipeline_db'),
                                  'mode'          => 'overwrite',
                                  'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                                 },
@@ -209,7 +208,6 @@ sub pipeline_analyses {
               -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
               -parameters    => {
                                  'src_db_conn'   => $self->o('master_db'),
-                                 'dest_db_conn'  => $self->o('pipeline_db'),
                                  'synteny_mlss_id' => $self->o('synteny_mlss_id'),
                                  'mode'          => 'replace',
                                  'table'         => 'method_link_species_set',
