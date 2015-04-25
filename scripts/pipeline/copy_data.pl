@@ -1116,28 +1116,32 @@ sub copy_data_in_text_mode {
         $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
     }
     $start += $step;
+    $sth->{mysql_use_result} = 1;
     $sth->execute();
-    my $all_rows = $sth->fetchall_arrayref;
-    $sth->finish;
-    #print "start $start end $end $max_id rows " . @$all_rows . "\n";
+    my $first_row = $sth->fetchrow_arrayref;
 
     ## EXIT CONDITION
     if ($patch_merge) {
 	#case in my patches db where the genomic_align_block_ids are not consecutive
-        return if ($end > ($max_id||0) && !@$all_rows);
+        return if ($end > ($max_id||0) && !$first_row);
 
-        next if (!@$all_rows);
+        next if (!$first_row);
     } else {
-        return if (!@$all_rows);
+        return if (!$first_row);
     } 
 
     my $time=time(); 
     my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
     open(TEMP, ">$filename") or die "could not open the file '$filename' for writing";
-    foreach my $this_row (@$all_rows) {
+    print TEMP join("\t", map {defined($_)?$_:'\N'} @$first_row), "\n";
+    my $nrows = 1;
+    while(my $this_row = $sth->fetchrow_arrayref) {
       print TEMP join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
+      $nrows++;
     }
     close(TEMP);
+    $sth->finish;
+    #print "start $start end $end $max_id rows $nrows\n";
     #print "FILE $filename\n";
     #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
     system("mysqlimport -h$host -P$port -u$user ".($pass ? "-p$pass" : '')." -L -l -i $dbname $filename");
