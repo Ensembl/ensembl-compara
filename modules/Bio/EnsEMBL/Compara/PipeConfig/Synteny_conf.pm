@@ -164,7 +164,7 @@ sub pipeline_analyses {
             { -logic_name => 'build_synteny',
               -module => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::BuildSynteny',
               -parameters => {
-                              'program' => 'java -Xmx2000M -classpath ' . $self->o('BuildSynteny_exe') . ' BuildSynteny',
+                              'program' => 'java -Xmx1700M -classpath ' . $self->o('BuildSynteny_exe') . ' BuildSynteny',
                               'gff_file' => '#synteny_dir#/#seq_region#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
                               'orient' => $self->o('orient'),
                               'output_file' => '#synteny_dir#/#seq_region#.#maxDist1#.#minSize1#.BuildSynteny.out',
