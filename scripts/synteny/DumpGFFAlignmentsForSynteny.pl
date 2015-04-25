@@ -131,7 +131,7 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
   next unless ($qy_slice->has_karyotype || $force);
 
   my $seq_region_name = $qy_dnafrag->name;
-  open SYN,">$output_dir" . "$seq_region_name.syten.gff";
+  open SYN, ">", "${output_dir}/${seq_region_name}.syten.gff";
 
   foreach my $tg_dnafrag (@{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, $non_ref_coord_system_name)}) {
     #Check if the dnafrag is part of the karyotype to decide whether to calculate the synteny
