@@ -222,7 +222,7 @@ sub pipeline_analyses {
                               'synteny_mlss_id' => $self->o('synteny_mlss_id'),
                               'ref_species' => $self->o('ref_species'),
                              },
-              -flow_into => ['FetchMLSS'],
+              -flow_into => ['SyntenyStats'],
             },
             { -logic_name      => 'FetchMLSS',
               -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS',
