@@ -327,7 +327,7 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
   } elsif ($class =~ /^ConservationScore.conservation_score/) {
     copy_conservation_scores($from_dba, $to_dba, $method_link_species_set);
   } elsif ($class =~ /^ConstrainedElement.constrained_element/) {
-    copy_constrained_elements($from_dba, $to_dba, $mlss_id);
+    copy_constrained_elements($from_dba, $to_dba, $method_link_species_set);
   } else {
     print " ** ERROR **  Copying data of class $class is not supported yet!\n";
     exit(1);
@@ -931,11 +931,17 @@ sub copy_conservation_scores {
 =cut
 
 sub copy_constrained_elements {
-  my ($from_dba, $to_dba, $mlss_id) = @_;
+  my ($from_dba, $to_dba, $method_link_species_set) = @_;
 
+  my $gab_mlss_id = $method_link_species_set->get_value_for_tag('msa_mlss_id');
+  if (!$gab_mlss_id) {
+    print " ** ERROR **  Needs a 'msa_mlss_id' entry in the method_link_species_set_tag table!\n";
+    exit(1);
+  }
   exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
-      "method_link_species_set_id = $mlss_id");
+      "method_link_species_set_id = $gab_mlss_id");
 
+  my $mlss_id = $method_link_species_set->dbID;
   my $lower_limit = $mlss_id * 10**10;
   my $upper_limit = ($mlss_id + 1) * 10**10;
 
