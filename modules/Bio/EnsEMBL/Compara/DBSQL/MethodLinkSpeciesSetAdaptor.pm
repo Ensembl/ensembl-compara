@@ -136,6 +136,7 @@ sub store {
 
   assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
 
+  #FIXME: $store_components_first should be used for the method as well
   my $method            = $mlss->method()           or die "No Method defined, cannot store\n";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
