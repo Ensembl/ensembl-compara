@@ -150,7 +150,7 @@ sub pipeline_analyses {
                               'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                               'level'      => $self->o('level'),
                               'force'      => $self->o('force'),
-                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region# --force #force# --output_dir #synteny_dir#",
+                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region_name# --force #force# --output_dir #synteny_dir#",
                               },
                 -flow_into => {
                                '1' => [ 'build_synteny' ],
@@ -163,9 +163,9 @@ sub pipeline_analyses {
               -module => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::BuildSynteny',
               -parameters => {
                               'program' => 'java -Xmx1700M -classpath ' . $self->o('BuildSynteny_exe') . ' BuildSynteny',
-                              'gff_file' => '#synteny_dir#/#seq_region#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
+                              'gff_file' => '#synteny_dir#/#seq_region_name#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
                               'orient' => $self->o('orient'),
-                              'output_file' => '#synteny_dir#/#seq_region#.#maxDist1#.#minSize1#.BuildSynteny.out',
+                              'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
               -rc_name => '1.8Gb',
             },

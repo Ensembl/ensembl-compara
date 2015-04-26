@@ -108,7 +108,7 @@ sub write_output {
     my ($self) = @_;
 
     foreach my $dnafrag (@{$self->param('dnafrags_for_karyotype')}) {
-        $self->dataflow_output_id( { 'seq_region' => $dnafrag->name }, 2);
+        $self->dataflow_output_id( { 'seq_region_name' => $dnafrag->name }, 2);
     }
 }
 
