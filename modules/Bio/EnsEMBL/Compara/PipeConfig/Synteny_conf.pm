@@ -108,7 +108,9 @@ sub pipeline_wide_parameters {
         'minSize1' => $self->o('minSize1'),
         'maxDist2' => $self->o('maxDist2'),
         'minSize2' => $self->o('minSize2'),
+        'orient'   => $self->o('orient'),
 
+        'level'     => $self->o('level'),
         'include_non_karyotype' => $self->o('include_non_karyotype'),
     };
 }
@@ -151,7 +153,6 @@ sub pipeline_analyses {
                               'query_name' => $self->o('ref_species'),
                               'method_link_type' => $self->o('method_link_type'),
                               'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
-                              'level'      => $self->o('level'),
                               'synteny_mlss_id'    => $self->o('synteny_mlss_id'),
                               'cmd' => "#program# --dbname #compara_url# --qy #query_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region_name# --force #include_non_karyotype# --output_dir #synteny_dir#",
                               },
@@ -167,7 +168,6 @@ sub pipeline_analyses {
               -parameters => {
                               'program' => 'java -Xmx1700M -classpath ' . $self->o('BuildSynteny_exe') . ' BuildSynteny',
                               'gff_file' => '#synteny_dir#/#seq_region_name#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
-                              'orient' => $self->o('orient'),
                               'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
               -rc_name => '1.8Gb',
