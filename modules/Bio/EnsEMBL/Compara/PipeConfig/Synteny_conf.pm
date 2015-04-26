@@ -68,6 +68,7 @@ sub default_options {
             'method_link_type' => 'LASTZ_NET', #pairwise alignment type
 
             #DumpGFFAlignmentsForSynteny parameters
+            'dumpgff_capacity'  => 3,
             'force' => 0, #over-ride check for has_karyotype in ListChromosomes and DumpGFFAlignmentsForSynteny
             'level' => 1, #which GenomicAlignBlock level_id to use. Level=>1 will only use level 1 blocks, level=>2 will use level 1 and level 2 blocks. For human vs chimp, we would use level=>2
 
@@ -157,7 +158,7 @@ sub pipeline_analyses {
                 -flow_into => {
                                '1' => [ 'build_synteny' ],
                               },
-              -hive_capacity => 3, #database intensive
+              -analysis_capacity => $self->o('dumpgff_capacity'), #database intensive
               -rc_name => '1.8Gb',
             },
             #Build synteny regions
