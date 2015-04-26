@@ -121,11 +121,12 @@ if ($mlss_id) {
 my $qy_dnafrags;
 unless (defined $seq_region) {
   foreach my $n ($ref_coord_system_name ? ($ref_coord_system_name) : @karyotype_coord_system_names) {
-    push @$qy_dnafrags, $dfa->fetch_all_by_GenomeDB_region($qy_gdb, $n);
+    push @$qy_dnafrags, @{$dfa->fetch_all_by_GenomeDB_region($qy_gdb, $n)};
   }
 } else {
   $qy_dnafrags = [ $dfa->fetch_by_GenomeDB_and_name($qy_gdb, $seq_region) ];
 }
+
 
 foreach my $qy_dnafrag (@{$qy_dnafrags}) {
   #Check if the dnafrag is part of the karyotype to decide whether to calculate the synteny
@@ -138,7 +139,7 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
 
   my $tg_dnafrags;
   foreach my $n ($non_ref_coord_system_name ? ($non_ref_coord_system_name) : @karyotype_coord_system_names) {
-    push @$tg_dnafrags, $dfa->fetch_all_by_GenomeDB_region($tg_gdb, $n);
+    push @$tg_dnafrags, @{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, $n)};
   }
 
   foreach my $tg_dnafrag (@$tg_dnafrags) {
