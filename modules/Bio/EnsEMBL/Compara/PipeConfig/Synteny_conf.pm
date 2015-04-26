@@ -154,7 +154,7 @@ sub pipeline_analyses {
                               'method_link_type' => $self->o('method_link_type'),
                               'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                               'synteny_mlss_id'    => $self->o('synteny_mlss_id'),
-                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region_name# --force #include_non_karyotype# --output_dir #synteny_dir#",
+                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region_name# --force #include_non_karyotype# --level #level# --output_dir #synteny_dir#",
                               },
                 -flow_into => {
                                '1' => [ 'build_synteny' ],
