@@ -171,6 +171,7 @@ sub pipeline_analyses {
                               'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
               -rc_name => '1.8Gb',
+              -meadow_type  => 'LSF',   # The head nodes cannot run Java programs
             },
             #Concatenate into single file
             { -logic_name => 'concat_files',
