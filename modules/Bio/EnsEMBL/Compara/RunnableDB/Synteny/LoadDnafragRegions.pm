@@ -49,14 +49,24 @@ use Bio::EnsEMBL::Compara::DnaFragRegion;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub fetch_input {
+    my $self = shift;
+
+    my $synteny_mlss_id = $self->param_required('synteny_mlss_id');
+    my $synteny_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($synteny_mlss_id);
+    $self->param('synteny_mlss', $synteny_mlss);
+
+    my $existing_synteny_regions = $self->compara_dba->get_SyntenyRegionAdaptor->fetch_all_by_MethodLinkSpeciesSet($synteny_mlss);
+    die "There are already some SyntenyRegions for the MLSS $synteny_mlss_id in the database\n" if scalar(@$existing_synteny_regions);
+}
+
 
 sub run {
     my $self = shift;
 
-    my $mlss_id = $self->param_required('synteny_mlss_id');
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    my $synteny_mlss_id = $self->param('synteny_mlss_id');
     my $qy_species = $self->param_required('ref_species');
-    my ($gdb1, $gdb2) = @{$mlss->species_set_obj->genome_dbs()};
+    my ($gdb1, $gdb2) = @{$self->param('synteny_mlss')->species_set_obj->genome_dbs()};
     my ($qy_gdb, $tg_gdb) = $gdb1->name eq $qy_species ? ($gdb1,$gdb2) : ($gdb2,$gdb1);
 
     my $dfa = $self->compara_dba->get_DnaFragAdaptor();
@@ -90,7 +100,7 @@ sub run {
 
             my $sr = new Bio::EnsEMBL::Compara::SyntenyRegion(
                 -REGIONS                     => [$qy_dfr, $tg_dfr],
-                -METHOD_LINK_SPECIES_SET_ID  => $mlss_id,
+                -METHOD_LINK_SPECIES_SET_ID  => $synteny_mlss_id,
             );
 
             $sra->store($sr);
