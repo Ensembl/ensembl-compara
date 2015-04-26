@@ -174,8 +174,6 @@ sub store {
         my $val = $helper->transaction(
             -RETRY => 3,
             -CALLBACK => sub {
-                #eval {$self->dbc->do('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')};
-                #die $@ if $@ and not $@ =~ m/row-based logging/;
                 my $sth2 = $self->prepare("INSERT INTO method_link_species_set $columns SELECT
                     IF(
                         MAX(method_link_species_set_id) = $max_mlss_id,
