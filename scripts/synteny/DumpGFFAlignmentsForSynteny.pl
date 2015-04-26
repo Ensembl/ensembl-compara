@@ -135,7 +135,7 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
   next unless ($qy_slice->has_karyotype || $force);
 
   my $seq_region_name = $qy_dnafrag->name;
-  open SYN, ">", "${output_dir}/${seq_region_name}.syten.gff";
+  open(my $synt_file, ">", "${output_dir}/${seq_region_name}.syten.gff");
 
   my $tg_dnafrags;
   foreach my $n ($non_ref_coord_system_name ? ($non_ref_coord_system_name) : @karyotype_coord_system_names) {
@@ -173,7 +173,7 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
         }
         
         # print out a in gff format
-        print SYN join("\t",
+        print $synt_file join("\t",
             $qy_dnafrag->name,
             'synteny',
             'similarity',
@@ -192,7 +192,7 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
       $start += $chunk;
     }
   }
-  close SYN;
+  close $synt_file;
 }
 
 exit 0;
