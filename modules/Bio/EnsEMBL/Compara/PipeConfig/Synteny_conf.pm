@@ -61,7 +61,7 @@ sub default_options {
             'division'      => 'Multi', # Stats 
             'store_in_pipeline_db' => 1, # Stats
 	    'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-            'synteny_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/' . 'release_' . $self->o('rel_with_suffix') . '/' . $self->o('synteny_mlss_id') . '/',
+            'work_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
 
             'compara_url' => undef, #pairwise database to calculate the syntenies from
             'ref_species' => undef, #reference species
@@ -93,14 +93,15 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
-        'mkdir -p '.$self->o('synteny_dir'), #Make dump_dir directory
+        'mkdir -p '.$self->o('work_dir'), #Make dump_dir directory
     ];
 }
 
 sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
-        'synteny_dir'   => $self->o('synteny_dir'),
+            # 'synteny_mlss_id' will be evaluated in the runnables, not here
+        'synteny_dir'   => $self->o('work_dir').'/#synteny_mlss_id#/',
 
         'maxDist1' => $self->o('maxDist1'),
         'minSize1' => $self->o('minSize1'),
@@ -150,6 +151,7 @@ sub pipeline_analyses {
                               'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                               'level'      => $self->o('level'),
                               'force'      => $self->o('force'),
+                              'synteny_mlss_id'    => $self->o('synteny_mlss_id'),
                               'cmd' => "#program# --dbname #compara_url# --qy #query_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region_name# --force #force# --output_dir #synteny_dir#",
                               },
                 -flow_into => {
