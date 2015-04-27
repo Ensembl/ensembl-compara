@@ -143,7 +143,7 @@ sub calculate_stats {
   foreach my $species (sort keys %syntenic_regions) {
     my $coding_overlap;
     
-    foreach my $sr_name (keys $syntenic_regions{$species}) {
+    foreach my $sr_name (keys %{$syntenic_regions{$species}}) {
       foreach my $syntenic_coords (@{$syntenic_regions{$species}{$sr_name}}) {
        $tags{'num_blocks'}++;
         foreach my $coding_coords (@{$coding_regions{$species}{$sr_name}}) {
