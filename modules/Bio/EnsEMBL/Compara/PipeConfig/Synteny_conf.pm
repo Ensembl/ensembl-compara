@@ -101,6 +101,8 @@ sub pipeline_create_commands {
 sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
+        'master_db'     => $self->o('master_db'),
+
             # 'synteny_mlss_id' will be evaluated in the runnables, not here
         'synteny_dir'   => $self->o('work_dir').'/#synteny_mlss_id#/',
 
@@ -209,7 +211,7 @@ sub pipeline_analyses {
             { -logic_name => 'copy_mlssid_from_master',
               -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
               -parameters    => {
-                                 'src_db_conn'   => $self->o('master_db'),
+                                 'src_db_conn'   => '#master_db#',
                                  'synteny_mlss_id' => $self->o('synteny_mlss_id'),
                                  'mode'          => 'replace',
                                  'table'         => 'method_link_species_set',
