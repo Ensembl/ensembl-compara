@@ -329,12 +329,33 @@ sub render_Barcode {
 
   my $max = $glyph->{'max'} || 1000;
   my $step = $glyph->{'pixelunit'} * $self->{'sf'};
-  my $mul =  scalar(@colours) / $max;
-  foreach my $p (@$points) {
-    my $colour = $colours[int($p * $mul)] || '000000';
-    $canvas->filledRectangle($x1,$y1,$x2,$y2,$colour);
-    $x1 += $step;
-    $x2 += $step;
+
+  if($glyph->{'wiggle'} eq 'bar') {
+    my $mul = ($y2-$y1) / $max;
+    foreach my $p (@$points) {
+      my $yb = $y2 - $p * $mul;
+      $canvas->filledRectangle($x1,$yb,$x2,$y2,$colours[0]);
+      $x1 += $step;
+      $x2 += $step;
+    }
+  } elsif($glyph->{'wiggle'} eq 'line') {
+    my $mul = ($y2-$y1) / $max;
+    my $ya = 0;
+    foreach my $p (@$points) {
+      my $yb = $y2 - $p * $mul;
+      $canvas->line($x1,$ya,$x2,$yb,$colours[0]);
+      $x1 += $step;
+      $x2 += $step;
+      $ya = $yb;
+    }
+  } else {
+    my $mul =  scalar(@colours) / $max;
+    foreach my $p (@$points) {
+      my $colour = $colours[int($p * $mul)] || '000000';
+      $canvas->filledRectangle($x1,$y1,$x2,$y2,$colour);
+      $x1 += $step;
+      $x2 += $step;
+    }
   }
 }
 

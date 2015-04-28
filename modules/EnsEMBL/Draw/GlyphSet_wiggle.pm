@@ -258,10 +258,27 @@ sub _draw_wiggle_points_as_line {
   }
 }
 
+sub _draw_wiggle_points_as_graph {
+  my ($self, $c, $features,$parameters) = @_;
+
+  $self->push($self->Barcode({
+    values    => $features,
+    x         => 1,
+    y         => 0,
+    height    => $c->{'pix_per_score'} * $parameters->{'max_score'},
+    unit      => $parameters->{'unit'},
+    max       => $parameters->{'max_score'},
+    colours   => [$c->{'colour'}],
+    wiggle    => $parameters->{'graph_type'},
+  }));
+}
+
 sub draw_wiggle_points {
   my ($self,$c,$features,$parameters) = @_;
 
-  if($parameters->{'graph_type'} eq 'line') {
+  if($parameters->{'unit'}) {
+    $self->_draw_wiggle_points_as_graph($c,$features,$parameters);
+  } elsif($parameters->{'graph_type'} eq 'line') {
     $self->_draw_wiggle_points_as_line($c,$features,$parameters);
   } else {
     $self->_draw_wiggle_points_as_bar_or_points($c,$features,$parameters);
@@ -313,6 +330,10 @@ sub do_draw_wiggle {
   # pix_per_score: vertical pixels per unit score
   my $max_score     = $parameters->{'max_score'};
   my $min_score     = $parameters->{'min_score'};
+  if($parameters->{'unit'}) {
+    # Barcode glyph can't cope with anything else
+    $min_score = 0;
+  }
   my $range = $max_score-$min_score;
   if($range < 0.01) {
     # Oh dear, data all has pretty much same value ...

@@ -206,18 +206,17 @@ sub wiggle_features {
     my $slice     = $self->{'container'};
     my $adaptor   = $self->bigwig_adaptor;
     return [] unless $adaptor;
-    my $summary   = $adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
+    my $summary   = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
     my $bin_width = $slice->length / $bins;
     my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
     my @features;
     
     for (my $i = 0; $i < $bins; $i++) {
-      next unless $summary->[$i]{'validCount'} > 0;
-      
+      next unless defined $summary->[$i];
       push @features, {
         start => $flip ? $flip - (($i + 1) * $bin_width) : ($i * $bin_width + 1),
         end   => $flip ? $flip - ($i * $bin_width + 1)   : (($i + 1) * $bin_width),
-        score => $summary->[$i]{'sumData'} / $summary->[$i]{'validCount'},
+        score => $summary->[$i],
       };
     }
     
@@ -234,42 +233,38 @@ sub draw_features {
 
   # render wiggle if wiggle
   if ($wiggle) {
-    my $features   = $self->wiggle_features($self->bins);
+    my $agg = $self->wiggle_aggregate();
+
     my $viewLimits = $self->my_config('viewLimits');
     my $no_titles  = $self->my_config('no_titles');
-    my $min_score;
+    # TODO barcode renderer cannot cope with minimum score being non-zero
     my $max_score;
-    
     my $signal_range = $self->my_config('signal_range');
     if(defined $signal_range) {
-      ($min_score, $max_score) = @$signal_range;
+      $max_score = $signal_range->[1];
     }
-    unless(defined $min_score and defined $max_score) {
+    unless(defined $max_score) {
       if (defined $viewLimits) {
-        ($min_score, $max_score) = split ':', $viewLimits;
+        $max_score = [ split ':', $viewLimits ]->[1];
       } else {
-        $min_score = $features->[0]{'score'};
-        $max_score = $features->[0]{'score'};
-
-        foreach my $feature (@$features) {
-          $min_score = min($min_score, $feature->{'score'});
-          $max_score = max($max_score, $feature->{'score'});
-        }
+        $max_score = $agg->{'max'};
       }
     }
-    
+   
     my $gang = $self->gang();
     if($gang and $gang->{'max'}) {
       $max_score = $gang->{'max'};
     }
 
     # render wiggle plot        
-    $self->draw_wiggle_plot($features, {
-      min_score    => $min_score, 
-      max_score    => $max_score, 
+    $self->draw_wiggle_plot($agg->{'values'}, {
+      min_score    => 0,
+      max_score    => $max_score,
       score_colour => $colour,
       axis_colour  => $colour,
       no_titles    => defined $no_titles,
+      unit         => $agg->{'unit'},
+      graph_type   => 'bar',
     });
   }
 
