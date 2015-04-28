@@ -54,6 +54,8 @@ sub render_Rect {
   my $y1 = $glyph->{'pixely'};
   my $y2 = $glyph->{'pixely'} + $glyph->{'pixelheight'};
 
+  $attrs->{'overlap'} = 1 if $glyph->{'alpha'};
+
   $x1 = 0 if $x1 < 0;
   $x2 = 0 if $x2 < 0;
   $y1 = 0 if $y1 < 0;

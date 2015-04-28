@@ -1084,20 +1084,31 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var test  = false;
     var areas = draggables ? this.draggables : this.areas;
     var c;
-    
+    var last;
+    var current;
+
     for (var i = 0; i < areas.length; i++) {
       c = areas[i];
-      
+
       switch (c.a.shape.toLowerCase()) {
         case 'circle': test = this.inCircle(c.c, coords); break;
         case 'poly':   test = this.inPoly(c.c, coords); break;
         default:       test = this.inRect(c, coords); break;
       }
-      
+
       if (test === true) {
-        return $.extend({}, c);
+        current = $.extend({}, c);
+
+        // if the areas are overlapping (in case of transparent areas, return the one drawn on top)
+        if (!current.a.attrs.overlap) {
+          return last || current;
+        }
+
+        last = current;
       }
     }
+
+    return last;
   },
   
   inRect: function (c, coords) {
