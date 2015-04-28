@@ -45,7 +45,7 @@ use vars qw( $SCRIPT_ROOT $SERVERROOT );
 
 BEGIN {
   $SCRIPT_ROOT = dirname($Bin);
-  ($SERVERROOT = $SCRIPT_ROOT) =~ s#/utils/selenium##;
+  ($SERVERROOT = $SCRIPT_ROOT) =~ s#utils##;
   unshift @INC,"$SERVERROOT/modules";  
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
@@ -64,20 +64,47 @@ GetOptions(
 
 die 'Please provide configuration files!' unless ($config && $tests);
 
+## Find config files
+my @all_plugins = @{$SiteDefs::ENSEMBL_PLUGINS || []};
+push @all_plugins, ('root', $SERVERROOT);
+my ($config_path, $tests_path, $species_path);
+while (my ($plugin_name, $dir) = splice @all_plugins, 0, 2) {
+  my $path = $dir.'/utils/selenium/conf/'.$config;
+  if (!$config_path && $config && -e $path) {
+    $config_path = $path;
+  }
+  $path = $dir.'/utils/selenium/conf/'.$tests;
+  if (!$tests_path && $tests && -e $path) {
+    $tests_path = $path;
+  }
+  $path = $dir.'/utils/selenium/conf/'.$species;
+  if (!$species_path && $species && -e $path) {
+    $species_path = $path;
+  }
+}
+
+die "Couldn't find configuration files $config and/or $tests!" unless ($config_path && $tests_path);
+
 ## Read configurations
 my ($conf_string, $test_string, $spp_string);
 {
   local $/;
   my $fh;
-  open $fh, '<', "conf/$config";
-  $conf_string .= $_ for <$fh>;
-  close $fh;
-  open $fh, '<', "conf/$tests";
-  $test_string .= $_ for <$fh>;
-  close $fh;
-  open $fh, '<', "conf/$species";
-  $spp_string .= $_ for <$fh>;
-  close $fh;
+  if ($config_path) {
+    open $fh, '<', $config_path;
+    $conf_string .= $_ for <$fh>;
+    close $fh;
+  }
+  if ($tests_path) {
+    open $fh, '<', $tests_path;
+    $test_string .= $_ for <$fh>;
+    close $fh;
+  }
+  if ($species_path) {
+    open $fh, '<', $species_path;
+    $spp_string .= $_ for <$fh>;
+    close $fh;
+  }
 } 
 my $CONF          = $conf_string ? from_json($conf_string)  : {};
 my $TESTS         = $test_string ? from_json($test_string)  : {};
@@ -85,7 +112,7 @@ my $SPECIES       = $spp_string ? from_json($spp_string) : {};
 
 ## Validate main configuration
 unless ($CONF->{'host'}) {
-  die "You must specify the selenium host, e.g. ???";
+  die "You must specify the selenium host, e.g. 127.0.0.1";
 }
 
 unless ($CONF->{'url'} && $CONF->{'url'} =~ /^http/) {
