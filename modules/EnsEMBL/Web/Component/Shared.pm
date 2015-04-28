@@ -1283,4 +1283,34 @@ sub render_consequence_type {
   return ($type) ? qq{<span class="hidden">$rank</span>$type} : '-';
 }
 
+sub render_evidence_status {
+  my $self      = shift;
+  my $evidences = shift;
+
+  my $render;
+  foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$evidences){
+    my $evidence_label = $evidence;
+       $evidence_label =~ s/_/ /g;
+    $render .= sprintf('<img src="/i/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                        $evidence, $evidence_label, $evidence
+                      );
+  }
+  return $render;
+}
+
+sub render_clinical_significance {
+  my $self       = shift;
+  my $clin_signs = shift;
+
+  my $render;
+  foreach my $cs (sort {$a cmp $b} @$clin_signs){
+    my $cs_img = $cs;
+       $cs_img =~ s/\s/-/g;
+    $render .= sprintf('<img src="/i/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                        $cs_img, $cs, $cs
+                      );
+  }
+  return $render;
+}
+
 1;
