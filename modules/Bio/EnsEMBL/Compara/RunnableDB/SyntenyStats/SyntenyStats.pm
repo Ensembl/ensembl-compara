@@ -32,6 +32,7 @@ Calculate overall and coding coverage statistics for synteny.
 =head1 SYNOPSIS
 
  $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats -division compara_curr -mlss_id 10104 -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl
+ $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats -mlss_id 10104 -pairwise_db_url mysql://ensro@compara3/database_with_the_matching_species
 
 =head1 Author
 
@@ -43,31 +44,55 @@ package Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Hive::Process');
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub run {
   my ($self) = @_;
   
+  $self->initialize_db_adaptors();
   $self->syntenic_regions();
   $self->coding_regions();
   $self->calculate_stats();
 }
 
+sub initialize_db_adaptors {
+  my ($self) = @_;
+
+  my $division = $self->param('division');
+  if ($division) {
+      my $reg = 'Bio::EnsEMBL::Registry';
+      if( $self->param("reg_conf") ){
+          Bio::EnsEMBL::Registry->load_all( $self->param("reg_conf") );
+          $reg->load_all( $self->param("reg_conf") );
+      } elsif($self->param("store_in_pipeline_db") ){
+          my $pipe_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %{ $self->param('pipeline_db') });
+      }
+      $self->param('compara_db', Bio::EnsEMBL::Registry->get_adaptor($division, 'compara'));
+  } else {
+      $self->param('compara_db', $self->compara_dba);
+      my $pairwise_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('pairwise_db_url'));
+      $self->param('pairwise_dba', $pairwise_dba);
+  }
+}
+
+sub _get_core_db_adaptor {
+    my ($self, $species) = @_;
+    if ($self->param('division')) {
+        return Bio::EnsEMBL::Registry->get_adaptor($species, 'core');
+    } else {
+        return $self->param('pairwise_dba')->get_GenomeDBAdaptor->fetch_by_name_assembly($species)->db_adaptor;
+    }
+}
+
 sub syntenic_regions {
   my ($self) = @_;
-  my $division = $self->param_required('division');
   my $mlss_id  = $self->param_required('mlss_id');
-  my $reg = 'Bio::EnsEMBL::Registry';
-  if( $self->param("reg_conf") ){
-   Bio::EnsEMBL::Registry->load_all( $self->param("reg_conf") ); 
-   $reg->load_all( $self->param("reg_conf") );
-  } elsif($self->param("store_in_pipeline_db") ){
-   my $pipe_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %{ $self->param('pipeline_db') });
-  }
-  my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($division, 'compara', 'MethodLinkSpeciesSet');
-  my $sra = Bio::EnsEMBL::Registry->get_adaptor($division, 'compara', 'SyntenyRegion');
+  my $mlssa = $self->param('compara_db')->get_MethodLinkSpeciesSetAdaptor;
+  my $sra = $self->param('compara_db')->get_SyntenyRegionAdaptor;
   
   my $mlss = $mlssa->fetch_by_dbID($mlss_id);
   my $synteny_regions = $sra->fetch_all_by_MethodLinkSpeciesSet($mlss);
@@ -84,7 +109,6 @@ sub syntenic_regions {
   }
   
   $self->param('mlss', $mlss);
-  $self->param('compara_db', $sra->db);
   $self->param('syntenic_regions', \%syntenic_regions);
   $self->param('syntenic_lengths', \%syntenic_lengths);
 }
@@ -97,7 +121,8 @@ sub coding_regions {
   my %coding_regions;
   my %coding_lengths;
   foreach my $species (@species) {
-    my $sa = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'Slice');
+   my $core_dba = $self->_get_core_db_adaptor($species);
+    my $sa = $core_dba->get_SliceAdaptor;
     my $slices = $sa->fetch_all('toplevel');
     foreach my $slice (@$slices) {
       $total_lengths{$species} += $slice->length;
