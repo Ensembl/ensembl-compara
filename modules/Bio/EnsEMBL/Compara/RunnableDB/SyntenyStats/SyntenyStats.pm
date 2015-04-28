@@ -78,8 +78,7 @@ sub syntenic_regions {
     my $dnafrag_regions = $synteny_region->get_all_DnaFragRegions();
     foreach my $dnafrag_region (@$dnafrag_regions) {
       my $species = $dnafrag_region->genome_db->name;
-      my $slice = $dnafrag_region->slice;
-      push @{$syntenic_regions{$species}{$slice->seq_region_name}}, [$slice->start, $slice->end];
+      push @{$syntenic_regions{$species}{$dnafrag_region->dnafrag->name}}, [$dnafrag_region->dnafrag_start, $dnafrag_region->dnafrag_end];
       $syntenic_lengths{$species} += $dnafrag_region->length;
     }
   }
