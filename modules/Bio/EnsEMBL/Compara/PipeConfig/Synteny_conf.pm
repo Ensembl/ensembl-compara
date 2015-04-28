@@ -20,9 +20,18 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
+This pipeline is using eHive's parameter-stack mechanism, i.e. the jobs
+inherit the parameters of their parents.
+The pipeline should be configured exclusively from the command line, with the
+-pairwise_db_url and possibly -pairwise_mlss_id parameters. If the latter is
+skipped, the pipeline will use all the pairwise alignments found on the server.
+The pipeline automatically finds the alignments that are missing syntenies and
+compute these (incl. the stats)
+The analysis "compute_synteny_start" can be seeded multiple times.
+Extra parameters like "level", "orient", "minSize1", etc, should also be given
+at the command-line level, and not in this file.
 
 =head1 CONTACT
 
@@ -45,27 +54,14 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},   # inherit the generic ones
             
-            'pipeline_name'         => 'SYNTENY_'.$self->o('synteny_mlss_id')."_".$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
-            'dbname'               => $self->o('pipeline_name'), #pipeline database name
+            'host'          => 'compara5',      # Where to host the pipeline database
 
-            'host'        => 'compara5',                        #host name
-            'pipeline_db' => {                                  # connection parameters
-                              -species => 'Multi',
-                              -host   => $self->o('host'),
-                              -port   => 3306,
-                              -user   => 'ensadmin',
-                              -pass   => $self->o('password'),
-                              -dbname => $ENV{USER}.'_'.$self->o('dbname'),
-                              -driver => 'mysql',
-                             },
-            'division'      => 'Multi', # Stats 
-            'store_in_pipeline_db' => 1, # Stats
 	    'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
             'work_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
 
-            'compara_url' => undef, #pairwise database to calculate the syntenies from
-            'ref_species' => undef, #reference species
-            'method_link_type' => 'LASTZ_NET', #pairwise alignment type
+            # Connections to the pairwise database must be given
+            #'pairwise_db_url' => undef, #pairwise database to calculate the syntenies from
+            'pairwise_mlss_id'  => undef,   # if undef, will use all the pairwise alignments found in it
 
             #DumpGFFAlignmentsForSynteny parameters
             'dumpgff_capacity'  => 3,
@@ -117,6 +113,15 @@ sub pipeline_wide_parameters {
     };
 }
 
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    }
+}
+
+
 sub resource_classes {
     my ($self) = @_;
     
@@ -133,13 +138,34 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
+
+        {   -logic_name => 'compute_synteny_start',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::FetchSyntenyParameters',
+            -input_ids  => [
+                {
+                    pairwise_db_url     => $self->o('pairwise_db_url'),
+                    pairwise_mlss_id    => $self->o('pairwise_mlss_id'),
+                },
+            ],
+            -wait_for   => [ 'copy_tables_from_master_db' ],
+            -flow_into  => {
+                2 => 'create_work_dir',
+            },
+        },
+        {   -logic_name => 'create_work_dir',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd'   => 'mkdir -p #synteny_dir#',
+            },
+            -flow_into  => [ 'chr_name_factory' ],
+        },
             #dump chr names
             {   -logic_name => 'chr_name_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::ListChromosomes',
                 -parameters => {
-                                'compara_db'            => $self->o('compara_url'),
+                                'compara_db'            => '#pairwise_db_url#',
+                                'species_name'          => '#ref_species#',
                                },
-                -input_ids => [{}],
                 -flow_into => {
                                '2->A' => [ 'dump_gff_alignments' ],
                                'A->1' => [ 'concat_files' ],
@@ -151,12 +177,7 @@ sub pipeline_analyses {
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
               -parameters => {
                               'program'    => $self->o('DumpGFFAlignmentsForSynteny_exe'),
-                              'compara_url' => $self->o('compara_url'),
-                              'query_name' => $self->o('ref_species'),
-                              'method_link_type' => $self->o('method_link_type'),
-                              'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
-                              'synteny_mlss_id'    => $self->o('synteny_mlss_id'),
-                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region_name# --force #include_non_karyotype# --level #level# --output_dir #synteny_dir#",
+                              'cmd' => "#program# --dbname #pairwise_db_url# --qy #ref_species# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region_name# --force #include_non_karyotype# --level #level# --output_dir #synteny_dir#",
                               },
                 -flow_into => {
                                '1' => [ 'build_synteny' ],
@@ -183,39 +204,37 @@ sub pipeline_analyses {
                               'cmd' => 'cat #synteny_dir#/*.BuildSynteny.out | grep cluster > #output_file#',
                              },
              -flow_into => { 
-                              '1' => [ 'copy_tables_factory' ],
+                              '1' => [ 'copy_dnafrags_from_master' ],
                            },
               
             },
             { -logic_name => 'copy_tables_factory',
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
               -parameters => {
-                             'db_conn' => $self->o('compara_url'),
-                             'inputlist'    => [ 'genome_db', 'dnafrag', 'method_link', 'method_link_species_set', 'species_set'],
+                             'inputlist'    => [ 'genome_db', 'method_link', 'method_link_species_set', 'species_set'],
 			     'column_names' => [ 'table' ],
                              },
+              -input_ids => [ { } ],
               -flow_into => {
-                             '2->A' => [ 'copy_tables_from_pairwise_db' ],
-                             'A->1' => [ 'copy_mlssid_from_master' ],
+                             '2' => [ 'copy_tables_from_master_db' ],
                             },
             },              
-            { -logic_name => 'copy_tables_from_pairwise_db',
+            { -logic_name => 'copy_tables_from_master_db',
               -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
               -parameters    => {
-                                 'src_db_conn'   => $self->o('compara_url'),
+                                 'src_db_conn'   => '#master_db#',
                                  'mode'          => 'overwrite',
                                  'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                                 },
             
             },
-            { -logic_name => 'copy_mlssid_from_master',
+            { -logic_name => 'copy_dnafrags_from_master',
               -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
               -parameters    => {
                                  'src_db_conn'   => '#master_db#',
-                                 'synteny_mlss_id' => $self->o('synteny_mlss_id'),
-                                 'mode'          => 'replace',
-                                 'table'         => 'method_link_species_set',
-                                 'where'         => 'method_link_species_set_id = #synteny_mlss_id#',
+                                 'mode'          => 'insertignore',
+                                 'table'         => 'dnafrag',
+                                 'where'         => 'is_reference = 1 AND genome_db_id IN (#genome_db_ids#)'
                                 },
               -flow_into => {
                               1 => [ 'load_dnafrag_regions' ],
@@ -225,33 +244,15 @@ sub pipeline_analyses {
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::LoadDnafragRegions',
               -parameters => { 
                               'input_file' => '#synteny_dir#/all.#maxDist1#.#minSize1#.BuildSynteny',
-                              'synteny_mlss_id' => $self->o('synteny_mlss_id'),
-                              'ref_species' => $self->o('ref_species'),
                              },
               -flow_into => ['SyntenyStats'],
-            },
-            { -logic_name      => 'FetchMLSS',
-              -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS',
-              -max_retry_count => 0,
-              -parameters      => {
-                                     division => $self->o('division'),
-                                     store_in_pipeline_db => $self->o('store_in_pipeline_db'),
-                                     pipeline_db => $self->o('pipeline_db'),
-                                     mlss_id  => $self->o('synteny_mlss_id'),
-                                  },
-              -flow_into       => {
-                                    1 => ['SyntenyStats'],
-                                  },
             },
     
             {   
               -logic_name      => 'SyntenyStats',
               -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats',
               -parameters      => {
-                                   division => $self->o('division'),
-                                   store_in_pipeline_db => $self->o('store_in_pipeline_db'),
-                                   pipeline_db => $self->o('pipeline_db'),
-                                   mlss_id  => $self->o('synteny_mlss_id'),
+                                   mlss_id  => '#synteny_mlss_id#',
                                   },
               -max_retry_count => 0,
               -rc_name => '3.6Gb',
