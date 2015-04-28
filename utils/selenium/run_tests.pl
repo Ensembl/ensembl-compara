@@ -25,7 +25,10 @@
  Instead, a helper script is used to dump some useful parts of the
  web configuration, which should then be eyeballed to ensure it looks OK.
 
-  Example of use:
+  Note: Configuration files must be placed in utils/selenium/conf, but they can be
+  in any plugin that is configured in Plugins.pm
+
+  Example of usage:
 
   perl run_tests.pl --release=80 --config=ensembl.conf --tests=link_checker.conf --species=release_80_species.conf
 =cut
