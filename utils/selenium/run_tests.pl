@@ -14,47 +14,95 @@
 
 #!/usr/local/bin/perl
 
+=pod
+ Wrapper script for selenium tests. 
+ Takes one argument (release number) plus two JSON configuration files:
+ - configure connection and select which tests are run in a particular batch
+ - configure species to test (optional)
+
+ The purpose of the latter file is to remove dependency on the web code.
+ Instead, a helper script is used to dump some useful parts of the
+ web configuration, which should then be eyeballed to ensure it looks OK.
+
+  Example of use:
+
+  perl run_tests.pl --release=80 --config=link_checker.conf --species=release_80_species.conf
+=cut
+
 use strict;
-use Getopt::Long;
-use Class::Inspector;
+use warnings;
+no warnings 'uninitialized';
+
 use FindBin qw($Bin);
-use vars qw( $SERVERROOT );
+use File::Basename qw( dirname );
+use Getopt::Long;
+
 use LWP::UserAgent;
+use JSON;
+
+use vars qw( $SCRIPT_ROOT $SERVERROOT );
 
 BEGIN {
-  $SERVERROOT = "$Bin/../..";
-  unshift @INC,"$SERVERROOT/../public-plugins/selenium/modules";  
+  $SCRIPT_ROOT = dirname($Bin);
+  ($SERVERROOT = $SCRIPT_ROOT) =~ s#/utils/selenium##;
+  unshift @INC,"$SERVERROOT/modules";  
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;    
 }
 
-my $module;
-my $url = 'http://test.ensembl.org';
-my $host;
-my $port = '4444';
-my $browser = '*firefox'; #'*googlechrome' # C:\Program Files\Google\Chrome\Application\chrome.exe;
-my $test;
-my $skip;
-my $verbose;
-my $species;
-my $timeout;
-my @species_list;
+my ($release, $config, $species);
 
 GetOptions(
-  'module=s'  => \$module,
-  'url=s'     => \$url,
-  'host=s'    => \$host,
-  'port=s'    => \$port,
-  'browser=s' => \$browser,
-  'test=s'    => \$test,
-  'skip=s'    => \$skip,
-  'verbose'   => \$verbose,
+  'release=s' => \$release,
+  'config=s'  => \$config,
   'species=s' => \$species,
-  'timeout=s' => \$timeout,
 );
 
+die 'Please provide a configuration file!' unless $config;
+
+## Read configurations
+my ($conf_string, $spp_string);
+{
+  local $/;
+  my $fh;
+  open $fh, '<', "conf/$config";
+  $conf_string .= $_ for <$fh>;
+  close $fh;
+  open $fh, '<', "conf/$species";
+  $spp_string .= $_ for <$fh>;
+  close $fh;
+} 
+my $CONF          = $conf_string ? from_json($conf_string)  : {};
+my $SPECIES       = $spp_string ? from_json($spp_string) : {};
+
+## Validate main configuration
+unless ($CONF->{'host'}) {
+  die "You must specify the selenium host, e.g. ???";
+}
+
+unless ($CONF->{'url'} && $CONF->{'url'} =~ /^http/) {
+  die "You must specify a url to test against, eg. http://www.ensembl.org";
+}
+
+unless (($CONF->{'modules'} && scalar(@{$CONF->{'modules'}||[]}))
+        || ($CONF->{'modules'} && scalar(@{$CONF->{'modules'}||[]}))) {
+  die "You must specify at least one test module, eg. ['Generic']";
+}
+
+unless (ref($CONF->{'modules'}[0]) eq 'HASH' && $CONF->{'modules'}[0]{'tests'} && scalar(@{$CONF->{'modules'}[0]{'tests'}||[]})) {
+  die "You must specify at least one test method, eg. ['homepage']";
+}
+
+$SPECIES = {'none'} unless keys %$SPECIES;
+
+my $browser = $CONF->{'browser'}  || 'firefox';
+my $port    = $CONF->{'port'}     || '4444';
+my $timeout = $CONF->{'timeout'}  || 50000;
+my $verbose = $CONF->{'verbose'}  || 0;
+
+=pod
 # check to see if the selenium server is online(URL returns OK if server is online).
 my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
 $ua->timeout(10);
@@ -63,80 +111,105 @@ if($response->content ne 'OK') {
   print "\nSelenium Server is offline or IP Address is wrong !!!!\n";
   exit;
 }
+=cut
 
-die "You must specify a test module, eg. --module Generic" unless $module;
-die "You must specify a url to test against, eg. --url http://www.ensembl.org" unless $url;
+## Basic config for test modules
+my $test_config = {
+                    url     => $CONF->{'url'},
+                    host    => $CONF->{'host'},
+                    port    => $port,
+                    browser => $browser,
+                    conf    => {
+                                release => $CONF->{'release'},
+                                timeout => $timeout,
+                                },
+                    verbose => $verbose,  
+                  };
 
-# hack: collect errors so that we can check for selenium failures
-my @errors;
-$SIG{'__DIE__'} = sub { push(@errors, $_[0]) };
 
-# try to use the package
-my $package = "EnsEMBL::Selenium::Test::$module";
-eval("use $package");
-die "can't use $package\n$@" if $@;
+## Separate out the tests by species/non-species
+my $test_suite = {
+                  'non_species' => [],
+                  'species'     => {},
+                  };
 
-# look for test methods
-no strict 'refs';
-my @methods = sort grep { /^test_/ } @{Class::Inspector->methods($package, 'public')};
-use strict 'refs';
-die "Module has no test methods (test methods must be named 'test_*')" unless @methods;
-# create test object
-my $object = $package->new(
-  url => $url,
-  host => $host,
-  port => $port,
-  browser => $browser,
-  conf => {
-    timeout => $timeout,
-  },
-  verbose => $verbose,  
-);
-
-my $methods_called = 0;
-
-#FIRST CHECK IF WEBSITE IS UP.....
-$object->check_website;
-
-#TODO:: regex clear all spaces
-my @test = split(/,/, $test);
-my @skip = split(/,/, $skip);
-@species_list = ($species =~ /,/) ? split(/,/, $species) : $species; #TODO::CHeck for invalid species like unknownspecies
-
-#getting all valid species for ensembl
-if($species eq 'all') {
-  my $SD = $object->get_species_def;
-  my @valid_species = $SD->valid_species;
-
-  @species_list = @valid_species;
-}
-
-# run tests
-#run the test again for each species so only if module eq species run through loops
-foreach (@species_list) {
-  $object->set_species($_) if($_);
-  foreach my $method (@methods) {
-    next if @test and !grep {$method =~ /^(test_)?$_$/i} @test;
-    next if @skip and grep {$method =~ /^(test_)?$_$/i} @skip;
-    
-    my $test_case = $method;
-    $test_case =~ s/test_//g;
-    $test_case = uc($test_case);
-
-    print "\n****************************************\n";
-    ($_) ? print " Testing $_ \n" : print " Testing $test_case\n"; 
-    print "****************************************\n";
-    print "TESTING $test_case \n" if($_);
-    
-    $object->$method;
-    $methods_called++;
+foreach my $module (@{$CONF->{'modules'}}) {
+  my $species = $module->{'species'} || [];
+  if ($species eq 'all') {
+  }
+  elsif (scalar(@$species)) {
+    foreach my $sp (@$species) {
+      if ($test_suite->{'species'}{$sp}) {
+        push @{$test_suite->{'species'}{$sp}}, $module;
+      }
+      else {
+        $test_suite->{'species'}{$sp} = [$module];
+      }
+    }
+  }
+  else {
+    push @{$test_suite->{'non_species'}}, $module,
   }
 }
 
-# check for problems
-if ($methods_called) {    
-  print "\nAll tests passed OK\n" 
-    unless ($verbose or grep {/^Error.*selenium/} @errors or $object->testmore_output =~ /not ok/m);
-} else {
-  print "No test methods to run\n";
+## Run any non-species-specific tests first 
+foreach my $module (@{$test_suite->{'non_species'}}) {
+  my $module_name = $module->{'name'};
+  foreach my $test_set (@{$module->{'tests'}||[]}) {
+    run_test($module_name, $test_config, $test_set);    
+  }
 }
+
+## Loop through the relevant tests for each species
+foreach my $sp (keys %{$test_suite->{'species'}}) {
+  foreach my $module (@{$test_suite->{'species'}{$sp}}) {
+    my $module_name = $module->{'name'};
+    foreach my $test_set (@{$module->{'tests'}}) {
+      $test_config->{'species'} = $species;
+      run_test($module_name, $test_config, $test_set);    
+    }
+  }
+}
+
+print "TEST RUN COMPLETED\n\n";
+
+################# SUBROUTINES #############################################
+
+sub run_test {
+  my ($module, $config, $tests) = @_;
+
+  ## Try to use the package
+  my $package = "EnsEMBL::Selenium::Test::$module";
+  eval("use $package");
+  if ($@) {
+    write_to_log("TEST FAILED: Couldn't use $package\n$@");
+    return;
+  }
+  my @test_names = keys @{$tests||[]};
+  unless (@test_names) {
+    write_to_log("TEST FAILED: No methods specified for test module $package");
+    return;
+  }
+
+  my $object = $package->new(%{$config||{}});
+
+  ## Run the tests
+  foreach my $name (@test_names) {
+    my $method = 'test_'.$name;
+    if ($object->can($method)) {
+      my $error = $object->$method($tests->{$name});
+      write_to_log($error) if $error;
+    }
+    else {
+      write_to_log("TEST FAILED: No such method $method in package $package");
+    }
+  }
+}
+
+sub write_to_log {
+  my $message = shift;
+  ## TODO Replace with proper logging
+  print "$message\n";
+}
+
+
