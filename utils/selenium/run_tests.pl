@@ -95,8 +95,6 @@ unless (ref($CONF->{'modules'}[0]) eq 'HASH' && $CONF->{'modules'}[0]{'tests'} &
   die "You must specify at least one test method, eg. ['homepage']";
 }
 
-$SPECIES = {'none'} unless keys %$SPECIES;
-
 my $browser = $CONF->{'browser'}  || 'firefox';
 my $port    = $CONF->{'port'}     || '4444';
 my $timeout = $CONF->{'timeout'}  || 50000;
@@ -155,19 +153,15 @@ foreach my $module (@{$CONF->{'modules'}}) {
 ## Run any non-species-specific tests first 
 foreach my $module (@{$test_suite->{'non_species'}}) {
   my $module_name = $module->{'name'};
-  foreach my $test_set (@{$module->{'tests'}||[]}) {
-    run_test($module_name, $test_config, $test_set);    
-  }
+  run_test($module_name, $test_config, $module->{'tests'});    
 }
 
 ## Loop through the relevant tests for each species
 foreach my $sp (keys %{$test_suite->{'species'}}) {
   foreach my $module (@{$test_suite->{'species'}{$sp}}) {
     my $module_name = $module->{'name'};
-    foreach my $test_set (@{$module->{'tests'}}) {
-      $test_config->{'species'} = $species;
-      run_test($module_name, $test_config, $test_set);    
-    }
+    $test_config->{'species'} = $species;
+    run_test($module_name, $test_config, $module->{'tests'});    
   }
 }
 
@@ -185,7 +179,15 @@ sub run_test {
     write_to_log("TEST FAILED: Couldn't use $package\n$@");
     return;
   }
-  my @test_names = keys @{$tests||[]};
+  my (@test_names, $has_test_params);
+  if (ref($tests) eq 'ARRAY') {
+    @test_names = @{$tests||[]};
+  }
+  else { 
+    @test_names = keys %{$tests||{}};
+    $has_test_params = 1;
+  }
+
   unless (@test_names) {
     write_to_log("TEST FAILED: No methods specified for test module $package");
     return;
@@ -196,8 +198,12 @@ sub run_test {
   ## Run the tests
   foreach my $name (@test_names) {
     my $method = 'test_'.$name;
+    my @params = ();
+    if ($has_test_params) {
+      @params = @{$tests->{$name}||[]};
+    }
     if ($object->can($method)) {
-      my $error = $object->$method($tests->{$name});
+      my $error = $object->$method(@params);
       write_to_log($error) if $error;
     }
     else {
