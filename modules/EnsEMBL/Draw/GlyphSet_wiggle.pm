@@ -287,6 +287,20 @@ sub _add_regulation_minilabel {
                         $extra_content,$top,$labels,$colours);
 }
 
+sub _draw_guideline {
+  my ($self,$width,$y) = @_;
+
+  $self->push($self->Line({
+    x         => 0,
+    y         => $y,
+    width     => $width,
+    height    => 1,
+    colour    => 'grey90',
+    absolutey => 1,
+    dotted => 1,
+  }));
+}
+
 sub do_draw_wiggle {
   my ($self, $features, $parameters, $colours, $labels) = @_;
 
@@ -347,6 +361,10 @@ sub do_draw_wiggle {
   if ($parameters->{'axis_label'} ne 'off') {
     $self->_draw_score($top,$max_score,$parameters);
     $self->_draw_score($bottom,$min_score,$parameters);
+  }
+  if(!$parameters->{'no_axis'} and !$parameters->{'no_guidelines'}) {
+    $self->_draw_guideline($slice->length,$top);
+    $self->_draw_guideline($slice->length,($top+$bottom)/2);
   }
 
   # Single line? Build into singleton set.
