@@ -149,9 +149,18 @@ sub pipeline_analyses {
             ],
             -wait_for   => [ 'copy_tables_from_master_db' ],
             -flow_into  => {
-                2 => 'create_work_dir',
+                2 => 'register_mlss',
             },
         },
+
+        {   -logic_name => 'register_mlss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
+            -parameters => {
+                mlss_id     => '#synteny_mlss_id#',
+            },
+            -flow_into  => [ 'create_work_dir'],
+        },
+
         {   -logic_name => 'create_work_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
