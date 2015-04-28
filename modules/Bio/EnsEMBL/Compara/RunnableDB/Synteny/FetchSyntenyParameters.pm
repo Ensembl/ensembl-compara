@@ -122,7 +122,7 @@ sub _check_pairwise {
 
     # Do the species have karyotypes ?
     my $genome_dbs = $master_mlss->species_set_obj->genome_dbs;
-    if (not ($genome_dbs->[0]->has_karyotype and $genome_dbs->[1]->has_karyotype)) {
+    if (grep {not $_->has_karyotype} @$genome_dbs) {
         if (not $self->param('include_non_karyotype')) {
             $self->warning(sprintf("Discarding '%s' because some species don't have a karyotype", $mlss->name));
             return;
