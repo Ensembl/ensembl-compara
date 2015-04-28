@@ -1034,11 +1034,17 @@ sub copy_constrained_elements {
 sub copy_synteny_regions {
     my ($from_dba, $to_dba, $mlss) = @_;
 
+    my $to_sra = $to_dba->get_SyntenyRegionAdaptor;
+    my $existing_synteny_regions = $to_sra->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    if (my $count = scalar(@$existing_synteny_regions)) {
+        print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
+            " ** ERROR **  synteny_region table with the MLSS_ID ".($mlss->dbID)."\n";
+        exit(1);
+    }
     # No concept of dry_run with synteny_regions
     return if $dry_run;
 
     # There is usually not much data, so using the API is fine
-    my $to_sra = $to_dba->get_SyntenyRegionAdaptor;
     my $all_synteny_regions = $from_dba->get_SyntenyRegionAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
     foreach my $synteny_region (@$all_synteny_regions) {
         # No dbID to fix, we just let the AUTO_INCREMENT do its magic
