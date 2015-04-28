@@ -2138,6 +2138,7 @@ sub add_data_files {
       colourset => $data->{$_}{'colour_key'} || 'feature',
       strand    => 'f',
       renderers => $renderers, 
+      gang      => 'rnaseq',
     });
   }
 }

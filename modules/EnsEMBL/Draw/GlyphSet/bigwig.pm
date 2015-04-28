@@ -120,15 +120,23 @@ sub render_text {
   return '';
 }
 
+sub bins {
+  my ($self) = @_;
+
+  if(!$self->{'_bins'}) {
+    my $slice = $self->{'container'};
+    $self->{'_bins'} = min($self->{'config'}->image_width, $slice->length);
+  }
+  return $self->{'_bins'};
+}
+
 sub features {
   my $self          = shift;
   my $slice         = $self->{'container'};
-  my $max_bins      = min($self->{'config'}->image_width, $slice->length);
   my $fake_analysis = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
   my @features;
-  my @wiggle = $self->wiggle_features($max_bins);
   
-  foreach (@{$self->wiggle_features($max_bins)}) {
+  foreach (@{$self->wiggle_features($self->bins)}) {
     push @features, {
       start    => $_->{'start'}, 
       end      => $_->{'end'}, 
@@ -169,6 +177,25 @@ sub wiggle_aggregate {
   return $self->{'_cache'}{'wiggle_aggregate'};
 }
 
+sub _max_val {
+  my ($self) = @_;
+
+  # TODO cache output so as not to re-call
+  my $hub = $self->{'config'}->hub;
+  my $has_chrs = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES});
+  my $slice = $self->{'container'};
+  my $adaptor = $self->bigwig_adaptor;
+  my $max_val = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $self->bins, $has_chrs);
+  return max(@$max_val);
+}
+
+sub gang_prepare {
+  my ($self,$gang) = @_;
+
+  my $max = $self->_max_val;
+  $gang->{'max'} = max($gang->{'max'}||0,$max);
+}
+
 # get the alignment features
 sub wiggle_features {
   my ($self, $bins) = @_;
@@ -207,8 +234,7 @@ sub draw_features {
 
   # render wiggle if wiggle
   if ($wiggle) {
-    my $max_bins   = min($self->{'config'}->image_width, $slice->length);
-    my $features   = $self->wiggle_features($max_bins);
+    my $features   = $self->wiggle_features($self->bins);
     my $viewLimits = $self->my_config('viewLimits');
     my $no_titles  = $self->my_config('no_titles');
     my $min_score;
@@ -232,6 +258,11 @@ sub draw_features {
       }
     }
     
+    my $gang = $self->gang();
+    if($gang and $gang->{'max'}) {
+      $max_score = $gang->{'max'};
+    }
+
     # render wiggle plot        
     $self->draw_wiggle_plot($features, {
       min_score    => $min_score, 

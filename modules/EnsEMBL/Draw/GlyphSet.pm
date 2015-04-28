@@ -396,6 +396,18 @@ sub supports_subtitles {
   return 0;
 }
 
+################### GANGS #######################
+
+sub gang_prepare {
+}
+
+sub gang {
+  my ($self,$val) = @_;
+
+  $self->{'_gang'} = $val if @_>1;
+  return $self->{'_gang'};
+}
+
 ################### LABELS ##########################
 
 sub label {
