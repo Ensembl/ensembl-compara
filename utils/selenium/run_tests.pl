@@ -16,8 +16,9 @@
 
 =pod
  Wrapper script for selenium tests. 
- Takes one argument (release number) plus two JSON configuration files:
- - configure connection and select which tests are run in a particular batch
+ Takes one argument (release number) plus three JSON configuration files:
+ - configure Selenium environment
+ - select which tests are run in a particular batch
  - configure species to test (optional)
 
  The purpose of the latter file is to remove dependency on the web code.
@@ -26,7 +27,7 @@
 
   Example of use:
 
-  perl run_tests.pl --release=80 --config=link_checker.conf --species=release_80_species.conf
+  perl run_tests.pl --release=80 --config=ensembl.conf --tests=link_checker.conf --species=release_80_species.conf
 =cut
 
 use strict;
@@ -38,7 +39,7 @@ use File::Basename qw( dirname );
 use Getopt::Long;
 
 use LWP::UserAgent;
-use JSON;
+use JSON qw(from_json);
 
 use vars qw( $SCRIPT_ROOT $SERVERROOT );
 
@@ -52,29 +53,34 @@ BEGIN {
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;    
 }
 
-my ($release, $config, $species);
+my ($release, $config, $tests, $species);
 
 GetOptions(
   'release=s' => \$release,
   'config=s'  => \$config,
+  'tests=s'   => \$tests,
   'species=s' => \$species,
 );
 
-die 'Please provide a configuration file!' unless $config;
+die 'Please provide configuration files!' unless ($config && $tests);
 
 ## Read configurations
-my ($conf_string, $spp_string);
+my ($conf_string, $test_string, $spp_string);
 {
   local $/;
   my $fh;
   open $fh, '<', "conf/$config";
   $conf_string .= $_ for <$fh>;
   close $fh;
+  open $fh, '<', "conf/$tests";
+  $test_string .= $_ for <$fh>;
+  close $fh;
   open $fh, '<', "conf/$species";
   $spp_string .= $_ for <$fh>;
   close $fh;
 } 
 my $CONF          = $conf_string ? from_json($conf_string)  : {};
+my $TESTS         = $test_string ? from_json($test_string)  : {};
 my $SPECIES       = $spp_string ? from_json($spp_string) : {};
 
 ## Validate main configuration
@@ -86,12 +92,14 @@ unless ($CONF->{'url'} && $CONF->{'url'} =~ /^http/) {
   die "You must specify a url to test against, eg. http://www.ensembl.org";
 }
 
-unless (($CONF->{'modules'} && scalar(@{$CONF->{'modules'}||[]}))
-        || ($CONF->{'modules'} && scalar(@{$CONF->{'modules'}||[]}))) {
+unless (($TESTS->{'modules'} && scalar(@{$TESTS->{'modules'}||[]}))
+        || ($TESTS->{'modules'} && scalar(@{$TESTS->{'modules'}||[]}))) {
   die "You must specify at least one test module, eg. ['Generic']";
 }
 
-unless (ref($CONF->{'modules'}[0]) eq 'HASH' && $CONF->{'modules'}[0]{'tests'} && scalar(@{$CONF->{'modules'}[0]{'tests'}||[]})) {
+unless (ref($TESTS->{'modules'}[0]) eq 'HASH' 
+          && $TESTS->{'modules'}[0]{'tests'} 
+            && scalar(@{$TESTS->{'modules'}[0]{'tests'}||[]})) {
   die "You must specify at least one test method, eg. ['homepage']";
 }
 
@@ -118,7 +126,7 @@ my $test_config = {
                     port    => $port,
                     browser => $browser,
                     conf    => {
-                                release => $CONF->{'release'},
+                                release => $release,
                                 timeout => $timeout,
                                 },
                     verbose => $verbose,  
@@ -131,7 +139,7 @@ my $test_suite = {
                   'species'     => {},
                   };
 
-foreach my $module (@{$CONF->{'modules'}}) {
+foreach my $module (@{$TESTS->{'modules'}}) {
   my $species = $module->{'species'} || [];
   if ($species eq 'all') {
   }
