@@ -122,6 +122,7 @@ sub coding_regions {
   my %coding_lengths;
   foreach my $species (@species) {
    my $core_dba = $self->_get_core_db_adaptor($species);
+   $core_dba->dbc->prevent_disconnect( sub {
     my $sa = $core_dba->get_SliceAdaptor;
     my $slices = $sa->fetch_all('toplevel');
     foreach my $slice (@$slices) {
@@ -142,6 +143,7 @@ sub coding_regions {
         }
       }
     }
+   });
   }
   
   $self->param('total_lengths', \%total_lengths);
