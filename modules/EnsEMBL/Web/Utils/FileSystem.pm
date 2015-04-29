@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -177,6 +177,7 @@ sub list_dir_contents {
   ## @param Hashref with keys
   ##  - hidden : if on, will return hidden files too (off by default)
   ##  - no_exception :  if set true will not throw an exception if there's any problem
+  ##  - recursive: flag if on, will get all the files recursively going through each sub folder
   ## @return Arrayref of files/dir, undef if dir not existing
   my ($dir, $params) = @_;
 
@@ -193,6 +194,10 @@ sub list_dir_contents {
 
     next if !$params->{'hidden'} && $content =~ /^\.+/;
     push @$ls, $content;
+
+    if ($params->{'recursive'} && -d "$dir/$content" && $content !~ /^\.+$/) {
+      push @$ls, map {"$content/$_"} @{list_dir_contents("$dir/$content", $params)};
+    }
   }
 
   $dh->close;

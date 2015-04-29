@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -96,6 +96,10 @@ sub all_configs {
   if (!$self->{'all_configs'}) {
     $self->{'all_configs'} = $self->filtered_configs;
     
+    #my @A = keys %{$self->{'all_configs'}};
+    #warn "@@@ ALL CONFIGS @A";
+    #use Data::Dumper; warn Dumper($self->{'all_configs'}{$A[0]}{'data'});
+    
     foreach (values %{$self->{'all_configs'}}) {
       $_->{'raw_data'} = $_->{'data'};
       $_->{'data'}     = eval($_->{'data'}) || {};
@@ -127,12 +131,17 @@ sub filtered_configs {
 sub active_config {
   my ($self, $type, $code, $record_type) = @_;
   $self->all_configs unless $self->{'all_configs'};
+  #my @A = keys %{$self->{'active_config'}};
+  #warn ">>> @A";
   return $self->{'active_config'}{$record_type || ($self->user_id ? 'user' : 'session')}{$type}{$code};
 }
 
 sub get_config {
   my $self   = shift;
   my $config = $self->all_configs->{$self->active_config(@_)};
+  #use Data::Dumper;
+  #use Carp qw(cluck);
+  #cluck ">>> GOT CONFIG ".Dumper($config->{'data'});
   
   # If there is no user record, but there is a session record, move the session record to the user account.
   # This means that users retain their settings when logging in after making a configuration

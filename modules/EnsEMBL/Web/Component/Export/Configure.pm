@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,8 +32,10 @@ sub content {
   my $form = $view_config->get_form;
   
   $form->set_attribute('method', 'post');
-  
-  return '<h2>Export Configuration - Feature List</h2>' . $form->render;
+ 
+  my $tip = $hub->function eq 'Location' ? '' : $self->_info('Tip', 'For sequence export, please go to the relevant sequence page (see lefthand menu) and use the new "Download sequence" button');
+ 
+  return '<h2>Export Configuration - Feature List</h2>' . $tip . $form->render;
 }
 
 1;

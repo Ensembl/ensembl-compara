@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +36,15 @@ sub createObjects {
   my $object = $self->object;
   
   return unless $object;
-  
+
+  # Ignore r parameters if recalculating
+  if($self->hub->script eq 'Page' and $self->param('realign')) {
+    foreach my $p ($self->param) {
+      next unless $p =~ /^r\d+$/;
+      $self->delete_param($p);
+    }
+  }
+
   # Redirect if we need to generate a new url
   return if $self->generate_url($object->slice);
   

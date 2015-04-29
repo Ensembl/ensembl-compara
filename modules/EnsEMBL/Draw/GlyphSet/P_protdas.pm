@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::P_protdas;
 
 ### Displays protein DAS sources on Transcript/ProteinSummary?
@@ -23,12 +29,17 @@ package EnsEMBL::Draw::GlyphSet::P_protdas;
 
 use strict;
 
-use Sanger::Graphics::ColourMap;
-use Sanger::Graphics::Bump;
-#use Bio::EnsEMBL::Glyph::Symbol::box; 
+use EnsEMBL::Draw::Utils::ColourMap;
 use POSIX; #floor
 
 use base qw(EnsEMBL::Draw::GlyphSet);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub _init {
   my ($self) = @_;
@@ -356,7 +367,7 @@ sub render_colourgradient {
 
   my $score_range = $max_value - $min_value;
   my $score_per_grade =  ($max_score - $min_score)/ $configuration->{'fg_grades'};
-  my $cm = Sanger::Graphics::ColourMap->new;
+  my $cm = EnsEMBL::Draw::Utils::ColourMap->new;
   my @cg = $cm->build_linear_gradient($configuration->{'fg_grades'}, ['yellow', 'green', 'blue']);
   my $style;
  

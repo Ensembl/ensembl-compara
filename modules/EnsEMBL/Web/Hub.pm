@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,8 +33,9 @@ use strict;
 use Carp;
 use CGI;
 use URI::Escape qw(uri_escape uri_unescape);
+use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Draw::ColourMap;
+use EnsEMBL::Draw::Utils::ColourMap;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
@@ -47,7 +48,7 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Session;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
@@ -130,7 +131,7 @@ sub config_adaptor { return $_[0]{'_config_adaptor'} ||= EnsEMBL::Web::DBSQL::Co
 
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
 sub referer           { return $_[0]{'referer'}   ||= $_[0]->parse_referer;                                  }
-sub colourmap         { return $_[0]{'colourmap'} ||= EnsEMBL::Draw::ColourMap->new($_[0]->species_defs);      }
+sub colourmap         { return $_[0]{'colourmap'} ||= EnsEMBL::Draw::Utils::ColourMap->new($_[0]->species_defs);      }
 sub is_ajax_request   { return $_[0]{'is_ajax'}   //= $_[0]{'_apache_handle'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
 
 sub species_path      { return shift->species_defs->species_path(@_);       }
@@ -147,6 +148,8 @@ sub has_problem_type   { return scalar @{$_[0]{'_problem'}{$_[1]}||[]}; }
 sub get_problem_type   { return @{$_[0]{'_problem'}{$_[1]}||[]}; }
 sub clear_problem_type { delete $_[0]{'_problem'}{$_[1]}; }
 sub clear_problems     { $_[0]{'_problem'} = {}; }
+
+sub is_mobile_request  { }; #this is implemented in the mobile plugin
 
 
 ## Cookie methods
@@ -305,12 +308,13 @@ sub get_species_info {
 
     for (@required_species) {
       $self->{'_species_info'}{$_} = {
-        'key'         => $_,
-        'name'        => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
-        'common'      => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
-        'scientific'  => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
-        'assembly'    => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
-        'group'       => $species_defs->get_config($_, 'SPECIES_GROUP')
+        'key'               => $_,
+        'name'              => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
+        'common'            => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
+        'scientific'        => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+        'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
+        'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
+        'group'             => $species_defs->get_config($_, 'SPECIES_GROUP')
       } unless exists $self->{'_species_info'}{$_};
     }
 
@@ -318,6 +322,59 @@ sub get_species_info {
   }
 
   return $species ? $self->{'_species_info'}{$species} : $self->{'_species_info'};
+}
+
+sub order_species_by_clade {
+### Read the site-wide configuration variables TAXON_LABEL and TAXON_ORDER
+### and sort all the SpeciesTreeNode objects given in $species
+### @param  : arrayref of SpeciesTreeNode objects
+### @return : arrayref of SpeciesTreeNode objects
+
+  my ($self, $species) = @_;
+
+  my $species_defs  = $self->species_defs;
+  my $species_info  = $self->get_species_info;
+  my $labels        = $species_defs->TAXON_LABEL; ## sort out labels
+
+  my (@group_order, %label_check);
+  foreach my $taxon (@{$species_defs->TAXON_ORDER || []}) {
+    my $label = $labels->{$taxon} || $taxon;
+    push @group_order, $label unless $label_check{$label}++;
+  }
+
+  my %stn_by_name = ();
+  foreach my $stn (@$species) {
+    $stn_by_name{$stn->genome_db->name} = $stn;
+  };
+
+  ## Sort species into desired groups
+  my %phylo_tree;
+
+  foreach (keys %$species_info) {
+    my $group = $species_info->{$_}->{'group'};
+    my $group_name = $group ? $labels->{$group} || $group : 'no_group';
+    push @{$phylo_tree{$group_name}}, $_;
+  }
+
+  my @final_sets;
+
+  my $favourites    = $self->get_favourite_species;
+  if (scalar @$favourites) {
+    push @final_sets, ['Favourite species', [map {encode_entities($stn_by_name{lc $_})} @$favourites]];
+  }
+
+  ## Output in taxonomic groups, ordered by common name
+  foreach my $group_name (@group_order) {
+    my $species_list = $phylo_tree{$group_name};
+
+    if ($species_list && ref $species_list eq 'ARRAY' && scalar @$species_list) {
+      my $name_to_use = ($group_name eq 'no_group') ? (scalar(@group_order) > 1 ? 'Other species' : 'All species') : encode_entities($group_name);
+      my @sorted_by_common = sort { $species_info->{$a}->{'common'} cmp $species_info->{$b}->{'common'} } @$species_list;
+      push @final_sets, [$name_to_use, [map {encode_entities($stn_by_name{lc $_})} @sorted_by_common]];
+    }
+  }
+
+  return \@final_sets;
 }
 
 # Does an ordinary redirect
@@ -565,7 +622,7 @@ sub get_ExtURL_link {
 
 sub get_ext_seq {
   ## Uses PFETCH etc to get description and sequence of an external record
-  ## @param Extrenal DB type (has to match ENSEMBL_EXTERNAL_DATABASES variable in SiteDefs)
+  ## @param External DB type (has to match ENSEMBL_EXTERNAL_DATABASES variable in SiteDefs)
   ## @param Hashref with keys to be passed to get_sequence method of the required indexer (see EnsEMBL::Web::ExtIndex subclasses)
   ## @return Hashref (or possibly a list of similar hashrefs for multiple sequences) with keys:
   ##  - id        Stable ID of the object
@@ -748,25 +805,37 @@ sub get_data_from_session {
   my $species  = $self->param('species') || $self->species;
   my $tempdata = $self->session->get_data(type => $type, code => $code);
   my $name     = $tempdata->{'name'};
-  my ($content, $format);
 
-  # NB this used to be new EnsEMBL::Web... etc but this does not work with the
-  # FeatureParser module for some reason, so have to use FeatureParser->new()
-  my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
-  
+  my %file_params = (
+                      'hub' => $self,
+                    );
+ 
+  ## Build in some backwards compatiblity with old file paths
   if ($type eq 'url') {
-    my $response = EnsEMBL::Web::Tools::Misc::get_url_content($tempdata->{'url'});
-       $content  = $response->{'content'};
-  } else {
-    my $file    = EnsEMBL::Web::TmpFile::Text->new(filename => $tempdata->{'filename'});
-       $content = $file->retrieve;
-    
-    return {} unless $content;
+    $file_params{'input_drivers'} = ['URL'];
+    $file_params{'file'} = $tempdata->{'file'} || $tempdata->{'url'};
   }
-   
-  $parser->parse($content, $tempdata->{'format'});
+  else {
+    $file_params{'file'} = $tempdata->{'file'};
+    unless ($file_params{'file'}) {
+      $file_params{'file'} = join('/', $tempdata->{'prefix'}, $tempdata->{'filename'});
+    }
+  }
 
-  return { parser => $parser, name => $name };
+  my $file = EnsEMBL::Web::File::User->new(%file_params);
+  my $result = $file->read;
+  if ($result->{'error'}) {
+    ## TODO - do something useful with the error!
+    warn ">>> ERROR READING FILE: ".$result->{'error'};
+    return {};
+  }
+  else {
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
+
+    $parser->parse($result->{'content'}, $tempdata->{'format'});
+
+    return { parser => $parser, name => $name };
+  }
 }
 
 sub get_favourite_species {
@@ -799,11 +868,15 @@ sub is_new_regulation_pipeline { # Regulation rewrote their pipeline
   my ($self) = @_;
 
   return $self->{'is_new_pipeline'} if defined $self->{'is_new_pipeline'};
-  my $mca = $self->database('funcgen')->get_MetaContainer;
-  my $date = $mca->single_value_by_key('regbuild.last_annotation_update');
-  my ($year,$month) = split('-',$date);
-  my $new = 1;
-  $new = 0 if $year < 2014 or $year == 2014 and $month < 6;
+  my $fg = $self->database('funcgen');
+  my $new = 0;
+  if($fg) {
+    my $mca = $fg->get_MetaContainer;
+    my $date = $mca->single_value_by_key('regbuild.last_annotation_update');
+    my ($year,$month) = split('-',$date);
+    $new = 1;
+    $new = 0 if $year < 2014 or $year == 2014 and $month < 6;
+  }
   $self->{'is_new_pipeline'} = $new;
   return $new;
 }

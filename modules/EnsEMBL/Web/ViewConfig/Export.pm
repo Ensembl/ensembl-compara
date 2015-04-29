@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,8 +41,6 @@ sub init {
   $defaults->{"phylopan_$_"}   = 'yes' for qw(cdna aligned);
   $defaults->{"phyloxml_$_"}   = 'no'  for qw(no_sequences);
   $defaults->{"phylopan_$_"}   = 'no'  for qw(no_sequences);
-  $defaults->{"orthoxml_$_"}   = 'yes' for qw(possible_orthologs);
-  $defaults->{"orthopan_$_"}   = 'yes' for qw(possible_orthologs);
   $defaults->{'fasta_genomic'} = 'unmasked';
   
   foreach my $f (qw(csv tab gff)) {

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ package EnsEMBL::Web::Object::Phenotype;
 use strict;
 
 use base qw(EnsEMBL::Web::Object::Feature);
+
+sub default_action { return 'Locations'; }
 
 sub short_caption {
   my $self = shift;
@@ -68,5 +70,14 @@ sub get_all_phenotypes {
   my $pa    = $vardb->get_adaptor('Phenotype');
   return $pa->fetch_all();
 };
+
+sub get_gene_display_label {
+  my ($self, $gene_id) = @_;
+
+  my $gene  = $self->hub->database('core')->get_adaptor('Gene')->fetch_by_stable_id($gene_id);
+  my $xref  = $gene && $gene->display_xref;
+
+  return $xref && $xref->display_id || '';
+}
 
 1;

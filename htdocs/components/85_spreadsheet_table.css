@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ body.ie6 .dataTables_filter input { height: 20px; }
 .dataTables_export .floating_popup   { color: [[PAGE_TEXT]]; right: 0; width: 125px; }
 .dataTables_export .floating_popup a { display: block; padding: 0 2px 3px }
 
-.col_toggle              { float: left; width: 34%; text-align: center; color: [[PAGE_TEXT]]; }
+.col_toggle              { float: left;  text-align: center; color: [[PAGE_TEXT]]; }
 .col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; border: 2px outset [[TINT_BG]]; min-width: 125px; display: inline-block; padding: 1px 5px; margin: auto; }
 .col_toggle.left         { text-align: left; }
 .col_toggle.left .toggle { margin: 0; text-align: center; }
@@ -92,6 +92,10 @@ body.ie67 .col_toggle ul     { margin: 18px 0 0 -125px; }
 .sorting      { background: url(/i/sort_both_light.png) no-repeat right center; }
 .sorting_asc  { background: url(/i/sort_asc.png) no-repeat right center; }
 .sorting_desc { background: url(/i/sort_desc.png) no-repeat right center; }
+
+.supergroup   { background:[[CONTRAST_BG]]!important; font-weight:bold; }
+.subgroup     { background:[[CONFIG_HOVER]]!important; font-weight:bold; }
+.groupmember  { padding-left:1em; }
 
 .toggle_table .sorting { background-image: url(/i/sort_both.png); }
 
@@ -115,6 +119,9 @@ div.score_neutral { background: blue;   }
 td a.hover_show        { display: none; text-decoration: none; font-size: 90%; position: absolute; margin: -1px 1px; background-color: [[PANEL_BG]]; padding: 2px; }
 tr.bg2 td a.hover_show { background-color: [[NEUTRAL_BG]]; }
 td:hover a.hover_show  { display: inline; }
+
+tr.row-sub td { font-size: 85%; }
+tr.row-sub td:first-child { text-indent:24px; }
 
 table.new_table th { cursor: pointer; padding: 2px 20px 2px 4px; }
 .new_table_wrapper { clear: both; margin: 0 0 16px; }

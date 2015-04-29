@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,6 +54,9 @@ sub champion(&@) {
 }
 
 sub get_url_content {
+######## DEPRECATED ################
+warn "DEPRECATED METHOD 'get_url_content' - please switch to using EnsEMBL::Web::File::Utils::URL::read_file. This method will be removed in release 80.";
+####################################
   my $url   = shift;
   my $proxy = shift || $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
 
@@ -78,6 +81,9 @@ sub get_url_content {
 }
 
 sub get_url_filesize {
+######## DEPRECATED ################
+warn "DEPRECATED METHOD 'get_url_filesize' - please switch to using EnsEMBL::Web::File::Utils::URL::get_filesize. This method will be removed in release 80.";
+####################################
 ## Returns the size of a file in bytes, or an error code if the request fails
 ## TODO - needs changing to get just the first line or so of the file before
 ## trying to fetch the rest, in case we are dealing with a huge file format like BAM!

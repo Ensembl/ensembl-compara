@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ use CGI;
 use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Hub;
-
-#use Data::Dumper;
 
 use base qw(EnsEMBL::Web::Controller);
 
@@ -86,11 +84,18 @@ sub psychic {
   $query =~ s/\s+$//g;
   $query =~ s/\s+/ /g;
 
-  $species = undef if $dest_site =~ /_all/;
+  my @extra;
+  push @extra,"facet_feature_type=Documentation" if $species eq 'help';
+  $species = undef if $dest_site =~ /_all/ or $species eq 'help';
 
   return $hub->redirect("http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query=$query")                          if $dest_site eq 'ebi';
   return $hub->redirect("http://www.sanger.ac.uk/search?db=allsanger&t=$query")                                      if $dest_site eq 'sanger';
   return $hub->redirect("http://www.ensemblgenomes.org/search/eg/$query")                                            if $dest_site eq 'ensembl_genomes';
+
+  my $extra = '';
+  if(@extra) {
+    $extra = join(';','',@extra);
+  }
 
   if ($dest_site =~ /vega/) {
     if ($site_type eq 'vega') {
@@ -103,7 +108,7 @@ sub psychic {
     $url  = "/Multi/Search/Results?species=all&idx=All&q=$query";
     $site = 'http://www.ensembl.org'; 
   } else {
-    $url = "/Multi/Search/Results?species=$species&idx=All&q=$query";
+    $url = "/Multi/Search/Results?species=$species&idx=All&q=$query$extra";
   }
 
   my $flag = 0;
@@ -123,6 +128,17 @@ sub psychic {
 
   ## If we have a species and a location can we jump directly to that page ?
   if ($species || $query_species ) {
+
+    if ($query =~ /^rs\d+$/) {
+
+      return $hub->redirect($site.$hub->url({
+        'species'   => $species || $query_species,
+        'type'      => 'Variation',
+        'action'    => 'Explore',
+        'v'         => $query
+      }));
+    }
+
     my $real_chrs = $hub->species_defs->ENSEMBL_CHROMOSOMES;
     my $jump_query = $query;
     if ($query_species) {
@@ -218,11 +234,7 @@ sub psychic {
   }
 
   if (!$flag) {
-    $url = 
-      $query =~ /^BLA_\w+$/               ? $self->escaped_url('/Multi/blastview/%s', $query) :                                                                 ## Blast ticket
-      $query =~ /^\s*([ACGT]{40,})\s*$/i  ? $self->escaped_url('/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $1) :         ## BLAST seq search
-      $query =~ /^\s*([A-Z]{40,})\s*$/i   ? $self->escaped_url('/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $1) : ## BLAST seq search
-      $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);    # everything else!
+    $url = $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
   }
 
   # Hack to get facets through to search. Psychic will be rewritten soon
@@ -230,7 +242,7 @@ sub psychic {
   if($url =~ m!/Search/!) {
     my @params = grep {$_ ne 'q'} $hub->param();
     $url .= ($url =~ /\?/ ? ';' : '?');
-    $url .= join(";",map {; "$_=".$hub->param($_) } @params);
+    $url .= join(";",map {; "$_=".$hub->param($_) } @params).$extra;
   }
 
   $hub->redirect($site . $url);

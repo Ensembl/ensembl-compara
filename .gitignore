@@ -1,7 +1,7 @@
 /cbuild/*
 !/cbuild/README.txt
 /conf/Plugins.pm
-/conf/packed/*.packed
+/conf/packed
 /conf/config.packed
 /htdocs/das/*
 !/htdocs/das/das.xsl

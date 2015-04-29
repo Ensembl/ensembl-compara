@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ sub _help {
 
   my %sample    = %{$self->species_defs->SAMPLE_DATA || {}};
   my $help_text = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
-  my $url       = $self->hub->url({ __clear => 1, action => 'Transcript', t => $sample{'TRANSCRIPT_PARAM'} });
+  my $url       = $self->hub->url({ __clear => 1, action => 'Summary', t => $sample{'TRANSCRIPT_PARAM'} });
   
   $help_text .= sprintf('
     <p>

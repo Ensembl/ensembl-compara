@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,12 @@ sub content {
   my $hit_name   = $hub->param('id');
   my $hit_db     = $self->object->get_sf_hit_db_name($hit_name);
   my $link_name  = $hit_db eq 'RFAM' ? [ split '-', $hit_name ]->[0] : $hit_name;
+
+  #Uniprot can't deal with versions in accessions
+  if ($hit_db =~ /^Uniprot/){
+    $link_name =~ s/(\w*)\.\d+/$1/;
+  }
+
   my $hit_length = $hub->param('hit_length');
   my $hit_url    = $hub->get_ExtURL_link($link_name, $hit_db, $link_name);
   my $tsid       = $hub->param('t');

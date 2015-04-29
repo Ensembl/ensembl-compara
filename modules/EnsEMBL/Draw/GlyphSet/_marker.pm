@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,7 +51,11 @@ sub _init {
   my $previous_start = $length + 1e10;
   my $previous_end   = -1e10;
   my $previous_id    = '';
-  my $features       = $self->features;
+  my @logic_names    = @{$self->my_config('logic_names') || []};
+  my $logic_name     = $logic_names[0];
+  ## Fetch all markers if this isn't a subset, e.g. SATMap
+  $logic_name        = undef if $logic_name eq 'marker';
+  my $features       = $self->features($logic_name);
   
   foreach my $f (@$features) {
     my $id = $f->{'drawing_id'};
@@ -124,7 +128,7 @@ sub render_text {
 }
 
 sub features {
-  my $self  = shift;
+  my ($self, $logic_name) = @_;
   my $slice = $self->{'container'};
   my @features;
   
@@ -134,7 +138,7 @@ sub features {
     my $priority   = $self->my_config('priority');
     my $marker_id  = $self->my_config('marker_id');
     my $map_weight = 2;
-    @features   = (@{$slice->get_all_MarkerFeatures(undef, $priority, $map_weight)});
+    @features   = (@{$slice->get_all_MarkerFeatures($logic_name, $priority, $map_weight)});
     push @features, @{$slice->get_MarkerFeatures_by_Name($marker_id)} if ($marker_id and !grep {$_->display_id eq $marker_id} @features); ## Force drawing of specific marker regardless of weight (but only if not already being drawn!)
   }
   

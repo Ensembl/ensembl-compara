@@ -1,0 +1,21 @@
+div.export-formats div {
+  float: left;
+  margin: 8px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+div.export-formats img {
+  height: 150px;
+  width: 200px;
+  border: 1px solid [[PANEL_BORDER]];
+}
+
+
+div.export-formats div {
+}
+
+div.export-formats div.selected {
+  background-color: [[BUTTON_BG]];
+  color: [[BUTTON_TEXT]];
+}

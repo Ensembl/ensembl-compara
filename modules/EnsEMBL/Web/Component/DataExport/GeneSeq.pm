@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,41 +57,22 @@ sub content {
   ## Get user's current settings
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
-  my $settings = {
-        'extra' => {
-          'type'      => 'Checklist',
-          'label'     => 'Sequences to export',
-          'values'    => $checklist,
-          'selectall' => 'off',
-        },
-        'flank5_display' => {
-            'label'     => "5' Flanking sequence (upstream)",  
-            'type'      => 'NonNegInt',  
-        },
-        'flank3_display' => { 
-            'label'     => "3' Flanking sequence (downstream)", 
-            'type'      => 'NonNegInt',  
-        },
-        'snp_display' => {
-            'label'   => 'Include sequence variants',
-            'type'    => 'Checkbox',
-            'value'   => 'on',
-            'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
-        },
-  };
+  my $settings = $viewconfig->form_fields;
+
+  $settings->{'extra'} = {
+                          'type'      => 'Checklist',
+                          'label'     => 'Sequences to export',
+                          'values'    => $checklist,
+                          'selectall' => 'off',
+                          };
 
   ## Options per format
+  my @field_order = $viewconfig->field_order;
+  my @rtf_fields = map {$_ if $_ ne 'title_display'} @field_order;
+
   my $fields_by_format = {
-    'RTF' => [
-                ['flank5_display',  $viewconfig->get('flank5_display')], 
-                ['flank3_display',  $viewconfig->get('flank3_display')],
-                ['snp_display'],
-              ],  
-    'FASTA' => [
-                ['extra'],
-                ['flank5_display', 0],
-                ['flank3_display', 0],
-               ], 
+                          'RTF' => [@rtf_fields],
+                          'FASTA' => [qw(extra flank5_display flank3_display)],
   };
 
   ## Create settings form (comes with some default fields - see parent)

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ sub content {
     { key => 'type',     title => 'Evidence type', align => 'left', sort => 'string'   },
     { key => 'feature',  title => 'Feature name',  align => 'left', sort => 'string'   },
     { key => 'location', title => 'Location',      align => 'left', sort => 'position' },
+    { key => 'source',   title => 'Source',        align => 'left', sort => 'position' },
   ); 
 
   my @rows;
@@ -61,12 +62,21 @@ sub content {
         foreach my $f (sort { $a->start <=> $b->start } @{$features->{$f_set}}) {
           my $f_start = $object_slice->start + $f->start - 1;
           my $f_end   = $object_slice->start + $f->end   - 1;
+
+          my $source_link = $self->hub->url({
+            type => 'Experiment',
+            action => 'Sources',
+            ex => 'name-'.$f->feature_set->name
+          });
           
           push @rows, { 
             type     => $f->feature_type->evidence_type_label,
             location => $f->slice->seq_region_name . ":$f_start-$f_end",
             feature  => $feature_name,
-            cell     => $cell_line
+            cell     => $cell_line,
+            source   => sprintf(q(<a href="%s">%s</a>),
+                  $source_link,
+                  $f->feature_set->source_label),
           };
           
           push @rows, @{$self->get_motif_rows($f, $cell_line)} if $features == $core_features;
@@ -77,7 +87,7 @@ sub content {
   
   $table->add_rows(@rows);
 
-#  $self->cell_line_button;
+#  $self->cell_line_button('reg_summary');
 
   if(scalar keys %$evidence_data) {
     return $table->render;
@@ -92,12 +102,15 @@ sub get_motif_rows {
   my @motif_rows; 
 
   foreach my $mf (@{$f->get_associated_MotifFeatures}) {
-    my ($name, $binding_matrix_name) = split /:/, $mf->display_label;
+    my @A = split /:/, $mf->display_label;
+    my ($name, $binding_matrix_name) = $A[0], $A[-1];
+    my $link = $hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
+    $name .= " ($link)" if $link;
 
     push @motif_rows, {
       type     => $f->feature_type->evidence_type_label,
       location => $mf->seq_region_name . ':' . $mf->seq_region_start . '-' . $mf->seq_region_end,
-      feature  => sprintf('%s (%s)', $name, $hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name)),
+      feature  => $name,
       cell     => $cell_line
     };
   }

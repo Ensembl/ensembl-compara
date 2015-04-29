@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ sub content {
     { key => 'allele',   title => 'Allele',                 sort => 'string'                           },
     { key => 'type',     title => 'Consequence type',       sort => 'position_html'                    },
   );
-  my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
+  my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside', data_table_config => {iDisplayLength => 10} } );
   my @motif_columns = (
     { key => 'rf',       title => 'Feature',                   sort => 'html'                             },
     { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
@@ -298,7 +298,7 @@ sub content {
             my $row = {
               rf       => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
               cell_type => $rf->cell_type->name,
-              ftype    => $rf->feature_type->name,
+              ftype    => $rf->feature_type->so_name,
               allele   => $r_allele,
               type     => $type || '-',
             };
@@ -341,7 +341,7 @@ sub content {
         
         my $row = {
           rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
-          ftype    => 'Motif feature',
+          ftype    => $mfva->feature->feature_type->so_name,#'Motif feature',
           allele   => $m_allele,
           type     => $type,
           matrix   => $matrix_url,

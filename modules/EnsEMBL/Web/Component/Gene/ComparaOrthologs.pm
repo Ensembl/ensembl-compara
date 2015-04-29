@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ sub _init {
 ## (see public-plugins/ensembl for an example data structure)
 sub _species_sets {}
 
+our %button_set = ('download' => 1, 'view' => 0);
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -41,12 +43,12 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   my $availability = $object->availability;
+  my $is_ncrna     = ($object->Obj->biotype =~ /RNA/);
   
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
-    $object->get_homology_matches('ENSEMBL_PARALOGUES', 'possible_ortholog', undef, $cdb)
   );
-  
+
   my %orthologue_list;
   my %skipped;
   
@@ -103,7 +105,7 @@ sub content {
   ##----------------------------- FULL TABLE -----------------------------------------
 
   $html .= '<h3>Selected orthologues</h3>' if $species_sets;
- 
+
   my $column_name = $self->html_format ? 'Compare' : 'Description';
   
   my $columns = [
@@ -168,14 +170,16 @@ sub content {
         my $align_url = $hub->url({
             action   => 'Compara_Ortholog',
             function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''),
+            hom_id   => $orthologue->{'dbID'},
             g1       => $stable_id,
           });
         
-        unless ($object->Obj->biotype =~ /RNA/) {
+        if ($is_ncrna) {
+          $target_links .= sprintf '<li><a href="%s" class="notext">Alignment</a></li>', $align_url;
+        } else {
           $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
+          $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url.';seq=cDNA';
         }
-        $align_url    .= ';seq=cDNA';
-        $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url;
         
         $alignview = 1;
       }
@@ -242,11 +246,7 @@ sub content {
   my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'Species asc', 'Type asc' ], id => 'orthologues' });
   
   if ($alignview && keys %orthologue_list) {
-    # PREpend
-    $html = sprintf(
-      '<p><a href="%s">View sequence alignments of all orthologues</a>.</p>', 
-      $hub->url({ action => 'Compara_Ortholog', function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''), })
-    ).$html;
+    $button_set{'view'} = 1;
   }
   
   $html .= $table->render;
@@ -265,6 +265,87 @@ sub content {
     );
   }  
   return $html;
+}
+
+sub export_options { return {'action' => 'Orthologs'}; }
+
+sub get_export_data {
+## Get data for export
+  my ($self, $flag) = @_;
+  my $hub          = $self->hub;
+  my $object       = $self->object || $hub->core_object('gene');
+
+  if ($flag eq 'sequence') {
+    return $object->get_homologue_alignments;
+  }
+  else {
+    my $cdb = $flag || $hub->param('cdb') || 'compara';
+    my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
+    my %ok_species;
+    foreach (grep { /species_/ } $hub->param) {
+      (my $sp = $_) =~ s/species_//;
+      $ok_species{$sp} = 1 if $hub->param($_) eq 'yes';
+    }
+    if (keys %ok_species) {
+      return [grep {$ok_species{$_->get_all_Members->[1]->genome_db->name}} @$homologies];
+    }
+    else {
+      return $homologies;
+    }
+  }
+}
+
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my @buttons;
+
+  if ($button_set{'download'}) {
+
+    my $gene    =  $self->object->Obj;
+
+    my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
+    my $name = $dxr ? $dxr->display_id : $gene->stable_id;
+
+    my $params  = {
+                  'type'        => 'DataExport',
+                  'action'      => 'Orthologs',
+                  'data_type'   => 'Gene',
+                  'component'   => 'ComparaOrthologs',
+                  'data_action' => $hub->action,
+                  'gene_name'   => $name,
+                };
+
+    ## Add any species settings
+    foreach (grep { /^species_/ } $hub->param) {
+      $params->{$_} = $hub->param($_);
+    }
+
+    push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Download orthologues',
+                    'class'   => 'export',
+                    'modal'   => 1
+                    };
+  }
+
+  if ($button_set{'view'}) {
+
+    my $cdb = $hub->param('cdb') || 'compara';
+
+    my $params = {
+                  'action' => 'Compara_Ortholog',
+                  'function' => 'Alignment'.($cdb =~ /pan/ ? '_pan_compara' : ''),
+                  };
+
+    push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'View sequence alignments',
+                    'class'   => 'view',
+                    'modal'   => 0
+    };
+  }
+  return @buttons;
 }
 
 1;

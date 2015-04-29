@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,26 +34,46 @@ sub caption {
 }
 
 sub content {
+  my $self  = shift;
+
+  my $order = [qw(description alignment)];
+
+  return $self->make_twocol($order);
+}
+
+sub get_data {
   my $self      = shift;
   my $object    = $self->object;
   my $trans     = $object->Obj;
   my $tsi       = $object->stable_id;
   my $hit_id    = $object->param('sequence');
   my $ext_db    = $object->param('extdb');
+  my $data      = {
+                    'description' => {'label' => 'Description'},
+                    'alignment'   => {'label' => 'EMBOSS output'},
+                  };
 
   #get external sequence and type (DNA or PEP)
   my $ext_seq   = $self->hub->get_ext_seq($ext_db, {'id' => $hit_id, 'translation' => 1});
 
-  return qq(<p>Unable to retrieve sequence for $hit_id from external service $ext_db.\n$ext_seq->{'error'}.</p>) unless $ext_seq->{'sequence'};
+  if ($ext_seq->{'sequence'}) {
+    my $seq_type  = $object->determine_sequence_type($ext_seq->{'sequence'});
+    my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];
+    my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type) || '';
 
-  my $seq_type  = $object->determine_sequence_type($ext_seq->{'sequence'});
-  my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];
-  my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type) || '';
 
-  return $seq_type eq 'PEP'
-    ? qq(<p>Alignment between external feature $hit_id and translation of transcript $tsi</p><p><pre>$alignment</pre></p>)
-    : qq(<p>Alignment between external feature $hit_id and transcript $tsi</p><p><pre>$alignment</pre></p>)
-  ;
+    $data->{'description'}{'content'} = $seq_type eq 'PEP'
+      ? qq(Alignment between external feature $hit_id and translation of transcript $tsi)
+      : qq(Alignment between external feature $hit_id and transcript $tsi);
+    $data->{'alignment'}{'content'} = $alignment;
+    $data->{'alignment'}{'raw'} = 1;
+  }
+  else {
+    $self->mcacheable(0);
+    $data->{'description'}{'content'} = qq(Unable to retrieve sequence for $hit_id from external service $ext_db. $ext_seq->{'error'});
+  }
+
+  return $data;
 }
 
 1;

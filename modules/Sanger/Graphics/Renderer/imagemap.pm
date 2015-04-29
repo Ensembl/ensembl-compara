@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,14 +31,10 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(Sanger::Graphics::Renderer);
 
-our $VERSION = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
-
 #########
-# imagemaps are basically strings, so initialise the canvas with ""
-# imagemaps also aren't too fussed about width & height boundaries
-#
 sub init_canvas {
-  shift->canvas('');
+  my $self = shift;
+  $self->canvas([]);
 }
 
 sub add_canvas_frame {
@@ -47,6 +43,7 @@ sub add_canvas_frame {
 
 sub render_Ellipse {}
 sub render_Intron  {}
+sub render_Arc  {}
 
 sub render_Composite { shift->render_Rect(@_); }
 sub render_Space     { shift->render_Rect(@_); }
@@ -133,7 +130,7 @@ sub render_area {
 #  Time: 11.040 - slightly faster with '.'s
 #  $self->{canvas} = '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n" . $self->{canvas};
 #  push @{$self->{data}}, '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n";
-  $self->{canvas} .= '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n";
+  push @{$self->canvas},[$shape,[map int, @$points],$attrs];
 }
 
 sub get_attributes {
@@ -147,15 +144,17 @@ sub get_attributes {
     if ($attr) {
       if ($_ eq 'alt' || $_ eq 'title') {
         $actions{$_} = encode_entities($attr);
+      } elsif($_ eq 'class') {
+        $actions{'klass'} = [ split(/ /,$attr) ];
       } else {
         $actions{$_} = $attr;
       }
     }
   }
   
-  return unless $actions{'title'} || $actions{'href'} || $actions{'class'} =~ /label /;
+  return unless $actions{'title'} || $actions{'href'} || grep { $_ eq 'label'  } @{$actions{'klass'}||[]};
   
-  return join '', map qq{ $_="$actions{$_}"}, keys %actions;
+  return \%actions;
 }
 
 1;

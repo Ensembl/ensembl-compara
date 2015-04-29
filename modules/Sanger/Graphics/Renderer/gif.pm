@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -250,6 +250,32 @@ sub render_Ellipse {
     $self->{sf} *  $glyph->{'pixelheight'},
     $colour
    );
+}
+
+sub render_Arc {
+  my ($self, $glyph) = @_;
+
+  my $canvas         = $self->{'canvas'};
+  my $gcolour        = $glyph->{'colour'};
+  my $colour         = $self->colour($gcolour);
+  my $filled         = $glyph->filled();
+  my ($cx, $cy)      = $glyph->pixelcentre();
+
+  $canvas->setThickness($glyph->{'thickness'});
+
+  my $method = $filled ? 'filledArc' : 'arc';
+  $canvas->$method(
+    $self->{sf} * ($cx-$glyph->{'pixelwidth'}/2),
+    $self->{sf} * ($cy-$glyph->{'pixelheight'}/2),
+    $self->{sf} *  $glyph->{'pixelwidth'},
+    $self->{sf} *  $glyph->{'pixelheight'},
+    $self->{sf} *  $glyph->{'start_point'},
+    $self->{sf} *  $glyph->{'end_point'},
+    $colour
+   );
+
+  ## Reset brush thickness
+  $canvas->setThickness(1);
 }
 
 sub render_Intron {

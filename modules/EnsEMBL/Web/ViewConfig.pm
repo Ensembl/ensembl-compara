@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
+use List::MoreUtils qw(firstidx);
 
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Tree;
@@ -81,7 +82,21 @@ sub extra_tabs       { return ();                           } # Used to add tabs
 
 sub init   {}
 sub modify {} # For plugins
-sub form   {}
+
+## The following stub methods should be overwritten in child modules
+sub form_fields { return {}; }
+sub field_order {}
+
+sub form {
+  ## Generic form-building method - overridden in views that have not yet been
+  ## upgraded to use the new export interface
+  my $self = shift;
+  my $fields = $self->form_fields;
+  
+  foreach ($self->field_order) {
+    $self->add_form_element($fields->{$_});
+  }
+}
 
 sub options { 
   my $self = shift;
@@ -115,7 +130,7 @@ sub get {
   return undef unless exists $self->{'options'}{$key};
   
   my $type = exists $self->{'options'}{$key}{'user'} ? 'user' : 'default';
-  
+ 
   return ref $self->{'options'}{$key}{$type} eq 'ARRAY' ? @{$self->{'options'}{$key}{$type}} : $self->{'options'}{$key}{$type};
 }
 
@@ -265,7 +280,21 @@ sub update_from_url {
       $params_removed = 1;
     }
   }
-  
+
+  # plus_signal turns on some regulation tracks in a complex algorithm
+  # on both regulation and location views. It can be specified in a URL
+  # and is currently used in some zmenus. Annoyingly there seems to
+  # be no better place for this code. Move it if you know of one. --dan
+
+  my $plus = $input->param('plus_signal');
+  if($plus) {
+    $self->reg_renderer($self->hub,$plus,'signals',1);
+    if($delete_params) {
+      $input->delete('plus_signal');
+      $params_removed = 1;
+    }
+  }
+
   my @values = split /,/, $input->param($image_config);
   
   $hub->get_imageconfig($image_config)->update_from_url(@values) if @values;
@@ -322,8 +351,13 @@ sub get_fieldset {
 sub add_form_element {
   my ($self, $element) = @_;
     
-  if ($element->{'type'} eq 'CheckBox' || $element->{'type'} eq 'DASCheckBox') {
-    $element->{'selected'} = $self->get($element->{'name'}) eq $element->{'value'} ? 1 : 0 ;
+  if ($element->{'type'} =~ /Checkbox|CheckBox/) {
+    ## Allow defaults to be set to 'off', even though the checkbox value attribute 
+    ## needs to be set to 'on' - otherwise we get weird reverse-logic checkboxes!
+    if ($element->{'value'} eq 'off') {
+      $element->{'value'} = 'on';
+    }
+    $element->{'selected'} = $self->get($element->{'name'}) eq 'off' ? 0 : 1;
   } elsif (!exists $element->{'value'}) {
     if ($element->{'multiple'}) {
       my @value = $self->get($element->{'name'});
@@ -470,6 +504,7 @@ sub build_imageconfig_form {
   foreach my $node (@{$image_config->tree->child_nodes}) {
     my $section = $node->id;
     
+    $section =~ s|-|_|g;
     next if $section eq 'track_order';
     
     my $data    = $node->data;
@@ -661,13 +696,14 @@ sub build_imageconfig_menus {
     
     my $child = $parent->append_child('li', {
       id         => $id,
-      class      => join(' ', @classes),
-      inner_HTML => qq{$name
+      class      => \@classes,
+      inner_HTML => qq{
         <div class="controls">
           $controls
           <div class="favourite sprite fave_icon _ht" title="Favorite this track"></div>
           $help
         </div>
+        <div class="track_name">$name</div>
         $desc
       }
     });
@@ -750,6 +786,28 @@ sub add_select_all {
     });
   } elsif ($caption && !$external) {
     $menu->before('h3', { inner_HTML => $caption });
+  }
+}
+
+sub reg_renderer {
+  my ($self,$hub,$image_config,$renderer,$state) = @_;
+
+  my $mask = firstidx { $renderer eq $_ } qw(x peaks signals);
+  my $image_config = $hub->get_imageconfig($image_config);
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
+    my $menu = $image_config->get_node($type);
+    next unless $menu;
+    foreach my $node (@{$menu->child_nodes}) {
+      my $old = $node->get('display');
+      my $renderer = firstidx { $old eq $_ }
+        qw(off compact tiling tiling_feature);
+      next if $renderer <= 0;
+      $renderer |= $mask if $state;
+      $renderer &=~ $mask unless $state;
+      $renderer = 1 unless $renderer;
+      $renderer = [ qw(off compact tiling tiling_feature) ]->[$renderer];
+      $image_config->update_track_renderer($node->id,$renderer);
+    }
   }
 }
 

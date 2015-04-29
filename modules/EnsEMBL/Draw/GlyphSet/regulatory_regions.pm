@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,13 +34,10 @@ sub get_feature_sets {
   my $fg_a_a =  $fg_db->get_AnalysisAdaptor;
   my $fg_fs_a = $fg_db->get_FeatureSetAdaptor;
   my $analysis = $fg_a_a->fetch_by_logic_name($logic_name);
-  return [grep {
-    $_->name !~ /cisRED\s+search\s+regions/i
-  } @{$fg_fs_a->fetch_all_by_feature_class('external',undef,{
-    constraints => {
-      analyses => [$analysis],
-    },
-  })}];
+  return $fg_fs_a->fetch_all_by_feature_class('external', 
+                                               undef,
+                                               {constraints => {analyses => [$analysis]}},
+                                              );
 }
 
 sub features {

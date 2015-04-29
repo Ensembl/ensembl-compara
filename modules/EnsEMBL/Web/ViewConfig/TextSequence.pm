@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,11 +34,65 @@ sub init {
     min_frequency      => 0.1,
     consequence_filter => 'off',
     title_display      => 'off',
-    hide_long_snps     => 'yes',
+    hide_long_snps     => 'on',
   });
 }
 
+sub variation_fields {
+  my $self = shift;
+  my $options = shift || {};
+  my @fields  = qw(snp_display hide_long_snps);
+  push @fields, 'consequence_filter' if ($options->{'consequence'} ne 'no');
+  return @fields;
+}
+ 
+
+sub add_variation_options {
+  my $self    = shift;
+  my $markup  = shift || EnsEMBL::Web::Constants::MARKUP_OPTIONS();
+  my $options = shift || {};
+  my $hub     = $self->hub;
+  my $fields;
+
+  ## Tweak standard markup 
+  $markup->{'snp_display'} = { 
+                              'name'  => 'snp_display',
+                              'label' => $options->{'label'} || 'Show variations',
+                              };
+  my @snp_values;
+
+  unless ($options->{'snp_link'} eq 'no') { 
+    push @snp_values, { 'value' => 'snp_link', 'caption' => 'Yes and show links' };
+  }
+
+  if ($options->{'snp_display'}) {
+    push @snp_values, @{$options->{'snp_display'}};
+  } 
+
+  if (scalar @snp_values) {
+    unshift @snp_values, (
+                            { 'value' => 'off', 'caption' => 'No'  },
+                            { 'value' => 'on', 'caption' => 'Yes' },
+                          );
+    $markup->{'snp_display'}{'type'}  = 'Dropdown';
+    $markup->{'snp_display'}{'values'}  = \@snp_values;
+  }
+  else {
+    $markup->{'snp_display'}{'type'}  = 'Checkbox';
+    $markup->{'snp_display'}{'value'} = 'on'; 
+  }
+
+  if ($options->{'consequence'} ne 'no') {
+    my %consequence_types = map { $_->label && $_->feature_class =~ /transcript/i ? ($_->label => $_->SO_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+    
+    push @{$markup->{'consequence_filter'}{'values'}}, map { value => $consequence_types{$_}, caption => $_ }, sort keys %consequence_types;
+    
+  }
+  
+}
+
 sub variation_options {
+### Older version - used by a couple of views that haven't been ported to new export interface
   my ($self, $options) = @_;
   my $hub    = $self->hub;
   my %markup = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;

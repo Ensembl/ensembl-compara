@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,14 +32,15 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
+  my ($self, $class) = @_;
+  $class ||= 'portal';
   my $html;
   
   foreach (@{$self->{'buttons'}}) {
     if ($_->{'url'}) {
-      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}"><img src="/img/$_->{'img'}.gif" class="portal" alt="" /></a>);
+      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}"><img src="/img/$_->{'img'}.gif" class="$class" alt="" /></a>);
     } else {
-      $html .= qq|<img src="/img/$_->{'img'}_off.gif" class="portal" alt="" title="$_->{'title'} (NOT AVAILABLE)" />|;
+      $html .= qq|<img src="/img/$_->{'img'}_off.gif" class="$class" alt="" title="$_->{'title'} (NOT AVAILABLE)" />|;
     }
   }
   

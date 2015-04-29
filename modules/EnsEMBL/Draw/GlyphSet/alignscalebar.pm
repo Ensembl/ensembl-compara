@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ sub render_align_bar {
   my $config      = $self->{'config'};
   my $species     = $self->species;
   my $pix_per_bp  = $self->scalex;
-  my $last_end    = -1;
+  my $last_end    = undef;
   my $last_chr    = -1;
   my $join_z      = -20;
   my $last_s2s    = -1;
@@ -135,7 +135,7 @@ sub render_align_bar {
   my %colour_map;
   my %colour_map2;
   my @colours = qw(antiquewhite1 mistyrose1 burlywood1 khaki1 cornsilk1 lavenderblush1 lemonchiffon2 darkseagreen2 lightcyan1 papayawhip seashell1);
-
+  
   foreach my $s (sort {$a->{'start'} <=> $b->{'start'}} @{$self->{'container'}->get_all_Slice_Mapper_pairs(1)}) {
     my $s2        = $s->{'slice'};
     my $ss        = $s->{'start'};
@@ -145,6 +145,7 @@ sub render_align_bar {
     my $s2e       = $s2->{'end'};
     my $s2st      = $s2->{'strand'};
     my $s2t       = $s2->{'seq_region_name'};
+    my $s2sp      = $s2->adaptor->db->species if($s2->adaptor);
     my $box_start = $ss;
     my $box_end   = $se;
     my $filled    = $sst;
@@ -192,11 +193,14 @@ sub render_align_bar {
     }
     
     $self->push($glyph);
+
+    my $ref_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $species, 'SPECIES_COMMON_NAME') || lc $species;
+    my $other_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $s2sp, 'SPECIES_COMMON_NAME') || lc $s2sp || '';
     
-    # This happens when we have two contiguous underlying slices
-    if ($last_end == $ss - 1) {
-      my $s3l = $s2st == -1 && $last_s2st == -1 ? $s2e - $last_s2s + 1 : $s2s - $last_s2e - 1;
-      my $xc  = $box_start - $global_start;
+    # This happens when we have two slices following each other
+    if (defined $last_end and ($last_end <= $ss - 1)) {
+      my $s3l = $s2st == -1 && $last_s2st == -1 ? $last_s2s - $s2e + 1 : $s2s - $last_s2e - 1;
+      my $xc  = $box_start - $global_start - ($ss-$last_end)/2;
       my $h   = $yc - 2;
       my $colour;
       my $legend;
@@ -207,18 +211,19 @@ sub render_align_bar {
         # Different chromosomes
         $colour = 'black';
         $title = "AlignSlice Break; There is a breakpoint in the alignment between chromosome $last_chr and $s2t";
-        $legend = 'Breakpoint between different chromosomes';
+        $legend = "Breakpoint between $other_species_common_name chromosomes";
       } elsif ($last_s2st ne $s2st) {
         # Same chromosome, different strand (inversion)
-        $colour = '3333ff';
+        $colour = 'dodgerblue';
         $title = "AlignSlice Break; There is an inversion in chromosome $s2t";
-        $legend = 'Inversion in chromosome';
-      } elsif ($s3l > 0) {
-        # Same chromosome, same strand, gap between the two underlying slices
+        $legend = "Inversion on the $other_species_common_name chromosome";
+      } elsif ( (($last_end == $ss-1) && ($s3l > 0)) or ($s3l == 0) ) {
+        # Same chromosome, same strand, gap in only 1 genome (blocks are adjacent in the other)
         my ($from, $to);
         
         $colour = 'red';
-        $legend = 'Gap between two underlying slices';
+        $title = sprintf('Gap in the %s genome', $s3l ? $other_species_common_name : $ref_species_common_name);
+        $legend = 'Indel (> 50 bp)';
         
         if ($s2st == 1) {
           $from = $last_s2e;
@@ -231,11 +236,14 @@ sub render_align_bar {
         ($from, $to) = ($to, $from) if $from > $to;
         
         $href = $self->_url({ species => $species, action => 'Align', r => "$s2t:$from-$to", break => 1 });
-      } else {
-        # Same chromosome, same strand, no gap between the two underlying slices (BreakPoint in another species)
-        $colour = 'indianred3';
+      } elsif ($s3l < 0 ) {
+        # Same chromosome, same strand, inverted order in the target species
+        $colour = 'yellowgreen';
         $title = "AlignSlice Break; There is a breakpoint in the alignment on chromosome $s2t";
-        $legend = 'Breakpoint on chromosome';
+        $legend = "Shuffled blocks on the $other_species_common_name chromosome";
+      } else {
+        # Gap in both genomes
+        #warn "else s3l=$s3l last_end=$last_end ss=$ss diff=".($ss-$last_end-1)."\n";
       }
       
       my $base = $self->strand == 1 ? $h - 3 : $h + 9;
@@ -249,12 +257,12 @@ sub render_align_bar {
         width     => 4 / $pix_per_bp,
         height    => 6,
         direction => $self->strand == 1 ? 'down' : 'up'
-      }));
+      })) if $legend;
       
       $config->{'alignslice_legend'}{$colour} = {
         priority => $self->_pos,
         legend   => $legend
-      };
+      } if $legend && $self->{container}->coord_system()->version() !~ /(EPO|PECAN)/;
     }
     
     $last_end = $se;
@@ -263,6 +271,24 @@ sub render_align_bar {
     $last_s2st = $s2st;
     $last_chr = $s2t;
   }
+  
+  # alignment legend for multiple alignment (show everything)
+  if ($self->{container}->coord_system()->version() =~ /(EPO|PECAN)/) { 
+    my $all_legend = [
+                   { colour => 'black', title => 'AlignSlice Break; Breakpoint in alignment', legend => 'Breakpoint between chromosomes'},
+                   { colour => 'dodgerblue', title => 'AlignSlice Break; Inversion in chromosome', legend => 'Inversion on chromosome'},      
+                   { colour => 'red', title => 'Gap in genome', legend => 'Indel (> 50 bp)'},      
+                   { colour => 'yellowgreen', title => 'AlignSlice Break; Breakpoint in alignment', legend => 'Shuffled blocks on chromosome'},      
+    ];
+
+    for my $row (@$all_legend) {     
+      my $colour = $row->{colour};
+      $config->{'alignslice_legend'}{$colour} = {
+        priority => $self->_pos,
+        legend   => $row->{legend}
+      };
+    }
+  }   
 }
 
 1;

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ use List::MoreUtils qw(uniq);
 use EnsEMBL::Draw::DrawableContainer;
 use EnsEMBL::Draw::VDrawableContainer;
 
-use EnsEMBL::Web::Document::Image;
+use EnsEMBL::Web::Document::Image::GD;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Document::NewTable;
 use EnsEMBL::Web::Document::TwoCol;
@@ -50,7 +50,6 @@ use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Form::ModalForm;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::TmpFile::Text;
 
 sub new {
   my $class = shift;
@@ -64,6 +63,7 @@ sub new {
     id            => $id,
     object        => undef,
     cacheable     => 0,
+    mcacheable    => 1,
     ajaxable      => 0,
     configurable  => 0,
     has_image     => 0,
@@ -126,7 +126,10 @@ sub renderer {
 sub view_config { 
   ## @getter
   ## @return EnsEMBL::Web::ViewConfig::[type]
-  my $self = shift;
+  my ($self, $type) = @_;
+  unless ($self->{'view_config'}) {
+    $self->{'view_config'} = $self->hub->get_viewconfig($self->id, $type);
+  }
   return $self->{'view_config'};
 }
 
@@ -158,8 +161,12 @@ sub cacheable {
 }
 
 sub mcacheable {
-  # temporary method in e75 only - will be replaced in 76 (hr5)
-  return 1;
+  ## temporary method only - will be replaced in 77 (hr5) - use cacheable method instead
+  ## @accessor
+  ## @return Boolean
+  my $self = shift;
+  $self->{'mcacheable'} = shift if @_;
+  return $self->{'mcacheable'};
 }
 
 sub ajaxable {
@@ -205,6 +212,27 @@ sub html_format {
 
 ########### END OF ACCESSORS ###################
 
+sub make_twocol {
+  my ($self, $order) = @_;
+
+  my $data    = $self->get_data;
+  my $twocol  = $self->new_twocol;
+
+  foreach (@$order) {
+    my $field = $data->{$_};
+    next unless $field->{'content'};
+    my $content = $field->{'raw'} == 1 ? $self->_wrap_content($field->{'content'}) : $field->{'content'};
+    $twocol->add_row($field->{'label'}, $content);
+  }
+
+  return $twocol->render;
+}
+
+sub _wrap_content {
+  my ($self, $content) = @_;
+  return "<p><pre>$content</pre></p>";
+}
+
 sub get_content {
   my ($self, $function) = @_;
   my $cache = $self->mcacheable && $self->ajaxable && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
@@ -214,7 +242,7 @@ sub get_content {
     $self->set_cache_params;
     $content = $cache->get($ENV{'CACHE_KEY'});
   }
-  
+
   if (!$content) {
     if($function && $self->can($function)) {
       $content = $self->$function;
@@ -222,7 +250,7 @@ sub get_content {
       $content = $self->content; # Force sequence-point before buttons call.
       $content = $self->content_buttons.$content;
     }
-    if ($cache && $content) {
+    if ($cache && $content && $self->mcacheable) { # content method call can change mcacheable value
       $self->set_cache_key;
       $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, values %{$ENV{'CACHE_TAGS'}});
     }
@@ -260,7 +288,7 @@ sub content_buttons {
       </a>
     );
   }
-  # Create the blue-regctangle buttons
+  # Create the blue-rectangle buttons
   my $blue_html = '';
   foreach my $g (@groups) {
     my $group = '';
@@ -272,8 +300,14 @@ sub content_buttons {
       push @classes, 'togglebutton' if $b->{'toggle'};
       push @classes, 'off'          if $b->{'toggle'} and $b->{'toggle'} eq 'off';
       $all_disabled = 0 unless $b->{'disabled'};
-      $group .= sprintf('<a href="%s" class="%s">%s</a>',
-            $b->{'url'}, join(' ',@classes), $b->{'caption'});
+      if ($b->{'disabled'}) {
+        $group .= sprintf('<div class="%s">%s</div>',
+            join(' ',@classes), $b->{'caption'});
+      }
+      else {
+        $group .= sprintf('<a href="%s" class="%s" rel="%s">%s</a>',
+            $b->{'url'}, join(' ',@classes),$b->{'rel'},$b->{'caption'});
+      }
     }
     if(@$g>1) {
       my $class = "group";
@@ -292,15 +326,6 @@ sub content_buttons {
     <div class="component-navs nav_buttons $class">$nav_html</div>
   ) if $nav_html;
   return $nav_html.$blue_html;
-}
-
-sub cache {
-  my ($panel, $obj, $type, $name) = @_;
-  my $cache = EnsEMBL::Web::TmpFile::Text->new(
-    prefix   => $type,
-    filename => $name,
-  );
-  return $cache;
 }
 
 sub set_cache_params {
@@ -534,6 +559,7 @@ sub modal_form {
   $params->{'current'}  = $hub->action;
   $params->{'name'}     = $name;
   $params->{$_}         = $options->{$_} for qw(class method wizard label no_back_button no_button buttons_on_top buttons_align skip_validation enctype);
+  $params->{'enctype'}  = 'multipart/form-data' if !$self->renderer->{'_modal_dialog_'};
 
   if ($options->{'wizard'}) {
     my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;
@@ -578,7 +604,7 @@ sub new_image {
   
   $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
  
-  my $image = EnsEMBL::Web::Document::Image->new($hub, $self->id, \@image_configs);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($hub, $self->id, \@image_configs);
   $image->drawable_container = EnsEMBL::Draw::DrawableContainer->new(@_) if $self->html_format;
   
   return $image;
@@ -588,7 +614,7 @@ sub new_vimage {
   my $self  = shift;
   my @image_config = $_[1];
   
-  my $image = EnsEMBL::Web::Document::Image->new($self->hub, $self->id, \@image_config);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self->id, \@image_config);
   $image->drawable_container = EnsEMBL::Draw::VDrawableContainer->new(@_) if $self->html_format;
   
   return $image;
@@ -596,7 +622,7 @@ sub new_vimage {
 
 sub new_karyotype_image {
   my ($self, $image_config) = @_;  
-  my $image = EnsEMBL::Web::Document::Image->new($self->hub, $self->id, $image_config ? [ $image_config ] : undef);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self->id, $image_config ? [ $image_config ] : undef);
   $image->{'object'} = $self->object;
   
   return $image;
@@ -608,10 +634,10 @@ sub new_table {
   my $table    = EnsEMBL::Web::Document::Table->new(@_);
   my $filename = $hub->filename($self->object);
   my $options  = $_[2];
+  $self->{'_table_count'}++ if $options->{'exportable'};
   
   $table->session    = $hub->session;
   $table->format     = $self->format;
-  $table->export_url = $hub->url unless defined $options->{'exportable'} || $self->{'_table_count'}++;
   $table->filename   = join '-', $self->id, $filename;
   $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
   
@@ -696,11 +722,11 @@ sub toggleable_table {
   
   return sprintf('
     <div class="toggleable_table">
-      <h2><a rel="%s_table" class="toggle %s" href="#%s_table">%s</a></h2>
       %s
+      <h2><a rel="%s_table" class="toggle _slide_toggle %s" href="#%s_table">%s</a></h2>
       %s
     </div>',
-    $id, $state[1], $id, $title, $extra_html, $table->render(@{$for_render||[]})
+    $extra_html, $id, $state[1], $id, $title, $table->render(@{$for_render||[]})
   ); 
 }
 
@@ -757,8 +783,8 @@ sub trim_large_string {
   my $self        = shift;
   my $string      = shift;
   my $cell_prefix = shift;
-  my $truncator = shift;
-  my $options = shift || {};
+  my $truncator   = shift;
+  my $options     = shift || {};
   
   unless(ref($truncator)) {
     my $len = $truncator || 25;
@@ -781,10 +807,12 @@ sub trim_large_string {
   
   return $string unless defined $truncated;
   return sprintf(qq(
-    <div class="toggle_div">
-      <span class="%s">%s</span>
-      <span class="cell_detail">%s</span>
-      <span class="toggle_img"/>
+    <div class="height_wrap">
+      <div class="toggle_div">
+        <span class="%s">%s</span>
+        <span class="cell_detail">%s</span>
+        <span class="toggle_img"/>
+      </div>
     </div>),
       join(" ",@summary_classes),$truncated,$string);  
 }

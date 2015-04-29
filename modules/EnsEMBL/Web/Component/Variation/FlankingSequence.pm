@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,8 +27,12 @@ sub initialize {
   my $hub               = $self->hub;
   my $object            = $self->object || $hub->core_object('variation');
   my $vf                = $hub->param('vf');
-  my $flanking          = $hub->param('select_sequence') || 'both';
-  my $flank_size        = $hub->param('flank_size') || 400;
+
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
+
+  my $flanking          = $hub->param('select_sequence') || $vc->get('select_sequence');
+  my $flank_size        = $hub->param('flank_size') || $vc->get('flank_size');
   my @flank             = $flanking eq 'both' ? ($flank_size, $flank_size) : $flanking eq 'up' ? ($flank_size) : (undef, $flank_size);
   my %mappings          = %{$object->variation_feature_mapping}; 
   my $v                 = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$vf};
@@ -48,10 +52,10 @@ sub initialize {
   );
  
   my $config = {
-    display_width  => $hub->param('display_width') || 60,
+    display_width  => $hub->param('display_width') || $vc->get('display_width'),
     species        => $hub->species,
-    snp_display    => $hub->param('snp_display')    =~ /yes|on/,
-    hide_long_snps => $hub->param('hide_long_snps') =~ /yes|on/,
+    snp_display    => $hub->param('snp_display') || $vc->get('snp_display'),
+    hide_long_snps => $hub->param('hide_long_snps') || $vc->get('hide_long_snps'),
     v              => $hub->param('v'),
     focus_variant  => $vf,
     failed_variant => 1,
@@ -69,7 +73,7 @@ sub initialize {
       my $markup = {};
          $seq    = [ map {{ letter => $_ }} split '', $slice->seq ];
       
-      if ($config->{'snp_display'}) {
+      if ($config->{'snp_display'} eq 'on') {
         $self->set_variations($config, { name => $config->{'species'}, slice => $slice }, $markup);
         $self->markup_variation($seq, $markup, $config);
       }
@@ -106,7 +110,7 @@ sub content {
     ", 'auto');
   }
   
-  $html .= sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
+  $html .= $self->build_sequence($sequence, $config);
   
   return $self->_info('Flanking sequence', qq{ 
     The sequence below is from the <b>reference genome</b> flanking the variant location.
@@ -118,6 +122,11 @@ sub content {
 }
 
 sub export_options { return {'action' => 'FlankingSeq'}; }
+
+sub get_export_data {
+  my $self = shift;
+  return $self->initialize;
+}
 
 sub initialize_export {
   my $self = shift;

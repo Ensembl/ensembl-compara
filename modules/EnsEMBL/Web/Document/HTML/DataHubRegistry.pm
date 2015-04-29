@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,10 +38,22 @@ sub render {
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
 
-  my %datahubs;
+  my (%datahubs, %internal_hub_lookup);
+  my $imageconfig   = $hub->get_imageconfig('contigviewbottom');
   foreach my $sp (@valid_species) {
     ## This is all a bit hacky, but makes configuration of multi-species datahubs simpler
     my %sp_hubs = (%{$species_defs->get_config($sp, 'PUBLIC_DATAHUBS')||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_DATAHUBS'));
+
+    ## Is this hub already configured?
+    my $internal_hubs = $species_defs->get_config($sp, 'ENSEMBL_INTERNAL_DATAHUB_SOURCES');
+    while (my ($k, $v) = each (%{$internal_hubs||{}})) {
+      my $hub_info = $species_defs->get_config($sp, $k);
+      my $node = $imageconfig->get_node($v);
+      my $menu = $node ? $node->id : $v;
+      $internal_hub_lookup{$hub_info->{'url'}} = $menu;
+    }
+
+    ## Get hub information
     if (keys %sp_hubs) {
       while (my($key,$menu) = each (%sp_hubs)) {
         ## multiX returns a hash, not a hash ref, and Perl gets confused
@@ -80,7 +92,7 @@ sub render {
   my $html;
   
   my $table = EnsEMBL::Web::Document::Table->new([
-      { key => 'name',     title => 'Datahub name', width => '30%', align => 'left', sort => 'html' },
+      { key => 'name',     title => 'Trackhub name', width => '30%', align => 'left', sort => 'html' },
       { key => 'description',    title => 'Description', width => '30%', align => 'left', sort => 'string' },
       { key => 'species',      title => 'Species and assembly', width => '40%', align => 'left', sort => 'html' },
   ], [], {});
@@ -95,7 +107,7 @@ sub render {
         ## Get best archive for older releases
         my $archive_version = $species_defs->ENSEMBL_VERSION;
         ## Spaces are problematic in ini file arrays
-        (my $current_assembly = $species_defs->get_config($species, 'ASSEMBLY_NAME')) =~ s/ /_/; 
+        (my $current_assembly = $species_defs->get_config($species, 'ASSEMBLY_VERSION')) =~ s/ /_/; 
         if ($current_assembly =~ /$sp_info->{'assembly'}/i) {
           $sp_info->{'site'} = 'current';
         }
@@ -122,10 +134,18 @@ sub render {
       my $location = $species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
       if ($sp_info->{'site'}) {
         my $site = $sp_info->{'site'} eq 'current' ? '' : $sp_info->{'site'};
-        my $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s#modal_user_data',
+        my $link;
+        my $menu = $internal_hub_lookup{$hub_info->{'url'}};
+        if ($menu) {
+          $link = sprintf('%s/%s/Location/View?r=%s;#modal_config_viewbottom-seq_assembly-%s', 
+                          $site, $sp_info->{'dir'}, $location, $menu); 
+        }
+        else {
+          $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s#modal_user_data',
                         $site, $sp_info->{'dir'}, $location,
                         $hub_info->{'url'}, $hub_info->{'menu'}, $hub_info->{'menu'}
                       );
+        }
         $species_html .= sprintf('<p><a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s (%s)</a></p>', 
                           $link, $sp_info->{'dir'}, $sp_info->{'common'}, 
                           $link, $sp_info->{'common'}, $sp_info->{'assembly'},

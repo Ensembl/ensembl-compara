@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,16 +38,19 @@ sub render {
   ## Output data
   foreach my $sp (@$species_order) {
     next unless $sp && $data->{$sp};
-    $html .= sprintf '<h4>%s</h4><ul>', $info->{$sp}{'long_name'};
+    $html .= sprintf('<h4>%s (%s)</h4><ul>', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'});
 
     foreach my $other (@$species_order) {
       my $values = $data->{$sp}{$other};
       next unless $values;  
         
-      my $mlss_id = $values->[1];
-      my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
-      $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', 
-                          $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
+      if ($values->[2]) {
+          my $mlss_id = $values->[1];
+          my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
+          $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
+      } else {
+          $html .= sprintf('<li>%s (%s)</li>', $info->{$other}{'common_name'}, $info->{$other}{'long_name'});
+      }
     } 
     $html .= '</ul>';
   }

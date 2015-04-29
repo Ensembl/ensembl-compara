@@ -19,9 +19,9 @@ use Text::Wrap;
 
 $Text::Wrap::columns = 75;
 
-our $ENSEMBL_VERSION           = 76;
-our $ARCHIVE_VERSION           = 'Aug2014';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'August 2014';
+our $ENSEMBL_VERSION           = 79;
+our $ARCHIVE_VERSION           = 'Mar2015';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'March 2015';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -38,6 +38,7 @@ my ($volume, $dir) = File::Spec->splitpath(__FILE__);
 
 our $ENSEMBL_SERVERROOT = File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
 our $ENSEMBL_WEBROOT    = "$ENSEMBL_SERVERROOT/ensembl-webcode";
+our $ENSEMBL_DOCROOT    = "$ENSEMBL_WEBROOT/htdocs";
 our $ENSEMBL_PLUGINS;
 
 ## Define Plugin directories
@@ -70,10 +71,14 @@ our $ENSEMBL_SITETYPE          = 'Ensembl';
 our $ENSEMBL_USER              = getpwuid($>); # Auto-set web serveruser
 our $ENSEMBL_GROUP             = getgrgid($)); # Auto-set web server group
 our $ENSEMBL_IMAGE_WIDTH       = 800;
-our $ENSEMBL_JSCSS_TYPE        = 'minified';
+
+our $ENSEMBL_MINIFIED_FILES_PATH = '/minified'; # path for saving the minified files
+our $ENSEMBL_DEBUG_JS            = 0; # change these to 1 to prevent js minification
+our $ENSEMBL_DEBUG_CSS           = 0; # change these to 1 to prevent css minification
+
+our $ENSEMBL_EXTERNAL_SEARCHABLE = 0; # No external bots allowed by default
 
 our $ENSEMBL_MART_ENABLED      = 0;
-our $ENSEMBL_BLAST_ENABLED     = 0;
 
 our $ENSEMBL_ORM_DATABASES     = {};
 
@@ -111,9 +116,11 @@ foreach (@$ENSEMBL_DEBUG_FLAG_NAMES) {
   no strict 'refs';
   
   my $variable_name = "SiteDefs::ENSEMBL_DEBUG_$_";
-    $$variable_name = 1 << ($i++);
+    $$variable_name = 1 << ($i++)
+    ;
     
-  $ENSEMBL_DEBUG_VERBOSE_ERRORS <<= 1;
+  $ENSEMBL_DEBUG_VERBOSE_ERRORS <<= 1
+  ;
   $ENSEMBL_DEBUG_VERBOSE_ERRORS  += 1;
 }
 
@@ -132,8 +139,9 @@ our $ENSEMBL_TMP_TMP        = '/tmp';
 our $ENSEMBL_TMP_URL        = '/tmp';
 our $ENSEMBL_TMP_URL_IMG    = '/img-tmp';
 our $ENSEMBL_TMP_URL_CACHE  = '/img-cache';
+our $TRACKHUB_TIMEOUT       = 60*60*24;
 
-our ($ENSEMBL_REGISTRY, $ENSEMBL_BLASTSCRIPT);
+our ($ENSEMBL_REGISTRY);
 
 # Environment variables to set using the SetEnv directive
 our %ENSEMBL_SETENV = (
@@ -152,7 +160,7 @@ our %ENSEMBL_SETENV = (
 our @ENSEMBL_LIB_DIRS;
 our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_WEBROOT/conf");
 our @ENSEMBL_PERL_DIRS    = ("$ENSEMBL_WEBROOT/perl");
-our @ENSEMBL_HTDOCS_DIRS  = ("$ENSEMBL_WEBROOT/htdocs", "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");
+our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");
 
 our $APACHE_DIR           = "$ENSEMBL_SERVERROOT/apache2";
 our $APACHE_BIN           = "$APACHE_DIR/bin/httpd";
@@ -208,8 +216,10 @@ our $ENSEMBL_ENCRYPT_REFRESH  = 30;       # Refresh cookies with less than 30 da
 ###############################################################################
 
 our $ENSEMBL_CONFIG_FILENAME     = 'config.packed';
+our $ENSEMBL_HTTPD_CONFIG_FILE   = "$ENSEMBL_WEBROOT/conf/httpd.conf";
 our $ENSEMBL_CONFIG_BUILD        = 0; # Build config on server startup? Setting to 0 will try to recover from $ENSEMBL_CONFIG_FILENAME on startup
 our $ENSEMBL_LONGPROCESS_MINTIME = 10;
+our $APACHE_DEFINE               = undef; # command line arguments for httpd command
 
 ## ALLOWABLE DATA OBJECTS
 our $OBJECT_TO_SCRIPT = {
@@ -235,17 +245,26 @@ our $OBJECT_TO_SCRIPT = {
   Phenotype           => 'Page',
   Experiment          => 'Page',
 
-  Blast               => 'Page',
   Info                => 'AltPage',
   Search              => 'Page',
   
   UserConfig          => 'Modal',
   UserData            => 'Modal',
   Help                => 'Modal',  
+
+  CSS                 => 'CSS',
 };
 
-logs("$ENSEMBL_SERVERROOT/logs");
-tmp("$ENSEMBL_SERVERROOT/tmp");
+## Set log directory and files
+our $ENSEMBL_LOGDIR    = defer { "$ENSEMBL_SERVERROOT/logs" };
+our $ENSEMBL_PIDFILE   = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.httpd.pid" };
+our $ENSEMBL_ERRORLOG  = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.error_log" };
+our $ENSEMBL_CUSTOMLOG = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.access_log ensembl_extended" };
+
+## Set tmp dirs
+our $ENSEMBL_TMP_DIR       = defer { "$ENSEMBL_SERVERROOT/tmp" };
+our $ENSEMBL_TMP_DIR_IMG   = defer { "$ENSEMBL_TMP_DIR/img/tmp" };
+our $ENSEMBL_TMP_DIR_CACHE = defer { "$ENSEMBL_TMP_DIR/img/cache" };
 
 #### END OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 ###############################################################################
@@ -319,6 +338,7 @@ sub update_conf {
     $BIOPERL_DIR,
     "$ENSEMBL_SERVERROOT/biomart-perl/lib",
     "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
+    "$ENSEMBL_SERVERROOT/ensembl-io/modules",
     "$ENSEMBL_SERVERROOT/ensembl-funcgen/modules",
     "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
     "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
@@ -381,31 +401,8 @@ sub error {
        "\n", '#' x 78, "\n";
 }
 
-sub tmp {
-  my $tmp_dir = shift;
-  
-  $SiteDefs::ENSEMBL_TMP_DIR       = $tmp_dir;
-  $SiteDefs::ENSEMBL_TMP_DIR_IMG   = "$tmp_dir/img/tmp";
-  $SiteDefs::ENSEMBL_TMP_DIR_CACHE = "$tmp_dir/img/cache";
-  $SiteDefs::ENSEMBL_TMP_DIR_BLAST = "$tmp_dir/blastqueue";
-}
-
-sub logs {
-  my $log_dir = shift;
-  my $datestamp;
-  
-  if ($SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_TIMESTAMPED_LOGS) {
-    my @time = gmtime;
-    $datestamp = sprintf '.%04d-%02d-%02d-%02d-%02d-%02d', $time[5] + 1900, $time[4] + 1, @time[3,2,1,0];
-  }
-
-  ## Set all log files into the /ensemblweb/tmp/logs/uswest/ directory
-  my $log_prefix               = "$log_dir/$SiteDefs::ENSEMBL_SERVER";
-  $SiteDefs::ENSEMBL_LOGDIR    = "$log_dir";
-  $SiteDefs::ENSEMBL_PIDFILE   = "$log_prefix.httpd.pid";
-  $SiteDefs::ENSEMBL_ERRORLOG  = "$log_prefix$datestamp.error_log";
-  $SiteDefs::ENSEMBL_CUSTOMLOG = "$log_prefix$datestamp.access_log ensembl_extended";
-}
+sub logs { warn sprintf q(SiteDefs::logs is deprecated. Just define $SiteDefs::ENSEMBL_LOGDIR = '%s' instead in %s if needed.%s), $_[0] =~ s/\/$//r, [ caller ]->[0],  "\n"; }
+sub tmp { warn sprintf q(SiteDefs::tmp is deprecated. Just define $SiteDefs::ENSEMBL_TMP_DIR = '%s' instead in %s if needed.%s), $_[0] =~ s/\/$//r, [ caller ]->[0], "\n"; }
 
 =for Information
 
@@ -508,7 +505,7 @@ Support enquiries: helpdesk@ensembl.org
                                                                                 
 =head1 LICENSE
                                                                                 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

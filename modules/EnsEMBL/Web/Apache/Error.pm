@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,13 +50,13 @@ sub handler {
       <h3>$error_number error: $error_subject</h3>
       <div class="error-pad">
         <p>$error_text</p>
-        <p>
-          Please check that you have typed in the correct URL or else use the site search
-          facility to try and locate information you require.
+        <p>Please check that you have typed in the correct URL or else use the
+        <a href="/Multi/Search/Results">site search</a>
+        facility to try and locate information you require.
         </p>
         <p>
-          If you think an error has occurred please send email to the server administrator 
-          using the link below.
+        If you think an error has occurred, please
+        <a href="http://www.ensembl.org/Help/Contact">contact our HelpDesk</a>.
         </p>
       </div>
     </div>}

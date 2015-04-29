@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +27,9 @@ my $DEBUG = 0;
 
 sub new {
   my ($class, $url) = @_;
-
+ 
+  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor instead";
+ 
   my $self = bless {
     _cache => {},
     _url => $url,
@@ -46,13 +48,19 @@ sub bigwig_open {
   return $self->{_cache}->{_bigwig_handle};
 }
 
+sub check {
+  my $self = shift;
+
+  my $bw = $self->bigwig_open;
+  return defined $bw;
+}
 
 # UCSC prepend 'chr' on human chr ids. These are in some of the BigWig
 # files. This method returns a possibly modified chr_id after
 # checking whats in the BigWig file
 sub munge_chr_id {
   my ($self, $chr_id) = @_;
-  my $bw = $self->bigwig_open;
+  my $bw = $self->{_cache}->{_bigwig_handle} || $self->bigwig_open;
   
   warn "Failed to open BigWig file " . $self->url unless $bw;
   
@@ -72,14 +80,14 @@ sub munge_chr_id {
 }
 
 sub fetch_extended_summary_array {
-  my ($self, $chr_id, $start, $end, $bins) = @_;
+  my ($self, $chr_id, $start, $end, $bins, $has_chrs) = @_;
 
   my $bw = $self->bigwig_open;
   warn "Failed to open BigWig file" . $self->url unless $bw;
   return [] unless $bw;
   
-  #  Maybe need to add 'chr' 
-  my $seq_id = $self->munge_chr_id($chr_id);
+  #  Maybe need to add 'chr' (only try if species has chromosomes)
+  my $seq_id = $has_chrs ? $self->munge_chr_id($chr_id) : $chr_id;
   return [] if !defined($seq_id);
 
 # Remember this method takes half-open coords (subtract 1 from start)
@@ -90,6 +98,58 @@ sub fetch_extended_summary_array {
   }
   
   return $summary_e;
+}
+
+sub fetch_scores_by_chromosome {
+### Get data across a single chromosome or the whole genome
+### @param chromosomes ArrayRef - usually just one chromosome (undef if whole karyotype is wanted)
+### @param bins Integer - number of bins to divide data into
+### @param bin_size Integer - default size of bin in base pairs 
+  my ($self, $chromosomes, $bins, $bin_size) = @_;
+  my (%data, $max);
+  return ({}, undef) unless $self->check;
+
+  my $bw = $self->bigwig_open;
+  if ($bw) {
+    ## If we're on a single-chromosome page, we want to filter the BigWig data
+    my %chr_check;
+    foreach (@{$chromosomes||[]}) {
+      $chr_check{$_} = 1;
+      ## Also convert our chromosome names into UCSC equivalents
+      my $chr_name = 'chr'.$_;
+      $chr_name = 'chrM' if $chr_name eq 'chrMT';
+      $chr_check{$chr_name} = 1;
+    }
+    my $chrs = $bw->chromList;
+    my $chr = $chrs->head;
+    while ($chr) {
+      if (!$chromosomes || $chr_check{$chr->name}) {
+        my $stats = $bw->bigWigSummaryArrayExtended($chr->name, 1, $chr->size, $bins);
+        my @scores;
+
+        foreach (@$stats) {
+          my $mean    = $_->{'validCount'}
+                          ? sprintf('%.2f', ($_->{'sumData'} / $_->{'validCount'}))
+                          : 0;
+
+          push @scores, $mean;
+
+          ## Get the maximum via each bin rather than for the entire dataset, 
+          ## so we can scale nicely on single-chromosome pages
+          my $bin_max = sprintf('%.2f', $_->{'maxVal'});
+          $max = $bin_max if $max < $bin_max;
+        }
+
+        ## Translate chromosome name back from its UCSC equivalent
+        (my $chr_name = $chr->name) =~ s/chr//;
+        $chr_name = 'MT' if $chr_name eq 'M';
+        $data{$chr_name} = \@scores;
+
+      }
+      $chr = $chr->next;
+    }
+  }
+  return (\%data, $max);
 }
 
 1;

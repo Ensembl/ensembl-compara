@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,10 +54,10 @@ sub content {
       'For more information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.</p>';
   } else {
     my $lrg         = $object->Obj;
-    my $param       = $hub->param('lrg');
+    my $lrg_gene    = $hub->param('lrg');
     my $transcript  = $hub->param('lrgt');
-    (my $href       = $external_urls->{'LRG'}) =~ s/###ID###//;
-    my $description = qq{LRG region <a rel="external" href="$href">$param</a>.};
+    (my $href       = $external_urls->{'LRG'}) =~ s/###ID###/$lrg_gene/;
+    my $description = qq{LRG region <a rel="external" href="$href">$lrg_gene</a>.};
     my @genes       = @{$lrg->get_all_Genes('lrg_import')||[]};
     my $display     = $genes[0]->display_xref();
 
@@ -65,7 +65,7 @@ sub content {
     my $slice       = $lrg->feature_Slice;
     my $source      = $genes[0]->source;
        $source      = 'LRG' if $source =~ /LRG/;
-    (my $source_url = $external_urls->{uc $source}) =~ s/###ID###//;
+    (my $source_url = $external_urls->{uc $source}) =~ s/\/###ID###//;
     
     if (scalar(@hgnc_xrefs)) {
       my $hgnc = $hgnc_xrefs[0]->display_id;
@@ -102,6 +102,9 @@ sub content {
     my $transcripts = $lrg->get_all_Transcripts(undef, 'LRG_import'); 
 
     my %distinct_tr = map { $_->external_name => 1} @$transcripts;
+    if (scalar (keys(%distinct_tr)) == 0) {
+      %distinct_tr = map { $_->stable_id => 1} @$transcripts;
+    }
 
     my $count  = scalar (keys(%distinct_tr));
     my $plural = 'transcripts';
@@ -116,7 +119,7 @@ sub content {
     my $show = (defined($tr_cookie) && $tr_cookie ne '' ) ? $tr_cookie eq 'open' : 'open';
 
     my $tr_line = $tr_html . sprintf(
-        ' <a rel="transcripts_table" class="button toggle no_img set_cookie %s" href="#" title="Click to toggle the transcript table">
+        ' <a rel="transcripts_table" class="button toggle _slide_toggle no_img set_cookie %s" href="#" title="Click to toggle the transcript table">
           <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
         </a>',
         $show ? 'open' : 'closed'
@@ -175,7 +178,7 @@ sub transcript_table {
     
   foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->display_id, $_ ] } @$transcripts) {
     my $transcript_length = $_->length;
-    my $t_label           = $_->external_name; # Because of LRG_321: several proteins per transcripti
+    my $t_label           = ($_->external_name && $_->external_name ne '') ? $_->external_name : $_->stable_id; # Because of LRG_321: several proteins per transcripti
     my $tsi               = $_->stable_id;
     my $protein           = 'No protein product';
     my $protein_length    = '-';

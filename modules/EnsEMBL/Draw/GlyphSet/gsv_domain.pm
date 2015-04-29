@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package EnsEMBL::Draw::GlyphSet::gsv_domain;
 
 use strict;
 
-use Sanger::Graphics::Bump;
+use EnsEMBL::Draw::Utils::Bump;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
@@ -122,7 +122,7 @@ sub _init {
        $bump_start = 0 if ($bump_start < 0);
     my $bump_end = $bump_start + int($Composite3->width()*$pix_per_bp) +1;
        $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
-    my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
+    my $row = & EnsEMBL::Draw::Utils::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
 
     $Composite3->y( $voffset + $Composite3->{'y'} + $row * ($h+$th*2+5) );
     $self->push( $Composite3 );

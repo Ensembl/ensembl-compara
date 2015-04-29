@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ sub href {
     range       => $feature ? undef : sprintf('%s:%s-%s', $f->seq_region_name, $start, $end),
     target      => $f->slice->seq_region_name,
     target_type => $f->type,
-    dbID        => $f->id,
+    dbID        => $f->dbID,
   });
 }
 

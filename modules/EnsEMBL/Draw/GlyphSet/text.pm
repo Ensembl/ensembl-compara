@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::text;
 
-### Generic text module, possibly used by LD and/or TSV?
+### Generic text module, used to create footer lines 
 
 use strict;
 
@@ -34,11 +34,11 @@ sub _init {
 
   my( $fontname, $fontsize ) = $self->get_font_details( 'text' );
   my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-  my $h = $res[3];
+  my $h = $res[3] + ($self->my_config('extra_height') || 0);
 
   my $text = $self->my_config('text');
   unless ($text)  {  $text =  $self->{'config'}->{'text'}; }
-  $self->push( Sanger::Graphics::Glyph::Text->new({
+  $self->push($self->Text({
     'x'         => 1, 
     'y'         => 2,
     'height'    => $h,

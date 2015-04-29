@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,10 +25,13 @@ use strict;
 
 use List::Util qw(reduce);
 
-use EnsEMBL::Web::Utils::UserData;
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::File::User;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
+
+sub wiggle_subtitle { join(', ',@{$_[0]->{'subtitle'}||[]}); }
 
 sub feature_group { my ($self, $f) = @_; return $f->id; }
 sub feature_label { my ($self, $f) = @_; return $f->id; }
@@ -37,11 +40,16 @@ sub draw_features {
   my ($self, $wiggle) = @_; 
   my %data = $self->features;
   
-  return 0 unless keys %data;
-  
+  ## Value to drop into error message
+  return $self->my_config('format').' features' unless keys %data;
+ 
+  $self->{'subtitle'} = []; 
   if ($wiggle) {
+    my $first = 1;
     foreach my $key ($self->sort_features_by_priority(%data)) {
-      my ($features, $config)     = @{$data{$key}};
+      $self->draw_space_glyph() unless $first;
+      $first = 0;
+      my ($features, $config)     = @{$data{$key}||[]};
       my $graph_type              = ($config->{'useScore'} && $config->{'useScore'} == 4) || ($config->{'graphType'} && $config->{'graphType'} eq 'points') ? 'points' : 'bar';
       my ($min_score, $max_score) = split ':', $config->{'viewLimits'};
       
@@ -53,14 +61,14 @@ sub draw_features {
         max_score    => $max_score, 
         score_colour => $config->{'color'},
         axis_colour  => 'black',
-        description  => $config->{'description'},
         graph_type   => $graph_type,
         use_feature_colours => (lc($config->{'itemRgb'}||'') eq 'on'),
       });
+      push @{$self->{'subtitle'}},$config->{'description'};
     }
   }
   
-  return 1;
+  return 0;
 }
 
 sub features {
@@ -68,31 +76,60 @@ sub features {
   my $container    = $self->{'container'};
   my $species_defs = $self->species_defs;
   my $sub_type     = $self->my_config('sub_type');
+  my $parser = EnsEMBL::Web::Text::FeatureParser->new($species_defs);
   my $features     = [];
   my %results;
   
   $self->{'_default_colour'} = $self->SUPER::my_colour($sub_type);
  
-  my $args = {
-    'slice'   => $container,
-    'format'  => $self->my_config('format'),
-    'url'     => $self->my_config('url'),
-    'file'    => $self->my_config('file'),
-    'content' => $self->my_config('data'),
-  };
- 
-  my $track_data = EnsEMBL::Web::Utils::UserData::build_tracks_from_file($species_defs, $args);
+  $parser->filter($container->seq_region_name, $container->start, $container->end);
+
+  $self->{'parser'} = $parser;
+
+  if ($sub_type eq 'single_feature') {
+    $parser->parse($self->my_config('data'), $self->my_config('format'));
+  }
+  else {
+    my %args = ('hub' => $self->{'config'}->hub);
+
+    if ($sub_type eq 'url') {
+      $args{'file'} = $self->my_config('url');
+      $args{'input_drivers'} = ['URL']; 
+    }
+    else {
+      $args{'file'} = $self->my_config('file');
+      if ($args{'file'} !~ /\//) { ## TmpFile upload
+        $args{'prefix'} = 'user_upload';
+      }
+    }
+
+    my $file = EnsEMBL::Web::File::User->new(%args);
+
+    my $response = $file->read;
+
+    if (my $data = $response->{'content'}) {
+      $parser->parse($data, $self->my_config('format'));
+    } else {
+      return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
+      warn "!!! ERROR READING FILE: ".$response->{'error'}[0];
+    }
+  } 
 
   ## Now we translate all the features to their rightful co-ordinates
-  while (my ($key, $T) = each (%$track_data)) {
-    my @A = @{$T->{'features'}};
-    warn ">>> KEY $key has FEATURES @A";
-    $self->map($container, $_) for @{$T->{'features'}};
+  while (my ($key, $T) = each (%{$parser->{'tracks'}})) {
+    $_->map($container) for @{$T->{'features'}};
  
     ## Set track depth a bit higher if there are lots of user features
     $T->{'config'}{'dep'} = scalar @{$T->{'features'}} > 20 ? 20 : scalar @{$T->{'features'}};
 
-=pod
+    ## Quick'n'dirty BED hack
+    foreach (@{$T->{'features'}}) {
+      if ($_->can('external_data') && $_->external_data && $_->external_data->{'BlockCount'}) {
+        $self->{'my_config'}->set('has_blocks', 1);
+        last;
+      }
+    }
+
     ### ensure the display of the VEP features using colours corresponding to their consequence
     if ($self->my_config('format') eq 'VEP_OUTPUT') {
       my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;      
@@ -139,9 +176,8 @@ sub features {
       }
     }
     else {
-=cut
       $features = $T->{'features'};
-    #}
+    }
 
     $results{$key} = [$features, $T->{'config'}];
   }
@@ -161,13 +197,13 @@ sub feature_title {
     $strand_name[$f->seq_region_strand]
   );
 
-  $title .= '; Hit start: '  . $f->hstart  if ($f->can('hstart') && $f->hstart);
-  $title .= '; Hit end: '    . $f->hend    if ($f->can('hend') && $f->hend);
-  $title .= '; Hit strand: ' . $f->hstrand if ($f->can('hstrand') && $f->hstrand);
-  $title .= '; Score: '      . $f->score   if($f->can('score') && $f->score);
-  
-  my %extra = $f->can('extra_data') && $f->extra_data && ref $f->extra_data eq 'HASH' ? %{$f->extra_data} : ();
-  
+  $title .= '; Hit start: ' . $f->hstart if $f->hstart;
+  $title .= '; Hit end: ' . $f->hend if $f->hend;
+  $title .= '; Hit strand: ' . $f->hstrand if $f->hstrand;
+  $title .= '; Score: ' . $f->score if $f->score; 
+ 
+  my %extra = $f->extra_data && ref $f->extra_data eq 'HASH' ? %{$f->extra_data} : (); 
+ 
   foreach my $k (sort keys %extra) {
     next if $k eq '_type';
     next if $k eq 'item_colour';
@@ -195,29 +231,6 @@ sub my_colour {
   my ($self, $k, $v) = @_;
   my $c = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'color'} || $self->{'_default_colour'};
   return $v eq 'join' ?  $self->{'config'}->colourmap->mix($c, 'white', 0.8) : $c;
-}
-
-sub map {
-  my( $self, $slice, $f ) = @_;
-  my $chr = $f->slice->seq_region_name();
-  $chr=~s/^chr//;
-  return () unless $chr eq $slice->seq_region_name;
-  my $start = $f->start();
-  my $slice_end = $slice->end();
-  return () unless $start <= $slice_end;
-  my $end   = $f->end();
-  my $slice_start = $slice->start();
-  return () unless $slice_start <= $end;
-  $self->slide($f, 1 - $slice_start );
-
-  if ($slice->strand == -1) {
-    my $flip = $slice->length + 1;
-    my ($start, $end) = ($f->start, $f->end);
-    $f->start($flip - $end);
-    $f->end($flip - $start);
-  }
-
-  return $f;
 }
 
 sub slide    {

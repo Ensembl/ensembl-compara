@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ sub _dynamic_require {
 
   return 'Classname parameter missing' unless $classname;
 
-  unless (exists $INC{$classname} || exists $FAILED_INC{$classname}) { # if neither already loaded nor already failed
+  unless (exists $FAILED_INC{$classname}) { # if not already failed
     eval "require $classname";
     if ($@) {
       $FAILED_INC{$classname} = "Module '$classname' could not be loaded: $@";

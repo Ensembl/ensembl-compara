@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -384,7 +384,7 @@ sub save_config {
     
     foreach (qw(view_config image_config)) {
       ($params{'code'}, $params{'link'}) = $_ eq 'view_config' ? ($view_config, [ 'image_config', $image_config ]) : ($image_config, [ 'view_config', $view_config ]);
-      
+ 
       my ($saved, $deleted) = $adaptor->save_config(%params, %{$existing{$_} || {}}, type => $_, record_type_id => $record_type_id, data => $adaptor->get_config($_, $params{'code'}));
       
       push @links, { id => $saved, code => $params{'code'}, link => $params{'link'}, set_ids => $params{'set_ids'} };
@@ -414,7 +414,7 @@ sub save_config {
 }
 
 sub _use {
-  ### Wrapper for EnsEMBL::Web::Root::dynamic_use.
+  ### Wrapper for EnsEMBL::Root::dynamic_use.
   ### Returns either a newly created module or the error detailing why the new function failed.
   ### Skips "Can't locate" errors - these come from trying to use non-existant modules in plugin directories and can be safely ignored.
   

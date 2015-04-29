@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,19 +44,19 @@ sub populate_tree {
     { 'availability' => 'either' }
   );
 
-  my $T = $self->create_node('SupportingEvidence', 'Supporting evidence ([[counts::evidence]])',
+  my $T = $self->create_node('SupportingEvidence', 'Supporting evidence',
    [qw( evidence EnsEMBL::Web::Component::Transcript::SupportingEvidence )],
     { 'availability' => 'transcript has_evidence', 'concise' => 'Supporting evidence' }
   );
   
-  $T->append($self->create_subnode('SupportingEvidence/Alignment', '',
+  $T->append($self->create_subnode('SupportingEvidence/Alignment', 'Alignment of Supporting Evidence',
     [qw( alignment EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment )],
     { 'no_menu_entry' => 'transcript' }
   ));
   
   my $seq_menu = $self->create_submenu('Sequence', 'Sequence');
   
-  $seq_menu->append($self->create_node('Exons', 'Exons ([[counts::exons]])',
+  $seq_menu->append($self->create_node('Exons', 'Exons',
     [qw( exons EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet )],
     { 'availability' => 'either has_exons', 'concise' => 'Exons' }
   ));
@@ -73,30 +73,30 @@ sub populate_tree {
   
   my $record_menu = $self->create_submenu('ExternalRecords', 'External References');
 
-  my $sim_node = $self->create_node('Similarity', 'General identifiers ([[counts::similarity_matches]])',
+  my $sim_node = $self->create_node('Similarity', 'General identifiers',
     [qw( similarity EnsEMBL::Web::Component::Transcript::SimilarityMatches )],
     { 'availability' => 'transcript has_similarity_matches', 'concise' => 'General identifiers' }
   );
   
-  $sim_node->append($self->create_subnode('Similarity/Align', '',
+  $sim_node->append($self->create_subnode('Similarity/Align', 'Alignment of External Feature',
    [qw( alignment EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment )],
     { 'no_menu_entry' => 'transcript' }
   ));
   
   $record_menu->append($sim_node);
   
-  $record_menu->append($self->create_node('Oligos', 'Oligo probes ([[counts::oligos]])',
+  $record_menu->append($self->create_node('Oligos', 'Oligo probes',
     [qw( arrays EnsEMBL::Web::Component::Transcript::OligoArrays )],
     { 'availability' => 'transcript database:funcgen has_oligos', 'concise' => 'Oligo probes' }
   ));
   
-  my $go_menu = $self->create_submenu('GO', 'Ontology ([[counts::go]])');
-  $go_menu->append($self->create_node('Ontology/Image', 'GO graph ([[counts::go]])',
+  my $go_menu = $self->create_submenu('GO', 'Ontology');
+  $go_menu->append($self->create_node('Ontology/Image', 'GO graph',
     [qw( go EnsEMBL::Web::Component::Transcript::Goimage )],
     { 'availability' => 'transcript has_go', 'concise' => 'GO graph' }
   ));
 
-  $go_menu->append($self->create_node('Ontology/Table', 'GO table ([[counts::go]])',
+  $go_menu->append($self->create_node('Ontology/Table', 'GO table',
     [qw( go EnsEMBL::Web::Component::Transcript::Go )],
     { 'availability' => 'transcript has_go', 'concise' => 'GO table' }
   ));
@@ -134,7 +134,7 @@ sub populate_tree {
     { 'availability' => 'either translation', 'concise' => 'Protein summary' }
   ));
   
-  my $D = $self->create_node('Domains', 'Domains & features ([[counts::prot_domains]])',
+  my $D = $self->create_node('Domains', 'Domains & features',
     [qw( domains EnsEMBL::Web::Component::Transcript::DomainSpreadsheet )],
     { 'availability' => 'transcript has_domains', 'concise' => 'Domains & features' }
   );
@@ -146,7 +146,7 @@ sub populate_tree {
   
   $prot_menu->append($D);
   
-  $prot_menu->append($self->create_node('ProtVariations', 'Variations ([[counts::prot_variations]])',
+  $prot_menu->append($self->create_node('ProtVariations', 'Variations',
     [qw( protvars EnsEMBL::Web::Component::Transcript::ProteinVariations )],
     { 'availability' => 'either database:variation has_variations', 'concise' => 'Variations' }
   ));

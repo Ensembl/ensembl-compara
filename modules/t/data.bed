@@ -1,0 +1,6 @@
+browser position chr19:6704537-7704536
+track name="BACEndPairs" description="BAC end pairs around the human INSR gene" visibility=2 url=http://www.ncbi.nlm.nih.gov/genome/clone/query.cgi?EXPR=$$
+chr19 6603909 6764455 RP11-635J19 1000  - 6603909 6764455 0 2 407,441,  0,160105,
+chr19 6625260 6722355 CTD-2240J22 1000  + 6625260 6722355 0 2 289,234,  0,96861,
+chr19 6635584 6803135 RP11-1146A2 1000  + 6635584 6803135 0 2 344,318,  0,167233,
+chr19 6669680 6755686 CTD-3159G9  1000  - 6669680 6755686 0 2 419,479,  0,85527,

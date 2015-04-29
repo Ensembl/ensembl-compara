@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,21 +26,11 @@ use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $self = shift;
-  my $hash = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'} || {}; 
   
   my $defaults = {
     collapsability => 'gene',
   };
      
-  #getting the clade colour for each species type (tree background colour based on the species type)
-  foreach my $name (keys %$hash) {
-    while (my ($key, $value) = each %{$hash->{$name}}) {
-      $key   =~ s/^genetree_//;
-      $value = join '_', @$value if ref $value eq 'ARRAY';
-      $defaults->{"group_${name}_$key"} = $value;
-    }
-  }
-  
   $self->set_defaults($defaults);
   $self->add_image_config('speciestreeview', 'nodas');
   $self->code  = join '::', grep $_, 'Gene::SpeciesTree', $self->hub->referer->{'ENSEMBL_FUNCTION'};  

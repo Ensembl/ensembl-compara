@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Transcript::Goimage;
 
 use strict;
 
-use EnsEMBL::Web::Tools::OntologyVisualisation;
+use EnsEMBL::Web::Document::Image::Ontology;
 use Bio::EnsEMBL::DBSQL::OntologyTermAdaptor;
 
 use base qw(EnsEMBL::Web::Component::Transcript);
@@ -36,51 +36,17 @@ sub content {
   my $hub                         = $self->hub;
   my $object                      = $self->object;
   my $species_defs                = $hub->species_defs;  
-  my $ontology_term_adaptor       = $hub->get_databases('go')->{'go'}->get_GOTermAdaptor;
-  my $go_sub_dir                  = '/GO/';  
-  my $go_dir                      = $species_defs->ENSEMBL_TMP_DIR_IMG . $go_sub_dir;
-  my $go_url                      =  $species_defs->ENSEMBL_TMP_URL_IMG . $go_sub_dir;
-  # supply no default url pattern - if we default to GO we get broken links when a non-GO 
-  # ontology term exists but there is no external URL for that ontology.
-  my $go_id_url                   = ''; 
-#  my $go_id_url                   = $species_defs->ENSEMBL_EXTERNAL_URLS->{'GO'};
-  my $get_relation_type_colour    = sub { return $species_defs->colour('goimage', shift); };
-  my $image_background_colour     = $species_defs->colour('goimage', 'image_background');
-  my $node_fill_colour            = $species_defs->colour('goimage', 'node_fill');
-  my $node_font_colour            = $species_defs->colour('goimage', 'node_font');
-  my $node_border_colour          = $species_defs->colour('goimage', 'node_border');
-  my $non_highlight_fill_colour   = $species_defs->colour('goimage', 'non_highlight_fill');
-  my $non_highlight_font_colour   = $species_defs->colour('goimage', 'non_highlight_font');
-  my $non_highlight_border_colour = $species_defs->colour('goimage', 'non_highlight_border');    
-  my $goslim_goa_fill             = $species_defs->colour('goimage', 'goslim_goa_fill');
-  my $goslim_goa_font             = $species_defs->colour('goimage', 'goslim_goa_font');
-  my $goslim_goa_border           = $species_defs->colour('goimage', 'goslim_goa_border');
-  my $node_fill_text              = $species_defs->colour('goimage', 'node_fill_text');
-  my $goslim_goa_fill_text        = $species_defs->colour('goimage', 'goslim_goa_fill_text');
-  $node_fill_text                 =~ s/_/ /g;
-  $goslim_goa_fill_text           =~ s/_/ /g;
-  
-  my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new(
-    $ontology_term_adaptor,
-    $go_dir,
-    $go_url,
-    $go_id_url,
-    $image_background_colour,
-    $node_fill_colour,
-    $node_font_colour,
-    $node_border_colour,
-    $non_highlight_fill_colour,
-    $non_highlight_font_colour,
-    $non_highlight_border_colour,
-    $goslim_goa_fill,
-    $goslim_goa_font,
-    $goslim_goa_border,
-    $get_relation_type_colour
-  );
-  
+
   my %clusters = $species_defs->multiX('ONTOLOGIES');
   return "<p>Ontology database not found.</p>" unless %clusters;
 
+  my $ontology_term_adaptor       = $hub->get_databases('go')->{'go'}->get_GOTermAdaptor;
+  
+  my $ontovis = EnsEMBL::Web::Document::Image::Ontology->new(
+    $hub, undef,
+    {'_ontology_term_adaptor' => $ontology_term_adaptor},
+  );
+  
   my @ontologies;
 
   foreach my $oid (sort keys %clusters) {
@@ -104,16 +70,16 @@ sub content {
   if (%$go_hash) {
     $html .= sprintf(
       '<p><strong>The chart shows the ancestry of the ontology terms that have been annotated to this entity. <br/>
-The nodes are clickable links to the ontology websites. </strong>
-<br/><strong>Terms:</strong> <span style="width:20px"> &nbsp; </span> <span style="color:#ffffff;background:%s"> Annotated terms </span> &nbsp;<span style="width:20px">&nbsp;</span>',
+The nodes are clickable links to the ontology websites. </strong></p>
+<p><strong>Key:</strong> <span style="width:20px;padding:4px"> &nbsp; </span> <span style="color:#ffffff;background:%s;padding:4px"> Annotated terms </span> &nbsp;<span style="width:20px">&nbsp;</span>',
       $ontovis->node_fill_colour
     );
     
     #if (%$go_slim_hash) {
     if (@goslim_subset){
       $html .= sprintf(
-        ' &nbsp;<span style="border:2px solid orange">Generic GO Slim terms </span>',
-        $ontovis->highlighted_fill_colour
+        ' &nbsp;<span style="border:1px solid %s;padding:4px">Generic GO Slim terms </span>',
+        $ontovis->highlighted_border_colour
       )
     }
     

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,82 +20,76 @@ package EnsEMBL::Web::ViewConfig::Transcript::ExonsSpreadsheet;
 
 use strict;
 
+use EnsEMBL::Web::Constants;
+
 use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
 
   $self->set_defaults({
-    panel_exons      => 'on',
-    panel_supporting => 'on',
-    sscon            => 25,
-    flanking         => 50,
-    fullseq          => 'no',
-    oexon            => 'no',
-    line_numbering   => 'off',
-    snp_display      => 'off',
+    sscon           => 25,
+    flanking        => 50,
+    fullseq         => 'off',
+    exons_only      => 'off',
+    line_numbering  => 'off',
+    snp_display     => 'off',
   });
 
   $self->title = 'Exons';
   $self->SUPER::init;
 }
 
-sub form {
+sub field_order {
   my $self = shift;
-    
-  $self->add_form_element({
+  return qw(flanking display_width sscon fullseq exons_only line_numbering snp_display hide_long_snps consequence_filter);
+}
+
+sub form_fields {
+  my $self = shift;
+   
+  my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
+  my $fields = {};
+
+  $markup_options->{'flanking'} = {
     type  => 'NonNegInt',
     label => 'Flanking sequence at either end of transcript',
     name  => 'flanking'
-  });
+  };
   
-  $self->add_form_element({
-    type   => 'DropDown',
-    select => 'select',
-    name   => 'display_width',
-    label  => 'Number of base pairs per row',
-    values => [
-      map {{ value => $_, caption => "$_ bps" }} map $_*15, 2..8
-    ]
-  });
-  
-  $self->add_form_element({
+  $markup_options->{'sscon'} = {
     type  => 'NonNegInt',
     label => 'Intron base pairs to show at splice sites', 
     name  => 'sscon'
-  });
+  };
   
-  $self->add_form_element({
+  $markup_options->{'fullseq'} = {
     type  => 'CheckBox',
     label => 'Show full intronic sequence',
     name  => 'fullseq',
-    value => 'yes'
-  });
+    value => 'on',
+  };
   
-  $self->add_form_element({
-    type  => 'CheckBox',
-    label => 'Show exons only',
-    name  => 'oexon',
-    value => 'yes'
-  });
-  
-  $self->add_form_element({
-    type   => 'DropDown', 
-    select => 'select',
-    name   => 'line_numbering',
-    label  => 'Line numbering',
-    values => [
+  $markup_options->{'line_numbering'}{'values'} = [
       { value => 'gene',  caption => 'Relative to the gene'            },
       { value => 'cdna',  caption => 'Relative to the cDNA'            },
       { value => 'cds',   caption => 'Relative to the coding sequence' },
       { value => 'slice', caption => 'Relative to coordinate systems'  },
       { value => 'off',   caption => 'None'                            },
-    ]
-  });
+  ];
   
-  $self->variation_options({ populations => [ 'fetch_all_LD_Populations' ], snp_display => [{ value => 'exon', caption => 'In exons only' }], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
-  
-  $_->set_flag($self->SELECT_ALL_FLAG) for @{$self->get_form->fieldsets};
+  $self->add_variation_options($markup_options, { populations => [ 'fetch_all_LD_Populations' ], snp_display => [{ value => 'exon', caption => 'In exons only' }], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
+ 
+  ## THIS DOESN'T SEEM TO HAVE ANY EFFECT! 
+  #$_->set_flag($self->SELECT_ALL_FLAG) for @{$self->get_form->fieldsets};
+
+  foreach ($self->field_order) {
+    next unless $markup_options->{$_};
+    $fields->{$_} = $markup_options->{$_};
+    $fields->{$_}{'value'} = $self->get($_);
+  }
+
+  return $fields;
 }
 
 

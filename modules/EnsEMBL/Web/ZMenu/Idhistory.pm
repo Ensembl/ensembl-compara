@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::Idhistory;
 
 use strict;
 
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -72,7 +72,7 @@ sub archive_link {
      $url = $hub->url({ type => $type, action => $action, $p => $name });
   } else {
     my $release_id   = $archive->release;
-    my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+    my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
     my $release = $adaptor->fetch_release($release_id); 
     my $archive_site = $release ? $release->{'archive'} : '';
     

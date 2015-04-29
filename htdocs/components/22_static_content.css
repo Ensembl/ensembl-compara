@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,9 @@ div#doc_search .button  { vertical-align:middle; }
   border-radius:8px; -moz-border-radius: 8px; -webkit-border-radius: 8px;}
 
 div.species-news p.headline { margin:0; padding:4px 0; font-size:110%; min-height:40px; }
-h2.news-category { margin-top:2em; color:[[MH_BORDER]]!important; }
+h2.news-category { margin-top:1em; color:[[MH_BORDER]]!important; }
+h3.news-subcategory { color:[[MH_BORDER]]!important; }
+div.news-item { margin-bottom:3em; }
 
 ul#favourites_list li, ul#species_list li { cursor:move; }
 
@@ -89,6 +91,8 @@ div.species-box     { margin: 0 0 16px; overflow: hidden; }
 img.species-img,
 div.species-box img { display: block; height: 48px; width: 48px; border-radius: 7px; -moz-border-radius: 7px; -webkit-border-radius: 7px; }
 div.species-box span.sp-img { float: left; padding: 0; margin-right: 8px; border: [[PANEL_BORDER]] solid 1px; border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; background-color: [[PANEL_BORDER]]; }
+
+div.annotation-stats  { margin-left:16px; }
 
 /*----------------------------------------------------------------------
   Species homepages

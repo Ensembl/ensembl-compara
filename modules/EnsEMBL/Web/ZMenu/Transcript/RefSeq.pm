@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ sub content {
     label    => $gene_id,
     link     => $hub->get_ExtURL_link($gene_id, 'REFSEQ_GENEIMP', $gene_id),
     abs_url  => 1,
-    position => 2,
+    position => 1,
   });
 
   my $biotype = ucfirst lc $gene->biotype;
@@ -62,12 +62,17 @@ sub content {
       label    => $translation_id,
       link     => $hub->get_ExtURL_link($translation_id, 'REFSEQ_PROTIMP', $translation_id),
       abs_url  => 1,
-      position => 3
+      position => 2
     });
   }
 
   $self->delete_entry_by_type('Gene');
   $self->delete_entry_by_type('Transcript');
+  $self->delete_entry_by_type('Exons');
+  $self->delete_entry_by_type('Exon');
+  $self->delete_entry_by_value('cDNA Sequence');
+  $self->delete_entry_by_value('Protein Variations');
+
 }
 
 1;

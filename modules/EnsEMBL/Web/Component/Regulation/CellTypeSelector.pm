@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,11 +42,6 @@ sub content_ajax {
   my $params      = $hub->multi_params; 
 
   my $context       = $self->hub->param('context') || 200;
-  my $object_slice  = $object->get_bound_context_slice($context);
-     $object_slice  = $object_slice->invert if $object_slice->strand < 1;
-  my $api_data = $object->get_evidence_data($object_slice,{ cells_only => 1 });
-  my $av_cells = $api_data->{'cells'};
-
   my $shown_cells = $self->shown_cells($hub->param('image_config'));
 
   my (%shown_cells,%cell_categories);

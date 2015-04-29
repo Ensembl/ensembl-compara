@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,12 +23,6 @@ use strict;
 use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::Element);
-
-sub new {
-  my $self = shift->SUPER::new(@_);
-  $self->set('BLAST Search') if $self->hub->type eq 'blastview'; ## FIXME - this is a temporary hack until we rewrite the BLAST front end
-  return $self;
-}
 
 sub set       { $_[0]{'title'} = $_[1]; }
 sub get       { return $_[0]{'title'};  }

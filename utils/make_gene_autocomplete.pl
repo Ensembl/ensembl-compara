@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -90,8 +90,9 @@ foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
     $sth = $adaptor->prepare(
       'SELECT ad.analysis_id, ad.web_data 
         FROM analysis_description ad, analysis a 
-        WHERE a.analysis_id = ad.analysis_id AND 
-              a.logic_name != "estgene"      AND 
+        WHERE a.analysis_id = ad.analysis_id      AND 
+              a.logic_name != "estgene"           AND 
+              a.logic_name NOT LIKE "%refseq%"    AND 
               ad.displayable = 1'
     );
     

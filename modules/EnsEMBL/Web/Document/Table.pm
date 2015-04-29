@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ use JSON qw(from_json);
 use Scalar::Util qw(looks_like_number);
 use HTML::Entities qw(encode_entities);
 
-use Sanger::Graphics::ColourMap;
+use EnsEMBL::Draw::Utils::ColourMap;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -55,7 +55,6 @@ sub new {
 sub session    :lvalue { $_[0]{'session'};    }
 sub code       :lvalue { $_[0]{'code'}        }
 sub format     :lvalue { $_[0]{'format'};     }
-sub export_url :lvalue { $_[0]{'export_url'}; }
 sub filename   :lvalue { $_[0]{'filename'};   }
 
 sub has_rows { return ! !@{$_[0]{'rows'}}; }
@@ -233,13 +232,6 @@ sub render {
     };
   }
    
-  if ($self->export_url) {
-    $table .= sprintf(
-      '<div class="other_tool"><p><a class="export" href="%s;filename=%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>',
-      $self->export_url, $self->filename
-    );
-  }
-  
   # A wrapper div is needed for data tables so that export and config forms can be found by checking the table's siblings
   if ($data_table) {
     $wrapper = qq{ class="$wrapper"} if $wrapper; 
@@ -327,8 +319,9 @@ sub data_table_config {
   my %columns        = map { $_->{'key'} => $i++ } @{$self->{'columns'}};
   my $session_data   = $self->session ? $self->session->get_data(type => 'data_table', code => $code) : {};
   my $sorting        = $session_data->{'sorting'} ?        from_json($session_data->{'sorting'})        : $self->{'options'}{'sorting'}        || [];
-  my $hidden         = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : $self->{'options'}{'hidden_columns'} || [];
-  my $default_hidden = $self->{'options'}{'hidden_columns'} ? $self->jsonify({ map { $_ => 1 } @{$self->{'options'}{'hidden_columns'}} }) : '';
+  my $hidden_cols    = [ keys %{{ map { $_ => 1 } @{$self->{'options'}{'hidden_columns'} || []}, map { $_->{'hidden'} ? $columns{$_->{'key'}} : () } @{$self->{'columns'}} }} ];
+  my $hidden         = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : $hidden_cols;
+  my $default_hidden = $self->{'options'}{'hidden_columns'} ? $self->jsonify({ map { $_ => 1 } @$hidden_cols }) : '';
   my $config         = sprintf '<input type="hidden" name="code" value="%s" />', encode_entities($code);
   my $sort           = [];
   
@@ -371,7 +364,7 @@ sub process {
   my (@head, @body, $colourmap, @gradient);
   
   if ($heatmap) {
-    $colourmap = Sanger::Graphics::ColourMap->new;
+    $colourmap = EnsEMBL::Draw::Utils::ColourMap->new;
     @gradient  = $colourmap->build_linear_gradient(@{$heatmap->{'settings'}});
   } 
   
@@ -387,7 +380,7 @@ sub process {
     
     if ($col->{'help'}) {
       delete $col->{'title'};
-      $label = qq(<span class="ht _ht" title="$col->{'help'}">$label</span>);
+      $label = sprintf '<span class="ht _ht"><span class="_ht_tip">%s</span>%s</span>', encode_entities($col->{'help'}), $label;
     }
     
     push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq( $_="$col->{$_}") : () } qw(id class title style colspan rowspan)), $label;

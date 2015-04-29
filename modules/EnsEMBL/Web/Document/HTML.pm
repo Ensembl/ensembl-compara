@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ use strict;
 
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use LWP::UserAgent;
 
 use base qw(EnsEMBL::Web::Root);
@@ -98,6 +99,24 @@ sub new_panel {
     );
   
   return undef;
+}
+
+sub news_header {
+  my ($self, $hub, $release_id) = @_;
+  my $header_text;
+
+  if ($hub->species_defs->ENSEMBL_SUBTYPE && $hub->species_defs->ENSEMBL_SUBTYPE eq 'GRCh37') {
+    $header_text = 'Ensembl GRCh37';
+  }
+  else {
+    my $sitename = join(' ', $hub->species_defs->ENSEMBL_SITETYPE, $hub->species_defs->ENSEMBL_SUBTYPE);
+    my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
+    my $release      = $adaptor->fetch_release($release_id);
+    my $release_date = $release->{'date'};
+    my $release_details = $release_date ? "$release_id ($release_date)" : $release_id;
+    $header_text = sprintf('%s Release %s', $sitename, $release_details);
+  }
+  return $header_text;
 }
 
 sub get_rss_feed {

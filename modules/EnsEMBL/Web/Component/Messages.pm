@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,7 +57,9 @@ sub content {
   
   $session->purge_data(type => 'message', code => $_->{'code'}) for @data;
   
-  return qq{<div class="session_messages">$html</div>};
+  return $self->renderer->{'_modal_dialog_'}
+    ? qq(<div class="session_messages">$html</div>)
+    : qq(<div class="session_messages js_panel"><input type="hidden" class="panel_type" value="Message">$html</div>);
 }
 
 1;

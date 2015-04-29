@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ sub content {
     { title => 'Synteny',            img => 'compara_syn',   url => $availability->{'chromosome'} && $availability->{'has_synteny'} ? $hub->url({ action => 'Synteny'                                 }) : '' },
   ];
 
-  my $html  = $self->SUPER::content;
+  my $html  = $self->SUPER::content('portal-small');
      $html .= '<p>';
   
   if ($gene) {

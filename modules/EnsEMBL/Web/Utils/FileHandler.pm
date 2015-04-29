@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ sub file_get_contents {
   ## @return List of lines of files
   my $filename    = shift;
 
-  throw exception('FileNotFound', "File $filename could not be found") if !-e $filename || -d $filename;
+  throw exception('FileHandlerException', "File $filename could not be found") if !-e $filename || -d $filename;
 
   my $file_handle = get_file_handle($filename, 'r');
   my @lines       = $file_handle->getlines;
@@ -44,13 +44,15 @@ sub file_get_contents {
 sub file_put_contents {
   ## Write the content to the file
   ## Creates a new file if not existing one
-  ## Overrites any existing content if file existing
+  ## Overwrites any existing content if file existing
   ## @param  File location
   ## @params List of text to be written
+  ## @return 1 if successful
   my $file_handle = get_file_handle(shift, 'w');
-
-  $file_handle->print(@_);
+  my $return      = $file_handle->print(@_);
   $file_handle->close;
+
+  return $return;
 }
 
 sub file_append_contents {
@@ -58,10 +60,12 @@ sub file_append_contents {
   ## Creates a new file if not existing one
   ## @param  File location
   ## @params List of lines of text to be appended
+  ## @return 1 if successful
   my $file_handle = get_file_handle(shift, 'a');
-
-  $file_handle->print(@_);
+  my $return      = $file_handle->print(@_);
   $file_handle->close;
+
+  return $return;
 }
 
 sub get_file_handle {
@@ -70,7 +74,7 @@ sub get_file_handle {
   my ($file, $arg) = @_;
 
   my $file_handle = FileHandle->new;
-  $file_handle->open($file, $arg);
+  $file_handle->open($file, $arg) or throw exception('FileHandlerException', "File $file could not be opened");
   return $file_handle;
 }
 

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -87,6 +87,21 @@ sub content {
     label  => $feature->supporting_information,
   });
 
+  my $feature_view_link = $self->hub->url({
+                              type   => 'Location',
+                              action => 'Genome',
+                              ftype  => 'RegulatoryFactor',
+                              fset   => $feature->feature_set->name,
+                              id     => $feature->display_label,
+                            });
+
+
+  if ($feature_view_link){
+    $self->add_entry({
+      label_html => 'View all locations',
+      link       => $feature_view_link,
+    });
+  }
 }
 
 1;

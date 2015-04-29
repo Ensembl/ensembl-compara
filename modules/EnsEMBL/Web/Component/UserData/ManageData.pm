@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ use Digest::MD5 qw(md5_hex);
 use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Data::Session;
-use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::File::User;
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -68,17 +68,31 @@ sub content {
       ## check if we have current assemblies
       $old_assemblies++ if (scalar(@assemblies) < 1); 
       foreach (@assemblies) {
-        $old_assemblies++ if ($_ ne $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME'));
+        $old_assemblies++ if ($_ ne $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_VERSION'));
       }
       my $user_record = ref($file) =~ /Record/;
       my $sharers     = $file->{'code'} =~ /_$session_id$/ ? EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'}) : 0;
          $sharers-- if $sharers && !$file->{'user_id'}; # Take one off for the original user
-      
-      if ($file->{'filename'} && !EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'}, $file->{'prefix'} ? (prefix => $file->{'prefix'}) : (), extension => $file->{'extension'})->exists) {
-        $file->{'name'} .= ' (File could not be found)';
-        $not_found++;
+     
+      if ($file->{'filename'}) {
+        my %args = (
+                    'hub'             => $hub, 
+                    'file'            => $file->{'file'}, 
+                    'extension'       => $file->{'extension'}
+                    );
+        if ($file->{'prefix'}) {
+          $args{'prefix'} = $file->{'prefix'};
+        }
+        else {
+          $args{'read_datestamp'} = $file->{'datestamp'};
+        }
+        my $user_file = EnsEMBL::Web::File::User->new(%args);
+        if (!$user_file->exists) {
+          $file->{'name'} .= ' (File could not be found)';
+          $not_found++;
+        }
       }
-      
+
       my $row = ref($file) =~ /DAS/ || $user_record && $file->type eq 'das' ? $self->table_row_das($file, $user_record) : $self->table_row($file, $sharers);
       
       my ($type, $id) = $file->{'analyses'} =~ /^(session|user)_(\d+)_/;
@@ -106,7 +120,7 @@ sub content {
   $html  .= $self->group_shared_data;
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html ||= '<p class="space-below">You have no custom data.</p>';
-  $html  .= sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add a custom track</a></p>', $hub->url({'action'=>'SelectFile'});
+  $html  .= sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add your data</a></p>', $hub->url({'action'=>'SelectFile'});
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
   my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
@@ -237,7 +251,7 @@ sub table_row {
 
   ## Link for valid datahub  
   my ($config_link, $conf_template);
-  if ($file->{'format'} eq 'DATAHUB' && $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME') eq $file->{'assembly'}) {
+  if ($file->{'format'} eq 'DATAHUB' && $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_VERSION') eq $file->{'assembly'}) {
     $conf_template  = $self->_icon({ class => 'config_icon', 'title' => 'Configure hub tracks for '.$hub->species_defs->get_config($file->{'species'}, 'SPECIES_COMMON_NAME') });
     my $sample_data = $hub->species_defs->get_config($file->{'species'}, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};

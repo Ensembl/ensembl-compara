@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -225,7 +225,7 @@ sub _init {
     my $vc_band_start = $band->start + $v_offset;
     my $vc_band_end   = $band->end   + $v_offset;
     
-    next if $vc_band_end - $vc_band_start < 280000; # hack to make zfish annotated regions look wider on the ideogram
+#    next if $vc_band_end - $vc_band_start < 280000; # hack to make zfish annotated regions look wider on the ideogram
     
     my $stain = $band->stain;
     my $R     = $vc_band_start;

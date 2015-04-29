@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ div.config div.config_matrix div.subtracks ul.config_menu           { margin: 0;
 div.config div.config_matrix div.subtracks ul li.default            { position: relative; }
 div.config div.config_matrix div.subtracks ul li.track div          { display: none; }
 div.config div.config_matrix div.subtracks ul li.default div        { display: block; position: absolute; height: 17px; width: 17px; top: 2px; left: 2px; }
+div.config div.config_matrix div.subtracks ul li.track { padding: 3px 0 2px 25px; top: inherit; left: inherit; width: inherit; height: inherit; }
 div.config div.config_matrix div.subtracks div.select_all           { margin: 0 0 3px 0; }
 div.config div.config_matrix div.subtracks div.select_all strong    { padding: 2px 0; }
 div.config div.config_matrix div.subtracks div.select_all .current  { font-weight: bold; }
@@ -154,6 +155,7 @@ div.config div.config_matrix .tutorial.video            { top: 45px; right: 5px;
 div.config div.config_matrix .tutorial.video a          { color: #FFF!important; }
 div.config div.config_matrix .tutorial.video:before,    
 div.config div.config_matrix .tutorial.video:after      { display: none; }
+div.config div.config_matrix span.close                 { background: url("/i/close.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0); cursor: pointer; height: 20px; position: absolute; right: -12px; top: -7px; width: 20px; }
 
 body.ie67  div.config div.config_matrix .tutorial,
 body.ie67  div.config div.config_matrix .toggle_tutorial,

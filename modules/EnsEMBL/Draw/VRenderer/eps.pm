@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ limitations under the License.
 package EnsEMBL::Draw::VRenderer::eps;
 
 ### Renders vertical ideograms in EPS format
-### Modeled on Sanger::Graphics::Renderer::eps
+### Modeled on EnsEMBL::Draw::Renderer::eps
 
 use strict;
 
@@ -27,6 +27,9 @@ use strict;
 use base qw(EnsEMBL::Draw::VRenderer);
 
 sub init_canvas {
+######## DEPRECATED ################
+warn "DEPRECATED MODULE - will be removed in release 81.";
+####################################
   my ($self, $config, $im_width, $im_height) = @_;
 
   $self->{'colours'} = {};
@@ -38,9 +41,7 @@ sub init_canvas {
 
   my $canvas = qq(%!PS-Adobe-3.0 EPSF-3.0
 %%BoundingBox: 0 0 $im_width $im_height
-% Created by Sanger::Graphics::Renderer::eps
-%  Contact http://www.ensembl.org/
-%  Author: js5\@sanger.ac.uk
+% Created by EnsEMBL::Draw::VRenderer::eps
 %%%%%%%%%
 % set default font
 %

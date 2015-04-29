@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -79,12 +79,12 @@ sub gene_phenotypes {
           $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
         }
         my $locs = sprintf(
-            '<a href="%s">View on Karyotype</a>',
+            '<a href="%s" class="karyotype-link">View on Karyotype</a>',
             $hub->url({
               type    => 'Phenotype',
               action  => 'Locations',
               ph      => $pf->phenotype->dbID
-             })
+             }),
         );
         # display one row for phenotype associated with male and female strain
         my $pf_id = $pf->id;
@@ -114,12 +114,12 @@ sub gene_phenotypes {
         }
         
         my $locs = sprintf(
-          '<a href="%s">View on Karyotype</a>',
+          '<a href="%s" class="karyotype_link">View on Karyotype</a>',
           $hub->url({
             type    => 'Phenotype',
             action  => 'Locations',
             ph      => $pf->phenotype->dbID
-          })
+          }),
         );
       
         push @rows, { source => $source, phenotype => $phen, locations =>  $locs};

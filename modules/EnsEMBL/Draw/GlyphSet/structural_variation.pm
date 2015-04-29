@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ sub features {
     return $features_list;
   }
   else {
-    my $track_name = $self->my_config('caption');
+    my $track_name = $self->my_config('name');
     $self->errorTrack("No $track_name data for this region");
     return [];
   }
@@ -334,7 +334,9 @@ sub href {
     type => 'StructuralVariation',
     sv   => $f->variation_name,
     svf  => $f->dbID,
-    vdb  => $self->my_config('db')
+    vdb  => $self->my_config('db'),
+    v    => undef,
+    vf   => undef,
   });
 }
 
@@ -344,7 +346,7 @@ sub title {
   my $start  = $self->{'container'}->start + $f->start -1;
   my $end    = $self->{'container'}->end + $f->end;
   my $pos    = 'Chr ' . $f->seq_region_name . ":$start-$end";
-  my $source = $f->source;
+  my $source = $f->source_name;
 
   return "Structural variation: $id; Source: $source; Location: $pos";
 }

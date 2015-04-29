@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -141,6 +141,9 @@ sub content_ensembl {
   $html .= $table->render;
   
   if ($count > 0) {
+    ## No point in exporting alignment if only one peptide!
+    $html .= $self->content_buttons if $count > 1;
+
     my $ens_table = $self->new_table([], [], { margin  => '1em 0px' });
     
     $ens_table->add_columns(
@@ -185,6 +188,39 @@ sub content_ensembl {
   }
 
   return $html;
+}
+
+sub export_options { return {'action' => 'Family'}; }
+
+sub get_export_data {
+## Get data for export
+  my $self    = shift;
+  ## Need to explicitly create Family, as it's not a standard core object
+  $self->hub->{'_builder'}->create_objects('Family', 'lazy');
+  my $family = $self->hub->core_object('family');
+  if ($family) {
+    return $family->Obj->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
+  }
+}
+
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+
+  my $params  = {
+                  'type'        => 'DataExport',
+                  'action'      => 'Family',
+                  'data_type'   => 'Gene',
+                  'component'   => 'FamilyProteins',
+                  'fm'          => $hub->param('fm'),
+                  'align'       => 'family',
+                };
+  return {
+    'url'     => $hub->url($params),
+    'caption' => 'Download family alignment',
+    'class'   => 'export',
+    'modal'   => 1
+  };
 }
 
 1;

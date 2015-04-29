@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ sub content {
     'name'    => 'message',
     'label'   => 'Message',
     'value'   => $hub->param('message') || '',
+    'notes'   => 'Tip: drag the bottom righthand corner to make this box bigger.',
   }, {
     'type'    => 'File',
     'name'    => 'attachment',
@@ -98,8 +99,8 @@ sub content {
     'name'    => 'submit',
     'value'   => 'Send',
   });
-  
-  $_->set_attribute('data-role', 'none') for @{$fieldset->get_elements_by_tag_name('input')};
+
+  $_->set_attribute('data-role', 'none') for @{$fieldset->get_elements_by_tag_name([qw(input select textarea)])};
 
   return $form->render;
 }

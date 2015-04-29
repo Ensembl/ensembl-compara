@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,14 +36,14 @@ sub content {
   ## first check we have a location
   return $self->_info('A unique location can not be determined for this variation', $object->not_unique_location) if $object->not_unique_location;
   
-  my $hub           = $self->hub;
-  my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
-  my $width         = $hub->param('context') || 30000;
-  my $width_max     = 1000000;
-  my %mappings      = %{$object->variation_feature_mapping};  # first determine correct SNP location 
-  my $vname         = $object->name;
-  my $im_cfg        = 'snpview'; # Different display and image configuration between Variation and Structural Variation
-  my ($v, $var_slice, $html);
+  my $hub                = $self->hub;
+  my $slice_adaptor      = $hub->get_adaptor('get_SliceAdaptor');
+  my $width              = $hub->param('context') || 30000;
+  my $max_display_length = 1000000;
+  my %mappings           = %{$object->variation_feature_mapping};  # first determine correct SNP location 
+  my $vname              = $object->name;
+  my $im_cfg             = 'snpview'; # Different display and image configuration between Variation and Structural Variation
+  my ($v, $feature_start, $feature_end, $var_slice, $html);
   
   ($v) = values %mappings if keys %mappings == 1;
   
@@ -52,7 +52,11 @@ sub content {
   if ($object->isa('EnsEMBL::Web::Object::StructuralVariation')) {
     $im_cfg = 'structural_variation';
     my $svf_id = $hub->param('svf');
-    
+    $max_display_length = $object->max_display_length;
+
+    $feature_start = $mappings{$svf_id}{'start'} <= $mappings{$svf_id}{'end'} ? $mappings{$svf_id}{'start'} : $mappings{$svf_id}{'end'};
+    $feature_end   = $mappings{$svf_id}{'start'} <= $mappings{$svf_id}{'end'} ? $mappings{$svf_id}{'end'}   : $mappings{$svf_id}{'start'};
+
     # Somatic Breakpoints
     if ( $svf_id && $mappings{$svf_id}{breakpoint_order} && $object->is_somatic == 1 && $v){
       my @locations;
@@ -87,7 +91,7 @@ sub content {
       $html .= qq{</div>};
       
       if ($hub->param('bpf')) {
-        $v->{'end'} = $mappings{$svf_id}{start} if ($hub->param('bpf') =~ /from/) ;
+        $v->{'end'}   = $mappings{$svf_id}{start} if ($hub->param('bpf') =~ /from/) ;
         $v->{'start'} = $mappings{$svf_id}{end} if ($hub->param('bpf') =~ /to/) ;
       } else {
         $v->{'end'} = $mappings{$svf_id}{start};
@@ -95,8 +99,13 @@ sub content {
     } else {
       $v ||= $mappings{$svf_id};
     }
-  }  else { # Variation
-    $v ||= $mappings{$hub->param('vf')};
+  } else { # Variation
+    
+    my $vf_id = $hub->param('vf');
+    $v ||= $mappings{$vf_id};
+
+    $feature_start = $mappings{$vf_id}{'start'} <= $mappings{$vf_id}{'end'} ? $mappings{$vf_id}{'start'} : $mappings{$vf_id}{'end'};
+    $feature_end   = $mappings{$vf_id}{'start'} <= $mappings{$vf_id}{'end'} ? $mappings{$vf_id}{'end'}   : $mappings{$vf_id}{'start'};
   }
   
   return $self->_info('Display', "<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the variation's location</p>") unless $v;
@@ -110,33 +119,12 @@ sub content {
   my $img_end    = $end;
   
   # Width max > length Slice > context
-  if ($length >= $width && $length <= $width_max) {
-    my $new_width = ($length < ($width_max-int($width_max/5))) ? int($length/10) : int($length-$width_max/2);
+  if ($length >= $width && $length <= $max_display_length) {
+    my $new_width = ($length < ($max_display_length-int($max_display_length/5))) ? int($length/10) : int($length-$max_display_length/2);
     $img_start -= $new_width; 
     $img_end   += $new_width;
-  } elsif ($length > $width_max) { # length Slice > Width max
-    my $location  = "$seq_region:$img_start-$img_end";
-       $img_end   = $img_start + $width_max -1; 
-       $var_slice = 1;
-    my $interval = $width_max/1000;
-    
-    my $overview_link = $hub->url({
-      type     => 'Location',
-      action   => 'Overview',
-      r        => $location,
-      sv       => $object->name,
-      cytoview => 'variation_feature_structural=normal',
-    });
- 
-   $html .= $self->_info(
-      $object->type . ' has been truncated',
-      sprintf('
-        <p>
-          This %s is too large to display in full, this image and tables below contain only the information relating to the first %s Kb of the feature. 
-          To see the full length structural variation please use the <a href="%s">region overview</a> display.
-        </p>
-      ', $object->type, $interval, $overview_link)
-    );
+  } elsif ($length > $max_display_length) { # length Slice > Width max
+    return $self->feature_is_too_long($seq_region,$start,$end,$max_display_length,'display');
   } else { # context > length Slice
     $img_start -= int($width/2 - ($length/2)); 
     $img_end   += int($width/2 - ($length/2));
@@ -182,9 +170,10 @@ sub content {
  
   $html .= $image->render;
  
-  if ($length > $width_max){ # Variation truncated (slice very large)
-    $var_slice = $slice;
-    $html .= '<h2>Features overlapping the variation context:</h2>';
+  # Calculate the real length of the feature (i.e. in case of SV with breakpoints we used to display each of them, with a length of 1)
+  my $real_feature_length = $feature_end - $feature_start + 1;
+  if ($real_feature_length > $max_display_length){ # Variation truncated (slice very large)
+    return $html.$self->feature_is_too_long($seq_region,$feature_start,$feature_end,$max_display_length,'table');
   } else {
     $var_slice = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
     $html     .= "<h2>Features overlapping $vname:</h2>";
@@ -288,6 +277,66 @@ sub constrained_element_table {
   }
   
   return $self->toggleable_table('Constrained elements', 'cons', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), 1);
+}
+
+
+sub feature_is_too_long {
+  my $self            = shift;
+  my $seq_region      = shift;
+  my $start           = shift;
+  my $end             = shift;
+  my $max_displayable = shift;
+  my $htype           = shift;
+  my $hub             = $self->hub;
+  my $type            = lc($self->object->type);
+  
+  $htype ||= 'display';
+  $type =~ s/structuralv/structural v/;
+  $type =~ s/variation/variant/;
+
+  my $region          = "$seq_region:$start-$end";
+  my $max_display_end = $start + $max_displayable - 1;
+
+  my $region_overview_url = $hub->url({
+       type   => 'Location',
+       action => 'Overview',
+       db     => 'core',
+       r      => $region,
+       sv     => $hub->param('sv'),
+       svf    => $hub->param('svf'),
+       cytoview => 'variation_feature_structural_smaller=compact,variation_feature_structural_larger=gene_nolabel'
+  });
+  my $region_detail_url = $hub->url({
+       type   => 'Location',
+       action => 'View',
+       db     => 'core',
+       r      => "$seq_region:$start-$max_display_end",
+       sv     => $hub->param('sv'),
+       svf    => $hub->param('svf'),
+       contigviewbottom => 'variation_feature_structural_smaller=gene_nolabel,variation_feature_structural_larger=gene_nolabel'
+  });
+
+  my %header_text = ( 'display' => 'for this display',
+                      'table'   => 'to display the list of overlapping features/elements'
+                    );
+
+  my $warning_header = sprintf('The %s is too long %s (more than %sbp)', $type, $header_text{$htype}, $self->thousandify($max_displayable));
+  my $warning_content = qq{Please, view the list of overlapping genes, transcripts and structural variants in the <a href="$region_overview_url">Region overview</a> page};
+  my $warning_content_end = sprintf('.<br />The context of the first %sbp of the structural variant is available in the <a href="%s">Region in detail</a> page.',
+                                    $self->thousandify($max_displayable),$region_detail_url
+                                   );
+  if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
+    my @species = split('_',lc($hub->species));
+    my $mart_dataset = substr($species[0],0,1).$species[1].'_gene_ensembl';
+    my $mart_url = sprintf( '/biomart/martview?VIRTUALSCHEMANAME=default'.
+                            '&ATTRIBUTES=%s.default.feature_page.ensembl_gene_id|%s.default.feature_page.ensembl_transcript_id|'.
+                            '%s.default.feature_page.strand|%s.default.feature_page.ensembl_peptide_id'.
+                            '&FILTERS=%s.default.filters.chromosomal_region.%s:%i:%i:1&VISIBLEPANEL=resultspanel',
+                            $mart_dataset,$mart_dataset,$mart_dataset,$mart_dataset,$mart_dataset,$seq_region, $start, $end
+                          );
+    $warning_content .= qq{ or in <a href="$mart_url">BioMart</a>};
+  }
+  return $self->_warning( $warning_header, $warning_content.$warning_content_end );
 }
 
 1;

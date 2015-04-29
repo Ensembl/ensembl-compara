@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,16 +16,28 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::lsv_variations;
 
 ### STATUS : Unknown - another LRG glyphset that seems to no longer be used
 
 use strict;
 
-use Sanger::Graphics::Bump;
+use EnsEMBL::Draw::Utils::Bump;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub _init {
   my ($self) = @_; 
@@ -119,7 +131,7 @@ sub _init {
        $bump_start = 0 if ($bump_start < 0);
     my $bump_end = $bump_start + int($bglyph->width()*$pix_per_bp) +1;
        $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
-    my $row = & Sanger::Graphics::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
+    my $row = & EnsEMBL::Draw::Utils::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
     $max_row = $row if $row > $max_row;
     $tglyph->y( $voffset + $tglyph->{'y'} + ( $row * (2+$h) ) + 1 );
     $bglyph->y( $voffset + $bglyph->{'y'} + ( $row * (2+$h) ) + 1 );

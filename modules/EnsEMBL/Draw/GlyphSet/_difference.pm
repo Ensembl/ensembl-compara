@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -86,6 +86,7 @@ sub _cluster_zmenu {
   my $ref_width = max(25,$c->{'ref_end'}-$c->{'ref_start'})*2;
   return $self->_url({
     action => 'AlignDiff',
+    parent_action => $self->{'config'}->hub->action,
     cigar => $pre.join(" ",@cigfrag).$post,
     ctype => $c->{'type_str'},
     num => scalar @{$c->{'blobs'}},

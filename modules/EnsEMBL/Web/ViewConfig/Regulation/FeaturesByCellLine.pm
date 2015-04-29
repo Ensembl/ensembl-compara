@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::ViewConfig::Regulation::Page);
 
 sub init {
   my $self = shift;
-  $self->title = 'Details by cell line';
+  $self->title = 'Details by cell type';
   $self->add_image_config('regulation_view');
   $self->set_defaults({ opt_highlight => 'yes', context => 200 });
 }
@@ -54,6 +54,6 @@ sub form {
   $self->add_form_element({ type => 'YesNo', name => 'opt_highlight', select => 'select', label => 'Highlight core region' });
 }
 
-sub extra_tabs { return $_[0]->reg_extra_tabs; }
+sub extra_tabs { return $_[0]->reg_extra_tabs('regulation_view'); }
 
 1;

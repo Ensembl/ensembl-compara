@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -73,13 +73,13 @@ sub _configure_Variation_table {
 
   my $column_order = [qw(names loc)];
   my $column_info = {
-    'names'   => {'label' => 'Name(s)', 'title' => 'Feature type ID (e.g. variant ID: rs123, gene ID:ENSG00000000001)', 'sort' => 'html'},
-    'loc'     => {'label' => 'Genomic location (strand)', 'title' => 'Position of the feature (e.g. chromosome number, start and end coordinates, forward or reverse strand)', 'sort' => 'position_html'},
-    'feat_type' => {'label' => 'Feature type', 'title' => 'Variant, gene, or QTL'},
-    'genes'   => {'label' => 'Reported gene(s)', 'title' => 'The gene reported to be associated with the phenotype'},
+    'names'       => {'label' => 'Name(s)', 'title' => 'Feature type ID (e.g. variant ID: rs123, gene ID:ENSG00000000001)', 'sort' => 'html'},
+    'loc'         => {'label' => 'Genomic location (strand)', 'title' => 'Position of the feature (e.g. chromosome number, start and end coordinates, forward or reverse strand)', 'sort' => 'position_html'},
+    'feat_type'   => {'label' => 'Feature type', 'title' => 'Variant, gene, or QTL'},
+    'genes'       => {'label' => 'Reported gene(s)', 'title' => 'The gene reported to be associated with the phenotype'},
     'phe_sources' => {'label' => 'Annotation source(s)', 'title' => 'Project or database reporting the association'},
     'phe_studies' => {'label' => 'Study', 'title' => 'Link to the pubmed article or other source showing the association', 'sort' => 'html'},
-    'p-values' => {'label' => 'P value (negative log)', 'title' => 'The probability that the association is significant (a higher number indicates a higher probability)'},
+    'p-values'    => {'label' => 'P value (negative log)', 'title' => 'The probability that the association is significant (a higher number indicates a higher probability)'},
   };
 
   my ($data, $extras) = @$feature_set;
@@ -155,10 +155,23 @@ sub _pf_link {
   # link to gene or variation page
   else {
     # work out the ID param (e.g. v, g, sv)
+    # TODO - get these from Controller::OBJECT_PARAMS (controller should be made accessible via Hub)
     my $id_param = $type;
     $id_param =~ s/[a-z]//g;
     $id_param = lc($id_param);
-    
+
+    my $display_label = '';
+    if ($type eq 'Gene') {
+      $display_label = $self->object->get_gene_display_label($f->{'label'});
+      $display_label = " ($display_label)" if $display_label;
+
+      # LRG
+      if ($f->{'label'} =~ /(LRG)_\d+$/) {
+        $type = $1;
+        $id_param = lc($type);
+      }
+    }
+
     my $params = {
       'type'      => $type,
       'action'    => 'Phenotype',
@@ -167,7 +180,7 @@ sub _pf_link {
       __clear     => 1
     };
   
-    $link = sprintf('<a href="%s">%s</a>', $self->hub->url($params), $f->{'label'});
+    $link = sprintf('<a href="%s">%s%s</a>', $self->hub->url($params), $f->{'label'}, $display_label);
   }
   
   return $link;

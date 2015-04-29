@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,7 +46,11 @@ sub content {
     $self->nav_url(1e6)
   ];
   
-  return $hub->param('update_panel') ? $self->jsonify($values) : $self->navbar($self->ramp($ramp_entries, $wd), $wd, $values);
+  my $length = -1;
+  my $object = $self->hub->core_object('Location');
+  $length = $object->seq_region_length if $object;
+  
+  return $self->navbar($self->ramp($ramp_entries->[0][1],$ramp_entries->[-1][1],$length),'realign=1');
 }
 
 sub ramp_url { return shift->nav_url(shift, 'resize'); }

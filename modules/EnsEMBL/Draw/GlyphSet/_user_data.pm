@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_a
 sub feature_group { my ($self, $f) = @_; return $f->id;       }
 sub feature_label { my ($self, $f) = @_; return $f->hseqname; }
 
+sub wiggle_subtitle { return $_[0]->my_config('description'); }
+
 sub draw_features {
   my ($self, $wiggle) = @_;
   my %data = $self->features;
@@ -39,8 +41,6 @@ sub draw_features {
   return 0 unless keys %data;
   
   if ($wiggle) {
-    my $description = $self->my_config('description');
-    
     foreach my $key ($self->sort_features_by_priority(%data)) {
       my ($features, $config)     = @{$data{$key}};
       my $graph_type              = ($config->{'useScore'} && $config->{'useScore'} == 4) || ($config->{'graphType'} && $config->{'graphType'} eq 'points') ? 'points' : 'bar';
@@ -54,7 +54,6 @@ sub draw_features {
         max_score    => $max_score,
         score_colour => $config->{'color'},
         axis_colour  => 'black',
-        description  => $description,
         graph_type   => $graph_type,
       });
     }

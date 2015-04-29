@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,8 +57,7 @@ use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Text::Feature::VEP_OUTPUT;
 use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::Tools::Misc qw(get_url_filesize);
+use EnsEMBL::Web::File::User;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -100,11 +99,12 @@ sub save_to_db {
   my $user     = $hub->user;
   my $tmpdata  = $session->get_data(%args);
   my $assembly = $tmpdata->{'assembly'};
-  my $file     = EnsEMBL::Web::TmpFile::Text->new(filename => $tmpdata->{'filename'}); ## TODO: proper error exceptions !!!!!
+  my $file     = EnsEMBL::Web::File::User->new(hub => $hub, file => $tmpdata->{'file'}); 
   
   return unless $file->exists;
-  
-  my $data   = $file->retrieve or die "Can't get data out of the file $tmpdata->{'filename'}";
+  my $result = $file->read;
+
+  my $data   = $result->{'content'} or die "Can't get data out of the file $tmpdata->{'filename'}";
   my $format = $tmpdata->{'format'};
   my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
   my (@analyses, @messages, @errors);
@@ -198,8 +198,11 @@ sub store_data {
     warn Dumper($report->{'errors'});
     return undef;
   }
-  
-  EnsEMBL::Web::TmpFile::Text->new(filename => $tmp_data->{'filename'})->delete if $tmp_data->{'filename'}; ## Delete cached file
+
+  if ($tmp_data->{'filename'}) { ## Delete cached file
+    my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $tmp_data->{'file'});
+    $file->delete;
+  }
   
   ## logic names
   my $analyses    = $report->{'analyses'};
@@ -278,7 +281,10 @@ sub delete_upload {
     
     if ($upload->{'filename'}) {
       push @track_names, "upload_$code";
-      EnsEMBL::Web::TmpFile::Text->new(filename => $upload->{'filename'})->delete if $owner;
+      if ($owner) {
+        my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $upload->{'file'});
+        $file->delete;
+      }
     } else {
       my @analyses = split ', ', $upload->{'analyses'};
       push @track_names, @analyses;
@@ -362,13 +368,26 @@ sub update_configs {
           $data->{$_}{'display'} = $old_track->{'display'} for @$new_tracks;
           
           foreach my $species (keys %{$data->{'track_order'} || {}}) {
-            foreach my $strand ('', '.f', '.r') {
-              my $order = delete $data->{'track_order'}{$species}{"$key$strand"};
-              
-              if ($order) {
-                $data->{'track_order'}{$species}{"$_$strand"} = $order for @$new_tracks;
+
+            my $new_track_order = [];
+
+            foreach my $order (@{$data->{'track_order'}{$species}}) {
+              my $track_regexp = qr/^$key(\.(r|f))?$/;
+
+              if ($order->[0] =~ $track_regexp) {
+                for (@$new_tracks) {
+                  push @$new_track_order, [ "$_$1", $order->[1] ];
+                }
+              } elsif ($order->[1] =~ $track_regexp) {
+                for (reverse @$new_tracks) {
+                  push @$new_track_order, [ $order->[0], "$_$1" ];
+                }
+              } else {
+                push @$new_track_order, $order;
               }
             }
+
+            $data->{'track_order'}{$species} = $new_track_order;
           }
           
           $update  = 1;
@@ -732,9 +751,6 @@ sub calculate_consequence_data {
       foreach my $type (keys %{$track}) { 
         my $features = $parser->fetch_features_by_tracktype($type);
         
-        # include failed variations
-        $vep_config->{vfa}->db->include_failed_variations(1) if defined($vep_config->{vfa}->db) && $vep_config->{vfa}->db->can('include_failed_variations');
-        
         while ( $f = shift @{$features}){
           $file_count++;
           next if $feature_count >= $size_limit; # $size_limit is max number of v to process, if hit max continue counting v's in file but do not process them
@@ -1072,34 +1088,8 @@ sub consequence_table {
 sub get_das_servers {
 ### Returns a hash ref of pre-configured DAS servers
   my $self = shift;
-  
-  my @domains = ();
-  my @urls    = ();
 
-  my $reg_url  = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_URL');
-  my $reg_name = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_NAME') || $reg_url;
-
-  push( @domains, {'caption'  => $reg_name, 'value' => $reg_url} );
-  my @extras = @{$self->species_defs->get_config('MULTI', 'ENSEMBL_DAS_SERVERS')};
-  foreach my $e (@extras) {
-    push( @domains, {'caption' => $e, 'value' => $e} );
-  }
-  #push( @domains, {'caption' => $self->param('preconf_das'), 'value' => $self->param('preconf_das')} );
-
-  # Ensure servers are proper URLs, and omit duplicate domains
-  my %known_domains = ();
-  foreach my $server (@domains) {
-    my $url = $server->{'value'};
-    next unless $url;
-    next if $known_domains{$url};
-    $known_domains{$url}++;
-    $url = "http://$url" if ($url !~ m!^\w+://!);
-    $url .= "/das" if ($url !~ /\/das1?$/);
-    $server->{'caption'} = $url if ( $server->{'caption'} eq $server->{'value'});
-    $server->{'value'}   = $url;
-  }
-
-  return @domains;
+  return map {'caption' => $_, 'value' => $_}, @{$self->species_defs->get_config('MULTI', 'ENSEMBL_DAS_SERVERS')};
 }
 
 # Returns an arrayref of DAS sources for the selected server and species
@@ -1246,7 +1236,7 @@ sub render_sift_polyphen {
     $rank_str = "($score)";
   }
   
-  return qq{$type=<span style="color:$colours{$pred}">$pred$rank_str</span>};
+  return qq($type=<span style="color:$colours{$pred}">$pred$rank_str</span>);
 }
 
 sub configure_vep {

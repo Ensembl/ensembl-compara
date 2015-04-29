@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,16 +31,16 @@ sub init {
   my $ref        = $variations->{'REFERENCE_STRAIN'};
   my %strains;
   
-  $strains{$_} = 'yes' for grep $_ ne $ref, @{$variations->{'DEFAULT_STRAINS'} || []};
-  $strains{$_} = 'no'  for grep $_ ne $ref, @{$variations->{'DISPLAY_STRAINS'} || []};
-  
+  $strains{$_} = 'on' for grep $_ ne $ref, @{$variations->{'DEFAULT_STRAINS'} || []};
+  $strains{$_} = 'off'  for grep $_ ne $ref, @{$variations->{'DISPLAY_STRAINS'} || []};
+ 
   $self->SUPER::init;
   
   $self->set_defaults({
     display_width  => 120,
     exon_ori       => 'all',
     match_display  => 'dot',
-    snp_display    => 'yes',
+    snp_display    => 'on',
     line_numbering => 'sequence',
     codons_display => 'off',
     strand         => 1,
@@ -100,11 +100,11 @@ sub form {
     next if $_ eq $ref;
     
     $self->add_form_element({
-      type  => 'CheckBox', 
-      label => $_,
-      name  => $_,
-      value => 'yes', 
-      raw   => 1
+      type      => 'CheckBox', 
+      label     => $_,
+      name      => $_,
+      value     => 'on', 
+      raw       => 1,
     });
   }
 }

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ use strict;
 
 use Time::HiRes qw(time);
 
-use Sanger::Graphics::Bump;
-
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
@@ -35,6 +33,7 @@ use List::Util qw(min max);
 
 sub colour { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
 
+sub wiggle_subtitle { $_[0]->{'subtitle_text'} || $_[0]->my_colour('score','text'); }
 
 sub draw_features {
   ### Called from {{EnsEMBL::Draw::GlyphSet_wiggle_and_block.pm}}
@@ -68,7 +67,7 @@ sub draw_features {
   #colours to distinguish alternating features for GenomicAlignBlock objects only 
   my @block_colours;
   if ($constrained_element) {
-      push @block_colours, $feature_colour;
+      @block_colours = ($feature_colour, $feature_colour);
   } else {
       @block_colours =($feature_colour, $self->{'config'}->colourmap->mix($feature_colour,'white',0.5));
 
@@ -176,7 +175,10 @@ sub draw_features {
     }
     
     $self->_offset($h);
-    $self->draw_track_name($feature_text, $feature_colour) if $drawn_block;
+    if($drawn_block) {
+      $self->{'subtitle_colour'} ||= $feature_colour;
+      $self->{'subtitle_text'} = $feature_text;
+    }
   }
   
   my $drawn_wiggle = $wiggle ? $self->wiggle_plot : 1;
@@ -296,8 +298,6 @@ sub wiggle_plot {
   
   return 0 unless scalar @$features;
 
-  $self->draw_space_glyph;
-  
   my $min_score = 0;
   my $max_score = 0;
   

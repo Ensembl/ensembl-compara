@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -283,7 +283,7 @@ sub get_archive_object {
   my $self = shift;
   my $id = $self->stable_id;
   my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
-  my $archive_object = $archive_adaptor->fetch_by_stable_id($id);
+  my $archive_object = $archive_adaptor->fetch_by_stable_id($id, 'Translation');
 
  return $archive_object;
 }

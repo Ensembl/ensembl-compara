@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +19,6 @@ limitations under the License.
 package EnsEMBL::Web::Component::UserData::UploadParsed;
 
 use strict;
-
-use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -55,12 +51,11 @@ sub content_ajax {
   
   return unless $data;
   
-  my $parser  = EnsEMBL::Web::Text::FeatureParser->new($hub->species_defs, $hub->param('r'), $data->{'species'});
   my $format  = $data->{'format'};
-  my $formats = $hub->species_defs->REMOTE_FILE_FORMATS;
+  my $formats = $hub->species_defs->multi_val('REMOTE_FILE_FORMATS');
   my $html;
   
-  unless ($format eq 'DATAHUB' && $hub->param('assembly') !~ $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_NAME')) { ## Don't give parsing message if this is a hub and we can't show it!
+  unless ($format eq 'DATAHUB' && $hub->param('assembly') !~ $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')) { ## Don't give parsing message if this is a hub and we can't show it!
     if (grep /^$format$/i, @$formats) {
       $html .= '<p>We cannot parse large file formats to navigate to the nearest feature. Please select appropriate coordinates after closing this window</p>';
     } 
@@ -71,17 +66,10 @@ sub content_ajax {
         $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider using a smaller dataset.</p>";
       } 
       else {
-        my $content;
-      
-        if ($type eq 'url') {
-          $content = get_url_content($data->{'url'})->{'content'};
-        }  
-        elsif ($type eq 'upload') {
-          $content = EnsEMBL::Web::TmpFile::Text->new(filename => $data->{'filename'}, extension => $data->{'extension'})->retrieve;
-        }
-
-        if ($content) {      
-          my $error   = $parser->parse($content, $data->{'format'});
+        my $session_data = $hub->get_data_from_session($type, $hub->param('code'));
+        my $parser = $session_data->{'parser'};
+        my $error;
+        if ($parser) {
           my $nearest = $parser->nearest;
           $nearest = undef if $nearest && !$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /[^\w|\.]/, $nearest); # Make sure we have a valid location
         

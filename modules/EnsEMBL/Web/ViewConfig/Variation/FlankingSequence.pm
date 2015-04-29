@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,22 +26,30 @@ use base qw(EnsEMBL::Web::ViewConfig::TextSequence);
 
 sub init {
   my $self = shift;
+  $self->SUPER::init;
   
   $self->set_defaults({
     flank_size      => 400,
-    snp_display     => 'yes',
+    snp_display     => 'on',
     select_sequence => 'both',
-    hide_long_snps  => 'yes',
   });
 
   $self->title = 'Flanking sequence';
 }
 
-sub form {
-  my $self    = shift;
-  my %options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
+sub field_order {
+  my $self = shift;
+  my @order = qw(flank_size select_sequence);
+  push @order, $self->variation_fields;
+  return @order;
+}
+
+sub form_fields {
+  my $self            = shift;
+  my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
+  my $fields = {};
   
-  $self->add_form_element({
+  $markup_options->{'flank_size'} = {
     type   => 'DropDown',
     select =>, 'select',
     label  => 'Length of reference flanking sequence to display',
@@ -52,12 +60,11 @@ sub form {
       { value => '300',  caption => '300bp'  },
       { value => '400',  caption => '400bp'  },
       { value => '500',  caption => '500bp'  },
-      { value => '500',  caption => '500bp'  },
       { value => '1000', caption => '1000bp' },
     ]
-  });  
+  };  
 
-  $self->add_form_element({
+  $markup_options->{'select_sequence'} = {
     type   => 'DropDown', 
     select => 'select',
     name   => 'select_sequence',
@@ -67,16 +74,19 @@ sub form {
       { value => 'up',   caption => "Upstream sequence only (5')"   },
       { value => 'down', caption => "Downstream sequence only (3')" },
     ]
-  });
+  };
   
-  $self->add_form_element({ 
-    type   => 'YesNo', 
-    name   => 'snp_display', 
-    select => 'select', 
-    label  => 'Show variations in flanking sequence'
-  });
+  $self->add_variation_options($markup_options, 
+                                {'label' => 'Show variations in flanking sequence',
+                                 'snp_link' => 'no'}
+                              ); 
   
-  $self->add_form_element($options{'hide_long_snps'});
+  foreach ($self->field_order) {
+    $fields->{$_} = $markup_options->{$_};
+    $fields->{$_}{'value'} = $self->get($_);
+  }
+
+  return $fields;
 }
 
 1;

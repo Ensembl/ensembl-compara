@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,11 +20,6 @@ package EnsEMBL::Web::Component::Gene::ComparaTree;
 
 use strict;
 
-use Bio::AlignIO;
-use IO::Scalar;
-
-use EnsEMBL::Web::Constants;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -37,7 +32,7 @@ sub _init {
 sub get_details {
   my $self   = shift;
   my $cdb    = shift;
-  my $object = $self->object;
+  my $object = shift || $self->object;
   my $member = $object->get_compara_Member($cdb);
 
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
@@ -100,6 +95,9 @@ sub content {
   my $is_genetree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
   my ($gene, $member, $tree, $node, $test_tree);
 
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
+
   if ($is_genetree) {
     $tree   = $object->Obj;
     $member = undef;
@@ -117,7 +115,8 @@ sub content {
   my $unhighlight          = $highlight_gene ? $hub->url({ g1 => undef, collapse => $hub->param('collapse') }) : '';
   my $image_width          = $self->image_width       || 800;
   my $colouring            = $hub->param('colouring') || 'background';
-  my $collapsability       = $is_genetree ? '' : $hub->param('collapsability');
+  my $collapsability       = $is_genetree ? '' : ($vc->get('collapsability') || $hub->param('collapsability'));
+  my $clusterset_id        = $vc->get('clusterset_id') || $hub->param('clusterset_id');
   my $show_exons           = $hub->param('exons') eq 'on' ? 1 : 0;
   my $image_config         = $hub->get_imageconfig('genetreeview');
   my @hidden_clades        = grep { $_ =~ /^group_/ && $hub->param($_) eq 'hide'     } $hub->param;
@@ -125,7 +124,7 @@ sub content {
   my @highlights           = $gene && $member ? ($gene->stable_id, $member->genome_db->dbID) : (undef, undef);
   my $hidden_genes_counter = 0;
   my $link                 = $hub->type eq 'GeneTree' ? '' : sprintf ' <a href="%s">%s</a>', $hub->url({ species => 'Multi', type => 'GeneTree', action => 'Image', gt => $tree_stable_id, __clear => 1 }), $tree_stable_id;
-  my ($hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id);
+  my (%hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id);
 
   my $html                 = sprintf '<h3>GeneTree%s</h3>%s', $link, $self->new_twocol(
     ['Number of genes',             scalar(@$leaves)                                                  ],
@@ -138,7 +137,7 @@ sub content {
   my $parent      = $tree->tree->{'_supertree'};
   if (defined $parent) {
 
-    if ($hub->param('super_tree') eq 'on') {
+    if ($vc->get('super_tree') eq 'on' || $hub->param('super_tree') eq 'on') {
       my $super_url = $self->ajax_url('sub_supertree',{ cdb => $cdb, update_panel => undef });
       $html .= qq(<div class="ajax"><input type="hidden" class="ajax_load" value="$super_url" /></div>);
     } else {
@@ -154,18 +153,16 @@ sub content {
   }
 
   if ($hub->type eq 'Gene') {
-    if ($tree->tree->clusterset_id ne $object->hub->param('clusterset_id')) {
+    if ($tree->tree->clusterset_id ne $clusterset_id) {
       $html .= $self->_info('Phylogenetic model selection',
         sprintf(
-          'The phylogenetic model <I>%s</I> is not available for this tree. Showing the default (consensus) tree instead.',
-          $object->hub->param('clusterset_id')
+          'The phylogenetic model <I>%s</I> is not available for this tree. Showing the default (consensus) tree instead.', $clusterset_id
           )
       );
-    } elsif ($object->hub->param('clusterset_id') ne 'default') {
+    } elsif ($clusterset_id ne 'default') {
 
       my $text = sprintf(
-          'The tree displayed here has been built with the phylogenetic model <I>%s</I>. It has then been merged with trees built with other models to give the final tree and homologies. Data shown here may be inconsistent with the rest of the comparative analyses, especially homologies.',
-          $object->hub->param('clusterset_id')
+          'The tree displayed here has been built with the phylogenetic model <I>%s</I>. It has then been merged with trees built with other models to give the final tree and homologies. Data shown here may be inconsistent with the rest of the comparative analyses, especially homologies.', $clusterset_id
       );
       my $rank = $tree->tree->get_tagvalue('k_score_rank');
       my $score = $tree->tree->get_tagvalue('k_score');
@@ -202,12 +199,23 @@ sub content {
     }
   }
   
+  # Get all the genome_db_ids in each clade
+  # Ideally, this should be stored in $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}
+  # or any other centralized place, to avoid recomputing it many times
+  my %genome_db_ids_by_clade = map {$_ => []} @{ $self->hub->species_defs->TAXON_ORDER };
+  foreach my $species_name (keys %{$self->hub->get_species_info}) {
+    foreach my $clade (@{ $self->hub->species_defs->get_config($species_name, 'SPECIES_GROUP_HIERARCHY') }) {
+      push @{$genome_db_ids_by_clade{$clade}}, $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'GENOME_DB'}{lc $species_name};
+    }
+  }
+  $genome_db_ids_by_clade{LOWCOVERAGE} = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'}{'LOWCOVERAGE'};
+
   if (@hidden_clades) {
-    $hidden_genome_db_ids = '_';
+    %hidden_genome_db_ids = ();
     
     foreach my $clade (@hidden_clades) {
       my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
-      $hidden_genome_db_ids .= $hub->param("group_${clade_name}_genome_db_ids") . '_';
+      $hidden_genome_db_ids{$_} = 1 for @{ $genome_db_ids_by_clade{$clade_name} };
     }
     
     foreach my $this_leaf (@$leaves) {
@@ -217,7 +225,7 @@ sub content {
       next if $highlight_gene && $this_leaf->gene_member->stable_id eq $highlight_gene;
       next if $member && $genome_db_id == $member->genome_db_id;
       
-      if ($hidden_genome_db_ids =~ /_${genome_db_id}_/) {
+      if ($hidden_genome_db_ids{$genome_db_id}) {
         $hidden_genes_counter++;
         $this_leaf->disavow_parent;
         $tree = $tree->minimize_tree;
@@ -255,7 +263,7 @@ sub content {
   if (@collapsed_clades) {
     foreach my $clade (@collapsed_clades) {
       my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
-      my $extra_collapsed_nodes = $self->find_nodes_by_genome_db_ids($tree, [ split '_', $hub->param("group_${clade_name}_genome_db_ids") ], 'internal');
+      my $extra_collapsed_nodes = $self->find_nodes_by_genome_db_ids($tree, $genome_db_ids_by_clade{$clade_name}, 'internal');
       
       if (%$extra_collapsed_nodes) {
         $collapsed_nodes .= ',' if $collapsed_nodes;
@@ -268,21 +276,14 @@ sub content {
   
   if ($colouring =~ /^(back|fore)ground$/) {
     my $mode   = $1 eq 'back' ? 'bg' : 'fg';
-    my @clades = grep { $_ =~ /^group_.+_${mode}colour/ } $hub->param;
 
-    # Get all the genome_db_ids in each clade
-    my $genome_db_ids_by_clade;
-    
-    foreach my $clade (@clades) {
-      my ($clade_name) = $clade =~ /group_(.+)_${mode}colour/;
-      $genome_db_ids_by_clade->{$clade_name} = [ split '_', $hub->param("group_${clade_name}_genome_db_ids") ];
-    }
-
-    # Sort the clades by the number of genome_db_ids. First the largest clades,
-    # so they can be overwritten later (see ensembl-webcode/modules/EnsEMBL/Draw/GlyphSet/genetree.pm)
-    foreach my $clade_name (sort { scalar @{$genome_db_ids_by_clade->{$b}} <=> scalar @{$genome_db_ids_by_clade->{$a}} } keys %$genome_db_ids_by_clade) {
-      my $genome_db_ids = $genome_db_ids_by_clade->{$clade_name};
-      my $colour        = $hub->param("group_${clade_name}_${mode}colour") || 'magenta';
+    # TAXON_ORDER is ordered by increasing phylogenetic size. Reverse it to
+    # get the largest clades first, so that they can be overwritten later
+    # (see ensembl-webcode/modules/EnsEMBL/Draw/GlyphSet/genetree.pm)
+    foreach my $clade_name (reverse @{ $self->hub->species_defs->TAXON_ORDER }) {
+      next unless $hub->param("group_${clade_name}_${mode}colour");
+      my $genome_db_ids = $genome_db_ids_by_clade{$clade_name};
+      my $colour        = $hub->param("group_${clade_name}_${mode}colour");
       my $nodes         = $self->find_nodes_by_genome_db_ids($tree, $genome_db_ids, $mode eq 'fg' ? 'all' : undef);
       
       push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => [ keys %$nodes ] } if %$nodes;
@@ -303,11 +304,25 @@ sub content {
   my $image_id = $gene ? $gene->stable_id : $tree_stable_id;
   my $li_tmpl  = '<li><a href="%s">%s</a></li>';
   my @view_links;
-  
-  $image->image_type       = 'genetree';
-  $image->image_name       = ($hub->param('image_width')) . "-$image_id";
-  $image->imagemap         = 'yes';
-  $image->{'panel_number'} = 'tree';
+
+
+  $image->image_type        = 'genetree';
+  $image->image_name        = ($hub->param('image_width')) . "-$image_id";
+  $image->imagemap          = 'yes';
+  $image->{'panel_number'}  = 'tree';
+
+  ## Need to pass gene name to export form 
+  my $gene_name;
+  if ($gene) {
+    my $dxr    = $gene->Obj->can('display_xref') ? $gene->Obj->display_xref : undef;
+    $gene_name = $dxr ? $dxr->display_id : $gene->stable_id;
+  }
+  else {
+    $gene_name = $tree_stable_id;
+  }
+  $image->{'export_params'} = [['gene_name', $gene_name],['align', 'tree']];
+  $image->{'data_export'}   = 'GeneTree';
+
   $image->set_button('drag', 'title' => 'Drag to select region');
   
   if ($gene) {
@@ -460,66 +475,6 @@ sub find_nodes_by_genome_db_ids {
   return $node_ids;
 }
 
-sub content_align {
-  my $self = shift;
-  my $cdb  = shift || 'compara';
-  my $hub  = $self->hub;
-  
-  # Get the ProteinTree object
-  my ($member, $tree, $node) = $self->get_details($cdb);
-  
-  return $tree . $self->genomic_alignment_links($cdb) unless defined $member;
-  
-  # Determine the format
-  my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
-  my $mode    = $hub->param('text_format');
-  $mode       = 'fasta' unless $formats{$mode};
-
-  my $formatted; # Variable to hold the formatted alignment string
-  my $fh  = IO::Scalar->new(\$formatted);
-  my $aio = Bio::AlignIO->new( -format => $mode, -fh => $fh );
-  
-  $aio->write_aln($tree->get_SimpleAlign);
-
-  return $self->format eq 'Text' ? $formatted : sprintf(q{
-    <p>Multiple sequence alignment in "<i>%s</i>" format:</p>
-    <p>The sequence alignment format can be configured using the
-    'configure page' link in the left panel.<p>
-    <pre>%s</pre>
-  }, $formats{$mode} || $mode, $formatted);
-}
-
-sub content_text {
-  my $self = shift;
-  my $cdb  = shift || 'compara';
-  my $hub  = $self->hub;
-
-  # Get the ProteinTree object
-  my ($member, $tree, $node) = $self->get_details($cdb);
-  
-  return $tree . $self->genomic_alignment_links($cdb) unless defined $member;
-
-  # Return the text representation of the tree
-  my %formats = EnsEMBL::Web::Constants::TREE_FORMATS;
-  my $mode    = $hub->param('tree_format');
-  $mode       = 'newick' unless $formats{$mode};
-  my $fn      = $formats{$mode}{'method'};
-  my @params  = map $hub->param($_), @{$formats{$mode}{'parameters'} || []};
-  my $string  = $tree->$fn(@params);
-  
-  if ($formats{$mode}{'split'} && $self->format ne 'Text') {
-    my $reg = '([' . quotemeta($formats{$mode}{'split'}) . '])';
-    $string =~ s/$reg/$1\n/g;
-  }
-
-  return $self->format eq 'Text' ? $string : sprintf(q{
-    <p>The following is a representation of the tree in "<i>%s</i>" format</p>
-    <p>The tree representation can be configured using the
-    'configure page' link in the left panel.<p>
-    <pre>%s</pre>
-  }, $formats{$mode}{'caption'} || $mode, $string);
-}
-
 sub genomic_alignment_links {
   my $self          = shift;
   my $hub           = $self->hub;
@@ -557,10 +512,43 @@ sub genomic_alignment_links {
   foreach (sort { $a cmp $b } keys %species_hash) {
     my ($name, $type) = split /###/, $_;
     
-    $list .= qq{<li><a href="$url;align=$species_hash{$_}">$name - $type</a></li>};
+    $list .= qq(<li><a href="$url;align=$species_hash{$_}">$name - $type</a></li>);
   }
   
   return qq{<div class="alignment_list"><p>View genomic alignments for this gene</p><ul>$list</ul></div>};
+}
+
+sub export_options { return {'action' => 'GeneTree'}; }
+
+sub get_export_data {
+## Get data for export
+  my ($self, $type) = @_;
+  my $hub   = $self->hub;
+  my $cdb   = $hub->param('cdb') || 'compara';
+  my $gene  = $hub->core_object('gene');
+  my ($tree, $node, $member);
+
+  ## First, get tree
+  if ($type && $type eq 'genetree') {
+    $tree = $gene->get_GeneTree($cdb, 1);
+  }
+  else {
+    ($member, $tree) = $self->get_details($cdb, $gene);
+  }
+
+  ## Get node if required
+  if ($hub->param('node')) {
+    $node = $tree->find_node_by_node_id($hub->param('node'))
+  }
+
+  ## Finally return correct object type
+  if ($type) {
+    return $node ? $node : $tree;
+  }
+  else {
+    return $node ? $node->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1) 
+                 : $tree->tree->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
+  }
 }
 
 1;

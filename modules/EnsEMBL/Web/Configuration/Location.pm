@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ sub populate_tree {
     { 'availability' => 'database:compara' }
   );
   
-  $align_menu->append($self->create_node('Compara_Alignments/Image', 'Alignments (image) ([[counts::alignments]])', 
+  $align_menu->append($self->create_node('Compara_Alignments/Image', 'Alignments (image)', 
     [qw(
       summary  EnsEMBL::Web::Component::Location::Summary
       top      EnsEMBL::Web::Component::Location::ViewTop
@@ -95,7 +95,7 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (image)' }
   ));
   
-  $align_menu->append($self->create_node('Compara_Alignments', 'Alignments (text) ([[counts::alignments]])',
+  $align_menu->append($self->create_node('Compara_Alignments', 'Alignments (text)',
     [qw(
       summary    EnsEMBL::Web::Component::Location::Summary
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
@@ -105,7 +105,7 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (text)' }
   ));
   
-  $align_menu->append($self->create_node('Multi', 'Region Comparison ([[counts::pairwise_alignments]])',
+  $align_menu->append($self->create_node('Multi', 'Region Comparison',
     [qw(
       summary  EnsEMBL::Web::Component::Location::MultiIdeogram
       selector EnsEMBL::Web::Component::Location::MultiSpeciesSelector
@@ -120,7 +120,7 @@ sub populate_tree {
     [qw( gen_alignment EnsEMBL::Web::Component::Location::ComparaGenomicAlignment )]
   ));
   
-  $align_menu->append($self->create_node('Synteny', 'Synteny ([[counts::synteny]])',
+  $align_menu->append($self->create_node('Synteny', 'Synteny',
     [qw(
       summary  EnsEMBL::Web::Component::Location::Summary
       image    EnsEMBL::Web::Component::Location::SyntenyImage
@@ -132,7 +132,7 @@ sub populate_tree {
   
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   
-  $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing ([[counts::reseq_strains]])',
+  $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing',
     [qw(
       summary EnsEMBL::Web::Component::Location::Summary
       botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
@@ -246,54 +246,17 @@ sub add_archive_link {
   my $hub            = $self->hub;
   my $alt_assembly = $hub->species_defs->SWITCH_ASSEMBLY;
   return unless $alt_assembly;
-  my $current_assembly = $hub->species_defs->ASSEMBLY_NAME;
+  my $current_assembly = $hub->species_defs->ASSEMBLY_VERSION;
   my $alt_release = $hub->species_defs->SWITCH_VERSION;
   my $site = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
-  my ($link, $title);
+  my $external = 1;
+  #my ($link, $title, $class);
 
   if ($current_assembly ne $alt_assembly ) {
-  ## get coordinates on other assembly if available
-
-    if ($self->object && $self->object->slice) {
-      if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
-        my $mapping;
-        foreach $mapping (@mappings) {
-          last if $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
-        }
-        if ($mapping) {
-          my $segments = $self->object->slice->project('chromosome', $alt_assembly);
-          ## link if there is an ungapped mapping of whole gene
-          if (scalar(@$segments) == 1) {
-            my $new_slice = $segments->[0]->to_Slice;
-            $link = sprintf('%s%s/Location/%s?r=%s:%s-%s',
-                          $site,
-                          $hub->species_path,
-                          $hub->action,
-                          $new_slice->seq_region_name,
-                          $new_slice->start,
-                          $new_slice->end,
-                  );
-            last;  
-          }
-        }
-        else {
-          $link = sprintf('%s/%s', $site, $hub->url());
-        }
-      }
-      else {
-        $link = sprintf('%s/%s', $site, $hub->url());
-      }
-      $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly;
-    }
+    my $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly;
+    my $link  = $self->hub->url({ type => 'Help', action => 'ListMappings', alt_assembly => $alt_assembly });
+    $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 0, class => 'modal_link' }));
   }
-  else {
-
-    $link = sprintf('%s%s/Search/Results?q=%s',
-                    $site, $hub->species_path, $hub->param('r'),
-            );
-    $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly
-  }
-  $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 1 })) if $link;
 }
 
 sub add_vega_link {

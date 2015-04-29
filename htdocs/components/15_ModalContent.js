@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           return this.getContent(link, json.redirectURL);
         } else if (json.redirectType === 'page') {
           return Ensembl.redirect(json.redirectURL);
+        } else if (json.redirectType === 'download') {
+          Ensembl.EventManager.trigger('modalClose');
+          window.location.href = json.redirectURL;
+          return;
         }
         
         // Avoid race conditions if the user has clicked another nav link while waiting for content to load
@@ -125,7 +129,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           return json.modalTab ? Ensembl.EventManager.trigger('modalOpen', { href: json.redirectURL, rel: json.modalTab }) : this.getContent(undefined, json.redirectURL);
         }
         
-        if (json.success === true || json.redirectType === 'page') {
+        if (json.redirectType === 'download') {
+          Ensembl.EventManager.trigger('modalClose');
+          window.location.href = json.redirectURL; // not triggering reloadPage here as reloadPage will call destructor on existing panels
+        } else if (json.success === true || json.redirectType === 'page') {
           Ensembl.EventManager.trigger('reloadPage', false, json.redirectType === 'page' ? json.redirectURL : false);
         } else if (this.el.is(':visible')) {
           this.updateContent(json);
@@ -187,7 +194,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       $(this).parents('div._selectall').find('input[type=checkbox]').prop('checked', this.checked);
     });
   },
-  
+
   displayErrorMessage: function (message) {
     message = message || 'Sorry, the page request failed to load.';
     this.elLk.content.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>' + message + '</p></div></div>');

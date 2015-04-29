@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,38 +22,39 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
+use EnsEMBL::Web::File::Utils::TrackHub;
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
-use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 sub new {
   my $self = shift->SUPER::new(@_);
   
-  $self->{'datahub_adaptor'} = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({ 
-    timeout => 10,
-    proxy   => $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY,
-  });
+  $self->{'trackhub'} = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->{'hub'},
+                                                                        'url' => $self->{'url'});
   
   return $self;
 }
 
 sub check_data {
-  my $self = shift;
-  my $url  = $self->{'url'};
+### Checks if this hub is a) available and b) usable
+### @param assembly_lookup HashRef (optional) - passed to TrackHub
+### @return Array
+###               error ArrayRef
+###               hub_info HashRef
+  my ($self, $assembly_lookup) = @_;
   my $error;
   
-  $url = chase_redirects($url);
-  # try to open and use the datahub file
-  # this checks that the datahub files is present and correct
-  my $datahub = $self->{'datahub_adaptor'}->get_hub_info($url);
+  my $hub_info = $self->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup,
+                                               'parse_tracks' => 0});
   
-  if ($datahub->{'error'}) {
-    $error  = "<p>Unable to open remote TrackHub file: $url</p>";
-    $error .= "<p>$_.</p>" for ref $datahub->{'error'} eq 'ARRAY' ? @{$datahub->{'error'}} : $datahub->{'error'};
+  if ($hub_info->{'error'}) {
+    $error  = sprintf('<p>Unable to attach remote TrackHub: %s</p>', $self->url);
+    $error .= "<p>$_.</p>" for ref $hub_info->{'error'} eq 'ARRAY' 
+                ? @{$hub_info->{'error'}} : $hub_info->{'error'};
   }
-  my @assemblies = keys %{$datahub->{'genomes'}||{}};
-  return ($error, { name => $datahub->{'details'}{'shortLabel'}, assemblies => \@assemblies});  
+  my @assemblies = keys %{$hub_info->{'genomes'}||{}};
+  return ($error, { name => $hub_info->{'details'}{'shortLabel'}, assemblies => \@assemblies});  
 }
 
 sub style {

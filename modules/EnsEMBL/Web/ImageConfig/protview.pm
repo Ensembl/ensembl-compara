@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@ package EnsEMBL::Web::ImageConfig::protview;
 use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
+
+sub cache_key {
+  my $self = shift;
+  return join '::', $self->SUPER::cache_key(@_), $self->hub->param('t') || '';
+}
 
 sub init {
   my $self = shift;
@@ -55,9 +60,16 @@ sub init {
     [ 'variation_legend' ],
     { glyphset => 'P_variation_legend' }
   );
-  
-  my $translation = $self->hub->core_object('transcript') ? $self->hub->core_object('transcript')->Obj->translation : undef;
-  my $id = $translation ? $translation->stable_id : $self->hub->species_defs->ENSEMBL_SITETYPE.' Protein'; 
+}
+
+sub initialize {
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $translation = $hub->core_object('transcript') ? $hub->core_object('transcript')->Obj->translation : undef;
+  my $id          = $translation ? $translation->stable_id : $hub->species_defs->ENSEMBL_SITETYPE.' Protein';
+
+  $self->SUPER::initialize(@_);
+
   $self->add_tracks('other',
     [ 'scalebar',       'Scale bar', 'P_scalebar', { display => 'normal', strand => 'r' }],
     [ 'exon_structure', $id, 'P_protein',  { display => 'normal', strand => 'f', colourset => 'protein_feature', menu => 'no' }],

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,8 +56,6 @@ sub content {
     { key => 'goslim_goa_title', title => 'GOSlim Terms',      sort => 'text', width => '30%', align => 'centre' },
   ];
   
-
-
   my $html    = '<ul>';
   my $tables  = '';
   my $i = 0;
@@ -89,14 +87,21 @@ sub content {
 
 sub process_data {
   my ($self, $table, $data, $extdb) = @_;
-  my $hub = $self->hub;
+  
+  my $hub              = $self->hub;
+  # this is a dirty way of having all the go term description until core decide to have a table for them, this is how we will have to do thing
+  my $description_hash = {'EXP' => 'Inferred from Experiment', 'IC' => 'Inferred by Curator', 'IDA' => 'Inferred from Direct Assay', 'IEA' => 'Inferred from Electronic Annotation', 'IEP' => 'Inferred from Expression Pattern', 'IGC' => 'Inferred from Genomic Context', 'IGI' => 'Inferred from Genetic Interaction', 'IMP' => 'Inferred from Mutant Phenotype', 'IPI' => 'Inferred from Physical Interaction', 'ISA' => 'Inferred from Sequence Alignment', 'ISM' => 'Inferred from Sequence Model', 'ISO' => 'Inferred from Sequence Orthology', 'ISS' => 'Inferred from Sequence or Structural Similarity', 'NAS' => 'Non-traceable Author Statement', 'ND' => 'No biological Data available', 'RCA' => 'Inferred from Reviewed Computational Analysis', 'TAS' => 'Traceable Author Statement', 'NR' => 'Not Recorded', 'IBA' => 'Inferred from Biological aspect of Ancestor'};
   
   foreach my $go (sort keys %$data) {
-    my $hash    = $data->{$go} || {};
-    my $go_link = $hub->get_ExtURL_link($go, $extdb, $go);
-    my $goslim  = $hash->{'goslim'} || {};
-    my $row     = {};
+    my $hash        = $data->{$go} || {};
+    my $go_link     = $hub->get_ExtURL_link($go, $extdb, $go);
+    my $goslim      = $hash->{'goslim'} || {};
+    my $row         = {};
+    my $go_evidence = $hash->{'evidence'}; 
+    
     my ($goslim_goa_acc, $goslim_goa_title, $desc);
+    
+    $description_hash->{$go_evidence} = $description_hash->{$go_evidence} ? $description_hash->{$go_evidence} : 'No description available';
     
     if ($hash->{'info'}) {
       my ($gene, $type, $common_name);
@@ -130,7 +135,7 @@ sub process_data {
     
     $row->{'go'}               = $go_link;
     $row->{'description'}      = $hash->{'term'};
-    $row->{'evidence'}         = $hash->{'evidence'};
+    $row->{'evidence'}         = qq(<span class="glossary_mouseover">$go_evidence<span class="floating_popup">$description_hash->{$go_evidence}</span></span>);
     $row->{'desc'}             = join ', ', grep $_, ($desc, $hash->{'source'});
     $row->{'goslim_goa_acc'}   = $goslim_goa_acc;
     $row->{'goslim_goa_title'} = $goslim_goa_title;

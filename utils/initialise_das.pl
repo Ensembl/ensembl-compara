@@ -13,7 +13,7 @@ use Pod::Usage;
 use DBI;
 use Data::Dumper;
 use Compress::Zlib;
-
+use LWP::UserAgent;
 
 # --- load libraries needed for reading config ---
 use vars qw( $SERVERROOT );
@@ -530,7 +530,6 @@ sub _get_das_coords {
 }
 
 sub publish_multi_species_sources {
-    return;
 # Now Multi species sources, e.g EnsemblGene Id etc
     my $sp = $species_defs->ENSEMBL_PRIMARY_SPECIES;
 
@@ -626,7 +625,7 @@ Support enquiries: helpdesk@ensembl.org
                                                                                 
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

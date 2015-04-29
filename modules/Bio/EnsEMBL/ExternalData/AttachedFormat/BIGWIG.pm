@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
-use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 sub extra_config_page { return "ConfigureBigWig"; }
 
@@ -33,7 +33,8 @@ sub check_data {
   my $error = '';
   require Bio::DB::BigFile;
 
-  $url = chase_redirects($url);
+  $url = chase_redirects($url, {'hub' => $self->{'hub'}});
+
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_BIGWIG) {
     $error = "The BigWig file could not be added - FTP is not supported, please use HTTP.";
   }
@@ -44,7 +45,6 @@ sub check_data {
     eval {
       Bio::DB::BigFile->set_udc_defaults;
       $bigwig = Bio::DB::BigFile->bigWigFileOpen($url);
-      my $chromosome_list = $bigwig->chromList;
     };
     warn $@ if $@;
     warn "Failed to open BigWig " . $url unless $bigwig;
@@ -53,7 +53,7 @@ sub check_data {
       $error = "Unable to open remote BigWig file: $url<br>Ensure that your web/ftp server is accessible to the Ensembl site";
     }
   }
-  return $error;
+  return ($url, $error);
 }
 
 

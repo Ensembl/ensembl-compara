@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ sub content {
   
   my ($sequence, $config) = $self->initialize($translation);
 
-  return sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
+  return $self->build_sequence($sequence, $config);
 }
 
 sub export_options { return {'action' => 'Protein'}; }
@@ -116,7 +116,7 @@ sub export_options { return {'action' => 'Protein'}; }
 sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
-  my $vc = $hub->get_viewconfig('Transcript', 'ProteinSeq');
+  my $vc = $hub->get_viewconfig('ProteinSeq', 'Transcript');
   $hub->param('exons', $vc->get('exons'));
   my $transcript = $self->object || $hub->core_object('transcript');
   return $self->initialize($transcript->translation_object);

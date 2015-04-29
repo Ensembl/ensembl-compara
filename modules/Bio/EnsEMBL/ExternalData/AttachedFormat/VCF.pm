@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ no warnings 'uninitialized';
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
 
-use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 sub check_data {
   my ($self) = @_;
@@ -32,7 +32,7 @@ sub check_data {
   my $error = '';
   require Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
 
-  $url = chase_redirects($url);
+  $url = chase_redirects($url, {'hub' => $self->{'hub'}});
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_VCF) {
     $error = "The VCF file could not be added - FTP is not supported, please use HTTP.";
   } 
@@ -58,7 +58,7 @@ sub check_data {
       };
     }
   }
-  return $error;
+  return ($url, $error);
 }
 
 1;

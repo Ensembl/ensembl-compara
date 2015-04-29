@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ sub availability {
       
       $availability->{'structural_variation'} = 1;
     
-      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts supporting_structural_variation);
+      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts supporting_structural_variation phenotypes);
       
       $availability->{'has_phenotype'} = 1 if ($self->has_phenotype || $availability->{'has_transcripts'});
  
@@ -87,9 +87,22 @@ sub counts {
     $counts = {};
     $counts->{'transcripts'} = $self->count_transcripts;
     $counts->{'supporting_structural_variation'} = $self->count_supporting_structural_variation;
-    
+    $counts->{'phenotypes'} = $self->count_phenotypes;    
+
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;
+  }
+
+  return $counts;
+}
+
+sub count_phenotypes {
+  my $self = shift;
+
+  my $counts = 0;
+  my $pf_objects = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_StructuralVariation($self->Obj);
+  if ($pf_objects) {
+    $counts = scalar @$pf_objects;
   }
 
   return $counts;
@@ -169,18 +182,20 @@ sub caption {
  return $caption;
 }
 
-sub name               { my $self = shift; return $self->Obj->variation_name;                                         }
-sub class              { my $self = shift; return $self->Obj->var_class;                                              }
-sub source             { my $self = shift; return $self->Obj->source;                                                 }
-sub source_description { my $self = shift; return $self->Obj->source_description;                                     }
-sub study              { my $self = shift; return $self->Obj->study;                                                  }
-sub study_name         { my $self = shift; return (defined($self->study)) ? $self->study->name : undef;               }                
-sub study_description  { my $self = shift; return (defined($self->study)) ? $self->study->description : undef;        } 
-sub study_url          { my $self = shift; return (defined($self->study)) ? $self->study->url : undef;                }
-sub external_reference { my $self = shift; return (defined($self->study)) ? $self->study->external_reference : undef; }
-sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;                   }
-sub is_somatic         { my $self = shift; return $self->Obj->is_somatic;                                             }
-sub default_action     { return 'Explore'; }
+sub name                  { my $self = shift; return $self->Obj->variation_name;                                         }
+sub class                 { my $self = shift; return $self->Obj->var_class;                                              }
+sub source                { my $self = shift; return $self->Obj->source;                                                 }
+sub source_description    { my $self = shift; return $self->Obj->source_description;                                     }
+sub study                 { my $self = shift; return $self->Obj->study;                                                  }
+sub study_name            { my $self = shift; return (defined($self->study)) ? $self->study->name : undef;               }
+sub study_description     { my $self = shift; return (defined($self->study)) ? $self->study->description : undef;        }
+sub study_url             { my $self = shift; return (defined($self->study)) ? $self->study->url : undef;                }
+sub external_reference    { my $self = shift; return (defined($self->study)) ? $self->study->external_reference : undef; }
+sub supporting_sv         { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;                   }
+sub is_somatic            { my $self = shift; return $self->Obj->is_somatic;                                             }
+sub clinical_significance { my $self = shift; return $self->Obj->get_all_clinical_significance_states;                   }
+sub default_action        { return 'Explore'; }
+sub max_display_length    { return 1000000; }
 
 sub validation_status  { 
   my $self = shift; 

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ sub _init {
 
   my %labels = map { $_->SO_term => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
-  $self->init_legend(3);
+  $self->init_legend();
 
   foreach (sort { $labels{$a}[0] <=> $labels{$b}[0] } keys %$features) {
     $self->add_to_legend({
@@ -47,6 +47,8 @@ sub _init {
       colour => $features->{$_},
     });
   }
+
+  $self->add_space;
 }
 
 1;

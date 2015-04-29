@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -129,11 +129,13 @@ sub populate_tree {
   $tools_menu->append($self->create_node('DropUpload',      '', [], { command => 'EnsEMBL::Web::Command::UserData::DropUpload'      }));
   
   ## Region Report
+=pod
   $tools_menu->append($self->create_node('SelectReportOptions', 'Region Report', [qw(report_options EnsEMBL::Web::Component::UserData::SelectReportOptions)]));
   $tools_menu->append($self->create_node('RegionReportOutput',  '',              [qw(region_report  EnsEMBL::Web::Component::UserData::RegionReportOutput)]));
   
   $tools_menu->append($self->create_node('CheckRegions',  '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckRegions'  }));
   $tools_menu->append($self->create_node('RunRegionTool', '', [], { command => 'EnsEMBL::Web::Command::UserData::RunRegionTool' }));
+=cut
 }
 
 1;

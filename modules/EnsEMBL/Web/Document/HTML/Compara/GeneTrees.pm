@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,51 +32,6 @@ use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 use base qw(EnsEMBL::Web::Document::HTML::Compara);
 
-
-sub order_species_by_clade {
-  my ($self, $species) = @_;
-  my $species_sets = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'} || {};
-
-  my @species_set_names = grep {$species_sets->{$_}->{'taxon_id'}} (keys %$species_sets);
-  my %ss_by_gdb_ids = ();
-  my %ss_length = ();
-  foreach my $name (@species_set_names) {
-    foreach my $gdb_id (uniq @{$species_sets->{$name}->{genome_db_ids}}) {
-      push @{$ss_by_gdb_ids{$gdb_id}}, $name;
-      $ss_length{$name} ++;
-    }
-  }
-  my %is_below = ();
-  my %after_rules = ();
-  my %true_content = ();
-  foreach my $gdb_id (keys %ss_by_gdb_ids) {
-    my @names = sort {$ss_length{$a} <=> $ss_length{$b}} @{$ss_by_gdb_ids{$gdb_id}};
-    push @{$true_content{$names[0]}}, $gdb_id;
-    while (scalar(@names) >= 2) {
-      $after_rules{$names[1]}{$names[0]} = 1;
-      $is_below{$names[0]} = 1;
-      shift @names;
-    }
-  }
-  my @ss_order = ();
-  my @top_names = sort {$ss_length{$b} <=> $ss_length{$a} || lc $a cmp lc $b} (grep {not $is_below{$_}} @species_set_names);
-  $self->add_species_set($_, \%after_rules, \%ss_length, \@ss_order) for @top_names;
-
-  my %stn_by_gdb_id = ();
-  foreach my $stn (@$species) {
-    $stn_by_gdb_id{$stn->genome_db_id} = $stn;
-  };
-
-  my @final_sets;
-  foreach my $name (reverse @ss_order) {
-    my @species_here = map {delete $stn_by_gdb_id{$_}} @{$true_content{$name}};
-    push @final_sets, [(scalar(@species_here) != $ss_length{$name} ? 'other ' : '').$name, [sort {$a->node_name cmp $b->node_name} @species_here]];
-  }
-  push @final_sets, [undef, [sort {$a->node_name cmp $b->node_name} (grep {$stn_by_gdb_id{$_->genome_db_id} } @$species)]] if scalar(keys %stn_by_gdb_id);
-
-  return \@final_sets;
-}
-
 sub add_species_set {
   my ($self, $name, $after_rules, $ss_length, $acc) = @_;
   my @sub_names = sort {$ss_length->{$b} <=> $ss_length->{$a} || lc $a cmp lc $b} (keys %{$after_rules->{$name}});
@@ -85,7 +40,6 @@ sub add_species_set {
   }
   unshift @$acc, $name;
 }
-
 
 sub format_gene_tree_stats {
   my ($self, $method) = @_;
@@ -103,7 +57,7 @@ sub format_gene_tree_stats {
   my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
 
   # Reads the species set that are defined in the database (if any)
-  my $ordered_species = $self->order_species_by_clade($species_tree->root->get_all_leaves);
+  my $ordered_species = $hub->order_species_by_clade($species_tree->root->get_all_leaves);
 
   my $counter_raphael_holders = 0;
 
@@ -161,10 +115,13 @@ List of available views:
 
 } elsif ($page eq 'coverage')  {
 
+    my $n_group = scalar(@$ordered_species)-1;
     $html .= q{<h2>Gene-tree coverage (per species)</h2>};
+    $html .= '<p>Quick links: '.join(', ', map {sprintf('<a href="#cladegroup%d">%s</a>', $_, $ordered_species->[$_]->[0])} 1..$n_group).'</p>' if scalar(@$ordered_species) > 1;
     $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2)]);
-    foreach my $set (@$ordered_species) {
-      $html .= sprintf('<h3>%s</h3>', ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
+    for (0..$n_group) {
+      my $set = $ordered_species->[$_];
+      $html .= sprintf('<h3><a name="cladegroup%d"></a>%s</h3>', $_, ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
       $html .= $self->get_html_for_gene_tree_coverage($set->[0], $set->[1], $method, \$counter_raphael_holders);
     }
 

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ use Apache2::Const qw(:common :methods :http);
 use Apache2::Util;
 
 use EnsEMBL::Web::Hub;
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::ProductionAdaptor;
 use EnsEMBL::Web::Cache;
 
 our $MEMD = EnsEMBL::Web::Cache->new;
@@ -57,7 +57,7 @@ sub handler {
     my $helpdesk  = $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
     my $webmaster = $SiteDefs::ENSEMBL_SERVERADMIN;
     my $url       = $SiteDefs::ENSEMBL_STATIC_SERVER;
-    my @news      = @{EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_news({ release => $release_id, species => $species })};
+    my @news      = @{EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub)->fetch_changelog({ release => $release_id, species => $species })};
 
     my $rss = qq(
       <rss version="2.0">
@@ -73,7 +73,7 @@ sub handler {
           <link>$url</link>
           <generator>Ensembl web API</generator>
           <image>
-            <url>$url/img/e-rss.png</url>
+            <url>$url/i/rss.gif</url>
             <title>Ensembl release $release_id</title>
             <link>$url</link>
           </image>

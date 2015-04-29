@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ sub features {
   } else {
     my $features_list = $self->fetch_features;
     if (!scalar(@$features_list)) {
-      my $track_name = $self->my_config('caption'); 
+      my $track_name = $self->my_config('name'); 
       $self->errorTrack("No $track_name data for this region");
       return [];
     }
@@ -127,7 +127,7 @@ sub fetch_features {
       } elsif ($self->my_config('source')) {
         @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_by_source($self->my_config('source'), undef, $var_db) || []};
       } else { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures($var_db) || []};
+        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures(undef, undef, undef, $var_db) || []};
       }
       
       $self->cache($id, \@somatic_mutations);   
@@ -389,5 +389,7 @@ sub export_feature {
     values  => [ $variation_name, $feature->allele_string, $feature->var_class, $feature->display_consequence ]
   });
 }
+
+sub supports_subtitles { return 1; }
 
 1;

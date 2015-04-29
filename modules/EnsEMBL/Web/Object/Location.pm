@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1057,7 +1057,7 @@ sub fetch_homologues_of_gene_in_species {
   
   return [] unless $self->database('compara');
 
-  my $qy_member = $self->database('compara')->get_GeneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
+  my $qy_member = $self->database('compara')->get_GeneMemberAdaptor->fetch_by_stable_id($gene_stable_id);
   
   return [] unless defined $qy_member; 
 
@@ -1423,19 +1423,13 @@ sub pops_for_slice {
 
 sub get_source {
   my $self = shift;
-  my $default = shift;
+
   my $vari_adaptor = $self->database('variation')->get_db_adaptor('variation');
   unless ($vari_adaptor) {
     warn "ERROR: Can't get variation adaptor";
     return ();
   }
-
-  if ($default) {
-    return  $vari_adaptor->get_VariationAdaptor->get_default_source();
-  }
-  else {
-    return $vari_adaptor->get_VariationAdaptor->get_all_sources();
-  }
+  return $vari_adaptor->get_VariationAdaptor->get_all_sources();
 }
 
 sub get_all_misc_sets {
@@ -1619,7 +1613,7 @@ sub get_all_genotypes{
 
 sub can_export {
   my $self = shift;
-  return $self->action =~ /^(Export|Chromosome|Genome|Synteny)$/ ? 0 : $self->availability->{'slice'};
+  return $self->action =~ /^(Export|Chromosome|Genome|Synteny|Compara_Alignments)$/ ? 0 : $self->availability->{'slice'};
 }
 
 sub multi_locations {

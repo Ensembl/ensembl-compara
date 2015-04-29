@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ sub features {
   
   return $self->SUPER::features({
     style   => 'colouredscore',
-    adaptor => $slice->{'_cache'}{'bigbed_adaptor'}{$bigbed_file} ||= $self->bigbed_adaptor(Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($bigbed_file)),
+    adaptor => $slice->{'_cache'}{'bigbed_adaptor'}{$bigbed_file} ||= $self->bigbed_adaptor(Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor->new($bigbed_file)),
   });
 }
 

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,6 +77,10 @@ use base qw(EnsEMBL::Draw::GlyphSet);
 
 use POSIX qw(ceil);
 use List::Util qw(max);
+
+# Would be better to caluclate this at the end, but we calculate (x,y)
+#   before all the data is in.
+my $MAX_WIDTH = 350;
 
 # USEFUL UTILITIES
 
@@ -215,9 +219,10 @@ sub _icon_line {
 sub _icon_scale { # %age scale, like on meth tracks
   my ($self,$x,$y,$k) = @_;
 
-  my $num_boxwidths = 10;
+  my $gradient_settings = $k->{'gradient'} || {'boxes' => 10, 'labels' => 1};
+
   my $style = $k->{'style'} || 'box';
-  my @cg = $self->_colourmap->build_linear_gradient($num_boxwidths,
+  my @cg = $self->_colourmap->build_linear_gradient($gradient_settings->{'boxes'},
                                                     $k->{'colour'});
   for my $i (0..@cg) {
     if($i<@cg) {
@@ -226,19 +231,22 @@ sub _icon_scale { # %age scale, like on meth tracks
       $k->{'colour'} = $cg[$i];
       $self->$method($x+$i*$self->{'box_width'},$y,$k);
     }
-    $self->push($self->Text({
-      x => $x + $i*$self->{'box_width'} -($i?$self->{'text_width'}*2/3:0),
-      y => $y + $self->{'text_height'},
-      height => $self->{'text_height'},
-      valign => 'center',
-      halign => 'center',
-      colour => 'black',
-      text   => ($i*10)." ",
-      font   => 'Small',
-      %abs,
-    }));
+    if ($gradient_settings->{'labels'}) {
+      $self->push($self->Text({
+        x => $x + $i*$self->{'box_width'} -($i?$self->{'text_width'}*2/3:0),
+        y => $y + $self->{'text_height'},
+        height => $self->{'text_height'},
+        valign => 'center',
+        halign => 'center',
+        colour => 'black',
+        text   => ($i*10)." ",
+        font   => 'Small',
+        %abs,
+      }));
+    }
   }
-  return ($self->{'box_width'}*$num_boxwidths,$self->{'text_height'});
+  $self->{'max_height'} += $self->{'text_height'};
+  return ($self->{'box_width'} * $gradient_settings->{'boxes'}, $self->{'text_height'});
 }
 
 # MAIN METHODS
@@ -269,6 +277,7 @@ sub _add_here { # common internal method for adding whether alone or group
   my $method = $self->can($method_name);
   die "No such method '$method_name" unless $method;
   my ($w,$h) = $self->$method($xo,$yo,$k);
+  $self->{'max_height'} = $yo unless $yo < $self->{'max_height'};
   my ($lw,$lh) = $self->_legend($xo+$w+$legend_gap,$yo,$h,$k);
   return ($w+$lw,$h);
 }
@@ -283,7 +292,7 @@ sub _reset { # reset position following init
   my ($self) = @_;
 
   $self->newline if $self->{'h'}; # not first time
-  $self->{'y'} ||= 8; # 8px is a nice gap at start
+  $self->{'y'} ||= 4; # 4px is a nice gap at start
   $self->{'h'} = 0;
   $self->{'col'} = 0;
 }
@@ -315,6 +324,7 @@ sub add_to_legend { # add single legend member
   $self->{'seen'}{$name} = 1;
 
   my ($xo,$yo) = $self->_start();
+  $yo += 12;
   my ($w,$h) = $self->_add_here($xo,$yo,$k);
   $self->_advance($w,$h);
   return ($w,$h);
@@ -334,7 +344,7 @@ sub add_vgroup_to_legend { # add vertical group of members
 
   my ($xo,$yo) = $self->_start();
   # title 
-  my $title_height = $self->{'text_height'} * 2;
+  my $title_height = $self->{'text_height'} * 2 + 4;
   my $gap = $self->{'text_height'}/2;
   $self->push($self->Text({
     x             => $xo,
@@ -368,14 +378,19 @@ sub init_legend { # begin (or reset)
   return unless $self->strand == -1;
 
   $self->{'box_width'} = 20;
-  $self->{'columns'} = ($c||2);
   my $im_width = $config->get_parameter('panel_width'); 
- 
+  if($c) {
+    $self->{'columns'} = $c;
+  } else {
+    $self->{'columns'} = int($im_width / $MAX_WIDTH);
+  }
   $self->{'font'} = { $self->get_font_details('legend', 1) };
 
   my @sizes = $self->get_text_width(0,'X','',%{$self->{'font'}});
   $self->{'text_width'}  = $sizes[2];
   $self->{'text_height'} = $sizes[3];
+  
+  $self->{'max_height'} = 0;
 
   # n is legend number, going across then down 
   $self->{'seen'} = {};
@@ -385,13 +400,29 @@ sub init_legend { # begin (or reset)
   # Set up a separating line
   $self->push($self->Rect({
     x             => 0,
-    y             => 4,
+    y             => 12,
     width         => $im_width,
     height        => 0,
     colour        => 'grey50',
     %abs,
   }));
+  $self->{'max_height'} += 12;
 }
+
+sub add_space {
+  my $self = shift;
+  my $im_width = $self->{'config'}->get_parameter('panel_width'); 
+  my $space = 4;
+
+  $self->push($self->Rect({
+    x             => 0,
+    y             => $self->{'max_height'} + $self->{'text_height'} + $space,
+    width         => $im_width,
+    height        => $space,
+    colour        => 'white',
+  }));
+}
+
 
 1;
         

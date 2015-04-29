@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,14 +26,11 @@ package EnsEMBL::Web::Root;
 ### STATUS: Stable
 
 ### DESCRIPTION
-### This module contains a lot of generic functionality
-### needed throughout the web code: dynamic module loading,
-### url construction, data formatting, etc.
+### This module contains a lot of generic functionality needed throughout 
+### the web code: url construction, data formatting, etc.
 
 use strict;
 
-use Data::Dumper;
-use Carp                  qw(cluck);
 use File::Path            qw(mkpath);
 use File::Spec::Functions qw(splitpath);
 use List::MoreUtils       qw(first_index);
@@ -44,24 +41,7 @@ use Time::HiRes           qw(gettimeofday);
 use URI::Escape           qw(uri_escape uri_unescape);
 use Apache2::RequestUtil;
 
-# Used to enable symbolic debugging support in dynamic_use.
-
-BEGIN {
-  if($ENV{'PERLDB'}) {
-    require Inline;
-    Inline->import(C => Config => DIRECTORY => "$SiteDefs::ENSEMBL_WEBROOT/cbuild");
-    Inline->import(C => "void lvalues_nodebug(CV* cv) { CvNODEBUG_on(cv); }");
-  }
-}
-
-my %FAILED_MODULES;
-
-sub new {
-  my $class = shift;
-  my $self  = {};
-  bless $self, $class;
-  return $self;
-}
+use parent qw(EnsEMBL::Root);
 
 sub filters :lvalue { $_[0]->{'filters'}; }
 
@@ -157,86 +137,6 @@ sub _format_error {
 sub is_valid_module_name {
   my ($self, $classname) = @_;
   return $classname =~ /^[a-zA-Z_]\w*(::\w+)*$/;
-}
-
-# Hack to allow symbollic debugging in face of lvalues,
-# despite perl bug #7013. Only run when in debug mode.
-sub _fix_lvalues_r {
-  no strict;
-  my ($name,$here) = @_; 
-
-  foreach my $t (values %$here) {
-    next unless *{"$t"}{CODE} and grep { $_ eq 'lvalue' } attributes::get(*{"$t"}{CODE});
-    lvalues_nodebug(*{"$t"}{CODE});
-  }
-  _fix_lvalues_r("$name$_",\%{"$name$_"}) for keys %$here;
-}
-sub _fix_lvalues {
-  no strict;
-  my $classname = shift;
-  _fix_lvalues_r("EnsEMBL::",\%{"EnsEMBL::"});
-}
-# End hack
-
-# Equivalent of USE - but used at runtime
-sub dynamic_use {
-  my ($self, $classname) = @_;
-  
-  if (!$classname) {
-    my @caller = caller(0);
-    my $error_message = "Dynamic use called from $caller[1] (line $caller[2]) with no classname parameter\n";
-    warn $error_message;
-    $FAILED_MODULES{$classname} = $error_message;
-    return 0;
-  }
-  
-  return 0 if exists $FAILED_MODULES{$classname};
-  
-  my ($parent_namespace, $module) = $classname =~ /^(.*::)(.*)$/ ? ($1, $2) : ('::', $classname);
-
-  {
-    no strict 'refs';
-    if ($parent_namespace->{$module.'::'}) {
-      my %namespace_hash = %{$parent_namespace->{$module.'::'} || {}};
-      foreach my $key (keys %namespace_hash) {
-        $namespace_hash{$key} =~ /$_/ and delete $namespace_hash{$key} and last for keys %FAILED_MODULES;
-      }
-      return 1 if keys %namespace_hash; # return if already used 
-    }
-  }
-
-  eval "require $classname";
-  
-  if ($@) {
-    my $path = $classname; 
-    $path =~ s/::/\//g;
-    
-    cluck "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~ /^Can't locate $path/;
-    
-    $FAILED_MODULES{$classname} = $@;
-    $@ = undef;
-    return 0;
-  }
-  
-  _fix_lvalues($classname) if $ENV{'PERLDB'};
-  $classname->import;
-  return 1;
-}
-
-sub dynamic_use_fallback {
-  ## Tries to dynamically use the first possible module out of a list of given modules
-  ## @param   list of modules' name (Array, not ArrayRef)
-  ## @return  first successfully "use"d module's name
-  my $self    = shift;
-  my $module  = shift;
-  $module     = shift while $module && !$self->dynamic_use($module);
-  return $module;
-}
-
-# Return error message cached if use previously failed
-sub dynamic_use_failure {
-  my ($self, $classname) = @_;
-  return $FAILED_MODULES{$classname};
 }
 
 sub get_module_names {

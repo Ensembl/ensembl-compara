@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -259,17 +259,23 @@ sub get_config {
 }
 
 sub set_config {
-  ### Overrides the config value for a given species and a given config key 
-  ### (use with care!)
-  ### Arguments: species name (string), parameter name (string), parameter value (any)
-  ### Returns: boolean
-  
+  ## Overrides the config value for a given config key
+  ## @param Key name (string)
+  ## @param Value (any)
+  my ($self, $key, $value) = @_;
+
+  $CONF->{'_storage'}{$key} = $value || undef if defined $CONF->{'_storage'};
+}
+
+sub set_species_config {
+  ## Overrides the config value for a given species and a given config key
+  ## @param species name (string)
+  ## @param Key name (string)
+  ## @param Value (any)
   my ($self, $species, $key, $value) = @_;
   $value ||= undef;
   
   $CONF->{'_storage'}{$species}{$key} = $value if defined $CONF->{'_storage'} && exists $CONF->{'_storage'}{$species};
-  
-  return 1;
 }
 
 sub retrieve {
@@ -1034,19 +1040,19 @@ sub assembly_lookup {
   my ($self, $old_assemblies) = @_;
   my $lookup = {};
   foreach ($self->valid_species) {
-    my $assembly = $self->get_config($_, 'ASSEMBLY_NAME');
+    my $assembly = $self->get_config($_, 'ASSEMBLY_VERSION');
     ## A bit clunky, but it makes code cleaner in use
-    $lookup->{$assembly} = [$_, $assembly];
+    $lookup->{$assembly} = [$_, $assembly, 0];
     ## Now look up UCSC assembly names
     if ($self->get_config($_, 'UCSC_GOLDEN_PATH')) {
-      $lookup->{$self->get_config($_, 'UCSC_GOLDEN_PATH')} = [$_, $assembly];
+      $lookup->{$self->get_config($_, 'UCSC_GOLDEN_PATH')} = [$_, $assembly, 0];
     }
     if ($old_assemblies) {
       ## Include past UCSC assemblies
       if ($self->get_config($_, 'UCSC_ASSEMBLIES')) {
         my %ucsc = @{$self->get_config($_, 'UCSC_ASSEMBLIES')||[]};
         while (my($k, $v) = each(%ucsc)) {
-          $lookup->{$k} = [$_, $v];
+          $lookup->{$k} = [$_, $v, 1];
         }
       }
     }

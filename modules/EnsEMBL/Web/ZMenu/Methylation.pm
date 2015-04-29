@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ use List::Util qw(min max);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
-use Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor;
 
 sub summary_zmenu {
   # Way too many args, make OO.
@@ -96,8 +96,7 @@ sub summary_zmenu {
     $self->add_entry({ type => "Region Summary",
                        label => "Zoom using link below for individual feature details" });
     $self->add_entry({ type => "Location",
-                       label => "$chr:$s-$e",
-                       link => $self->hub->url({ r => "$chr:$s-$e" })});
+                       label => "$chr:$s-$e"});
     $self->add_entry({ type => "Feature Count",
                        label => $num });
     $self->add_entry({ type => "Methylated Reads",
@@ -187,7 +186,7 @@ sub bigbed {
                           @parts[-5..-1]);
 
   return ( $self->{'_cache'}->{'bigbed_adaptor'}->{$bigbed_file} ||=
-    Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($bigbed_file)
+    Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor->new($bigbed_file)
   );
 }
 

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,8 +36,7 @@ sub createObjects {
    
   if (!$structural_variation) {
     return $self->problem('fatal', 'Structural Variation ID required', $self->_help('A structural variation ID is required to build this page.')) unless $identifier;
-    
-    $db->include_failed_variations(1);
+
     $db->include_non_significant_phenotype_associations(0);
     
     $structural_variation = $db->get_StructuralVariationAdaptor->fetch_by_name($identifier);

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ sub content {
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
 
   # URL-based section
-  my $format_info = $self->hub->species_defs->DATA_FORMAT_INFO;
-  my %format_name = map {$format_info->{$_}{'label'} => 1} (@{$self->hub->species_defs->UPLOAD_FILE_FORMATS}, @{$self->hub->species_defs->REMOTE_FILE_FORMATS});
+  my $format_info = $self->hub->species_defs->multi_val('DATA_FORMAT_INFO');
+  my %format_name = map {$format_info->{$_}{'label'} => 1} (@{$self->hub->species_defs->multi_val('UPLOAD_FILE_FORMATS')}, @{$self->hub->species_defs->multi_val('REMOTE_FILE_FORMATS')});
   my $format_list = join(', ', (sort {lc($a) cmp lc($b)} keys %format_name));
 
   my $note = sprintf qq(

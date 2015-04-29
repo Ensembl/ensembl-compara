@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ package EnsEMBL::Web::Document::Element::ToolButtons;
 # Generates the tools buttons below the left menu - configuration, data export, etc.
 
 use strict;
-
-use URI::Escape qw(uri_escape);
 
 use base qw(EnsEMBL::Web::Document::Element);
 
@@ -47,7 +45,6 @@ sub label_classes {
     'Manage your data'    => 'data',
     'Add your data'       => 'data',
     'Export data'         => 'export',
-    'Bookmark this page'  => 'bookmark',
     'Share this page'     => 'share',
   };
 }
@@ -80,12 +77,12 @@ sub content {
 sub init {
   my $self       = shift;  
   my $controller = shift;
-  my $hub        = $controller->hub;
+  my $hub        = $self->hub;
   my $object     = $controller->object;
   my @components = @{$hub->components};
   my $session    = $hub->session;
   my $user       = $hub->user;
-  my $has_data   = grep($session->get_data(type => $_), qw (upload url das)) || ($user && (grep $user->get_records($_), qw(uploads urls dases)));
+  my $has_data   = $self->_has_data;
   my $view_config;
      $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
   
@@ -134,31 +131,7 @@ sub init {
       caption => 'Export data',
       class   => 'disabled',
       url     => undef,
-      title   => 'You cannot export data from this page'
-    });
-  }
-  
-  if ($hub->user) {
-    my $title = $controller->page->title;
-    
-    $self->add_entry({
-      caption => 'Bookmark this page',
-      class   => 'modal_link',
-      url     => $hub->url({
-        type        => 'Account',
-        action      => 'Bookmark/Add',
-        __clear     => 1,
-        name        => uri_escape($title->get_short),
-        description => uri_escape($title->get),
-        url         => uri_escape($hub->species_defs->ENSEMBL_BASE_URL . $hub->url)
-      })
-    });
-  } else {
-    $self->add_entry({
-      caption => 'Bookmark this page',
-      class   => 'disabled',
-      url     => undef,
-      title   => 'You must be logged in to bookmark pages'
+      title   => 'Generic export has been disabled on this page. Check individual images, tables, etc for download buttons',
     });
   }
   
@@ -190,6 +163,14 @@ sub export_url {
   }
   
   return $hub->url({ type => 'Export', action => $export, function => $type });
+}
+
+sub _has_data {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+
+  return !!grep $session->get_data(type => $_), qw(upload url das);
 }
 
 1;

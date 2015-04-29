@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ use Data::Dumper;
 ### Accepts a data hash in the format:
 ### $data = {
 ###     'scores'    => [],
+###     'mins'      => [], #optional
+###     'maxs'      => [], #optional
 ###     'display    => '_method',   # optional
 ###     'histogram' => 'bar_style', # optional
 ###     'colour'    => '',
@@ -63,7 +65,8 @@ sub build_tracks {
   my $chr_max_data  = 0;
 	my $slice			    = $self->{'container'}->{'sa'}->fetch_by_region(undef, $chr);
   my $width         = $image_config->get_parameter( 'width') || 80;
-  my $max_data      = $image_config->get_parameter( 'max_value' ) || 1;
+  my $max_value     = $image_config->get_parameter( 'max_value' ) || 1;
+  my $max_mean      = $image_config->get_parameter( 'max_mean' ) || 1;
   my $bins          = $image_config->get_parameter('bins') || 150;
   my $max_len       = $image_config->container_width();
   my $bin_size      = int($max_len/$bins);
@@ -79,36 +82,47 @@ sub build_tracks {
     $T->{'style'}     = $info->{'display'} || $display;
     $T->{'histogram'} = $info->{'histogram'} || $histogram;
     $T->{'width'}     = $width;
-    $T->{'scores'}    = $scores;
     $T->{'colour'}    = $info->{'colour'};
-    $T->{'max_data'}  = $max_data;
+    $T->{'max_value'} = $max_value;
+    $T->{'max_mean'}  = $max_mean;
     $T->{'max_len'}   = $max_len;
     $T->{'bin_size'}  = $bin_size;
     $T->{'v_offset'}  = $v_offset;
 
+    my $scaled_scores = [];
+    my $mins          = [];
+    my $maxs          = [];
     foreach(@$scores) { 
-		  $chr_min_data = $_ if ($_<$chr_min_data || $chr_min_data eq undef); 
-		  $chr_max_data = $_ if $_>$chr_max_data; 
+      my $mean = $_;
+      if (ref($_) eq 'HASH') {
+        $mean = $_->{'mean'};
+        push $mins, $_->{'min'};
+        push $maxs, $_->{'max'};
+      } 
+      ## Use real values for max/min labels
+		  $chr_min_data = $mean if ($mean < $chr_min_data || $chr_min_data eq undef); 
+		  $chr_max_data = $mean if $mean > $chr_max_data;
+      ## Scale data for actual display
+      my $max = $max_value || $chr_max_data || 1; 
+      push @$scaled_scores, $mean/$max * $width;
 	  }
+    $T->{'scores'} = $scaled_scores;
+    $T->{'mins'}   = $mins;
+    $T->{'maxs'}   = $maxs;
     push @settings, $T;
   }
   
   ## Add max/min lines if required
   if ($display eq '_line' && $track_config->get('maxmin') && scalar @settings) {
-    my $label2        = $track_config->get( 'labels' );
-    $self->label2( $self->Text({
-       'text'      => 'Min:'.$chr_min_data.' Max:'.$chr_max_data,
-       'font'      => 'Tiny',
-       'absolutey' => 1,
-    }) ); 
+    $self->label2('Min:'.$chr_min_data.' Max:'.$chr_max_data); 
     $self->push( $self->Space( {
       'x' => 1, 'width' => 3, 'height' => $width, 'y' => 0, 'absolutey'=>1 
     } ));
     # max line (max)
     $self->push( $self->Line({
       'x'      => $v_offset ,
-      'y'      => $chr_max_data,
-     'width'  => $max_len - $v_offset ,
+      'y'      => $width,
+     'width'  => $max_len - $v_offset,
      'height' => 0,
      'colour' => 'lavender',
      'absolutey' => 1,
@@ -142,15 +156,35 @@ sub build_tracks {
   } 
 }
 
-sub _line {
+sub _whiskers {
   my ($self, $T) = @_;
-  my @data =  @{$T->{'scores'}};
+  $self->_line($T, {'whiskers' => 1});
+}
+
+sub _raw {
+  my ($self, $T) = @_;
+  $self->_line($T, {'scale_to_mean' => 1});
+}
+
+sub _line {
+  my ($self, $T, $options) = @_;
+  my @scores  =  @{$T->{'scores'}};
+  my @mins    =  @{$T->{'mins'}};
+  my @maxs    =  @{$T->{'maxs'}};
+  ## These two options are mutually exclusive
+  my $draw_whiskers = $options->{'whiskers'};
+  my $scale_to_mean  = $draw_whiskers ? 0 : $options->{'scale_to_mean'};
 
   my $old_y = undef;
   for(my $x = $T->{'v_offset'} - $T->{'bin_size'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
-    my $datum = shift @data;
-    my $new_y = $datum; # / $T->{'max_data'} * $T->{'width'} ;
-   
+    my $datum       = shift @scores;
+    my $max_value   = $T->{'max_value'} || 1;
+    my $max_mean    = $T->{'max_mean'} || 1;
+    my $scale       = $scale_to_mean ? $T->{'width'} / $max_mean
+                                     : $T->{'width'} / $max_value;
+    my $new_y       = $datum * $scale;
+    my $min_whisker = (shift @mins) * $scale;
+    my $max_whisker = (shift @maxs) * $scale;
     if(defined $old_y) {
       
       $self->push( $self->Line({
@@ -161,6 +195,38 @@ sub _line {
  	      'colour' => $T->{'colour'},
  	      'absolutey' => 1,
       }) );			
+    }
+    if ($draw_whiskers && $min_whisker && $max_whisker) {
+      my $whisker_len = $T->{'bin_size'};
+      ## NOTE These x coordinates are based more on trial-and-error
+      ## than on maths - I'm not sure how correct they are! 
+      ## Main whisker line (min to max)
+      $self->push( $self->Line({
+        'x'      => $x + ($whisker_len * 2), 
+        'y'      => $min_whisker,
+        'width'  => 0,
+ 	      'height' => $max_whisker,
+ 	      'colour' => 'black',
+ 	      'absolutey' => 1,
+      }) );
+      ## Min whisker end
+      $self->push( $self->Line({
+        'x'      => $x + ($whisker_len * 1.5), 
+        'y'      => $min_whisker,
+	      'width'  => $whisker_len,
+ 	      'height' => 0, 
+ 	      'colour' => 'black',
+ 	      'absolutey' => 1,
+      }) );
+      ## Max whisker end
+      $self->push( $self->Line({
+        'x'      => $x + ($whisker_len * 1.5), 
+        'y'      => $max_whisker,
+	      'width'  => $whisker_len,
+ 	      'height' => 0, 
+ 	      'colour' => 'black',
+ 	      'absolutey' => 1,
+      }) );
     }
     $old_y = $new_y;
   }
@@ -176,7 +242,7 @@ sub _histogram {
   my $old_y;
   for(my $x = $T->{'v_offset'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
     my $datum = shift @data;
-    my $new_y = $datum / $T->{'max_data'} * $T->{'width'};
+    my $new_y = $datum / $T->{'max_value'} * $T->{'width'};
 
     if(defined $old_y) {
       $self->push( $self->Rect({
@@ -190,6 +256,11 @@ sub _histogram {
     }
     $old_y = $new_y;
   }
+}
+
+sub _set_scale {
+  my ($self, $T) = @_;
+  return $T->{'max_data'} ? $T->{'width'} / $T->{'max_data'} : $T->{'width'};
 }
 
 1;

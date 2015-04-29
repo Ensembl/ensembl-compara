@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,28 +30,33 @@ sub content {
   my $default = $hub->param('default');
   my $action  = $hub->param('goto');
   
-  $self->caption('Expand track depth to:');
+  $self->caption('Change track depth to:');
+
+  my %params = (
+                'action'        => $action,
+                'track'         => $track,
+                );
   
   $self->add_entry({
     label_html => "Default ($default)",
-    link       => $hub->url({ action => $action, $track => '' })
+    link       => $hub->url({ %params, 'depth' => '' })
   });
   if ($count > 20) {
     $self->add_entry({
       label_html => '20 features',
-      link       => $hub->url({ action => $action, $track => '20' })
+      link       => $hub->url({ %params, 'depth' => '20' })
     });
   }
   if ($count > 100) {
     $self->add_entry({
       action     => 'View',
       label_html => '100 features',
-      link       => $hub->url({ action => $action, $track => '100' })
+      link       => $hub->url({ %params, 'depth' => '100' })
     });
   }
   $self->add_entry({
     label_html => "All features ($count)",
-    link       => $hub->url({ action => $action, $track => $count })
+    link       => $hub->url({ %params, 'depth' => $count })
   });
 }
 

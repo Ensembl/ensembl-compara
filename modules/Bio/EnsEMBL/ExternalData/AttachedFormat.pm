@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,11 +24,16 @@ no warnings 'uninitialized';
 
 use Text::ParseWords;
 
-use EnsEMBL::Web::Tools::Misc qw(get_url_filesize);
+use EnsEMBL::Web::File::Utils::URL qw(get_filesize);
 
 sub new {
   my ($proto,$hub,$format,$url,$trackline) = @_;
   my $class = ref($proto) || $proto;
+
+  (my $new_class = $class) =~ s/ExternalData/Web::File/;
+  $new_class =~ s/Bio:://;
+  warn "######## DEPRECATED MODULE - please use $new_class instead";
+
   my $self = {
     format => $format,
     hub => $hub,
@@ -46,20 +51,24 @@ sub extra_config_page { return undef; }
 
 sub check_data {
   my ($self) = @_;
-  my $error = '';
+  my $error_message = '';
   my $options = {};
 
   my $url = $self->{'url'};
   $url = "http://$url" unless $url =~ /^http|^ftp/;
 
   ## Check file size
-  my $feedback = get_url_filesize($url);
-
-  if ($feedback->{'error'}) {
-    if ($feedback->{'error'} eq 'timeout') {
-      $error = 'No response from remote server';
-    } elsif ($feedback->{'error'} eq 'mime') {
-      $error = 'Invalid mime type';
+  my $feedback = get_filesize($url, {'hub' => $self->{'hub'}, 'nice' => 1});
+  my $error = $feedback->{'error'}[0];
+  if ($error) {
+    if ($error eq 'timeout') {
+      $error_message = 'No response from remote server';
+    } elsif ($error eq 'mime') {
+      $error_message = 'Invalid mime type';
+    } elsif ($error eq 'denied') {
+      ## Server is refusing header requests, so do nothing
+      $error = undef;
+      $options = {'filesize' => 1};
     } else {
       $error = "Unable to access file. Server response: $feedback->{'error'}";
     }
@@ -69,7 +78,7 @@ sub check_data {
   else {
     $options = {'filesize' => $feedback->{'filesize'}};
   }
-  return ($error, $options);
+  return ($url, $error, $options);
 }
 
 sub parse_trackline {

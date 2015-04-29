@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ use strict;
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub label { return undef; }
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 
 # Lazy evaluation
 sub data_by_cell_line {
@@ -33,6 +34,7 @@ sub data_by_cell_line {
 
   my $data = $config->{'data_by_cell_line'};
   $data = $data->() if ref($data) eq 'CODE';
+  $config->{'data_by_cell_line'} = $data;
   return $data||{};
 }
 
@@ -51,13 +53,11 @@ sub draw_features {
 
   my $hub = $self->{'config'}->hub;
   my $cell_type_url = $hub->url('Component', {
-    type => 'Regulation',
     action   => 'Web',
     function    => 'CellTypeSelector/ajax',
     image_config => $self->{'config'}->type,
   });
   my $evidence_url = $hub->url('Component', {
-    type => 'Regulation',
     action => 'Web',
     function => 'EvidenceSelector/ajax',
     image_config => $self->{'config'}->type,
@@ -123,7 +123,8 @@ sub draw_blocks {
     $self->draw_track_name($label, $colour, -108, 0, 'no_offset');
     $self->draw_block_features ($features, $colour, $f_set, 1, 1);
   }
-  $self->_offset($self->add_legend_box("More",["Links",@$zmenu_extra_content],$self->_offset+2)) if defined $zmenu_extra_content;
+  $self->_add_sublegend(undef,"More","Links",$zmenu_extra_content,
+                        $self->_offset+2);
 
   $self->draw_space_glyph;
 }

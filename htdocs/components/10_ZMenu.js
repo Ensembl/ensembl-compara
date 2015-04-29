@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,39 @@
 Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   constructor: function (id, data) {
     this.base(id);
-    
-    var area = $(data.area.a);
+
+    var area = data.area.a;
     var params, n;
+
+    if (data.area.link) {
+      area = { klass:{}, attrs: { href: data.area.link.attr('href'), title: data.area.link.attr('title') } };
+    }
     
-    this.drag       = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
-    this.align      = area.hasClass('align'); // TODO: implement alignslice menus
-    this.group      = area.hasClass('group') || area.hasClass('pseudogroup');
-    this.coloured   = area.hasClass('coloured');
-    this.href       = area.attr('href');
-    this.title      = area.attr('title') || '';
+    this.drag       = area.klass.drag ? 'drag' : area.klass.vdrag ? 'vdrag' : false;
+    this.align      = area.klass.align; // TODO: implement alignslice menus
+    this.group      = area.klass.group || area.klass.pseudogroup;
+    this.coloured   = area.klass.coloured;
+    this.href       = area.attrs.href;
+    this.title      = area.attrs.title || '';
     this.das        = false;
     this.event      = data.event;
     this.coords     = data.coords || {};
     this.imageId    = data.imageId;
+    this.onclose    = data.onclose; // to be triggered when the zmenu is closed
+    this.context    = data.context; // context to call the 'onclose' on (defaults to the zmenu panel itself)
     this.relatedEl  = data.relatedEl;
     this.areaCoords = $.extend({}, data.area);
     this.location   = 0;
+    this.helptips   = false;
     
-    if (area.hasClass('das')) {
-      this.das       = area.hasClass('group') ? 'group' : area.hasClass('pseudogroup') ? 'pseudogroup' : 'feature';
-      this.logicName = area.attr('class').replace(/das/, '').replace(/(pseudo)?group/, '').replace(/ /g, '');
+    if (area.klass.das) {
+      this.das       = area.klass.group ? 'group' : area.klass.pseudogroup ? 'pseudogroup' : 'feature';
+      this.logicName = '';
+      $.each(area.attrs,function(k,v) {
+        if(k != 'das' && k != 'pseudogroup' && k != 'group') {
+          this.logicName += k;
+        }
+      });
     }
     
     if (this.drag) {
@@ -50,7 +62,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.start       = parseInt(params[5], 10);
       this.end         = parseInt(params[6], 10);
       this.strand      = parseInt(params[7], 10);
-      this.multi       = area.hasClass('multi') ? n : false;
+      this.multi       = area.klass.multi ? n : false;
       
       if (!this.speciesPath.match(/^\//)) {
         this.speciesPath = '/' + this.speciesPath;
@@ -91,6 +103,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     $('.close', this.el).on('click', function () { 
       panel.hide();
+      if (panel.onclose) {
+        panel.onclose.call(panel.context || panel);
+      }
     });
     
     // The location parameter that is due to be changed has its value replaced with %s
@@ -157,7 +172,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var menu    = this.title.split('; ');
     var caption = menu.shift();
     
-    this.buildMenu(menu, caption, link, extra);
+    this.buildMenu(menu, caption, link, extra, true);
   },
   
   populateDas: function () {
@@ -296,7 +311,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     function notLocation() {
       var view = end - start + 1 > Ensembl.maxRegionLength ? 'Overview' : 'View';
           url  = url.replace(/.+\?/, '?');
-          menu = [ '<a href="' + panel.speciesPath + '/Location/' + view + url + '">Jump to location ' + view.toLowerCase() + '</a>' ];
+          menu = [ '<a href="' + panel.speciesPath + '/Location/' + view + url + '">Jump to region ' + view.toLowerCase() + '</a>' ];
       
       if (!window.location.pathname.match('/Chromosome')) {
         menu.push('<a href="' + panel.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>');
@@ -448,7 +463,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     url  = this.baseURL.replace(/.+\?/, '?').replace(/%s/, this.chr + ':' + start + '-' + end);
-    menu = [ '<a href="' + this.speciesPath + '/Location/' + view + url + '">Jump to location ' + view.toLowerCase() + '</a>' ];
+    menu = [ '<a href="' + this.speciesPath + '/Location/' + view + url + '">Jump to region ' + view.toLowerCase() + '</a>' ];
     
     if (!window.location.pathname.match('/Chromosome')) {
       menu.push('<a href="' + this.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>');
@@ -457,7 +472,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.buildMenu(menu, caption);
   },
   
-  buildMenu: function (content, caption, link, extra) {
+  buildMenu: function (content, caption, link, extra, decodeHTML) {
     var body = [];
     var i    = content.length;
     var menu, title, parse, j, row;
@@ -490,8 +505,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
           body.push('<tr>' + row + '</tr>');
         }
       } else {
-        menu = content[i].split(': ');  
-        body.unshift(this.row.apply(this, menu.length > 1 ? [ menu.shift(), menu.join(': ') ] : [ content[i] ]));
+        var kv = decodeHTML ? $('<span/>').html(content[i]).text() : content[i]; // Unescape HTML if needed
+        menu = kv.split(': ');  
+        body.unshift(this.row.apply(this, menu.length > 1 ? [ menu.shift(), menu.join(': ') ] : [ kv ]));
       }
     }
     
@@ -546,6 +562,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (this.relatedEl) {      
       this.relatedEl.addClass('highlight');
+    }
+
+    if (!this.helptips && this.elLk.container.html()) {
+      this.elLk.container.find('._ht').helptip();
+      this.helptips = true;
     }
   },
   

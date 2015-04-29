@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package EnsEMBL::Draw::VRenderer;
 
 ### Base class for creating a canvas for a VDrawableContainer
 ### and its glyphsets
-### Modeled on Sanger::Graphics::Renderer, adapted for vertical
+### Modeled on EnsEMBL::Draw::Renderer, adapted for vertical
 ### ideograms
 
 use strict;
@@ -112,7 +112,7 @@ sub render {
           $PAR->{'pixelwidth'}  = $points[0] + $points[2] - 2 * $PAR->{'pixelx'};
           $PAR->{'pixelheight'} = $points[1] + $points[3] - 2 * $PAR->{'pixely'};
           
-          $glyph = $COL ? Sanger::Graphics::Glyph::Rect->new($PAR) : Sanger::Graphics::Glyph::Space->new($PAR);
+          $glyph = $COL ? EnsEMBL::Draw::Glyph::Rect->new($PAR) : EnsEMBL::Draw::Glyph::Space->new($PAR);
         } elsif (@points == 8 &&
             $points[0] == $points[6] && $points[1] == $points[3] &&
             $points[2] == $points[4] && $points[5] == $points[7]
@@ -122,10 +122,10 @@ sub render {
           $PAR->{'pixelwidth'}  = $points[0] + $points[2] - 2 * $PAR->{'pixelx'};
           $PAR->{'pixelheight'} = $points[1] + $points[5] - 2 * $PAR->{'pixely'};
           
-          $glyph = $COL ? Sanger::Graphics::Glyph::Rect->new($PAR) : Sanger::Graphics::Glyph::Space->new($PAR);
+          $glyph = $COL ? EnsEMBL::Draw::Glyph::Rect->new($PAR) : EnsEMBL::Draw::Glyph::Space->new($PAR);
         } else {
           $PAR->{'pixelpoints'} = [ @points ];
-          $glyph = Sanger::Graphics::Glyph::Poly->new($PAR);
+          $glyph = EnsEMBL::Draw::Glyph::Poly->new($PAR);
         }
         
         push @{$layers{defined $Z ? $Z : -1 }}, $glyph;

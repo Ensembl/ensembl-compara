@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ use warnings;
 no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Component::Location);
+
+use List::MoreUtils qw(first_index);
 
 sub _init {
   my $self = shift;
@@ -105,58 +107,48 @@ sub stats_table {
   my $self = shift;
   my $object = $self->object;
 
-  my @orderlist = (
-    'Length (bps)',
-    'Coding genes',
-    'Short non coding genes',
-    'Long non coding genes',
-    'Pseudogenes',
-    'Short Variants',
-    'Number of fingerprint contigs',
-    'Number of clones selected for sequencing',
-    'Number of clones sent for sequencing',
-    'Number of accessioned sequence clones',
-    'Number of finished sequence clones',
-    'Total number of sequencing clones',
-    'Raw percentage of map covered by sequence clones',
-  );
-  
-  my $table = EnsEMBL::Web::Document::Table->new([{ key => 'header'}, { key => 'value'}], [], { header => 'no', exportable => 0, 'class' => 'tint' });
+  my @order = qw(_length coding noncoding noncoding/s noncoding/l noncoding/m
+                 pseudogene SNPCount);
+  my @suffixes = (['','~'],['r',' (incl. ~ readthrough)']);
+  my @data;
 
-  my ($stats, %chr_stats, %code_hash, %readt_hash);
+  # Attributes
   my $chr = $object->Obj->{'slice'};
   foreach my $attrib (@{$chr->get_all_Attributes}) {
-    if ($attrib->value =~ /^\d+$/) {
-      $chr_stats{$attrib->name} += $attrib->value;
-      $code_hash{$attrib->name} = $attrib->code;
+    my ($name,$inline,$sub) = ($attrib->code,'',0);
+    if($name =~ s/^(.*?)_(r)?a?cnt(_([^_]*))?$/$1/) { # Counts
+      $sub = 1 if $4;
+      $name .= "/$4" if $4;
+      $inline = $2;
     }
-    if ($attrib->code =~ /(\w+)\_ra?cnt/) {
-      $readt_hash{$attrib->code} += $attrib->value;
-    }
-  }
-  $chr_stats{'Length (bps)'} = $chr->seq_region_length ;
-
-  for my $stat (@orderlist) {
-    my $value = $object->thousandify( $chr_stats{$stat} );
-    next if !$value;
-    my $code = $code_hash{$stat};
-    $code =~ s/_cnt/_rcnt/;
-    $code =~ s/_acnt/_racnt/;
-    if ($readt_hash{$code}) {
-      $value .= " (incl. " . $readt_hash{$code} . " readthrough)";
-    }
-    $stat = 'Estimated length (bps)' if $stat eq 'Length (bps)' && $object->species_defs->NO_SEQUENCE;
-    # Is this really the best way to do this? -- ds23
-    $stat =~ s/Raw p/P/;
-    $stat =~ s/protein_coding/Protein-coding/;
-    $stat =~ s/_/ /g;
-    $stat =~ s/ Count$/s/;
-    $stat =~ s/SNPs/Variations/;
-    $stat = ucfirst($stat) unless $stat =~ /^[a-z]+RNA/;
-
-    $table->add_row({'header' => $stat, 'value' => $value}); 
+    my $pos = first_index { $_ eq $name } @order;
+    next if $pos == -1;
+    my $value =  $object->thousandify($attrib->value);
+    ($data[$pos]||={})->{$inline} = $value;
+    $data[$pos]->{'_name'} = $attrib->name if $inline eq '';
+    $data[$pos]->{'_sub'} = 1 if $sub;
   }
 
+  # Add length
+  my $name = "Length (bps)";
+  $name = 'Estimated length (bps)' if $object->species_defs->NO_SEQUENCE;
+  $data[0]->{'_name'} = $name;
+  $data[0]->{''} = $object->thousandify($chr->seq_region_length);
+
+  my $table = EnsEMBL::Web::Document::Table->new([{ key => 'header'}, { key => 'value'}], [], { header => 'no', exportable => 0, 'class' => 'tint' });
+  foreach my $d (@data) {
+    my $value = '';
+    foreach my $s (@suffixes) {
+      next unless defined $d->{$s->[0]};
+      $value .= $s->[1];
+      $value =~ s/~/$d->{$s->[0]}/g;
+    }
+    next unless $value;
+    my $class = '';
+    $class = 'row-sub' if $d->{'_sub'};
+    $table->add_row({ header => $d->{'_name'}, value => $value,
+                      options => { class => $class }}); 
+  }
   return $table;
 }
 

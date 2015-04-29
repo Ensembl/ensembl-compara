@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ package EnsEMBL::Web::Object::Transcript;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::TranscriptAlleles qw(get_all_ConsequenceType);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
 use EnsEMBL::Web::Cache;
@@ -438,37 +437,37 @@ sub get_families {
     return {};
   }
 
-  # create family object
-  my $family_adaptor;
-  eval {
-    $family_adaptor = $databases->get_FamilyAdaptor
-  };
-  
-  if ($@) {
-    warn $@; 
-    return {};
-  }
-  
-  my $families = [];
   my $translation = $self->translation_object;
-  
-  eval {
-    $families = $family_adaptor->fetch_by_Member_source_stable_id('ENSEMBLPEP',$translation->stable_id)
-  };
+  return unless $translation;
+
+  my $member = $self->database($cdb)->get_SeqMemberAdaptor->fetch_by_stable_id($translation->stable_id);
+  my $family = $self->database($cdb)->get_FamilyAdaptor->fetch_by_SeqMember($member);
 
   # munge data
   my $family_hash = {};
   
-  if (@$families) {
+  if ($family) {
     my $ga = $self->database('core')->get_GeneAdaptor;
     
-    foreach my $family (@$families) {
-      $family_hash->{$family->stable_id} = {
-        'description' => $family->description,
-        'count'       => $family->Member_count_by_source_taxon('ENSEMBLGENE', $taxon_id),
-        'genes'       => [ map { $ga->fetch_by_stable_id($_->stable_id) } @{$family->get_Member_by_source_taxon('ENSEMBLGENE', $taxon_id) || []} ],
-      };
+    my @members = grep $_->taxon_id eq $taxon_id, @{$family->get_all_GeneMembers};
+    #my @genes = map { $ga->fetch_by_stable_id($_->stable_id) } @members;
+    my @genes = map { $_->get_Gene } @members;
+
+    ## dedupe genes
+    my %seen;
+    foreach (@genes) {
+      next unless $_;
+      next if $seen{$_->stable_id};
+      $seen{$_->stable_id} = $_;
     }
+
+    my @unique_genes = values %seen;
+
+    $family_hash->{$family->stable_id} = {
+      'description' => $family->description,
+      'genes'       => \@unique_genes, 
+      'count'       => scalar @members, 
+    };
   }
   
   return $family_hash;
@@ -657,8 +656,9 @@ sub getAllelesConsequencesOnSlice {
   my $valids = $self->valids;  
 
   # Get all features on slice
-  my $allele_features = $sample_slice->get_all_AlleleFeatures_Slice(1) || []; 
-  return ([], []) unless @$allele_features;
+  ## Don't assume that a sample ID taken from CGI input is actually present in this species!
+  my $allele_features = eval {$sample_slice->get_all_AlleleFeatures_Slice(1) || []}; 
+  return ([], []) if $@ || !@$allele_features;
 
   my @filtered_af =
     sort { $a->[2]->start <=> $b->[2]->start }
@@ -1177,10 +1177,13 @@ sub get_go_list {
       my $has_ancestor = (!defined ($ancestor));
       if (!$has_ancestor){
         $has_ancestor=($go eq $ancestor);
+        my $term = $goa->fetch_by_accession($go);
 
-        my $ancestors = $goa->fetch_all_by_descendant_term($goa->fetch_by_accession($go));
-        for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
-          $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
+        if ($term) {
+          my $ancestors = $goa->fetch_all_by_descendant_term($term);
+          for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
+            $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
+          }
         }
       }
       
@@ -1381,7 +1384,7 @@ sub get_archive_object {
   my $self = shift;
   my $id = $self->stable_id;
   my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
-  my $archive_object = $archive_adaptor->fetch_by_stable_id($id);
+  my $archive_object = $archive_adaptor->fetch_by_stable_id($id, 'Transcript');
 
   return $archive_object;
 }
@@ -1712,7 +1715,7 @@ sub variation_data {
     next unless $tv->cdna_start && $tv->cdna_end;
     next if scalar keys %consequence_filter && !grep $consequence_filter{$_}, @{$tv->consequence_type};
     
-    my $vf    = $self->transcript_variation_to_variation_feature($tv);
+    my $vf    = $self->transcript_variation_to_variation_feature($tv) or next;
     my $vdbid = $vf->dbID;
     
     #next if scalar keys %population_filter && !$population_filter{$vdbid};

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ sub content {
   $self->caption($slice_name);
   
   $self->add_entry({
-    label => "Center on $slice_type $slice_name",
+    label => "Centre on $slice_type $slice_name",
     link  => $hub->url({ 
       type   => 'Location', 
       action => $action, 
@@ -72,7 +72,7 @@ sub content {
     $action = $new_slice_length > $threshold ? 'Overview' : 'View';
     
     $self->add_entry({
-      label => "Center on $new_slice_type $new_slice_name",
+      label => "Centre on $new_slice_type $new_slice_name",
       link  => $hub->url({
         type   => 'Location', 
         action => $action, 

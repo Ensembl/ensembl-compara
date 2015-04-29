@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
   updateSelection: function () {
+    var panel = this;
 
     if(!this.changed) { return; }
 
@@ -23,12 +24,17 @@ Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
       image_config: this.params.image_config
     };
     params[this.urlParam] = encodeURIComponent(this.selection.join(','));
+    params[this.urlParam+'_on'] = encodeURIComponent(this.changed_on.join(','));
+    params[this.urlParam+'_off'] = encodeURIComponent(this.changed_off.join(','));
+
+    panel.reset_selection();
     $.ajax({
       url: '/' + Ensembl.species + '/Ajax/cell_type',
       data: params,
       context: this,
       complete: function() {
-        var panels = ['FeaturesByCellLine','FeatureDetails','FeatureSummary'];
+        var panels = ['FeaturesByCellLine','FeatureDetails',
+                      'FeatureSummary','ViewBottom'];
         var bg_panels = ['Buttons','SummaryButtons'];
         for(var i=0;i<bg_panels.length;i++) {
           Ensembl.EventManager.triggerSpecific('updatePanel',bg_panels[i],null,null,null,null,{ background: true });

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,33 +49,23 @@ sub content {
   
   my $align_param = $hub->param('align');
 
-  #target_species and target_slice_name_range may not be defined so split separately
-  #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
   my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
-  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range ?
-    $target_slice_name_range =~ /(\w+):(\d+)-(\d+)/ : (undef, undef, undef);
-
-  #Define target_slice
-  my $target_slice;
-  if ($target_species && $target_slice_start) {
-      my $target_slice_adaptor = $hub->database('core', $target_species)->get_SliceAdaptor;
-      $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name, $target_slice_start, $target_slice_end);
-  }
+  my $target_slice = $object->get_target_slice;
 
   my ($alert_box, $error) = $self->check_for_align_problems({
                     'align' => $align,
                     'species' => $self->object->species,
                   });
   return $alert_box if $error;
-  my $warnings;
+  my ($warnings, $image_link);
   
   my $html = $alert_box;
   
-  if ($type eq 'Gene') {
+  if ($type eq 'Gene' && $align) {
     my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
     
-    $html .= sprintf(
-      '<p style="font-weight:bold"><a href="%s">Go to a graphical view of this alignment</a></p>',
+    $image_link = sprintf(
+      '<p style="font-weight:bold"><a href="%s">View an image of this alignment</a></p>',
       $hub->url({
         type   => 'Location',
         action => 'Compara_Alignments/Image',
@@ -85,7 +75,7 @@ sub content {
     );
   }
   
-  $slice = $slice->invert if $hub->param('strand') == -1;
+  $slice = $slice->invert if ($hub->param('strand') && $hub->param('strand') == -1);
 
   my $align_blocks;
   my $num_groups = 0;
@@ -94,8 +84,8 @@ sub content {
   my $is_low_coverage_species = 0; #is this species part of the low coverage set in the EPO_LOW_COVERAGE alignments
 
   #method_link_species_set class and type
-  my $method_class = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'};
-  my $method_type = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'type'};
+  my $method_class = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'} if ($align);
+  my $method_type = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'type'} if ($align);
 
   # Get all alignment blocks and group_ids when asking for a specific alignment
   if ($align) {
@@ -127,6 +117,8 @@ sub content {
   } elsif ($is_overlap && $target_species && !$target_slice) {
       $need_target_slice_table = 1;  
   }
+  ## Need to pass information to button code
+  $hub->param('need_target_slice_table', $need_target_slice_table);
 
   my ($slices, $slice_length, $num_slices);
   
@@ -157,10 +149,9 @@ sub content {
   #If the slice_length is long, split the sequence into chunks to speed up the process
   #Note that slice_length is not set if need to display a target_slice_eable
   if ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
-
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
-    $html .= '<div class="sequence_key"></div>' . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
+    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
+    $html .= $image_link . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
 
   } else {
     my ($table, $padding);
@@ -168,13 +159,14 @@ sub content {
     #Draw target_slice_table for overlapping alignments
     if ($need_target_slice_table) {
       $table = $self->_get_target_slice_table($slice, $align, $align_blocks, $groups, $method_class, $method_type, $is_low_coverage_species, $cdb);
-      $html .= '<div class="sequence_key"></div>' . $table . $self->show_warnings($warnings);
+      $html .= $image_link . $table;
     } else {
       #Write out sequence if length is short enough
       $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices) if ($align);
-      $html .= $self->content_sub_slice($slice, $slices, undef, $cdb); # Direct call if the sequence length is short enough
+      $html .= $image_link . $self->content_sub_slice($slice, $slices, undef, $cdb) if($align); # Direct call if the sequence length is short enough
     }
   }
+  
   $html .= $self->show_warnings($warnings);
  
   return $html;
@@ -183,20 +175,29 @@ sub content {
 
 sub content_sub_slice {
   my $self = shift;
+  my ($sequence, $config) = $self->_get_sequence(@_);  
+  return $self->build_sequence($sequence, $config,1);
+}
+
+sub _get_sequence {
+  my $self = shift;
   my ($slice, $slices, $defaults, $cdb) = @_;
-  
+
   my $hub          = $self->hub;
-  my $object       = $self->object;
+  my $object       = $self->object || $hub->core_object($hub->param('data_type'));
      $slice      ||= $object->slice;
-     $slice        = $slice->invert if !$_[0] && $hub->param('strand') == -1;
+     $slice        = $slice->invert if !$_[0] && $hub->param('strand') && $hub->param('strand') == -1;
   my $species_defs = $hub->species_defs;
   my $start        = $hub->param('subslice_start');
   my $end          = $hub->param('subslice_end');
   my $padding      = $hub->param('padding');
   my $slice_length = $hub->param('length') || $slice->length;
 
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
+
   my $config = {
-    display_width   => $hub->param('display_width') || 60,
+    display_width   => $hub->param('display_width') || $vc->get('display_width'),
     site_type       => ucfirst lc $species_defs->ENSEMBL_SITETYPE || 'Ensembl',
     species         => $hub->species,
     display_species => $species_defs->SPECIES_COMMON_NAME,
@@ -208,10 +209,11 @@ sub content_sub_slice {
   };
   
   for (qw(exon_display exon_ori snp_display line_numbering conservation_display codons_display region_change_display title_display align)) {
-    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
+    my $param = $hub->param($_) || $vc->get($_);
+    $config->{$_} = $param;
   }
   
-  if ($config->{'line_numbering'}) {
+  if ($config->{'line_numbering'} ne 'off') {
     $config->{'end_number'} = 1;
     $config->{'number'}     = 1;
   }
@@ -237,19 +239,19 @@ sub content_sub_slice {
   # markup_comparisons must be called first to get the order of the comparison sequences
   # The order these functions are called in is also important because it determines the order in which things are added to $config->{'key'}
   $self->markup_comparisons($sequence, $markup, $config)   if $config->{'align'};
-  $self->markup_conservation($sequence, $config)           if $config->{'conservation_display'};
-  $self->markup_region_change($sequence, $markup, $config) if $config->{'region_change_display'};
-  $self->markup_codons($sequence, $markup, $config)        if $config->{'codons_display'};
-  $self->markup_exons($sequence, $markup, $config)         if $config->{'exon_display'};
-  $self->markup_variation($sequence, $markup, $config)     if $config->{'snp_display'};
-  $self->markup_line_numbers($sequence, $config)           if $config->{'line_numbering'};
+  $self->markup_conservation($sequence, $config)           if $config->{'conservation_display'} ne 'off';
+  $self->markup_region_change($sequence, $markup, $config) if $config->{'region_change_display'} ne 'off';
+  $self->markup_codons($sequence, $markup, $config)        if $config->{'codons_display'} ne 'off';
+  $self->markup_exons($sequence, $markup, $config)         if $config->{'exon_display'} ne 'off';
+  $self->markup_variation($sequence, $markup, $config)     if $config->{'snp_display'} ne 'off';
+  $self->markup_line_numbers($sequence, $config)           if $config->{'number'};
   
   # Only if this IS NOT a sub slice - print the key and the slice list
   my $template = '';
-  $template = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . $self->get_slice_table($config->{'slices'}) unless $start && $end;
+  $template = $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
-  my $class = $end == $slice_length ? '' : ' class="no-bottom-margin"' if $start && $end;
+  my $class = ($start && $end && $end == $slice_length) ? '' : ' class="no-bottom-margin"';
   
   $config->{'html_template'} = qq{$template<pre$class>%s</pre>};
 
@@ -266,9 +268,8 @@ sub content_sub_slice {
   
   $self->id('');
  
-  return $self->build_sequence($sequence, $config);
+  return ($sequence, $config);
 }
-
 
 sub draw_tree {
   my ($self, $cdb, $align_blocks, $slice, $align, $class, $groups, $slices) = @_;
@@ -333,33 +334,34 @@ sub draw_tree {
 
     #Restrict the tree by looking at the species in the AlignSlice
     $restricted_tree = $gab->get_GenomicAlignTree;
-    my $num_slices = @$slices;
-    my $cnt =0;
+  }
 
-    foreach my $this_node (@{$restricted_tree->get_all_sorted_genomic_align_nodes()}) {
+    # Remove the leaves (and their parents) from the tree if the species is
+    # hidden by the current configuration (i.e. is not in $slices)
+    my %slice_ok = map {(lc $_->{name}) => 1} @$slices;
+    foreach my $this_node (@{$restricted_tree->get_all_leaves}) {
       my $genomic_align_group = $this_node->genomic_align_group;
       next if (!$genomic_align_group);
       my $node_name = $genomic_align_group->genome_db->name;
-      my $this_slice = $slices->[$cnt];
-      if ($cnt < $num_slices && lc($slices->[$cnt]->{name}) eq $node_name) {
-        #if need to distinguish between nodes of the same name, maybe try checking that the
-        #genomic_aligns in the slice and group are identical
-        #my $slice_gas = $this_slice->{genomic_align_ids}; #hash
-        #my $tree_gas = $genomic_align_group->{genomic_align_array};
-        $cnt++;
-      } else {
-        $this_node->disavow_parent;
-        $restricted_tree = $restricted_tree->minimize_tree;
-      }
+      next if $slice_ok{$node_name};
+      $this_node->disavow_parent;
+      $restricted_tree = $restricted_tree->minimize_tree;
     }
-  }
 
   #Get cigar lines from each Slice which will be passed to the genetree.pm drawing code
   my $slice_cigar_lines;
 
+  # The nodes should be in the same order as the slices, so we can match
+  # the internal nodes to the ancestral slices
+  my @internal_nodes = grep {not $_->is_leaf} @{$restricted_tree->get_all_sorted_genomic_align_nodes};
   foreach my $this_slice (@$slices) {
-    next if (lc($this_slice->{name}) eq "ancestral_sequences"); #skip cigar lines for ancestral seqs
-    push @$slice_cigar_lines, $this_slice->{cigar_line};
+    if (lc($this_slice->{name}) eq "ancestral_sequences") {
+      #skip cigar lines for ancestral seqs and transfer the counter_position flag
+      my $ga_node = shift @internal_nodes;
+      $ga_node->{_counter_position} = $this_slice->{_counter_position};
+    } else {
+      push @$slice_cigar_lines, $this_slice->{cigar_line};
+    }
   }
 
   #Get low coverage species from the EPO_LOW_COVERAGE species set
@@ -414,10 +416,7 @@ sub get_slice_table {
 
     $species_padding = length $species if $return_padding && length $species > $species_padding;
 
-    $table_rows .= qq{
-    <tr>
-      <th>$species &rsaquo;</th>
-      <td>};
+    $table_rows .= sprintf '<tr><th>%s&nbsp;&rsaquo;</th><td>', $species =~ s/\s/&nbsp;/r;
 
     foreach my $slice (@{$_->{'underlying_slices'}}) {
       next if $slice->seq_region_name eq 'GAP';
@@ -430,7 +429,7 @@ sub get_slice_table {
         $number_padding = length $end    if length $end    > $number_padding;
       }
       
-      if ($species eq 'Ancestral sequences') {
+      if ($species =~ /^Ancestral sequences/) {
         $table_rows .= $slice->{'_tree'};
         $ancestral_sequences = 1;
       } else {
@@ -438,16 +437,14 @@ sub get_slice_table {
       }
     }
 
-    $table_rows .= qq{
-      </td>
-    </tr>};
+    $table_rows .= '</td></tr>';
   }
   
   $region_padding++ if $region_padding;
  
   if ($table_rows) { 
     my $rtn = qq(<table class="bottom-margin" cellspacing="0">$table_rows</table>);
-    $rtn    = qq{<p>NOTE: <a href="/info/docs/compara/analyses.html#epo">How ancestral sequences are calculated</a></p>$rtn} if $ancestral_sequences;
+    $rtn    = qq{<p>NOTE: <a href="/info/genome/compara/analyses.html#epo">How ancestral sequences are calculated</a></p>$rtn} if $ancestral_sequences;
     return $return_padding ? ($rtn, "$species_padding,$region_padding,$number_padding") : $rtn;
   }
 }
@@ -464,6 +461,7 @@ sub _get_target_slice_table {
   my $mlss_adaptor            = $compara_db->get_adaptor('MethodLinkSpeciesSet');
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
   my $ref_region              = $slice->seq_region_name;
+  my $html                    = '';
 
   my $other_species;
 
@@ -522,6 +520,7 @@ sub _get_target_slice_table {
       #want num_species but not non_ref details
       ($ref_start, $ref_end, $non_ref_start, $non_ref_end, undef, $num_species) = $self->object->get_start_end_of_slice($gab_group, $ref_species);
     }
+    next if $num_species == 0 && $class !~ /pairwise/;
 
     $gab_num++;
 
@@ -574,18 +573,20 @@ sub _get_target_slice_table {
     push @rows, $this_row;
   }
 
-  my $table = $self->new_table(\@columns, \@rows, {
+  if (scalar(@rows)) {
+    my $table = $self->new_table(\@columns, \@rows, {
       data_table => 1,
       data_table_config => {iDisplayLength => 25},
       class             => 'fixed_width',
       sorting           => [ 'length desc' ],
       exportable        => 0
-  });
+    });
 
-  my $html = "A total of " . @$merged_blocks . " alignment blocks have been found. Please select an alignment to view by selecting a Block from the Alignment column. <br /> <br />";
-  $html .= $table->render;
-  
-  return qq{<div class="summary_panel">$html</div>};
+    $html = "A total of " . @$merged_blocks . " alignment blocks have been found. Please select an alignment to view by selecting a Block from the Alignment column. <br /> <br />";
+    $html .= $table->render;
+    $html = qq{<div class="summary_panel">$html</div>};
+  }
+  return $html;
 
 }
 
@@ -651,6 +652,54 @@ sub _get_low_coverage_genome_db_sets {
     }
   }
   return $low_coverage_species;
+}
+
+sub export_options { 
+  my $self = shift;
+  my $hub = $self->hub;
+  my @species_options;
+  my $align = $hub->param('align');
+  
+  return unless $align;  
+
+  foreach (grep { /species_$align/ } $hub->param) {
+    push @species_options, $_;  
+  }
+  
+  return {
+          'action'  => 'TextAlignments', 
+          'params'  => ['align', @species_options], 
+          'caption' => 'Download alignment',
+        }; 
+}
+
+sub get_export_data {
+## Get data for export
+  my $self = shift;
+  my $hub = $self->hub;
+  ## Fetch object explicitly, as we're probably coming from a DataExport URL
+  my $obj = $hub->core_object($hub->param('data_type'));
+  return $obj;
+}
+
+sub initialize_export {
+  my $self = shift;
+  my $hub = $self->hub;
+
+  my $object    = $self->builder->object($hub->param('data_type'));
+  my $location  = $object->Obj;
+  my $cdb       = $hub->param('cdb') || 'compara';
+  my ($slices)  = $object->get_slices({
+                        'slice'   => $object->slice,
+                        'align'   => $hub->param('align'),
+                        'species' => $hub->species,
+                        'start'   => undef,
+                        'end'     => undef,
+                        'db'      => $cdb,
+                        'target'  => $object->get_target_slice,
+                        'image'   => $self->has_image
+                });
+  return $self->_get_sequence($object->slice, $slices, undef, $cdb);
 }
 
 1;

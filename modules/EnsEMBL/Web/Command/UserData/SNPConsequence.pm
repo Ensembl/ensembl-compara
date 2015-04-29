@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ sub process {
     $session_data->{'border'}   = 'off'; ## show as unjoined features
     $session_data->{'md5'}      = $temp_file->md5;
     $session_data->{'nearest'}  = $nearest;
-    $session_data->{'assembly'} = $species_defs->get_config($species, 'ASSEMBLY_NAME');
+    $session_data->{'assembly'} = $species_defs->get_config($species, 'ASSEMBLY_VERSION');
 
     $session->set_data(%$session_data);
     

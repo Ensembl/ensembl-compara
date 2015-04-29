@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ sub create_factory {
   
   if ($factory) {
     my $obj;
-    if($hub->script =~ /Component|DataExport/ and $factory->canLazy) {
+    if($hub->script =~ /Component/ and $factory->canLazy) {
      # warn "!!! BEING LAZY WITH $type";
       $factory->SetTypedDataObject($type,EnsEMBL::Web::Lazy::Object->new(sub {
         $obj = $factory->createObjectsInternal;

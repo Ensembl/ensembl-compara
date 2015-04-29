@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -179,7 +179,12 @@ my $input_c = @species;
 if( $species_list eq 'ALL' ) {
   @species = ();
   my %ignored;
-  @ignored{@ignore_species} = ();
+  foreach my $ig (@ignore_species) {
+    my $val = 0;
+    $val = -1  if($ig =~ s!^<!!);
+    $val = 1 if($ig =~ s!^>!!);
+    @ignored{grep { ($_ cmp $ig) == $val } @{$SD->ENSEMBL_DATASETS}} = ();
+  }
   foreach my $sp (@{$SD->ENSEMBL_DATASETS}) {
     push @species,$sp unless exists $ignored{$sp};
   }
@@ -574,7 +579,8 @@ sub dumpVariation {
 
   my $sth;
   my ($all_hgvs_names,$hgvs_sth);
-  if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
+	if (1) { 
+#if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
     print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
     $sth = $conf->{'variation_dbh'}->prepare(qq(
     SELECT variation_id, hgvs_name
@@ -671,7 +677,8 @@ sub dumpVariation {
 
   my ($ssid_sth, $stmt,$ssid_hash);
   # the mouse and human databases are so big that that dumping in one go runs out of memory even with 48Gb!
-  if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
+	if (1) {
+#  if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
     print LOG "    Preparing to get extra ssID info ".&date_and_mem()."\n";
     $stmt = qq{SELECT variation_id,
                       GROUP_CONCAT('ss',subsnp_id) as ssid
@@ -1094,7 +1101,6 @@ sub dumpGenomicAlignment {
   my %dbs      = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTDB  if $ESTDB;
   $dbs{'cdna'}          = $CDNADB if $CDNADB;
-  $dbs{'rnaseq'}        = $RNASEQDB if $RNASEQDB;
   my %tables = (
     'dna_align_feature'     => [ 'DnaAlignFeature',     'DNA alignment feature' ],
     'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
@@ -1457,7 +1463,7 @@ sub DomainLine {
                     $acc);
   $species =~ s/_/ /;
   my $ids = join ',', @$IDS;
-  my $description = "$desc $count associated external database identifiers: $ids";
+  my $description = &clean($desc)." $count associated external database identifiers: $ids";
   my $xml = qq(
 <doc>
   <field name="id">$acc</field>

@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,8 +125,9 @@ div.ff-notes {
 }
 .ftext, .ftextarea {
   border: [[PANEL_BORDER]] solid 1px;
-  width: 210px;
+  width: 206px;
   margin: 0 0 3px;
+  padding-left: 4px;
 }
 .ffile {
   margin: 0 0 3px;
@@ -154,6 +155,7 @@ input.fbutton:active, input.fbutton:hover {
 }
 input.fbutton.disabled, input.fbutton.disabled:active {
   background-color:#999;
+  cursor: default;
 }
 .fselect {
   width: 210px;
@@ -381,7 +383,7 @@ div.filterable-dropdown p.filterable-dropdown-filter {
 div.filterable-dropdown p.filterable-dropdown-filter input {
   height: 20px;
   margin: 0;
-  width: 378px;
+  width: 375px;
   color: [[PAGE_TEXT]];
   font-style: italic;
 }
@@ -428,16 +430,4 @@ form.freeform fieldset .form-field .ff-right {
   display:inline!important;
   margin: 0;
   padding: 0;
-}
-
-input.blast-button {
-  display:inline!important;
-  float:none!important;
-  font-family:inherit;
-  font-weight:normal!important;
-  font-size:1em!important;
-  background-image: url(/i/16/rev/blast.png); 
-  background-position: 4px 50%; 
-  background-repeat: no-repeat; 
-  padding: 5px 6px 3px 22px;
 }

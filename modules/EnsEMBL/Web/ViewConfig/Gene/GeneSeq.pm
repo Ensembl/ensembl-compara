@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,24 +41,32 @@ sub init {
   });
 }
 
-sub form {
-  my $self                   = shift;
-  my $dbs                    = $self->species_defs->databases;
-  my %gene_markup_options    = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
-  my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
-  my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;
-  
-  push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
-  push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
-  
-  $self->add_form_element($gene_markup_options{'flank5_display'});
-  $self->add_form_element($gene_markup_options{'flank3_display'});
-  $self->add_form_element($other_markup_options{'display_width'});
-  $self->add_form_element($gene_markup_options{'exon_display'});
-  $self->add_form_element($general_markup_options{'exon_ori'});
-  $self->variation_options({ populations => [ 'fetch_all_LD_Populations' ] }) if $dbs->{'DATABASE_VARIATION'};
-  $self->add_form_element($general_markup_options{'line_numbering'});
-  $self->add_form_element($other_markup_options{'title_display'});
+sub field_order {
+  my $self = shift;
+  my $dbs   = $self->species_defs->databases;
+  my @order = qw(flank5_display flank3_display display_width exon_display exon_ori);
+  push @order, $self->variation_fields if $dbs->{'DATABASE_VARIATION'};
+  push @order, qw(line_numbering title_display);
+  return @order;
+}
+
+sub form_fields {
+  my $self            = shift;
+  my $dbs             = $self->species_defs->databases;
+  my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
+  my $fields = {};
+
+  push @{$markup_options->{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons' } if $dbs->{'DATABASE_VEGA'};
+  push @{$markup_options->{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
+
+  $self->add_variation_options($markup_options) if $dbs->{'DATABASE_VARIATION'};
+ 
+  foreach ($self->field_order) {
+    $fields->{$_} = $markup_options->{$_};
+    $fields->{$_}{'value'} = $self->get($_);
+  }
+ 
+  return $fields; 
 }
 
 1;

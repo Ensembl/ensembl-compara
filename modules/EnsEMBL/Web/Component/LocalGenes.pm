@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ sub content {
     while (my ($stable_id, $data) = each %genes) {
       my $gene      = $data->{'gene'};
       my $dxr       = $gene->can('display_xref') ? $gene->display_xref : undef;
-      my $gene_name = ($dxr->display_id) ? $dxr->display_id : '-';
+      my $gene_name = $dxr && $dxr->display_id || '-';
       my $params    = {
         db     => 'core',
         r      => undef,

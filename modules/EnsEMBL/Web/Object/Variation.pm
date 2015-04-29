@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -350,7 +350,7 @@ sub source {
   ### Description: gets the Variation source
   ### Returns String
 
-  $_[0]->vari->source;
+  $_[0]->vari->source_name;
 }
 
 sub source_description {
@@ -385,7 +385,7 @@ sub source_version {
   ### Returns String
 
   my $self    = shift;
-  my $source  = $self->vari->source;
+  my $source  = $self->vari->source_name;
   my $version = $self->vari->adaptor->get_source_version($source);
   return $version;
 }
@@ -559,9 +559,7 @@ sub clinical_significance {
   ### Returns and array
 
   my $self = shift;
-  my $css = $self->vari->clinical_significance;
-  my @cs_list = split(",",$css);
-  return \@cs_list;
+  return $self->vari->get_all_clinical_significance_states;
 }
 
 
@@ -622,9 +620,6 @@ sub freqs {
   my $self = shift;
 
   ## show genotypes for unmapped variants - get alleles from variation not variation feature
-
-  # Force to display the failed alleles
-  $self->Obj->adaptor->db->get_db_adaptor('variation')->include_failed_variations(1);
 
   my $allele_list = $self->vari->get_all_Alleles;
   return {} unless $allele_list;
@@ -737,6 +732,19 @@ sub get_external_data {
   my $self = shift;
   $self->{'external_data'} ||= $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_Variation($self->vari);
   return $self->{'external_data'};
+}
+
+sub slice {
+  my $self = shift;
+  my @vfs = @{$self->Obj->get_all_VariationFeatures};
+  my $feature_slice;
+  return 1 unless $self->hub->param('vf');
+  foreach my $vf (@vfs){
+    if ($vf->dbID == $self->hub->core_param('vf')){
+      $feature_slice = $vf->feature_Slice;
+    }
+  }
+  return $feature_slice;
 }
 
 sub is_somatic_with_different_ref_base {
@@ -959,23 +967,36 @@ sub individual_table {
   my %ip_hash_new;
   my %synonym;
   my %pop_seen;
+  my %pop_data;
+
   foreach my $pop_geno (@{$pop_genos}){
       my $pop_obj = $pop_geno->population();
+      my $pop_id  = $pop_obj->dbID();   
 
       ## look up samples in each population once
-      next if $pop_seen{ $pop_obj->dbID()} ==1;
-      $pop_seen{ $pop_obj->dbID()} =1;
+      next if $pop_seen{ $pop_id} ==1;
+      $pop_seen{ $pop_id} =1;
 
       my $individuals = $pop_obj->get_all_Individuals(); 
       foreach my $ind_ob (@{$individuals}){
           ## link on name & apply to geno structure later
-          push @{$ip_hash_new{$ind_ob->name()}}, $pop_obj;
+          push @{$ip_hash_new{$ind_ob->name()}}, $pop_id;
       }
 
       ## look up synonyms (for dbSNP link) once
       $synonym{$pop_obj->name} = $pop_obj->get_all_synonyms(),
-  }
 
+      # Add population information
+      $pop_data{$pop_id} = {
+         Name => $pop_obj->name(),
+         Size => $pop_obj->size(),
+         Link => $synonym{$pop_obj->name},
+         ID   => $pop_obj->dbID(),
+         Priority => $pop_obj->display_group_priority(),
+         Group    => $pop_obj->display_group_name()
+      };
+  }
+  
   my %data;
   
   foreach my $ind_gt_obj ( @$individual_genotypes ) { 
@@ -995,23 +1016,18 @@ sub individual_table {
     $data{$ind_id}{Object}        = $ind_obj;
   
     if(defined $ip_hash_new{$ind_obj->name()}->[0]){
-        foreach my $pop_obj(@{$ip_hash_new{$ind_obj->name()}}){
-            push (@{$data{$ind_id}{Population}}, {
-                Name => $pop_obj->name(),
-                Size => $pop_obj->size(),
-                Link => $synonym{$pop_obj->name},
-                ID   => $pop_obj->dbID()
-                });
-        }
+      foreach my $pop_id (@{$ip_hash_new{$ind_obj->name()}}){
+        push (@{$data{$ind_id}{Population}}, $pop_data{$pop_id});
+      }
     }
     else{
-        ## force the rest to the 'Other individuals' table to be reported seperately
-        push (@{$data{$ind_id}{Population}}, {
-            Name => $ind_obj->name(),
-            Size => 1,
-            Link => [],
-            ID   => 1000000
-            });
+      ## force the rest to the 'Other individuals' table to be reported seperately
+      push (@{$data{$ind_id}{Population}}, {
+        Name => $ind_obj->name(),
+        Size => 1,
+        Link => [],
+        ID   => 1000000
+      });
     }
   }
   
@@ -1411,9 +1427,6 @@ sub find_location {
   return $slice->name;
 }
 
-
-
-
 sub pop_obj_from_id {
 
   ### LD
@@ -1460,21 +1473,13 @@ sub location { return $_[0]; }
 
 sub get_source {
   my $self = shift;
-  my $default = shift;
 
   my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
   unless ($vari_adaptor) {
     warn "ERROR: Can't get variation adaptor";
     return ();
   }
-
-  if ($default) {
-    return  $vari_adaptor->get_VariationAdaptor->get_default_source();
-  }
-  else {
-    return $vari_adaptor->get_VariationAdaptor->get_all_sources();
-  }
-
+  return $vari_adaptor->get_VariationAdaptor->get_all_sources();
 }
 
 =head2 hgvs
@@ -1601,7 +1606,7 @@ sub hgvs_url {
   my $p = {
     action => 'Explore',
     db     => 'core',
-    source => $obj->source,
+    source => $obj->source_name,
     v      => $obj->name,
     r      => undef,
   };

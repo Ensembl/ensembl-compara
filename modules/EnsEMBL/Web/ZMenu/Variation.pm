@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ sub feature_content {
   my $chr           = $feature->seq_region_name;
   my $name          = $feature->variation_name;
   my $dbID          = $feature->dbID;
-  my $source        = $feature->source;
+  my $source        = $feature->source_name;
   my $bp            = "$chr:$chr_start";
   my $types         = $hub->species_defs->colour('variation');
   my $type          = $consequence && !($snp_fake || $var_box) ? $consequence : $feature->display_consequence;

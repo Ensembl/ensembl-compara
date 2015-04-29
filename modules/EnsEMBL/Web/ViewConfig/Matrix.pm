@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ sub form {
     video     => sprintf('<a href="%s" class="popup">Click to view a tutorial video</a>', $hub->url({ type => 'Help', action => 'View', id => $help{'Config/Matrix'}, __clear => 1 })),
   );
   
-  $tutorials{$_} = qq(<b class="tutorial $_">$tutorials{$_}</b>) for keys %tutorials;
+  $tutorials{$_} = qq(<b class="tutorial $_"><span class="close"></span>$tutorials{$_}</b>) for keys %tutorials;
   
   if ($tutorial_row < 3) {
     my $margin = $tutorial_row == 0 ? 70 : 60;

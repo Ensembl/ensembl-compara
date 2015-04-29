@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,40 +26,66 @@ sub init {
   my $self = shift;
   
   $self->set_defaults({
-    exons          => 'yes',
-    codons         => 'yes',
-    utr            => 'yes',
-    coding_seq     => 'yes',
-    translation    => 'yes',
-    rna            => 'no',
-    snp_display    => 'yes',
-    line_numbering => 'sequence',
+    exons          => 'on',
+    codons         => 'on',
+    utr            => 'on',
+    coding_seq     => 'on',
+    translation    => 'on',
+    rna            => 'off',
+    snp_display    => 'on',
+    line_numbering => 'on',
   });
   
   $self->title = 'cDNA sequence';
   $self->SUPER::init;
 }
 
-sub form {
+sub field_order {
   my $self = shift;
+  my @order = qw(exons codons utr coding_seq translation rna);
+  push @order, $self->variation_fields if $self->species_defs->databases->{'DATABASE_VARIATION'};
+  push @order, qw(line_numbering);
+  return @order;
+}
 
-  $self->add_form_element({ type => 'YesNo', name => 'exons',       select => 'select', label => 'Show exons'            });
-  $self->add_form_element({ type => 'YesNo', name => 'codons',      select => 'select', label => 'Show codons'           });
-  $self->add_form_element({ type => 'YesNo', name => 'utr',         select => 'select', label => 'Show UTR'              });
-  $self->add_form_element({ type => 'YesNo', name => 'coding_seq',  select => 'select', label => 'Show coding sequence'  });
-  $self->add_form_element({ type => 'YesNo', name => 'translation', select => 'select', label => 'Show protein sequence' });
-  $self->add_form_element({ type => 'YesNo', name => 'rna',         select => 'select', label => 'Show RNA features'     });
-  $self->variation_options({ populations => [ 'fetch_all_HapMap_Populations', 'fetch_all_1KG_Populations' ], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
-  $self->add_form_element({
-    type   => 'DropDown', 
-    select => 'select',
-    name   => 'line_numbering',
-    label  => 'Line numbering',
-    values => [
-      { value => 'sequence', caption => 'Yes' },
-      { value => 'off',      caption => 'No'  },
-    ]
-  });
+sub form_fields {
+  my $self = shift;
+  my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
+  my $fields = {};
+
+  my @extra = (
+    ['codons',      'codons'],
+    ['utr',         'UTR'],
+    ['coding_seq',  'coding sequence'],
+    ['translation', 'protein sequence'],
+    ['rna',         'RNA features'],
+  );
+
+  foreach (@extra) {
+    my ($name, $label) = @$_;
+    $markup_options->{$name} = {
+                                type  => 'Checkbox', 
+                                name  => $name,
+                                value => 'on',       
+                                label => "Show $label",         
+     };
+  }
+
+  ## Switch line-numbering to a checkbox as it doesn't have multiple options
+  $markup_options->{'line_numbering'}{'type'} = 'Checkbox';
+  $markup_options->{'line_numbering'}{'value'} = 'sequence';
+  delete $markup_options->{'line_numbering'}{'values'};
+
+  my $var_options = { populations => [ 'fetch_all_HapMap_Populations', 'fetch_all_1KG_Populations' ], snp_link => 'no' };
+
+  $self->add_variation_options($markup_options, $var_options) if $self->species_defs->databases->{'DATABASE_VARIATION'};
+
+  foreach ($self->field_order) {
+    $fields->{$_} = $markup_options->{$_};
+    $fields->{$_}{'value'} = $self->get($_);
+  }
+
+  return $fields;
 }
 
 1;

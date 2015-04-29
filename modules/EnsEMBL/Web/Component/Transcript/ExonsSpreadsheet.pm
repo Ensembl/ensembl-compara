@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Trans
 sub initialize {
   my ($self, $export) = @_;
   my $hub        = $self->hub;
-  my $only_exon  = $hub->param('oexon') eq 'yes'; # display only exons
   my $entry_exon = $hub->param('exon');
   my $object     = $self->object || $hub->core_object('transcript');
   my $transcript = $object->Obj;
@@ -34,14 +33,18 @@ sub initialize {
   my $chr_name   = $exons[0]->slice->seq_region_name;
   my $i          = 0;
   my @data;
+
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
   
   my $config = {
-    display_width => $hub->param('display_width') || 60,
-    sscon         => $hub->param('sscon'),            # no of bp to show either side of a splice site
-    flanking      => $hub->param('flanking'),         # no of bp up/down stream of transcript
-    full_seq      => $hub->param('fullseq') eq 'yes', # flag to display full sequence (introns and exons)
-    snp_display   => $hub->param('snp_display'),
-    number        => $hub->param('line_numbering'),
+    exons_only    => $hub->param('exons_only') || $vc->get('exons_only'),
+    display_width => $hub->param('display_width') || $vc->get('display_width'),
+    sscon         => $hub->param('sscon') || $vc->get('sscon'),   # no of bp to show either side of a splice site
+    flanking      => $hub->param('flanking') || $vc->get('flanking'),   # no of bp up/down stream of transcript
+    full_seq      => $hub->param('fullseq') || $vc->get('fullseq'),     # flag to display full sequence (introns and exons)
+    snp_display   => $hub->param('snp_display') || $vc->get('snp_display'),
+    number        => $hub->param('line_numbering') || $vc->get('line_numbering'),
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
     strand        => $strand,
@@ -61,12 +64,12 @@ sub initialize {
       $config->{'min_frequency'} = $hub->param('min_frequency');
     }
     
-    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} ne 'off' && join('', @consequence) ne 'off';
     $config->{'hide_long_snps'}     = $hub->param('hide_long_snps') eq 'yes';
   }
   
   # Get flanking sequence
-  my ($upstream, $downstream, $offset) = $config->{'flanking'} && !$only_exon ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
+  my ($upstream, $downstream, $offset) = $config->{'exons_only'} eq 'off' && $config->{'flanking'} ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
   
   if ($upstream) {
     $self->add_line_numbers('upstream', $config, $config->{'flanking'}, $offset);
@@ -84,7 +87,7 @@ sub initialize {
     my $exon_end   = $exon->seq_region_end;
 
     $exon_id = "<strong>$exon_id</strong>" if $entry_exon && $entry_exon eq $exon_id;
-    
+
     my $exon_seq = $self->get_exon_sequence_data($config, $exon);
     
     push @data, $export ? $exon_seq : {
@@ -99,7 +102,7 @@ sub initialize {
     };
 
     # Add intronic sequence
-    if ($next_exon && !$only_exon) {
+    if ($config->{'exons_only'} eq 'off' && $next_exon) {
       my ($intron_start, $intron_end) = $strand == 1 ? ($exon_end + 1, $next_exon->start - 1) : ($next_exon->end + 1, $exon_start - 1);
       my $intron_length = $intron_end - $intron_start + 1;
       my $intron_id     = "Intron $i-" . ($i + 1);
@@ -121,7 +124,7 @@ sub initialize {
     
     push @data, $export ? $downstream : { 
       exint    => "3' downstream sequence", 
-      Sequence => $self->build_sequence($downstream, $config)
+      Sequence => $self->build_sequence($downstream, $config,1)
     };
   }
   
@@ -145,7 +148,7 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
 
-  return sprintf '<div class="sequence_key">%s</div>%s%s', $self->get_key($config), $table->render;
+  return sprintf '<div class="_adornment_key adornment-key"></div><div class="adornment-load">'.$table->render."</div>";
 }
 
 sub export_options { return {'action' => 'ExonSeq'}; }
@@ -153,13 +156,6 @@ sub export_options { return {'action' => 'ExonSeq'}; }
 sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
-  ## Set some CGI parameters from the viewconfig
-  ## (because we don't want to have to set them in DataExport)
-  my $vc = $hub->get_viewconfig('Transcript', 'ExonsSpreadsheet');
-  my @params = qw(sscon snp_display flanking line_numbering);
-  foreach (@params) {
-    $hub->param($_, $vc->get($_));
-  }
   my ($data, $config) = $self->initialize(1);
   $config->{'v_space'} = "\n";
   return ($data, $config, 1);
@@ -176,7 +172,9 @@ sub get_exon_sequence_data {
   my $exon_end     = $exon->end;
   my $utr_start    = $coding_start && $coding_start > $exon_start; # exon starts with UTR
   my $utr_end      = $coding_end   && $coding_end   < $exon_end;   # exon ends with UTR
-  my $class        = $coding_start && $coding_end ? 'e0' : 'eu';   # if the transcript is entirely UTR, use utr class for the whole sequence
+  my $class        = defined $coding_start ? 'e1' : 'e0';
+  my $utr_class    = defined $coding_start ? 'eu' : 'e0';
+  my $utr_key      = defined $coding_start ? 'utr' : 'exon0';
   my @sequence     = map {{ letter => $_, class => $class }} split '', $seq;
   my ($coding_length, $utr_length);
   
@@ -192,18 +190,18 @@ sub get_exon_sequence_data {
     
     if ($utr_end) {
       $coding_length = 0 if $coding_length < 0;
-      $sequence[$_]{'class'} = 'eu' for $coding_length..$seq_length - 1;
-      $config->{'key'}{'exons/Introns'}{'utr'} = 1;
+      $sequence[$_]{'class'} = $utr_class for $coding_length..$seq_length - 1;
+      $config->{'key'}{'exons/Introns'}{$utr_key} = 1;
     }
     
     if ($utr_start) {
-      $sequence[$_]{'class'} = 'eu' for 0..($utr_length < $seq_length ? $utr_length : $seq_length) - 1;
-      $config->{'key'}{'exons/Introns'}{'utr'} = 1;
+      $sequence[$_]{'class'} = $utr_class for 0..($utr_length < $seq_length ? $utr_length : $seq_length) - 1;
+      $config->{'key'}{'exons/Introns'}{$utr_key} = 1;
     }
   }
   
   $config->{'last_number'} = $strand == 1 ? $exon_start - 1 : $exon_end + 1 if $config->{'number'} eq 'slice'; # Ensures that line numbering is correct if there are no introns
-  $config->{'key'}{'exons/Introns'}{$coding_start && $coding_end ? 'exon' : 'utr'} = 1;
+  $config->{'key'}{'exons/Introns'}{$coding_start && $coding_end ? 'exon1' : $utr_key} = 1;
   
   $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'snp_display'} ne 'off';
   
@@ -224,18 +222,18 @@ sub get_intron_sequence_data {
   my $display_width = $config->{'display_width'};
   my $strand        = $config->{'strand'};
   my $sscon         = $config->{'sscon'};
-  my @dots          = map {{ letter => $_, class => 'e1' }} split '', '.' x ($display_width - 2 * ($sscon % ($display_width / 2)));
+  my @dots          = map {{ letter => $_, class => 'ei' }} split '', '.' x ($display_width - 2 * ($sscon % ($display_width / 2)));
   my @sequence;
   
   eval {
-    if (!$config->{'full_seq'} && $intron_length > ($sscon * 2)) {
+    if ((!$config->{'full_seq'} || $config->{'full_seq'} eq 'off') && $intron_length > ($sscon * 2)) {
       my $start = { slice => $exon->slice->sub_Slice($intron_start, $intron_start + $sscon - 1, $strand) };
       my $end   = { slice => $next_exon->slice->sub_Slice($intron_end - ($sscon - 1), $intron_end, $strand) };
       
-      $start->{'sequence'} = [ map {{ letter => $_, class => 'e1' }} split '', lc $start->{'slice'}->seq ];
-      $end->{'sequence'}   = [ map {{ letter => $_, class => 'e1' }} split '', lc $end->{'slice'}->seq   ];
-      
-      if ($config->{'snp_display'} eq 'yes') {
+      $start->{'sequence'} = [ map {{ letter => $_, class => 'ei' }} split '', lc $start->{'slice'}->seq ];
+      $end->{'sequence'}   = [ map {{ letter => $_, class => 'ei' }} split '', lc $end->{'slice'}->seq   ];
+     
+      if ($config->{'snp_display'} eq 'on') {
         $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
@@ -245,9 +243,9 @@ sub get_intron_sequence_data {
     } else {
       my $slice = $exon->slice->sub_Slice($intron_start, $intron_end, $strand);
       
-      @sequence = map {{ letter => $_, class => 'e1' }} split '', lc $slice->seq;
+      @sequence = map {{ letter => $_, class => 'ei' }} split '', lc $slice->seq;
       
-      $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'yes';
+      $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'on';
       $self->add_line_numbers('intron', $config, $intron_length);
     }
   };
@@ -290,7 +288,7 @@ sub get_flanking_sequence_data {
   $upstream->{'sequence'}   = [ map {{ letter => $_, class => 'ef' }} split '', lc $upstream->{'seq'}   ];
   $downstream->{'sequence'} = [ map {{ letter => $_, class => 'ef' }} split '', lc $downstream->{'seq'} ];
   
-  if ($config->{'snp_display'} eq 'yes') {
+  if ($config->{'snp_display'} eq 'on') {
     $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $upstream, $downstream;
   }
   
@@ -304,6 +302,11 @@ sub get_flanking_sequence_data {
 
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
+
+  my $adorn = $self->hub->param('adorn') || 'none';
+
+  return if $adorn eq 'none';
+
   my $object = $self->object || $self->hub->core_object('transcript');
   my $variation_features    = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
@@ -313,9 +316,9 @@ sub add_variations {
   
   foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
     my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
-    
-    next if $config->{'consequence_filter'} && !$consequence;
-    
+
+    next if $config->{'consequence_filter'} && %{$config->{'consequence_filter'}} && !$consequence;
+
     my $vf    = $transcript_variation->variation_feature;
     my $name  = $vf->variation_name;
     my $start = $vf->start - 1;
@@ -399,19 +402,20 @@ sub add_line_numbers {
 
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
-  $config->{'html_template'} = '<pre class="exon_sequence">%s</pre>';
-  return $self->SUPER::build_sequence([ $sequence ], $config);
+  $config->{'html_template'} = '<pre class="text_sequence exon_sequence">%s</pre>';
+  return $self->SUPER::build_sequence([ $sequence ], $config,1);
 }
 
 sub get_key {
-  return shift->SUPER::get_key(@_, {
+  return shift->SUPER::get_key($_[0], {
     'exons/Introns' => {
-      exon     => { class => 'e0', text => 'Translated sequence' },
-      intron   => { class => 'e1', text => 'Intron sequence'     },
+      exon0    => { class => 'e0', text => 'Non-coding exon'     },
+      exon1    => { class => 'e1', text => 'Translated sequence' },
+      intron   => { class => 'ei', text => 'Intron sequence'     },
       utr      => { class => 'eu', text => 'UTR'                 },
       flanking => { class => 'ef', text => 'Flanking sequence'   },
     }
-  });
+  }, $_[2]);
 }
 
 1;

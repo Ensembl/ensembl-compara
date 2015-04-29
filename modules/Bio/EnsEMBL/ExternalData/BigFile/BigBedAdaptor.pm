@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,6 +35,12 @@ my @bed_columns = (
   ['name'],
   ['score'],
   ['strand'],
+  ['thickStart'],
+  ['thickEnd'],
+  ['itemRgb'],
+  ['blockCount',9],
+  ['blockSizes',10],
+  ['chromStarts'],
 );
 
 # colour, age used in AgeOfBase track
@@ -46,6 +52,8 @@ my %global_name_map = (
 
 sub new {
   my ($class, $url) = @_;
+
+  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor instead";
 
   my $self = bless {
     _cache => {},
@@ -63,6 +71,13 @@ sub bigbed_open {
   Bio::DB::BigFile->set_udc_defaults;
   $self->{_cache}->{_bigbed_handle} ||= Bio::DB::BigFile->bigBedFileOpen($self->url);
   return $self->{_cache}->{_bigbed_handle};
+}
+
+sub check {
+  my $self = shift;
+
+  my $bb = $self->bigbed_open;
+  return defined $bb;
 }
 
 sub _parse_as {
@@ -88,6 +103,7 @@ sub autosql {
 
   unless($self->{'_cache'}->{'_as'}) {
     my $bb = $self->bigbed_open;
+    return {} unless $bb;
     my $as = $self->_parse_as($bb->bigBedAs);
     $self->{'_cache'}->{'_as'} = $as;
   }
@@ -110,10 +126,10 @@ sub munge_chr_id {
   my $ret_id;
   
   do {
-    $ret_id = $head->name if $head->name =~ /^(chr)?$chr_id$/ && $head->size; # Check we get values back for seq region. Maybe need to add 'chr' 
-  } while (!$ret_id && ($head = $head->next));
+    $ret_id = $head->name if $head && $head->name =~ /^(chr)?$chr_id$/ && $head->size; # Check we get values back for seq region. Maybe need to add 'chr' 
+  } while (!$ret_id && $head && ($head = $head->next));
   
-  warn " *** could not find region $chr_id in BigBed file" unless $ret_id;
+  #warn " *** could not find region $chr_id in BigBed file" unless $ret_id;
   
   return $ret_id;
 }
@@ -257,7 +273,7 @@ sub fetch_rows  {
   my ($self, $chr_id, $start, $end, $dowhat) = @_;
 
   my $bb = $self->bigbed_open;
-  warn "Failed to open BigBed file" . $self->url unless $bb;
+  warn "Failed to open BigBed file " . $self->url."\n" unless $bb;
   return [] unless $bb;
   
   #  Maybe need to add 'chr' 

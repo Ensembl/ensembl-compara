@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -278,21 +278,35 @@ sub accept {
   my %custom_das   = map { $_->{'dsn'}  => 1 } $session->get_data(type => 'das'), $user ? $user->get_records('dases') : ();
      $data         = from_json($data);
   my @view_configs = $configuration ? map { $hub->get_viewconfig(@$_) || () } @{$configuration->new_for_components($hub, split '/', $action, 2)} : $hub->get_viewconfig(keys %$data);
-  my (@revert, $manage);
-  
+  my (@revert, $manage,%saveds);
+ 
+  my @altered; 
+  foreach my $view_config (@view_configs) {
+    my $config       = $data->{$view_config->component};
+    my $ic_type      = $view_config->image_config;
+    ## Save current config for this component (if any)
+    my @current_configs = ($hub->config_adaptor->get_config('view_config', $view_config->code),
+                            $hub->config_adaptor->get_config('image_config', $ic_type));
+    my $record_type_id  = $hub->user ? $hub->user->id : $session->create_session_id;
+
+    if (scalar(@current_configs)) {
+      $saveds{$view_config->component} =
+        $self->save_config($view_config->code, $ic_type, (
+          record_type     => 'session',
+          record_type_ids => [$record_type_id],
+          name            => $view_config->title . ' - '. $self->pretty_date(time, 'simple_datetime'),
+          description     => 'This configuration was automatically saved when you used a URL to view a shared image. It contains your configuration before you accepted the shared image.',
+        ));
+    }
+    
+    $session->receive_shared_data(grep !$custom_data{$_}, @{$config->{'shared_data'}}) if $config->{'shared_data'};
+  }
   foreach my $view_config (@view_configs) {
     my $config       = $data->{$view_config->component};
     my $ic_type      = $view_config->image_config;
     my $image_config = $ic_type ? $hub->get_imageconfig($ic_type) : undef;
-    my $saved_config = $self->save_config($view_config->code, $ic_type, (
-      record_type    => 'session',
-      record_type_id => $session->create_session_id,
-      name           => $view_config->title . ' - '. $self->pretty_date(time, 'simple_datetime'),
-      description    => 'This configuration was automatically saved when you used a URL to view a shared image. It contains your configuration before you accepted the shared image.',
-    ));
-    
-    $session->receive_shared_data(grep !$custom_data{$_}, @{$config->{'shared_data'}}) if $config->{'shared_data'};
-    
+
+
     if ($config->{'shared_das'}) {
       my @das_sources;
       
@@ -319,8 +333,15 @@ sub accept {
     $view_config->reset($image_config);
     
     if ($image_config && scalar keys %{$config->{'image_config'}}) {
+      my @changes;
+      foreach (keys %{$config->{'image_config'}}) {
+        my $node = $image_config->get_node($_) or next;
+        my $track_name = $node->data->{'name'} || $node->data->{'caption'};
+        push @changes, $track_name if $track_name;
+      }
       $image_config->set_user_settings($config->{'image_config'});
-      push @{$image_config->altered}, 'Tracks on image';
+      $image_config->altered(@changes);
+      push @altered, @changes;
     }
     
     if (scalar keys %{$config->{'view_config'}}) {
@@ -328,7 +349,8 @@ sub accept {
       $view_config->altered = 1;
     }
     
-    if (scalar $view_config->altered || ($image_config && scalar @{$image_config->altered})) {
+    if (scalar $view_config->altered || ($image_config && $image_config->is_altered)) {
+      my $saved_config = $saveds{$view_config->component};
       push @revert, [ sprintf('
         <a class="update_panel config-reset" rel="%s" href="%s">Revert to previous configuration%%s</a>',
         $view_config->component,
@@ -344,18 +366,21 @@ sub accept {
   }
   
   if (scalar @revert) {
+    my $tracks = join(', ', @altered);
     $session->add_data(
       type     => 'message',
       function => '_info',
       code     => 'configuration',
       order    => 101,
       message  => sprintf('
-        <p>The URL you just used has changed the configuration for this page%s. You may want to:</p>
+        <p>The URL you just used has changed the %s this page%s. You may want to:</p>
         <p class="tool_buttons" style="width:225px">
           %s
           %s
         </p>
-      ', $manage ? ', and your previous configuration has been saved' : '', join('', map { sprintf $_->[0], scalar @revert > 1 ? $_->[1] : '' } @revert), $manage)
+      ',
+      $tracks ? "following tracks: $tracks<br /> on" : 'configuration for', 
+      $manage ? ', and your previous configuration has been saved' : '', join('', map { sprintf $_->[0], scalar @revert > 1 ? $_->[1] : '' } @revert), $manage)
     );
   }
   

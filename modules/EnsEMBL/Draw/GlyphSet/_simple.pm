@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ sub features {
 sub colour_key { return lc $_[1]->analysis->logic_name; }
 sub _das_type  { return 'simple'; }
 
-sub feature_label { my ($self, $f) = @_; return $f->id; }
+sub feature_label { my ($self, $f) = @_; return $f->display_id; }
 sub render_normal {$_[0]->SUPER::render_normal(1);}
 sub render_labels {$_[0]->SUPER::render_normal();}
 

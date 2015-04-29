@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@ use strict;
   
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
+use List::Util qw(max);
+
 sub get_sequence_data {
-  my ($self, $object, $config) = @_;
+  my ($self, $object, $config,$adorn) = @_;
   my $hub          = $self->hub;
   my $trans        = $object->Obj;
   my $slice        = $trans->feature_Slice;
@@ -122,22 +124,33 @@ sub get_sequence_data {
         $flip = 1 - $flip;
       }
       
-      if ($config->{'translation'}) {        
+      if ($config->{'translation'}) {
         $protein_seq->{'seq'}[$i]{'letter'}     = $protein_seq->{'seq'}[$i + 2]{'letter'} = '-';
         $protein_seq->{'seq'}[$i + 1]{'letter'} = substr($peptide, int(($i + 1 - $cd_start) / 3), 1) || ($i + 1 < $cd_end ? '*' : '.');
       }
     }
   };
   
-  # If the transcript starts mid-codon, make the protein sequence show -X- at the start
-  if ($config->{'translation'} && $start_pad) {
-    my $pos     = scalar grep $protein_seq->{'seq'}[$_]{'letter'} eq '.', 0..2; # Find the number of . characters at the start
+  # If the transcript starts or ends mid-codon, make the protein sequence show -X- at the start or the end respectively
+  if ($config->{'translation'}) {
+    my ($pos_start, $pos_end, $strip_end);
     my @partial = qw(- X -);
-    
-    $protein_seq->{'seq'}[$pos]{'letter'} = $partial[$pos] while $pos--; # Replace . with as much of -X- as fits in the space
+
+    if ($start_pad) {
+      ($pos_start) = grep $protein_seq->{'seq'}[$_ - 1]{'letter'} eq '.', 1..3; # Find the positions of . characters at the start
+    }
+
+    if ($strip_end = 3 - ($cd_end - $cd_start) % 3) {
+      ($pos_end) = grep $protein_seq->{'seq'}[$_ + 1]{'letter'} =~ /\*|\-/, -3..-1; # Find the positions of - or * characters at the end
+    }
+
+    # Replace with as much of -X- as fits in the space and remove the extra chars from the end if required
+    $protein_seq->{'seq'}[$pos_start]{'letter'} = $partial[ $pos_start ]  while $pos_start--;
+    $protein_seq->{'seq'}[$pos_end]{'letter'}   = $partial[ $pos_end ]    while $pos_end++;
+    splice $protein_seq->{'seq'}, -1 * $strip_end if $strip_end--;
   }
   
-  if ($config->{'snp_display'}) {
+  if ($config->{'snp_display'} and $adorn ne 'none') {
     foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'}, $trans_strand)}) {
       next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
       
@@ -185,6 +198,7 @@ sub get_sequence_data {
         push @{$mk->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
         
         $variation_seq->{'seq'}[$_]{'letter'} = $ambigcode;
+        $variation_seq->{'seq'}[$_]{'new_letter'} = $ambigcode;
         $variation_seq->{'seq'}[$_]{'href'} = $url;
         $variation_seq->{'seq'}[$_]{'title'} = $variation_name;
         $variation_seq->{'seq'}[$_]{'tag'} = 'a';
@@ -228,7 +242,11 @@ sub get_sequence_data {
       
       foreach my $type (keys %$mk) {
         my %tmp = map { $_ - $cd_start + 1 >= 0 && $_ - $cd_start + 1 < $length ? ($_ - $cd_start + 1 => $mk->{$type}{$_}) : () } keys %{$mk->{$type}};
+        my $decap = max(-1,grep {  $_-$cd_start+1 < 0 } keys %{$mk->{$type}});
         $shifted->{$type} = \%tmp;
+        if($decap > 0 and $type eq 'exons') {
+          $shifted->{$type}{0}{'type'} = $mk->{$type}{$decap}{'type'};
+        }
       }
       
       $mk = $shifted;
@@ -237,7 +255,7 @@ sub get_sequence_data {
   
   # Used to set the initial sequence colour
   if ($config->{'exons'}) {
-    $_->{'exons'}{0}{'type'} = [ 'exon0' ] for @markup;
+    $_->{'exons'}{0}{'type'} ||= [ 'exon0' ] for @markup;
   }
   
   return (\@sequence, \@markup);
@@ -318,30 +336,39 @@ sub initialize {
   my $self   = shift;
   my $hub    = $self->hub;
   my $object = $self->object || $hub->core_object('transcript');
-  
+
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
+ 
+  my $adorn = $hub->param('adorn') || 'none';
+ 
   my $config = { 
-    display_width   => $hub->param('display_width') || 60,
     species         => $hub->species,
     maintain_colour => 1,
     transcript      => 1,
   };
-  
-  $config->{$_}            = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
+ 
+  $config->{'display_width'} = $hub->param('display_width') || $vc->get('display_width'); 
+  $config->{$_} = ($hub->param($_) eq 'on' || $vc->get($_) eq 'on') ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
-  $config->{'snp_display'} = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
-  
+ 
   if ($hub->param('line_numbering') ne 'off') {
-    $config->{'line_numbering'} = 'yes';
+    $config->{'line_numbering'} = 'on';
     $config->{'number'}         = 1;
   }
   
   $self->set_variation_filter($config);
   
-  my ($sequence, $markup) = $self->get_sequence_data($object, $config);
+  my ($sequence, $markup) = $self->get_sequence_data($object, $config,$adorn);
   
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
-  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
+  if($adorn ne 'none') {
+    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
+    push @{$config->{'loaded'}||=[]},'variations';
+  } else {
+    push @{$config->{'loading'}||=[]},'variations';
+  }
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
@@ -353,7 +380,7 @@ sub content {
   my $self = shift;
   my ($sequence, $config) = $self->initialize;
 
-  return sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
+  return $self->build_sequence($sequence, $config);
 }
 
 sub export_options { return {'action' => 'Transcript'}; }
@@ -361,13 +388,6 @@ sub export_options { return {'action' => 'Transcript'}; }
 sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
-  ## Set some CGI parameters from the viewconfig
-  ## (because we don't want to have to set them in DataExport)
-  my $vc = $hub->get_viewconfig('Transcript', 'TranscriptSeq');
-  my @params = qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
-    foreach (@params) {
-    $hub->param($_, $vc->get($_));
-  }
   my ($sequence, $config) = $self->initialize;
   return ($sequence, $config);
 }

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,12 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Web::Tools::OpenSearchDescription;
+
+### OpenSearch enables direct access to the Ensembl search engine
+### from the Chrome browser address bar - this functionality requires
+### XML files on the webserver, which are created by this module
+
+### See http://www.opensearch.org/Specifications/OpenSearch/1.1#OpenSearch_description_document
 
 use strict;
 

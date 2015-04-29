@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,18 +38,32 @@ sub content {
 }
 
 sub _content {
-  my $self   = shift;
-  my $hub    = $self->hub;
-  my $object = $self->object;
-  my @xref   = $object->display_xref;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $object      = $self->object;
+  my @xref        = $object->display_xref;
+  my $gene_desc   = $object->gene_description =~ s/No description//r =~ s/\[.+\]\s*$//r;
   
   $self->caption($xref[0] ? "$xref[3]: $xref[0]" : 'Novel transcript');
   
-  $self->add_entry({
-    type  => 'Gene',
-    label => $object->stable_id,
-    link  => $hub->url({ type => 'Gene', action => 'Summary' })
-  });
+  if($gene_desc) {
+    $self->add_entry({
+      type  => 'Gene',
+      label => $gene_desc
+    });
+    
+    $self->add_entry({
+      type  => ' ',
+      label => $object->stable_id,
+      link  => $hub->url({ type => 'Gene', action => 'Summary' })
+    }); 
+  } else {
+    $self->add_entry({
+      type  => 'Gene',
+      label => $object->stable_id,
+      link  => $hub->url({ type => 'Gene', action => 'Summary' })
+    });     
+  }
   
   $self->add_entry({
     type  => 'Location',
@@ -81,13 +95,16 @@ sub _content {
     $self->add_entry({
       type  => 'Analysis',
       label => $label
-    });
-    
-    $self->add_entry({
-      type       => 'Prediction method',
-      label_html => $object->analysis->description
-    });
+    });    
   }
+
+  my $alt_allele_link = $object->get_alt_allele_link('Location');
+  $self->add_entry({
+                    'type'       => 'Gene alleles',
+                    'label_html' => $alt_allele_link,
+                  }) 
+    if $alt_allele_link;
+  
 }
 
 1;

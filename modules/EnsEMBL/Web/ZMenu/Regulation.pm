@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ sub content {
     label => $object->get_attribute_list
   });
   
-  $self->add_entry({ label_html => 'NOTE: This feature has been projected by the <a href="/info/docs/funcgen/index.html">RegulatoryBuild</a>' }) if $reg_feature->is_projected;
+  $self->add_entry({ label_html => 'NOTE: This feature has been projected by the <a href="/info/genome/funcgen/index.html">RegulatoryBuild</a>' }) if $reg_feature->is_projected;
 
   $self->_add_nav_entries;
 

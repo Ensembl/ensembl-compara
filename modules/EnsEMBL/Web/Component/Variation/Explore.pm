@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,10 +38,12 @@ sub content {
   my $avail     = $self->object->availability;
 
   my ($seq_url, $gt_url, $pop_url, $geno_url, $context_url, $ld_url, $pheno_url, $phylo_url, $cit_url);
+  my ($gt_count, $geno_count, $pheno_count, $cit_count);
   $seq_url        = $hub->url({'action' => 'Sequence'});
   $context_url    = $hub->url({'action' => 'Context'});
   if ($avail->{'has_transcripts'}) {
     $gt_url   = $hub->url({'action' => 'Mappings'});
+    $gt_count = $avail->{'has_transcripts'};
   }
   if ($avail->{'has_populations'}) {
     if ($avail->{'not_somatic'}) {
@@ -54,18 +56,21 @@ sub content {
 
   if ($avail->{'has_individuals'} && $avail->{'not_somatic'}) {
     $geno_url   = $hub->url({'action' => 'Individual'});
+    $geno_count = $avail->{'has_individuals'};
     if ($avail->{'has_ldpops'}) {
       $ld_url    = $hub->url({'action' => 'HighLD'});
     }
   }
   if ($avail->{'has_ega'}) {
-    $pheno_url    = $hub->url({'action' => 'Phenotype'});
+    $pheno_url   = $hub->url({'action' => 'Phenotype'});
+    $pheno_count = $avail->{'has_ega'}
   }
   if ($avail->{'has_alignments'}) {
-    $phylo_url    = $hub->url({'action' => 'Compara_Alignments'});
+    $phylo_url    = $hub->url({'action' => 'Compara_Alignments'});    
   }
   if ($avail->{'has_citation'}) {
-    $cit_url      = $hub->url({'action' => 'Citations'});
+    $cit_url   = $hub->url({'action' => 'Citations'});
+    $cit_count = $avail->{'has_citation'};
   }
   
   my ($p_title, $p_img);
@@ -77,13 +82,13 @@ sub content {
   }
 
   my @buttons = (
-    {'title' => 'Graphical neighbourhood region', 'img' => 'genomic_context',        'url' => $context_url},
-    {'title' => 'Consequences (e.g. missense)',   'img' => 'gene_transcript',        'url' => $gt_url},
+    {'title' => 'Graphical neighbourhood region', 'img' => 'genomic_context','url' => $context_url},
+    {'title' => 'Consequences (e.g. missense)',   'img' => 'gene_transcript','url' => $gt_url,    'count' => $gt_count},
     {'title' => $p_title,                 'img' => $p_img,                   'url' => $pop_url},
-    {'title' => 'Individual genotypes',   'img' => 'individual_genotypes',   'url' => $geno_url},
+    {'title' => 'Individual genotypes',   'img' => 'individual_genotypes',   'url' => $geno_url,  'count' => $geno_count},
     {'title' => 'LD plots and tables',    'img' => 'linkage_disequilibrium', 'url' => $ld_url},
-    {'title' => 'Diseases and traits',    'img' => 'phenotype_data',         'url' => $pheno_url},
-    {'title' => 'Citations',                        'img' => 'citations',    'url' => $cit_url},
+    {'title' => 'Diseases and traits',    'img' => 'phenotype_data',         'url' => $pheno_url, 'count' => $pheno_count},
+    {'title' => 'Citations',              'img' => 'citations',              'url' => $cit_url,   'count' => $cit_count},
     {'title' => 'Sequence conservation via cross-species alignments',   
                                           'img' => 'phylogenetic_context',   'url' => $phylo_url},
     {'title' => 'Upstream and downstream sequence', 'img' => 'flanking_sequence',      'url' => $seq_url},
@@ -95,15 +100,18 @@ sub content {
     my $title = $button->{'title'};
     my $img   = 'var_'.$button->{'img'};
     my $url   = $button->{'url'};
-    if ($url) {
-      $html .= qq(<a href="$url"><img src="/i/96/${img}.png" class="portal _ht" alt="$title" title="$title" /></a>);
+    if ($url) {      
+      my $padding = ($button->{'count'} && $button->{'count'} > 99) ? '' : ($button->{'count'} > 9) ? ' 4px' : ' 6px';
+      my $b_count = qq{<span class="counts">$button->{'count'}</span>} if ($button->{'count'});
+      $html      .= qq(<div class="icon-container"><a href="$url" style="text-decoration:none"><img src="/i/96/${img}.png" class="portal _ht var_icon" alt="$title" title="$title" />$b_count</a></div>);
     }
     else {
       $title .= ' (NOT AVAILABLE)';
-      $html  .= qq(<img src="/i/96/${img}_off.png" class="portal _ht" alt="$title" title="$title" />);
+      $html  .= qq(<div class="icon-container"><img src="/i/96/${img}_off.png" class="portal _ht" alt="$title" title="$title" /></div>);
     }
   }
 
+  $html .= '<div style="clear:both"></div>';
   $html .= '</div>';
 
   ## Variation documentation links

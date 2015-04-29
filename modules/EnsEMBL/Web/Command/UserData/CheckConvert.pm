@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ sub process {
   if ($id_mapper) {
     $url_params->{'action'}    = 'SelectOutput';
     $url_params->{'id_mapper'} = $id_mapper;
+    $hub->param('format', 'ID');
   } elsif ($consequence_mapper) {
     $url_params->{'action'}             = 'SNPConsequence';
     $url_params->{'consequence_mapper'} = $consequence_mapper;

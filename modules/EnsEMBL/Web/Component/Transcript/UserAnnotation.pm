@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ sub content {
     my $type = 'Transcript';
     my $species = $object->species;
 
-    my @annotations = $user->annotations;
+    my $annotations = $user->annotations;
     my @trans_annotations;
-    foreach my $record (@annotations) {
+    foreach my $record (@$annotations) {
       next unless $record->stable_id eq $id;
       push @trans_annotations, $record;
     }

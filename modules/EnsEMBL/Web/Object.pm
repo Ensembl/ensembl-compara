@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ use strict;
 
 use HTML::Entities  qw(encode_entities);
 
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 use HTML::Entities  qw(encode_entities);
 use List::Util qw(min max);
@@ -189,7 +189,7 @@ sub get_earliest_archive {
   ## Method required for ID history views, applies to several web objects
   my $self = shift;
   
-  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
+  my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($self->hub);
   my $releases = $adaptor->fetch_releases();
   foreach my $r (@$releases){ 
     return $r->{'id'} if $r->{'online'} eq 'Y';
@@ -209,6 +209,71 @@ sub rose_manager {
   return $self->{'_rose_managers'}{$db}{$type} ||= $self->dynamic_use_fallback($db ? "ORM::EnsEMBL::DB::${db}::Manager${type}" : (), 'ORM::EnsEMBL::Rose::Manager');
 }
 
+=head2 get_alt_alleles
+
+ Example     : my ($stable_id,$alleles) = $gene->get_allele_info
+ Description : retrieves stable id and details of alt_alleles
+ Return type : list (stable_id string and arrayref of B::E::Genes)
+
+=cut
+
+sub get_alt_alleles {
+  my $self = shift;
+  my $gene = $self->type eq 'Gene' ? $self->Obj : $self->gene;
+  my $stable_id = $gene->stable_id;
+  my $alleles = [];
+  if ($gene->slice->is_reference) {
+    $alleles = $gene->get_all_alt_alleles;
+  }
+  else {
+    my $adaptor = $self->hub->get_adaptor('get_AltAlleleGroupAdaptor');
+    my $group = $adaptor->fetch_by_gene_id($gene->dbID);
+    if ($group) {
+      foreach my $alt_allele_gene (@{$group->get_all_Genes}) {
+        if ($alt_allele_gene->stable_id ne $stable_id) {
+          push @$alleles, $alt_allele_gene;
+        }
+      }
+    }
+  }
+  return $alleles;
+}
+
+sub get_alt_allele_link {
+  my ($self, $type) = @_;
+  my $hub   = $self->hub;
+
+  my @alt_alleles = @{$self->get_alt_alleles};
+  return unless scalar @alt_alleles;
+
+  my $alt_link;
+  ## Are we on the reference or haplotype?
+  my ($reference) = grep { $self->slice->seq_region_name eq $_ } @{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]};
+  if ($reference) {
+    ## Link to Alt Allele page, since there could be several
+    $alt_link = sprintf('View <a href="%s">alleles</a> of this gene on alternate assemblies',
+                                  $hub->url({'type' => 'Gene','action' => 'Alleles'}));
+  }
+  else {
+    ## Link to reference gene
+    my $ref_gene;
+    foreach my $gene (@alt_alleles) {
+      if (grep { $gene->seq_region_name eq $_ } @{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]}) {
+        $ref_gene = $gene;
+        last;
+      }
+    }
+    if ($ref_gene) {
+      my $ref_location = sprintf('%s:%s-%s', $ref_gene->seq_region_name, $ref_gene->seq_region_start, $ref_gene->seq_region_end);
+      my $params = {'type' => 'Gene', 'g' => $ref_gene->stable_id, 'r' => $ref_location };
+      $params->{'action'} = 'Summary' if $type eq 'Location';
+      $alt_link = sprintf('View this gene on the <a href="%s">primary assembly</a>.', $hub->url($params));
+    }
+  }
+  return $alt_link;
+}
+
+
 ## Compara data-munging methods - not tied to a specific web data object type?
 
 sub count_alignments {
@@ -216,16 +281,15 @@ sub count_alignments {
   my $cdb        = shift || 'DATABASE_COMPARA';
   my $species    = $self->species;
   my %alignments = $self->species_defs->multi($cdb, 'ALIGNMENTS');
-  my $c          = { all => 0, pairwise => 0 };
-  
+  my $c          = { all => 0, pairwise => 0, multi => 0 };
+
   foreach (grep $_->{'species'}{$species}, values %alignments) {
     $c->{'all'}++ ;
     $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/ && scalar keys %{$_->{'species'}} == 2;
+    $c->{'multi'}++    if $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species};
   }
-  
-  $c->{'multi'} = $c->{'all'} - $c->{'pairwise'};
-  
-  return $c; 
+
+  return $c;
 }
 
 sub check_for_align_in_database {
@@ -253,7 +317,6 @@ sub check_for_align_in_database {
       }
     }
     else {
-      warn "!!! NO ALIGNMENT";
       push @messages, {'severity' => 'warning', 'title' => 'No alignment specified', 'message' => '<p>Please select the alignment you wish to display from the box above.</p>'};
     }
 
@@ -296,7 +359,7 @@ sub check_for_missing_species {
   if (scalar @skipped) {
     $title = 'hidden';
     $warnings .= sprintf(
-                             '<p>The following %d species in the alignment are not shown in the image. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
+                             '<p>The following %d species in the alignment are not shown - use "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
                              scalar @skipped,
                              join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
                             );
@@ -306,10 +369,16 @@ sub check_for_missing_species {
     $title .= ' and ';
   }
 
+  my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
+  my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
+  my $multi_check = $ancestral ? 2 : 1;
+
   if (scalar @missing) {
     $title .= ' species';
     if ($align_details->{'class'} =~ /pairwise/) {
       $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
+    } elsif ($not_missing == $multi_check) {
+      $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_COMMON_NAME);
     } else {
       $warnings .= sprintf('<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>',
                                  scalar @missing,
@@ -331,6 +400,7 @@ sub get_slices {
     push @slices, $args->{slice}; # If no alignment selected then we just display the original sequence as in geneseqview
   }
 
+  my $counter = 0;
   foreach (@slices) {
     next unless $_;
     my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $args->{species};
@@ -346,6 +416,21 @@ sub get_slices {
       display_name      => $self->get_slice_display_name($name, $_),
       cigar_line        => $cigar_line,
     };
+    if ($name eq 'Ancestral_sequences') {
+        $counter++;
+        my $ga_node = $formatted_slices[-1]->{underlying_slices}->[0]->{_node_in_tree};
+        my $removed_species = $_->{_align_slice}->{_removed_species};
+        # The current slice has to be discarded if it is an ancestral node
+        # that fully maps to hidden species on one of its sides
+        my $c1 = scalar(grep {not $removed_species->{$_->genomic_align_group->genome_db->name} } @{$ga_node->children->[0]->get_all_leaves});
+        my $c2 = scalar(grep {not $removed_species->{$_->genomic_align_group->genome_db->name} } @{$ga_node->children->[1]->get_all_leaves});
+        if ($c1 and $c2) {
+          $formatted_slices[-1]->{_counter_position} = $counter;
+          $formatted_slices[-1]->{display_name} .= " $counter";
+        } else {
+          pop @formatted_slices;
+        }
+    }
 
     $length ||= $_->length; # Set the slice length value for the reference slice only
   }
@@ -353,21 +438,36 @@ sub get_slices {
   return (\@formatted_slices, $length);
 }
 
-sub get_alignments {
-  my ($self, $args) = @_;
+sub get_target_slice {
+  my $self = shift;
   my $hub = $self->hub;
-
-  my $cdb = $args->{'cdb'} || 'compara';
+  my $align_param = $hub->param('align');
+  my $target_slice;
 
   #target_species and target_slice_name_range may not be defined so split separately
   #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
-  my ($align, $target_species, $target_slice_name_range) = split '--', $args->{align};
-  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range =~ /(\w+):(\d+)-(\d+)/;
-  my $target_slice;
+  my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
+  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range ?
+    $target_slice_name_range =~ /([\w\.]+):(\d+)-(\d+)/ : (undef, undef, undef);
+
+  #Define target_slice
   if ($target_species && $target_slice_start) {
       my $target_slice_adaptor = $hub->database('core', $target_species)->get_SliceAdaptor;
       $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name, $target_slice_start, $target_slice_end);
   }
+
+  return $target_slice;
+}
+
+sub get_alignments {
+  my ($self, $args) = @_;
+  my $hub = $self->hub;
+  my $slice = $args->{slice};
+
+  my $cdb = $args->{'cdb'} || 'compara';
+
+  my ($align, $target_species, $target_slice_name_range) = split '--', $hub->param('align');
+  my $target_slice = $self->get_target_slice;
 
   my $func                    = $self->{'alignments_function'} || 'get_all_Slices';
   my $compara_db              = $hub->database($cdb);
@@ -522,7 +622,6 @@ sub build_features_into_sorted_groups {
   # Sort by length
   return [ map { $_->{'gabs'} } sort { $b->{'len'} <=> $a->{'len'} } values %$groups ];
 }
-
 
 sub DEPRECATED {
   my @caller = caller(1);

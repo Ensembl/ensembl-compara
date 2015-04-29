@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,13 +27,25 @@ use base qw(EnsEMBL::Draw::GlyphSet::legend);
 sub _init {
   my $self = shift;
 
+  ## Hide if corresponding tracks are all off
+  my $node = $self->{'config'}{'_tree'}->get_node('functional_dna_methylation');
+  return unless $node;
+  my $show = 0;
+  foreach ($node->descendants) {
+    if ($_->get('display') && $_->get('display') ne 'off') {
+      $show = 1;
+      last;
+    }
+  }
+  return unless $show;
+
   # Let them accumulate in structure if accumulating and not last
   my $Config         = $self->{'config'};
   return if ($self->my_config('accumulate') eq 'yes' &&
              $Config->get_parameter('more_slices'));
+  return unless $self->{'legend'}{[split '::', ref $self]->[-1]};
   # Clear features (for next legend)
   $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
-  return unless $self->{'legend'}{[split '::', ref $self]->[-1]};
   
   $self->init_legend(2);
 
@@ -41,6 +53,8 @@ sub _init {
     legend => '% methylated reads',
     colour => [qw(yellow green blue)],
   }); 
+  
+  $self->add_space;
 }
 
 1;

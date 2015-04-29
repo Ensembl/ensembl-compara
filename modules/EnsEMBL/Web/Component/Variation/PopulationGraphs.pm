@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,8 +36,11 @@ sub content {
   
   return unless defined $pop_freq;
   
-  my $graph_id = 0;
-  my $height   = 50;
+  my $graph_id    = 0;
+  my $height      = 50;
+  my $width       = 118;
+  my $large_width = 135;
+  my $max_width   = 150;
   my (@graphs, $pop_tree, %sub_pops, @alleles);
   
   my @inputs = (
@@ -49,15 +52,16 @@ sub content {
   # Get alleles list
   my $project_name;
   foreach my $pop_name (sort keys %$pop_freq) {
-    my $values   = '';
-    my $p_name   = (split ':', $pop_name)[1];
-       $pop_tree = $self->update_pop_tree($pop_tree, $pop_name, $pop_freq->{$pop_name}{'sub_pop'}) if defined $pop_freq->{$pop_name}{'sub_pop'};
+    my $values = '';
+
+    $pop_tree = $self->update_pop_tree($pop_tree, $pop_name, $pop_freq->{$pop_name}{'sub_pop'}) if defined $pop_freq->{$pop_name}{'sub_pop'};
 
     $project_name = $pop_freq->{$pop_name}{'group'} if (!$project_name);
 
     foreach my $ssid (keys %{$pop_freq->{$pop_name}{'freq'}}) {
       foreach my $allele (keys %{$pop_freq->{$pop_name}{'freq'}{$ssid}}) {
         my $freq = $pop_freq->{$pop_name}{'freq'}{$ssid}{$allele};
+        $width = $large_width if (length($allele) > 2 and $width!=$large_width);
         push (@alleles, $allele) if $freq > 0 && !(grep $allele eq $_, @alleles);
       }
     }  
@@ -74,13 +78,8 @@ sub content {
   
   # Create graphs
   foreach my $pop_name (sort { ($a !~ /ALL/ cmp $b !~ /ALL/) || $a cmp $b } keys %$pop_freq) {
-    my $values    = '';
-    my @pop_names = split ':', $pop_name;
-    
-    shift @pop_names if (scalar @pop_names > 1);
-    
-    my $p_name     = join ':', @pop_names;
-    my $short_name = $self->get_short_name($p_name);
+    my $values     = '';
+    my $short_name = $self->get_short_name($pop_name);
     my $pop_desc   = $pop_freq->{$pop_name}{'desc'};
     
     # Constructs the array for the pie charts: [allele,frequency]
@@ -92,6 +91,10 @@ sub content {
         
         $values .= ',' if $values ne '';
         $freq    = 0.5 if $freq < 0.5; # Fixed bug if freq between 0 and 0.5
+        if (length($al)>4) {
+          $al = substr($al,0,4).'...';
+          $width = ($freq==100) ? $max_width+5 : $max_width;
+        }
         $values .= "[$freq,'$al']";
         last;
       }
@@ -105,36 +108,42 @@ sub content {
     if ($short_name =~ /ALL/ || scalar(keys(%$pop_tree)) == 0) {
       push @graphs, sprintf('
         <div class="pie_chart_holder">
-          <div class="pie_chart%s _ht" title="%s">
-            <h4>%s</h4>
-            <div id="graphHolder%s" style="width:118px;height:%spx"></div>
+          <div class="pie_chart%s">
+            <div style="margin:4px">
+              <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+            </div>
+            <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
         </div>
-      ', $short_name eq 'ALL' ? ' all_population' : '', $pop_desc, $short_name, $graph_id, $height);
+      ', $short_name eq 'ALL' ? ' all_population' : '', $pop_desc, $short_name, $graph_id, $width, $height);
     }
     # Super-population
     elsif ($pop_tree->{$short_name}) {
       push @graphs, sprintf('
         <div class="pie_chart_holder">
-          <div class="pie_chart _ht" title="%s">
-            <h4>%s</h4>
-            <div id="graphHolder%s" style="width:118px;height:%spx"></div>
+          <div class="pie_chart">
+            <div style="margin:4px">
+              <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+            </div>
+            <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
-          <a class="toggle set_cookie %s" href="#" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
+          <a class="toggle %s _slide_toggle set_cookie" href="#" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
         </div>
-      ', $pop_desc, $short_name, $graph_id, $height, $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', $short_name);
+      ', $pop_desc, $short_name, $graph_id, $width, $height, $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', $short_name);
     }
     # Sub-populations
     else {
       foreach (grep $pop_tree->{$_}{$short_name}, keys %$pop_tree) {
         push @{$sub_pops{$_}}, sprintf('
           <div class="pie_chart_holder">
-            <div class="pie_chart _ht" title="%s">
-              <h4>%s</h4>
-              <div id="graphHolder%s" style="width:118px;height:%spx"></div>
+            <div class="pie_chart">
+              <div style="margin:4px">
+                <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+              </div>
+              <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
             </div>
           </div>
-        ', $pop_desc, $short_name, $graph_id, $height);
+        ', $pop_desc, $short_name, $graph_id, $width, $height);
       }
     }
     
@@ -153,7 +162,7 @@ sub content {
     my $show     = $hub->get_cookie_value("toggle_population_freq_$sp") eq 'open';
     
     $html .= sprintf('
-      <div class="population_genetics_pie population_freq_%s">
+      <div class="population_freq_%s population_genetics_pie">
         <div class="toggleable" %s>
           <div><p><b>%s sub-populations</b></p></div>
           %s
@@ -237,9 +246,14 @@ sub update_pop_tree {
 sub get_short_name {
   my $self   = shift;
   my $p_name = shift;
-     $p_name =~ /phase_1_(.+)/; # Gets a shorter name for the display
-  
-  return $1 || $p_name;
+  my @composed_name = split(':', $p_name);
+  my $short_name = $composed_name[$#composed_name]; 
+
+  if ($short_name =~ /phase_\d+_(.+)$/) {
+    $short_name = $1;
+  }
+
+  return $short_name;
 }
 
 1;

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ sub render {
       'class'   => 'input',
       'values'  => [
         {'value' => '', 'caption' => 'All species'},
+        {'value' => 'help', 'caption' => 'Help and Documentation' },
         {'value' => '', 'caption' => '---', 'disabled' => 1},
         map({ $common_names{$_} ? {'value' => $_, 'caption' => $common_names{$_}, 'group' => 'Favourite species'} : ()} @$favourites),
         {'value' => '', 'caption' => '---', 'disabled' => 1},

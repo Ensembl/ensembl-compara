@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ my $DB_NAMES = {
   'protein_id'          => 'emblcds',
   'refseq'              => 'refseq',
   'refseq_dna'          => 'refseq',
+  'refseq_mrna'         => 'refseq',
   'refseq_peptide'      => 'refseq',
   'swiss-2dpage'        => 'uniprotkb',
   'uniprot'             => 'uniprotkb',

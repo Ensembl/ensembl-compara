@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,6 +144,8 @@ Ensembl.LayoutManager.extend({
       'popstate.ensembl'  : $.proxy(this.popState, this)
     });
 
+    this.showMobileMessage();
+    this.showCookieMessage();
     this.handleMirrorRedirect();
   },
   
@@ -246,15 +248,24 @@ Ensembl.LayoutManager.extend({
   
   handleMirrorRedirect: function() {
     
-    var redirectCode = unescape(Ensembl.cookie.get('redirect_mirror'));
+    var redirectCode  = unescape(Ensembl.cookie.get('redirect_mirror'));
+    var redirectURI   = unescape(Ensembl.cookie.get('redirect_mirror_url'));
+
+    Ensembl.cookie.set('redirect_mirror_url');
+
+    var noRedirectURI = function(uri) {
+      uri = uri.replace(/(\&|\;)?redirect=[^\&\;]+/, '').replace(/(\&|\;)?debugip=[^\&\;]+/, '').replace(/\?[\;\&]+/, '?').replace(/\?$/, '');
+      uri = uri + (uri.match(/\?/) ? ';redirect=no' : '?redirect=no');
+      return uri;
+    };
 
     if (redirectCode && redirectCode !== 'no') {
       redirectCode      = redirectCode.split(/\|/);
       if (redirectCode.length >= 2) {
-        var currentURI    = window.location.href.replace(/(\&|\;)?redirect=[^\&\;]+/, '').replace(/(\&|\;)?debugip=[^\&\;]+/, '').replace(/\?[\;\&]+/, '?').replace(/\?$/, '');
+        var currentURI    = noRedirectURI(window.location.href);
         var mirrorName    = redirectCode.shift();
         var remainingTime = parseInt(redirectCode.shift());
-        var mirrorURI     = currentURI.replace(window.location.host, mirrorName);
+        var mirrorURI     = (redirectURI ? noRedirectURI($('<a>').attr('href', redirectURI).prop('href')) : currentURI).replace(window.location.host, mirrorName);
         var messageDiv    = $([
           '<div class="redirect-message hidden">',
           ' <p>You are being redirected to <b><a href="' + mirrorURI + '">', mirrorName, '</a></b> <span class="_redirect_countdown">in ', remainingTime, ' seconds</span>. Click <a class="_redirect_no" href="#">here</a> if you don\'t wish to be redirected.</p>',
@@ -279,5 +290,29 @@ Ensembl.LayoutManager.extend({
         });
       }
     }
-  }
+  },
+
+  showCookieMessage: function() {
+    var cookiesAccepted = Ensembl.cookie.get('cookies_ok');
+
+    if (!cookiesAccepted) {
+      $(['<div class="cookie-message hidden">',
+        '<div></div>',
+        '<p>We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.</p>',
+        '<p><button>Don\'t show this again</button></p>',
+        '<p>Further details about our privacy and cookie policy can be found <a href="/info/about/legal/privacy.html">here</a>.</p>',
+        '</div>'
+      ].join(''))
+        .appendTo(document.body).show().find('button,div').on('click', function (e) {
+          Ensembl.cookie.set('cookies_ok', 'yes');
+          $(this).parents('div').first().fadeOut(200);
+      }).filter('div').helptip({content:"Don't show this again"});
+      return true;
+    }
+
+    return false;
+  },
+
+  showMobileMessage: function() { }
+
 });

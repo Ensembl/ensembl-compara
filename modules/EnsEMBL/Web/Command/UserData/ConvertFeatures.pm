@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ sub process {
             $ddaf->end($_->rawend);
             $ddaf->strand($_->strand);
             $ddaf->seqname($_->seqname);
-            $ddaf->score($_->external_data->{'score'}[0]);
+            $ddaf->score(exists $_->external_data->{'score'} ? $_->external_data->{'score'}[0] : undef);
             $ddaf->extra_data($_->external_data);
             $ddaf->{'gff_attribs'}=$_->attribs;
             
@@ -132,8 +132,8 @@ sub process {
         $f->start($new->start);
         $f->end($new->end);
 
-        my $feature_type = $f->extra_data->{'feature_type'}[0];
-        my $source       = $f->extra_data->{'source'}[0];
+        my $feature_type = exists $f->extra_data->{'feature_type'} ? $f->extra_data->{'feature_type'}[0] : undef;
+        my $source       = exists $f->extra_data->{'source'} ? $f->extra_data->{'source'}[0] : undef;
         my $extra        = $f->{'gff_attribs'};
         my $other        = [];
         

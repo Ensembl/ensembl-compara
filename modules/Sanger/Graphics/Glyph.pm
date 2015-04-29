@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,14 +28,14 @@ no warnings qw(uninitialized);
 use Sanger::Graphics::ColourMap;
 use vars qw($AUTOLOAD);
 
-our $VERSION = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
-
 #########
 # constructor
 # _methods is a hash of valid methods you can call on this object
 #
 sub new {
   my ($class, $params_ref) = @_;
+  (my $module = $class) =~ s/Sanger::Graphics/EnsEMBL::Draw/;
+  warn "########### Module $class is deprecated and will be removed in release 82. Please update your code to use $module instead";
   my $self = {
 	      'background' => 'transparent',
 	      'composite'  => undef,          # arrayref for Glyph::Composite to store other glyphs in

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ sub _init {
   $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   return unless $features;
 
-  $self->init_legend(3);
+  $self->init_legend();
   my (%sections,%headings,%priorities, @legend_check);
   
   foreach my $type (sort { $features->{$a}{'priority'} <=> $features->{$b}{'priority'} } keys %$features) {
@@ -71,6 +71,8 @@ sub _init {
   foreach my $key (sort { $priorities{$b} <=> $priorities{$a} } keys %sections) {      
     $self->add_vgroup_to_legend($sections{$key},$headings{$key});
   }
+
+  $self->add_space;
 }
 
 1;

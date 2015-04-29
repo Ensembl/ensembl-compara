@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,12 +36,15 @@ sub ICON_MAPPINGS {
   my $component = shift || 'page';
   
   return {
-    'config'    => { 'file' => 'setting.png',   'alt' => 'config',   'title' => "Configure this $component"          },
-    'search'    => { 'file' => 'search.png',    'alt' => 'search',   'title' => "Search this $component"             },
-    'download'  => { 'file' => 'download.png',  'alt' => 'download', 'title' => "Download data from this $component" },
-    'image'     => { 'file' => 'picture.png',   'alt' => 'image',    'title' => "Export this image"                  },
-    'userdata'  => { 'file' => 'page-user.png', 'alt' => 'data',     'title' => "Manage your custom tracks"          },
-    'share'     => { 'file' => 'share.png',     'alt' => 'share',    'title' => "Share this $component"              },
+    'config'        => { 'file' => 'setting.png',         'alt' => 'config',      'title' => "Configure this $component"          },
+    'search'        => { 'file' => 'search.png',          'alt' => 'search',      'title' => "Search this $component"             },
+    'download'      => { 'file' => 'download.png',        'alt' => 'download',    'title' => "Download data from this $component" },
+    'image'         => { 'file' => 'picture.png',         'alt' => 'image',       'title' => "Export this image"                  },
+    'userdata'      => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Manage your custom tracks"          },
+    'share'         => { 'file' => 'share.png',           'alt' => 'share',       'title' => "Share this $component"              },
+    'reset_config'  => { 'file' => 'settings-reset.png',  'alt' => 'reset config', 'title' => "Reset configuration"               },
+    'reset_order'   => { 'file' => 'order-reset.png',     'alt' => 'reset order', 'title' => "Reset track order"                },
+    'resize'        => { 'file' => 'image_resize.png',    'alt' => 'resize image', 'title' => "Resize this image"                },
   };
 }
 
@@ -73,7 +76,6 @@ sub EXPORT_FORMATS {
 	  'png'  => { 'name' => 'PNG', 'longname' => 'Portable Network Graphics',   'extn' => 'png', 'mime' => 'image/png'              },
     'gif'  => { 'name' => 'GIF', 'longname' => 'Graphics Interchange Format', 'extn' => 'gif', 'mime' => 'image/gif'              },
 	  'svg'  => { 'name' => 'SVG', 'longname' => 'Scalable Vector Graphics',    'extn' => 'svg', 'mime' => 'image/svg+xml'          },
-	  'eps'  => { 'name' => 'EPS', 'longname' => 'Encapsulated Postscript',     'extn' => 'eps', 'mime' => 'application/postscript' },
 	  'pdf'  => { 'name' => 'PDF', 'longname' => 'Portable Document Format',    'extn' => 'pdf', 'mime' => 'application/pdf'        },
 	  'gff'  => { 'name' => 'GFF', 'longname' => 'General Feature Format',      'extn' => 'txt', 'mime' => 'text/plain'             }
   );
@@ -90,17 +92,6 @@ sub FASTA_OPTIONS {
         { 'value' => 'intron',     'caption' => 'Introns'},
         { 'value' => 'sequence',   'caption' => 'Genomic sequence'},
   );
-}
-
-sub HOMOLOGY_TYPES {
-### Lookup for compara acronyms
-  return {
-    'BRH'  => 'Best Reciprocal Hit',
-    'UBRH' => 'Unique Best Reciprocal Hit',
-    'MBRH' => 'Multiple Best Reciprocal Hit',
-    'RHS'  => 'Reciprocal Hit based on Synteny around BRH',
-    'DWGA' => 'Derived from Whole Genome Alignment'
-  };
 }
 
 sub GENE_JOIN_TYPES {
@@ -132,15 +123,16 @@ sub GENE_JOIN_TYPES {
 sub ALIGNMENT_FORMATS {
 ### Metadata for alignment export formats
   return (
-    'fasta'    => 'FASTA',
-    'msf'      => 'MSF',
-    'clustalw' => 'CLUSTAL',
-    'selex'    => 'Selex',
-    'pfam'     => 'Pfam',
-    'mega'     => 'Mega',
-    'nexus'    => 'Nexus',
-    'phylip'   => 'Phylip',
-    'psi'      => 'PSI',
+    'fasta'     => 'FASTA',
+    'msf'       => 'MSF',
+    'clustalw'  => 'CLUSTAL',
+    'selex'     => 'Selex',
+    'pfam'      => 'Pfam',
+    'mega'      => 'Mega',
+    'nexus'     => 'Nexus',
+    'phylip'    => 'Phylip',
+    'psi'       => 'PSI',
+    'stockholm' => 'Stockholm',
   );
 }
 sub SIMPLEALIGN_DEFAULT { return 'clustalw'; }
@@ -211,19 +203,24 @@ sub FAMILY_EXTERNAL {
   );
 }
 
-sub GENERAL_MARKUP_OPTIONS {
-### Configuration for text sequence displays, shared by
-### 'Genomic Alignments', 'Marked-up Sequence' and 'Resequencing'
-  return (
-    'snp_display' => {
-      'type'   => 'DropDown', 
-      'select' => 'select',
-      'name'   => 'snp_display',
-      'label'  => 'Show variations',
-      'values' => [
-        { 'value' => 'off', 'caption' => 'No'  },
-        { 'value' => 'yes', 'caption' => 'Yes' },
-      ]
+
+
+sub MARKUP_OPTIONS {
+### Configuration for text sequence displays
+  return {
+  ### TEXT SEQUENCE MARKUP
+    'exons' => {
+      'type'    => 'Checkbox',
+      'name'    => 'exons',
+      'label'   => 'Show exons',
+      'value'   => 'on',
+      'checked' => 'checked',
+    },
+    'exons_only' => {
+      type  => 'CheckBox',
+      label => 'Show exons only',
+      name  => 'exons_only',
+      value => 'on',
     },
     'line_numbering' => {
       'type'   => 'DropDown', 
@@ -271,22 +268,13 @@ sub GENERAL_MARKUP_OPTIONS {
       'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
     },
     'hide_long_snps' => {
-      'type'   => 'DropDown', 
+      'type'   => 'Checkbox', 
       'select' => 'select',
       'name'   => 'hide_long_snps',
       'label'  => 'Hide variations longer than 10bp',
-      'values' => [
-        { 'value' => 'yes', 'caption' => 'Yes' },
-        { 'value' => 'off', 'caption' => 'No'  },
-      ]
+      'value'  => 'on',
     },
-  );
-}
-
-sub GENE_MARKUP_OPTIONS {
-### Gene-specific text sequence configuration options,
-### shared by 'Genomic Alignments' and 'Marked-up Sequence'
-  return (
+    ### GENE-SPECIFIC TEXT SEQUENCE
     'flank5_display' => {
       'type'     => 'NonNegInt', 
       'required' => 'yes',
@@ -312,13 +300,7 @@ sub GENE_MARKUP_OPTIONS {
         { 'value' => 'core',      'caption' => 'Core exons'      },
       ],
     },
-  );
-}
-
-sub OTHER_MARKUP_OPTIONS {
-### Configuration options for aligned sequence markup,
-### shared by 'Genomic Alignments' and 'Resequencing'
-  return (
+    ### ALIGNED SEQUENCE MARKUP
     'display_width' => {
       'type'   => 'DropDown',
       'select' => 'select',
@@ -354,12 +336,179 @@ sub OTHER_MARKUP_OPTIONS {
       'name'   => 'title_display',
       'label'  => 'Display pop-up information on mouseover',
       'values' => [
+        { 'value' => 'on', 'caption' => 'Yes' },
+        { 'value' => 'off', 'caption' => 'No'  },
+      ],
+    },
+    'seq_type' => {
+      'type'    => 'RadioList',
+      'name'    => 'seq_type',
+      'label'   => 'Sequence to export',
+      'values' => [
+        { 'value' => 'msa_dna', 'caption' => 'Alignments - DNA' },
+        { 'value' => 'msa_pep', 'caption' => 'Alignments - amino acids' },
+        { 'value' => 'seq_dna', 'caption' => 'Unaligned sequences - CDS' },
+        { 'value' => 'seq_pep', 'caption' => 'Unaligned sequences - proteins' },
+      ],
+      'value'   => 'msa_dna',
+    }, 
+  };
+}
+
+############ OLD MARKUP HASHES - REMOVE ONCE VIEWCONFIG REFACTOR IS COMPLETE ################
+
+sub GENERAL_MARKUP_OPTIONS {
+### Configuration for text sequence displays, shared by
+### 'Genomic Alignments', 'Marked-up Sequence' and 'Resequencing'
+  return (
+    'snp_display' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'snp_display',
+      'label'  => 'Show variations',
+      'values' => [
+        { 'value' => 'off', 'caption' => 'No'  },
+        { 'value' => 'yes', 'caption' => 'Yes' },
+      ]
+    },
+    'line_numbering' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'line_numbering',
+      'label'  => 'Line numbering',
+      'values' => [
+        { 'value' => 'sequence', 'caption' => 'Relative to this sequence'      },
+        { 'value' => 'slice',    'caption' => 'Relative to coordinate systems' },
+        { 'value' => 'off',      'caption' => 'None'                           },
+      ]
+    },
+    'exon_ori' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'exon_ori',
+      'label'  => 'Orientation of additional exons',
+      'values' => [
+        { 'value' => 'fwd', 'caption' => 'Display same orientation exons only'    },
+        { 'value' => 'rev', 'caption' => 'Display reverse orientation exons only' },
+        { 'value' => 'all', 'caption' => 'Display exons in both orientations'     },
+      ],
+    },
+    'pop_filter' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'population_filter',
+      'label'  => 'Filter variations by population',
+      'notes'  => 'Warning: This could cause the page to take a long time to load',
+      'values' => [{ 'value' => 'off', 'caption' => 'None' }]
+    },
+    'pop_min_freq' => {
+      'type'  => 'NonNegFloat',
+      'label' => 'Minor allele frequency for population filter',
+      'name'  => 'min_frequency',
+      'max'   => 0.5
+    },
+    'consequence_filter' => {
+      'type'     => 'DropDown',
+      'multiple' => 1,
+      'size'     => 5,
+      'select'   => 'select',
+      'name'     => 'consequence_filter',
+      'label'    => 'Filter variations by consequence type',
+      'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
+    },
+    'hide_long_snps' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'hide_long_snps',
+      'label'  => 'Hide variations longer than 10bp',
+      'values' => [
+        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'off', 'caption' => 'No'  },
+      ]
+    },
+  );
+}
+
+sub GENE_MARKUP_OPTIONS {
+### Gene-specific text sequence configuration options,
+### shared by 'Genomic Alignments' and 'Marked-up Sequence'
+  return (
+    'flank5_display' => {
+      'type'     => 'NonNegInt',
+      'required' => 'yes',
+      'label'    => "5' Flanking sequence (upstream)",
+      'name'     => 'flank5_display',
+      'max'      => 1e6
+    },
+    'flank3_display' => {
+      'type'     => 'NonNegInt',
+      'required' => 'yes',
+      'label'    => "3' Flanking sequence (downstream)",
+      'name'     => 'flank3_display',
+      'max'      => 1e6
+    },
+    'exon_display' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'exon_display',
+      'label'  => 'Additional exons to display',
+      'values' => [
+        { 'value' => 'off',       'caption' => 'No exon markup'  },
+        { 'value' => 'Ab-initio', 'caption' => 'Ab-initio exons' },
+        { 'value' => 'core',      'caption' => 'Core exons'      },
+      ],
+    },
+  );
+}
+
+sub OTHER_MARKUP_OPTIONS {
+### Configuration options for aligned sequence markup,
+### shared by 'Genomic Alignments' and 'Resequencing'
+  return (
+    'display_width' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'display_width',
+      'label'  => 'Number of base pairs per row',
+      'values' => [
+        map { { 'value' => $_, 'caption' => "$_ bps" } } map { $_*15 } (2..12)
+      ],
+    },
+    'strand' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'strand',
+      'label'  => 'Strand',
+      'values' => [
+        { 'value' => '1',  'caption' => 'Forward' },
+        { 'value' => '-1', 'caption' => 'Reverse' }
+      ]
+    },
+    'codons_display' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'codons_display',
+      'label'  => 'Codons',
+      'values' => [
+        { 'value' => 'all', 'caption' => 'START/STOP codons'  },
+        { 'value' => 'off', 'caption' => 'Do not show codons' },
+      ],
+    },
+    'title_display' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'title_display',
+      'label'  => 'Display pop-up information on mouseover',
+      'values' => [
         { 'value' => 'yes', 'caption' => 'Yes' },
         { 'value' => 'off', 'caption' => 'No'  },
       ],
     },
   );
 }
+
+
+################################################################################################
 
 sub VARIATION_OPTIONS {
 ### Variation markup options for text sequence displays, 
@@ -513,6 +662,7 @@ sub ERROR_MESSAGES {
   return (
     404 => [
       'Page not found' ,
+      #'Much like this creature, the page you requested could not be found.',
       'Sorry, the page you requested was not found on this server.',
     ], 
     400 => [
@@ -525,7 +675,7 @@ sub ERROR_MESSAGES {
     ], 
     401 => [
       'Not authorised',
-      'You were not authorised to view that page, an username and password is required',
+      'You were not authorised to view that page, a username and password is required',
     ]
   );
 }

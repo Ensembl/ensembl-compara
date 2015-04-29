@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -91,6 +91,8 @@ our $patterns = {
 
 sub new {
   my ($class, $config, $extra_spacing, $glyphsets_ref) = @_;
+  (my $module = $class) =~ s/Sanger::Graphics/EnsEMBL::Draw/;
+  warn "########### Module $class is deprecated and will be removed in release 82. Please update your code to use $module instead";
   
   my $self = {
     'glyphsets'     => $glyphsets_ref,
@@ -234,7 +236,7 @@ sub render {
       if ($self->can($method)) {
         $self->$method($_, $Ta);
       } else {
-        print STDERR "Sanger::Graphics::Renderer::render: Do not know how to $method\n";
+        print STDERR "Sanger::Graphics::Renderer::render: $self does not know how to $method\n";
       }
       
       $Ta->{$method} ||= [];

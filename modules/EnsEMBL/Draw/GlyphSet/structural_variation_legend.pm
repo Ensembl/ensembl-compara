@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ sub _init {
   
   my %labels = %Bio::EnsEMBL::Variation::Utils::Constants::VARIATION_CLASSES;
   
-  $self->init_legend(3);
+  $self->init_legend();
   
   foreach (sort { $labels{$a}{'display_term'} cmp $labels{$b}{'display_term'} } keys %$features) {
     $self->add_to_legend({
@@ -48,6 +48,8 @@ sub _init {
       colour => $features->{$_},
     });
   }
+
+  $self->add_space;
 }
 
 1;

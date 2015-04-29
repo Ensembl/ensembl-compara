@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
@@ -47,7 +47,7 @@ sub vcf_adaptor {
        $url    =~ s/###CHR###/$region/g;
   }
   
-  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor->new($url);
+  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url);
 }
 
 sub render_compact { return $_[0]->render_normal; }

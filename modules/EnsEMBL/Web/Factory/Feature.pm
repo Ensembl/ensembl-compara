@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -115,7 +115,6 @@ sub _create_Phenotype {
   
   my $id         = $self->param('id');   
   my $dbc        = $self->hub->database('variation');
-	$dbc->include_failed_variations(1);
   my $a          = $dbc->get_adaptor('VariationFeature');
   my $func       = $self->param('somatic') ? 'fetch_all_somatic_with_phenotype' : 'fetch_all_with_phenotype';
   my $variations = $a->$func(undef, undef, $id);
@@ -183,13 +182,13 @@ sub _create_ProbeFeatures_linked_transcripts {
     my $id = $self->param('id');
     my $probe_set_adaptor = $db_adaptor->get_ProbeSetAdaptor;
     my $probe_set = shift @{$probe_set_adaptor->fetch_all_by_name($id)};
-    @db_entries = @{$probe_set->get_all_Transcript_DBEntries};
+    @db_entries = $probe_set ? @{$probe_set->get_all_Transcript_DBEntries} : ();
   } else {
     my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;
     @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
     foreach my $probe (@probe_objs) {
-     my @entries = @{$probe->get_all_Transcript_DBEntries};
-     push(@db_entries, @entries);
+      my @entries = @{$probe->get_all_Transcript_DBEntries};
+      push(@db_entries, @entries);
     }
   }
 
@@ -342,7 +341,13 @@ sub _create_RegulatoryFactor {
     }
     my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
     my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
-    $features = $fset->get_Features_by_FeatureType($ftype);
+    ## Defensive programming against API barfs
+    if (ref($ftype)) {
+      $features = $fset->get_Features_by_FeatureType($ftype);
+    }
+    else {
+      warn ">>> UNKNOWN FEATURE TYPE";
+    }
   }
 
   if (@$features) {
@@ -430,7 +435,7 @@ sub _create_LRG {
   my $csa           = $hub->database('core',$hub->species)->get_CoordSystemAdaptor;
   my $ama           = $hub->database('core', $hub->species)->get_AssemblyMapperAdaptor;
   my $old_cs        = $csa->fetch_by_name('lrg');
-  my $new_cs        = $csa->fetch_by_name('chromosome', $hub->species_defs->ASSEMBLY_NAME);
+  my $new_cs        = $csa->fetch_by_name('chromosome', $hub->species_defs->ASSEMBLY_VERSION);
   my $mapper        = $ama->fetch_by_CoordSystems($old_cs, $new_cs);
 
   foreach my $s (@$slices) {
@@ -489,30 +494,33 @@ sub _generic_create {
     foreach my $fid (split /\s+/, $id) { 
       my $t_features;
       
-      ## Check for gene stable IDs
-      my $gene_stable_id = 0;
-      if ($object_type eq 'Gene') {
-        my ($species, $obj_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($fid); 
-        $gene_stable_id = 1 if ($species && $obj_type && $obj_type eq 'Gene');
-      }
-      
       if ($xref_db) { 
         eval {
          $t_features = [$db_adaptor->$adaptor_name->$accessor($xref_db, $fid)];
         };
-      } elsif ($gene_stable_id) { ## Hack to get gene stable IDs to work
-        $accessor = 'fetch_by_stable_id';
-        eval {
-          $t_features = [ $db_adaptor->$adaptor_name->$accessor($fid) ];
-        };
       } elsif ($subtype) {
-         eval {
+        eval {
          $t_features = $db_adaptor->$adaptor_name->$accessor($fid, $subtype);
         };
-      } else { 
-        eval {
-         $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
-        };
+      } else {
+
+        ## Check for gene stable IDs
+        my $gene_stable_id = 0;
+        if ($object_type eq 'Gene') {
+          my ($species, $obj_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($fid); 
+          $gene_stable_id = 1 if ($species && $obj_type && $obj_type eq 'Gene');
+        }
+
+        if ($gene_stable_id) { ## Hack to get gene stable IDs to work
+          $accessor = 'fetch_by_stable_id';
+          eval {
+            $t_features = [ $db_adaptor->$adaptor_name->$accessor($fid) ];
+          };
+        } else { 
+          eval {
+           $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
+          };
+        }
       }
       
       ## if no result, check for unmapped features

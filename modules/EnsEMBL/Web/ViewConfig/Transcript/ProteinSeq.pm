@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,31 +26,48 @@ sub init {
   my $self = shift;
   
   $self->set_defaults({
-    exons       => 'yes',
+    exons       => 'on',
     snp_display => 'off',
-    number      => 'no'
+    number      => 'off'
   });
 
   $self->title = 'Protein Sequence';
   $self->SUPER::init;
 }
 
-sub form {
+sub field_order {
   my $self = shift;
+  my @order = qw(display_width exons);
+  push @order, $self->variation_fields if $self->species_defs->databases->{'DATABASE_VARIATION'};
+  push @order, 'number';
+  return @order;
+}
 
-  $self->add_form_element({
-    type   => 'DropDown',
-    select => 'select',
-    name   => 'display_width',
-    label  => 'Number of amino acids per row',
-    values => [
-      map {{ value => $_, caption => "$_ aa" }} map 10*$_, 3..20
-    ]
-  });
+sub form_fields {
+  my $self = shift;
+  my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
+  my $fields = {};
+
+  $markup_options->{'display_width'}{'label'} = 'Number of amino acids per row';
+  $markup_options->{'display_width'}{'values'} = [
+            map {{ value => $_, caption => "$_ aa" }} map 10*$_, 3..20
+  ];
   
-  $self->add_form_element({ type => 'YesNo', name => 'exons', select => 'select', label => 'Show exons' });
-  $self->variation_options({ populations => [ 'fetch_all_HapMap_Populations', 'fetch_all_1KG_Populations' ], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
-  $self->add_form_element({ type => 'YesNo', name => 'number', select => 'select', label => 'Number residues' });
+  $markup_options->{'number'} = {
+                                  'type'  => 'Checkbox',
+                                  'name'  => 'number',
+                                  'label' => 'Number residues', 
+                                  'value' => 'on',
+  };
+
+  $self->add_variation_options($markup_options, { populations => [ 'fetch_all_HapMap_Populations', 'fetch_all_1KG_Populations' ], snp_link => 'no' }) if $self->species_defs->databases->{'DATABASE_VARIATION'};
+
+  foreach ($self->field_order) {
+    $fields->{$_} = $markup_options->{$_};
+    $fields->{$_}{'value'} = $self->get($_);
+  }
+
+  return $fields;
 }
 
 1;

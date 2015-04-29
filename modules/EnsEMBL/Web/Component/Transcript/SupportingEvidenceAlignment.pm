@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,9 +29,17 @@ sub _init {
 }
 
 sub content {
+  my $self   = shift;
+
+  my $order = [qw(external_record transcript_details exon_info exon_coords e_alignment t_alignment)];
+
+  return $self->make_twocol($order);
+}
+
+sub get_data {
   my $self         = shift;
   my $hub          = $self->hub;
-  my $object       = $self->object;
+  my $object       = $self->object || $hub->core_object('transcript');
   my $transcript   = $object->Obj;
   my $tsi          = $object->stable_id;
   my $hit_id       = $object->param('sequence');
@@ -40,8 +48,9 @@ sub content {
   my $trans_length = $transcript->length;
   my $e_count      = scalar @{$transcript->get_all_Exons};
   my $translation  = $transcript->translation;
-  my $table        = $self->new_twocol;
-  my ($cds_aa_length, $cds_length, $e_alignment, $html);
+  my ($cds_aa_length, $cds_length);
+
+  my $data = {};
 
   # get external sequence and type (DNA or PEP) - refseq try with and without version
   my $query_db = '';
@@ -87,14 +96,25 @@ sub content {
   # working with DNA or PEP?
   my $seq_type = $object->determine_sequence_type($ext_seq);
   my $label    = $seq_type eq 'PEP' ? 'aa' : 'bp';
+  $data->{'external_record'} = {'label' => 'External record'};
 
   if ($ext_seq) {
+    #Uniprot can't deal with versions in accessions
+    if ($hit_db_name =~ /^Uniprot/){
+      $hit_id =~ s/(\w*)\.\d+/$1/;
+    }
     my $hit_url = $hub->get_ExtURL_link($hit_id, $hit_db_name, $hit_id);
     my $txt = "$hit_url ($hit_db_name)";
     $txt   .= ", length = $ext_seq_length $label" if $ext_seq_length;
-    $table->add_row('External record', $txt);
-  } else {
-    $table->add_row('External record', "Unable to fetch sequence for $hit_id from the $hit_db_name database at this time.");
+    $data->{'external_record'}{'content'} = $txt;
+  }
+  else {
+    if ($hit_db_name) {
+      $data->{'external_record'}{'content'} = "Unable to fetch sequence for $hit_id ($hit_db_name) at this time.";
+    }
+    else {
+      $data->{'external_record'}{'content'} = "Unable to fetch sequence for $hit_id at this time.";
+    }
   }
 
   if ($seq_type eq 'PEP' && $translation) {
@@ -102,7 +122,7 @@ sub content {
     $cds_length    = " Translation length: $cds_aa_length aa";
   }
 
-  $table->add_row('Transcript details', "Exons: $e_count. Length: $trans_length bp.$cds_length");
+  $data->{'transcript_details'} = {'label' => 'Transcript details', 'content' => "Exons: $e_count. Length: $trans_length bp.$cds_length"};
 
   # exon alignment (if exon ID is in the URL)
   if ($exon_id) {
@@ -149,55 +169,91 @@ sub content {
       }
     }
 
-    $table->add_row('Exon Information', "<p>$exon_id</p><p>$e_length_text</p>");
-    $table->add_row('Exon coordinates', "<p>Transcript: $cdna_start-$cdna_end bp</p><p>$exon_cds_pos</p>");
+    $data->{'exon_info'} = {'label' => 'Exon Information', 'content' => "<p>$exon_id</p><p>$e_length_text</p>"};
+    $data->{'exon_coords'} = {'label' => 'Exon coordinates', 'content' => "<p>Transcript: $cdna_start-$cdna_end bp</p><p>$exon_cds_pos</p>"};
+    $data->{'e_alignment'} = {'label' => 'Exon alignment'};
 
     if ($ext_seq) {
       if (!$e_sequence && $seq_type eq 'PEP') {
-        $table->add_row('Exon alignment:', "Unable to fetch translation for $exon_id from the $hit_db_name database at this time.");
-        $html .= $table->render;
+        $data->{'e_alignment'}{'content'} = "Unable to fetch translation for $exon_id from the $hit_db_name database at this time.";
       }
       else {
         # get exon alignment
-        my $e_alignment = $object->get_alignment($ext_seq, $e_sequence, $seq_type);
-        $e_alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
-
-        $table->add_row('Exon alignment:', '');
-        $html .= $table->render;
-        $html .= "<p><br /><pre>$e_alignment</pre></p>";
+        my $alignment = $object->get_alignment($ext_seq, $e_sequence, $seq_type);
+        $alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
+        $data->{'e_alignment'}{'content'} = $alignment; 
+        $data->{'e_alignment'}{'raw'} = 1;
+        $hub->param('has_e_alignment', 'yes');
       }
     }
     else {
-      $table->add_row('Exon alignment:', "Unable to show alignment");
-      $html .= $table->render;
+      $data->{'e_alignment'}{'content'} = "Unable to show alignment";
     }
-  }
-  else {
-    $html .= $table->render;
   }
 
   my $type   = $seq_type eq 'PEP' ? 'Translation' : 'Transcript';
-  my $table2 = $self->new_twocol;
+  $data->{'t_alignment'} = {'label' => "$type alignment"};
+  $hub->param('align_type', $type);
   if ($ext_seq) {
     # get transcript sequence
     my $trans_sequence = $object->get_int_seq($transcript, $seq_type)->[0];
     if (!$trans_sequence && $seq_type eq 'PEP') {
-      $table2->add_row("$type alignment:", "Unable to retrieve translation for $tsi");
-      $html .= $table2->render;
+      $data->{'t_alignment'}{'content'} = "Unable to retrieve translation for $tsi";
     } else {
       # get transcript alignment
-      my $trans_alignment = $object->get_alignment($ext_seq, $trans_sequence, $seq_type);
-      $trans_alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
-      $table2->add_row("$type alignment:", '');
-      $html .= $table2->render;
-      $html .= "<p><br /><br /><pre>$trans_alignment</pre></p>";
+      my $alignment = $object->get_alignment($ext_seq, $trans_sequence, $seq_type);
+      $alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
+      $data->{'t_alignment'}{'content'} = $alignment; 
+      $data->{'t_alignment'}{'raw'} = 1;
+      $hub->param('has_t_alignment', 'yes');
     }
   }
   else {
-    $table2->add_row("$type alignment:", "Unable to show alignment");
-    $html .= $table2->render;
+    $data->{'t_alignment'}{'content'} = "Unable to show alignment";
   }
-  return $html;
+
+  return $data;
 }
+
+sub export_options  { return {'action' => 'Emboss'}; }
+
+sub get_export_data {
+## Get data for export
+  my $self = shift;
+  my $data = $self->get_data;
+  my @fields = qw(e_alignment t_alignment);
+  my $output = [];
+  foreach (@fields) {
+    next unless $data->{$_}{'raw'}; ## actual output, not an error message
+    push @$output, $data->{$_}{'content'};
+  }
+  return $output;
+}
+
+sub buttons {
+  my $self = shift;
+  my $hub = $self->hub;
+  return unless ($hub->param('has_e_alignment') && $hub->param('has_t_alignment'));
+  my $params  = {
+                  'type'        => 'DataExport',
+                  'action'      => 'Emboss',
+                  'data_type'   => 'Transcript',
+                  'component'   => 'SupportingEvidenceAlignment',
+                  'sequence'    => $hub->param('sequence'),
+                  'exon'        => $hub->param('exon'), 
+                  'align_type'  => lc($hub->param('align_type')),
+                  'has_e_alignment' => $hub->param('has_e_alignment'), 
+                  'has_t_alignment' => $hub->param('has_t_alignment'), 
+              };
+  my $plural = ($hub->param('e_alignment') && $hub->param('t_alignment')) ? 's' : '';
+  return {
+    'url'     => $hub->url($params),
+    'caption' => "Download alignment$plural",
+    'class'   => 'export',
+    'modal'   => 1
+  };
+}
+
+
 1;
 

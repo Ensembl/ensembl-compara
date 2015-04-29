@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -375,6 +375,7 @@ sub component_content {
   my $base_url     = $hub->species_defs->ENSEMBL_BASE_URL;
   my $function     = $hub->function;
   my $is_html      = ($hub->param('_format') || 'HTML') eq 'HTML';
+  my $table_count  = 0;
   
   foreach my $entry (map @{$self->{'components'}->{$_} || []}, $self->components) {
     my ($module_name, $content_function) = split /\//, $entry;
@@ -394,6 +395,7 @@ sub component_content {
       $html .= $self->component_failure($self->dynamic_use_failure($module_name), $entry, $module_name);
       next;
     }
+
     ### If this component is configured to be loaded by an AJAX request, print just the div which the content will be loaded into
     my $ajaxable = $component->ajaxable;
     if ($ajaxable && !$ajax_request && $is_html) {
@@ -406,9 +408,20 @@ sub component_content {
       # Without this, ajax panels don't load, or load the wrong content.
       my ($panel_name) = $self =~ /\((.+)\)$/;
       
-      # If there are some params that needs to be a part of the POST request, add them as hidden fields
-      my $ajax_post = ref $ajaxable ? join('', map { my $val = $hub->param($_); $val ? qq(<input class="ajax_post" type="hidden" name="$_" value="$val" />) : '' } @$ajaxable) : '';
-      
+      # If this is going to be a POST request, move all POST and GET params to hidden inputs (this is done because GET params are not read in a post request by hub->param)
+      my $ajax_post = '';
+      if ($ajaxable eq 'post') {
+        my $input = $hub->input;
+        my %inps  = map { $_ => $hub->param($_) } $hub->param; # all params
+        exists $inps{$_} or $inps{$_} = $input->url_param($_) for $input->url_param; # any remaining GET params
+        foreach my $param_name (keys %inps) {
+          $inps{$param_name} = [ $inps{$param_name} ] unless ref $inps{$param_name};
+          for (@{$inps{$param_name}}) {
+            $ajax_post .= qq(<input class="ajax_post" type="hidden" name="$param_name" value="$_" />);
+          }
+        }
+      }
+
       $html .= qq(<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="$url">$ajax_post</div>);
       
     } else {
@@ -429,7 +442,7 @@ sub component_content {
           my $panel_type = $modal || $content =~ /panel_type/ ? '' : '<input type="hidden" class="panel_type" value="Content" />';
           
           # Only add the wrapper if $content is html, and the update_panel parameter isn't present
-          $content = qq{<div class="js_panel __h __h_comp_$id" id="$id">$panel_type$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
+          $content = qq{<div class="js_panel" id="$id">$panel_type$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
         } else {
           my $caption = $component->caption;
           $html .= sprintf '<h2>%s</h2>', encode_entities($caption) if $caption;
@@ -438,8 +451,22 @@ sub component_content {
         $html .= $content;
       }
     }
+
+    ## Does this component have any tables?
+    if ($component && $component->{'_table_count'}) {
+      $table_count += $component->{'_table_count'};
+    }    
+
   }
-  
+
+  if ($table_count > 1) {
+    my $button = sprintf(
+      '<div class="component_tools tool_buttons"><p style="display:inline-block"><a class="export" href="%s;filename=%s;_format=Excel" title="Download all tables as CSV">Download all tables as CSV</a></p></div>',
+      $hub->url, $hub->filename
+    );
+    $html = $button.$html;
+  }
+
   $html .= sprintf '<div class="more"><a href="%s">more about %s ...</a></div>', $self->{'link'}, encode_entities($self->parse($self->{'caption'})) if $self->{'link'};
   
   return $html;

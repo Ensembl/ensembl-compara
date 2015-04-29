@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,11 +55,13 @@ sub content {
     label => $hub->param('zoom'),
     order => 1,
   });
+  warn ">>> ZOOMING HERE with action ".$self->hub->action;
   $self->add_entry({
     type  => 'Zoom',
     label => "zoom here",
     link => $self->hub->url({
       r => $hub->param('zoom_r'),
+      action => $hub->param('parent_action'),
     }),
     order => 2,
   });

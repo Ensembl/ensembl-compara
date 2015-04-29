@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ sub DataObjects {
   # 1) There is no current r parameter OR
   # 2) The r parameter has a : (in other words, it's not a whole chromosome)
 
-  if($self->hub->script ne 'Component') {
+  if($self->hub->script !~ /Component|DataExport/) {
     my $loc = $objects->{'Location'}[0];
     $self->param('r', sprintf '%s:%s-%s', map $loc->$_, qw(seq_region_name seq_region_start seq_region_end)) if $loc && (!$self->param('r') || $self->param('r') =~ /:/);
   } 
@@ -98,7 +98,7 @@ sub __set_species {
   
   $species     ||= $self->species;
   $golden_path ||= $self->species_defs->get_config($species, 'ENSEMBL_GOLDEN_PATH');
-  $golden_path ||= $self->species_defs->get_config($species, 'ASSEMBLY_NAME');
+  $golden_path ||= $self->species_defs->get_config($species, 'ASSEMBLY_VERSION');
   
   $self->__species = $species; # to store co-ordinate system information
   $self->__species_hash ||= {};
@@ -218,7 +218,16 @@ sub createObjects {
       my $anchor1 = $self->param('anchor1'); 
       
       if ($seq_region && !$anchor1) {
-        $location = $self->_location_from_SeqRegion($seq_region, $start, $end, $strand); # We have a seq region, and possibly start, end and strand. From this we can directly get a location
+        if ($self->param('band')) {
+          my $slice;
+          eval {
+            $slice = $self->_slice_adaptor->fetch_by_chr_band($seq_region, $self->param('band'));
+          };
+          $location = $self->new_location($slice) if $slice;
+        }
+        else {
+          $location = $self->_location_from_SeqRegion($seq_region, $start, $end, $strand); # We have a seq region, and possibly start, end and strand. From this we can directly get a location
+        }
       } else {
         # Mapping of supported URL parameters to function calls which should get a Location for those parameters
         # Ordered by most likely parameter to appear in the URL
@@ -308,7 +317,6 @@ sub createObjects {
       }
     }
   }
-  
   $self->DataObjects($location) if $location;
   return $location;
 }
@@ -855,7 +863,7 @@ sub merge {
 sub _map_assembly {
   my ($self, $seq_region, $start, $end, $strand) = @_;
   
-  my $assembly_name = $self->species_defs->ASSEMBLY_NAME;
+  my $assembly_name = $self->species_defs->ASSEMBLY_VERSION;
   my $assembly      = $self->param('a');
   
   $self->delete_param('a');

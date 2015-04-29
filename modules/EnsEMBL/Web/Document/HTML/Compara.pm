@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -165,11 +165,11 @@ sub mlss_data {
           # Alignment between 2+ species
           foreach my $nonref_db (@non_ref_genome_dbs) {
             $species->{ucfirst($nonref_db->name)}++;
-            $data->{$ref_name}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID];
+            $data->{$ref_name}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
           }
         } else {
             # Self-alignment. No need to increment $species->{$ref_name} as it has been done earlier
-            $data->{$ref_name}{$ref_name} = [$method, $mlss->dbID];
+            $data->{$ref_name}{$ref_name} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
         }
       }
     }
@@ -277,11 +277,11 @@ sub draw_stepped_table {
       else {
         $cbg = $j % 2 ? 'bg3' : 'bg4';
       }
-      my ($method, $mlss_id) = @{$data->{$other_species}{$species}||[]};
+      my ($method, $mlss_id, $with_extra_info) = @{$data->{$other_species}{$species}||[]};
       my $content = '-';
 
       if ($mlss_id) {
-        if ($method eq 'SYNTENY') {
+        if (not $with_extra_info) {
           $content = '<b>YES</b>';
         }
         else {

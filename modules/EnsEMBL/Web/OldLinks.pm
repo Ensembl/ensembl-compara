@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ use base qw(Exporter);
 our @EXPORT = our @EXPORT_OK = qw(get_redirect get_archive_redirect);
 
 our %mapping = (
+  'blastview'             => [{ 'type' => 'Tools',               'action' => 'Blast',                        'initial_release' => 76 }],
   'featureview'           => [{ 'type' => 'Location',            'action' => 'Genome',                       'initial_release' => 34 }],
   'karyoview'             => [{ 'type' => 'Location',            'action' => 'Genome',                       'initial_release' => 1, 'final_release' => 31 }],
   'mapview'               => [{ 'type' => 'Location',            'action' => 'Chromosome',                   'initial_release' => 1  }],
@@ -110,6 +111,7 @@ our %mapping = (
                               { 'type' => 'Gene',                'action' => 'TranscriptComparison',         'initial_release' => 71 },
                               { 'type' => 'Gene',                'action' => 'Expression',                   'initial_release' => 71 },
                               { 'type' => 'Gene',                'action' => 'SpeciesTree',                  'initial_release' => 69 },
+                              { 'type' => 'Gene',                'action' => 'Alleles',                      'initial_release' => 78 },
                               { 'type' => 'Transcript',          'action' => 'Ontology/Image',               'initial_release' => 60 },
                               { 'type' => 'Transcript',          'action' => 'Ontology/Table',               'initial_release' => 60 },
                               { 'type' => 'Transcript',          'action' => 'Variation_Transcript/Table',   'initial_release' => 68 },
@@ -123,6 +125,8 @@ our %mapping = (
                               { 'type' => 'LRG',                 'action' => 'Sequence_Protein',             'initial_release' => 62 },
                               { 'type' => 'LRG',                 'action' => 'Exons',                        'initial_release' => 62 },
                               { 'type' => 'LRG',                 'action' => 'ProteinSummary',               'initial_release' => 65 },
+                              { 'type' => 'LRG',                 'action' => 'Phenotype',                    'initial_release' => 76 },
+                              { 'type' => 'LRG',                 'action' => 'StructuralVariation_LRG',      'initial_release' => 76 },
                               { 'type' => 'Phenotype',           'action' => 'Locations',                    'initial_release' => 64 },
                               { 'type' => 'Phenotype',           'action' => 'All',                          'initial_release' => 69 },
                               { 'type' => 'Marker',              'action' => 'Details',                      'initial_release' => 59 },

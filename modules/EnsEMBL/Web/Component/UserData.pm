@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,10 +36,12 @@ sub add_file_format_dropdown {
   my ($self, $form, $limit, $js_enabled) = @_;
 
   my $sd              = $self->hub->species_defs;
-  my @remote_formats  = $limit && $limit eq 'upload' ? () : @{$sd->REMOTE_FILE_FORMATS};
-  my @upload_formats  = $limit && $limit eq 'remote' ? () : @{$sd->UPLOAD_FILE_FORMATS};
-  my $format_info     = $sd->DATA_FORMAT_INFO;
+  my @remote_formats  = $limit && $limit eq 'upload' ? () : @{$sd->multi_val('REMOTE_FILE_FORMATS')||[]};
+  my @upload_formats  = $limit && $limit eq 'remote' ? () : @{$sd->multi_val('UPLOAD_FILE_FORMATS')||[]};
+  my $format_info     = $sd->multi_val('DATA_FORMAT_INFO');
   my %format_type     = (map({$_ => 'remote'} @remote_formats), map({$_ => 'upload'} @upload_formats));
+  ## Override defaults for datahub, which is a special case
+  $format_type{'datahub'} = 'datahub';
 
   if (scalar @remote_formats || scalar @upload_formats) {
     my $values = [

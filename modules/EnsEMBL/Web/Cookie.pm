@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,9 +22,12 @@ package EnsEMBL::Web::Cookie;
 ### All the methods in CGI::Cookie that actually construct a CGI::Cookie object have been overridden to accept apache handle as first argument
 
 use strict;
+use warnings;
 
 use Digest::MD5;
+
 use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Attributes;
 
 use base qw(CGI::Cookie);
 
@@ -83,7 +86,7 @@ sub value {
   return exists $self->{'_ens_value'} ? $self->{'_ens_value'} : ($self->{'_ens_value'} = $self->SUPER::value);
 }
 
-sub get_value {
+sub get_value :Deprecated("Please use 'value' instead of 'get_value'") {
   ## @return Value of the cookie
   ## DEPRECATED: For backward compatibility only
   return shift->value;
@@ -99,7 +102,7 @@ sub encrypted {
 sub expires {
   ## @accessor
   my $self = shift;
-  return $self->SUPER::expires($_ ? $_ ne 'now' ? $_ : 'Thu, 31-Dec-1970 23:59:59 GMT' : 'Thu, 31-Dec-2037 23:59:59 GMT') for @_;
+  return $self->SUPER::expires($_[0] && $_[0] ne 'now' ? $_[0] : 'Thu, 31-Dec-2037 23:59:59 GMT') if @_;
   return $self->SUPER::expires;
 }
 

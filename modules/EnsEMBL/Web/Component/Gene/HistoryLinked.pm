@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -105,6 +105,7 @@ sub get_assoc {
     if ($r->[0]->release == $last_release) {
       $release = undef;
     } else {
+      $last_gsi = undef;
       $release = $r->[0]->release;
     }
 

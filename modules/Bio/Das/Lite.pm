@@ -762,6 +762,9 @@ sub postprocess {
     }
   }
 
+  ## Clean dirty values
+  __clean_vals($results);
+
   #########
   # fix ups
   #
@@ -792,6 +795,25 @@ sub postprocess {
     }
   }
   return;
+}
+
+sub __clean_vals {
+  my $object = shift;
+
+  if ($object) {
+
+    my $ref = ref $object;
+
+    if (!$ref) {
+      $object =~ s/^[\n\r\t\s]*|[\n\r\t\s]*$//g;
+    } elsif ($ref eq 'ARRAY') {
+      $object->[$_] = __clean_vals($object->[$_]) for 0..$#$object;
+    } elsif ($ref eq 'HASH') {
+      $object->{$_} = __clean_vals($object->{$_}) for keys %$object;
+    }
+  }
+
+  return $object;
 }
 
 #########

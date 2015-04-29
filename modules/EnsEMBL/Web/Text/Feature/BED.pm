@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ sub new {
 
   unless(defined $extra) {
     $extra = {};
-    my @default_extras = qw(thick_start thick_end item_colour
+  }
+  my @default_extras = qw(thick_start thick_end item_colour
                             BlockCount BlockSizes BlockStart);
-    foreach my $i (0..$#default_extras) {
-      $extra->{$default_extras[$i]}=$args->[$i+6] if defined $args->[$i+6];
-    }
+  foreach my $i (0..$#default_extras) {
+    $extra->{$default_extras[$i]}=$args->[$i+6] if defined $args->[$i+6];
   }
   my $more = { map { $_ => [$extra->{$_}] } keys %$extra };
 
@@ -89,6 +89,8 @@ sub score {
 }
 
 sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
+
+sub attribs { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : {} ; }
 
 sub cigar_string {
   my $self = shift;

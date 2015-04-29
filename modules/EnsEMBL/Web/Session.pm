@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ sub store {
   foreach my $type (qw(view_config image_config)) {
     foreach my $config (values %{$self->{"${type}s"}}) {
       ## Only store if config has changed
-      my $altered = $type eq 'view_config' ? $config->altered : scalar @{$config->altered};
+      my $altered = $type eq 'view_config' ? $config->altered : $config->is_altered;
       if ($config->storable && $altered) {
         push @data, {
           code => $config->code,
@@ -486,63 +486,41 @@ sub add_das {
 }
 
 sub add_das_from_string {
-  my $self    = shift;
-  my $string  = shift;
-  my @existing = $self->hub->get_all_das;
-  my $parser   = $self->das_parser;
-  my ($server, $identifier) = $parser->parse_das_string($string);
-  $identifier = uri_unescape($identifier); # parse_das_string returns URI escaped identifier
-  my $error;
-  
-  # If we couldn't reliably parse an identifier (i.e. string is not a URL),
-  # assume it is a registry ID
-  if (!$identifier) {
-    $identifier = $string;
-    $server     = $self->hub->species_defs->DAS_REGISTRY_URL;
-  }
+  my $self      = shift;
+  my $string    = shift;
+  my @existing  = $self->hub->get_all_das;
+  my $parser    = $self->das_parser;
 
-  # Check if the source has already been added, otherwise add it
-  my $source = $existing[0]->{$identifier} || $existing[1]->{"$server/$identifier"};
-  
+  my ($source, $error);
+
+  # string could be logic name or uri of existing DAS sources
+  $source = $existing[0]->{$string} || $existing[1]->{$string};
+
+  # string could contain both url and dsn
   if (!$source) {
-    # If not, parse the DAS server to get a list of sources...
-    eval {
-      foreach (@{$parser->fetch_Sources( -location => $server )}) { 
-        # ... and look for one with a matcing URI or DSN
-        if ($_->logic_name eq $identifier || $_->dsn eq $identifier) { 
-        
-          if (!@{$_->coord_systems}) { 
-            $error = "Unable to add DAS source $identifier as it does not provide any details of its coordinate systems";
-            return;  
-          }
-          
-          $source = EnsEMBL::Web::DASConfig->new_from_hashref($_); 
-          $self->add_das($source);
-          last;
-        }
-      }
-    };
-    
-    $error = "DAS error: $@" if $@;
+    my ($url, $dsn) = $parser->parse_das_string($string);
+    $dsn = uri_unescape($dsn || '');
+
+    $source = $existing[0]->{$dsn} || $existing[1]->{"$url/$dsn"};
   }
 
   if ($source) {
     # so long as the source is 'suitable' for this view, turn it on
-    $self->configure_das_views($source, @_) unless $error;
-  } else { 
-    $error ||= "Unable to find a DAS source named $identifier on $server";
+    $self->configure_das_views($source, @_);
+  } else {
+    $error = "Unable to find a DAS source for $string";
   }
-  
+
   if ($error) {
     $self->add_data(
       type     => 'message',
       function => '_warning',
       code     => 'das:' . md5_hex($string),
-      message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s).', encode_entities($string), encode_entities($error))
+      message  => sprintf('You attempted to attach a DAS source: %s, unfortunately we were unable to attach this source (%s).', encode_entities($string), encode_entities($error))
     );
   }
-  
-  return $source ? $source->logic_name : undef;
+
+  return $source && $source->{'logic_name'};
 }
 
 # Switch on a DAS source for the current view/image (if it is suitable)
@@ -600,7 +578,7 @@ sub configure_das_views {
     
     $node->set_user($_, $track_options->{$_}) for keys %$track_options;
     my $text = $node->data->{'name'} || $node->data->{'coption'};
-    push @{$image_config->altered}, $text;
+    $image_config->altered($text);
   }
 }
 
@@ -633,8 +611,7 @@ sub configure_user_data {
           } else {
             $_->set_user('display', $valid{'normal'} ? 'normal' : $renderers->[2]);
           }
-          my $text = $_->data->{'name'} || $_->data->{'coption'};
-          push @{$image_config->altered}, $text;
+          $image_config->altered($_->data->{'name'} || $_->data->{'coption'});
         }
         
         $image_config->{'code'} = $ic_code;

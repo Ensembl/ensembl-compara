@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ sub content {
 
   # Clinical significance
   if ($column_flags->{'clin_sign'}) {
-   push(@$columns,{ key => 'clin_sign', title => 'Clinical significance',  ialign => 'left', sort => 'hidden_string' });
+   push(@$columns,{ key => 'clin_sign', title => 'Clinical significance',  align => 'left', sort => 'hidden_string' });
   }
 
   push(@$columns,{ key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' });

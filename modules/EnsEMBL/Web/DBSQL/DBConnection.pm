@@ -21,7 +21,7 @@ Module to initiate and store database connections for web api
 
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ sub get_DBAdaptor {
 
   # Funcgen Database Files Overwrite
   if ($database eq 'funcgen' && $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'}{'NAME'}) {
-    my $file_path = join '/', $self->{'species_defs'}->DATAFILE_BASE_PATH, lc $species, $self->{'species_defs'}->ASSEMBLY_NAME;
+    my $file_path = join '/', $self->{'species_defs'}->DATAFILE_BASE_PATH, lc $species, $self->{'species_defs'}->ASSEMBLY_VERSION;
     $dba->get_ResultSetAdaptor->dbfile_data_root($file_path) if -e $file_path && -d $file_path;
   }  
   
@@ -311,15 +311,6 @@ sub _get_db_with_dnadb {
   }
 }
 
-sub _get_fasta_database{
-    my $self = shift;
-    my $db_info =  $self->_get_database_info( shift, 'DATABASE_FASTA' ) ||
-        die( "No fasta database for this species" );
-    my $adpt =  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
-    $self->dynamic_use('Bio::EnsEMBL::ExternalData::FASTA::FASTAAdaptor');
-    return Bio::EnsEMBL::ExternalData::FASTA::FASTAAdaptor->new($adpt);
-}
-
 =head2 _get_userupload_database
 
  Arg[1]      : String  
@@ -384,23 +375,6 @@ sub _get_go_database{
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::OntologyDBAdaptor' );
 }
 
-=head2 _get_blast_database
-
- Arg[1]      : none
- 
- Example     : $self->_get_blast_database
- Description : Gets blast database connection
- Return type : Bio::EnsEMBL::External::BlastAdaptor
-
-=cut
-
-sub _get_blast_database{
-  my $self = shift;
-  my $db_info = $self->{'species_defs'}->multidb->{DATABASE_BLAST} ||
-     die( "No blast database in MULTI" );
-  return  $self->_get_database( $db_info, 'Bio::EnsEMBL::External::BlastAdaptor' );
-}
-
 =head2 _get_database_info
 
  Arg[1]      : String
@@ -432,7 +406,7 @@ sub _get_database_info{
  Arg[2]      : String
                 Adaptor type
  
- Example     : $self->_get_database( $db_info, 'Bio::EnsEMBL::External::BlastAdaptor' );
+ Example     : $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
  Description : Creates the database adaptor for the adaptor type passed in ARG[2]
  Return type : A new database adaptor with connection information
 

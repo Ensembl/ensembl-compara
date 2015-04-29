@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::ld2;
 
 ### STATUS: Unknown - not clear that it's used anywhere
@@ -25,6 +31,13 @@ use strict;
 use POSIX;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub _key { return $_[0]->my_config('key') || 'r2'; }
 
@@ -107,7 +120,7 @@ sub _init {
       next if $x < 0 || $x > $len;
               
       my $type =  lc ($snp->[1]->display_consequence);
-      $self->push( Sanger::Graphics::Glyph::Rect->new({
+      $self->push($self->Rect({
         'title'     => $snp->[1]->variation_name,
         'height'    => $TAG_LENGTH,
         'x'         => $x,
@@ -124,7 +137,7 @@ sub _init {
     my $name    = "LD($key): $pop_name";
     $name   .= '   ('.(join ', ', map { ucfirst(lc($_->name)) } @{$parents} ).')' if @$parents;
     $name   .= "   $number_of_snps SNPs";
-    $self->push( Sanger::Graphics::Glyph::Text->new({
+    $self->push($self->Text({
       'x'         => 0,
       'y'         => $yoffset - $h - $TAG_LENGTH,
       'height'    => $h,
@@ -170,7 +183,7 @@ warn " [[[ $value, $value1 ]]] ";
         my $colour = defined($value) ? $colour_gradient[POSIX::floor(40 * $value)] : "blue";
         my $snp_names = $snp_m->[1]->variation_name;
         $snp_names.= "-".$snp_n->[1]->variation_name;
-        $self->push( Sanger::Graphics::Glyph::Poly->new({
+        $self->push($self->Poly({
           'alt'  => "$snp_names: ". ($value || "n/a"),
           'points' => \@p2,
           'colour' => $colour,

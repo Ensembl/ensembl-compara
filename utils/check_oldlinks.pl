@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ BEGIN {
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use EnsEMBL::Web::Root;
+use EnsEMBL::Root;
 use EnsEMBL::Web::Tree;
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Builder;
@@ -53,7 +53,7 @@ my $builder = new EnsEMBL::Web::Builder({ hub => $hub });
 my (@object_types, %old_links);
 
 while (my ($k, $v) = each (%{$hub->species_defs->OBJECT_TO_SCRIPT})) {
-  push @object_types, $k if $v eq 'Page' && $k !~ /^(Info|Blast)$/;
+  push @object_types, $k if $v eq 'Page' && $k ne 'Info';
 } 
 
 while (my ($k, $v) = each (%EnsEMBL::Web::OldLinks::mapping)) {
@@ -63,7 +63,7 @@ while (my ($k, $v) = each (%EnsEMBL::Web::OldLinks::mapping)) {
 foreach my $type (@object_types) {
   my $conf_module = "EnsEMBL::Web::Configuration::$type";
   
-  if (EnsEMBL::Web::Root::dynamic_use(undef, $conf_module)) {
+  if (EnsEMBL::Root::dynamic_use(undef, $conf_module)) {
     ## We need to fake a web page so that we can get the LH menu
     my $page = EnsEMBL::Web::Document::Page::Dynamic->new({
       hub          => $hub,

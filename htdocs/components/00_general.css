@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ body.ie6 th, body.ie6 td { font-size: 13px; }
 ----------------------------------------------------------------------*/
 
 img     { border: 0; }
+img.middle-align { vertical-align: middle; }
 form    { border: none; margin: 0 0 1em 0; }
 p       { margin: 0 0 1em; line-height: 1.25em; padding: 0; }
 ul, ol  { margin: 0 0 1.25em; line-height: 1.25em; padding-left: 2em; }
@@ -93,6 +94,10 @@ h1              { font-size: 1.5em; }
 h2              { font-size: 1.2em; }
 h3              { font-size: 1.1em; }
 h4              { font-size: 1em;   }
+h1.light,
+h2.light,
+h3.light,
+h4.light        { color: #808080; }
 body.mac h1,
 body.mac h2     { padding-top: 4px; }
 
@@ -103,16 +108,20 @@ body.mac h2     { padding-top: 4px; }
 /*----------------------------------------------------------------------
  Links 
 ----------------------------------------------------------------------*/
-a               { color: [[PAGE_LINK]];    } /* neutral style for anchor target */
-a:visited       { color: [[PAGE_VISITED]]; }
-a:hover         { color: [[PAGE_HOVER]];   }
-a:active        { color: [[PAGE_HOVER]];   }
-a.no-visit:visited { color: [[PAGE_LINK]]; } /* don't change link colour on links we want to stay "visible" */
-span.link       { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
-a.toggle        { background: url(/i/open2.gif) no-repeat right bottom; text-decoration: none; padding-right: 20px; outline: 0 none; }
-a.toggle.closed { background-image: url(/i/closed2.gif); }
-a.ajax_add      { background: none!important; padding-right: 0; }
-p.button a      { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; color: [[PAGE_BG]]; padding: 3px 6px 1px; margin-right: 4px; text-decoration: none; display: inline-block; }
+a                     { color: [[PAGE_LINK]];    } /* neutral style for anchor target */
+a:visited             { color: [[PAGE_VISITED]]; }
+a:hover               { color: [[PAGE_HOVER]];   }
+a:active              { color: [[PAGE_HOVER]];   }
+a.no-visit:visited    { color: [[PAGE_LINK]]; } /* don't change link colour on links we want to stay "visible" */
+span.link             { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
+a.toggle              { background: url(/i/open2.gif) no-repeat right bottom; text-decoration: none; padding-right: 20px; outline: 0 none; }
+a.toggle.closed       { background-image: url(/i/closed2.gif); }
+a.ajax_add            { background: none!important; padding-right: 0; }
+p.button a            { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; color: [[PAGE_BG]]; padding: 3px 6px 1px; margin-right: 4px; text-decoration: none; display: inline-block; }
+a.pre_species         { color: #333333; }
+a.pre_species:visited { color: #333333; }
+a.pre_species:hover   { color: [[PAGE_HOVER]]; }
+
 
 /*----------------------------------------------------------------------
   Tables

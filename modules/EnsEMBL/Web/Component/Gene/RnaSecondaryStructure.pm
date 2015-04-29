@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ package EnsEMBL::Web::Component::Gene::RnaSecondaryStructure;
 
 use strict;
 
+use EnsEMBL::Web::Document::Image::R2R;
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -35,13 +37,15 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $html;
 
-  $html .= '<h4>Key</h4><img src="/img/r2r_legend.png" /><br />' if $object->availability->{'has_2ndary_cons'};
+  $html .= sprintf '<h4>Key</h4><p><img src="%s/img/r2r_legend.png" /></p>', $self->static_server if $object->availability->{'has_2ndary_cons'};
 
   my ($display_name) = $object->display_xref;
 
-  my $svg_path = $self->draw_structure($display_name);
+  my $image = EnsEMBL::Web::Document::Image::R2R->new($self->hub, $self, {});
+  my $svg_path = $image->render($display_name);
+
   if ($svg_path) {
-    $html .= qq(<object data="$svg_path" type="image/svg+xml"></object>);
+    $html .= qq(<h4><a href="$svg_path">Download image</a></h4><object data="$svg_path" type="image/svg+xml"></object>);
   }
 
   return $html;

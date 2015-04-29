@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,7 +57,6 @@ sub _init {
     #set length of feature to the equivalent of 1 pixel if it's less than 1 pixel
     my $f_length = $f->end - $f->start;
     my $width = ($f_length > $bp_per_pixel) ? $f_length : $bp_per_pixel;
-    $width = 0;
     #hack for zfish karyotype display - don't show small bands
 #    next F if ( ($bp_per_pixel/$f_length) > 2);
 

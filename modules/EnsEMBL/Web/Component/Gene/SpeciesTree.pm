@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ package EnsEMBL::Web::Component::Gene::SpeciesTree;
 
 use strict;
 
-use Bio::AlignIO;
 use Bio::EnsEMBL::Registry;
-use IO::Scalar;
 
 use EnsEMBL::Web::Constants;
 
@@ -38,9 +36,8 @@ sub _init {
 sub get_details {
   my $self   = shift;
   my $cdb    = shift;  
-  my $hub    = $self->hub;  
   
-  my $object = $self->object;
+  my $object = shift || $self->object;
   my $member = $object->get_compara_Member($cdb);
 
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
@@ -50,7 +47,7 @@ sub get_details {
 
   return (undef, '<strong>Gene is not in a compara tree</strong>') unless $tree;
 
-  my $node = $tree->get_all_nodes;
+  my $node = $tree->root->get_all_nodes;
   return (undef, '<strong>Gene is not in the compara tree</strong>') unless $node;
   
   return ($member, $tree, $node);
@@ -81,7 +78,7 @@ sub content {
   my @highlights     = $species_name;
   return $tree if $hub->param('g') && !$is_speciestree && !defined $member;  
   
-  my $leaves               = $tree->get_all_leaves;  
+  my $leaves               = $tree->root->get_all_leaves;  
   my $image_config         = $hub->get_imageconfig('speciestreeview');
   
   my $image_width          = $self->image_width || 800;
@@ -94,33 +91,8 @@ sub content {
     slice_number    => '1|1',
     cdb             => $cdb
   });
-# code to have the background colours on the tree but not sure if this is applicable to the species tree as all the nodes are aligned  
-#   my $coloured_nodes;
-#   
-#   if ($colouring =~ /^(back|fore)ground$/) {
-#     my $mode   = $1 eq 'back' ? 'bg' : 'fg';
-#     my @clades = grep { $_ =~ /^group_.+_${mode}colour/ } $hub->param;
-# 
-#     # Get all the genome_db_ids in each clade
-#     my $genome_db_ids_by_clade;
-#     
-#     foreach my $clade (@clades) {
-#       my ($clade_name) = $clade =~ /group_(.+)_${mode}colour/;
-#       $genome_db_ids_by_clade->{$clade_name} = [ split '_', $hub->param("group_${clade_name}_genome_db_ids") ];
-#     }
-# 
-#     # Sort the clades by the number of genome_db_ids. First the largest clades,
-#     # so they can be overwritten later (see ensembl-webcode/modules/EnsEMBL/Draw/GlyphSet/genetree.pm)
-#     foreach my $clade_name (sort { scalar @{$genome_db_ids_by_clade->{$b}} <=> scalar @{$genome_db_ids_by_clade->{$a}} } keys %$genome_db_ids_by_clade) {
-#       my $genome_db_ids = $genome_db_ids_by_clade->{$clade_name};
-#       my $colour        = $hub->param("group_${clade_name}_${mode}colour") || 'magenta';          
-#       
-#       #Get node_ids in  nodes hash
-#       #my $node_id = $tree->get_node_with_genome_db_id(134)->node_id();
-#       #push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => $node_id};
-#     }
-#   }
-  my $image = $self->new_image($tree, $image_config, \@highlights);
+
+  my $image = $self->new_image($tree->root, $image_config, \@highlights);
 
   return $html if $self->_export_image($image, 'no_text');
 
@@ -131,10 +103,33 @@ sub content {
   $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'tree';
   $image->set_button('drag', 'title' => 'Drag to select region');
+
+  ## Need to pass gene name to export form 
+  my $gene_name;
+  if ($gene) {
+    my $dxr    = $gene->Obj->can('display_xref') ? $gene->Obj->display_xref : undef;
+    $gene_name = $dxr ? $dxr->display_id : $gene->stable_id;
+  }
+  else {
+    $gene_name = $tree->tree->stable_id;
+  }
+  $image->{'export_params'} = [['gene_name', $gene_name],['align', 'tree']];
+  $image->{'data_export'}   = 'SpeciesTree';
   
   $html .= $image->render;
   
   return $html;
+}
+
+sub export_options { return {'action' => 'SpeciesTree'}; }
+
+sub get_export_data {
+## Get data for export
+  my ($self, $type) = @_;
+  my $cdb       = $self->hub->param('cdb') || 'compara';
+  my $gene      = $self->hub->core_object('gene');
+  my ($member, $tree) = $self->get_details($cdb, $gene);
+  return $tree;
 }
 
 1;

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ sub get_feature_view_link {
   my $feature_id  = $feature->display_label;
   my $feature_set = $feature->feature_set->name;
   
-  return if $feature_set =~ /cisRED|CRM/i;
+  return if $feature_set =~ /cisRED|CRM|FANTOM/i;
   
   my $link = $self->hub->url({
     type   => 'Location',

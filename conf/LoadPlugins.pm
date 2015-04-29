@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ sub import {
       local $SIG{'__WARN__'} = sub { warn $_[0] unless $_[0]=~ /Subroutine .+ redefined/; };
 
       # Load the core file first, then all the existing plugin files
-      for (@lib_dirs, @plugins) {
+      for (reverse(@lib_dirs), @plugins) {
         my $filename = "$_->[1]/$filename" =~ s/\/+/\//gr;
         if (-e $filename) {
           eval "require '$filename'";

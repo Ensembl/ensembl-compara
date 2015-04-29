@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ sub populate_tree {
     { 'availability' => 'has_transcripts', 'concise' => 'Genes and regulation' }
   ));
   
-  $self->create_node('Evidence', 'Supporting evidence ([[counts::supporting_structural_variation]])',
+  $self->create_node('Evidence', 'Supporting evidence',
     [qw( evidence  EnsEMBL::Web::Component::StructuralVariation::SupportingEvidence)],
     { 'availability' => 'has_supporting_structural_variation', 'concise' => 'Supporting evidence' }
   );

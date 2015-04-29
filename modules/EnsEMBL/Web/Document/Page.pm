@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -106,10 +106,6 @@ sub doc_type {
     return sprintf "<!DOCTYPE %s SYSTEM %s>\n", $self->{'doc_type_version'}, $self->{'document_types'}->{$self->{'doc_type'}}->{$self->{'doc_type_version'}};
   }
   else {
-    
-    # remove this hack when old blast interface is disposed off
-    return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'."\n" if $self->hub && $self->hub->type eq 'blastview';
-
     return "<!DOCTYPE html>\n";
   }
 }

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -93,8 +93,13 @@ sub handler {
       }
     }
 
+    return DECLINED if $file eq $uri; # absolute file path provided via url
+
     if (-e $file) {
       ## Send 2MB+ files without caching them
+      $r->headers_out->set('Cache-Control'  => 'max-age=' . 60*60*24*30);
+      $r->headers_out->set('Expires'        => HTTP::Date::time2str(time + 60*60*24*30));
+      $r->content_type(mime_type($uri));
       return $r->sendfile($file) if -s $file > 2*1024*1024;
       
       {
@@ -110,9 +115,6 @@ sub handler {
       $r->headers_out->set('Last-Modified'  => HTTP::Date::time2str($file_info[9]));
       $r->headers_out->set('Accept-Ranges'  => 'bytes');
       $r->headers_out->set('Content-Length' => length($content));
-      $r->headers_out->set('Cache-Control'  => 'max-age=' . 60*60*24*30);
-      $r->headers_out->set('Expires'        => HTTP::Date::time2str(time + 60*60*24*30));
-      $r->content_type(mime_type($uri));
       
       $r->print($content);
       return OK;

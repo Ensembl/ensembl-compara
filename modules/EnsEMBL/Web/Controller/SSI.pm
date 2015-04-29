@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ sub _init {
   
   $page->include_navigation(0); 
   $page->initialize;
+  $self->add_JSCSS($page);
   $self->render_page;
   
   return OK;
@@ -219,6 +220,46 @@ sub template_LINK {
 sub template_MOVIE {
   my ($self, $movie_params) = @_;
   return EnsEMBL::Web::Document::HTML::Movie->new($self->hub)->render($movie_params) || '<p><i>Movie not found</i></p>';
+}
+
+sub add_JSCSS {
+  my ($self, $page) = @_;
+
+  my $head        = $self->content =~ /<head>(.*?)<\/head>/sm ? $1 : '';
+  my $stylesheets = $page->elements->{'stylesheet'};
+  my $javascript  = $page->elements->{'javascript'};
+
+  while ($head =~ s/<style(.*?)>(.*?)<\/style>//sm) {
+    my ($attr, $cont) = ($1, $2);
+
+    next unless $attr =~ /text\/css/;
+
+    my $media = $attr =~ /media="(.*?)"/ ? $1 : 'all';
+
+    if ($attr =~ /src="(.*?)"/) {
+      $stylesheets->add_sheet($1);
+    } else {
+      $stylesheets->add_sheet($cont);
+    }
+  }
+
+  while ($head =~ s/<script(.*?)>(.*?)<\/script>//sm) {
+    my ($attr, $cont) = ($1, $2);
+
+    next unless $attr =~ /text\/javascript/;
+
+    if ($attr =~ /src="(.*?)"/) {
+      $javascript->add_source($1);
+    } else {
+      $javascript->add_script($cont);
+    }
+  }
+
+  while ($head =~ s/<link (.*?)\s*\/>//sm) {
+    my %attrs = map { s/"//g; split '=' } split ' ', $1;
+    next unless $attrs{'rel'} eq 'stylesheet';
+    $stylesheets->add_sheet($attrs{'href'}) if $attrs{'href'};
+  }
 }
 
 1;

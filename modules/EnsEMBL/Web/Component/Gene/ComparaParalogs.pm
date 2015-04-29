@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
+our %button_set = ('download' => 1, 'view' => 0);
+
 sub _init {
   my $self = shift;
   $self->cacheable(1);
@@ -35,13 +37,22 @@ sub content {
   my $hub            = $self->hub;
   my $availability   = $self->object->availability;
   my $cdb            = shift || $hub->param('cdb') || 'compara';
-  my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog', $cdb)};
+  my $is_ncrna       = ($self->object->Obj->biotype =~ /RNA/);
+  my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', undef, $cdb)};
   
   return '<p>No paralogues have been identified for this gene</p>' unless keys %paralogue_list;
   
   my %paralogue_map = qw(SEED BRH PIP RHS);
+  my %cached_lca_desc = ();
   my $alignview     = 0;
-  
+ 
+  my %glossary = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my $taxon_common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
+
+  my $lookup = {
+                'Paralogues (same species)' => 'Within species paralogues (within species paralogs)',
+                };
+ 
   my $columns = [
     { key => 'Type',                align => 'left', width => '10%', sort => 'html'          },
     { key => 'Ancestral taxonomy',  align => 'left', width => '10%', sort => 'html'          },
@@ -69,8 +80,8 @@ sub content {
       my @external = (qq{<span class="small">$description</span>});
       unshift @external, $paralogue->{'display_id'} if $paralogue->{'display_id'};
       my $paralogue_desc              = $paralogue_map{$paralogue->{'homology_desc'}} || $paralogue->{'homology_desc'};
-      my $paralogue_subtype           = $paralogue->{'homology_subtype'}              || '&nbsp;';
       my $paralogue_dnds_ratio        = $paralogue->{'homology_dnds_ratio'}           || '&nbsp;';
+      my $species_tree_node           = $paralogue->{'species_tree_node'};
       (my $spp = $paralogue->{'spp'}) =~ tr/ /_/;
       
       my $link_url = $hub->url({
@@ -107,22 +118,54 @@ sub content {
         my $align_url = $hub->url({
             action   => 'Compara_Paralog', 
             function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''),, 
+            hom_id   => $paralogue->{'dbID'},
             g1       => $stable_id
         });
-        $links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
-        $align_url .= ';seq=cDNA';
-        $links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url;
+
+        if ($is_ncrna) {
+          $links .= sprintf '<li><a href="%s" class="notext">Alignment</a></li>', $align_url;
+        } else {
+          $links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
+          $links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url.';seq=cDNA';
+        }
         
         ($target, $query) = ($paralogue->{'target_perc_id'}, $paralogue->{'query_perc_id'});
         $alignview = 1;
       }
 
       $links .= '</ul>';
-      
+
+      my $glossary_def = $glossary{$lookup->{ucfirst $paralogue_desc}} || '';
+
+      my $ancestral_taxonomy;
+      my $lca_desc;
+      if (not $species_tree_node) {
+        $ancestral_taxonomy = '&nbsp;';
+        # nothing to do
+      } elsif (exists $cached_lca_desc{$species_tree_node->node_id}) {
+        ($ancestral_taxonomy, $lca_desc) = @{$cached_lca_desc{$species_tree_node->node_id}};
+      } elsif ($species_tree_node->is_leaf) {
+        $ancestral_taxonomy = $hub->species_defs->species_label($species_tree_node->genome_db->name);
+      } else {
+        if ($species_tree_node->taxon_id and exists $taxon_common_names->{$species_tree_node->taxon_id}) {
+          $ancestral_taxonomy = sprintf('%s (%s)', $taxon_common_names->{$species_tree_node->taxon_id}, $species_tree_node->node_name());
+        } else {
+          $ancestral_taxonomy = $species_tree_node->node_name();
+        }
+        my ($c0, $c1) = @{$species_tree_node->children()};
+        my $other_side = scalar(@{$c0->find_leaves_by_field('genome_db_id', $paralogue->{'homologue'}->genome_db_id)}) ? $c1 : $c0;
+        $lca_desc = "Last common ancestor with ";
+        if ($other_side->taxon_id and exists $taxon_common_names->{$other_side->taxon_id}) {
+          $lca_desc .= sprintf('%s (%s)', $taxon_common_names->{$other_side->taxon_id}, $other_side->node_name());
+        } else {
+          $lca_desc .= $other_side->node_name();
+        }
+        $cached_lca_desc{$species_tree_node->node_id} = [$ancestral_taxonomy, $lca_desc];
+      }
       
       push @rows, {
-        'Type'                => ucfirst $paralogue_desc,
-        'Ancestral taxonomy'  => $paralogue_subtype,
+        'Type'                => $glossary_def ? sprintf('<span class="glossary_mouseover">%s<span class="floating_popup">%s</span></span>', ucfirst $paralogue_desc, $glossary_def) : ucfirst $paralogue_desc,
+        'Ancestral taxonomy'  => $lca_desc ? sprintf('<span class="glossary_mouseover">%s<span class="floating_popup">%s</span></span>', $ancestral_taxonomy, $lca_desc) : $ancestral_taxonomy,
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Compare'             => $self->html_format ? qq{<span class="small">$links</span>} : '',
         'Location'            => qq{<a href="$location_link">$paralogue->{'location'}</a>},
@@ -136,16 +179,85 @@ sub content {
   my $html;
   
   if ($alignview && keys %paralogue_list) {
-    $html .= sprintf(
-      '<p><a href="%s">View sequence alignments of all paralogues</a>.</p>', 
-      $hub->url({ action => 'Compara_Paralog', function => 'Alignment' })
-    );
+    $button_set{'view'} = 1;
   }
  
   $html .= $table->render;
  
   return $html;
 }
+
+sub export_options { return {'action' => 'Paralogs'}; }
+
+sub get_export_data {
+## Get data for export
+  my ($self, $flag) = @_;
+  my $hub          = $self->hub;
+  my $object       = $self->object || $hub->core_object('gene');
+
+  if ($flag eq 'sequence') {
+    return $object->get_homologue_alignments;
+  }
+  else {
+    my $cdb = $flag || $hub->param('cdb') || 'compara';
+    my ($homologies) = $object->get_homologies('ENSEMBL_PARALOGUES', 'paralog|gene_split', undef, $cdb);
+    return $homologies;
+  }
+}
+
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my @buttons;
+
+  if ($button_set{'download'}) {
+
+    my $gene    =  $self->object->Obj;
+
+    my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
+    my $name = $dxr ? $dxr->display_id : $gene->stable_id;
+
+    my $params  = {
+                  'type'        => 'DataExport',
+                  'action'      => 'Paralogs',
+                  'data_type'   => 'Gene',
+                  'component'   => 'ComparaParalogs',
+                  'data_action' => $hub->action,
+                  'gene_name'   => $name,
+                };
+
+    ## Add any species settings
+    foreach (grep { /^species_/ } $hub->param) {
+      $params->{$_} = $hub->param($_);
+    }
+
+    push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Download paralogues',
+                    'class'   => 'export',
+                    'modal'   => 1
+                    };
+  }
+
+  if ($button_set{'view'}) {
+
+    my $cdb = $hub->param('cdb') || 'compara';
+
+    my $params = {
+                  'action' => 'Compara_Paralog',
+                  'function' => 'Alignment'.($cdb =~ /pan/ ? '_pan_compara' : ''),
+                  };
+
+    push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'View sequence alignments',
+                    'class'   => 'view',
+                    'modal'   => 0
+    };
+  }
+  return @buttons;
+}
+
 
 1;
 

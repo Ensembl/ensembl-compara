@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,7 +23,10 @@ use strict;
 use RTF::Writer;
 
 use EnsEMBL::Web::Fake;
-use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
+use HTML::Entities        qw(encode_entities);
+
+use EnsEMBL::Draw::Utils::ColourMap;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
@@ -50,38 +53,61 @@ sub buttons {
 
   return unless $options->{'action'};
 
-  my $params  = {'type' => 'DataExport', 'action' => $options->{'action'}, 'data_type' => $self->hub->type, 'component' => $self->id};
+  my @namespace = split('::', ref($self));
+  my $params  = {'type' => 'DataExport', 'action' => $options->{'action'}, 'data_type' => $self->hub->type, 'component' => $namespace[-1]};
   foreach (@{$options->{'params'} || []}) {
     $params->{$_} = $hub->param($_);
   }
 
-  return {
-    'url'     => $hub->url($params),
-    'caption' => $options->{'caption'} || 'Download sequence',
-    'class'   => 'export',
-    'modal'   => 1
-  };
+  
+  if ($options->{'action'} =~ /Align/ && ($hub->param('need_target_slice_table') || !$hub->param('align'))) {
+    return {
+      'url'       => undef, 
+      'caption'   => $options->{'caption'} || 'Download sequence',
+      'class'     => 'export',
+      'disabled'  => 1,
+    };
+  }
+  else {
+    return {
+      'url'     => $hub->url($params),
+      'caption' => $options->{'caption'} || 'Download sequence',
+      'class'   => 'export',
+      'modal'   => 1
+    };
+  }
 }
 
 sub _init {
   my ($self, $subslice_length) = @_;
   $self->cacheable(1);
   $self->ajaxable(1);
+
+  my $type  = $self->hub->param('data_type') || $self->hub->type;
+  my $vc    = $self->view_config($type);
   
   if ($subslice_length) {
     my $hub = $self->hub;
-    $self->{'subslice_length'} = $hub->param('force') || $subslice_length * ($hub->param('display_width') || 60);
+    $self->{'subslice_length'} = $hub->param('force') || $subslice_length * ($hub->param('display_width') || $vc->get('display_width'));
   }
 }
 
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
-  my ($self, $slices, $config) = @_;
+  my ($self, $slices, $config,$adorn) = @_;
   my $hub      = $self->hub;
   my $sequence = [];
   my @markup;
-  
-  $self->set_variation_filter($config) if $config->{'snp_display'};
+ 
+  if($config->{'snp_display'} ne 'off') {
+    if($adorn eq 'none') {
+      push @{$config->{'loading'}||=[]},'variations';
+    } else {
+      push @{$config->{'loaded'}||=[]},'variations';
+    }
+  }
+ 
+  $self->set_variation_filter($config) if $config->{'snp_display'} ne 'off';
   
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
   
@@ -97,8 +123,10 @@ sub get_sequence_data {
     
     $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
     $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
-    $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'};
-    $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
+    if($adorn ne 'none') {
+      $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'} ne 'off';
+    }
+    $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'} ne 'off';
     $self->set_codons($config, $sl, $mk)                if $config->{'codons_display'};
     
     push @markup, $mk;
@@ -195,14 +223,7 @@ sub set_variations {
   my $focus  = $name eq $config->{'species'} ? $config->{'focus_variant'} : undef;
   my $snps   = [];
   my $u_snps = {};
-  my ($adaptor, $include_failed);
-  
-  if ($config->{'failed_variant'}) {
-    $adaptor        = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
-    $include_failed = $adaptor->db->include_failed_variations;
-    
-    $adaptor->db->include_failed_variations(1);
-  }
+  my $adaptor;
   
   if ($focus_snp_only) {
     push @$snps, $focus_snp_only;
@@ -210,9 +231,12 @@ sub set_variations {
     eval {
       # NOTE: currently we can't filter by both population and consequence type, since the API doesn't support it.
       # This isn't a problem, however, since filtering by population is disabled for now anyway.
-      $snps = $config->{'population'} ? 
-        $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) :
-        $slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1);
+      if ($config->{'population'}) {
+         $snps = $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'});
+      } else {
+        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},  @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)});
+        $snps = \@snps_list;
+      }
     };
   }
   
@@ -229,7 +253,7 @@ sub set_variations {
         map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
       };
     }
-    
+
     $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
   }
   
@@ -241,9 +265,7 @@ sub set_variations {
   foreach (@ordered_snps) {
     my $dbID   = $_->dbID;
     my $failed = $_->variation ? $_->variation->is_failed : 0;
-    
-    next if $failed && $dbID != $focus;
-    
+
     my $variation_name = $_->variation_name;
     my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
     my $start          = $_->start;
@@ -255,14 +277,15 @@ sub set_variations {
     my $ambigcode;
     
     if ($config->{'variation_sequence'}) {
-      my $url = $hub->url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
+      my $url = $hub->url({ species => $name, r => undef, vf => $dbID, v => undef });
       
       $ambigcode = $var_class =~ /in-?del|insertion|deletion/ ? '*' : $_->ambig_code;
       $ambigcode = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>} if $ambigcode;
     }
     
     # Use the variation from the underlying slice if we have it.
-    my $snp = scalar keys %$u_snps ? $u_snps->{$variation_name} : $_;
+    my $snp = $u_snps->{$variation_name} if scalar keys %$u_snps;
+    $snp ||= $_; 
     
     # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
     my $seq_region_start = $snp->seq_region_start;
@@ -346,19 +369,21 @@ sub set_variations {
         species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
         type        => 'ZMenu',
         action      => 'TextSequence',
-        factorytype => 'Location'
+        factorytype => 'Location',
+        v => undef,
       };
-      
-      push @{$markup->{'variations'}{$_}{'href'}{'v'}},  $variation_name;
-      push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+
+      if($dbID) {
+        push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+      } else {
+        push @{$markup->{'variations'}{$_}{'href'}{'v'}},  $variation_name;
+      }
       
       $sequence->[$_] = $ambigcode if $config->{'variation_sequence'} && $ambigcode;
     }
     
     $config->{'focus_position'} = [ $s..$e ] if $dbID eq $config->{'focus_variant'};
   }
-  
-  $adaptor->db->include_failed_variations($include_failed) if $adaptor && defined $include_failed;
 }
 
 sub set_exons {
@@ -490,6 +515,7 @@ sub markup_exons {
     exon1   => 'e1',
     exon2   => 'e2',
     eu      => 'eu',
+    intron  => 'ei',
     other   => 'eo',
     gene    => 'eg',
     compara => 'e2',
@@ -558,12 +584,15 @@ sub markup_variation {
       $variation = $data->{'variations'}{$_};
       
       $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
+      $seq->[$_]{'new_letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $variation->{'alleles'} if $config->{'title_display'};
       $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
       $seq->[$_]{'class'} .= 'var '  if $variation->{'focus'};
       $seq->[$_]{'href'}   = $hub->url($variation->{'href'}) if $variation->{'href'};
-      $seq->[$_]{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
+      my $new_post  = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
+      $seq->[$_]{'new_post'} = $new_post if $new_post ne $seq->[$_]{'post'};
+      $seq->[$_]{'post'} = $new_post;
       
       $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
     }
@@ -627,6 +656,24 @@ sub markup_conservation {
   }
   
   $config->{'key'}{'conservation'} = 1 if $conserved;
+}
+
+sub adseq_eq {
+  my ($a,$b) = @_;
+
+  return 1 if !defined $a and !defined $b;
+  return 0 if !defined $a or !defined $b;
+  foreach my $k (keys %$a) { return 0 unless exists $b->{$k}; }
+  foreach my $k (keys %$b) { return 0 unless exists $a->{$k}; }
+  foreach my $k (keys %$a) {
+    return 0 unless @{$a->{$k}} == @{$b->{$k}};
+    foreach my $i (0..$#{$a->{$k}}) {
+      return 0 if defined $a->{$k}[$i] and !defined $b->{$k}[$i];
+      return 0 if defined $b->{$k}[$i] and !defined $a->{$k}[$i];
+      return 0 unless $a->{$k}[$i] == $b->{$k}[$i];
+    }
+  }
+  return 1;
 }
 
 sub markup_line_numbers {
@@ -773,18 +820,21 @@ sub markup_line_numbers {
 }
 
 sub build_sequence {
-  my ($self, $sequence, $config) = @_;
+  my ($self, $sequence, $config, $exclude_key) = @_;
   my $line_numbers   = $config->{'line_numbers'};
   my %class_to_style = %{$self->class_to_style}; # Firefox doesn't copy/paste anything but inline styles, so convert classes to styles
   my $single_line    = scalar @{$sequence->[0]||[]} <= $config->{'display_width'}; # Only one line of sequence to display
   my $s              = 0;
   my ($html, @output);
+
+  my $adorn = $self->hub->param('adorn') || 'none';
  
   my $adid = 0;
   my $adoff = 0;
   my %addata;
   my %adlookup;
   my %adlookid;
+  my %flourishes;
 
   foreach my $lines (@$sequence) {
     my %current  = ( tag => 'span', class => '', title => '', href => '' );
@@ -800,6 +850,7 @@ sub build_sequence {
       $current{'title'} = $seq->{'title'}  ? qq(title="$seq->{'title'}") : '';
       $current{'href'}  = $seq->{'href'}   ? qq(href="$seq->{'href'}")   : '';;
       $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"'   : 'span';
+      $current{'letter'} = $seq->{'new_letter'};
       
       if ($seq->{'class'}) {
         $current{'class'} = $seq->{'class'};
@@ -829,7 +880,7 @@ sub build_sequence {
         $style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
       }
     
-      foreach my $k (qw(style title href tag)) {
+      foreach my $k (qw(style title href tag letter)) {
         my $v = $current{$k};
         $v = $style if $k eq 'style';
         $v = $seq->{'tag'} if $k eq 'tag';
@@ -877,6 +928,10 @@ sub build_sequence {
         }
         
         push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post, adid => $adid };
+        
+        if($post) {
+          ($flourishes{'post'}||={})->{$adid} = $self->jsonify({ v => $post });
+        }
         $adid++;
         
         $new_line{$_} = $current{$_} for keys %current;
@@ -914,10 +969,126 @@ sub build_sequence {
     $adref{$k} = [ map { s/^\w+="(.*)"$/$1/s; $_; } @{$adref{$k}} ];
   }
 
-  my $adornment = $self->jsonify({
-    seq => \%adseq,
+  # RLE
+  foreach my $a (keys %adseq) {
+    foreach my $k (keys %{$adseq{$a}}) {
+      my @rle;
+      my $lastval;
+      foreach my $v (@{$adseq{$a}->{$k}}) {
+        $v = -1 if !defined $v;
+        if(@rle and $v == $lastval) {
+          if($rle[-1] < 0) { $rle[-1]--; } else { push @rle,-1; }
+        } elsif($v == -1) {
+          push @rle,undef;
+        } else {
+          push @rle,$v;
+        }
+        $lastval = $v;
+      }
+      pop @rle if @rle and $rle[-1] and $rle[-1] < 0;
+      if(@rle > 1 and !defined $rle[0] and defined $rle[1] and $rle[1]<0) {
+        shift @rle;
+        $rle[0]--;
+      }
+      if(@rle == 1 and !defined $rle[0]) {
+        delete $adseq{$a}->{$k};
+      } else {
+        $adseq{$a}->{$k} = \@rle;
+      }
+    }
+    delete $adseq{$a} unless keys %{$adseq{$a}};
+  }
+
+  # PREFIX
+  foreach my $k (keys %adref) {
+    # ... sort
+    my @sorted;
+    foreach my $i (0..$#{$adref{$k}}) {
+      push @sorted,[$i,$adref{$k}->[$i]];
+    }
+    @sorted = sort { $a->[1] cmp $b->[1] } @sorted;
+    my %pmap; 
+    foreach my $i (0..$#sorted) {
+      $pmap{$sorted[$i]->[0]} = $i;
+    }
+    @sorted = map { $_->[1] } @sorted;
+    # ... calculate prefixes
+    my @prefixes;
+    my $prev = "";
+    my $prevlen = 0;
+    foreach my $s (@sorted) {
+      if($prev) {
+        my $match = "";
+        while(substr($s,0,length($match)) eq $match and 
+              length($match) < length($prev)) {
+          $match .= substr($prev,length($match),1);
+        }
+        my $len = length($match)-1;
+        push @prefixes,[$len-$prevlen,substr($s,length($match)-1)];
+        $prevlen = $len;
+      } else {
+        push @prefixes,[-$prevlen,$s];
+        $prevlen = 0;
+      }
+      $prev = $s; 
+    } 
+    # ... fix references
+    foreach my $a (keys %adseq) {
+      next unless $adseq{$a}->{$k};
+      my @seq;
+      foreach my $v (@{$adseq{$a}->{$k}}) {
+        if(defined $v) {
+          if($v>0) {
+            push @seq,$pmap{$v};
+          } else {
+            push @seq,$v;
+          }
+        } else {
+          push @seq,undef;
+        }
+      }
+      $adseq{$a}->{$k} = \@seq;
+      $adref{$k} = \@prefixes;
+    }
+  }
+
+  my (@adseq_raw,@adseq);
+  foreach my $k (keys %adseq) { $adseq_raw[$k] = $adseq{$k}; }
+  my $prev;
+  foreach my $i (0..$#adseq_raw) {
+    if($i and adseq_eq($prev,$adseq_raw[$i])) {
+      if(defined $adseq[-1] and !ref($adseq[-1])) { $adseq[-1]--; } else { push @adseq,-1; }
+    } else {
+      $prev = $adseq_raw[$i];
+      push @adseq,$prev;
+    }
+  }
+  
+  my $key = $self->get_key($config,undef,1);
+
+  # Put things not in a type into a 'other' type
+  $key->{'other'} ||= {};
+  foreach my $k (keys %$key) {
+    next if $k eq '_messages';
+    if($key->{$k}{'class'}) {
+      $key->{'other'}{$k} = $key->{$k};
+      delete $key->{$k};
+    }
+  }
+
+  if($adorn eq 'only') {
+    $key->{$_}||={} for @{$config->{'loading'}||[]};
+  }
+  $key->{$_}||={} for @{$config->{'loaded'}||[]};
+
+  my $adornment = {
+    seq => \@adseq,
     ref => \%adref,
-  });
+    flourishes => \%flourishes,
+    legend => $key,
+    loading => $config->{'loading'}||[],
+  };
+  my $adornment_json = encode_entities($self->jsonify($adornment),"<>");
 
   my $length = $output[0] ? scalar @{$output[0]} - 1 : 0;
   
@@ -949,7 +1120,9 @@ sub build_sequence {
       }
      
       $line = "$_->[$x]{'pre'}$line" if $_->[$x]{'pre'};
-      $line .= $_->[$x]{'post'}      if $_->[$x]{'post'};
+      $line .= qq(<span class="ad-post-$adid">);
+      $line .= $_->[$x]{'post'} if $_->[$x]{'post'};
+      $line .= qq(</span>);
       $html .= "$line\n";
       
       $y++;
@@ -973,16 +1146,51 @@ sub build_sequence {
     $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key) if $partial_key;
   }
 
-  $config->{'html_template'} = qq(
-    <div class="adornment">
-      <span class="adornment-data" style="display:none;">
-        $adornment
-      </span>
-      $config->{'html_template'}
-    </div>
-  );
- 
-  return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
+  my $random_id = random_string(8);
+
+  my $key_html = '';
+  unless($exclude_key) {
+    $key_html = qq(<div class="_adornment_key adornment-key"></div>);
+  }
+
+  my $id = $self->id;
+  my $panel_type = qq(<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_$id" />);
+  if($adorn eq 'none') {
+    my $ajax_url = $self->hub->apache_handle->unparsed_uri;
+    my ($path,$params) = split(/\?/,$ajax_url,2);
+    my @params = split(/;/,$params);
+    for(@params) { $_ = 'adorn=only' if /^adorn=/; }
+    $ajax_url = $path.'?'.join(';',@params,'adorn=only');
+    my $ajax_json = encode_entities($self->jsonify({ url => $ajax_url, provisional => $adornment }),"<>");
+    return qq(
+      <div class="js_panel" id="$random_id">
+        $key_html
+        <div class="adornment">
+          <span class="adornment-data" style="display:none;">
+            $ajax_json
+          </span>
+          $config->{'html_template'}
+        </div>
+        $panel_type
+      </div>
+    );
+
+  } elsif($adorn eq 'only') {
+    return qq(<div><span class="adornment-data">$adornment_json</span></div>);
+  } else {
+    return qq(
+      <div class="js_panel" id="$random_id">
+        $key_html
+        <div class="adornment">
+          <span class="adornment-data" style="display:none;">
+            $adornment_json
+          </span>
+          $config->{'html_template'}
+        </div>
+        $panel_type
+      </div>
+    );
+  }
 }
 
 # When displaying a very large sequence we can break it up into smaller sections and render each of them much more quickly
@@ -992,7 +1200,7 @@ sub chunked_content {
   my $i   = 1;
   my $j   = $chunk_length;
   my $end = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
-  my $url = $self->ajax_url('sub_slice', { %$url_params, update_panel => undef });
+  my $url = $self->ajax_url('sub_slice', { %$url_params, update_panel => 1 });
   my $html;
   
   # The display is split into a managable number of sub slices, which will be processed in parallel by requests
@@ -1031,6 +1239,7 @@ sub class_to_style {
       ef   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONFLANK'}{'default'}" } ],
       eo   => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}{'default'}" } ],
       eg   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONGENE'}{'default'}", 'font-weight' => 'bold' } ],
+      ei   => [ $i++, { 'color' => "#$styles->{'SEQ_INTRON'}{'default'}" } ],
       c0   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC0'}{'default'}" } ],
       c1   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC1'}{'default'}" } ],
       cu   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}{'default'}" } ],
@@ -1056,6 +1265,15 @@ sub class_to_style {
   return $self->{'class_to_style'};
 }
 
+my $cm = EnsEMBL::Draw::Utils::ColourMap->new();
+
+sub col_to_hex {
+  my ($col) = @_;
+
+  return undef unless $col;
+  return $cm->hex_by_name($col);
+}
+
 sub content_key {
   my $self   = shift;
   my $config = shift || {};
@@ -1077,13 +1295,13 @@ sub content_key {
 }
 
 sub get_key {
-  my ($self, $config, $k) = @_;
+  my ($self, $config, $k,$newkey) = @_;
   my $hub            = $self->hub;
   my $class_to_style = $self->class_to_style;
   my $image_config   = $hub->get_imageconfig('text_seq_legend');
   my $var_styles     = $hub->species_defs->colour('variation');
   my $strain         = $hub->species_defs->translate('strain') || 'strain';
-  
+ 
   my $exon_type;
      $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
      $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
@@ -1110,7 +1328,8 @@ sub get_key {
   );
   
   %key = (%key, %$k) if $k;
-  
+ 
+ 
   foreach my $type (keys %key) {
     if ($key{$type}{'class'}) {
       my $style = $class_to_style->{$key{$type}{'class'}}[1];
@@ -1128,6 +1347,27 @@ sub get_key {
   
   $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
   
+  if($config->{'focus_variant'}) {
+    $image_config->{'legend'}{'focus'} = {
+      class => 'focus',
+      label => 'red',
+      default => 'white',
+      text => 'Focus variant',
+      extra_css => 'text-decoration: underline; font-weight: bold;',
+    };
+  }
+ 
+  foreach my $type (keys %key) {
+    my @each = ($key{$type});
+    @each = values %{$key{$type}} unless($key{$type}->{'class'});
+    foreach my $v (@each) {
+      foreach my $t (qw(default label)) {
+        next unless $v->{$t};
+        $v->{$t} = col_to_hex($v->{$t});
+      }
+    }
+  }
+ 
   foreach my $type (keys %{$config->{'key'}}) {
     if (ref $config->{'key'}{$type} eq 'HASH') {
       $image_config->{'legend'}{$type}{$_} = $key{$type}{$_} for grep $config->{'key'}{$type}{$_}, keys %{$config->{'key'}{$type}};
@@ -1135,132 +1375,25 @@ sub get_key {
       $image_config->{'legend'}{$type} = $key{$type};
     }
   }
-  
-  $image_config->image_width(700);
-  
-  my $key_img = $image_config->{'legend'} ? $self->new_image(EnsEMBL::Web::Fake->new({}), $image_config)->render : '';
-  
+
+  my @messages;
+
   my $key_list;
-     $key_list .= "<li>Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}</li>"                if $config->{'population_filter'};
-     $key_list .= '<li>Variations are filtered by consequence type</li>',                                                                                   if $config->{'consequence_filter'};
-     $key_list .= sprintf '<li style="%s">Focus variant</li>', join ';', map "$_:$class_to_style->{'var'}[1]{$_}", keys %{$class_to_style->{'var'}[1]}      if $config->{'focus_variant'};
-     $key_list .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                              if $config->{'key'}{'conservation'};
-     $key_list .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'    if $config->{'alignment_numbering'};
-     $key_list .= "<li><code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)</li>".
-                  "<li><code>|&nbsp;&nbsp;&nbsp;&nbsp;</code>Confirmed match to reference sequence (genotype or read coverage data available)</li>"         if $config->{'match_display'};
-     $key_list .= '<li><code>~&nbsp;&nbsp;&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                if $config->{'resequencing'};
-     $key_list .= '<li><code>acgt&nbsp;</code>Implicit sequence (no read coverage data available)</li>'.
-                  '<li><code>ACGT&nbsp;</code>Confirmed sequence (genotype or read coverage data available)</li>'                                           if $config->{'resequencing'} && !$config->{'match_display'};
+     push @messages,"Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}"                if $config->{'population_filter'};
+     push @messages,'Variations are filtered by consequence type',                                                                                   if $config->{'consequence_filter'};
+     push @messages,'Conserved regions are where >50&#37; of bases in alignments match'                                                              if $config->{'key'}{'conservation'};
+     push @messages,'For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line'    if $config->{'alignment_numbering'};
+     push @messages,"<code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)",
+                  "<code>|&nbsp;&nbsp;&nbsp;&nbsp;</code>Confirmed match to reference sequence (genotype or read coverage data available)"         if $config->{'match_display'};
+     push @messages,'<code>~&nbsp;&nbsp;&nbsp;&nbsp;</code>No resequencing coverage at this position'                                                if $config->{'resequencing'};
+     '<code>acgt&nbsp;</code>Implicit sequence (no read coverage data available)',
+                  '<code>ACGT&nbsp;</code>Confirmed sequence (genotype or read coverage data available)'                                           if $config->{'resequencing'} && !$config->{'match_display'};
      $key_list  = "<ul>$key_list</ul>" if $key_list;
   
-  return "<h4>Key</h4>$key_img$key_list" if $key_img || $key_list;
-}
+ 
+  $image_config->{'legend'}{'_messages'}= \@messages;
 
-sub export_sequence {
-  my ($self, $sequence, $config, $block_mode) = @_;
-  my @colours        = (undef);
-  my $class_to_style = $self->class_to_style;
-  my $spacer         = $config->{'v_space'} ? ' ' x $config->{'display_width'} : '';
-  my $c              = 1;
-  my $i              = 0;
-  my $j              = 0;
-  my @output;
-  
-  foreach my $class (sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } keys %$class_to_style) {
-    my $rtf_style = {};
-    
-    $rtf_style->{'\cf'      . $c++} = substr $class_to_style->{$class}[1]{'color'}, 1            if $class_to_style->{$class}[1]{'color'};
-    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}[1]{'background-color'}, 1 if $class_to_style->{$class}[1]{'background-color'};
-    $rtf_style->{'\b'}              = 1                                                          if $class_to_style->{$class}[1]{'font-weight'}     eq 'bold';
-    $rtf_style->{'\ul'}             = 1                                                          if $class_to_style->{$class}[1]{'text-decoration'} eq 'underline';
-    
-    $class_to_style->{$class}[1] = $rtf_style;
-    
-    push @colours, [ map hex, unpack 'A2A2A2', $rtf_style->{$_} ] for sort grep /\d/, keys %$rtf_style;
-  }
-  
-  foreach my $lines (@$sequence) {
-    my ($section, $class, $previous_class, $count);
-    
-    $lines->[-1]{'end'} = 1;
-    
-    foreach my $seq (@$lines) {
-      if ($seq->{'class'}) {
-        $class = $seq->{'class'};
-       
-        if ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/ && $class !~ /\s*(e\w)\s*/) {
-          $class .= " $1";
-        }
-      } elsif ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/) {
-        $class = $1;
-      } else {
-        $class = '';
-      }
-      
-      $class = join ' ', sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } split /\s+/, $class;
-      
-      $seq->{'letter'} =~ s/<a.+>(.+)<\/a>/$1/ if $seq->{'url'};
-      
-      if ($count == $config->{'display_width'} || $seq->{'end'} || defined $previous_class && $class ne $previous_class) {
-        my $style = join '', map keys %{$class_to_style->{$_}[1]}, split ' ', $previous_class;
-        
-        $section .= $seq->{'letter'} if $seq->{'end'};
-        
-        if (!scalar @{$output[$i][$j] || []} && $config->{'number'}) {
-          my $num  = shift @{$config->{'line_numbers'}{$i}};
-          my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $num->{'label'});
-          my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'start'});
-          
-          push @{$output[$i][$j]}, [ \'', $config->{'h_space'} . sprintf '%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}" ];
-        }
-        
-        push @{$output[$i][$j]}, [ \$style, $section ];
-        
-        if ($count == $config->{'display_width'}) {
-          $count = 0;
-          $j++;
-        }
-        
-        $section = '';
-      }
-      
-      $section       .= $seq->{'letter'};
-      $previous_class = $class;
-      $count++;
-    }
-    
-    $i++;
-    $j = 0;
-  }
-  
-  my $string;
-  my $file = EnsEMBL::Web::TmpFile::Text->new(extension => 'rtf', prefix => '');
-  my $rtf  = RTF::Writer->new_to_string(\$string);
-  
-  $rtf->prolog(
-    fonts  => [ 'Courier New' ],
-    colors => \@colours,
-  );
-  
-  if ($block_mode) {
-    foreach my $block (@output) {
-      $rtf->paragraph(\'\fs20', $_)      for @$block;
-      $rtf->paragraph(\'\fs20', $spacer) if $spacer;
-    }
-  } else {  
-    for my $i (0..$#{$output[0]}) {
-      $rtf->paragraph(\'\fs20', $_->[$i]) for @output;
-      $rtf->paragraph(\'\fs20', $spacer)  if $spacer;
-    }
-  }
-  
-  $rtf->close;
-  
-  print $file $string;
-  
-  $file->save;
-  
-  return $file->content;
+  return $image_config->{'legend'};
 }
 
 1;

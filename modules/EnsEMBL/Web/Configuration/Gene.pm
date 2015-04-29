@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ sub populate_tree {
     { 'availability' => 'gene' }
   );
 
-  $self->create_node('Splice', 'Splice variants ([[counts::transcripts]])',
+  $self->create_node('Splice', 'Splice variants',
     [qw( image EnsEMBL::Web::Component::Gene::SpliceImage )],
     { 'availability' => 'gene has_transcripts', 'concise' => 'Splice variants' }
   );
@@ -61,6 +61,11 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
   );
 
+  $self->create_node('Alleles', 'Gene alleles',
+                     [qw(alleles EnsEMBL::Web::Component::Gene::Alleles)],
+                     { 'availability' => 'core has_alt_alleles', 'concise' => 'Gene Alleles' }
+                   );
+
   my $seq_menu = $self->create_node('Sequence', 'Sequence',
     [qw( sequence EnsEMBL::Web::Component::Gene::GeneSeq )],
     { 'availability' => 'gene', 'concise' => 'Marked-up sequence' }
@@ -74,7 +79,9 @@ sub populate_tree {
   ));
 
   $self->create_node('Matches', 'External references',
-    [qw( matches EnsEMBL::Web::Component::Gene::SimilarityMatches )],
+    [qw( 
+      matches EnsEMBL::Web::Component::Gene::SimilarityMatches 
+    )],
     { 'availability' => 'gene has_similarity_matches', 'concise' => 'External references' }
   );
 
@@ -86,13 +93,6 @@ sub populate_tree {
     { 'availability' => 'regulation not_patch not_rnaseq' }
   );
 
-  $self->create_node('Expression', 'Expression',
-    [qw(
-      rnaseq_table  EnsEMBL::Web::Component::Gene::ExpressionTable
-    )],
-    { 'availability' => 'gene database:rnaseq not_rnaseq' }
-  );
-  
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
     [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
     {'availability' => 'gene database:compara core'}
@@ -106,29 +106,17 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_alignments' }
   ));
   
-  my $tree_node = $self->create_node('Compara_Tree', 'Gene tree (image)',
+  $compara_menu->append($self->create_node('Compara_Tree', 'Gene tree',
     [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
     { 'availability' => 'gene database:compara core has_gene_tree' }
-  );
-  
-  $tree_node->append($self->create_subnode('Compara_Tree/Text', 'Gene tree (text)',
-    [qw( treetext EnsEMBL::Web::Component::Gene::ComparaTree/text )],
-    { 'availability' => 'gene database:compara core has_gene_tree' }
   ));
   
-  $tree_node->append($self->create_subnode('Compara_Tree/Align', 'Gene tree (alignment)',
-    [qw( treealign EnsEMBL::Web::Component::Gene::ComparaTree/align )],
-    { 'availability' => 'gene database:compara core has_gene_tree' }
-  ));
-  
-  $tree_node->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
+  $compara_menu->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
       [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
       { 'availability' => 'gene database:compara core has_species_tree' }
     ));
-  
-  $compara_menu->append($tree_node);
     
-  my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues ([[counts::orthologs]])',
+  my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues',
     [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
     { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
   );
@@ -140,7 +128,7 @@ sub populate_tree {
   
   $compara_menu->append($ol_node);
   
-  my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues ([[counts::paralogs]])',
+  my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues',
     [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
     { 'availability' => 'gene database:compara core has_paralogs', 'concise' => 'Paralogues' }
   );
@@ -152,9 +140,9 @@ sub populate_tree {
   
   $compara_menu->append($pl_node);
   
-  my $fam_node = $self->create_node('Family', 'Protein families ([[counts::families]])',
+  my $fam_node = $self->create_node('Family', 'Ensembl protein families',
     [qw( family EnsEMBL::Web::Component::Gene::Family )],
-    { 'availability' => 'family', 'concise' => 'Protein families' }
+    { 'availability' => 'family', 'concise' => 'Ensembl protein families' }
   );
   
   $fam_node->append($self->create_subnode('Family/Genes', uc($species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME')) . ' genes in this family',
@@ -175,7 +163,7 @@ sub populate_tree {
       variation EnsEMBL::Web::Component::Gene::GenePhenotypeVariation
       orthologue EnsEMBL::Web::Component::Gene::GenePhenotypeOrthologue
     )],
-    { 'availability' => 1 }#'phenotype' }
+    { 'availability' => 1 } #set as true since getting the orthologs is really slow
   );
 	
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
@@ -203,6 +191,12 @@ sub populate_tree {
     [qw( external EnsEMBL::Web::Component::Gene::ExternalData )],
     { 'availability' => 'gene' }
   );
+
+  $external->append($self->create_subnode('ExpressionAtlas', 'Gene expression atlas',
+    [qw( atlas EnsEMBL::Web::Component::Gene::ExpressionAtlas )],
+    { 'availability'  => 'gene' }
+  ));
+
   
   if ($hub->users_available) {
     $external->append($self->create_node('UserAnnotation', 'Personal annotation',

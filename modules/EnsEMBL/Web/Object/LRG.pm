@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ use strict;
 
 use Time::HiRes qw(time);
 use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::Homology;
 use Exporter;
 
 use EnsEMBL::Web::Cache;
@@ -756,24 +757,11 @@ sub get_homology_matches {
     my $adaptor_call  = $self->param('gene_adaptor') || 'get_GeneAdaptor';
     my %homology_list;
 
-    # Convert descriptions into more readable form
-    my %desc_mapping = (
-      'ortholog_one2one'          => '1-to-1',
-      'apparent_ortholog_one2one' => '1-to-1 (apparent)', 
-      'ortholog_one2many'         => '1-to-many',
-      'between_species_paralog'   => 'paralogue (between species)',
-      'ortholog_many2many'        => 'many-to-many',
-      'within_species_paralog'    => 'paralogue (within species)',
-      'other_paralog'             => 'other paralogue (within species)',
-      'putative_gene_split'       => 'putative gene split',
-      'contiguous_gene_split'     => 'contiguous gene split'
-    );
-    
     foreach my $display_spp (keys %$homologues){
       my $order = 0;
       
       foreach my $homology (@{$homologues->{$display_spp}}){ 
-        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id) = @$homology;
+        my ($homologue, $homology_desc, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id, $homology_id) = @$homology;
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
         
@@ -781,15 +769,15 @@ sub get_homology_matches {
         next if $homology_list{$display_spp}{$homologue->stable_id} && $homology_desc eq 'other_paralog';
  
         $homology_list{$display_spp}{$homologue->stable_id} = {
-          homology_desc       => $desc_mapping{$homology_desc} || 'no description',
+          homology_desc       => $Bio::EnsEMBL::Compara::Homology::PLAIN_TEXT_WEB_DESCRIPTIONS{$homology_desc} || 'no description',
           description         => $homologue->description       || 'No description',
           display_id          => $homologue->display_label     || 'Novel Ensembl prediction',
-          homology_subtype    => $homology_subtype,
           spp                 => $display_spp,
           query_perc_id       => $query_perc_id,
           target_perc_id      => $target_perc_id,
           homology_dnds_ratio => $dnds_ratio,
           gene_tree_node_id   => $gene_tree_node_id,
+          dbID                => $homology_id,
           order               => $order,
           location            => sprintf('%s:%s-%s:%s', map $homologue->$_, qw(chr_name chr_start chr_end chr_strand))
         };
@@ -821,7 +809,7 @@ sub fetch_homology_species_hash {
 
   $self->timer_push( 'starting to fetch' , 6 );
 
-  my $query_member = $database->get_GeneMemberAdaptor->fetch_by_source_stable_id("ENSEMBLGENE",$geneid);
+  my $query_member = $database->get_GeneMemberAdaptor->fetch_by_stable_id($geneid);
 
   return {} unless defined $query_member ;
 
@@ -871,7 +859,7 @@ sub fetch_homology_species_hash {
 
     # FIXME: ucfirst $genome_db_name is a hack to get species names right for the links in the orthologue/paralogue tables.
     # There should be a way of retrieving this name correctly instead.
-    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->taxonomy_level, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}];
+    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID ];
   }
 
   $self->timer_push('homologies hacked', 6);
@@ -916,7 +904,7 @@ sub get_compara_Member{
     my $genemember_adaptor = $compara_dba->get_adaptor('GeneMember') || &$error( "Cannot COMPARA->get_adaptor('GeneMember')" );
     # Fetch the object
     my $id = $self->stable_id;
-    my $member = $genemember_adaptor->fetch_by_source_stable_id('ENSEMBLGENE',$id) || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
+    my $member = $genemember_adaptor->fetch_by_stable_id($id) || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
     # Update the cache
     $self->{$cachekey} = $member;
   }

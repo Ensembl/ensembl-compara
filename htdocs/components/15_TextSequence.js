@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,19 +35,15 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
    
     $('.adornment',this.el).each(function() {
       var $this = $(this);
-      if($this.hasClass('adornment-done') ||
-         $this.hasClass('adornment-running')) {
-        return;
-      }
-      $this.adorn().then(function(nework) {
-        if(nework) {
-          panel.initPopups($this);
-          panel.updateKey($this);
-          if(!$('.ajax_pending',this.el).length &&
-             !$('.ajax_load',this.el).length &&
-             !$('.sequence_key img',this.el).length) {
-            panel.requestKey($this);
-          }
+      $this.adorn(function(outer) {
+        var $outer = $(outer);
+        panel.initPopups($outer);
+        panel.updateKey($outer);
+        panel.fixKey($outer);
+        if(!$('.ajax_pending',this.el).length &&
+            !$('.ajax_load',this.el).length &&
+            !$('.sequence_key img',this.el).length) {
+//            panel.requestKey($this);
         }
       });
     });
@@ -85,6 +81,10 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     $key.data('url',url);
   },
 
+  fixKey: function(el) {
+    el.parents('.js_panel').find('._adornment_key').first().keepOnPage({marginTop: 10, spaced: true}).keepOnPage('trigger');
+  },
+
   requestKey: function(el) {
     var $key = el.parents('.js_panel').find('.sequence_key');
     if(!$key.length) { return; }
@@ -105,6 +105,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   },
   
   makeZMenu: function (e, el) {
-    Ensembl.EventManager.trigger('makeZMenu', el.data('menuId'), { event: e, area: { a: el } });
+    Ensembl.EventManager.trigger('makeZMenu', el.data('menuId'), { event: e, area: { link: el } });
   }
 });

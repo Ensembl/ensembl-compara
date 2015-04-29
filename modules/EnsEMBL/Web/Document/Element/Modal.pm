@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,11 +49,11 @@ sub content {
   
   foreach my $entry (@{$self->entries}) {
     my $id    = lc $entry->{'id'};
-    $panels  .= qq{<div id="modal_$id" class="modal_content js_panel $entry->{'class'}" style="display:none"></div>};
+    $panels  .= qq(<div id="modal_$id" class="modal_content js_panel $entry->{'class'}" style="display:none"></div>);
     $content .= sprintf '<li><a class="modal_%s" href="%s">%s</a></li>', $id, $entry->{'url'} || '#', encode_entities($self->strip_HTML($entry->{'caption'}));
   }
   
-  $content = qq{
+  $content = qq(
   <div id="modal_bg"></div>
   <div id="modal_panel" class="js_panel">
     <input type="hidden" class="panel_type" value="ModalContainer" />
@@ -69,7 +69,7 @@ sub content {
     <div class="modal_overlay"><img class="overlay_close" title="Cancel" alt="close" src="${img_url}close.png" /><div class="overlay_content"></div></div>
     <div class="modal_overlay_bg"></div>
   </div>
-  };
+  );
   
   return $content;
 }

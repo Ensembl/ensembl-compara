@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,20 +27,7 @@ use base qw(EnsEMBL::Web::Component);
 
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
-use List::MoreUtils qw(uniq);
-
-use EnsEMBL::Draw::DrawableContainer;
-use EnsEMBL::Draw::VDrawableContainer;
-
-use EnsEMBL::Web::Document::Image;
-use EnsEMBL::Web::Document::Table;
-use EnsEMBL::Web::Document::TwoCol;
-use EnsEMBL::Web::Constants;
-use EnsEMBL::Web::DOM;
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::Form::ModalForm;
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::TmpFile::Text;
+use List::MoreUtils qw(uniq first_index);
 
 ######### USED ON VARIOUS PAGES ###########
 
@@ -67,7 +54,7 @@ sub colour_biotype {
   my $colours       = $self->hub->species_defs->colour('gene');
   my $key = $transcript->biotype;
   $key = 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
-  my $colour = ($colours->{$key}||{})->{'default'};
+  my $colour = ($colours->{lc($key)}||{})->{'default'};
   my $hex = $self->hub->colourmap->hex_by_name($colour);
   return $self->coltab($html,$hex,$title);
 }
@@ -76,33 +63,30 @@ sub transcript_table {
   my $self        = shift;
   my $hub         = $self->hub;
   my $object      = $self->object;
+  my $avail       = $object->availability;
   my $species     = $hub->species;
-  my $table       = $self->new_twocol; 
-  my $html        = '';
+  my $table       = $self->new_twocol;
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
      $description = '' if $description eq 'No description';
+  my $show        = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
+  my $button      = sprintf('<a rel="transcripts_table" class="button toggle no_img _slide_toggle set_cookie %s" href="#" title="Click to toggle the transcript table">
+    <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
+    </a>',
+    $show ? 'open' : 'closed'
+  );
+  
 
   if ($description) {
-    my ($edb, $acc);
-    
-    if ($object->get_db eq 'vega') {
-      $edb = 'Vega';
-      $acc = $object->Obj->stable_id;
-      $description .= sprintf ' <span class="small">%s</span>', $hub->get_ExtURL_link("Source: $edb", $edb . '_' . lc $page_type, $acc);
-    } else {
-      $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
-      $description =~ s/\[\w+:([-\w\/\_]+)\;\w+:([\w\.]+)\]//g;
-      ($edb, $acc) = ($1, $2);
 
-      my $l1   =  $hub->get_ExtURL($edb, $acc);
-      $l1      =~ s/\&amp\;/\&/g;
-      my $t1   = "Source: $edb $acc";
-      my $link = $l1 ? qq(<a href="$l1">$t1</a>) : $t1;
+    my $link = $self->get_gene_display_link('[LINK]'); # [LINK] will get replaced by the external id later on
 
-      $description .= qq( <span class="small">@{[ $link ]}</span>) if $acc && $acc ne 'content';
+    if ($link) {
+      my $link_id   = $link->{'id'};
+      $link         = $link->{'link'} =~ s/\[LINK\]/$link_id/r;
+      $description  =~ s/$link_id/$link/;
     }
-
+    
     $table->add_row('Description', $description);
   }
 
@@ -110,22 +94,16 @@ sub transcript_table {
 
   my $site_type         = $hub->species_defs->ENSEMBL_SITETYPE; 
   my @SYNONYM_PATTERNS  = qw(%HGNC% %ZFIN%);
-  my (@syn_matches, $syns_html);
+  my (@syn_matches, $syns_html, $counts_summary);
   push @syn_matches,@{$object->get_database_matches($_)} for @SYNONYM_PATTERNS;
 
   my $gene = $page_type eq 'gene' ? $object->Obj : $object->gene;
   foreach (@{$object->get_similarity_hash(0, $gene)}) {
     next unless $_->{'type'} eq 'PRIMARY_DB_SYNONYM';
-    my $id           = $_->display_id; 
+    my $id           = $_->display_id;
     my $synonym     = $self->get_synonyms($id, @syn_matches);
-    my $url = $hub->url({
-      type   => 'Location',
-      action => 'Genome',
-      r      => $location, 
-      id     => $id,
-      ftype  => 'Gene',
-    });
-    $syns_html .= qq{<p>$synonym [<span class="small"><a href="$url">View all $site_type genes linked to this name</a>.</span>]</p>};
+    next unless $synonym;
+    $syns_html .= "<p>$synonym</p>";
   }
 
   $table->add_row('Synonyms', $syns_html) if $syns_html;
@@ -146,7 +124,7 @@ sub transcript_table {
     $self->thousandify($seq_region_end),
     $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
   );
-  
+ 
   # alternative (Vega) coordinates
   if ($object->get_db eq 'vega') {
     my $alt_assemblies  = $hub->species_defs->ALTERNATIVE_ASSEMBLIES || [];
@@ -207,12 +185,6 @@ sub transcript_table {
     }
   }
 
-  $table->add_row('Location', $location_html);
-
-  my $insdc_accession;
-  $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
-  $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
-
   my $gene = $object->gene;
 
   #text for tooltips
@@ -220,6 +192,9 @@ sub transcript_table {
   my $trans_5_3_desc = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
   my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
   my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
+  my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my $gene_html    = '';  
+  my $transc_table;
 
   if ($gene) {
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
@@ -232,14 +207,19 @@ sub transcript_table {
 
     my $trans_attribs = {};
     my $trans_gencode = {};
+    my @appris_codes  = qw(appris_pi1 appris_pi2 appris_pi3 appris_pi4 appris_pi5 appris_alt1 appris_alt2);
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic)) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL), @appris_codes) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
-        if($attrib_type eq 'gencode_basic') {
-            if ($attrib && $attrib->value) {
-              $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
-            }
+        next unless $attrib;
+        if($attrib_type eq 'gencode_basic' && $attrib->value) {
+          $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
+        } elsif ($attrib_type =~ /appris/  && $attrib->value) {
+          ## There should only be one APPRIS code per transcript
+          (my $code = $attrib->code) =~ s/appris_//;
+          $trans_attribs->{$trans->stable_id}{'appris'} = [$code, $attrib->name]; 
+          last;
         } else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
         }
@@ -253,9 +233,7 @@ sub transcript_table {
     if ($count == 1) { 
       $plural =~ s/s$//;
       $splices =~ s/s$//;
-    }
-    
-    my $gene_html = "This gene has $count $plural ($splices)";
+    }   
     
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
@@ -264,16 +242,28 @@ sub transcript_table {
         action => 'Summary',
         g      => $gene_id
       });
-      $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a><br /><br />$gene_html};
+      $gene_html .= sprintf('<p>This transcript is a product of gene <a href="%s">%s</a> %s',
+        $gene_url,
+        $gene_id,
+        $button
+      );
     }
-    
-    my $show    = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
+   
+    ## Link to other haplotype genes
+    my $alt_link = $object->get_alt_allele_link;
+    if ($alt_link) {
+      if ($page_type eq 'gene') {
+        $location_html .= "<p>$alt_link</p>";
+      }
+    }   
+
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
        { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
-       { key => 'bp_length',  sort => 'numeric', title => 'Length'   },
-       { key => 'protein',    sort => 'html',    title => 'Protein'    },
-       { key => 'biotype',    sort => 'html',    title => 'Biotype'       },
+       { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Length in base pairs'},
+       { key => 'protein',    sort => 'html',    label => 'Protein', title => 'Protein length in amino acids' },
+       { key => 'translation',sort => 'html',    title => 'Translation ID', 'hidden' => 1 },
+       { key => 'biotype',    sort => 'html',    title => 'Biotype', align => 'left' },
     );
 
     push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo_sapiens|Mus_musculus/;
@@ -281,7 +271,7 @@ sub transcript_table {
     my @rows;
    
     my %extra_links = (
-      uniprot => { match => "^UniProt", name => "UniProt", order => 0, hidden => 1 },
+      uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
       refseq => { match => "^RefSeq", name => "RefSeq", order => 1 },
     );
     my %any_extras;
@@ -289,27 +279,21 @@ sub transcript_table {
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
       my $tsi               = $_->stable_id;
-      my $protein           = 'No protein product';
+      my $protein           = '';
+      my $translation_id    = '';
+      my $protein_url       = '';
       my $protein_length    = '-';
       my $ccds              = '-';
       my %extras;
       my $cds_tag           = '-';
       my $gencode_set       = '-';
       my $url               = $hub->url({ %url_params, t => $tsi });
-      my @flags;
+      my (@flags, @evidence);
       
-      if ($_->translation) {
-        $protein = sprintf(
-          '(<a href="%s">%s</a>)',
-          $hub->url({
-            type   => 'Transcript',
-            action => 'ProteinSummary',
-            t      => $tsi
-          }),
-          'view'
-        );
-        
-        $protein_length = $_->translation->length;
+      if (my $translation = $_->translation) {
+        $protein_url    = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $tsi });
+        $translation_id = $translation->stable_id;
+        $protein_length = $translation->length;
       }
 
       my $dblinks = $_->get_all_DBLinks;
@@ -343,6 +327,10 @@ sub transcript_table {
         elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
          push @flags,qq(<span class="glossary_mouseover">CDS 3' incomplete<span class="floating_popup">$trans_3_desc</span></span>);
         }
+        if ($trans_attribs->{$tsi}{'TSL'}) {
+          my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
+          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s</span></span>), $tsl, $glossary{"TSL$tsl"};
+        }
       }
 
       if ($trans_gencode->{$tsi}) {
@@ -350,26 +338,45 @@ sub transcript_table {
           push @flags,qq(<span class="glossary_mouseover">GENCODE basic<span class="floating_popup">$gencode_desc</span></span>);
         }
       }
+      if ($trans_attribs->{$tsi}{'appris'}) {
+        my ($code, $text) = @{$trans_attribs->{$tsi}{'appris'}};
+        my $short_code = $code ? ' '.uc($code) : '';
+        my $appris_popup  = sprintf('<span class="glossary_mouseover">APPRIS%s<span class="floating_popup">%s', $short_code, $text);
+
+        my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '521', '__clear' => 1});
+        $appris_popup .= sprintf('<br/><br/><a href="%s" class="popup">APPRIS</a> is a system to annotate alternatively spliced transcripts based on a range of computational methods.</span></span>', $glossary_url);
+
+        push @flags, $appris_popup;
+      }
+
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
+      if ($biotype_text =~ /rna/i) {
+        $biotype_text =~ s/rna/RNA/;
+      }
+      else {
+        $biotype_text = ucfirst($biotype_text);
+      } 
       my $merged = '';
       $merged .= " Merged Ensembl/Havana gene." if $_->analysis->logic_name =~ /ensembl_havana/;
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
-        name       => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
-        transcript => sprintf('<a href="%s">%s</a>', $url, $tsi),
-        bp_length  => $transcript_length,
-        protein    => (($protein_length ne '-')?"$protein_length aa ":' ').$protein,
-        biotype    => $self->colour_biotype($self->glossary_mouseover(ucfirst $biotype_text,undef,$merged),$_),
-        ccds       => $ccds,
+        name        => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
+        transcript  => sprintf('<a href="%s">%s</a>', $url, $tsi),
+        bp_length   => $transcript_length,
+        protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
+        translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_id : '-',
+        biotype     => $self->colour_biotype($self->glossary_mouseover($biotype_text,undef,$merged),$_),
+        ccds        => $ccds,
         %extras,
         has_ccds   => $ccds eq '-' ? 0 : 1,
         cds_tag    => $cds_tag,
         gencode_set=> $gencode_set,
         options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
-        flags => join('',map { "<span class='ts_flag'>$_</span>" } @flags),
+        flags => join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags),
+        evidence => join('', @evidence),
       };
       
-      $biotype_text = '.' if $biotype_text eq 'protein coding';
+      $biotype_text = '.' if $biotype_text eq 'Protein coding';
       $biotype_rows{$biotype_text} = [] unless exists $biotype_rows{$biotype_text};
       push @{$biotype_rows{$biotype_text}}, $row;
     }
@@ -389,67 +396,252 @@ sub transcript_table {
 
     # Add rows to transcript table
     push @rows, @{$biotype_rows{$_}} for sort keys %biotype_rows; 
-    # Add suffixes to lengths (kept numeric till now to aid sorting)
-    for (@rows) { 
-      $_->{'bp_length'} .= ' bp' if $_->{'bp_length'} =~ /\d/;
-    }
 
-    $table->add_row(
-      $page_type eq 'gene' ? 'Transcripts' : 'Gene',
-      $gene_html . sprintf(
-        ' <a rel="transcripts_table" class="button toggle no_img set_cookie %s" href="#" title="Click to toggle the transcript table">
-          <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
-        </a>',
-        $show ? 'open' : 'closed'
-      )
-    );
-
-    my @hidecols;
-    foreach my $id (keys %extra_links) {
-      foreach my $i (0..$#columns) {
-        if($columns[$i]->{'key'} eq $id and $extra_links{$id}->{'hidden'}) {
-          push @hidecols,$i;
-          last;
-        }
-      }
-    }
-
-    my $table_2 = $self->new_table(\@columns, \@rows, {
+    $transc_table = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
       data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
       toggleable        => 1,
       class             => 'fixed_width' . ($show ? '' : ' hide'),
       id                => 'transcripts_table',
-      exportable        => 1,
-      hidden_columns    => \@hidecols,
+      exportable        => 1
     });
+    
+    # since counts form left nav is gone, we are adding it in the description  
+    if($page_type eq 'gene') {
+      my @str_array;
+      my $ortholog_url = $hub->url({
+        type   => 'Gene',
+        action => 'Compara_Ortholog',
+        g      => $gene->stable_id
+      });
+      
+      my $paralog_url = $hub->url({
+        type   => 'Gene',
+        action => 'Compara_Paralog',
+        g      => $gene->stable_id
+      });
+      
+      my $protein_url = $hub->url({
+        type   => 'Gene',
+        action => 'Family',
+        g      => $gene->stable_id
+      });
 
-    $html = $table->render.$table_2->render;
+      my $phenotype_url = $hub->url({
+        type   => 'Gene',
+        action => 'Phenotype',
+        g      => $gene->stable_id
+      });    
 
-  } else {
-    $html = $table->render;
+      my $splice_url = $hub->url({
+        type   => 'Gene',
+        action => 'Splice',
+        g      => $gene->stable_id
+      });        
+      
+      push @str_array, sprintf('%s %s', 
+                          $avail->{has_transcripts}, 
+                          $avail->{has_transcripts} eq "1" ? "transcript (<a href='$splice_url'>splice variant</a>)" : "transcripts (<a href='$splice_url'>splice variants)</a>"
+                      ) if($avail->{has_transcripts});
+      push @str_array, sprintf('%s gene %s', 
+                          $avail->{has_alt_alleles}, 
+                          $avail->{has_alt_alleles} eq "1" ? "allele" : "alleles"
+                      ) if($avail->{has_alt_alleles});
+      push @str_array, sprintf('<a href="%s">%s %s</a>', 
+                          $ortholog_url, 
+                          $avail->{has_orthologs}, 
+                          $avail->{has_orthologs} eq "1" ? "orthologue" : "orthologues"
+                      ) if($avail->{has_orthologs});
+      push @str_array, sprintf('<a href="%s">%s %s</a>',
+                          $paralog_url, 
+                          $avail->{has_paralogs}, 
+                          $avail->{has_paralogs} eq "1" ? "paralogue" : "paralogues"
+                      ) if($avail->{has_paralogs});    
+      push @str_array, sprintf('is a member of <a href="%s">%s Ensembl protein %s</a>', $protein_url, 
+                          $avail->{family_count}, 
+                          $avail->{family_count} eq "1" ? "family" : "families"
+                      ) if($avail->{family_count});
+      push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+                          $phenotype_url, 
+                          $avail->{has_phenotypes}, 
+                          $avail->{has_phenotypes} eq "1" ? "phenotype" : "phenotypes"
+                      ) if($avail->{has_phenotypes});
+     
+      $counts_summary  = sprintf('This gene has %s.',$self->join_with_and(@str_array));    
+      $gene_html      .= $button;
+    } 
+    
+    if($page_type eq 'transcript') {    
+      my @str_array;
+      
+      my $exon_url = $hub->url({
+        type   => 'Transcript',
+        action => 'Exons',
+        g      => $gene->stable_id
+      }); 
+      
+      my $similarity_url = $hub->url({
+        type   => 'Transcript',
+        action => 'Similarity',
+        g      => $gene->stable_id
+      }); 
+      
+      my $oligo_url = $hub->url({
+        type   => 'Transcript',
+        action => 'Oligos',
+        g      => $gene->stable_id
+      });     
+
+      my $domain_url = $hub->url({
+        type   => 'Transcript',
+        action => 'Domains',
+        g      => $gene->stable_id
+      });
+      
+      my $variation_url = $hub->url({
+        type   => 'Transcript',
+        action => 'ProtVariations',
+        g      => $gene->stable_id
+      });     
+     
+      push @str_array, sprintf('<a href="%s">%s %s</a>', 
+                          $exon_url, $avail->{has_exons}, 
+                          $avail->{has_exons} eq "1" ? "exon" : "exons"
+                        ) if($avail->{has_exons});
+                        
+      push @str_array, sprintf('is annotated with <a href="%s">%s %s</a>', 
+                          $domain_url, $avail->{has_domains}, 
+                          $avail->{has_domains} eq "1" ? "domain and feature" : "domains and features"
+                        ) if($avail->{has_domains});
+
+      push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+                          $variation_url, 
+                          $avail->{has_variations}, 
+                          $avail->{has_variations} eq "1" ? "variation" : "variations",
+                        ) if($avail->{has_variations});    
+      
+      push @str_array, sprintf('maps to <a href="%s">%s oligo %s</a>',    
+                          $oligo_url,
+                          $avail->{has_oligos}, 
+                          $avail->{has_oligos} eq "1" ? "probe" : "probes"
+                        ) if($avail->{has_oligos});
+                  
+      $counts_summary  = sprintf('<p>This transcript has %s.</p>', $self->join_with_and(@str_array));  
+    }    
   }
+
+  $table->add_row('Location', $location_html);
+
+  my $insdc_accession;
+  $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
+  $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
   
-  return qq{<div class="summary_panel">$html</div>};
+  $table->add_row( $page_type eq 'gene' ? 'About this gene' : 'About this transcript',$counts_summary) if $counts_summary;
+  $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
+
+  return sprintf '<div class="summary_panel">%s%s</div>', $table->render, $transc_table ? $transc_table->render : '';
+}
+
+sub get_gene_display_link {
+  my ($self, $caption) = @_;
+
+  my $hub           = $self->hub;
+  my $gene          = $self->object->gene;
+  my $xref          = $gene->display_xref or return;
+  my $display_name  = $xref->display_id;
+  my $display_db    = $xref->db_display_name;
+  my $external_id   = $xref->primary_id;
+  my $prefix        = '';
+
+  # remove prefix from the URL for Vega External Genes
+  if ($hub->species eq 'Mus_musculus' && $gene->source eq 'vega_external') {
+    ($prefix, $display_name) = split ':', $display_name;
+  }
+
+  my $link = $hub->get_ExtURL_link($caption || $display_name, $xref->dbname, $external_id);
+
+  return unless $link;
+
+  $link = sprintf '%s:%s', $prefix, $link if $prefix;
+  $link = $caption || $display_name if $display_db =~ /^Projected/; # just return the caption in this case
+
+  return { 'link' => $link, 'dbname' => $display_db, 'id' => $external_id };
 }
 
 sub get_synonyms {
   my ($self, $match_id, @matches) = @_;
-  my ($ids, $syns);
+  my @ids;
   foreach my $m (@matches) {
     my $dbname = $m->db_display_name;
     my $disp_id = $m->display_id;
-    if ($dbname =~/(HGNC|ZFIN)/ && $disp_id eq $match_id) {
+    if ( $disp_id eq $match_id) {
       my $synonyms = $m->get_all_synonyms;
-      $ids = '';
-      $ids = $ids . ', ' . (ref $_ eq 'ARRAY' ? "@$_" : $_) for @$synonyms;
+      push @ids, (ref $_ eq 'ARRAY' ? "@$_" : $_) for @$synonyms;
     }
   }
-  $ids  =~ s/^\,\s*//;
-  $syns = $ids if $ids =~ /^\w/;
-  return $syns;
+  return join ', ', @ids;
 }
 
+# Utility method to wrap HTML in a glossary
+sub glossary {
+  my %glossary = $_[0]->multiX('ENSEMBL_GLOSSARY');
+  my $entry = $glossary{$_[1]};
+
+  return $_[2] unless defined $entry;
+  return qq(<span class="glossary_mouseover">$_[2]<span class="floating_popup">$entry</span></span>);
+}
+  
+sub _add_gene_counts {
+  my ($self,$genome_container,$sd,$cols,$options,$tail,$our_type) = @_;
+
+  my @order = qw(
+    coding_cnt noncoding_cnt noncoding_cnt/s noncoding_cnt/l noncoding_cnt/m
+    pseudogene_cnt transcript
+  );
+  my @suffixes = (['','~'],
+                  ['r',' (incl ~ '.glossary($sd,'Readthrough','readthrough').')']);
+  my %glossary_lookup   = (
+      'coding_cnt'          => 'Protein coding',
+      'noncoding_cnt/s'     => 'Small non coding gene',
+      'noncoding_cnt/l'     => 'Long non coding gene',
+      'pseudogene_cnt'      => 'Pseudogene',
+      'transcript'          => 'Transcript',
+    );
+
+  my @data;
+  foreach my $statistic (@{$genome_container->fetch_all_statistics()}) {
+    my ($name,$inner,$type) = ($statistic->statistic,'','');
+    if($name =~ s/^(.*?)_(r?)(a?)cnt(_(.*))?$/$1_cnt/) {
+      ($inner,$type) = ($2,$3);
+      $name .= "/$5" if $5;
+    }
+    next unless $type eq $our_type;
+    my $i = first_index { $name eq $_ } @order;
+    next if $i == -1;
+    ($data[$i]||={})->{$inner} = $self->thousandify($statistic->value);
+    $data[$i]->{'_key'} = $name;
+    $data[$i]->{'_name'} = $statistic->name if $inner eq '';
+    $data[$i]->{'_sub'} = ($name =~ m!/!);
+  } 
+
+  my $counts = $self->new_table($cols, [], $options);
+  foreach my $d (@data) {
+    my $value = '';
+    foreach my $s (@suffixes) {
+      next unless $d->{$s->[0]};
+      $value .= $s->[1];
+      $value =~ s/~/$d->{$s->[0]}/g;
+    }
+    next unless $value;
+    my $class = '';
+    $class = 'row-sub' if $d->{'_sub'};
+    my $key = $d->{'_name'};
+    $key = glossary($sd,$glossary_lookup{$d->{'_key'}},"<b>$d->{'_name'}</b>");
+    $counts->add_row({ name => $key, stat => $value, options => { class => $class }});
+  } 
+  return "<h3>Gene counts$tail</h3>".$counts->render;
+}
+  
 sub species_stats {
   my $self = shift;
   my $sd = $self->hub->species_defs;
@@ -460,14 +652,6 @@ sub species_stats {
   my $genome_container = $db_adaptor->get_GenomeContainer();
 
   my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
-  my %glossary_lookup   = (
-      'coding'              => 'Protein coding',
-      'snoncoding'          => 'Short non coding gene',
-      'lnoncoding'          => 'Long non coding gene',
-      'pseudogene'          => 'Pseudogene',
-      'transcript'          => 'Transcript',
-    );
-
 
   my $cols = [
     { key => 'name', title => '', width => '30%', align => 'left' },
@@ -476,7 +660,7 @@ sub species_stats {
   my $options = {'header' => 'no', 'rows' => ['bg3', 'bg1']};
 
   ## SUMMARY STATS
-  my $summary = EnsEMBL::Web::Document::Table->new($cols, [], $options);
+  my $summary = $self->new_table($cols, [], $options);
 
   my( $a_id ) = ( @{$meta_container->list_value_by_key('assembly.name')},
                     @{$meta_container->list_value_by_key('assembly.default')});
@@ -502,8 +686,9 @@ sub species_stats {
       'name' => '<b>Base Pairs</b>',
       'stat' => $self->thousandify($genome_container->get_total_length()),
   });
+  my $header = '<span class="glossary_mouseover">Golden Path Length<span class="floating_popup">'.$glossary{'Golden path length'}.'</span></span>';
   $summary->add_row({
-      'name' => '<b>Golden Path Length</b>',
+      'name' => "<b>$header</b>",
       'stat' => $self->thousandify($genome_container->get_ref_length())
   });
   $summary->add_row({
@@ -538,94 +723,46 @@ sub species_stats {
   }
 
   $html .= $summary->render;
-  ## GENE COUNTS (FOR PRIMARY ASSEMBLY)
-  my $counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
-  my @stats = qw(coding snoncoding lnoncoding pseudogene transcript);
+
+  ## GENE COUNTS
   my $has_alt = $genome_container->get_alt_coding_count();
-
-  my $primary = $has_alt ? ' (Primary assembly)' : '';
-  $html .= "<h3>Gene counts$primary</h3>";
-
-  foreach (@stats) {
-    my $name = $_.'_cnt';
-    my $method = 'get_'.$_.'_count';
-    my $title = $genome_container->get_attrib($name)->name();
-    my $term = $glossary_lookup{$_};
-    my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary{$term}</span></span>) : $title;
-    my $stat = $self->thousandify($genome_container->$method);
-    unless ($_ eq 'transcript') {
-      my $rmethod = 'get_r'.$_.'_count';
-      my $readthrough = $genome_container->$rmethod;
-      if ($readthrough) {
-        $stat .= ' (incl. '.$self->thousandify($readthrough).' <span class="glossary_mouseover">readthrough<span class="floating_popup">'.$glossary{'Readthrough'}.'</span></span>)';
-      }
-    }
-    $counts->add_row({
-      'name' => "<b>$header</b>",
-      'stat' => $stat,
-    }) if $stat;
+  if($has_alt) {
+    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Primary assembly)','');
+    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Alternative sequence)','a');
+  } else {
+    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,'','');
   }
-
-  $html .= $counts->render;
-
-  ## GENE COUNTS FOR ALTERNATIVE ASSEMBLY
-  if ($has_alt) {
-    $html .= "<h3>Gene counts (Alternative sequence)</h3>";
-    my $alt_counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
-    foreach (@stats) {
-      my $name = $_.'_acnt';
-      my $method = 'get_alt_'.$_.'_count';
-      my $title = $genome_container->get_attrib($name)->name();
-      my $term = $glossary_lookup{$_};
-      my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary{$term}</span></span>) : $title;
-      my $stat = $self->thousandify($genome_container->$method);
-      unless ($_ eq 'transcript') {
-        my $rmethod = 'get_alt_r'.$_.'_count';
-        my $readthrough = $genome_container->$rmethod;
-        if ($readthrough) {
-          $stat .= ' (incl. '.$self->thousandify($readthrough).' <span class="glossary_mouseover">readthrough<span class="floating_popup">'.$glossary{'Readthrough'}.'</span></span>)';
-        }
-      }
-      $alt_counts->add_row({
-        'name' => "<b>$header</b>",
-        'stat' => $stat,
-      }) if $stat;
-    }
-    $html .= $alt_counts->render;
-  }
+  
   ## OTHER STATS
   my $rows = [];
   ## Prediction transcripts
   my $analysis_adaptor = $db_adaptor->get_AnalysisAdaptor();
   my $attribute_adaptor = $db_adaptor->get_AttributeAdaptor();
-  my @analyses = @{ $analysis_adaptor->fetch_all_by_feature_class('PredictionTranscript') };
+  my @analyses = @{ $analysis_adaptor->
+                      fetch_all_by_feature_class('PredictionTranscript') };
   foreach my $analysis (@analyses) {
     my $logic_name = $analysis->logic_name;
-    my $stat = $genome_container->get_prediction_count($logic_name);
-    my $name = $attribute_adaptor->fetch_by_code($logic_name)->[2];
+    my $stat = $genome_container->fetch_by_statistic(
+                                      'PredictionTranscript',$logic_name); 
     push @$rows, {
-      'name' => "<b>$name</b>",
-      'stat' => $self->thousandify($stat),
-    } if $stat;
+      'name' => "<b>".$stat->name."</b>",
+      'stat' => $self->thousandify($stat->value),
+    } if $stat and $stat->name;
   }
   ## Variants
   if ($self->hub->database('variation')) {
-    my @other_stats = (
-      {'name' => 'SNPCount', 'method' => 'get_short_variation_count'},
-      {'name' => 'struct_var', 'method' => 'get_structural_variation_count'}
-    );
-    foreach (@other_stats) {
-      my $method = $_->{'method'};
-      my $stat = $self->thousandify($genome_container->$method);
+    my @other_stats = qw(SNPCount StructuralVariation);
+    foreach my $name (@other_stats) {
+      my $stat = $genome_container->fetch_by_statistic($name);
       push @$rows, {
-        'name' => '<b>'.$genome_container->get_attrib($_->{'name'})->name().'</b>',
-        'stat' => $stat,
-      } if $stat;
+        'name' => '<b>'.$stat->name.'</b>',
+        'stat' => $self->thousandify($stat->value)
+      } if $stat and $stat->name;
     }
   }
   if (scalar(@$rows)) {
     $html .= '<h3>Other</h3>';
-    my $other = EnsEMBL::Web::Document::Table->new($cols, $rows, $options);
+    my $other = $self->new_table($cols, $rows, $options);
     $html .= $other->render;
   }
 
@@ -806,6 +943,7 @@ sub _sort_similarity_links {
     next if $externalDB eq 'Vega_translation';
     next if $externalDB eq 'OTTP' && $display_id =~ /^\d+$/;    # don't show vega translation internal IDs
     next if $externalDB eq 'shares_CDS_with_ENST';
+    next if $externalDB =~ /^Uniprot_/;
 
     if ($externalDB =~ /^($ontologies)$/) {
       push @{$object->__data->{'links'}{'go'}}, $display_id;
@@ -833,7 +971,7 @@ sub _sort_similarity_links {
       }
     }
     if ($type->isa('Bio::EnsEMBL::IdentityXref')) {
-      $text .= ' <span class="small"> [Target %id: ' . $type->target_identity . '; Query %id: ' . $type->query_identity . ']</span>';
+      $text .= ' <span class="small"> [Target %id: ' . $type->ensembl_identity . '; Query %id: ' . $type->xref_identity . ']</span>';
       $join_links = 1;
     }
 
@@ -1050,8 +1188,8 @@ sub structural_variation_table {
       type   => 'Location',
       action => 'View',
       r      => $loc_string,
-    });
-      
+    });      
+    
     my %row = (
       id          => qq{<a href="$sv_link">$name</a>},
       location    => qq{<a href="$loc_link">$loc_string</a>},
@@ -1081,7 +1219,15 @@ sub render_sift_polyphen {
     'benign'            => 'good',
     'unknown'           => 'neutral',
     'tolerated'         => 'good',
-    'deleterious'       => 'bad'
+    'deleterious'       => 'bad',
+    
+    # slightly different format for SIFT low confidence states
+    # depending on whether they come direct from the API
+    # or via the VEP's no-whitespace processing
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
   );
   
   my %ranks = (
