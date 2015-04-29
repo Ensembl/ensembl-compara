@@ -33,7 +33,7 @@ my $TESTMORE_OUTPUT;
 sub new {
   my($class, %args) = @_;
 
-  die 'Must supply a url' unless $args{url};
+  return ('bug', 'Must supply a url') unless $args{url};
   
   my $self = {
     _url      => $args{url},
@@ -90,15 +90,14 @@ sub get_current_url {
   return $location;
 }
 
-#CHECK IF THE SITE IS UP...EXIT IF NOT
 sub check_website {
+### Check if the website to be tested is (still) up
   my $self = shift;
   
   my $url = $self->url;
   $self->sel->open("/");
   if ($self->sel->get_title eq "The Ensembl Genome Browser (development)") {
-    print"\n$url IS DOWN!!!!!\n";
-    exit;
+    return ('fail', "$url IS DOWN");
   }
 }
 
