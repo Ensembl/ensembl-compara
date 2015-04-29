@@ -24,8 +24,9 @@
     if(colconf.width) { attrs.width = colconf.width; }
     if(colconf.sort)  { classes.push('sorting'); }
     if(colconf.help) {
+      var help = $('<div/>').text(colconf.help).html();
       text =
-        '<span class="ht _ht" title="'+colconf.help+'">'+text+'</span>';
+        '<span class="ht _ht" title="'+help+'">'+text+'</span>';
     }
     var attr_str = "";
     $.each(attrs,function(k,v) {

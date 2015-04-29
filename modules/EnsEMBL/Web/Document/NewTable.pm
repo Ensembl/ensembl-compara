@@ -26,6 +26,7 @@ use Scalar::Util qw(looks_like_number);
 use Sanger::Graphics::ColourMap;
 
 use base qw(EnsEMBL::Web::Root);
+use HTML::Entities qw(encode_entities);
 
 sub new {
   my ($class, $cols, $rows, $options, $spanning) = @_;
@@ -175,6 +176,7 @@ sub render {
       "columns" => [ "new_table_columns", { } ]
    },
   });
+  $data = encode_entities($data);
   return qq(
     <a class="new_table" href="$url">$data</a>
   );
