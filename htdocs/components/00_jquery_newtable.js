@@ -97,8 +97,11 @@
 
   function use_response(widgets,$table,data) {
     var view = $table.data('view');
-    widgets[view.format].add_data(data.data,
-                                  data.region.rows,
+    rows = [data.region.rows[0],data.region.rows[1]];
+    if(rows[1]==-1) {
+      rows[1] = rows[0] + data.data.length;
+    }
+    widgets[view.format].add_data($table,data.data,rows,
                                   data.region.columns);
   }
 
@@ -162,6 +165,7 @@
   }
 
   function maybe_use_response(widgets,$table,result) {
+    console.log("maybe_use_response");
     var cur_data = $table.data('data');
     var in_data = result.data;
     if(compares_equal(cur_data,in_data)) {
@@ -170,6 +174,7 @@
         use_response(widgets,$table,data);
         got.push(data.region);
       });
+      console.log("follow on");
       maybe_issue_followon(widgets,$table,in_data,result.regions,got);
     }
   }
@@ -192,6 +197,8 @@
     delete data.rows;
     delete data.format;
     $table.data('data',data);
+    console.log("old-data",JSON.stringify(old_data));
+    console.log("data",JSON.stringify(data));
     if(!compares_equal(data,old_data)) {
       get_new_data(widgets,$table,data,[{
         columns: view.columns,
@@ -236,6 +243,7 @@
       if(view.format != old_view.format) {
         build_format(widgets,$table);
       }
+      console.log("242");
       maybe_get_new_data(widgets,$table);
       $table.data('old-view',$.extend(true,{},view));
     });
@@ -247,6 +255,7 @@
       widgets[name].go($table,$widget);
     });
     $table.data('src',$target.attr('href'));
+    console.log("254");
     maybe_get_new_data(widgets,$table);
     $target.replaceWith($table);
   }

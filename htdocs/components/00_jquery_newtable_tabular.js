@@ -75,20 +75,48 @@
     }); 
   }
 
+  function extend_rows($table,rows) {
+    var $thead = $('thead',$table);
+    var $tbody = $('tbody',$table);
+    var nrows = $('tr',$tbody).length;
+    var ncols = $('th',$thead).length;
+    for(var i=nrows;i<rows[1];i++) {
+      var $row = $('<tr/>').appendTo($tbody);
+      for(var j=0;j<ncols;j++) {
+        $('<td/>').appendTo($row);
+      }
+    }
+  }
+
+  function update_row($table,data,row,columns) {
+    var $row = $('tbody tr',$table).eq(row);
+    var $cells = $('td',$row);
+    var di = 0;
+    for(var i=0;i<columns.length;i++) {
+      if(!columns[i])
+        continue;
+      $cells.eq(i).html(data[di++]);
+    }
+  }
+
   $.fn.new_table_tabular = function(config,data) {
     return {
       layout: function($table) {
         var config = $table.data('config');
         var header = new_header(config);
-        return '<table class="ss new_table">'+header+'</table>';
+        return '<table class="ss new_table">'+header+'<tbody></tbody></table>';
       },
       go: function($table,$el) {
         $('th',$table).click(function(e) {
           add_sort($table,$(this).data('key'),!e.shiftKey); 
         });
       },
-      add_data: function(data,rows,columns) {
-        console.log("add_data",data,rows,columns);
+      add_data: function($table,data,rows,columns) {
+        console.log("add_data");
+        extend_rows($table,rows);
+        for(var i=rows[0];i<rows[1];i++) {
+          update_row($table,data[i-rows[0]],i,columns);
+        }
       }
     };
   }; 
