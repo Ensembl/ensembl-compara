@@ -22,7 +22,7 @@ package EnsEMBL::Selenium::Test::Location;
 
 use strict;
 
-use parent 'EnsEMBL::Selenium::Test';
+use parent 'EnsEMBL::Selenium::Test::SpeciesPages';
 
 sub default_url {
   my $self = shift;
