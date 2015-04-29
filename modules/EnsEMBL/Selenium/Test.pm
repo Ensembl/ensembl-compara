@@ -60,7 +60,9 @@ sub test_lh_menu {
   my $self    = shift;
   my $sel     = $self->sel;
   my $current = $self->get_current_url();
-  my $goto    = $self->default_url;
+
+  my ($goto, $error) = $self->default_url;
+  return ($goto, $error) if $error;
 
   $self->no_mirrors_redirect;
   $sel->open_ok($goto);
