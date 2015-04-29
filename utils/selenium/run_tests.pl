@@ -183,6 +183,14 @@ foreach my $module (@{$TESTS->{'modules'}}) {
 our $pass = 0;
 our $fail = 0;
 
+my ($sec, $min, $hour, $day, $month, $year) = gmtime;
+my $timestamp = sprintf('%s%02d%02d_%02d%02d%02d', $year+1900, $month+1, $day, $hour, $min, $sec);
+our $log_file_name = $tests;
+$log_file_name =~ s/\.conf//; 
+$log_file_name .= '_'.$timestamp.'.log';
+our $log;
+open $log, '>>', $log_file_name;
+
 ## Run any non-species-specific tests first 
 foreach my $module (@{$test_suite->{'non_species'}}) {
   my $module_name = $module->{'name'};
@@ -197,6 +205,8 @@ foreach my $sp (keys %{$test_suite->{'species'}}) {
     run_test($module_name, $test_config, $module->{'tests'});    
   }
 }
+
+close($log);
 
 my $total = $pass + $fail;
 my $plural = $total > 1 ? 's' : '';
@@ -275,7 +285,12 @@ sub write_to_log {
   my ($code, $message) = @_;
   my ($sec, $min, $hour, $day, $month, $year) = gmtime;
   my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
-  print uc($code).": $message $timestamp\n";
+  if ($log) {
+    print $log uc($code).": $message $timestamp\n";
+  }
+  else {
+    print uc($code).": $message $timestamp\n";
+  }
 }
 
 sub read_config {
