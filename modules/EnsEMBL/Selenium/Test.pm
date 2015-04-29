@@ -34,7 +34,7 @@ my $TESTMORE_OUTPUT;
 sub new {
   my($class, %args) = @_;
 
-  return ('bug', 'Must supply a url') unless $args{url};
+  return ('bug', 'Must supply a url', $class, 'new') unless $args{url};
   
   my $self = {
     _url      => $args{url},
@@ -70,19 +70,19 @@ sub test_lh_menu {
     $sel->ensembl_click_all_links('.local_context');
   }
   else {
-    return ('fail', "Couldn't open page $goto to check navigation links");
+    return ('fail', "Couldn't open page $goto to check navigation links", ref($self), 'test_lh_menu');
   }
 }
 
 sub default_url {
   my $self = shift;
-  return ('bug', "default_url method not implemented in test module ".ref($self);
+  return ('bug', "default_url method not implemented in test module", ref($self), 'default_url');
 }
 
 sub test_debug {
 ### Quick'n'dirty test to ensure that the test script is working!
   my $self = shift;
-  return ('pass', 'DEBUG OK!');
+  return ('pass', 'DEBUG OK!', ref($self), 'test_debug');
 }
 
 ############### ACCESSORS AND UTILITY METHODS ################## 
@@ -117,7 +117,7 @@ sub check_website {
   my $url = $self->url;
   $self->sel->open("/");
   if ($self->sel->get_title eq "The Ensembl Genome Browser (development)") {
-    return ('fail', "$url IS DOWN");
+    return ('fail', "$url IS DOWN", ref($self), 'check_website');
   }
 }
 

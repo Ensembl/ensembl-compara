@@ -29,7 +29,7 @@ sub new {
 
   ## Abort this test set if the species has no variation data
   if (!$args{'species'}->{'variation_db'}) {
-    return ('pass', 'Species '.$species->{'name'}.' has no variation data');
+    return ('pass', 'Species '.$species->{'name'}.' has no variation data', $class, 'new');
   }
 
   my $self = $class->SUPER::new(%args);

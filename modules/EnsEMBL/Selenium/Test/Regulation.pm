@@ -29,7 +29,7 @@ sub new {
 
   ## Abort this test set if the species has no regulation data
   if (!$args{'species'}->{'funcgen_db'}) {
-    return ('pass', 'Species '.$species->{'name'}.' has no regulation data');
+    return ('pass', 'Species '.$species->{'name'}.' has no regulation data', $class, 'new');
   }
 
   my $self = $class->SUPER::new(%args);
