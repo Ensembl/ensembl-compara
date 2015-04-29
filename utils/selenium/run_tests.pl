@@ -98,7 +98,7 @@ unless (ref($TESTS->{'modules'}[0]) eq 'HASH'
   die "You must specify at least one test method, eg. ['homepage']";
 }
 
-print "Configuration OK - running tests...";
+print "Configuration OK - running tests...\n\n";
 
 my $host    = $CONF->{'host'};
 my $port    = $CONF->{'port'}     || '4444';
