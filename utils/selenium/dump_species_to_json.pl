@@ -43,7 +43,14 @@ open(CONF, '>', $config_file) or die "Couldn't open file $config_file for writin
 my $data = {};
 
 foreach my $species (@valid_species) {
-  my $info = $sd->get_config($species, 'SAMPLE_DATA');
+  my $info  = $sd->get_config($species, 'SAMPLE_DATA');
+  my $dbs   = $sd->databases;
+  if ($dbs->{'variation'}) {
+    $info->{'variation_db'} = 1;
+  }
+  if ($dbs->{'funcgen'}) {
+    $info->{'funcgen_db'} = 1;
+  }
   $data->{$species} = $info;
 }
 
