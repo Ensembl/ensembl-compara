@@ -204,31 +204,40 @@ sub run_test {
     return;
   }
 
-  my $object = $package->new(%{$config||{}});
+  my ($object, $error) = $package->new(%{$config||{}});
 
-  ## Run the tests
-  foreach my $name (@test_names) {
-    my $method = 'test_'.$name;
-    my @params = ();
-    if ($has_test_params) {
-      @params = @{$tests->{$name}||[]};
-    }
-    if ($object->can($method)) {
-      my ($code, $message) = $object->$method(@params);
-      if ($code eq 'fail' || $config->{'verbose'}) { 
-        write_to_log($code, $message);
+  if ($error) {
+    ## Variable $object is actually an error code
+    write_to_log($object, $error);
+  }
+  else {
+    ## Run the tests
+    foreach my $name (@test_names) {
+      my $method = 'test_'.$name;
+      my @params = ();
+      if ($has_test_params) {
+        @params = @{$tests->{$name}||[]};
       }
-    }
-    else {
-      write_to_log('bug', "No such method $method in package $package");
+      if ($object->can($method)) {
+        my ($code, $message) = $object->$method(@params);
+        if ($code eq 'fail' || $config->{'verbose'}) { 
+          write_to_log($code, $message);
+        }
+      }
+      else {
+        write_to_log('bug', "No such method $method in package $package");
+      }
     }
   }
 }
 
 sub write_to_log {
+### Write a status line
+### TODO Replace with proper logging
   my ($code, $message) = @_;
-  ## TODO Replace with proper logging
-  print uc($code).": $message\n";
+  my ($sec, $min, $hour, $day, $month, $year) = gmtime;
+  my $timestamp = sprintf('at %s:%s%s on %s-%s-%s', $hour, $min, $sec, $day, $month, $year);
+  print uc($code).": $message $timestamp\n";
 }
 
 sub read_config {
