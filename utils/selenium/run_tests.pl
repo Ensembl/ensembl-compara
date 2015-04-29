@@ -176,13 +176,18 @@ print "TEST RUN COMPLETED\n\n";
 ################# SUBROUTINES #############################################
 
 sub run_test {
+### Run a set of tests within a test module
+### Note that there are three report codes:
+###   'pass' means the selenium test passed
+###   'fail' means the test ran but did not pass
+###   'bug' means there was a problem running the test
   my ($module, $config, $tests) = @_;
 
   ## Try to use the package
   my $package = "EnsEMBL::Selenium::Test::$module";
   eval("use $package");
   if ($@) {
-    write_to_log("TEST FAILED: Couldn't use $package\n$@");
+    write_to_log('bug', "Couldn't use $package\n$@");
     return;
   }
   my (@test_names, $has_test_params);
@@ -195,7 +200,7 @@ sub run_test {
   }
 
   unless (@test_names) {
-    write_to_log("TEST FAILED: No methods specified for test module $package");
+    write_to_log('bug', "No methods specified for test module $package");
     return;
   }
 
@@ -209,19 +214,21 @@ sub run_test {
       @params = @{$tests->{$name}||[]};
     }
     if ($object->can($method)) {
-      my $error = $object->$method(@params);
-      write_to_log($error) if $error;
+      my ($code, $message) = $object->$method(@params);
+      if ($code eq 'fail' || $config->{'verbose'}) { 
+        write_to_log($code, $message);
+      }
     }
     else {
-      write_to_log("TEST FAILED: No such method $method in package $package");
+      write_to_log('bug', "No such method $method in package $package");
     }
   }
 }
 
 sub write_to_log {
-  my $message = shift;
+  my ($code, $message) = @_;
   ## TODO Replace with proper logging
-  print "$message\n";
+  print uc($code).": $message\n";
 }
 
 sub read_config {
