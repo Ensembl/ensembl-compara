@@ -113,14 +113,29 @@ sub render_Barcode {
 
   my $max = $glyph->{'max'} || 1000;
   my $top = $self->{'canvas'}{'im_height'};
-  foreach my $p (@$points) {
-    my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
-    $self->fillcolor($colour);
-    $self->strokecolor($colour);
-    $self->rect($x1,$top-$y1,$x2-$x1,$y2-$y1);
-    $self->fill();
-    $x1 += $glyph->{'pixelunit'} * $self->{'sf'};
-    $x2 += $glyph->{'pixelunit'} * $self->{'sf'};
+  my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+
+  if($glyph->{'wiggle'} eq 'bar') {
+    my $mul = ($y2-$y1) / $max;
+    foreach my $p (@$points) {
+      my $yb = $y1 + $p * $mul;
+      $self->strokecolor($colours[0]);
+      $self->fillcolor($colours[0]);
+      $self->rect($x1,$top-$y2,$x2-$x1,$yb-$y1,$colours[0]);
+      $self->fill();
+      $x1 += $step;
+      $x2 += $step;
+    }
+  } else {
+    foreach my $p (@$points) {
+      my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
+      $self->fillcolor($colour);
+      $self->strokecolor($colour);
+      $self->rect($x1,$top-$y1,$x2-$x1,$y2-$y1);
+      $self->fill();
+      $x1 += $step;
+      $x2 += $step;
+    }
   }
 }
 

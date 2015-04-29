@@ -180,12 +180,23 @@ sub render_Barcode {
   my @colours = @{$glyph->{'colours'}};
   my $max = $glyph->{'max'} || 1000;
   my $fmt = "_%s %f %f %f %f r fi\n";
-  foreach my $p (@$points) {
-    my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
-    $self->_colour($colour);
-    $self->add_string(sprintf($fmt,$colour,$x1,$y1,$x2-$x1+1,$y2-$y1+1));
-    $x1 += $glyph->{'pixelunit'} * $self->{'sf'};
-    $x2 += $glyph->{'pixelunit'} * $self->{'sf'};
+  my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+  if($glyph->{'wiggle'} eq 'bar') {
+    my $mul = ($y2-$y1) / $max;
+    foreach my $p (@$points) {
+      my $yb = $y2 - $p * $mul;
+      $self->add_string(sprintf($fmt,$colours[0],$x1,$y2,$x2-$x1+1,$yb-$y2+1,$style));
+      $x1 += $step;
+      $x2 += $step;
+    }
+  } else {
+    foreach my $p (@$points) {
+      my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
+      $self->_colour($colour);
+      $self->add_string(sprintf($fmt,$colour,$x1,$y1,$x2-$x1+1,$y2-$y1+1));
+      $x1 += $step;
+      $x2 += $step;
+    }
   }
 }
 

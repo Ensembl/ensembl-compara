@@ -338,16 +338,6 @@ sub render_Barcode {
       $x1 += $step;
       $x2 += $step;
     }
-  } elsif($glyph->{'wiggle'} eq 'line') {
-    my $mul = ($y2-$y1) / $max;
-    my $ya = 0;
-    foreach my $p (@$points) {
-      my $yb = $y2 - $p * $mul;
-      $canvas->line($x1,$ya,$x2,$yb,$colours[0]);
-      $x1 += $step;
-      $x2 += $step;
-      $ya = $yb;
-    }
   } else {
     my $mul =  scalar(@colours) / $max;
     foreach my $p (@$points) {
