@@ -145,9 +145,9 @@ unless ($DEBUG) {
 my $test_config = {
                     sel     => $selenium,
                     url     => $url,
-                    release => $release,
                     timeout => $timeout,
                     verbose => $verbose,  
+                    conf    => {'release' => $release},
                   };
 
 

@@ -42,6 +42,7 @@ sub new {
     _timeout  => $args{timeout} || 50000,
     _verbose  => $args{verbose},
     _species  => $args{species},
+    _conf     => $args{conf},
   };
     
   bless $self, $class;
@@ -58,6 +59,10 @@ sub verbose {$_[0]->{_verbose}};
 sub species {$_[0]->{_species}};
 sub timeout {$_[0]->{_timeout}};
 
+sub conf {
+  my ($self, $key) = @_;
+  return $self->{_conf}{$key};
+}
 
 sub testmore_output {
   # test builder output (this will be empty if we are in verbose mode)
