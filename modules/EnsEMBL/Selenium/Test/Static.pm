@@ -54,11 +54,4 @@ sub test_homepage {
   $sel->ensembl_click_links(["link=Privacy Policy"]);
 }
 
-sub test_debug {
-### Quick'n'dirty test to ensure that the test script is working!
-  my $self = shift;
-  return ('pass', 'DEBUG OK!');
-}
-
-
 1;
