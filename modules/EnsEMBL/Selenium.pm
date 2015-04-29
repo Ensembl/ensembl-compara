@@ -80,7 +80,7 @@ sub ensembl_open_zmenu {
   my ($self, $panel, $area_tag, $track_name) = @_;
   my $tag = $area_tag ?  "area[$area_tag]" : 'area[href^=#vdrag]';  
 
-  return "  Test ZMenu $track_name on the $panel panel \n" if $self->verbose;
+  return ('pass', "  Testing ZMenu $track_name on the $panel panel)" if $self->verbose;
   $self->run_script(qq/
     Ensembl.PanelManager.panels.$panel.elLk.img.one('click', function (e) {
       var coords = Ensembl.PanelManager.panels.$panel.elLk.map.find('$tag').attr('coords').split(','); 
@@ -123,17 +123,22 @@ sub ensembl_click_links {
   my ($self, $links, $timeout) = @_;
   return unless $links && ref($links) eq 'ARRAY';
   my $location = $self->get_location();  
-  my $errors = [];
+  my $output = [];
   
   foreach my $link (@{$links}) {
     my ($locator, $timeout) = ref $link eq 'ARRAY' ? @$link : ($link, $timeout || $self->_timeout);
     if ($self->is_element_present($locator)) {
-      push @$errors, "$locator FAILED in $location \n\n" unless $self->click_ok($locator) and $self->ensembl_wait_for_page_to_load($timeout);
+      if ($self->click_ok($locator) and $self->ensembl_wait_for_page_to_load($timeout)) {
+        push @$output, ('pass', "Link $locator on $location checked successfully");
+      }
+      else {
+        push @$output, ('fail', "$locator FAILED in $location \n\n");
+      }
     } else {        
-      push @$errors, "***missing*** $locator in $location \n";
+      push @$output, ('fail', "***missing*** $locator in $location \n");
     }
   }
-  return scalar @$errors ? $errors : 0;
+  return $output;
 }
 
 sub ensembl_click_all_links {
@@ -153,7 +158,7 @@ sub ensembl_click_all_links {
 
   my @links_array = split(',',$links_href);
   my $i = 0;
-  my $errors = [];
+  my $output = [];
 
   foreach my $link (@links_array) {
     $self->pause(500);
@@ -181,20 +186,25 @@ sub ensembl_click_all_links {
   
     if ($rel eq 'external' || $link !~ /^$url/) {
       $self->open_ok($link);
-      push @$errors, "LINK FAILED:: $link_text($link) at $location \n\n" unless ok($self->get_title !~ /Internal Server Error|404 error|ERROR/i, 'No Internal or 404 Server Error');
+      if (ok($self->get_title !~ /Internal Server Error|404 error|ERROR/i, 'No Internal or 404 Server Error')) {
+        push @$output, ('pass', "Link $link_text ($link) successful at $location");
+      }
+      else {
+        push @$output, ('fail', "LINK FAILED:: $link_text ($link) at $location");
+      }
     } elsif ($link_id && $link_id ne 'null') {
       $self->ensembl_click_links(["id=$link_id"]);
     } elsif ($link_text) {
       $self->ensembl_click_links(["link=$link_text"]);
     } else {
-      push @$errors, "LINK UNTESTED:: $link has no id or text at $location \n\n";
+      push @$output, ('fail', "LINK UNTESTED:: $link has no id or text at $location");
       next;
     }
     
     $self->ensembl_is_text_present($text) if($text);
     $self->go_back();
   }
-  return scalar @$errors ? $errors : 0;
+  return $output;
 }
 
 sub ensembl_images_loaded {
@@ -214,29 +224,24 @@ sub ensembl_images_loaded {
   });
   my $location = $self->get_location();
   my $test_text = $self->ensembl_is_text_present("All images loaded successfully");
-  return $test_text ? 0 : "IMAGE LOADING ERROR";
+  return $test_text ? ('pass', 'Images loaded successfully') : ('fail', "IMAGE LOADING ERROR");
 }
 
 
-#Overloading is_text_present function so that it returns the current url when it fails
 sub ensembl_is_text_present {
+#Overloading is_text_present function so that it returns the current url when it fails
   my ($self, $text) = @_;
   my $url = $self->get_location();
     
-  print "URL:: $url \n\n" unless $self->is_text_present_ok($text);
+  return ('fail', "MISSING TEXT $text at URL $url") unless $self->is_text_present_ok($text);
 }
 
-sub ensembl_has_das_error {
-  my $self = shift;
-  return $self->is_element_present("//div[\@id='TextDAS']//div[\@class='error-pad']");
-}
-
-#overloading select to return URL where the action fails.
 sub ensembl_select {
+### overloading select to return URL where the action fails.
   my ($self, $select_locator, $option_locator) = @_;
   my $url = $self->get_location();
     
-  print "URL:: $url \n\n" unless $self->select_ok($select_locator,$option_locator);  
+  return ('fail', "Failure at URL $url") unless $self->select_ok($select_locator,$option_locator);  
 }
 
 
