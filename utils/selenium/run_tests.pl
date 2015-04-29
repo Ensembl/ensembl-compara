@@ -45,6 +45,8 @@ use Data::Dumper;
 use LWP::UserAgent;
 use JSON qw(from_json);
 
+use EnsEMBL::Selenium;
+
 use vars qw( $SCRIPT_ROOT $SERVERROOT );
 
 BEGIN {
@@ -81,12 +83,18 @@ my $CONF          = read_config($config_path);
 my $TESTS         = read_config($tests_path); 
 my $SPECIES       = read_config($species_path);
 
+my $url     = $CONF->{'url'};
+my $host    = $CONF->{'host'};
+my $port    = $CONF->{'port'}     || '4444';
+my $browser = $CONF->{'browser'}  || 'firefox';
+my $timeout = $CONF->{'timeout'}  || 50000;
+
 ## Validate main configuration
-unless ($CONF->{'host'}) {
+unless ($host) {
   die "You must specify the selenium host, e.g. 127.0.0.1";
 }
 
-unless ($CONF->{'url'} && $CONF->{'url'} =~ /^http/) {
+unless ($url && $url =~ /^http/) {
   die "You must specify a url to test against, eg. http://www.ensembl.org";
 }
 
@@ -103,17 +111,15 @@ unless (ref($TESTS->{'modules'}[0]) eq 'HASH'
 
 print "Configuration OK - running tests...\n\n";
 
-my $host    = $CONF->{'host'};
-my $port    = $CONF->{'port'}     || '4444';
-my $browser = $CONF->{'browser'}  || 'firefox';
-my $timeout = $CONF->{'timeout'}  || 50000;
-
 ## Allow overriding of verbosity on command line or in configurations
 unless (defined($verbose)) {
   $verbose = defined($TESTS->{'verbose'}) ? $TESTS->{'verbose'}
                 : defined($CONF->{'verbose'}) ? $CONF->{'verbose'} 
                 : 0;
 }
+
+## Create Selenium object
+my $selenium;
 
 unless ($DEBUG) {
   ## Check to see if the selenium server is online 
@@ -123,18 +129,21 @@ unless ($DEBUG) {
   if ($response->content ne 'OK') { 
     die "Selenium Server is offline or host configuration is wrong !!!!\n";
   }
+  $selenium = EnsEMBL::Selenium->new(
+                                     _ua         => $ua,
+                                     host        => $host,
+                                     port        => $port,
+                                     browser     => $browser,
+                                     browser_url => $CONF->{'url'},
+                                    ); 
 }
 
 ## Basic config for test modules
 my $test_config = {
-                    url     => $CONF->{'url'},
-                    host    => $host,
-                    port    => $port,
-                    browser => $browser,
-                    conf    => {
-                                release => $release,
-                                timeout => $timeout,
-                                },
+                    sel     => $selenium,
+                    url     => $url,
+                    release => $release,
+                    timeout => $timeout,
                     verbose => $verbose,  
                   };
 
@@ -168,6 +177,9 @@ if ($DEBUG) {
   print Dumper($test_suite);
 }
 
+our $pass = 0;
+our $fail = 0;
+
 ## Run any non-species-specific tests first 
 foreach my $module (@{$test_suite->{'non_species'}}) {
   my $module_name = $module->{'name'};
@@ -183,7 +195,12 @@ foreach my $sp (keys %{$test_suite->{'species'}}) {
   }
 }
 
-print "TEST RUN COMPLETED\n\n";
+my $total = $pass + $fail;
+
+print "TEST RUN COMPLETED!\n";
+print "Ran $total tests:\n";
+print "- $pass succeeded\n";
+print "- $fail failed\n";
 
 ################# SUBROUTINES #############################################
 
@@ -234,6 +251,10 @@ sub run_test {
         my ($code, $message) = $object->$method(@params);
         if ($code eq 'fail' || $config->{'verbose'}) { 
           write_to_log($code, $message);
+          $code eq 'pass' ? $pass++ : $fail++;
+        }
+        else {
+          $pass++;
         }
       }
       else {
@@ -248,7 +269,7 @@ sub write_to_log {
 ### TODO Replace with proper logging
   my ($code, $message) = @_;
   my ($sec, $min, $hour, $day, $month, $year) = gmtime;
-  my $timestamp = sprintf('at %s:%s%s on %s-%s-%s', $hour, $min, $sec, $day, $month, $year);
+  my $timestamp = sprintf('at %01d:%01d:%01d on %01d-%01d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
   print uc($code).": $message $timestamp\n";
 }
 
