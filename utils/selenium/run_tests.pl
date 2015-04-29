@@ -173,9 +173,9 @@ foreach my $module (@{$TESTS->{'modules'}}) {
   }
 }
 
-if ($DEBUG) {
-  print Dumper($test_suite);
-}
+#if ($DEBUG) {
+#  print Dumper($test_suite);
+#}
 
 our $pass = 0;
 our $fail = 0;
@@ -196,9 +196,10 @@ foreach my $sp (keys %{$test_suite->{'species'}}) {
 }
 
 my $total = $pass + $fail;
+my $plural = $total > 1 ? 's' : '';
 
 print "TEST RUN COMPLETED!\n";
-print "Ran $total tests:\n";
+print "Ran $total test$plural:\n";
 print "- $pass succeeded\n";
 print "- $fail failed\n";
 
