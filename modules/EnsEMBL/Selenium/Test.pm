@@ -53,6 +53,38 @@ sub new {
   return $self;
 }
 
+############### GENERIC TESTS #################################
+
+sub test_lh_menu {
+### Tests all links on lefthand menu of a given page type (e.g. Gene)
+  my $self    = shift;
+  my $sel     = $self->sel;
+  my $current = $self->get_current_url();
+  my $goto    = $self->default_url;
+
+  $self->no_mirrors_redirect;
+  $sel->open_ok($goto);
+  if ($sel->ensembl_wait_for_page_to_load) {
+    $sel->ensembl_click_all_links('.local_context');
+  }
+  else {
+    return ('fail', "Couldn't open page $goto to check navigation links");
+  }
+}
+
+sub default_url {
+  my $self = shift;
+  return ('bug', "default_url method not implemented in test module ".ref($self);
+}
+
+sub test_debug {
+### Quick'n'dirty test to ensure that the test script is working!
+  my $self = shift;
+  return ('pass', 'DEBUG OK!');
+}
+
+############### ACCESSORS AND UTILITY METHODS ################## 
+
 sub url     {$_[0]->{_url}};
 sub sel     {$_[0]->{_sel}};
 sub verbose {$_[0]->{_verbose}};
