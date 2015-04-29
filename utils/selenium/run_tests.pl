@@ -40,6 +40,7 @@ no warnings 'uninitialized';
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
 use Getopt::Long;
+use Data::Dumper;
 
 use LWP::UserAgent;
 use JSON qw(from_json);
@@ -56,13 +57,15 @@ BEGIN {
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;    
 }
 
-my ($release, $config, $tests, $species);
+my ($release, $config, $tests, $species, $verbose, $DEBUG);
 
 GetOptions(
   'release=s' => \$release,
   'config=s'  => \$config,
   'tests=s'   => \$tests,
   'species=s' => \$species,
+  'verbose=s' => \$verbose,
+  'DEBUG'   => \$DEBUG,
 );
 
 die 'Please provide configuration files!' unless ($config && $tests);
@@ -104,15 +107,22 @@ my $host    = $CONF->{'host'};
 my $port    = $CONF->{'port'}     || '4444';
 my $browser = $CONF->{'browser'}  || 'firefox';
 my $timeout = $CONF->{'timeout'}  || 50000;
-my $verbose = $CONF->{'verbose'}  || 0;
 
-# check to see if the selenium server is online(URL returns OK if server is online).
-my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
-$ua->timeout(10);
-my $response = $ua->get("http://$host:$port/selenium-server/driver/?cmd=testComplete");
-if($response->content ne 'OK') { 
-  print "\nSelenium Server is offline or IP Address is wrong !!!!\n";
-  exit;
+## Allow overriding of verbosity on command line or in configurations
+unless (defined($verbose)) {
+  $verbose = defined($TESTS->{'verbose'}) ? $TESTS->{'verbose'}
+                : defined($CONF->{'verbose'}) ? $CONF->{'verbose'} 
+                : 0;
+}
+
+unless ($DEBUG) {
+  ## Check to see if the selenium server is online 
+  my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
+  $ua->timeout(10);
+  my $response = $ua->get("http://$host:$port/selenium-server/driver/?cmd=testComplete");
+  if ($response->content ne 'OK') { 
+    die "Selenium Server is offline or host configuration is wrong !!!!\n";
+  }
 }
 
 ## Basic config for test modules
@@ -152,6 +162,10 @@ foreach my $module (@{$TESTS->{'modules'}}) {
   else {
     push @{$test_suite->{'non_species'}}, $module,
   }
+}
+
+if ($DEBUG) {
+  print Dumper($test_suite);
 }
 
 ## Run any non-species-specific tests first 
