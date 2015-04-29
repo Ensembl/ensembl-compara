@@ -1031,8 +1031,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         var disp   = e.pageX - e.data.x;
         var coords = { left: e.data.left, width: e.data.width };
 
-        disp = Math.max(disp, e.data.panel.dragRegion.l + 1 - coords.left);
-        disp = Math.min(e.data.panel.dragRegion.r - coords.left - coords.width + 1, disp);
+        if (e.data.action !== 'right') {
+          disp = Math.max(disp, e.data.panel.dragRegion.l + 1 - coords.left);
+        }
+        if (e.data.action !== 'left') {
+          disp = Math.min(e.data.panel.dragRegion.r - coords.left - coords.width + 1, disp);
+        }
 
         switch (e.data.action) {
           case 'left':
