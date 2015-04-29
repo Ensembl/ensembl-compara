@@ -231,7 +231,7 @@ sub run_test {
   my $package = "EnsEMBL::Selenium::Test::$module";
   eval("use $package");
   if ($@) {
-    write_to_log('bug', "Couldn't use $package\n$@");
+    write_to_log('bug', "Couldn't use $package\n$@", 'run_tests.pl');
     return;
   }
 
@@ -245,7 +245,7 @@ sub run_test {
   }
 
   unless (@test_names) {
-    write_to_log('bug', "No methods specified for test module $package");
+    write_to_log('bug', "No methods specified for test module $package", 'run_tests.pl');
     return;
   }
 
@@ -260,9 +260,9 @@ sub run_test {
   }
   else {
     ## Check that site being tested is up
-    my ($code, $message) = $package->check_website;
-    if ($code eq 'fail') {
-      write_to_log($code, "ABORTING TESTS ON $module: $message");
+    my @response = $package->check_website;
+    if ($response[0] eq 'fail') {
+      write_to_log($response[0], "ABORTING TESTS ON $module: $message", $module, $method);
       return;
     }
 
@@ -274,17 +274,17 @@ sub run_test {
         @params = @{$tests->{$name}||[]};
       }
       if ($object->can($method)) {
-        my ($code, $message) = $object->$method(@params);
-        if ($code eq 'fail' || $config->{'verbose'}) { 
-          write_to_log($code, $message);
-          $code eq 'pass' ? $pass++ : $fail++;
+        my @response = $object->$method(@params);
+        if ($response[0] eq 'fail' || $config->{'verbose'}) { 
+          write_to_log(@response);
+          $response[0] eq 'pass' ? $pass++ : $fail++;
         }
         else {
           $pass++;
         }
       }
       else {
-        write_to_log('bug', "No such method $method in package $package");
+        write_to_log('bug', "No such method $method in package $package", 'run_tests.pl');
       }
     }
   }
@@ -293,14 +293,14 @@ sub run_test {
 sub write_to_log {
 ### Write a status line
 ### TODO Replace with proper logging
-  my ($code, $message) = @_;
+  my ($code, $message, $module, $method) = @_;
   my ($sec, $min, $hour, $day, $month, $year) = gmtime;
   my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
   if ($log) {
-    print $log uc($code).": $message $timestamp\n";
+    print $log uc($code)." in $module::$method - $message $timestamp\n";
   }
   else {
-    print uc($code).": $message $timestamp\n";
+    print uc($code)." in $module::$method - $message $timestamp\n";
   }
 }
 
