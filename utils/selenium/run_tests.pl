@@ -234,6 +234,14 @@ sub run_test {
     write_to_log('bug', "Couldn't use $package\n$@");
     return;
   }
+
+  ## Check that site being tested is up
+  my ($code, $message) = $package->check_website;
+  if ($code eq 'fail') {
+    write_to_log($code, "ABORTING TESTS ON $module: $message");
+    return;
+  }
+
   my (@test_names, $has_test_params);
   if (ref($tests) eq 'ARRAY') {
     @test_names = @{$tests||[]};
