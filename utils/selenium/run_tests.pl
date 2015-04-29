@@ -106,7 +106,6 @@ my $browser = $CONF->{'browser'}  || 'firefox';
 my $timeout = $CONF->{'timeout'}  || 50000;
 my $verbose = $CONF->{'verbose'}  || 0;
 
-=pod
 # check to see if the selenium server is online(URL returns OK if server is online).
 my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
 $ua->timeout(10);
@@ -115,7 +114,6 @@ if($response->content ne 'OK') {
   print "\nSelenium Server is offline or IP Address is wrong !!!!\n";
   exit;
 }
-=cut
 
 ## Basic config for test modules
 my $test_config = {
