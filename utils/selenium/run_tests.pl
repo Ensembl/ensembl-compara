@@ -68,50 +68,15 @@ GetOptions(
 die 'Please provide configuration files!' unless ($config && $tests);
 
 ## Find config files
-my @all_plugins = @{$SiteDefs::ENSEMBL_PLUGINS || []};
-push @all_plugins, ('root', $SERVERROOT);
-my ($config_path, $tests_path, $species_path);
-while (my ($plugin_name, $dir) = splice @all_plugins, 0, 2) {
-  my $path = $dir.'/utils/selenium/conf/'.$config;
-  if (!$config_path && $config && -e $path) {
-    $config_path = $path;
-  }
-  $path = $dir.'/utils/selenium/conf/'.$tests;
-  if (!$tests_path && $tests && -e $path) {
-    $tests_path = $path;
-  }
-  $path = $dir.'/utils/selenium/conf/'.$species;
-  if (!$species_path && $species && -e $path) {
-    $species_path = $path;
-  }
-}
+my ($config_path, $tests_path, $species_path) = find_configs($SERVERROOT);
 
-die "Couldn't find configuration files $config and/or $tests!" unless ($config_path && $tests_path);
+die "Couldn't find configuration file $config!" unless $config_path;
+die "Couldn't find configuration file $tests!" unless $tests_path;
 
 ## Read configurations
-my ($conf_string, $test_string, $spp_string);
-{
-  local $/;
-  my $fh;
-  if ($config_path) {
-    open $fh, '<', $config_path;
-    $conf_string .= $_ for <$fh>;
-    close $fh;
-  }
-  if ($tests_path) {
-    open $fh, '<', $tests_path;
-    $test_string .= $_ for <$fh>;
-    close $fh;
-  }
-  if ($species_path) {
-    open $fh, '<', $species_path;
-    $spp_string .= $_ for <$fh>;
-    close $fh;
-  }
-} 
-my $CONF          = $conf_string ? from_json($conf_string)  : {};
-my $TESTS         = $test_string ? from_json($test_string)  : {};
-my $SPECIES       = $spp_string ? from_json($spp_string) : {};
+my $CONF          = read_config($config_path); 
+my $TESTS         = read_config($tests_path); 
+my $SPECIES       = read_config($species_path);
 
 ## Validate main configuration
 unless ($CONF->{'host'}) {
@@ -132,6 +97,8 @@ unless (ref($TESTS->{'modules'}[0]) eq 'HASH'
             && scalar(@{$TESTS->{'modules'}[0]{'tests'}||[]})) {
   die "You must specify at least one test method, eg. ['homepage']";
 }
+
+print "Configuration OK - running tests...";
 
 my $browser = $CONF->{'browser'}  || 'firefox';
 my $port    = $CONF->{'port'}     || '4444';
@@ -256,4 +223,48 @@ sub write_to_log {
   print "$message\n";
 }
 
+sub read_config {
+### Read a config file and convert from JSON to a perl hash
+  my $path = shift;
+  my $data = {};
+  my $json;
+  {
+    local $/;
+    my $fh;
+    if ($path) {
+      open $fh, '<', $path;
+      $json .= $_ for <$fh>;
+      close $fh;
+    }
+  }
+  if ($json) {
+    $data = from_json($json);
+  }
+  return $data;
+}
 
+sub find_configs {
+### Go through plugins and find the first config file of each type
+  my $SERVERROOT = shift; 
+  my ($config_path, $tests_path, $species_path);
+
+  my @all_plugins = @{$SiteDefs::ENSEMBL_PLUGINS || []};
+  push @all_plugins, ('root', $SERVERROOT);
+
+  while (my ($plugin_name, $dir) = splice @all_plugins, 0, 2) {
+    my $path = $dir.'/utils/selenium/conf/'.$config;
+    if (!$config_path && $config && -e $path) {
+      $config_path = $path;
+    }
+    $path = $dir.'/utils/selenium/conf/'.$tests;
+    if (!$tests_path && $tests && -e $path) {
+      $tests_path = $path;
+    }
+    $path = $dir.'/utils/selenium/conf/'.$species;
+    if (!$species_path && $species && -e $path) {
+      $species_path = $path;
+    }
+  }
+
+  return ($config_path, $tests_path, $species_path);
+}
