@@ -31,6 +31,9 @@
   Example of usage:
 
   perl run_tests.pl --release=80 --config=ensembl.conf --tests=link_checker.conf --species=release_80_species.conf
+
+  Important note: the DEBUG flag allows you to run dummy tests that don't rely on selenium,
+  so that you can check this script and the base test modules for errors
 =cut
 
 use strict;
@@ -198,6 +201,7 @@ foreach my $sp (keys %{$test_suite->{'species'}}) {
 my $total = $pass + $fail;
 my $plural = $total > 1 ? 's' : '';
 
+print "\n==========================\n";
 print "TEST RUN COMPLETED!\n";
 print "Ran $total test$plural:\n";
 print "- $pass succeeded\n";
@@ -270,7 +274,7 @@ sub write_to_log {
 ### TODO Replace with proper logging
   my ($code, $message) = @_;
   my ($sec, $min, $hour, $day, $month, $year) = gmtime;
-  my $timestamp = sprintf('at %01d:%01d:%01d on %01d-%01d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
+  my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
   print uc($code).": $message $timestamp\n";
 }
 
