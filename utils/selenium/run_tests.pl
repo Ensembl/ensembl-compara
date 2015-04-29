@@ -100,8 +100,9 @@ unless (ref($TESTS->{'modules'}[0]) eq 'HASH'
 
 print "Configuration OK - running tests...";
 
-my $browser = $CONF->{'browser'}  || 'firefox';
+my $host    = $CONF->{'host'};
 my $port    = $CONF->{'port'}     || '4444';
+my $browser = $CONF->{'browser'}  || 'firefox';
 my $timeout = $CONF->{'timeout'}  || 50000;
 my $verbose = $CONF->{'verbose'}  || 0;
 
@@ -119,7 +120,7 @@ if($response->content ne 'OK') {
 ## Basic config for test modules
 my $test_config = {
                     url     => $CONF->{'url'},
-                    host    => $CONF->{'host'},
+                    host    => $host,
                     port    => $port,
                     browser => $browser,
                     conf    => {
