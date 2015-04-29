@@ -80,7 +80,7 @@ sub ensembl_open_zmenu {
   my ($self, $panel, $area_tag, $track_name) = @_;
   my $tag = $area_tag ?  "area[$area_tag]" : 'area[href^=#vdrag]';  
 
-  return ('pass', "  Testing ZMenu $track_name on the $panel panel)" if $self->verbose;
+  return ('pass', "  Testing ZMenu $track_name on the $panel panel") if $self->verbose;
   $self->run_script(qq/
     Ensembl.PanelManager.panels.$panel.elLk.img.one('click', function (e) {
       var coords = Ensembl.PanelManager.panels.$panel.elLk.map.find('$tag').attr('coords').split(','); 
