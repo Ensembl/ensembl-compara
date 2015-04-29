@@ -261,11 +261,12 @@ sub _draw_wiggle_points_as_line {
 sub _draw_wiggle_points_as_graph {
   my ($self, $c, $features,$parameters) = @_;
 
+  my $height = $c->{'pix_per_score'} * $parameters->{'max_score'};
   $self->push($self->Barcode({
     values    => $features,
     x         => 1,
     y         => 0,
-    height    => $c->{'pix_per_score'} * $parameters->{'max_score'},
+    height    => $height,
     unit      => $parameters->{'unit'},
     max       => $parameters->{'max_score'},
     colours   => [$c->{'colour'}],
@@ -321,8 +322,9 @@ sub _draw_guideline {
 sub do_draw_wiggle {
   my ($self, $features, $parameters, $colours, $labels) = @_;
 
-  my $slice         = $self->{'container'};
-  my $row_height    = $self->my_config('height') || 60;
+  my $slice = $self->{'container'};
+  my $row_height =
+    $parameters->{'height'} || $self->my_config('height') || 60;
  
   # max_score: score at top of y-axis on graph
   # min_score: score at bottom of y-axis on graph

@@ -108,8 +108,7 @@ sub render_normal {
     max       => $agg->{'max'},
     colours   => \@greyscale,
   }));
-
-  $self->_render_hidden_bgd($h) if @{$agg->{'values'}} && $self->my_config('addhiddenbgd');
+  $self->_render_hidden_bgd($h) if @{$agg->{'values'}};
   
   $self->errorTrack("No features from '$name' on this strand") unless @{$agg->{'values'}} || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
 }
@@ -256,7 +255,8 @@ sub draw_features {
       $max_score = $gang->{'max'};
     }
 
-    # render wiggle plot        
+    # render wiggle plot
+    my $height = $self->my_config('height') || 60;
     $self->draw_wiggle_plot($agg->{'values'}, {
       min_score    => 0,
       max_score    => $max_score,
@@ -264,8 +264,10 @@ sub draw_features {
       axis_colour  => $colour,
       no_titles    => defined $no_titles,
       unit         => $agg->{'unit'},
+      height       => $height,
       graph_type   => 'bar',
     });
+    $self->_render_hidden_bgd($height) if @{$agg->{'values'}};
   }
 
   warn q{bigwig glyphset doesn't draw blocks} if !$wiggle || $wiggle eq 'both';
