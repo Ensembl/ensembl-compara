@@ -235,13 +235,6 @@ sub run_test {
     return;
   }
 
-  ## Check that site being tested is up
-  my ($code, $message) = $package->check_website;
-  if ($code eq 'fail') {
-    write_to_log($code, "ABORTING TESTS ON $module: $message");
-    return;
-  }
-
   my (@test_names, $has_test_params);
   if (ref($tests) eq 'ARRAY') {
     @test_names = @{$tests||[]};
@@ -260,9 +253,19 @@ sub run_test {
 
   if ($error) {
     ## Variable $object is actually an error code
+    ## N.B. In this situation, 'pass' is treated as an error
+    ## because it means we are aborting this module's tests
+    ## (e.g. if it's a Variation test and species has no variation)
     write_to_log($object, $error);
   }
   else {
+    ## Check that site being tested is up
+    my ($code, $message) = $package->check_website;
+    if ($code eq 'fail') {
+      write_to_log($code, "ABORTING TESTS ON $module: $message");
+      return;
+    }
+
     ## Run the tests
     foreach my $name (@test_names) {
       my $method = 'test_'.$name;
