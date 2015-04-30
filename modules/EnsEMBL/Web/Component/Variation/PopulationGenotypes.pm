@@ -271,57 +271,14 @@ sub format_table {
       }  
 
 
-      # Allele: frequency (count)
-      my %alleles_list;
-      my @allele_freq = @{$data->{'AlleleFrequency'}};
-      foreach my $gt (@{$data->{'Alleles'}}) {
-        next unless $gt =~ /(\w|\-)+/;
-        my $allele_freq  = $self->format_number(shift @allele_freq);
-        my $allele_count = shift @{$data->{'AlleleCount'}} || undef;
-        $alleles_list{$gt} = {'freq' => $allele_freq, 'count' => $allele_count};
-      }
-
-      my $count_a = 0;
-      foreach my $gt (sort { ($a !~ /$ref_allele/ cmp $b !~ /$ref_allele/) || $a cmp $b } keys %alleles_list) {
-        my $gt_label = $gt;
-        foreach my $al (keys(%$al_colours)) {
-          $gt_label =~ s/$al/$al_colours->{$al}/g;
-        } 
-        $gt_label = substr($gt_label,0,10).'...' if (length($gt)>10);
-
-        $count_a ++;
-        my $sep = ($count_a == scalar(@{$data->{'Alleles'}})) ? '' : ';padding-right:6px';
-        my $width = (length($gt) > 1) ? 120 : 105;
-        $pop_row{'Allele'} .= sprintf(qq{<div style="float:left;width:%ipx%s"><b>%s</b>: %s (%i)%s</div>},
-                                      $width, $sep, $gt_label, $alleles_list{$gt}{'freq'}, $alleles_list{$gt}{'count'});
-      }
-      $pop_row{'Allele'} = '<div>'.$pop_row{'Allele'}.'<div style="clear:both"/></div>' if ($pop_row{'Allele'});
+      # Column "Allele: frequency (count)"
+      my $allele_content = $self->format_allele_genotype_content($data,'Allele',$ref_allele);
+      $pop_row{'Allele'} = qq{<div>$allele_content<div style="clear:both"/></div>} if ($allele_content);
 
 
-      # Genotype: frequency (count)
-      my %genotypes_list;
-      my @genotype_freq = @{$data->{'GenotypeFrequency'} || []};
-      foreach my $gt (@{$data->{'Genotypes'}}) {
-        my $genotype_freq  = $self->format_number(shift @genotype_freq);
-        my $genotype_count = shift @{$data->{'GenotypeCount'}} || undef;
-        $genotypes_list{$gt} = {'freq' => $genotype_freq, 'count' => $genotype_count};
-      }
-
-      my $count_g = 0;
-      foreach my $gt (sort { ($a !~ /$ref_allele\|$ref_allele/ cmp $b !~ /$ref_allele\|$ref_allele/) || $a cmp $b } keys %genotypes_list) {
-        my $gt_label = $gt;
-        foreach my $al (keys(%$al_colours)) {
-          $gt_label =~ s/$al/$al_colours->{$al}/g;
-        }
-        $gt_label = substr($gt_label,0,10).'...' if (length($gt)>10);
-
-        $count_g ++;
-        my $sep = ($count_g == scalar(@{$data->{'Genotypes'}})) ? '' : ';padding-right:6px'; 
-        my $width = (length($gt) > 4) ? '140px' : '125px';
-        $pop_row{"Genotype"} .= sprintf(qq{<div style="float:left;width:%ipx%s"><b>%s</b>: %s (%i)%s</div>},
-                                        $width, $sep, $gt_label, $genotypes_list{$gt}{'freq'}, $genotypes_list{$gt}{'count'});
-      }
-      $pop_row{'Genotype'} = '<div>'.$pop_row{'Genotype'}.'<div style="clear:both"/></div>' if ($pop_row{'Genotype'});
+      # Column "Genotype: frequency (count)"
+      my $genotype_content = $self->format_allele_genotype_content($data,'Genotype',$ref_allele);
+      $pop_row{'Genotype'} = qq{<div>$genotype_content<div style="clear:both"/></div>} if ($genotype_content);
 
 
       ## Add the population description: this will appear when the user move the mouse on the population name
@@ -508,5 +465,43 @@ sub generic_group_link {
   return sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations &rarr;</a></p>', $pop_url, $project_name);
 }
 
+sub format_allele_genotype_content {
+  my $self       = shift;
+  my $data       = shift;
+  my $type       = shift; # 'Allele' or 'Genotype'
+  my $ref_allele = shift;
+
+  my $al_colours = $self->object->get_allele_genotype_colours;
+
+  my %data_list;
+  my @freqs = @{$data->{$type.'Frequency'} || []};
+  foreach my $gt (@{$data->{$type.'s'}}) {
+    next unless $gt =~ /(\w|\-)+/;
+    my $gt_freq  = $self->format_number(shift @freqs);
+    my $gt_count = shift @{$data->{$type.'Count'}} || undef;
+    $data_list{$gt} = {'freq' => $gt_freq, 'count' => $gt_count};
+  }
+
+  my $content;
+  my $count_data = 0;
+  my $regex = ($type eq 'Genotype') ? $ref_allele.'\|'.$ref_allele : $ref_allele;
+  foreach my $gt (sort { ($a !~ /$regex/ cmp $b !~ /$regex/) || $a cmp $b } keys %data_list) {
+    my $gt_label = $gt;
+    foreach my $al (keys(%$al_colours)) {
+      $gt_label =~ s/$al/$al_colours->{$al}/g;
+    }
+    $gt_label = substr($gt_label,0,10).'...' if (length($gt)>10);
+
+    $count_data ++;
+    my $sep = ($count_data == scalar(keys(%data_list))) ? '' : ';padding-right:6px';
+    my $width = (length($gt) > 1) ? 120 : 105;
+    if ($type eq 'Genotype') {
+      $width = (length($gt) > 4) ? 140 : 125;
+    }
+    $content .= sprintf(qq{<div style="float:left;width:%ipx%s"><b>%s</b>: %s (%i)%s</div>},
+                        $width, $sep, $gt_label, $data_list{$gt}{'freq'}, $data_list{$gt}{'count'});
+  }
+  return $content;
+}
 
 1;
