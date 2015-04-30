@@ -15,6 +15,38 @@
  */
 
 (function($) {
+  var rows_per_subtable = 1000;
+
+  function beat(def,sleeplen) {
+    return def.then(function(data) {
+      var d = $.Deferred();
+      setTimeout(function() { d.resolve(data); },sleeplen);
+      return d;
+    });
+  }
+
+  function loop(def,fn,group,sleeplen) {
+    return def.then(function(raw_input) {
+      var input = [];
+      $.each(raw_input,function(a,b) { input.push([a,b]); });
+      d = $.Deferred().resolve(input);
+      var output = [];
+      for(var ii=0;ii<input.length;ii+=group) {
+        (function(i) {
+          d = beat(d.then(function(j) {
+            for(j=0;j<group && i+j<input.length;j++) {
+              var c = fn(input[i+j][0],input[i+j][1]);
+              if(c !== undefined) {
+                output.push(c);
+              }
+            }
+            return $.Deferred().resolve(output);
+          }),sleeplen);
+        })(ii);
+      }
+      return d;
+    });
+  }
 
   function new_th(index,colconf,$header) {
     var text = colconf.label || colconf.title || colconf.key;
@@ -45,7 +77,7 @@
     $.each(config.columns,function(i,data) {
       columns.push(new_th(i,data,$header));
     });
-    return '<thead><tr class="ss_header">'+columns.join('')+"</tr></thead>";
+    return '<thead><tr>'+columns.join('')+"</tr></thead>";
   }
   
   function add_sort($table,key,clear) {
@@ -75,28 +107,79 @@
     }); 
   }
 
+  function new_subtable($table) {
+    return $("<table><tbody></tbody></table>");
+  }
+
   function extend_rows($table,rows) {
     var $thead = $('thead',$table);
     var $tbody = $('tbody',$table);
     var nrows = $('tr',$tbody).length;
     var ncols = $('th',$thead).length;
-    for(var i=nrows;i<rows[1];i++) {
-      var $row = $('<tr/>').appendTo($tbody);
-      for(var j=0;j<ncols;j++) {
-        $('<td/>').appendTo($row);
+    var row = "<tr>";
+    for(var i=0;i<ncols;i++) {
+      row += "<td></td>";
+    }
+    row += "</tr>";
+    var target = rows[1];
+    var $subtables = $('table',$table);
+    for(var i=0;i<$subtables.length;i++) {
+      var $subtable;
+      if(i+1 >= $subtables.length) {
+        $subtable = new_subtable($table).appendTo($('.new_table',$table));
+      } else {
+        $subtable = $subtables.eq(i+1);
+      }
+      var nsrows = $('tbody tr',$subtable).length;
+      target-= nsrows;
+    }
+    for(var i=0;i<$subtables.length;i++) {
+      var $subtable = $subtables.eq(i+1);
+      var nsrows = $('tbody tr',$subtable).length;
+      if(nsrows < rows_per_subtable) {
+        var to_add = target;
+        if(to_add+nsrows > rows_per_subtable)
+          to_add = rows_per_subtable - nsrows;
+        var html = "";
+        for(var j=0;j<to_add;j++) { html += row; }
+        $subtable.append(html);
+        target -= to_add;
       }
     }
   }
 
-  function update_row($table,data,row,columns) {
-    var $row = $('tbody tr',$table).eq(row);
-    var $cells = $('td',$row);
-    var di = 0;
+  function update_row2($table,data,row,columns) {
+    var table_num = Math.floor(row/rows_per_subtable);
+    var $subtable = $('table',$table).eq(table_num+1);
+    var markup = $subtable.data('markup') || [];
+    var idx = row-table_num*rows_per_subtable;
+    markup[idx] = markup[idx] || [];
+    di = 0;
     for(var i=0;i<columns.length;i++) {
-      if(!columns[i])
-        continue;
-      $cells.eq(i).html(data[di++]);
+      if(columns[i])
+        markup[idx][i] = data[di++];
     }
+    $subtable.data('markup',markup);
+    return table_num;
+  }
+
+  function update_row3($table,row) {
+    var table_num = Math.floor(row/rows_per_subtable);
+    var $subtable = $('table',$table).eq(table_num+1);
+    var markup = $subtable.data('markup') || [];
+    var html = "";
+    for(var i=0;i<markup.length;i++) {
+      html += "<tr>";
+      for(var j=0;j<markup[i].length;j++) {
+        if(markup[i][j]) {
+          html += "<td>"+(markup[i][j])+"</td>";
+        } else {
+          html += "<td></td>";
+        }
+      }
+      html += "</tr>";
+    }
+    $('tbody',$subtable).html(html);
   }
 
   $.fn.new_table_tabular = function(config,data) {
@@ -104,7 +187,7 @@
       layout: function($table) {
         var config = $table.data('config');
         var header = new_header(config);
-        return '<table class="ss new_table">'+header+'<tbody></tbody></table>';
+        return '<div class="new_table"><table>'+header+'<tbody></tbody></table></div>';
       },
       go: function($table,$el) {
         $('th',$table).click(function(e) {
@@ -114,9 +197,15 @@
       add_data: function($table,data,rows,columns) {
         console.log("add_data");
         extend_rows($table,rows);
-        for(var i=rows[0];i<rows[1];i++) {
-          update_row($table,data[i-rows[0]],i,columns);
-        }
+        var subtabs = [];
+        $.each(data,function(i,val) {
+          subtabs[update_row2($table,val,i+rows[0],columns)]=1;
+        });
+        d = $.Deferred().resolve(subtabs);
+        loop(d,function(tabnum,v) {
+          console.log("updating table "+tabnum);
+          update_row3($table,tabnum);
+        },2,0);
       }
     };
   }; 

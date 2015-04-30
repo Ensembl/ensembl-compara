@@ -123,7 +123,12 @@ td:hover a.hover_show  { display: inline; }
 tr.row-sub td { font-size: 85%; }
 tr.row-sub td:first-child { text-indent:24px; }
 
-table.new_table th { cursor: pointer; padding: 2px 20px 2px 4px; }
+.new_table { border: 1px [[NEUTRAL_BORDER]] solid; margin: 0 0 16px; }
+.new_table table    { table-layout: fixed;  width: 100%; border-spacing: 0; }
+.new_table th { cursor: pointer; padding: 2px 20px 2px 4px; background-color: [[NEUTRAL_BORDER]]; line-height: 16px; }
+.new_table tbody tr:nth-child(odd) { background-color: #eee; }
+.new_table th,.new_table td { padding: 4px; }
+
 .new_table_wrapper { clear: both; margin: 0 0 16px; }
 .new_table_top     { background-color: #8b9bc1; border: 1px solid #ccc; color: #fff; height: 22px; padding: 7px 0 5px 10px; }
 .new_table_section { float: left; width: 33%; height: 100%; }
