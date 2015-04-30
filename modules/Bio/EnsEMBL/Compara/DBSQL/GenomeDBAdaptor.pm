@@ -27,20 +27,16 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
 
 =head1 SYNOPSIS
 
   use Bio::EnsEMBL::Registry;
-
   my $reg = "Bio::EnsEMBL::Registry";
-
   $reg->load_registry_from_db(-host=>"ensembldb.ensembl.org", -user=>"anonymous");
+
   my $genome_db_adaptor = $reg->get_adaptor("Multi", "compara", "GenomeDB");
 
-  $genome_db_adaptor->store($genome_db);
-
-  $genome_db = $genome_db_adaptor->fetch_by_dbID(22);
   $all_genome_dbs = $genome_db_adaptor->fetch_all();
   $genome_db = $genome_db_adaptor->fetch_by_name_assembly("Homo sapiens", 'NCBI36');
   $genome_db = $genome_db_adaptor->fetch_by_registry_name("human");

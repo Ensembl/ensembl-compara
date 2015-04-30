@@ -22,16 +22,10 @@ FamilyAdaptor - This object represents a family coming from a database of protei
 
 =head1 SYNOPSIS
 
-  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  my $fa = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'Compara', 'Family');
+  my $ma = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'Compara', 'SeqMember');
 
-  my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-user   => 'myusername',
-						       -dbname => 'myfamily_db',
-						       -host   => 'myhost');
-
-  my $fa = $db->get_FamilyAdaptor;
   my $fam = $fa->fetch_by_stable_id('ENSF000013034');
-
-  my $ma = $db->get_SeqMemberAdaptor;
   my $member = $ma->fetch_by_stable_id('YSV4_CAEEL')};   # This is UniProt accession symbol
   my $fam = $fa->fetch_by_SeqMember($member);
 
