@@ -459,8 +459,8 @@ sub variation_table {
         
         if ($tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
           #my $var                  = $snp->variation;
-          my $evidence             = $snp->get_all_evidence_values || [];
-          my $clin_sig             = $snp->get_all_clinical_significance_states || [];
+          my $evidences            = $snp->get_all_evidence_values || [];
+          my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
           my $variation_name       = $snp->variation_name;
           my $var_class            = $snp->var_class;
           my $translation_start    = $transcript_variation->translation_start;
@@ -495,30 +495,9 @@ sub variation_table {
           my $gmaf   = $snp->minor_allele_frequency; # global maf
              $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
 
-          my $status = join("",
-            map {
-              sprintf(
-                '<img src="/i/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
-                $_, $_, $_
-              )
-            } @$evidence
-          );
+          my $status = $self->render_evidence_status($evidences);
 
-          my %clin_sign_icon;
-          foreach my $cs (@{$clin_sig}) {
-            my $icon_name = $cs;
-            $icon_name =~ s/ /-/g;
-            $clin_sign_icon{$cs} = $icon_name;
-          }
-
-          $clin_sig = join("",
-            map {
-              sprintf(
-                '<img src="/i/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
-                $clin_sign_icon{$_}, $_, $_
-              )
-            } @$clin_sig
-          );
+          my $clin_sig = $self->render_clinical_significance($clin_sigs);
 
           my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
           
