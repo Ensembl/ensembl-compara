@@ -104,78 +104,26 @@
     widgets[view.format].add_data($table,data.data,rows,
                                   data.region.columns);
   }
-
-  function eliminate_one(base,elim) {
-    var out = []; 
-    if((base[1] != -1 && elim[0] >= base[1]) ||                 
-       (elim[1] != -1 && elim[1] <= base[0])) {
-      out.push(base);
-    } else {
-      if(elim[0] > base[0]) {
-        out.push([base[0],elim[0],base[2]]);
-      }   
-      if((elim[1] < base[1] || base[1] == -1) && elim[1] != -1) {
-        out.push([elim[1],base[1],base[2]]);
-      }
-      var a = elim[0];
-      var b = elim[1];
-      if(a < base[0]) { a = base[0]; }
-      if(base[1] != -1 && b > base[1]) { b = base[1]; }
-      if(b > a || b == -1) {
-        var newset = [];
-        var any = false;
-        for(var i=0;i<base[2].length;i++) {
-          newset[i] = base[2][i] && !elim[2][i];
-          any = (any || newset[i]);
-        }
-        if(any) {
-          out.push([a,b,newset]);
-        }
-      } 
-    }
-    return out;
-  }
-
-  function eliminate(bases,elims) {
-    for(var i=0;i<elims.length;i++) {
-      var out = []; 
-      for(var j=0;j<bases.length;j++) {
-        out = out.concat(eliminate_one(bases[j],elims[i]));
-      }   
-      bases = out;
-    }
-    return out;
-  }
   
-  function maybe_issue_followon(widgets,$table,data,req,res) {
-    // two convenience functions for converting format
-    function r2a(r) { return [r.rows[0],r.rows[1],r.columns]; }
-    function a2r(a) { return { rows: [a[0],a[1]], columns: a[2] }; }
-
-    var all_cols = [];
-    var all_with_data = [];
-    $.each(req,function(i,r) { all_cols.push(r2a(r)); });
-    $.each(res,function(i,r) { all_with_data.push(r2a(r)); });
-    var remaining = eliminate(all_cols,all_with_data);
-    var outstanding = [];
-    $.each(remaining,function(i,r) { outstanding.push(a2r(r)); });
-    if(outstanding.length) {
-      get_new_data(widgets,$table,data,outstanding);
-    }
-  }
-
   function maybe_use_response(widgets,$table,result) {
     console.log("maybe_use_response");
     var cur_data = $table.data('data');
     var in_data = result.data;
     if(compares_equal(cur_data,in_data)) {
       var got = [];
+      var more = [];
       $.each(result.response,function(i,data) {
         use_response(widgets,$table,data);
         got.push(data.region);
+        if(data.more) {
+          console.log("follow on");
+          more.push({ region: data.request, more: data.more });
+        }
       });
-      console.log("follow on");
-      maybe_issue_followon(widgets,$table,in_data,result.regions,got);
+      if(more.length) {
+        console.log("more="+JSON.stringify(more));
+        get_new_data(widgets,$table,in_data,more);
+      }
     }
   }
 

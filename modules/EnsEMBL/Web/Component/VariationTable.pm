@@ -53,30 +53,37 @@ sub table_content {
   foreach my $region (@$regions) {
     my $columns = $region->{'columns'};
     my $rows = $region->{'rows'};
-    my ($data,$these_cols,$these_rows);
+    my $more_in = $region->{'more'};
+    my ($data,$these_cols,$these_rows,$continue);
     # respond A (if 0,0), A B a b (if 1,1)  C c cc (if 2,2), rest
-    if($rows->[0] == 0 and $columns->[0]) {
+    if(!$more_in) {
       $data = [[qw(A)]];
       $these_cols = [1,0,0,0,0,0,0,0,0,0,0,0,0,0];
       $these_rows = [0,1];
-    } elsif($rows->[0]<2 and ($rows->[1]>1 or $rows->[1]==-1) and $columns->[1]) {
+      $continue = 1;
+    } elsif($more_in == 1) {
       $data = [[qw(A B)],[qw(a b)]];
       $these_cols = [1,1,0,0,0,0,0,0,0,0,0,0,0,0];
       $these_rows = [0,2];
-    } elsif($rows->[0]<3 and ($rows->[1]>2 or $rows->[1]==-1) and $columns->[2]) {
+      $continue = 2;
+    } elsif($more_in == 2) {
       $data = [[qw(A B C)],[qw(a b c)],[qw(aa bb cc)]];
       $these_cols = [1,1,1,0,0,0,0,0,0,0,0,0,0,0];
       $these_rows = [0,-1];
+      $continue = 3;
     } else {
       $data = [[qw(D E F G H I J K L M N)],
                [qw(d e f g h i j k l m n)],
                [qw(dd ee ff gg hh ii jj kk ll mm nn)]];
       $these_cols = [0,0,0,1,1,1,1,1,1,1,1,1,1,1];
       $these_rows = [0,-1];
+      $continue = 0;
     }
     push @out,{
+      request => $regions,
       data => $data,
-      region => { columns => $these_cols, rows => $these_rows }
+      region => { columns => $these_cols, rows => $these_rows },
+      more => $continue,
     };
   }
   return \@out;
