@@ -25,6 +25,7 @@ use JSON qw(from_json);
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::Component::Variation);
+use Time::HiRes qw(time);
 
 sub _init {
   my $self = shift;
@@ -110,19 +111,38 @@ sub ajax_table_content {
       my $t = $hub->param('t');
       @transcripts = grep $_->stable_id eq $t, @transcripts;
     }
- 
-    warn "ct=$consequence_type t=".join(', ',@transcripts)."\n"; 
-    my $data = $self->variation_table($consequence_type,\@transcripts);
-    my @data_out;
+
+    my @outline_cols = qw(ID Source);
     my @cols = qw(ID chr Alleles gmaf class Source Submitters clinsig snptype aachange aacoord sift polyphen Transcript);
+    my %cols_pos;
+    $cols_pos{$cols[$_]} = $_ for(0..$#cols);
+    my @outline_cols_bitmap = (0) x @cols;
+    $outline_cols_bitmap[$cols_pos{$_}] = 1 for @outline_cols;
+
+    my ($data,$more_out,$columns_out,$used_cols);
+    if($more_in) {
+      # Full table required
+      $data = $self->variation_table($consequence_type,\@transcripts);
+      $more_out = 0;
+      $columns_out = [ (1) x @cols ];
+      $used_cols = \@cols;
+    } else {
+      # Outline table only
+      $data = $self->variation_table($consequence_type,\@transcripts,1);
+      $more_out = 1;
+      $columns_out = \@outline_cols_bitmap;
+      $used_cols = \@outline_cols;
+    }
+    my @data_out;
     foreach my $d (@$data) {
-      push @data_out,[ map { $d->{$_} } @cols ];
+      push @data_out,[ map { $d->{$_}||'' } @$used_cols ];
     }
   
     push @out,{
       request => $regions,
       data => \@data_out,
-      region => { columns => [ (1) x @cols ], rows => [0,-1] },
+      region => { columns => $columns_out, rows => [0,-1] },
+      more => $more_out,
     };
   }
   return \@out;
@@ -471,13 +491,14 @@ sub tree {
   return sprintf '<ul class="tree variation_consequence_tree">%s</ul>', $self->tree_html($tree, 1);
 }
 
-
 sub variation_table {
-  my ($self, $consequence_type, $transcripts, $slice) = @_;
+  my ($self, $consequence_type, $transcripts, $outline) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
   
+  my ($ROW,$NONOUTLINE,$SPECIAL) = (0,0,0);
+
   # create some URLs - quicker than calling the url method for every variation
   my $base_url = $hub->url({
     type   => 'Variation',
@@ -525,7 +546,9 @@ sub variation_table {
     my %snps = %{$transcript->__data->{'transformed'}{'snps'} || {}};
    
     next unless %snps;
-    
+   
+    $ROW -= time();
+ 
     my $transcript_stable_id = $transcript->stable_id;
     my $gene_snps            = $transcript->__data->{'transformed'}{'gene_snps'} || [];
     my $tr_start             = $transcript->__data->{'transformed'}{'start'};
@@ -539,7 +562,7 @@ sub variation_table {
       my $transcript_variation = $snps{$raw_id};
       
       next unless $transcript_variation;
-      
+     
       foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
         my $skip = 1;
         
@@ -557,93 +580,103 @@ sub variation_table {
         next if $skip;
         
         if ($tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-          #my $var                  = $snp->variation;
-          my $evidence             = $snp->get_all_evidence_values || [];
-          my $clin_sig             = $snp->get_all_clinical_significance_states || [];
-          my $variation_name       = $snp->variation_name;
-          my $var_class            = $snp->var_class;
-          my $translation_start    = $transcript_variation->translation_start;
-          my $source               = $snp->source_name;
-          my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('-', '-');
-          my $url                  = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
-          my $trans_url            = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
-          my $vf_allele            = $tva->variation_feature_seq;
-          my $allele_string        = $snp->allele_string;
-             $allele_string        = $self->trim_large_allele_string($allele_string, 'allele_' . $tva->dbID, 20) if length $allele_string > 20; # Check allele string size (for display issues)
-             $allele_string        =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\/.+\//; # highlight variant allele in allele string
-          
-          # Sort out consequence type string
-          my $type = $self->render_consequence_type($tva);
-          
-          my $sift = $self->render_sift_polyphen($tva->sift_prediction,     $tva->sift_score);
-          my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
-          
-          # Adds LSDB/LRG sources
-          if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-            my $var         = $snp->variation;
-            my $syn_sources = $var->get_all_synonym_sources;
+          my $row;
+
+          my $variation_name = $snp->variation_name;
+          my $source = $snp->source_name;
+          my $url = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
+          $row->{'ID'} = qq(<a href="$url">$variation_name</a>);
+          $row->{'Source'} = $source;
+
+          unless($outline) {
+            $NONOUTLINE -= time();
+            my $evidence             = $snp->get_all_evidence_values || [];
+            my $clin_sig             = $snp->get_all_clinical_significance_states || [];
+            my $var_class            = $snp->var_class;
+            my $translation_start    = $transcript_variation->translation_start;
+            my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('-', '-');
+            my $trans_url            = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
+            my $vf_allele            = $tva->variation_feature_seq;
+            my $allele_string        = $snp->allele_string;
+              $allele_string        = $self->trim_large_allele_string($allele_string, 'allele_' . $tva->dbID, 20) if length $allele_string > 20; # Check allele string size (for display issues)
+              $allele_string        =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\/.+\//; # highlight variant allele in allele string
             
-            foreach my $s_source (@$syn_sources) {
-              next if $s_source !~ /LSDB|LRG/;
+            # Sort out consequence type string
+            my $type = $self->render_consequence_type($tva);
+            
+            my $sift = $self->render_sift_polyphen($tva->sift_prediction,     $tva->sift_score);
+            my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+            
+            # Adds LSDB/LRG sources
+            if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+              my $var         = $snp->variation;
+              my $syn_sources = $var->get_all_synonym_sources;
               
-              my ($synonym) = $var->get_all_synonyms($s_source);
-                 $source   .= ', ' . $hub->get_ExtURL_link($s_source, $s_source, $synonym);
+              foreach my $s_source (@$syn_sources) {
+                next if $s_source !~ /LSDB|LRG/;
+                
+                my ($synonym) = $var->get_all_synonyms($s_source);
+                  $source   .= ', ' . $hub->get_ExtURL_link($s_source, $s_source, $synonym);
+              }
             }
-          }
+            
+            my $gmaf   = $snp->minor_allele_frequency; # global maf
+              $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
+
+            my $status = join("",
+              map {
+                sprintf(
+                  '<img src="/i/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                  $_, $_, $_
+                )
+              } @$evidence
+            );
+
+            my %clin_sign_icon;
+            foreach my $cs (@{$clin_sig}) {
+              my $icon_name = $cs;
+              $icon_name =~ s/ /-/g;
+              $clin_sign_icon{$cs} = $icon_name;
+            }
+
+            $clin_sig = join("",
+              map {
+                sprintf(
+                  '<img src="/i/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                  $clin_sign_icon{$_}, $_, $_
+                )
+              } @$clin_sig
+            );
+
+            my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
           
-          my $gmaf   = $snp->minor_allele_frequency; # global maf
-             $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
-
-          my $status = join("",
-            map {
-              sprintf(
-                '<img src="/i/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
-                $_, $_, $_
-              )
-            } @$evidence
-          );
-
-          my %clin_sign_icon;
-          foreach my $cs (@{$clin_sig}) {
-            my $icon_name = $cs;
-            $icon_name =~ s/ /-/g;
-            $clin_sign_icon{$cs} = $icon_name;
+            my $more_row = {
+              class      => $var_class,
+              Alleles    => $allele_string,
+              Ambiguity  => $snp->ambig_code,
+              gmaf       => $gmaf   || '-',
+              status     => $status || '-',
+              clinsig    => $clin_sig || '-',
+              chr        => "<span class=\"hidden\">$chr:".($start > $end ? $end : $start)."</span>$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
+              Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
+              snptype    => $type,
+              Transcript => qq{<a href="$trans_url">$transcript_name</a>},
+              aachange   => $aachange,
+              aacoord    => $aacoord,
+              sift       => $sift,
+              polyphen   => $poly,
+              HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
+            };
+            $row = { %$row, %$more_row };
+            $NONOUTLINE += time();
           }
-
-          $clin_sig = join("",
-            map {
-              sprintf(
-                '<img src="/i/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
-                $clin_sign_icon{$_}, $_, $_
-              )
-            } @$clin_sig
-          );
-
-          my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
-          
-          push @rows, {
-            ID         => qq{<a href="$url">$variation_name</a>},
-            class      => $var_class,
-            Alleles    => $allele_string,
-            Ambiguity  => $snp->ambig_code,
-            gmaf       => $gmaf   || '-',
-            status     => $status || '-',
-            clinsig    => $clin_sig || '-',
-            chr        => "<span class=\"hidden\">$chr:".($start > $end ? $end : $start)."</span>$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
-            Source     => $source,
-            Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
-            snptype    => $type,
-            Transcript => qq{<a href="$trans_url">$transcript_name</a>},
-            aachange   => $aachange,
-            aacoord    => $aacoord,
-            sift       => $sift,
-            polyphen   => $poly,
-            HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
-          };
+          push @rows,$row;
         }
       }
     }
+    $ROW += time();
   }
+  warn sprintf("%f/%f (%d)",$ROW-$NONOUTLINE,$ROW,$outline);
 
   return \@rows;
 }
