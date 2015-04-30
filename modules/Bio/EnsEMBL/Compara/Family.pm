@@ -48,7 +48,7 @@ Implemented methods:
  - stable_id()
  - version()
  - description()
- - description_score() (links to description())
+ - description_score()
 
 =head1 METHODS
 

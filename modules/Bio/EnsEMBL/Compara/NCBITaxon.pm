@@ -22,21 +22,24 @@ Bio::EnsEMBL::Compara::NCBITaxon
 
 =head1 DESCRIPTION
 
-  An object that hold a node within a taxonomic tree.  Inherits from NestedSet.
+Attributes:
+  - taxon_id()
+  - rank()
 
-  From Bio::Species
-   classification
-   common_name
-   binomial
+Names:
+  - scientific_name()
+  - common_name()
+  - ensembl_alias_name()
+  - short_name()
+  - get_short_name()
 
-  Here are also the additional methods in Bio::Species that "might" be useful, but let us
-  forget about these for now.
-   genus
-   species
-   sub_species
-   variant
-   organelle
-   division
+Only for species level and below
+  - genus()
+  - species()
+  - subspecies()
+
+Others:
+  - classification()
 
 =head1 CONTACT
 

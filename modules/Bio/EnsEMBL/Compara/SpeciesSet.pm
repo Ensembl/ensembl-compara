@@ -14,6 +14,40 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::SpeciesSet
+
+=head1 DESCRIPTION
+
+Class to represent a set of GenomeDBs
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::SpeciesSet
+  +- Bio::EnsEMBL::Compara::Taggable
+  `- Bio::EnsEMBL::Storable
+
+=head1 SYNOPSIS
+
+Content of the set:
+ - genome_dbs()
+
+Others:
+ - toString()
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the GIT log.
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
+
+=head1 METHODS
+
+
 =cut
 
 package Bio::EnsEMBL::Compara::SpeciesSet;

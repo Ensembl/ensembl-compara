@@ -49,6 +49,11 @@ The object only overrides a few methods from its parents, and does not have addi
 
 Ensembl Team. Individual contributions can be found in the GIT log.
 
+=head1 SYNOPSIS
+
+GeneTreeMember is a GeneTreeNode and an AlignedMember at the same time.
+Refer to the documentation of those two objects.
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.

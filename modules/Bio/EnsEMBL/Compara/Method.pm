@@ -33,11 +33,13 @@ Bio::EnsEMBL::Compara::Method
 
 =head1 SYNOPSIS
 
-    my $my_method       = Bio::EnsEMBL::Compara::Method->new( -type => 'FAMILY', -class => 'Family.family' );
+Attributes:
+  - dbID()
+  - type()
+  - class()
 
-    $method_adaptor->store( $my_method );
-
-    my $dbID = $my_method->dbID();
+I/O:
+  - toString()
 
 =head1 DESCRIPTION
 
