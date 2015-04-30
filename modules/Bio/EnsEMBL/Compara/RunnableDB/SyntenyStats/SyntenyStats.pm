@@ -72,6 +72,7 @@ sub initialize_db_adaptors {
           my $pipe_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %{ $self->param('pipeline_db') });
       }
       $self->param('compara_db', Bio::EnsEMBL::Registry->get_adaptor($division, 'compara'));
+      $self->param('ref_species', undef);
   } else {
       $self->param('compara_db', $self->compara_dba);
       my $pairwise_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('pairwise_db_url'));
@@ -165,8 +166,9 @@ sub calculate_stats {
   my %tags;
   my $prefix = '';
   
-  
-  foreach my $species (sort keys %syntenic_regions) {
+  my $ref_species = $self->param('ref_species');
+  my @species = $ref_species ? sort {$a ne $ref_species} keys %syntenic_regions : sort keys %syntenic_regions;
+  foreach my $species (@species) {
     my $coding_overlap;
     
     foreach my $sr_name (keys %{$syntenic_regions{$species}}) {
