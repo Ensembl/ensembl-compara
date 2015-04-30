@@ -487,8 +487,7 @@ sub _recursive_get_orthocluster {
 
   return if($member_set->{$gene->dbID});
 
-  print "query gene: " if ($debug);
-  $gene->print_member() if($debug);
+  print "query gene: ", $gene->toString, "\n" if ($debug);
   $member_set->{$gene->dbID} = $gene;
 
   my $homologies = $self->fetch_all_by_Member($gene);
@@ -499,7 +498,7 @@ sub _recursive_get_orthocluster {
     
     foreach my $member (@{$homology->get_all_Members}) {
       next if($member->dbID == $gene->dbID); #skip query gene
-      $member->print_member if($debug);
+      print $member->toString, "\n" if($debug);
 
       printf("adding homology_id %d to cluster\n", $homology->dbID) if($debug);
       $ortho_set->{$homology->dbID} = $homology;

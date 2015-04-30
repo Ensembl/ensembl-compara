@@ -84,17 +84,17 @@ sub fetch_or_store_gene {
     # Gene Member
     my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($gene->stable_id);
     if (defined $gene_member) {
-        if ($self->debug) {print "REUSE: $gene_member "; $gene_member->print_member();}
+        if ($self->debug) {print "REUSE: $gene_member ", $gene_member->toString(), "\n";}
     } else {
         $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(-gene=>$gene, -genome_db=>$self->param('genome_db'));
         $self->param('gene_member_adaptor')->store($gene_member) unless $self->param('dry_run');
-        if ($self->debug) {print "NEW: $gene_member "; $gene_member->print_member();}
+        if ($self->debug) {print "NEW: $gene_member ", $gene_member->toString(), "\n";}
     }
 
     # Transcript Member
     my $trans_member = $gene_member->get_canonical_SeqMember;
     if (defined $trans_member) {
-        if ($self->debug) {print "REUSE: $trans_member"; $trans_member->print_member();}
+        if ($self->debug) {print "REUSE: $trans_member", $trans_member->toString(), "\n";}
     } else {
         my $transcript = $gene->canonical_transcript;
         $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
@@ -105,7 +105,7 @@ sub fetch_or_store_gene {
         $trans_member->gene_member_id($gene_member->dbID);
         $self->param('seq_member_adaptor')->store($trans_member) unless $self->param('dry_run');
         $self->param('seq_member_adaptor')->_set_member_as_canonical($trans_member) unless $self->param('dry_run');
-        if ($self->debug) {print "NEW: $trans_member "; $trans_member->print_member();}
+        if ($self->debug) {print "NEW: $trans_member ", $trans_member->toString(), "\n";}
     }
 
     return $trans_member;

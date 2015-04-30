@@ -218,7 +218,7 @@ sub best_homology_for_gene {
   my $best_homology = undef;
   my $best_rank = undef;
   
-  #$gene->print_member;
+  #print $gene->toString;
   foreach my $homology (@{$self->homologies_for_gene($gene)}) {
     #print $homology->toString;
     my $rank = $ordered_types->{$homology->description};
