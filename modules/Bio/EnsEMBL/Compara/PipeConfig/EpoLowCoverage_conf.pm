@@ -260,6 +260,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'load_genomedb',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
+			'master_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
 			'registry_dbs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), $self->o('livemirror_loc')],
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel

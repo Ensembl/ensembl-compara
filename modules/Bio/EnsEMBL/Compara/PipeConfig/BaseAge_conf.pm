@@ -141,6 +141,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+            'master_db'      => $self->o('master_db'),
     };
 }
 
@@ -166,7 +167,6 @@ sub pipeline_analyses {
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_exe'),
 				  'mlss_id'        => $self->o('mlss_id'),
-                                  'master_db'      => $self->o('master_db'),				  
                                   'pipeline_db'    => $self->dbconn_2_url('pipeline_db'),
 				 },
 	       -flow_into => {
@@ -181,7 +181,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
+                'compara_db'    => '#master_db#',   # that's where genome_db_ids come from
                 'mlss_id'       => $self->o('mlss_id'),
                 'extra_parameters'      => [ 'locator' ],
             },
