@@ -410,24 +410,10 @@ sub binomial {
   }
 }
 
-=head2 ensembl_alias
-
-  Example    : $ncbi->ensembl_alias;
-  Description: The ensembl_alias name (AKA the name in the ensembl website) of this genome
-  Returntype : string
-  Exceptions : warns when node is not a species or has no ensembl_alias
-  Caller     : general
-
-=cut
-
-sub ensembl_alias {
+sub ensembl_alias { ## DEPRECATED
   my $self = shift;
-  if ($self->has_tag('ensembl alias name')) {
-    return $self->get_tagvalue('ensembl alias name');
-  } else {
-    warning("taxon_id=",$self->node_id," is not a species or subspecies. So ensembl_alias is undef\n");
-    return undef;
-  }
+  deprecate('NCBITaxon::ensembl_alias() is deprecated in favour of ensembl_alias_name(), and will be removed in e82');
+  return $self->ensembl_alias_name;
 }
 
 

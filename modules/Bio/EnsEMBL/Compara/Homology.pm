@@ -492,8 +492,8 @@ sub subtype {  ## DEPRECATED
 
 sub taxonomy_alias {  ## DEPRECATED
     my $self = shift;
-    deprecate("Homology::taxonomy_alias() is deprecated and will be removed in e79. Use species_tree_node()->taxon()->ensembl_alias() instead.");
-    return $self->species_tree_node()->taxon()->ensembl_alias();
+    deprecate("Homology::taxonomy_alias() is deprecated and will be removed in e79. Use species_tree_node()->taxon()->ensembl_alias_name() instead.");
+    return $self->species_tree_node()->taxon()->ensembl_alias_name();
 }
 
 
