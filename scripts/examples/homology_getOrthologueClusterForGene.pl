@@ -43,7 +43,7 @@ my $gene_member = $comparaDBA->get_GeneMemberAdaptor->fetch_by_stable_id($gene_n
 my ($homologies, $genes) = $comparaDBA->get_HomologyAdaptor->fetch_orthocluster_with_Member($gene_member);
 
 foreach my $homology (@$homologies) {
-  $homology->print_homology;
+  print $homology->toString;
 }
 foreach my $member (@$genes) {
   $member->print_member;

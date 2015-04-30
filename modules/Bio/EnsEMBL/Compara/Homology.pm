@@ -39,8 +39,9 @@ and "hum" <-> "rat2".
 
 =head1 SYNOPSIS
 
-Implemented methods:
+General getters:
  - description()
+ - toString()
 
 dN/dS values:
  - n()
@@ -315,26 +316,36 @@ sub dnds_ratio {
 ## General I/O
 ###############
 
-=head2 print_homology
+=head2 toString
 
- Example    : $homology->print_homology
- Description: This method prints a short descriptor of the homology
-	      USE ONLY FOR DEBUGGING not for data output since the
-	      format of this output may change as need dictates.
+  Example     : print $homology->toString();
+  Description : This method returns a short text-description of the homology
+                USE ONLY FOR DEBUGGING not for data output since the
+                format of this output may change as need dictates.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
 
 =cut
 
-sub print_homology {
+sub toString {
+    my $self = shift;
+    my $txt = sprintf('Homology dbID=%d %s @ %s', $self->dbID, $self->description, $self->taxonomy_level);
+    $txt .= ' between '.join(' and ', map {$_->stable_id} @{$self->gene_list});
+    $txt .= sprintf(' [dN=%.2f dS=%.2f dN/dS=%.2f]', $self->dn, $self->ds, $self->dnds_ratio) if $self->ds;
+    return $txt;
+}
+
+sub print_homology {    ## DEPRECATED
   my $self = shift;
   
+  deprecate('$homology->print_homology() is deprecated and will be removed in e84. Use $homology->toString() instead.');
   printf("Homology %d,%s,%s : ", $self->dbID, $self->description, $self->taxonomy_level);
   foreach my $member (@{$self->gene_list}) {
     printf("%s(%d)\t", $member->stable_id, $member->dbID);
   }
   print("\n");
 }
-
-
 
 
 =head2 homology_key

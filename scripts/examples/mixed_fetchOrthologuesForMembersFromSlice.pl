@@ -51,7 +51,7 @@ foreach my $pep (@{$members}) {
     $pep->gene_member->print_member;
     my $orths = $homologyDBA->fetch_all_by_Member_paired_species($pep->gene_member, 'homo_sapiens');
     foreach my $homology (@{$orths}) {
-      $homology->print_homology;
+      print $homology->toString;
     }
   }
 }

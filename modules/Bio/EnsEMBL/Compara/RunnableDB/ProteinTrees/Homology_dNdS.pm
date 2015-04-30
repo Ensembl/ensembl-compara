@@ -132,7 +132,7 @@ sub calc_genetic_distance {
   my ($self, $homology, $codeml_parameters) = @_;
 
   #print("use codeml to get genetic distance of homology\n");
-  $homology->print_homology if ($self->debug);
+  print $homology->toString if ($self->debug);
   
   my $aln = $homology->get_SimpleAlign(-seq_type => 'cds', -ID_TYPE => 'member');
 
