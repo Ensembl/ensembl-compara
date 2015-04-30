@@ -78,31 +78,6 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data from the database
-    Returns :   none
-    Args    :   none
-
-=cut
-
-sub fetch_input {
-  my( $self) = @_;
-  return 1;
-}
-
-=head2 run
-
-    Title   :   run
-    Usage   :   $self->run
-    Function:   runs something
-    Returns :   none
-    Args    :   none
-
-=cut
-
 sub run {
   my( $self) = @_;
 
@@ -128,21 +103,6 @@ sub run {
       }
   }
 
-  return 1;
-}
-
-=head2 write_output
-
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   stores something
-    Returns :   none
-    Args    :   none
-
-=cut
-
-sub write_output {
-  my( $self) = @_;
   return 1;
 }
 

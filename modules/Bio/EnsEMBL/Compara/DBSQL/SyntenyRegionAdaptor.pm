@@ -184,16 +184,20 @@ sub store {
        throw("$sr is not a SyntenyRegion object");
    }
 
-   my $sth = $self->prepare("insert into synteny_region (method_link_species_set_id) VALUES (?)");
-
-   $sth->execute($sr->method_link_species_set_id);
-   my $synteny_region_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'synteny_region', 'synteny_region_id');
-   $sr->dbID($synteny_region_id);
+   if ($sr->dbID) {
+    my $sth = $self->prepare("INSERT INTO synteny_region (synteny_region_id,method_link_species_set_id) VALUES (?,?)");
+    $sth->execute($sr->dbID, $sr->method_link_species_set_id);
+   } else {
+    my $sth = $self->prepare("INSERT INTO synteny_region (method_link_species_set_id) VALUES (?)");
+    $sth->execute($sr->method_link_species_set_id);
+    my $synteny_region_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'synteny_region', 'synteny_region_id');
+    $sr->dbID($synteny_region_id);
+   }
    $sr->adaptor($self);
 
    my $dfra = $self->db->get_DnaFragRegionAdaptor;
    foreach my $dfr (@{$sr->regions}) {
-     $dfr->synteny_region_id($synteny_region_id);
+     $dfr->synteny_region_id($sr->dbID);
      $dfra->store($dfr);
    }
    return $sr->dbID;
@@ -360,6 +364,20 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
   return \@srs;
 }
+
+
+sub count_by_mlss_id {
+    my ($self, $mlss_id) = @_;
+
+    my $sql = "SELECT COUNT(*) FROM synteny_region WHERE method_link_species_set_id=?";
+    my $sth = $self->prepare($sql);
+    $sth->execute($mlss_id);
+    my ($count) = $sth->fetchrow_array();
+    $sth->finish();
+
+    return $count;
+}
+
 
 1;
 

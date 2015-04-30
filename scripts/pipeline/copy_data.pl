@@ -225,6 +225,7 @@ my $from_dba = get_DBAdaptor($from_url, $from_reg_name);
 my $from_ga_adaptor = $from_dba->get_GenomicAlignAdaptor();
 my $from_cs_adaptor = $from_dba->get_ConservationScoreAdaptor();
 my $from_ce_adaptor = $from_dba->get_ConstrainedElementAdaptor();
+my $from_sr_adaptor = $from_dba->get_SyntenyRegionAdaptor();
 
 print "\n\n";   # to clear from possible warnings
 
@@ -233,6 +234,7 @@ my %type_to_adaptor = (
                        'BLASTZ_NET'             => $from_ga_adaptor,
                        'TRANSLATED_BLAT_NET'    => $from_ga_adaptor,
                        'LASTZ_PATCH'            => $from_ga_adaptor,
+                       'SYNTENY'                => $from_sr_adaptor,
                        'EPO'                    => $from_ga_adaptor,
                        'EPO_LOW_COVERAGE'       => $from_ga_adaptor,
                        'PECAN'                  => $from_ga_adaptor,
@@ -328,6 +330,8 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
     copy_conservation_scores($from_dba, $to_dba, $method_link_species_set);
   } elsif ($class =~ /^ConstrainedElement.constrained_element/) {
     copy_constrained_elements($from_dba, $to_dba, $method_link_species_set);
+  } elsif ($class =~ /^SyntenyRegion.synteny/) {
+    copy_synteny_regions($from_dba, $to_dba, $method_link_species_set);
   } else {
     print " ** ERROR **  Copying data of class $class is not supported yet!\n";
     exit(1);
@@ -1020,6 +1024,41 @@ sub copy_constrained_elements {
 		$step);
   }
 }
+
+=head2 copy_synteny_regions
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $this_mlss
+
+  Description : copies SyntenyRegions for this MethodLinkSpeciesSet.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_synteny_regions {
+    my ($from_dba, $to_dba, $mlss) = @_;
+
+    my $to_sra = $to_dba->get_SyntenyRegionAdaptor;
+    my $existing_synteny_regions = $to_sra->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    if (my $count = scalar(@$existing_synteny_regions)) {
+        print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
+            " ** ERROR **  synteny_region table with the MLSS_ID ".($mlss->dbID)."\n";
+        exit(1);
+    }
+    # No concept of dry_run with synteny_regions
+    return if $dry_run;
+
+    # There is usually not much data, so using the API is fine
+    my $all_synteny_regions = $from_dba->get_SyntenyRegionAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    foreach my $synteny_region (@$all_synteny_regions) {
+        # No dbID to fix, we just let the AUTO_INCREMENT do its magic
+        $synteny_region->dbID(undef);
+        $to_sra->store($synteny_region);
+    }
+}
+
 
 =head2 copy_data
 

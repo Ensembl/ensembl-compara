@@ -136,6 +136,7 @@ sub store {
 
   assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
 
+  #FIXME: $store_components_first should be used for the method as well
   my $method            = $mlss->method()           or die "No Method defined, cannot store\n";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
@@ -173,8 +174,6 @@ sub store {
         my $val = $helper->transaction(
             -RETRY => 3,
             -CALLBACK => sub {
-                #eval {$self->dbc->do('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')};
-                #die $@ if $@ and not $@ =~ m/row-based logging/;
                 my $sth2 = $self->prepare("INSERT INTO method_link_species_set $columns SELECT
                     IF(
                         MAX(method_link_species_set_id) = $max_mlss_id,

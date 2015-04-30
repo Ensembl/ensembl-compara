@@ -49,8 +49,9 @@ my $level = 1;
 my $reg_conf;
 my $force = 0; #use slice even if it has no karyotype
 my $output_dir = "";
-my $ref_coord_system_name = 'chromosome';
-my $non_ref_coord_system_name = 'chromosome';
+my $ref_coord_system_name = undef;
+my $non_ref_coord_system_name = undef;
+my @karyotype_coord_system_names = ('chromosome', 'group');
 
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
@@ -119,10 +120,13 @@ if ($mlss_id) {
 
 my $qy_dnafrags;
 unless (defined $seq_region) {
-  $qy_dnafrags = $dfa->fetch_all_by_GenomeDB_region($qy_gdb, $ref_coord_system_name);
+  foreach my $n ($ref_coord_system_name ? ($ref_coord_system_name) : @karyotype_coord_system_names) {
+    push @$qy_dnafrags, @{$dfa->fetch_all_by_GenomeDB_region($qy_gdb, $n)};
+  }
 } else {
   $qy_dnafrags = [ $dfa->fetch_by_GenomeDB_and_name($qy_gdb, $seq_region) ];
 }
+
 
 foreach my $qy_dnafrag (@{$qy_dnafrags}) {
   #Check if the dnafrag is part of the karyotype to decide whether to calculate the synteny
@@ -131,9 +135,14 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
   next unless ($qy_slice->has_karyotype || $force);
 
   my $seq_region_name = $qy_dnafrag->name;
-  open SYN,">$output_dir" . "$seq_region_name.syten.gff";
+  open(my $synt_file, ">", "${output_dir}/${seq_region_name}.syten.gff");
 
-  foreach my $tg_dnafrag (@{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, $non_ref_coord_system_name)}) {
+  my $tg_dnafrags;
+  foreach my $n ($non_ref_coord_system_name ? ($non_ref_coord_system_name) : @karyotype_coord_system_names) {
+    push @$tg_dnafrags, @{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, $n)};
+  }
+
+  foreach my $tg_dnafrag (@$tg_dnafrags) {
     #Check if the dnafrag is part of the karyotype to decide whether to calculate the synteny
     my $tg_slice = $tg_dnafrag->slice;
     next unless ($tg_slice->has_karyotype || $force);
@@ -164,25 +173,26 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
         }
         
         # print out a in gff format
-        print SYN  
-          $qy_dnafrag->name . "\t" .
-            "synteny\t" .
-              "similarity\t" .
-                $qy_ga->dnafrag_start . "\t" .
-                  $qy_ga->dnafrag_end . "\t" .
-                    $gab->score . "\t" .
-                      $strand . "\t" .
-                        ".\t" .
-                          $tg_dnafrag->name . "\t" .
-                            $tg_ga->dnafrag_start . "\t" .
-                              $tg_ga->dnafrag_end . "\t" .
-                                $hstrand . "\t" .
-                                  ".\n";
+        print $synt_file join("\t",
+            $qy_dnafrag->name,
+            'synteny',
+            'similarity',
+            $qy_ga->dnafrag_start,
+            $qy_ga->dnafrag_end,
+            $gab->score,
+            $strand,
+            '.',
+            $tg_dnafrag->name,
+            $tg_ga->dnafrag_start,
+            $tg_ga->dnafrag_end,
+            $hstrand,
+            '.',
+        ), "\n";
       }
       $start += $chunk;
     }
   }
-  close SYN;
+  close $synt_file;
 }
 
 exit 0;
