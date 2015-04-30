@@ -29,6 +29,19 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf
 
+=head1 SYNOPSIS
+
+    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
+
+    #3. make sure that all default_options are set correctly
+
+    #4. Run init_pipeline.pl script:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf \
+        -password <your_password> -mlss_id <your_current_PT_mlss_id> \
+        -division <eg_division> -eg_release <egrelease>
+
+    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
+
 =head1 DESCRIPTION
 
 The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
