@@ -45,7 +45,7 @@ sub new_content {
   return qq(<a class="enstab" href="$url">data</a>);
 }
 
-sub table_content {
+sub fake_table_content {
   my ($self,$hub) = @_;
 
   my $regions = from_json($hub->param('regions'));
@@ -84,6 +84,45 @@ sub table_content {
       data => $data,
       region => { columns => $these_cols, rows => $these_rows },
       more => $continue,
+    };
+  }
+  return \@out;
+}
+
+sub ajax_table_content {
+  my ($self) = @_;
+
+  my $hub = $self->hub;
+  my $regions = from_json($hub->param('regions'));
+  my @out;
+  foreach my $region (@$regions) {
+    my $columns = $region->{'columns'};
+    my $rows = $region->{'rows'};
+    my $more_in = $region->{'more'};
+    # Get the data
+    my $object_type      = $hub->type;
+    my $consequence_type = $hub->param('sub_table');
+    my $icontext         = $hub->param('context') || 100;
+    my $gene_object      = $self->configure($icontext, $consequence_type);
+    my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
+  
+    if ($object_type eq 'Transcript') {
+      my $t = $hub->param('t');
+      @transcripts = grep $_->stable_id eq $t, @transcripts;
+    }
+ 
+    warn "ct=$consequence_type t=".join(', ',@transcripts)."\n"; 
+    my $data = $self->variation_table($consequence_type,\@transcripts);
+    my @data_out;
+    my @cols = qw(ID chr Alleles gmaf class Source Submitters clinsig snptype aachange aacoord sift polyphen Transcript);
+    foreach my $d (@$data) {
+      push @data_out,[ map { $d->{$_} } @cols ];
+    }
+  
+    push @out,{
+      request => $regions,
+      data => \@data_out,
+      region => { columns => [ (1) x @cols ], rows => [0,-1] },
     };
   }
   return \@out;

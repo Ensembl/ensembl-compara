@@ -145,11 +145,10 @@ sub render {
   
 #  return $self->$func if $self->can($func);
   
-  my $url = $hub->url('Ajax', {
-    type => 'enstab',
-    action => undef,
-    function => undef,
-    source => 'VariationTable',
+  my $url = $hub->url('ComponentAjax', {
+    source => 'enstab',
+    action => 'Web',
+    function => 'VariationTable',
   },0,1);
  
   my $data = $self->jsonify({
