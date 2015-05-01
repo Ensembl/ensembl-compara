@@ -51,7 +51,7 @@ sub get_block_features {
       return [];
     }
      #warn "Adapt $feature_adaptor"; 
-     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('Transcription Factor') || [] ;
+     my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('Insulator') || [] ;  
     $self->{'block_features'} = $features; 
   }
 
@@ -73,7 +73,7 @@ sub draw_features {
   foreach my $feature ( @$block_features ) {
     my $label = $feature->get_displayable_product_FeatureSet->display_label; 
     my $fset_cell_line = $feature->get_displayable_product_FeatureSet->cell_type->name;
-    #next unless $fset_cell_line =~/IMR90/;
+    next unless $fset_cell_line =~/IMR90/;
     my $colour = $self->my_colour($fset_cell_line) || 'steelblue';
     # render wiggle if wiggle
     if( $wiggle ) { 
@@ -127,7 +127,6 @@ sub draw_features {
        $self->draw_block_features( $features, $colour );
        $self->draw_track_name($display_label, $colour);
     }
-    last;
   }
 
   my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
