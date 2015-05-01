@@ -113,40 +113,14 @@
 
   function extend_rows($table,rows) {
     console.log("extend_rows");
-    var $thead = $('thead',$table);
-    var $tbody = $('tbody',$table);
-    var nrows = $('tr',$tbody).length;
-    var ncols = $('th',$thead).length;
-    var row = "<tr>";
-    for(var i=0;i<ncols;i++) {
-      row += "<td></td>";
-    }
-    row += "</tr>";
     var target = rows[1];
     var $subtables = $('table',$table);
-    for(var i=0;i<$subtables.length-1;i++) {
-      var $subtable = $subtables.eq(i+1);
-      var nsrows = $('tbody tr',$subtable).length;
-      if(nsrows < rows_per_subtable && target>0) {
-        var to_add = target;
-        if(nsrows+to_add > rows_per_subtable) {
-          to_add = rows_per_subtable - nsrows;
-        }
-        var html = "";
-        for(var j=nsrows;j<rows_per_subtable;j++) { html += row; }
-        $subtable.append(html);
-        ns_rows = rows_per_subtable;
-      }
-      target -= nsrows;
-    }
+    target -= ($subtables.length-1)*rows_per_subtable;
     while(target > 0) {
       var $subtable = new_subtable($table).appendTo($('.new_table',$table));
       var to_add = target;
       if(to_add > rows_per_subtable)
         to_add = rows_per_subtable;
-      var html = "";
-      for(var j=0;j<to_add;j++) { html += row; }
-      $subtable.append(html);
       target -= to_add;
     }
     console.log("/extend_rows");
@@ -167,23 +141,36 @@
     return table_num;
   }
 
-  function update_row3($table,table_num) {
-    console.log("update_row3");
+  function build_html($table,table_num) {
     var $subtable = $('table',$table).eq(table_num+1);
+    var $th = $('table:first th',$table);
     var markup = $subtable.data('markup') || [];
     var html = "";
     for(var i=0;i<markup.length;i++) {
       html += "<tr>";
-      for(var j=0;j<markup[i].length;j++) {
+      for(var j=0;j<$th.length;j++) {
+        var start = "<td>";
+        if(i==0) {
+          start = "<td style=\"width: "+$th.eq(j).width()+"px\">";
+        }
         if(markup[i][j]) {
-          html += "<td>"+(markup[i][j])+"</td>";
+          html += start+markup[i][j]+"</td>";
         } else {
-          html += "<td></td>";
+          html += start+"</td>";
         }
       }
       html += "</tr>";
     }
-    $('tbody',$subtable).html(html);
+    return html;
+  }
+
+  function apply_html($table,table_num,html) {
+    var $subtable = $('table',$table).eq(table_num+1);
+    $('tbody',$subtable)[0].innerHTML = html;
+    // The line below is probably more portable than the line above,
+    //   but a third of the speed.
+    //   Maybe browser checks if there are compat issues raised in testing?
+    // $('tbody',$subtable).html(html);
   }
 
   $.fn.new_table_tabular = function(config,data) {
@@ -207,7 +194,8 @@
         });
         d = $.Deferred().resolve(subtabs);
         loop(d,function(tabnum,v) {
-          update_row3($table,tabnum);
+          var html = build_html($table,tabnum);
+          apply_html($table,tabnum,html);
         },1,100);
       }
     };
