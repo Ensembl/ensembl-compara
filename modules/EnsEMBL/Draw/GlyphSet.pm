@@ -381,7 +381,9 @@ sub subtitle_text {
 sub use_subtitles {
   my ($self) = @_;
 
-  return $self->supports_subtitles && $self->subtitle_text;
+  return
+    $self->{'config'}->get_option('opt_subtitles') &&
+    $self->supports_subtitles && $self->subtitle_text;
 }
 
 sub subtitle_height {
@@ -398,6 +400,18 @@ sub subtitle_colour {
 
 sub supports_subtitles {
   return 0;
+}
+
+################### GANGS #######################
+
+sub gang_prepare {
+}
+
+sub gang {
+  my ($self,$val) = @_;
+
+  $self->{'_gang'} = $val if @_>1;
+  return $self->{'_gang'};
 }
 
 ################### LABELS ##########################

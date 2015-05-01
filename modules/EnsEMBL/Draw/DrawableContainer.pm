@@ -249,6 +249,15 @@ sub new {
     
       my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
 
+      my %gang_data;
+      foreach my $glyphset (@glyphsets) {
+        my $gang = $glyphset->my_config('gang');
+        next unless $gang;
+        $gang_data{$gang} ||= {};
+        $glyphset->gang_prepare($gang_data{$gang});
+        $glyphset->gang($gang_data{$gang});
+      }
+
       ## go ahead and do all the database work
       $self->timer_push('GlyphSet list prepared for config ' . ref($config), 1);
 

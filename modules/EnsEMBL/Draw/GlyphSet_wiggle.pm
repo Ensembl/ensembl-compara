@@ -258,10 +258,28 @@ sub _draw_wiggle_points_as_line {
   }
 }
 
+sub _draw_wiggle_points_as_graph {
+  my ($self, $c, $features,$parameters) = @_;
+
+  my $height = $c->{'pix_per_score'} * $parameters->{'max_score'};
+  $self->push($self->Barcode({
+    values    => $features,
+    x         => 1,
+    y         => 0,
+    height    => $height,
+    unit      => $parameters->{'unit'},
+    max       => $parameters->{'max_score'},
+    colours   => [$c->{'colour'}],
+    wiggle    => $parameters->{'graph_type'},
+  }));
+}
+
 sub draw_wiggle_points {
   my ($self,$c,$features,$parameters) = @_;
 
-  if($parameters->{'graph_type'} eq 'line') {
+  if($parameters->{'unit'}) {
+    $self->_draw_wiggle_points_as_graph($c,$features,$parameters);
+  } elsif($parameters->{'graph_type'} eq 'line') {
     $self->_draw_wiggle_points_as_line($c,$features,$parameters);
   } else {
     $self->_draw_wiggle_points_as_bar_or_points($c,$features,$parameters);
@@ -287,11 +305,26 @@ sub _add_regulation_minilabel {
                         $extra_content,$top,$labels,$colours);
 }
 
+sub _draw_guideline {
+  my ($self,$width,$y) = @_;
+
+  $self->push($self->Line({
+    x         => 0,
+    y         => $y,
+    width     => $width,
+    height    => 1,
+    colour    => 'grey90',
+    absolutey => 1,
+    dotted => 1,
+  }));
+}
+
 sub do_draw_wiggle {
   my ($self, $features, $parameters, $colours, $labels) = @_;
 
-  my $slice         = $self->{'container'};
-  my $row_height    = $self->my_config('height') || 60;
+  my $slice = $self->{'container'};
+  my $row_height =
+    $parameters->{'height'} || $self->my_config('height') || 60;
  
   # max_score: score at top of y-axis on graph
   # min_score: score at bottom of y-axis on graph
@@ -299,6 +332,10 @@ sub do_draw_wiggle {
   # pix_per_score: vertical pixels per unit score
   my $max_score     = $parameters->{'max_score'};
   my $min_score     = $parameters->{'min_score'};
+  if($parameters->{'unit'}) {
+    # Barcode glyph can't cope with anything else
+    $min_score = 0;
+  }
   my $range = $max_score-$min_score;
   if($range < 0.01) {
     # Oh dear, data all has pretty much same value ...
@@ -327,9 +364,12 @@ sub do_draw_wiggle {
     $parameters->{'score_colour'} || $self->my_colour('score') || 'blue';
 
   # Shift down the lhs label to between the axes
-  if($bottom-$top > 50) {
+  if($bottom-$top > 30) {
     # luxurious space for centred label
-    $self->{'label_y_offset'} = ($bottom-$top)/2;
+    $self->{'label_y_offset'} =
+        ($bottom-$top)/2             # half-way-between
+        + $self->subtitle_height     # graph is offset down if subtitled
+        - 16;                        # two-line label so centre its centre
   } else {
     # tight, just squeeze it down a little
     $self->{'label_y_offset'} = 0;
@@ -347,6 +387,10 @@ sub do_draw_wiggle {
   if ($parameters->{'axis_label'} ne 'off') {
     $self->_draw_score($top,$max_score,$parameters);
     $self->_draw_score($bottom,$min_score,$parameters);
+  }
+  if(!$parameters->{'no_axis'} and !$parameters->{'no_guidelines'}) {
+    $self->_draw_guideline($slice->length,$top);
+    $self->_draw_guideline($slice->length,($top+$bottom)/2);
   }
 
   # Single line? Build into singleton set.
