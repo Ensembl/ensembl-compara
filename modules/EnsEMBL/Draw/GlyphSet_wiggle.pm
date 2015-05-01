@@ -364,7 +364,7 @@ sub do_draw_wiggle {
     $parameters->{'score_colour'} || $self->my_colour('score') || 'blue';
 
   # Shift down the lhs label to between the axes
-  if($bottom-$top > 50) {
+  if($bottom-$top > 30) {
     # luxurious space for centred label
     $self->{'label_y_offset'} = ($bottom-$top)/2;
   } else {
