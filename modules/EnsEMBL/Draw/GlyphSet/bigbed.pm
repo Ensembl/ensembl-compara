@@ -171,7 +171,7 @@ sub _draw_wiggle {
  
   $self->draw_wiggle_plot(
     $features, {
-      min_score => min(@scores),
+      min_score => 0,
       max_score => max(@scores),
       score_colour => $self->my_config('colour'),
   }); 
