@@ -622,7 +622,7 @@ sub get_ExtURL_link {
 
 sub get_ext_seq {
   ## Uses PFETCH etc to get description and sequence of an external record
-  ## @param External DB type (has to match ENSEMBL_EXTERNAL_DATABASES variable in SiteDefs)
+  ## @param External DB type (has to match ENSEMBL_EXTERNAL_DATABASES variable in SiteDefs, except ENSEMBL and REST)
   ## @param Hashref with keys to be passed to get_sequence method of the required indexer (see EnsEMBL::Web::ExtIndex subclasses)
   ## @return Hashref (or possibly a list of similar hashrefs for multiple sequences) with keys:
   ##  - id        Stable ID of the object
@@ -638,8 +638,10 @@ sub get_ext_seq {
   unless (exists $indexers->{'databases'}{$external_db}) {
     my ($indexer, $exe);
 
-    # get data from e! databases
-    if ($external_db =~ /^ENS/) {
+    if ($external_db eq 'REST') {
+      $indexer = 'ENSEMBL_REST';
+      $exe     = 1;
+    } elsif ($external_db =~ /^ENS/) {
       $indexer = 'ENSEMBL_RETRIEVE';
       $exe     = 1;
     } else {

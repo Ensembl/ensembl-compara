@@ -41,6 +41,7 @@ use EnsEMBL::Draw::Glyph::Rect;
 use EnsEMBL::Draw::Glyph::Space;
 use EnsEMBL::Draw::Glyph::Sprite;
 use EnsEMBL::Draw::Glyph::Text;
+use EnsEMBL::Draw::Glyph::Arc;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
@@ -207,11 +208,13 @@ sub unshift {
          $gx1 = $gx + $Glyph->width();
     $gy  =     $Glyph->y();
          $gy1 = $gy + $Glyph->height();
+      warn ">>> GY = $gy, GY1 = $gy1";
 
     $self->minx($gx)  unless defined $self->minx && $self->minx < $gx;
     $self->maxx($gx1) unless defined $self->maxx && $self->maxx > $gx1;
     $self->miny($gy)  unless defined $self->miny && $self->miny < $gy;
     $self->maxy($gy1) unless defined $self->maxy && $self->maxy > $gy1;
+    warn "... SET MAX Y to ".$self->maxy;
   }
 }
 
@@ -240,6 +243,7 @@ sub Space      { my $self = shift; return EnsEMBL::Draw::Glyph::Space->new(@_); 
 sub Sprite     { my $self = shift; return EnsEMBL::Draw::Glyph::Sprite->new(@_);     }
 sub Text       { my $self = shift; return EnsEMBL::Draw::Glyph::Text->new(@_);       }
 sub Triangle   { my $self = shift; return EnsEMBL::Draw::Glyph::Triangle->new(@_);   }
+sub Arc        { my $self = shift; return EnsEMBL::Draw::Glyph::Arc->new(@_);   }
 
 sub _init {
 ### _init creates masses of Glyphs from a data source.
@@ -1285,5 +1289,12 @@ sub check {
 }
 
     
+
+sub acos_in_degrees {
+  my ($self, $x) = @_;
+  my $pi   = 4*atan2(1,1);
+  my $acos = atan2(sqrt(1 - $x * $x), $x);
+  return int($acos/$pi * 180);
+}
 
 1;

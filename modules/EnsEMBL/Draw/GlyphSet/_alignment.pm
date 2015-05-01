@@ -24,6 +24,7 @@ package EnsEMBL::Draw::GlyphSet::_alignment;
 use strict;
 
 use List::Util qw(min max);
+use POSIX qw(floor ceil);
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block EnsEMBL::Draw::GlyphSet::_difference);
 
@@ -670,13 +671,246 @@ sub render_ungrouped {
   $self->errorTrack(sprintf q{No features from '%s' on this strand}, $self->my_config('name')) unless $features_drawn || ($on_this_strand == scalar(@ok_features)) || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
 }
 
+sub render_interaction_label { $_[0]->{'show_labels'} = 1; $_[0]->render_interaction($_[1]); }
+
+sub render_interaction {
+## Draw paired features joined by an arc
+  my ($self, $args) = @_;
+
+  my $h               = $args->{'height'} || $self->my_config('height') || 8;
+     $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
+  my $strand          = $self->strand;
+  my $strand_flag     = $self->my_config('strand');
+  my $length          = $self->{'container'}->length;
+  my $pix_per_bp      = $self->scalex;
+  my $y_offset        = 0;
+  my $max_arc         = 0;
+
+  my %features        = $self->features;
+
+  ## NB We need fontsize for the track expansion text, even if there are no labels
+  my $label_h;
+  my ($fontname, $fontsize) = $self->get_font_details('outertext');
+  if ($self->{'show_labels'}) {
+    $label_h = [ $self->get_text_width(0, 'X', '', ptsize => $fontsize, font => $fontname) ]->[3];
+  }
+
+  ## Default colours for features (greyscale is exaggerated towards ends to compensate for limitations of human vision)
+  my @greyscale       = qw(cccccc aaaaaa 999999 888888 7777777 666666 555555 444444 333333 222222 000000);
+  my $ngreyscale      = scalar @greyscale;
+
+  foreach my $feature_key (sort keys %features) {
+    my ($config, @features);
+
+    $self->{'track_key'} = $feature_key;
+
+    next unless $features{$feature_key};
+
+    my $max_score       = $config->{'max_score'} || 1000;
+    my $min_score       = $config->{'min_score'} || 0;
+    my $greyscale_max   = $config && exists $config->{'greyscale_max'} && $config->{'greyscale_max'} > 0 ? $config->{'greyscale_max'} : 1000;
+
+    my @tmp = @{$features{$feature_key}};
+    my %id;
+
+    if (ref $tmp[0] eq 'ARRAY') {
+      @features = @{$tmp[0]};
+      if (ref $tmp[1] eq 'HASH') {
+        $config   = $tmp[1];
+      }
+    } else {
+      @features = @tmp;
+    }
+
+    my (%id, $y_pos);
+    foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_], @features) {
+      my ($s1, $e1, $s2, $e2, $f) = @$_;
+
+      my $fgroup_name = $self->feature_group($f);
+
+      push @{$id{$fgroup_name}}, [ $s1, $e1, $s2, $e2, $f,
+                                    int($s1 * $pix_per_bp), int($e1 * $pix_per_bp),
+                                    int($s2 * $pix_per_bp), int($e2 * $pix_per_bp),
+                                  ];
+    }
+
+    my %idl;
+    foreach my $k (keys %id) {
+      $idl{$k} = $strand * ( max(map { $_->[1] } @{$id{$k}}) -
+                             min(map { $_->[0] } @{$id{$k}}));
+    }
+
+    next unless keys %id;
+
+    foreach my $i (sort { $idl{$a} <=> $idl{$b} } keys %id) {
+      my @feat  = @{$id{$i}};
+      my $x     = -1e8;
+
+      foreach (@feat) {
+        my ($s1, $e1, $s2, $e2, $f) = @$_;
+
+        my $feature_colour;
+
+        if ($config->{'itemRgb'} =~ /on/i) {
+          $feature_colour = $f->external_data->{'item_colour'}[0];
+        }
+        else {
+          $feature_colour = $greyscale[min($ngreyscale - 1, int(($f->score * $ngreyscale) / $greyscale_max))];
+        }
+
+        my $join_colour    = $feature_colour;
+        my $label_colour   = $feature_colour;
+
+        my $start_1         = max($s1, 1);
+        my $start_2         = max($s2, 2);
+        my $end_1           = min($e1, $length - 1);
+        my $end_2           = min($e2, $length);
+
+        ## Unlike other tracks, we need to show partial features that are outside this slice
+
+        ## First feature of pair
+        $self->push($self->Rect({
+              x            => $start_1 - 1,
+              y            => 0,
+              width        => $end_1 - $start_1 + 1,
+              height       => $h,
+              colour       => $feature_colour,
+              label_colour => $label_colour,
+              absolutey    => 1,
+            })) unless $e1 < 0;
+
+        ## Arc between features
+
+        ## Set some sensible limits
+        my $max_width = $self->image_width * 2;
+        my $max_depth = 250; ## should be less than image width! 
+
+        ## Start with a basic circular arc, then constrain to above limits
+        my $start_point   = 0; ## righthand end of arc
+        my $end_point     = 180; ### lefthand end of arc
+        my $major_axis    = abs(ceil(($start_2 - $end_1) * $pix_per_bp));
+        my $minor_axis    = $major_axis;
+        $major_axis       = $max_width if $major_axis > $max_width; 
+        $minor_axis       = $max_depth if $minor_axis > $max_depth; 
+        
+        ## Measurements needed for drawing partial arcs
+        my $centre        = ceil($end_1 * $pix_per_bp + $major_axis/2);
+        my $left_height   = $minor_axis; ## height of curve at left of image
+        my $right_height  = $minor_axis; ## height of curve at right of image
+
+        ## Cut curve off at edge of track if ends lie outside the current window
+        if ($end_1 < 0) {
+          my $cos = $centre / $major_axis;
+          my $acos = $self->acos_in_degrees($cos);
+          ## Tweak by 5 degrees to ensure arc doesn't overlap image
+          $end_point -= $acos + 5;
+          $left_height = abs(sin($acos) * $minor_axis);
+        }
+        if ($s2 >= $length) {
+          my $cos = ($self->image_width - $centre) / $major_axis;
+          my $acos = $self->acos_in_degrees($cos);
+          ## Tweak by 5 degrees to ensure arc doesn't overlap image
+          $start_point = $acos + 5;
+          $right_height = abs(sin($acos) * $minor_axis);
+        }
+
+        ## Are one or both ends of this interaction visible?
+        my $end = {};
+        $end->{'left'} = 1 if $end_1 > 0;
+        $end->{'right'} = 1 if $s2 < $length;
+
+        ## Keep track of the maximum visible arc height, to save us a lot of grief
+        ## trying to get rid of white space below the arcs
+        ## Only use arc cutoff if there's a feature at one end of it
+        ## otherwise we end up with no track height at all!
+        if (keys %$end < 2) {
+          $max_arc = $left_height if (!$end->{'left'} && $left_height > $max_arc);
+          $max_arc = $right_height if (!$end->{'right'} && $right_height > $max_arc);
+        }
+        else {
+          $max_arc = $minor_axis if $minor_axis > $max_arc;
+        }
+
+        ## modify dimensions to allow for 2-pixel width of brush
+        $self->push($self->Arc({
+              x             => $end_1 + ($major_axis / $pix_per_bp),
+              y             => ($minor_axis / 2) + $h,
+              width         => $major_axis,
+              height        => $minor_axis,
+              start_point   => $start_point,
+              end_point     => $end_point,
+              colour        => $join_colour,
+              filled        => 0,
+              thickness     => 2,
+              absolutewidth => 1,
+            }));
+        ## Second feature of pair
+        $self->push($self->Rect({
+              x            => $start_2 - 1,
+              y            => 0,
+              width        => $end_2 - $start_2 + 1,
+              height       => $h,
+              colour       => $feature_colour,
+              label_colour => $label_colour,
+              absolutey    => 1,
+            })) unless $s2 > $length;
+
+        if ($self->{'show_labels'}) {
+          my $label = $f->score;
+          my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $fontname, ptsize => $fontsize);
+          ## Work out where to place the label, based on the visible arc
+          my ($x, $y);
+          if (keys %$end == 2) { ## All on-screen
+            $x = $start_2 - ($start_2 - $start_1) / 2;
+            $x -= $text_width;
+            $y = $minor_axis / 2 + $label_h;
+          }
+          elsif (!keys %$end) { ## Just an arc with no end-points
+            $x = $length / 2 - $text_width;
+            $y = $minor_axis / 2 + $label_h;
+          }
+          else { ## Partial arc
+            if ($end->{'right'}) {
+              $x = 2;
+              $y = $left_height;
+            }
+            else {
+              $x = $length - $text_width / $pix_per_bp;
+              $y = $right_height / 2;
+            }
+          }
+          $self->push($self->Text({
+            font      => $fontname,
+            colour    => 'black',
+            height    => $fontsize,
+            ptsize    => $fontsize,
+            text      => $label,
+            title     => $self->feature_title($f),
+            x         => $x,
+            y         => $y,
+            width     => $text_width,
+            height    => $label_h,
+            absolutey => 1,
+            href      => '', 
+            class     => 'group', # for click_start/end on labels
+          }));
+        }
+      }
+    }
+  }
+  ## Limit track height to that of biggest arc
+  my $track_height = $max_arc / 2 + 10;
+  $track_height   .= $label_h if $self->{'show_labels'};
+  $self->{'maxy'}  = $track_height;
+}
+
 sub render_text {
   my $self     = shift;
   my $strand   = $self->strand;
   my %features = $self->features;
   my $method   = $self->can('export_feature') ? 'export_feature' : '_render_text';
   my $export;
-  
+
   foreach my $feature_key ($strand < 0 ? sort keys %features : reverse sort keys %features) {
     foreach my $f (@{$features{$feature_key}}) {
       foreach (map { $_->[2] } sort { $a->[0] <=> $b->[0] } map { [ $_->start, $_->end, $_ ] } @{$f || []}) {
@@ -684,7 +918,7 @@ sub render_text {
       }
     }
   }
-  
+
   return $export;
 }
 

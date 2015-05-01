@@ -1004,52 +1004,61 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     if (!this.elLk.selector || !this.elLk.selector.length) {
       this.elLk.selector = $('<div class="_selector selector"></div>').insertAfter(this.elLk.img).toggleClass('vertical', this.vertical).filter(':not(.vertical)')
-      .append('<div class="left-border"></div><div class="right-border"></div>').on('click', function(e) {
-        e.stopPropagation();
-        $(document).off('.selectbox');
-      }).on('mousedown', {panel: this}, function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-
-        $(document).on('mousemove.selectbox', {
-          action  : e.target !== e.currentTarget ? e.target.className.match(/left/) ? 'left' : 'right' : 'move',
-          x       : e.pageX,
-          panel   : e.data.panel,
-          width   : parseInt(e.data.panel.elLk.selector.css('width')),
-          left    : parseInt(e.data.panel.elLk.selector.css('left'))
-        }, function(e) {
-          e.stopPropagation();
-
-          var disp   = e.pageX - e.data.x;
-          var coords = { left: e.data.left, width: e.data.width };
-
-          disp = Math.max(disp, e.data.panel.dragRegion.l + 1 - coords.left);
-          disp = Math.min(e.data.panel.dragRegion.r - coords.left - coords.width + 1, disp);
-
-          switch (e.data.action) {
-            case 'left':
-              disp = Math.min(coords.width - 6, disp);
-              coords.left = coords.left + disp;
-              coords.width = coords.width - disp;
-            break;
-            case 'right':
-              coords.width = Math.max(coords.width + disp, 6);
-            break;
-            case 'move':
-              coords.left = coords.left + disp;
-            break;
-          }
-
-          e.data.panel.elLk.selector.css(coords);
-          e.data.panel.makeZMenu(e, { s: coords.left, r: coords.width });
-
-        }).on('mouseup.selectbox click.selectbox', function(e) {
-          $(this).off('.selectbox');
-        })
-      }).end();
+        .append('<div class="left-border"></div><div class="right-border"></div>');
+      this.activateSelector();
     }
 
     this.elLk.selector.css({ left: coords.l, top: coords.t, width: coords.r - coords.l + 1, height: coords.b - coords.t - 1 }).show();
+  },
+
+  activateSelector: function() {
+    this.elLk.selector.on('click', function(e) {
+      e.stopPropagation();
+      $(document).off('.selectbox');
+    }).on('mousedown', {panel: this}, function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+
+      $(document).on('mousemove.selectbox', {
+        action  : e.target !== e.currentTarget ? e.target.className.match(/left/) ? 'left' : 'right' : 'move',
+        x       : e.pageX,
+        panel   : e.data.panel,
+        width   : parseInt(e.data.panel.elLk.selector.css('width')),
+        left    : parseInt(e.data.panel.elLk.selector.css('left'))
+      }, function(e) {
+        e.stopPropagation();
+
+        var disp   = e.pageX - e.data.x;
+        var coords = { left: e.data.left, width: e.data.width };
+
+        if (e.data.action !== 'right') {
+          disp = Math.max(disp, e.data.panel.dragRegion.l + 1 - coords.left);
+        }
+        if (e.data.action !== 'left') {
+          disp = Math.min(e.data.panel.dragRegion.r - coords.left - coords.width + 1, disp);
+        }
+
+        switch (e.data.action) {
+          case 'left':
+            disp = Math.min(coords.width - 6, disp);
+            coords.left = coords.left + disp;
+            coords.width = coords.width - disp;
+          break;
+          case 'right':
+            coords.width = Math.max(coords.width + disp, 6);
+          break;
+          case 'move':
+            coords.left = coords.left + disp;
+          break;
+        }
+
+        e.data.panel.elLk.selector.css(coords);
+        e.data.panel.makeZMenu(e, { s: coords.left, r: coords.width });
+
+      }).on('mouseup.selectbox click.selectbox', function(e) {
+        $(this).off('.selectbox');
+      })
+    }).end();
   },
 
   updateExportMenu: function(coords, speciesNumber, imageNumber) {
@@ -1084,20 +1093,31 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var test  = false;
     var areas = draggables ? this.draggables : this.areas;
     var c;
-    
+    var last;
+    var current;
+
     for (var i = 0; i < areas.length; i++) {
       c = areas[i];
-      
+
       switch (c.a.shape.toLowerCase()) {
         case 'circle': test = this.inCircle(c.c, coords); break;
         case 'poly':   test = this.inPoly(c.c, coords); break;
         default:       test = this.inRect(c, coords); break;
       }
-      
+
       if (test === true) {
-        return $.extend({}, c);
+        current = $.extend({}, c);
+
+        // if the areas are overlapping (in case of transparent areas, return the one drawn on top)
+        if (!current.a.attrs.overlap) {
+          return last || current;
+        }
+
+        last = current;
       }
     }
+
+    return last;
   },
   
   inRect: function (c, coords) {

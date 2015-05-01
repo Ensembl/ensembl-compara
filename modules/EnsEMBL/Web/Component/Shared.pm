@@ -271,7 +271,7 @@ sub transcript_table {
     my @rows;
    
     my %extra_links = (
-      uniprot => { match => "^UniProt", name => "UniProt", order => 0 },
+      uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
       refseq => { match => "^RefSeq", name => "RefSeq", order => 1 },
     );
     my %any_extras;
@@ -645,12 +645,15 @@ sub _add_gene_counts {
 sub species_stats {
   my $self = shift;
   my $sd = $self->hub->species_defs;
-  my $html = '<h3>Summary</h3>';
-
+  my $html;
   my $db_adaptor = $self->hub->database('core');
   my $meta_container = $db_adaptor->get_MetaContainer();
   my $genome_container = $db_adaptor->get_GenomeContainer();
 
+  #deal with databases that don't have species_stats
+  return $html if $genome_container->is_empty;
+
+  $html = '<h3>Summary</h3>';
   my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
 
   my $cols = [
@@ -1219,7 +1222,15 @@ sub render_sift_polyphen {
     'benign'            => 'good',
     'unknown'           => 'neutral',
     'tolerated'         => 'good',
-    'deleterious'       => 'bad'
+    'deleterious'       => 'bad',
+    
+    # slightly different format for SIFT low confidence states
+    # depending on whether they come direct from the API
+    # or via the VEP's no-whitespace processing
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
   );
   
   my %ranks = (
@@ -1273,6 +1284,36 @@ sub render_consequence_type {
   my $rank = $consequences[0]->rank;
       
   return ($type) ? qq{<span class="hidden">$rank</span>$type} : '-';
+}
+
+sub render_evidence_status {
+  my $self      = shift;
+  my $evidences = shift;
+
+  my $render;
+  foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$evidences){
+    my $evidence_label = $evidence;
+       $evidence_label =~ s/_/ /g;
+    $render .= sprintf('<img src="%s/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                        $self->img_url, $evidence, $evidence_label, $evidence
+                      );
+  }
+  return $render;
+}
+
+sub render_clinical_significance {
+  my $self       = shift;
+  my $clin_signs = shift;
+
+  my $render;
+  foreach my $cs (sort {$a cmp $b} @$clin_signs){
+    my $cs_img = $cs;
+       $cs_img =~ s/\s/-/g;
+    $render .= sprintf('<img src="%s/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                        $self->img_url, $cs_img, $cs, $cs
+                      );
+  }
+  return $render;
 }
 
 1;

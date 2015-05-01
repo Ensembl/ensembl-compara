@@ -577,11 +577,15 @@ sub evidence_status {
 
   my $html;
   foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$status){
+    my $evidence_label = $evidence;
+       $evidence_label =~ s/_/ /g;
     my $img_evidence =  sprintf(
                           '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="/i/val/evidence_%s.png" title="%s"/>',
-                          $evidence, $evidence
+                          $evidence, $evidence_label
                         );
-    my $url_type = ($evidence =~ /cited/i) ? 'Citations' : 'Population';
+    my $url_type = 'Population';
+       $url_type = 'Citations' if ($evidence =~ /cited/i);
+       $url_type = 'Phenotype' if ($evidence =~ /phenotype/i);
 
     my $url = $hub->url({
          type   => 'Variation',

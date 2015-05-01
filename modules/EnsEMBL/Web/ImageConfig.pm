@@ -1201,6 +1201,23 @@ sub _add_vcf_track {
   );
 }
 
+sub _add_pairwise_tabix_track {
+  shift->_add_file_format_track(
+    format    => 'PAIRWISE',
+    renderers => [
+      'off',                'Off', 
+      'interaction',        'Pairwise interaction',
+      'interaction_label',  'Pairwise interaction with labels'
+    ],
+    options => {
+      external   => 'external',
+      subtype    => 'pairwise',
+    },
+    @_
+  );
+  
+}
+
 sub _add_flat_file_track {
   my ($self, $menu, $sub_type, $key, $name, $description, %options) = @_;
 
@@ -1274,7 +1291,12 @@ sub _user_track_settings {
   my ($self, $style, $format) = @_;
   my ($strand, @user_renderers);
 
-  if ($style =~ /^(wiggle|WIG)$/) {
+  if (lc($format) eq 'pairwise') {
+    $strand         = 'f';
+    @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction',
+                        'interaction_label', 'Pairwise interaction with labels');
+  }
+  elsif ($style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   }
@@ -3096,22 +3118,25 @@ sub add_sequence_variations_meta {
     if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
     } elsif ($menu_item->{'type'} eq 'source') { # source type
-      (my $temp_name     = $menu_item->{'long_name'}) =~ s/ variants$//;
+
       my $other_sources = ($menu_item->{'long_name'} =~ /all other sources/);
 
-      $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
-      $menu_item->{'short_name'} =~ s/ variants$/$short_suffix_caption/;
+      (my $source_name   = $menu_item->{'long_name'}) =~ s/\svariants$//i;
+      (my $caption       = $menu_item->{'long_name'}) =~ s/\svariants$/$suffix_caption/;
+      (my $label_caption = $menu_item->{'short_name'}) =~ s/\svariants$/$short_suffix_caption/;
+      $label_caption .= $short_suffix_caption if ($label_caption !~ /$short_suffix_caption/);
 
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $menu_item->{'long_name'},
-        labelcaption => $menu_item->{'short_name'},
-        sources     => $other_sources ? undef : [ $temp_name ],
-        description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
+        caption      => $caption,
+        labelcaption => $label_caption,
+        sources      => $other_sources ? undef : [ $source_name ],
+        description  => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$source_name},
       });
+
     } elsif ($menu_item->{'type'} eq 'set') { # set type
-      if ($menu_item->{'long_name'} =~ / variants$/) {
-        $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
+      if ($menu_item->{'long_name'} =~ /\svariants$/i) {
+        $menu_item->{'long_name'} =~ s/\svariants$/$suffix_caption/;
       }
       elsif ($menu_item->{'long_name'} !~ /$regexp_suffix_caption$/){# / short variants \(SNPs and indels\)$/){
         $menu_item->{'long_name'} .= $suffix_caption;
@@ -3125,12 +3150,12 @@ sub add_sequence_variations_meta {
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $caption,
+        caption      => $caption,
         labelcaption => $label_caption,
-        sources     => undef,
-        sets        => [ $temp_name ],
-        set_name    => $set_name,
-        description => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
+        sources      => undef,
+        sets         => [ $temp_name ],
+        set_name     => $set_name,
+        description  => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
       });
     }
     

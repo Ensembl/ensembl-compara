@@ -242,6 +242,8 @@ package EnsEMBL::Web::Tools::DHTMLmerge::File;
 use strict;
 use warnings;
 
+use URI::Escape qw(uri_escape);
+
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 
 sub new {
@@ -280,9 +282,45 @@ sub get_contents {
   if ($type eq 'css') {
     my $sequence_markup = $species_defs->colour('sequence_markup') || {}; # Add sequence markup colours to ENSEMBL_STYLE - they are used in CSS. This smells a lot like a hack.
     my %colours         = (%{$species_defs->ENSEMBL_STYLE || {}}, map { $_ => $sequence_markup->{$_}{'default'} } keys %$sequence_markup);
-       $colours{$_}     =~ s/^([0-9A-F]{6})$/#$1/i for keys %colours;
-       $content         =~ s/\[\[(\w+)\]\]/$colours{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg; 
+    my @images_folders  = map "$_/css_images", @{$species_defs->ENSEMBL_HTDOCS_DIRS || []};
+
+    $content = _substitute_colours($content, \%colours);
+    $content = _substitute_images($content, \@images_folders, \%colours);
   }
+
+  return $content;
+}
+
+sub _substitute_colours {
+  ## @private
+  ## Replaces colour constants in text with actual values
+  my ($content, $colours) = @_;
+
+  $colours->{$_} =~ s/^([0-9A-F]{6})$/#$1/i for keys %$colours;
+  $content       =~ s/\[\[(\w+)\]\]/$colours->{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg;
+
+  return $content;
+}
+
+sub _substitute_images {
+  ## @private
+  ## Replaces image constants in text with actual escaped svg text
+  my ($content, $dirs, $colours) = @_;
+
+  my $matches = [];
+
+  while ($content =~ m/(\[\[IMG\:(\w+\.svg)\]\])/g) {
+
+    push @$matches, [ $-[1], $+[1] - $-[1] ]; # offset and length
+
+    my ($img) = map { -r "$_/$2" ? "$_/$2" : () } @$dirs;
+        $img  = join('', file_get_contents($img)) =~ s/\R\s*//r if $img;
+        $img  = $img ? sprintf('data:image/svg+xml,%s', uri_escape(_substitute_colours($img, $colours))) : "none /*image $2 not found*/";
+
+    push @{$matches->[-1]}, $img; # replacement
+  }
+
+  substr($content, $_->[0], $_->[1], $_->[2]) for reverse @$matches;
 
   return $content;
 }

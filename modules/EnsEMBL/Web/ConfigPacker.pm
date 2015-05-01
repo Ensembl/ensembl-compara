@@ -402,10 +402,8 @@ sub _summarise_variation_db {
   # get menu config from meta table if it exists
   my $v_conf_aref = $dbh->selectall_arrayref('select meta_value from meta where meta_key = "web_config" order by meta_id asc');
   foreach my $row(@$v_conf_aref) {
-    my ($type, $long_name, $key, $parent) = split /\#/, $row->[0];
-  
-    my $short_name = $long_name;
-    $short_name = $1 if $long_name =~ s/\s*{(.*?)}\s*$//;
+    my @values = split(/\#/,$row->[0],-1);
+    my ($type,$long_name,$short_name,$key,$parent) = @values;
 
     push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
       type       => $type,
@@ -1757,6 +1755,9 @@ sub _munge_file_formats {
     'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
     'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
     'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},
+    ## WashU formats
+    'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
+    'pairwise_tabix' => {'ext' => 'txt', 'label' => 'Pairwise interactions (indexed)', 'display' => 'feature', 'indexed' => 1},
   );
 
   ## Munge into something useful to this website

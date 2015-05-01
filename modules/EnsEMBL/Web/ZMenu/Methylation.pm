@@ -96,8 +96,7 @@ sub summary_zmenu {
     $self->add_entry({ type => "Region Summary",
                        label => "Zoom using link below for individual feature details" });
     $self->add_entry({ type => "Location",
-                       label => "$chr:$s-$e",
-                       link => $self->hub->url({ r => "$chr:$s-$e" })});
+                       label => "$chr:$s-$e"});
     $self->add_entry({ type => "Feature Count",
                        label => $num });
     $self->add_entry({ type => "Methylated Reads",

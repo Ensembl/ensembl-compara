@@ -23,6 +23,7 @@ use warnings;
 no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Component::UserData);
+use EnsEMBL::Web::TmpFile::Text;
 
 sub _init {
   my $self = shift;
