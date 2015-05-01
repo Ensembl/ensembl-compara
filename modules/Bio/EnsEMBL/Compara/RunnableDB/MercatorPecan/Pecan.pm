@@ -530,9 +530,7 @@ sub _write_gerp_dataflow {
 #    }
 #    $species_set .= "]";
 #    my $output_id = "{genomic_align_block_id=>" . $gab->dbID . ",species_set=>" .  $species_set;
-    my $output_id = "{genomic_align_block_id=>" . $gab->dbID;
-    
-    $output_id .= "}";
+    my $output_id = { genomic_align_block_id => $gab->dbID };
 
     $self->dataflow_output_id($output_id,1);
 }

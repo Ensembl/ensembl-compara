@@ -159,7 +159,7 @@ use warnings;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
@@ -255,7 +255,7 @@ sub new {
       if (defined($reference_genomic_align_id));
   $self->genomic_align_array($genomic_align_array) if (defined($genomic_align_array));
 
-  $self->starting_genomic_align_id($starting_genomic_align_id) if (defined($starting_genomic_align_id));
+  $self->reference_genomic_align_id($starting_genomic_align_id) if (defined($starting_genomic_align_id));
 
   return $self;
 }
@@ -353,93 +353,6 @@ sub method_link_species_set_id {
   }
 
   return $self->{'method_link_species_set_id'};
-}
-
-=head2 starting_genomic_align_id (DEPRECATED)
-
-  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align_id() method instead
- 
-  Arg [1]    : integer $reference_genomic_align_id
-  Example    : $genomic_align_block->starting_genomic_align_id(4321);
-  Description: set for attribute reference_genomic_align_id. A value of 0 will set the
-               reference_genomic_align_id attribute to undef. When looking for genomic
-               alignments in a given slice or dnafrag, the reference_genomic_align
-               corresponds to the Bio::EnsEMBL::Compara::GenomicAlign included in the
-               starting slice or dnafrag. The reference_genomic_align_id is the dbID
-               corresponding to the reference_genomic_align. All remaining
-               Bio::EnsEMBL::Compara::GenomicAlign objects included in the
-               Bio::EnsEMBL::Compara::GenomicAlignBlock are the non_reference_genomic_aligns.
-  Returntype : none
-  Exceptions : throw if $reference_genomic_align_id id not a postive number
-  Caller     : $genomic_align_block->starting_genomic_align_id(int)
-
-=cut
-
-sub starting_genomic_align_id {
-  my $self = shift;
-  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align_id() method instead");
-  return $self->reference_genomic_align_id(@_);
-}
-
-=head2 starting_genomic_align (DEPRECATED)
-
-  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align() method instead
- 
-  Arg [1]    : (none)
-  Example    : $genomic_align = $genomic_align_block->starting_genomic_align();
-  Description: get the reference_genomic_align. When looking for genomic alignments in
-               a given slice or dnafrag, the reference_genomic_align corresponds to the
-               Bio::EnsEMBL::Compara::GenomicAlign included in the starting slice or
-               dnafrag. The reference_genomic_align_id is the dbID corresponding to the
-               reference_genomic_align. All remaining Bio::EnsEMBL::Compara::GenomicAlign
-               objects included in the Bio::EnsEMBL::Compara::GenomicAlignBlock are the
-               non_reference_genomic_aligns.
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
-  Exceptions : warns if no reference_genomic_align_id has been set and returns a ref.
-               to an empty array
-  Exceptions : warns if no genomic_align_array has been set and returns a ref.
-               to an empty array
-  Exceptions : throw if reference_genomic_align_id does not match any of the
-               Bio::EnsEMBL::Compara::GenomicAlign objects in the genomic_align_array
-  Caller     : $genomic_align_block->starting_genomic_align()
-
-=cut
-
-sub starting_genomic_align {
-  my $self = shift;
-  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_genomic_align() method instead");
-  return $self->reference_genomic_align(@_);
-}
-
-
-=head2 resulting_genomic_aligns
-
-  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_non_reference_genomic_align()
-  method instead
- 
-  Arg [1]    : (none)
-  Example    : $genomic_aligns = $genomic_align_block->resulting_genomic_aligns();
-  Description: get the all the non_reference_genomic_aligns. When looking for genomic
-               alignments in a given slice or dnafrag, the reference_genomic_align
-               corresponds to the Bio::EnsEMBL::Compara::GenomicAlign included in the
-               reference slice or dnafrag. The reference_genomic_align_id is the dbID
-               corresponding to the reference_genomic_align. All remaining
-               Bio::EnsEMBL::Compara::GenomicAlign objects included in the
-               Bio::EnsEMBL::Compara::GenomicAlignBlock are the
-               non_reference_genomic_aligns.
-  Returntype : a ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
-  Exceptions : warns if no reference_genomic_align_id has been set and returns a ref.
-               to an empty array
-  Exceptions : warns if no genomic_align_array has been set and returns a ref.
-               to an empty array
-  Caller     : $genomic_align_block->resulting_genomic_aligns()
-
-=cut
-
-sub resulting_genomic_aligns {
-  my ($self) = @_;
-  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->get_all_non_reference_genomic_aligns() method instead");
-  return $self->get_all_non_reference_genomic_aligns(@_);
 }
 
 
@@ -866,25 +779,6 @@ sub level_id {
   return $self->{'level_id'};
 }
 
-=head2 requesting_slice (DEPRECATED)
-
-  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice() method instead
- 
-  Arg [1]    : Bio::EnsEMBL::Slice $reference_slice
-  Example    : my $reference_slice = $genomic_align_block->requesting_slice;
-  Example    : $genomic_align_block->requesting_slice($reference_slice);
-  Description: get/set for attribute reference_slice.
-  Returntype : Bio::EnsEMBL::Slice object
-  Exceptions : throw if $reference_slice is not a Bio::EnsEMBL::Slice
-  Caller     : general
-
-=cut
-
-sub requesting_slice {
-  my ($self) = shift;
-  deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignBlock->reference_slice() method instead");
-  return $self->reference_slice(@_);
-}
 
 =head2 alignment_strings
 

@@ -806,50 +806,6 @@ sub node_id {
   return $self->{'node_id'} || $self->{'_original_node_id'};
 }
 
-=head2 genomic_align_group
-
-  Arg [2]    : [optional] Bio::EnsEMBL::Compara::GenomicAlignGroup $genomic_align_group
-  Example    : $genomic_align_group = $genomic_align->genomic_align_group();
-  Example    : $genomic_align->genomic_align_group($genomic_align_group);
-  Description: get/set for the Bio::EnsEMBL::Compara::GenomicAlginGroup object
-               corresponding to this Bio::EnsEMBL::Compara::GenomicAlign object 
-  Returntype : int
-  Exceptions : none
-  Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
-  Status     : Stable
-
-=cut
-
-sub genomic_align_group {
-  my ($self, $genomic_align_group) = @_;
-
-  deprecate("Removed genomic_align_group table");
-
-}
-
-
-=head2 genomic_align_group_id
-
-  Arg [2]    : [optional] int $genomic_align_group_id
-  Example    : $genomic_align_group_id = $genomic_align->genomic_align_group_id();
-  Example    : $genomic_align->genomic_align_group_id(18);
-  Description: get/set for the genomic_align_group_id corresponding to this
-               Bio::EnsEMBL::Compara::GenomicAlign object
-  Returntype : int
-  Exceptions : none
-  Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
-  Status     : Stable
-
-=cut
-
-sub genomic_align_group_id {
-  my ($self, $genomic_align_group_id) = @_;
-
-  deprecate("Removed genomic_align_group table");
-}
-
 
 =head2 original_sequence
 
@@ -897,7 +853,7 @@ sub original_sequence {
               $self->dnafrag_strand
           );
     } else {
-      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_groups".
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->original_sequence".
           " You either have to specify more information (see perldoc for".
           " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
     }

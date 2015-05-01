@@ -77,13 +77,13 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
 
 =head2 fetch_all_AlignedMember_by_Member
 
-  Arg[1]     : Member or member_id
+  Arg[1]     : GeneMember, SeqMember or seq_member_id
   Arg [-METHOD_LINK_SPECIES_SET] (opt)
              : MethodLinkSpeciesSet or int: either the object or its dbID
   Arg [-CLUSTERSET_ID] (opt)
-             : int: the root_id of the clusterset node
-               NB: The definition of this argument is unstable and might change
-                   in the future
+             : string: the name of the clusterset (use "default" to get the default
+               trees). Currently, there is a clusterset for the default trees, one for
+               each phylogenetic model used in the protein tree pipeline
   Example    : $all_members = $genetree_adaptor->fetch_all_AlignedMember_by_Member($member);
   Description: Transforms the member into an AlignedMember.
                If the member is a non-canonical SeqMember, returns []
@@ -98,10 +98,9 @@ sub fetch_all_AlignedMember_by_Member {
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
     assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
-    my $member_id = (ref($member) ? $member->dbID : $member);
-    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+    my $seq_member_id = (ref($member) ? ($member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID) : $member);
+    my $constraint = '(m.seq_member_id = ?)';
+    $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
     if (defined $mlss) {
         assert_ref_or_dbID($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
@@ -115,16 +114,15 @@ sub fetch_all_AlignedMember_by_Member {
         $self->bind_param_generic_fetch($clusterset_id, SQL_VARCHAR);
     }
 
-    my $join = [[['gene_tree_root', 'tr'], 't.root_id = tr.root_id']];
-    return $self->generic_fetch($constraint, $join);
+    return $self->generic_fetch($constraint);
 }
 
 
 =head2 fetch_default_AlignedMember_for_Member
 
-  Arg[1]     : Member or member_id
+  Arg[1]     : GeneMember, SeqMember or seq_member_id
   Example    : $align_member = $genetreenode_adaptor->fetch_adefault_AlignedMember_for_Member($member);
-  Description: Transforms the member into an AlignedMember.
+  Description: Transforms the member into an AlignedMember for the default gene-tree
                If the member is a non-canonical SeqMember, returns undef
   Returntype : Bio::EnsEMBL::Compara::AlignedMember
   Exceptions : none
@@ -136,16 +134,11 @@ sub fetch_default_AlignedMember_for_Member {
     my ($self, $member) = @_;
 
     assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
-    my $member_id = (ref($member) ? $member->dbID : $member);
-    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+    my $seq_member_id = (ref($member) ? ($member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID) : $member);
+    my $constraint = '(m.seq_member_id = ?) AND (tr.clusterset_id = "default")';
+    $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
-
-    $constraint .= ' AND (tr.clusterset_id = "default")';
-
-    my $join = [[['gene_tree_root', 'tr'], 't.root_id = tr.root_id']];
-    return $self->generic_fetch_one($constraint, $join);
+    return $self->generic_fetch_one($constraint);
 }
 
 

@@ -228,31 +228,6 @@ sub reference_slice_strand {
   return $self->{'reference_slice_strand'};
 }
 
-=head2 get_original_strand
-
-  Args       : none
-  Example    : if (!$genomic_align_block->get_original_strand()) {
-                 # original GenomicAlignBlock has been reverse-complemented
-               }
-  Description: getter for the _orignal_strand attribute
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-  Status     : DEPRECATED, use $genomic_align_block->original_strand instead
-
-=cut
-
-sub get_original_strand {
-  my ($self) = @_;
-
-  deprecate("get_original_strand should not be used. Please use the original_strand method instead");
-
-  if (!defined($self->{_original_strand})) {
-    $self->{_original_strand} = 1;
-  }
-
-  return $self->{_original_strand};
-}
 
 =head2 restricted_aln_start
 

@@ -118,6 +118,31 @@ sub load_all_from_seq_members {
     }
 }
 
+
+=head2 fetch_by_Gene
+
+  Arg[1]      : Bio::EnsEMBL::Gene $gene
+  Arg[2]      : (opt) boolean: $verbose
+  Example     : my $gene_member = $genemember_adaptor->fetch_by_Gene($gene);
+  Description : Returns the GeneMember equivalent of the given Gene object.
+                If $verbose is switched on and the gene is not in Compara, prints a warning.
+  Returntype  : Bio::EnsEMBL::Compara::GeneMember
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_by_Gene {
+    my ($self, $gene, $verbose) = @_;
+
+    assert_ref($gene, 'Bio::EnsEMBL::Gene', 'gene');
+    my $gene_member = $self->fetch_by_stable_id($gene->stable_id);
+    warn $gene->stable_id." does not exist in the Compara database\n" if $verbose and not $gene_member;
+    return $gene_member;
+}
+
+
 #
 # INTERNAL METHODS
 #
@@ -256,7 +281,7 @@ sub store {
     my $sth2 = $self->prepare("SELECT gene_member_id, genome_db_id FROM gene_member WHERE stable_id=?");
     $sth2->execute($member->stable_id);
     my($id, $genome_db_id) = $sth2->fetchrow_array();
-    warn("MemberAdaptor: insert failed, but member_id select failed too") unless($id);
+    warn("GeneMemberAdaptor: insert failed, but gene_member_id select failed too") unless($id);
     throw(sprintf('%s already exists and belongs to a different species (%s) ! Stable IDs must be unique across the whole set of species', $member->stable_id, $self->db->get_GenomeDBADaptor->fetch_by_dbID($genome_db_id)->name )) if $genome_db_id and $member->genome_db_id and $genome_db_id != $member->genome_db_id;
     $member->dbID($id);
     $sth2->finish;
