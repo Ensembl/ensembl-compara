@@ -366,7 +366,10 @@ sub do_draw_wiggle {
   # Shift down the lhs label to between the axes
   if($bottom-$top > 30) {
     # luxurious space for centred label
-    $self->{'label_y_offset'} = ($bottom-$top)/2;
+    $self->{'label_y_offset'} =
+        ($bottom-$top)/2             # half-way-between
+        + $self->subtitle_height     # graph is offset down if subtitled
+        - 16;                        # two-line label so centre its centre
   } else {
     # tight, just squeeze it down a little
     $self->{'label_y_offset'} = 0;

@@ -377,7 +377,9 @@ sub subtitle_text {
 sub use_subtitles {
   my ($self) = @_;
 
-  return $self->supports_subtitles && $self->subtitle_text;
+  return
+    $self->{'config'}->get_option('opt_subtitles') &&
+    $self->supports_subtitles && $self->subtitle_text;
 }
 
 sub subtitle_height {
