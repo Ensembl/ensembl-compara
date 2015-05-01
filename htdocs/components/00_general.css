@@ -113,6 +113,7 @@ a:visited             { color: [[PAGE_VISITED]]; }
 a:hover               { color: [[PAGE_HOVER]];   }
 a:active              { color: [[PAGE_HOVER]];   }
 a.no-visit:visited    { color: [[PAGE_LINK]]; } /* don't change link colour on links we want to stay "visible" */
+a[rel="external"]     { background-position: right center; background-repeat: no-repeat; padding-right: 12px; background-image: url("[[IMG:external_link.svg]]") }
 span.link             { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
 a.toggle              { background: url(/i/open2.gif) no-repeat right bottom; text-decoration: none; padding-right: 20px; outline: 0 none; }
 a.toggle.closed       { background-image: url(/i/closed2.gif); }
