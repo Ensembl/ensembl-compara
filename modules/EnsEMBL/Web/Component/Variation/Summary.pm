@@ -182,38 +182,39 @@ sub variation_source {
   
   ## parse description for links
   (my $description = $object->source_description) =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2" class="constant">$1<\/a>/; 
-  
+  my $source_prefix = 'View in';
+
   # Source link
   if ($source =~ /dbSNP/) {
     $sname       = 'DBSNP';
-    $source_link = $hub->get_ExtURL_link("[View in dbSNP]", $sname, $name);
+    $source_link = $hub->get_ExtURL_link("$source_prefix dbSNP", $sname, $name);
   } elsif ($source =~ /SGRP/) {
-    $source_link = $hub->get_ExtURL_link("[About $source]", 'SGRP_PROJECT');
+    $source_link = $hub->get_ExtURL_link("About $source", 'SGRP_PROJECT');
   } elsif ($source =~ /COSMIC/) {
     $sname       = 'COSMIC';
     my $cname = ($name =~ /^COSM(\d+)/) ? $1 : $name;
-    $source_link = $hub->get_ExtURL_link("[View in $source]", "${sname}_ID", $cname);
+    $source_link = $hub->get_ExtURL_link("$source_prefix $source", "${sname}_ID", $cname);
   } elsif ($source =~ /HGMD/) {
     $version =~ /(\d{4})(\d+)/;
     $version = "$1.$2";
     my $pf          = ($hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation')->fetch_all_by_Variation($object->Obj))->[0];
     my $asso_gene   = $pf->associated_gene;
-       $source_link = $hub->get_ExtURL_link("[View in $source]", 'HGMD', { ID => $asso_gene, ACC => $name });
+       $source_link = $hub->get_ExtURL_link("$source_prefix $source", 'HGMD', { ID => $asso_gene, ACC => $name });
   } elsif ($source =~ /ESP/) {
     if ($name =~ /^TMP_ESP_(\d+)_(\d+)/) {
-      $source_link = $hub->get_ExtURL_link("[View in $source]", $source, { CHR => $1 , START => $2, END => $2});
+      $source_link = $hub->get_ExtURL_link("$source_prefix $source", $source, { CHR => $1 , START => $2, END => $2});
     }
     else {
-      $source_link = $hub->get_ExtURL_link("[View in $source]", "${source}_HOME");
+      $source_link = $hub->get_ExtURL_link("$source_prefix $source", "${source}_HOME");
     }
   } elsif ($source =~ /LSDB/) {
     $version = ($version) ? " ($version)" : '';
-    $source_link = $hub->get_ExtURL_link("[View in $source]", $source, $name);
+    $source_link = $hub->get_ExtURL_link("$source_prefix $source", $source, $name);
   }  elsif ($source =~ /PhenCode/) {
      $sname       = 'PHENCODE';
-     $source_link = $hub->get_ExtURL_link("[View in PhenCode]", $sname, $name);
+     $source_link = $hub->get_ExtURL_link("$source_prefix PhenCode", $sname, $name);
 } else {
-    $source_link = $url ? qq{<a href="$url" class="constant">[View in $source]</a>} : "$source $version";
+    $source_link = $url ? qq{<a href="$url" class="constant">$source_prefix $source</a>} : "$source $version";
   }
   
   $version = ($version) ? " (release $version)" : '';
@@ -578,10 +579,10 @@ sub evidence_status {
   my $html;
   foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$status){
     my $evidence_label = $evidence;
-       $evidence_label =~ s/_/ /g;
+       $evidence_label =~ s/_/\s/g;
     my $img_evidence =  sprintf(
-                          '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="/i/val/evidence_%s.png" title="%s"/>',
-                          $evidence, $evidence_label
+                          '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="%s/val/evidence_%s.png" title="%s"/>',
+                           $self->img_url, $evidence, $evidence_label
                         );
     my $url_type = 'Population';
        $url_type = 'Citations' if ($evidence =~ /cited/i);
@@ -596,7 +597,8 @@ sub evidence_status {
     $html .= qq{<a href="$url">$img_evidence</a>};
   }
 
-  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the evidence status descriptions"/>}; 
+  my $src = $self->img_url.'/16/info.png';
+  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the evidence status descriptions"/>}; 
   my $info_link = qq{<a href="/info/genome/variation/data_description.html#evidence_status" target="_blank">$img</a>};
 
   return [ "Evidence status $info_link" , $html ];
@@ -610,9 +612,10 @@ sub clinical_significance {
   my $clin_sign = $object->clinical_significance;
 
   return unless (scalar(@$clin_sign));
-
-  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to view the explanation (from the ClinVar website)"/>};
-  my $info_link = $hub->get_ExtURL_link($img, "CLIN_SIG", '');
+  
+  my $src = $self->img_url.'/16/info.png';
+  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the clinical significances"/>};
+  my $info_link = qq{<a href="/info/genome/variation/data_description.html#clin_significance" target="_blank">$img</a>};
 
   my %clin_sign_icon;
   foreach my $cs (@{$clin_sign}) {
@@ -631,8 +634,8 @@ sub clinical_significance {
   my $cs_content = join("",
     map {
       sprintf(
-        '<a href="%s"><img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" title="%s" src="/i/val/clinsig_%s.png" /></a>',
-        $url, $_, $clin_sign_icon{$_}
+        '<a href="%s"><img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" title="%s" src="%s/val/clinsig_%s.png" /></a>',
+        $url, $_, $self->img_url, $clin_sign_icon{$_}
       )
     } @$clin_sign
   );

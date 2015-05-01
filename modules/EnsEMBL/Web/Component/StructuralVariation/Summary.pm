@@ -412,8 +412,9 @@ sub clinical_significance {
 
   return unless (scalar(@$clin_sign));
 
-  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to view the explanation (from the ClinVar website)"/>};
-  my $info_link = $hub->get_ExtURL_link($img, "CLIN_SIG", '');
+  my $src = $self->img_url.'/16/info.png';
+  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the clinical significances"/>};
+  my $info_link = qq{<a href="/info/genome/variation/data_description.html#clin_significance" target="_blank">$img</a>};
 
   my %clin_sign_icon;
   foreach my $cs (@{$clin_sign}) {
@@ -432,8 +433,8 @@ sub clinical_significance {
   my $cs_content = join("",
     map {
       sprintf(
-        '<a href="%s"><img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" title="%s" src="/i/val/clinsig_%s.png" /></a>',
-        $url, $_, $clin_sign_icon{$_}
+        '<a href="%s"><img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" title="%s" src="%s/val/clinsig_%s.png" /></a>',
+        $url, $_, $self->img_url, $clin_sign_icon{$_}
       )
     } @$clin_sign
   );
