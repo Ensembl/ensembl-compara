@@ -919,6 +919,16 @@ sub _summarise_website_db {
     $self->db_tree->{'ENSEMBL_GLOSSARY'}{$entry->{'word'}} = $entry->{'meaning'}; 
   }
 
+  ## Get attrib text lookup
+  $t_aref = $dbh->selectall_arrayref(
+    'select data from help_record where type = "lookup" and status = "live"'
+  );
+  foreach my $row (@$t_aref) {
+    my $entry = eval($row->[0]);
+    $self->db_tree->{'TEXT_LOOKUP'}{$entry->{'word'}} = $entry->{'meaning'}; 
+  }
+
+
   $dbh->disconnect();
 }
 
