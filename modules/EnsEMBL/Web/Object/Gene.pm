@@ -68,6 +68,7 @@ sub availability {
         $availability->{'has_2ndary_cons'}    = $tree && $tree->get_tagvalue('ss_cons') ? 1 : 0;
         $availability->{'has_2ndary'}         = ($availability->{'has_2ndary_cons'} || ($obj->canonical_transcript && scalar(@{$obj->canonical_transcript->get_all_Attributes('ncRNA')}))) ? 1 : 0;
       }
+      $availability->{'has_gxa'}              = $self->gxa_check;
 
       $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}           = !!$funcgen_res; 
@@ -481,6 +482,8 @@ sub seq_region_strand           { return $_[0]->Obj->strand;     }
 sub feature_length              { return $_[0]->Obj->feature_Slice->length; }
 sub get_latest_incarnation      { return $_[0]->Obj->get_latest_incarnation; }
 sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived; }
+sub gxa_check                   { return; } #implemented in widget plugin, to check for gene expression atlas availability
+
 
 sub get_database_matches {
   my $self = shift;
