@@ -207,18 +207,21 @@ sub transcript_table {
 
     my $trans_attribs = {};
     my $trans_gencode = {};
-    my @appris_codes  = qw(appris_pi1 appris_pi2 appris_pi3 appris_pi4 appris_pi5 appris_alt1 appris_alt2);
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL), @appris_codes) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL appris)) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
         next unless $attrib;
         if($attrib_type eq 'gencode_basic' && $attrib->value) {
           $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
-        } elsif ($attrib_type =~ /appris/  && $attrib->value) {
+        } elsif ($attrib_type eq 'appris'  && $attrib->value) {
           ## There should only be one APPRIS code per transcript
-          (my $code = $attrib->code) =~ s/appris_//;
-          $trans_attribs->{$trans->stable_id}{'appris'} = [$code, $attrib->name]; 
+          my $short_code = $attrib->value;
+          ## Manually shorten the full attrib values to save space
+          $short_code =~ s/ernative//;
+          $short_code =~ s/rincipal//;
+          my $text = sprintf('%s - %s', $attrib->name, $attrib->value);
+          $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $text]; 
           last;
         } else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
