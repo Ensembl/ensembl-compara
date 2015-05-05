@@ -55,7 +55,7 @@ sub champion(&@) {
 
 sub get_url_content {
 ######## DEPRECATED ################
-warn "DEPRECATED METHOD 'get_url_content' - please switch to using EnsEMBL::Web::File::Utils::URL::read_file. This method will be removed in release 80.";
+warn "DEPRECATED METHOD 'get_url_content' - please switch to using EnsEMBL::Web::File::Utils::URL::read_file. This method will be removed in release 81.";
 ####################################
   my $url   = shift;
   my $proxy = shift || $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
@@ -82,7 +82,7 @@ warn "DEPRECATED METHOD 'get_url_content' - please switch to using EnsEMBL::Web:
 
 sub get_url_filesize {
 ######## DEPRECATED ################
-warn "DEPRECATED METHOD 'get_url_filesize' - please switch to using EnsEMBL::Web::File::Utils::URL::get_filesize. This method will be removed in release 80.";
+warn "DEPRECATED METHOD 'get_url_filesize' - please switch to using EnsEMBL::Web::File::Utils::URL::get_filesize. This method will be removed in release 81.";
 ####################################
 ## Returns the size of a file in bytes, or an error code if the request fails
 ## TODO - needs changing to get just the first line or so of the file before
