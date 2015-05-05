@@ -192,7 +192,7 @@ sub transcript_table {
   my $trans_5_3_desc = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
   my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
   my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
-  my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my %text_lookup  = $hub->species_defs->multiX('TEXT_LOOKUP');
   my $gene_html    = '';  
   my $transc_table;
 
@@ -220,8 +220,7 @@ sub transcript_table {
           ## Manually shorten the full attrib values to save space
           $short_code =~ s/ernative//;
           $short_code =~ s/rincipal//;
-          my $text = sprintf('%s - %s', $attrib->name, $attrib->value);
-          $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $text]; 
+          $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $attrib->value]; 
           last;
         } else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
@@ -332,7 +331,7 @@ sub transcript_table {
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
-          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s</span></span>), $tsl, $glossary{"TSL$tsl"};
+          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s%s</span></span>), $tsl, $text_lookup{"TSL:$tsl"}, $text_lookup{'TSL'};
         }
       }
 
@@ -342,14 +341,9 @@ sub transcript_table {
         }
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
-        my ($code, $text) = @{$trans_attribs->{$tsi}{'appris'}};
+        my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
         my $short_code = $code ? ' '.uc($code) : '';
-        my $appris_popup  = sprintf('<span class="glossary_mouseover">APPRIS%s<span class="floating_popup">%s', $short_code, $text);
-
-        my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '521', '__clear' => 1});
-        $appris_popup .= sprintf('<br/><br/><a href="%s" class="popup">APPRIS</a> is a system to annotate alternatively spliced transcripts based on a range of computational methods.</span></span>', $glossary_url);
-
-        push @flags, $appris_popup;
+          push @flags, sprintf qq(<span class="glossary_mouseover">APPRIS%s<span class="floating_popup">%s%s</span></span>), $short_code, $text_lookup{"APPRIS: $key"}, $text_lookup{'APPRIS'};
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
