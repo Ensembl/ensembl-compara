@@ -267,7 +267,7 @@ sub format_table {
       # SSID + Submitter
       if ($ssid) {
         $pop_row{'ssid'}      = $hub->get_ExtURL_link($ssid, 'DBSNPSS', $ssid) unless $ssid eq 'ss0';
-        $pop_row{'submitter'} = $hub->get_ExtURL_link($data->{'submitter'}, 'DBSNPSSID', $data->{'submitter'});
+        $pop_row{'submitter'} = ($data->{'submitter'}) ? $hub->get_ExtURL_link($data->{'submitter'}, 'DBSNPSSID', $data->{'submitter'}) : '-';
       }  
 
 
@@ -462,7 +462,7 @@ sub generic_group_link {
   my $project_name = ($1) ? $1 : $title;
   $project_name = ($project_name =~ /project/i) ? "<b>$project_name</b>" : ' ';
   
-  return sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations &rarr;</a></p>', $pop_url, $project_name);
+  return sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations</a></p>', $pop_url, $project_name);
 }
 
 sub format_allele_genotype_content {
