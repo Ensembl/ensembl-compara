@@ -164,7 +164,7 @@ sub get_study {
   return unless $study_name;
   
   my $study_description = $self->add_pubmed_link($object->study_description);
-  my $study_line        = sprintf '<a href="%s" class="constant">%s</a>', $object->study_url, $study_name;
+  my $study_line        = sprintf '<a href="%s" class="constant" rel="external">%s</a>', $object->study_url, $study_name;
   
   return ['Study', "$study_line - $study_description"];
 }
@@ -202,7 +202,7 @@ sub add_pubmed_link {
     foreach (@temp) {
       if (/PMID/) {
         (my $id = $_)   =~ s/PMID://; 
-        my $pubmed_url  = $hub->get_ExtURL_link($_, 'PUBMED', $id); 
+        my $pubmed_url  = $hub->get_ExtURL_link($_, 'EPMC_MED', $id);
            $description =~ s/$_/$pubmed_url/;
       }
     }
