@@ -122,3 +122,10 @@ td:hover a.hover_show  { display: inline; }
 
 tr.row-sub td { font-size: 85%; }
 tr.row-sub td:first-child { text-indent:24px; }
+
+div.allele_short     { float:left;width:105px; }
+div.allele_long      { float:left;width:120px; }
+div.genotype_short   { float:left;width:125px; }
+div.genotype_long    { float:left;width:140px; }
+div.allele_padding   { padding-right:6px; }
+div.genotype_padding { padding-right:6px; }

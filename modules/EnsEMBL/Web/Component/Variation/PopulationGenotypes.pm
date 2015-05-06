@@ -493,13 +493,17 @@ sub format_allele_genotype_content {
     $gt_label = substr($gt_label,0,10).'...' if (length($gt)>10);
 
     $count_data ++;
-    my $sep = ($count_data == scalar(keys(%data_list))) ? '' : ';padding-right:6px';
-    my $width = (length($gt) > 1) ? 120 : 105;
-    if ($type eq 'Genotype') {
-      $width = (length($gt) > 4) ? 140 : 125;
+    my $class;
+    if ($type eq 'Allele') {
+     $class  = (length($gt) > 1) ? 'allele_long' : 'allele_short';
+     $class .= ($count_data == scalar(keys(%data_list))) ? '' : ' allele_padding';
     }
-    $content .= sprintf(qq{<div style="float:left;width:%ipx%s"><b>%s</b>: %s (%i)%s</div>},
-                        $width, $sep, $gt_label, $data_list{$gt}{'freq'}, $data_list{$gt}{'count'});
+    elsif ($type eq 'Genotype') {
+      $class  = (length($gt) > 4) ? 'genotype_long' : 'genotype_short';
+      $class .= ($count_data == scalar(keys(%data_list))) ? '' : ' genotype_padding';
+    }
+    $content .= sprintf(qq{<div class="%s"><b>%s</b>: %s (%i)%s</div>},
+                        $class, $gt_label, $data_list{$gt}{'freq'}, $data_list{$gt}{'count'});
   }
   return $content;
 }
