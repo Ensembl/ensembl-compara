@@ -418,6 +418,7 @@ sub render_as_alignment_nolabel {
         
         if ($self->my_config('has_blocks') && $show_structure) {
           ## BED file shown like transcript
+          $label_colour       = $feature_colour;
           my ($block_count)   = @{$f->external_data->{'BlockCount'}};
           my ($block_starts)  = @{$f->external_data->{'BlockStarts'}};
           my ($block_sizes)   = @{$f->external_data->{'BlockSizes'}};
