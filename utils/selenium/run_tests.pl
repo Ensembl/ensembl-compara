@@ -256,13 +256,13 @@ sub run_test {
     ## N.B. In this situation, 'pass' is treated as an error
     ## because it means we are aborting this module's tests
     ## (e.g. if it's a Variation test and species has no variation)
-    write_to_log($object, $error);
+    write_to_log($object, $error, $module);
   }
   else {
     ## Check that site being tested is up
     my @response = $package->check_website;
     if ($response[0] eq 'fail') {
-      write_to_log($response[0], "ABORTING TESTS ON $module: $message", $module, $method);
+      write_to_log($response[0], "ABORTING TESTS ON $module: ".$response[1], $response[2], $response[3]);
       return;
     }
 
