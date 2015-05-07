@@ -422,22 +422,74 @@ sub render_as_alignment_nolabel {
           my ($block_count)   = @{$f->external_data->{'BlockCount'}};
           my ($block_starts)  = @{$f->external_data->{'BlockStarts'}};
           my ($block_sizes)   = @{$f->external_data->{'BlockSizes'}};
-          my @block_starts  = split(',', $block_starts); 
-          my @block_sizes   = split(',', $block_sizes); 
+          my @block_starts    = split(',', $block_starts); 
+          my @block_sizes     = split(',', $block_sizes); 
+          my ($thick_start)   = @{$f->external_data->{'thick_start'}};
+          my ($thick_end)     = @{$f->external_data->{'thick_end'}};
+          $thick_start        -= $self->{'container'}->start;
+          $thick_end          -= $self->{'container'}->start;
+
+          my %glyph_params  = (
+                                height       => $h,
+                                absolutey    => 1,
+                              );
           
           for (my $i = 0; $i < $block_count; $i++) {
-            my $block_start = $start - 1 + $block_starts[$i];
+            my $block_start = $start + $block_starts[$i];
             my $block_width = $block_sizes[$i] || 1;
             my $block_end   = $block_start + $block_width;
-            $composite->unshift($self->Rect({
+            if ($i == 0 && $thick_start) {
+              my $utr_width = $thick_start - $start;
+              if ($utr_width > 0) {
+                $composite->unshift($self->Rect({
+                                            x             => $block_start,
+                                            y             => $composite->{'y'},
+                                            width         => $utr_width,
+                                            bordercolour  => $feature_colour,
+                                            %glyph_params,
+                                          }));
+              }
+              else {
+                $utr_width    = 0;
+                $thick_start  = $start;
+              }
+              $composite->unshift($self->Rect({
+                                            x            => $thick_start,
+                                            y            => $composite->{'y'},
+                                            width        => $block_width - $utr_width,
+                                            colour       => $feature_colour,
+                                            %glyph_params,
+                                          }));
+            }
+            elsif ($i == $block_count - 1 && $thick_end) {
+              my $utr_width = $block_end - $thick_end;
+              $utr_width = 0 if $utr_width < 1; 
+              $composite->unshift($self->Rect({
+                                            x            => $block_start,
+                                            y            => $composite->{'y'},
+                                            width        => $block_width - $utr_width,
+                                            colour       => $feature_colour,
+                                            %glyph_params,
+                                          }));
+              if ($utr_width) {
+                $composite->unshift($self->Rect({
+                                            x             => $thick_end,
+                                            y             => $composite->{'y'},
+                                            width         => $utr_width,
+                                            border_colour => $feature_colour,
+                                            %glyph_params,
+                                          }));
+              } 
+            }
+            else {
+              $composite->unshift($self->Rect({
                                             x            => $block_start,
                                             y            => $composite->{'y'},
                                             width        => $block_width,
-                                            height       => $h,
                                             colour       => $feature_colour,
-                                            label_colour => $label_colour,
-                                            absolutey    => 1,
+                                            %glyph_params,
                                           }));
+            }
 
             if ($i < $block_count - 1) {
               $composite->push($self->Intron({
