@@ -98,7 +98,10 @@ sub create_species_tree {
     # build the tree
     foreach my $taxon (@taxa_for_tree) {
         $taxon->release_children;
-        $root = $taxon->root unless($root);
+        if (not $root) {
+            $root = $taxon->root;
+            next;
+        }
         $root->merge_node_via_shared_ancestor($taxon);
     }
 
