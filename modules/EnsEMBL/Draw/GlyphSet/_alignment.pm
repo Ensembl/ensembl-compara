@@ -416,7 +416,41 @@ sub render_as_alignment_nolabel {
           $feature_colour = $f->external_data->{'item_colour'}[0] if $config->{'itemRgb'} =~ /on/i;
         }
         
-        if ($draw_cigar || $cigar =~ /$regexp/) {
+        if ($self->my_config('has_blocks') && $show_structure) {
+          ## BED file shown like transcript
+          my ($block_count)   = @{$f->external_data->{'BlockCount'}};
+          my ($block_starts)  = @{$f->external_data->{'BlockStarts'}};
+          my ($block_sizes)   = @{$f->external_data->{'BlockSizes'}};
+          my @block_starts  = split(',', $block_starts); 
+          my @block_sizes   = split(',', $block_sizes); 
+          
+          for (my $i = 0; $i < $block_count; $i++) {
+            my $block_start = $start - 1 + $block_starts[$i];
+            my $block_width = $block_sizes[$i] || 1;
+            my $block_end   = $block_start + $block_width;
+            $composite->unshift($self->Rect({
+                                            x            => $block_start,
+                                            y            => $composite->{'y'},
+                                            width        => $block_width,
+                                            height       => $h,
+                                            colour       => $feature_colour,
+                                            label_colour => $label_colour,
+                                            absolutey    => 1,
+                                          }));
+
+            if ($i < $block_count - 1) {
+              $composite->push($self->Intron({
+                                            x         => $block_end,
+                                            y         => $composite->{'y'},
+                                            width     => $start + $block_starts[$i+1] - $block_end,
+                                            height    => $h,
+                                            colour    => $feature_colour,
+                                            absolutey => 1,
+                                          }));
+            }
+          }
+        }
+        elsif ($draw_cigar || $cigar =~ /$regexp/) {
           $composite->push($self->Space({
             x         => $start - 1,
             y         => 0,
@@ -451,27 +485,19 @@ sub render_as_alignment_nolabel {
       }
       
       if ($composite ne $self) {
-        if ($self->my_config('has_blocks') && $show_structure) {
-          $composite->unshift($self->Intron({
-            x         => $composite->{'x'},
-            y         => $composite->{'y'},
-            width     => $composite->{'width'},
-            height    => $h,
-            colour    => $feature_colour,
-            absolutey => 1,
-          }));
-        }
-        elsif ($h > 1) {
-          $composite->bordercolour($feature_colour) if $join;
-        } else {
-          $composite->unshift($self->Rect({
-            x         => $composite->{'x'},
-            y         => $composite->{'y'},
-            width     => $composite->{'width'},
-            height    => $h,
-            colour    => $join_colour,
-            absolutey => 1
-          }));
+        if (!$show_structure) {
+          if ($h > 1) {
+            $composite->bordercolour($feature_colour) if $join;
+          } else {
+            $composite->unshift($self->Rect({
+                                              x         => $composite->{'x'},
+                                              y         => $composite->{'y'},
+                                              width     => $composite->{'width'},
+                                              height    => $h,
+                                              colour    => $join_colour,
+                                              absolutey => 1
+                                            }));
+          }
         }
         
         $composite->y($composite->y + $y_pos);
