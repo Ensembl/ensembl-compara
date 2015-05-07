@@ -248,8 +248,6 @@ use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Compara::GenomicAlign;
-#use Bio::EnsEMBL::Utils::Exception qw(verbose);
-#verbose("INFO");
 
 
 my $ucsc_dbname;

@@ -111,7 +111,7 @@ hard-coded and thus will get out-to-date at some stage.
 
 use strict;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::Exception qw( throw warning info verbose );
+use Bio::EnsEMBL::Utils::Exception qw( throw warning info );
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
