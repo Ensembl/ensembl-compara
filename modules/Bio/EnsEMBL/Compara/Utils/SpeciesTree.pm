@@ -52,6 +52,7 @@ use LWP::Simple;
 use URI::Escape;
 
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::SpeciesTreeNode;
@@ -89,7 +90,8 @@ sub create_species_tree {
         # loading from extrataxon_sequenced:
     foreach my $extra_taxon (@$extrataxon_sequenced) {
         my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        push @taxa_for_tree, $taxon if defined $taxon;
+        throw("Unknown taxon_id '$extra_taxon'") unless $taxon;
+        push @taxa_for_tree, $taxon;
     }
 
 
