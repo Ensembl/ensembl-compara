@@ -74,12 +74,12 @@ sub default_options {
     # parameters that are likely to change from execution to another:
     'mlss_id'               => '100032',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
 
-    'pipeline_name'         => 'vega_genetree_20140905_76_new', #edit this each time
+    'pipeline_name'         => 'vega_genetree_20150402_79', #edit this each time
 
-    "registry_dbs" => [{"-host" => "vegabuild","-pass" => "","-port" => 5304,"-user" => "ottro"}],
+    "registry_dbs" => [{"-host" => "vegp-db","-pass" => "","-port" => 5304,"-user" => "ottro"}],
 
     'rel_suffix'            => 'vega',
-    'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/'.$self->o('pipeline_name'),
+    'work_dir'              => '/lustre/scratch109/ensembl/ds23/compara-79/ds23_vega_genetree_20150402_79',
     'outgroups'             => { },   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
@@ -87,14 +87,16 @@ sub default_options {
 
     # connection parameters to various databases:
     # the production database itself (will be created)
-    'host'   => 'vegabuild',
+    'host'   => 'vegp-db',
     'port'   => 5304,
     'user'   => 'ottadmin',
 
     # the master database for synchronization of various ids
-    'master_db' => 'mysql://ottro@vegabuild:5304/vega_compara_master',
+    'master_db' => 'mysql://ottro@vegp-db:5304/vega_compara_master',
 
     # switch off the reuse:
+    'reuse_from_prev_rel_db'    => 0,
+    reuse_db                    => 0,
     'prev_rel_db'               => undef,
     'do_stable_id_mapping'      => 0,
 
@@ -119,39 +121,22 @@ sub default_options {
 
 #
 # Rather than maintain our own analysis pipeline just want to alter the existing one
+# Fortunately, the base config has slots to do that
 #
 
-sub pipeline_analyses {
-  my ($self) = @_;
+sub analyses_to_remove {
+    return [qw(overall_qc email_tree_stats_report)];
+}
 
-  #not needed for Vega
-  my %analyses_to_ignore = map { $_ => 1 } qw(overall_qc);# treefam_xref_idmap);
-
-  my $analyses = $self->SUPER::pipeline_analyses;
-  for (my $i = @$analyses; $i >= 0; --$i) {
-    my $analysis = $analyses->[$i];
-    my $name = $analysis->{'-logic_name'};
-    next unless $name;
-    if ($analyses_to_ignore{$name}) {
-      splice @$analyses, $i, 1;
-    }
-
-    if ($name eq 'run_qc_tests') {
-      if (grep {$_ eq 'overall_qc'} @{$analyses->[$i]{'-flow_into'}{'1->A'}}) {
-         print "Vega fix - removed flow control rule from run_qc_tests to overall_qc\n";
-         delete $analyses->[$i]{'-flow_into'}{'1->A'};
-       }
-    }
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
 
     #include non-reference slices
-    if ($name eq 'load_fresh_members_from_db') {
-      $analyses->[$i]{'-parameters'}{'include_nonreference'} = 1;
-      $analyses->[$i]{'-parameters'}{'include_reference'} = 1;
-      $analyses->[$i]{'-parameters'}{'store_missing_dnafrags'} = 1;
-      $analyses->[$i]{'-parameters'}{'force_unique_canonical'} = 1;
-    }
-  }
-  return $analyses;
+    $analyses_by_name->{'load_fresh_members_from_db'}->{'-parameters'}{'include_nonreference'} = 1;
+    $analyses_by_name->{'load_fresh_members_from_db'}->{'-parameters'}{'include_reference'} = 1;
+    $analyses_by_name->{'load_fresh_members_from_db'}->{'-parameters'}{'store_missing_dnafrags'} = 1;
+    $analyses_by_name->{'load_fresh_members_from_db'}->{'-parameters'}{'force_unique_canonical'} = 1;
 }
 
 1;

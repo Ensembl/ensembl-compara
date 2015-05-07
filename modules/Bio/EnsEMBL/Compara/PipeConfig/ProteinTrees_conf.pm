@@ -2591,6 +2591,7 @@ sub filter_analyses {
 
     my @to_process = ($start_logic_name);
     my %to_keep = ();
+    my %to_remove = map {$_ => 1} @{$self->analyses_to_remove};
 
     while (@to_process) {
         my $logic_name = shift @to_process;
@@ -2601,6 +2602,7 @@ sub filter_analyses {
         next unless exists $a->{-flow_into};
         if (ref($a->{-flow_into})) {
             if (ref($a->{-flow_into}) eq 'ARRAY') {
+                $a->{-flow_into} = [grep {not $to_remove{$_}} @{$a->{-flow_into}}];
                 push @to_process, @{$a->{-flow_into}};
             } else {
                 my @bns = keys %{$a->{-flow_into}};
@@ -2613,15 +2615,22 @@ sub filter_analyses {
                     my $target = $a->{-flow_into}->{$branch_number};
                     if (ref($target)) {
                         if (ref($target) eq 'ARRAY') {
-                            push @to_process, @$target;
+                            $a->{-flow_into}->{$branch_number} = [grep {not $to_remove{$_}} @$target];
+                            push @to_process, @{$a->{-flow_into}->{$branch_number}};
                         } else {
-                            push @to_process, keys %$target;
+                            my %new_hash = map {$_ => $target->{$_}} (grep {not $to_remove{$_}} keys %$target);
+                            $a->{-flow_into}->{$branch_number} = \%new_hash;
+                            push @to_process, keys %new_hash;
                         }
+                    } elsif ($to_remove{$target}) {
+                        delete $a->{-flow_into}->{$branch_number};
                     } else {
                         push @to_process, $target;
                     }
                 }
             }
+        } elsif ($to_remove{$a->{-flow_into}}) {
+            delete $a->{-flow_into};
         } else {
             push @to_process, $a->{-flow_into};
         }
@@ -2631,11 +2640,15 @@ sub filter_analyses {
 }
 
 
-## The following methods can be redefined to add more analysis and change the parameters of some core ones
+## The following methods can be redefined to add more analyses / remove some, and change the parameters of some core ones
 sub extra_analyses {
     my $self = shift;
     return [
     ];
+}
+
+sub analyses_to_remove {
+    return [];
 }
 
 sub tweak_analyses {
