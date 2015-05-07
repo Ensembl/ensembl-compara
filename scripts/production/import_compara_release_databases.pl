@@ -159,6 +159,7 @@ print $fh join("\n", map {join("\t", @$_)} @data), "\n";
 close($fh);
 
 ## Run CopyDBoverServer.pl and remove the configuration file
-system 'perl', $copydboverserver, '-pass', $ensadmin_psw, '-noflush', $filename;
+print STDERR ">> $copydboverserver -pass $ensadmin_psw -noflush $filename\n";
+system $copydboverserver, '-pass', $ensadmin_psw, '-noflush', $filename;
 unlink $filename;
 
