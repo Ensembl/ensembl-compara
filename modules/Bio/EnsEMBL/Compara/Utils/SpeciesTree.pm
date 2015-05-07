@@ -102,7 +102,12 @@ sub create_species_tree {
             $root = $taxon->root;
             next;
         }
+        my $n1 = scalar(@{$root->get_all_leaves});
         $root->merge_node_via_shared_ancestor($taxon);
+        my $n2 = scalar(@{$root->get_all_leaves});
+        if ($n1 != ($n2-1)) {
+            throw(sprintf('Adding %s to the tree did not increase the number of leaves. Are you trying to include a species and some of its sub-species/strains ?', $taxon->name));
+        }
     }
 
     $root = $root->minimize_tree if (defined($root));
