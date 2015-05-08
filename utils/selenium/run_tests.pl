@@ -269,7 +269,7 @@ sub run_test {
   }
   else {
     ## Check that site being tested is up
-    my @response = $package->check_website;
+    my @response = $object->check_website;
     if ($response[0] eq 'fail') {
       write_to_log($response[0], "ABORTING TESTS ON $module: ".$response[1], $response[2], $response[3]);
       return;
