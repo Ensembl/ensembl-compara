@@ -226,6 +226,11 @@ print "Ran $total test$plural:\n";
 print "- $pass succeeded\n";
 print "- $fail failed\n";
 
+if ($tests_path =~ /debug/) {
+  print "\n\nIgnore this next message - it simply means that no real selenium tests 
+  were run, because we were only testing the harness, not the website\n";
+}
+
 ################# SUBROUTINES #############################################
 
 sub run_test {
