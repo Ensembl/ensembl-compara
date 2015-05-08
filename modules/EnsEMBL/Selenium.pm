@@ -77,7 +77,8 @@ sub ensembl_wait_for_page_to_load {
   }
 
   try {
-    ok($self->get_title !~ /404 error/i, 'No 404 Error')
+    ok($self->get_title !~ /404 error/i, 'No 404 Error');
+  }
   catch {
     return ['fail', '404 Error at '.$self->get_location];
   }
