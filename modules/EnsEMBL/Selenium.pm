@@ -63,12 +63,30 @@ sub ensembl_wait_for_page_to_load {
   $timeout ||= $self->_timeout;
  
   try { 
-    $self->wait_for_page_to_load_ok($timeout)
-    and ok($self->get_title !~ /Internal Server Error|404 error/i, 'No Internal or 404 Server Error')
-    and $self->ensembl_wait_for_ajax_ok('50000');
+    $self->wait_for_page_to_load_ok($timeout);
   }
   catch {
     return ('fail', 'Page load failed at '.$self->get_location);
+  }
+
+  try {
+    ok($self->get_title !~ /Internal Server Error/i, 'No Internal Server Error');
+  }
+  catch {
+    return ('fail', 'Internal Server Error at '.$self->get_location);
+  }
+
+  try {
+    ok($self->get_title !~ /404 error/i, 'No 404 Error')
+  catch {
+    return ('fail', '404 Error at '.$self->get_location);
+  }
+
+  try {
+    $self->ensembl_wait_for_ajax_ok('50000');
+  }
+  catch {
+    return ('fail', 'Ajax load failed at '.$self->get_location);
   }
 }
 
