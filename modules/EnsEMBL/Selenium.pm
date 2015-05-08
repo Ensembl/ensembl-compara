@@ -232,8 +232,9 @@ sub ensembl_is_text_present {
 #Overloading is_text_present function so that it returns the current url when it fails
   my ($self, $text) = @_;
   my $url = $self->get_location();
-    
-  return ('fail', "MISSING TEXT $text at URL $url") unless $self->is_text_present_ok($text);
+   
+  eval { $self->is_text_present_ok($text) }; 
+  return ('fail', "MISSING TEXT $text at URL $url") if $@; 
 }
 
 sub ensembl_select {
