@@ -87,11 +87,11 @@ sub test_debug {
 
 ############### ACCESSORS AND UTILITY METHODS ################## 
 
-sub url     {$_[0]->{_url}};
-sub sel     {$_[0]->{_sel}};
-sub verbose {$_[0]->{_verbose}};
-sub species {$_[0]->{_species}};
-sub timeout {$_[0]->{_timeout}};
+sub url     {return $_[0]->{_url}};
+sub sel     {return $_[0]->{_sel}};
+sub verbose {return $_[0]->{_verbose}};
+sub species {return $_[0]->{_species}};
+sub timeout {return $_[0]->{_timeout}};
 
 sub conf {
   my ($self, $key) = @_;
