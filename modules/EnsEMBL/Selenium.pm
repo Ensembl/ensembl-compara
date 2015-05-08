@@ -234,7 +234,7 @@ sub ensembl_is_text_present {
   my ($self, $text) = @_;
   my $url = $self->get_location();
    
-  eval { lives_ok($self->is_text_present_ok($text) }; 
+  eval { lives_ok($self->is_text_present_ok($text)); }; 
   return ('fail', "MISSING TEXT $text at URL $url") if $@; 
 }
 
