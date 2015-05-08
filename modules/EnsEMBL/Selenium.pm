@@ -23,7 +23,7 @@ package EnsEMBL::Selenium;
 
 use strict;
 use Test::More;
-use Test::Exception;
+use Try::Tiny;
 use base 'Test::WWW::Selenium';
 
 # return user defined timeout, or a default
@@ -233,9 +233,14 @@ sub ensembl_is_text_present {
 #Overloading is_text_present function so that it returns the current url when it fails
   my ($self, $text) = @_;
   my $url = $self->get_location();
-   
-  eval { lives_ok($self->is_text_present_ok($text)); }; 
-  return ('fail', "MISSING TEXT $text at URL $url") if $@; 
+  
+  try {
+    $self->is_text_present($text);  
+  }
+  catch {
+    return ('fail', "MISSING TEXT $text at URL $url"); 
+  }
+ 
 }
 
 sub ensembl_select {
