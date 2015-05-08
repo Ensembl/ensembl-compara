@@ -402,6 +402,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $a = null;
     });
 
+    // add dyna loading to label layers for track description
+    this.elLk.labelLayers.on('mouseenter', function () {
+      $(this).find('._dyna_load').dynaLoad();
+    });
+
     // apply css positions to the hover layers
     this.positionLayers();
 

@@ -920,11 +920,12 @@ sub _add_datahub_tracks {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
     my $squish       = $track->{'visibility'} eq 'squish' || $config->{'visibility'} eq 'squish'; # FIXME: make it inherit correctly
+    my $desc_url     = $track->{'description_url'} ? $hub->url('Ajax', {'type' => 'fetch_html', 'url' => $track->{'description_url'}}) : '';
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
     my $source       = {
       name        => $track->{'track'},
       source_name => $source_name,
-      description => $track->{'longLabel'} . $link,
+      description => $desc_url ? qq(<span class="_dyna_load"><a class="hidden" href="$desc_url">$track->{'longLabel'}</a>Loading &#133;</span>) : '',
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
