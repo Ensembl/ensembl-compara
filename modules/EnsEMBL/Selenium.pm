@@ -63,7 +63,7 @@ sub ensembl_wait_for_page_to_load {
   $timeout ||= $self->_timeout;
  
   try { 
-    $self->wait_for_page_to_load_ok($timeout);
+    $self->wait_for_page_to_load($timeout);
   }
   catch {
     return ['fail', 'Page load failed at '.$self->get_location];
@@ -84,7 +84,7 @@ sub ensembl_wait_for_page_to_load {
   }
 
   try {
-    $self->ensembl_wait_for_ajax_ok('50000');
+    $self->ensembl_wait_for_ajax('50000');
   }
   catch {
     return ['fail', 'Ajax load failed at '.$self->get_location];
@@ -133,12 +133,12 @@ sub ensembl_open_zmenu_at {
 }
 
 sub ensembl_click {
-### Overloading click_ok function so that it returns the current url when it fails. 
+### Overloading click function so that it returns the current url when it fails. 
 ### Only use this function when ensembl_click_links below does not work like an ajax button
   my ($self, $link, $timeout) = @_;
   my $url = $self->get_location();
     
-  return $self->click_ok($link,$timeout) ? 0 : "CLICK FAILED: URL $url \n\n";
+  return $self->click($link,$timeout) ? 0 : "CLICK FAILED: URL $url \n\n";
 }
 
 sub ensembl_click_links {
@@ -159,7 +159,7 @@ sub ensembl_click_links {
       push @output, $error;
     }
     else {
-      $error = try { $self->click_ok($locator) and $self->ensembl_wait_for_page_to_load($timeout);}
+      $error = try { $self->click($locator) and $self->ensembl_wait_for_page_to_load($timeout);}
                 catch { ['fail', "$locator FAILED in $location \n\n"]; };
       if ($error) {
         push @output, $error;
@@ -216,7 +216,7 @@ sub ensembl_click_all_links {
     next if grep (/$link_text/, @$skip_link);
   
     if ($rel eq 'external' || $link !~ /^$url/) {
-      $self->open_ok($link);
+      $self->open($link);
       if (ok($self->get_title !~ /Internal Server Error|404 error|ERROR/i, 'No Internal or 404 Server Error')) {
         push @$output, ('pass', "Link $link_text ($link) successful at $location");
       }
@@ -274,7 +274,7 @@ sub ensembl_select {
   my ($self, $select_locator, $option_locator) = @_;
   my $url = $self->get_location();
     
-  return ('fail', "Failure at URL $url") unless $self->select_ok($select_locator,$option_locator);  
+  return ('fail', "Failure at URL $url") unless $self->select($select_locator,$option_locator);  
 }
 
 
