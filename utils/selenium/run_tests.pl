@@ -289,12 +289,23 @@ sub run_test {
       }
       if ($object->can($method)) {
         my @response = $object->$method(@params);
-        if ($response[0] eq 'fail' || $config->{'verbose'}) { 
-          write_to_log(@response);
-          $response[0] eq 'pass' ? $pass++ : $fail++;
+        if (!scalar(@response)) {
+          $pass++;
         }
         else {
-          $pass++;
+          my @output;
+          if (ref($response[0]) eq 'ARRAY') {
+            @output = @response;
+          }
+          else {
+            @output = (\@response);
+          }
+          foreach (@output) {
+            if ($_->[0] eq 'fail' || $config->{'verbose'}) { 
+              write_to_log(@$_);
+              $_->[0] eq 'pass' ? $pass++ : $fail++;
+            }
+          }
         }
       }
       else {
@@ -307,26 +318,15 @@ sub run_test {
 sub write_to_log {
 ### Write a status line
 ### TODO Replace with proper logging
-  my @response = @_;
-  my @output;
+  my ($code, $message, $module, $method) = @_;
 
-  if (ref($response[0]) eq 'ARRAY') {
-    @output = @response;
+  my ($sec, $min, $hour, $day, $month, $year) = gmtime;
+  my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
+  if ($log) {
+    print $log uc($code)." in $module::$method - $message $timestamp\n";
   }
   else {
-    @output = (\@response);
-  }
-
-  foreach (@output) {
-    my ($code, $message, $module, $method) = @$_;
-    my ($sec, $min, $hour, $day, $month, $year) = gmtime;
-    my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
-    if ($log) {
-      print $log uc($code)." in $module::$method - $message $timestamp\n";
-    }
-    else {
-      print uc($code)." in $module::$method - $message $timestamp\n";
-    }
+    print uc($code)." in $module::$method - $message $timestamp\n";
   }
 }
 
