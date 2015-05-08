@@ -89,6 +89,7 @@ sub ensembl_wait_for_page_to_load {
   catch {
     return ['fail', 'Ajax load failed at '.$self->get_location];
   }
+  return [];
 }
 
 sub ensembl_open_zmenu {
