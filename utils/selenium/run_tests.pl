@@ -289,22 +289,19 @@ sub run_test {
       }
       if ($object->can($method)) {
         my @response = $object->$method(@params);
-        if (!scalar(@response)) {
-          $pass++;
-        }
-        else {
-          my @output;
-          if (ref($response[0]) eq 'ARRAY') {
-            @output = @response;
-          }
-          else {
-            @output = (\@response);
-          }
-          foreach (@output) {
-            if ($_->[0] eq 'fail' || $config->{'verbose'}) { 
+        foreach (@response) {
+          if (ref($_) eq 'ARRAY') {
+            if ($_->[0] eq 'fail' || $config->{'verbose'}) {
               write_to_log(@$_);
               $_->[0] eq 'pass' ? $pass++ : $fail++;
             }
+          }
+          elsif ($_) {
+            $pass++;
+          }
+          else {
+            write_to_log('fail', "Unknown error from $method in $package");
+            $fail++;
           }
         }
       }
