@@ -31,27 +31,29 @@ sub test_homepage {
   my $current = $self->get_current_url();  
 
   $self->no_mirrors_redirect;
-  $sel->open_ok("/");  
+  $sel->open_ok("/"); 
 
-  $sel->ensembl_wait_for_page_to_load
-  and $sel->ensembl_is_text_present("Ensembl release $this_release")
-  and $sel->ensembl_is_text_present("What's New in Release $this_release")
-  and $sel->ensembl_is_text_present('Did you know')
-  and $sel->ensembl_click_links(["link=View full list of all Ensembl species"]);
- 
-  $sel->go_back();
-  $sel->ensembl_wait_for_page_to_load;
-  $sel->ensembl_click_links(["link=acknowledgements page"]); 
+  my @responses; 
 
-  $sel->go_back()
-  and $sel->ensembl_wait_for_page_to_load;  
+  ## Check main content
+  if ($sel->ensembl_wait_for_page_to_load) {
+    push @responses, [$sel->ensembl_is_text_present("Ensembl release $this_release")];
+    push @responses, [$sel->ensembl_is_text_present("What's New in Release $this_release")];
+    push @responses, [$sel->ensembl_is_text_present('Did you know')];
+    push @responses, [$sel->ensembl_click_links(["link=View full list of all Ensembl species"])];
   
-  $sel->ensembl_click_links(["link=About Ensembl"]); 
+    $sel->go_back();
+  }
   
-  $sel->go_back()
-  and $sel->ensembl_wait_for_page_to_load;
-  
-  $sel->ensembl_click_links(["link=Privacy Policy"]);
+  ## Try links
+  my @links = ('acknowledgements page', 'About Ensembl', 'Privacy Policy');
+  foreach (@links) {
+    if ($sel->ensembl_wait_for_page_to_load) {
+      push @responses, [$sel->ensembl_click_links(["link=$_"])]; 
+      $sel->go_back();
+    }
+  }
+  return @responses;
 }
 
 1;
