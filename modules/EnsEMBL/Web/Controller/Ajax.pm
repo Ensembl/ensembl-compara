@@ -28,6 +28,7 @@ use URI::Escape     qw(uri_unescape);
 use EnsEMBL::Web::ViewConfig::Regulation::Page;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::File::Utils::URL;
 
 use base qw(EnsEMBL::Web::Controller);
 
@@ -302,6 +303,19 @@ sub table_export {
     }
     print join(',',@row_out)."\n";
   }
+}
+
+sub fetch_html {
+  my ($self, $hub) = @_;
+
+  my $url     = $hub->param('url');
+  my $content = {};
+
+  if ($url) {
+     $content = EnsEMBL::Web::File::Utils::URL::read_file($url, {'hub' => $hub, 'nice' => 1});
+  }
+
+  print $content->{'content'} || '';
 }
 
 1;
