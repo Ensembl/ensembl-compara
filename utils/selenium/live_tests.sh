@@ -18,10 +18,13 @@
 perl run_tests.pl --config=selenium.conf --tests=static.conf
 
 ## Test basic views for all species
-perl run_tests.pl --config=selenium.conf --tests=lh_menu.conf
+perl run_tests.pl --config=selenium.conf --tests=basic.conf
 
 ## Intensive test of human
-perl run_tests.pl --config=selenium.conf --tests=detailed.conf --species=human_only.conf
+#perl run_tests.pl --config=selenium.conf --tests=detailed.conf --species=human_only.conf
 
 ## Test user upload, etc (again, human only)
-perl run_tests.pl --config=selenium.conf --tests=user.conf --species=human_only.conf
+#perl run_tests.pl --config=selenium.conf --tests=user.conf --species=human_only.conf
+
+## Check links in documentation
+#perl run_tests.pl --config=selenium.conf --tests=docs.conf
