@@ -272,7 +272,7 @@ sub format_table {
 
 
       # Column "Allele: frequency (count)"
-      my $allele_content = $self->format_allele_genotype_content($data,'Allele',$ref_allele);
+      my $allele_content = $self->format_allele_genotype_content($data,'Allele',$ref_allele,$is_somatic);
       $pop_row{'Allele'} = qq{<div>$allele_content<div style="clear:both"/></div>} if ($allele_content);
 
 
@@ -313,7 +313,8 @@ sub format_table {
   # Allele frequency columns
   foreach my $col (sort { $a cmp $b } keys %columns) {
     next if $col =~ /pop|ssid|submitter|Description|detail|count|failed|Genotype/; # Exclude all but 'Allele X'
-    push @header_row, { key => $col, align => 'left', label => "$col: frequency (count)", sort => ($sortable) ? 'numeric' : 'none' };
+    my $label_suffix = ($is_somatic) ? '' : ' (count)';
+    push @header_row, { key => $col, align => 'left', label => "$col: frequency$label_suffix", sort => ($sortable) ? 'numeric' : 'none' };
   }
   
   if (exists $columns{'ssid'}) {
@@ -470,6 +471,7 @@ sub format_allele_genotype_content {
   my $data       = shift;
   my $type       = shift; # 'Allele' or 'Genotype'
   my $ref_allele = shift;
+  my $is_somatic = shift;
 
   my $al_colours = $self->object->get_allele_genotype_colours;
 
@@ -486,11 +488,10 @@ sub format_allele_genotype_content {
   my $count_data = 0;
   my $regex = ($type eq 'Genotype') ? $ref_allele.'\|'.$ref_allele : $ref_allele;
   foreach my $gt (sort { ($a !~ /$regex/ cmp $b !~ /$regex/) || $a cmp $b } keys %data_list) {
-    my $gt_label = $gt;
+    my $gt_label = (length($gt)>10) ? substr($gt,0,10).'...' : $gt;
     foreach my $al (keys(%$al_colours)) {
       $gt_label =~ s/$al/$al_colours->{$al}/g;
     }
-    $gt_label = substr($gt_label,0,10).'...' if (length($gt)>10);
 
     $count_data ++;
     my $class;
@@ -502,8 +503,14 @@ sub format_allele_genotype_content {
       $class  = (length($gt) > 4) ? 'genotype_long' : 'genotype_short';
       $class .= ($count_data == scalar(keys(%data_list))) ? '' : ' genotype_padding';
     }
-    $content .= sprintf(qq{<div class="%s"><b>%s</b>: %s (%i)%s</div>},
-                        $class, $gt_label, $data_list{$gt}{'freq'}, $data_list{$gt}{'count'});
+
+    if ($is_somatic) {
+      $content .= sprintf(qq{<div class="%s"><b>%s</b>: %s</div>},
+                          $class, $gt_label, $data_list{$gt}{'freq'});
+    } else {
+      $content .= sprintf(qq{<div class="%s"><b>%s</b>: %s (%i)</div>},
+                          $class, $gt_label, $data_list{$gt}{'freq'}, $data_list{$gt}{'count'});
+    }
   }
   return $content;
 }
