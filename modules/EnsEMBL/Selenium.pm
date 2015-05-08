@@ -153,19 +153,21 @@ sub ensembl_click_links {
   
   foreach my $link (@{$links}) {
     my ($locator, $timeout) = ref $link eq 'ARRAY' ? @$link : ($link, $timeout || $self->_timeout);
-    try {
-      $self->is_element_present($locator);
-      try {
-        $self->click_ok($locator) and $self->ensembl_wait_for_page_to_load($timeout);
-      }
-      catch {
-        push @output, ['fail', "$locator FAILED in $location \n\n"];
-      }
-      push @output, ['pass', "Link $locator on $location checked successfully"];
-    } 
-    catch {        
-      push @output, ['fail', "***missing*** $locator in $location \n"];
+    my $error = try { $self->is_element_present($locator); }
+                catch {['fail', "***missing*** $locator in $location \n"]; };
+    if ($error) {
+      push @output, $error;
     }
+    else {
+      $error = try { $self->click_ok($locator) and $self->ensembl_wait_for_page_to_load($timeout);}
+                catch { ['fail', "$locator FAILED in $location \n\n"]; };
+      if ($error) {
+        push @output, $error;
+      }
+      else { 
+        push @output, ['pass', "Link $locator on $location checked successfully"];
+      }
+    } 
   }
   return @output;
 }
@@ -262,13 +264,9 @@ sub ensembl_is_text_present {
   my ($self, $text) = @_;
   my $url = $self->get_location();
   
-  try {
-    $self->is_text_present($text);  
-  }
-  catch {
-    return ('fail', "MISSING TEXT $text at URL $url"); 
-  }
- 
+  my $error = try { $self->is_text_present($text); }
+              catch { ['fail', "MISSING TEXT $text at URL $url"]; }; 
+  return $error; 
 }
 
 sub ensembl_select {
