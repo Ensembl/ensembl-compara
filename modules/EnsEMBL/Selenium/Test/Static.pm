@@ -36,7 +36,11 @@ sub test_homepage {
   my @responses; 
 
   ## Check main content
-  if ($sel->ensembl_wait_for_page_to_load) {
+  my $load_error = $sel->ensembl_wait_for_page_to_load;
+  if ($load_error && $load_error->[0] eq 'fail') {
+    push @responses, $load_error;
+  }
+  else {
     push @responses, $sel->ensembl_is_text_present("Ensembl release $this_release");
     push @responses, $sel->ensembl_is_text_present("What's New in Release $this_release");
     push @responses, $sel->ensembl_is_text_present('Did you know');
@@ -48,7 +52,11 @@ sub test_homepage {
   ## Try links
   my @links = ('acknowledgements page', 'About Ensembl', 'Privacy Policy');
   foreach (@links) {
-    if ($sel->ensembl_wait_for_page_to_load) {
+    $load_error = $sel->ensembl_wait_for_page_to_load;
+    if ($load_error && $load_error->[0] eq 'fail') {
+      push @responses, $load_error;
+    }
+    else {
       push @responses, $sel->ensembl_click_links(["link=$_"]); 
       $sel->go_back();
     }
