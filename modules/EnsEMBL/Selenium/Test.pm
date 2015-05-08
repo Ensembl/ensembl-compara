@@ -38,7 +38,7 @@ sub new {
   
   my $self = {
     _url      => $args{url},
-    _sel      => $args{selenium},
+    _sel      => $args{sel},
     _timeout  => $args{timeout} || 50000,
     _verbose  => $args{verbose},
     _species  => $args{species},
