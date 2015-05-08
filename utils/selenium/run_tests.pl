@@ -191,9 +191,12 @@ our $fail = 0;
 
 my ($sec, $min, $hour, $day, $month, $year) = gmtime;
 my $timestamp = sprintf('%s%02d%02d_%02d%02d%02d', $year+1900, $month+1, $day, $hour, $min, $sec);
-our $log_file_name = $tests;
+
+mkdir('test_reports') unless -e 'test_reports';
+our $log_file_name = 'test_reports/'.$tests;
 $log_file_name =~ s/\.conf//; 
 $log_file_name .= '_'.$timestamp.'.log';
+
 our $log;
 open $log, '>>', $log_file_name;
 
