@@ -124,22 +124,25 @@ sub ensembl_click_links {
   my ($self, $links, $timeout) = @_;
   return unless $links && ref($links) eq 'ARRAY';
   my $location = $self->get_location();  
-  my $output = [];
+  my @output;
   
   foreach my $link (@{$links}) {
     my ($locator, $timeout) = ref $link eq 'ARRAY' ? @$link : ($link, $timeout || $self->_timeout);
-    if ($self->is_element_present($locator)) {
-      if ($self->click_ok($locator) and $self->ensembl_wait_for_page_to_load($timeout)) {
-        push @$output, ('pass', "Link $locator on $location checked successfully");
+    try {
+      $self->is_element_present($locator);
+      try {
+        $self->click_ok($locator) and $self->ensembl_wait_for_page_to_load($timeout);
       }
-      else {
-        push @$output, ('fail', "$locator FAILED in $location \n\n");
+      catch {
+        push @output, ('fail', "$locator FAILED in $location \n\n");
       }
-    } else {        
-      push @$output, ('fail', "***missing*** $locator in $location \n");
+      push @output, ('pass', "Link $locator on $location checked successfully");
+    } 
+    catch {        
+      push @output, ('fail', "***missing*** $locator in $location \n");
     }
   }
-  return $output;
+  return @output;
 }
 
 sub ensembl_click_all_links {
