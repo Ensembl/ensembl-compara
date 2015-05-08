@@ -307,14 +307,26 @@ sub run_test {
 sub write_to_log {
 ### Write a status line
 ### TODO Replace with proper logging
-  my ($code, $message, $module, $method) = @_;
-  my ($sec, $min, $hour, $day, $month, $year) = gmtime;
-  my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
-  if ($log) {
-    print $log uc($code)." in $module::$method - $message $timestamp\n";
+  my @response = @_;
+  my @output;
+
+  if (ref($response[0]) eq 'ARRAY') {
+    @output = @response;
   }
   else {
-    print uc($code)." in $module::$method - $message $timestamp\n";
+    @output = (\@response);
+  }
+
+  foreach (@output) {
+    my ($code, $message, $module, $method) = @$_;
+    my ($sec, $min, $hour, $day, $month, $year) = gmtime;
+    my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
+    if ($log) {
+      print $log uc($code)." in $module::$method - $message $timestamp\n";
+    }
+    else {
+      print uc($code)." in $module::$method - $message $timestamp\n";
+    }
   }
 }
 
