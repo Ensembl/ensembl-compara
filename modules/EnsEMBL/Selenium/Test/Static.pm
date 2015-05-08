@@ -37,10 +37,10 @@ sub test_homepage {
 
   ## Check main content
   if ($sel->ensembl_wait_for_page_to_load) {
-    push @responses, [$sel->ensembl_is_text_present("Ensembl release $this_release")];
-    push @responses, [$sel->ensembl_is_text_present("What's New in Release $this_release")];
-    push @responses, [$sel->ensembl_is_text_present('Did you know')];
-    push @responses, [$sel->ensembl_click_links(["link=View full list of all Ensembl species"])];
+    push @responses, $sel->ensembl_is_text_present("Ensembl release $this_release");
+    push @responses, $sel->ensembl_is_text_present("What's New in Release $this_release");
+    push @responses, $sel->ensembl_is_text_present('Did you know');
+    push @responses, $sel->ensembl_click_links(["link=View full list of all Ensembl species"]);
   
     $sel->go_back();
   }
@@ -49,7 +49,7 @@ sub test_homepage {
   my @links = ('acknowledgements page', 'About Ensembl', 'Privacy Policy');
   foreach (@links) {
     if ($sel->ensembl_wait_for_page_to_load) {
-      push @responses, [$sel->ensembl_click_links(["link=$_"])]; 
+      push @responses, $sel->ensembl_click_links(["link=$_"]); 
       $sel->go_back();
     }
   }

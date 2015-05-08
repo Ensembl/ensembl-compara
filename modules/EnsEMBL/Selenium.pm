@@ -134,12 +134,12 @@ sub ensembl_click_links {
         $self->click_ok($locator) and $self->ensembl_wait_for_page_to_load($timeout);
       }
       catch {
-        push @output, ('fail', "$locator FAILED in $location \n\n");
+        push @output, ['fail', "$locator FAILED in $location \n\n"];
       }
-      push @output, ('pass', "Link $locator on $location checked successfully");
+      push @output, ['pass', "Link $locator on $location checked successfully"];
     } 
     catch {        
-      push @output, ('fail', "***missing*** $locator in $location \n");
+      push @output, ['fail', "***missing*** $locator in $location \n"];
     }
   }
   return @output;
