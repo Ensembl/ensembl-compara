@@ -86,6 +86,7 @@ my $CONF          = read_config($config_path);
 my $TESTS         = read_config($tests_path); 
 my $SPECIES       = read_config($species_path);
 
+ $release ||= $CONF->{'release'};
 my $url     = $CONF->{'url'};
 my $host    = $CONF->{'host'};
 my $port    = $CONF->{'port'}     || '4444';
@@ -111,6 +112,11 @@ unless (ref($TESTS->{'modules'}[0]) eq 'HASH'
             && scalar(@{$TESTS->{'modules'}[0]{'tests'}||[]})) {
   die "You must specify at least one test method, eg. ['homepage']";
 }
+
+unless ($release) {
+  die "You must specify a release version!";
+}
+
 
 print "Configuration OK - running tests...\n\n";
 
