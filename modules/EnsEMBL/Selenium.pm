@@ -61,10 +61,15 @@ sub ensembl_wait_for_page_to_load {
   my ($self, $timeout) = @_;
   
   $timeout ||= $self->_timeout;
-  
-  $self->wait_for_page_to_load_ok($timeout)
-  and ok($self->get_title !~ /Internal Server Error|404 error/i, 'No Internal or 404 Server Error')
-  and $self->ensembl_wait_for_ajax_ok('50000');
+ 
+  try { 
+    $self->wait_for_page_to_load_ok($timeout)
+    and ok($self->get_title !~ /Internal Server Error|404 error/i, 'No Internal or 404 Server Error')
+    and $self->ensembl_wait_for_ajax_ok('50000');
+  }
+  catch {
+    return ('fail', 'Page load failed at '.$self->get_location);
+  }
 }
 
 sub ensembl_open_zmenu {
