@@ -6,9 +6,9 @@ export ENSEMBL_CVS_ROOT_DIR=$PWD
 echo "Running test suite"
 echo "Using $PERL5LIB"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/modules/t $SKIP_TESTS
+  PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/modules/t
 else
-  perl $PWD/ensembl-test/scripts/runtests.pl $PWD/modules/t $SKIP_TESTS
+  perl $PWD/ensembl-test/scripts/runtests.pl $PWD/modules/t
 fi
 
 rt=$?
