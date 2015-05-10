@@ -28,6 +28,7 @@ before_install:
 install:
     - cpanm -v --installdeps --with-recommends --notest --cpanfile ensembl/cpanfile .
     - cpanm -v --installdeps --notest .
+    - cpanm -v --installdeps --with-recommends --notest ensembl-rest
     - cpanm -n Catalyst::Runtime
     - cpanm -n Catalyst::Plugin::ConfigLoader Catalyst::Action::RenderView Mojo Catalyst::Plugin::Static::Simple
     - cpanm -n Catalyst::Devel
