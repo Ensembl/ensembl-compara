@@ -14,7 +14,8 @@ export PERL5LIB=$PERL5LIB:/nfs/users/nfs_m/mm14/src/perl/perl5:/nfs/users/nfs_m/
 
 echo "Running ensembl-rest test suite using $PERL5LIB"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
+  #PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
+  perl $PWD/ensembl-test/scripts/runtests.pl $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
 else
   perl $PWD/ensembl-test/scripts/runtests.pl $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
 fi
