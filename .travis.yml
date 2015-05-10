@@ -23,6 +23,13 @@ before_install:
     - unzip bioperl-release-1-2-3.zip
     - echo -e "[server]\nwait_timeout=28000" | sudo tee -a /etc/mysql/my.cnf
     - sudo service mysql restart
+    - git clone --branch master --depth 1 https://github.com/samtools/tabix.git
+    - cd tabix
+    - make
+    - cd perl
+    - perl Makefile.PL
+    - make && make install
+    - cd ../../
 
 
 install:
