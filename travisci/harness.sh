@@ -10,6 +10,10 @@ else
   perl $PWD/ensembl-test/scripts/runtests.pl $PWD/modules/t
 fi
 
+if [ $? -ne 0 ]; then
+  exit $?
+fi
+
 export PERL5LIB=$PERL5LIB:/nfs/users/nfs_m/mm14/src/perl/perl5:/nfs/users/nfs_m/mm14/src/perl/lib:$PWD/ensembl-variation/modules:$PWD/ensembl-funcgen/modules:$PWD/ensembl-io/modules:$PWD/ensembl-rest/lib
 
 echo "Running ensembl-rest test suite using $PERL5LIB"
