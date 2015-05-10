@@ -70,6 +70,8 @@ sub create_species_tree {
         rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES)], @args);
 
     my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
+    $taxon_adaptor->_id_cache->clear_cache();
+
     my $root;
     my @taxa_for_tree = ();
     my %gdbs_by_taxon_id = ();
@@ -82,8 +84,10 @@ sub create_species_tree {
         foreach my $gdb (@$gdb_list) {
             my $taxon_name = $gdb->name;
             next if ($taxon_name =~ /ncestral/);
-            push @taxa_for_tree, $gdb->taxon;
-            push @{$gdbs_by_taxon_id{$gdb->taxon_id}}, $gdb;
+            my $taxon_id = $gdb->taxon_id;
+            my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
+            push @taxa_for_tree, $taxon;
+            push @{$gdbs_by_taxon_id{$taxon_id}}, $gdb;
         }
     }
 
