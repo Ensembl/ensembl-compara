@@ -61,35 +61,22 @@ sub ensembl_wait_for_page_to_load {
   my ($self, $timeout) = @_;
   
   $timeout ||= $self->_timeout;
- 
-  try { 
-    $self->wait_for_page_to_load($timeout);
-  }
-  catch {
-    return ['fail', 'Page load failed at '.$self->get_location];
-  }
 
-  try {
-    ok($self->get_title !~ /Internal Server Error/i, 'No Internal Server Error');
-  }
-  catch {
-    return ['fail', 'Internal Server Error at '.$self->get_location];
-  }
+  my $error = try { $self->wait_for_page_to_load($timeout); }
+              catch { return ['fail', 'Page load failed at '.$self->get_location];};
+  return $error if $error;
 
-  try {
-    ok($self->get_title !~ /404 error/i, 'No 404 Error');
-  }
-  catch {
-    return ['fail', '404 Error at '.$self->get_location];
-  }
+  $error = try { ok($self->get_title !~ /Internal Server Error/i, 'No Internal Server Error');}
+            catch { return ['fail', 'Internal Server Error at '.$self->get_location];};
+  return $error if $error;
 
-  try {
-    $self->ensembl_wait_for_ajax('50000');
-  }
-  catch {
-    return ['fail', 'Ajax load failed at '.$self->get_location];
-  }
-  return [];
+  $error = try { ok($self->get_title !~ /404 error/i, 'No 404 Error');}
+            catch {return ['fail', '404 Error at '.$self->get_location];};
+  return $error if $error;
+
+  $error = try {$self->ensembl_wait_for_ajax('50000');}
+            catch {return ['fail', 'Ajax load failed at '.$self->get_location];};
+  return $error;
 }
 
 sub ensembl_open_zmenu {
