@@ -14,7 +14,8 @@ if [ $? -ne 0 ]; then
   exit $?
 fi
 
-if [ "$TRAVIS_PERL_VERSION" < "5.14" ]; then
+echo "We are running Perl '$TRAVIS_PERL_VERSION'"
+if [[ "$TRAVIS_PERL_VERSION" < "5.14" ]]; then
   echo "Skipping ensembl-rest test suite on Perl $TRAVIS_PERL_VERSION"
 else
   export PERL5LIB=$PERL5LIB:$PWD/ensembl-variation/modules:$PWD/ensembl-funcgen/modules:$PWD/ensembl-io/modules:$PWD/ensembl-rest/lib
