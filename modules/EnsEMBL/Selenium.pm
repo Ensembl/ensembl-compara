@@ -42,16 +42,19 @@ sub ensembl_wait_for_ajax {
   $timeout ||= $self->_timeout;
   $pause   ||= 500;
   ## increase the pause and timeout if we are testing mirrors since the site is slower.
-  $pause += 3000 if ($url =~ /uswest|useast|ec2/);
-  $timeout += 20000 if ($url =~ /uswest|useast|ec2/);
+  $pause += 3000 if ($url =~ /staging|uswest|useast|ec2/);
+  $timeout += 20000 if ($url =~ /staging|uswest|useast|ec2/);
 
   $self->pause($pause);
-  
-  $self->wait_for_condition(
-    qq/var \$ = selenium.browserbot.getCurrentWindow().jQuery;
-    !(\$(".ajax_load").length || \$(".ajax_error").length || \$(".syntax-error").length)/,
-    $timeout || $self->_timeout
-  );  
+
+  my $error = try {  
+                    $self->wait_for_condition(
+                      qq/var \$ = selenium.browserbot.getCurrentWindow().jQuery;
+                      !(\$(".ajax_load").length || \$(".ajax_error").length || \$(".syntax-error").length)/,
+                    $timeout || $self->_timeout
+                    );}
+                catch { return 1; };
+  return $error; 
 }
 
 sub ensembl_wait_for_page_to_load {
