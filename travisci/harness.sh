@@ -14,14 +14,17 @@ if [ $? -ne 0 ]; then
   exit $?
 fi
 
-export PERL5LIB=$PERL5LIB:/nfs/users/nfs_m/mm14/src/perl/perl5:/nfs/users/nfs_m/mm14/src/perl/lib:$PWD/ensembl-variation/modules:$PWD/ensembl-funcgen/modules:$PWD/ensembl-io/modules:$PWD/ensembl-rest/lib
-
-echo "Running ensembl-rest test suite using $PERL5LIB"
-if [ "$COVERALLS" = 'true' ]; then
-  #PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
-  perl $PWD/ensembl-test/scripts/runtests.pl $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
+if [ "$TRAVIS_PERL_VERSION" < "5.14" ]; then
+  echo "Skipping ensembl-rest test suite on Perl $TRAVIS_PERL_VERSION"
 else
-  perl $PWD/ensembl-test/scripts/runtests.pl $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
+  export PERL5LIB=$PERL5LIB:$PWD/ensembl-variation/modules:$PWD/ensembl-funcgen/modules:$PWD/ensembl-io/modules:$PWD/ensembl-rest/lib
+  echo "Running ensembl-rest test suite using $PERL5LIB"
+  if [ "$COVERALLS" = 'true' ]; then
+    #PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
+    perl $PWD/ensembl-test/scripts/runtests.pl $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
+  else
+    perl $PWD/ensembl-test/scripts/runtests.pl $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
+  fi
 fi
 
 rt=$?
