@@ -31,7 +31,10 @@ sub test_homepage {
   my $current = $self->get_current_url();  
 
   $self->no_mirrors_redirect;
-  $sel->open_ok("/"); 
+
+  my $error = try { $sel->open("/"); }
+                catch { return ['fail', "Couldn't open home page at ".$sel->{'browser_url'}]; };
+  return $error if $error;
 
   my @responses; 
 
