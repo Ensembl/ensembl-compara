@@ -51,7 +51,7 @@ script: "./travisci/harness.sh"
 matrix:
   exclude:
     - perl: "5.10"
-      env: COVERALLS=false
-    - perl: "5.14"
       env: COVERALLS=true
+    - perl: "5.14"
+      env: COVERALLS=false
 
