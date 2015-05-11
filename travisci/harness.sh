@@ -19,11 +19,12 @@ if [ "$TRAVIS_PERL_VERSION" < "5.14" ]; then
 else
   export PERL5LIB=$PERL5LIB:$PWD/ensembl-variation/modules:$PWD/ensembl-funcgen/modules:$PWD/ensembl-io/modules:$PWD/ensembl-rest/lib
   echo "Running ensembl-rest test suite using $PERL5LIB"
+  REST_SCRIPTS=("$PWD/ensembl-rest/t/genomic_alignment.t" "$PWD/ensembl-rest/t/info.t" "$PWD/ensembl-rest/t/taxonomy.t")
   if [ "$COVERALLS" = 'true' ]; then
-    #PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
-    perl $PWD/ensembl-test/scripts/runtests.pl $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
+    #PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen' perl $PWD/ensembl-test/scripts/runtests.pl -verbose "${REST_SCRIPTS[@]}"
+    perl $PWD/ensembl-test/scripts/runtests.pl "${REST_SCRIPTS[@]}"
   else
-    perl $PWD/ensembl-test/scripts/runtests.pl $PWD/ensembl-rest/t/genomic_alignment.t $PWD/ensembl-rest/t/info.t $PWD/ensembl-rest/t/taxonomy.t
+    perl $PWD/ensembl-test/scripts/runtests.pl "${REST_SCRIPTS[@]}"
   fi
 fi
 
