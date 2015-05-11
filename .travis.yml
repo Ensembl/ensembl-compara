@@ -14,7 +14,7 @@ before_install:
     - sudo apt-get -y install sendmail
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
-    - git clone --branch master --depth 1 https://github.com/muffato/ensembl-funcgen.git
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
