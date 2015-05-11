@@ -37,7 +37,7 @@ sub test_homepage {
 
   ## Check main content
   my $load_error = $sel->ensembl_wait_for_page_to_load;
-  if ($load_error && $load_error->[0] eq 'fail') {
+  if ($load_error && ref($load_error) eq 'ARRAY' && $load_error->[0] eq 'fail') {
     push @responses, $load_error;
   }
   else {
