@@ -14,6 +14,7 @@ use strict;
 use Config;
 use ConfigDeferrer qw(:all);
 use File::Spec;
+use Sys::Hostname;
 use Sys::Hostname::Long;
 use Text::Wrap;
 
@@ -42,8 +43,82 @@ our $ENSEMBL_DOCROOT    = "$ENSEMBL_WEBROOT/htdocs";
 our $ENSEMBL_PLUGINS;
 
 ## Define Plugin directories
-eval qq(require '$ENSEMBL_WEBROOT/conf/Plugins.pm');
-error("Error requiring plugin file:\n$@") if $@;
+if(-e "$ENSEMBL_WEBROOT/conf/Plugins.pm") {
+  eval qq(require '$ENSEMBL_WEBROOT/conf/Plugins.pm');
+  error("Error requiring plugin file:\n$@") if $@;
+}
+
+## Calculate driect identities
+# UNIX identity
+my @ENSEMBL_IDENTITY;
+my $ap_host = Sys::Hostname::hostname;
+my $ap_path = $ENSEMBL_SERVERROOT;
+push @ENSEMBL_IDENTITY,"unix:$ap_host:$ap_path";
+
+foreach my $id (@ENSEMBL_IDENTITY) {
+  warn " Server has identity $id\n";
+}
+
+## Load AutoPlugin files
+our $ENSEMBL_PLUGINS_USED = {};
+our $ENSEMBL_IDS_USED = {};
+
+sub paired { map {[$_[$_*2],$_[$_*2+1]]} 0..int(@_/2)-1 }
+my @PLUGINS_SEEN = map { $_->[0] } paired @$ENSEMBL_PLUGINS;
+$ENSEMBL_IDS_USED->{'- direct -'} = 0;
+$ENSEMBL_PLUGINS_USED->{$_} = [0] for @PLUGINS_SEEN;
+my $code = 1;
+my (%ALIST,%AFILES,%APRIO,@AMAPS);
+foreach my $f (glob "$ENSEMBL_SERVERROOT/*/*/conf/AutoPlugins.pm") {
+  our $ENSEMBL_AUTOPLUGINS = {};
+  our $ENSEMBL_IDENTITY_MAP = {};
+  eval qq(require '$f');
+  error("Error requiring autoplugin file '$f':\n$@") if $@;
+  push @AMAPS,$ENSEMBL_IDENTITY_MAP;
+  foreach my $k (keys %$ENSEMBL_AUTOPLUGINS) {
+    my $prio = 50;
+    my $orig_k = $k;
+    $prio = $1 if $k =~ s/^(\d+)!//;
+    $APRIO{$k} ||= $prio;
+    push @{$ALIST{$k}||=[]},@{$ENSEMBL_AUTOPLUGINS->{$orig_k}};
+    push @{$AFILES{$k}||=[]},$f;
+  }
+}
+
+## Calculate mapped identities
+my $any_maps = 1;
+while($any_maps) {
+  $any_maps = 0;
+  foreach my $map (@AMAPS) {
+    foreach my $id (keys %$map) {
+      next if grep { $_ eq $id } @ENSEMBL_IDENTITY;
+      my $re = $map->{$id};
+      next unless grep { /$re/ } @ENSEMBL_IDENTITY;
+      warn " Server has mapped identity $id ($re)\n";
+      $any_maps = 1;
+      push @ENSEMBL_IDENTITY,$id;
+    }
+  }
+}
+
+## Process AutoPlugin files
+foreach my $k (sort { $APRIO{$a} <=> $APRIO{$b} } keys %ALIST) {
+  if(grep { $_ eq $k } @ENSEMBL_IDENTITY) {
+    warn " Loading $k\n";
+    my @to_add;
+    foreach my $p (paired @{$ALIST{$k}||[]}) {
+      unless($ENSEMBL_IDS_USED->{$k}) {
+        $ENSEMBL_IDS_USED->{$k} = $code++;
+      }
+      $ENSEMBL_PLUGINS_USED->{$p->[0]} ||= [];
+      push @{$ENSEMBL_PLUGINS_USED->{$p->[0]}},$ENSEMBL_IDS_USED->{$k};
+      next if grep { $p->[0] eq $_ } @PLUGINS_SEEN;
+      push @to_add,$p->[0],$p->[1];
+      push @PLUGINS_SEEN,$p->[0];
+    }
+    push @$ENSEMBL_PLUGINS,@to_add;
+  }
+}
 
 # Needed for parsing BAM files
 our ($UDC_CACHEDIR, $HTTP_PROXY);
