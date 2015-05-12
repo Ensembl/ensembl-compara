@@ -52,8 +52,10 @@ if(-e "$ENSEMBL_WEBROOT/conf/Plugins.pm") {
 # UNIX identity
 my @ENSEMBL_IDENTITY;
 my $ap_host = Sys::Hostname::hostname;
-my $ap_path = $ENSEMBL_SERVERROOT;
-push @ENSEMBL_IDENTITY,"unix:$ap_host:$ap_path";
+my @ap_path = split(m!/!,$ENSEMBL_SERVERROOT);
+foreach my $i (0..$#ap_path) {
+  push @ENSEMBL_IDENTITY,"unix:$ap_host:".join('/',@ap_path[0..$i]);
+}
 
 foreach my $id (@ENSEMBL_IDENTITY) {
   warn " Server has identity $id\n";
