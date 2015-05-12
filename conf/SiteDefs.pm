@@ -75,7 +75,10 @@ foreach my $f (glob "$ENSEMBL_SERVERROOT/*/*/conf/AutoPlugins.pm") {
   our $ENSEMBL_AUTOPLUGINS = {};
   our $ENSEMBL_IDENTITY_MAP = {};
   eval qq(require '$f');
-  error("Error requiring autoplugin file '$f':\n$@") if $@;
+  if($@) {
+    warn "Error requiring autoplugin file '$f': $@\n";
+    next;
+  }
   push @AMAPS,$ENSEMBL_IDENTITY_MAP;
   foreach my $k (keys %$ENSEMBL_AUTOPLUGINS) {
     my $prio = 50;
