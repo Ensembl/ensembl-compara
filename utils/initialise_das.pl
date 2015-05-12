@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-package initialize_das;
 # This script
 use FindBin qw($Bin);
 use Cwd;
@@ -16,7 +15,16 @@ use Data::Dumper;
 use Compress::Zlib;
 use LWP::UserAgent;
 
-$hub->species_defs->ENSEMBL_SUBTYPE || $hub->species_defs->ENSEMBL_SITETYPE)EnsEMBL::ExternalData::DAS::SourceParser;
+# --- load libraries needed for reading config ---
+use vars qw( $SERVERROOT );
+BEGIN{
+  $SERVERROOT = dirname( $Bin );
+  unshift @INC, "$SERVERROOT/conf";
+  unshift @INC, "$SERVERROOT";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+  require Bio::EnsEMBL::ExternalData::DAS::SourceParser;
   import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic %COORD_MAPPINGS %TYPE_MAPPINGS %AUTHORITY_MAPPINGS %NON_GENOMIC_COORDS);
 }
 
