@@ -5,11 +5,9 @@ export ENSEMBL_CVS_ROOT_DIR=$PWD
 
 echo "Running ensembl-compara test suite using $PERL5LIB"
 if [ "$COVERALLS" = 'true' ]; then
-  echo
-  #PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/modules/t
+  PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/modules/t
 else
-  echo
-  #perl $PWD/ensembl-test/scripts/runtests.pl $PWD/modules/t
+  perl $PWD/ensembl-test/scripts/runtests.pl $PWD/modules/t
 fi
 
 rt1=$?
@@ -22,11 +20,9 @@ else
   echo "Running ensembl-rest test suite using $PERL5LIB"
   REST_SCRIPTS=("$PWD/ensembl-rest/t/genomic_alignment.t" "$PWD/ensembl-rest/t/info.t" "$PWD/ensembl-rest/t/taxonomy.t")
   if [ "$COVERALLS" = 'true' ]; then
-    echo
-    #PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen' perl $PWD/ensembl-test/scripts/runtests.pl -verbose "${REST_SCRIPTS[@]}"
+    PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen' perl $PWD/ensembl-test/scripts/runtests.pl -verbose "${REST_SCRIPTS[@]}"
   else
-    echo
-    #perl $PWD/ensembl-test/scripts/runtests.pl "${REST_SCRIPTS[@]}"
+    perl $PWD/ensembl-test/scripts/runtests.pl "${REST_SCRIPTS[@]}"
   fi
 fi
 
