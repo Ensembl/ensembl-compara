@@ -80,7 +80,7 @@ sub show_twitter {
                 $twitter_user, $widget_id, $twitter_user);
   }
 
-  return $twitter_html;
+  return qq(<div class="homepage-twitter">$twitter_html</div>);
 }
 
 sub show_headlines {
