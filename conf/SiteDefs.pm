@@ -53,13 +53,11 @@ if(-e "$ENSEMBL_WEBROOT/conf/Plugins.pm") {
 my @ENSEMBL_IDENTITY;
 my $ap_host = Sys::Hostname::hostname;
 my @ap_path = split(m!/!,$ENSEMBL_SERVERROOT);
-foreach my $i (0..$#ap_path) {
+foreach my $i (1..$#ap_path) {
   push @ENSEMBL_IDENTITY,"unix:$ap_host:".join('/',@ap_path[0..$i]);
 }
 
-foreach my $id (@ENSEMBL_IDENTITY) {
-  warn " Server has identity $id\n";
-}
+warn " Server has identities\n    ".join("\n    ",@ENSEMBL_IDENTITY)."\n";
 
 ## Load AutoPlugin files
 our $ENSEMBL_PLUGINS_USED = {};
@@ -102,7 +100,7 @@ if(exists $APAL{$AUSER}) {
     $f_short =~ s!^$ENSEMBL_SERVERROOT/!!;
     $f_short =~ s!/conf/AutoPlugins.pm$!!;
     unless(grep { $_ eq $f_short } @{$APAL{$AUSER}}) {
-      warn " Skipping $f due to PAL\n";
+      warn " Skipping $f_short due to PAL\n";
       next;
     }
     $NEWADATA{$f} = $ADATA{$f};
