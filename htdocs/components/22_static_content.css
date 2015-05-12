@@ -163,7 +163,6 @@ form.homepage-search-form             { text-align: center; margin: 0 !important
 div.new-to-ensembl p      { background: url("/i/e-quest.gif") no-repeat scroll left -2px transparent; padding-left: 32px; }
 div.new-to-ensembl p a    { font-weight: bold; font-size: 108%; }
 div.new-to-ensembl p span { display: block; }
-div.did-you-know          { padding: 16px; }
 
 /*-----------------------------------------------------------------------
 contact link on help and faq page 
