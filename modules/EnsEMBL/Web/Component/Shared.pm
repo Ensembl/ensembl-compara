@@ -1313,4 +1313,20 @@ sub render_clinical_significance {
   return $render;
 }
 
+sub button_portal {
+  my ($self, $buttons, $class) = @_;
+  $class ||= '';
+  my $html;
+
+  foreach (@{$buttons || []}) {
+    if ($_->{'url'}) {
+      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}"><img src="/img/$_->{'img'}.gif" class="portal $class" alt="" /></a>);
+    } else {
+      $html .= qq|<img src="/img/$_->{'img'}.gif" class="portal $class portal-unavail" alt="" title="$_->{'title'} (Not available)" />|;
+    }
+  }
+
+  return qq{<div>$html</div>};
+}
+
 1;

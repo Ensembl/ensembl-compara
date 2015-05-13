@@ -22,29 +22,5 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component);
 
-sub _init {
-  my $self = shift;
-  
-  $self->cacheable(1);
-  $self->ajaxable(0);
-  
-  $self->{'buttons'} = [];
-}
-
-sub content {
-  my ($self, $class) = @_;
-  $class ||= '';
-  my $html;
-
-  foreach (@{$self->{'buttons'}}) {
-    if ($_->{'url'}) {
-      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}"><img src="/img/$_->{'img'}.gif" class="portal $class" alt="" /></a>);
-    } else {
-      $html .= qq|<img src="/img/$_->{'img'}.gif" class="portal $class portal-unavail" alt="" title="$_->{'title'} (Not available)" />|;
-    }
-  }
-  
-  return qq{<div>$html</div>};
-}
 
 1;
