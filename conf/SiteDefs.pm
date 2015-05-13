@@ -40,6 +40,10 @@ my ($volume, $dir) = File::Spec->splitpath(__FILE__);
 our $ENSEMBL_SERVERROOT = File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
 our $ENSEMBL_WEBROOT    = "$ENSEMBL_SERVERROOT/ensembl-webcode";
 our $ENSEMBL_DOCROOT    = "$ENSEMBL_WEBROOT/htdocs";
+our $ENSEMBL_PLUGINS_ROOTS = $ENV{'ENSEMBL_PLUGINS_ROOTS'}||"*-plugins";
+our @ENSEMBL_PLUGINS_PATHS = (
+  "$ENSEMBL_SERVERROOT/$ENSEMBL_PLUGINS_ROOTS/".getpwuid($>),
+);
 our $ENSEMBL_PLUGINS;
 
 ## Define Plugin directories
@@ -68,56 +72,23 @@ my @PLUGINS_SEEN = map { $_->[0] } paired @$ENSEMBL_PLUGINS;
 $ENSEMBL_IDS_USED->{'- direct -'} = 0;
 $ENSEMBL_PLUGINS_USED->{$_} = [0] for @PLUGINS_SEEN;
 my $code = 1;
-my (%ADATA,%APAL);
-foreach my $f (glob "$ENSEMBL_SERVERROOT/*/*/conf/AutoPlugins.pm") {
+my (%ALIST,%APRIO,@AMAPS);
+my $APATHS = join(" ",map {"$_/conf/AutoPlugins.pm"} @ENSEMBL_PLUGINS_PATHS);
+foreach my $f (glob $APATHS) {
   our $ENSEMBL_AUTOPLUGINS = {};
   our $ENSEMBL_IDENTITY_MAP = {};
-  our $ENSEMBL_AUTOPLUGINS_PAL = {};
   eval qq(require '$f');
   if($@) {
     warn "Error requiring autoplugin file '$f': $@\n";
     next;
   }
-  foreach my $k (keys %$ENSEMBL_AUTOPLUGINS_PAL) {
-    if(exists $APAL{$k}) {
-      error("Multiple AUTOPLUGINS PAL for '$k': refusing to start");
-    }
-    $APAL{$k} = $ENSEMBL_AUTOPLUGINS_PAL->{$k};
-  }
-  $ADATA{$f} = {
-    map => $ENSEMBL_IDENTITY_MAP,
-    plugins => $ENSEMBL_AUTOPLUGINS,
-  };
-}
-
-## Check PAL
-my $AUSER = getpwuid($>);
-if(exists $APAL{$AUSER}) {
-  warn " PAL exists for user $AUSER\n";
-  my %NEWADATA;
-  foreach my $f (keys %ADATA) {
-    my $f_short = $f;
-    $f_short =~ s!^$ENSEMBL_SERVERROOT/!!;
-    $f_short =~ s!/conf/AutoPlugins.pm$!!;
-    unless(grep { $_ eq $f_short } @{$APAL{$AUSER}}) {
-      warn " Skipping $f_short due to PAL\n";
-      next;
-    }
-    $NEWADATA{$f} = $ADATA{$f};
-  }
-  %ADATA = %NEWADATA;
-}
-
-## Apply permitted files
-my (%ALIST,%APRIO,@AMAPS);
-foreach my $data (values %ADATA) {
-  push @AMAPS,$data->{'map'};
-  foreach my $k (keys %{$data->{'plugins'}}) {
+  push @AMAPS,$ENSEMBL_IDENTITY_MAP;
+  foreach my $k (keys %$ENSEMBL_AUTOPLUGINS) {
     my $prio = 50;
     my $orig_k = $k;
     $prio = $1 if $k =~ s/^(\d+)!//;
     $APRIO{$k} ||= $prio;
-    push @{$ALIST{$k}||=[]},@{$data->{'plugins'}{$orig_k}};
+    push @{$ALIST{$k}||=[]},@{$ENSEMBL_AUTOPLUGINS->{$orig_k}};
   }
 }
 
