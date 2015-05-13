@@ -42,6 +42,7 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 div.icon-holder       { width: 650px; }
 img.portal            { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
 img.portal-small      { height: 80px; width: 80px; }
+img.portal-unavail    { -webkit-filter: grayscale(100%); filter: grayscale(100%); filter: gray; filter: url("[[IMG:greyscale.svg]]#greyscale"); opacity: 0.4; }
 span.counts           { position:absolute; top:-8px; right:14px; background-color:[[BUTTON_BG]]; color:[[BUTTON_TEXT]]; padding:2px 6px; border-radius:5px; box-shadow:2px 2px 2px #AAA }
 div.icon-container    { float:left; position:relative; }
 
