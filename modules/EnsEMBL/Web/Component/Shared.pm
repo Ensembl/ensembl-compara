@@ -1320,9 +1320,9 @@ sub button_portal {
 
   foreach (@{$buttons || []}) {
     if ($_->{'url'}) {
-      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}"><img src="/img/$_->{'img'}.gif" class="portal $class" alt="" /></a>);
+      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}" class="_ht"><img src="/img/$_->{'img'}.gif" class="portal $class" alt="" /></a>);
     } else {
-      $html .= qq|<img src="/img/$_->{'img'}.gif" class="portal $class portal-unavail" alt="" title="$_->{'title'} (Not available)" />|;
+      $html .= qq|<img src="/img/$_->{'img'}.gif" class="_ht portal $class portal-unavail" alt="" title="$_->{'title'} (Not available)" />|;
     }
   }
 
