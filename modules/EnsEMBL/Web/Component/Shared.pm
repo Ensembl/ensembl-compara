@@ -1318,11 +1318,13 @@ sub button_portal {
   $class ||= '';
   my $html;
 
+  my $img_url = $self->img_url;
+
   foreach (@{$buttons || []}) {
     if ($_->{'url'}) {
-      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}" class="_ht"><img src="/img/$_->{'img'}.gif" class="portal $class" alt="" /></a>);
+      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}" class="_ht"><img src="$img_url$_->{'img'}" class="portal $class" alt="" /></a>);
     } else {
-      $html .= qq|<img src="/img/$_->{'img'}.gif" class="_ht portal $class portal-unavail" alt="" title="$_->{'title'} (Not available)" />|;
+      $html .= qq|<img src="$img_url$_->{'img'}" class="_ht portal $class portal-unavail" alt="" title="$_->{'title'} (Not available)" />|;
     }
   }
 

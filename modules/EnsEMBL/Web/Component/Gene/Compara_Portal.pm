@@ -36,11 +36,11 @@ sub content {
   my $location      = $hub->url({ type => 'Location',  action => 'Compara' });
 
   my $buttons       = [
-    { title => 'Genomic alignments', img => 'compara_align', url => $availability->{'has_alignments'} ? $hub->url({ action => 'Compara_Alignments' }) : '' },
-    { title => 'Gene tree',          img => 'compara_tree',  url => $availability->{'has_gene_tree'}  ? $hub->url({ action => 'Compara_Tree'       }) : '' },
-    { title => 'Orthologues',        img => 'compara_ortho', url => $availability->{'has_orthologs'}  ? $hub->url({ action => 'Compara_Ortholog'   }) : '' },
-    { title => 'Paralogues',         img => 'compara_para',  url => $availability->{'has_paralogs'}   ? $hub->url({ action => 'Compara_Paralog'    }) : '' },
-    { title => 'Families',           img => 'compara_fam',   url => $availability->{'family'}         ? $hub->url({ action => 'Family'             }) : '' },
+    { title => 'Genomic alignments', img => '80/compara_align.gif', url => $availability->{'has_alignments'} ? $hub->url({ action => 'Compara_Alignments' }) : '' },
+    { title => 'Gene tree',          img => '80/compara_tree.gif',  url => $availability->{'has_gene_tree'}  ? $hub->url({ action => 'Compara_Tree'       }) : '' },
+    { title => 'Orthologues',        img => '80/compara_ortho.gif', url => $availability->{'has_orthologs'}  ? $hub->url({ action => 'Compara_Ortholog'   }) : '' },
+    { title => 'Paralogues',         img => '80/compara_para.gif',  url => $availability->{'has_paralogs'}   ? $hub->url({ action => 'Compara_Paralog'    }) : '' },
+    { title => 'Families',           img => '80/compara_fam.gif',   url => $availability->{'family'}         ? $hub->url({ action => 'Family'             }) : '' },
   ];
 
   my $html  = $self->button_portal($buttons);
