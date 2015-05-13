@@ -33,14 +33,14 @@ sub _init {
 
 sub content {
   my ($self, $class) = @_;
-  $class ||= 'portal';
+  $class ||= '';
   my $html;
-  
+
   foreach (@{$self->{'buttons'}}) {
     if ($_->{'url'}) {
-      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}"><img src="/img/$_->{'img'}.gif" class="$class" alt="" /></a>);
+      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}"><img src="/img/$_->{'img'}.gif" class="portal $class" alt="" /></a>);
     } else {
-      $html .= qq|<img src="/img/$_->{'img'}_off.gif" class="$class" alt="" title="$_->{'title'} (NOT AVAILABLE)" />|;
+      $html .= qq|<img src="/img/$_->{'img'}_off.gif" class="portal $class" alt="" title="$_->{'title'} (NOT AVAILABLE)" />|;
     }
   }
   
