@@ -127,7 +127,7 @@ sub content {
 
     my $pop_name = $pop_names{$selected_pop};
     my $project_url  = $self->pop_url($pop_name);
-    my $pop_url = sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the <b>%s</b> population &rarr;</a></p>', $project_url, $pop_name); 
+    my $pop_url = ($project_url) ? sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the <b>%s</b> population &rarr;</a></p>', $project_url, $pop_name) : ''; 
 
     return $self->toggleable_table(
       "Genotypes for $pop_names{$selected_pop}", $selected_pop, 
