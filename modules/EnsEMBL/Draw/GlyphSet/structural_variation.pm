@@ -370,4 +370,6 @@ sub highlight {
   }));
 }
 
+sub supports_subtitles { return 1; }
+
 1;
