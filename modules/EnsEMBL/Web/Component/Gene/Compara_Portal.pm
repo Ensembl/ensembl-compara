@@ -43,7 +43,7 @@ sub content {
     { title => 'Families',           img => '80/compara_fam.gif',   url => $availability->{'family'}         ? $hub->url({ action => 'Family'             }) : '' },
   ];
 
-  my $html  = $self->button_portal($buttons);
+  my $html  = $self->button_portal($buttons, 'portal-small');
      $html .= qq{<p class="center">More views of comparative genomics data, such as multiple alignments and synteny, are available on the <a href="$location">Location</a> page for this gene.</p>};
 
   return $html;
