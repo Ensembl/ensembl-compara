@@ -123,8 +123,10 @@ sub draw_blocks {
     $self->draw_track_name($label, $colour, -108, 0, 'no_offset');
     $self->draw_block_features ($features, $colour, $f_set, 1, 1);
   }
-  $self->_add_sublegend(undef,"More","Links",$zmenu_extra_content,
-                        $self->_offset+2);
+  if(defined $zmenu_extra_content) {
+    $self->_add_sublegend(undef,"More","Links",$zmenu_extra_content,
+                          $self->_offset+2);
+  }
 
   $self->draw_space_glyph;
 }
