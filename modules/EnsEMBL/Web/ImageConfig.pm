@@ -3384,7 +3384,8 @@ sub add_structural_variations {
 
     my $node_name = "$menu_item->{'long_name'} $suffix";
     my $caption   = "$prefix_caption$menu_item->{'long_name'}";
-       $caption   =~ s/1000 Genomes/1KG/;
+    my $labelcaption = $caption;
+    $labelcaption   =~ s/1000 Genomes/1KG/;
 
     my $db = 'variation';
 
@@ -3396,6 +3397,7 @@ sub add_structural_variations {
         %options,
         db          => $db,
         caption     => $caption,
+        labelcaption => $labelcaption,
         source      => undef,
         sets        => [ $menu_item->{'long_name'} ],
         set_name    => $menu_item->{'long_name'},
