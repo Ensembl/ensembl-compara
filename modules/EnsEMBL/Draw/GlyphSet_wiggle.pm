@@ -227,7 +227,7 @@ sub _draw_wiggle_points_as_line {
   }
 
   my ($previous_x,$previous_y);
-  for (my $i = 0; $i <= @$features; $i++) {
+  for (my $i = 0; $i < @$features; $i++) {
     my $f = $features->[$i];
     next if ref $f eq 'HASH' and $discrete_features;
 
@@ -242,7 +242,7 @@ sub _draw_wiggle_points_as_line {
     my $current_y = $c->{'line_px'}-($current_score-$c->{'line_score'}) * $c->{'pix_per_score'};
     next unless $current_x <= $slice_length;
 
-    if($i) {
+    if(defined $previous_x) {
       $self->push($self->Line({
         x         => $current_x,
         y         => $current_y,
