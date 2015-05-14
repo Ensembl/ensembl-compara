@@ -579,7 +579,7 @@ sub evidence_status {
   my $html;
   foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$status){
     my $evidence_label = $evidence;
-       $evidence_label =~ s/_/\s/g;
+       $evidence_label =~ s/_/ /g;
     my $img_evidence =  sprintf(
                           '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="%s/val/evidence_%s.png" title="%s"/>',
                            $self->img_url, $evidence, $evidence_label
