@@ -95,9 +95,7 @@ sub content {
   my $html = $self->button_portal(\@buttons);
 
   ## Variation documentation links
-  my $new_vep     = $hub->species_defs->ENSEMBL_VEP_ENABLED;
-  my $vep_link    = $hub->url({'species' => $species, '__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
-  my $link_class  = $new_vep ? '' : ' class="modal_link"';
+  my $vep_icon = $self->vep_icon;
   $html .= qq(
     <div class="column-wrapper">
       <div class="column-two column-first">
@@ -110,7 +108,7 @@ sub content {
             <li>Exercise: <a href="/info/website/tutorials/malaria_basic_genetics_exercises_Ensembl.pdf">Genomes and SNPs in Malaria</a></li>
           </ul>
           <h2>Analysing your data</h2>
-          <p><a href="$vep_link"$link_class><img src="/i/vep_logo_sm.png" alt="[logo]" style="vertical-align:middle" /></a> Test your own variants with the <a href="$vep_link"$link_class>Variant Effect Predictor</a></p>
+          <div>$vep_icon</div>
         </div>
       </div>
       <div class="column-two column-next">
