@@ -14,7 +14,6 @@ use strict;
 use Config;
 use ConfigDeferrer qw(:all);
 use File::Spec;
-use Sys::Hostname;
 use Sys::Hostname::Long;
 use Text::Wrap;
 
@@ -42,6 +41,7 @@ our $ENSEMBL_WEBROOT    = "$ENSEMBL_SERVERROOT/ensembl-webcode";
 our $ENSEMBL_DOCROOT    = "$ENSEMBL_WEBROOT/htdocs";
 our $ENSEMBL_PLUGINS_ROOTS = $ENV{'ENSEMBL_PLUGINS_ROOTS'}||"*-plugins";
 our @ENSEMBL_PLUGINS_PATHS = (
+  $ENSEMBL_WEBROOT,
   "$ENSEMBL_SERVERROOT/$ENSEMBL_PLUGINS_ROOTS/".getpwuid($>),
 );
 our $ENSEMBL_PLUGINS;
@@ -52,15 +52,20 @@ if(-e "$ENSEMBL_WEBROOT/conf/Plugins.pm") {
   error("Error requiring plugin file:\n$@") if $@;
 }
 
-## Calculate driect identities
-# UNIX identity
+## Load AutoIdentities files
 my @ENSEMBL_IDENTITY;
-my $ap_host = Sys::Hostname::hostname;
-my @ap_path = split(m!/!,$ENSEMBL_SERVERROOT);
-foreach my $i (1..$#ap_path) {
-  push @ENSEMBL_IDENTITY,"unix:$ap_host:".join('/',@ap_path[0..$i]);
+my $IPATHS = join(" ",map {"$_/conf/AutoIdentities.pm"} @ENSEMBL_PLUGINS_PATHS);
+my $APATHS = join(" ",map {"$_/conf/AutoPlugins.pm"} @ENSEMBL_PLUGINS_PATHS);
+foreach my $f (glob $IPATHS) {
+  our $ENSEMBL_IDENTITIES = [];
+  next unless -e $f;
+  eval qq(require '$f');
+  if($@) {
+    warn "Error requiring autoidentities file '$f': $@\n";
+    next;
+  }
+  push @ENSEMBL_IDENTITY,@{$_->()} for @$ENSEMBL_IDENTITIES;
 }
-
 warn " Server has identities\n    ".join("\n    ",@ENSEMBL_IDENTITY)."\n";
 
 ## Load AutoPlugin files
@@ -73,10 +78,10 @@ $ENSEMBL_IDS_USED->{'- direct -'} = 0;
 $ENSEMBL_PLUGINS_USED->{$_} = [0] for @PLUGINS_SEEN;
 my $code = 1;
 my (%ALIST,%APRIO,@AMAPS);
-my $APATHS = join(" ",map {"$_/conf/AutoPlugins.pm"} @ENSEMBL_PLUGINS_PATHS);
 foreach my $f (glob $APATHS) {
   our $ENSEMBL_AUTOPLUGINS = {};
   our $ENSEMBL_IDENTITY_MAP = {};
+  next unless -e $f;
   eval qq(require '$f');
   if($@) {
     warn "Error requiring autoplugin file '$f': $@\n";
