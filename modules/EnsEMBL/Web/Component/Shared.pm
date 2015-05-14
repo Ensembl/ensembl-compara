@@ -1322,13 +1322,14 @@ sub button_portal {
 
   foreach (@{$buttons || []}) {
     if ($_->{'url'}) {
-      $html .= qq(<a href="$_->{'url'}" title="$_->{'title'}" class="_ht"><img src="$img_url$_->{'img'}" class="portal $class" alt="" /></a>);
+      my $counts = qq(<span class="counts">$_->{'count'}</span>) if $_->{'count'};
+      $html .= qq(<div><a href="$_->{'url'}" title="$_->{'title'}" class="_ht"><img src="$img_url$_->{'img'}" alt="$_->{'title'}" />$counts</a></div>);
     } else {
-      $html .= qq|<img src="$img_url$_->{'img'}" class="_ht portal $class portal-unavail" alt="" title="$_->{'title'} (Not available)" />|;
+      $html .= qq|<div><img src="$img_url$_->{'img'}" class="_ht unavailable" alt="$_->{'title'} (Not available)" title="$_->{'title'} (Not available)" /></div>|;
     }
   }
 
-  return qq{<div>$html</div>};
+  return qq{<div class="portal $class">$html</div><div class="invisible"></div>};
 }
 
 1;
