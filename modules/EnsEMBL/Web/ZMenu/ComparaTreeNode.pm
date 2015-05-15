@@ -376,7 +376,7 @@ sub content {
       link        => $hub->url($params),
       link_class  => 'modal_link',
       order       => 14,
-    }) if($self->hub->species eq 'Multi'); #for now not showing this for multi species gene tree because of problem with object, will have proper fix for 81
+    }) if($self->hub->species ne 'Multi'); #for now not showing this for multi species gene tree because of problem with object, will have proper fix for 81
 
     # Jalview
     my ($url_align, $url_tree) = $self->dump_tree_as_text($node);
