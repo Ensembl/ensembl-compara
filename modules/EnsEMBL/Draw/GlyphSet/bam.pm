@@ -458,9 +458,20 @@ sub render_coverage {
 #  return \@filtered;
 #}
 
+# Calculate a machine-unique name for the C for safe copyability
+use Sys::Hostname::Long;
+use Digest::MD5 qw(md5_hex);
+our $cbuild_dir;
+BEGIN {
+  my $name = Sys::Hostname::Long::hostname_long.
+    ":$SiteDefs::ENSEMBL_WEBROOT";
+  $cbuild_dir = "$SiteDefs::ENSEMBL_WEBROOT/.cbuild-".md5_hex($name);
+  mkdir $cbuild_dir unless -e $cbuild_dir;
+};
+
 use Inline C => Config => INC => "-I$SiteDefs::SAMTOOLS_DIR",
                           LIBS => "-L$SiteDefs::SAMTOOLS_DIR -lbam",
-                          DIRECTORY => "$SiteDefs::ENSEMBL_WEBROOT/cbuild";
+                          DIRECTORY => $cbuild_dir;
 
 ##    Inline->init;
 #
