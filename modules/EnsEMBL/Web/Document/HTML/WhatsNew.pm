@@ -60,7 +60,7 @@ sub render {
   }
   $html .= $blog if $blog;
 
-  return if ($species_defs->ENSEMBL_SUBTYPE eq 'Archive');
+  return $html if ($species_defs->ENSEMBL_SUBTYPE eq 'Archive');
   
   $html .= $self->show_twitter();
 
