@@ -1009,7 +1009,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     if (!this.elLk.selector || !this.elLk.selector.length) {
       this.elLk.selector = $('<div class="_selector selector"></div>').insertAfter(this.elLk.img).toggleClass('vertical', this.vertical).filter(':not(.vertical)')
-        .append('<div class="left-border"></div><div class="right-border"></div>');
+        .append('<div class="left-border"></div><div class="right-border"></div>').end();
       this.activateSelector();
     }
 
