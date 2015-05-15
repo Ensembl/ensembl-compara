@@ -418,6 +418,23 @@ sub _load_in_species_pages {
   return $spp_tree;
 }
 
+sub _check_json_file {
+  my ($self, $species) = @_;
+
+  # Check for existence of VCF JSON configuration file
+  my $filename = $species.'_vcf';
+  my $path;
+
+  foreach my $confdir (@SiteDefs::ENSEMBL_CONF_DIRS) {
+    my $check_path = "$confdir/json/$filename.json";
+    if (-e $check_path) {
+      $path = $check_path;
+      last;
+    }
+  }
+  return $path;
+}
+
 sub _read_in_ini_file {
   my ($self, $filename, $defaults) = @_;
   my $inifile = undef;
@@ -630,6 +647,7 @@ sub _parse {
   # Grab default settings first and store in defaults
   my $defaults = $self->_read_in_ini_file('DEFAULTS', {});
   $self->_info_line('Parsing', 'DEFAULTS ini file');
+
   
   # Loop for each species exported from SiteDefs
   # grab the contents of the ini file AND
@@ -637,6 +655,10 @@ sub _parse {
   # o/w attach the species databases/parse the DAS registry, 
   # load the data and store the DB/DAS packed files
   foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
+    # Get path to VCF JSON file
+    my $json_path = $self->_check_json_file($species);
+    #$tree->{$species}{'ENSEMBL_VCF_COLLECTIONS'} = {'CONFIG' => $json_path, 'ENABLED' => 1} if $json_path;
+
     $config_packer->species($species);
     
     $self->process_ini_files($species, 'db', $config_packer, $defaults);
