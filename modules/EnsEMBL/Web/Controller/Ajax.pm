@@ -67,7 +67,7 @@ sub autocomplete {
   
   if (!$results) {
     my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
-    my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
+    my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, location, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
     
     $sth->execute;
     
