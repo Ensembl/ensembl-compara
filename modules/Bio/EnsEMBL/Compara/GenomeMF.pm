@@ -190,11 +190,6 @@ sub get_production_name {
     return $self->{production_name};
 }
 
-sub get_genebuild {
-    my $self = shift;
-    return $self->{genebuild};
-}
-
 sub has_karyotype {
     my $self = shift;
     return $self->{'has_karyotype'} || 0;
