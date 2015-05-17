@@ -113,6 +113,8 @@ sub default_options {
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 0,
+        'allow_missing_coordinates' => 0,
+        'allow_missing_cds_seqs'    => 0,
         # highest member_id for a protein member
         'protein_members_range'     => 100000000,
 
