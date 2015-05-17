@@ -148,6 +148,11 @@ sub _load_sequences {
     $self->{"_${type}_seq"} = \%sequence2hash;
 }
 
+sub get_GenomeContainer {
+    my $self = shift;
+    return $self;
+}
+
 sub get_MetaContainer {
     my $self = shift;
     return $self;
