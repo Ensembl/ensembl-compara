@@ -77,6 +77,14 @@ sub all_from_file {
     return $perl_array;
 }
 
+sub locator {
+    my $self = shift;
+    return sprintf('%s/filename=%s;index=%d', ref($self), $self->{'_registry_file'}, $self->{'_registry_index'});
+}
+
+
+## Coordinates
+
 sub get_gene_coordinates {
     my $self = shift;
     $self->_load_coordinates unless exists $self->{'_gene_coordinates'};
@@ -114,6 +122,9 @@ sub _load_coordinates {
     $self->{'_cds_coordinates'} = \%cds_coordinates;
 }
 
+
+## Sequences
+
 sub get_cds_sequences {
     my $self = shift;
     $self->_load_sequences('cds') unless exists $self->{'_cds_seq'};
@@ -147,6 +158,9 @@ sub _load_sequences {
         die "Could not read fasta sequences from $input_file\n";
     }
 }
+
+
+## CoreDBAdaptor
 
 sub get_GenomeContainer {
     my $self = shift;
@@ -195,12 +209,6 @@ sub assembly_name {
     my $self = shift;
     return $self->{'assembly'} || 'unknown_assembly';
 }
-
-sub locator {
-    my $self = shift;
-    return sprintf('%s/filename=%s;index=%d', ref($self), $self->{'_registry_file'}, $self->{'_registry_index'});
-}
-
 
 1;
 
