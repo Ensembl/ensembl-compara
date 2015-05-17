@@ -921,6 +921,8 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'members_per_genome',
                 allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
+                allow_missing_coordinates   => $self->o('allow_missing_coordinates'),
+                allow_missing_cds_seqs      => $self->o('allow_missing_cds_seqs'),
             },
             %hc_analysis_params,
         },
