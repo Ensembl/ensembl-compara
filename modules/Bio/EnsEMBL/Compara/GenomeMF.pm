@@ -130,11 +130,12 @@ sub _load_sequences {
     my $self = shift;
     my $type = shift;
 
+    my %sequence2hash = ();
+    $self->{"_${type}_seq"} = \%sequence2hash;
+
     return unless exists $self->{"${type}_fasta"};
     my $input_file = $self->{"${type}_fasta"};
     die unless -e $input_file;
-
-    my %sequence2hash = ();
 
     my $in_file  = Bio::SeqIO->new(-file => $input_file , '-format' => 'Fasta');
     while ( my $seq = $in_file->next_seq() ) {
@@ -145,7 +146,6 @@ sub _load_sequences {
     if(!keys(%sequence2hash)){
         die "Could not read fasta sequences from $input_file\n";
     }
-    $self->{"_${type}_seq"} = \%sequence2hash;
 }
 
 sub get_GenomeContainer {
