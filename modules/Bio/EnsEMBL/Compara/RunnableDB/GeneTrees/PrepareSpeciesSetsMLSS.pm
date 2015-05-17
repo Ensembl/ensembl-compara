@@ -88,6 +88,21 @@ sub _has_duplicates {
 sub run {
     my $self = shift;
 
+    # Reusability is only possible if there is a master database
+    if ($self->param('reference_dba')) {
+        $self->find_reusable_genomes();
+    } else {
+        foreach my $gdb (@{$self->param('genome_dbs')}) {
+            $gdb->{is_reused} = 0;
+            #next unless $gdb->is_polyploid;
+            map {$_->{is_reused} = 0} @{$gdb->component_genome_dbs};
+        }
+    }
+}
+
+sub find_reusable_genomes {
+    my $self = shift;
+
     # Here we check that the data is consistent
 
     die "Duplicates in reused_gdb_ids\n" if _has_duplicates($self->param('reused_gdb_ids'));
