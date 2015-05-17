@@ -169,17 +169,17 @@ sub AUTOLOAD {
 
 sub has_karyotype {
     my $self = shift;
-    return $self->{'has_karyotype'};
+    return $self->{'has_karyotype'} || 0;
 }
 
 sub is_high_coverage {
     my $self = shift;
-    return $self->{'is_high_coverage'};
+    return $self->{'is_high_coverage'} || 0;
 }
 
 sub assembly_name {
     my $self = shift;
-    return $self->{'assembly'};
+    return $self->{'assembly'} || 'unknown_assembly';
 }
 
 sub locator {
