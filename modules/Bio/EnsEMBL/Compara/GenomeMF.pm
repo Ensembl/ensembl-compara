@@ -158,13 +158,27 @@ sub get_MetaContainer {
     return $self;
 }
 
-our $AUTOLOAD;
 
-sub AUTOLOAD {
+## GenomeDB fields
+
+sub get_taxonomy_id {
     my $self = shift;
-    if ( $AUTOLOAD =~ m/::get_(\w+)$/ ) {
-        return $self->{$1};
-    }
+    return $self->{taxonomy_id};
+}
+
+sub get_genebuild {
+    my $self = shift;
+    return $self->{genebuild};
+}
+
+sub get_production_name {
+    my $self = shift;
+    return $self->{production_name};
+}
+
+sub get_genebuild {
+    my $self = shift;
+    return $self->{genebuild};
 }
 
 sub has_karyotype {
