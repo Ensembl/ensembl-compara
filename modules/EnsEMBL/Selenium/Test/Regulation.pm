@@ -31,7 +31,7 @@ sub new {
 
   ## Abort this test set if the species has no regulation data
   my $species = $self->species;
-  if (!$species->{'funcgen_db'}) {
+  if (!$species->{'regulation_db'}) {
     return ['pass', 'Species '.$species->{'name'}.' has no regulation data', $class, 'new'];
   }
 
