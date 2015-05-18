@@ -67,11 +67,11 @@ sub autocomplete {
   
   if (!$results) {
     my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
-    my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
+    my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, location, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
     
     $sth->execute;
     
-    $results = $sth->fetchall_arrayref;
+    $results = { map { uc $_->[0] => { 'label' => $_->[0], 'g' => $_->[1], 'r' => $_->[2], 'db' => $_->[3] } } @{$sth->fetchall_arrayref} };
     $cache->set($key, $results, undef, 'AUTOCOMPLETE') if $cache;
   }
   

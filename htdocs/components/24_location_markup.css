@@ -30,6 +30,8 @@
 .navbar .relocate input:hover    { background-color: [[CONTRAST_BG]]; }
 .navbar .relocate form           { float: left; padding: 2px 0; width: 370px; }
 .navbar .relocate form label     { float: left; display: block; width: 64px; margin-top: 5px; padding-right: 8px; text-align: right; }
+.navbar .navgene                 { float: left; margin: 0; }
+
 
 .navbar.narrow1 .relocate,
 .navbar.narrow2 .relocate        { width: 370px; }
