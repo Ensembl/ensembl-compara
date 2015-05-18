@@ -28,7 +28,7 @@ sub new {
   my ($class, %args) = @_;
 
   ## Check we have a species before proceeding
-  return ('bug', "These tests require a species", $class, 'new') unless $args{'species'};
+  return ['bug', "These tests require a species", $class, 'new'] unless $args{'species'};
 
   my $self = $class->SUPER::new(%args);
   return $self;
