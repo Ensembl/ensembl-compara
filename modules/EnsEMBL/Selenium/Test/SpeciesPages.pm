@@ -34,4 +34,28 @@ sub new {
   return $self;
 }
 
+sub test_lh_menu {
+### Tests all links on lefthand menu of a given page type (e.g. Gene)
+  my $self    = shift;
+  my $sel     = $self->sel;
+  my $current = $self->get_current_url();
+
+  my ($goto, $error) = $self->default_url;
+  return ($goto, $error) if $error;
+
+  $self->no_mirrors_redirect;
+  my $error = try { $sel->open($goto); }
+                catch {return ['fail', "Couldn't open sample page $goto to check navigation links", ref($self), 'test_lh_menu']; };
+  return $error if $erro;
+
+  my $load_error = $sel->ensembl_wait_for_page_to_load;
+  if ($load_error && ref($load_error) eq 'ARRAY' && $load_error->[0] eq 'fail') {
+    push @responses, $load_error;
+  }
+  else {
+    push @responses, $sel->ensembl_click_all_links('.local_context');
+  }
+  return @responses;
+}
+
 1;
