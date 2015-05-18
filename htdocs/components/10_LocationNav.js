@@ -17,7 +17,9 @@
 Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   constructor: function (id, params) {
     this.base(id, params);
-    
+
+    this.geneCache = {};
+
     Ensembl.EventManager.register('hashChange',  this, this.getContent);
     Ensembl.EventManager.register('changeWidth', this, this.resize);
     Ensembl.EventManager.register('imageResize', this, this.resize);
@@ -171,16 +173,12 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     
     this.enabled = this.params.enabled || false;
 
-    this.elLk.locationInput = $('.location_selector', this.el);
-    this.elLk.navbar        = $('.navbar', this.el);
-    this.elLk.imageNav      = $('.image_nav', this.elLk.navbar);
-    this.elLk.forms         = $('form', this.elLk.navbar);
-    
-    $('a.go-button', this.elLk.forms).on('click', function () {
-      $(this).parents('form').trigger('submit');
-      return false;
-    });
-    
+    this.elLk.navbar    = this.el.find('.navbar');
+    this.elLk.imageNav  = this.elLk.navbar.find('.image_nav');
+    this.elLk.forms     = this.elLk.navbar.find('form');
+
+    this.initNavForms();
+
     this.elLk.navLinks = $('a', this.elLk.imageNav).addClass('constant').on('click', function (e) {
       var newR;
       
@@ -241,7 +239,87 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.updateButtons(); 
     this.resize();
   },
-  
+
+  initNavForms: function() {
+    var panel = this;
+
+    this.elLk.geneAutocomplete = this.elLk.forms.filter('._nav_gene').find('input[type=text]');
+
+    // attach form submit event
+    this.elLk.forms.on('submit', {panel: this}, function (e, autocomplete) {
+      e.preventDefault();
+
+      var params = {};
+
+      // g and db params needed for gene navigation
+      if (this.className.match(/_nav_gene/)) {
+
+        if (this.q.value.length < 3) {
+          return;
+        }
+
+        params = (e.data.panel.geneCache[this.q.value.substr(0, 3).toUpperCase()] || [])[this.q.value.toUpperCase()];
+
+        if (!params) {
+          return;
+        }
+
+        Ensembl.updateURL({g: params.g, db: params.db});
+      } else {
+        params.r = this.r.value;
+      }
+
+      e.data.panel.elLk.geneAutocomplete.autocomplete('close').val(params.label);
+
+      Ensembl.updateLocation(params.r);
+      return;
+
+    }).find('a').on('click', function (e) {
+      e.preventDefault();
+      $(this).closest('form').trigger('submit');
+    });
+
+    // autocomplete on the gene input field
+    this.elLk.geneAutocomplete.autocomplete({
+      minLength: 3,
+      source: function(request, responseCallback) {
+
+        var context = { // context to be passed to ajax callbacks
+          panel     : panel,
+          term      : request.term,
+          key       : request.term.substr(0, 3).toUpperCase(),
+          callback  : function(str, group) {
+            var regexp = new RegExp('^' + $.ui.autocomplete.escapeRegex(str), 'i');
+            return responseCallback($.map(group, function(val, geneLabel) {
+              return regexp.test(geneLabel) ? val.label : null;
+            }));
+          }
+        }
+
+        if (context.key in panel.geneCache) {
+          return context.callback(request.term, panel.geneCache[context.key]);
+        }
+
+        $.ajax({
+          url: Ensembl.speciesPath + '/Ajax/autocomplete',
+          cache: true,
+          data: { q: context.key },
+          dataType: 'json',
+          context: context,
+          success: function (json) {
+            this.panel.geneCache[this.key] = json;
+          },
+          complete: function () {
+            return this.callback(this.term, this.panel.geneCache[this.key]);
+          }
+        });
+      },
+      select: function(e, ui) {
+        $(this).closest('form').trigger('submit');
+      }
+    });
+  },
+
   getContent: function () {
     var panel = this;
 

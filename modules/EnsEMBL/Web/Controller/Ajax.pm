@@ -71,7 +71,7 @@ sub autocomplete {
     
     $sth->execute;
     
-    $results = $sth->fetchall_arrayref;
+    $results = { map { uc $_->[0] => { 'label' => $_->[0], 'g' => $_->[1], 'r' => $_->[2], 'db' => $_->[3] } } @{$sth->fetchall_arrayref} };
     $cache->set($key, $results, undef, 'AUTOCOMPLETE') if $cache;
   }
   
