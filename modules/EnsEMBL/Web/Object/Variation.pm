@@ -1636,11 +1636,11 @@ sub hgvs_url {
     } elsif ($type eq 'p') { # protein position
       $p->{'type'}   = 'Transcript';
       $p->{'action'} = 'ProtVariations';
-      $p->{'t'}      = $refseq;
+      $p->{'t'}      = $refseq.$version;
     } else { # $type eq c: cDNA position, no $type: special cases where the variation falls in e.g. a pseudogene. Default to transcript
       $p->{'type'}   = 'Transcript';
       $p->{'action'} = ($hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary');
-      $p->{'t'}      = $refseq;
+      $p->{'t'}      = $refseq.$version;
     }
   }
   
