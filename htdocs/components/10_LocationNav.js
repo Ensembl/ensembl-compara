@@ -191,7 +191,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.elLk.geneAutocomplete = this.elLk.forms.filter('._nav_gene').find('input[type=text]');
 
     // attach form submit event
-    this.elLk.forms.on('submit', {panel: this}, function (e, autocomplete) {
+    this.elLk.forms.on('submit', {panel: this}, function (e, term) {
       e.preventDefault();
 
       var params = {};
@@ -199,11 +199,13 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       // g and db params needed for gene navigation
       if (this.className.match(/_nav_gene/)) {
 
-        if (this.q.value.length < 3) {
+        term = term || this.q.value;
+
+        if (term.length < 3) {
           return;
         }
 
-        params = (e.data.panel.geneCache[this.q.value.substr(0, 3).toUpperCase()] || [])[this.q.value.toUpperCase()];
+        params = (e.data.panel.geneCache[term.substr(0, 3).toUpperCase()] || {})[term.toUpperCase()];
 
         if (!params) {
           return;
@@ -260,7 +262,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         });
       },
       select: function(e, ui) {
-        $(this).closest('form').trigger('submit');
+        $(this).closest('form').triggerHandler('submit', ui.item.value);
       }
     });
   },
