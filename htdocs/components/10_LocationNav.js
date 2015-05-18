@@ -176,66 +176,11 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.elLk.navbar    = this.el.find('.navbar');
     this.elLk.imageNav  = this.elLk.navbar.find('.image_nav');
     this.elLk.forms     = this.elLk.navbar.find('form');
+    this.elLk.navLinks  = this.elLk.imageNav.find('a');
 
     this.initNavForms();
-
-    this.elLk.navLinks = $('a', this.elLk.imageNav).addClass('constant').on('click', function (e) {
-      var newR;
-      
-      if (panel.enabled === true) {
-        newR = this.href.match(Ensembl.locationMatch)[1];
-        
-        if (newR !== Ensembl.coreParams.r) {
-          Ensembl.updateLocation(newR);
-        }
-        
-        return false;
-      }
-    });
-    
-    if(!$('span.ramp', this.el).length) { return; } // No slider here
-    $('span.ramp', this.el).hide();
-    var sliderConfig = panel.config();
-    var sliderLabel  = $('.slider_label', this.el);
-    
-    $('.slider_wrapper', this.el).children().css('display', 'inline-block');
-    var slide_min = sliderConfig.min;
-    var slide_max = sliderConfig.max;
-    var slide_mul = ( Math.log(slide_max) - Math.log(slide_min) ) / 100;
-    var slide_off = Math.log(slide_min);
-    var rs = panel.currentLocations();
-    this.elLk.slider = $('.slider', this.el).slider({
-      value: panel.val2pos(),
-      step:  1,
-      min:   0,
-      max:   100,
-      force: false,
-      slide: function (e, ui) {
-        var value = panel.pos2val(ui.value);
-        sliderLabel.html(value + ' bp').show();
-      },
-      change: function (e, ui) {
-        if(panel.elLk.slider.slider('option','fake')) { return; }
-        var input = panel.pos2val(ui.value);
-        rs = panel.rescale(rs,input);
-        var url = panel.newLocation(rs);
-        
-        if (panel.enabled === false) {
-          Ensembl.redirect(url);
-          return false;
-        } else if (Ensembl.locationURL === 'hash' && !window.location.hash.match(Ensembl.locationMatch) && window.location.search.match(Ensembl.locationMatch)[1] === rs['r']) {
-          return false; // when there's no hash, but the current location is the same as the new r
-        } else if ((window.location[Ensembl.locationURL].match(Ensembl.locationMatch) || [])[1] === rs['r']) {
-          return false;
-        }
-        
-        Ensembl.updateLocation(rs['r'][0]+":"+rs['r'][1]+"-"+rs['r'][2]);
-      },
-      stop: function () {
-        sliderLabel.hide();
-        $('.ui-slider-handle', panel.elLk.slider).trigger('blur'); // Force the blur event to remove the highlighting for the handle
-      }
-    });
+    this.initNavLinks();
+    this.initSlider();
     this.updateButtons(); 
     this.resize();
   },
@@ -316,6 +261,75 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       },
       select: function(e, ui) {
         $(this).closest('form').trigger('submit');
+      }
+    });
+  },
+
+  initNavLinks: function () {
+    var panel = this;
+
+    this.elLk.navLinks.addClass('constant').on('click', function (e) {
+      var newR;
+
+      if (panel.enabled === true) {
+        newR = this.href.match(Ensembl.locationMatch)[1];
+
+        if (newR !== Ensembl.coreParams.r) {
+          Ensembl.updateLocation(newR);
+        }
+
+        return false;
+      }
+    });
+  },
+
+  initSlider: function () {
+    var panel = this;
+
+    if (!$('span.ramp', this.el).length) { // No slider here
+      return;
+    }
+
+    $('span.ramp', this.el).hide();
+    var sliderConfig = panel.config();
+    var sliderLabel  = $('.slider_label', this.el);
+
+    $('.slider_wrapper', this.el).children().css('display', 'inline-block');
+    var slide_min = sliderConfig.min;
+    var slide_max = sliderConfig.max;
+    var slide_mul = ( Math.log(slide_max) - Math.log(slide_min) ) / 100;
+    var slide_off = Math.log(slide_min);
+    var rs = panel.currentLocations();
+    this.elLk.slider = $('.slider', this.el).slider({
+      value: panel.val2pos(),
+      step:  1,
+      min:   0,
+      max:   100,
+      force: false,
+      slide: function (e, ui) {
+        var value = panel.pos2val(ui.value);
+        sliderLabel.html(value + ' bp').show();
+      },
+      change: function (e, ui) {
+        if(panel.elLk.slider.slider('option','fake')) { return; }
+        var input = panel.pos2val(ui.value);
+        rs = panel.rescale(rs,input);
+        var url = panel.newLocation(rs);
+
+        if (panel.enabled === false) {
+          Ensembl.redirect(url);
+          return false;
+        } else if (Ensembl.locationURL === 'hash' && !window.location.hash.match(Ensembl.locationMatch) && window.location.search.match(Ensembl.locationMatch)[1] === rs['r']) {
+          return false; // when there's no hash, but the current location is the same as the new r
+        } else if ((window.location[Ensembl.locationURL].match(Ensembl.locationMatch) || [])[1] === rs['r']) {
+          return false;
+        }
+
+        Ensembl.updateLocation(rs['r'][0]+":"+rs['r'][1]+"-"+rs['r'][2]);
+      },
+      stop: function () {
+        sliderLabel.hide();
+        $('.ui-slider-handle', panel.elLk.slider).trigger('blur'); // Force the blur event to remove the highlighting for the handle
       }
     });
   },
