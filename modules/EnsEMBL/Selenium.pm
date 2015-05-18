@@ -206,9 +206,9 @@ sub ensembl_click_all_links {
     next if grep (/$link_text/, @$skip_link);
   
     if ($rel eq 'external' || $link !~ /^$url/) {
-      my $error = try { $sel->open($link); }
-                catch { return ['fail', "Couldn't open page $link"]; };
-      if ($error && ref($error) eq 'ARRAY' && $error->[0] eq 'fail') 
+      my $error = try { $self->open($link); }
+                    catch { return ['fail', "Couldn't open page $link"]; };
+      if ($error && ref($error) eq 'ARRAY' && $error->[0] eq 'fail') { 
         push @output, $error;
       }
       else {
