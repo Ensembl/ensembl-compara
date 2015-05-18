@@ -179,7 +179,7 @@ sub ensembl_click_all_links {
 
   my @links_array = split(',',$links_href);
   my $i = 0;
-  my $output = [];
+  my @output;
 
   foreach my $link (@links_array) {
     $self->pause(500);
@@ -206,26 +206,42 @@ sub ensembl_click_all_links {
     next if grep (/$link_text/, @$skip_link);
   
     if ($rel eq 'external' || $link !~ /^$url/) {
-      $self->open($link);
-      if (ok($self->get_title !~ /Internal Server Error|404 error|ERROR/i, 'No Internal or 404 Server Error')) {
-        push @$output, ('pass', "Link $link_text ($link) successful at $location");
+      my $error = try { $sel->open($link); }
+                catch { return ['fail', "Couldn't open page $link"]; };
+      if ($error && ref($error) eq 'ARRAY' && $error->[0] eq 'fail') 
+        push @output, $error;
       }
       else {
-        push @$output, ('fail', "LINK FAILED:: $link_text ($link) at $location");
+
+        $error = try { ok($self->get_title !~ /Internal Server Error/i, 'No Internal Server Error');}
+                  catch { return ['fail', "Internal Server Error at $location"];};
+        if ($error) {
+          push @output, $error;
+          next;
+        }
+
+        $error = try { ok($self->get_title !~ /404 Error/i, 'No 404 Error');}
+                  catch { return ['fail', "404 Error at $location"];};
+        if ($error) {
+          push @output, $error;
+          next;
+        }
+
+        push @output, ['pass', "Link $link_text ($link) successful at $location"];
       }
     } elsif ($link_id && $link_id ne 'null') {
-      $self->ensembl_click_links(["id=$link_id"]);
+      push @output, $self->ensembl_click_links(["id=$link_id"]);
     } elsif ($link_text) {
-      $self->ensembl_click_links(["link=$link_text"]);
+      push @output, $self->ensembl_click_links(["link=$link_text"]);
     } else {
-      push @$output, ('fail', "LINK UNTESTED:: $link has no id or text at $location");
+      push @output, ['fail', "LINK UNTESTED:: $link has no id or text at $location"];
       next;
     }
     
-    $self->ensembl_is_text_present($text) if($text);
+    push @output, $self->ensembl_is_text_present($text) if ($text);
     $self->go_back();
   }
-  return $output;
+  return @output;
 }
 
 sub ensembl_images_loaded {
