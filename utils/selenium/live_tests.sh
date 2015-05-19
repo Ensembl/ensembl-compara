@@ -15,9 +15,10 @@
 # limitations under the License.
 
 ## Test static content
-perl run_tests.pl --config=selenium.conf --tests=static.conf
+#perl run_tests.pl --config=selenium.conf --tests=static.conf
 
 ## Test basic views for all species
+perl run_tests.pl --config=selenium.conf --tests=basic.conf --species=human_only.conf
 #perl run_tests.pl --config=selenium.conf --tests=basic.conf
 
 ## Intensive test of human
