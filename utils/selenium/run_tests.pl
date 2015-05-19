@@ -294,7 +294,7 @@ sub run_test {
       }
       if ($object->can($method)) {
         print "...... Trying test method $method...\n";
-        my @response = $object->$method(@params);
+        my @response = ($object->$method(@params));
         foreach (@response) {
           if (ref($_) eq 'ARRAY') {
             if ($_->[0] eq 'fail' || $config->{'verbose'}) {
