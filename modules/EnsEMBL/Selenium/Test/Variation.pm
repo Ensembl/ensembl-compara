@@ -42,7 +42,7 @@ sub default_url {
   my $self = shift;
   my $species = $self->species;
 
-  return sprintf('/%s/Variation/Summary?vf=%s', $species->{'name'}, $species->{'VARIATION_PARAM'});
+  return sprintf('/%s/Variation/Explore?v=%s', $species->{'name'}, $species->{'VARIATION_PARAM'});
 }
 
 1;
