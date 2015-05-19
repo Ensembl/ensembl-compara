@@ -166,8 +166,11 @@ my $test_suite = {
 foreach my $module (@{$TESTS->{'modules'}}) {
   my $species = $module->{'species'} || [];
   if ($species eq 'all') {
+    my @keys = keys %$SPECIES;
+    $species = \@keys;   
+    $module->{'species'} = '';
   }
-  elsif (scalar(@$species)) {
+  if (scalar(@$species)) {
     foreach my $sp (@$species) {
       if ($test_suite->{'species'}{$sp}) {
         push @{$test_suite->{'species'}{$sp}}, $module;
@@ -210,7 +213,7 @@ foreach my $module (@{$test_suite->{'non_species'}}) {
 foreach my $sp (keys %{$test_suite->{'species'}}) {
   foreach my $module (@{$test_suite->{'species'}{$sp}}) {
     my $module_name = $module->{'name'};
-    $test_config->{'species'} = $species;
+    $test_config->{'species'} = {'name' => $sp, %{$SPECIES->{$sp}}};
     run_test($module_name, $test_config, $module->{'tests'});    
   }
 }
