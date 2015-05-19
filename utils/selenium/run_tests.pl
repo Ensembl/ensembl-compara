@@ -211,6 +211,7 @@ foreach my $module (@{$test_suite->{'non_species'}}) {
 
 ## Loop through the relevant tests for each species
 foreach my $sp (keys %{$test_suite->{'species'}}) {
+  print "\n======= TESTING SPECIES $sp:\n";
   foreach my $module (@{$test_suite->{'species'}{$sp}}) {
     my $module_name = $module->{'name'};
     $test_config->{'species'} = {'name' => $sp, %{$SPECIES->{$sp}}};
