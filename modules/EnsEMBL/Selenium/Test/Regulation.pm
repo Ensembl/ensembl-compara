@@ -42,7 +42,7 @@ sub default_url {
   my $self = shift;
   my $species = $self->species;
 
-  return sprintf('/%s/Regulation/Summary?rf=%s', $species->{'name'}, $species->{'REGULATION_PARAM'});
+  return sprintf('/%s/Regulation/Summary?db=funcgen;rf=%s', $species->{'name'}, $species->{'REGULATION_PARAM'});
 }
 
 1;
