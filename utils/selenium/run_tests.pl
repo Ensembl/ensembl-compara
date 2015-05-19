@@ -196,8 +196,7 @@ my ($sec, $min, $hour, $day, $month, $year) = gmtime;
 my $timestamp = sprintf('%s%02d%02d_%02d%02d%02d', $year+1900, $month+1, $day, $hour, $min, $sec);
 
 mkdir('test_reports') unless -e 'test_reports';
-our $log_filename = 'test_reports/'.$tests;
-$log_filename =~ s/\.conf//; 
+(my $log_filename = $tests) =~ s/\.conf//;
 
 my $pass_log_filename = sprintf('test_reports/%s_%s_%s.log', $log_filename, 'pass', $timestamp); 
 my $fail_log_filename = sprintf('test_reports/%s_%s_%s.log', $log_filename, 'fail', $timestamp); 
