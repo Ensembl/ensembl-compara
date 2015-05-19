@@ -196,12 +196,16 @@ my ($sec, $min, $hour, $day, $month, $year) = gmtime;
 my $timestamp = sprintf('%s%02d%02d_%02d%02d%02d', $year+1900, $month+1, $day, $hour, $min, $sec);
 
 mkdir('test_reports') unless -e 'test_reports';
-our $log_file_name = 'test_reports/'.$tests;
-$log_file_name =~ s/\.conf//; 
-$log_file_name .= '_'.$timestamp.'.log';
+our $log_filename = 'test_reports/'.$tests;
+$log_filename =~ s/\.conf//; 
 
-our $log;
-open $log, '>>', $log_file_name;
+my $pass_log_filename = sprintf('test_reports/%s_%s_%s.log', $log_filename, 'pass', $timestamp); 
+my $fail_log_filename = sprintf('test_reports/%s_%s_%s.log', $log_filename, 'fail', $timestamp); 
+
+our $pass_log;
+our $fail_log;
+open $pass_log, '>>', $pass_log_filename;;
+open $fail_log, '>>', $fail_log_filename;;
 
 ## Run any non-species-specific tests first 
 foreach my $module (@{$test_suite->{'non_species'}}) {
@@ -219,7 +223,8 @@ foreach my $sp (keys %{$test_suite->{'species'}}) {
   }
 }
 
-close($log);
+close($pass_log);
+close($fail_log);
 
 my $total = $pass + $fail;
 my $plural = $total > 1 ? 's' : '';
@@ -318,7 +323,7 @@ sub run_test {
   }
 }
 
-sub write_to_log {
+sub _write_to_log {
 ### Write a status line
 ### TODO Replace with proper logging
   my ($code, $message, $module, $method) = @_;
@@ -326,15 +331,18 @@ sub write_to_log {
   my ($sec, $min, $hour, $day, $month, $year) = gmtime;
   my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
   
-  my $message = uc($code);
-  $message    .= " in $module" if $module;
-  $message    .= "::$method" if $method;
-  $message    .= "- $message $timestamp\n";
+  my $line = uc($code);
+  $line    .= " in $module" if $module;
+  $line    .= "::$method" if $method;
+  $line    .= "- $message $timestamp\n";
+
+  my $log = $code eq 'pass' ? $pass_log : $fail_log;
+
   if ($log) {
-    print $log $message;
+    print $log $line;
   }
   else {
-    print $message; 
+    print $line; 
   }
 }
 
