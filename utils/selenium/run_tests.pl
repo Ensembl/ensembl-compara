@@ -297,7 +297,7 @@ sub run_test {
         my @response = ($object->$method(@params));
         foreach (@response) {
           if (ref($_) eq 'ARRAY') {
-            if ($_->[0] eq 'fail' || $config->{'verbose'}) {
+            if ($config->{'verbose'} || $_->[0] ne 'pass') { 
               write_to_log(@$_);
               $_->[0] eq 'pass' ? $pass++ : $fail++;
             }
