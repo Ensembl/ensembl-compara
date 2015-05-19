@@ -44,9 +44,11 @@ sub test_lh_menu {
   return ($goto, $error) if $error;
 
   $self->no_mirrors_redirect;
-  my $error = try { $sel->open($goto); }
-                catch {return ['fail', "Couldn't open sample page $goto to check navigation links", ref($self), 'test_lh_menu']; };
-  return $error if $error;
+
+  my $error = eval { $sel->open($goto); };
+  if ($error && $error ne 'OK') {
+    return ['fail', "Couldn't open sample page $goto to check navigation links", ref($self), 'test_lh_menu'];
+  }
 
   my @responses;
   my $load_error = $sel->ensembl_wait_for_page_to_load;
