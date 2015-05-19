@@ -215,7 +215,7 @@ sub test_fails {
   my ($self, $error) = @_;
   my $fail = 0;
 
-  if ($error)
+  if ($error) {
     if (ref($error) eq 'ARRAY' && $error->[0] ne 'pass') {
       $fail = 1;
     }
