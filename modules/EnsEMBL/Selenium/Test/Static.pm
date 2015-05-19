@@ -45,7 +45,7 @@ sub test_homepage {
   }
   else {
     push @responses, $sel->ensembl_is_text_present("Ensembl release $this_release");
-    push @responses, $sel->ensembl_is_text_present("What's New in Release $this_release");
+    push @responses, $sel->ensembl_is_text_present("What's New");
     push @responses, $sel->ensembl_is_text_present('Did you know');
     push @responses, $sel->ensembl_click_links(["link=View full list of all Ensembl species"]);
   
