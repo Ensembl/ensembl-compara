@@ -162,6 +162,56 @@ sub ensembl_click_links {
   return @output;
 }
 
+
+sub ensembl_click_all_links {
+### Finds all links within an element and clicks each of them
+  my ($self, $div) = @_;  
+
+  # get all the links on the page
+  my $links_href = $self->get_eval(qq{
+    var \$ = selenium.browserbot.getCurrentWindow().jQuery;
+    \$('$div').find('a');
+  });
+
+  my @links_array = split(',',$links_href);
+  my @output;
+
+  foreach my $link (@links_array) {
+    $self->pause(500);
+    push @output, $self->try_link($link);
+    $self->go_back();
+  }
+  return @output;
+}
+
+sub try_link {
+  my ($self, $link, $text) = @_;
+  my $location = $self->get_location();
+
+  my $error = try { $self->open($link); }
+                catch { return ['fail', "Couldn't open page $link"]; };
+  if ($error && ref($error) eq 'ARRAY' && $error->[0] eq 'fail') { 
+    return $error;
+  }
+  else {
+    $error = try { $self->get_title !~ /Internal Server Error/i;}
+              catch { return ['fail', "Internal Server Error at $link"];};
+    return $error if $error;
+
+    $error = try { $self->get_title !~ /404 Error/i;}
+               catch { return ['fail', "404 Error at $link"];};
+    if ($error) {
+      return $error;
+    }
+    else {
+      my $link_text = $link;
+      $link_text .= "($text)" if $text;
+      return ['pass', "Link $link_text successful at $location"];
+    }
+  }
+}
+
+=pod
 sub ensembl_click_all_links {
 ### Finds all links within an element and clicks each of them
 ### @param div String - The id or class for the container of the links
@@ -243,6 +293,7 @@ sub ensembl_click_all_links {
   }
   return @output;
 }
+=cut
 
 sub ensembl_images_loaded {
 ### Check if all the ajax images on the page have been loaded successfully
