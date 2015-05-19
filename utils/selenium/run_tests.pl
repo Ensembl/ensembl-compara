@@ -246,6 +246,7 @@ sub run_test {
 
   ## Try to use the package
   my $package = "EnsEMBL::Selenium::Test::$module";
+  print "\n\nRunning test $package...\n\n";
   eval("use $package");
   if ($@) {
     write_to_log('bug', "Couldn't use $package\n$@", 'run_tests.pl');
