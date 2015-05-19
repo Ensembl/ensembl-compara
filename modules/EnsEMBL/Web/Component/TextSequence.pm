@@ -1348,7 +1348,7 @@ sub get_key {
   $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
   
   if($config->{'focus_variant'}) {
-    $image_config->{'legend'}{'focus'} = {
+    $image_config->{'legend'}{'variations'}{'focus'} = {
       class => 'focus',
       label => 'red',
       default => 'white',
