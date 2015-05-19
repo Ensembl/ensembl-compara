@@ -56,7 +56,7 @@ sub test_lh_menu {
     push @responses, $load_error;
   }
   else {
-    push @responses, $sel->ensembl_click_all_links('.local_context');
+    push @responses, ($sel->ensembl_click_all_links('.local_context'));
   }
   return @responses;
 }

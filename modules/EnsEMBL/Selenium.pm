@@ -188,27 +188,36 @@ sub try_link {
   my ($self, $link, $text) = @_;
   my $location = $self->get_location();
 
-  my $error = try { $self->open($link); }
-                catch { return ['fail', "Couldn't open page $link"]; };
-  if ($self->test_fails($error)) {
-    return $error;
-  }
-  else {
-    $error = try { $self->get_title !~ /Internal Server Error/i;}
-              catch { return ['fail', "Internal Server Error at $link"];};
-    return $error if $self->test_fails($error);
-
-    $error = try { $self->get_title !~ /404 Error/i;}
-               catch { return ['fail', "404 Error at $link"];};
-    if ($self->test_fails($error)) {
-      return $error;
-    }
-    else {
-      my $link_text = $link;
-      $link_text .= "($text)" if $text;
-      return ['pass', "Link $link_text successful at $location"];
-    }
-  }
+   my $error = try { $self->open($link); }
+                 catch { return ['fail', "Couldn't open page $link"]; };
+   if ($self->test_fails($error)) {
+     return $error;
+   }
+   else {
+     my $title = $self->get_title;
+ 
+     if ($title =~ /Internal Server Error/i) {
+       return ['fail', "Internal Server Error at $link"];
+     }
+     elsif ($title =~ /404 Error/i) {
+       return ['fail', "404 Error at $link"];
+     }
+     else {
+ 
+       ## Check for obvious code errors
+       my @barfs = ('AJAX error', 'Runtime Error');
+ 
+       foreach (@barfs) {
+         my $fail = eval { $self->is_text_present($_); };
+         if ($fail) {
+           return ['fail', "Page error $_ at $link"];
+         }
+       }
+       my $link_text = $link;
+       $link_text .= "($text)" if $text;
+       return ['pass', "Link $link_text successful at $location"];
+     }
+   }
 }
 
 sub test_fails {
