@@ -323,7 +323,7 @@ sub run_test {
   }
 }
 
-sub _write_to_log {
+sub write_to_log {
 ### Write a status line
 ### TODO Replace with proper logging
   my ($code, $message, $module, $method) = @_;
