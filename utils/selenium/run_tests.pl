@@ -325,11 +325,16 @@ sub write_to_log {
 
   my ($sec, $min, $hour, $day, $month, $year) = gmtime;
   my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
+  
+  my $message = uc($code);
+  $message    .= " in $module" if $module;
+  $message    .= "::$method" if $method;
+  $message    .= "- $message $timestamp\n";
   if ($log) {
-    print $log uc($code)." in $module::$method - $message $timestamp\n";
+    print $log $message;
   }
   else {
-    print uc($code)." in $module::$method - $message $timestamp\n";
+    print $message; 
   }
 }
 
