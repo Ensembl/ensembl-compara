@@ -24,6 +24,7 @@ use strict;
 
 use LWP::UserAgent;
 use Time::HiRes;
+use Try::Tiny;
 use Test::Exception;
 use Test::More "no_plan";
 
