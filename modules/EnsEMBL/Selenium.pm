@@ -190,17 +190,17 @@ sub try_link {
 
   my $error = try { $self->open($link); }
                 catch { return ['fail', "Couldn't open page $link"]; };
-  if ($error && ref($error) eq 'ARRAY' && $error->[0] eq 'fail') { 
+  if ($self->test_fails($error)) {
     return $error;
   }
   else {
     $error = try { $self->get_title !~ /Internal Server Error/i;}
               catch { return ['fail', "Internal Server Error at $link"];};
-    return $error if $error;
+    return $error if $self->test_fails($error);
 
     $error = try { $self->get_title !~ /404 Error/i;}
                catch { return ['fail', "404 Error at $link"];};
-    if ($error) {
+    if ($self->test_fails($error)) {
       return $error;
     }
     else {
@@ -209,6 +209,21 @@ sub try_link {
       return ['pass', "Link $link_text successful at $location"];
     }
   }
+}
+
+sub test_fails {
+  my ($self, $error) = @_;
+  my $fail = 0;
+
+  if ($error)
+    if (ref($error) eq 'ARRAY' && $error->[0] ne 'pass') {
+      $fail = 1;
+    }
+    elsif ($error ne 'OK') {
+      $fail = 1;
+    }
+  } 
+  return $fail;
 }
 
 =pod

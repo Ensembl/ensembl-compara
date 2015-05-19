@@ -118,7 +118,7 @@ unless ($release) {
 }
 
 
-print "Configuration OK - running tests...\n\n";
+print "Configuration OK - running tests...\n";
 
 ## Allow overriding of verbosity on command line or in configurations
 unless (defined($verbose)) {
