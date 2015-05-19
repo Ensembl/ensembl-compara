@@ -211,7 +211,7 @@ foreach my $module (@{$test_suite->{'non_species'}}) {
 
 ## Loop through the relevant tests for each species
 foreach my $sp (keys %{$test_suite->{'species'}}) {
-  print "\n======= TESTING SPECIES $sp:\n";
+  print "\n\n======= TESTING SPECIES $sp:\n";
   foreach my $module (@{$test_suite->{'species'}{$sp}}) {
     my $module_name = $module->{'name'};
     $test_config->{'species'} = {'name' => $sp, %{$SPECIES->{$sp}}};
@@ -247,7 +247,7 @@ sub run_test {
 
   ## Try to use the package
   my $package = "EnsEMBL::Selenium::Test::$module";
-  print "\n\nRunning test $package...\n\n";
+  print "... Running test module $package...\n";
   eval("use $package");
   if ($@) {
     write_to_log('bug', "Couldn't use $package\n$@", 'run_tests.pl');
@@ -293,6 +293,7 @@ sub run_test {
         @params = @{$tests->{$name}||[]};
       }
       if ($object->can($method)) {
+        print "...... Trying test method $method...\n";
         my @response = $object->$method(@params);
         foreach (@response) {
           if (ref($_) eq 'ARRAY') {
