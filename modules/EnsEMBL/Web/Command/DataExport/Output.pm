@@ -85,7 +85,8 @@ sub process {
       my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
       my $in_bioperl    = grep { lc($_) eq lc($format) } keys %align_formats;
       ## Alignments and trees are handled by external writers
-      if ($hub->param('align') && lc($format) ne 'rtf') {
+      if (($hub->param('align') && lc($format) ne 'rtf')
+          || (ref($component) =~ /Paralog/ && $in_bioperl && lc($format) ne 'fasta')) {
         my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
         my $is_tree       = grep { lc($_) eq lc($format) } keys %tree_formats;
         if ($in_bioperl) {
