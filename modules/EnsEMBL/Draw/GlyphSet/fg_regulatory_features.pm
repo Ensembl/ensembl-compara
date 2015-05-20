@@ -82,9 +82,10 @@ sub fetch_features {
 sub _check_build_type {
   my ($self) = @_;
 
+  my $species = $self->{'config'}{'species'};
   unless(defined $self->{'new_reg_build'}) {
     $self->{'new_reg_build'} =
-      $self->{'config'}->hub->is_new_regulation_pipeline;
+      $self->{'config'}->hub->is_new_regulation_pipeline($species);
   }
 }
 

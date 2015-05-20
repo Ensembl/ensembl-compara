@@ -867,11 +867,13 @@ sub req_cache_get {
 }
 
 sub is_new_regulation_pipeline { # Regulation rewrote their pipeline
-  my ($self) = @_;
+  my ($self,$species) = @_;
 
-  return $self->{'is_new_pipeline'} if defined $self->{'is_new_pipeline'};
-  my $fg = $self->database('funcgen');
-  my $new = 0;
+  $species ||= $self->species;
+  my $new = ($self->{'is_new_pipeline'}||={})->{$species};
+  return $new if defined $new;
+  my $fg = $self->databases_species($species,'funcgen')->{'funcgen'};
+  $new = 0;
   if($fg) {
     my $mca = $fg->get_MetaContainer;
     my $date = $mca->single_value_by_key('regbuild.last_annotation_update');
@@ -879,7 +881,7 @@ sub is_new_regulation_pipeline { # Regulation rewrote their pipeline
     $new = 1;
     $new = 0 if $year < 2014 or $year == 2014 and $month < 6;
   }
-  $self->{'is_new_pipeline'} = $new;
+  $self->{'is_new_pipeline'}{$species} = $new;
   return $new;
 }
 
