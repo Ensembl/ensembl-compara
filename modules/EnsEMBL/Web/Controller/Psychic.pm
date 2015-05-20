@@ -234,7 +234,12 @@ sub psychic {
   }
 
   if (!$flag) {
-    $url = $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
+    if($query =~ /^\s*([A-Z]{40,})\s*$/i) {
+      # BLAST
+      $url = $self->escaped_url('/Tools/Blast?query_sequence=%s', $1);
+    } else {
+      $url = $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
+    }
   }
 
   # Hack to get facets through to search. Psychic will be rewritten soon
