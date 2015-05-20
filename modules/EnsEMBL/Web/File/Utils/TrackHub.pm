@@ -140,6 +140,9 @@ sub get_hub {
         }
         else {
           my $file = $info->{'trackDb'};
+          if ($file !~ /^http|ftp/) {
+            $file = $parser->base_url.'/'.$file;
+          }
           $options->{'file'} = $file;
 
           $response = read_file($file, $file_args); 
