@@ -224,8 +224,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (flag) {
       this.selectArea(false);
       this.elLk.drag.filter(':not(:has(.image_spinner))').append('<div class="spinner image_spinner"><div>');
+      this.elLk.toolbars.append('<div class="image_loading">Loading&#133;</div>');
     } else {
-      this.elLk.drag.find('.image_spinner').remove();
+      this.elLk.drag.find('.image_spinner').add(this.elLk.toolbars.find('.image_loading')).remove();
     }
   },
 

@@ -159,6 +159,7 @@ div.image_toolbar div.scroll-switch div.last      { margin-right: 6px; }
 div.image_toolbar div.scroll-switch div:hover     { background-color: [[BUTTON_BG_HOVER]]; }
 div.image_toolbar div.scroll-switch button        { border: none; cursor: pointer; height: 17px; outline: none; width: 16px; vertical-align: top; background: url(/i/controls_white.png) repeat scroll -68px -18px transparent; }
 div.image_toolbar div.scroll-switch button.on     { background-position: -68px 0; }
+div.image_toolbar div.image_loading               { position: absolute; font-size: 120%; left: 50%; line-height: 16px; margin-left: -30px; }
 
 /* Image exporting */
 
