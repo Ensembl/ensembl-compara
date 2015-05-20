@@ -864,6 +864,23 @@ sub render_interaction {
 
         ## Arc between features
 
+        ## Default behaviour is to draw arc from middles of features
+        my $arc_start       = $start_1 + ceil(($end_1 - $start_1) / 2);
+        my $arc_end         = $start_2 + floor(($end_2 - $start_2) / 2);
+
+        my $direction_1     = $f->direction_1; 
+        my $direction_2     = $f->direction_2; 
+        if ($direction_1 || $direction_2) {
+          if ($direction_1 =~ /\+/) {
+            $arc_start = $start_1;
+            $arc_end   = $start_2;
+          }
+          else {
+            $arc_start = $end_1;
+            $arc_end   = $end_2;
+          }
+        }
+
         ## Set some sensible limits
         my $max_width = $self->image_width * 2;
         my $max_depth = 250; ## should be less than image width! 
@@ -871,13 +888,13 @@ sub render_interaction {
         ## Start with a basic circular arc, then constrain to above limits
         my $start_point   = 0; ## righthand end of arc
         my $end_point     = 180; ### lefthand end of arc
-        my $major_axis    = abs(ceil(($start_2 - $end_1) * $pix_per_bp));
+        my $major_axis    = abs(ceil(($arc_end - $arc_start) * $pix_per_bp));
         my $minor_axis    = $major_axis;
         $major_axis       = $max_width if $major_axis > $max_width; 
         $minor_axis       = $max_depth if $minor_axis > $max_depth; 
         
         ## Measurements needed for drawing partial arcs
-        my $centre        = ceil($end_1 * $pix_per_bp + $major_axis/2);
+        my $centre        = ceil($arc_start * $pix_per_bp + $major_axis/2);
         my $left_height   = $minor_axis; ## height of curve at left of image
         my $right_height  = $minor_axis; ## height of curve at right of image
 
@@ -916,7 +933,7 @@ sub render_interaction {
 
         ## modify dimensions to allow for 2-pixel width of brush
         $self->push($self->Arc({
-              x             => $end_1 + ($major_axis / $pix_per_bp),
+              x             => $arc_start + ($major_axis / $pix_per_bp),
               y             => ($minor_axis / 2) + $h,
               width         => $major_axis,
               height        => $minor_axis,
@@ -927,6 +944,7 @@ sub render_interaction {
               thickness     => 2,
               absolutewidth => 1,
             }));
+
         ## Second feature of pair
         $self->push($self->Rect({
               x            => $start_2 - 1,
