@@ -65,7 +65,8 @@ sub before_after_hooks {
       closedir DIR;
     }
   }
-
+  @before = sort @before;
+  @after = sort @after;
   return (\@before, \@after);
 }
 
