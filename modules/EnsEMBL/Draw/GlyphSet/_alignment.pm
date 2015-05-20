@@ -833,6 +833,10 @@ sub render_interaction {
         if ($config->{'itemRgb'} =~ /on/i) {
           $feature_colour = $f->external_data->{'item_colour'}[0];
         }
+        elsif ($f->score =~ /[0-9]{1,3},[0-9]{1,3},[0-9]{1,3}/) {
+          ## "Score" field is an RGB value
+          $feature_colour = $f->score;
+        }
         else {
           $feature_colour = $greyscale[min($ngreyscale - 1, int(($f->score * $ngreyscale) / $greyscale_max))];
         }
