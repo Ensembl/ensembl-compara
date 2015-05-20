@@ -219,7 +219,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       Ensembl.EventManager.trigger('highlightAllImages');
     }
   },
-  
+
+  toggleLoading: function (flag) {
+    if (flag) {
+      this.selectArea(false);
+      this.elLk.drag.filter(':not(:has(.image_spinner))').append('<div class="spinner image_spinner"><div>');
+    } else {
+      this.elLk.drag.find('.image_spinner').remove();
+    }
+  },
+
   getContent: function (url, el, params, newContent, attrs) {
     // If the panel contains an ajax loaded sub-panel, this function will be reached before ImageMap.init has been completed.
     // Make sure that this doesn't cause an error.
@@ -230,7 +239,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.removeShare();
     }
     
-    if (this.elLk.boundariesPanning) {
+    if (this.elLk.drag.length) {
+      this.toggleLoading(true);
       attrs = attrs || {};
       attrs.background = true;
     }
@@ -736,8 +746,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           this.elLk.boundariesPanning = false;
           return;
         }
-
-        this.elLk.boundariesPanning.parent().append('<div class="spinner">');
 
         Ensembl.updateLocation(this.newLocation);
 
