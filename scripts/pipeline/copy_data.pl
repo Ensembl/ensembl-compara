@@ -1148,14 +1148,15 @@ sub copy_data_in_text_mode {
     my $start_time = time();
     my $end = $start + $step - 1;
     my $sth;
+    my $sth_attribs = { 'mysql_use_result' => 1 };
+
     #print "start $start end $end\n";
     if (!$use_limit) {
-        $sth = $from_dba->dbc->prepare($query." AND $index_name BETWEEN $start AND $end");
+        $sth = $from_dba->dbc->prepare( $query." AND $index_name BETWEEN $start AND $end", $sth_attribs );
     } else {
-        $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
+        $sth = $from_dba->dbc->prepare( $query." LIMIT $start, $step", $sth_attribs );
     }
     $start += $step;
-    $sth->{mysql_use_result} = 1;
     $sth->execute();
     my $first_row = $sth->fetchrow_arrayref;
 
