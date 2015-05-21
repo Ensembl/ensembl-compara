@@ -161,7 +161,7 @@ sub _convert_node {
   }
   $hash->{confidence} = {};
   if ($boot) {
-    $hash->{confidence}{boostrap} = $boot + 0;
+    $hash->{confidence}{bootstrap} = $boot + 0;
   }
   if ($dcs) {
     $hash->{confidence}{duplication_confidence_score} = $dcs + 0;
