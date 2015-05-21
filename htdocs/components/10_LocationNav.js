@@ -195,11 +195,12 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.elLk.geneInput   = this.elLk.forms.find('input[name=q]');
 
     // attach form submit event
-    this.elLk.forms.on('submit', {panel: this}, function (e, term) {
+    this.elLk.forms.on('submit', {panel: this}, function (e) {
       e.preventDefault();
 
       var params = {};
       var gene   = {};
+      var term   = '';
 
       if (panel.alignmentPage) {
 
@@ -214,7 +215,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       // g and db params needed for gene navigation
       if (this.className.match(/_nav_gene/)) {
 
-        term = term || this.q.value;
+        term = this.q.value;
 
         if (term.length < 3) {
           return;
@@ -281,7 +282,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         });
       },
       select: function(e, ui) {
-        $(this).closest('form').triggerHandler('submit', ui.item.value);
+        $(this).closest('form').find('input[name=q]').val(ui.item.value).end().trigger('submit');
       }
     });
   },
