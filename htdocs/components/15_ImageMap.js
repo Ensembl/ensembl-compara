@@ -240,7 +240,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.removeShare();
     }
     
-    if (this.elLk.drag.length) {
+    if (this.elLk.drag && this.elLk.drag.length) {
       this.toggleLoading(true);
       attrs = attrs || {};
       attrs.background = true;

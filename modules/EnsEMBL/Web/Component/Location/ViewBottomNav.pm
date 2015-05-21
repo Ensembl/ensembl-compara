@@ -46,7 +46,7 @@ sub content {
   my $object = $self->hub->core_object('Location');
   $length = $object->seq_region_length if $object;
   
-  my $ramp = $self->ramp($min||1e3,$max||1e6,$length);
+  my $ramp = $self->ramp($min||1e2,$max||1e6,$length);
   return $self->navbar($ramp);
 }
 
@@ -62,7 +62,7 @@ sub navbar {
       <div class="navbar print_hide" style="width:$image_width">
         <input type="hidden" class="panel_type" value="LocationNav" />
         <div class="relocate">
-          <form action="$url" method="get">
+          <form action="$url" method="get" class="_nav_loc">
             <label for="loc_r">Location:</label>
             <input name="r" id="loc_r" value="" type="text" />
             <a class="go-button" href="">Go</a>
@@ -79,10 +79,10 @@ sub navbar {
           <a href="#" class="move left_2" title="Back 1Mb"></a>
           <a href="#" class="move left_1" title="Back 1 window"></a>
           <a href="#" class="zoom_in" title="Zoom in"></a>
-          <span class="ramp">$ramp</span>
+          <span class="ramp hidden">$ramp</span>
           <span class="slider_wrapper">
             <span class="slider_left"></span>
-            <span class="slider"><span class="slider_label floating_popup"></span></span>
+            <span class="slider"><span class="slider_label helptip"></span></span>
             <span class="slider_right"></span>
           </span>
           <a href="#" class="zoom_out" title="Zoom out"></a>
