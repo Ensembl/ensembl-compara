@@ -133,6 +133,9 @@ div.helptip-bottom div.ui-tooltip-content:after  { border-width: 0 0 8px 8px; bo
 body.ie67 div.helptip-top    div.ui-tooltip-content { top: -8px; }
 body.ie67 div.helptip-bottom div.ui-tooltip-content { top:  8px; }
 
+/* generic helptip */
+.helptip { position: absolute !important; background-color: [[PAGE_TEXT]]; color: [[PAGE_BG]]; padding: 8px; white-space: normal; line-height: 16px; border-radius: 4px; z-index: 100000; }
+
 /************************************
              generic tree
  ************************************/
