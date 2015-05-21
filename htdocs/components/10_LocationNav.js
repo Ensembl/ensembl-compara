@@ -323,8 +323,6 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       return;
     }
 
-    console.log(this.sliderConfig)
-
     if (!this.sliderConfig) {
       return;
     }
