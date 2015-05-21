@@ -234,7 +234,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       e.data.panel.elLk.geneInput.autocomplete('close').val(gene.label);
 
       if (panel.refreshOnly) {
-        Ensembl.updateURL($.extend(params, panel.extraParams));
+        Ensembl.updateURL($.extend({}, panel.extraParams, {g: params.g, db: params.db}));
         Ensembl.updateLocation(params.r);
       } else {
         Ensembl.redirect(panel.newHref([], params));
