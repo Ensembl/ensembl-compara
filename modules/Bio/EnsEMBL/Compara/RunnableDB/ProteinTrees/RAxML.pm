@@ -46,6 +46,7 @@ sub param_defaults {
              'reroot_with_sdi'            => 1,
              'output_file'                => 'RAxML_result.#gene_tree_id#',
              'minimum_genes'              => 4,
+			 'output_clusterset_id'       => 'raxml',
     };
 }
 
