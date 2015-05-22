@@ -105,7 +105,7 @@ sub process {
           $error = 'Output not implemented for format '.$format;
         }
       }
-      elsif ($in_bioperl) {
+      elsif ($in_bioperl && $component =~ /Compara/) { 
         $error = ($hub->param('align_type') || $hub->param('seq_type') =~ /msa/) 
                     ? $self->write_alignment($component)
                     : $self->write_homologue_seq($component);
