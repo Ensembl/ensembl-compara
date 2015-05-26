@@ -1262,11 +1262,12 @@ sub _add_file_format_track {
     $args{'options'}{'external'} = undef;
   } else {
     $desc = sprintf(
-      'Data retrieved from %s %s file on an external webserver. %s This data is attached to the %s, and comes from URL: %s',
+      'Data retrieved from %s %s file on an external webserver. %s <p>This data is attached to the %s, and comes from URL: <a href="%s">%s</a></p>',
       $article,
       $args{'format'},
       $args{'description'},
       encode_entities($args{'source'}{'source_type'}),
+      encode_entities($args{'source'}{'source_url'}),
       encode_entities($args{'source'}{'source_url'})
     );
   }
@@ -1497,7 +1498,7 @@ sub update_from_url {
           }
         } else {
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-            sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
+            sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href=">%s">%s</a>', encode_entities($n), encode_entities($p), encode_entities($p)),
             url   => $p,
             style => $style
           );
