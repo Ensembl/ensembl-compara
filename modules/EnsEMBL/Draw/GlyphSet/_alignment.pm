@@ -865,15 +865,17 @@ sub render_interaction {
         ## Arc between features
 
         ## Default behaviour is to draw arc from middles of features
-        my $arc_start       = $start_1 + ceil(($end_1 - $start_1) / 2);
-        my $arc_end         = $start_2 + floor(($end_2 - $start_2) / 2);
+        my $arc_start       = $start_1 == $end_1 ? $start_1 - 0.5
+                                : $start_1 + ceil(($end_1 - $start_1) / 2);
+        my $arc_end         = $start_2 == $end_2 ? $start_2 - 0.5
+                                : $start_2 + floor(($end_2 - $start_2) / 2);
 
         my $direction_1     = $f->direction_1; 
         my $direction_2     = $f->direction_2; 
         if ($direction_1 || $direction_2) {
           if ($direction_1 =~ /\+/) {
-            $arc_start = $start_1;
-            $arc_end   = $start_2;
+            $arc_start = $start_1 == $end_1 ? $start_1 - 1 : $start_1;
+            $arc_end   = $start_2 == $end_2 ? $start_2 - 1 : $start_2;
           }
           else {
             $arc_start = $end_1;
