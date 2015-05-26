@@ -239,8 +239,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.removeZMenus();
       this.removeShare();
     }
-    
-    if (this.elLk.drag && this.elLk.drag.length) {
+
+    if (this.elLk.drag && this.elLk.drag.length && $.contains(this.el[0], this.elLk.drag[0])) {
       this.toggleLoading(true);
       attrs = attrs || {};
       attrs.background = true;
