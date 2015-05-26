@@ -19,6 +19,13 @@ limitations under the License.
 package Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
 use strict;
 
+########################################################################################
+#
+# DEPRECATED MODULE - PLEASE SEE ensembl-io/modules/Bio/EnsEMBL/IO/Adaptor/BigWigAdaptor
+#
+########################################################################################
+
+
 use Data::Dumper;
 use Bio::DB::BigFile;
 use Bio::DB::BigFile::Constants;
@@ -28,7 +35,8 @@ my $DEBUG = 0;
 sub new {
   my ($class, $url) = @_;
  
-  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor instead";
+  warn "######## DEPRECATED MODULE";
+  warn "### This module will be removed in release 82 - please use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor instead";
  
   my $self = bless {
     _cache => {},

@@ -20,6 +20,13 @@ limitations under the License.
 
 Bio::EnsEMBL::ExternalData::DAS::Stylesheet
 
+############################################################################
+#
+# DEPRECATED MODULE - DAS SUPPORT WILL BE REMOVED FROM ENSEMBL IN RELEASE 83
+#
+#############################################################################
+
+
 =head1 SYNOPSIS
 
   # Build a stylesheet object from the DAS response

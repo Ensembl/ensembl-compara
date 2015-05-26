@@ -19,6 +19,12 @@ limitations under the License.
 package Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor;
 use strict;
 
+########################################################################################
+#
+# DEPRECATED MODULE - PLEASE SEE ensembl-io/modules/Bio/EnsEMBL/IO/Adaptor/BAMAdaptor
+#
+########################################################################################
+
 use Bio::EnsEMBL::Feature;
 use Data::Dumper;
 use Bio::DB::Sam;
@@ -43,7 +49,8 @@ my $snpCode = {
 sub new {
   my ($class, $url) = @_;
 
-  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BamAdaptor instead";
+  warn "######## DEPRECATED MODULE ##########";
+  warn "### This module will be removed in release 82 - please use Bio::EnsEMBL::IO::Adaptor::BamAdaptor instead";
 
   my $self = bless {
     _cache => {},
