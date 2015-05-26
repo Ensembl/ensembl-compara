@@ -36,7 +36,8 @@ Ensembl.DataTable = {
       var dataTable = table.dataTable(options);
       var settings  = dataTable.fnSettings();
       
-      $('.dataTables_filter input', settings.nTableWrapper).after('<div class="overlay">Filter</div>').on({
+      var filterInput   = $('.dataTables_filter input', settings.nTableWrapper);
+      var filterOverlay = filterInput.after('<div class="overlay">Filter</div>').on({
         focus: function () {
           $(this).siblings('.overlay').hide();
         },
@@ -46,7 +47,8 @@ Ensembl.DataTable = {
           }
         }
       });
-      
+      if (filterInput.val().length) filterOverlay.siblings('.overlay').hide();
+
       if (!noToggle) {
         panel.columnToggle(settings);
       }
