@@ -106,5 +106,12 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   
   makeZMenu: function (e, el) {
     Ensembl.EventManager.trigger('makeZMenu', el.data('menuId'), { event: e, area: { link: el } });
+  },
+
+  getContent: function (url, el, params, newContent, attrs) {
+    attrs = attrs || {};
+    attrs.paced = true;
+
+    this.base(url, el, params, newContent, attrs);
   }
 });
