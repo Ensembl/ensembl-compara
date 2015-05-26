@@ -116,7 +116,12 @@ sub coords {
 
 sub _split_coords {
   my ($self, $f) = @_; 
-  return split(/,|-|:/, $f);
+  ## Capture a final minus sign (direction) before splitting
+  $f =~ /(-)$/;
+  my $direction = $1; 
+  my @coords = split(/,|-|:/, $f);
+  push @coords, $direction if $direction;
+  return @coords;
 }
 
 sub _raw_score    { 
