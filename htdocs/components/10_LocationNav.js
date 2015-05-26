@@ -201,6 +201,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       var params = {};
       var gene   = {};
       var term   = '';
+      var tmp;
 
       if (panel.alignmentPage) {
 
@@ -218,18 +219,26 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         term = this.q.value;
 
         if (term.length < 3) {
+          alert('Please type in at least 3 characters to get a list of matching genes');
           return;
         }
 
         gene = (e.data.panel.geneCache[term.substr(0, 3).toUpperCase()] || {})[term.toUpperCase()];
 
         if (!gene) {
+          alert("No gene found for '" + term + "'");
           return;
         }
 
         params = {g: gene.g, db: gene.db, r: gene.r};
       } else {
         params = {r: this.r.value};
+      }
+
+      tmp = params.r.match(/^([^:]+):([0-9]+)-([0-9]+)$/);
+      if (!tmp || tmp.length !== 4 || tmp[3] - tmp[2] < 0) {
+        alert('Invalid location: ' + params.r);
+        return;
       }
 
       e.data.panel.elLk.geneInput.autocomplete('close').val(gene.label);
