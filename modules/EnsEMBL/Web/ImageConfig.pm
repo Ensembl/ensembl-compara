@@ -64,7 +64,7 @@ sub new {
       storable     => 1,      
       has_das      => 1,
       datahubs     => 0,
-      image_width  => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
+      image_width  => $hub->image_width,
       image_resize => 0,      
       margin       => 5,
       spacing      => 2,

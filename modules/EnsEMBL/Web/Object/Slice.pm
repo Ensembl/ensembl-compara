@@ -435,7 +435,7 @@ sub get_data {
   # retrieve all the data to draw wiggle plots
   if (scalar @result_sets > 0) {   
     my $resultfeature_adaptor = $hub->get_adaptor('get_ResultFeatureAdaptor', 'funcgen');
-    my $max_bins              = $ENV{'ENSEMBL_IMAGE_WIDTH'} - 228; 
+    my $max_bins              = $hub->image_width - 228;
     my $wiggle_data           = $resultfeature_adaptor->fetch_all_by_Slice_ResultSets($self->Obj, \@result_sets, $max_bins);
     
     foreach my $rset_id (keys %$wiggle_data) { 

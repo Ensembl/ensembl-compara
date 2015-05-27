@@ -170,6 +170,23 @@ sub clear_problems     { $_[0]{'_problem'} = {}; }
 
 sub is_mobile_request  { }; #this is implemented in the mobile plugin
 
+sub image_width {
+  ## Gets image width or sets it for subsequent requests by setting a cookie
+  ## @param Width in pixels (if setting)
+  ## @return Width in pixels
+  my ($self, $width) = @_;
+
+  if ($width) {
+    $self->{'_image_width'} = $width;
+    $self->set_cookie('ENSEMBL_WIDTH', $width);
+  }
+
+  return $self->{'_image_width'} ||= $self->param('image_width') || $self->get_cookie_value('ENSEMBL_WIDTH') || $self->species_defs->ENSEMBL_IMAGE_WIDTH;
+}
+
+sub is_dynamic_image_width {
+  return shift->get_cookie_value('DYNAMIC_WIDTH') ? 1 : 0;
+}
 
 ## Cookie methods
 sub get_cookie_value {
