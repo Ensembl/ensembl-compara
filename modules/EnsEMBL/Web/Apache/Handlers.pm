@@ -175,11 +175,11 @@ sub parse_uri {
 sub map_to_file {
   ## Finds out the file that maps to a url and saves it as ENSEMBL_FILENAME entry in subprocess_env
   ## @param Apache2::RequestRec request object
-  ## @return URL string if a redirect is needed, undef otherwise, irrespective of whether the file was found or not (If file is not found filename is not set)
+  ## @return URL string if a redirect is needed, undef otherwise, irrespective of whether the file was found or not (If file is not found ENSEMBL_FILENAME is not set)
   my $r     = shift;
   my $path  = $r->subprocess_env('ENSEMBL_PATH');
 
-  if ($path =~ /\.html$/ || $path =~ /\/[^\.]+$/) { # path to .html file or a folder
+  if ($path =~ /\.html$/ || $path =~ /\/[^\.]+$/) { # path to file with .html extension or without extension (possibly a folder)
 
     my @path_seg = grep { $_ ne '' } split '/', $path;
 
@@ -187,7 +187,7 @@ sub map_to_file {
 
       my $filename = File::Spec->catfile($dir, @path_seg);
 
-      return "$path/index.html" if -d $filename;
+      return "$path/index.html" if -d $filename; # if path corresponds to a folder, redirect to it's index.html page
 
       if (-r $filename) {
         $r->subprocess_env('ENSEMBL_FILENAME', $filename);
@@ -251,6 +251,7 @@ sub request_start_hook {
   ## @param Apache2::RequestRec request object
   ## In a plugin, use this function with PREV to plugin some code to be run before the request is handled
 }
+
 sub request_end_hook {
   ## Subroutine hook to be called when the request handling finishes
   ## @param Apache2::RequestRec request object
