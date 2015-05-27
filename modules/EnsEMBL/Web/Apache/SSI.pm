@@ -55,7 +55,7 @@ sub handler {
 
   $controller->process;
 
-  return $controller->status;
+  return OK;
 }
 
 1;
