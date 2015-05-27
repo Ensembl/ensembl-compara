@@ -21,7 +21,7 @@ package EnsEMBL::Web::Apache::SSI;
 use strict;
 use warnings;
 
-use Apache2::Const qw(:methods :http);
+use Apache2::Const qw(:common :http :methods);
 
 use EnsEMBL::Web::Controller::Doxygen;
 use EnsEMBL::Web::Controller::SSI;
