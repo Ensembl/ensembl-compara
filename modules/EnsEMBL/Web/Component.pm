@@ -598,7 +598,6 @@ sub new_image {
   if ($export) {
     # Set text export on image config
     $image_config->set_parameter('text_export', $export) if $formats{$export}{'extn'} eq 'txt';
-    $image_config->set_parameter('sortable_tracks', 0);
   }
   
   $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
@@ -666,7 +665,7 @@ sub _export_image {
   my $hub = $self->hub;
   
   $image->{'export'} = 'iexport' . ($flag ? " $flag" : '');
-  
+
   my ($format, $scale) = $hub->param('export') ? split /-/, $hub->param('export'), 2 : ('', 1);
   $scale eq 1 if $scale <= 0;
   
