@@ -27,6 +27,7 @@ use Class::DBI;
 
 use Bio::EnsEMBL::Registry;
 
+use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::Document::Panel;
@@ -36,12 +37,16 @@ use base qw(EnsEMBL::Web::Root);
 
 my @HANDLES_TO_DISCONNECT;
 
-sub r             { return shift->{'r'};              }
-sub species_defs  { return shift->{'species_defs'};   }
-sub species       { return shift->{'species'};        }
-sub path_segments { return shift->{'path_segments'};  }
-sub query         { return shift->{'query'};          }
-sub filename      { return shift->{'filename'};       }
+sub r             :Getter('r');
+sub hub           :Getter('hub');
+sub species_defs  :Getter('species_defs');
+sub species       :Getter('species');
+sub path_segments :Getter('path_segments');
+sub query         :Getter('query');
+sub filename      :Getter('filename');
+sub type          :Getter('type');
+sub action        :Getter('action');
+sub function      :Getter('function');
 
 sub new {
   ## @constructor
@@ -55,16 +60,23 @@ sub new {
   my ($class, $r, $species_defs, $params) = @_;
 
   my $self = bless {
-    r             => $r,
-    species_defs  => $species_defs,
-    page_type     => 'Dynamic',
-    renderer_type	=> 'String',
-    errors        => []
+    'r'             => $r,
+    'species_defs'  => $species_defs,
+    'page_type'     => 'Dynamic',
+    'renderer_type' => 'String',
+    'species'       => $params->{'species'},
+    'path_segments' => $params->{'path_segments'},
+    'query'         => $params->{'query'},
+    'filename'      => $params->{'filename'},
+    'type'          => '',
+    'action'        => '',
+    'function'      => '',
+    'errors'        => []
   }, $class;
 
-  $self->{$_} = $params->{$_} for qw(species path_segments query filename);
+  $self->parse_path_segments; # populate type, action and function
 
-  $self->parse_path_segments;
+  $self->{'hub'} = EnsEMBL::Web::Hub->new($self);
 
   return $self;
 }
@@ -113,14 +125,6 @@ sub upload_size_limit {
   return shift->species_defs->CGI_POST_MAX;
 }
 
-sub hub {
-  ## Returns a cached or new hub instance
-  ## @return EnsEMBL::Web::Hub instance
-  my $self = shift;
-
-  return $self->{'hub'} ||= EnsEMBL::Web::Hub->new($self);
-}
-
 sub builder {
   ## Returns a cached or new builder instance
   ## @return EnsEMBL::Web::Builder instance
@@ -139,7 +143,7 @@ sub renderer {
 
   return $self->{'renderer'} ||= dynamic_require('EnsEMBL::Web::Document::Renderer::'.$self->renderer_type)->new(
     r     => $self->r,
-    cache => $self->cache
+    cache => $self->hub->cache
   );
 }
 
@@ -167,7 +171,7 @@ sub init_cache {
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
 
-  if ($self->cache && $self->request ne 'modal') {
+  if ($self->hub->cache && $self->request ne 'modal') {
     # Add parameters useful for caching functions
     $self->{'session_id'}  = $hub->session->session_id;
     $self->{'user_id'}     = $hub->user;
@@ -179,6 +183,9 @@ sub init_cache {
 }
 
 sub referer {
+  ## Gets the referer for the current request
+  ## @param Flag if on will return referer string without parsing it
+  ## @return Referer object (parsed) or referer string (unparsed)
   my ($self, $unparsed) = @_;
 
   $self->{'referer_string'} ||= $self->r->headers_in->{'Referer'};
@@ -246,11 +253,7 @@ sub update_user_history {} # stub for users plugin
 
 sub OBJECT_PARAMS { return $_[0]->object_params;      }
 sub input         { return $_[0]->hub->input;         }
-sub cache         { return $_[0]->hub->cache;         }
 sub errors        { return $_[0]->{'errors'};         }
-sub type          { return $_[0]->{type};             }
-sub action        { return $_[0]->{action};           }
-sub function      { return $_[0]->{function};         }
 sub object        { return $_[0]->builder->object;    }
 sub page_type     { return $_[0]->{'page_type'};      }
 sub renderer_type { return $_[0]->{'renderer_type'};  }
@@ -378,7 +381,7 @@ sub get_cached_content {
   
   my ($self, $type) = @_;
   
-  my $cache = $self->cache;
+  my $cache = $self->hub->cache;
   my $r     = $self->r;
   
   return unless $cache;
@@ -406,7 +409,7 @@ sub set_cached_content {
   
   my ($self, $content) = @_;
   
-  my $cache = $self->cache;
+  my $cache = $self->hub->cache;
   
   return unless $cache && $self->cacheable;
   return unless $ENV{'CACHE_KEY'};
@@ -422,7 +425,7 @@ sub clear_cached_content {
   ### Removes content from Memcached based on the request's URL and the user's session id.
   
   my $self  = shift;
-  my $cache = $self->cache;
+  my $cache = $self->hub->cache;
   my $r     = $self->r;
   
   if ($cache && $r->headers_in->{'Cache-Control'} =~ /(max-age=0|no-cache)/ && $r->method ne 'POST') {
