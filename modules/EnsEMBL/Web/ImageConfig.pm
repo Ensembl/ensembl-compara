@@ -737,8 +737,10 @@ sub load_user_tracks {
     } else {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
-          Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s',
-          encode_entities($url_sources{$code}{'source_type'}), encode_entities($url_sources{$code}{'source_url'})
+          Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href="%s">%s</a>',
+          encode_entities($url_sources{$code}{'source_type'}), 
+          encode_entities($url_sources{$code}{'source_url'}),
+          encode_entities($url_sources{$code}{'source_url'})
         ),
         url      => $url_sources{$code}{'source_url'},
         format   => $url_sources{$code}{'format'},
@@ -1258,7 +1260,7 @@ sub _add_file_format_track {
 
   if ($args{'internal'}) {
     $desc = $args{'description'};
-    $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_NAME, $args{'source'}{'dir'}, $args{'source'}{'file'};
+    $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_VERSION, $args{'source'}{'dir'}, $args{'source'}{'file'};
     $args{'options'}{'external'} = undef;
   } else {
     $desc = sprintf(
