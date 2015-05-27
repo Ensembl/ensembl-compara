@@ -64,7 +64,8 @@ sub draw_features {
         graph_type   => $graph_type,
         use_feature_colours => (lc($config->{'itemRgb'}||'') eq 'on'),
       });
-      push @{$self->{'subtitle'}},$config->{'description'};
+      my $subtitle = $config->{'name'} || $config->{'description'};
+      push @{$self->{'subtitle'}},$subtitle;
     }
   }
   
