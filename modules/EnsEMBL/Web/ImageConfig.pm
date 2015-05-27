@@ -920,11 +920,12 @@ sub _add_datahub_tracks {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
     my $squish       = $track->{'visibility'} eq 'squish' || $config->{'visibility'} eq 'squish'; # FIXME: make it inherit correctly
+    my $desc_url     = $track->{'description_url'} ? $hub->url('Ajax', {'type' => 'fetch_html', 'url' => $track->{'description_url'}}) : '';
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
     my $source       = {
       name        => $track->{'track'},
       source_name => $source_name,
-      description => $track->{'longLabel'} . $link,
+      description => $desc_url ? qq(<span class="_dyna_load"><a class="hidden" href="$desc_url">$track->{'longLabel'}</a>Loading &#133;</span>) : '',
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
@@ -949,9 +950,7 @@ sub _add_datahub_tracks {
     
     if ($matrix) {
       my $caption = $track->{'shortLabel'};
-      if($parent->data->{'shortLabel'}) {
-        $caption .= " (\t>".$parent->data->{'shortLabel'}.")";
-      }
+      $source->{'section'} = $parent->data->{'shortLabel'};
       ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
       $source->{'labelcaption'} = $caption;
      
@@ -1146,7 +1145,9 @@ sub _add_bigbed_track {
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
     $options->{'join'} = 'off';  
-  } 
+  } else {
+    push @$renderers, ('tiling', 'Wiggle plot');
+  }
   
   $self->_add_file_format_track(
     format      => 'BigBed',
@@ -1201,6 +1202,23 @@ sub _add_vcf_track {
   );
 }
 
+sub _add_pairwise_tabix_track {
+  shift->_add_file_format_track(
+    format    => 'PAIRWISE',
+    renderers => [
+      'off',                'Off', 
+      'interaction',        'Pairwise interaction',
+      'interaction_label',  'Pairwise interaction with labels'
+    ],
+    options => {
+      external   => 'external',
+      subtype    => 'pairwise',
+    },
+    @_
+  );
+  
+}
+
 sub _add_flat_file_track {
   my ($self, $menu, $sub_type, $key, $name, $description, %options) = @_;
 
@@ -1244,11 +1262,12 @@ sub _add_file_format_track {
     $args{'options'}{'external'} = undef;
   } else {
     $desc = sprintf(
-      'Data retrieved from %s %s file on an external webserver. %s This data is attached to the %s, and comes from URL: %s',
+      'Data retrieved from %s %s file on an external webserver. %s <p>This data is attached to the %s, and comes from URL: <a href="%s">%s</a></p>',
       $article,
       $args{'format'},
       $args{'description'},
       encode_entities($args{'source'}{'source_type'}),
+      encode_entities($args{'source'}{'source_url'}),
       encode_entities($args{'source'}{'source_url'})
     );
   }
@@ -1263,6 +1282,7 @@ sub _add_file_format_track {
     name        => $args{'source'}{'source_name'},
     caption     => exists($args{'source'}{'caption'}) ? $args{'source'}{'caption'} : $args{'source'}{'source_name'},
     labelcaption => $args{'source'}{'labelcaption'},
+    section     => $args{'source'}{'section'},
     url         => $url || $args{'source'}{'source_url'},
     description => $desc,
     %{$args{'options'}}
@@ -1273,7 +1293,12 @@ sub _user_track_settings {
   my ($self, $style, $format) = @_;
   my ($strand, @user_renderers);
 
-  if ($style =~ /^(wiggle|WIG)$/) {
+  if (lc($format) eq 'pairwise') {
+    $strand         = 'f';
+    @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction',
+                        'interaction_label', 'Pairwise interaction with labels');
+  }
+  elsif ($style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   }
@@ -1473,7 +1498,7 @@ sub update_from_url {
           }
         } else {
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-            sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
+            sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href=">%s">%s</a>', encode_entities($n), encode_entities($p), encode_entities($p)),
             url   => $p,
             style => $style
           );
@@ -1740,6 +1765,7 @@ sub load_tracks {
   }
   
   $self->add_options('information', [ 'opt_empty_tracks', 'Display empty tracks', undef, undef, 'off' ]) unless $self->get_parameter('opt_empty_tracks') eq '0';
+  $self->add_options('information', [ 'opt_subtitles', 'Display in-track labels', undef, undef, 'normal' ]);
   $self->add_options('information', [ 'opt_highlight_feature', 'Highlight current feature', undef, undef, 'normal' ]);
   $self->tree->append_child($self->create_option('track_order')) if $self->get_parameter('sortable_tracks');
 }
@@ -2137,6 +2163,7 @@ sub add_data_files {
       colourset => $data->{$_}{'colour_key'} || 'feature',
       strand    => 'f',
       renderers => $renderers, 
+      gang      => 'rnaseq',
     });
   }
 }
@@ -2495,7 +2522,6 @@ sub add_simple_features {
   return unless $menu;
   
   my ($keys, $data) = $self->_merge($hashref->{'simple_feature'});
-  use Data::Dumper;
   
   foreach (grep !$data->{$_}{'transcript_associated'}, @$keys) {  
     # Allow override of default glyphset, menu etc.
@@ -3052,8 +3078,8 @@ sub add_sequence_variations {
 sub add_sequence_variations_meta {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
-  my $prefix_caption = 'Variant - '; 
   my $suffix_caption = ' - short variants (SNPs and indels)';
+  my $short_suffix_caption = ' SNPs/indels';
   my $regexp_suffix_caption = $suffix_caption;
      $regexp_suffix_caption =~ s/\(/\\\(/;
      $regexp_suffix_caption =~ s/\)/\\\)/;
@@ -3093,36 +3119,44 @@ sub add_sequence_variations_meta {
     if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
     } elsif ($menu_item->{'type'} eq 'source') { # source type
-      (my $temp_name     = $menu_item->{'long_name'}) =~ s/ variants$//;
+
       my $other_sources = ($menu_item->{'long_name'} =~ /all other sources/);
 
-      $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
+      (my $source_name   = $menu_item->{'long_name'}) =~ s/\svariants$//i;
+      (my $caption       = $menu_item->{'long_name'}) =~ s/\svariants$/$suffix_caption/;
+      (my $label_caption = $menu_item->{'short_name'}) =~ s/\svariants$/$short_suffix_caption/;
+      $label_caption .= $short_suffix_caption if ($label_caption !~ /$short_suffix_caption/);
 
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $prefix_caption.$menu_item->{'long_name'},
-        sources     => $other_sources ? undef : [ $temp_name ],
-        description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
+        caption      => $caption,
+        labelcaption => $label_caption,
+        sources      => $other_sources ? undef : [ $source_name ],
+        description  => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$source_name},
       });
+
     } elsif ($menu_item->{'type'} eq 'set') { # set type
-      if ($menu_item->{'long_name'} =~ / variants$/) {
-        $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
+      if ($menu_item->{'long_name'} =~ /\svariants$/i) {
+        $menu_item->{'long_name'} =~ s/\svariants$/$suffix_caption/;
       }
       elsif ($menu_item->{'long_name'} !~ /$regexp_suffix_caption$/){# / short variants \(SNPs and indels\)$/){
         $menu_item->{'long_name'} .= $suffix_caption;
       }
 
       (my $temp_name = $menu_item->{'key'})       =~ s/^variation_set_//;
-      (my $caption   = $menu_item->{'long_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
+      (my $caption   = $menu_item->{'long_name'});
+      (my $label_caption   = $menu_item->{'short_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
+      $label_caption .= $short_suffix_caption;
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $prefix_caption.$caption,
-        sources     => undef,
-        sets        => [ $temp_name ],
-        set_name    => $set_name,
-        description => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
+        caption      => $caption,
+        labelcaption => $label_caption,
+        sources      => undef,
+        sets         => [ $temp_name ],
+        set_name     => $set_name,
+        description  => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
       });
     }
     
@@ -3351,7 +3385,8 @@ sub add_structural_variations {
 
     my $node_name = "$menu_item->{'long_name'} $suffix";
     my $caption   = "$prefix_caption$menu_item->{'long_name'}";
-       $caption   =~ s/1000 Genomes/1KG/;
+    my $labelcaption = $caption;
+    $labelcaption   =~ s/1000 Genomes/1KG/;
 
     my $db = 'variation';
 
@@ -3363,6 +3398,7 @@ sub add_structural_variations {
         %options,
         db          => $db,
         caption     => $caption,
+        labelcaption => $labelcaption,
         source      => undef,
         sets        => [ $menu_item->{'long_name'} ],
         set_name    => $menu_item->{'long_name'},

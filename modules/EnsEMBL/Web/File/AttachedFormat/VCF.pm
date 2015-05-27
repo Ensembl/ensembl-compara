@@ -58,7 +58,7 @@ sub check_data {
       };
     }
   }
-  return $error;
+  return ($url, $error);
 }
 
 1;

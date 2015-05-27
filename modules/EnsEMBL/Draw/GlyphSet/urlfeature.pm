@@ -16,6 +16,12 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::urlfeature;
 
 ### STATUS: Unknown - doesn't seem to be in use any more
@@ -23,6 +29,13 @@ package EnsEMBL::Draw::GlyphSet::urlfeature;
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_feature);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub my_label { 
   my $self = shift;

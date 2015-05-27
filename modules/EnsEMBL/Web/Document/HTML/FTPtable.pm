@@ -128,7 +128,7 @@ sub render {
       var4    => $databases->{'DATABASE_VARIATION'} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vcf/%s/">VCF</a>',                $title{'vcf'},     $rel, $sp_dir) : '-',
       var3    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/">VEP</a>',    $title{'vep'},     $rel),
       funcgen => $required_lookup->{'funcgen'}{$sp_dir} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)',      $title{'funcgen'}, $rel, $sp_dir) : '-',
-      bam     => $databases->{'DATABASE_RNASEQ'}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bam/%s/genebuild/">BAM</a>',                $title{'bam'},     $rel, $sp_dir) : '-',
+      bam     => $databases->{'DATABASE_RNASEQ'}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bamcov/%s/genebuild/">BAM</a>',                $title{'bam'},     $rel, $sp_dir) : '-',
       files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'files'},   $rel, $sp_dir) : '-',
     };
   }

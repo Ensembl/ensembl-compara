@@ -18,9 +18,17 @@ limitations under the License.
 
 package Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
+############################################################################
+#
+# DEPRECATED MODULE - PLEASE SEE ensembl-io/modules/Bio/EnsEMBL/IO/HubParser
+#
+############################################################################
+
 use strict;
 
 sub new {
+  warn "######## DEPRECATED MODULE #########";
+  warn "### This module will be removed in Release 82. Please use Bio::EnsEMBL::IO::HubParser (from  the ensembl-io repository) instead.";
 ### c
   my ($class, %args) = @_;
 
@@ -99,7 +107,7 @@ sub get_genome_info {
     }
     else {
       ## TrackDb file path is usually given relative to hub.txt
-      if ($k =~ /trackDb|htmlPath/ && $v !~ /^[http|ftp]/) {
+      if ($k =~ /trackDb|htmlPath/ && $v !~ /^(http|ftp)/) {
         $v = $self->{'base_url'}.'/'.$v;
       }
       $genome_info->{$genome}{$k} = $v;

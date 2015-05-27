@@ -110,12 +110,6 @@ div.up_arrow   { width: 0; height: 0; border-left: 8px solid transparent; border
 div.down_arrow { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top:    15px solid red;   }
 div.no_arrow   { width: 15px; height: 15px; background: grey; }
 
-div.score         { -moz-border-radius: 5px; border-radius: 5px; width: 100%; max-width: 50px; color: white; text-align: center; }
-div.score_good    { background: green;  }
-div.score_ok      { background: orange; }
-div.score_bad     { background: red;    }
-div.score_neutral { background: blue;   }
-
 td a.hover_show        { display: none; text-decoration: none; font-size: 90%; position: absolute; margin: -1px 1px; background-color: [[PANEL_BG]]; padding: 2px; }
 tr.bg2 td a.hover_show { background-color: [[NEUTRAL_BG]]; }
 td:hover a.hover_show  { display: inline; }

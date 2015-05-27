@@ -39,7 +39,8 @@ sub new {
   return $self;
 }
 
-sub name  { shift->{'format'} }
+sub url       { return shift->{'url'} }
+sub name      { shift->{'format'} }
 sub trackline { shift->{'trackline'} }
 
 sub extra_config_page { return undef; }
@@ -69,7 +70,7 @@ sub check_data {
   else {
     $options = {'filesize' => $feedback->{'filesize'}};
   }
-  return ($error, $options);
+  return ($url, $error, $options);
 }
 
 sub parse_trackline {

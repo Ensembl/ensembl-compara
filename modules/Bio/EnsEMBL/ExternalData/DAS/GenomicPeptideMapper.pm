@@ -24,6 +24,13 @@ limitations under the License.
 #   Transcript Mapper uses slice-relative coordinates...
 package Bio::EnsEMBL::ExternalData::DAS::GenomicPeptideMapper;
 
+############################################################################
+#
+# DEPRECATED MODULE - DAS SUPPORT WILL BE REMOVED FROM ENSEMBL IN RELEASE 83
+#
+#############################################################################
+
+
 use strict;
 use warnings;
 use Bio::EnsEMBL::TranscriptMapper;

@@ -25,7 +25,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 
-use Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
+use Bio::EnsEMBL::IO::HubParser;
 
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 use EnsEMBL::Web::Tree;
@@ -41,16 +41,16 @@ our $headers = {
                 'If-Modified-Since' => 'Thu, 1 Jan 1970 00:00:00 GMT',
                 };
 
-### Memcached refresh period
-our $cache_timeout = 60*60*24*7;
-
 sub new {
 ### c
   my ($class, %args) = @_;
 
+  my $hub = $args{'hub'};
+  $args{'timeout'} = $hub->param('udcTimeout') || $hub->species_defs->TRACKHUB_TIMEOUT;
+
   ## TODO - replace with Bio::EnsEMBL::IO version when it's ready
   unless ($args{'parser'}) {
-    $args{'parser'} = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new('url' => $args{'url'});
+    $args{'parser'} = Bio::EnsEMBL::IO::HubParser->new('url' => $args{'url'});
   }
 
   my $self = \%args;
@@ -140,13 +140,17 @@ sub get_hub {
         }
         else {
           my $file = $info->{'trackDb'};
+          if ($file !~ /^http|ftp/) {
+            $file = $parser->base_url.'/'.$file;
+          }
           $options->{'file'} = $file;
 
           $response = read_file($file, $file_args); 
 
-          if ($response->{'error'}) {
-            push @errors, "$genome ($file): ".@{$response->{'error'}};
-            $tree->append($tree->create_node("error_$genome", { error => @{$response->{'error'}}, file => $file }));
+          if ($response->{'error'} || !$response->{'content'}) {
+            my $error = @{$response->{'error'}} || "trackDB file empty for genome $genome";
+            push @errors, "$genome ($file): $error";
+            $tree->append($tree->create_node("error_$genome", { error => $error, file => $file }));
           }
           else {
             $options->{'content'} = $response->{'content'};
@@ -169,7 +173,7 @@ sub get_hub {
   else {
     my $trackhub = { details => $hub_info, genomes => $genome_info };
     if ($cache) {
-      $cache->set($cache_key, $trackhub, $cache_timeout, 'TRACKHUBS');
+      $cache->set($cache_key, $trackhub, $self->{'timeout'}, 'TRACKHUBS');
     }
     return $trackhub;
   }
@@ -223,7 +227,7 @@ sub get_track_info {
     $trackhub = $cache->get($cache_key);
     if ($trackhub) {
       $trackhub->{'genomes'}{$args->{'genome'}}{'tree'} = $tree;
-      $cache->set($cache_key, $trackhub, $cache_timeout, 'TRACKHUBS');
+      $cache->set($cache_key, $trackhub, $self->{'timeout'}, 'TRACKHUBS');
     }
   }
   

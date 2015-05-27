@@ -25,6 +25,7 @@ use strict;
 use Compress::Zlib qw//;
 use Compress::Bzip2;
 use IO::Uncompress::Bunzip2;
+use IO::Uncompress::Gunzip;
 
 use EnsEMBL::Web::Exceptions;
 
@@ -149,7 +150,7 @@ sub uncompress {
   } 
   elsif ($compression eq 'gz' || 
       ord($$content_ref) == 31 && ord(substr($$content_ref,1)) == 139 ) { ## GZIP...
-    $temp = Compress::Zlib::memGunzip($$content_ref);
+    IO::Uncompress::Gunzip::gunzip($content_ref, \$temp, MultiStream => 1);
     $$content_ref = $temp;
   } 
   elsif ($compression eq 'bz' || $$content_ref =~ /^BZh([1-9])1AY&SY/ ) {                            ## GZIP2

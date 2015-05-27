@@ -23,6 +23,9 @@ use strict;
 use base qw(EnsEMBL::Draw::Renderer);
 
 sub init_canvas {
+######## DEPRECATED ################
+warn "DEPRECATED MODULE - will be removed in release 81.";
+####################################
   my ($self, $config, $im_width, $im_height) = @_;
 
   $self->{'colours'} = {};
@@ -159,6 +162,41 @@ sub render_Rect {
     #
     $self->_colour($gbordercolour);
     $self->add_string("_$gbordercolour $x $y $w $h r st\n") unless ($gcolour eq "transparent");
+  }
+}
+
+sub render_Barcode {
+  my ($self, $glyph) = @_;
+
+  my $colours        = $self->{'colours'};
+
+  my $points = $glyph->{'pixelpoints'};
+  return unless defined $points;
+
+  my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
+  my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
+  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+  my @colours = @{$glyph->{'colours'}};
+  my $max = $glyph->{'max'} || 1000;
+  my $fmt = "_%s %f %f %f %f r fi\n";
+  my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+  if($glyph->{'wiggle'} eq 'bar') {
+    my $mul = ($y2-$y1) / $max;
+    foreach my $p (@$points) {
+      my $yb = $y2 - $p * $mul;
+      $self->add_string(sprintf($fmt,$colours[0],$x1,$y2,$x2-$x1+1,$yb-$y2+1,$style));
+      $x1 += $step;
+      $x2 += $step;
+    }
+  } else {
+    foreach my $p (@$points) {
+      my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
+      $self->_colour($colour);
+      $self->add_string(sprintf($fmt,$colour,$x1,$y1,$x2-$x1+1,$y2-$y1+1));
+      $x1 += $step;
+      $x2 += $step;
+    }
   }
 }
 

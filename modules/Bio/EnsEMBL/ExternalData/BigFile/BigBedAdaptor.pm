@@ -19,6 +19,12 @@ limitations under the License.
 package Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
 use strict;
 
+########################################################################################
+#
+# DEPRECATED MODULE - PLEASE SEE ensembl-io/modules/Bio/EnsEMBL/IO/Adaptor/BigBedAdaptor
+#
+########################################################################################
+
 use List::Util qw(max);
 
 use Bio::DB::BigFile;
@@ -53,7 +59,8 @@ my %global_name_map = (
 sub new {
   my ($class, $url) = @_;
 
-  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor instead";
+  warn "######## DEPRECATED MODULE";
+  warn "### This module will be removed in release 82 - please use Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor instead";
 
   my $self = bless {
     _cache => {},
@@ -129,7 +136,7 @@ sub munge_chr_id {
     $ret_id = $head->name if $head && $head->name =~ /^(chr)?$chr_id$/ && $head->size; # Check we get values back for seq region. Maybe need to add 'chr' 
   } while (!$ret_id && $head && ($head = $head->next));
   
-  warn " *** could not find region $chr_id in BigBed file" unless $ret_id;
+  #warn " *** could not find region $chr_id in BigBed file" unless $ret_id;
   
   return $ret_id;
 }

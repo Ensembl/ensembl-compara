@@ -1,25 +1,5 @@
 #!/usr/local/bin/perl
 
-=head1 NAME
-
-restart_server - script to restart an Ensembl server
-
-=head1 SYNOPSIS
-
-    ctrl_scripts/restart_server [-rXh] [-d N]
-
-=head1 DESCRIPTION
-
-This script calls ctrl_script/stop_server and ctrl_script/start_server
-consecutively. Available options are:
-
-    - delete conf/config.packed before restart
-    - delayed restart (to allow shutdown of heavy servers)
-    - start Apache in single server mode
-    - tail error logs
-
-Run 'ctrl_script/restart_server --help' for usage details.
-
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -36,106 +16,87 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=head1 AUTHOR
-
-Patrick Meidl <pm2@sanger.ac.uk>
-
-=head1 CONTACT
-
-Post questions to the EnsEMBL development list dev@ensembl.org 
-
 =cut
 
 use strict;
 use warnings;
-no warnings 'uninitialized';
 
-use File::Basename qw(dirname);
 use FindBin qw($Bin);
-use POSIX qw(strftime);
 use Getopt::Long qw(:config no_ignore_case);
 
-my $serverroot;
-
 BEGIN {
-  $serverroot = dirname($Bin);
-  unshift @INC, "$serverroot/conf";
+  require "$Bin/include.pl";
 };
 
-use SiteDefs;
+my $web_root = $SiteDefs::ENSEMBL_WEBROOT;
 
-if($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
-  print LOG sprintf "%s [005] begin restart cycle (manual invocation)\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
-  close LOG;
-}
+my ($help, $rmconfig, $delay, $single, $tail, $flush, $species, @defines);
 
-my ($help, $rmconfig, $delay, $single, $tail, $flush, $species,@defines);
 &GetOptions(
-  "sp=s"     => \$species,
-  "rmconfig" => \$rmconfig,
-  "r"        => \$rmconfig,
-  "f"        => \$flush,
-  "d|delay=i"  => \$delay,
-  "X"        => \$single,
-  "single"   => \$single,
-  "help"     => \$help,
-  "h"        => \$help,
-  "t"        => \$tail,
-  "taillog"  => \$tail,
-  "D=s"      => \@defines,
+  "sp=s"        => \$species,
+  "t|taillog"   => \$tail,
+  "h|help"      => \$help,
+
+  # start_server args
+  "r|rmconfig"  => \$rmconfig,
+  "f|flush"     => \$flush,
+  "D|define=s"  => \@defines,
+
+  # stop_server args
+  "d|delay=i"   => \$delay
 );
 
 if ($help) {
-  print qq(Usage:
+  print qq{
+  Usage:
     ctrl_scripts/restart_server
-        [-r|--rmconfig]
-        [-d|--delay N]
-        [-X|--single]
-        [-h|--help]
-        [-t|--taillog]
-        [-sp=species_name,species_name|all]        
 
-Options:
+  Options:
     -r, --rmconfig  : remove conf/config.packed before restarting the server
+    -f, --flush     : flush memcached storage!
     -d N, --delay N : wait N seconds before restart \(to allow proper shutdown\)
-    -X, --single    : start Apache in single server mode
-    -h, --help      : print this help message
     -sp             : rm conf/packed/species_name.*, or rm conf/packed/* if -s eq all
     -t, --taillog   : end the command with ./ctrl/taillog
     -D              : extra defines for apache
-);
+    -h, --help      : print this help message
+};
 
   exit;
 }
 
 if ($species) {
   warn "SPECIES [$species]\n";
-  
+
   if ($species eq 'all') {
-    my $cmd = "rm $serverroot/conf/packed/\*";
+    my $cmd = "rm $web_root/conf/packed/\*";
     `$cmd`;
+    $rmconfig = 1; # to rebuild config
   } else {
     foreach my $sp (split /,/, $species) {
-      my $f = "$serverroot/conf/packed/$sp.db.packed";
-      
+      my $f = "$web_root/conf/packed/$sp.db.packed";
+
       if (-e $f) {
         `rm $f`;
         warn " Removed $f ....\n";
+        $rmconfig = 1; # to rebuild config
       } else {
         warn " WARNING: $sp not found ...\n";
       }
     }
   }
-  
-  my $rebuild = "$serverroot/utils/rebuild_conf";
-  
-  `$rebuild` if -e $rebuild;
 }
 
-my $defines = join(" ",map { "-D $_ " } @defines);
-my $stop_args  = $delay ? "-d $delay" : '';
-my $start_args = join ' ', $rmconfig ? '-r' : '', $single ? '-X' : '', $flush ? '-f' : '',$defines;
-my $argv       = join ' ', @ARGV;
+my $defines     = join(" ",map { "-D $_ " } @defines);
+my $stop_args   = $delay ? "-d $delay" : '';
+my $start_args  = join ' ', $rmconfig ? '-r' : '', $flush ? '-f' : '', $defines;
+my $argv        = join ' ', @ARGV;
+
+my ($before_restart, $after_restart) = before_after_hooks('restart');
+
+for (@$before_restart) {
+  eval { require $_; };
+  warn $@ if $@;
+}
 
 # stop and start the server
 system("perl $Bin/stop_server $stop_args $argv")   == 0 or exit;
@@ -146,9 +107,9 @@ if ($tail) {
   system("$Bin/taillog") == 0 or exit;
 }
 
-if ($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
-  print LOG sprintf "%s [006] end restart cycle (manual invocation)\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
-  close LOG;
+for (@$after_restart) {
+  eval { require $_; };
+  warn $@ if $@;
 }
 
 exit;

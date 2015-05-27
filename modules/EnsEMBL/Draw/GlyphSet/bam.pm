@@ -27,8 +27,17 @@ use base qw(EnsEMBL::Draw::GlyphSet::sequence);
 
 use EnsEMBL::Draw::GlyphSet;
 
-use Bio::EnsEMBL::IO::Adaptor::BAMAdaptor;
+# There are still references to it in the core API and they're used
+#   here via a few intermediary calls. It's very wierd, maybe Core
+#   know what' going on. Obviously it should go long term, but in
+#   the meantime, this must stay so that Zebrafish BWA's still work.
+#
+#   Spooky.
+#   dps  2015-04-17
+use Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor;
+
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::BAMAdaptor;
 use Data::Dumper;
 
 sub errorTrack {
@@ -449,9 +458,20 @@ sub render_coverage {
 #  return \@filtered;
 #}
 
+# Calculate a machine-unique name for the C for safe copyability
+use Sys::Hostname::Long;
+use Digest::MD5 qw(md5_hex);
+our $cbuild_dir;
+BEGIN {
+  my $name = Sys::Hostname::Long::hostname_long.
+    ":$SiteDefs::ENSEMBL_WEBROOT";
+  $cbuild_dir = "$SiteDefs::ENSEMBL_WEBROOT/.cbuild-".md5_hex($name);
+  mkdir $cbuild_dir unless -e $cbuild_dir;
+};
+
 use Inline C => Config => INC => "-I$SiteDefs::SAMTOOLS_DIR",
                           LIBS => "-L$SiteDefs::SAMTOOLS_DIR -lbam",
-                          DIRECTORY => "$SiteDefs::ENSEMBL_WEBROOT/cbuild";
+                          DIRECTORY => $cbuild_dir;
 
 ##    Inline->init;
 #

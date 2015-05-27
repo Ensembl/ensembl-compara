@@ -16,6 +16,12 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::histone_modifications;
 
 ### STATUS: Unknown - maybe not in use any more?
@@ -23,6 +29,15 @@ package EnsEMBL::Draw::GlyphSet::histone_modifications;
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
+
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 
 sub get_block_features {
 
@@ -92,12 +107,11 @@ sub draw_features {
       my $features = $fset->get_Features_by_Slice($slice ) ;
       next unless @$features;
       $drawn_flag = "block_features";
-      $self->draw_block_features( $features, $colour );
       $self->draw_track_name($display_label, $colour);
+      $self->draw_block_features( $features, $colour );
    # }
    }
 
-  $self->draw_space_glyph() if $drawn_flag;
   my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
   return $error;
 }

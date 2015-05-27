@@ -31,6 +31,8 @@ use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
+sub wiggle_subtitle { join(', ',@{$_[0]->{'subtitle'}||[]}); }
+
 sub feature_group { my ($self, $f) = @_; return $f->id; }
 sub feature_label { my ($self, $f) = @_; return $f->id; }
 
@@ -38,10 +40,15 @@ sub draw_features {
   my ($self, $wiggle) = @_; 
   my %data = $self->features;
   
-  return 0 unless keys %data;
-  
+  ## Value to drop into error message
+  return $self->my_config('format').' features' unless keys %data;
+ 
+  $self->{'subtitle'} = []; 
   if ($wiggle) {
+    my $first = 1;
     foreach my $key ($self->sort_features_by_priority(%data)) {
+      $self->draw_space_glyph() unless $first;
+      $first = 0;
       my ($features, $config)     = @{$data{$key}||[]};
       my $graph_type              = ($config->{'useScore'} && $config->{'useScore'} == 4) || ($config->{'graphType'} && $config->{'graphType'} eq 'points') ? 'points' : 'bar';
       my ($min_score, $max_score) = split ':', $config->{'viewLimits'};
@@ -54,14 +61,14 @@ sub draw_features {
         max_score    => $max_score, 
         score_colour => $config->{'color'},
         axis_colour  => 'black',
-        description  => $config->{'description'},
         graph_type   => $graph_type,
         use_feature_colours => (lc($config->{'itemRgb'}||'') eq 'on'),
       });
+      push @{$self->{'subtitle'}},$config->{'description'};
     }
   }
   
-  return 1;
+  return 0;
 }
 
 sub features {

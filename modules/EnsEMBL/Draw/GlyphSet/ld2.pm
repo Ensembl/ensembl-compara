@@ -16,6 +16,12 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::ld2;
 
 ### STATUS: Unknown - not clear that it's used anywhere
@@ -25,6 +31,13 @@ use strict;
 use POSIX;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub _key { return $_[0]->my_config('key') || 'r2'; }
 

@@ -39,7 +39,7 @@ sub _init {
 
   my %labels = map { $_->SO_term => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
-  $self->init_legend(3);
+  $self->init_legend();
 
   foreach (sort { $labels{$a}[0] <=> $labels{$b}[0] } keys %$features) {
     $self->add_to_legend({

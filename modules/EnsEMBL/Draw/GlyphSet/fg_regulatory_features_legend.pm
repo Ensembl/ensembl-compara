@@ -58,7 +58,7 @@ sub _init {
   return unless %features;
   return unless $self->{'legend'}{[split '::', ref $self]->[-1]};
  
-  $self->init_legend(2);
+  $self->init_legend();
  
   my $empty = 1;
 

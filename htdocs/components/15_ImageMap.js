@@ -39,7 +39,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('mouseUp',            this, this.dragStop);
     Ensembl.EventManager.register('hashChange',         this, this.hashChange);
     Ensembl.EventManager.register('changeFavourite',    this, this.changeFavourite);
-    Ensembl.EventManager.register('imageResize',        this, this.getContent);
+    Ensembl.EventManager.register('imageResize',        this, function () { if (this.xhr) { this.xhr.abort(); } this.getContent(); });
     Ensembl.EventManager.register('windowResize',       this, resetOffset);
     Ensembl.EventManager.register('ajaxLoaded',         this, resetOffset); // Adding content could cause scrollbars to appear, changing the offset, but this does not fire the window resize event
     Ensembl.EventManager.register('changeWidth',        this, function () { this.params.updateURL = Ensembl.updateURL({ image_width: false }, this.params.updateURL); Ensembl.EventManager.trigger('queuePageReload', this.id); });
@@ -143,6 +143,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           $(this).parent().parent().find('div').toggleClass('selected');
           panel.panning = flag;
           Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
+          if (flag) {
+            panel.selectArea(false);
+            panel.removeZMenus();
+          }
         }
       }).filter(panel.panning ? '.on' : ':not(.on)').parent().addClass('selected');
     }
@@ -215,21 +219,29 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       Ensembl.EventManager.trigger('highlightAllImages');
     }
   },
-  
+
+  toggleLoading: function (flag) {
+    if (flag) {
+      this.selectArea(false);
+      this.elLk.drag.filter(':not(:has(.image_spinner))').append('<div class="spinner image_spinner"><div>');
+      this.elLk.toolbars.append('<div class="image_loading">Loading&#133;</div>');
+    } else {
+      this.elLk.drag.find('.image_spinner').add(this.elLk.toolbars.find('.image_loading')).remove();
+    }
+  },
+
   getContent: function (url, el, params, newContent, attrs) {
     // If the panel contains an ajax loaded sub-panel, this function will be reached before ImageMap.init has been completed.
     // Make sure that this doesn't cause an error.
     if (this.imageConfig) {
       this.elLk.exportMenu.add(this.elLk.labelLayers).add(this.elLk.hoverLayers).add(this.elLk.resizeMenu).remove();
-    
-      for (var id in this.zMenus) {
-        Ensembl.EventManager.trigger('destroyPanel', id);
-      }
-   
+
+      this.removeZMenus();
       this.removeShare();
     }
-    
-    if (this.elLk.boundariesPanning) {
+
+    if (this.elLk.drag && this.elLk.drag.length && $.contains(this.el[0], this.elLk.drag[0])) {
+      this.toggleLoading(true);
       attrs = attrs || {};
       attrs.background = true;
     }
@@ -399,6 +411,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
 
       $a = null;
+    });
+
+    // add dyna loading to label layers for track description
+    this.elLk.labelLayers.on('mouseenter', function () {
+      $(this).find('._dyna_load').dynaLoad();
     });
 
     // apply css positions to the hover layers
@@ -731,8 +748,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           return;
         }
 
-        this.elLk.boundariesPanning.parent().append('<div class="spinner">');
-
         Ensembl.updateLocation(this.newLocation);
 
       } else {
@@ -748,7 +763,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         } else {
           range = this.vertical ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
           
-          this.makeZMenu(e, range);
+          this.makeZMenu(e, range, { onclose: function() { this.selectArea(false); }, context: this });
           
           this.dragging = false;
           this.clicking = false;
@@ -758,38 +773,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   drag: function (e) {
-    var x      = e.pageX - this.dragCoords.offset.x;
-    var y      = e.pageY - this.dragCoords.offset.y;
-    var coords = {};
-    
-    switch (x < this.dragCoords.map.x) {
-      case true:  coords.l = x; coords.r = this.dragCoords.map.x; break;
-      case false: coords.r = x; coords.l = this.dragCoords.map.x; break;
-    }
-    
-    switch (y < this.dragCoords.map.y) {
-      case true:  coords.t = y; coords.b = this.dragCoords.map.y; break;
-      case false: coords.b = y; coords.t = this.dragCoords.map.y; break;
-    }
-    
-    if (this.vertical || x < this.dragRegion.l) {
-      coords.l = this.dragRegion.l;
-    }
-    if (this.vertical || x > this.dragRegion.r) {
-      coords.r = this.dragRegion.r;
-    }
-    
-    if (!this.vertical || y < this.dragRegion.t) {
-      coords.t = this.dragRegion.t;
-    }
-    if (!this.vertical || y > this.dragRegion.b) {
-      coords.b = this.dragRegion.b;
-    }
 
     if (this.panning) {
       this.panImage(e);
     } else {
-      this.highlight(coords, 'rubberband', this.dragRegion.a.attrs.href.split('|')[3]);
+      this.selectArea(e);
     }
   },
 
@@ -823,7 +811,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.getContent();
   },
   
-  makeZMenu: function (e, coords) {
+  makeZMenu: function (e, coords, params) {
     var area = coords.r ? this.dragRegion : this.getArea(coords);
    
     if (!area || area.a.klass.label) {
@@ -856,9 +844,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       dragArea = null;
     }
     
-    Ensembl.EventManager.trigger('makeZMenu', id, { event: e, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false });
+    Ensembl.EventManager.trigger('makeZMenu', id, $.extend({ event: e, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false }, params));
     
     this.zMenus[id] = 1;
+  },
+
+  removeZMenus: function() {
+
+    for (var id in this.zMenus) {
+      Ensembl.EventManager.trigger('destroyPanel', id);
+    }
   },
   
   /**
@@ -986,6 +981,100 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     els = null;
   },
 
+  selectArea: function(e) {
+
+    if (e === false) {
+      this.elLk.selector && this.elLk.selector.hide();
+      return;
+    }
+
+    var coords  = {};
+    var x       = e.pageX - this.dragCoords.offset.x;
+    var y       = e.pageY - this.dragCoords.offset.y;
+
+    switch (x < this.dragCoords.map.x) {
+      case true:  coords.l = x; coords.r = this.dragCoords.map.x; break;
+      case false: coords.r = x; coords.l = this.dragCoords.map.x; break;
+    }
+
+    switch (y < this.dragCoords.map.y) {
+      case true:  coords.t = y; coords.b = this.dragCoords.map.y; break;
+      case false: coords.b = y; coords.t = this.dragCoords.map.y; break;
+    }
+
+    if (this.vertical || x < this.dragRegion.l) {
+      coords.l = this.dragRegion.l;
+    }
+    if (this.vertical || x > this.dragRegion.r) {
+      coords.r = this.dragRegion.r;
+    }
+
+    if (!this.vertical || y < this.dragRegion.t) {
+      coords.t = this.dragRegion.t;
+    }
+    if (!this.vertical || y > this.dragRegion.b) {
+      coords.b = this.dragRegion.b;
+    }
+
+    if (!this.elLk.selector || !this.elLk.selector.length) {
+      this.elLk.selector = $('<div class="_selector selector"></div>').insertAfter(this.elLk.img).toggleClass('vertical', this.vertical).filter(':not(.vertical)')
+        .append('<div class="left-border"></div><div class="right-border"></div>').end();
+      this.activateSelector();
+    }
+
+    this.elLk.selector.css({ left: coords.l, top: coords.t, width: coords.r - coords.l + 1, height: coords.b - coords.t - 1 }).show();
+  },
+
+  activateSelector: function() {
+    this.elLk.selector.on('click', function(e) {
+      e.stopPropagation();
+      $(document).off('.selectbox');
+    }).on('mousedown', {panel: this}, function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+
+      $(document).on('mousemove.selectbox', {
+        action  : e.target !== e.currentTarget ? e.target.className.match(/left/) ? 'left' : 'right' : 'move',
+        x       : e.pageX,
+        panel   : e.data.panel,
+        width   : parseInt(e.data.panel.elLk.selector.css('width')),
+        left    : parseInt(e.data.panel.elLk.selector.css('left'))
+      }, function(e) {
+        e.stopPropagation();
+
+        var disp   = e.pageX - e.data.x;
+        var coords = { left: e.data.left, width: e.data.width };
+
+        if (e.data.action !== 'right') {
+          disp = Math.max(disp, e.data.panel.dragRegion.l + 1 - coords.left);
+        }
+        if (e.data.action !== 'left') {
+          disp = Math.min(e.data.panel.dragRegion.r - coords.left - coords.width + 1, disp);
+        }
+
+        switch (e.data.action) {
+          case 'left':
+            disp = Math.min(coords.width - 6, disp);
+            coords.left = coords.left + disp;
+            coords.width = coords.width - disp;
+          break;
+          case 'right':
+            coords.width = Math.max(coords.width + disp, 6);
+          break;
+          case 'move':
+            coords.left = coords.left + disp;
+          break;
+        }
+
+        e.data.panel.elLk.selector.css(coords);
+        e.data.panel.makeZMenu(e, { s: coords.left, r: coords.width });
+
+      }).on('mouseup.selectbox click.selectbox', function(e) {
+        $(this).off('.selectbox');
+      })
+    }).end();
+  },
+
   updateExportMenu: function(coords, speciesNumber, imageNumber) {
     var panel = this;
 
@@ -1018,20 +1107,31 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var test  = false;
     var areas = draggables ? this.draggables : this.areas;
     var c;
-    
+    var last;
+    var current;
+
     for (var i = 0; i < areas.length; i++) {
       c = areas[i];
-      
+
       switch (c.a.shape.toLowerCase()) {
         case 'circle': test = this.inCircle(c.c, coords); break;
         case 'poly':   test = this.inPoly(c.c, coords); break;
         default:       test = this.inRect(c, coords); break;
       }
-      
+
       if (test === true) {
-        return $.extend({}, c);
+        current = $.extend({}, c);
+
+        // if the areas are overlapping (in case of transparent areas, return the one drawn on top)
+        if (!current.a.attrs.overlap) {
+          return last || current;
+        }
+
+        last = current;
       }
     }
+
+    return last;
   },
   
   inRect: function (c, coords) {

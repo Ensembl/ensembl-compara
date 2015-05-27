@@ -97,6 +97,48 @@ sub render_Rect {
   }
 }
 
+sub render_Barcode {
+  my ($self, $glyph) = @_;
+
+  my $colours        = $self->{'colours'};
+
+  my $points = $glyph->{'pixelpoints'};
+  return unless defined $points;
+
+  my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
+  my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
+  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+  my @colours = @{$glyph->{'colours'}};
+
+  my $max = $glyph->{'max'} || 1000;
+  my $top = $self->{'canvas'}{'im_height'};
+  my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+
+  if($glyph->{'wiggle'} eq 'bar') {
+    my $mul = ($y2-$y1) / $max;
+    foreach my $p (@$points) {
+      my $yb = $y1 + $p * $mul;
+      $self->strokecolor($colours[0]);
+      $self->fillcolor($colours[0]);
+      $self->rect($x1,$top-$y2,$x2-$x1,$yb-$y1,$colours[0]);
+      $self->fill();
+      $x1 += $step;
+      $x2 += $step;
+    }
+  } else {
+    foreach my $p (@$points) {
+      my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
+      $self->fillcolor($colour);
+      $self->strokecolor($colour);
+      $self->rect($x1,$top-$y1,$x2-$x1,$y2-$y1);
+      $self->fill();
+      $x1 += $step;
+      $x2 += $step;
+    }
+  }
+}
+
 sub render_Text {
   my ($self, $glyph) = @_;
   my $font = $glyph->font();

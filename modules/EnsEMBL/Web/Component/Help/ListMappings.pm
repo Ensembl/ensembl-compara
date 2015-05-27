@@ -40,45 +40,59 @@ sub content {
   my $alt_assembly      = $hub->param('alt_assembly');
   my $alt_assemblies    = $hub->species_defs->ASSEMBLY_MAPPINGS || [];
   my $referer           = $hub->referer;
+  my ($html, $table);
   
   # get coordinates of other assembly 
   if ($alt_assembly && scalar(@$alt_assemblies)) {
-    my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'ensemblcoordinates asc' ] });
-
-    $table->add_columns(
-      { key => 'ensemblcoordinates', title => "$current_assembly coordinates",               align => 'left', sort => 'position'      },
-      { key => 'length',             title => 'Length',                            align => 'left', sort => 'numeric'       },
-      { key => 'targetcoordinates',  title => "$alt_assembly coordinates",  align => 'left', sort => 'position_html' }
-    );
-   
+    $html .= '<input type="hidden" class="panel_type" value="Content" /><h2>Coordinate mappings</h2>';
     if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
+
       my $mapping;
       foreach (@mappings) {
         $mapping = $_;
         last if $mapping eq sprintf('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
       }
       if ($mapping) {
+
         my $segments = $location->slice->project('chromosome', $alt_assembly);
+
+        if (scalar @$segments) {
              
-        my $base_url    = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
+
+          $table = $self->new_table([], [], { data_table => 1, sorting => [ 'ensemblcoordinates asc' ] });
+
+          $table->add_columns(
+            { key => 'coords', title => "$current_assembly coordinates", align => 'left', sort => 'position'},
+            { key => 'length',             title => 'Length', align => 'left', sort => 'numeric'},
+            { key => 'target',  title => "$alt_assembly coordinates",  align => 'left', sort => 'position_html'}
+          );
+
+          my $base_url  = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
+          my $title     = 'Go to '.$hub->species_defs->SWITCH_ARCHIVE_URL; 
     
-        foreach my $segment (@$segments) {
-          my $s          = $segment->from_start + $ensembl_start - 1;
-          my $slice      = $segment->to_Slice;
-          my $mapped_url = "$base_url/$species/Location/View?r=" . $slice->seq_region_name. ':' . $slice->start. '-'.  $slice->end;
-	        my $match_txt  = $slice->seq_region_name . ':' . $hub->thousandify($slice->start) . '-' . $hub->thousandify($slice->end);
+          foreach my $segment (@$segments) {
+            my $s          = $segment->from_start + $ensembl_start - 1;
+            my $slice      = $segment->to_Slice;
+            my $mapped_url = "$base_url/$species/Location/View?r=" . $slice->seq_region_name. ':' . $slice->start. '-'.  $slice->end;
+	          my $match_txt  = $slice->seq_region_name . ':' . $hub->thousandify($slice->start) . '-' . $hub->thousandify($slice->end);
       
-	        $table->add_row({
-            ensemblcoordinates => "$chromosome:$s-" . ($slice->length + $s - 1),
-		        length             => $slice->length, 
-		        targetcoordinates  => qq{<a href="$mapped_url" rel="external">$match_txt</a>}
-          });
+	          $table->add_row({
+              coords => "$chromosome:$s-" . ($slice->length + $s - 1),
+		          length => $slice->length, 
+		          target => qq{<a href="$mapped_url" title="$title" rel="external">$match_txt</a>}
+            });
+          }
         }
       }
     }
-    
-    return sprintf '<input type="hidden" class="panel_type" value="Content" /><h2>Coordinate mappings</h2>%s', $table->render;  	
   }
+  if ($table) {
+    $html .= $table->render;  	
+  }
+  else {
+    $html .= '<p>No mappings in this region - please try another location.</p>';
+  }
+  return $html; 
 }
 
 1;

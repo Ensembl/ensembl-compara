@@ -16,6 +16,12 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::ctcf;
 
 ### Draw CTCF regulatory features track
@@ -23,9 +29,17 @@ package EnsEMBL::Draw::GlyphSet::ctcf;
 
 use strict;
 
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub my_helplink { return "ctcf"; }
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub get_block_features {
   ### block_features
@@ -115,7 +129,6 @@ sub draw_features {
     }
   }
 
-  $self->draw_space_glyph() if $drawn_flag;
   my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
   return $error;
 }

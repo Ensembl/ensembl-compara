@@ -403,11 +403,13 @@ sub _summarise_variation_db {
   # get menu config from meta table if it exists
   my $v_conf_aref = $dbh->selectall_arrayref('select meta_value from meta where meta_key = "web_config" order by meta_id asc');
   foreach my $row(@$v_conf_aref) {
-    my ($type, $long_name, $key, $parent) = split /\#/, $row->[0];
-  
+    my @values = split(/\#/,$row->[0],-1);
+    my ($type,$long_name,$short_name,$key,$parent) = @values;
+
     push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
       type       => $type,
       long_name  => $long_name,
+      short_name => $short_name,
       key        => $key,
       parent     => $parent
     };
@@ -917,6 +919,16 @@ sub _summarise_website_db {
     my $entry = eval($row->[0]);
     $self->db_tree->{'ENSEMBL_GLOSSARY'}{$entry->{'word'}} = $entry->{'meaning'}; 
   }
+
+  ## Get attrib text lookup
+  $t_aref = $dbh->selectall_arrayref(
+    'select data from help_record where type = "lookup" and status = "live"'
+  );
+  foreach my $row (@$t_aref) {
+    my $entry = eval($row->[0]);
+    $self->db_tree->{'TEXT_LOOKUP'}{$entry->{'word'}} = $entry->{'meaning'}; 
+  }
+
 
   $dbh->disconnect();
 }
@@ -1754,6 +1766,9 @@ sub _munge_file_formats {
     'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
     'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
     'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},
+    ## WashU formats
+    'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
+    'pairwise_tabix' => {'ext' => 'txt', 'label' => 'Pairwise interactions (indexed)', 'display' => 'feature', 'indexed' => 1},
   );
 
   ## Munge into something useful to this website

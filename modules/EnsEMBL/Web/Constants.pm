@@ -76,7 +76,6 @@ sub EXPORT_FORMATS {
 	  'png'  => { 'name' => 'PNG', 'longname' => 'Portable Network Graphics',   'extn' => 'png', 'mime' => 'image/png'              },
     'gif'  => { 'name' => 'GIF', 'longname' => 'Graphics Interchange Format', 'extn' => 'gif', 'mime' => 'image/gif'              },
 	  'svg'  => { 'name' => 'SVG', 'longname' => 'Scalable Vector Graphics',    'extn' => 'svg', 'mime' => 'image/svg+xml'          },
-	  'eps'  => { 'name' => 'EPS', 'longname' => 'Encapsulated Postscript',     'extn' => 'eps', 'mime' => 'application/postscript' },
 	  'pdf'  => { 'name' => 'PDF', 'longname' => 'Portable Document Format',    'extn' => 'pdf', 'mime' => 'application/pdf'        },
 	  'gff'  => { 'name' => 'GFF', 'longname' => 'General Feature Format',      'extn' => 'txt', 'mime' => 'text/plain'             }
   );
@@ -346,11 +345,12 @@ sub MARKUP_OPTIONS {
       'name'    => 'seq_type',
       'label'   => 'Sequence to export',
       'values' => [
-        { 'value' => 'msa', 'caption' => 'Alignments' },
-        { 'value' => 'dna', 'caption' => 'CDS' },
-        { 'value' => 'pep', 'caption' => 'Proteins' },
+        { 'value' => 'msa_dna', 'caption' => 'Alignments - DNA' },
+        { 'value' => 'msa_pep', 'caption' => 'Alignments - amino acids' },
+        { 'value' => 'seq_dna', 'caption' => 'Unaligned sequences - CDS' },
+        { 'value' => 'seq_pep', 'caption' => 'Unaligned sequences - proteins' },
       ],
-      'value'   => 'msa',
+      'value'   => 'msa_dna',
     }, 
   };
 }

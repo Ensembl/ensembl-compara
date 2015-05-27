@@ -39,7 +39,18 @@ sub content {
   ## Note - these options aren't available on the page, so they
   ## don't belong in the viewconfig
   my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
-  my $settings = {'seq_type' => $markup_options->{'seq_type'}};
+  my %seq_element     = %{$markup_options->{'seq_type'}};
+  my %align_element   = %seq_element;
+  my @values          = @{$seq_element{'values'}};
+  ## Removed unaligned sequence values from dropdown
+  pop @values;
+  pop @values;
+  $align_element{'values'} = \@values;
+
+  my $settings = {
+                  'seq_type'    => \%seq_element,
+                  'align_type'  => \%align_element, 
+                  };
 
   ## Pass species selection to output
   my $species_options = [];
@@ -54,7 +65,7 @@ sub content {
 
   ## Add formats output by BioPerl
   foreach ($self->alignment_formats) {
-    my $field = $_ eq 'FASTA' ? 'seq_type' : undef;
+    my $field = $_ eq 'FASTA' ? 'seq_type' : 'align_type';
     $fields_by_format->{$_} = [$field];
   }
 

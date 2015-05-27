@@ -18,6 +18,11 @@ limitations under the License.
 
 package EnsEMBL::Web::Command::UserData::CheckRegions;
 
+############# DEPRECATED #################
+## This tool is no longer in use and will
+## be removed in release 81
+##########################################
+
 ## Checks the user's input and uploads/creates a file for processing
 
 use strict;

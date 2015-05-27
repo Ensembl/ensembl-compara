@@ -24,6 +24,13 @@ limitations under the License.
 #   AssemblyMapper uses seq_region_id rather than seq_region_name in output
 package Bio::EnsEMBL::ExternalData::DAS::GenomicMapper;
 
+############################################################################
+#
+# DEPRECATED MODULE - DAS SUPPORT WILL BE REMOVED FROM ENSEMBL IN RELEASE 83
+#
+#############################################################################
+
+
 use strict;
 use warnings;
 

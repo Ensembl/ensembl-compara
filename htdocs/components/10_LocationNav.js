@@ -17,243 +17,384 @@
 Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   constructor: function (id, params) {
     this.base(id, params);
-    
+
+    this.geneCache      = {};
+    this.sliderConfig   = false;
+    this.extraParams    = {};
+    this.refreshOnly    = true;
+    this.alignmentPage  = false;
+
     Ensembl.EventManager.register('hashChange',  this, this.getContent);
     Ensembl.EventManager.register('changeWidth', this, this.resize);
     Ensembl.EventManager.register('imageResize', this, this.resize);
     
-    if (!window.location.pathname.match(/\/Multi/)) {
-      Ensembl.EventManager.register('ajaxComplete', this, function () { this.enabled = true; });
+    if (window.location.pathname.match(/\/Multi/)) {
+      this.extraParams  = {realign: 1};
+      this.refreshOnly  = false;
     }
   },
-    
-  config: function() {
-    var panel = this;
-    var sliderConfig = $.parseJSON($('span.ramp', panel.el).text());
-    // TODO cache it? Is it worth it?
-    return sliderConfig;
-  },
 
-  currentLocations: function() { // extract r's into easy to use format
-    var out = {};
-    var url = decodeURIComponent(window.location.href).split("?");
-    parts = url[1].split(/[;&]/);
-    $.each(parts,function(i,part) {
-      kv = part.split("=");
-      if(!kv[0].match(/^r[0-9]*$/))
+  currentLocations: function () {
+  /*
+   * Extracts r params into easy to use format
+   */
+    var out     = {};
+    var rRegexp = new RegExp(/^([^:]*):([^-]*)-([^:]*)(:.*)?/);
+
+    $.each(window.location.search.replace(/^\?/, '').split(/[;&]/), function (i, part) {
+      var kv = part.split('=');
+      if (!kv[0].match(/^r[0-9]*$/)) {
         return;
-      var r_parts = kv[1].match(/^([^:]*):([^-]*)-([^:]*)(:.*)?/);
-      out[kv[0]] = [r_parts[1],parseInt(r_parts[2]),parseInt(r_parts[3]),r_parts[4]||''];
+      }
+      var rParts = decodeURIComponent(kv[1]).match(rRegexp);
+      out[kv[0]] = [rParts[1], parseInt(rParts[2]), parseInt(rParts[3]), rParts[4] || ''];
     });
+
     return out;
   },
 
-  newLocation: function(rs) {
-    var url = decodeURIComponent(window.location.href).split("?");
-    parts = url[1].split(/[;&]/);
-    new_parts = [];
-    $.each(parts,function(i,part) {
-      kv = part.split("=");
-      if(kv[0].match(/^r[0-9]*$/)) {
-        new_parts.push(kv[0]+"="+rs[kv[0]][0]+":"+rs[kv[0]][1]+"-"+rs[kv[0]][2]+rs[kv[0]][3]);
+  newHref: function (rs, others) {
+  /*
+   * Creates a new URL from the given r and other params
+   */
+    var url       = window.location.href.split("?");
+    var newParams = [];
+    others        = others || {};
+
+    $.each(url[1].split(/[;&]/), function (i, part) {
+      var kv = part.split('=');
+
+      if (kv[0].match(/^r[0-9]*$/) && rs[kv[0]]) {
+        newParams.push(kv[0] + '=' + rs[kv[0]][0] + ':' + rs[kv[0]][1] + '-' + rs[kv[0]][2] + (rs[kv[0]][3] || ''));
+      } else if (kv[0] in others) {
+        newParams.push(kv[0] + '=' + others[kv[0]]);
+        delete others[kv[0]];
       } else {
-        new_parts.push(part);
+        newParams.push(kv[0] + '=' + decodeURIComponent(kv[1]));
       }
     });
-    var extra = $('.image_nav .extra-params',this.el).attr('href');
-    if(extra) {
-      extra = ';' + extra.substring(1);
+
+    for (var k in others) {
+      newParams.push(k + '=' + others[k]);
     }
-    return url[0]+"?"+new_parts.join(";")+extra;
+
+    for (var k in this.extraParams) {
+      newParams.push(k + '=' + this.extraParams[k]);
+    }
+
+    return url[0] + '?' + newParams.sort(function(a, b) {
+      return a.split('=')[0] > b.split('=')[0];
+    }).join(';');
   },
 
-  rescale: function(rs,input) {
-    var config = this.config();
-    input = Math.round(input);
-    var out = {};
-    $.each(rs,function(k,v) {
-      var r_2centre = Math.round(v[1]+v[2]);
-      var r_start = Math.round((r_2centre-input)/2);
-      if(r_start<1) { r_start = 1; }
-      var r_end = r_start+input+1;
-      if(k=='r') {
-        if(r_start > config.length) {
-          r_start = config.length - config.min;
-        }
-        if(r_end > config.length) {
-          r_end = config.length;
-        }
-      }
-      if(r_start<1) { r_start = 1; }
-      out[k] = [v[0],r_start,r_end,v[3]];
-    });
-    return out;
-  },
+  arrowHref: function (step) {
+  /*
+   * Returns href for the arrow buttons at cur pos. as string
+   */
+    var panel = this;
+    var rs    = this.currentLocations();
 
-  arrow: function(step) { // href for arrow buttons at cur pos. as string
-    var config = this.config();
-    var rs = this.currentLocations();
-    var out =  {};
-    $.each(rs,function(k,v) {
+    $.each(rs, function (k, v) {
       v[1] += step;
       v[2] += step;
-      if(k=='r') {
-        if(v[1] > config.length) { v[1] = config.length - config.min; }
-        if(v[2] > config.length) { v[2] = config.length; }
-        if(v[1] < 1) { v[1] = 1; }
-        if(v[2] < 1) { v[2] = config.min; }
+      if (k == 'r') {
+        if (v[1] > panel.sliderConfig.length) { v[1] = panel.sliderConfig.length - panel.sliderConfig.min; }
+        if (v[2] > panel.sliderConfig.length) { v[2] = panel.sliderConfig.length; }
+        if (v[1] < 1) { v[1] = 1; }
+        if (v[2] < 1) { v[2] = panel.sliderConfig.min; }
       }
     });
-    return this.newLocation(rs);
+
+    return this.newHref(rs);
   },
 
-  zoom: function(factor) { // href for +/- buttons at cur pos. as string
-    var rs = this.currentLocations();
+  zoomHref: function (factor) {
+  /*
+   * Returns href for +/- buttons at cur pos. as string
+   */
+    var rs    = this.currentLocations();
     var width = rs['r'][2] - rs['r'][1];
-    rs = this.rescale(rs,width*factor);
-    if(factor>1) {
-      $.each(rs,function(k,v) {
-        if(v[1] == v[2]) { v[2]++; }
+    rs        = this.rescale(rs, width * factor);
+
+    if (factor > 1) {
+      $.each(rs, function (k, v) {
+        if (v[1] == v[2]) { v[2]++; }
       });
     }
-    return this.newLocation(rs);
+
+    return this.newHref(rs);
   },
 
-  updateButtons: function() { // update button hrefs (and loc) at cur. pos
+  rescale: function(rs, newWidth) {
+  /*
+   * Resets the r params according to the new width provided
+   */
     var panel = this;
+    newWidth  = Math.round(newWidth);
+    var out   = {};
 
-    var rs = this.currentLocations();
-    var width = rs['r'][2]-rs['r'][1]+1;
-    $('.left_2',panel.el).attr('href',panel.arrow(-1e6));
-    $('.left_1',panel.el).attr('href',panel.arrow(-width));
-    $('.zoom_in',panel.el).attr('href',panel.zoom(0.5));
-    $('.zoom_out',panel.el).attr('href',panel.zoom(2));
-    $('.right_1',panel.el).attr('href',panel.arrow(width));
-    $('.right_2',panel.el).attr('href',panel.arrow(1e6));
-    $('#loc_r',panel.el).val(rs['r'][0]+':'+rs['r'][1]+'-'+rs['r'][2]);
-  },
+    $.each(rs, function (k, v) {
+      var rStart  = Math.max(Math.round((Math.round(v[1] + v[2]) - newWidth) / 2), 1);
+      var rEnd    = rStart + newWidth + 1;
 
-  val2pos: function () { // from 0-100 on UI slider to bp
-    var panel = this;
+      if (k == 'r') {
+        rStart  = Math.max(Math.min(rStart, panel.sliderConfig.length - panel.sliderConfig.min), 1);
+        rEnd    = Math.min(rEnd, panel.sliderConfig.length);
+      }
 
-    var rs = this.currentLocations();
-    var input = rs['r'][2]-rs['r'][1]+1;
-    var sliderConfig = panel.config();
-    var slide_min = sliderConfig.min;
-    var slide_max = sliderConfig.max;
-    var slide_mul = ( Math.log(slide_max) - Math.log(slide_min) ) / 100;
-    var slide_off = Math.log(slide_min);
-    var out = (Math.log(input)-slide_off)/slide_mul;
-    if(out < 0) { return 0; }
-    if(out > 100) { return 100; }
+      out[k] = [v[0], rStart, rEnd, v[3]];
+    });
+
     return out;
-  }, 
+  },
 
-  pos2val: function(pos) { // from bp to 0-100 on UI slider
-    var panel = this;
+  updateButtons: function(sliderVal) {
+    /*
+     * Update button hrefs (and location input) at cur. pos
+     */
+    sliderVal = Math.round(typeof sliderVal === 'undefined' ? this._val2pos() : sliderVal);
+    var rs    = this.currentLocations();
+    var width = rs['r'][2]-rs['r'][1]+1;
 
-    var sliderConfig = panel.config();
-    var slide_min = sliderConfig.min;
-    var slide_max = sliderConfig.max;
-    var slide_mul = ( Math.log(slide_max) - Math.log(slide_min) ) / 100;
-    var slide_off = Math.log(slide_min);
-    var raw_value = Math.exp(pos * slide_mul + slide_off);
-    // To 2sf
-    var mag = Math.pow(10,2 - Math.ceil(Math.log(raw_value)/Math.LN10));
-    var value = Math.round(Math.round(raw_value*mag)/mag);
-    return value;
+    this.elLk.left1.attr('href', this.arrowHref(-width));
+    this.elLk.left2.attr('href', this.arrowHref(-1e6));
+    this.elLk.right1.attr('href', this.arrowHref(width));
+    this.elLk.right2.attr('href', this.arrowHref(1e6));
+
+    this.elLk.zoomIn.attr('href', this.zoomHref(0.5)).toggleClass('disabled', sliderVal === 0).helptip(sliderVal === 0 ? 'disable' : 'enable');
+    this.elLk.zoomOut.attr('href', this.zoomHref(2)).toggleClass('disabled', sliderVal === 100).helptip(sliderVal === 100 ? 'disable' : 'enable');
+
+    this.elLk.regionInput.val(rs['r'][0] + ':' + rs['r'][1] + '-'+rs['r'][2]);
   },
  
   init: function () {
     var panel = this;
     
     this.base();
-    
-    this.enabled = this.params.enabled || false;
 
-    this.elLk.locationInput = $('.location_selector', this.el);
-    this.elLk.navbar        = $('.navbar', this.el);
-    this.elLk.imageNav      = $('.image_nav', this.elLk.navbar);
-    this.elLk.forms         = $('form', this.elLk.navbar);
-    
-    $('a.go-button', this.elLk.forms).on('click', function () {
-      $(this).parents('form').trigger('submit');
-      return false;
+    this.elLk.navbar    = this.el.find('.navbar');
+    this.elLk.imageNav  = this.elLk.navbar.find('.image_nav');
+    this.elLk.forms     = this.elLk.navbar.find('form');
+    this.elLk.navLinks  = this.elLk.imageNav.find('a');
+
+    this.alignmentPage  = !!this.elLk.forms.first().closest('.alignment_select').length;
+
+    this.initNavForms();
+    this.initNavLinks();
+    this.initSlider();
+    this.resize();
+  },
+
+  initNavForms: function() {
+  /*
+   * Initialises the gene and location navigation form
+   */
+    var panel = this;
+
+    this.elLk.regionInput = this.elLk.forms.find('input[name=r]');
+    this.elLk.geneInput   = this.elLk.forms.find('input[name=q]');
+
+    // attach form submit event
+    this.elLk.forms.on('submit', {panel: this}, function (e) {
+      e.preventDefault();
+
+      var params = {};
+      var gene   = {};
+      var term   = '';
+      var tmp;
+
+      if (panel.alignmentPage) {
+
+        $.each($(this).serializeArray(), function (v, k) {
+          params[k.name] = k.value;
+        });
+
+        Ensembl.redirect(panel.newHref([], params));
+        return;
+      }
+
+      // g and db params needed for gene navigation
+      if (this.className.match(/_nav_gene/)) {
+
+        term = this.q.value;
+
+        if (term.length < 3) {
+          alert('Please type in at least 3 characters to get a list of matching genes');
+          return;
+        }
+
+        gene = (e.data.panel.geneCache[term.substr(0, 3).toUpperCase()] || {})[term.toUpperCase()];
+
+        if (!gene) {
+          alert("No gene found for '" + term + "'");
+          return;
+        }
+
+        params = {g: gene.g, db: gene.db, r: gene.r};
+      } else {
+        params = {r: this.r.value};
+      }
+
+      tmp = params.r.match(/^([^:]+):([0-9]+)-([0-9]+)$/);
+      if (!tmp || tmp.length !== 4 || tmp[3] - tmp[2] < 0) {
+        alert('Invalid location: ' + params.r);
+        return;
+      }
+
+      e.data.panel.elLk.geneInput.autocomplete('close').val(gene.label);
+
+      if (panel.refreshOnly) {
+        Ensembl.updateURL($.extend({}, panel.extraParams, {g: params.g, db: params.db}));
+        Ensembl.updateLocation(params.r);
+      } else {
+        Ensembl.redirect(panel.newHref([], params));
+      }
+
+    }).find('a').on('click', function (e) {
+      e.preventDefault();
+      $(this).closest('form').trigger('submit');
     });
-    
-    this.elLk.navLinks = $('a', this.elLk.imageNav).addClass('constant').on('click', function (e) {
+
+    // autocomplete on the gene input field
+    this.elLk.geneInput.autocomplete({
+      minLength: 3,
+      source: function(request, responseCallback) {
+
+        var context = { // context to be passed to ajax callbacks
+          panel     : panel,
+          term      : request.term,
+          key       : request.term.substr(0, 3).toUpperCase(),
+          callback  : function(str, group) {
+            var regexp = new RegExp('^' + $.ui.autocomplete.escapeRegex(str), 'i');
+            return responseCallback($.map(group, function(val, geneLabel) {
+              return regexp.test(geneLabel) ? val.label : null;
+            }));
+          }
+        }
+
+        if (context.key in panel.geneCache) {
+          return context.callback(request.term, panel.geneCache[context.key]);
+        }
+
+        $.ajax({
+          url: Ensembl.speciesPath + '/Ajax/autocomplete',
+          cache: true,
+          data: { q: context.key },
+          dataType: 'json',
+          context: context,
+          success: function (json) {
+            this.panel.geneCache[this.key] = json;
+          },
+          complete: function () {
+            return this.callback(this.term, this.panel.geneCache[this.key]);
+          }
+        });
+      },
+      select: function(e, ui) {
+        $(this).closest('form').find('input[name=q]').val(ui.item.value).end().trigger('submit');
+      }
+    });
+  },
+
+  initNavLinks: function () {
+  /*
+   * Initialises the image navigation like
+   */
+    var panel = this;
+
+    this.elLk.navLinks.helptip().addClass('constant').on('click', function (e) {
+
+      if (this.className.match(/disabled/)) {
+        return false;
+      }
+
       var newR;
-      
-      if (panel.enabled === true) {
+
+      if (panel.refreshOnly) {
+        e.preventDefault();
         newR = this.href.match(Ensembl.locationMatch)[1];
-        
+
         if (newR !== Ensembl.coreParams.r) {
           Ensembl.updateLocation(newR);
         }
-        
-        return false;
       }
     });
-    
-    if(!$('span.ramp', this.el).length) { return; } // No slider here
-    $('span.ramp', this.el).hide();
-    var sliderConfig = panel.config();
-    var sliderLabel  = $('.slider_label', this.el);
-    
-    $('.slider_wrapper', this.el).children().css('display', 'inline-block');
-    var slide_min = sliderConfig.min;
-    var slide_max = sliderConfig.max;
-    var slide_mul = ( Math.log(slide_max) - Math.log(slide_min) ) / 100;
-    var slide_off = Math.log(slide_min);
-    var rs = panel.currentLocations();
-    this.elLk.slider = $('.slider', this.el).slider({
-      value: panel.val2pos(),
+  },
+
+  initSlider: function () {
+  /*
+   * Initialises the slider
+   */
+    var panel = this;
+
+    try {
+      this.sliderConfig = $.parseJSON(this.elLk.imageNav.find('span.ramp').remove().text());
+    } catch (ex) {
+      return;
+    }
+
+    if (!this.sliderConfig) {
+      return;
+    }
+
+    this.elLk.slider      = this.elLk.imageNav.find('.slider_wrapper').show().find('.slider');
+    this.elLk.sliderLabel = this.elLk.imageNav.find('.slider_label').hide();
+    this.elLk.zoomIn      = this.elLk.navLinks.filter('.zoom_in');
+    this.elLk.zoomOut     = this.elLk.navLinks.filter('.zoom_out');
+    this.elLk.left1       = this.elLk.navLinks.filter('.left_1');
+    this.elLk.left2       = this.elLk.navLinks.filter('.left_2');
+    this.elLk.right1      = this.elLk.navLinks.filter('.right_1');
+    this.elLk.right2      = this.elLk.navLinks.filter('.right_2');
+
+    this.elLk.slider.slider({
+      value: this._val2pos(),
       step:  1,
       min:   0,
       max:   100,
       force: false,
       slide: function (e, ui) {
-        var value = panel.pos2val(ui.value);
-        sliderLabel.html(value + ' bp').show();
+        panel.elLk.sliderLabel.html(panel._pos2val(ui.value) + ' bp').show();
       },
       change: function (e, ui) {
-        if(panel.elLk.slider.slider('option','fake')) { return; }
-        var input = panel.pos2val(ui.value);
-        rs = panel.rescale(rs,input);
-        var url = panel.newLocation(rs);
-        
-        if (panel.enabled === false) {
-          Ensembl.redirect(url);
-          return false;
-        } else if (Ensembl.locationURL === 'hash' && !window.location.hash.match(Ensembl.locationMatch) && window.location.search.match(Ensembl.locationMatch)[1] === rs['r']) {
-          return false; // when there's no hash, but the current location is the same as the new r
-        } else if ((window.location[Ensembl.locationURL].match(Ensembl.locationMatch) || [])[1] === rs['r']) {
-          return false;
+
+        if (panel.elLk.slider.slider('option','fake')) {
+          return;
         }
-        
-        Ensembl.updateLocation(rs['r'][0]+":"+rs['r'][1]+"-"+rs['r'][2]);
+
+        var rs = panel.rescale(panel.currentLocations(), panel._pos2val(ui.value));
+
+        if (panel.refreshOnly) {
+          Ensembl.updateLocation(rs['r'][0] + ':' + rs['r'][1] + '-' + rs['r'][2]);
+        } else {
+          Ensembl.redirect(panel.newHref(rs));
+        }
       },
-      stop: function () {
-        sliderLabel.hide();
-        $('.ui-slider-handle', panel.elLk.slider).trigger('blur'); // Force the blur event to remove the highlighting for the handle
+      stop: function (e, ui) {
+        panel.elLk.sliderLabel.hide();
+        $(ui.handle).trigger('blur');
       }
     });
-    this.updateButtons(); 
-    this.resize();
-  },
-  
-  getContent: function () {
-    var panel = this;
 
-    if(panel.elLk.slider) {  
-      panel.elLk.slider.slider('option','fake',true); 
-      panel.elLk.slider.slider('value',panel.val2pos());
-      panel.elLk.slider.slider('option','fake',false); 
-      panel.updateButtons();
+    this.updateButtons();
+  },
+
+  getContent: function () {
+  /*
+   * Overrides the default getContent method to update the slider to the new location instead of refreshing the whole panel via ajax
+   */
+    if (this.elLk.slider) {
+      var sliderVal = this._val2pos();
+      this.elLk.slider.slider('option','fake',true);
+      this.elLk.slider.slider('value', sliderVal);
+      this.elLk.slider.slider('option','fake',false);
+      this.updateButtons(sliderVal);
     }
   },
-  
+
   resize: function () {
+  /*
+   * Rearranges the navbar accoding to the new browser window size
+   */
     var widths = {
       navbar: this.elLk.navbar.width(),
       slider: this.elLk.imageNav.width(),
@@ -267,6 +408,29 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     } else {
       this.elLk.navbar.removeClass('narrow1 narrow2');
     }
-    this.updateButtons();
+
+    if (this.elLk.slider) {
+      this.updateButtons();
+    }
+  },
+
+  _val2pos: function () { // from 0-100 on UI slider to bp
+    var rs        = this.currentLocations();
+    var width     = rs['r'][2] - rs['r'][1] + 1;
+    var slideMul  = ( Math.log(this.sliderConfig.max) - Math.log(this.sliderConfig.min) ) / 100;
+    var slideOff  = Math.log(this.sliderConfig.min);
+
+    return Math.min(Math.max((Math.log(width) - slideOff) / slideMul, 0), 100);
+  },
+
+  _pos2val: function(pos) { // from bp to 0-100 on UI slider
+    var slideMul = ( Math.log(this.sliderConfig.max) - Math.log(this.sliderConfig.min) ) / 100;
+    var slideOff = Math.log(this.sliderConfig.min);
+    var rawValue = Math.exp(pos * slideMul + slideOff);
+
+    // To 2sf
+    var mag   = Math.pow(10, 2 - Math.ceil(Math.log(rawValue) / Math.LN10));
+
+    return Math.round(Math.round(rawValue*mag) / mag);
   }
 });

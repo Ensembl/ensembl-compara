@@ -26,6 +26,8 @@ use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
+sub supports_subtitles { 0; }
+
 sub features {
   my $self    = shift;
   my $slice   = $self->{'container'}; 

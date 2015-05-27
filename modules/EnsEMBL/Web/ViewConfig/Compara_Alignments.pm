@@ -29,7 +29,7 @@ sub init {
   my $species_defs = $self->species_defs;
   my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
   my %defaults;
-  
+
   foreach my $key (grep { $alignments->{$_}{'class'} !~ /pairwise/ } keys %$alignments) {
     foreach (keys %{$alignments->{$key}{'species'}}) {
       my @name = split '_', $alignments->{$key}{'name'};
@@ -62,7 +62,7 @@ sub form {
 ### Override base class, because alignments have multiple configuration screens
   my $self = shift;
   my $fields = $self->form_fields;
-
+  
   foreach ($self->field_order) {
     $self->add_form_element($fields->{$_});
   }
@@ -127,25 +127,28 @@ sub alignment_options {
   my $species      = $self->hub->referer->{'ENSEMBL_SPECIES'};
   my $species_defs = $self->species_defs;
   my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
-  
-  # Order by number of species (name is in the form "6 primates EPO"
-  foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
-    my $sp   = $row->{'species'};
-    my @name = split '_', $row->{'name'};
-    my $n    = shift @name;
-    
-    $sp->{$_} = $species_defs->species_label($_) for keys %$sp;
-    
-    $self->add_fieldset(join ' ', $n, map lc, @name);
-    
-    foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
-      $self->add_form_element({
-        type  => 'CheckBox', 
-        label => $sp->{$_},
-        name  => sprintf('species_%s_%s', $row->{'id'}, lc),
-        value => 'yes',
-        raw   => 1
-      });
+
+  # Only show if the alignment has been selected in the dropdown and !align="" in url
+  # Order by number of species (name is in the form "6 primates EPO"  
+  if($self->hub->parse_referer->{params}->{align} && grep($_ != "", @{$self->hub->parse_referer->{params}->{align}})) {  
+    foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} && $_->{id} eq @{$self->hub->parse_referer->{params}->{align}}[0]} values %$alignments) {
+      my $sp   = $row->{'species'};
+      my @name = split '_', $row->{'name'};
+      my $n    = shift @name;
+      
+      $sp->{$_} = $species_defs->species_label($_) for keys %$sp;
+      
+      $self->add_fieldset(join ' ', $n, map lc, @name);
+      
+      foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
+        $self->add_form_element({
+          type  => 'CheckBox', 
+          label => $sp->{$_},
+          name  => sprintf('species_%s_%s', $row->{'id'}, lc),
+          value => 'yes',
+          raw   => 1
+        });
+      }
     }
   }
 }

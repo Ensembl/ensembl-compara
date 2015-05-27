@@ -45,7 +45,7 @@ sub content {
   my $svg_path = $image->render($display_name);
 
   if ($svg_path) {
-    $html .= qq(<object data="$svg_path" type="image/svg+xml"></object>);
+    $html .= qq(<h4><a href="$svg_path">Download image</a></h4><object data="$svg_path" type="image/svg+xml"></object>);
   }
 
   return $html;

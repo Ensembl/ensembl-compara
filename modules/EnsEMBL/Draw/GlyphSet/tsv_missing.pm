@@ -16,6 +16,12 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::tsv_missing;
 
 ### Error track for Transcript/Population/Image
@@ -23,7 +29,13 @@ package EnsEMBL::Draw::GlyphSet::tsv_missing;
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 # The filter message refers to the number of SNPs removed from the 'snp_fake' track
 # i.e. the number will not change if you filter on SARA SNPs

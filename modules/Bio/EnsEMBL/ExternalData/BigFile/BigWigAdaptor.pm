@@ -19,6 +19,13 @@ limitations under the License.
 package Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
 use strict;
 
+########################################################################################
+#
+# DEPRECATED MODULE - PLEASE SEE ensembl-io/modules/Bio/EnsEMBL/IO/Adaptor/BigWigAdaptor
+#
+########################################################################################
+
+
 use Data::Dumper;
 use Bio::DB::BigFile;
 use Bio::DB::BigFile::Constants;
@@ -28,7 +35,8 @@ my $DEBUG = 0;
 sub new {
   my ($class, $url) = @_;
  
-  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor instead";
+  warn "######## DEPRECATED MODULE";
+  warn "### This module will be removed in release 82 - please use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor instead";
  
   my $self = bless {
     _cache => {},
@@ -79,6 +87,28 @@ sub munge_chr_id {
   return $ret_id;
 }
 
+sub fetch_summary_array {
+  my ($self, $chr_id, $start, $end, $bins, $has_chrs, $mode) = @_;
+
+  $mode ||= 0;
+  my $bw = $self->bigwig_open;
+  warn "Failed to open BigWig file" . $self->url unless $bw;
+  return [] unless $bw;
+
+  #  Maybe need to add 'chr' (only try if species has chromosomes)
+  my $seq_id = $has_chrs ? $self->munge_chr_id($chr_id) : $chr_id;
+  return [] if !defined($seq_id);
+
+# Remember this method takes half-open coords (subtract 1 from start)
+  my $summary = $bw->bigWigSummaryArray("$seq_id",$start-1,$end,$mode,$bins);
+
+  if ($DEBUG) {
+    warn " *** fetch extended summary: $chr_id:$start-$end : found ", scalar(@$summary), " summary points\n";
+  }
+
+  return $summary;
+}
+
 sub fetch_extended_summary_array {
   my ($self, $chr_id, $start, $end, $bins, $has_chrs) = @_;
 
@@ -124,27 +154,22 @@ sub fetch_scores_by_chromosome {
     my $chr = $chrs->head;
     while ($chr) {
       if (!$chromosomes || $chr_check{$chr->name}) {
+        my $stats = $bw->bigWigSummaryArrayExtended($chr->name, 1, $chr->size, $bins);
         my @scores;
-        my $start = 0;
-        my ($end, $previous_start, $previous_end);
 
-        for (my $i = 0; $i < $bins; $i++) {
-          last if $previous_end == $chr->size;
-          $start  = $previous_end + 1;
-          $end    = $start + $bin_size;
-          $end    = $chr->size if $end > $chr->size;
+        foreach (@$stats) {
+          my $mean    = $_->{'validCount'}
+                          ? sprintf('%.2f', ($_->{'sumData'} / $_->{'validCount'}))
+                          : 0;
 
-          my $summary = $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMean');
-          push @scores, sprintf('%.2f', $summary);
+          push @scores, $mean;
 
           ## Get the maximum via each bin rather than for the entire dataset, 
           ## so we can scale nicely on single-chromosome pages
-          my $bin_max = sprintf('%.2f', $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMax'));
+          my $bin_max = sprintf('%.2f', $_->{'maxVal'});
           $max = $bin_max if $max < $bin_max;
-
-          $previous_start = $start;
-          $previous_end   = $end;
         }
+
         ## Translate chromosome name back from its UCSC equivalent
         (my $chr_name = $chr->name) =~ s/chr//;
         $chr_name = 'MT' if $chr_name eq 'M';

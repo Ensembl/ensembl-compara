@@ -26,6 +26,7 @@ use URI::Escape     qw(uri_unescape);
 
 use EnsEMBL::Web::ViewConfig::Regulation::Page;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::File::Utils::URL;
 
 use base qw(EnsEMBL::Web::Controller);
 
@@ -52,11 +53,11 @@ sub autocomplete {
   
   if (!$results) {
     my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
-    my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
+    my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, location, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
     
     $sth->execute;
     
-    $results = $sth->fetchall_arrayref;
+    $results = { map { uc $_->[0] => { 'label' => $_->[0], 'g' => $_->[1], 'r' => $_->[2], 'db' => $_->[3] } } @{$sth->fetchall_arrayref} };
     $cache->set($key, $results, undef, 'AUTOCOMPLETE') if $cache;
   }
   
@@ -288,6 +289,19 @@ sub table_export {
     }
     print join(',',@row_out)."\n";
   }
+}
+
+sub fetch_html {
+  my ($self, $hub) = @_;
+
+  my $url     = $hub->param('url');
+  my $content = {};
+
+  if ($url) {
+     $content = EnsEMBL::Web::File::Utils::URL::read_file($url, {'hub' => $hub, 'nice' => 1});
+  }
+
+  print $content->{'content'} || '';
 }
 
 1;

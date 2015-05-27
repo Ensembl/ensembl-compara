@@ -52,7 +52,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.base();
     
     if (this.params.hash) {
-      this.elLk.links.removeClass('active').children('.' + this.params.hash).parent().addClass('active');
+      var new_active = this.elLk.links.children('.' + this.params.hash);
+      if(new_active.length) {
+        this.elLk.links.removeClass('active');
+        new_active.parent().addClass('active');
+      }
       delete this.params.hash;
     }
     
@@ -1088,6 +1092,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     button.attr('title', function () { return $(this).hasClass('open') ? 'Hide information' : 'Click for more information'; });
+
+    desc.find('._dyna_load').dynaLoad();
     
     this.elLk.help = this.elLk.help.add(button).filter('.open');
   }, 

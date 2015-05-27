@@ -82,7 +82,7 @@ sub process {
     ## For datahubs, pass assembly info so we can check if there's suitable data
     my $assemblies = $species_defs->assembly_lookup;
  
-    my ($error, $options) = $format->check_data($assemblies);
+    my ($url, $error, $options) = $format->check_data($assemblies);
     
     if ($error) {
       $redirect .= 'SelectFile';
@@ -98,90 +98,78 @@ sub process {
       my $extra_config_page = $format->extra_config_page;
       my $name              = $hub->param('name') || $options->{'name'} || $filename;
          $redirect         .= $extra_config_page || 'RemoteFeedback';
-      
+     
       delete $options->{'name'};
+ 
+      my $assemblies = $options->{'assemblies'} || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
+      my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
-      $url = chase_redirects($url, {'hub' => $self->hub});
-      if (ref($url) eq 'HASH') {
-        $redirect .= 'SelectFile';
-        $session->add_data(
-          type     => 'message',
-          code     => 'AttachURL',
-          message  => $url->{'error'},
-          function => '_error'
-        );
-      }
-      else {
-        my $assemblies = $options->{'assemblies'}
-                        || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
-        my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+      my ($flag_info, $code); 
 
-        my ($flag_info, $code); 
+      foreach (@$assemblies) {
 
-        foreach (@$assemblies) {
+        my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies{$_}||[]};         
 
-          my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies{$_}||[]};         
-
-          ## This is a bit messy, but there are so many permutations!
-          if ($assembly) {
-            if ($current_species eq $hub->param('species')) {
-              $flag_info->{'species'}{'this'} = 1;
-              if ($is_old) {
-                $flag_info->{'assembly'}{'this_old'} = 1;
-              }
-              else {
-                $flag_info->{'assembly'}{'this_new'} = 1;
-              }
+        ## This is a bit messy, but there are so many permutations!
+        if ($assembly) {
+          if ($current_species eq $hub->param('species')) {
+            $flag_info->{'species'}{'this'} = 1;
+            if ($is_old) {
+              $flag_info->{'assembly'}{'this_old'} = 1;
             }
             else {
-              $flag_info->{'species'}{'other'}++;
-              if ($is_old) {
-                $flag_info->{'assembly'}{'other_old'} = 1;
-              }
-              else {
-                $flag_info->{'assembly'}{'other_new'} = 1;
-              }
-            }
-            
-            unless ($is_old) {
-              my $data = $session->add_data(
-                type        => 'url',
-                code        => join('_', md5_hex($name . $current_species . $assembly . $url), $session->session_id),
-                url         => $url,
-                name        => $name,
-                format      => $format->name,
-                style       => $format->trackline,
-                species     => $current_species,
-                assembly    => $assembly, 
-                timestamp   => time,
-                %$options,
-              );
-      
-              $session->configure_user_data('url', $data);
-    
-              if ($current_species eq $hub->param('species')) {
-                $code = $data->{'code'};
-              }
-      
-              $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
+              $flag_info->{'assembly'}{'this_new'} = 1;
             }
           }
-        }    
+          else {
+            $flag_info->{'species'}{'other'}++;
+            if ($is_old) {
+              $flag_info->{'assembly'}{'other_old'} = 1;
+            }
+            else {
+              $flag_info->{'assembly'}{'other_new'} = 1;
+            }
+          }
+            
+          unless ($is_old) {
+            my $data = $session->add_data(
+              type        => 'url',
+              code        => join('_', md5_hex($name . $current_species . $assembly . $url), $session->session_id),
+              url         => $url,
+              name        => $name,
+              format      => $format->name,
+              style       => $format->trackline,
+              species     => $current_species,
+              assembly    => $assembly, 
+              timestamp   => time,
+              %$options,
+            );
+    
+            $session->configure_user_data('url', $data);
+  
+            if ($current_species eq $hub->param('species')) {
+              $code = $data->{'code'};
+            }
+     
+            $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
+          }
+        }
+      }    
 
-        ## For datahubs, work out what feedback we need to give the user
-        my ($species_flag, $assembly_flag); 
-        if ($flag_info->{'species'}{'other'} && !$flag_info->{'species'}{'this'}) {
-          $species_flag = 'other_only';
-        }
+      ## For datahubs, work out what feedback we need to give the user
+      my ($species_flag, $assembly_flag); 
+      if ($flag_info->{'species'}{'other'} && !$flag_info->{'species'}{'this'}) {
+        $species_flag = 'other_only';
+      }
 
-        if ($flag_info->{'assembly'}{'this_new'} && $flag_info->{'assembly'}{'this_old'}) {
-          $assembly_flag = 'old_and_new';
-        }
-        elsif (!$flag_info->{'assembly'}{'this_new'} && !$flag_info->{'assembly'}{'other_new'}) {
-          $assembly_flag = 'old_only';
-        }
+      if ($flag_info->{'assembly'}{'this_new'} && $flag_info->{'assembly'}{'this_old'}) {
+        $assembly_flag = 'old_and_new';
+      }
+      elsif (!$flag_info->{'assembly'}{'this_new'} && !$flag_info->{'assembly'}{'other_new'}) {
+        $assembly_flag = 'old_only';
+      }
         
-        %params = (
+      %params = (
           format          => $format->name,
           type            => 'url',
           name            => $name,
@@ -189,8 +177,7 @@ sub process {
           species_flag    => $species_flag,
           assembly_flag   => $assembly_flag,
           code            => $code,
-        );
-      }
+      );
     }
   } else {
     $redirect .= 'SelectFile';

@@ -59,13 +59,17 @@ sub render {
     $cache->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $cache;
   }
 
-  $html .= '<div class="did-you-know"><ul class="bxslider">';
+  $html .= '<ul class="bxslider">';
 
   ## We want all the news plus some random tips
   my $limit = 5;
 
   my @tips_to_show = map {[$categories{'new'}, $_->{'content'}]} @{$tips->{'new'}};
 
+  # On a mirror installation we probably don't have or want an ENSEMBL_TIPS_RSS setting, and                                                                                                                         
+  # so don't want to return an empty 'did-you-know' class html div, so return here.                                                                                                                                  
+  return unless @tips_to_show;
+  
   ## Random did-you-knows
   my $to_add = $limit - scalar(@tips_to_show);
   srand;
@@ -81,7 +85,7 @@ sub render {
     $html .= sprintf('<li><div><b>%s</b><br />%s</div></li>', $_->[0], $_->[1]);
   }
 
-  $html .= '</ul></div>';
+  $html .= '</ul>';
 
   return $html;
 }

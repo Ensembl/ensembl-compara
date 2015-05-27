@@ -16,6 +16,12 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::simple_histogram;
 
 ### Draws data stored as simple features in a histogram style track
@@ -24,6 +30,15 @@ package EnsEMBL::Draw::GlyphSet::simple_histogram;
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
+
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 
 sub draw_features  {
   my ($self, $wiggle) = @_;

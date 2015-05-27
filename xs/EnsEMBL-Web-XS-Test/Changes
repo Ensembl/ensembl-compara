@@ -1,0 +1,6 @@
+Revision history for Perl extension EnsEMBL::Web::XS::Test.
+
+0.01  Fri Apr 10 14:49:25 2015
+	- original version; created by h2xs 1.23 with options
+		-A -n EnsEMBL::Web::XS::Test
+

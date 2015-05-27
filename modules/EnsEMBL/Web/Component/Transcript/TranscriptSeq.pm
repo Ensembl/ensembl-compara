@@ -140,14 +140,15 @@ sub get_sequence_data {
       ($pos_start) = grep $protein_seq->{'seq'}[$_ - 1]{'letter'} eq '.', 1..3; # Find the positions of . characters at the start
     }
 
-    if ($strip_end = 3 - ($cd_end - $cd_start) % 3) {
+    if ($strip_end = 3 - ($cd_end - $cd_start + 1) % 3) {
       ($pos_end) = grep $protein_seq->{'seq'}[$_ + 1]{'letter'} =~ /\*|\-/, -3..-1; # Find the positions of - or * characters at the end
     }
 
     # Replace with as much of -X- as fits in the space and remove the extra chars from the end if required
     $protein_seq->{'seq'}[$pos_start]{'letter'} = $partial[ $pos_start ]  while $pos_start--;
     $protein_seq->{'seq'}[$pos_end]{'letter'}   = $partial[ $pos_end ]    while $pos_end++;
-    splice $protein_seq->{'seq'}, -1 * $strip_end if $strip_end--;
+
+    splice $protein_seq->{'seq'}, -1 * $strip_end if $strip_end;
   }
   
   if ($config->{'snp_display'} and $adorn ne 'none') {

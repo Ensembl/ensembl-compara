@@ -82,9 +82,10 @@ sub fetch_features {
 sub _check_build_type {
   my ($self) = @_;
 
+  my $species = $self->{'config'}{'species'};
   unless(defined $self->{'new_reg_build'}) {
     $self->{'new_reg_build'} =
-      $self->{'config'}->hub->is_new_regulation_pipeline;
+      $self->{'config'}->hub->is_new_regulation_pipeline($species);
   }
 }
 
@@ -277,6 +278,6 @@ sub feature_label {
 }
 
 sub label_overlay { return 1; }
-sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }
+sub max_label_rows { return $_[0]->my_config('max_label_rows') || 1; }
 
 1;

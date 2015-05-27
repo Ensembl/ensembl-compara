@@ -281,7 +281,17 @@ sub get_export_data {
   else {
     my $cdb = $flag || $hub->param('cdb') || 'compara';
     my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
-    return $homologies;
+    my %ok_species;
+    foreach (grep { /species_/ } $hub->param) {
+      (my $sp = $_) =~ s/species_//;
+      $ok_species{$sp} = 1 if $hub->param($_) eq 'yes';
+    }
+    if (keys %ok_species) {
+      return [grep {$ok_species{$_->get_all_Members->[1]->genome_db->name}} @$homologies];
+    }
+    else {
+      return $homologies;
+    }
   }
 }
 

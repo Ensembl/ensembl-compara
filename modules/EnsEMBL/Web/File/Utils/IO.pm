@@ -31,6 +31,9 @@ package EnsEMBL::Web::File::Utils::IO;
 ### The "non-nice" mode returns less structured data for capture by the calling 
 ### script and will also throw exceptions unless the 'no_exception' flag is passed.
 
+### Note that we always pass 'MultiStream' => 1 to gunzip, in case we are dealing
+### with a bgzip file
+
 ### Examples:
 
 ### use EnsEMBL::Web::File::Utils::IO qw/:all/;
@@ -205,13 +208,19 @@ sub read_file {
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->absolute_read_path : $file;
-  my $content;
+  my ($content, $method, $slurp_args);
 
   my $compression = $args->{'compression'} || get_compression($file);
-  my $method      = $compression ? $compression.'_slurp' : 'slurp';
+  if ($compression) {
+    $method = $compression.'_slurp';
+    $slurp_args = {'MultiStream' => 1} if $compression eq 'gz';
+  }
+  else {
+    $method = 'slurp';
+  }
   eval {
     no strict 'refs';
-    $content = &$method($path);
+    $content = &$method($path, 0, 0, $slurp_args);
   };
 
   if ($args->{'nice'}) {
@@ -247,12 +256,19 @@ sub read_lines {
   my ($file, $args) = @_;
   my $content = [];
   my $path = ref($file) ? $file->absolute_read_path : $file;
+  my ($method, $slurp_args);
 
   my $compression = defined($args->{'read_compression'}) || get_compression($file);
-  my $method = $compression ? $compression.'_slurp_to_array' : 'slurp_to_array';
+  if ($compression) {
+    $method = $compression.'_slurp_to_array';
+    $slurp_args = {'MultiStream' => 1} if $compression eq 'gz';
+  }
+  else {
+    $method = 'slurp_to_array';
+  }
   eval { 
     no strict 'refs';
-    $content = &$method($path) 
+    $content = &$method($path, 0, 0, $slurp_args) 
   }; 
 
   if ($args->{'nice'}) {
@@ -290,9 +306,16 @@ sub preview_file {
   my $limit = $args->{'limit'} || 10;
   my $count = 0;
   my $lines = [];
+  my ($method, $slurp_args);
 
   my $compression = $args->{'read_compression'} || get_compression($file);
-  my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
+  if ($compression) {
+    $method = $compression.'_work_with_file';
+    $slurp_args = {'MultiStream' => 1} if $compression eq 'gz';
+  }
+  else {
+    $method = 'work_with_file';
+  }
 
   eval { 
     no strict 'refs';
@@ -305,7 +328,8 @@ sub preview_file {
           last if $count == $limit;
         }
         return;
-      }
+      },
+      $slurp_args
     );
   };
 

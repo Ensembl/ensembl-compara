@@ -35,7 +35,7 @@ sub _init {
   $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   return unless $features;
 
-  $self->init_legend(3);
+  $self->init_legend();
   my (%sections,%headings,%priorities, @legend_check);
   
   foreach my $type (sort { $features->{$a}{'priority'} <=> $features->{$b}{'priority'} } keys %$features) {

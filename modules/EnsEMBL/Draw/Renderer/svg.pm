@@ -25,8 +25,6 @@ use base qw(EnsEMBL::Draw::Renderer);
 
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
-  # we separate out postscript commands from header so that we can
-  # do EPS at some future time.
   $im_height = int($im_height * $self->{sf});
   $im_width  = int($im_width  * $self->{sf});
 
@@ -89,8 +87,8 @@ sub class {
     return qq(class="$class");
 }
 sub style {
-    my ($self, $glyph) = @_;
-    my $gcolour       = $glyph->colour();
+    my ($self, $glyph,$colour) = @_;
+    my $gcolour       = $colour || $glyph->colour();
     my $gbordercolour = $glyph->bordercolour();
 
     my $style = 
@@ -137,6 +135,42 @@ sub render_Rect {
     $self->add_string(qq(<rect x="$x" y="$y" width="$w" height="$h" $style />\n)); 
 }
 
+sub render_Barcode {
+  my ($self, $glyph) = @_;
+
+  my $colours        = $self->{'colours'};
+
+  my $points = $glyph->{'pixelpoints'};
+  return unless defined $points;
+
+  my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
+  my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
+  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+  my @colours = @{$glyph->{'colours'}};
+  my $max = $glyph->{'max'} || 1000;
+  my $fmt = '<rect x="%0.3f" y="%0.3f" width="%0.3f" height="%0.3f" %s />';
+  my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+  if($glyph->{'wiggle'} eq 'bar') {
+    my $mul = ($y2-$y1) / $max;
+    my $style = $self->style($glyph,$colours[0]);
+    foreach my $p (@$points) {
+      my $yb = $y2 - $p * $mul;
+      $self->add_string(sprintf($fmt,$x1,$y2,$x2-$x1+1,$yb-$y2+1,$style));
+      $x1 += $step;
+      $x2 += $step;
+    }
+  } else {
+    foreach my $p (@$points) {
+      my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
+      my $style = $self->style($glyph,$colour);
+      $self->add_string(sprintf($fmt,$x1,$y1,$x2-$x1+1,$y2-$y1+1,$style));
+      $x1 += $step;
+      $x2 += $step;
+    }
+  }
+}
+
 sub render_Text {
     my ($self, $glyph) = @_;
     my $font = $glyph->font();
@@ -155,11 +189,11 @@ sub render_Text {
 }
 
 sub render_Circle {
-#    die "Not implemented in postscript yet!";
+#    die "Not implemented in svg yet!";
 }
 
 sub render_Ellipse {
-#    die "Not implemented in postscript yet!";
+#    die "Not implemented in svg yet!";
 }
 
 sub render_Intron {

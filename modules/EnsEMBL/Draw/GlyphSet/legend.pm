@@ -78,6 +78,10 @@ use base qw(EnsEMBL::Draw::GlyphSet);
 use POSIX qw(ceil);
 use List::Util qw(max);
 
+# Would be better to caluclate this at the end, but we calculate (x,y)
+#   before all the data is in.
+my $MAX_WIDTH = 350;
+
 # USEFUL UTILITIES
 
 my %abs = map {; $_ => 1 } qw(absolutex absolutey absolutewidth);
@@ -374,9 +378,12 @@ sub init_legend { # begin (or reset)
   return unless $self->strand == -1;
 
   $self->{'box_width'} = 20;
-  $self->{'columns'} = ($c||2);
   my $im_width = $config->get_parameter('panel_width'); 
- 
+  if($c) {
+    $self->{'columns'} = $c;
+  } else {
+    $self->{'columns'} = int($im_width / $MAX_WIDTH);
+  }
   $self->{'font'} = { $self->get_font_details('legend', 1) };
 
   my @sizes = $self->get_text_width(0,'X','',%{$self->{'font'}});

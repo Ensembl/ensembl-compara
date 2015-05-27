@@ -199,7 +199,7 @@ sub get_export_data {
   $self->hub->{'_builder'}->create_objects('Family', 'lazy');
   my $family = $self->hub->core_object('family');
   if ($family) {
-    return $family->Obj->get_SimpleAlign;
+    return $family->Obj->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
   }
 }
 

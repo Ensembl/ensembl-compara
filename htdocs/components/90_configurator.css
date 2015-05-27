@@ -113,7 +113,9 @@ div.config_wrapper .config_menu .collapsed               { background-image: url
 div.config_wrapper .config_menu .density_bar             { background-image: url(/i/render/density_bar.gif); }
 div.config_wrapper .config_menu .density_graph           { background-image: url(/i/render/density_graph.gif); }
 div.config_wrapper .config_menu .density_line            { background-image: url(/i/render/density_line.gif); }
+div.config_wrapper .config_menu .density_raw             { background-image: url(/i/render/density_raw.gif); }
 div.config_wrapper .config_menu .density_whiskers        { background-image: url(/i/render/density_whiskers.gif); }
+div.config_wrapper .config_menu .density_raw             { background-image: url(/i/render/density_raw.gif); }
 div.config_wrapper .config_menu .density_mixed           { background-image: url(/i/render/density_mixed.gif); }
 div.config_wrapper .config_menu .density_outline         { background-image: url(/i/render/density_outline.gif); }
 div.config_wrapper .config_menu .difference              { background-image: url(/i/render/difference.gif); }
@@ -127,6 +129,8 @@ div.config_wrapper .config_menu .highlight_rharrow       { background-image: url
 div.config_wrapper .config_menu .highlight_widebox       { background-image: url(/i/render/highlight_widebox.gif); }
 div.config_wrapper .config_menu .highlight_wideline      { background-image: url(/i/render/highlight_wideline.gif); }
 div.config_wrapper .config_menu .histogram               { background-image: url(/i/render/histogram.gif); }
+div.config_wrapper .config_menu .interaction             { background-image: url(/i/render/interaction.gif); }
+div.config_wrapper .config_menu .interaction_label       { background-image: url(/i/render/interaction_label.gif); }
 div.config_wrapper .config_menu .line                    { background-image: url(/i/render/line.gif); }
 div.config_wrapper .config_menu .misalign                { background-image: url(/i/render/misalign.gif); }
 div.config_wrapper .config_menu .off                     { background-image: url(/i/render/off.gif); }

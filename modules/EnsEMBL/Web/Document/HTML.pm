@@ -113,7 +113,8 @@ sub news_header {
     my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
     my $release      = $adaptor->fetch_release($release_id);
     my $release_date = $release->{'date'};
-    $header_text = sprintf('%s Release %s (%s)', $sitename, $release_id, $release_date);
+    my $release_details = $release_date ? "$release_id ($release_date)" : $release_id;
+    $header_text = sprintf('%s Release %s', $sitename, $release_details);
   }
   return $header_text;
 }

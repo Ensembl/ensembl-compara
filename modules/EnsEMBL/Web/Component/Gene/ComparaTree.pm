@@ -33,12 +33,11 @@ sub get_details {
   my $self   = shift;
   my $cdb    = shift;
   my $object = shift || $self->object;
-  my $member = $object->get_compara_Member($cdb);
 
+  my $member = $object->get_compara_Member($cdb);
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
   my $species_tree = $object->get_SpeciesTree($cdb);
-  
   my $tree = $object->get_GeneTree($cdb);
   return (undef, '<strong>Gene is not in a compara tree</strong>') unless $tree;
 
@@ -529,8 +528,12 @@ sub get_export_data {
   my ($tree, $node, $member);
 
   ## First, get tree
-  if ($type && $type eq 'genetree') {
+  if ($type && $type eq 'genetree') { 
     $tree = $gene->get_GeneTree($cdb, 1);
+  }
+  elsif ($hub->species eq 'Multi' && $hub->param('gt')) {
+    my $gene_tree = $hub->{'_builder'}->create_objects('GeneTree', 'lazy');
+    $tree         = $gene_tree->Obj;
   }
   else {
     ($member, $tree) = $self->get_details($cdb, $gene);
@@ -543,16 +546,11 @@ sub get_export_data {
 
   ## Finally return correct object type
   if ($type) {
-    if ($type eq 'genetree') {
-      return $node ? $node->get_AlignedMemberSet : $tree;
-    }
-    else {
-      return $node ? $node : $tree;
-    }
+    return $node ? $node : $tree;
   }
   else {
     return $node ? $node->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1) 
-                 : $tree->get_SimpleAlign;
+                 : $tree->tree->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
   }
 }
 

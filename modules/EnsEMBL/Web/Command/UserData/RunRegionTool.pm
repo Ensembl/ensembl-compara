@@ -18,6 +18,11 @@ limitations under the License.
 
 package EnsEMBL::Web::Command::UserData::RunRegionTool;
 
+############# DEPRECATED #################
+## This tool is no longer in use and will
+## be removed in release 81
+##########################################
+
 use strict;
 
 use EnsEMBL::Web::TmpFile::Text;

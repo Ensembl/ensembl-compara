@@ -1,22 +1,5 @@
 #!/usr/local/bin/perl
 
-=head1 NAME
-
-start_server - script to start an Ensembl server
-
-=head1 SYNOPSIS
-
-    ctrl_scripts/start_server [-rXh]
-
-=head1 DESCRIPTION
-
-This script starts up an Ensembl server. Available options are:
-
-    - delete conf/config.packed before start
-    - start Apache in single server mode
-
-Run 'ctrl_script/start_server --help' for usage details.
-
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -33,170 +16,106 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=head1 AUTHOR
-
-Patrick Meidl <pm2@sanger.ac.uk>
-
-=head1 CONTACT
-
-Post questions to the EnsEMBL development list dev@ensembl.org
-
 =cut
 
 use strict;
 use warnings;
-no warnings 'uninitialized';
 
 use FindBin qw($Bin);
-use File::Basename qw(dirname);
-use POSIX qw(strftime);
 use Getopt::Long;
 
-my ($help, $rmconfig, $single, $flush, @defines);
-my $serverroot;
-
 BEGIN {
-  $serverroot = dirname($Bin);
-  unshift @INC, "$serverroot/conf";
+  require "$Bin/include.pl";
 };
 
-use SiteDefs;
+# Get some configs from SiteDefs
+my $web_root      = $SiteDefs::ENSEMBL_WEBROOT;
+my $conf_dir      = $SiteDefs::ENSEMBL_CONF_DIRS[0];
+my $conf_file     = $SiteDefs::ENSEMBL_CONFIG_FILENAME;
+my $memcached     = $SiteDefs::ENSEMBL_MEMCACHED;
+my $apache_define = $SiteDefs::APACHE_DEFINE;
+my $apache_dir    = $SiteDefs::APACHE_DIR;
+my $apache_bin    = $SiteDefs::APACHE_BIN;
+my $apache_conf   = $SiteDefs::ENSEMBL_HTTPD_CONFIG_FILE;
 
-## Walk through the plugin tree and see if there's 'ctrl_scripts/*' in there
-## any files starting with 00_start* to 49_start* will be executed before apache
-## any files starting with 50_start* to 99_start* will be executed after
-## same thing happens with stop_server
-## all scripts must be perl scripts, as they are 'required'
+my ($help, $rmconfig, $flush, @defines);
 
-my @start_before;
-my @start_after;
-my @plugins = reverse @{$SiteDefs::ENSEMBL_PLUGINS || []};
-
-while(my ($dir, $name) = splice @plugins, 0, 2) {
-  $dir = "$dir/ctrl_scripts";
-  
-  if (opendir(DIR, $dir)) {
-    my @files = readdir(DIR);
-    push @start_before, map "$dir/$_", grep /^[0-4]?[0-9]_start/, @files;
-    push @start_after,  map "$dir/$_", grep /^[5-9][0-9]_start/,  @files;
-    closedir DIR;
-  }
-}
-
-@start_before = sort @start_before;
-@start_after  = sort @start_after;
-
-my $confdir = 'conf';
-
+# parse command line options
 &GetOptions(
-  "confdir=s" => \$confdir,
-  "rmconfig"  => \$rmconfig,
-  "r"         => \$rmconfig,
-  "flush"     => \$flush,
-  "f"         => \$flush,
-  "X"         => \$single,
-  "single"    => \$single,
-  "help"      => \$help,
-  "h"         => \$help,
-  "D=s"       => \@defines,
+  "r|rmconfig"  => \$rmconfig,
+  "f|flush"     => \$flush,
+  "h|help"      => \$help,
+  "D|define=s"  => \@defines
 );
-
-warn "
-==============================================================================
- Starting server with configurations from $confdir
-";
 
 if ($help) {
   print qq(
-	Usage:
+  Usage:
     ctrl_scripts/start_server
-      [-r|--rmconfig]
-      [-f|--flush]
-      [-X|--single]
-      [-h|--help]
-        
-Options:
-  -r, --rmconfig  : remove conf/config.packed before restarting the server and flush memcached
-	-f, --flush     : flush memcached storage!
-  -X, --single    : start Apache in single server mode
-  -h, --help      : print this help message
+
+  Options:
+    -r, --rmconfig  : remove $conf_file before restarting the server and flush memcached
+    -f, --flush     : flush memcached storage!
+    -D, --define    : list of arguments to be passed to apache httpd process
+    -h, --help      : print this help message
 );
 
   exit;
 }
 
-if ($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
-  print LOG sprintf "%s [001] attempt server start (manual invocation)\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
-  close LOG; 
+warn_line();
+warn_string('start_server: Starting server');
+
+# Create directory for packed files if it doesn't exist
+if (! -e "$conf_dir/packed") {
+  warn_string("Creating directory for packed files at $conf_dir/packed");
+  system("mkdir -p $conf_dir/packed");
 }
 
-if (! -e "$SiteDefs::ENSEMBL_CONF_DIRS[0]/packed") {
-  warn " Creating directory for packed files at $SiteDefs::ENSEMBL_CONF_DIRS[0]/packed\n";
-  system("mkdir -p $SiteDefs::ENSEMBL_CONF_DIRS[0]/packed");
-}
-
-if ($SiteDefs::ENSEMBL_JSCSS_TYPE && ! -e "$SiteDefs::ENSEMBL_WEBROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE") {
-  warn " Creating directory for compress js and css at $SiteDefs::ENSEMBL_WEBROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE\n";
-  system("mkdir -p $SiteDefs::ENSEMBL_WEBROOT/htdocs/$SiteDefs::ENSEMBL_JSCSS_TYPE");
-}
-
+# If rebuilding the config file
 if ($rmconfig) {
-  warn " Removing config.packed...\n";
-  
-  my $ok = unlink "$serverroot/$confdir/config.packed";
-  
+  warn_line();
+  warn_string("Removing $conf_file");
+
+  my $ok = unlink "$conf_dir/$conf_file";
+
   if ($ok) {
-    warn " Removed config.packed....\n";
-  } else {
-    warn " Could not delete $serverroot/$confdir/config.packed: $!\n[WARN] Starting with old config.packed!\n";
+    warn_string("Removed $conf_file");
+  } elsif (-e "$conf_dir/$conf_file") {
+    warn_string("Could not delete $conf_dir/$conf_file: $!\n[WARN] Starting with old $conf_file!");
   }
 }
 
-## Check memcached servers version
-warn " Checking memcached compatibility...\n";
+# Additional processing for memcached
+if ($memcached) {
 
-my $res = system("$serverroot/ctrl_scripts/memcached version");
+  # Check memcached servers version
+  warn_line();
+  warn_string("Checking memcached compatibility...");
 
-if ($res >> 8 > 0) {
-  die " failed\nPlease check www.ensembl.org/info/docs/webcode/mirror/memcached\n";
+  my $res = system("$web_root/ctrl_scripts/memcached version");
+
+  if ($res >> 8 > 0) {
+    warn_string('failed');
+    die_string('Please check www.ensembl.org/info/docs/webcode/mirror/memcached');
+  }
+
+  if ($flush || $rmconfig) {
+    # Flush memcached
+    my $cmd = "$web_root/ctrl_scripts/memcached flush_all";
+    my @res = `$cmd`; chomp @res;
+
+    warn_string("Flushed memcached entries for this server (@res)");
+  }
 }
 
-if ($flush || $rmconfig) {
-  # Flush memcached
-  my $cmd = "$serverroot/ctrl_scripts/memcached flush_all";
-  my @res = `$cmd`; chomp @res;
-  
-  warn " Flushed memcached entries for this server (@res)\n";
-}
+warn_line();
 
-warn "==============================================================================\n";
+my ($before_start, $after_start) = before_after_hooks('start');
 
-my $cmd = '';
+# Build the httpd command string and run all commands
+my $cmd = sprintf '%s -d %s -f %s %s', $apache_bin || "$apache_dir/bin/httpd", $apache_dir, $apache_conf, join(' ', map("-D$_", @defines, $apache_define ? grep(/\S/, split ' ', $apache_define) : ()));
 
-if($SiteDefs::APACHE_DEFINE) {
-  push @defines,grep { /\S/ } split(' ',$SiteDefs::APACHE_DEFINE);
-}
-my $defines = join(' ',map { "-D$_" } @defines);
-
-my $exe     =  defined ($SiteDefs::APACHE_BIN) ? $SiteDefs::APACHE_BIN : ($SiteDefs::APACHE_DIR . '/bin/httpd');
-   $cmd    .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf $defines" . ($single ? ' -X' : '');
-
-if ($single) {
-  require $_ for @start_before;
-  require $_ for @start_after; # Better than not at all?
-  warn "About to exec: $cmd\n";
-  exec("$cmd");
-  die " Could not start server: $!.\n[FATAL] Server start failed.\n";
-} else {
-  require $_ for @start_before;
-  
-  system("$cmd") == 0 or die " Could not start server: $!.\n[FATAL] Server start failed.\n";
-
-  require $_ for @start_after;
-}
-
-if ($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
-  print LOG sprintf "%s [002] server started (manual invocation)\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
-  close LOG; 
-}
-
+require $_ for @$before_start;
+system($cmd) and die_string("Could not start server: $!.\n[FATAL] Server start failed.");
+require $_ for @$after_start;

@@ -135,7 +135,7 @@ sub render_align_bar {
   my %colour_map;
   my %colour_map2;
   my @colours = qw(antiquewhite1 mistyrose1 burlywood1 khaki1 cornsilk1 lavenderblush1 lemonchiffon2 darkseagreen2 lightcyan1 papayawhip seashell1);
-
+  
   foreach my $s (sort {$a->{'start'} <=> $b->{'start'}} @{$self->{'container'}->get_all_Slice_Mapper_pairs(1)}) {
     my $s2        = $s->{'slice'};
     my $ss        = $s->{'start'};
@@ -145,7 +145,7 @@ sub render_align_bar {
     my $s2e       = $s2->{'end'};
     my $s2st      = $s2->{'strand'};
     my $s2t       = $s2->{'seq_region_name'};
-    my $s2sp      = $s2->adaptor->db->species;
+    my $s2sp      = $s2->adaptor->db->species if($s2->adaptor);
     my $box_start = $ss;
     my $box_end   = $se;
     my $filled    = $sst;
@@ -195,7 +195,7 @@ sub render_align_bar {
     $self->push($glyph);
 
     my $ref_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $species, 'SPECIES_COMMON_NAME') || lc $species;
-    my $other_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $s2sp, 'SPECIES_COMMON_NAME') || lc $s2sp;
+    my $other_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $s2sp, 'SPECIES_COMMON_NAME') || lc $s2sp || '';
     
     # This happens when we have two slices following each other
     if (defined $last_end and ($last_end <= $ss - 1)) {
@@ -262,7 +262,7 @@ sub render_align_bar {
       $config->{'alignslice_legend'}{$colour} = {
         priority => $self->_pos,
         legend   => $legend
-      } if $legend;
+      } if $legend && $self->{container}->coord_system()->version() !~ /(EPO|PECAN)/;
     }
     
     $last_end = $se;
@@ -271,6 +271,24 @@ sub render_align_bar {
     $last_s2st = $s2st;
     $last_chr = $s2t;
   }
+  
+  # alignment legend for multiple alignment (show everything)
+  if ($self->{container}->coord_system()->version() =~ /(EPO|PECAN)/) { 
+    my $all_legend = [
+                   { colour => 'black', title => 'AlignSlice Break; Breakpoint in alignment', legend => 'Breakpoint between chromosomes'},
+                   { colour => 'dodgerblue', title => 'AlignSlice Break; Inversion in chromosome', legend => 'Inversion on chromosome'},      
+                   { colour => 'red', title => 'Gap in genome', legend => 'Indel (> 50 bp)'},      
+                   { colour => 'yellowgreen', title => 'AlignSlice Break; Breakpoint in alignment', legend => 'Shuffled blocks on chromosome'},      
+    ];
+
+    for my $row (@$all_legend) {     
+      my $colour = $row->{colour};
+      $config->{'alignslice_legend'}{$colour} = {
+        priority => $self->_pos,
+        legend   => $row->{legend}
+      };
+    }
+  }   
 }
 
 1;

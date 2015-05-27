@@ -192,7 +192,7 @@ sub transcript_table {
   my $trans_5_3_desc = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
   my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
   my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
-  my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my %text_lookup  = $hub->species_defs->multiX('TEXT_LOOKUP');
   my $gene_html    = '';  
   my $transc_table;
 
@@ -207,18 +207,20 @@ sub transcript_table {
 
     my $trans_attribs = {};
     my $trans_gencode = {};
-    my @appris_codes  = qw(appris_pi1 appris_pi2 appris_pi3 appris_pi4 appris_pi5 appris_alt1 appris_alt2);
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL), @appris_codes) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL appris)) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
         next unless $attrib;
         if($attrib_type eq 'gencode_basic' && $attrib->value) {
           $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
-        } elsif ($attrib_type =~ /appris/  && $attrib->value) {
+        } elsif ($attrib_type eq 'appris'  && $attrib->value) {
           ## There should only be one APPRIS code per transcript
-          (my $code = $attrib->code) =~ s/appris_//;
-          $trans_attribs->{$trans->stable_id}{'appris'} = [$code, $attrib->name]; 
+          my $short_code = $attrib->value;
+          ## Manually shorten the full attrib values to save space
+          $short_code =~ s/ernative//;
+          $short_code =~ s/rincipal//;
+          $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $attrib->value]; 
           last;
         } else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
@@ -271,7 +273,7 @@ sub transcript_table {
     my @rows;
    
     my %extra_links = (
-      uniprot => { match => "^UniProt", name => "UniProt", order => 0 },
+      uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
       refseq => { match => "^RefSeq", name => "RefSeq", order => 1 },
     );
     my %any_extras;
@@ -329,7 +331,7 @@ sub transcript_table {
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
-          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s</span></span>), $tsl, $glossary{"TSL$tsl"};
+          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s%s</span></span>), $tsl, $text_lookup{"TSL:$tsl"}, $text_lookup{'TSL'};
         }
       }
 
@@ -339,12 +341,9 @@ sub transcript_table {
         }
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
-        my ($code, $text) = @{$trans_attribs->{$tsi}{'appris'}};
-        my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '521', '__clear' => 1});
-        my $appris_link   = $hub->get_ExtURL_link('APPRIS website', 'APPRIS');
-        push @flags, $code
-          ? sprintf('<span class="glossary_mouseover">APPRIS %s<span class="floating_popup">%s<br /><a href="%s" class="popup">Glossary entry for APPRIS</a><br />%s</span></span>', uc $code, $text, $glossary_url, $appris_link)
-          : sprintf('<span class="glossary_mouseover">APPRIS<span class="floating_popup">%s<br />%s</span></span>', $text, $appris_link);
+        my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
+        my $short_code = $code ? ' '.uc($code) : '';
+          push @flags, sprintf qq(<span class="glossary_mouseover">APPRIS%s<span class="floating_popup">%s%s</span></span>), $short_code, $text_lookup{"APPRIS: $key"}, $text_lookup{'APPRIS'};
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
@@ -643,12 +642,15 @@ sub _add_gene_counts {
 sub species_stats {
   my $self = shift;
   my $sd = $self->hub->species_defs;
-  my $html = '<h3>Summary</h3>';
-
+  my $html;
   my $db_adaptor = $self->hub->database('core');
   my $meta_container = $db_adaptor->get_MetaContainer();
   my $genome_container = $db_adaptor->get_GenomeContainer();
 
+  #deal with databases that don't have species_stats
+  return $html if $genome_container->is_empty;
+
+  $html = '<h3>Summary</h3>';
   my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
 
   my $cols = [
@@ -1217,7 +1219,15 @@ sub render_sift_polyphen {
     'benign'            => 'good',
     'unknown'           => 'neutral',
     'tolerated'         => 'good',
-    'deleterious'       => 'bad'
+    'deleterious'       => 'bad',
+    
+    # slightly different format for SIFT low confidence states
+    # depending on whether they come direct from the API
+    # or via the VEP's no-whitespace processing
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
   );
   
   my %ranks = (
@@ -1271,6 +1281,67 @@ sub render_consequence_type {
   my $rank = $consequences[0]->rank;
       
   return ($type) ? qq{<span class="hidden">$rank</span>$type} : '-';
+}
+
+sub render_evidence_status {
+  my $self      = shift;
+  my $evidences = shift;
+
+  my $render;
+  foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$evidences){
+    my $evidence_label = $evidence;
+       $evidence_label =~ s/_/ /g;
+    $render .= sprintf('<img src="%s/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                        $self->img_url, $evidence, $evidence_label, $evidence
+                      );
+  }
+  return $render;
+}
+
+sub render_clinical_significance {
+  my $self       = shift;
+  my $clin_signs = shift;
+
+  my $render;
+  foreach my $cs (sort {$a cmp $b} @$clin_signs){
+    my $cs_img = $cs;
+       $cs_img =~ s/\s/-/g;
+    $render .= sprintf('<img src="%s/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                        $self->img_url, $cs_img, $cs, $cs
+                      );
+  }
+  return $render;
+}
+
+sub button_portal {
+  my ($self, $buttons, $class) = @_;
+  $class ||= '';
+  my $html;
+
+  my $img_url = $self->img_url;
+
+  foreach (@{$buttons || []}) {
+    if ($_->{'url'}) {
+      my $counts = qq(<span class="counts">$_->{'count'}</span>) if $_->{'count'};
+      $html .= qq(<div><a href="$_->{'url'}" title="$_->{'title'}" class="_ht"><img src="$img_url$_->{'img'}" alt="$_->{'title'}" />$counts</a></div>);
+    } else {
+      $html .= qq|<div><img src="$img_url$_->{'img'}" class="_ht unavailable" alt="$_->{'title'} (Not available)" title="$_->{'title'} (Not available)" /></div>|;
+    }
+  }
+
+  return qq{<div class="portal $class">$html</div><div class="invisible"></div>};
+}
+
+sub vep_icon {
+  my ($self, $inner_html) = @_;
+
+  $inner_html   ||= 'Test your own variants with the <span>Variant Effect Predictor</span>';
+  my $hub         = $self->hub;
+  my $new_vep     = $hub->species_defs->ENSEMBL_VEP_ENABLED;
+  my $vep_link    = $hub->url({'__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
+  my $link_class  = $new_vep ? '' : ' modal_link';
+
+  return qq(<a class="vep-icon$link_class" href="$vep_link">$inner_html</a>);
 }
 
 1;
