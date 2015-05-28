@@ -426,6 +426,8 @@ sub render_as_alignment_nolabel {
           my @block_sizes     = split(',', $block_sizes); 
           my ($thick_start)   = @{$f->external_data->{'thick_start'}};
           my ($thick_end)     = @{$f->external_data->{'thick_end'}};
+          ## Fix for weird output from kent tools
+          $thick_start        = 0 if $thick_start == $thick_end;
           $thick_start        -= $self->{'container'}->start;
           $thick_end          -= $self->{'container'}->start;
 
@@ -433,7 +435,7 @@ sub render_as_alignment_nolabel {
                                 height       => $h,
                                 absolutey    => 1,
                               );
-          
+         
           for (my $i = 0; $i < $block_count; $i++) {
             my $block_start = $start + $block_starts[$i];
             my $block_width = $block_sizes[$i] || 1;
