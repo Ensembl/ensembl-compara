@@ -188,12 +188,12 @@ sub transcript_table {
   my $gene = $object->gene;
 
   #text for tooltips
-  my $gencode_desc = "The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).";
-  my $trans_5_3_desc = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
-  my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
-  my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
-  my %text_lookup  = $hub->species_defs->multiX('TEXT_LOOKUP');
-  my $gene_html    = '';  
+  my $gencode_desc    = "The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).";
+  my $trans_5_3_desc  = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
+  my $trans_5_desc    = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
+  my $trans_3_desc    = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
+  my %text_lookup     = $hub->species_defs->multiX('TEXT_LOOKUP');
+  my $gene_html       = '';
   my $transc_table;
 
   if ($gene) {
@@ -320,30 +320,30 @@ sub transcript_table {
       if ($trans_attribs->{$tsi}) {
         if ($trans_attribs->{$tsi}{'CDS_start_NF'}) {
           if ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-            push @flags,qq(<span class="glossary_mouseover">CDS 5' and 3' incomplete<span class="floating_popup">$trans_5_3_desc</span></span>);
+            push @flags, $self->helptip("CDS 5' and 3' incomplete", $trans_5_3_desc);
           }
           else {
-            push @flags,qq(<span class="glossary_mouseover">CDS 5' incomplete<span class="floating_popup">$trans_5_desc</span></span>);
+            push @flags, $self->helptip("CDS 5' incomplete", $trans_5_desc);
           }
         }
         elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-         push @flags,qq(<span class="glossary_mouseover">CDS 3' incomplete<span class="floating_popup">$trans_3_desc</span></span>);
+         push @flags, $self->helptip("CDS 3' incomplete", $trans_3_desc);
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
-          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s%s</span></span>), $tsl, $text_lookup{"TSL:$tsl"}, $text_lookup{'TSL'};
+          push @flags, $self->helptip("TSL:$tsl", $text_lookup{"TSL:$tsl"}.$text_lookup{'TSL'});
         }
       }
 
       if ($trans_gencode->{$tsi}) {
         if ($trans_gencode->{$tsi}{'gencode_basic'}) {
-          push @flags,qq(<span class="glossary_mouseover">GENCODE basic<span class="floating_popup">$gencode_desc</span></span>);
+          push @flags, $self->helptip('GENCODE basic', $gencode_desc);
         }
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
         my $short_code = $code ? ' '.uc($code) : '';
-          push @flags, sprintf qq(<span class="glossary_mouseover">APPRIS%s<span class="floating_popup">%s%s</span></span>), $short_code, $text_lookup{"APPRIS: $key"}, $text_lookup{'APPRIS'};
+          push @flags, $self->helptip("APPRIS$short_code", $text_lookup{"APPRIS: $key"}.$text_lookup{'APPRIS'});
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
@@ -578,32 +578,19 @@ sub get_synonyms {
   }
   return join ', ', @ids;
 }
-
-# Utility method to wrap HTML in a glossary
-sub glossary {
-  my %glossary = $_[0]->multiX('ENSEMBL_GLOSSARY');
-  my $entry = $glossary{$_[1]};
-
-  return $_[2] unless defined $entry;
-  return qq(<span class="glossary_mouseover">$_[2]<span class="floating_popup">$entry</span></span>);
-}
   
 sub _add_gene_counts {
   my ($self,$genome_container,$sd,$cols,$options,$tail,$our_type) = @_;
 
-  my @order = qw(
-    coding_cnt noncoding_cnt noncoding_cnt/s noncoding_cnt/l noncoding_cnt/m
-    pseudogene_cnt transcript
-  );
-  my @suffixes = (['','~'],
-                  ['r',' (incl ~ '.glossary($sd,'Readthrough','readthrough').')']);
-  my %glossary_lookup   = (
-      'coding_cnt'          => 'Protein coding',
-      'noncoding_cnt/s'     => 'Small non coding gene',
-      'noncoding_cnt/l'     => 'Long non coding gene',
-      'pseudogene_cnt'      => 'Pseudogene',
-      'transcript'          => 'Transcript',
-    );
+  my @order           = qw(coding_cnt noncoding_cnt noncoding_cnt/s noncoding_cnt/l noncoding_cnt/m pseudogene_cnt transcript);
+  my @suffixes        = (['','~'], ['r',' (incl ~ '.$self->glossary_helptip('readthrough', 'Readthrough').')']);
+  my $glossary_lookup = {
+    'coding_cnt'        => 'Protein coding',
+    'noncoding_cnt/s'   => 'Small non coding gene',
+    'noncoding_cnt/l'   => 'Long non coding gene',
+    'pseudogene_cnt'    => 'Pseudogene',
+    'transcript'        => 'Transcript',
+  };
 
   my @data;
   foreach my $statistic (@{$genome_container->fetch_all_statistics()}) {
@@ -633,7 +620,7 @@ sub _add_gene_counts {
     my $class = '';
     $class = 'row-sub' if $d->{'_sub'};
     my $key = $d->{'_name'};
-    $key = glossary($sd,$glossary_lookup{$d->{'_key'}},"<b>$d->{'_name'}</b>");
+    $key = $self->glossary_helptip("<b>$d->{'_name'}</b>", $glossary_lookup->{$d->{'_key'}});
     $counts->add_row({ name => $key, stat => $value, options => { class => $class }});
   } 
   return "<h3>Gene counts$tail</h3>".$counts->render;
@@ -651,7 +638,6 @@ sub species_stats {
   return $html if $genome_container->is_empty;
 
   $html = '<h3>Summary</h3>';
-  my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
 
   my $cols = [
     { key => 'name', title => '', width => '30%', align => 'left' },
@@ -686,7 +672,7 @@ sub species_stats {
       'name' => '<b>Base Pairs</b>',
       'stat' => $self->thousandify($genome_container->get_total_length()),
   });
-  my $header = '<span class="glossary_mouseover">Golden Path Length<span class="floating_popup">'.$glossary{'Golden path length'}.'</span></span>';
+  my $header = $self->glossary_helptip('Golden Path Length', 'Golden path length');
   $summary->add_row({
       'name' => "<b>$header</b>",
       'stat' => $self->thousandify($genome_container->get_ref_length())
@@ -1275,7 +1261,7 @@ sub render_consequence_type {
             $var_styles->{lc $_->SO_term}->{'default'}
           )
         : $colourmap->hex_by_name($var_styles->{'default'}->{'default'});
-      $self->coltab($_->label,$hex,$_->description);
+      $self->coltab($_->label, $hex, $_->description);
     }
     @consequences;
   my $rank = $consequences[0]->rank;
