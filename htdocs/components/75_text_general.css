@@ -193,6 +193,3 @@ a.notext { text-decoration:none; }
 a.fn-link { vertical-align:super; font-size:0.7em; text-decoration:none; }
 div.footnotes { margin-top:2em; }
 div.footnotes ol li { font-size:0.9em; }
-
-.conhelp { border-bottom:1px dotted #999; cursor: help; }
-

@@ -29,34 +29,24 @@ use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
 use List::MoreUtils qw(uniq first_index);
 
-######### USED ON VARIOUS PAGES ###########
-
 sub coltab {
-  my ($self,$text,$colour,$title) = @_;
+  my ($self, $text, $colour, $title) = @_;
 
-  $title ||= '';
-  return sprintf(
-    qq(
-      <div class="coltab">
-        <span class="colour coltab_tab" style="background-color:%s;">&nbsp;</span>
-        <div class="_ht conhelp coltab_text" title="%s">%s</div>
-      </div>),
-    $colour,$title,$text
-  );
+  return sprintf(qq(<div class="coltab"><span class="coltab-tab" style="background-color:%s;">&nbsp;</span><div class="coltab-text">%s</div></div>), $colour, $self->helptip($text, $title));
 }
 
-
-########### GENES AND TRANSCRIPTS ###################
-
 sub colour_biotype {
-  my ($self,$html,$transcript,$title) = @_;
+  my ($self, $text, $transcript, $title) = @_;
 
-  my $colours       = $self->hub->species_defs->colour('gene');
-  my $key = $transcript->biotype;
-  $key = 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
-  my $colour = ($colours->{lc($key)}||{})->{'default'};
-  my $hex = $self->hub->colourmap->hex_by_name($colour);
-  return $self->coltab($html,$hex,$title);
+  $title ||= $self->get_glossary_entry($text);
+
+  my $colours = $self->hub->species_defs->colour('gene');
+  my $key     = $transcript->biotype;
+     $key     = 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
+  my $colour  = ($colours->{lc($key)} || {})->{'default'};
+  my $hex     = $self->hub->colourmap->hex_by_name($colour);
+
+  return $self->coltab($text, $hex, $title);
 }
 
 sub transcript_table {
@@ -353,8 +343,7 @@ sub transcript_table {
       else {
         $biotype_text = ucfirst($biotype_text);
       } 
-      my $merged = '';
-      $merged .= " Merged Ensembl/Havana gene." if $_->analysis->logic_name =~ /ensembl_havana/;
+
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
         name        => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
@@ -362,15 +351,15 @@ sub transcript_table {
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
         translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_id : '-',
-        biotype     => $self->colour_biotype($self->glossary_mouseover($biotype_text,undef,$merged),$_),
+        biotype     => $self->colour_biotype($biotype_text, $_),
         ccds        => $ccds,
         %extras,
-        has_ccds   => $ccds eq '-' ? 0 : 1,
-        cds_tag    => $cds_tag,
-        gencode_set=> $gencode_set,
-        options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
-        flags => join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags),
-        evidence => join('', @evidence),
+        has_ccds    => $ccds eq '-' ? 0 : 1,
+        cds_tag     => $cds_tag,
+        gencode_set => $gencode_set,
+        options     => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
+        flags       => join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags),
+        evidence    => join('', @evidence),
       };
       
       $biotype_text = '.' if $biotype_text eq 'Protein coding';

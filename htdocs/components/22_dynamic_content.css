@@ -172,9 +172,8 @@ ul.variation_consequence_tree li a.leaf   { margin-left: -10px!important; }
 /************************************
    misc conventions
  ************************************/
-div.coltab { line-height: 110%; text-align: left; display: inline-block; }
-span.coltab_tab { float: left; }
-div.coltab_text { margin: 0 0 4px 8px; }
+div.coltab span.coltab-tab  { float: left; line-height: 110%; }
+div.coltab div.coltab-text  { margin: 0 0 4px 8px; }
 
 /* 'redirecting to mirror' message*/
 div.redirect-message-padding  { height: 40px; }
