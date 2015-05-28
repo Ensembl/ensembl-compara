@@ -182,7 +182,6 @@ sub transcript_table {
   my $trans_5_3_desc  = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
   my $trans_5_desc    = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
   my $trans_3_desc    = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
-  my %text_lookup     = $hub->species_defs->multiX('TEXT_LOOKUP');
   my $gene_html       = '';
   my $transc_table;
 
@@ -321,7 +320,7 @@ sub transcript_table {
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
-          push @flags, $self->helptip("TSL:$tsl", $text_lookup{"TSL:$tsl"}.$text_lookup{'TSL'});
+          push @flags, $self->helptip("TSL:$tsl", $self->get_glossary_entry("TSL:$tsl").$self->get_glossary_entry('TSL'));
         }
       }
 
@@ -333,7 +332,7 @@ sub transcript_table {
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
         my $short_code = $code ? ' '.uc($code) : '';
-          push @flags, $self->helptip("APPRIS$short_code", $text_lookup{"APPRIS: $key"}.$text_lookup{'APPRIS'});
+          push @flags, $self->helptip("APPRIS$short_code", $self->get_glossary_entry("APPRIS: $key").$self->get_glossary_entry('APPRIS'));
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
