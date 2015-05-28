@@ -82,4 +82,3 @@ body.ie  .zmenu_holder div.header      { width: 202px; }
 body.ie6 .zmenu_holder span.close,
 body.ie6 .info_popup   span.close      { background-image: url(/i/close2.gif); }
 
-.glossary_mouseover                    { border-bottom: 1px dotted #00c; cursor: pointer; }
