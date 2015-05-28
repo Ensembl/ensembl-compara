@@ -197,7 +197,8 @@ sub calc_genetic_distance {
         warn("Caught a NotImplemented error. Ignoring as this can be generated from bad alignments \n");
       }
       else {
-        die;
+        print_simple_align($aln, 80);
+        die "Codeml failed. Please investigate this homology.\n";
       }
     }
     return $homology;
