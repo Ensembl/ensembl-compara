@@ -424,12 +424,16 @@ sub render_as_alignment_nolabel {
           my ($block_sizes)   = @{$f->external_data->{'BlockSizes'}};
           my @block_starts    = split(',', $block_starts); 
           my @block_sizes     = split(',', $block_sizes); 
-          my ($thick_start)   = @{$f->external_data->{'thick_start'}};
-          my ($thick_end)     = @{$f->external_data->{'thick_end'}};
-          ## Fix for weird output from kent tools
-          $thick_start        = 0 if $thick_start == $thick_end;
-          $thick_start        -= $self->{'container'}->start;
-          $thick_end          -= $self->{'container'}->start;
+          my ($thick_start)   = @{$f->external_data->{'thick_start'} || (0)};
+          my ($thick_end)     = @{$f->external_data->{'thick_end'} || (0)};
+          $thick_start        -= $self->{'container'}->start if $thick_start;
+          $thick_end          -= $self->{'container'}->start if $thick_end;
+
+          ## Fix for non-intuitive configuration of non-coding transcripts
+          if ($thick_start == $thick_end) {
+            $thick_start  = 0;
+            $thick_end    = 0;
+          }
 
           my %glyph_params  = (
                                 height       => $h,
@@ -478,17 +482,22 @@ sub render_as_alignment_nolabel {
                                             x             => $thick_end,
                                             y             => $composite->{'y'},
                                             width         => $utr_width,
-                                            border_colour => $feature_colour,
+                                            bordercolour => $feature_colour,
                                             %glyph_params,
                                           }));
               } 
             }
             else {
+              if ($thick_start) {
+                $glyph_params{'colour'} = $feature_colour;
+              }
+              else {
+                $glyph_params{'bordercolour'} = $feature_colour;
+              }
               $composite->unshift($self->Rect({
                                             x            => $block_start,
                                             y            => $composite->{'y'},
                                             width        => $block_width,
-                                            colour       => $feature_colour,
                                             %glyph_params,
                                           }));
             }
