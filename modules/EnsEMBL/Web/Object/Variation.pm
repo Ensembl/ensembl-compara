@@ -58,7 +58,7 @@ sub availability {
       
       $availability->{'variation'} = 1;
       
-      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts populations individuals ega citation);
+      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts populations samples ega citation);
       if($self->param('vf')){
           ## only show these if a mapping available
           $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
@@ -91,7 +91,7 @@ sub counts {
     $counts = {};
     $counts->{'transcripts'} = $self->count_transcripts;
     $counts->{'populations'} = $self->count_populations;
-    $counts->{'individuals'} = $self->count_individuals;
+    $counts->{'samples'} = $self->count_samples;
     $counts->{'ega'}         = $self->count_ega;
     $counts->{'ldpops'}      = $self->count_ldpops;
     $counts->{'alignments'}  = $self->count_alignments->{'multi'};
@@ -141,7 +141,7 @@ sub count_populations {
   return $counts;
 }
 
-sub count_individuals {
+sub count_samples {
   my $self = shift;
   my $dbh  = $self->database('variation')->get_VariationAdaptor->dbc->db_handle;
   my $var  = $self->Obj;
@@ -149,7 +149,7 @@ sub count_individuals {
   # somatic variations don't have genotypes currently
   return 0 if $var->has_somatic_source;
   
-  my $gts = $var->get_all_IndividualGenotypes();
+  my $gts = $var->get_all_SampleGenotypes();
   
   return defined($gts) ? scalar @$gts : 0;
 }
