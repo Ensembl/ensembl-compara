@@ -1073,16 +1073,16 @@ sub sample_genotype {
 }
 
 
-sub individual_description {
+sub sample_description {
 
-  ### Individual_genotype_table_calls
-  ### Args      : Bio::EnsEMBL::Variation::Individual object
-  ### Example    : $genotype_freq = $object->individual_description($individual);
-  ### Description: gets the Individual description
+  ### Sample_genotype_table_calls
+  ### Args       : Bio::EnsEMBL::Variation::Sample object
+  ### Example    : $description = $object->sample_description($sample);
+  ### Description: gets the Sample description
   ### Returns String
 
-  my ($self, $individual_obj)  = @_;
-  return $individual_obj->description;
+  my ($self, $sample_obj)  = @_;
+  return $sample_obj->description;
 }
 
 
