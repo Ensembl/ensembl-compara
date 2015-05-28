@@ -78,7 +78,7 @@ sub content {
 sub make_table {
   my ($self, $table_rows, $consequence_type) = @_;
   my $hub      = $self->hub;
-  my $glossary = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_glossary_lookup;
+  my $glossary = $hub->glossary_lookup;
   
   # Using explicit wdiths speeds things up and makes layout more predictable
   # u = 1unit, where unit is calculated so that total width is 100%

@@ -35,9 +35,9 @@ sub content {
   return $self->non_coding_error unless $object->translation_object;
 
   my $hub         = $self->hub;
-  my $var_styles  = $self->hub->species_defs->colour('variation');
-  my $colourmap   = $self->hub->colourmap;
-  my $glossary    = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_glossary_lookup;
+  my $var_styles  = $hub->species_defs->colour('variation');
+  my $colourmap   = $hub->colourmap;
+  my $glossary    = $hub->glossary_lookup;
   my $show_scores = $hub->param('show_scores');
   my @data;
   

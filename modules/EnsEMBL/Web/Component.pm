@@ -445,14 +445,7 @@ sub get_glossary_entry {
   ## @return Glossary description (possibly HTML)
   my ($self, $entry) = @_;
 
-  $self->{'_glossary'}    ||= { $self->hub->species_defs->multiX('ENSEMBL_GLOSSARY') };
-  $self->{'_help_lookup'} ||= { $self->hub->species_defs->multiX('TEXT_LOOKUP') };
-
-  return $self->{'_help_lookup'}{$entry} // $self->{'_glossary'}{$entry} // '';
-}
-
-sub get_help_lookup_entry {
-
+  return $self->hub->glossary_lookup->{$entry} // '';
 }
 
 sub error_panel {

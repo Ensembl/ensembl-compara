@@ -678,6 +678,22 @@ sub get_ext_seq {
   return wantarray ? @sequences : $sequences[0];
 }
 
+sub glossary_lookup {
+  ## Get the glossary lookup hash
+  ## @return Hashref with merged keys from TEXT_LOOKUP and ENSEMBL_GLOSSARY
+  my $self = shift;
+
+  if (!$self->{'_glossary_lookup'}) {
+    my %glossary  = $self->species_defs->multiX('ENSEMBL_GLOSSARY');
+    my %lookup    = $self->species_defs->multiX('TEXT_LOOKUP');
+
+    $self->{'_glossary_lookup'}{$_} = $glossary{$_} for keys %glossary;
+    $self->{'_glossary_lookup'}{$_} = $lookup{$_}   for keys %lookup;
+  }
+
+  return $self->{'_glossary_lookup'};
+}
+
 # This method gets all configured DAS sources for the current species.
 # Source configurations are retrieved first from SpeciesDefs, then additions and
 # modifications are added from the User and Session.
