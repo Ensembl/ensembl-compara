@@ -222,14 +222,20 @@
         row += '<li><span class="ad-loading">loading</span></li>';
       } else {
         sorted_each(cv,function(en,ev) {
-          var style = '';
+          var lclass = 'adorn-key-entry';
+          var style  = '';
+          var title  = '';
           if(!ev) { return; }
           if(ev['default']) {
             style += "background-color: " + ev['default'] + ";";
           }
+          if (ev['title']) {
+            title += ' title="' + ev['title'] + '"';
+            style += 'cursor:help;';
+          }
           if(ev.label) { style += "color: " + ev.label + ";"; }
           if(ev.extra_css) { style += ev.extra_css; }
-          row += '<li><span class="adorn-key-entry" style="'+style+'">' +
+          row += '<li><span class="'+lclass+'"'+title+' style="'+style+'">' +
             ev.text + '</span></li>';
         });
       }
@@ -248,7 +254,7 @@
     var html = '';
     if(key) { html += '<dl>' + key +'</dl>'; }
     if(messages) { html += '<ul>' + messages + '</ul>'; }
-    $key.html(html).toggle(!!html);
+    $key.html(html).toggle(!!html).find('span[title]').helptip();
   }
 
   function _do_adorn(outer,fixups,data) {
