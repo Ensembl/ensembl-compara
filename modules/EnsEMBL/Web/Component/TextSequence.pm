@@ -1346,13 +1346,17 @@ sub get_key {
   }
   
   $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
-  
+  $key{'variations'}{'failed'}{'title'} = "Suspect variants which failed our quality control checks";
+
+  my $example = ($hub->param('v')) ? ' (i.e. '.$hub->param('v').')' : '';
+
   if($config->{'focus_variant'}) {
     $image_config->{'legend'}{'variations'}{'focus'} = {
-      class => 'focus',
-      label => 'red',
-      default => 'white',
-      text => 'Focus variant',
+      class     => 'focus',
+      label     => 'red',
+      default   => 'white',
+      text      => 'Focus variant',
+      title     => "The Focus variant corresponds to the current variant$example",
       extra_css => 'text-decoration: underline; font-weight: bold;',
     };
   }
@@ -1367,7 +1371,7 @@ sub get_key {
       }
     }
   }
- 
+
   foreach my $type (keys %{$config->{'key'}}) {
     if (ref $config->{'key'}{$type} eq 'HASH') {
       $image_config->{'legend'}{$type}{$_} = $key{$type}{$_} for grep $config->{'key'}{$type}{$_}, keys %{$config->{'key'}{$type}};
