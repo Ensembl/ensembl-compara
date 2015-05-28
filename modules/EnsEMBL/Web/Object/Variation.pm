@@ -945,26 +945,26 @@ sub pop_display_group_name{
  
 
 
-# Individual table -----------------------------------------------------
+# Sample table -----------------------------------------------------
 
-sub individual_table {
+sub sample_table {
 
-  ### individual_table_calls
-  ### Example    : my $ind_genotypes = $object->individual_table;
-  ### Description: gets Individual Genotype data for this variation
+  ### sample_table_calls
+  ### Example    : my $sample_genotypes = $object->sample_table;
+  ### Description: gets Sample Genotype data for this variation
   ### Returns hashref with all the data
 
   my $self = shift;
   my $selected_pop = shift;
-  my $individual_genotypes = $self->individual_genotypes_obj($selected_pop);
-  return {} unless defined $individual_genotypes && @$individual_genotypes; 
+  my $sample_genotypes = $self->sample_genotypes_obj($selected_pop);
+  return {} unless defined $sample_genotypes && @$sample_genotypes; 
 
   ### limit populations shown to those with population genotypes 
   ### summarised by dbSNP or added in adaptor for 1KG
   my $pop_geno_adaptor   = $self->hub->database('variation')->get_PopulationGenotypeAdaptor();
   my $pop_genos = $pop_geno_adaptor->fetch_all_by_Variation($self->vari);
 
-  my %ip_hash_new;
+  my %sp_hash_new; #sample_population
   my %synonym;
   my %pop_seen;
   my %pop_data;
@@ -977,10 +977,10 @@ sub individual_table {
       next if $pop_seen{ $pop_id} ==1;
       $pop_seen{ $pop_id} =1;
 
-      my $individuals = $pop_obj->get_all_Individuals(); 
-      foreach my $ind_ob (@{$individuals}){
+      my $samples = $pop_obj->get_all_Samples(); 
+      foreach my $sample_ob (@{$samples}){
           ## link on name & apply to geno structure later
-          push @{$ip_hash_new{$ind_ob->name()}}, $pop_id;
+          push @{$sp_hash_new{$sample_ob->name()}}, $pop_id;
       }
 
       ## look up synonyms (for dbSNP link) once
@@ -999,31 +999,33 @@ sub individual_table {
   
   my %data;
   
-  foreach my $ind_gt_obj ( @$individual_genotypes ) { 
-    my $ind_obj   = $ind_gt_obj->individual;
-    next unless $ind_obj;
-    next if $ind_obj->name() =~/1000GENOMES:pilot_2/; ## not currently reporting these
+  foreach my $sample_gt_obj ( @$sample_genotypes ) { 
+    my $sample_obj = $sample_gt_obj->sample;
+    my $ind_obj   = $sample_obj->individual;
 
-    my $ind_id    = $ind_obj->dbID;
+    next unless $sample_obj;
+    next if $sample_obj->name() =~/1000GENOMES:pilot_2/; ## not currently reporting these
+
+    my $sample_id    = $sample_obj->dbID;
     
-    $data{$ind_id}{Name}           = $ind_obj->name;
-    $data{$ind_id}{Genotypes}      = $self->individual_genotype($ind_gt_obj);
-    $data{$ind_id}{Gender}         = $ind_obj->gender;
-    $data{$ind_id}{Description}    = $self->individual_description($ind_obj);
-    $data{$ind_id}{Mother}        = $self->parent($ind_obj,"mother");
-    $data{$ind_id}{Father}        = $self->parent($ind_obj,"father");
-    $data{$ind_id}{Children}      = $self->child($ind_obj);
-    $data{$ind_id}{Object}        = $ind_obj;
+    $data{$sample_id}{Name}        = $sample_obj->name;
+    $data{$sample_id}{Genotypes}   = $self->sample_genotype($sample_gt_obj);
+    $data{$sample_id}{Gender}      = $ind_obj->gender;
+    $data{$sample_id}{Description} = $self->sample_description($sample_obj);
+    $data{$sample_id}{Mother}      = $self->parent($ind_obj,"mother");
+    $data{$sample_id}{Father}      = $self->parent($ind_obj,"father");
+    $data{$sample_id}{Children}    = $self->child($ind_obj);
+    $data{$sample_id}{Object}      = $sample_obj;
   
-    if(defined $ip_hash_new{$ind_obj->name()}->[0]){
-      foreach my $pop_id (@{$ip_hash_new{$ind_obj->name()}}){
-        push (@{$data{$ind_id}{Population}}, $pop_data{$pop_id});
+    if(defined $sp_hash_new{$sample_obj->name()}->[0]){
+      foreach my $pop_id (@{$sp_hash_new{$sample_obj->name()}}){
+        push (@{$data{$sample_id}{Population}}, $pop_data{$pop_id});
       }
     }
     else{
-      ## force the rest to the 'Other individuals' table to be reported seperately
-      push (@{$data{$ind_id}{Population}}, {
-        Name => $ind_obj->name(),
+      ## force the rest to the 'Other samples' table to be reported seperately
+      push (@{$data{$sample_id}{Population}}, {
+        Name => $sample_obj->name(),
         Size => 1,
         Link => [],
         ID   => 1000000
