@@ -84,17 +84,30 @@ sub fetch_input {
 
     # We can directly fetch the leaves
     my $gene_tree_id = $self->param_required('gene_tree_id');
-    $self->param('all_protein_leaves', $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($gene_tree_id));
+    my $all_protein_leaves =  $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($gene_tree_id);
+
+    # The Runnable needs all these fields
+    my @good_leaves = grep {defined $_->genome_db_id and defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->dnafrag_id and defined $_->dnafrag_strand} @$all_protein_leaves;
 
     # Let's preload the gene members
-    $self->compara_dba->get_GeneMemberAdaptor->load_all_from_seq_members($self->param('all_protein_leaves'));
+    # Note that we have already filtered the list at this stage, to reduce
+    # the number of sequences to load, and thus the memory usage
+    $self->compara_dba->get_GeneMemberAdaptor->load_all_from_seq_members($all_protein_leaves);
+
+    my %protein_leaves_by_genome_db_id = ();
+    foreach my $leaf (@$all_protein_leaves) {
+        push @{$protein_leaves_by_genome_db_id{$leaf->genome_db_id}}, $leaf;
+    }
+    $self->param('protein_leaves_by_genome_db_id', \%protein_leaves_by_genome_db_id);
 }
 
 
 sub run {
     my $self = shift;
 
-    $self->check_for_split_genes
+    foreach my $genome_db_id (keys %{$self->param('protein_leaves_by_genome_db_id')}) {
+        $self->check_for_split_genes($genome_db_id);
+    }
 }
 
 
@@ -114,25 +127,26 @@ sub post_cleanup {
 
 sub check_for_split_genes {
     my $self = shift;
+    my $genome_db_id = shift;
 
+    printf("Working on genome_db_id $genome_db_id\n") if $self->debug;
     my $connected_split_genes = $self->param('connected_split_genes');
     my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
     $gene_member_adaptor->db->dbc->disconnect_if_idle;
 
     my $tmp_time = time();
 
-    my @all_protein_leaves = @{$self->param('all_protein_leaves')};
-    my @good_leaves = grep {defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->dnafrag_id and defined $_->dnafrag_strand and defined $_->genome_db_id} @all_protein_leaves;
+    my @these_protein_leaves = @{$self->param('protein_leaves_by_genome_db_id')->{$genome_db_id}};
+    my @good_leaves = grep {defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->dnafrag_id and defined $_->dnafrag_strand} @these_protein_leaves;
 
     if($self->debug) {
-        printf("%1.3f secs to fetch all %d/%dleaves\n", time()-$tmp_time, scalar(@all_protein_leaves), scalar(@good_leaves));
+        printf("%1.3f secs to fetch all %d/%dleaves\n", time()-$tmp_time, scalar(@these_protein_leaves), scalar(@good_leaves));
         print "build paralogs graph\n";
     }
     my @genepairlinks;
     my $graphcount = 0;
     while (my $protein1 = shift @good_leaves) {
         foreach my $protein2 (@good_leaves) {
-            next unless ($protein1->genome_db_id == $protein2->genome_db_id);
             push @genepairlinks, [$protein1, $protein2];
             print "build graph $graphcount\n" if ($self->debug and ($graphcount++ % 10 == 0));
         }
@@ -253,7 +267,7 @@ sub check_for_split_genes {
 
 
     if($self->debug) {
-        printf("%1.3f secs to analyze %d pairings (%d groups found)\n", time()-$tmp_time, scalar(@sorted_genepairlinks), scalar(@{$connected_split_genes->holding_node->links}) );
+        printf("%1.3f secs to analyze %d pairings of genome_db_id %d, (%d groups found)\n", time()-$tmp_time, scalar(@sorted_genepairlinks), $genome_db_id, scalar(@{$connected_split_genes->holding_node->links}) );
     }
 
 }
