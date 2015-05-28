@@ -197,7 +197,8 @@ sub calc_genetic_distance {
         warn("Caught a NotImplemented error. Ignoring as this can be generated from bad alignments \n");
       }
       else {
-        die;
+        print_simple_align($aln, 80);
+        die "Codeml failed. Please investigate this homology.\n";
       }
     }
     return $homology;
@@ -246,7 +247,12 @@ sub calc_genetic_distance {
       my $stats = new Bio::Align::DNAStatistics;
       if($stats->can('calc_KaKs_pair')) {
         my ($seq1id,$seq2id) = map { $_->display_id } $aln->each_seq;
-        my $results = $stats->calc_KaKs_pair($aln, $seq1id, $seq2id);
+        my $results = eval { $stats->calc_KaKs_pair($aln, $seq1id, $seq2id) };
+        if ($@) {
+            print_simple_align($aln, 80);
+            warn("Codeml error: $@");
+            return;
+        }
         my $counting_method_dn = $results->[0]{D_n};
         my $counting_method_ds = $results->[0]{D_s};
 
