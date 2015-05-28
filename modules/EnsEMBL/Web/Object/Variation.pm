@@ -1089,9 +1089,9 @@ sub sample_description {
 
 sub parent {
 
-  ### Individual_genotype_table_calls
+  ### Sample_genotype_table_calls
   ### Args1      : Bio::EnsEMBL::Variation::Individual object
-  ### Arg2      : string  "mother" "father"
+  ### Arg2       : string  "mother" "father"
   ### Example    : $mother = $object->parent($individual, "mother");
   ### Description: gets any related individuals
   ### Returns Bio::EnsEMBL::Variation::Individual
@@ -1102,16 +1102,16 @@ sub parent {
   return {} unless $parent;
 
   # Gender is obvious, not calling their parents
-  return  { Name        => $parent->name,
-      ### Description=> $self->individual_description($ind_obj),
-    };
+  return  { Name => $parent->name,
+    ### Description=> $self->individual_description($ind_obj),
+  };
 }
 
 
 sub child {
 
-  ### Individual_genotype_table_calls
-  ### Args      : Bio::EnsEMBL::Variation::Individual object
+  ### Sample_genotype_table_calls
+  ### Args       : Bio::EnsEMBL::Variation::Individual object
   ### Example    : %children = %{ $object->extra_individual($individual)};
   ### Description: gets any related individuals
   ### Returns Bio::EnsEMBL::Variation::Individual
@@ -1128,21 +1128,24 @@ sub child {
 }
 
 
-sub get_individuals_pops {
+sub get_samples_pops {
 
-  ### Individual_genotype_table_calls
-  ### Args      : Bio::EnsEMBL::Variation::Individual object
-  ### Example    : $pops =  $object->get_individuals_pop($individual)};
-  ### Description: gets any individual''s populations
+  ### Sample_genotype_table_calls
+  ### Args       : Bio::EnsEMBL::Variation::Sample object
+  ### Example    : $pops =  $object->get_samples_pop($sample)};
+  ### Description: gets any sample''s populations
   ### Returns Bio::EnsEMBL::Variation::Population
 
-  my ($self, $individual) = @_;
-  my @populations = @{$individual->get_all_Populations};
+  my ($self, $sample) = @_;
+  my @populations = @{$sample->get_all_Populations};
   my @pop_string;
 
   foreach (@populations) {
-    push (@pop_string,  {Name => $self->pop_name($_), 
-       Link => $self->pop_links($_), ID => $_->dbID});
+    push (@pop_string,  {
+      Name => $self->pop_name($_), 
+      Link => $self->pop_links($_),
+      ID => $_->dbID
+    });
   }
   return \@pop_string;
 }
