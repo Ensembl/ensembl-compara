@@ -79,7 +79,7 @@ The option is selected by the hmm_clustering flag.
 
 At this step, the pipeline will initialize:
  - the ncbi_taxa_node and ncbi_taxa_name tables: copied over from a reference database (either a "master" database, or a pre-existing Compara database)
- - entries in the method_link, species_set, and method_link_species_set tables
+ - entries in the method_link, species_set_header, species_set, and method_link_species_set tables
 
 Then, it will:
  - check that the connections to each core database / FASTA file are available

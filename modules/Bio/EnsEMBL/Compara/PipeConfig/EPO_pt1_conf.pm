@@ -192,7 +192,7 @@ return [
  -input_ids  => [{}],
  -parameters => {
   'db_conn' => '#compara_pairwise_db#',
-  'inputlist'    => [ 'genome_db', 'dnafrag', 'method_link', 'method_link_species_set', 'species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
+  'inputlist'    => [ 'genome_db', 'dnafrag', 'method_link', 'method_link_species_set', 'species_set_header', 'species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
   'column_names' => [ 'table' ],
  },
  -flow_into => {
@@ -219,6 +219,7 @@ return [
   -parameters => {
    'sql' => [
     'DELETE FROM method_link_species_set WHERE method_link_species_set_id NOT IN (#list_of_pairwise_mlss_ids#)',
+    'DELETE sh.* FROM species_set_header sh LEFT OUTER JOIN method_link_species_set mlss ON sh.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
     'DELETE ss.* FROM species_set ss LEFT OUTER JOIN method_link_species_set mlss ON ss.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
     'DELETE df.*, gdb.* FROM dnafrag df INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id LEFT OUTER JOIN species_set ss ON gdb.genome_db_id = ss.genome_db_id WHERE ss.genome_db_id IS NULL',
    'DELETE FROM genome_db WHERE ! assembly_default',

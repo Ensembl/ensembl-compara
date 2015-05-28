@@ -275,7 +275,7 @@ return
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
  -parameters => {
   'db_conn' => $self->o('compara_master'),
-  'inputlist'    => [ 'genome_db', 'dnafrag', 'method_link', 'method_link_species_set', 'species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
+  'inputlist'    => [ 'genome_db', 'dnafrag', 'method_link', 'method_link_species_set', 'species_set_header', 'species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
   'column_names' => [ 'table' ],
  },
  -flow_into => {
@@ -302,6 +302,7 @@ return
 #    'DELETE FROM method_link_species_set WHERE method_link_species_set_id NOT IN ('.$self->o('epo_mlss_id').','.$self->o('gerp_ce_mlss_id').','.$self->o('gerp_cs_mlss_id').')',
     'DELETE FROM method_link_species_set WHERE method_link_species_set_id NOT IN ('.$self->o('epo_mlss_id').')',
     'DELETE ss.* FROM species_set ss LEFT OUTER JOIN method_link_species_set mlss ON ss.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
+    'DELETE ssh.* FROM species_set_header ssh LEFT OUTER JOIN method_link_species_set mlss ON ssh.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
     'DELETE df.*, gdb.* FROM dnafrag df INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id LEFT OUTER JOIN species_set ss ON gdb.genome_db_id = ss.genome_db_id WHERE ss.genome_db_id IS NULL AND gdb.name <> "'.$self->o('ancestral_sequences_name').'"',
    'DELETE FROM genome_db WHERE ! assembly_default',
    'DELETE df.* FROM dnafrag df INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id WHERE gdb.name = "'.$self->o('ancestral_sequences_name').'"',

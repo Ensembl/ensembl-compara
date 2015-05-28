@@ -182,7 +182,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'   => '#master_db#',
-                'inputlist' => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'dnafrag' ],
+                'inputlist' => [ 'method_link', 'species_set_header', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'dnafrag' ],
                 'column_names' => [ 'table' ],
             },
 
@@ -281,7 +281,8 @@ sub pipeline_analyses {
                             # Removes the SS and the MLSS associated with non-valid genome_db_ids
                             'sql' => [ 'CREATE TEMPORARY TABLE tmp_ss SELECT species_set_id FROM species_set LEFT JOIN genome_db USING (genome_db_id) GROUP BY species_set_id HAVING COUNT(*) != COUNT(genome_db.genome_db_id)',
                                        'DELETE method_link_species_set FROM method_link_species_set JOIN tmp_ss USING (species_set_id)',
-                                       'DELETE species_set FROM species_set JOIN tmp_ss USING (species_set_id)',
+                                       'DELETE species_set             FROM species_set             JOIN tmp_ss USING (species_set_id)',
+                                       'DELETE species_set_header      FROM species_set_header      JOIN tmp_ss USING (species_set_id)',
                                      ]
                            },
             -flow_into  => [ 'make_species_tree' ],

@@ -220,7 +220,7 @@ sub pipeline_analyses {
             { -logic_name => 'copy_tables_factory',
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
               -parameters => {
-                             'inputlist'    => [ 'genome_db', 'method_link', 'method_link_species_set', 'species_set'],
+                             'inputlist'    => [ 'genome_db', 'method_link', 'method_link_species_set', 'species_set_header', 'species_set'],
 			     'column_names' => [ 'table' ],
                              },
               -input_ids => [ { } ],

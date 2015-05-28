@@ -212,7 +212,7 @@ my $config = {
                              tests => [
                                        {
                                         description => 'We should have removed members on all the low-coverage-assembly species',
-                                        query       => 'SELECT name FROM species_set JOIN genome_db USING(genome_db_id) JOIN species_set_tag USING(species_set_id) WHERE value="low-coverage-assembly" AND genome_db_id NOT IN(SELECT DISTINCT(genome_db_id) FROM gene_tree_backup JOIN seq_member USING (seq_member_id) WHERE is_removed = 1);',
+                                        query       => 'SELECT name FROM species_set JOIN genome_db USING(genome_db_id) JOIN species_set_header USING (species_set_id) WHERE name="low-coverage-assembly" AND genome_db_id NOT IN(SELECT DISTINCT(genome_db_id) FROM gene_tree_backup JOIN seq_member USING (seq_member_id) WHERE is_removed = 1);',
                                        },
                                       ],
                             },

@@ -48,7 +48,7 @@ sub default_options {
         'master_db'       => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
 
         # Tables to copy and merge
-        'tables_from_master'    => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+        'tables_from_master'    => [ 'method_link', 'species_set_header', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
         'tables_from_family_db' => [ 'dnafrag', 'genome_db' ],
         'tables_to_merge'       => [ 'seq_member', 'gene_member', 'sequence' ],
     };

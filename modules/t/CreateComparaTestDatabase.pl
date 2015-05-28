@@ -164,6 +164,9 @@ $dbh->do("insert into method_link_species_set select * from $srcDB.method_link_s
 #Populate method_link_species_set_tag (take all so more data can be added at a later date)
 $dbh->do("INSERT INTO method_link_species_set_tag SELECT * FROM $srcDB.method_link_species_set_tag");
 
+#Populate species_set_header (take all so more data can be added at a later date)
+$dbh->do("INSERT INTO species_set_header SELECT * FROM $srcDB.species_set_header");
+
 #Populate species_set (take all so more data can be added at a later date)
 $dbh->do("INSERT INTO species_set SELECT * FROM $srcDB.species_set");
 
@@ -902,12 +905,11 @@ sub _run_query_from_method_link_type_species_set_name {
             FROM
               $srcDB.method_link_species_set mlss
             JOIN
-              $srcDB.species_set_tag USING (species_set_id)
+              $srcDB.species_set_header USING (species_set_id)
             JOIN
               $srcDB.method_link USING (method_link_id) 
             WHERE
-              species_set_tag.tag = "name" AND
-              species_set_tag.value = \"$species_set_name\"
+              species_set_header.name = \"$species_set_name\"
               AND method_link.type = \"$method_link_type\"
             });     
     

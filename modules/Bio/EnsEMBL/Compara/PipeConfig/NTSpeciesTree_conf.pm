@@ -111,7 +111,7 @@ sub pipeline_analyses {
     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     -input_ids => [{}],
     -parameters => {
-     'inputlist'    => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 
+     'inputlist'    => [ 'genome_db', 'species_set_header', 'species_set', 'method_link', 'method_link_species_set',
                          'species_tree_node', 'species_tree_root', 'ncbi_taxa_name', 'ncbi_taxa_node'  ],
      'column_names' => [ 'table' ],
     },
@@ -141,6 +141,9 @@ sub pipeline_analyses {
 
         'DELETE mlss.* FROM method_link_species_set mlss WHERE mlss.method_link_species_set_id NOT IN (#msa_mlssid_csv_string#)',
 
+        'DELETE sh.* FROM species_set_header sh LEFT OUTER JOIN method_link_species_set mlss ON mlss.species_set_id = sh.species_set_id '.
+        'WHERE mlss.species_set_id IS NULL',
+
         'DELETE ss.* FROM species_set ss LEFT OUTER JOIN method_link_species_set mlss ON mlss.species_set_id = ss.species_set_id '.
         'WHERE mlss.species_set_id IS NULL',
    
@@ -148,6 +151,7 @@ sub pipeline_analyses {
         'WHERE mlss.method_link_id IS NULL',
 
 	# we need a mlssid for the full compara species tree
+	'INSERT INTO species_set_header VALUES (1, "all", NULL, NULL)',
 	'INSERT INTO species_set (SELECT 1, genome_db_id FROM genome_db WHERE taxon_id)',
         
         'INSERT INTO method_link VALUES(1000000, "ORIGINAL_TREE", "GenomicAlignTree.tree_alignment")',

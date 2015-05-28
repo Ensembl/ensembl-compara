@@ -570,7 +570,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE species_set             AUTO_INCREMENT=10000001',
+                    'ALTER TABLE species_set_header      AUTO_INCREMENT=10000001',
                     'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
                 ],
             },

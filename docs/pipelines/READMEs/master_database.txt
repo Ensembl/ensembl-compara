@@ -14,8 +14,9 @@ method_link              comparison methods
 method_link_species_set  combine comparison method with set of species
 ncbi_taxa_name           all the various tags, names, etc, attached to the NCBI taxonomy
 ncbi_taxa_node           the complete NCBI taxonomy, stored as a tree structure
-species_set              set of species 
-species_set_tag          species specific tags
+species_set_header       description of set of species
+species_set              content of the species-sets
+species_set_tag          species-set specific tags
 
 
 1- code API needed

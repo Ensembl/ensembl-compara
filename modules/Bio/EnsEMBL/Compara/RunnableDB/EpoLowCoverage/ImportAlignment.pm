@@ -153,6 +153,12 @@ sub importAlignment {
 	$dnafrag_id = $self->param('dnafrag_id');
     }
 
+    #Copy the species_set_header
+    copy_data($self->param('from_comparaDBA'), $self->compara_dba,
+	      "species_set_header",
+	      undef, undef, undef,
+	      "SELECT species_set_header.* FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id");
+
     #Copy the method_link_species_set
     copy_data($self->param('from_comparaDBA'), $self->compara_dba,
 	      "method_link_species_set",
