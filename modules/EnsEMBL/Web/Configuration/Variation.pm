@@ -78,7 +78,7 @@ sub populate_tree {
   $self->create_node('Individual', 'Individual genotypes',
     [qw( 
       search     EnsEMBL::Web::Component::Variation::IndividualGenotypesSearch
-      individual EnsEMBL::Web::Component::Variation::IndividualGenotypes 
+      individual EnsEMBL::Web::Component::Variation::SampleGenotypes 
     )],
     { 'availability' => 'variation has_individuals not_somatic', 'concise' => 'Individual genotypes', 'no_menu_entry' => $somatic }
   ); 
