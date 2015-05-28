@@ -222,21 +222,19 @@
         row += '<li><span class="ad-loading">loading</span></li>';
       } else {
         sorted_each(cv,function(en,ev) {
-          var lclass = 'adorn-key-entry';
-          var style  = '';
-          var title  = '';
-          if(!ev) { return; }
-          if(ev['default']) {
-            style += "background-color: " + ev['default'] + ";";
+          row += '<li><span class="adorn-key-entry" style="';
+          row += ev['default'] ? 'background-color:' + ev['default'] + ';' : '';
+          row += ev.label ? 'color:' + ev.label + ';' : '';
+          row += ev.extra_css ? ev.extra_css : '';
+          row += '">';
+          if (ev.title) {
+            row += '<span title="' + ev.title + '"';
+            row += ev.label ? ' style="border-color:' + ev.label + '"' : '';
+            row += '>' + ev.text + '</span>';
+          } else {
+            row += ev.text;
           }
-          if (ev['title']) {
-            title += ' title="' + ev['title'] + '"';
-            style += 'cursor:help;';
-          }
-          if(ev.label) { style += "color: " + ev.label + ";"; }
-          if(ev.extra_css) { style += ev.extra_css; }
-          row += '<li><span class="'+lclass+'"'+title+' style="'+style+'">' +
-            ev.text + '</span></li>';
+          row += '</span></li>';
         });
       }
       if(row) {
