@@ -570,7 +570,7 @@ sub fetch_by_method_link_type_registry_aliases {
   Example    : my $method_link_species_set =
                      $mlssa->fetch_by_method_link_type_species_set_name("EPO", "mammals")
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
-               corresponding to the given method_link_type and and species_set_tag value
+               corresponding to the given method_link_type and and species_set_name value
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                object is found
@@ -592,7 +592,7 @@ sub fetch_by_method_link_type_species_set_name {
             return $mlss if $mlss;
         }
     }
-    warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
+    warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_name value of $species_set_name\n");
     return undef
 }
 

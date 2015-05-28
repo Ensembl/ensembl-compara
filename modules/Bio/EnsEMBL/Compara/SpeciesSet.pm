@@ -61,7 +61,7 @@ use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::GenomeDB;
 
-use base (  'Bio::EnsEMBL::Storable',           # inherit dbID(), adaptor() and new() methods
+use base (  'Bio::EnsEMBL::Compara::StorableWithReleaseHistory',           # inherit dbID(), adaptor() and new() methods, and first_release() and last_release()
             'Bio::EnsEMBL::Compara::Taggable'   # inherit everything related to tagability
          );
 
@@ -107,8 +107,8 @@ sub new {
 
 sub name {
     my $self = shift;
-    $self->add_tag('name', shift) if @_;
-    return $self->get_value_for_tag('name');
+    $self->{'_name'} = shift if @_;
+    return $self->{'_name'};
 }
 
 
@@ -167,8 +167,7 @@ sub genome_dbs {
 sub toString {
     my $self = shift;
 
-    my $taxon_id    = $self->get_tagvalue('taxon_id');
-    return ref($self).": dbID=".($self->dbID || '?').($taxon_id ? ", taxon_id=$taxon_id" : '').", name='".($self->name || '?')."', genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} sort {$a->dbID <=> $b->dbID} @{ $self->genome_dbs })."]";
+    return ref($self).": dbID=".($self->dbID || '?').", name='".($self->name || '?')."', genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} sort {$a->dbID <=> $b->dbID} @{ $self->genome_dbs })."]";
 }
 
 

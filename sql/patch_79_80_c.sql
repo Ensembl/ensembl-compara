@@ -31,6 +31,23 @@ UPDATE genome_db SET last_release = 79 WHERE assembly_default=0;
 ALTER TABLE genome_db DROP COLUMN assembly_default;
 
 
+-- the species_set table
+CREATE TABLE species_set_header (
+  species_set_id              int(10) unsigned NOT NULL AUTO_INCREMENT,
+  name                        varchar(255) NOT NULL default '',
+  first_release               smallint,
+  last_release                smallint,
+
+  PRIMARY KEY (species_set_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+INSERT INTO species_set_header
+	SELECT species_set.species_set_id, IFNULL(value, ""), IF(SUM(first_release IS NULL)>0, NULL, MAX(first_release)), IF(SUM(last_release IS NOT NULL)>0, MIN(last_release), NULL)
+	FROM species_set JOIN genome_db USING (genome_db_id) LEFT JOIN species_set_tag ON species_set.species_set_id = species_set_tag.species_set_id AND tag = "name"
+	GROUP BY species_set.species_set_id;
+
+
 -- the method_link_species_set table
 CREATE TEMPORARY TABLE method_link_species_set_time AS
 	SELECT method_link_species_set_id, IF(SUM(first_release IS NULL)>0, NULL, MAX(first_release)) AS fr, IF(SUM(last_release IS NOT NULL)>0, MIN(last_release), NULL) AS lr

@@ -167,8 +167,8 @@ CREATE TABLE genome_db (
 
 
 /**
-@table species_set
-@desc  Contains groups or sets of species which are used in the @link method_link_species_set table. Each species_set is a set of @link genome_db objects
+@table species_set_header
+@desc  Header for the @link species_set table which groups or sets of species which are used in the @link method_link_species_set table.
 @colour   #3CB371
 
 @example     This query shows the first 10 species_sets having human
@@ -182,13 +182,41 @@ CREATE TABLE genome_db (
 @see genome_db
 */
 
-CREATE TABLE species_set (
+CREATE TABLE species_set_header (
   species_set_id              int(10) unsigned NOT NULL AUTO_INCREMENT,
-  genome_db_id                int(10) unsigned DEFAULT NULL,
+  name                        varchar(255) NOT NULL default '',
+  first_release               smallint,
+  last_release                smallint,
 
+  PRIMARY KEY (species_set_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table species_set
+@desc  Describes the content of each species-set (@link species_set_header) as a set of @link genome_db objects
+@colour   #3CB371
+
+@example     This query shows the first 10 species_sets having human
+   @sql      SELECT species_set_id, GROUP_CONCAT(name) AS species FROM species_set JOIN genome_db USING(genome_db_id) GROUP BY species_set_id HAVING species LIKE '%homo_sapiens%' ORDER BY species_set_id LIMIT 10;
+
+@column species_set_id    Internal ID for the table, foreign key to @link species_set_header
+@column genome_db_id      External reference to genome_db_id in the @link genome_db table
+
+
+@see method_link_species_set
+@see genome_db
+*/
+
+CREATE TABLE species_set (
+  species_set_id              int(10) unsigned NOT NULL,
+  genome_db_id                int(10) unsigned NOT NULL,
+
+  FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
-  UNIQUE KEY  (species_set_id,genome_db_id)
+  PRIMARY KEY  (species_set_id,genome_db_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -213,8 +241,7 @@ CREATE TABLE species_set_tag (
   tag                         varchar(50) NOT NULL,
   value                       mediumtext,
 
-  ## NB: species_set_id is not unique so cannot be used as a foreign key
-  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
+  FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
 
   UNIQUE KEY tag_species_set_id (species_set_id,tag)
 
@@ -271,8 +298,8 @@ CREATE TABLE method_link (
 
 CREATE TABLE method_link_species_set (
   method_link_species_set_id  int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  method_link_id              int(10) unsigned, # FK method_link.method_link_id
-  species_set_id              int(10) unsigned NOT NULL default 0,
+  method_link_id              int(10) unsigned NOT NULL, # FK method_link.method_link_id
+  species_set_id              int(10) unsigned NOT NULL,
   name                        varchar(255) NOT NULL default '',
   source                      varchar(255) NOT NULL default 'ensembl',
   url                         varchar(255) NOT NULL default '',
@@ -280,8 +307,7 @@ CREATE TABLE method_link_species_set (
   last_release                smallint,
 
   FOREIGN KEY (method_link_id) REFERENCES method_link(method_link_id),
-  ## NB: species_set_id is not unique so cannot be used as a foreign key
-  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
+  FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
 
   PRIMARY KEY (method_link_species_set_id),
   UNIQUE KEY method_link_id (method_link_id,species_set_id)
@@ -302,7 +328,7 @@ CREATE TABLE method_link_species_set (
 
 
 CREATE TABLE method_link_species_set_tag (
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK species_set.species_set_id
+  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   tag                         varchar(50) NOT NULL,
   value                       mediumtext,
 
