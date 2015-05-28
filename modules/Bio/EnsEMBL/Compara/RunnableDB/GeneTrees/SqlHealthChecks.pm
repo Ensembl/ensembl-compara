@@ -130,6 +130,18 @@ my $config = {
                 query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND NOT (sequence REGEXP "^[ACGTN]*$")',
             },
             {
+                description => 'ncRNA sequences cannot be entirely made of N',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND (sequence REGEXP "^N*$")',
+            },
+            {
+                description => 'protein sequences cannot be entirely made of X',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence REGEXP "^X*$")',
+            },
+            {
+                description => 'CDS sequences cannot be entirely made of N',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence REGEXP "^N*$")',
+            },
+            {
                 description => 'GeneMembers should have chromosome coordinates',
                 query => 'SELECT gene_member_id FROM gene_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL) AND NOT #allow_missing_coordinates#',
             },
