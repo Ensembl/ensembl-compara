@@ -60,4 +60,6 @@ join genome_db g using (genome_db_id) where e.db_name=? and g.name=?/,
 	  -PARAMS => [$db_name, $dba->species()]);
 	$adaptor->store_member_associations($dba, $db_name);
   }
+  print "Completed processing " . $dba->species() . "\n";
+  $dba->dbc()->disconnect_if_idle();
 }
