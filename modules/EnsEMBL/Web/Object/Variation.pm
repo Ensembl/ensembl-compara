@@ -1038,23 +1038,23 @@ sub sample_table {
 
 
 
-sub individual_genotypes_obj {
+sub sample_genotypes_obj {
 
-  ### Individual_genotype_table_calls
-  ### Example    : my $ind_genotypes = $object->individual_genotypes;
-  ### Description: gets IndividualGenotypes for this Variation
-  ### Returns listref of IndividualGenotypes
+  ### Sample_genotype_table_calls
+  ### Example    : my $sample_genotypes = $object->sample_genotypes;
+  ### Description: gets SampleGenotypes for this Variation
+  ### Returns listref of SampleGenotypes
 
   my $self = shift;
   my $selected_pop = shift;
-  my $individuals;
+  my $samples;
   eval {
-    $individuals = $self->vari->get_all_IndividualGenotypes($selected_pop);
+    $samples = $self->vari->get_all_SampleGenotypes($selected_pop);
   };
   if ($@) {
-    warn "\n\n************ERROR************:  Bio::EnsEMBL::Variation::Variation::get_all_IndividualGenotypes fails. $@";
+    warn "\n\n************ERROR************:  Bio::EnsEMBL::Variation::Variation::get_all_SampleGenotypes fails. $@";
   }
-  return $individuals;
+  return $samples;
 }
 
 
