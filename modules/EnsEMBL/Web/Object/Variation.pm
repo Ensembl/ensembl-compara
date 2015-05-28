@@ -1392,7 +1392,7 @@ sub ld_pops_for_snp {
   my $self = shift; 
   my @vari_mappings = @{ $self->unique_variation_feature }; 
   return [] unless @vari_mappings;                    # must have mapping
-  return [] unless $self->counts->{'individuals'};    # must have genotypes
+  return [] unless $self->counts->{'samples'};    # must have genotypes
   return [] unless $self->vari_class =~ /snp/i;  # must be a SNP or mixed
 
   my $pa = $self->Obj->adaptor->db->get_PopulationAdaptor;
