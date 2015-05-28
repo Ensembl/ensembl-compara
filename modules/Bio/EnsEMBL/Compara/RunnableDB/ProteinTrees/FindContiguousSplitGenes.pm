@@ -117,6 +117,7 @@ sub check_for_split_genes {
 
     my $connected_split_genes = $self->param('connected_split_genes');
     my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
+    $gene_member_adaptor->db->dbc->disconnect_if_idle;
 
     my $tmp_time = time();
 
@@ -205,6 +206,7 @@ sub check_for_split_genes {
                 }
                 $self->warning(sprintf('A pair: %s %s', $protein1->stable_id, $protein2->stable_id));
                 $connected_split_genes->add_connection($protein1->seq_member_id, $protein2->seq_member_id);
+                $gene_member_adaptor->db->dbc->disconnect_if_idle;
             }
 
         # This is a second level of contiguous gene split events, more
@@ -244,6 +246,7 @@ sub check_for_split_genes {
 
                 $self->warning(sprintf('B pair: %s %s', $protein1->stable_id, $protein2->stable_id));
                 $connected_split_genes->add_connection($protein1->seq_member_id, $protein2->seq_member_id);
+                $gene_member_adaptor->db->dbc->disconnect_if_idle;
             }
         }
     }
