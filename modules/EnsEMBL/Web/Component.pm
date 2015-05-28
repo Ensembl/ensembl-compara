@@ -420,11 +420,34 @@ sub append_s_to_plural {
 }
 
 sub helptip {
-  ## Returns html for an info icon which displays the given helptip when hovered
-  ## @param Tip text (TODO - make it HTML compatiable)
-  ## @param Optional - icon name to override the default info icon
-  my ($self, $tip, $icon) = @_;
-  return sprintf '<img src="%s/i/16/%s.png" alt="(?)" class="_ht helptip-icon" title="%s" />', $self->static_server, $icon || 'info', $tip;
+  ## Returns a dotted underlined element with given text and hover helptip
+  ## @param Display html
+  ## @param Tip html
+  my ($self, $display_html, $tip_html) = @_;
+  return $tip_html ? sprintf('<span class="ht _ht"><span class="_ht_tip">%s</span>%s</span>', encode_entities($tip_html), $display_html) : $display_html;
+}
+
+sub glossary_helptip {
+  ## Creates a dotted underlined element that has a mouseover glossary helptip (helptip text fetched from glossary table of help db)
+  ## @param Display html
+  ## @param Entry to match the glossary key to fetch help tip html (if not provided, use the display html as glossary key)
+  my ($self, $display_html, $entry) = @_;
+
+  $entry  ||= $display_html;
+  $entry    = $self->get_glossary_entry($entry);
+
+  return $self->helptip($display_html, $entry);
+}
+
+sub get_glossary_entry {
+  ## Gets glossary value for a given entry
+  ## @param Entry key to lookup against the glossary
+  ## @return Glossary description (possibly HTML)
+  my ($self, $entry) = @_;
+
+  $self->{'_glossary'} ||= { $self->hub->species_defs->multiX('ENSEMBL_GLOSSARY') };
+
+  return $self->{'_glossary'}{$entry} // '';
 }
 
 sub error_panel {
@@ -533,16 +556,6 @@ sub EC_URL {
      $url_string =~ s/-/\?/g;
   
   return $self->hub->get_ExtURL_link("EC $string", 'EC_PATHWAY', $url_string);
-}
-
-sub glossary_mouseover {
-  my ($self, $entry, $display_text) = @_;
-  $display_text ||= $entry;
-  
-  my %glossary = $self->hub->species_defs->multiX('ENSEMBL_GLOSSARY');
-  (my $text = $glossary{$entry}) =~ s/<.+?>//g;
-
-  return $text ? qq{<span class="glossary_mouseover">$display_text<span class="floating_popup">$text</span></span>} : $display_text;
 }
 
 sub modal_form {
