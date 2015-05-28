@@ -127,7 +127,7 @@ sub content {
             </div>
             <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
-          <a class="toggle %s _slide_toggle set_cookie" href="#population_freq_%s" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
+          <a class="toggle %s _slide_toggle set_cookie" href="#" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
         </div>
       ', $pop_desc, $short_name, $graph_id, $width, $height, 
          $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', 
