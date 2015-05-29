@@ -588,10 +588,8 @@ sub parse_defaults {
     if ($self->param('collection')) {
         my $collection = $self->param('collection');
         my $ss_adaptor = $self->compara_dba->get_SpeciesSetAdaptor();
-        my $ss = $ss_adaptor->fetch_all_by_tag_value("name", "collection-$collection");
-        die "Cannot find the collection '$collection'" unless scalar(@$ss);
-        die "There are several collections '$collection'" if scalar(@$ss) > 1;
-        $genome_dbs = $ss->[0]->genome_dbs;
+        my $ss = $ss_adaptor->fetch_collection_by_name($collection);
+        $genome_dbs = $ss->genome_dbs;
     }
 
     #Create a collection of pairs from the list of genome_dbs

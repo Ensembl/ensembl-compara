@@ -383,7 +383,7 @@ sub add_to_collections {
       my $new_genome_dbs = [grep {$_->name ne $gdb_name} @{$ss->genome_dbs}];
       push @$new_genome_dbs, @$genome_dbs;
       my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
-      printf("%s added to the collection '%s' (species_set_id=%d)\n", $gdb_name, $ss->get_value_for_tag('name'), $new_ss->dbID);
+      printf("%s added to the collection '%s' (species_set_id=%d)\n", $gdb_name, $ss->name, $new_ss->dbID);
   }
 }
 
@@ -416,7 +416,7 @@ sub remove_species_from_collections {
         my $new_genome_dbs = [grep {$_->dbID != $genome_db->dbID} @{$ss->genome_dbs}];
         next if scalar(@$new_genome_dbs) == scalar(@{$ss->genome_dbs});
         my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
-        printf("%s removed from the collection '%s' (species_set_id=%d)\n", $genome_db->name, $ss->get_value_for_tag('name'), $new_ss->dbID);
+        printf("%s removed from the collection '%s' (species_set_id=%d)\n", $genome_db->name, $ss->name, $new_ss->dbID);
     }
 }
 

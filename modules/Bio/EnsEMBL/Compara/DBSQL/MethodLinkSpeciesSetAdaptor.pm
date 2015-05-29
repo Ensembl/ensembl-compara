@@ -577,7 +577,7 @@ sub fetch_by_method_link_type_species_set_name {
     my ($self, $method_link_type, $species_set_name) = @_;
 
     my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
-    my $all_species_sets = $species_set_adaptor->fetch_all_by_tag_value('name', $species_set_name);
+    my $all_species_sets = $species_set_adaptor->fetch_all_by_name($species_set_name);
 
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
 

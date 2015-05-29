@@ -111,7 +111,7 @@ my $genome_dbs = $method_link_species_set->species_set_obj->genome_dbs();
 
 my @sps_set = @$genome_dbs;
 if ($exclude_lcg) {
-  my $ss = $compara_dba->get_SpeciesSetAdaptor()->fetch_all_by_tag_value('name', 'low-coverage')->[0];
+  my $ss = $compara_dba->get_SpeciesSetAdaptor()->fetch_all_by_name('low-coverage')->[0];
   my %in_ss = map {$_->dbID => 1} @{$ss->genome_dbs};
   @sps_set = grep {!$in_ss{$_->dbID}} @$genome_dbs;
 }
