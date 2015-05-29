@@ -388,6 +388,10 @@ sub update_conf {
   
   while (my ($dir, $name) = splice @plugins, 0, 2) {
     my $plugin_conf = "${name}::SiteDefs";
+
+    if (!-d $dir) {
+      die "[ERROR] Plugin $name could not be loaded: $dir not found.\n";
+    }
     
     eval qq{ package $plugin_conf; use ConfigDeferrer qw(defer); }; # export 'defer' to the plugin SiteDefs
     eval qq{ require '$dir/conf/SiteDefs.pm' };                     # load the actual plugin SiteDefs
