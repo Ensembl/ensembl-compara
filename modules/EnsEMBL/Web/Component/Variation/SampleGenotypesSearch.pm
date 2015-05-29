@@ -49,8 +49,8 @@ sub content {
     <div class="navbar print_hide" style="padding-left:5px">
       <input type="hidden" class="panel_type" value="Content" />
       <form class="update_panel" action="#">
-        <label for="ind">Search for a sample:</label>
-        <input type="text" name="ind" id="ind" value="%s" size="30"/>
+        <label for="sample">Search for a sample:</label>
+        <input type="text" name="sample" id="sample" value="%s" size="30"/>
         <input type="hidden" name="panel_id" value="%s" />
         <input type="hidden" name="url" value="%s" />
         <input type="hidden" name="element" value=".results" />
