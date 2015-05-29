@@ -33,7 +33,6 @@ use strict;
 use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
-use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 use HTML::Entities  qw(encode_entities);
 use List::Util qw(min max);
 
