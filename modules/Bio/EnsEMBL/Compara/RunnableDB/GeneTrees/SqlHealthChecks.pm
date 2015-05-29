@@ -183,6 +183,17 @@ my $config = {
     },
 
 
+    stable_id_mapping => {
+        tests => [
+            {
+                description => 'There are stable IDs coming from at least 2 releases',
+                query => 'SELECT DISTINCT LEFT(stable_id, 9) AS prefix FROM gene_tree_root WHERE stable_id IS NOT NULL',
+                expected_size => '>= 2',
+            },
+        ],
+    },
+
+
     ### EPO Removed members
     #########################
 

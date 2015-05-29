@@ -2432,7 +2432,16 @@ sub core_pipeline_analyses {
                 'prev_rel_db'   => '#mapping_db#',
                 'type'          => 't',
             },
+            -flow_into          => [ 'hc_stable_id_mapping' ],
             -rc_name => '1Gb_job',
+        },
+
+        {   -logic_name         => 'hc_stable_id_mapping',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'stable_id_mapping',
+            },
+            %hc_analysis_params,
         },
 
         {   -logic_name    => 'treefam_xref_idmap',
