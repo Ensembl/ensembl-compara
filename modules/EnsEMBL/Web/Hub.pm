@@ -50,7 +50,6 @@ use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
-use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
 use base qw(EnsEMBL::Web::Root);
 
