@@ -178,29 +178,7 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[copy tables from master and fix the offsets]---------------------------------------------
 
-        {   -logic_name => 'copy_table_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'db_conn'   => '#master_db#',
-                'inputlist' => [ 'method_link', 'species_set_header', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'dnafrag' ],
-                'column_names' => [ 'table' ],
-            },
-
-            -flow_into => {
-                           '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
-                           'A->1' => [ 'offset_tables' ],
-            },
-        },
-
-            {   -logic_name    => 'copy_table',
-                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-                -parameters    => {
-                                   'mode'          => 'overwrite',
-                                   'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-                                  },
-                -analysis_capacity => 10,
-                -flow_into         => [ 'innodbise_table' ],
-            },
+            @{$self->init_basic_tables_analyses('#master_db#', 'offset_tables', 0, 0, 1)},
 
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -216,16 +194,6 @@ sub pipeline_analyses {
                     'ALTER TABLE CAFE_species_gene AUTO_INCREMENT=100000001',
                 ],
             },
-        },
-
-# ---------------------------------------------[turn all tables to InnoDB]---------------------------------------------
-
-        {   -logic_name    => 'innodbise_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters    => {
-                'sql'         => "ALTER TABLE #table# ENGINE=InnoDB",
-            },
-            -analysis_capacity => 10,
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------

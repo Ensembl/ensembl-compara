@@ -113,30 +113,7 @@ sub pipeline_analyses {
  my ($self) = @_;
  print "pipeline_analyses\n";
  return [
-   {
-    -logic_name => 'table_list_to_copy',
-    -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-    -input_ids => [{}],
-    -parameters => {
-     'inputlist'    => [ 'genome_db', 'species_set_header', 'species_set', 'method_link', 'method_link_species_set',
-                         'species_tree_node', 'species_tree_root', 'ncbi_taxa_name', 'ncbi_taxa_node'  ],
-     'column_names' => [ 'table' ],
-    },
-    -flow_into => {
-     '2->A' => [ 'copy_tables' ],
-     'A->1' => [ 'modify_copied_tables' ],
-    },
-   },
-
-   {
-     -logic_name => 'copy_tables',
-     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer', 
-     -parameters => {
-      'src_db_conn'   => $self->o('previous_compara_db'),
-      'mode'          => 'overwrite',
-      'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-     },
-   },
+    @{$self->init_basic_tables_analyses($self->o('previous_compara_db'), 'modify_copied_tables', 1, 1, 0, [{}])},
    
    {
     -logic_name => 'modify_copied_tables',

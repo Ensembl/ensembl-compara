@@ -270,30 +270,8 @@ return
 	},
 },
 # ------ set up the necessary databas tables for loading the enredo output and runnig ortheus and gerp
-{  
- -logic_name => 'copy_table_factory',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- -parameters => {
-  'db_conn' => $self->o('compara_master'),
-  'inputlist'    => [ 'genome_db', 'dnafrag', 'method_link', 'method_link_species_set', 'species_set_header', 'species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
-  'column_names' => [ 'table' ],
- },
- -flow_into => {
-  '2->A' => [ 'copy_tables' ],
-  'A->1' => [ 'delete_from_copied_tables' ],
- },
- -meadow_type    => 'LOCAL',
-},
-{ 
-  -logic_name    => 'copy_tables',
-  -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-  -parameters    => {
-	'src_db_conn'   => $self->o('compara_master'),
-	'dest_db_conn'  => $self->o('pipeline_db'),
-	'mode'          => 'overwrite',
-	'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-  },
-},
+#
+    @{$self->init_basic_tables_analyses($self->o('compara_master'), 'delete_from_copied_tables', 1, 0, 1)},
 {
   -logic_name => 'delete_from_copied_tables',
   -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',

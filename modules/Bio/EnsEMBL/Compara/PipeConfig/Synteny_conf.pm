@@ -217,26 +217,8 @@ sub pipeline_analyses {
                            },
               
             },
-            { -logic_name => 'copy_tables_factory',
-              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-              -parameters => {
-                             'inputlist'    => [ 'genome_db', 'method_link', 'method_link_species_set', 'species_set_header', 'species_set'],
-			     'column_names' => [ 'table' ],
-                             },
-              -input_ids => [ { } ],
-              -flow_into => {
-                             '2' => [ 'copy_tables_from_master_db' ],
-                            },
-            },              
-            { -logic_name => 'copy_tables_from_master_db',
-              -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-              -parameters    => {
-                                 'src_db_conn'   => '#master_db#',
-                                 'mode'          => 'overwrite',
-                                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-                                },
-            
-            },
+            @{$self->init_basic_tables_analyses('#master_db#', undef, 1, 0, 0, [{}])},
+
             { -logic_name => 'copy_dnafrags_from_master',
               -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
               -parameters    => {
