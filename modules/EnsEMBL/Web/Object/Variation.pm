@@ -1002,16 +1002,16 @@ sub sample_table {
   foreach my $sample_gt_obj ( @$sample_genotypes ) { 
     my $sample_obj = $sample_gt_obj->sample;
     my $ind_obj   = $sample_obj->individual;
-
+    
+    next unless $ind_obj;
     next unless $sample_obj;
     next if $sample_obj->name() =~/1000GENOMES:pilot_2/; ## not currently reporting these
 
     my $sample_id    = $sample_obj->dbID;
-    
     $data{$sample_id}{Name}        = $sample_obj->name;
     $data{$sample_id}{Genotypes}   = $self->sample_genotype($sample_gt_obj);
     $data{$sample_id}{Gender}      = $ind_obj->gender;
-    $data{$sample_id}{Description} = $self->sample_description($sample_obj);
+    $data{$sample_id}{Description} = $self->description($sample_obj);
     $data{$sample_id}{Mother}      = $self->parent($ind_obj,"mother");
     $data{$sample_id}{Father}      = $self->parent($ind_obj,"father");
     $data{$sample_id}{Children}    = $self->child($ind_obj);
@@ -1073,7 +1073,7 @@ sub sample_genotype {
 }
 
 
-sub sample_description {
+sub description {
 
   ### Sample_genotype_table_calls
   ### Args       : Bio::EnsEMBL::Variation::Sample object
@@ -1081,8 +1081,8 @@ sub sample_description {
   ### Description: gets the Sample description
   ### Returns String
 
-  my ($self, $sample_obj)  = @_;
-  return $sample_obj->description;
+  my ($self, $obj)  = @_;
+  return $obj->description;
 }
 
 
@@ -1122,7 +1122,7 @@ sub child {
   foreach my $individual ( @{ $individual_obj->get_all_child_Individuals} ) {
     my $gender = $individual->gender;
     $children{$individual->name} = [$gender, 
-           $self->individual_description($individual)];
+           $self->description($individual)];
   }
   return \%children;
 }
