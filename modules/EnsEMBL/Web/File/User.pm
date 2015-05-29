@@ -258,10 +258,11 @@ sub build_tracks_from_file {
   my $class = 'EnsEMBL::Web::IOWrapper::'.uc($self->format);
   if (EnsEMBL::Root::dynamic_use($class)) {
     my $wrapper = $class->new($self);
-    while ($wrapper->parser->next) {
-      my $key = $wrapper->parser->get_metadata_value('name') || 'default';
-      if ($is_metadata) {
-        $tracks->{$key}{'config'}{'description'} = $wrapper->parser->get_metadata_value('description') unless $tracks->{$key}{'config'}{'description'};
+    my $parser = $wrapper->parser;
+    while ($parser->next) {
+      my $key = $parser->get_metadata_value('name') || 'default';
+      if ($parser->is_metadata) {
+        $tracks->{$key}{'config'}{'description'} = $parser->get_metadata_value('description') unless $tracks->{$key}{'config'}{'description'};
       }
       else {
         my $feature_array = $tracks->{$key}{'features'} || [];
