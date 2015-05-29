@@ -27,7 +27,7 @@ use base qw(Exporter);
 
 use constant 'MAX_HIGHLIGHT_FILESIZE' => 1048576;  # (bytes) = 1Mb
 
-our @EXPORT = our @EXPORT_OK = qw(pretty_date get_url_content get_url_filesize style_by_filesize champion);
+our @EXPORT = our @EXPORT_OK = qw(pretty_date style_by_filesize champion);
 
 sub pretty_date {
   my $timestamp = shift;
