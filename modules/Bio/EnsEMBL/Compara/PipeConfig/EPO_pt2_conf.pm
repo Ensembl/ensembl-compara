@@ -217,7 +217,6 @@ sub pipeline_analyses {
 		-parameters     => { 'core_db_urls' => $self->o('core_db_urls'), dont_change_if_locator => $self->o('dont_change_if_locator'), },
 		-flow_into => {
 				2 => [ 'mysql:////genome_db?insertion_method=REPLACE' ],
-				3 => [ 'mysql:////species_set?insertion_method=INSERT' ],
 				1 => [ 'set_assembly_default_to_zero' ],
 		},
 	    },
