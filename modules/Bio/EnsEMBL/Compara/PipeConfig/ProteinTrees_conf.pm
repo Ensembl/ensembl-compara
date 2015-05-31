@@ -2550,7 +2550,7 @@ sub core_pipeline_analyses {
                 'component_genomes' => 0,
             },
             -flow_into  => {
-                '2' => { ':////accu?species_set=[]' => { 'species_set' => '#genome_db_id#'} },
+                '2' => { ':////accu?genome_db_ids=[]' => { 'genome_db_ids' => '#genome_db_id#'} },
             },
         },
 
