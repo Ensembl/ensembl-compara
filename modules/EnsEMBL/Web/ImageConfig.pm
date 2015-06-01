@@ -813,16 +813,26 @@ sub _add_datahub {
 
     my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
 
-    my $assembly = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH')
-                        || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
-    my $node = $hub_info->{'genomes'}{$assembly}{'tree'};
-   
+    my $node;
+    my $assemblies =
+      $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
+    $assemblies ||= [];
+    $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
+    foreach my $assembly_var (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION)) {
+      my $assembly = $self->hub->species_defs->get_config($self->species,$assembly_var);
+      next unless $assembly;
+      push @$assemblies,$assembly;
+    }
+    foreach my $assembly (@$assemblies) {
+      $node = $hub_info->{'genomes'}{$assembly}{'tree'};
+      last if $node;
+    }
     if ($node) {
       $self->_add_datahub_node($node, $menu, $menu_name);
 
       $self->{'_attached_datahubs'}{$url} = 1;
-    }
-    else {
+    } else {
+      my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
       $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];
     }
   }
