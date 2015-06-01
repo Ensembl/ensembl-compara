@@ -211,6 +211,7 @@ div.icon                      { padding: 4px 8px 4px 0; }
 /* Note that these names include the word 'icon' to distinguish them from classes associated with actions */
 .fave_icon     { background-image: url(/i/16/swp/star.png);         }
 .info_icon     { background-image: url(/i/16/swp/info.png);         }
+.help_icon     { background-image: url(/i/16/swp/help.png);         }
 .save_icon     { background-image: url(/i/16/swp/save.png);         }
 .config_icon   { background-image: url(/i/16/swp/setting.png);      }
 .delete_icon   { background-image: url(/i/16/swp/trash.png);        }
