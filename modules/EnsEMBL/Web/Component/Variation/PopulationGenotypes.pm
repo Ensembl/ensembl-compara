@@ -37,7 +37,7 @@ sub content {
   return $self->_info('Variation: ' . $object->name, '<p>No genotypes for this variation</p>') unless %$freq_data;
   
   my $table_array = $self->format_frequencies($freq_data);
-  my $html        = '<a id="IndividualGenotypesPanel_top"></a>';
+  my $html        = '<a id="SampleGenotypesPanel_top"></a>';
   
   if (scalar @$table_array == 1 && $is_somatic) {
     $html .= $table_array->[0]->[1]->render;
@@ -193,7 +193,7 @@ sub format_table {
   my $ref_allele = ($vf_object) ? (split('/',$vf_object->allele_string))[0] : '';
 
   my $sortable = ($table_header =~ /1000 genomes/i) ? 0 : 1;
-  my $has_pop_with_ind = 0;
+  my $has_pop_with_samples = 0;
 
   my %columns;
   my @header_row;
@@ -298,8 +298,8 @@ sub format_table {
       $pop_row{'Super-Population'} = $self->sort_extra_pops($pop_info->{'Super-Population'});
       $pop_row{'Sub-Population'}   = $self->sort_extra_pops($pop_info->{'Sub-Population'});
       if ($pop_info->{Size}) {
-        $pop_row{'detail'} = $self->ajax_add($self->ajax_url(undef, { function => 'IndividualGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id);
-        $has_pop_with_ind  = 1;
+        $pop_row{'detail'} = $self->ajax_add($self->ajax_url(undef, { function => 'SampleGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id);
+        $has_pop_with_samples  = 1;
       }
       
       push @rows, \%pop_row;
@@ -332,7 +332,7 @@ sub format_table {
     push @header_row, { key => $col, align => 'left', label => "$col: frequency (count)", sort => ($sortable) ? 'numeric' : 'none' };
   }
 
-  push @header_row, { key => 'detail', align => 'left', label => 'Genotype detail',         sort => 'none' } if ($self->object->counts->{'individuals'} && $has_pop_with_ind == 1);
+  push @header_row, { key => 'detail', align => 'left', label => 'Genotype detail',         sort => 'none' } if ($self->object->counts->{'samples'} && $has_pop_with_samples == 1);
   push @header_row, { key => 'failed', align => 'left', label => 'Comment', width => '25%', sort => ($sortable) ? 'string' : 'none' } if $columns{'failed'};
 
   my $table = $self->new_table([], [], { data_table => 1 });

@@ -45,10 +45,10 @@ sub content {
     $info_box = $self->multiple_locations($feature_slice, $variation->failed_description); 
   }
   
-  my $transcript_url  = $hub->url({ action => "Variation", action => "Mappings",    vf => $vf });
-  my $genotype_url    = $hub->url({ action => "Variation", action => "Individual",  vf => $vf });
-  my $phenotype_url   = $hub->url({ action => "Variation", action => "Phenotype",   vf => $vf });
-  my $citation_url    = $hub->url({ action => "Variation", action => "Citations",   vf => $vf });
+  my $transcript_url  = $hub->url({ action => "Variation", action => "Mappings",  vf => $vf });
+  my $genotype_url    = $hub->url({ action => "Variation", action => "Sample",    vf => $vf });
+  my $phenotype_url   = $hub->url({ action => "Variation", action => "Phenotype", vf => $vf });
+  my $citation_url    = $hub->url({ action => "Variation", action => "Citations", vf => $vf });
  
   my @str_array;
   push @str_array, sprintf('overlaps <a href="%s">%s %s</a>', 
@@ -56,11 +56,11 @@ sub content {
                       $avail->{has_transcripts}, 
                       $avail->{has_transcripts} eq "1" ? "transcript" : "transcripts"
                   ) if($avail->{has_transcripts});
-  push @str_array, sprintf('has <a href="%s">%s individual %s</a>', 
+  push @str_array, sprintf('has <a href="%s">%s sample %s</a>', 
                       $genotype_url, 
-                      $avail->{has_individuals}, 
-                      $avail->{has_individuals} eq "1" ? "genotype" : "genotypes" 
-                  )if($avail->{has_individuals});
+                      $avail->{has_samples}, 
+                      $avail->{has_samples} eq "1" ? "genotype" : "genotypes" 
+                  )if($avail->{has_samples});
   push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
                       $phenotype_url, 
                       $avail->{has_ega}, 

@@ -19,7 +19,7 @@ limitations under the License.
 package EnsEMBL::Draw::GlyphSet::snp_fake_haplotype;
 
 ### Comparison track at bottom of Transcript/Population/Image
-### (green/purple rectangles), comparing individual/strain
+### (green/purple rectangles), comparing sample/strain
 ### to reference
 ### (Called "fake" because blocks are shown equidistant, regardless
 ### of SNP coordinates)
@@ -39,8 +39,8 @@ sub _init {
   return unless $Config->{'snp_fake_haplotype'};
 
   # Get reference strain name for start of track:
-  my $individual_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
-  my $golden_path =  $individual_adaptor->get_reference_strain_name();
+  my $sample_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_SampleAdaptor;
+  my $golden_path =  $sample_adaptor->get_reference_strain_name();
   my $reference_name = $Config->{'reference'};
   
   # Put allele and coverage data from config into hashes -----------------------
@@ -53,9 +53,9 @@ sub _init {
 
     # find out once if this species is inbred or not. Then apply to all
     unless (defined $fully_inbred) {
-      my ($individual) = @{$individual_adaptor->fetch_all_by_name($strain)};
-      if ($individual) {
-	      $fully_inbred = $individual->type_individual eq 'Fully_inbred' ? 1 : 0;
+      my ($sample) = @{$sample_adaptor->fetch_all_by_name($strain)};
+      if ($sample) {
+	      $fully_inbred = $sample->individual->type_individual eq 'Fully_inbred' ? 1 : 0;
       }
     } 
     $strain_alleles{$strain} = {};  # every strain should be in here

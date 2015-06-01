@@ -745,18 +745,18 @@ sub get_samples {
     return ();
   }
 
-  my $individual_adaptor = $vari_adaptor->get_IndividualAdaptor;
+  my $sample_adaptor = $vari_adaptor->get_SampleAdaptor;
  
   if ($options eq 'default') {
-    return sort @{$individual_adaptor->get_default_strains};
+    return sort @{$sample_adaptor->get_default_strains};
   }
 
   my %default_pops; 
-  map { $default_pops{$_} = 1 } @{$individual_adaptor->get_default_strains};
+  map { $default_pops{$_} = 1 } @{$sample_adaptor->get_default_strains};
  
   my %db_pops;
   
-  foreach (sort @{$individual_adaptor->get_display_strains}) {
+  foreach (sort @{$sample_adaptor->get_display_strains}) {
     next if $default_pops{$_}; 
     $db_pops{$_} = 1;
   }
@@ -833,14 +833,14 @@ sub munge_gaps_split {
 sub read_coverage {
   my ($self, $sample, $sample_slice) = @_;
   
-  my $individual_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
-  my $sample_objs = $individual_adaptor->fetch_all_by_name($sample);
+  my $sample_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_SampleAdaptor;
+  my $sample_objs = $sample_adaptor->fetch_all_by_name($sample);
   return ([], []) unless @$sample_objs;
   my $sample_obj = $sample_objs->[0];
   
   my $rc_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_ReadCoverageAdaptor;
   my $coverage_level = $rc_adaptor->get_coverage_levels;
-  my $coverage_obj = $rc_adaptor->fetch_all_by_Slice_Individual_depth($sample_slice, $sample_obj);
+  my $coverage_obj = $rc_adaptor->fetch_all_by_Slice_Sample_depth($sample_slice, $sample_obj);
   return ($coverage_level, $coverage_obj);
 }
 
