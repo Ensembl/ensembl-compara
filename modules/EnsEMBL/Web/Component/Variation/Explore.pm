@@ -42,9 +42,9 @@ sub content {
   $seq_url      = $hub->url({'action' => 'Sequence'});
   $context_url  = $hub->url({'action' => 'Context'});
 
-  if ($avail->{'has_transcripts'}) {
+  if ($avail->{'has_features'}) {
     $gt_url   = $hub->url({'action' => 'Mappings'});
-    $gt_count = $avail->{'has_transcripts'};
+    $gt_count = $avail->{'has_features'};
   }
 
   if ($avail->{'has_populations'}) {

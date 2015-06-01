@@ -58,7 +58,7 @@ sub availability {
       
       $availability->{'variation'} = 1;
       
-      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts populations samples ega citation);
+      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts regfeats features populations samples ega citation);
       if($self->param('vf')){
           ## only show these if a mapping available
           $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
@@ -90,8 +90,10 @@ sub counts {
   unless ($counts) {
     $counts = {};
     $counts->{'transcripts'} = $self->count_transcripts;
+    $counts->{'regfeats'}    = $self->count_regfeats;
+    $counts->{'features'}    = $counts->{'transcripts'} + $counts->{'regfeats'};
     $counts->{'populations'} = $self->count_populations;
-    $counts->{'samples'} = $self->count_samples;
+    $counts->{'samples'}     = $self->count_samples;
     $counts->{'ega'}         = $self->count_ega;
     $counts->{'ldpops'}      = $self->count_ldpops;
     $counts->{'alignments'}  = $self->count_alignments->{'multi'};
@@ -119,6 +121,12 @@ sub count_ega {
   my $counts = scalar @ega_links || 0;
   return $counts;
 }
+
+sub count_features {
+  my $self = shift;
+  return $self->count_transcripts + $self->count_regfeats;
+}
+
 sub count_transcripts {
   my $self = shift;
   my %mappings = %{ $self->variation_feature_mapping };
@@ -129,9 +137,16 @@ sub count_transcripts {
     my @transcript_variation_data = @{ $mappings{$varif_id}{transcript_vari} };
     $counts = scalar @transcript_variation_data;
   }
-  
-  $counts += scalar map {@{$_->get_all_RegulatoryFeatureVariations}, @{$_->get_all_MotifFeatureVariations}} @{$self->get_variation_features};
 
+  return $counts;
+}
+
+sub count_regfeats {
+  my $self = shift;
+  my $counts = 0;
+  # a MotifFeature is necessarily contained in a RegulatoryFeature so we don't need the count explicitly?
+  # $counts += scalar map {@{$_->get_all_RegulatoryFeatureVariations}, @{$_->get_all_MotifFeatureVariations}} @{$self->get_variation_features};
+  $counts += scalar map {@{$_->get_all_RegulatoryFeatureVariations}} @{$self->get_variation_features};
   return $counts;
 }
 
