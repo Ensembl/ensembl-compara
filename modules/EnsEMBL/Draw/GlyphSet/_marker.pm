@@ -20,6 +20,10 @@ package EnsEMBL::Draw::GlyphSet::_marker;
 
 ### Draws marker track
 
+##################
+# DEPRECATED!
+##################
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
@@ -29,6 +33,7 @@ sub colour_key    { return lc $_[1]->marker->type; }
 
 sub _init {
   my $self = shift;
+  warn "############# DEPRECATED MODULE - USE GlyphSet::marker instead";
   
   return unless $self->strand == -1;
   return $self->render_text if $self->{'text_export'};

@@ -20,11 +20,16 @@ package EnsEMBL::Draw::GlyphSet::_simple;
 
 ### Standard rendering of data from simple_feature table (or similar)
 
+##################
+# DEPRECATED!
+##################
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
 
 sub features { 
+  warn "############# DEPRECATED MODULE - USE GlyphSet::marker instead";
   my $self     = shift;
   my $call     = 'get_all_' . ($self->my_config('type') || 'SimpleFeatures'); 
   my $db_type       = $self->my_config('db');
