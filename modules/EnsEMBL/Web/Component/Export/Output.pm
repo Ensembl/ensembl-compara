@@ -88,10 +88,19 @@ sub ld_dump {
         
           my $snp = shift @$snps;
           my $pos = shift @$starts;
-        
-          my @values = map { $_ ? sprintf '%.3f', $_ : '-' } @$row;
+
+          my @values;
+          foreach my $r (@$row) {
+            my $value = '-';
+            $value = sprintf('%.3f',$r) if $r;
+            push @values,{
+              value => $value,
+              style => "background-color:#".($r eq '-'?'ffffff':$colour_gradient[floor($r*40)]),
+            };
+          }
+
           my @row_style = map { 'background-color:#' . ($_ eq '-' ? 'ffffff' : $colour_gradient[floor($_*40)]) . ';' } @values;
-        
+
           if ($table) {
             $table->add_row([ $pos, $snp, @values, $snp ]);
             $table->add_option('row_style', [ $header_style, $header_style, @row_style, $header_style ]);
