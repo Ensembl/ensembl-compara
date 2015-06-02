@@ -59,6 +59,12 @@ sub init {
     type => 'image/png',
     href => $species_defs->img_url . $species_defs->ENSEMBL_STYLE->{'SITE_ICON'}
   });
+
+  $self->add_link({ 
+    rel  => 'apple-touch-icon',
+    type => 'image/png',
+    href => '/apple-touch-icon.png'
+  });
   
   $self->add_link({
     rel   => 'search',

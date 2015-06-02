@@ -72,6 +72,7 @@ use Time::HiRes qw(time);
 use Fcntl qw(O_WRONLY O_CREAT);
 
 use SiteDefs;# qw(:ALL);
+use Sys::Hostname::Long;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
@@ -278,6 +279,10 @@ sub set_species_config {
   $CONF->{'_storage'}{$species}{$key} = $value if defined $CONF->{'_storage'} && exists $CONF->{'_storage'}{$species};
 }
 
+sub generator {
+  Sys::Hostname::Long::hostname_long().":".$SiteDefs::ENSEMBL_SERVERROOT;
+}
+
 sub retrieve {
   ### Retrieves stored configuration from disk
   ### Returns: boolean
@@ -287,7 +292,7 @@ sub retrieve {
   my $Q    = lock_retrieve($self->{'_filename'}) or die "Can't open $self->{'_filename'}: $!"; 
   
   $CONF->{'_storage'} = $Q if ref $Q eq 'HASH';
-  return 1;
+  return $CONF->{'_storage'}{'GENERATOR'} eq generator();
 }
 
 sub store {
@@ -296,10 +301,12 @@ sub store {
   ### Caller: perl.startup, on first (validation) pass of httpd.conf
   
   my $self = shift;
+
+  $CONF->{'_storage'}{'GENERATOR'} = generator();
+
   die "[FATAL] Could not write to $self->{'_filename'}: $!" unless lock_nstore($CONF->{'_storage'}, $self->{'_filename'});
   return 1;
 }
-
 
 sub parse {
   ### Retrieves a stored configuration or creates a new one
@@ -317,9 +324,11 @@ sub parse {
   
   if (!$SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{'_filename'}) {
     warn " Retrieving conf from $self->{'_filename'}\n";
-    $self->retrieve;
-    $reg_conf->configure;
-    return 1;
+    if($self->retrieve) {
+      $reg_conf->configure;
+      return 1;
+    }
+    warn " conf was not generated here, regenerating\n";
   }
   
 #  $self->_get_valid_urls; # under development
@@ -461,6 +470,12 @@ sub _read_in_ini_file {
       }
       
       close FH;
+    }
+
+    # Check for existence of VCF JSON configuration file
+    my $json_path = "$confdir/json/${filename}_vcf.json";
+    if (-e $json_path) {
+      $tree->{'ENSEMBL_VCF_COLLECTIONS'} = {'CONFIG' => $json_path, 'ENABLED' => 1} if $json_path;
     }
   }
   

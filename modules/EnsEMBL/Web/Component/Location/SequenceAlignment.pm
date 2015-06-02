@@ -41,7 +41,7 @@ sub content {
   my $ref_slice      = $self->new_object('Slice', $original_slice, $object->__data); # Get reference slice
   my $var_db         = $species_defs->databases->{'DATABASE_VARIATION'};
   my $strain         = $species_defs->translate('strain') || 'strain';
-  my (@individuals, $html);
+  my (@samples, $html);
     
   my $config = {
     display_width  => $hub->param('display_width') || 60,
@@ -49,7 +49,7 @@ sub content {
     species        => $hub->species,
     comparison     => 1,
     resequencing   => 1,
-    ref_slice_name => $ref_slice->get_individuals('reference')
+    ref_slice_name => $ref_slice->get_samples('reference')
   };
   
   foreach (qw(exon_ori match_display snp_display line_numbering codons_display title_display)) {
@@ -58,19 +58,19 @@ sub content {
   
   # FIXME: Nasty hack to allow the parameter to be defined, but false. Used when getting variations.
   # Can be deleted once we get the correct set of variations from the API 
-  # (there are currently variations returned when the resequenced individuals match the reference)
+  # (there are currently variations returned when the resequenced samples match the reference)
   $config->{'match_display'} ||= 0;  
   $config->{'exon_display'}    = 'selected' if $config->{'exon_ori'};
   $config->{'end_number'}      = $config->{'number'} = 1 if $config->{'line_numbering'};
   
   foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS)) {
-    foreach my $ind (@{$var_db->{$_}}) {
-      push @individuals, $ind if $hub->param($ind) eq 'on';
+    foreach my $sample (@{$var_db->{$_}}) {
+      push @samples, $sample if $hub->param($sample) eq 'on';
     }
   }
   
-  if (scalar @individuals) {
-    $config->{'slices'} = $self->get_slices($ref_slice->Obj, \@individuals, $config);
+  if (scalar @samples) {
+    $config->{'slices'} = $self->get_slices($ref_slice->Obj, \@samples, $config);
     
     my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
     
@@ -105,7 +105,7 @@ sub content {
   } else {
     $strain .= 's';
     
-    if ($ref_slice->get_individuals('reseq')) {
+    if ($ref_slice->get_samples('reseq')) {
       $html = $self->_info(
         "No $strain specified", 
         qq(<p>Please select $strain to display from the "<b>Resequenced $strain</b>" section of the configuration panel, accessible via "<b>Configure this page</b>" link to the left.</p>)
@@ -119,16 +119,16 @@ sub content {
 }
 
 sub get_slices {
-  my ($self, $ref_slice_obj, $individuals, $config) = @_;
+  my ($self, $ref_slice_obj, $samples, $config) = @_;
   my $hub = $self->hub;
   
   # Chunked request
-  if (!defined $individuals) {
+  if (!defined $samples) {
     my $var_db = $hub->species_defs->databases->{'DATABASE_VARIATION'};
     
     foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS DISPLAYBLE)) {
-      foreach my $ind (@{$var_db->{$_}}) {
-        push @$individuals, $ind if $hub->param($ind) eq 'on';
+      foreach my $sample (@{$var_db->{$_}}) {
+        push @$samples, $sample if $hub->param($sample) eq 'on';
       }
     }
   }
@@ -136,7 +136,7 @@ sub get_slices {
   my $msc = Bio::EnsEMBL::MappedSliceContainer->new(-SLICE => $ref_slice_obj, -EXPANDED => 1);
   
   $msc->set_StrainSliceAdaptor(Bio::EnsEMBL::DBSQL::StrainSliceAdaptor->new($ref_slice_obj->adaptor->db));
-  $msc->attach_StrainSlice($_) for @$individuals;
+  $msc->attach_StrainSlice($_) for @$samples;
   
   my @slices = ({ 
     name  => $config->{'ref_slice_name'},

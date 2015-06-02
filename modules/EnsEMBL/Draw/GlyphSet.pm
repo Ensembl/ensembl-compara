@@ -208,13 +208,11 @@ sub unshift {
          $gx1 = $gx + $Glyph->width();
     $gy  =     $Glyph->y();
          $gy1 = $gy + $Glyph->height();
-      warn ">>> GY = $gy, GY1 = $gy1";
 
     $self->minx($gx)  unless defined $self->minx && $self->minx < $gx;
     $self->maxx($gx1) unless defined $self->maxx && $self->maxx > $gx1;
     $self->miny($gy)  unless defined $self->miny && $self->miny < $gy;
     $self->maxy($gy1) unless defined $self->maxy && $self->maxy > $gy1;
-    warn "... SET MAX Y to ".$self->maxy;
   }
 }
 
@@ -394,7 +392,9 @@ sub subtitle_text {
 sub use_subtitles {
   my ($self) = @_;
 
-  return $self->supports_subtitles && $self->subtitle_text;
+  return
+    $self->{'config'}->get_option('opt_subtitles') &&
+    $self->supports_subtitles && $self->subtitle_text;
 }
 
 sub subtitle_height {
@@ -411,6 +411,18 @@ sub subtitle_colour {
 
 sub supports_subtitles {
   return 0;
+}
+
+################### GANGS #######################
+
+sub gang_prepare {
+}
+
+sub gang {
+  my ($self,$val) = @_;
+
+  $self->{'_gang'} = $val if @_>1;
+  return $self->{'_gang'};
 }
 
 ################### LABELS ##########################
@@ -1226,15 +1238,22 @@ sub section {
 
 sub section_zmenu { $_[0]->my_config('section_zmenu'); }
 sub section_no_text { $_[0]->my_config('no_section_text'); }
+sub section_lines { $_[0]->{'section_lines'}; }
 
 sub section_text {
-  $_[0]->{'section_text'} = $_[1] if @_>1;
+  if(@_>1) {
+    $_[0]->{'section_text'} = $_[1];
+    my @texts = @{$_[0]->wrap($_[1],$_[2],'Arial',8)};
+    @texts = @texts[0..1] if @texts>2;
+    $_[0]->{'section_lines'} = \@texts;
+  }
   return $_[0]->{'section_text'};
 }
 
 sub section_height {
   return 0 unless $_[0]->{'section_text'};
-  return 32;
+  return 24 if @{ $_[0]->{'section_lines'}} == 1;
+  return 36;
 }
 
 
@@ -1280,10 +1299,9 @@ sub check {
   return $name;
 }
 
-    
-
 sub acos_in_degrees {
   my ($self, $x) = @_;
+  $x = 1 if ($x > 1 || $x < -1);
   my $pi   = 4*atan2(1,1);
   my $acos = atan2(sqrt(1 - $x * $x), $x);
   return int($acos/$pi * 180);

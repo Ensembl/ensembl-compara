@@ -35,6 +35,8 @@ use EnsEMBL::Web::Text::Feature::BED;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
+sub wiggle_subtitle { return $_[0]->my_config('caption'); }
+
 sub my_helplink   { return 'bigbed'; }
 sub feature_id    { $_[1]->id;       }
 sub feature_group { $_[1]->id;       }
@@ -169,12 +171,10 @@ sub _draw_wiggle {
  
   $self->draw_wiggle_plot(
     $features, {
-      min_score => min(@scores),
+      min_score => 0,
       max_score => max(@scores),
-      description => $self->my_config('caption'),
       score_colour => $self->my_config('colour'),
   }); 
-  $self->draw_space_glyph();
   return (); # No error
 }
 

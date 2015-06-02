@@ -192,9 +192,9 @@ sub populate_tree {
     { 'availability' => 'gene' }
   );
 
-  $external->append($self->create_subnode('ExpressionAtlas', 'Gene expression atlas',
+  $external->append($self->create_subnode('ExpressionAtlas', 'Gene expression',
     [qw( atlas EnsEMBL::Web::Component::Gene::ExpressionAtlas )],
-    { 'availability'  => 'gene' }
+    { 'availability'  => 'gene has_gxa' }
   ));
 
   

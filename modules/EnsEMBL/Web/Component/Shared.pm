@@ -29,34 +29,24 @@ use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
 use List::MoreUtils qw(uniq first_index);
 
-######### USED ON VARIOUS PAGES ###########
-
 sub coltab {
-  my ($self,$text,$colour,$title) = @_;
+  my ($self, $text, $colour, $title) = @_;
 
-  $title ||= '';
-  return sprintf(
-    qq(
-      <div class="coltab">
-        <span class="colour coltab_tab" style="background-color:%s;">&nbsp;</span>
-        <div class="_ht conhelp coltab_text" title="%s">%s</div>
-      </div>),
-    $colour,$title,$text
-  );
+  return sprintf(qq(<div class="coltab"><span class="coltab-tab" style="background-color:%s;">&nbsp;</span><div class="coltab-text">%s</div></div>), $colour, $self->helptip($text, $title));
 }
 
-
-########### GENES AND TRANSCRIPTS ###################
-
 sub colour_biotype {
-  my ($self,$html,$transcript,$title) = @_;
+  my ($self, $text, $transcript, $title) = @_;
 
-  my $colours       = $self->hub->species_defs->colour('gene');
-  my $key = $transcript->biotype;
-  $key = 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
-  my $colour = ($colours->{lc($key)}||{})->{'default'};
-  my $hex = $self->hub->colourmap->hex_by_name($colour);
-  return $self->coltab($html,$hex,$title);
+  $title ||= $self->get_glossary_entry($text);
+
+  my $colours = $self->hub->species_defs->colour('gene');
+  my $key     = $transcript->biotype;
+     $key     = 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
+  my $colour  = ($colours->{lc($key)} || {})->{'default'};
+  my $hex     = $self->hub->colourmap->hex_by_name($colour);
+
+  return $self->coltab($text, $hex, $title);
 }
 
 sub transcript_table {
@@ -188,12 +178,11 @@ sub transcript_table {
   my $gene = $object->gene;
 
   #text for tooltips
-  my $gencode_desc = "The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).";
-  my $trans_5_3_desc = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
-  my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
-  my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
-  my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
-  my $gene_html    = '';  
+  my $gencode_desc    = "The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).";
+  my $trans_5_3_desc  = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
+  my $trans_5_desc    = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
+  my $trans_3_desc    = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
+  my $gene_html       = '';
   my $transc_table;
 
   if ($gene) {
@@ -207,18 +196,20 @@ sub transcript_table {
 
     my $trans_attribs = {};
     my $trans_gencode = {};
-    my @appris_codes  = qw(appris_pi1 appris_pi2 appris_pi3 appris_pi4 appris_pi5 appris_alt1 appris_alt2);
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL), @appris_codes) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL appris)) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
         next unless $attrib;
         if($attrib_type eq 'gencode_basic' && $attrib->value) {
           $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
-        } elsif ($attrib_type =~ /appris/  && $attrib->value) {
+        } elsif ($attrib_type eq 'appris'  && $attrib->value) {
           ## There should only be one APPRIS code per transcript
-          (my $code = $attrib->code) =~ s/appris_//;
-          $trans_attribs->{$trans->stable_id}{'appris'} = [$code, $attrib->name]; 
+          my $short_code = $attrib->value;
+          ## Manually shorten the full attrib values to save space
+          $short_code =~ s/ernative//;
+          $short_code =~ s/rincipal//;
+          $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $attrib->value]; 
           last;
         } else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
@@ -271,7 +262,7 @@ sub transcript_table {
     my @rows;
    
     my %extra_links = (
-      uniprot => { match => "^UniProt", name => "UniProt", order => 0 },
+      uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
       refseq => { match => "^RefSeq", name => "RefSeq", order => 1 },
     );
     my %any_extras;
@@ -318,35 +309,30 @@ sub transcript_table {
       if ($trans_attribs->{$tsi}) {
         if ($trans_attribs->{$tsi}{'CDS_start_NF'}) {
           if ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-            push @flags,qq(<span class="glossary_mouseover">CDS 5' and 3' incomplete<span class="floating_popup">$trans_5_3_desc</span></span>);
+            push @flags, $self->helptip("CDS 5' and 3' incomplete", $trans_5_3_desc);
           }
           else {
-            push @flags,qq(<span class="glossary_mouseover">CDS 5' incomplete<span class="floating_popup">$trans_5_desc</span></span>);
+            push @flags, $self->helptip("CDS 5' incomplete", $trans_5_desc);
           }
         }
         elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-         push @flags,qq(<span class="glossary_mouseover">CDS 3' incomplete<span class="floating_popup">$trans_3_desc</span></span>);
+         push @flags, $self->helptip("CDS 3' incomplete", $trans_3_desc);
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
-          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s</span></span>), $tsl, $glossary{"TSL$tsl"};
+          push @flags, $self->helptip("TSL:$tsl", $self->get_glossary_entry("TSL:$tsl").$self->get_glossary_entry('TSL'));
         }
       }
 
       if ($trans_gencode->{$tsi}) {
         if ($trans_gencode->{$tsi}{'gencode_basic'}) {
-          push @flags,qq(<span class="glossary_mouseover">GENCODE basic<span class="floating_popup">$gencode_desc</span></span>);
+          push @flags, $self->helptip('GENCODE basic', $gencode_desc);
         }
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
-        my ($code, $text) = @{$trans_attribs->{$tsi}{'appris'}};
+        my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
         my $short_code = $code ? ' '.uc($code) : '';
-        my $appris_popup  = sprintf('<span class="glossary_mouseover">APPRIS%s<span class="floating_popup">%s', $short_code, $text);
-
-        my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '521', '__clear' => 1});
-        $appris_popup .= sprintf('<br/><br/><a href="%s" class="popup">APPRIS</a> is a system to annotate alternatively spliced transcripts based on a range of computational methods.</span></span>', $glossary_url);
-
-        push @flags, $appris_popup;
+          push @flags, $self->helptip("APPRIS$short_code", $self->get_glossary_entry("APPRIS: $key").$self->get_glossary_entry('APPRIS'));
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
@@ -356,8 +342,7 @@ sub transcript_table {
       else {
         $biotype_text = ucfirst($biotype_text);
       } 
-      my $merged = '';
-      $merged .= " Merged Ensembl/Havana gene." if $_->analysis->logic_name =~ /ensembl_havana/;
+
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
         name        => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
@@ -365,15 +350,15 @@ sub transcript_table {
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
         translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_id : '-',
-        biotype     => $self->colour_biotype($self->glossary_mouseover($biotype_text,undef,$merged),$_),
+        biotype     => $self->colour_biotype($biotype_text, $_),
         ccds        => $ccds,
         %extras,
-        has_ccds   => $ccds eq '-' ? 0 : 1,
-        cds_tag    => $cds_tag,
-        gencode_set=> $gencode_set,
-        options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
-        flags => join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags),
-        evidence => join('', @evidence),
+        has_ccds    => $ccds eq '-' ? 0 : 1,
+        cds_tag     => $cds_tag,
+        gencode_set => $gencode_set,
+        options     => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
+        flags       => join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags),
+        evidence    => join('', @evidence),
       };
       
       $biotype_text = '.' if $biotype_text eq 'Protein coding';
@@ -581,32 +566,19 @@ sub get_synonyms {
   }
   return join ', ', @ids;
 }
-
-# Utility method to wrap HTML in a glossary
-sub glossary {
-  my %glossary = $_[0]->multiX('ENSEMBL_GLOSSARY');
-  my $entry = $glossary{$_[1]};
-
-  return $_[2] unless defined $entry;
-  return qq(<span class="glossary_mouseover">$_[2]<span class="floating_popup">$entry</span></span>);
-}
   
 sub _add_gene_counts {
   my ($self,$genome_container,$sd,$cols,$options,$tail,$our_type) = @_;
 
-  my @order = qw(
-    coding_cnt noncoding_cnt noncoding_cnt/s noncoding_cnt/l noncoding_cnt/m
-    pseudogene_cnt transcript
-  );
-  my @suffixes = (['','~'],
-                  ['r',' (incl ~ '.glossary($sd,'Readthrough','readthrough').')']);
-  my %glossary_lookup   = (
-      'coding_cnt'          => 'Protein coding',
-      'noncoding_cnt/s'     => 'Small non coding gene',
-      'noncoding_cnt/l'     => 'Long non coding gene',
-      'pseudogene_cnt'      => 'Pseudogene',
-      'transcript'          => 'Transcript',
-    );
+  my @order           = qw(coding_cnt noncoding_cnt noncoding_cnt/s noncoding_cnt/l noncoding_cnt/m pseudogene_cnt transcript);
+  my @suffixes        = (['','~'], ['r',' (incl ~ '.$self->glossary_helptip('readthrough', 'Readthrough').')']);
+  my $glossary_lookup = {
+    'coding_cnt'        => 'Protein coding',
+    'noncoding_cnt/s'   => 'Small non coding gene',
+    'noncoding_cnt/l'   => 'Long non coding gene',
+    'pseudogene_cnt'    => 'Pseudogene',
+    'transcript'        => 'Transcript',
+  };
 
   my @data;
   foreach my $statistic (@{$genome_container->fetch_all_statistics()}) {
@@ -636,7 +608,7 @@ sub _add_gene_counts {
     my $class = '';
     $class = 'row-sub' if $d->{'_sub'};
     my $key = $d->{'_name'};
-    $key = glossary($sd,$glossary_lookup{$d->{'_key'}},"<b>$d->{'_name'}</b>");
+    $key = $self->glossary_helptip("<b>$d->{'_name'}</b>", $glossary_lookup->{$d->{'_key'}});
     $counts->add_row({ name => $key, stat => $value, options => { class => $class }});
   } 
   return "<h3>Gene counts$tail</h3>".$counts->render;
@@ -645,13 +617,15 @@ sub _add_gene_counts {
 sub species_stats {
   my $self = shift;
   my $sd = $self->hub->species_defs;
-  my $html = '<h3>Summary</h3>';
-
+  my $html;
   my $db_adaptor = $self->hub->database('core');
   my $meta_container = $db_adaptor->get_MetaContainer();
   my $genome_container = $db_adaptor->get_GenomeContainer();
 
-  my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
+  #deal with databases that don't have species_stats
+  return $html if $genome_container->is_empty;
+
+  $html = '<h3>Summary</h3>';
 
   my $cols = [
     { key => 'name', title => '', width => '30%', align => 'left' },
@@ -686,7 +660,7 @@ sub species_stats {
       'name' => '<b>Base Pairs</b>',
       'stat' => $self->thousandify($genome_container->get_total_length()),
   });
-  my $header = '<span class="glossary_mouseover">Golden Path Length<span class="floating_popup">'.$glossary{'Golden path length'}.'</span></span>';
+  my $header = $self->glossary_helptip('Golden Path Length', 'Golden path length');
   $summary->add_row({
       'name' => "<b>$header</b>",
       'stat' => $self->thousandify($genome_container->get_ref_length())
@@ -1275,12 +1249,73 @@ sub render_consequence_type {
             $var_styles->{lc $_->SO_term}->{'default'}
           )
         : $colourmap->hex_by_name($var_styles->{'default'}->{'default'});
-      $self->coltab($_->label,$hex,$_->description);
+      $self->coltab($_->label, $hex, $_->description);
     }
     @consequences;
   my $rank = $consequences[0]->rank;
       
   return ($type) ? qq{<span class="hidden">$rank</span>$type} : '-';
+}
+
+sub render_evidence_status {
+  my $self      = shift;
+  my $evidences = shift;
+
+  my $render;
+  foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$evidences){
+    my $evidence_label = $evidence;
+       $evidence_label =~ s/_/ /g;
+    $render .= sprintf('<img src="%s/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                        $self->img_url, $evidence, $evidence_label, $evidence
+                      );
+  }
+  return $render;
+}
+
+sub render_clinical_significance {
+  my $self       = shift;
+  my $clin_signs = shift;
+
+  my $render;
+  foreach my $cs (sort {$a cmp $b} @$clin_signs){
+    my $cs_img = $cs;
+       $cs_img =~ s/\s/-/g;
+    $render .= sprintf('<img src="%s/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+                        $self->img_url, $cs_img, $cs, $cs
+                      );
+  }
+  return $render;
+}
+
+sub button_portal {
+  my ($self, $buttons, $class) = @_;
+  $class ||= '';
+  my $html;
+
+  my $img_url = $self->img_url;
+
+  foreach (@{$buttons || []}) {
+    if ($_->{'url'}) {
+      my $counts = qq(<span class="counts">$_->{'count'}</span>) if $_->{'count'};
+      $html .= qq(<div><a href="$_->{'url'}" title="$_->{'title'}" class="_ht"><img src="$img_url$_->{'img'}" alt="$_->{'title'}" />$counts</a></div>);
+    } else {
+      $html .= qq|<div><img src="$img_url$_->{'img'}" class="_ht unavailable" alt="$_->{'title'} (Not available)" title="$_->{'title'} (Not available)" /></div>|;
+    }
+  }
+
+  return qq{<div class="portal $class">$html</div><div class="invisible"></div>};
+}
+
+sub vep_icon {
+  my ($self, $inner_html) = @_;
+
+  $inner_html   ||= 'Test your own variants with the <span>Variant Effect Predictor</span>';
+  my $hub         = $self->hub;
+  my $new_vep     = $hub->species_defs->ENSEMBL_VEP_ENABLED;
+  my $vep_link    = $hub->url({'__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
+  my $link_class  = $new_vep ? '' : ' modal_link';
+
+  return qq(<a class="vep-icon$link_class" href="$vep_link">$inner_html</a>);
 }
 
 1;

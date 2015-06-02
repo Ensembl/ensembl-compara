@@ -48,7 +48,6 @@ sub content {
   my ($tsl)        = @{$transcript->get_all_Attributes('TSL')};
   my $html         = "<strong>Exons:</strong> $exons <strong>Coding exons:</strong> $coding_exons <strong>Transcript length:</strong> $basepairs bps";
   $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
-  my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
 
   $table->add_row('Statistics', $html);
 
@@ -66,9 +65,9 @@ sub content {
   }
 
   ## add TSL info
-  if ($tsl && ($tsl = $tsl->value)) {  
-    my $key = $tsl =~ s/^tsl([^\s]+).*$/TSL$1/gr;     
-    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag _ht"><span class="glossary_mouseover" title="%s">%s</span></span>', encode_entities($glossary{$key}), $key =~ s/TSL/TSL\:/gr));
+  if ($tsl && ($tsl = $tsl->value)) {
+    my $key = $tsl =~ s/^tsl([^\s]+).*$/TSL:$1/gr;
+    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag">%s</span>', $self->helptip($key, $self->get_glossary_entry($key).$self->get_glossary_entry('TSL'))));
   }
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
 
@@ -128,7 +127,7 @@ sub content {
   ## add frameshift introns info
   my $frameshift_introns = $object->get_frameshift_introns;
 
-  $table->add_row('Frameshift introns', $self->glossary_mouseover('Frameshift intron', 'Frameshift introns') . " occur at intron number(s)  $frameshift_introns.") if $frameshift_introns;
+  $table->add_row('Frameshift introns', $self->glossary_helptip('Frameshift introns', 'Frameshift intron') . " occur at intron number(s)  $frameshift_introns.") if $frameshift_introns;
 
   ## add stop gained/lost variation info
   my @attrib_codes = qw(StopLost StopGained);

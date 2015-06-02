@@ -54,7 +54,7 @@ sub content {
   }
 
   my ($table_rows, $column_flags) = $self->table_data($data);
-  my $table      = $self->new_table([], [], { data_table => 1 });
+  my $table      = $self->new_table([], [], { data_table => 1, sorting => [ 'disease asc' ] });
      
   if (scalar keys(%$table_rows) != 0) {
 

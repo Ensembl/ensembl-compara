@@ -288,7 +288,7 @@ sub filter_munged_snps {
 
 # Sequence Align View ---------------------------------------------------
 
-sub get_individuals {
+sub get_samples {
   ### SequenceAlignView
   ### Arg (optional) : type string
   ###  - "default"   : returns samples checked by default
@@ -300,30 +300,30 @@ sub get_individuals {
 
   my $self    = shift;
   my $options = shift;
-  my $individual_adaptor;
+  my $sample_adaptor;
   
   eval {
-   $individual_adaptor = $self->variation_adaptor->get_IndividualAdaptor;
+   $sample_adaptor = $self->variation_adaptor->get_SampleAdaptor;
   };
   
   if ($@) {
-    warn "Error getting individual adaptor off variation adaptor " . $self->variation_adaptor;
+    warn "Error getting sample adaptor off variation adaptor " . $self->variation_adaptor;
     return ();
   }
   
   if ($options eq 'default') {
-    return sort  @{$individual_adaptor->get_default_strains};
+    return sort  @{$sample_adaptor->get_default_strains};
   } elsif ($options eq 'reseq') {
-    return @{$individual_adaptor->fetch_all_strains};
+    return @{$sample_adaptor->fetch_all_strains};
   } elsif ($options eq 'reference') {
-    return $individual_adaptor->get_reference_strain_name || $self->species;
+    return $sample_adaptor->get_reference_strain_name || $self->species;
   }
 
   my %default_pops;
-  map { $default_pops{$_} = 1 } @{$individual_adaptor->get_default_strains};
+  map { $default_pops{$_} = 1 } @{$sample_adaptor->get_default_strains};
   my %db_pops;
   
-  foreach (sort  @{$individual_adaptor->get_display_strains}) {
+  foreach (sort  @{$sample_adaptor->get_display_strains}) {
     next if $default_pops{$_};
     $db_pops{$_} = 1;
   }

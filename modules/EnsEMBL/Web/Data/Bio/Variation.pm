@@ -56,7 +56,7 @@ sub convert_to_drawing_parameters {
   # getting associated phenotypes and associated genes
   foreach my $pf (@data) {
     my $object_id   = $pf->object_id;
-    my $source_name = $pf->source;
+    my $source_name = $pf->source_name;
        $source_name =~ s/_/ /g;
     my $study_xref  = ($pf->study) ? $pf->study->external_reference : undef;
     my $external_id = ($pf->external_id) ? $pf->external_id : undef;

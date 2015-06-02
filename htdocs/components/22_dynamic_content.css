@@ -38,12 +38,13 @@ body.ie6  a.help-header span.sprite { width: 18px; font-size: 14px; }
 
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
-/* Variation "icons" */
-div.icon-holder       { width: 650px; }
-img.portal            { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
-img.portal-small       { height: 80px; width: 80px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
-span.counts           { position:absolute; top:-8px; right:14px; background-color:#667aa6; color:#FFF; padding:2px 6px; border-radius:5px; box-shadow:2px 2px 2px #AAA }
-div.icon-container    { float:left; position:relative; }
+/* Portal "icons" for Variation, compara etc */
+div.portal                  { width: 650px; }
+div.portal div              { float:left; position:relative; }
+div.portal img              { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
+div.portal-small img        { height: 80px; width: 80px; }
+div.portal img.unavailable  { -webkit-filter: grayscale(100%); filter: grayscale(100%); filter: gray; filter: url("[[IMG:greyscale.svg]]#greyscale"); opacity: 0.4; }
+div.portal span.counts      { position:absolute; top:-8px; right:14px; background-color:[[BUTTON_BG]]; color:[[BUTTON_TEXT]]; padding:2px 6px; border-radius:5px; box-shadow:2px 2px 2px #AAA }
 
 /************************************
              table stuff
@@ -77,7 +78,6 @@ body.ie .open .cell_detail { display: block; }
 
 .ts_flag { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
 .ts_biotype { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
-.ts_flag .glossary_mouseover { border-bottom: 1px dotted #000099; }
 .appris_green { color:#006600; }
 .appris_yellow { color:#c19200; }
 
@@ -132,6 +132,9 @@ div.helptip-bottom div.ui-tooltip-content:after  { border-width: 0 0 8px 8px; bo
 body.ie67 div.helptip-top    div.ui-tooltip-content { top: -8px; }
 body.ie67 div.helptip-bottom div.ui-tooltip-content { top:  8px; }
 
+/* generic helptip */
+.helptip { position: absolute !important; background-color: [[PAGE_TEXT]]; color: [[PAGE_BG]]; padding: 8px; white-space: normal; line-height: 16px; border-radius: 4px; z-index: 100000; }
+
 /************************************
              generic tree
  ************************************/
@@ -168,9 +171,8 @@ ul.variation_consequence_tree li a.leaf   { margin-left: -10px!important; }
 /************************************
    misc conventions
  ************************************/
-div.coltab { line-height: 110%; text-align: left; display: inline-block; }
-span.coltab_tab { float: left; }
-div.coltab_text { margin: 0 0 4px 8px; }
+div.coltab span.coltab-tab  { float: left; line-height: 110%; }
+div.coltab div.coltab-text  { margin: 0 0 4px 8px; }
 
 /* 'redirecting to mirror' message*/
 div.redirect-message-padding  { height: 40px; }

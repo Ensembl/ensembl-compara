@@ -33,7 +33,6 @@ my $web_root      = $SiteDefs::ENSEMBL_WEBROOT;
 my $conf_dir      = $SiteDefs::ENSEMBL_CONF_DIRS[0];
 my $conf_file     = $SiteDefs::ENSEMBL_CONFIG_FILENAME;
 my $memcached     = $SiteDefs::ENSEMBL_MEMCACHED;
-my $ctrl_log      = $SiteDefs::ENSEMBL_CTRLLOG;
 my $apache_define = $SiteDefs::APACHE_DEFINE;
 my $apache_dir    = $SiteDefs::APACHE_DIR;
 my $apache_bin    = $SiteDefs::APACHE_BIN;

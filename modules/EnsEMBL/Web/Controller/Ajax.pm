@@ -28,6 +28,7 @@ use URI::Escape     qw(uri_unescape);
 use EnsEMBL::Web::ViewConfig::Regulation::Page;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::File::Utils::URL;
 
 use base qw(EnsEMBL::Web::Controller);
 
@@ -43,7 +44,7 @@ sub new {
     user_cookie    => $args->{'user_cookie'},
   });
   
-  my $func = $hub->action;
+  my $func = 'ajax_'.$hub->action;
   
   bless $self, $class;
   
@@ -52,7 +53,7 @@ sub new {
   return $self;
 }
 
-sub autocomplete {
+sub ajax_autocomplete {
   my ($self, $hub) = @_;
   my $cache   = $hub->cache;
   my $species = $hub->species;
@@ -66,18 +67,18 @@ sub autocomplete {
   
   if (!$results) {
     my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
-    my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
+    my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, location, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
     
     $sth->execute;
     
-    $results = $sth->fetchall_arrayref;
+    $results = { map { uc $_->[0] => { 'label' => $_->[0], 'g' => $_->[1], 'r' => $_->[2], 'db' => $_->[3] } } @{$sth->fetchall_arrayref} };
     $cache->set($key, $results, undef, 'AUTOCOMPLETE') if $cache;
   }
   
   print $self->jsonify($results);
 }
 
-sub track_order {
+sub ajax_track_order {
   my ($self, $hub)  = @_;
   my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
   my $species       = $image_config->species;
@@ -93,7 +94,7 @@ sub track_order {
   $hub->session->store;
 }
 
-sub order_reset {
+sub ajax_order_reset {
   my ($self, $hub)  = @_;
   my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
   my $species       = $image_config->species;
@@ -104,7 +105,7 @@ sub order_reset {
   $hub->session->store;
 }
 
-sub config_reset {
+sub ajax_config_reset {
   my ($self, $hub)  = @_;
   my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
   my $species       = $image_config->species;
@@ -124,7 +125,7 @@ sub config_reset {
   $hub->session->store;
 }
 
-sub multi_species {
+sub ajax_multi_species {
   my ($self, $hub) = @_;
   my %species = map { $_ => $hub->param($_) } $hub->param;
   my %args    = ( type => 'multi_species', code => 'multi_species' );
@@ -141,7 +142,7 @@ sub multi_species {
   }
 }
 
-sub cell_type {
+sub ajax_cell_type {
   my ($self,$hub) = @_;
   my $cell = $hub->param('cell');
   my $image_config_name = $hub->param('image_config') || 'regulation_view';
@@ -178,7 +179,7 @@ sub cell_type {
   $hub->session->store;
 }
 
-sub evidence {
+sub ajax_evidence {
   my ($self,$hub) = @_;
 
   my (%evidence,%changed);
@@ -213,7 +214,7 @@ sub evidence {
   $hub->session->store;
 }
 
-sub reg_renderer {
+sub ajax_reg_renderer {
   my ($self,$hub) = @_;
 
   my $renderer = $hub->input->url_param('renderer');
@@ -228,7 +229,7 @@ sub reg_renderer {
   });
 }
 
-sub nav_config {
+sub ajax_nav_config {
   my ($self, $hub) = @_;
   my $session = $hub->session;
   my %args    = ( type => 'nav', code => $hub->param('code') );
@@ -245,7 +246,7 @@ sub nav_config {
   $session->set_data(%args, %data) if scalar grep $_ !~ /(type|code)/, keys %data;
 }
 
-sub data_table_config {
+sub ajax_data_table_config {
   my ($self, $hub) = @_;
   my $session = $hub->session;
   my $sorting = $hub->param('sorting');
@@ -260,7 +261,7 @@ sub data_table_config {
   $session->set_data(%args, %data) if scalar keys %data;
 }
 
-sub table_export {
+sub ajax_table_export {
   my ($self, $hub) = @_;
   my $r     = $hub->apache_handle;
   my $data  = from_json($hub->param('data'));
@@ -302,6 +303,19 @@ sub table_export {
     }
     print join(',',@row_out)."\n";
   }
+}
+
+sub ajax_fetch_html {
+  my ($self, $hub) = @_;
+
+  my $url     = $hub->param('url');
+  my $content = {};
+
+  if ($url) {
+     $content = EnsEMBL::Web::File::Utils::URL::read_file($url, {'hub' => $hub, 'nice' => 1});
+  }
+
+  print $content->{'content'} || '';
 }
 
 1;

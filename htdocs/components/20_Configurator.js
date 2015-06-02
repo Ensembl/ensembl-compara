@@ -1092,6 +1092,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     button.attr('title', function () { return $(this).hasClass('open') ? 'Hide information' : 'Click for more information'; });
+
+    desc.find('._dyna_load').dynaLoad();
     
     this.elLk.help = this.elLk.help.add(button).filter('.open');
   }, 

@@ -23,6 +23,13 @@ limitations under the License.
 #   names the from/to coordinate systems as 'external' and 'ensembl'.
 package Bio::EnsEMBL::ExternalData::DAS::XrefPeptideMapper;
 
+############################################################################
+#
+# DEPRECATED MODULE - DAS SUPPORT WILL BE REMOVED FROM ENSEMBL IN RELEASE 83
+#
+#############################################################################
+
+
 use strict;
 use warnings;
 

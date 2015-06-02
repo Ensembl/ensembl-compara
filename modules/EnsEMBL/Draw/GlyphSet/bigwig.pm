@@ -36,6 +36,7 @@ use EnsEMBL::Web::File::Utils::URL;
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub href_bgd       { return $_[0]->_url({ action => 'UserData' }); }
+sub wiggle_subtitle { return $_[0]->my_config('caption'); }
 
 sub bigwig_adaptor { 
   my $self = shift;
@@ -107,8 +108,7 @@ sub render_normal {
     max       => $agg->{'max'},
     colours   => \@greyscale,
   }));
-
-  $self->_render_hidden_bgd($h) if @{$agg->{'values'}} && $self->my_config('addhiddenbgd');
+  $self->_render_hidden_bgd($h) if @{$agg->{'values'}};
   
   $self->errorTrack("No features from '$name' on this strand") unless @{$agg->{'values'}} || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
 }
@@ -119,15 +119,23 @@ sub render_text {
   return '';
 }
 
+sub bins {
+  my ($self) = @_;
+
+  if(!$self->{'_bins'}) {
+    my $slice = $self->{'container'};
+    $self->{'_bins'} = min($self->{'config'}->image_width, $slice->length);
+  }
+  return $self->{'_bins'};
+}
+
 sub features {
   my $self          = shift;
   my $slice         = $self->{'container'};
-  my $max_bins      = min($self->{'config'}->image_width, $slice->length);
   my $fake_analysis = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
   my @features;
-  my @wiggle = $self->wiggle_features($max_bins);
   
-  foreach (@{$self->wiggle_features($max_bins)}) {
+  foreach (@{$self->wiggle_features($self->bins)}) {
     push @features, {
       start    => $_->{'start'}, 
       end      => $_->{'end'}, 
@@ -168,6 +176,25 @@ sub wiggle_aggregate {
   return $self->{'_cache'}{'wiggle_aggregate'};
 }
 
+sub _max_val {
+  my ($self) = @_;
+
+  # TODO cache output so as not to re-call
+  my $hub = $self->{'config'}->hub;
+  my $has_chrs = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES});
+  my $slice = $self->{'container'};
+  my $adaptor = $self->bigwig_adaptor;
+  my $max_val = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $self->bins, $has_chrs);
+  return max(@$max_val);
+}
+
+sub gang_prepare {
+  my ($self,$gang) = @_;
+
+  my $max = $self->_max_val;
+  $gang->{'max'} = max($gang->{'max'}||0,$max);
+}
+
 # get the alignment features
 sub wiggle_features {
   my ($self, $bins) = @_;
@@ -178,18 +205,17 @@ sub wiggle_features {
     my $slice     = $self->{'container'};
     my $adaptor   = $self->bigwig_adaptor;
     return [] unless $adaptor;
-    my $summary   = $adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
+    my $summary   = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
     my $bin_width = $slice->length / $bins;
     my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
     my @features;
     
     for (my $i = 0; $i < $bins; $i++) {
-      next unless $summary->[$i]{'validCount'} > 0;
-      
+      next unless defined $summary->[$i];
       push @features, {
         start => $flip ? $flip - (($i + 1) * $bin_width) : ($i * $bin_width + 1),
         end   => $flip ? $flip - ($i * $bin_width + 1)   : (($i + 1) * $bin_width),
-        score => $summary->[$i]{'sumData'} / $summary->[$i]{'validCount'},
+        score => $summary->[$i],
       };
     }
     
@@ -202,47 +228,46 @@ sub wiggle_features {
 sub draw_features {
   my ($self, $wiggle) = @_;
   my $slice        = $self->{'container'};
-  my $feature_type = $self->my_config('caption');
   my $colour       = $self->my_config('colour') || 'slategray';
 
   # render wiggle if wiggle
   if ($wiggle) {
-    my $max_bins   = min($self->{'config'}->image_width, $slice->length);
-    my $features   = $self->wiggle_features($max_bins);
+    my $agg = $self->wiggle_aggregate();
+
     my $viewLimits = $self->my_config('viewLimits');
     my $no_titles  = $self->my_config('no_titles');
-    my $min_score;
+    # TODO barcode renderer cannot cope with minimum score being non-zero
     my $max_score;
-    
     my $signal_range = $self->my_config('signal_range');
     if(defined $signal_range) {
-      ($min_score, $max_score) = @$signal_range;
+      $max_score = $signal_range->[1];
     }
-    unless(defined $min_score and defined $max_score) {
+    unless(defined $max_score) {
       if (defined $viewLimits) {
-        ($min_score, $max_score) = split ':', $viewLimits;
+        $max_score = [ split ':', $viewLimits ]->[1];
       } else {
-        $min_score = $features->[0]{'score'};
-        $max_score = $features->[0]{'score'};
-
-        foreach my $feature (@$features) {
-          $min_score = min($min_score, $feature->{'score'});
-          $max_score = max($max_score, $feature->{'score'});
-        }
+        $max_score = $agg->{'max'};
       }
     }
-    
-    # render wiggle plot        
-    $self->draw_wiggle_plot($features, {
-      min_score    => $min_score, 
-      max_score    => $max_score, 
-      description  => $feature_type,
+   
+    my $gang = $self->gang();
+    if($gang and $gang->{'max'}) {
+      $max_score = $gang->{'max'};
+    }
+
+    # render wiggle plot
+    my $height = $self->my_config('height') || 60;
+    $self->draw_wiggle_plot($agg->{'values'}, {
+      min_score    => 0,
+      max_score    => $max_score,
       score_colour => $colour,
       axis_colour  => $colour,
       no_titles    => defined $no_titles,
+      unit         => $agg->{'unit'},
+      height       => $height,
+      graph_type   => 'bar',
     });
-    
-    $self->draw_space_glyph;
+    $self->_render_hidden_bgd($height) if @{$agg->{'values'}};
   }
 
   warn q{bigwig glyphset doesn't draw blocks} if !$wiggle || $wiggle eq 'both';

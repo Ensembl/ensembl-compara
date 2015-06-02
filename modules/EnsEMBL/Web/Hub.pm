@@ -50,7 +50,6 @@ use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
-use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -622,7 +621,7 @@ sub get_ExtURL_link {
 
 sub get_ext_seq {
   ## Uses PFETCH etc to get description and sequence of an external record
-  ## @param External DB type (has to match ENSEMBL_EXTERNAL_DATABASES variable in SiteDefs)
+  ## @param External DB type (has to match ENSEMBL_EXTERNAL_DATABASES variable in SiteDefs, except ENSEMBL and REST)
   ## @param Hashref with keys to be passed to get_sequence method of the required indexer (see EnsEMBL::Web::ExtIndex subclasses)
   ## @return Hashref (or possibly a list of similar hashrefs for multiple sequences) with keys:
   ##  - id        Stable ID of the object
@@ -638,8 +637,10 @@ sub get_ext_seq {
   unless (exists $indexers->{'databases'}{$external_db}) {
     my ($indexer, $exe);
 
-    # get data from e! databases
-    if ($external_db =~ /^ENS/) {
+    if ($external_db eq 'REST') {
+      $indexer = 'ENSEMBL_REST';
+      $exe     = 1;
+    } elsif ($external_db =~ /^ENS/) {
       $indexer = 'ENSEMBL_RETRIEVE';
       $exe     = 1;
     } else {
@@ -674,6 +675,22 @@ sub get_ext_seq {
   return { 'error' => 'No entries found' } if !@sequences;
 
   return wantarray ? @sequences : $sequences[0];
+}
+
+sub glossary_lookup {
+  ## Get the glossary lookup hash
+  ## @return Hashref with merged keys from TEXT_LOOKUP and ENSEMBL_GLOSSARY
+  my $self = shift;
+
+  if (!$self->{'_glossary_lookup'}) {
+    my %glossary  = $self->species_defs->multiX('ENSEMBL_GLOSSARY');
+    my %lookup    = $self->species_defs->multiX('TEXT_LOOKUP');
+
+    $self->{'_glossary_lookup'}{$_} = $glossary{$_} for keys %glossary;
+    $self->{'_glossary_lookup'}{$_} = $lookup{$_}   for keys %lookup;
+  }
+
+  return $self->{'_glossary_lookup'};
 }
 
 # This method gets all configured DAS sources for the current species.
@@ -865,11 +882,13 @@ sub req_cache_get {
 }
 
 sub is_new_regulation_pipeline { # Regulation rewrote their pipeline
-  my ($self) = @_;
+  my ($self,$species) = @_;
 
-  return $self->{'is_new_pipeline'} if defined $self->{'is_new_pipeline'};
-  my $fg = $self->database('funcgen');
-  my $new = 0;
+  $species ||= $self->species;
+  my $new = ($self->{'is_new_pipeline'}||={})->{$species};
+  return $new if defined $new;
+  my $fg = $self->databases_species($species,'funcgen')->{'funcgen'};
+  $new = 0;
   if($fg) {
     my $mca = $fg->get_MetaContainer;
     my $date = $mca->single_value_by_key('regbuild.last_annotation_update');
@@ -877,7 +896,7 @@ sub is_new_regulation_pipeline { # Regulation rewrote their pipeline
     $new = 1;
     $new = 0 if $year < 2014 or $year == 2014 and $month < 6;
   }
-  $self->{'is_new_pipeline'} = $new;
+  $self->{'is_new_pipeline'}{$species} = $new;
   return $new;
 }
 

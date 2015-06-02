@@ -33,13 +33,15 @@ sub new {
   ### Constructor
   ### Instantiates a parser for the appropriate file type 
   ### and opens the file for reading
-  my ($class, $format, $path) = @_;
+  ### @param file EnsEMBL::Web::File object
+  my ($class, $file) = @_;
 
   my $parser;
   my $parser_formats = EnsEMBL::Web::Constants::PARSER_FORMATS;
-  my $parser_class = 'Bio::EnsEMBL::IO::Parser::'.$parser_formats->{lc($args->{'format'})}{'class'};
+  my $parser_class = 'Bio::EnsEMBL::IO::Parser::'.$parser_formats->{lc($file->format)}{'class'};
+
   if (EnsEMBL::Root::dynamic_use($parser_class)) {
-    $parser = $parser_class->open($path);
+    $parser = $parser_class->open($file->absolute_read_path);
   }
 
   my $self = { parser => $parser };

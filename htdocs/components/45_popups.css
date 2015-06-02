@@ -42,10 +42,14 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .info_popup td.closed                  { background: url(/i/closed2.gif) 100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
 .info_popup td.opened                  { background: url(/i/open2.gif)   100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
 .info_popup .freq                      { display: inline-block; height: 0.5em; }
-.info_popup .A                         { background-color: #90EE90; }
-.info_popup .T                         { background-color: #EEA2AD; }
-.info_popup .C                         { background-color: #B0C4DE; }
-.info_popup .G                         { background-color: #FFEC8B; }
+.info_popup .base_A                    { background-color: #90EE90; }
+.info_popup .base_T                    { background-color: #EEA2AD; }
+.info_popup .base_C                    { background-color: #B0C4DE; }
+.info_popup .base_G                    { background-color: #FFEC8B; }
+.info_popup .base_1                    { background-color: #4B0082; }
+.info_popup .base_2                    { background-color: #FF1493; }
+.info_popup .base_3                    { background-color: #FF7F50; }
+.info_popup .base_4                    { background-color: #8B4513; }
 .info_popup ul                         { list-style: none; margin: 0; padding: 0; }
 .info_popup ul li                      { list-style-image: none; }
 
@@ -78,4 +82,3 @@ body.ie  .zmenu_holder div.header      { width: 202px; }
 body.ie6 .zmenu_holder span.close,
 body.ie6 .info_popup   span.close      { background-image: url(/i/close2.gif); }
 
-.glossary_mouseover                    { border-bottom: 1px dotted #00c; cursor: pointer; }

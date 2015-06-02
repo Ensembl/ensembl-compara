@@ -28,6 +28,8 @@ use POSIX qw(floor ceil);
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block EnsEMBL::Draw::GlyphSet::_difference);
 
+sub wiggle_subtitle {}
+
 #==============================================================================
 # The following functions can be overridden if the class does require
 # something different - main one to be overridden is probably the
@@ -414,7 +416,105 @@ sub render_as_alignment_nolabel {
           $feature_colour = $f->external_data->{'item_colour'}[0] if $config->{'itemRgb'} =~ /on/i;
         }
         
-        if ($draw_cigar || $cigar =~ /$regexp/) {
+        if ($self->my_config('has_blocks') && $show_structure) {
+          ## BED file shown like transcript
+          $label_colour       = $feature_colour;
+          my ($block_count)   = @{$f->external_data->{'BlockCount'}};
+          my ($block_starts)  = @{$f->external_data->{'BlockStarts'}};
+          my ($block_sizes)   = @{$f->external_data->{'BlockSizes'}};
+          my @block_starts    = split(',', $block_starts); 
+          my @block_sizes     = split(',', $block_sizes); 
+          my ($thick_start)   = @{$f->external_data->{'thick_start'} || (0)};
+          my ($thick_end)     = @{$f->external_data->{'thick_end'} || (0)};
+          $thick_start        -= $self->{'container'}->start if $thick_start;
+          $thick_end          -= $self->{'container'}->start if $thick_end;
+
+          ## Fix for non-intuitive configuration of non-coding transcripts
+          if ($thick_start == $thick_end) {
+            $thick_start  = 0;
+            $thick_end    = 0;
+          }
+
+          my %glyph_params  = (
+                                height       => $h,
+                                absolutey    => 1,
+                              );
+         
+          for (my $i = 0; $i < $block_count; $i++) {
+            my $block_start = $start + $block_starts[$i];
+            my $block_width = $block_sizes[$i] || 1;
+            my $block_end   = $block_start + $block_width;
+            if ($i == 0 && $thick_start) {
+              my $utr_width = $thick_start - $start;
+              if ($utr_width > 0) {
+                $composite->unshift($self->Rect({
+                                            x             => $block_start,
+                                            y             => $composite->{'y'},
+                                            width         => $utr_width,
+                                            bordercolour  => $feature_colour,
+                                            %glyph_params,
+                                          }));
+              }
+              else {
+                $utr_width    = 0;
+                $thick_start  = $start;
+              }
+              $composite->unshift($self->Rect({
+                                            x            => $thick_start,
+                                            y            => $composite->{'y'},
+                                            width        => $block_width - $utr_width,
+                                            colour       => $feature_colour,
+                                            %glyph_params,
+                                          }));
+            }
+            elsif ($i == $block_count - 1 && $thick_end) {
+              my $utr_width = $block_end - $thick_end;
+              $utr_width = 0 if $utr_width < 1; 
+              $composite->unshift($self->Rect({
+                                            x            => $block_start,
+                                            y            => $composite->{'y'},
+                                            width        => $block_width - $utr_width,
+                                            colour       => $feature_colour,
+                                            %glyph_params,
+                                          }));
+              if ($utr_width) {
+                $composite->unshift($self->Rect({
+                                            x             => $thick_end,
+                                            y             => $composite->{'y'},
+                                            width         => $utr_width,
+                                            bordercolour => $feature_colour,
+                                            %glyph_params,
+                                          }));
+              } 
+            }
+            else {
+              if ($thick_start) {
+                $glyph_params{'colour'} = $feature_colour;
+              }
+              else {
+                $glyph_params{'bordercolour'} = $feature_colour;
+              }
+              $composite->unshift($self->Rect({
+                                            x            => $block_start,
+                                            y            => $composite->{'y'},
+                                            width        => $block_width,
+                                            %glyph_params,
+                                          }));
+            }
+
+            if ($i < $block_count - 1) {
+              $composite->push($self->Intron({
+                                            x         => $block_end,
+                                            y         => $composite->{'y'},
+                                            width     => $start + $block_starts[$i+1] - $block_end,
+                                            height    => $h,
+                                            colour    => $feature_colour,
+                                            absolutey => 1,
+                                          }));
+            }
+          }
+        }
+        elsif ($draw_cigar || $cigar =~ /$regexp/) {
           $composite->push($self->Space({
             x         => $start - 1,
             y         => 0,
@@ -449,27 +549,19 @@ sub render_as_alignment_nolabel {
       }
       
       if ($composite ne $self) {
-        if ($self->my_config('has_blocks') && $show_structure) {
-          $composite->unshift($self->Intron({
-            x         => $composite->{'x'},
-            y         => $composite->{'y'},
-            width     => $composite->{'width'},
-            height    => $h,
-            colour    => $feature_colour,
-            absolutey => 1,
-          }));
-        }
-        elsif ($h > 1) {
-          $composite->bordercolour($feature_colour) if $join;
-        } else {
-          $composite->unshift($self->Rect({
-            x         => $composite->{'x'},
-            y         => $composite->{'y'},
-            width     => $composite->{'width'},
-            height    => $h,
-            colour    => $join_colour,
-            absolutey => 1
-          }));
+        if (!$show_structure) {
+          if ($h > 1) {
+            $composite->bordercolour($feature_colour) if $join;
+          } else {
+            $composite->unshift($self->Rect({
+                                              x         => $composite->{'x'},
+                                              y         => $composite->{'y'},
+                                              width     => $composite->{'width'},
+                                              height    => $h,
+                                              colour    => $join_colour,
+                                              absolutey => 1
+                                            }));
+          }
         }
         
         $composite->y($composite->y + $y_pos);
@@ -752,6 +844,10 @@ sub render_interaction {
         if ($config->{'itemRgb'} =~ /on/i) {
           $feature_colour = $f->external_data->{'item_colour'}[0];
         }
+        elsif ($f->score =~ /[0-9]{1,3},[0-9]{1,3},[0-9]{1,3}/) {
+          ## "Score" field is an RGB value
+          $feature_colour = $f->score;
+        }
         else {
           $feature_colour = $greyscale[min($ngreyscale - 1, int(($f->score * $ngreyscale) / $greyscale_max))];
         }
@@ -779,6 +875,25 @@ sub render_interaction {
 
         ## Arc between features
 
+        ## Default behaviour is to draw arc from middles of features
+        my $arc_start       = $start_1 == $end_1 ? $start_1 - 0.5
+                                : $start_1 + ceil(($end_1 - $start_1) / 2);
+        my $arc_end         = $start_2 == $end_2 ? $start_2 - 0.5
+                                : $start_2 + floor(($end_2 - $start_2) / 2);
+
+        my $direction_1     = $f->direction_1; 
+        my $direction_2     = $f->direction_2; 
+        if ($direction_1 || $direction_2) {
+          if ($direction_1 =~ /\+/) {
+            $arc_start = $start_1 == $end_1 ? $start_1 - 1 : $start_1;
+            $arc_end   = $start_2 == $end_2 ? $start_2 - 1 : $start_2;
+          }
+          else {
+            $arc_start = $end_1;
+            $arc_end   = $end_2;
+          }
+        }
+
         ## Set some sensible limits
         my $max_width = $self->image_width * 2;
         my $max_depth = 250; ## should be less than image width! 
@@ -786,13 +901,13 @@ sub render_interaction {
         ## Start with a basic circular arc, then constrain to above limits
         my $start_point   = 0; ## righthand end of arc
         my $end_point     = 180; ### lefthand end of arc
-        my $major_axis    = abs(ceil(($start_2 - $end_1) * $pix_per_bp));
+        my $major_axis    = abs(ceil(($arc_end - $arc_start) * $pix_per_bp));
         my $minor_axis    = $major_axis;
         $major_axis       = $max_width if $major_axis > $max_width; 
         $minor_axis       = $max_depth if $minor_axis > $max_depth; 
         
         ## Measurements needed for drawing partial arcs
-        my $centre        = ceil($end_1 * $pix_per_bp + $major_axis/2);
+        my $centre        = ceil($arc_start * $pix_per_bp + $major_axis/2);
         my $left_height   = $minor_axis; ## height of curve at left of image
         my $right_height  = $minor_axis; ## height of curve at right of image
 
@@ -831,7 +946,7 @@ sub render_interaction {
 
         ## modify dimensions to allow for 2-pixel width of brush
         $self->push($self->Arc({
-              x             => $end_1 + ($major_axis / $pix_per_bp),
+              x             => $arc_start + ($major_axis / $pix_per_bp),
               y             => ($minor_axis / 2) + $h,
               width         => $major_axis,
               height        => $minor_axis,
@@ -842,6 +957,7 @@ sub render_interaction {
               thickness     => 2,
               absolutewidth => 1,
             }));
+
         ## Second feature of pair
         $self->push($self->Rect({
               x            => $start_2 - 1,

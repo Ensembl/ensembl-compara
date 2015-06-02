@@ -33,6 +33,7 @@ use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub my_helplink { return "ctcf"; }
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 
 sub new {
   my $self = shift;
@@ -128,7 +129,6 @@ sub draw_features {
     }
   }
 
-  $self->draw_space_glyph() if $drawn_flag;
   my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
   return $error;
 }

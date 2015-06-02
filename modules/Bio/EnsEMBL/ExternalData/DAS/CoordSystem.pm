@@ -18,6 +18,13 @@ limitations under the License.
 
 package Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
 
+############################################################################
+#
+# DEPRECATED MODULE - DAS SUPPORT WILL BE REMOVED FROM ENSEMBL IN RELEASE 83
+#
+#############################################################################
+
+
 use Bio::EnsEMBL::Utils::Argument  qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 

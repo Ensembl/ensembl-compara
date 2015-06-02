@@ -38,6 +38,8 @@ sub new {
   $self->SUPER::new(@_);
 }
 
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
+
 sub draw_features  {
   my ($self, $wiggle) = @_;
 

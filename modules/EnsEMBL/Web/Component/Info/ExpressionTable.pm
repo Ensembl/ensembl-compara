@@ -20,8 +20,6 @@ package EnsEMBL::Web::Component::Info::ExpressionTable;
 
 use strict;
 
-use EnsEMBL::Web::Document::Table;
-
 use base qw(EnsEMBL::Web::Component);
 
 sub _init {
@@ -31,24 +29,20 @@ sub _init {
 }
 
 sub content {
-  my $self         = shift;
-  my $hub          = $self->hub;
-  my $html;
-  my %glossary = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
-  my $common   = $hub->species_defs->SPECIES_COMMON_NAME;
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $glossary  = $hub->glossary_lookup;
+  my $common    = $hub->species_defs->SPECIES_COMMON_NAME;
 
-  $html .= "<p>$common gene expression data is available for the following tissues:</p>";
+  my $html = "<p>$common gene expression data is available for the following tissues:</p>";
 
   my @track_order = ('rnaseq', 'dna_align', 'data_file'); 
   my $columns = [
-    { key => 'tissue',    'title' => 'Tissue',                align => 'left', width => '10%'},
+    { key => 'tissue',    'title' => 'Tissue',                align => 'left',   width => '10%'},
     { key => 'all',       'title' => 'All data',              align => 'center', width => '15%'},
-    { key => 'rnaseq',    'title' => 'RNASeq gene models',    align => 'center', width => '25%',
-      help => $glossary{'RNASeq gene models'}},
-    { key => 'dna_align', 'title' => 'Intron-spanning reads', align => 'center', width => '25%',
-      help => $glossary{'Intron-spanning reads'}},
-    { key => 'data_file', 'title' => 'RNASeq alignments',     align => 'center', width => '25%',
-      help => $glossary{'RNASeq gene alignments'}},
+    { key => 'rnaseq',    'title' => 'RNASeq gene models',    align => 'center', width => '25%', help => $glossary->{'RNASeq gene models'}},
+    { key => 'dna_align', 'title' => 'Intron-spanning reads', align => 'center', width => '25%', help => $glossary->{'Intron-spanning reads'}},
+    { key => 'data_file', 'title' => 'RNASeq alignments',     align => 'center', width => '25%', help => $glossary->{'RNASeq gene alignments'}},
   ];
 
   my $rows = [];
@@ -116,9 +110,8 @@ sub content {
     $row->{'all'} = sprintf('<a href="%s">View in example location</a>', $url);
     push @$rows, $row;            
   }
- 
-  my $table = EnsEMBL::Web::Document::Table->new($columns, $rows, {});
-  $html .= $table->render;
+
+  $html .= $self->new_table($columns, $rows, {})->render;
 
   return $html;
 }

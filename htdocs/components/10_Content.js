@@ -23,7 +23,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     var fnEls = {
       ajaxLoad:         $('.ajax', this.el),
       hideHints:        $('.hint', this.el),
-      glossary:         $('.glossary_mouseover', this.el),
       helpTips:         $('._ht', this.el),
       wrapping:         $('table.cellwrap_inside, table.heightwrap_inside', this.el),
       selectToToggle:   $('._stt', this.el),
@@ -143,7 +142,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
     }
     
-    this.xhr = $.paced_ajax({
+    this.xhr = $[attrs.paced ? 'paced_ajax' : 'ajax']({
       url: url,
       data: data,
       dataType: 'html',
@@ -224,6 +223,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
       } else {
         panel.toggleContent($(this), duration);
+        if (panel.elLk[this.rel] && $(this).hasClass('closed')) {
+          window.location.hash = panel.elLk[this.rel][0].id;
+        }
       }
       
       Ensembl.EventManager.trigger('toggleContent', this.rel, duration); // this toggles any other toggle switches used to toggle the same html block
@@ -304,14 +306,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       }).prependTo(this.firstChild).helptip({ content: 'Hide this panel' });
     });
   },
-  
-  glossary: function () {
-    this.elLk.glossary.each(function() {
-      var el  = $(this);
-      el.helptip({ content: el.children('.floating_popup').remove().html() });
-    });
-  },
-  
+
   dataTable: function () {
     $.extend(this, Ensembl.DataTable);
     this.dataTableInit();

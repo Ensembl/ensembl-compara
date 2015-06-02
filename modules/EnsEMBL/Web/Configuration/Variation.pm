@@ -55,7 +55,7 @@ sub populate_tree {
   
   $context_menu->append($self->create_node('Mappings', 'Genes and regulation',
     [qw( mappings EnsEMBL::Web::Component::Variation::Mappings )],
-    { 'availability' => 'variation has_transcripts', 'concise' => 'Genes and regulation' }
+    { 'availability' => 'variation has_features', 'concise' => 'Genes and regulation' }
   ));
   $context_menu->append($self->create_node('Sequence', 'Flanking sequence',
     [qw( flanking EnsEMBL::Web::Component::Variation::FlankingSequence )],
@@ -75,17 +75,17 @@ sub populate_tree {
     { 'availability' => 'variation has_populations is_somatic', 'concise' => 'Sample information', 'no_menu_entry' => !$somatic }
   );
   
-  $self->create_node('Individual', 'Individual genotypes',
+  $self->create_node('Sample', 'Sample genotypes',
     [qw( 
-      search     EnsEMBL::Web::Component::Variation::IndividualGenotypesSearch
-      individual EnsEMBL::Web::Component::Variation::IndividualGenotypes 
+      search EnsEMBL::Web::Component::Variation::SampleGenotypesSearch
+      sample EnsEMBL::Web::Component::Variation::SampleGenotypes 
     )],
-    { 'availability' => 'variation has_individuals not_somatic', 'concise' => 'Individual genotypes', 'no_menu_entry' => $somatic }
+    { 'availability' => 'variation has_samples not_somatic', 'concise' => 'Sample genotypes', 'no_menu_entry' => $somatic }
   ); 
   
   $self->create_node('HighLD', 'Linkage disequilibrium',
     [qw( highld EnsEMBL::Web::Component::Variation::HighLD )],
-    { 'availability' => 'variation has_ldpops variation has_individuals not_somatic', 'concise' => 'Linkage disequilibrium', 'no_menu_entry' => $somatic }
+    { 'availability' => 'variation has_ldpops variation has_samples not_somatic', 'concise' => 'Linkage disequilibrium', 'no_menu_entry' => $somatic }
   );
     
   $self->create_node('Phenotype', 'Phenotype Data',

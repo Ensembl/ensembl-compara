@@ -19,6 +19,13 @@ limitations under the License.
 package Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
 use strict;
 
+########################################################################################
+#
+# DEPRECATED MODULE - PLEASE SEE ensembl-io/modules/Bio/EnsEMBL/IO/Adaptor/BigWigAdaptor
+#
+########################################################################################
+
+
 use Data::Dumper;
 use Bio::DB::BigFile;
 use Bio::DB::BigFile::Constants;
@@ -28,7 +35,8 @@ my $DEBUG = 0;
 sub new {
   my ($class, $url) = @_;
  
-  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor instead";
+  warn "######## DEPRECATED MODULE";
+  warn "### This module will be removed in release 82 - please use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor instead";
  
   my $self = bless {
     _cache => {},
@@ -77,6 +85,28 @@ sub munge_chr_id {
   warn " *** could not find region $chr_id in BigWig file" unless $ret_id;
   
   return $ret_id;
+}
+
+sub fetch_summary_array {
+  my ($self, $chr_id, $start, $end, $bins, $has_chrs, $mode) = @_;
+
+  $mode ||= 0;
+  my $bw = $self->bigwig_open;
+  warn "Failed to open BigWig file" . $self->url unless $bw;
+  return [] unless $bw;
+
+  #  Maybe need to add 'chr' (only try if species has chromosomes)
+  my $seq_id = $has_chrs ? $self->munge_chr_id($chr_id) : $chr_id;
+  return [] if !defined($seq_id);
+
+# Remember this method takes half-open coords (subtract 1 from start)
+  my $summary = $bw->bigWigSummaryArray("$seq_id",$start-1,$end,$mode,$bins);
+
+  if ($DEBUG) {
+    warn " *** fetch extended summary: $chr_id:$start-$end : found ", scalar(@$summary), " summary points\n";
+  }
+
+  return $summary;
 }
 
 sub fetch_extended_summary_array {

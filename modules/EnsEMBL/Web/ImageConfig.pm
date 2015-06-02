@@ -737,8 +737,10 @@ sub load_user_tracks {
     } else {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
-          Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s',
-          encode_entities($url_sources{$code}{'source_type'}), encode_entities($url_sources{$code}{'source_url'})
+          Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href="%s">%s</a>',
+          encode_entities($url_sources{$code}{'source_type'}), 
+          encode_entities($url_sources{$code}{'source_url'}),
+          encode_entities($url_sources{$code}{'source_url'})
         ),
         url      => $url_sources{$code}{'source_url'},
         format   => $url_sources{$code}{'format'},
@@ -811,16 +813,26 @@ sub _add_datahub {
 
     my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
 
-    my $assembly = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH')
-                        || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
-    my $node = $hub_info->{'genomes'}{$assembly}{'tree'};
-   
+    my $node;
+    my $assemblies =
+      $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
+    $assemblies ||= [];
+    $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
+    foreach my $assembly_var (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION)) {
+      my $assembly = $self->hub->species_defs->get_config($self->species,$assembly_var);
+      next unless $assembly;
+      push @$assemblies,$assembly;
+    }
+    foreach my $assembly (@$assemblies) {
+      $node = $hub_info->{'genomes'}{$assembly}{'tree'};
+      last if $node;
+    }
     if ($node) {
       $self->_add_datahub_node($node, $menu, $menu_name);
 
       $self->{'_attached_datahubs'}{$url} = 1;
-    }
-    else {
+    } else {
+      my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
       $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];
     }
   }
@@ -920,11 +932,12 @@ sub _add_datahub_tracks {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
     my $squish       = $track->{'visibility'} eq 'squish' || $config->{'visibility'} eq 'squish'; # FIXME: make it inherit correctly
+    my $desc_url     = $track->{'description_url'} ? $hub->url('Ajax', {'type' => 'fetch_html', 'url' => $track->{'description_url'}}) : '';
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
     my $source       = {
       name        => $track->{'track'},
       source_name => $source_name,
-      description => $track->{'longLabel'} . $link,
+      description => $desc_url ? qq(<span class="_dyna_load"><a class="hidden" href="$desc_url">$track->{'longLabel'}</a>Loading &#133;</span>) : '',
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
@@ -1257,15 +1270,16 @@ sub _add_file_format_track {
 
   if ($args{'internal'}) {
     $desc = $args{'description'};
-    $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_NAME, $args{'source'}{'dir'}, $args{'source'}{'file'};
+    $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_VERSION, $args{'source'}{'dir'}, $args{'source'}{'file'};
     $args{'options'}{'external'} = undef;
   } else {
     $desc = sprintf(
-      'Data retrieved from %s %s file on an external webserver. %s This data is attached to the %s, and comes from URL: %s',
+      'Data retrieved from %s %s file on an external webserver. %s <p>This data is attached to the %s, and comes from URL: <a href="%s">%s</a></p>',
       $article,
       $args{'format'},
       $args{'description'},
       encode_entities($args{'source'}{'source_type'}),
+      encode_entities($args{'source'}{'source_url'}),
       encode_entities($args{'source'}{'source_url'})
     );
   }
@@ -1496,7 +1510,7 @@ sub update_from_url {
           }
         } else {
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-            sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
+            sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href=">%s">%s</a>', encode_entities($n), encode_entities($p), encode_entities($p)),
             url   => $p,
             style => $style
           );
@@ -1763,6 +1777,7 @@ sub load_tracks {
   }
   
   $self->add_options('information', [ 'opt_empty_tracks', 'Display empty tracks', undef, undef, 'off' ]) unless $self->get_parameter('opt_empty_tracks') eq '0';
+  $self->add_options('information', [ 'opt_subtitles', 'Display in-track labels', undef, undef, 'normal' ]);
   $self->add_options('information', [ 'opt_highlight_feature', 'Highlight current feature', undef, undef, 'normal' ]);
   $self->tree->append_child($self->create_option('track_order')) if $self->get_parameter('sortable_tracks');
 }
@@ -2160,6 +2175,7 @@ sub add_data_files {
       colourset => $data->{$_}{'colour_key'} || 'feature',
       strand    => 'f',
       renderers => $renderers, 
+      gang      => 'rnaseq',
     });
   }
 }
@@ -3115,22 +3131,25 @@ sub add_sequence_variations_meta {
     if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
     } elsif ($menu_item->{'type'} eq 'source') { # source type
-      (my $temp_name     = $menu_item->{'long_name'}) =~ s/ variants$//;
+
       my $other_sources = ($menu_item->{'long_name'} =~ /all other sources/);
 
-      $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
-      $menu_item->{'short_name'} =~ s/ variants$/$short_suffix_caption/;
+      (my $source_name   = $menu_item->{'long_name'}) =~ s/\svariants$//i;
+      (my $caption       = $menu_item->{'long_name'}) =~ s/\svariants$/$suffix_caption/;
+      (my $label_caption = $menu_item->{'short_name'}) =~ s/\svariants$/$short_suffix_caption/;
+      $label_caption .= $short_suffix_caption if ($label_caption !~ /$short_suffix_caption/);
 
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $menu_item->{'long_name'},
-        labelcaption => $menu_item->{'short_name'},
-        sources     => $other_sources ? undef : [ $temp_name ],
-        description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
+        caption      => $caption,
+        labelcaption => $label_caption,
+        sources      => $other_sources ? undef : [ $source_name ],
+        description  => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$source_name},
       });
+
     } elsif ($menu_item->{'type'} eq 'set') { # set type
-      if ($menu_item->{'long_name'} =~ / variants$/) {
-        $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
+      if ($menu_item->{'long_name'} =~ /\svariants$/i) {
+        $menu_item->{'long_name'} =~ s/\svariants$/$suffix_caption/;
       }
       elsif ($menu_item->{'long_name'} !~ /$regexp_suffix_caption$/){# / short variants \(SNPs and indels\)$/){
         $menu_item->{'long_name'} .= $suffix_caption;
@@ -3144,12 +3163,12 @@ sub add_sequence_variations_meta {
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $caption,
+        caption      => $caption,
         labelcaption => $label_caption,
-        sources     => undef,
-        sets        => [ $temp_name ],
-        set_name    => $set_name,
-        description => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
+        sources      => undef,
+        sets         => [ $temp_name ],
+        set_name     => $set_name,
+        description  => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
       });
     }
     
@@ -3378,7 +3397,8 @@ sub add_structural_variations {
 
     my $node_name = "$menu_item->{'long_name'} $suffix";
     my $caption   = "$prefix_caption$menu_item->{'long_name'}";
-       $caption   =~ s/1000 Genomes/1KG/;
+    my $labelcaption = $caption;
+    $labelcaption   =~ s/1000 Genomes/1KG/;
 
     my $db = 'variation';
 
@@ -3390,6 +3410,7 @@ sub add_structural_variations {
         %options,
         db          => $db,
         caption     => $caption,
+        labelcaption => $labelcaption,
         source      => undef,
         sets        => [ $menu_item->{'long_name'} ],
         set_name    => $menu_item->{'long_name'},

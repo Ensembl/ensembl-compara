@@ -19,9 +19,9 @@ use Text::Wrap;
 
 $Text::Wrap::columns = 75;
 
-our $ENSEMBL_VERSION           = 79;
-our $ARCHIVE_VERSION           = 'Mar2015';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'March 2015';
+our $ENSEMBL_VERSION           = 80;
+our $ARCHIVE_VERSION           = 'May2015';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'May 2015';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -39,11 +39,98 @@ my ($volume, $dir) = File::Spec->splitpath(__FILE__);
 our $ENSEMBL_SERVERROOT = File::Spec->catpath($volume, [split '/ensembl-webcode', $dir]->[0]) || '.';
 our $ENSEMBL_WEBROOT    = "$ENSEMBL_SERVERROOT/ensembl-webcode";
 our $ENSEMBL_DOCROOT    = "$ENSEMBL_WEBROOT/htdocs";
+our $ENSEMBL_PLUGINS_ROOTS = $ENV{'ENSEMBL_PLUGINS_ROOTS'}||"*-plugins";
+our @ENSEMBL_PLUGINS_PATHS = (
+  $ENSEMBL_WEBROOT,
+  "$ENSEMBL_SERVERROOT/$ENSEMBL_PLUGINS_ROOTS/".getpwuid($>),
+);
 our $ENSEMBL_PLUGINS;
 
 ## Define Plugin directories
-eval qq(require '$ENSEMBL_WEBROOT/conf/Plugins.pm');
-error("Error requiring plugin file:\n$@") if $@;
+if(-e "$ENSEMBL_WEBROOT/conf/Plugins.pm") {
+  eval qq(require '$ENSEMBL_WEBROOT/conf/Plugins.pm');
+  error("Error requiring plugin file:\n$@") if $@;
+}
+
+## Load AutoIdentities files
+my @ENSEMBL_IDENTITY;
+my $IPATHS = join(" ",map {"$_/conf/AutoIdentities.pm"} @ENSEMBL_PLUGINS_PATHS);
+my $APATHS = join(" ",map {"$_/conf/AutoPlugins.pm"} @ENSEMBL_PLUGINS_PATHS);
+foreach my $f (glob $IPATHS) {
+  our $ENSEMBL_IDENTITIES = [];
+  next unless -e $f;
+  eval qq(require '$f');
+  if($@) {
+    warn "Error requiring autoidentities file '$f': $@\n";
+    next;
+  }
+  push @ENSEMBL_IDENTITY,@{$_->()} for @$ENSEMBL_IDENTITIES;
+}
+warn " Server has identities\n    ".join("\n    ",@ENSEMBL_IDENTITY)."\n";
+
+## Load AutoPlugin files
+our $ENSEMBL_PLUGINS_USED = {};
+our $ENSEMBL_IDS_USED = {};
+
+sub paired { map {[$_[$_*2],$_[$_*2+1]]} 0..int(@_/2)-1 }
+my @PLUGINS_SEEN = map { $_->[0] } paired @$ENSEMBL_PLUGINS;
+$ENSEMBL_IDS_USED->{'- direct -'} = 0;
+$ENSEMBL_PLUGINS_USED->{$_} = [0] for @PLUGINS_SEEN;
+my $code = 1;
+my (%ALIST,%APRIO,@AMAPS);
+foreach my $f (glob $APATHS) {
+  our $ENSEMBL_AUTOPLUGINS = {};
+  our $ENSEMBL_IDENTITY_MAP = {};
+  next unless -e $f;
+  eval qq(require '$f');
+  if($@) {
+    warn "Error requiring autoplugin file '$f': $@\n";
+    next;
+  }
+  push @AMAPS,$ENSEMBL_IDENTITY_MAP;
+  foreach my $k (keys %$ENSEMBL_AUTOPLUGINS) {
+    my $prio = 50;
+    my $orig_k = $k;
+    $prio = $1 if $k =~ s/^(\d+)!//;
+    $APRIO{$k} ||= $prio;
+    push @{$ALIST{$k}||=[]},@{$ENSEMBL_AUTOPLUGINS->{$orig_k}};
+  }
+}
+
+## Calculate mapped identities
+my $any_maps = 1;
+while($any_maps) {
+  $any_maps = 0;
+  foreach my $map (@AMAPS) {
+    foreach my $id (keys %$map) {
+      next if grep { $_ eq $id } @ENSEMBL_IDENTITY;
+      my $re = $map->{$id};
+      next unless grep { /$re/ } @ENSEMBL_IDENTITY;
+      warn " Server has mapped identity $id ($re)\n";
+      $any_maps = 1;
+      push @ENSEMBL_IDENTITY,$id;
+    }
+  }
+}
+
+## Process AutoPlugin files
+foreach my $k (sort { $APRIO{$a} <=> $APRIO{$b} } keys %ALIST) {
+  if(grep { $_ eq $k } @ENSEMBL_IDENTITY) {
+    warn " Loading $k\n";
+    my @to_add;
+    foreach my $p (paired @{$ALIST{$k}||[]}) {
+      unless($ENSEMBL_IDS_USED->{$k}) {
+        $ENSEMBL_IDS_USED->{$k} = $code++;
+      }
+      $ENSEMBL_PLUGINS_USED->{$p->[0]} ||= [];
+      push @{$ENSEMBL_PLUGINS_USED->{$p->[0]}},$ENSEMBL_IDS_USED->{$k};
+      next if grep { $p->[0] eq $_ } @PLUGINS_SEEN;
+      push @to_add,$p->[0],$p->[1];
+      push @PLUGINS_SEEN,$p->[0];
+    }
+    push @$ENSEMBL_PLUGINS,@to_add;
+  }
+}
 
 # Needed for parsing BAM files
 our ($UDC_CACHEDIR, $HTTP_PROXY);
@@ -301,6 +388,10 @@ sub update_conf {
   
   while (my ($dir, $name) = splice @plugins, 0, 2) {
     my $plugin_conf = "${name}::SiteDefs";
+
+    if (!-d $dir) {
+      die "[ERROR] Plugin $name could not be loaded: $dir not found.\n";
+    }
     
     eval qq{ package $plugin_conf; use ConfigDeferrer qw(defer); }; # export 'defer' to the plugin SiteDefs
     eval qq{ require '$dir/conf/SiteDefs.pm' };                     # load the actual plugin SiteDefs

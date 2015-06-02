@@ -159,7 +159,9 @@ sub variation_content {
   }
     
   push @entries, { class => 'population', link => $hub->url({ action => 'Population', %url_params }), label => 'Population Allele Frequencies' } if scalar keys %population_data;
-  
+
+  my %colours;
+  $colours{$_} = "base_$_" for(qw(C G A T));
   foreach my $name (sort { !$a <=> !$b || $b =~ /ALL/ cmp $a =~ /ALL/ || $a cmp $b } keys %population_data) {
     my %display = reverse %{$population_data{$name}};
     my $i       = 0;
@@ -170,7 +172,8 @@ sub variation_content {
       # Keep the alleles order
       foreach my $al (@{$population_allele{$name}}) {
         if ($population_data{$name}{$submitter}{$al}){
-          push @freqs, $al;
+          $colours{$al} ||= "base_".(scalar(keys %colours)%4);
+          push @freqs, $colours{$al};
           push @freqs, $population_data{$name}{$submitter}{$al};
           $af .= $af ? ', ' : '';
           $af .= "$al: $population_data{$name}{$submitter}{$al}";

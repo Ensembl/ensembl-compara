@@ -14,5 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-perl run_tests.pl --module FTPtable --url http://www.ensembl.org --host 172.20.10.187 --port 4444 > "test_reports/FTPtable.txt" 2>&1
-perl run_tests.pl --module Blast --url http://www.ensembl.org --host 172.20.10.187 --port 4444 --species all > "test_reports/Blast.txt" 2>&1
+## Test static content
+#perl run_tests.pl --config=selenium.conf --tests=static.conf
+
+## Test basic views for all species
+perl run_tests.pl --config=selenium.conf --tests=basic.conf --species=human_only.conf
+#perl run_tests.pl --config=selenium.conf --tests=basic.conf
+
+## Intensive test of human
+#perl run_tests.pl --config=selenium.conf --tests=detailed.conf --species=human_only.conf
+
+## Test user upload, etc (again, human only)
+#perl run_tests.pl --config=selenium.conf --tests=user.conf --species=human_only.conf
+
+## Check links in documentation
+#perl run_tests.pl --config=selenium.conf --tests=docs.conf

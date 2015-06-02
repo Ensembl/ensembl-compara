@@ -44,6 +44,7 @@ sub content {
     { key => 'type',     title => 'Evidence type', align => 'left', sort => 'string'   },
     { key => 'feature',  title => 'Feature name',  align => 'left', sort => 'string'   },
     { key => 'location', title => 'Location',      align => 'left', sort => 'position' },
+    { key => 'source',   title => 'Source',        align => 'left', sort => 'position' },
   ); 
 
   my @rows;
@@ -61,12 +62,21 @@ sub content {
         foreach my $f (sort { $a->start <=> $b->start } @{$features->{$f_set}}) {
           my $f_start = $object_slice->start + $f->start - 1;
           my $f_end   = $object_slice->start + $f->end   - 1;
+
+          my $source_link = $self->hub->url({
+            type => 'Experiment',
+            action => 'Sources',
+            ex => 'name-'.$f->feature_set->name
+          });
           
           push @rows, { 
             type     => $f->feature_type->evidence_type_label,
             location => $f->slice->seq_region_name . ":$f_start-$f_end",
             feature  => $feature_name,
-            cell     => $cell_line
+            cell     => $cell_line,
+            source   => sprintf(q(<a href="%s">%s</a>),
+                  $source_link,
+                  $f->feature_set->source_label),
           };
           
           push @rows, @{$self->get_motif_rows($f, $cell_line)} if $features == $core_features;

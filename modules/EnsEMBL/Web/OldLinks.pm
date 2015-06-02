@@ -112,6 +112,7 @@ our %mapping = (
                               { 'type' => 'Gene',                'action' => 'Expression',                   'initial_release' => 71 },
                               { 'type' => 'Gene',                'action' => 'SpeciesTree',                  'initial_release' => 69 },
                               { 'type' => 'Gene',                'action' => 'Alleles',                      'initial_release' => 78 },
+                              { 'type' => 'Gene',                'action' => 'ExpressionAtlas',              'initial_release' => 80 },
                               { 'type' => 'Transcript',          'action' => 'Ontology/Image',               'initial_release' => 60 },
                               { 'type' => 'Transcript',          'action' => 'Ontology/Table',               'initial_release' => 60 },
                               { 'type' => 'Transcript',          'action' => 'Variation_Transcript/Table',   'initial_release' => 68 },

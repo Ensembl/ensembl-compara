@@ -70,7 +70,7 @@ sub content {
   return sprintf('
     <input type="hidden" class="subpanel_type" value="ConfigManager" />
     <div class="config_manager">
-      <a title="Click for help (opens in new window)" class="popup constant sprite config_manager_help info_icon _ht" href="/Help/View?id=%s#manage_configs"></a>
+      <a title="Click for help (opens in new window)" class="popup constant sprite config_manager_help help_icon _ht" href="/Help/View?id=%s#manage_configs"></a>
       <div class="records">
         %s
       </div>

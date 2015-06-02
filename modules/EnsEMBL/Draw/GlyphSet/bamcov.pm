@@ -26,7 +26,6 @@ package EnsEMBL::Draw::GlyphSet::bamcov;
 ### apart from enabling a track to inherit from both bam and bigwig!
 
 use strict;
-use base qw(EnsEMBL::Draw::GlyphSet::bam EnsEMBL::Draw::GlyphSet::bigwig);
-
+use base qw(EnsEMBL::Draw::GlyphSet::bigwig EnsEMBL::Draw::GlyphSet::bam);
 
 1;
