@@ -83,7 +83,7 @@ sub build_tracks {
     $T->{'histogram'} = $info->{'histogram'} || $histogram;
     $T->{'width'}     = $width;
     $T->{'colour'}    = $info->{'colour'};
-    $T->{'max_value'} = $max_value;
+    $T->{'max_value'} = $info->{'max_value'} || $max_value;
     $T->{'max_mean'}  = $max_mean;
     $T->{'max_len'}   = $max_len;
     $T->{'bin_size'}  = $bin_size;
@@ -103,7 +103,7 @@ sub build_tracks {
 		  $chr_min_data = $mean if ($mean < $chr_min_data || $chr_min_data eq undef); 
 		  $chr_max_data = $mean if $mean > $chr_max_data;
       ## Scale data for actual display
-      my $max = $max_value || $chr_max_data || 1; 
+      my $max = $T->{'max_value'} || $chr_max_data || 1; 
       push @$scaled_scores, $mean/$max * $width;
 	  }
     $T->{'scores'} = $scaled_scores;
