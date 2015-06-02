@@ -51,11 +51,18 @@ sub content {
   my $citation_url    = $hub->url({ action => "Variation", action => "Citations", vf => $vf });
  
   my @str_array;
+  
   push @str_array, sprintf('overlaps <a href="%s">%s %s</a>', 
                       $transcript_url, 
                       $avail->{has_transcripts}, 
                       $avail->{has_transcripts} eq "1" ? "transcript" : "transcripts"
                   ) if($avail->{has_transcripts});
+  push @str_array, sprintf('%s<a href="%s">%s %s</a>',
+                      $avail->{has_transcripts} ? '' : 'overlaps ',
+                      $transcript_url,
+                      $avail->{has_regfeats},
+                      $avail->{has_regfeats} eq "1" ? "regulatory feature" : "regulatory features"
+                  ) if($avail->{has_regfeats});
   push @str_array, sprintf('has <a href="%s">%s sample %s</a>', 
                       $genotype_url, 
                       $avail->{has_samples}, 
