@@ -373,6 +373,9 @@ sub new {
               absolutex => 1,
               absolutewidth => 1,
               href => $url,
+              hover => 1,
+              alt => $texts[$i],
+              class => "hoverzmenu",
             }));
             $sec_off += $leading;
           }

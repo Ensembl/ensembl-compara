@@ -408,6 +408,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             panel.elLk.drag.triggerHandler('click', e);
           }
         ));
+      } else if(this.a.klass.hoverzmenu) { // hover simulates click
+        var layer = $('<div class="label_layer">');
+        layer.appendTo(panel.elLk.container).data({area: this});
+        panel.elLk.labelLayers = panel.elLk.labelLayers.add(layer);
+        (function(){ // this to keep zmid sharable and not muddled
+          var zmid;
+          panel.elLk.labelLayers.on('mouseenter',function(e) {
+            zmid = panel.makeZMenu(e, panel.getMapCoords(e),{'approx':2});
+            $('#'+zmid+' .close').hide();
+          });
+          panel.elLk.labelLayers.on('mouseleave',function(e) {
+            $('#'+zmid).hide();
+          });
+        })();
       }
 
       $a = null;
@@ -812,8 +826,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   makeZMenu: function (e, coords, params) {
-    var area = coords.r ? this.dragRegion : this.getArea(coords);
-   
+    var area;
+    if(coords.r) {
+      area = this.dragRegion;
+    } else if(params && params.approx) {
+      area = this.getBestArea(coords,undefined,params.approx);
+    } else {
+      area = this.getArea(coords);
+    }
+
     if (!area || area.a.klass.label) {
       return;
     }
@@ -843,10 +864,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       dragArea = null;
     }
-    
+
+    if(params && params.close) {
+      var zmenu = $('#'+id);
+      if(zmenu)
+        zmenu.hide();
+      return;
+    }
+
     Ensembl.EventManager.trigger('makeZMenu', id, $.extend({ event: e, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false }, params));
     
     this.zMenus[id] = 1;
+    return id;
   },
 
   removeZMenus: function() {
@@ -1096,13 +1125,26 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   getMapCoords: function (e) {
     this.imgOffset = this.imgOffset || this.elLk.img.offset();
-    
+
     return {
       x: e.pageX - this.imgOffset.left - 1, // exclude the 1px borders
       y: e.pageY - this.imgOffset.top - 1
     };
   },
-  
+
+  getBestArea: function(coords,draggables,delta) {
+    var i,w = [[0,0],[-1,0],[1,0],[0,-1],[0,1]];
+
+    for(var i=0;i<w.length;i++) {
+      var x = coords.x + w[i][0]*delta;
+      var y = coords.y + w[i][1]*delta;
+      var v = this.getArea({ 'x': x, 'y': y },draggables);
+      if(v) {
+        return v;
+      }
+    }
+  },
+
   getArea: function (coords, draggables) {
     var test  = false;
     var areas = draggables ? this.draggables : this.areas;
