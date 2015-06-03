@@ -415,7 +415,7 @@ sub render_as_alignment_nolabel {
           
           $feature_colour = $f->external_data->{'item_colour'}[0] if $config->{'itemRgb'} =~ /on/i;
         }
-        
+      
         if ($self->my_config('has_blocks') && $show_structure) {
           ## BED file shown like transcript
           $label_colour       = $feature_colour;
@@ -434,6 +434,11 @@ sub render_as_alignment_nolabel {
             $thick_start  = 0;
             $thick_end    = 0;
           }
+          my $coding = $thick_start || $thick_end ? 1 : 0;
+  
+          ## Ignore thick start/end if it's outside the current region
+          $thick_start = 0 if $thick_start < 1;
+          $thick_end = 0 if $thick_end >= $end;
 
           my %glyph_params  = (
                                 height       => $h,
@@ -441,11 +446,18 @@ sub render_as_alignment_nolabel {
                               );
          
           for (my $i = 0; $i < $block_count; $i++) {
-            my $block_start = $start + $block_starts[$i];
+            my $block_start = $s + $block_starts[$i] - 1;
             my $block_width = $block_sizes[$i] || 1;
             my $block_end   = $block_start + $block_width;
+            next if ($block_end < 0 || $block_start > $length);
+
+            ## Truncate to limits of viewport
+            $block_start  = 0 if $block_start < 0;
+            $block_end    = $length if $block_end > $length;
+            $block_width  = $block_end - $block_start if $block_width > $block_end;
+
             if ($i == 0 && $thick_start) {
-              my $utr_width = $thick_start - $start;
+              my $utr_width = $thick_start - $s;
               if ($utr_width > 0) {
                 $composite->unshift($self->Rect({
                                             x             => $block_start,
@@ -457,7 +469,7 @@ sub render_as_alignment_nolabel {
               }
               else {
                 $utr_width    = 0;
-                $thick_start  = $start;
+                $thick_start  = $block_start;
               }
               $composite->unshift($self->Rect({
                                             x            => $thick_start,
@@ -473,7 +485,7 @@ sub render_as_alignment_nolabel {
               $composite->unshift($self->Rect({
                                             x            => $block_start,
                                             y            => $composite->{'y'},
-                                            width        => $block_width - $utr_width,
+                                            width        => $block_width - $utr_width + 1,
                                             colour       => $feature_colour,
                                             %glyph_params,
                                           }));
@@ -488,7 +500,7 @@ sub render_as_alignment_nolabel {
               } 
             }
             else {
-              if ($thick_start) {
+              if ($coding) {
                 $glyph_params{'colour'} = $feature_colour;
               }
               else {
