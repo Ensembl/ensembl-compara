@@ -68,6 +68,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
+            'genome_db_id'                  => undef,   # By default, we process all the genome_dbs
+
             'max_dist_no_overlap'           => 1000000, # Max distance between genes that do not overlap
             'max_nb_genes_no_overlap'       => 1,       # Number of genes between two genes that do not overlap
             'max_dist_small_overlap'        => 500000,  # Max distance between genes that slightly overlap
@@ -89,11 +91,24 @@ sub fetch_input {
     # The Runnable needs all these fields
     my @good_leaves = grep {defined $_->genome_db_id and defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->dnafrag_id and defined $_->dnafrag_strand} @$all_protein_leaves;
 
+    # And sometimes, only 1 genome_db_id
+    if ($self->param('genome_db_id')) {
+        @good_leaves = grep {$_->genome_db_id == $self->param('genome_db_id')} @good_leaves;
+
+    } elsif ($self->param('split_genes_gene_count') and scalar(@good_leaves) > $self->param('split_genes_gene_count')) {
+        my %gdb_ids = ();
+        $gdb_ids{$_->genome_db_id} = 1 for @good_leaves;
+        $self->dataflow_output_id( { gene_tree_id => $gene_tree_id, genome_db_id => $_ } ) for keys %gdb_ids;
+        $self->complete_early("Too many genes, will check the split-genes 1 species at a time");
+    }
+
     # Let's preload the gene members
     # Note that we have already filtered the list at this stage, to reduce
     # the number of sequences to load, and thus the memory usage
     $self->compara_dba->get_GeneMemberAdaptor->load_all_from_seq_members($all_protein_leaves);
 
+    # Note that if $self->param('genome_db_id') is set, the hash will
+    # contain a single entry
     my %protein_leaves_by_genome_db_id = ();
     foreach my $leaf (@$all_protein_leaves) {
         push @{$protein_leaves_by_genome_db_id{$leaf->genome_db_id}}, $leaf;
@@ -147,6 +162,7 @@ sub check_for_split_genes {
     my $graphcount = 0;
     while (my $protein1 = shift @good_leaves) {
         foreach my $protein2 (@good_leaves) {
+            next if $protein1->dnafrag_id != $protein2->dnafrag_id;  ## HACK: this is only true as long as the detection algorithm below requires it
             push @genepairlinks, [$protein1, $protein2];
             print "build graph $graphcount\n" if ($self->debug and ($graphcount++ % 10 == 0));
         }
@@ -278,9 +294,15 @@ sub store_split_genes {
     my $connected_split_genes = $self->param('connected_split_genes');
     my $holding_node = $connected_split_genes->holding_node;
 
-    my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
-    $sth0->execute($self->param('gene_tree_id'));
-    $sth0->finish;
+    if ($self->param('genome_db_id')) {
+        my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (seq_member_id) JOIN seq_member USING (seq_member_id) WHERE root_id = ? AND genome_db_id = ?');
+        $sth0->execute($self->param('gene_tree_id'), $self->param('genome_db_id'));
+        $sth0->finish;
+    } else {
+        my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
+        $sth0->execute($self->param('gene_tree_id'));
+        $sth0->finish;
+    }
 
     my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id) VALUES (?)');
     my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id, gene_split_id) VALUES (?, ?)');

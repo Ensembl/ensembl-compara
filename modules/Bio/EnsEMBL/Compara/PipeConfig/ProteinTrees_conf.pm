@@ -134,6 +134,7 @@ sub default_options {
         'use_quick_tree_break'      => 1,
 
         'treebreak_gene_count'      => 400,
+        'split_genes_gene_count'    => 5000,
 
         'mcoffee_himem_gene_count'  => 250,
         'mafft_gene_count'          => 300,
@@ -1709,13 +1710,23 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'split_genes',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
+            -parameters     => {
+                split_genes_gene_count  => $self->o('split_genes_gene_count'),
+            },
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
-                1   => ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision'),
+                '2->A' => 'split_genes_per_species',
+                'A->1' => ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision'),
                 -1  => 'split_genes_himem',
             },
+        },
+
+        {   -logic_name     => 'split_genes_per_species',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
+            -hive_capacity  => $self->o('split_genes_capacity'),
+            -rc_name        => '500Mb_job',
         },
 
         {   -logic_name     => 'split_genes_himem',
