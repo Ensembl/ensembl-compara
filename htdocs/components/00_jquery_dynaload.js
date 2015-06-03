@@ -27,11 +27,12 @@
         return;
       }
 
-      options.url       = options.url       || data.url       || el.find('a').first().attr('href');
-      options.fallBack  = options.fallBack  || data.fallBack  || el.find('a').first().remove().html() || 'Request failed';
-      options.loaded    = true;
+      options.url             = options.url             || data.url             || el.find('a').first().attr('href');
+      options.fallBack        = options.fallBack        || data.fallBack        || el.find('a').first().html() || 'Request failed';
+      options.responseFilter  = options.responseFilter  || data.responseFilter  || function (response) { return response; };
+      options.loaded          = true;
 
-      el.data('dynaLoad', options);
+      el.empty().data('dynaLoad', options);
 
       if (!options.url) {
         el.html(options.fallBack);
@@ -41,8 +42,8 @@
           context: el,
           url: options.url,
           dataType: 'html',
-          success: function (html) {
-            this.html(html || this.data('dynaLoad').fallBack);
+          success: function (response) {
+            this.html(this.data('dynaLoad').responseFilter(response) || this.data('dynaLoad').fallBack);
           },
           error: function() {
             this.html(this.data('dynaLoad').fallBack).data('dynaLoad').loaded = false;
