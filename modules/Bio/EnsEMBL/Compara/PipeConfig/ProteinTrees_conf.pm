@@ -1727,8 +1727,7 @@ sub core_pipeline_analyses {
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
-                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision' ) ],
-                'A->1'   => [ 'hc_post_tree' ],
+                1   => 'tree_entry_point',
                 -1  => 'split_genes_himem',
             },
         },
@@ -1737,17 +1736,14 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
-            -flow_into      => {
-                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision' ) ],
-                'A->1'   => [ 'hc_post_tree' ],
-            },
+            -flow_into      => [ 'tree_entry_point' ],
         },
 
         {   -logic_name => 'tree_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest_decision' ],
-                'A->1' => [ 'notung' ],
+                'A->1' => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
             },
         },
 
@@ -2186,6 +2182,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '1Gb_job',
             -flow_into  => {
+                1  => [ 'hc_post_tree' ],
                 -1 => [ 'raxml_bl_himem' ],
             }
         },
@@ -2200,6 +2197,9 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '4Gb_job',
+            -flow_into  => {
+                1  => [ 'hc_post_tree' ],
+            }
         },
 
 # ---------------------------------------------[orthologies]-------------------------------------------------------------
