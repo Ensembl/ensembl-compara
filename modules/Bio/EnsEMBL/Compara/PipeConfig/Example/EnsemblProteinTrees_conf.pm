@@ -98,7 +98,6 @@ sub default_options {
 
     # tree building parameters:
         'use_quick_tree_break'      => 0,
-        'treebreak_gene_count'      => 40000,     # affects msa_chooser
 
     # alignment filtering options
 
