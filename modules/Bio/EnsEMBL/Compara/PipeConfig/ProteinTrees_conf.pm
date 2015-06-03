@@ -1417,11 +1417,13 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name    => 'hcluster_merge_factory',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'    => [ ['txt'], ['cat'], ],
+                'column_names' => [ 'ext' ],
+            },
             -flow_into => {
-                '1->A' => {
-                    'hcluster_merge_inputs' => [{'ext' => 'txt'}, {'ext' => 'cat'}],
-                },
+                '2->A' => [ 'hcluster_merge_inputs' ],
                 'A->1' => [ 'hcluster_run' ],
             },
         },
