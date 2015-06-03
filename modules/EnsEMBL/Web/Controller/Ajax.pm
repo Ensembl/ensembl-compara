@@ -315,7 +315,12 @@ sub ajax_fetch_html {
      $content = EnsEMBL::Web::File::Utils::URL::read_file($url, {'hub' => $hub, 'nice' => 1});
   }
 
-  print $content->{'content'} || '';
+  $content  = $content->{'content'} || '';
+  $content  =~ s/^.*<\s*body[^\>]*>\s*|\s*<\s*\/\s*body\s*>.+$//gis; # just keep the contents of body tag
+  $content  =~ s/<\s*(script|style)/<!-- /gis; # comment out script and style tags
+  $content  =~ s/<\s*\/\s*(script|style)[^>]*>/ -->/gis;
+
+  print $content;
 }
 
 1;
