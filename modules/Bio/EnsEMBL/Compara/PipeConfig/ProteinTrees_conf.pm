@@ -449,7 +449,7 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_1_before_genome_load.sql.gz',
             },
             -flow_into  => {
-                '1->A'  => [ 'genome_reuse_factory' ],
+                '1->A'  => [ 'dnafrag_reuse_factory' ],
                 'A->1'  => [ $self->o('clustering_mode') eq 'blastp' ? 'test_should_blast_be_skipped' : 'backbone_fire_clustering' ],
             },
         },
@@ -748,14 +748,6 @@ sub core_pipeline_analyses {
         },
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
-        {   -logic_name => 'genome_reuse_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into => {
-                '1->A' => [ 'dnafrag_reuse_factory' ],
-                'A->1' => [ 'load_fresh_members_factory' ],
-            },
-        },
-
         {   -logic_name => 'dnafrag_reuse_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
@@ -787,7 +779,8 @@ sub core_pipeline_analyses {
                 'species_set_id'    => '#reuse_ss_id#',
             },
             -flow_into => {
-                2 => [ 'component_genome_dbs_move_factory' ],
+                '2->A' => [ 'component_genome_dbs_move_factory' ],
+                'A->1' => [ 'nonpolyploid_genome_load_fresh_factory' ],
             },
         },
 
@@ -930,14 +923,6 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
 
-        {   -logic_name => 'load_fresh_members_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into => {
-                '1->A' => [ 'nonpolyploid_genome_load_fresh_factory' ],
-                'A->1' => [ 'hc_members_globally' ],
-            },
-        },
-
         {   -logic_name => 'nonpolyploid_genome_load_fresh_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
@@ -960,7 +945,8 @@ sub core_pipeline_analyses {
                 'extra_parameters'  => [ 'locator' ],
             },
             -flow_into => {
-                2 => [ 'test_is_polyploid_in_core_db' ],
+                '2->A' => [ 'test_is_polyploid_in_core_db' ],
+                'A->1' => [ 'hc_members_globally' ],
             },
         },
 
