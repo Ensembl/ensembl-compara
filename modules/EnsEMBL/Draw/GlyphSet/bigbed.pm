@@ -268,6 +268,17 @@ sub render_as_alignment_label {
   $self->SUPER::render_as_alignment_label(@_);
 }
 
+sub render_as_transcript_nolabel {
+  my $self = shift;
+  $self->SUPER::render_as_alignment_nolabel({'height' => 8, 'depth' => 20, 'structure' => 1});
+} 
+
+sub render_as_transcript_label   {
+  my $self = shift;
+  $self->{'show_labels'} = 1; 
+  $self->SUPER::render_as_alignment_nolabel({'height' => 8, 'depth' => 20, 'structure' => 1});
+}
+
 ## Backwards compatibility
 sub render_normal { $_[0]->render_as_alignment_nolabel; }
 sub render_labels { $_[0]->render_as_alignment_label; }
