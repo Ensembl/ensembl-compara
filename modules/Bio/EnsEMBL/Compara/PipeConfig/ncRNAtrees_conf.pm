@@ -336,29 +336,14 @@ sub pipeline_analyses {
                 },
                 species_set_name => $self->o('epo_species_set_name'),
             },
-            -flow_into => [ 'create_lca_species_set' ],
-        },
-
-        {   -logic_name => 'create_lca_species_set',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
-            -parameters => {
-                            'object_type' => "SpeciesSet",
-                            'arglist'     => [ -genome_dbs => [] ],
-            },
-            -flow_into => {
-                2 => {
-                    'generate_pre_species_set'     => { 'lca_species_set_id' => '#dbID#' },     # pass it on to the query
-                    'mysql:////species_set_tag' => { 'species_set_id' => '#dbID#', 'tag' => 'name', 'value' => 'low-coverage-assembly' },   # record the id in ss_tag table
-                },
-            },
+            -flow_into => [ 'generate_pre_species_set' ],
         },
 
         {   -logic_name => 'generate_pre_species_set',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',    # another non-stardard use of JobFactory for iterative insertion
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'         => '#epo_db#',
-                'inputquery'      => "SELECT #lca_species_set_id# as lca_species_set_id, GROUP_CONCAT(DISTINCT g.genome_db_id) as pre_species_set FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
-                # 'fan_branch_code' => 2,
+                'inputquery'      => "SELECT GROUP_CONCAT(DISTINCT g.genome_db_id) AS genome_db_ids FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
             },
             -flow_into => {
                            2 => [ 'store_lca_species_set' ],
@@ -366,13 +351,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'store_lca_species_set',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',    # another non-stardard use of JobFactory for iterative insertion
-            -parameters => {
-                'inputquery'      => "SELECT #lca_species_set_id# as species_set_id, genome_db_id FROM genome_db where genome_db_id in (#pre_species_set#)",
-            },
-            -flow_into => {
-                2 => [ 'mysql:////species_set' ],
-            },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::StoreLowCovSpeciesSet',
         },
 
 # ---------------------------------------------[load ncRNA and gene members]---------------------------------------------
