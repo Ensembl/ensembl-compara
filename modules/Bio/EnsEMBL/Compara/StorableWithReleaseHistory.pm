@@ -168,7 +168,9 @@ sub is_in_release {
     my $release_number = shift;
     looks_like_number($release_number) || throw("A release number must be given (got '$release_number')");
     if ($self->has_been_released) {
-        if ($self->last_release) {
+        if ($self->first_release > $release_number) {
+            return 0;
+        } elsif ($self->last_release) {
             return $self->last_release >= $release_number;
         } else {
             return 1;
