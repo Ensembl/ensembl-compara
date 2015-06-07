@@ -180,8 +180,8 @@ instead of the range of genomic_align_id
 =head2 OLD DATA
 
 Sometimes, some alignments are dropped from one release to the other. In order to avoid copying
-these data, this script looks for "skip_mlss" entries in the meta table of the master database
-and skip the method_link_species_sets corresponding to these IDs.
+these data, this script reads the "last_release" fields and skip the related entries (genome_db,
+species_set, and method_link_species_set)
 
 =cut
 
@@ -557,14 +557,6 @@ sub get_all_method_link_species_sets {
     return $mlsss;
   }
 
-  ## Get the list of MLSS to skip from the meta table of the master DB
-  my $meta_container = $compara_dba->get_MetaContainer();
-  throw("Error while getting the MetaContainer") unless ($meta_container);
-  my $skip_mlss;
-  foreach my $this_skip_mlss (@{$meta_container->list_value_by_key("skip_mlss")}) {
-    $skip_mlss->{$this_skip_mlss} = 1;
-  }
-
   my $these_genome_dbs = {};
   foreach my $this_genome_db (@$genome_dbs) {
     assert_ref($this_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'this_genome_db');
@@ -575,7 +567,7 @@ sub get_all_method_link_species_sets {
     my $these_method_link_species_sets =
         $method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db);
     foreach my $this_method_link_species_set (@{$these_method_link_species_sets}) {
-      next if ($skip_mlss->{$this_method_link_species_set->dbID});
+      next unless $this_method_link_species_set->is_current;    # this relies on last_release
       my $all_included = 1;
       foreach my $this_included_genome_db (@{$this_method_link_species_set->species_set_obj->genome_dbs()}) {
         if (!defined($these_genome_dbs->{$this_included_genome_db->dbID})) {
@@ -616,23 +608,14 @@ sub get_all_species_sets_with_tags {
   throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor")
       unless ($species_set_adaptor);
 
-  ## Get the list of MLSS to skip from the meta table of the master DB
-  my $meta_container = $compara_dba->get_MetaContainer();
-  throw("Error while getting the MetaContainer") unless ($meta_container);
-  my $skip_ss;
-  foreach my $this_skip_ss (@{$meta_container->list_value_by_key("skip_ss")}) {
-    $skip_ss->{$this_skip_ss} = 1;
-  }
-
   my $these_genome_dbs = {};
   foreach my $this_genome_db (@$genome_dbs) {
     assert_ref($this_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'this_genome_db');
     $these_genome_dbs->{$this_genome_db->dbID} = $this_genome_db;
   }
 
-  my $these_species_sets = $species_set_adaptor->fetch_all();
+  my $these_species_sets = $species_set_adaptor->fetch_all_current();
   foreach my $this_species_set (@{$these_species_sets}) {
-    next if ($skip_ss->{$this_species_set->dbID});
     next if (!$this_species_set->get_all_tags);
     my $all_included = 1;
     foreach my $this_included_genome_db (@{$this_species_set->genome_dbs}) {
