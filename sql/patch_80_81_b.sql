@@ -12,26 +12,29 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_79_80_c.sql
+# patch_80_81_b.sql
 #
 # Title: Add "first_release" and "last_release" to the core tables
 #
 # Description:
-#   genome_db, species_set, and method_link_species_set now have two
-#   extra columns ("first_release" and "last_release") to track the
-#   release versions when they were loaded / active.
+#   A header table (species_set_header) is added for species-sets.
+#   genome_db, species_set_header, and method_link_species_set now
+#   have two #   extra columns ("first_release" and "last_release")
+#   to track the #   release versions when they were loaded / active.
 #   As a result, genome_db.assembly_default has been removed
+
 
 -- the genome_db table
 ALTER TABLE genome_db ADD COLUMN first_release smallint unsigned, ADD COLUMN last_release smallint unsigned;
 
-# If there are some non-default assemblies, they must come from a previous version
-UPDATE genome_db SET last_release = 79 WHERE assembly_default=0;
+# Insert dummy values for first_release and last_release
+UPDATE genome_db SET first_release = 79;    -- must be set, so that all the genomes are considered as released
+UPDATE genome_db SET last_release = 79 WHERE assembly_default=0;    -- non-default genome_dbs were not current any more in e80, so must have ended in e79 or before
 
 ALTER TABLE genome_db DROP COLUMN assembly_default;
 
 
--- the species_set table
+-- the species_set_header table
 CREATE TABLE species_set_header (
   species_set_id              int(10) unsigned NOT NULL AUTO_INCREMENT,
   name                        varchar(255) NOT NULL default '',
@@ -42,10 +45,19 @@ CREATE TABLE species_set_header (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-INSERT INTO species_set_header
-	SELECT species_set.species_set_id, IFNULL(value, ""), IF(SUM(first_release IS NULL)>0, NULL, MAX(first_release)), IF(SUM(last_release IS NOT NULL)>0, MIN(last_release), NULL)
-	FROM species_set JOIN genome_db USING (genome_db_id) LEFT JOIN species_set_tag ON species_set.species_set_id = species_set_tag.species_set_id AND tag = "name"
+-- first and last release can be inferred from the genome_db table
+INSERT INTO species_set_header (species_set_id, first_release, last_release)
+	SELECT species_set.species_set_id, IF(SUM(first_release IS NULL)>0, NULL, MAX(first_release)), IF(SUM(first_release IS NULL)>0, NULL, IF(SUM(last_release IS NOT NULL)>0, MIN(last_release), NULL))
+	FROM species_set JOIN genome_db USING (genome_db_id)
 	GROUP BY species_set.species_set_id;
+
+-- Try to find the best name
+UPDATE species_set JOIN species_set_tag USING (species_set_id) SET name = CONCAT("genetree_display_", value) WHERE tag = "genetree_display";
+UPDATE species_set JOIN species_set_tag USING (species_set_id) SET name = CONCAT("taxon_", value) WHERE tag = "taxon_id";
+UPDATE species_set JOIN species_set_tag USING (species_set_id) SET name = value WHERE tag = "name";
+DELETE FROM species_set_tag WHERE tag = "genetree_display";
+DELETE FROM species_set_tag WHERE tag = "taxon_id";
+DELETE FROM species_set_tag WHERE tag = "name";
 
 
 -- the method_link_species_set table
@@ -60,4 +72,5 @@ UPDATE method_link_species_set JOIN method_link_species_set_time USING (method_l
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_79_80_c.sql|first_last_release');
+  VALUES (NULL, 'patch', 'patch_80_81_b.sql|first_last_release');
+

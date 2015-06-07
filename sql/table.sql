@@ -1798,16 +1798,16 @@ CREATE TABLE `CAFE_species_gene` (
 
 # ------------------------ End of CAFE tables --------------------------------------
 
-# Auto add schema version to database (this will override whatever hive puts there)
+-- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '80');
-
-#Add schema type
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '81');
+-- Add schema type to database
+DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_79_80_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_80_81_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_79_80_b.sql|genebuild_unique');
+  VALUES (NULL, 'patch', 'patch_80_81_b.sql|first_last_release');
 
