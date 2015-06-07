@@ -59,6 +59,8 @@ DELETE FROM species_set_tag WHERE tag = "genetree_display";
 DELETE FROM species_set_tag WHERE tag = "taxon_id";
 DELETE FROM species_set_tag WHERE tag = "name";
 
+-- Insert an empty species-set
+INSERT INTO species_set_header (name, first_release) VALUES ("empty", 81);
 
 -- the method_link_species_set table
 CREATE TEMPORARY TABLE method_link_species_set_time AS

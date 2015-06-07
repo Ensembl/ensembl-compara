@@ -266,6 +266,7 @@ INSERT IGNORE INTO species_set_header
 });
 find_first_last_rel('species_set');
 #run_command_once('DELETE FROM species_set_tag WHERE tag = "name"');
+run_command_once('INSERT INTO species_set_header (name, first_release) VALUES ("empty", 81)');
 find_species_set_names();
 $master_dbc->do('UPDATE species_set_header SET name = REPLACE(name, "oldcollection",  "") WHERE name LIKE "oldcollection%"');
 
