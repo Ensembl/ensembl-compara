@@ -1780,7 +1780,7 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTagging',
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name    	=> '4Gb_job',
-            -batch_size     => 5,
+            -batch_size     => 50,
             -flow_into      => [ 'small_trees_go_to_treebest' ],
         },
 
@@ -1791,7 +1791,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'condition'             => '#tree_gene_count# < 4',
             },
-			-batch_size     => 10,
+			-batch_size     => 50,
             -flow_into  => {
                 2  => [ 'treebest_small_families' ],
                 3  => [ 'prottest' ],
@@ -1814,7 +1814,9 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
                 1 => [ 'raxml_decision' ],
-				2 => [ 'treebest_small_families' ],
+				2 => [ 'treebest_small_families' ],# This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
+												   #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
+												   #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
             }
         },
 
@@ -1986,8 +1988,8 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
             -parameters => {
                 'branches'  => {
-                    2 => '(#tree_gene_count# <  #raxml_threshold_n_genes#) || (#tree_aln_length# <  #raxml_threshold_aln_len#)',
-                    4 => '(#tree_gene_count# >= #threshold_n_genes_large#) || (#tree_aln_length# >= #threshold_aln_len_large#)',
+                    2 => '(#tree_gene_count# <  #raxml_threshold_n_genes#) && (#tree_aln_length# <  #raxml_threshold_aln_len#)',
+                    4 => '(#tree_aln_length# >= #threshold_aln_len_large#)',
                 },
                 'else_branch'   => 3,
                 'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
@@ -2012,6 +2014,8 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => $self->o('examl_cores'),
                 'treebest_exe'          => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'      => 'default',
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_64c_mpi',
@@ -2030,6 +2034,8 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => $self->o('examl_cores'),
                 'treebest_exe'          => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'      => 'default',
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '16Gb_64c_mpi',
@@ -2042,6 +2048,7 @@ sub core_pipeline_analyses {
                 'raxml_exe'                 => $self->o('raxml_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'      => 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '1Gb_job',
@@ -2082,6 +2089,8 @@ sub core_pipeline_analyses {
                 'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'extra_raxml_args'          => '-T '.$self->o('raxml_cores'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'      => 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '16Gb_16c_job',
@@ -2096,6 +2105,8 @@ sub core_pipeline_analyses {
                 'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'extra_raxml_args'          => '-T '.$self->o('raxml_cores'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'      => 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '64Gb_16c_job',
@@ -2143,6 +2154,7 @@ sub core_pipeline_analyses {
                 'raxml_exe'                 => $self->o('raxml_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'input_clusterset_id'       => 'notung',
+                'output_clusterset_id'      => 'raxml_bl',
                 'escape_branch'             => -1,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
@@ -2158,6 +2170,7 @@ sub core_pipeline_analyses {
                 'raxml_exe'                 => $self->o('raxml_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'input_clusterset_id'       => 'notung',
+                'output_clusterset_id'      => 'raxml_bl',
                 'escape_branch'             => -1,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
@@ -2174,8 +2187,8 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                  '2->A' => [ 'hc_tree_structure', 'hc_tree_attributes' ],
-                 '1->A' => [ 'hc_alignment_post_tree', 'hc_tree_structure', 'hc_tree_attributes' ],
                  'A->1' => 'ortho_tree',
+                 '1->A' => $self->o('use_notung') ? [ 'hc_alignment_post_tree' ] : [ 'hc_alignment_post_tree', 'hc_tree_structure', 'hc_tree_attributes' ]
             },
         },
 
