@@ -227,7 +227,7 @@ sub find_first_last_rel {
 
     my $dbc = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url=> get_compara_url('master') )->dbc();
     my $table_to_update = $table eq 'species_set' ? 'species_set_header' : $table;
-    my $sql = "UPDATE $table_to_update SET first_release = ?, last_release = ? WHERE ${table}_id = ?";
+    my $sql = "UPDATE $table_to_update SET first_release = ?, last_release = ? WHERE ${table}_id = ? AND first_release IS NULL AND last_release IS NULL";
     my $sth = $dbc->prepare($sql);
     foreach my $dbID (sort {$a <=> $b} keys %$master_contents) {
         print $table, " ", $first_rel{$dbID} || 'NEVER', ' -> ', $last_rel{$dbID} || ($first_rel{$dbID} ? 'CUR' : 'NEVER'), ' ', sprintf_contents($master_contents->{$dbID}, $table), "\n";
