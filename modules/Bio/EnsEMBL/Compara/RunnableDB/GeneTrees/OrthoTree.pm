@@ -115,7 +115,8 @@ sub fetch_input {
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
     my $tree_id = $self->param_required('gene_tree_id');
-    my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
+    my $default_gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
+    my $gene_tree = $default_gene_tree->alternative_trees->{'notung'};
     $gene_tree->preload();
     $self->param('gene_tree', $gene_tree->root);
 
