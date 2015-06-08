@@ -176,6 +176,8 @@ CREATE TABLE genome_db (
   
 @column species_set_id    Internal (non-unique) ID for the table
 @column genome_db_id      External reference to genome_db_id in the @link genome_db table
+@column first_release     The first release this set genome was present in
+@column last_release      The last release this set was present in, or NULL if it is still current
 
 
 @see method_link_species_set
@@ -185,6 +187,7 @@ CREATE TABLE genome_db (
 CREATE TABLE species_set_header (
   species_set_id              int(10) unsigned NOT NULL AUTO_INCREMENT,
   name                        varchar(255) NOT NULL default '',
+  size                        int(10) unsigned NOT NULL,
   first_release               smallint,
   last_release                smallint,
 
@@ -289,8 +292,8 @@ CREATE TABLE method_link (
 @column name                          Human-readable description for this method_link_species_set
 @column source                        Source of the data. Currently either "ensembl" or "ucsc" if data were imported from UCSC
 @column url                           A URL where you can find the orignal data if they were imported
-@column first_release     The first release this genome was present in
-@column last_release      The last release this genome was present in, or NULL if it is still current
+@column first_release     The first release this analysis was present in
+@column last_release      The last release this analysis was present in, or NULL if it is still current
 
 @see method_link
 @see species_set
@@ -1810,4 +1813,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_80_81_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_80_81_b.sql|first_last_release');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_80_81_c.sql|species_set_size');
 

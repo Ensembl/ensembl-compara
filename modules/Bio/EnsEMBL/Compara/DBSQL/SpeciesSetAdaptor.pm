@@ -27,6 +27,7 @@ use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
+# NOTE: the "size" column is write-only
 
 
 #############################################################
@@ -118,13 +119,13 @@ sub store {
                 die sprintf("Attempting to store an object with dbID=$dbID (ss=%s) experienced a collision with same dbID but different data\n", join("/", map {$_->dbID} @$genome_dbs ));
             }
 
-            my $set_id_sql = 'INSERT INTO species_set_header (species_set_id, name, first_release, last_release) VALUES (?,?,?,?)';
-            $self->db->dbc->do( $set_id_sql, undef, $dbID, $species_set->name, $species_set->first_release, $species_set->last_release ) or die "Could not perform '$set_id_sql'\n";
+            my $set_id_sql = 'INSERT INTO species_set_header (species_set_id, name, size, first_release, last_release) VALUES (?,?,?,?,?)';
+            $self->db->dbc->do( $set_id_sql, undef, $dbID, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release ) or die "Could not perform '$set_id_sql'\n";
 
         } else { # grab a new species_set_id by using AUTO_INCREMENT:
 
-            my $grab_id_sql = 'INSERT INTO species_set_header (name, first_release, last_release) VALUES (?,?,?)';
-            $self->db->dbc->do( $grab_id_sql, undef, $species_set->name, $species_set->first_release, $species_set->last_release ) or die "Could not perform '$grab_id_sql'\n";
+            my $grab_id_sql = 'INSERT INTO species_set_header (name, size, first_release, last_release) VALUES (?,?,?,?)';
+            $self->db->dbc->do( $grab_id_sql, undef, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release ) or die "Could not perform '$grab_id_sql'\n";
 
             $dbID = $self->dbc->db_handle->last_insert_id(undef, undef, 'species_set_header', 'species_set_id');
             if (not $dbID) {
@@ -164,8 +165,8 @@ sub store {
 sub update_header {
     my ($self, $species_set) = @_;
 
-    my $update_sql = 'UPDATE species_set_header SET name = ?, first_release = ?, last_release = ? WHERE species_set_id = ?';
-    $self->db->dbc->do( $update_sql, undef, $species_set->name, $species_set->first_release, $species_set->last_release, $species_set->dbID ) or die "Could not perform '$update_sql'\n";
+    my $update_sql = 'UPDATE species_set_header SET name = ?, size = ?, first_release = ?, last_release = ? WHERE species_set_id = ?';
+    $self->db->dbc->do( $update_sql, undef, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release, $species_set->dbID ) or die "Could not perform '$update_sql'\n";
 }
 
 

@@ -155,6 +155,23 @@ sub genome_dbs {
 }
 
 
+=head2 size
+
+  Example     : my $size = $species_set->size();
+  Description : Getter for the size of the species set.
+  Returntype  : Integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub size {
+    my $self = shift;
+    return scalar(@{$self->genome_dbs});
+}
+
+
 =head2 toString
 
   Args       : (none)
