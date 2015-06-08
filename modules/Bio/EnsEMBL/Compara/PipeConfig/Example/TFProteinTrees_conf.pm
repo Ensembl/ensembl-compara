@@ -368,6 +368,8 @@ sub tweak_analyses {
     $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'java'} = '/nfs/production/panda/ensemblgenomes/production/compara/mp14/java/jre1.8.0_40/bin/java';
     $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
     $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
+    $analyses_by_name->{'ortho_tree'}->{'-parameters'}{'store_homologies'} = 0;
+    $analyses_by_name->{'ortho_tree_himem'}->{'-parameters'}{'store_homologies'} = 0;
 }
 
 
