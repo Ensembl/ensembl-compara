@@ -268,13 +268,13 @@ INSERT IGNORE INTO species_set_header
 find_first_last_rel('species_set');
 #run_command_once('DELETE FROM species_set_tag WHERE tag = "name"');
 run_command_once('INSERT INTO species_set_header (name, first_release) VALUES ("empty", 81)');
-find_species_set_names();
+#find_species_set_names();
 $master_dbc->do('UPDATE species_set_header SET name = REPLACE(name, "oldcollection",  "") WHERE name LIKE "oldcollection%"');
 
 run_command_once(q{ALTER TABLE method_link_species_set ADD COLUMN first_release smallint unsigned, ADD COLUMN last_release smallint unsigned});
 $master_dbc->do(q{
 CREATE TEMPORARY TABLE method_link_species_set_time AS
-	SELECT method_link_species_set_id, IF(SUM(first_release IS NULL)>0, NULL, MAX(first_release)) AS fr, IF(SUM(last_release IS NOT NULL)>0, MIN(last_release), NULL) AS lr
+	SELECT method_link_species_set_id, IF(SUM(species_set_header.first_release IS NULL)>0, NULL, MAX(species_set_header.first_release)) AS fr, IF(SUM(species_set_header.last_release IS NOT NULL)>0, MIN(species_set_header.last_release), NULL) AS lr
 	FROM method_link_species_set JOIN species_set_header USING (species_set_id)
 	GROUP BY method_link_species_set_id;
 });
