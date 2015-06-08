@@ -881,10 +881,8 @@ sub _add_datahub_tracks {
   my $hub    = $self->hub;
   my $data   = $parent->data;
   my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
-  my $link   = $config->{'description_url'} ? qq(<br /><a href="$config->{'description_url'}" rel="external">Go to track description on trackhub</a>) : '';
-  my $info   = $config->{'longLabel'} . $link;
   my %tracks;
- 
+
   my %options = (
     menu_key     => $name,
     menu_name    => $name,
@@ -920,7 +918,8 @@ sub _add_datahub_tracks {
       matrix => {
         section     => $menu->data->{'caption'},
         header      => $options{'submenu_name'},
-        description => $info,
+        desc_url    => $config->{'description_url'},
+        description => $config->{'longLabel'},
         axes        => $options{'axes'},
       }
     ) : ())
@@ -932,12 +931,12 @@ sub _add_datahub_tracks {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
     my $squish       = $track->{'visibility'} eq 'squish' || $config->{'visibility'} eq 'squish'; # FIXME: make it inherit correctly
-    my $desc_url     = $track->{'description_url'} ? $hub->url('Ajax', {'type' => 'fetch_html', 'url' => $track->{'description_url'}}) : '';
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
     my $source       = {
       name        => $track->{'track'},
       source_name => $source_name,
-      description => $desc_url ? qq(<span class="_dyna_load"><a class="hidden" href="$desc_url">$track->{'longLabel'}</a>Loading &#133;</span>) : '',
+      desc_url    => $track->{'description_url'},
+      description => $track->{'longLabel'},
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
@@ -971,8 +970,7 @@ sub _add_datahub_tracks {
         column => $options{'axis_labels'}{'x'}{$track->{'subGroups'}{$config->{'dimensions'}{'x'}}},
         row    => $options{'axis_labels'}{'y'}{$track->{'subGroups'}{$config->{'dimensions'}{'y'}}},
       };
-      
-      $source->{'column_data'} = { description => $info, no_subtrack_description => 1 };
+      $source->{'column_data'} = { desc_url => $config->{'description_url'}, description => $config->{'longLabel'}, no_subtrack_description => 1 };
     }
     
     $tracks{$type}{$source->{'name'}} = $source;
@@ -1007,7 +1005,7 @@ sub _add_datahub_extras_options {
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'subset'}     = $self->tree->clean_id($args{'source'}{'submenu_key'}, '\W') unless $args{'source'}{'matrix'};
-  $args{'options'}{$_}           = $args{'source'}{$_} for qw(datahub matrix column_data colour description);
+  $args{'options'}{$_}           = $args{'source'}{$_} for qw(datahub matrix column_data colour description desc_url);
   
   return %args;
 }
