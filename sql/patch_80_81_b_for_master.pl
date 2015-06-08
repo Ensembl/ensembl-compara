@@ -231,7 +231,7 @@ sub find_first_last_rel {
     my $sth = $dbc->prepare($sql);
     foreach my $dbID (sort {$a <=> $b} keys %$master_contents) {
         print $table, " ", $first_rel{$dbID} || 'NEVER', ' -> ', $last_rel{$dbID} || ($first_rel{$dbID} ? 'CUR' : 'NEVER'), ' ', sprintf_contents($master_contents->{$dbID}, $table), "\n";
-        $sth->execute($first_rel{$dbID}, $last_rel{$dbID}, $dbID) unless $topup and (not defined $first_rel{$dbID}) and (not defined $last_rel{$dbID});
+        $sth->execute($first_rel{$dbID}, $last_rel{$dbID}, $dbID);
     }
     $sth->finish();
 }
@@ -278,7 +278,7 @@ CREATE TEMPORARY TABLE method_link_species_set_time AS
 	FROM method_link_species_set JOIN species_set_header USING (species_set_id)
 	GROUP BY method_link_species_set_id;
 });
-$master_dbc->do(q{UPDATE method_link_species_set JOIN method_link_species_set_time USING (method_link_species_set_id) SET first_release = fr, last_release = lr});
+$master_dbc->do(q{UPDATE method_link_species_set JOIN method_link_species_set_time USING (method_link_species_set_id) SET first_release = fr, last_release = lr WHERE first_release IS NULL AND last_release IS NULL});
 find_first_last_rel('method_link_species_set');
 
 run_command_once("INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'patch', 'patch_80_81_b.sql|first_last_release')");
