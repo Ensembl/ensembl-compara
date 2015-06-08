@@ -780,6 +780,8 @@ sub copy_dna_dna_alignements {
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     ## For DNA-DNA alignments, the method_link_id is < 100.
     next if ($this_method_link_species_set->method->dbID >= 100);
+    ## We ignore LASTZ_PATCH alignments as they should be reloaded fresh every release
+    next if ($this_method_link_species_set->method->type eq 'LASTZ_PATCH');
     print "Copying dna-dna alignments for ", $this_method_link_species_set->name,
         " (", $this_method_link_species_set->dbID, "): ";
     my $where = "genomic_align_block_id >= ".
