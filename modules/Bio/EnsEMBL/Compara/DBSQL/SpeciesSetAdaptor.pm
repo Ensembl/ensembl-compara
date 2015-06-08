@@ -103,7 +103,7 @@ sub store {
 
     my $dbID = $species_set->dbID;
         # Could we have a species_set in the DB with the given contents already?
-    if ( my $stored_ss = scalar(@$genome_dbs) && $self->fetch_by_GenomeDBs( $genome_dbs ) ) {
+    if ( my $stored_ss = $self->fetch_by_GenomeDBs( $genome_dbs ) ) {
         my $stored_dbID = $stored_ss->dbID;
         if($dbID and $dbID!=$stored_dbID) {
             die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)\n";
