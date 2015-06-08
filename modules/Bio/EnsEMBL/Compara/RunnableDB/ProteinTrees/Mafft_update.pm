@@ -79,6 +79,8 @@ sub fetch_input {
     $self->param( 'tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
     my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) or die "Could not fetch gene_tree with gene_tree_id='$self->param('gene_tree_id')'";
     my $copy_tree = $self->param('current_gene_tree')->alternative_trees->{'copy'};
+	$self->param( 'copy_gene_tree', $copy_tree);
+
     die sprintf( 'Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id') ) unless $copy_tree;
 	$self->param( 'protein_tree', $self->param('current_gene_tree'));
 
@@ -88,6 +90,7 @@ sub fetch_input {
         -ID_TYPE => 'SEQUENCE',
         -STOP2X => 1,
         -APPEND_SPECIES_TREE_NODE_ID => 0,
+		-UNIQ_SEQ => 1,
     );
     unless(-e $input_aln and -s $input_aln) {
         die "There are no alignments in '$input_aln', cannot continue";
@@ -116,18 +119,21 @@ sub get_msa_command_line {
 
 	@members_2_b_updated{keys %members_2_b_added} = values %members_2_b_added;
 
-    my %tree_members = ( map { $_->stable_id => $_ } @{ $self->param('current_gene_tree')->get_all_Members } );
+	print "members to update:\n" if ( $self->debug );
     foreach my $updated_member_stable_id ( keys %members_2_b_updated ) {
-        print "updated member\t$updated_member_stable_id\n" if ( $self->debug );
-        my $bioseq = $tree_members{$updated_member_stable_id}->bioseq();
+        my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor;
+        my $seq_member = $seq_member_adaptor->fetch_by_stable_id($updated_member_stable_id);
+        print "$updated_member_stable_id|".$seq_member->seq_member_id."|".$seq_member->sequence_id."\n" if ( $self->debug );
+        my $bioseq = $seq_member->bioseq(-ID_TYPE => 'SEQUENCE_ID');
         $new_seq->write_seq($bioseq);
     }
+
 
     #--------------------------------------------------------------------------------------------------------------
 
     die "Cannot execute '$mafft_exe' in '$mafft_home'" unless ( -x $mafft_home . '/' . $mafft_exe );
 
-    return sprintf( '%s/%s --add %s --thread 1 %s > %s', $mafft_home, $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
+    return sprintf( '%s/%s --add %s --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
 } ## end sub get_msa_command_line
 
 1;
