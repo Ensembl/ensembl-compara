@@ -116,8 +116,9 @@ sub _load_coordinates {
 
 sub get_cds_sequences {
     my $self = shift;
+    return {};
     $self->_load_sequences('cds') unless exists $self->{'_cds_seq'};
-    return $self->{'_cds_seq'};
+	#return $self->{'_cds_seq'};
 }
 
 sub get_protein_sequences {
@@ -148,6 +149,11 @@ sub _load_sequences {
     $self->{"_${type}_seq"} = \%sequence2hash;
 }
 
+sub get_GenomeContainer {
+    my $self = shift;
+    return $self;
+}
+
 sub get_MetaContainer {
     my $self = shift;
     return $self;
@@ -164,17 +170,17 @@ sub AUTOLOAD {
 
 sub has_karyotype {
     my $self = shift;
-    return $self->{'has_karyotype'};
+    return $self->{'has_karyotype'} || 0;
 }
 
 sub is_high_coverage {
     my $self = shift;
-    return $self->{'is_high_coverage'};
+    return $self->{'is_high_coverage'} || 0;
 }
 
 sub assembly_name {
     my $self = shift;
-    return $self->{'assembly'};
+    return $self->{'assembly'} || "assembly";
 }
 
 sub locator {
