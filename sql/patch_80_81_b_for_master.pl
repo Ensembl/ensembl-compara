@@ -67,6 +67,7 @@ my %first_table_release = (
     genome_db               => 24,
     method_link_species_set => 25,
     species_set             => 38,
+    species_set_tag         => 57,
 );
 
 my $last_available_rel  = 80;     # last public release
@@ -110,7 +111,7 @@ sub get_contents {
     my $dbID_field = $table.'_id';
     my $joined_fields = join(", ", $dbID_field, @{$fields{$table}});
     my $sql = "SELECT $joined_fields FROM $table GROUP BY $dbID_field";
-    if (($table eq 'method_link_species_set') and ($rel ne 'master') and ($rel < 38)) {
+    if (($table eq 'method_link_species_set') and ($rel ne 'master') and ($rel < $first_table_release{species_set})) {
         # There is no species_set_id before release 38
         $sql = "SELECT method_link_species_set_id, method_link_id, 0 AS species_set_id, '' AS name FROM method_link_species_set GROUP BY method_link_species_set_id";
     }
@@ -143,7 +144,7 @@ sub sprintf_contents {
 
 sub find_species_set_names {
     my %name = ();
-    foreach my $rel (57..$last_available_rel) {
+    foreach my $rel ($first_table_release{species_set_tag}..$last_available_rel) {
         my $dbc = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url=> get_compara_url($rel) )->dbc();
         my $all_names = $dbc->db_handle->selectall_arrayref('SELECT species_set_id, value FROM species_set_tag WHERE tag = "genetree_display"');
         $name{$_->[0]} = 'genetree_display_'.$_->[1] for @$all_names;
