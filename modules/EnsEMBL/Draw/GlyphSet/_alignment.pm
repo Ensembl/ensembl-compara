@@ -424,8 +424,8 @@ sub render_as_alignment_nolabel {
           my ($block_sizes)   = @{$f->external_data->{'BlockSizes'}};
           my @block_starts    = split(',', $block_starts); 
           my @block_sizes     = split(',', $block_sizes); 
-          my ($thick_start)   = @{$f->external_data->{'thick_start'} || (0)};
-          my ($thick_end)     = @{$f->external_data->{'thick_end'} || (0)};
+          my ($thick_start)   = @{$f->external_data->{'thick_start'} || [0]};
+          my ($thick_end)     = @{$f->external_data->{'thick_end'} || [0]};
           $thick_start        -= $self->{'container'}->start if $thick_start;
           $thick_end          -= $self->{'container'}->start if $thick_end;
 
