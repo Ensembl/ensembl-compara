@@ -934,7 +934,9 @@ sub _add_datahub_tracks {
   });
   
   $self->alphabetise_tracks($submenu, $menu);
-  
+ 
+  my $count_visible = 0;
+ 
   foreach (@{$children||[]}) {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
@@ -964,9 +966,10 @@ sub _add_datahub_tracks {
       elsif (lc($type) eq 'bigwig') {
         $display = $visibility eq 'full' ? 'tiling' : 'compact';
       }
-      ## TODO - remove this warn once we've benchmarked trackhub visibility
-      warn sprintf('... SETTING TRACK STYLE TO %s FOR %s TRACK %s', $display, uc($type), $track->{'track'});
       $options{'display'} = $display;
+      $count_visible++;
+      ## TODO - remove this warn once we've benchmarked trackhub visibility
+      #warn sprintf('... SETTING TRACK STYLE TO %s FOR %s TRACK %s', $display, uc($type), $track->{'track'});
     }
     my $source       = {
       name        => $track->{'track'},
@@ -1011,6 +1014,7 @@ sub _add_datahub_tracks {
     
     $tracks{$type}{$source->{'name'}} = $source;
   }
+  warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
   
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
