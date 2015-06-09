@@ -1154,7 +1154,12 @@ sub _add_bam_track {
     The read end bars indicate the direction of the read and the colour indicates the type of read pair:
     Green = both mates are part of a proper pair; Blue = either this read is not paired, or its mate was not mapped; Red = this read is not properly paired.
   ';
-  
+ 
+
+  ## Override default renderer (mainly used by trackhubs)
+  my %options;
+  $options{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+ 
   $self->_add_file_format_track(
     format      => 'BAM',
     description => $desc,
@@ -1167,7 +1172,8 @@ sub _add_bam_track {
     colourset   => 'BAM',
     options => {
       external => 'external',
-      sub_type => 'bam'
+      sub_type => 'bam',
+      %options,
     },
     %args,
   );
@@ -1238,7 +1244,13 @@ sub _add_bigwig_track {
 }
 
 sub _add_vcf_track {
-  shift->_add_file_format_track(
+  my ($self, %args) = @_;
+
+  ## Override default renderer (mainly used by trackhubs)
+  my %options;
+  $options{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+
+  $self->_add_file_format_track(
     format    => 'VCF',
     renderers => [
       'off',       'Off',
@@ -1250,7 +1262,8 @@ sub _add_vcf_track {
       sources    => undef,
       depth      => 0.5,
       bump_width => 0,
-      colourset  => 'variation'
+      colourset  => 'variation',
+      %options,
     },
     @_
   );
