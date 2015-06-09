@@ -1248,7 +1248,7 @@ sub _add_vcf_track {
 
   ## Override default renderer (mainly used by trackhubs)
   my %options;
-  $options{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+  $options{'display'} = $args{'source'}{'display'} if %args && $args{'source'}{'display'};
 
   $self->_add_file_format_track(
     format    => 'VCF',
