@@ -188,16 +188,22 @@ sub features {
   return [] unless $bba;
   my $format    = $self->format;
   my $slice     = $self->{'container'};
-  my $features  = $bba->fetch_features($slice->seq_region_name, $slice->start, $slice->end + 1);
+  my $raw_feats = $bba->fetch_features($slice->seq_region_name, $slice->start, $slice->end + 1);
   my $config    = {};
   my $max_score = 0;
   my $key       = $self->my_config('description') =~ /external webserver/ ? 'url' : 'feature';
   
   $self->{'_default_colour'} = $self->SUPER::my_colour($self->my_config('sub_type'));
   
-  foreach (@$features) {
-    $_->map($slice);
-    $max_score = max($max_score, $_->score);
+  my $features = [];
+  foreach (@$raw_feats) {
+    my $bed = EnsEMBL::Web::Text::Feature::BED->new(@$_);
+    $bed->coords([$_[0],$_[1],$_[2]]);
+    ## Set score to undef if missing, to distinguish it from a genuine present but zero score
+    $bed->score(undef) if @_ < 5;
+    $bed->map($slice);
+    $max_score = max($max_score, $bed->score);
+    push @$features, $bed;
   }
   
   # WORK OUT HOW TO CONFIGURE FEATURES FOR RENDERING
