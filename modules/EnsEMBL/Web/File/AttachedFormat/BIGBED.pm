@@ -60,7 +60,6 @@ sub check_data {
     eval {
       Bio::DB::BigFile->set_udc_defaults;
       $bigbed = Bio::DB::BigFile->bigBedFileOpen($url);
-      my $chromosome_list = $bigbed->chromList;
     };
     warn $@ if $@;
     warn "Failed to open BigBed " . $url unless $bigbed;
