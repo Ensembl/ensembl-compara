@@ -803,7 +803,7 @@ sub _add_datahub {
   my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
   my $hub_info = $trackhub->get_hub({'assembly_lookup' => $self->species_defs->assembly_lookup, 
                                       'parse_tracks' => 1}); ## Do we have data for this species?
-  
+ 
   if ($hub_info->{'error'}) {
     ## Probably couldn't contact the hub
     push @{$hub_info->{'error'}||[]}, '<br /><br />Please check the source URL in a web browser.';
@@ -814,8 +814,7 @@ sub _add_datahub {
     my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
 
     my $node;
-    my $assemblies =
-      $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
+    my $assemblies = $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
     $assemblies ||= [];
     $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
     foreach my $assembly_var (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION)) {
@@ -862,13 +861,13 @@ sub _add_datahub_node {
     my $n       = $node;
     my $data    = $n->data;
     my $config  = {};
-    unless ($data->{'superTrack'} && $data->{'superTrack'} =~ /^on/) {
+    unless ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
       $config->{$_} = $data->{$_} for keys %$data;
     }
 
     while ($n = $n->parent_node) {
       $data = $n->data;
-      last if $data->{'superTrack'} && $data->{'superTrack'} =~ /^on/;
+      last if $data->{'superTrack'} && $data->{'superTrack'} eq 'on';
       $config->{$_} ||= $data->{$_} for keys %$data;
     };
     
