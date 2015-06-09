@@ -415,7 +415,7 @@ sub render_as_alignment_nolabel {
           
           $feature_colour = $f->external_data->{'item_colour'}[0] if $config->{'itemRgb'} =~ /on/i;
         }
-      
+     
         if ($self->my_config('has_blocks') && $show_structure) {
           ## BED file shown like transcript
           $label_colour       = $feature_colour;
@@ -521,6 +521,7 @@ sub render_as_alignment_nolabel {
                                             width     => $start + $block_starts[$i+1] - $block_end,
                                             height    => $h,
                                             colour    => $feature_colour,
+                                            strand    => $f->strand,
                                             absolutey => 1,
                                           }));
             }
