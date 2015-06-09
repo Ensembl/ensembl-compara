@@ -858,19 +858,27 @@ sub _add_datahub_node {
   } 
 
   if (scalar(@childless)) {
+    ## Get additional/overridden settings from parent nodes
     my $n       = $node;
     my $data    = $n->data;
     my $config  = {};
-    unless ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
+    ## The only parameter we override from superTrack nodes is visibility
+    if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
+      $config->{'visibility'} = $data->{'visibility'}; 
+    }
+    else {
       $config->{$_} = $data->{$_} for keys %$data;
     }
 
     while ($n = $n->parent_node) {
       $data = $n->data;
-      last if $data->{'superTrack'} && $data->{'superTrack'} eq 'on';
+      if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
+        $config->{'visibility'} = $data->{'visibility'} if $data->{'visibility'}; 
+        last;
+      }
       $config->{$_} ||= $data->{$_} for keys %$data;
     };
-    
+
     $self->_add_datahub_tracks($node, \@childless, $config, $menu, $name);
   }
 }
@@ -930,9 +938,36 @@ sub _add_datahub_tracks {
   foreach (@{$children||[]}) {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
-    my $squish       = $track->{'visibility'} eq 'squish' || $config->{'visibility'} eq 'squish'; # FIXME: make it inherit correctly
+    my $visibility   = $config->{'visibility'} || $track->{'visibility'};
+    ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
+    my $squish       = $visibility eq 'squish';
     my $desc_url     = $track->{'description_url'} ? $hub->url('Ajax', {'type' => 'fetch_html', 'url' => $track->{'description_url'}}) : '';
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
+
+    ## Set track style according to format and visibility
+    my $display;
+    if ($visibility && $visibility ne 'hide' && $visibility ne 'none') {
+      if (lc($type) eq 'bigbed') {
+        if ($visibility eq 'full') {
+          $display = 'as_transcript_label';
+        }
+        elsif ($visibility eq 'squish') {
+          $display = 'half_height';
+        }
+        elsif ($visibility eq 'pack') {
+          $display = 'stack';
+        }
+        elsif ($visibility eq 'dense') {
+          $display = 'ungrouped';
+        }
+      }
+      elsif (lc($type) eq 'bigwig') {
+        $display = $visibility eq 'full' ? 'tiling' : 'compact';
+      }
+      ## TODO - remove this warn once we've benchmarked trackhub visibility
+      warn sprintf('... SETTING TRACK STYLE TO %s FOR %s TRACK %s', $display, uc($type), $track->{'track'});
+      $options{'display'} = $display;
+    }
     my $source       = {
       name        => $track->{'track'},
       source_name => $source_name,
@@ -1153,6 +1188,8 @@ sub _add_bigbed_track {
     addhiddenbgd => 1,
     max_label_rows => 2,
   };
+  ## Override default renderer (mainly used by trackhubs)
+  $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
     $options->{'join'} = 'off';  
@@ -1185,6 +1222,9 @@ sub _add_bigwig_track {
     addhiddenbgd => 1,
     max_label_rows => 2,
   };
+
+  ## Override default renderer (mainly used by trackhubs)
+  $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
 
   $self->_add_file_format_track(
     format    => 'BigWig',
