@@ -87,6 +87,7 @@ use EnsEMBL::Web::Tools::RobotsTxt;
 use EnsEMBL::Web::Tools::OpenSearchDescription;
 use EnsEMBL::Web::Tools::Registry;
 use EnsEMBL::Web::Tools::MartRegistry;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -132,6 +133,36 @@ sub new {
   $self->{'_storage'} = $CONF->{'_storage'};
 
   return $self;
+}
+
+sub register_orm_databases {
+  ## Registers ORM data sources (as present in ENSEMBL_ORM_DATABASES config) to be used with ensembl-orm API
+  my $self  = shift;
+  my $dbs   = {};
+
+  if (dynamic_require('ORM::EnsEMBL::Rose::DbConnection', 1)) { # ignore if ensembl-orm doesn't exist
+
+    while (my ($key, $value) = each %{$self->ENSEMBL_ORM_DATABASES}) {
+
+      my $params = $value;
+      if (!ref $params) {
+
+        $params = $self->multidb->{$value} or warn "Database connection properties for '$value' could not be found in SiteDefs" and next;
+        $params = {
+          'database'  => $params->{'NAME'},
+          'host'      => $params->{'HOST'} || $self->DATABASE_HOST,
+          'port'      => $params->{'PORT'} || $self->DATABASE_HOST_PORT,
+          'username'  => $params->{'USER'} || $self->DATABASE_WRITE_USER,
+          'password'  => $params->{'PASS'} || $self->DATABASE_WRITE_PASS
+        };
+      }
+
+      $params->{'type'} = $key;
+      $dbs->{$key}      = ORM::EnsEMBL::Rose::DbConnection->register_database($params);
+    }
+  }
+
+  return $dbs;
 }
 
 sub core_params { return $_[0]->{'_core_params'}; }

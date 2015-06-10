@@ -61,8 +61,7 @@ use EnsEMBL::Web::Registry;
 my $conf = EnsEMBL::Web::SpeciesDefs->new;
 
 # Setup the ORM DB connections before loading files
-eval { require ORM::EnsEMBL::Rose::DbConnection; };
-my $orm_connections = $@ ? {} : ORM::EnsEMBL::Rose::DbConnection->register_from_speciesdefs($conf);
+my $orm_connections = $conf->register_orm_databases;
 
 if ($conf->ENSEMBL_MART_ENABLED > 0) {
   require 'BioMart/Initializer.pm';
