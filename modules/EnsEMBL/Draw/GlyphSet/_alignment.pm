@@ -426,6 +426,7 @@ sub render_as_alignment_nolabel {
           my @block_sizes     = split(',', $block_sizes); 
           my ($thick_start)   = @{$f->external_data->{'thick_start'} || [0]};
           my ($thick_end)     = @{$f->external_data->{'thick_end'} || [0]};
+          ## Make relative to viewport
           $thick_start        -= $self->{'container'}->start if $thick_start;
           $thick_end          -= $self->{'container'}->start if $thick_end;
 
@@ -456,7 +457,7 @@ sub render_as_alignment_nolabel {
             $block_end    = $length if $block_end > $length;
             $block_width  = $block_end - $block_start if $block_width > $block_end;
 
-            if ($i == 0 && $thick_start) {
+            if ($i == 0 && $thick_start) { ## First exon, with UTR
               my $utr_width = $thick_start - $s;
               if ($utr_width > 0) {
                 $composite->unshift($self->Rect({
@@ -479,7 +480,7 @@ sub render_as_alignment_nolabel {
                                             %glyph_params,
                                           }));
             }
-            elsif ($i == $block_count - 1 && $thick_end) {
+            elsif ($i == $block_count - 1 && $thick_end) { ## Last exon, with UTR
               my $utr_width = $block_end - $thick_end;
               $utr_width = 0 if $utr_width < 1; 
               $composite->unshift($self->Rect({
@@ -490,16 +491,17 @@ sub render_as_alignment_nolabel {
                                             %glyph_params,
                                           }));
               if ($utr_width) {
+                delete $glyph_params{'colour'};
                 $composite->unshift($self->Rect({
                                             x             => $thick_end,
                                             y             => $composite->{'y'},
                                             width         => $utr_width,
-                                            bordercolour => $feature_colour,
+                                            bordercolour  => $feature_colour,
                                             %glyph_params,
                                           }));
               } 
             }
-            else {
+            else { ## Any exon without UTR
               if ($coding) {
                 $glyph_params{'colour'} = $feature_colour;
               }
