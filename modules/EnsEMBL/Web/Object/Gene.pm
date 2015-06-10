@@ -172,7 +172,7 @@ sub get_phenotype {
   $phen_count     = $pfa->count_all_by_Gene($self->Obj);
 
   if (!$phen_count) {
-    my $hgncs = $self->obj->get_all_DBEntries('hgnc') || [];
+    my $hgncs = $self->Obj->get_all_DBEntries('hgnc') || [];
 
     if(scalar @$hgncs && $hgncs->[0]) {
       my $hgnc_name = $hgncs->[0]->display_id;
