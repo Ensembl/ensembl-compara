@@ -123,6 +123,7 @@ sub content {
     ## Only link to individual exons if the user has clicked squarely
     ## on an exon (i.e. ignore when zoomed out or exons are tiny)
     for (@exons) {
+      next unless $_; # eg Genscan
       $self->add_entry({
         type  => !$self->{'_exon_count'} ? @exons > 1 ? 'Exons' : 'Exon' : ' ',
         label => $_,
