@@ -436,14 +436,26 @@ sub get_data {
   if (scalar @result_sets > 0) {   
     my $resultfeature_adaptor = $hub->get_adaptor('get_ResultFeatureAdaptor', 'funcgen');
     my $max_bins              = $ENV{'ENSEMBL_IMAGE_WIDTH'} - 228; 
-    my $wiggle_data           = $resultfeature_adaptor->fetch_all_by_Slice_ResultSets($self->Obj, \@result_sets, $max_bins);
+    my $wiggle_data           = eval {$resultfeature_adaptor->fetch_all_by_Slice_ResultSets($self->Obj, \@result_sets, $max_bins); };
+
+    if ($@) {
+      $hub->session->add_data(
+                              type      => 'message',
+                              function  => '_error',
+                              message   => "Sorry, could not find data for the selected tracks",
+                              code      => 'wiggle_data_error',
+                              );
+      return {};
+    }
+    else {
     
-    foreach my $rset_id (keys %$wiggle_data) { 
-      my $results_set           = $hub->get_adaptor('get_ResultSetAdaptor', 'funcgen')->fetch_by_dbID($rset_id);
-      my $unique_feature_set_id = join ':', $results_set->cell_type->name, $results_set->feature_type->name, $results_set->dbID;
-      my $features              = $wiggle_data->{$rset_id};
+      foreach my $rset_id (keys %$wiggle_data) { 
+        my $results_set           = $hub->get_adaptor('get_ResultSetAdaptor', 'funcgen')->fetch_by_dbID($rset_id);
+        my $unique_feature_set_id = join ':', $results_set->cell_type->name, $results_set->feature_type->name, $results_set->dbID;
+        my $features              = $wiggle_data->{$rset_id};
       
-      $data->{'wiggle_data'}{$unique_feature_set_id} = $features;
+        $data->{'wiggle_data'}{$unique_feature_set_id} = $features;
+      }
     }
   }      
   
