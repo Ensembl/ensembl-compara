@@ -220,6 +220,7 @@ sub rose_manager {
 sub get_alt_alleles {
   my $self = shift;
   my $gene = $self->type eq 'Gene' ? $self->Obj : $self->gene;
+  return [] unless $gene; # eg GENSCAN is type Transcript, ->gene is undef
   my $stable_id = $gene->stable_id;
   my $alleles = [];
   if ($gene->slice->is_reference) {
