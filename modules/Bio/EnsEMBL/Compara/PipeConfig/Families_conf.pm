@@ -82,9 +82,9 @@ sub default_options {
         'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
             # code directories:
-        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
-        'mcl_bin_dir'     => '/software/ensembl/compara/mcl-12-135/bin',
-        'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.113',
+        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
+        'mcl_bin_dir'     => '/software/ensembl/compara/mcl-14-137/bin',
+        'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.221',
             
             # data directories:
         'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
