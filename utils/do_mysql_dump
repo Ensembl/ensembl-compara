@@ -110,9 +110,8 @@ my %web_userdb = %{$species_defs->accounts_db};
 
 foreach my $sp( @SPECIES ){
   # Hard-code all databases _never_ to dump
-  my %kill_list = map {$_=>1} qw( ENSEMBL_BLAST 
+  my %kill_list = map {$_=>1} qw(
 				DATABASE_COMPARA_MULTIPLE
-				ENSEMBL_BLAST_LOG
 				DATABASE_FASTA
         DATABASE_HEALTHCHECK
 				ENSEMBL_GLOVAR );
