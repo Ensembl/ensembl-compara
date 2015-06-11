@@ -63,18 +63,17 @@ sub session_id   { return $_[0]{'session_id'}   ||= $_[0]->hub->session->create_
 
 sub dbh {
   return $DBH if $DBH and $DBH->ping;
-  
-  my $self = shift;
-  my $sd   = $self->hub->species_defs;
 
-  # try and get user db connection. If it fails the use backup port
+  my $self  = shift;
+  my $db    = $self->hub->species_defs->session_db;
+
+  # try and get session db connection
   eval {
-    $DBH = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT),        $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS) ||
-           DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT_BACKUP), $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS);
+    $DBH = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $db->{'NAME'}, $db->{'HOST'}, $db->{'PORT'}), $db->{'USER'}, $db->{'PASS'});
   };
-  
+
   EnsEMBL::Web::Controller->disconnect_on_request_finish($DBH);
-  
+
   return $DBH || undef;
 }
 

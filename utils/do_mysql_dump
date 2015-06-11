@@ -106,15 +106,7 @@ utils::Tool::info(1, "Dumping data to $dumpdir" );
 
 
 # Web user db conf -----------------------------------------------------------
-my %web_userdb = (
-	   USER => $species_defs->ENSEMBL_USERDB_USER,
-	   PASS => $species_defs->ENSEMBL_USERDB_PASS,
-	   HOST => $species_defs->DATABASE_USERDB_HOST,
-	   PORT => $species_defs->DATABASE_USERDB_PORT,
-	   NAME => $species_defs->ENSEMBL_USERDB_NAME,
-	   DRIVER => 'mysql',
-	  );
-
+my %web_userdb = %{$species_defs->accounts_db};
 
 foreach my $sp( @SPECIES ){
   # Hard-code all databases _never_ to dump
