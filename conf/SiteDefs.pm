@@ -275,17 +275,9 @@ our $ENSEMBL_SECONDARY_SPECIES;
 our %__species_aliases;
 
 ###############################################################################
-## Web user database - used to store information about settings, e.g. DAS
-## contigview and cytoview options.
+## Cookies and cookie encryption
 ###############################################################################
 
-our $ENSEMBL_USERDB_TYPE      = 'mysql';
-our $ENSEMBL_USERDB_NAME      = 'ensembl_accounts';
-our $ENSEMBL_USERDB_USER      = 'mysqluser';
-our $ENSEMBL_USERDB_HOST      = 'localhost';
-our $ENSEMBL_USERDB_PORT      =  3305;
-our $ENSEMBL_USERDB_PASS      = '';
-                             
 our $ENSEMBL_USER_COOKIE      = 'ENSEMBL_WWW_USER';
 our $ENSEMBL_USER_ID          = 0;
 our $ENSEMBL_SESSION_COOKIE   = 'ENSEMBL_WWW_SESSION';
