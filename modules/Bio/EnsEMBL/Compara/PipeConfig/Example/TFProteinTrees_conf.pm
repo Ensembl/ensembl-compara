@@ -369,6 +369,7 @@ sub tweak_analyses {
     $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
     $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
     $analyses_by_name->{'ortho_tree'}->{'-parameters'}{'store_homologies'} = 0;
+    $analyses_by_name->{'ortho_tree'}->{'-parameters'}{'input_clusterset_id'} = 'notung';
     $analyses_by_name->{'ortho_tree_himem'}->{'-parameters'}{'store_homologies'} = 0;
 }
 
