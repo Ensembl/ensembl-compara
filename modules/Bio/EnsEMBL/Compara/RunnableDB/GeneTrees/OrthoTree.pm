@@ -116,7 +116,16 @@ sub fetch_input {
 
     my $tree_id = $self->param_required('gene_tree_id');
     my $default_gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
-    my $gene_tree = $default_gene_tree->alternative_trees->{'notung'};
+	my $gene_tree;
+    if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
+        my $selected_tree = $default_gene_tree->alternative_trees->{$self->param('input_clusterset_id')};
+        die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
+        $gene_tree = $selected_tree;
+	}
+	else{
+		$gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
+	}
+
     $gene_tree->preload();
     $self->param('gene_tree', $gene_tree->root);
 
