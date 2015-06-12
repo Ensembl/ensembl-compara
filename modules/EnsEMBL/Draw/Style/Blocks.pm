@@ -19,9 +19,7 @@ limitations under the License.
 package EnsEMBL::Draw::Style::Blocks;
 
 =pod
-Renders a track as a series of simple unconnected blocks
-on one line (i.e. not stacked or bumped). Often referred to 
-in the interface as "compact".
+Renders a track as a series of simple rectangular blocks
 
 Also a parent module to most styles that render individual features
 rather than graphs or other aggregate data.
@@ -101,8 +99,13 @@ sub create_glyphs {
 
     ## Optional label
     if ($show_label) {
-      $new_y = $position->{'y'} + $block_height;
-      $new_y += $labels_height if ($bumped eq 'labels_only');
+      if ($track_config->get('label_overlay')) {
+        $new_y = $position->{'y'};
+      }
+      else {
+        $new_y = $position->{'y'} + $block_height;
+        $new_y += $labels_height if ($bumped eq 'labels_only');
+      }
       $position = {
                     'y'       => $new_y,
                     'width'   => $text_info->{'width'}, 
