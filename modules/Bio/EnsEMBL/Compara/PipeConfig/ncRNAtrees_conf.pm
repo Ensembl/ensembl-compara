@@ -659,7 +659,6 @@ sub pipeline_analyses {
             -analysis_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
                             'mafft_exe'             => $self->o('mafft_exe'),
-                            'mafft_binaries'        => $self->o('mafft_binaries'),
                             'raxml_exe'             => $self->o('raxml_exe'),
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             'prank_exe'             => $self->o('prank_exe'),
@@ -694,7 +693,6 @@ sub pipeline_analyses {
             -parameters => {
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             'mafft_exe' => $self->o('mafft_exe'),
-                            'mafft_binaries' => $self->o('mafft_binaries'),
                             'raxml_exe' => $self->o('raxml_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                            },
