@@ -34,6 +34,7 @@ sub colour_key    { return lc $_[1]->marker->type; }
 sub _init {
   my $self = shift;
   warn "############# DEPRECATED MODULE - USE GlyphSet::marker instead";
+  warn "This module will be removed in release 82";
   
   return unless $self->strand == -1;
   return $self->render_text if $self->{'text_export'};
