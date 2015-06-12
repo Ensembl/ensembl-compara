@@ -44,7 +44,8 @@ sub render_labels {
 sub render_normal {
   my $self = shift;
 
-  my @features = $self->init;
+  my @features = $self->get_features;
+  return unless scalar @features;
 
   my $colours = $self->{'my_config'}->get('colours');
   my $default_colour = 'red';
