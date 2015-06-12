@@ -75,6 +75,7 @@ sub new {
     label2     => undef,
     bumped     => undef,
     error      => undef,
+    features   => [],
     highlights => $data->{'highlights'},
     strand     => $data->{'strand'},
     container  => $data->{'container'},
@@ -87,6 +88,7 @@ sub new {
   
   bless $self, $class;
   
+  $self->{'features'} = $self->init;
   $self->init_label;
 
   return $self;
@@ -99,6 +101,8 @@ sub get_parameter      { return $_[0]->{'config'}->get_parameter($_[1]);        
 sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};                                                                                    }
 sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};                                                                                        }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
+sub get_features       { return $_[0]->{'features'}; }
+
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label_caption   { return $_[0]->my_config('labelcaption');                                                                                                }
 sub depth              { return $_[0]->my_config('depth');                                                                                                       }
@@ -250,6 +254,8 @@ sub _init {
   my ($self) = @_;
   print STDERR qq($self unimplemented\n);
 }
+
+sub init { return []; } ## New method used by refactored glyphsets
 
 sub bumped {
   my ($self, $val) = @_;
