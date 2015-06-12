@@ -40,7 +40,7 @@ sub param_defaults {
     return {
         %{ $self->SUPER::param_defaults },
         # Note that Examl needs MPI and has to be run through mpirun.lsf
-        'cmd' => '#parse_examl_exe# -s #alignment_file# -m PROT -n #gene_tree_id# ; rm RAxML_info.#gene_tree_id# ; #raxml_exe# -y -m #best_fit_model# -p 99123746531 -s #alignment_file# -n #gene_tree_id# ; mpirun.lsf -np #examl_cores# -mca btl tcp,self #examl_exe# -s #gene_tree_id#.binary -t RAxML_parsimonyTree.#gene_tree_id# -m GAMMA -n #gene_tree_id# -S',
+		'cmd' => '#parse_examl_exe# -s #alignment_file# -m PROT -n #gene_tree_id# ; rm RAxML_info.#gene_tree_id# ; #raxml_exe# -y -m #best_fit_model# -p 99123746531 -s #alignment_file# -n #gene_tree_id# ; sleep 10 ; module load intel/icc-13.1 ; /nfs/production/mpi/mpich/mpich3/3.1-intel/bin/mpiexec.hydra #examl_exe# -s #gene_tree_id#.binary -t RAxML_parsimonyTree.#gene_tree_id# -m GAMMA -n #gene_tree_id# -S',
 
         'aln_format'           => 'phylip',
         'runtime_tree_tag'     => 'examl_runtime',
