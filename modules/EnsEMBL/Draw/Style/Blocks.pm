@@ -30,20 +30,12 @@ This module expects data in the following format:
             {
               'start'         => 123456,
               'end'           => 123789,
-              'colour'        => 'red',
+              'colour'        => 'red',                             # mandatory unless bordercolour set
+              'bordercolour'  => 'black',                           # optional
               'label'         => 'Feature 1',                       # optional
               'label_colour'  => 'red',                             # optional
               'href'          => '/Location/View?r=123456-124789',  # optional  
               'title'         => 'Some text goes here',             # optional  
-            },
-            {
-              'start'         => 123654,
-              'end'           => 123987,
-              'colour'        => 'blue',
-              'label'         => 'Feature 2',                       # optional
-              'label_colour'  => 'blue',                            # optional
-              'href'         => '/Location/View?r=123654-124987',   # optional  
-              'title'         => 'Some other text goes here',       # optional  
             },
           ];
 =cut
@@ -124,17 +116,21 @@ sub draw_block {
 ### @param position Hashref - information about the feature's size and position
   my ($self, $block, $position) = @_;
 
+  return unless ($block->{'colour'} || $block->{'bordercolour'});
+
   ## Set parameters
   my $params = {
                   x            => $block->{'start'},
                   y            => $position->{'y'},
                   width        => $position->{'width'},
                   height       => $position->{'height'},
-                  colour       => $block->{'colour'},
                   href         => $block->{'href'},
                   title        => $block->{'title'},
                   absolutey    => 1,
                 };
+
+  $params->{'colour'} = $block->{'colour'} if $block->{'colour'};
+  $params->{'bordercolour'} = $block->{'bordercolour'} if $block->{'bordercolour'};
 
   push @{$self->glyphs}, $self->Rect($params);
 }
