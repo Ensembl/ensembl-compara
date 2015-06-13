@@ -398,7 +398,7 @@ sub compute_keys {
     my ($self, $ss) = @_;
     return {
         genome_db_ids => Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::_ids_string($ss->genome_dbs),
-        name => $ss->get_value_for_tag('name'),
+        $ss->has_tag('name') ? (name => $ss->get_value_for_tag('name')) : (),
         (map {sprintf('has_tag_%s', lc $_) => 1} $ss->get_all_tags()),
         (map {sprintf('tag_%s', lc $_) => lc $ss->get_value_for_tag($_)} $ss->get_all_tags()),
     }
