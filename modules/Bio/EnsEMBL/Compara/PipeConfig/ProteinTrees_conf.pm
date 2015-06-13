@@ -119,7 +119,7 @@ sub default_options {
         'protein_members_range'     => 100000000,
 
     # blast parameters:
-        'blast_params'              => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
+        'blast_params'              => '-seg no -max_hsps 1 -use_sw_tback -num_threads 1',
 
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
