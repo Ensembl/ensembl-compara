@@ -2273,7 +2273,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
-            -flow_into      => [ 'ktreedist', 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
+            -flow_into      => [ 'ktreedist' ],
             %hc_analysis_params,
         },
 
@@ -2444,6 +2444,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'stable_id_mapping',
             },
+            -flow_into  => [ 'build_HMM_factory' ],
             %hc_analysis_params,
         },
 
@@ -2456,6 +2457,16 @@ sub core_pipeline_analyses {
             -rc_name => '1Gb_job',
         },
 
+        {   -logic_name => 'build_HMM_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+                'fan_branch_code'   => 2,
+            },
+            -flow_into  => {
+                2 => [ 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
+            },
+        },
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
 
         {   -logic_name => 'polyploid_move_back_factory',
