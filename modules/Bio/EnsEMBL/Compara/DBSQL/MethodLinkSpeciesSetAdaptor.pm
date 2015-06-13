@@ -256,7 +256,7 @@ sub _objs_from_sth {
             my $species_set_obj = $species_set_hash->get($species_set_id) or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
 
             if($method and $species_set_obj) {
-                my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast(
+                my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast( {
                     adaptor            => $self,
                     dbID               => $dbID,
                     
@@ -266,7 +266,7 @@ sub _objs_from_sth {
                     name               => $name,
                     source             => $source,
                     url                => $url,
-                );
+                } );
                 push @mlss_list, $mlss;
             }
     }
