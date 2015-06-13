@@ -46,7 +46,6 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::AncestralAllelesCompleteBase');
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
 use IPC::Open3;
 
 use Socket;
