@@ -942,7 +942,6 @@ sub _add_datahub_tracks {
     my $visibility   = $config->{'visibility'} || $track->{'visibility'};
     ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
     my $squish       = $visibility eq 'squish';
-    my $desc_url     = $track->{'description_url'} ? $hub->url('Ajax', {'type' => 'fetch_html', 'url' => $track->{'description_url'}}) : '';
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
 
     ## Set track style according to format and visibility
