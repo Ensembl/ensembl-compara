@@ -324,8 +324,8 @@ sub resource_classes {
          '16Gb_16c_job' => {'LSF' => '-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '64Gb_16c_job' => {'LSF' => '-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
     };
 }
