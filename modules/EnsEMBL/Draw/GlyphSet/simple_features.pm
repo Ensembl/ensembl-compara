@@ -27,33 +27,16 @@ use EnsEMBL::Draw::Style::Blocks;
 use parent qw(EnsEMBL::Draw::GlyphSet::Simple);
 
 sub features { 
-  my $self     = shift;
-  my $call     = 'get_all_' . ($self->my_config('type') || 'SimpleFeatures'); 
-  my $db_type       = $self->my_config('db');
-  my @features = map @{$self->{'container'}->$call($_, undef, $db_type)||[]}, @{$self->my_config('logic_names')||[]};
-  
-  return \@features;
-}
-
-sub render_labels {
-  my $self = shift;
-  $self->{'my_config'}->set('show_labels', 1);
-  $self->render_normal;
-}
-
-sub render_normal {
-  my $self = shift;
-
-  my @features = $self->get_features;
-  return unless scalar @features;
+  my $self    = shift;
+  my $call    = 'get_all_' . ($self->my_config('type') || 'SimpleFeatures'); 
+  my $db_type = $self->my_config('db');
+  my @feature_objects = map @{$self->{'container'}->$call($_, undef, $db_type)||[]}, @{$self->my_config('logic_names')||[]};
 
   my $colours = $self->{'my_config'}->get('colours');
   my $default_colour = 'red';
-  $self->{'my_config'}->set('bumped', 1);
-
   my $data = [];
-
-  foreach my $f (@features) {
+  
+  foreach my $f (@feature_objects) {
     my ($start, $end) = $self->ok_feature($f);
     next unless $start;
     push @$data, {
@@ -70,16 +53,26 @@ sub render_normal {
                   };
   }
 
-  if (scalar(@$data)) {
-    my $config = $self->track_style_config;
-    my $style  = EnsEMBL::Draw::Style::Blocks->new($config, $data);
-    $self->push($style->create_glyphs);
-  }
-  else {
-    ## No features show "empty track line" if option set
-    my $track_name = $self->label_text || '';
-    $self->errorTrack("No $track_name features in this region") if $self->{'config'}->get_option('opt_empty_tracks') == 1;
-  }
+  return $data;
+}
+
+sub render_labels {
+  my $self = shift;
+  $self->{'my_config'}->set('show_labels', 1);
+  $self->render_normal;
+}
+
+sub render_normal {
+  my $self = shift;
+
+  my $features = $self->get_features;
+  return unless scalar @$features;
+
+  $self->{'my_config'}->set('bumped', 1);
+
+  my $config = $self->track_style_config;
+  my $style  = EnsEMBL::Draw::Style::Blocks->new($config, $features);
+  $self->push($style->create_glyphs);
 }
 
 sub title {
