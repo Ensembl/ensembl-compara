@@ -139,6 +139,7 @@ sub default_options {
         'raxml_threshold_aln_len' => 2500,
         'raxml_cores'             => 16,
         'examl_cores'             => 64,
+        'examl_ptiles'            => 16,
         'treebest_threshold_n_residues' => 10000,
         'treebest_threshold_n_genes'    => 400,
 
@@ -2008,7 +2009,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'examl',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
-                'raxml_exe'             => $self->o('raxml_exe'),
+                'raxml_exe'             => $self->o('raxml_pthreads_exe'),
+                'extra_raxml_args'      => '-T '.$self->o('examl_ptiles'),
                 'examl_exe_sse3'        => $self->o('examl_exe_sse3'),
                 'examl_exe_avx'         => $self->o('examl_exe_avx'),
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
@@ -2028,7 +2030,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'examl_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
-                'raxml_exe'             => $self->o('raxml_exe'),
+                'raxml_exe'             => $self->o('raxml_pthreads_exe'),
+                'extra_raxml_args'      => '-T '.$self->o('examl_ptiles'),
                 'examl_exe_sse3'        => $self->o('examl_exe_sse3'),
                 'examl_exe_avx'         => $self->o('examl_exe_avx'),
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
