@@ -83,7 +83,7 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_ga_20150402_79',
+      -dbname => $self->o('ENV', 'USER').'_vega_ga_20150611_80',
     },
 
     #need to overwrite the value from ../Lastz_conf.pm
