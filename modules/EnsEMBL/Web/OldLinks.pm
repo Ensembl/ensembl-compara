@@ -144,6 +144,9 @@ our %mapping = (
   'dasconfview'           => [{ 'type' => 'UserData',            'action' => 'Attach',                       'initial_release' => 1  }],
   'helpview'              => [{ 'type' => 'Help',                'action' => 'Search',                       'initial_release' => 34 }],
   'miscsetview'           => [{ 'type' => 'Location',            'action' => 'Miscset',                      'initial_release' => 34 }],
+
+  # Renamed
+  'Variation/Individual'  => [{ 'type' => 'Variation',           'action' => 'Sample',                        'initial_release' => 81 }],
 );
 
 sub get_redirect {
