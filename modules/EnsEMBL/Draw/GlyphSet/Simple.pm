@@ -65,7 +65,7 @@ sub init {
   $self->{'my_config'}->set('height', $height); 
 
   ## OK, done!
-  return @$features; 
+  return $features; 
 }
 
 sub ok_feature {
