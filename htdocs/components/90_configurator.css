@@ -47,7 +47,7 @@ div.config_wrapper div.config ul                                    { margin: 0;
 div.config_wrapper div.config ul li                                 { margin: 0; list-style-image: none; background-repeat: no-repeat; background-position: 2px 2px; }
 
 div.config_wrapper div.config ul.config_menu li                     { font-weight: normal; clear: right; background-color: #FFF; }
-div.config_wrapper div.config ul.config_menu li div.track_name      { padding: 3px 0 2px 25px; cursor: pointer; background: inherit; }
+div.config_wrapper div.config ul.config_menu li div.track_name      { padding: 3px 0 2px 25px; cursor: pointer; background: inherit; min-height: 16px;}
 div.config_wrapper div.config ul.config_menu li div.desc            { margin: 5px 0; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[PANEL_BORDER]]; }
 div.config_wrapper div.config ul.config_menu li div.desc ul         { padding-left: 26px; }
 div.config_wrapper div.config ul.config_menu li div.desc ul li      { padding: 0 0 2px; background-color: inherit; list-style-image: url(/i/bullet_1.gif); }
