@@ -442,10 +442,12 @@ sub render_as_alignment_nolabel {
           $thick_end = 0 if $thick_end >= $end;
 
           my %glyph_params  = (
-                                height       => $h,
-                                absolutey    => 1,
+                                y           => $composite->{'y'},
+                                height      => $h,
+                                colour      => $feature_colour,
+                                absolutey   => 1,
                               );
-         
+
           for (my $i = 0; $i < $block_count; $i++) {
             my $block_start = $s + $block_starts[$i] - 1;
             my $block_width = $block_sizes[$i] || 1;
@@ -457,66 +459,55 @@ sub render_as_alignment_nolabel {
             $block_end    = $length if $block_end > $length;
             $block_width  = $block_end - $block_start if $block_width > $block_end;
 
-            if ($i == 0 && $thick_start) { ## First exon, with UTR
-              my $utr_width = $thick_start - $s;
-              if ($utr_width > 0) {
-                $composite->unshift($self->Rect({
-                                            x             => $block_start,
-                                            y             => $composite->{'y'},
-                                            width         => $utr_width,
-                                            bordercolour  => $feature_colour,
-                                            %glyph_params,
-                                          }));
+            my %block_params = %glyph_params;
+
+            if ($thick_start && $thick_start > $block_start) {
+              if ($thick_start > $block_end) {
+                $block_params{'x'}     = $block_start;
+                $block_params{'width'} = $block_width;
+                $composite->unshift($self->draw_utr(%block_params));
               }
               else {
-                $utr_width    = 0;
-                $thick_start  = $block_start;
+                my $utr_width = $thick_start - $block_start;
+                $block_params{'x'}     = $block_start;
+                $block_params{'width'} = $utr_width;
+                $composite->unshift($self->draw_utr(%block_params));
+
+                $block_params{'x'}     = $thick_start;
+                $block_params{'width'} = $block_width - $utr_width;
+                $composite->unshift($self->draw_coding_block(%block_params));
               }
-              $composite->unshift($self->Rect({
-                                            x            => $thick_start,
-                                            y            => $composite->{'y'},
-                                            width        => $block_width - $utr_width,
-                                            colour       => $feature_colour,
-                                            %glyph_params,
-                                          }));
             }
-            elsif ($i == $block_count - 1 && $thick_end) { ## Last exon, with UTR
-              my $utr_width = $block_end - $thick_end;
-              $utr_width = 0 if $utr_width < 1; 
-              $composite->unshift($self->Rect({
-                                            x            => $block_start,
-                                            y            => $composite->{'y'},
-                                            width        => $block_width - $utr_width + 1,
-                                            colour       => $feature_colour,
-                                            %glyph_params,
-                                          }));
-              if ($utr_width) {
-                delete $glyph_params{'colour'};
-                $composite->unshift($self->Rect({
-                                            x             => $thick_end,
-                                            y             => $composite->{'y'},
-                                            width         => $utr_width,
-                                            bordercolour  => $feature_colour,
-                                            %glyph_params,
-                                          }));
-              } 
+            elsif ($thick_end && $thick_end < $block_end) {
+              if ($thick_end < $block_start) {
+                $block_params{'x'}     = $block_start;
+                $block_params{'width'} = $block_width;
+                $composite->unshift($self->draw_coding_block(%block_params));
+              }
+              else {
+                my $utr_width = $block_end - $thick_end;
+                $utr_width = 0 if $utr_width < 1;   
+                $block_params{'x'}     = $block_start;
+                $block_params{'width'} = $block_width - $utr_width + 1;
+                $composite->unshift($self->draw_coding_block(%block_params));
+
+                $block_params{'x'}     = $thick_end;
+                $block_params{'width'} = $utr_width;
+                $composite->unshift($self->draw_utr(%block_params));
+              }
             }
-            else { ## Any exon without UTR
+            else {
+              $block_params{'x'}     = $block_start;
+              $block_params{'width'} = $block_width;
               if ($coding) {
-                $glyph_params{'colour'} = $feature_colour;
+                $composite->unshift($self->draw_coding_block(%block_params));
               }
               else {
-                $glyph_params{'bordercolour'} = $feature_colour;
+                $composite->unshift($self->draw_noncoding_block(%block_params));
               }
-              $composite->unshift($self->Rect({
-                                            x            => $block_start,
-                                            y            => $composite->{'y'},
-                                            width        => $block_width,
-                                            %glyph_params,
-                                          }));
             }
 
-            if ($i < $block_count - 1) {
+            if ($i < ($block_count - 1)) {
               $composite->push($self->Intron({
                                             x         => $block_end,
                                             y         => $composite->{'y'},
@@ -651,6 +642,25 @@ sub render_as_alignment_nolabel {
   
   $self->errorTrack(sprintf q{No features from '%s' on this strand}, $self->my_config('name')) unless $features_drawn || $on_other_strand || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->errorTrack(sprintf(q{%s features from '%s' omitted}, $features_bumped, $self->my_config('name')), undef, $y_offset) if $self->get_parameter('opt_show_bumped') && $features_bumped;
+}
+
+sub draw_coding_block {
+  my ($self, %params) = @_;
+  return $self->Rect({%params});
+}
+
+sub draw_noncoding_block {
+  my ($self, %params) = @_;
+  $params{'bordercolour'} = $params{'colour'};
+  delete $params{'colour'};
+  return $self->Rect({%params});
+}
+
+sub draw_utr {
+  my ($self, %params) = @_;
+  $params{'height'} = $params{'height'} - 2;
+  $params{'y'} += 1; 
+  return $self->draw_noncoding_block(%params);
 }
 
 # First we cluster to a sensible scale for this display. Then we characterise
