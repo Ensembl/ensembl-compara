@@ -44,26 +44,45 @@ sub features {
 sub render_normal {
   my $self = shift;
   
+  my @features = $self->get_features;
+  return unless scalar @features;
+
   $self->{'my_config'}->set('show_labels', 1);
   $self->{'my_config'}->set('label_overlay', 1);
+  $self->{'my_config'}->set('bumped', 1);
 
-  my $features = $self->features;
+  my $colours = $self->{'my_config'}->get('colours');
+  my $default_colour = 'gray';
 
-  if (scalar(@$features)) {
+  my $data = [];
+
+  foreach my $f (@features) {
+    my ($start, $end) = $self->ok_feature($f);
+    next unless $start;
+    push @$data, {
+                  'start'         => $start,
+                  'end'           => $end,
+                  'colour'        => $colours->{$f->analysis->logic_name}{'default'}
+                                        || $default_colour,
+                  'label'         => $f->display_id,
+                  'label_colour'  => $colours->{$f->analysis->logic_name}{'text'}
+                                        || $colours->{$f->analysis->logic_name}{'default'}
+                                        || $default_colour,
+                  'href'          => $self->href($f),
+                  'title'         => $self->title($f),
+                  };
+  }
+
+  if (scalar(@$data)) {
     my $config = $self->track_style_config;
     my $style  = EnsEMBL::Draw::Style::Blocks::Tagged->new($config, $data);
     $self->push($style->create_glyphs);
   }
-  else {
-    ## No features show "empty track line" if option set
-    $self->errorTrack("No clones in this region") if $self->{'config'}->get_option('opt_empty_tracks') == 1;
-  }
 }
 
+sub get_colours {
 ## If bac map clones are very long then we draw them as "outlines" as
 ## we aren't convinced on their quality... However draw ENCODE filled
-
-sub get_colours {
   my ($self, $f) = @_;
   my $colours = $self->SUPER::get_colours($f);
   
