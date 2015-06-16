@@ -122,21 +122,21 @@ sub content_update {
 }
 
 sub content_config {
-  my $self      = shift;
-  my $hub       = $self->hub;
-  my $record_id = $hub->param('record_id');
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $config_key  = $hub->param('record_id');
   
-  return unless $record_id;
+  return unless $config_key;
   
   my $adaptor     = $hub->config_adaptor;
   my $all_configs = $adaptor->all_configs;
-  my $record      = $all_configs->{$record_id};
+  my $record      = $all_configs->{$config_key};
   
   return unless $record;
   
   my ($vc, $ic) = $record->{'type'} eq 'view_config' ? ($record, $all_configs->{$record->{'link_key'}}) : ($all_configs->{$record->{'link_key'}}, $record);
   my $all_sets  = $adaptor->all_sets;
-  my @sets      = sort { $a->[1] cmp $b->[1] } map [ $all_sets->{$_}{'config_key'}, $all_sets->{$_}{'name'} ], $adaptor->record_to_sets($record_id);
+  my @sets      = sort { $a->[1] cmp $b->[1] } map [ $all_sets->{$_}{'config_key'}, $all_sets->{$_}{'name'} ], $adaptor->record_to_sets($config_key);
   my (@config, $html);
   
   if ($vc) {
@@ -182,7 +182,7 @@ sub content_config {
 sub content_all { return $_[0]->content(1); }
 
 sub records {
-  my ($self, $show_all, $record_ids) = @_;
+  my ($self, $show_all, $config_keys) = @_;
   my $hub     = $self->hub;
   my $adaptor = $hub->config_adaptor;
   my $configs = $adaptor->all_configs;
@@ -202,9 +202,9 @@ sub records {
   $self->{'editables'} = $self->deepcopy($adaptor->all_sets);
   
   foreach (values %$configs) {
-    my $record_id = $_->{'config_key'};
+    my $config_key = $_->{'config_key'};
     
-    next if $record_ids && !$record_ids->{$record_id};
+    next if $config_keys && !$config_keys->{$config_key};
     next if $_->{'active'};
     next if $_->{'type'} eq 'image_config' && $_->{'link_key'};
     
@@ -214,16 +214,15 @@ sub records {
     
     my ($type, $code) = split '::', $vc_code;
     my $view_config   = $hub->get_viewconfig($code, $type);
-    my $component     = $view_config->component;
-    my @sets          = $adaptor->record_to_sets($record_id);
+    my @sets          = $adaptor->record_to_sets($config_key);
     
     my ($row, $group_key, $json_group) = $self->row($_, { type => $type, conf => $view_config->title });
     
     push @{$rows->{$group_key}}, $row;
     push @{$self->{'editables'}{$_}{'conf_codes'}}, "${type}_$code" for @sets;
     
-    $json->{$record_id} = {
-      id        => $record_id,
+    $json->{$config_key} = {
+      id        => $config_key,
       name      => $_->{'name'},
       group     => $json_group,
       groupId   => $_->{'record_type_id'},
@@ -236,7 +235,7 @@ sub records {
   
   my $columns = $self->columns;
   
-  return ($columns, $rows, $json) if $record_ids;
+  return ($columns, $rows, $json) if $config_keys;
   return $self->records_html($columns, $rows, $json) . qq{<div class="hidden no_records">$empty</div>};
 }
 
@@ -308,8 +307,8 @@ sub row {
   my $set_view     = $self->set_view;
   my $templates    = $self->templates;
   my $desc         = $record->{'description'} =~ s|\n|<br />|rg;
-  my $record_id    = $record->{'config_key'};
-  my %params       = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id, ($set_view ? (is_set => 1) : ()) );
+  my $config_key   = $record->{'config_key'};
+  my %params       = ( action => 'ModifyConfig', __clear => 1, record_id => $config_key, ($set_view ? (is_set => 1) : ()) );
   my $edit_url     = $hub->url({ function => 'edit_details', %params });
   my $group        = $record->{'record_type'} eq 'group';
   my $record_group = $self->record_group($record);
@@ -321,9 +320,9 @@ sub row {
     'Edit sets'
   ];
   
-  $row->{'expand'}  = sprintf $templates->{'expand'}, $self->ajax_url('config', { __clear => 1, record_id => $record_id, update_panel => 1 });
+  $row->{'expand'}  = sprintf $templates->{'expand'}, $self->ajax_url('config', { __clear => 1, record_id => $config_key, update_panel => 1 });
   $row->{'active'}  = sprintf $templates->{'icon'}, 'use', 'edit', $text->[0], $hub->url({ function => 'activate', %params }), $text->[1];
-  $row->{'options'} = { class => $record_id };
+  $row->{'options'} = { class => $config_key };
   
   if ($group && !$self->admin_groups->{$record->{'record_type_id'}}) {
     $row->{'name'}   = { value => sprintf($templates->{'wrap'}, $record->{'name'}), class => 'wrap' };
