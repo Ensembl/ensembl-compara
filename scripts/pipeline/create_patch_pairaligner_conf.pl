@@ -192,7 +192,7 @@ my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
 #find list of LASTZ_NET alignments in master
 my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
 my $pairwise_mlsss = $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('LASTZ_NET', $ref_genome_db);
-push $pairwise_mlsss, @{$mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('BLASTZ_NET', $ref_genome_db)};
+push @$pairwise_mlsss, @{$mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('BLASTZ_NET', $ref_genome_db)};
 my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
 
 my $all_genome_dbs;
@@ -248,7 +248,8 @@ foreach my $name (keys %unique_genome_dbs) {
 
 #Set default exception_species for human if not already set
 if ($ref_species eq "homo_sapiens" && @$exception_species == 0) {
-    @$exception_species = ("gorilla_gorilla", "macaca_mulatta", "pan_troglodytes", "pongo_abelii", "callithrix_jacchus");
+    # 9443 is the taxon_id of Primates
+    @$exception_species = map {$_->name} @{$genome_db_adaptor->fetch_all_by_ancestral_taxon_id(9443)};
 }
 
 my @common_gdbs;
