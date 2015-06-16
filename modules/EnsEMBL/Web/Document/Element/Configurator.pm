@@ -133,9 +133,13 @@ sub add_image_config_notes {
   my ($self, $controller) = @_;
   my $panel   = $self->new_panel('Configurator', $controller, code => 'x', class => 'image_config_notes' );
   my $img_url = $self->img_url;
+  my $trackhub_link = $self->hub->url({'type' => 'UserData', 'action' => 'SelectHub'});
   
   $panel->set_content(qq(
-    <h2 class="border">Key</h2>
+    <div class="info-box">
+    <p>Looking for more data? See our <a href="${trackhub_link}" class="modal_link">Track Hub list</a> for external sources of annotation</p>
+    </div>
+    <h2 class="border clear">Key</h2>
     <div>
       <ul class="configuration_key">
         <li><img src="${img_url}render/normal.gif" /><span>Track style</span></li>
