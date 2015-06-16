@@ -705,7 +705,7 @@ sub save_to_user {
 
     my @columns = qw(record_type record_type_id is_set name description servername site_type release_number);
 
-    $dbh->{'user'}->do('INSERT INTO configuration_details ('.join(', ', @columns).') VALUES ('.join(', ', map('?', @columns)).')', {}, map(encode_entities($_->{$_}) || '', @columns));
+    $dbh->{'user'}->do('INSERT INTO configuration_details ('.join(', ', @columns).') VALUES ('.join(', ', map('?', @columns)).')', {}, map(encode_entities($new->{$_}) || '', @columns));
 
     $new->{'record_id'} = $dbh->{'user'}->last_insert_id(undef, undef, 'configuration_details', 'record_id');
 
@@ -713,11 +713,6 @@ sub save_to_user {
       push @new_sets, $new;
     } else {
       push @new_records, $new;
-
-      $dbh->{'user'}->do(
-        'INSERT INTO configuration_details (record_type, record_type_id, is_set, name, description, servername, site_type, release_number) VALUES (?, ?, "n", ?, ?, ?, ?, ?)', {},
-        map(encode_entities($_->{$_}) || '', qw(record_type record_type_id name description servername site_type release_number))
-      );
 
       @columns = qw(record_id type code active link_id link_code data created_at modified_at);
 
