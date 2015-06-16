@@ -319,6 +319,7 @@ sub ajax_fetch_html {
   $content  =~ s/^.*<\s*body[^\>]*>\s*|\s*<\s*\/\s*body\s*>.+$//gis; # just keep the contents of body tag
   $content  =~ s/<\s*(script|style)/<!-- /gis; # comment out script and style tags
   $content  =~ s/<\s*\/\s*(script|style)[^>]*>/ -->/gis;
+  $content  =~ s/\s*((style|on[a-z]+)\s*\=\s*(\"|\'))/ x$1/gis; # disable any inline styles and JavaScript events
 
   print $content;
 }
