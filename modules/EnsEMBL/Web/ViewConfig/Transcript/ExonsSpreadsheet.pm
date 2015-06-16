@@ -33,8 +33,9 @@ sub init {
     fullseq         => 'off',
     exons_only      => 'off',
     line_numbering  => 'off',
-    snp_display     => 'off',
+    snp_display     => 'exon',
   });
+
 
   $self->title = 'Exons';
   $self->SUPER::init;
