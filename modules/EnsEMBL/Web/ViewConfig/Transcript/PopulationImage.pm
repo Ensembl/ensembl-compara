@@ -67,7 +67,7 @@ sub form {
   my %type       = %{$options{'type'}};
 
   # Add Individual selection
-  $self->add_fieldset('Selected individuals');
+  $self->add_fieldset('Selected samples');
 
   my @strains = (@{$variations->{'DEFAULT_STRAINS'}}, @{$variations->{'DISPLAY_STRAINS'}});
   my %seen;
