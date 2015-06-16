@@ -220,7 +220,7 @@ sub add_external_browsers {
       $url = $hub->get_ExtURL('EGB_NCBI', { NCBI_DB => $browsers{'NCBI_DB'}, CHR => $chr, START => $start, END => $end });
     } else {
       my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
-      $url = "http://www.ncbi.nih.gov/mapview/map_search.cgi?taxid=$taxid";
+      $url = "http://www.ncbi.nlm.nih.gov/mapview/map_search.cgi?taxid=$taxid";
     }
     
     $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
