@@ -97,9 +97,9 @@ sub save {
 sub get_linked_configs {
   my ($self, $record, $adaptor, $save_ids) = @_;
   
-  return if $save_ids->{$record->{'record_id'}};
+  return if $save_ids->{$record->{'config_key'}};
   
-  $save_ids->{$record->{'record_id'}} = $record->{'is_set'} eq 'y' ? 'set' : 'config';
+  $save_ids->{$record->{'config_key'}} = $record->{'is_set'} eq 'y' ? 'set' : 'config';
   
   my $sets = $adaptor->all_sets;
   

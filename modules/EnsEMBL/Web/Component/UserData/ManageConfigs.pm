@@ -134,9 +134,9 @@ sub content_config {
   
   return unless $record;
   
-  my ($vc, $ic) = $record->{'type'} eq 'view_config' ? ($record, $all_configs->{$record->{'link_id'}}) : ($all_configs->{$record->{'link_id'}}, $record);
+  my ($vc, $ic) = $record->{'type'} eq 'view_config' ? ($record, $all_configs->{$record->{'link_key'}}) : ($all_configs->{$record->{'link_key'}}, $record);
   my $all_sets  = $adaptor->all_sets;
-  my @sets      = sort { $a->[1] cmp $b->[1] } map [ $all_sets->{$_}{'record_id'}, $all_sets->{$_}{'name'} ], $adaptor->record_to_sets($record_id);
+  my @sets      = sort { $a->[1] cmp $b->[1] } map [ $all_sets->{$_}{'config_key'}, $all_sets->{$_}{'name'} ], $adaptor->record_to_sets($record_id);
   my (@config, $html);
   
   if ($vc) {
@@ -202,11 +202,11 @@ sub records {
   $self->{'editables'} = $self->deepcopy($adaptor->all_sets);
   
   foreach (values %$configs) {
-    my $record_id = $_->{'record_id'};
+    my $record_id = $_->{'config_key'};
     
     next if $record_ids && !$record_ids->{$record_id};
     next if $_->{'active'};
-    next if $_->{'type'} eq 'image_config' && $_->{'link_id'};
+    next if $_->{'type'} eq 'image_config' && $_->{'link_key'};
     
     my $vc_code = $_->{'type'} eq 'image_config' && $_->{'link_code'} ? $_->{'link_code'} : $_->{'code'};
     
@@ -228,7 +228,7 @@ sub records {
       group     => $json_group,
       groupId   => $_->{'record_type_id'},
       codes     => [ "${type}_$code" ],
-      editables => { map { $self->{'editables'}{$_}{'record_id'} => 1 } @sets }
+      editables => { map { $self->{'editables'}{$_}{'config_key'} => 1 } @sets }
     };
   }
   
@@ -308,7 +308,7 @@ sub row {
   my $set_view     = $self->set_view;
   my $templates    = $self->templates;
   my $desc         = $record->{'description'} =~ s|\n|<br />|rg;
-  my $record_id    = $record->{'record_id'};
+  my $record_id    = $record->{'config_key'};
   my %params       = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id, ($set_view ? (is_set => 1) : ()) );
   my $edit_url     = $hub->url({ function => 'edit_details', %params });
   my $group        = $record->{'record_type'} eq 'group';
@@ -333,7 +333,7 @@ sub row {
   } else {
     $row->{'name'}   = { value => sprintf($templates->{'editable'}, $record->{'name'}, '<input type="text" maxlength="255" name="name" />', $edit_url), class => 'editable wrap' };
     $row->{'desc'}   = { value => sprintf($templates->{'editable'}, $desc,             '<textarea rows="5" name="description"></textarea>', $edit_url), class => 'editable wrap' };
-    $row->{'delete'} = sprintf $templates->{'icon'}, 'delete', 'edit',         'Delete', $hub->url({ function => 'delete', %params, link_id => $record->{'link_id'} });
+    $row->{'delete'} = sprintf $templates->{'icon'}, 'delete', 'edit',         'Delete', $hub->url({ function => 'delete', %params, link_id => $record->{'link_key'} });
     $row->{'share'}  = sprintf $templates->{'icon'}, 'share',  'share_record', 'Share',  $hub->url({ function => 'share',  %params }) unless $group;
     $row->{'edit'}   = sprintf $templates->{'icon'}, 'edit',   'edit_record',  $text->[2], '#';
 
@@ -428,8 +428,8 @@ sub edit_table_row {
   
   $row->{'name'}    = { value => sprintf($templates->{'wrap'}, $record->{'name'}),        class => 'wrap', sort => $record->{'name'} };
   $row->{'desc'}    = { value => sprintf($templates->{'wrap'}, $record->{'description'}), class => 'wrap' };
-  $row->{'add'}     = sprintf $templates->{'add'}, $record->{'record_id'};
-  $row->{'options'} = { class => join(' ', $record->{'record_id'}, @{$record->{'conf_codes'} || []}), record => $record };
+  $row->{'add'}     = sprintf $templates->{'add'}, $record->{'config_key'};
+  $row->{'options'} = { class => join(' ', $record->{'config_key'}, @{$record->{'conf_codes'} || []}), record => $record };
   
   return $row;
 }
