@@ -272,7 +272,7 @@ sub new_config {
 
 sub link_configs {
   my ($self, @links) = @_;
-  my $db_type = get_db_type($links[0]{'id'});
+  my $db_type = get_db_type(map { $_->{'id'} || () } @links);
   my $dbh     = $self->dbh or return;
      $dbh     = $dbh->{$db_type} or return;
   
