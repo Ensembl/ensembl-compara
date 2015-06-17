@@ -308,4 +308,6 @@ Ensembl.extend({
   }
 });
 
+Ensembl.Class = {}; // sub namespace for "Base" based classes to keep Ensembl in their namespace
+
 window.Ensembl = Ensembl; // Make Ensembl namespace available on window - needed for upload iframes because the minifier will compress the variable name Ensembl
