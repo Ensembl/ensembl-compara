@@ -152,7 +152,6 @@ if ($ref_include_non_reference && $non_ref_include_non_reference) {
 #Get list of genome_dbs from database
 my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
 my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
-my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
 my @all_genome_dbs = ($ref_genome_db);
 print STDERR "Generating a configuration file for $ref_species\n";
 
@@ -187,13 +186,12 @@ if ($species && @$species > 0) {
             if ($genome_db->name ne $ref_genome_db->name) {
                 #skip anything that isn't current
                 next unless ($genome_db->assembly_default);
-                my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, 'chromosome');
-                if (@$dnafrags > 1) {
-                    #print "   found " . @$dnafrags . " chromosomes in " . $genome_db->name . "\n";
-                    #find non-ref genome_dbs (may be present in blastz and lastz)
+                print STDERR $genome_db->name, " has a karyotype ? ", $genome_db->has_karyotype, "\n";
+                if ($genome_db->has_karyotype) {
+                    #print STDERR "   found " . @$dnafrags . " chromosomes in " . $genome_db->name . "\n";
                     $unique_genome_dbs{$genome_db->name} = $genome_db;
                 } else {
-                    #print "   no chromosomes found in " . $genome_db->name . "\n";
+                    #print STDERR "   no chromosomes found in " . $genome_db->name . "\n";
                 }
             }
         }
