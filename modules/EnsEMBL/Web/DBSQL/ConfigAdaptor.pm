@@ -206,13 +206,17 @@ sub set_config {
   my ($self, %args) = @_;
   my $config_key = $args{'record_id'} ? get_config_key($args{'record_type'}, $args{'record_id'}) : $self->active_config($args{'type'}, $args{'code'});
 
-  ($config_key) = $self->save_config($config_key, %args);
+  $args{'config_key'} = $config_key;
+
+  ($config_key) = $self->save_config(%args);
   
   return $config_key;
 }
 
 sub save_config {
-  my ($self, $config_key, %args) = @_;
+  my ($self, %args) = @_;
+
+  my $config_key = $args{'config_key'};
 
   my ($saved, $deleted, $data);
   
