@@ -104,7 +104,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::Ortheus;
 
 use strict;
 use Data::Dumper;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::Config::Compara; #for $PYTHON and $ORTHEUS and $EXONERATE
 use Bio::EnsEMBL::Analysis::Runnable::Ortheus;

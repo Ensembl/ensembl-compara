@@ -59,7 +59,7 @@ use FileHandle;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;

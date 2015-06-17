@@ -45,7 +45,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::RunAncestr
 use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::AncestralAllelesCompleteBase');
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 sub fetch_input {
     my $self = shift;

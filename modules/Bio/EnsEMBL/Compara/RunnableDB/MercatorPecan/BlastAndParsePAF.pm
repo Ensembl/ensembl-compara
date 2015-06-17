@@ -50,7 +50,7 @@ use strict;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF');
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
 sub param_defaults {

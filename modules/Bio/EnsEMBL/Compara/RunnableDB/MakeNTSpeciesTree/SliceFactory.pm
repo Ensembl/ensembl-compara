@@ -33,7 +33,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::SliceFactory;
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::Exception;
 use Data::Dumper;
 
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
