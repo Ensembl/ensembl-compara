@@ -41,7 +41,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.elLk.editTable    = $('table',                 this.elLk.editTypes);
     this.elLk.editRecord   = $('.edit_record',          this.elLk.editSets);
     this.elLk.editSelected = $('input.selected',        this.elLk.editSets);
-    this.elLk.editId       = $('.record_id',            this.elLk.editSets);
+    this.elLk.editId       = $('.config_key',           this.elLk.editSets);
     this.elLk.addSet       = $('.add_set',              this.elLk.editSets);
     this.elLk.saveToGroup  = $('.groups',               this.elLk.addSet);
     this.elLk.addHeader    = $('.add_header',           this.elLk.editSets);
@@ -53,7 +53,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.elLk.shareURL     = $('.share_url',            this.elLk.shareConfig);
     this.elLk.shareGroups  = $('.share_groups',         this.elLk.shareConfig);
     this.elLk.shareGroup   = $('input.group',           this.elLk.shareConfig);
-    this.elLk.shareId      = $('.record_id',            this.elLk.shareConfig);
+    this.elLk.shareId      = $('.config_key',           this.elLk.shareConfig);
     this.elLk.shareHeader  = $('.config_header',        this.elLk.shareConfig);
     
     this.elLk.addSet.validate({
@@ -352,7 +352,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     $.ajax({
       url: this.params.updateURL,
-      data: { record_ids: data.recordIds },
+      data: { config_keys: data.configKeys },
       traditional: true,
       cache: false,
       dataType: 'json',
