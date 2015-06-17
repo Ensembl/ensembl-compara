@@ -149,25 +149,22 @@ if ($ref_include_non_reference && $non_ref_include_non_reference) {
     throw("It is not advisable to find matches between patches of different species. Please only set either ref_include_non_reference or non_ref_include_non_reference");
 }
 
-my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
-
 #Get list of genome_dbs from database
 my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-#my $all_genome_dbs = $genome_db_adaptor->fetch_all();
-
-#find list of LASTZ_NET alignments in master
 my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
-my $pairwise_mlsss = $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('LASTZ_NET', $ref_genome_db);
-push @$pairwise_mlsss, @{$mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('BLASTZ_NET', $ref_genome_db)};
 my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
-
-my $all_genome_dbs;
-#add ref_genome_db
-push @$all_genome_dbs, $ref_genome_db;
+my @all_genome_dbs = ($ref_genome_db);
+print STDERR "Generating a configuration file for $ref_species\n";
 
 #Set default dump_dir
 $dump_dir = "/lustre/scratch109/ensembl/" . $ENV{USER} ."/scratch/hive/release_" . $ref_genome_db->db_adaptor->get_MetaContainer->get_schema_version() . "/nib_files/" unless ($dump_dir);
 print STDERR "NIB files will be dumped in $dump_dir\n";
+
+#find list of LASTZ_NET alignments in master
+my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+my @pairwise_mlsss;
+push @pairwise_mlsss, @{ $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('LASTZ_NET', $ref_genome_db) };
+push @pairwise_mlsss, @{ $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('BLASTZ_NET', $ref_genome_db) };
 
 my %unique_genome_dbs;
 #If a set of species is set, use these else automatically determine which species to use depending on whether they
@@ -181,7 +178,7 @@ if ($species && @$species > 0) {
         $unique_genome_dbs{$genome_db->name} = $genome_db;
     }
 } else {
-    foreach my $mlss (@$pairwise_mlsss) {
+    foreach my $mlss (@pairwise_mlsss) {
         #print "name " . $mlss->name . " " . $mlss->dbID . "\n";
         my $genome_dbs = $mlss->species_set_obj->genome_dbs;
         
@@ -210,7 +207,7 @@ foreach my $name (keys %unique_genome_dbs) {
     #next if ($name ~~ @$skip_species);
     next if (grep {$name eq $_}  @$skip_species); 
 #    print $unique_genome_dbs{$name}->name . "\n";
-    push @$all_genome_dbs, $unique_genome_dbs{$name};
+    push @all_genome_dbs, $unique_genome_dbs{$name};
 }
 
 #Allow exception_species to be specified as either --exception_species spp1 --exception_species spp2 --exception_species spp3 or --exception_species spp1,spp2,spp3
@@ -269,7 +266,7 @@ my $primate_matrix = $ENV{'ENSEMBL_CVS_ROOT_DIR'}. "/ensembl-compara/scripts/pip
 
 my $ref_gdb;
 my $genome_dbs;
-foreach my $gdb (@$all_genome_dbs) {
+foreach my $gdb (@all_genome_dbs) {
     if ($gdb->name eq $ref_species) {
 	$ref_gdb = $gdb;
 	next;
