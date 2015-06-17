@@ -31,7 +31,7 @@ create_patch_pairaligner_conf.pl
 
  create_patch_pairaligner_conf.pl --help  
 
- create_patch_pairaligner_conf.pl --master_url mysql://ensro@compara1:3306/sf5_ensembl_compara_master --ref_species homo_sapiens --ref_url mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37 --ensembl_version 68 --host ens-livemirror --dump_dir /lustre/scratch109/ensembl/kb3/scratch/hive/release_68/nib_files --haplotypes chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
+ create_patch_pairaligner_conf.pl --reg_conf path/to/production_reg.conf --ref_species homo_sapiens --dump_dir /lustre/scratch109/ensembl/kb3/scratch/hive/release_68/nib_files --patches chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
 
 =head1 DESCRIPTION
 
@@ -53,10 +53,9 @@ Create the lastz configuration script for just the reference species patches aga
 
 =over
 
-=item B<--master_url>
+=item B<--reg_conf>
 
-Location of the ensembl compara master database containing the new patches. Must be of the format:
-mysql://user@host:port/ensembl_compara_master
+Location of the ensembl compara registry configuration file. The file is expected to load all the relevant core databases and a master database.
 
 =item B<--skip_species>
 List of non-reference pair aligner species to skip from this pipeline because they are new species and will have the current set of patches present in the normal pairwise pipeline
@@ -66,21 +65,6 @@ List of non-reference pair aligner species. This is not normally required since 
 
 =item B<[--ref_species]>
 Reference species. Default homo_sapiens
-
-=item B<--ref_url>
-Location of the core database for the reference species which has the newest patches
-
-=item B<--ensembl_version>
-New ensembl_version. The non-reference species core databases will be taken from --host and be of the previous ensembl version
-
-=item B<[--host]>
-Host containing the core databases for the non-reference species core databases. Default ens-livemirror
-
-=item B<[--port]>
-Port number. Default 3306
-
-=item B<[--user]>
-Readonly user name. Default ensro
 
 =item B<[--dump_dir]>
 Location to dump the nib files
@@ -110,19 +94,14 @@ Set include_non_reference attribute for the non-reference species. Default 0. Se
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::URI qw/parse_uri/;
 use Getopt::Long;
 
 my $ref_species = "homo_sapiens";
-my $master_url;
-my $ref_url;
-my $host = "ens-livemirror";
-my $port = "3306";
-my $user = "ensro";
-my $ensembl_version = software_version();
+my $reg_conf;
+my $compara_master = "compara_master";
 my $dump_dir;
 my $patches;
 my $non_ref_patches;
@@ -141,32 +120,27 @@ my $print_chain_config = 1;
 
 
 GetOptions(
+  'reg_conf=s' => \$reg_conf,
+  'compara_master=s' => \$compara_master,
   'ref_species=s' => \$ref_species,
-  'ref_url=s' => \$ref_url,
-  'ensembl_version=i' => \$ensembl_version,
-  'host=s' => \$host,
-  'port=i' => \$port,
-  'user=s' => \$user,
   'dump_dir=s' => \$dump_dir,
   'patches=s' => \$patches,
   'non_ref_patches=s' => \$non_ref_patches,
   'species=s@' => $species,
   'skip_species=s@' => $skip_species,
-  'master_url=s' => \$master_url,
   'exception_species=s@' => $exception_species,
   'ref_include_non_reference=i' => \$ref_include_non_reference,
   'non_ref_include_non_reference=i' => \$non_ref_include_non_reference,
  );
 
-my $reg = "Bio::EnsEMBL::Registry";
-$reg->no_version_check(1);
-
-#Load pipeline db
+#Load all the dbs via the registry
 my $compara_dba;
-if ($master_url) {
-    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$master_url);
+if ($reg_conf) {
+    -e $reg_conf || die "'$reg_conf' does not exist ...\n";
+    Bio::EnsEMBL::Registry->load_all($reg_conf);
+    $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara_master, "compara");
 } else {
-    throw("A compara master database url must be defined");
+    throw("A registry file or a compara master database url must be defined");
 }
 
 #Check values of ref_include_non_reference and non_ref_include_non_reference
@@ -174,15 +148,6 @@ if ($master_url) {
 if ($ref_include_non_reference && $non_ref_include_non_reference) {
     throw("It is not advisable to find matches between patches of different species. Please only set either ref_include_non_reference or non_ref_include_non_reference");
 }
-
-#Set default dump_dir
-$dump_dir = "/lustre/scratch109/ensembl/" . $ENV{USER} ."/scratch/hive/release_" . $ensembl_version . "/nib_files/" unless ($dump_dir);
-
-#Parse ref_url 
-my $uri = parse_uri($ref_url);
-my %ref_core = $uri->generate_dbsql_params();
-
-$reg->load_registry_from_url($ref_url);
 
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
@@ -199,6 +164,10 @@ my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
 my $all_genome_dbs;
 #add ref_genome_db
 push @$all_genome_dbs, $ref_genome_db;
+
+#Set default dump_dir
+$dump_dir = "/lustre/scratch109/ensembl/" . $ENV{USER} ."/scratch/hive/release_" . $ref_genome_db->db_adaptor->get_MetaContainer->get_schema_version() . "/nib_files/" unless ($dump_dir);
+print STDERR "NIB files will be dumped in $dump_dir\n";
 
 my %unique_genome_dbs;
 #If a set of species is set, use these else automatically determine which species to use depending on whether they
@@ -317,8 +286,6 @@ foreach my $gdb (@$all_genome_dbs) {
     }
 }
 
-#find core databases
-my $core_dbs = list_core_dbs($host, $port, $user, $ensembl_version);
 
 #
 #Start of conf file
@@ -327,31 +294,18 @@ print "[\n";
 
 if ($print_species) {
      
-    #ref_species
-    print "{TYPE => SPECIES,\n";
-    print "  'abrev'          => '" . $ref_gdb->name . "',\n";
-    print "  'genome_db_id'   => " . $ref_gdb->dbID . ",\n";
-    print "  'taxon_id'       => " . $ref_gdb->taxon_id . ",\n";
-    print "  'phylum'         => 'Vertebrata',\n";
-    print "  'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',\n";
-    print "  'host'           => '" . $ref_core{-HOST} . "',\n";
-    print "  'port'           => " . $ref_core{-PORT} . ",\n";
-    print "  'user'           => '" . $ref_core{-USER} . "\',\n";
-    print "  'dbname'         => '" . $ref_core{-DBNAME} . "',\n";
-    print "  'species'        => '" . $ref_gdb->name . "',\n";
-    print "},\n";
-
-    foreach my $genome_db (sort {$a->dbID <=> $b->dbID} @$genome_dbs) {
+    # all the species
+    foreach my $genome_db ($ref_gdb, sort {$a->dbID <=> $b->dbID} @$genome_dbs) {
 	print "{TYPE => SPECIES,\n";
 	print "  'abrev'          => '" . $genome_db->name . "',\n";
 	print "  'genome_db_id'   => " . $genome_db->dbID . ",\n";
 	print "  'taxon_id'       => " . $genome_db->taxon_id . ",\n";
 	print "  'phylum'         => 'Vertebrata',\n";
 	print "  'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',\n";
-	print "  'host'           => '" . $core_dbs->{$genome_db->name}{host} . "',\n";
-	print "  'port'           => $port,\n";
-	print "  'user'           => '$user',\n";
-	print "  'dbname'         => '" . $core_dbs->{$genome_db->name}{db} . "',\n";
+	print "  'host'           => '" . $genome_db->db_adaptor->dbc->host . "',\n";
+	print "  'port'           => '" . $genome_db->db_adaptor->dbc->port . "',\n";
+	print "  'user'           => '" . $genome_db->db_adaptor->dbc->user . "',\n";
+	print "  'dbname'         => '" . $genome_db->db_adaptor->dbc->dbname . "',\n";
 	print "  'species'        => '" . $genome_db->name . "',\n";
 	print "},\n";
     }
@@ -529,41 +483,3 @@ if ($print_chain_config) {
 print "{ TYPE => END }\n";
 print "]\n";
 
-
-sub list_core_dbs {
-    my ($host, $port, $user, $ensembl_version) = @_;
-    my $core_dbs;
-
-    #special case to go through both ens-staging1 and ens-staging2
-    if ($host =~ /ens-staging/) {
-	my @dbs1 = `mysql -u $user -P $port -h ens-staging1 -e "show databases like '%core_$ensembl_version%'"`;
-	my @dbs2 = `mysql -u $user -P $port -h ens-staging2 -e "show databases like '%core_$ensembl_version%'"`;
-	foreach my $db (@dbs1) {
-            next if ($db =~ /Database/);
-	    chomp $db;
-	    my ($species) = $db =~ /(\w+)_core_.*/;
-	    $core_dbs->{$species}{db} = $db;
-	    $core_dbs->{$species}{host} = "ens-staging1";
-	}
-	foreach my $db (@dbs2) {
-            next if ($db =~ /Database/);
-	    chomp $db;
-	    my ($species) = $db =~ /(\w+)_core_.*/;
-	    $core_dbs->{$species}{db} = $db;
-	    $core_dbs->{$species}{host} = "ens-staging2";
-	}
-
-
-    } else {
-	$ensembl_version--;
-	my @dbs = `mysql -u $user -P $port -h $host -N -e "show databases like '%core_$ensembl_version%'"`;
-	foreach my $db (@dbs) {
-	    chomp $db;
-	    my ($species) = $db =~ /(\w+)_core_.*/;
-	    $core_dbs->{$species}{db} = $db;
-	    $core_dbs->{$species}{host} = $host;
-	}
-    }
-
-    return $core_dbs;
-}
