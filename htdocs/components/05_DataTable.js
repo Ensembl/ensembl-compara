@@ -47,7 +47,7 @@ Ensembl.DataTable = {
           }
         }
       });
-      if (filterInput.val().length) filterOverlay.siblings('.overlay').hide();
+      if (filterInput.val() && filterInput.val().length) filterOverlay.siblings('.overlay').hide();
 
       if (!noToggle) {
         panel.columnToggle(settings);
