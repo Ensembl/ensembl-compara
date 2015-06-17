@@ -46,8 +46,7 @@ sub content {
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
   my $current_species = $hub->species;
-  my $current_assembly = $species_defs->ASSEMBLY_NAME;
-  warn ">>> SPECIES $current_species, ASSEMBLY $current_assembly";
+  my $current_assembly = $species_defs->ASSEMBLY_VERSION;
 
   my $datahubs = {};
   my (%this_assembly, %this_species, %other_species);
