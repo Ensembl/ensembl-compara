@@ -757,7 +757,7 @@ sub save_to_user {
   delete $self->{'all_configs'};
   delete $self->{'all_sets'};
 
-  return scalar (@new_records, @new_sets);
+  return @new_records + @new_sets; # just return the total count
 }
 
 # Share a configuration or set with another user
