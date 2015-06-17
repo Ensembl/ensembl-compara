@@ -100,20 +100,41 @@ sub content {
 
   my $html;
 
+  my $link = $hub->url({'type' => 'UserData', 'action' => 'SelectFile'});
+  $html .= $self->info_panel('Tip', qq(If you don't see the hub you are interested in listed here, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.));
+
   my @keys_1 = keys %this_assembly;
+  my $table_1 = $self->create_table($datahubs, \@keys_1);
   $html .= '<h3>Hubs with data on the current species and assembly</h3>';
-  $html .= '<p>Links for other species may go to archive sites</p>';
-  $html .= $self->create_table($datahubs, \@keys_1);
+  if ($table_1) {
+    $html .= '<p>Links for other species may go to archive sites</p>';
+    $html .= $table_1;
+  }
+  else {
+    $html .= '<p>Sorry, we have no listed hubs for this species and assembly</p>';
+  }
 
   my @keys_2 = keys %this_species;
+  my $table_2 = $self->create_table($datahubs, \@keys_2);
   $html .= '<h3>Hubs with data on the current species but older assemblies</h3>';
-  $html .= '<p>Links may go to archive sites</p>';
-  $html .= $self->create_table($datahubs, \@keys_2);
+  if ($table_2) {
+    $html .= '<p>Links may go to archive sites</p>';
+    $html .= $table_1;
+  }
+  else {
+    $html .= '<p>Sorry, we have no other listed hubs for this species</p>';
+  }
 
   my @keys_3 = keys %other_species;
+  my $table_3 = $self->create_table($datahubs, \@keys_3);
   $html .= '<h3>Hubs with data on other species</h3>';
-  $html .= '<p>Links may go to archive sites</p>';
-  $html .= $self->create_table($datahubs, \@keys_3);
+  if ($table_3) {
+    $html .= '<p>Links may go to archive sites</p>';
+    $html .= $table_1;
+  }
+  else {
+    $html .= '<p>Sorry, we have no other listed hubs</p>';
+  }
 
   $html .= '</div>';
   return $html; 
@@ -134,12 +155,15 @@ sub create_table {
                     || lc($datahubs->{$a}->{'name'}) cmp lc($datahubs->{$b}->{'name'})
                     } @$keys;
 
+  my $row_count = 0;
   foreach my $key (@order) {
     my $hub_info = $datahubs->{$key};
+    next unless keys %$hub_info;
     my $row = {
               'name'        => $hub_info->{'name'},
               'description' => $hub_info->{'description'},
               };
+    $row_count++;
     my (@species_links, $species_html);
     foreach my $sp_info (@{$hub_info->{'species'}}) {
       my $species = $sp_info->{'dir'};
@@ -197,7 +221,7 @@ sub create_table {
     $table->add_row($row);
     delete $datahubs->{$key};
   }
-  return $table->render;
+  return $row_count > 0 ? $table->render : undef;
 }
 
 1;
