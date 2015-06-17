@@ -385,7 +385,7 @@ sub alleles {
   my $freq       = sprintf '%.2f', $variation->minor_allele_frequency;
      $freq       = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
   my $maf        = $variation->minor_allele;
-     $maf        = qq{ | <span class="_ht conhelp" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
+     $maf        = qq{ | <span class="_ht ht" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
   my $html;   
   my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : ''; 
    
@@ -422,7 +422,7 @@ sub alleles {
   }
   else {
     my $allele_title = ($alleles =~ /\//) ? qq{Reference/Alternative$alt_string alleles $alleles_strand} : qq{$alleles$alleles_strand};
-    $html = qq{<span class="_ht conhelp" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$ancestor$ambiguity$maf};
+    $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$ancestor$ambiguity$maf};
   }
 
   # Check somatic mutation base matches reference
@@ -738,8 +738,13 @@ sub most_severe_consequence {
          v      => $self->object->name,
       });
  
-      my $html = sprintf(
-         '<div>%s | <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>',
+
+      my $html = sprintf(qq{
+         <div>
+           <div class="text-float-left">%s</div>
+           <div class="text-float-left">| <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>
+           <div class="clear"></div>
+         </div>},
          $self->render_consequence_type($vf_object,1),
          $url
       );

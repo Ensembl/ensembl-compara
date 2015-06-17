@@ -41,6 +41,7 @@ a.bigtext     { text-decoration: none;                        }
 .autocenter         { text-align: left; margin: 0 auto; }
 .bold               { font-weight: bold; }
 .italic             { font-style: italic; }
+.text-float-left    { float: left; margin-right: 0.5em; }
 .clear              { clear: both; }
 .clear-left         { clear: left; }
 .clear-right        { clear: right; }
