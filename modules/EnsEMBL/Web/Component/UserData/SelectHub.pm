@@ -42,13 +42,15 @@ sub content {
   my $self          = shift;
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
-  my $sitename      = $species_defs->ENSEMBL_SITETYPE;
-  my $adaptor       = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
 
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
+  my $current_species = $hub->species;
+  my $current_assembly = $species_defs->ASSEMBLY_NAME;
+  warn ">>> SPECIES $current_species, ASSEMBLY $current_assembly";
 
-  my (%datahubs, %internal_hub_lookup);
+  my $datahubs = {};
+  my (%this_assembly, %this_species, %other_species);
   my $imageconfig   = $hub->get_imageconfig('contigviewbottom');
   foreach my $sp (@valid_species) {
     ## This is all a bit hacky, but makes configuration of multi-species datahubs simpler
@@ -72,25 +74,56 @@ sub content {
           }
         }
         $config{'priority'} = 0 unless $config{'priority'};
-        $datahubs{$key} = {'menu' => $menu, %config};
+        $datahubs->{$key} = {'menu' => $menu, %config};
         foreach my $assembly (sort { $assemblies{$a} cmp $assemblies{$b} || $a cmp $b } keys %assemblies) {
           my $sp = $assemblies{$assembly};
-          if ($datahubs{$key}{'species'}) {
-            push @{$datahubs{$key}{'species'}}, {'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly};
+          if ($sp eq $current_species) {
+            if ($assembly eq $current_assembly) {
+              $this_assembly{$key} = 1;
+            }
+            else {
+              $this_species{$key} = 1;
+            }
           }
           else {
-            $datahubs{$key}{'species'} = [{'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly}];
+            $other_species{$key} = 1;
+          }
+          if ($datahubs->{$key}{'species'}) {
+            push @{$datahubs->{$key}{'species'}}, {'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly};
+          }
+          else {
+            $datahubs->{$key}{'species'} = [{'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly}];
           }
         }
       }
     }
   }
 
-  my @order = sort { $datahubs{$b}->{'priority'} <=> $datahubs{$a}->{'priority'}
-                    || lc($datahubs{$a}->{'name'}) cmp lc($datahubs{$b}->{'name'})
-                    } keys %datahubs;
-
   my $html;
+
+  my @keys_1 = keys %this_assembly;
+  $html .= '<h3>Hubs with data on the current species and assembly</h3>';
+  $html .= '<p>Links for other species may go to archive sites</p>';
+  $html .= $self->create_table($datahubs, \@keys_1);
+
+  my @keys_2 = keys %this_species;
+  $html .= '<h3>Hubs with data on the current species but older assemblies</h3>';
+  $html .= '<p>Links may go to archive sites</p>';
+  $html .= $self->create_table($datahubs, \@keys_2);
+
+  my @keys_3 = keys %other_species;
+  $html .= '<h3>Hubs with data on other species</h3>';
+  $html .= '<p>Links may go to archive sites</p>';
+  $html .= $self->create_table($datahubs, \@keys_3);
+
+  $html .= '</div>';
+  return $html; 
+}
+
+sub create_table {
+  my ($self, $datahubs, $keys) = @_;
+  my $species_defs  = $self->hub->species_defs;
+  my $adaptor       = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($self->hub);
 
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'name',     title => 'Trackhub name', width => '30%', align => 'left', sort => 'html' },
@@ -98,8 +131,16 @@ sub content {
       { key => 'species',      title => 'Species and assembly', width => '40%', align => 'left', sort => 'html' },
   ], [], {});
 
+  my @order = sort { $datahubs->{$b}->{'priority'} <=> $datahubs->{$a}->{'priority'}
+                    || lc($datahubs->{$a}->{'name'}) cmp lc($datahubs->{$b}->{'name'})
+                    } @$keys;
+
   foreach my $key (@order) {
-    my $hub_info = $datahubs{$key};
+    my $hub_info = $datahubs->{$key};
+    my $row = {
+              'name'        => $hub_info->{'name'},
+              'description' => $hub_info->{'description'},
+              };
     my (@species_links, $species_html);
     foreach my $sp_info (@{$hub_info->{'species'}}) {
       my $species = $sp_info->{'dir'};
@@ -132,36 +173,32 @@ sub content {
         ## Don't link back to archives with no/buggy datahub support!
       }
             
+
       my $location = $species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
       if ($sp_info->{'site'}) {
         my $site = $sp_info->{'site'} eq 'current' ? '' : $sp_info->{'site'};
         my $link;
         $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s#modal_user_data',
-                        $site, $sp_info->{'dir'}, $location,
-                        $hub_info->{'url'}, $hub_info->{'menu'}, $hub_info->{'menu'}
-                      );
-        $species_html .= sprintf('<p><a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s (%s)</a></p>',
-                          $link, $sp_info->{'dir'}, $sp_info->{'common'},
-                          $link, $sp_info->{'common'}, $sp_info->{'assembly'},
+                         $site, $sp_info->{'dir'}, $location,
+                         $hub_info->{'url'}, $hub_info->{'menu'}, $hub_info->{'menu'}
                         );
+        $species_html .= sprintf('<p><a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s (%s)</a></p>',
+                                  $link, $sp_info->{'dir'}, $sp_info->{'common'},
+                                  $link, $sp_info->{'common'}, $sp_info->{'assembly'},
+                                );
       }
       else {
         $species_html .= sprintf('<p><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /> %s (%s)</p>',
-                          $sp_info->{'dir'}, $sp_info->{'common'},
-                          $sp_info->{'common'}, $sp_info->{'assembly'},
-                        );
+                                $sp_info->{'dir'}, $sp_info->{'common'},
+                                $sp_info->{'common'}, $sp_info->{'assembly'},
+                                );
       }
     }
-    $table->add_row({
-              'name'        => $hub_info->{'name'},
-              'description' => $hub_info->{'description'},
-              'species'     => $species_html,
-    });
+    $row->{'species'} = $species_html;
+    $table->add_row($row);
+    delete $datahubs->{$key};
   }
-
-  $html .= $table->render;
-  $html .= '</div>';
-  return $html; 
+  return $table->render;
 }
 
 1;
