@@ -119,7 +119,7 @@ sub content {
   $html .= '<h3>Hubs with data on the current species but older assemblies</h3>';
   if ($table_2) {
     $html .= '<p>Links may go to archive sites</p>';
-    $html .= $table_1;
+    $html .= $table_2;
   }
   else {
     $html .= '<p>Sorry, we have no other listed hubs for this species</p>';
@@ -130,7 +130,7 @@ sub content {
   $html .= '<h3>Hubs with data on other species</h3>';
   if ($table_3) {
     $html .= '<p>Links may go to archive sites</p>';
-    $html .= $table_1;
+    $html .= $table_3;
   }
   else {
     $html .= '<p>Sorry, we have no other listed hubs</p>';
