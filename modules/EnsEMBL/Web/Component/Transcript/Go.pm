@@ -120,12 +120,12 @@ sub process_data {
       my $url        = $hub->url({
         species     => $species,
         type        => $type eq 'gene'        ? 'Gene'           : 'Transcript',
-        action      => $type eq 'translation' ? 'ProteinSummary' : 'Summary',
+        action      => $type eq 'translation' ? 'Ontology' : 'Summary',
         $param_type => $gene,
         __clear     => 1,
       });
       
-      $desc = qq{[from $common_name <a href="$url">$gene</a>]};
+      $desc = qq{Propagated from $common_name <a href="$url">$gene</a> by orthology};
     }
     
     foreach (keys %$goslim) {
