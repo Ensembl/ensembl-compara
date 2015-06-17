@@ -67,7 +67,7 @@ sub variation_content {
     type   => 'Variation',
     v      => $v,
     vf     => $feature->dbID(),
-    source => $feature->source
+    source => $feature->source_name,
   );
   
   if ($chr_end < $chr_start) {
@@ -110,6 +110,17 @@ sub variation_content {
     if ($tv) {
       my $pep_alleles = $tv->pep_allele_string;
       my $codons      = $tv->codons;
+      ## Also truncate long peptides
+      if (length $pep_alleles > 10) {
+        $pep_alleles =~ /(\w{10})\w+(\w\/\w)(\w+)/;
+        $pep_alleles = $1.'...'.$2;
+        $pep_alleles .= '...' if $3;
+      }
+      if (length $codons > 10) {
+        $codons =~ /(\w{10})\w+(\w\/\w)(\w+)/;
+        $codons = $1.'...'.$2;
+        $codons .= '...' if $3;
+      }
       
       push @entries, { type => 'Amino acids', label => $pep_alleles} if $pep_alleles && $pep_alleles =~ /\//;
       push @entries, { type => 'Codons',      label => $codons}      if $codons      && $codons      =~ /\//;
