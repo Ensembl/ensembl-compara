@@ -34,7 +34,7 @@ Input for create_patch_pairaligner_conf.pl:
 2) Add the patches to the ensembl-compara-master database
 
 a) You may want to make a backup of the master first:
-eg 
+e.g.
 mysqldump --opt -h compara1 -u ensro ensembl_compara_master > /path/to/dump/dir/ensembl_compara_master.dump
 
 b) Remove any dnafrags which have been CHANGED or DELETED. These are listed in "Patches to delete:" in the output above.
@@ -51,15 +51,15 @@ The registry configuration file needs to contain the information for the compara
 Check that these have been added.
 
 3) Create the lastz.conf file. 
-This script currently supports homo_sapiens and mus_musculus as reference species. Any additional reference species will need a reference dna_collection specified in the script of the form (eg):
+This script currently only supports homo_sapiens and mus_musculus as reference species. Any additional reference species will have to be implemented in the script as an extra reference dna_collection of the form (e.g.):
 $dna_collection->{homo_sapiens_mammal} 
 
-An additional dna_collection may be added to deal with species which require different parameters. The list of exception species (eg primates in the case of human) are defined by the --exception_species parameter. The default list used when human is the reference species is: gorilla_gorilla, macaca_mulatta, pan_troglodytes, pongo_abelii, callithrix_jacchus. There are no exception_species for mouse. The dna_collection is specied of the form (eg):
+An additional dna_collection may be added to deal with species which require different parameters. The list of exception species (e.g. primates in the case of human) are defined by the --exception_species parameter. The default list used when human is the reference species is: gorilla_gorilla, macaca_mulatta, pan_troglodytes, pongo_abelii, callithrix_jacchus. There are no exception_species for mouse. The dna_collection is specied of the form (e.g.):
 $dna_collection->{homo_sapiens_exception} 
 
 The default pair aligner options are defined in the variable $pair_aligner->{mammal} and for the exception_species, in $pair_aligner->{exception}. 
 
-The ref_include_non_reference and non_ref_include_non_reference can be left to the default values unless doing non-ref patches against a ref species eg human vs mouse patches. This would have to be done as a isolated run from the other mouse patches where mouse would be the reference species.
+The ref_include_non_reference and non_ref_include_non_reference can be left to the default values unless doing non-ref patches against a ref species e.g. human vs mouse patches. This would have to be done as a isolated run from the other mouse patches where mouse would be the reference species.
 
 The list of patches to use is given in the output of the find_assembly_patches.pl script.
 perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --ref_species homo_sapiens --patches chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
