@@ -227,6 +227,7 @@ sub check_for_split_genes {
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
                 print "Checking split genes overlap\n" if $self->debug;
                 my @genes_in_range = @{$gene_member_adaptor->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
+                $gene_member_adaptor->db->dbc->disconnect_if_idle;
 
                 if ((2+$self->param('max_nb_genes_no_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
@@ -236,7 +237,6 @@ sub check_for_split_genes {
                 }
                 $self->warning(sprintf('A pair: %s %s', $protein1->stable_id, $protein2->stable_id));
                 $connected_split_genes->add_connection($protein1->seq_member_id, $protein2->seq_member_id);
-                $gene_member_adaptor->db->dbc->disconnect_if_idle;
             }
 
         # This is a second level of contiguous gene split events, more
@@ -267,6 +267,7 @@ sub check_for_split_genes {
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
 
                 my @genes_in_range = @{$gene_member_adaptor->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
+                $gene_member_adaptor->db->dbc->disconnect_if_idle;
                 if ((2+$self->param('max_nb_genes_small_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
                         print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->dnafrag_start,",", $gene->dnafrag_end,"\n" if $self->debug;
@@ -276,7 +277,6 @@ sub check_for_split_genes {
 
                 $self->warning(sprintf('B pair: %s %s', $protein1->stable_id, $protein2->stable_id));
                 $connected_split_genes->add_connection($protein1->seq_member_id, $protein2->seq_member_id);
-                $gene_member_adaptor->db->dbc->disconnect_if_idle;
             }
         }
     }
