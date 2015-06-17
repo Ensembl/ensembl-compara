@@ -68,7 +68,7 @@ sub populate_tree {
   
   $seq_menu->append($self->create_node('Sequence_Protein', 'Protein',
     [qw( sequence EnsEMBL::Web::Component::Transcript::ProteinSeq )],
-    { 'availability' => 'either', 'concise' => 'Protein sequence' }
+    { 'availability' => 'translation', 'concise' => 'Protein sequence' }
   ));
   
   my $record_menu = $self->create_submenu('ExternalRecords', 'External References');
@@ -131,7 +131,7 @@ sub populate_tree {
       image      EnsEMBL::Web::Component::Transcript::TranslationImage
       statistics EnsEMBL::Web::Component::Transcript::PepStats
     )],
-    { 'availability' => 'either translation', 'concise' => 'Protein summary' }
+    { 'availability' => 'translation not_pred', 'concise' => 'Protein summary' }
   ));
   
   my $D = $self->create_node('Domains', 'Domains & features',

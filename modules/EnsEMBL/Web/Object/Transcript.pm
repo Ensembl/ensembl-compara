@@ -56,6 +56,7 @@ sub availability {
       $availability->{'history_protein'} = 1 if $trans_id || $trans >= 1;
     } elsif( $obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
       $availability->{'either'} = 1;
+      $availability->{'translation'} = 1;
     } else {
       my $counts = $self->counts;
       my $rows   = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
@@ -65,6 +66,7 @@ sub availability {
       $availability->{'core'}            = $self->get_db eq 'core';
       $availability->{'either'}          = 1;
       $availability->{'transcript'}      = 1;
+      $availability->{'not_pred'}        = 1;
       $availability->{'domain'}          = 1;
       $availability->{'translation'}     = !!$obj->translation;
       $availability->{'strains'}         = !!$self->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} if $self->species_defs->databases->{'DATABASE_VARIATION'};
