@@ -110,6 +110,7 @@ Set include_non_reference attribute for the non-reference species. Default 0. Se
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::URI qw/parse_uri/;
@@ -121,7 +122,7 @@ my $ref_url;
 my $host = "ens-livemirror";
 my $port = "3306";
 my $user = "ensro";
-my $ensembl_version = 74;
+my $ensembl_version = software_version();
 my $dump_dir;
 my $patches;
 my $non_ref_patches;
