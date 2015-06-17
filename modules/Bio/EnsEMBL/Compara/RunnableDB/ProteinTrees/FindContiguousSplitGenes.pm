@@ -182,26 +182,19 @@ sub check_for_split_genes {
         my ($protein1, $protein2) = @$genepairlink;
 
         # Compute the sequence overlap
-        #my $aln = 0;
-        #my $len1 = 0;
-        #my @aln1 = split(//, $protein1->alignment_string);
-        #my $len2 = 0;
-        #my @aln2 = split(//, $protein2->alignment_string);
+        my $aln = 0;
+        my $len1 = 0;
+        my @aln1 = split(//, $protein1->alignment_string);
+        my $len2 = 0;
+        my @aln2 = split(//, $protein2->alignment_string);
 
-        #for (my $i=0; $i <= $#aln1; $i++) {
-        #    $len1++ if ($aln1[$i] ne '-');
-        #    $len2++ if ($aln2[$i] ne '-');
-        #    $aln++ if ($aln1[$i] ne '-' && $aln2[$i] ne '-');
-        #}
+        for (my $i=0; $i <= $#aln1; $i++) {
+            $len1++ if ($aln1[$i] ne '-');
+            $len2++ if ($aln2[$i] ne '-');
+            $aln++ if ($aln1[$i] ne '-' && $aln2[$i] ne '-');
+        }
  
-        #printf("Pair: %s-%s: %d out of %d-%d\n", $protein1->stable_id, $protein2->stable_id, $aln, $len1, $len2) if ($self->debug);
-        my $pair = new Bio::EnsEMBL::Compara::AlignedMemberSet;
-        my $protein1_copy = $protein1->Bio::EnsEMBL::Compara::AlignedMember::copy;
-        my $protein2_copy = $protein2->Bio::EnsEMBL::Compara::AlignedMember::copy;
-        $pair->add_Member($protein1_copy);
-        $pair->add_Member($protein2_copy);
-        $pair->update_alignment_stats;
-        print "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
+        printf("Pair: %s-%s: %d out of %d-%d\n", $protein1->stable_id, $protein2->stable_id, $aln, $len1, $len2) if ($self->debug);
 
         my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
         my $start1 = $gene_member1->dnafrag_start; my $start2 = $gene_member2->dnafrag_start; my $starttemp;
@@ -210,10 +203,8 @@ sub check_for_split_genes {
         my $gdb_id1 = $gene_member1->genome_db_id; my $gdb_id2 = $gene_member2->genome_db_id;
         my $dnafrag_id1 = $gene_member1->dnafrag_id; my $dnafrag_id2 = $gene_member2->dnafrag_id;
 
-        printf("%%Id: %d/%d, %%Pos: %d/%d\n", $protein1_copy->perc_id, $protein2_copy->perc_id, $protein1_copy->perc_pos, $protein2_copy->perc_pos);
         # Checking for gene_split cases
-        #if ($aln == 0)
-        if (0 == $protein1_copy->perc_id && 0 == $protein2_copy->perc_id && 0 == $protein1_copy->perc_pos && 0 == $protein2_copy->perc_pos) {
+        if ($aln == 0) {
 
             # Condition A1: If same seq region and less than 1MB distance
             if ($dnafrag_id1 == $dnafrag_id2 && ($self->param('max_dist_no_overlap') > abs($start1 - $start2)) && $strand1 eq $strand2 ) {
@@ -250,10 +241,8 @@ sub check_for_split_genes {
         # "skid marks" in the alignment view.
 
         # Condition B1: all 4 percents below 10
-        #} elsif (100*$aln < $len1*$self->param('small_overlap_percentage')
-        #        && 100*$aln < $len2*$self->param('small_overlap_percentage')) {
-        } elsif ($protein1_copy->perc_id < $self->param('small_overlap_percentage') && $protein2_copy->perc_id < $self->param('small_overlap_percentage')
-              && $protein1_copy->perc_pos < $self->param('small_overlap_percentage') && $protein2_copy->perc_pos < $self->param('small_overlap_percentage')) {
+        } elsif (100*$aln < $len1*$self->param('small_overlap_percentage')
+                && 100*$aln < $len2*$self->param('small_overlap_percentage')) {
 
             # Condition B2: If non-overlapping and smaller than 500kb start and 500kb end distance
             if ($dnafrag_id1 == $dnafrag_id2
