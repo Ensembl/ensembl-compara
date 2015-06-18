@@ -425,40 +425,14 @@ sub get_data {
           # There should only be one
           throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
           
-          push @result_sets, $sset->[0];
-          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = 1;
+          my $bigwig_path = $sset->[0]->dbfile_path;
+
+          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = $bigwig_path;
         }
       }
     }
   }
 
-  # retrieve all the data to draw wiggle plots
-  if (scalar @result_sets > 0) {   
-    my $resultfeature_adaptor = $hub->get_adaptor('get_ResultFeatureAdaptor', 'funcgen');
-    my $max_bins              = $ENV{'ENSEMBL_IMAGE_WIDTH'} - 228; 
-    my $wiggle_data           = eval {$resultfeature_adaptor->fetch_all_by_Slice_ResultSets($self->Obj, \@result_sets, $max_bins); };
-
-    if ($@) {
-      $hub->session->add_data(
-                              type      => 'message',
-                              function  => '_error',
-                              message   => "Sorry, could not find data for the selected tracks",
-                              code      => 'wiggle_data_error',
-                              );
-      return {};
-    }
-    else {
-    
-      foreach my $rset_id (keys %$wiggle_data) { 
-        my $results_set           = $hub->get_adaptor('get_ResultSetAdaptor', 'funcgen')->fetch_by_dbID($rset_id);
-        my $unique_feature_set_id = join ':', $results_set->cell_type->name, $results_set->feature_type->name, $results_set->dbID;
-        my $features              = $wiggle_data->{$rset_id};
-      
-        $data->{'wiggle_data'}{$unique_feature_set_id} = $features;
-      }
-    }
-  }      
-  
   $data->{'colours'} = \%feature_sets_on;
   
   return $data;
