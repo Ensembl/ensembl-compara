@@ -85,11 +85,11 @@ sub new {
  Arg [1]    : string $cs_species
               e.g. "Homo sapiens"
  Arg [2]    : string $cs_assembly (can be undef)
-              e.g. "NCBI_31" if undef assembly_default will be taken
+              e.g. "NCBI_31" if undef the current will be taken
  Arg [3]    : string $qy_species
               e.g. "Mus musculus"
  Arg [4]    : string $qy_assembly (can be undef)
-              e.g. "MGSC_3", if undef assembly_default will be taken
+              e.g. "MGSC_3", if undef the current will be taken
  Arg [5]    : string $chromosome_name
               the name of the chromosome to retrieve alignments from (e.g. 'X')
  Arg [6]    : int start

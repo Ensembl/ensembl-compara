@@ -518,8 +518,6 @@ sub _write_gerp_dataflow {
 
 #Taken from Analysis/Runnable/Ortheus.pm module
 sub parse_results {
-    my ($self) = @_;
-
     my ($self, $run_number) = @_;
 
     #print STDERR 

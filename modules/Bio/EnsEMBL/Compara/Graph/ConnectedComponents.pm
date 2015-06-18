@@ -26,19 +26,6 @@ Bio::EnsEMBL::Compara::Graph::ConnectedComponents
 
 =cut
 
-=head1 SYNOPSIS
-
-my $aa = $sdba->get_AnalysisAdaptor;
-my $analysis = $aa->fetch_by_logic_name('PAFCluster');
-my $rdb = new Bio::EnsEMBL::Compara::Graph::ConnectedComponents(
-                         -input_id   => "{'species_set'=>[1,2,3,14]}",
-                         -analysis   => $analysis);
-
-$rdb->fetch_input
-$rdb->run;
-
-=cut
-
 =head1 DESCRIPTION
 
 This is a general purpose tool for building connected component clusters

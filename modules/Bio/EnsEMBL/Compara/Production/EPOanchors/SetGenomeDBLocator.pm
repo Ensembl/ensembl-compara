@@ -48,7 +48,11 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::EPOanchors::SetGenomeDBLocator;
 
 use strict;
+use warnings;
+
 use Data::Dumper;
+
+use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -63,7 +67,6 @@ sub fetch_input {
 		$sth = $self->dbc->prepare("SELECT * FROM genome_db");
 	}
 	$sth->execute();
-	my @genome_db_ids;
 	my %db_names;
         my $genome_dbs = $sth->fetchall_hashref('name');
 	foreach my $core_db_url(@{ $self->param('core_db_urls') }){
@@ -79,20 +82,22 @@ sub fetch_input {
 				$genome_dbs->{$species_name}->{'locator'} = "Bio::EnsEMBL::DBSQL::DBAdaptor/host=" . 
 				$host . ";port=" . $port . ";user=" . $user . ";dbname=" . $dbname . ";species=" . 
 				$species_name . ";disconnect_when_inactive=1";
-				push(@genome_db_ids, { genome_db_id => $genome_dbs->{$species_name}->{'genome_db_id'}, species_set_id => $self->param('species_set_id') }); 
 			}
 		}
 	}	 
 	my @genome_dbs = values( %$genome_dbs );
 	$self->param('genome_dbs', \@genome_dbs);
-	$self->param('genome_db_ids', \@genome_db_ids);
 }
 
 sub write_output {
 	my ($self) = @_;
 	return unless $self->param('genome_dbs');
 	$self->dataflow_output_id( $self->param('genome_dbs'), 2);
-	$self->dataflow_output_id( $self->param('genome_db_ids'), 3);
+        my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
+            -dbID => $self->param('species_set_id'),
+            -GENOME_DBS => $self->param('genome_dbs')
+        );
+        $self->compara_dba->get_SpeciesSetAdaptor->store($species_set);
 }
 
 1;

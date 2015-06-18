@@ -112,7 +112,7 @@ sub fetch_input {
   my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
 
 
-  my ($epo_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage-assembly') };
+  my ($epo_ss) = @{ $species_set_adaptor->fetch_all_by_name('low-coverage-assembly') };
   unless($epo_ss) {
     die "Could not fetch a SpeciesSet named 'low-coverage-assembly' from the database\n";
   }
@@ -121,9 +121,9 @@ sub fetch_input {
       $self->param('epo_gdb')->{$epo_gdb->dbID} = 1;
   }
 
-  # my ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage-assembly') };
+  # my ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_name('low-coverage-assembly') };
   # unless($low_cov_ss) {
-  #   ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage') };
+  #   ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_name('low-coverage') };
   # }
   # unless($low_cov_ss) {
   #   die "A SpeciesSet named either 'low-coverage-assembly' or 'low-coverage' must be present in the database to run this analysis\n";

@@ -84,11 +84,31 @@ sub new {
 
     my $self = $class->SUPER::new(@_);  # deal with Storable stuff
 
-    my ($genome_dbs) = rearrange([qw(GENOME_DBS)], @_);
+    my ($genome_dbs, $name) = rearrange([qw(GENOME_DBS NAME)], @_);
 
     $self->genome_dbs($genome_dbs) if (defined ($genome_dbs));
+    $self->name($name) if (defined $name);
 
     return $self;
+}
+
+
+=head2 name
+
+  Example     : my $name = $species_set->name();
+  Example     : $species_set->name($name);
+  Description : Getter/Setter for the name of the species set.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub name {
+    my $self = shift;
+    $self->add_tag('name', shift) if @_;
+    return $self->get_value_for_tag('name');
 }
 
 
@@ -148,8 +168,7 @@ sub toString {
     my $self = shift;
 
     my $taxon_id    = $self->get_tagvalue('taxon_id');
-    my $name        = $self->get_tagvalue('name');
-    return ref($self).": dbID=".($self->dbID || '?').($taxon_id ? ", taxon_id=$taxon_id" : '').", name='".($name || '?')."', genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} sort {$a->dbID <=> $b->dbID} @{ $self->genome_dbs })."]";
+    return ref($self).": dbID=".($self->dbID || '?').($taxon_id ? ", taxon_id=$taxon_id" : '').", name='".($self->name || '?')."', genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} sort {$a->dbID <=> $b->dbID} @{ $self->genome_dbs })."]";
 }
 
 

@@ -95,9 +95,9 @@ sub default_options {
     # clustering parameters:
 
     # tree building parameters:
+        'use_quick_tree_break'      => 0,
         'use_raxml'                 => 1,
         'use_notung'                => 1,
-        'treebreak_gene_count'      => 100000,     # affects msa_chooser
 
     # alignment filtering options
 

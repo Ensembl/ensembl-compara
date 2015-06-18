@@ -232,8 +232,6 @@ $helper->transaction( -CALLBACK => sub {
         return;
     }
     my $genome_db = update_genome_db($species_db, $compara_db, $force);
-    #delete_genomic_align_data($compara_db, $genome_db);
-    #delete_syntenic_data($compara_db, $genome_db);
     update_dnafrags($compara_db, $genome_db, $species_db);
     my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_db);
     foreach my $component_gdb (@$component_genome_dbs) {
@@ -383,7 +381,7 @@ sub add_to_collections {
       my $new_genome_dbs = [grep {$_->name ne $gdb_name} @{$ss->genome_dbs}];
       push @$new_genome_dbs, @$genome_dbs;
       my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
-      printf("%s added to the collection '%s' (species_set_id=%d)\n", $gdb_name, $ss->get_value_for_tag('name'), $new_ss->dbID);
+      printf("%s added to the collection '%s' (species_set_id=%d)\n", $gdb_name, $ss->name, $new_ss->dbID);
   }
 }
 
@@ -416,7 +414,7 @@ sub remove_species_from_collections {
         my $new_genome_dbs = [grep {$_->dbID != $genome_db->dbID} @{$ss->genome_dbs}];
         next if scalar(@$new_genome_dbs) == scalar(@{$ss->genome_dbs});
         my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
-        printf("%s removed from the collection '%s' (species_set_id=%d)\n", $genome_db->name, $ss->get_value_for_tag('name'), $new_ss->dbID);
+        printf("%s removed from the collection '%s' (species_set_id=%d)\n", $genome_db->name, $ss->name, $new_ss->dbID);
     }
 }
 
@@ -430,82 +428,6 @@ sub _fetch_all_collections_by_name {
         push @sss, $c if $c;
     }
     return \@sss;
-}
-
-=head2 delete_genomic_align_data
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Description : This method deletes from the genomic_align and 
-                genomic_align_block tables
-                all the rows that refer to the species identified
-                by the $genome_db_id
-  Returns     : -none-
-  Exceptions  : throw if any SQL statment fails
-
-=cut
-
-sub delete_genomic_align_data {
-  my ($compara_dba, $genome_db) = @_;
-
-  print "Getting the list of genomic_align_block_id to remove... ";
-  my $rows = $compara_dba->dbc->do(qq{
-      CREATE TABLE list AS
-          SELECT genomic_align_block_id
-          FROM genomic_align_block, method_link_species_set
-          WHERE genomic_align_block.method_link_species_set_id = method_link_species_set.method_link_species_set_id
-          AND genome_db_id = $genome_db->{dbID}
-    });
-  throw $compara_dba->dbc->errstr if (!$rows);
-  print "$rows elements found.\n";
-
-  print "Deleting corresponding genomic_align and genomic_align_block rows...";
-  $rows = $compara_dba->dbc->do(qq{
-      DELETE
-        genomic_align, genomic_align_block
-      FROM
-        list
-        LEFT JOIN genomic_align_block USING (genomic_align_block_id)
-        LEFT JOIN genomic_align USING (genomic_align_block_id)
-      WHERE
-        list.genomic_align_block_id = genomic_align.genomic_align_block_id
-    });
-  throw $compara_dba->dbc->errstr if (!$rows);
-  print " ok!\n";
-
-  print "Droping the list of genomic_align_block_ids...";
-  $rows = $compara_dba->dbc->do(qq{DROP TABLE list});
-  throw $compara_dba->dbc->errstr if (!$rows);
-  print " ok!\n\n";
-}
-
-=head2 delete_syntenic_data
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Description : This method deletes from the dnafrag_region
-                and synteny_region tables all the rows that refer
-                to the species identified by the $genome_db_id
-  Returns     : -none-
-  Exceptions  : throw if any SQL statment fails
-
-=cut
-
-sub delete_syntenic_data {
-  my ($compara_dba, $genome_db) = @_;
-
-  print "Deleting dnafrag_region and synteny_region rows...";
-  my $rows = $compara_dba->dbc->do(qq{
-      DELETE
-        dnafrag_region, synteny_region
-      FROM
-        dnafrag_region
-        LEFT JOIN synteny_region USING (synteny_region_id)
-        LEFT JOIN method_link_species_set USING (method_link_species_set_id)
-      WHERE genome_db_id = $genome_db->{dbID}
-    });
-  throw $compara_dba->dbc->errstr if (!$rows);
-  print " ok!\n\n";
 }
 
 =head2 update_dnafrags
@@ -608,43 +530,3 @@ sub print_method_link_species_sets_to_update {
 
 }
 
-=head2 create_new_method_link_species_sets
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Description : This method creates all the genomic MethodLinkSpeciesSet
-                that are needed for the new assembly.
-                NB: Only method_link with a dbID <200 are taken into
-                account (they should be the genomic ones)
-  Returns     : -none-
-  Exceptions  :
-
-=cut
-
-sub create_new_method_link_species_sets {
-  my ($compara_dba, $genome_db) = @_;
-
-  my $method_link_species_set_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
-  my $genome_db_adaptor = $compara_dba->get_adaptor("GenomeDB");
-
-  my $method_link_species_sets;
-  my $all_genome_dbs = $genome_db_adaptor->fetch_all();
-  foreach my $this_genome_db (@$all_genome_dbs) {
-    next if ($this_genome_db->name ne $genome_db->name);
-    foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
-      $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
-          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs})} = $this_method_link_species_set;
-    }
-  }
-
-  print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
-  foreach my $this_method_link_id (sort {$a <=> $b} keys %$method_link_species_sets) {
-    last if ($this_method_link_id > 200); # Avoid non-genomic method_link_species_set
-    foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
-      printf "%8d: ", $this_method_link_species_set->dbID,;
-      print $this_method_link_species_set->method->type, " (",
-          join(",", map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs}), ")\n";
-    }
-  }
-
-}

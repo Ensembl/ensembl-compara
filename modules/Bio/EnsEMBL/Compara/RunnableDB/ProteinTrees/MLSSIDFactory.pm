@@ -83,16 +83,16 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $species_set     = $self->param_required('species_set');
+    my $genome_db_ids = $self->param_required('genome_db_ids');
 
-    while (my $genome_db_id1 = shift @{$species_set}) {
+    while (my $genome_db_id1 = shift @{$genome_db_ids}) {
         $self->make_dataflow_if_needed('ENSEMBL_PARALOGUES', [$genome_db_id1]);
 
         if ($self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id1)->is_polyploid) {
             $self->make_dataflow_if_needed('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
         }
         
-        foreach my $genome_db_id2 (@{$species_set}) {
+        foreach my $genome_db_id2 (@{$genome_db_ids}) {
             $self->make_dataflow_if_needed('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2]);
         }
     }

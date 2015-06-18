@@ -467,10 +467,8 @@ sub get_all_default_genome_dbs {
 
   if ($collection) {
     my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor();
-    my $ss = $ss_adaptor->fetch_all_by_tag_value("name", "collection-$collection");
-    die "Cannot find the collection '$collection'" unless scalar(@$ss);
-    die "There are several collections '$collection'" if scalar(@$ss) > 1;
-    return $ss->[0]->genome_dbs;
+    my $ss = $ss_adaptor->fetch_collection_by_name($collection);
+    return $ss->genome_dbs;
   }
 
   if (@$mlss_ids) {

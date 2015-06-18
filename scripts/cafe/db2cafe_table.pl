@@ -105,25 +105,21 @@ if ($compara_url) {
   $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
 }
 
-# Get all the adaptors
-my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
-my $tree_adaptor = $compara_dba->get_GeneTreeAdaptor();
-my $genomeDB_Adaptor = $compara_dba->get_GenomeDBAdaptor();
-
 # Get all the species for the mlss:
-my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($mlss);
-my $species_set = $method_link_species_set->species_set_obj->genome_dbs();
+my $method_link_species_set = $compara_dba->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($mlss);
+my $genome_dbs = $method_link_species_set->species_set_obj->genome_dbs();
 
-my @sps_set = @$species_set;
+my @sps_set = @$genome_dbs;
 if ($exclude_lcg) {
-  my $lcg = low_coverage_genomes();
-
-  @sps_set = grep {! is_in($_->taxon_id, $lcg)} @$species_set;
+  my $ss = $compara_dba->get_SpeciesSetAdaptor()->fetch_all_by_name('low-coverage')->[0];
+  my %in_ss = map {$_->dbID => 1} @{$ss->genome_dbs};
+  @sps_set = grep {!$in_ss{$_->dbID}} @$genome_dbs;
 }
 
 my @species_names = map {(split /_/, $_->name)[0]} @sps_set;
 
 # Get the number of members per family
+my $tree_adaptor = $compara_dba->get_GeneTreeAdaptor();
 my $all_trees = $tree_adaptor->fetch_all(-tree_type => 'tree', -method_link_species_set_id => $mlss, -clusterset_id => 'default');
 my $sth = $tree_adaptor->prepare('SELECT genome_db_id FROM gene_tree_node JOIN seq_member USING (seq_member_id) WHERE root_id = ?');
 print "FAMILYDESC\tFAMILY\t", join("\t", @species_names), "\n";
@@ -141,35 +137,3 @@ for my $tree (@$all_trees) {
   print join ("\t", @flds), "\n";
 }
 
-
-
-sub low_coverage_genomes {
-  my $sql1 = "select species_set_id from species_set_tag where value = 'low-coverage'";
-  my $sth1 = $compara_dba->dbc->prepare($sql1);
-  $sth1->execute();
-  my $ssid_row = $sth1->fetchrow_hashref;
-  my $ssid = $ssid_row->{species_set_id};
-  my $sql2 = "select genome_db_id from species_set where species_set_id = $ssid";
-  my $sth2 = $compara_dba->dbc->prepare($sql2);
-  $sth2->execute();
-  my $genomeDB_ids = $sth2->fetchall_arrayref;
-  my @db_ids = map {$_->[0]} @$genomeDB_ids;
-  my @taxon_ids = map {get_taxon_id_from_dbID($_)} @db_ids;
-  return \@taxon_ids;
-}
-
-sub is_in {
-  my ($item, $arref) = @_;
-  for my $el (@$arref) {
-    if ($item eq $el) {
-      return 1
-    }
-  }
-  return 0
-}
-
-sub get_taxon_id_from_dbID {
-  my ($dbID) = @_;
-  my $genomeDB = $genomeDB_Adaptor->fetch_by_dbID($dbID);
-  return $genomeDB->taxon_id();
-}
