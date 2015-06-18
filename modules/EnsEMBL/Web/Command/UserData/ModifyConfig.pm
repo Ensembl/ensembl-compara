@@ -20,7 +20,6 @@ package EnsEMBL::Web::Command::UserData::ModifyConfig;
 
 use strict;
 
-use Digest::MD5 qw(md5_hex);
 use Encode      qw(decode_utf8);
 use URI::Escape qw(uri_escape);
 
@@ -177,15 +176,9 @@ sub share {
   return unless $record;
   
   my @groups = $hub->param('group');
-  
-  if ($is_set) {
-    delete $record->{'records'};
-  } else {
-    $record->{'data'} = delete $record->{'raw_data'};
-  }
-  
-  my $checksum = md5_hex($adaptor->serialize_data($record));
-  
+
+  my $checksum = $adaptor->generate_checksum($record);
+
   if (scalar @groups) {
     my $user = $hub->user;
     

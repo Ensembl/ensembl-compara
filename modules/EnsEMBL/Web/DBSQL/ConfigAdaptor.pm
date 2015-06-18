@@ -94,11 +94,12 @@ sub _dbh_session {
 sub _dbh_user {
   return $DBH_USER if $DBH_USER and $DBH_USER->ping;
 
-  my $self = shift;
+  my $self  = shift;
+  my $hub   = $self->hub;
 
-  return unless $self->user_id; # only needed if user is present
+  return unless $hub->users_available;
 
-  my $db = $self->hub->species_defs->accounts_db;
+  my $db = $hub->species_defs->accounts_db;
 
   # try and get accounts db connection
   eval {
@@ -782,8 +783,8 @@ sub share {
     next unless $record;
     next if $group_id && !$group;
     next if !$group && $record_types{$record->{'record_type'}} eq $record->{'record_type_id'}; # Don't share with yourself
-    next if $checksum && md5_hex($self->serialize_data($record)) ne $checksum;
-    
+    next if $checksum && $self->generate_checksum($record) ne $checksum;
+
     my ($exists) = grep {
       !$_->{'active'}                                 &&
       $_->{'type'}        eq $record->{'type'}        &&
@@ -856,6 +857,11 @@ sub share_set {
     record_type_id => $record_types{$record_type},
     record_ids     => [ map get_db_id($_), @$record_keys ]
   );
+}
+
+sub generate_checksum {
+  my ($self, $record) = @_;
+  return md5_hex($self->serialize_data({ map {$_ => $record->{$_} || ''} qw(record_id record_type record_type_id servername site_type release_number) }));
 }
 
 sub set_cache_tags {
