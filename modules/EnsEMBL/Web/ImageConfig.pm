@@ -796,7 +796,7 @@ sub load_user_tracks {
 }
 
 sub _add_datahub {
-  my ($self, $menu_name, $url, $is_poor_name, $existing_menu) = @_;
+  my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $hide) = @_;
 
   return ($menu_name, {}) if $self->{'_attached_datahubs'}{$url};
 
@@ -827,7 +827,7 @@ sub _add_datahub {
       last if $node;
     }
     if ($node) {
-      $self->_add_datahub_node($node, $menu, $menu_name);
+      $self->_add_datahub_node($node, $menu, $menu_name, $hide);
 
       $self->{'_attached_datahubs'}{$url} = 1;
     } else {
@@ -839,7 +839,7 @@ sub _add_datahub {
 }
 
 sub _add_datahub_node {
-  my ($self, $node, $menu, $name) = @_;
+  my ($self, $node, $menu, $name, $hide) = @_;
   
   my (@next_level, @childless);
   if ($node->has_child_nodes) {
@@ -864,19 +864,26 @@ sub _add_datahub_node {
     my $config  = {};
     ## The only parameter we override from superTrack nodes is visibility
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
-      $config->{'visibility'} = $data->{'visibility'}; 
+      $config->{'visibility'} = $hide ? '' : $data->{'visibility'}; 
     }
     else {
       $config->{$_} = $data->{$_} for keys %$data;
+      $config->{'visibility'} = 'hide' if $hide;
     }
 
     while ($n = $n->parent_node) {
       $data = $n->data;
       if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
-        $config->{'visibility'} = $data->{'visibility'} if $data->{'visibility'}; 
+        if ($hide) {
+          $config->{'visibility'} = '';
+        }
+        elsif ($data->{'visibility'}) {
+          $config->{'visibility'} = $data->{'visibility'}; 
+        }
         last;
       }
       $config->{$_} ||= $data->{$_} for keys %$data;
+      $config->{'visibility'} = 'hide' if $hide;
     };
 
     $self->_add_datahub_tracks($node, \@childless, $config, $menu, $name);
@@ -1109,7 +1116,7 @@ sub load_file_format {
   return unless ($format eq 'datahub' || $self->can($function));
   
   my $internal = !defined $sources;
-     $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
+  $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
   
   foreach my $source_name (sort keys %$sources) {
     # get the target menu 
@@ -1137,7 +1144,7 @@ sub load_file_format {
     }
     if ($source) {
       if ($format eq 'datahub') {
-        $self->_add_datahub($source->{'source_name'}, $source->{'url'}, undef, $menu);
+        $self->_add_datahub($source->{'source_name'}, $source->{'url'}, undef, $menu, 1);
       }
       else { 
         my $is_internal = $source->{'source_url'} ? 0 : $internal;
