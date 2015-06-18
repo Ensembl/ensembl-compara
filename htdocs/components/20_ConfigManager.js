@@ -435,16 +435,11 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   },
   
   activateRecord: function (tr) {
-    var bg     = tr.css('backgroundColor');
-    var height = tr.height() + 'px';
-    var data   = this.params.records[tr.data('configId')];
-    
-    tr.siblings('.active').stop(true, true).removeClass('active').css('backgroundColor', '').find('.config_used').stop(true, true).hide();
-    
-    tr.addClass('active').delay(1000).animate({ backgroundColor: bg }, 1000, function () {
-      $(this).removeClass('active').css('backgroundColor', '');
-    }).find('.config_used').css({ height: height, lineHeight: height, width: tr.width() - 1, display: 'block' }).delay(1000).fadeOut(500);
-    
+    var data = this.params.records[tr.data('configId')];
+
+    tr.siblings('.active').stop(true, true).removeClass('active').find('.config_used').stop(true, true).hide();
+    tr.addClass('active').find('.config_used').show().delay(1000).fadeOut(500);
+
     this.updatePanels(data);
     
     if (data.codes.length) {
@@ -459,7 +454,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     var user         = this.elLk.editTypes.filter('.user');
     var sessionTable = session.find('table').dataTable();
     var userTable    = user.find('table').dataTable();
-    var saved        = $('<span class="icon_link sprite_disabled _ht save_icon" title="Saved">&nbsp;</span>').helptip();
+    var saved        = $('<span class="icon_link sprite sprite_disabled _ht save_icon" title="Saved">&nbsp;</span>').helptip();
     
     this.elLk.tables.find('tr').filter('.' + json.ids.join(', .')).find('a.save_icon').replaceWith(saved);
     

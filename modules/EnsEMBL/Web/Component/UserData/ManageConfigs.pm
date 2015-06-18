@@ -281,7 +281,7 @@ sub records_tables {
       '<div class="record_type %s"><h2>%s</h2>%s</div>',
       join(' ', $_, scalar @sorted ? () : 'hidden'),
       $headers->{$_},
-      $self->new_table($columns->{$_}, \@sorted, { data_table => 'no_sort no_col_toggle', exportable => 0, class => "fixed editable heightwrap_inside $_" })->render
+      $self->new_table($columns->{$_}, \@sorted, { data_table => 'no_sort no_col_toggle', exportable => 0, class => "config-list fixed editable heightwrap_inside $_" })->render
     );
   }
   
@@ -294,7 +294,7 @@ sub templates {
     editable => '<div><div class="height_wrap"><div class="val" title="Click here to edit">%s</div></div>%s<a href="%s" class="save"></a></div>',
     expand   => '<a class="icon_link _ht expand" title="See more details" href="%s">&#9660;</a><a class="icon_link _ht collapse hidden" title="Collapse" href="#">&#9650;</a>',
     icon     => '<a class="icon_link sprite _ht %s_icon %s" title="%s" href="%s">&nbsp;</a>%s',
-    disabled => '<span class="icon_link sprite_disabled _ht %s_icon" title="%s">&nbsp;</span>',
+    disabled => '<span class="icon_link sprite sprite_disabled _ht %s_icon" title="%s">&nbsp;</span>',
     add      => '<a class="add_to_set" href="#" rel="%s"><span class="removed _ht" title="Add to set">&nbsp;</span><span class="added _ht" title="Remove from set">&nbsp;</span></a>',
     list     => '<li class="%s"><span class="name">%s</span></li>',
     icon_col => { title => '', width => '16px', align => 'center' },
