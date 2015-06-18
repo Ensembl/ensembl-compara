@@ -155,7 +155,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->store_hmmprofile($self->param('hmm_file'), $self->param('gene_tree_id'));
+    $self->store_hmmprofile($self->param('hmm_file'), $self->param('protein_tree')->stable_id || $self->param('gene_tree_id'));
 }
 
 

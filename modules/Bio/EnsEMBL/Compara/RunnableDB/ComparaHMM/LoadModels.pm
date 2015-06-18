@@ -127,12 +127,12 @@ sub download_models {
 =cut
 
 sub store_hmmprofile {
-    my ($self, $multicm_file, $hmm_name, $consensus) = @_;
+    my ($self, $multicm_file, $hmm_model_id, $hmm_name, $consensus) = @_;
 
     $multicm_file ||= $self->param('cm_file_or_directory');
     print STDERR "Opening file $multicm_file\n" if ($self->debug());
     open MULTICM, $multicm_file or die "$!\n";
-    my ($name, $model_id) = ($hmm_name)x2;
+    my ($name, $model_id) = ($hmm_name, $hmm_model_id);
     my $profile_content;
 
     print STDERR "SKIP_CONSENSUS:", $self->param('skip_consensus'), "\n";
@@ -147,7 +147,7 @@ sub store_hmmprofile {
             $name = defined $hmm_name ? $hmm_name : $this_name;
         } elsif ($line =~ /^ACC/) {
             my ($tag, $accession) = split(/\s+/,$line);
-            $model_id = defined $hmm_name ? $hmm_name : $accession;
+            $model_id = defined $hmm_model_id ? $hmm_model_id : $accession;
         } elsif ($line =~ /^\/\//) {
             # End of profile, let's store it
             $self->throw("Error loading profile [$hmm_name, $name, $model_id]\n") unless (defined($model_id) && defined ($profile_content));
