@@ -164,7 +164,7 @@ sub retrieve {
   my @cookies;
 
   for (@_) {
-    my $cookie = $cookies->{delete $_->{'name'}} || undef;
+    my $cookie = $cookies->{$_->{'name'}} || undef;
     if ($cookie) {
       $cookie->_init($apache_handle, $_, 1) if keys %$_;
       if ($cookie->encrypted) {

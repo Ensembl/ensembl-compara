@@ -278,11 +278,12 @@ our %__species_aliases;
 ## Cookies and cookie encryption
 ###############################################################################
 
-our $ENSEMBL_USER_COOKIE      = 'ENSEMBL_WWW_USER';
-our $ENSEMBL_USER_ID          = 0;
-our $ENSEMBL_SESSION_COOKIE   = 'ENSEMBL_WWW_SESSION';
-our $ENSEMBL_COOKIEHOST       = '';
-                             
+our $ENSEMBL_USER_COOKIE        = 'ENSEMBL_WWW_USER';
+our $ENSEMBL_USER_COOKIEHOST    = '';
+our $ENSEMBL_SESSION_COOKIE     = 'ENSEMBL_WWW_SESSION';
+our $ENSEMBL_SESSION_COOKIEHOST = '';
+our $ENSEMBL_COOKIEHOST         = '';
+
 our $ENSEMBL_ENCRYPT_0        = 0x16a3b3; # Encryption keys for session
 our $ENSEMBL_ENCRYPT_1        = 'a9';     # Encryption keys for session
 our $ENSEMBL_ENCRYPT_2        = 'xX';     # Encryption keys for session
