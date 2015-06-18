@@ -27,9 +27,9 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
-  my $func = $self->hub->function;
-  
-  $self->$func();
+  my $func = sprintf 'mc_%s', $self->hub->function;
+
+  $self->$func() if $self->can($func);
 }
 
 sub edit_fields {
@@ -39,7 +39,7 @@ sub edit_fields {
   };
 }
 
-sub edit_details {
+sub mc_edit_details {
   my $self  = shift;
   my $hub   = $self->hub;
   my $param = $hub->param('param');
@@ -49,7 +49,7 @@ sub edit_details {
   print 'success' if $hub->config_adaptor->edit_details($hub->param('config_key'), $param, decode_utf8($hub->param('value')), $hub->param('is_set'));
 }
 
-sub save {
+sub mc_save {
   my $self        = shift;
   my $hub         = $self->hub;
   my $then        = $hub->param('then');
@@ -112,7 +112,7 @@ sub get_linked_configs {
   }
 }
 
-sub delete {
+sub mc_delete {
   my $self = shift;
   my $hub  = $self->hub;
   my $func = $hub->param('is_set') ? 'delete_set' : 'delete_config';
@@ -120,7 +120,7 @@ sub delete {
   print $self->jsonify({ func => 'deleteRecord' }) if $hub->config_adaptor->$func($hub->param('config_key'), $hub->param('link_key'));
 }
 
-sub activate {
+sub mc_activate {
   my $self = shift;
   my $hub  = $self->hub;
   my $func = $hub->param('is_set') ? 'activate_set' : 'update_active';
@@ -128,7 +128,7 @@ sub activate {
   print $self->jsonify({ func => 'activateRecord' }) if $hub->config_adaptor->$func($hub->param('config_key'));
 }
 
-sub edit_sets {
+sub mc_edit_sets {
   my $self       = shift;
   my $hub        = $self->hub;
   my $config_key = $hub->param('config_key');
@@ -139,7 +139,7 @@ sub edit_sets {
   print $self->jsonify({ func => 'updateTable', id => $config_key, editables => $update }) if $update;
 }
 
-sub add_set {
+sub mc_add_set {
   my $self        = shift;
   my $hub         = $self->hub;
   my @config_keys = $hub->param('config_key');
@@ -160,7 +160,7 @@ sub add_set {
   print $self->jsonify({ func => 'addTableRow', configKeys => [ $set_id ] }) if $set_id;
 }
 
-sub share {
+sub mc_share {
   my $self    = shift;
   my $hub     = $self->hub;
   my $referer = $hub->referer;
@@ -202,7 +202,7 @@ sub share {
   }
 }
 
-sub reset_all {
+sub mc_reset_all {
   my $self       = shift;
   my $hub        = $self->hub;
   my $adaptor    = $hub->config_adaptor;
