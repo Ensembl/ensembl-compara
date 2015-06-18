@@ -161,8 +161,8 @@ sub supporting_evidence_table {
         $has_data{'clin'} = 1;
       }
 
-      my ($indiv, $strain, $phen);
-      my ($indivs, $strains, $phens);
+      my ($sample, $strain, $phen);
+      my ($samples, $strains, $phens);
       
       # Phenotype
       foreach my $pf (sort {$a->seq_region_start <=> $b->seq_region_start} @{$ssv_obj->get_all_PhenotypeFeatures}) {
@@ -171,15 +171,15 @@ sub supporting_evidence_table {
         $has_data{'phen'} = 1;
       }
       
-      # Individual/strain
+      # Sample/strain
       foreach my $svs (@{$ssv_obj->get_all_StructuralVariationSamples}) {
         
-        my $a_indiv  = ($svs->individual) ? $svs->individual->name : undef;
+        my $a_sample  = ($svs->sample) ? $svs->sample->name : undef;
         my $a_strain = ($svs->strain) ? $svs->strain->name : undef;
         
-        if ($a_indiv) {
-          $indivs->{$a_indiv} = 1;
-          $has_data{'ind'} = 1;
+        if ($a_sample) {
+          $samples->{$a_sample} = 1;
+          $has_data{'sample'} = 1;
         }
         if ($a_strain) {
           $strains->{$a_strain} = 1;
@@ -187,7 +187,7 @@ sub supporting_evidence_table {
         }
       }
      
-      $indiv  = join(';<br />', sort (keys(%$indivs)));
+      $sample  = join(';<br />', sort (keys(%$samples)));
       $strain = join(';<br />', sort (keys(%$strains)));
       $phen   = join(';<br />', sort (keys(%$phens)));
       
@@ -197,7 +197,7 @@ sub supporting_evidence_table {
                   pos      => $loc,
                   copy     => $copy_number ? $copy_number : '-',
                   clin     => $clin ? $clin : '-',
-                  indiv    => $indiv ? $indiv : '-',
+                  sample   => $sample ? $sample : '-',
                   strain   => $strain ? $strain : '-',
                   bp_order => $bp_order ? $bp_order : '-',
                   phen     => $phen ? $phen : '-',
@@ -221,8 +221,8 @@ sub supporting_evidence_table {
       push(@$columns,{ key => 'clin',  sort => 'hidden_string', title => 'Clinical significance' });
     }
     
-    if ($has_data{'ind'}) {
-      push(@$columns, { key => 'indiv', sort => 'string', title => 'Individual name(s)'});
+    if ($has_data{'sample'}) {
+      push(@$columns, { key => 'sample', sort => 'string', title => 'Sample name(s)'});
     }
     
     if ($has_data{'phen'}) {  

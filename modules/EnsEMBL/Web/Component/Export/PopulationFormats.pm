@@ -60,7 +60,7 @@ sub content {
   
   $form->add_fieldset;
   
-  $form->add_notes({ class => undef, text => 'Dump of SNP data per individual (SNPs in rows, individuals in columns). For more advanced data queries use <a href="/biomart/martview">BioMart</a>.' });
+  $form->add_notes({ class => undef, text => 'Dump of SNP data per sample (SNPs in rows, samples in columns). For more advanced data queries use <a href="/biomart/martview">BioMart</a>.' });
   $form->add_notes({ class => undef, text => 'Please choose a format for your exported data' });
   $form->add_notes({ class => undef, list => \@list });
       

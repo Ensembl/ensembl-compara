@@ -463,11 +463,11 @@ sub _summarise_variation_db {
      elsif ($type eq 'DEFAULT'){ push (@default, $name); }
      elsif ($type eq 'LD'){ push (@ld, $name); } 
    }
-   $self->db_details($db_name)->{'tables'}{'individual.reference_strain'} = $reference;
+   $self->db_details($db_name)->{'tables'}{'sample.reference_strain'} = $reference;
    $self->db_details($db_name)->{'REFERENCE_STRAIN'} = $reference; 
-   $self->db_details($db_name)->{'meta_info'}{'individual.default_strain'} = \@default;
+   $self->db_details($db_name)->{'meta_info'}{'sample.default_strain'} = \@default;
    $self->db_details($db_name)->{'DEFAULT_STRAINS'} = \@default;  
-   $self->db_details($db_name)->{'meta_info'}{'individual.display_strain'} = \@display;
+   $self->db_details($db_name)->{'meta_info'}{'sample.display_strain'} = \@display;
    $self->db_details($db_name)->{'DISPLAY_STRAINS'} = \@display; 
    $self->db_details($db_name)->{'LD_POPULATIONS'} = \@ld;
 #---------- Add in strains contained in read_coverage_collection table
