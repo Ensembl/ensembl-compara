@@ -60,7 +60,7 @@ sub param_defaults {
     my $self = shift;
     return { %{ $self->SUPER::param_defaults },
              'cmd'              => '#noisy_exe# -s -v --seqtype P --cutoff #noisy_cutoff# #alignment_file#',
-             'output_file'      => '#gene_align_id#_out.fas',
+             'output_file'      => 'align.0_out.fas',
              'read_tags'        => 1,
              'runtime_tree_tag' => 'noisy_runtime', };
 }
