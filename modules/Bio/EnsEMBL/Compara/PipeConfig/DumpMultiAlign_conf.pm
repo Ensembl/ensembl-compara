@@ -176,7 +176,8 @@ sub pipeline_analyses {
 	{  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
 
-            -parameters    => {"cmd"=>"perl " . $self->o('dump_program') . " --species " . $self->o('species') . " --mlss_id " . $self->o('mlss_id') ." --coord_system " . "#coord_system# --masked_seq " . $self->o('masked_seq') . " --split_size " . $self->o('split_size') . " --output_format " . $self->o('format') . "  #extra_args#", 
+            -parameters    => {
+                               'cmd' => [ 'perl', $self->o('dump_program'), '--species', $self->o('species'), '--mlss_id', $self->o('mlss_id'), '--coord_system', '#coord_system#', '--masked_seq', $self->o('masked_seq'), '--split_size', $self->o('split_size'), '--output_format', '#format#' ],
 			       "reg_conf" => $self->o('reg_conf'),
 			       "db_urls" => $self->o('db_urls'),
 			       "compara_db" => $self->o('compara_db'),

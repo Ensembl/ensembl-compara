@@ -138,7 +138,7 @@ sub write_output {
                              'start'                 =>  $start_gab_id,
                              'end'                   =>  $end_gab_id,
                              'output_file'           =>  $output_file,
-                             'extra_args'            =>  " --skip_species $species --chunk_num $chunk",
+                             'extra_args'            =>  ['--skip_species', $species, '--chunk_num', $chunk],
                              'num_blocks'            =>  $this_num_blocks,
                              'dumped_output_file'    =>  $dump_output_file,
                              'coord_system'          =>  $coord_system,

@@ -84,7 +84,7 @@ sub write_output {
     #Write out cmd for DumpMultiAlign and a few other parameters 
     #used in downstream analyses 
     
-    my $extra_args = ""; #Need to put something here
+    my $extra_args = []; #Need to put something here
     my $output_ids = {
                      'coord_system'       => $coord_system_name,
                      'output_file'        => $output_file,

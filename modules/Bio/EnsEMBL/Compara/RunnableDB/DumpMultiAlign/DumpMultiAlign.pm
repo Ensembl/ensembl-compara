@@ -42,52 +42,44 @@ This RunnableDB module runs DumpMultiAlign jobs.
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign;
 
 use strict;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub run {
     my $self = shift;
 
     my $cmd = $self->param('cmd');
+    push @$cmd, @{$self->param('extra_args')};
 
     #append full path to output_file
     my $full_output_file = $self->param('output_dir') . "/" . $self->param('output_file');
-    $cmd .= " --output_file $full_output_file";
+    push @$cmd, '--output_file', $full_output_file;
 
     #Write a temporary file to store gabs to dump
     if ($self->param('start') && $self->param('end')) {
         my $tmp_file = $self->_write_gab_file();
-        $cmd .= " --file_of_genomic_align_block_ids " . $tmp_file;
+        push @$cmd, '--file_of_genomic_align_block_ids', $tmp_file;
 
         $self->param('tmp_file', $tmp_file);
     }
 
     #Convert compara_db into either a url or a name
     if ($self->param('compara_db') =~ /^mysql:\/\//) {
-	$cmd .= " --compara_url " . $self->param('compara_db');
+	push @$cmd, '--compara_url', $self->param('compara_db');
     } else {
-	$cmd .= " --dbname " . $self->param('compara_db');
+	push @$cmd, '--dbname', $self->param('compara_db');
     }
 
     #Convert db_urls into a string
     if ($self->param('db_urls')) {
 	my $str = join ",", @{$self->param('db_urls')};
-	$cmd .= (" --db '" . $str . "'");
+	push @$cmd, '--db', $str;
     }
 
     if ($self->param('reg_conf')) {
-	$cmd .= " --reg_conf " . $self->param('reg_conf');
+	push @$cmd, '--reg_conf', $self->param('reg_conf');
     }
 
-    #print "cmd $cmd \n";
-
-    #
-    #Run DumpMultiAlign cmd
-    #
-    $self->dbc->disconnect_if_idle;
-    if(my $return_value = system($cmd)) {
-        $return_value >>= 8;
-        die "system( $cmd ) failed: $return_value";
-    }
+    $self->SUPER::run();
 
     #
     #Check number of genomic_align_blocks written is correct
@@ -112,8 +104,8 @@ sub _healthcheck {
     my ($self) = @_;
     
     #Find out if split into several files
-    my $dump_cmd    = $self->param('extra_args');
-    my $chunk_num   = $dump_cmd =~ /chunk_num/;
+    #my $dump_cmd    = $self->param('extra_args');
+    #my $chunk_num   = $dump_cmd =~ /chunk_num/;
     my $output_file = $self->param('output_dir') . "/" . $self->param('output_file');
 
     #not split by chunk eg supercontigs so need to check all supercontig* files
