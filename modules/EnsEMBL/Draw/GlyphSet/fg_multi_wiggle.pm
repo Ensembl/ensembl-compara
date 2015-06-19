@@ -28,6 +28,10 @@ use base qw(EnsEMBL::Draw::GlyphSet::bigwig);
 sub label { return undef; }
 sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 
+## Override bigwig.pm with method from GlyphSet_wiggle_and_block, 
+## so that we can draw blocks!
+sub render_compact        { return $_[0]->_render; }
+
 # Lazy evaluation
 sub data_by_cell_line {
   my ($self,$config) = @_;
