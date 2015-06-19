@@ -98,6 +98,8 @@ sub fetch_input {
     
     my $filename = join '-',@filenames;
     $filename = $file_prefix . "." . $filename . "_" . $method_link_type;
+    $filename =~ s/[\(\)]+//g;
+    $filename =~ s/-/_/g;
     $self->param('filename', $filename);
 }
 

@@ -119,7 +119,6 @@ sub write_output {
 
     while (my $row = $sth->fetchrow_arrayref) {
 	my $output_file = $self->param('filename') . "." . $tag . $name . "." . $self->param('format');
-        $output_file=~s/[\(\)]+//g;
 
 	my $dump_output_file = $output_file;
 

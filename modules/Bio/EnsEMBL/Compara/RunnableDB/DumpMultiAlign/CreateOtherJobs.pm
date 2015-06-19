@@ -58,9 +58,7 @@ sub write_output {
 
     my $tag = "other";
 
-    my $output_file = $self->param('filename') . "." . $tag . "." . $self->param('format');
-    $output_file=~s/[\(\)]+//g;
-    $output_file=~s/-/_/g;
+    my $output_file = $self->param('filename') . "." . $tag;
 
     #Convert eg human to Homo sapiens
     #my $species_name = $reg->get_adaptor($self->param('species'), "core", "MetaContainer")->get_production_name;
@@ -129,9 +127,7 @@ sub write_output {
 		$this_num_blocks = (@$skip_genomic_align_blocks % $split_size);
 	    }
 
-	    my $this_suffix = "_" . $chunk . "." . $format;
-	    my $dump_output_file = $output_file;
-	    $dump_output_file =~ s/\.$format/$this_suffix/;
+	    my $dump_output_file = $output_file . "_" . $chunk . "." . $format;
 
             my $coord_system = ""; #Needs to be set to something to avoid errors in DumMultiAlign
 

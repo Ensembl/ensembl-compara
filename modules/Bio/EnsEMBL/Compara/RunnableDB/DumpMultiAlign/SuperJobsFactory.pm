@@ -93,17 +93,13 @@ sub write_output {
     my ($total_blocks) = $sth->fetchrow_array;
     
     my $tag         = $self->param('coord_system_name');
-    my $output_file = $self->param('filename') . "." . $tag . "." . $self->param('format');
-    $output_file    =~s/[\(\)]+//g;
+    my $output_file = $self->param('filename') . "." . $tag;
     
     my $format            = $self->param('format');
     my $coord_system_name = $self->param('coord_system_name');
     #This doesn't work because DumpMultiAlignment adds _1 to the output file and can create more if there are lots of supercontigs.
     #Since I create only one job, the compress will only start when all the chunks have been produced (if more than one) so I can use "*"
-    #my $this_suffix = "." . $format;
-    my $this_suffix       = "*" . "." . $format;
-    my $dump_output_file  = $output_file;
-    $dump_output_file     =~ s/\.$format/$this_suffix/;
+    my $dump_output_file  = $output_file . "*." . $format;
 	
     #Write out cmd for DumpMultiAlign and a few other parameters 
     #used in downstream analyses 

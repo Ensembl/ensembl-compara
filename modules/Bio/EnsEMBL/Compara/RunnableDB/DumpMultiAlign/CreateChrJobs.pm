@@ -102,10 +102,7 @@ sub write_output {
     }
 
     while (my $row = $sth->fetchrow_arrayref) {
-	my $output_file = $self->param('filename') . "." . $tag . $name . "." . $self->param('format');
-        $output_file=~s/[\(\)]+//g;
-        $output_file=~s/-/_/g;
-
+	my $output_file = $self->param('filename') . "." . $tag . $name;
 
 	my $num_chunks = ceil($total_blocks/$self->param('split_size'));
 
@@ -119,9 +116,7 @@ sub write_output {
 		$this_num_blocks = ($total_blocks - (($chunk-1)*$split_size));
 	    }
 
-	    my $this_suffix = "_" . $chunk . "." . $format;
-	    my $dump_output_file = $output_file;
-	    $dump_output_file =~ s/\.$format$/$this_suffix/;
+	    my $dump_output_file = $output_file . "_" . $chunk . "." . $format;
 
 	    #Write out cmd for DumpMultiAlign and a few other parameters 
 	    #used in downstream analyses 
