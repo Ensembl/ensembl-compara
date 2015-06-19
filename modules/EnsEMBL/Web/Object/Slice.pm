@@ -397,8 +397,9 @@ sub get_data {
       my $feature_type_name     = $reg_attr_fset->feature_type->name;
       my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $feature_type_name;
       my $focus_flag            = $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
-      
+
       $count++;
+      my $key = "$unique_feature_set_id:$count";
       
       next unless $data->{$cell_line}{$focus_flag}{'on'}{$feature_type_name};
       
@@ -413,8 +414,8 @@ sub get_data {
           my $obj = $reg_object->Obj;
           @block_features = grep $obj->has_attribute($_->dbID, 'annotated'), @block_features
         }
-        
-        $data->{$cell_line}{$focus_flag}{'block_features'}{"$unique_feature_set_id:$count"} = \@block_features if scalar @block_features;
+       
+        $data->{$cell_line}{$focus_flag}{'block_features'}{$key} = \@block_features if scalar @block_features;
       }
       
       if ($display_style eq 'tiling' || $display_style eq 'tiling_feature') {
@@ -424,15 +425,21 @@ sub get_data {
         if (scalar @$sset) {
           # There should only be one
           throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
-          
-          my $bigwig_path = $sset->[0]->dbfile_path;
-
-          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = $bigwig_path;
+        
+          push @result_sets, $sset->[0];
+          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = 1;  
         }
       }
     }
   }
 
+  foreach (@result_sets) { 
+    my $unique_feature_set_id = join ':', $_->cell_type->name, 
+                                          $_->feature_type->name, 
+                                          $_->dbID;
+    $data->{'wiggle_data'}{$unique_feature_set_id} = $_->dbfile_path;
+  }
+    
   $data->{'colours'} = \%feature_sets_on;
   
   return $data;
