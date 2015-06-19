@@ -23,7 +23,7 @@ package EnsEMBL::Draw::GlyphSet::fg_multi_wiggle;
 
 use strict;
 
-use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
+use base qw(EnsEMBL::Draw::GlyphSet::bigwig);
 
 sub label { return undef; }
 sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
@@ -79,7 +79,7 @@ sub draw_features {
   } @zmenu_links ];
 
   $self->{'will_draw_wiggle'} = $wiggle;
- 
+
   # First draw block features
   my $any_on = scalar keys %{$data->{$set}{'on'}};
   if ($peaks) {
@@ -152,49 +152,25 @@ sub process_wiggle_data {
   my (@all_features, $legend, @colours);
   
   foreach my $evidence_type (keys %$wiggle_data) {
-    my $result_set = $wiggle_data->{$evidence_type}; 
-    my @features   = @{$self->data_by_cell_line($config)->{'wiggle_data'}{$evidence_type}};
+    my $bigwig_file = $self->data_by_cell_line($config)->{'wiggle_data'}{$evidence_type}; 
+
+    $self->{_cache}->{_bigwig_adaptor} = Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor->new($bigwig_file);
+    my $features = $self->features(undef, $evidence_type);
     
-    next unless scalar @features > 0;
-    
+    next unless scalar @$features > 0;
     $data_flag = 1;
-    
-    my $wsize = $features[0]->window_size; 
-    my $start = 1 - $wsize; # Do this here so we minimize the number of calcs done in the loop
-    my $end   = 0;
-
-    @features = sort { $a->scores->[0] <=> $b->scores->[0] } @features;
-    
-    my ($f_min_score, $f_max_score) = @{$features[0]->get_min_max_scores};
-
-    if ($wsize == 0) {
-      $f_min_score = $features[0]->scores->[0]; 
-      $f_max_score = $features[-1]->scores->[0]; 
-    } else {
-      my @rfs;
-      
-      foreach my $rf (@features) {
-        for (0..$#{$rf->scores}){
-          $start += $wsize;
-          $end   += $wsize;
-          
-          push @rfs, { start => $start, end => $end, score => $rf->scores->[$_] };
-        }
-      }
-      
-      @features = @rfs;
-    }
-    
-    $min_score = $f_min_score if $f_min_score <= $min_score;
-    $max_score = $f_max_score if $f_max_score >= $max_score;
-
-    my $feature_name = $evidence_type;
-    my @temp         = split /:/, $feature_name;
-       $feature_name = $temp[1];
+  
+    foreach (@$features) {
+      $min_score = $_->{'score'} if $_->{'score'} <= $min_score;
+      $max_score = $_->{'score'} if $_->{'score'} >= $max_score;
+    } 
+ 
+    my @temp         = split /:/, $evidence_type;
+    my $feature_name = $temp[1]; 
     my $colour       = $colour_keys->{$feature_name}; 
     
     push @labels, $feature_name;
-    push @all_features, \@features;
+    push @all_features, $features;
     push @colours, $colour;
     
     $legend->{$feature_name} = $colour; 
@@ -202,7 +178,6 @@ sub process_wiggle_data {
 
   if ($data_flag == 1) {
     $max_score = 1 if $reg_view && $max_score <= 1;
-    
     $self->draw_wiggle(\@all_features, $min_score, $max_score, \@colours, \@labels,$zmenu_extra_content);
     
     # Add colours to legend
