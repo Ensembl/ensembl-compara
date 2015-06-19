@@ -220,10 +220,14 @@ sub _discrete_features {
 
 sub _draw_wiggle_points_as_line {
   my ($self, $c, $features) = @_;
+  return unless $features && $features->[0];
   my $slice_length = $self->{'container'}->length;
   my $discrete_features = $self->_discrete_features($features);
   if($discrete_features) {
     $features = [ sort { $a->start <=> $b->start } @$features ];
+  }
+  elsif (ref($features->[0]) eq 'HASH') {
+    $features = [ sort { $a->{'start'} <=> $b->{'start'} } @$features ];
   }
 
   my ($previous_x,$previous_y);
