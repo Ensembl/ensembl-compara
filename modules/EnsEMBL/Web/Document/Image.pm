@@ -296,9 +296,9 @@ sub add_image_export_menu {
 
   my ($menu, $print_header);
   my @formats = (
+      { f => 'png',     section => 'main',  label => 'PNG' },
       { f => 'pdf',     section => 'main',  label => 'PDF'},
       { f => 'svg',     section => 'main',  label => 'SVG' },
-      { f => 'png',     section => 'main',  label => 'PNG' },
       { f => 'gff',     section => 'main',  label => 'Text (GFF)', text => 1 },
       { f => 'png-5',   section => 'print', label => 'PNG (x5)' },
   );
