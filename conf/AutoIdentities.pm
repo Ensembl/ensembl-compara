@@ -7,8 +7,12 @@ $SiteDefs::ENSEMBL_IDENTITIES = [
   sub {
     my $host = Sys::Hostname::hostname;
     my @path = split(m!/!,$SiteDefs::ENSEMBL_SERVERROOT);
-    return [ map {"unix:$host:".join('/',@path[0..$_])} (1..$#path) ];
-  }
+    my @out;
+    foreach my $host (('',Sys::Hostname::hostname)) {
+      push @out,(map {"unix:$host:".join('/',@path[0..$_])} (1..$#path));
+    }
+    return \@out;
+  },
 ];
 
 1;
