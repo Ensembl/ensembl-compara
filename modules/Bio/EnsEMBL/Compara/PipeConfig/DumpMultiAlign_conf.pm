@@ -127,8 +127,7 @@ sub pipeline_analyses {
 	 {  -logic_name => 'initJobs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
             -parameters => {'species' => $self->o('species'),
-			    'dump_mlss_id' => $self->o('mlss_id'),
-			    'output_dir' => $self->o('output_dir'),
+			    'mlss_id' => $self->o('mlss_id'),
 			    'compara_db' => $self->o('compara_db'),
 			   },
             -input_ids => [ {} ],
@@ -154,7 +153,6 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs',
             -parameters    => {
                                'format' => $self->o('format'),
-			       'output_dir' => $self->o('output_dir'),
 			       'compara_db' => $self->o('compara_db'),
 			      },
 	    -flow_into => {
