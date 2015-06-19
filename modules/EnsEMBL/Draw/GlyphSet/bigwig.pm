@@ -130,12 +130,13 @@ sub bins {
 }
 
 sub features {
-  my $self          = shift;
+  my ($self, $bins, $cache_key) = @_;
+  $bins ||= $self->bins;
   my $slice         = $self->{'container'};
   my $fake_analysis = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
   my @features;
   
-  foreach (@{$self->wiggle_features($self->bins)}) {
+  foreach (@{$self->wiggle_features($bins, $cache_key)}) {
     push @features, {
       start    => $_->{'start'}, 
       end      => $_->{'end'}, 
@@ -197,32 +198,41 @@ sub gang_prepare {
 
 # get the alignment features
 sub wiggle_features {
-  my ($self, $bins) = @_;
+  my ($self, $bins, $multi_key) = @_;
   my $hub = $self->{'config'}->hub;
   my $has_chrs = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES});
   
-  if (!$self->{'_cache'}{'wiggle_features'}) {
+  my $wiggle_features = $multi_key ? $self->{'_cache'}{'wiggle_features'}{$multi_key} 
+                                   : $self->{'_cache'}{'wiggle_features'}; 
+
+  if (!$wiggle_features) {
     my $slice     = $self->{'container'};
     my $adaptor   = $self->bigwig_adaptor;
     return [] unless $adaptor;
+
     my $summary   = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
     my $bin_width = $slice->length / $bins;
     my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
-    my @features;
+    $wiggle_features = [];
     
     for (my $i = 0; $i < $bins; $i++) {
       next unless defined $summary->[$i];
-      push @features, {
+      push @$wiggle_features, {
         start => $flip ? $flip - (($i + 1) * $bin_width) : ($i * $bin_width + 1),
         end   => $flip ? $flip - ($i * $bin_width + 1)   : (($i + 1) * $bin_width),
         score => $summary->[$i],
       };
     }
-    
-    $self->{'_cache'}{'wiggle_features'} = \@features;
+  
+    if ($multi_key) {
+      $self->{'_cache'}{'wiggle_features'}{$multi_key} = $wiggle_features;
+    }
+    else {
+      $self->{'_cache'}{'wiggle_features'} = $wiggle_features;
+    }
   }
   
-  return $self->{'_cache'}{'wiggle_features'};
+  return $wiggle_features;
 }
 
 sub draw_features {
