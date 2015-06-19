@@ -78,7 +78,7 @@ sub write_output {
 	Bio::EnsEMBL::Registry->load_all();
     }
 
-    #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
+    #Note this is using the database set in $self->param('compara_db') rather than the underlying eHive database.
     my $compara_dba = $self->compara_dba;
 
     #Find chromosome names and numbers of genomic_align_blocks

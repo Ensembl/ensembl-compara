@@ -67,7 +67,7 @@ sub fetch_input {
 	}
     } # By default, we expect the genome_dbs to have a locator
 
-    #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
+    #Note this is using the database set in $self->param('compara_db') rather than the underlying eHive database.
     my $compara_dba       = $self->compara_dba;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my $genome_db         = $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
