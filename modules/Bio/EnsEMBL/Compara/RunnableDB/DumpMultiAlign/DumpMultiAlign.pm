@@ -83,15 +83,12 @@ sub run {
     #
     #Run DumpMultiAlign cmd
     #
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-
-    #$self->dbc->disconnect_if_idle;
+    $self->dbc->disconnect_if_idle;
     if(my $return_value = system($cmd)) {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
     }
 
-    $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();
     #
     #Check number of genomic_align_blocks written is correct
     # 
