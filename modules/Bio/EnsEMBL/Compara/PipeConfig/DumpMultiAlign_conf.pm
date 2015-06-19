@@ -91,7 +91,6 @@ sub default_options {
 	'masked_seq' => 1,
         'format' => 'emf',
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
-        'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/species_tree.ensembl.topology.nw",
 
     };
@@ -188,21 +187,7 @@ sub pipeline_analyses {
 			      },
 	   -hive_capacity => 15,
 	   -rc_name => '2GbMem',
-	    -flow_into => {
-	       '2->A' => [ 'emf2maf' ],
-	       'A->1' => [ 'compress' ]
-            }
-        },
-	{  -logic_name    => 'emf2maf',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
-            -parameters    => {"output_dir"=> $self->o('output_dir'), 
-			       "emf2maf_program" => $self->o('emf2maf_program'), 
-                           },
-	   -hive_capacity => 200,
-	   -rc_name => '2GbMem',
-	   -flow_into => {
-	       2 => [ 'compress' ],
-           }
+           -flow_into => [ 'compress' ],
         },
 	{  -logic_name    => 'compress',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Compress',

@@ -35,8 +35,7 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 
 =head1 DESCRIPTION
 
-This RunnableDB module runs DumpMultiAlign jobs. It creates emf2maf jobs if
-necessary and compression jobs
+This RunnableDB module runs DumpMultiAlign jobs.
 
 =cut
 
@@ -107,16 +106,6 @@ sub write_output {
     #delete tmp file
     unlink($self->param('tmp_file'));
 
-    #
-    #Create emf2maf job if necesary
-    #
-    if ($self->param('num_blocks') != 0) {
-	my $output_ids = {'output_file'=>$self->param('dumped_output_file'),
-			  'num_blocks' =>$self->param('num_blocks')};
-
-	$self->dataflow_output_id($output_ids, 2);
-
-    } 
 }
 
 #

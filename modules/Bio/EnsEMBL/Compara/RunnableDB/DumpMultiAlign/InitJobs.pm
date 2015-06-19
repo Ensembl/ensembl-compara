@@ -106,8 +106,7 @@ sub write_output {
     my $self = shift @_;
 
     #
-    #Pass on input_id and add on new parameters: multi-align mlss_id, filename,
-    #emf2maf
+    #Pass on input_id and add on new parameters: multi-align mlss_id, filename
     #
     #my $output_ids = $self->input_id;
     my $output_ids;
