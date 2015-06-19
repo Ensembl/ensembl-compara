@@ -92,7 +92,6 @@ sub default_options {
         'format' => 'emf',
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
         'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
-	'maf_output_dir' => "",
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/species_tree.ensembl.topology.nw",
 
     };
@@ -132,7 +131,6 @@ sub pipeline_analyses {
 			    'dump_mlss_id' => $self->o('mlss_id'),
 			    'output_dir' => $self->o('output_dir'),
 			    'compara_db' => $self->o('compara_db'),
-			    'maf_output_dir' => $self->o('maf_output_dir'), #define if want to run emf2maf 
 			   },
             -input_ids => [ {} ],
             -flow_into => {
@@ -140,7 +138,6 @@ sub pipeline_analyses {
                 '3->A' => [ 'createSuperJobs' ],
                 '4->A' => [ 'createOtherJobs' ],
 		'A->1' => [ 'md5sum'],
-		5 => [ 'md5sum'], #if defined maf_output_dir
             },
         },
 	 {  -logic_name    => 'createChrJobs',
@@ -188,7 +185,6 @@ sub pipeline_analyses {
 			       "output_dir"=> $self->o('output_dir'),
 			       "output_file"=>"#output_file#" , 
 			       "format" => $self->o('format'), 
-			       "maf_output_dir" => $self->o('maf_output_dir'),
 			      },
 	   -hive_capacity => 15,
 	   -rc_name => '2GbMem',
@@ -201,7 +197,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
             -parameters    => {"output_dir"=> $self->o('output_dir'), 
 			       "emf2maf_program" => $self->o('emf2maf_program'), 
-			       "maf_output_dir" => $self->o('maf_output_dir')},
+                           },
 	   -hive_capacity => 200,
 	   -rc_name => '2GbMem',
 	   -flow_into => {

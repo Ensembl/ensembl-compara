@@ -72,19 +72,6 @@ sub run {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
     }
-
-    #
-    #If maf_output_dir defined, move maf file from emf directory to maf
-    #directory
-    #
-    if ($self->param('maf_output_dir')) {
-	my $mv_cmd = "mv " . $self->param('output_dir') . "/" . $self->param('output_file') . ".gz " . $self->param('maf_output_dir');
-	if(my $return_value = system($mv_cmd)) {
-	    $return_value >>= 8;
-	    die "system( $cmd ) failed: $return_value";
-	}
-    }
-
 }
 
 sub write_output {

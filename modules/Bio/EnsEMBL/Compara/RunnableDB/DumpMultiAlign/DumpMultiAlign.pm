@@ -111,7 +111,6 @@ sub write_output {
     #Create emf2maf job if necesary
     #
     if ($self->param('num_blocks') != 0) {
-    #if ($self->param('maf_output_dir')) {
 	my $output_ids = {'output_file'=>$self->param('dumped_output_file'),
 			  'num_blocks' =>$self->param('num_blocks')};
 
