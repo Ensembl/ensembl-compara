@@ -58,7 +58,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::LoadDnaFragRegion;
 use strict;
 use Data::Dumper;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
+use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

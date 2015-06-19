@@ -136,6 +136,7 @@ sub store {
 
   assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet');
 
+  #FIXME: $store_components_first should be used for the method as well
   my $method            = $mlss->method()           or die "No Method defined, cannot store\n";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
@@ -173,8 +174,6 @@ sub store {
         my $val = $helper->transaction(
             -RETRY => 3,
             -CALLBACK => sub {
-                #eval {$self->dbc->do('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')};
-                #die $@ if $@ and not $@ =~ m/row-based logging/;
                 my $sth2 = $self->prepare("INSERT INTO method_link_species_set $columns SELECT
                     IF(
                         MAX(method_link_species_set_id) = $max_mlss_id,
@@ -257,17 +256,17 @@ sub _objs_from_sth {
             my $species_set_obj = $species_set_hash->get($species_set_id) or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
 
             if($method and $species_set_obj) {
-                my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-                    -adaptor            => $self,
-                    -dbID               => $dbID,
+                my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast( {
+                    adaptor            => $self,
+                    dbID               => $dbID,
                     
-                    -method             => $method,
-                    -species_set_obj    => $species_set_obj,
+                    method             => $method,
+                    species_set        => $species_set_obj,
 
-                    -name               => $name,
-                    -source             => $source,
-                    -url                => $url,
-                );
+                    name               => $name,
+                    source             => $source,
+                    url                => $url,
+                } );
                 push @mlss_list, $mlss;
             }
     }
@@ -578,7 +577,7 @@ sub fetch_by_method_link_type_species_set_name {
     my ($self, $method_link_type, $species_set_name) = @_;
 
     my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
-    my $all_species_sets = $species_set_adaptor->fetch_all_by_tag_value('name', $species_set_name);
+    my $all_species_sets = $species_set_adaptor->fetch_all_by_name($species_set_name);
 
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
 

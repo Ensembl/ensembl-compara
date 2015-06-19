@@ -19,7 +19,6 @@ limitations under the License.
 package Bio::EnsEMBL::Compara::Production::EPOanchors::HMMer::ChunkDnafrags;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Hive::Utils 'stringify';
 use Data::Dumper;
 

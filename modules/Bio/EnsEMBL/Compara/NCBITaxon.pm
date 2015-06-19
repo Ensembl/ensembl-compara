@@ -22,21 +22,24 @@ Bio::EnsEMBL::Compara::NCBITaxon
 
 =head1 DESCRIPTION
 
-  An object that hold a node within a taxonomic tree.  Inherits from NestedSet.
+Attributes:
+  - taxon_id()
+  - rank()
 
-  From Bio::Species
-   classification
-   common_name
-   binomial
+Names:
+  - scientific_name()
+  - common_name()
+  - ensembl_alias_name()
+  - short_name()
+  - get_short_name()
 
-  Here are also the additional methods in Bio::Species that "might" be useful, but let us
-  forget about these for now.
-   genus
-   species
-   sub_species
-   variant
-   organelle
-   division
+Only for species level and below
+  - genus()
+  - species()
+  - subspecies()
+
+Others:
+  - classification()
 
 =head1 CONTACT
 
@@ -410,24 +413,10 @@ sub binomial {
   }
 }
 
-=head2 ensembl_alias
-
-  Example    : $ncbi->ensembl_alias;
-  Description: The ensembl_alias name (AKA the name in the ensembl website) of this genome
-  Returntype : string
-  Exceptions : warns when node is not a species or has no ensembl_alias
-  Caller     : general
-
-=cut
-
-sub ensembl_alias {
+sub ensembl_alias { ## DEPRECATED
   my $self = shift;
-  if ($self->has_tag('ensembl alias name')) {
-    return $self->get_tagvalue('ensembl alias name');
-  } else {
-    warning("taxon_id=",$self->node_id," is not a species or subspecies. So ensembl_alias is undef\n");
-    return undef;
-  }
+  deprecate('NCBITaxon::ensembl_alias() is deprecated in favour of ensembl_alias_name(), and will be removed in e82');
+  return $self->ensembl_alias_name;
 }
 
 

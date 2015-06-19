@@ -225,6 +225,7 @@ my $from_dba = get_DBAdaptor($from_url, $from_reg_name);
 my $from_ga_adaptor = $from_dba->get_GenomicAlignAdaptor();
 my $from_cs_adaptor = $from_dba->get_ConservationScoreAdaptor();
 my $from_ce_adaptor = $from_dba->get_ConstrainedElementAdaptor();
+my $from_sr_adaptor = $from_dba->get_SyntenyRegionAdaptor();
 
 print "\n\n";   # to clear from possible warnings
 
@@ -233,6 +234,7 @@ my %type_to_adaptor = (
                        'BLASTZ_NET'             => $from_ga_adaptor,
                        'TRANSLATED_BLAT_NET'    => $from_ga_adaptor,
                        'LASTZ_PATCH'            => $from_ga_adaptor,
+                       'SYNTENY'                => $from_sr_adaptor,
                        'EPO'                    => $from_ga_adaptor,
                        'EPO_LOW_COVERAGE'       => $from_ga_adaptor,
                        'PECAN'                  => $from_ga_adaptor,
@@ -282,7 +284,7 @@ my @all_method_link_species_sets = values %all_mlss_objects;
 print "\n-------------------------------\nWill be adding a total of ".scalar(@all_method_link_species_sets)." MLSS objects\n";
 
 if($dry_run) {
-    print "\n\t*** This is the dry_run mode. Please remove the --dry_run flag if you want the script to copy anything\n";
+    print "\n\t*** This is the dry_run mode. Please remove the --dry_run flag if you want the script to copy anything\n\n";
 }
 
 my $ini_re_enable = $re_enable;
@@ -304,7 +306,7 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             "SELECT stn.* " .
             " FROM species_tree_node stn" .
             " JOIN species_tree_root str using(root_id)" .
-            " WHERE str.method_link_species_set_id = $mlss_id");
+            " WHERE str.method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy the species_tree_root data if present
   copy_data($from_dba, $to_dba,
@@ -312,7 +314,7 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             undef, undef, undef,
             "SELECT * " .
             " FROM species_tree_root" .
-            " WHERE method_link_species_set_id = $mlss_id");
+            " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
   copy_data($from_dba, $to_dba,
@@ -320,14 +322,16 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
 	  undef, undef, undef,
 	  "SELECT method_link_species_set_id, tag, value" .
 	  " FROM method_link_species_set_tag " .
-	  " WHERE method_link_species_set_id = $mlss_id");
+	  " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
 
   if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
     copy_genomic_align_blocks($from_dba, $to_dba, $method_link_species_set);
   } elsif ($class =~ /^ConservationScore.conservation_score/) {
     copy_conservation_scores($from_dba, $to_dba, $method_link_species_set);
   } elsif ($class =~ /^ConstrainedElement.constrained_element/) {
-    copy_constrained_elements($from_dba, $to_dba, $mlss_id);
+    copy_constrained_elements($from_dba, $to_dba, $method_link_species_set);
+  } elsif ($class =~ /^SyntenyRegion.synteny/) {
+    copy_synteny_regions($from_dba, $to_dba, $method_link_species_set);
   } else {
     print " ** ERROR **  Copying data of class $class is not supported yet!\n";
     exit(1);
@@ -485,7 +489,7 @@ sub copy_genomic_align_blocks {
 
   exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild, assembly_default", "genome_db_id IN ($gdb_ids)" );
   #ignore ancestral dnafrags, will add those later
-  if (!check_table("dnafrag", $from_dba, $to_dba, undef, "genome_db_id != 63")) {
+  if (!check_table("dnafrag", $from_dba, $to_dba, undef, "genome_db_id != 63 AND genome_db_id IN ($gdb_ids)")) {
       $fix_dnafrag = 1;
       if ($fix_dnafrag && !$trust_to) {
           print " To fix the dnafrags in the genomic_align table, you can use the trust_to flag\n\n";
@@ -931,11 +935,17 @@ sub copy_conservation_scores {
 =cut
 
 sub copy_constrained_elements {
-  my ($from_dba, $to_dba, $mlss_id) = @_;
+  my ($from_dba, $to_dba, $method_link_species_set) = @_;
 
+  my $gab_mlss_id = $method_link_species_set->get_value_for_tag('msa_mlss_id');
+  if (!$gab_mlss_id) {
+    print " ** ERROR **  Needs a 'msa_mlss_id' entry in the method_link_species_set_tag table!\n";
+    exit(1);
+  }
   exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
-      "method_link_species_set_id = $mlss_id");
+      "method_link_species_set_id = $gab_mlss_id");
 
+  my $mlss_id = $method_link_species_set->dbID;
   my $lower_limit = $mlss_id * 10**10;
   my $upper_limit = ($mlss_id + 1) * 10**10;
 
@@ -1014,6 +1024,41 @@ sub copy_constrained_elements {
 		$step);
   }
 }
+
+=head2 copy_synteny_regions
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $this_mlss
+
+  Description : copies SyntenyRegions for this MethodLinkSpeciesSet.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_synteny_regions {
+    my ($from_dba, $to_dba, $mlss) = @_;
+
+    my $to_sra = $to_dba->get_SyntenyRegionAdaptor;
+    my $existing_synteny_regions = $to_sra->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    if (my $count = scalar(@$existing_synteny_regions)) {
+        print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
+            " ** ERROR **  synteny_region table with the MLSS_ID ".($mlss->dbID)."\n";
+        exit(1);
+    }
+    # No concept of dry_run with synteny_regions
+    return if $dry_run;
+
+    # There is usually not much data, so using the API is fine
+    my $all_synteny_regions = $from_dba->get_SyntenyRegionAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    foreach my $synteny_region (@$all_synteny_regions) {
+        # No dbID to fix, we just let the AUTO_INCREMENT do its magic
+        $synteny_region->dbID(undef);
+        $to_sra->store($synteny_region);
+    }
+}
+
 
 =head2 copy_data
 
@@ -1103,35 +1148,40 @@ sub copy_data_in_text_mode {
     my $start_time = time();
     my $end = $start + $step - 1;
     my $sth;
+    my $sth_attribs = { 'mysql_use_result' => 1 };
+
     #print "start $start end $end\n";
     if (!$use_limit) {
-        $sth = $from_dba->dbc->prepare($query." AND $index_name BETWEEN $start AND $end");
+        $sth = $from_dba->dbc->prepare( $query." AND $index_name BETWEEN $start AND $end", $sth_attribs );
     } else {
-        $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
+        $sth = $from_dba->dbc->prepare( $query." LIMIT $start, $step", $sth_attribs );
     }
     $start += $step;
     $sth->execute();
-    my $all_rows = $sth->fetchall_arrayref;
-    $sth->finish;
-    #print "start $start end $end $max_id rows " . @$all_rows . "\n";
+    my $first_row = $sth->fetchrow_arrayref;
 
     ## EXIT CONDITION
     if ($patch_merge) {
 	#case in my patches db where the genomic_align_block_ids are not consecutive
-        return if ($end > ($max_id||0) && !@$all_rows);
+        return if ($end > ($max_id||0) && !$first_row);
 
-        next if (!@$all_rows);
+        next if (!$first_row);
     } else {
-        return if (!@$all_rows);
+        return if (!$first_row);
     } 
 
     my $time=time(); 
     my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
     open(TEMP, ">$filename") or die "could not open the file '$filename' for writing";
-    foreach my $this_row (@$all_rows) {
+    print TEMP join("\t", map {defined($_)?$_:'\N'} @$first_row), "\n";
+    my $nrows = 1;
+    while(my $this_row = $sth->fetchrow_arrayref) {
       print TEMP join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
+      $nrows++;
     }
     close(TEMP);
+    $sth->finish;
+    #print "start $start end $end $max_id rows $nrows\n";
     #print "FILE $filename\n";
     #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
     system("mysqlimport -h$host -P$port -u$user ".($pass ? "-p$pass" : '')." -L -l -i $dbname $filename");

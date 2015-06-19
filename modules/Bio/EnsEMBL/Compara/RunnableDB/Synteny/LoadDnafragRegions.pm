@@ -38,92 +38,79 @@ Bio::EnsEMBL::Compara::RunnableDB::Synteny::BuildSynteny
 
 package Bio::EnsEMBL::Compara::RunnableDB::Synteny::LoadDnafragRegions;
 
+use strict;
 use warnings;
-use Data::Dumper;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+use Bio::EnsEMBL::Utils::IO qw/iterate_file/;
+
+use Bio::EnsEMBL::Compara::SyntenyRegion;
+use Bio::EnsEMBL::Compara::DnaFragRegion;
 
 
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data from the database
-    Returns :   none
-    Args    :   none
-
-=cut
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
-  my( $self) = @_;
-  return 1;
+    my $self = shift;
+
+    my $synteny_mlss_id = $self->param_required('synteny_mlss_id');
+    my $synteny_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($synteny_mlss_id);
+    $self->param('synteny_mlss', $synteny_mlss);
+
+    my $existing_synteny_regions = $self->compara_dba->get_SyntenyRegionAdaptor->fetch_all_by_MethodLinkSpeciesSet($synteny_mlss);
+    die "There are already some SyntenyRegions for the MLSS $synteny_mlss_id in the database\n" if scalar(@$existing_synteny_regions);
 }
 
-=head2 run
-
-    Title   :   run
-    Usage   :   $self->run
-    Function:   runs something
-    Returns :   none
-    Args    :   none
-
-=cut
 
 sub run {
-  my( $self) = @_;
-  my $compara_name = "compara";
-  $self->param('pipeline_db');
-  my $worker_dir = $self->worker_temp_directory; 
+    my $self = shift;
 
-  my $loc_cmd = "perl $ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/make_reg_from_locator.pl -no_print_ret 1 -url " . $self->param('compara_url');
-  open(LOC, "$loc_cmd |");
+    my $synteny_mlss_id = $self->param('synteny_mlss_id');
+    my $qy_species = $self->param_required('ref_species');
+    my ($gdb1, $gdb2) = @{$self->param('synteny_mlss')->species_set_obj->genome_dbs()};
+    my ($qy_gdb, $tg_gdb) = $gdb1->name eq $qy_species ? ($gdb1,$gdb2) : ($gdb2,$gdb1);
 
-  my $tmp_file =  $worker_dir . 'reg_conf';
-print $tmp_file, " ***\n";
-  open(IN, ">$tmp_file") or die "cant open $tmp_file for writing\n$!\n\n";
-  while(<LOC>){
-   print IN $_;
-  }
-  close(LOC);
-  print IN "\n######\nnew Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(\n"; 
-  while(my($key, $value) = each %{ $self->param('pipeline_db') }){
-   print IN "  $key => \"$value\",\n";
-  }
-  print IN "  -species => \"$compara_name\",);\n1;\n";
-  close(IN);
-  my $reg = "Bio::EnsEMBL::Registry";
-  $reg->load_all("$tmp_file");
-  my $non_ref_species;
-  my $genome_db_adaptor = $reg->get_adaptor("$compara_name", "compara", "GenomeDB");
-  foreach my $genome_db(@{ $genome_db_adaptor->fetch_all }){
-   unless ($self->param('ref_species') eq $genome_db->name){
-    $non_ref_species = $genome_db->name;
-   }
-  }
-  my $cmd = "perl $ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/synteny/LoadSyntenyData.pl --reg_conf $tmp_file" . 
-            " --dbname $compara_name -ref \"" . $self->param('ref_species') . "\" -nonref \"$non_ref_species\" " .
-            " -synteny_mlss_id 10109 " . " " . $self->param('input_file');
-            #" -mlss_id " . $self->param('synteny_mlss_id') . " " . $self->param('input_file');
-  system("$cmd");
-}
+    my $dfa = $self->compara_dba->get_DnaFragAdaptor();
+    my $sra = $self->compara_dba->get_SyntenyRegionAdaptor();
 
+    my $line_number = 1;
+    my $filename = $self->param_required('input_file');
+    iterate_file($filename, sub {
+        my $line= shift;
+        chomp $line;
+        if ($line =~ /^(\S+)\t.*\t.*\t(\d+)\t(\d+)\t.*\t(-1|1)\t.*\t(\S+)\t(\d+)\t(\d+)$/) {#####This will need to be changed
+            my ($qy_chr,$qy_start,$qy_end,$rel,$tg_chr,$tg_start,$tg_end) = ($1,$2,$3,$4,$5,$6,$7);
 
+            my $qy_dnafrag = $dfa->fetch_by_GenomeDB_and_name($qy_gdb, $qy_chr);
+            my $tg_dnafrag = $dfa->fetch_by_GenomeDB_and_name($tg_gdb, $tg_chr);
 
+            # print STDERR "1: $qy_chr, 2: $tg_chr, qy_end: " .$qy_dnafrag->end.", tg_end: ". $tg_dnafrag->end."\n";
 
-=head2 write_output
+            my $qy_dfr = new Bio::EnsEMBL::Compara::DnaFragRegion(
+                -DNAFRAG_ID     => $qy_dnafrag->dbID,
+                -DNAFRAG_START  => $qy_start,
+                -DNAFRAG_END    => $qy_end,
+                -DNAFRAG_STRAND => 1,
+            );
+            my $tg_dfr = new Bio::EnsEMBL::Compara::DnaFragRegion(
+                -DNAFRAG_ID     => $tg_dnafrag->dbID,
+                -DNAFRAG_START  => $tg_start,
+                -DNAFRAG_END    => $tg_end,
+                -DNAFRAG_STRAND => $rel,
+            );
 
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   stores something
-    Returns :   none
-    Args    :   none
+            my $sr = new Bio::EnsEMBL::Compara::SyntenyRegion(
+                -REGIONS                     => [$qy_dfr, $tg_dfr],
+                -METHOD_LINK_SPECIES_SET_ID  => $synteny_mlss_id,
+            );
 
-=cut
+            $sra->store($sr);
 
-sub write_output {
-  my( $self) = @_;
-  return 1;
+            print STDERR "synteny region line number $line_number loaded\n";
+            $line_number++;
+        } else {
+            die "The input file '$filename' has a wrong format at line $line_number\n";
+        }
+    });
 }
 
 

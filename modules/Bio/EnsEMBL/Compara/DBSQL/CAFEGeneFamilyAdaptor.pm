@@ -45,10 +45,13 @@ package Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor;
 use strict;
 use warnings;
 
+use DBI qw(:sql_types);
+
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::CAFEGeneFamily;
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor');
 
@@ -62,24 +65,14 @@ sub fetch_all {
 sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;
 
-    return undef unless (defined $geneTree);
-    assert_ref($geneTree, 'Bio::EnsEMBL::Compara::GeneTree');
+    assert_ref_or_dbID($geneTree, 'Bio::EnsEMBL::Compara::GeneTree', 'geneTree');
 
-    my $node_id = $geneTree->root_id();
-    return $self->fetch_by_gene_tree_root_id($node_id);
+    my $constraint = 'cgf.gene_tree_root_id = ?';
+    $self->bind_param_generic_fetch($geneTree->root_id(), SQL_INTEGER);
+
+    return $self->generic_fetch_one($constraint);
 }
 
-sub fetch_by_gene_tree_root_id {
-    my ($self, $gene_tree_root_id) = @_;
-
-    unless (defined $gene_tree_root_id) {
-        throw("gene_tree_root_id must be defined");
-    }
-    my $constraint = "cgf.gene_tree_root_id=$gene_tree_root_id";
-
-    return $self->generic_fetch($constraint)->[0];
-
-}
 
 sub fetch_all_by_method_link_species_set_id {
     my ($self, $mlss_id) = @_;

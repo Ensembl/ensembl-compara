@@ -103,7 +103,7 @@ sub store {
 
     my $dbID = $species_set->dbID;
         # Could we have a species_set in the DB with the given contents already?
-    if ( my $stored_ss = scalar(@$genome_dbs) && $self->fetch_by_GenomeDBs( $genome_dbs ) ) {
+    if ( my $stored_ss = $self->fetch_by_GenomeDBs( $genome_dbs ) ) {
         my $stored_dbID = $stored_ss->dbID;
         if($dbID and $dbID!=$stored_dbID) {
             die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)\n";
@@ -188,11 +188,11 @@ sub _objs_from_sth {
     my @ss_list;
     while (my ($species_set_id, $species_set_contents) = each %ss_content_hash) {
         unless($ss_incomplete{$species_set_id}) {
-            push @ss_list, Bio::EnsEMBL::Compara::SpeciesSet->new(
-                -genome_dbs => $species_set_contents,
-                -dbID       => $species_set_id,
-                -adaptor    => $self,
-            );
+            push @ss_list, Bio::EnsEMBL::Compara::SpeciesSet->new_fast( {
+                genome_dbs => $species_set_contents,
+                dbID       => $species_set_id,
+                adaptor    => $self,
+            } );
         }
     }
 
@@ -229,7 +229,7 @@ sub fetch_all_by_tag {
 
   Arg [1]     : string $tag
   Arg [2]     : string $value
-  Example     : my $species_set = $species_set_adaptor->fetch_by_tag_value('name', 'primates');
+  Example     : my $species_set = $species_set_adaptor->fetch_by_tag_value('color', 'red');
   Description : Fetches the SpeciesSet object with that tag-value pair. If more than one
                 species_set exists with this tag-value pair, returns the species_set
                 with the largest species_set_id
@@ -268,6 +268,26 @@ sub fetch_by_GenomeDBs {
 }
 
 
+=head2 fetch_all_by_name
+
+  Arg [1]     : string $species_set_name
+  Example     : my $species_sets = $species_set_adaptor->fetch_all_by_name('mammals');
+  Description : Fetches the "collection" SpeciesSet object with that name
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : thrown if $species_set_name is missing
+  Caller      : general
+
+=cut
+
+sub fetch_all_by_name {
+    my ($self, $species_set_name) = @_;
+
+    throw('$species_set_name is required') unless $species_set_name;
+
+    return $self->_id_cache->get_all_by_additional_lookup('name', $species_set_name);
+}
+
+
 
 ###########################################
 # Interface for "collection" species sets #
@@ -289,7 +309,7 @@ sub fetch_collection_by_name {
 
     throw('$collection is required') unless $collection;
 
-    my $all_ss = $self->fetch_all_by_tag_value("name", "collection-$collection");
+    my $all_ss = $self->fetch_all_by_name("collection-$collection");
 
     if (scalar(@$all_ss) == 0) {
         warn "cannot find the collection '$collection'\n";
@@ -378,6 +398,7 @@ sub compute_keys {
     my ($self, $ss) = @_;
     return {
         genome_db_ids => Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::_ids_string($ss->genome_dbs),
+        $ss->has_tag('name') ? (name => $ss->get_value_for_tag('name')) : (),
         (map {sprintf('has_tag_%s', lc $_) => 1} $ss->get_all_tags()),
         (map {sprintf('tag_%s', lc $_) => lc $ss->get_value_for_tag($_)} $ss->get_all_tags()),
     }

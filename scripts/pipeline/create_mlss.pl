@@ -234,13 +234,11 @@ if (!$method_link_type) {
 
 if ($collection) {
   my $ssa = $compara_dba->get_SpeciesSetAdaptor();
-  my $ss = $ssa->fetch_all_by_tag_value('name', "collection-$collection");
-  if (scalar(@$ss) == 0) {
-    die "Cannot find the collection '$collection'";
-  } elsif (scalar(@$ss) > 1) {
-    die "There are multiple collections '$collection'";
-  }
-  @input_genome_db_ids = map {$_->dbID} (grep {not $_->genome_component}  @{$ss->[0]->genome_dbs});
+  my $ss = $ssa->fetch_collection_by_name($collection);
+  # For ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES we need to exclude the
+  # component genome_dbs because they are only temporary for production
+  my $gdbs = ($pairwise or $singleton) ? [grep {not $_->genome_component}  @{$ss->genome_dbs}] : $ss->genome_dbs;
+  @input_genome_db_ids = map {$_->dbID} @$gdbs;
 }
 
 my @new_input_genome_db_ids;
@@ -385,7 +383,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   }
   
   my $method = $ma->fetch_by_type($method_link_type) or Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type );
-  my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $all_genome_dbs );
+  my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -name => $species_set_name, -genome_dbs => $all_genome_dbs );
 
   my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                  -method => $method,
@@ -396,9 +394,6 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
 
   $helper->transaction( -CALLBACK => sub {
     $mlssa->store($new_mlss);
-    if ($species_set_name) {
-      $species_set->store_tag('name', $species_set_name);
-    }
   } );
 
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";

@@ -59,7 +59,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJo
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;

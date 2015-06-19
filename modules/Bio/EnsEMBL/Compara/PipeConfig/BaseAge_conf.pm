@@ -61,7 +61,7 @@ sub default_options {
 
             #Location url of database to get EPO GenomicAlignTree objects from
 #            'compara_url' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_' . $self->o('ensembl_release'),
-            'compara_url' => 'mysql://ensro@compara4:3306/sf5_epo_17mammals_77',
+            'compara_url' => 'mysql://ensro@compara4:3306/mp14_epo_17mammals_80',
             'clade_taxon_id' => 9443,   # this is the taxon_id of Primates
 
             #Location url of database to get snps from
@@ -73,7 +73,7 @@ sub default_options {
             'anc_host'   => 'compara4',
             'anc_name'   => 'ancestral_sequences',
             #'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
-            'anc_dbname' => 'sf5_epo_17mammals_ancestral_core_77',
+            'anc_dbname' => 'mp14_epo_17mammals_ancestral_core_80',
 
             #Connection parameters for production database (the rest is defined in the base class)
             'host' => 'compara2',
@@ -141,6 +141,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+            'master_db'      => $self->o('master_db'),
     };
 }
 
@@ -166,7 +167,6 @@ sub pipeline_analyses {
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_exe'),
 				  'mlss_id'        => $self->o('mlss_id'),
-                                  'master_db'      => $self->o('master_db'),				  
                                   'pipeline_db'    => $self->dbconn_2_url('pipeline_db'),
 				 },
 	       -flow_into => {
@@ -181,7 +181,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
+                'compara_db'    => '#master_db#',   # that's where genome_db_ids come from
                 'mlss_id'       => $self->o('mlss_id'),
                 'extra_parameters'      => [ 'locator' ],
             },

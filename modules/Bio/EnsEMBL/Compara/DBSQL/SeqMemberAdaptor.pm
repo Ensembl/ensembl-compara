@@ -60,7 +60,7 @@ use Bio::EnsEMBL::Compara::SeqMember;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
@@ -213,6 +213,53 @@ sub fetch_canonical_member_for_gene_member_id { ## DEPRECATED
 }
 
 
+=head2 fetch_by_Translation
+
+  Arg[1]      : Bio::EnsEMBL::Translation
+  Arg[2]      : (opt) boolean: $verbose
+  Example     : my $seq_member = $seqmember_adaptor->fetch_by_Translation($translation);
+  Description : Returns the SeqMember equivalent of the given Translation object
+                If $verbose is switched on and the translation is not in Compara, prints a warning.
+  Returntype  : Bio::EnsEMBL::Compara::SeqMember
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_by_Translation {
+    my ($self, $translation, $verbose) = @_;
+
+    assert_ref($translation, 'Bio::EnsEMBL::Translation', 'translation');
+    my $seq_member = $self->fetch_by_stable_id($translation->stable_id);
+    warn $translation->stable_id." does not exist in the Compara database\n" if $verbose and not $seq_member;
+    return $seq_member;
+}
+
+
+=head2 fetch_by_Transcript
+
+  Arg[1]      : Bio::EnsEMBL::Transcript
+  Arg[2]      : (opt) boolean: $verbose
+  Example     : my $seq_member = $seqmember_adaptor->fetch_by_Transcript($transcript);
+  Description : Returns the SeqMember equivalent of the given Transcript object
+                If $verbose is switched on and the transcript is not in Compara, prints a warning.
+  Returntype  : Bio::EnsEMBL::Compara::SeqMember
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_by_Transcript {
+    my ($self, $transcript, $verbose) = @_;
+
+    assert_ref($transcript, 'Bio::EnsEMBL::Transcript', 'transcript');
+    my $stable_id_for_compara = $transcript->translation ? $transcript->translation->stable_id : $transcript->stable_id;
+    my $seq_member = $self->fetch_by_stable_id($stable_id_for_compara);
+    warn $stable_id_for_compara." does not exist in the Compara database\n" if $verbose and not $seq_member;
+    return $seq_member;
+}
 
 
 #
@@ -333,7 +380,7 @@ sub store {
     my $sth2 = $self->prepare("SELECT seq_member_id, sequence_id, genome_db_id FROM seq_member WHERE stable_id=?");
     $sth2->execute($member->stable_id);
     my($id, $sequence_id, $genome_db_id) = $sth2->fetchrow_array();
-    warn("MemberAdaptor: insert failed, but member_id select failed too") unless($id);
+    warn("SeqMemberAdaptor: insert failed, but seq_member_id select failed too") unless($id);
     throw(sprintf('%s already exists and belongs to a different species (%s) ! Stable IDs must be unique across the whole set of species', $member->stable_id, $self->db->get_GenomeDBADaptor->fetch_by_dbID($genome_db_id)->name )) if $genome_db_id and $member->genome_db_id and $genome_db_id != $member->genome_db_id;
     $member->dbID($id);
     $member->sequence_id($sequence_id) if ($sequence_id) and $member->isa('Bio::EnsEMBL::Compara::SeqMember');

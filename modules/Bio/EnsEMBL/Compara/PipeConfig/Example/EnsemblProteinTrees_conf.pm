@@ -29,6 +29,18 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf
 
+=head1 SYNOPSIS
+
+    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
+
+    #3. make sure that all default_options are set correctly
+
+    #4. Run init_pipeline.pl script:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf \
+        -password <your_password> -mlss_id <your_current_PT_mlss_id>
+
+    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
+
 =head1 DESCRIPTION
 
 The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
@@ -86,8 +98,6 @@ sub default_options {
 
     # tree building parameters:
         'use_quick_tree_break'      => 0,
-        'treebreak_gene_count'      => 40000,     # affects msa_chooser
-        'mafft_gene_count'          => 300,     # affects msa_chooser
 
     # alignment filtering options
 
@@ -110,7 +120,7 @@ sub default_options {
     # executable locations:
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
-        'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
+        'mafft_home'                => '/software/ensembl/compara/mafft-7.221/',
         'trimal_exe'                => '/software/ensembl/compara/trimAl/trimal-1.2',
         'noisy_exe'                 => '/software/ensembl/compara/noisy/noisy-1.5.12',
         'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
@@ -126,7 +136,7 @@ sub default_options {
         'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
-        'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
+        'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
         'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
         'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
@@ -215,7 +225,7 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@compara4:3306/mp14_ensembl_compara_78',
+        'prev_rel_db' => 'mysql://ensro@compara5:3306/mm14_ensembl_compara_80',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'

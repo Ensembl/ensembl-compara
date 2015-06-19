@@ -105,9 +105,10 @@ sub _setInternalIds {
             my $offset_ga = $mlss_id * $magic_number + 1 - $min_ga;
             my $offset_gab = $mlss_id * $magic_number + 1 - $min_gab;
             print STDERR "Offsets: genomic_align_block_id=$offset_gab genomic_align_id=$offset_ga\n";
-            print STDERR $dbc->do($sql1, undef, $offset_gab, $mlss_id), " rows duplicated in genomic_align_block\n";
+            print STDERR (my $nd = $dbc->do($sql1, undef, $offset_gab, $mlss_id)), " rows duplicated in genomic_align_block\n";
             print STDERR $dbc->do($sql2, undef, $offset_gab, $offset_ga, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_block \n";
-            print STDERR $dbc->do($sql3, undef, $mlss_id), " rows removed from genomic_align_block\n";
+            print STDERR (my $nr = $dbc->do($sql3, undef, $mlss_id)), " rows removed from genomic_align_block\n";
+            die "Numbers mismatch: $nd rows duplicated and $nr removed\n" if $nd != $nr;
         }
     );
 }

@@ -26,19 +26,6 @@ Bio::EnsEMBL::Compara::Graph::ConnectedComponents
 
 =cut
 
-=head1 SYNOPSIS
-
-my $aa = $sdba->get_AnalysisAdaptor;
-my $analysis = $aa->fetch_by_logic_name('PAFCluster');
-my $rdb = new Bio::EnsEMBL::Compara::Graph::ConnectedComponents(
-                         -input_id   => "{'species_set'=>[1,2,3,14]}",
-                         -analysis   => $analysis);
-
-$rdb->fetch_input
-$rdb->run;
-
-=cut
-
 =head1 DESCRIPTION
 
 This is a general purpose tool for building connected component clusters
@@ -155,13 +142,11 @@ sub add_connection {
     $cluster->add_child($node2);
   }
   elsif(defined($parent1) and !defined($parent2)) {
-    # printf("add member to cluster %d\n", $parent1->node_id);
-    # $node2->print_member; 
+    # printf("add member to cluster %d\n%s\n", $parent1->node_id, $node2->toString);
     $parent1->add_child($node2);
   }
   elsif(!defined($parent1) and defined($parent2)) {
-    # printf("add member to cluster %d\n", $parent2->node_id);
-    # $node1->print_member; 
+    # printf("add member to cluster %d\n%s\n", $parent2->node_id, $node1->toString);
     $parent2->add_child($node1);
   }
   elsif(defined($parent1) and defined($parent2)) {

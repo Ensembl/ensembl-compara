@@ -89,7 +89,7 @@ my $config = {
     #############
 
     members_per_genome => {
-        params => [ 'genome_db_id', 'allow_ambiguity_codes' ],
+        params => [ 'genome_db_id', 'allow_ambiguity_codes', 'allow_missing_coordinates', 'allow_missing_cds_seqs' ],
         tests => [
             {
                 description => 'Each genome should have some genes',
@@ -119,7 +119,7 @@ my $config = {
             },
             {
                 description => 'Peptides should have CDS sequences (which are made of only ACGTN). Ambiguity codes have to be explicitely switched on.',
-                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]")) AND NOT #allow_missing_cds_seqs#',
             },
             {
                 description => 'The protein sequences should not be only ACGTN (unless 5aa-long, for an immunoglobulin gene)',
@@ -130,12 +130,24 @@ my $config = {
                 query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND NOT (sequence REGEXP "^[ACGTN]*$")',
             },
             {
+                description => 'ncRNA sequences cannot be entirely made of N',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND (sequence REGEXP "^N*$")',
+            },
+            {
+                description => 'protein sequences cannot be entirely made of X',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence REGEXP "^X*$")',
+            },
+            {
+                description => 'CDS sequences cannot be entirely made of N',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence REGEXP "^N*$")',
+            },
+            {
                 description => 'GeneMembers should have chromosome coordinates',
-                query => 'SELECT gene_member_id FROM gene_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL)',
+                query => 'SELECT gene_member_id FROM gene_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL) AND NOT #allow_missing_coordinates#',
             },
             {
                 description => 'GeneMembers should map to a dnafrag of their own species',
-                query => 'SELECT gene_member_id FROM gene_member LEFT JOIN dnafrag USING (dnafrag_id) WHERE gene_member.genome_db_id = #genome_db_id# AND (dnafrag.dnafrag_id IS NULL OR gene_member.genome_db_id != dnafrag.genome_db_id)',
+                query => 'SELECT gene_member_id FROM gene_member LEFT JOIN dnafrag USING (dnafrag_id) WHERE gene_member.genome_db_id = #genome_db_id# AND (dnafrag.dnafrag_id IS NULL OR gene_member.genome_db_id != dnafrag.genome_db_id) AND NOT #allow_missing_coordinates#',
             },
             {
                 description => 'GeneMembers should have the same taxonomy ID as their genomeDB',
@@ -143,11 +155,11 @@ my $config = {
             },
             {
                 description => 'SeqMembers should have chromosome coordinates',
-                query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL)',
+                query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL) AND NOT #allow_missing_coordinates#',
             },
             {
                 description => 'SeqMembers should map to a dnafrag of their own species',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN dnafrag USING (dnafrag_id) WHERE seq_member.genome_db_id = #genome_db_id# AND (dnafrag.dnafrag_id IS NULL OR seq_member.genome_db_id != dnafrag.genome_db_id)',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN dnafrag USING (dnafrag_id) WHERE seq_member.genome_db_id = #genome_db_id# AND (dnafrag.dnafrag_id IS NULL OR seq_member.genome_db_id != dnafrag.genome_db_id) AND NOT #allow_missing_coordinates#',
             },
             {
                 description => 'SeqMembers should have the same taxonomy ID as their genomeDB',
@@ -166,6 +178,17 @@ my $config = {
             {
                 description => 'All the seq_members should have a genome_db_id',
                 query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id IS NULL',
+            },
+        ],
+    },
+
+
+    stable_id_mapping => {
+        tests => [
+            {
+                description => 'There are stable IDs coming from at least 2 releases',
+                query => 'SELECT DISTINCT LEFT(stable_id, 9) AS prefix FROM gene_tree_root WHERE stable_id IS NOT NULL',
+                expected_size => '>= 2',
             },
         ],
     },

@@ -85,7 +85,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::Runnable::Pecan;
 use Bio::EnsEMBL::Analysis::Runnable::Ortheus;
@@ -530,9 +530,7 @@ sub _write_gerp_dataflow {
 #    }
 #    $species_set .= "]";
 #    my $output_id = "{genomic_align_block_id=>" . $gab->dbID . ",species_set=>" .  $species_set;
-    my $output_id = "{genomic_align_block_id=>" . $gab->dbID;
-    
-    $output_id .= "}";
+    my $output_id = { genomic_align_block_id => $gab->dbID };
 
     $self->dataflow_output_id($output_id,1);
 }

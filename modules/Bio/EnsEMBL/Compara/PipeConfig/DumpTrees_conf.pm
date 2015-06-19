@@ -188,7 +188,7 @@ sub pipeline_analyses {
                 |,
             },
             -flow_into => {
-                1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },
+                1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
             },
           },
 

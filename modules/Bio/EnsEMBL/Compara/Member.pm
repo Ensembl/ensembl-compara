@@ -56,7 +56,8 @@ Member properties:
  - genome_db_id() and genome_db()
  - taxon_id() and taxon()
 
-You can print the summary of a Member with print_member()
+Other methods:
+ - toString()
 
 =head1 AUTHORSHIP
 
@@ -400,23 +401,28 @@ sub genome_db {
 }
 
 
-=head2 print_member
+=head2 toString
 
-  Example    : $member->print_member;
-  Description: used for debugging, prints out key descriptive elements
-               of member
+  Example    : print $member->toString();
+  Description: used for debugging, returns a string with the key descriptive
+               elements of this member
   Returntype : none
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub print_member {
+sub toString {
     my $self = shift;
-
     my $str = sprintf("   %s %s(%d)", $self->source_name, $self->stable_id, $self->dbID || -1);
     $str .= sprintf("\t%s : %d-%d", $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end) if $self->dnafrag_id;
-    print $str, "\n";
+    return $str;
+}
+
+sub print_member {  ## DEPRECATED
+    my $self = shift;
+    deprecate('$member->print_member() is deprecated and will be removed in e84. Use $member->toString() instead.');
+    print $self->toString, "\n";
 }
 
 

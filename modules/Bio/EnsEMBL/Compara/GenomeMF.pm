@@ -58,7 +58,7 @@ sub all_from_file {
     my $perl_array   = $json_parser->decode($json_text);
 
     # List of fields that must / can be present
-    my @obligatory_fields = qw(production_name taxonomy_id assembly genebuild prot_fasta cds_fasta);
+    my @obligatory_fields = qw(production_name taxonomy_id prot_fasta);
     my $possible_fields = {map {$_ => 1} (@obligatory_fields, qw(gene_coord_gff is_high_coverage has_karyotype))};
 
     # Checks the integrity of the file
@@ -76,6 +76,14 @@ sub all_from_file {
     #print Dumper($perl_array);
     return $perl_array;
 }
+
+sub locator {
+    my $self = shift;
+    return sprintf('%s/filename=%s;index=%d', ref($self), $self->{'_registry_file'}, $self->{'_registry_index'});
+}
+
+
+## Coordinates
 
 sub get_gene_coordinates {
     my $self = shift;
@@ -114,6 +122,9 @@ sub _load_coordinates {
     $self->{'_cds_coordinates'} = \%cds_coordinates;
 }
 
+
+## Sequences
+
 sub get_cds_sequences {
     my $self = shift;
     $self->_load_sequences('cds') unless exists $self->{'_cds_seq'};
@@ -130,11 +141,12 @@ sub _load_sequences {
     my $self = shift;
     my $type = shift;
 
+    my %sequence2hash = ();
+    $self->{"_${type}_seq"} = \%sequence2hash;
+
     return unless exists $self->{"${type}_fasta"};
     my $input_file = $self->{"${type}_fasta"};
     die unless -e $input_file;
-
-    my %sequence2hash = ();
 
     my $in_file  = Bio::SeqIO->new(-file => $input_file , '-format' => 'Fasta');
     while ( my $seq = $in_file->next_seq() ) {
@@ -145,7 +157,14 @@ sub _load_sequences {
     if(!keys(%sequence2hash)){
         die "Could not read fasta sequences from $input_file\n";
     }
-    $self->{"_${type}_seq"} = \%sequence2hash;
+}
+
+
+## CoreDBAdaptor
+
+sub get_GenomeContainer {
+    my $self = shift;
+    return $self;
 }
 
 sub get_MetaContainer {
@@ -153,35 +172,38 @@ sub get_MetaContainer {
     return $self;
 }
 
-our $AUTOLOAD;
 
-sub AUTOLOAD {
+## GenomeDB fields
+
+sub get_taxonomy_id {
     my $self = shift;
-    if ( $AUTOLOAD =~ m/::get_(\w+)$/ ) {
-        return $self->{$1};
-    }
+    return $self->{taxonomy_id};
+}
+
+sub get_genebuild {
+    my $self = shift;
+    return $self->{genebuild};
+}
+
+sub get_production_name {
+    my $self = shift;
+    return $self->{production_name};
 }
 
 sub has_karyotype {
     my $self = shift;
-    return $self->{'has_karyotype'};
+    return $self->{'has_karyotype'} || 0;
 }
 
 sub is_high_coverage {
     my $self = shift;
-    return $self->{'is_high_coverage'};
+    return $self->{'is_high_coverage'} || 0;
 }
 
 sub assembly_name {
     my $self = shift;
-    return $self->{'assembly'};
+    return $self->{'assembly'} || 'unknown_assembly';
 }
-
-sub locator {
-    my $self = shift;
-    return sprintf('%s/filename=%s;index=%d', ref($self), $self->{'_registry_file'}, $self->{'_registry_index'});
-}
-
 
 1;
 

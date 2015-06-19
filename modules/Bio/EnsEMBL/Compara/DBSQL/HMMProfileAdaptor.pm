@@ -197,7 +197,7 @@ sub create_instance_from_rowhash {
     return $obj;
 }
 
-sub init_instance_from_rowhash() {
+sub init_instance_from_rowhash {
     my ($self, $obj, $rowhash) = @_;
 
     $obj->model_id($rowhash->{model_id});

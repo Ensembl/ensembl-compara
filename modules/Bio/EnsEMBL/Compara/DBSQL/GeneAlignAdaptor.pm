@@ -23,7 +23,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
-use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
@@ -31,8 +30,7 @@ use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
 use DBI qw(:sql_types);
 
-our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
-
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 =head2 fetch_all_by_SeqMember
 

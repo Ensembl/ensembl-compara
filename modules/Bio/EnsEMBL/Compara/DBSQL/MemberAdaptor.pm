@@ -61,7 +61,7 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
@@ -318,6 +318,9 @@ sub fetch_all_by_GenomeDB {
     return $self->generic_fetch($constraint);
 }
 
+
+#TODO fetch_all_by_Slice($slice)
+#TODO fetch_all_by_Locus($locus, -expand_both, -expand_5, -expand_3, -limit
 
 sub _fetch_all_by_dnafrag_id_start_end_strand_limit {
   my ($self,$dnafrag_id,$dnafrag_start,$dnafrag_end,$dnafrag_strand,$limit) = @_;

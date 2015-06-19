@@ -125,8 +125,8 @@ sub run {
     my $compara_dba = $self->compara_dba();
     my $core_dba    = $self->param('core_dba');
 
-    $compara_dba->dbc->disconnect_when_inactive(0);
-    $core_dba->dbc->disconnect_when_inactive(0);
+    # It may take some time to load the slices, so let's free the connection
+    $compara_dba->dbc->disconnect_if_idle();
 
     my $unfiltered_slices = $self->param('genome_db')->genome_component
         ? $core_dba->get_SliceAdaptor->fetch_all_by_genome_component($self->param('genome_db')->genome_component)
@@ -143,7 +143,10 @@ sub run {
 
     if(scalar(@$final_slices)) {
 
-        $self->loadMembersFromCoreSlices( $final_slices );
+        # Let's make sure disconnect_when_inactive is set to 0 on both connections
+        $core_dba->dbc->prevent_disconnect( sub { $compara_dba->dbc->prevent_disconnect( sub {
+            $self->loadMembersFromCoreSlices( $final_slices );
+        } ) } );
 
     } else {
 
@@ -181,15 +184,17 @@ sub loadMembersFromCoreSlices {
   #and then all transcripts in gene to store as members in compara
 
   my @genes;
+  my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
+  my $gene_adaptor;
 
   foreach my $slice (@$slices) {
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
-    my $dnafrag = $self->compara_dba->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
+    my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
     unless ($dnafrag) {
         if ($self->param('store_missing_dnafrags')) {
             $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $self->param('genome_db'));
-            $self->compara_dba->get_DnaFragAdaptor->store($dnafrag);
+            $dnafrag_adaptor->store($dnafrag);
         } else {
             $self->throw(sprintf('Cannot find / create a DnaFrag with name "%s" for "%s"', $slice->seq_region_name, $self->param('genome_db')->name));
         }
@@ -197,6 +202,11 @@ sub loadMembersFromCoreSlices {
 
     @genes = ();
     my $current_end;
+
+    # Heuristic: it usually takes several seconds to load more than 500 genes,
+    # so let's disconnect from compara
+    $gene_adaptor ||= $slice->adaptor->db->get_GeneAdaptor;
+    $self->compara_dba->dbc->disconnect_if_idle() if $gene_adaptor->count_all_by_Slice($slice) > 500;
 
     foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)}) {
       $self->param('geneCount', $self->param('geneCount')+1 );

@@ -141,7 +141,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::HealthCheck;
 
 use strict;
-#use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -160,7 +160,7 @@ sub run
       ## Run the method called <_run_[TEST_NAME]_test>
       my $method = "_run_".$self->param('test')."_test";
       if ($self->can($method)) {
-	  $self->warning("Running test ", $self->param('test'));
+	  $self->warning("Running test ".$self->param('test'));
 	  $self->$method;
 	  $self->warning("OK.");
       } else {
@@ -536,7 +536,7 @@ sub _run_compare_to_previous_db_test {
 
 	  my $previous_gdb = $previous_genome_db_adaptor->fetch_by_name_assembly($g_db->name);
 	  if (!$previous_gdb) {
-	      $self->warning($g_db->name, " does not exist in the previous database (" . $previous_compara_dba->dbc->dbname . ")");
+	      $self->warning($g_db->name. " does not exist in the previous database (" . $previous_compara_dba->dbc->dbname . ")");
 	      return;
 	  }
 	  push @$previous_gdbs, $previous_gdb->dbID;

@@ -135,8 +135,7 @@ sub print_transcript ($$)
 
 
 foreach my $homology (@mouse_homologies, @rat_homologies) {
-  print "\n";
-  $homology->print_homology;
+  print "\n", $homology->toString();
   my $cdna_simple_align = $homology->get_SimpleAlign(-seq_type => 'cds');
   my ($gene1,$gene2) = @{$homology->gene_list};
   my $temp;

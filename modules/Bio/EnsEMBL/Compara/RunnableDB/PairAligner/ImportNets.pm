@@ -166,7 +166,7 @@ sub fetch_input {
 	  $non_ref_ga = $ga1;
       }
 
-      #Check the ref_ga dnafrag_id is valid for this job. Since the gabs were fetched using fetch_all_by_MethodLinkSpeciesSet_Dnafrag, the $gab->reference_genomic_align->dnafrag_id needs to be the same as the visible genomic_align_id else this isn't the reference genomic_align and we need to skip it)
+      #Check the ref_ga dnafrag_id is valid for this job. Since the gabs were fetched using fetch_all_by_MethodLinkSpeciesSet_DnaFrag, the $gab->reference_genomic_align->dnafrag_id needs to be the same as the visible genomic_align_id else this isn't the reference genomic_align and we need to skip it)
 
       next if ($ref_ga->dnafrag_id != $gab->reference_genomic_align->dnafrag_id);
 
@@ -252,6 +252,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
+    # FIXME: disconnect_when_inactive() probably not needed
     my $disconnect_when_inactive_default = $self->compara_dba->dbc->disconnect_when_inactive;
     $self->compara_dba->dbc->disconnect_when_inactive(0);
     $self->SUPER::write_output;

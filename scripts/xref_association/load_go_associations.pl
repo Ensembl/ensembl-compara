@@ -128,5 +128,6 @@ join genome_db g using (genome_db_id) where e.db_name=? and g.name=?/,
 	  return $member_acc_hash;
 	});
   print "Completed processing " . $dba->species() . "\n";
+  $dba->dbc()->disconnect_if_idle();
 } ## end for my $genome_db (@genome_dbs)
 

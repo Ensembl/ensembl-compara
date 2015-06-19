@@ -68,6 +68,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
+            'genome_db_id'                  => undef,   # By default, we process all the genome_dbs
+
             'max_dist_no_overlap'           => 1000000, # Max distance between genes that do not overlap
             'max_nb_genes_no_overlap'       => 1,       # Number of genes between two genes that do not overlap
             'max_dist_small_overlap'        => 500000,  # Max distance between genes that slightly overlap
@@ -84,17 +86,43 @@ sub fetch_input {
 
     # We can directly fetch the leaves
     my $gene_tree_id = $self->param_required('gene_tree_id');
-    $self->param('all_protein_leaves', $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($gene_tree_id));
+    my $all_protein_leaves =  $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($gene_tree_id);
+
+    # The Runnable needs all these fields
+    my @good_leaves = grep {defined $_->genome_db_id and defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->dnafrag_id and defined $_->dnafrag_strand} @$all_protein_leaves;
+
+    # And sometimes, only 1 genome_db_id
+    if ($self->param('genome_db_id')) {
+        @good_leaves = grep {$_->genome_db_id == $self->param('genome_db_id')} @good_leaves;
+
+    } elsif ($self->param('split_genes_gene_count') and scalar(@good_leaves) > $self->param('split_genes_gene_count')) {
+        my %gdb_ids = ();
+        $gdb_ids{$_->genome_db_id} = 1 for @good_leaves;
+        $self->dataflow_output_id( { gene_tree_id => $gene_tree_id, genome_db_id => $_ } ) for keys %gdb_ids;
+        $self->complete_early("Too many genes, will check the split-genes 1 species at a time");
+    }
 
     # Let's preload the gene members
-    $self->compara_dba->get_GeneMemberAdaptor->load_all_from_seq_members($self->param('all_protein_leaves'));
+    # Note that we have already filtered the list at this stage, to reduce
+    # the number of sequences to load, and thus the memory usage
+    $self->compara_dba->get_GeneMemberAdaptor->load_all_from_seq_members($all_protein_leaves);
+
+    # Note that if $self->param('genome_db_id') is set, the hash will
+    # contain a single entry
+    my %protein_leaves_by_genome_db_id = ();
+    foreach my $leaf (@$all_protein_leaves) {
+        push @{$protein_leaves_by_genome_db_id{$leaf->genome_db_id}}, $leaf;
+    }
+    $self->param('protein_leaves_by_genome_db_id', \%protein_leaves_by_genome_db_id);
 }
 
 
 sub run {
     my $self = shift;
 
-    $self->check_for_split_genes
+    foreach my $genome_db_id (keys %{$self->param('protein_leaves_by_genome_db_id')}) {
+        $self->check_for_split_genes($genome_db_id);
+    }
 }
 
 
@@ -114,24 +142,27 @@ sub post_cleanup {
 
 sub check_for_split_genes {
     my $self = shift;
+    my $genome_db_id = shift;
 
+    printf("Working on genome_db_id $genome_db_id\n") if $self->debug;
     my $connected_split_genes = $self->param('connected_split_genes');
     my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
+    $gene_member_adaptor->db->dbc->disconnect_if_idle;
 
     my $tmp_time = time();
 
-    my @all_protein_leaves = @{$self->param('all_protein_leaves')};
-    my @good_leaves = grep {defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->dnafrag_id and defined $_->dnafrag_strand and defined $_->genome_db_id} @all_protein_leaves;
+    my @these_protein_leaves = @{$self->param('protein_leaves_by_genome_db_id')->{$genome_db_id}};
+    my @good_leaves = grep {defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->dnafrag_id and defined $_->dnafrag_strand} @these_protein_leaves;
 
     if($self->debug) {
-        printf("%1.3f secs to fetch all %d/%dleaves\n", time()-$tmp_time, scalar(@all_protein_leaves), scalar(@good_leaves));
+        printf("%1.3f secs to fetch all %d/%dleaves\n", time()-$tmp_time, scalar(@these_protein_leaves), scalar(@good_leaves));
         print "build paralogs graph\n";
     }
     my @genepairlinks;
     my $graphcount = 0;
     while (my $protein1 = shift @good_leaves) {
         foreach my $protein2 (@good_leaves) {
-            next unless ($protein1->genome_db_id == $protein2->genome_db_id);
+            next if $protein1->dnafrag_id != $protein2->dnafrag_id;  ## HACK: this is only true as long as the detection algorithm below requires it
             push @genepairlinks, [$protein1, $protein2];
             print "build graph $graphcount\n" if ($self->debug and ($graphcount++ % 10 == 0));
         }
@@ -151,26 +182,19 @@ sub check_for_split_genes {
         my ($protein1, $protein2) = @$genepairlink;
 
         # Compute the sequence overlap
-        #my $aln = 0;
-        #my $len1 = 0;
-        #my @aln1 = split(//, $protein1->alignment_string);
-        #my $len2 = 0;
-        #my @aln2 = split(//, $protein2->alignment_string);
+        my $aln = 0;
+        my $len1 = 0;
+        my @aln1 = split(//, $protein1->alignment_string);
+        my $len2 = 0;
+        my @aln2 = split(//, $protein2->alignment_string);
 
-        #for (my $i=0; $i <= $#aln1; $i++) {
-        #    $len1++ if ($aln1[$i] ne '-');
-        #    $len2++ if ($aln2[$i] ne '-');
-        #    $aln++ if ($aln1[$i] ne '-' && $aln2[$i] ne '-');
-        #}
+        for (my $i=0; $i <= $#aln1; $i++) {
+            $len1++ if ($aln1[$i] ne '-');
+            $len2++ if ($aln2[$i] ne '-');
+            $aln++ if ($aln1[$i] ne '-' && $aln2[$i] ne '-');
+        }
  
-        #printf("Pair: %s-%s: %d out of %d-%d\n", $protein1->stable_id, $protein2->stable_id, $aln, $len1, $len2) if ($self->debug);
-        my $pair = new Bio::EnsEMBL::Compara::AlignedMemberSet;
-        my $protein1_copy = $protein1->Bio::EnsEMBL::Compara::AlignedMember::copy;
-        my $protein2_copy = $protein2->Bio::EnsEMBL::Compara::AlignedMember::copy;
-        $pair->add_Member($protein1_copy);
-        $pair->add_Member($protein2_copy);
-        $pair->update_alignment_stats;
-        print "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
+        printf("Pair: %s-%s: %d out of %d-%d\n", $protein1->stable_id, $protein2->stable_id, $aln, $len1, $len2) if ($self->debug);
 
         my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
         my $start1 = $gene_member1->dnafrag_start; my $start2 = $gene_member2->dnafrag_start; my $starttemp;
@@ -179,10 +203,8 @@ sub check_for_split_genes {
         my $gdb_id1 = $gene_member1->genome_db_id; my $gdb_id2 = $gene_member2->genome_db_id;
         my $dnafrag_id1 = $gene_member1->dnafrag_id; my $dnafrag_id2 = $gene_member2->dnafrag_id;
 
-        printf("%%Id: %d/%d, %%Pos: %d/%d\n", $protein1_copy->perc_id, $protein2_copy->perc_id, $protein1_copy->perc_pos, $protein2_copy->perc_pos);
         # Checking for gene_split cases
-        #if ($aln == 0)
-        if (0 == $protein1_copy->perc_id && 0 == $protein2_copy->perc_id && 0 == $protein1_copy->perc_pos && 0 == $protein2_copy->perc_pos) {
+        if ($aln == 0) {
 
             # Condition A1: If same seq region and less than 1MB distance
             if ($dnafrag_id1 == $dnafrag_id2 && ($self->param('max_dist_no_overlap') > abs($start1 - $start2)) && $strand1 eq $strand2 ) {
@@ -196,6 +218,7 @@ sub check_for_split_genes {
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
                 print "Checking split genes overlap\n" if $self->debug;
                 my @genes_in_range = @{$gene_member_adaptor->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
+                $gene_member_adaptor->db->dbc->disconnect_if_idle;
 
                 if ((2+$self->param('max_nb_genes_no_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
@@ -218,10 +241,8 @@ sub check_for_split_genes {
         # "skid marks" in the alignment view.
 
         # Condition B1: all 4 percents below 10
-        #} elsif (100*$aln < $len1*$self->param('small_overlap_percentage')
-        #        && 100*$aln < $len2*$self->param('small_overlap_percentage')) {
-        } elsif ($protein1_copy->perc_id < $self->param('small_overlap_percentage') && $protein2_copy->perc_id < $self->param('small_overlap_percentage')
-              && $protein1_copy->perc_pos < $self->param('small_overlap_percentage') && $protein2_copy->perc_pos < $self->param('small_overlap_percentage')) {
+        } elsif (100*$aln < $len1*$self->param('small_overlap_percentage')
+                && 100*$aln < $len2*$self->param('small_overlap_percentage')) {
 
             # Condition B2: If non-overlapping and smaller than 500kb start and 500kb end distance
             if ($dnafrag_id1 == $dnafrag_id2
@@ -235,6 +256,7 @@ sub check_for_split_genes {
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
 
                 my @genes_in_range = @{$gene_member_adaptor->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
+                $gene_member_adaptor->db->dbc->disconnect_if_idle;
                 if ((2+$self->param('max_nb_genes_small_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
                         print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->dnafrag_start,",", $gene->dnafrag_end,"\n" if $self->debug;
@@ -250,7 +272,7 @@ sub check_for_split_genes {
 
 
     if($self->debug) {
-        printf("%1.3f secs to analyze %d pairings (%d groups found)\n", time()-$tmp_time, scalar(@sorted_genepairlinks), scalar(@{$connected_split_genes->holding_node->links}) );
+        printf("%1.3f secs to analyze %d pairings of genome_db_id %d, (%d groups found)\n", time()-$tmp_time, scalar(@sorted_genepairlinks), $genome_db_id, scalar(@{$connected_split_genes->holding_node->links}) );
     }
 
 }
@@ -261,9 +283,15 @@ sub store_split_genes {
     my $connected_split_genes = $self->param('connected_split_genes');
     my $holding_node = $connected_split_genes->holding_node;
 
-    my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
-    $sth0->execute($self->param('gene_tree_id'));
-    $sth0->finish;
+    if ($self->param('genome_db_id')) {
+        my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (seq_member_id) JOIN seq_member USING (seq_member_id) WHERE root_id = ? AND genome_db_id = ?');
+        $sth0->execute($self->param('gene_tree_id'), $self->param('genome_db_id'));
+        $sth0->finish;
+    } else {
+        my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
+        $sth0->execute($self->param('gene_tree_id'));
+        $sth0->finish;
+    }
 
     my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id) VALUES (?)');
     my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id, gene_split_id) VALUES (?, ?)');

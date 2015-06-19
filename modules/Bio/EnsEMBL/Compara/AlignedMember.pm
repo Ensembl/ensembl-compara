@@ -61,6 +61,7 @@ Statistics about the alignment of this SeqMember:
  - num_pos_matches()
  - num_mismatches()
  - update_alignment_stats()    # to update the above counters
+
 NB: Only Homology::perc_*() are pre-computed. To query num_*() on an Homology
 object, or any counter on a GeneTree / Family object, first initialize them with
 update_alignment_stats(). The latter is also useful to get the statistics on a

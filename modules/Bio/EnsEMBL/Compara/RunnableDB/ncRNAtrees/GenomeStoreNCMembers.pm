@@ -111,8 +111,8 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
-    $self->param('core_db')->dbc->disconnect_when_inactive(0);
+    # It may take some time to load the slices, so let's free the connection
+    $self->compara_dba->dbc->disconnect_if_idle();
 
 #    my @stable_ids = ();
 
@@ -122,7 +122,8 @@ sub run {
     print("fetched ",scalar(@slices), " slices to load from\n");
     die "No toplevel slices, cannot fetch anything" unless(scalar(@slices));
 
-    foreach my $slice (@slices) {
+    $self->param('core_db')->dbc->prevent_disconnect( sub { $self->compara_dba->dbc->prevent_disconnect( sub {
+      foreach my $slice (@slices) {
         foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
             if ($gene->biotype =~ /rna/i) {
 #                my $gene_stable_id = $gene->stable_id or die "Could not get stable_id from gene with id=".$gene->dbID();
@@ -130,12 +131,11 @@ sub run {
 #                push @stable_ids, $gene_stable_id;
             }
         }
-    }
+      }
+    } ) } );
 
 #    $self->param('stable_ids', \@stable_ids);
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    $self->param('core_db')->dbc->disconnect_when_inactive(1);
 }
 
 

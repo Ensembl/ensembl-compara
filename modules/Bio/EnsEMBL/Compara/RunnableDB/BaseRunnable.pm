@@ -244,6 +244,7 @@ sub elevate_privileges {
         $self->throw("Cannot guess the password for 'ensadmin'\n") unless $new_password;
         $dbc->username('ensadmin');
         $dbc->password($new_password);
+        $dbc->reconnect();
     }
 }
 

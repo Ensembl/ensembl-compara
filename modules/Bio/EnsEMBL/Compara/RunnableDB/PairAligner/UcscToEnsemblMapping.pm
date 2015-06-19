@@ -46,7 +46,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UcscToEnsemblMapping;
 
 use strict;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

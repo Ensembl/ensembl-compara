@@ -188,6 +188,7 @@ and skip the method_link_species_sets corresponding to these IDs.
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Getopt::Long;
 use Data::Dumper;
 
@@ -325,6 +326,8 @@ copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs, $MT_only);
 if ($old_dba and !$skip_data) {
 ## Copy all the MethodLinkSpeciesSetTags for MethodLinkSpeciesSets
   copy_all_mlss_tags($old_dba, $new_dba, $all_default_method_link_species_sets);
+## Copy all the SpecieTree entries
+  copy_all_species_tres($old_dba, $new_dba, $all_default_method_link_species_sets);
 
 ## Copy DNA-DNA alignemnts
   copy_dna_dna_alignements($old_dba, $new_dba, $all_default_method_link_species_sets);
@@ -355,14 +358,14 @@ exit(0);
 =cut
 
 sub copy_table {
-  my ($from_dba, $to_dba, $table_name) = @_;
+  my ($from_dba, $to_dba, $table_name, $constraint, $id, $name) = @_;
 
-  print "Copying table $table_name...\n";
-  throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
+  assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
-  throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  $name ||= 'all';
+  $id ||= 'all';
+  print "Copying table $table_name ($name) ...\n";
 
   my $user = $to_dba->dbc->username;
   my $pass = $to_dba->dbc->password;
@@ -370,14 +373,18 @@ sub copy_table {
   my $port = $to_dba->dbc->port;
   my $dbname = $to_dba->dbc->dbname;
 
-  my $sth = $from_dba->dbc->prepare("SELECT * FROM $table_name");
+  my $sth = $from_dba->dbc->prepare("SELECT $table_name.* FROM $table_name ".($constraint || ''));
   $sth->execute();
   my $all_rows = $sth->fetchall_arrayref();
   $sth->finish;
-  my $filename = "/tmp/$table_name.populate_new_database.$$.txt";
+  if (!@$all_rows) {
+    print "Nothing to copy.\n";
+    return
+  }
+  my $filename = "/tmp/$table_name.populate_new_database.$id.$$.txt";
   open(TEMP, ">$filename") or die;
   foreach my $this_row (@$all_rows) {
-    print TEMP join("\t", @$this_row), "\n";
+    print TEMP join("\t", map {defined $_ ? $_ : '\N'} @$this_row), "\n";
   }
   close(TEMP);
   if ($pass) {
@@ -454,17 +461,14 @@ sub update_schema_version {
 sub get_all_default_genome_dbs {
   my ($compara_dba, $species_names, $mlss_ids, $collection) = @_;
 
-  throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($compara_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'compara_dba');
 
   my $all_species;
 
   if ($collection) {
     my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor();
-    my $ss = $ss_adaptor->fetch_all_by_tag_value("name", "collection-$collection");
-    die "Cannot find the collection '$collection'" unless scalar(@$ss);
-    die "There are several collections '$collection'" if scalar(@$ss) > 1;
-    return $ss->[0]->genome_dbs;
+    my $ss = $ss_adaptor->fetch_collection_by_name($collection);
+    return $ss->genome_dbs;
   }
 
   if (@$mlss_ids) {
@@ -538,8 +542,7 @@ sub get_all_method_link_species_sets {
   my ($compara_dba, $genome_dbs, $mlss_ids) = @_;
   my $all_method_link_species_sets = {};
 
-  throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($compara_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'compara_dba');
 
   my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
   throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor")
@@ -564,8 +567,7 @@ sub get_all_method_link_species_sets {
 
   my $these_genome_dbs = {};
   foreach my $this_genome_db (@$genome_dbs) {
-    throw("[$this_genome_db] should be a Bio::EnsEMBL::Compara::GenomeDB")
-        unless (UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB"));
+    assert_ref($this_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'this_genome_db');
     $these_genome_dbs->{$this_genome_db->dbID} = $this_genome_db;
   }
 
@@ -608,8 +610,7 @@ sub get_all_species_sets_with_tags {
   my ($compara_dba, $genome_dbs, $mlss_ids) = @_;
   my $all_species_sets = {};
 
-  throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($compara_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'compara_dba');
 
   my $species_set_adaptor = $compara_dba->get_SpeciesSetAdaptor();
   throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor")
@@ -625,8 +626,7 @@ sub get_all_species_sets_with_tags {
 
   my $these_genome_dbs = {};
   foreach my $this_genome_db (@$genome_dbs) {
-    throw("[$this_genome_db] should be a Bio::EnsEMBL::Compara::GenomeDB")
-        unless (UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB"));
+    assert_ref($this_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'this_genome_db');
     $these_genome_dbs->{$this_genome_db->dbID} = $this_genome_db;
   }
 
@@ -666,11 +666,8 @@ sub get_all_species_sets_with_tags {
 sub copy_all_dnafrags {
   my ($from_dba, $to_dba, $genome_dbs, $MT_only) = @_;
 
-  throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
-
-  throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
+  assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
   my $user = $new_dba->dbc->username;
   my $pass = $new_dba->dbc->password;
@@ -730,41 +727,33 @@ sub copy_all_dnafrags {
 sub copy_all_mlss_tags {
   my ($from_dba, $to_dba, $mlsss) = @_;
 
-  throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
-
-  throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
-
-  my $user = $new_dba->dbc->username;
-  my $pass = $new_dba->dbc->password;
-  my $host = $new_dba->dbc->host;
-  my $port = $new_dba->dbc->port;
-  my $dbname = $new_dba->dbc->dbname;
-
-  my $mlss_tag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM method_link_species_set_tag".
-      " WHERE method_link_species_set_id = ?");
   foreach my $this_mlss (@$mlsss) {
     next if $methods_to_skip{$this_mlss->method->type};
-    $mlss_tag_fetch_sth->execute($this_mlss->dbID);
-    my $all_rows = $mlss_tag_fetch_sth->fetchall_arrayref;
-    if (!@$all_rows) {
-      next;
-    }
-    my $filename = "/tmp/method_link_species_set_tag.populate_new_database.".$this_mlss->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print "Copying method_link_species_set_tag for ", $this_mlss->name, ":\n . ";
+    copy_table($from_dba, $to_dba, 'method_link_species_set_tag', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
+  }
+}
 
-    if ($pass) {
-      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    } else {
-      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    }
-    unlink("$filename");
+
+=head2 copy_all_species_tres
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : listref Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlsss
+  Description : copy from $from_dba to $to_dba all the SpeciesTree entries which
+                correspond to MethodLinkSpeciesSets from the $mlsss list only.
+                Species-trees are stored in the species_tree_root and species_tree_node tables
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_all_species_tres {
+  my ($from_dba, $to_dba, $mlsss) = @_;
+
+  foreach my $this_mlss (@$mlsss) {
+    next unless $this_mlss->method->class =~ /GenomicAlign(Tree|Block).(tree|ancestral|multiple)_alignment/;
+    copy_table($from_dba, $to_dba, 'species_tree_root', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
+    copy_table($from_dba, $to_dba, 'species_tree_node', "JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
   }
 }
 
@@ -906,54 +895,10 @@ sub copy_ancestor_dnafrag {
 sub copy_synteny_data {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
-  my $user = $new_dba->dbc->username;
-  my $pass = $new_dba->dbc->password;
-  my $host = $new_dba->dbc->host;
-  my $port = $new_dba->dbc->port;
-  my $dbname = $new_dba->dbc->dbname;
-
-  my $synteny_region_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM synteny_region".
-      " WHERE method_link_species_set_id = ?");
-  my $dnafrag_region_fetch_sth = $old_dba->dbc->prepare("SELECT dnafrag_region.* FROM synteny_region".
-      " LEFT JOIN dnafrag_region using (synteny_region_id) WHERE method_link_species_set_id = ?");
-  foreach my $this_method_link_species_set (@$method_link_species_sets) {
-    $synteny_region_fetch_sth->execute($this_method_link_species_set->dbID);
-    my $all_rows = $synteny_region_fetch_sth->fetchall_arrayref;
-    if (!@$all_rows) {
-      next;
-    }
-    my $filename = "/tmp/synteny_region.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print "Copying dna-dna alignments for ", $this_method_link_species_set->name, ":\n . ";
-    if ($pass) {
-      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    } else {
-      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    }
-    unlink("$filename");
-
-    $dnafrag_region_fetch_sth->execute($this_method_link_species_set->dbID);
-    $all_rows = $dnafrag_region_fetch_sth->fetchall_arrayref;
-    if (!@$all_rows) {
-      next;
-    }
-    $filename = "/tmp/dnafrag_region.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print " . ";
-    if ($pass) {
-      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    } else {
-      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    }
-    unlink("$filename");
+  foreach my $this_mlss (@$method_link_species_sets) {
+    next unless $this_mlss->method->class eq 'SyntenyRegion.synteny';
+    copy_table($old_dba, $new_dba, 'synteny_region', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
+    copy_table($old_dba, $new_dba, 'dnafrag_region', "JOIN synteny_region USING (synteny_region_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
   }
 }
 

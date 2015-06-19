@@ -1348,9 +1348,9 @@ CREATE TABLE gene_tree_node_attr (
 @desc  This table stores different HMM-based profiles used and produced by gene trees
 @colour   #1E90FF
 
-@column model_id              Model ID of the profile. Can be the external ID in case of imported models
-@column name                  Name of the model
-@column type                  Short description of the origin of the profile
+@column model_id              Model ID of the profile. This is the stable_id of the gene-tree, or the external ID in case of imported models (such as RF00001)
+@column name                  Name of the model, if available (such as 5S_rRNA for RF00001)
+@column type                  Short description of the origin of the profile (usually, one of "tree_hmm_aa_v3", "tree_hmm_dna_v3", "infernal" or "infernal-refined")
 @column compressed_profile    The HMM profile, compressed with zlib. It can be decompressed with the MySQL function UNCOMPRESS()
 @column consensus             The consensus sequence derived from the profile
 

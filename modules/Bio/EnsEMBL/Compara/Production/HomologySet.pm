@@ -218,16 +218,16 @@ sub best_homology_for_gene {
   my $best_homology = undef;
   my $best_rank = undef;
   
-  #$gene->print_member;
+  #print $gene->toString;
   foreach my $homology (@{$self->homologies_for_gene($gene)}) {
-    #$homology->print_homology;
+    #print $homology->toString;
     my $rank = $ordered_types->{$homology->description};
     if(!defined($best_rank) or ($rank and ($rank<$best_rank))) {
       $best_homology = $homology;
       $best_rank = $rank;
     }
   }
-  #if($best_homology) { printf("BEST: "); $best_homology->print_homology; }
+  #if($best_homology) { print "BEST: ", $best_homology->toString; }
   return $best_homology;
 }
 

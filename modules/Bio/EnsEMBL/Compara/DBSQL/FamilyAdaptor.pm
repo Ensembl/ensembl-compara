@@ -22,16 +22,10 @@ FamilyAdaptor - This object represents a family coming from a database of protei
 
 =head1 SYNOPSIS
 
-  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  my $fa = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'Compara', 'Family');
+  my $ma = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'Compara', 'SeqMember');
 
-  my $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-user   => 'myusername',
-						       -dbname => 'myfamily_db',
-						       -host   => 'myhost');
-
-  my $fa = $db->get_FamilyAdaptor;
   my $fam = $fa->fetch_by_stable_id('ENSF000013034');
-
-  my $ma = $db->get_SeqMemberAdaptor;
   my $member = $ma->fetch_by_stable_id('YSV4_CAEEL')};   # This is UniProt accession symbol
   my $fam = $fa->fetch_by_SeqMember($member);
 
@@ -72,7 +66,7 @@ use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert :check);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 use DBI qw(:sql_types);
 
@@ -122,6 +116,26 @@ sub fetch_all_by_GeneMember {
 }
 
 
+=head2 fetch_all_by_Gene
+
+ Arg [1]    : Bio::EnsEMBL::Gene $gene
+ Example    : $families = $FamilyAdaptor->fetch_all_by_Gene($gene);
+ Description: find the families to which the given gene belongs to
+ Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
+ Exceptions : when missing arguments
+ Caller     : general
+
+=cut
+
+sub fetch_all_by_Gene {
+    my ($self, $gene) = @_;
+
+    assert_ref($gene, 'Bio::EnsEMBL::Gene', 'gene');
+    my $gene_member = $self->db->get_GeneMemberAdaptor->fetch_by_Gene($gene, 1);
+    return $gene_member ? $self->fetch_all_by_GeneMember($gene_member) : [];
+}
+
+
 =head2 fetch_by_SeqMember
 
  Arg [1]    : Bio::EnsEMBL::Compara::SeqMember $member
@@ -146,6 +160,26 @@ sub fetch_by_SeqMember {
 }
 
 
+=head2 fetch_by_Translation
+
+ Arg [1]    : Bio::EnsEMBL::Translation $translation
+ Example    : $family = $FamilyAdaptor->fetch_by_Translation($translation);
+ Description: find the family to which the given peptide belongs to
+ Returntype : Bio::EnsEMBL::Compara::Family or undef
+ Exceptions : when missing arguments
+ Caller     : general
+
+=cut
+
+sub fetch_by_Translation {
+    my ($self, $translation) = @_;
+
+    assert_ref($translation, 'Bio::EnsEMBL::Translation', 'translation');
+    my $seq_member = $self->db->get_SeqMemberAdaptor->fetch_by_Translation($translation, 1);
+    return $seq_member ? $self->fetch_by_SeqMember($seq_member) : undef;
+}
+
+
 sub fetch_by_Member_source_stable_id { ## DEPRECATED
   my ($self, $source_name, $member_stable_id) = @_;
 
@@ -156,6 +190,34 @@ sub fetch_by_Member_source_stable_id { ## DEPRECATED
   $m = $self->db->get_SeqMemberAdaptor->fetch_by_source_stable_id($source_name, $member_stable_id);
   my $f = $self->fetch_by_SeqMember($m);
   return $f ? [$f] : [];
+}
+
+
+=head2 fetch_by_stable_id
+
+  Arg [1]    : string $stable_id
+               the unique database identifier for the Family to be obtained
+  Example    : $family = $adaptor->fetch_by_stable_id('ENSFM00300000084926')
+  Description: Returns the Family created from the database and defined by the
+               the stable id $stable_id.
+  Returntype : Bio::EnsEMBL::Compara::Family
+  Exceptions : thrown if $stable_id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_by_stable_id {
+    my ($self, $stable_id) = @_;
+
+    unless(defined $stable_id) {
+        $self->throw("fetch_by_stable_id must have an stable_id");
+    }
+
+    my $constraint = 'f.stable_id = ?';
+
+    $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
+
+    return $self->generic_fetch_one($constraint)
 }
 
 

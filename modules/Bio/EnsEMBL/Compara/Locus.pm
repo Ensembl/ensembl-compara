@@ -32,6 +32,16 @@ Locus is a base object that represents a segment of a DnaFrag.
 
 =head1 SYNOPSIS
 
+Attributes:
+  - dnafrag() (and dnafrag_id())
+  - dnafrag_start()
+  - dnafrag_end()
+  - dnafrag_strand()
+
+Links to other objects:
+  - genome_db()
+  - get_Slice()
+
 Locus is not supposed to be instantiated directly, but should
 only be used as a base class.
 Adaptor / object methods that require coordinates will usually

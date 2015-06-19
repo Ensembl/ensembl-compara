@@ -94,7 +94,7 @@ sub default_options {
             'genomic_alignment_capacity'      => 300,
             'fast_trees_capacity'             => 300,
             'raxml_capacity'                  => 300,
-            'recover_capacity'                => 250,
+            'recover_capacity'                => 150,
             'ss_picts_capacity'               => 200,
 
             # Params for healthchecks;
@@ -106,8 +106,7 @@ sub default_options {
             'cmalign_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
             'cmbuild_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
             'cmsearch_exe'          => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch',
-            'mafft_exe'             => '/software/ensembl/compara/mafft-7.017/bin/mafft',
-            'mafft_binaries'        => '/software/ensembl/compara/mafft-7.017/binaries',
+            'mafft_exe'             => '/software/ensembl/compara/mafft-7.221/bin/mafft',
             'raxml_exe'             => '/software/ensembl/compara/raxml/standard-RAxML/raxmlHPC-PTHREADS-SSE3',
             'prank_exe'             => '/software/ensembl/compara/prank/090707/src/prank',
             'raxmlLight_exe'        => '/software/ensembl/compara/raxml/RAxML-Light-1.0.5/raxmlLight-PTHREADS',

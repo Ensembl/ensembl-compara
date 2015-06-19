@@ -60,7 +60,7 @@ my $alignIO = Bio::AlignIO->newFh(-interleaved=>1, -fh=>\*STDOUT, -format=>'psi'
 my $count=0;
 foreach my $homology (@{$homology_list}) {
     $count++;
-    $homology->print_homology;
+    print $homology->toString;
 
     my $human_gene = undef;
     my $mouse_gene = undef;
