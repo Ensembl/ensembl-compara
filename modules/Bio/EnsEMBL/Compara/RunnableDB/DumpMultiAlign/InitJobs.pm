@@ -51,10 +51,8 @@ use Bio::EnsEMBL::Registry;
 sub fetch_input {
     my $self = shift;
 
-    my $file_prefix      = "Compara";
-    my $reg              = "Bio::EnsEMBL::Registry";
-    my $method_link_type = $self->param('method_link_type');
- 
+    my $file_prefix = "Compara";
+
     #
     #Load registry and get compara database adaptor
     #
@@ -88,18 +86,11 @@ sub fetch_input {
       $self->param('mlss_id', $mlss->get_value_for_tag('msa_mlss_id'));
     }
 
-    $mlss          = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-    my $genome_dbs = $mlss->species_set_obj->genome_dbs();
-    my @filenames;
-
-    foreach my $gdb (@$genome_dbs){
-        push @filenames, $gdb->name().".".$gdb->assembly(); 
-    }
-    
-    my $filename = join '-',@filenames;
-    $filename = $file_prefix . "." . $filename . "_" . $method_link_type;
-    $filename =~ s/[\(\)]+//g;
-    $filename =~ s/-/_/g;
+    $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
+    my $filename = $mlss->name;
+    $filename =~ s/[\W\s]+/_/g;
+    $filename =~ s/_$//;
+    $filename = $file_prefix . "." . $filename;
     $self->param('filename', $filename);
 }
 
@@ -110,27 +101,25 @@ sub write_output {
     #
     #Pass on input_id and add on new parameters: multi-align mlss_id, filename
     #
-    #my $output_ids = $self->input_id;
-    my $output_ids;
-    my $extra_args = "\"mlss_id\" => \"". $self->param('mlss_id') . "\"";
-    $extra_args .= ",\"genome_db_id\" => \"". $self->param('genome_db_id') . "\"";
-    $extra_args .= ",\"filename\" => \"". $self->param('filename') ."\"";
-    $extra_args .= ",\"species\" => \"". $self->param('species') . "\"";
-    $extra_args .= ",\"output_dir\" => \"". $self->param('output_dir') ."\"";
 
-    $output_ids = "{$extra_args}";
+    my $output_ids = {
+        mlss_id         => $self->param('mlss_id'),
+        genome_db_id    => $self->param('genome_db_id'),
+        filename        => $self->param('filename'),
+    };
 
-    my $out_file = $self->param('filename');
-    $out_file=~s/[\(\)]+//g;
+    my @all_cs = @{$self->param('coord_systems')};
+    #Set up chromosome job
+    my $cs = shift @all_cs;
+    $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $cs}, 2);
 
-    # If there were no jobs for the output channel 1, hive will invoke
-    # autoflow by default. This will mess up the pipeline and must be
-    # prevented here.
-    $self->input_job->autoflow(0);
+    #Set up supercontig job
+    foreach my $other_cs (@all_cs) {
+        $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $other_cs}, 3);
+    }
 
-    #Set up chromosome/supercontig/other job
-    $self->dataflow_output_id($output_ids, 2);
-    $self->dataflow_output_id({'out_file' => $out_file, 'output_dir' => $self->param_required('output_dir')}, 1);
+    #Set up other job
+    $self->dataflow_output_id($output_ids, 4);
 
 }
 
