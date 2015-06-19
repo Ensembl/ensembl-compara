@@ -448,9 +448,9 @@ sub render_as_alignment_nolabel {
                                 absolutey   => 1,
                               );
 
-          for (my $i = 0; $i < $block_count; $i++) {
-            my $block_start = $s + $block_starts[$i] - 1;
-            my $block_width = $block_sizes[$i] || 1;
+          for (my $j = 0; $j < $block_count; $j++) {
+            my $block_start = $s + $block_starts[$j] - 1;
+            my $block_width = $block_sizes[$j] || 1;
             my $block_end   = $block_start + $block_width;
             next if ($block_end < 0 || $block_start > $length);
 
@@ -507,11 +507,11 @@ sub render_as_alignment_nolabel {
               }
             }
 
-            if ($i < ($block_count - 1)) {
+            if ($j < ($block_count - 1)) {
               $composite->push($self->Intron({
                                             x         => $block_end,
                                             y         => $composite->{'y'},
-                                            width     => $start + $block_starts[$i+1] - $block_end,
+                                            width     => $s + $block_starts[$j+1] - $block_end,
                                             height    => $h,
                                             colour    => $feature_colour,
                                             strand    => $f->strand,
