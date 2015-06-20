@@ -50,10 +50,6 @@ sub run {
     my $cmd = $self->param('cmd');
     push @$cmd, @{$self->param('extra_args')};
 
-    #append full path to output_file
-    my $full_output_file = $self->param('output_dir') . "/" . $self->param('output_file') . "." . $self->param('format');
-    push @$cmd, '--output_file', $full_output_file;
-
     #Write a temporary file to store gabs to dump
     if ($self->param('start') && $self->param('end')) {
         my $tmp_file = $self->_write_gab_file();
@@ -101,20 +97,7 @@ sub write_output {
 sub _healthcheck {
     my ($self) = @_;
     
-    #Find out if split into several files
-    my $dump_cmd = join(" ", @{$self->param('extra_args')});
-    my $chunk_num = $dump_cmd =~ /chunk_num/;
-    my $output_file = $self->param('output_dir') . "/" . $self->param('output_file') . "." . $self->param('format');
-
-    #not split by chunk eg supercontigs so need to check all supercontig* files
-    if (!$chunk_num) {
-	if ($output_file =~ /\.[^\.]+$/) {
-	    $output_file =~ s/(\.[^\.]+)$/_*$1/;
-	}
-    } else {
-	#Have chunk number in filename
-	$output_file = $self->param('output_dir') . "/" . $self->param('dumped_output_file');
-    }
+    my $output_file = $self->param('output_file_pattern');
 
     my $cmd;
     if ($self->param('format') eq "emf") {
@@ -133,7 +116,7 @@ sub _healthcheck {
 	#visual confirmation all is well
 	my $sql = "INSERT INTO healthcheck (filename, expected,dumped) VALUES (?,?,?)";
 	my $sth = $self->db->dbc->prepare($sql);
-	$sth->execute($self->param('output_file'), $self->param('num_blocks'), $num_blocks);
+	$sth->execute($self->param('output_file_pattern'), $self->param('num_blocks'), $num_blocks);
 	$sth->finish();
     }
 }

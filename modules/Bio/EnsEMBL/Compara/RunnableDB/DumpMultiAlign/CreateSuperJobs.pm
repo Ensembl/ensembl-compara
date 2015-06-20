@@ -73,21 +73,15 @@ sub write_output {
     # exit if there is nothing to dump
     return unless $total_blocks;
     
-    my $output_file = $self->param('filename') . "." . $self->param('coord_system_name');
-    
-    my $format = $self->param('format');
-    #We need the star because DumpMultiAlignment adds _1 to the output file and can create more if there are lots of supercontigs.
-    my $dump_output_file = $output_file . "*." . $format;
-	
     #Write out cmd for DumpMultiAlign and a few other parameters 
     #used in downstream analyses 
     
     my $extra_args = []; #Need to put something here
     my $output_ids = {
-                     'output_file'        => $output_file,
+                     'region_name'        => '#coord_system_name#',
+                     'filename_suffix'    => '*',   # We need the star because DumpMultiAlignment.pl adds _1 to the output file and can create more if there are lots of supercontigs.
                      'num_blocks'         => $total_blocks,
-                     'dumped_output_file' => $dump_output_file,
-                     'extra_args'         => [ '--coord_system', $self->param('coord_system_name') ],
+                     'extra_args'         => [ '--coord_system', '#coord_system_name#' ],
                     };
 
     $self->dataflow_output_id($output_ids, 2);

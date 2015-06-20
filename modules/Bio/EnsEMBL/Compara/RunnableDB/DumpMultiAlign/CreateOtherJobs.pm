@@ -56,10 +56,6 @@ sub write_output {
     #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;
 
-    my $tag = "other";
-
-    my $output_file = $self->param('filename') . "." . $tag;
-
     my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
@@ -90,7 +86,6 @@ sub write_output {
 	}
     }
     my $split_size = $self->param('split_size');
-    my $format = $self->param('format');
     my $species = $genome_db->name;
 
     my $gab_num = 1;
@@ -124,18 +119,16 @@ sub write_output {
 		$this_num_blocks = (@$skip_genomic_align_blocks % $split_size);
 	    }
 
-	    my $dump_output_file = $output_file . "_" . $chunk . "." . $format;
-
 	    #Write out cmd from DumpMultiAlign
 	    #Used to create a file of genomic_align_block_ids to pass to
 	    #DumpMultiAlign
 	    my $output_id = {
+                             'region_name'           =>  'other',
                              'start'                 =>  $start_gab_id,
                              'end'                   =>  $end_gab_id,
-                             'output_file'           =>  $output_file,
+                             'filename_suffix'       =>  $chunk,
                              'extra_args'            =>  ['--skip_species', $species, '--chunk_num', $chunk],
                              'num_blocks'            =>  $this_num_blocks,
-                             'dumped_output_file'    =>  $dump_output_file,
                             };
 
 	    #print "skip $output_id\n";

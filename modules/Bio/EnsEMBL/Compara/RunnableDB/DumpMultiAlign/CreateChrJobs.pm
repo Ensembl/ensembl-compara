@@ -94,7 +94,6 @@ sub write_output {
     my $format = $self->param('format');
 
     while (my $row = $sth->fetchrow_arrayref) {
-	my $output_file = $self->param('filename') . "." . $tag . $name;
 
 	my $num_chunks = ceil($total_blocks/$self->param('split_size'));
 
@@ -106,23 +105,18 @@ sub write_output {
 		$this_num_blocks = ($total_blocks - (($chunk-1)*$split_size));
 	    }
 
-	    my $dump_output_file = $output_file . "_" . $chunk . "." . $format;
-
 	    #Write out cmd for DumpMultiAlign and a few other parameters 
 	    #used in downstream analyses 
 	    my $output_ids = {
-                output_file => $output_file,
-                extra_args => ['--seq_region', $name, '--chunk_num', $chunk],
-                num_blocks => $this_num_blocks,
-                dumped_output_file => $dump_output_file,
+                region_name     => $tag.$name,
+                filename_suffix => $chunk,
+                extra_args      => ['--seq_region', $name, '--chunk_num', $chunk],
+                num_blocks      => $this_num_blocks,
             };
 	    
 	    $self->dataflow_output_id($output_ids, 2);
 	}
     }
-
-
-
 }
 
 1;

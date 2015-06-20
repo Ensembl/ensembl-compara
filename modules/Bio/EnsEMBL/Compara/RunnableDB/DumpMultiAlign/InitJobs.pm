@@ -107,7 +107,7 @@ sub write_output {
     my $output_ids = {
         mlss_id         => $self->param('mlss_id'),
         genome_db_id    => $self->param('genome_db_id'),
-        filename        => $self->param('filename'),
+        base_filename   => $self->param('filename'),
     };
 
     my @all_cs = @{$self->param('coord_systems')};
