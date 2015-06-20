@@ -129,8 +129,6 @@ sub write_output {
 
 	    my $dump_output_file = $output_file . "_" . $chunk . "." . $format;
 
-            my $coord_system = ""; #Needs to be set to something to avoid errors in DumMultiAlign
-
 	    #Write out cmd from DumpMultiAlign
 	    #Used to create a file of genomic_align_block_ids to pass to
 	    #DumpMultiAlign
@@ -141,7 +139,6 @@ sub write_output {
                              'extra_args'            =>  ['--skip_species', $species, '--chunk_num', $chunk],
                              'num_blocks'            =>  $this_num_blocks,
                              'dumped_output_file'    =>  $dump_output_file,
-                             'coord_system'          =>  $coord_system,
                             };
 
 	    #print "skip $output_id\n";

@@ -94,7 +94,6 @@ sub write_output {
     my $compara_url = $self->param('compara_url');
     my $split_size = $self->param('split_size');
     my $format = $self->param('format');
-    my $coord_system_name = $self->param('coord_system_name');
 
     if (defined($compara_url)) {
 	#need to protect the @
@@ -121,7 +120,6 @@ sub write_output {
 	    #Write out cmd for DumpMultiAlign and a few other parameters 
 	    #used in downstream analyses 
 	    my $output_ids = {
-                coord_system => $coord_system_name,
                 output_file => $output_file,
                 extra_args => ['--seq_region', $name, '--chunk_num', $chunk],
                 num_blocks => $this_num_blocks,
