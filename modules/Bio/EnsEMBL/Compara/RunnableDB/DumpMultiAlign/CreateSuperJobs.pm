@@ -90,7 +90,6 @@ sub write_output {
                      'output_file'        => $output_file,
                      'num_blocks'         => $total_blocks,
                      'dumped_output_file' => $dump_output_file,
-                     'format'             => $format,
                      'extra_args'         => $extra_args,
                     };
 

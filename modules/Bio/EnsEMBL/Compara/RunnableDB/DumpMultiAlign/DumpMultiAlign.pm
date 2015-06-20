@@ -51,7 +51,7 @@ sub run {
     push @$cmd, @{$self->param('extra_args')};
 
     #append full path to output_file
-    my $full_output_file = $self->param('output_dir') . "/" . $self->param('output_file');
+    my $full_output_file = $self->param('output_dir') . "/" . $self->param('output_file') . "." . $self->param('format');
     push @$cmd, '--output_file', $full_output_file;
 
     #Write a temporary file to store gabs to dump
@@ -104,7 +104,7 @@ sub _healthcheck {
     #Find out if split into several files
     my $dump_cmd = join(" ", @{$self->param('extra_args')});
     my $chunk_num = $dump_cmd =~ /chunk_num/;
-    my $output_file = $self->param('output_dir') . "/" . $self->param('output_file');
+    my $output_file = $self->param('output_dir') . "/" . $self->param('output_file') . "." . $self->param('format');
 
     #not split by chunk eg supercontigs so need to check all supercontig* files
     if (!$chunk_num) {

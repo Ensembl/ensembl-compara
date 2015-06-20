@@ -126,7 +126,6 @@ sub write_output {
                 extra_args => ['--seq_region', $name, '--chunk_num', $chunk],
                 num_blocks => $this_num_blocks,
                 dumped_output_file => $dump_output_file,
-                format => $format
             };
 	    
 	    $self->dataflow_output_id($output_ids, 2);

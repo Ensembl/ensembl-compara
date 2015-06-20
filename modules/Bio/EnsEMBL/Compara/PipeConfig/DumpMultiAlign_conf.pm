@@ -112,6 +112,17 @@ sub pipeline_create_commands {
 }
 
 
+# Ensures species output parameter gets propagated implicitly
+sub hive_meta_table {
+    my ($self) = @_;
+
+    return {
+        %{$self->SUPER::hive_meta_table},
+        'hive_use_param_stack'  => 1,
+    };
+}
+
+
 sub resource_classes {
     my ($self) = @_;
 
@@ -130,7 +141,11 @@ sub pipeline_analyses {
 			    'mlss_id' => $self->o('mlss_id'),
 			    'compara_db' => $self->o('compara_db'),
 			   },
-            -input_ids => [ {} ],
+            -input_ids => [
+                {
+                    'format'    => $self->o('format'),
+                }
+            ],
             -flow_into => {
                 '2->A' => [ 'createChrJobs' ],
                 '3->A' => [ 'createSuperJobs' ],
@@ -141,7 +156,6 @@ sub pipeline_analyses {
 	 {  -logic_name    => 'createChrJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateChrJobs',
             -parameters    => {
-			       'format' => $self->o('format'),
 			       'compara_db' => $self->o('compara_db'),
 			       'split_size' => $self->o('split_size'),
 			      },
@@ -152,7 +166,6 @@ sub pipeline_analyses {
 	{  -logic_name    => 'createSuperJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs',
             -parameters    => {
-                               'format' => $self->o('format'),
 			       'compara_db' => $self->o('compara_db'),
 			      },
 	    -flow_into => {
@@ -162,7 +175,6 @@ sub pipeline_analyses {
 	{  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
             -parameters    => {'species' => $self->o('species'),
-			       'format' => $self->o('format'),
 			       'compara_db' => $self->o('compara_db'),
 			       'split_size' => $self->o('split_size'),
 			      },
@@ -182,7 +194,6 @@ sub pipeline_analyses {
 			       "num_blocks"=> "#num_blocks#",
 			       "output_dir"=> $self->o('output_dir'),
 			       "output_file"=>"#output_file#" , 
-			       "format" => $self->o('format'), 
 			      },
 	   -hive_capacity => 15,
 	   -rc_name => '2GbMem',
@@ -199,10 +210,11 @@ sub pipeline_analyses {
 	{  -logic_name    => 'md5sum',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MD5SUM',
             -parameters    => {'output_dir' => $self->o('output_dir'),},
+            -flow_into    => [ 'readme' ],
         },
 	{  -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
-            -parameters    => {'format' => $self->o('format'),
+            -parameters    => {
 			       'compara_db' => $self->o('compara_db'),
 			       'mlss_id' => $self->o('mlss_id'),
 			       'output_dir' => $self->o('output_dir'),
@@ -210,10 +222,6 @@ sub pipeline_analyses {
 			       'species_tree_file' => $self->o('species_tree_file'),
 			       'species' => $self->o('species'),
 			      },
-            -input_ids     =>[ 
-		  {
-		  },
-             ],
         },    
 
     ];
