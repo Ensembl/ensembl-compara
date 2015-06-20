@@ -85,7 +85,6 @@ sub write_output {
     my ($name, $total_blocks);
     $sth->bind_columns(\$name,\$total_blocks);
 
-    my $chr_blocks; 
     my $tag;
     if ($self->param('coord_system_name') eq "chromosome") {
 	$tag = "chr";
@@ -105,8 +104,6 @@ sub write_output {
 
 	my $num_chunks = ceil($total_blocks/$self->param('split_size'));
 
-	#store chromosome name and number of chunks
-	$chr_blocks->{$name} = $num_chunks;
 	for (my $chunk = 1; $chunk <= $num_chunks; $chunk++) {
 
 	    #Number of gabs in this chunk (used for healthcheck)
