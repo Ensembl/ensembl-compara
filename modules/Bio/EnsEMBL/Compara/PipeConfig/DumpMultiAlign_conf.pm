@@ -128,6 +128,8 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
         'dump_program'  => $self->o('dump_program'),
+        'format'        => $self->o('format'),
+        'split_size'    => $self->o('split_size'),
     }
 }
 
@@ -151,7 +153,6 @@ sub pipeline_analyses {
 			   },
             -input_ids => [
                 {
-                    'format'    => $self->o('format'),
                 }
             ],
             -flow_into => {
@@ -165,7 +166,6 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateChrJobs',
             -parameters    => {
 			       'compara_db' => $self->o('compara_db'),
-			       'split_size' => $self->o('split_size'),
 			      },
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ] #must be on branch2 incase there are no results
@@ -184,7 +184,6 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
             -parameters    => {'species' => $self->o('species'),
 			       'compara_db' => $self->o('compara_db'),
-			       'split_size' => $self->o('split_size'),
 			      },
 	   -rc_name => '2GbMem',
 	    -flow_into => {
@@ -195,7 +194,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
 
             -parameters    => {
-                               'cmd' => [ 'perl', '#dump_program#', '--species', $self->o('species'), '--mlss_id', $self->o('mlss_id'), '--masked_seq', $self->o('masked_seq'), '--split_size', $self->o('split_size'), '--output_format', '#format#' ],
+                               'cmd' => [ 'perl', '#dump_program#', '--species', $self->o('species'), '--mlss_id', $self->o('mlss_id'), '--masked_seq', $self->o('masked_seq'), '--split_size', '#split_size#', '--output_format', '#format#' ],
 			       "reg_conf" => $self->o('reg_conf'),
 			       "db_urls" => $self->o('db_urls'),
 			       "compara_db" => $self->o('compara_db'),
@@ -226,7 +225,6 @@ sub pipeline_analyses {
 			       'compara_db' => $self->o('compara_db'),
 			       'mlss_id' => $self->o('mlss_id'),
 			       'output_dir' => $self->o('output_dir'),
-			       'split_size' => $self->o('split_size'),
 			       'species_tree_file' => $self->o('species_tree_file'),
 			       'species' => $self->o('species'),
 			      },
