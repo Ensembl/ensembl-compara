@@ -68,7 +68,8 @@ sub fetch_input {
     #Note this is using the database set in $self->param('compara_db') rather than the underlying eHive database.
     my $compara_dba       = $self->compara_dba;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-    my $genome_db         = $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
+    my $genome_db         = $genome_db_adaptor->fetch_by_name_assembly($self->param('species'))
+                             || $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
     my $coord_systems     = $genome_db->db_adaptor->get_CoordSystemAdaptor->fetch_all_by_attrib('default_version');;
     my @coord_system_names_by_rank = map {$_->name} (sort {$a->rank <=> $b->rank} @$coord_systems);
 
