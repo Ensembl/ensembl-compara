@@ -122,6 +122,14 @@ sub hive_meta_table {
     };
 }
 
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},
+        'dump_program'  => $self->o('dump_program'),
+    }
+}
 
 sub resource_classes {
     my ($self) = @_;
@@ -187,7 +195,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
 
             -parameters    => {
-                               'cmd' => [ 'perl', $self->o('dump_program'), '--species', $self->o('species'), '--mlss_id', $self->o('mlss_id'), '--masked_seq', $self->o('masked_seq'), '--split_size', $self->o('split_size'), '--output_format', '#format#' ],
+                               'cmd' => [ 'perl', '#dump_program#', '--species', $self->o('species'), '--mlss_id', $self->o('mlss_id'), '--masked_seq', $self->o('masked_seq'), '--split_size', $self->o('split_size'), '--output_format', '#format#' ],
 			       "reg_conf" => $self->o('reg_conf'),
 			       "db_urls" => $self->o('db_urls'),
 			       "compara_db" => $self->o('compara_db'),
