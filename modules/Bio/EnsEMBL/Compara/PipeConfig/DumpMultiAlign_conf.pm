@@ -147,12 +147,12 @@ sub pipeline_analyses {
     return [
 	 {  -logic_name => 'initJobs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
-            -parameters => {'species' => $self->o('species'),
-			    'mlss_id' => $self->o('mlss_id'),
-			    'compara_db' => $self->o('compara_db'),
-			   },
             -input_ids => [
                 {
+                    'species'   => $self->o('species'),
+                    'compara_db' => $self->o('compara_db'),
+                    'mlss_id'    => $self->o('mlss_id'),
+                    'output_dir' => $self->o('output_dir'),
                 }
             ],
             -flow_into => {
@@ -164,27 +164,18 @@ sub pipeline_analyses {
         },
 	 {  -logic_name    => 'createChrJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateChrJobs',
-            -parameters    => {
-			       'compara_db' => $self->o('compara_db'),
-			      },
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ] #must be on branch2 incase there are no results
             }	    
         },
 	{  -logic_name    => 'createSuperJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs',
-            -parameters    => {
-			       'compara_db' => $self->o('compara_db'),
-			      },
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ]
             }
         },
 	{  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
-            -parameters    => {'species' => $self->o('species'),
-			       'compara_db' => $self->o('compara_db'),
-			      },
 	   -rc_name => '2GbMem',
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ]
@@ -194,13 +185,10 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
 
             -parameters    => {
-                               'cmd' => [ 'perl', '#dump_program#', '--species', $self->o('species'), '--mlss_id', $self->o('mlss_id'), '--masked_seq', $self->o('masked_seq'), '--split_size', '#split_size#', '--output_format', '#format#' ],
+                               'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', $self->o('masked_seq'), '--split_size', '#split_size#', '--output_format', '#format#' ],
 			       "reg_conf" => $self->o('reg_conf'),
 			       "db_urls" => $self->o('db_urls'),
-			       "compara_db" => $self->o('compara_db'),
 			       "num_blocks"=> "#num_blocks#",
-			       "output_dir"=> $self->o('output_dir'),
-			       "output_file"=>"#output_file#" , 
 			      },
 	   -hive_capacity => 15,
 	   -rc_name => '2GbMem',
@@ -210,23 +198,17 @@ sub pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'           => 'gzip -f -9 #output_dir#/#dumped_output_file#',
-                'output_dir'    => $self->o('output_dir'),
             },
             -hive_capacity => 200,
         },
 	{  -logic_name    => 'md5sum',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MD5SUM',
-            -parameters    => {'output_dir' => $self->o('output_dir'),},
             -flow_into    => [ 'readme' ],
         },
 	{  -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
             -parameters    => {
-			       'compara_db' => $self->o('compara_db'),
-			       'mlss_id' => $self->o('mlss_id'),
-			       'output_dir' => $self->o('output_dir'),
 			       'species_tree_file' => $self->o('species_tree_file'),
-			       'species' => $self->o('species'),
 			      },
         },    
 
