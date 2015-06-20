@@ -105,6 +105,8 @@ sub _healthcheck {
 
     } elsif ($self->param('format') eq "maf") {
 	$cmd = "grep ^a " . $output_file . " | wc -l";
+    } else {
+        die '_healthcheck() is not implemented for '.$self->param('format')."\n";
     }
     my $num_blocks = `$cmd`;
     chomp $num_blocks;
