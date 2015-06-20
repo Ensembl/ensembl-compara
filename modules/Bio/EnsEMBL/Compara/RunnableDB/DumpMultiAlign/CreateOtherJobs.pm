@@ -60,14 +60,11 @@ sub write_output {
 
     my $output_file = $self->param('filename') . "." . $tag;
 
-    #Convert eg human to Homo sapiens
-    #my $species_name = $reg->get_adaptor($self->param('species'), "core", "MetaContainer")->get_production_name;
-
     my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
 
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('species'));
+    my $genome_db = $genome_db_adaptor->fetch_by_dbID($self->param('genome_db_id'));
     my $species_name = $genome_db->name;
 
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
@@ -94,7 +91,7 @@ sub write_output {
     }
     my $split_size = $self->param('split_size');
     my $format = $self->param('format');
-    my $species = $self->param('species');
+    my $species = $genome_db->name;
 
     my $gab_num = 1;
     my $start_gab_id ;

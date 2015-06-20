@@ -39,6 +39,7 @@ This RunnableDB module creates 3 jobs: 1) gabs on chromosomes 2) gabs on
 supercontigs 3) gabs without $species (others)
 
 =cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs;
 
 use strict;

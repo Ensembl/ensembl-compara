@@ -165,7 +165,7 @@ sub pipeline_analyses {
 	 {  -logic_name    => 'createChrJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateChrJobs',
 	    -flow_into => {
-	       2 => [ 'dumpMultiAlign' ] #must be on branch2 incase there are no results
+	       2 => [ 'dumpMultiAlign' ]
             }	    
         },
 	{  -logic_name    => 'createSuperJobs',
@@ -188,7 +188,6 @@ sub pipeline_analyses {
                                'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', $self->o('masked_seq'), '--split_size', '#split_size#', '--output_format', '#format#' ],
 			       "reg_conf" => $self->o('reg_conf'),
 			       "db_urls" => $self->o('db_urls'),
-			       "num_blocks"=> "#num_blocks#",
 			      },
 	   -hive_capacity => 15,
 	   -rc_name => '2GbMem',

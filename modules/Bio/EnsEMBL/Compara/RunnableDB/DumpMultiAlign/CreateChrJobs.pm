@@ -90,14 +90,8 @@ sub write_output {
 	$tag = "chr";
     }
 
-    my $compara_url = $self->param('compara_url');
     my $split_size = $self->param('split_size');
     my $format = $self->param('format');
-
-    if (defined($compara_url)) {
-	#need to protect the @
-	$compara_url =~ s/@/\\\\@/;
-    }
 
     while (my $row = $sth->fetchrow_arrayref) {
 	my $output_file = $self->param('filename') . "." . $tag . $name;
