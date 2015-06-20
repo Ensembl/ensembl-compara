@@ -202,7 +202,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'compress',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'           => 'gzip -f -9 #output_dir#/#output_file#',
+                'cmd'           => 'gzip -f -9 #output_dir#/#dumped_output_file#',
                 'output_dir'    => $self->o('output_dir'),
             },
             -hive_capacity => 200,
