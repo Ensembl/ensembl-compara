@@ -121,7 +121,7 @@ sub write_output {
     }
 
     #Set up other job
-    $self->dataflow_output_id($output_ids, 4);
+    $self->dataflow_output_id($output_ids, 1);
 
 }
 

@@ -116,8 +116,8 @@ sub _create_specific_readme {
 
     #Get tree and ordered set of genome_dbs
     my ($newick_species_tree, $species_set) = $self->_get_species_tree($mlss);
-    my $method_link = $mlss->method->type;
-    my $filename = $self->param('output_dir') . "/README." . lc($method_link) . "_" . @$species_set . "_way";
+
+    my $filename = $self->param_required('readme_file');
     open my $fh, '>', $filename || die ("Cannot open $filename");
     $self->param('fh', $fh);
 

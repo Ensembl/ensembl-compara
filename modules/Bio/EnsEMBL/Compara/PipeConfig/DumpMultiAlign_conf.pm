@@ -158,7 +158,7 @@ sub pipeline_analyses {
             -flow_into => {
                 '2->A' => [ 'createChrJobs' ],
                 '3->A' => [ 'createSuperJobs' ],
-                '4->A' => [ 'createOtherJobs' ],
+                '1->A' => [ 'createOtherJobs' ],
 		'A->1' => [ 'md5sum'],
             },
         },
@@ -208,11 +208,12 @@ sub pipeline_analyses {
             },
             -flow_into      => [ 'readme' ],
         },
-	{  -logic_name    => 'readme',
+        {   -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
             -parameters    => {
-			       'species_tree_file' => $self->o('species_tree_file'),
-			      },
+                'readme_file' => '#output_dir#/README.#base_filename#',
+                'species_tree_file' => $self->o('species_tree_file'),
+            },
         },    
 
     ];
