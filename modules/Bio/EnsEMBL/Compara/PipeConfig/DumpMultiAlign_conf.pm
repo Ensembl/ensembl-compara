@@ -218,6 +218,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
             -parameters    => {
+                'mode'  => $self->o('mode'),
                 'readme_file' => '#output_dir#/README.#base_filename#',
                 'species_tree_file' => $self->o('species_tree_file'),
             },

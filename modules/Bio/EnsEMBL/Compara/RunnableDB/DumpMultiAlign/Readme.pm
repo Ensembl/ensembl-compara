@@ -379,9 +379,16 @@ sub _print_file_grouping_help {
     my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
     my $common_species_name = $self->_get_species_common_name($gdb_grouping);
 
-    $self->_print_paragraph("Alignments are grouped by $common_species_name chromosome. Each file contains up to " . $self->param('split_size') . " alignments. The file named *.others_*." . $self->param('format') . ".gz contain alignments that do not
-include any $common_species_name region. Alignments containing duplications in $common_species_name are
-dumped once per duplicated segment.");
+    my @par = ();
+    if ($self->param('mode') ne 'file') {
+        push @par, "Alignments are grouped by $common_species_name chromosome.";
+        push @par, "Alignments containing duplications in $common_species_name are dumped once per duplicated segment.";
+        push @par, "The files named *.other*." . $self->param('format') . "contain alignments that do not include any $common_species_name region.";
+    }
+    if ($self->param('split_size')) {
+        push @par, "Each file contains up to " . $self->param('split_size') . " alignments.";
+    }
+    $self->_print_paragraph(join(" ", @par));
 }
 
 sub _print_header {
