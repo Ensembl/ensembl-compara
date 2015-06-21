@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_80_81_b.sql
+# patch_81_82_b.sql
 #
 # Title: Add "first_release" and "last_release" to the core tables
 #
@@ -29,7 +29,7 @@ ALTER TABLE genome_db ADD COLUMN first_release smallint unsigned, ADD COLUMN las
 
 # Insert dummy values for first_release and last_release
 UPDATE genome_db SET first_release = 79;    -- must be set, so that all the genomes are considered as released
-UPDATE genome_db SET last_release = 79 WHERE assembly_default=0;    -- non-default genome_dbs were not current any more in e80, so must have ended in e79 or before
+UPDATE genome_db SET last_release = 79 WHERE assembly_default=0;    -- non-default genome_dbs were not current any more in e81, so must have ended in e79 or before
 
 ALTER TABLE genome_db DROP COLUMN assembly_default;
 
@@ -60,7 +60,7 @@ DELETE FROM species_set_tag WHERE tag = "taxon_id";
 DELETE FROM species_set_tag WHERE tag = "name";
 
 -- Insert an empty species-set
-INSERT INTO species_set_header (name, first_release) VALUES ("empty", 81);
+INSERT INTO species_set_header (name, first_release) VALUES ("empty", 82);
 
 -- the method_link_species_set table
 CREATE TEMPORARY TABLE method_link_species_set_time AS
@@ -74,5 +74,5 @@ UPDATE method_link_species_set JOIN method_link_species_set_time USING (method_l
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_80_81_b.sql|first_last_release');
+  VALUES (NULL, 'patch', 'patch_81_82_b.sql|first_last_release');
 

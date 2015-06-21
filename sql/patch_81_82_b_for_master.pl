@@ -70,7 +70,7 @@ my %first_table_release = (
     species_set_tag         => 57,
 );
 
-my $last_available_rel  = 80;     # last public release
+my $last_available_rel  = 81;     # last public release
 
 $| = 1;
 
@@ -267,7 +267,7 @@ INSERT IGNORE INTO species_set_header
 });
 find_first_last_rel('species_set');
 #run_command_once('DELETE FROM species_set_tag WHERE tag = "name"');
-run_command_once('INSERT INTO species_set_header (name, first_release) VALUES ("empty", 81)');
+run_command_once('INSERT INTO species_set_header (name, first_release) VALUES ("empty", 82)');
 #find_species_set_names();
 $master_dbc->do('UPDATE species_set_header SET name = REPLACE(name, "oldcollection",  "") WHERE name LIKE "oldcollection%"');
 
@@ -281,5 +281,5 @@ CREATE TEMPORARY TABLE method_link_species_set_time AS
 $master_dbc->do(q{UPDATE method_link_species_set JOIN method_link_species_set_time USING (method_link_species_set_id) SET first_release = fr, last_release = lr WHERE first_release IS NULL AND last_release IS NULL});
 find_first_last_rel('method_link_species_set');
 
-run_command_once("INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'patch', 'patch_80_81_b.sql|first_last_release')");
+run_command_once("INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'patch', 'patch_81_82_b.sql|first_last_release')");
 

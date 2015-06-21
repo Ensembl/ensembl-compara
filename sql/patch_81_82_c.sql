@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_80_81_c.sql
+# patch_81_82_c.sql
 #
 # Title: Add a "size" column to the species_set_header table
 #
@@ -30,5 +30,5 @@ UPDATE ssh_size JOIN species_set_header USING (species_set_id) SET species_set_h
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_80_81_c.sql|species_set_size');
+  VALUES (NULL, 'patch', 'patch_81_82_c.sql|species_set_size');
 

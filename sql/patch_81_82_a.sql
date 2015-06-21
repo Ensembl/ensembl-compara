@@ -12,16 +12,16 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_80_81_a.sql
+# patch_81_82_a.sql
 #
 # Title: Update schema version.
 #
 # Description:
-#   Update schema_version in meta table to 81.
+#   Update schema_version in meta table to 82.
 
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '81');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '82');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_80_81_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_81_82_a.sql|schema_version');
