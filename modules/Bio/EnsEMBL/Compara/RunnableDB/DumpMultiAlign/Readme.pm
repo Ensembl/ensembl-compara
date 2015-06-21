@@ -127,7 +127,11 @@ sub _create_specific_readme {
 	$self->_create_specific_epo_readme($compara_dba, $mlss, $species_set, $filename, $schema_version, $newick_species_tree);
     } elsif ($mlss->method->type eq "EPO_LOW_COVERAGE") {
 	$self->_create_specific_epo_low_coverage_readme($compara_dba, $mlss, $species_set, $filename, $schema_version, $newick_species_tree, $mlss_adaptor);
-    } 
+    } elsif ($mlss->method->type eq "LASTZ_NET") {
+	$self->_create_specific_lastz_readme($compara_dba, $mlss, $species_set, $filename, $schema_version);
+    } else {
+        die "I don't know how to generate a README for ".$mlss->method->type."\n";
+    }
 
 }
 
@@ -389,5 +393,44 @@ https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl
     close FILE;
 
 }
+
+#
+#Create LASTZ_NET README file
+#
+sub _create_specific_lastz_readme {
+    my ($self, $compara_dba, $mlss, $species_set, $filename, $schema_version) = @_;
+
+    my $species = $self->param('species');
+
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
+    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species);
+    my $common_species_name = $genome_db->db_adaptor->get_MetaContainer->get_common_name;
+
+    my $full_pairwise_name = join(' vs ', map {sprintf("%s (%s)", $_->name, $_->assembly)} @$species_set);
+    open FILE, ">$filename" || die ("Cannot open $filename");
+    print FILE "This directory contains all the $full_pairwise_name LASTZ pairwise
+alignments corresponding to the Release " . $schema_version . " of Ensembl (see
+http://www.ensembl.org for further details and credits about the
+Ensembl project).\n";
+
+    my $ref_species = $mlss->get_value_for_tag('reference_species');
+
+    print FILE "
+$ref_species was used as the reference species. After running LastZ, the raw LastZ alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.
+
+Alignments are grouped by $common_species_name chromosome. Each file contains up to " . $self->param('split_size') . " alignments. The file named *.others_*." . $self->param('format') . ".gz contain alignments that do not
+include any $common_species_name region. Alignments containing duplications in $common_species_name are
+dumped once per duplicated segment.\n";
+
+    if ($self->param('format') eq "emf") {
+	print FILE "An emf2maf parser is available with the ensembl compara API, in the
+scripts/dumps directory. Alternatively you can download it using the GitHub frontend:
+https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl
+";
+    }
+
+    close(FILE);
+}
+
 
 1;
