@@ -180,18 +180,21 @@ sub pipeline_analyses {
 		'A->1' => [ 'md5sum'],
             },
         },
+        # Generates DumpMultiAlign jobs from genomic_align_blocks on chromosomes (1 job per chromosome)
 	 {  -logic_name    => 'createChrJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateChrJobs',
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ]
             }	    
         },
+        # Generates DumpMultiAlign jobs from genomic_align_blocks on supercontigs (1 job per coordinate-system)
 	{  -logic_name    => 'createSuperJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs',
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ]
             }
         },
+	# Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
 	{  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
 	   -rc_name => 'crowd',
