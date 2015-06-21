@@ -93,6 +93,7 @@ sub default_options {
         'format' => 'emf',
         'mode' => 'dir',    # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
+        'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/species_tree.ensembl.topology.nw",
 
         # Method link types of mlss_id to retrieve
@@ -130,11 +131,13 @@ sub pipeline_wide_parameters {
 
     return {
         %{$self->SUPER::pipeline_wide_parameters},
-        'dump_program'  => $self->o('dump_program'),
+        'dump_program'      => $self->o('dump_program'),
+        'emf2maf_program'   => $self->o('emf2maf_program'),
+
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
+
         'export_dir'    => $self->o('export_dir'),
-        'output_dir'    => '#export_dir#/#base_filename#',
     }
 }
 
@@ -171,12 +174,13 @@ sub pipeline_analyses {
             -flow_into => {
                 $self->o('mode') eq 'file' ?
                 (
-                    '1->A' => [ 'dumpMultiAlign' ],
+                    '5->A' => [ 'dumpMultiAlign' ],
                 ) : (
                     '2->A' => [ 'createChrJobs' ],
                     '3->A' => [ 'createSuperJobs' ],
-                    '1->A' => [ 'createOtherJobs' ],
+                    '4->A' => [ 'createOtherJobs' ],
                 ),
+                '6->A' => [ 'copy_and_uncompress_emf_dir' ],
 		'A->1' => [ 'md5sum'],
             },
         },
@@ -215,12 +219,46 @@ sub pipeline_analyses {
 	   -rc_name => 'crowd',
            $self->o('mode') eq 'tar' ? () : ( -flow_into => [ 'compress' ] ),
         },
+        {   -logic_name     => 'copy_and_uncompress_emf_dir',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'cmd'           => 'cp -a #export_dir#/#base_filename#/#base_filename#*.emf* #output_dir#; gunzip #output_dir#/*.gz',
+            },
+            -flow_into      => [ 'find_emf_files' ],
+        },
+        {   -logic_name     => 'find_emf_files',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters     => {
+                'inputcmd'      => 'grep -rc DATA #output_dir#/',
+                'delimiter'     => ":",
+                'column_names' => [ 'in_emf_file', 'num_blocks' ],
+            },
+            -flow_into => {
+                $self->o('mode') eq 'tar' ? (
+                    2 => [ 'emf2maf' ],     # will create a fan of jobs
+                ) : (
+                    '2->A' => [ 'emf2maf' ],     # will create a fan of jobs
+                    'A->1' => [ 'compress_maf_dir' ]
+                ),
+            },
+        },
+        {   -logic_name     => 'emf2maf',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
+            -analysis_capacity  => 5,
+            -rc_name        => 'crowd',
+        },
+        {   -logic_name     => 'compress_maf_dir',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'cmd'           => 'gzip -f -9 #output_dir#/*.maf',
+            },
+        },
         {   -logic_name     => 'compress',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'           => 'gzip -f -9 #output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
             },
-            -hive_capacity => 200,
+            -analysis_capacity => 1,
         },
 	{   -logic_name     => 'md5sum',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',

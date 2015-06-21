@@ -107,27 +107,56 @@ sub write_output {
     #Pass on input_id and add on new parameters: multi-align mlss_id, filename
     #
 
+    my $output_dir = $self->param_required('export_dir').'/'.$self->param('filename');
     my $output_ids = {
         mlss_id         => $self->param('mlss_id'),
         genome_db_id    => $self->param('genome_db_id'),
         base_filename   => $self->param('filename'),
+        output_dir      => '#export_dir#/#base_filename#',
     };
 
-    make_path($self->param('filename'));
+    if ($self->param_required('format') eq 'emf2maf') {
 
-    my @all_cs = @{$self->param('coord_systems')};
-    #Set up chromosome job
-    my $cs = shift @all_cs;
-    $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $cs}, 2);
+        # In this mode, we read the EMF files from one directory, and
+        # convert them to MAF in another one
+        die "The EMF directory '$output_dir' does not exist.\n" unless -d $output_dir;
+        die "The EMF directory '$output_dir' is not complete.\n" unless -e $output_dir.'/README.'.$self->param('filename');
 
-    #Set up supercontig job
-    foreach my $other_cs (@all_cs) {
-        $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $other_cs}, 3);
+        # Fix the format name for dumpMultiAlign
+        $output_ids->{format}            = 'maf';
+        # output_dir is another directory alongside #base_filename#
+        $output_ids->{output_dir}        = '#export_dir#/#base_filename#_maf',
+        $output_dir .= '_maf';
+
+        # Flow into the emf2maf branch
+        $self->dataflow_output_id($output_ids, 6);
+
+    } else {
+
+        my @all_cs = @{$self->param('coord_systems')};
+        #Set up chromosome job
+        my $cs = shift @all_cs;
+        $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $cs}, 2);
+
+        #Set up supercontig job
+        foreach my $other_cs (@all_cs) {
+            $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $other_cs}, 3);
+        }
+
+        #Set up other job
+        $self->dataflow_output_id($output_ids, 4);
+
+        # In case there is something connected there: a job to dump all the
+        # blocks in 1 file
+        $self->dataflow_output_id( {%$output_ids, 'region_name' => 'all', 'extra_args' => []}, 5);
+
     }
 
-    #Set up other job
-    $self->dataflow_output_id( {%$output_ids, 'region_name' => 'all', 'extra_args' => []}, 1);
+    make_path($output_dir);
 
+    # Override autoflow and make sure the descendant jobs have all the
+    # parameters
+    $self->dataflow_output_id($output_ids, 1);
 }
 
 1;
