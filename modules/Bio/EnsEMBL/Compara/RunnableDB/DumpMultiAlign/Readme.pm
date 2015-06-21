@@ -208,7 +208,7 @@ uses the Pecan alignments to infer the ancestral sequences.");
     $self->_print_pecan_help();
     $self->_print_ortheus_help();
     $self->_print_file_grouping_help();
-    $self->_print_helper($mlss);
+    $self->_print_format_helper($mlss);
 }
 
 #
@@ -253,7 +253,7 @@ gaps were introduced into the $species sequence).");
     $self->_print_ortheus_help();
     $self->_print_gerp_help();
     $self->_print_file_grouping_help();
-    $self->_print_helper($mlss);
+    $self->_print_format_helper($mlss);
 }
 
 #
@@ -272,7 +272,7 @@ Pecan builds alignments in these syntenic regions.");
     $self->_print_pecan_help();
     $self->_print_gerp_help();
     $self->_print_file_grouping_help();
-    $self->_print_helper($mlss);
+    $self->_print_format_helper($mlss);
 }
 
 #
@@ -290,7 +290,7 @@ sub _create_specific_lastz_readme {
     $self->_print_paragraph("$common_species_name was used as the reference species. After running LastZ, the raw LastZ alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.");
 
     $self->_print_file_grouping_help();
-    $self->_print_helper($mlss);
+    $self->_print_format_helper($mlss);
 }
 
 
@@ -399,14 +399,16 @@ to Release $schema_version of Ensembl (see http://www.ensembl.org for further de
 and credits about the Ensembl project).");
 }
 
-sub _print_helper {
+sub _print_format_helper {
     my ($self, $mlss) = @_;
     if ($self->param('format') eq 'emf') {
         $self->_print_paragraph("An emf2maf parser is available with the ensembl compara API, in the
 scripts/dumps directory. Alternatively you can download it using the GitHub frontend:
 https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl");
     } elsif ($self->param('format') eq 'maf') {
-        $self->_print_paragraph("Please note that MAF format does not support conservation scores.") if ($mlss->method->type eq 'EPO_LOW_COVERAGE') or ($mlss->method->type eq 'PECAN');
+        my $txt = "The MAF format is described at https://cgwb.nci.nih.gov/FAQ/FAQformat.html#format5";
+        $txt .= "Please note that MAF format does not support conservation scores." if ($mlss->method->type eq 'EPO_LOW_COVERAGE') or ($mlss->method->type eq 'PECAN');
+        $self->_print_paragraph($txt);
     }
 }
 
