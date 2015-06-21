@@ -76,7 +76,6 @@ sub write_output {
     #Write out cmd for DumpMultiAlign and a few other parameters 
     #used in downstream analyses 
     
-    my $extra_args = []; #Need to put something here
     my $output_ids = {
                      'region_name'        => '#coord_system_name#',
                      'filename_suffix'    => '*',   # We need the star because DumpMultiAlignment.pl adds _1 to the output file and can create more if there are lots of supercontigs (when split_size is set)

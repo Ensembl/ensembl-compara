@@ -92,6 +92,7 @@ sub default_options {
 	'split_size' => 200,
 	'masked_seq' => 1,
         'format' => 'emf',
+        'mode' => 'dir',    # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/species_tree.ensembl.topology.nw",
 
@@ -157,9 +158,14 @@ sub pipeline_analyses {
                 }
             ],
             -flow_into => {
-                '2->A' => [ 'createChrJobs' ],
-                '3->A' => [ 'createSuperJobs' ],
-                '1->A' => [ 'createOtherJobs' ],
+                $self->o('mode') eq 'file' ?
+                (
+                    '1->A' => [ 'dumpMultiAlign' ],
+                ) : (
+                    '2->A' => [ 'createChrJobs' ],
+                    '3->A' => [ 'createSuperJobs' ],
+                    '1->A' => [ 'createOtherJobs' ],
+                ),
 		'A->1' => [ 'md5sum'],
             },
         },
@@ -193,7 +199,7 @@ sub pipeline_analyses {
 			      },
 	   -hive_capacity => 15,
 	   -rc_name => '2GbMem',
-           -flow_into => [ 'compress' ],
+           $self->o('mode') eq 'tar' ? () : ( -flow_into => [ 'compress' ] ),
         },
         {   -logic_name     => 'compress',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
@@ -215,8 +221,14 @@ sub pipeline_analyses {
                 'readme_file' => '#output_dir#/README.#base_filename#',
                 'species_tree_file' => $self->o('species_tree_file'),
             },
+           $self->o('mode') eq 'tar' ? ( -flow_into => [ 'tar' ] ) : (),
         },    
-
+        {   -logic_name     => 'tar',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'cmd'           => 'cd #export_dir#; tar czf #base_filename#.tar.gz #base_filename#',
+            },
+        },
     ];
 }
 

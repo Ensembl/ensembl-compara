@@ -48,7 +48,7 @@ sub run {
     my $self = shift;
 
     my $cmd = $self->param('cmd');
-    push @$cmd, @{$self->param('extra_args')};
+    push @$cmd, @{$self->param_required('extra_args')};
 
     #Write a temporary file to store gabs to dump
     if ($self->param('start') && $self->param('end')) {

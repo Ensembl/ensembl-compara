@@ -126,7 +126,7 @@ sub write_output {
     }
 
     #Set up other job
-    $self->dataflow_output_id($output_ids, 1);
+    $self->dataflow_output_id( {%$output_ids, 'region_name' => 'all', 'extra_args' => []}, 1);
 
 }
 
