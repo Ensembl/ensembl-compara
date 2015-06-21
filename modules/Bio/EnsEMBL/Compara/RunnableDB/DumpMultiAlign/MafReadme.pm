@@ -33,27 +33,19 @@ This RunnableDB module generates a general README.{maf} file and a specific READ
 ckong
 
 =cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MafReadme;
 
 use strict;
-use Data::Dumper;
-use Bio::EnsEMBL::Registry;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use warnings;
 
-sub fetch_input {
-    my ($self)  = @_;
-
-    my $output_dir        = $self->param_required('output_dir') || die "'output_dir' is an obligatory parameter";
-    $self->param('output_dir', $output_dir);
-
-return 0;
-}
+use base ('Bio::EnsEMBL::Hive::Process');
 
 sub run {
     my ($self)  = @_;
 
-    my $output_dir = $self->param('output_dir');
-    my $readme     = $output_dir."/README.txt";
+    my $export_dir = $self->param_required('export_dir');
+    my $readme     = $export_dir."/README.txt";
     my $data;
 
     open  $data,">","$readme" or die $!;
@@ -64,14 +56,6 @@ sub run {
     print $data "The first species is always the reference.\n";
     close($data);
 
-return 0;
 }
-
-sub write_output {
-    my ($self)  = @_;
-    
-return 0;
-}    
-
 
 1;
