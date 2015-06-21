@@ -18,70 +18,67 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory;
 
-=head1 DESCRIPTION
-
-=head1 AUTHOR
-
-ckong
-
 =cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory;
 
 use strict;
-use Data::Dumper;
-use Bio::EnsEMBL::Registry;
+use warnings;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
+sub param_defaults {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::param_defaults},
+        'species_priority'  => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes' ],
+    }
+}
+
 sub fetch_input {
-    my ($self) 	= @_;
+    my ($self) = @_;
 
-    my $division          = $self->param_required('division')          || die "'division' is an obligatory parameter";
-    my $method_link_types = $self->param_required('method_link_types') || die "'method_link_types' is an obligatory parameter";
+    my $method_link_types = $self->param_required('method_link_types');
 
-    $self->param('division', $division);
-    $self->param('method_link_types', $method_link_types);
+    # Get MethodLinkSpeciesSet adaptor:
+    my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-return 0;
+    my @good_mlsss = ();
+    foreach my $ml_typ (@$method_link_types){
+        # Get MethodLinkSpeciesSet Objects for required method_link_type
+        my $mlss_listref = $mlssa->fetch_all_by_method_link_type($ml_typ);
+
+        foreach my $mlss (@$mlss_listref) {
+            my $mlss_id     = $mlss->dbID();
+
+            if (($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') or ($mlss->method->type eq 'EPO_LOW_COVERAGE')) {
+                my $ref_species = $mlss->get_value_for_tag('reference_species');
+                die "Reference species missing! Please check the 'reference species' tag in method_link_species_set_tag for mlss_id $mlss_id\n" unless $ref_species;
+
+            } else {
+                my %species_in_mlss = map {$_->name => 1} @{$mlss->species_set_obj->genome_dbs};
+                my @ref_species_in = grep {$species_in_mlss{$_}} @{$self->param('species_priority')};
+                if (not scalar(@ref_species_in)) {
+                    die "Could not find any of (".join(", ", map {'"'.$_.'"'} @{$self->param('species_priority')}).") in mlss_id $mlss_id. Edit the 'species_priority' list in MLSSJobFactory.\n";
+                }
+                $mlss->add_tag('reference_species', $ref_species_in[0]);
+            }
+
+            push @good_mlsss, $mlss;
+        }
+    }
+    $self->param('good_mlsss', \@good_mlsss);
 }
 
-sub run {
-    my ($self)  = @_;
-
-return 0;
-}
 
 sub write_output {
     my ($self)  = @_;
 
-    my $division          = $self->param('division');
-    my $method_link_types = $self->param('method_link_types');
-
-    # Get MethodLinkSpeciesSet adaptor:
-    my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($division, 'compara', 'MethodLinkSpeciesSet');
-
-    foreach my $ml_typ (@$method_link_types){
-       # Get MethodLinkSpeciesSet Objects for required method_link_type
-       my $mlss_listref = $mlssa->fetch_all_by_method_link_type($ml_typ);
-
-my $count =0;
-           
-       foreach my $mlss (@$mlss_listref){ 
-	  #next unless $count < 2;
-          $count++;
-
-          my $mlss_id     = $mlss->dbID();
-	  my $ref_species = $mlss->get_value_for_tag('reference_species');
-
-          warn("Reference species missing! Please check the 'reference species' tag in method_link_species_set_tag for mlss_id ".$mlss_id)if(!defined $ref_species);
-          next unless (defined $ref_species);
-
-	  $self->dataflow_output_id({'mlss_id' => $mlss_id, 'species' => $ref_species, 'method_link_type' => $ml_typ}, 2) if (defined $mlss_id);          
-       }
-   }
-return 0;
+    foreach my $mlss (@{$self->param('good_mlsss')}) {
+        $self->dataflow_output_id({'mlss_id' => $mlss->dbID, 'species' => $mlss->get_value_for_tag('reference_species')}, 2);
+    }
 }
 
-
 1;
-
 

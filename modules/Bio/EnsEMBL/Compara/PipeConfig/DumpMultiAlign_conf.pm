@@ -88,13 +88,15 @@ sub default_options {
 
         'export_dir'    => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/dumps',
 
-	'species'  => "human",
 	'split_size' => 200,
 	'masked_seq' => 1,
         'format' => 'emf',
         'mode' => 'dir',    # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/species_tree.ensembl.topology.nw",
+
+        # Method link types of mlss_id to retrieve
+        'method_link_types' => ['BLASTZ_NET', 'TRANSLATED_BLAT', 'TRANSLATED_BLAT_NET', 'LASTZ_NET', 'PECAN', 'EPO', 'EPO_LOW_COVERAGE'],
 
     };
 }
@@ -148,15 +150,24 @@ sub resource_classes {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
+
+        {   -logic_name    => 'MLSSJobFactory',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory',
+            -parameters    => {
+                'method_link_types' => $self->o('method_link_types'),
+            },
+            -input_ids     => [
+                {
+                    'compara_db'        => $self->o('compara_db'),
+                },
+            ],
+            -flow_into      => {
+                '2' => [ 'initJobs' ],
+            },
+        },
+
 	 {  -logic_name => 'initJobs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
-            -input_ids => [
-                {
-                    'species'   => $self->o('species'),
-                    'compara_db' => $self->o('compara_db'),
-                    'mlss_id'    => $self->o('mlss_id'),
-                }
-            ],
             -flow_into => {
                 $self->o('mode') eq 'file' ?
                 (
