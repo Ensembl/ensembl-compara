@@ -41,6 +41,10 @@ sub fetch_input {
 
     my $method_link_types = $self->param_required('method_link_types');
 
+    if (not ref($method_link_types)) {
+        $method_link_types = [split /,:/, $method_link_types];
+    }
+
     # Get MethodLinkSpeciesSet adaptor:
     my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
