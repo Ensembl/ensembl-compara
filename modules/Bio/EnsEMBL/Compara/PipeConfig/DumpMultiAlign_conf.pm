@@ -142,8 +142,8 @@ sub resource_classes {
     my ($self) = @_;
 
     return {
-            %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '2GbMem' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+        'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
 
@@ -194,7 +194,7 @@ sub pipeline_analyses {
         },
 	{  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
-	   -rc_name => '2GbMem',
+	   -rc_name => 'crowd',
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ]
             }
@@ -209,7 +209,7 @@ sub pipeline_analyses {
                                'output_file_pattern' => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
 			      },
 	   -hive_capacity => 15,
-	   -rc_name => '2GbMem',
+	   -rc_name => 'crowd',
            $self->o('mode') eq 'tar' ? () : ( -flow_into => [ 'compress' ] ),
         },
         {   -logic_name     => 'compress',
