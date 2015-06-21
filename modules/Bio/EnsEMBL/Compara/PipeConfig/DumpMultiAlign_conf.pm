@@ -86,6 +86,8 @@ sub default_options {
         # Intentionally left empty
 	#'compara_db' => 'Multi',
 
+        'export_dir'    => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/dumps',
+
 	'species'  => "human",
 	'split_size' => 200,
 	'masked_seq' => 1,
@@ -106,8 +108,6 @@ sub pipeline_create_commands {
 
 	#Store DumpMultiAlign healthcheck results
         $self->db_cmd('CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)'),
-	
-	'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
     ];
 }
 
@@ -130,6 +130,8 @@ sub pipeline_wide_parameters {
         'dump_program'  => $self->o('dump_program'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
+        'export_dir'    => $self->o('export_dir'),
+        'output_dir'    => '#export_dir#/#base_filename#',
     }
 }
 
@@ -152,7 +154,6 @@ sub pipeline_analyses {
                     'species'   => $self->o('species'),
                     'compara_db' => $self->o('compara_db'),
                     'mlss_id'    => $self->o('mlss_id'),
-                    'output_dir' => $self->o('output_dir'),
                 }
             ],
             -flow_into => {

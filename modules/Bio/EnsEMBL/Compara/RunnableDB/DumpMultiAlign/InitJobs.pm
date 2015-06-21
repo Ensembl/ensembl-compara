@@ -45,9 +45,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use File::Path qw(make_path);
 
 use Bio::EnsEMBL::Registry;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
 
 sub fetch_input {
     my $self = shift;
@@ -109,6 +112,8 @@ sub write_output {
         genome_db_id    => $self->param('genome_db_id'),
         base_filename   => $self->param('filename'),
     };
+
+    make_path($self->param('filename'));
 
     my @all_cs = @{$self->param('coord_systems')};
     #Set up chromosome job
