@@ -95,7 +95,19 @@ sub write_output {
 
     while (my $row = $sth->fetchrow_arrayref) {
 
-	my $num_chunks = ceil($total_blocks/$self->param('split_size'));
+        if (not $split_size) {
+            my $output_ids = {
+                region_name     => $tag.$name,
+                filename_suffix => '',
+                extra_args      => ['--seq_region', $name],
+                num_blocks      => $total_blocks,
+            };
+
+            $self->dataflow_output_id($output_ids, 2);
+            next;
+        }
+
+        my $num_chunks = ceil($total_blocks / $split_size);
 
 	for (my $chunk = 1; $chunk <= $num_chunks; $chunk++) {
 

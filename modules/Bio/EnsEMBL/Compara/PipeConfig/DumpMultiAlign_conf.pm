@@ -188,7 +188,7 @@ sub pipeline_analyses {
                                'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', $self->o('masked_seq'), '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_dir#/#base_filename#.#region_name#.#format#' ],
 			       "reg_conf" => $self->o('reg_conf'),
 			       "db_urls" => $self->o('db_urls'),
-                               'output_file_pattern' => '#output_dir#/#base_filename#.#region_name#_#filename_suffix#.#format#',
+                               'output_file_pattern' => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
 			      },
 	   -hive_capacity => 15,
 	   -rc_name => '2GbMem',
@@ -197,7 +197,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'compress',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'           => 'gzip -f -9 #output_dir#/#base_filename#.#region_name#_#filename_suffix#.#format#',
+                'cmd'           => 'gzip -f -9 #output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
             },
             -hive_capacity => 200,
         },

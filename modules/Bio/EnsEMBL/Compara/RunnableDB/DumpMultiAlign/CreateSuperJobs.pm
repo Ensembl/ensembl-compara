@@ -36,7 +36,7 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 =head1 DESCRIPTION
 
 This RunnableDB module generates DumpMultiAlign jobs from genomic_align_blocks
-on the species supercontigs. The jobs are split into $split_size chunks
+on the species supercontigs.
 
 =cut
 
@@ -79,7 +79,7 @@ sub write_output {
     my $extra_args = []; #Need to put something here
     my $output_ids = {
                      'region_name'        => '#coord_system_name#',
-                     'filename_suffix'    => '*',   # We need the star because DumpMultiAlignment.pl adds _1 to the output file and can create more if there are lots of supercontigs.
+                     'filename_suffix'    => '*',   # We need the star because DumpMultiAlignment.pl adds _1 to the output file and can create more if there are lots of supercontigs (when split_size is set)
                      'num_blocks'         => $total_blocks,
                      'extra_args'         => [ '--coord_system', '#coord_system_name#' ],
                     };

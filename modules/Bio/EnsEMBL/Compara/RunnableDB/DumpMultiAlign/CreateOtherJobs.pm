@@ -108,8 +108,23 @@ sub write_output {
 	    $start_gab_id = $gab->dbID;
 	}
 
+        if ($split_size == 0) {
+            if ($gab_num == @$skip_genomic_align_blocks) {
+                my $output_id = {
+                    'region_name'           =>  'other',
+                    'start'                 =>  $start_gab_id,
+                    'end'                   =>  $gab->dbID,
+                    'filename_suffix'       =>  '',
+                    'extra_args'            =>  ['--skip_species', $species],
+                    'num_blocks'            =>  $gab_num,
+                };
+
+                #print "skip $output_id\n";
+                $self->dataflow_output_id($output_id, 2);
+            }
+
 	#Create jobs after each $split_size gabs
-	if ($gab_num % $split_size == 0 || 
+        } elsif ($gab_num % $split_size == 0 ||
 	    $gab_num == @$skip_genomic_align_blocks) {
 
 	    $end_gab_id = $gab->dbID;
