@@ -84,7 +84,7 @@ sub content {
     {'title' => 'Graphical neighbourhood region',                     'img' => '96/var_genomic_context.png',        'url' => $context_url                           },
     {'title' => 'Consequences (e.g. missense)',                       'img' => '96/var_gene_transcript.png',        'url' => $gt_url,       'count' => $gt_count    },
     {'title' => $p_title,                                             'img' => $p_img,                              'url' => $pop_url                               },
-    {'title' => 'Sample genotypes',                                   'img' => '96/var_individual_genotypes.png',   'url' => $geno_url,     'count' => $geno_count  },
+    {'title' => 'Sample genotypes',                                   'img' => '96/var_sample_genotypes.png',       'url' => $geno_url,     'count' => $geno_count  },
     {'title' => 'LD plots and tables',                                'img' => '96/var_linkage_disequilibrium.png', 'url' => $ld_url                                },
     {'title' => 'Diseases and traits',                                'img' => '96/var_phenotype_data.png',         'url' => $pheno_url,    'count' => $pheno_count },
     {'title' => 'Citations',                                          'img' => '96/var_citations.png',              'url' => $cit_url,      'count' => $cit_count   },
