@@ -330,8 +330,26 @@ sub _print_species_set {
 
 sub _print_species_tree {
     my ($self, $newick_species_tree) = @_;
-    $newick_species_tree =~ s/\(/(\n/g;
-    $newick_species_tree =~ s/,/,\n/g;
+
+    # The original layout was like this:
+    #$newick_species_tree =~ s/\(/(\n/g;
+    #$newick_species_tree =~ s/,/,\n/g;
+    # but it's quite difficult to see the structure (there is no indentation)
+
+    # This solution adds indentation
+    my $c = -1;
+    my %inc = ( '(' => 1, ')' => -1, ',' => 0 );
+    my $sep = "  ";
+    $newick_species_tree =~ s/([\(\)\,])/$1 eq ')' ? "\n".($sep x($c+=$inc{$1})).$1 : "$1\n".($sep x($c+=$inc{$1}))/eg;
+
+    # There is an even more advanced solution, but I find it less readable
+    # And the advantage of the previous solution is that it is still
+    # newick-compatible... Very good for copy-paste !
+    #my $c = 0;
+    #my $leaf = "+--";
+    #my $ind = "|  ";
+    #$newick_species_tree =~ s/([\(\)\,])/if($1 eq '(') {$c++; $leaf} elsif($1 eq ')') {$c--; "\n".${ind}x$c} else {"\n".${ind}x($c-1).$leaf}/eg;
+
     $self->_print_line("The species tree was:");
     $self->_print_line($newick_species_tree);
     $self->_print_line("\n");
