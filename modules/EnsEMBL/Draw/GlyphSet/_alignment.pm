@@ -943,18 +943,18 @@ sub render_interaction {
 
         ## Cut curve off at edge of track if ends lie outside the current window
         if ($end_1 < 0) {
-          my $cos = $centre / $major_axis;
-          my $acos = $self->acos_in_degrees($cos);
+          my $cos   = $centre / $major_axis;
+          my $theta = $self->acos_in_degrees($cos);
           ## Tweak by 5 degrees to ensure arc doesn't overlap image
-          $end_point -= $acos + 5;
-          $left_height = abs(sin($acos) * $minor_axis);
+          $end_point -= $theta + 5;
+          $left_height = abs(sin($theta) * $minor_axis);
         }
         if ($s2 >= $length) {
-          my $cos = ($self->image_width - $centre) / $major_axis;
-          my $acos = $self->acos_in_degrees($cos);
+          my $cos   = ($self->image_width - $centre) / $major_axis;
+          my $theta = $self->acos_in_degrees($cos);
           ## Tweak by 5 degrees to ensure arc doesn't overlap image
-          $start_point = $acos + 5;
-          $right_height = abs(sin($acos) * $minor_axis);
+          $start_point = $theta + 5;
+          $right_height = abs(sin($theta) * $minor_axis);
         }
 
         ## Are one or both ends of this interaction visible?
