@@ -204,7 +204,7 @@ sub _create_specific_epo_low_coverage_readme {
 
     $self->_print_species_tree($newick_species_tree);
 
-    my $gdb_grouping = $self->compara_dba->fetch_by_dbID($self->param('genome_db_id'));
+    my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
     my $species = lc $self->_get_species_common_name($gdb_grouping);
     $self->_print_paragraph("To build the " . @$high_coverage_species_set . "-way alignment, first, Enredo is used to build a set of
 co-linear regions between the genomes and then Pecan aligns these regions. 
