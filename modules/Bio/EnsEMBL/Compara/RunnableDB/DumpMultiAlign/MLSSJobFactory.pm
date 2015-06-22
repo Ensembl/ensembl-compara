@@ -43,7 +43,7 @@ sub fetch_input {
     my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
     my @good_mlsss = ();
-    foreach my $ml_typ (split /,:/, $self->param_required('method_link_types')){
+    foreach my $ml_typ (split /[,:]/, $self->param_required('method_link_types')){
         # Get MethodLinkSpeciesSet Objects for required method_link_type
         my $mlss_listref = $mlssa->fetch_all_by_method_link_type($ml_typ);
 
