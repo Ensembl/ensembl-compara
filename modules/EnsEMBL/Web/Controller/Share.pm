@@ -57,16 +57,15 @@ sub new {
 # TODO: rewrite sharing code so that it comes through here for everything (not ShareURL)
 
 sub dbh {
-  my $self = shift;
-  my $sd   = $self->hub->species_defs;
+  my $self  = shift;
+  my $db    = $self->hub->species_defs->session_db;
   my $dbh;
-  
+
   # try and get user db connection. If it fails the use backup port
   eval {
-    $dbh = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT),        $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS) ||
-           DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT_BACKUP), $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS);
+    $dbh = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $db->{'NAME'}, $db->{'HOST'}, $db->{'PORT'}), $db->{'USER'}, $db->{'PASS'});
   };
-  
+
   return $dbh || undef;
 }
 

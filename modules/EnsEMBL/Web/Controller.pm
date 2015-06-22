@@ -370,13 +370,13 @@ sub save_config {
   my (%existing, $existing_config);
   
   if ($overwrite) {
-    foreach my $id ($overwrite, $configs->{$overwrite}{'link_id'} || ()) {
-      $existing{$configs->{$id}{'type'}} = { record_id => $id };
+    foreach my $id ($overwrite, $configs->{$overwrite}{'link_key'} || ()) {
+      $existing{$configs->{$id}{'type'}} = { config_key => $id };
       $params{$_} ||= $configs->{$id}{$_} for qw(record_type record_type_id name description);
-      push @{$params{'set_ids'}}, $adaptor->record_to_sets($id);
+      push @{$params{'set_keys'}}, $adaptor->record_to_sets($id);
     }
   }
-  
+
   my $record_type_ids = delete $params{'record_type_ids'};
   
   foreach my $record_type_id (ref $record_type_ids eq 'ARRAY' ? @$record_type_ids : $record_type_ids) {
@@ -387,7 +387,7 @@ sub save_config {
  
       my ($saved, $deleted) = $adaptor->save_config(%params, %{$existing{$_} || {}}, type => $_, record_type_id => $record_type_id, data => $adaptor->get_config($_, $params{'code'}));
       
-      push @links, { id => $saved, code => $params{'code'}, link => $params{'link'}, set_ids => $params{'set_ids'} };
+      push @links, { id => $saved, code => $params{'code'}, link => $params{'link'}, set_keys => $params{'set_keys'} };
       
       if ($deleted) {
         push @{$existing_config->{'deleted'}}, $deleted;
@@ -408,7 +408,7 @@ sub save_config {
     $adaptor->link_configs(@links);
   }
   
-  $existing_config->{'saved'} = [ grep !$configs->{$_->{'value'}}{'link_id'}, @{$existing_config->{'saved'}} ] if $overwrite;
+  $existing_config->{'saved'} = [ grep !$configs->{$_->{'value'}}{'link_key'}, @{$existing_config->{'saved'}} ] if $overwrite;
   
   return $existing_config;
 }

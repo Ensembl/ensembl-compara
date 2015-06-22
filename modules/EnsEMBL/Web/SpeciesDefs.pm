@@ -165,6 +165,20 @@ sub register_orm_databases {
   return $dbs;
 }
 
+sub session_db {
+  my $self = shift;
+  my $db   = $self->multidb->{'DATABASE_SESSION'};
+
+  return {
+    'NAME'    => $db->{'NAME'},
+    'HOST'    => $db->{'HOST'},
+    'PORT'    => $db->{'PORT'},
+    'DRIVER'  => $db->{'DRIVER'}  || 'mysql',
+    'USER'    => $db->{'USER'}    || $self->DATABASE_WRITE_USER,
+    'PASS'    => $db->{'PASS'}    || $self->DATABASE_WRITE_PASS
+  };
+}
+
 sub core_params { return $_[0]->{'_core_params'}; }
 
 sub get_all_das {

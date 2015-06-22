@@ -95,12 +95,18 @@ sub new {
 
   bless $self, $class;
   
-  $self->session = EnsEMBL::Web::Session->new($self, $args->{'session_cookie'});
+  $self->init_session($args->{'session_cookie'});
   $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer if $ENSEMBL_WEB_REGISTRY;
   
   $self->set_core_params;
   
   return $self;
+}
+
+sub init_session {
+  my ($self, $cookie) = @_;
+
+  $self->session = EnsEMBL::Web::Session->new($self, $cookie);
 }
 
 # Accessor functionality

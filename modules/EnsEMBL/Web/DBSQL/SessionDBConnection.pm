@@ -27,15 +27,12 @@ use base qw(EnsEMBL::Web::DBSQL::DirectDBConnection);
 our $cache = EnsEMBL::Web::Cache->new;
 
 sub import {
-  my ($class, $species_defs) = @_;
+  my ($class, $sd) = @_;
 
-  my $caller = caller;
-  $class->direct_connection($caller,
-                            $species_defs->multidb->{'DATABASE_SESSION'}{'NAME'} || $species_defs->ENSEMBL_USERDB_NAME,
-                            $species_defs->multidb->{'DATABASE_SESSION'}{'HOST'} || $species_defs->ENSEMBL_USERDB_HOST,
-                            $species_defs->multidb->{'DATABASE_SESSION'}{'PORT'} || $species_defs->ENSEMBL_USERDB_PORT,
-                            $species_defs->multidb->{'DATABASE_SESSION'}{'USER'} || $species_defs->DATABASE_WRITE_USER,
-                            $species_defs->multidb->{'DATABASE_SESSION'}{'PASS'} || $species_defs->DATABASE_WRITE_PASS);
+  my $caller  = caller;
+  my $db      = $sd->session_db;
+
+  $class->direct_connection($caller, $db->{'NAME'}, $db->{'HOST'}, $db->{'PORT'}, $db->{'USER'}, $db->{'PASS'});
 
   $caller->cache($cache) if $cache;
 }
