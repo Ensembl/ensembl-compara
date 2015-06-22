@@ -935,9 +935,11 @@ sub render_interaction {
         my $minor_axis    = $major_axis;
         $major_axis       = $max_width if $major_axis > $max_width; 
         $minor_axis       = $max_depth if $minor_axis > $max_depth; 
+        my $a             = $major_axis / 2;
+        my $b             = $minor_axis / 2;
         
         ## Measurements needed for drawing partial arcs
-        my $centre        = ceil($arc_start * $pix_per_bp + $major_axis/2);
+        my $centre        = ceil($arc_start * $pix_per_bp + $a);
         my $left_height   = $minor_axis; ## height of curve at left of image
         my $right_height  = $minor_axis; ## height of curve at right of image
 
@@ -977,7 +979,7 @@ sub render_interaction {
         ## modify dimensions to allow for 2-pixel width of brush
         $self->push($self->Arc({
               x             => $arc_start + ($major_axis / $pix_per_bp),
-              y             => ($minor_axis / 2) + $h,
+              y             => $b + $h,
               width         => $major_axis,
               height        => $minor_axis,
               start_point   => $start_point,
@@ -1007,11 +1009,11 @@ sub render_interaction {
           if (keys %$end == 2) { ## All on-screen
             $x = $start_2 - ($start_2 - $start_1) / 2;
             $x -= $text_width;
-            $y = $minor_axis / 2 + $label_h;
+            $y = $b + $label_h;
           }
           elsif (!keys %$end) { ## Just an arc with no end-points
             $x = $length / 2 - $text_width;
-            $y = $minor_axis / 2 + $label_h;
+            $y = $b + $label_h;
           }
           else { ## Partial arc
             if ($end->{'right'}) {
