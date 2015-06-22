@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign;
 use strict;
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
-sub run {
+sub fetch_input {
     my $self = shift;
 
     my $cmd = $self->param('cmd');
@@ -74,13 +74,6 @@ sub run {
     if ($self->param('reg_conf')) {
 	push @$cmd, '--reg_conf', $self->param('reg_conf');
     }
-
-    $self->SUPER::run();
-
-    #
-    #Check number of genomic_align_blocks written is correct
-    # 
-    $self->_healthcheck();
 }
 
 sub write_output {
@@ -88,6 +81,11 @@ sub write_output {
 
     #delete tmp file
     unlink($self->param('tmp_file'));
+
+    $self->SUPER::write_output();
+
+    #Check number of genomic_align_blocks written is correct
+    $self->_healthcheck();
 
 }
 
