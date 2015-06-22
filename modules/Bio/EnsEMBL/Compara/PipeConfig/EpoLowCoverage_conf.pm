@@ -218,6 +218,7 @@ sub pipeline_analyses {
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('cs_mlss_id') . ', "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('ce_mlss_id') . ', "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "high_coverage_mlss_id", ' . $self->o('high_epo_mlss_id') . ')'
+                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "reference_species", ' . $self->o('ref_species') . ')'
                               ],
                              },
               -flow_into => {

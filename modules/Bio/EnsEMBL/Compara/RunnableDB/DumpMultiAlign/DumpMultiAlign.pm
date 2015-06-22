@@ -35,64 +35,39 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 
 =head1 DESCRIPTION
 
-This RunnableDB module runs DumpMultiAlign jobs. It creates emf2maf jobs if
-necessary and compression jobs
+This RunnableDB module runs DumpMultiAlign jobs.
 
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign;
 
 use strict;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
-sub run {
+sub fetch_input {
     my $self = shift;
 
     my $cmd = $self->param('cmd');
-
-    #append full path to output_file
-    my $full_output_file = $self->param('output_dir') . "/" . $self->param('output_file');
-    $cmd .= " --output_file $full_output_file";
+    push @$cmd, @{$self->param_required('extra_args')};
 
     #Write a temporary file to store gabs to dump
     if ($self->param('start') && $self->param('end')) {
         my $tmp_file = $self->_write_gab_file();
-        $cmd .= " --file_of_genomic_align_block_ids " . $tmp_file;
+        push @$cmd, '--file_of_genomic_align_block_ids', $tmp_file;
 
         $self->param('tmp_file', $tmp_file);
     }
 
     #Convert compara_db into either a url or a name
     if ($self->param('compara_db') =~ /^mysql:\/\//) {
-	$cmd .= " --compara_url " . $self->param('compara_db');
+	push @$cmd, '--compara_url', $self->param('compara_db');
     } else {
-	$cmd .= " --dbname " . $self->param('compara_db');
-    }
-
-    #Convert db_urls into a string
-    if ($self->param('db_urls')) {
-	my $str = join ",", @{$self->param('db_urls')};
-	$cmd .= (" --db '" . $str . "'");
+	push @$cmd, '--dbname', $self->param('compara_db');
     }
 
     if ($self->param('reg_conf')) {
-	$cmd .= " --reg_conf " . $self->param('reg_conf');
+	push @$cmd, '--reg_conf', $self->param('reg_conf');
     }
-
-    #print "cmd $cmd \n";
-
-    #
-    #Run DumpMultiAlign cmd
-    #
-    $self->dbc->disconnect_if_idle;
-    if(my $return_value = system($cmd)) {
-        $return_value >>= 8;
-        die "system( $cmd ) failed: $return_value";
-    }
-    #
-    #Check number of genomic_align_blocks written is correct
-    # 
-    $self->_healthcheck();
 }
 
 sub write_output {
@@ -101,31 +76,11 @@ sub write_output {
     #delete tmp file
     unlink($self->param('tmp_file'));
 
-    #
-    #Create emf2maf job if necesary
-    #
-    if ($self->param('maf_output_dir')) {
-	my $output_ids = {'output_file'=>$self->param('dumped_output_file'),
-			  'num_blocks' =>$self->param('num_blocks')};
+    $self->SUPER::write_output();
 
-	$self->dataflow_output_id($output_ids, 2);
+    #Check number of genomic_align_blocks written is correct
+    $self->_healthcheck();
 
-    } else {
-	#Send dummy jobs to emf2maf
-	#$self->dataflow_output_id("{}", 2);
-
-	#Send to compress
-	my $output_ids = {"output_file"=>$self->param('dumped_output_file')};
-	$self->dataflow_output_id($output_ids, 1);
-	
-    }
-
-    #
-    #Create Compress jobs - could this be put in the else and then emf2maf calls compress with both emf and maf?
-    #
-
-    #my $output_ids = "{\"output_file\"=>\"" . $self->param('dumped_output_file') . "\"}";
-    #$self->dataflow_output_id($output_ids, 1);
 }
 
 #
@@ -134,20 +89,7 @@ sub write_output {
 sub _healthcheck {
     my ($self) = @_;
     
-    #Find out if split into several files
-    my $dump_cmd = $self->param('extra_args');
-    my $chunk_num = $dump_cmd =~ /chunk_num/;
-    my $output_file = $self->param('output_dir') . "/" . $self->param('output_file');
-
-    #not split by chunk eg supercontigs so need to check all supercontig* files
-    if (!$chunk_num) {
-	if ($output_file =~ /\.[^\.]+$/) {
-	    $output_file =~ s/(\.[^\.]+)$/_*$1/;
-	}
-    } else {
-	#Have chunk number in filename
-	$output_file = $self->param('output_dir') . "/" . $self->param('dumped_output_file');
-    }
+    my $output_file = $self->param('output_file_pattern');
 
     my $cmd;
     if ($self->param('format') eq "emf") {
@@ -155,6 +97,8 @@ sub _healthcheck {
 
     } elsif ($self->param('format') eq "maf") {
 	$cmd = "grep ^a " . $output_file . " | wc -l";
+    } else {
+        die '_healthcheck() is not implemented for '.$self->param('format')."\n";
     }
     my $num_blocks = `$cmd`;
     chomp $num_blocks;
@@ -166,7 +110,7 @@ sub _healthcheck {
 	#visual confirmation all is well
 	my $sql = "INSERT INTO healthcheck (filename, expected,dumped) VALUES (?,?,?)";
 	my $sth = $self->db->dbc->prepare($sql);
-	$sth->execute($self->param('output_file'), $self->param('num_blocks'), $num_blocks);
+	$sth->execute($self->param('output_file_pattern'), $self->param('num_blocks'), $num_blocks);
 	$sth->finish();
     }
 }
@@ -186,11 +130,11 @@ sub _write_gab_file {
 
     my $tmp_file = $worker_temp_directory . "other_gab_$$.out";
     
-    open(FILE, ">$tmp_file") || die ("Couldn't open $tmp_file for writing"); 
+    open my $tmp_fh, '>', $tmp_file || die ("Couldn't open $tmp_file for writing");
     while (my $row = $sth->fetchrow) {
-	print FILE $row . "\n";
+	print $tmp_fh, $row . "\n";
     }
-    close(FILE);
+    close($tmp_fh);
     $sth->finish;
 
     return $tmp_file;
