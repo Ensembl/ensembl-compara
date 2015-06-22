@@ -947,15 +947,13 @@ sub render_interaction {
         if ($end_1 < 0) {
           my $cos   = $centre / $major_axis;
           my $theta = $self->acos_in_degrees($cos);
-          ## Tweak by 5 degrees to ensure arc doesn't overlap image
-          $end_point -= $theta + 5;
+          $end_point -= $theta;
           $left_height = abs(sin($theta) * $minor_axis);
         }
         if ($s2 >= $length) {
           my $cos   = ($self->image_width - $centre) / $major_axis;
           my $theta = $self->acos_in_degrees($cos);
-          ## Tweak by 5 degrees to ensure arc doesn't overlap image
-          $start_point = $theta + 5;
+          $start_point = $theta;
           $right_height = abs(sin($theta) * $minor_axis);
         }
 
