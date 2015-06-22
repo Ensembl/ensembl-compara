@@ -65,12 +65,6 @@ sub fetch_input {
 	push @$cmd, '--dbname', $self->param('compara_db');
     }
 
-    #Convert db_urls into a string
-    if ($self->param('db_urls')) {
-	my $str = join ",", @{$self->param('db_urls')};
-	push @$cmd, '--db', $str;
-    }
-
     if ($self->param('reg_conf')) {
 	push @$cmd, '--reg_conf', $self->param('reg_conf');
     }

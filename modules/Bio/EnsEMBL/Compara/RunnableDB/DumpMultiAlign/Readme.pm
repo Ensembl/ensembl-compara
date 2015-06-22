@@ -89,17 +89,6 @@ sub run {
 #
 sub _create_specific_readme {
     my ($self) = @_;
-    #
-    #Load registry
-    #
-    if ($self->param('reg_conf')) {
-	Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'),1);
-    } elsif ($self->param('db_url')) {
-	my $db_urls = $self->param('db_url');
-	foreach my $db_url (@$db_urls) {
-	    Bio::EnsEMBL::Registry->load_registry_from_url($db_url);
-	}
-    } # By default, we expect the genome_dbs to have a locator
 
     #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;

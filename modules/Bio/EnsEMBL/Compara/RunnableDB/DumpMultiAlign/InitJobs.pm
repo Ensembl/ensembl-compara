@@ -57,18 +57,6 @@ sub fetch_input {
 
     my $file_prefix = "Compara";
 
-    #
-    #Load registry and get compara database adaptor
-    #
-    if ($self->param('reg_conf')) {
-	Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'),1);
-    } elsif ($self->param('db_url')) {
-	my $db_urls = $self->param('db_url');
-	foreach my $db_url (@$db_urls) {
-	    Bio::EnsEMBL::Registry->load_registry_from_url($db_url);
-	}
-    } # By default, we expect the genome_dbs to have a locator
-
     #Note this is using the database set in $self->param('compara_db') rather than the underlying eHive database.
     my $compara_dba       = $self->compara_dba;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;

@@ -72,17 +72,11 @@ sub default_options {
         },
 
         # By default, the pipeline will follow the "locator" of each
-        # genome_db. You only have to set db_urls or reg_conf if the
-        # locators are missing.
+        # genome_db. You only have to set reg_conf if the locators
+        # are missing.
+        'reg_conf' => '',
 
-	#Location of core and, optionally, compara db
-	#'db_urls' => [ $self->dbconn_2_url('staging_loc1'), $self->dbconn_2_url('staging_loc2') ],
-	'db_urls' => [],
-
-	#Alternative method of defining location of dbs
-	'reg_conf' => '',
-
-        # Compara reference to dump. Can be the "species" name (if loading the Registry via db_urls)
+        # Compara reference to dump. Can be the "species" name (if loading the Registry via reg_conf)
         # or the url of the database itself
         # Intentionally left empty
 	#'compara_db' => 'Multi',
@@ -132,9 +126,6 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'reg_conf'      => $self->o('reg_conf'),
-        'db_urls'       => $self->o('db_urls'),
-
         'dump_program'      => $self->o('dump_program'),
         'emf2maf_program'   => $self->o('emf2maf_program'),
 
@@ -151,6 +142,8 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
+        'default_with_reg_conf' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
+        'crowd_with_reg_conf' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
     };
 }
 
@@ -187,6 +180,7 @@ sub pipeline_analyses {
                 '6->A' => [ 'copy_and_uncompress_emf_dir' ],
 		'A->1' => [ 'md5sum'],
             },
+            -rc_name => 'default_with_reg_conf',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on chromosomes (1 job per chromosome)
 	 {  -logic_name    => 'createChrJobs',
@@ -212,13 +206,13 @@ sub pipeline_analyses {
         },
 	{  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
-
             -parameters    => {
                                'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', $self->o('masked_seq'), '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_dir#/#base_filename#.#region_name#.#format#' ],
                                'output_file_pattern' => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
+                               'reg_conf'      => $self->o('reg_conf'),
 			      },
 	   -hive_capacity => 15,
-	   -rc_name => 'crowd',
+	   -rc_name => 'crowd_with_reg_conf',
            $self->o('mode') eq 'tar' ? () : ( -flow_into => [ 'compress' ] ),
         },
         {   -logic_name     => 'copy_and_uncompress_emf_dir',
@@ -276,6 +270,7 @@ sub pipeline_analyses {
                 'readme_file' => '#output_dir#/README.#base_filename#',
             },
            $self->o('mode') eq 'tar' ? ( -flow_into => [ 'tar' ] ) : (),
+            -rc_name => 'default_with_reg_conf',
         },    
         {   -logic_name     => 'tar',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
