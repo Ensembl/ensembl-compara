@@ -47,7 +47,6 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Registry;
 
 use POSIX qw(ceil);
 

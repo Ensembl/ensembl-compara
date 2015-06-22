@@ -82,7 +82,8 @@ sub default_options {
 	#Alternative method of defining location of dbs
 	'reg_conf' => '',
 
-	#Compara reference to dump. Can be the "species" name (if loading via db_urls) or the url
+        # Compara reference to dump. Can be the "species" name (if loading the Registry via db_urls)
+        # or the url of the database itself
         # Intentionally left empty
 	#'compara_db' => 'Multi',
 
@@ -131,6 +132,10 @@ sub pipeline_wide_parameters {
 
     return {
         %{$self->SUPER::pipeline_wide_parameters},
+
+        'reg_conf'      => $self->o('reg_conf'),
+        'db_urls'       => $self->o('db_urls'),
+
         'dump_program'      => $self->o('dump_program'),
         'emf2maf_program'   => $self->o('emf2maf_program'),
 
@@ -211,8 +216,6 @@ sub pipeline_analyses {
 
             -parameters    => {
                                'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', $self->o('masked_seq'), '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_dir#/#base_filename#.#region_name#.#format#' ],
-			       "reg_conf" => $self->o('reg_conf'),
-			       "db_urls" => $self->o('db_urls'),
                                'output_file_pattern' => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
 			      },
 	   -hive_capacity => 15,
