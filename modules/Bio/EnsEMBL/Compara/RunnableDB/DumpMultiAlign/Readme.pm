@@ -383,7 +383,7 @@ sub _print_file_grouping_help {
     if ($self->param('mode') ne 'file') {
         push @par, "Alignments are grouped by $common_species_name chromosome.";
         push @par, "Alignments containing duplications in $common_species_name are dumped once per duplicated segment.";
-        push @par, "The files named *.other*." . $self->param('format') . "contain alignments that do not include any $common_species_name region.";
+        push @par, "The files named *.other*." . $self->param('format') . " contain alignments that do not include any $common_species_name region.";
     }
     if ($self->param('split_size')) {
         push @par, "Each file contains up to " . $self->param('split_size') . " alignments.";
