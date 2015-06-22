@@ -148,7 +148,7 @@ sub _get_species_tree {
 	$genome_dbs_by_name{$name} = $genome_db;
     }
 
-    foreach my $leaf (@{$species_tree->root->get_all_leaves}) {
+    foreach my $leaf (@{$species_tree->root->get_all_sorted_leaves}) {
         push @$ordered_species, $genome_dbs_by_name{lc $leaf->node_name} if $leaf->node_name;
     }
 
