@@ -36,3 +36,9 @@ method_link_types => In case you only want to dump a particular kind of alignmen
   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db mysql://ensro@ens-staging1/ensembl_compara_80 --reg_conf path/to/production_reg_conf.pl
   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_prev --reg_conf path/to/production_reg_conf.pl --format maf --method_link_types EPO
 
+
+3) Advanced usage
+
+To add an extra job to dump the alignment with mlss_id XXX, using "favourite_species" to group the files
+  seed_pipeline.pl -url mysql://hive/database -logic_name initJobs -input_id '{"mlss_id" => XXX, "species" => "favourite_species"}'
+
