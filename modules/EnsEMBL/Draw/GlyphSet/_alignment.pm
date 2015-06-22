@@ -899,28 +899,33 @@ sub render_interaction {
             })) unless $e1 < 0;
 
         ## Arc between features
+        my $width = $self->image_width;
 
         ## Default behaviour is to draw arc from middles of features
-        my $arc_start       = $start_1 == $end_1 ? $start_1 - 0.5
-                                : $start_1 + ceil(($end_1 - $start_1) / 2);
-        my $arc_end         = $start_2 == $end_2 ? $start_2 - 0.5
-                                : $start_2 + floor(($end_2 - $start_2) / 2);
+        ## Of course for the arcs we have to use the real coordinates, 
+        ## not the ones constrained to the viewport
+        my $arc_start       = $s1 == $e1 ? $s1 - 0.5
+                                : $s1 + ceil(($e1 - $s1) / 2);
+        my $arc_end         = $s2 == $e2 ? $s2 - 0.5
+                                : $s2 + floor(($e2 - $s2) / 2);
 
         my $direction_1     = $f->direction_1; 
         my $direction_2     = $f->direction_2; 
         if ($direction_1 || $direction_2) {
           if ($direction_1 =~ /\+/) {
-            $arc_start = $start_1 == $end_1 ? $start_1 - 1 : $start_1;
-            $arc_end   = $start_2 == $end_2 ? $start_2 - 1 : $start_2;
+            $arc_start  = $s1 == $e1 ? $s1 - 1 : $s1;
+            $arc_end    = $s2 == $e2 ? $s2 - 1 : $s2;
           }
           else {
-            $arc_start = $end_1;
-            $arc_end   = $end_2;
+            $arc_start = $e1;
+            $arc_end   = $e2;
           }
         }
+        ## Don't show arcs if both ends lie outside viewport
+        next if ($arc_start < 0 && $arc_end > $length);
 
         ## Set some sensible limits
-        my $max_width = $self->image_width * 2;
+        my $max_width = $width * 2;
         my $max_depth = 250; ## should be less than image width! 
 
         ## Start with a basic circular arc, then constrain to above limits
