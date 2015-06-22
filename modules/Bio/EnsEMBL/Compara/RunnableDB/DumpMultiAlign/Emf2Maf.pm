@@ -62,6 +62,8 @@ sub run {
     #Check number of genomic_align_blocks written is correct
     # 
     $self->_healthcheck();
+
+    unlink($self->param('in_emf_file'));
 }
 
 #
