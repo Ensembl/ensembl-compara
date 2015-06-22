@@ -163,6 +163,7 @@ sub pipeline_analyses {
             -flow_into      => {
                 '2' => [ 'initJobs' ],
             },
+            -rc_name => 'default_with_reg_conf',
         },
 
         {  -logic_name => 'initJobs',
@@ -187,6 +188,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
+            -rc_name => 'default_with_reg_conf',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on supercontigs (1 job per coordinate-system)
         {  -logic_name    => 'createSuperJobs',
@@ -194,6 +196,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
+            -rc_name => 'default_with_reg_conf',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
@@ -202,6 +205,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
+            -rc_name => 'default_with_reg_conf',
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
