@@ -323,7 +323,7 @@ sub _print_species_set {
     my ($self, $intro_text, $set) = @_;
     $self->_print_line($intro_text);
     foreach my $species (@$set) {
-        $self->_print_line($self->_get_species_description($species));
+        $self->_print_line(" - ".$self->_get_species_description($species));
     }
     $self->_print_line("");
 }
