@@ -91,7 +91,7 @@ sub default_options {
         'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
 
         # Method link types of mlss_id to retrieve
-        'method_link_types' => ['BLASTZ_NET', 'TRANSLATED_BLAT', 'TRANSLATED_BLAT_NET', 'LASTZ_NET', 'PECAN', 'EPO', 'EPO_LOW_COVERAGE'],
+        'method_link_types' => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
 
     };
 }
