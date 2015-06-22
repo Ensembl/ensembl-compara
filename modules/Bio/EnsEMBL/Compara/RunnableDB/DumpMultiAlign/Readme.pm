@@ -216,7 +216,7 @@ sub _create_specific_epo_low_coverage_readme {
     $self->_print_species_tree($newick_species_tree);
 
     my $gdb_grouping = $self->compara_dba->fetch_by_dbID($self->param('genome_db_id'));
-    my $species = $self->_get_species_common_name($gdb_grouping);
+    my $species = lc $self->_get_species_common_name($gdb_grouping);
     $self->_print_paragraph("To build the " . @$high_coverage_species_set . "-way alignment, first, Enredo is used to build a set of
 co-linear regions between the genomes and then Pecan aligns these regions. 
 Next, Ortheus uses the Pecan alignments to infer the ancestral sequences. Then
@@ -257,12 +257,12 @@ Pecan builds alignments in these syntenic regions.");
 sub _create_specific_lastz_readme {
     my ($self, $compara_dba, $mlss, $species_set) = @_;
 
-    my $full_pairwise_name = join(' vs ', map {$self->_get_species_description($_)} @$species_set);
+    my $full_pairwise_name = join(' vs ', map {lc $self->_get_species_description($_)} @$species_set);
     $self->_print_header("$full_pairwise_name LASTZ pairwise alignments");
 
     my $ref_species = $mlss->get_value_for_tag('reference_species');
     my $ref_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($ref_species);
-    my $common_species_name = $self->_get_species_common_name($ref_genome_db);
+    my $common_species_name = lc $self->_get_species_common_name($ref_genome_db);
     $self->_print_paragraph("$common_species_name was used as the reference species. After running LastZ, the raw LastZ alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.");
 
     $self->_print_file_grouping_help();
@@ -299,7 +299,7 @@ sub _print_species_set {
     my ($self, $intro_text, $set) = @_;
     $self->_print_line($intro_text);
     foreach my $species (@$set) {
-        $self->_print_line(" - ".$self->_get_species_description($species));
+        $self->_print_line(" - ".(ucfirst $self->_get_species_description($species)));
     }
     $self->_print_line("");
 }
@@ -371,7 +371,7 @@ Read more about Gerp: http://mendel.stanford.edu/SidowLab/downloads/gerp/index.h
 sub _print_file_grouping_help {
     my ($self) = @_;
     my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
-    my $common_species_name = $self->_get_species_common_name($gdb_grouping);
+    my $common_species_name = lc $self->_get_species_common_name($gdb_grouping);
 
     my @par = ();
     if ($self->param('mode') ne 'file') {
