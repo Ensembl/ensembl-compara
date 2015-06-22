@@ -147,46 +147,22 @@ sub _get_species_tree {
 
     my $ordered_species;
 
-    #Try to get tree from mlss_tag table
-    my $newick_species_tree = $mlss->get_value_for_tag('species_tree');
+    my $species_tree = $mlss->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
+    my $newick_species_tree = $species_tree->species_tree;
     
-    #If this fails, try to get from file
-    if (!$newick_species_tree && $self->param('species_tree_file') ne "") {
-        $newick_species_tree = $self->_slurp($self->param('species_tree_file'));
-    }
-
-    $newick_species_tree =~ s/^\s*//;
-    $newick_species_tree =~ s/\s*$//;
-    $newick_species_tree =~ s/[\r\n]//g;
-
-    my $species_tree =
-      Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
-
     my $genome_dbs = $mlss->species_set_obj->genome_dbs;
 
-    my %leaves_names;
+    my %genome_dbs_by_name;
     foreach my $genome_db (@$genome_dbs) {
-	my $name = $genome_db->name;
-	#$name =~ tr/ /_/;
+	my $name = lc $genome_db->name;
 	next if ($name eq "ancestral_sequences");
-	$leaves_names{$genome_db->dbID} = $name;
-	$leaves_names{$name} = $genome_db;
+	$genome_dbs_by_name{$name} = $genome_db;
     }
 
-    foreach my $leaf (@{$species_tree->get_all_leaves}) {
-	my $leaf_name = lc($leaf->name);
-	unless (defined $leaves_names{$leaf_name}) {
-	    $leaf->disavow_parent;
-	    $species_tree = $species_tree->minimize_tree;
-	}
-	if ($leaf_name =~ /\d+/) {
-	    $leaf->name($leaves_names{$leaf_name});
-	}
-	if (defined $leaves_names{$leaf_name}) {
-	    push @$ordered_species, $leaves_names{$leaf_name};
-	}
+    foreach my $leaf (@{$species_tree->root->get_all_leaves}) {
+        push @$ordered_species, $genome_dbs_by_name{lc $leaf->node_name} if $leaf->node_name;
     }
-    $newick_species_tree = $species_tree->newick_format("simple");
+
     return ($newick_species_tree, $ordered_species);
 }
 
@@ -222,7 +198,7 @@ sub _create_specific_epo_low_coverage_readme {
 
     my %high_coverage_species;
     foreach my $species (@$high_coverage_species_set) {
-	$high_coverage_species{$species} = 1;
+	$high_coverage_species{$species->dbID} = 1;
     }
 
     $self->_print_header(scalar(@$species_set)."-way Enredo-Pecan-Ortheus (EPO) multiple alignments");
@@ -231,11 +207,11 @@ sub _create_specific_epo_low_coverage_readme {
     #phylogenetic order
     $self->_print_species_set(
         "The core set of species used for the " . @$high_coverage_species_set . "-way EPO alignment:",
-        [grep {defined $high_coverage_species{$_}} @$species_set]);
+        [grep {defined $high_coverage_species{$_->dbID}} @$species_set]);
 
     $self->_print_species_set(
         "And the extra 2X genomes are:",
-        [grep {not defined $high_coverage_species{$_}} @$species_set]);
+        [grep {not defined $high_coverage_species{$_->dbID}} @$species_set]);
 
     $self->_print_species_tree($newick_species_tree);
 

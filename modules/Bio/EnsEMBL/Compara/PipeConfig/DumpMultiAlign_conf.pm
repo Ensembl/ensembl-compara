@@ -95,7 +95,6 @@ sub default_options {
         'mode' => 'dir',    # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
         'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
-	'species_tree_file' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/species_tree.ensembl.topology.nw",
 
         # Method link types of mlss_id to retrieve
         'method_link_types' => ['BLASTZ_NET', 'TRANSLATED_BLAT', 'TRANSLATED_BLAT_NET', 'LASTZ_NET', 'PECAN', 'EPO', 'EPO_LOW_COVERAGE'],
@@ -275,7 +274,6 @@ sub pipeline_analyses {
             -parameters    => {
                 'mode'  => $self->o('mode'),
                 'readme_file' => '#output_dir#/README.#base_filename#',
-                'species_tree_file' => $self->o('species_tree_file'),
             },
            $self->o('mode') eq 'tar' ? ( -flow_into => [ 'tar' ] ) : (),
         },    
