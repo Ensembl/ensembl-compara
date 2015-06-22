@@ -74,6 +74,7 @@ sub fetch_input {
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my $genome_db         = $genome_db_adaptor->fetch_by_name_assembly($self->param('species'))
                              || $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
+    $genome_db->db_adaptor || die "I don't know where the ".$self->param('species')." core database is. Have you defined the Registry ?\n";
     my $coord_systems     = $genome_db->db_adaptor->get_CoordSystemAdaptor->fetch_all_by_attrib('default_version');;
     my @coord_system_names_by_rank = map {$_->name} (sort {$a->rank <=> $b->rank} @$coord_systems);
 
