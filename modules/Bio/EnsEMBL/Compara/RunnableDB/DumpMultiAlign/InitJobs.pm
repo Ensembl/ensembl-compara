@@ -64,7 +64,17 @@ sub fetch_input {
                              || $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
     $genome_db->db_adaptor || die "I don't know where the ".$self->param('species')." core database is. Have you defined the Registry ?\n";
     my $coord_systems     = $genome_db->db_adaptor->get_CoordSystemAdaptor->fetch_all_by_attrib('default_version');;
-    my @coord_system_names_by_rank = map {$_->name} (sort {$a->rank <=> $b->rank} @$coord_systems);
+
+    my $sql = "
+    SELECT DISTINCT coord_system_name
+    FROM genomic_align JOIN dnafrag USING (dnafrag_id)
+    WHERE genome_db_id= ? AND method_link_species_set_id=?";
+
+    my $sth = $compara_dba->dbc->prepare($sql);
+    $sth->execute($self->param('genome_db_id'), $self->param('mlss_id'));
+    my %coord_systems_in_aln = map {$_->[0] => 1} @{$sth->fetchall_arrayref};
+
+    my @coord_system_names_by_rank = map {$_->name} (sort {$a->rank <=> $b->rank} (grep {$coord_systems_in_aln{$_->name}} @$coord_systems));
 
     $self->param('coord_systems', \@coord_system_names_by_rank);
     $self->param('genome_db_id', $genome_db->dbID);
@@ -125,7 +135,7 @@ sub write_output {
         my @all_cs = @{$self->param('coord_systems')};
         #Set up chromosome job
         my $cs = shift @all_cs;
-        $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $cs}, 2);
+        $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $cs}, 2) if $cs;
 
         #Set up supercontig job
         foreach my $other_cs (@all_cs) {
