@@ -22,8 +22,8 @@ format      => Many formats are accepted. "emf" (default), "maf", and "emf2maf" 
 export_dir  => Where to dump files. The pipeline will create 1 directory per alignment there
 
 Other options are:
-split_size  => Maximum number of blocks per file
-masked_seq  => As in DumpMultiAlign.pl (0 for unmasked, 1 for soft-masked, 2 for hard-masked)
+split_size  => Maximum number of blocks per file (default: 200)
+masked_seq  => As in DumpMultiAlign.pl (0 for unmasked, 1 for soft-masked (default), 2 for hard-masked)
 mode        => Either 'dir' (directory of compressed files -this is the default-),
                'tar' (compressed tar archive of a directory of uncompressed files),
                or 'file' (single compressed file)
