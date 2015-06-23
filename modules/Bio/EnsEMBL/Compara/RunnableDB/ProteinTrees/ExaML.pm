@@ -46,6 +46,7 @@ sub param_defaults {
         'runtime_tree_tag'     => 'examl_runtime',
         'output_clusterset_id' => 'raxml',
         'output_file'          => 'ExaML_result.#gene_tree_id#',
+        'remove_columns'       => 1,
     };
 }
 
