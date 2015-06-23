@@ -71,7 +71,7 @@ sub fetch_input {
     WHERE genome_db_id= ? AND method_link_species_set_id=?";
 
     my $sth = $compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('genome_db_id'), $self->param_required('mlss_id'));
+    $sth->execute($genome_db->dbID, $self->param_required('mlss_id'));
     my %coord_systems_in_aln = map {$_->[0] => 1} @{$sth->fetchall_arrayref};
 
     my @coord_system_names_by_rank = map {$_->name} (sort {$a->rank <=> $b->rank} (grep {$coord_systems_in_aln{$_->name}} @$coord_systems));
