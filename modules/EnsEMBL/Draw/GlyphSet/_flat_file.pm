@@ -27,6 +27,7 @@ use List::Util qw(reduce);
 
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::User;
+use EnsEMBL::Web::Utils::FormatText qw(add_links);
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
@@ -116,9 +117,18 @@ sub features {
     }
   } 
 
+  my $key = $self->{'hover_label_class'}; 
+  my $hover_label = $self->{'config'}->{'hover_labels'}{$key};
+
   ## Now we translate all the features to their rightful co-ordinates
   while (my ($key, $T) = each (%{$parser->{'tracks'}})) {
     $_->map($container) for @{$T->{'features'}};
+
+    my $description = $T->{'config'}{'description'};
+    if ($description) {
+      $description = add_links($description);
+      $hover_label->{'extra_desc'} = $description;
+    }
  
     ## Set track depth a bit higher if there are lots of user features
     $T->{'config'}{'dep'} = scalar @{$T->{'features'}} > 20 ? 20 : scalar @{$T->{'features'}};
@@ -182,7 +192,7 @@ sub features {
 
     $results{$key} = [$features, $T->{'config'}];
   }
-
+  use Data::Dumper; warn Dumper($hover_label);
   return %results;
 }
 
