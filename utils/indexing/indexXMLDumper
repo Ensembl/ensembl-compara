@@ -74,15 +74,16 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
 # used to boost certain records
 my $boosts = {
 	      'GeneTrans' => {
-			      'core'    => '40',
-			      'is_ref' => '10',
+			      'core'    => 40,
+			      'is_ref'  => 10,
+                              'non_ref' => 0,
 			     },
 	      'Family' => {
-			   'species' => '50',
-                           'ms'      => '10', 
+			   'species' => 50,
+                           'ms'      => 10,
 			  },
 	      'GeneTree' => {
-			     'All' => '50',
+			     'All' => 50,
 			    },
 	     };
 
@@ -2075,6 +2076,9 @@ sub dumpGene {
     print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
     header($fh);
 
+    #does this species have PATCHES
+    (my $has_patches) = $conf->{'dbh'}->selectrow_array(qq(select count(*) from assembly_exception where exc_type != 'PAR'));
+
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
       'select external_db_id, db_display_name
          from external_db', 'external_db_id'
@@ -2184,7 +2188,6 @@ sub dumpGene {
        WHERE g.seq_region_id = sr.seq_region_id 
          AND sr.coord_system_id = cs.coord_system_id);
     my $gene_locations = $conf->{'dbh'}->selectall_hashref($sql,'stable_id');
-
     $sql = qq(
       SELECT g.gene_id, t.transcript_id, tr.translation_id,
              g.stable_id as gsid, g.version as gversion, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
@@ -2231,6 +2234,7 @@ sub dumpGene {
                        $old->{'synonyms'},
                        '',
                        $gene_locations->{$old_gsi},
+                       $has_patches,
                        $db,
                        $counter),
               $fh);
@@ -2300,6 +2304,7 @@ sub dumpGene {
                         $old->{'synonyms'},
                         '',
                         $gene_locations->{$old_gsi},
+                        $has_patches,
                         $db,
                         $counter),
           $fh);
@@ -2398,6 +2403,9 @@ sub dumpTranscript {
     open( $fh, ">$file" ) or die "Can't open $file: $!";
     print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
     header($fh);
+
+    #does this species have PATCHES
+    (my $has_patches) = $conf->{'dbh'}->selectrow_array(qq(select count(*) from assembly_exception where exc_type != 'PAR'));
 
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
       'select external_db_id, db_name, db_display_name, description
@@ -2532,6 +2540,7 @@ sub dumpTranscript {
        WHERE t.seq_region_id = sr.seq_region_id
          AND sr.coord_system_id = cs.coord_system_id);
     my $trans_locations = $conf->{'dbh'}->selectall_hashref($sql,'stable_id');
+    $trans_locations->{'has_patches'} = $has_patches;
     $sql = qq(
       SELECT t.transcript_id, tr.translation_id, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
              t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.status, t.biotype, a.logic_name
@@ -2577,6 +2586,7 @@ sub dumpTranscript {
                         $old->{'synonyms'},
                         $old->{'supporting_evidence'},
                         $trans_locations->{$old_tsi},
+                        $has_patches,
                         $db,
                         $counter),
               $fh);
@@ -2658,6 +2668,7 @@ sub dumpTranscript {
                         $old->{'synonyms'},
                         $old->{'supporting_evidence'},
                         $trans_locations->{$old_tsi},
+                        $has_patches,
                         $db,
                         $counter),
           $fh) if ($old->{'tsid'});
@@ -2674,7 +2685,7 @@ sub dumpTranscript {
 }
 
 sub GeneTransLine {
-  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $feat_loc, $db, $counter) = @_;
+  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $feat_loc, $has_patches, $db, $counter) = @_;
 
   #get stable ID of object
   my ($sid,$sid_ver);
@@ -2686,8 +2697,12 @@ sub GeneTransLine {
   }
   my $boost = 0;
   $boost += $boosts->{'GeneTrans'}{$db};
-  my $is_ref = $feat_loc->{'non_ref'} ? '' : 'is_ref';
-  $boost += $boosts->{'GeneTrans'}{$is_ref};
+  my $ref_boost_value;
+  if ($has_patches) {
+    my $is_ref = $feat_loc->{'non_ref'} ? 'non_ref' : 'is_ref';
+    $ref_boost_value = $boosts->{'GeneTrans'}{$is_ref};
+    $boost += $ref_boost_value;
+  }
 
   my $url = sprintf(qq(%s/%s/Summary?%s=%s&amp;db=%s),
                     $species,
@@ -2721,7 +2736,7 @@ sub GeneTransLine {
     $xml .= qq(
   <field name="db_boost">$db_boost_value</field>);
   }
-  if (my $ref_boost_value =  $boosts->{'GeneTrans'}{$is_ref}) {
+  if (defined($ref_boost_value)) {
     $xml .= qq(
   <field name="ref_boost">$ref_boost_value</field>);
   }
