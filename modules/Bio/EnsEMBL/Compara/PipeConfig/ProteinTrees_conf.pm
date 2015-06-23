@@ -1814,7 +1814,7 @@ sub core_pipeline_analyses {
             -max_retry_count			=> 1,
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
-                1 => [ 'raxml_decision' ],
+                1 => [ 'get_num_of_patterns' ],
 				2 => [ 'treebest_small_families' ],# This route is used in cases where a particular tree with e.g. 4 genes will pass the threshold for
 												   #   small trees in treebest_small_families, but these genes may be split_genes which would mean that 
 												   #   the tree actually have < 4 genes, thus crashing PhyML/ProtTest.
@@ -1833,8 +1833,8 @@ sub core_pipeline_analyses {
             -rc_name					=> '64Gb_16c_job',
             -max_retry_count 			=> 1,
             -flow_into  => {
-                -1 => [ 'raxml_decision' ],
-                1 => [ 'raxml_decision' ],
+                -1 => [ 'get_num_of_patterns' ],
+                1 => [ 'get_num_of_patterns' ],
 			}
         },
 
@@ -1984,6 +1984,35 @@ sub core_pipeline_analyses {
         },
 
 # ---------------------------------------------[tree building with raxml]-------------------------------------------------------------
+
+        {   -logic_name => 'get_num_of_patterns',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ParserExaml',
+            -parameters => {
+                'getPatterns_exe'       => $self->o('getPatterns_exe'),
+            },
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -batch_size    				=> 100,
+            -rc_name    				=> '4Gb_job',
+            -max_retry_count			=> 1,
+            -flow_into  => {
+                -1 => [ 'get_num_of_patterns_himem' ],
+                1 => [ 'raxml_decision' ],
+            }
+        },
+
+        {   -logic_name => 'get_num_of_patterns_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ParserExaml',
+            -parameters => {
+                'getPatterns_exe'       => $self->o('getPatterns_exe'),
+            },
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -batch_size    				=> 100,
+            -rc_name    				=> '16Gb_job',
+            -max_retry_count			=> 1,
+            -flow_into  => {
+                1 => [ 'raxml_decision' ],
+            }
+        },
 
         {   -logic_name => 'raxml_decision',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
