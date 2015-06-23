@@ -39,6 +39,5 @@ method_link_types => In case you only want to dump a particular kind of alignmen
 
 3) Advanced usage
 
-To add an extra job to dump the alignment with mlss_id XXX, using "favourite_species" to group the files
-  seed_pipeline.pl -url mysql://hive/database -logic_name initJobs -input_id '{"mlss_id" => XXX, "species" => "favourite_species"}'
+To tell the pipeline to dump a specific alignment, you can add --mlss_id XXX to the init_pipeline.pl command
 

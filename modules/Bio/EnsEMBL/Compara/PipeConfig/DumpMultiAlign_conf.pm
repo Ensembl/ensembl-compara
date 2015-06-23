@@ -92,6 +92,9 @@ sub default_options {
         # Method link types of mlss_id to retrieve
         'method_link_types' => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
 
+        # Specific mlss_id to dump. Leave undef as the pipeline can detect
+        # it automatically
+        'mlss_id'   => undef,
     };
 }
 
@@ -158,6 +161,7 @@ sub pipeline_analyses {
             -input_ids     => [
                 {
                     'compara_db'        => $self->o('compara_db'),
+                    'mlss_id'           => $self->o('mlss_id'),
                 },
             ],
             -flow_into      => {

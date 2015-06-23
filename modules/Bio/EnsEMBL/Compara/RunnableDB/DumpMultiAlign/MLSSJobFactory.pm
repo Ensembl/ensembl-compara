@@ -39,34 +39,46 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
+    $self->param('good_mlsss', []);
+
     # Get MethodLinkSpeciesSet adaptor:
     my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-    my @good_mlsss = ();
+    if ($self->param('mlss_id')) {
+        my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id')) ||
+            die $self->param('mlss_id')." does not exist in the database !\n";
+        $self->_test_and_add_mlss($mlss);
+        return;
+    }
+
     foreach my $ml_typ (split /[,:]/, $self->param_required('method_link_types')){
         # Get MethodLinkSpeciesSet Objects for required method_link_type
         my $mlss_listref = $mlssa->fetch_all_by_method_link_type($ml_typ);
-
         foreach my $mlss (@$mlss_listref) {
-            my $mlss_id     = $mlss->dbID();
-
-            if (($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') or ($mlss->method->type eq 'EPO_LOW_COVERAGE')) {
-                my $ref_species = $mlss->get_value_for_tag('reference_species');
-                die "Reference species missing! Please check the 'reference species' tag in method_link_species_set_tag for mlss_id $mlss_id\n" unless $ref_species;
-
-            } else {
-                my %species_in_mlss = map {$_->name => 1} @{$mlss->species_set_obj->genome_dbs};
-                my @ref_species_in = grep {$species_in_mlss{$_}} @{$self->param('species_priority')};
-                if (not scalar(@ref_species_in)) {
-                    die "Could not find any of (".join(", ", map {'"'.$_.'"'} @{$self->param('species_priority')}).") in mlss_id $mlss_id. Edit the 'species_priority' list in MLSSJobFactory.\n";
-                }
-                $mlss->add_tag('reference_species', $ref_species_in[0]);
-            }
-
-            push @good_mlsss, $mlss;
+            $self->_test_and_add_mlss($mlss);
         }
     }
-    $self->param('good_mlsss', \@good_mlsss);
+}
+
+sub _test_and_add_mlss {
+    my ($self, $mlss) = @_;
+
+    my $mlss_id     = $mlss->dbID();
+
+    if (($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') or ($mlss->method->type eq 'EPO_LOW_COVERAGE')) {
+        my $ref_species = $mlss->get_value_for_tag('reference_species');
+        die "Reference species missing! Please check the 'reference species' tag in method_link_species_set_tag for mlss_id $mlss_id\n" unless $ref_species;
+
+    } else {
+        my %species_in_mlss = map {$_->name => 1} @{$mlss->species_set_obj->genome_dbs};
+        my @ref_species_in = grep {$species_in_mlss{$_}} @{$self->param('species_priority')};
+        if (not scalar(@ref_species_in)) {
+            die "Could not find any of (".join(", ", map {'"'.$_.'"'} @{$self->param('species_priority')}).") in mlss_id $mlss_id. Edit the 'species_priority' list in MLSSJobFactory.\n";
+        }
+        $mlss->add_tag('reference_species', $ref_species_in[0]);
+    }
+
+    push @{$self->param('good_mlsss')}, $mlss;
 }
 
 
