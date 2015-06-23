@@ -491,6 +491,8 @@ sub init_label {
   my $component = $config->get_parameter('component');
   my $hover     = $component && !$hub->param('export') && $node->get('menu') ne 'no';
   my $class     = random_string(8);
+  ## Store this where the glyphset can find it later...
+  $self->{'hover_label_class'} = $class;
 
   if ($hover) {
     my $fav       = $config->get_favourite_tracks->{$track};
