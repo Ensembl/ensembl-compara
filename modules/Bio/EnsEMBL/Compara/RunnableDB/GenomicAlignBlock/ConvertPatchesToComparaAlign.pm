@@ -1,85 +1,83 @@
-#!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#      http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+=head1 LICENSE
 
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <http://www.ensembl.org/Help/Contact>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::ConvertPatchesToComparaAlign
+
+=head1 DESCRIPTION
+
+Runnable to import the alignments between patches / haplotypes and primary
+regions.  The original data are in the core database and only need to be
+transformed into genomic_align(_block) entries.  The trick is that blocks
+have to be split when they contain gaps of more than 50bp (to follow a rule
+that applies to our LASTZ_NET pipeline).
+
+Parameters:
+  - a compara database
+  - "genome_db_id"
+  - "lastz_patch_method" (usually "LASTZ_PATCH")
+
+=cut
+
+package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::ConvertPatchesToComparaAlign;
 
 use strict;
 use warnings;
-use Getopt::Long;
-use Data::Dumper;
 
-use Bio::EnsEMBL::Registry;
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-my $gap_cutoff_size = 50; # size of the gap (base pairs) in the reference or patch sequence greater than (>) this value will end the block
 
-my $mlssid;
-my $species_name = "human";
-my $db_user;
-my $db_host;
-my $release_version;
-my $dnafrags_file;
-
-
-my $description = q'
-	PROGRAM: convert_patch_to_compara_align.pl
-
-	DESCRIPTION: converts DnaAlignFeature alignments from the "otherfeatures"
-		     db to compara genomic_align(s) and genomic_align_block(s).
-	EXAMPLE: perl convert_patch_to_compara_align.pl --mlssid 556 --species_name human \
-		 --db_host server_name --db_user user_name --release_version 65 --dnafrags_file dnafrags_file
-';
-
-my $help = sub {
-	print $description;
-};
-
-unless(@ARGV){
-	$help->();
-	exit(0);
+sub param_defaults {
+    return {
+        gap_cutoff_size => 50,  # size of the gap (base pairs) in the reference or patch sequence greater than (>) this value will end the block
+    }
 }
 
-GetOptions(
-	"mlssid=s" => \$mlssid,
-	"species_name=s" => \$species_name,
-	"db_user=s" => \$db_user,
-	"db_host=s" => \$db_host,
-	"release_version=s" => \$release_version,
-	"dnafrags_file=s" => \$dnafrags_file,
-);
 
-unless(defined $mlssid && defined $db_user && defined $db_host && defined $release_version && (-f $dnafrags_file)){
-	$help->();
-	exit(0);
-}
+sub fetch_input {
+    my $self = shift;
 
-Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host=>"$db_host", -user=>"$db_user",
-        -port=>'3306', -db_version=>"$release_version");
+    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param_required('genome_db_id'));
+    my %dnafrags_hash = map {$_->name => $_->dbID} @{ $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($genome_db) };
+    $self->param('dnafrags_hash', \%dnafrags_hash);
 
-my (%hum_dfs, %aligned_patch);
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids($self->param_required('lastz_patch_method'), [$self->param('genome_db_id')]);
+    $self->param('mlss_id', $mlss->dbID);
 
-open(INF, $dnafrags_file) or die;
+    my $gap_cutoff_size = $self->param('gap_cutoff_size');
 
-while(<INF>){
-	chomp;
-	my($name,$dbID)=split("\t",$_);
-	$hum_dfs{$name}=$dbID;
-}
+    my %aligned_patch = ();
+    $self->param('aligned_patch', \%aligned_patch);
 
-my $daf_a = Bio::EnsEMBL::Registry->get_adaptor(
-	"$species_name", "core", "DnaAlignFeature");
+    my $daf_a = $genome_db->db_adaptor->get_DnaAlignFeatureAdaptor;
+
+    ##### original code from ensembl-compara/scritps/pipeline/convert_patch_to_compara_align.pl ######
 
 my $patch_align_features = $daf_a->fetch_all_by_logic_name("alt_seq_mapping");
 
@@ -211,8 +209,23 @@ foreach my $ref_name(keys %aligned_patch){
 	}
 }
 
+    ##### end #####
 
-my $mlss_pref = $mlssid . "0000000000";
+    #$self->param('arr', $arr);
+}
+
+
+sub write_output {
+    my $self = shift;
+
+    my %aligned_patch = %{ $self->param('aligned_patch') };
+    my $mlss_id = $self->param('mlss_id');
+    # This works for any species, but I want to preserve the original variable name
+    my %hum_dfs = %{ $self->param('dnafrags_hash') };
+
+    ##### original code from ensembl-compara/scritps/pipeline/convert_patch_to_compara_align.pl ######
+
+my $mlss_pref = $mlss_id . "0000000000";
 foreach my $ref_name(keys %aligned_patch){
 	foreach my $patch_name(keys %{$aligned_patch{$ref_name}}){
                 our $arr;
@@ -228,14 +241,31 @@ foreach my $ref_name(keys %aligned_patch){
 			my $gab_perc_id = int($gab->{gab_perc_num} / $align_len * 100);
 			# the last two fields (group_id and level_id) in the genomic_align_block table are filled using this hack to set the 
 			# group_id = (patch_dnafrag_id + mlss_prefix) and set level_id = 1
-			print join("\t", "GenomicAlignBlock", ($gab->{genomic_align_block_id} + $mlss_pref), 
-				$mlssid, '\N', $gab_perc_id, $align_len, ($hum_dfs{ $patch_name } + $mlss_pref), "1"), "\n"; 
-			print join("\t", "GenomicAlign", ($gab->{ref_genomic_align_id} + $mlss_pref), 
-				($gab->{genomic_align_block_id} + $mlss_pref), $mlssid, $hum_dfs{ $ref_name }, 
-				$gab->{ref_start}, $gab->{ref_end}, $gab->{ref_strand}, $gab->{ref_aln_bases}, "1", '\N'), "\n"; 
-			print join("\t", "GenomicAlign", ($gab->{patch_genomic_align_id} + $mlss_pref), 
-				($gab->{genomic_align_block_id} + $mlss_pref), $mlssid, $hum_dfs{ $patch_name }, 
-				$gab->{patch_start}, $gab->{patch_end}, $gab->{patch_strand}, $gab->{patch_aln_bases}, "1", '\N'), "\n";
+			$self->_insert_into_table("genomic_align_block", ($gab->{genomic_align_block_id} + $mlss_pref), 
+				$mlss_id, 0, $gab_perc_id, $align_len, ($hum_dfs{ $patch_name } + $mlss_pref), 1);
+			$self->_insert_into_table("genomic_align", ($gab->{ref_genomic_align_id} + $mlss_pref), 
+				($gab->{genomic_align_block_id} + $mlss_pref), $mlss_id, $hum_dfs{ $ref_name }, 
+				$gab->{ref_start}, $gab->{ref_end}, $gab->{ref_strand}, $gab->{ref_aln_bases}, 1, undef);
+			$self->_insert_into_table("genomic_align", ($gab->{patch_genomic_align_id} + $mlss_pref), 
+				($gab->{genomic_align_block_id} + $mlss_pref), $mlss_id, $hum_dfs{ $patch_name }, 
+				$gab->{patch_start}, $gab->{patch_end}, $gab->{patch_strand}, $gab->{patch_aln_bases}, 1, undef);
 		}
 	}
 }
+
+    ##### end #####
+
+    $self->dataflow_output_id( { method_link_species_set_id => $mlss_id }, 1);
+}
+
+sub _insert_into_table {
+    my $self = shift;
+    my $table_name = shift;
+    my $n_values = scalar(@_);
+    my $sql = "INSERT INTO $table_name VALUES (".("?,"x($n_values-1))."?)";
+    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth->execute(@_);
+    $sth->finish;
+}
+
+1;
