@@ -412,8 +412,9 @@ sub render_as_alignment_nolabel {
         
         if ($feature_object) {
           eval { $cigar = $f->cigar_string; };
-          
-          $feature_colour = $f->external_data->{'item_colour'}[0] if $config->{'itemRgb'} =~ /on/i;
+          if ($config->{'itemRgb'} =~ /on/i && ref($f) =~ /Text::Feature/) { 
+            $feature_colour = $f->external_data->{'item_colour'}[0];
+          }
         }
      
         if ($self->my_config('has_blocks') && $show_structure) {
