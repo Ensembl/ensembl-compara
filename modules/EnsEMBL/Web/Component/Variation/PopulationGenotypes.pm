@@ -118,6 +118,11 @@ sub format_frequencies {
       my @composed_name = split(':', $name);
       $composed_name[$#composed_name] = '<b>'.$composed_name[$#composed_name].'</b>';
       $freq_data->{$pop_id}{'pop_info'}{'Name'} = join(':',@composed_name);
+
+      # 1KG population names
+      if ($freq_data->{$pop_id}{'pop_info'}{'PopGroup'} && $freq_data->{$pop_id}{'pop_info'}{'PopGroup'} =~ /^(1000\s*genomes|hapmap)/i ) {
+        $freq_data->{$pop_id}{'pop_info'}{'Label'} = $composed_name[$#composed_name];
+      }
     }
 
     ### loop through frequency data for this population putting it in the destination array for display purposes
@@ -282,13 +287,18 @@ sub format_table {
 
 
       ## Add the population description: this will appear when the user move the mouse on the population name
-      my $pop_name = $pop_info->{'Name'};
+      my $pop_name = ($pop_info->{'Label'}) ? $pop_info->{'Label'} : $pop_info->{'Name'}; # 1KG population names
       if (!$is_somatic && $pop_info->{'Description'}) {
-       $pop_name = qq{<span class="_ht" title="}.$self->strip_HTML($pop_info->{'Description'}).qq{">$pop_name</span>};
+        my $desc = $self->strip_HTML($pop_info->{'Description'});
+        my $ht_class = ((scalar(keys %urls_seen) > 1 || scalar(keys %pop_urls) == 1 )) ? '' : ' ht';
+        $pop_name = qq{<span class="_ht$ht_class" title="$desc">$pop_name</span>};
+      }
+      if ($pop_info->{'Label'}) { # 1KG population names
+        $pop_name .= qq{<span class="hidden export">;}.$pop_info->{'Name'}.qq{</span>};
       }
 
       ## Only link on the population name if there's more than one URL for this table
-      my $pop_url                  = (scalar(keys %urls_seen) > 1 || scalar(keys %pop_urls) == 1 ) ? sprintf('<a href="%s" rel="external">%s</a>', $pop_urls{$pop_id}, $pop_name) : $pop_name;
+      my $pop_url = (scalar(keys %urls_seen) > 1 || scalar(keys %pop_urls) == 1 ) ? sprintf('<a href="%s" rel="external">%s</a>', $pop_urls{$pop_id}, $pop_name) : $pop_name;
 
       ## Hacky indent, because overriding table CSS is a pain!
       $pop_row{'pop'}              = $group_member ? '&nbsp;&nbsp;'.$pop_url : $pop_url;
