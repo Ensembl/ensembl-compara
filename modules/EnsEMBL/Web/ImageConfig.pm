@@ -3055,8 +3055,6 @@ sub add_regulation_builds {
       }));
     }
    
-    warn ">>> CELL LINE $cell_line";
- 
     my %column_data = (
       db        => $key,
       glyphset  => 'fg_multi_wiggle',
