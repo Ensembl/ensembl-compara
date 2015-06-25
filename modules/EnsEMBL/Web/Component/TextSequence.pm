@@ -520,7 +520,11 @@ sub markup_exons {
     gene    => 'eg',
     compara => 'e2',
   };
-  
+
+  if ($config->{'exons_case'}) {
+    $class->{'exon1'} = 'el';
+  }
+ 
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
@@ -841,7 +845,7 @@ sub build_sequence {
     my %previous = ( tag => 'span', class => '', title => '', href => '' );
     my %new_line = ( tag => 'span', class => '', title => '', href => '' );
     my ($row, $pre, $post, $count, $i);
-    
+  
     foreach my $seq (@$lines) {
       my $style;
       
@@ -851,11 +855,13 @@ sub build_sequence {
       $current{'href'}  = $seq->{'href'}   ? qq(href="$seq->{'href'}")   : '';;
       $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"'   : 'span';
       $current{'letter'} = $seq->{'new_letter'};
-      
+
       if ($seq->{'class'}) {
         $current{'class'} = $seq->{'class'};
         chomp $current{'class'};
-        
+        if ($seq->{'class'} =~ /\b(e\w)\b/) {
+        }
+
         if ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/ && $current{'class'} !~ /\b(e\w)\b/) {
           $current{'class'} .= " $1";
         }
@@ -1246,9 +1252,10 @@ sub class_to_style {
       co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}{'default'}" } ],
       aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}{'default'}" } ],
       end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}{'label'}" } ],
-      bold => [ $i++, { 'font-weight' => 'bold' } ]
+      bold => [ $i++, { 'font-weight' => 'bold' } ],
+      el   => [$i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}", 'text-transform' => 'lowercase' } ],
     );
-    
+
     foreach (keys %$var_styles) {
       my $style = { 'background-color' => $colourmap->hex_by_name($var_styles->{$_}{'default'}) };
       
@@ -1326,7 +1333,13 @@ sub get_key {
       compara => { class => 'e2', text => "$exon_type exons"                                   }
     }
   );
-  
+ 
+  if ($config->{'exons_case'}) {
+    $key{'exons'}->{'exon0'}{'text'} = 'ALTERNATING EXONS';
+    $key{'exons'}->{'exon1'} = {'text' => 'alternating exons',
+                                'class' => 'el'};
+  }
+   
   %key = (%key, %$k) if $k;
  
  

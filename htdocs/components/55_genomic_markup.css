@@ -34,6 +34,7 @@ span.ef { color: [[SEQ_EXONFLANK]] }
 span.eo { background-color: [[SEQ_EXONOTHER]] }
 span.eg { color: [[SEQ_EXONGENE]]; font-weight: bold }
 span.ei { color: [[SEQ_INTRON]]; }
+span.el { text-transform:lowercase; }
 
 /* Codon colours */
 span.c0 { background-color: [[SEQ_CODONC0]] }

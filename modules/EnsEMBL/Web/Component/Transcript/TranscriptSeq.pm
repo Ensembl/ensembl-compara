@@ -350,7 +350,7 @@ sub initialize {
   };
  
   $config->{'display_width'} = $hub->param('display_width') || $vc->get('display_width'); 
-  $config->{$_} = ($hub->param($_) eq 'on' || $vc->get($_) eq 'on') ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
+  $config->{$_} = ($hub->param($_) eq 'on' || $vc->get($_) eq 'on') ? 1 : 0 for qw(exons exons_case codons coding_seq translation rna snp_display utr hide_long_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
  
   if ($hub->param('line_numbering') ne 'off') {

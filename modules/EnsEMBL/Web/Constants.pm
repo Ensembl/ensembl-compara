@@ -222,6 +222,12 @@ sub MARKUP_OPTIONS {
       name  => 'exons_only',
       value => 'on',
     },
+    'exons_case' => {
+      type  => 'CheckBox',
+      label => 'Show exons as alternating upper/lower case',
+      name  => 'exons_case',
+      value => 'on',
+    },
     'line_numbering' => {
       'type'   => 'DropDown', 
       'select' => 'select',
