@@ -309,11 +309,24 @@ sub resource_classes {
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
+         '16Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
          '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+
+         '8Gb_8c_mpi'  => {'LSF' => '-q mpi -n 8 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
+         '8Gb_16c_mpi'  => {'LSF' => '-q mpi -n 16 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '8Gb_24c_mpi'  => {'LSF' => '-q mpi -n 24 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
+         '8Gb_32c_mpi'  => {'LSF' => '-q mpi -n 32 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+
+         '32Gb_8c_mpi' => {'LSF' => '-q mpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"' },
+         '32Gb_16c_mpi' => {'LSF' => '-q mpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '32Gb_24c_mpi' => {'LSF' => '-q mpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
+         '32Gb_32c_mpi' => {'LSF' => '-q mpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
          '4Gb_job_gpfs'      => {'LSF' => '-q production-rh6 -M4000 -R"select[mem>4000] rusage[mem=4000] select[gpfs]"' },
   };
