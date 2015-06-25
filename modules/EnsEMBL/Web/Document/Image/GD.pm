@@ -304,7 +304,6 @@ sub hover_labels {
   
   foreach my $label (map values %{$_->{'hover_labels'} || {}}, @{$self->{'image_configs'}}) {
     next if $done{$label->{'class'}};
-    warn ">>> EXTRA DESCRIPTION? ".$label->{'extra_desc'};
     
     my $desc   = join '', map "<p>$_</p>", split /; /, $label->{'desc'};
     $desc     .= $label->{'extra_desc'};
