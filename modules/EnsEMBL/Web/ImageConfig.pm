@@ -2940,7 +2940,15 @@ sub add_regulation_builds {
   my $reg_segs      = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info;
-  my @cell_lines    = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } map [split ':']->[0], keys %{$db_tables->{'cell_type'}{'ids'}}; # Put MultiCell first
+
+  my @cell_lines;
+
+  foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
+    (my $name = $_) =~ s/:\w+$//;
+    push @cell_lines, $name;
+  }
+  @cell_lines = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } @cell_lines; # Put MultiCell first
+ 
   my (@renderers, $prev_track, %matrix_menus, %matrix_rows);
 
   # FIXME: put this in db
@@ -3046,7 +3054,9 @@ sub add_regulation_builds {
         height      => 4,
       }));
     }
-    
+   
+    warn ">>> CELL LINE $cell_line";
+ 
     my %column_data = (
       db        => $key,
       glyphset  => 'fg_multi_wiggle',
