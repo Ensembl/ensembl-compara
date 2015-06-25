@@ -505,7 +505,7 @@ sub tag_data {
       '<a href="#" rel="list_%s_%s" class="toggle closed">%i variants</a>'.
       '<div class="list_%s_%s"><div class="toggleable" style="display:none">%s</div></div>',
       $vf->dbID, $pop->dbID,
-      scalar @tagged_list,
+      scalar @tagged_by_list,
       $vf->dbID, $pop->dbID,
       join("<br>", @tagged_by_list)
     );
