@@ -226,6 +226,11 @@ sub write_rtf {
 
       $class = join ' ', sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } split /\s+/, $class;
 
+      ## RTF has no equivalent of text-transform, so we must manually alter the text
+      if ($class =~ /\b(el)\b/) {
+        $seq->{'letter'} = lc($seq->{'letter'});
+      }
+
       ## Add species name at beginning of each line if this is an alignment
       ## (on pages, this is done by build_sequence, but that adds HTML)
       my $sp_string;
@@ -336,7 +341,9 @@ sub _class_to_style {
       co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}{'default'}" } ],
       aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}{'default'}" } ],
       end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}{'label'}" } ],
-      bold => [ $i++, { 'font-weight' => 'bold' } ]
+      bold => [ $i++, { 'font-weight' => 'bold' } ],
+      el   => [$i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}", 'text-transform' => 'lowercase' } ],
+
     );
 
     foreach (keys %$var_styles) {
