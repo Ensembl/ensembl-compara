@@ -318,10 +318,10 @@ sub resource_classes {
          '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
          '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
-         '8Gb_8c_mpi'  => {'LSF' => '-q mpi -n 8 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
-         '8Gb_16c_mpi'  => {'LSF' => '-q mpi -n 16 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '8Gb_24c_mpi'  => {'LSF' => '-q mpi -n 24 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
-         '8Gb_32c_mpi'  => {'LSF' => '-q mpi -n 32 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '8Gb_8c_mpi'  => {'LSF' => '-q mpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
+         '8Gb_16c_mpi'  => {'LSF' => '-q mpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '8Gb_24c_mpi'  => {'LSF' => '-q mpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
+         '8Gb_32c_mpi'  => {'LSF' => '-q mpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
 
          '32Gb_8c_mpi' => {'LSF' => '-q mpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"' },
          '32Gb_16c_mpi' => {'LSF' => '-q mpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
