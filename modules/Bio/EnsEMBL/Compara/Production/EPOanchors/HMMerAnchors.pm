@@ -57,7 +57,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::HMMerAnchors;
 
 use strict;
 use Bio::AlignIO;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

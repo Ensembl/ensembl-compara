@@ -224,7 +224,6 @@ sub default_options {
      #
      #Resource requirements
      #
-     'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
      'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
      'aligner_capacity' => 4000,
 
@@ -257,16 +256,16 @@ sub resource_classes {
     my ($self) = @_;
     return {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-	 '100Mb' =>  { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' }, 
-	 '1Gb' =>    { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },  
-	 '1.8Gb' =>  { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=11"' },  
-         '3.6Gb' =>  { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
-         '7.5Gb' =>  { 'LSF' => '-C0 -M7500' . $self->o('memory_suffix') .' -R"select[mem>7500] rusage[mem=7500]"' }, 
-         '11.4Gb' => { 'LSF' => '-C0 -M11400' . $self->o('memory_suffix') .' -R"select[mem>11400] rusage[mem=11400]"' }, 
-         '14Gb' =>   { 'LSF' => '-C0 -M14000' . $self->o('memory_suffix') .' -R"select[mem>14000] rusage[mem=14000]"' }, 
-         '14Gb_long_job' =>   { 'LSF' => '-C0 -M14000' . $self->o('memory_suffix') .' -R"select[mem>14000] rusage[mem=14000]" -q long' }, 
-         'gerp' =>   { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=11"' },
-         'higerp' =>   { 'LSF' => '-C0 -M3800' . $self->o('memory_suffix') .' -R"select[mem>3800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3800,'.$self->o('dbresource').'=10:duration=11"' },
+         '100Mb' =>  { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
+         '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+         '1.8Gb' =>  { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=11]"' },
+         '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
+         '7.5Gb' =>  { 'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
+         '11.4Gb' => { 'LSF' => '-C0 -M11400 -R"select[mem>11400] rusage[mem=11400]"' },
+         '14Gb' =>   { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
+         '14Gb_long_job' =>   { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]" -q long' }, 
+         'gerp' =>   { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=11]"' },
+         'higerp' =>   { 'LSF' => '-C0 -M3800 -R"select[mem>3800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3800,'.$self->o('dbresource').'=10:duration=11]"' },
     };
 }
 

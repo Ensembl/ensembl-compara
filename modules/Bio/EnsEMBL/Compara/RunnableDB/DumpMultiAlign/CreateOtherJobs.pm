@@ -56,20 +56,11 @@ sub write_output {
     #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;
 
-    my $tag = "other";
-
-    my $output_file = $self->param('filename') . "." . $tag . "." . $self->param('format');
-    $output_file=~s/[\(\)]+//g;
-    $output_file=~s/-/_/g;
-
-    #Convert eg human to Homo sapiens
-    #my $species_name = $reg->get_adaptor($self->param('species'), "core", "MetaContainer")->get_production_name;
-
     my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
 
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('species'));
+    my $genome_db = $genome_db_adaptor->fetch_by_dbID($self->param('genome_db_id'));
     my $species_name = $genome_db->name;
 
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
@@ -95,8 +86,7 @@ sub write_output {
 	}
     }
     my $split_size = $self->param('split_size');
-    my $format = $self->param('format');
-    my $species = $self->param('species');
+    my $species = $genome_db->name;
 
     my $gab_num = 1;
     my $start_gab_id ;
@@ -118,8 +108,23 @@ sub write_output {
 	    $start_gab_id = $gab->dbID;
 	}
 
+        if ($split_size == 0) {
+            if ($gab_num == @$skip_genomic_align_blocks) {
+                my $output_id = {
+                    'region_name'           =>  'other',
+                    'start'                 =>  $start_gab_id,
+                    'end'                   =>  $gab->dbID,
+                    'filename_suffix'       =>  '',
+                    'extra_args'            =>  ['--skip_species', $species],
+                    'num_blocks'            =>  $gab_num,
+                };
+
+                #print "skip $output_id\n";
+                $self->dataflow_output_id($output_id, 2);
+            }
+
 	#Create jobs after each $split_size gabs
-	if ($gab_num % $split_size == 0 || 
+        } elsif ($gab_num % $split_size == 0 ||
 	    $gab_num == @$skip_genomic_align_blocks) {
 
 	    $end_gab_id = $gab->dbID;
@@ -129,23 +134,16 @@ sub write_output {
 		$this_num_blocks = (@$skip_genomic_align_blocks % $split_size);
 	    }
 
-	    my $this_suffix = "_" . $chunk . "." . $format;
-	    my $dump_output_file = $output_file;
-	    $dump_output_file =~ s/\.$format/$this_suffix/;
-
-            my $coord_system = ""; #Needs to be set to something to avoid errors in DumMultiAlign
-
 	    #Write out cmd from DumpMultiAlign
 	    #Used to create a file of genomic_align_block_ids to pass to
 	    #DumpMultiAlign
 	    my $output_id = {
+                             'region_name'           =>  'other',
                              'start'                 =>  $start_gab_id,
                              'end'                   =>  $end_gab_id,
-                             'output_file'           =>  $output_file,
-                             'extra_args'            =>  " --skip_species $species --chunk_num $chunk",
+                             'filename_suffix'       =>  $chunk,
+                             'extra_args'            =>  ['--skip_species', $species, '--chunk_num', $chunk],
                              'num_blocks'            =>  $this_num_blocks,
-                             'dumped_output_file'    =>  $dump_output_file,
-                             'coord_system'          =>  $coord_system,
                             };
 
 	    #print "skip $output_id\n";

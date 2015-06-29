@@ -31,7 +31,7 @@ create_patch_pairaligner_conf.pl
 
  create_patch_pairaligner_conf.pl --help  
 
- create_patch_pairaligner_conf.pl --master_url mysql://ensro@compara1:3306/sf5_ensembl_compara_master --ref_species homo_sapiens --ref_url mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37 --ensembl_version 68 --host ens-livemirror --dump_dir /lustre/scratch109/ensembl/kb3/scratch/hive/release_68/nib_files --haplotypes chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
+ create_patch_pairaligner_conf.pl --reg_conf path/to/production_reg.conf --patched_species homo_sapiens --dump_dir /lustre/scratch109/ensembl/kb3/scratch/hive/release_68/nib_files --patches chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
 
 =head1 DESCRIPTION
 
@@ -53,10 +53,9 @@ Create the lastz configuration script for just the reference species patches aga
 
 =over
 
-=item B<--master_url>
+=item B<--reg_conf>
 
-Location of the ensembl compara master database containing the new patches. Must be of the format:
-mysql://user@host:port/ensembl_compara_master
+Location of the ensembl compara registry configuration file. The file is expected to load all the relevant core databases and a master database.
 
 =item B<--skip_species>
 List of non-reference pair aligner species to skip from this pipeline because they are new species and will have the current set of patches present in the normal pairwise pipeline
@@ -64,44 +63,22 @@ List of non-reference pair aligner species to skip from this pipeline because th
 =item B<--species>
 List of non-reference pair aligner species. This is not normally required since the pairwise alignments to be run are determined automatically depending on whether the non-reference species has chromosomes. This will over-ride this mechanism and can be used for running human against the mouse patches using human as the reference.
 
-=item B<[--ref_species]>
+=item B<[--patched_species]>
 Reference species. Default homo_sapiens
-
-=item B<--ref_url>
-Location of the core database for the reference species which has the newest patches
-
-=item B<--ensembl_version>
-New ensembl_version. The non-reference species core databases will be taken from --host and be of the previous ensembl version
-
-=item B<[--host]>
-Host containing the core databases for the non-reference species core databases. Default ens-livemirror
-
-=item B<[--port]>
-Port number. Default 3306
-
-=item B<[--user]>
-Readonly user name. Default ensro
 
 =item B<[--dump_dir]>
 Location to dump the nib files
 
 =item B<--patches>
-Patches for the reference species. Normal state is to set these. Do not set when doing human vs mouse patches
+Patches to run the PairAligner on.
 List of patches in the form: 
 coord_system_name1:PATCH1,coord_system_name2:PATCH2,coord_system_name3:PATCH3
 eg chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1
 
-=item B<--non_ref_patches>
-Patches for the non-ref species, used for doing human vs mouse patches
-List of patches in the form: 
-coord_system_name1:PATCH1,coord_system_name2:PATCH2,coord_system_name3:PATCH3
-eg chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1
+=item B<--patched_species_is_alignment_reference>
 
-=item B<--ref_include_non_reference>
-Set include_non_reference attribute for the reference species. Default 1. Set to 0 when doing human vs mouse patches.
-
-=item B<--non_ref_include_non_reference>
-Set include_non_reference attribute for the non-reference species. Default 0. Set to 1 when doing human vs mouse patches.
+Boolean. Tells the script whether the patched species is the reference species in the pairwise alignment. This is 1 by default, and (in Ensembl production) should only be set to 0 for mouse patches vs human.
+Note that setting this option to 0 implies that --species contains a single species, and --skip_species is not populated
 
 =back
 
@@ -111,25 +88,17 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Utils::URI qw/parse_uri/;
 use Getopt::Long;
 
-my $ref_species = "homo_sapiens";
-my $master_url;
-my $ref_url;
-my $host = "ens-livemirror";
-my $port = "3306";
-my $user = "ensro";
-my $ensembl_version = 74;
+my $patched_species;
+my $reg_conf;
+my $compara_master = "compara_master";
 my $dump_dir;
 my $patches;
-my $non_ref_patches;
 my $species = [];
 my $skip_species = [];
 my $exception_species = [];
-my $ref_include_non_reference = 1;
-my $non_ref_include_non_reference = 0;
+my $patched_species_is_alignment_reference = 1;
 
 #Which fields to print
 my $print_species = 1;
@@ -140,64 +109,45 @@ my $print_chain_config = 1;
 
 
 GetOptions(
-  'ref_species=s' => \$ref_species,
-  'ref_url=s' => \$ref_url,
-  'ensembl_version=i' => \$ensembl_version,
-  'host=s' => \$host,
-  'port=i' => \$port,
-  'user=s' => \$user,
+  'reg_conf=s' => \$reg_conf,
+  'compara_master=s' => \$compara_master,
+  'patched_species=s' => \$patched_species,
   'dump_dir=s' => \$dump_dir,
   'patches=s' => \$patches,
-  'non_ref_patches=s' => \$non_ref_patches,
   'species=s@' => $species,
   'skip_species=s@' => $skip_species,
-  'master_url=s' => \$master_url,
   'exception_species=s@' => $exception_species,
-  'ref_include_non_reference=i' => \$ref_include_non_reference,
-  'non_ref_include_non_reference=i' => \$non_ref_include_non_reference,
+  'patched_species_is_alignment_reference=i' => \$patched_species_is_alignment_reference,
  );
 
-my $reg = "Bio::EnsEMBL::Registry";
-$reg->no_version_check(1);
-
-#Load pipeline db
+#Load all the dbs via the registry
 my $compara_dba;
-if ($master_url) {
-    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$master_url);
+if ($reg_conf) {
+    -e $reg_conf || die "'$reg_conf' does not exist ...\n";
+    Bio::EnsEMBL::Registry->load_all($reg_conf);
+    $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara_master, "compara") || die "Cannot find '$compara_master' in the Registry.\n";
 } else {
-    throw("A compara master database url must be defined");
+    die "A registry file or a compara master database url must be defined";
 }
 
-#Check values of ref_include_non_reference and non_ref_include_non_reference
-#Only one can be set
-if ($ref_include_non_reference && $non_ref_include_non_reference) {
-    throw("It is not advisable to find matches between patches of different species. Please only set either ref_include_non_reference or non_ref_include_non_reference");
-}
-
-#Set default dump_dir
-$dump_dir = "/lustre/scratch109/ensembl/" . $ENV{USER} ."/scratch/hive/release_" . $ensembl_version . "/nib_files/" unless ($dump_dir);
-
-#Parse ref_url 
-my $uri = parse_uri($ref_url);
-my %ref_core = $uri->generate_dbsql_params();
-
-$reg->load_registry_from_url($ref_url);
-
-my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+die "Patches must be given with --patches.\n" unless $patches;
 
 #Get list of genome_dbs from database
+die "The name of the patched species must be given with --patched_species.\n" unless $patched_species;
 my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-#my $all_genome_dbs = $genome_db_adaptor->fetch_all();
+my $patched_genome_db = $genome_db_adaptor->fetch_by_registry_name($patched_species);
+my @all_genome_dbs = ($patched_genome_db);
+print STDERR "Generating a configuration file for $patched_species\n";
+
+#Set default dump_dir
+$dump_dir = "/lustre/scratch109/ensembl/" . $ENV{USER} ."/scratch/hive/release_" . $patched_genome_db->db_adaptor->get_MetaContainer->get_schema_version() . "/nib_files/" unless ($dump_dir);
+print STDERR "NIB files will be dumped in $dump_dir\n";
 
 #find list of LASTZ_NET alignments in master
-my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
-my $pairwise_mlsss = $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('LASTZ_NET', $ref_genome_db);
-push $pairwise_mlsss, @{$mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('BLASTZ_NET', $ref_genome_db)};
-my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
-
-my $all_genome_dbs;
-#add ref_genome_db
-push @$all_genome_dbs, $ref_genome_db;
+my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+my @pairwise_mlsss;
+push @pairwise_mlsss, @{ $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('LASTZ_NET', $patched_genome_db) };
+push @pairwise_mlsss, @{ $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('BLASTZ_NET', $patched_genome_db) };
 
 my %unique_genome_dbs;
 #If a set of species is set, use these else automatically determine which species to use depending on whether they
@@ -210,23 +160,24 @@ if ($species && @$species > 0) {
         my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($spp);
         $unique_genome_dbs{$genome_db->name} = $genome_db;
     }
+    die "Only 1 species can be given to --species when the patched species is not the reference in the alignment.\n" if scalar(keys %unique_genome_dbs) > 1 and not $patched_species_is_alignment_reference;
 } else {
-    foreach my $mlss (@$pairwise_mlsss) {
+    die "When the patched species is not the reference in the alignment, you must give --species with 1 species.\n" if not $patched_species_is_alignment_reference;
+    foreach my $mlss (@pairwise_mlsss) {
         #print "name " . $mlss->name . " " . $mlss->dbID . "\n";
         my $genome_dbs = $mlss->species_set_obj->genome_dbs;
         
         foreach my $genome_db (@$genome_dbs) {
             #find non-reference species
-            if ($genome_db->name ne $ref_genome_db->name) {
+            if ($genome_db->name ne $patched_species) {
                 #skip anything that isn't current
                 next unless ($genome_db->assembly_default);
-                my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, 'chromosome');
-                if (@$dnafrags > 1) {
-                    #print "   found " . @$dnafrags . " chromosomes in " . $genome_db->name . "\n";
-                    #find non-ref genome_dbs (may be present in blastz and lastz)
+                print STDERR $genome_db->name, " has a karyotype ? ", $genome_db->has_karyotype, "\n";
+                if ($genome_db->has_karyotype) {
+                    #print STDERR "   found " . @$dnafrags . " chromosomes in " . $genome_db->name . "\n";
                     $unique_genome_dbs{$genome_db->name} = $genome_db;
                 } else {
-                    #print "   no chromosomes found in " . $genome_db->name . "\n";
+                    #print STDERR "   no chromosomes found in " . $genome_db->name . "\n";
                 }
             }
         }
@@ -235,58 +186,57 @@ if ($species && @$species > 0) {
 
 #Allow species to be specified as either --species spp1 --species spp2 --species spp3 or --species spp1,spp2,spp3
 @$skip_species = split(/,/, join(',', @$skip_species));
+die "--skip_species is forbidden twhen the patched species is not the reference in the alignment.\n" if @$skip_species and not $patched_species_is_alignment_reference;
 foreach my $name (keys %unique_genome_dbs) {
     #skip anything in the skip_species array 
     #next if ($name ~~ @$skip_species);
     next if (grep {$name eq $_}  @$skip_species); 
 #    print $unique_genome_dbs{$name}->name . "\n";
-    push @$all_genome_dbs, $unique_genome_dbs{$name};
+    push @all_genome_dbs, $unique_genome_dbs{$name};
 }
 
 #Allow exception_species to be specified as either --exception_species spp1 --exception_species spp2 --exception_species spp3 or --exception_species spp1,spp2,spp3
 @$exception_species = split(/,/, join(',', @$exception_species));
 
 #Set default exception_species for human if not already set
-if ($ref_species eq "homo_sapiens" && @$exception_species == 0) {
-    @$exception_species = ("gorilla_gorilla", "macaca_mulatta", "pan_troglodytes", "pongo_abelii", "callithrix_jacchus");
+if ($patched_species eq "homo_sapiens" && @$exception_species == 0) {
+    # 9443 is the taxon_id of Primates
+    @$exception_species = map {$_->name} grep {$_->assembly_default} @{$genome_db_adaptor->fetch_all_by_ancestral_taxon_id(9443)};
 }
-
-my @common_gdbs;
-my @exception_gdbs;
 
 #Define dna_collections 
 my $dna_collection;
 %{$dna_collection->{homo_sapiens_exception}} = ('chunk_size' => 30000000,
 					      'overlap'    => 0,
-					      'include_non_reference' => $ref_include_non_reference, #include haplotypes
+					      'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
 					      'masking_options' => '"{default_soft_masking => 1}"');
 
 %{$dna_collection->{homo_sapiens_mammal}} = ('chunk_size' => 30000000,
 					     'overlap'    => 0,
-					     'include_non_reference' => $ref_include_non_reference, #include haplotypes
+					     'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
 					     'masking_options_file' => "'" . $ENV{'ENSEMBL_CVS_ROOT_DIR'}."/ensembl-compara/scripts/pipeline/human36.spec'");
 
 %{$dna_collection->{mus_musculus_exception}} = ('chunk_size' => 30000000,
 					      'overlap'    => 0,
-					      'include_non_reference' => $ref_include_non_reference, #include haplotypes
+					      'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
 					      'masking_options' => '"{default_soft_masking => 1}"');
 
 %{$dna_collection->{mus_musculus_mammal}} = ('chunk_size' => 30000000,
 					     'overlap'    => 0,
-					     'include_non_reference' => $ref_include_non_reference, #include haplotypes
+					     'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
 					     'masking_options' => '"{default_soft_masking => 1}"');
 
 
 %{$dna_collection->{exception}} = ('chunk_size' => 10100000,
                                    'group_set_size' => 10100000,
                                    'overlap' => 100000,
-                                   'include_non_reference' => $non_ref_include_non_reference, 
+                                   'include_non_reference' => ($patched_species_is_alignment_reference ? 0 : 1), # when the patched species is not the reference
                                    'masking_options' => '"{default_soft_masking => 1}"');
 
 %{$dna_collection->{mammal}} = ('chunk_size' => 10100000,
 				'group_set_size' => 10100000,
 				'overlap' => 100000,
-                                'include_non_reference' => $non_ref_include_non_reference, 
+                                'include_non_reference' => ($patched_species_is_alignment_reference ? 0 : 1), # when the patched species is not the reference
 				'masking_options' => '"{default_soft_masking => 1}"');
 
 my $pair_aligner;
@@ -297,14 +247,19 @@ my $primate_matrix = $ENV{'ENSEMBL_CVS_ROOT_DIR'}. "/ensembl-compara/scripts/pip
 %{$pair_aligner->{mammal}} = ('parameters' => "\"{method_link=>\'LASTZ_RAW\',options=>\'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac\'}\"");
 
 my $ref_gdb;
-my $genome_dbs;
-foreach my $gdb (@$all_genome_dbs) {
-    if ($gdb->name eq $ref_species) {
-	$ref_gdb = $gdb;
-	next;
+my @all_but_ref_gdbs;
+my @common_gdbs;
+my @exception_gdbs;
+
+foreach my $gdb (@all_genome_dbs) {
+    if (not $ref_gdb) {
+        # The reference species is the patched species unless $patched_species_is_alignment_reference is set
+        if ($patched_species_is_alignment_reference xor ($gdb->name ne $patched_species)) {
+            $ref_gdb = $gdb;
+            next;
+        }
     }
-    #All genome_dbs except ref_gdb
-    push @$genome_dbs, $gdb;
+    push @all_but_ref_gdbs, $gdb;
 
     if (grep $_ eq $gdb->name, @$exception_species) {
 	#print "   exception " . $gdb->name . "\n";
@@ -315,8 +270,7 @@ foreach my $gdb (@$all_genome_dbs) {
     }
 }
 
-#find core databases
-my $core_dbs = list_core_dbs($host, $port, $user, $ensembl_version);
+my $ref_species = $ref_gdb->name;
 
 #
 #Start of conf file
@@ -325,31 +279,18 @@ print "[\n";
 
 if ($print_species) {
      
-    #ref_species
-    print "{TYPE => SPECIES,\n";
-    print "  'abrev'          => '" . $ref_gdb->name . "',\n";
-    print "  'genome_db_id'   => " . $ref_gdb->dbID . ",\n";
-    print "  'taxon_id'       => " . $ref_gdb->taxon_id . ",\n";
-    print "  'phylum'         => 'Vertebrata',\n";
-    print "  'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',\n";
-    print "  'host'           => '" . $ref_core{-HOST} . "',\n";
-    print "  'port'           => " . $ref_core{-PORT} . ",\n";
-    print "  'user'           => '" . $ref_core{-USER} . "\',\n";
-    print "  'dbname'         => '" . $ref_core{-DBNAME} . "',\n";
-    print "  'species'        => '" . $ref_gdb->name . "',\n";
-    print "},\n";
-
-    foreach my $genome_db (sort {$a->dbID <=> $b->dbID} @$genome_dbs) {
+    # all the species
+    foreach my $genome_db ($ref_gdb, sort {$a->dbID <=> $b->dbID} @all_but_ref_gdbs) {
 	print "{TYPE => SPECIES,\n";
 	print "  'abrev'          => '" . $genome_db->name . "',\n";
 	print "  'genome_db_id'   => " . $genome_db->dbID . ",\n";
 	print "  'taxon_id'       => " . $genome_db->taxon_id . ",\n";
 	print "  'phylum'         => 'Vertebrata',\n";
 	print "  'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',\n";
-	print "  'host'           => '" . $core_dbs->{$genome_db->name}{host} . "',\n";
-	print "  'port'           => $port,\n";
-	print "  'user'           => '$user',\n";
-	print "  'dbname'         => '" . $core_dbs->{$genome_db->name}{db} . "',\n";
+	print "  'host'           => '" . $genome_db->db_adaptor->dbc->host . "',\n";
+	print "  'port'           => '" . $genome_db->db_adaptor->dbc->port . "',\n";
+	print "  'user'           => '" . $genome_db->db_adaptor->dbc->user . "',\n";
+	print "  'dbname'         => '" . $genome_db->db_adaptor->dbc->dbname . "',\n";
 	print "  'species'        => '" . $genome_db->name . "',\n";
 	print "},\n";
     }
@@ -366,7 +307,7 @@ if ($print_dna_collection) {
     print " 'collection_name'       => \'$ref_species exception\',\n";
     print " 'genome_db_id'          => " . $ref_gdb->dbID . ",\n";
     print " 'genome_name_assembly'  => \'" . $ref_gdb->name . ":" . $ref_gdb->assembly . "',\n";
-    print " 'region'                => \'$patches\',\n" if ($patches);
+    print " 'region'                => \'$patches\',\n" if $patched_species_is_alignment_reference;
     print " 'chunk_size'            => " . $dna_collection->{$ref_exception}{'chunk_size'} . ",\n";
     print " 'overlap'               => " . $dna_collection->{$ref_exception}{'overlap'} . ",\n";
     print " 'include_non_reference' => " . $dna_collection->{$ref_exception}{'include_non_reference'} . ",\n";  
@@ -378,7 +319,7 @@ if ($print_dna_collection) {
     print " 'collection_name'       => \'$ref_species mammal\',\n";
     print " 'genome_db_id'          => " . $ref_gdb->dbID . ",\n";
     print " 'genome_name_assembly'  => \'" . $ref_gdb->name . ":" . $ref_gdb->assembly . "',\n";
-    print " 'region'                => \'$patches\',\n" if ($patches);
+    print " 'region'                => \'$patches\',\n" if $patched_species_is_alignment_reference;
     print " 'chunk_size'            => " . $dna_collection->{$ref_mammal}{'chunk_size'} . ",\n";
     print " 'overlap'               => " . $dna_collection->{$ref_mammal}{'overlap'} . ",\n";
     print " 'include_non_reference' => " . $dna_collection->{$ref_mammal}{'include_non_reference'} . ",\n";  
@@ -396,7 +337,7 @@ if ($print_dna_collection) {
 	print " 'collection_name'      => \'" . $genome_db->name . " all\',\n";
 	print " 'genome_db_id'         => " . $genome_db->dbID . ",\n";
 	print " 'genome_name_assembly' => \'" . $genome_db->name . ":" . $genome_db->assembly . "',\n";
-        print " 'region'               => \'$non_ref_patches\',\n" if ($non_ref_patches);
+        print " 'region'               => \'$patches\',\n" if not $patched_species_is_alignment_reference;
 	print " 'chunk_size'           => " . $dna_collection->{exception}{'chunk_size'} . ",\n";
 	print " 'group_set_size'       => " . $dna_collection->{exception}{'group_set_size'} . ",\n";
 	print " 'overlap'              => " . $dna_collection->{exception}{'overlap'} . ",\n";
@@ -411,7 +352,7 @@ if ($print_dna_collection) {
 	print " 'collection_name'      => '" . $genome_db->name . " all',\n";
 	print " 'genome_db_id'         => " . $genome_db->dbID . ",\n";
 	print " 'genome_name_assembly' => '" . $genome_db->name . ":" . $genome_db->assembly . "',\n";
-        print " 'region'               => \'$non_ref_patches\',\n" if ($non_ref_patches);
+        print " 'region'               => \'$patches\',\n" if not $patched_species_is_alignment_reference;
 	print " 'chunk_size'           => " . $dna_collection->{mammal}{'chunk_size'} . ",\n";
 	print " 'group_set_size'       => " . $dna_collection->{mammal}{'group_set_size'} . ",\n";
 	print " 'overlap'              => " . $dna_collection->{mammal}{'overlap'} . ",\n";
@@ -472,17 +413,17 @@ if ($print_dna_collection2) {
     print " 'collection_name'       => '" . $ref_gdb->name . " for chain',\n";
     print " 'genome_db_id'          => " . $ref_gdb->dbID . ",\n";
     print " 'genome_name_assembly'  => '" . $ref_gdb->name . ":" . $ref_gdb->assembly . "',\n";
-    print " 'region'                => \'$patches\',\n" if ($patches);
+    print " 'region'                => \'$patches\',\n" if $patched_species_is_alignment_reference;
     print " 'include_non_reference' => " . $dna_collection->{$ref_mammal}{'include_non_reference'} . ",\n";  #assume same for mammal or primate
     print " 'dump_loc'              => '" . $dump_dir . "/" . $ref_gdb->name . "_nib_for_chain'\n";
     print "},\n";
 
-    foreach my $genome_db (sort {$a->dbID <=> $b->dbID} @$genome_dbs) {
+    foreach my $genome_db (sort {$a->dbID <=> $b->dbID} @all_but_ref_gdbs) {
 	print "{ TYPE => DNA_COLLECTION,\n";
 	print " 'collection_name'       => '" . $genome_db->name . " for chain',\n";
 	print " 'genome_db_id'          => " . $genome_db->dbID . ",\n";
 	print " 'genome_name_assembly'  => '" . $genome_db->name . ":" . $genome_db->assembly . "',\n";
-        print " 'region'                => \'$non_ref_patches\',\n" if ($non_ref_patches);
+        print " 'region'                => \'$patches\',\n" if not $patched_species_is_alignment_reference;
         if ($dna_collection->{mammal}{'include_non_reference'}) {
             print " 'include_non_reference' => " . $dna_collection->{mammal}{'include_non_reference'} . ",\n";  
         }
@@ -492,7 +433,7 @@ if ($print_dna_collection2) {
 }
 
 if ($print_chain_config) {
-    foreach my $genome_db (sort {$a->dbID <=> $b->dbID} @$genome_dbs) {
+    foreach my $genome_db (sort {$a->dbID <=> $b->dbID} @all_but_ref_gdbs) {
 	print "{TYPE                            => CHAIN_CONFIG,\n";
 	print " 'input_method_link'             => [1001, 'LASTZ_RAW'],\n";
 	print " 'output_method_link'            => [1002, 'LASTZ_CHAIN'],\n";
@@ -502,7 +443,7 @@ if ($print_chain_config) {
 	print " 'linear_gap'                    => 'medium'\n";
 	print "},\n";
     }
-    foreach my $genome_db (sort {$a->dbID <=> $b->dbID} @$genome_dbs) {
+    foreach my $genome_db (sort {$a->dbID <=> $b->dbID} @all_but_ref_gdbs) {
 	#Find existing method_link_type for these 2 species. Assume only have either BLASTZ_NET or LASTZ_NET.
 	my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('LASTZ_NET', [$ref_gdb->dbID, $genome_db->dbID]);
 	unless (defined $mlss) {
@@ -527,41 +468,3 @@ if ($print_chain_config) {
 print "{ TYPE => END }\n";
 print "]\n";
 
-
-sub list_core_dbs {
-    my ($host, $port, $user, $ensembl_version) = @_;
-    my $core_dbs;
-
-    #special case to go through both ens-staging1 and ens-staging2
-    if ($host =~ /ens-staging/) {
-	my @dbs1 = `mysql -u $user -P $port -h ens-staging1 -e "show databases like '%core_$ensembl_version%'"`;
-	my @dbs2 = `mysql -u $user -P $port -h ens-staging2 -e "show databases like '%core_$ensembl_version%'"`;
-	foreach my $db (@dbs1) {
-            next if ($db =~ /Database/);
-	    chomp $db;
-	    my ($species) = $db =~ /(\w+)_core_.*/;
-	    $core_dbs->{$species}{db} = $db;
-	    $core_dbs->{$species}{host} = "ens-staging1";
-	}
-	foreach my $db (@dbs2) {
-            next if ($db =~ /Database/);
-	    chomp $db;
-	    my ($species) = $db =~ /(\w+)_core_.*/;
-	    $core_dbs->{$species}{db} = $db;
-	    $core_dbs->{$species}{host} = "ens-staging2";
-	}
-
-
-    } else {
-	$ensembl_version--;
-	my @dbs = `mysql -u $user -P $port -h $host -N -e "show databases like '%core_$ensembl_version%'"`;
-	foreach my $db (@dbs) {
-	    chomp $db;
-	    my ($species) = $db =~ /(\w+)_core_.*/;
-	    $core_dbs->{$species}{db} = $db;
-	    $core_dbs->{$species}{host} = $host;
-	}
-    }
-
-    return $core_dbs;
-}

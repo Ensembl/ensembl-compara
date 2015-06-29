@@ -1348,9 +1348,9 @@ CREATE TABLE gene_tree_node_attr (
 @desc  This table stores different HMM-based profiles used and produced by gene trees
 @colour   #1E90FF
 
-@column model_id              Model ID of the profile. Can be the external ID in case of imported models
-@column name                  Name of the model
-@column type                  Short description of the origin of the profile
+@column model_id              Model ID of the profile. This is the stable_id of the gene-tree, or the external ID in case of imported models (such as RF00001)
+@column name                  Name of the model, if available (such as 5S_rRNA for RF00001)
+@column type                  Short description of the origin of the profile (usually, one of "tree_hmm_aa_v3", "tree_hmm_dna_v3", "infernal" or "infernal-refined")
 @column compressed_profile    The HMM profile, compressed with zlib. It can be decompressed with the MySQL function UNCOMPRESS()
 @column consensus             The consensus sequence derived from the profile
 
@@ -1766,16 +1766,14 @@ CREATE TABLE `CAFE_species_gene` (
 
 # ------------------------ End of CAFE tables --------------------------------------
 
-# Auto add schema version to database (this will override whatever hive puts there)
+-- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '80');
-
-#Add schema type
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '81');
+-- Add schema type to database
+DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_79_80_a.sql|schema_version');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_79_80_b.sql|genebuild_unique');
+  VALUES (NULL, 'patch', 'patch_80_81_a.sql|schema_version');
 

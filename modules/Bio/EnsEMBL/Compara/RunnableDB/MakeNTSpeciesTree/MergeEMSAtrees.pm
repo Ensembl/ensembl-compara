@@ -33,7 +33,6 @@ Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::MergeEMSAtrees
 package Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::MergeEMSAtrees;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception ('throw');
 use Data::Dumper;
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

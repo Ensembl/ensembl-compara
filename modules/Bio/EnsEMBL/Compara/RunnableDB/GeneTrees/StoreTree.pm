@@ -320,8 +320,7 @@ sub parse_newick_into_tree {
       #Then we "next" the loop
       $leaf->print_node if $self->debug;
       $leaf->node_id(0);
-
-	  #$leaf->seq_member_id($seq_member_id);
+      $leaf->seq_member_id($seq_member_id);
       $leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
     } else {
       $old_leaf->Bio::EnsEMBL::Compara::AlignedMember::copy($leaf);
@@ -492,7 +491,7 @@ sub parse_filtered_align {
     }
 
     my %hash_initial_strings = ();
-    my @missing_members = ();
+    my %missing_members = ();
     {
         my $alignio = Bio::AlignIO->new(-file => $alnfile_ini, -format => 'fasta');
         my $aln = $alignio->next_aln or die "The input alignment '$alnfile_ini' cannot be read";
@@ -501,30 +500,31 @@ sub parse_filtered_align {
             if (exists $hash_filtered_strings{$seq->display_id()}) {
                 $hash_initial_strings{$seq->display_id()} = $seq->seq();
             } else {
-                push @missing_members, $seq->display_id();
+				my ($seq_member_id,$tmp) = split(/_/,$seq->display_id());
+                $missing_members{$seq_member_id} = 1;
             }
         }
     }
-    my $all_missing_members = join('/', @missing_members);
+    my $all_missing_members = join('/', keys %missing_members);
 
-    if ($tree_to_delete_nodes and scalar(@missing_members)) {
+    if ($tree_to_delete_nodes and scalar(keys %missing_members)) {
         my $treenode_adaptor = $tree_to_delete_nodes->adaptor->db->get_GeneTreeNodeAdaptor;
 
         warn sprintf("leaves=%d ini_aln=%d filt_aln=%d\n", scalar(@{$tree_to_delete_nodes->get_all_leaves()}), scalar(keys %hash_initial_strings), scalar(keys %hash_filtered_strings));
 
         foreach my $leaf (@{$tree_to_delete_nodes->get_all_leaves()}) {
-            next if exists $hash_filtered_strings{$leaf->seq_member_id};
+            next unless exists $missing_members{$leaf->seq_member_id};
 
             $self->call_within_transaction(sub{
                 $treenode_adaptor->remove_seq_member($leaf);
             });
         }
         $self->param('removed_members', 1);
-        $tree_to_delete_nodes->store_tag('n_removed_members', scalar(@missing_members));
+        $tree_to_delete_nodes->store_tag('n_removed_members', scalar(keys %missing_members));
         $tree_to_delete_nodes->store_tag('removed_members', $all_missing_members);
         $tree_to_delete_nodes->store_tag('gene_count', scalar(@{$tree_to_delete_nodes->get_all_leaves}) );
-    } elsif (scalar(@missing_members)) {
-        $self->param('gene_tree')->store_tag('n_removable_members', scalar(@missing_members));
+    } elsif (scalar(keys %missing_members)) {
+        $self->param('gene_tree')->store_tag('n_removable_members', scalar(keys %missing_members));
         $self->param('gene_tree')->store_tag('removable_members', $all_missing_members);
     }
 

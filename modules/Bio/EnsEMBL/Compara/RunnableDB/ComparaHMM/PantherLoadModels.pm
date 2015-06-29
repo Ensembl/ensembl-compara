@@ -172,7 +172,7 @@ sub get_profiles {
         my $fam = basename($famPath);
         my $cons_seq = $self->get_consensus_from_index($fam);
         print STDERR "Storing family $famPath($fam) => $famPath/hmmer.hmm\n" if ($self->debug());
-        $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, {$fam => $cons_seq});
+        $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, undef, {$fam => $cons_seq});
 
         next unless $self->param('include_subfamilies');
 
@@ -184,7 +184,7 @@ sub get_profiles {
             my $subfam = "$fam:" . $subfamBasename;
             $cons_seq = $self->get_consensus_from_index($subfam);
             print STDERR "Storing $subfam HMM\n";
-            $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam, {$subfam => $cons_seq});
+            $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam, undef, {$subfam => $cons_seq});
         }
     }
 }

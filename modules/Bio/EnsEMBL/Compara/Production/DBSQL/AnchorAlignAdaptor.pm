@@ -39,7 +39,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);

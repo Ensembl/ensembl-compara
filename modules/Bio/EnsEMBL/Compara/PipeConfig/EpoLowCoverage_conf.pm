@@ -152,7 +152,6 @@ sub default_options {
         #
         #Resource requirements
         #
-       'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
        'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
        'aligner_capacity' => 2000,
     };
@@ -181,10 +180,10 @@ sub resource_classes {
 
     return {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
-         '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
-	 '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.6Gb' =>  { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
+         '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
+         '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
+	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
+         '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
     };
 }
 
@@ -217,7 +216,8 @@ sub pipeline_analyses {
                               'sql' => [
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('cs_mlss_id') . ', "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('ce_mlss_id') . ', "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
-                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "high_coverage_mlss_id", ' . $self->o('high_epo_mlss_id') . ')'
+                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "high_coverage_mlss_id", ' . $self->o('high_epo_mlss_id') . ')',
+                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "reference_species", ' . $self->o('ref_species') . ')'
                               ],
                              },
               -flow_into => {

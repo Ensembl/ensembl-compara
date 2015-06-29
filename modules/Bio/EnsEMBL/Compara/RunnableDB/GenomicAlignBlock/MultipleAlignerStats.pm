@@ -112,7 +112,7 @@ sub fetch_input {
   }
   
   unless (-e $self->param('dump_features')) {
-      die(self->param('dump_features') . " does not exist");
+      die($self->param('dump_features') . " does not exist");
   }
 
   unless ($self->param('compare_beds')) {
@@ -120,7 +120,7 @@ sub fetch_input {
   }
   
   unless (-e $self->param('compare_beds')) {
-      die(self->param('compare_beds') . " does not exist");
+      die($self->param('compare_beds') . " does not exist");
   }
   
   #Get ensembl schema version from meta table if not defined

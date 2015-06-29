@@ -60,7 +60,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps;
 
 use strict;
 use Data::Dumper;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

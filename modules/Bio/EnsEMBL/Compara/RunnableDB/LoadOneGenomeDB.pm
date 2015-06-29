@@ -117,6 +117,7 @@ sub fetch_input {
             $self->param('locator', $core_dba->locator($suffix_separator) );  # substitute the given locator by one in conventional format
         }
         $self->param('core_dba', $core_dba);
+        $self->param('genome_db_id',$self->param('master_dbID'));
         return;
     }
 

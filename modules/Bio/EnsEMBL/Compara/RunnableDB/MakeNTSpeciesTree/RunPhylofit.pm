@@ -36,7 +36,7 @@ use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::AlignIO;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Data::Dumper;
 
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

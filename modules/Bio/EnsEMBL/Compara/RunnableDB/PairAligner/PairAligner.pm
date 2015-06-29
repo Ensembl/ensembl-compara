@@ -62,7 +62,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use File::Basename;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::GenomicAlign;
