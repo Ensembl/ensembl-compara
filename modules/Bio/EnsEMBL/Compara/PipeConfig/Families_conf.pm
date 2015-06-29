@@ -474,8 +474,9 @@ sub pipeline_analyses {
                 'append'        => [qw(-N -q)],
                 'input_query'   => 'select * from mcl_sparse_matrix',
                 'command_out'   => ['#mcl_bin_dir#/mcxload', '-abc', '-', '-ri', 'max', '-o', '#work_dir#/#file_basename#.tcx', '-write-tab', '#work_dir#/#file_basename#.itab',    # run the actual command
-                                    ';',
-                                    'tail', '-n', '1', '#work_dir#/#file_basename#.tcx', '|', 'grep', ')' ],    # then test that the file finishes with a closing round bracket
+                                    #### FIXME: The healthcheck part below is not currently working - see DbCmd runnable
+                                    ## '\\;',      # NB: make sure it is properly escaped!
+                                    ## 'tail', '-n', '1', '#work_dir#/#file_basename#.tcx', '|', 'grep', ')' ],    # then test that the file finishes with a closing round bracket
             },
             -flow_into => {
                 1 => [ 'mcl' ],
@@ -673,6 +674,26 @@ sub pipeline_analyses {
 1;
 
 =head1 STATS and TIMING
+
+=head2 rel.81 stats
+
+    sequences to cluster:           7,936,228       [ SELECT count(*) from sequence; ] -- took 1m12s to run
+    distances by Blast:         1,561,834,584       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 43m to run
+
+    non-reference genes:         3120               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          9260               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         10.7d               [ call time_analysis('%'); ]    -- could have been shorter by 1-2 days (mcxload had a syntax error in the command line, which was an attempt to introduce a healthcheck)
+    uniprot_loading time:        6.7h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               6.8d               [ call time_analysis('blast%'); ]
+    mcxload running time:       21.8h               [ select (UNIX_TIMESTAMP(when_finished)-UNIX_TIMESTAMP(when_started))/3600 hours from role join analysis_base using(analysis_id) where done_jobs=1 and logic_name='mcxload_matrix' order by role_id DESC limit 1; ]
+    mcl running time:           13.1h               [ select (UNIX_TIMESTAMP(when_finished)-UNIX_TIMESTAMP(when_started))/3600 hours from role join analysis_base using(analysis_id) where done_jobs=1 and logic_name='mcl' order by role_id DESC limit 1; ]
+
+    memory used by mcxload:     41.6G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         63.1G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
+
 
 =head2 rel.80 stats
 
