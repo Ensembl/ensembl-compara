@@ -72,6 +72,7 @@ sub fetch_input {
     $self->param('genome_dbs', $self->compara_dba->get_GenomeDBAdaptor->fetch_all());
 
     my $method_adaptor = $self->compara_dba->get_MethodAdaptor;
+    # FIXME : not all the pipelines want homologues
     $self->param('ml_ortho', $method_adaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES'));
     $self->param('ml_para', $method_adaptor->fetch_by_type('ENSEMBL_PARALOGUES'));
     $self->param('ml_homoeo', $method_adaptor->fetch_by_type('ENSEMBL_HOMOEOLOGUES'));
@@ -213,7 +214,9 @@ sub _write_mlss {
     my $mlss;
     if ($self->param('reference_dba')) {
         $mlss = $self->param('reference_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($method->dbID, $ss->dbID);
-        $mlss or die sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString);
+        if ((not $mlss) and $self->param('reference_dba')->get_MethodAdaptor->fetch_by_dbID($method->dbID)) {
+            die sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString);
+        }
     }
     unless ($mlss) {
         $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new( -method => $method, -species_set_obj => $ss);
