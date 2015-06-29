@@ -256,6 +256,8 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
+                allow_missing_coordinates   => 0,
+                allow_missing_cds_seqs => 0,
                 allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
             -flow_into  => [ 'per_genome_qc' ],
