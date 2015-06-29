@@ -91,6 +91,7 @@ sub fetch_input {
     my $anchor_align = $anchor_align_adaptor->fetch_by_dbID($anchor_align_id);
     push(@{$self->param('anchor_aligns')}, $anchor_align);
   }
+  $self->compara_dba()->dbc->disconnect_if_idle();
   $self->_dump_fasta();
   exit(1) if (!$self->param('fasta_files') or !@{$self->param('fasta_files')});
 
@@ -110,6 +111,7 @@ sub run {
 
 print $run_str, "\n";
 
+  $self->compara_dba()->dbc->disconnect_if_idle();
   my $msa_string = qx"$run_str";
   $self->param('msa_string', $msa_string);
 
