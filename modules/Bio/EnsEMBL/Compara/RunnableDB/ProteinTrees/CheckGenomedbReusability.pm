@@ -58,6 +58,12 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 my $suffix_separator = '__cut_here__';
 
+sub param_defaults {
+    return {
+        check_gene_content  => 1,
+    }
+}
+
 sub fetch_input {
     my $self = shift @_;
 
@@ -131,6 +137,12 @@ sub fetch_input {
 
         $self->param('genome_db', $genome_db);
         $self->param('reuse_genome_db', $reuse_genome_db);
+
+        if (not $self->param('check_gene_content')) {
+            $self->warning("As requested, will not check that the gene-content is the same for ".$genome_db->name);
+            $self->param('reuse_this', 1);
+            return;
+        }
 
         my $prev_core_dba;
 
