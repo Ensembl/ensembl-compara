@@ -677,7 +677,7 @@ sub _objs_from_sth {
   }
   $sth->finish;
 
-  return @anchor_aligns;
+  return \@anchor_aligns;
 }
 
 
