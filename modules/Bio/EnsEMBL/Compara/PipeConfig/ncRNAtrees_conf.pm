@@ -267,7 +267,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_members_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
-                '1->A' => 'load_members',
+                '2->A' => 'load_members',
                 'A->1' => [ 'hc_members_globally' ],
             },
         },
