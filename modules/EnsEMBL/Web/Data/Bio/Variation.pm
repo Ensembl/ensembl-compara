@@ -50,7 +50,15 @@ sub convert_to_drawing_parameters {
   my $count_features  = scalar @data;
 
   if ($count_features > $max_features) {
-    throw exception('TooManyFeatures', qq(There are <b>$count_features</b> genomic locations associated with this phenotype. Please, use <a href="/biomart/martview/">BioMart</a> to retrieve a table of all the variants associated with this phenotype instead as there are too many to display on a karyotype.));
+
+    my $biomart_link = ($hub->species_defs->ENSEMBL_MART_ENABLED && $hub->species =~ /homo_sapiens/i) ? '?VIRTUALSCHEMANAME=default'.
+                          '&ATTRIBUTES=hsapiens_snp.default.snp.refsnp_id|hsapiens_snp.default.snp.chr_name|'.
+                          'hsapiens_snp.default.snp.chrom_start|hsapiens_snp.default.snp.associated_gene'.
+                          '&FILTERS=hsapiens_snp.default.filters.phenotype_description.&quot;'.$hub->param('name').'&quot;'.
+                          '&VISIBLEPANEL=resultspanel' : '/';
+
+
+    throw exception('TooManyFeatures', qq(There are <b>$count_features</b> genomic locations associated with this phenotype. Please, use <a href="/biomart/martview$biomart_link">BioMart</a> to retrieve a table of all the variants associated with this phenotype instead as there are too many to display on a karyotype.));
   }
 
   # getting associated phenotypes and associated genes
