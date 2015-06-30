@@ -186,7 +186,6 @@ sub pipeline_analyses {
             {   -logic_name => 'load_genomedb',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
                 -parameters => {
-                    # FIXME: need databases such as staging1/2
                     'registry_conf_file' => $self->o('reg_conf'),
                 },
                 -flow_into => [ 'copy_dnafrags_from_master' ],
