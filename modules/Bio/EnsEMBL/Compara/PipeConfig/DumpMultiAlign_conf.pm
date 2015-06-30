@@ -98,20 +98,6 @@ sub default_options {
     };
 }
 
-sub pipeline_create_commands {
-    my ($self) = @_;
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-
-        #Store DumpMultiAlign other_gab genomic_align_block_ids
-        $self->db_cmd('CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL)'),
-
-        #Store DumpMultiAlign healthcheck results
-        $self->db_cmd('CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)'),
-    ];
-}
-
-
 # Ensures species output parameter gets propagated implicitly
 sub hive_meta_table {
     my ($self) = @_;
@@ -153,6 +139,19 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
+        {   -logic_name     => 'create_tracking_tables',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'sq'    => [
+                    #Store DumpMultiAlign other_gab genomic_align_block_ids
+                    'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL)',
+                    #Store DumpMultiAlign healthcheck results
+                    'CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)',
+                ],
+            },
+            -input_ids     => [ {} ],
+        },
+
         {   -logic_name    => 'MLSSJobFactory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory',
             -parameters    => {
@@ -185,6 +184,7 @@ sub pipeline_analyses {
                 'A->1' => [ 'md5sum'],
             },
             -rc_name => 'default_with_reg_conf',
+            -wait_for       => 'create_tracking_tables',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on chromosomes (1 job per chromosome)
         {  -logic_name    => 'createChrJobs',
