@@ -175,7 +175,7 @@ sub supporting_evidence_table {
       foreach my $svs (@{$ssv_obj->get_all_StructuralVariationSamples}) {
         
         my $a_sample  = ($svs->sample) ? $svs->sample->name : undef;
-        my $a_strain = ($svs->strain) ? $svs->strain->name : undef;
+        my $a_strain = ($svs->strain && $hub->species =~ /^(mus|mouse)/i) ? $svs->strain->name : undef;
         
         if ($a_sample) {
           $samples->{$a_sample} = 1;
