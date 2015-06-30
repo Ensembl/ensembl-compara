@@ -67,6 +67,8 @@ sub content {
       my $pop_id = $pop->{'ID'};
       next unless ($pop_id);
       
+      $pop->{'Label'} = $pop->{'Name'};
+
       if ($pop->{'Size'} == 1) {
         $other_sample = 1;
         $other_sample_data{$pop_id} = 1;
@@ -74,14 +76,17 @@ sub content {
       else {
         $populations{$pop_id} = 1;
         $pop_names{$pop_id} = $pop->{'Name'};
-
+        
+        my @composed_name = split(':', $pop->{'Label'});
+        $pop->{'Label'} = $composed_name[$#composed_name];
+      
         my $priority_level = $pop->{'Priority'};
         if ($priority_level) {
           $group_name{$priority_level} = $pop->{'Group'} unless defined $group_name{$priority_level};
-          $priority_data{$priority_level}{$pop_id} = {'name' => $pop->{'Name'}, 'link' => $pop->{'Link'}};
+          $priority_data{$priority_level}{$pop_id} = {'name' => $pop->{'Name'}, 'label' => $pop->{'Label'}, 'link' => $pop->{'Link'}};
         }
         else {
-          $other_pop_data{$pop_id} = {'name' => $pop->{'Name'}, 'link' => $pop->{'Link'}};
+          $other_pop_data{$pop_id} = {'name' => $pop->{'Name'}, 'label' => $pop->{'Label'}, 'link' => $pop->{'Link'}};
         }
       }
     }
@@ -91,10 +96,16 @@ sub content {
       $genotype =~ s/$al/$al_colours->{$al}/g;
     } 
     
+    my $sample_label = $data->{'Name'};
+    if ($sample_label =~ /(1000\s*genomes|hapmap)/i) {
+      my @composed_name = split(':', $sample_label);
+      $sample_label = $composed_name[$#composed_name];
+    }
+
     my $row = {
-      Sample  => sprintf("<small id=\"$data->{'Name'}\">$data->{'Name'} (%s)</small>", substr($data->{'Gender'}, 0, 1)),
+      Sample  => sprintf("<small id=\"$data->{'Name'}\">$sample_label (%s)</small>", substr($data->{'Gender'}, 0, 1)),
       Genotype    => "<small>$genotype</small>",
-      Population  => "<small>".join(", ", sort keys %{{map {$_->{Name} => undef} @{$data->{Population}}}})."</small>",
+      Population  => "<small>".join(", ", sort keys %{{map {$_->{Label} => undef} @{$data->{Population}}}})."</small>",
       Father      => "<small>".($father eq '-' ? $father : "<a href=\"#$father\">$father</a>")."</small>",
       Mother      => "<small>".($mother eq '-' ? $mother : "<a href=\"#$mother\">$mother</a>")."</small>",
       Children    => '-'
@@ -126,8 +137,8 @@ sub content {
     $selected_pop ||= (keys %rows)[0]; # there is only one entry in %rows
 
     my $pop_name = $pop_names{$selected_pop};
-    my $project_url  = $self->pop_url($pop_name);
-    my $pop_url = ($project_url) ? sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the <b>%s</b> population &rarr;</a></p>', $project_url, $pop_name) : ''; 
+    my $project_url  = $self->pop_url($pop_name,$pop_name);
+    my $pop_url = ($project_url) ? sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the <b>%s</b> population</a></p>', $project_url, $pop_name) : ''; 
 
     return $self->toggleable_table(
       "Genotypes for $pop_names{$selected_pop}", $selected_pop, 
@@ -188,7 +199,7 @@ sub format_table {
 
   # Get URLs
   foreach my $pop_id (keys %$pop_list) {
-    my $url = $self->pop_url($pop_list->{$pop_id}{'name'}, $pop_list->{$pop_id}{'link'});
+    my $url = $self->pop_url($pop_list->{$pop_id}{'name'}, $self->pop_url($pop_list->{$pop_id}{'label'}), $pop_list->{$pop_id}{'link'});
     $pop_urls{$pop_id} = $url;
     $urls_seen{$url}++;
   }
@@ -208,7 +219,13 @@ sub format_table {
     if ($pop_name =~ /^.+\:.+$/) {
       my @composed_name = split(':', $pop_name);
       $composed_name[$#composed_name] = '<b>'.$composed_name[$#composed_name].'</b>';
-      $pop_name = join(':',@composed_name);
+      if ($pop_name =~ /(1000\s*genomes|hapmap)/i) {
+        $pop_name  = qq{<span class="hidden export">;$pop_name</span>};
+        $pop_name .= $composed_name[$#composed_name];
+      }
+      else {
+        $pop_name = join(':',@composed_name);
+      }
     }
 
     $pop_name = scalar(keys %urls_seen) > 1 ? sprintf('<a href="%s" rel="external">%s</a>', $pop_urls{$pop_id}, $pop_name) : $pop_name; 
@@ -236,7 +253,7 @@ sub format_table {
 
   if ($generic_pop_url) {
     my $project_name = ($table_header =~ /project/i) ? "<b>$table_header</b>" : ' ';
-    $html .= sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations &rarr;</a></p>', $generic_pop_url, $project_name);
+    $html .= sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations</a></p>', $generic_pop_url, $project_name);
   }
 
   return $html;
@@ -266,18 +283,19 @@ sub format_parent {
 
 
 sub pop_url {
-   ### Arg1        : Population name (to be displayed)
-   ### Arg2        : dbSNP population ID (variable to be linked to)
-   ### Example     : $self->pop_url($pop_name, $pop_dbSNPID);
+   ### Arg1        : Full population name
+   ### Arg2        : Population name/label (to be displayed)
+   ### Arg3        : dbSNP population ID (variable to be linked to)
+   ### Example     : $self->pop_url($pop_name, $pop_label, $pop_dbSNPID);
    ### Description : makes pop_name into a link
    ### Returns  string
 
-  my ($self, $pop_name, $pop_dbSNP) = @_;
+  my ($self, $pop_name, $pop_label, $pop_dbSNP) = @_;
 
   my $pop_url;
 
   if($pop_name =~ /^1000GENOMES/) {
-    $pop_url = $self->hub->get_ExtURL('1KG_POP', $pop_name);
+    $pop_url = $self->hub->get_ExtURL('1KG_POP', $pop_label);
   }
   elsif ($pop_name =~ /^NextGen/i) {
     $pop_url = $self->hub->get_ExtURL('NEXTGEN_POP');
