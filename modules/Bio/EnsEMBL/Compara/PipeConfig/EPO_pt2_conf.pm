@@ -325,13 +325,11 @@ sub pipeline_analyses {
 				'input_method_link_species_set_id' => '#mapping_mlssid#',
 				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
 			},
-		-failed_job_tolerance => 10,
                 -flow_into => {
                     -1 => 'trim_anchor_align_himem',
                 },
 		-hive_capacity => 150,
 		-batch_size    => 20,
-		-max_retry_count => 1,
 	    },
 
 	    {   -logic_name => 'trim_anchor_align_himem',
@@ -340,9 +338,7 @@ sub pipeline_analyses {
 				'input_method_link_species_set_id' => '#mapping_mlssid#',
 				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
 			},
-		-failed_job_tolerance => 10,
 		-hive_capacity => 150,
-		-max_retry_count => 1,
                 -rc_name => 'mem3500',
 	    },
     ];

@@ -323,6 +323,7 @@ sub get_trimmed_anchor_aligns {
 
 
     if ($count_before + $count_after != $end - $start + 1) {
+      $self->input_job->transient_error(0);
       die "Wrong length $count_before * $count_after * $start * $end * $seq_before * $count_before * $seq_after * $count_after +";
     }
     if ($this_anchor_align->dnafrag_strand == 1) {
