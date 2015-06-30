@@ -287,7 +287,7 @@ sub pipeline_analyses {
 		-parameters => {
 			'mapping_exe' => $self->o('mapping_exe'),
 		},
-		-hive_capacity => 200,
+		-hive_capacity => 1000,
 		-max_retry_count => 1,
 	    },
 
@@ -321,8 +321,8 @@ sub pipeline_analyses {
                 -flow_into => {
                     -1 => 'trim_anchor_align_himem',
                 },
-		-hive_capacity => 200,
-		-batch_size    => 10,
+		-hive_capacity => 150,
+		-batch_size    => 20,
 		-max_retry_count => 1,
 	    },
 
@@ -333,8 +333,7 @@ sub pipeline_analyses {
 				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
 			},
 		-failed_job_tolerance => 10,
-		-hive_capacity => 200,
-		-batch_size    => 10,
+		-hive_capacity => 150,
 		-max_retry_count => 1,
                 -rc_name => 'mem3500',
 	    },
