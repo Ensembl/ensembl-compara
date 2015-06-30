@@ -827,12 +827,12 @@ sub most_severe_consequence {
   my ($self, $variation_features) = @_;
 
   my $hub = $self->hub;
-  my $vf  = $hub->param('vf');
+  my $vf  = $hub->param('vf') || $hub->param('vl');
 
   return () if (!$vf);
 
   foreach my $vf_object (@$variation_features) {
-    if ($vf_object->dbID == $vf) {
+    if (($vf_object->dbID || $vf_object->location_string) == $vf) {
 
       my $url = $hub->url({
          type   => 'Variation',

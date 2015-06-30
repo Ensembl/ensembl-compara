@@ -29,6 +29,7 @@ sub content {
   my $self       = shift;
   my $hub        = $self->hub;
   my $vf         = $hub->param('vf');
+  my $vl         = $hub->param('vl');
   my $db         = $hub->param('vdb') || 'variation';
   my $click_data = $self->click_data;
   my $i          = 0;
@@ -41,16 +42,40 @@ sub content {
     @features = () unless grep $_->{'dbID'} eq $vf, @features;
     @features = map { $vf_adaptor->fetch_by_dbID($_->{'dbID'}) } @features;
   } elsif (!$vf) {
-    my $adaptor         = $hub->database($db)->get_VariationAdaptor;
+    my $var_adaptor     = $hub->database($db)->get_VariationAdaptor;
     my @variation_names = split ',', $hub->param('v');
     my @regions         = split ',', $hub->param('regions');
     
     for (0..$#variation_names) {
       my ($chr, $start, $end) = split /\W/, $regions[$_];
-      push @features, grep { $_->seq_region_name eq $chr && $_->seq_region_start == $start && $_->seq_region_end == $end } @{$adaptor->fetch_by_name($variation_names[$_])->get_all_VariationFeatures};
+      
+      my @vfs;
+      
+      my $v = $var_adaptor->fetch_by_name($variation_names[$_]);
+      
+      if($v) {
+        push @features,
+          grep { $_->seq_region_name eq $chr && $_->seq_region_start == $start && $_->seq_region_end == $end }
+          @{$v->get_all_VariationFeatures};
+      }
+      elsif($vl) {
+        my $sa = $hub->database($hub->param('db') || 'core')->get_SliceAdaptor;
+        my ($c, $s, $e) = split(/\:|\-/, $vl);
+        my $slice = $sa->fetch_by_region('chromosome', $c, $s, $e || $s);
+        
+        # find VCF config
+        my $c = $hub->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
+
+        if($c) {
+         # set config file via ENV variable
+         $ENV{ENSEMBL_VARIATION_VCF_CONFIG_FILE} = $c->{'CONFIG'};
+         $vf_adaptor->db->use_vcf($c->{'ENABLED'});
+        }
+        push @features, @{$vf_adaptor->fetch_all_by_Slice($slice)};
+      }
     }
   }
-  
+
   @features = $vf_adaptor->fetch_by_dbID($vf) unless scalar @features;
   
   $self->{'feature_count'} = scalar @features;
@@ -165,6 +190,7 @@ sub feature_content {
         type   => 'Variation',
         action => 'Explore',
         v      => $name,
+        vl     => sprintf("%s:%i-%i", $chr, $chr_start, $chr_end),
         vf     => $dbID,
         source => $source
       })

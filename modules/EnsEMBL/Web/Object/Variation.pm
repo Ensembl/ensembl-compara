@@ -55,9 +55,9 @@ sub availability {
       $availability->{'variation'} = 1;
       
       $availability->{"has_$_"} = $counts->{$_} for qw(uniq_transcripts transcripts regfeats features populations population_freqs samples ega citation locations);
-      if($self->param('vf')){
-        ## only show these if a mapping available
-        $availability->{"has_$_"} = $counts->{$_} for qw(alignments ldpops);
+      if($self->param('vf') || $self->param('vl')){
+          ## only show these if a mapping available
+          $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
       }
       $availability->{'is_somatic'}  = $obj->has_somatic_source;
       $availability->{'not_somatic'} = !$obj->has_somatic_source;
@@ -431,7 +431,7 @@ sub source_version {
 
   my $self    = shift;
   my $source  = $self->vari->source_name;
-  my $version = $self->vari->adaptor->get_source_version($source);
+  my $version = $self->vari->source_version;
   return $version;
 }
 
@@ -1010,7 +1010,7 @@ sub sample_table {
   ### limit populations shown to those with population genotypes 
   ### summarised by dbSNP or added in adaptor for 1KG
   my $pop_geno_adaptor   = $self->hub->database('variation')->get_PopulationGenotypeAdaptor();
-  my $pop_genos = $pop_geno_adaptor->fetch_all_by_Variation($self->vari);
+  my $pop_genos = $self->pop_genotype_obj;
 
   my %synonym;
   my %pop_seen;
@@ -1544,15 +1544,23 @@ sub hgvs {
   # skip if no mapping or somatic mutation with mutation ref base different to ensembl ref base
   return {} unless $mapping_count && !$self->is_somatic_with_different_ref_base; 
   
+  my $vl;
+  
   if ($mapping_count == 1) {
     ($vfid) = keys %$mappings;
   } elsif (!$vfid) {
     $vfid = $self->hub->param('vf');
+    $vl   = $self->hub->param('vl');
   }
   
-  return {} unless $vfid;
+  my $vf;
   
-  my $vf = $self->Obj->get_VariationFeature_by_dbID($vfid);
+  if($vfid) {
+    $vf = $self->Obj->get_VariationFeature_by_dbID($vfid);
+  }
+  else {
+    $vf = $self->vari->variation_feature;
+  }
   
   return {} unless $vf;
   

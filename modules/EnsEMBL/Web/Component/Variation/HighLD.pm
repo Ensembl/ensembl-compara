@@ -89,10 +89,13 @@ sub summary_table {
       last;
     }
   }
+  
+  $vf ||= $variation->variation_feature;
 
   # Building population tree
   my %pop_data;
   my $pop_adaptor = $variation->adaptor->db->get_PopulationAdaptor();
+
   foreach my $pop (@pops) {
     my $pop_id = $pop->dbID;
     my $name   = $pop->name;
@@ -277,9 +280,11 @@ sub linked_var_table {
     }
   }
   
-  my $vf_dbID             = $vf->dbID;
+  $vf ||= $variation->variation_feature;
+  
   my $vf_start            = $vf->seq_region_start;
   my $vf_end              = $vf->seq_region_end;
+  my $vf_dbID             = $vf->dbID || $vf_start;
   my $temp_slice          = $vf->feature_Slice->expand($max_distance, $max_distance);
   my $pop_id              = $pop->dbID;
   my $pop_name            = $pop->name;
@@ -298,23 +303,27 @@ sub linked_var_table {
   ], [], { data_table => 1 });
   
   # do some filtering
-  my @old_values = @{$ldca->fetch_by_Slice($temp_slice, $pop)->get_all_ld_values};
+  # my @old_values = @{$ldca->fetch_by_Slice($temp_slice, $pop)->get_all_ld_values};
+  my @old_values = @{$ldca->fetch_by_VariationFeature($vf, $pop)->get_all_ld_values};
+  print STDERR "Got ".scalar @old_values." values before filtering\n";
   
   my (@new_values, @other_vfs);
   
   foreach my $ld (@old_values) {
-    next unless $ld->{'variation1'}->dbID == $vf_dbID || $ld->{'variation2'}->dbID == $vf_dbID;
-    next unless $ld->{'population_id'} == $pop_id;
-    next unless $ld->{'r2'}      >= $min_r2;
-    next unless $ld->{'d_prime'} >= $min_d_prime;
+    # next unless $ld->{'variation1'}->dbID == $vf_dbID || $ld->{'variation2'}->dbID == $vf_dbID;
+    # next unless $ld->{'population_id'} == $pop_id;
+    next unless $ld->{'r2'}        >= $min_r2;
+    next unless $ld->{'d_prime'}   >= $min_d_prime;
     
-    my $other_vf = $ld->{'variation1'}->dbID == $vf_dbID ? $ld->{'variation2'} : $ld->{'variation1'};
+    my $other_vf = ($ld->{'variation1'}->dbID || $ld->{'variation1'}->seq_region_start) == $vf_dbID ? $ld->{'variation2'} : $ld->{'variation1'};
     
     $ld->{'other_vf'} = $other_vf;
     
     push @new_values, $ld;
     push @other_vfs,  $other_vf;
   }
+
+  print STDERR "Got ".scalar @new_values." values after filtering\n";
   
   if (@new_values) {
     # get phenotype data
