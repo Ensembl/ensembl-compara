@@ -247,11 +247,20 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
                     'db_conn'    => '#reuse_db#',
-                    'inputquery' => 'SELECT anchor_align.* FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND anchor_status IS NULL AND method_link_species_set_id = #mapping_mlssid#',
+                    'inputquery' => 'SELECT anchor_align.* FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND method_link_species_set_id = #mapping_mlssid#',
                     'fan_branch_code' => 2,
                 },
                 -flow_into => {
                     2 => [ ':////anchor_align' ],
+                    1 => [ 'reset_anchor_status' ],
+                },
+            },
+
+            {   -logic_name => 'reset_anchor_status',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+                -parameters => {
+                    'db_conn'    => '#reuse_db#',
+                    'inputquery' => 'UPDATE anchor_align SET anchor_status = NULL',
                 },
             },
 
