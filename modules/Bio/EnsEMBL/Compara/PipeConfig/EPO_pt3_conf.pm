@@ -192,7 +192,7 @@ return
                 -input_ids => [{}],
                 -flow_into => {
                     '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
-                    '1->A' => [ 'create_ancestral_db', 'set_internal_ids', 'find_ancestral_seq_gdb' ],
+                    '1->A' => [ 'create_ancestral_db', 'set_internal_ids' ],
                     'A->1' => [ 'copy_mlss' ],
                 },
             },
@@ -244,6 +244,7 @@ return
                 'INSERT INTO meta (meta_key, meta_value) VALUES ("species.production_name", "'.$self->o('ancestral_sequences_name').'")',
                 ],
         },
+        -flow_into => 'find_ancestral_seq_gdb',
 },
 # ------------------------------------- dump mapping info from mapping db to file
 {
