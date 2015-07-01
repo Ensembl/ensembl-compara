@@ -68,7 +68,7 @@ sub default_options {
         # Intentionally left empty
         #'compara_db' => 'Multi',
 
-        'export_dir'    => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/dumps',
+        'export_dir'    => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/dumps'.$self->o('rel_with_suffix'),
 
         # Maximum number of blocks per file
         'split_size' => 200,
