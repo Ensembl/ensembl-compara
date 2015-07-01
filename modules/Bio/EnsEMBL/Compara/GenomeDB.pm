@@ -306,11 +306,7 @@ sub short_name {
 
 sub assembly {
   my $self = shift;
-  my $assembly = shift;
-
-  if($assembly) {
-    $self->{'assembly'} = $assembly;
-  }
+  $self->{'assembly'} = shift if (@_);
   return $self->{'assembly'};
 }
 

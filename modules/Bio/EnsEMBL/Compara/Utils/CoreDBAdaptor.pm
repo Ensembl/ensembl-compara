@@ -67,9 +67,8 @@ sub assembly_name {
     return undef unless $core_dba->group eq 'core';
 
     my ($cs) = @{$core_dba->get_CoordSystemAdaptor->fetch_all()};
-    my $assembly_name = $cs->version;
 
-    return $assembly_name;
+    return $cs ? $cs->version : '';
 }
 
 
