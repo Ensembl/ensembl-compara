@@ -76,31 +76,36 @@ sub default_options {
  return {
   %{$self->SUPER::default_options},
 
-  'pipeline_name' => '4reptiles_EPOpt3pt2',
-  'core_db_version' => 74,
-  'rel_with_suffix' => 74,
+        # Change this name
+        'species_set_name' => '17mammals_reuse',
+
+        # But not this one
+        'pipeline_name' => $self->o('species_set_name').'_epo',
+
+        # Where the pipeline lives
+        'host'  => 'compara2',
+
   'mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
-  'epo_mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
+  #'epo_mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
 #  'gerp_ce_mlss_id' => 648,
 #  'gerp_cs_mlss_id' => 50295,
+  'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw',
+
+
   'bl2seq' => '/software/ensembl/compara/bl2seq', # location of ncbi bl2seq executable on farm3
-  'bl2seq_dump_dir' => $self->o('dump_dir')."BL2SEQ".$self->o('db_suffix').$self->o('rel_with_suffix'), # location for dumping sequences to determine strand (for bl2seq)
-  'bl2seq_file_stem' => $self->o('bl2seq_dump_dir')."/bl2seq",
   'enredo_bin_dir' => '/software/ensembl/compara/', # location of enredo executable
   'enredo_params' => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 10000 '.
 	'--min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
-  'enredo_output_file_name' => 'enredo_'.$self->o('epo_mlss_id').'.out',
-  'enredo_output_file' => $self->o('dump_dir').$self->o('enredo_output_file_name'),
-  'db_suffix' => '_epo_17mammals_',
-  'ancestral_sequences_name' => 'ancestral_sequences',
-  'dump_dir' => $self->o('ENV', 'EPO_DUMP_PATH').'epo_'.$self->o('rel_with_suffix')."/dumps".$self->o('db_suffix').$self->o('rel_with_suffix')."/",
+
+        # Dump directory
+  'dump_dir' => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
+  'enredo_output_file' => $self->o('dump_dir').'enredo_'.$self->o('epo_mlss_id').'.out',
   'bed_dir' => $self->o('dump_dir').'bed_dir',
   'feature_dumps' => $self->o('dump_dir').'feature_dumps',
-  'enredo_mapping_file_name' => 'enredo_friendly.mlssid_'.$self->o('epo_mlss_id')."_".$self->o('rel_with_suffix'), 
-  'enredo_mapping_file' => $self->o('dump_dir').$self->o('enredo_mapping_file_name'),
-  'cvs_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'), 
-  'species_tree_file' => $self->o('cvs_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw',
-  #'species_tree_file' => $self->o('cvs_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
+  'enredo_mapping_file' => $self->o('dump_dir').'enredo_friendly.mlssid_'.$self->o('epo_mlss_id')."_".$self->o('rel_with_suffix'),
+  'bl2seq_dump_dir' => $self->o('dump_dir').'bl2seq', # location for dumping sequences to determine strand (for bl2seq)
+  'bl2seq_file_stem' => $self->o('bl2seq_dump_dir')."/bl2seq",
+
   # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
   'addMT' => 1,
   'jar_file' => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
@@ -114,73 +119,21 @@ sub default_options {
   'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
   'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
 
+  'ancestral_sequences_name' => 'ancestral_sequences',
   # connection parameters to various databases:
-	'pipeline_db' => { # the production database itself (will be created)
-		-driver => 'mysql',
-		-host   => 'compara4',
-		-port   => 3306,
-                -user   => 'ensadmin',
-		-pass   => $self->o('password'),
-		-dbname => $self->o('ENV', 'USER').$self->o('db_suffix').$self->o('rel_with_suffix'),
-   	},
 	'ancestral_db' => { # core ancestral db
 		-driver => 'mysql',
 		-host   => 'compara4',
 		-port   => 3306,
-		-species => "ancestral_sequences",
+		-species => $self->o('ancestral_sequences_name'),
 		-user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $self->o('ENV', 'USER').$self->o('db_suffix').'ancestral_core_'.$self->o('rel_with_suffix'),
+		-dbname => $self->o('ENV', 'USER').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
 	},
 	# master db
-	'compara_master' => {
-		-driver => 'mysql',
-		-user => 'ensro',
-		-port => 3306,
-		-pass => '',
-		-host => 'compara1',
-		-dbname => 'sf5_ensembl_compara_master',
-	#	-dbname => 'sf5_test_74_mammal_master',
-#		-dbname => 'kb3_ensembl_compara_71',
-	},
-	# location of most of the core dbs
-	'main_core_dbs' => [
-		{
-			-driver => 'mysql',
-			-user => 'ensro',
-			-port => 3306,
-			-host => 'ens-staging1',
-			-dbname => '',
-			-db_version => $self->o('ensembl_version'),
-		},
-		{
-			-driver => 'mysql',
-			-user => 'ensro',
-			-port => 3306,
-			-host => 'ens-staging2',
-			-dbname => '',
-			-db_version => $self->o('ensembl_version'),
-		},
-               
-	
-	],
-	# any additional core dbs
-	'additional_core_db_urls' => { 
-#		'ovis_aries' => 'mysql://ensro@compara1:3306/ovis_aries_core_73_1',
-		'rattus_norvegicus' => 'mysql://ensro@compara1:3306/mm14_db8_rat6_ref',
-	},
+        'compara_master' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
 	# anchor mappings
-	'compara_mapped_anchor_db' => {
-		-driver => 'mysql',
-		-user => 'ensro',
-		-port => 3306,
-		-pass => '',
-		-host => 'compara3',
-	#	-dbname => 'sf5_bird_lizard_epo_anchor_mappings74',
-#		-dbname => 'sf5_bird_lizard_epo_anchor_mappings74',
-		-dbname => 'sf5_17mammals_epo_anchor_mappings77',
-#		-dbname => 'sf5_13_mammal_anchor_mappings69',
-	},
+        'compara_mapped_anchor_db' => 'mysql://ensro@compara3:3306/sf5_17mammals_epo_anchor_mappings77',
 
      }; 
 }
@@ -199,11 +152,10 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_; 
     return {
-	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-	'default' => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' }, # reset the default   farm3 lsf syntax
-	'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' }, # farm3 lsf syntax
-	'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' }, # farm3 lsf syntax
-	'hugemem' => {'LSF' => '-q hugemem -C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' }, # farm3 lsf syntax
+        'default' => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' },
+        'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
+        'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
+        'hugemem' => {'LSF' => '-q hugemem -C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
     };  
 }
 
@@ -211,12 +163,11 @@ sub pipeline_wide_parameters {
 	my $self = shift @_;
 	return {
 		%{$self->SUPER::pipeline_wide_parameters},
+                'ancestral_db' => $self->o('ancestral_db'),
 		'enredo_mapping_file' => $self->o('enredo_mapping_file'),
 		'compara_master' => $self->o('compara_master'),
-		'main_core_dbs' => $self->o('main_core_dbs'),
 		'compara_mapped_anchor_db' => $self->o('compara_mapped_anchor_db'),
  		'mapping_mlssid' => $self->o('mapping_mlssid'),
-		'additional_core_db_urls' => $self->o('additional_core_db_urls'),
 		'epo_mlss_id' => $self->o('epo_mlss_id'),
 #		'gerp_ce_mlss_id' => $self->o('gerp_ce_mlss_id'),
 #		'gerp_cs_mlss_id' => $self->o('gerp_cs_mlss_id'),
@@ -230,13 +181,47 @@ sub pipeline_analyses {
 
 return 
 [
+
+            {   -logic_name => 'copy_table_factory',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -parameters => {
+                    'db_conn'      => '#compara_mapped_anchor_db#',
+                    'inputlist'    => [ 'method_link', 'genome_db', 'species_set', 'method_link_species_set', 'anchor_align', 'dnafrag', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
+                    'column_names' => [ 'table' ],
+                },
+                -input_ids => [{}],
+                -flow_into => {
+                    '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
+                    '1->A' => [ 'create_ancestral_db', 'set_internal_ids', 'find_ancestral_seq_gdb' ],
+                    'A->1' => [ 'copy_mlss' ],
+                },
+            },
+
+            {   -logic_name    => 'copy_table',
+                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+                -parameters    => {
+                    'mode'          => 'topup',
+                    'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+                },
+            },
+
+            {   -logic_name    => 'copy_mlss',
+                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+                -parameters    => {
+                    'src_db_conn'   => '#compara_master#',
+                    'mode'          => 'topup',
+                    'table'         => 'method_link_species_set',
+                    'where'         => 'method_link_species_set_id = #epo_mlss_id#',
+                },
+                -flow_into     => [ 'make_species_tree' ],
+            },
+
 # ------------------------------------- create the ancestral db	
 {
  -logic_name => 'create_ancestral_db',
- -input_ids  => [{}],
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
  -parameters => {
-  'db_conn' => $self->o('ancestral_db'),
+  'db_conn' => '#ancestral_db#',
   'input_query' => 'CREATE DATABASE',
   },
   -flow_into => { 1 => 'create_tables_in_ancestral_db' },
@@ -245,89 +230,41 @@ return
  -logic_name => 'create_tables_in_ancestral_db',
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
  -parameters => {
-  'db_conn' => $self->o('ancestral_db'),
-  'input_file' => $self->o('cvs_dir')."/ensembl/sql/table.sql",
+  'db_conn' => '#ancestral_db#',
+  'input_file' => $self->o('ensembl_cvs_root_dir')."/ensembl/sql/table.sql",
   },
-  -flow_into => { 1 => 'dump_mappings_to_file' },
+  -flow_into => { 1 => 'store_ancestral_species_name' },
+},
+{
+        -logic_name => 'store_ancestral_species_name',
+        -module => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+        -parameters => {
+            'db_conn' => '#ancestral_db#',
+            'sql'   => [
+                'INSERT INTO meta (meta_key, meta_value) VALUES ("species.production_name", "'.$self->o('ancestral_sequences_name').'")',
+                ],
+        },
 },
 # ------------------------------------- dump mapping info from mapping db to file
 {
  -logic_name => 'dump_mappings_to_file',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+ -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
  -parameters => {
-  'db_cmd' => $self->db_cmd("","mysql://ensadmin:".$self->o('password')."\@compara3:3306/sf5_17mammals_epo_anchor_mappings77"),
-  'enredo_mapping_file' => $self->o('enredo_mapping_file'),
-  'cmd' => "#db_cmd# --append -N --append -B -sql \'SELECT aa.anchor_id, gdb.name, df.name, aa.dnafrag_start, aa.dnafrag_end, CASE ".
-  "aa.dnafrag_strand WHEN 1 THEN \"+\" ELSE \"-\" END, aa.num_of_organisms, aa.score FROM anchor_align aa INNER JOIN ".
-  "dnafrag df ON aa.dnafrag_id = df.dnafrag_id INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id WHERE ".
-  "aa.method_link_species_set_id = \'" . $self->o('mapping_mlssid') . 
-  "\' ORDER BY gdb.name, df.name, aa.dnafrag_start\' >"."#enredo_mapping_file#",
+     'db_conn'      => '#compara_mapped_anchor_db#',
+     'output_file'  => '#enredo_mapping_file#',
+     'input_query'  => q{SELECT aa.anchor_id, gdb.name, df.name, aa.dnafrag_start, aa.dnafrag_end, CASE
+  aa.dnafrag_strand WHEN 1 THEN "+" ELSE "-" END, aa.num_of_organisms, aa.score FROM anchor_align aa INNER JOIN
+  dnafrag df ON aa.dnafrag_id = df.dnafrag_id INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id WHERE
+  aa.method_link_species_set_id = #mapping_mlssid#
+  ORDER BY gdb.name, df.name, aa.dnafrag_start},
   },
-   -flow_into => {
-	'1->A' => [ 'copy_table_factory', 'run_enredo' ],
-#       'A->1' => [ 'dump_before_ldr' ],
-        'A->1' => [ 'load_dnafrag_region' ],
-	},
+   -flow_into => [ 'run_enredo' ],
 },
 # ------ set up the necessary databas tables for loading the enredo output and runnig ortheus and gerp
 {  
- -logic_name => 'copy_table_factory',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- -parameters => {
-  'db_conn' => $self->o('compara_master'),
-  'inputlist'    => [ 'genome_db', 'dnafrag', 'method_link', 'method_link_species_set', 'species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
-  'column_names' => [ 'table' ],
- },
- -flow_into => {
-  '2->A' => [ 'copy_tables' ],
-  'A->1' => [ 'delete_from_copied_tables' ],
- },
- -meadow_type    => 'LOCAL',
-},
-{ 
-  -logic_name    => 'copy_tables',
-  -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-  -parameters    => {
-	'src_db_conn'   => $self->o('compara_master'),
-	'dest_db_conn'  => $self->o('pipeline_db'),
-	'mode'          => 'overwrite',
-	'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-  },
-},
-{
-  -logic_name => 'delete_from_copied_tables',
-  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-  -parameters => {
-   'sql' => [
-#    'DELETE FROM method_link_species_set WHERE method_link_species_set_id NOT IN ('.$self->o('epo_mlss_id').','.$self->o('gerp_ce_mlss_id').','.$self->o('gerp_cs_mlss_id').')',
-    'DELETE FROM method_link_species_set WHERE method_link_species_set_id NOT IN ('.$self->o('epo_mlss_id').')',
-    'DELETE ss.* FROM species_set ss LEFT OUTER JOIN method_link_species_set mlss ON ss.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
-    'DELETE df.*, gdb.* FROM dnafrag df INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id LEFT OUTER JOIN species_set ss ON gdb.genome_db_id = ss.genome_db_id WHERE ss.genome_db_id IS NULL AND gdb.name <> "'.$self->o('ancestral_sequences_name').'"',
-   'DELETE FROM genome_db WHERE ! assembly_default',
-   'DELETE df.* FROM dnafrag df INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id WHERE gdb.name = "'.$self->o('ancestral_sequences_name').'"',
-   ],
-  },
- -flow_into => { 1 => [ 'set_genome_db_locator_factory', 'set_internal_ids' ], },
-},
-{
-	-logic_name => 'set_genome_db_locator_factory',
-	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-	-parameters => {
-		'inputquery' => 'SELECT name AS species_loc_name FROM genome_db WHERE assembly_default',
-	},
-	-flow_into => { 2 => 'update_genome_db_locator', 1 => 'make_species_tree', }, 
-},
-{
-	-logic_name => 'update_genome_db_locator',
-	-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::UpdateGenomeDBLocator',
-	-meadow_type    => 'LOCAL',
-		
-}, 
-{
 	-logic_name => 'set_internal_ids',
 	-module => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
 	-parameters => {
-	'epo_mlssid' => $self->o('epo_mlss_id'),
 		'sql'   => [
 		  'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
 		  'ALTER TABLE genomic_align AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
@@ -344,29 +281,38 @@ return
 			'newick_format' => 'simple',
 			'blength_tree_file' => $self->o('species_tree_file'),		
 	},
-#	-flow_into => {
-#		4 => { 'mysql:////' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
-#	},
+        -flow_into     => [ 'dump_mappings_to_file' ],
+},
+
+        {
+            -logic_name => 'find_ancestral_seq_gdb',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -parameters => {
+                'compara_db'    => '#compara_master#',
+                'call_list'     => [ 'compara_dba', 'get_GenomeDBAdaptor', ['fetch_by_name_assembly', $self->o('ancestral_sequences_name')] ],
+                'column_names2getters'  => { 'master_dbID' => 'dbID' },
+            },
+            -flow_into => {
+                2 => 'store_ancestral_seq_gdb',
+            },
+        },
+{
+    -logic_name    => 'store_ancestral_seq_gdb',
+    -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
+    -parameters    => {
+        'locator'   => '#ancestral_db#',
+    },
 },
 # ------------------------------------- run enredo
 {
 	-logic_name => 'run_enredo',
 	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	-parameters => {
-		'cmd' => $self->o('enredo_bin_dir').'enredo '.$self->o('enredo_params')." ".$self->o('enredo_output_file')." ".$self->o('enredo_mapping_file'),
+		'cmd' => $self->o('enredo_bin_dir').'enredo '.$self->o('enredo_params').' #enredo_output_file# #enredo_mapping_file#',
 	},
 	-rc_name => 'mem7500',
+        -flow_into => [ 'load_dnafrag_region' ],
 },
-
-#{   -logic_name => 'dump_before_ldr',
-#    -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-#    -parameters => {
-#        'output_file'   => '/lustre/scratch109/ensembl/sf5/EPO_DUMPS/epo_rel80/sf5_epo_multi_way_leo_taxa_test_80.mysql',
-#    },
-#    -flow_into  => {
-#	1 => [ 'load_dnafrag_region' ],
-#    },
-#},
 
 # ------------------------------------- load the synteny blocks from the enredo output into the dnafrag_region and synteny_region tables
 {
@@ -559,7 +505,7 @@ return
                               'dump_features' => $self->o('dump_features_exe'),
                               'compare_beds' => $self->o('compare_beds_exe'),
                               'bed_dir' => $self->o('bed_dir'),
-                              'ensembl_release' => $self->o('rel_with_suffix'),
+                              'ensembl_release' => $self->o('ensembl_release'),
                               'output_dir' => $self->o('feature_dumps'),
                               'mlss_id'   => $self->o('epo_mlss_id'),
                              },
