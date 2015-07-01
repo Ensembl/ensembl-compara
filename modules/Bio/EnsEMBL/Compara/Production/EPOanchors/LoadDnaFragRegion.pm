@@ -138,6 +138,8 @@ sub write_output {
 	unless ( "$genome_dbs_names_from_file" eq "$genome_db_names_from_db" );
 	my (%DNAFRAGS, @synteny_region_ids);
 	# populate dnafrag_region table
+        $self->dbc->do('TRUNCATE dnafrag_region');
+        $self->dbc->do('TRUNCATE synteny_region');
 	my $sth1 = $self->dbc->prepare("INSERT INTO dnafrag_region VALUES (?,?,?,?,?)");
 	my $sth2 = $self->dbc->prepare("INSERT INTO synteny_region VALUES (?,?)");
 	foreach my $synteny_region_id(sort {$a <=> $b} keys %{ $self->param('synteny_regions') }){
