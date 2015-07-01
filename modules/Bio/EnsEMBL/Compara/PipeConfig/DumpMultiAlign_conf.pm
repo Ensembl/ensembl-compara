@@ -142,7 +142,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'create_tracking_tables',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters     => {
-                'sq'    => [
+                'sql'    => [
                     #Store DumpMultiAlign other_gab genomic_align_block_ids
                     'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL)',
                     #Store DumpMultiAlign healthcheck results
