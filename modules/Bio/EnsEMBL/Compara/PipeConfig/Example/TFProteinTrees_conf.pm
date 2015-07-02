@@ -126,7 +126,7 @@ sub default_options {
         'noisy_exe'                 => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
         'raxml_exe'                 => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
         'raxml_pthreads_exe'        => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-PTHREADS-SSE3',
-        'examl_exe_avx'             => '/nfs/production/xfam/treefam/software/ExaML/examl',
+        'examl_exe_avx'             => '/nfs/production/xfam/treefam/software/ExaML/examl-AVX',
         'examl_exe_sse3'            => '/nfs/production/xfam/treefam/software/ExaML/examl',
         'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
         'getPatterns_exe'           => '/nfs/production/xfam/treefam/software/RAxML/number_of_patterns/getPatterns',
