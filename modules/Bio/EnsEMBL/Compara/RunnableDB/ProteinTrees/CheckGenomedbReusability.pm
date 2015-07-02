@@ -58,6 +58,12 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 my $suffix_separator = '__cut_here__';
 
+sub param_defaults {
+    return {
+        check_gene_content  => 1,
+    }
+}
+
 sub fetch_input {
     my $self = shift @_;
 
@@ -132,6 +138,12 @@ sub fetch_input {
         $self->param('genome_db', $genome_db);
         $self->param('reuse_genome_db', $reuse_genome_db);
 
+        if (not $self->param('check_gene_content')) {
+            $self->warning("As requested, will not check that the gene-content is the same for ".$genome_db->name);
+            $self->param('reuse_this', 1);
+            return;
+        }
+
         my $prev_core_dba;
 
         if (comes_from_core_database($genome_db)) {
@@ -144,7 +156,7 @@ sub fetch_input {
 
             # load the prev.release registry:
             foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {
-                Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species_suffix => $suffix_separator.$prev_release );
+                Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species_suffix => $suffix_separator.$prev_release, -verbose => $self->debug );
             }
             $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core'));
 

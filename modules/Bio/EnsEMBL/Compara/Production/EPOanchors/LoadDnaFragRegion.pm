@@ -56,10 +56,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::EPOanchors::LoadDnaFragRegion;
 
 use strict;
-use Data::Dumper;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -128,20 +125,21 @@ sub fetch_input {
 sub write_output {
 	my ($self) = @_;
 	# sort the species names from the enredo output files
-	my $ancestal_db = $self->param('ancestral_db');
-	my $genome_dbs_names_from_file = join(":", sort {$a cmp $b} @{ $self->param('genome_dbs') }, $ancestal_db->{'-species'}) . ":";
+	my $genome_dbs_names_from_file = join(":", sort {$a cmp $b} @{ $self->param('genome_dbs') }) . ":";
 
 	# get the genome_db names from the genome_db table in the production db
 	my $genome_db_adaptor = $self->compara_dba()->get_adaptor("GenomeDB");
 	my $genome_db_names_from_db;
 	foreach my $genome_db(sort {$a->name cmp $b->name} @{ $genome_db_adaptor->fetch_all }){
-		$genome_db_names_from_db .= $genome_db->name.":";
+		$genome_db_names_from_db .= $genome_db->name.":" if $genome_db->taxon_id;
 	}
 	# check the species names from the file against those from the db
 	die "species from enredo file ($genome_dbs_names_from_file) are not the same as the set of species in the database ($genome_db_names_from_db)", $! 
 	unless ( "$genome_dbs_names_from_file" eq "$genome_db_names_from_db" );
 	my (%DNAFRAGS, @synteny_region_ids);
 	# populate dnafrag_region table
+        $self->dbc->do('TRUNCATE dnafrag_region');
+        $self->dbc->do('TRUNCATE synteny_region');
 	my $sth1 = $self->dbc->prepare("INSERT INTO dnafrag_region VALUES (?,?,?,?,?)");
 	my $sth2 = $self->dbc->prepare("INSERT INTO synteny_region VALUES (?,?)");
 	foreach my $synteny_region_id(sort {$a <=> $b} keys %{ $self->param('synteny_regions') }){

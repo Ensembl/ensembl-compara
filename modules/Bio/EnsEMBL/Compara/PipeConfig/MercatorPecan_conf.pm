@@ -72,9 +72,9 @@ sub default_options {
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	'dbname'                => $ENV{USER}.'_pecan_23way_'.$self->o('rel_with_suffix'),
-        'work_dir'              => '/lustre/scratch109/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
-#	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
-	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+        'work_dir'              => '/lustre/scratch110/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
+	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+#	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 
         'species_set' => undef, 
 
@@ -89,7 +89,8 @@ sub default_options {
         'reuse_capacity'        => 100,
 
     #location of full species tree, will be pruned
-        'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh', 
+	    #'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh', 
+        'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.23amniots.branch_len.nw', 
 
     #master database
         'master_db_name' => 'sf5_ensembl_compara_master', 
@@ -200,7 +201,6 @@ sub default_options {
             -port   => 5304,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => '78'
         },
 
         'curr_loc' => {                   # general location of the current release core databases (for checking their reusability)
@@ -225,7 +225,7 @@ sub default_options {
      #Resource requirements
      #
      'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
-     'aligner_capacity' => 2000,
+     'aligner_capacity' => 4000,
 
     };
 }
@@ -258,13 +258,14 @@ sub resource_classes {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
          '100Mb' =>  { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
          '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-         '1.8Gb' =>  { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
+         '1.8Gb' =>  { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=11]"' },
          '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
          '7.5Gb' =>  { 'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
          '11.4Gb' => { 'LSF' => '-C0 -M11400 -R"select[mem>11400] rusage[mem=11400]"' },
          '14Gb' =>   { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
-         'gerp' =>   { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
-         'higerp' =>   { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
+         '14Gb_long_job' =>   { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]" -q long' }, 
+         'gerp' =>   { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=11]"' },
+         'higerp' =>   { 'LSF' => '-C0 -M3800 -R"select[mem>3800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3800,'.$self->o('dbresource').'=10:duration=11]"' },
     };
 }
 
@@ -383,6 +384,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
                 'master_db' => $self->o('master_db'),
+				'tree_method_link' => 'PECAN',
             },
             -flow_into => [ 'make_species_tree' ],
             -meadow_type    => 'LOCAL',
@@ -524,7 +526,6 @@ sub pipeline_analyses {
                  'fasta_dir'                 => $self->o('blastdb_dir'),
                  'only_canonical'            => 0,
             },
-             -batch_size    =>  20,  # they can be really, really short
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },

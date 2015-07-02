@@ -256,6 +256,8 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
+                allow_missing_coordinates   => 0,
+                allow_missing_cds_seqs => 0,
                 allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
             -flow_into  => [ 'per_genome_qc' ],
@@ -265,7 +267,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_members_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
-                '1->A' => 'load_members',
+                '2->A' => 'load_members',
                 'A->1' => [ 'hc_members_globally' ],
             },
         },
@@ -451,7 +453,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name     => 'write_member_counts',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
                 'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
             },
