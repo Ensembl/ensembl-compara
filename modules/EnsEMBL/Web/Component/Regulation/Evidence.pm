@@ -57,7 +57,6 @@ sub content {
     # Process core features first
     foreach my $features ($core_features, $non_core_features) {
       foreach my $f_set (sort { $features->{$a}[0]->start <=> $features->{$b}[0]->start } keys %$features) { 
-        my $feature_name = [split /:/, $f_set]->[1];
         
         foreach my $f (sort { $a->start <=> $b->start } @{$features->{$f_set}}) {
           my $f_start = $object_slice->start + $f->start - 1;
@@ -68,7 +67,9 @@ sub content {
             action => 'Sources',
             ex => 'name-'.$f->feature_set->name
           });
-          
+       
+          my $feature_name  = $f->feature_type->name;   
+
           push @rows, { 
             type     => $f->feature_type->evidence_type_label,
             location => $f->slice->seq_region_name . ":$f_start-$f_end",
