@@ -89,6 +89,7 @@ sub summary_table {
  
   foreach my $pop (@pops) {
     my $description = $pop->description;
+       $description ||= '-';
     
     if (length $description > 30) {
       my $full_desc = $self->strip_HTML($description);
@@ -106,18 +107,19 @@ sub summary_table {
     my $pop_dbSNP = $pop->get_all_synonyms('dbSNP');
 
     my $pop_label = $pop_name;
-    if ($pop_label =~ /^.+\:.+$/) {
-      $pop_label =~ s/\:/\:<b>/;
-      $pop_label .= '</b>';
+    if ($pop_label =~ /^.+\:.+$/ and $pop_label !~ /(http|https):/) {
+      my @composed_name = split(':', $pop_label);
+      $composed_name[$#composed_name] = '<b>'.$composed_name[$#composed_name].'</b>';
+      $pop_label = join(':',@composed_name);
     }
 
     # Population external links
     my $pop_url;
     if ($pop_name =~ /^1000GENOMES/) { 
-      $pop_url = $pop_label.$self->hub->get_ExtURL_link($img_info, '1KG_POP', $pop_name);
+      $pop_url = $self->hub->get_ExtURL_link($pop_label, '1KG_POP', $pop_name);
     }
     else {
-      $pop_url = $pop_dbSNP ? $pop_label.$self->hub->get_ExtURL_link($img_info, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_label;
+      $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_label, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_label;
     }
     
     my $row = {
