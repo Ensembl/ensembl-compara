@@ -209,7 +209,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'default_with_reg_conf',
+            -rc_name => 'crowd_with_reg_conf',
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
