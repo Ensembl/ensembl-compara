@@ -297,8 +297,7 @@ sub fetch_all_dnafrag_ids {
 sub fetch_all_anchors_by_genome_db_id_and_mlssid {
 	my($self, $genome_db_id, $test_mlssid) = @_;
 	unless (defined $genome_db_id && defined $test_mlssid) {
-		throw("fetch_all_anchors_by_dnafrag_id_and_test_mlssid  must 
-			have a genome_db_id and a test_mlssid");
+		throw("fetch_all_anchors_by_genome_db_id_and_mlssid must have a genome_db_id and a test_mlssid");
 	}
 	my $dnafrag_query = qq{
 		SELECT aa.dnafrag_id, aa.anchor_align_id, aa.anchor_id, aa.dnafrag_start, aa.dnafrag_end 
@@ -311,31 +310,6 @@ sub fetch_all_anchors_by_genome_db_id_and_mlssid {
 	return $sth->fetchall_arrayref();
 }
 
-=head2 fetch_all_anchors_by_dnafrag_id_and_test_mlssid 
-
-  Arg[1]     : dnafrag_id, string
-  Example    : 
-  Description: 
-  Returntype : arrayref 
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub fetch_all_anchors_by_dnafrag_id_and_test_mlssid {
-	my($self, $dnafrag_id, $test_mlssid) = @_;
-	unless (defined $dnafrag_id && defined $test_mlssid) {
-		throw("fetch_all_anchors_by_dnafrag_id_and_test_mlssid  must 
-			have a dnafrag_id and a test_mlssid");
-	}
-	my $dnafrag_query = qq{
-		SELECT aa.anchor_align_id, aa.anchor_id, aa.dnafrag_start, aa.dnafrag_end FROM anchor_align aa
-		WHERE aa.dnafrag_id = ? AND aa.method_link_species_set_id = ? AND anchor_status 
-		IS NULL ORDER BY dnafrag_start, dnafrag_end};
-	my $sth = $self->prepare($dnafrag_query);
-	$sth->execute($dnafrag_id, $test_mlssid) or die $self->errstr;
-	return $sth->fetchall_arrayref();
-}
 
 =head2 fetch_all_filtered_anchors
 
