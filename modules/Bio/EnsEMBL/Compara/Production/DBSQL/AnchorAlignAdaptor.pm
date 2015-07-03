@@ -115,21 +115,6 @@ sub store_exonerate_hits {
         return bulk_insert($self->dbc, 'anchor_align', $batch_records, [qw(method_link_species_set_id anchor_id dnafrag_id dnafrag_start dnafrag_end dnafrag_strand score num_of_organisms num_of_sequences)]);
 }
 
-#=head2 store_new_method_link_species_set_id
-#
-#  Arg[1]     : 
-#  Example    : 
-#  Description: 
-#  Returntype : none
-#  Exceptions : none
-#  Caller     : general
-#
-#=cut
-
-#sub store_new_method_link_species_set_id {
-#	my($self) = @_;
-#	my $insert_sth = "insert into method_link
-
 
 ###############################################################################
 #
@@ -157,39 +142,6 @@ sub fetch_dnafrag_id {
 
 ##########################
 
-
-sub get_target_file {
-	my $self = shift;
-	my($analysis_data_id, $target_genome_db_id) = @_;
-	my $query = qq{
-		SELECT data FROM analysis_data WHERE analysis_data = ?};
-	my $sth = $self->prepare($query);
-	$sth->execute($analysis_data_id) or die $self->errstr;
-	return $sth->fetchrow_arrayref()->[0]->{target_genomes}->{$target_genome_db_id};
-}
-
-
-
-sub fetch_anchors_by_genomedb_id {
-	my ($self, $genome_db_id) = @_;
-	my $return_hashref;
-	unless (defined $genome_db_id) {
-		throw("fetch_anchors_by_genomedb_id must have an anchor_id and a method_link_species_set_id");
-	}
-
-	my $query = qq{
-		SELECT aa.dnafrag_id, aa.anchor_align_id, aa.anchor_id, 
-		aa.dnafrag_start, aa.dnafrag_end 
-		FROM anchor_align aa INNER JOIN dnafrag df ON 
-		aa.dnafrag_id = df.dnafrag_id WHERE 
-		df.genome_db_id = ? order by aa.dnafrag_id, aa.dnafrag_start};
-	my $sth = $self->prepare($query);
-	$sth->execute($genome_db_id) or die $self->errstr;
-	while (my$row = $sth->fetchrow_arrayref) {
-		push(@{$return_hashref->{$row->[0]}}, [ $row->[1], $row->[2], $row->[3], $row->[4] ]);
-	}
-	return $return_hashref;
-}
 
 =head2 fetch_all_by_anchor_id_and_mlss_id
 
@@ -308,38 +260,6 @@ sub fetch_all_anchors_by_genome_db_id_and_mlssid {
 	my $sth = $self->prepare($dnafrag_query);
 	$sth->execute($genome_db_id, $mlssid) or die $self->errstr;
 	return $sth->fetchall_arrayref();
-}
-
-
-=head2 fetch_all_filtered_anchors
-
-  Args       : none
-  Example    : 
-  Description: 
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub fetch_all_filtered_anchors {
-	my($self) = @_;
-	my %Return_hash;
-	my $fetch_query = qq{
-		SELECT anchor_id, dnafrag_id, dnafrag_start, dnafrag_end, num_of_sequences, num_of_organisms 
-		FROM anchor_align WHERE anchor_status IS NULL ORDER BY dnafrag_id, dnafrag_start, dnafrag_end};
-
-	my $sth = $self->prepare($fetch_query);
-	$sth->execute() or die $self->errstr;
-	my$array_ref = $sth->fetchall_arrayref();
-	for(my$i=0;$i<@{$array_ref};$i++) {
-		push(@{$Return_hash{$array_ref->[$i]->[1]}}, 
-		[ $array_ref->[$i]->[0], $array_ref->[$i]->[2], $array_ref->[$i]->[3], $array_ref->[$i]->[4], $array_ref->[$i]->[5] ]);
-		# [ anchor_id, dnafrag_start, dnafrag_end, num_of_seqs_that_hit_the_genomic_position, num_of_organisms_from_which_seqs_derived ]
-		splice(@{$array_ref}, $i, 1); #reduce momory used
-		$i--;
-	}
-	return \%Return_hash;
 }
 
 
