@@ -68,6 +68,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify;
 
 use strict;
+use warnings;
 
 use Data::Dumper;
 use IO::File;

@@ -57,6 +57,7 @@ This module (at least for now) relies heavily on Jim Kent\'s Axt tools.
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 use Bio::EnsEMBL::Analysis;

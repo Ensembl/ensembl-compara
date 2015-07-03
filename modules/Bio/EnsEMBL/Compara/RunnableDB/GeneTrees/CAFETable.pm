@@ -49,6 +49,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneGainLossCommon');

@@ -66,6 +66,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels;
 
 use strict;
+use warnings;
 use Time::HiRes qw(time);
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 

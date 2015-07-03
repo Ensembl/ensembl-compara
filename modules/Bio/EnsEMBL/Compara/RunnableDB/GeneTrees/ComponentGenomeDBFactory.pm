@@ -33,6 +33,7 @@ Simple Runnable that flows all the components of a polyploid genome
 package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

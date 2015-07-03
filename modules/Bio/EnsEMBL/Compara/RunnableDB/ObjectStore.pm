@@ -69,6 +69,7 @@ This is a Compara-specific generic runnable that creates a storable object and s
 package Bio::EnsEMBL::Compara::RunnableDB::ObjectStore;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

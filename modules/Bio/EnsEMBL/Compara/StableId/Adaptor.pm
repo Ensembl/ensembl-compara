@@ -32,6 +32,7 @@ which has a general functionality of an adaptor, but strictly speaking isn't.
 package Bio::EnsEMBL::Compara::StableId::Adaptor;
 
 use strict;
+use warnings;
 use DBI;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Compara::StableId::NamedClusterSet;

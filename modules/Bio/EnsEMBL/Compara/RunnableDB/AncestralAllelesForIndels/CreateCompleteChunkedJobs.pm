@@ -42,6 +42,7 @@ This RunnableDB module splits the seq_region into regions of chunk_size and crea
 package Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::CreateCompleteChunkedJobs;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 use File::Path qw(make_path);

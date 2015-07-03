@@ -48,6 +48,7 @@ supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtIndex;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

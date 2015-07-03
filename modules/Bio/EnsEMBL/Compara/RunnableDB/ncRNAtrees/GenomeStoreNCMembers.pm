@@ -62,6 +62,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Slice;
 use Bio::EnsEMBL::Gene;
 use Bio::EnsEMBL::Compara::SeqMember;

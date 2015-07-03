@@ -44,6 +44,7 @@ on the species supercontigs.
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use POSIX qw(ceil);

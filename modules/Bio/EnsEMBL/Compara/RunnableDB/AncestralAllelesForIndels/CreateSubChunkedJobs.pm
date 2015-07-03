@@ -42,6 +42,7 @@ This RunnableDB module creates even smaller chunked jobs for running with analys
 package Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::CreateSubChunkedJobs;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 

@@ -50,6 +50,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft_update;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use base ( 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA' );
 

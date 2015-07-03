@@ -56,6 +56,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors;
 
 use strict;
+use warnings;
 use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

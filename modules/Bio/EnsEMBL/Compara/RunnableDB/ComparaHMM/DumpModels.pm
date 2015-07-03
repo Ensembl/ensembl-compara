@@ -54,6 +54,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels;
 
 use strict;
+use warnings;
 use IO::File; ## ??
 use File::Path qw/remove_tree make_path/;
 use Time::HiRes qw(time gettimeofday tv_interval);

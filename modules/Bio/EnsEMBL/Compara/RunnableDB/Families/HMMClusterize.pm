@@ -56,6 +56,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize;
 
 use strict;
+use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters;
 use Data::Dumper;

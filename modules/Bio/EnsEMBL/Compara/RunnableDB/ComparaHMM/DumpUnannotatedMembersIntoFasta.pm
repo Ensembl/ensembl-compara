@@ -48,6 +48,7 @@ Supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpUnannotatedMembersIntoFasta;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::MemberSet;
 

@@ -109,6 +109,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerConfig;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

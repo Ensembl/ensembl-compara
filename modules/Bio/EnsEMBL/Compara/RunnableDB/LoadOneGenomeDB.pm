@@ -86,6 +86,7 @@ supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::GenomeDB;

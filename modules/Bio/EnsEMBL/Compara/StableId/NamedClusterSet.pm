@@ -32,6 +32,7 @@ that maintains membername-2-clusterid and clusterid-2-clustername relationships
 package Bio::EnsEMBL::Compara::StableId::NamedClusterSet;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Compara::StableId::Map;
 

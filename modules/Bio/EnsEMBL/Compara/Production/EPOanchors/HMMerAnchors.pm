@@ -56,6 +56,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::EPOanchors::HMMerAnchors;
 
 use strict;
+use warnings;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 

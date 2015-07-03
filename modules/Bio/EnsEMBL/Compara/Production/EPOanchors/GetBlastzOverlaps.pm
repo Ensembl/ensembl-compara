@@ -53,6 +53,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::EPOanchors::GetBlastzOverlaps;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Analysis;

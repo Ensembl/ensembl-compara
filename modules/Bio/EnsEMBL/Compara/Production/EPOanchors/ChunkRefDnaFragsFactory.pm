@@ -19,6 +19,7 @@ limitations under the License.
 package Bio::EnsEMBL::Compara::Production::EPOanchors::ChunkRefDnaFragsFactory;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Hive::Utils 'stringify';
 use Data::Dumper;
 

@@ -18,6 +18,7 @@
 
 ####Nb just dumps chr fragments, including whole chromosomes, but doesn't load into compara database -- has advantage of not needing compara details
 use strict;
+use warnings;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::SeqIO;
 use Bio::PrimarySeq;

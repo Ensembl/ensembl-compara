@@ -70,6 +70,7 @@ TODO
 =cut
 
 use strict;
+use warnings;
 use Getopt::Long;
 use Bio::Perl;
 use Bio::EnsEMBL::Registry;

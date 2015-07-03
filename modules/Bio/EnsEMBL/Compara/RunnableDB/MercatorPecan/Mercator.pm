@@ -58,6 +58,7 @@ Supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Mercator;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Analysis::Runnable::Mercator;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Analysis;

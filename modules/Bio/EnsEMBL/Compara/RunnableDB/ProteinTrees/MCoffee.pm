@@ -49,6 +49,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee;
 
 use strict;
+use warnings;
 
 use IO::File;
 

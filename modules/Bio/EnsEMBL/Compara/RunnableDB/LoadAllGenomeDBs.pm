@@ -32,6 +32,7 @@ Loads all the core databases and stores the species as GenomeDB objects.
 package Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBs;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB');
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 

@@ -40,6 +40,7 @@ It also serves as a good simple example of a Compara job factory:
 package Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Hive::Utils 'stringify';
 
     # Note: the order is important, this is a true example of Multiple Inheritance:

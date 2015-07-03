@@ -47,6 +47,7 @@ Supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::BlastAndParsePAF;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF');
 

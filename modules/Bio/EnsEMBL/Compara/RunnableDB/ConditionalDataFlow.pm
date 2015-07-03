@@ -49,6 +49,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow
 package Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow;
 
 use strict;
+use warnings;
 
 ## We inherit from the Compara BaseRunnable to benefit from $self->compara_dba
 #use base ('Bio::EnsEMBL::Hive::Process');

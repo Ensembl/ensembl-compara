@@ -86,6 +86,7 @@ perl DumpConservationScores.pl -h
 =cut
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);

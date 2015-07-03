@@ -110,6 +110,7 @@ hard-coded and thus will get out-to-date at some stage.
 =cut
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw( throw warning info );
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;

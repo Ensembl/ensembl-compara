@@ -31,6 +31,7 @@ This runnable dumps all members into one big FASTA file.
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

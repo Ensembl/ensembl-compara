@@ -59,6 +59,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 

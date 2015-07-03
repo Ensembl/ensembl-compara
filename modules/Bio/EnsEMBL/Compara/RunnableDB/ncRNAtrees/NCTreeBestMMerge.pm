@@ -73,6 +73,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 

@@ -31,6 +31,7 @@ A name generator object (maintains the counter and knows the format of stable_id
 package Bio::EnsEMBL::Compara::StableId::Generator;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Compara::StableId::Map;
 use Bio::EnsEMBL::Compara::StableId::NamedClusterSet;

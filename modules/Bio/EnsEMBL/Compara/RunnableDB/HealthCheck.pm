@@ -141,6 +141,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::HealthCheck;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Data::Dumper;

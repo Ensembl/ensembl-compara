@@ -44,6 +44,7 @@ on the species chromosomes. The jobs are split into $split_size chunks
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateChrJobs;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;

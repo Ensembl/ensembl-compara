@@ -44,6 +44,7 @@ wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.all.chain.g
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportChains;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 use Bio::EnsEMBL::Analysis::Runnable::AlignmentChains;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;

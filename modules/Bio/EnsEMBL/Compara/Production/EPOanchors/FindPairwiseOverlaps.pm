@@ -19,6 +19,7 @@ limitations under the License.
 package Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Utils::Exception qw(throw);

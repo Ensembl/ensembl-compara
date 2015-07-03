@@ -244,6 +244,7 @@ expects this alias as the qSpecies name as it needs it in order to know the tabl
 
 
 use strict;
+use warnings;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DnaDnaAlignFeature;

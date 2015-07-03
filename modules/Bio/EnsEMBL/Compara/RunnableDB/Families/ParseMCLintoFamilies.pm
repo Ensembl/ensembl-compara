@@ -21,6 +21,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::Families::ParseMCLintoFamilies;
 # RunnableDB to parse the MCL output and load the families
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Family;

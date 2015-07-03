@@ -60,6 +60,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllTreesOrthoXML; 
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;

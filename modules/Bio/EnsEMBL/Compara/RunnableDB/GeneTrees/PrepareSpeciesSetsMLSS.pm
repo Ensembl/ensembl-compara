@@ -41,6 +41,7 @@ all the species.
 package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS;
 
 use strict;
+use warnings;
 use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Compara::SpeciesSet;

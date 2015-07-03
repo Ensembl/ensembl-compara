@@ -52,6 +52,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS;
 
 use strict;
+use warnings;
 use Statistics::Descriptive;
 
 use Bio::Tools::Run::Phylo::PAML::Codeml;

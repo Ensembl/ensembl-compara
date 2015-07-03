@@ -55,6 +55,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use File::stat;
 

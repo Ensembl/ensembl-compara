@@ -20,6 +20,7 @@ package Bio::EnsEMBL::Compara::Filter::BestHit;
 
 use vars qw(@ISA);
 use strict;
+use warnings;
 
 
 =head2 filter

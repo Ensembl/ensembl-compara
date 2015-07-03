@@ -42,6 +42,7 @@ This RunnableDB module concatenates the sub-chunked jobs to produce files coveri
 package Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::ConcatVep;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 use File::Basename;

@@ -15,6 +15,7 @@
 
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::AlignIO;
 

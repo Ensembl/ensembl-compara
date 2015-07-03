@@ -5,6 +5,7 @@
 
 package Bio::EnsEMBL::Compara::Production::AlgorithmDiff;
 use strict;
+use warnings;
 use vars qw($VERSION @EXPORT_OK @ISA @EXPORT);
 use integer;		# see below in _replaceNextLargerWith() for mod to make
 					# if you don't use this

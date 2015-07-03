@@ -42,6 +42,7 @@ This RunnableDB module runs DumpMultiAlign jobs.
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub fetch_input {

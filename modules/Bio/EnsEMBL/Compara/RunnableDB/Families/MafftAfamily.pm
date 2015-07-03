@@ -19,6 +19,7 @@ limitations under the License.
 package Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

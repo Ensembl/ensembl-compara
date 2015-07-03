@@ -59,6 +59,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;

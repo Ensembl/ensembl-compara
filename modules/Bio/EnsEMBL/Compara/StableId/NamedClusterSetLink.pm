@@ -31,6 +31,7 @@ A linked pair of NamedClusterSet objects with extra stats + MNR algorithm
 package Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Compara::StableId::NamedClusterSet;
 use Bio::EnsEMBL::Compara::StableId::Generator;

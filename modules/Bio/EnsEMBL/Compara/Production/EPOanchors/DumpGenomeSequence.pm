@@ -56,6 +56,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use File::Path qw(make_path remove_tree);
 use Bio::EnsEMBL::Utils::IO::FASTASerializer;

@@ -48,6 +48,7 @@ supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability;
 
 use strict;
+use warnings;
 use Scalar::Util qw(looks_like_number);
 use Digest::MD5 qw(md5_hex);
 

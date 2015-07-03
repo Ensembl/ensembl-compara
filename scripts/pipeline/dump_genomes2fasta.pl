@@ -15,6 +15,7 @@
 
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 

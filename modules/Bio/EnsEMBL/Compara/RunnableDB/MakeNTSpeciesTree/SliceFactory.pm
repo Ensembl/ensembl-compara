@@ -31,6 +31,7 @@ Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::SliceFactory
 package Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::SliceFactory;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Data::Dumper;

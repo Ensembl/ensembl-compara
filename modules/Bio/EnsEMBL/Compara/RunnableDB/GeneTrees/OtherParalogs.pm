@@ -61,6 +61,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs;
 
 use strict;
+use warnings;
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 

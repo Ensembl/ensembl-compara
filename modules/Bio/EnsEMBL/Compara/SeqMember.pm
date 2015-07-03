@@ -74,6 +74,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::SeqMember;
 
 use strict;
+use warnings;
 #use warnings;
 
 #use feature qw(switch);

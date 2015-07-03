@@ -96,6 +96,7 @@ method_link_type
 package Bio::Das::ProServer::SourceAdaptor::conservation_score;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception;
 

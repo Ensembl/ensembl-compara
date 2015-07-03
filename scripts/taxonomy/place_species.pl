@@ -15,6 +15,7 @@
 
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;

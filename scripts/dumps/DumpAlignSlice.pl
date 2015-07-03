@@ -258,6 +258,7 @@ perl DumpAlignSlice.pl
 };
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;

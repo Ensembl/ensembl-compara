@@ -38,6 +38,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 package Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies;
 
 use strict;
+use warnings;
 
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::GeneTree;

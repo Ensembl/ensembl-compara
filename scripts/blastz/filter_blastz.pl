@@ -19,6 +19,7 @@ $|=1;
 ###############################################Rewrite for Bz output.
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 #use Bio::EnsEMBL::DnaDnaAlignFeature;

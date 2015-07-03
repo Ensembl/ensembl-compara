@@ -69,6 +69,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::GeneSet;
 
 use strict;
+use warnings;
 
 
 sub new {

@@ -20,6 +20,7 @@ package Bio::EnsEMBL::Compara::Filter::Greedy;
 
 use vars qw(@ISA);
 use strict;
+use warnings;
 
 #use Bio::EnsEMBL::DnaDnaAlignFeature;
 

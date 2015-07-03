@@ -54,6 +54,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates;
 
 use strict;
+use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;

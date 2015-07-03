@@ -19,6 +19,7 @@ limitations under the License.
 package Bio::EnsEMBL::Compara::Production::EPOanchors::HMMer::LoadConsEles;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);

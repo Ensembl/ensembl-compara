@@ -38,6 +38,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::Utils::Exception;

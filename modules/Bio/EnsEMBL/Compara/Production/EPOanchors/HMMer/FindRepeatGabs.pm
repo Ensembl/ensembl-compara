@@ -19,6 +19,7 @@ limitations under the License.
 package Bio::EnsEMBL::Compara::Production::EPOanchors::HMMer::FindRepeatGabs;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Registry;
 

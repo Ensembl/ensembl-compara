@@ -52,6 +52,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 

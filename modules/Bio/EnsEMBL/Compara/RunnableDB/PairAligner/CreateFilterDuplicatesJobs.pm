@@ -58,6 +58,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;

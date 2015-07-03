@@ -50,6 +50,7 @@ Supported keys:
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::MemberSet;
 

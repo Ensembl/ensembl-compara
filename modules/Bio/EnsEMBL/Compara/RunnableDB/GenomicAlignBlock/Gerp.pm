@@ -53,6 +53,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp;
 
 use strict;
+use warnings;
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;

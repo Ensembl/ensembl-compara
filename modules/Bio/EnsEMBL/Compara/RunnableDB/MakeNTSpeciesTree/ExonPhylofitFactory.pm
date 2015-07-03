@@ -32,6 +32,7 @@ Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::ExonPhylofitFactory
 package Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::ExonPhylofitFactory;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception ('throw');

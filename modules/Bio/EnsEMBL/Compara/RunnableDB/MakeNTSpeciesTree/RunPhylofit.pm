@@ -31,6 +31,7 @@ Bio::EnsEMBL::Compara::RunnableDB::RunPhylofit
 package Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::RunPhylofit;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;

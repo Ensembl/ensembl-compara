@@ -34,6 +34,7 @@ Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
 package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 

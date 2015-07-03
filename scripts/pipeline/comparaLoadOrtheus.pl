@@ -73,6 +73,7 @@ alignments
 =cut
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);

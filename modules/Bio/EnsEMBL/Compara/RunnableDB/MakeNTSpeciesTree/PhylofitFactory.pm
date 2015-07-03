@@ -33,6 +33,7 @@ Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::PhylofitFactory
 package Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::PhylofitFactory;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Data::Dumper;

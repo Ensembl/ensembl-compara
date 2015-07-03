@@ -49,6 +49,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Compara::Graph::NewickParser;

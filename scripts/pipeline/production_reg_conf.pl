@@ -24,6 +24,7 @@
 # 3. Possibly add entries for core databases that are still on genebuilders' servers
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;

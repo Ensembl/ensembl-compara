@@ -45,6 +45,7 @@ wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.net.gz
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportNets;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets;
 use Bio::EnsEMBL::Analysis::Runnable::AlignmentNets;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;

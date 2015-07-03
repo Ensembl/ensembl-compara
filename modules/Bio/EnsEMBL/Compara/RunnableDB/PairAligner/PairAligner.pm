@@ -60,6 +60,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 
 use strict;
+use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);

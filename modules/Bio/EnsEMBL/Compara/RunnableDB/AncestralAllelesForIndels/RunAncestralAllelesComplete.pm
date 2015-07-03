@@ -43,6 +43,7 @@ This RunnableDB module creates and analyses the consequences of an indel event f
 package Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::RunAncestralAllelesComplete;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::AncestralAllelesCompleteBase');
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 

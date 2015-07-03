@@ -70,6 +70,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal;
 
 use strict;
+use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
 

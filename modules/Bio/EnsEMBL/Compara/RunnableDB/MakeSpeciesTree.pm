@@ -47,6 +47,7 @@ Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree
 package Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;

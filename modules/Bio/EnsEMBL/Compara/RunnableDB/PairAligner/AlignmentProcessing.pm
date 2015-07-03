@@ -38,6 +38,7 @@ Abstract base class of AlignmentChains and AlignmentNets
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;

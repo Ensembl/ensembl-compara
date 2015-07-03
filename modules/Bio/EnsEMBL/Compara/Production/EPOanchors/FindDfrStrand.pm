@@ -56,6 +56,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Registry;
 use Bio::SearchIO;

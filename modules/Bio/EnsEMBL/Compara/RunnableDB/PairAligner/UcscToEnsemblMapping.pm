@@ -45,6 +45,7 @@ wget http://hgdownload.cse.ucsc.edu/goldenPath/ponAbe2/database/chromInfo.txt.gz
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UcscToEnsemblMapping;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

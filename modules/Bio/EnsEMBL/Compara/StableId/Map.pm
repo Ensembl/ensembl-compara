@@ -32,6 +32,7 @@ can load from file or save to file.
 package Bio::EnsEMBL::Compara::StableId::Map;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 
 sub new {

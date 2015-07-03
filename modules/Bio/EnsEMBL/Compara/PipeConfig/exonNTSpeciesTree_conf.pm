@@ -22,6 +22,7 @@ limitations under the License.
 package Bio::EnsEMBL::Compara::PipeConfig::exonNTSpeciesTree_conf;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {

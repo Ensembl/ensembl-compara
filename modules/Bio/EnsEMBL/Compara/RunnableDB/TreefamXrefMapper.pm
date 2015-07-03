@@ -56,6 +56,7 @@ Contact anybody in Compara.
 package Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::StableId::Adaptor;
 use Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink;
 

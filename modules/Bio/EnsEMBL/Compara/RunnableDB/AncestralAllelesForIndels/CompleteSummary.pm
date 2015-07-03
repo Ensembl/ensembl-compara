@@ -42,6 +42,7 @@ This RunnableDB module creates a summary file from the summary table in the pipe
 package Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::CompleteSummary;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
