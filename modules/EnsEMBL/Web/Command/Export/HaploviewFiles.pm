@@ -72,7 +72,6 @@ sub make_files {
   
   foreach my $sample (keys %sample_genotypes) {
     my $s      = $samples{$sample};
-    warn ">>>$s\n";
     my $output = join "\t", 'FAM' . $family++, $sample, $s->{'father'}, $s->{'mother'}, $s->{'gender'}, "0\t";
        $output =~ s/ /_/g;
     
