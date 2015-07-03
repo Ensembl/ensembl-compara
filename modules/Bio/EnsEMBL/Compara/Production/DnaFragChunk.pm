@@ -266,7 +266,7 @@ sub dnafrag {
 
   #lazy load the DnaFrag
   if(!defined($self->{'_dnafrag'}) and defined($self->dnafrag_id) and $self->adaptor) {
-    $self->{'_dnafrag'} = $self->adaptor->_fetch_DnaFrag_by_dbID($self->dnafrag_id);
+    $self->{'_dnafrag'} = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_dbID($self->dnafrag_id);
   }
 
   return $self->{'_dnafrag'};

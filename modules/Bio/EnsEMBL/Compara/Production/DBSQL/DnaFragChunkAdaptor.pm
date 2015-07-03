@@ -41,8 +41,9 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use DBI qw(:sql_types);
+
+use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
 #############################
@@ -132,37 +133,6 @@ sub update_sequence
 #
 ###############################################################################
 
-=head2 fetch_by_dbID
-
-  Arg [1]    : int $id
-               the unique database identifier for the feature to be obtained
-  Example    : $dfc = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the DnaFragChunk created from the database defined by the
-               the id $id.
-  Returntype : Bio::EnsEMBL::Compara::Production::DnaFragChunk
-  Exceptions : thrown if $id is not defined
-  Caller     : general
-
-=cut
-
-sub fetch_by_dbID{
-  my ($self,$id) = @_;
-
-  unless(defined $id) {
-    $self->throw("fetch_by_dbID must have an id");
-  }
-
-  my @tabs = $self->_tables;
-
-  my ($name, $syn) = @{$tabs[0]};
-
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${syn}.${name}_id = $id";
-
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->_generic_fetch($constraint)};
-  return $obj;
-}
 
 =head2 fetch_all_by_DnaFragChunkSet
 
@@ -184,35 +154,18 @@ sub fetch_all_by_DnaFragChunkSet {
   }
 
   my $dnafrag_chunk_set_id = $dnafrag_chunk_set->dbID;
-  my $constraint = "dfc.dnafrag_chunk_set_id = $dnafrag_chunk_set_id";
+  $self->bind_param_generic_fetch($dnafrag_chunk_set_id, SQL_INTEGER);
+  my $constraint = 'dfc.dnafrag_chunk_set_id = ?';
 
   #printf("fetch_all_by_DnaFragChunkSet has contraint\n$constraint\n");
 
-  return $self->_generic_fetch($constraint);
+  return $self->generic_fetch($constraint);
 }
 
-
-=head2 fetch_all
-
-  Arg        : None
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub fetch_all {
-  my $self = shift;
-
-  return $self->_generic_fetch();
-}
 
 ############################
 #
 # INTERNAL METHODS
-# (pseudo subclass methods)
 #
 ############################
 
@@ -235,18 +188,6 @@ sub _columns {
              dfc.sequence_id
             );
 }
-
-sub _default_where_clause {
-  my $self = shift;
-  return '';
-}
-
-sub _final_clause {
-  my $self = shift;
-  $self->{'_final_clause'} = shift if(@_);
-  return $self->{'_final_clause'};
-}
-
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -271,86 +212,6 @@ sub _objs_from_sth {
   $sth->finish;
 
   return \@chunks
-}
-
-
-=head2 _generic_fetch
-
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::Production::DnaFragChunk in contig coordinates
-  Exceptions : none
-  Caller     : internal
-
-=cut
-
-sub _generic_fetch {
-  my ($self, $constraint, $join) = @_;
-
-  my @tables = $self->_tables;
-  my $columns = join(', ', $self->_columns());
-
-  if ($join) {
-    foreach my $single_join (@{$join}) {
-      my ($tablename, $condition, $extra_columns) = @{$single_join};
-      if ($tablename && $condition) {
-        push @tables, $tablename;
-
-        if($constraint) {
-          $constraint .= " AND $condition";
-        } else {
-          $constraint = " $condition";
-        }
-      }
-      if ($extra_columns) {
-        $columns .= ", " . join(', ', @{$extra_columns});
-      }
-    }
-  }
-
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-
-  my $sql = "SELECT $columns FROM $tablenames";
-
-  my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->_final_clause;
-
-  #append a where clause if it was defined
-  if($constraint) {
-    $sql .= " WHERE $constraint ";
-    if($default_where) {
-      $sql .= " AND $default_where ";
-    }
-  } elsif($default_where) {
-    $sql .= " WHERE $default_where ";
-  }
-
-  #append additional clauses which may have been defined
-  $sql .= " $final_clause" if($final_clause);
-
-  #print STDERR $sql,"\n";
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-  # print STDERR $sql,"\n";
-  # print STDERR "sql execute finished. about to build objects\n";
-
-  return $self->_objs_from_sth($sth);
-
-}
-
-sub _fetch_DnaFrag_by_dbID
-{
-  my $self       = shift;
-  my $dnafrag_id = shift;
-
-  return $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id);  
 }
 
 1;
