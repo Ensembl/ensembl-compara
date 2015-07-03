@@ -54,6 +54,7 @@ sub param_defaults {
         'tree_method_link'  => 'PROTEIN_TREES',
         'reused_gdb_ids'    => [],
         'nonreused_gdb_ids' => [],
+        'create_homology_mlss'  => 1,
     };
 }
 
@@ -143,6 +144,7 @@ sub write_output {
 
     my @noncomponent_gdbs = grep {not $_->genome_component} @$all_gdbs;
     foreach my $genome_db (@noncomponent_gdbs) {
+        last unless $self->param('create_homology_mlss');
 
         my $ssg = $self->_write_ss( [$genome_db] );
         my $mlss_pg = $self->_write_mlss( $ssg, $self->param('ml_para') );
@@ -154,7 +156,7 @@ sub write_output {
 
     ## Since possible_ortholds have been removed, there are no between-species paralogs any more
     ## Also, not that in theory, we could skip the orthologs between components of the same polyploid Genome
-    $self->_write_all_pairs( $self->param('ml_ortho'), [@noncomponent_gdbs]);
+    $self->_write_all_pairs( $self->param('ml_ortho'), [@noncomponent_gdbs]) if $self->param('create_homology_mlss');
 
     $self->_write_shared_ss('reuse', [grep {$_->{is_reused}} @{$self->param('genome_dbs')}] );
     $self->_write_shared_ss('nonreuse', [grep {not $_->{is_reused}} @{$self->param('genome_dbs')}] );

@@ -217,6 +217,7 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
                 -parameters => {
                     'tree_method_link' => 'MAP_ANCHORS',
+                    'create_homology_mlss'  => 0,
                 },
                 -flow_into => [ 'reuse_anchor_align_factory' ],
             },
