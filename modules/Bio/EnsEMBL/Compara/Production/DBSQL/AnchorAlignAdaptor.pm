@@ -233,22 +233,22 @@ sub fetch_all_by_anchor_id_and_mlss_id {
 =cut
 
 sub update_failed_anchor {
-	my($self, $failed_anchor_hash_ref, $analysis_id_which_failed, $test_mlssid) = @_;
+	my($self, $failed_anchor_hash_ref, $analysis_id_which_failed, $mlssid) = @_;
 	unless (defined $failed_anchor_hash_ref ){
 		throw( "No failed_anchor_id : update_failed_anchor failed");
 	} 
 	unless (defined $analysis_id_which_failed){
 		throw("No analysis_id : update_failed_anchor failed");
 	}
-	unless (defined $test_mlssid) {
-		throw("No test_mlssid : update_failed_anchor failed");
+	unless (defined $mlssid) {
+		throw("No mlssid : update_failed_anchor failed");
 	}
 
 	my $update = qq{
 		UPDATE anchor_align SET anchor_status = ? WHERE anchor_id = ? AND method_link_species_set_id = ?};
 	my $sth = $self->prepare($update);
 	foreach my $failed_anchor(%{$failed_anchor_hash_ref}) {
-		$sth->execute($analysis_id_which_failed, $failed_anchor, $test_mlssid) or die $self->errstr;
+		$sth->execute($analysis_id_which_failed, $failed_anchor, $mlssid) or die $self->errstr;
 	}
 	return 1;
 }
@@ -295,9 +295,9 @@ sub fetch_all_dnafrag_ids {
 #HACK
 
 sub fetch_all_anchors_by_genome_db_id_and_mlssid {
-	my($self, $genome_db_id, $test_mlssid) = @_;
-	unless (defined $genome_db_id && defined $test_mlssid) {
-		throw("fetch_all_anchors_by_genome_db_id_and_mlssid must have a genome_db_id and a test_mlssid");
+	my($self, $genome_db_id, $mlssid) = @_;
+	unless (defined $genome_db_id && defined $mlssid) {
+		throw("fetch_all_anchors_by_genome_db_id_and_mlssid must have a genome_db_id and a mlssid");
 	}
 	my $dnafrag_query = qq{
 		SELECT aa.dnafrag_id, aa.anchor_align_id, aa.anchor_id, aa.dnafrag_start, aa.dnafrag_end 
@@ -306,7 +306,7 @@ sub fetch_all_anchors_by_genome_db_id_and_mlssid {
 		WHERE df.genome_db_id = ? AND aa.method_link_species_set_id = ? AND anchor_status 
 		IS NULL ORDER BY dnafrag_start, dnafrag_end};
 	my $sth = $self->prepare($dnafrag_query);
-	$sth->execute($genome_db_id, $test_mlssid) or die $self->errstr;
+	$sth->execute($genome_db_id, $mlssid) or die $self->errstr;
 	return $sth->fetchall_arrayref();
 }
 
