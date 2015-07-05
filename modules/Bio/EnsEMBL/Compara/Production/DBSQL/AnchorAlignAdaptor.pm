@@ -266,29 +266,6 @@ sub fetch_all_anchors_by_genome_db_id_and_mlssid {
 }
 
 
-=head2 fetch_all_by_MethodLinkSpeciesSet
-
-  Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss
-  Example    :
-  Description: Returns all the AnchorAlign obejcts for this MethodLinkSpeciesSet
-  Returntype : listref of Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign objects
-  Exceptions :
-  Caller     : general
-
-=cut
-
-sub fetch_all_by_MethodLinkSpeciesSet {
-  my ($self, $method_link_species_set) = @_;
-
-  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
-
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "aa.method_link_species_set_id = ". $method_link_species_set->dbID;
-
-  return $self->generic_fetch($constraint);
-}
-
-
 ############################
 #
 # INTERNAL METHODS
