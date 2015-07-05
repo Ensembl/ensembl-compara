@@ -512,15 +512,15 @@ sub _get_suitable_species_tree_node_ids {
     my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($member_type eq 'protein' ? 'PROTEIN_TREES' : 'NC_TREES')->[0];
     my $species_tree = $self->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
 
-    my $sth;
+    my $sql;
+    my @bound_parameters;
 
     if (not $lca) {
-        my $sql = sprintf(q{SELECT node_id FROM species_tree_node WHERE root_id = ?});
-        $sth = $self->prepare($sql);
-        $sth->execute($species_tree->root_id);
+        $sql = 'SELECT node_id FROM species_tree_node WHERE root_id = ?';
+        push @bound_parameters, $species_tree->root_id;
 
     } else {
-        my $sql = sprintf(q{SELECT DISTINCT stn.node_id FROM
+        $sql = sprintf(q{SELECT DISTINCT stn.node_id FROM
             ncbi_taxa_node ntn1 JOIN ncbi_taxa_node ntn2 ON ntn1.left_index %s ntn2.left_index AND ntn1.right_index %s ntn2.right_index
             JOIN species_tree_node stn ON ntn2.taxon_id = stn.taxon_id
             WHERE
@@ -530,10 +530,9 @@ sub _get_suitable_species_tree_node_ids {
             $in ? '<' : '>=',
             $in ? '>' : '<=',
         );
-        $sth = $self->prepare($sql);
-        $sth->execute($lca->node_id, $species_tree->root_id);
+        push @bound_parameters, $lca->node_id, $species_tree->root_id;
     }
-    return [map {$_->[0]} @{$sth->fetchall_arrayref}];
+    return $self->dbc->db_handle->selectcol_arrayref($sql, undef,  @bound_parameters);
 }
 
 

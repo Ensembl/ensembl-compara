@@ -58,8 +58,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $sth = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot();
-    my $member_ids = [map {$_->[0]} @{$sth->fetchall_arrayref}];
+    my $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot();
     my $unannotated_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
 
     # write fasta file:
