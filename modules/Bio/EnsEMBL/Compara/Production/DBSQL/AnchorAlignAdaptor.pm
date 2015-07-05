@@ -39,6 +39,9 @@ use warnings;
 
 package Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor;
 
+use strict;
+use warnings;
+
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
@@ -172,35 +175,35 @@ sub fetch_all_by_anchor_id_and_mlss_id {
 }
 
 
-=head2 update_failed_anchor
+=head2 update_anchor_status
 
-  Arg[1]     : anchor_id, hashref 
-  Arg[2]     : current analysis_id, string
-  Example    : $anchor_align_adaptor->update_failed_anchor($self->input_anchor_id, $self->input_analysis_id);
-  Description: updates anchor_status field, setting it to the current analysis_id, if the anchor fails the filters associated with the analysis_id
+  Arg[1]     : anchor_id, arrayref
+  Arg[2]     : integer: new "anchor_status" value
+  Example    : $anchor_align_adaptor->update_anchor_status($array_of_anchor_ids, 3333);
+  Description: updates anchor_status field
   Returntype : none
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub update_failed_anchor {
-	my($self, $failed_anchor_hash_ref, $analysis_id_which_failed, $mlssid) = @_;
-	unless (defined $failed_anchor_hash_ref ){
-		throw( "No failed_anchor_id : update_failed_anchor failed");
+sub update_anchor_status {
+	my($self, $failed_anchor_array_ref, $new_status, $mlssid) = @_;
+	unless (defined $failed_anchor_array_ref){
+		throw( "No failed_anchor_id : update_anchor_status failed");
 	} 
-	unless (defined $analysis_id_which_failed){
-		throw("No analysis_id : update_failed_anchor failed");
+	unless (defined $new_status ){
+		throw("No status : update_anchor_status failed");
 	}
 	unless (defined $mlssid) {
-		throw("No mlssid : update_failed_anchor failed");
+		throw("No mlssid : update_anchor_status failed");
 	}
 
 	my $update = qq{
 		UPDATE anchor_align SET anchor_status = ? WHERE anchor_id = ? AND method_link_species_set_id = ?};
 	my $sth = $self->prepare($update);
-	foreach my $failed_anchor(%{$failed_anchor_hash_ref}) {
-		$sth->execute($analysis_id_which_failed, $failed_anchor, $mlssid) or die $self->errstr;
+	foreach my $failed_anchor(@{$failed_anchor_array_ref}) {
+		$sth->execute($new_status, $failed_anchor, $mlssid) or die $self->errstr;
 	}
 	return 1;
 }
