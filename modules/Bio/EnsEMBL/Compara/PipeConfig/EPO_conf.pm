@@ -79,11 +79,7 @@ sub default_options {
         'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
 
         # mlss_ids & co. Don't touch and define "mlss_id" on the command line
-        'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
         # 'mlss_id' => 825, # epo mlss from master
-        'mapping_method_link_id' => 10000, # dummy value - should not need to change
-        'mapping_method_link_name' => 'MAP_ANCHORS', 
-        'mapping_mlssid' => 10000, # dummy value - should not need to change
         'ancestral_sequences_name' => 'ancestral_sequences',
 
         # Executable parameters
@@ -137,12 +133,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        # mlss_id & co
         'mlss_id'                   => $self->o('mlss_id'),
-        'anchors_mlss_id'           => $self->o('anchors_mlss_id'),
-        'mapping_method_link_id'    => $self->o('mapping_method_link_id'),
-        'mapping_method_link_name'  => $self->o('mapping_method_link_name'),
-        'mapping_mlssid'            => $self->o('mapping_mlssid'),
 
         # directories
         'work_dir'              => $self->o('work_dir'),

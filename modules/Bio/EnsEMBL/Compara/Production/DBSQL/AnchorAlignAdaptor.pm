@@ -172,32 +172,6 @@ sub flag_as_overlapping {
 	return 1;
 }
 
-=head2 fetch_all_dnafrag_ids 
-
-  Arg[1]     : listref of genome_db_ids 
-  Example    : 
-  Description: 
-  Returntype : arrayref 
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub fetch_all_dnafrag_ids {
-	my($self, $mlssid) = @_;
-	my $return_hashref;
-	my $dnafrag_query = qq{
-		SELECT DISTINCT(aa.dnafrag_id), df.genome_db_id FROM anchor_align aa
-		INNER JOIN dnafrag df on aa.dnafrag_id = df.dnafrag_id 
-		WHERE aa.method_link_species_set_id = ?};
-#		WHERE df.genome_db_id = ?};  
-	my $sth = $self->prepare($dnafrag_query);
-	$sth->execute($mlssid);
-	while(my@row = $sth->fetchrow_array) {
-		push(@{$return_hashref->{$row[1]}}, $row[0]);
-	}
-	return $return_hashref;
-}
 
 =head2 fetch_all_anchors_by_genome_db_id_and_mlssid 
 

@@ -79,6 +79,7 @@ sub fetch_input {
 	my ($self) = @_;
 
         $self->dbc->disconnect_if_idle();
+        $self->param_required('mlss_id');
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
 	my $genome_db_file = $self->param_required('genome_db_file');
         my $sth;
@@ -187,7 +188,7 @@ sub process_exonerate_hits {
 				my $index = join(":", $anchor_id, $dnafrag_id, $hit_position->[0]);
 				my $number_of_org_hits = keys %{$hit_numbers->{$index}->{anc_orgs}};
 				my $number_of_seq_hits = $hit_numbers->{$index}->{seq_nums};
-				push @records_to_load, [$self->param('mapping_mlssid'), $anchor_id, $dnafrag_id, @{$hit_position}[0..3], $number_of_org_hits, $number_of_seq_hits];
+				push @records_to_load, [$self->param('mlss_id'), $anchor_id, $dnafrag_id, @{$hit_position}[0..3], $number_of_org_hits, $number_of_seq_hits];
 			}
 		}
 	}

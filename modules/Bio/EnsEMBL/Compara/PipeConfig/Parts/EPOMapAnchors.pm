@@ -92,13 +92,11 @@ sub pipeline_analyses_epo_anchor_mapping {
             {   -logic_name => 'load_genomedb_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -parameters => {
-                    'mlss_id'               => $self->o('mlss_id'),
                     'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
                     'extra_parameters'      => [ 'locator' ],
                 },
                 -flow_into => {
                     '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-                    '1->A' => [ 'populate_method_link_table' ],
                     'A->1' => [ 'create_mlss_ss' ],
                 },
             },
@@ -139,19 +137,9 @@ sub pipeline_analyses_epo_anchor_mapping {
             {   -logic_name => 'create_mlss_ss',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
                 -parameters => {
-                    'whole_method_links'    => [ 'MAP_ANCHORS' ],
+                    'whole_method_links'    => [ 'EPO' ],
                 },
                 -flow_into => [ 'reuse_anchor_align_factory' ],
-            },
-
-            {   -logic_name => 'populate_method_link_table',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-                -parameters => {
-                    'sql' => [
-                        # ml and mlss entries for the overlaps, pecan and gerp
-                        'REPLACE INTO method_link (method_link_id, type) VALUES(#mapping_method_link_id#, "#mapping_method_link_name#")',
-                    ]
-                },
             },
 
             {   -logic_name     => 'reuse_anchor_align_factory',
@@ -161,7 +149,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 },
                 -flow_into => {
                     '2->A' => [ 'reuse_anchor_align' ],
-                    'A->1' => [ 'reset_anchor_status' ],
+                    'A->1' => [ 'dump_genome_sequence_factory' ],
                 },
             },
 
@@ -171,17 +159,9 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'db_conn'    => '#reuse_db#',
                     'table'      => 'anchor_align',
-                    'inputquery' => 'SELECT anchor_align.* FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND method_link_species_set_id = #mapping_mlssid# AND untrimmed_anchor_align_id IS NULL',
+                    'inputquery' => 'SELECT anchor_align_id, #mlss_id#, anchor_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences, evalue, untrimmed_anchor_align_id, 0 FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND untrimmed_anchor_align_id IS NULL',
                 },
 		-hive_capacity => $self->o('low_capacity'),
-            },
-
-            {   -logic_name => 'reset_anchor_status',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-                -parameters => {
-                    'sql' => 'UPDATE anchor_align SET is_overlapping = 0',
-                },
-                -flow_into  => [ 'dump_genome_sequence_factory' ],
             },
 
             {   -logic_name     => 'dump_genome_sequence_factory',
@@ -331,7 +311,7 @@ sub pipeline_analyses_epo_anchor_mapping {
 	    {   -logic_name => 'trim_anchor_align',			
 		-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
 		-parameters => {
-                                'method_link_species_set_id' => '#mapping_mlssid#',
+                                'method_link_species_set_id' => '#mlss_id#',
                                 'ortheus_c_exe' => $self->o('ortheus_c_exe'),
 			},
                 -flow_into => {
@@ -344,7 +324,7 @@ sub pipeline_analyses_epo_anchor_mapping {
 	    {   -logic_name => 'trim_anchor_align_himem',
 		-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
 		-parameters => {
-                                'method_link_species_set_id' => '#mapping_mlssid#',
+                                'method_link_species_set_id' => '#mlss_id#',
                                 'ortheus_c_exe' => $self->o('ortheus_c_exe'),
 			},
         -flow_into => { -1 => 'ignore_huge_trim_anchor_align' },

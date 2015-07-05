@@ -69,14 +69,14 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub run {
 	my ($self) = @_;
-	my $anc_mapping_mlssid = $self->param('mapping_mlssid');
+	my $anc_mapping_mlssid = $self->param_required('mlss_id');
 	my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
-	my $dnafrag_ids = $anchor_align_adaptor->fetch_all_dnafrag_ids($anc_mapping_mlssid);
+	my $anc_mapping_mlss = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($anc_mapping_mlssid);
 	my (%Overlappping_anchors, %Anchors_2_remove, %Scores);
-	foreach my $genome_db_id(sort keys %{$dnafrag_ids}) {
+	foreach my $genome_db (@{$anc_mapping_mlss->species_set->genome_dbs}) {
 		my %genome_db_dnafrags;
 		foreach my $genome_db_anchors(@{ $anchor_align_adaptor->fetch_all_anchors_by_genome_db_id_and_mlssid(
-						$genome_db_id, $anc_mapping_mlssid) }) {
+						$genome_db->dbID, $anc_mapping_mlssid) }) {
 			push(@{ $genome_db_dnafrags{ $genome_db_anchors->[0] } }, [ @{ $genome_db_anchors }[1..4] ]);	
 		}
 		foreach my $dnafrag_id(sort keys %genome_db_dnafrags) {
@@ -128,9 +128,9 @@ sub run {
 sub write_output {
     my ($self) = @_;
     # Reset the flag to 0 for all the anchor_align
-    $self->compara_dba()->dbc->do('UPDATE anchor_align SET is_overlapping = 0 WHERE method_link_species_set_id = ?', undef,  $self->param('mapping_mlssid'));
+    $self->compara_dba()->dbc->do('UPDATE anchor_align SET is_overlapping = 0 WHERE method_link_species_set_id = ?', undef,  $self->param('mlss_id'));
     # And set it to 1 for the ones we've found
-    $self->compara_dba()->get_adaptor('AnchorAlign')->flag_as_overlapping($self->param('overlapping_ancs_to_remove'), $self->param('mapping_mlssid'));
+    $self->compara_dba()->get_adaptor('AnchorAlign')->flag_as_overlapping($self->param('overlapping_ancs_to_remove'), $self->param('mlss_id'));
 }
 
 1;

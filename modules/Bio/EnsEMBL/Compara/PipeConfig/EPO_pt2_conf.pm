@@ -79,11 +79,7 @@ sub default_options {
 
         'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
 
-    	'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
     	# 'mlss_id' => 825, # epo mlss from master
-        'mapping_method_link_id' => 10000, # dummy value - should not need to change
-    	'mapping_method_link_name' => 'MAP_ANCHORS', 
-    	'mapping_mlssid' => 10000, # dummy value - should not need to change
     	
     	 # dont dump the MT sequence for mapping
     	'only_nuclear_genome' => 1,
@@ -120,10 +116,7 @@ sub pipeline_wide_parameters {
 	return {
 		%{$self->SUPER::pipeline_wide_parameters},
 
-		'anchors_mlss_id' => $self->o('anchors_mlss_id'),
-		'mapping_method_link_id' => $self->o('mapping_method_link_id'),
-        	'mapping_method_link_name' => $self->o('mapping_method_link_name'),
-        	'mapping_mlssid' => $self->o('mapping_mlssid'),
+                'mlss_id' => $self->o('mlss_id'),
 		'seq_dump_loc' => $self->o('seq_dump_loc'),
 		'compara_anchor_db' => $self->o('compara_anchor_db'),
 		'master_db' => $self->o('master_db'),
