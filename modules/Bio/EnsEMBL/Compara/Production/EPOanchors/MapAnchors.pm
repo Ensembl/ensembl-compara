@@ -115,6 +115,8 @@ sub run {
 sub write_output {
 my ($self) = @_;
 my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
+my $dnafrag_adaptor = $self->compara_dba()->get_adaptor("DnaFrag");
+my $target_genome_db = $self->compara_dba()->get_adaptor("GenomeDB")->fetch_by_dbID( $self->param('genome_db_id') );
 $self->dbc->disconnect_if_idle();
 my $exo_fh = $self->param('out_file');
 my ($hits, $target2dnafrag);
@@ -136,9 +138,9 @@ while(my $mapping = <$exo_fh>){
 
 	foreach my $target_info (sort keys %{$target2dnafrag}) {
 		my($coord_sys, $dnafrag_name) = (split(":", $target_info))[0,2];
-		$target2dnafrag->{$target_info} = $anchor_align_adaptor->fetch_dnafrag_id(
-							$coord_sys, $dnafrag_name, $self->param('genome_db_id'));
-		die "no dnafrag_id found\n" unless($target2dnafrag->{$target_info});
+		$target2dnafrag->{$target_info} = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($target_genome_db, $coord_sys, $dnafrag_name)->[0];
+		die "no dnafrag found\n" unless($target2dnafrag->{$target_info});
+		$target2dnafrag->{$target_info} = $target2dnafrag->{$target_info}->dbID;
 	}
 	my $hit_numbers = $self->merge_overlapping_target_regions($hits);
 	my $records = $self->process_exonerate_hits($hits, $target2dnafrag, $hit_numbers);	
