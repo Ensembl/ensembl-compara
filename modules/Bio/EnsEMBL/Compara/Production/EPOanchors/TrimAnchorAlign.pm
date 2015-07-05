@@ -79,16 +79,12 @@ sub fetch_input {
   my $anchor_align_adaptor = $self->compara_dba()->get_AnchorAlignAdaptor();
   ## This method returns a hash at the moment, not the objects
 #   print "Fetching AnchorAligns for Anchor ", $self->param('anchor_id'), " and MLSS ", $self->{'input_method_link_species_set_id'}, "\n";
-  my $anchor_align_hash = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id(
+  my $anchor_aligns = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id(
       $self->param('anchor_id'), $self->param('input_method_link_species_set_id') );
   die "Cannot find any anchor_align with anchor_id = ". $self->param('anchor_id').
     " and method_link_species_set_id = ". $self->param('input_method_link_species_set_id')
-      if (!$anchor_align_hash);
-  foreach my $anchor_align_id (keys %$anchor_align_hash) {
-     print "Fetching AnchorAlign $anchor_align_id\n";
-    my $anchor_align = $anchor_align_adaptor->fetch_by_dbID($anchor_align_id);
-    push(@{$self->param('anchor_aligns')}, $anchor_align);
-  }
+      if (!$anchor_aligns and !scalar(@$anchor_aligns));
+  $self->param('anchor_aligns', $anchor_aligns);
   $self->compara_dba()->dbc->disconnect_if_idle();
   $self->_dump_fasta();
 

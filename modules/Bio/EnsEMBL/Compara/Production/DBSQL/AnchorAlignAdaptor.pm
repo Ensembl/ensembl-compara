@@ -44,6 +44,8 @@ use warnings;
 
 use Data::Dumper;
 
+use DBI qw(:sql_types);
+
 use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
@@ -134,9 +136,8 @@ sub store_exonerate_hits {
 
   Arg[1]     : anchor_id, string
   Arg[2]     : method_link_species_set_id, string
-  Example    : my $anchor = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id($self->input_anchor_id,$self->method_link_species_set_id);
-  Description: returns hashref of cols. from anchor_align table using anchor_align_id as unique hash key
-  Returntype : hashref 
+  Example    : my $anchor_aligns = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id($self->input_anchor_id,$self->method_link_species_set_id);
+  Returntype : arrayref of AnchorAlign objects
   Exceptions : none
   Caller     : general
 
@@ -147,15 +148,10 @@ sub fetch_all_by_anchor_id_and_mlss_id {
 	unless (defined $anchor_id && defined $method_link_species_set_id) {
 		throw("fetch_all_by_anchor_id_and_mlss_id must have an anchor_id and a method_link_species_set_id");
 	}
-
-	my $query = qq{
-		SELECT anchor_align_id, method_link_species_set_id, anchor_id, 
-		dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, score, 
-		num_of_organisms, num_of_sequences FROM anchor_align WHERE 
-		anchor_id = ? AND method_link_species_set_id = ? AND anchor_status IS NULL};
-	my $sth = $self->prepare($query);
-	$sth->execute($anchor_id, $method_link_species_set_id) or die $self->errstr;
-	return $sth->fetchall_hashref("anchor_align_id");
+        my $constraint = 'anchor_id = ? AND method_link_species_set_id = ?';
+        $self->bind_param_generic_fetch($anchor_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($method_link_species_set_id, SQL_INTEGER);
+        return $self->generic_fetch($constraint);
 }
 
 
