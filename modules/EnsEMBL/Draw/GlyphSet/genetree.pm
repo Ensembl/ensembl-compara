@@ -194,11 +194,11 @@ sub _init {
       } elsif( $f->{_genes}->{$current_gene} ){
         $label_colour     = 'red';
         $collapsed_colour = 'red';
-        $node_colour = "royalblue";
+        $node_colour = 'navyblue';
         $bold = defined($other_genome_db_id);
       } elsif( $f->{_genome_dbs}->{$current_genome_db_id} ){
         $label_colour     = 'blue';
-        $collapsed_colour = 'royalblue';
+        $collapsed_colour = 'navyblue';
         $bold = defined($other_genome_db_id);
       }
     }
