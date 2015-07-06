@@ -333,6 +333,15 @@ sub content {
   push @view_links, sprintf $li_tmpl, $hub->url({ collapse => 'none', g1 => $highlight_gene }), 'View fully expanded tree';
   push @view_links, sprintf $li_tmpl, $unhighlight, 'Switch off highlighting' if $highlight_gene;
 
+  {
+    my @rank_options = ( q{<option value="/">-- Select a rank--</option>} );
+    foreach my $rank (qw(species genus family order class phylum kingdom)) {
+      my $collapsed_to_rank = $self->collapsed_nodes($tree, $node, "rank_$rank", $highlight_genome_db_id, $highlight_gene);
+      push @rank_options, sprintf qq{<option value="%s">%s</option>\n}, $hub->url({ collapse => $collapsed_to_rank, g1 => $highlight_gene }), ucfirst $rank;
+    }
+    push @view_links, sprintf qq{<li>Collapse all the nodes at the taxonomic rank <select onchange="Ensembl.redirect(this.value)">%s</select></li>}, join("\n", @rank_options);
+  }
+
   $html .= $image->render;
   $html .= sprintf(qq{
     <div>
@@ -399,6 +408,35 @@ sub collapsed_nodes {
       
       $expanded_nodes{$tnode->node_id} = $tnode;
       $expanded_nodes{$_->node_id}     = $_ for @{$tnode->get_all_ancestors};
+    }
+  } elsif ($action =~ /rank_(\w+)/) {
+    my $asked_rank = $1;
+    my @rank_order = qw(subspecies species subgenus genus subfamily family superfamily parvorder infraorder suborder order superorder infraclass subclass class superclass subphylum phylum superphylum subkingdom kingdom);
+    my %rank_pos = map {$rank_order[$_] => $_} 0..(scalar(@rank_order)-1);
+    my @nodes_to_check = ($tree);
+    while (@nodes_to_check) {
+      my $internal_node = shift @nodes_to_check;
+      next if $internal_node->is_leaf;
+      my $taxon = $internal_node->species_tree_node->taxon;
+      my $this_rank = $taxon->rank;
+      if ($this_rank eq 'no rank') {
+        # We traverse the taxonomy upwards until we find a rank, and get
+        # the rank just below instead
+        while ($this_rank eq 'no rank') {
+          $taxon = $taxon->parent;
+          last unless $taxon;
+          $this_rank = $taxon->rank;
+        }
+        $this_rank = $rank_pos{$this_rank}-1;
+        #warn sprintf("Mapped 'no rank' %s to %s\n", $internal_node->species_tree_node->taxon->name, $rank_order[$this_rank]);
+      } else {
+        $this_rank = $rank_pos{$this_rank};
+      }
+      if ($this_rank <= $rank_pos{$asked_rank}) {
+        $collapsed_nodes{$internal_node->node_id} = $internal_node;
+      } else {
+        push @nodes_to_check, @{$internal_node->children};
+      }
     }
   }
   
