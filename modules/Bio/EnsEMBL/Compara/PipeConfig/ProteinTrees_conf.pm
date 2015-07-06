@@ -233,6 +233,7 @@ sub default_options {
         #'homology_dNdS_capacity'    => 200,
         #'qc_capacity'               =>   4,
         #'hc_capacity'               =>   4,
+		#'hc_post_tree_capacity'     => 100,
         #'HMMer_classify_capacity'   => 400,
         #'loadmembers_capacity'      =>  30,
         #'HMMer_classifyPantherScore_capacity'   => 1000,
@@ -2395,6 +2396,7 @@ sub core_pipeline_analyses {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE ref_root_id = #gene_tree_id#',
                 'fan_branch_code'   => 2,
             },
+            -hive_capacity        => $self->o('hc_post_tree_capacity'),
             -flow_into  => {
                  '2->A' => [ 'hc_tree_structure', 'hc_tree_attributes' ],
                  'A->1' => 'ortho_tree',
