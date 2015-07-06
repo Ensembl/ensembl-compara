@@ -108,7 +108,7 @@ sub content {
 
   my $column_name = $self->html_format ? 'Compare' : 'Description';
   
-  my $columns = [
+  $columns = [
     { key => 'Species',    align => 'left', width => '10%', sort => 'html'                                                },
     { key => 'Type',       align => 'left', width => '5%',  sort => 'string'                                              },
     { key => 'dN/dS',      align => 'left', width => '5%',  sort => 'numeric'                                             },

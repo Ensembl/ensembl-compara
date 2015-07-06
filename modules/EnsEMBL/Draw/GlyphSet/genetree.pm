@@ -236,7 +236,6 @@ sub _init {
 
     my $collapsed_xoffset = 0;
     if ($f->{_bg_colour}) {
-      my $width  = $bitmap_width;
       my $y = $f->{y_from} + 2;
       my $height = $f->{y_to} - $f->{y_from} - 1;
       my $x = $f->{x};
