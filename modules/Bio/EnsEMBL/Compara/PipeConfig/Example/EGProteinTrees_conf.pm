@@ -93,6 +93,7 @@ sub default_options {
         'allow_ambiguity_codes'     => 1,
 
     # blast parameters:
+        'blast_params'              => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
 
     # clustering parameters:
 
