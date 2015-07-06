@@ -122,7 +122,8 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ancestral_prev',
-    -dbname => 'ensembl_ancestral_80',
+#    -dbname => 'ensembl_ancestral_80',
+    -dbname => 'mm14_ensembl_ancestral_80',
 );
 
 # current ancestral database on one of Compara servers:
