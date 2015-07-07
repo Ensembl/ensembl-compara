@@ -64,12 +64,12 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 
 # Individual pipeline database for ncRNAtrees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'compara1',
+    -host => 'compara2',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_nctrees',
-    -dbname => 'mm14_compara_nctrees_81',
+    -dbname => 'mp14_compara_nctrees_81_B',
 );
 
 # Individual pipeline database for Families:
