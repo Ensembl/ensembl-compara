@@ -110,7 +110,7 @@ sub content {
         <div class="pie_chart_holder">
           <div class="pie_chart%s">
             <div style="margin:4px">
-              <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+              <span class="_ht ht" style="font-size:1em;font-weight:bold" title="%s">%s</span>
             </div>
             <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
@@ -123,7 +123,7 @@ sub content {
         <div class="pie_chart_holder">
           <div class="pie_chart">
             <div style="margin:4px">
-              <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+              <span class="_ht ht" style="font-size:1em;font-weight:bold" title="%s">%s</span>
             </div>
             <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
@@ -140,7 +140,7 @@ sub content {
           <div class="pie_chart_holder">
             <div class="pie_chart">
               <div style="margin:4px">
-                <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+                <span class="_ht ht" style="font-size:1em;font-weight:bold" title="%s">%s</span>
               </div>
               <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
             </div>
