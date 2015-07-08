@@ -69,7 +69,7 @@ sub gene_phenotypes {
         my $strain_name = encode_entities($strain->name);
         my $strain_gender = $strain->gender;
         my $allele_symbol = encode_entities($pf->allele_symbol);
-        if ($ext_id && $source) {
+        if ($ext_id) {
           $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
         }
         my $locs = sprintf(
@@ -104,11 +104,15 @@ sub gene_phenotypes {
         my $source = $pf->source_name;
         my $attribs = $pf->get_all_attributes;
 
-        if ($ext_id && $source) {
-          my $source_uc = uc $source;
-             $source_uc =~ s/\s/_/g;
-          $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id, TAX => $tax});
+        my $source_uc = uc $source;
+        $source_uc =~ s/\s/_/g;
+        my $source_url = "";
+        if ($ext_id) {
+          $source_url = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id, TAX => $tax});
+        } else {
+          $source_url = $hub->get_ExtURL_link($source, $source_uc);
         }
+        $source_url = $source if ($source_url eq "" || !$source_url);
         
         my $locs = sprintf(
           '<a href="%s" class="karyotype_link">View on Karyotype</a>',
@@ -125,7 +129,7 @@ sub gene_phenotypes {
           $has_allelic = 1;
         }
 
-        push @rows, { source => $source, phenotype => $phen, locations => $locs, allelic => $allelic_requirement };
+        push @rows, { source => $source_url, phenotype => $phen, locations => $locs, allelic => $allelic_requirement };
       }
     }
   }
