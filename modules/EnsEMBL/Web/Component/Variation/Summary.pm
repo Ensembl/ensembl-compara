@@ -103,8 +103,8 @@ sub multiple_locations {
   my %mappings = %{$self->object->variation_feature_mapping};
   my $count    = scalar keys %mappings;
   my $html;
-  my $header = $failed ? 'This variation has been flagged'
-                          : "This variation maps to $count locations";
+  my $header = $failed ? 'This variant has been flagged'
+                          : "This variant maps to $count locations";
   
   if ($feature_slice) {
     for (0..$#descs) {
@@ -116,8 +116,8 @@ sub multiple_locations {
  
   ## Do a bit of user-friendly munging
   foreach (@descs) {
-    if ($_ eq 'Variation maps to more than one genomic location') {
-      $_ = "Variation maps to $count genomic locations"; 
+    if ($_ eq 'Variant maps to more than one genomic location') {
+      $_ = "Variant maps to $count genomic locations"; 
     }
   }
  
@@ -357,7 +357,7 @@ sub synonyms {
 
     return [
       sprintf('<a class="toggle %s _slide_toggle set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a>', $show ? 'open' : 'closed'),
-      sprintf('<p>This variation has <strong>%s</strong> synonyms - click the plus to show</p><div class="variation_synonyms twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+      sprintf('<p>This variant has <strong>%s</strong> synonyms - click the plus to show</p><div class="variation_synonyms twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
         $count,
         $show ? '' : 'display:none',
         join('', map "<li>$_</li>", @synonyms_list)
@@ -466,7 +466,7 @@ sub location {
   my %mappings = %{$object->variation_feature_mapping};
   my $count    = scalar keys %mappings;
   
-  return ['Location', 'This variation has not been mapped'] unless $count;
+  return ['Location', 'This variant has not been mapped'] unless $count;
   
   my $hub = $self->hub;
   my $vf  = $hub->param('vf');
@@ -504,7 +504,7 @@ sub location {
     );
   }
   else {
-    $location = "This variation maps to $count genomic locations; <b>None selected</b>";
+    $location = "This variant maps to $count genomic locations; <b>None selected</b>";
   }
   
   return [ 'Location', "$location$location_link" ];
@@ -671,7 +671,7 @@ sub hgvs {
     return [
       sprintf('<a class="toggle %s _slide_toggle set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a>', $show ? 'open' : 'closed'),
       sprintf(qq(<div class="twocol-cell">
-        <p>This variation has <strong>%s</strong> HGVS names - click the plus to show</p>
+        <p>This variant has <strong>%s</strong> HGVS names - click the plus to show</p>
         <div class="HGVS_names"><div class="toggleable"%s>$html</div></div>
       </div>), $count, $show ? '' : ' style="display:none"')
     ];
@@ -706,7 +706,7 @@ sub sets{
   
     return [
       sprintf('<a class="toggle %s _slide_toggle set_cookie" href="#" rel="variation_sets" title="Click to toggle sets names">Genotyping chips</a>', $show ? 'open' : 'closed'),
-      sprintf('<p>This variation has assays on <strong>%s</strong> chips - click the plus to show</p><div class="variation_sets twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+      sprintf('<p>This variant has assays on <strong>%s</strong> chips - click the plus to show</p><div class="variation_sets twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
         $count,
         $show ? '' : 'display:none',
         join('', map "<li>$_</li>", @genotyping_sets_list)
@@ -715,7 +715,7 @@ sub sets{
   }
   else {
     return scalar @genotyping_sets_list
-      ? ['Genotyping chips', sprintf('This variation has assays on: %s', join(', ', @genotyping_sets_list))]
+      ? ['Genotyping chips', sprintf('This variant has assays on: %s', join(', ', @genotyping_sets_list))]
       : ()
     ;
   }

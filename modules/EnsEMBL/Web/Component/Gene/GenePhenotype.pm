@@ -130,7 +130,7 @@ sub gene_phenotypes {
     }
   }
   if (scalar @rows) {
-    $html = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the gene $g_name</h2>};
+    $html = qq{<a id="gene_phenotype"></a><h2>Phenotype(s) and disease(s) associated with this gene $g_name</h2>};
     my @columns = (
       { key => 'phenotype', align => 'left', title => 'Phenotype' },
       { key => 'source',    align => 'left', title => 'Source'    }
@@ -151,7 +151,7 @@ sub gene_phenotypes {
     }
   }
   else {
-    $html = "<p>No phenotypes directly associated with gene $g_name.</p>";
+    $html = "<p>No phenotype or disease is known to be directly associated with this gene $g_name.</p>";
   }
   return $html;
 }

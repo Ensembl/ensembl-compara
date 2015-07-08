@@ -1396,8 +1396,8 @@ sub get_key {
   my @messages;
 
   my $key_list;
-     push @messages,"Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}"                if $config->{'population_filter'};
-     push @messages,'Variations are filtered by consequence type',                                                                                   if $config->{'consequence_filter'};
+     push @messages,"Displaying variants for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}"                if $config->{'population_filter'};
+     push @messages,'Variants are filtered by consequence type',                                                                                   if $config->{'consequence_filter'};
      push @messages,'Conserved regions are where >50&#37; of bases in alignments match'                                                              if $config->{'key'}{'conservation'};
      push @messages,'For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line'    if $config->{'alignment_numbering'};
      push @messages,"<code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)",
