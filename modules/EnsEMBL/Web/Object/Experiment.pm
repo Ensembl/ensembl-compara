@@ -100,6 +100,7 @@ sub new {
     push @$feature_sets_info, {
       'source_info'         => $source_info,
       'project_name'        => $project_name,
+      'experimental_group'  => $experiment->experimental_group->name,
       'project_url'         => $experiment_group ? $experiment_group->url : '',
       'feature_set_name'    => $feature_set->name,
       'feature_type_name'   => $feature_type->name,

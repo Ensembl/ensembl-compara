@@ -906,4 +906,35 @@ sub is_new_regulation_pipeline { # Regulation rewrote their pipeline
   return $new;
 }
 
+sub _source_url {
+  my ($url,$type,$params) = @_;
+
+  my @x = split(/###/,$url,-1);
+  my @y;
+  while(@x) {
+    push @y,(shift @x);
+    next unless @x;
+    local $_ = shift @x;
+    if(s/^(.*)=(.*)$/$1/) {
+      my $pred = $2;
+      return undef if $params->{$_} !~ /$pred/;
+    }
+    push @y,$params->{$_};
+  }
+  return join('',@y);
+}
+
+sub source_url {
+  my ($self,$type,$params) = @_;
+
+  my $urls = $self->species_defs->ENSEMBL_EXTERNAL_URLS->{uc $type};
+  return undef unless $urls;
+  $urls = [$urls] unless ref($urls) eq 'ARRAY';
+  foreach my $url (@$urls) {
+    my $ret = _source_url($url,$type,$params);
+    return $ret if $ret;
+  }
+  return undef;
+}
+
 1;
