@@ -20,10 +20,11 @@ use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::AlignIO;
 use File::Spec;
 use Getopt::Long;
+use Bio::EnsEMBL::ApiVersion;
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
-use Bio::EnsEMBL::ApiVersion;
 
 my $tree_id_file;
 my $one_tree_id;
@@ -39,13 +40,19 @@ my $phyloxml;
 my $cafe_phyloxml;
 my $aa = 1;
 my $dirpath;
+my $reg_conf;
+my $reg_alias;
 
 $| = 1;
 
 GetOptions('help'           => \$help,
            'tree_id_file|infile=s' => \$tree_id_file,
            'tree_id=i'      => \$one_tree_id,
+
+           'reg_conf=s'     => \$reg_conf,
+           'reg_alias=s'    => \$reg_alias,
            'url=s'          => \$url,
+
            'a|aln_out=s'    => \$aln_out,
            'f|fasta_out=s'  => \$fasta_out,
            'fc|fasta_cds_out=s' => \$fasta_cds_out,
@@ -60,7 +67,7 @@ GetOptions('help'           => \$help,
 
 if ($help) {
   print "
-$0 [--tree_id id | --tree_id_file file.txt] --url mysql://ensro\@compara1:3306/kb3_ensembl_compara_59
+$0 [--tree_id id | --tree_id_file file.txt] [--url mysql://ensro\@compara1:3306/kb3_ensembl_compara_59 | -reg_conf reg_file.pm -reg_alias alias ]
 
 --tree_id         the root_id of the tree to be dumped
 --tree_id_file    a file with a list of tree_ids
@@ -90,12 +97,19 @@ unless ( (defined $tree_id_file && (-r $tree_id_file)) or $one_tree_id ) {
   print "\n either --tree_id_file or --tree_id has to be defined.\nEXIT 1\n\n";
   exit 1;
 }
-unless (defined $url) {
-  print "\n--url is not defined. It should be something like mysql://ensro\@compara1:3306/kb3_ensembl_compara_59\nEXIT 2\n\n";
+
+unless ($url or ($reg_conf and $reg_alias)) {
+  print "\nNeither --url nor --reg_conf and --reg_alias is not defined. The URL should be something like mysql://ensro\@compara1:3306/kb3_ensembl_compara_59\nEXIT 2\n\n";
   exit 2;
 }
 
-my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch( $url.';type=compara' );
+if($reg_conf) {
+    Bio::EnsEMBL::Registry->load_all($reg_conf);    # if undefined, default reg_conf will be used
+}
+my $dba = $reg_alias
+    ? Bio::EnsEMBL::Registry->get_DBAdaptor( $reg_alias, 'compara' )
+    : Bio::EnsEMBL::Hive::URLFactory->fetch( $url.';type=compara' );
+
 my $adaptor = $dba->get_GeneTreeAdaptor;
 
 my @tree_ids;
