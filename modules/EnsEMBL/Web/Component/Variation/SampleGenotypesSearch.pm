@@ -123,7 +123,7 @@ sub content_results {
      
       my $sample_name   = $sample_obj->name;
       my $gender        = $sample_obj->individual->gender;
-      my $description   = $object->sample_description($sample_obj);
+      my $description   = $object->description($sample_obj);
          $description ||= '-';
       my $population    = $self->get_all_populations($sample_obj);  
          
