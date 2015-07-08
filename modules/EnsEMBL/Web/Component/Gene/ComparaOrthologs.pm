@@ -74,23 +74,23 @@ sub content {
   if ($species_sets) {
     $html .= qq{
       <h3>Summary of orthologues of this gene</h3>
-      <p class="space-below">Click on 'Show' to display the orthologues for one or more groups, or click on 'Configure this page' to choose a custom list of species</p>
+      <p class="space-below">Click on 'Show details' to display the orthologues for one or more groups of species. Alternatively, click on 'Configure this page' to choose a custom list of species.</p>
     };
  
     $columns = [
-      { key => 'set',       title => 'Species set',    align => 'left',    width => '20%' },
+      { key => 'set',       title => 'Species set',    align => 'left',    width => '26%' },
       { key => 'show',      title => 'Show details',   align => 'center',  width => '10%' },
-      { key => '1:1',       title => '1:1',            align => 'center',  width => '20%' },
-      { key => '1:many',    title => '1:many',         align => 'center',  width => '20%' },
-      { key => 'many:many', title => 'many:many',      align => 'center',  width => '20%' },
-      { key => 'none',      title => 'No orthologues', align => 'center',  width => '20%' },
+      { key => '1:1',       title => 'With 1:1 orthologues',       align => 'center',  width => '16%', help => 'Number of species with 1:1 orthologues' },
+      { key => '1:many',    title => 'With 1:many orthologues',    align => 'center',  width => '16%', help => 'Number of species with 1:many orthologues' },
+      { key => 'many:many', title => 'With many:many orthologues', align => 'center',  width => '16%', help => 'Number of species with many:many orthologues' },
+      { key => 'none',      title => 'Without orthologues',        align => 'center',  width => '16%', help => 'Number of species without orthologues' },
     ];
 
     foreach my $set (@$set_order) {
       my $set_info = $species_sets->{$set};
       
       push @rows, {
-        'set'       => "<strong>$set_info->{'title'}</strong><br />$set_info->{'desc'}",
+        'set'       => "<strong>$set_info->{'title'}</strong> (<i>$set_info->{'all'} species</i>)<br />$set_info->{'desc'}",
         'show'      => qq{<input type="checkbox" class="table_filter" title="Check to show these species in table below" name="orthologues" value="$set" />},
         '1:1'       => $set_info->{'1-to-1'}       || 0,
         '1:many'    => $set_info->{'1-to-many'}    || 0,
@@ -108,7 +108,7 @@ sub content {
 
   my $column_name = $self->html_format ? 'Compare' : 'Description';
   
-  my $columns = [
+  $columns = [
     { key => 'Species',    align => 'left', width => '10%', sort => 'html'                                                },
     { key => 'Type',       align => 'left', width => '5%',  sort => 'string'                                              },
     { key => 'dN/dS',      align => 'left', width => '5%',  sort => 'numeric'                                             },
