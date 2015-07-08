@@ -90,6 +90,8 @@ sub fetch_input {
       $self->param('mlss_id', $mlss->get_value_for_tag('msa_mlss_id'));
     }
 
+    $self->param('is_pairwise_alignment', $mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment' ? 1 : 0);
+
     $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
     my $filename = $mlss->name;
     $filename =~ s/[\W\s]+/_/g;
@@ -143,7 +145,7 @@ sub write_output {
         }
 
         #Set up other job
-        $self->dataflow_output_id($output_ids, 4);
+        $self->dataflow_output_id($output_ids, 4) unless $self->param('is_pairwise_alignment');
 
         # In case there is something connected there: a job to dump all the
         # blocks in 1 file

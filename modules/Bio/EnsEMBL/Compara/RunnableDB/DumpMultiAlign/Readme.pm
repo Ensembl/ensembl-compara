@@ -117,7 +117,9 @@ sub _create_specific_readme {
     } elsif ($mlss->method->type eq "EPO_LOW_COVERAGE") {
 	$self->_create_specific_epo_low_coverage_readme($compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor);
     } elsif ($mlss->method->type eq "LASTZ_NET") {
-	$self->_create_specific_lastz_readme($compara_dba, $mlss, $species_set);
+	$self->_create_specific_pairaligner_readme($compara_dba, $mlss, $species_set, 'LastZ');
+    } elsif ($mlss->method->type eq 'TRANSLATED_BLAT_NET' ) {
+	$self->_create_specific_pairaligner_readme($compara_dba, $mlss, $species_set, 'Translated Blat');
     } else {
         die "I don't know how to generate a README for ".$mlss->method->type."\n";
     }
@@ -241,18 +243,18 @@ Pecan builds alignments in these syntenic regions.");
 }
 
 #
-#Create LASTZ_NET README file
+#Create PairAligner README file
 #
-sub _create_specific_lastz_readme {
-    my ($self, $compara_dba, $mlss, $species_set) = @_;
+sub _create_specific_pairaligner_readme {
+    my ($self, $compara_dba, $mlss, $species_set, $aligner_name) = @_;
 
     my $full_pairwise_name = join(' vs ', map {lc $self->_get_species_description($_)} @$species_set);
-    $self->_print_header("$full_pairwise_name LASTZ pairwise alignments");
+    $self->_print_header("$full_pairwise_name $aligner_name pairwise alignments");
 
     my $ref_species = $mlss->get_value_for_tag('reference_species');
     my $ref_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($ref_species);
     my $common_species_name = lc $self->_get_species_common_name($ref_genome_db);
-    $self->_print_paragraph("$common_species_name was used as the reference species. After running LastZ, the raw LastZ alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.");
+    $self->_print_paragraph("$common_species_name was used as the reference species. After running $aligner_name, the raw alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.");
 
     $self->_print_file_grouping_help();
     $self->_print_format_helper($mlss);
