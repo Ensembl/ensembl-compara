@@ -94,7 +94,7 @@ sub draw_features {
   my $any_on = scalar keys %{$data->{$set}{'on'}};
   if ($peaks) {
     if ($data->{$set}{'block_features'}) {   
-      $self->draw_blocks($data->{$set}{'block_features'}, $label, undef, $colours, $data->{$set}{'on'} ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) : '',!$wiggle?$zmenu_extra_content:undef);
+      $self->draw_blocks($data->{$set}{'block_features'}, $label, undef, $colours, $data->{$set}{'on'} ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) : '',!$wiggle?$zmenu_extra_content:undef,$cell_line eq 'MultiCell');
     } else {
       $self->display_error_message($cell_line, $set, 'peaks') if $any_on;
     }
@@ -113,7 +113,7 @@ sub draw_features {
 }
 
 sub draw_blocks { 
-  my ($self, $fs_data, $display_label, $bg_colour, $colours, $tracks_on, $zmenu_extra_content) = @_;
+  my ($self, $fs_data, $display_label, $bg_colour, $colours, $tracks_on, $zmenu_extra_content,$is_multi) = @_;
   
   $self->draw_track_name($display_label, 'black', -118, undef);
   if ($tracks_on) {
@@ -123,13 +123,15 @@ sub draw_blocks {
   }
 
   foreach my $f_set (sort { $a cmp $b } keys %$fs_data) { 
-    my $feature_name = $f_set; 
-    my @temp         = split /:/, $feature_name;
-       $feature_name = $temp[-2];
+    my @temp         = split /:/, $f_set;
+    pop @temp;
+    my $feature_name = pop @temp;
+    my $cell_line = join(':',@temp);
     my $colour       = $colours->{$feature_name};  
     my $features     = $fs_data->{$f_set}; 
-    my $label        = $display_label =~ /MultiCell/ ? "$temp[0]:$temp[1]" : $temp[1];
-    
+
+    my $label = $feature_name;
+    $label = "$cell_line $feature_name" if $is_multi;
     $self->draw_track_name($label, $colour, -108, 0, 'no_offset');
     $self->draw_block_features ($features, $colour, $f_set, 1, 1);
   }
