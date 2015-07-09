@@ -113,6 +113,7 @@ Ensembl.DataTable = {
         parent = null;
       },
       fnDrawCallback: function (tableSettings) {
+        this.togglewrap('redo');
         $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', tableSettings.nTableWrapper)[tableSettings._iDisplayLength === -1 ? 'hide' : 'show']();
         
         var data          = this.data();
