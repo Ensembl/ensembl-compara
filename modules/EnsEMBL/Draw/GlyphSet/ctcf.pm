@@ -38,7 +38,9 @@ sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 sub new {
   my $self = shift;
   tombstone('2015-04-16','ds23');
-  $self->SUPER::new(@_);
+  $ret = $self->SUPER::new(@_);
+  warn "########### Module ".$self." is deprecated and will be removed in release 82.";
+  return $ret;
 }
 
 sub get_block_features {

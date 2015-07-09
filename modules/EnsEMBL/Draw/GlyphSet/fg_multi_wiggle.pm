@@ -25,6 +25,12 @@ use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::bigwig);
 
+sub new {
+  my $self = shift;
+  my $ret = $self->SUPER::new(@_);
+  return $ret;
+}
+
 sub label { return undef; }
 sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 

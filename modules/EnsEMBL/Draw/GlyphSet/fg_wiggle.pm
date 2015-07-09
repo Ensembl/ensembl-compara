@@ -46,7 +46,9 @@ sub data_by_cell_line {
 sub new {
   my $self = shift;
   tombstone('2015-04-16','ds23');
-  $self->SUPER::new(@_);
+  $ret = $self->SUPER::new(@_);
+  warn "########### Module ".$self." is deprecated and will be removed in release 82.";
+  return $ret;
 }
 
 sub draw_features {
