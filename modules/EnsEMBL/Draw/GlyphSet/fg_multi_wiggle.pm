@@ -119,7 +119,7 @@ sub draw_blocks {
   foreach my $f_set (sort { $a cmp $b } keys %$fs_data) { 
     my $feature_name = $f_set; 
     my @temp         = split /:/, $feature_name;
-       $feature_name = $temp[1];  
+       $feature_name = $temp[-2];
     my $colour       = $colours->{$feature_name};  
     my $features     = $fs_data->{$f_set}; 
     my $label        = $display_label =~ /MultiCell/ ? "$temp[0]:$temp[1]" : $temp[1];
@@ -170,7 +170,7 @@ sub process_wiggle_data {
     } 
  
     my @temp         = split /:/, $evidence_type;
-    my $feature_name = $temp[1]; 
+    my $feature_name = $temp[-2];
     my $colour       = $colour_keys->{$feature_name}; 
     
     push @labels, $feature_name;
