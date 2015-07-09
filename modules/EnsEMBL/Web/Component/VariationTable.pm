@@ -109,10 +109,9 @@ sub make_table {
       { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'} });
   }
 
-  # add GMAF, SIFT and PolyPhen for human
+  # add GMAF and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'}     },
       { key => 'polyphen', sort => 'position_html', width => '6u', label => "Poly\fPhen", align => 'center', help => $glossary->{'PolyPhen'} },
     );
 
