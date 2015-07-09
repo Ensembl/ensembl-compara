@@ -412,16 +412,22 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         var layer = $('<div class="label_layer">');
         layer.appendTo(panel.elLk.container).data({area: this});
         panel.elLk.labelLayers = panel.elLk.labelLayers.add(layer);
-        (function(){ // this to keep zmid sharable and not muddled
-          var zmid;
-          panel.elLk.labelLayers.on('mouseenter',function(e) {
-            zmid = panel.makeZMenu(e, panel.getMapCoords(e),{'approx':2});
+        (function(layer,zmid,on) {
+          layer.on('mouseenter',function(e) {
+            if(on) { return; }
+            on = true;
+            $('#'+zmid).removeClass('closed');
+            zmid = panel.makeZMenu(e,panel.getMapCoords(e),{'approx':2});
             $('#'+zmid+' .close').hide();
+            $('#'+zmid).show();
           });
-          panel.elLk.labelLayers.on('mouseleave',function(e) {
+          layer.on('mouseleave',function(e) {
+            if(!on) { return; }
+            on = false;
+            $('#'+zmid).addClass('closed');
             $('#'+zmid).hide();
           });
-        })();
+        })(layer,undefined,false);
       }
 
       $a = null;
