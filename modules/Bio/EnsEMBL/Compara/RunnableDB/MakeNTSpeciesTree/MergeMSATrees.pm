@@ -43,7 +43,7 @@ sub fetch_input {
 
  # get the full compara tree and store it in the db
  my $tree_path = $self->param('species_tree_bl');
- my $full_species_tree = `cat $tree_path`;
+ my $full_species_tree = $self->_slurp($tree_path);
  chomp $full_species_tree;
  my $full_tree = $species_tree_adapt->new_from_newick($full_species_tree, "compara_species_tree", 'name');
 
