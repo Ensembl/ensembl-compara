@@ -352,7 +352,7 @@ sub get_cell_line_data {
   my $data;
 
   foreach my $cell_line (keys %cell_lines) {
-    $cell_line =~ s/:\w*//;
+    $cell_line =~ s/:[^:]*$//;
     
     foreach my $set (@sets) {
       my $node = $image_config->get_node("reg_feats_${set}_$cell_line");
