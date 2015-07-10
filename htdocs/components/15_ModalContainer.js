@@ -309,6 +309,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     if (reload === true) {
       Ensembl.EventManager.trigger('reloadPage', !!this.pageReload || this.sectionReload, this.reloadURL);
+      Ensembl.EventManager.trigger('partialReload');
       this.sectionReload = {};
     }
   }
