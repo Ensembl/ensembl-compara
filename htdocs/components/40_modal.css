@@ -182,11 +182,14 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 .modal_content .cloud_multi_selector_list li                   { list-style: none; display: inline-block; background: [[BUTTON_BG]]; padding: 2px 8px; border: 1px solid [[BUTTON_BG]]; cursor: pointer; color: [[BUTTON_TEXT]]; }
 .modal_content .cloud_multi_selector_list li:hover             { background: [[BUTTON_BG_HOVER]]; }
 .modal_content .cloud_multi_selector_list li.off               { background: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; border: 1px solid [[BUTTON_DISABLED]]; }
+.modal_content .cloud_multi_selector_list li.partial           { background: [[BUTTON_PARTIAL]]; color: [[BUTTON_TEXT]]; border: 1px solid [[BUTTON_PARTIAL]]; }
 .modal_content .cloud_multi_selector_list li.off:hover         { background: [[BUTTON_DISABLED_HOVER]]; }
+.modal_content .cloud_multi_selector_list li.partial:hover     { background: [[BUTTON_BG_HOVER]]; }
 .cloud_flip_hint { height: 100%; position: absolute; text-align: center; width: 100%; }
 .cloud_flip_hint_wrap { display: inline-block; padding: 100px 16px; }
 .cloud_flip_hint .on { background: [[BUTTON_BG]]; border: 1px solid [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; display: inline-block; margin: 4px; padding: 2px 8px; }
 .cloud_flip_hint .off { background: [[BUTTON_DISABLED]]; border: 1px solid [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; display: inline-block; margin: 4px; padding: 2px 8px; }
+.cloud_flip_hint .partial { background: [[BUTTON_PARTIAL]]; border: 1px solid [[BUTTON_PARTIAL]]; color: [[BUTTON_TEXT]]; display: inline-block; margin: 4px; padding: 2px 8px; }
 .cloud_flip_hint .flip_icon { background-image: url("/i/32/reload.png"); display: inline-block; height: 32px; width: 32px; margin-bottom: -11px; }
 .cloud_flip_hint .error_pad { padding: 24px 8px; }
 .modal_content .cloud_multi_selector_list li.heading { background: none; border: medium none; color: black; font-size: 140%;  }

@@ -23,7 +23,6 @@ Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
     var params = {
       image_config: this.params.image_config
     };
-    params[this.urlParam] = encodeURIComponent(this.selection.join(','));
     params[this.urlParam+'_on'] = encodeURIComponent(this.changed_on.join(','));
     params[this.urlParam+'_off'] = encodeURIComponent(this.changed_off.join(','));
 

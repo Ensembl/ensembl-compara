@@ -38,7 +38,16 @@ sub shown_cells {
       $shown_cells{$cell} = 1 unless $node->get('display') eq 'off';
     }
   }
-  return [ keys %shown_cells ];
+  my $ev = $self->all_evidences->{'all'};
+  my %partials;
+  foreach my $ex (values %$ev) {
+    next unless $ex->{'on'};
+    ($partials{$_}||=0)++ for(@{$ex->{'cells'}});
+    ($partials{$_}||=0)-- for(@{$ex->{'oncells'}});
+  }
+  my @partials = grep { ($partials{$_}||0) } keys %shown_cells;
+
+  return ([ keys %shown_cells ],\@partials);
 }
 
 sub all_evidences {
@@ -60,12 +69,14 @@ sub all_evidences {
         my $ev = $node2->id;
         next unless $ev =~ s/^${type}_${cell}_//;
         my $renderer2 = $node2->get('display');
-        $evidences{$ev} ||= { cells => [], on => 0 };
+        $evidences{$ev} ||= { oncells => [], cells => [], on => 0 };
         $evidences{$ev}->{'on'} ||= ( $renderer2 ne 'off' );
         $evidences{$ev}->{'group'} ||= $node2->get('group');
+        push @{$evidences{$ev}->{'cells'}},$cell;
         if($renderer2 ne 'off') {
           $mode = 3 if $mode == 4 and $renderer ne 'off';
           $evidences{$ev}->{'on'} ||= 1;
+          push @{$evidences{$ev}->{'oncells'}},$cell if $renderer ne 'off';
           $mode &=~ 1 if $renderer eq 'tiling';
           $mode &=~ 2 if $renderer eq 'compact';
         }
@@ -162,7 +173,8 @@ sub nav_buttons {
 sub cell_line_button {
   my ($self,$image_config) = @_;
 
-  my $cell_m = scalar @{$self->shown_cells($image_config)};
+  my ($shown_cells,$partials) = $self->shown_cells($image_config);
+  my $cell_m = scalar @$shown_cells;
   my $cell_n = scalar @{$self->object->all_cell_types};
 
   my $url = $self->hub->url('Component', {
@@ -171,9 +183,13 @@ sub cell_line_button {
     image_config => $image_config,
   });
 
+  my $cell_p = scalar(@$partials);
+  my $count = "showing ".($cell_m-$cell_p)."/$cell_n";
+  $count .= " and $cell_p partially" if $cell_p;
+
   push @{$self->{'buttons'}||=[]},{
     url => $url,
-    caption => "Select cells (showing $cell_m/$cell_n)",
+    caption => "Select cells ($count)",
     class => 'cell-line',
     modal => 1
   };

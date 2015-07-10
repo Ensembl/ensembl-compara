@@ -148,14 +148,31 @@ sub ajax_cell_type {
   my $image_config_name = $hub->param('image_config') || 'regulation_view';
 
   my $image_config = $hub->get_imageconfig($image_config_name);
-  my (%cell,%changed);
 
-  my $target = \%cell;
-  foreach my $key (qw(cell cell_on cell_off)) {
+  # What changed
+  my %changes;
+  my %renderers = ( 'cell_on' => 'normal', 'cell_off' => 'off' );
+  foreach my $key (keys %renderers) {
+    my $renderer = $renderers{$key};
     foreach my $cell (split(/,/,uri_unescape($hub->param($key)))) {
-      $target->{$image_config->tree->clean_id($cell)} = 1;
+      my $id = $image_config->tree->clean_id($cell);
+      $changes{$image_config->tree->clean_id($cell)} = $renderer;
     }
-    $target = \%changed;
+  }
+
+  # Which evidences have any cell-lines on at all
+  my %any_on;
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
+    my $menu = $image_config->get_node($type);
+    next unless $menu;
+    foreach my $node (@{$menu->child_nodes}) {
+      foreach my $node2 (@{$node->child_nodes}) {
+        my $ev = $node2->id;
+        next unless $ev =~ s/^${type}_(.*?)_//;
+        my $renderer2 = $node2->get('display');
+        $any_on{$ev} = 1 if $renderer2 ne 'off';
+      }
+    }
   }
 
   foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
@@ -167,13 +184,21 @@ sub ajax_cell_type {
         $cell =~ s/^(reg_feats_|seg_)//;
       }
       next if $cell eq 'MultiCell';
-      my $renderer = $cell{$cell} ? 'normal' : 'off';
       if($image_config_name ne 'regulation_view' and
           $type eq 'seg_features') {
         next;
       }
-      next unless $changed{$cell};
-      $image_config->update_track_renderer($node->id,$renderer);
+      next unless $changes{$cell};
+      if($changes{$cell} ne 'off') { # Force non-partial
+        foreach my $node2 (@{$node->child_nodes}) {
+          my $ev = $node2->id;
+          next unless $ev =~ s/^${type}_${cell}_//;
+          my $renderer2 = $node2->get('display');
+          next if $renderer2 ne 'off' or !$any_on{$ev};
+          $image_config->update_track_renderer($node2->id,'on');
+        }
+      }
+      $image_config->update_track_renderer($node->id,$changes{$cell});
     }
   }
   $hub->session->store;

@@ -27,32 +27,35 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
   set_selection: function () {
     var panel = this;
 
-    panel.selection = $.makeArray(
-      $('.cloud_multi_selector_list li:not(.off)',panel.elLk.content).map(
-        function(i,val) {
-          return $(val).data('key');
-        }
-      )
-    );
-
-    if(panel.orig_selection) {
-      panel.changed_on = [];
-      panel.changed_off = [];
-      var pend = {};
-      $.each(panel.orig_selection,function(i,v) { pend[v] = 1; });
-      $.each(panel.selection,function(i,v) {
-        if(pend[v]) {
-          delete pend[v];
-        } else {
-          panel.changed_on.push(v);
+    if(!panel.orig) {
+      panel.orig = {};
+      $('.cloud_multi_selector_list li',panel.elLk.content).each(
+        function(i) {
+          var state = "on";
+          if($(this).hasClass('off')) { state = "off"; }
+          if($(this).hasClass('partial')) { state = "partial"; }
+          panel.orig[$(this).data('key')] = state;
+        });
+      panel.changed = false;
+      return;
+    }
+    panel.changed_on = [];
+    panel.changed_off = [];
+    $('.cloud_multi_selector_list li',panel.elLk.content).each(
+      function(i) {
+        var key = $(this).data('key');
+        var state = "on";
+        if($(this).hasClass('off')) { state = "off"; }
+        if($(this).hasClass('partial')) { state = "partial"; }
+        if(state != panel.orig[key]) {
+          if(state == 'on') {
+            panel.changed_on.push(key);
+          } else {
+            panel.changed_off.push(key);
+          }
         }
       });
-      $.each(pend,function(k,v) { panel.changed_off.push(k); });
-      panel.changed = ( panel.changed_on.length||panel.changed_off.length );
-    } else {
-      panel.orig_selection = panel.selection;
-      panel.changed = false;
-    }
+    panel.changed = ( panel.changed_on.length||panel.changed_off.length );
   },
 
   reset_selection: function () {
@@ -85,7 +88,11 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
       panel.elLk.filter.focus();
     });
     this.elLk.list.click(function() {
-      $(this).toggleClass('off');
+      if($(this).hasClass('partial')) {
+        $(this).removeClass('partial');
+      } else {
+        $(this).toggleClass('off');
+      }
       panel.set_selection();
       panel.elLk.filter.focus();
       return false;
