@@ -104,9 +104,9 @@ sub get_motif_rows {
 
   foreach my $mf (@{$f->get_associated_MotifFeatures}) {
     my @A = split /:/, $mf->display_label;
-    my ($name, $binding_matrix_name) = $A[0], $A[-1];
-    my $link = $hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
-    $name .= " ($link)" if $link;
+    my ($name, $binding_matrix_name) = ($A[0], $A[-1]);
+    my $link = $hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', { ID => $binding_matrix_name });
+    $name .= " motif ($link)" if $link;
 
     push @motif_rows, {
       type     => $f->feature_type->evidence_type_label,
