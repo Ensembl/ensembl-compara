@@ -246,8 +246,7 @@ sub insdc_accession {
     if($slice) {
       my $name = $self->_insdc_synonym($slice,'INSDC');
       if($name) {
-        return join(':',$slice->coord_system->name,$csv,$name,
-                      $slice->start,$slice->end,$slice->strand);
+        return join(':',$csv,$name);
       }
     }
   }

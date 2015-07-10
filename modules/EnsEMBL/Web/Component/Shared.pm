@@ -152,6 +152,11 @@ sub transcript_table {
 
   $location_html = "<p>$location_html</p>";
 
+  my $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
+  if ($insdc_accession) {
+    $location_html .= "<p>$insdc_accession</p>";
+  }
+
   if ($page_type eq 'gene') {
     # Haplotype/PAR locations
     my $alt_locs = $object->get_alternative_locations;
@@ -241,7 +246,7 @@ sub transcript_table {
         $button
       );
     }
-   
+
     ## Link to other haplotype genes
     my $alt_link = $object->get_alt_allele_link;
     if ($alt_link) {
@@ -402,13 +407,9 @@ sub transcript_table {
     $about_count = $self->about_feature; # getting about this gene or transcript feature counts
     
   }
-  
+
   $table->add_row('Location', $location_html);
 
-  my $insdc_accession;
-  $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
-  $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
-  
   $table->add_row( $page_type eq 'gene' ? 'About this gene' : 'About this transcript',$about_count) if $about_count;
   $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
 
