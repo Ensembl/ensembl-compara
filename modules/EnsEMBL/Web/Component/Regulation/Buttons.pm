@@ -38,7 +38,9 @@ sub content {
   $self->renderer_button;
   $self->advanced_button('featuresbycellline');
 
-  return '';
+  my $id = $self->id;
+  return qq(<input type="hidden" class="panel_type" value="RegButtons" name="panel_type_$id" />);
+
 }
 
 sub button_style {

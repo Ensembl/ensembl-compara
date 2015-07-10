@@ -467,6 +467,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           if (json.updated) {
             Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, update[0], update[1]);
             Ensembl.EventManager.trigger('reloadPage', panel.id);
+            Ensembl.EventManager.trigger('partialReload');
           }
         }
       });
