@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Regulation;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Shared);
 
 sub shown_cells {
   my ($self,$image_config) = @_;
@@ -86,37 +86,77 @@ sub all_evidences {
 
 sub buttons { return @{$_[0]->{'buttons'}||[]}; }
 
+sub button_portal {
+  my ($self, $buttons, $class) = @_;
+  $class ||= '';
+  my $html;
+
+  my $img_url = $self->img_url;
+
+  foreach (@{$buttons || []}) {
+    my ($counts,$url,$text,$extra_class) = ('','#','','');
+    $extra_class = $_->{'class'} if $_->{'class'};
+    if($_->{'count'}) {
+     $counts = qq(<span class="counts">$_->{'count'}</span>);
+    }
+    if($_->{'text'}) {
+      $text = qq(<div class="text">$_->{'text'}</div>);
+    }
+    $text =~ s/\n/<br>/g;
+    $url = $_->{'url'} if $_->{'url'};
+    $html .= ( qq(
+      <div class="portal_box $extra_class">
+        <a href="$_->{'url'}"
+           title="$_->{'title'}"
+           class="_ht">
+          <img src="$img_url$_->{'img'}"
+               alt="$_->{'title'}"/>
+          $text
+          $counts
+        </a>
+      </div>
+    ));
+    $html =~ s/ +/ /g;
+  }
+
+  return qq{<div class="portal $class">$html</div><div class="invisible"></div>};
+}
+
 sub nav_buttons {
   my ($self) = @_;
 
   my @buttons = (
-    { css => 'summary', caption => 'Summary', action => 'Summary' },
     {
-      css => 'details', caption => 'Details by Cell type',
-      action => 'Cell_line'
-    },
-    { css => 'context', caption => 'Feature Context', action => 'Context' },
-    { css => 'sourcedata', caption => 'Source Data', action => 'Evidence' }
-  );
-
-  my $action = $self->hub->action;
-  foreach my $b (@buttons) {
-    my $url = $self->hub->url({ action => $b->{'action'} });
-    my $title = $b->{'caption'};
-    my $disabled = 0;
-    if($action eq $b->{'action'}) {
-      $url = '#';
-      $title = 'YOU ARE ON THIS PAGE';
-      $disabled = 1;
+      img => "navb-reg-summary.png",
+      title => "Summary",
+      action => 'Summary',
+      text => "Summary",
+    },{
+      img => "navb-reg-details.png",
+      title => "Details by cell type",
+      action => 'Cell_line',
+      text => "Details by\ncell type",
+    },{
+      img => "navb-reg-context.png",
+      title => "Feature context",
+      action => 'Context',
+      text => "Feature\ncontext",
+    },{
+      img => "navb-reg-sourcedata.png",
+      title => "Source Data",
+      action => 'Evidence',
+      text => "Source Data",
     }
-    push @{$self->{'buttons'}||=[]},{
-      nav_image => "navb_reg_$b->{'css'}",
-      caption => $b->{'caption'},
-      title => $title,
-      url => $url,
-      disabled => $disabled,
-    };
+  );
+  foreach my $b (@buttons) {
+    if($b->{'action'} eq $self->hub->action) {
+      $b->{'title'} = "YOU ARE ON THIS PAGE";
+      $b->{'class'} = "navb-current";
+    } else {
+      $b->{'url'} = $self->hub->url({ action => $b->{'action'} });
+    }
   }
+  return $self->button_portal(\@buttons);
 }
 
 sub cell_line_button {
