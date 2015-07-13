@@ -264,6 +264,7 @@ if($mode eq 'generate') {
     $current{$d} = get_checksum_file($d);
   }
   foreach my $d (keys %$perdir) {
+    next unless $d =~ /^$root/;
     compare_checksums($d,$perdir->{$d},$current{$d});
   }
   warn "Done. If no warnings above, you are ok.\n";
