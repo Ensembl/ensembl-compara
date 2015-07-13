@@ -48,7 +48,7 @@ sub content {
   my $sub_slices       = $object->__data->{'slices'}{'tsv_transcript'}[2]; 
   my $fake_length      = $object->__data->{'slices'}{'tsv_transcript'}[3];
 
-  # Variations
+  # Variants
   my ($count_sample_snps, $sample_snps, $context_count) = $object->getFakeMungedVariationsOnSlice($transcript_slice, $sub_slices);
   my $start_difference = $object->__data->{'slices'}{'tsv_transcript'}[1]->start - $object->__data->{'slices'}{'transcript'}[1]->start;
   my @transcript_snps;
@@ -171,7 +171,7 @@ sub content {
   
   return $image->render . $self->_info(
     'Configuring the display',
-    sprintf '<p>Tip: use the "<strong>Configure this page</strong>" link on the left to customise the exon context and types of variations displayed above.<br />%s</p>', $self->variations_missing($configs->{'snps'}, $context)
+    sprintf '<p>Tip: use the "<strong>Configure this page</strong>" link on the left to customise the exon context and types of variants displayed above.<br />%s</p>', $self->variations_missing($configs->{'snps'}, $context)
   );
 }
 
@@ -267,11 +267,11 @@ sub variations_missing {
   if ($counts->[0] == 0) {
     $text .= 'There are no SNPs within the context selected for this transcript.';
   } elsif ($counts->[1] == 0) {
-    $text .= "The options set in the page configuration have filtered out all $counts->[0] variations in this region.";
+    $text .= "The options set in the page configuration have filtered out all $counts->[0] variants in this region.";
   } elsif ($counts->[0] == $counts->[1]) {
-    $text .= 'None of the variations are filtered out by the Source, Class and Type filters.';
+    $text .= 'None of the variants are filtered out by the Source, Class and Type filters.';
   } else {
-    $text .= ($counts->[0] - $counts->[1]) . " of the $counts->[0] variations in this region have been filtered out by the Source, Class and Type filters.";
+    $text .= ($counts->[0] - $counts->[1]) . " of the $counts->[0] variants in this region have been filtered out by the Source, Class and Type filters.";
   }
   
   $configure_text .= $text;
@@ -282,14 +282,14 @@ sub variations_missing {
   my $context_text;
   
   if ($counts->[2] == 0) {
-    $context_text = 'None of the intronic variations are removed by the Context filter.';
+    $context_text = 'None of the intronic variants are removed by the Context filter.';
   } elsif ($counts->[2] == 1) {
-    $context_text = "$counts->[2] intronic variation has been removed by the Context filter.";
+    $context_text = "$counts->[2] intronic variants have been removed by the Context filter.";
   } else {
-    $context_text = "$counts->[2] intronic variations are removed by the Context filter.";
+    $context_text = "$counts->[2] intronic variants are removed by the Context filter.";
   }
   
-  $context_text   .= "<br />The context is currently set to display variations within $context bp of exon boundaries.";
+  $context_text   .= "<br />The context is currently set to display variants within $context bp of exon boundaries.";
   $configure_text .= "<br />$context_text";
   
   return $configure_text;

@@ -148,7 +148,7 @@ sub render_content {
       <span style="float:right;">
         <a href="$url">Switch to $switched view <img src="/i/16/reload.png" height="12px"/></a>
       </span>
-      <h2>Summary of variation consequences in $stable_id</h2>
+      <h2>Summary of variant consequences in $stable_id</h2>
     ) . $table;
   }
   
@@ -289,7 +289,7 @@ sub stats_table {
     }
   }
   
-  # add the row for ALL variations if there are any
+  # add the row for ALL variants if there are any
   if ($total_counts) {
     my $hidden_span = '<span class="hidden">-</span>'; # create a hidden span to add so that ALL is always last in the table
     my $warning = '';
@@ -308,7 +308,7 @@ sub stats_table {
     push @rows, {
       type  => $hidden_span . 'ALL',
       view  => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL', update_panel => 1 }), 'ALL'),
-      desc  => "All variations $warning",
+      desc  => "All variants $warning",
       count => $hidden_span . $total_counts,
     };
   }
@@ -380,7 +380,7 @@ sub variation_table {
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
   
-  # create some URLs - quicker than calling the url method for every variation
+  # create some URLs - quicker than calling the url method for every variant
   my $base_url = $hub->url({
     type   => 'Variation',
     action => 'Summary',

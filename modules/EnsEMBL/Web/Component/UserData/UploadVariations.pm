@@ -59,7 +59,7 @@ sub content {
       formats</a>.</p>
       
       <p>Upload is limited to $variation_limit variants; lines after the limit
-      will be ignored. Users with more than $variation_limit variations can
+      will be ignored. Users with more than $variation_limit variants can
       split files into smaller chunks, use the standalone <a
       href="/info/docs/tools/vep/script/index.html"
       target="_blank">perl script</a> or the <a
@@ -69,7 +69,7 @@ sub content {
       documentation</a></p>
       
       <p><b>NB:</b> Ensembl now by default uses Sequence Ontology terms to
-      describe variation consequences. See <a
+      describe variant consequences. See <a
       href="/info/genome/variation/predicted_data.html#consequences">this page</a>
       for details</p>
   )});

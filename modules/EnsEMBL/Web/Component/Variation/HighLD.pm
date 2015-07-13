@@ -37,7 +37,7 @@ sub content {
   my $object = $self->object;
   
   ## first check we have a location.
-  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
+  return $self->_info('A unique location can not be determined for this variant', $object->not_unique_location) if $object->not_unique_location;
   
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
@@ -65,7 +65,7 @@ sub summary_table {
     { key => 'desc',   title => 'Description',             sort => 'string', align => 'left'   },
     { key => 'tags',   title => 'Tags',                    sort => 'string', align => 'right'  },
     { key => 'tagged', title => 'Tagged by',               sort => 'string', align => 'right'  },
-    { key => 'table',  title => 'Linked variations table', sort => 'none',   align => 'center' },
+    { key => 'table',  title => 'Linked variants table',   sort => 'none',   align => 'center' },
     { key => 'plot',   title => 'LD plot (image)',         sort => 'none',   align => 'center' },
     { key => 'export', title => 'LD plot (table)',         sort => 'none',   align => 'center' },
   ], [], { data_table => 1, sorting => [ 'name asc' ] });
@@ -175,12 +175,12 @@ sub summary_table {
   my $html = '<h2>Links to linkage disequilibrium data by population</h2>';
   
   if ($table_with_no_rows) {
-    $html .= $self->_hint('HighLD', 'Linked variation information', qq{
-      <p>A variation may have no LD data in a given population for the following reasons:</p>
+    $html .= $self->_hint('HighLD', 'Linked variant information', qq{
+      <p>A variant may have no LD data in a given population for the following reasons:</p>
       <ul>
-        <li>Linked variations are being filtered out by page configuration</li>
-        <li>Variation $v has a minor allele frequency close or equal to 0</li>
-        <li>Variation $v does not have enough genotypes to calculate LD values</li>
+        <li>Linked variants are being filtered out by page configuration</li>
+        <li>Variant $v has a minor allele frequency close or equal to 0</li>
+        <li>Variant $v does not have enough genotypes to calculate LD values</li>
         <li>Estimated r<sup>2</sup> values are below 0.05 and have been filtered out</li>
       </ul>
     });
@@ -297,7 +297,7 @@ sub linked_var_table {
       
       my $pf_string;
       
-      # check if any VAs for this variation
+      # check if any VAs for this Variant
       if ($ld->{'pfs'}) {
         $pf_string .= '<table style="border:none;width:100%;padding:0;margin:0">';
         
@@ -402,8 +402,8 @@ sub linked_var_table {
   }
   
   return $table->has_rows ?
-    $self->toggleable_table("Variations linked to $v in $pop_name", $pop_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>}) :
-    '<h3>No variations found</h3><br /><br />';
+    $self->toggleable_table("Variants linked to $v in $pop_name", $pop_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>}) :
+    '<h3>No variants found</h3><br /><br />';
 }
 
 sub ld_populations {

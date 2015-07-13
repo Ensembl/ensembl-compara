@@ -57,7 +57,7 @@ sub add_variation_options {
   ## Tweak standard markup 
   $markup->{'snp_display'} = { 
                               'name'  => 'snp_display',
-                              'label' => $options->{'label'} || 'Show variations',
+                              'label' => $options->{'label'} || 'Show variants',
                               };
   my @snp_values;
 
@@ -113,7 +113,7 @@ sub variation_options {
     $self->add_form_element($markup{'consequence_filter'});
   }
   
-  # Population filtered variations currently fail to return in a reasonable time
+  # Population filtered variants currently fail to return in a reasonable time
 #  if ($options->{'populations'}) {
 #    my $pop_adaptor = $hub->get_adaptor('get_PopulationAdaptor', 'variation'); 
 #    my @populations = map @{$pop_adaptor->$_}, @{$options->{'populations'}};
