@@ -3275,7 +3275,7 @@ sub add_sequence_variations_default {
     next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
     next if     $hashref->{'source'}{'somatic'}{$key_2} == 1;
     
-    $sequence_variation->append($self->create_track("variation_feature_${key}_$key_2", "$key_2 variations", {
+    $sequence_variation->append($self->create_track("variation_feature_${key}_$key_2", "$key_2 variants", {
       %$options,
       caption     => $prefix_caption.$key_2,
       sources     => [ $key_2 ],
@@ -3672,7 +3672,7 @@ sub add_somatic_structural_variations {
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'somatic'}{'counts'} || {}}) {
-    $somatic->append($self->create_track("somatic_sv_feature_$key_2", "$key_2 somatic structural variations", {
+    $somatic->append($self->create_track("somatic_sv_feature_$key_2", "$key_2 somatic structural variants", {
       %options,
       caption     => $prefix_caption."$key_2 somatic",
       source      => $key_2,
