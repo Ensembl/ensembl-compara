@@ -34,11 +34,11 @@ sub content {
   my $vf     = $self->hub->param('vf');
   my $html;
   ## first check we have uniquely determined variation
-  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
+  return $self->_info('A unique location can not be determined for this variant', $object->not_unique_location) if $object->not_unique_location;
 
   my $data = $object->get_external_data();
 
-  return 'We do not have any external data for this variation' unless (scalar @$data);
+  return 'We do not have any external data for this variant' unless (scalar @$data);
 
   my $is_somatic = $object->Obj->is_somatic;
   my $study      = ($is_somatic && $object->Obj->source =~ /COSMIC/i) ? 'Tumour site' : 'Study'; 
