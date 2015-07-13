@@ -40,11 +40,11 @@ sub ICON_MAPPINGS {
     'search'        => { 'file' => 'search.png',          'alt' => 'search',      'title' => "Search this $component"             },
     'download'      => { 'file' => 'download.png',        'alt' => 'download',    'title' => "Download data from this $component" },
     'image'         => { 'file' => 'picture.png',         'alt' => 'image',       'title' => "Export this image"                  },
-    'userdata'      => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Manage your custom tracks"          },
+    'userdata'      => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Manage your data"                   },
     'share'         => { 'file' => 'share.png',           'alt' => 'share',       'title' => "Share this $component"              },
-    'reset_config'  => { 'file' => 'settings-reset.png',  'alt' => 'reset config', 'title' => "Reset configuration"               },
-    'reset_order'   => { 'file' => 'order-reset.png',     'alt' => 'reset order', 'title' => "Reset track order"                },
-    'resize'        => { 'file' => 'image_resize.png',    'alt' => 'resize image', 'title' => "Resize this image"                },
+    'reset_config'  => { 'file' => 'settings-reset.png',  'alt' => 'reset config','title' => "Reset configuration"                },
+    'reset_order'   => { 'file' => 'order-reset.png',     'alt' => 'reset order', 'title' => "Reset track order"                  },
+    'resize'        => { 'file' => 'image_resize.png',    'alt' => 'resize image','title' => "Resize this image"                  },
   };
 }
 
