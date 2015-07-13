@@ -979,11 +979,14 @@ sub _add_datahub_tracks {
       ## TODO - remove this warn once we've benchmarked trackhub visibility
       #warn sprintf('... SETTING TRACK STYLE TO %s FOR %s TRACK %s', $display, uc($type), $track->{'track'});
     }
+    ## Note that we use a duplicate value in description and longLabel, because non-hub files 
+    ## often have much longer descriptions so we need to distinguish the two
     my $source       = {
       name        => $track->{'track'},
       source_name => $source_name,
       desc_url    => $track->{'description_url'},
       description => $track->{'longLabel'},
+      longLabel   => $track->{'longLabel'},
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
@@ -1203,6 +1206,7 @@ sub _add_bigbed_track {
     colourset    => 'feature',
     strand       => $strand,
     style        => $args{'source'}{'style'},
+    longLabel    => $args{'source'}{'longLabel'},
     addhiddenbgd => 1,
     max_label_rows => 2,
   };
@@ -1237,6 +1241,7 @@ sub _add_bigwig_track {
     external     => 'external',
     sub_type     => 'bigwig',
     colour       => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
+    longLabel    => $args{'source'}{'longLabel'},
     addhiddenbgd => 1,
     max_label_rows => 2,
   };

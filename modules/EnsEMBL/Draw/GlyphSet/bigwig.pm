@@ -36,7 +36,11 @@ use EnsEMBL::Web::File::Utils::URL;
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub href_bgd       { return $_[0]->_url({ action => 'UserData' }); }
-sub wiggle_subtitle { return $_[0]->my_config('caption'); }
+
+sub wiggle_subtitle {
+  my $self = shift;
+  return $self->my_config('longLabel') || $self->my_config('caption');
+} 
 
 sub bigwig_adaptor { 
   my $self = shift;

@@ -35,7 +35,10 @@ use EnsEMBL::Web::Text::Feature::BED;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
-sub wiggle_subtitle { return $_[0]->my_config('caption'); }
+sub wiggle_subtitle { 
+  my $self = shift;
+  return $self->my_config('longLabel') || $self->my_config('caption');
+}
 
 sub my_helplink   { return 'bigbed'; }
 sub feature_id    { $_[1]->id;       }
