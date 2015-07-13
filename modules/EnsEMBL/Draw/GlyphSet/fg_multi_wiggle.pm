@@ -131,7 +131,7 @@ sub draw_blocks {
     my $features     = $fs_data->{$f_set}; 
 
     my $label = $feature_name;
-    $label = "$cell_line $feature_name" if $is_multi;
+    $label = "$feature_name $cell_line" if $is_multi;
     $self->draw_track_name($label, $colour, -108, 0, 'no_offset');
     $self->draw_block_features ($features, $colour, $f_set, 1, 1);
   }

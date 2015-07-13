@@ -311,8 +311,14 @@ sub draw_track_name {
   my $y  = $self->_offset; 
      $y += $y_offset if $y_offset;
      
-  my %font_details = $self->get_font_details('innertext', 1); 
-  my @res_analysis = $self->get_text_width(0, $name, '', %font_details);
+  my %font_details = $self->get_font_details('innertext', 1);
+
+  my @res_analysis;
+  while($name) {
+    @res_analysis = $self->get_text_width(0, $name, '', %font_details);
+    last if($res_analysis[2] < -$x_offset);
+    $name = substr($name,0,-1);
+  }
 
   $self->push($self->Text({
     x         => $x,
