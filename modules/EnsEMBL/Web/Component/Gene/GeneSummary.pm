@@ -101,7 +101,7 @@ sub content {
       $lrg_link." provide".
       (@lrg_matches > 1 ? "" : "s").
       " a stable genomic reference framework ".
-      "for describing sequence variations for this gene";
+      "for describing sequence variants for this gene";
 
     $lrg_html .= $lrg_link;
   }
