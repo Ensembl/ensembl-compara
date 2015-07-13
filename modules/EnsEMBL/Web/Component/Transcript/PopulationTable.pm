@@ -69,13 +69,13 @@ sub content {
  
   my $message = '
         <p>
-          There are no variations in this region in %s, or the variations have been filtered out by the options set in the page configuration. 
+          There are no variants in this region in %s, or the variants have been filtered out by the options set in the page configuration. 
           To change the filtering options select the "Configure this page" link from the menu on the left hand side of this page.
         </p><br />
       ';
 
   if ($hub->param('data_grouping') eq 'by_variant') {
-    $html .= "<h2>Variations in position</h2>";
+    $html .= "<h2>Variants in position</h2>";
     my (@rows, @missing);
     foreach my $sample (@samples) {
       my @data = map @{$snp_data->{$_}{$sample} || []}, sort keys %$snp_data;
@@ -103,12 +103,12 @@ sub content {
         $tables{$sample} = sprintf($message, 'this strain');
       }
     }  
-  $html .= "<h2>Variations in $_:</h2>$tables{$_}" for keys %tables;
+  $html .= "<h2>Variants in $_:</h2>$tables{$_}" for keys %tables;
   }
 
   $html .= $self->_info('Configuring the display', sprintf('
     <p>These %ss are displayed by default: <b>%s.</b><br />
-    Select the "Configure this page" link in the left hand menu to customise which %ss and types of variation are displayed in the tables above.</p>',
+    Select the "Configure this page" link in the left hand menu to customise which %ss and types of variants are displayed in the tables above.</p>',
     $strain_name, join(', ', $self->object->get_samples('default')), $strain_name
   ));  
   
