@@ -170,6 +170,7 @@ sub wiggle_aggregate {
       length => $slice->length,
       strand => $slice->strand,
       max => max(@$values),
+      min => min(@$values),
       values => $values,
     };
   }
@@ -246,11 +247,18 @@ sub draw_features {
 
     my $viewLimits = $self->my_config('viewLimits');
     my $no_titles  = $self->my_config('no_titles');
-    # TODO barcode renderer cannot cope with minimum score being non-zero
-    my $max_score;
+    my ($min_score,$max_score);
     my $signal_range = $self->my_config('signal_range');
     if(defined $signal_range) {
+      $min_score = $signal_range->[0];
       $max_score = $signal_range->[1];
+    }
+    unless(defined $min_score) {
+      if (defined $viewLimits) {
+        $min_score = [ split ':', $viewLimits ]->[0];
+      } else {
+        $min_score = $agg->{'min'};
+      }
     }
     unless(defined $max_score) {
       if (defined $viewLimits) {
@@ -264,11 +272,14 @@ sub draw_features {
     if($gang and $gang->{'max'}) {
       $max_score = $gang->{'max'};
     }
+    if($gang and $gang->{'min'}) {
+      $min_score = $gang->{'min'};
+    }
 
     # render wiggle plot
     my $height = $self->my_config('height') || 60;
     $self->draw_wiggle_plot($agg->{'values'}, {
-      min_score    => 0,
+      min_score    => $min_score,
       max_score    => $max_score,
       score_colour => $colour,
       axis_colour  => $colour,

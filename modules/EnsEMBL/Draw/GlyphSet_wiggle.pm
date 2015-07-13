@@ -337,10 +337,6 @@ sub do_draw_wiggle {
   # pix_per_score: vertical pixels per unit score
   my $max_score     = $parameters->{'max_score'};
   my $min_score     = $parameters->{'min_score'};
-  if($parameters->{'unit'}) {
-    # Barcode glyph can't cope with anything else
-    $min_score = 0;
-  }
   my $range = $max_score-$min_score;
   if($range < 0.01) {
     # Oh dear, data all has pretty much same value ...

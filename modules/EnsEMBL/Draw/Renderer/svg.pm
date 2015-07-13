@@ -23,6 +23,8 @@ use vars qw(%classes);
 
 use base qw(EnsEMBL::Draw::Renderer);
 
+use List::Util qw(max);
+
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
   $im_height = int($im_height * $self->{sf});
@@ -155,14 +157,14 @@ sub render_Barcode {
     my $mul = ($y2-$y1) / $max;
     my $style = $self->style($glyph,$colours[0]);
     foreach my $p (@$points) {
-      my $yb = $y2 - $p * $mul;
+      my $yb = $y2 - max($p,0) * $mul;
       $self->add_string(sprintf($fmt,$x1,$y2,$x2-$x1+1,$yb-$y2+1,$style));
       $x1 += $step;
       $x2 += $step;
     }
   } else {
     foreach my $p (@$points) {
-      my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
+      my $colour = $colours[int(max($p,0) * scalar @colours / $max)] || 'black';
       my $style = $self->style($glyph,$colour);
       $self->add_string(sprintf($fmt,$x1,$y1,$x2-$x1+1,$y2-$y1+1,$style));
       $x1 += $step;

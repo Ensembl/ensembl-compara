@@ -26,6 +26,8 @@ use GD;
 
 use base qw(EnsEMBL::Draw::Renderer);
 
+use List::Util qw(max);
+
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
   $self->{'im_width'}     = $im_width;
@@ -361,7 +363,7 @@ sub render_Barcode {
   if($glyph->{'wiggle'} eq 'bar') {
     my $mul = ($y2-$y1) / $max;
     foreach my $p (@$points) {
-      my $yb = $y2 - $p * $mul;
+      my $yb = $y2 - max($p,0) * $mul;
       $canvas->filledRectangle($x1,$yb,$x2,$y2,$colours[0]);
       $x1 += $step;
       $x2 += $step;
@@ -369,7 +371,7 @@ sub render_Barcode {
   } else {
     my $mul =  scalar(@colours) / $max;
     foreach my $p (@$points) {
-      my $colour = $colours[int($p * $mul)] || '000000';
+      my $colour = $colours[int(max($p,0) * $mul)] || '000000';
       $canvas->filledRectangle($x1,$y1,$x2,$y2,$colour);
       $x1 += $step;
       $x2 += $step;

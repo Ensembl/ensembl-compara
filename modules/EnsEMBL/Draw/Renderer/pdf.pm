@@ -24,6 +24,8 @@ use PDF::API2;
 
 use base qw(EnsEMBL::Draw::Renderer);
 
+use List::Util qw(max);
+
 1;
 
 sub init_canvas {
@@ -118,7 +120,7 @@ sub render_Barcode {
   if($glyph->{'wiggle'} eq 'bar') {
     my $mul = ($y2-$y1) / $max;
     foreach my $p (@$points) {
-      my $yb = $y1 + $p * $mul;
+      my $yb = $y1 + max($p,0) * $mul;
       $self->strokecolor($colours[0]);
       $self->fillcolor($colours[0]);
       $self->rect($x1,$top-$y2,$x2-$x1,$yb-$y1,$colours[0]);
@@ -128,7 +130,7 @@ sub render_Barcode {
     }
   } else {
     foreach my $p (@$points) {
-      my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
+      my $colour = $colours[int(max($p,0) * scalar @colours / $max)] || 'black';
       $self->fillcolor($colour);
       $self->strokecolor($colour);
       $self->rect($x1,$top-$y1,$x2-$x1,$y2-$y1);
