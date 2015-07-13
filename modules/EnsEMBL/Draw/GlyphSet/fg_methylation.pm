@@ -56,7 +56,7 @@ sub features {
   
   return unless defined $rs;
 
-  my $bigbed_file = $rs->dbfile_data_dir;
+  my $bigbed_file = $rs->dbfile_path;
   
   # Substitute path, if necessary. TODO: use DataFileAdaptor  
   my @parts = split m!/!, $bigbed_file;
