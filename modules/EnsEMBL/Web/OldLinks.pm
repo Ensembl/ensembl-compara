@@ -146,14 +146,23 @@ our %mapping = (
   'miscsetview'           => [{ 'type' => 'Location',            'action' => 'Miscset',                      'initial_release' => 34 }],
 
   # Renamed
-  'Variation/Individual'  => [{ 'type' => 'Variation',           'action' => 'Sample',                        'initial_release' => 81 }],
+  'Page'                  => {
+                              'Variation/Individual'  => {'type' => 'Variation', 'action' => 'Sample', 'initial_release' => 81},
+                              },
 );
 
 sub get_redirect {
-  my ($old_name) = @_;
+  my ($old_name, $type, $action) = @_;
   
   return undef unless exists $mapping{$old_name};
-  return "$mapping{$old_name}[0]{'type'}/$mapping{$old_name}[0]{'action'}";
+
+  if ($old_name eq 'Page') {
+    return undef unless exists $mapping{'Page'}{$type.'/'.$action};
+    return ($mapping{'Page'}{$type.'/'.$action}{'type'}, $mapping{'Page'}{$type.'/'.$action}{'action'});
+  }
+  else {
+    return "$mapping{$old_name}[0]{'type'}/$mapping{$old_name}[0]{'action'}";
+  }
 }
 
 sub get_archive_redirect {
