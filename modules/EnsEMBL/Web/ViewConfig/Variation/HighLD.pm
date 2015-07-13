@@ -44,7 +44,7 @@ sub form {
     type   => 'DropDown',
     select => 'select',
     name   => 'max_distance',
-    label  => 'Maximum distance between variations',
+    label  => 'Maximum distance between variants',
     values => [
       { value => '10000',  caption => '10kb'  },
       { value => '20000',  caption => '20kb'  },
@@ -119,7 +119,7 @@ sub form {
   
   $self->add_form_element({
     type  => 'CheckBox',
-    label => 'Only display variations associated with phenotypes',
+    label => 'Only display variants associated with phenotypes',
     name  => 'only_phenotypes',
     value => 'yes',
     raw   => 1,
