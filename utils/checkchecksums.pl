@@ -148,20 +148,31 @@ sub save {
   rename("$masterfile.new",$masterfile);
 }
 
-sub get_checksum_file {
-  my ($dir) = @_;
+sub hashify_checksum_file {
+  my ($in) = @_;
 
   my %out;
-  open(CHECKSUMS,"ssh ensweb-1-19 zcat $BASE$dir/CHECKSUMS.gz |") or
-    die "Cannot read checksums: $!";
-  while(<CHECKSUMS>) {
+  foreach (split(m!\n!,$in)) {
     chomp; chomp;
     my $fn = $_;
     $fn =~ s!^\s*\d+\s+\d+\s+!!;
     $out{$fn} = $_;
   }
-  close CHECKSUMS;
-  return \%out; 
+  return \%out;
+}
+
+sub get_checksum_file {
+  my ($dir) = @_;
+
+  my $in = "";
+  {
+    local $/ = undef;
+    open(CHECKSUMS,"ssh ensweb-1-19 zcat $BASE$dir/CHECKSUMS.gz |") or
+      die "Cannot read checksums: $!";
+    $in = <CHECKSUMS>;
+    close CHECKSUMS;
+  }
+  return hashify_checksum_file($in); 
 }
 
 sub perdir {
@@ -217,8 +228,29 @@ sub update_file {
 
   system("mkdir -p test/$d");
   open(CHECKSUMS,"| gzip -c >test/$d/CHECKSUMS.gz") || die "$d: $!";
+
+  my $path = "$BASE/$d/CHECKSUMS.gz";
+  open(CHECKSUMS,qq(| ssh ensweb-1-19 bash -c "gzip -9 >$path")) or
+    die "Cannot write checksums: $!";
   print CHECKSUMS $contents;
   close CHECKSUMS;
+}
+
+sub file_changed {
+  my ($old,$new) = @_;
+
+  my %all;
+  $all{$_} = 1 for keys %$old;
+  $all{$_} = 1 for keys %$new;
+  foreach my $f (keys %all) {
+    my $x = $old->{$f};
+    my $y = $new->{$f};
+    return 1 unless defined $old->{$f} and defined $new->{$f};
+    $x =~ s/\s+/ /g;
+    $y =~ s/\s+/ /g;
+    return 1 unless $x eq $y;
+  }
+  return 0;
 }
 
 if($mode eq 'generate' and $reset) {
@@ -270,10 +302,24 @@ if($mode eq 'generate') {
   warn "Done. If no warnings above, you are ok.\n";
 } elsif($mode eq 'replace') {
   my $perdir = perdir($master);
+  my @all;
   foreach my $d (keys %$perdir) {
+    next unless $d =~ /^$root/;
+    push @all,$d;
+  }
+  my $i = 0;
+  my $n = @all;
+  foreach my $d (@all) {
+    $i++;
+    warn "Generating $i/$n\n";
     my $contents = "";
     $contents .= join("\n",map { $perdir->{$d}{$_} } sort keys %{$perdir->{$d}})."\n";
-    update_file($d,$contents);
+    my $old = get_checksum_file($d);
+    my $new = hashify_checksum_file($contents);
+    if(file_changed($old,$new)) {
+      warn "  updating\n";
+      update_file($d,$contents);
+    }
   }  
 }
 
