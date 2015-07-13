@@ -36,7 +36,7 @@ sub content {
   my $object = $self->object;
 
   # first check we have uniquely determined variation
-  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
+  return $self->_info('A unique location can not be determined for this variant', $object->not_unique_location) if $object->not_unique_location;
   return $self->detail_panel if $hub->param('allele');
   
   my %mappings = %{$object->variation_feature_mapping($hub->param('recalculate'))};
@@ -54,7 +54,7 @@ sub content {
       
     $html .= $self->_warning(
       'Warning',
-      '<p>Consequences for this variation have been calculated using the Ensembl reference allele' . (defined $feature_slice ? ' (' . $feature_slice->seq .')</p>' : '</p>'),
+      '<p>Consequences for this variant have been calculated using the Ensembl reference allele' . (defined $feature_slice ? ' (' . $feature_slice->seq .')</p>' : '</p>'),
       '50%'
     );
   }
@@ -364,7 +364,7 @@ sub content {
     
     return $html;
   } else { 
-    return $self->_info('', '<p>This variation has not been mapped to any Ensembl genes, transcripts or regulatory features</p>');
+    return $self->_info('', '<p>This variant has not been mapped to any Ensembl genes, transcripts or regulatory features</p>');
   }
 }
 
