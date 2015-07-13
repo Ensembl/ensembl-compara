@@ -29,7 +29,7 @@ use strict;
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
 
 sub features { 
-  warn "############# DEPRECATED MODULE - USE GlyphSet::marker instead";
+  warn "############# DEPRECATED MODULE - USE GlyphSet::simple_features instead";
   warn "This module will be removed in release 82";
   my $self     = shift;
   my $call     = 'get_all_' . ($self->my_config('type') || 'SimpleFeatures'); 
