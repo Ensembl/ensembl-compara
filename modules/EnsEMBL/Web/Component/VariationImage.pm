@@ -248,7 +248,7 @@ sub content {
     'Configuring the display',
     qq{
     <p>
-      Tip: use the '<strong>Configure this page</strong>' link on the left to customise the protein domains and types of variations displayed above.<br />
+      Tip: use the '<strong>Configure this page</strong>' link on the left to customise the protein domains and types of variants displayed above.<br />
       Please note the default 'Context' settings will probably filter out some intronic SNPs.<br />
       $info_text
     </p>}
@@ -267,11 +267,11 @@ sub config_info {
   if ($counts->[0] == 0) {
     $info = 'There are no SNPs within the context selected for this transcript.';
   } elsif ($counts->[1] == 0) {
-    $info = "The options set in the page configuration have filtered out all $counts->[0] variations in this region.";
+    $info = "The options set in the page configuration have filtered out all $counts->[0] variants in this region.";
   } elsif ($counts->[0] == $counts->[1]) {
-    $info = 'None of the variations are filtered out by the Source, Class and Type filters.';
+    $info = 'None of the variants are filtered out by the Source, Class and Type filters.';
   } else {
-    $info = ($counts->[0] - $counts->[1]) . " of the $counts->[0] variations in this region have been filtered out by the Source, Class and Type filters.";
+    $info = ($counts->[0] - $counts->[1]) . " of the $counts->[0] variants in this region have been filtered out by the Source, Class and Type filters.";
   }
   
   return $info unless defined $counts->[2]; # Context filter
@@ -279,11 +279,11 @@ sub config_info {
   $info .= '<br />';
   
   if ($counts->[2]== 0) {
-    $info .= 'None of the intronic variations are removed by the Context filter.';
+    $info .= 'None of the intronic variants are removed by the Context filter.';
   } elsif ($counts->[2] == 1) {
-    $info .= "$counts->[2] intronic variation has been removed by the Context filter.";
+    $info .= "$counts->[2] intronic variants has been removed by the Context filter.";
   } else {
-    $info .= "$counts->[2] intronic variations are removed by the Context filter.";
+    $info .= "$counts->[2] intronic variants are removed by the Context filter.";
   }
   
   return $info;
