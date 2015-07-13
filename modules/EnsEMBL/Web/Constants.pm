@@ -254,7 +254,7 @@ sub MARKUP_OPTIONS {
       'type'   => 'DropDown', 
       'select' => 'select',
       'name'   => 'population_filter',
-      'label'  => 'Filter variations by population',
+      'label'  => 'Filter variants by population',
       'notes'  => 'Warning: This could cause the page to take a long time to load',
       'values' => [{ 'value' => 'off', 'caption' => 'None' }]
     },
@@ -270,14 +270,14 @@ sub MARKUP_OPTIONS {
       'size'     => 5,
       'select'   => 'select',
       'name'     => 'consequence_filter',
-      'label'    => 'Filter variations by consequence type',
+      'label'    => 'Filter variants by consequence type',
       'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
     },
     'hide_long_snps' => {
       'type'   => 'Checkbox', 
       'select' => 'select',
       'name'   => 'hide_long_snps',
-      'label'  => 'Hide variations longer than 10bp',
+      'label'  => 'Hide variants longer than 10bp',
       'value'  => 'on',
     },
     ### GENE-SPECIFIC TEXT SEQUENCE
@@ -371,7 +371,7 @@ sub GENERAL_MARKUP_OPTIONS {
       'type'   => 'DropDown',
       'select' => 'select',
       'name'   => 'snp_display',
-      'label'  => 'Show variations',
+      'label'  => 'Show variants',
       'values' => [
         { 'value' => 'off', 'caption' => 'No'  },
         { 'value' => 'yes', 'caption' => 'Yes' },
@@ -403,7 +403,7 @@ sub GENERAL_MARKUP_OPTIONS {
       'type'   => 'DropDown',
       'select' => 'select',
       'name'   => 'population_filter',
-      'label'  => 'Filter variations by population',
+      'label'  => 'Filter variants by population',
       'notes'  => 'Warning: This could cause the page to take a long time to load',
       'values' => [{ 'value' => 'off', 'caption' => 'None' }]
     },
@@ -419,14 +419,14 @@ sub GENERAL_MARKUP_OPTIONS {
       'size'     => 5,
       'select'   => 'select',
       'name'     => 'consequence_filter',
-      'label'    => 'Filter variations by consequence type',
+      'label'    => 'Filter variants by consequence type',
       'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
     },
     'hide_long_snps' => {
       'type'   => 'DropDown',
       'select' => 'select',
       'name'   => 'hide_long_snps',
-      'label'  => 'Hide variations longer than 10bp',
+      'label'  => 'Hide variants longer than 10bp',
       'values' => [
         { 'value' => 'yes', 'caption' => 'Yes' },
         { 'value' => 'off', 'caption' => 'No'  },
@@ -535,7 +535,7 @@ sub VARIATION_OPTIONS {
       'opt_class_deletion'               =>  [ 'on', 'Deletions'              ],
       'opt_class_indel'                  =>  [ 'on', 'In-dels'                ],
       'opt_class_snp'                    =>  [ 'on', 'SNPs'                   ],
-      'opt_class_cnv'                    =>  [ 'on', 'Copy number variations' ],
+      'opt_class_cnv'                    =>  [ 'on', 'Copy number variants' ],
       'opt_class_substitution'           =>  [ 'on', 'Substitutions'          ],
       'opt_class_tandem_repeat'          =>  [ 'on', 'Tandem repeats'         ],
       'opt_class_'                       =>  [ 'on', 'Unclassified'           ],
@@ -544,7 +544,7 @@ sub VARIATION_OPTIONS {
       'opt_class_somatic_deletion'       =>  [ 'on', 'Somatic deletions'              ],
       'opt_class_somatic_indel'          =>  [ 'on', 'Somatic in-dels'                ],
       'opt_class_somatic_snv'            =>  [ 'on', 'Somatic SNVs'                   ],
-      'opt_class_somatic_cnv'            =>  [ 'on', 'Somatic copy number variations' ],
+      'opt_class_somatic_cnv'            =>  [ 'on', 'Somatic copy number variants' ],
       'opt_class_somatic_substitution'   =>  [ 'on', 'Somatic substitutions'          ],
       'opt_class_somatic_tandem_repeat'  =>  [ 'on', 'Somatic tandem repeats'         ],
       'opt_class_somatic_'               =>  [ 'on', 'Unclassified somatic mutations' ],
