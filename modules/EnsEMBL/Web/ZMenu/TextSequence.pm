@@ -149,7 +149,7 @@ sub variation_content {
 
   push @entries, (
     { type  => 'Consequences',   label_html => "<ul>$type</ul>" },
-    { link  => $hub->url({ action => 'Explore', %url_params}), label => 'Explore this variation'},
+    { link  => $hub->url({ action => 'Explore', %url_params}), label => 'Explore this variant'},
     { link  => $hub->url({ action => 'Mappings', %url_params }), label => 'Gene/Transcript Locations' }
   );
 

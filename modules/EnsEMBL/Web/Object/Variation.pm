@@ -193,7 +193,7 @@ sub count_citations{
 sub short_caption {
   my $self = shift;
   
-  my $type = $self->Obj->is_somatic ? 'Somatic mutation' : 'Variation';
+  my $type = $self->Obj->is_somatic ? 'Somatic mutation' : 'Variant';
   my $short_type = $self->Obj->is_somatic ? 'S. mut' : 'Var';
   return $type.' displays' unless shift eq 'global';   
   
