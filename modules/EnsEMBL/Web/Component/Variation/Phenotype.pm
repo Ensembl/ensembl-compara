@@ -148,7 +148,7 @@ sub table_data {
     }
     
     my $id                 = $pf->{'_phenotype_id'};
-    my $source_name        = $pf->source;
+    my $source_name        = $pf->source_name;
     my $study_name         = $pf->study ? $pf->study->name : '';
     my $disease_url        = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder }); 
     my $external_id        = ($pf->external_id) ? $pf->external_id : $study_name;
