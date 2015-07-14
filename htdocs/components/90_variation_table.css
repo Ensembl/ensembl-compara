@@ -26,3 +26,7 @@ div.genotype_short   { float:left;width:125px; }
 div.genotype_long    { float:left;width:140px; }
 div.allele_padding   { padding-right:6px; }
 div.genotype_padding { padding-right:6px; }
+
+div.clin_sign     { width:92px; padding:1px 0px 1px 3px; background-color:white; border:1px solid #DDD; border-radius:8px;-moz-border-radius: 8px; }
+img.clin_sign     { vertical-align:middle; margin-right:5px; }
+img.review_status { vertical-align:middle; margin:2px 0px; }
