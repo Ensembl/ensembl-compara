@@ -874,19 +874,21 @@ sub _add_datahub_node {
       $config->{'visibility'} = 'hide' if $hide;
     }
 
+    ## Add any setting inherited from parents
     while ($n = $n->parent_node) {
       $data = $n->data;
       if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
-        if ($hide) {
-          $config->{'visibility'} = '';
-        }
-        elsif ($data->{'visibility'}) {
-          $config->{'visibility'} = $data->{'visibility'}; 
-        }
+        $config->{'visibility'} = $hide ? '' : $data->{'visibility'}; 
         last;
       }
       $config->{$_} ||= $data->{$_} for keys %$data;
-      $config->{'visibility'} = 'hide' if $hide;
+      if ($hide) {
+        $config->{'visibility'} = 'hide';
+      }
+      else {
+        ## Override visibility with that of parent
+        $config->{'visibility'} = $data->{'visibility'} if defined $data->{'visibility'};
+      }
     };
 
     $self->_add_datahub_tracks($node, \@childless, $config, $menu, $name);
