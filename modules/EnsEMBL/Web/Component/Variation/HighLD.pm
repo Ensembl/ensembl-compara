@@ -236,7 +236,7 @@ sub linked_var_table {
   my $pop_name            = $pop->name;
   my $tables_with_no_rows = 0;
   my $table               = $self->new_table([
-    { key => 'variation',   title => 'Variation',               align => 'left', sort => 'html'                 },
+    { key => 'variation',   title => 'Variant',               align => 'left', sort => 'html'                 },
     { key => 'location',    title => 'Location',                align => 'left', sort => 'position_html'        },
     { key => 'distance',    title => 'Distance (bp)',           align => 'left', sort => 'numeric'              },
     { key => 'r2',          title => 'r<sup>2</sup>',           align => 'left', sort => 'numeric'              },
