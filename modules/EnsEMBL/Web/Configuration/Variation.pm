@@ -41,7 +41,7 @@ sub populate_tree {
   my $self    = shift;
   my $somatic = $self->object ? $self->object->Obj->has_somatic_source : undef;
 
-  $self->create_node('Explore', 'Explore this variation',
+  $self->create_node('Explore', 'Explore this variant',
     [qw(
       explore EnsEMBL::Web::Component::Variation::Explore
     )],
