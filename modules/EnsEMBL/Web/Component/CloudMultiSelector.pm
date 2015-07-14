@@ -56,7 +56,7 @@ sub content_ajax {
   my $hub          = $self->hub;
   my %all          = %{$self->{'all_options'}};       # Set in child content_ajax function - complete list of options in the form { URL param value => display label }
   my %included     = %{$self->{'included_options'}};  # Set in child content_ajax function - List of options currently set in URL in the form { url param value => order } where order is 1, 2, 3 etc.
-  my %partial      = %{$self->{'partial_options'}};
+  my %partial      = %{$self->{'partial_options'}||{}};
   my @all_categories = @{$self->{'categories'}||[]};
 
   my $url          = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
