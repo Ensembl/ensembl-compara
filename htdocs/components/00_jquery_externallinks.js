@@ -17,7 +17,6 @@
 (function ($) {
   $.fn.externalLinks = function () {
     return this.each(function() {
-      var links =
       $(this)
         .find('a[rel!=external][rel!=notexternal][target!=_blank][href^="http"]:not(:empty):not(:has(img))')
         .filter(function () {
@@ -26,8 +25,6 @@
           }
           return this.hostname !== window.location.hostname;
         }).attr('rel', 'external');
-      console.log(links.length);
-      links.each(function () { console.log(this) });
     });
   };
 })(jQuery);
