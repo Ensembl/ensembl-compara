@@ -281,6 +281,9 @@ sub run_test {
     ## (e.g. if it's a Variation test and species has no variation)
     write_to_log($object, $error, $module);
   }
+  elsif (!$object || ref($object) !~ /Selenium/) {
+    write_to_log('bug', "ABORTING TESTS ON $module - COULD NOT CREATE OBJECT. Check you have a valid configuration for this test and try again."); 
+  }
   else {
     ## Check that site being tested is up
     my @response = $object->check_website;
