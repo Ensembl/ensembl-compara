@@ -21,6 +21,9 @@
       $(this)
         .find('a[rel!=external][rel!=notexternal][target!=_blank][href^="http"]:not(:empty):not(:has(img))')
         .filter(function () {
+          if (this.hostname === 'www.ensembl.org') { // hack for 81 to exclude www.ensembl.org links in track descriptions
+            return false;
+          }
           return this.hostname !== window.location.hostname;
         }).attr('rel', 'external');
       console.log(links.length);
