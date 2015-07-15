@@ -946,16 +946,33 @@ sub render_interaction {
 
         ## Cut curve off at edge of track if ends lie outside the current window
         if ($end_1 < 0) {
-          my $cos   = $centre / $major_axis;
-          my $theta = $self->acos_in_degrees($cos);
-          $end_point -= $theta;
-          $left_height = abs(sin($theta) * $minor_axis);
+          my $x = abs($centre);
+          $x = $a if $x > $a;
+          my $theta;
+          if ($centre > 0) {
+            ($left_height, $theta) = $self->truncate_ellipse($x, $a, $b);
+            $end_point -= $theta;
+          }
+          else {
+            ($left_height, $theta) = $self->truncate_ellipse($x, $a, $b);
+            $end_point = $theta;
+          }
         }
+
         if ($s2 >= $length) {
-          my $cos   = ($self->image_width - $centre) / $major_axis;
-          my $theta = $self->acos_in_degrees($cos);
-          $start_point = $theta;
-          $right_height = abs(sin($theta) * $minor_axis);
+          my ($x, $theta);
+          if ($centre > $length) {
+            $x = $centre - $length;
+            $x = $a if $x > $a;
+            ($right_height, $theta) = $self->truncate_ellipse($x, $a, $b);
+            $start_point = 180 - $theta;
+          }
+          else {
+            $x = $length - $centre;
+            $x = $a if $x > $a;
+            ($right_height, $theta) = $self->truncate_ellipse($x, $a, $b);
+            $start_point = $theta;
+          }
         }
 
         ## Are one or both ends of this interaction visible?
@@ -965,9 +982,10 @@ sub render_interaction {
 
         ## Keep track of the maximum visible arc height, to save us a lot of grief
         ## trying to get rid of white space below the arcs
-        ## Only use arc cutoff if there's a feature at one end of it
+        ## Only use arc cutoff if there's a feature at one end of it 
+        ## (and if the arc is less than 90 degrees, hence less than full height)
         ## otherwise we end up with no track height at all!
-        if (keys %$end < 2) {
+        if (keys %$end < 2 && ($end_point - $start_point < 90)) {
           $max_arc = $left_height if (!$end->{'left'} && $left_height > $max_arc);
           $max_arc = $right_height if (!$end->{'right'} && $right_height > $max_arc);
         }
@@ -975,7 +993,7 @@ sub render_interaction {
           $max_arc = $minor_axis if $minor_axis > $max_arc;
         }
 
-        ## modify dimensions to allow for 2-pixel width of brush
+        ## Finally, we have the coordinates to draw 
         $self->push($self->Arc({
               x             => $arc_start + ($major_axis / $pix_per_bp),
               y             => $b + $h,
