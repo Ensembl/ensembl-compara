@@ -30,6 +30,7 @@
       options.url             = options.url             || data.url             || el.find('a').first().attr('href');
       options.fallBack        = options.fallBack        || data.fallBack        || el.find('a').first().html() || 'Request failed';
       options.responseFilter  = options.responseFilter  || data.responseFilter  || function (response) { return response; };
+      options.complete        = options.complete        || data.complete        || $.noop;
       options.loaded          = true;
 
       el.empty().data('dynaLoad', options);
@@ -47,6 +48,9 @@
           },
           error: function() {
             this.html(this.data('dynaLoad').fallBack).data('dynaLoad').loaded = false;
+          },
+          complete: function() {
+            this.data('dynaLoad').complete.call(this);
           }
         });
       }
