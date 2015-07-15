@@ -284,6 +284,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.getContent();
+    this.el.externalLinks();
   },
   
   showConfigMenu: function (e) {

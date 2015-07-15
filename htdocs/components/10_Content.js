@@ -63,7 +63,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return false;
       });
     }
-    
+
+    this.el.externalLinks();
   },
   
   ajaxLoad: function () {

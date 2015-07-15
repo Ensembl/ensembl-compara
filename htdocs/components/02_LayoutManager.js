@@ -43,7 +43,9 @@ Ensembl.LayoutManager.extend({
       
       this.hashChange(Ensembl.urlFromHash(window.location.href, true));
     }
-    
+
+    $(document).find('#static').externalLinks();
+
     $(document).on('click', '.modal_link', function () {
       if (Ensembl.EventManager.trigger('modalOpen', this)) {
         return false;
