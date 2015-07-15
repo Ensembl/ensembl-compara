@@ -1307,12 +1307,24 @@ sub check {
   return $name;
 }
 
-sub acos_in_degrees {
-  my ($self, $x) = @_;
-  $x = 1 if ($x > 1 || $x < -1);
-  my $pi   = 4*atan2(1,1);
-  my $acos = atan2(sqrt(1 - $x * $x), $x);
-  return int($acos/$pi * 180);
+sub truncate_ellipse {
+  my ($self, $x, $a, $b) = @_;
+  my $h = $self->ellipse_y($x, $a, $b);
+  my $theta =  $self->atan_in_degrees($x, $h);
+  return ($h, $theta);
+}
+
+sub ellipse_y {
+  my ($self, $x, $a, $b) = @_;
+  my $y = sqrt(abs((1 - (($x * $x) / ($a * $a))) * $b * $b));
+  return int($y);
+}
+
+sub atan_in_degrees {
+  my ($self, $x, $y) = @_;
+  my $pi   = 4 * atan2(1, 1);
+  my $atan = atan2($y, $x);
+  return int($atan * (180 / $pi));
 }
 
 1;
