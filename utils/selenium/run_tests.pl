@@ -15,15 +15,15 @@
 #!/usr/local/bin/perl
 
 =pod
- Wrapper script for selenium tests. 
- Takes one argument (release number) plus three JSON configuration files:
- - configure Selenium environment
- - select which tests are run in a particular batch
- - configure species to test (optional)
+  Wrapper script for selenium tests. 
+  Takes one argument (release number) plus three JSON configuration files:
+  - configure Selenium environment
+  - select which tests are run in a particular batch
+  - configure species to test (optional - defaults to release_<VERSION>_species.conf)
 
- The purpose of the latter file is to remove dependency on the web code.
- Instead, a helper script is used to dump some useful parts of the
- web configuration, which should then be eyeballed to ensure it looks OK.
+  The purpose of the latter file is to remove dependency on the web code.
+  Instead, a helper script dump_species_to_json.pl is used to dump some useful parts
+  of the web configuration, which should then be eyeballed to ensure it looks OK.
 
   Note: Configuration files must be placed in utils/selenium/conf, but they can be
   in any plugin that is configured in Plugins.pm
@@ -74,6 +74,10 @@ GetOptions(
 );
 
 die 'Please provide configuration files!' unless ($config && $tests);
+
+if (!$species) {
+  $species = sprintf('release_%s_species.conf', $release);
+}
 
 ## Find config files
 my ($config_path, $tests_path, $species_path) = find_configs($SERVERROOT);
@@ -127,9 +131,6 @@ unless (defined($verbose)) {
                 : 0;
 }
 
-## Create Selenium object
-my $selenium;
-
 unless ($DEBUG) {
   ## Check to see if the selenium server is online 
   my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
@@ -138,22 +139,20 @@ unless ($DEBUG) {
   if ($response->content ne 'OK') { 
     die "Selenium Server is offline or host configuration is wrong !!!!\n";
   }
-  $selenium = EnsEMBL::Selenium->new(
-                                     _ua         => $ua,
-                                     host        => $host,
-                                     port        => $port,
-                                     browser     => $browser,
-                                     browser_url => $CONF->{'url'},
-                                    ); 
 }
 
 ## Basic config for test modules
 my $test_config = {
-                    sel     => $selenium,
-                    url     => $url,
-                    timeout => $timeout,
-                    verbose => $verbose,  
-                    conf    => {'release' => $release},
+                    url         => $url,
+                    timeout     => $timeout,
+                    verbose     => $verbose,  
+                    conf        => {'release' => $release},
+                    sel_config  => { 
+                                      host        => $host,
+                                      port        => $port,
+                                      browser     => $browser,
+                                      browser_url => $CONF->{'url'},
+                                    },
                   };
 
 
@@ -281,8 +280,9 @@ sub run_test {
     ## (e.g. if it's a Variation test and species has no variation)
     write_to_log($object, $error, $module);
   }
-  elsif (!$object || ref($object) !~ /Selenium/) {
-    write_to_log('bug', "ABORTING TESTS ON $module - COULD NOT CREATE OBJECT. Check you have a valid configuration for this test and try again."); 
+  elsif (!$object || ref($object) !~ /Test/) {
+    write_to_log('fail', "Could not instantiate object from package $package"); 
+    return;
   }
   else {
     ## Check that site being tested is up
@@ -306,8 +306,8 @@ sub run_test {
           if (ref($_) eq 'ARRAY') {
             if ($config->{'verbose'} || $_->[0] ne 'pass') { 
               write_to_log(@$_);
-              $_->[0] eq 'pass' ? $pass++ : $fail++;
             }
+            $_->[0] eq 'pass' ? $pass++ : $fail++;
           }
           elsif ($_) {
             $pass++;
