@@ -31,8 +31,14 @@ use DBI;
 sub new {
   my ($class, $hub) = @_;
 
+    ## Ignore subtype if we're on an archive
+    my $site = lc($hub->species_defs->ENSEMBL_SUBTYPE);
+    if (!$site || $site eq 'archive') {
+      $site = lc($hub->species_defs->ENSEMBL_SITETYPE);
+    }
+
     my $self = {
-    'SITE' => lc($hub->species_defs->ENSEMBL_SUBTYPE || $hub->species_defs->ENSEMBL_SITETYPE),
+    'SITE' => $site, 
     'NAME' => $hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'},
     'HOST' => $hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'HOST'},
     'PORT' => $hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'PORT'},
