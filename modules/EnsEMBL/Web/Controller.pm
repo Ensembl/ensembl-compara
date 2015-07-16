@@ -264,7 +264,7 @@ sub set_cache_params {
   $tags{'bot'}     = 'BOT'                            if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
   
   $ENV{'CACHE_KEY'}  = join '::', map $tags{$_} || (), qw(url page_type session user mac ie bot ajax);
-  $ENV{'CACHE_KEY'} .= join '::', '', map $_->name =~ /^toggle_/ ? sprintf '%s[%s]', $_->name, $_->value : (), values %{$hub->cookies};
+  $ENV{'CACHE_KEY'} .= join '::', '', map $_->name =~ /^toggle_/ ? sprintf '%s[%s]', $_->name, $_->value : (), grep $_, values %{$hub->cookies};
   
   if ($self->request !~ /^(page|ssi)$/) {
     my $referer = $hub->referer;
