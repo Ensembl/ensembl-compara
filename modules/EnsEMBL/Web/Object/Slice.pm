@@ -34,6 +34,7 @@ package EnsEMBL::Web::Object::Slice;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
+use EnsEMBL::Web::Tree;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -353,10 +354,12 @@ sub get_cell_line_data {
 
   foreach my $cell_line (keys %cell_lines) {
     $cell_line =~ s/:[^:]*$//;
-    
+    my $ic_cell_line = $cell_line;
+    EnsEMBL::Web::Tree->clean_id($ic_cell_line);
+
     foreach my $set (@sets) {
-      my $node = $image_config->get_node("reg_feats_${set}_$cell_line");
-      
+      my $node = $image_config->get_node("reg_feats_${set}_$ic_cell_line");
+
       next unless $node;
       
       my $display = $node->get('display');
