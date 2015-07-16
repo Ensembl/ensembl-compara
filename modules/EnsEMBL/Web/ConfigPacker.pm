@@ -828,7 +828,8 @@ sub _summarise_funcgen_db {
   foreach my $row (@$rs_aref ){
     my ($regbuild_name, $regbuild_string) = @$row; 
     $regbuild_name =~s/regbuild\.//;
-    my @key_info = split(/\./,$regbuild_name); 
+    $regbuild_name =~ /^(.*)\.(.*?)$/;
+    my @key_info = ($1,$2);
     my %data;  
     my @ids = split(/\,/,$regbuild_string);
     my $sth = $dbh->prepare(
