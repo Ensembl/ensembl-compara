@@ -207,14 +207,11 @@ sub ajax_cell_type {
 sub ajax_evidence {
   my ($self,$hub) = @_;
 
-  my (%evidence,%changed);
-
-  my $target = \%evidence;
-  foreach my $key (qw(evidence evidence_on evidence_off)) {
+  my %changed;
+  foreach my $key (qw(evidence_on evidence_off)) {
     foreach my $ev (split(/,/,uri_unescape($hub->param($key)))) {
-      $target->{$ev} = 1;
+      $changed{$key}->{$ev} = 1;
     }
-    $target = \%changed;
   }
 
   foreach my $image_config_name (qw(regulation_view reg_summary_page)) {
@@ -229,8 +226,10 @@ sub ajax_evidence {
         foreach my $node2 (@{$node->child_nodes}) {
           my $ev = $node2->id;
           $ev =~ s/^${type}_${cell}_//;
-          my $renderer = $evidence{$ev} ? 'on' : 'off';
-          next unless $changed{$ev};
+          my $renderer;
+          $renderer = 'on' if $changed{'evidence_on'}->{$ev};
+          $renderer = 'off' if $changed{'evidence_off'}->{$ev};
+          next unless $renderer;
           $image_config->update_track_renderer($node2->id,$renderer);
         }
       }
