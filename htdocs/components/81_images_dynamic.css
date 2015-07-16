@@ -56,7 +56,7 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .hover_layer:hover                        { background-color: #333; }
 
 .label_layer,
-.label_layer .label_layer_bg              { position: absolute; padding-right: 5px; padding-bottom: 2px; }
+.label_layer .label_layer_bg              { position: absolute; margin-left: -5px; padding-right: 5px; padding-bottom: 2px; }
 .label_layer .label_layer_bg              { width: inherit; height: inherit; margin: 0; background-color: #333; opacity: 0.1; display: none; }
 .hover_label                              { position: absolute; margin-left: 5px; padding: 0 0 4px; border: none; display: none; text-align: left; width: 450px; cursor: default; }
 .hover_label div.spinner                  { display: none; }
