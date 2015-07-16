@@ -168,7 +168,7 @@ sub transcript_table {
   my @columns = (
      { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
      { key => 'bp_length',  sort => 'numeric', title => 'Length (bp)'   },
-     { key => 'protein',    sort => 'html',    title => 'Protein ID'    },
+     { key => 'protein',sort =>'html_numeric', title => 'Protein ID'    },
      { key => 'aa_length',  sort => 'numeric', title => 'Length (aa)'   },
   );
 
