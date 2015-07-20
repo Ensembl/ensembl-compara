@@ -168,8 +168,9 @@ sub get_redirect {
 sub get_archive_redirect {
   my ($type, $action) = @_;
   my @releases;
-  
+ 
   while (my ($old_view, $new_views) = each %mapping) {
+    next if $old_view eq 'Page';
     push @releases, [ $old_view, $_->{'initial_release'}, $_->{'final_release'}, $_->{'missing_releases'} || [] ] for grep $_->{'type'} eq $type && $_->{'action'} eq $action, @$new_views;
   }
   
