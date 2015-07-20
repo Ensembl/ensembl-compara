@@ -192,7 +192,7 @@ sub add_pointers {
       end       => $row->{'end'},
       id        => $row->{'label'},
       col       => $item_colour || $grad_colour || $default_colour,
-      href      => $href,
+      href      => $hub->url({$config_name ? ('config' => $config_name) : (), %$href}),
       html_id   => $row->{'html_id'} || '',
     };
 
