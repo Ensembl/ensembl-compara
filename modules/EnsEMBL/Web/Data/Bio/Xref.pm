@@ -63,7 +63,7 @@ sub convert_to_drawing_parameters {
         'strand'   => $g->strand,
         'length'   => $g->end-$g->start+1,
         'extra'    => {'description' => $g->description, 'dbname' => $xref->dbname},
-        'href'     => $hub->url({ 
+        'href'     => {
                         type      => 'ZMenu', 
                         action    => 'Feature', 
                         function  => 'Xref', 
@@ -73,7 +73,7 @@ sub convert_to_drawing_parameters {
                         r         => $loc, 
                         g         => $g->stable_id, 
                         desc      => $g->description,
-                      }),
+                      },
       };
     }
   }  

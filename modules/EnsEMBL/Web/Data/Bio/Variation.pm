@@ -173,7 +173,7 @@ sub convert_to_drawing_parameters {
       strand  => $pf->strand,
       html_id => "${name}_$dbID", # The html id is used to match the feature on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
       label   => $name,
-      href    => $hub->url(\%url_params),       
+      href    => \%url_params,
       p_value => $p_value_logs{$name},
       extra   => {
         feat_type   => $object_type,

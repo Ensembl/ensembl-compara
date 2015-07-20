@@ -58,7 +58,7 @@ sub convert_to_drawing_parameters {
         'label'    => $g->stable_id,
         'gene_id'  => [ $g->stable_id ],
         'extra'    => {'description' => $g->description},
-        'href'     => $hub->url({ type => 'ZMenu', action => 'Gene', g => $g->stable_id, r => ($g->seq_region_name . ':' . $g->seq_region_start . '-' . $g->seq_region_end)}),        
+        'href'     => { type => 'ZMenu', action => 'Gene', g => $g->stable_id, r => ($g->seq_region_name . ':' . $g->seq_region_start . '-' . $g->seq_region_end)},
       }
     }
   }
