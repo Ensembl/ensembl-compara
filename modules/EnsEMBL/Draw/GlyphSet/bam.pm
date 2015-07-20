@@ -459,12 +459,10 @@ sub render_coverage {
 #}
 
 # Calculate a machine-unique name for the C for safe copyability
-use Sys::Hostname::Long;
 use Digest::MD5 qw(md5_hex);
 our $cbuild_dir;
 BEGIN {
-  my $name = Sys::Hostname::Long::hostname_long.
-    ":$SiteDefs::ENSEMBL_WEBROOT";
+  my $name = $SiteDefs::ENSEMBL_COHORT;
   $cbuild_dir = "$SiteDefs::ENSEMBL_WEBROOT/.cbuild-".md5_hex($name);
   mkdir $cbuild_dir unless -e $cbuild_dir;
 };

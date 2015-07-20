@@ -537,7 +537,11 @@ sub memcached {
   $pars->{'flags'} = [ keys %flags ];
   
   $SiteDefs::ENSEMBL_MEMCACHED = $pars;
+
+  $SiteDefs::ENSEMBL_COHORT =
+    Sys::Hostname::Long::hostname_long().":".$ENSEMBL_SERVERROOT;
 }
+
 
 1;
 

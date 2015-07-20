@@ -324,10 +324,6 @@ sub set_species_config {
   $CONF->{'_storage'}{$species}{$key} = $value if defined $CONF->{'_storage'} && exists $CONF->{'_storage'}{$species};
 }
 
-sub generator {
-  Sys::Hostname::Long::hostname_long().":".$SiteDefs::ENSEMBL_SERVERROOT;
-}
-
 sub retrieve {
   ### Retrieves stored configuration from disk
   ### Returns: boolean
@@ -337,7 +333,7 @@ sub retrieve {
   my $Q    = lock_retrieve($self->{'_filename'}) or die "Can't open $self->{'_filename'}: $!"; 
   
   $CONF->{'_storage'} = $Q if ref $Q eq 'HASH';
-  return $CONF->{'_storage'}{'GENERATOR'} eq generator();
+  return $CONF->{'_storage'}{'GENERATOR'} eq $SiteDefs::ENSEMBL_COHORT;
 }
 
 sub store {
@@ -347,7 +343,7 @@ sub store {
   
   my $self = shift;
 
-  $CONF->{'_storage'}{'GENERATOR'} = generator();
+  $CONF->{'_storage'}{'GENERATOR'} = $SiteDefs::ENSEMBL_COHORT;
 
   die "[FATAL] Could not write to $self->{'_filename'}: $!" unless lock_nstore($CONF->{'_storage'}, $self->{'_filename'});
   return 1;
