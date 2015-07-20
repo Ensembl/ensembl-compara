@@ -86,14 +86,14 @@ sub handler_species {
     return HTTP_TEMPORARY_REDIRECT;
   }
   
-  my ($redirect, $new_action) = get_redirect($script, $type, $action);
+  my $redirect = get_redirect($script, $type, $action);
   
   if ($redirect) {
-    if ($new_action) {
-      $ENV{'ENSEMBL_TYPE'}    = $type   = $redirect;
-      $ENV{'ENSEMBL_ACTION'}  = $action = $new_action;
-      $redirect = join '/', $type, $action;
-    }
+    ($type, $action, $function) = split($redirect);
+    $ENV{'ENSEMBL_TYPE'}      = $type;
+    $ENV{'ENSEMBL_ACTION'}    = $action if $action;
+    $ENV{'ENSEMBL_FUNCTION'}  = $function if $function;
+
     $newfile = join '/', '', $species, $redirect;
     warn "OLD LINK REDIRECT: $script $newfile" if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
     
