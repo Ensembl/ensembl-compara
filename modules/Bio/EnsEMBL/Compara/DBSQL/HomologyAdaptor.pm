@@ -98,7 +98,11 @@ sub fetch_all_by_Member {
   my ($method_link_type, $method_link_species_set, $species_tree_node_ids) =
     rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET SPECIES_TREE_NODE_IDS)], @args);
 
-  assert_ref_or_dbID($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', '-METHOD_LINK_SPECIES_SET') if defined $method_link_species_set;
+  # In fact, -METHOD_LINK_SPECIES_SET can be an array, and both dbIDs and object instances are accepted
+  my $mlsss = (defined $method_link_species_set and (ref($method_link_species_set) ne 'ARRAY')) ? [$method_link_species_set] : $method_link_species_set;
+  if (defined $method_link_species_set) {
+    assert_ref_or_dbID($_, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', '-METHOD_LINK_SPECIES_SET') for @$mlsss;
+  }
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
 
   my $seq_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
@@ -108,8 +112,7 @@ sub fetch_all_by_Member {
   $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
   if (defined $method_link_species_set) {
-    $constraint .= ' AND h.method_link_species_set_id = ?';
-    $self->bind_param_generic_fetch(ref($method_link_species_set) ? $method_link_species_set->dbID : $method_link_species_set, SQL_INTEGER);
+    $constraint .= sprintf(' AND h.method_link_species_set_id IN (%s)', join(',', -1, map {ref($_) ? $_->dbID : $_} @$mlsss));
   }
 
   if (defined $species_tree_node_ids) {
