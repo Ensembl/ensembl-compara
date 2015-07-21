@@ -59,6 +59,32 @@ sub add_file_format_dropdown {
   }
 }
 
+sub add_auto_format_dropdown {
+  my ($self, $form) = @_;
+
+  my $sd              = $self->hub->species_defs;
+  my $format_info     = $sd->multi_val('DATA_FORMAT_INFO');
+  my @upload_formats  = @{$sd->multi_val('UPLOAD_FILE_FORMATS')||[]};
+  my @remote_formats  = @{$sd->multi_val('REMOTE_FILE_FORMATS')||[]};
+  my %format_type     = (map({$_ => 'remote'} @remote_formats), map({$_ => 'upload'} @upload_formats));
+
+  my $values = [
+                {'caption' => '-- Choose --', 'value' => ''},
+                map { 'value'   => uc($_), 
+                      'caption' => $format_info->{$_}{'label'}, 
+                      'class'   => "_aff_$format_type{$_}" }, 
+                sort (@remote_formats, @upload_formats)
+              ];
+  $form->add_field({
+      'type'    => 'dropdown',
+      'name'    => 'format',
+      'label'   => 'Data format',
+      'values'  => $values,
+      #'class'   => 'hide',
+      'notes'   => '<a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>',
+    });
+}
+
 sub output_das_text {
   my ($self, $form, @sources) = @_;
   
