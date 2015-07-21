@@ -491,10 +491,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.hoverLabels.each(function() {
 
       // init the tab styled icons inside the hover menus
-      $(this).find('._hl_icon').tabs($(this).find('._hl_tab'));
+      $(this).find('._hl_icon').removeClass('_hl_icon').tabs($(this).find('._hl_tab'));
 
     // init config tab, fav icon and close icon
-    }).find('a.config').on('click', function () {
+    }).find('a.config').off().on('click', function () {
       var config  = this.rel;
       var update  = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
       var fav     = '';
@@ -520,7 +520,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $this = null;
 
       return false;
-    }).end().find('input._copy_url').on('click focus blur', function(e) {
+    }).end().find('input._copy_url').off().on('click focus blur', function(e) {
       $(this).val(this.defaultValue).select().parents('.label_layer').toggleClass('hover', e.type !== 'blur');
     });
   },
