@@ -41,12 +41,30 @@ sub new {
   my $parser_class = 'Bio::EnsEMBL::IO::Parser::'.$parser_formats->{lc($file->format)}{'class'};
 
   if (EnsEMBL::Root::dynamic_use($parser_class)) {
-    $parser = $parser_class->open($file->absolute_read_path);
+    if ($file->source eq 'url') {
+      my $result = $file->read; 
+      $parser = $parser_class->open_content($result->{'content'}) if $result->{'content'};
+    }
+    else {
+      $parser = $parser_class->open($file->absolute_read_path);
+    }
   }
 
   my $self = { parser => $parser };
   bless $self, $class;
   return $self;
+}
+
+sub parser {
+  ### a
+  my $self = shift;
+  return $self->{'parser'};
+}
+
+sub next {
+  ### Wrapper around parser iterator
+  my $self = shift;
+  return $self->parser->next;
 }
 
 sub create_hash {
