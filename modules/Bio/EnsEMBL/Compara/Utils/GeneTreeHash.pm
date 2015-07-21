@@ -25,7 +25,8 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 sub convert {
   my ($self, $tree, @args) = @_;
 
-  my ($no_sequences, $aligned, $cdna, $species_common_name, $exon_boundaries, $gaps, $full_tax_info) = rearrange([qw(NO_SEQUENCES ALIGNED CDNA SPECIES_COMMON_NAME EXON_BOUNDARIES GAPS FULL_TAX_INFO)], @args);
+  my ($no_sequences, $aligned, $cdna, $species_common_name, $exon_boundaries, $gaps, $full_tax_info, $cigar_line) =
+    rearrange([qw(NO_SEQUENCES ALIGNED CDNA SPECIES_COMMON_NAME EXON_BOUNDARIES GAPS FULL_TAX_INFO CIGAR_LINE)], @args);
 
   if (defined $no_sequences) {
       $self->no_sequences($no_sequences);
@@ -48,6 +49,7 @@ sub convert {
   if (defined $full_tax_info) {
     $self->full_tax_info($full_tax_info);
   }
+  $self->cigar_line($cigar_line);
 
   return $self->_head_node($tree);
 }
@@ -106,6 +108,14 @@ sub full_tax_info {
     $self->{_full_tax_info} = $fti;
   }
   return $self->{_fti};
+}
+
+sub cigar_line {
+    my ($self, $cigar_line) = @_;
+    if (defined ($cigar_line)) {
+        $self->{_cigar_line} = $cigar_line;
+    }
+    return $self->{_cigar_line};
 }
 
 sub _head_node {
@@ -271,6 +281,7 @@ sub _convert_node {
             $mol_seq = ($self->cdna()) ? $node->other_sequence('cds') : $node->sequence();
         }
         $hash->{sequence}->{mol_seq} = { is_aligned => $aligned + 0, seq => $mol_seq };
+        $hash->{sequence}->{mol_seq}->{cigar_line} = $node->cigar_line() if $self->cigar_line();
     }
 }
   return $hash;
