@@ -119,7 +119,7 @@ sub table_data {
 
     my $row = {
 	  year   => $cit->year(),
-	  pmid   => defined $cit->pmid() ? $hub->get_ExtURL_link($cit->pmid(), "PUBMED", $cit->pmid()) : undef,
+	  pmid   => defined $cit->pmid() ? $hub->get_ExtURL_link($cit->pmid(), "EPMC_MED", $cit->pmid()) : undef,
           phen   => $has_phen_asso == 1 ? $has_phenotype_html : '',
 	  title  => $cit->title(),
 	  author => $cit->authors(),

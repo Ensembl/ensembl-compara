@@ -120,12 +120,12 @@ sub process_data {
       my $url        = $hub->url({
         species     => $species,
         type        => $type eq 'gene'        ? 'Gene'           : 'Transcript',
-        action      => $type eq 'translation' ? 'ProteinSummary' : 'Summary',
+        action      => $type eq 'translation' ? 'Ontology' : 'Summary',
         $param_type => $gene,
         __clear     => 1,
       });
       
-      $desc = qq{[from $common_name <a href="$url">$gene</a>]};
+      $desc = qq{Propagated from $common_name <a href="$url">$gene</a> by orthology};
     }
     
     foreach (keys %$goslim) {
@@ -135,7 +135,7 @@ sub process_data {
     
     $row->{'go'}               = $go_link;
     $row->{'description'}      = $hash->{'term'};
-    $row->{'evidence'}         = qq(<span class="glossary_mouseover">$go_evidence<span class="floating_popup">$description_hash->{$go_evidence}</span></span>);
+    $row->{'evidence'}         = $self->helptip($go_evidence, $description_hash->{$go_evidence});
     $row->{'desc'}             = join ', ', grep $_, ($desc, $hash->{'source'});
     $row->{'goslim_goa_acc'}   = $goslim_goa_acc;
     $row->{'goslim_goa_title'} = $goslim_goa_title;

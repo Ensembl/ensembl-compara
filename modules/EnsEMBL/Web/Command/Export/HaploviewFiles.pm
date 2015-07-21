@@ -50,12 +50,12 @@ sub make_files {
   my $slice_genotypes = $location->get_all_genotypes; # gets all genotypes in the Slice as a hash. where key is region_name-region_start
   
   my ($family, $locus, $genotype);
-  my %ind_genotypes;
-  my %individuals;
+  my %sample_genotypes;
+  my %samples;
   my @snps;  
   
   foreach my $vf (@{$location->get_variation_features}) {
-    my ($genotypes, $ind_data) = $location->individual_genotypes($vf, $slice_genotypes);
+    my ($genotypes, $sample_data) = $location->sample_genotypes($vf, $slice_genotypes);
     
     next unless %$genotypes;
     
@@ -66,17 +66,17 @@ sub make_files {
     
     push (@snps, $name);
     
-    map { $ind_genotypes{$_}->{$name} = $genotypes->{$_} } keys %$genotypes;
-    map { $individuals{$_} = $ind_data->{$_} } keys %$ind_data;
+    map { $sample_genotypes{$_}->{$name} = $genotypes->{$_} } keys %$genotypes;
+    map { $samples{$_} = $sample_data->{$_} } keys %$sample_data;
   }
   
-  foreach my $individual (keys %ind_genotypes) {
-    my $i      = $individuals{$individual};
-    my $output = join "\t", 'FAM' . $family++, $individual, $i->{'father'}, $i->{'mother'}, $i->{'gender'}, "0\t";
+  foreach my $sample (keys %sample_genotypes) {
+    my $s      = $samples{$sample};
+    my $output = join "\t", 'FAM' . $family++, $sample, $s->{'father'}, $s->{'mother'}, $s->{'gender'}, "0\t";
        $output =~ s/ /_/g;
     
     foreach (@snps) {
-      my $snp = $ind_genotypes{$individual}->{$_} || '00';
+      my $snp = $sample_genotypes{$sample}->{$_} || '00';
       $snp =~ tr/ACGTN/12340/;
       
       $output .= join ' ', split //, $snp;

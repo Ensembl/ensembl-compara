@@ -84,7 +84,7 @@ sub init {
   );
   
   $self->modify_configs(
-    [ 'variation_feature_structural_larger', 'variation_feature_structural_smaller', 'somatic_sv_feature' ],
+    [ 'variation_feature_structural_larger', 'variation_feature_structural_smaller', 'somatic_sv_feature', 'variation_feature_structural_DECIPHER' ],
     { display => 'off', menu => 'yes' }
   );
   

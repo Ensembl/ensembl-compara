@@ -53,7 +53,7 @@ sub check_data {
       $error = "Unable to open remote BigWig file: $url<br>Ensure that your web/ftp server is accessible to the Ensembl site";
     }
   }
-  return $error;
+  return ($url, $error);
 }
 
 

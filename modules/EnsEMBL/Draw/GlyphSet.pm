@@ -41,6 +41,7 @@ use EnsEMBL::Draw::Glyph::Rect;
 use EnsEMBL::Draw::Glyph::Space;
 use EnsEMBL::Draw::Glyph::Sprite;
 use EnsEMBL::Draw::Glyph::Text;
+use EnsEMBL::Draw::Glyph::Arc;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
@@ -74,6 +75,7 @@ sub new {
     label2     => undef,
     bumped     => undef,
     error      => undef,
+    features   => [],
     highlights => $data->{'highlights'},
     strand     => $data->{'strand'},
     container  => $data->{'container'},
@@ -86,6 +88,7 @@ sub new {
   
   bless $self, $class;
   
+  $self->{'features'} = $self->init;
   $self->init_label;
 
   return $self;
@@ -98,6 +101,8 @@ sub get_parameter      { return $_[0]->{'config'}->get_parameter($_[1]);        
 sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};                                                                                    }
 sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};                                                                                        }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
+sub get_features       { return $_[0]->{'features'}; }
+
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label_caption   { return $_[0]->my_config('labelcaption');                                                                                                }
 sub depth              { return $_[0]->my_config('depth');                                                                                                       }
@@ -240,6 +245,7 @@ sub Space      { my $self = shift; return EnsEMBL::Draw::Glyph::Space->new(@_); 
 sub Sprite     { my $self = shift; return EnsEMBL::Draw::Glyph::Sprite->new(@_);     }
 sub Text       { my $self = shift; return EnsEMBL::Draw::Glyph::Text->new(@_);       }
 sub Triangle   { my $self = shift; return EnsEMBL::Draw::Glyph::Triangle->new(@_);   }
+sub Arc        { my $self = shift; return EnsEMBL::Draw::Glyph::Arc->new(@_);   }
 
 sub _init {
 ### _init creates masses of Glyphs from a data source.
@@ -248,6 +254,8 @@ sub _init {
   my ($self) = @_;
   print STDERR qq($self unimplemented\n);
 }
+
+sub init { return []; } ## New method used by refactored glyphsets
 
 sub bumped {
   my ($self, $val) = @_;
@@ -280,6 +288,19 @@ sub transform {
   }
 }
 
+sub track_style_config {
+### Bring together the various config options in a format
+### that can be used by the new Style modules
+  my $self = shift;
+  my ($fontname, $fontsize) = $self->get_font_details('outertext');
+  return {
+          'image_config' => $self->{'config'},
+          'track_config' => $self->{'my_config'},
+          'pix_per_bp'   => $self->{'config'}->image_width / $self->{'container'}->length, 
+          'font_name'    => $fontname,
+          'font_size'    => $fontsize,
+          };
+}
 
 ############### GENERIC RENDERING ####################
 
@@ -377,7 +398,9 @@ sub subtitle_text {
 sub use_subtitles {
   my ($self) = @_;
 
-  return $self->supports_subtitles && $self->subtitle_text;
+  return
+    $self->{'config'}->get_option('opt_subtitles') &&
+    $self->supports_subtitles && $self->subtitle_text;
 }
 
 sub subtitle_height {
@@ -394,6 +417,18 @@ sub subtitle_colour {
 
 sub supports_subtitles {
   return 0;
+}
+
+################### GANGS #######################
+
+sub gang_prepare {
+}
+
+sub gang {
+  my ($self,$val) = @_;
+
+  $self->{'_gang'} = $val if @_>1;
+  return $self->{'_gang'};
 }
 
 ################### LABELS ##########################
@@ -456,6 +491,8 @@ sub init_label {
   my $component = $config->get_parameter('component');
   my $hover     = $component && !$hub->param('export') && $node->get('menu') ne 'no';
   my $class     = random_string(8);
+  ## Store this where the glyphset can find it later...
+  $self->{'hover_label_class'} = $class;
 
   if ($hover) {
     my $fav       = $config->get_favourite_tracks->{$track};
@@ -1209,15 +1246,22 @@ sub section {
 
 sub section_zmenu { $_[0]->my_config('section_zmenu'); }
 sub section_no_text { $_[0]->my_config('no_section_text'); }
+sub section_lines { $_[0]->{'section_lines'}; }
 
 sub section_text {
-  $_[0]->{'section_text'} = $_[1] if @_>1;
+  if(@_>1) {
+    $_[0]->{'section_text'} = $_[1];
+    my @texts = @{$_[0]->wrap($_[1],$_[2],'Arial',8)};
+    @texts = @texts[0..1] if @texts>2;
+    $_[0]->{'section_lines'} = \@texts;
+  }
   return $_[0]->{'section_text'};
 }
 
 sub section_height {
   return 0 unless $_[0]->{'section_text'};
-  return 32;
+  return 24 if @{ $_[0]->{'section_lines'}} == 1;
+  return 36;
 }
 
 
@@ -1263,6 +1307,24 @@ sub check {
   return $name;
 }
 
-    
+sub truncate_ellipse {
+  my ($self, $x, $a, $b) = @_;
+  my $h = $self->ellipse_y($x, $a, $b);
+  my $theta =  $self->atan_in_degrees($x, $h);
+  return ($h, $theta);
+}
+
+sub ellipse_y {
+  my ($self, $x, $a, $b) = @_;
+  my $y = sqrt(abs((1 - (($x * $x) / ($a * $a))) * $b * $b));
+  return int($y);
+}
+
+sub atan_in_degrees {
+  my ($self, $x, $y) = @_;
+  my $pi   = 4 * atan2(1, 1);
+  my $atan = atan2($y, $x);
+  return int($atan * (180 / $pi));
+}
 
 1;

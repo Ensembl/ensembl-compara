@@ -60,7 +60,6 @@ sub check_data {
     eval {
       Bio::DB::BigFile->set_udc_defaults;
       $bigbed = Bio::DB::BigFile->bigBedFileOpen($url);
-      my $chromosome_list = $bigbed->chromList;
     };
     warn $@ if $@;
     warn "Failed to open BigBed " . $url unless $bigbed;
@@ -69,7 +68,7 @@ sub check_data {
       $error = "Unable to open remote BigBed file: $url<br>Ensure that your web/ftp server is accessible to the Ensembl site";
     }
   }
-  return $error;
+  return ($url, $error);
 }
 
 sub style {

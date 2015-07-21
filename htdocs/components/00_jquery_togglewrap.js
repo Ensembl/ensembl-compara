@@ -191,6 +191,9 @@
     if (arg === 'update') {
       update();
     } else {
+      if(arg == 'redo') {
+        elements.removeData('togglewrap');
+      }
       var classes = '.heightwrap_inside, .cellwrap_inside';
       elements = elements.filter(classes).add(elements.find(classes));
       init();

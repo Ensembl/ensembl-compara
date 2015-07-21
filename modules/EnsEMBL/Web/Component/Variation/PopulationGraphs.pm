@@ -110,7 +110,7 @@ sub content {
         <div class="pie_chart_holder">
           <div class="pie_chart%s">
             <div style="margin:4px">
-              <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+              <span class="_ht ht" style="font-size:1em;font-weight:bold" title="%s">%s</span>
             </div>
             <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
@@ -123,13 +123,15 @@ sub content {
         <div class="pie_chart_holder">
           <div class="pie_chart">
             <div style="margin:4px">
-              <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+              <span class="_ht ht" style="font-size:1em;font-weight:bold" title="%s">%s</span>
             </div>
             <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
           <a class="toggle %s _slide_toggle set_cookie" href="#" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
         </div>
-      ', $pop_desc, $short_name, $graph_id, $width, $height, $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', $short_name);
+      ', $pop_desc, $short_name, $graph_id, $width, $height, 
+         $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', 
+         $short_name, $short_name);
     }
     # Sub-populations
     else {
@@ -138,7 +140,7 @@ sub content {
           <div class="pie_chart_holder">
             <div class="pie_chart">
               <div style="margin:4px">
-                <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+                <span class="_ht ht" style="font-size:1em;font-weight:bold" title="%s">%s</span>
               </div>
               <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
             </div>
@@ -162,13 +164,13 @@ sub content {
     my $show     = $hub->get_cookie_value("toggle_population_freq_$sp") eq 'open';
     
     $html .= sprintf('
-      <div class="population_freq_%s population_genetics_pie">
+      <div class="population_freq_%s population_genetics_pie" id="population_freq_%s">
         <div class="toggleable" %s>
           <div><p><b>%s sub-populations</b></p></div>
           %s
         </div>
       </div>
-    ', $sp, $show ? '' : 'style="display:none"', $sp, $sub_html);
+    ', $sp, $sp, $show ? '' : 'style="display:none"', $sp, $sub_html);
   }
 
   return $html;

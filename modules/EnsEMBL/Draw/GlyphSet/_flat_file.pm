@@ -27,9 +27,12 @@ use List::Util qw(reduce);
 
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::User;
+use EnsEMBL::Web::Utils::FormatText qw(add_links);
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
+
+sub wiggle_subtitle { join(', ',@{$_[0]->{'subtitle'}||[]}); }
 
 sub feature_group { my ($self, $f) = @_; return $f->id; }
 sub feature_label { my ($self, $f) = @_; return $f->id; }
@@ -40,9 +43,13 @@ sub draw_features {
   
   ## Value to drop into error message
   return $self->my_config('format').' features' unless keys %data;
-  
+ 
+  $self->{'subtitle'} = []; 
   if ($wiggle) {
+    my $first = 1;
     foreach my $key ($self->sort_features_by_priority(%data)) {
+      $self->draw_space_glyph() unless $first;
+      $first = 0;
       my ($features, $config)     = @{$data{$key}||[]};
       my $graph_type              = ($config->{'useScore'} && $config->{'useScore'} == 4) || ($config->{'graphType'} && $config->{'graphType'} eq 'points') ? 'points' : 'bar';
       my ($min_score, $max_score) = split ':', $config->{'viewLimits'};
@@ -55,10 +62,11 @@ sub draw_features {
         max_score    => $max_score, 
         score_colour => $config->{'color'},
         axis_colour  => 'black',
-        description  => $config->{'description'},
         graph_type   => $graph_type,
         use_feature_colours => (lc($config->{'itemRgb'}||'') eq 'on'),
       });
+      my $subtitle = $config->{'name'} || $config->{'description'};
+      push @{$self->{'subtitle'}},$subtitle;
     }
   }
   
@@ -109,9 +117,18 @@ sub features {
     }
   } 
 
+  my $key = $self->{'hover_label_class'}; 
+  my $hover_label = $self->{'config'}->{'hover_labels'}{$key};
+
   ## Now we translate all the features to their rightful co-ordinates
   while (my ($key, $T) = each (%{$parser->{'tracks'}})) {
     $_->map($container) for @{$T->{'features'}};
+
+    my $description = $T->{'config'}{'description'};
+    if ($description) {
+      $description = add_links($description);
+      $hover_label->{'extra_desc'} = $description;
+    }
  
     ## Set track depth a bit higher if there are lots of user features
     $T->{'config'}{'dep'} = scalar @{$T->{'features'}} > 20 ? 20 : scalar @{$T->{'features'}};
@@ -175,7 +192,7 @@ sub features {
 
     $results{$key} = [$features, $T->{'config'}];
   }
-
+  use Data::Dumper; warn Dumper($hover_label);
   return %results;
 }
 

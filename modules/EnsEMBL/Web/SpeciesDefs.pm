@@ -72,6 +72,7 @@ use Time::HiRes qw(time);
 use Fcntl qw(O_WRONLY O_CREAT);
 
 use SiteDefs;# qw(:ALL);
+use Sys::Hostname::Long;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::ConfigRegistry;
@@ -86,6 +87,7 @@ use EnsEMBL::Web::Tools::RobotsTxt;
 use EnsEMBL::Web::Tools::OpenSearchDescription;
 use EnsEMBL::Web::Tools::Registry;
 use EnsEMBL::Web::Tools::MartRegistry;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -131,6 +133,50 @@ sub new {
   $self->{'_storage'} = $CONF->{'_storage'};
 
   return $self;
+}
+
+sub register_orm_databases {
+  ## Registers ORM data sources (as present in ENSEMBL_ORM_DATABASES config) to be used with ensembl-orm API
+  my $self  = shift;
+  my $dbs   = {};
+
+  if (dynamic_require('ORM::EnsEMBL::Rose::DbConnection', 1)) { # ignore if ensembl-orm doesn't exist
+
+    while (my ($key, $value) = each %{$self->ENSEMBL_ORM_DATABASES}) {
+
+      my $params = $value;
+      if (!ref $params) {
+
+        $params = $self->multidb->{$value} or warn "Database connection properties for '$value' could not be found in SiteDefs" and next;
+        $params = {
+          'database'  => $params->{'NAME'},
+          'host'      => $params->{'HOST'} || $self->DATABASE_HOST,
+          'port'      => $params->{'PORT'} || $self->DATABASE_HOST_PORT,
+          'username'  => $params->{'USER'} || $self->DATABASE_WRITE_USER,
+          'password'  => $params->{'PASS'} || $self->DATABASE_WRITE_PASS
+        };
+      }
+
+      $params->{'type'} = $key;
+      $dbs->{$key}      = ORM::EnsEMBL::Rose::DbConnection->register_database($params);
+    }
+  }
+
+  return $dbs;
+}
+
+sub session_db {
+  my $self = shift;
+  my $db   = $self->multidb->{'DATABASE_SESSION'};
+
+  return {
+    'NAME'    => $db->{'NAME'},
+    'HOST'    => $db->{'HOST'},
+    'PORT'    => $db->{'PORT'},
+    'DRIVER'  => $db->{'DRIVER'}  || 'mysql',
+    'USER'    => $db->{'USER'}    || $self->DATABASE_WRITE_USER,
+    'PASS'    => $db->{'PASS'}    || $self->DATABASE_WRITE_PASS
+  };
 }
 
 sub core_params { return $_[0]->{'_core_params'}; }
@@ -287,7 +333,7 @@ sub retrieve {
   my $Q    = lock_retrieve($self->{'_filename'}) or die "Can't open $self->{'_filename'}: $!"; 
   
   $CONF->{'_storage'} = $Q if ref $Q eq 'HASH';
-  return 1;
+  return $CONF->{'_storage'}{'GENERATOR'} eq $SiteDefs::ENSEMBL_COHORT;
 }
 
 sub store {
@@ -296,10 +342,12 @@ sub store {
   ### Caller: perl.startup, on first (validation) pass of httpd.conf
   
   my $self = shift;
+
+  $CONF->{'_storage'}{'GENERATOR'} = $SiteDefs::ENSEMBL_COHORT;
+
   die "[FATAL] Could not write to $self->{'_filename'}: $!" unless lock_nstore($CONF->{'_storage'}, $self->{'_filename'});
   return 1;
 }
-
 
 sub parse {
   ### Retrieves a stored configuration or creates a new one
@@ -317,9 +365,11 @@ sub parse {
   
   if (!$SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{'_filename'}) {
     warn " Retrieving conf from $self->{'_filename'}\n";
-    $self->retrieve;
-    $reg_conf->configure;
-    return 1;
+    if($self->retrieve) {
+      $reg_conf->configure;
+      return 1;
+    }
+    warn " conf was not generated here, regenerating\n";
   }
   
 #  $self->_get_valid_urls; # under development
@@ -461,6 +511,12 @@ sub _read_in_ini_file {
       }
       
       close FH;
+    }
+
+    # Check for existence of VCF JSON configuration file
+    my $json_path = "$confdir/json/${filename}_vcf.json";
+    if (-e $json_path) {
+      $tree->{'ENSEMBL_VCF_COLLECTIONS'} = {'CONFIG' => $json_path, 'ENABLED' => 1} if $json_path;
     }
   }
   

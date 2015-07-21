@@ -26,6 +26,8 @@ use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
+sub supports_subtitles { 0; }
+
 sub features {
   my $self    = shift;
   my $slice   = $self->{'container'}; 
@@ -54,7 +56,7 @@ sub features {
   
   return unless defined $rs;
 
-  my $bigbed_file = $rs->dbfile_data_dir;
+  my $bigbed_file = $rs->dbfile_path;
   
   # Substitute path, if necessary. TODO: use DataFileAdaptor  
   my @parts = split m!/!, $bigbed_file;

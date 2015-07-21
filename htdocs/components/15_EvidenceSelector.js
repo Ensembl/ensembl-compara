@@ -30,7 +30,7 @@ Ensembl.Panel.EvidenceSelector = Ensembl.Panel.CloudMultiSelector.extend({
       data: params,
       context: this,
       complete: function() {
-        Ensembl.EventManager.triggerSpecific('updatePanel','Buttons',null,null,null,null,{ background: true });
+        Ensembl.EventManager.trigger('partialReload');
         Ensembl.EventManager.triggerSpecific('updatePanel','FeaturesByCellLine');
         Ensembl.EventManager.triggerSpecific('updatePanel','ViewBottom');
       }

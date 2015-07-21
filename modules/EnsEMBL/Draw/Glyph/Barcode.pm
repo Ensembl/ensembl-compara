@@ -20,6 +20,10 @@ limitations under the License.
 # blocks at regularly-spaced intervals. It is essentially a lot of
 # rectangles in a row, but implemented more efficiently.
 #
+# If wiggle is set, however, it is drawn as a wiggle, rather than as a
+# barcode and the value is the maximum score.
+# That's quite a challenge to the Glyph's name, sadly.
+#
 # { values    => [... , ... , ...],
 #   x         => $leftmost_coord,
 #   y         => $topmost_coord,
@@ -28,6 +32,8 @@ limitations under the License.
 #   width     => $ignored, # always calculated as @$values*$unit
 #   absolutex => $if_in_px_not_bp,
 #   colours   => [ ... , ... , ... ],
+#   max       => $maximum_score
+#   wiggle    => $draw_as_wiggle_not_barcode
 # }
 
 package EnsEMBL::Draw::Glyph::Barcode;
@@ -66,6 +72,7 @@ sub transform {
   $self->{'pixelunit'}   *= ($scalex||1);
   $self->{'pixely'}      *= ($scaley||1);
   $self->{'pixelheight'} *= ($scaley||1);
+  $self->{'wiggley'}     *= ($scaley||1) if $self->{'wiggley'};
 
   $self->{'pixelx'}      += $translatex;
   $self->{'pixely'}      += $translatey;

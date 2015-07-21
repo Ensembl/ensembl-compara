@@ -20,7 +20,6 @@ package EnsEMBL::Web::Command::UserData::ModifyConfig;
 
 use strict;
 
-use Digest::MD5 qw(md5_hex);
 use Encode      qw(decode_utf8);
 use URI::Escape qw(uri_escape);
 
@@ -28,9 +27,9 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
-  my $func = $self->hub->function;
-  
-  $self->$func();
+  my $func = sprintf 'mc_%s', $self->hub->function;
+
+  $self->$func() if $self->can($func);
 }
 
 sub edit_fields {
@@ -40,33 +39,33 @@ sub edit_fields {
   };
 }
 
-sub edit_details {
+sub mc_edit_details {
   my $self  = shift;
   my $hub   = $self->hub;
   my $param = $hub->param('param');
   
   return unless $self->edit_fields->{$param};
   
-  print 'success' if $hub->config_adaptor->edit_details($hub->param('record_id'), $param, decode_utf8($hub->param('value')), $hub->param('is_set'));
+  print 'success' if $hub->config_adaptor->edit_details($hub->param('config_key'), $param, decode_utf8($hub->param('value')), $hub->param('is_set'));
 }
 
-sub save {
-  my $self      = shift;
-  my $hub       = $self->hub;
-  my $then      = $hub->param('then');
-  my $redirect  = $hub->param('redirect');
-  my $record_id = $hub->param('record_id');
-  my $func      = $hub->param('is_set') ? 'all_sets' : 'all_configs';
-  my $adaptor   = $hub->config_adaptor;
-  my (%save_ids, $success);
-  
-  $self->get_linked_configs($adaptor->$func->{$record_id}, $adaptor, \%save_ids);
-  
-  if (scalar keys %save_ids > 1 && !$hub->param('save_all')) {
+sub mc_save {
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $then        = $hub->param('then');
+  my $redirect    = $hub->param('redirect');
+  my $config_key  = $hub->param('config_key');
+  my $func        = $hub->param('is_set') ? 'all_sets' : 'all_configs';
+  my $adaptor     = $hub->config_adaptor;
+  my (%save_keys, $success);
+
+  $self->get_linked_configs($adaptor->$func->{$config_key}, $adaptor, \%save_keys);
+
+  if (scalar keys %save_keys > 1 && !$hub->param('save_all')) {
     my ($configs, $sets) = ($adaptor->all_configs, $adaptor->all_sets);
     my %json;
     
-    push @{$json{"$save_ids{$_}s"}}, $save_ids{$_} eq 'set' ? $sets->{$_}{'name'} : $configs->{$_}{'name'} for keys %save_ids;
+    push @{$json{"$save_keys{$_}s"}}, $save_keys{$_} eq 'set' ? $sets->{$_}{'name'} : $configs->{$_}{'name'} for keys %save_keys;
     
     print $self->jsonify({ func => 'saveAll', %json });
     
@@ -83,69 +82,69 @@ sub save {
     }), undef, undef, 'modal', 'modal_user_data');
   }
   
-  $success += $adaptor->save_to_user($_, $save_ids{$_} eq 'set') for keys %save_ids;
+  $success += $adaptor->save_to_user($_, $save_keys{$_} eq 'set') for keys %save_keys;
   
   return unless $success;
   
   if ($redirect) {
     $self->ajax_redirect($redirect, undef, undef, 'modal', 'modal_user_data');
   } else {
-    print $self->jsonify({ func => 'saveRecord', ids => [ keys %save_ids ] });
+    print $self->jsonify({ func => 'saveRecord', ids => [ keys %save_keys ] });
   }
 }
 
 sub get_linked_configs {
-  my ($self, $record, $adaptor, $save_ids) = @_;
+  my ($self, $record, $adaptor, $save_keys) = @_;
   
-  return if $save_ids->{$record->{'record_id'}};
+  return if $save_keys->{$record->{'config_key'}};
   
-  $save_ids->{$record->{'record_id'}} = $record->{'is_set'} eq 'y' ? 'set' : 'config';
+  $save_keys->{$record->{'config_key'}} = $record->{'is_set'} eq 'y' ? 'set' : 'config';
   
   my $sets = $adaptor->all_sets;
   
   if ($record->{'is_set'} eq 'y') {
     foreach (keys %{$record->{'records'}}) {
-      $save_ids->{$_} = 'config';
-      $self->get_linked_configs($sets->{$_}, $adaptor, $save_ids) for grep $_ != $record->{'record_id'}, $adaptor->record_to_sets($_);
+      $save_keys->{$_} = 'config';
+      $self->get_linked_configs($sets->{$_}, $adaptor, $save_keys) for grep $_ != $record->{'config_key'}, $adaptor->record_to_sets($_);
     }
   } else {
-    $self->get_linked_configs($sets->{$_}, $adaptor, $save_ids) for $adaptor->record_to_sets($record->{'record_id'});
+    $self->get_linked_configs($sets->{$_}, $adaptor, $save_keys) for $adaptor->record_to_sets($record->{'config_key'});
   }
 }
 
-sub delete {
+sub mc_delete {
   my $self = shift;
   my $hub  = $self->hub;
   my $func = $hub->param('is_set') ? 'delete_set' : 'delete_config';
   
-  print $self->jsonify({ func => 'deleteRecord' }) if $hub->config_adaptor->$func($hub->param('record_id'), $hub->param('link_id'));
+  print $self->jsonify({ func => 'deleteRecord' }) if $hub->config_adaptor->$func($hub->param('config_key'), $hub->param('link_key'));
 }
 
-sub activate {
+sub mc_activate {
   my $self = shift;
   my $hub  = $self->hub;
   my $func = $hub->param('is_set') ? 'activate_set' : 'update_active';
   
-  print $self->jsonify({ func => 'activateRecord' }) if $hub->config_adaptor->$func($hub->param('record_id'));
+  print $self->jsonify({ func => 'activateRecord' }) if $hub->config_adaptor->$func($hub->param('config_key'));
 }
 
-sub edit_sets {
+sub mc_edit_sets {
   my $self       = shift;
   my $hub        = $self->hub;
-  my $record_id  = $hub->param('record_id');
+  my $config_key = $hub->param('config_key');
   my @update_ids = $hub->param('update_id');
   my $func       = $hub->param('is_set') ? 'edit_set_records' : 'edit_record_sets';
-  my $update     = $hub->config_adaptor->$func($record_id, @update_ids);
+  my $update     = $hub->config_adaptor->$func($config_key, @update_ids);
   
-  print $self->jsonify({ func => 'updateTable', id => $record_id, editables => $update }) if $update;
+  print $self->jsonify({ func => 'updateTable', id => $config_key, editables => $update }) if $update;
 }
 
-sub add_set {
-  my $self       = shift;
-  my $hub        = $self->hub;
-  my @record_ids = $hub->param('record_id');
-  my $user       = $hub->user;
-  my %params     = map { $_ => decode_utf8($hub->param($_)) } qw(record_type name description);
+sub mc_add_set {
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my @config_keys = $hub->param('config_key');
+  my $user        = $hub->user;
+  my %params      = map { $_ => decode_utf8($hub->param($_)) } qw(record_type name description);
   
   if ($params{'record_type'} eq 'group' && $user) {
     my $group = decode_utf8($hub->param('group'));
@@ -154,14 +153,14 @@ sub add_set {
   
   my $set_id = $hub->config_adaptor->create_set(
     record_type_id => $params{'record_type'} eq 'session' ? $hub->session->create_session_id : $user ? $user->id : undef,
-    record_ids     => \@record_ids,
+    config_keys    => \@config_keys,
     %params
   );
   
-  print $self->jsonify({ func => 'addTableRow', recordIds => [ $set_id ] }) if $set_id;
+  print $self->jsonify({ func => 'addTableRow', configKeys => [ $set_id ] }) if $set_id;
 }
 
-sub share {
+sub mc_share {
   my $self    = shift;
   my $hub     = $self->hub;
   my $referer = $hub->referer;
@@ -169,7 +168,7 @@ sub share {
   return if $referer->{'external'}; 
   
   my $is_set  = $hub->param('is_set');
-  my $id      = $hub->param('record_id');
+  my $id      = $hub->param('config_key');
   my $func    = $is_set ? 'all_sets' : 'all_configs';
   my $adaptor = $hub->config_adaptor;
   my $record  = $self->deepcopy($adaptor->$func->{$id});
@@ -177,15 +176,9 @@ sub share {
   return unless $record;
   
   my @groups = $hub->param('group');
-  
-  if ($is_set) {
-    delete $record->{'records'};
-  } else {
-    $record->{'data'} = delete $record->{'raw_data'};
-  }
-  
-  my $checksum = md5_hex($adaptor->serialize_data($record));
-  
+
+  my $checksum = $adaptor->generate_checksum($record);
+
   if (scalar @groups) {
     my $user = $hub->user;
     
@@ -193,23 +186,23 @@ sub share {
     
     my %admin_groups = map { $_->group_id => 1 } $user->find_admin_groups;
        $func         = $is_set ? 'share_set' : 'share_record';
-    my @record_ids;
+    my @config_keys;
     
     foreach (@groups) {
       next unless $admin_groups{$_};
       
-      my $record_id = $adaptor->$func($id, $checksum, $_);
+      my $config_key = $adaptor->$func($id, $checksum, $_);
       
-      push @record_ids, ref $record_id eq 'ARRAY' ? @$record_id : $record_id || ();
+      push @config_keys, ref $config_key eq 'ARRAY' ? @$config_key : $config_key || ();
     }
     
-    print $self->jsonify({ func => 'addTableRow', recordIds => \@record_ids }) if scalar @record_ids;
+    print $self->jsonify({ func => 'addTableRow', configKeys => \@config_keys }) if scalar @config_keys;
   } else {
     printf '%s%sshare_ref=conf%s-%s-%s', $referer->{'absolute_url'}, $referer->{'absolute_url'} =~ /\?/ ? ';' : '?', $is_set ? 'set' : '', $id, $checksum;
   }
 }
 
-sub reset_all {
+sub mc_reset_all {
   my $self       = shift;
   my $hub        = $self->hub;
   my $adaptor    = $hub->config_adaptor;

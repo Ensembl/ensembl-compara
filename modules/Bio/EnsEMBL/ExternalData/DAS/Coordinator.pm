@@ -20,6 +20,12 @@ limitations under the License.
 
 Bio::EnsEMBL::ExternalData::DAS::Coordinator
 
+############################################################################
+#
+# DEPRECATED MODULE - DAS SUPPORT WILL BE REMOVED FROM ENSEMBL IN RELEASE 83
+#
+#############################################################################
+
 =head1 SYNOPSIS
 
   # Instantiate with a list of Bio::EnsEMBL::ExternalData::DAS::Source objects:

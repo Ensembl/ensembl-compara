@@ -192,7 +192,7 @@ sub add_pointers {
       end       => $row->{'end'},
       id        => $row->{'label'},
       col       => $item_colour || $grad_colour || $default_colour,
-      href      => $href,
+      href      => $hub->url({$config_name ? ('config' => $config_name) : (), %$href}),
       html_id   => $row->{'html_id'} || '',
     };
 
@@ -306,6 +306,7 @@ sub hover_labels {
     next if $done{$label->{'class'}};
     
     my $desc   = join '', map "<p>$_</p>", split /; /, $label->{'desc'};
+    $desc     .= $label->{'extra_desc'};
     my $subset = $label->{'subset'};
     my $renderers;
     

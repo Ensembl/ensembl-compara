@@ -142,13 +142,8 @@ sub load_user_track_data {
       }
     }
     
-<<<<<<< HEAD
-    $max_value = $max1 if $max1 > $max_value;
-    $max_mean  = $max2 if $max2 > $max_mean;
-=======
     $max_value = $max1 if $max1 && $max1 > $max_value;
     $max_mean = $max2 if $max2 && $max2 > $max_mean;
->>>>>>> Add option to render BigWig line graph as means scaled relative to one another, as well as scaled relative to maximum value in region
   }
   
   if ($max_value) {
@@ -163,11 +158,7 @@ sub load_user_track_data {
   
   $self->set_parameter('bins',      $bins);
   $self->set_parameter('max_value', $max_value);
-<<<<<<< HEAD
   $self->set_parameter('max_mean',  $max_mean);
-=======
-  $self->set_parameter('max_mean', $max_mean);
->>>>>>> Add option to render BigWig line graph as means scaled relative to one another, as well as scaled relative to maximum value in region
   
   return \%data;
 }

@@ -568,6 +568,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.elLk.container.find('._ht').helptip();
       this.helptips = true;
     }
+    // Hover ZMenus can be closed before they load!
+    if(this.el.hasClass('closed')) {
+      this.hide();
+    }
   },
   
   showExisting: function (data) {

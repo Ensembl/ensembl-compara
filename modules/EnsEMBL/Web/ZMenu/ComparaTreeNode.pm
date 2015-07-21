@@ -357,7 +357,8 @@ sub content {
     my $gene_name;
     my $gene = $self->object->Obj;
     my $dxr    = $gene->can('display_xref') ? $gene->display_xref : undef;
-    my $gene_name = $dxr ? $dxr->display_id : $gene->stable_id;
+
+    my $gene_name = $hub->species eq 'Multi' ? $hub->param('gt') : $dxr ? $dxr->display_id : $gene->stable_id;
     
     my $params = {
                 'type'      => 'DataExport',
@@ -375,7 +376,7 @@ sub content {
       link        => $hub->url($params),
       link_class  => 'modal_link',
       order       => 14,
-    });
+    }); 
 
     # Jalview
     my ($url_align, $url_tree) = $self->dump_tree_as_text($node);

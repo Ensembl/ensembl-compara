@@ -18,9 +18,17 @@ limitations under the License.
 
 package Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
+############################################################################
+#
+# DEPRECATED MODULE - PLEASE SEE ensembl-io/modules/Bio/EnsEMBL/IO/HubParser
+#
+############################################################################
+
 use strict;
 
 sub new {
+  warn "######## DEPRECATED MODULE #########";
+  warn "### This module will be removed in Release 82. Please use Bio::EnsEMBL::IO::HubParser (from  the ensembl-io repository) instead.";
 ### c
   my ($class, %args) = @_;
 

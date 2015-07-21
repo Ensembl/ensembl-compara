@@ -78,7 +78,7 @@ sub content {
 sub make_table {
   my ($self, $table_rows, $consequence_type) = @_;
   my $hub      = $self->hub;
-  my $glossary = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_glossary_lookup;
+  my $glossary = $hub->glossary_lookup;
   
   # Using explicit wdiths speeds things up and makes layout more predictable
   # u = 1unit, where unit is calculated so that total width is 100%
@@ -102,15 +102,16 @@ sub make_table {
   splice @$columns, 3, 0, { key => 'HGVS', width => '10u', sort => 'string', title => 'HGVS name(s)', align => 'center', export_options => { split_newline => 2 } } if $hub->param('hgvs') eq 'on';
 
   # add SIFT for supported species
-  if ($hub->species =~ /bos_taurus|canis_familiaris|danio_rerio|gallus_gallus|mus_musculus|rattus_norvegicus|sus_scrofa/i) {
+  my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
+
+  if ($sd->{'SIFT'}) {
     push @$columns, (
       { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'} });
   }
 
-  # add GMAF, SIFT and PolyPhen for human
+  # add GMAF and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'}     },
       { key => 'polyphen', sort => 'position_html', width => '6u', label => "Poly\fPhen", align => 'center', help => $glossary->{'PolyPhen'} },
     );
 
@@ -147,7 +148,7 @@ sub render_content {
       <span style="float:right;">
         <a href="$url">Switch to $switched view <img src="/i/16/reload.png" height="12px"/></a>
       </span>
-      <h2>Summary of variation consequences in $stable_id</h2>
+      <h2>Summary of variant consequences in $stable_id</h2>
     ) . $table;
   }
   
@@ -288,7 +289,7 @@ sub stats_table {
     }
   }
   
-  # add the row for ALL variations if there are any
+  # add the row for ALL variants if there are any
   if ($total_counts) {
     my $hidden_span = '<span class="hidden">-</span>'; # create a hidden span to add so that ALL is always last in the table
     my $warning = '';
@@ -307,7 +308,7 @@ sub stats_table {
     push @rows, {
       type  => $hidden_span . 'ALL',
       view  => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL', update_panel => 1 }), 'ALL'),
-      desc  => "All variations $warning",
+      desc  => "All variants $warning",
       count => $hidden_span . $total_counts,
     };
   }
@@ -379,7 +380,7 @@ sub variation_table {
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
   
-  # create some URLs - quicker than calling the url method for every variation
+  # create some URLs - quicker than calling the url method for every variant
   my $base_url = $hub->url({
     type   => 'Variation',
     action => 'Summary',
@@ -459,8 +460,8 @@ sub variation_table {
         
         if ($tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
           #my $var                  = $snp->variation;
-          my $evidence             = $snp->get_all_evidence_values || [];
-          my $clin_sig             = $snp->get_all_clinical_significance_states || [];
+          my $evidences            = $snp->get_all_evidence_values || [];
+          my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
           my $variation_name       = $snp->variation_name;
           my $var_class            = $snp->var_class;
           my $translation_start    = $transcript_variation->translation_start;
@@ -495,30 +496,9 @@ sub variation_table {
           my $gmaf   = $snp->minor_allele_frequency; # global maf
              $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
 
-          my $status = join("",
-            map {
-              sprintf(
-                '<img src="/i/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
-                $_, $_, $_
-              )
-            } @$evidence
-          );
+          my $status = $self->render_evidence_status($evidences);
 
-          my %clin_sign_icon;
-          foreach my $cs (@{$clin_sig}) {
-            my $icon_name = $cs;
-            $icon_name =~ s/ /-/g;
-            $clin_sign_icon{$cs} = $icon_name;
-          }
-
-          $clin_sig = join("",
-            map {
-              sprintf(
-                '<img src="/i/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
-                $clin_sign_icon{$_}, $_, $_
-              )
-            } @$clin_sig
-          );
+          my $clin_sig = $self->render_clinical_significance($clin_sigs);
 
           my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
           

@@ -28,14 +28,14 @@ sub empty    { return sprintf '<div class="no_records%s"><h2>Your configuration 
 sub set_view { return 1; }
 
 sub records {
-  my ($self, $show_all, $record_ids) = @_;
+  my ($self, $show_all, $config_keys) = @_;
   my $hub     = $self->hub;
   my $adaptor = $hub->config_adaptor;
   my @sets    = values %{$adaptor->all_sets};
   my $json    = {};
   my $rows    = {};
   
-  $self->{'editables'} = { map { $_->{'type'} eq 'image_config' && $_->{'link_id'} ? () : ($_->{'record_id'} => $_) } values %{$self->deepcopy($adaptor->filtered_configs({ active => '' }))} };
+  $self->{'editables'} = { map { $_->{'type'} eq 'image_config' && $_->{'link_key'} ? () : ($_->{'config_key'} => $_) } values %{$self->deepcopy($adaptor->filtered_configs({ active => '' }))} };
   
   my $new_set = scalar keys %{$self->{'editables'}} ? '<p><a href="#" class="create_set">Create a new configuration set</a></p>' : '<p>You must save some configurations before you can create a new configuration set.</p>';
   
@@ -50,22 +50,22 @@ sub records {
   }
   
   foreach (sort { $a->{'name'} cmp $b->{'name'} } @sets) {
-    my $record_id = $_->{'record_id'};
+    my $config_key = $_->{'config_key'};
     
-    next if $record_ids && !$record_ids->{$record_id};
+    next if $config_keys && !$config_keys->{$config_key};
     
     my @confs;
     
     foreach (map $self->{'editables'}{$_} || (), keys %{$_->{'records'}}) {
-      push @confs, [ $_->{'record_id'}, $_->{'name'}, $_->{'conf_name'}, $_->{'conf_codes'} ] if $_->{'conf_name'};
+      push @confs, [ $_->{'config_key'}, $_->{'name'}, $_->{'conf_name'}, $_->{'conf_codes'} ] if $_->{'conf_name'};
     }
     
     my ($row, $group_key, $json_group) = $self->row($_, \@confs);
     
     push @{$rows->{$group_key}}, $row;
     
-    $json->{$record_id} = {
-      id        => $record_id,
+    $json->{$config_key} = {
+      id        => $config_key,
       name      => $_->{'name'},
       group     => $json_group,
       groupId   => $_->{'record_type_id'},
@@ -76,7 +76,7 @@ sub records {
   
   my $columns = $self->columns;
   
-  return ($columns, $rows, $json) if $record_ids;
+  return ($columns, $rows, $json) if $config_keys;
   return $self->records_html($columns, $rows, $json) . $self->empty(scalar @sets) . $new_set;
 }
 
@@ -191,8 +191,8 @@ sub new_set_form {
   $fieldset->add_field({ type => 'String', name => 'name',        label => 'Configuration set name', required => 1, maxlength => 255 });
   $fieldset->add_field({ type => 'Text',   name => 'description', label => 'Configuration set description'                           });
   
-  $fieldset->append_child('input', { type => 'checkbox', value => $_,     class => "selected hidden $_", name => 'record_id' }) for keys %{$self->{'editables'}};
-  $fieldset->append_child('input', { type => 'submit',   value => 'Save', class => 'save fbutton'                            });
+  $fieldset->append_child('input', { type => 'checkbox', value => $_,     class => "selected hidden $_", name => 'config_key' }) for keys %{$self->{'editables'}};
+  $fieldset->append_child('input', { type => 'submit',   value => 'Save', class => 'save fbutton'                             });
   
   return $form->render;
 }

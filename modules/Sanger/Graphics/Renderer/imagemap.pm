@@ -43,6 +43,7 @@ sub add_canvas_frame {
 
 sub render_Ellipse {}
 sub render_Intron  {}
+sub render_Arc  {}
 
 sub render_Composite { shift->render_Rect(@_); }
 sub render_Space     { shift->render_Rect(@_); }

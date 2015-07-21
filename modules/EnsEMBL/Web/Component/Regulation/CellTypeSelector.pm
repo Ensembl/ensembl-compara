@@ -42,7 +42,7 @@ sub content_ajax {
   my $params      = $hub->multi_params; 
 
   my $context       = $self->hub->param('context') || 200;
-  my $shown_cells = $self->shown_cells($hub->param('image_config'));
+  my ($shown_cells,$partial) = $self->shown_cells($hub->param('image_config'));
 
   my (%shown_cells,%cell_categories);
   $shown_cells{$shown_cells->[$_]} = $_+1 for(0..$#$shown_cells);
@@ -53,6 +53,7 @@ sub content_ajax {
 
   $self->{'all_options'}      = \%all_cells;
   $self->{'included_options'} = \%shown_cells;
+  $self->{'partial_options'}  =  { map { $_ => 1 } @$partial };
   $self->{'param_mode'} = 'single';
   $self->{'extra_params'} = { image_config => $hub->param('image_config') };
 

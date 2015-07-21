@@ -33,10 +33,11 @@ sub _init {
 }
 
 sub _content_li {
-  my ($self,$key,$content,$on) = @_;
+  my ($self,$key,$content,$on,$partial) = @_;
 
   my $class;
   $class .= "off" unless $on;
+  $class .= "partial" if $partial;
   $class .= "heading" if $on>1;
   return qq(
     <li class="$class" data-key="$key">$content</li>);
@@ -55,6 +56,7 @@ sub content_ajax {
   my $hub          = $self->hub;
   my %all          = %{$self->{'all_options'}};       # Set in child content_ajax function - complete list of options in the form { URL param value => display label }
   my %included     = %{$self->{'included_options'}};  # Set in child content_ajax function - List of options currently set in URL in the form { url param value => order } where order is 1, 2, 3 etc.
+  my %partial      = %{$self->{'partial_options'}||{}};
   my @all_categories = @{$self->{'categories'}||[]};
 
   my $url          = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
@@ -98,7 +100,7 @@ sub content_ajax {
       }
       foreach my $key (@{$self->_sort_values($d->{'clusters'}{$cluster})}) {
         $cluster_list .=
-          $self->_content_li($key,$all{$key},!!$included{$key});
+          $self->_content_li($key,$all{$key},!!$included{$key},!!$partial{$key});
       }
       $include_list .= qq(<div>$heading<ul class="included">$cluster_list</ul></div>);
     }
@@ -134,17 +136,24 @@ sub content_ajax {
     $extra_inputs,
     $include_html,
   );
-  
+ 
+  my $partial = '';
+  if(%partial) {
+    $partial = qq(<div><span class="partial">PARTIAL</span></div>);
+  } 
   my $hint = qq(
     <div class="cloud_flip_hint">
       <div class="cloud_flip_hint_wrap">
         <div class="info">
           <h3>tip</h3>
           <div class="error_pad">
-            <h1>click to flip</h1>
-            <span class="on">ON</span>
-            <span class="flip_icon"></span>
-            <span class="off">OFF</span>
+            <div>
+              <h1>click to flip</h1>
+              <span class="on">ON</span>
+              <span class="flip_icon"></span>
+              <span class="off">OFF</span>
+            </div>
+            $partial
           </div>
         </div>
       </div>

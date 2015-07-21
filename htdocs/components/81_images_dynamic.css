@@ -48,6 +48,7 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .drag_select .selector .right-border      { left: auto; right: 0; border-width: 0 1px 0 0; }
 .drag_select .selector .left-border:hover,
 .drag_select .selector .right-border:hover{ background-color: rgba(255, 0, 0, 0.4); border: none; width: 5px; }
+.drag_select div.image_spinner            { position: absolute; opacity: 0.7; border: none; background-position: center center; background-color: #fff; width: 100%; height: 100%; top: 0; bottom: 0; }
 
 /* Hover menus */
 
@@ -57,7 +58,7 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .label_layer,
 .label_layer .label_layer_bg              { position: absolute; margin-left: -5px; padding-right: 5px; padding-bottom: 2px; }
 .label_layer .label_layer_bg              { width: inherit; height: inherit; margin: 0; background-color: #333; opacity: 0.1; display: none; }
-.hover_label                              { position: absolute; margin-left: 5px; padding: 0 0 4px; border: none; display: none; text-align: left; width: 300px; cursor: default; }
+.hover_label                              { position: absolute; margin-left: 5px; padding: 0 0 4px; border: none; display: none; text-align: left; width: 450px; cursor: default; }
 .hover_label div.spinner                  { display: none; }
 .hover_label_spinner div                  { display: none; }
 .hover_label_spinner div.spinner          { display: block; }
@@ -127,7 +128,6 @@ body.mac div.boundaries_wrapper ul li div.handle    { cursor: ns-resize; }
 /* Image panning */
 div.boundaries_wrapper div.boundaries_panning             { position: absolute; top: 0; background-color: #fffdf8; height: 100%; overflow: hidden; cursor: move; }
 div.boundaries_wrapper div.boundaries_panning ul          { overflow: hidden; }
-div.boundaries_wrapper div.boundaries_panning div.spinner { position: absolute; opacity: 0.5; border: none; background-position: center center; background-color: #fff; width: 100%; height: 100%; top: 0; }
 
 @media print {
   div.boundaries_wrapper { display: none; }
@@ -139,7 +139,7 @@ div.image_toolbar        { background-color: [[BUTTON_BG]]; color: #FFFFFF; heig
 div.image_toolbar.top    { border-bottom: 1px solid #999999; }
 div.image_toolbar.bottom { border-top: 1px solid #999999; }
 div.image_toolbar a      { float: left; width: 16px; height: 16px; display: block; margin: -2px 2px 2px; border: [[BUTTON_BG]] solid 2px; border-radius: 2px; }
-div.image_toolbar a:hover{ border-color: [[MH_BG]]; background-color: [[MH_BG]]; }
+div.image_toolbar a:hover{ border-color: [[BUTTON_BG_HOVER]]; background-color: [[BUTTON_BG_HOVER]]; }
 
 div.image_toolbar a.config        { background-image: url(/i/16/rev/setting.png);       }
 div.image_toolbar a.data          { background-image: url(/i/16/rev/page-user.png);     }
@@ -154,11 +154,12 @@ div.image_toolbar a.config-reset  { background-image: url(/i/16/rev/setting-rese
 div.image_toolbar div.scroll-switch               { float: right; line-height: 16px; }
 div.image_toolbar div.scroll-switch span          { margin-right: 4px; }
 div.image_toolbar div.scroll-switch div           { display: inline-block; margin: -2px 2px 0; padding: 2px; border-radius: 2px; }
-div.image_toolbar div.scroll-switch div.selected  { background-color: [[MH_BG]]; }
+div.image_toolbar div.scroll-switch div.selected  { background-color: [[BUTTON_BG_HOVER]]; }
 div.image_toolbar div.scroll-switch div.last      { margin-right: 6px; }
-div.image_toolbar div.scroll-switch div:hover     { background-color: [[MH_BG]]; }
+div.image_toolbar div.scroll-switch div:hover     { background-color: [[BUTTON_BG_HOVER]]; }
 div.image_toolbar div.scroll-switch button        { border: none; cursor: pointer; height: 17px; outline: none; width: 16px; vertical-align: top; background: url(/i/controls_white.png) repeat scroll -68px -18px transparent; }
 div.image_toolbar div.scroll-switch button.on     { background-position: -68px 0; }
+div.image_toolbar div.image_loading               { position: absolute; font-size: 120%; left: 50%; line-height: 16px; margin-left: -30px; }
 
 /* Image exporting */
 
@@ -210,6 +211,7 @@ div.icon                      { padding: 4px 8px 4px 0; }
 /* Note that these names include the word 'icon' to distinguish them from classes associated with actions */
 .fave_icon     { background-image: url(/i/16/swp/star.png);         }
 .info_icon     { background-image: url(/i/16/swp/info.png);         }
+.help_icon     { background-image: url(/i/16/swp/help.png);         }
 .save_icon     { background-image: url(/i/16/swp/save.png);         }
 .config_icon   { background-image: url(/i/16/swp/setting.png);      }
 .delete_icon   { background-image: url(/i/16/swp/trash.png);        }

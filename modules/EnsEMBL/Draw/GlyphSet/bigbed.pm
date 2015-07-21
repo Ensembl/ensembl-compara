@@ -35,6 +35,11 @@ use EnsEMBL::Web::Text::Feature::BED;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
+sub wiggle_subtitle { 
+  my $self = shift;
+  return $self->my_config('longLabel') || $self->my_config('caption');
+}
+
 sub my_helplink   { return 'bigbed'; }
 sub feature_id    { $_[1]->id;       }
 sub feature_group { $_[1]->id;       }
@@ -73,13 +78,8 @@ sub bigbed_adaptor {
       }
     } 
     else {
-<<<<<<< HEAD
       my $ad = Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor->new($self->my_config('url'));
       $error = "Broken bigbed file" unless $ad->check;
-=======
-      my $ad = Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($self->my_config('url'));
-      $error = "Missing bigbed file" unless $ad->check;
->>>>>>> postreleasefix/79
       $self->{'_cache'}->{'_bigbed_adaptor'} = $ad;
     }
   }
@@ -174,12 +174,10 @@ sub _draw_wiggle {
  
   $self->draw_wiggle_plot(
     $features, {
-      min_score => min(@scores),
+      min_score => 0,
       max_score => max(@scores),
-      description => $self->my_config('caption'),
       score_colour => $self->my_config('colour'),
   }); 
-  $self->draw_space_glyph();
   return (); # No error
 }
 
@@ -193,16 +191,22 @@ sub features {
   return [] unless $bba;
   my $format    = $self->format;
   my $slice     = $self->{'container'};
-  my $features  = $bba->fetch_features($slice->seq_region_name, $slice->start, $slice->end + 1);
+  my $raw_feats = $bba->fetch_features($slice->seq_region_name, $slice->start, $slice->end + 1);
   my $config    = {};
   my $max_score = 0;
   my $key       = $self->my_config('description') =~ /external webserver/ ? 'url' : 'feature';
   
   $self->{'_default_colour'} = $self->SUPER::my_colour($self->my_config('sub_type'));
   
-  foreach (@$features) {
-    $_->map($slice);
-    $max_score = max($max_score, $_->score);
+  my $features = [];
+  foreach (@$raw_feats) {
+    my $bed = EnsEMBL::Web::Text::Feature::BED->new(@$_);
+    $bed->coords([$_[0],$_[1],$_[2]]);
+    ## Set score to undef if missing, to distinguish it from a genuine present but zero score
+    $bed->score(undef) if @_ < 5;
+    $bed->map($slice);
+    $max_score = max($max_score, $bed->score);
+    push @$features, $bed;
   }
   
   # WORK OUT HOW TO CONFIGURE FEATURES FOR RENDERING
@@ -271,6 +275,17 @@ sub render_as_alignment_label {
   my $self = shift;
   $self->{'show_labels'} = 1;
   $self->SUPER::render_as_alignment_label(@_);
+}
+
+sub render_as_transcript_nolabel {
+  my $self = shift;
+  $self->SUPER::render_as_alignment_nolabel({'height' => 8, 'depth' => 20, 'structure' => 1});
+} 
+
+sub render_as_transcript_label   {
+  my $self = shift;
+  $self->{'show_labels'} = 1; 
+  $self->SUPER::render_as_alignment_nolabel({'height' => 8, 'depth' => 20, 'structure' => 1});
 }
 
 ## Backwards compatibility

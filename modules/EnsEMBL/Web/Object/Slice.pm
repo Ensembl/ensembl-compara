@@ -34,6 +34,7 @@ package EnsEMBL::Web::Object::Slice;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
+use EnsEMBL::Web::Tree;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -288,7 +289,7 @@ sub filter_munged_snps {
 
 # Sequence Align View ---------------------------------------------------
 
-sub get_individuals {
+sub get_samples {
   ### SequenceAlignView
   ### Arg (optional) : type string
   ###  - "default"   : returns samples checked by default
@@ -300,30 +301,30 @@ sub get_individuals {
 
   my $self    = shift;
   my $options = shift;
-  my $individual_adaptor;
+  my $sample_adaptor;
   
   eval {
-   $individual_adaptor = $self->variation_adaptor->get_IndividualAdaptor;
+   $sample_adaptor = $self->variation_adaptor->get_SampleAdaptor;
   };
   
   if ($@) {
-    warn "Error getting individual adaptor off variation adaptor " . $self->variation_adaptor;
+    warn "Error getting sample adaptor off variation adaptor " . $self->variation_adaptor;
     return ();
   }
   
   if ($options eq 'default') {
-    return sort  @{$individual_adaptor->get_default_strains};
+    return sort  @{$sample_adaptor->get_default_strains};
   } elsif ($options eq 'reseq') {
-    return @{$individual_adaptor->fetch_all_strains};
+    return @{$sample_adaptor->fetch_all_strains};
   } elsif ($options eq 'reference') {
-    return $individual_adaptor->get_reference_strain_name || $self->species;
+    return $sample_adaptor->get_reference_strain_name || $self->species;
   }
 
   my %default_pops;
-  map { $default_pops{$_} = 1 } @{$individual_adaptor->get_default_strains};
+  map { $default_pops{$_} = 1 } @{$sample_adaptor->get_default_strains};
   my %db_pops;
   
-  foreach (sort  @{$individual_adaptor->get_display_strains}) {
+  foreach (sort  @{$sample_adaptor->get_display_strains}) {
     next if $default_pops{$_};
     $db_pops{$_} = 1;
   }
@@ -352,11 +353,13 @@ sub get_cell_line_data {
   my $data;
 
   foreach my $cell_line (keys %cell_lines) {
-    $cell_line =~ s/:\w*//;
-    
+    $cell_line =~ s/:[^:]*$//;
+    my $ic_cell_line = $cell_line;
+    EnsEMBL::Web::Tree->clean_id($ic_cell_line);
+
     foreach my $set (@sets) {
-      my $node = $image_config->get_node("reg_feats_${set}_$cell_line");
-      
+      my $node = $image_config->get_node("reg_feats_${set}_$ic_cell_line");
+
       next unless $node;
       
       my $display = $node->get('display');
@@ -397,8 +400,9 @@ sub get_data {
       my $feature_type_name     = $reg_attr_fset->feature_type->name;
       my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $feature_type_name;
       my $focus_flag            = $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
-      
+
       $count++;
+      my $key = "$unique_feature_set_id:$count";
       
       next unless $data->{$cell_line}{$focus_flag}{'on'}{$feature_type_name};
       
@@ -413,8 +417,8 @@ sub get_data {
           my $obj = $reg_object->Obj;
           @block_features = grep $obj->has_attribute($_->dbID, 'annotated'), @block_features
         }
-        
-        $data->{$cell_line}{$focus_flag}{'block_features'}{"$unique_feature_set_id:$count"} = \@block_features if scalar @block_features;
+       
+        $data->{$cell_line}{$focus_flag}{'block_features'}{$key} = \@block_features if scalar @block_features;
       }
       
       if ($display_style eq 'tiling' || $display_style eq 'tiling_feature') {
@@ -424,29 +428,24 @@ sub get_data {
         if (scalar @$sset) {
           # There should only be one
           throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
-          
+        
           push @result_sets, $sset->[0];
-          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = 1;
+          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = 1;  
         }
       }
     }
   }
 
-  # retrieve all the data to draw wiggle plots
-  if (scalar @result_sets > 0) {   
-    my $resultfeature_adaptor = $hub->get_adaptor('get_ResultFeatureAdaptor', 'funcgen');
-    my $max_bins              = $ENV{'ENSEMBL_IMAGE_WIDTH'} - 228; 
-    my $wiggle_data           = $resultfeature_adaptor->fetch_all_by_Slice_ResultSets($self->Obj, \@result_sets, $max_bins);
+  foreach (@result_sets) { 
+    my $unique_feature_set_id = join ':', $_->cell_type->name, 
+                                          $_->feature_type->name, 
+                                          $_->dbID;
+    my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
+    my $path = $_->dbfile_path;
+    $path = "$file_path/$path" unless $path =~ /^$file_path/;
+    $data->{'wiggle_data'}{$unique_feature_set_id} = $path;
+  }
     
-    foreach my $rset_id (keys %$wiggle_data) { 
-      my $results_set           = $hub->get_adaptor('get_ResultSetAdaptor', 'funcgen')->fetch_by_dbID($rset_id);
-      my $unique_feature_set_id = join ':', $results_set->cell_type->name, $results_set->feature_type->name, $results_set->dbID;
-      my $features              = $wiggle_data->{$rset_id};
-      
-      $data->{'wiggle_data'}{$unique_feature_set_id} = $features;
-    }
-  }      
-  
   $data->{'colours'} = \%feature_sets_on;
   
   return $data;

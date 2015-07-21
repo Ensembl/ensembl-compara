@@ -163,7 +163,9 @@ form.homepage-search-form             { text-align: center; margin: 0 !important
 div.new-to-ensembl p      { background: url("/i/e-quest.gif") no-repeat scroll left -2px transparent; padding-left: 32px; }
 div.new-to-ensembl p a    { font-weight: bold; font-size: 108%; }
 div.new-to-ensembl p span { display: block; }
-div.did-you-know          { padding: 16px; }
+
+div.homepage-twitter        { margin: 16px -6px 7px; }
+div.homepage-twitter iframe { width: 100% !important;}
 
 /*-----------------------------------------------------------------------
 contact link on help and faq page 

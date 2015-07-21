@@ -31,7 +31,7 @@ sub new {
     $extra = {};
   }
   my @default_extras = qw(thick_start thick_end item_colour
-                            BlockCount BlockSizes BlockStart);
+                            BlockCount BlockSizes BlockStarts);
   foreach my $i (0..$#default_extras) {
     $extra->{$default_extras[$i]}=$args->[$i+6] if defined $args->[$i+6];
   }

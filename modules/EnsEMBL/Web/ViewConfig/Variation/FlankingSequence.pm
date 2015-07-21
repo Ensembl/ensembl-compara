@@ -77,7 +77,7 @@ sub form_fields {
   };
   
   $self->add_variation_options($markup_options, 
-                                {'label' => 'Show variations in flanking sequence',
+                                {'label' => 'Show variants in flanking sequence',
                                  'snp_link' => 'no'}
                               ); 
   

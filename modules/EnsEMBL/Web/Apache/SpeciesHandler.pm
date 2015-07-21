@@ -51,7 +51,7 @@ sub handler_species {
   
   $action   = shift @path_segments;
   $function = shift @path_segments;
-  
+ 
   $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
 
   if ($flag && $script) {
@@ -86,10 +86,15 @@ sub handler_species {
     return HTTP_TEMPORARY_REDIRECT;
   }
   
-  my $redirect = get_redirect($script);
+  my $redirect = get_redirect($script, $type, $action);
   
   if ($redirect) {
-    my $newfile = join '/', '', $species, $redirect;
+    ($type, $action, $function) = split($redirect);
+    $ENV{'ENSEMBL_TYPE'}      = $type;
+    $ENV{'ENSEMBL_ACTION'}    = $action if $action;
+    $ENV{'ENSEMBL_FUNCTION'}  = $function if $function;
+
+    $newfile = join '/', '', $species, $redirect;
     warn "OLD LINK REDIRECT: $script $newfile" if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
     
     $r->headers_out->add('Location' => join '?', $newfile, $querystring || ());

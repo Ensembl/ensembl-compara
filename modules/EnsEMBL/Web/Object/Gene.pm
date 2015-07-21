@@ -68,6 +68,7 @@ sub availability {
         $availability->{'has_2ndary_cons'}    = $tree && $tree->get_tagvalue('ss_cons') ? 1 : 0;
         $availability->{'has_2ndary'}         = ($availability->{'has_2ndary_cons'} || ($obj->canonical_transcript && scalar(@{$obj->canonical_transcript->get_all_Attributes('ncRNA')}))) ? 1 : 0;
       }
+      $availability->{'has_gxa'}              = $self->gxa_check;
 
       $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}           = !!$funcgen_res; 
@@ -81,19 +82,7 @@ sub availability {
       $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
       
       if ($self->database('variation')) {
-        my $phen_count  = 0;
-        my $pfa         = Bio::EnsEMBL::Registry->get_adaptor($self->species, 'variation', 'PhenotypeFeature');
-        $phen_count     = $pfa->count_all_by_Gene($self->Obj);
-
-        if (!$phen_count) {
-          my $hgncs = $obj->get_all_DBEntries('hgnc') || [];
-
-          if(scalar @$hgncs && $hgncs->[0]) {
-            my $hgnc_name = $hgncs->[0]->display_id;
-            $phen_count   = $pfa->_check_gene_by_HGNC($hgnc_name) if $hgnc_name; # this method is super-fast as it uses some direct SQL on a nicely indexed table
-          }
-        }
-        $availability->{'has_phenotypes'} = $phen_count;
+        $availability->{'has_phenotypes'} = $self->get_phenotype;
       }
 
       if ($self->database('compara_pan_ensembl')) {
@@ -140,9 +129,11 @@ sub counts {
       $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};
     }
     $counts->{structural_variation} = 0;
+
     if ($self->database('variation')){ 
       my $vdb = $self->species_defs->get_config($self->species,'databases')->{'DATABASE_VARIATION'};
       $counts->{structural_variation} = $vdb->{'tables'}{'structural_variation'}{'rows'};
+      $counts->{phenotypes} = $self->get_phenotype;
     }
     if ($member) {
       $counts->{'orthologs'}  = $member->number_of_orthologues;
@@ -173,7 +164,24 @@ sub counts {
   
   return $counts;
 }
+sub get_phenotype {
+  my $self = shift;
+  
+  my $phen_count  = 0;
+  my $pfa         = Bio::EnsEMBL::Registry->get_adaptor($self->species, 'variation', 'PhenotypeFeature');
+  $phen_count     = $pfa->count_all_by_Gene($self->Obj);
 
+  if (!$phen_count) {
+    my $hgncs = $self->Obj->get_all_DBEntries('hgnc') || [];
+
+    if(scalar @$hgncs && $hgncs->[0]) {
+      my $hgnc_name = $hgncs->[0]->display_id;
+      $phen_count   = $pfa->_check_gene_by_HGNC($hgnc_name) if $hgnc_name; # this method is super-fast as it uses some direct SQL on a nicely indexed table
+    }
+  }
+  
+  return $phen_count;
+}
 sub get_xref_available{
   my $self=shift;
   my $available = ($self->count_xrefs > 0);
@@ -238,8 +246,7 @@ sub insdc_accession {
     if($slice) {
       my $name = $self->_insdc_synonym($slice,'INSDC');
       if($name) {
-        return join(':',$slice->coord_system->name,$csv,$name,
-                      $slice->start,$slice->end,$slice->strand);
+        return join(':',$csv,$name);
       }
     }
   }
@@ -481,6 +488,8 @@ sub seq_region_strand           { return $_[0]->Obj->strand;     }
 sub feature_length              { return $_[0]->Obj->feature_Slice->length; }
 sub get_latest_incarnation      { return $_[0]->Obj->get_latest_incarnation; }
 sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived; }
+sub gxa_check                   { return; } #implemented in widget plugin, to check for gene expression atlas availability
+
 
 sub get_database_matches {
   my $self = shift;

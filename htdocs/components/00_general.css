@@ -113,6 +113,10 @@ a:visited             { color: [[PAGE_VISITED]]; }
 a:hover               { color: [[PAGE_HOVER]];   }
 a:active              { color: [[PAGE_HOVER]];   }
 a.no-visit:visited    { color: [[PAGE_LINK]]; } /* don't change link colour on links we want to stay "visible" */
+a.external-link,
+a[rel=external]       { background-position: right center; background-repeat: no-repeat; padding-right: 12px; background-image: url("[[IMG:external_link.svg]]") }
+a.external-link:hover,
+a[rel=external]:hover { background-image: url("[[IMG:external_link_hover.svg]]") }
 span.link             { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
 a.toggle              { background: url(/i/open2.gif) no-repeat right bottom; text-decoration: none; padding-right: 20px; outline: 0 none; }
 a.toggle.closed       { background-image: url(/i/closed2.gif); }
@@ -165,13 +169,15 @@ div.warning h3      { background-color: [[WARNING_BG]]; }
 div.info h3         { background-image: url(/i/16/info.png);  background-color: [[INFO_BG]]; }
 div.hint h3         { background-image: none; padding: 4px 8px 2px; background-color: [[INFO_BG]]; height: 20px; line-height: 20px; }
 
-div.error div,
-div.warning div,
-div.info div,
-div.hint div        { border: 1px solid [[ERROR_BG]]; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
+div.error > div,
+div.warning > div,
+div.info > div,
+div.hint > div      { border: 1px solid [[ERROR_BG]]; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
 div.warning div     { border-color: [[WARNING_BG]]; }
-div.info div,
-div.hint div        { border-color: [[INFO_BG]]; }
+div.info > div,
+div.hint > div      { border-color: [[INFO_BG]]; }
+.info div,
+.hint div           { border: none; }
 
 div.syntax-error    { color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; }
 

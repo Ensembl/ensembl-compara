@@ -70,7 +70,7 @@ sub content {
   return sprintf('
     <input type="hidden" class="subpanel_type" value="ConfigManager" />
     <div class="config_manager">
-      <a title="Click for help (opens in new window)" class="popup constant sprite config_manager_help info_icon _ht" href="/Help/View?id=%s#manage_configs"></a>
+      <a title="Click for help (opens in new window)" class="popup constant sprite config_manager_help help_icon _ht" href="/Help/View?id=%s#manage_configs"></a>
       <div class="records">
         %s
       </div>
@@ -111,7 +111,7 @@ sub content {
 
 sub content_update {
   my $self = shift;
-  my ($columns, $rows, $json) = $self->records(1, { map { $_ => 1 } $self->hub->param('record_ids') });
+  my ($columns, $rows, $json) = $self->records(1, { map { $_ => 1 } $self->hub->param('config_keys') });
   
   return $self->jsonify({
     data   => $json,
@@ -122,21 +122,21 @@ sub content_update {
 }
 
 sub content_config {
-  my $self      = shift;
-  my $hub       = $self->hub;
-  my $record_id = $hub->param('record_id');
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $config_key  = $hub->param('config_key');
   
-  return unless $record_id;
+  return unless $config_key;
   
   my $adaptor     = $hub->config_adaptor;
   my $all_configs = $adaptor->all_configs;
-  my $record      = $all_configs->{$record_id};
+  my $record      = $all_configs->{$config_key};
   
   return unless $record;
   
-  my ($vc, $ic) = $record->{'type'} eq 'view_config' ? ($record, $all_configs->{$record->{'link_id'}}) : ($all_configs->{$record->{'link_id'}}, $record);
+  my ($vc, $ic) = $record->{'type'} eq 'view_config' ? ($record, $all_configs->{$record->{'link_key'}}) : ($all_configs->{$record->{'link_key'}}, $record);
   my $all_sets  = $adaptor->all_sets;
-  my @sets      = sort { $a->[1] cmp $b->[1] } map [ $all_sets->{$_}{'record_id'}, $all_sets->{$_}{'name'} ], $adaptor->record_to_sets($record_id);
+  my @sets      = sort { $a->[1] cmp $b->[1] } map [ $all_sets->{$_}{'config_key'}, $all_sets->{$_}{'name'} ], $adaptor->record_to_sets($config_key);
   my (@config, $html);
   
   if ($vc) {
@@ -182,7 +182,7 @@ sub content_config {
 sub content_all { return $_[0]->content(1); }
 
 sub records {
-  my ($self, $show_all, $record_ids) = @_;
+  my ($self, $show_all, $config_keys) = @_;
   my $hub     = $self->hub;
   my $adaptor = $hub->config_adaptor;
   my $configs = $adaptor->all_configs;
@@ -202,11 +202,11 @@ sub records {
   $self->{'editables'} = $self->deepcopy($adaptor->all_sets);
   
   foreach (values %$configs) {
-    my $record_id = $_->{'record_id'};
+    my $config_key = $_->{'config_key'};
     
-    next if $record_ids && !$record_ids->{$record_id};
+    next if $config_keys && !$config_keys->{$config_key};
     next if $_->{'active'};
-    next if $_->{'type'} eq 'image_config' && $_->{'link_id'};
+    next if $_->{'type'} eq 'image_config' && $_->{'link_key'};
     
     my $vc_code = $_->{'type'} eq 'image_config' && $_->{'link_code'} ? $_->{'link_code'} : $_->{'code'};
     
@@ -214,21 +214,20 @@ sub records {
     
     my ($type, $code) = split '::', $vc_code;
     my $view_config   = $hub->get_viewconfig($code, $type);
-    my $component     = $view_config->component;
-    my @sets          = $adaptor->record_to_sets($record_id);
+    my @sets          = $adaptor->record_to_sets($config_key);
     
     my ($row, $group_key, $json_group) = $self->row($_, { type => $type, conf => $view_config->title });
     
     push @{$rows->{$group_key}}, $row;
     push @{$self->{'editables'}{$_}{'conf_codes'}}, "${type}_$code" for @sets;
     
-    $json->{$record_id} = {
-      id        => $record_id,
+    $json->{$config_key} = {
+      id        => $config_key,
       name      => $_->{'name'},
       group     => $json_group,
       groupId   => $_->{'record_type_id'},
       codes     => [ "${type}_$code" ],
-      editables => { map { $self->{'editables'}{$_}{'record_id'} => 1 } @sets }
+      editables => { map { $self->{'editables'}{$_}{'config_key'} => 1 } @sets }
     };
   }
   
@@ -236,7 +235,7 @@ sub records {
   
   my $columns = $self->columns;
   
-  return ($columns, $rows, $json) if $record_ids;
+  return ($columns, $rows, $json) if $config_keys;
   return $self->records_html($columns, $rows, $json) . qq{<div class="hidden no_records">$empty</div>};
 }
 
@@ -282,7 +281,7 @@ sub records_tables {
       '<div class="record_type %s"><h2>%s</h2>%s</div>',
       join(' ', $_, scalar @sorted ? () : 'hidden'),
       $headers->{$_},
-      $self->new_table($columns->{$_}, \@sorted, { data_table => 'no_sort no_col_toggle', exportable => 0, class => "fixed editable heightwrap_inside $_" })->render
+      $self->new_table($columns->{$_}, \@sorted, { data_table => 'no_sort no_col_toggle', exportable => 0, class => "config-list fixed editable heightwrap_inside $_" })->render
     );
   }
   
@@ -295,7 +294,7 @@ sub templates {
     editable => '<div><div class="height_wrap"><div class="val" title="Click here to edit">%s</div></div>%s<a href="%s" class="save"></a></div>',
     expand   => '<a class="icon_link _ht expand" title="See more details" href="%s">&#9660;</a><a class="icon_link _ht collapse hidden" title="Collapse" href="#">&#9650;</a>',
     icon     => '<a class="icon_link sprite _ht %s_icon %s" title="%s" href="%s">&nbsp;</a>%s',
-    disabled => '<span class="icon_link sprite_disabled _ht %s_icon" title="%s">&nbsp;</span>',
+    disabled => '<span class="icon_link sprite sprite_disabled _ht %s_icon" title="%s">&nbsp;</span>',
     add      => '<a class="add_to_set" href="#" rel="%s"><span class="removed _ht" title="Add to set">&nbsp;</span><span class="added _ht" title="Remove from set">&nbsp;</span></a>',
     list     => '<li class="%s"><span class="name">%s</span></li>',
     icon_col => { title => '', width => '16px', align => 'center' },
@@ -308,8 +307,8 @@ sub row {
   my $set_view     = $self->set_view;
   my $templates    = $self->templates;
   my $desc         = $record->{'description'} =~ s|\n|<br />|rg;
-  my $record_id    = $record->{'record_id'};
-  my %params       = ( action => 'ModifyConfig', __clear => 1, record_id => $record_id, ($set_view ? (is_set => 1) : ()) );
+  my $config_key   = $record->{'config_key'};
+  my %params       = ( action => 'ModifyConfig', __clear => 1, config_key => $config_key, ($set_view ? (is_set => 1) : ()) );
   my $edit_url     = $hub->url({ function => 'edit_details', %params });
   my $group        = $record->{'record_type'} eq 'group';
   my $record_group = $self->record_group($record);
@@ -321,9 +320,9 @@ sub row {
     'Edit sets'
   ];
   
-  $row->{'expand'}  = sprintf $templates->{'expand'}, $self->ajax_url('config', { __clear => 1, record_id => $record_id, update_panel => 1 });
+  $row->{'expand'}  = sprintf $templates->{'expand'}, $self->ajax_url('config', { __clear => 1, config_key => $config_key, update_panel => 1 });
   $row->{'active'}  = sprintf $templates->{'icon'}, 'use', 'edit', $text->[0], $hub->url({ function => 'activate', %params }), $text->[1];
-  $row->{'options'} = { class => $record_id };
+  $row->{'options'} = { class => $config_key };
   
   if ($group && !$self->admin_groups->{$record->{'record_type_id'}}) {
     $row->{'name'}   = { value => sprintf($templates->{'wrap'}, $record->{'name'}), class => 'wrap' };
@@ -333,7 +332,7 @@ sub row {
   } else {
     $row->{'name'}   = { value => sprintf($templates->{'editable'}, $record->{'name'}, '<input type="text" maxlength="255" name="name" />', $edit_url), class => 'editable wrap' };
     $row->{'desc'}   = { value => sprintf($templates->{'editable'}, $desc,             '<textarea rows="5" name="description"></textarea>', $edit_url), class => 'editable wrap' };
-    $row->{'delete'} = sprintf $templates->{'icon'}, 'delete', 'edit',         'Delete', $hub->url({ function => 'delete', %params, link_id => $record->{'link_id'} });
+    $row->{'delete'} = sprintf $templates->{'icon'}, 'delete', 'edit',         'Delete', $hub->url({ function => 'delete', %params, link_key => $record->{'link_key'} });
     $row->{'share'}  = sprintf $templates->{'icon'}, 'share',  'share_record', 'Share',  $hub->url({ function => 'share',  %params }) unless $group;
     $row->{'edit'}   = sprintf $templates->{'icon'}, 'edit',   'edit_record',  $text->[2], '#';
 
@@ -428,8 +427,8 @@ sub edit_table_row {
   
   $row->{'name'}    = { value => sprintf($templates->{'wrap'}, $record->{'name'}),        class => 'wrap', sort => $record->{'name'} };
   $row->{'desc'}    = { value => sprintf($templates->{'wrap'}, $record->{'description'}), class => 'wrap' };
-  $row->{'add'}     = sprintf $templates->{'add'}, $record->{'record_id'};
-  $row->{'options'} = { class => join(' ', $record->{'record_id'}, @{$record->{'conf_codes'} || []}), record => $record };
+  $row->{'add'}     = sprintf $templates->{'add'}, $record->{'config_key'};
+  $row->{'options'} = { class => join(' ', $record->{'config_key'}, @{$record->{'conf_codes'} || []}), record => $record };
   
   return $row;
 }
@@ -444,10 +443,10 @@ sub edit_table_html {
   my $type     = $set_view ? 'configurations' : 'sets';
   my (%tables, $html);
   
-  $fieldset->append_child('input', { type => 'checkbox', class => "selected hidden $_", name => 'update_id', value => $_        }) for keys %{$self->{'editables'}};
-  $fieldset->append_child('input', { type => 'hidden',   class => 'record_id',          name => 'record_id', value => ''        });
-  $fieldset->append_child('input', { type => 'hidden',                                  name => 'is_set',    value => $set_view });
-  $fieldset->append_child('input', { type => 'submit',   class => 'save fbutton',                            value => 'Save'    });
+  $fieldset->append_child('input', { type => 'checkbox', class => "selected hidden $_", name => 'update_id',  value => $_        }) for keys %{$self->{'editables'}};
+  $fieldset->append_child('input', { type => 'hidden',   class => 'config_key',         name => 'config_key', value => ''        });
+  $fieldset->append_child('input', { type => 'hidden',                                  name => 'is_set',     value => $set_view });
+  $fieldset->append_child('input', { type => 'submit',   class => 'save fbutton',                             value => 'Save'    });
   
   foreach (@$rows) {
     my $record = delete $_->{'options'}{'record'};
@@ -494,7 +493,7 @@ sub share {
   
   $fieldset->append_child('input', { type => 'button', class => 'make_url', value => 'Share' });
   $fieldset->append_child('input', { type => 'text',   class => 'share_url' });
-  $fieldset->append_child('input', { type => 'hidden', class => 'record_id', name => 'record_id' });
+  $fieldset->append_child('input', { type => 'hidden', class => 'config_key', name => 'config_key' });
   $fieldset->append_child('input', { type => 'hidden', name => 'is_set', value => $self->set_view });
   
   if (scalar @$groups) {

@@ -20,11 +20,17 @@ package EnsEMBL::Draw::GlyphSet::_simple;
 
 ### Standard rendering of data from simple_feature table (or similar)
 
+##################
+# DEPRECATED!
+##################
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
 
 sub features { 
+  warn "############# DEPRECATED MODULE - USE GlyphSet::simple_features instead";
+  warn "This module will be removed in release 82";
   my $self     = shift;
   my $call     = 'get_all_' . ($self->my_config('type') || 'SimpleFeatures'); 
   my $db_type       = $self->my_config('db');
@@ -36,7 +42,7 @@ sub features {
 sub colour_key { return lc $_[1]->analysis->logic_name; }
 sub _das_type  { return 'simple'; }
 
-sub feature_label { my ($self, $f) = @_; return $f->id; }
+sub feature_label { my ($self, $f) = @_; return $f->display_id; }
 sub render_normal {$_[0]->SUPER::render_normal(1);}
 sub render_labels {$_[0]->SUPER::render_normal();}
 

@@ -133,9 +133,13 @@ sub add_image_config_notes {
   my ($self, $controller) = @_;
   my $panel   = $self->new_panel('Configurator', $controller, code => 'x', class => 'image_config_notes' );
   my $img_url = $self->img_url;
+  my $trackhub_link = $self->hub->url({'type' => 'UserData', 'action' => 'SelectHub'});
   
   $panel->set_content(qq(
-    <h2 class="border">Key</h2>
+    <div class="info-box">
+    <p>Looking for more data? See our <a href="${trackhub_link}" class="modal_link">Track Hub list</a> for external sources of annotation</p>
+    </div>
+    <h2 class="border clear">Key</h2>
     <div>
       <ul class="configuration_key">
         <li><img src="${img_url}render/normal.gif" /><span>Track style</span></li>
@@ -166,15 +170,15 @@ sub save_as {
   my ($configs, %seen, $save_to);
   
   foreach (sort { $a->{'name'} cmp $b->{'name'} } values %$data) {
-    next if $seen{$_->{'record_id'}};
+    next if $seen{$_->{'config_key'}};
     
-    $seen{$_} = 1 for $_->{'record_id'}, $_->{'link_id'};
+    $seen{$_} = 1 for $_->{'config_key'}, $_->{'link_key'};
     
     next if $_->{'record_type'} eq 'group' && !$groups{$_->{'record_type_id'}};
     
     $configs .= sprintf(
       '<option value="%s" class="%1$s">%s%s</option>',
-      $_->{'record_id'},
+      $_->{'config_key'},
       $_->{'name'},
       $user ? sprintf(' (%s%s)', $_->{'record_type'} eq 'user' ? 'Account' : ucfirst $_->{'record_type'}, $_->{'record_type'} eq 'group' ? ': ' . $groups{$_->{'record_type_id'}}->name : '') : ''
     ); 

@@ -153,7 +153,7 @@ sub has_phenotype {
 sub short_caption {
   my $self = shift;
 
-  my $type = 'Structural variation';
+  my $type = 'Structural variant';
   if ($self->class eq 'CNV_PROBE') {
      $type = 'CNV probe';
   }
@@ -170,12 +170,12 @@ sub short_caption {
 
 sub caption {
  my $self = shift;
- my $type = 'Structural variation';
+ my $type = 'Structural variant';
  if ($self->class eq 'CNV_PROBE') {
-   $type = 'Copy number variation probe';
+   $type = 'Copy number variant probe';
  }
  elsif($self->is_somatic) {
-   $type = 'Somatic structural variation';
+   $type = 'Somatic structural variant';
  }
  my $caption = $type.': '.$self->name;
 

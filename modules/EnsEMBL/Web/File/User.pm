@@ -250,5 +250,34 @@ sub write_tarball {
   return $result;
 }
 
+sub build_tracks_from_file {
+### Parse a file and convert data into drawable objects
+  my $self = shift;
+  my $tracks = {};
+
+  my $class = 'EnsEMBL::Web::IOWrapper::'.uc($self->format);
+  if (EnsEMBL::Root::dynamic_use($class)) {
+    my $wrapper = $class->new($self);
+    my $parser = $wrapper->parser;
+    while ($parser->next) {
+      my $key = $parser->get_metadata_value('name') || 'default';
+      if ($parser->is_metadata) {
+        $tracks->{$key}{'config'}{'description'} = $parser->get_metadata_value('description') unless $tracks->{$key}{'config'}{'description'};
+      }
+      else {
+        my $feature_array = $tracks->{$key}{'features'} || [];
+
+        ## Create feature
+        my $feature = $wrapper->get_hash;
+        next unless keys %$feature;
+
+        ## Add to track hash
+        push @$feature_array, $feature;
+        $tracks->{$key}{'features'} = $feature_array unless $tracks->{$key}{'features'};
+      }
+    }
+  }
+  return $tracks;
+}
 1;
 

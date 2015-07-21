@@ -157,7 +157,7 @@ sub fetch_archives_by_species {
       species as s,
       release_species as rs
     WHERE  
-      r.number = rs.release_id
+      r.release_id = rs.release_id
     AND
       s.species_id = rs.species_id
     AND

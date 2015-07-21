@@ -27,6 +27,7 @@ sub init {
   
   $self->set_defaults({
     exons       => 'on',
+    exons_case  => 'off',
     snp_display => 'off',
     number      => 'off'
   });
@@ -37,7 +38,7 @@ sub init {
 
 sub field_order {
   my $self = shift;
-  my @order = qw(display_width exons);
+  my @order = qw(display_width exons exons_case);
   push @order, $self->variation_fields if $self->species_defs->databases->{'DATABASE_VARIATION'};
   push @order, 'number';
   return @order;

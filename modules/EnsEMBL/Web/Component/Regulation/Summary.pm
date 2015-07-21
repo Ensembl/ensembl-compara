@@ -79,7 +79,8 @@ sub content {
     $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
   }
 
-  return $summary->render;
+  my $nav_buttons = $self->nav_buttons;
+  return $nav_buttons.$summary->render;
 }
 
 1;

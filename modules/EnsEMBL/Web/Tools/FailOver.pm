@@ -16,6 +16,70 @@ limitations under the License.
 
 =cut
 
+=head1 FailOver
+
+=head2 Introduction
+
+The FailOver module is designed to handle potentially unreliable resources,
+probably from remote servers, by providing a common framework for
+remembering that a resource was unavialable for a period of time, and so
+minimising the impact of potentially expensive checks.
+
+You write a subclass containing your checks and configuration and when
+you've done that, this superclass will provide you with a pair of methods
+to try the unreliable operation. One method, ->go, is for more complex
+situations, and ->get_cached for simpler ones. You will only need to use
+one of the two.
+
+=head2 Simpler Method (get_cached)
+
+For the simpler method, first override ->attempt. The call will be passed
+two arguments. The first, endpoint, will be the string "only", unless
+you have had reason to change it, and can safely be ignored (see "Multiple
+Endpoints" if you are curious). The second, payload, is a copy of the
+argument to the call to get_cached. This method should perform the risky
+operation and return its result.
+
+Then override ->successful. This will be passed the result of an attempt
+and should return true or false values depending on whether the result
+"looks like" a success or not.
+
+Now create an object using a prefix unique to your implementation (this
+is just a string which means files for failovers can all be stored in
+the same directory).
+
+You can now call ->get_cached. On the first attempt it will call your
+attempt, and then test if it was a success or not by calling ->successful
+with the result. If successful, the value will be returned, otherwise
+undef will be returned. On later attempts, if early attempts failed then
+undef will always be returned for some period of time.
+
+Example:
+
+  package EnsEMBL::Web::Tools::FailOver::My;
+  use base qw(EnsEMBL::Web::Tools::FailOver);
+
+  sub attempt {
+    my ($endpoint,$payload) = @_;
+    # Say this method returns a positive number if it's ok
+    return do_the_thing_that_might_fail($payload); 
+  }
+
+  sub successful { return $_[1] > 0; }
+
+Now you can do:
+
+  my $fail = EnsEMBL::Web::Tools::FailOver::My->new("example");
+  $payload = ... data for do_the_thing_that_might_fail() ...
+  my $out = $fail->get_cached($payload);
+
+$out will be the result of the operation if everything is up. If something
+goes down, suuccessful returns a false value, and $out is set to undef.
+For some time, $out then continues to return undef without even calling
+attempt.
+
+=cut
+
 package EnsEMBL::Web::Tools::FailOver;
 
 use strict;
@@ -37,7 +101,7 @@ sub new {
 # Defined in subclasses to check an endpoint is alive
 # Usage: $self->liveness_check($endpoint).
 # Returns: 1 = yes, 0 = no
-sub liveness_check { die "Must override alive"; }
+sub liveness_check { die "Must override alive if using ->go rather than ->get_cached"; }
 
 # seconds to continue to cautiously test for deadness after initial reports
 sub min_initial_dead { return 20; }
@@ -53,7 +117,7 @@ sub fail_for { return 600; }
 
 # Defined in subclasses
 # return arrayref of endpoints to try
-sub endpoints { die "Must override endpoints"; }
+sub endpoints { return ['only']; }
 
 # Defined in subclasses to attempt at one endpoint
 # Usage: $self->attempt($endpoint,$payload,$tryhard)

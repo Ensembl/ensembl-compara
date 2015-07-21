@@ -19,6 +19,13 @@ limitations under the License.
 package Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
 use strict;
 
+########################################################################################
+#
+# DEPRECATED MODULE - PLEASE SEE ensembl-io/modules/Bio/EnsEMBL/IO/Adaptor/VcfAdaptor
+#
+########################################################################################
+
+
 use Bio::EnsEMBL::Feature;
 use Data::Dumper;
 use Vcf;
@@ -41,7 +48,8 @@ my $snpCode = {
 
 sub new {
   my ($class, $url) = @_;
-  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::VcfAdaptor instead";
+  warn "######## DEPRECATED MODULE";
+  warn "### This module will be removed in Release 82 - please use Bio::EnsEMBL::IO::Adaptor::VcfAdaptor instead";
   my $self = bless {
     _cache => {},
     _url => $url,

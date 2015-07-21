@@ -402,10 +402,8 @@ sub _summarise_variation_db {
   # get menu config from meta table if it exists
   my $v_conf_aref = $dbh->selectall_arrayref('select meta_value from meta where meta_key = "web_config" order by meta_id asc');
   foreach my $row(@$v_conf_aref) {
-    my ($type, $long_name, $key, $parent) = split /\#/, $row->[0];
-  
-    my $short_name = $long_name;
-    $short_name = $1 if $long_name =~ s/\s*{(.*?)}\s*$//;
+    my @values = split(/\#/,$row->[0],-1);
+    my ($type,$long_name,$short_name,$key,$parent) = @values;
 
     push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
       type       => $type,
@@ -465,11 +463,11 @@ sub _summarise_variation_db {
      elsif ($type eq 'DEFAULT'){ push (@default, $name); }
      elsif ($type eq 'LD'){ push (@ld, $name); } 
    }
-   $self->db_details($db_name)->{'tables'}{'individual.reference_strain'} = $reference;
+   $self->db_details($db_name)->{'tables'}{'sample.reference_strain'} = $reference;
    $self->db_details($db_name)->{'REFERENCE_STRAIN'} = $reference; 
-   $self->db_details($db_name)->{'meta_info'}{'individual.default_strain'} = \@default;
+   $self->db_details($db_name)->{'meta_info'}{'sample.default_strain'} = \@default;
    $self->db_details($db_name)->{'DEFAULT_STRAINS'} = \@default;  
-   $self->db_details($db_name)->{'meta_info'}{'individual.display_strain'} = \@display;
+   $self->db_details($db_name)->{'meta_info'}{'sample.display_strain'} = \@display;
    $self->db_details($db_name)->{'DISPLAY_STRAINS'} = \@display; 
    $self->db_details($db_name)->{'LD_POPULATIONS'} = \@ld;
 #---------- Add in strains contained in read_coverage_collection table
@@ -830,7 +828,8 @@ sub _summarise_funcgen_db {
   foreach my $row (@$rs_aref ){
     my ($regbuild_name, $regbuild_string) = @$row; 
     $regbuild_name =~s/regbuild\.//;
-    my @key_info = split(/\./,$regbuild_name); 
+    $regbuild_name =~ /^(.*)\.(.*?)$/;
+    my @key_info = ($1,$2);
     my %data;  
     my @ids = split(/\,/,$regbuild_string);
     my $sth = $dbh->prepare(
@@ -920,6 +919,16 @@ sub _summarise_website_db {
     my $entry = eval($row->[0]);
     $self->db_tree->{'ENSEMBL_GLOSSARY'}{$entry->{'word'}} = $entry->{'meaning'}; 
   }
+
+  ## Get attrib text lookup
+  $t_aref = $dbh->selectall_arrayref(
+    'select data from help_record where type = "lookup" and status = "live"'
+  );
+  foreach my $row (@$t_aref) {
+    my $entry = eval($row->[0]);
+    $self->db_tree->{'TEXT_LOOKUP'}{$entry->{'word'}} = $entry->{'meaning'}; 
+  }
+
 
   $dbh->disconnect();
 }
@@ -1758,6 +1767,9 @@ sub _munge_file_formats {
     'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
     'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
     'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},
+    ## WashU formats
+    'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
+    'pairwise_tabix' => {'ext' => 'txt', 'label' => 'Pairwise interactions (indexed)', 'display' => 'feature', 'indexed' => 1},
   );
 
   ## Munge into something useful to this website
