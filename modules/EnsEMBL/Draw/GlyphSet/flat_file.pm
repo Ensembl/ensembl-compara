@@ -23,8 +23,8 @@ package EnsEMBL::Draw::GlyphSet::flat_file;
 
 use strict;
 
-use Bio::EnsEMBL::IO::Parser;
 use EnsEMBL::Web::File::User;
+use EnsEMBL::Web::IOWrapper;
 
 use EnsEMBL::Draw::Style::Blocks;
 
@@ -51,37 +51,23 @@ sub features {
     }
   }
 
-  my $file = EnsEMBL::Web::File::User->new(%args);
+  my $file  = EnsEMBL::Web::File::User->new(%args);
+  my $iow   = EnsEMBL::Web::IOWrapper->new($file);
 
-  my $response = $file->read;
-
-  if ($response->{'content'}) {
-    my $parser = Bio::EnsEMBL::IO::Parser::open_content_as($format, $response->{'content'});
-
-    if (!$parser) { warn "Could not create parser for $format file"; }
-
-    while ($parser->next) {
-      my $seqname = $parser->get_seqname;
-      my $start   = $parser->get_start;
-      my $end     = $parser->get_end;
+  ## Loop through parser
+  if ($iow) {
+    while ($iow->next) {
+      my ($seqname, $start, $end) = $iow->coords;
       ## Skip features that lie outside the current slice
       next unless ($seq_name eq $container->seq_region_name 
                     && (
                          ($start >= $container->start && $end <= $container->end)
                       || ($start <= $container->start && $end <= $container->end)
                       || ($start <= $container->end && $end >= $container->start) 
-                    ))
+                    ));
 
-      my $feature_colour = $parser->get_itemRgb || $self->my_config('colour');   
 
-      push @$features, {
-                        'start'         => $start,
-                        'end'           => $end,
-                        'colour'        => $feature_colour,
-                        'label'         => $parser->get_name,
-                        'label_colour'  => $feature_colour,
-                        'href'          => $self->href(),
-                        };
+      push @$features, $iow->create_hash;
     }
 
   } else {
