@@ -502,8 +502,7 @@ sub copy_genomic_align_blocks {
         MIN(gab.group_id), MAX(gab.group_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
         MIN(gat.node_id), MAX(gat.node_id),
-        MIN(gat.root_id), MAX(gat.root_id),
-        MIN(gat.left_index)
+        MIN(gat.root_id), MAX(gat.root_id)
     FROM genomic_align_block gab
     LEFT JOIN genomic_align ga using (genomic_align_block_id)
 	LEFT JOIN genomic_align_tree gat ON gat.node_id = ga.node_id
@@ -515,7 +514,7 @@ sub copy_genomic_align_blocks {
 
   $sth->execute($mlss_id);
   my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, 
-		$min_gat, $max_gat, $min_root_id, $max_root_id, $from_index_range_start) =
+		$min_gat, $max_gat, $min_root_id, $max_root_id) =
       $sth->fetchrow_array();
 
   $sth->finish();
@@ -556,7 +555,6 @@ sub copy_genomic_align_blocks {
 
   my $lower_limit = $mlss_id * 10**10;
   my $upper_limit = ($mlss_id + 1) * 10**10;
-  my $index_offset = 0;
 
   if (!defined $fix_gab) {
       if ($max_gab < 10**10) {
@@ -646,17 +644,6 @@ sub copy_genomic_align_blocks {
         " ** ERROR **  convention!\n";
       exit(1);
    }
-
-   # make sure the left_index and right_index are unique in the *to* db
-   my $sth_index = $to_dba->dbc->prepare("SELECT max(right_index) FROM genomic_align_tree");
-   $sth_index->execute();
-   my ($to_index_prev_range_max) = $sth_index->fetchrow_array();
-   $to_index_prev_range_max    ||= 0;
-
-   my $to_index_magnitude        = 10**(length($to_index_prev_range_max)-1);
-   my $to_index_range_start      = int($to_index_prev_range_max/$to_index_magnitude+1)*$to_index_magnitude+1;
-
-   $index_offset = $to_index_range_start-$from_index_range_start; # may go negative, it's fine
   }
 
   return if $dry_run;
@@ -677,7 +664,7 @@ sub copy_genomic_align_blocks {
         "genomic_align_tree",
         "root_id",
         $min_root_id, $max_root_id,
-        "SELECT node_id+$fix_gat, parent_id+$fix_gat, root_id+$fix_gat, left_index+$index_offset, right_index+$index_offset, left_node_id+$fix_gat, right_node_id+$fix_gat, distance_to_parent".
+        "SELECT node_id+$fix_gat, parent_id+$fix_gat, root_id+$fix_gat, left_index, right_index, left_node_id+$fix_gat, right_node_id+$fix_gat, distance_to_parent".
         " FROM genomic_align_tree ".
 	"WHERE root_id >= $min_root_id AND root_id <= $max_root_id");
     #Reset the appropriate nodes to zero. Only needs to be done if fix_lower 
