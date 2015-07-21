@@ -259,7 +259,7 @@ sub fetch_all_by_ancestral_taxon_id {
   }
 
   my $sql = "SELECT genome_db_id FROM ncbi_taxa_node ntn1, ncbi_taxa_node ntn2, genome_db gdb
-    WHERE ntn1.taxon_id = ? AND ntn1.left_index < ntn2.left_index AND ntn1.right_index > ntn2.left_index
+    WHERE ntn1.taxon_id = ? AND ntn1.left_index <= ntn2.left_index AND ntn1.right_index >= ntn2.left_index
     AND ntn2.taxon_id = gdb.taxon_id";
   if ($assembly_default_only) {
     $sql .= " AND gdb.assembly_default = 1";
