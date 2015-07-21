@@ -445,7 +445,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.hoverLabels.css('left', function() { return $(this.parentNode).width(); });
 
     // initialise content inside hover labels
-    this.inithoverLabels();
+    this.initHoverLabels();
   },
 
   positionLayers: function() {
@@ -485,7 +485,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
   },
 
-  inithoverLabels: function () {
+  initHoverLabels: function () {
     var panel = this;
 
     this.elLk.hoverLabels.each(function() {
