@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Component::UserData::SelectFile;
 
+### Form for uploading or attaching user's own data
+
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -42,7 +44,13 @@ sub content {
   my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
   my $max_upload_size = abs($sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
-  my $form            = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'AddFile'}), {'skip_validation' => 1, 'class' => 'check', 'no_button' => 1}); # default JS validation is skipped as this form goes through a customised validation
+  ## default JS validation is skipped as this form goes through a customised validation
+  my $form            = $self->modal_form('select', 
+                                          $hub->url({'type' => 'UserData', 'action' => 'AddFile'}), 
+                                          {'skip_validation' => 1, 
+                                           'class' => 'check', 
+                                           'no_button' => 1}
+                                          ); 
   my $fieldset        = $form->add_fieldset({'no_required_notes' => 1});
 
   $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this data (optional)'});
@@ -98,8 +106,6 @@ sub content {
     });
   }
 
-  $self->add_file_format_dropdown($form);
-
   $fieldset->add_field({ 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data'});
   $fieldset->add_field({ 'type' => 'File', 'name' => 'file', 'label' => "Or upload file (max $max_upload_size)", 'required' => 1 });
   $fieldset->add_field({
@@ -109,6 +115,9 @@ sub content {
     'size'        => 30,
     #'required'    => 1, 
   });
+
+  $self->add_auto_format_dropdown($form);
+
   $fieldset->add_button({'type' => 'Submit', 'name' => 'submit_button', 'value' => 'Add data' });
 
   return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
