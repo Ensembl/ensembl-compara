@@ -72,8 +72,10 @@ sub new {
 
   my $input_drivers = ['IO'];
   my $absolute = 0;
+  my $source = 'file';
   if ($args{'file'} && $args{'file'} =~ /^[http|ftp]/) {
     $absolute = 1;
+    $source = 'url';
     $input_drivers = ['URL'];
   }
   elsif ($args{'upload'}) {
@@ -83,6 +85,7 @@ sub new {
   my $self = {
               'hub'             => $args{'hub'},
               'absolute'        => $absolute,
+              'source'          => $source,
               'base_dir'        => $args{'base_dir'} || 'user',
               'base_extra'      => $args{'base_extra'},
               'input_drivers'   => $args{'input_drivers'} || $input_drivers, 
@@ -367,6 +370,12 @@ sub code {
 ### Session code for fetching this file
   my $self = shift;
   return $self->{'code'};
+}
+
+sub source {
+### a
+  my $self = shift;
+  return $self->{'source'};
 }
 
 sub error {
