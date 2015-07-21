@@ -16,10 +16,47 @@
 
 // JavaScript to dynamically change form action on the UserData upload page according to the option selected (or radio buttons checked) and do validation on the form
 
+/*
+
+Default is now to display all input elements and then try and guess the format based
+on the file name/extension.
+
+    var formats = {
+                    'bam': 'bam',
+                    'bb': 'bigbed',
+                    'bed': 'bed',
+                    'bgr': 'bedgraph',
+                    'bw': 'bigwig',
+                    'gff': 'gff',
+                    'gtf': 'gtf',
+                    'psl': 'psl',
+                    'vcf': 'vcf',
+                    'vep': 'vep',
+                    'wig': 'wig'
+                  };
+    
+In addition, if data is input into either the text area or file upload,
+any formats with class 'remote' should be ignored/hidden
+
+Order of parsing:
+
+1. name = hub.txt => autoselect 'trackhub'
+
+2. extension matches one of the formats in the list below => autoselect that format
+
+   (Note: allow for secondary extensions such as .gz)
+
+3. ambiguous extension (e.g. 'txt') - do not autoselect format
+
+4. format is of type 'remote', but the input field was not 'url' => deselect this format and warn the user
+
+*/
+
+
 Ensembl.Panel.UserData = Ensembl.Panel.extend({
   init: function () {
     var panel = this;
-    
+
     this.base();
     
     this.elLk.activeLink      = this.el.parents('.modal_wrapper').siblings('.modal_nav').find('ul.local_context li.active');
