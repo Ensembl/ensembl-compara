@@ -330,13 +330,15 @@ sub hover_label_tabs {
   my $renderers;
 
   foreach (@{$label->{'renderers'}}) {
-    my $text = $_->{'text'};
 
-    if ($_->{'current'}) {
-      $renderers .= qq(<li class="current"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /><img src="${img_url}tick.png" class="tick" alt="Selected" title="Selected" /> $text</li>);
-    } else {
-      $renderers .= qq(<li><a href="$_->{'url'}" class="config" rel="$label->{'component'}"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>);
-    }
+    $renderers .= sprintf q(<li class="%s%s"><a href="%s" class="config" rel="%s"><img src="%srender/%2$s.gif" alt="%s" title="%6$s" />%s %6$s</a></li>),
+      $_->{'current'} ? 'current ' : '',
+      $_->{'val'},
+      $_->{'url'},
+      $label->{'component'},
+      $img_url,
+      $_->{'text'},
+      $_->{'current'} ? qq(<img src="${img_url}tick.png" class="tick" alt="Selected" title="Selected" />) : '';
   }
 
   $label->{'conf_url'} = $sd->ENSEMBL_BASE_URL.$label->{'conf_url'} if $label->{'conf_url'};
