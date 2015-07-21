@@ -59,6 +59,7 @@ sub param_defaults {
         'polyploid_genomes' => 1,
         'component_genomes' => 1,
         'normal_genomes'    => 1,
+        'ancestral_genomes' => 0,
 
         'extra_parameters'  => [],
 
@@ -90,6 +91,7 @@ sub fetch_input {
 
     # Now we apply the filters
     # Note that to filter out some GenomeDBs, we keep the other ones !
+    $genome_dbs = [grep {$_->name ne 'ancestral_sequences'} @$genome_dbs] if not $self->param('ancestral_genomes');
     $genome_dbs = [grep {not $_->is_polyploid} @$genome_dbs] if not $self->param('polyploid_genomes');
     $genome_dbs = [grep {not $_->genome_component} @$genome_dbs] if not $self->param('component_genomes');
     $genome_dbs = [grep {$_->is_polyploid or $_->genome_component} @$genome_dbs] if not $self->param('normal_genomes');
