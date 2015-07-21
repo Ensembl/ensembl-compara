@@ -441,43 +441,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     // apply css positions to the hover layers
     this.positionLayers();
 
-    this.elLk.hoverLabels.each(function() {
+    // position hover menus to the right of the layer
+    this.elLk.hoverLabels.css('left', function() { return $(this.parentNode).width(); });
 
-      // position hover menus to the right of the layer and init the tab styled icons inside the hover menus
-      $(this).css('left', function() { return $(this.parentNode).width(); }).find('._hl_icon').tabs($(this).find('._hl_tab'));
-
-    // init config tab, fav icon and close icon
-    }).find('a.config').on('click', function () {
-      var config  = this.rel;
-      var update  = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
-      var fav     = '';
-      var $this   = $(this);
-
-      if ($this.hasClass('favourite')) {
-        fav = $this.hasClass('selected') ? 'off' : 'on';
-        Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
-      } else {
-        $this.parents('.label_layer').addClass('hover_label_spinner');
-      }
-
-      $.ajax({
-        url: this.href + fav,
-        dataType: 'json',
-        success: function (json) {
-          if (json.updated) {
-            Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, update[0], update[1]);
-            Ensembl.EventManager.trigger('reloadPage', panel.id);
-            Ensembl.EventManager.trigger('partialReload');
-          }
-        }
-      });
-      
-      $this = null;
-
-      return false;
-    }).end().find('input._copy_url').on('click focus blur', function(e) {
-      $(this).val(this.defaultValue).select().parents('.label_layer').toggleClass('hover', e.type !== 'blur');
-    });
+    // initialise content inside hover labels
+    this.inithoverLabels();
   },
 
   positionLayers: function() {
@@ -515,6 +483,52 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
       area = $this = null;
     });
+  },
+
+  inithoverLabels: function () {
+    var panel = this;
+
+    this.elLk.hoverLabels.each(function() {
+
+      // init the tab styled icons inside the hover menus
+      $(this).find('._hl_icon').tabs($(this).find('._hl_tab'));
+
+    // init config tab, fav icon and close icon
+    }).find('a.config').on('click', function () {
+      var config  = this.rel;
+      var update  = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
+      var fav     = '';
+      var $this   = $(this);
+
+      if ($this.hasClass('favourite')) {
+        fav = $this.hasClass('selected') ? 'off' : 'on';
+        Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
+      } else {
+        $this.parents('.label_layer').addClass('hover_label_spinner');
+      }
+
+      $.ajax({
+        url: this.href + fav,
+        dataType: 'json',
+        success: function (json) {
+          if (json.updated) {
+            panel.changeConfiguration(config, update[0], update[1]);
+          }
+        }
+      });
+
+      $this = null;
+
+      return false;
+    }).end().find('input._copy_url').on('click focus blur', function(e) {
+      $(this).val(this.defaultValue).select().parents('.label_layer').toggleClass('hover', e.type !== 'blur');
+    });
+  },
+
+  changeConfiguration: function (config, trackName, renderer) {
+    Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, trackName, renderer);
+    Ensembl.EventManager.trigger('reloadPage', this.id);
+    Ensembl.EventManager.trigger('partialReload');
   },
   
   makeResizable: function () {
