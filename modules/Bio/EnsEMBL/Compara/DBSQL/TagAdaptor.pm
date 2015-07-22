@@ -91,12 +91,23 @@ sub _load_tagvalues {
     #print STDERR "CALL _load_tagvalues $self/$object\n";
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
     #print STDERR "_load_tagvalues = $db_tagtable/$db_attrtable\n";
- 
+
+    my $obj_tags = $object->{'_tags'};
+
     # Tags (multiple values are allowed)
     my $sth = $self->prepare("SELECT tag, value FROM $db_tagtable WHERE $db_keyname=?");
     $sth->execute($object->$perl_keyname);
-    while (my ($tag, $value) = $sth->fetchrow_array()) {
-        $object->add_tag($tag, $value, 1);
+    my ($tag, $value);
+    $sth->bind_columns(\$tag, \$value);
+    while ($sth->fetch()) {
+        # Optimized version of Taggable::add_tag()
+        if ( ! exists($obj_tags->{$tag}) ) {
+            $obj_tags->{$tag} = $value;
+        } elsif ( ref($obj_tags->{$tag}) eq 'ARRAY' ) {
+            push @{$obj_tags->{$tag}}, $value;
+        } else {
+            $obj_tags->{$tag} = [ $obj_tags->{$tag}, $value ];
+        }
     }
     $sth->finish;
    
@@ -110,7 +121,7 @@ sub _load_tagvalues {
         if (defined $attrs) {
             foreach my $key (keys %$attrs) {
                 if (($key ne $db_keyname) and defined(${$attrs}{$key})) {
-                    $object->add_tag($key, ${$attrs}{$key});
+                    $obj_tags->{$key} = ${$attrs}{$key};
                 }
             }
         }
@@ -125,7 +136,7 @@ sub _load_tagvalues {
                of objects (assumed to be all of the same type)
   Arg [1]    : $objs: Array ref to the list of object
   Arg [2]    : (optional) Boolean: does $objs contain all the objects from the db ?
-  Example    : $genetreenode_adaptor->_load_tagvalues_multiples( [$node1, $node2] );
+  Example    : $genetreenode_adaptor->_load_tagvalues_multiple( [$node1, $node2] );
   Returntype : none
   Exceptions : none
   Caller     : internal
@@ -154,9 +165,21 @@ sub _load_tagvalues_multiple {
     # Tags (multiple values are allowed)
     my $sth = $self->prepare("SELECT $db_keyname, tag, value FROM $db_tagtable $where_constraint");
     $sth->execute();
-    while (my ($obj_id, $tag, $value) = $sth->fetchrow_array()) {
+    my ($obj_id, $tag, $value);
+    $sth->bind_columns(\$obj_id, \$tag, \$value);
+    while ($sth->fetch()) {
         next if $all_objects and not exists $perl_keys{$obj_id};
-        $perl_keys{$obj_id}->add_tag($tag, $value, 1);
+        my $obj_tags = $perl_keys{$obj_id}->{'_tags'};
+
+        # Optimized version of Taggable::add_tag()
+        if ( ! exists($obj_tags->{$tag}) ) {
+            $obj_tags->{$tag} = $value;
+        } elsif ( ref($obj_tags->{$tag}) eq 'ARRAY' ) {
+            push @{$obj_tags->{$tag}}, $value;
+        } else {
+            $obj_tags->{$tag} = [ $obj_tags->{$tag}, $value ];
+        }
+
         #warn "adding $value to $tag of $obj_id";
     }
     $sth->finish;
@@ -167,10 +190,10 @@ sub _load_tagvalues_multiple {
         $sth->execute();
         # Retrieve data
         while (my $attrs = $sth->fetchrow_hashref()) {
-            my $object = $perl_keys{$attrs->{$db_keyname}};
+            my $obj_tags = $perl_keys{$attrs->{$db_keyname}};
             foreach my $key (keys %$attrs) {
                 if (($key ne $db_keyname) and defined(${$attrs}{$key})) {
-                    $object->add_tag($key, ${$attrs}{$key});
+                    $obj_tags->{$key} = ${$attrs}{$key};
                 }
             }
         }
