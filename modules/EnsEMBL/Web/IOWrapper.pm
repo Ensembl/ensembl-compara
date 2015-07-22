@@ -26,17 +26,21 @@ use warnings;
 no warnings 'uninitialized';
 
 use Bio::EnsEMBL::IO::Parser;
-
-use base qw(EnsEMBL::Web::Root);
+use Bio::EnsEMBL::IO::Utils;
 
 sub new {
   ### Constructor
   ### Instantiates a parser for the appropriate file type 
   ### and opens the file for reading
   ### @param file EnsEMBL::Web::File object
-  my ($class, $file) = @_;
+  my $file = shift;
 
   my $parser;
+
+  my %format_to_class = Bio::EnsEMBL::IO::Utils::format_to_class;
+  my $subclass = $format_to_class{$file->get_format};
+  return undef unless $subclass;
+  my $class = "EnsEMBL::Web::IOWrapper::$subclass";
 
   if ($file->source eq 'url') {
     my $result = $file->read;
