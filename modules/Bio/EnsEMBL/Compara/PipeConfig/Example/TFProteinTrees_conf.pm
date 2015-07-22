@@ -129,6 +129,7 @@ sub default_options {
         'examl_exe_avx'             => '/nfs/production/xfam/treefam/software/ExaML/examl-AVX',
         'examl_exe_sse3'            => '/nfs/production/xfam/treefam/software/ExaML/examl',
         'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
+		'examl_out_dir'				=> '/nfs/panda/ensembl/production/mateus/compara/TreeFam10/examl',
         'getPatterns_exe'           => '/nfs/production/xfam/treefam/software/RAxML/number_of_patterns/getPatterns',
         'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
 
