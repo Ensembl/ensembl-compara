@@ -70,7 +70,6 @@ sub features {
                       || ($start <= $container->end && $end >= $container->start) 
                     ));
 
-
       push @$features, $iow->create_hash;
     }
 
