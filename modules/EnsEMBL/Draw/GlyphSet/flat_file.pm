@@ -38,7 +38,10 @@ sub features {
   my $features     = [];
 
   ## Get the file contents
-  my %args = ('hub' => $self->{'config'}->hub);
+  my %args = (
+              'hub'     => $self->{'config'}->hub,
+              'format'  => $self->my_config('format'),
+              );
 
   if ($sub_type eq 'url') {
     $args{'file'} = $self->my_config('url');
@@ -59,7 +62,7 @@ sub features {
     while ($iow->next) {
       my ($seqname, $start, $end) = $iow->coords;
       ## Skip features that lie outside the current slice
-      next unless ($seq_name eq $container->seq_region_name 
+      next unless ($seqname eq $container->seq_region_name 
                     && (
                          ($start >= $container->start && $end <= $container->end)
                       || ($start <= $container->start && $end <= $container->end)
@@ -71,9 +74,18 @@ sub features {
     }
 
   } else {
-    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR READING FILE: ".$response->{'error'}[0];
+    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
+    warn "!!! ERROR READING FILE ".$file->absolute_read_path;
   }
+
+  return $features;
+}
+
+sub render_normal {
+  my $self = shift;
+
+  my $features = $self->features;
+  warn ">>> FEATURES @$features";
 }
 
 sub href {
