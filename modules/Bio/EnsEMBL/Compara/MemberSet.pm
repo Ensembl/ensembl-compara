@@ -501,9 +501,12 @@ sub print_sequences_to_file {
 }
 
 sub _load_all_missing_sequences {
-    my ($self, $seq_type) = @_;
+    my ($self, $seq_type, @other_sets) = @_;
 
-    my $random_adaptor = $self->adaptor ? $self->adaptor : $self->get_all_Members->[0]->adaptor;
+    my $sets = ref($self) ? [$self, @other_sets] : \@other_sets;
+    return unless scalar(@$sets);
+    my $one_set = $sets->[0];
+    my $random_adaptor = $one_set->adaptor ? $one_set->adaptor : $one_set->get_all_Members->[0]->adaptor;
     my $sequence_adaptor = $random_adaptor->db->get_SequenceAdaptor;
 
     if ($seq_type) {
@@ -511,25 +514,29 @@ sub _load_all_missing_sequences {
         my $key = "_sequence_$seq_type";
 
         my %member_id2member = ();
-        foreach my $member (@{$self->get_all_Members}) {
-            next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
-            next if $member->{$key};
-            $member_id2member{$member->seq_member_id} = $member if $member->seq_member_id;
+        foreach my $set (@$sets) {
+            foreach my $member (@{$set->get_all_Members}) {
+                next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
+                next if $member->{$key};
+                push @{$member_id2member{$member->seq_member_id}}, $member if $member->seq_member_id;
+            }
         }
         my @member_ids = keys %member_id2member;
         my $seqs = $sequence_adaptor->fetch_other_sequences_by_member_ids_type(\@member_ids, $seq_type);
         while (my ($id, $seq) = each %$seqs) {
-            $member_id2member{$id}->{$key} = $seq;
+            $_->{$key} = $seq for @{$member_id2member{$id}};
         }
 
     } else {
 
         my %seq_id2member = ();
-        foreach my $member (@{$self->get_all_Members}) {
-            next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
-            next if $member->{'_sequence'};
-            my $seq_id = $member->{'_sequence_id'};
-            push @{$seq_id2member{$seq_id}}, $member if $seq_id;
+        foreach my $set (@$sets) {
+            foreach my $member (@{$set->get_all_Members}) {
+                next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
+                next if $member->{'_sequence'};
+                my $seq_id = $member->{'_sequence_id'};
+                push @{$seq_id2member{$seq_id}}, $member if $seq_id;
+            }
         }
 
         my @seq_ids = keys %seq_id2member;
