@@ -25,7 +25,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use EnsEMBL::Web::Constants;
+use Bio::EnsEMBL::IO::Parser;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -37,17 +37,15 @@ sub new {
   my ($class, $file) = @_;
 
   my $parser;
-  my $parser_formats = EnsEMBL::Web::Constants::PARSER_FORMATS;
-  my $parser_class = 'Bio::EnsEMBL::IO::Parser::'.$parser_formats->{lc($file->format)}{'class'};
 
-  if (EnsEMBL::Root::dynamic_use($parser_class)) {
-    if ($file->source eq 'url') {
-      my $result = $file->read; 
-      $parser = $parser_class->open_content($result->{'content'}) if $result->{'content'};
+  if ($file->source eq 'url') {
+    my $result = $file->read;
+    if ($result->{'content'}) {
+      $parser = Bio::EnsEMBL::IO::Parser::open_content_as($file->get_format, $result->{'content'});
     }
-    else {
-      $parser = $parser_class->open($file->absolute_read_path);
-    }
+  }
+  else {
+    $parser = Bio::EnsEMBL::IO::Parser::open_as($file->get_format, $file->absolute_read_path);
   }
 
   my $self = { parser => $parser };
