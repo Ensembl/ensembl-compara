@@ -56,7 +56,8 @@ sub features {
   }
 
   my $file  = EnsEMBL::Web::File::User->new(%args);
-  my $iow   = EnsEMBL::Web::IOWrapper->new($format, $file);
+  ## Don't call new in the usual way, since we subclass this object on creation
+  my $iow   = EnsEMBL::Web::IOWrapper::new($file);
 
   ## Loop through parser
   if ($iow) {
