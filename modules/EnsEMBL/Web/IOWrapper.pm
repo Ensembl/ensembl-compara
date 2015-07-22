@@ -28,19 +28,31 @@ no warnings 'uninitialized';
 use Bio::EnsEMBL::IO::Parser;
 use Bio::EnsEMBL::IO::Utils;
 
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
+
 sub new {
   ### Constructor
   ### Instantiates a parser for the appropriate file type 
   ### and opens the file for reading
   ### @param file EnsEMBL::Web::File object
-  my $file = shift;
+  my ($class, $parser) = @_;
 
-  my $parser;
+  my $self = { parser => $parser };
+  bless $self, $class;  
+  return $self;
+}
+
+sub open {
+  ## Factory method - creates a wrapper of the appropriate type
+  ## based on the format of the file given
+  my $file = shift;
 
   my %format_to_class = Bio::EnsEMBL::IO::Utils::format_to_class;
   my $subclass = $format_to_class{$file->get_format};
   return undef unless $subclass;
-  my $class = "EnsEMBL::Web::IOWrapper::$subclass";
+  my $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
+
+  my $parser;
 
   if ($file->source eq 'url') {
     my $result = $file->read;
@@ -52,9 +64,12 @@ sub new {
     $parser = Bio::EnsEMBL::IO::Parser::open_as($file->get_format, $file->absolute_read_path);
   }
 
-  my $self = { parser => $parser };
-  bless $self, $class;
-  return $self;
+  if (dynamic_use($class, 1)) {
+    $class->new($parser);  
+  }
+  else {
+    warn ">>> NO SUCH MODULE $class";
+  }
 }
 
 sub parser {
