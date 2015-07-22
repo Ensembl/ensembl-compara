@@ -40,9 +40,9 @@ our %single_species_ml = ('ENSEMBL_PARALOGUES' => 1, 'ENSEMBL_HOMOEOLOGUES' => 1
 =head2 fetch_all_by_Gene
 
   Arg [1]     : Bio::EnsEMBL::Gene $gene
+  Arg (opt)   : See L<fetch_all_by_Member> for the list of optional arguments
   Example     : my $all_homologues = $homology_adaptor->fetch_all_by_Gene($gene, -TARGET_SPECIES => 'rabbit');
-  Description : fetch the homology relationships where the given gene is implicated. See fetch_all_by_Member for
-                the list of optional arguments
+  Description : fetch the homology relationships where the given gene is implicated.
   Returntype  : arrayref of Bio::EnsEMBL::Compara::Homology
   Exceptions  : none
   Caller      : general
