@@ -99,10 +99,11 @@ sub coords {
 
 sub rgb_to_hex {
   ### For the web we really need hex colours, but file formats have traditionally used RGB
-  ### @param Arrayref of three RGB values
+  ### @param String - three RGB values
   ### @return String - same colour in hex
   my ($self, $triple_ref) = @_;
-  return sprintf("%02x%02x%02x", @{$triple_ref});
+  my @rgb = split(',', $triple_ref);
+  return sprintf("%02x%02x%02x", @rgb);
 }
 
 1;
