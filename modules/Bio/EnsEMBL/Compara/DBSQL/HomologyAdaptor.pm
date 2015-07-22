@@ -97,13 +97,41 @@ sub fetch_all_by_Member {
   if ($target_species or $target_taxon) {
     throw("-METHOD_LINK_SPECIES_SET cannot be used together with -TARGET_SPECIES or -TARGET_TAXON") if $method_link_species_set;
     $method_link_species_set = $self->_find_target_mlsss($member->genome_db, $target_species, $target_taxon, $method_link_type);
-  } elsif ($method_link_species_set and (ref($method_link_species_set) ne 'ARRAY')) {
-    $method_link_species_set = [$method_link_species_set];
-  }
+    # Since $method_link_type has been used to produce $method_link_species_set, we can unset it
+    $method_link_type = undef;
 
-  # In fact, -METHOD_LINK_SPECIES_SET can be an array, and both dbIDs and object instances are accepted
-  if (defined $method_link_species_set) {
-    assert_ref_or_dbID($_, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', '-METHOD_LINK_SPECIES_SET') for @$method_link_species_set;
+  } elsif ($method_link_species_set) {
+    # In fact, -METHOD_LINK_SPECIES_SET can be an array, and both dbIDs and object instances are accepted
+    $method_link_species_set = [$method_link_species_set] if ref($method_link_species_set) ne 'ARRAY';
+
+    if (defined $method_link_type) {
+      my @filtered_method_link_species_set = grep {$_->method->type eq $method_link_type} @$method_link_species_set;
+      if (not scalar(@filtered_method_link_species_set)) {
+        warn "In HomologyAdaptor::fetch_all_by_Member(), -METHOD_LINK_TYPE has disabled -METHOD_LINK_SPECIES_SET\n";
+        return [];
+      }
+      $method_link_species_set = \@filtered_method_link_species_set;
+      # Since $method_link_type has been used to produce $method_link_species_set, we can unset it
+      $method_link_type = undef;
+    }
+
+    my $mlss_a = $self->db->get_MethodLinkSpeciesSetAdaptor;
+    my $query_gdb_id = $member->genome_db_id;
+    my @filtered_method_link_species_set = ();
+    foreach my $mlss (@$method_link_species_set) {
+      if (ref($mlss)) {
+        assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', '-METHOD_LINK_SPECIES_SET');
+      } else {
+        my $mlss_id = $mlss;
+        $mlss = $mlss_a->fetch_by_dbID($mlss_id) || throw("$mlss_id is not a valid dbID for MethodLinkSpeciesSet");
+      }
+      push @filtered_method_link_species_set, $mlss->dbID if (grep {$_->dbID == $query_gdb_id} @{$mlss->species_set_obj->genome_dbs});
+    }
+    if (not scalar(@filtered_method_link_species_set)) {
+      warn "In HomologyAdaptor::fetch_all_by_Member(), the query member is not part of any -METHOD_LINK_SPECIES_SET\n";
+      return [];
+    }
+    $method_link_species_set = \@filtered_method_link_species_set;
   }
 
   my $seq_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
@@ -113,7 +141,7 @@ sub fetch_all_by_Member {
   $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
   if (defined $method_link_species_set) {
-    $constraint .= sprintf(' AND h.method_link_species_set_id IN (%s)', join(',', -1, map {ref($_) ? $_->dbID : $_} @$method_link_species_set));
+    $constraint .= sprintf(' AND h.method_link_species_set_id IN (%s)', join(',', @$method_link_species_set));
   }
 
   if (defined $species_tree_node_ids) {
@@ -186,7 +214,7 @@ sub _find_target_mlsss {
         $method_link_types = [$method_link_types];
     }
 
-    my @all_mlsss = ();
+    my @all_mlss_ids = ();
     foreach my $ml (@{$method_link_types}) {
         foreach my $target_genome_db (values %unique_gdbs) {
             my $mlss;
@@ -197,10 +225,10 @@ sub _find_target_mlsss {
                 next if $single_species_ml{$ml};
                 $mlss = $mlss_a->fetch_by_method_link_type_GenomeDBs($ml, [$query_genome_db, $target_genome_db], "no_warning");
             }
-            push @all_mlsss, $mlss if (defined $mlss);
+            push @all_mlss_ids, $mlss->dbID if (defined $mlss);
         }
     }
-    return \@all_mlsss
+    return \@all_mlss_ids
 
 }
 
