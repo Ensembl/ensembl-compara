@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::IOWrapper::BED;
+package EnsEMBL::Web::IOWrapper::Bed;
 
 ### Wrapper for Bio::EnsEMBL::IO::Parser::Bed, which builds
 ### simple hash features suitable for use in the drawing code 
