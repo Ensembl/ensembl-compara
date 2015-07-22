@@ -25,7 +25,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use base qw(EnsEMBL::Web::IOWrapper);
+use parent qw(EnsEMBL::Web::IOWrapper);
 
 sub create_hash {
   my $self = shift;
