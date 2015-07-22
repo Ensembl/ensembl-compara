@@ -84,6 +84,7 @@ sub new {
 
   my $self = {
               'hub'             => $args{'hub'},
+              'format'          => $args{'format'},
               'absolute'        => $absolute,
               'source'          => $source,
               'base_dir'        => $args{'base_dir'} || 'user',
@@ -382,6 +383,19 @@ sub error {
 ### a
   my $self = shift;
   return $self->{'error'};
+}
+
+sub set_format {
+### a
+  my ($self, $format) = @_;
+  $self->{'format'} = $format;
+  return $self->{'format'};
+}
+
+sub get_format {
+### a
+  my $self = shift;
+  return $self->{'format'};
 }
 
 sub set_timestamp {
