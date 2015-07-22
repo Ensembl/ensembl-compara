@@ -35,12 +35,13 @@ sub features {
   my $container    = $self->{'container'};
   my $species_defs = $self->species_defs;
   my $sub_type     = $self->my_config('sub_type');
+  my $format       = $self->my_config('format');
   my $features     = [];
 
   ## Get the file contents
   my %args = (
               'hub'     => $self->{'config'}->hub,
-              'format'  => $self->my_config('format'),
+              'format'  => $format,
               );
 
   if ($sub_type eq 'url') {
@@ -55,7 +56,7 @@ sub features {
   }
 
   my $file  = EnsEMBL::Web::File::User->new(%args);
-  my $iow   = EnsEMBL::Web::IOWrapper->new($file);
+  my $iow   = EnsEMBL::Web::IOWrapper->new($format, $file);
 
   ## Loop through parser
   if ($iow) {
