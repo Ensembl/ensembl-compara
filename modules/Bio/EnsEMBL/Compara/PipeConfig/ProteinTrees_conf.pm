@@ -2087,6 +2087,7 @@ sub core_pipeline_analyses {
             -max_retry_count => 0,
             -flow_into => {
                -1 => [ 'examl_8_cores_himem' ],  # MEMLIMIT
+               -2 => [ 'examl_16_cores' ],       # RUNTIME 
             }
         },
 
@@ -2126,6 +2127,7 @@ sub core_pipeline_analyses {
             -max_retry_count => 0,
             -flow_into => {
                -1 => [ 'examl_16_cores_himem' ],  # MEMLIMIT
+               -2 => [ 'examl_32_cores' ],  	  # RUNTIME
             }
         },
 
@@ -2165,6 +2167,7 @@ sub core_pipeline_analyses {
             -max_retry_count => 0,
             -flow_into => {
                -1 => [ 'examl_32_cores_himem' ],  # MEMLIMIT
+               -2 => [ 'examl_64_cores' ],  	  # RUNTIME
             }
         },
 
@@ -2236,7 +2239,8 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '1Gb_job',
             -flow_into  => {
-                -1 => [ 'raxml_multi_core_himem' ],
+                -1 => [ 'raxml_8_cores_himem' ],
+                -2 => [ 'raxml_8_cores' ],
                 2 =>  [ 'treebest_small_families' ],     # This event is triggered if there are 2 or 3 genes in the tree
             }
         },
@@ -2279,6 +2283,7 @@ sub core_pipeline_analyses {
             -rc_name 		=> '16Gb_8c_job',
             -flow_into  => {
                 -1 => [ 'raxml_8_cores_himem' ],
+                -2 => [ 'examl_16_cores' ],
             }
         },
 
@@ -2307,6 +2312,7 @@ sub core_pipeline_analyses {
             -rc_name 		=> '16Gb_16c_job',
             -flow_into  => {
                 -1 => [ 'raxml_16_cores_himem' ],
+                -2 => [ 'examl_32_cores' ],
             }
         },
 
