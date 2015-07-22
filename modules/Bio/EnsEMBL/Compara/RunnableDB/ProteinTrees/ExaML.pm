@@ -38,10 +38,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML');
 sub param_defaults {
     my $self = shift;
     return {
-        %{ $self->SUPER::param_defaults },
         # Note that Examl needs MPI and has to be run through mpirun.lsf
-		'cmd' => '#parse_examl_exe# -s #alignment_file# -m PROT -n #gene_tree_id# ; rm RAxML_info.#gene_tree_id# ; #raxml_exe# #extra_raxml_args# -y -m #best_fit_model# -p 99123746531 -s #alignment_file# -n #gene_tree_id# ; sleep 10 ; /nfs/production/mpi/mpich/mpich3/3.1.1-intel/bin/mpiexec.hydra #examl_exe# -s #gene_tree_id#.binary -t RAxML_parsimonyTree.#gene_tree_id# -m GAMMA -n #gene_tree_id# -S',
-
+        %{ $self->SUPER::param_defaults },
+		'newest_checkPointFile'=> undef,
+		'cmd_checkpoint'       => 'cp #examl_dir#/#worker_dir#/#gene_tree_id#.binary . ; cp #newest_checkPointFile# latest_ExaML_binaryCheckpoint.#gene_tree_id# ; sleep 10 ; /nfs/production/mpi/mpich/mpich3/3.1.1-intel/bin/mpiexec.hydra #examl_exe# -s #gene_tree_id#.binary -R latest_ExaML_binaryCheckpoint.#gene_tree_id# -m GAMMA -n #gene_tree_id# -S',
+		'cmd_from_scratch'     => '#parse_examl_exe# -s align.0.phylip -m PROT -n #gene_tree_id# ; rm RAxML_info.#gene_tree_id# ; #raxml_exe# #extra_raxml_args# -y -m #best_fit_model# -p 99123746531 -s align.0.phylip -n #gene_tree_id# ; sleep 10 ; /nfs/production/mpi/mpich/mpich3/3.1.1-intel/bin/mpiexec.hydra #examl_exe# -s #gene_tree_id#.binary -t RAxML_parsimonyTree.#gene_tree_id# -m GAMMA -n #gene_tree_id# -S',
         'aln_format'           => 'phylip',
         'runtime_tree_tag'     => 'examl_runtime',
         'output_clusterset_id' => 'raxml',
@@ -53,7 +54,10 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
 
-    # Auto-select the SSE3-only or AVX-enabled version
+	#We should inherit from GenericRunnable here since we will need the gene_tree object.
+    $self->SUPER::fetch_input();
+
+    # Auto-select for the SSE3-only or AVX-enabled version
     my $avx = `grep avx /proc/cpuinfo`;
     if ($avx) {
         $self->param( 'examl_exe', $self->param('examl_exe_avx') );
@@ -66,7 +70,36 @@ sub fetch_input {
 
     print "CPU type: $avx\n" if ( $self->debug );
 
-    return $self->SUPER::fetch_input();
+	#Best-fit model	
+    my $best_fit_model = $self->set_raxml_model();
+    $self->param( 'best_fit_model', $best_fit_model );
+    print "best-fit model: " . $self->param('best_fit_model') . "\n" if ( $self->debug );
+
+	# Auto select if there are any checkpoints for a particular root_id
+	my $root_id = $self->param('gene_tree_id');
+	my $source_dir = $self->param('examl_dir');
+
+	my @dir = `find $source_dir -name $root_id.binary | xargs ls -t`;
+	my @tok = split(/\//,$dir[0]);
+	my $worker_dir = $tok[-2];
+	my @list = `ls -t $source_dir/$worker_dir/ExaML_binaryCheckpoint*`;
+	if ((scalar(@list) > 0) && (!-z $list[0])){
+		chomp($list[0]);
+		$self->param('newest_checkPointFile',$list[0]);
+	}
+	$self->param('worker_dir',$worker_dir);
+
+    if ($self->param('newest_checkPointFile')) {
+		$self->param('cmd',$self->param('cmd_checkpoint'));
+        print "ExaML will run on Check Point mode using the file " . $self->param('newest_checkPointFile') . " as a checkpoint\n" if ($self->debug);
+		print "CMD:" . $self->param('cmd_checkpoint') . "\n" if ($self->debug);
+    }
+    else {
+		$self->param('cmd',$self->param('cmd_from_scratch'));
+        print "No checkpoint was found running on standard mode\n" if ($self->debug);
+		print "CMD:" . $self->param('cmd_from_scratch') . "\n" if ($self->debug);
+    }
+
 }
 
 ## Because Examl is using MPI, it has to be run in a shared directory
