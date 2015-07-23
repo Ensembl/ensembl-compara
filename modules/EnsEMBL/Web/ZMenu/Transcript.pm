@@ -165,10 +165,10 @@ sub content {
   }
 
   if ($object->analysis) {
-    my $label = $transcript->analysis->display_label . ' Transcript';
+    my $analysis = $transcript->analysis;
     $self->add_entry({
       type        => 'Source',
-      label_html  => $self->glossary_helptip($label)
+      label_html  => $self->helptip($analysis->display_label, $analysis->description)
     });
   }
   my $alt_allele_link = $object->get_alt_allele_link('Location');
