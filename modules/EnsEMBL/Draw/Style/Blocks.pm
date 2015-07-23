@@ -55,9 +55,9 @@ sub create_glyphs {
   my $image_config    = $self->image_config;
   my $track_config    = $self->track_config;
   my $default_colour  = $track_config->get('default_colour');
-  warn ">>> DEFAULT COLOUR $default_colour";
+  #warn ">>> DEFAULT COLOUR $default_colour";
 
-  use Data::Dumper; warn Dumper($data);
+  #use Data::Dumper; warn Dumper($data);
 
   foreach my $block (@$data) {
     my $show_label = $track_config->get('show_labels') && $block->{'label'};
@@ -90,7 +90,7 @@ sub create_glyphs {
     #$block_width      = $slice_width - $block->{'start'} if ($block_width > $slice_width);
 
     my $labels_height = $label_row * $label_height;
-    my $add_labels    = !$bumped || $bumped eq 'labels_only' ? 0 : $labels_height;
+    my $add_labels    = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
 
     my $position  = {
                     'y'       => (($feature_row + 1) * ($block_height + 4)) + $add_labels,
