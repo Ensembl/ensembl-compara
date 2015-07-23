@@ -40,7 +40,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.relatedEl  = data.relatedEl;
     this.areaCoords = $.extend({}, data.area);
     this.location   = 0;
-    this.helptips   = false;
     
     if (area.klass.das) {
       this.das       = area.klass.group ? 'group' : area.klass.pseudogroup ? 'pseudogroup' : 'feature';
@@ -564,10 +563,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.relatedEl.addClass('highlight');
     }
 
-    if (!this.helptips && this.elLk.container.html()) {
-      this.elLk.container.find('._ht').helptip();
-      this.helptips = true;
-    }
+    // enable helptips
+    this.elLk.container.find('._ht').helptip();
+
     // Hover ZMenus can be closed before they load!
     if(this.el.hasClass('closed')) {
       this.hide();
