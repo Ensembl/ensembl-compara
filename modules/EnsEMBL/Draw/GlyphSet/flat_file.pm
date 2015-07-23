@@ -28,7 +28,7 @@ use EnsEMBL::Web::IOWrapper;
 
 use EnsEMBL::Draw::Style::Blocks;
 
-use base qw(EnsEMBL::Draw::GlyphSet);
+use base qw(EnsEMBL::Draw::GlyphSet::Alignment);
 
 sub features {
   my $self         = shift;
@@ -84,8 +84,15 @@ sub features {
 sub render_normal {
   my $self = shift;
 
+  #$self->{'my_config'}->set('bumped', 1);
+
+  $self->{'my_config'}->set('default_colour', $self->{'_default_colour'});
+
   my $features = $self->features;
-  warn ">>> FEATURES @$features";
+
+  my $config = $self->track_style_config;
+  my $style  = EnsEMBL::Draw::Style::Blocks->new($config, $features);
+  $self->push($style->create_glyphs);
 }
 
 sub href {
