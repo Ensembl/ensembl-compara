@@ -88,6 +88,7 @@ sub create_tracks {
   my $tracks      = [];
   my $data        = {};
   my $prioritise  = 0;
+  my @order;
   my $saved_key;
 
   while ($parser->next) {
@@ -103,6 +104,7 @@ sub create_tracks {
       unless (keys %{$data->{$track_key}{'metadata'}||{}}) {
         $data->{$track_key}{'metadata'} = $parser->get_all_metadata;
         $prioritise = 1 if $data->{$track_key}{'metadata'}{'priority'};
+        push @order, $track_key;
         $saved_key = $track_key;
         $parser->start_new_track;
       }
@@ -126,8 +128,10 @@ sub create_tracks {
     }
   }
 
-  my @order = $prioritise ? sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} keys %$data 
-                          : keys %$data;
+  if ($prioritise) {
+    @order = sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} 
+              keys %$data;
+  }
 
   foreach (@order) {
     push @$tracks, $data->{$_};
