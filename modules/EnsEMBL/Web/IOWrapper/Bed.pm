@@ -44,13 +44,13 @@ sub create_cigar_string {
   my $self = shift;
 
   if (!$self->parser->get_blockCount || !$self->parser->get_blockSizes 
-          || !$self->parser->getchromStarts) {
+          || !$self->parser->get_blockStarts) {
     return ($self->parser->get_end - $self->parser->get_start + 1).'M'; 
   } 
 
   my $cigar;
-  my @block_starts  = @{$self->parser->getChromStarts};
-  my @block_lengths = @{$self->parser->getBlockSizes};
+  my @block_starts  = @{$self->parser->get_blockStarts};
+  my @block_lengths = @{$self->parser->get_blockSizes};
   my $strand = $self->parser->get_strand();
   my $end = 0;
 
