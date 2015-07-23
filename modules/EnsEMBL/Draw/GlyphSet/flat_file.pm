@@ -58,21 +58,9 @@ sub features {
   my $file  = EnsEMBL::Web::File::User->new(%args);
   my $iow   = EnsEMBL::Web::IOWrapper::open($file);
 
-  ## Loop through parser
   if ($iow) {
-    while ($iow->next) {
-      my ($seqname, $start, $end) = $iow->coords;
-      ## Skip features that lie outside the current slice
-      next unless ($seqname eq $container->seq_region_name 
-                    && (
-                         ($start >= $container->start && $end <= $container->end)
-                      || ($start <= $container->start && $end <= $container->end)
-                      || ($start <= $container->end && $end >= $container->start) 
-                    ));
-
-      push @$features, $iow->create_hash;
-    }
-
+    ## Parse the file, filtering on the current slice
+    $features = $iow->create_tracks($container);
   } else {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! ERROR READING FILE ".$file->absolute_read_path;
@@ -88,14 +76,19 @@ sub render_normal {
 
   $self->{'my_config'}->set('default_colour', $self->{'_default_colour'});
 
-  my $features = $self->features;
+  my $subtracks = $self->features;
+  my $config    = $self->track_style_config;
 
-  my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Blocks->new($config, $features);
-  $self->push($style->create_glyphs);
+  foreach (@$subtracks) {
+    my $features  = $_->{'features'};
+    my $style     = EnsEMBL::Draw::Style::Blocks->new($config, $features);
+    $self->push($style->create_glyphs);
+  }
 }
 
 sub href {
 }
+
+
 
 1;
