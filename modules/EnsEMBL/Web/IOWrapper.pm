@@ -78,10 +78,62 @@ sub parser {
   return $self->{'parser'};
 }
 
-sub next {
-  ### Wrapper around parser iterator
-  my $self = shift;
-  return $self->parser->next;
+sub create_tracks {
+### Loop through the file and create one or more tracks
+### Orders tracks by priority value if it exists
+### @param slice - Bio::EnsEMBL::Slice object
+### @return arrayref of one or more hashes containing track information
+  my ($self, $slice) = @_;
+  my $parser = $self->parser;
+  my $tracks      = [];
+  my $data        = {};
+  my $prioritise  = 0;
+  my $saved_key;
+
+  while ($parser->next) {
+    my $track_line = $parser->is_metadata;
+    if ($track_line) {
+      $parser->read_metadata;
+    }
+    else {
+      my $track_key = $parser->get_metadata_value('name') || $saved_key || 'data';
+
+      ## Slurp metadata into this track and wipe it from the parser
+      ## so that we don't get values copied between tracks
+      unless (keys %{$data->{$track_key}{'metadata'}||{}}) {
+        $data->{$track_key}{'metadata'} = $parser->get_all_metadata;
+        $prioritise = 1 if $data->{$track_key}{'metadata'}{'priority'};
+        $saved_key = $track_key;
+        $parser->start_new_track;
+      }
+
+      my ($seqname, $start, $end) = $self->coords;
+      ## Skip features that lie outside the current slice
+      if ($slice) {
+        next unless ($seqname eq $slice->seq_region_name
+                      && (
+                         ($start >= $slice->start && $end <= $slice->end)
+                      || ($start <= $slice->start && $end <= $slice->end)
+                      || ($start <= $slice->end && $end >= $slice->start)
+                    ));
+      }
+      if ($data->{$track_key}{'features'}) {
+        push @{$data->{$track_key}{'features'}}, $self->create_hash;
+      }
+      else {
+        $data->{$track_key}{'features'} = [$self->create_hash];
+      }
+    }
+  }
+
+  my @order = $prioritise ? sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} keys %$data 
+                          : keys %$data;
+
+  foreach (@order) {
+    push @$tracks, $data->{$_};
+  }
+
+  return $tracks;
 }
 
 sub create_hash {
