@@ -42,6 +42,7 @@ This module expects data in the following format:
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use parent qw(EnsEMBL::Draw::Style);
 
@@ -50,16 +51,23 @@ sub create_glyphs {
 ### @return ArrayRef of EnsEMBL::Web::Glyph objects
   my $self = shift;
 
-  my $data          = $self->data;
-  my $image_config  = $self->image_config;
-  my $track_config  = $self->track_config;
- 
+  my $data            = $self->data;
+  my $image_config    = $self->image_config;
+  my $track_config    = $self->track_config;
+  my $default_colour  = $track_config->get('default_colour');
+  warn ">>> DEFAULT COLOUR $default_colour";
+
+  use Data::Dumper; warn Dumper($data);
+
   foreach my $block (@$data) {
     my $show_label = $track_config->get('show_labels') && $block->{'label'};
     my $text_info = $self->get_text_info($block->{'label'});
     my $feature_row = 0;
     my $label_row   = 0;
     my $new_y;
+
+    ## Set default colour if there is one
+    $block->{'colour'} ||= $default_colour;
 
     ## Work out if we're bumping the whole feature or just the label
     my $bumped     = $track_config->get('bumped');
@@ -74,9 +82,12 @@ sub create_glyphs {
     my $block_height  = $track_config->get('height') || $text_info->{'height'};
     my $label_height  = $show_label ? $text_info->{'height'} : 0;
 
-    my $block_width   = $block->{'end'} - $block->{'start'} + 1;
-    my $slice_width   = $image_config->container_width;
-    $block_width      = $slice_width - $block->{'start'} if ($block_width > $slice_width);
+    my $block_width   = $block->{'end'} > $block->{'start'}
+                          ? $block->{'end'} - $block->{'start'}
+                          : $block->{'start'} - $block->{'end'};
+    $block_width      = 1 if $block_width == 0; ## Fix for single base-pair features
+    #my $slice_width   = $image_config->container_width;
+    #$block_width      = $slice_width - $block->{'start'} if ($block_width > $slice_width);
 
     my $labels_height = $label_row * $label_height;
     my $add_labels    = !$bumped || $bumped eq 'labels_only' ? 0 : $labels_height;
@@ -128,9 +139,10 @@ sub draw_block {
                   title        => $block->{'title'},
                   absolutey    => 1,
                 };
-
   $params->{'colour'} = $block->{'colour'} if $block->{'colour'};
   $params->{'bordercolour'} = $block->{'bordercolour'} if $block->{'bordercolour'};
+
+  use Data::Dumper; warn ">>> DRAWING BLOCK ".Dumper($params);
 
   push @{$self->glyphs}, $self->Rect($params);
 }
