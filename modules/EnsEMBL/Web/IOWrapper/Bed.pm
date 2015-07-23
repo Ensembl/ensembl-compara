@@ -28,7 +28,8 @@ no warnings 'uninitialized';
 use parent qw(EnsEMBL::Web::IOWrapper);
 
 sub create_hash {
-  my $self = shift;
+  my ($self, $metadata) = @_;
+  $metadata ||= {};
   return {
     'start'         => $self->parser->get_start,
     'end'           => $self->parser->get_end,
@@ -37,6 +38,7 @@ sub create_hash {
     'score'         => $self->parser->get_score,
     'colour'        => $self->rgb_to_hex($self->parser->get_itemRgb),
     'cigar_string'  => $self->create_cigar_string,
+    'href'          => $metadata->{'url'};
   };
 }
 

@@ -120,10 +120,10 @@ sub create_tracks {
                     ));
       }
       if ($data->{$track_key}{'features'}) {
-        push @{$data->{$track_key}{'features'}}, $self->create_hash;
+        push @{$data->{$track_key}{'features'}}, $self->create_hash($data->{$track_key}{'metadata'});
       }
       else {
-        $data->{$track_key}{'features'} = [$self->create_hash];
+        $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'})];
       }
     }
   }
