@@ -45,6 +45,7 @@ sub render_half_height {
 
 sub render_stack { 
   my $self = shift;
+  ## Show as a deep stack of densely packed features
   $self->{'my_config'}->set('height', 1);
   $self->{'my_config'}->set('vspacing', 0);
   $self->{'my_config'}->set('depth', 40);
@@ -56,6 +57,7 @@ sub render_stack {
 
 sub render_unlimited {
   my $self = shift;
+  ## Show as a very deep stack of densely packed features
   $self->{'my_config'}->set('height', 1);
   $self->{'my_config'}->set('vspacing', 0);
   $self->{'my_config'}->set('depth', 1000);
