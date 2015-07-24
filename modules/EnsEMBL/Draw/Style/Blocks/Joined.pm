@@ -38,7 +38,6 @@ sub draw_block {
   if (!$cigar_string) {
     $self->SUPER::draw_block($block, $position);
   }
-  warn ">>> CIGAR STRING $cigar_string";
 
   ## Basic parameters for all part of the feature
   my $start     = $block->{'start'};
@@ -77,12 +76,12 @@ use Data::Dumper;
     # If a match/mismatch - draw filled box
     if ($type =~ /^[MmU=X]$/) {
       $params{'colour'} = $colour;
-      warn ">>> DRAWING BLOCK ".Dumper(\%params);
+      #warn ">>> DRAWING BLOCK ".Dumper(\%params);
     }
     ## Otherwise draw bordered box
     else {
       $params{'bordercolour'} = $colour;
-      warn ">>> DRAWING JOIN ".Dumper(\%params);
+      #warn ">>> DRAWING JOIN ".Dumper(\%params);
     }
     push @{$self->glyphs}, $self->Rect(\%params);
     $current_x += $len;
