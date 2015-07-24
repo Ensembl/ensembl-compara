@@ -70,7 +70,7 @@ sub features {
   return $features;
 }
 
-sub render_normal {
+sub render_as_alignment_nolabel {
   my $self = shift;
 
   ## Defaults
