@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+/* SIFT & PolyPhen scores */
 div.score         { -moz-border-radius: 5px; border-radius: 5px; width: 100%; max-width: 50px; color: white; text-align: center; }
 div.score_good    { background: green;  }
 div.score_ok      { background: orange; }
 div.score_bad     { background: red;    }
 div.score_neutral { background: blue;   }
 
+/* Population genotypes */
 div.allele_short     { float:left;width:105px; }
 div.allele_long      { float:left;width:120px; }
 div.genotype_short   { float:left;width:125px; }
@@ -27,6 +29,10 @@ div.genotype_long    { float:left;width:140px; }
 div.allele_padding   { padding-right:6px; }
 div.genotype_padding { padding-right:6px; }
 
-div.clin_sign     { width:92px; padding:1px 0px 1px 3px; background-color:white; border:1px solid #DDD; border-radius:8px;-moz-border-radius: 8px; }
+/* Phenotype clinical significance */
+div.clin_sign     { display:inline-block; padding:1px 3px; background-color:white; border:1px solid #DDD; border-radius:8px;-moz-border-radius: 8px; }
 img.clin_sign     { vertical-align:middle; margin-right:5px; }
 img.review_status { vertical-align:middle; margin:2px 0px; }
+
+/* LD export table */
+span.ld_focus_variant {background-color:[[BUTTON_BG]]; color:[[BUTTON_TEXT]];padding:2px 4px;border-radius:5px}
