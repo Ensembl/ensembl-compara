@@ -27,7 +27,6 @@ use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
-use EnsEMBL::Draw::Style::Feature;
 use EnsEMBL::Draw::Style::Feature::Joined;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Alignment);
@@ -78,7 +77,7 @@ sub render_as_alignment_nolabel {
   my $colour_key     = $self->colour_key('default');
   $self->{'my_config'}->set('default_colour', $self->my_colour($colour_key));
 
-  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('bumped', 1) unless defined($self->{'my_config'}->get('bumped'));
   $self->{'my_config'}->set('same_strand', $self->strand);
   unless ($self->{'my_config'}->get('height')) {
     $self->{'my_config'}->set('height', 8);

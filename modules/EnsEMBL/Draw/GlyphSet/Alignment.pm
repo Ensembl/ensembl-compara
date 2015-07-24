@@ -67,6 +67,13 @@ sub render_unlimited {
   $self->render_as_alignment_nolabel;
 }
 
+sub render_ungrouped {
+  my $self = shift;
+  $self->{'my_config'}->set('no_join', 1);
+  $self->{'my_config'}->set('bumped', 0);
+  $self->render_as_alignment_nolabel;
+}
+
 sub convert_cigar_to_blocks {
   ## The drawing code shouldn't care what a cigar string is!
   my ($self, $cigar_string, $feature_start) = @_;
