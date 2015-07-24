@@ -18,8 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::Style::Feature::Joined;
 
-### Renders a track as a series of simple rectangular blocks
-### joined by horizontal blocks (either outlined or semi-transparent)
+### Renders a track as a series of features with internal structure
+### Blocks may be joined with horizontal lines, semi-transparent
+### blocks or no joins at all 
 
 use parent qw(EnsEMBL::Draw::Style::Feature);
 
@@ -41,11 +42,12 @@ sub draw_feature {
   my $current_x = $feature_start;
   $current_x    = 0 if $current_x < 0;
 
-  my $colour    = $feature->{'colour'};
-  my $join      = $feature->{'join_colour'} || $feature->{'bordercolour'} || $colour;
+  my $colour      = $feature->{'colour'};
+  my $join_colour = $feature->{'join_colour'} || $feature->{'bordercolour'} || $colour;
 
-  my $track_config = $self->track_config;
-  my $alpha        = $track_config->get('alpha');
+  my $track_config  = $self->track_config;
+  my $join          = $track_config->get('no_join') ? 0 : 1;
+  my $alpha         = $track_config->get('alpha');
 
   my %defaults = (
                   y            => $position->{'y'},
@@ -64,18 +66,18 @@ sub draw_feature {
     my ($start, $width) = @$_; 
 
     ## Join this block to the previous one
-    if (keys %previous) {
+    if ($join && keys %previous) {
       my %params = %defaults;
       my $end = $previous{'x'} + $previous{'width'};
       $params{'x'}      = $end;
       $params{'width'}  = $start - $end;
 
       if ($alpha) {
-        $params{'colour'} = $colour;
+        $params{'colour'} = $join_colour;
         $params{'alpha'}  = $alpha;
       }
       else {
-        $params{'bordercolour'} = $join;
+        $params{'bordercolour'} = $join_colour;
       }
       #warn ">>> DRAWING JOIN ".Dumper(\%params);
       push @{$self->glyphs}, $self->Rect(\%params);
