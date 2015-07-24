@@ -53,6 +53,7 @@ sub create_hash {
     'seq_region'    => $self->parser->get_seqname,
     'strand'        => $self->parser->get_strand,
     'score'         => $self->parser->get_score,
+    'label'         => $self->parser->get_name,
     'colour'        => $colour, 
     'cigar_string'  => $self->create_cigar_string,
   };
