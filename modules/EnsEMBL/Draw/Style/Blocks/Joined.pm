@@ -45,7 +45,10 @@ sub draw_block {
   my $current_x = $start;
 
   my $colour    = $block->{'colour'};
-  my $border    = $block->{'join_colour'} || $block->{'bordercolour'} || $colour;
+  my $join      = $block->{'join_colour'} || $block->{'bordercolour'} || $colour;
+
+  my $track_config = $self->track_config;
+  my $alpha        = $track_config->get('alpha');
 
   my %defaults = (
                   y            => $position->{'y'},
@@ -73,14 +76,20 @@ use Data::Dumper;
     $params{'x'}      = $current_x;
     $params{'width'}  = $len;
 
-    # If a match/mismatch - draw filled box
+    # If a match/mismatch - draw box
     if ($type =~ /^[MmU=X]$/) {
       $params{'colour'} = $colour;
       #warn ">>> DRAWING BLOCK ".Dumper(\%params);
     }
-    ## Otherwise draw bordered box
+    ## Otherwise draw join
     else {
-      $params{'bordercolour'} = $colour;
+      if ($alpha) {
+        $params{'colour'} = $colour;
+        $params{'alpha'}  = $alpha;
+      }
+      else {
+        $params{'bordercolour'} = $join;
+      }
       #warn ">>> DRAWING JOIN ".Dumper(\%params);
     }
     push @{$self->glyphs}, $self->Rect(\%params);
