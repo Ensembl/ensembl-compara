@@ -96,6 +96,8 @@ sub render_as_alignment_nolabel {
     my $name      = $metadata->{'name'};
     $hover_label->{'header'} = $name if $name;
 
+    ## Tidy up feature coordinates so they make sense to drawing code
+
     ## Add any suitable metadata to track name mouseover menu
     my $extras;
     my $description = $metadata->{'description'};
