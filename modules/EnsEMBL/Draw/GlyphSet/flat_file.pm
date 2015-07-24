@@ -26,8 +26,8 @@ use strict;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 
-use EnsEMBL::Draw::Style::Blocks;
-use EnsEMBL::Draw::Style::Blocks::Joined;
+use EnsEMBL::Draw::Style::Feature;
+use EnsEMBL::Draw::Style::Feature::Joined;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Alignment);
 
@@ -92,7 +92,7 @@ sub render_as_alignment_nolabel {
     my $name      = $metadata->{'name'};
     $config->{'track_config'}->set('caption', $name) if $name;
 
-    my $style     = EnsEMBL::Draw::Style::Blocks::Joined->new($config, $features);
+    my $style     = EnsEMBL::Draw::Style::Feature::Joined->new($config, $features);
     $self->push($style->create_glyphs);
   }
 }
