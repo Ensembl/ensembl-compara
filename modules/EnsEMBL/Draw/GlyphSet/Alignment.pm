@@ -26,4 +26,42 @@ use base qw(EnsEMBL::Draw::GlyphSet);
 
 sub colour_key { return $_[0]->my_config('colour_key') || $_[0]->my_config('sub_type'); }
 
+## Renderers which tweak the standard track style
+
+sub render_as_alignment_label {
+  my $self = shift;
+  $self->{'my_config'}->set('show_labels', 1);
+  $self->render_as_alignment_nolabel;
+}
+
+sub render_half_height { 
+  my $self = shift;
+  my $height = $self->my_config('height') / 2 || 4;
+  $self->{'my_config'}->set('height', $height);
+  $self->{'my_config'}->set('depth', 20);
+  
+  $self->render_as_alignment_nolabel;
+}                                                           
+
+sub render_stack { 
+  my $self = shift;
+  $self->{'my_config'}->set('height', 1);
+  $self->{'my_config'}->set('depth', 40);
+  ## Draw joins as 50% transparency, not borders
+  $self->{'my_config'}->set('alpha', 0.5);
+
+  $self->render_as_alignment_nolabel;
+}
+
+sub render_unlimited {
+  my $self = shift;
+  $self->{'my_config'}->set('height', 1);
+  $self->{'my_config'}->set('depth', 1000);
+  ## Draw joins as 50% transparency, not borders
+  $self->{'my_config'}->set('alpha', 0.5);
+
+  $self->render_as_alignment_nolabel;
+}
+
+
 1;
