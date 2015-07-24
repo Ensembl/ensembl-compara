@@ -55,7 +55,7 @@
         }
         e.data.el.data('keepOnTop', {fixed: fixed});
         if (e.data.clone) {
-          e.data.clone.css(fixed ? {height: e.data.el.height() - 2, width: e.data.el.width()} : {}).toggle(fixed);  // -2 is just to prevent an possible jumpy effect
+          e.data.clone.css(fixed ? {height: e.data.el.height(), width: e.data.el.width()} : {}).toggle(fixed);
         }
         e.data.el.css(fixed ? { position: 'fixed', top: e.data.options.marginTop } : { position: e.data.defaults.position, top: e.data.defaults.top });
         ((fixed ? e.data.options.onfix : e.data.options.onreset) || $.noop).apply(e.data.el[0]);
