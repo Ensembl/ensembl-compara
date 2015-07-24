@@ -244,7 +244,6 @@ sub default_options {
         #
         #Resource requirements
         #
-        'memory_suffix' => "",                    #temporary fix to define the memory requirements in resource_classes
         'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
         'aligner_capacity' => 2000,
     };
@@ -290,15 +289,15 @@ sub resource_classes {
 
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
+            '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
+            '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
                 # if running on one of compara1..5 servers that support my+$SERVERHOSTNAME resources:
-            'crowd' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
-            'crowd_himem' => { 'LSF' => '-C0 -M6000' . $self->o('memory_suffix') .' -R"select[mem>6000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=6000,'.$self->o('dbresource').'=10:duration=3]"' },
+            'crowd' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
+            'crowd_himem' => { 'LSF' => '-C0 -M6000 -R"select[mem>6000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=6000,'.$self->o('dbresource').'=10:duration=3]"' },
                 # if running on any other server:
-#            '1Gb_core'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000,myens_livemirrortok=1000:duration=3]"' },
-#            'crowd' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
-#            'crowd_himem' => { 'LSF' => '-C0 -M6000' . $self->o('memory_suffix') .' -R"select[mem>6000] rusage[mem=6000]"' },
+#            '1Gb_core'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000,myens_livemirrortok=1000:duration=3]"' },
+#            'crowd' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
+#            'crowd_himem' => { 'LSF' => '-C0 -M6000 -R"select[mem>6000] rusage[mem=6000]"' },
     };
 }
 

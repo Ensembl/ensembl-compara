@@ -120,7 +120,7 @@ sub default_options {
     # executable locations:
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
-        'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
+        'mafft_home'                => '/software/ensembl/compara/mafft-7.221/',
         'trimal_exe'                => '/software/ensembl/compara/trimAl/trimal-1.2',
         'noisy_exe'                 => '/software/ensembl/compara/noisy/noisy-1.5.12',
         'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
@@ -136,7 +136,7 @@ sub default_options {
         'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
-        'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
+        'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
         'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
         'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
@@ -225,7 +225,7 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@compara4:3306/mp14_ensembl_compara_78',
+        'prev_rel_db' => 'mysql://ensro@compara5:3306/mm14_ensembl_compara_80',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'

@@ -47,7 +47,6 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Registry;
 
 use POSIX qw(ceil);
 
@@ -85,32 +84,30 @@ sub write_output {
     my ($name, $total_blocks);
     $sth->bind_columns(\$name,\$total_blocks);
 
-    my $chr_blocks; 
     my $tag;
     if ($self->param('coord_system_name') eq "chromosome") {
 	$tag = "chr";
     }
 
-    my $compara_url = $self->param('compara_url');
     my $split_size = $self->param('split_size');
     my $format = $self->param('format');
-    my $coord_system_name = $self->param('coord_system_name');
-
-    if (defined($compara_url)) {
-	#need to protect the @
-	$compara_url =~ s/@/\\\\@/;
-    }
 
     while (my $row = $sth->fetchrow_arrayref) {
-	my $output_file = $self->param('filename') . "." . $tag . $name . "." . $self->param('format');
-        $output_file=~s/[\(\)]+//g;
-        $output_file=~s/-/_/g;
 
+        if (not $split_size) {
+            my $output_ids = {
+                region_name     => $tag.$name,
+                filename_suffix => '',
+                extra_args      => ['--seq_region', $name],
+                num_blocks      => $total_blocks,
+            };
 
-	my $num_chunks = ceil($total_blocks/$self->param('split_size'));
+            $self->dataflow_output_id($output_ids, 2);
+            next;
+        }
 
-	#store chromosome name and number of chunks
-	$chr_blocks->{$name} = $num_chunks;
+        my $num_chunks = ceil($total_blocks / $split_size);
+
 	for (my $chunk = 1; $chunk <= $num_chunks; $chunk++) {
 
 	    #Number of gabs in this chunk (used for healthcheck)
@@ -119,27 +116,18 @@ sub write_output {
 		$this_num_blocks = ($total_blocks - (($chunk-1)*$split_size));
 	    }
 
-	    my $this_suffix = "_" . $chunk . "." . $format;
-	    my $dump_output_file = $output_file;
-	    $dump_output_file =~ s/\.$format$/$this_suffix/;
-
 	    #Write out cmd for DumpMultiAlign and a few other parameters 
 	    #used in downstream analyses 
 	    my $output_ids = {
-                coord_system => $coord_system_name,
-                output_file => $output_file,
-                extra_args => "--seq_region $name --chunk_num $chunk",
-                num_blocks => $this_num_blocks,
-                dumped_output_file => $dump_output_file,
-                format => $format
+                region_name     => $tag.$name,
+                filename_suffix => $chunk,
+                extra_args      => ['--seq_region', $name, '--chunk_num', $chunk],
+                num_blocks      => $this_num_blocks,
             };
 	    
 	    $self->dataflow_output_id($output_ids, 2);
 	}
     }
-
-
-
 }
 
 1;

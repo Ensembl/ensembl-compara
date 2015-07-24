@@ -463,6 +463,14 @@ if ($method_link_species_set->method->class eq "ConservationScore.conservation_s
       if (!$method_link_species_set);
 }
 
+# When run on a production database, the connections to the core databases
+# will have disconnect_when_inactive set to 1.
+# For pairwise alignments, we consider that we can afford staying asleep
+# half of the time, with the benefit of not losing the connection
+if (scalar(@{$method_link_species_set->species_set_obj->genome_dbs}) == 2) {
+    map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$method_link_species_set->species_set_obj->genome_dbs};
+}
+
 print STDERR "Dumping ", $method_link_species_set->name, "\n";
 
 # Fetching the query Slices:
@@ -499,6 +507,7 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
 	exit(0);
     } 
   }
+  $slice_adaptor->dbc->disconnect_if_idle();
 }
 
 # Get the GenomicAlignBlockAdaptor or the GenomicAlignTreeAdaptor:

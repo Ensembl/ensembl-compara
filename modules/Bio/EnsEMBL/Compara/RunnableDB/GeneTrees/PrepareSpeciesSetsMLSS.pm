@@ -54,6 +54,7 @@ sub param_defaults {
         'tree_method_link'  => 'PROTEIN_TREES',
         'reused_gdb_ids'    => [],
         'nonreused_gdb_ids' => [],
+        'create_homology_mlss'  => 1,
     };
 }
 
@@ -72,6 +73,7 @@ sub fetch_input {
     $self->param('genome_dbs', $self->compara_dba->get_GenomeDBAdaptor->fetch_all());
 
     my $method_adaptor = $self->compara_dba->get_MethodAdaptor;
+    # FIXME : not all the pipelines want homologues
     $self->param('ml_ortho', $method_adaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES'));
     $self->param('ml_para', $method_adaptor->fetch_by_type('ENSEMBL_PARALOGUES'));
     $self->param('ml_homoeo', $method_adaptor->fetch_by_type('ENSEMBL_HOMOEOLOGUES'));
@@ -142,6 +144,7 @@ sub write_output {
 
     my @noncomponent_gdbs = grep {not $_->genome_component} @$all_gdbs;
     foreach my $genome_db (@noncomponent_gdbs) {
+        last unless $self->param('create_homology_mlss');
 
         my $ssg = $self->_write_ss( [$genome_db] );
         my $mlss_pg = $self->_write_mlss( $ssg, $self->param('ml_para') );
@@ -153,7 +156,7 @@ sub write_output {
 
     ## Since possible_ortholds have been removed, there are no between-species paralogs any more
     ## Also, not that in theory, we could skip the orthologs between components of the same polyploid Genome
-    $self->_write_all_pairs( $self->param('ml_ortho'), [@noncomponent_gdbs]);
+    $self->_write_all_pairs( $self->param('ml_ortho'), [@noncomponent_gdbs]) if $self->param('create_homology_mlss');
 
     $self->_write_shared_ss('reuse', [grep {$_->{is_reused}} @{$self->param('genome_dbs')}] );
     $self->_write_shared_ss('nonreuse', [grep {not $_->{is_reused}} @{$self->param('genome_dbs')}] );
@@ -213,7 +216,9 @@ sub _write_mlss {
     my $mlss;
     if ($self->param('reference_dba')) {
         $mlss = $self->param('reference_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($method->dbID, $ss->dbID);
-        $mlss or die sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString);
+        if ((not $mlss) and $self->param('reference_dba')->get_MethodAdaptor->fetch_by_dbID($method->dbID)) {
+            die sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString);
+        }
     }
     unless ($mlss) {
         $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new( -method => $method, -species_set_obj => $ss);

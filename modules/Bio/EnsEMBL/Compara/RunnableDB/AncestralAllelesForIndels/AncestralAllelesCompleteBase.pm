@@ -45,7 +45,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Time::HiRes;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

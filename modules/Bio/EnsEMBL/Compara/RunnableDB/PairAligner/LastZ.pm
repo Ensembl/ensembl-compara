@@ -59,7 +59,7 @@ use Bio::EnsEMBL::Analysis::Runnable::Lastz;
 use Bio::EnsEMBL::Analysis;
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
-use Bio::EnsEMBL::Utils::Exception qw(throw verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner);
 

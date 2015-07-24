@@ -117,6 +117,7 @@ sub fetch_input {
             $self->param('locator', $core_dba->locator($suffix_separator) );  # substitute the given locator by one in conventional format
         }
         $self->param('core_dba', $core_dba);
+        $self->param('genome_db_id',$self->param('master_dbID'));
         return;
     }
 
@@ -202,6 +203,7 @@ sub store_and_dataflow_genome_db {
     my $genome_db = shift @_;
     my $branch = shift @_ || 1;
 
+    warn "GenomeDB to store: ", $genome_db->toString, "\n" if $self->debug;
     $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
     my $genome_db_id            = $genome_db->dbID();
 

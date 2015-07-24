@@ -73,7 +73,7 @@ sub fetch_input {
     if(my $species_tree_input_file = $self->param('species_tree_input_file')) {     # load the tree given from a file
         die "The file '$species_tree_input_file' cannot be open for reading" unless(-r $species_tree_input_file);
 
-        $species_tree_string = `cat $species_tree_input_file`;
+        $species_tree_string = $self->_slurp($species_tree_input_file);
 #        chomp $species_tree_string;
 
         $species_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $species_tree_string, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
@@ -132,8 +132,7 @@ sub fetch_input {
         }
 
         if(my $blength_tree_file = $self->param('blength_tree_file')) {     # defines the mode
-            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file`, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
-#            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( `cat $blength_tree_file`);
+            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $self->_slurp($blength_tree_file), 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
             $species_tree_root  = Bio::EnsEMBL::Compara::Utils::SpeciesTree->prune_tree( $blength_tree, $self->compara_dba );
 
         } else {

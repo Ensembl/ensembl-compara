@@ -39,7 +39,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -130,11 +130,6 @@ sub store_exonerate_hits {
         my $out_put_mlssid = shift;
         throw() unless($batch_records);
     
-        # FIXME: disconnect_when_inactive(): why do we need a LOCK here ?
-        my $dcs = $self->dbc->disconnect_when_inactive();
-        $self->dbc->disconnect_when_inactive(0);
-        $self->dbc->do("LOCK TABLE anchor_align WRITE");
-
         my $query = qq{ 
         INSERT INTO anchor_align (method_link_species_set_id, anchor_id, dnafrag_id, dnafrag_start,     
         dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences)
@@ -145,8 +140,6 @@ sub store_exonerate_hits {
                 $sth->execute( split(":", $row) );
         }    
         $sth->finish;
-        $self->dbc->do("UNLOCK TABLES");
-        $self->dbc->disconnect_when_inactive($dcs);
         return 1;
 }
 
@@ -232,7 +225,7 @@ sub fetch_anchors_by_genomedb_id {
 	my ($self, $genome_db_id) = @_;
 	my $return_hashref;
 	unless (defined $genome_db_id) {
-		throw("fetch_all_by_anchor_id_and_mlss_id must have an anchor_id and a method_link_species_set_id");
+		throw("fetch_anchors_by_genomedb_id must have an anchor_id and a method_link_species_set_id");
 	}
 
 	my $query = qq{
@@ -281,7 +274,6 @@ sub fetch_all_by_anchor_id_and_mlss_id {
 
   Arg[1]     : method_link_species_set_id, string
   Arg[2]     : genome_db_ids, arrray_ref
-  Example    : my $anchor = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id($self->input_anchor_id,$self->method_link_species_set_id);
   Description: returns hashref of cols. from anchor_align table using anchor_align_id as unique hash key
   Returntype : hashref 
   Exceptions : none
@@ -312,7 +304,6 @@ sub fetch_dnafrag_and_genome_db_ids_by_test_mlssid {
   Arg[1]     : method_link_species_set_id, string
   Arg[2]     : genome_db_ids, arrray_ref
   Arg[3]     : anchor_id, string
-  Example    : my $anchor = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id($self->input_anchor_id,$self->method_link_species_set_id);
   Description: returns hashref of cols. from anchor_align table using anchor_align_id as unique hash key
   Returntype : hashref 
   Exceptions : none
@@ -684,7 +675,7 @@ sub _objs_from_sth {
   }
   $sth->finish;
 
-  return @anchor_aligns;
+  return \@anchor_aligns;
 }
 
 

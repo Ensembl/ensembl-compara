@@ -104,7 +104,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::Ortheus;
 
 use strict;
 use Data::Dumper;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::Config::Compara; #for $PYTHON and $ORTHEUS and $EXONERATE
 use Bio::EnsEMBL::Analysis::Runnable::Ortheus;
@@ -1031,7 +1031,7 @@ sub get_species_tree {
   foreach my $genome_db (@$genome_dbs) {
       my $name = $genome_db->name;
       $name =~ tr/ /_/;
-      $leaf_name{$name} = $genome_db->dbID;
+      $leaf_name{lc $name} = $genome_db->dbID;
       if ($name ne "ancestral_sequences") {
 	  $leaf_check{$genome_db->dbID} = 2;
       }

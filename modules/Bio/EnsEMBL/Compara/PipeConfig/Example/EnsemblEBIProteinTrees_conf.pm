@@ -95,27 +95,24 @@ sub default_options {
         'hcluster_exe'              => $self->o('exe_dir').'/hcluster_sg',
         'mcoffee_home'              => '/nfs/panda/ensemblgenomes/external/t-coffee',
         'mafft_home'                => '/nfs/panda/ensemblgenomes/external/mafft',
+        'trimal_exe'                => '/nfs/production/xfam/treefam/software/trimal/source/trimal',
+        'noisy_exe'                 => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
+        'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
         'treebest_exe'              => $self->o('exe_dir').'/treebest',
-        'quicktree_exe'             => $self->o('exe_dir').'/quicktree',
-        'hmmer2_home'               => '/nfs/panda/ensemblgenomes/external/hmmer-2/bin/',
-        'codeml_exe'                => $self->o('exe_dir').'/codeml',
-        'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
-        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'raxml_exe'                 => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
         'raxml_pthreads_exe'        => 'UNDEF',
         'examl_exe_avx'             => 'UNDEF',
         'examl_exe_sse3'            => 'UNDEF',
         'parse_examl_exe'           => 'UNDEF',
-        'hmmer3_home'               => 'UNDEF',
-        'cafe_shell'                => 'UNDEF',
-
-        # The following ones are currently installed by TreeFam, but should
-        # also be under /nfs/panda/ensemblgenomes/external/
-        'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
-        'noisy_exe'                 => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
         'notung_jar'                => '/nfs/production/xfam/treefam/software/Notung/Notung-2.6/Notung-2.6.jar',
-        'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
-        'raxml_exe'                 => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
-        'trimal_exe'                => '/nfs/production/xfam/treefam/software/trimal/source/trimal',
+        'quicktree_exe'             => $self->o('exe_dir').'/quicktree',
+        'hmmer2_home'               => '/nfs/panda/ensemblgenomes/external/hmmer-2/bin/',
+        'hmmer3_home'               => 'UNDEF',
+        'codeml_exe'                => $self->o('exe_dir').'/codeml',
+        'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
+        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
+        'cafe_shell'                => 'UNDEF',
 
 
     # HMM specific parameters (set to 0 or undef if not in use)
@@ -155,6 +152,11 @@ sub default_options {
         'decision_capacity'         =>   4,
         'HMMer_classify_capacity'   => 400,
         'loadmembers_capacity'      =>  30,
+        'HMMer_classifyPantherScore_capacity'   => 1000,
+        'copy_trees_capacity'       => 50,
+        'copy_alignments_capacity'  => 50,
+        'mafft_update_capacity'     => 50,
+        'raxml_update_capacity'     => 50,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -251,6 +253,7 @@ sub resource_classes {
          'msa_himem'    => {'LSF' => '-C0 -q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
          'urgent_hcluster'      => {'LSF' => '-C0 -q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '4Gb_job_gpfs' => {},
     };
 }
 

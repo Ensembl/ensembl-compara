@@ -54,7 +54,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::GetBlastzOverlaps;
 
 use strict;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Analysis;
 
 Bio::EnsEMBL::Registry->load_all;

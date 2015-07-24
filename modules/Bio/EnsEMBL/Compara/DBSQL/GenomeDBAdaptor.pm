@@ -427,6 +427,8 @@ sub _find_missing_DBAdaptors {
         my $that_assembly = $db_adaptor->assembly_name();
         $db_adaptor->dbc->disconnect_if_idle();
 
+        next unless $that_species;
+
         my $that_gdb = $self->fetch_by_name_assembly($that_species, $that_assembly);
         $that_gdb->db_adaptor($db_adaptor) if $that_gdb and not $that_gdb->{_db_adaptor};
     }

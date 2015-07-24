@@ -54,7 +54,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp;
 
 use strict;
 use File::Basename;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::ConservationScore;

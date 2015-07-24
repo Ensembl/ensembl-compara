@@ -90,6 +90,14 @@ sub default_options {
 	    #Location of executables
 	    'pair_aligner_exe' => '/software/ensembl/compara/bin/lastz',
 
+	     #if collection is set both 'curr_core_dbs_locs' and 'curr_core_sources_locs' parameters are set to undef otherwise the are to use the default pairwise values
+	    $self->o('collection') ? 
+	    	('curr_core_dbs_locs'=>undef, 
+	    		'curr_core_sources_locs'=> undef) : 
+	    	('curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ], 
+	    		'curr_core_sources_locs'=> ''),
+
+
 	    #
 	    #Default pair_aligner
 	    #

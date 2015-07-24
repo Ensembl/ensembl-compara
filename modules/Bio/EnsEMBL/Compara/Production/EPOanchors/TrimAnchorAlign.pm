@@ -62,7 +62,7 @@ use strict;
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Analysis::Runnable::Pecan;
 
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -91,6 +91,7 @@ sub fetch_input {
     my $anchor_align = $anchor_align_adaptor->fetch_by_dbID($anchor_align_id);
     push(@{$self->param('anchor_aligns')}, $anchor_align);
   }
+  $self->compara_dba()->dbc->disconnect_if_idle();
   $self->_dump_fasta();
   exit(1) if (!$self->param('fasta_files') or !@{$self->param('fasta_files')});
 
@@ -110,6 +111,7 @@ sub run {
 
 print $run_str, "\n";
 
+  $self->compara_dba()->dbc->disconnect_if_idle();
   my $msa_string = qx"$run_str";
   $self->param('msa_string', $msa_string);
 
@@ -321,6 +323,7 @@ sub get_trimmed_anchor_aligns {
 
 
     if ($count_before + $count_after != $end - $start + 1) {
+      $self->input_job->transient_error(0);
       die "Wrong length $count_before * $count_after * $start * $end * $seq_before * $count_before * $seq_after * $count_after +";
     }
     if ($this_anchor_align->dnafrag_strand == 1) {

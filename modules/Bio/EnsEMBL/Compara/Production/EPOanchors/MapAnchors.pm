@@ -70,23 +70,28 @@ sub configure_defaults {
 
 sub fetch_input {
 	my ($self) = @_;
+        $self->dbc->disconnect_if_idle();
 	$self->configure_defaults();
-	my $anchor_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( %{ $self->param('compara_anchor_db') } );
-	$anchor_dba->dbc->disconnect_if_idle();
+        # FIXME : we only need a DBConnection here, not a Compara DBAdaptor
+        my $anchor_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('compara_anchor_db') );
 	my $genome_db_file = $self->param('genome_db_file');
 	my $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id BETWEEN  ? AND ?");
-	my($min_anc_id,$max_anc_id) =  @{ eval( $self->param('anchor_ids') ) }[0,-1];
+        my $min_anc_id = $self->param('min_anchor_id');
+        my $max_anc_id = $self->param('max_anchor_id');
 	$sth->execute( $min_anc_id, $max_anc_id );
 	my $query_file = $self->worker_temp_directory  . "anchors." . join ("-", $min_anc_id, $max_anc_id );
 	open F, ">$query_file" || throw("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
 		print F ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
 	}
+        $sth->finish;
+        $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
 }
 
 sub run {
 	my ($self) = @_;
+        $self->dbc->disconnect_if_idle();
 	my $program = $self->param('mapping_exe');
 	my $query_file = $self->param('query_file');
 	my $target_file = $self->param('genome_db_file');
@@ -104,6 +109,7 @@ sub run {
 sub write_output {
 my ($self) = @_;
 my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
+$self->dbc->disconnect_if_idle();
 my $exo_fh = $self->param('out_file');
 my ($hits, $target2dnafrag);
 while(my $mapping = <$exo_fh>){ 

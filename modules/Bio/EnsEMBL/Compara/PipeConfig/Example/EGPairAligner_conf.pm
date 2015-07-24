@@ -263,7 +263,6 @@ sub default_options {
         #
         #Resource requirements
         #
-        'memory_suffix' => "",                    #temporary fix to define the memory requirements in resource_classes
         'dbresource' => '',
 	'aligner_capacity' => 2000,
 
@@ -276,13 +275,13 @@ sub resource_classes {
     return {
             #%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 	    'default' => {'LSF' => '-q production-rh6'},
-            '100Mb' => { 'LSF' => '-q production-rh6 -M100' .' -R" rusage[mem=100]"' },
-	    '500Mb' => { 'LSF' => '-q production-rh6 -M500' .' -R" rusage[mem=500]"' },
-            '1Gb'   => { 'LSF' => '-q production-rh6 -M1000' .' -R" rusage[mem=1000]"' },
-            'crowd' => { 'LSF' => '-q production-rh6 -M1800' .' -R" rusage[mem=1800]"' },
-            'crowd_himem' => { 'LSF' => '-q production-rh6 -M3600' .' -R"rusage[mem=3600]"' },
-	    '4.2Gb' => { 'LSF' => '-q production-rh6 -M4200' .' -R"rusage[mem=4200]"' },
-	    '8.4Gb' => { 'LSF' => '-q production-rh6 -M8400' .' -R"rusage[mem=8400]"' },
+            '100Mb' => { 'LSF' => '-q production-rh6 -M100 -R"rusage[mem=100]"' },
+	    '500Mb' => { 'LSF' => '-q production-rh6 -M500 -R"rusage[mem=500]"' },
+            '1Gb'   => { 'LSF' => '-q production-rh6 -M1000 -R"rusage[mem=1000]"' },
+            'crowd' => { 'LSF' => '-q production-rh6 -M1800 -R"rusage[mem=1800]"' },
+            'crowd_himem' => { 'LSF' => '-q production-rh6 -M3600 -R"rusage[mem=3600]"' },
+	    '4.2Gb' => { 'LSF' => '-q production-rh6 -M4200 -R"rusage[mem=4200]"' },
+	    '8.4Gb' => { 'LSF' => '-q production-rh6 -M8400 -R"rusage[mem=8400]"' },
     };
 }
 

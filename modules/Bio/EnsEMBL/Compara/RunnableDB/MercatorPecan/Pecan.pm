@@ -85,7 +85,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::Runnable::Pecan;
 use Bio::EnsEMBL::Analysis::Runnable::Ortheus;

@@ -65,8 +65,6 @@ sub default_options {
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
         'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@ens-livemirror/ensembl_ancestral_#expr( #ensembl_release# - 1)expr#',
-
-        'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
     };
 }
 
@@ -97,7 +95,7 @@ sub resource_classes {
     return {
         %{ $self->SUPER::resource_classes() },
          'urgent'   => {  'LSF' => '-q yesterday' },
-         'more_mem' => {  'LSF' => '-M5000'.$self->o('reservation_sfx').' -R "select[mem>5000] rusage[mem=5000]"' },
+         'more_mem' => {  'LSF' => '-M5000 -R "select[mem>5000] rusage[mem=5000]"' },
     };
 }
 

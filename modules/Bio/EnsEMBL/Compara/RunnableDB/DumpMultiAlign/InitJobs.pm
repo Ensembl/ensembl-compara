@@ -40,40 +40,41 @@ supercontigs 3) gabs without $species (others)
 
 =cut
 
-
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use File::Path qw(make_path);
 
 use Bio::EnsEMBL::Registry;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
 
 sub fetch_input {
     my $self = shift;
 
     my $file_prefix = "Compara";
 
-    #
-    #Load registry and get compara database adaptor
-    #
-    if ($self->param('reg_conf')) {
-	Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'),1);
-    } elsif ($self->param('db_url')) {
-	my $db_urls = $self->param('db_url');
-	foreach my $db_url (@$db_urls) {
-	    Bio::EnsEMBL::Registry->load_registry_from_url($db_url);
-	}
-    } # By default, we expect the genome_dbs to have a locator
-
-    #Note this is using the database set in $self->param('compara_db').
-    my $compara_dba = $self->compara_dba;
-
+    #Note this is using the database set in $self->param('compara_db') rather than the underlying eHive database.
+    my $compara_dba       = $self->compara_dba;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('species'));
-    my $coord_systems = $genome_db->db_adaptor->get_CoordSystemAdaptor->fetch_all_by_attrib('default_version');;
-    my @coord_system_names_by_rank = map {$_->name} (sort {$a->rank <=> $b->rank} @$coord_systems);
+    my $genome_db         = $genome_db_adaptor->fetch_by_name_assembly($self->param_required('species'))
+                             || $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
+    $genome_db->db_adaptor || die "I don't know where the ".$self->param('species')." core database is. Have you defined the Registry ?\n";
+    my $coord_systems     = $genome_db->db_adaptor->get_CoordSystemAdaptor->fetch_all_by_attrib('default_version');;
+
+    my $sql = "
+    SELECT DISTINCT coord_system_name
+    FROM genomic_align JOIN dnafrag USING (dnafrag_id)
+    WHERE genome_db_id= ? AND method_link_species_set_id=?";
+
+    my $sth = $compara_dba->dbc->prepare($sql);
+    $sth->execute($genome_db->dbID, $self->param_required('mlss_id'));
+    my %coord_systems_in_aln = map {$_->[0] => 1} @{$sth->fetchall_arrayref};
+
+    my @coord_system_names_by_rank = map {$_->name} (sort {$a->rank <=> $b->rank} (grep {$coord_systems_in_aln{$_->name}} @$coord_systems));
 
     $self->param('coord_systems', \@coord_system_names_by_rank);
     $self->param('genome_db_id', $genome_db->dbID);
@@ -83,15 +84,18 @@ sub fetch_input {
     #and store in param('mlss_id')
     #
     my $mlss_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
-    $self->param('mlss_id', $self->param('dump_mlss_id'));
-    my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
+    my $mlss         = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
+
     if ($mlss->method->type eq "GERP_CONSERVATION_SCORE") {
       $self->param('mlss_id', $mlss->get_value_for_tag('msa_mlss_id'));
     }
 
+    $self->param('is_pairwise_alignment', $mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment' ? 1 : 0);
+
     $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
     my $filename = $mlss->name;
-    $filename =~ tr/ /_/;
+    $filename =~ s/[\W\s]+/_/g;
+    $filename =~ s/_$//;
     $filename = $file_prefix . "." . $filename;
     $self->param('filename', $filename);
 }
@@ -101,39 +105,59 @@ sub write_output {
     my $self = shift @_;
 
     #
-    #Pass on input_id and add on new parameters: multi-align mlss_id, filename,
-    #emf2maf
+    #Pass on input_id and add on new parameters: multi-align mlss_id, filename
     #
 
+    my $output_dir = $self->param_required('export_dir').'/'.$self->param('filename');
     my $output_ids = {
         mlss_id         => $self->param('mlss_id'),
         genome_db_id    => $self->param('genome_db_id'),
-        filename        => $self->param('filename'),
+        base_filename   => $self->param('filename'),
+        output_dir      => '#export_dir#/#base_filename#',
     };
 
-    my @all_cs = @{$self->param('coord_systems')};
-    #Set up chromosome job
-    my $cs = shift @all_cs;
-    $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $cs}, 2);
+    if ($self->param_required('format') eq 'emf2maf') {
 
-    #Set up supercontig job
-    foreach my $other_cs (@all_cs) {
-        $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $other_cs}, 3);
+        # In this mode, we read the EMF files from one directory, and
+        # convert them to MAF in another one
+        die "The EMF directory '$output_dir' does not exist.\n" unless -d $output_dir;
+        die "The EMF directory '$output_dir' is not complete.\n" unless -e $output_dir.'/README.'.$self->param('filename');
+
+        # Fix the format name for dumpMultiAlign
+        $output_ids->{format}            = 'maf';
+        # output_dir is another directory alongside #base_filename#
+        $output_ids->{output_dir}        = '#export_dir#/#base_filename#_maf',
+        $output_dir .= '_maf';
+
+        # Flow into the emf2maf branch
+        $self->dataflow_output_id($output_ids, 6);
+
+    } else {
+
+        my @all_cs = @{$self->param('coord_systems')};
+        #Set up chromosome job
+        my $cs = shift @all_cs;
+        $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $cs}, 2) if $cs;
+
+        #Set up supercontig job
+        foreach my $other_cs (@all_cs) {
+            $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $other_cs}, 3);
+        }
+
+        #Set up other job
+        $self->dataflow_output_id($output_ids, 4) unless $self->param('is_pairwise_alignment');
+
+        # In case there is something connected there: a job to dump all the
+        # blocks in 1 file
+        $self->dataflow_output_id( {%$output_ids, 'region_name' => 'all', 'extra_args' => []}, 5);
+
     }
 
-    #Set up other job
-    $self->dataflow_output_id($output_ids, 4);
+    make_path($output_dir);
 
-    #Automatic flow through to md5sum for emf files on branch 1
-    #Needs to be here and not after Compress because need one md5sum per
-    #directory NOT per file
-
-    #Set up md5sum for emf2maf if necessary
-    if ($self->param('maf_output_dir') ne "") {
-	my $md5sum_output_ids = {"output_dir" => $self->param('maf_output_dir') };
-	$self->dataflow_output_id($md5sum_output_ids, 5);
-    }
-
+    # Override autoflow and make sure the descendant jobs have all the
+    # parameters
+    $self->dataflow_output_id($output_ids, 1);
 }
 
 1;

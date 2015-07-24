@@ -21,7 +21,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps;
 use strict;
 use Data::Dumper;
 use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 	
@@ -68,7 +68,7 @@ sub fetch_input {
 			my $rgab_len;
 			eval{ $rgab_len = $restricted_gab->length };
 			if($@){
-				warning($@);
+				$self->warning($@);
 				last;
 			}
 
@@ -151,7 +151,7 @@ sub run {
 				my $restricted_non_reference_genomic_aligns;
 				eval{ $restricted_non_reference_genomic_aligns = $rgab->get_all_non_reference_genomic_aligns };
 				if($@){
-					warning($@);
+					$self->warning($@);
 					last;
 				}
 				my $temp_start = 0;

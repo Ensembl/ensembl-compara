@@ -155,7 +155,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->store_hmmprofile($self->param('hmm_file'), $self->param('gene_tree_id'));
+    $self->store_hmmprofile($self->param('hmm_file'), $self->param('protein_tree')->stable_id || $self->param('gene_tree_id'));
 }
 
 
@@ -179,7 +179,7 @@ sub run_buildhmm {
             $self->param('hmmbuild_exe'),
             ($self->param('cdna') ? ($self->param_required('hmmer_version') eq '2' ? '--nucleic' : '--dna') : '--amino'),
             $self->param_required('hmmer_version') eq '2' ? '-F' : '',
-            '-n', $self->param('gene_tree_id'),
+            '-n', $self->param('protein_tree')->stable_id || $self->param('gene_tree_id'),
             $hmm_file,
             $aln_file
     );

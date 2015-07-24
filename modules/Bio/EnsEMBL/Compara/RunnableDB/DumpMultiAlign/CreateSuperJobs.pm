@@ -36,7 +36,7 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 =head1 DESCRIPTION
 
 This RunnableDB module generates DumpMultiAlign jobs from genomic_align_blocks
-on the species supercontigs. The jobs are split into $split_size chunks
+on the species supercontigs.
 
 =cut
 
@@ -73,32 +73,14 @@ sub write_output {
     # exit if there is nothing to dump
     return unless $total_blocks;
     
-    my $tag = $self->param('coord_system_name');
-    #my $output_file = $self->param('output_dir') ."/" . $self->param('filename') . "." . $tag . "." . $self->param('format');
-    my $output_file = $self->param('filename') . "." . $tag . "." . $self->param('format');
-    $output_file=~s/[\(\)]+//g;
-    $output_file=~s/-/_/g;
-    
-    my $format = $self->param('format');
-    my $coord_system_name = $self->param('coord_system_name');
-    #This doesn't work because DumpMultiAlignment adds _1 to the output file and can create more if there are lots of supercontigs.
-    #Since I create only one job, the compress will only start when all the chunks have been produced (if more than one) so I can use "*"
-    #my $this_suffix = "." . $format;
-    my $this_suffix = "*" . "." . $format;
-    my $dump_output_file = $output_file;
-    $dump_output_file =~ s/\.$format/$this_suffix/;
-	
     #Write out cmd for DumpMultiAlign and a few other parameters 
     #used in downstream analyses 
     
-    my $extra_args = ""; #Need to put something here
     my $output_ids = {
-                     'coord_system'       => $coord_system_name,
-                     'output_file'        => $output_file,
+                     'region_name'        => '#coord_system_name#',
+                     'filename_suffix'    => '*',   # We need the star because DumpMultiAlignment.pl adds _1 to the output file and can create more if there are lots of supercontigs (when split_size is set)
                      'num_blocks'         => $total_blocks,
-                     'dumped_output_file' => $dump_output_file,
-                     'format'             => $format,
-                     'extra_args'         => $extra_args,
+                     'extra_args'         => [ '--coord_system', '#coord_system_name#' ],
                     };
 
     $self->dataflow_output_id($output_ids, 2);

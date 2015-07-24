@@ -79,12 +79,14 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
 		#'pipeline_name'         => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
-		'pipeline_name'         => 'treefam_10_mammals_baboon',
+		#'pipeline_name'         => 'treefam_10_mammals_baboon',
+		#'pipeline_name'         => 'ckong_protein_trees_compara_homology_protists_topup24',
+		'pipeline_name'         => 'TreeFam10',
         # Tag attached to every single tree
         'division'              => 'treefam',
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              =>  '/nfs/nobackup2/xfam/treefam/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
+        'work_dir'              =>  '/nfs/panda/ensembl/production/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
@@ -138,8 +140,7 @@ sub default_options {
 
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
-       'panther_like_databases'  => [],
-       #'panther_like_databases'  => [ ["/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii", "PANTHER7.2", 1] ],
+       'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/mateus/TF10",
 
        # List of MultiHMM files to load (and their names)
        #'multihmm_files'          => [ ["/lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt", "PFAM"] ],
@@ -203,8 +204,10 @@ sub default_options {
       -port   => 4401,
       -user   => 'admin',
       -pass   => $self->o('password'),
-	  #-dbname => 'TreeFam'.$self->o('treefam_release').$self->o('rel_suffix'),
-      -dbname => 'treefam_10_mammals_baboon',
+	  #-dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
+	  #-dbname => 'treefam_10_mammals_baboon',
+	  #-dbname => 'ckong_protein_trees_compara_homology_protists_topup24',
+	  -dbname => 'TreeFam10',
 	  -driver => 'mysql',
       #-db_version => $self->o('ensembl_release')
     },
@@ -212,17 +215,17 @@ sub default_options {
             -host => 'mysql-eg-mirror.ebi.ac.uk',
             -port => 4157,
             -user => 'ensro',
-            #-verbose => 1,
-            -db_version => 75, 
+			#-verbose => 1,
+			-db_version => 79, 
    },
     ensembl_mirror => {
             -host => 'mysql-ensembl-mirror.ebi.ac.uk',
             -user => 'anonymous',
             -port => '4240',
-            #-verbose => 1,
-            -db_version => 75
+			#-verbose => 1,
+			-db_version => 79
     },
-    master_db=> {
+	master_db=> {
             -host => 'mysql-treefam-prod',
             -user => 'admin',
             -port => '4401',
@@ -241,8 +244,8 @@ sub default_options {
             -host => 'mysql-eg-prod-1.ebi.ac.uk',
             -port => 4238,
             -user => 'ensro',
-            -verbose => 1,
-            -db_version => 75,
+			#-verbose => 1,
+			-db_version => 79,
    },
 
     #ncbi_eg=> {
@@ -278,7 +281,8 @@ sub default_options {
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
 		#'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
-        'prev_rel_db' => 'mysql://admin:'.$self->o('password').'@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
+		#'prev_rel_db' => 'mysql://admin:'.$self->o('password').'@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
+		'prev_rel_db' => undef,
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
@@ -286,8 +290,9 @@ sub default_options {
         #   'hmm' means that the pipeline will run an HMM classification
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
+		'clustering_mode'           => 'hybrid',
 		#'clustering_mode'           => 'hmm',
-        'clustering_mode'           => 'topup',
+		#'clustering_mode'           => 'topup',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
@@ -358,6 +363,13 @@ sub tweak_analyses {
         'build_HMM_cds'             => '1Gb_job',
         'build_HMM_cds_himem'       => '4Gb_job',
         'raxml_epa_longbranches_himem'  => '16Gb_job',
+		'make_blastdb_unannotated'  => '4Gb_job',
+	    'unannotated_all_vs_all_factory' => '4Gb_job',
+	    'blastp_unannotated'        => '4Gb_job',
+	    'hcluster_dump_input_all_pafs'  => '4Gb_job',
+	    'hcluster_parse_output'     => '4Gb_job',
+	    'cluster_factory'           => '4Gb_job',
+	    'treebest_small_families'   => '4Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
@@ -368,12 +380,17 @@ sub tweak_analyses {
     $analyses_by_name->{'notung_himem'}->{'-parameters'}{'notung_memory'} = 29000;
     $analyses_by_name->{'prottest'}->{'-parameters'}{'prottest_memory'} = 3500;
     $analyses_by_name->{'prottest'}->{'-parameters'}{'n_cores'} = 16;
-    $analyses_by_name->{'prottest'}->{'-parameters'}{'java'} = '/usr/bin/java';
+	#$analyses_by_name->{'prottest'}->{'-parameters'}{'java'} = '/usr/bin/java';
+    $analyses_by_name->{'prottest'}->{'-parameters'}{'java'} = '/nfs/production/panda/ensemblgenomes/production/compara/mp14/java/jre1.8.0_40/bin/java';
     $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'prottest_memory'} = 14500;
     $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'n_cores'} = 16;
-    $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'java'} = '/usr/bin/java';
+	#$analyses_by_name->{'prottest_himem'}->{'-parameters'}{'java'} = '/usr/bin/java';
+    $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'java'} = '/nfs/production/panda/ensemblgenomes/production/compara/mp14/java/jre1.8.0_40/bin/java';
     $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
     $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
+    $analyses_by_name->{'ortho_tree'}->{'-parameters'}{'store_homologies'} = 0;
+    $analyses_by_name->{'ortho_tree'}->{'-parameters'}{'input_clusterset_id'} = 'notung';
+    $analyses_by_name->{'ortho_tree_himem'}->{'-parameters'}{'store_homologies'} = 0;
 }
 
 

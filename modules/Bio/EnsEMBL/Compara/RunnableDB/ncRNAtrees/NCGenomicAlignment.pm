@@ -183,9 +183,6 @@ sub run_mafft {
     $self->param('mafft_output',$mafft_output);
 
     my $mafft_exe      = $self->require_executable('mafft_exe');
-    my $mafft_binaries = $self->param_required('mafft_binaries');
-
-    $ENV{MAFFT_BINARIES} = $mafft_binaries;
 
     my $cmd = "$mafft_exe --auto $input_fasta > $mafft_output";
     print STDERR "Running mafft\n$cmd\n" if ($self->debug);
