@@ -67,5 +67,34 @@ sub render_unlimited {
   $self->render_as_alignment_nolabel;
 }
 
+sub convert_cigar_to_blocks {
+  ## The drawing code shouldn't care what a cigar string is!
+  my ($self, $cigar_string, $feature_start) = @_;
+  my $blocks = [];
+
+  my $current_start = $feature_start;
+
+  ## Parse the cigar string, splitting up into an array
+  ## like ('10M','2I','30M','I','M','20M','2D','2020M');
+  ## original string - "10M2I30MIM20M2D2020M"
+  my @cigar = $cigar_string =~ /(\d*[MDImUXS=])/g;
+
+  foreach (@cigar) {
+    ## Split each of the {number}{Letter} entries into a pair of [ {number}, {letter} ] 
+    ## representing length and feature type ( 'M' -> 'Match/mismatch', 'I' -> Insert, 'D' -> Deletion )
+    ## If there is no number convert it to [ 1, {letter} ] as no-number implies a single base pair...
+    my ($length, $type) = /^(\d+)([MDImUXS=])/ ? ($1, $2) : (1, $_);
+
+    my $start = $current_start;
+
+    # If a match/mismatch, create a structure block
+    if ($type =~ /^[MmU=X]$/) {
+      push @$blocks, [$start, $length];
+    }
+    $current_start += $length;
+  } 
+
+  return $blocks;
+}
 
 1;

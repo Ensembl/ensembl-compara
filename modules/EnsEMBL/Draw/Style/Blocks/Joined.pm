@@ -34,15 +34,15 @@ sub draw_block {
 
   ## In case we're trying to draw a feature with no internal structure,
   ## revert to parent method, which is much simpler!
-  my $cigar_string = $block->{'cigar_string'};
-  if (!$cigar_string) {
+  my $structure = $block->{'structure'};
+  if (!$structure) {
     $self->SUPER::draw_block($block, $position);
   }
 
-  ## Basic parameters for all part of the feature
-  my $start     = $block->{'start'};
-  $start        = 0 if $start < 0;
-  my $current_x = $start;
+  ## Basic parameters for all parts of the feature
+  my $feature_start = $block->{'start'};
+  my $current_x = $feature_start;
+  $current_x    = 0 if $current_x < 0;
 
   my $colour    = $block->{'colour'};
   my $join      = $block->{'join_colour'} || $block->{'bordercolour'} || $colour;
@@ -58,31 +58,21 @@ sub draw_block {
                   absolutey    => 1,
                 );
 
-  ## Parse the cigar string, splitting up into an array
-  ## like ('10M','2I','30M','I','M','20M','2D','2020M');
-  ## original string - "10M2I30MIM20M2D2020M"
-  my @cigar = $cigar_string =~ /(\d*[MDImUXS=])/g;
+  use Data::Dumper;
 
-use Data::Dumper;
+  my %previous;
 
-  foreach (@cigar) {
-    my %params = %defaults;
+  foreach (@$structure) {
 
-    ## Split each of the {number}{Letter} entries into a pair of [ {number}, {letter} ] 
-    ## representing length and feature type ( 'M' -> 'Match/mismatch', 'I' -> Insert, 'D' -> Deletion )
-    ## If there is no number convert it to [ 1, {letter} ] as no-number implies a single base pair...
-    my ($len, $type) = /^(\d+)([MDImUXS=])/ ? ($1, $2) : (1, $_);
+    my ($start, $width) = @$_; 
 
-    $params{'x'}      = $current_x;
-    $params{'width'}  = $len;
+    ## Join this block to the previous one
+    if (keys %previous) {
+      my %params = %defaults;
+      my $end = $previous{'x'} + $previous{'width'};
+      $params{'x'}      = $end;
+      $params{'width'}  = $start - $end;
 
-    # If a match/mismatch - draw box
-    if ($type =~ /^[MmU=X]$/) {
-      $params{'colour'} = $colour;
-      #warn ">>> DRAWING BLOCK ".Dumper(\%params);
-    }
-    ## Otherwise draw join
-    else {
       if ($alpha) {
         $params{'colour'} = $colour;
         $params{'alpha'}  = $alpha;
@@ -91,9 +81,21 @@ use Data::Dumper;
         $params{'bordercolour'} = $join;
       }
       #warn ">>> DRAWING JOIN ".Dumper(\%params);
+      push @{$self->glyphs}, $self->Rect(\%params);
+      
     }
+
+    ## Now draw the next chunk of structure
+    my %params = %defaults;
+
+    $params{'x'}      = $start;
+    $params{'width'}  = $width;
+
+    $params{'colour'} = $colour;
+    #warn ">>> DRAWING BLOCK ".Dumper(\%params);
     push @{$self->glyphs}, $self->Rect(\%params);
-    $current_x += $len;
+    $current_x += $width;
+    %previous = %params;
   }
 
 }
