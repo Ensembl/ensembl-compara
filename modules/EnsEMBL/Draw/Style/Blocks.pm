@@ -55,11 +55,12 @@ sub create_glyphs {
   my $image_config    = $self->image_config;
   my $track_config    = $self->track_config;
   my $default_colour  = $track_config->get('default_colour');
-  #warn ">>> DEFAULT COLOUR $default_colour";
-
-  #use Data::Dumper; warn Dumper($data);
 
   foreach my $block (@$data) {
+
+    my $same_strand = $track_config->get('same_strand');
+    next if defined($same_strand) && $block->{'strand'} != $same_strand;
+
     my $show_label = $track_config->get('show_labels') && $block->{'label'};
     my $text_info = $self->get_text_info($block->{'label'});
     my $feature_row = 0;
@@ -97,7 +98,7 @@ sub create_glyphs {
                     'width'   => $block_width,
                     'height'  => $block_height,
                     };
-    
+  
     $self->draw_block($block, $position);
 
     ## Optional label
@@ -143,8 +144,6 @@ sub draw_block {
                 };
   $params->{'colour'} = $block->{'colour'} if $block->{'colour'};
   $params->{'bordercolour'} = $block->{'bordercolour'} if $block->{'bordercolour'};
-
-  use Data::Dumper; warn ">>> DRAWING BLOCK ".Dumper($params);
 
   push @{$self->glyphs}, $self->Rect($params);
 }
