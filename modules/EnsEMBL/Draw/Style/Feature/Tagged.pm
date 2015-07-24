@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::Style::Blocks::Tagged;
+package EnsEMBL::Draw::Style::Feature::Tagged;
 
 =pod
 Renders a track as a series of simple rectangular blocks
@@ -24,5 +24,5 @@ with 'tags' - triangular
 
 =cut
 
-use parent qw(EnsEMBL::Draw::Style::Blocks);
+use parent qw(EnsEMBL::Draw::Style::Feature);
 

@@ -16,42 +16,40 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::Style::Blocks::Joined;
+package EnsEMBL::Draw::Style::Feature::Transcript;
 
-### Renders a track as a series of simple rectangular blocks
-### joined by horizontal blocks (either outlined or semi-transparent)
+### Renders a track as a series of exons and introns 
 
-use parent qw(EnsEMBL::Draw::Style::Blocks);
+use parent qw(EnsEMBL::Draw::Style::Feature);
 
-sub draw_block {
-### Create each "block" as a set of glyphs: blocks plus joins
-### @param block Hashref - data for a single feature
+sub draw_feature {
+### Create each feature as a set of glyphs: blocks plus joins
+### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the feature's size and position
-  my ($self, $block, $position) = @_;
+  my ($self, $feature, $position) = @_;
 
   ## In case we're trying to draw a feature with no internal structure,
   ## revert to parent method, which is much simpler!
-  my $structure = $block->{'structure'};
+  my $structure = $feature->{'structure'};
   if (!$structure) {
-    $self->SUPER::draw_block($block, $position);
+    $self->SUPER::draw_feature($feature, $position);
   }
 
   ## Basic parameters for all parts of the feature
-  my $feature_start = $block->{'start'};
+  my $feature_start = $feature->{'start'};
   my $current_x = $feature_start;
   $current_x    = 0 if $current_x < 0;
 
-  my $colour    = $block->{'colour'};
-  my $join      = $block->{'join_colour'} || $block->{'bordercolour'} || $colour;
+  my $colour    = $feature->{'colour'};
+  my $join      = $feature->{'join_colour'} || $feature->{'bordercolour'} || $colour;
 
   my $track_config = $self->track_config;
-  my $alpha        = $track_config->get('alpha');
 
   my %defaults = (
                   y            => $position->{'y'},
                   height       => $position->{'height'},
-                  href         => $block->{'href'},
-                  title        => $block->{'title'},
+                  href         => $feature->{'href'},
+                  title        => $feature->{'title'},
                   absolutey    => 1,
                 );
 
@@ -61,7 +59,7 @@ sub draw_block {
 
   foreach (@$structure) {
 
-    my ($start, $width) = @$_; 
+    my ($start, $width, $coding) = @$_; 
 
     ## Join this block to the previous one
     if (keys %previous) {

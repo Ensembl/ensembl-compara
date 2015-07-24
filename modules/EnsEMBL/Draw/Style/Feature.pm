@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::Style::Blocks;
+package EnsEMBL::Draw::Style::Feature;
 
 =pod
 Renders a track as a series of simple rectangular blocks
@@ -56,51 +56,51 @@ sub create_glyphs {
   my $track_config    = $self->track_config;
   my $default_colour  = $track_config->get('default_colour');
 
-  foreach my $block (@$data) {
+  foreach my $feature (@$data) {
 
     my $same_strand = $track_config->get('same_strand');
-    next if defined($same_strand) && $block->{'strand'} != $same_strand;
+    next if defined($same_strand) && $feature->{'strand'} != $same_strand;
 
-    my $show_label = $track_config->get('show_labels') && $block->{'label'};
-    my $text_info = $self->get_text_info($block->{'label'});
+    my $show_label  = $track_config->get('show_labels') && $feature->{'label'};
+    my $text_info   = $self->get_text_info($feature->{'label'});
     my $feature_row = 0;
     my $label_row   = 0;
     my $new_y;
 
     ## Set default colour if there is one
-    $block->{'colour'} ||= $default_colour;
+    $feature->{'colour'} ||= $default_colour;
 
     ## Work out if we're bumping the whole feature or just the label
     my $bumped     = $track_config->get('bumped');
     if ($bumped) {
-      my $bump = $self->set_bump_row($block->{'start'}, $block->{'end'}, $show_label, $text_info);
+      my $bump = $self->set_bump_row($feature->{'start'}, $feature->{'end'}, $show_label, $text_info);
       $label_row   = $bump;
       $feature_row = $bump unless $bumped eq 'labels_only';       
     }
     next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
     ## Work out where to place the feature
-    my $block_height  = $track_config->get('height') || $text_info->{'height'};
-    my $label_height  = $show_label ? $text_info->{'height'} : 0;
-    my $vspacing      = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
+    my $feature_height  = $track_config->get('height') || $text_info->{'height'};
+    my $label_height    = $show_label ? $text_info->{'height'} : 0;
+    my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
 
-    my $block_width   = $block->{'end'} > $block->{'start'}
-                          ? $block->{'end'} - $block->{'start'}
-                          : $block->{'start'} - $block->{'end'};
-    $block_width      = 1 if $block_width == 0; ## Fix for single base-pair features
-    my $slice_width   = $image_config->container_width;
-    $block_width      = $slice_width - $block->{'start'} if ($block_width > $slice_width);
+    my $feature_width   = $feature->{'end'} > $feature->{'start'}
+                          ? $feature->{'end'} - $feature->{'start'}
+                          : $feature->{'start'} - $feature->{'end'};
+    $feature_width      = 1 if $feature_width == 0; ## Fix for single base-pair features
+    my $slice_width     = $image_config->container_width;
+    $feature_width      = $slice_width - $feature->{'start'} if ($feature_width > $slice_width);
 
-    my $labels_height = $label_row * $label_height;
-    my $add_labels    = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
+    my $labels_height   = $label_row * $label_height;
+    my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
 
     my $position  = {
-                    'y'       => (($feature_row + 1) * ($block_height + $vspacing)) + $add_labels,
-                    'width'   => $block_width,
-                    'height'  => $block_height,
+                    'y'       => (($feature_row + 1) * ($feature_height + $vspacing)) + $add_labels,
+                    'width'   => $feature_width,
+                    'height'  => $feature_height,
                     };
   
-    $self->draw_block($block, $position);
+    $self->draw_feature($feature, $position);
 
     ## Optional label
     if ($show_label) {
@@ -108,7 +108,7 @@ sub create_glyphs {
         $new_y = $position->{'y'};
       }
       else {
-        $new_y = $position->{'y'} + $block_height;
+        $new_y = $position->{'y'} + $feature_height;
         $new_y += $labels_height if ($bumped eq 'labels_only');
       }
       $position = {
@@ -116,57 +116,57 @@ sub create_glyphs {
                     'width'   => $text_info->{'width'}, 
                     'height'  => $text_info->{'height'},
                   };
-      $self->add_label($block, $position);
+      $self->add_label($feature, $position);
     }
   }
 
   return @{$self->glyphs||[]};
 }
 
-sub draw_block {
+sub draw_feature {
 ### Create a glyph that's a simple filled rectangle
-### @param block Hashref - data for a single feature
+### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the feature's size and position
-  my ($self, $block, $position) = @_;
+  my ($self, $feature, $position) = @_;
 
-  return unless ($block->{'colour'} || $block->{'bordercolour'});
+  return unless ($feature->{'colour'} || $feature->{'bordercolour'});
 
   ## Set parameters
-  my $x = $block->{'start'};
+  my $x = $feature->{'start'};
   $x    = 0 if $x < 0;
   my $params = {
                   x            => $x,
                   y            => $position->{'y'},
                   width        => $position->{'width'},
                   height       => $position->{'height'},
-                  href         => $block->{'href'},
-                  title        => $block->{'title'},
+                  href         => $feature->{'href'},
+                  title        => $feature->{'title'},
                   absolutey    => 1,
                 };
-  $params->{'colour'} = $block->{'colour'} if $block->{'colour'};
-  $params->{'bordercolour'} = $block->{'bordercolour'} if $block->{'bordercolour'};
+  $params->{'colour'}       = $feature->{'colour'} if $feature->{'colour'};
+  $params->{'bordercolour'} = $feature->{'bordercolour'} if $feature->{'bordercolour'};
 
   push @{$self->glyphs}, $self->Rect($params);
 }
 
 sub add_label {
 ### Create a text label
-### @param block Hashref - data for a single feature
+### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the label's size and position
-  my ($self, $block, $position) = @_;
+  my ($self, $feature, $position) = @_;
 
   my $label = {
                 font      => $self->{'font_name'},
-                colour    => $block->{'label_colour'} || 'black',
+                colour    => $feature->{'label_colour'} || 'black',
                 height    => $self->{'font_size'},
                 ptsize    => $self->{'font_size'},
-                text      => $block->{'label'},
-                x         => $block->{'start'},
+                text      => $feature->{'label'},
+                x         => $feature->{'start'},
                 y         => $position->{'y'},
                 width     => $position->{'width'},
                 height    => $position->{'height'},
-                href      => $block->{'href'},
-                title     => $block->{'title'},
+                href      => $feature->{'href'},
+                title     => $feature->{'title'},
                 absolutey => 1,
               };
 
