@@ -82,16 +82,19 @@ sub canvas {
 #########
 # colour caching routine.
 # GD can only store 256 colours, so need to cache the ones we colorAllocate. (Doh!)
-#
+# This is also a good place to apply contrast
 sub colour {
   my ($self, $id, $alpha) = @_;
   $id           ||= 'black';
 
+  my @rgb = $self->{'colourmap'}->rgb_by_name($id);
+  push @rgb,int(127*$alpha) if $alpha;
+  @rgb = $self->{'colourmap'}->hivis($self->{'contrast'},@rgb);
   if ($alpha) {
-    $self->{'_GDColourCacheAlpha'}->{$id}{$alpha} ||= $self->{'canvas'}->colorAllocateAlpha($self->{'colourmap'}->rgb_by_name($id), int(127 * $alpha));
+    $self->{'_GDColourCacheAlpha'}->{$id}{$alpha} ||= $self->{'canvas'}->colorAllocateAlpha(@rgb);
     return $self->{'_GDColourCacheAlpha'}->{$id}{$alpha};
   } else {
-    $self->{'_GDColourCache'}->{$id} ||= $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
+    $self->{'_GDColourCache'}->{$id} ||= $self->{'canvas'}->colorAllocate(@rgb);
     return $self->{'_GDColourCache'}->{$id};
   }
 }

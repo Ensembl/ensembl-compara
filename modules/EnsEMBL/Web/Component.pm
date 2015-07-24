@@ -677,13 +677,17 @@ sub _export_image {
   
   $image->{'export'} = 'iexport' . ($flag ? " $flag" : '');
 
-  my ($format, $scale) = $hub->param('export') ? split /-/, $hub->param('export'), 2 : ('', 1);
-  $scale eq 1 if $scale <= 0;
-  
+  my @export = split(/-/,$hub->param('export'));
+  my $format = (shift @export)||'';
+  my %params = @export;
+  my $scale = abs($params{'s'}) || 1;
+  my $contrast = abs($params{'c'}) || 1;
+
   my %formats = EnsEMBL::Web::Constants::EXPORT_FORMATS;
   
   if ($formats{$format}) {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
+    $image->drawable_container->{'config'}->set_parameter('contrast',$contrast);
     (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
     my $filename = sprintf '%s-%s-%s.%s', $comp, $hub->filename($self->object), $scale, $formats{$format}{'extn'};
     
