@@ -55,42 +55,32 @@ sub create_hash {
     'score'         => $self->parser->get_score,
     'label'         => $self->parser->get_name,
     'colour'        => $colour, 
-    'cigar_string'  => $self->create_cigar_string,
+    'structure'     => $self->create_structure($start),
   };
 }
 
-sub create_cigar_string {
-  my $self = shift;
+sub create_structure {
+  my ($self, $feature_start) = @_;
 
   if (!$self->parser->get_blockCount || !$self->parser->get_blockSizes 
           || !$self->parser->get_blockStarts) {
-    return ($self->parser->get_end - $self->parser->get_start + 1).'M'; 
+    return undef; 
   } 
 
-  my $cigar;
+  my $structure = [];
+
   my @block_starts  = @{$self->parser->get_blockStarts};
   my @block_lengths = @{$self->parser->get_blockSizes};
-  my $strand = $self->parser->get_strand();
-  my $end = 0;
 
   foreach(0..($self->parser->get_blockCount - 1)) {
     my $start = shift @block_starts;
     my $length = shift @block_lengths;
-    if ($_) {
-      if ($strand == -1) {
-        $cigar = ( $start - $end - 1)."I$cigar";
-      } else {
-        $cigar .= ( $start - $end - 1)."I";
-      }
-    }
-    if ($strand == -1) {
-      $cigar = $length."M$cigar";
-    } else {
-      $cigar.= $length.'M';
-    }
-    $end = $start + $length -1;
+    ## Blocks are defined relative to feature start, so we need to convert
+    ## to actual image coordinates
+    push @$structure, [$start + $feature_start, $length];
   }
-  return $cigar;
+
+  return $structure;
 }
 
 1;
