@@ -55,12 +55,13 @@ sub create_hash {
     'score'         => $self->parser->get_score,
     'label'         => $self->parser->get_name,
     'colour'        => $colour, 
-    'structure'     => $self->create_structure($start),
+    'structure'     => $self->create_structure($start, $end, $slice->length),
   };
 }
 
 sub create_structure {
-  my ($self, $feature_start) = @_;
+  my ($self, $feature_start, $feature_end, $slice_length) = @_;
+  warn ">>> FEATURE $feature_start, $feature_end, $slice_length";
 
   if (!$self->parser->get_blockCount || !$self->parser->get_blockSizes 
           || !$self->parser->get_blockStarts) {
@@ -71,14 +72,54 @@ sub create_structure {
 
   my @block_starts  = @{$self->parser->get_blockStarts};
   my @block_lengths = @{$self->parser->get_blockSizes};
+  my $thick_start   = $self->parser->get_thickStart;
+  my $thick_end     = $self->parser->get_thickEnd;
+
+  ## Fix for non-intuitive configuration of non-coding transcripts
+  if ($thick_start == $thick_end) {
+    $thick_start  = 0;
+    $thick_end    = 0;
+  }
+  my $has_coding = $thick_start || $thick_end ? 1 : 0;
+
+  ## Ignore thick start/end if it's outside the current region
+  $thick_start = 0 if $thick_start < 1;
+  $thick_end = 0 if $thick_end >= $slice_length;
 
   foreach(0..($self->parser->get_blockCount - 1)) {
-    my $start = shift @block_starts;
-    my $length = shift @block_lengths;
     ## Blocks are defined relative to feature start, so we need to convert
     ## to actual image coordinates
-    push @$structure, [$start + $feature_start, $length];
+    my $start   = shift @block_starts;
+    $start     += $feature_start;
+    my $length  = shift @block_lengths;
+    my $end     = $start + $length;
+
+    my $block = {'start' => $end, 'end' => $end};
+    
+    if (!$has_coding) {
+      $block->{'coding'} = 0; 
+    }
+    else {
+      if ($thick_start && $thick_start > $start) {## 5' UTR
+        if ($thick_start > $end) {
+          $block->{'coding'} = 0; 
+        }
+        else {
+          $block->{'utr_5'} = $thick_start - $start;
+        }
+      }
+      elsif ($thick_end && $thick_end < $end) { ## 3' UTR
+        if ($thick_end < $start) {
+          $block->{'coding'} = 0; 
+        }
+        else {
+          $block->{'utr_3'} = $thick_end - $start;
+        }
+      }
+    }
+    push @$structure, $block;
   }
+  use Data::Dumper; warn Dumper($structure);
 
   return $structure;
 }
