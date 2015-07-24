@@ -28,6 +28,7 @@ use EnsEMBL::Web::IOWrapper;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
 use EnsEMBL::Draw::Style::Feature::Joined;
+use EnsEMBL::Draw::Style::Feature::Transcript;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Alignment);
 
@@ -108,9 +109,26 @@ sub render_as_alignment_nolabel {
     }
     $hover_label->{'extra_desc'} = $extras;
 
-    my $style     = EnsEMBL::Draw::Style::Feature::Joined->new($config, $features);
+    my $drawing_style = $self->{'my_config'}->get('drawing_style');
+    my $style_class   = $drawing_style ? "EnsEMBL::Draw::Style::Feature::$drawing_style" 
+                                       : 'EnsEMBL::Draw::Style::Feature::Joined';
+
+    my $style = $style_class->new($config, $features);
     $self->push($style->create_glyphs);
   }
+}
+
+sub render_as_transcript_nolabel {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', 'Transcript');
+  $self->render_as_alignment_nolabel;
+}
+
+sub render_as_transcript_label {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', 'Transcript');
+  $self->{'my_config'}->set('show_labels', 1);
+  $self->render_as_alignment_nolabel;
 }
 
 sub href {
