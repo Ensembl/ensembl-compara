@@ -193,7 +193,7 @@ Ensembl.extend({
   },
   
   cleanURL: function (url) {
-    return unescape(url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([?;])time=[^;]+;?/g, '$1').replace(/[?;]$/g, ''));
+    return url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([?;])time=[^;]+;?/g, '$1').replace(/[?;]$/g, '');
   },
   
   // Remove the old time stamp from a URL and replace with a new one
