@@ -28,17 +28,33 @@ no warnings 'uninitialized';
 use parent qw(EnsEMBL::Web::IOWrapper);
 
 sub create_hash {
-  my ($self, $metadata) = @_;
+  my ($self, $metadata, $slice) = @_;
   $metadata ||= {};
+
+  ## Start and end need to be relative to slice
+  my $start = $self->parser->get_start;
+  my $end   = $self->parser->get_end;
+  if ($slice) {
+    $start  -= $slice->start;
+    $end    -= $slice->start;
+  }
+
+  ## Only set colour if we have something in file, otherwise
+  ## we will override the default colour in the drawing code
+  my $colour;
+  my $rgb = $self->parser->get_itemRgb;
+  if ($rgb) {
+    $colour = $self->rgb_to_hex($rgb);
+  }
+
   return {
-    'start'         => $self->parser->get_start,
-    'end'           => $self->parser->get_end,
+    'start'         => $start,
+    'end'           => $end,
     'seq_region'    => $self->parser->get_seqname,
     'strand'        => $self->parser->get_strand,
     'score'         => $self->parser->get_score,
-    'colour'        => $self->rgb_to_hex($self->parser->get_itemRgb),
+    'colour'        => $colour, 
     'cigar_string'  => $self->create_cigar_string,
-    'href'          => $metadata->{'url'};
   };
 }
 
