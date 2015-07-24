@@ -86,8 +86,8 @@ sub create_glyphs {
                           ? $block->{'end'} - $block->{'start'}
                           : $block->{'start'} - $block->{'end'};
     $block_width      = 1 if $block_width == 0; ## Fix for single base-pair features
-    #my $slice_width   = $image_config->container_width;
-    #$block_width      = $slice_width - $block->{'start'} if ($block_width > $slice_width);
+    my $slice_width   = $image_config->container_width;
+    $block_width      = $slice_width - $block->{'start'} if ($block_width > $slice_width);
 
     my $labels_height = $label_row * $label_height;
     my $add_labels    = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
@@ -130,8 +130,10 @@ sub draw_block {
   return unless ($block->{'colour'} || $block->{'bordercolour'});
 
   ## Set parameters
+  my $x = $block->{'start'};
+  $x    = 0 if $x < 0;
   my $params = {
-                  x            => $block->{'start'},
+                  x            => $x,
                   y            => $position->{'y'},
                   width        => $position->{'width'},
                   height       => $position->{'height'},
