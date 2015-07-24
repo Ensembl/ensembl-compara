@@ -112,18 +112,15 @@ sub create_tracks {
       my ($seqname, $start, $end) = $self->coords;
       ## Skip features that lie outside the current slice
       if ($slice) {
-        next unless ($seqname eq $slice->seq_region_name
-                      && (
-                         ($start >= $slice->start && $end <= $slice->end)
-                      || ($start <= $slice->start && $end <= $slice->end)
-                      || ($start <= $slice->end && $end >= $slice->start)
-                    ));
+        next if ($seqname ne $slice->seq_region_name
+                  || $end < $slice->start
+                  || $start > $slice->end);
       }
       if ($data->{$track_key}{'features'}) {
-        push @{$data->{$track_key}{'features'}}, $self->create_hash($data->{$track_key}{'metadata'}, $slice);
+        push @{$data->{$track_key}{'features'}}, $self->create_hash($data->{$track_key}{'metadata'});
       }
       else {
-        $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'}, $slice)];
+        $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'})];
       }
     }
   }

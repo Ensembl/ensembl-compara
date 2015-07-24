@@ -28,16 +28,8 @@ no warnings 'uninitialized';
 use parent qw(EnsEMBL::Web::IOWrapper);
 
 sub create_hash {
-  my ($self, $metadata, $slice) = @_;
+  my ($self, $metadata) = @_;
   $metadata ||= {};
-
-  ## Start and end need to be relative to slice
-  my $start = $self->parser->get_start;
-  my $end   = $self->parser->get_end;
-  if ($slice) {
-    $start  -= $slice->start;
-    $end    -= $slice->start;
-  }
 
   ## Only set colour if we have something in file, otherwise
   ## we will override the default colour in the drawing code
@@ -48,20 +40,19 @@ sub create_hash {
   }
 
   return {
-    'start'         => $start,
-    'end'           => $end,
+    'start'         => $self->parser->get_start,
+    'end'           => $self->parser->get_end,
     'seq_region'    => $self->parser->get_seqname,
     'strand'        => $self->parser->get_strand,
     'score'         => $self->parser->get_score,
     'label'         => $self->parser->get_name,
     'colour'        => $colour, 
-    'structure'     => $self->create_structure($start, $end, $slice->length),
+    'structure'     => $self->create_structure($start, $end),
   };
 }
 
 sub create_structure {
-  my ($self, $feature_start, $feature_end, $slice_length) = @_;
-  warn ">>> FEATURE $feature_start, $feature_end, $slice_length";
+  my ($self, $feature_start, $feature_end) = @_;
 
   if (!$self->parser->get_blockCount || !$self->parser->get_blockSizes 
           || !$self->parser->get_blockStarts) {
@@ -82,15 +73,8 @@ sub create_structure {
   }
   my $has_coding = $thick_start || $thick_end ? 1 : 0;
 
-  ## Ignore thick start/end if it's outside the current region
-  $thick_start = 0 if $thick_start < 1;
-  $thick_end = 0 if $thick_end >= $slice_length;
-
   foreach(0..($self->parser->get_blockCount - 1)) {
-    ## Blocks are defined relative to feature start, so we need to convert
-    ## to actual image coordinates
     my $start   = shift @block_starts;
-    $start     += $feature_start;
     my $length  = shift @block_lengths;
     my $end     = $start + $length;
 
@@ -119,7 +103,7 @@ sub create_structure {
     }
     push @$structure, $block;
   }
-  use Data::Dumper; warn Dumper($structure);
+  use Data::Dumper; warn '@@@ STRUCTURE '.Dumper($structure);
 
   return $structure;
 }
