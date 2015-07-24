@@ -46,6 +46,7 @@ sub render_half_height {
 sub render_stack { 
   my $self = shift;
   $self->{'my_config'}->set('height', 1);
+  $self->{'my_config'}->set('vspacing', 0);
   $self->{'my_config'}->set('depth', 40);
   ## Draw joins as 50% transparency, not borders
   $self->{'my_config'}->set('alpha', 0.5);
@@ -56,6 +57,7 @@ sub render_stack {
 sub render_unlimited {
   my $self = shift;
   $self->{'my_config'}->set('height', 1);
+  $self->{'my_config'}->set('vspacing', 0);
   $self->{'my_config'}->set('depth', 1000);
   ## Draw joins as 50% transparency, not borders
   $self->{'my_config'}->set('alpha', 0.5);
