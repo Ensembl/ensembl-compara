@@ -63,7 +63,8 @@ sub draw_feature {
 
   foreach (@$structure) {
 
-    my ($start, $width) = @$_; 
+    my $start = $_->{'start'};
+    my $width = $_->{'end'} - $start; 
 
     ## Join this block to the previous one
     if ($join && keys %previous) {
