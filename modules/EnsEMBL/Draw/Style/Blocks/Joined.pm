@@ -20,14 +20,14 @@ package EnsEMBL::Draw::Style::Blocks::Joined;
 
 =pod
 Renders a track as a series of simple rectangular blocks
-joined by horizontal "borders"
+joined by horizontal blocks (either outlined or semi-transparent)
 
 =cut
 
 use parent qw(EnsEMBL::Draw::Style::Blocks);
 
 sub draw_block {
-### Create a set of glyphs joined by horizontal lines
+### Create each "block" as a set of glyphs: blocks plus joins
 ### @param block Hashref - data for a single feature
 ### @param position Hashref - information about the feature's size and position
   my ($self, $block, $position) = @_;
