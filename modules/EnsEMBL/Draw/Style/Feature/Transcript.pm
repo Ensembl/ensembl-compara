@@ -41,7 +41,7 @@ sub draw_feature {
   $current_x    = 0 if $current_x < 0;
 
   my $colour    = $feature->{'colour'};
-  my $join      = $feature->{'join_colour'} || $feature->{'bordercolour'} || $colour;
+  my $join      = $feature->{'join_colour'} || $colour;
 
   my $track_config = $self->track_config;
 
@@ -59,8 +59,6 @@ sub draw_feature {
 
   foreach (@$structure) {
 
-    my ($start, $width, $coding) = @$_; 
-
     ## Join this block to the previous one
     if (keys %previous) {
       my %params = %defaults;
@@ -68,31 +66,58 @@ sub draw_feature {
       $params{'x'}      = $end;
       $params{'width'}  = $start - $end;
 
-      if ($alpha) {
-        $params{'colour'} = $colour;
-        $params{'alpha'}  = $alpha;
-      }
-      else {
-        $params{'bordercolour'} = $join;
-      }
-      #warn ">>> DRAWING JOIN ".Dumper(\%params);
-      push @{$self->glyphs}, $self->Rect(\%params);
+      $params{'bordercolour'} = $join;
+      warn ">>> DRAWING INTRON ".Dumper(\%params);
+      push @{$self->glyphs}, $self->Intron(\%params);
       
     }
 
     ## Now draw the next chunk of structure
     my %params = %defaults;
-
-    $params{'x'}      = $start;
-    $params{'width'}  = $width;
-
     $params{'colour'} = $colour;
-    #warn ">>> DRAWING BLOCK ".Dumper(\%params);
-    push @{$self->glyphs}, $self->Rect(\%params);
+
+    if ($_->{'non_coding'}) {
+      $self->draw_noncoding_block(%params);
+    }
+    elsif ($_->{'utr_5'}) {
+      $params{'width'} = $_->{'utr_5'};
+      $self->draw_noncoding_block(%params);
+      $params{'x'}    += $_->{'utr_5'};
+      $params{'width'} = $_->{'width'} - $_->{'utr_5'};
+      $params{'colour'} = $colour;
+      $self->draw_coding_block(%params);
+    }
+    elsif ($_->{'utr_3'}) {
+      $params{'width'} = $_->{'utr_3'};
+      $self->draw_coding_block(%params);
+      $params{'x'}    += $_->{'utr_3'};
+      $params{'width'} = $_->{'width'} - $_->{'utr_3'};
+      $self->draw_noncoding_block(%params);
+    }
+    else {
+      $self->draw_coding_block(%params);
+    }
+
     $current_x += $width;
     %previous = %params;
   }
 
+}
+
+sub draw_coding_block {
+  my ($self, %params) = @_;
+  warn ">>> DRAWING CODING BLOCK ".Dumper(\%params);
+  push @{$self->glyphs}, $self->Rect(\%params);
+}
+
+sub draw_noncoding_block {
+  my ($self, %params) = @_;
+  $params{'bordercolour'} = $params{'colour'};
+  delete $params{'colour'};
+  $params{'height'} = $params{'height'} - 2;
+  $params{'y'} += 1;
+  warn ">>> DRAWING NON-CODING BLOCK ".Dumper(\%params);
+  push @{$self->glyphs}, $self->Rect(\%params);
 }
 
 1;
