@@ -94,7 +94,7 @@ sub render_as_alignment_nolabel {
     my $features  = $_->{'features'};
     my $metadata  = $_->{'metadata'};
     my $name      = $metadata->{'name'};
-    $self->{'my_config'}->set('caption', $name) if $name;
+    $hover_label->{'header'} = $name if $name;
 
     ## Add any suitable metadata to track name mouseover menu
     my $extras;
