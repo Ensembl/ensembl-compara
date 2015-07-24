@@ -70,7 +70,9 @@ sub new {
         }
       }
     }
-    $feature_sets = $feature_set_adaptor->fetch_all_displayable_by_type('annotated', keys %$constraints ? {'constraints' => $constraints} : ());
+    $feature_sets = $param eq 'all' || keys %$constraints
+      ? $feature_set_adaptor->fetch_all_displayable_by_type('annotated', keys %$constraints ? {'constraints' => $constraints} : ())
+      : [];
   }
 
   my $binding_matrix_adaptor = $funcgen_db_adaptor->get_BindingMatrixAdaptor;
