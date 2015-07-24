@@ -27,6 +27,7 @@ use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 
 use EnsEMBL::Draw::Style::Blocks;
+use EnsEMBL::Draw::Style::Blocks::Joined;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Alignment);
 
@@ -72,11 +73,18 @@ sub features {
 sub render_normal {
   my $self = shift;
 
+  ## Defaults
+  my $colour_key     = $self->colour_key('default');
+  $self->{'my_config'}->set('default_colour', $self->my_colour($colour_key));
+
   $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('same_strand', $self->strand);
+  unless ($self->{'my_config'}->get('height')) {
+    $self->{'my_config'}->set('height', 8);
+  }
 
   my $subtracks = $self->features;
   my $config    = $self->track_style_config;
-  #$config->set('default_colour', $self->{'_default_colour'});
 
   foreach (@$subtracks) {
     my $features  = $_->{'features'};
@@ -84,7 +92,7 @@ sub render_normal {
     my $name      = $metadata->{'name'};
     $config->{'track_config'}->set('caption', $name) if $name;
 
-    my $style     = EnsEMBL::Draw::Style::Blocks->new($config, $features);
+    my $style     = EnsEMBL::Draw::Style::Blocks::Joined->new($config, $features);
     $self->push($style->create_glyphs);
   }
 }
