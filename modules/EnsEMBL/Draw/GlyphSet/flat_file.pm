@@ -25,6 +25,7 @@ use strict;
 
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
+use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
 use EnsEMBL::Draw::Style::Feature;
 use EnsEMBL::Draw::Style::Feature::Joined;
@@ -86,11 +87,27 @@ sub render_as_alignment_nolabel {
   my $subtracks = $self->features;
   my $config    = $self->track_style_config;
 
+  my $key = $self->{'hover_label_class'};
+  my $hover_label = $self->{'config'}->{'hover_labels'}{$key};
+
   foreach (@$subtracks) {
     my $features  = $_->{'features'};
     my $metadata  = $_->{'metadata'};
     my $name      = $metadata->{'name'};
-    $config->{'track_config'}->set('caption', $name) if $name;
+    $self->{'my_config'}->set('caption', $name) if $name;
+
+    ## Add any suitable metadata to track name mouseover menu
+    my $extras;
+    my $description = $metadata->{'description'};
+    if ($description) {
+      $description = add_links($description);
+      $extras = $description;
+    }
+    my $url = $metadata->{'url'};
+    if ($url) {
+      $extras .= sprintf(' For more information, visit <a href="%s">%s</a>', $url, $url);
+    }
+    $hover_label->{'extra_desc'} = $extras;
 
     my $style     = EnsEMBL::Draw::Style::Feature::Joined->new($config, $features);
     $self->push($style->create_glyphs);
