@@ -18,11 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::Style::Blocks::Joined;
 
-=pod
-Renders a track as a series of simple rectangular blocks
-joined by horizontal blocks (either outlined or semi-transparent)
-
-=cut
+### Renders a track as a series of simple rectangular blocks
+### joined by horizontal blocks (either outlined or semi-transparent)
 
 use parent qw(EnsEMBL::Draw::Style::Blocks);
 
