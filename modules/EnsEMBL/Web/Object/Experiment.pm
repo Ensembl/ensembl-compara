@@ -59,17 +59,14 @@ sub new {
       while (my ($filter, $value) = each(%$filters)) {
         if ($filter eq 'cell_type') {
           my $cell_type_adaptor = $funcgen_db_adaptor->get_CellTypeAdaptor;
-          $constraints->{'cell_types'} = [ map $cell_type_adaptor->fetch_by_name($_), @$value ];
-        }
-        elsif ($filter eq 'evidence_type') {
+          push @{$constraints->{'cell_types'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
+        } elsif ($filter eq 'evidence_type') {
           $constraints->{'evidence_types'} = $value;
-        }
-        elsif ($filter eq 'project') {
+        } elsif ($filter eq 'project') {
           my $experimental_group_adaptor = $funcgen_db_adaptor->get_ExperimentalGroupAdaptor;
-          $constraints->{'projects'} = [ map $experimental_group_adaptor->fetch_by_name($_), @$value ];
-        }
-        elsif ($filter eq 'feature_type') {
-          $constraints->{'feature_types'} = [ map $feature_type_adaptor->fetch_by_name($_), @$value ];
+          push @{$constraints->{'projects'}}, $_ for map $experimental_group_adaptor->fetch_by_name($_) || (), @$value;
+        } elsif ($filter eq 'feature_type') {
+          push @{$constraints->{'feature_types'}}, $_ for map $feature_type_adaptor->fetch_by_name($_) || (), @$value;
         }
       }
     }
