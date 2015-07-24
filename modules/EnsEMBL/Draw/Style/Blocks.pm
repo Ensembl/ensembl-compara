@@ -82,6 +82,7 @@ sub create_glyphs {
     ## Work out where to place the feature
     my $block_height  = $track_config->get('height') || $text_info->{'height'};
     my $label_height  = $show_label ? $text_info->{'height'} : 0;
+    my $vspacing      = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
 
     my $block_width   = $block->{'end'} > $block->{'start'}
                           ? $block->{'end'} - $block->{'start'}
@@ -94,7 +95,7 @@ sub create_glyphs {
     my $add_labels    = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
 
     my $position  = {
-                    'y'       => (($feature_row + 1) * ($block_height + 4)) + $add_labels,
+                    'y'       => (($feature_row + 1) * ($block_height + $vspacing)) + $add_labels,
                     'width'   => $block_width,
                     'height'  => $block_height,
                     };
