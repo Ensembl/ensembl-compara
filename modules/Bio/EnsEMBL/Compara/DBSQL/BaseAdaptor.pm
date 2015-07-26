@@ -178,8 +178,25 @@ sub generic_fetch {
 }
 
 
+=head2 mysql_server_prepare
+
+  Arg[1]      : Boolean (opt)
+  Example     : $self->compara_dba->get_HomologyAdaptor->mysql_server_prepare();
+  Description : Getter / setter. Controls whether statements are prepared server-side,
+                which should give better performance for repeated queries
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub mysql_server_prepare {
     my $self = shift;
+    # Internally there is no '_mysql_server_prepare' field but
+    # only '_cached_statements'. The existence of the latter tells whether
+    # the option is turned on. The setter must thus ensure the hash is
+    # deleted when the option is switched off
     return (exists $self->{'_cached_statements'} ? 1 : 0) unless scalar(@_);
     my $value = shift;
     if ($value) {
@@ -195,6 +212,22 @@ sub mysql_server_prepare {
     }
 }
 
+
+=head2 prepare
+
+  Arg [1]    : string $string
+               a SQL query to be prepared by this adaptors database
+  Example    : $sth = $adaptor->prepare("select yadda from blabla")
+  Description: provides a DBI statement handle from the adaptor. A convenience
+               function so you dont have to write $adaptor->db->prepare all the
+               time. It will perform a server-side preparation if the mysql_server_prepare()
+               flag has been switched on
+  Returntype : DBI::StatementHandle
+  Exceptions : none
+  Caller     : Adaptors inherited from BaseAdaptor
+  Status     : Stable
+
+=cut
 
 sub prepare {
     my ($self, $query, @args) = @_;
