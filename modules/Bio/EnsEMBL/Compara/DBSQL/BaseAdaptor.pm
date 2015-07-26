@@ -204,7 +204,7 @@ sub prepare {
         $self->dbc->db_handle->{mysql_server_prepare} = 1;
         my $sth = $self->SUPER::prepare($query, @args);
         $self->dbc->db_handle->{mysql_server_prepare} = 0;
-        $self->{'_cached_statements'}->{$query} = $sth;
+        $self->{'_cached_statements'}->{$query} = $sth if $sth;
         return $sth;
     } else {
         return $self->SUPER::prepare($query, @args);
