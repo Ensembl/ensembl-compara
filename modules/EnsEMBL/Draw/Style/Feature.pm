@@ -89,7 +89,7 @@ sub create_glyphs {
                           : $feature->{'start'} - $feature->{'end'};
     $feature_width      = 1 if $feature_width == 0; ## Fix for single base-pair features
     my $slice_width     = $image_config->container_width;
-    $feature_width      = $slice_width - $feature->{'start'} if ($feature_width > $slice_width);
+    $feature_width      = $slice_width - $feature->{'start'} if ($feature->{'end'} > $slice_width);
 
     my $labels_height   = $label_row * $label_height;
     my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
