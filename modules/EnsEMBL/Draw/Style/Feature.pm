@@ -95,9 +95,10 @@ sub create_glyphs {
     my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
 
     my $position  = {
-                    'y'       => (($feature_row + 1) * ($feature_height + $vspacing)) + $add_labels,
-                    'width'   => $feature_width,
-                    'height'  => $feature_height,
+                    'y'           => (($feature_row + 1) * ($feature_height + $vspacing)) + $add_labels,
+                    'width'       => $feature_width,
+                    'height'      => $feature_height,
+                    'image_width' => $slice_width,
                     };
   
     $self->draw_feature($feature, $position);
