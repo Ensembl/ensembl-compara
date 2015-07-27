@@ -28,8 +28,19 @@ no warnings 'uninitialized';
 use parent qw(EnsEMBL::Web::IOWrapper);
 
 sub create_hash {
-  my ($self, $metadata) = @_;
+### Create a hash of feature information in a format that
+### can be used by the drawing code
+### @param metadata - Hashref of information about this track
+### @param slice - Bio::EnsEMBL::Slice object
+### @return Hashref
+  my ($self, $metadata, $slice) = @_;
   $metadata ||= {};
+  return unless $slice;
+
+  ## Start and end need to be relative to slice,
+  ## as that is how the API returns coordinates
+  my $feature_start = $self->parser->get_start;
+  my $feature_end   = $self->parser->get_end;
 
   ## Only set colour if we have something in file, otherwise
   ## we will override the default colour in the drawing code
@@ -40,19 +51,19 @@ sub create_hash {
   }
 
   return {
-    'start'         => $self->parser->get_start,
-    'end'           => $self->parser->get_end,
+    'start'         => $feature_start - $slice->start,
+    'end'           => $feature_end - $slice->start,
     'seq_region'    => $self->parser->get_seqname,
     'strand'        => $self->parser->get_strand,
     'score'         => $self->parser->get_score,
     'label'         => $self->parser->get_name,
     'colour'        => $colour, 
-    'structure'     => $self->create_structure($start, $end),
+    'structure'     => $self->create_structure($feature_start, $slice->start),
   };
 }
 
 sub create_structure {
-  my ($self, $feature_start, $feature_end) = @_;
+  my ($self, $feature_start, $slice_start) = @_;
 
   if (!$self->parser->get_blockCount || !$self->parser->get_blockSizes 
           || !$self->parser->get_blockStarts) {
@@ -71,14 +82,24 @@ sub create_structure {
     $thick_start  = 0;
     $thick_end    = 0;
   }
+  else {
+    ## Adjust to make relative to slice (and compensate for BED coords)
+    $thick_start -= ($slice_start - 1);
+    $thick_end   -= $slice_start;
+  }
+
+  ## Does this feature have _any_ coding sequence?
   my $has_coding = $thick_start || $thick_end ? 1 : 0;
 
   foreach(0..($self->parser->get_blockCount - 1)) {
     my $start   = shift @block_starts;
+    ## Adjust to be relative to slice and compensate for BED format
+    my $offset  = $feature_start - $slice_start;
+    $start      = $start + $offset + 1;
     my $length  = shift @block_lengths;
-    my $end     = $start + $length;
+    my $end     = $start + $length - 1;
 
-    my $block = {'start' => $end, 'end' => $end};
+    my $block = {'start' => $start, 'end' => $end};
     
     if (!$has_coding) {
       $block->{'coding'} = 0; 
@@ -100,10 +121,12 @@ sub create_structure {
           $block->{'utr_3'} = $thick_end - $start;
         }
       }
+      else {
+        $block->{'coding'} = 1;
+      }
     }
     push @$structure, $block;
   }
-  use Data::Dumper; warn '@@@ STRUCTURE '.Dumper($structure);
 
   return $structure;
 }
