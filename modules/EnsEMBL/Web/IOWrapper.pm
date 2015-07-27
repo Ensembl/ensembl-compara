@@ -117,10 +117,10 @@ sub create_tracks {
                   || $start > $slice->end);
       }
       if ($data->{$track_key}{'features'}) {
-        push @{$data->{$track_key}{'features'}}, $self->create_hash($data->{$track_key}{'metadata'});
+        push @{$data->{$track_key}{'features'}}, $self->create_hash($data->{$track_key}{'metadata'}, $slice);
       }
       else {
-        $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'})];
+        $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'}, $slice)];
       }
     }
   }
