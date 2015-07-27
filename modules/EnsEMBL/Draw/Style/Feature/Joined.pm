@@ -39,8 +39,8 @@ sub draw_feature {
 
   ## Basic parameters for all parts of the feature
   my $feature_start = $feature->{'start'};
-  my $current_x = $feature_start;
-  $current_x    = 0 if $current_x < 0;
+  my $current_x     = $feature_start;
+  $current_x        = 0 if $current_x < 0;
 
   my $colour      = $feature->{'colour'};
   my $join_colour = $feature->{'join_colour'} || $feature->{'bordercolour'} || $colour;
@@ -59,19 +59,25 @@ sub draw_feature {
 
   use Data::Dumper;
 
+  my $image_width = $position->{'image_width'};
   my %previous;
 
   foreach (@$structure) {
 
-    my $start = $_->{'start'};
-    my $width = $_->{'end'} - $start; 
+    my $last_element = 0;
 
     ## Join this block to the previous one
     if ($join && keys %previous) {
-      my %params = %defaults;
-      my $end = $previous{'x'} + $previous{'width'};
-      $params{'x'}      = $end;
-      $params{'width'}  = $start - $end;
+      my %params        = %defaults;
+      my $start         = $previous{'x'} + $previous{'width'};
+      $params{'x'}      = $start;
+      my $end           = $_->{'start'};
+      my $width         = $end - $start;
+      if ($end > $image_width) {
+        $width          = $image_width - $start;
+        $last_element   = 1;
+      }
+      $params{'width'}  = $width;
 
       if ($alpha) {
         $params{'colour'} = $join_colour;
@@ -80,20 +86,25 @@ sub draw_feature {
       else {
         $params{'bordercolour'} = $join_colour;
       }
-      #warn ">>> DRAWING JOIN ".Dumper(\%params);
+      #warn "... DRAWING JOIN ".Dumper(\%params);
       push @{$self->glyphs}, $self->Rect(\%params);
       
     }
+    last if $last_element;
 
     ## Now draw the next chunk of structure
     my %params = %defaults;
 
+    my $start = $_->{'start'};
     $params{'x'}      = $start;
-    $params{'width'}  = $width;
+    $params{'width'}  = $_->{'end'} - $start;
 
-    $params{'colour'} = $colour;
-    #warn ">>> DRAWING BLOCK ".Dumper(\%params);
-    push @{$self->glyphs}, $self->Rect(\%params);
+    ## Only draw blocks that appear on the image!
+    unless ($end < 0 || $start > $position->{'image_width'}) {
+      $params{'colour'} = $colour;
+      #warn "... DRAWING BLOCK ".Dumper(\%params);
+      push @{$self->glyphs}, $self->Rect(\%params);
+    }
     $current_x += $width;
     %previous = %params;
   }
