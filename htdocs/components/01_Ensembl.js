@@ -278,9 +278,17 @@ Ensembl.extend({
     if (paramOnly) {
       return r;
     }
-    
+
     var hash = r && this.locationURL === 'search' ? { r: r } : {};
-    
+
+    if (hash.r) {
+      $.each(['g', 'db'], function (i, param) {
+        if (Ensembl.coreParams[param]) {
+          hash[param] = Ensembl.coreParams[param];
+        }
+      });
+    }
+
     $.each(window.location.hash.replace('#', '').split(/[;&]/), function () {
       var param = this.split('=');
       
