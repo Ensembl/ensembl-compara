@@ -37,13 +37,13 @@ sub draw_feature {
 
   ## Basic parameters for all parts of the feature
   my $feature_start = $feature->{'start'};
-  my $current_x = $feature_start;
-  $current_x    = 0 if $current_x < 0;
+  my $current_x     = $feature_start;
+  $current_x        = 0 if $current_x < 0;
 
-  my $colour    = $feature->{'colour'};
-  my $join      = $feature->{'join_colour'} || $colour;
+  my $colour        = $feature->{'colour'};
+  my $join_colour   = $feature->{'join_colour'} || $colour;
 
-  my $track_config = $self->track_config;
+  my $track_config  = $self->track_config;
 
   my %defaults = (
                   y            => $position->{'y'},
@@ -55,49 +55,66 @@ sub draw_feature {
 
   use Data::Dumper;
 
+  my $image_width = $position->{'image_width'};
   my %previous;
 
   foreach (@$structure) {
 
+    my $last_element = 0;
+
     ## Join this block to the previous one
     if (keys %previous) {
-      my %params = %defaults;
-      my $end = $previous{'x'} + $previous{'width'};
-      $params{'x'}      = $end;
-      $params{'width'}  = $start - $end;
+      my %params        = %defaults;
+      my $start         = $previous{'x'} + $previous{'width'};
+      $params{'x'}      = $start;
+      my $end           = $_->{'start'};
+      my $width         = $end - $start;
+      if ($end > $image_width) {
+        $width          = $image_width - $start;
+        $last_element   = 1;
+      }
+      $params{'width'}  = $width;
 
-      $params{'bordercolour'} = $join;
+      $params{'colour'} = $join_colour;
       warn ">>> DRAWING INTRON ".Dumper(\%params);
       push @{$self->glyphs}, $self->Intron(\%params);
       
     }
+    last if $last_element;
 
     ## Now draw the next chunk of structure
     my %params = %defaults;
-    $params{'colour'} = $colour;
 
-    if ($_->{'non_coding'}) {
-      $self->draw_noncoding_block(%params);
-    }
-    elsif ($_->{'utr_5'}) {
-      $params{'width'} = $_->{'utr_5'};
-      $self->draw_noncoding_block(%params);
-      $params{'x'}    += $_->{'utr_5'};
-      $params{'width'} = $_->{'width'} - $_->{'utr_5'};
+    my $start = $_->{'start'};
+    my $end   = $_->{'end'};
+    $params{'x'}      = $start;
+    $params{'width'}  = $end - $start;
+
+    ## Only draw blocks that appear on the image!
+    unless ($end < 0 || $start > $position->{'image_width'}) {
       $params{'colour'} = $colour;
-      $self->draw_coding_block(%params);
+      if ($_->{'non_coding'}) {
+        $self->draw_noncoding_block(%params);
+      }
+      elsif ($_->{'utr_5'}) {
+        $params{'width'} = $_->{'utr_5'};
+        $self->draw_noncoding_block(%params);
+        $params{'x'}    += $_->{'utr_5'};
+        $params{'width'} = $_->{'width'} - $_->{'utr_5'};
+        $params{'colour'} = $colour;
+        $self->draw_coding_block(%params);
+      }
+      elsif ($_->{'utr_3'}) {
+        $params{'width'} = $_->{'utr_3'};
+        $self->draw_coding_block(%params);
+        $params{'x'}    += $_->{'utr_3'};
+        $params{'width'} = $_->{'width'} - $_->{'utr_3'};
+        $self->draw_noncoding_block(%params);
+      }
+      else {
+        $self->draw_coding_block(%params);
+      }
     }
-    elsif ($_->{'utr_3'}) {
-      $params{'width'} = $_->{'utr_3'};
-      $self->draw_coding_block(%params);
-      $params{'x'}    += $_->{'utr_3'};
-      $params{'width'} = $_->{'width'} - $_->{'utr_3'};
-      $self->draw_noncoding_block(%params);
-    }
-    else {
-      $self->draw_coding_block(%params);
-    }
-
     $current_x += $width;
     %previous = %params;
   }
