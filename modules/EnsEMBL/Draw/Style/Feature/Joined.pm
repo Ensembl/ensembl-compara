@@ -47,7 +47,6 @@ sub draw_feature {
 
   my $track_config  = $self->track_config;
   my $join          = $track_config->get('no_join') ? 0 : 1;
-  my $alpha         = $track_config->get('alpha');
 
   my %defaults = (
                   y            => $position->{'y'},
@@ -56,8 +55,6 @@ sub draw_feature {
                   title        => $feature->{'title'},
                   absolutey    => 1,
                 );
-
-  use Data::Dumper;
 
   my $image_width = $position->{'image_width'};
   my %previous;
@@ -69,6 +66,8 @@ sub draw_feature {
     ## Join this block to the previous one
     if ($join && keys %previous) {
       my %params        = %defaults;
+      $params{'join_colour'}  = $join_colour;
+
       my $start         = $previous{'x'} + $previous{'width'};
       $params{'x'}      = $start;
       my $end           = $_->{'start'};
@@ -77,18 +76,9 @@ sub draw_feature {
         $width          = $image_width - $start;
         $last_element   = 1;
       }
-      $params{'width'}  = $width;
+      $params{'width'}        = $width;
 
-      if ($alpha) {
-        $params{'colour'} = $join_colour;
-        $params{'alpha'}  = $alpha;
-      }
-      else {
-        $params{'bordercolour'} = $join_colour;
-      }
-      #warn "... DRAWING JOIN ".Dumper(\%params);
-      push @{$self->glyphs}, $self->Rect(\%params);
-      
+      $self->draw_join(%params);      
     }
     last if $last_element;
 
@@ -96,19 +86,39 @@ sub draw_feature {
     my %params = %defaults;
 
     my $start = $_->{'start'};
+    my $end   = $_->{'end'};
     $params{'x'}      = $start;
-    $params{'width'}  = $_->{'end'} - $start;
+    $params{'width'}  = $end - $start;
 
     ## Only draw blocks that appear on the image!
     unless ($end < 0 || $start > $position->{'image_width'}) {
       $params{'colour'} = $colour;
-      #warn "... DRAWING BLOCK ".Dumper(\%params);
-      push @{$self->glyphs}, $self->Rect(\%params);
+      $self->draw_block($feature, %params);
     }
     $current_x += $width;
     %previous = %params;
   }
 
+}
+
+sub draw_join {
+  my ($self, %params) = @_;
+  my $alpha = $self->track_config->get('alpha');
+
+  if ($alpha) {
+    $params{'colour'} = $params{'join_colour'};
+    $params{'alpha'}  = $alpha;
+  }
+  else {
+    $params{'bordercolour'} = $params{'join_colour'};
+  }
+  delete $params{'join_colour'};
+  push @{$self->glyphs}, $self->Rect(\%params);
+}
+
+sub draw_block {
+  my ($self, $feature, %params) = @_;
+  push @{$self->glyphs}, $self->Rect(\%params);
 }
 
 1;
