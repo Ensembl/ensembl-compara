@@ -196,3 +196,7 @@ a.notext { text-decoration:none; }
 a.fn-link { vertical-align:super; font-size:0.7em; text-decoration:none; }
 div.footnotes { margin-top:2em; }
 div.footnotes ol li { font-size:0.9em; }
+
+/* documentation pages styling */
+#evidence_status_table              { width: 850px; }
+#evidence_status_table th.set_min   { min-width: 150px; }
