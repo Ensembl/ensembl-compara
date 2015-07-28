@@ -27,7 +27,7 @@ use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
-use EnsEMBL::Draw::Style::Feature::Structure;
+use EnsEMBL::Draw::Style::Feature::Structured;
 use EnsEMBL::Draw::Style::Feature::Transcript;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Alignment);
