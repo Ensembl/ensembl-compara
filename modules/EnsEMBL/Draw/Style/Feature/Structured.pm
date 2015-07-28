@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::Style::Feature::Joined;
+package EnsEMBL::Draw::Style::Feature::Structured;
 
 ### Renders a track as a series of features with internal structure
 ### Blocks may be joined with horizontal lines, semi-transparent

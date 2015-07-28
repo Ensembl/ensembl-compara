@@ -20,7 +20,7 @@ package EnsEMBL::Draw::Style::Feature::Transcript;
 
 ### Renders a track as a series of exons and introns 
 
-use parent qw(EnsEMBL::Draw::Style::Feature::Joined);
+use parent qw(EnsEMBL::Draw::Style::Feature::Structured);
 
 sub draw_join {
   my ($self, %params) = @_;
