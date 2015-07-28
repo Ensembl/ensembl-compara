@@ -33,13 +33,13 @@ sub draw_block {
   my ($self, %params) = @_;
   my $structure   = $params{'structure'};
   my $block_width = $params{'width'};
-  my $colour      = $params{'colour'};
 
   if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block(%params);
   }
   elsif ($structure->{'utr_5'}) {
-    $params{'width'} = $structure->{'utr_5'};
+    my $colour        = $params{'colour'};
+    $params{'width'}  = $structure->{'utr_5'};
     $self->draw_noncoding_block(%params);
     $params{'x'}     += $structure->{'utr_5'};
     $params{'width'}  = $block_width - $structure->{'utr_5'};
