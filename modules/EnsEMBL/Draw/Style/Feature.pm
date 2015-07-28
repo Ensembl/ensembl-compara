@@ -84,12 +84,22 @@ sub create_glyphs {
     my $label_height    = $show_label ? $text_info->{'height'} : 0;
     my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
 
-    my $feature_width   = $feature->{'end'} > $feature->{'start'}
-                          ? $feature->{'end'} - $feature->{'start'}
-                          : $feature->{'start'} - $feature->{'end'};
-    $feature_width      = 1 if $feature_width == 0; ## Fix for single base-pair features
     my $slice_width     = $image_config->container_width;
-    $feature_width      = $slice_width - $feature->{'start'} if ($feature->{'end'} > $slice_width);
+    my $feature_width   = $feature->{'end'} - $feature->{'start'};
+
+    if ($feature_width == 0) {
+      ## Fix for single base-pair features
+      $feature_width = 1;
+    }
+    else {
+      ## Truncate to viewport - but don't alter feature hash because we may need it
+      my ($drawn_start, $drawn_end) = $feature->{'end'} - $feature->{'start'}
+                                        ? ($feature->{'start'}, $feature->{'end'})
+                                        : ($feature->{'end'}, $feature->{'start'});
+      $drawn_start        = 0 if $drawn_start < 0;
+      $drawn_end          = $slice_width if $drawn_end > $slice_width;
+      $feature_width      = $drawn_end - $drawn_start; 
+    }
 
     my $labels_height   = $label_row * $label_height;
     my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
@@ -158,13 +168,20 @@ sub add_label {
   ## TODO - darken label colour if it's too pale - see "projector" image export
   my $colour = $feature->{'label_colour'} || $feature->{'colour'} || 'black';
 
+  ## Stop labels from overlapping edge of image
+  my $x = $feature->{'start'};
+  $x = 0 if $x < 0;
+  if (($x + $position->{'width'}) > $self->image_config->container_width) {
+    $x = $self->image_config->container_width - $position->{'width'};
+  }
+
   my $label = {
                 font      => $self->{'font_name'},
                 colour    => $colour,
                 height    => $self->{'font_size'},
                 ptsize    => $self->{'font_size'},
                 text      => $feature->{'label'},
-                x         => $feature->{'start'},
+                x         => $x,
                 y         => $position->{'y'},
                 width     => $position->{'width'},
                 height    => $position->{'height'},
