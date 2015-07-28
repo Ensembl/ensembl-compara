@@ -28,10 +28,15 @@ sub colour_key { return $_[0]->my_config('colour_key') || $_[0]->my_config('sub_
 
 ## Renderers which tweak the standard track style
 
+sub render_as_alignment_nolabel {
+  my $self = shift;
+  $self->draw_features;
+}
+
 sub render_as_alignment_label {
   my $self = shift;
   $self->{'my_config'}->set('show_labels', 1);
-  $self->render_as_alignment_nolabel;
+  $self->draw_features;
 }
 
 sub render_half_height { 
@@ -40,7 +45,7 @@ sub render_half_height {
   $self->{'my_config'}->set('height', $height);
   $self->{'my_config'}->set('depth', 20);
   
-  $self->render_as_alignment_nolabel;
+  $self->draw_features;
 }                                                           
 
 sub render_stack { 
@@ -52,7 +57,7 @@ sub render_stack {
   ## Draw joins as 50% transparency, not borders
   $self->{'my_config'}->set('alpha', 0.5);
 
-  $self->render_as_alignment_nolabel;
+  $self->draw_features;
 }
 
 sub render_unlimited {
@@ -64,14 +69,14 @@ sub render_unlimited {
   ## Draw joins as 50% transparency, not borders
   $self->{'my_config'}->set('alpha', 0.5);
 
-  $self->render_as_alignment_nolabel;
+  $self->draw_features;
 }
 
 sub render_ungrouped {
   my $self = shift;
   $self->{'my_config'}->set('no_join', 1);
   $self->{'my_config'}->set('bumped', 0);
-  $self->render_as_alignment_nolabel;
+  $self->draw_features;
 }
 
 sub convert_cigar_to_blocks {

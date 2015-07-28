@@ -27,7 +27,7 @@ use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
-use EnsEMBL::Draw::Style::Feature::Joined;
+use EnsEMBL::Draw::Style::Feature::Structure;
 use EnsEMBL::Draw::Style::Feature::Transcript;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Alignment);
@@ -71,7 +71,7 @@ sub features {
   return $features;
 }
 
-sub render_as_alignment_nolabel {
+sub draw_features {
   my $self = shift;
 
   ## Defaults
@@ -113,7 +113,7 @@ sub render_as_alignment_nolabel {
 
     my $drawing_style = $self->{'my_config'}->get('drawing_style');
     my $style_class   = $drawing_style ? "EnsEMBL::Draw::Style::Feature::$drawing_style" 
-                                       : 'EnsEMBL::Draw::Style::Feature::Joined';
+                                       : 'EnsEMBL::Draw::Style::Feature::Structured';
 
     my $style = $style_class->new($config, $features);
     $self->push($style->create_glyphs);
@@ -123,14 +123,14 @@ sub render_as_alignment_nolabel {
 sub render_as_transcript_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', 'Transcript');
-  $self->render_as_alignment_nolabel;
+  $self->draw_features;
 }
 
 sub render_as_transcript_label {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', 'Transcript');
   $self->{'my_config'}->set('show_labels', 1);
-  $self->render_as_alignment_nolabel;
+  $self->draw_features;
 }
 
 sub href {
