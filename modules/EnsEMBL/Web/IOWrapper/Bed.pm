@@ -49,6 +49,7 @@ sub create_hash {
   my $score   = $self->parser->get_score;
 
   if ($metadata->{'useScore'}) {
+    my @greyscale = @{$self->greyscale||[]};
     if ($score <= 166) {
       $colour = $greyscale[0];
     }

@@ -30,8 +30,6 @@ use Bio::EnsEMBL::IO::Utils;
 
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 
-our @greyscale = qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000);
-
 sub new {
   ### Constructor
   ### Instantiates a parser for the appropriate file type 
@@ -39,7 +37,9 @@ sub new {
   ### @param file EnsEMBL::Web::File object
   my ($class, $parser) = @_;
 
-  my $self = { parser => $parser };
+  my $greyscale = [qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000)]; 
+
+  my $self = { parser => $parser, greyscale => $greyscale };
   bless $self, $class;  
   return $self;
 }
@@ -78,6 +78,12 @@ sub parser {
   ### a
   my $self = shift;
   return $self->{'parser'};
+}
+
+sub greyscale {
+  ### a
+  my $self = shift;
+  return $self->{'greyscale'};
 }
 
 sub create_tracks {
