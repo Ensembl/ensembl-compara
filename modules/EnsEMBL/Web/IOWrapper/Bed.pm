@@ -27,6 +27,8 @@ no warnings 'uninitialized';
 
 use parent qw(EnsEMBL::Web::IOWrapper);
 
+our @greyscale = qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000);
+
 sub create_hash {
 ### Create a hash of feature information in a format that
 ### can be used by the drawing code
@@ -45,8 +47,27 @@ sub create_hash {
   ## Only set colour if we have something in file, otherwise
   ## we will override the default colour in the drawing code
   my $colour;
-  my $rgb = $self->parser->get_itemRgb;
-  if ($rgb) {
+  my $strand  = $self->parser->get_strand;
+  my $score   = $self->parser->get_score;
+
+  if ($metadata->{'useScore'}) {
+    if ($score <= 166) {
+      $colour = $greyscale[0];
+    }
+    else {
+      my $step = int(($score - 166) / 110) + 1;
+      $colour = $greyscale[$step];
+    }
+  }
+  elsif ($metadata->{'itemRgb'} eq 'On') {
+    my $rgb = $self->parser->get_itemRgb;
+    if ($rgb) {
+      $colour = $self->rgb_to_hex($rgb);
+    }
+  }
+  elsif ($metadata->{'colorByStrand'} && $strand) {
+    my ($pos, $neg) = split(' ', $metadata->{'colorByStrand'});
+    my $rgb = $strand == 1 ? $pos : $neg;
     $colour = $self->rgb_to_hex($rgb);
   }
 
@@ -54,8 +75,8 @@ sub create_hash {
     'start'         => $feature_start - $slice->start,
     'end'           => $feature_end - $slice->start,
     'seq_region'    => $self->parser->get_seqname,
-    'strand'        => $self->parser->get_strand,
-    'score'         => $self->parser->get_score,
+    'strand'        => $strand,
+    'score'         => $score,
     'label'         => $self->parser->get_name,
     'colour'        => $colour, 
     'structure'     => $self->create_structure($feature_start, $slice->start),
