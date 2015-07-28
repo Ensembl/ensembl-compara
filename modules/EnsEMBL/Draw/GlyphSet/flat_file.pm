@@ -84,6 +84,10 @@ sub draw_features {
     $self->{'my_config'}->set('height', 8);
   }
 
+  unless ($self->{'my_config'}->get('depth')) {
+    $self->{'my_config'}->set('depth', 10);
+  }
+
   my $subtracks = $self->features;
   my $config    = $self->track_style_config;
 
