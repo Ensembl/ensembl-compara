@@ -30,6 +30,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.minImageWidth    = 500;
     this.labelWidth       = 0;
     this.boxCoords        = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
+    this.altKeyDragging   = false;
     
     function resetOffset() {
       delete this.imgOffset;
@@ -131,24 +132,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
 
     if (this.elLk.boundaries.length && this.draggables.length) {
-      this.panning = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
-      this.elLk.toolbars.first().append([
+      this.elLk.dragSwitch = this.elLk.toolbars.first().append([
         '<div class="scroll-switch">',
           '<span>Drag/Select:</span>',
           '<div><button title="Scroll to a region" class="dragging on"></button></div>',
           '<div class="last"><button title="Select a region" class="dragging"></button></div>',
         '</div>'].join('')).find('button').helptip().on('click', function() {
-        var flag = $(this).hasClass('on');
-        if (flag !== panel.panning) {
-          $(this).parent().parent().find('div').toggleClass('selected');
-          panel.panning = flag;
-          Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
-          if (flag) {
-            panel.selectArea(false);
-            panel.removeZMenus();
-          }
+        var panning = $(this).hasClass('on');
+        panel.setPanning(panning);
+        if (panning) {
+          panel.selectArea(false);
+          panel.removeZMenus();
         }
-      }).filter(panel.panning ? '.on' : ':not(.on)').parent().addClass('selected');
+      }).parent();
+      this.setPanning();
     }
   },
 
@@ -762,6 +759,17 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       };
       
       this.elLk.drag.on('mousemove', this.mousemove);
+
+      this.altKeyDragging = e.altKey || e.shiftKey || e.metaKey;
+
+      if (this.altKeyDragging) {
+        this.setPanning(!this.panning);
+      }
+
+      if (this.panning) {
+        this.selectArea(false);
+        this.removeZMenus();
+      }
     }
   },
   
@@ -771,6 +779,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (this.mousemove) {
       this.elLk.drag.off('mousemove', this.mousemove);
       this.mousemove = false;
+
+      if (this.altKeyDragging) {
+        this.setPanning(!this.panning);
+      }
     }
     
     if (this.dragging !== false) {
@@ -818,6 +830,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     } else {
       this.selectArea(e);
     }
+  },
+
+  setPanning: function (flag) {
+    if (typeof flag === 'undefined') {
+      flag = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
+    } else {
+      Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
+    }
+
+    this.panning = flag;
+    this.elLk.dragSwitch.toggleClass2('selected', function() {
+      return $(this).find('button').hasClass('on') ? flag : !flag;
+    });
   },
 
   panImage: function(e) {
