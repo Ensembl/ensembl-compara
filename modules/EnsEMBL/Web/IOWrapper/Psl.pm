@@ -37,16 +37,18 @@ sub create_hash {
   $metadata ||= {};
   return unless $slice;
 
-  my $feature_start = $self->parser->get_tStart;
-  my $feature_end   = $self->parser->get_tEnd;
+  my ($seq_region, $feature_start, $feature_end) = $self->coords;
 
   ## Only set colour if we have something in file, otherwise
   ## we will override the default colour in the drawing code
   my $colour;
   my $strand  = $self->parser->get_strand;
-  my $score   = $self->parser->get_score;
+  my $score;
 
-  if ($metadata->{'useScore'}) {
+  if ($metadata->{'color'}) {
+    #$colour = $metadata->{'color'};
+  }
+  elsif ($metadata->{'useScore'}) {
     ## UCSC use greyscale with PSL, but it's not clear how it's calculated!
   }
 
@@ -55,7 +57,7 @@ sub create_hash {
   return {
     'start'         => $feature_start - $slice->start,
     'end'           => $feature_end - $slice->start,
-    'seq_region'    => $self->parser->get_tName,
+    'seq_region'    => $seq_region,
     'strand'        => $strand,
     'score'         => $score,
     'label'         => $self->parser->get_qName,
@@ -80,6 +82,7 @@ sub create_structure {
   foreach(0..($self->parser->get_blockCount - 1)) {
     my $start   = shift @block_starts;
     my $offset  = $feature_start - $slice_start;
+    $start      = $start + $offset;
     my $length  = shift @block_lengths;
     my $end     = $start + $length;
 
@@ -90,6 +93,12 @@ sub create_structure {
   }
 
   return $structure;
+}
+
+sub coords {
+  ### Simple accessor to return the coordinates from the parser
+  my $self = shift;
+  return ($self->parser->get_tName, $self->parser->get_tStart, $self->parser->get_tEnd);
 }
 
 1;
