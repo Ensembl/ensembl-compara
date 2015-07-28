@@ -60,12 +60,17 @@ sub create_glyphs {
   my $bumped          = $track_config->get('bumped');
   my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
   my $same_strand     = $track_config->get('same_strand');
+  ## In case the file contains multiple tracks, start each subtrack below the previous one
+  my $y_start         = $track_config->get('y_start') || 0;
+  my $show_label      = 0;
+  my $label_height    = 0;
+  my $total_height    = 0;
 
   foreach my $feature (@$data) {
 
     next if defined($same_strand) && $feature->{'strand'} != $same_strand;
 
-    my $show_label  = $track_config->get('show_labels') && $feature->{'label'};
+    $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
     my $text_info   = $self->get_text_info($feature->{'label'});
     my $feature_row = 0;
     my $label_row   = 0;
@@ -84,7 +89,7 @@ sub create_glyphs {
 
     ## Work out where to place the feature
     my $feature_height  = $track_config->get('height') || $text_info->{'height'};
-    my $label_height    = $show_label ? $text_info->{'height'} : 0;
+    $label_height    = $show_label ? $text_info->{'height'} : 0;
 
     my $feature_width   = $feature->{'end'} - $feature->{'start'};
 
@@ -104,16 +109,17 @@ sub create_glyphs {
 
     my $labels_height   = $label_row * $label_height;
     my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
-
+    my $y               = ($y_start + ($feature_row + 1) * ($feature_height + $vspacing)) + $add_labels;
     my $position  = {
-                    'y'           => (($feature_row + 1) * ($feature_height + $vspacing)) + $add_labels,
+                    'y'           => $y,
                     'width'       => $feature_width,
                     'height'      => $feature_height,
                     'image_width' => $slice_width,
                     };
-  
-    $self->draw_feature($feature, $position);
 
+    $self->draw_feature($feature, $position);
+    $total_height = $y if $y > $total_height;
+  
     ## Optional label
     if ($show_label) {
       if ($track_config->get('label_overlay')) {
@@ -130,9 +136,12 @@ sub create_glyphs {
                     'image_width' => $slice_width,
                   };
       $self->add_label($feature, $position);
+      $total_height = $new_y if $new_y > $total_height;
     }
   }
-
+  ## Add label height if last feature had a label
+  $total_height += $label_height if $show_label;
+  $track_config->set('y_start', $y_start + $total_height);
   return @{$self->glyphs||[]};
 }
 
