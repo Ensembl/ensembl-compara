@@ -127,6 +127,7 @@ sub run {
         push @branches_to_dataflow, $branch if $condition;
     }
 
+	print "Branch to dataflow:". @branches_to_dataflow . "\n" if ($self->debug);
     $self->param('branches_to_dataflow', \@branches_to_dataflow);
 }
 

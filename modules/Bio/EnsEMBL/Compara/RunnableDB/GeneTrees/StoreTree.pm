@@ -118,7 +118,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     my $simple_align_options = shift || {};
 
     my $removed_columns = undef;
-    if ($self->param('removed_columns')) {
+    if ($self->param('remove_columns')) {
         if ($gene_tree->has_tag('removed_columns')) {
             my @removed_columns = eval($gene_tree->get_value_for_tag('removed_columns'));
             $removed_columns = \@removed_columns;
