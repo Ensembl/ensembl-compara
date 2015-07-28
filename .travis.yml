@@ -35,8 +35,8 @@ before_install:
 
 
 install:
-    - cpanm -v --installdeps --with-recommends --notest --cpanfile ensembl/cpanfile ./ensembl/
-    - cpanm -v --installdeps --with-recommends --notest --cpanfile ensembl-rest/cpanfile ./ensembl-rest/
+    - cpanm -v --installdeps --with-recommends --notest --cpanfile ensembl/cpanfile .
+    - cpanm -v --installdeps --with-recommends --notest --cpanfile ensembl-rest/cpanfile .
     - cpanm -v --installdeps --notest .
     - cpanm -n Devel::Cover::Report::Coveralls
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
