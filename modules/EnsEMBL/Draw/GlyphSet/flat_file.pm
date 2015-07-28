@@ -124,7 +124,6 @@ sub draw_features {
 
     my $style = $style_class->new($config, $features);
     $self->push($style->create_glyphs);
-    #$self->{'my_config'}->set('y_start', 0);
   }
 }
 
