@@ -155,10 +155,11 @@ sub add_label {
 ### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the label's size and position
   my ($self, $feature, $position) = @_;
+  my $colour = $feature->{'label_colour'} || $feature->{'colour'} || 'black';
 
   my $label = {
                 font      => $self->{'font_name'},
-                colour    => $feature->{'label_colour'} || 'black',
+                colour    => $colour,
                 height    => $self->{'font_size'},
                 ptsize    => $self->{'font_size'},
                 text      => $feature->{'label'},
