@@ -87,29 +87,32 @@ sub draw_features {
   my $subtracks = $self->features;
   my $config    = $self->track_style_config;
 
-  my $key = $self->{'hover_label_class'};
+  my $key         = $self->{'hover_label_class'};
   my $hover_label = $self->{'config'}->{'hover_labels'}{$key};
+  my $mod_header  = $hover_label->{'header'};
 
   foreach (@$subtracks) {
     my $features  = $_->{'features'};
     my $metadata  = $_->{'metadata'};
     my $name      = $metadata->{'name'};
-    $hover_label->{'header'} = $name if $name;
+    if ($name) {
+      if ($mod_header) {
+        $hover_label->{'header'} .= ': ';
+        $mod_header = 0;
+      }
+      else {
+        $hover_label->{'header'} .= '; '; 
+      }
+      $hover_label->{'header'} .= $name;
+    }
 
-    ## Tidy up feature coordinates so they make sense to drawing code
-
-    ## Add any suitable metadata to track name mouseover menu
-    my $extras;
+    ## Add description to track name mouseover menu
     my $description = $metadata->{'description'};
     if ($description) {
       $description = add_links($description);
-      $extras = $description;
+      $hover_label->{'extra_desc'} .= '<br>' if $hover_label->{'extra_desc'}; 
+      $hover_label->{'extra_desc'} .= $description;
     }
-    my $url = $metadata->{'url'};
-    if ($url) {
-      $extras .= sprintf(' For more information, visit <a href="%s">%s</a>', $url, $url);
-    }
-    $hover_label->{'extra_desc'} = $extras;
 
     my $drawing_style = $self->{'my_config'}->get('drawing_style');
     my $style_class   = $drawing_style ? "EnsEMBL::Draw::Style::Feature::$drawing_style" 
@@ -117,6 +120,7 @@ sub draw_features {
 
     my $style = $style_class->new($config, $features);
     $self->push($style->create_glyphs);
+    #$self->{'my_config'}->set('y_start', 0);
   }
 }
 
