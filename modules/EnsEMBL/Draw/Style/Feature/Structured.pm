@@ -51,6 +51,7 @@ sub draw_feature {
   my %defaults = (
                   y            => $position->{'y'},
                   height       => $position->{'height'},
+                  strand       => $feature->{'strand'},
                   href         => $feature->{'href'},
                   title        => $feature->{'title'},
                   absolutey    => 1,
