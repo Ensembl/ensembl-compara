@@ -30,6 +30,8 @@ use Bio::EnsEMBL::IO::Utils;
 
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 
+our @greyscale = qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000);
+
 sub new {
   ### Constructor
   ### Instantiates a parser for the appropriate file type 

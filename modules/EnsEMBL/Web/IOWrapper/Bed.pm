@@ -27,8 +27,6 @@ no warnings 'uninitialized';
 
 use parent qw(EnsEMBL::Web::IOWrapper);
 
-our @greyscale = qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000);
-
 sub create_hash {
 ### Create a hash of feature information in a format that
 ### can be used by the drawing code
