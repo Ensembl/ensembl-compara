@@ -99,7 +99,7 @@ sub draw_feature {
     else {
       $params{'colour'}     = $colour;
       $params{'structure'}  = $_;
-      $self->draw_block($feature, %params);
+      $self->draw_block(%params);
     }
     $current_x += $width;
     %previous = %params;
