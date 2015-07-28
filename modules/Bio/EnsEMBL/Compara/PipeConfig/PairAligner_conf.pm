@@ -473,6 +473,14 @@ sub pipeline_analyses {
 	       -parameters => { },
  	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
 	       -flow_into => {
+			      1 => [ 'delete_trivial_alignments' ],
+			     },
+	       -rc_name => '1Gb',
+	    },
+	    {  -logic_name => 'delete_trivial_alignments',
+               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DeleteTrivialAlignments',
+	       -parameters => { },
+	       -flow_into => {
 			      1 => [ 'update_max_alignment_length_before_FD' ],
 			     },
 	       -rc_name => '1Gb',
