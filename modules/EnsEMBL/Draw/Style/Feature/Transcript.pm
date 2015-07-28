@@ -31,23 +31,26 @@ sub draw_join {
 
 sub draw_block {
   my ($self, $feature, %params) = @_;
+  my $structure   = $params{'structure'};
+  my $block_width = $params{'width'};
+  my $colour      = $params{'colour'};
 
-  if ($feature->{'non_coding'}) {
+  if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block(%params);
   }
-  elsif ($feature->{'utr_5'}) {
-    $params{'width'} = $feature->{'utr_5'};
+  elsif ($structure->{'utr_5'}) {
+    $params{'width'} = $structure->{'utr_5'};
     $self->draw_noncoding_block(%params);
-    $params{'x'}    += $feature->{'utr_5'};
-    $params{'width'} = $feature->{'width'} - $feature->{'utr_5'};
+    $params{'x'}     += $structure->{'utr_5'};
+    $params{'width'}  = $block_width - $structure->{'utr_5'};
     $params{'colour'} = $colour;
     $self->draw_coding_block(%params);
   }
-  elsif ($feature->{'utr_3'}) {
-    $params{'width'} = $feature->{'utr_3'};
+  elsif ($structure->{'utr_3'}) {
+    $params{'width'} = $structure->{'utr_3'};
     $self->draw_coding_block(%params);
-    $params{'x'}    += $feature->{'utr_3'};
-    $params{'width'} = $feature->{'width'} - $feature->{'utr_3'};
+    $params{'x'}    += $structure->{'utr_3'};
+    $params{'width'} = $block_width - $structure->{'utr_3'};
     $self->draw_noncoding_block(%params);
   }
   else {
