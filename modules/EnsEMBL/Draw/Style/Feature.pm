@@ -54,11 +54,15 @@ sub create_glyphs {
   my $data            = $self->data;
   my $image_config    = $self->image_config;
   my $track_config    = $self->track_config;
+  ## Set some track-wide variables
   my $default_colour  = $track_config->get('default_colour');
+  my $slice_width     = $image_config->container_width;
+  my $bumped          = $track_config->get('bumped');
+  my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
+  my $same_strand     = $track_config->get('same_strand');
 
   foreach my $feature (@$data) {
 
-    my $same_strand = $track_config->get('same_strand');
     next if defined($same_strand) && $feature->{'strand'} != $same_strand;
 
     my $show_label  = $track_config->get('show_labels') && $feature->{'label'};
@@ -71,7 +75,6 @@ sub create_glyphs {
     $feature->{'colour'} ||= $default_colour;
 
     ## Work out if we're bumping the whole feature or just the label
-    my $bumped     = $track_config->get('bumped');
     if ($bumped) {
       my $bump = $self->set_bump_row($feature->{'start'}, $feature->{'end'}, $show_label, $text_info);
       $label_row   = $bump;
@@ -82,9 +85,7 @@ sub create_glyphs {
     ## Work out where to place the feature
     my $feature_height  = $track_config->get('height') || $text_info->{'height'};
     my $label_height    = $show_label ? $text_info->{'height'} : 0;
-    my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
 
-    my $slice_width     = $image_config->container_width;
     my $feature_width   = $feature->{'end'} - $feature->{'start'};
 
     if ($feature_width == 0) {
@@ -126,6 +127,7 @@ sub create_glyphs {
                     'y'       => $new_y,
                     'width'   => $text_info->{'width'}, 
                     'height'  => $text_info->{'height'},
+                    'image_width' => $slice_width,
                   };
       $self->add_label($feature, $position);
     }
@@ -171,8 +173,10 @@ sub add_label {
   ## Stop labels from overlapping edge of image
   my $x = $feature->{'start'};
   $x = 0 if $x < 0;
-  if (($x + $position->{'width'}) > $self->image_config->container_width) {
-    $x = $self->image_config->container_width - $position->{'width'};
+  my $image_width_in_pixels = $position->{'image_width'} * $self->{'pix_per_bp'};
+  my $x_in_pixels           = $x * $self->{'pix_per_bp'}; 
+  if (($x_in_pixels + $position->{'width'}) > $image_width_in_pixels) {
+    $x = $position->{'image_width'} - ($position->{'width'} / $self->{'pix_per_bp'});
   }
 
   my $label = {
