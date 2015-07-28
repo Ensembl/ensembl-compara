@@ -183,7 +183,9 @@ sub generic_fetch {
   Arg[1]      : Boolean (opt)
   Example     : $self->compara_dba->get_HomologyAdaptor->mysql_server_prepare();
   Description : Getter / setter. Controls whether statements are prepared server-side,
-                which should give better performance for repeated queries
+                which should give better performance for repeated queries.
+                DO NOT enable by default, there is still a memory leak:
+                 L<https://rt.cpan.org/Public/Bug/Display.html?id=83486>
   Returntype  : Boolean
   Exceptions  : none
   Caller      : general
