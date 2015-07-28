@@ -662,8 +662,11 @@ sub parse_defaults {
 	}
 	push @$collection, $pair;
     } else {
-	#What about self comparisons? 
-	die "Must define at least 2 species";
+        my %pair = (
+            'ref_genome_db'     => $genome_dbs->[0],
+            'non_ref_genome_db' => $genome_dbs->[0],
+        );
+	push @$collection, \%pair;
     }
 
     foreach my $pair (@$collection) {
@@ -724,6 +727,14 @@ sub parse_defaults {
 	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " raw";;
 	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
 	#$net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
+
+        # self-alignments would have the same names for "reference" and
+        # "non-reference" collections otherwise
+        if ($pair->{ref_genome_db}->name eq $pair->{non_ref_genome_db}->name) {
+            $net_config->{'non_reference_collection_name'} .= ' again';
+            $pair_aligner->{'non_reference_collection_name'} .= ' again';
+            $chain_config->{'non_reference_collection_name'} .= ' again';
+        }
 	    
 	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->name . "_nib_for_chain";
 	
