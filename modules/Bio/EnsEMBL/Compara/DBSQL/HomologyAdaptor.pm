@@ -30,6 +30,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert :check);
 
 use DBI qw(:sql_types);
+use Scalar::Util qw(blessed looks_like_number);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
@@ -39,16 +40,9 @@ our %single_species_ml = ('ENSEMBL_PARALOGUES' => 1, 'ENSEMBL_HOMOEOLOGUES' => 1
 =head2 fetch_all_by_Gene
 
   Arg [1]     : Bio::EnsEMBL::Gene $gene
-  Arg [-METHOD_LINK_TYPE] (opt)
-              : string: the method_link_type of the homologies to return. By
-                default, no filter is applied. You may want to use
-                ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES
-  Arg [-TARGET_SPECIES] (opt)
-              : string: the species to find homologues with. By default, no
-                filter is applied. You can use any of the aliases recognised
-                by the Registry
+  Arg (opt)   : See L<fetch_all_by_Member> for the list of optional arguments
   Example     : my $all_homologues = $homology_adaptor->fetch_all_by_Gene($gene, -TARGET_SPECIES => 'rabbit');
-  Description : fetch the homology relationships where the given gene is implicated
+  Description : fetch the homology relationships where the given gene is implicated.
   Returntype  : arrayref of Bio::EnsEMBL::Compara::Homology
   Exceptions  : none
   Caller      : general
@@ -58,17 +52,11 @@ our %single_species_ml = ('ENSEMBL_PARALOGUES' => 1, 'ENSEMBL_HOMOEOLOGUES' => 1
 sub fetch_all_by_Gene {
     my ($self, $gene, @args) = @_;
 
-    my ($method_link_type, $target_species) =
-        rearrange([qw(METHOD_LINK_TYPE TARGET_SPECIES)], @args);
-
     my $gene_member = $self->db->get_GeneMemberAdaptor->fetch_by_Gene($gene, 1);
     if (not $gene_member) {
         return [];
-    } elsif ($target_species) {
-        return $self->fetch_all_by_Member_paired_species($gene_member, $target_species, $method_link_type ? [$method_link_type] : undef);
-    } else {
-        return $self->fetch_all_by_Member($gene_member, -METHOD_LINK_TYPE => $method_link_type);
     }
+    return $self->fetch_all_by_Member($gene_member, @args);
 }
 
 
@@ -80,14 +68,20 @@ sub fetch_all_by_Gene {
                usually ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES
   Arg [-METHOD_LINK_SPECIES_SET] (opt)
              : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-               Describes the kind of homology and the set of species
+               Describes the kind of homology and the set of species. Cannot be combined with
+               the -TARGET_* options
   Arg [-SPECIES_TREE_NODE_IDS] (opt)
              : Array of integers: the node_ids of the SpeciesTreeNodes
                we want to keep in the results. Used to get in/out-paralogues
+  Arg [-TARGET_SPECIES] (opt) string or Bio::EnsEMBL::Compara::GenomeDB
+             : The species to find homologues with. By default, no filter is applied.
+               You can use any of the aliases recognised by the Registry.
+  Arg [-TARGET_TAXON] (opt) string or Bio::EnsEMBL::Compara::NCBITaxon
+             : The taxon to find homologues with. By default, no filter is applied.
   Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member($member);
   Description: fetch the homology relationships where the given member is implicated
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
-  Exceptions : none
+  Exceptions : Throws if arguments are of incorrect type, or if conflicting arguments are used.
   Caller     : general
 
 =cut
@@ -95,11 +89,50 @@ sub fetch_all_by_Gene {
 sub fetch_all_by_Member {
   my ($self, $member, @args) = @_;
 
-  my ($method_link_type, $method_link_species_set, $species_tree_node_ids) =
-    rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET SPECIES_TREE_NODE_IDS)], @args);
+  my ($method_link_type, $method_link_species_set, $species_tree_node_ids, $target_species, $target_taxon) =
+    rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET SPECIES_TREE_NODE_IDS TARGET_SPECIES TARGET_TAXON)], @args);
 
-  assert_ref_or_dbID($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', '-METHOD_LINK_SPECIES_SET') if defined $method_link_species_set;
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
+
+  if ($target_species or $target_taxon) {
+    throw("-METHOD_LINK_SPECIES_SET cannot be used together with -TARGET_SPECIES or -TARGET_TAXON") if $method_link_species_set;
+    $method_link_species_set = $self->_find_target_mlsss($member->genome_db, $target_species, $target_taxon, $method_link_type);
+    # Since $method_link_type has been used to produce $method_link_species_set, we can unset it
+    $method_link_type = undef;
+
+  } elsif ($method_link_species_set) {
+    # In fact, -METHOD_LINK_SPECIES_SET can be an array, and both dbIDs and object instances are accepted
+    $method_link_species_set = [$method_link_species_set] if ref($method_link_species_set) ne 'ARRAY';
+
+    if (defined $method_link_type) {
+      my @filtered_method_link_species_set = grep {$_->method->type eq $method_link_type} @$method_link_species_set;
+      if (not scalar(@filtered_method_link_species_set)) {
+        warn "In HomologyAdaptor::fetch_all_by_Member(), -METHOD_LINK_TYPE has disabled -METHOD_LINK_SPECIES_SET\n";
+        return [];
+      }
+      $method_link_species_set = \@filtered_method_link_species_set;
+      # Since $method_link_type has been used to produce $method_link_species_set, we can unset it
+      $method_link_type = undef;
+    }
+
+    my $mlss_a = $self->db->get_MethodLinkSpeciesSetAdaptor;
+    my $query_gdb_id = $member->genome_db_id;
+    my @filtered_method_link_species_set = ();
+    foreach my $mlss (@$method_link_species_set) {
+      if (ref($mlss)) {
+        assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', '-METHOD_LINK_SPECIES_SET');
+      } else {
+        my $mlss_id = $mlss;
+        $mlss = $mlss_a->fetch_by_dbID($mlss_id) || throw("$mlss_id is not a valid dbID for MethodLinkSpeciesSet");
+      }
+      push @filtered_method_link_species_set, $mlss->dbID if (grep {$_->dbID == $query_gdb_id} @{$mlss->species_set_obj->genome_dbs});
+    }
+    if (not scalar(@filtered_method_link_species_set)) {
+      warn "In HomologyAdaptor::fetch_all_by_Member(), the query member is not part of any -METHOD_LINK_SPECIES_SET\n";
+      return [];
+    }
+    $method_link_species_set = \@filtered_method_link_species_set;
+  }
 
   my $seq_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
 
@@ -108,12 +141,12 @@ sub fetch_all_by_Member {
   $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
   if (defined $method_link_species_set) {
-    $constraint .= ' AND h.method_link_species_set_id = ?';
-    $self->bind_param_generic_fetch(ref($method_link_species_set) ? $method_link_species_set->dbID : $method_link_species_set, SQL_INTEGER);
+    $constraint .= sprintf(' AND h.method_link_species_set_id IN (%s)', join(',', @$method_link_species_set));
   }
 
   if (defined $species_tree_node_ids) {
-    $constraint .= sprintf(' AND h.species_tree_node_id IN (%s)', join(',', -1, @$species_tree_node_ids));
+    return [] unless scalar(@$species_tree_node_ids);
+    $constraint .= sprintf(' AND h.species_tree_node_id IN (%s)', join(',', @$species_tree_node_ids));
   }
 
   # This internal variable is used by add_Member method 
@@ -131,65 +164,88 @@ sub fetch_all_by_Member {
   }
 }
 
+sub _find_target_mlsss {
+    my ($self, $query_genome_db, $target_species, $target_taxon, $method_link_types) = @_;
+
+    my $gdb_a = $self->db->get_GenomeDBAdaptor();
+    my $ncbi_a = $self->db->get_NCBITaxonAdaptor();
+    my $mlss_a = $self->db->get_MethodLinkSpeciesSetAdaptor();
+
+    my %unique_gdbs = ();
+
+    # Find all the target species. Accepted values are: object instances,
+    # genome_db_ids, and species names (incl. aliases)
+    foreach my $s (@$target_species) {
+        if (ref($s)) {
+            assert_ref($s, 'Bio::EnsEMBL::Compara::GenomeDB');
+            $unique_gdbs{$s->dbID} = $s;
+        } elsif (looks_like_number($s)) {
+            $unique_gdbs{$s} = $gdb_a->fetch_by_dbID($s) || throw("Could not find a GenomeDB with dbID=$s");
+        } else {
+            my $g = $gdb_a->fetch_by_name_assembly($s);
+               $g = $gdb_a->fetch_by_registry_name($s) unless $g;
+            throw("Could not find a GenomeDB named '$s'") unless $g;
+            $unique_gdbs{$g->dbID} = $g;
+        }
+    }
+
+    # Find all the target taxa. Accepted values are: object instances,
+    # taxon_ids, and taxon names
+    foreach my $t (@$target_taxon) {
+        my $tax;
+        if (ref($t)) {
+            assert_ref($t, 'Bio::EnsEMBL::Compara::NCBITaxon');
+            $tax = $t->dbID;
+        } elsif (looks_like_number($t)) {
+            $tax = $t; #$ncbi_a->fetch_node_by_taxon_id($t) || throw("Could not find a NCBITaxon with dbID=$t");
+        } else {
+            my $ntax = $ncbi_a->fetch_node_by_name($t);
+            throw("Could not find a NCBITaxon named '$t'") unless $ntax;
+            $tax = $ntax->dbID;
+        }
+        foreach my $gdb (@{$gdb_a->fetch_all_by_ancestral_taxon_id($tax)}) {
+            $unique_gdbs{$gdb->dbID} = $gdb;
+        }
+    }
+
+    if (not defined $method_link_types) {
+        $method_link_types = [keys %single_species_ml];
+    } elsif (not ref $method_link_types) {
+        $method_link_types = [$method_link_types];
+    }
+
+    my @all_mlss_ids = ();
+    foreach my $ml (@{$method_link_types}) {
+        foreach my $target_genome_db (values %unique_gdbs) {
+            my $mlss;
+            if ($query_genome_db->dbID == $target_genome_db->dbID) {
+                next unless $single_species_ml{$ml};
+                $mlss = $mlss_a->fetch_by_method_link_type_GenomeDBs($ml, [$query_genome_db], "no_warning");
+            } else {
+                next if $single_species_ml{$ml};
+                $mlss = $mlss_a->fetch_by_method_link_type_GenomeDBs($ml, [$query_genome_db, $target_genome_db], "no_warning");
+            }
+            push @all_mlss_ids, $mlss->dbID if (defined $mlss);
+        }
+    }
+    return \@all_mlss_ids
+
+}
 
 =head2 fetch_all_by_Member_paired_species
 
-  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
-  Arg [2]    : string $species
-               e.g. "Mus_musculus" or "Mus musculus"
-  Arg [3]    : (optional) an arrayref of method_link types
-               e.g. ['ENSEMBL_ORTHOLOGUES']. Default is ['ENSEMBL_ORTHOLOGUES','ENSEMBL_PARALOGUES']
-  Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member_paired_species($member, "Mus_musculus");
-  Description: fetch the homology relationships where the given member is implicated
-               in pair with another member from the paired species. Member species and
-               paired species should be different.
-               
-               When you give the species name the method attempts to find
-               the species without _ subsitution and then replacing them
-               for spaces. This is to help support GenomeDB objects which
-               have _ in their names.
-  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
-  Exceptions : If a GenomeDB cannot be found for the given species name
-  Caller     : 
+  Description: DEPRECATED: Will be removed in e86. Use $self->fetch_all_by_Member($member, -TARGET_SPECIES => $species) instead (possibly with -METHOD_LINK_TYPE)
 
 =cut
 
-sub fetch_all_by_Member_paired_species {
+sub fetch_all_by_Member_paired_species {  ## DEPRECATED
   my ($self, $member, $species, $method_link_types) = @_;
 
-  my $gdb1 = $member->genome_db;
+  deprecate("fetch_all_by_Member_paired_species() is deprecated and will be removed in e86. Use fetch_all_by_Member(\$member, -TARGET_SPECIES => \$species) instead (possibly with -METHOD_LINK_TYPE)");
 
-  throw("\$species should be string, not a ".ref($species)) if ref($species);
-  my $gdb_a = $self->db->get_GenomeDBAdaptor();
-  my $gdb2 = $gdb_a->fetch_by_registry_name($species);
-  if(!defined $gdb2) {
-      $gdb2 = $gdb_a->fetch_by_name_assembly($species);
-      if(!defined $gdb2) {
-          throw("No GenomeDB found with name '$species'");
-      }
-  }
+  my $target_mlss = $self->_find_target_mlsss($member->genome_db, [$species], [], $method_link_types);
 
-  unless (defined $method_link_types) {
-    $method_link_types = [keys %single_species_ml];
-  }
-  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
-
-  my $all_homologies = [];
-  foreach my $ml (@{$method_link_types}) {
-    my $mlss;
-    if ($gdb1->dbID == $gdb2->dbID) {
-      next unless $single_species_ml{$ml};
-      $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1], "no_warning");
-    } else {
-      next if $single_species_ml{$ml};
-      $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2], "no_warning");
-    }
-    if (defined $mlss) {
-      my $homologies = $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $mlss);
-      push @{$all_homologies}, @{$homologies} if (defined $homologies);
-    }
-  }
-  return $all_homologies;
+  return $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $target_mlss);
 }
 
 
