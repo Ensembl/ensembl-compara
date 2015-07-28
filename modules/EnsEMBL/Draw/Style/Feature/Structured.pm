@@ -97,13 +97,13 @@ sub draw_feature {
       $params{'x'} = $end < 0 ? 0 : $position->{'image_width'}; 
     }
     else {
-      $params{'colour'} = $colour;
+      $params{'colour'}     = $colour;
+      $params{'structure'}  = $_;
       $self->draw_block($feature, %params);
     }
     $current_x += $width;
     %previous = %params;
   }
-
 }
 
 sub draw_join {
