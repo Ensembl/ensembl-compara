@@ -225,7 +225,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       } else {
         panel.toggleContent($(this), duration);
         if (panel.elLk[this.rel] && $(this).hasClass('closed')) {
-          window.location.hash = panel.elLk[this.rel][0].id;
+          if (panel.elLk[this.rel][0].id) {
+            window.location.hash = panel.elLk[this.rel][0].id;
+          }
         }
       }
       
