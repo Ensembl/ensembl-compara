@@ -760,6 +760,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       this.elLk.drag.on('mousemove', this.mousemove);
 
+      $(document).on('keyup.exitOnEsc', function(e) {
+        if (e.which === 27) { // Escape key
+          panel.newLocation = false;
+          if (panel.panning) {
+            panel.dragStop();
+          }
+        }
+      });
+
       this.altKeyDragging = e.altKey || e.shiftKey || e.metaKey;
 
       if (this.altKeyDragging) {
@@ -779,6 +788,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (this.mousemove) {
       this.elLk.drag.off('mousemove', this.mousemove);
       this.mousemove = false;
+
+      $(document).off('.exitOnEsc');
 
       if (this.altKeyDragging) {
         this.setPanning(!this.panning);
