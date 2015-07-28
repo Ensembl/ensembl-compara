@@ -122,7 +122,7 @@ sub draw_join {
 }
 
 sub draw_block {
-  my ($self, $feature, %params) = @_;
+  my ($self, %params) = @_;
   push @{$self->glyphs}, $self->Rect(\%params);
 }
 

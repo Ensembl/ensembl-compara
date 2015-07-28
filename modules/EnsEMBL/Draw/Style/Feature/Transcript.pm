@@ -30,7 +30,7 @@ sub draw_join {
 }
 
 sub draw_block {
-  my ($self, $feature, %params) = @_;
+  my ($self, %params) = @_;
   my $structure   = $params{'structure'};
   my $block_width = $params{'width'};
   my $colour      = $params{'colour'};
