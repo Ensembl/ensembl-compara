@@ -92,7 +92,11 @@ sub draw_feature {
     $params{'width'}  = $end - $start;
 
     ## Only draw blocks that appear on the image!
-    unless ($end < 0 || $start > $position->{'image_width'}) {
+    if ($end < 0 || $start > $position->{'image_width'}) {
+      ## Pretend we drew a block at the start of the image
+      $params{'x'} = $end < 0 ? 0 : $position->{'image_width'}; 
+    }
+    else {
       $params{'colour'} = $colour;
       $self->draw_block($feature, %params);
     }
