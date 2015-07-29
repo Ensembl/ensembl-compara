@@ -1177,6 +1177,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var imgBox = this.draggables && this.draggables[0];
     var start, end;
 
+    if (r === false) {
+      this.highlightedLoc = false;
+      if (this.elLk.highlightLocation) {
+        this.elLk.highlightLocation.hide();
+      }
+      return;
+    }
+
     if (!r || !imgBox || imgBox.range.chr !== r[1]) {
       return;
     }

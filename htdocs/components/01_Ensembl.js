@@ -239,10 +239,12 @@ Ensembl.extend({
 
   highlightLocation: function (r) {
 
-    r = this.getHighlightedLocation(r);
+    if (r) { // r can be false to clear hightlighted area
+      r = this.getHighlightedLocation(r);
+    }
 
-    if (r) {
-      this.updateURL({ hlr: r[0] });
+    if (r || r === false) {
+      this.updateURL({ hlr: r && r[0] });
       this.EventManager.trigger('highlightLocation', r);
     }
   },
