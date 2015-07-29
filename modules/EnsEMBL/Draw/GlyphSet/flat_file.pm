@@ -29,6 +29,7 @@ use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
 use EnsEMBL::Draw::Style::Feature::Structured;
 use EnsEMBL::Draw::Style::Feature::Transcript;
+use EnsEMBL::Draw::Style::Feature::Interaction;
 
 use base qw(EnsEMBL::Draw::GlyphSet::Alignment);
 
@@ -65,7 +66,7 @@ sub features {
     $features = $iow->create_tracks($container);
   } else {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR READING FILE ".$file->absolute_read_path;
+    warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
   }
 
   return $features;
@@ -137,6 +138,13 @@ sub render_as_transcript_label {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', 'Transcript');
   $self->{'my_config'}->set('show_labels', 1);
+  $self->draw_features;
+}
+
+sub render_interaction {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', 'Interaction');
+  $self->{'my_config'}->set('bumped', 0); 
   $self->draw_features;
 }
 
