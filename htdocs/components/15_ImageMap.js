@@ -810,6 +810,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (!this.newLocation) {
           this.elLk.boundariesPanning.parent().remove();
           this.elLk.boundariesPanning = false;
+          this.highlightLocation(this.highlightedLoc);
           return;
         }
 
@@ -876,6 +877,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (locationDisplacement) {
       this.newLocation = this.dragRegion.range.chr + ':' + (this.dragRegion.range.start - locationDisplacement) + '-' + (this.dragRegion.range.end - locationDisplacement);
       this.elLk.boundariesPanning.helptip('option', 'content', this.newLocation).helptip('open');
+      this.highlightLocation(this.highlightedLoc, locationDisplacement);
     } else {
       this.newLocation = false;
       this.elLk.boundariesPanning.helptip('close');
@@ -1168,7 +1170,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }).end();
   },
 
-  highlightLocation: function (r) {
+  highlightLocation: function (r, offset) {
+
+    offset = offset || 0;
 
     var imgBox = this.draggables && this.draggables[0];
     var start, end;
@@ -1177,8 +1181,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return;
     }
 
-    start = imgBox.range.start;
-    end   = imgBox.range.end;
+    start = imgBox.range.start - offset;
+    end   = imgBox.range.end - offset;
 
     this.selectArea(false);
 
