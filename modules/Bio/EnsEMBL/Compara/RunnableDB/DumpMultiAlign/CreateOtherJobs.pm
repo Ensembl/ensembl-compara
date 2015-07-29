@@ -83,7 +83,6 @@ sub write_output {
     }
 
     my $split_size = $self->param('split_size');
-    my $species = $genome_db->name;
     my $gab_num = 1;
     my $start_gab_id ;
     my $end_gab_id;
@@ -111,7 +110,7 @@ sub write_output {
                     'start'                 =>  $start_gab_id,
                     'end'                   =>  $gab_id,
                     'filename_suffix'       =>  '',
-                    'extra_args'            =>  ['--skip_species', $species],
+                    'extra_args'            =>  ['--skip_species', $species_name],
                     'num_blocks'            =>  $gab_num,
                 };
 
@@ -137,7 +136,7 @@ sub write_output {
                              'start'                 =>  $start_gab_id,
                              'end'                   =>  $end_gab_id,
                              'filename_suffix'       =>  $chunk,
-                             'extra_args'            =>  ['--skip_species', $species, '--chunk_num', $chunk],
+                             'extra_args'            =>  ['--skip_species', $species_name, '--chunk_num', $chunk],
                              'num_blocks'            =>  $this_num_blocks,
                             };
 
