@@ -80,10 +80,30 @@ sub parser {
   return $self->{'parser'};
 }
 
-sub greyscale {
-  ### a
-  my $self = shift;
-  return $self->{'greyscale'};
+sub convert_to_gradient {
+### Convert a 0-1000 score to a value on a colour gradient
+### Default is greyscale
+  my ($self, $score, $colour) = @_;
+  ## Default to black
+  $score = 1000 unless defined($score);
+
+  my @gradient = $colour ? $self->_create_gradient($colour) : @{$self->{'greyscale'}||[]};
+
+  my $value;
+  if ($score <= 166) {
+    $value = $gradient[0];
+  }
+  else {
+    my $step = int(($score - 166) / 110) + 1;
+    $value = $gradient[$step];
+  }
+  return $value; 
+}
+
+sub _create_gradient {
+  my ($self, $colour) = @_;
+  my $gradient = [];
+  return $gradient;
 }
 
 sub create_tracks {
