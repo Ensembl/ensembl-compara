@@ -85,6 +85,8 @@ sub default_options {
 
         # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
         'mode' => 'dir',
+        # how the files will be split: either 'chromosome' or 'random'
+        'split_mode' => 'chromosome',
 
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
         'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
@@ -171,6 +173,9 @@ sub pipeline_analyses {
 
         {  -logic_name => 'initJobs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
+            -parameters => {
+                split_mode => $self->o('split_mode'),
+            },
             -flow_into => {
                 $self->o('mode') eq 'file' ?
                 (
@@ -205,6 +210,9 @@ sub pipeline_analyses {
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
+            -parameters => {
+                split_mode => $self->o('split_mode'),
+            },
             -rc_name => 'crowd',
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]

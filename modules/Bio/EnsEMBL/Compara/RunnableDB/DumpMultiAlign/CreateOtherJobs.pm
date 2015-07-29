@@ -50,7 +50,7 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub write_output {
+sub skip_genomic_align_block_ids {
     my $self = shift @_;
 
     #Note this is using the database set in $self->param('compara_db').
@@ -81,18 +81,43 @@ sub write_output {
 	}
         push @$gab_ids, $this_genomic_align_block->dbID unless $has_skip;
     }
+    return $gab_ids;
+}
+
+sub all_genomic_align_block_ids {
+    my $self = shift @_;
+
+    #Note this is using the database set in $self->param('compara_db').
+    return $self->compara_dba->dbc->db_handle->selectcol_arrayref('SELECT genomic_align_block_id FROM genomic_align_block WHERE method_link_species_set_id = ?', undef, $self->param('mlss_id'));
+}
+
+
+sub write_output {
+    my $self = shift @_;
+
+    my $gab_ids;
+    my $extra_args;
+    my $region_name;
+
+    if ($self->param('split_mode') eq 'chromosome') {
+        #Note this is using the database set in $self->param('compara_db').
+        my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
+        $gab_ids = $self->skip_genomic_align_block_ids();
+        $extra_args = ['--skip_species', $genome_db->name];
+        $region_name = 'other';
+    } else {
+        $gab_ids = $self->all_genomic_align_block_ids();
+        $extra_args = [];
+        $region_name = 'all';
+    }
 
     my $split_size = $self->param('split_size');
     my $gab_num = 1;
     my $start_gab_id ;
     my $end_gab_id;
     my $chunk = 1;
-
     
-    #
-    #Create a table (other_gab) to store the genomic_align_block_ids of those
-    #blocks which do not contain $self->param('species')
-    #
+    #Create a table (other_gab) to store the genomic_align_block_ids
     my $sql_cmd = "INSERT INTO other_gab (genomic_align_block_id) VALUES (?)";
     my $dump_sth = $self->db->dbc->prepare($sql_cmd);
 
@@ -106,11 +131,11 @@ sub write_output {
         if ($split_size == 0) {
             if ($gab_num == @$gab_ids) {
                 my $output_id = {
-                    'region_name'           =>  'other',
+                    'region_name'           =>  $region_name,
                     'start'                 =>  $start_gab_id,
                     'end'                   =>  $gab_id,
                     'filename_suffix'       =>  '',
-                    'extra_args'            =>  ['--skip_species', $species_name],
+                    'extra_args'            =>  $extra_args,
                     'num_blocks'            =>  $gab_num,
                 };
 
@@ -132,11 +157,11 @@ sub write_output {
 	    #Used to create a file of genomic_align_block_ids to pass to
 	    #DumpMultiAlign
 	    my $output_id = {
-                             'region_name'           =>  'other',
+                             'region_name'           =>  $region_name,
                              'start'                 =>  $start_gab_id,
                              'end'                   =>  $end_gab_id,
                              'filename_suffix'       =>  $chunk,
-                             'extra_args'            =>  ['--skip_species', $species_name, '--chunk_num', $chunk],
+                             'extra_args'            =>  [@$extra_args, '--chunk_num', $chunk],
                              'num_blocks'            =>  $this_num_blocks,
                             };
 
