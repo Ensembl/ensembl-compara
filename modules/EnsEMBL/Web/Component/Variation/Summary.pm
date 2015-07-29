@@ -45,6 +45,34 @@ sub content {
     $info_box = $self->multiple_locations($feature_slice, $variation->failed_description); 
   }
   
+  my @str_array = $self->feature_summary($avail);
+  
+  my $summary_table = $self->new_twocol(    
+    $self->variation_source,
+    $self->alleles($feature_slice),
+    $self->location,
+    $feature_slice ? $self->co_located($feature_slice) : (),
+    $self->most_severe_consequence($variation_features),
+    #$self->validation_status,
+    $self->evidence_status,
+    $self->clinical_significance,
+    $self->synonyms,
+    $self->hgvs,
+    $self->sets,
+    @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : ()
+  );
+
+  return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
+}
+
+# Description : about this variant paragraph on summary panel
+# Arg1        : availability count
+# Returns     : Array
+sub feature_summary {
+  my ($self, $avail) = @_;
+  
+  my $hub             = $self->hub;
+  my $vf              = $hub->param('vf');
   my $transcript_url  = $hub->url({ action => "Variation", action => "Mappings",  vf => $vf });
   my $genotype_url    = $hub->url({ action => "Variation", action => "Sample",    vf => $vf });
   my $phenotype_url   = $hub->url({ action => "Variation", action => "Phenotype", vf => $vf });
@@ -77,24 +105,9 @@ sub content {
                       $citation_url, 
                       $avail->{has_citation}, 
                       $avail->{has_citation} eq "1" ? "citation" : "citations" 
-                  ) if($avail->{has_citation});
-
-  my $summary_table = $self->new_twocol(    
-    $self->variation_source,
-    $self->alleles($feature_slice),
-    $self->location,
-    $feature_slice ? $self->co_located($feature_slice) : (),
-    $self->most_severe_consequence($variation_features),
-    #$self->validation_status,
-    $self->evidence_status,
-    $self->clinical_significance,
-    $self->synonyms,
-    $self->hgvs,
-    $self->sets,
-    @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : ()
-  );
-
-  return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
+                  ) if($avail->{has_citation});  
+                  
+  return @str_array;
 }
 
 sub multiple_locations {
