@@ -43,7 +43,8 @@ sub new {
     session_cookie => $args->{'session_cookie'},
     user_cookie    => $args->{'user_cookie'},
   });
-  
+ 
+  $self->{hub} = $hub;
   my $func = 'ajax_'.$hub->action;
   
   bless $self, $class;
