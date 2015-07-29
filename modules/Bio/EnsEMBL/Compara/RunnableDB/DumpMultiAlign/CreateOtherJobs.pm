@@ -98,11 +98,11 @@ sub write_output {
     #Create a table (other_gab) to store the genomic_align_block_ids of those
     #blocks which do not contain $self->param('species')
     #
+    my $sql_cmd = "INSERT INTO other_gab (genomic_align_block_id) VALUES (?)";
+    my $dump_sth = $self->db->dbc->prepare($sql_cmd);
+
     foreach my $gab (sort {$a->dbID <=> $b->dbID} @$skip_genomic_align_blocks) {
-	my $sql_cmd = "INSERT INTO other_gab (genomic_align_block_id) VALUES (?)";
-	my $dump_sth = $self->db->dbc->prepare($sql_cmd);
 	$dump_sth->execute($gab->dbID);
-	$dump_sth->finish();
 
 	if (!defined $start_gab_id) {
 	    $start_gab_id = $gab->dbID;
@@ -153,6 +153,7 @@ sub write_output {
 	}
 	$gab_num++;
     }
+    $dump_sth->finish();
 }
 
 
