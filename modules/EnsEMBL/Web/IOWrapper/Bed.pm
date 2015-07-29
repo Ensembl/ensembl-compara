@@ -62,6 +62,9 @@ sub create_hash {
     my $rgb = $strand == 1 ? $pos : $neg;
     $colour = $self->rgb_to_hex($rgb);
   }
+  elsif ($metadata->{'color'}) {
+    $colour = $metadata->{'color'};
+  }
 
   return {
     'start'         => $feature_start - $slice->start,

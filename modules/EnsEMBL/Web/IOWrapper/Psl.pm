@@ -45,11 +45,12 @@ sub create_hash {
   my $strand  = $self->parser->get_strand;
   my $score;
 
-  if ($metadata->{'color'}) {
-    #$colour = $metadata->{'color'};
-  }
-  elsif ($metadata->{'useScore'}) {
+  if ($metadata->{'useScore'}) {
     ## UCSC use greyscale with PSL, but it's not clear how it's calculated!
+    $colour = $self->convert_to_gradient(1000);
+  }
+  elsif ($metadata->{'color'}) {
+    $colour = $metadata->{'color'};
   }
 
   ## Start and end need to be relative to slice,
