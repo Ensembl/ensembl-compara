@@ -16,9 +16,9 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::IOWrapper::Pairwise;
+package EnsEMBL::Web::IOWrapper::PairwiseSimple;
 
-### Wrapper for Bio::EnsEMBL::IO::Parser::Pairwise, which builds
+### Wrapper for Bio::EnsEMBL::IO::Parser::PairwiseSimple, which builds
 ### simple hash features suitable for use in the drawing code 
 
 use strict;
@@ -38,7 +38,7 @@ sub create_hash {
   return unless $slice;
 
   ## Skip this feature if the interaction crosses chromosomes
-  my ($seqname_2, $feature_2_start, $feature_2_end) = @{$self->parser->get_interacting_region||[]};
+  my ($seqname_2, $feature_2_start, $feature_2_end) = $self->parser->get_interacting_region;
   return if $seqname_2 ne $slice->seq_region_name;
 
   ## Start and end need to be relative to slice,
