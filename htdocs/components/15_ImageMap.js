@@ -84,6 +84,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeImageMap();
     this.makeHoverLabels();
     this.initImageButtons();
+    this.highlightLocation(Ensembl.getHighlightedLocation());
     
     if (!this.vertical) {
       this.makeResizable();
