@@ -272,9 +272,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
       }
 
-      if (link_html.match(/Show/)) {
+      if (link_html.match(/Show/) && el.hasClass("toggle_link")) {
         el.html("Hide");
-      } else if (link_html.match(/Hide/)) {
+      } else if (link_html.match(/Hide/) && el.hasClass("toggle_link")) {
         el.html("Show");
       }
             
