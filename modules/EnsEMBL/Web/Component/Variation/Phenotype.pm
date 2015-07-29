@@ -44,9 +44,6 @@ sub content {
 
   return 'We do not have any external data for this variant' unless (scalar @$data);
 
-  my $is_somatic = $object->Obj->is_somatic;
-  my $study      = ($is_somatic && $object->Obj->source =~ /COSMIC/i) ? 'Tumour site' : 'Study'; 
-
   # Select only the phenotype features which have the same coordinates as the selected variation
   my $vf_object = ($vf) ? $self->hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) : undef;
   if ($vf_object) {
@@ -61,35 +58,7 @@ sub content {
   my $table      = $self->new_table([], [], { data_table => 1, sorting => [ 'disease asc' ] });
      
   if (scalar keys(%$table_rows) != 0) {
-
-    $table->add_columns(
-      { key => 'disease', title => 'Phenotype/Disease/Trait', align => 'left', sort => 'html' },
-      { key => 'source',  title => 'Source(s)',               align => 'left', sort => 'html' },
-    );
-    if ($column_flags->{'s_evidence'}) {
-      $table->add_columns({ key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' });
-    }
-    
-    $table->add_columns({ key => 'study', title => $study, align => 'left', sort => 'html' });
-
-    if ($column_flags->{'clin_sign'}) {
-      $table->add_columns({ key => 'clin_sign', title => 'Clinical significance', align => 'left', sort => 'html' });
-    }
-      
-    $table->add_columns({ key => 'genes',   title => 'Reported gene(s)',  align => 'left', sort => 'html' });
-    
-    if (!$is_somatic) {
-      $table->add_columns(
-        { key => 'allele',  title => 'Associated allele', align => 'left', sort => 'string', help => 'Most associated risk allele' },
-      );
-    }
-
-    if ($column_flags->{'stats'}) {
-      $table->add_columns({ key => 'stats',  title => 'Statistics', align => 'left', sort => 'none' });
-    }
-
-    $table->add_columns({ key => 'locations', align => 'left', title => 'Genomic Locations' });
-
+    $self->add_table_columns($table, $column_flags);
     $table->add_rows(@$_) for values %$table_rows;
     $html .= sprintf qq{<h3>Significant association(s)</h3>};
     $html .= $table->render;
@@ -98,6 +67,45 @@ sub content {
   return $html;
 };
 
+# Description : Simple function to just add the columns in the table (can be overwritten in mobile plugins)
+# Arg1        : $table hash
+# Returns     : $table(hash)
+sub add_table_columns {
+  my ($self, $table, $column_flags) = @_;
+  
+  my $is_somatic = $self->object->Obj->is_somatic;
+  my $study      = ($is_somatic && $self->object->Obj->source =~ /COSMIC/i) ? 'Tumour site' : 'Study';
+  
+  $table->add_columns(
+    { key => 'disease', title => 'Phenotype/Disease/Trait', align => 'left', sort => 'html' },
+    { key => 'source',  title => 'Source(s)',               align => 'left', sort => 'html' },
+  );
+  if ($column_flags->{'s_evidence'}) {
+    $table->add_columns({ key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' });
+  }
+  
+  $table->add_columns({ key => 'study', title => $study, align => 'left', sort => 'html' });
+
+  if ($column_flags->{'clin_sign'}) {
+    $table->add_columns({ key => 'clin_sign', title => 'Clinical significance', align => 'left', sort => 'html' });
+  }
+    
+  $table->add_columns({ key => 'genes',   title => 'Reported gene(s)',  align => 'left', sort => 'html' });
+  
+  if (!$is_somatic) {
+    $table->add_columns(
+      { key => 'allele',  title => 'Associated allele', align => 'left', sort => 'string', help => 'Most associated risk allele' },
+    );
+  }
+
+  if ($column_flags->{'stats'}) {
+    $table->add_columns({ key => 'stats',  title => 'Statistics', align => 'left', sort => 'none' });
+  }
+
+  $table->add_columns({ key => 'locations', align => 'left', title => 'Genomic Locations' });
+  
+  return $table;
+}
 
 sub table_data { 
   my ($self, $external_data, $pop_freq) = @_;
