@@ -336,7 +336,7 @@ sub _delete_tagvalue {
     $self->_read_attr_list($db_attrtable, $db_keyname);
     #print STDERR "CALL _delete_tagvalue $self/$object/$tag/$value: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
-    if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
+    if (defined $db_attrtable and exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
         # It is an attribute
         my $sth = $self->prepare("UPDATE $db_attrtable SET $tag=NULL WHERE $db_keyname=?");
         $sth->execute($object->$perl_keyname);
@@ -448,7 +448,7 @@ sub _wipe_all_tags {
     $self->_read_attr_list($db_attrtable, $db_keyname);
     #print STDERR "CALL _wipe_all_tags $self/$exclude_attr/$exclude_tags: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
 
-    unless ($exclude_attr) {
+    if (defined $db_attrtable and not $exclude_attr) {
         my $sth = $self->prepare("DELETE FROM $db_attrtable WHERE $db_keyname=?");
         foreach my $object (@$objects) {
             $sth->execute($object->$perl_keyname);
@@ -509,7 +509,7 @@ sub _store_all_tags {
         my $tag_hash = $object->get_tagvalue_hash;
         my $object_key = $object->$perl_keyname;
         foreach my $tag (keys %$tag_hash) {
-            next if exists $self->{"_attr_list_$db_attrtable"}->{$tag};
+            next if defined $db_attrtable and exists $self->{"_attr_list_$db_attrtable"}->{$tag};
             if (ref($tag_hash->{$tag}) eq 'ARRAY') {
                 foreach my $value (@{$tag_hash->{$tag}}) {
                     $sth->execute($object_key, $tag, $value);
