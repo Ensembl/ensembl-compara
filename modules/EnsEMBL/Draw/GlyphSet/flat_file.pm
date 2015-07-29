@@ -146,6 +146,9 @@ sub render_interaction {
   $self->{'my_config'}->set('drawing_style', 'Interaction');
   $self->{'my_config'}->set('bumped', 0); 
   $self->draw_features;
+  ## Limit track height to that of biggest arc
+  my $max_height  = $self->{'my_config'}->get('max_height');
+  $self->{'maxy'} = $max_height if $max_height;
 }
 
 sub href {
