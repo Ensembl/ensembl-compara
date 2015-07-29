@@ -576,7 +576,7 @@ if ($skip_species && !$file_of_genomic_align_block_ids) {
 }
 
 ## MAIN DUMPING LOOP
-do {
+while(1) {
   my $genomic_align_blocks = [];
   if ($file_of_genomic_align_block_ids) {
     open(FILE, $file_of_genomic_align_block_ids) or die ("Cannot open $file_of_genomic_align_block_ids");
@@ -602,6 +602,7 @@ do {
       $genomic_align_blocks = $genomic_align_set_adaptor->
           fetch_all_by_MethodLinkSpeciesSet($method_link_species_set,
           $split_size, $start);
+      $start += $split_size;
     }
   } else {
       while ((!$split_size or @$genomic_align_blocks < $split_size) and $slice_counter < @query_slices) {
@@ -654,19 +655,22 @@ do {
       }
     }
 
-    ## chunk_num means that only this chunk has to be dumped:
-    ## set the split_size to 0 in orer to exit the main loop
+    ## chunk_num means that only this chunk has to be dumped
+    ## we can now exit
     if ($chunk_num) {
-      $split_size = 0;
+      last;
     }
 
   } else {
-    ## No more genomic_align_blocks to dump: set split_size to 0 in orer to exit the main loop
-    $split_size = 0;
+    ## No more genomic_align_blocks to dump
+    last;
   }
-#} while ($split_size or $slice_counter < @query_slices);
-#} while ($split_size && $slice_counter < @query_slices);
-} while (($split_size and $slice_counter < @query_slices) or @$skip_genomic_align_blocks);
+  ## We have exhausted @query_slices
+  last if @query_slices and $slice_counter == scalar(@query_slices);
+  ## We have exhausted @$skip_genomic_align_blocks
+  last if $skip_species and not $file_of_genomic_align_block_ids and not @$skip_genomic_align_blocks;
+
+}
 
 exit(0);
 
