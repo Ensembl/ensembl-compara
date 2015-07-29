@@ -68,26 +68,22 @@ sub write_output {
     #
     #Find genomic_align_blocks which do not contain $self->param('species')
     #
-    my $skip_genomic_align_blocks = $gab_adaptor->
-      fetch_all_by_MethodLinkSpeciesSet($mlss);
-    for (my $i=0; $i<@$skip_genomic_align_blocks; $i++) {
+    my $gab_ids = [];
+    my $all_genomic_align_blocks = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    while (my $this_genomic_align_block = shift @$all_genomic_align_blocks) {
 	my $has_skip = 0;
-	foreach my $this_genomic_align (@{$skip_genomic_align_blocks->[$i]->get_all_GenomicAligns()}) {
+	foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns()}) {
 	    if (($this_genomic_align->genome_db->name eq $species_name) or
 		($this_genomic_align->genome_db->name eq "ancestral_sequences")) {
 		$has_skip = 1;
 		last;
 	    }
 	}
-	if ($has_skip) {
-	    my $this_genomic_align_block = splice(@$skip_genomic_align_blocks, $i, 1);
-	    $i--;
-	    $this_genomic_align_block = undef;
-	}
+        push @$gab_ids, $this_genomic_align_block->dbID unless $has_skip;
     }
+
     my $split_size = $self->param('split_size');
     my $species = $genome_db->name;
-
     my $gab_num = 1;
     my $start_gab_id ;
     my $end_gab_id;
@@ -101,19 +97,19 @@ sub write_output {
     my $sql_cmd = "INSERT INTO other_gab (genomic_align_block_id) VALUES (?)";
     my $dump_sth = $self->db->dbc->prepare($sql_cmd);
 
-    foreach my $gab (sort {$a->dbID <=> $b->dbID} @$skip_genomic_align_blocks) {
-	$dump_sth->execute($gab->dbID);
+    foreach my $gab_id (sort {$a <=> $b} @$gab_ids) {
+	$dump_sth->execute($gab_id);
 
 	if (!defined $start_gab_id) {
-	    $start_gab_id = $gab->dbID;
+	    $start_gab_id = $gab_id;
 	}
 
         if ($split_size == 0) {
-            if ($gab_num == @$skip_genomic_align_blocks) {
+            if ($gab_num == @$gab_ids) {
                 my $output_id = {
                     'region_name'           =>  'other',
                     'start'                 =>  $start_gab_id,
-                    'end'                   =>  $gab->dbID,
+                    'end'                   =>  $gab_id,
                     'filename_suffix'       =>  '',
                     'extra_args'            =>  ['--skip_species', $species],
                     'num_blocks'            =>  $gab_num,
@@ -124,14 +120,13 @@ sub write_output {
             }
 
 	#Create jobs after each $split_size gabs
-        } elsif ($gab_num % $split_size == 0 ||
-	    $gab_num == @$skip_genomic_align_blocks) {
+        } elsif ($gab_num % $split_size == 0 || $gab_num == @$gab_ids) {
 
-	    $end_gab_id = $gab->dbID;
+	    $end_gab_id = $gab_id;
 
 	    my $this_num_blocks = $split_size;
-	    if ($gab_num == @$skip_genomic_align_blocks) {
-		$this_num_blocks = (@$skip_genomic_align_blocks % $split_size);
+	    if ($gab_num == @$gab_ids) {
+		$this_num_blocks = (@$gab_ids % $split_size);
 	    }
 
 	    #Write out cmd from DumpMultiAlign
