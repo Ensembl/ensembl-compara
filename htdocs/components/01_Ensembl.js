@@ -33,6 +33,7 @@ Ensembl.extend({
     this.locationURL     = typeof window.history.pushState === 'function' ? 'search' : 'hash';
     this.hashParamRegex  = '([#?;&])(__PARAM__=)[^;&]+((;&)?)';
     this.locationMatch   = new RegExp(/[#?;&]r=([^;&]+)/);
+    this.hightlightMatch = new RegExp(/[#?;&]hlr=([^;&]+)/);
     this.locationReplace = new RegExp(this.hashParamRegex.replace('__PARAM__', 'r'));
     this.width           = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
     this.dynamicWidth    = !!this.cookie.get('DYNAMIC_WIDTH');
@@ -227,6 +228,22 @@ Ensembl.extend({
     if (this.updateURL({ r: r }) === true && this.locationURL === 'search') {
       this.setCoreParams();
       this.EventManager.trigger('hashChange', r);
+    }
+  },
+
+  getHighlightedLocation: function(url) {
+    var r = ((url || window.location.href).match(this.hightlightMatch) || ['']).pop().match(/(.+):(\d+)-(\d+)/);
+
+    return r ? [ r[0], r[1], parseInt(r[2]), parseInt(r[3]) ] : null;
+  },
+
+  highlightLocation: function (r) {
+
+    r = this.getHighlightedLocation(r);
+
+    if (r) {
+      this.updateURL({ hlr: r[0] });
+      this.EventManager.trigger('highlightLocation', r);
     }
   },
   

@@ -31,6 +31,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.labelWidth       = 0;
     this.boxCoords        = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
     this.altKeyDragging   = false;
+    this.highlightedLoc   = false;
     
     function resetOffset() {
       delete this.imgOffset;
@@ -45,6 +46,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('ajaxLoaded',         this, resetOffset); // Adding content could cause scrollbars to appear, changing the offset, but this does not fire the window resize event
     Ensembl.EventManager.register('changeWidth',        this, function () { this.params.updateURL = Ensembl.updateURL({ image_width: false }, this.params.updateURL); Ensembl.EventManager.trigger('queuePageReload', this.id); });
     Ensembl.EventManager.register('highlightAllImages', this, function () { if (!this.align) { this.highlightAllImages(); } });
+    Ensembl.EventManager.register('highlightLocation',  this, this.highlightLocation);
   },
   
   init: function () {
@@ -82,6 +84,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeImageMap();
     this.makeHoverLabels();
     this.initImageButtons();
+    this.highlightLocation(Ensembl.getHighlightedLocation());
     
     if (!this.vertical) {
       this.makeResizable();
@@ -807,6 +810,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (!this.newLocation) {
           this.elLk.boundariesPanning.parent().remove();
           this.elLk.boundariesPanning = false;
+          this.highlightLocation(this.highlightedLoc);
           return;
         }
 
@@ -873,6 +877,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (locationDisplacement) {
       this.newLocation = this.dragRegion.range.chr + ':' + (this.dragRegion.range.start - locationDisplacement) + '-' + (this.dragRegion.range.end - locationDisplacement);
       this.elLk.boundariesPanning.helptip('option', 'content', this.newLocation).helptip('open');
+      this.highlightLocation(this.highlightedLoc, locationDisplacement);
     } else {
       this.newLocation = false;
       this.elLk.boundariesPanning.helptip('close');
@@ -1163,6 +1168,43 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $(this).off('.selectbox');
       })
     }).end();
+  },
+
+  highlightLocation: function (r, offset) {
+
+    offset = offset || 0;
+
+    var imgBox = this.draggables && this.draggables[0];
+    var start, end;
+
+    if (!r || !imgBox || imgBox.range.chr !== r[1]) {
+      return;
+    }
+
+    start = imgBox.range.start - offset;
+    end   = imgBox.range.end - offset;
+
+    this.selectArea(false);
+
+    if (start > r[2] && start < r[3] || end > r[2] && end < r[3] || start <= r[2] && end >= r[3]) {
+
+      if (!this.elLk.highlightLocation) {
+        this.elLk.highlightLocation = $('<div class="selector hlrselector"></div>').insertAfter(this.elLk.img);
+      }
+
+      this.elLk.highlightLocation.css({
+        left:   imgBox.l + Math.max(r[2] - start, 0) / imgBox.range.scale,
+        width:  (Math.min(end, r[3] + 1) - Math.max(r[2], start)) / imgBox.range.scale - 1,
+        top:    imgBox.t,
+        height: imgBox.b - imgBox.t
+      }).show();
+
+      this.highlightedLoc = r;
+    } else {
+      if (this.elLk.highlightLocation) {
+        this.elLk.highlightLocation.hide();
+      }
+    }
   },
 
   updateExportMenu: function(coords, speciesNumber, imageNumber) {
