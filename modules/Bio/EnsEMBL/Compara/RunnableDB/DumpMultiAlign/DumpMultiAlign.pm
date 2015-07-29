@@ -132,7 +132,7 @@ sub _write_gab_file {
     
     open my $tmp_fh, '>', $tmp_file || die ("Couldn't open $tmp_file for writing");
     while (my $row = $sth->fetchrow) {
-	print $tmp_fh, $row . "\n";
+	print $tmp_fh $row . "\n";
     }
     close($tmp_fh);
     $sth->finish;
