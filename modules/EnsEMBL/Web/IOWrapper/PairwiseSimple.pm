@@ -54,8 +54,12 @@ sub create_hash {
   my $colour;
   my $score = $self->parser->get_score;
   if ($score && $score =~ /\d+,\d+,\d+/) {
+    ## Score field can be 'hacked' to set a colour
     $colour = $self->rgb_to_hex($score);
     $score  = undef;
+  }
+  else {
+    $colour = $self->convert_to_gradient($score);
   }
 
   my $structure = [
@@ -67,7 +71,6 @@ sub create_hash {
     'start'         => $feature_1_start,
     'end'           => $feature_2_end,
     'seq_region'    => $self->parser->get_seqname,
-    'label'         => $self->parser->get_id,
     'direction'     => $self->parser->get_direction,
     'score'         => $score,
     'colour'        => $colour, 
