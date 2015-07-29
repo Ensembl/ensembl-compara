@@ -49,14 +49,7 @@ sub create_hash {
   my $score   = $self->parser->get_score;
 
   if ($metadata->{'useScore'}) {
-    my @greyscale = @{$self->greyscale||[]};
-    if ($score <= 166) {
-      $colour = $greyscale[0];
-    }
-    else {
-      my $step = int(($score - 166) / 110) + 1;
-      $colour = $greyscale[$step];
-    }
+    $colour = $self->convert_to_gradient($score, $metadata->{'color'});
   }
   elsif ($metadata->{'itemRgb'} eq 'On') {
     my $rgb = $self->parser->get_itemRgb;
