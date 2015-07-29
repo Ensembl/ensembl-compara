@@ -1179,9 +1179,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     if (r === false) {
       this.highlightedLoc = false;
-      if (this.elLk.highlightLocation) {
-        this.elLk.highlightLocation.hide();
-      }
+      $(this.elLk.highlightLocation).add(this.elLk.resetHighlightLocation).hide();
       return;
     }
 
@@ -1200,12 +1198,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         this.elLk.highlightLocation = $('<div class="selector hlrselector"></div>').insertAfter(this.elLk.img);
       }
 
+      if (!this.elLk.resetHighlightLocation) {
+        this.elLk.resetHighlightLocation = $('<a class="hlr-reset" href="#ClearHighlightedRegion" title="Clear highlighted region">').appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
+          e.preventDefault();
+          Ensembl.highlightLocation(false);
+        });
+      }
+
       this.elLk.highlightLocation.css({
         left:   imgBox.l + Math.max(r[2] - start, 0) / imgBox.range.scale,
         width:  (Math.min(end, r[3] + 1) - Math.max(r[2], start)) / imgBox.range.scale - 1,
         top:    imgBox.t,
         height: imgBox.b - imgBox.t
       }).show();
+
+      this.elLk.resetHighlightLocation.show();
 
       this.highlightedLoc = r;
     } else {
