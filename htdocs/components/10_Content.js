@@ -253,9 +253,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   toggleContent: function (el, duration) {
-    var rel     = el.attr('rel');
-    var toggle  = duration ? 'slideToggle' : 'toggle';
-    var html    = el.html();
+    var rel       = el.attr('rel');
+    var toggle    = duration ? 'slideToggle' : 'toggle';
+    var link_html = el.html();
  
     if (!rel) {
       el.toggleClass('open closed').siblings('.toggleable')[toggle](duration);
@@ -272,9 +272,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
       }
 
-      if (html.match(/Show/)) {
+      if (link_html.match(/Show/)) {
         el.html("Hide");
-      } else if (html.match(/Hide/)) {
+      } else if (link_html.match(/Hide/)) {
         el.html("Show");
       }
             
