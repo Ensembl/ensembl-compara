@@ -508,6 +508,7 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
     } 
   }
   $slice_adaptor->dbc->disconnect_if_idle();
+  warn "here:", scalar(@query_slices), " query slices\n";
 }
 
 # Get the GenomicAlignBlockAdaptor or the GenomicAlignTreeAdaptor:
@@ -530,6 +531,7 @@ my $use_several_files = 0;
 if ($output_file and $split_size) {
   $use_several_files = 1;
 }
+warn "several files ? $use_several_files\n";
 
 my $slice_counter = 0;
 my $start = 0;
@@ -599,9 +601,11 @@ while(1) {
       $start = 0;
     } else {
       # Get the alignments using the GABadaptor
+      warn "fetching $split_size $start";
       $genomic_align_blocks = $genomic_align_set_adaptor->
           fetch_all_by_MethodLinkSpeciesSet($method_link_species_set,
           $split_size, $start);
+      warn "fetched";
       $start += $split_size;
     }
   } else {
@@ -654,6 +658,7 @@ while(1) {
         $this_genomic_align_block = undef;
       }
     }
+    warn "dumped ", scalar(@$genomic_align_blocks), " blocks chunk_num $chunk_num split_size $split_size";
 
     ## chunk_num means that only this chunk has to be dumped
     ## we can now exit
@@ -669,7 +674,10 @@ while(1) {
   last if @query_slices and $slice_counter == scalar(@query_slices);
   ## We have exhausted @$skip_genomic_align_blocks
   last if $skip_species and not $file_of_genomic_align_block_ids and not @$skip_genomic_align_blocks;
+  ## We only need one iteration of the loop to read the file
+  last if $file_of_genomic_align_block_ids;
 
+  warn "split size $split_size slice_counter $slice_counter query_slices ", scalar(@query_slices), " skip_genomic_align_blocks ", scalar(@$skip_genomic_align_blocks);
 }
 
 exit(0);

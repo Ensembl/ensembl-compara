@@ -45,9 +45,9 @@ $split_size chunks
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs;
 
 use strict;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use warnings;
 
-use POSIX qw(ceil);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub write_output {
