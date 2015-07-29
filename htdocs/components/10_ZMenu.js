@@ -98,6 +98,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         
         return false;
       }
+    }).on('click', 'a._location_highlight', function () {
+      Ensembl.highlightLocation(this.href);
+
+      panel.hide();
+
+      return false;
     });
     
     $('.close', this.el).on('click', function () { 
@@ -385,6 +391,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
           }
           
           menu = [ '<a class="' + cls + '" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>' ];
+
+          if (cls) {
+            menu.push('<a class="_location_highlight" href="' + window.location.href.replace(Ensembl.hightlightMatch, '') + ';hlr=' + this.chr + ':' + start + '-' + end + '">Highlight region (' + (end - start + 1) + ' bp)</a>');
+          }
         }
       }
     } else { // Point select
