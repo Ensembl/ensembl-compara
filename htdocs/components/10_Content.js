@@ -255,7 +255,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   toggleContent: function (el, duration) {
     var rel     = el.attr('rel');
     var toggle  = duration ? 'slideToggle' : 'toggle';
-    
+    var html    = el.html();
+ 
     if (!rel) {
       el.toggleClass('open closed').siblings('.toggleable')[toggle](duration);
     } else {
@@ -270,7 +271,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           el.siblings('.toggleable')[toggle](duration);
         }
       }
-      
+
+      if (html.match(/Show/)) {
+        el.html("Hide");
+      } else if (html.match(/Hide/)) {
+        el.html("Show");
+      }
+            
       if (el.hasClass('set_cookie')) {
         Ensembl.cookie.set('toggle_' + rel, el.hasClass('open') ? 'closed' : 'open');
       }
