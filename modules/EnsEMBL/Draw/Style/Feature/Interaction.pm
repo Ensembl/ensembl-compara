@@ -43,12 +43,12 @@ sub create_glyphs {
     ## Set default colour if there is one
     my $colour      = $feature->{'colour'} || $default_colour;
 
-    my %defaults = {
+    my %defaults = (
                     'y'           => 0,
                     'height'      => $feature_height,
                     'colour'      => $colour,
                     'absolute_y'  => 1,
-                    };
+                    );
 
     $self->draw_feature($feature, %defaults);
 
