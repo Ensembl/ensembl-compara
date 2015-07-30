@@ -337,8 +337,8 @@ sub load_cigars_from_file {
 
     Arg [-UNIQ_SEQ] : (opt) boolean (default: false)
         : whether redundant sequences should be discarded
-    Arg [-ID_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
-        : which identifier should be used as sequence names: the stable_id, the sequence_id, or the seq_member_id
+    Arg [-ID_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER', 'DISPLAY')
+        : which identifier should be used as sequence names: the stable_id, the sequence_id, the seq_member_id, or the display_label
     Arg [-STOP2X] (opt) boolean (default: false)
         : whether the stop codons (character '*') should be replaced with gaps (character 'X')
           other unusual aminoacids (U and O) are also replaced by their closest match (C and K)
@@ -423,6 +423,7 @@ sub get_SimpleAlign {
         my $seqID = $member->stable_id;
         $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
         $seqID = $member->seq_member_id if $id_type and $id_type =~ m/^MEM/i;
+        $seqID = $member->display_label if $id_type and $id_type =~ m/^DIS/i;
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
         $seqID .= "_" . $member->genome_db->_species_tree_node_id if ($append_stn_id);
