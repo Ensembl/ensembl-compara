@@ -32,11 +32,13 @@ sub build_feature {
 ### Parse exons separately from other features
   my ($self, $data, $track_key, $slice) = @_;
 
+  my $attribs       = $self->parser->get_attributes;
+  my $transcript_id = $attribs->{'transcript_id'};
+  my $is_exon       = $attribs->{'exon_number'};
+
   my $type = $self->parser->get_type;
 
-  if ($type eq 'exon') {
-    my $attribs = $self->parser->get_attributes;
-    my $transcript_id = $attribs->{'transcript_id'};
+  if ($is_exon && $transcript_id) { ## Feature is part of a transcript!
     if ($data->{$track_key}{'transcripts'}{$transcript_id}) {
       push @{$data->{$track_key}{'transcripts'}{$transcript_id}}, $self->create_hash($data->{$track_key}{'metadata'}, $slice);
     }
@@ -76,6 +78,14 @@ sub post_process {
         push @{$hash->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}};
       }
 
+      ## Deal with possible partial transcripts (e.g. export)
+      if (!$hash->{'start'}) {
+        $hash->{'start'} = $exons->[0]{'start'};
+      }
+      if (!$hash->{'end'}) {
+        $hash->{'end'} = $exons->[-1]{'start'};
+      }
+
       if ($data->{$track_key}{'features'}) {
         push @{$data->{$track_key}{'features'}}, $hash; 
       }
@@ -83,6 +93,14 @@ sub post_process {
         $data->{$track_key}{'features'} = [$hash]; 
       }
     }
+    ## Transcripts will be out of order, owing to being stored in hash
+    ## Sort by start coordinate, then reverse length (i.e. longest first)
+    my @sorted_features = sort {
+                                $a->{'seq_region'} cmp $b->{'seq_region'}
+                                || $a->{'start'} <=> $b->{'start'}
+                                || $b->{'end'} <=> $a->{'end'}
+                                } @{$data->{$track_key}{'features'}};
+    $data->{$track_key}{'features'} = \@sorted_features;
   }
 }
 
