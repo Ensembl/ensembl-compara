@@ -393,7 +393,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
           menu = [ '<a class="' + cls + '" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>' ];
 
           if (cls) {
-            menu.unshift('<a class="_location_highlight" href="' + window.location.href.replace(Ensembl.hightlightMatch, '') + ';hlr=' + this.chr + ':' + start + '-' + end + '">Highlight region (' + (end - start + 1) + ' bp)</a>');
+            menu.unshift('<a class="_location_highlight" href="' + Ensembl.updateURL({hlr: this.chr + ':' + start + '-' + end}, window.location.href) + '">Highlight region (' + (end - start + 1) + ' bp)</a>');
           }
         }
       }
