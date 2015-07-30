@@ -301,7 +301,7 @@ Ensembl.extend({
     var hash = r && this.locationURL === 'search' ? { r: r } : {};
 
     if (hash.r) {
-      $.each(['g', 'db'], function (i, param) {
+      $.each(['g', 'db', 'hlr'], function (i, param) {
         if (Ensembl.coreParams[param]) {
           hash[param] = Ensembl.coreParams[param];
         }

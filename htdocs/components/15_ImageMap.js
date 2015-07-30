@@ -910,7 +910,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       Ensembl.redirect(area.a.attrs.href);
       return;
     }
-    
+
+    if (area.a.attrs.href && this.highlightedLoc) {
+      area.a.attrs.href = Ensembl.updateURL({hlr: this.highlightedLoc[0]}, area.a.attrs.href);
+    }
+
     var id = 'zmenu_' + area.a.coords.join('_');
     var dragArea, range, location, fuzziness;
     
