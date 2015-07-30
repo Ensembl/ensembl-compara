@@ -18,20 +18,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   constructor: function (id, params) {
     this.base(id, params);
     
-    this.dragging         = false;
-    this.panning          = false;
-    this.clicking         = true;
-    this.dragCoords       = {};
-    this.dragRegion       = {};
-    this.highlightRegions = {};
-    this.areas            = [];
-    this.draggables       = [];
-    this.speciesCount     = 0;
-    this.minImageWidth    = 500;
-    this.labelWidth       = 0;
-    this.boxCoords        = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
-    this.altKeyDragging   = false;
-    this.highlightedLoc   = false;
+    this.dragging           = false;
+    this.panning            = false;
+    this.clicking           = true;
+    this.dragCoords         = {};
+    this.dragRegion         = {};
+    this.highlightRegions   = {};
+    this.areas              = [];
+    this.draggables         = [];
+    this.speciesCount       = 0;
+    this.minImageWidth      = 500;
+    this.labelWidth         = 0;
+    this.boxCoords          = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
+    this.altKeyDragging     = false;
+    this.highlightedLoc     = false;
+    this.lastHighlightedLoc = false;
     
     function resetOffset() {
       delete this.imgOffset;
@@ -1171,6 +1172,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   highlightLocation: function (r, offset) {
+    var panel = this;
 
     offset = offset || 0;
 
@@ -1178,8 +1180,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var start, end;
 
     if (r === false) {
-      this.highlightedLoc = false;
-      $(this.elLk.highlightLocation).add(this.elLk.resetHighlightLocation).hide();
+      this.lastHighlightedLoc = this.highlightedLoc;
+      this.highlightedLoc     = false;
+      if (this.elLk.highlightLocation) {
+        this.elLk.highlightLocation.hide();
+      }
+      if (this.elLk.resetHighlightLocation) {
+        if (this.lastHighlightedLoc) {
+          this.elLk.resetHighlightLocation.show().removeClass('selected').attr('href', '#HighlightRegion').helptip('option', 'content', 'Highlight region');
+        } else {
+          this.elLk.resetHighlightLocation.hide();
+        }
+      }
       return;
     }
 
@@ -1199,10 +1211,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
 
       if (!this.elLk.resetHighlightLocation) {
-        this.elLk.resetHighlightLocation = $('<a class="hlr-reset" href="#ClearHighlightedRegion" title="Clear highlighted region">').appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
-          e.preventDefault();
-          Ensembl.highlightLocation(false);
-        });
+        this.elLk.resetHighlightLocation = $('<a class="hlr-reset" href="#ClearHighlightedRegion" title="Clear highlighted region">')
+          .appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
+            e.preventDefault();
+            Ensembl.highlightLocation(this.className.match('selected') ? false : panel.lastHighlightedLoc);
+          }
+        );
       }
 
       this.elLk.highlightLocation.css({
@@ -1212,7 +1226,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         height: imgBox.b - imgBox.t
       }).show();
 
-      this.elLk.resetHighlightLocation.show();
+      this.elLk.resetHighlightLocation.addClass('selected').show();
 
       this.highlightedLoc = r;
     } else {

@@ -239,7 +239,7 @@ Ensembl.extend({
 
   highlightLocation: function (r) {
 
-    if (r) { // r can be false to clear hightlighted area
+    if (r && typeof r === 'string') { // r can be false to clear hightlighted area, or can be an object already
       r = this.getHighlightedLocation(r);
     }
 

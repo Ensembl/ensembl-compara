@@ -136,11 +136,12 @@ div.boundaries_wrapper div.boundaries_panning ul          { overflow: hidden; }
 
 /* Icon toolbar for dynamic images */
 
-div.image_toolbar        { background-color: [[BUTTON_BG]]; color: #FFFFFF; height: 16px; padding: 4px 0; overflow: hidden; }
-div.image_toolbar.top    { border-bottom: 1px solid #999999; }
-div.image_toolbar.bottom { border-top: 1px solid #999999; }
-div.image_toolbar a      { float: left; width: 16px; height: 16px; display: block; margin: -2px 2px 2px; border: [[BUTTON_BG]] solid 2px; border-radius: 2px; }
-div.image_toolbar a:hover{ border-color: [[BUTTON_BG_HOVER]]; background-color: [[BUTTON_BG_HOVER]]; }
+div.image_toolbar                 { background-color: [[BUTTON_BG]]; color: #FFFFFF; height: 16px; padding: 4px 0; overflow: hidden; }
+div.image_toolbar.top             { border-bottom: 1px solid #999999; }
+div.image_toolbar.bottom          { border-top: 1px solid #999999; }
+div.image_toolbar a               { float: left; width: 16px; height: 16px; display: block; margin: -2px 2px 2px; border: [[BUTTON_BG]] solid 2px; border-radius: 2px; }
+div.image_toolbar a:hover,
+div.image_toolbar a.selected      { border-color: [[BUTTON_BG_HOVER]]; background-color: [[BUTTON_BG_HOVER]]; }
 
 div.image_toolbar a.config        { background-image: url(/i/16/rev/setting.png);       }
 div.image_toolbar a.data          { background-image: url(/i/16/rev/page-user.png);     }
@@ -150,7 +151,7 @@ div.image_toolbar a.resize        { background-image: url(/i/16/rev/image_resize
 div.image_toolbar a.share         { background-image: url(/i/16/rev/share.png);         }
 div.image_toolbar a.order-reset   { background-image: url(/i/16/rev/order-reset.png);   }
 div.image_toolbar a.config-reset  { background-image: url(/i/16/rev/setting-reset.png); }
-div.image_toolbar a.hlr-reset     { background-image: url(/i/16/rev/highlight.png); border-color: [[BUTTON_BG_HOVER]]; background-color: [[BUTTON_BG_HOVER]]; }
+div.image_toolbar a.hlr-reset     { background-image: url(/i/16/rev/highlight.png);     }
 
 /* Drag/Select switch */
 div.image_toolbar div.scroll-switch               { float: right; line-height: 16px; }
