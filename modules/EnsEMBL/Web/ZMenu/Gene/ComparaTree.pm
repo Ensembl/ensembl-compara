@@ -46,7 +46,7 @@ sub content {
   
   $self->add_entry({
     type     => 'Species',
-    label    => $species,
+    label    => $hub->species_defs->species_label($species),
     link     => $species_path,
     position => 1
   });
