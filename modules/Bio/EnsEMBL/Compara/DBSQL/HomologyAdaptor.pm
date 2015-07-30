@@ -364,20 +364,14 @@ sub fetch_all_by_tree_node_id {
 
 =head2 fetch_all_by_genome_pair
 
-  Arg [1]    : genome_db_id
-  Arg [2]    : genome_db_id
-  Example    : $homologies = $HomologyAdaptor->fetch_all_by_genome_pair(22,3);
-  Description: fetch all the homology relationships for the a pair of genome_db_ids
-               This method can be used to grab all the orthologues for a species pair.
-  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
-  Exceptions : none
-  Caller     : 
+  Description: DEPRECATED: Will be removed in e86. Use fetch_all_by_MethodLinkSpeciesSet() with the explicit MethodLinkSpeciesSet object that describes the homologies you want to retrieve
 
 =cut
 
-sub fetch_all_by_genome_pair {
+sub fetch_all_by_genome_pair {  ## DEPRECATED
     my ($self, $genome_db_id1, $genome_db_id2) = @_;
 
+    deprecate("fetch_all_by_genome_pair() is deprecated and will be removed in e86. Use fetch_all_by_MethodLinkSpeciesSet() with the explicit MethodLinkSpeciesSet object that describes the homologies you want to retrieve");
     my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
     my @all_mlss;
     if ($genome_db_id1 == $genome_db_id2) {
@@ -388,7 +382,7 @@ sub fetch_all_by_genome_pair {
         push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$genome_db_id1, $genome_db_id2]);
     }
 
-    my $constraint = "h.method_link_species_set_id IN (". join (",", (map {$_->dbID} @all_mlss)) . ")";
+    my $constraint = "h.method_link_species_set_id IN (". join (",", (map {$_ ? $_->dbID : -1} @all_mlss)) . ")";
 
     return $self->generic_fetch($constraint);
 }
