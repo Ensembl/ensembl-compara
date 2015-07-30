@@ -1534,7 +1534,9 @@ sub get_cigar_arrayref {
 
     # This slice overlaps with the previous mapping. This is not supported.
     if ($slice_start < $cigar_pos) {
-      die "ERROR in AlignSlice: Trying to get a cigar_line from overlapping Slices is not supported.\n";
+      my $species_name = $self->genome_db->name;
+      warn "ERROR in AlignSlice for $species_name: Trying to get a cigar_line from overlapping Slices is not supported.\n";
+      next;
     }
 
     # If there is a gap between this slice and the previous one (or the start of the slice)
