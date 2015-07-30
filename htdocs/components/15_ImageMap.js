@@ -1174,6 +1174,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   highlightLocation: function (r, offset) {
     var panel = this;
 
+    if (this.vertical) { // not for vertical images
+      return;
+    }
+
     offset = offset || 0;
 
     var imgBox = this.draggables && this.draggables[0];
