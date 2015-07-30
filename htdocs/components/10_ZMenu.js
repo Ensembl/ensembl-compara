@@ -87,6 +87,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.el.on('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
     }).on('click', 'a.location_change', function () {
+
+      if (!window.location.pathname.match(/\/Location\/View(\/|$)/)) {
+        return true;
+      }
+
       var locationMatch = this.href.match(Ensembl.locationMatch);
       
       if (locationMatch) {
