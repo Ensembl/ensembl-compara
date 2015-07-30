@@ -39,9 +39,11 @@ sub content {
   my $node_id         = $hub->param('node')                   || die 'No node value in params';
   my $node            = $tree->find_node_by_node_id($node_id);
   
+  if (!$node and $tree->tree->{'_supertree'}) {
+    $node = $tree->tree->{'_supertree'}->find_node_by_node_id($node_id);
+  }
   unless ($node) {
-    $tree = $tree->tree->{'_supertree'};
-    $node = $tree->find_node_by_node_id($node_id);
+    $node = $tree->adaptor->fetch_node_by_node_id($node_id);
     die "No node_id $node_id in ProteinTree" unless $node;
   }
   
