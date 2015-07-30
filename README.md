@@ -6,8 +6,6 @@
 [travis]: https://travis-ci.org/Ensembl/ensembl-compara
 [coveralls]: https://coveralls.io/r/Ensembl/ensembl-compara
 
-![e!Compara word cloud](docs/ebang-wordcloud.png)
-
 The Ensembl Compara API (Application Programme Interface) serves as a
 middle layer between the underlying MySQL database and the user's script.
 It aims to encapsulate the database layout by providing high level access
@@ -27,3 +25,4 @@ http://lists.ensembl.org/mailman/listinfo/dev
 Questions may also be sent to the Ensembl help desk at
 http://www.ensembl.org/Help/Contact
 
+![e!Compara word cloud](docs/ebang-wordcloud.png)
