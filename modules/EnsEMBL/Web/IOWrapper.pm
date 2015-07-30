@@ -55,15 +55,17 @@ sub open {
   my $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
 
   my $parser;
+  my $format = $file->get_format;
+  return undef unless $format;
 
   if ($file->source eq 'url') {
     my $result = $file->read;
     if ($result->{'content'}) {
-      $parser = Bio::EnsEMBL::IO::Parser::open_content_as($file->get_format, $result->{'content'});
+      $parser = Bio::EnsEMBL::IO::Parser::open_content_as($format, $result->{'content'});
     }
   }
   else {
-    $parser = Bio::EnsEMBL::IO::Parser::open_as($file->get_format, $file->absolute_read_path);
+    $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_read_path);
   }
 
   if (dynamic_use($class, 1)) {
@@ -144,14 +146,11 @@ sub create_tracks {
                   || $end < $slice->start
                   || $start > $slice->end);
       }
-      if ($data->{$track_key}{'features'}) {
-        push @{$data->{$track_key}{'features'}}, $self->create_hash($data->{$track_key}{'metadata'}, $slice);
-      }
-      else {
-        $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'}, $slice)];
-      }
+      $self->build_feature($data, $track_key, $slice);
     }
   }
+
+  $self->post_process($data);
 
   if ($prioritise) {
     @order = sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} 
@@ -163,6 +162,18 @@ sub create_tracks {
   }
 
   return $tracks;
+}
+
+sub post_process {} ## Stub
+
+sub build_feature {
+  my ($self, $data, $track_key, $slice) = @_;
+  if ($data->{$track_key}{'features'}) {
+    push @{$data->{$track_key}{'features'}}, $self->create_hash($data->{$track_key}{'metadata'}, $slice);
+  }
+  else {
+    $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'}, $slice)];
+  }
 }
 
 sub create_hash {
