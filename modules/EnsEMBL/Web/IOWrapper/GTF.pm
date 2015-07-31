@@ -34,11 +34,10 @@ sub build_feature {
 
   my $attribs       = $self->parser->get_attributes;
   my $transcript_id = $attribs->{'transcript_id'};
-  my $is_exon       = $attribs->{'exon_number'};
+  my $exon_number   = $attribs->{'exon_number'};
+  my $type          = $self->parser->get_type;
 
-  my $type = $self->parser->get_type;
-
-  if ($is_exon && $transcript_id) { ## Feature is part of a transcript!
+  if ($transcript_id) { ## Feature is part of a transcript!
     if ($data->{$track_key}{'transcripts'}{$transcript_id}) {
       push @{$data->{$track_key}{'transcripts'}{$transcript_id}}, $self->create_hash($data->{$track_key}{'metadata'}, $slice);
     }
@@ -59,38 +58,85 @@ sub build_feature {
 sub post_process {
 ### Reassemble sub-features back into features
   my ($self, $data) = @_;
+  use Data::Dumper;
   
   while (my ($track_key, $content) = each (%$data)) {
     next unless $content->{'transcripts'};
-    while (my ($transcript_id, $exons) = each (%{$content->{'transcripts'}})) {
-      my $no_of_exons = scalar(@{$exons||[]});
-      next unless $no_of_exons;
+    while (my ($transcript_id, $segments) = each (%{$content->{'transcripts'}})) {
 
-      my $hash = {'structure' => []};
+      my $no_of_segments = scalar(@{$segments||[]});
+      next unless $no_of_segments;
+
+      my $transcript = shift @$segments;
+      $transcript->{'structure'}  = [];
+      $transcript->{'label'}    ||= $transcript->{'transcript_name'} || $transcript->{'transcript_id'};
+
+      ## Now turn exons into internal structure
+
+      ## Sort elements: by start then by reverse name, 
+      ## so we get UTRs before their corresponding exons/CDS
+      my @ordered_segments = sort {
+                                    $a->{'start'} <=> $b->{'start'}
+                                    || lc($b->{'type'}) cmp lc($a->{'type'})
+                                  } @$segments;
+      my $seen    = {};   
       
-      foreach (sort {$a->{'exon_number'} <=> $b->{'exon_number'}} @$exons) {
-        $hash->{'seq_region'} = $_->{'seq_region'};  
-        $hash->{'start'}      = $_->{'start'} if $_->{'exon_number'} == 1;
-        $hash->{'end'}        = $_->{'end'} if $_->{'exon_number'} == $no_of_exons;
-        $hash->{'strand'}     = $_->{'strand'};
-        $hash->{'colour'}     = $_->{'colour'};
-        $hash->{'label'}    ||= $_->{'transcript_name'} || $_->{'transcript_id'};
-        push @{$hash->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}};
-      }
+      foreach (@ordered_segments) {
+        #warn Dumper($_);
+        my $type              = $_->{'type'};
 
-      ## Deal with possible partial transcripts (e.g. export)
-      if (!$hash->{'start'}) {
-        $hash->{'start'} = $exons->[0]{'start'};
+        if ($type eq 'UTR') {
+          ## which UTR are we in? Note that we go by drawing direction, not strand direction
+          if ($seen->{'cds'}) {
+            if (!$seen->{'utr_right'}) {
+              $seen->{'utr_right_start'}  = $_->{'start'};
+              $seen->{'utr_right_end'}    = $_->{'end'};
+              my $previous_exon = $transcript->{'structure'}[-1];
+              $previous_exon->{'end'}   = $_->{'end'};
+              $previous_exon->{'utr_3'} = $_->{'start'};
+              delete $previous_exon->{'coding'};
+
+              #warn ">>> START OF 3' UTR: ".$_->{'start'};
+            }
+          }
+          else {
+            $seen->{'utr_left_start'} = $_->{'start'};
+            $seen->{'utr_left_end'}   = $_->{'end'};
+            #warn ">>> END OF 5' UTR: ".$_->{'end'};
+          }
+        }  
+        elsif ($type eq 'CDS') {
+          $seen->{'cds'} = 1;
+          if ($seen->{'utr_left_start'} && $seen->{'utr_left_start'} < $_->{'start'}) {
+            push @{$transcript->{'structure'}}, {'start' => $seen->{'utr_left_start'}, 'end' => $_->{'end'}, 'utr_5' => $seen->{'utr_left_end'}};
+            delete $seen->{'utr_left_start'};
+            delete $seen->{'utr_left_end'};
+          }
+          else {
+            push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 1};
+          }
+        }
+        elsif ($type eq 'exon' && !$seen->{'cds'}) { ## Non-coding gene or UTR
+=pod
+            if ($seen->{'utr_left'} && $seen->{'utr_left'} > $_->{'end'}) {
+              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 0};
+            }
+            elsif ($_->{'transcript_biotype'} eq 'protein_coding') {
+              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 1};
+            }
+            else {
+              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 0};
+            }
+=cut
+        }
       }
-      if (!$hash->{'end'}) {
-        $hash->{'end'} = $exons->[-1]{'start'};
-      }
+      #warn Dumper($transcript);
 
       if ($data->{$track_key}{'features'}) {
-        push @{$data->{$track_key}{'features'}}, $hash; 
+        push @{$data->{$track_key}{'features'}}, $transcript; 
       }
       else {
-        $data->{$track_key}{'features'} = [$hash]; 
+        $data->{$track_key}{'features'} = [$transcript]; 
       }
     }
     ## Transcripts will be out of order, owing to being stored in hash
@@ -137,10 +183,10 @@ sub create_hash {
     $colour = $metadata->{'color'};
   }
 
-  ## Try to find an ID for this feature, by taking
-  ## the first attribute ending in 'id'
+  ## Try to find an ID for this feature
   my $attributes = $self->parser->get_attributes;
-  my $id = $attributes->{'transcript_id'} || $attributes->{'gene_id'};
+  my $id = $attributes->{'transcript_name'} || $attributes->{'transcript_id'} 
+            || $attributes->{'gene_name'} || $attributes->{'gene_id'};
 
   ## Not a transcript, so just grab a likely attribute
   if (!$id) {
@@ -153,6 +199,7 @@ sub create_hash {
   }
 
   return {
+    'type'          => $self->parser->get_type,
     'start'         => $feature_start - $slice->start,
     'end'           => $feature_end - $slice->start,
     'seq_region'    => $self->parser->get_seqname,
