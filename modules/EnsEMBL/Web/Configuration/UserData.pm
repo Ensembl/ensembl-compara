@@ -48,6 +48,7 @@ sub populate_tree {
   $data_menu->append($self->create_node('UploadFile',   '', [], { command => 'EnsEMBL::Web::Command::UserData::UploadFile'   }));
   $data_menu->append($self->create_node('AttachRemote', '', [], { command => 'EnsEMBL::Web::Command::UserData::AttachRemote' }));
   $data_menu->append($self->create_node('CheckShare',   '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckShare'   }));
+  $data_menu->append($self->create_node('TrackHubRedirect',   '', [], { command => 'EnsEMBL::Web::Command::UserData::TrackHubRedirect'   }));
 
   ## Trackhub registry
   #$data_menu->append($self->create_node('SelectHub',     'Track Hubs', [qw(track_hubs  EnsEMBL::Web::Component::UserData::SelectHub)]));
