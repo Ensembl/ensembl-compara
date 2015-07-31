@@ -72,7 +72,7 @@ sub add_auto_format_dropdown {
                 {'caption' => '-- Choose --', 'value' => ''},
                 map { 'value'   => uc($_), 
                       'caption' => $format_info->{$_}{'label'}, 
-                      'class'   => "_aff_$format_type{$_}" }, 
+                      'class'   => "_format_$format_type{$_}" },
                 sort (@remote_formats, @upload_formats)
               ];
   $form->add_field({

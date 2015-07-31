@@ -123,6 +123,11 @@ div.fbutton-right div.ff-right {
 div.ff-notes {
   padding: 3px 0 3px 50%;
 }
+div.inline-label {
+  float: left;
+  margin-right: 10px;
+  line-height: 20px;
+}
 .ftext, .ftextarea {
   border: [[PANEL_BORDER]] solid 1px;
   width: 206px;
@@ -430,4 +435,9 @@ form.freeform fieldset .form-field .ff-right {
   display:inline!important;
   margin: 0;
   padding: 0;
+}
+
+textarea.inactive {
+  font-style: italic;
+  color: #999;
 }

@@ -44,13 +44,13 @@ sub content {
   my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
   my $max_upload_size = abs($sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
-  ## default JS validation is skipped as this form goes through a customised validation
-  my $form            = $self->modal_form('select', 
-                                          $hub->url({'type' => 'UserData', 'action' => 'AddFile'}), 
-                                          {'skip_validation' => 1, 
-                                           'class' => 'check', 
-                                           'no_button' => 1}
-                                          ); 
+
+  my $form            = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'AddFile'}), {
+    'skip_validation'   => 1, # default JS validation is skipped as this form goes through a customised validation
+    'class'             => 'check',
+    'no_button'         => 1
+  });
+
   my $fieldset        = $form->add_fieldset({'no_required_notes' => 1});
 
   $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this data (optional)'});
@@ -59,66 +59,52 @@ sub content {
   my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, $sd->valid_species);
 
   # Create HTML for showing/hiding assembly names to work with JS
-  my $assembly_names = join '', map { sprintf '<span class="_stt_%s%s">%s</span>', $_->{'value'}, $_->{'value'} eq $current_species ? '' : ' hidden', delete $_->{'assembly'} } @species;
+  my $assembly_names = join '', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, delete $_->{'assembly'} } @species;
 
   $fieldset->add_field({
-      'type'        => 'dropdown',
-      'name'        => 'species',
-      'label'       => 'Species',
-      'values'      => \@species,
-      'value'       => $current_species,
-      'class'       => '_stt'
+    'type'          => 'dropdown',
+    'name'          => 'species',
+    'label'         => 'Species',
+    'values'        => \@species,
+    'value'         => $current_species,
+    'class'         => '_stt'
   });
 
-  ## Are mappings available?
-  ## FIXME - reinstate auto-mapping option when we have a solution!
-  ## TODO - once fixed, the assembly name toggling (wrt species selected) will need redoing - hr5
-  my $mappings; # = $sd->ASSEMBLY_MAPPINGS;
-  my $current_assembly = $sd->get_config($current_species, 'ASSEMBLY_VERSION');
-  if ($mappings && ref($mappings) eq 'ARRAY') {
-    my @values = {'name' => $current_assembly, 'value' => $current_assembly};
-    foreach my $string (reverse sort @$mappings) { 
-      my @A = split('#|:', $string);
-      my $assembly = $A[3];
-      push @values, {'name' => $assembly, 'value' => $assembly};
-    }
-    $form->add_element(
-      'type'        => 'DropDown',
-      'name'        => 'assembly',
-      'label'       => "Assembly",
-      'values'      => \@values,
-      'value'       => $current_assembly,
-      'select'      => 'select',
-    );
-    $form->add_element(
-      'type'        => 'Information',
-      'value'       => 'Please note: if your data is not on the current assembly, the coordinates will be converted',
-    );
-  }
-  else {
-    $fieldset->add_field({
-      'type'        => 'noedit',
-      'label'       => 'Assembly',
-      'name'        => 'assembly_name',
-      'value'       => $assembly_names,
-      'no_input'    => 1,
-      'is_html'     => 1,
-    });
-  }
-
-  $fieldset->add_field({ 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data'});
-  $fieldset->add_field({ 'type' => 'File', 'name' => 'file', 'label' => "Or upload file (max $max_upload_size)", 'required' => 1 });
   $fieldset->add_field({
-    'type'        => 'URL',
-    'name'        => 'url',
-    'label'       => 'Or provide file URL',
-    'size'        => 30,
-    #'required'    => 1, 
+    'type'          => 'noedit',
+    'label'         => 'Assembly',
+    'name'          => 'assembly_name',
+    'value'         => $assembly_names,
+    'no_input'      => 1,
+    'is_html'       => 1,
+  });
+
+  $fieldset->add_field({
+    'label'         => 'Data',
+    'field_class'   => '_userdata_add',
+    'elements'      => [{
+      'type'          => 'Text',
+      'value'         => 'Paste in data or provide a file URL',
+      'name'          => 'text',
+      'class'         => 'inactive'
+    }, {
+      'type'          => 'noedit',
+      'value'         => "Or upload file (max $max_upload_size)",
+      'no_input'      => 1,
+      'element_class' => 'inline-label'
+    }, {
+      'type'          => 'File',
+      'name'          => 'file',
+    }]
   });
 
   $self->add_auto_format_dropdown($form);
 
-  $fieldset->add_button({'type' => 'Submit', 'name' => 'submit_button', 'value' => 'Add data' });
+  $fieldset->add_button({
+    'type'          => 'Submit',
+    'name'          => 'submit_button',
+    'value'         => 'Add data'
+  });
 
   return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
 }
