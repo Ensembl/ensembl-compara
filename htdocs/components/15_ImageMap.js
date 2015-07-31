@@ -1195,7 +1195,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
       if (this.elLk.resetHighlightLocation) {
         if (this.lastHighlightedLoc) {
-          this.elLk.resetHighlightLocation.show().removeClass('selected').attr('href', '#HighlightRegion').helptip('option', 'content', 'Highlight region');
+          this.elLk.resetHighlightLocation.removeClass('selected').helptip('option', 'content', 'Highlight region').show();
         } else {
           this.elLk.resetHighlightLocation.hide();
         }
@@ -1219,7 +1219,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
 
       if (!this.elLk.resetHighlightLocation) {
-        this.elLk.resetHighlightLocation = $('<a class="hlr-reset" href="#ClearHighlightedRegion" title="Clear highlighted region">')
+        this.elLk.resetHighlightLocation = $('<a class="hlr-reset">')
           .appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
             e.preventDefault();
             Ensembl.highlightLocation(this.className.match('selected') ? false : panel.lastHighlightedLoc);
@@ -1234,7 +1234,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         height: imgBox.b - imgBox.t
       }).show();
 
-      this.elLk.resetHighlightLocation.addClass('selected').show();
+      this.elLk.resetHighlightLocation.addClass('selected').helptip('option', 'content', 'Clear highlighted region').show();
 
       this.highlightedLoc = r;
     } else {
