@@ -297,6 +297,13 @@ sub update_from_url {
 
   my @values = split /,/, $input->param($image_config);
   
+  ## Hack to use a more user-friendly URL for trackhub attachment
+  if ($input->param('trackhub') && $image_config eq 'contigviewbottom') {
+    push @values, 'url:'.$input->param('trackhub');
+    $input->param('format', 'DATAHUB');
+    $input->delete('trackhub'); 
+  }
+
   $hub->get_imageconfig($image_config)->update_from_url(@values) if @values;
   
   $session->store;
