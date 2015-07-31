@@ -89,11 +89,10 @@ sub post_process {
           ## which UTR are we in? Note that we go by drawing direction, not strand direction
           if ($seen->{'cds'}) {
             if (!$seen->{'utr_right'}) {
-              $seen->{'utr_right_start'}  = $_->{'start'};
-              $seen->{'utr_right_end'}    = $_->{'end'};
+              $seen->{'utr_right'}  = $_->{'start'};
               my $previous_exon = $transcript->{'structure'}[-1];
               $previous_exon->{'end'}   = $_->{'end'};
-              $previous_exon->{'utr_3'} = $_->{'start'};
+              $previous_exon->{'utr_3'} = $_->{'start'} - $previous_exon->{'start'};
               delete $previous_exon->{'coding'};
 
               #warn ">>> START OF 3' UTR: ".$_->{'start'};
@@ -108,7 +107,9 @@ sub post_process {
         elsif ($type eq 'CDS') {
           $seen->{'cds'} = 1;
           if ($seen->{'utr_left_start'} && $seen->{'utr_left_start'} < $_->{'start'}) {
-            push @{$transcript->{'structure'}}, {'start' => $seen->{'utr_left_start'}, 'end' => $_->{'end'}, 'utr_5' => $seen->{'utr_left_end'}};
+            ## Add 1 to compensate for stop/start codon
+            push @{$transcript->{'structure'}}, {'start' => $seen->{'utr_left_start'}, 'end' => $_->{'end'}, 
+                                                  'utr_5' => $seen->{'utr_left_end'} - $seen->{'utr_left_start'} + 1};
             delete $seen->{'utr_left_start'};
             delete $seen->{'utr_left_end'};
           }
