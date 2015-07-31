@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Command::UserData::TrockHubRedirect;
+package EnsEMBL::Web::Command::UserData::TrackHubRedirect;
 
 use strict;
 
@@ -38,6 +38,11 @@ sub process {
   my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my $pattern       = "^$extension\$";
   my %params;
+
+  my $default_species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
+  my $redirect        = sprintf('/%s/Location/View', $default_species);
+  my $sample_links    = $species_defs->get_config($default_species, 'SAMPLE_DATA');
+  $params{'r'}        = $sample_links->{'LOCATION_PARAM'} if $sample_links;
 
   if ($url) {
     my $format = EnsEMBL::Web::File::AttachedFormat::DATAHUB->new($self->hub, $url);
