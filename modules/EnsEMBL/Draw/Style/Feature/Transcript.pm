@@ -26,6 +26,11 @@ sub draw_join {
   my ($self, %params) = @_;
   $params{'colour'} = $params{'join_colour'};
   delete $params{'join_colour'};
+  ## Now that we have used the correct coordinates, constrain to viewport
+  if ($params{'x'} < 0) {
+    $params{'x'}          = 0;
+    $params{'width'}     += $params{'x'};
+  }
   push @{$self->glyphs}, $self->Intron(\%params);
 }
 
@@ -60,6 +65,12 @@ sub draw_block {
 
 sub draw_coding_block {
   my ($self, %params) = @_;
+  delete $params{'structure'};
+  ## Now that we have used the correct coordinates, constrain to viewport
+  if ($params{'x'} < 0) {
+    $params{'x'}          = 0;
+    $params{'width'}     += $params{'x'};
+  }
   push @{$self->glyphs}, $self->Rect(\%params);
 }
 
@@ -69,7 +80,14 @@ sub draw_noncoding_block {
   delete $params{'colour'};
   $params{'height'} = $params{'height'} - 2;
   $params{'y'} += 1;
+  delete $params{'structure'};
+  ## Now that we have used the correct coordinates, constrain to viewport
+  if ($params{'x'} < 0) {
+    $params{'x'}          = 0;
+    $params{'width'}     += $params{'x'};
+  }
   push @{$self->glyphs}, $self->Rect(\%params);
 }
+
 
 1;
