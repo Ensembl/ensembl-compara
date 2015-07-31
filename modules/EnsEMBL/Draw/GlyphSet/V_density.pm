@@ -87,7 +87,7 @@ sub build_tracks {
     $T->{'max_len'}   = $max_len;
     $T->{'bin_size'}  = $bin_size;
     $T->{'v_offset'}  = $v_offset;
-    if ($chr eq 'MT') {
+    if (uc($chr) eq 'MT') {
       $T->{'max_value'} = undef;
     }
     else {
