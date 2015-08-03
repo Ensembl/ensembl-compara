@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Command::UserData::AddFile;
 
+## Attaches or uploads a file and does some basic checks on the format
+
 use strict;
 
 use List::Util qw(first);
@@ -31,31 +33,20 @@ sub process {
   
   return $self->set_format if $hub->function eq 'set_format';
  
-  my ($method)    = first { $hub->param($_) } qw(url file text);
+  my ($method)    = first { $hub->param($_) } qw(file text);
   my $format      = $hub->param('format');
   my $url_params  = {};
 
-  if ($method eq 'url') {
+
+  if ($method eq 'text' && $hub->param('text') =~ /^(http|ftp)/) {
     ## Attach the file from the remote URL
     $url_params = $self->attach_data($hub->param('url'), $format); 
   }
   else {
     ## Upload the data
-    my %remote_formats = map { lc $_ => 1 } @{$self->hub->species_defs->multi_val('REMOTE_FILE_FORMATS')||[]};
-    if ($remote_formats{$format}) {
-      $url_params->{'restart'} = 1;
-      $hub->session->add_data(
-        type     => 'message',
-        code     => 'userdata_error',
-        message  => "We are unable to upload files of this type. Please supply a URL for this data.",
-        function => '_error'
-      );
-    }
-    else {
       $url_params = $self->upload($method);
       $url_params->{ __clear} = 1;
       $url_params->{'action'} = 'UploadFeedback';
-    }
   }
 
   if ($url_params->{'restart'}) {
