@@ -433,10 +433,12 @@ sub fetch_or_create_other_tree {
     }
 
     if (not exists $other_trees->{$clusterset->clusterset_id}) {
+        delete $tree->{'_member_array'};   # Clean cache to make sure we use freshest data
         my $newtree = $tree->deep_copy();
         $newtree->stable_id(undef);
         # Reformat things
         foreach my $member (@{$newtree->get_all_Members}) {
+            print "member:\t".$member."\n" if ($self->debug > 1);
             $member->cigar_line(undef);
             $member->{'_children_loaded'} = 1;
         }
