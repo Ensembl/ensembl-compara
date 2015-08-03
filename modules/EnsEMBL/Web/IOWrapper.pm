@@ -56,6 +56,11 @@ sub create_hash {
   ### the web display
 }
 
+sub validate {
+  ### Stub - needs to be implemented in each child
+  ### Validates the first few lines of a file to ensure it's in the format selected
+}
+
 sub coords {
   ### Simple accessor to return the coordinates from the parser
   my $self = shift;
