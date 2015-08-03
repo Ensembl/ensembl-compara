@@ -65,6 +65,26 @@ sub PARSER_FORMATS {
   };
 }
 
+sub USERDATA_FORMATS {
+  return {
+    'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph',   'limit' => 'remote'},
+    'bed'       => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature', 'limit' => 'upload'},
+    'bedgraph'  => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph',   'limit' => 'upload'},
+    'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph',   'limit' => 'remote'},
+    'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph',   'limit' => 'remote'},
+    'gene_list' => {'ext' => 'txt', 'label' => 'Gene or feature list', 
+                                                            'display' => 'feature', 'limit' => 'upload'},
+    'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature', 'limit' => 'upload'},
+    'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature', 'limit' => 'upload'},
+    'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
+    'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature', 'limit' => 'upload'},
+    'trackhub'  => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph',   'limit' => 'remote'},
+    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
+    'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature', 'limit' => 'upload'},
+    'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph',   'limit' => 'upload'},
+  };
+}
+
 sub FORMATS {
   warn "!!! DEPRECATED - PLEASE USE 'EXPORT_FORMATS' INSTEAD";
   return &EXPORT_FORMATS;
