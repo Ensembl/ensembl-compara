@@ -20,7 +20,7 @@ Ensembl.Panel.UserData = Ensembl.Panel.extend({
   formats: {
     'bam' : 'BAM',
     'bb'  : 'BIGBED',
-    'bed' : 'DEB',
+    'bed' : 'BED',
     'bgr' : 'BEDGRAPH',
     'bw'  : 'BIGWIG',
     'gff' : 'GFF',
@@ -98,7 +98,7 @@ Ensembl.Panel.UserData = Ensembl.Panel.extend({
 
     this.elLk.formatDropdown.find('option').prop('disabled', function () {
       return !(isUpload ? !this.className.match('_format_remote') : !this.className.match('_format_upload'));
-    }).filter(':first, [value=' + format + ']').last().prop('selected', true);
+    }).filter(':first, [value=' + format + ']:enabled').last().prop('selected', true);
   },
 
   resetFormatDropdown: function () {
