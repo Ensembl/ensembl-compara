@@ -173,14 +173,8 @@ sub upload {
 
   ## Now we know where the data is coming from, initialise the object and read the data
   $self->init(%args);
-  my $result = $self->read;
-
-  ## Parse the file to check that it's really in the format the user selected
-  if (!$result->{'error'}) {
-    my $iow   = EnsEMBL::Web::IOWrapper::open($self);
-    my $validation_error = $iow->validate($result->{'content'});
-    $result->{'error'} = [$validation_error] if $validation_error;
-  }
+  my $iow     = EnsEMBL::Web::IOWrapper::open($self);
+  my $result  = $iow->validate;
 
   ## Add upload to session
   if ($result->{'error'}) {
