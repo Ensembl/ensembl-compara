@@ -34,12 +34,12 @@ sub ajax_redirect {
 
 sub upload {
 ### Simple wrapper around File::User 
-  my ($self, $method, $type) = @_;
+  my ($self, $method, $format) = @_;
   my $hub       = $self->hub;
   my $params    = {};
 
   my $file  = EnsEMBL::Web::File::User->new('hub' => $hub, 'empty' => 1);
-  my $error = $file->upload;
+  my $error = $file->upload('method' => $method, 'format' => $format);
 
   if ($error) {
     $params->{'restart'} = 1;
