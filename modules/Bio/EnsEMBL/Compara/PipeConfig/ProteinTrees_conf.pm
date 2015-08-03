@@ -1987,7 +1987,7 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[tree building with raxml]-------------------------------------------------------------
 
         {   -logic_name => 'get_num_of_patterns',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ParserExaml',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GetPatterns',
             -parameters => {
                 'getPatterns_exe'       => $self->o('getPatterns_exe'),
             },
@@ -2003,7 +2003,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'get_num_of_patterns_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ParserExaml',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GetPatterns',
             -parameters => {
                 'getPatterns_exe'       => $self->o('getPatterns_exe'),
             },

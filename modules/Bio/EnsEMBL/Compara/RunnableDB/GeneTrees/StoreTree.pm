@@ -28,6 +28,7 @@ use Bio::AlignIO;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -531,6 +532,36 @@ sub parse_filtered_align {
     }
 
     return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings, $cdna);
+}
+
+# Hacky way of invoking the HCs directly here
+sub _run_test {
+    my $self = shift;
+    return $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_run_test(@_);
+}
+
+sub call_hcs_all_trees {
+    my $self = shift;
+
+    my $ini_gene_tree_id = $self->param('gene_tree_id');
+    my $alt_root_ids = $self->compara_dba->dbc->db_handle->selectcol_arrayref('SELECT root_id FROM gene_tree_root WHERE ref_root_id = ?', undef, $self->param('gene_tree_id'));
+    foreach my $root_id ($ini_gene_tree_id, @$alt_root_ids) {
+        $self->param('gene_tree_id', $root_id);
+        my @test_groups = ('tree_structure', 'tree_attributes');
+        if ($root_id == $ini_gene_tree_id) {
+            if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
+                @test_groups = ('alignment');
+            } else {
+                push @test_groups, 'alignment';
+            }
+        }
+        foreach my $test_name (@test_groups) {
+            $self->param('tests', $Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::config->{$test_name}->{tests});
+            $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_validate_tests();
+            $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::run();
+        }
+    }
+    $self->param('gene_tree_id', $ini_gene_tree_id);
 }
 
 

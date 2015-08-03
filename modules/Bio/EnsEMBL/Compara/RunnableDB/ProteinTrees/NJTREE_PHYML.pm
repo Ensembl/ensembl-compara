@@ -177,6 +177,8 @@ sub write_output {
         system(sprintf('cd %s; zip -r -9 %s/%d.zip', $self->worker_temp_directory, $self->param('output_dir'), $self->param('gene_tree_id')));
     }
 
+    $self->call_hcs_all_trees();
+
     # Only dataflows at the end, if everything went fine
     foreach my $root_id (@dataflow) {
         $self->dataflow_output_id({'gene_tree_id' => $root_id}, 2);
