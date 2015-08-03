@@ -99,6 +99,8 @@ Ensembl.Panel.UserData = Ensembl.Panel.extend({
     this.elLk.formatDropdown.find('option').prop('disabled', function () {
       return !(isUpload ? !this.className.match('_format_remote') : !this.className.match('_format_upload'));
     }).filter(':first, [value=' + format + ']:enabled').last().prop('selected', true);
+    // Finally, reveal the dropdown
+    this.elLk.formatDropdown.removeClass('hide');
   },
 
   resetFormatDropdown: function () {
