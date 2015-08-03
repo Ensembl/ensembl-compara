@@ -68,20 +68,19 @@ sub PARSER_FORMATS {
 sub USERDATA_FORMATS {
   return {
     'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph',   'limit' => 'remote'},
-    'bed'       => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature', 'limit' => 'upload'},
-    'bedgraph'  => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph',   'limit' => 'upload'},
+    'bed'       => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature'},
+    'bedgraph'  => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph'},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph',   'limit' => 'remote'},
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph',   'limit' => 'remote'},
-    'gene_list' => {'ext' => 'txt', 'label' => 'Gene or feature list', 
-                                                            'display' => 'feature', 'limit' => 'upload'},
-    'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature', 'limit' => 'upload'},
-    'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature', 'limit' => 'upload'},
+    'gene_list' => {'ext' => 'txt', 'label' => 'Gene or feature list', 'display' => 'feature'},
+    'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
+    'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
     'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
-    'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature', 'limit' => 'upload'},
+    'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
     'trackhub'  => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph',   'limit' => 'remote'},
     'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
-    'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature', 'limit' => 'upload'},
-    'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph',   'limit' => 'upload'},
+    'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
+    'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
   };
 }
 
