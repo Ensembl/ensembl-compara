@@ -45,6 +45,34 @@ sub content {
     $info_box = $self->multiple_locations($feature_slice, $variation->failed_description); 
   }
   
+  my @str_array = $self->feature_summary($avail);
+  
+  my $summary_table = $self->new_twocol(    
+    $self->variation_source,
+    $self->alleles($feature_slice),
+    $self->location,
+    $feature_slice ? $self->co_located($feature_slice) : (),
+    $self->most_severe_consequence($variation_features),
+    #$self->validation_status,
+    $self->evidence_status,
+    $self->clinical_significance,
+    $self->synonyms,
+    $self->hgvs,
+    $self->sets,
+    @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : ()
+  );
+
+  return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
+}
+
+# Description : about this variant paragraph on summary panel
+# Arg1        : availability count
+# Returns     : Array
+sub feature_summary {
+  my ($self, $avail) = @_;
+  
+  my $hub             = $self->hub;
+  my $vf              = $hub->param('vf');
   my $transcript_url  = $hub->url({ action => "Variation", action => "Mappings",  vf => $vf });
   my $genotype_url    = $hub->url({ action => "Variation", action => "Sample",    vf => $vf });
   my $phenotype_url   = $hub->url({ action => "Variation", action => "Phenotype", vf => $vf });
@@ -77,24 +105,9 @@ sub content {
                       $citation_url, 
                       $avail->{has_citation}, 
                       $avail->{has_citation} eq "1" ? "citation" : "citations" 
-                  ) if($avail->{has_citation});
-
-  my $summary_table = $self->new_twocol(    
-    $self->variation_source,
-    $self->alleles($feature_slice),
-    $self->location,
-    $feature_slice ? $self->co_located($feature_slice) : (),
-    $self->most_severe_consequence($variation_features),
-    #$self->validation_status,
-    $self->evidence_status,
-    $self->clinical_significance,
-    $self->synonyms,
-    $self->hgvs,
-    $self->sets,
-    @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : ()
-  );
-
-  return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
+                  ) if($avail->{has_citation});  
+                  
+  return @str_array;
 }
 
 sub multiple_locations {
@@ -356,9 +369,11 @@ sub synonyms {
     my $show = $self->hub->get_cookie_value('toggle_variation_synonyms') eq 'open';
 
     return [
-      sprintf('<a class="toggle %s _slide_toggle set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a>', $show ? 'open' : 'closed'),
-      sprintf('<p>This variant has <strong>%s</strong> synonyms - click the plus to show</p><div class="variation_synonyms twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
-        $count,
+      sprintf('Synonyms'),
+      sprintf('<p>This variant has <strong>%s</strong> synonyms - <a title="Click to show synonyms" rel="variation_synonyms" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p><div class="variation_synonyms twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+        $count,        
+        $show ? 'open' : 'closed',        
+        $show ? 'Hide' : 'Show',
         $show ? '' : 'display:none',
         join('', map "<li>$_</li>", @synonyms_list)
       )
@@ -669,11 +684,11 @@ sub hgvs {
     my $show = $self->hub->get_cookie_value('toggle_HGVS_names') eq 'open';
 
     return [
-      sprintf('<a class="toggle %s _slide_toggle set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a>', $show ? 'open' : 'closed'),
+      sprintf('HGVS names'),
       sprintf(qq(<div class="twocol-cell">
-        <p>This variant has <strong>%s</strong> HGVS names - click the plus to show</p>
+        <p>This variant has <strong>%s</strong> HGVS names - <a title="Click to show HGVS names" rel="HGVS_names" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p>
         <div class="HGVS_names"><div class="toggleable"%s>$html</div></div>
-      </div>), $count, $show ? '' : ' style="display:none"')
+      </div>), $count, $show ? 'open' : 'closed', $show ? 'Hide' : 'Show', $show ? '' : ' style="display:none"')
     ];
   } elsif ($count == 1) {
     return ['HGVS name', $html];
@@ -705,9 +720,11 @@ sub sets{
     my $show = $self->hub->get_cookie_value('toggle_variation_sets') eq 'open';
   
     return [
-      sprintf('<a class="toggle %s _slide_toggle set_cookie" href="#" rel="variation_sets" title="Click to toggle sets names">Genotyping chips</a>', $show ? 'open' : 'closed'),
-      sprintf('<p>This variant has assays on <strong>%s</strong> chips - click the plus to show</p><div class="variation_sets twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
+      'Genotyping chips',
+      sprintf('<p>This variant has assays on <strong>%s</strong> chips - <a title="Click to show chips" rel="variation_sets" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p><div class="variation_sets twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
         $count,
+        $show ? 'open' : 'closed',        
+        $show ? 'Hide' : 'Show',
         $show ? '' : 'display:none',
         join('', map "<li>$_</li>", @genotyping_sets_list)
       )

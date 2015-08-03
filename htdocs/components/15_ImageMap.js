@@ -18,18 +18,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   constructor: function (id, params) {
     this.base(id, params);
     
-    this.dragging         = false;
-    this.panning          = false;
-    this.clicking         = true;
-    this.dragCoords       = {};
-    this.dragRegion       = {};
-    this.highlightRegions = {};
-    this.areas            = [];
-    this.draggables       = [];
-    this.speciesCount     = 0;
-    this.minImageWidth    = 500;
-    this.labelWidth       = 0;
-    this.boxCoords        = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
+    this.dragging           = false;
+    this.panning            = false;
+    this.clicking           = true;
+    this.dragCoords         = {};
+    this.dragRegion         = {};
+    this.highlightRegions   = {};
+    this.areas              = [];
+    this.draggables         = [];
+    this.speciesCount       = 0;
+    this.minImageWidth      = 500;
+    this.labelWidth         = 0;
+    this.boxCoords          = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
+    this.altKeyDragging     = false;
+    this.highlightedLoc     = false;
+    this.lastHighlightedLoc = false;
     
     function resetOffset() {
       delete this.imgOffset;
@@ -44,6 +47,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('ajaxLoaded',         this, resetOffset); // Adding content could cause scrollbars to appear, changing the offset, but this does not fire the window resize event
     Ensembl.EventManager.register('changeWidth',        this, function () { this.params.updateURL = Ensembl.updateURL({ image_width: false }, this.params.updateURL); Ensembl.EventManager.trigger('queuePageReload', this.id); });
     Ensembl.EventManager.register('highlightAllImages', this, function () { if (!this.align) { this.highlightAllImages(); } });
+    Ensembl.EventManager.register('highlightLocation',  this, this.highlightLocation);
   },
   
   init: function () {
@@ -81,6 +85,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeImageMap();
     this.makeHoverLabels();
     this.initImageButtons();
+    this.highlightLocation(Ensembl.getHighlightedLocation());
     
     if (!this.vertical) {
       this.makeResizable();
@@ -131,24 +136,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
 
     if (this.elLk.boundaries.length && this.draggables.length) {
-      this.panning = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
-      this.elLk.toolbars.first().append([
+      this.elLk.dragSwitch = this.elLk.toolbars.first().append([
         '<div class="scroll-switch">',
           '<span>Drag/Select:</span>',
           '<div><button title="Scroll to a region" class="dragging on"></button></div>',
           '<div class="last"><button title="Select a region" class="dragging"></button></div>',
         '</div>'].join('')).find('button').helptip().on('click', function() {
-        var flag = $(this).hasClass('on');
-        if (flag !== panel.panning) {
-          $(this).parent().parent().find('div').toggleClass('selected');
-          panel.panning = flag;
-          Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
-          if (flag) {
-            panel.selectArea(false);
-            panel.removeZMenus();
-          }
+        var panning = $(this).hasClass('on');
+        panel.setPanning(panning);
+        if (panning) {
+          panel.selectArea(false);
+          panel.removeZMenus();
         }
-      }).filter(panel.panning ? '.on' : ':not(.on)').parent().addClass('selected');
+      }).parent();
+      this.setPanning();
     }
   },
 
@@ -441,43 +442,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     // apply css positions to the hover layers
     this.positionLayers();
 
-    this.elLk.hoverLabels.each(function() {
+    // position hover menus to the right of the layer
+    this.elLk.hoverLabels.css('left', function() { return $(this.parentNode).width(); });
 
-      // position hover menus to the right of the layer and init the tab styled icons inside the hover menus
-      $(this).css('left', function() { return $(this.parentNode).width(); }).find('._hl_icon').tabs($(this).find('._hl_tab'));
-
-    // init config tab, fav icon and close icon
-    }).find('a.config').on('click', function () {
-      var config  = this.rel;
-      var update  = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
-      var fav     = '';
-      var $this   = $(this);
-
-      if ($this.hasClass('favourite')) {
-        fav = $this.hasClass('selected') ? 'off' : 'on';
-        Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
-      } else {
-        $this.parents('.label_layer').addClass('hover_label_spinner');
-      }
-
-      $.ajax({
-        url: this.href + fav,
-        dataType: 'json',
-        success: function (json) {
-          if (json.updated) {
-            Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, update[0], update[1]);
-            Ensembl.EventManager.trigger('reloadPage', panel.id);
-            Ensembl.EventManager.trigger('partialReload');
-          }
-        }
-      });
-      
-      $this = null;
-
-      return false;
-    }).end().find('input._copy_url').on('click focus blur', function(e) {
-      $(this).val(this.defaultValue).select().parents('.label_layer').toggleClass('hover', e.type !== 'blur');
-    });
+    // initialise content inside hover labels
+    this.initHoverLabels();
   },
 
   positionLayers: function() {
@@ -515,6 +484,56 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
       area = $this = null;
     });
+  },
+
+  initHoverLabels: function () {
+    var panel = this;
+
+    this.elLk.hoverLabels.each(function() {
+
+      // init the tab styled icons inside the hover menus
+      $(this).find('._hl_icon').removeClass('_hl_icon').tabs($(this).find('._hl_tab'));
+
+    // init config tab, fav icon and close icon
+    }).find('a.config').off().on('click', function (e) {
+      e.preventDefault();
+
+      if ($(this).parent().hasClass('current')) {
+        return;
+      }
+
+      var config  = this.rel;
+      var update  = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
+      var fav     = '';
+      var $this   = $(this);
+
+      if ($this.hasClass('favourite')) {
+        fav = $this.hasClass('selected') ? 'off' : 'on';
+        Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
+      } else {
+        $this.parents('.label_layer').addClass('hover_label_spinner');
+      }
+
+      $.ajax({
+        url: this.href + fav,
+        dataType: 'json',
+        success: function (json) {
+          if (json.updated) {
+            panel.changeConfiguration(config, update[0], update[1]);
+          }
+        }
+      });
+
+      $this = null;
+    }).end().find('input._copy_url').off().on('click focus blur', function(e) {
+      $(this).val(this.defaultValue).select().parents('.label_layer').toggleClass('hover', e.type !== 'blur');
+    });
+  },
+
+  changeConfiguration: function (config, trackName, renderer) {
+    Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, trackName, renderer);
+    Ensembl.EventManager.trigger('reloadPage', this.id);
+    Ensembl.EventManager.trigger('partialReload');
   },
   
   makeResizable: function () {
@@ -744,6 +763,26 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       };
       
       this.elLk.drag.on('mousemove', this.mousemove);
+
+      $(document).on('keyup.exitOnEsc', function(e) {
+        if (e.which === 27) { // Escape key
+          panel.newLocation = false;
+          if (panel.panning) {
+            panel.dragStop();
+          }
+        }
+      });
+
+      this.altKeyDragging = e.altKey || e.shiftKey || e.metaKey;
+
+      if (this.altKeyDragging) {
+        this.setPanning(!this.panning);
+      }
+
+      if (this.panning) {
+        this.selectArea(false);
+        this.removeZMenus();
+      }
     }
   },
   
@@ -753,6 +792,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (this.mousemove) {
       this.elLk.drag.off('mousemove', this.mousemove);
       this.mousemove = false;
+
+      $(document).off('.exitOnEsc');
+
+      if (this.altKeyDragging) {
+        this.setPanning(!this.panning);
+      }
     }
     
     if (this.dragging !== false) {
@@ -766,6 +811,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (!this.newLocation) {
           this.elLk.boundariesPanning.parent().remove();
           this.elLk.boundariesPanning = false;
+          this.highlightLocation(this.highlightedLoc);
           return;
         }
 
@@ -802,6 +848,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
   },
 
+  setPanning: function (flag) {
+    if (typeof flag === 'undefined') {
+      flag = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
+    } else {
+      Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
+    }
+
+    this.panning = flag;
+    this.elLk.dragSwitch.toggleClass2('selected', function() {
+      return $(this).find('button').hasClass('on') ? flag : !flag;
+    });
+  },
+
   panImage: function(e) {
 
     if (!this.elLk.boundariesPanning) {
@@ -819,6 +878,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (locationDisplacement) {
       this.newLocation = this.dragRegion.range.chr + ':' + (this.dragRegion.range.start - locationDisplacement) + '-' + (this.dragRegion.range.end - locationDisplacement);
       this.elLk.boundariesPanning.helptip('option', 'content', this.newLocation).helptip('open');
+      this.highlightLocation(this.highlightedLoc, locationDisplacement);
     } else {
       this.newLocation = false;
       this.elLk.boundariesPanning.helptip('close');
@@ -850,7 +910,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       Ensembl.redirect(area.a.attrs.href);
       return;
     }
-    
+
+    if (area.a.attrs.href && this.highlightedLoc) {
+      area.a.attrs.href = Ensembl.updateURL({hlr: this.highlightedLoc[0]}, area.a.attrs.href);
+    }
+
     var id = 'zmenu_' + area.a.coords.join('_');
     var dragArea, range, location, fuzziness;
     
@@ -1109,6 +1173,75 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $(this).off('.selectbox');
       })
     }).end();
+  },
+
+  highlightLocation: function (r, offset) {
+    var panel = this;
+
+    if (this.vertical) { // not for vertical images
+      return;
+    }
+
+    offset = offset || 0;
+
+    var imgBox = this.draggables && this.draggables[0];
+    var start, end;
+
+    if (r === false) {
+      this.lastHighlightedLoc = this.highlightedLoc;
+      this.highlightedLoc     = false;
+      if (this.elLk.highlightLocation) {
+        this.elLk.highlightLocation.hide();
+      }
+      if (this.elLk.resetHighlightLocation) {
+        if (this.lastHighlightedLoc) {
+          this.elLk.resetHighlightLocation.removeClass('selected').helptip('option', 'content', 'Highlight region').show();
+        } else {
+          this.elLk.resetHighlightLocation.hide();
+        }
+      }
+      return;
+    }
+
+    if (!r || !imgBox || imgBox.range.chr !== r[1]) {
+      return;
+    }
+
+    start = imgBox.range.start - offset;
+    end   = imgBox.range.end - offset;
+
+    this.selectArea(false);
+
+    if (start > r[2] && start < r[3] || end > r[2] && end < r[3] || start <= r[2] && end >= r[3]) {
+
+      if (!this.elLk.highlightLocation) {
+        this.elLk.highlightLocation = $('<div class="selector hlrselector"></div>').insertAfter(this.elLk.img);
+      }
+
+      if (!this.elLk.resetHighlightLocation) {
+        this.elLk.resetHighlightLocation = $('<a class="hlr-reset">')
+          .appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
+            e.preventDefault();
+            Ensembl.highlightLocation(this.className.match('selected') ? false : panel.lastHighlightedLoc);
+          }
+        );
+      }
+
+      this.elLk.highlightLocation.css({
+        left:   imgBox.l + Math.max(r[2] - start, 0) / imgBox.range.scale,
+        width:  (Math.min(end, r[3] + 1) - Math.max(r[2], start)) / imgBox.range.scale - 1,
+        top:    imgBox.t,
+        height: imgBox.b - imgBox.t
+      }).show();
+
+      this.elLk.resetHighlightLocation.addClass('selected').helptip('option', 'content', 'Clear highlighted region').show();
+
+      this.highlightedLoc = r;
+    } else {
+      if (this.elLk.highlightLocation) {
+        this.elLk.highlightLocation.hide();
+      }
+    }
   },
 
   updateExportMenu: function(coords, speciesNumber, imageNumber) {

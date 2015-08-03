@@ -225,7 +225,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       } else {
         panel.toggleContent($(this), duration);
         if (panel.elLk[this.rel] && $(this).hasClass('closed')) {
-          window.location.hash = panel.elLk[this.rel][0].id;
+          if (panel.elLk[this.rel][0].id) {
+            window.location.hash = panel.elLk[this.rel][0].id;
+          }
         }
       }
       
@@ -251,9 +253,10 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   toggleContent: function (el, duration) {
-    var rel     = el.attr('rel');
-    var toggle  = duration ? 'slideToggle' : 'toggle';
-    
+    var rel       = el.attr('rel');
+    var toggle    = duration ? 'slideToggle' : 'toggle';
+    var link_html = el.html();
+ 
     if (!rel) {
       el.toggleClass('open closed').siblings('.toggleable')[toggle](duration);
     } else {
@@ -268,7 +271,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           el.siblings('.toggleable')[toggle](duration);
         }
       }
-      
+
+      if (link_html.match(/Show/) && el.hasClass("toggle_link")) {
+        el.html("Hide");
+      } else if (link_html.match(/Hide/) && el.hasClass("toggle_link")) {
+        el.html("Show");
+      }
+            
       if (el.hasClass('set_cookie')) {
         Ensembl.cookie.set('toggle_' + rel, el.hasClass('open') ? 'closed' : 'open');
       }

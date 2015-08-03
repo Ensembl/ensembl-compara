@@ -22,7 +22,7 @@ package EnsEMBL::Draw::GlyphSet::marker;
 
 use strict;
 
-use EnsEMBL::Draw::Style::Blocks;
+use EnsEMBL::Draw::Style::Feature;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
@@ -50,7 +50,7 @@ sub render_normal {
   my $features       = $self->features($logic_name);
 
   my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Blocks->new($config, $features);
+  my $style  = EnsEMBL::Draw::Style::Feature->new($config, $features);
   $self->push($style->create_glyphs);
 
 }

@@ -297,6 +297,13 @@ sub update_from_url {
 
   my @values = split /,/, $input->param($image_config);
   
+  ## Hack to use a more user-friendly URL for trackhub attachment
+  if ($input->param('trackhub') && $image_config eq 'contigviewbottom') {
+    push @values, 'url:'.$input->param('trackhub');
+    $input->param('format', 'DATAHUB');
+    $input->delete('trackhub'); 
+  }
+
   $hub->get_imageconfig($image_config)->update_from_url(@values) if @values;
   
   $session->store;
@@ -357,7 +364,8 @@ sub add_form_element {
     if ($element->{'value'} eq 'off') {
       $element->{'value'} = 'on';
     }
-    $element->{'selected'} = $self->get($element->{'name'}) eq 'off' ? 0 : 1;
+    my $value = $self->get($element->{'name'});
+    $element->{'selected'} = ( $value eq 'off' || $value eq 'no') ? 0 : 1;
   } elsif (!exists $element->{'value'}) {
     if ($element->{'multiple'}) {
       my @value = $self->get($element->{'name'});

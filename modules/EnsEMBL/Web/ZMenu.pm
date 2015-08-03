@@ -187,6 +187,14 @@ sub delete_entry_by_type {
   }
 }
 
+sub helptip {
+  ## Returns a dotted underlined element with given text and hover helptip
+  ## @param Display html
+  ## @param Tip html
+  my ($self, $display_html, $tip_html) = @_;
+  return $tip_html ? sprintf('<span class="ht _ht"><span class="_ht_tip hidden">%s</span>%s</span>', encode_entities($tip_html), $display_html) : $display_html;
+}
+
 sub glossary_helptip {
   ## Creates a dotted underlined element that has a mouseover glossary helptip (helptip text fetched from glossary table of help db)
   ## @param Display html
@@ -196,7 +204,7 @@ sub glossary_helptip {
   $entry  ||= $display_html;
   $entry    = $self->hub->glossary_lookup->{$entry} // '';
 
-  return $entry ? sprintf('<span class="ht _ht"><span class="_ht_tip hidden">%s</span>%s</span>', encode_entities($entry), $display_html) : $display_html;
+  return $self->helptip($display_html, $entry);
 }
 
 # Build and print the JSON response

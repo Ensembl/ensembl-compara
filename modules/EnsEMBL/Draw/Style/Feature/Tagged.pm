@@ -16,8 +16,13 @@ limitations under the License.
 
 =cut
 
-package Sanger::Graphics::Glyph::Rect;
-use strict;
-use base qw(Sanger::Graphics::Glyph);
+package EnsEMBL::Draw::Style::Feature::Tagged;
 
-1;
+=pod
+Renders a track as a series of simple rectangular blocks
+with 'tags' - triangular
+
+=cut
+
+use parent qw(EnsEMBL::Draw::Style::Feature);
+

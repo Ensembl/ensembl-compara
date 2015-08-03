@@ -22,7 +22,7 @@ package EnsEMBL::Draw::GlyphSet::simple_features;
 
 use strict;
 
-use EnsEMBL::Draw::Style::Blocks;
+use EnsEMBL::Draw::Style::Feature;
 
 use parent qw(EnsEMBL::Draw::GlyphSet::Simple);
 
@@ -71,7 +71,7 @@ sub render_normal {
   $self->{'my_config'}->set('bumped', 1);
 
   my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Blocks->new($config, $features);
+  my $style  = EnsEMBL::Draw::Style::Feature->new($config, $features);
   $self->push($style->create_glyphs);
 }
 

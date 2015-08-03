@@ -88,6 +88,7 @@ sub configure {
   ##  - multiple        Flag for multiple attribute in <select>
   ##  - maxlength       Maxlength attribute for <input>
   ##  - max             Allowed maximum value in case of integers
+  ##  - default         Default value that gets added by JS if the user leaves this element empty (in case of String input - See String element)
   ##  - checked         Checked attribute (only for Checkbox or DASCheckBox) - (For Checklist - see 'value' key)
   ##  - das             DAS object (only for DASCheckBox)
   warn "Web::Form::Element::configure needs to be overridden in the child class";

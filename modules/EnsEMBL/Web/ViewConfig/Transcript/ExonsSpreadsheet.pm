@@ -53,9 +53,10 @@ sub form_fields {
   my $fields = {};
 
   $markup_options->{'flanking'} = {
-    type  => 'NonNegInt',
-    label => 'Flanking sequence at either end of transcript',
-    name  => 'flanking'
+    type    => 'NonNegInt',
+    default => '0',
+    label   => 'Flanking sequence at either end of transcript',
+    name    => 'flanking'
   };
   
   $markup_options->{'sscon'} = {

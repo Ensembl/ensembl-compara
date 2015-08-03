@@ -40,7 +40,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.relatedEl  = data.relatedEl;
     this.areaCoords = $.extend({}, data.area);
     this.location   = 0;
-    this.helptips   = false;
     
     if (area.klass.das) {
       this.das       = area.klass.group ? 'group' : area.klass.pseudogroup ? 'pseudogroup' : 'feature';
@@ -88,6 +87,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.el.on('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
     }).on('click', 'a.location_change', function () {
+
+      if (!window.location.pathname.match(/\/Location\/View(\/|$)/)) {
+        return true;
+      }
+
       var locationMatch = this.href.match(Ensembl.locationMatch);
       
       if (locationMatch) {
@@ -99,6 +103,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         
         return false;
       }
+    }).on('click', 'a._location_highlight', function () {
+      Ensembl.highlightLocation(this.href);
+
+      panel.hide();
+
+      return false;
     });
     
     $('.close', this.el).on('click', function () { 
@@ -388,6 +398,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
           menu = [ '<a class="' + cls + '" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>' ];
         }
       }
+
+      menu.unshift('<a class="_location_highlight" href="' + Ensembl.updateURL({hlr: this.chr + ':' + start + '-' + end}, window.location.href) + '">Highlight region (' + (end - start + 1) + ' bp)</a>');
+
     } else { // Point select
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);
       
@@ -564,10 +577,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.relatedEl.addClass('highlight');
     }
 
-    if (!this.helptips && this.elLk.container.html()) {
-      this.elLk.container.find('._ht').helptip();
-      this.helptips = true;
-    }
+    // enable helptips
+    this.elLk.container.find('._ht').helptip();
+
     // Hover ZMenus can be closed before they load!
     if(this.el.hasClass('closed')) {
       this.hide();

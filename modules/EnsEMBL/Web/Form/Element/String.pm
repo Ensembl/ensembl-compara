@@ -43,6 +43,7 @@ sub configure {
 
   $self->set_attribute($_, $params->{$_}) for grep exists $params->{$_}, qw(id name value size class maxlength style);
   $self->set_attribute('class', [$self->VALIDATION_CLASS, $params->{'required'} ? $self->CSS_CLASS_REQUIRED : $self->CSS_CLASS_OPTIONAL]);
+  $self->set_attribute('class', 'default_'.$params->{'default'}) if exists $params->{'default'};
 
   $self->$_(1) for grep $params->{$_}, qw(disabled readonly);
 

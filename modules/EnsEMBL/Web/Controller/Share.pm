@@ -118,7 +118,7 @@ sub create {
   my $function     = $referer->{'ENSEMBL_FUNCTION'};
   my @view_configs = $configuration ? map { $hub->get_viewconfig(@$_) || () } @{$configuration->new_for_components($hub, $action, $function)} : $hub->get_viewconfig($hub->function);
   my $custom_data  = uri_unescape($hub->param('custom_data'));
-  my $species      = from_json($hub->param('species'));
+  my $species      = from_json($hub->param('species') || "{}");
   my $species_defs = $hub->species_defs;
   my $version      = $species_defs->ENSEMBL_VERSION;
   my $hash         = $hub->param('hash');
