@@ -121,9 +121,7 @@ sub upload {
   my $no_attach = $type eq 'no_attach' ? 1 : 0;
 
   ## Has the user specified a format?
-  if ($f_param) {
-    $format = $f_param;
-  } 
+  $format = $f_param || $args{'format'};
 
   ## Get the compression algorithm, based on the file extension
   ## and, if necessary, try to guess the format from the extension
@@ -151,8 +149,9 @@ sub upload {
       }
     }
   }
- 
-  $args{'timestamp_name'}  = 1;
+
+  $args{'format'}         = $format; 
+  $args{'timestamp_name'} = 1;
 
   if ($method eq 'url') {
     $args{'file'}          = $hub->param($method);
