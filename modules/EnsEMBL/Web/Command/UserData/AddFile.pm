@@ -44,7 +44,7 @@ sub process {
   }
   else {
     ## Upload the data
-      $url_params = $self->upload($method);
+      $url_params = $self->upload($method, $format);
       $url_params->{ __clear} = 1;
       $url_params->{'action'} = 'UploadFeedback';
   }
@@ -72,14 +72,14 @@ sub attach_data {
   }
 
   ## For datahubs, pass assembly info so we can check if there's suitable data
-  my $assemblies = $species_defs->assembly_lookup;
+  my $assemblies = $hub->species_defs->assembly_lookup;
 
   my ($url, $error, $options) = $format->check_data($assemblies);
 
   if ($error) {
     $url_params->{'restart'} = 1;
 
-    $session->add_data(
+    $hub->session->add_data(
       type     => 'message',
       code     => 'AttachURL',
       message  => $error,
@@ -89,7 +89,7 @@ sub attach_data {
   else {
     ## This next bit is a hack - we need to implement userdata configuration properly! 
     my $extra_config_page   = $format->extra_config_page;
-    my $name                = $hub->param('name') || $options->{'name'} || $filename;
+    my $name                = $hub->param('name') || $options->{'name'} || $format->name;
     $url_params->{'action'} = $extra_config_page || 'RemoteFeedback';
 
     delete $options->{'name'};
@@ -123,9 +123,9 @@ sub attach_data {
             $flag_info->{'assembly'}{'other_new'} = 1;
           }
           unless ($is_old) {
-            my $data = $session->add_data(
+            my $data = $hub->session->add_data(
               type        => 'url',
-              code        => join('_', md5_hex($name . $current_species . $assembly . $url), $session->session_id),
+              code        => join('_', md5_hex($name . $current_species . $assembly . $url), $hub->session->session_id),
               url         => $url,
               name        => $name,
               format      => $format->name,
@@ -136,13 +136,13 @@ sub attach_data {
               %$options,
             );
 
-            $session->configure_user_data('url', $data);
+            $hub->session->configure_user_data('url', $data);
 
             if ($current_species eq $hub->param('species')) {
               $code = $data->{'code'};
             }
 
-            $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
+            $self->object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
           }
         }
       }
