@@ -84,6 +84,7 @@ sub add_auto_format_dropdown {
       'name'    => 'format',
       'label'   => 'Data format',
       'values'  => $sorted_values,
+      'required' => 1,
       'class'   => 'hide',
       'notes'   => '<a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>',
     });
