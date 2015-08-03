@@ -85,7 +85,7 @@ sub new {
   ## Note that we always store format internally as lowercase
   my $self = {
               'hub'             => $args{'hub'},
-              'format'          => lc($args{'format'}),
+              'format'          => $args{'format'},
               'absolute'        => $absolute,
               'source'          => $source,
               'base_dir'        => $args{'base_dir'} || 'user',
@@ -150,6 +150,8 @@ sub init {
     ## Creating a new file from form input
     $self->{'content'} = $args{'content'};
   }
+
+  $self->{'format'} ||= $args{'format'};
 
   ## Prepare to write new local file
   ## N.B. We need to allow for user-supplied names with and without extensions
@@ -396,7 +398,7 @@ sub set_format {
 sub get_format {
 ### a
   my $self = shift;
-  return $self->{'format'};
+  return lc($self->{'format'});
 }
 
 sub set_timestamp {
