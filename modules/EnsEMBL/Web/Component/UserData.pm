@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Component::UserData;
 
+use EnsEMBL::Web::Constants;
+
 use base qw(EnsEMBL::Web::Component);
 
 use strict;
@@ -62,24 +64,26 @@ sub add_file_format_dropdown {
 sub add_auto_format_dropdown {
   my ($self, $form) = @_;
 
-  my $sd              = $self->hub->species_defs;
-  my $format_info     = $sd->multi_val('DATA_FORMAT_INFO');
-  my @upload_formats  = @{$sd->multi_val('UPLOAD_FILE_FORMATS')||[]};
-  my @remote_formats  = @{$sd->multi_val('REMOTE_FILE_FORMATS')||[]};
-  my %format_type     = (map({$_ => 'remote'} @remote_formats), map({$_ => 'upload'} @upload_formats));
+  my $format_info     = EnsEMBL::Web::Constants::USERDATA_FORMATS; 
+  my $sorted_values   = [{'caption' => '-- Choose --', 'value' => ''}];
+  my @format_values;
 
-  my $values = [
-                {'caption' => '-- Choose --', 'value' => ''},
-                map { 'value'   => uc($_), 
-                      'caption' => $format_info->{$_}{'label'}, 
-                      'class'   => "_format_$format_type{$_}" },
-                sort (@remote_formats, @upload_formats)
-              ];
+  while (my ($format, $info) = each (%$format_info)) {
+    my $class;
+    if ($info->{'limit'}) {
+      my $limit = $info->{'limit'};
+      $class = "_format_$limit";
+    }
+    push @format_values, {'value' => uc($format), 'caption' => $info->{'label'}, 'class' => $class ? $class : ''};
+  }
+
+  push @$sorted_values, sort {$a->{'value'} cmp $b->{'value'}} @format_values;
+
   $form->add_field({
       'type'    => 'dropdown',
       'name'    => 'format',
       'label'   => 'Data format',
-      'values'  => $values,
+      'values'  => $sorted_values,
       'class'   => 'hide',
       'notes'   => '<a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>',
     });
