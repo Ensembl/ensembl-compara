@@ -35,16 +35,19 @@ sub new {
   ### Instantiates a parser for the appropriate file type 
   ### and opens the file for reading
   ### @param file EnsEMBL::Web::File object
-  my ($class, $parser, $file, $format) = @_;
+  my ($class, $self) = @_;
 
-  my $greyscale = [qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000)]; 
+  $self->{'greyscale'} = [qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000)]; 
 
-  my $self = { 
-                parser    => $parser, 
-                file      => $file, 
-                format    => $format,
-                greyscale => $greyscale, 
-            };
+  ## 'Nearest' should be relative to the size of the genome
+  my $scale = 1;
+  if ($self->{'hub'}) {
+    my $species = $self->{'species'} || $self->hub->species;
+    $scale = $hub->species_defs->get_config($species, 'ENSEMBL_GENOME_SIZE');
+    $scale = 1 if $scale = 0;
+  }
+  $self->{'nearest_window_size'} = 100000 * $scale; 
+
   bless $self, $class;  
   return $self;
 }
@@ -52,7 +55,7 @@ sub new {
 sub open {
   ## Factory method - creates a wrapper of the appropriate type
   ## based on the format of the file given
-  my $file = shift;
+  my ($file, %args) = @_;
 
   my %format_to_class = Bio::EnsEMBL::IO::Utils::format_to_class;
   my $subclass = $format_to_class{$file->get_format};
@@ -75,7 +78,12 @@ sub open {
   }
 
   if (dynamic_use($class, 1)) {
-    $class->new($parser, $file, $format);  
+    $class->new({
+                'parser' => $parser, 
+                'file'   => $file, 
+                'format' => $format,
+                %args,
+                });  
   }
   else {
     warn ">>> NO SUCH MODULE $class";
