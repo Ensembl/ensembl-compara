@@ -35,11 +35,16 @@ sub new {
   ### Instantiates a parser for the appropriate file type 
   ### and opens the file for reading
   ### @param file EnsEMBL::Web::File object
-  my ($class, $parser, $file) = @_;
+  my ($class, $parser, $file, $format) = @_;
 
   my $greyscale = [qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000)]; 
 
-  my $self = { parser => $parser, file => $file, greyscale => $greyscale };
+  my $self = { 
+                parser    => $parser, 
+                file      => $file, 
+                format    => $format,
+                greyscale => $greyscale, 
+            };
   bless $self, $class;  
   return $self;
 }
@@ -70,7 +75,7 @@ sub open {
   }
 
   if (dynamic_use($class, 1)) {
-    $class->new($parser, $file);  
+    $class->new($parser, $file, $format);  
   }
   else {
     warn ">>> NO SUCH MODULE $class";
@@ -87,6 +92,12 @@ sub file {
   ### a
   my $self = shift;
   return $self->{'file'};
+}
+
+sub format {
+  ### a
+  my $self = shift;
+  return $self->{'format'};
 }
 
 sub convert_to_gradient {
@@ -195,7 +206,7 @@ sub validate {
   my $self = shift;
   my $valid = $self->parser->validate;
 
-  return $valid ? undef : 'File did not validate as given format.';
+  return $valid ? undef : 'File did not validate as format '.$self->format;
 }
 
 sub coords {
