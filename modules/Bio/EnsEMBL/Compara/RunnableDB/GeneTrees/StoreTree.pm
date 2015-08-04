@@ -547,14 +547,21 @@ sub call_hcs_all_trees {
     my $alt_root_ids = $self->compara_dba->dbc->db_handle->selectcol_arrayref('SELECT root_id FROM gene_tree_root WHERE ref_root_id = ?', undef, $self->param('gene_tree_id'));
     foreach my $root_id ($ini_gene_tree_id, @$alt_root_ids) {
         $self->param('gene_tree_id', $root_id);
-        my @test_groups = ('tree_structure', 'tree_attributes');
+        my @test_groups;
         if ($root_id == $ini_gene_tree_id) {
             if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
                 @test_groups = ('alignment');
             } else {
-                push @test_groups, 'alignment';
+                if ($self->param('read_tags')) {
+                    @test_groups = ('alignment');
+                } else {
+                    @test_groups = ('alignment', 'tree_structure', 'tree_attributes');
+                }
             }
+        } else {
+                @test_groups = ('tree_structure', 'tree_attributes');
         }
+
         foreach my $test_name (@test_groups) {
             $self->param('tests', $Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::config->{$test_name}->{tests});
             $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_validate_tests();
