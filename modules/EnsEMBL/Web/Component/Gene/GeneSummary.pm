@@ -157,7 +157,7 @@ sub content {
           my @old_ids;
           my $predecessors = $object->get_predecessors();
           foreach my $pred (@$predecessors) {
-            if ($pred->release eq $alt_release) {
+            if ($pred->release <= $alt_release) {
               push @old_ids, $pred->stable_id();
             }
           }
