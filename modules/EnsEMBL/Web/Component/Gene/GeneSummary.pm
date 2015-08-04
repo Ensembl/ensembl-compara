@@ -34,6 +34,7 @@ sub content {
   my $self          = shift;
   my $hub           = $self->hub;
   my $object        = $self->object;
+  my $gene          = $object->gene;
   my $species_defs  = $hub->species_defs;
   my $table         = $self->new_twocol;
   my $site_type     = $species_defs->ENSEMBL_SITETYPE;
@@ -41,10 +42,16 @@ sub content {
   my @Uniprot       = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
   my $db            = $object->get_db;
   my $alt_genes     = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
-  my @RefSeqMatches = @{$object->gene->get_all_Attributes('refseq_compare')};
-  my $display_link  = $self->get_gene_display_link;
+  my @RefSeqMatches = @{$gene->get_all_Attributes('refseq_compare')};
+  my $display_xref  = $gene->display_xref;
+  my ($link_url)    = $display_xref ? $self->get_gene_display_link($gene, $display_xref) : ();
 
-  $table->add_row('Name', qq|<p>$display_link->{'link'} ($display_link->{'dbname'})</p>|) if $display_link;
+  if ($display_xref) {
+    $table->add_row('Name', $link_url
+      ? sprintf('<p><a href="%s" class="constant">%s</a> (%s)</p>', $link_url, $display_xref->display_id, $display_xref->db_display_name)
+      : sprintf('<p>%s (%s)</p>', $display_xref->display_id, $display_xref->db_display_name)
+    );
+  }
 
   # add CCDS info
   if (scalar @CCDS) {
