@@ -40,7 +40,7 @@ STRUCTURE
 
 Every Bio::EnsEMBL::Compara::AlignSlice contains a set of Bio::EnsEMBL::Compara::AlignSlice::Slice
 objects, at least one by species involved in the alignments. For instance, if the reference Slice is a
-human slice and the set of alignments corresponds to human-mouse BLASTZ_NET alignments, there will be at
+human slice and the set of alignments corresponds to human-mouse LASTZ_NET alignments, there will be at
 least one Bio::EnsEMBL::Compara::AlignSlice::Slice for human and at least another one for mouse. The main
 Bio::EnsEMBL::Compara::AlignSlice::Slice for the reference species will contain a single genomic sequence
 whilst the other Bio::EnsEMBL::Compara::AlignSlice::Slice objects might be made of several pieces of

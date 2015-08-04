@@ -41,7 +41,7 @@ duplications). The build_tree_string methods numbers the sequences in order and 
 order of the dnafrag_regions array accordingly. Last, the dumpFasta() method dumps the sequences
 according to the tree_string order.
 
-This module can be used to include low coverage 2X genomes in the alignment. To do this, the pairwise BLASTZ_NET alignments between each 2X genome and a reference species (eg human) are retrieved from specified databases. 
+This module can be used to include low coverage 2X genomes in the alignment. To do this, the pairwise LASTZ_NET alignments between each 2X genome and a reference species (eg human) are retrieved from specified databases. 
 
 Ortheus also generates a set of aligned ancestral sequences. This module stores them in a core-like database.
 
@@ -77,11 +77,11 @@ FIXME
 
 =item * pairwise_analysis_data_id (int)
 
-Optional. A list of database locations and method_link_species_set_id pairs for the 2X geonome BLASTZ_NET alignments. The database locations should be identified using the url format.ie mysql://user:pass\@host:port/db_name.
+Optional. A list of database locations and method_link_species_set_id pairs for the 2X geonome LASTZ_NET alignments. The database locations should be identified using the url format.ie mysql://user:pass\@host:port/db_name.
 
 =item * reference_species 
 
-Optional. The reference species for the 2X genome BLASTZ_NET alignments
+Optional. The reference species for the 2X genome LASTZ_NET alignments
 
 =item * options
 
@@ -1101,7 +1101,7 @@ sub get_DnaFragRegions {
   Arg [1]    : int syteny_region_id
   Arg [2]    : int analysis_data_id
   Description: Creates a fake assembly for each 2X genome by stitching
-               together the BLASTZ_NET alignments found on this synteny_region
+               together the LASTZ_NET alignments found on this synteny_region
                between the reference species and each 2X genome. The list of
                the pairwise database locations and  
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet ids are obtained
@@ -1155,7 +1155,7 @@ sub _load_2XGenomes {
   $self->param('2x_dnafrag_region', []);
   $self->param('ga_frag', []);
 
-  #Find the BLASTZ_NET alignments between the reference species and each
+  #Find the LASTZ_NET alignments between the reference species and each
   #2X genome.
   foreach my $params (@parameters) {
       my $param = eval($params);

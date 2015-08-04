@@ -50,7 +50,7 @@ This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdapto
   my $mlss_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
           "Compara26", "compara", "MethodLinkSpeciesSet");
   my $method_link_species_set = $mlss_adaptor->fetch_by_method_link_type_registry_aliases(
-          "BLASTZ_NET", ["Homo sapiens", "Rattus norvegicus"]);
+          "LASTZ_NET", ["Homo sapiens", "Rattus norvegicus"]);
 
   ## Fetch the align_slice
   my $align_slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor(

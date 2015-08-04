@@ -341,7 +341,7 @@ sub _run_conservation_scores_test {
                   genome_db_ids => array of genome_db_ids
   Example     : $self->_run_pairwise_gabs_test();
   Example     : $self->_run_pairwise_gabs_test("{method_link_species_set_id=>123}");
-  Example     : self->_run_pairwise_gabs_test("{method_link_type=>'BLASTZ_NET', genome_db_ids=>'[1,2]'}");
+  Example     : self->_run_pairwise_gabs_test("{method_link_type=>'LASTZ_NET', genome_db_ids=>'[1,2]'}");
   Description : Tests whether the genomic_align_block and genomic_align tables
                 are not empty, whether there are twice as many genomic_aligns
                 as genomic_align_blocks and whether each genomic_align_block
@@ -438,7 +438,7 @@ sub _run_pairwise_gabs_test {
                   number of genomic_align_blocks in the query and the target
                   databases before being flaged as an error. Default 20.
   Example     : $self->_run_compare_to_previous_db_test("{previous_db_url=>'mysql://anonymous@ensembldb.ensembl.org:3306/ensembl_compara_47', previous_method_link_species_set_id=>123, current_method_link_species_set_id=>123, max_percentage_diff=>20}");
- Example      : $self->_run_compare_to_previous_db_test("{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'BLASTZ_NET\',current_genome_db_ids=>\'[25,22,]\'}")
+ Example      : $self->_run_compare_to_previous_db_test("{previous_db_url=>\'mysql://anonymous\@ensembldb.ensembl.org\',method_link_type=>\'LASTZ_NET\',current_genome_db_ids=>\'[25,22,]\'}")
   Description : Tests whether there are genomic_align_blocks, genomic_aligns
                 and method_link_species_sets in the tables and whether the
                 total number of genomic_align_blocks between 2 databases are
