@@ -25,7 +25,7 @@ Ensembl.Panel.UserData = Ensembl.Panel.extend({
     'bw'  : 'BIGWIG',
     'gff' : 'GFF',
     'gtf' : 'GTF',
-    'psl' : 'PSF',
+    'psl' : 'PSL',
     'vcf' : 'VCF',
     'vep' : 'VEP',
     'wig' : 'WIG'
