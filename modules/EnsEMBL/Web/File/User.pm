@@ -172,8 +172,7 @@ sub upload {
 
   ## Now we know where the data is coming from, initialise the object and read the data
   $self->init(%args);
-  my $iow     = EnsEMBL::Web::IOWrapper::open($self);
-  my $result  = $iow->validate;
+  my $result = $self->read;
 
   ## Add upload to session
   if ($result->{'error'}) {
@@ -183,20 +182,32 @@ sub upload {
     my $response = $self->write($result->{'content'});
 
     if ($response->{'success'}) {
-      my $session = $hub->session;
-      my $md5     = $self->md5($result->{'content'});
-      my $code    = join '_', $md5, $session->session_id;
-      my $format  = $hub->param('format');
-      $format     = 'BED' if $format =~ /bedgraph/i;
-      my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
 
-      $inputs{'format'}    = $format if $format;
-      my $species = $hub->param('species') || $hub->species;
+      ## Now validate it using the appropriate parser - 
+      ## note that we have to do this after upload, otherwise we can't validate pasted data
+      my $iow = EnsEMBL::Web::IOWrapper::open($self);
+      $error = $iow->validate;
 
-      ## Attach data species to session
-      ## N.B. Use 'write' locations, since uploads are read from the
-      ## system's CGI directory
-      my $data = $session->add_data(
+      if ($error) {
+        ## If something went wrong, delete the upload
+        my $deletion = $self->delete;
+        warn '!!! ERROR DELETING UPLOAD: '.$deletion->{'error'}[0] if $deletion->{'error'};
+      }
+      else {
+        my $session = $hub->session;
+        my $md5     = $self->md5($result->{'content'});
+        my $code    = join '_', $md5, $session->session_id;
+        my $format  = $hub->param('format');
+        $format     = 'BED' if $format =~ /bedgraph/i;
+        my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
+
+        $inputs{'format'}    = $format if $format;
+        my $species = $hub->param('species') || $hub->species;
+
+        ## Attach data species to session
+        ## N.B. Use 'write' locations, since uploads are read from the
+        ## system's CGI directory
+        my $data = $session->add_data(
                                     type      => 'upload',
                                     file      => $self->write_location,
                                     filesize  => length($result->{'content'}),
@@ -211,9 +222,10 @@ sub upload {
                                     %inputs
                                     );
 
-      $session->configure_user_data('upload', $data);
-      ## Store the session code so we can access it later
-      $self->{'code'} = $code;
+        $session->configure_user_data('upload', $data);
+        ## Store the session code so we can access it later
+        $self->{'code'} = $code;
+      }
     }
     else {
       $error = $response->{'error'}[0];
