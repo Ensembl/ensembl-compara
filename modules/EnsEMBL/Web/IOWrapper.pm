@@ -65,7 +65,8 @@ sub open {
     }
   }
   else {
-    $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_read_path);
+    ## Open file from where we wrote to, otherwise it can cause issues
+    $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
   }
 
   if (dynamic_use($class, 1)) {
@@ -193,15 +194,8 @@ sub validate {
   ### Wrapper around the parser's validation method
   my $self = shift;
   my $valid = $self->parser->validate;
-  my $result;
 
-  if ($valid) {
-    $result = $self->file->read;
-  }
-  else {
-    $result->{'error'} = 'File did not validate as given format. Please check your data.';
-  }
-  return $result;
+  return $valid ? undef : 'File did not validate as given format.';
 }
 
 sub coords {
