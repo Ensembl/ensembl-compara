@@ -70,13 +70,13 @@ sub process {
 
   if ($url) {
     my $format_package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
-    my $trackline      = $self->hub->param('trackline');
+    my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $self->hub->param('trackline'));
     my $format;
     
     if ($self->dynamic_use($format_package)) {
-      $format = $format_package->new($self->hub, $format_name, $url, $trackline);
+      $format = $format_package->new(%args);
     } else {
-      $format = EnsEMBL::Web::File::AttachedFormat->new($self->hub, $format_name, $url, $trackline);
+      $format = EnsEMBL::Web::File::AttachedFormat->new(%args);
     }
    
     ## For datahubs, pass assembly info so we can check if there's suitable data

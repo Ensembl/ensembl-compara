@@ -45,7 +45,7 @@ sub process {
   $params{'r'}        = $sample_links->{'LOCATION_PARAM'} if $sample_links;
 
   if ($url) {
-    my $format = EnsEMBL::Web::File::AttachedFormat::DATAHUB->new($self->hub, $url);
+    my $format = EnsEMBL::Web::File::AttachedFormat::DATAHUB->new('hub' => $self->hub, 'url' => $url);
    
     ## pass assembly info so we can check if there's suitable data
     my $assemblies = $species_defs->assembly_lookup;

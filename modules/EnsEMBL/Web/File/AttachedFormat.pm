@@ -27,14 +27,9 @@ use Text::ParseWords;
 use EnsEMBL::Web::File::Utils::URL qw(get_filesize);
 
 sub new {
-  my ($proto,$hub,$format,$url,$trackline) = @_;
+  my ($proto, %args) = @_;
   my $class = ref($proto) || $proto;
-  my $self = {
-    format => $format,
-    hub => $hub,
-    url => $url,
-    trackline => $trackline,
-  };
+  my $self = \%args;
   bless $self,$class;
   return $self;
 }
