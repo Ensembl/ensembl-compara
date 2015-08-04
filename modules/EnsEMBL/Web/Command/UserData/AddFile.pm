@@ -24,6 +24,9 @@ use strict;
 
 use List::Util qw(first);
 use HTML::Entities qw(encode_entities);
+use Digest::MD5 qw(md5_hex);
+
+use EnsEMBL::Web::File::AttachedFormat;
 
 use base qw(EnsEMBL::Web::Command::UserData);
 
@@ -40,7 +43,7 @@ sub process {
 
   if ($method eq 'text' && $hub->param('text') =~ /^(http|ftp)/) {
     ## Attach the file from the remote URL
-    $url_params = $self->attach_data($hub->param('url'), $format); 
+    $url_params = $self->attach_data($hub->param('text'), $format); 
   }
   else {
     ## Upload the data
@@ -52,6 +55,8 @@ sub process {
   if ($url_params->{'restart'}) {
     $url_params->{'action'} = 'SelectFile';
   }
+  my $redirect = $self->hub->url($url_params);
+  warn ">>> REDIRECT TO $redirect"; 
 
   return $self->ajax_redirect($self->hub->url($url_params));
 }
@@ -60,7 +65,7 @@ sub attach_data {
   my ($self, $url, $format_name) = @_;
   my $hub     = $self->hub;
 
-  my $format_package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
+  my $format_package = 'EnsEMBL::Web::File::AttachedFormat::'.uc($format_name);
   my $trackline      = $self->hub->param('trackline');
   my $url_params     = {};
   my $format;
@@ -72,9 +77,9 @@ sub attach_data {
   }
 
   ## For datahubs, pass assembly info so we can check if there's suitable data
-  my $assemblies = $hub->species_defs->assembly_lookup;
+  my $ensembl_assemblies = $hub->species_defs->assembly_lookup;
 
-  my ($url, $error, $options) = $format->check_data($assemblies);
+  my ($url, $error, $options) = $format->check_data($ensembl_assemblies);
 
   if ($error) {
     $url_params->{'restart'} = 1;
@@ -95,13 +100,12 @@ sub attach_data {
     delete $options->{'name'};
 
     my $assemblies = $options->{'assemblies'} || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
-    my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
     my ($flag_info, $code);
 
     foreach (@$assemblies) {
 
-      my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies{$_}||[]};
+      my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies->{$_}||[]};
 
       ## This is a bit messy, but there are so many permutations!
       if ($assembly) {
@@ -122,28 +126,28 @@ sub attach_data {
           else {
             $flag_info->{'assembly'}{'other_new'} = 1;
           }
-          unless ($is_old) {
-            my $data = $hub->session->add_data(
-              type        => 'url',
-              code        => join('_', md5_hex($name . $current_species . $assembly . $url), $hub->session->session_id),
-              url         => $url,
-              name        => $name,
-              format      => $format->name,
-              style       => $format->trackline,
-              species     => $current_species,
-              assembly    => $assembly,
-              timestamp   => time,
-              %$options,
-            );
+        }
+        unless ($is_old) {
+          my $data = $hub->session->add_data(
+            type        => 'url',
+            code        => join('_', md5_hex($name . $current_species . $assembly . $url), $hub->session->session_id),
+            url         => $url,
+            name        => $name,
+            format      => $format->name,
+            style       => $format->trackline,
+            species     => $current_species,
+            assembly    => $assembly,
+            timestamp   => time,
+            %$options,
+          );
 
-            $hub->session->configure_user_data('url', $data);
+          $hub->session->configure_user_data('url', $data);
 
-            if ($current_species eq $hub->param('species')) {
-              $code = $data->{'code'};
-            }
-
-            $self->object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
+          if ($current_species eq $hub->param('species')) {
+            $code = $data->{'code'};
           }
+
+          $self->object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
         }
       }
       ## For datahubs, work out what feedback we need to give the user
@@ -160,7 +164,6 @@ sub attach_data {
       }
 
       $url_params->{'format'}         = $format->name;
-      $url_params->{'type'}           = 'url';
       $url_params->{'name'}           = $name;
       $url_params->{'species'}        = $hub->param('species');
       $url_params->{'species_flag'}   = $species_flag;
