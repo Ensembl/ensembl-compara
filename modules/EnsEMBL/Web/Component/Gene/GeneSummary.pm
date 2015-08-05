@@ -166,7 +166,7 @@ sub content {
           my (%seen, @ok_ids);
           foreach (@old_ids) {
             push @ok_ids, $_ unless $seen{$_};
-            $seen{$_};
+            $seen{$_} = 1;
           }
 
           if (@ok_ids) {
