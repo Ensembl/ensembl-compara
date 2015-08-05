@@ -116,10 +116,6 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Region Comparison' }
   ));
   
-  $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',
-    [qw( gen_alignment EnsEMBL::Web::Component::Location::ComparaGenomicAlignment )]
-  ));
-  
   $align_menu->append($self->create_node('Synteny', 'Synteny',
     [qw(
       summary  EnsEMBL::Web::Component::Location::Summary
