@@ -169,9 +169,16 @@ sub content {
             }
           }
 
-          if (@old_ids) {
+          ## Dedupe IDs
+          my (%seen, @ok_ids);
+          foreach (@old_ids) {
+            push @ok_ids, $_ unless $seen{$_};
+            $seen{$_} = 1;
+          }
+
+          if (@ok_ids) {
             $txt .= qq(<p>View this locus in the $alt_assembly archive: );
-            foreach my $id (@old_ids) {
+            foreach my $id (@ok_ids) {
               $txt .= sprintf(qq(<a href="%s" rel="external">%s</a> ),
                           $url.$hub->species_path."/Gene/Summary?g=".$id,$id);
             }
