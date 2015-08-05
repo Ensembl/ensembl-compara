@@ -137,7 +137,7 @@ sub process {
     $url_params->{'__clear'}        = 1;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
-    push @core_params, qw(export_action data_type component align);
+    push @core_params, qw(export_action data_type data_action component align);
     push @core_params, $self->config_params; 
     foreach my $species (grep { /species_/ } $hub->param) {
       push @core_params, $species;
