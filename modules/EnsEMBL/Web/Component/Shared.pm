@@ -27,6 +27,7 @@ use base qw(EnsEMBL::Web::Component);
 
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
+use List::Util      qw(first);
 use List::MoreUtils qw(uniq first_index);
 
 sub coltab {
@@ -69,7 +70,7 @@ sub transcript_table {
 
     my ($url, $xref) = $self->get_gene_display_link($object->gene, $description);
 
-    if ($xref && $xref->db_display_name !~ /^Projected/) {
+    if ($xref) {
       $xref        = $xref->primary_id;
       $description =~ s|$xref|<a href="$url" class="constant">$xref</a>|;
     }
@@ -568,11 +569,11 @@ sub get_gene_display_link {
   my $hub = $self->hub;
 
   if ($xref && !ref $xref) { # description string
-    my $external_id = { map { split ':', $_, 2 } split ';', $xref =~ s/^.+\[|\]$//gr }->{'Acc'};
-    ($xref) = grep $_->primary_id eq $external_id, @{$gene->get_all_DBLinks};
+    my $details = { map { split ':', $_, 2 } split ';', $xref =~ s/^.+\[|\]$//gr };
+    $xref = first { $_->primary_id eq $details->{'Acc'} && $_->db_display_name eq $details->{'Source'} } @{$gene->get_all_DBLinks};
   }
 
-  return unless $xref;
+  return unless $xref && $xref->info_type ne 'PROJECTION';
 
   my $url = $hub->get_ExtURL($xref->dbname, $xref->primary_id);
 
