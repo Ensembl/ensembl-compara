@@ -95,7 +95,7 @@ sub handle_download {
         'gz'    => 'application/x-gzip',
         'zip'   => 'application/zip',
   );
-  my $mime_type = $mime_types{$compression} || $mime_types{$format} || 'text/plain';
+  my $mime_type = $mime_types{$compression} || $format && $mime_types{$format} || 'text/plain';
 
   my %params = (hub => $hub, file => $path);
   my $file = EnsEMBL::Web::File::User->new(%params);
