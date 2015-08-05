@@ -53,12 +53,19 @@ my $builder = new EnsEMBL::Web::Builder({ hub => $hub });
 my (@object_types, %old_links);
 
 while (my ($k, $v) = each (%{$hub->species_defs->OBJECT_TO_SCRIPT})) {
-  push @object_types, $k if $v eq 'Page' && $k ne 'Info';
+  push @object_types, $k if $v eq 'Page' && $k ne 'Tools' && $k ne 'Search';
 } 
 
-while (my ($k, $v) = each (%EnsEMBL::Web::OldLinks::mapping)) {
-  $old_links{$_->{'type'}}{$_->{'action'}}++ for @$v;
+my %mappings;
+
+## Convert real URLs into node keys for comparison matching
+while (my ($k, $v) = each (%EnsEMBL::Web::OldLinks::archive_mapping)) {
+  my ($type, $action, $function) = split('/', $k);
+  $action .= '_'.$function if $function;
+  $mappings{$type.'/'.$action} = 1;
 }
+
+my $errors;
 
 foreach my $type (@object_types) {
   my $conf_module = "EnsEMBL::Web::Configuration::$type";
@@ -85,30 +92,20 @@ foreach my $type (@object_types) {
       my $action = $node->id;
       
       next unless $node->data->{'components'};
-      next if $node->data->{'no_menu_entry'};
       next if $node->data->{'external'};
-      next if $action eq 'Output';
-      next if $old_links{$type}{$action};
+      next if $action eq 'Output' || $action eq 'Unknown';
+
+      my $route = join('/', $type, $action);
       
-      my @a    = split '_', $action;
-      my $i    = scalar @a;
-      my $j    = $#a;
-      my $next = 0;
-       
-      while (--$i) {
-        if ($old_links{$type}{join('_', map $a[$_], 0..$i-1) . join ('/', '', map $a[$_], $i..$j)}) {
-          $next = 1;
-          last;
-        }
+      unless ($mappings{$route}) { 
+        print "!!! NO MAPPING FOR PAGE $route\n";
+        $errors++;
       }
-      
-      warn "!!! NO MAPPING FOR PAGE $type/$action\n" unless $next;
     }
-    
-    warn "\n";
   }
 }
 
+print "\nALL PAGES HAVE BEEN MAPPED!\n" unless $errors;
 
 exit;
 
