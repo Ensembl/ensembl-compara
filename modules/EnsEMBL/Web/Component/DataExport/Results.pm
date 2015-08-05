@@ -55,16 +55,16 @@ sub content {
   my $form      = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => $hub->param('export_action')}), 'method' => 'post'});
   my $fieldset  = $form->add_fieldset;
 
+  my @core_params = keys %{$hub->core_object('parameters')};
+  push @core_params, qw(name format compression data_type data_action component export_action align);
+
+  ## Have to pass species selection back to form, as it's not stored in viewconfig
+  foreach my $species (grep { /species_/ } $hub->param) {
+    push @core_params, $species; 
+  }
+
   foreach ($hub->param) {
     my %field_info = ('name' => $_);
-
-    my @core_params = keys %{$hub->core_object('parameters')};
-    push @core_params, qw(name format compression data_type component export_action align);
-
-    ## Have to pass species selection back to form, as it's not stored in viewconfig
-    foreach my $species (grep { /species_/ } $hub->param) {
-      push @core_params, $species; 
-    }
 
     unless (grep @core_params, $_) {
       $field_info{'name'} .= '_'.$hub->param('format');

@@ -140,6 +140,10 @@ sub create_form {
       'value'   => $hub->param('data_type'),
     },
     {
+      'name'    => 'data_action',
+      'value'   => $hub->param('data_action'),
+    },
+    {
       'name'    => 'component',
       'value'   => $hub->param('component'),
     },
