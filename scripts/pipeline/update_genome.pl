@@ -340,6 +340,7 @@ sub update_dnafrags {
   my $current_verbose = verbose();
   verbose('EXCEPTION');
 
+  my $new_dnafrags_ids = 0;
   foreach my $slice (@$gdb_slices) {
     my $length = $slice->seq_region_length;
     my $name = $slice->seq_region_name;
@@ -356,11 +357,13 @@ sub update_dnafrags {
             -is_reference => $is_reference
         );
     my $dnafrag_id = $dnafrag_adaptor->update($new_dnafrag);
+    $new_dnafrags_ids++ if not exists $old_dnafrags_by_id->{$dnafrag_id};
     delete($old_dnafrags_by_id->{$dnafrag_id});
     throw() if ($old_dnafrags_by_id->{$dnafrag_id});
   }
   verbose($current_verbose);
-  print "Deleting ", scalar(keys %$old_dnafrags_by_id), " former DnaFrags...";
+  print "Inserted $new_dnafrags_ids new DnaFrags.\n";
+  print "Now deleting ", scalar(keys %$old_dnafrags_by_id), " former DnaFrags...";
   foreach my $deprecated_dnafrag_id (keys %$old_dnafrags_by_id) {
     $compara_dba->dbc->do("DELETE FROM dnafrag WHERE dnafrag_id = ".$deprecated_dnafrag_id) ;
   }
