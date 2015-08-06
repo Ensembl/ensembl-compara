@@ -22,6 +22,7 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(looks_like_number);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::ApiVersion;
