@@ -364,12 +364,13 @@ sub do_draw_wiggle {
   $self->{'subtitle_colour'} ||=
     $parameters->{'score_colour'} || $self->my_colour('score') || 'blue';
 
-  # Shift down the lhs label to between the axes
-  if($bottom-$top > 30) {
+  # Shift down the lhs label to between the axes unless the subtitle is within the track
+  if($bottom-$top > 30 && $self->wiggle_subtitle) {
     # luxurious space for centred label
+    # graph is offset down if subtitled
     $self->{'label_y_offset'} =
         ($bottom-$top)/2             # half-way-between
-        + $self->subtitle_height     # graph is offset down if subtitled
+        + $self->subtitle_height     
         - 16;                        # two-line label so centre its centre
   } else {
     # tight, just squeeze it down a little
