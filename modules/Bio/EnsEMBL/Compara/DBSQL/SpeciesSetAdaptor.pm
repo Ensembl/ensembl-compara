@@ -344,14 +344,15 @@ sub fetch_collection_by_name {
     throw('$collection is required') unless $collection;
 
     my $all_ss = $self->fetch_all_by_name("collection-$collection");
+    my @all_current_ss = grep {$_->is_current} @$all_ss;
 
-    if (scalar(@$all_ss) == 0) {
+    if (scalar(@all_current_ss) == 0) {
         warn "cannot find the collection '$collection'\n";
         return undef;
-    } elsif (scalar(@$all_ss) > 1) {
+    } elsif (scalar(@all_current_ss) > 1) {
         die "There are multiple collections '$collection'\n";
     } else {
-        return $all_ss->[0];
+        return $all_current_ss[0];
     }
 }
 
