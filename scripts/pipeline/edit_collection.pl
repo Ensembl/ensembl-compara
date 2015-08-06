@@ -180,18 +180,10 @@ if ($collection_ss) {
 # FIXME check if it deals correctly with polyploid genomes
 warn "The new collection will be composed of ".scalar(@new_collection_gdbs)." GenomeDBs\n";
 
-# FIXME consider merging this if with the previous one
-
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 $helper->transaction( -CALLBACK => sub {
-    if ($collection_ss) {
-        my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_ss, \@new_collection_gdbs);
-        print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $new_collection_ss->dbID != $collection_ss->dbID;
-    } else {
-        my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -NAME => $$collection_name, -GENOME_DBS => \@new_collection_gdbs );
-        $compara_dba->get_SpeciesSetAdaptor->store($species_set);
-        $compara_dba->get_SpeciesSetAdaptor->update_header($species_set);
-    }
+    my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
+    print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $collection_ss and ($new_collection_ss->dbID != $collection_ss->dbID);
 } );
 
 exit(0);

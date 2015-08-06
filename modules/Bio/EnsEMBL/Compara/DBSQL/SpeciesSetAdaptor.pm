@@ -393,24 +393,25 @@ sub fetch_all_collections_by_genome {
 =cut
 
 sub update_collection {
-    my ($self, $old_ss, $new_genome_dbs) = @_;
+    my ($self, $collection_name, $old_ss, $new_genome_dbs) = @_;
 
     my $species_set = $self->fetch_by_GenomeDBs($new_genome_dbs);
 
     if ($species_set) {
-        if ($old_ss->dbID == $species_set->dbID) {
+        if ($old_ss and ($old_ss->dbID == $species_set->dbID)) {
             warn sprintf("The new '%s' collection is already in the database !\n", $old_ss->name);
             # The content hasn't changed, we can assume that the name is
             # there as well and return the original species set
+            # We should check that first/last_release are correctly set
             return $old_ss;
         }
         if ($species_set->name) {
-            if ($species_set->name eq $old_ss->name) {
-                # Being here would mean that the new collection is already
-                # stored.
-                # We're going to change their first/last_release anyway
+            if ($species_set->name ne "collection-$collection_name") {
+                die sprintf("The species-set for the new '%s' collection content already exists and has a name ('%s'). Cannot store the collection\n", $collection_name, $species_set->name);
             } else {
-                die sprintf("The species-set for the new '%s' collection content already exists and has a name ('%s'). Cannot store the collection\n", $old_ss->name, $species_set->name);
+                # Being here would mean that the new collection is already
+                # stored with the correct name.
+                # We're going to change their first/last_release anyway
             }
         }
     } else {
@@ -418,7 +419,7 @@ sub update_collection {
         $self->store($species_set);
     }
 
-    $species_set->name($old_ss->name);
+    $species_set->name("collection-$collection_name");
     $species_set->first_release(software_version());
     $species_set->last_release(undef);
     $self->update_header($species_set);
