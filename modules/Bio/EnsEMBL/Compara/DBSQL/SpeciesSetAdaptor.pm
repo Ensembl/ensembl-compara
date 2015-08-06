@@ -323,6 +323,30 @@ sub fetch_all_by_name {
 }
 
 
+=head2 fetch_all_by_GenomeDB
+
+  Arg  1     : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : my $species_sets = $ssa->fetch_all_by_genome_db($genome_db)
+  Description: Retrieve all the Bio::EnsEMBL::Compara::SpeciesSet objects
+               which includes the genome defined by the Bio::EnsEMBL::Compara::GenomeDB
+               object or the genome_db_id in the species_set
+  Returntype : listref of Bio::EnsEMBL::Compara::SpeciesSet objects
+  Exceptions : wrong argument throws
+  Caller     :
+
+=cut
+
+sub fetch_all_by_GenomeDB {
+    my ($self, $genome_db) = @_;
+
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
+
+    my $genome_db_id = $genome_db->dbID or throw "[$genome_db] must have a dbID";
+
+    return $self->_id_cache->get_all_by_additional_lookup(sprintf('genome_db_%d', $genome_db_id), 1);
+}
+
+
 
 ###########################################
 # Interface for "collection" species sets #
@@ -466,6 +490,7 @@ sub compute_keys {
     return {
         genome_db_ids => Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::_ids_string($ss->genome_dbs),
         name => $ss->name,
+        (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$ss->genome_dbs()}),
         (map {sprintf('has_tag_%s', lc $_) => 1} $ss->get_all_tags()),
         (map {sprintf('tag_%s', lc $_) => lc $ss->get_value_for_tag($_)} $ss->get_all_tags()),
         %{$self->SUPER::compute_keys($ss)},
