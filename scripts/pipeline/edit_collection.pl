@@ -179,6 +179,8 @@ if ($collection_ss) {
 
 # FIXME check if it deals correctly with polyploid genomes
 warn "The new collection will be composed of ".scalar(@new_collection_gdbs)." GenomeDBs\n";
+print "Press Enter to continue\n";
+<>;
 
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 $helper->transaction( -CALLBACK => sub {
