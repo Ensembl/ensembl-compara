@@ -281,8 +281,7 @@ sub print_method_link_species_sets_to_update {
     print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
     foreach my $this_method_link_species_set (sort {$a->dbID <=> $b->dbID} @$method_link_species_sets) {
         printf "%8d: ", $this_method_link_species_set->dbID,;
-        print $this_method_link_species_set->method->type, " (",
-        join(",", map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs}), ")\n";
+        print $this_method_link_species_set->method->type, " (", $this_method_link_species_set->name, ")\n";
     }
     print "  NONE\n" unless scalar(@$method_link_species_sets);
 
