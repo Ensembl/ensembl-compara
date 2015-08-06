@@ -393,12 +393,30 @@ sub fetch_all_collections_by_genome {
 sub update_collection {
     my ($self, $old_ss, $new_genome_dbs) = @_;
 
-    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -NAME => $old_ss->name, -GENOME_DBS => $new_genome_dbs );
-    $self->store($species_set);
-    return $old_ss if $old_ss->dbID == $species_set->dbID;
+    my $species_set = $self->fetch_by_GenomeDBs($new_genome_dbs);
 
-    $old_ss->name('old'.($old_ss->name));
-    $self->update_header($old_ss);
+    if ($species_set) {
+        if ($old_ss->dbID == $species_set->dbID) {
+            warn sprintf("The new '%s' collection is already in the database !\n", $old_ss->name);
+            # The content hasn't changed, we can assume that the name is
+            # there as well and return the original species set
+            return $old_ss;
+        }
+        if ($species_set->name) {
+            if ($species_set->name eq $old_ss->name) {
+                # Being here would mean that the new collection is already
+                # stored.
+            } else {
+                die sprintf("The species-set for the new '%s' collection content already exists and has a name ('%s'). Cannot store the collection\n", $old_ss->name, $species_set->name);
+            }
+        }
+    } else {
+        $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -GENOME_DBS => $new_genome_dbs );
+        $self->store($species_set);
+    }
+
+    $species_set->name($old_ss->name);
+    $self->update_header($species_set);
 
     return $species_set;
 }
