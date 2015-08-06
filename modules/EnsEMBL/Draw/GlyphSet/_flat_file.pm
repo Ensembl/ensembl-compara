@@ -192,7 +192,6 @@ sub features {
 
     $results{$key} = [$features, $T->{'config'}];
   }
-  use Data::Dumper; warn Dumper($hover_label);
   return %results;
 }
 
