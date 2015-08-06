@@ -144,7 +144,7 @@ warn "*** This script thinks that the Ensembl version is ".software_version().".
 
 #my $collection_ss = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($collection_name);
 my $collection_ss = $compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID(35739);
-my $all_current_gdbs = [grep {$_->name ne 'ancestral_sequences'} @{$compara_dba->get_GenomeDBAdaptor->fetch_all_current()}];
+my $all_current_gdbs = [grep {($_->is_current or not $_->has_been_released) and ($_->name ne 'ancestral_sequences')} @{$compara_dba->get_GenomeDBAdaptor->fetch_all()}];
 my @new_collection_gdbs = ();
 
 if ($collection_ss) {
@@ -157,8 +157,12 @@ if ($collection_ss) {
     my @new_species = grep {not exists $collection_species_by_name{$_->name}} @$all_current_gdbs;
     push @new_collection_gdbs, ask_for_genome_dbs('Select the new species to add to the collection', \@new_species);
 
+    # forcedly-updated species
+    my @forced_updated_species = grep {exists $collection_species_by_name{$_->name} and ($collection_species_by_name{$_->name}->dbID != $_->dbID) and $_->is_current} @$all_current_gdbs;
+    push @new_collection_gdbs, ask_for_genome_dbs('Species that must be updated (because they are newer)', \@forced_updated_species, 1);
+
     # updated species
-    my @updated_species = grep {exists $collection_species_by_name{$_->name} and ($collection_species_by_name{$_->name}->dbID != $_->dbID)} @$all_current_gdbs;
+    my @updated_species = grep {exists $collection_species_by_name{$_->name} and ($collection_species_by_name{$_->name}->dbID != $_->dbID) and not $_->is_current} @$all_current_gdbs;
     push @new_collection_gdbs, ask_for_genome_dbs('Select the species to update', \@updated_species);
 
     # Species to potentially remove
@@ -194,11 +198,13 @@ exit(0);
 sub ask_for_genome_dbs {
     my $title = shift;
     my $all_genome_dbs = shift;
+    my $dont_ask = shift;
     return () unless scalar(@$all_genome_dbs);
 
     my $genome_dbs_hash = {map {$_->dbID => $_} @{$all_genome_dbs}};
     my $genome_dbs_in = {};
-    do {
+    $genome_dbs_in = $genome_dbs_hash if $dont_ask;
+    while (1) {
         print "$title\n";
 
         foreach my $this_genome_db (sort {
@@ -214,6 +220,12 @@ sub ask_for_genome_dbs {
             } else {
                 printf " %3d.$state ($name $assembly)\n", $dbID;
             }
+        }
+
+        if ($dont_ask) {
+            print "Nothing to edit. Press enter\n";
+            <>;
+            last;
         }
 
         print 'Add/Remove a GenomeDB (Press enter to finish)   ';;
@@ -232,9 +244,10 @@ sub ask_for_genome_dbs {
                 }
             }
         } else {
-            return values %$genome_dbs_in;
+            last;
         }
-    } while (1);
+    }
+    return values %$genome_dbs_in;
 }
 
 =head2 update_component_genome_dbs
