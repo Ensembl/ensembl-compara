@@ -394,6 +394,7 @@ sub print_method_link_species_sets_to_update {
   foreach my $this_genome_db (@{$genome_db_adaptor->fetch_all()}) {
     next if ($this_genome_db->name ne $genome_db->name);
     foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
+      next unless $this_method_link_species_set->is_current;
       $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
           {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs})} = $this_method_link_species_set;
     }
@@ -404,8 +405,7 @@ sub print_method_link_species_sets_to_update {
     last if ($this_method_link_id > 200); # Avoid non-genomic method_link_species_set
     foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
       printf "%8d: ", $this_method_link_species_set->dbID,;
-      print $this_method_link_species_set->method->type, " (",
-          join(",", map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs}), ")\n";
+      print $this_method_link_species_set->method->type, " (", $this_method_link_species_set->name, ")\n";
     }
   }
 
