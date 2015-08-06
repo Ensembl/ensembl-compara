@@ -377,7 +377,7 @@ sub update_dnafrags {
   Description : This method prints all the genomic MethodLinkSpeciesSet
                 that need to be updated (those which correspond to the
                 $genome_db).
-                NB: Only method_link with a dbID <200 are taken into
+                NB: Only method_link with a dbID<200 || dbID>=500 are taken into
                 account (they should be the genomic ones)
   Returns     : -none-
   Exceptions  :
@@ -402,7 +402,7 @@ sub print_method_link_species_sets_to_update {
 
   print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
   foreach my $this_method_link_id (sort {$a <=> $b} keys %$method_link_species_sets) {
-    last if ($this_method_link_id > 200); # Avoid non-genomic method_link_species_set
+    next if ($this_method_link_id > 200) and ($this_method_link_id < 500); # Avoid non-genomic method_link_species_set
     foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
       printf "%8d: ", $this_method_link_species_set->dbID,;
       print $this_method_link_species_set->method->type, " (", $this_method_link_species_set->name, ")\n";
