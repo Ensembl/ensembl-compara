@@ -199,7 +199,7 @@ foreach my $name (keys %unique_genome_dbs) {
 #Set default exception_species for human if not already set
 if ($patched_species eq "homo_sapiens" && @$exception_species == 0) {
     # 9443 is the taxon_id of Primates
-    @$exception_species = map {$_->name} grep {$_->assembly_default} @{$genome_db_adaptor->fetch_all_by_ancestral_taxon_id(9443)};
+    @$exception_species = map {$_->name} grep {$_->is_current} @{$genome_db_adaptor->fetch_all_by_ancestral_taxon_id(9443)};
 }
 
 #Define dna_collections 
