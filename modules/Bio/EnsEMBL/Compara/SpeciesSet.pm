@@ -108,7 +108,7 @@ sub new {
 sub name {
     my $self = shift;
     $self->{'_name'} = shift if @_;
-    return $self->{'_name'};
+    return $self->{'_name'} || '';
 }
 
 
