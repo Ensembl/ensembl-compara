@@ -632,6 +632,7 @@ sub support_additional_lookups {
 sub compute_keys {
     my ($self, $mlss) = @_;
     return {
+        species_set_id => $mlss->species_set_obj->dbID,
         method => sprintf('%d', $mlss->method->dbID),
         method_species_set => sprintf('%d_%d', $mlss->method->dbID, $mlss->species_set_obj->dbID),
         (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$mlss->species_set_obj->genome_dbs()}),
