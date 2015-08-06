@@ -36,22 +36,25 @@ sub new {
   my $class = shift;
   my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $args  = shift || {};
-  my $self  = {};
-  
-  my $hub = EnsEMBL::Web::Hub->new({
-    apache_handle  => $r,
-    session_cookie => $args->{'session_cookie'},
-    user_cookie    => $args->{'user_cookie'},
-  });
- 
-  $self->{hub} = $hub;
-  my $func = 'ajax_'.$hub->action;
-  
-  bless $self, $class;
-  
-  $self->$func($hub) if $self->can($func);
-  
+  my $self  = bless {
+    'hub' => EnsEMBL::Web::Hub->new({
+      apache_handle  => $r,
+      session_cookie => $args->{'session_cookie'},
+      user_cookie    => $args->{'user_cookie'},
+    })
+  }, $class;
+
+  $self->process;
+
   return $self;
+}
+
+sub process {
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $func  = 'ajax_'.$hub->action;
+
+  $self->$func($hub) if $self->can($func);
 }
 
 sub ajax_autocomplete {
