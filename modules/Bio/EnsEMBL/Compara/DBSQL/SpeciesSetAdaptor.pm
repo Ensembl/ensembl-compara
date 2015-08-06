@@ -436,12 +436,14 @@ sub update_collection {
         foreach my $gdb (@{$old_ss->genome_dbs}) {
             # ... that are not in the new set
             next if $curr_gdb_ids{$gdb->dbID};
+            warn "Retiring ", $gdb->toString, "\n" if $gdb->is_current;
             $gdb_a->retire_object($gdb);
             # and the SpeciesSets they're in
             foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
                 $self->retire_object($ss);
                 # And now the MLSSs that use the species-set
                 foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
+                    warn "Retiring mlss_id ", $mlss->dbID, " ", $mlss->name, "\n" if $mlss->is_current;
                     $mlss_a->retire_object($mlss);
                 }
             }
@@ -449,17 +451,23 @@ sub update_collection {
     }
 
     # Enable all the GenomeDBs of the collection
+    my @released_gdbs;
     foreach my $gdb (@{$species_set->genome_dbs}) {
+        next if $gdb->is_current;
+        push @released_gdbs, $gdb;
+        warn "Releasing ", $gdb->toString, "\n" unless $gdb->is_current;
         $gdb_a->make_object_current($gdb);
     }
+
     # And the SpeciesSets they are part of ...
-    foreach my $gdb (@{$species_set->genome_dbs}) {
+    foreach my $gdb (@released_gdbs) {
         foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
             # ... if all the species in the set are enabled
             next if grep {not $_->is_current} @{$ss->genome_dbs};
             $self->make_object_current($ss);
             # And now the MLSSs that use the species-set
             foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
+                warn "Releasing mlss_id ", $mlss->dbID, " ", $mlss->name, "\n" unless $mlss->is_current;
                 $mlss_a->make_object_current($mlss);
             }
         }
