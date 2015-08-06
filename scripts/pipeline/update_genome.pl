@@ -39,12 +39,6 @@ This script's main purpose is to take the new core DB and a compara DB
 in production phase and update it in several steps:
  - It updates the genome_db table
  - It updates all the dnafrags for the given genome_db
- - It updates all the collections for the given genome_db
-
-It can also edit a few properties like:
- - Change the last release of a genome_db
- - Add a genome_db to a collection species set
- - Remove a genome_db from a collection species set
 
 =head1 SYNOPSIS
 
@@ -58,8 +52,6 @@ It can also edit a few properties like:
     [--taxon_id 1234]
     [--[no]force]
     [--offset 1000]
-    [--collection "collection name"]
-    [--remove_from_collection | --add_to_collection | --set_last_release release_number]
 
 =head1 OPTIONS
 
@@ -131,16 +123,6 @@ from that number (and we will assign according to the current number
 of Genome DBs exceeding the offset). First ID will be equal to the
 offset+1
 
-=item B<[--collection "Collection name"]>
-
-Adds the new / updated genome_db_id to the collection. This option
-can be used multiple times
-
-=item B<[--remove_from_collection | --add_to_collection | --set_last_release release_number]>
-
-(exclusive) options to respectively remove the species from its
-collections, add the species to more collections, and change the last_release
-
 =back
 
 =head1 INTERNAL METHODS
@@ -164,10 +146,6 @@ my $genome_db_name;
 my $taxon_id;
 my $force = 0;
 my $offset = 0;
-my @collection = ();
-my $action_remove_from_collection = 0;
-my $action_add_to_collection = 0;
-my $action_set_last_release = 0;
 
 GetOptions(
     "help" => \$help,
@@ -178,10 +156,6 @@ GetOptions(
     "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
     'offset=i' => \$offset,
-    "collection=s@" => \@collection,
-    "remove_from_collection!" => \$action_remove_from_collection,
-    "add_to_collection!" => \$action_add_to_collection,
-    "set_last_release=i" => \$action_set_last_release,
   );
 
 $| = 0;
@@ -191,10 +165,6 @@ if ($help or !$species or !$compara) {
     use Pod::Usage;
     pod2usage({-exitvalue => 0, -verbose => 2});
 }
-
-die "'remove_from_collection', 'add_to_collection', and 'set_last_release' are exclusive options\n" if
-    ($action_set_last_release and ($action_remove_from_collection or $action_add_to_collection))
-    or ($action_remove_from_collection and $action_add_to_collection);
 
 my $species_no_underscores = $species;
 $species_no_underscores =~ s/\_/\ /;
@@ -217,28 +187,12 @@ throw ("Cannot connect to database [$compara]") if (!$compara_db);
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_db->dbc);
 
 $helper->transaction( -CALLBACK => sub {
-    if ($action_set_last_release or $action_remove_from_collection or $action_add_to_collection) {
-        my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
-        my $genome_db = $genome_db_adaptor->fetch_by_core_DBAdaptor($species_db);
-
-        if ($action_set_last_release) {
-            $genome_db->last_release($action_set_last_release);
-            $genome_db_adaptor->update($genome_db);
-            remove_species_from_collections($compara_db, $genome_db, \@collection);
-        } elsif ($action_remove_from_collection) {
-            remove_species_from_collections($compara_db, $genome_db, \@collection);
-        } else {
-            add_to_collections($compara_db, [$genome_db], \@collection);
-        }
-        return;
-    }
     my $genome_db = update_genome_db($species_db, $compara_db, $force);
     update_dnafrags($compara_db, $genome_db, $species_db);
     my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_db);
     foreach my $component_gdb (@$component_genome_dbs) {
         update_dnafrags($compara_db, $component_gdb, $species_db);
     }
-    add_to_collections($compara_db, [$genome_db, @$component_genome_dbs], \@collection);
     print_method_link_species_sets_to_update($compara_db, $genome_db);
 } );
 
@@ -304,7 +258,6 @@ sub update_genome_db {
 
         -TAXON_ID   => $taxon_id,
         -NAME       => $genome_db_name,
-        -FIRST_RELEASE => software_version(),
     );
 
     if (!defined($genome_db->taxon_id)) {
@@ -354,83 +307,6 @@ sub update_component_genome_dbs {
     return \@gdbs;
 }
 
-
-=head2 add_to_collections
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Arrayref of Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Arg[3]      : Array reference of strings (the collections to add the species to)
-  Description : This method updates all the collection species sets to
-                include the new genome_dbs (they are supposed to all have the same name)
-  Returns     : -none-
-  Exceptions  : throw if any SQL statment fails
-
-=cut
-
-sub add_to_collections {
-  my ($compara_dba, $genome_dbs, $all_collections) = @_;
-
-  my $gdb_name = $genome_dbs->[0]->name;
-  # Gets all the collections with that genome_db
-  my $ssa = $compara_dba->get_SpeciesSetAdaptor;
-  my $sss = $ssa->fetch_all_collections_by_genome($gdb_name);
-  push @$sss, @{_fetch_all_collections_by_name($ssa, $all_collections)};
-
-  my %seen = ();
-  foreach my $ss (@$sss) {
-      next if $seen{$ss->dbID};
-      $seen{$ss->dbID} = 1;
-      my $new_genome_dbs = [grep {$_->name ne $gdb_name} @{$ss->genome_dbs}];
-      push @$new_genome_dbs, @$genome_dbs;
-      my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
-      printf("%s added to the collection '%s' (species_set_id=%d)\n", $gdb_name, $ss->name, $new_ss->dbID);
-  }
-}
-
-=head2 remove_species_from_collections
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Arg[3]      : arrayref of string $all_collection_names (optional)
-  Description : This method updates the collection species sets to
-                exclude the given $genome_db. Updates them all unless
-                $all_collection_names is given
-  Returns     : -none-
-  Exceptions  : throw if any SQL statment fails
-
-=cut
-
-sub remove_species_from_collections {
-    my ($compara_dba, $genome_db, $all_collection_names) = @_;
-
-    my $sss;
-    my $ssa = $compara_dba->get_SpeciesSetAdaptor;
-
-    if ($all_collection_names and scalar(@$all_collection_names)) {
-        $sss = _fetch_all_collections_by_name($ssa, $all_collection_names);
-    } else {
-        $sss = $ssa->fetch_all_collections_by_genome($genome_db->dbID);
-    }
-
-    foreach my $ss (@$sss) {
-        my $new_genome_dbs = [grep {$_->dbID != $genome_db->dbID} @{$ss->genome_dbs}];
-        next if scalar(@$new_genome_dbs) == scalar(@{$ss->genome_dbs});
-        my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
-        printf("%s removed from the collection '%s' (species_set_id=%d)\n", $genome_db->name, $ss->name, $new_ss->dbID);
-    }
-}
-
-# Wrapper around Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::fetch_collection_by_name
-sub _fetch_all_collections_by_name {
-    my ($ssa, $all_collection_names) = @_;
-
-    my @sss;
-    foreach my $collection (@{$all_collection_names || []}) {
-        my $c = $ssa->fetch_collection_by_name($collection);
-        push @sss, $c if $c;
-    }
-    return \@sss;
-}
 
 =head2 update_dnafrags
 
