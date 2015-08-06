@@ -54,7 +54,7 @@ It can also edit a few properties like:
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_alias
     --species new_species_db_name_or_alias
-    [--species_name "Species name"]
+    [--genome_db_name "Species name"]
     [--taxon_id 1234]
     [--[no]force]
     [--offset 1000]
@@ -105,9 +105,9 @@ any of the aliases given in the registry_configuration_file
 
 =over
 
-=item B<[--species_name "Species name"]>
+=item B<[--genome_db_name "Species name"]>
 
-Set up the species name. This is needed when the core database
+Set up the GenomeDB name. This is needed when the core database
 misses this information
 
 =item B<[--taxon_id 1234]>
@@ -160,7 +160,7 @@ my $help;
 my $reg_conf;
 my $compara;
 my $species = "";
-my $species_name;
+my $genome_db_name;
 my $taxon_id;
 my $force = 0;
 my $offset = 0;
@@ -174,7 +174,7 @@ GetOptions(
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     "species=s" => \$species,
-    "species_name=s" => \$species_name,
+    "genome_db_name=s" => \$genome_db_name,
     "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
     'offset=i' => \$offset,
@@ -274,7 +274,7 @@ sub update_genome_db {
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
     }
   } elsif ($force) {
-    print "GenomeDB with this name [$species_name] and the correct assembly".
+    print "GenomeDB with this name [$genome_db_name] and the correct assembly".
         " is not in the compara DB [$compara]\n".
         "You don't need the --force option!!";
     print "Press [Enter] to continue or Ctrl+C to cancel...";
@@ -303,12 +303,12 @@ sub update_genome_db {
         -DB_ADAPTOR => $species_dba,
 
         -TAXON_ID   => $taxon_id,
-        -NAME       => $species_name,
+        -NAME       => $genome_db_name,
         -FIRST_RELEASE => software_version(),
     );
 
     if (!defined($genome_db->taxon_id)) {
-      throw "Cannot find species.taxonomy_id in meta table for $species_name.\n".
+      throw "Cannot find species.taxonomy_id in meta table for $genome_db_name.\n".
           "   You can use the --taxon_id option";
     }
     print "New GenomeDB for Compara: ", $genome_db->toString, "\n";
