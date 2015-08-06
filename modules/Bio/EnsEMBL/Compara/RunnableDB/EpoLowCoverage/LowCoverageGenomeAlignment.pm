@@ -1088,7 +1088,7 @@ sub _load_GenomicAligns {
   Arg [1]    : int genomic_align_block_id
   Arg [2]    : int analysis_data_id
   Description: Creates a fake assembly for each 2X genome by stitching
-               together the BLASTZ_NET alignments found on this synteny_region
+               together the LASTZ_NET alignments found on this synteny_region
                between the reference species and each 2X genome. The list of
                the pairwise database locations and  
                Bio::EnsEMBL::Compara::MethodLinkSpeciesSet ids are obtained
@@ -1146,7 +1146,7 @@ sub _load_2XGenomes {
 
   print "GAB $genomic_align_block_id num ref copies " . scalar(@$ref_gas) . "\n" if $self->debug;
 
-  #Find the BLASTZ_NET alignments between the reference species and each
+  #Find the LASTZ_NET alignments between the reference species and each
   #2X genome.
 
   foreach my $mlss_id (keys %$pairwise_locations) {

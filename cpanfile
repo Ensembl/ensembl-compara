@@ -9,3 +9,5 @@ requires 'Test::Exception';
 requires 'Text::CSV';
 requires 'XML::Writer';
 requires 'Parse::RecDescent';
+requires 'Capture::Tiny';
+

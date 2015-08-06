@@ -662,8 +662,11 @@ sub parse_defaults {
 	}
 	push @$collection, $pair;
     } else {
-	#What about self comparisons? 
-	die "Must define at least 2 species";
+        my %pair = (
+            'ref_genome_db'     => $genome_dbs->[0],
+            'non_ref_genome_db' => $genome_dbs->[0],
+        );
+	push @$collection, \%pair;
     }
 
     foreach my $pair (@$collection) {
@@ -724,6 +727,14 @@ sub parse_defaults {
 	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " raw";;
 	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
 	#$net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
+
+        # self-alignments would have the same names for "reference" and
+        # "non-reference" collections otherwise
+        if ($pair->{ref_genome_db}->name eq $pair->{non_ref_genome_db}->name) {
+            $net_config->{'non_reference_collection_name'} .= ' again';
+            $pair_aligner->{'non_reference_collection_name'} .= ' again';
+            $chain_config->{'non_reference_collection_name'} .= ' again';
+        }
 	    
 	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->name . "_nib_for_chain";
 	
@@ -970,12 +981,14 @@ sub create_pair_aligner_dataflows {
 	#
 	my $ref_output_hash = {};
 	%$ref_output_hash = ('method_link_species_set_id'=>$mlss_id,
+			     'is_reference' => 1,
 			     'collection_name'=> $pair_aligner->{'reference_collection_name'},
 			     'chunk_size' => $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'chunk_size'},
 			     'overlap' => $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'overlap'});
 
 	my $non_ref_output_hash = {};
 	%$non_ref_output_hash = ('method_link_species_set_id'=>$mlss_id,
+				 'is_reference' => 0,
 				 'collection_name'=>$pair_aligner->{'non_reference_collection_name'},
 				 'chunk_size' => $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'chunk_size'},
 				 'overlap' => $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'overlap'});
@@ -1123,12 +1136,14 @@ sub create_net_dataflows {
            #
            my $ref_output_hash = {};
            %$ref_output_hash = ('method_link_species_set_id'=>$net_config->{'mlss_id'},
+                                'is_reference' => 1,
                                 'collection_name'=> $net_config->{'reference_collection_name'},
                                 'chunk_size' => $dna_collections->{$net_config->{'reference_collection_name'}}->{'chunk_size'},
                                 'overlap' => $dna_collections->{$net_config->{'reference_collection_name'}}->{'overlap'});
 
            my $non_ref_output_hash = {};
            %$non_ref_output_hash = ('method_link_species_set_id'=>$net_config->{'mlss_id'},
+                                    'is_reference' => 0,
                                     'collection_name'=>$net_config->{'non_reference_collection_name'},
                                     'chunk_size' => $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'chunk_size'},
                                     'overlap' => $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'overlap'});

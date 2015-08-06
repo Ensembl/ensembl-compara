@@ -136,6 +136,7 @@ sub filter_duplicates {
   $self->param('delete_hash', {}); #all the genomic_align_blocks that need to be deleted
 
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('method_link_species_set_id'));
+  $self->param('is_self_alignment', (scalar(@{ $mlss->species_set_obj->genome_dbs }) == 1 ? 1 : 0));
 #  my ($gdb1, $gdb2) = @{$mlss->species_set_obj->genome_dbs};
 #  if($gdb1->dbID > $gdb2->dbID) {
 #    my $tmp = $gdb1; $gdb1=$gdb2; $gdb2=$tmp;
@@ -224,6 +225,13 @@ sub find_identical_matches {
 	my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag
 	  ($mlss, $dnafrag, $region_start, $region_end);
 	
+          if ($self->param('is_self_alignment')) {
+              if ($self->param('is_reference')) {
+                  $genomic_align_block_list = [grep {$_->reference_genomic_align_id < $_->get_all_non_reference_genomic_aligns->[0]->dbID} @$genomic_align_block_list];
+              } else {
+                  $genomic_align_block_list = [grep {$_->reference_genomic_align_id > $_->get_all_non_reference_genomic_aligns->[0]->dbID} @$genomic_align_block_list];
+              }
+          }
 	printf STDERR "IDENTICAL MATCHES: dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, 
 	      $region_start, $region_end, scalar(@$genomic_align_block_list);
 
@@ -251,6 +259,13 @@ sub find_edge_artefacts {
 
        my $genomic_align_block_list = $GAB_DBA->fetch_all_by_MethodLinkSpeciesSet_DnaFrag
         ($mlss, $dnafrag, $region_start, $region_end);
+        if ($self->param('is_self_alignment')) {
+            if ($self->param('is_reference')) {
+                $genomic_align_block_list = [grep {$_->reference_genomic_align_id < $_->get_all_non_reference_genomic_aligns->[0]->dbID} @$genomic_align_block_list];
+            } else {
+                $genomic_align_block_list = [grep {$_->reference_genomic_align_id > $_->get_all_non_reference_genomic_aligns->[0]->dbID} @$genomic_align_block_list];
+            }
+        }
        printf STDERR "EDGE ARTEFACTS: dnafrag %s %s %d:%d has %d GABs\n", $dnafrag->coord_system_name, $dnafrag->name, $region_start, $region_end, scalar(@$genomic_align_block_list);
        
        # first sort the list for processing

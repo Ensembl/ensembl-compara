@@ -36,13 +36,8 @@ before_install:
 
 install:
     - cpanm -v --installdeps --with-recommends --notest --cpanfile ensembl/cpanfile .
+    - cpanm -v --installdeps --with-recommends --notest --cpanfile ensembl-rest/cpanfile .
     - cpanm -v --installdeps --notest .
-    - cpanm -n Catalyst::Runtime
-    - cpanm -n Catalyst::Plugin::ConfigLoader Catalyst::Action::RenderView Mojo Catalyst::Plugin::Static::Simple
-    - cpanm -n Catalyst::Devel
-    - cd ensembl-rest
-    - cpanm -v --installdeps --with-recommends --notest .
-    - cd ..
     - cpanm -n Devel::Cover::Report::Coveralls
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf

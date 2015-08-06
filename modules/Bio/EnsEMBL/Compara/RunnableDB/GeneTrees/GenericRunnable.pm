@@ -199,6 +199,8 @@ sub write_output {
         }
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
+
+    $self->call_hcs_all_trees();
 }
 
 
@@ -288,7 +290,10 @@ sub run_generic_command {
             print "Re-rooting the tree with 'treebest sdi'\n" if($self->debug);
             $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi'));
         }
-        die "The Newick output is empty\n" unless $output;
+		unless($output){
+			sleep 30;
+            die "The Newick output is empty\n";
+		}
         $self->param('newick_output', $output);
     }
 }

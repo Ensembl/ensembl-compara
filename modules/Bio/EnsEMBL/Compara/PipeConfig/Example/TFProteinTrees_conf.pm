@@ -120,6 +120,7 @@ sub default_options {
         'notung_jar'                => '/nfs/production/xfam/treefam/software/Notung/Notung-2.6/Notung-2.6.jar',
         'quicktree_exe'             => $self->o('exe_dir').'/quicktree',
         'hmmer2_home'               => '/nfs/panda/ensemblgenomes/external/hmmer-2/bin/',
+        'hmmer3_home'               => '/nfs/panda/ensemblgenomes/external/hmmer-3/bin/',
         'codeml_exe'                => $self->o('exe_dir').'/codeml',
         'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
         'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
@@ -128,9 +129,11 @@ sub default_options {
         'noisy_exe'                 => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
         'raxml_exe'                 => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
         'raxml_pthreads_exe'        => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-PTHREADS-SSE3',
-        'examl_exe_avx'             => '/nfs/production/xfam/treefam/software/ExaML/examl',
+        'examl_exe_avx'             => '/nfs/production/xfam/treefam/software/ExaML/examl-AVX',
         'examl_exe_sse3'            => '/nfs/production/xfam/treefam/software/ExaML/examl',
         'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
+		'examl_out_dir'				=> '/nfs/panda/ensembl/production/mateus/compara/TreeFam10/examl',
+        'getPatterns_exe'           => '/nfs/production/xfam/treefam/software/RAxML/number_of_patterns/getPatterns',
         'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
         'cafe_shell'                => 'UNDEF',
 
@@ -177,6 +180,7 @@ sub default_options {
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
         'decision_capacity'         =>   4,
+        'hc_post_tree_capacity'     => 100,
         'HMMer_classify_capacity'   => 400,
 		'HMMer_classifyPantherScore_capacity'=> 1000,
         'loadmembers_capacity'      => 30,
@@ -328,11 +332,24 @@ sub resource_classes {
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
+         '16Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
          '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+
+         '8Gb_8c_mpi'  => {'LSF' => '-q mpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
+         '8Gb_16c_mpi'  => {'LSF' => '-q mpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '8Gb_24c_mpi'  => {'LSF' => '-q mpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
+         '8Gb_32c_mpi'  => {'LSF' => '-q mpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+
+         '32Gb_8c_mpi' => {'LSF' => '-q mpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"' },
+         '32Gb_16c_mpi' => {'LSF' => '-q mpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '32Gb_24c_mpi' => {'LSF' => '-q mpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
+         '32Gb_32c_mpi' => {'LSF' => '-q mpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
          '4Gb_job_gpfs'      => {'LSF' => '-q production-rh6 -M4000 -R"select[mem>4000] rusage[mem=4000] select[gpfs]"' },
   };

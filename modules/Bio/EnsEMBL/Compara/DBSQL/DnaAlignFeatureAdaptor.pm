@@ -279,7 +279,7 @@ sub fetch_all_by_Slice {
   Arg [2]    : string $species
                e.g. "Mus musculus"
   Arg [3]    : string $alignment_type
-               e.g. "BLASTZ_NET"
+               e.g. "LASTZ_NET"
   Arg [4]    : string $seq_region_name
                e.g. "6-COX"
   Example    :

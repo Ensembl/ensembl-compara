@@ -57,7 +57,6 @@ use strict;
 use IO::File; ## ??
 use File::Path qw/remove_tree make_path/;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use File::Which;
 use LWP::Simple;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -86,7 +85,7 @@ sub fetch_input {
     } elsif ($code == 1) {
         print STDERR "OK creating the library\n" if ($self->debug());
 
-      if (which('lfs')) {
+      if (`which lfs`) {
         my $book_stripe_cmd = "lfs setstripe " . $hmmLibrary->bookDir() . " -c -1";
         my $global_stripe_cmd = "lfs setstripe " . $hmmLibrary->globalsDir() . " -c -1";
 

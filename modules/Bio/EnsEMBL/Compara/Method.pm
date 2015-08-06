@@ -94,7 +94,7 @@ sub new {
 
   Arg [1]    : (opt.) string type
   Example    : my $type = $method->type();
-  Example    : $method->type('BLASTZ_NET');
+  Example    : $method->type('LASTZ_NET');
   Description: Getter/Setter for the type of this method
   Returntype : string type
 

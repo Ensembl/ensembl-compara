@@ -140,6 +140,7 @@ sub default_options {
         'examl_exe_avx'             => '/nfs/production/xfam/treefam/software/ExaML/examl',
         'examl_exe_sse3'            => '/nfs/production/xfam/treefam/software/ExaML/examl',
         'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
+        'getPatterns_exe'           => '/nfs/production/xfam/treefam/software/RAxML/number_of_patterns/getPatterns',
         'cafe_shell'                => 'UNDEF',
 
     # HMM specific parameters (set to 0 or undef if not in use)
@@ -168,6 +169,7 @@ sub default_options {
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
         'decision_capacity'         =>   4,
+        'hc_post_tree_capacity'     => 100,
         'HMMer_classify_capacity'   => 400,
         'loadmembers_capacity'      =>  30,
         'HMMer_classifyPantherScore_capacity'   => 1000,

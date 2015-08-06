@@ -177,7 +177,11 @@ sub write_output {
     my $self = shift @_;
 
     $self->delete_old_homologies unless $self->param('_readonly');
+    # Here is how to use server-side prepared statements. They have not
+    # proven to be faster, so this is not enabled by default
+    #$self->param('homologyDBA')->mysql_server_prepare(1);
     $self->run_analysis;
+    #$self->param('homologyDBA')->mysql_server_prepare(0);
     $self->print_summary;
 }
 

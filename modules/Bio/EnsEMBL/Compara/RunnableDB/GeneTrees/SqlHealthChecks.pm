@@ -54,7 +54,7 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 
 
-my $config = {
+our $config = {
 
     ### Species Tree
     #################

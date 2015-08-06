@@ -131,6 +131,7 @@ sub createFilterDuplicatesJobs
   my $analysis = $self->param('filter_duplicates_analysis');
   #my $region = $self->param('region');
   my $mlss_id = $self->param('method_link_species_set_id');
+  my $is_reference = $self->param('is_reference');
   my $chunk_size = $self->param('chunk_size');
   my $overlap = $self->param('overlap');
 
@@ -155,6 +156,7 @@ sub createFilterDuplicatesJobs
   foreach my $dnafrag_id (keys %dnafrag_id_list) {
     my $input_hash = {};
     $input_hash->{'dnafrag_id'} = $dnafrag_id;
+    $input_hash->{'is_reference'} = $is_reference;
     #$input_hash->{'seq_region_start'} = $seq_region_start if (defined $seq_region_start);
     #$input_hash->{'seq_region_end'} = $seq_region_end if (defined $seq_region_end);
     $input_hash->{'method_link_species_set_id'} = $mlss_id if (defined $mlss_id);

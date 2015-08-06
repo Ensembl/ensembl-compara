@@ -178,6 +178,75 @@ sub generic_fetch {
 }
 
 
+=head2 mysql_server_prepare
+
+  Arg[1]      : Boolean (opt)
+  Example     : $self->compara_dba->get_HomologyAdaptor->mysql_server_prepare();
+  Description : Getter / setter. Controls whether statements are prepared server-side,
+                which should give better performance for repeated queries.
+                DO NOT enable by default, there is still a memory leak:
+                 L<https://rt.cpan.org/Public/Bug/Display.html?id=83486>
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub mysql_server_prepare {
+    my $self = shift;
+    # Internally there is no '_mysql_server_prepare' field but
+    # only '_cached_statements'. The existence of the latter tells whether
+    # the option is turned on. The setter must thus ensure the hash is
+    # deleted when the option is switched off
+    return (exists $self->{'_cached_statements'} ? 1 : 0) unless scalar(@_);
+    my $value = shift;
+    if ($value) {
+        $self->{'_cached_statements'} = {} unless exists $self->{'_cached_statements'};
+        return 1;
+    } else {
+        return 0 unless exists $self->{'_cached_statements'};
+        foreach my $sth (values %{$self->{'_cached_statements'}}) {
+            $sth->finish;
+        }
+        delete $self->{'_cached_statements'};
+        return 0;
+    }
+}
+
+
+=head2 prepare
+
+  Arg [1]    : string $string
+               a SQL query to be prepared by this adaptors database
+  Example    : $sth = $adaptor->prepare("select yadda from blabla")
+  Description: provides a DBI statement handle from the adaptor. A convenience
+               function so you dont have to write $adaptor->db->prepare all the
+               time. It will perform a server-side preparation if the mysql_server_prepare()
+               flag has been switched on
+  Returntype : DBI::StatementHandle
+  Exceptions : none
+  Caller     : Adaptors inherited from BaseAdaptor
+  Status     : Stable
+
+=cut
+
+sub prepare {
+    my ($self, $query, @args) = @_;
+
+    if (exists $self->{'_cached_statements'}) {
+        return $self->{'_cached_statements'}->{$query} if exists $self->{'_cached_statements'}->{$query};
+        $self->dbc->db_handle->{mysql_server_prepare} = 1;
+        my $sth = $self->SUPER::prepare($query, @args);
+        $self->dbc->db_handle->{mysql_server_prepare} = 0;
+        $self->{'_cached_statements'}->{$query} = $sth if $sth;
+        return $sth;
+    } else {
+        return $self->SUPER::prepare($query, @args);
+    }
+}
+
+
 =head2 generic_fetch_one
 
   Arguments  : Same arguments as construct_sql_query()

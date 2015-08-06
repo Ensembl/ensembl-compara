@@ -1521,43 +1521,6 @@ sub _cigar_element {
     return $elem;
 }
 
-=head2 _get_Mapper_from_cigar_line (deprecated, use _get_Mapper_from_cigar_arrayref)
-
-  Arg[1]     : $cigar_line
-  Arg[2]     : $alignment_position
-  Arg[3]     : $sequence_position
-  Arg[4]     : $relative_strand
-  Example    : $this_mapper = _get_Mapper_from_cigar_line($cigar_line, 
-                $aln_pos, $seq_pos, 1);
-  Description: creates a new Bio::EnsEMBL::Mapper object for mapping between
-               sequence and alignment coordinate systems using the cigar_line
-               and starting from the $alignment_position and sequence_position.
-  Returntype : Bio::EnsEMBL::Mapper object
-  Exceptions : None
-  Status     : Stable
-
-=cut
-
-sub _get_Mapper_from_cigar_line {
-  my ($cigar_line, $alignment_position, $sequence_position, $rel_strand) = @_;
-
-  my $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
-
-  my $cigar_pieces = [];
-  my $cigar_elements = [ $cigar_line =~ /(\d*[GMDXI])/g ];
-  foreach my $cigar_piece (@$cigar_elements) {
-    my $cigar_type = substr($cigar_piece, -1, 1);
-    my $cigar_num = substr($cigar_piece, 0, -1);
-    $cigar_num = 1 if ($cigar_num eq "");
-    next if ($cigar_num < 1);
-
-    push(@{$cigar_pieces}, [$cigar_num, $cigar_type]);
-  }
-
-  return _get_Mapper_from_cigar_arrayref($cigar_pieces, $alignment_position, $sequence_position, $rel_strand);
-}
-
-
 =head2 _get_Mapper_from_cigar_arrayref
 
   Arg[1]     : $cigar_arrayref

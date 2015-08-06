@@ -41,12 +41,12 @@ and method_link tables
   my $method_link_species_set = $mlssa->fetch_by_dbID(1);
 
   my $method_link_species_set = $mlssa->fetch_by_method_link_type_registry_aliases(
-        "BLASTZ_NET", ["human", "Mus musculus"]);
+        "LASTZ_NET", ["human", "Mus musculus"]);
 
   my $method_link_species_set = $mlssa->fetch_by_method_link_type_species_set_name(
         "EPO", "mammals")
   
-  my $method_link_species_sets = $mlssa->fetch_all_by_method_link_type("BLASTZ_NET");
+  my $method_link_species_sets = $mlssa->fetch_all_by_method_link_type("LASTZ_NET");
 
   my $method_link_species_sets = $mlssa->fetch_all_by_GenomeDB($genome_db);
 
@@ -363,7 +363,7 @@ sub fetch_by_method_link_id_species_set_id {
 
   Arg  1     : string method_link_type
   Example    : my $method_link_species_sets =
-                     $mlssa->fetch_all_by_method_link_type("BLASTZ_NET")
+                     $mlssa->fetch_all_by_method_link_type("LASTZ_NET")
   Description: Retrieve all the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
                corresponding to the given method_link_type
   Returntype : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
@@ -417,7 +417,7 @@ sub fetch_all_by_GenomeDB {
   Arg  1     : string method_link_type
   Arg  2     : Bio::EnsEMBL::Compara::GenomeDB $genome_db
   Example    : my $method_link_species_sets =
-                     $mlssa->fetch_all_by_method_link_type_GenomeDB("BLASTZ_NET", $rat_genome_db)
+                     $mlssa->fetch_all_by_method_link_type_GenomeDB("LASTZ_NET", $rat_genome_db)
   Description: Retrieve all the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
                corresponding to the given method_link_type and which include the
                given Bio::EnsEBML::Compara::GenomeDB
@@ -441,12 +441,11 @@ sub fetch_all_by_method_link_type_GenomeDB {
 =head2 fetch_by_method_link_type_GenomeDBs
 
   Arg 1      : string $method_link_type
-  Arg 2      : listref of Bio::EnsEMBL::Compara::GenomeDB objects [$gdb1, $gdb2, $gdb3]
+  Arg 2      : listref of Bio::EnsEMBL::Compara::GenomeDB objects
   Arg 3      : (optional) bool $no_warning
   Example    : my $method_link_species_set =
-                   $mlssa->fetch_by_method_link_type_GenomeDBs('MULTIZ',
+                   $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES',
                        [$human_genome_db,
-                       $rat_genome_db,
                        $mouse_genome_db])
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
                corresponding to the given method_link and the given set of
@@ -488,11 +487,10 @@ sub fetch_by_method_link_type_GenomeDBs {
 =head2 fetch_by_method_link_type_genome_db_ids
 
   Arg  1     : string $method_link_type
-  Arg 2      : listref of int [$gdbid1, $gdbid2, $gdbid3]
+  Arg 2      : listref of int (dbIDs of GenomeDBs)
   Example    : my $method_link_species_set =
-                   $mlssa->fetch_by_method_link_type_genome_db_id('MULTIZ',
+                   $mlssa->fetch_by_method_link_type_genome_db_id('ENSEMBL_ORTHOLOGUES',
                        [$human_genome_db->dbID,
-                       $rat_genome_db->dbID,
                        $mouse_genome_db->dbID])
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
                corresponding to the given method_link and the given set of
@@ -525,10 +523,10 @@ sub fetch_by_method_link_type_genome_db_ids {
 =head2 fetch_by_method_link_type_registry_aliases
 
   Arg  1     : string $method_link_type
-  Arg 2      : listref of core database aliases [$human, $mouse, $rat]
+  Arg 2      : listref of core database aliases
   Example    : my $method_link_species_set =
-                   $mlssa->fetch_by_method_link_type_registry_aliases("MULTIZ",
-                       ["human","mouse","rat"])
+                   $mlssa->fetch_by_method_link_type_registry_aliases("ENSEMBL_ORTHOLOGUES",
+                       ["human","mouse"])
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
                corresponding to the given method_link and the given set of
                core database aliases defined in the Bio::EnsEMBL::Registry

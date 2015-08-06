@@ -116,7 +116,14 @@ sub write_output {
         output_dir      => '#export_dir#/#base_filename#',
     };
 
-    if ($self->param_required('format') eq 'emf2maf') {
+    if ($self->param_required('split_mode') eq 'random') {
+
+        # In this mode, we don't care about the chromsome names and
+        # coordinate systems, we let createOtherJobs bin the alignment
+        # blocks into chunks
+        $self->dataflow_output_id($output_ids, 4);
+
+    } elsif ($self->param_required('format') eq 'emf2maf') {
 
         # In this mode, we read the EMF files from one directory, and
         # convert them to MAF in another one

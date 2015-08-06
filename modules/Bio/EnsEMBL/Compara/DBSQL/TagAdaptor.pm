@@ -91,12 +91,23 @@ sub _load_tagvalues {
     #print STDERR "CALL _load_tagvalues $self/$object\n";
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
     #print STDERR "_load_tagvalues = $db_tagtable/$db_attrtable\n";
- 
+
+    my $obj_tags = $object->{'_tags'};
+
     # Tags (multiple values are allowed)
     my $sth = $self->prepare("SELECT tag, value FROM $db_tagtable WHERE $db_keyname=?");
     $sth->execute($object->$perl_keyname);
-    while (my ($tag, $value) = $sth->fetchrow_array()) {
-        $object->add_tag($tag, $value, 1);
+    my ($tag, $value);
+    $sth->bind_columns(\$tag, \$value);
+    while ($sth->fetch()) {
+        # Optimized version of Taggable::add_tag()
+        if ( ! exists($obj_tags->{$tag}) ) {
+            $obj_tags->{$tag} = $value;
+        } elsif ( ref($obj_tags->{$tag}) eq 'ARRAY' ) {
+            push @{$obj_tags->{$tag}}, $value;
+        } else {
+            $obj_tags->{$tag} = [ $obj_tags->{$tag}, $value ];
+        }
     }
     $sth->finish;
    
@@ -110,7 +121,7 @@ sub _load_tagvalues {
         if (defined $attrs) {
             foreach my $key (keys %$attrs) {
                 if (($key ne $db_keyname) and defined(${$attrs}{$key})) {
-                    $object->add_tag($key, ${$attrs}{$key});
+                    $obj_tags->{$key} = ${$attrs}{$key};
                 }
             }
         }
@@ -125,7 +136,7 @@ sub _load_tagvalues {
                of objects (assumed to be all of the same type)
   Arg [1]    : $objs: Array ref to the list of object
   Arg [2]    : (optional) Boolean: does $objs contain all the objects from the db ?
-  Example    : $genetreenode_adaptor->_load_tagvalues_multiples( [$node1, $node2] );
+  Example    : $genetreenode_adaptor->_load_tagvalues_multiple( [$node1, $node2] );
   Returntype : none
   Exceptions : none
   Caller     : internal
@@ -154,9 +165,21 @@ sub _load_tagvalues_multiple {
     # Tags (multiple values are allowed)
     my $sth = $self->prepare("SELECT $db_keyname, tag, value FROM $db_tagtable $where_constraint");
     $sth->execute();
-    while (my ($obj_id, $tag, $value) = $sth->fetchrow_array()) {
+    my ($obj_id, $tag, $value);
+    $sth->bind_columns(\$obj_id, \$tag, \$value);
+    while ($sth->fetch()) {
         next if $all_objects and not exists $perl_keys{$obj_id};
-        $perl_keys{$obj_id}->add_tag($tag, $value, 1);
+        my $obj_tags = $perl_keys{$obj_id}->{'_tags'};
+
+        # Optimized version of Taggable::add_tag()
+        if ( ! exists($obj_tags->{$tag}) ) {
+            $obj_tags->{$tag} = $value;
+        } elsif ( ref($obj_tags->{$tag}) eq 'ARRAY' ) {
+            push @{$obj_tags->{$tag}}, $value;
+        } else {
+            $obj_tags->{$tag} = [ $obj_tags->{$tag}, $value ];
+        }
+
         #warn "adding $value to $tag of $obj_id";
     }
     $sth->finish;
@@ -167,10 +190,10 @@ sub _load_tagvalues_multiple {
         $sth->execute();
         # Retrieve data
         while (my $attrs = $sth->fetchrow_hashref()) {
-            my $object = $perl_keys{$attrs->{$db_keyname}};
+            my $obj_tags = $perl_keys{$attrs->{$db_keyname}};
             foreach my $key (keys %$attrs) {
                 if (($key ne $db_keyname) and defined(${$attrs}{$key})) {
-                    $object->add_tag($key, ${$attrs}{$key});
+                    $obj_tags->{$key} = ${$attrs}{$key};
                 }
             }
         }
@@ -313,7 +336,7 @@ sub _delete_tagvalue {
     $self->_read_attr_list($db_attrtable, $db_keyname);
     #print STDERR "CALL _delete_tagvalue $self/$object/$tag/$value: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
-    if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
+    if (defined $db_attrtable and exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
         # It is an attribute
         my $sth = $self->prepare("UPDATE $db_attrtable SET $tag=NULL WHERE $db_keyname=?");
         $sth->execute($object->$perl_keyname);
@@ -425,7 +448,7 @@ sub _wipe_all_tags {
     $self->_read_attr_list($db_attrtable, $db_keyname);
     #print STDERR "CALL _wipe_all_tags $self/$exclude_attr/$exclude_tags: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
 
-    unless ($exclude_attr) {
+    if (defined $db_attrtable and not $exclude_attr) {
         my $sth = $self->prepare("DELETE FROM $db_attrtable WHERE $db_keyname=?");
         foreach my $object (@$objects) {
             $sth->execute($object->$perl_keyname);
@@ -486,7 +509,7 @@ sub _store_all_tags {
         my $tag_hash = $object->get_tagvalue_hash;
         my $object_key = $object->$perl_keyname;
         foreach my $tag (keys %$tag_hash) {
-            next if exists $self->{"_attr_list_$db_attrtable"}->{$tag};
+            next if defined $db_attrtable and exists $self->{"_attr_list_$db_attrtable"}->{$tag};
             if (ref($tag_hash->{$tag}) eq 'ARRAY') {
                 foreach my $value (@{$tag_hash->{$tag}}) {
                     $sth->execute($object_key, $tag, $value);

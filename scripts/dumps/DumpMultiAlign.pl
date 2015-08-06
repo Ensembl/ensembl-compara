@@ -467,7 +467,7 @@ if ($method_link_species_set->method->class eq "ConservationScore.conservation_s
 # will have disconnect_when_inactive set to 1.
 # For pairwise alignments, we consider that we can afford staying asleep
 # half of the time, with the benefit of not losing the connection
-if (scalar(@{$method_link_species_set->species_set_obj->genome_dbs}) == 2) {
+if (scalar(@{$method_link_species_set->species_set_obj->genome_dbs}) <= 2) {
     map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$method_link_species_set->species_set_obj->genome_dbs};
 }
 
@@ -508,6 +508,7 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
     } 
   }
   $slice_adaptor->dbc->disconnect_if_idle();
+  warn "here:", scalar(@query_slices), " query slices\n";
 }
 
 # Get the GenomicAlignBlockAdaptor or the GenomicAlignTreeAdaptor:
@@ -530,6 +531,7 @@ my $use_several_files = 0;
 if ($output_file and $split_size) {
   $use_several_files = 1;
 }
+warn "several files ? $use_several_files\n";
 
 my $slice_counter = 0;
 my $start = 0;
@@ -576,7 +578,7 @@ if ($skip_species && !$file_of_genomic_align_block_ids) {
 }
 
 ## MAIN DUMPING LOOP
-do {
+while(1) {
   my $genomic_align_blocks = [];
   if ($file_of_genomic_align_block_ids) {
     open(FILE, $file_of_genomic_align_block_ids) or die ("Cannot open $file_of_genomic_align_block_ids");
@@ -599,9 +601,12 @@ do {
       $start = 0;
     } else {
       # Get the alignments using the GABadaptor
+      warn "fetching $split_size $start";
       $genomic_align_blocks = $genomic_align_set_adaptor->
           fetch_all_by_MethodLinkSpeciesSet($method_link_species_set,
           $split_size, $start);
+      warn "fetched";
+      $start += $split_size;
     }
   } else {
       while ((!$split_size or @$genomic_align_blocks < $split_size) and $slice_counter < @query_slices) {
@@ -653,20 +658,27 @@ do {
         $this_genomic_align_block = undef;
       }
     }
+    warn "dumped ", scalar(@$genomic_align_blocks), " blocks chunk_num $chunk_num split_size $split_size";
 
-    ## chunk_num means that only this chunk has to be dumped:
-    ## set the split_size to 0 in orer to exit the main loop
+    ## chunk_num means that only this chunk has to be dumped
+    ## we can now exit
     if ($chunk_num) {
-      $split_size = 0;
+      last;
     }
 
   } else {
-    ## No more genomic_align_blocks to dump: set split_size to 0 in orer to exit the main loop
-    $split_size = 0;
+    ## No more genomic_align_blocks to dump
+    last;
   }
-#} while ($split_size or $slice_counter < @query_slices);
-#} while ($split_size && $slice_counter < @query_slices);
-} while (($split_size and $slice_counter < @query_slices) or @$skip_genomic_align_blocks);
+  ## We have exhausted @query_slices
+  last if @query_slices and $slice_counter == scalar(@query_slices);
+  ## We have exhausted @$skip_genomic_align_blocks
+  last if $skip_species and not $file_of_genomic_align_block_ids and not @$skip_genomic_align_blocks;
+  ## We only need one iteration of the loop to read the file
+  last if $file_of_genomic_align_block_ids;
+
+  warn "split size $split_size slice_counter $slice_counter query_slices ", scalar(@query_slices), " skip_genomic_align_blocks ", scalar(@$skip_genomic_align_blocks);
+}
 
 exit(0);
 

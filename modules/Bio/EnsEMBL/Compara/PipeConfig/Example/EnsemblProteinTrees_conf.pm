@@ -138,6 +138,7 @@ sub default_options {
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
         'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
+        'getPatterns_exe'           => 'UNDEF',
         'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
     # HMM specific parameters (set to 0 or undef if not in use)
@@ -166,6 +167,7 @@ sub default_options {
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
         'decision_capacity'         =>   4,
+        'hc_post_tree_capacity'     => 100,
         'HMMer_classify_capacity'   => 100,
         'loadmembers_capacity'      =>  30,
         'HMMer_classifyPantherScore_capacity'   => 1000,

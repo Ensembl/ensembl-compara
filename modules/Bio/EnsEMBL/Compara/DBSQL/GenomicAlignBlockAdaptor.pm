@@ -1024,37 +1024,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
 }
 
 
-=head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType (DEPRECATED)
-  DEPRECATED! Use Bio::EnsEMBL::Compara::GenomicAlignBlockAdaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag method instead
-
-  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
-  Arg  2     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag (query)
-  Arg  3     : integer $start [optional]
-  Arg  4     : integer $end [optional]
-  Arg  5     : string $group_type
-  Example    : my $genomic_align_blocks =
-                  $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType(
-                      $mlss, $qy_dnafrag, 50000000, 50250000,"chain");
-  Description: Retrieve the corresponding
-               Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
-  Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. 
-  Exceptions : Returns ref. to an empty array if no matching
-               Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
-  Caller     : none
-  Status     : Deprecated
-
-=cut
-
-sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_GroupType {
-  my ($self, $method_link_species_set, $dnafrag, $start, $end, $group_type) = @_;
-
-  deprecate("There is no longer any GroupType defined. Use Bio::EnsEMBL::Compara::GenomicAlignBlockAdpator->fetch_all_by_MethodLinkSpeciesSet_DnaFrag method instead");
-
-  my $genomic_align_blocks = []; # returned object  
-  return $genomic_align_blocks;
-}
-
-
 =head2 retrieve_all_direct_attributes
 
   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock $genomic_align_block
