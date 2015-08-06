@@ -186,7 +186,7 @@ my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba-
 $helper->transaction( -CALLBACK => sub {
     if ($collection_ss) {
         my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_ss, \@new_collection_gdbs);
-        #print_method_link_species_sets_to_update($compara_dba, $collection_ss);
+        print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $new_collection_ss->dbID != $collection_ss->dbID;
     } else {
         my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -NAME => $$collection_name, -GENOME_DBS => \@new_collection_gdbs );
         $compara_dba->get_SpeciesSetAdaptor->store($species_set);
@@ -270,41 +270,27 @@ sub update_component_genome_dbs {
 =head2 print_method_link_species_sets_to_update
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg[2]      : Bio::EnsEMBL::Compara::SpeciesSet $collection_ss
   Description : This method prints all the genomic MethodLinkSpeciesSet
                 that need to be updated (those which correspond to the
-                $genome_db).
-                NB: Only method_link with a dbID <200 are taken into
-                account (they should be the genomic ones)
+                $collection_ss species-set).
   Returns     : -none-
   Exceptions  :
 
 =cut
 
 sub print_method_link_species_sets_to_update {
-  my ($compara_dba, $genome_db) = @_;
+    my ($compara_dba, $collection_ss) = @_;
 
-  my $method_link_species_set_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
-  my $genome_db_adaptor = $compara_dba->get_adaptor("GenomeDB");
+    my $method_link_species_sets = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_species_set_id($collection_ss->dbID);
 
-  my $method_link_species_sets;
-  foreach my $this_genome_db (@{$genome_db_adaptor->fetch_all()}) {
-    next if ($this_genome_db->name ne $genome_db->name);
-    foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
-      $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
-          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs})} = $this_method_link_species_set;
+    print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
+    foreach my $this_method_link_species_set (sort {$a->dbID <=> $b->dbID} @$method_link_species_sets) {
+        printf "%8d: ", $this_method_link_species_set->dbID,;
+        print $this_method_link_species_set->method->type, " (",
+        join(",", map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs}), ")\n";
     }
-  }
-
-  print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
-  foreach my $this_method_link_id (sort {$a <=> $b} keys %$method_link_species_sets) {
-    last if ($this_method_link_id > 200); # Avoid non-genomic method_link_species_set
-    foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
-      printf "%8d: ", $this_method_link_species_set->dbID,;
-      print $this_method_link_species_set->method->type, " (",
-          join(",", map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs}), ")\n";
-    }
-  }
+    print "  NONE\n" unless scalar(@$method_link_species_sets);
 
 }
 
