@@ -381,27 +381,6 @@ sub fetch_collection_by_name {
     }
 }
 
-=head2 fetch_all_collections_by_genome
-
-  Arg [1]     : scalar $genome_name_or_id
-  Example     : my $collections = $species_set_adaptor->fetch_all_collections_by_genome('homo_sapiens');
-  Description : Fetches all the "collection" SpeciesSet object for that GenomeDB
-  Returntype  : arrayref of Bio::EnsEMBL::Compara::SpeciesSet
-  Exceptions  : thrown if $genome_name_or_id is missing
-  Caller      : general
-
-=cut
-
-sub fetch_all_collections_by_genome {
-    my ($self, $genome_name_or_id) = @_;
-
-    throw('$genome_name_or_id is required') unless $genome_name_or_id;
-
-    my $field_name = looks_like_number($genome_name_or_id) ? 'genome_db_id' : 'gdb.name';
-    my $sql = sprintf('SELECT species_set_id FROM species_set_header ssh JOIN species_set USING (species_set_id) JOIN genome_db gdb USING (genome_db_id) WHERE ssh.name LIKE "collection-%%" AND %s = ?', $field_name);
-    return $self->_id_cache->get_by_sql($sql, [$genome_name_or_id]);
-}
-
 
 =head2 update_collection
 
