@@ -419,6 +419,9 @@ sub fetch_all_collections_by_genome {
 sub update_collection {
     my ($self, $collection_name, $old_ss, $new_genome_dbs) = @_;
 
+    my $gdb_a = $self->db->get_GenomeDBAdaptor;
+    my $mlss_a = $self->db->get_MethodLinkSpeciesSetAdaptor;
+
     my $species_set = $self->fetch_by_GenomeDBs($new_genome_dbs);
 
     if ($species_set) {
@@ -444,12 +447,43 @@ sub update_collection {
     }
 
     $species_set->name("collection-$collection_name");
-    $species_set->first_release(software_version());
-    $species_set->last_release(undef);
     $self->update_header($species_set);
+    $self->make_object_current($species_set);
 
-    $old_ss->last_release(software_version() - 1);
-    $self->update_header($old_ss);
+    if ($old_ss) {
+        my %curr_gdb_ids = map {$_->dbID => 1} @{$species_set->genome_dbs};
+        # Retire all the GenomeDBs ...
+        foreach my $gdb (@{$old_ss->genome_dbs}) {
+            # ... that are not in the new set
+            next if $curr_gdb_ids{$gdb->dbID};
+            $gdb_a->retire_object($gdb);
+            # and the SpeciesSets they're in
+            foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
+                $self->retire_object($ss);
+                # And now the MLSSs that use the species-set
+                foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
+                    $mlss_a->retire_object($mlss);
+                }
+            }
+        }
+    }
+
+    # Enable all the GenomeDBs of the collection
+    foreach my $gdb (@{$species_set->genome_dbs}) {
+        $gdb_a->make_object_current($gdb);
+    }
+    # And the SpeciesSets they are part of ...
+    foreach my $gdb (@{$species_set->genome_dbs}) {
+        foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
+            # ... if all the species in the set are enabled
+            next if grep {not $_->is_current} @{$ss->genome_dbs};
+            $self->make_object_current($ss);
+            # And now the MLSSs that use the species-set
+            foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
+                $mlss_a->make_object_current($mlss);
+            }
+        }
+    }
 
     return $species_set;
 }
