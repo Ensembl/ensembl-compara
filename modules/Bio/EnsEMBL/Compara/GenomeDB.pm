@@ -599,8 +599,8 @@ sub toString {
         ."', high_coverage='".$self->is_high_coverage
         .($self->genome_component ? "', genome_component='".$self->genome_component : '')
         ."', locator='".$self->locator
-        ."', first_release='".$self->first_release
-        ."', last_release='".$self->last_release
+        ."', first_release='".($self->first_release || 'NULL')
+        ."', last_release='".($self->last_release || 'NULL')
         ."'";
 }
 
