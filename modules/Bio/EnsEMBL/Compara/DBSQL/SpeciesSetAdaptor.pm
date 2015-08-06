@@ -24,6 +24,7 @@ use warnings;
 use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::ApiVersion;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
@@ -407,6 +408,7 @@ sub update_collection {
             if ($species_set->name eq $old_ss->name) {
                 # Being here would mean that the new collection is already
                 # stored.
+                # We're going to change their first/last_release anyway
             } else {
                 die sprintf("The species-set for the new '%s' collection content already exists and has a name ('%s'). Cannot store the collection\n", $old_ss->name, $species_set->name);
             }
@@ -417,7 +419,12 @@ sub update_collection {
     }
 
     $species_set->name($old_ss->name);
+    $species_set->first_release(software_version());
+    $species_set->last_release(undef);
     $self->update_header($species_set);
+
+    $old_ss->last_release(software_version() - 1);
+    $self->update_header($old_ss);
 
     return $species_set;
 }
