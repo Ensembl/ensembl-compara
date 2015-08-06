@@ -62,6 +62,8 @@ use DBI qw(:sql_types);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
+
+
 =head2 fetch_all_current
 
   Example     : $object_name->fetch_all_current();
@@ -94,6 +96,69 @@ sub fetch_all_by_release {
     my $self = shift;
     my $release_number = shift || throw("A release number must be given");
     return $self->_id_cache->get_all_by_additional_lookup('in_release_'.$release_number, 1);
+}
+
+
+=head2 update_first_last_release
+
+  Example     : $mlss_adaptor->update_first_last_release($mlss);
+  Description : Generic method to update first/last_release in the database
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub update_first_last_release {
+    my ($self, $object) = @_;
+    my %table = (
+        'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet' => ['method_link_species_set', 'method_link_species_set_id'],
+        'Bio::EnsEMBL::Compara::GenomeDB' => ['genome_db', 'genome_db_id'],
+        'Bio::EnsEMBL::Compara::SpeciesSet' => ['species_set_header', 'species_set_id'],
+    );
+    my $sql = sprintf('UPDATE %s SET first_release = ?, last_release = ? WHERE %s = ?', @{$table{ref($object)}});
+    $self->dbc->do($sql, undef, $object->first_release, $object->last_release, $object->dbID);
+    $self->_id_cache->put($object->dbID, $object);
+}
+
+
+=head2 retire_object
+
+  Example     : $genome_db_adaptor->retire_object();
+  Description : Mark the object as retired, i.e. with a last_release older than the current version
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub retire_object {
+    my ($self, $object) = @_;
+    return if not $object->is_current;
+    $object->last_release(software_version() - 1);
+    return $self->update_first_last_release($object);
+}
+
+
+=head2 make_object_current
+
+  Example     : $genome_db_adaptor->make_object_current();
+  Description : Mark the object as current, i.e. with a defined first_release and an undefined last_release
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_object_current {
+    my ($self, $object) = @_;
+    return if $object->is_current;
+    $object->first_release(software_version()) unless $object->has_been_released;
+    $object->last_release(undef);
+    return $self->update_first_last_release($object);
 }
 
 
