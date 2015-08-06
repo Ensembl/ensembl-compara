@@ -317,6 +317,12 @@ sub handler {
     $redirect = 1;
   }
 
+ if ($file =~ /\/info\/docs\/(variation|funcgen|compara|genebuild|microarray)/) {
+   $file =~ s/docs/genome/;
+   $r->uri($file);
+   $redirect = 1;
+ }
+
   if ($redirect) {
     $r->headers_out->add('Location' => $r->uri);
     $r->child_terminate;
