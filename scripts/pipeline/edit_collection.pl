@@ -142,8 +142,7 @@ die "Cannot connect to database [$compara]" if (!$compara_dba);
 
 warn "*** This script thinks that the Ensembl version is ".software_version().". Panic if it's wrong !\n";
 
-#my $collection_ss = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($collection_name);
-my $collection_ss = $compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID(35739);
+my $collection_ss = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($collection_name);
 my $all_current_gdbs = [grep {($_->is_current or not $_->has_been_released) and ($_->name ne 'ancestral_sequences')} @{$compara_dba->get_GenomeDBAdaptor->fetch_all()}];
 my @new_collection_gdbs = ();
 
