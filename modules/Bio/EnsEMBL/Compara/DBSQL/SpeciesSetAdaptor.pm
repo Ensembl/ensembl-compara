@@ -371,15 +371,10 @@ sub fetch_collection_by_name {
 
     my $all_ss = $self->fetch_all_by_name("collection-$collection");
     my @all_current_ss = grep {$_->is_current} @$all_ss;
+    return $all_current_ss[0] if @all_current_ss;
 
-    if (scalar(@all_current_ss) == 0) {
-        warn "cannot find the collection '$collection'\n";
-        return undef;
-    } elsif (scalar(@all_current_ss) > 1) {
-        die "There are multiple collections '$collection'\n";
-    } else {
-        return $all_current_ss[0];
-    }
+    my @sorted_ss = sort {$b->last_release <=> $a->last_release} grep {$_->has_been_released and not $_->is_current} @$all_ss;
+    return $sorted_ss[0];
 }
 
 
