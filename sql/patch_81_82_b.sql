@@ -28,8 +28,8 @@
 ALTER TABLE genome_db ADD COLUMN first_release smallint unsigned, ADD COLUMN last_release smallint unsigned;
 
 # Insert dummy values for first_release and last_release
-UPDATE genome_db SET first_release = 79;    -- must be set, so that all the genomes are considered as released
-UPDATE genome_db SET last_release = 79 WHERE assembly_default=0;    -- non-default genome_dbs were not current any more in e81, so must have ended in e79 or before
+UPDATE genome_db SET first_release = 80;    -- must be set, so that all the genomes are considered as released
+UPDATE genome_db SET last_release = 80 WHERE assembly_default=0;    -- non-default genome_dbs were not current any more in e81, so must have ended in e80 or before
 
 ALTER TABLE genome_db DROP COLUMN assembly_default;
 
