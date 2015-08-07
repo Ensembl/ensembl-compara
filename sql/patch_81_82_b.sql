@@ -52,9 +52,9 @@ INSERT INTO species_set_header (species_set_id, first_release, last_release)
 	GROUP BY species_set.species_set_id;
 
 -- Try to find the best name
-UPDATE species_set JOIN species_set_tag USING (species_set_id) SET name = CONCAT("genetree_display_", value) WHERE tag = "genetree_display";
-UPDATE species_set JOIN species_set_tag USING (species_set_id) SET name = CONCAT("taxon_", value) WHERE tag = "taxon_id";
-UPDATE species_set JOIN species_set_tag USING (species_set_id) SET name = value WHERE tag = "name";
+UPDATE species_set_header JOIN species_set_tag USING (species_set_id) SET name = CONCAT("genetree_display_", value) WHERE tag = "genetree_display";
+UPDATE species_set_header JOIN species_set_tag USING (species_set_id) SET name = CONCAT("taxon_", value) WHERE tag = "taxon_id";
+UPDATE species_set_header JOIN species_set_tag USING (species_set_id) SET name = value WHERE tag = "name";
 DELETE FROM species_set_tag WHERE tag = "genetree_display";
 DELETE FROM species_set_tag WHERE tag = "taxon_id";
 DELETE FROM species_set_tag WHERE tag = "name";
