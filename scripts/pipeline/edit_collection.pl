@@ -87,6 +87,11 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 The script will prompt for species to remove from the collection if this option is
 activated. Otherwise, the user will only have the choice to add and update genomes.
 
+=item B<[--[no]dry-run]>
+
+In dry-run mode (the default), the script does not write into the master
+database (and would be happy with a read-only connection).
+
 =back
 
 =head1 INTERNAL METHODS
@@ -107,6 +112,7 @@ my $reg_conf;
 my $compara;
 my $collection_name;
 my $ask_to_remove_species;
+my $dry_run = 1;
 
 GetOptions(
     "help" => \$help,
@@ -114,6 +120,7 @@ GetOptions(
     "compara=s" => \$compara,
     'collection=s'  => \$collection_name,
     'ask_to_remove_species' => \$ask_to_remove_species,
+    "dry_run|dry-run!" => \$dry_run,
   );
 
 $| = 0;
@@ -189,6 +196,7 @@ my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba-
 $helper->transaction( -CALLBACK => sub {
     my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
     print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $collection_ss and ($new_collection_ss->dbID != $collection_ss->dbID);
+    die "Aborting the transaction (dry-run mode)\n" if $dry_run;
 } );
 
 exit(0);
