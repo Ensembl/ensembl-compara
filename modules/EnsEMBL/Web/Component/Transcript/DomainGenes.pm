@@ -88,21 +88,22 @@ sub content {
   }
 
   ## Now do table
-  my $table = $self->new_table([], [], { data_table => 'no_sort' });
+  my $table = $self->new_table([], [], { data_table => 1 });
 
   $table->add_columns(
-    { key => 'id',   title => 'Gene',                   width => '30%', align => 'center' },
-    { key => 'loc',  title => 'Genome Location',        width => '20%', align => 'left'   },
-    { key => 'desc', title => 'Description (if known)', width => '50%', align => 'left'   }
+    { key => 'id',   title => 'Gene',                   width => '15%', align => 'left' },
+    { key => 'loc',  title => 'Genome Location',        width => '20%', align => 'left' },
+    { key => 'name', title => 'Name',                   width => '10%', align => 'left' },
+    { key => 'desc', title => 'Description (if known)', width => '55%', align => 'left' }
   );
   
   foreach my $gene (sort { $object->seq_region_sort($a->seq_region_name, $b->seq_region_name) || $a->seq_region_start <=> $b->seq_region_start } @$genes) {
     my $row       = {};
-    my $xref_id   = $gene->display_xref ? $gene->display_xref->display_id : '-novel-';
+    my $xref_id   = $gene->display_xref ? $gene->display_xref->display_id : '-';
     my $stable_id = $gene->stable_id;
     
-    $row->{'id'} = sprintf '<a href="%s">%s</a><br />(%s)', $hub->url({ type => 'Gene', action => 'Summary', g => $stable_id }), $stable_id, $xref_id;
-
+    $row->{'id'} = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Gene', action => 'Summary', g => $stable_id }), $stable_id, $xref_id;
+    $row->{'name'} = $xref_id;
     my $readable_location = sprintf(
       '%s: %s',
       $self->neat_sr_name($gene->slice->coord_system->name, $gene->slice->seq_region_name),
