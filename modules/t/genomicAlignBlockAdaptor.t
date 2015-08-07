@@ -100,7 +100,6 @@ my $dnafrag_id = $compara_db_adaptor->dbc->db_handle->selectrow_array("
     SELECT dnafrag_id FROM dnafrag df, genome_db gdb
     WHERE df.genome_db_id = gdb.genome_db_id
       and gdb.name = \"homo_sapiens\"
-      and gdb.assembly_default = 1
       and df.name = \"$slice_seq_region_name\"
       and df.coord_system_name = \"$slice_coord_system_name\"");
 my $dnafrag_start = $slice_start;

@@ -54,7 +54,7 @@ my $num_eutheria = 35;
 my ($num_of_genomes) = $compara_db_adaptor->dbc->db_handle->selectrow_array("SELECT count(*) FROM genome_db");
 my ($eutheria_taxon_id) = $compara_db_adaptor->dbc->db_handle->selectrow_array('SELECT taxon_id FROM ncbi_taxa_name where name = "Eutheria"');
 
-my ($genome_db_id, $taxon_id, $name, $assembly, $assembly_default, $genebuild,  $locator, $seq_region) = $compara_db_adaptor->dbc->db_handle->selectrow_array("SELECT genome_db_id, taxon_id, genome_db.name, assembly, assembly_default, genebuild, locator, dnafrag.name FROM genome_db JOIN dnafrag USING (genome_db_id) WHERE genome_db.name = 'homo_sapiens' LIMIT 1");
+my ($genome_db_id, $taxon_id, $name, $assembly, $first_release, $last_release, $genebuild,  $locator, $seq_region) = $compara_db_adaptor->dbc->db_handle->selectrow_array("SELECT genome_db_id, taxon_id, genome_db.name, assembly, first_release, last_release, genebuild, locator, dnafrag.name FROM genome_db JOIN dnafrag USING (genome_db_id) WHERE genome_db.name = 'homo_sapiens' LIMIT 1");
 
 #Need to add this explicitly 
 Bio::EnsEMBL::Registry->add_alias("homo_sapiens", "human");
@@ -91,7 +91,8 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_dbID", sub {
     my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
 
     is($genome_db->name, $name, "Checking genome_db name");
-    is($genome_db->assembly_default, $assembly_default, "Checking genome_db assembly_default");
+    is($genome_db->first_release, $first_release, "Checking genome_db first_release");
+    is($genome_db->last_release, $last_release, "Checking genome_db last_release");
     is($genome_db->assembly, $assembly, "Checking genome_db assembly");
     is($genome_db->genebuild, $genebuild, "Checking genome_db genebuild");
     is($genome_db->taxon_id, $taxon_id, "Checking genome_db taxon_id");

@@ -184,6 +184,7 @@ return [
 # ------------------------------------- set up the necessary database tables
     @{$self->init_basic_tables_analyses('#compara_pairwise_db#', 'delete_from_copied_tables', 1, 0, 1, [{}])},
 
+    # FIXME: assembly_default does not exist any more
 {
   -logic_name => 'delete_from_copied_tables',
   -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
