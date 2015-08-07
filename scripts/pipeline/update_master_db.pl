@@ -168,8 +168,10 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
                 $genome_db_adaptor->update($proper_genome_db);
                 warn "\t> Successfully updated the master database\n";
             }
-        } else {
+        } elsif ($master_genome_db->is_current) {
             print "> '$that_species' (assembly '$that_assembly') OK\n";
+        } else {
+            warn "> '$that_species' (assembly '$that_assembly') is in the master database, but is not yet 'current' (i.e. first/last_release are not properly set). It should be fixed after running edit_collection.pl\n";
         }
     } elsif ($check_species_missing_from_compara) {
         warn "> Could not find the species '$that_species' (assembly '$that_assembly') in the genome_db table. You should probably add it.\n";
