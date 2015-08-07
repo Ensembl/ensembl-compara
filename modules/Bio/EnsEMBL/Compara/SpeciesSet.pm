@@ -86,7 +86,7 @@ sub new {
 
     my ($genome_dbs, $name) = rearrange([qw(GENOME_DBS NAME)], @_);
 
-    $self->genome_dbs($genome_dbs) if (defined ($genome_dbs));
+    $self->genome_dbs($genome_dbs || []);
     $self->name($name) if (defined $name);
 
     return $self;
