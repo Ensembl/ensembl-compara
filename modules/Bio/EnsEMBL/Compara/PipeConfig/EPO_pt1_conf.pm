@@ -220,6 +220,7 @@ return [
 },
 
 { # this sets dummy values into the species_set table
+    # FIXME : direct writes into species_set are forbidden !
  -logic_name     => 'add_dummy_species_set_info_factory',
  -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
  -parameters => {

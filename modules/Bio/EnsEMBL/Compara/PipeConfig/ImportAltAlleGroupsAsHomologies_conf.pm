@@ -171,10 +171,7 @@ sub pipeline_analyses {
 
         {
             -logic_name => 'species_factory',
-            -module => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'    => 'SELECT genome_db_id FROM genome_db',
-            },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into => {
                 2   => [ 'altallegroup_factory' ],
             },
