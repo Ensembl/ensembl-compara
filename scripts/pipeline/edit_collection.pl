@@ -227,11 +227,13 @@ sub ask_for_genome_dbs {
             last;
         }
 
-        print 'Add/Remove a GenomeDB (Press enter to finish)   ';;
+        print 'Add or remove a GenomeDB by typing its dbID. Type "all" to select all. Press enter to finish.   ';;
         my $answer;
         chomp ($answer = <>);
         if ($answer) {
-            if (not $answer =~ /^\d+$/) {
+            if ($answer eq 'all') {
+                $genome_dbs_in = {%$genome_dbs_hash};
+            } elsif (not $answer =~ /^\d+$/) {
                 print "\nERROR: '$answer' is not a number, try again\n";
             } elsif (not exists $genome_dbs_hash->{$answer}) {
                 print "\nERROR: '$answer' is not a valid GenomeDB ID, try again\n";
