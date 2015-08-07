@@ -164,8 +164,9 @@ foreach my $name (keys %$deleted_patches) {
 
 my $delete_str = @delete_names ? "(".(join ",", @delete_names).")" : "";
 my $dnafrag_str = @dnafrags ? "(".(join ",", @dnafrags).")" : "";
-print "\nPatches to delete: $delete_str\n";
-print "Dnafrags to delete: $dnafrag_str\n";
+print "\nDnaFrags to delete:\n";
+print "  names: $delete_str\n";
+print "  dnafrag_ids: $dnafrag_str\n";
 
 if ($patch_names) {
     print "Input for create_patch_pairaligner_conf.pl:\n";
