@@ -160,8 +160,8 @@ if ($collection_ss) {
     my @forced_updated_species = grep {exists $collection_species_by_name{$_->name} and ($collection_species_by_name{$_->name}->dbID != $_->dbID) and $_->is_current} @$all_current_gdbs;
     push @new_collection_gdbs, ask_for_genome_dbs('Species that must be updated (because they are newer)', \@forced_updated_species, 1);
 
-    # updated species
-    my @updated_species = grep {exists $collection_species_by_name{$_->name} and ($collection_species_by_name{$_->name}->dbID != $_->dbID) and not $_->is_current} @$all_current_gdbs;
+    # updated species: only show the more recent ones (i.e. higher genome_db_id)
+    my @updated_species = grep {exists $collection_species_by_name{$_->name} and ($collection_species_by_name{$_->name}->dbID < $_->dbID) and not $_->is_current} @$all_current_gdbs;
     push @new_collection_gdbs, ask_for_genome_dbs('Select the species to update', \@updated_species);
 
     # Species to potentially remove
