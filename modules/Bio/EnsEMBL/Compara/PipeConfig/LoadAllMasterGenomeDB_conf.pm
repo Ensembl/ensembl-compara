@@ -80,10 +80,10 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
         {   -logic_name => 'load_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'db_conn'           => $self->o('master_db'),
-                'inputquery'        => 'SELECT genome_db_id, name species_name, assembly assembly_name FROM genome_db WHERE taxon_id AND assembly_default',
+                'all_current'       => 1,
                 'fan_branch_code'   => 2,
             },
             -input_ids  => [
@@ -91,7 +91,7 @@ sub pipeline_analyses {
                         # If you want to load the latest assembly for the genome, skip 'assembly assembly_name' field from the query.
             ],
             -flow_into => {
-                2 => [ 'load_genomedb' ],
+                2 => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#' }, },
             },
         },
 

@@ -93,7 +93,7 @@ Reports all the species that have a core database but not a GenomeDB entry
 =item B<[--check_species_with_no_core]>
 
 Boolean (default: true).
-Reports all the (assembly_default) GenomeDB entries that don't have a core database.
+Reports all the (current) GenomeDB entries that don't have a core database.
 
 =item B<[--[no]dry-run]>
 
@@ -168,8 +168,10 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
                 $genome_db_adaptor->update($proper_genome_db);
                 warn "\t> Successfully updated the master database\n";
             }
-        } else {
+        } elsif ($master_genome_db->is_current) {
             print "> '$that_species' (assembly '$that_assembly') OK\n";
+        } else {
+            warn "> '$that_species' (assembly '$that_assembly') is in the master database, but is not yet 'current' (i.e. first/last_release are not properly set). It should be fixed after running edit_collection.pl\n";
         }
     } elsif ($check_species_missing_from_compara) {
         warn "> Could not find the species '$that_species' (assembly '$that_assembly') in the genome_db table. You should probably add it.\n";
@@ -182,11 +184,11 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 if ($check_species_with_no_core) {
     foreach my $master_genome_db (@{$genome_db_adaptor->fetch_all}) {
         next if $master_genome_db->name eq 'ancestral_sequences';
-        if ($master_genome_db->assembly_default and not $found_genome_db_ids{$master_genome_db->dbID}) {
+        if ($master_genome_db->is_current and not $found_genome_db_ids{$master_genome_db->dbID}) {
             if ($master_genome_db->locator) {
                 warn "> The following genome_db entry has a locator in the master database. You should check that it really needs it.\n";
             } else {
-                warn "> The following genome_db entry has the assembly_default flag on but cannot be found in the core databases.\n\t".($master_genome_db->toString)."\n";
+                warn "> The following genome_db entry is set as current but cannot be found in the core databases.\n\t".($master_genome_db->toString)."\n";
             }
         }
     }

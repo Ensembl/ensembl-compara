@@ -1,4 +1,4 @@
-1	\N	schema_version	79
+1	\N	schema_version	82
 2	\N	patch	patch_38_39_a.sql|status_enum
 3	\N	patch	patch_38_39_b.sql|unique_assembly
 4	\N	patch	patch_38_39_c.sql|multiversion_objects
@@ -245,3 +245,11 @@
 1429	\N	patch	patch_77_78_b.sql|source_column_increase
 1430	\N	patch	patch_77_78_c.sql|Change unmapped_reason_id from smallint to int
 1431	\N	patch	patch_78_79_a.sql|schema_version
+1432	\N	patch	patch_79_80_a.sql|schema_version
+1433	\N	patch	patch_79_80_b.sql|xref_dbprimary_acc_longer
+1434	\N	patch	patch_79_80_c.sql|seq_region_synonym_longer
+1435	\N	patch	patch_79_80_d.sql|genome_statistics_value_longer
+1436	\N	patch	patch_80_81_a.sql|schema_version
+1437	\N	patch	patch_81_82_a.sql|schema_version
+1438	\N	patch	patch_81_82_b.sql|xref_width
+1439	\N	patch	patch_81_82_c.sql|seq_synonym_key

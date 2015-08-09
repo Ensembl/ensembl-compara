@@ -135,12 +135,13 @@ CREATE TABLE ncbi_taxa_name (
 @column taxon_id          External reference to taxon_id in the @link ncbi_taxa_node table
 @column name              Species name
 @column assembly          Assembly version of the genome
-@column assembly_default  Boolean value describing if this assembly is the default one or not, so that we can handle more than one assembly version for a given species.
 @column genebuild         Version of the genebuild
 @column has_karyotype     Whether the genome has a karyotype
 @column is_high_coverage  Whether the assembly coverage depth is high enough
 @column genome_component  Only used for polyploid genomes: the name of the genome component
 @column locator           Used for production purposes or for user configuration in in-house installation.
+@column first_release     The first release this genome was present in
+@column last_release      The last release this genome was present in, or NULL if it is still current
 
 */
 
@@ -149,12 +150,13 @@ CREATE TABLE genome_db (
   taxon_id                    int(10) unsigned DEFAULT NULL, # KF taxon.taxon_id
   name                        varchar(128) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
-  assembly_default            tinyint(1) DEFAULT 1,
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   is_high_coverage            tinyint(1) NOT NULL DEFAULT 0,
   genome_component            varchar(5) DEFAULT NULL,
   locator                     varchar(400),
+  first_release               smallint,
+  last_release                smallint,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
@@ -165,14 +167,44 @@ CREATE TABLE genome_db (
 
 
 /**
-@table species_set
-@desc  Contains groups or sets of species which are used in the @link method_link_species_set table. Each species_set is a set of @link genome_db objects
+@table species_set_header
+@desc  Header for the @link species_set table which groups or sets of species which are used in the @link method_link_species_set table.
 @colour   #3CB371
 
 @example     This query shows the first 10 species_sets having human
    @sql      SELECT species_set_id, GROUP_CONCAT(name) AS species FROM species_set JOIN genome_db USING(genome_db_id) GROUP BY species_set_id HAVING species LIKE '%homo_sapiens%' ORDER BY species_set_id LIMIT 10;
   
 @column species_set_id    Internal (non-unique) ID for the table
+@column genome_db_id      External reference to genome_db_id in the @link genome_db table
+@column first_release     The first release this set genome was present in
+@column last_release      The last release this set was present in, or NULL if it is still current
+
+
+@see method_link_species_set
+@see genome_db
+*/
+
+CREATE TABLE species_set_header (
+  species_set_id              int(10) unsigned NOT NULL AUTO_INCREMENT,
+  name                        varchar(255) NOT NULL default '',
+  size                        int(10) unsigned NOT NULL,
+  first_release               smallint,
+  last_release                smallint,
+
+  PRIMARY KEY (species_set_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table species_set
+@desc  Describes the content of each species-set (@link species_set_header) as a set of @link genome_db objects
+@colour   #3CB371
+
+@example     This query shows the first 10 species_sets having human
+   @sql      SELECT species_set_id, GROUP_CONCAT(name) AS species FROM species_set JOIN genome_db USING(genome_db_id) GROUP BY species_set_id HAVING species LIKE '%homo_sapiens%' ORDER BY species_set_id LIMIT 10;
+
+@column species_set_id    Internal ID for the table, foreign key to @link species_set_header
 @column genome_db_id      External reference to genome_db_id in the @link genome_db table
 
 
@@ -181,12 +213,13 @@ CREATE TABLE genome_db (
 */
 
 CREATE TABLE species_set (
-  species_set_id              int(10) unsigned NOT NULL AUTO_INCREMENT,
-  genome_db_id                int(10) unsigned DEFAULT NULL,
+  species_set_id              int(10) unsigned NOT NULL,
+  genome_db_id                int(10) unsigned NOT NULL,
 
+  FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
-  UNIQUE KEY  (species_set_id,genome_db_id)
+  PRIMARY KEY  (species_set_id,genome_db_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -211,8 +244,7 @@ CREATE TABLE species_set_tag (
   tag                         varchar(50) NOT NULL,
   value                       mediumtext,
 
-  ## NB: species_set_id is not unique so cannot be used as a foreign key
-  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
+  FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
 
   UNIQUE KEY tag_species_set_id (species_set_id,tag)
 
@@ -260,6 +292,8 @@ CREATE TABLE method_link (
 @column name                          Human-readable description for this method_link_species_set
 @column source                        Source of the data. Currently either "ensembl" or "ucsc" if data were imported from UCSC
 @column url                           A URL where you can find the orignal data if they were imported
+@column first_release     The first release this analysis was present in
+@column last_release      The last release this analysis was present in, or NULL if it is still current
 
 @see method_link
 @see species_set
@@ -267,15 +301,16 @@ CREATE TABLE method_link (
 
 CREATE TABLE method_link_species_set (
   method_link_species_set_id  int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  method_link_id              int(10) unsigned, # FK method_link.method_link_id
-  species_set_id              int(10) unsigned NOT NULL default 0,
+  method_link_id              int(10) unsigned NOT NULL, # FK method_link.method_link_id
+  species_set_id              int(10) unsigned NOT NULL,
   name                        varchar(255) NOT NULL default '',
   source                      varchar(255) NOT NULL default 'ensembl',
   url                         varchar(255) NOT NULL default '',
+  first_release               smallint,
+  last_release                smallint,
 
   FOREIGN KEY (method_link_id) REFERENCES method_link(method_link_id),
-  ## NB: species_set_id is not unique so cannot be used as a foreign key
-  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
+  FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
 
   PRIMARY KEY (method_link_species_set_id),
   UNIQUE KEY method_link_id (method_link_id,species_set_id)
@@ -296,7 +331,7 @@ CREATE TABLE method_link_species_set (
 
 
 CREATE TABLE method_link_species_set_tag (
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK species_set.species_set_id
+  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   tag                         varchar(50) NOT NULL,
   value                       mediumtext,
 
@@ -1768,12 +1803,16 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '81');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '82');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_80_81_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_81_82_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_81_82_b.sql|first_last_release');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_81_82_c.sql|species_set_size');
 

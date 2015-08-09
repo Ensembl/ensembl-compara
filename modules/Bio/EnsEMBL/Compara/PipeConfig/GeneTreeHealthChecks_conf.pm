@@ -126,11 +126,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'species_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM genome_db',
-                'fan_branch_code'   => 2,
-            },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 2 => [ 'hc_members_per_genome', 'hc_pafs' ],
             },

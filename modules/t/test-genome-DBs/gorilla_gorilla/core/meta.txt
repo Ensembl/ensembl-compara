@@ -1,4 +1,4 @@
-1	\N	schema_version	79
+1	\N	schema_version	82
 2	\N	patch	patch_55_56_a.sql|schema_version
 3	\N	patch	patch_55_56_b.sql|add_index_names
 4	\N	patch	patch_55_56_c.sql|drop_oligo_tables_and_xrefs
@@ -165,3 +165,11 @@
 864	\N	patch	patch_77_78_b.sql|source_column_increase
 865	\N	patch	patch_77_78_c.sql|Change unmapped_reason_id from smallint to int
 866	\N	patch	patch_78_79_a.sql|schema_version
+867	\N	patch	patch_79_80_a.sql|schema_version
+868	\N	patch	patch_79_80_b.sql|xref_dbprimary_acc_longer
+869	\N	patch	patch_79_80_c.sql|seq_region_synonym_longer
+870	\N	patch	patch_79_80_d.sql|genome_statistics_value_longer
+871	\N	patch	patch_80_81_a.sql|schema_version
+872	\N	patch	patch_81_82_a.sql|schema_version
+873	\N	patch	patch_81_82_b.sql|xref_width
+874	\N	patch	patch_81_82_c.sql|seq_synonym_key

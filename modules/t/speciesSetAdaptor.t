@@ -67,11 +67,11 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::store1", sub {
                                                   -genome_dbs => [ $genome_db_adaptor->fetch_by_name_assembly("felis_catus"),
                                                                  $genome_db_adaptor->fetch_by_name_assembly("mus_musculus")],                                                               );
 
-    $multi->hide('compara', 'species_set', 'genome_db', 'species_set_tag');
+    $multi->hide('compara', 'species_set_header', 'species_set', 'genome_db', 'species_set_tag');
     $species_set_adaptor->store($species_set_obj);
     is(scalar(@{$species_set_adaptor->fetch_all}), 1);
 
-    $multi->restore('compara', 'species_set', 'genome_db', 'species_set_tag');
+    $multi->restore('compara', 'species_set_header', 'species_set', 'genome_db', 'species_set_tag');
     done_testing();  
 };
 
@@ -81,7 +81,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::store2", sub {
    #Make sure the cache is empty
     $species_set_adaptor->{_id_cache}->clear_cache;
 
-    $multi->save('compara', 'species_set', 'genome_db', 'species_set_tag');
+    $multi->save('compara', 'species_set_header', 'species_set', 'genome_db', 'species_set_tag');
 
     #new object with no genome_dbs
     my $new_species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new();    
@@ -100,7 +100,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::store2", sub {
     $all_species_sets = $species_set_adaptor->fetch_all();
     is(scalar(@$all_species_sets), ($num_species_sets+1), "Checking store method");
 
-    $multi->restore('compara', 'species_set', 'genome_db', 'species_set_tag');
+    $multi->restore('compara', 'species_set_header', 'species_set', 'genome_db', 'species_set_tag');
     done_testing();  
 };
 

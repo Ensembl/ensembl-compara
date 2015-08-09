@@ -96,7 +96,7 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
 
@@ -150,9 +150,9 @@ sub store {
 
   if (!$dbID) {
 
-      my $columns = '(method_link_species_set_id, method_link_id, species_set_id, name, source, url)';
-      my $mlss_placeholders = '?, ?, ?, ?, ?';
-      my @mlss_data = ($method->dbID, $species_set_obj->dbID, $mlss->name || '', $mlss->source || '', $mlss->url || '');
+      my $columns = '(method_link_species_set_id, method_link_id, species_set_id, name, source, url, first_release, last_release)';
+      my $mlss_placeholders = '?, ?, ?, ?, ?, ?, ?';
+      my @mlss_data = ($method->dbID, $species_set_obj->dbID, $mlss->name || '', $mlss->source || '', $mlss->url || '', $mlss->first_release, $mlss->last_release);
 
       $dbID = $mlss->dbID();
       if (!$dbID) {
@@ -248,8 +248,8 @@ sub _objs_from_sth {
     my $method_hash = $self->db->get_MethodAdaptor()->_id_cache;
     my $species_set_hash = $self->db->get_SpeciesSetAdaptor()->_id_cache;
 
-    my ($dbID, $method_link_id, $species_set_id, $name, $source, $url);
-    $sth->bind_columns(\$dbID, \$method_link_id, \$species_set_id, \$name, \$source, \$url);
+    my ($dbID, $method_link_id, $species_set_id, $name, $source, $url, $first_release, $last_release);
+    $sth->bind_columns(\$dbID, \$method_link_id, \$species_set_id, \$name, \$source, \$url, \$first_release, \$last_release);
     while ($sth->fetch()) {
 
             my $method          = $method_hash->get($method_link_id) or warning "Could not fetch Method with dbID=$method_link_id for MLSS with dbID=$dbID";
@@ -266,6 +266,9 @@ sub _objs_from_sth {
                     name               => $name,
                     source             => $source,
                     url                => $url,
+
+                    _first_release     => $first_release,
+                    _last_release      => $last_release,
                 } );
                 push @mlss_list, $mlss;
             }
@@ -288,6 +291,8 @@ sub _columns {
         m.name
         m.source
         m.url
+        m.first_release
+        m.last_release
     )
 }
 
@@ -563,7 +568,7 @@ sub fetch_by_method_link_type_registry_aliases {
   Example    : my $method_link_species_set =
                      $mlssa->fetch_by_method_link_type_species_set_name("EPO", "mammals")
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
-               corresponding to the given method_link_type and and species_set_tag value
+               corresponding to the given method_link_type and and species_set_name value
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                object is found
@@ -585,7 +590,7 @@ sub fetch_by_method_link_type_species_set_name {
             return $mlss if $mlss;
         }
     }
-    warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
+    warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_name value of $species_set_name\n");
     return undef
 }
 
@@ -615,7 +620,7 @@ sub _build_id_cache {
 package Bio::EnsEMBL::DBSQL::Cache::MethodLinkSpeciesSet;
 
 
-use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
+use base qw/Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory/;
 use strict;
 use warnings;
 
@@ -627,10 +632,12 @@ sub support_additional_lookups {
 sub compute_keys {
     my ($self, $mlss) = @_;
     return {
+        species_set_id => $mlss->species_set_obj->dbID,
         method => sprintf('%d', $mlss->method->dbID),
         method_species_set => sprintf('%d_%d', $mlss->method->dbID, $mlss->species_set_obj->dbID),
         (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$mlss->species_set_obj->genome_dbs()}),
         (map {sprintf('genome_db_%d_method_%s', $_->dbID, uc $mlss->method->type) => 1} @{$mlss->species_set_obj->genome_dbs()}),
+        %{$self->SUPER::compute_keys($mlss)},
     }
 }
 

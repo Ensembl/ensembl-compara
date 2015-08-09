@@ -171,13 +171,11 @@ if ($species && @$species > 0) {
             #find non-reference species
             if ($genome_db->name ne $patched_species) {
                 #skip anything that isn't current
-                next unless ($genome_db->assembly_default);
+                next unless ($genome_db->is_current);
                 print STDERR $genome_db->name, " has a karyotype ? ", $genome_db->has_karyotype, "\n";
                 if ($genome_db->has_karyotype) {
-                    #print STDERR "   found " . @$dnafrags . " chromosomes in " . $genome_db->name . "\n";
+                    #find non-ref genome_dbs (may be present in blastz and lastz)
                     $unique_genome_dbs{$genome_db->name} = $genome_db;
-                } else {
-                    #print STDERR "   no chromosomes found in " . $genome_db->name . "\n";
                 }
             }
         }
@@ -201,7 +199,7 @@ foreach my $name (keys %unique_genome_dbs) {
 #Set default exception_species for human if not already set
 if ($patched_species eq "homo_sapiens" && @$exception_species == 0) {
     # 9443 is the taxon_id of Primates
-    @$exception_species = map {$_->name} grep {$_->assembly_default} @{$genome_db_adaptor->fetch_all_by_ancestral_taxon_id(9443)};
+    @$exception_species = map {$_->name} grep {$_->is_current} @{$genome_db_adaptor->fetch_all_by_ancestral_taxon_id(9443)};
 }
 
 #Define dna_collections 

@@ -204,6 +204,7 @@ my $dnafrag_condition = " genome_db_id in (" . join(",", map { $_->dbID }@$genom
 copy_table($master_db, $db_to_populate, "dnafrag", $dnafrag_condition);
 
 my $species_set_condition = " species_set_id = " . $ortheus_mlss->species_set_obj->dbID;
+copy_table($master_db, $db_to_populate, "species_set_header", $species_set_condition);
 copy_table($master_db, $db_to_populate, "species_set", $species_set_condition);
 
 copy_table($master_db, $db_to_populate, "method_link");

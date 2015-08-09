@@ -163,6 +163,9 @@ $dbh->do("insert into method_link_species_set select * from $srcDB.method_link_s
 #Populate method_link_species_set_tag (take all so more data can be added at a later date)
 $dbh->do("INSERT INTO method_link_species_set_tag SELECT * FROM $srcDB.method_link_species_set_tag");
 
+#Populate species_set_header (take all so more data can be added at a later date)
+$dbh->do("INSERT INTO species_set_header SELECT * FROM $srcDB.species_set_header");
+
 #Populate species_set (take all so more data can be added at a later date)
 $dbh->do("INSERT INTO species_set SELECT * FROM $srcDB.species_set");
 
@@ -186,7 +189,7 @@ $dbh->do("insert into ncbi_taxa_name select * from $srcDB.ncbi_taxa_name");
 my $other_genome_db_ids = $dbh->selectcol_arrayref("
     SELECT genome_db_id FROM genome_db
     WHERE name IN (\"".join("\", \"", @other_genome_db_names)."\")
-        and assembly_default = 1");
+        AND first_release IS NOT NULL AND last_release IS NULL");
 
 
 #Take max of all the max_align values, used to select alignment blocks
@@ -199,13 +202,13 @@ my $max_alignment_length = $array_ref->[0];
 
 my $ref_genome_db_id = $dbh->selectrow_array("
     SELECT genome_db_id FROM genome_db
-    WHERE name = \"$ref_genome_db_name\" and assembly_default = 1");
+    WHERE name = \"$ref_genome_db_name\" AND first_release IS NOT NULL AND last_release IS NULL");
 
 if ($do_pairwise) {
     my $pairwise_genome_db_ids = $dbh->selectcol_arrayref("
     SELECT genome_db_id FROM genome_db
     WHERE name IN (\"".join("\", \"", @pairwise_genome_db_names)."\")
-        and assembly_default = 1");
+        AND first_release IS NOT NULL AND last_release IS NULL");
 
     foreach my $genome_db_id (@$pairwise_genome_db_ids) {
 	foreach my $seq_region (@seq_regions) {
@@ -763,12 +766,11 @@ sub _run_query_from_method_link_type_species_set_name {
             FROM
               $srcDB.method_link_species_set mlss
             JOIN
-              $srcDB.species_set_tag USING (species_set_id)
+              $srcDB.species_set_header USING (species_set_id)
             JOIN
               $srcDB.method_link USING (method_link_id) 
             WHERE
-              species_set_tag.tag = "name" AND
-              species_set_tag.value = \"$species_set_name\"
+              species_set_header.name = \"$species_set_name\"
               AND method_link.type = \"$method_link_type\"
             });     
     

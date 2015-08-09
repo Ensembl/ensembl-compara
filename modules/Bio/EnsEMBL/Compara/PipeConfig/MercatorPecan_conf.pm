@@ -406,10 +406,9 @@ sub pipeline_analyses {
 # ---------------------------------------------[reuse members and pafs]--------------------------------------------------------------
 
         {   -logic_name => 'genome_reuse_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id#',
-                'fan_branch_code'   => 2,
+                'species_set_id'    => '#reuse_ss_id#',
             },
             -flow_into => {
                 '2->A' => [ 'sequence_table_reuse' ],
@@ -476,9 +475,10 @@ sub pipeline_analyses {
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
 
         {   -logic_name => 'genome_loadfresh_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# AND locator LIKE "Bio::EnsEMBL::DBSQL::DBAdaptor/%"',
+                'species_set_id'    => '#nonreuse_ss_id#',
+                'extra_parameters'  => [ 'name' ],
                 'fan_branch_code'   => 2,
             },
             -flow_into => {

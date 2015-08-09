@@ -487,7 +487,7 @@ sub copy_genomic_align_blocks {
   my $mlss_id = $mlss->dbID;
   my $gdb_ids = join(', ', map { $_->dbID() } @{ $mlss->species_set_obj->genome_dbs });
 
-  exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild, assembly_default", "genome_db_id IN ($gdb_ids)" );
+  exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild", "genome_db_id IN ($gdb_ids)" );
   #ignore ancestral dnafrags, will add those later
   if (!check_table("dnafrag", $from_dba, $to_dba, undef, "genome_db_id != 63 AND genome_db_id IN ($gdb_ids)")) {
       $fix_dnafrag = 1;

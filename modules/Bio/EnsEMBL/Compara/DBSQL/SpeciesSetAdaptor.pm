@@ -22,11 +22,14 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(looks_like_number);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::ApiVersion;
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
+# NOTE: the "size" column is write-only
 
 
 #############################################################
@@ -114,19 +117,20 @@ sub store {
         if($dbID) { # dbID is set in the object, but may refer to an object with different contents
 
             if($self->fetch_by_dbID( $dbID )) {
+                # FIXME: should we update the table instead ?
                 die sprintf("Attempting to store an object with dbID=$dbID (ss=%s) experienced a collision with same dbID but different data\n", join("/", map {$_->dbID} @$genome_dbs ));
             }
 
+            my $set_id_sql = 'INSERT INTO species_set_header (species_set_id, name, size, first_release, last_release) VALUES (?,?,?,?,?)';
+            $self->db->dbc->do( $set_id_sql, undef, $dbID, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release ) or die "Could not perform '$set_id_sql'\n";
+
         } else { # grab a new species_set_id by using AUTO_INCREMENT:
 
-            my $grab_id_sql = 'INSERT INTO species_set VALUES ()';
-            $self->db->dbc->do( $grab_id_sql ) or die "Could not perform '$grab_id_sql'\n";
+            my $grab_id_sql = 'INSERT INTO species_set_header (name, size, first_release, last_release) VALUES (?,?,?,?)';
+            $self->db->dbc->do( $grab_id_sql, undef, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release ) or die "Could not perform '$grab_id_sql'\n";
 
-            if( $dbID = $self->dbc->db_handle->last_insert_id(undef, undef, 'species_set', 'species_set_id') ) {
-
-                my $empty_sql = "DELETE FROM species_set where species_set_id = $dbID";
-                $self->db->dbc->do( $empty_sql ) or die "Could not perform '$empty_sql'\n";
-            } else {
+            $dbID = $self->dbc->db_handle->last_insert_id(undef, undef, 'species_set_header', 'species_set_id');
+            if (not $dbID) {
                 die "Failed to obtain a species_set_id for the species_set being stored\n";
             }
         }
@@ -149,32 +153,59 @@ sub store {
 }
 
 
+=head2 update_header
+
+  Example     : $species_set_adaptor->update_header();
+  Description : Update the header of this species_set in the database
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub update_header {
+    my ($self, $species_set) = @_;
+
+    my $update_sql = 'UPDATE species_set_header SET name = ?, size = ?, first_release = ?, last_release = ? WHERE species_set_id = ?';
+    $self->db->dbc->do( $update_sql, undef, $species_set->name, $species_set->size, $species_set->first_release, $species_set->last_release, $species_set->dbID ) or die "Could not perform '$update_sql'\n";
+}
+
+
 
 ########################################################
 # Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
 ########################################################
 
 sub _tables {
-    return ( ['species_set', 'ss'] );
+    return ( ['species_set_header', 'sh'], ['species_set', 'ss'] );
 }
 
 
 sub _columns {
     # warning _objs_from_sth implementation depends on ordering
     return qw (
-        ss.species_set_id
+        sh.species_set_id
+        sh.name
+        sh.first_release
+        sh.last_release
         ss.genome_db_id
     );
+}
+
+sub _default_where_clause {
+    return 'sh.species_set_id = ss.species_set_id';
 }
 
 sub _objs_from_sth {
     my ($self, $sth) = @_;
 
+    my %ss_header       = ();
     my %ss_content_hash = ();
     my %ss_incomplete   = ();
     my $gdb_cache = $self->db->get_GenomeDBAdaptor->_id_cache;
 
-    while ( my ($species_set_id, $genome_db_id) = $sth->fetchrow() ) {
+    while ( my ($species_set_id, $name, $first_release, $last_release, $genome_db_id) = $sth->fetchrow() ) {
 
             # gdb objects are already cached on the $gdb_adaptor level, so no point in re-caching them here
         if( my $gdb = $gdb_cache->get($genome_db_id) ) {
@@ -183,15 +214,20 @@ sub _objs_from_sth {
             warning("Species set with dbID=$species_set_id is missing genome_db entry with dbID=$genome_db_id, so it will not be fetched");
             $ss_incomplete{$species_set_id}++;
         }
+        $ss_header{$species_set_id} = [$name, $first_release, $last_release];
     }
 
     my @ss_list;
     while (my ($species_set_id, $species_set_contents) = each %ss_content_hash) {
         unless($ss_incomplete{$species_set_id}) {
+            my ($name, $first_release, $last_release) = @{$ss_header{$species_set_id}};
             push @ss_list, Bio::EnsEMBL::Compara::SpeciesSet->new_fast( {
                 genome_dbs => $species_set_contents,
                 dbID       => $species_set_id,
                 adaptor    => $self,
+                _name      => $name,
+                _first_release  => $first_release,
+                _last_release   => $last_release,
             } );
         }
     }
@@ -288,6 +324,30 @@ sub fetch_all_by_name {
 }
 
 
+=head2 fetch_all_by_GenomeDB
+
+  Arg  1     : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Example    : my $species_sets = $ssa->fetch_all_by_genome_db($genome_db)
+  Description: Retrieve all the Bio::EnsEMBL::Compara::SpeciesSet objects
+               which includes the genome defined by the Bio::EnsEMBL::Compara::GenomeDB
+               object or the genome_db_id in the species_set
+  Returntype : listref of Bio::EnsEMBL::Compara::SpeciesSet objects
+  Exceptions : wrong argument throws
+  Caller     :
+
+=cut
+
+sub fetch_all_by_GenomeDB {
+    my ($self, $genome_db) = @_;
+
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
+
+    my $genome_db_id = $genome_db->dbID or throw "[$genome_db] must have a dbID";
+
+    return $self->_id_cache->get_all_by_additional_lookup(sprintf('genome_db_%d', $genome_db_id), 1);
+}
+
+
 
 ###########################################
 # Interface for "collection" species sets #
@@ -310,55 +370,103 @@ sub fetch_collection_by_name {
     throw('$collection is required') unless $collection;
 
     my $all_ss = $self->fetch_all_by_name("collection-$collection");
+    my @all_current_ss = grep {$_->is_current} @$all_ss;
+    return $all_current_ss[0] if @all_current_ss;
 
-    if (scalar(@$all_ss) == 0) {
-        warn "cannot find the collection '$collection'\n";
-        return undef;
-    } elsif (scalar(@$all_ss) > 1) {
-        die "There are multiple collections '$collection'\n";
-    } else {
-        return $all_ss->[0];
-    }
+    my @sorted_ss = sort {$b->last_release <=> $a->last_release} grep {$_->has_been_released and not $_->is_current} @$all_ss;
+    return $sorted_ss[0];
 }
 
-=head2 fetch_all_collections_by_genome
 
-  Arg [1]     : scalar $genome_name_or_id
-  Example     : my $collections = $species_set_adaptor->fetch_all_collections_by_genome('homo_sapiens');
-  Description : Fetches all the "collection" SpeciesSet object for that GenomeDB
-  Returntype  : arrayref of Bio::EnsEMBL::Compara::SpeciesSet
-  Exceptions  : thrown if $genome_name_or_id is missing
+=head2 update_collection
+
+  Arg[1]      : Bio::EnsEMBL::Compara::SpeciesSet $old_ss: The old "collection" species-set
+  Arg[2]      : arrayref of Bio::EnsEMBL::Compara::GenomeDB $new_genome_dbs: The list of GenomeDBs the new collection should contain
+  Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, [@{$collection_ensembl->genome_dbs}, $new_genome_db]);
+  Description : Creates a new collection species-set that contains the new list of GenomeDBs
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : none
   Caller      : general
+  Status      : Stable
 
 =cut
 
-sub fetch_all_collections_by_genome {
-    my ($self, $genome_name_or_id) = @_;
-
-    throw('$genome_name_or_id is required') unless $genome_name_or_id;
-
-    my $field_name = looks_like_number($genome_name_or_id) ? 'genome_db_id' : 'name';
-    my $sql = sprintf('SELECT species_set_id FROM species_set_tag JOIN species_set USING (species_set_id) JOIN genome_db USING (genome_db_id) WHERE tag = "name" AND value LIKE "collection-%%" AND %s = ?', $field_name);
-    return $self->_id_cache->get_by_sql($sql, [$genome_name_or_id]);
-}
-
-
 sub update_collection {
-    my ($self, $old_ss, $new_genome_dbs) = @_;
+    my ($self, $collection_name, $old_ss, $new_genome_dbs) = @_;
 
-    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $new_genome_dbs );
-    $self->store($species_set);
-    return $old_ss if $old_ss->dbID == $species_set->dbID;
+    my $gdb_a = $self->db->get_GenomeDBAdaptor;
+    my $mlss_a = $self->db->get_MethodLinkSpeciesSetAdaptor;
 
-    my $sql = 'REPLACE INTO species_set_tag SELECT ?, tag, value FROM species_set_tag WHERE species_set_id = ? AND tag = "name"';
-    my $sth = $self->prepare($sql);
-    $sth->execute($species_set->dbID, $old_ss->dbID);
-    $sth->finish();
+    my $species_set = $self->fetch_by_GenomeDBs($new_genome_dbs);
 
-    $sql = 'UPDATE species_set_tag SET value = CONCAT("old", value) WHERE species_set_id = ? AND tag = "name"';
-    $sth = $self->prepare($sql);
-    $sth->execute($old_ss->dbID);
-    $sth->finish();
+    if ($species_set) {
+        if ($old_ss and ($old_ss->dbID == $species_set->dbID)) {
+            warn sprintf("The new '%s' collection is already in the database !\n", $old_ss->name);
+            # The content hasn't changed, we can assume that the name is
+            # there as well and return the original species set
+            # We should check that first/last_release are correctly set
+            return $old_ss;
+        }
+        if ($species_set->name) {
+            if ($species_set->name ne "collection-$collection_name") {
+                die sprintf("The species-set for the new '%s' collection content already exists and has a name ('%s'). Cannot store the collection\n", $collection_name, $species_set->name);
+            } else {
+                # Being here would mean that the new collection is already
+                # stored with the correct name.
+                # We're going to change their first/last_release anyway
+            }
+        }
+    } else {
+        $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -GENOME_DBS => $new_genome_dbs );
+        $self->store($species_set);
+    }
+
+    $species_set->name("collection-$collection_name");
+    $self->update_header($species_set);
+    $self->make_object_current($species_set);
+
+    if ($old_ss) {
+        my %curr_gdb_ids = map {$_->dbID => 1} @{$species_set->genome_dbs};
+        # Retire all the GenomeDBs ...
+        foreach my $gdb (@{$old_ss->genome_dbs}) {
+            # ... that are not in the new set
+            next if $curr_gdb_ids{$gdb->dbID};
+            warn "Retiring ", $gdb->toString, "\n" if $gdb->is_current;
+            $gdb_a->retire_object($gdb);
+            # and the SpeciesSets they're in
+            foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
+                $self->retire_object($ss);
+                # And now the MLSSs that use the species-set
+                foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
+                    warn "Retiring mlss_id ", $mlss->dbID, " ", $mlss->name, "\n" if $mlss->is_current;
+                    $mlss_a->retire_object($mlss);
+                }
+            }
+        }
+    }
+
+    # Enable all the GenomeDBs of the collection
+    my @released_gdbs;
+    foreach my $gdb (@{$species_set->genome_dbs}) {
+        next if $gdb->is_current;
+        push @released_gdbs, $gdb;
+        warn "Releasing ", $gdb->toString, "\n" unless $gdb->is_current;
+        $gdb_a->make_object_current($gdb);
+    }
+
+    # And the SpeciesSets they are part of ...
+    foreach my $gdb (@released_gdbs) {
+        foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
+            # ... if all the species in the set are enabled
+            next if grep {not $_->is_current} @{$ss->genome_dbs};
+            $self->make_object_current($ss);
+            # And now the MLSSs that use the species-set
+            foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
+                warn "Releasing mlss_id ", $mlss->dbID, " ", $mlss->name, "\n" unless $mlss->is_current;
+                $mlss_a->make_object_current($mlss);
+            }
+        }
+    }
 
     return $species_set;
 }
@@ -386,7 +494,7 @@ sub _build_id_cache {
 package Bio::EnsEMBL::Compara::DBSQL::Cache::SpeciesSet;
 
 
-use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
+use base qw/Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory/;
 use strict;
 use warnings;
 
@@ -398,9 +506,11 @@ sub compute_keys {
     my ($self, $ss) = @_;
     return {
         genome_db_ids => Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::_ids_string($ss->genome_dbs),
-        $ss->has_tag('name') ? (name => $ss->get_value_for_tag('name')) : (),
+        name => $ss->name,
+        (map {sprintf('genome_db_%d', $_->dbID) => 1} @{$ss->genome_dbs()}),
         (map {sprintf('has_tag_%s', lc $_) => 1} $ss->get_all_tags()),
         (map {sprintf('tag_%s', lc $_) => lc $ss->get_value_for_tag($_)} $ss->get_all_tags()),
+        %{$self->SUPER::compute_keys($ss)},
     }
 }
 

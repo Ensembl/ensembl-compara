@@ -45,7 +45,7 @@ The end-user is probably only interested in the following methods:
  - toString()
 
 More advanced use-cases include:
- - assembly_default() (when there are multiple versions of the same species in the same database)
+ - the methods exposed by StorableWithReleaseHistory
  - locator() (when the species is on a different server
  - sync_with_registry() (if you gradually build your Registry and the GenomeDB objects. Very unlikely !!)
 
@@ -74,7 +74,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
-use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+use base ('Bio::EnsEMBL::Compara::StorableWithReleaseHistory');        # inherit dbID(), adaptor() and new() methods, and first_release() and last_release()
 
 
 =head2 new
@@ -312,13 +312,7 @@ sub assembly {
 
 =head2 assembly_default
 
-  Arg [1]    : (optional) int
-  Example    : $gdb->assembly_default(1);
-  Description: Getter/Setter for the assembly_default of this genome db.
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
+  Description: DEPRECATED. GenomeDB::assembly_default() is deprecated in favour of is_current(), and will be removed in e84. NOTE: it is not a setter any more
 
 =cut
 
@@ -326,11 +320,8 @@ sub assembly_default {
   my $self = shift;
   my $boolean = shift;
 
-  if(defined $boolean) {
-    $self->{'assembly_default'} = $boolean;
-  }
-  $self->{'assembly_default'}='1' unless(defined($self->{'assembly_default'}));
-  return $self->{'assembly_default'};
+  deprecate('GenomeDB::assembly_default() is deprecated in favour of is_current(), and will be removed in e84. NOTE: it is not a setter any more');
+  return $self->is_current;
 }
 
 =head2 genebuild
@@ -529,7 +520,6 @@ sub make_component_copy {
     my $copy_genome_db = { %{$self} };
     bless $copy_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB';
     $copy_genome_db->genome_component($component_name);
-    $copy_genome_db->assembly_default(0);
     $copy_genome_db->dbID(undef);
     $copy_genome_db->adaptor(undef);
     $self->component_genome_dbs($component_name, $copy_genome_db);
@@ -604,12 +594,13 @@ sub toString {
         .", name='".$self->name
         ."', assembly='".$self->assembly
         ."', genebuild='".$self->genebuild
-        ."', default='".$self->assembly_default
         ."', taxon_id='".$self->taxon_id
         ."', karyotype='".$self->has_karyotype
         ."', high_coverage='".$self->is_high_coverage
         .($self->genome_component ? "', genome_component='".$self->genome_component : '')
         ."', locator='".$self->locator
+        ."', first_release='".($self->first_release || 'NULL')
+        ."', last_release='".($self->last_release || 'NULL')
         ."'";
 }
 

@@ -84,7 +84,7 @@ sub default_options {
         },
 
         'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-        'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag', 'dnafrag' ],
+        'master_copy_tables' => [ 'genome_db', 'species_set_header', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_header', 'species_set_tag', 'dnafrag' ],
 
         'prevrel_db' => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
         'prevrel_merge_tables' => [ 'stable_id_history' ],

@@ -178,29 +178,7 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[copy tables from master and fix the offsets]---------------------------------------------
 
-        {   -logic_name => 'copy_table_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'db_conn'   => '#master_db#',
-                'inputlist' => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'dnafrag' ],
-                'column_names' => [ 'table' ],
-            },
-
-            -flow_into => {
-                           '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
-                           'A->1' => [ 'offset_tables' ],
-            },
-        },
-
-            {   -logic_name    => 'copy_table',
-                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-                -parameters    => {
-                                   'mode'          => 'overwrite',
-                                   'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-                                  },
-                -analysis_capacity => 10,
-                -flow_into         => [ 'innodbise_table' ],
-            },
+            @{$self->init_basic_tables_analyses('#master_db#', 'offset_tables', 0, 0, 1)},
 
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -216,16 +194,6 @@ sub pipeline_analyses {
                     'ALTER TABLE CAFE_species_gene AUTO_INCREMENT=100000001',
                 ],
             },
-        },
-
-# ---------------------------------------------[turn all tables to InnoDB]---------------------------------------------
-
-        {   -logic_name    => 'innodbise_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters    => {
-                'sql'         => "ALTER TABLE #table# ENGINE=InnoDB",
-            },
-            -analysis_capacity => 10,
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
@@ -283,7 +251,8 @@ sub pipeline_analyses {
                             # Removes the SS and the MLSS associated with non-valid genome_db_ids
                             'sql' => [ 'CREATE TEMPORARY TABLE tmp_ss SELECT species_set_id FROM species_set LEFT JOIN genome_db USING (genome_db_id) GROUP BY species_set_id HAVING COUNT(*) != COUNT(genome_db.genome_db_id)',
                                        'DELETE method_link_species_set FROM method_link_species_set JOIN tmp_ss USING (species_set_id)',
-                                       'DELETE species_set FROM species_set JOIN tmp_ss USING (species_set_id)',
+                                       'DELETE species_set             FROM species_set             JOIN tmp_ss USING (species_set_id)',
+                                       'DELETE species_set_header      FROM species_set_header      JOIN tmp_ss USING (species_set_id)',
                                      ]
                            },
             -flow_into  => [ 'make_species_tree' ],
@@ -345,7 +314,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'         => '#epo_db#',
-                'inputquery'      => "SELECT GROUP_CONCAT(DISTINCT g.genome_db_id) AS genome_db_ids FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
+                'inputquery'      => "SELECT GROUP_CONCAT(DISTINCT g.genome_db_id) AS genome_db_ids FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE last_release IS NULL AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE last_release IS NULL AND mlss2.name LIKE '%EPO')",
             },
             -flow_into => {
                            2 => [ 'store_lca_species_set' ],

@@ -182,39 +182,16 @@ sub pipeline_analyses {
 
 return [
 # ------------------------------------- set up the necessary database tables
-{  
- -logic_name => 'copy_table_factory',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- -input_ids  => [{}],
- -parameters => {
-  'db_conn' => '#compara_pairwise_db#',
-  'inputlist'    => [ 'genome_db', 'dnafrag', 'method_link', 'method_link_species_set', 'species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
-  'column_names' => [ 'table' ],
- },
- -flow_into => {
-  '2->A' => [ 'copy_tables' ],
-  'A->1' => [ 'delete_from_copied_tables' ],
- },
- -meadow_type    => 'LOCAL',
-},
+    @{$self->init_basic_tables_analyses('#compara_pairwise_db#', 'delete_from_copied_tables', 1, 0, 1, [{}])},
 
-{
-  -logic_name    => 'copy_tables',
-  -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-  -parameters    => {
-        'src_db_conn'   => '#compara_pairwise_db#',
-        'dest_db_conn'  => $self->o('pipeline_db'),
-        'mode'          => 'overwrite',
-        'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-  },
-},
-
+    # FIXME: assembly_default does not exist any more
 {
   -logic_name => 'delete_from_copied_tables',
   -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
   -parameters => {
    'sql' => [
     'DELETE FROM method_link_species_set WHERE method_link_species_set_id NOT IN (#list_of_pairwise_mlss_ids#)',
+    'DELETE sh.* FROM species_set_header sh LEFT OUTER JOIN method_link_species_set mlss ON sh.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
     'DELETE ss.* FROM species_set ss LEFT OUTER JOIN method_link_species_set mlss ON ss.species_set_id = mlss.species_set_id WHERE mlss.species_set_id IS NULL',
     'DELETE df.*, gdb.* FROM dnafrag df INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id LEFT OUTER JOIN species_set ss ON gdb.genome_db_id = ss.genome_db_id WHERE ss.genome_db_id IS NULL',
    'DELETE FROM genome_db WHERE ! assembly_default',
@@ -244,6 +221,7 @@ return [
 },
 
 { # this sets dummy values into the species_set table
+    # FIXME : direct writes into species_set are forbidden !
  -logic_name     => 'add_dummy_species_set_info_factory',
  -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
  -parameters => {

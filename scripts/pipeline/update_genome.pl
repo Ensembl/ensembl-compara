@@ -39,12 +39,6 @@ This script's main purpose is to take the new core DB and a compara DB
 in production phase and update it in several steps:
  - It updates the genome_db table
  - It updates all the dnafrags for the given genome_db
- - It updates all the collections for the given genome_db
-
-It can also edit a few properties like:
- - Turn assembly_default to 0 for a genome_db
- - Add a genome_db to a collection species set
- - Remove a genome_db from a collection species set
 
 =head1 SYNOPSIS
 
@@ -54,12 +48,10 @@ It can also edit a few properties like:
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_alias
     --species new_species_db_name_or_alias
-    [--species_name "Species name"]
+    [--genome_db_name "Species name"]
     [--taxon_id 1234]
     [--[no]force]
     [--offset 1000]
-    [--collection "collection name"]
-    [--remove_from_collection | --add_to_collection | --set_non_default]
 
 =head1 OPTIONS
 
@@ -105,9 +97,9 @@ any of the aliases given in the registry_configuration_file
 
 =over
 
-=item B<[--species_name "Species name"]>
+=item B<[--genome_db_name "Species name"]>
 
-Set up the species name. This is needed when the core database
+Set up the GenomeDB name. This is needed when the core database
 misses this information
 
 =item B<[--taxon_id 1234]>
@@ -131,17 +123,6 @@ from that number (and we will assign according to the current number
 of Genome DBs exceeding the offset). First ID will be equal to the
 offset+1
 
-=item B<[--collection "Collection name"]>
-
-Adds the new / updated genome_db_id to the collection. This option
-can be used multiple times
-
-=item B<[--remove_from_collection | --add_to_collection || --set_non_default]>
-
-(exclusive) options to respectively remove the species from its
-collections, add the species to more collections, and set the
-species as non-default
-
 =back
 
 =head1 INTERNAL METHODS
@@ -149,6 +130,7 @@ species as non-default
 =cut
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Utils::SqlHelper;
 
@@ -160,28 +142,20 @@ my $help;
 my $reg_conf;
 my $compara;
 my $species = "";
-my $species_name;
+my $genome_db_name;
 my $taxon_id;
 my $force = 0;
 my $offset = 0;
-my @collection = ();
-my $action_remove_from_collection = 0;
-my $action_add_to_collection = 0;
-my $action_set_non_default = 0;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     "species=s" => \$species,
-    "species_name=s" => \$species_name,
+    "genome_db_name=s" => \$genome_db_name,
     "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
     'offset=i' => \$offset,
-    "collection=s@" => \@collection,
-    "remove_from_collection!" => \$action_remove_from_collection,
-    "add_to_collection!" => \$action_add_to_collection,
-    "set_non_default!" => \$action_set_non_default,
   );
 
 $| = 0;
@@ -191,10 +165,6 @@ if ($help or !$species or !$compara) {
     use Pod::Usage;
     pod2usage({-exitvalue => 0, -verbose => 2});
 }
-
-die "'remove_from_collection', 'add_to_collection', and 'set_non_default' are exclusive options\n" if
-    ($action_set_non_default and ($action_remove_from_collection or $action_add_to_collection))
-    or ($action_remove_from_collection and $action_add_to_collection);
 
 my $species_no_underscores = $species;
 $species_no_underscores =~ s/\_/\ /;
@@ -217,27 +187,12 @@ throw ("Cannot connect to database [$compara]") if (!$compara_db);
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_db->dbc);
 
 $helper->transaction( -CALLBACK => sub {
-    if ($action_set_non_default or $action_remove_from_collection or $action_add_to_collection) {
-        my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
-        my $genome_db = $genome_db_adaptor->fetch_by_core_DBAdaptor($species_db);
-
-        if ($action_set_non_default) {
-            $genome_db_adaptor->set_non_default($genome_db);
-            remove_species_from_collections($compara_db, $genome_db, \@collection);
-        } elsif ($action_remove_from_collection) {
-            remove_species_from_collections($compara_db, $genome_db, \@collection);
-        } else {
-            add_to_collections($compara_db, [$genome_db], \@collection);
-        }
-        return;
-    }
     my $genome_db = update_genome_db($species_db, $compara_db, $force);
     update_dnafrags($compara_db, $genome_db, $species_db);
     my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_db);
     foreach my $component_gdb (@$component_genome_dbs) {
         update_dnafrags($compara_db, $component_gdb, $species_db);
     }
-    add_to_collections($compara_db, [$genome_db, @$component_genome_dbs], \@collection);
     print_method_link_species_sets_to_update($compara_db, $genome_db);
 } );
 
@@ -273,7 +228,7 @@ sub update_genome_db {
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
     }
   } elsif ($force) {
-    print "GenomeDB with this name [$species_name] and the correct assembly".
+    print "GenomeDB with this name [$genome_db_name] and the correct assembly".
         " is not in the compara DB [$compara]\n".
         "You don't need the --force option!!";
     print "Press [Enter] to continue or Ctrl+C to cancel...";
@@ -287,7 +242,7 @@ sub update_genome_db {
 
     # Get fresher information from the core database
     $genome_db->db_adaptor($species_dba, 1);
-    $genome_db->assembly_default(1);
+    $genome_db->last_release(undef);
 
     # And store it back in Compara
     $genome_db_adaptor->update($genome_db);
@@ -302,11 +257,11 @@ sub update_genome_db {
         -DB_ADAPTOR => $species_dba,
 
         -TAXON_ID   => $taxon_id,
-        -NAME       => $species_name,
+        -NAME       => $genome_db_name,
     );
 
     if (!defined($genome_db->taxon_id)) {
-      throw "Cannot find species.taxonomy_id in meta table for $species_name.\n".
+      throw "Cannot find species.taxonomy_id in meta table for $genome_db_name.\n".
           "   You can use the --taxon_id option";
     }
     print "New GenomeDB for Compara: ", $genome_db->toString, "\n";
@@ -353,83 +308,6 @@ sub update_component_genome_dbs {
 }
 
 
-=head2 add_to_collections
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Arrayref of Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Arg[3]      : Array reference of strings (the collections to add the species to)
-  Description : This method updates all the collection species sets to
-                include the new genome_dbs (they are supposed to all have the same name)
-  Returns     : -none-
-  Exceptions  : throw if any SQL statment fails
-
-=cut
-
-sub add_to_collections {
-  my ($compara_dba, $genome_dbs, $all_collections) = @_;
-
-  my $gdb_name = $genome_dbs->[0]->name;
-  # Gets all the collections with that genome_db
-  my $ssa = $compara_dba->get_SpeciesSetAdaptor;
-  my $sss = $ssa->fetch_all_collections_by_genome($gdb_name);
-  push @$sss, @{_fetch_all_collections_by_name($ssa, $all_collections)};
-
-  my %seen = ();
-  foreach my $ss (@$sss) {
-      next if $seen{$ss->dbID};
-      $seen{$ss->dbID} = 1;
-      my $new_genome_dbs = [grep {$_->name ne $gdb_name} @{$ss->genome_dbs}];
-      push @$new_genome_dbs, @$genome_dbs;
-      my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
-      printf("%s added to the collection '%s' (species_set_id=%d)\n", $gdb_name, $ss->name, $new_ss->dbID);
-  }
-}
-
-=head2 remove_species_from_collections
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Arg[3]      : arrayref of string $all_collection_names (optional)
-  Description : This method updates the collection species sets to
-                exclude the given $genome_db. Updates them all unless
-                $all_collection_names is given
-  Returns     : -none-
-  Exceptions  : throw if any SQL statment fails
-
-=cut
-
-sub remove_species_from_collections {
-    my ($compara_dba, $genome_db, $all_collection_names) = @_;
-
-    my $sss;
-    my $ssa = $compara_dba->get_SpeciesSetAdaptor;
-
-    if ($all_collection_names and scalar(@$all_collection_names)) {
-        $sss = _fetch_all_collections_by_name($ssa, $all_collection_names);
-    } else {
-        $sss = $ssa->fetch_all_collections_by_genome($genome_db->dbID);
-    }
-
-    foreach my $ss (@$sss) {
-        my $new_genome_dbs = [grep {$_->dbID != $genome_db->dbID} @{$ss->genome_dbs}];
-        next if scalar(@$new_genome_dbs) == scalar(@{$ss->genome_dbs});
-        my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
-        printf("%s removed from the collection '%s' (species_set_id=%d)\n", $genome_db->name, $ss->name, $new_ss->dbID);
-    }
-}
-
-# Wrapper around Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::fetch_collection_by_name
-sub _fetch_all_collections_by_name {
-    my ($ssa, $all_collection_names) = @_;
-
-    my @sss;
-    foreach my $collection (@{$all_collection_names || []}) {
-        my $c = $ssa->fetch_collection_by_name($collection);
-        push @sss, $c if $c;
-    }
-    return \@sss;
-}
-
 =head2 update_dnafrags
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
@@ -462,6 +340,7 @@ sub update_dnafrags {
   my $current_verbose = verbose();
   verbose('EXCEPTION');
 
+  my $new_dnafrags_ids = 0;
   foreach my $slice (@$gdb_slices) {
     my $length = $slice->seq_region_length;
     my $name = $slice->seq_region_name;
@@ -478,11 +357,13 @@ sub update_dnafrags {
             -is_reference => $is_reference
         );
     my $dnafrag_id = $dnafrag_adaptor->update($new_dnafrag);
+    $new_dnafrags_ids++ if not exists $old_dnafrags_by_id->{$dnafrag_id};
     delete($old_dnafrags_by_id->{$dnafrag_id});
     throw() if ($old_dnafrags_by_id->{$dnafrag_id});
   }
   verbose($current_verbose);
-  print "Deleting ", scalar(keys %$old_dnafrags_by_id), " former DnaFrags...";
+  print "Inserted $new_dnafrags_ids new DnaFrags.\n";
+  print "Now deleting ", scalar(keys %$old_dnafrags_by_id), " former DnaFrags...";
   foreach my $deprecated_dnafrag_id (keys %$old_dnafrags_by_id) {
     $compara_dba->dbc->do("DELETE FROM dnafrag WHERE dnafrag_id = ".$deprecated_dnafrag_id) ;
   }
@@ -496,7 +377,7 @@ sub update_dnafrags {
   Description : This method prints all the genomic MethodLinkSpeciesSet
                 that need to be updated (those which correspond to the
                 $genome_db).
-                NB: Only method_link with a dbID <200 are taken into
+                NB: Only method_link with a dbID<200 || dbID>=500 are taken into
                 account (they should be the genomic ones)
   Returns     : -none-
   Exceptions  :
@@ -513,6 +394,7 @@ sub print_method_link_species_sets_to_update {
   foreach my $this_genome_db (@{$genome_db_adaptor->fetch_all()}) {
     next if ($this_genome_db->name ne $genome_db->name);
     foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
+      next unless $this_method_link_species_set->is_current;
       $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
           {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs})} = $this_method_link_species_set;
     }
@@ -520,11 +402,10 @@ sub print_method_link_species_sets_to_update {
 
   print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
   foreach my $this_method_link_id (sort {$a <=> $b} keys %$method_link_species_sets) {
-    last if ($this_method_link_id > 200); # Avoid non-genomic method_link_species_set
+    next if ($this_method_link_id > 200) and ($this_method_link_id < 500); # Avoid non-genomic method_link_species_set
     foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
       printf "%8d: ", $this_method_link_species_set->dbID,;
-      print $this_method_link_species_set->method->type, " (",
-          join(",", map {$_->name} @{$this_method_link_species_set->species_set_obj->genome_dbs}), ")\n";
+      print $this_method_link_species_set->method->type, " (", $this_method_link_species_set->name, ")\n";
     }
   }
 

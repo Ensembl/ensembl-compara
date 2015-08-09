@@ -9,13 +9,14 @@ Populated tables:
 dnafrag                  toplevel sequence names, generally chromosomes or supercontigs
 genome_db                species
 mapping_session          list of the stable ID mappings that have been performed for families and gene trees
-meta                     tag skip_mlss:list of mlss_ids which are not to be copied over
+meta                     should only contain these keys: "schema_version" and "schema_type"
 method_link              comparison methods
 method_link_species_set  combine comparison method with set of species
 ncbi_taxa_name           all the various tags, names, etc, attached to the NCBI taxonomy
 ncbi_taxa_node           the complete NCBI taxonomy, stored as a tree structure
-species_set              set of species 
-species_set_tag          species specific tags
+species_set_header       description of set of species
+species_set              content of the species-sets
+species_set_tag          species-set specific tags
 
 
 1- code API needed

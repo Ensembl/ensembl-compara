@@ -1,4 +1,4 @@
-1	\N	schema_version	79
+1	\N	schema_version	82
 1567	1	species.classification	Euteleostomi
 2	1	genebuild.start_date	2009-03-Ensembl
 18	1	assembly.mapping	chromosome:RGSC3.4#contig
@@ -252,3 +252,11 @@
 1617	\N	patch	patch_77_78_b.sql|source_column_increase
 1618	\N	patch	patch_77_78_c.sql|Change unmapped_reason_id from smallint to int
 1619	\N	patch	patch_78_79_a.sql|schema_version
+1620	\N	patch	patch_79_80_a.sql|schema_version
+1621	\N	patch	patch_79_80_b.sql|xref_dbprimary_acc_longer
+1622	\N	patch	patch_79_80_c.sql|seq_region_synonym_longer
+1623	\N	patch	patch_79_80_d.sql|genome_statistics_value_longer
+1624	\N	patch	patch_80_81_a.sql|schema_version
+1625	\N	patch	patch_81_82_a.sql|schema_version
+1626	\N	patch	patch_81_82_b.sql|xref_width
+1627	\N	patch	patch_81_82_c.sql|seq_synonym_key
