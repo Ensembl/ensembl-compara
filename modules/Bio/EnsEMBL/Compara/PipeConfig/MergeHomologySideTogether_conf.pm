@@ -83,7 +83,7 @@ sub default_options {
             -dbname => $self->o('ENV', 'USER').'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
         },
 
-        'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+        'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         'master_copy_tables' => [ 'genome_db', 'species_set_header', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_header', 'species_set_tag', 'dnafrag' ],
 
         'prevrel_db' => 'mysql://ensro@compara3/kb3_ensembl_compara_71',

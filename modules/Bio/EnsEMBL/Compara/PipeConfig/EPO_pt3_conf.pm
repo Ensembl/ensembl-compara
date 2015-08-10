@@ -131,7 +131,7 @@ sub default_options {
 		-dbname => $self->o('ENV', 'USER').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
 	},
 	# master db
-        'compara_master' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+        'compara_master' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 	# anchor mappings
         'compara_mapped_anchor_db' => 'mysql://ensro@compara3:3306/sf5_17mammals_epo_anchor_mappings77',
 

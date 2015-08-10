@@ -116,7 +116,7 @@ sub default_options {
         'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #release# - 1)expr#',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
-        'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
+        'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mm14_ensembl_compara_master',
     };
 }
 

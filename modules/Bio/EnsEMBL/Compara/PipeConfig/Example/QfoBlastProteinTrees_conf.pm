@@ -79,7 +79,7 @@ sub default_options {
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => undef,
-        'ncbi_db'   => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
+        'ncbi_db'   => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them

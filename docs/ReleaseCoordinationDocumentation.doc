@@ -372,7 +372,7 @@ data</h2>
 <p>The production team updates the ncbi_taxonomy database on livemirror jus=
 t before the handover to us (please check that this has been done).</p>
 <p>We then need to update the tables on our master DB. The current (rel.75)=
- master database is sf5_ensembl_compara_master on compara1</p>
+ master database is mm14_ensembl_compara_master on compara1</p>
 <ul class=3D"inline-task-list" data-inline-tasks-content-id=3D"21174007">=
 =20
 <li class=3D"checked" data-inline-task-id=3D"470"><p>Update the ncbi_taxa_n=
@@ -462,7 +462,7 @@ the new extant species:</p>
 <div class=3D"codeContent panelContent pdl">=20
 <pre class=3D"theme: Confluence; brush: java; gutter: false" style=3D"font-=
 size:12px;">$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/place_sp=
-ecies.pl -master_url mysql://ensro@compara1/sf5_ensembl_compara_master -tax=
+ecies.pl -master_url mysql://ensro@compara1/mm14_ensembl_compara_master -tax=
 on_ids 9940,9361,7994,7918</pre>=20
 </div>
 </div><p><br />&nbsp;- 'ensembl timetree mya': the age of the taxon. It can=

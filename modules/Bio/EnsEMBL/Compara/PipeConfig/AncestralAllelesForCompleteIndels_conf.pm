@@ -137,7 +137,7 @@ sub default_options {
             'ancestor_dbname' => 'ensembl_ancestral_' . $self->o('db_version'),
 
             # master database connection parameters
-            'master_db'  => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'master_db'  => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 
             'pipeline_db' => {                                  # connection parameters
                               -host   => 'compara5',

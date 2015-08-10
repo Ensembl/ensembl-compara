@@ -94,7 +94,7 @@ sub default_options {
 	'anchor_batch_size' => 10,
 	 # max number of sequences to allow in an anchor
 	'anc_seq_count_cut_off' => 15,
-        'compara_master' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+        'compara_master' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
      };
 }
 

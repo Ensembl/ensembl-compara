@@ -93,7 +93,7 @@ sub default_options {
         'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.23amniots.branch_len.nw', 
 
     #master database
-        'master_db_name' => 'sf5_ensembl_compara_master', 
+        'master_db_name' => 'mm14_ensembl_compara_master',
 
     #update_max_alignment_length
     'quick' => 1, #use quick method for calculating the max_alignment_length (genomic_align_block->length 
@@ -158,7 +158,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'sf5_ensembl_compara_master',
+            -dbname => 'mm14_ensembl_compara_master',
 	    -driver => 'mysql',
         },
 

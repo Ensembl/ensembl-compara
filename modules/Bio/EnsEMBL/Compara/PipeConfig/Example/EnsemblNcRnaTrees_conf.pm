@@ -158,7 +158,7 @@ sub default_options {
                             -port   => 3306,
                             -user   => 'ensro',
                             -pass   => '',
-                            -dbname => 'sf5_ensembl_compara_master', # 'sf5_ensembl_compara_master',
+                            -dbname => 'mm14_ensembl_compara_master', # 'mm14_ensembl_compara_master',
                            },
 
            };

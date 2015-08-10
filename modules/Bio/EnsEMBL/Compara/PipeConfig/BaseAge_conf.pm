@@ -78,7 +78,7 @@ sub default_options {
             #Connection parameters for production database (the rest is defined in the base class)
             'host' => 'compara2',
 
-            'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 
             'staging_loc1' => {
                                -host   => 'ens-staging1',

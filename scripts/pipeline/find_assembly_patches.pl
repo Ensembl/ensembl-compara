@@ -34,7 +34,7 @@ find_assembly_patches.pl
  find_assembly_patches.pl 
     -new_core_url "mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37?group=core&species=homo_sapiens" 
     -prev_core_url "mysql://ensro@ens-livemirror:3306/homo_sapiens_core_67_37?group=core&species=homo_sapiens"
-    -compara_url mysql://ensro@compara1:3306/sf5_ensembl_compara_master
+    -compara_url mysql://ensro@compara1:3306/mm14_ensembl_compara_master
 
 =head1 DESCRIPTION
 

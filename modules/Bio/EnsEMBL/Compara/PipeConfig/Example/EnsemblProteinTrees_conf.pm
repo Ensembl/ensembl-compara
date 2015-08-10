@@ -185,7 +185,7 @@ sub default_options {
         'host' => 'compara1',
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
+        'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
 
         # Ensembl-specific databases
         'staging_loc1' => {                     # general location of half of the current release core databases

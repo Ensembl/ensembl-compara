@@ -56,7 +56,7 @@ sub default_options {
             
             'host'          => 'compara5',      # Where to host the pipeline database
 
-	    'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+	    'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
             'work_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
 
             # Connections to the pairwise database must be given

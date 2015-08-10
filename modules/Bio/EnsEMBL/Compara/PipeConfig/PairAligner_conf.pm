@@ -78,7 +78,7 @@ sub default_options {
              # dependent parameters:
         'host'        => 'compara1',                        #separate parameter to use the resources aswell
 
-	    'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+	    'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 
 	    'staging_loc1' => {
             -host   => 'ens-staging1',

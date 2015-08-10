@@ -68,7 +68,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'sf5_ensembl_compara_master',
+            -dbname => 'mm14_ensembl_compara_master',
 	    -driver => 'mysql',
         },
 	'populate_new_database_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",

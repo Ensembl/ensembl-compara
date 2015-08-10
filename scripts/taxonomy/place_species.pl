@@ -21,7 +21,7 @@ use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Data::Dumper;
 use Getopt::Long;
 
-my $master_url = 'mysql://ensro@compara1/sf5_ensembl_compara_master';
+my $master_url = 'mysql://ensro@compara1/mm14_ensembl_compara_master';
 my $taxon_ids;
 my $help;
 

@@ -30,7 +30,7 @@ Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper
 
     time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper \
         -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" \
-        -master_db "mysql://ensadmin:${ENSADMIN_PSW}@compara1/sf5_ensembl_compara_master" \
+        -master_db "mysql://ensadmin:${ENSADMIN_PSW}@compara1/mm14_ensembl_compara_master" \
         -prev_rel_db "mysql://ensro@compara1/lg4_ensembl_compara_63" -type t
 
 =cut

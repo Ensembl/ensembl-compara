@@ -45,7 +45,7 @@ sub default_options {
         'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'division'        => 'ensembl',     # used to find the species set and the family / ncRNA-tree databases
-        'master_db'       => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+        'master_db'       => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 
         # Tables to copy and merge
         'tables_from_master'    => [ 'method_link', 'species_set_header', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],

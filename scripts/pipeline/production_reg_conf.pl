@@ -90,7 +90,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_master',
-    -dbname => 'sf5_ensembl_compara_master',
+    -dbname => 'mm14_ensembl_compara_master',
 );
 
 # previous release database on one of Compara servers:

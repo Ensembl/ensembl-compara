@@ -67,7 +67,7 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         # The master database
-        'master_db'             => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+        'master_db'             => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 
         # The method_link_type for this kind of alignments
         'lastz_patch_method'    => 'LASTZ_PATCH',

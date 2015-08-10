@@ -75,7 +75,7 @@ sub default_options {
             # This is the only mandatory entry name
             'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara5/'.$self->o('dbowner').'_ensembl_compara_'.$self->o('ensembl_release'),
 
-            'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
             'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_80',   # <----- make sure this refers to the previous release!
 
             # make sure that for the rest of the databases you have servers' and owners' names right:
@@ -297,7 +297,7 @@ sub pipeline_analyses {
 
             #'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
             'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara3/mm14_test_final_db2',
-            'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         },
 
         'only_tables'       => {
@@ -324,7 +324,7 @@ sub pipeline_analyses {
             'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_70',
 
             'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
-            'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         },
 
         'only_tables'       => {
@@ -347,7 +347,7 @@ sub pipeline_analyses {
             'ncrna_db'      => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
 
             'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
-            'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         },
 
         'only_tables'       => {
@@ -383,7 +383,7 @@ sub pipeline_analyses {
             'sf5_ggal_tgut_lastz_71' => 'mysql://ensro@compara4/sf5_ggal_tgut_lastz_71',
 
             'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
-            'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         },
 
         'only_tables'       => {
