@@ -132,7 +132,7 @@ if ($destAncDB) {
 # May have to eliminate the -p pass part... not sure
 
 my $rc = 0xffff & system(
-  "mysqldump -p$pass -u $user -h $host -P $port --no-data $srcDB | " .
+  "mysqldump -u ensro -h $host -P $port --no-data $srcDB | " .
   "mysql -p$pass -u $user -h $host -P $port $destDB");
 
 if($rc != 0) {
@@ -142,7 +142,7 @@ if($rc != 0) {
 
 if ($destAncDB) {
     my $rc = 0xffff & system(
-                             "mysqldump -p$pass -u $user -h $host -P $port --no-data $srcAncDB | " .
+                             "mysqldump -u ensro -h $host -P $port --no-data $srcAncDB | " .
                              "mysql -p$pass -u $user -h $host -P $port $destAncDB");
     
     if($rc != 0) {
