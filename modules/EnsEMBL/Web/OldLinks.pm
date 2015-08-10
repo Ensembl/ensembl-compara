@@ -71,6 +71,7 @@ our %script_mapping = (
  
 our %archive_mapping = (
                         'Location/Genome'                         => { 'initial_release' => 51 },                         
+                        'Location/Chromosome'                     => { 'initial_release' => 51 },                         
                         'Location/Overview'                       => { 'initial_release' => 51 },                         
                         'Location/View'                           => { 'initial_release' => 51 },                         
                         'Location/Synteny'                        => { 'initial_release' => 51 },                         
@@ -82,6 +83,7 @@ our %archive_mapping = (
                         'Location/Compara_Alignments/Image'       => { 'initial_release' => 56 },
                         'Location/Multi'                          => { 'initial_release' => 56 },
                         'Location/Compara'                        => { 'initial_release' => 62 },
+                        'Location/Ensembl_GRCh37'                 => { 'initial_release' => 76 },
 
                         'Gene/Summary'                            => { 'initial_release' => 51 },                         
                         'Gene/Splice'                             => { 'initial_release' => 51 },                         
@@ -91,10 +93,10 @@ our %archive_mapping = (
                         'Gene/Regulation'                         => { 'initial_release' => 51 },                         
                         'Gene/Compara_Alignments'                 => { 'initial_release' => 51 },
                         'Gene/Compara_Tree'                       => { 'initial_release' => 51 },
-                        'Gene/ComparaOrtholog'                    => { 'initial_release' => 51 },
-                        'Gene/ComparaOrtholog/Alignment'          => { 'initial_release' => 51 },
-                        'Gene/ComparaParalog'                     => { 'initial_release' => 51 },
-                        'Gene/ComparaParalog/Alignment'           => { 'initial_release' => 51 },
+                        'Gene/Compara_Ortholog'                   => { 'initial_release' => 51 },
+                        'Gene/Compara_Ortholog/Alignment'         => { 'initial_release' => 51 },
+                        'Gene/Compara_Paralog'                    => { 'initial_release' => 51 },
+                        'Gene/Compara_Paralog/Alignment'          => { 'initial_release' => 51 },
                         'Gene/Family'                             => { 'initial_release' => 51 },
                         'Gene/Family/Genes'                       => { 'initial_release' => 51 },
                         'Gene/Family/Alignments'                  => { 'initial_release' => 51 },
