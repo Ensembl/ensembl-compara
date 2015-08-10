@@ -62,6 +62,7 @@ sub get_message {
   my ($self, $species_flag, $assembly_flag) = @_;
   my $hub         = $self->hub;
   my $species     = $hub->param('species');
+  my $reattach    = $hub->param('reattach');
   my $trackhub_ok = 0;
   my $try_archive = 0;
   my $message     = '';
@@ -79,6 +80,15 @@ sub get_message {
   elsif ($species_flag eq 'other_only') {
     my $url = sprintf('/%s/UserData/ManageData', $species);
     $message = sprintf('<strong>Your hub contains no data on the chosen species</strong>. Please check the <a href="%s" class="modal_link">Manage Data</a> page for other species supported by this hub.</p>', $url);
+  }
+  elsif ($reattach) {
+    if ($reattach eq 'preconfig') {
+      $message = 'This is a preconfigured hub, so you cannot reattach it.';
+    }
+    else {
+      $message = 'You have already attached this hub.';
+    }
+    $trackhub_ok = 1;
   }
   else {
     $message = 'Your hub attached successfully.';
