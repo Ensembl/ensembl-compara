@@ -177,10 +177,13 @@ sub check_attachment {
 
   ## Check user's own data
   unless ($already_attached) {
-    my $attachments = $hub->session->get_data('type' => 'url');
-    #use Data::Dumper; warn Dumper($attachments);
-    #foreach (@attachments) {
-    #}
+    my @attachments = $hub->session->get_data('type' => 'url');
+    foreach (@attachments) {
+      if ($_->{'url'} eq $url) {
+        $already_attached = 'user';
+        last;
+      }
+    }
   }
 
   if ($already_attached) {
