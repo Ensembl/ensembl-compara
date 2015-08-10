@@ -178,7 +178,7 @@ sub check_attachment {
   ## Check user's own data
   unless ($already_attached) {
     my $attachments = $hub->session->get_data('type' => 'url');
-    warn ">>> ATTACHMENTS $attachments";
+    #use Data::Dumper; warn Dumper($attachments);
     #foreach (@attachments) {
     #}
   }
@@ -205,7 +205,7 @@ sub attach {
   my ($redirect, $params);
 
   if ($error) {
-    $redirect .= 'SelectFile';
+    $redirect = 'SelectFile';
 
     $hub->session->add_data(
                         type     => 'message',
@@ -218,7 +218,7 @@ sub attach {
     ## This next bit is a hack - we need to implement userdata configuration properly! 
     my $extra_config_page = $attachable->extra_config_page;
     my $name              = $hub->param('name') || $options->{'name'} || $filename;
-    $redirect            .= $extra_config_page || 'RemoteFeedback';
+    $redirect             = $extra_config_page || 'RemoteFeedback';
 
     delete $options->{'name'};
 

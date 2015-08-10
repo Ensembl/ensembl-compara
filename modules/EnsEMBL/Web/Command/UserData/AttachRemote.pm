@@ -41,6 +41,7 @@ sub process {
   my @bits          = split /\./, $filename;
   my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my $pattern       = "^$extension\$";
+  my $new_action    = '';
   my $params        = {};
 
   ## We have to do some intelligent checking here, in case the user
@@ -67,11 +68,10 @@ sub process {
 
   if ($url) {
     ## Is this file already attached?
-    my ($redirect_action, $new_params) = $self->check_attachment($url);
+    ($new_action, $params) = $self->check_attachment($url);
 
-    if ($redirect_action) {
-      $redirect .= $redirect_action; 
-      $params = $new_params;
+    if ($new_action) {
+      $redirect .= $new_action; 
     }
     else {
       my $format_package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
@@ -84,7 +84,8 @@ sub process {
       $format = EnsEMBL::Web::File::AttachedFormat->new(%args);
       }
  
-      ($redirect, $params) = $self->attach($format, $filename);
+      ($new_action, $params) = $self->attach($format, $filename);
+      $redirect .= $new_action;
     }
   } else {
     $redirect .= 'SelectFile';
