@@ -112,6 +112,7 @@ sub store {
             die "Attempting to store an object with dbID=$dbID experienced a collision with same data but different dbID ($stored_dbID)\n";
         } else {
             $dbID = $stored_dbID;
+            $self->update_header($species_set);
         }
     } else {
         if($dbID) { # dbID is set in the object, but may refer to an object with different contents
@@ -417,12 +418,11 @@ sub update_collection {
             }
         }
     } else {
-        $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -GENOME_DBS => $new_genome_dbs );
+        $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -GENOME_DBS => $new_genome_dbs, -NAME => "collection-$collection_name" );
         $self->store($species_set);
     }
 
-    $species_set->name("collection-$collection_name");
-    $self->update_header($species_set);
+    # This is probably redundant with line 462
     $self->make_object_current($species_set);
 
     if ($old_ss) {
