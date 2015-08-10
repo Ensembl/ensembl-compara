@@ -157,6 +157,40 @@ sub upload {
   return $params;
 }
 
+sub check_attachment {
+  my ($self, $url) = @_;
+  my $hub = $self->hub;
+  my $species_defs = $hub->species_defs;
+
+  my $already_attached = 0;
+  my ($redirect, $params);
+
+  ## Check for pre-configured hubs
+  my %preconfigured = %{$species_defs->ENSEMBL_INTERNAL_DATAHUB_SOURCES||{}};
+  while (my($k, $v) = each (%preconfigured)) {
+    my $hub_info = $species_defs->get_config($hub->species, $k);
+    if ($hub_info->{'url'} eq $url) {
+      $already_attached = 'preconfig';
+      last;
+    }
+  }
+
+  ## Check user's own data
+  unless ($already_attached) {
+    my $attachments = $hub->session->get_data('type' => 'url');
+    warn ">>> ATTACHMENTS $attachments";
+    #foreach (@attachments) {
+    #}
+  }
+
+  if ($already_attached) {
+    $redirect = 'RemoteFeedback';
+    $params = {'format' => 'DATAHUB', 'reattach' => $already_attached};
+  }
+
+  return ($redirect, $params);
+}
+
 sub attach {
 ### Attach a remote file and return the parameters needed for a redirect
 ### @param attachable EnsEMBL::Web::File::AttachedFormat object
