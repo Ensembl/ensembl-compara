@@ -188,6 +188,8 @@ sub create_genome_db {
         -GENOME_COMPONENT => $asked_genome_component,
     );
     if ($master_object) {
+        $genome_db->first_release($master_object->first_release);
+        $genome_db->last_release($master_object->last_release);
         $genome_db->_assert_equals($master_object);
         $genome_db->dbID($master_object->dbID);
     } elsif ($asked_genome_db_id) {
