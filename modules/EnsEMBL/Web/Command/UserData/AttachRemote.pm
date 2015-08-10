@@ -22,7 +22,7 @@ use strict;
 
 use EnsEMBL::Web::File::AttachedFormat;
 
-use base qw(EnsEMBL::Web::Command);
+use base qw(EnsEMBL::Web::Command::UserData);
 
 sub process {
   my $self          = shift;
@@ -66,18 +66,26 @@ sub process {
   }
 
   if ($url) {
-    my $format_package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
-    my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $self->hub->param('trackline'));
-    my $format;
-    
-    if ($self->dynamic_use($format_package)) {
-      $format = $format_package->new(%args);
-    } else {
-      $format = EnsEMBL::Web::File::AttachedFormat->new(%args);
-    }
- 
-    ($redirect, $params) = $self->attach($format, $filename);
+    ## Is this file already attached?
+    my ($redirect_action, $new_params) = $self->check_attachment($url);
 
+    if ($redirect_action) {
+      $redirect .= $redirect_action; 
+      $params = $new_params;
+    }
+    else {
+      my $format_package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
+      my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $self->hub->param('trackline'));
+      my $format;
+    
+      if ($self->dynamic_use($format_package)) {
+        $format = $format_package->new(%args);
+      } else {
+      $format = EnsEMBL::Web::File::AttachedFormat->new(%args);
+      }
+ 
+      ($redirect, $params) = $self->attach($format, $filename);
+    }
   } else {
     $redirect .= 'SelectFile';
       $session->add_data(
