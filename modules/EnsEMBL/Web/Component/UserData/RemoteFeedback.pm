@@ -22,6 +22,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::Constants;
+
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
@@ -63,36 +65,32 @@ sub get_message {
   my $hub         = $self->hub;
   my $species     = $hub->param('species');
   my $reattach    = $hub->param('reattach');
-  my $trackhub_ok = 0;
+  my %messages    = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
+  my $trackhub_ok = 1;
   my $try_archive = 0;
   my $message     = '';
 
-  if ($assembly_flag eq 'old_only') {
-    $message = 'This hub contains no data on any current assemblies. Please check our <a href="/info/website/archives/">archive list</a> for alternative sites.';
-    $try_archive = 1;
-  }
-  elsif ($assembly_flag eq 'old_and_new') {
-    ## Multiple assemblies for the chosen species (usually only seen for human)
-    $message = '<strong>Your hub includes multiple assemblies, so not all features will be shown. Alternative assemblies may available on archive sites.</strong>';
-    $trackhub_ok = 1;
-    $try_archive = 1;
-  }
-  elsif ($species_flag eq 'other_only') {
-    my $url = sprintf('/%s/UserData/ManageData', $species);
-    $message = sprintf('<strong>Your hub contains no data on the chosen species</strong>. Please check the <a href="%s" class="modal_link">Manage Data</a> page for other species supported by this hub.</p>', $url);
+  if ($assembly_flag) {
+    $message = sprintf('<p><strong>%s</strong>', $messages{'hub_'.$assembly_flag}{'message'});
+    if ($assembly_flag eq 'old_only') {
+      $trackhub_ok = 0;
+      $try_archive = 1;
+    }
+    elsif ($assembly_flag eq 'old_and_new') {
+      $try_archive = 1;
+    }
+    elsif ($species_flag eq 'other_only') {
+      $trackhub_ok = 0;
+      my $url = sprintf('/%s/UserData/ManageData', $species);
+      $message .= sprintf('Please check the <a href="%s" class="modal_link">Manage Data</a> page for other species supported by this hub.', $url);
+    }
+    $message .= '</p>';
   }
   elsif ($reattach) {
-    if ($reattach eq 'preconfig') {
-      $message = 'This is a preconfigured hub, so you cannot reattach it.';
-    }
-    else {
-      $message = 'You have already attached this hub.';
-    }
-    $trackhub_ok = 1;
+    $message = $messages{'hub_'.$reattach}{'message'};
   }
   else {
-    $message = 'Your hub attached successfully.';
-    $trackhub_ok = 1;
+    $message = $messages{'hub_ok'}{'message'};
   }
 
   if ($trackhub_ok) {
