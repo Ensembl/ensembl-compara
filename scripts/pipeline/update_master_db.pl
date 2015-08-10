@@ -144,6 +144,18 @@ my %found_genome_db_ids = ();
 
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
 
+    eval {
+        $db_adaptor->dbc->connect();
+    };
+    if ($@) {
+        if ($@ =~ /DBI connect.*failed: Unknown database/) {
+            warn sprintf("The database %s does not exist (yet ?). Skipping it.\n", $db_adaptor->dbc->locator);
+            next;
+        } else {
+            die $@;
+        }
+    }
+
     # Get the production name and assembly to fetch our GenomeDBs
     my $mc = $db_adaptor->get_MetaContainer();
     next if $division and $mc->get_division and $mc->get_division ne $division;
