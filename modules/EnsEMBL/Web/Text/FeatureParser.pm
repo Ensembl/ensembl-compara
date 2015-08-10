@@ -259,7 +259,7 @@ sub parse {
             if ($feature->can('score')) {
               $current_max = $self->{'tracks'}{$self->current_key}{'config'}{'max_score'};
               $current_min = $self->{'tracks'}{$self->current_key}{'config'}{'min_score'};
-              if ($feature->score && $feature->score =~ /^\d+$/) {
+              if ($feature->score && $feature->score =~ /^-*\d+\.?\d*$/) {
                 $current_max = $feature->score if $feature->score > $current_max;
                 $current_min = $feature->score if $feature->score < $current_min;
               }
