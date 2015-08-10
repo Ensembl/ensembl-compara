@@ -133,23 +133,12 @@ sub run {
         : $core_dba->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 1, undef, 1) : ());
     die "Could not fetch any toplevel slices from ".$core_dba->dbc->dbname() unless(scalar(@$unfiltered_slices));
 
-    my $slices = $self->param('include_reference')
-                    ? $unfiltered_slices
-                    : [ grep { not $_->is_reference() } @$unfiltered_slices ];
+    # Let's make sure disconnect_when_inactive is set to 0 on both connections
+    $core_dba->dbc->prevent_disconnect( sub { $compara_dba->dbc->prevent_disconnect( sub {
+        $self->loadMembersFromCoreSlices( $unfiltered_slices );
+    } ) } );
 
-  my $final_slices = ( ! $self->param('include_patches') ) ?
-                       [ grep { $_->assembly_exception_type() !~ /PATCH/ } @$slices ]
-                       : [ @$slices ];
-
-    if(scalar(@$final_slices)) {
-
-        # Let's make sure disconnect_when_inactive is set to 0 on both connections
-        $core_dba->dbc->prevent_disconnect( sub { $compara_dba->dbc->prevent_disconnect( sub {
-            $self->loadMembersFromCoreSlices( $final_slices );
-        } ) } );
-
-    } else {
-
+    if (not $self->param('sliceCount')) {
         $self->warning("No suitable toplevel slices found in ".$core_dba->dbc->dbname());
     }
 }
@@ -188,6 +177,12 @@ sub loadMembersFromCoreSlices {
   my $gene_adaptor;
 
   foreach my $slice (@$slices) {
+
+    # Reference slices are excluded if $self->param('include_reference') is off
+    next if !$self->param('include_reference') and $slice->is_reference();
+    # Patches are excluded if $self->param('include_patches') is off
+    next if !$self->param('include_patches') and ($slice->assembly_exception_type() =~ /PATCH/);
+
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
     my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
