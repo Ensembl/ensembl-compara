@@ -35,8 +35,16 @@ sub new {
 }
 
 sub url       { return shift->{'url'} }
-sub name      { shift->{'format'} }
 sub trackline { shift->{'trackline'} }
+
+sub name {
+  my $self = shift;
+  unless ($self->{'format'}) {
+    my @namespace = split('::', ref($self));
+    $self->{'format'} = $namespace[-1];
+  }
+  return $self->{'format'};
+}
 
 sub extra_config_page { return undef; }
 
