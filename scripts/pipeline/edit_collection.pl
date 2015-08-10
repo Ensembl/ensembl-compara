@@ -196,7 +196,7 @@ my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba-
 $helper->transaction( -CALLBACK => sub {
     my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
     print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $collection_ss and ($new_collection_ss->dbID != $collection_ss->dbID);
-    die "Aborting the transaction (dry-run mode)\n" if $dry_run;
+    die "Dry-run mode required. Now aborting the transaction. Review the above-mentionned changes and re-run with the --nodry-run option\n" if $dry_run;
 } );
 
 exit(0);

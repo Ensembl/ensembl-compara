@@ -402,7 +402,7 @@ sub update_collection {
 
     if ($species_set) {
         if ($old_ss and ($old_ss->dbID == $species_set->dbID)) {
-            warn sprintf("The new '%s' collection is already in the database !\n", $old_ss->name);
+            warn sprintf("The new '%s' collection is already in the database ! Nothing to retire / release.\n", $old_ss->name);
             # The content hasn't changed, we can assume that the name is
             # there as well and return the original species set
             # We should check that first/last_release are correctly set
