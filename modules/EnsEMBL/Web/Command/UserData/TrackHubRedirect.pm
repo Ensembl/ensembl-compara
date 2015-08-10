@@ -20,11 +20,9 @@ package EnsEMBL::Web::Command::UserData::TrackHubRedirect;
 
 use strict;
 
-use Digest::MD5 qw(md5_hex);
-
 use EnsEMBL::Web::File::AttachedFormat::DATAHUB;
 
-use base qw(EnsEMBL::Web::Command);
+use base qw(EnsEMBL::Web::Command::UserData);
 
 sub process {
   my $self          = shift;
@@ -37,117 +35,25 @@ sub process {
   my @bits          = split /\./, $filename;
   my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my $pattern       = "^$extension\$";
-  my %params;
+  my $redirect      = $hub->species_path($hub->data_species) . '/UserData/';
+  my $params        = {};
 
-  my $default_species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
-  my $redirect        = sprintf('/%s/Location/View', $default_species);
-  my $sample_links    = $species_defs->get_config($default_species, 'SAMPLE_DATA');
-  $params{'r'}        = $sample_links->{'LOCATION_PARAM'} if $sample_links;
 
   if ($url) {
-    my $format = EnsEMBL::Web::File::AttachedFormat::DATAHUB->new('hub' => $self->hub, 'url' => $url);
-   
-    ## pass assembly info so we can check if there's suitable data
-    my $assemblies = $species_defs->assembly_lookup;
- 
-    my ($url, $error, $options) = $format->check_data($assemblies);
-
-    warn ">>> ATTACHING HUB ".$options->{'name'};
-
-    foreach (@{$options->{'assemblies'}||[]}) {
-      warn "... ASSEMBLY $_";
-    }
-
-
-=pod    
-    if ($error) {
-      $session->add_data(
-        type     => 'message',
-        code     => 'AttachURL',
-        message  => $error,
-        function => '_error'
-      );
-    } else {
- 
-      my $assemblies = $options->{'assemblies'} || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
-      my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
-
-      my ($flag_info, $code); 
-
-      foreach (@$assemblies) {
-
-        my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies{$_}||[]};         
-
-        ## This is a bit messy, but there are so many permutations!
-        if ($assembly) {
-          if ($current_species eq $hub->param('species')) {
-            $flag_info->{'species'}{'this'} = 1;
-            if ($is_old) {
-              $flag_info->{'assembly'}{'this_old'} = 1;
-            }
-            else {
-              $flag_info->{'assembly'}{'this_new'} = 1;
-            }
-          }
-          else {
-            $flag_info->{'species'}{'other'}++;
-            if ($is_old) {
-              $flag_info->{'assembly'}{'other_old'} = 1;
-            }
-            else {
-              $flag_info->{'assembly'}{'other_new'} = 1;
-            }
-          }
-            
-          unless ($is_old) {
-            my $data = $session->add_data(
-              type        => 'url',
-              code        => join('_', md5_hex($name . $current_species . $assembly . $url), $session->session_id),
-              url         => $url,
-              name        => $name,
-              format      => $format->name,
-              style       => $format->trackline,
-              species     => $current_species,
-              assembly    => $assembly, 
-              timestamp   => time,
-              %$options,
-            );
+    my $trackhub = EnsEMBL::Web::File::AttachedFormat::DATAHUB->new('hub' => $self->hub, 'url' => $url);
     
-            $session->configure_user_data('url', $data);
-  
-            if ($current_species eq $hub->param('species')) {
-              $code = $data->{'code'};
-            }
-     
-            $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
-          }
-        }
-      }    
+    my $standard_redirect;
+    ($standard_redirect, $params) = $self->attach($trackhub, $filename); 
 
-      ## For datahubs, work out what feedback we need to give the user
-      my ($species_flag, $assembly_flag); 
-      if ($flag_info->{'species'}{'other'} && !$flag_info->{'species'}{'this'}) {
-        $species_flag = 'other_only';
-      }
-
-      if ($flag_info->{'assembly'}{'this_new'} && $flag_info->{'assembly'}{'this_old'}) {
-        $assembly_flag = 'old_and_new';
-      }
-      elsif (!$flag_info->{'assembly'}{'this_new'} && !$flag_info->{'assembly'}{'other_new'}) {
-        $assembly_flag = 'old_only';
-      }
-        
-      %params = (
-          format          => $format->name,
-          type            => 'url',
-          name            => $name,
-          species         => $hub->param('species'),
-          species_flag    => $species_flag,
-          assembly_flag   => $assembly_flag,
-          code            => $code,
-      );
+    ## Override standard redirect with sample location
+    my $species = $hub->param('species');
+    if (!$species || !$hub->species_defs->valid_species($species)) {
+      $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
     }
-=cut
+    $redirect           = sprintf('/%s/Location/View', $species);
+    my $sample_links    = $species_defs->get_config($species, 'SAMPLE_DATA');
+    $params->{'r'}      = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+
   } else {
       $session->add_data(
         type     => 'message',
@@ -155,9 +61,10 @@ sub process {
         message  => 'No URL was provided',
         function => '_error'
       );
+    $redirect .= 'SelectFile';
   }
   
-  $self->ajax_redirect($redirect, \%params);  
+  $self->ajax_redirect($redirect, $params);  
 }
 
 1;
