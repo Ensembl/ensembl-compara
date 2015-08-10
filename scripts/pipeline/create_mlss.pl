@@ -263,6 +263,17 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     $genome_db_ids = [ map {$_->dbID} @genome_dbs ];
   }
   
+  my $auto_species_set_name = "";
+  foreach my $this_genome_db_id (@{$genome_db_ids}) {
+    my $gdb = $gdba->fetch_by_dbID($this_genome_db_id) || die( "Cannot fetch_by_dbID genome_db $this_genome_db_id" );
+    my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
+    $species_name =~ s/\b(\w)/\U$1/g;
+    $species_name =~ s/(\S)\S+\_/$1\./;
+    $species_name = substr($species_name, 0, 5);
+    $auto_species_set_name .= $species_name."-";
+  }
+  $auto_species_set_name =~ s/\-$//;
+
   if (!$name) {
     if ($method_link_type eq "FAMILY") {
       $name = "families";
@@ -273,16 +284,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
         $name = join('-',@{$genome_db_ids});
       }
       else {
-        foreach my $this_genome_db_id (@{$genome_db_ids}) {
-          my $gdb = $gdba->fetch_by_dbID($this_genome_db_id)
-            || die( "Cannot fetch_by_dbID genome_db $this_genome_db_id" );
-          my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
-
-          $species_name =~ s/\b(\w)/\U$1/g;
-          $species_name =~ s/(\S)\S+\_/$1\./;
-          $species_name = substr($species_name, 0, 5);
-          $name .= $species_name."-";
-        }
+        $name = $auto_species_set_name;
       }
       $name =~ s/\-$//;
       my $type = lc($method_link_type);
@@ -322,6 +324,13 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
       unless ($force) {
           $species_set_name = prompt("Set the value for this species_set name []");
       }
+      if (not $species_set_name) {
+        if (scalar(@{$genome_db_ids}) >= 3) {
+          die "A species-set name must be given if the set contains 3 or more species.\n"
+        } else {
+          $species_set_name = $auto_species_set_name;
+        }
+      }
   }
 
   ##
@@ -336,7 +345,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
         "  Name: ", $mlss->name, "\n",
           "  Source: ", $mlss->source, "\n",
             "  URL: $url\n";
-    print "  SpeciesSet name: $species_set_name\n" if (defined $species_set_name);
+    print "  SpeciesSet name: $species_set_name\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     $name = undef if ($pairwise || $singleton);
     next;
@@ -369,7 +378,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
       "  Name: $name\n",
         "  Source: $source\n",
           "  URL: $url\n";
-    print "  SpeciesSet name: $species_set_name\n" if (defined $species_set_name);
+    print "  SpeciesSet name: $species_set_name\n";
   unless ($force) {
     print "\nDo you want to continue? [y/N]? ";
     
