@@ -36,14 +36,19 @@ sub process {
   my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my $pattern       = "^$extension\$";
   my $redirect      = $hub->species_path($hub->data_species) . '/UserData/';
+  my $new_action    = '';
   my $params        = {};
 
 
   if ($url) {
-    my $trackhub = EnsEMBL::Web::File::AttachedFormat::DATAHUB->new('hub' => $self->hub, 'url' => $url);
+    ## Is this file already attached?
+    ($new_action, $params)  = $self->check_attachment($url);
+
+    unless ($new_action) {
+      my $trackhub = EnsEMBL::Web::File::AttachedFormat::DATAHUB->new('hub' => $self->hub, 'url' => $url);
     
-    my $standard_redirect;
-    ($standard_redirect, $params) = $self->attach($trackhub, $filename); 
+      ($new_action, $params) = $self->attach($trackhub, $filename); 
+    }
 
     ## Override standard redirect with sample location
     my $species = $hub->param('species');
@@ -53,7 +58,6 @@ sub process {
     $redirect           = sprintf('/%s/Location/View', $species);
     my $sample_links    = $species_defs->get_config($species, 'SAMPLE_DATA');
     $params->{'r'}      = $sample_links->{'LOCATION_PARAM'} if $sample_links;
-
   } else {
       $session->add_data(
         type     => 'message',
