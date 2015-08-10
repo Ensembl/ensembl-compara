@@ -296,7 +296,7 @@ sub attach {
     $params = {
                 format          => $attachable->name,
                 name            => $name,
-                species         => $hub->param('species'),
+                species         => $hub->param('species') || $hub->species,
                 species_flag    => $species_flag,
                 assembly_flag   => $assembly_flag,
                 code            => $code,
