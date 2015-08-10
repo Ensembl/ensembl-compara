@@ -21,6 +21,7 @@ package EnsEMBL::Web::Command::UserData::TrackHubRedirect;
 use strict;
 
 use EnsEMBL::Web::File::AttachedFormat::DATAHUB;
+use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Command::UserData);
 
@@ -48,7 +49,7 @@ sub process {
       my $trackhub = EnsEMBL::Web::File::AttachedFormat::DATAHUB->new('hub' => $self->hub, 'url' => $url);
     
       ($new_action, $params) = $self->attach($trackhub, $filename); 
-    }
+   }
 
     ## Override standard redirect with sample location
     my $species = $hub->param('species');
@@ -58,6 +59,21 @@ sub process {
     $redirect           = sprintf('/%s/Location/View', $species);
     my $sample_links    = $species_defs->get_config($species, 'SAMPLE_DATA');
     $params->{'r'}      = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+
+    my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
+    my $p         = $params->{'reattach'} || $params->{'species_flag'} 
+                      || $params->{'assembly_flag'} || 'ok';
+    my $key       = sprintf('hub_%s', $p);
+
+    if ($messages{$key}) {
+      $hub->session->add_data(
+        type     => 'message',
+        code     => 'AttachURL',
+        message  => $messages{$key}{'message'},
+        function => '_'.$messages{$key}{'type'},
+      );
+    }
+
   } else {
       $session->add_data(
         type     => 'message',
