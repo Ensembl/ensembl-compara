@@ -25,14 +25,27 @@ no warnings 'uninitialized';
 use base qw(EnsEMBL::Web::File::AttachedFormat);
 
 use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
+use Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 
 sub check_data {
   my ($self) = @_;
   my $url = $self->{'url'};
   my $error = '';
-  require Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 
-  $url = chase_redirects($url, {'hub' => $self->{'hub'}});
+  my $url_check = chase_redirects($url, {'hub' => $self->{'hub'}});
+  
+  if (ref($url_check) eq 'HASH') {
+    if ($url_check->{'error'}) {
+      $error = $url_check->{'error'}[0];
+    }
+    else {
+      $url = $url_check->{'url'};
+    }
+  }
+  else {
+    $url = $url_check;
+  }
+
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_VCF) {
     $error = "The VCF file could not be added - FTP is not supported, please use HTTP.";
   } 
@@ -40,21 +53,21 @@ sub check_data {
     # try to open and use the VCF file
     # this checks that the VCF and index files are present and correct, 
     # and should also cause the index file to be downloaded and cached in /tmp/ 
-    my ($dba, $index);
+    my ($adaptor, $index);
     eval {
-      $dba =  Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor->new($url);
-      $dba->fetch_variations(1, 1, 10);
+          $adaptor =  Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url);
+          $adaptor->fetch_variations(1, 1, 10);
     };
     warn $@ if $@;
     warn "Failed to open VCF $url\n $@\n " if $@; 
-    warn "Failed to open VCF $url\n $@\n " unless $dba;
+    warn "Failed to open VCF $url\n $@\n " unless $adaptor;
           
-    if ($@ or !$dba) {
+    if ($@ or !$adaptor) {
       $error = qq{
-        Unable to open/index remote VCF file: $url
-        <br />Ensembl can only display sorted, indexed VCF files
-        <br />Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site 
-        <br />For more information on the type of file expected please see the large file format <a href="/info/website/upload/large.html">documentation.</a>
+          Unable to open/index remote VCF file: $url
+          <br />Ensembl can only display sorted, indexed VCF files
+          <br />Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site 
+          <br />For more information on the type of file expected please see the large file format <a href="/info/website/upload/large.html">documentation.</a>
       };
     }
   }

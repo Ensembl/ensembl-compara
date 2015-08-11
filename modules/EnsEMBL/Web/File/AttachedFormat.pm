@@ -57,15 +57,16 @@ sub check_data {
   $url = "http://$url" unless $url =~ /^http|^ftp/;
 
   ## Check file size
-  my $feedback = get_filesize($url, {'hub' => $self->{'hub'}});
+  my $feedback = get_filesize($url, {'hub' => $self->{'hub'}, 'nice' => 1});
 
   if ($feedback->{'error'}) {
-    if ($feedback->{'error'} eq 'timeout') {
+    my $errors = ref($feedback->{'error'}) eq 'ARRAY' ? join('; ', @{$feedback->{'error'}}) : $feedback->{'error'};
+    if ($errors eq 'timeout') {
       $error = 'No response from remote server';
-    } elsif ($feedback->{'error'} eq 'mime') {
+    } elsif ($errors eq 'mime') {
       $error = 'Invalid mime type';
     } else {
-      $error = "Unable to access file. Server response: $feedback->{'error'}";
+      $error = "Unable to access file. Server response: $errors";
     }
   } elsif (defined $feedback->{'filesize'} && $feedback->{'filesize'} == 0) {
     $error = 'File appears to be empty';

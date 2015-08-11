@@ -16,30 +16,16 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Filter::Sanitize;
+package EnsEMBL::Web::IOWrapper::VCF4;
+
+### Wrapper for Bio::EnsEMBL::IO::Parser::VCF4, which builds
+### simple hash features suitable for use in the drawing code 
 
 use strict;
+use warnings;
+no warnings 'uninitialized';
 
-use base qw(EnsEMBL::Web::Filter);
+use parent qw(EnsEMBL::Web::IOWrapper);
 
-### Checks form fields for whitespace and quotes that might break things!
-
-sub catch {
-  my $self   = shift;
-  my $hub = $self->hub;
-  
-  foreach my $field ($hub->param) {
-    my $value = $hub->param($field);
-    $hub->param($field, $self->clean($value));
-  }
-}
-
-sub clean {
-  my ($self, $content) = @_;
-  $content =~ s/[\r\n].*$//sm;
-  $content =~ s/"//g;
-  $content =~ s/''/'/g;
-  return $content;
-}
 
 1;

@@ -300,8 +300,13 @@ sub update_from_url {
   ## Hack to use a more user-friendly URL for trackhub attachment
   if ($input->param('trackhub') && $image_config eq 'contigviewbottom') {
     push @values, 'url:'.$input->param('trackhub');
-    $input->param('format', 'DATAHUB');
+    $input->param('format', 'TRACKHUB');
     $input->delete('trackhub'); 
+  }
+
+  ## Backwards compatibility
+  if ($input->param('format') eq 'DATAHUB') {
+    $input->param('format', 'TRACKHUB');
   }
 
   $hub->get_imageconfig($image_config)->update_from_url(@values) if @values;
@@ -517,7 +522,7 @@ sub build_imageconfig_form {
     
     my $data    = $node->data;
     my $caption = $data->{'caption'};
-    my $class   = $data->{'datahub_menu'} || $section eq 'user_data' ? 'move_to_top' : ''; # add a class to user data and data hubs to get javascript to move them to the top of the navigation
+    my $class   = $data->{'trackhub_menu'} || $section eq 'user_data' ? 'move_to_top' : ''; # add a class to user data and data hubs to get javascript to move them to the top of the navigation
     my $div     = $form->append_child('div', { class => "config $section $class" });
     
     $div->append_child('h2', { class => 'config_header', inner_HTML => $caption });
@@ -543,7 +548,7 @@ sub build_imageconfig_form {
           
           $first = '';
           
-          next if scalar @child_nodes == 1 && !$data->{'datahub_menu'};
+          next if scalar @child_nodes == 1 && !$data->{'trackhub_menu'};
           
           my $url = $_->data->{'url'};
           my ($total, $on);
