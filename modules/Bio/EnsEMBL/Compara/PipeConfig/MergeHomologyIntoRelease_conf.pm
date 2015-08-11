@@ -95,16 +95,17 @@ sub default_options {
 
         'merged_tables'     => [ 'method_link_species_set_tag',
                                  'species_tree_node', 'species_tree_root' ],
-        'skipped_tables'    => [ 'dnafrag', 'genome_db', 'meta',
+        'skipped_tables'    => [ 'dnafrag', 'genome_db', 'meta', 'ktreedist_score',
                                  'method_link', 'method_link_species_set',
                                  'ncbi_taxa_name', 'ncbi_taxa_node',
                                  'species_set', 'species_set_header', 'species_set_tag',
-                                 'analysis', 'analysis_base', 'analysis_ctrl_rule',
+                                 'accu', 'analysis_base', 'analysis_ctrl_rule',
                                  'analysis_data', 'analysis_stats',
                                  'analysis_stats_monitor', 'dataflow_rule',
-                                 'job', 'job_file', 'job_message', 'log_message',
-                                 'monitor', 'resource_class', 'resource_description',
-                                 'role', 'worker',
+                                 'hive_meta', 'job', 'job_file', 'log_message',
+                                 'resource_class', 'resource_description',
+                                 'role', 'pipeline_wide_parameters',
+                                 'worker', 'worker_resource_usage',
                                ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
