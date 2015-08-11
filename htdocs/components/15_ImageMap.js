@@ -1195,7 +1195,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
       if (this.elLk.resetHighlightLocation) {
         if (this.lastHighlightedLoc) {
-          this.elLk.resetHighlightLocation.removeClass('selected').helptip('option', 'content', 'Highlight region').show();
+          this.elLk.resetHighlightLocation.removeClass('selected').helptip('option', 'content', 'Re-highlight region').show();
         } else {
           this.elLk.resetHighlightLocation.hide();
         }
