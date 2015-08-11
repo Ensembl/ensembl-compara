@@ -1190,14 +1190,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (r === false) {
       this.lastHighlightedLoc = this.highlightedLoc;
       this.highlightedLoc     = false;
-      if (this.elLk.highlightLocation) {
-        this.elLk.highlightLocation.hide();
+      if (this.elLk.highlightedLocation) {
+        this.elLk.highlightedLocation.hide();
       }
-      if (this.elLk.resetHighlightLocation) {
+      if (this.elLk.highlightButton) {
         if (this.lastHighlightedLoc) {
-          this.elLk.resetHighlightLocation.removeClass('selected').helptip('option', 'content', 'Re-highlight region').show();
+          this.elLk.highlightButton.removeClass('selected').helptip('option', 'content', 'Re-highlight region').show();
         } else {
-          this.elLk.resetHighlightLocation.hide();
+          this.elLk.highlightButton.hide();
         }
       }
       return;
@@ -1214,12 +1214,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     if (start > r[2] && start < r[3] || end > r[2] && end < r[3] || start <= r[2] && end >= r[3]) {
 
-      if (!this.elLk.highlightLocation) {
-        this.elLk.highlightLocation = $('<div class="selector hlrselector"></div>').insertAfter(this.elLk.img);
+      if (!this.elLk.highlightedLocation) {
+        this.elLk.highlightedLocation = $('<div class="selector hlrselector"></div>').insertAfter(this.elLk.img);
       }
 
-      if (!this.elLk.resetHighlightLocation) {
-        this.elLk.resetHighlightLocation = $('<a class="hlr-reset">')
+      if (!this.elLk.highlightButton) {
+        this.elLk.highlightButton = $('<a class="hlr-reset">')
           .appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
             e.preventDefault();
             Ensembl.highlightLocation(this.className.match('selected') ? false : panel.lastHighlightedLoc);
@@ -1227,19 +1227,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         );
       }
 
-      this.elLk.highlightLocation.css({
+      this.elLk.highlightedLocation.css({
         left:   imgBox.l + Math.max(r[2] - start, 0) / imgBox.range.scale,
         width:  (Math.min(end, r[3] + 1) - Math.max(r[2], start)) / imgBox.range.scale - 1,
         top:    imgBox.t,
         height: imgBox.b - imgBox.t
       }).show();
 
-      this.elLk.resetHighlightLocation.addClass('selected').helptip('option', 'content', 'Clear highlighted region').show();
+      this.elLk.highlightButton.addClass('selected').helptip('option', 'content', 'Clear highlighted region').show();
 
       this.highlightedLoc = r;
     } else {
-      if (this.elLk.highlightLocation) {
-        this.elLk.highlightLocation.hide();
+      if (this.elLk.highlightedLocation) {
+        this.elLk.highlightedLocation.hide();
       }
     }
   },
