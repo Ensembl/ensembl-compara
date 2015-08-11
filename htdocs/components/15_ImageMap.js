@@ -1194,7 +1194,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // create the highlighted area div
     if (!this.elLk.highlightedLocation) {
-      this.elLk.highlightedLocation = $('<div class="selector hlrselector"><div class="hlrselector-close">X</div></div>').insertAfter(this.elLk.img)
+      this.elLk.highlightedLocation = $('<div class="selector hlrselector"><div class="hlrselector-close">X</div></div>').hide().insertAfter(this.elLk.img)
         .find('div').helptip({content: 'Clear highlighted region'}).on('click', function(e) {
           e.preventDefault();
           e.stopPropagation();
@@ -1205,7 +1205,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // create the highlight button
     if (!this.elLk.highlightButton) {
-      this.elLk.highlightButton = $('<a class="hlr-reset">').appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
+      this.elLk.highlightButton = $('<a class="hlr-reset">').hide().appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
         e.preventDefault();
         if (this.className.match('selected')) {
           Ensembl.highlightLocation(false);
