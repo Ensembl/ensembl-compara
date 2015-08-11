@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::HTML::DataHubRegistry;
+package EnsEMBL::Web::Document::HTML::TrackHubRegistry;
 
 ### Renders the content of the  "Find a species page" linked to from the SpeciesList module
 
@@ -42,10 +42,10 @@ sub render {
   my $imageconfig   = $hub->get_imageconfig('contigviewbottom');
   foreach my $sp (@valid_species) {
     ## This is all a bit hacky, but makes configuration of multi-species datahubs simpler
-    my %sp_hubs = (%{$species_defs->get_config($sp, 'PUBLIC_DATAHUBS')||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_DATAHUBS'));
+    my %sp_hubs = (%{$species_defs->get_config($sp, 'PUBLIC_TRACKHUBS')||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_TRACKHUBS'));
 
     ## Is this hub already configured?
-    my $internal_hubs = $species_defs->get_config($sp, 'ENSEMBL_INTERNAL_DATAHUB_SOURCES');
+    my $internal_hubs = $species_defs->get_config($sp, 'ENSEMBL_INTERNAL_TRACKHUB_SOURCES');
     while (my ($k, $v) = each (%{$internal_hubs||{}})) {
       my $hub_info = $species_defs->get_config($sp, $k);
       my $node = $imageconfig->get_node($v);
@@ -141,7 +141,7 @@ sub render {
                           $site, $sp_info->{'dir'}, $location, $menu); 
         }
         else {
-          $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s#modal_user_data',
+          $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=TRACKHUB;menu=%s#modal_user_data',
                         $site, $sp_info->{'dir'}, $location,
                         $hub_info->{'url'}, $hub_info->{'menu'}, $hub_info->{'menu'}
                       );

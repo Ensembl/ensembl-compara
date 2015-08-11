@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::File::AttachedFormat::DATAHUB;
+package EnsEMBL::Web::File::AttachedFormat::TRACKHUB;
 
 use strict;
 use warnings;

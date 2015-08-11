@@ -53,7 +53,7 @@ sub content {
   my $imageconfig   = $hub->get_imageconfig('contigviewbottom');
   foreach my $sp (@valid_species) {
     ## This is all a bit hacky, but makes configuration of multi-species datahubs simpler
-    my %sp_hubs = (%{$species_defs->get_config($sp, 'PUBLIC_DATAHUBS')||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_DATAHUBS'));
+    my %sp_hubs = (%{$species_defs->get_config($sp, 'PUBLIC_TRACKHUBS')||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_TRACKHUBS'));
 
     ## Get hub information
     if (keys %sp_hubs) {
@@ -201,7 +201,7 @@ sub create_table {
       if ($sp_info->{'site'}) {
         my $site = $sp_info->{'site'} eq 'current' ? '' : $sp_info->{'site'};
         my $link;
-        $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s#modal_user_data',
+        $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=TRACKHUB;menu=%s#modal_user_data',
                          $site, $sp_info->{'dir'}, $location,
                          $hub_info->{'url'}, $hub_info->{'menu'}, $hub_info->{'menu'}
                         );

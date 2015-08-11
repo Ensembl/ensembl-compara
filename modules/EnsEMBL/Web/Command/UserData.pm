@@ -67,7 +67,7 @@ sub check_attachment {
   my ($redirect, $params);
 
   ## Check for pre-configured hubs
-  my %preconfigured = %{$species_defs->ENSEMBL_INTERNAL_DATAHUB_SOURCES||{}};
+  my %preconfigured = %{$species_defs->ENSEMBL_INTERNAL_TRACKHUB_SOURCES||{}};
   while (my($k, $v) = each (%preconfigured)) {
     my $hub_info = $species_defs->get_config($hub->species, $k);
     if ($hub_info->{'url'} eq $url) {
@@ -89,7 +89,7 @@ sub check_attachment {
 
   if ($already_attached) {
     $redirect = 'RemoteFeedback';
-    $params = {'format' => 'DATAHUB', 'reattach' => $already_attached};
+    $params = {'format' => 'TRACKHUB', 'reattach' => $already_attached};
   }
 
   return ($redirect, $params);

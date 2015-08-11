@@ -251,7 +251,7 @@ sub table_row {
 
   ## Link for valid datahub  
   my ($config_link, $conf_template);
-  if ($file->{'format'} eq 'DATAHUB' && $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_VERSION') eq $file->{'assembly'}) {
+  if ($file->{'format'} eq 'TRACKHUB' && $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_VERSION') eq $file->{'assembly'}) {
     $conf_template  = $self->_icon({ class => 'config_icon', 'title' => 'Configure hub tracks for '.$hub->species_defs->get_config($file->{'species'}, 'SPECIES_COMMON_NAME') });
     my $sample_data = $hub->species_defs->get_config($file->{'species'}, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};

@@ -300,7 +300,7 @@ sub update_from_url {
   ## Hack to use a more user-friendly URL for trackhub attachment
   if ($input->param('trackhub') && $image_config eq 'contigviewbottom') {
     push @values, 'url:'.$input->param('trackhub');
-    $input->param('format', 'DATAHUB');
+    $input->param('format', 'TRACKHUB');
     $input->delete('trackhub'); 
   }
 

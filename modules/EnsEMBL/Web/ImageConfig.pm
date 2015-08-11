@@ -1469,7 +1469,7 @@ sub update_from_url {
     my $format = $hub->param('format');
     my ($key, $renderer);
     
-    if (uc $format eq 'DATAHUB') {
+    if (uc $format eq 'TRACKHUB') {
       $key = $v;
     } else {
       my @split = split /=/, $v;
@@ -1547,7 +1547,7 @@ sub update_from_url {
         # We then have to create a node in the user_config
         my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
-        if (uc $format eq 'DATAHUB') {
+        if (uc $format eq 'TRACKHUB') {
           my $info;
           ($n, $info) = $self->_add_datahub($n, $p,1);
           if ($info->{'error'}) {
@@ -1607,7 +1607,7 @@ sub update_from_url {
         }
         # We have to create a URL upload entry in the session
         my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
-        if (uc $format eq 'DATAHUB') {
+        if (uc $format eq 'TRACKHUB') {
           $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
         }
         $session->add_data(
