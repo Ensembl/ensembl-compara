@@ -25,6 +25,7 @@ use strict;
 use List::Util qw(first);
 
 use EnsEMBL::Web::File::AttachedFormat;
+use EnsEMBL::Web::File::Utils::URL qw(chase_redirects file_exists);
 
 use base qw(EnsEMBL::Web::Command::UserData);
 
@@ -35,7 +36,7 @@ sub process {
   return $self->set_format if $hub->function eq 'set_format';
  
   my ($method)    = first { $hub->param($_) } qw(file text);
-  my $format      = $hub->param('format');
+  my $format_name = $hub->param('format');
   my $url_params  = {};
   my $new_action  = '';
 
@@ -52,23 +53,42 @@ sub process {
       $url_params->{'action'} = $new_action;
     }
     else {
-      my $format_package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format;
-      my %args = ('hub' => $self->hub, 'format' => $format, 'url' => $url, 'track_line' => $self->hub->param('trackline'));
+      ## Is this an indexed file? Check formats that could be either
+      my $not_indexed = 0;
+      if (uc($format_name) eq 'VCF') {
+        my $tabix_url   = $url.'.tbi';
+        $not_indexed = $self->check_for_index($tabix_url);
+      } 
 
-      if ($self->dynamic_use($format_package)) {
-        $format = $format_package->new(%args);
-      } else {
-      $format = EnsEMBL::Web::File::AttachedFormat->new(%args);
+      my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $self->hub->param('trackline'));
+      my $attachable;
+
+      if (!defined($not_indexed)) {
+        ## Something went wrong with check
+        $url_params->{'restart'} = 1;
       }
+      elsif ($not_indexed) {
+        $attachable = EnsEMBL::Web::File::AttachedFormat->new(%args);
+      }
+      else {
+        my $package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
 
-      ($new_action, $url_params) = $self->attach($format, $filename);
+        if ($self->dynamic_use($package)) {
+          $attachable = $package->new(%args);
+        } 
+        else {
+          $attachable = EnsEMBL::Web::File::AttachedFormat->new(%args);
+        }
+      }
+      warn ">>> FORMAT $attachable";
+      ($new_action, $url_params) = $self->attach($attachable, $filename);
       $url_params->{'action'} = $new_action;
     }
 
   }
   else {
     ## Upload the data
-      $url_params = $self->upload($method, $format);
+      $url_params = $self->upload($method, $format_name);
       $url_params->{ __clear} = 1;
       $url_params->{'action'} = 'UploadFeedback';
   }
@@ -78,6 +98,35 @@ sub process {
   }
 
   return $self->ajax_redirect($self->hub->url($url_params));
+}
+
+sub check_for_index {
+  my ($self, $url) = @_;
+
+  my $args = {'hub' => $self->hub, 'nice' => 1};
+  my $ok_url = chase_redirects($url, $args);
+  my ($index_exists, $error);
+
+  if (ref($ok_url) eq 'HASH') {
+    $error = $ok_url->{'error'}[0];
+  }
+  else {
+    my $check = file_exists($ok_url, $args);    
+    if ($check->{'error'}) {
+      $error = $check->{'error'}[0];
+    }
+    else {
+      $index_exists = $check->{'success'};
+    }
+  }
+  
+  if ($error) {
+    warn "!!! URL ERROR: $error";
+    return;
+  }
+  else {
+    return $index_exists ? 0 : 1;
+  }
 }
 
 sub set_format {
