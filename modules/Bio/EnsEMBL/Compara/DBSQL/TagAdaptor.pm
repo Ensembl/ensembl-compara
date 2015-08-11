@@ -190,7 +190,7 @@ sub _load_tagvalues_multiple {
         $sth->execute();
         # Retrieve data
         while (my $attrs = $sth->fetchrow_hashref()) {
-            my $obj_tags = $perl_keys{$attrs->{$db_keyname}};
+            my $obj_tags = $perl_keys{$attrs->{$db_keyname}}->{'_tags'};
             foreach my $key (keys %$attrs) {
                 if (($key ne $db_keyname) and defined(${$attrs}{$key})) {
                     $obj_tags->{$key} = ${$attrs}{$key};
