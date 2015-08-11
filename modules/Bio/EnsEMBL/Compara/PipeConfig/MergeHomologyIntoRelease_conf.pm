@@ -93,11 +93,19 @@ sub default_options {
             -dbname => sprintf('%s_ensembl_compara_%s', $self->o('ENV', 'USER'), $self->o('ensembl_release')),
         },
 
-        # Please make sure that all the "merged_tables" also appear in "skipped_tables"
-        'merged_tables'     => [ 'method_link_species_set_tag', 'species_tree_node', 'species_tree_root' ],
-        'skipped_tables'    => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_header', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set', 'dnafrag',
-                              'analysis', 'analysis_data', 'job', 'job_file', 'job_message', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
-                              'dataflow_rule', 'worker', 'monitor', 'resource_description', 'resource_class', 'log_message', 'analysis_base', 'role' ],
+        'merged_tables'     => [ 'method_link_species_set_tag',
+                                 'species_tree_node', 'species_tree_root' ],
+        'skipped_tables'    => [ 'dnafrag', 'genome_db', 'meta',
+                                 'method_link', 'method_link_species_set',
+                                 'ncbi_taxa_name', 'ncbi_taxa_node',
+                                 'species_set', 'species_set_header', 'species_set_tag',
+                                 'analysis', 'analysis_base', 'analysis_ctrl_rule',
+                                 'analysis_data', 'analysis_stats',
+                                 'analysis_stats_monitor', 'dataflow_rule',
+                                 'job', 'job_file', 'job_message', 'log_message',
+                                 'monitor', 'resource_class', 'resource_description',
+                                 'role', 'worker',
+                               ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
