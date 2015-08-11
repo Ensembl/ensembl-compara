@@ -27,6 +27,7 @@ use base qw(EnsEMBL::Web::Component);
 
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
+use List::Util      qw(first);
 use List::MoreUtils qw(uniq first_index);
 
 sub coltab {
@@ -64,20 +65,18 @@ sub transcript_table {
     </a>',
     $show ? 'open' : 'closed'
   );
-  
 
   if ($description) {
 
-    my $link = $self->get_gene_display_link('[LINK]'); # [LINK] will get replaced by the external id later on
+    my ($url, $xref) = $self->get_gene_display_link($object->gene, $description);
 
-    if ($link) {
-      my $link_id   = $link->{'id'};
-      $link         = $link->{'link'} =~ s/\[LINK\]/$link_id/r;
-      $description  =~ s/$link_id/$link/;
+    if ($xref) {
+      $xref        = $xref->primary_id;
+      $description =~ s|$xref|<a href="$url" class="constant">$xref</a>|;
     }
-    
+
     $table->add_row('Description', $description);
-  }  
+  }
 
   my $location    = $hub->param('r') || sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
 
@@ -563,29 +562,22 @@ sub about_feature {
 }
 
 sub get_gene_display_link {
-  my ($self, $caption) = @_;
+  ## @param Gene object
+  ## @param Gene xref object or description string
+  my ($self, $gene, $xref) = @_;
 
-  my $hub           = $self->hub;
-  my $gene          = $self->object->gene;
-  my $xref          = $gene->display_xref or return;
-  my $display_name  = $xref->display_id;
-  my $display_db    = $xref->db_display_name;
-  my $external_id   = $xref->primary_id;
-  my $prefix        = '';
+  my $hub = $self->hub;
 
-  # remove prefix from the URL for Vega External Genes
-  if ($hub->species eq 'Mus_musculus' && $gene->source eq 'vega_external') {
-    ($prefix, $display_name) = split ':', $display_name;
+  if ($xref && !ref $xref) { # description string
+    my $details = { map { split ':', $_, 2 } split ';', $xref =~ s/^.+\[|\]$//gr };
+    $xref = first { $_->primary_id eq $details->{'Acc'} && $_->db_display_name eq $details->{'Source'} } @{$gene->get_all_DBLinks};
   }
 
-  my $link = $hub->get_ExtURL_link($caption || $display_name, $xref->dbname, $external_id);
+  return unless $xref && $xref->info_type ne 'PROJECTION';
 
-  return unless $link;
+  my $url = $hub->get_ExtURL($xref->dbname, $xref->primary_id);
 
-  $link = sprintf '%s:%s', $prefix, $link if $prefix;
-  $link = $caption || $display_name if $display_db =~ /^Projected/; # just return the caption in this case
-
-  return { 'link' => $link, 'dbname' => $display_db, 'id' => $external_id };
+  return $url ? ($url, $xref) : ();
 }
 
 sub get_synonyms {

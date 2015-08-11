@@ -437,6 +437,7 @@ sub url {
   delete $pars{'t'}  if $params->{'pt'};
   delete $pars{'pt'} if $params->{'t'};
   delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
+  delete $pars{'v'}  if $params->{'vf'};
   delete $pars{'time'};
   delete $pars{'expand'};
 

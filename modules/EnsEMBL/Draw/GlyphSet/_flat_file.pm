@@ -57,6 +57,8 @@ sub draw_features {
       $min_score = $config->{'min_score'} unless $min_score;
       $max_score = $config->{'max_score'} unless $max_score;
       
+      my $subtitle = $config->{'name'} || $config->{'description'};
+      push @{$self->{'subtitle'}},$subtitle;
       $self->draw_wiggle_plot($features, { 
         min_score    => $min_score,
         max_score    => $max_score, 
@@ -65,8 +67,6 @@ sub draw_features {
         graph_type   => $graph_type,
         use_feature_colours => (lc($config->{'itemRgb'}||'') eq 'on'),
       });
-      my $subtitle = $config->{'name'} || $config->{'description'};
-      push @{$self->{'subtitle'}},$subtitle;
     }
   }
   
@@ -192,7 +192,6 @@ sub features {
 
     $results{$key} = [$features, $T->{'config'}];
   }
-  #use Data::Dumper; warn Dumper($hover_label);
   return %results;
 }
 

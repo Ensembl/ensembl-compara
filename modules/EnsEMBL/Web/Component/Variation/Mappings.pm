@@ -404,7 +404,7 @@ sub _sort_start_end {
     if ($start == $end) {
       return $start;
     } else {
-      return "$start-$end";
+      return join("-", sort {$a <=> $b} ($start, $end));
     }
   } else {
     return '-';

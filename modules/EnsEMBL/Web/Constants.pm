@@ -678,6 +678,36 @@ sub USERDATA_MESSAGES {
       'title'   => 'Script aborted',
       'message' => 'The region(s) you selected are too large and will return too much data for the web interface to cope with.'
     },
+    hub_ok => {
+      'type'    => 'info', 
+      'title'   => 'Hub attached',
+      'message' => 'Your hub attached successfully.',
+    },
+    hub_old_only => {
+      'type'    => 'error', 
+      'title'   => 'Track hub problem',
+      'message' => 'This hub contains no data on any current assemblies. Please check our <a href="/info/website/archives/">archive list</a> for alternative sites.',
+    },
+    hub_old_and_new => {
+      'type'    => 'warning', 
+      'title'   => 'Multiple assemblies',
+      'message' => 'Your hub includes multiple assemblies, so not all features will be shown. Alternative assemblies may available on archive sites.',
+    },
+    hub_other_only => {
+      'type'    => 'warning', 
+      'title'   => 'No data on this species',
+      'message' => 'Your hub contains no data on the chosen species.</p>',
+    },
+    hub_preconfig => {
+      'type'    => 'info', 
+      'title'   => 'Hub already attached',
+      'message' => 'This is a preconfigured hub, so you cannot reattach it.',
+    },
+    hub_user => {
+      'type'    => 'info', 
+      'title'   => 'Hub already attached',
+      'message' => 'You have already attached this hub.'
+    },
   );
 }
 

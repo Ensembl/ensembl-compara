@@ -27,21 +27,24 @@ use Text::ParseWords;
 use EnsEMBL::Web::File::Utils::URL qw(get_filesize);
 
 sub new {
-  my ($proto,$hub,$format,$url,$trackline) = @_;
+  my ($proto, %args) = @_;
   my $class = ref($proto) || $proto;
-  my $self = {
-    format => $format,
-    hub => $hub,
-    url => $url,
-    trackline => $trackline,
-  };
+  my $self = \%args;
   bless $self,$class;
   return $self;
 }
 
 sub url       { return shift->{'url'} }
-sub name      { shift->{'format'} }
 sub trackline { shift->{'trackline'} }
+
+sub name {
+  my $self = shift;
+  unless ($self->{'format'}) {
+    my @namespace = split('::', ref($self));
+    $self->{'format'} = $namespace[-1];
+  }
+  return $self->{'format'};
+}
 
 sub extra_config_page { return undef; }
 

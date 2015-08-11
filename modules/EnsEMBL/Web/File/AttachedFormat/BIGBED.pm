@@ -28,11 +28,6 @@ use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 use base qw(EnsEMBL::Web::File::AttachedFormat);
 
-sub new {
-  my $self = shift->SUPER::new(@_);
-  return $self;
-}
-
 sub _bigbed_adaptor {
   my ($self,$bba) = @_;
   if (defined($bba)) {

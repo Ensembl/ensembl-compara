@@ -21,6 +21,8 @@ use strict;
 
 use EnsEMBL::Draw::Utils::NamedColours;
 
+use List::Util qw(min max);
+
 ### Store errors outside the object, which contains only a colour hash
 our $errors;
 
@@ -169,6 +171,17 @@ sub contrast {
     }
     return $contrast;
     #return ($r + 3*$g * $b) <= 8*51 ? 'white' : 'black';
+}
+
+sub hivis {
+  my ($self,$contrast,@rgb) = @_;
+
+  my $w = 220; # Watershed whither divergeth intensity
+
+  # No, exponentiation isn't slow: takes 100ns even for perl
+  return map {
+    255*(($_/255)**$contrast)
+  } @rgb;
 }
 
 sub tint_by_rgb {
