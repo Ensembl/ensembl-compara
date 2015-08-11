@@ -96,7 +96,8 @@ sub new {
     'boxes'         => $boxes || {},
     'spacing'       => $config->get_parameter('spacing') || 2,
     'margin'        => $config->get_parameter('margin') || 5,
-    'sf'            => $config->get_parameter('sf') || 1
+    'sf'            => $config->get_parameter('sf') || 1,
+    contrast        => $config->get_parameter('contrast') || 1,
   };
   
   bless($self, $class);

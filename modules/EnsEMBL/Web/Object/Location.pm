@@ -1540,40 +1540,40 @@ sub get_ld_values {
   return \%ld_values;
 }
 
-#------ Individual stuff ------------------------------------------------
+#------ Sample stuff ------------------------------------------------
 
-sub individual_genotypes {
+sub sample_genotypes {
 
-  ### individual_table_calls
+  ### sample_table_calls
   ### Arg1: variation feature object
-  ### Example    : my $ind_genotypes = $object->individual_table;
-  ### Description: gets Individual Genotype data for this variation
+  ### Example    : my $sample_genotypes = $object->sample_table;
+  ### Description: gets Sample Genotype data for this variation
   ### Returns hashref with all the data
 
   my ($self, $vf, $slice_genotypes) = @_;
   if (! defined $slice_genotypes->{$vf->seq_region_name.'-'.$vf->seq_region_start}){
       return {};
   }
-  my $individual_genotypes = $slice_genotypes->{$vf->seq_region_name.'-'.$vf->seq_region_start};
-  return {} unless @$individual_genotypes; 
+  my $sample_genotypes = $slice_genotypes->{$vf->seq_region_name.'-'.$vf->seq_region_start};
+  return {} unless @$sample_genotypes; 
   my %data = ();
   my %genotypes = ();
 
   my %gender = qw (Unknown 0 Male 1 Female 2 );
-  foreach my $ind_gt_obj ( @$individual_genotypes ) { 
-    my $ind_obj   = $ind_gt_obj->individual;
-    next unless $ind_obj;
+  foreach my $sample_gt_obj ( @$sample_genotypes ) { 
+    my $sample_obj = $sample_gt_obj->sample;
+    next unless $sample_obj;
 
     # data{name}{AA}
     #we should only consider 1 base genotypes (from compressed table)
-    next if ( CORE::length($ind_gt_obj->allele1) > 1 || CORE::length($ind_gt_obj->allele2)>1);
-    foreach ($ind_gt_obj->allele1, $ind_gt_obj->allele2) {
+    next if ( CORE::length($sample_gt_obj->allele1) > 1 || CORE::length($sample_gt_obj->allele2)>1);
+    foreach ($sample_gt_obj->allele1, $sample_gt_obj->allele2) {
       my $allele = $_ =~ /A|C|G|T|N/ ? $_ : "N";
-      $genotypes{ $ind_obj->name }.= $allele;
+      $genotypes{ $sample_obj->name }.= $allele;
     }
-    $data{ $ind_obj->name }{gender}   = $gender{$ind_obj->gender} || 0;
-    $data{ $ind_obj->name }{mother}   = $self->parent($ind_obj, "mother");
-    $data{ $ind_obj->name }{father}   = $self->parent($ind_obj, "father");
+    $data{ $sample_obj->name }{gender} = $gender{$sample_obj->individual->gender} || 0;
+    $data{ $sample_obj->name }{mother} = $self->parent($sample_obj->individual, "mother");
+    $data{ $sample_obj->name }{father} = $self->parent($sample_obj->individual, "father");
   }
   return \%genotypes, \%data;
 }
@@ -1601,8 +1601,8 @@ sub get_all_genotypes{
 
   my $slice = $self->slice_cache;
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
-  my $iga = $variation_db->get_IndividualGenotypeAdaptor;
-  my $genotypes = $iga->fetch_all_by_Slice($slice);
+  my $sga = $variation_db->get_SampleGenotypeAdaptor;
+  my $genotypes = $sga->fetch_all_by_Slice($slice);
   #will return genotypes as a hash, having the region_name-start as key for rapid acces
   my $genotypes_hash = {};
   foreach my $genotype (@{$genotypes}){

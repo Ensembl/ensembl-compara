@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Regulation;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Shared);
 
 sub shown_cells {
   my ($self,$image_config) = @_;
@@ -38,7 +38,16 @@ sub shown_cells {
       $shown_cells{$cell} = 1 unless $node->get('display') eq 'off';
     }
   }
-  return [ keys %shown_cells ];
+  my $ev = $self->all_evidences->{'all'};
+  my %partials;
+  foreach my $ex (values %$ev) {
+    next unless $ex->{'on'};
+    ($partials{$_}||=0)++ for(@{$ex->{'cells'}});
+    ($partials{$_}||=0)-- for(@{$ex->{'oncells'}});
+  }
+  my @partials = grep { ($partials{$_}||0) } keys %shown_cells;
+
+  return ([ keys %shown_cells ],\@partials);
 }
 
 sub all_evidences {
@@ -60,12 +69,14 @@ sub all_evidences {
         my $ev = $node2->id;
         next unless $ev =~ s/^${type}_${cell}_//;
         my $renderer2 = $node2->get('display');
-        $evidences{$ev} ||= { cells => [], on => 0 };
+        $evidences{$ev} ||= { oncells => [], cells => [], on => 0 };
         $evidences{$ev}->{'on'} ||= ( $renderer2 ne 'off' );
         $evidences{$ev}->{'group'} ||= $node2->get('group');
+        push @{$evidences{$ev}->{'cells'}},$cell;
         if($renderer2 ne 'off') {
           $mode = 3 if $mode == 4 and $renderer ne 'off';
           $evidences{$ev}->{'on'} ||= 1;
+          push @{$evidences{$ev}->{'oncells'}},$cell if $renderer ne 'off';
           $mode &=~ 1 if $renderer eq 'tiling';
           $mode &=~ 2 if $renderer eq 'compact';
         }
@@ -86,43 +97,84 @@ sub all_evidences {
 
 sub buttons { return @{$_[0]->{'buttons'}||[]}; }
 
+sub button_portal {
+  my ($self, $buttons, $class) = @_;
+  $class ||= '';
+  my $html;
+
+  my $img_url = $self->img_url;
+
+  foreach (@{$buttons || []}) {
+    my ($counts,$url,$text,$extra_class) = ('','#','','');
+    $extra_class = $_->{'class'} if $_->{'class'};
+    if($_->{'count'}) {
+     $counts = qq(<span class="counts">$_->{'count'}</span>);
+    }
+    if($_->{'text'}) {
+      $text = qq(<div class="text">$_->{'text'}</div>);
+    }
+    $text =~ s/\n/<br>/g;
+    $url = $_->{'url'} if $_->{'url'};
+    $html .= ( qq(
+      <div class="portal_box $extra_class">
+        <a href="$_->{'url'}"
+           title="$_->{'title'}"
+           class="_ht">
+          <img src="$img_url$_->{'img'}"
+               alt="$_->{'title'}"/>
+          $text
+          $counts
+        </a>
+      </div>
+    ));
+    $html =~ s/ +/ /g;
+  }
+
+  return qq{<div class="portal $class">$html</div><div class="invisible"></div>};
+}
+
 sub nav_buttons {
   my ($self) = @_;
 
   my @buttons = (
-    { css => 'summary', caption => 'Summary', action => 'Summary' },
     {
-      css => 'details', caption => 'Details by Cell type',
-      action => 'Cell_line'
-    },
-    { css => 'context', caption => 'Feature Context', action => 'Context' },
-    { css => 'sourcedata', caption => 'Source Data', action => 'Evidence' }
-  );
-
-  my $action = $self->hub->action;
-  foreach my $b (@buttons) {
-    my $url = $self->hub->url({ action => $b->{'action'} });
-    my $title = $b->{'caption'};
-    my $disabled = 0;
-    if($action eq $b->{'action'}) {
-      $url = '#';
-      $title = 'YOU ARE ON THIS PAGE';
-      $disabled = 1;
+      img => "navb-reg-summary.png",
+      title => "Summary",
+      action => 'Summary',
+      text => "Summary",
+    },{
+      img => "navb-reg-details.png",
+      title => "Details by cell type",
+      action => 'Cell_line',
+      text => "Details by\ncell type",
+    },{
+      img => "navb-reg-context.png",
+      title => "Feature context",
+      action => 'Context',
+      text => "Feature\ncontext",
+    },{
+      img => "navb-reg-sourcedata.png",
+      title => "Source Data",
+      action => 'Evidence',
+      text => "Source Data",
     }
-    push @{$self->{'buttons'}||=[]},{
-      nav_image => "navb_reg_$b->{'css'}",
-      caption => $b->{'caption'},
-      title => $title,
-      url => $url,
-      disabled => $disabled,
-    };
+  );
+  foreach my $b (@buttons) {
+    if($b->{'action'} eq $self->hub->action) {
+      $b->{'title'} = "YOU ARE ON THIS PAGE";
+      $b->{'class'} = "navb-current";
+    } else {
+      $b->{'url'} = $self->hub->url({ action => $b->{'action'} });
+    }
   }
+  return $self->button_portal(\@buttons);
 }
 
 sub cell_line_button {
   my ($self,$image_config) = @_;
 
-  my $cell_m = scalar @{$self->shown_cells($image_config)};
+  my ($shown_cells,$partials) = $self->shown_cells($image_config);
+  my $cell_m = scalar @$shown_cells;
   my $cell_n = scalar @{$self->object->all_cell_types};
 
   my $url = $self->hub->url('Component', {
@@ -131,9 +183,13 @@ sub cell_line_button {
     image_config => $image_config,
   });
 
+  my $cell_p = scalar(@$partials);
+  my $count = "showing ".($cell_m-$cell_p)."/$cell_n";
+  $count .= " and $cell_p partially" if $cell_p;
+
   push @{$self->{'buttons'}||=[]},{
     url => $url,
-    caption => "Select cells (showing $cell_m/$cell_n)",
+    caption => "Select cells ($count)",
     class => 'cell-line',
     modal => 1
   };

@@ -57,16 +57,15 @@ sub new {
 # TODO: rewrite sharing code so that it comes through here for everything (not ShareURL)
 
 sub dbh {
-  my $self = shift;
-  my $sd   = $self->hub->species_defs;
+  my $self  = shift;
+  my $db    = $self->hub->species_defs->session_db;
   my $dbh;
-  
+
   # try and get user db connection. If it fails the use backup port
   eval {
-    $dbh = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT),        $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS) ||
-           DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $sd->ENSEMBL_USERDB_NAME, $sd->ENSEMBL_USERDB_HOST, $sd->ENSEMBL_USERDB_PORT_BACKUP), $sd->ENSEMBL_USERDB_USER, $sd->ENSEMBL_USERDB_PASS);
+    $dbh = DBI->connect(sprintf('DBI:mysql:database=%s;host=%s;port=%s', $db->{'NAME'}, $db->{'HOST'}, $db->{'PORT'}), $db->{'USER'}, $db->{'PASS'});
   };
-  
+
   return $dbh || undef;
 }
 
@@ -119,7 +118,7 @@ sub create {
   my $function     = $referer->{'ENSEMBL_FUNCTION'};
   my @view_configs = $configuration ? map { $hub->get_viewconfig(@$_) || () } @{$configuration->new_for_components($hub, $action, $function)} : $hub->get_viewconfig($hub->function);
   my $custom_data  = uri_unescape($hub->param('custom_data'));
-  my $species      = from_json($hub->param('species'));
+  my $species      = from_json($hub->param('species') || "{}");
   my $species_defs = $hub->species_defs;
   my $version      = $species_defs->ENSEMBL_VERSION;
   my $hash         = $hub->param('hash');

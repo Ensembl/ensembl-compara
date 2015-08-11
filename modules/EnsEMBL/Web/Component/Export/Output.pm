@@ -59,7 +59,7 @@ sub ld_dump {
     my %populations     = map { $_ => 1 } map { keys %$_ } values %$ld_values;
   
     my $header_style = 'background-color:#CCCCCC;font-weight:bold;';
-  
+ 
     foreach my $pop_name (sort { $a cmp $b } keys %populations) {
       foreach my $ld_type (keys %$ld_values) {
         my $ld = $ld_values->{$ld_type}->{$pop_name};
@@ -88,10 +88,30 @@ sub ld_dump {
         
           my $snp = shift @$snps;
           my $pos = shift @$starts;
-        
-          my @values = map { $_ ? sprintf '%.3f', $_ : '-' } @$row;
+
+          if ($table) {
+            $snp =~ s/\*//g;
+            my $url = $hub->url({
+                        type   => 'Variation',
+                        action => 'Explore',
+                        v      => $snp
+                      });
+            $pos = qq{<span style="font-weight:bold">$pos</span>} if ($snp eq $v);
+            $snp = ($snp eq $v) ? qq{<span class="_ht ld_focus_variant" title="Focus variant">$snp</span>}  : qq{<a href="$url">$snp</a>};
+          }
+
+          my @values;
+          foreach my $r (@$row) {
+            my $value = '-';
+            $value = sprintf('%.3f',$r) if $r;
+            push @values,{
+              value => $value,
+              style => "background-color:#".($r eq '-'?'ffffff':$colour_gradient[floor($r*40)]),
+            };
+          }
+
           my @row_style = map { 'background-color:#' . ($_ eq '-' ? 'ffffff' : $colour_gradient[floor($_*40)]) . ';' } @values;
-        
+
           if ($table) {
             $table->add_row([ $pos, $snp, @values, $snp ]);
             $table->add_option('row_style', [ $header_style, $header_style, @row_style, $header_style ]);
@@ -117,7 +137,7 @@ sub genetic_variation {
   my @samples  = $object->get_samples(undef, $params);
   my $snp_data = $object->get_genetic_variations(@samples);
   
-  $object->html(sprintf '<h2>Variation data for strains on transcript %s</h2>', $object->stable_id);
+  $object->html(sprintf '<h2>Variant data for strains on transcript %s</h2>', $object->stable_id);
   $object->html('<p>Format: tab separated per strain (SNP id; Type; Amino acid change;)</p>');
   $object->html('');
   

@@ -33,6 +33,7 @@ Ensembl.extend({
     this.locationURL     = typeof window.history.pushState === 'function' ? 'search' : 'hash';
     this.hashParamRegex  = '([#?;&])(__PARAM__=)[^;&]+((;&)?)';
     this.locationMatch   = new RegExp(/[#?;&]r=([^;&]+)/);
+    this.hightlightMatch = new RegExp(/[#?;&]hlr=([^;&]+)/);
     this.locationReplace = new RegExp(this.hashParamRegex.replace('__PARAM__', 'r'));
     this.width           = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
     this.dynamicWidth    = !!this.cookie.get('DYNAMIC_WIDTH');
@@ -193,7 +194,7 @@ Ensembl.extend({
   },
   
   cleanURL: function (url) {
-    return unescape(url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([?;])time=[^;]+;?/g, '$1').replace(/[?;]$/g, ''));
+    return url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([?;])time=[^;]+;?/g, '$1').replace(/[?;]$/g, '');
   },
   
   // Remove the old time stamp from a URL and replace with a new one
@@ -227,6 +228,24 @@ Ensembl.extend({
     if (this.updateURL({ r: r }) === true && this.locationURL === 'search') {
       this.setCoreParams();
       this.EventManager.trigger('hashChange', r);
+    }
+  },
+
+  getHighlightedLocation: function(url) {
+    var r = ((url || window.location.href).match(this.hightlightMatch) || ['']).pop().match(/(.+):(\d+)-(\d+)/);
+
+    return r ? [ r[0], r[1], parseInt(r[2]), parseInt(r[3]) ] : null;
+  },
+
+  highlightLocation: function (r) {
+
+    if (r && typeof r === 'string') { // r can be false to clear hightlighted area, or can be an object already
+      r = this.getHighlightedLocation(r);
+    }
+
+    if (r || r === false) {
+      this.updateURL({ hlr: r && r[0] });
+      this.EventManager.trigger('highlightLocation', r);
     }
   },
   
@@ -278,9 +297,17 @@ Ensembl.extend({
     if (paramOnly) {
       return r;
     }
-    
+
     var hash = r && this.locationURL === 'search' ? { r: r } : {};
-    
+
+    if (hash.r) {
+      $.each(['g', 'db', 'hlr'], function (i, param) {
+        if (Ensembl.coreParams[param]) {
+          hash[param] = Ensembl.coreParams[param];
+        }
+      });
+    }
+
     $.each(window.location.hash.replace('#', '').split(/[;&]/), function () {
       var param = this.split('=');
       
@@ -307,5 +334,7 @@ Ensembl.extend({
     return x1 + x2;
   }
 });
+
+Ensembl.Class = {}; // sub namespace for "Base" based classes to keep Ensembl in their namespace
 
 window.Ensembl = Ensembl; // Make Ensembl namespace available on window - needed for upload iframes because the minifier will compress the variable name Ensembl

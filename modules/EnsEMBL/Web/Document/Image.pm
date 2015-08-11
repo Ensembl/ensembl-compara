@@ -27,6 +27,9 @@ package EnsEMBL::Web::Document::Image;
 
 use strict;
 
+use List::Util qw(min max);
+use List::MoreUtils qw(uniq);
+
 sub new {
 ### Generic constructor
   my ($class, $hub, $component, $args) = @_;
@@ -294,49 +297,75 @@ sub add_image_export_menu {
   my $hub  = $self->hub;
   return unless $self->{'export'};
 
-  my $menu;
-  my @formats = (
-      { f => 'pdf',     label => 'PDF'},
-      { f => 'svg',     label => 'SVG' },
-      { f => 'png-5',   label => 'PNG (x5)' },
-      { f => 'png-2',   label => 'PNG (x2)' },
-      { f => 'png',     label => 'PNG' },
-      { f => 'png-0.5', label => 'PNG (x0.5)' },
-      { f => 'gff',     label => 'Text (GFF)', text => 1 }
-  );
+  my ($menu, $print_header);
+  my $sections = {
+    main => {
+      r => 1,
+      formats => [
+        { f => 'png', label => 'PNG' },
+        { f => 'pdf', label => 'PDF'},
+        { f => 'svg', label => 'SVG' },
+        { f => 'gff', label => 'Text (GFF)', text => 1 },
+      ],
+    },
+    print => {
+      r => 2,
+      title => 'Hi-res (for print)',
+      formats => [
+        { f => 'png-s-5', label => 'PNG (x5)' },
+      ],
+    },
+    proj => {
+      r => 3,
+      title => 'Hi-vis (projectors)',
+      formats => [],
+    }
+  };
 
-  splice @formats, 3, 0, { f => 'png-10',  label => 'PNG (x10)' } unless $self->height > 32000; ## PNG renderer will crash if image too tall!
+  unless($self->height > 32000) {
+    ## PNG renderer will crash if image too tall!
+    push @{$sections->{'print'}{'formats'}},
+      { f => 'png-s-10', label => 'PNG (x10)' };
+  }
+  # Scale /down/ for projectors, to get nice thick lines
+  my $scale =sprintf("%2.2f",max(min(1,1280/($self->image_width||1)),0.01));
+  push @{$sections->{'proj'}{'formats'}},
+    { f => "png-c-2-s-$scale", label => 'PNG' };
 
   my $url = $self->_export_url;
 
-  foreach (@formats) {
-    my $href = $url . $_->{'f'};
+  foreach my $section (sort keys %$sections) {
+    my $title = $sections->{$section}{'title'};
+    $menu .= qq(<div class="header">$title</div>) if $title;
+    foreach (@{$sections->{$section}{'formats'}}) {
+      my $href = $url . $_->{'f'};
 
-    if ($_->{'text'}) {
-      next if $self->{'export'} =~ /no_text/;
+      if ($_->{'text'}) {
+        next if $self->{'export'} =~ /no_text/;
 
-      $menu .= qq(<div><div>$_->{'label'}</div><a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a></div>);
+        $menu .= qq(<div><div>$_->{'label'}</div><a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a></div>);
 
-    } elsif ($_->{'f'} eq 'pdf') {
-      # option not to include pdf export
-      next if $self->{'export'} =~ /no_pdf/;
+      } elsif ($_->{'f'} eq 'pdf') {
+        # option not to include pdf export
+        next if $self->{'export'} =~ /no_pdf/;
 
-      $menu .= qq(
-          <div>
-            <div>$_->{'label'}</div>
-            <a class="view" href="$href" rel="external"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
-            <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
-          </div>
-      );
+        $menu .= qq(
+            <div>
+              <div>$_->{'label'}</div>
+              <a class="view" href="$href" target="_blank"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
+              <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
+            </div>
+        );
 
-    } else {
-      $menu .= qq(
-          <div>
-            <div>$_->{'label'}</div>
-            <a class="view" href="$href" rel="external"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
-            <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
-          </div>
-      );
+      } else {
+        $menu .= qq(
+            <div>
+              <div>$_->{'label'}</div>
+              <a class="view" href="$href" target="_blank"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
+              <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
+            </div>
+        );
+      }
     }
   }
 

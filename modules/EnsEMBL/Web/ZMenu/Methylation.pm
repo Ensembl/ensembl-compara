@@ -178,7 +178,7 @@ sub bigbed {
   my $rsa = $fgh->get_ResultSetAdaptor;
   my $rs = $rsa->fetch_by_dbID($id);
   
-  my $bigbed_file = $rs->dbfile_data_dir;
+  my $bigbed_file = $rs->dbfile_path;
 
   # Substitute path, if necessary. TODO: use DataFileAdaptor  
   my @parts = split(m!/!,$bigbed_file);

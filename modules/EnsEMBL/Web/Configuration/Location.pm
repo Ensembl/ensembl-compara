@@ -116,10 +116,6 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Region Comparison' }
   ));
   
-  $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',
-    [qw( gen_alignment EnsEMBL::Web::Component::Location::ComparaGenomicAlignment )]
-  ));
-  
   $align_menu->append($self->create_node('Synteny', 'Synteny',
     [qw(
       summary  EnsEMBL::Web::Component::Location::Summary
@@ -220,7 +216,7 @@ sub add_external_browsers {
       $url = $hub->get_ExtURL('EGB_NCBI', { NCBI_DB => $browsers{'NCBI_DB'}, CHR => $chr, START => $start, END => $end });
     } else {
       my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
-      $url = "http://www.ncbi.nih.gov/mapview/map_search.cgi?taxid=$taxid";
+      $url = "http://www.ncbi.nlm.nih.gov/mapview/map_search.cgi?taxid=$taxid";
     }
     
     $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
@@ -255,7 +251,7 @@ sub add_archive_link {
   if ($current_assembly ne $alt_assembly ) {
     my $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly;
     my $link  = $self->hub->url({ type => 'Help', action => 'ListMappings', alt_assembly => $alt_assembly });
-    $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 0, class => 'modal_link' }));
+    $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 0, class => 'modal_link external-link' }));
   }
 }
 

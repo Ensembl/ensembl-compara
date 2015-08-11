@@ -30,7 +30,52 @@ package EnsEMBL::Draw::Utils::Bump;
 ###############################################################################
 
 use strict;
+
 use Carp;
+use POSIX qw(floor ceil);
+
+use Exporter qw(import);
+our @EXPORT_OK = qw(bump bump_row);
+
+## TODO Work out why the heck we have two very slightly different bump methods!
+
+sub bump {
+### Adapted from the original bumping code from GlyphSet.pm
+  my ($tally, $start, $end, $truncate_if_outside, $key) = @_;
+  $key         ||= '_bump';
+  ($end, $start) = ($start, $end) if $end < $start;
+  $start         = 1 if $start < 1;
+  my $row_length = $tally->{$key}{'length'};
+
+  return -1 if $end > $row_length && $truncate_if_outside; # used to not display partial text labels
+
+  $end   = $row_length if $end > $row_length;
+  $start = floor($start);
+  $end   = ceil($end);
+
+  my $row     = 0;
+  my $length  = $end - $start + 1;
+  my $element = '0' x $row_length;
+
+  substr($element, $start, $length) = '1' x $length;
+
+  while ($row < $tally->{$key}{'rows'}) {
+    if (!$tally->{$key}{'array'}[$row]) { # We have no entries in this row - so create a new row
+      $tally->{$key}{'array'}[$row] = $element;
+      return $row;
+    }
+
+    if (($tally->{$key}{'array'}[$row] & $element) == 0) { # We already have a row, but the element fits so include it
+      $tally->{$key}{'array'}[$row] |= $element;
+      return $row;
+    }
+
+    $row++; # Can't fit in on this row go to the next row..
+  }
+
+  return -1; # If we get to this point we can't draw the feature
+}
+
 sub bump_row {
   my($start,$end,$bit_length,$bit_array,$max_row)=@_;
   $max_row = 1e9 unless defined $max_row;

@@ -23,8 +23,7 @@
 .config_manager table tr a.add_to_set                     { display: inline-block; width: 16px; height: 16px; background-image: url(/i/16/plus-button.png); }
 .config_manager table tr a.add_to_set span                { display: inline-block; width: 100%; }
 .config_manager table tr a.add_to_set span.added          { display: none; }
-.config_manager table tr.active,
-.config_manager table tr.added                            { background-color: #80CC74!important; }
+.config_manager table tr.added                            { background-color: [[BUTTON_BG]]!important; }
 .config_manager table tr.added a.add_to_set               { background-image: url(/i/16/minus-button.png); }
 .config_manager table tr.added a.add_to_set span.added    { display: inline-block; }
 .config_manager table tr.added a.add_to_set span.removed  { display: none; }
@@ -36,7 +35,8 @@
 .config_manager table td.details ul                       { margin: 0; }
 .config_manager table td.details h4                       { text-decoration: underline; margin-bottom: 8px; }
 .config_manager table td.wrap                             { padding-left: 4px!important; }
-.config_manager table td div.config_used                  { position: absolute; left: 1px; display: none; width: 100%; background: #80CC74; margin-top: -18px; text-align: center; z-index: 100; }
+.config_manager table.config-list tr                      { position: relative; } /* to provide offsets to div.config_used */
+.config_manager table td div.config_used                  { position: absolute; left: 0; right : 0; top: 0; bottom: 0; line-height: 26px; display: none; background: [[BUTTON_BG]]; text-align: center; z-index: 100; }
 .config_manager table td div.none                         { display: none; word-break: normal; }
 .config_manager table td div.none.show                    { display: block; }
 .config_manager table td .height_wrap                     { overflow: hidden; height: 16px; line-height: 16px; padding-right: 20px; }
@@ -55,7 +55,7 @@
 .config_manager .records a.create_set span.cancel         { display: none; float: right; text-decoration: underline; cursor: pointer; }
 .config_manager .reset_all .warning                       { display: inline-block; margin: 0; }
 .config_manager .reset_all .warning .fbutton              { margin: 0; }
-.config_manager .config_manager_help                      { float: right; margin: 0; }
+.config_manager .config_manager_help                      { float: left; margin: 0 0 0 180px; position: absolute; }
 
 .share_config                       { width: 632px; }
 .share_config.narrow                { width: 300px; }
@@ -91,4 +91,4 @@
 body.ie67 .config_manager table td div.config_used { margin-top: -1px; }
 body.ie6  .config_manager table td .height_wrap    { overflow: inherit; height: auto; line-height: auto; margin-right: 0; }
 body.ie6  .config_manager table td .ellipsis       { display: none; }
-body.ie7  .config_manager table td img.toggle      { top: 4px; }
+body.ie7  .config_manager table td img.toggle      { top: 4px; } 

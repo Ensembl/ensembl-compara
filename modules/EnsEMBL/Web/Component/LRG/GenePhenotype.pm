@@ -58,89 +58,59 @@ sub gene_phenotypes {
   my $g_display        = $obj->display_xref->display_id;
   my $html             = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the Ensembl gene $g_name ($g_display)</h2>};
   my (@rows, %list, $list_html);
+  my $has_allelic = 0;
   
   # add rows from Variation DB, PhenotypeFeature
   if ($hub->database('variation')) {
     my $pfa = $hub->database('variation')->get_PhenotypeFeatureAdaptor;
     
-    # OMIA needs tax ID
-    my $tax = $hub->species_defs->TAXONOMY_ID;
-    if ($species eq 'Mouse') {
-      my $features;
-      foreach my $pf (@{$pfa->fetch_all_by_Gene($obj)}) {
-        my $phen   = $pf->phenotype->description;
-        my $ext_id = $pf->external_id;
-        my $source = $pf->source;
-        my $strain = $pf->strain;
-        my $strain_name = encode_entities($strain->name);
-        my $strain_gender = $strain->gender;
-        my $allele_symbol = encode_entities($pf->allele_symbol);
-        if ($ext_id && $source) {
-          $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
-        }
-        my $locs = sprintf(
-            '<a href="%s" class="karyotype-link">View on Karyotype</a>',
-            $hub->url({
-              type    => 'Phenotype',
-              action  => 'Locations',
-              ph      => $pf->phenotype->dbID
-             }),
-        );
-        # display one row for phenotype associated with male and female strain
-        my $pf_id = $pf->id;
-        my $key = join("\t", ($phen, $strain_name, $allele_symbol));
-        $features->{$key}->{source} = $source;
-        push @{$features->{$key}->{gender}}, $strain_gender;
-        $features->{$key}->{locations} = $locs;
+    foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
+      my $phen    = $pf->phenotype->description;
+      my $ext_id  = $pf->external_id;
+      my $source  = $pf->source;
+      my $attribs = $pf->get_all_attributes;
+
+      if($ext_id && $source) {
+        my $source_uc = uc $source;
+           $source_uc =~ s/\s/_/g;
+        $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id });
       }
-      foreach my $key (sort keys %$features) {
-        my ($phenotype, $strain_name, $allele_symbol) = split("\t", $key);
-        push @rows, {
-          source => $features->{$key}->{source},
-          phenotype => $phenotype,
-          allele => $allele_symbol,
-          strain => $strain_name .  " (" . join(', ', sort @{$features->{$key}->{gender}}) . ")",
-          locations =>  $features->{$key}->{locations},
-        };
-      }
-    } else {    
-      foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
-        my $phen   = $pf->phenotype->description;
-        my $ext_id = $pf->external_id;
-        my $source = $pf->source;
-      
-        if($ext_id && $source) {
-          $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
-        }
         
-        my $locs = sprintf(
-          '<a href="%s" class="karyotype_link">View on Karyotype</a>',
-          $hub->url({
-            type    => 'Phenotype',
-            action  => 'Locations',
-            ph      => $pf->phenotype->dbID
-          }),
-        );
-      
-        push @rows, { source => $source, phenotype => $phen, locations =>  $locs};
+      my $locs = sprintf(
+        '<a href="%s" class="karyotype_link">View on Karyotype</a>',
+        $hub->url({
+          type    => 'Phenotype',
+          action  => 'Locations',
+          ph      => $pf->phenotype->dbID
+        }),
+      );
+
+      my $allelic_requirement = '-';
+      if ($attribs->{'inheritance_type'}) {
+        $allelic_requirement = $attribs->{'inheritance_type'};
+        $has_allelic = 1;
       }
+
+      push @rows, { source => $source, phenotype => $phen, locations => $locs, allelic => $allelic_requirement };
     }
   }
-  if ($species eq 'Mouse') {
-	return $html . $self->new_table([
+ 
+  if (scalar @rows) {
+    my @columns = (
       { key => 'phenotype', align => 'left', title => 'Phenotype' },
-      { key => 'source',    align => 'left', title => 'Source'    },
-      { key => 'strain',    align => 'left', title => 'Strain'    },
-      { key => 'allele',    align => 'left', title => 'Allele'    },
-      { key => 'locations', align => 'left', title => 'Locations' },
-    ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
-  } else {  
-      return $html . $self->new_table([ 
-      { key => 'phenotype', align => 'left', title => 'Phenotype'     },
-      { key => 'source',    align => 'left', title => 'Source'        },
-      { key => 'locations', align => 'left', title => 'Locations'     },
-    ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
+      { key => 'source',    align => 'left', title => 'Source'    }
+    );
+    if ($has_allelic == 1) {
+      push @columns, { key => 'allelic', align => 'left', title => 'Allelic requirement' , help => 'Allelic status associated with the disease (monoallelic, biallelic, etc)' };
+    }
+    push @columns, { key => 'locations', align => 'left', title => 'Genomic locations' };
+
+    $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_sort no_col_toggle', sorting => [ 'phenotype asc' ], exportable => 1 })->render;
   }
+  else {
+    $html = "<p>No phenotypes directly associated with gene $g_name.</p>";
+  }
+  return $html;
 }
 
 1;

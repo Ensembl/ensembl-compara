@@ -29,95 +29,73 @@ sub _init {
 }
 
 sub content {
-  my $self               = shift;
-  my $hub                = $self->hub;
-  my $object             = $self->object;
-  my $variation          = $object->Obj;
-  my $species            = $hub->species;
-
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $object    = $self->object;
+  my $variation = $object->Obj;
+  my $species   = $hub->species;
   my $avail     = $self->object->availability;
 
   my ($seq_url, $gt_url, $pop_url, $geno_url, $context_url, $ld_url, $pheno_url, $phylo_url, $cit_url);
   my ($gt_count, $geno_count, $pheno_count, $cit_count);
-  $seq_url        = $hub->url({'action' => 'Sequence'});
-  $context_url    = $hub->url({'action' => 'Context'});
-  if ($avail->{'has_transcripts'}) {
+
+  $seq_url      = $hub->url({'action' => 'Sequence'});
+  $context_url  = $hub->url({'action' => 'Context'});
+
+  if ($avail->{'has_features'}) {
     $gt_url   = $hub->url({'action' => 'Mappings'});
-    $gt_count = $avail->{'has_transcripts'};
+    $gt_count = $avail->{'has_features'};
   }
+
   if ($avail->{'has_populations'}) {
     if ($avail->{'not_somatic'}) {
-      $pop_url   = $hub->url({'action' => 'Population'});
+      $pop_url = $hub->url({'action' => 'Population'});
     }
     elsif ($avail->{'is_somatic'}) {
-      $pop_url  = $hub->url({'action' => 'Populations'});
+      $pop_url = $hub->url({'action' => 'Populations'});
     }
   }
 
-  if ($avail->{'has_individuals'} && $avail->{'not_somatic'}) {
-    $geno_url   = $hub->url({'action' => 'Individual'});
-    $geno_count = $avail->{'has_individuals'};
+  if ($avail->{'has_samples'} && $avail->{'not_somatic'}) {
+    $geno_url   = $hub->url({'action' => 'Sample'});
+    $geno_count = $avail->{'has_samples'};
     if ($avail->{'has_ldpops'}) {
-      $ld_url    = $hub->url({'action' => 'HighLD'});
+      $ld_url = $hub->url({'action' => 'HighLD'});
     }
   }
+
   if ($avail->{'has_ega'}) {
     $pheno_url   = $hub->url({'action' => 'Phenotype'});
     $pheno_count = $avail->{'has_ega'}
   }
+
   if ($avail->{'has_alignments'}) {
-    $phylo_url    = $hub->url({'action' => 'Compara_Alignments'});    
+    $phylo_url = $hub->url({'action' => 'Compara_Alignments'});
   }
+
   if ($avail->{'has_citation'}) {
     $cit_url   = $hub->url({'action' => 'Citations'});
     $cit_count = $avail->{'has_citation'};
   }
-  
-  my ($p_title, $p_img);
-  if($avail->{'not_somatic'}) {
-    ($p_title, $p_img) = ('Allele and genotype frequencies by population', 'population_genetics');
-  }
-  else {
-    ($p_title, $p_img) = ('Samples with this variant', 'sample_information');
-  }
+
+  my ($p_title, $p_img) = $avail->{'not_somatic'} ? ('Allele and genotype frequencies by population', '96/var_population_genetics.png') : ('Samples with this variant', '96/var_sample_information.png');
 
   my @buttons = (
-    {'title' => 'Graphical neighbourhood region', 'img' => 'genomic_context','url' => $context_url},
-    {'title' => 'Consequences (e.g. missense)',   'img' => 'gene_transcript','url' => $gt_url,    'count' => $gt_count},
-    {'title' => $p_title,                 'img' => $p_img,                   'url' => $pop_url},
-    {'title' => 'Individual genotypes',   'img' => 'individual_genotypes',   'url' => $geno_url,  'count' => $geno_count},
-    {'title' => 'LD plots and tables',    'img' => 'linkage_disequilibrium', 'url' => $ld_url},
-    {'title' => 'Diseases and traits',    'img' => 'phenotype_data',         'url' => $pheno_url, 'count' => $pheno_count},
-    {'title' => 'Citations',              'img' => 'citations',              'url' => $cit_url,   'count' => $cit_count},
-    {'title' => 'Sequence conservation via cross-species alignments',   
-                                          'img' => 'phylogenetic_context',   'url' => $phylo_url},
-    {'title' => 'Upstream and downstream sequence', 'img' => 'flanking_sequence',      'url' => $seq_url},
+    {'title' => 'Graphical neighbourhood region',                     'img' => '96/var_genomic_context.png',        'url' => $context_url                           },
+    {'title' => 'Consequences (e.g. missense)',                       'img' => '96/var_gene_transcript.png',        'url' => $gt_url,       'count' => $gt_count    },
+    {'title' => $p_title,                                             'img' => $p_img,                              'url' => $pop_url                               },
+    {'title' => 'Sample genotypes',                                   'img' => '96/var_sample_genotypes.png',       'url' => $geno_url,     'count' => $geno_count  },
+    {'title' => 'LD plots and tables',                                'img' => '96/var_linkage_disequilibrium.png', 'url' => $ld_url                                },
+    {'title' => 'Diseases and traits',                                'img' => '96/var_phenotype_data.png',         'url' => $pheno_url,    'count' => $pheno_count },
+    {'title' => 'Citations',                                          'img' => '96/var_citations.png',              'url' => $cit_url,      'count' => $cit_count   },
+    {'title' => 'Sequence conservation via cross-species alignments', 'img' => '96/var_phylogenetic_context.png',   'url' => $phylo_url                             },
+    {'title' => 'Upstream and downstream sequence',                   'img' => '96/var_flanking_sequence.png',      'url' => $seq_url                               },
   );
 
-  my $html = '<div class="icon-holder">';
-
-  foreach my $button (@buttons) {
-    my $title = $button->{'title'};
-    my $img   = 'var_'.$button->{'img'};
-    my $url   = $button->{'url'};
-    if ($url) {      
-      my $padding = ($button->{'count'} && $button->{'count'} > 99) ? '' : ($button->{'count'} > 9) ? ' 4px' : ' 6px';
-      my $b_count = qq{<span class="counts">$button->{'count'}</span>} if ($button->{'count'});
-      $html      .= qq(<div class="icon-container"><a href="$url" style="text-decoration:none"><img src="/i/96/${img}.png" class="portal _ht var_icon" alt="$title" title="$title" />$b_count</a></div>);
-    }
-    else {
-      $title .= ' (NOT AVAILABLE)';
-      $html  .= qq(<div class="icon-container"><img src="/i/96/${img}_off.png" class="portal _ht" alt="$title" title="$title" /></div>);
-    }
-  }
-
-  $html .= '<div style="clear:both"></div>';
-  $html .= '</div>';
+  my $html = $self->button_portal(\@buttons);
 
   ## Variation documentation links
-  my $new_vep     = $hub->species_defs->ENSEMBL_VEP_ENABLED;
-  my $vep_link    = $hub->url({'species' => $species, '__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
-  my $link_class  = $new_vep ? '' : ' class="modal_link"';
+  my $vep_icon = $self->vep_icon;
   $html .= qq(
     <div class="column-wrapper">
       <div class="column-two column-first">
@@ -130,7 +108,7 @@ sub content {
             <li>Exercise: <a href="/info/website/tutorials/malaria_basic_genetics_exercises_Ensembl.pdf">Genomes and SNPs in Malaria</a></li>
           </ul>
           <h2>Analysing your data</h2>
-          <p><a href="$vep_link"$link_class><img src="/i/vep_logo_sm.png" alt="[logo]" style="vertical-align:middle" /></a> Test your own variants with the <a href="$vep_link"$link_class>Variant Effect Predictor</a></p>
+          <div>$vep_icon</div>
         </div>
       </div>
       <div class="column-two column-next">

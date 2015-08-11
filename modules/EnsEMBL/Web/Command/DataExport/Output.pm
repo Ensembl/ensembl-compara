@@ -85,7 +85,8 @@ sub process {
       my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
       my $in_bioperl    = grep { lc($_) eq lc($format) } keys %align_formats;
       ## Alignments and trees are handled by external writers
-      if ($hub->param('align') && lc($format) ne 'rtf') {
+      if (($hub->param('align') && lc($format) ne 'rtf')
+          || (ref($component) =~ /Paralog/ && $in_bioperl && lc($format) ne 'fasta')) {
         my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
         my $is_tree       = grep { lc($_) eq lc($format) } keys %tree_formats;
         if ($in_bioperl) {
@@ -104,7 +105,7 @@ sub process {
           $error = 'Output not implemented for format '.$format;
         }
       }
-      elsif ($in_bioperl) {
+      elsif ($in_bioperl && $component =~ /Compara/) { 
         $error = ($hub->param('align_type') || $hub->param('seq_type') =~ /msa/) 
                     ? $self->write_alignment($component)
                     : $self->write_homologue_seq($component);
@@ -136,7 +137,7 @@ sub process {
     $url_params->{'__clear'}        = 1;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
-    push @core_params, qw(export_action data_type component align);
+    push @core_params, qw(export_action data_type data_action component align);
     push @core_params, $self->config_params; 
     foreach my $species (grep { /species_/ } $hub->param) {
       push @core_params, $species;
@@ -224,6 +225,11 @@ sub write_rtf {
       }
 
       $class = join ' ', sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } split /\s+/, $class;
+
+      ## RTF has no equivalent of text-transform, so we must manually alter the text
+      if ($class =~ /\b(el)\b/) {
+        $seq->{'letter'} = lc($seq->{'letter'});
+      }
 
       ## Add species name at beginning of each line if this is an alignment
       ## (on pages, this is done by build_sequence, but that adds HTML)
@@ -335,7 +341,9 @@ sub _class_to_style {
       co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}{'default'}" } ],
       aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}{'default'}" } ],
       end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}{'label'}" } ],
-      bold => [ $i++, { 'font-weight' => 'bold' } ]
+      bold => [ $i++, { 'font-weight' => 'bold' } ],
+      el   => [$i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}", 'text-transform' => 'lowercase' } ],
+
     );
 
     foreach (keys %$var_styles) {

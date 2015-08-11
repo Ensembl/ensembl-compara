@@ -114,6 +114,7 @@ sub matches_to_html {
                                                 data_table => 1, 
                                                 exportable => 1, 
                                                 hidden_columns => \@hidden_cols, 
+                                                class=>"mobile-nolink",
                                               });
 
   if ($count_ext_refs == 0) {

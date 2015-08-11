@@ -62,13 +62,15 @@ sub content {
 
   $self->add_entry({
     'label' => $hit_db_name eq 'TRACE' ? 'View Trace archive' : $id,
-    'link'  => encode_entities($hub->get_ExtURL($hit_db_name, $id))
+    'link'  => encode_entities($hub->get_ExtURL($hit_db_name, $id)),
+    'external' => 1,
   });
 
   if ($logic_name and my $ext_url = $hub->get_ExtURL($logic_name, $id)) {
     $self->add_entry({
       'label' => "View in external database",
-      'link'  => encode_entities($ext_url)
+      'link'  => encode_entities($ext_url),
+      'external' => 1,
     });
   }
 

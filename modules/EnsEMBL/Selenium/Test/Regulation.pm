@@ -27,12 +27,14 @@ use parent 'EnsEMBL::Selenium::Test::SpeciesPages';
 sub new {
   my ($class, %args) = @_;
 
+  my $self = $class->SUPER::new(%args);
+
   ## Abort this test set if the species has no regulation data
-  if (!$args{'species'}->{'funcgen_db'}) {
-    return ('pass', 'Species '.$species->{'name'}.' has no regulation data');
+  my $species = $self->species;
+  if (!$species->{'regulation_db'}) {
+    return ['pass', 'Species '.$species->{'name'}.' has no regulation data', $class, 'new'];
   }
 
-  my $self = $class->SUPER::new(%args);
   return $self;
 }
 
@@ -40,7 +42,7 @@ sub default_url {
   my $self = shift;
   my $species = $self->species;
 
-  return sprintf('/%s/Regulation/Summary?rf=%s', $species->{'name'}, $species->{'REGULATION_PARAM'});
+  return sprintf('/%s/Regulation/Summary?db=funcgen;rf=%s', $species->{'name'}, $species->{'REGULATION_PARAM'});
 }
 
 1;

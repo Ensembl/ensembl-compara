@@ -111,26 +111,34 @@ sub default_file_name {
 
 sub phyloxml_settings {
 ### Needed by child module (SpeciesTree)
-  return {
-          'cdna' => {
+  my $self = shift;
+  my $settings = {};
+
+  my $gene = $self->hub->core_object('gene');
+  my $has_cdna = $gene->Obj->canonical_transcript->cdna_coding_start ? 1 : 0;
+  
+  if ($has_cdna) {
+    $settings->{'cdna'} = {
                             'type'    => 'Checkbox',
                             'label'   => 'cDNA rather than protein sequence',
                             'value'   => 'on',
                             'checked' => 1,
-                     },
-          'aligned' => {
+                     };
+  }
+
+  $settings->{'aligned'} = {
                             'type'    => 'Checkbox',
                             'label'   => 'Aligned sequences with gaps',
                             'value'   => 'on',
                             'checked' => 1,
-                        },
-          'no_sequences' => {
-                             'type'    => 'Checkbox',
-                             'label'   => 'Omit sequences',
-                             'value'   => 'on',
-                             'checked' => 0,
-                            },
-  };
+                          };
+  $settings->{'no_sequences'} = {
+                                  'type'    => 'Checkbox',
+                                  'label'   => 'Omit sequences',
+                                  'value'   => 'on',
+                                  'checked' => 0,
+                                  };
+  return $settings;
 }
 
 sub phyloxml_fields {

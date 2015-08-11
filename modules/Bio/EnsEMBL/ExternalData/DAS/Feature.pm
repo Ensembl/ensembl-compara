@@ -16,14 +16,16 @@ limitations under the License.
 
 =cut
 
-#
-# EnsEMBL module for Bio::EnsEMBL::ExternalData::DAS::Feature
-#
-#
-
 =head1 NAME
 
 Bio::EnsEMBL::ExternalData::DAS::Feature
+
+############################################################################
+#
+# DEPRECATED MODULE - DAS SUPPORT WILL BE REMOVED FROM ENSEMBL IN RELEASE 83
+#
+#############################################################################
+
 
 =head1 SYNOPSIS
 

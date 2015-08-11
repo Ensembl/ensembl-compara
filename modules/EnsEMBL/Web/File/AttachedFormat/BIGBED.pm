@@ -28,11 +28,6 @@ use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 use base qw(EnsEMBL::Web::File::AttachedFormat);
 
-sub new {
-  my $self = shift->SUPER::new(@_);
-  return $self;
-}
-
 sub _bigbed_adaptor {
   my ($self,$bba) = @_;
   if (defined($bba)) {
@@ -60,7 +55,6 @@ sub check_data {
     eval {
       Bio::DB::BigFile->set_udc_defaults;
       $bigbed = Bio::DB::BigFile->bigBedFileOpen($url);
-      my $chromosome_list = $bigbed->chromList;
     };
     warn $@ if $@;
     warn "Failed to open BigBed " . $url unless $bigbed;

@@ -25,8 +25,9 @@
 /* NOTE: summary table is now configured to use "twocol" instead of dl dt dd */
 
 div.summary_panel a.toggle                   { color: [[PAGE_TEXT]]; }
+div.summary_panel a.toggle_link              { color: [[PAGE_LINK]]; text-decoration: underline; }
 
-div.summary_panel table.toggle_table         { border-collapse: collapse; cursor: pointer; }
+div.summary_panel table.toggle_table         { border-collapse: collapse; cursor: default; }
 div.summary_panel table.toggle_table td,
 div.summary_panel table.toggle_table th      { border: 1px solid [[NEUTRAL_BORDER]]; margin: 0; text-align: center; white-space: nowrap; }
 div.summary_panel table.toggle_table td      { padding: 2px 4px; }

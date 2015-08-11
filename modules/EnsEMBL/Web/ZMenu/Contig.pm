@@ -94,24 +94,25 @@ sub content {
         r        => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
       })
     });
+  }
+
+  if ($slice_type eq 'contig' &&  $slice_name !~ /^contig_/) {
+
+    (my $short_name = $slice_name) =~ s/\.\d+$//;
     
-    if ($cs->name eq 'clone') {
-      (my $short_name = $new_slice_name) =~ s/\.\d+$//;
+    $self->add_entry({
+      type     => 'EMBL',
+      label    => $slice_name,
+      link     => $hub->get_ExtURL('EMBL', $slice_name),
+      external => 1
+    });
       
-      $self->add_entry({
-        type     => 'EMBL',
-        label    => $new_slice_name,
-        link     => $hub->get_ExtURL('EMBL', $new_slice_name),
-        external => 1
-      });
-      
-      $self->add_entry({
-        type     => 'EMBL (latest version)',
-        label    => $short_name,
-        link     => $hub->get_ExtURL('EMBL', $short_name),
-        external => 1
-      });
-    }
+    $self->add_entry({
+      type     => 'EMBL (latest version)',
+      label    => $short_name,
+      link     => $hub->get_ExtURL('EMBL', $short_name),
+      external => 1
+    });
   }
 }
 

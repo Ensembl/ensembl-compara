@@ -67,7 +67,7 @@ sub variation_content {
     type   => 'Variation',
     v      => $v,
     vf     => $feature->dbID(),
-    source => $feature->source
+    source => $feature->source_name,
   );
   
   if ($chr_end < $chr_start) {
@@ -110,6 +110,17 @@ sub variation_content {
     if ($tv) {
       my $pep_alleles = $tv->pep_allele_string;
       my $codons      = $tv->codons;
+      ## Also truncate long peptides
+      if (length $pep_alleles > 10) {
+        $pep_alleles =~ /(\w{10})\w+(\w\/\w)(\w+)/;
+        $pep_alleles = $1.'...'.$2;
+        $pep_alleles .= '...' if $3;
+      }
+      if (length $codons > 10) {
+        $codons =~ /(\w{10})\w+(\w\/\w)(\w+)/;
+        $codons = $1.'...'.$2;
+        $codons .= '...' if $3;
+      }
       
       push @entries, { type => 'Amino acids', label => $pep_alleles} if $pep_alleles && $pep_alleles =~ /\//;
       push @entries, { type => 'Codons',      label => $codons}      if $codons      && $codons      =~ /\//;
@@ -138,7 +149,7 @@ sub variation_content {
 
   push @entries, (
     { type  => 'Consequences',   label_html => "<ul>$type</ul>" },
-    { link  => $hub->url({ action => 'Explore', %url_params}), label => 'Explore this variation'},
+    { link  => $hub->url({ action => 'Explore', %url_params}), label => 'Explore this variant'},
     { link  => $hub->url({ action => 'Mappings', %url_params }), label => 'Gene/Transcript Locations' }
   );
 
@@ -159,7 +170,9 @@ sub variation_content {
   }
     
   push @entries, { class => 'population', link => $hub->url({ action => 'Population', %url_params }), label => 'Population Allele Frequencies' } if scalar keys %population_data;
-  
+
+  my %colours;
+  $colours{$_} = "base_$_" for(qw(C G A T));
   foreach my $name (sort { !$a <=> !$b || $b =~ /ALL/ cmp $a =~ /ALL/ || $a cmp $b } keys %population_data) {
     my %display = reverse %{$population_data{$name}};
     my $i       = 0;
@@ -170,7 +183,8 @@ sub variation_content {
       # Keep the alleles order
       foreach my $al (@{$population_allele{$name}}) {
         if ($population_data{$name}{$submitter}{$al}){
-          push @freqs, $al;
+          $colours{$al} ||= "base_".(scalar(keys %colours)%4);
+          push @freqs, $colours{$al};
           push @freqs, $population_data{$name}{$submitter}{$al};
           $af .= $af ? ', ' : '';
           $af .= "$al: $population_data{$name}{$submitter}{$al}";

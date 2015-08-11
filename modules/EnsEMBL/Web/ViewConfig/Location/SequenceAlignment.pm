@@ -86,7 +86,7 @@ sub form {
   if ($ref) {
     $self->add_form_element({
       type  => 'NoEdit',
-      name  => 'reference_individual',
+      name  => 'reference_sample',
       label => "Reference $strains",
       value => $ref
     });

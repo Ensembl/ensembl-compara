@@ -31,7 +31,7 @@ sub new {
   my $self = shift->SUPER::new(@_);
   
   $self->{'trackhub'} = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->{'hub'},
-                                                                        'url' => $self->{'url'});
+                                                                 'url' => $self->{'url'});
   
   return $self;
 }

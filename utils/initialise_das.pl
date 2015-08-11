@@ -2,8 +2,8 @@
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
-package initialize_das;
 # This script
 use FindBin qw($Bin);
 use Cwd;
@@ -150,7 +150,7 @@ my $cdbh = $cdb->dbc->db_handle;
 my $ta = $cdb->get_NCBITaxonAdaptor();
 my $hash = $species_defs;
 
-my $das_coords = _get_das_coords();
+my $das_coords = {}; #_get_das_coords();
 
 my @species = $species_defs->valid_species();
 
@@ -196,18 +196,18 @@ foreach my $sp (@species) {
     }
   }
   
-  unless ($xml) {
+  #unless ($xml) {
   # Must have these coordinates for all species (though we don't create sources for them yet):
-  for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
-    unless (exists $das_coords->{$sp}{$coord_type}) {
+  #for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
+  #  unless (exists $das_coords->{$sp}{$coord_type}) {
       # Add to the registry and check it came back OK
-      my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid), $coord_type);
+  #    my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid), $coord_type);
       #if (! $check_registry) {
 	    #  $tmp->{$sp}{$coord_type} || warn "[FATAL] Unable to create $coord_type $sp coordinates";
       #}
-    }
-  }
-}
+  #  }
+  #}
+#}
   # Get top level slices from the database
   my $dbh = $db->dbc->db_handle;
   my $toplevel_slices   = $dbh->selectall_arrayref( q(
@@ -247,16 +247,16 @@ foreach my $sp (@species) {
         $_->[6] = $type;
         $cs_xml = $das_coords->{$sp}{$_->[5]}{$_->[6]};
       }
-      if (!$cs_xml) {
-        # Add to the registry and check it came back OK
-        my $tmp = _get_das_coords(_coord_system_as_xml(ucfirst($_->[5]), $_->[6], $sp, $taxid), ucfirst($_->[5])." $_->[6]");
-	      next SPECIES if ($check_registry);
-        $cs_xml = $tmp->{$sp}{$_->[5]}{$_->[6]};
-        if (!$cs_xml) {
-          print STDERR "[ERROR] Coordinate system $_->[5] $_->[6] is not in the DAS Registry! Skipping\n";
-          next SPECIES;
-        }
-      }
+      #if (!$cs_xml) {
+      #  # Add to the registry and check it came back OK
+      #  my $tmp = _get_das_coords(_coord_system_as_xml(ucfirst($_->[5]), $_->[6], $sp, $taxid), ucfirst($_->[5])." $_->[6]");
+	    #  next SPECIES if ($check_registry);
+      #  $cs_xml = $tmp->{$sp}{$_->[5]}{$_->[6]};
+      #  if (!$cs_xml) {
+      #    print STDERR "[ERROR] Coordinate system $_->[5] $_->[6] is not in the DAS Registry! Skipping\n";
+      #    next SPECIES;
+      #  }
+      #}
       my $start = $_->[2] || 1;
       my $end   = $_->[3] || $_->[1];
       my $test_range = sprintf("%s:%d,%d", $_->[0], $start, $start+99999>$end?$end:$start+99999);
@@ -487,7 +487,7 @@ sub _coord_system_as_xml {
   return $xml;
 }
 
-
+=pod
 sub _get_das_coords {
   my ($add_data, $add_name) = @_;
   my $ua = LWP::UserAgent->new(agent => $sitetype);
@@ -528,6 +528,7 @@ sub _get_das_coords {
   
   return \%coords;
 }
+=cut
 
 sub publish_multi_species_sources {
 # Now Multi species sources, e.g EnsemblGene Id etc
@@ -554,11 +555,11 @@ sub publish_multi_species_sources {
     foreach my $feature (@feature_types) {
 	    print STDERR "[INFO]  Parsing Multi species source * $feature * at ".gmtime()."\n";
 	    my $coord_type = $sources_info->{$feature}->{coord_system} or next;
-	    unless (exists $das_coords->{$sp}{$coord_type}) {
+	    #unless (exists $das_coords->{$sp}{$coord_type}) {
 	      # Add to the registry and check it came back OK
-	      my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid), $coord_type);
-	      $tmp->{$sp}{$coord_type} || die "[FATAL] Unable to create $coord_type $sp coordinates";
-	    }
+	    #  my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid), $coord_type);
+	    #  $tmp->{$sp}{$coord_type} || die "[FATAL] Unable to create $coord_type $sp coordinates";
+	    #}
 
 	    my $dbn = $sources_info->{$feature}->{master_db} || 'DATABASE_CORE';
 	    my $table = $sources_info->{$feature}->{master_table};

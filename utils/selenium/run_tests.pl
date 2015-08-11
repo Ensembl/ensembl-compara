@@ -15,15 +15,15 @@
 #!/usr/local/bin/perl
 
 =pod
- Wrapper script for selenium tests. 
- Takes one argument (release number) plus three JSON configuration files:
- - configure Selenium environment
- - select which tests are run in a particular batch
- - configure species to test (optional)
+  Wrapper script for selenium tests. 
+  Takes one argument (release number) plus three JSON configuration files:
+  - configure Selenium environment
+  - select which tests are run in a particular batch
+  - configure species to test (optional - defaults to release_<VERSION>_species.conf)
 
- The purpose of the latter file is to remove dependency on the web code.
- Instead, a helper script is used to dump some useful parts of the
- web configuration, which should then be eyeballed to ensure it looks OK.
+  The purpose of the latter file is to remove dependency on the web code.
+  Instead, a helper script dump_species_to_json.pl is used to dump some useful parts
+  of the web configuration, which should then be eyeballed to ensure it looks OK.
 
   Note: Configuration files must be placed in utils/selenium/conf, but they can be
   in any plugin that is configured in Plugins.pm
@@ -75,6 +75,10 @@ GetOptions(
 
 die 'Please provide configuration files!' unless ($config && $tests);
 
+if (!$species) {
+  $species = sprintf('release_%s_species.conf', $release);
+}
+
 ## Find config files
 my ($config_path, $tests_path, $species_path) = find_configs($SERVERROOT);
 
@@ -86,6 +90,7 @@ my $CONF          = read_config($config_path);
 my $TESTS         = read_config($tests_path); 
 my $SPECIES       = read_config($species_path);
 
+ $release ||= $CONF->{'release'};
 my $url     = $CONF->{'url'};
 my $host    = $CONF->{'host'};
 my $port    = $CONF->{'port'}     || '4444';
@@ -112,7 +117,12 @@ unless (ref($TESTS->{'modules'}[0]) eq 'HASH'
   die "You must specify at least one test method, eg. ['homepage']";
 }
 
-print "Configuration OK - running tests...\n\n";
+unless ($release) {
+  die "You must specify a release version!";
+}
+
+
+print "Configuration OK - running tests...\n";
 
 ## Allow overriding of verbosity on command line or in configurations
 unless (defined($verbose)) {
@@ -120,9 +130,6 @@ unless (defined($verbose)) {
                 : defined($CONF->{'verbose'}) ? $CONF->{'verbose'} 
                 : 0;
 }
-
-## Create Selenium object
-my $selenium;
 
 unless ($DEBUG) {
   ## Check to see if the selenium server is online 
@@ -132,22 +139,20 @@ unless ($DEBUG) {
   if ($response->content ne 'OK') { 
     die "Selenium Server is offline or host configuration is wrong !!!!\n";
   }
-  $selenium = EnsEMBL::Selenium->new(
-                                     _ua         => $ua,
-                                     host        => $host,
-                                     port        => $port,
-                                     browser     => $browser,
-                                     browser_url => $CONF->{'url'},
-                                    ); 
 }
 
 ## Basic config for test modules
 my $test_config = {
-                    sel     => $selenium,
-                    url     => $url,
-                    timeout => $timeout,
-                    verbose => $verbose,  
-                    conf    => {'release' => $release},
+                    url         => $url,
+                    timeout     => $timeout,
+                    verbose     => $verbose,  
+                    conf        => {'release' => $release},
+                    sel_config  => { 
+                                      host        => $host,
+                                      port        => $port,
+                                      browser     => $browser,
+                                      browser_url => $CONF->{'url'},
+                                    },
                   };
 
 
@@ -160,8 +165,11 @@ my $test_suite = {
 foreach my $module (@{$TESTS->{'modules'}}) {
   my $species = $module->{'species'} || [];
   if ($species eq 'all') {
+    my @keys = keys %$SPECIES;
+    $species = \@keys;   
+    $module->{'species'} = '';
   }
-  elsif (scalar(@$species)) {
+  if (scalar(@$species)) {
     foreach my $sp (@$species) {
       if ($test_suite->{'species'}{$sp}) {
         push @{$test_suite->{'species'}{$sp}}, $module;
@@ -185,11 +193,17 @@ our $fail = 0;
 
 my ($sec, $min, $hour, $day, $month, $year) = gmtime;
 my $timestamp = sprintf('%s%02d%02d_%02d%02d%02d', $year+1900, $month+1, $day, $hour, $min, $sec);
-our $log_file_name = $tests;
-$log_file_name =~ s/\.conf//; 
-$log_file_name .= '_'.$timestamp.'.log';
-our $log;
-open $log, '>>', $log_file_name;
+
+mkdir('test_reports') unless -e 'test_reports';
+(my $log_filename = $tests) =~ s/\.conf//;
+
+my $pass_log_filename = sprintf('test_reports/%s_%s_%s.log', $log_filename, 'pass', $timestamp); 
+my $fail_log_filename = sprintf('test_reports/%s_%s_%s.log', $log_filename, 'fail', $timestamp); 
+
+our $pass_log;
+our $fail_log;
+open $pass_log, '>>', $pass_log_filename;;
+open $fail_log, '>>', $fail_log_filename;;
 
 ## Run any non-species-specific tests first 
 foreach my $module (@{$test_suite->{'non_species'}}) {
@@ -199,14 +213,16 @@ foreach my $module (@{$test_suite->{'non_species'}}) {
 
 ## Loop through the relevant tests for each species
 foreach my $sp (keys %{$test_suite->{'species'}}) {
+  print "\n\n======= TESTING SPECIES $sp:\n";
   foreach my $module (@{$test_suite->{'species'}{$sp}}) {
     my $module_name = $module->{'name'};
-    $test_config->{'species'} = $species;
+    $test_config->{'species'} = {'name' => $sp, %{$SPECIES->{$sp}}};
     run_test($module_name, $test_config, $module->{'tests'});    
   }
 }
 
-close($log);
+close($pass_log);
+close($fail_log);
 
 my $total = $pass + $fail;
 my $plural = $total > 1 ? 's' : '';
@@ -216,6 +232,11 @@ print "TEST RUN COMPLETED!\n";
 print "Ran $total test$plural:\n";
 print "- $pass succeeded\n";
 print "- $fail failed\n";
+
+if ($tests_path =~ /debug/) {
+  print "\n\nIgnore this next message - it simply means that no real selenium tests 
+  were run, because we were only testing the harness, not the website\n";
+}
 
 ################# SUBROUTINES #############################################
 
@@ -229,9 +250,10 @@ sub run_test {
 
   ## Try to use the package
   my $package = "EnsEMBL::Selenium::Test::$module";
+  print "... Running test module $package...\n";
   eval("use $package");
   if ($@) {
-    write_to_log('bug', "Couldn't use $package\n$@");
+    write_to_log('bug', "Couldn't use $package\n$@", 'run_tests.pl');
     return;
   }
 
@@ -245,7 +267,7 @@ sub run_test {
   }
 
   unless (@test_names) {
-    write_to_log('bug', "No methods specified for test module $package");
+    write_to_log('bug', "No methods specified for test module $package", 'run_tests.pl');
     return;
   }
 
@@ -256,13 +278,17 @@ sub run_test {
     ## N.B. In this situation, 'pass' is treated as an error
     ## because it means we are aborting this module's tests
     ## (e.g. if it's a Variation test and species has no variation)
-    write_to_log($object, $error);
+    write_to_log($object, $error, $module);
+  }
+  elsif (!$object || ref($object) !~ /Test/) {
+    write_to_log('fail', "Could not instantiate object from package $package"); 
+    return;
   }
   else {
     ## Check that site being tested is up
-    my ($code, $message) = $package->check_website;
-    if ($code eq 'fail') {
-      write_to_log($code, "ABORTING TESTS ON $module: $message");
+    my @response = $object->check_website;
+    if ($response[0] eq 'fail') {
+      write_to_log($response[0], "ABORTING TESTS ON $module: ".$response[1], $response[2], $response[3]);
       return;
     }
 
@@ -274,17 +300,26 @@ sub run_test {
         @params = @{$tests->{$name}||[]};
       }
       if ($object->can($method)) {
-        my ($code, $message) = $object->$method(@params);
-        if ($code eq 'fail' || $config->{'verbose'}) { 
-          write_to_log($code, $message);
-          $code eq 'pass' ? $pass++ : $fail++;
-        }
-        else {
-          $pass++;
+        print "...... Trying test method $method...\n";
+        my @response = ($object->$method(@params));
+        foreach (@response) {
+          if (ref($_) eq 'ARRAY') {
+            if ($config->{'verbose'} || $_->[0] ne 'pass') { 
+              write_to_log(@$_);
+            }
+            $_->[0] eq 'pass' ? $pass++ : $fail++;
+          }
+          elsif ($_) {
+            $pass++;
+          }
+          else {
+            write_to_log('fail', "Unknown error from $method in $package");
+            $fail++;
+          }
         }
       }
       else {
-        write_to_log('bug', "No such method $method in package $package");
+        write_to_log('bug', "No such method $method in package $package", 'run_tests.pl');
       }
     }
   }
@@ -293,14 +328,23 @@ sub run_test {
 sub write_to_log {
 ### Write a status line
 ### TODO Replace with proper logging
-  my ($code, $message) = @_;
+  my ($code, $message, $module, $method) = @_;
+
   my ($sec, $min, $hour, $day, $month, $year) = gmtime;
   my $timestamp = sprintf('at %02d:%02d:%02d on %02d-%02d-%s', $hour, $min, $sec, $day, $month+1, $year+1900);
+  
+  my $line = uc($code);
+  $line    .= " in $module" if $module;
+  $line    .= "::$method" if $method;
+  $line    .= "- $message $timestamp\n";
+
+  my $log = $code eq 'pass' ? $pass_log : $fail_log;
+
   if ($log) {
-    print $log uc($code).": $message $timestamp\n";
+    print $log $line;
   }
   else {
-    print uc($code).": $message $timestamp\n";
+    print $line; 
   }
 }
 

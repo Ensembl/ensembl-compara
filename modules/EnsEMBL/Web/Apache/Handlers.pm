@@ -257,10 +257,21 @@ sub handler {
   my $u           = $r->parsed_uri;
   my $file        = $u->path;
   my $querystring = $u->query;
-  my @web_cookies = EnsEMBL::Web::Cookie->retrieve($r, map {'name' => $_, 'encrypted' => 1}, $SiteDefs::ENSEMBL_SESSION_COOKIE, $SiteDefs::ENSEMBL_USER_COOKIE);
-  my $cookies     = {
-    'session_cookie'  => $web_cookies[0] || EnsEMBL::Web::Cookie->new($r, {'name' => $SiteDefs::ENSEMBL_SESSION_COOKIE, 'encrypted' => 1}),
-    'user_cookie'     => $web_cookies[1] || EnsEMBL::Web::Cookie->new($r, {'name' => $SiteDefs::ENSEMBL_USER_COOKIE,    'encrypted' => 1})
+  my @web_cookies = ({
+    'name'            => $SiteDefs::ENSEMBL_SESSION_COOKIE,
+    'encrypted'       => 1,
+    'domain'          => $SiteDefs::ENSEMBL_SESSION_COOKIEHOST,
+  }, {
+    'name'            => $SiteDefs::ENSEMBL_USER_COOKIE,
+    'encrypted'       => 1,
+    'domain'          => $SiteDefs::ENSEMBL_USER_COOKIEHOST,
+  });
+
+  my @existing_cookies = EnsEMBL::Web::Cookie->retrieve($r, @web_cookies);
+
+  my $cookies = {
+    'session_cookie'  => $existing_cookies[0] || EnsEMBL::Web::Cookie->new($r, $web_cookies[0]),
+    'user_cookie'     => $existing_cookies[1] || EnsEMBL::Web::Cookie->new($r, $web_cookies[1]),
   };
 
   my @raw_path = split '/', $file;
@@ -293,6 +304,13 @@ sub handler {
     $redirect = 1;
   }
 
+  ## Trackhub short URL
+  if ($raw_path[0] eq 'TrackHub') {
+    $file = '/UserData/TrackHubRedirect?'.$querystring;
+    $r->uri($file);
+    $redirect = 1;
+  }
+
   ## Simple redirect to VEP
 
   if ($SiteDefs::ENSEMBL_SUBTYPE eq 'Pre' && $file =~ /\/vep/i) { ## Pre has no VEP, so redirect to tools page
@@ -305,6 +323,12 @@ sub handler {
     $r->uri('/info/docs/tools/vep/index.html');
     $redirect = 1;
   }
+
+ if ($file =~ /\/info\/docs\/(variation|funcgen|compara|genebuild|microarray)/) {
+   $file =~ s/docs/genome/;
+   $r->uri($file);
+   $redirect = 1;
+ }
 
   if ($redirect) {
     $r->headers_out->add('Location' => $r->uri);

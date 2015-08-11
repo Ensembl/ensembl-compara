@@ -50,6 +50,13 @@ sub end_1 {
   return $coords[2]; 
 }
 
+sub direction_1 {
+  my $self = shift; 
+  return $self->{'direction_1'} if $self->{'direction_1'};
+  my @coords = $self->_split_coords($self->{'__raw__'}[0]);
+  return $coords[3]; 
+}
+
 sub start_2 {
   my $self = shift; 
   return $self->{'start_2'} if $self->{'start_2'};
@@ -62,6 +69,13 @@ sub end_2 {
   return $self->{'end_2'} if $self->{'end_2'};
   my @coords = $self->_split_coords($self->{'__raw__'}[1]);
   return $coords[2]; 
+}
+
+sub direction_2 {
+  my $self = shift; 
+  return $self->{'direction_2'} if $self->{'direction_2'};
+  my @coords = $self->_split_coords($self->{'__raw__'}[1]);
+  return $coords[3]; 
 }
 
 sub _seqname { 
@@ -102,7 +116,12 @@ sub coords {
 
 sub _split_coords {
   my ($self, $f) = @_; 
-  return split(/,|-|:/, $f);
+  ## Capture a final minus sign (direction) before splitting
+  $f =~ /(-)$/;
+  my $direction = $1; 
+  my @coords = split(/,|-|:/, $f);
+  push @coords, $direction if $direction;
+  return @coords;
 }
 
 sub _raw_score    { 

@@ -27,7 +27,6 @@ use parent 'EnsEMBL::Selenium::Test::SpeciesPages';
 sub default_url {
   my $self = shift;
   my $species = $self->species;
-  return ('bug', 'Transcript views require a species') unless $species;
   return sprintf('/%s/Transcript/View?t=%s', $species->{'name'}, $species->{'TRANSCRIPT_PARAM'});
 }
 

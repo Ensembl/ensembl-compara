@@ -73,7 +73,7 @@ sub content {
       action => 'Explore',
       v      => $feature->variation_name,
       vf     => $feature->dbID,
-      source => $feature->source
+      source => $feature->source_name
     })
   });
   

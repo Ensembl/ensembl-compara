@@ -36,7 +36,8 @@ Ensembl.DataTable = {
       var dataTable = table.dataTable(options);
       var settings  = dataTable.fnSettings();
       
-      $('.dataTables_filter input', settings.nTableWrapper).after('<div class="overlay">Filter</div>').on({
+      var filterInput   = $('.dataTables_filter input', settings.nTableWrapper);
+      var filterOverlay = filterInput.after('<div class="overlay">Filter</div>').on({
         focus: function () {
           $(this).siblings('.overlay').hide();
         },
@@ -46,7 +47,8 @@ Ensembl.DataTable = {
           }
         }
       });
-      
+      if (filterInput.val() && filterInput.val().length) filterOverlay.siblings('.overlay').hide();
+
       if (!noToggle) {
         panel.columnToggle(settings);
       }
@@ -111,6 +113,7 @@ Ensembl.DataTable = {
         parent = null;
       },
       fnDrawCallback: function (tableSettings) {
+        this.togglewrap('redo');
         $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', tableSettings.nTableWrapper)[tableSettings._iDisplayLength === -1 ? 'hide' : 'show']();
         
         var data          = this.data();

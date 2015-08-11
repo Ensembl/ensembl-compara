@@ -284,6 +284,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.getContent();
+    this.el.externalLinks();
   },
   
   showConfigMenu: function (e) {
@@ -1092,6 +1093,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     button.attr('title', function () { return $(this).hasClass('open') ? 'Hide information' : 'Click for more information'; });
+
+    desc.find('._dyna_load').removeClass('_dyna_load').dynaLoad({complete: function () { this.externalLinks(); }});
     
     this.elLk.help = this.elLk.help.add(button).filter('.open');
   }, 

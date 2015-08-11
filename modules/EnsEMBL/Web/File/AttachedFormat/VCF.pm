@@ -30,7 +30,7 @@ sub check_data {
   my ($self) = @_;
   my $url = $self->{'url'};
   my $error = '';
-  require Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
+  require Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 
   $url = chase_redirects($url, {'hub' => $self->{'hub'}});
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_VCF) {

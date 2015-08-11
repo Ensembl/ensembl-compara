@@ -46,55 +46,43 @@ sub content {
   my $object = $self->hub->core_object('Location');
   $length = $object->seq_region_length if $object;
   
-  my $ramp = $self->ramp($min||1e3,$max||1e6,$length);
+  my $ramp = $self->ramp($min||1e2,$max||1e6,$length);
   return $self->navbar($ramp);
 }
 
 sub navbar {
-  my ($self, $ramp,$extra_params) = @_;
+  my ($self, $ramp) = @_;
   
   my $hub          = $self->hub;
   my $img_url      = $self->img_url;
   my $image_width  = $self->image_width . 'px';
-  my $url          = $hub->url({ %{$hub->multi_params(0)}, function => $hub->function, r => undef, g => undef }, 1);
-  my $psychic      = $hub->url({ type => 'psychic', action => 'Location', __clear => 1 });
-  my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) } keys %{$url->[1] || {}};
-  my $g            = $hub->param('g');
-  my $g_input      = $g ? qq{<input name="g" value="$g" type="hidden" />} : '';
-  $extra_params = "?$extra_params" if $extra_params;
-  $extra_params ||= '';
+  my $url          = $hub->url({ r => undef, g => undef, __clear => 1 });
 
   return qq(
       <div class="navbar print_hide" style="width:$image_width">
         <input type="hidden" class="panel_type" value="LocationNav" />
         <div class="relocate">
-          <form action="$url->[0]" method="get">
+          <form action="$url" method="get" class="_nav_loc">
             <label for="loc_r">Location:</label>
-            $extra_inputs
-            $g_input
-            <input name="r" id="loc_r" class="location_selector" value="" type="text" />
+            <input name="r" id="loc_r" value="" type="text" />
             <a class="go-button" href="">Go</a>
           </form>
-          <div class="js_panel" style="float: left; margin: 0">
-            <input type="hidden" class="panel_type" value="AutoComplete" />
-            <form action="$psychic" method="get" class="autocomplete">
-              <label for="loc_q">Gene:</label>
-              $extra_inputs
-              <input name="g" value="" type="hidden" />
-              <input name="q" id="loc_q" class="autocomplete" value="" type="text" />
+          <div class="navgene">
+            <form action="$url" method="get" class="_nav_gene">
+              <label for="loc_g">Gene:</label>
+              <input name="q" id="loc_q" type="text" />
               <a class="go-button" href="">Go</a>
             </form>
           </div>
         </div>
         <div class="image_nav">
-          <a href="$extra_params" style="display:none" class="extra-params">.</a>
           <a href="#" class="move left_2" title="Back 1Mb"></a>
           <a href="#" class="move left_1" title="Back 1 window"></a>
           <a href="#" class="zoom_in" title="Zoom in"></a>
-          <span class="ramp">$ramp</span>
+          <span class="ramp hidden">$ramp</span>
           <span class="slider_wrapper">
             <span class="slider_left"></span>
-            <span class="slider"><span class="slider_label floating_popup"></span></span>
+            <span class="slider"><span class="slider_label helptip"></span></span>
             <span class="slider_right"></span>
           </span>
           <a href="#" class="zoom_out" title="Zoom out"></a>

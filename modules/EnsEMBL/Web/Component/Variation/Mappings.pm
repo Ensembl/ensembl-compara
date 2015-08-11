@@ -36,7 +36,7 @@ sub content {
   my $object = $self->object;
 
   # first check we have uniquely determined variation
-  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
+  return $self->_info('A unique location can not be determined for this variant', $object->not_unique_location) if $object->not_unique_location;
   return $self->detail_panel if $hub->param('allele');
   
   my %mappings = %{$object->variation_feature_mapping($hub->param('recalculate'))};
@@ -54,7 +54,7 @@ sub content {
       
     $html .= $self->_warning(
       'Warning',
-      '<p>Consequences for this variation have been calculated using the Ensembl reference allele' . (defined $feature_slice ? ' (' . $feature_slice->seq .')</p>' : '</p>'),
+      '<p>Consequences for this variant have been calculated using the Ensembl reference allele' . (defined $feature_slice ? ' (' . $feature_slice->seq .')</p>' : '</p>'),
       '50%'
     );
   }
@@ -94,26 +94,7 @@ sub content {
     }
   }
   
-  my @columns = (
-    { key => 'gene',      title => 'Gene',                             sort => 'html'                        },
-    { key => 'trans',     title => 'Transcript (strand)',              sort => 'html'                        },
-    { key => 'allele',    title => 'Allele (transcript allele)',       sort => 'string',   width => '7%'     },
-    { key => 'type',      title => 'Consequence Type',                 sort => 'position_html'               },
-    { key => 'trans_pos', title => 'Position in transcript',           sort => 'position', align => 'center' },
-    { key => 'cds_pos',   title => 'Position in CDS',                  sort => 'position', align => 'center' },
-    { key => 'prot_pos',  title => 'Position in protein',              sort => 'position', align => 'center' },
-    { key => 'aa',        title => 'Amino acid',                       sort => 'string'                      },
-    { key => 'codon',     title => 'Codons',                           sort => 'string'                      },
-  );
-  
-
-  push @columns, ({ key => 'sift',      title => 'SIFT',     sort => 'position_html', align => 'center' },) 
-      if defined $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'} ;
-
-  push @columns, ({ key => 'polyphen',  title => 'PolyPhen', sort => 'position_html', align => 'center' },) 
-      if $hub->species eq 'Homo_sapiens';
-  
-  push @columns, { key => 'detail', title => 'Detail', sort => 'string' };
+  my @columns = $self->table_columns;
   
   my $table         = $self->new_table(\@columns, [], { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'], class => 'cellwrap_inside' });
   my $gene_adaptor  = $hub->get_adaptor('get_GeneAdaptor');
@@ -159,7 +140,7 @@ sub content {
       if ($trans_name !~ m/^LRG/) {
         $gene_url = $hub->url({
           type   => 'Gene',
-          action => 'Variation_Gene/Table',
+          action => $self->gene_action,
           db     => 'core',
           r      => undef,
           g      => $gene_name,
@@ -250,7 +231,7 @@ sub content {
       my $row = {
         allele    => $allele,
         gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
-        trans     => qq{<a href="$transcript_url">$trans_name</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
+        trans     => qq{<a href="$transcript_url" class="mobile-nolink">$trans_name</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
         type      => $type,
         trans_pos => $self->_sort_start_end($transcript_data->{'cdna_start'},        $transcript_data->{'cdna_end'}),
         cds_pos   => $self->_sort_start_end($transcript_data->{'cds_start'},         $transcript_data->{'cds_end'}),
@@ -357,15 +338,58 @@ sub content {
   }
 
   if ($flag) {
-    $html .=
-      ($table->has_rows ? '<h2>Gene and Transcript consequences</h2>'.$table->render : '<h3>No Gene or Transcript consequences</h3>').
-      ($reg_table->has_rows ? '<h2>Regulatory feature consequences</h2>'.$reg_table->render : '<h3>No overlap with Ensembl Regulatory features</h3>').
-      ($motif_table->has_rows ? '<h2>Motif feature consequences</h2>'.$motif_table->render : '<h3>No overlap with Ensembl Motif features</h3>');
-    
+    $html .= $self->render_tables($table, $reg_table, $motif_table);    
     return $html;
   } else { 
-    return $self->_info('', '<p>This variation has not been mapped to any Ensembl genes, transcripts or regulatory features</p>');
+    return $self->_info('', '<p>This variant has not been mapped to any Ensembl genes, transcripts or regulatory features</p>');
   }
+}
+
+# Description: Return hash of columns, this can be overwritten in the mobile plugins to remove columns not required.
+sub table_columns {
+  my $self = shift;
+  
+  my @columns = (
+    { key => 'gene',      title => 'Gene',                             sort => 'html'                        },
+    { key => 'trans',     title => 'Transcript (strand)',              sort => 'html'                        },
+    { key => 'allele',    title => 'Allele (transcript allele)',       sort => 'string',   width => '7%'     },
+    { key => 'type',      title => 'Consequence Type',                 sort => 'position_html'               },
+    { key => 'trans_pos', title => 'Position in transcript',           sort => 'position', align => 'center' },
+    { key => 'cds_pos',   title => 'Position in CDS',                  sort => 'position', align => 'center' },
+    { key => 'prot_pos',  title => 'Position in protein',              sort => 'position', align => 'center' },
+    { key => 'aa',        title => 'Amino acid',                       sort => 'string'                      },
+    { key => 'codon',     title => 'Codons',                           sort => 'string'                      },
+  );  
+
+  push @columns, ({ key => 'sift',      title => 'SIFT',     sort => 'position_html', align => 'center' },) 
+      if defined $self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'} ;
+
+  push @columns, ({ key => 'polyphen',  title => 'PolyPhen', sort => 'position_html', align => 'center' },) 
+      if $self->hub->species eq 'Homo_sapiens';
+  
+  push @columns, { key => 'detail', title => 'Detail', sort => 'string' };
+  
+  return @columns;
+}
+
+# Description: href/link for gene link, can be overwritten in mobile plugins
+sub gene_action {
+  my $self = @_;
+  
+  return 'Variation_Gene/Table';
+}
+
+# Arg         : Any tables that need to be rendered
+# Description : just returning all the tables thats been rendered (overwritten in mobile plugins)
+# Returns     : html string
+sub render_tables {
+  my ($self, $table, $reg_table, $motif_table) = @_;
+
+  my $table_html =  ($table->has_rows ? '<h2>Gene and Transcript consequences</h2>'.$table->render : '<h3>No Gene or Transcript consequences</h3>').
+                    ($reg_table->has_rows ? '<h2>Regulatory feature consequences</h2>'.$reg_table->render : '<h3>No overlap with Ensembl Regulatory features</h3>').
+                    ($motif_table->has_rows ? '<h2>Motif feature consequences</h2>'.$motif_table->render : '<h3>No overlap with Ensembl Motif features</h3>');
+                    
+  return $table_html;
 }
 
 # Mapping_table

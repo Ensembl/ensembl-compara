@@ -46,7 +46,7 @@ sub content {
   }
   
   # first check we have uniquely determined variation
-  return $self->_info("A unique location can not be determined for this $label_msg\variation", $object->not_unique_location) if $object->not_unique_location;
+  return $self->_info("A unique location can not be determined for this $label_msg\variant", $object->not_unique_location) if $object->not_unique_location;
   
   my %mappings = %{$object->variation_feature_mapping($hub->param('recalculate'))};
 
@@ -147,7 +147,7 @@ sub content {
     
     return $html.$table->render;
   } else { 
-    return $self->_info('', "<p>This $label_msg\variation has not been mapped to any Ensembl genes.</p>");
+    return $self->_info('', "<p>This $label_msg\variant has not been mapped to any Ensembl genes.</p>");
   }
 }
 

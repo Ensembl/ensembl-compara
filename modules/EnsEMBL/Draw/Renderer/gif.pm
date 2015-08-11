@@ -26,6 +26,8 @@ use GD;
 
 use base qw(EnsEMBL::Draw::Renderer);
 
+use List::Util qw(max);
+
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
   $self->{'im_width'}     = $im_width;
@@ -80,16 +82,19 @@ sub canvas {
 #########
 # colour caching routine.
 # GD can only store 256 colours, so need to cache the ones we colorAllocate. (Doh!)
-#
+# This is also a good place to apply contrast
 sub colour {
   my ($self, $id, $alpha) = @_;
   $id           ||= 'black';
 
+  my @rgb = $self->{'colourmap'}->rgb_by_name($id);
+  push @rgb,int(127*$alpha) if $alpha;
+  @rgb = $self->{'colourmap'}->hivis($self->{'contrast'},@rgb);
   if ($alpha) {
-    $self->{'_GDColourCacheAlpha'}->{$id}{$alpha} ||= $self->{'canvas'}->colorAllocateAlpha($self->{'colourmap'}->rgb_by_name($id), int(127 * $alpha));
+    $self->{'_GDColourCacheAlpha'}->{$id}{$alpha} ||= $self->{'canvas'}->colorAllocateAlpha(@rgb);
     return $self->{'_GDColourCacheAlpha'}->{$id}{$alpha};
   } else {
-    $self->{'_GDColourCache'}->{$id} ||= $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
+    $self->{'_GDColourCache'}->{$id} ||= $self->{'canvas'}->colorAllocate(@rgb);
     return $self->{'_GDColourCache'}->{$id};
   }
 }
@@ -357,12 +362,23 @@ sub render_Barcode {
 
   my $max = $glyph->{'max'} || 1000;
   my $step = $glyph->{'pixelunit'} * $self->{'sf'};
-  my $mul =  scalar(@colours) / $max;
-  foreach my $p (@$points) {
-    my $colour = $colours[int($p * $mul)] || '000000';
-    $canvas->filledRectangle($x1,$y1,$x2,$y2,$colour);
-    $x1 += $step;
-    $x2 += $step;
+
+  if($glyph->{'wiggle'} eq 'bar') {
+    my $mul = ($y2-$y1) / $max;
+    foreach my $p (@$points) {
+      my $yb = $y2 - max($p,0) * $mul;
+      $canvas->filledRectangle($x1,$yb,$x2,$y2,$colours[0]);
+      $x1 += $step;
+      $x2 += $step;
+    }
+  } else {
+    my $mul =  scalar(@colours) / $max;
+    foreach my $p (@$points) {
+      my $colour = $colours[int(max($p,0) * $mul)] || '000000';
+      $canvas->filledRectangle($x1,$y1,$x2,$y2,$colour);
+      $x1 += $step;
+      $x2 += $step;
+    }
   }
 }
 

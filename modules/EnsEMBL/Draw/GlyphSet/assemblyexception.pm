@@ -40,7 +40,7 @@ sub colour_key {
 sub features {
   my $self = shift;
   
-  if (!$self->{'features'}) {
+  if (!@{$self->{'features'}||[]}) {
     my $all_features = $self->{'container'}->get_all_AssemblyExceptionFeatures;
     
     return $self->{'features'} = $all_features if $self->{'display'} eq 'normal';

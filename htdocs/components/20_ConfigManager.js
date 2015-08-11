@@ -41,7 +41,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.elLk.editTable    = $('table',                 this.elLk.editTypes);
     this.elLk.editRecord   = $('.edit_record',          this.elLk.editSets);
     this.elLk.editSelected = $('input.selected',        this.elLk.editSets);
-    this.elLk.editId       = $('.record_id',            this.elLk.editSets);
+    this.elLk.editId       = $('.config_key',           this.elLk.editSets);
     this.elLk.addSet       = $('.add_set',              this.elLk.editSets);
     this.elLk.saveToGroup  = $('.groups',               this.elLk.addSet);
     this.elLk.addHeader    = $('.add_header',           this.elLk.editSets);
@@ -53,7 +53,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     this.elLk.shareURL     = $('.share_url',            this.elLk.shareConfig);
     this.elLk.shareGroups  = $('.share_groups',         this.elLk.shareConfig);
     this.elLk.shareGroup   = $('input.group',           this.elLk.shareConfig);
-    this.elLk.shareId      = $('.record_id',            this.elLk.shareConfig);
+    this.elLk.shareId      = $('.config_key',           this.elLk.shareConfig);
     this.elLk.shareHeader  = $('.config_header',        this.elLk.shareConfig);
     
     this.elLk.addSet.validate({
@@ -352,7 +352,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     
     $.ajax({
       url: this.params.updateURL,
-      data: { record_ids: data.recordIds },
+      data: { config_keys: data.configKeys },
       traditional: true,
       cache: false,
       dataType: 'json',
@@ -435,16 +435,11 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
   },
   
   activateRecord: function (tr) {
-    var bg     = tr.css('backgroundColor');
-    var height = tr.height() + 'px';
-    var data   = this.params.records[tr.data('configId')];
-    
-    tr.siblings('.active').stop(true, true).removeClass('active').css('backgroundColor', '').find('.config_used').stop(true, true).hide();
-    
-    tr.addClass('active').delay(1000).animate({ backgroundColor: bg }, 1000, function () {
-      $(this).removeClass('active').css('backgroundColor', '');
-    }).find('.config_used').css({ height: height, lineHeight: height, width: tr.width() - 1, display: 'block' }).delay(1000).fadeOut(500);
-    
+    var data = this.params.records[tr.data('configId')];
+
+    tr.siblings('.active').stop(true, true).removeClass('active').find('.config_used').stop(true, true).hide();
+    tr.addClass('active').find('.config_used').show().delay(1000).fadeOut(500);
+
     this.updatePanels(data);
     
     if (data.codes.length) {
@@ -459,7 +454,7 @@ Ensembl.Panel.ConfigManager = Ensembl.Panel.ModalContent.extend({
     var user         = this.elLk.editTypes.filter('.user');
     var sessionTable = session.find('table').dataTable();
     var userTable    = user.find('table').dataTable();
-    var saved        = $('<span class="icon_link sprite_disabled _ht save_icon" title="Saved">&nbsp;</span>').helptip();
+    var saved        = $('<span class="icon_link sprite sprite_disabled _ht save_icon" title="Saved">&nbsp;</span>').helptip();
     
     this.elLk.tables.find('tr').filter('.' + json.ids.join(', .')).find('a.save_icon').replaceWith(saved);
     

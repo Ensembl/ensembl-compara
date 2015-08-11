@@ -520,7 +520,11 @@ sub markup_exons {
     gene    => 'eg',
     compara => 'e2',
   };
-  
+
+  if ($config->{'exons_case'}) {
+    $class->{'exon1'} = 'el';
+  }
+ 
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
@@ -841,7 +845,7 @@ sub build_sequence {
     my %previous = ( tag => 'span', class => '', title => '', href => '' );
     my %new_line = ( tag => 'span', class => '', title => '', href => '' );
     my ($row, $pre, $post, $count, $i);
-    
+  
     foreach my $seq (@$lines) {
       my $style;
       
@@ -851,11 +855,13 @@ sub build_sequence {
       $current{'href'}  = $seq->{'href'}   ? qq(href="$seq->{'href'}")   : '';;
       $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"'   : 'span';
       $current{'letter'} = $seq->{'new_letter'};
-      
+
       if ($seq->{'class'}) {
         $current{'class'} = $seq->{'class'};
         chomp $current{'class'};
-        
+        if ($seq->{'class'} =~ /\b(e\w)\b/) {
+        }
+
         if ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/ && $current{'class'} !~ /\b(e\w)\b/) {
           $current{'class'} .= " $1";
         }
@@ -1246,9 +1252,10 @@ sub class_to_style {
       co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}{'default'}" } ],
       aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}{'default'}" } ],
       end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}{'label'}" } ],
-      bold => [ $i++, { 'font-weight' => 'bold' } ]
+      bold => [ $i++, { 'font-weight' => 'bold' } ],
+      el   => [$i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}", 'text-transform' => 'lowercase' } ],
     );
-    
+
     foreach (keys %$var_styles) {
       my $style = { 'background-color' => $colourmap->hex_by_name($var_styles->{$_}{'default'}) };
       
@@ -1326,7 +1333,13 @@ sub get_key {
       compara => { class => 'e2', text => "$exon_type exons"                                   }
     }
   );
-  
+ 
+  if ($config->{'exons_case'}) {
+    $key{'exons'}->{'exon0'}{'text'} = 'ALTERNATING EXONS';
+    $key{'exons'}->{'exon1'} = {'text' => 'alternating exons',
+                                'class' => 'el'};
+  }
+   
   %key = (%key, %$k) if $k;
  
  
@@ -1346,13 +1359,17 @@ sub get_key {
   }
   
   $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
-  
+  $key{'variations'}{'failed'}{'title'} = "Suspect variants which failed our quality control checks";
+
+  my $example = ($hub->param('v')) ? ' (i.e. '.$hub->param('v').')' : '';
+
   if($config->{'focus_variant'}) {
-    $image_config->{'legend'}{'focus'} = {
-      class => 'focus',
-      label => 'red',
-      default => 'white',
-      text => 'Focus variant',
+    $image_config->{'legend'}{'variations'}{'focus'} = {
+      class     => 'focus',
+      label     => 'red',
+      default   => 'white',
+      text      => 'Focus variant',
+      title     => "The Focus variant corresponds to the current variant$example",
       extra_css => 'text-decoration: underline; font-weight: bold;',
     };
   }
@@ -1367,7 +1384,7 @@ sub get_key {
       }
     }
   }
- 
+
   foreach my $type (keys %{$config->{'key'}}) {
     if (ref $config->{'key'}{$type} eq 'HASH') {
       $image_config->{'legend'}{$type}{$_} = $key{$type}{$_} for grep $config->{'key'}{$type}{$_}, keys %{$config->{'key'}{$type}};
@@ -1379,8 +1396,8 @@ sub get_key {
   my @messages;
 
   my $key_list;
-     push @messages,"Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}"                if $config->{'population_filter'};
-     push @messages,'Variations are filtered by consequence type',                                                                                   if $config->{'consequence_filter'};
+     push @messages,"Displaying variants for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}"                if $config->{'population_filter'};
+     push @messages,'Variants are filtered by consequence type',                                                                                   if $config->{'consequence_filter'};
      push @messages,'Conserved regions are where >50&#37; of bases in alignments match'                                                              if $config->{'key'}{'conservation'};
      push @messages,'For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line'    if $config->{'alignment_numbering'};
      push @messages,"<code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)",

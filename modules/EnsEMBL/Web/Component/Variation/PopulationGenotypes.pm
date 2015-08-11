@@ -37,7 +37,7 @@ sub content {
   return $self->_info('Variation: ' . $object->name, '<p>No genotypes for this variation</p>') unless %$freq_data;
   
   my $table_array = $self->format_frequencies($freq_data);
-  my $html        = '<a id="IndividualGenotypesPanel_top"></a>';
+  my $html        = '<a id="SampleGenotypesPanel_top"></a>';
   
   if (scalar @$table_array == 1 && $is_somatic) {
     $html .= $table_array->[0]->[1]->render;
@@ -118,6 +118,11 @@ sub format_frequencies {
       my @composed_name = split(':', $name);
       $composed_name[$#composed_name] = '<b>'.$composed_name[$#composed_name].'</b>';
       $freq_data->{$pop_id}{'pop_info'}{'Name'} = join(':',@composed_name);
+
+      # 1KG population names
+      if ($freq_data->{$pop_id}{'pop_info'}{'PopGroup'} && $freq_data->{$pop_id}{'pop_info'}{'PopGroup'} =~ /^(1000\s*genomes|hapmap)/i ) {
+        $freq_data->{$pop_id}{'pop_info'}{'Label'} = $composed_name[$#composed_name];
+      }
     }
 
     ### loop through frequency data for this population putting it in the destination array for display purposes
@@ -188,8 +193,12 @@ sub format_table {
   my $hub        = $self->hub;
   my $is_somatic = $self->object->Obj->has_somatic_source;
   my $al_colours = $self->object->get_allele_genotype_colours;
+  my $vf         = $hub->param('vf');
+  my $vf_object  = ($vf) ? $hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) : undef;
+  my $ref_allele = ($vf_object) ? (split('/',$vf_object->allele_string))[0] : '';
 
   my $sortable = ($table_header =~ /1000 genomes/i) ? 0 : 1;
+  my $has_pop_with_samples = 0;
 
   my %columns;
   my @header_row;
@@ -263,45 +272,33 @@ sub format_table {
       # SSID + Submitter
       if ($ssid) {
         $pop_row{'ssid'}      = $hub->get_ExtURL_link($ssid, 'DBSNPSS', $ssid) unless $ssid eq 'ss0';
-        $pop_row{'submitter'} = $hub->get_ExtURL_link($data->{'submitter'}, 'DBSNPSSID', $data->{'submitter'});
+        $pop_row{'submitter'} = ($data->{'submitter'}) ? $hub->get_ExtURL_link($data->{'submitter'}, 'DBSNPSSID', $data->{'submitter'}) : '-';
       }  
-      
-      # Freqs alleles
-      my @allele_freq = @{$data->{'AlleleFrequency'}};
-      
-      foreach my $gt (@{$data->{'Alleles'}}) {
-        next unless $gt =~ /(\w|\-)+/;
-        
-        my $allele_count = shift @{$data->{'AlleleCount'}} || undef;
-        
-        $pop_row{'Allele count'}{$gt}      = "$allele_count <strong>($gt)</strong>" if defined $allele_count;
-        $gt = substr($gt,0,10).'...' if (length($gt)>10);
-        $pop_row{"Allele $gt"} = $self->format_number(shift @allele_freq);
-      }
-      
-      $pop_row{'Allele count'} = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Allele count'}} if $pop_row{'Allele count'};
 
 
-      # Freqs genotypes
-      my @genotype_freq = @{$data->{'GenotypeFrequency'} || []};
-      
-      foreach my $gt (@{$data->{'Genotypes'}}) {
-        my $genotype_count = shift @{$data->{'GenotypeCount'}} || undef;
-        
-        $pop_row{'Genotype count'}{$gt} = "$genotype_count <strong>($gt)</strong>" if defined $genotype_count;
-        $pop_row{"Genotype $gt"}        = $self->format_number(shift @genotype_freq);
-      }
-      
-      $pop_row{'Genotype count'}   = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
+      # Column "Allele: frequency (count)"
+      my $allele_content = $self->format_allele_genotype_content($data,'Allele',$ref_allele,$is_somatic);
+      $pop_row{'Allele'} = qq{<div>$allele_content<div style="clear:both"/></div>} if ($allele_content);
+
+
+      # Column "Genotype: frequency (count)"
+      my $genotype_content = $self->format_allele_genotype_content($data,'Genotype',$ref_allele);
+      $pop_row{'Genotype'} = qq{<div>$genotype_content<div style="clear:both"/></div>} if ($genotype_content);
+
 
       ## Add the population description: this will appear when the user move the mouse on the population name
-      my $pop_name = $pop_info->{'Name'};
+      my $pop_name = ($pop_info->{'Label'}) ? $pop_info->{'Label'} : $pop_info->{'Name'}; # 1KG population names
       if (!$is_somatic && $pop_info->{'Description'}) {
-       $pop_name = qq{<span class="_ht" title="}.$self->strip_HTML($pop_info->{'Description'}).qq{">$pop_name</span>};
+        my $desc = $self->strip_HTML($pop_info->{'Description'});
+        my $ht_class = ((scalar(keys %urls_seen) > 1 || scalar(keys %pop_urls) == 1 )) ? '' : ' ht';
+        $pop_name = qq{<span class="_ht$ht_class" title="$desc">$pop_name</span>};
+      }
+      if ($pop_info->{'Label'}) { # 1KG population names
+        $pop_name .= qq{<span class="hidden export">;}.$pop_info->{'Name'}.qq{</span>};
       }
 
       ## Only link on the population name if there's more than one URL for this table
-      my $pop_url                  = (scalar(keys %urls_seen) > 1 || scalar(keys %pop_urls) == 1 ) ? sprintf('<a href="%s" rel="external">%s</a>', $pop_urls{$pop_id}, $pop_name) : $pop_name;
+      my $pop_url = (scalar(keys %urls_seen) > 1 || scalar(keys %pop_urls) == 1 ) ? sprintf('<a href="%s" rel="external">%s</a>', $pop_urls{$pop_id}, $pop_name) : $pop_name;
 
       ## Hacky indent, because overriding table CSS is a pain!
       $pop_row{'pop'}              = $group_member ? '&nbsp;&nbsp;'.$pop_url : $pop_url;
@@ -310,31 +307,12 @@ sub format_table {
       $pop_row{'failed'}           = $data->{'failed_desc'} if $table_header =~ /Inconsistent/i;
       $pop_row{'Super-Population'} = $self->sort_extra_pops($pop_info->{'Super-Population'});
       $pop_row{'Sub-Population'}   = $self->sort_extra_pops($pop_info->{'Sub-Population'});
-      $pop_row{'detail'}           = $self->ajax_add($self->ajax_url(undef, { function => 'IndividualGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id) if ($pop_info->{Size});;
+      if ($pop_info->{Size}) {
+        $pop_row{'detail'} = $self->ajax_add($self->ajax_url(undef, { function => 'SampleGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id);
+        $has_pop_with_samples  = 1;
+      }
       
-      foreach my $al (keys(%$al_colours)) {
-        $pop_row{'Allele count'} =~ s/$al/$al_colours->{$al}/g;           
-        $pop_row{'Genotype count'} =~ s/$al/$al_colours->{$al}/g;
-      }
-
-      # HTML display for the allele counts
-      my @al_count_array = split(',',$pop_row{'Allele count'});
-      $pop_row{'Allele count'} = '';
-      foreach my $al_count (@al_count_array) {
-        my $padding = ($pop_row{'Allele count'} eq '') ? '' : ';padding-left:5px';
-        $pop_row{'Allele count'} .= qq{<span style="min-width:55px;display:inline-block;text-align:right$padding">$al_count</span>};
-      }
-
-      # HTML display for the genotype counts
-      my @gen_count_array = split(',',$pop_row{'Genotype count'});
-      $pop_row{'Genotype count'} = '';
-      foreach my $gen_count (@gen_count_array) {
-        my $padding = ($pop_row{'Genotype count'} eq '') ? '' : ';padding-left:5px';
-        $pop_row{'Genotype count'} .= qq{<span style="min-width:65px;display:inline-block;text-align:right$padding">$gen_count</span>};
-      }
-
       push @rows, \%pop_row;
-      
       $columns{$_} = 1 for grep $pop_row{$_}, keys %pop_row;
     }
   }
@@ -345,12 +323,8 @@ sub format_table {
   # Allele frequency columns
   foreach my $col (sort { $a cmp $b } keys %columns) {
     next if $col =~ /pop|ssid|submitter|Description|detail|count|failed|Genotype/; # Exclude all but 'Allele X'
-    my ($type, $al_gen) = split (' ',$col);
-    foreach my $al (keys(%$al_colours)) {
-      $al_gen =~ s/$al/$al_colours->{$al}/g;
-    }
-    my $coloured_col = "$type $al_gen";
-    push @header_row, { key => $col, align => 'left', label => $coloured_col, sort => ($sortable) ? 'numeric' : 'none' };
+    my $label_suffix = ($is_somatic) ? '' : ' (count)';
+    push @header_row, { key => $col, align => 'left', label => "$col: frequency$label_suffix", sort => ($sortable) ? 'numeric' : 'none' };
   }
   
   if (exists $columns{'ssid'}) {
@@ -358,25 +332,18 @@ sub format_table {
     unshift @header_row, { key => 'ssid',      align => 'left', label => 'ssID',      sort => 'string' };
   }
   
-  unshift @header_row, { key => 'Description',    align => 'left', label => 'Description',                           sort => 'none' } if exists $columns{'Description'};
-  unshift @header_row, { key => 'pop',            align => 'left', label => ($is_somatic ? 'Sample' : 'Population'), sort => ($sortable) ? 'html' : 'none'   };
-  push    @header_row, { key => 'Allele count',   align => 'left', label => 'Allele count',                          sort => 'none' } if exists $columns{'Allele count'};
+  unshift @header_row, { key => 'Description', align => 'left', label => 'Description',                           sort => 'none' } if exists $columns{'Description'};
+  unshift @header_row, { key => 'pop',         align => 'left', label => ($is_somatic ? 'Sample' : 'Population'), sort => ($sortable) ? 'html' : 'none'   };
   
 
   # Genotype frequency columns
   foreach my $col (sort { $a cmp $b } keys %columns) {
     next if $col =~ /pop|ssid|submitter|Description|detail|count|failed|Allele/; # Exclude all but 'Genotype X|X'
-    my ($type, $al_gen) = split (' ',$col);
-    foreach my $al (keys(%$al_colours)) {
-      $al_gen =~ s/$al/$al_colours->{$al}/g;
-    }
-    my $coloured_col = "$type $al_gen"; 
-    push @header_row, { key => $col, align => 'left', label => $coloured_col, sort => ($sortable) ? 'numeric' : 'none' };
+    push @header_row, { key => $col, align => 'left', label => "$col: frequency (count)", sort => ($sortable) ? 'numeric' : 'none' };
   }
 
-  push    @header_row, { key => 'Genotype count', align => 'left', label => 'Genotype count',                        sort => 'none' } if exists $columns{'Genotype count'};
-  push    @header_row, { key => 'detail',         align => 'left', label => 'Genotype detail',                       sort => 'none' } if $self->object->counts->{'individuals'};
-  push    @header_row, { key => 'failed',         align => 'left', label => 'Comment', width => '25%',               sort => ($sortable) ? 'string' : 'none' } if $columns{'failed'};
+  push @header_row, { key => 'detail', align => 'left', label => 'Genotype detail',         sort => 'none' } if ($self->object->counts->{'samples'} && $has_pop_with_samples == 1);
+  push @header_row, { key => 'failed', align => 'left', label => 'Comment', width => '25%', sort => ($sortable) ? 'string' : 'none' } if $columns{'failed'};
 
   my $table = $self->new_table([], [], { data_table => 1 });
   $table->add_columns(@header_row);
@@ -478,7 +445,7 @@ sub no_pop_data {
         submitter => $hub->get_ExtURL_link($sub, 'DBSNPSSID', $sub),
         alleles   =>
           join("/",
-            map {defined($alleles{$_}) ? $_ : '<span style="color:red">'.$_.'</span>'}
+            map {defined($alleles{$_}) ? qq{<span style="font-weight:bold">$_</span>} : qq{<span style="color:red">$_</span>}}
             @ss_alleles
           ).
           ($flag ? ' *' : ''),
@@ -506,8 +473,56 @@ sub generic_group_link {
   my $project_name = ($1) ? $1 : $title;
   $project_name = ($project_name =~ /project/i) ? "<b>$project_name</b>" : ' ';
   
-  return sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations &rarr;</a></p>', $pop_url, $project_name);
+  return sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations</a></p>', $pop_url, $project_name);
 }
 
+sub format_allele_genotype_content {
+  my $self       = shift;
+  my $data       = shift;
+  my $type       = shift; # 'Allele' or 'Genotype'
+  my $ref_allele = shift;
+  my $is_somatic = shift;
+
+  my $al_colours = $self->object->get_allele_genotype_colours;
+
+  my %data_list;
+  my @freqs = @{$data->{$type.'Frequency'} || []};
+  foreach my $gt (@{$data->{$type.'s'}}) {
+    next unless $gt =~ /(\w|\-)+/;
+    my $gt_freq  = $self->format_number(shift @freqs);
+    my $gt_count = shift @{$data->{$type.'Count'}} || undef;
+    $data_list{$gt} = {'freq' => $gt_freq, 'count' => $gt_count};
+  }
+
+  my $content;
+  my $count_data = 0;
+  my $regex = ($type eq 'Genotype') ? $ref_allele.'\|'.$ref_allele : $ref_allele;
+  foreach my $gt (sort { ($a !~ /$regex/ cmp $b !~ /$regex/) || $a cmp $b } keys %data_list) {
+    my $gt_label = (length($gt)>10) ? substr($gt,0,10).'...' : $gt;
+    foreach my $al (keys(%$al_colours)) {
+      $gt_label =~ s/$al/$al_colours->{$al}/g;
+    }
+
+    $count_data ++;
+    my $class;
+    if ($type eq 'Allele') {
+     $class  = (length($gt) > 1) ? 'allele_long' : 'allele_short';
+     $class .= ($count_data == scalar(keys(%data_list))) ? '' : ' allele_padding';
+    }
+    elsif ($type eq 'Genotype') {
+      $class  = (length($gt) > 4) ? 'genotype_long' : 'genotype_short';
+      $class .= ($count_data == scalar(keys(%data_list))) ? '' : ' genotype_padding';
+    }
+
+    if ($is_somatic) {
+      $content .= sprintf(qq{<div class="%s"><b>%s</b>: %s</div>},
+                          $class, $gt_label, $data_list{$gt}{'freq'});
+    } else {
+      $content .= sprintf(qq{<div class="%s"><b>%s</b>: %s (%i)</div>},
+                          $class, $gt_label, $data_list{$gt}{'freq'}, $data_list{$gt}{'count'});
+    }
+  }
+  return $content;
+}
 
 1;

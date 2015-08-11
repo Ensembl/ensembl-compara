@@ -220,14 +220,18 @@ sub _discrete_features {
 
 sub _draw_wiggle_points_as_line {
   my ($self, $c, $features) = @_;
+  return unless $features && $features->[0];
   my $slice_length = $self->{'container'}->length;
   my $discrete_features = $self->_discrete_features($features);
   if($discrete_features) {
     $features = [ sort { $a->start <=> $b->start } @$features ];
   }
+  elsif (ref($features->[0]) eq 'HASH') {
+    $features = [ sort { $a->{'start'} <=> $b->{'start'} } @$features ];
+  }
 
   my ($previous_x,$previous_y);
-  for (my $i = 0; $i <= @$features; $i++) {
+  for (my $i = 0; $i < @$features; $i++) {
     my $f = $features->[$i];
     next if ref $f eq 'HASH' and $discrete_features;
 
@@ -242,7 +246,7 @@ sub _draw_wiggle_points_as_line {
     my $current_y = $c->{'line_px'}-($current_score-$c->{'line_score'}) * $c->{'pix_per_score'};
     next unless $current_x <= $slice_length;
 
-    if($i) {
+    if(defined $previous_x) {
       $self->push($self->Line({
         x         => $current_x,
         y         => $current_y,
@@ -258,10 +262,28 @@ sub _draw_wiggle_points_as_line {
   }
 }
 
+sub _draw_wiggle_points_as_graph {
+  my ($self, $c, $features,$parameters) = @_;
+
+  my $height = $c->{'pix_per_score'} * $parameters->{'max_score'};
+  $self->push($self->Barcode({
+    values    => $features,
+    x         => 1,
+    y         => 0,
+    height    => $height,
+    unit      => $parameters->{'unit'},
+    max       => $parameters->{'max_score'},
+    colours   => [$c->{'colour'}],
+    wiggle    => $parameters->{'graph_type'},
+  }));
+}
+
 sub draw_wiggle_points {
   my ($self,$c,$features,$parameters) = @_;
 
-  if($parameters->{'graph_type'} eq 'line') {
+  if($parameters->{'unit'}) {
+    $self->_draw_wiggle_points_as_graph($c,$features,$parameters);
+  } elsif($parameters->{'graph_type'} eq 'line') {
     $self->_draw_wiggle_points_as_line($c,$features,$parameters);
   } else {
     $self->_draw_wiggle_points_as_bar_or_points($c,$features,$parameters);
@@ -287,11 +309,27 @@ sub _add_regulation_minilabel {
                         $extra_content,$top,$labels,$colours);
 }
 
+sub _draw_guideline {
+  my ($self,$width,$y,$type) = @_;
+
+  $type ||= '1';
+  $self->push($self->Line({
+    x         => 0,
+    y         => $y,
+    width     => $width,
+    height    => 1,
+    colour    => 'grey90',
+    absolutey => 1,
+    dotted => $type,
+  }));
+}
+
 sub do_draw_wiggle {
   my ($self, $features, $parameters, $colours, $labels) = @_;
 
-  my $slice         = $self->{'container'};
-  my $row_height    = $self->my_config('height') || 60;
+  my $slice = $self->{'container'};
+  my $row_height =
+    $parameters->{'height'} || $self->my_config('height') || 60;
  
   # max_score: score at top of y-axis on graph
   # min_score: score at bottom of y-axis on graph
@@ -326,10 +364,14 @@ sub do_draw_wiggle {
   $self->{'subtitle_colour'} ||=
     $parameters->{'score_colour'} || $self->my_colour('score') || 'blue';
 
-  # Shift down the lhs label to between the axes
-  if($bottom-$top > 50) {
+  # Shift down the lhs label to between the axes unless the subtitle is within the track
+  if($bottom-$top > 30 && $self->wiggle_subtitle) {
     # luxurious space for centred label
-    $self->{'label_y_offset'} = ($bottom-$top)/2;
+    # graph is offset down if subtitled
+    $self->{'label_y_offset'} =
+        ($bottom-$top)/2             # half-way-between
+        + $self->subtitle_height     
+        - 16;                        # two-line label so centre its centre
   } else {
     # tight, just squeeze it down a little
     $self->{'label_y_offset'} = 0;
@@ -347,6 +389,14 @@ sub do_draw_wiggle {
   if ($parameters->{'axis_label'} ne 'off') {
     $self->_draw_score($top,$max_score,$parameters);
     $self->_draw_score($bottom,$min_score,$parameters);
+  }
+  if(!$parameters->{'no_axis'} and !$parameters->{'no_guidelines'}) {
+    foreach my $i (1..4) {
+      my $type;
+      $type = 'small' unless $i % 2;
+      $self->_draw_guideline($slice->length,($top*$i+$bottom*(4-$i))/4,
+                             $type);
+    }
   }
 
   # Single line? Build into singleton set.

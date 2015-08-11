@@ -21,15 +21,17 @@
 .navbar form select              { margin: 0; }
 
 .navbar span.ramp                { position: relative; float: left; bottom: 3px; text-align: center; width: 80px; }
-.navbar span.ramp a              { background-color: [[MH_BORDER]]; height: 4px; vertical-align: bottom; width: 4px; border: outset 1px [[MH_BORDER]]; display: inline-block; }
-.navbar span.ramp a.selected     { background-color: [[CONTRAST_HEADER]]; border: outset 1px [[CONTRAST_HEADER]]; }
 .navbar div.image_nav            { position: absolute; top: 50%; right: 0; margin-top: -10px; width: 304px; height: 20px; }
+.navbar div.image_nav a          { cursor: default; }
+.navbar div.image_nav a.disabled { opacity: 0.5; }
 
 .navbar .homolgy                 { font-size: 1.2em; }
 .navbar .relocate input          { border: 1px solid [[TINT_BORDER]]; height: 22px; padding: 0 4px; width: 248px; line-height: 22px; }
 .navbar .relocate input:hover    { background-color: [[CONTRAST_BG]]; }
 .navbar .relocate form           { float: left; padding: 2px 0; width: 370px; }
 .navbar .relocate form label     { float: left; display: block; width: 64px; margin-top: 5px; padding-right: 8px; text-align: right; }
+.navbar .navgene                 { float: left; margin: 0; }
+
 
 .navbar.narrow1 .relocate,
 .navbar.narrow2 .relocate        { width: 370px; }
@@ -68,22 +70,26 @@ a.move.left_2  { background: url(/i/nav-l2.gif); }
 a.move.right_1 { background: url(/i/nav-r1.gif); }
 a.move.right_2 { background: url(/i/nav-r2.gif); }
 
-.slider, .slider_left, .slider_right         { display: none; position: relative; height: 20px; float: left; background: url(/i/slider.gif) no-repeat 0 center; }
-.slider                                      { width: 150px; }
-.slider_left, .slider_right                  { width: 5px; z-index: 0 }
-.slider_left                                 { background-position: -1px center; }
-.slider .ui-slider-handle                    { margin-left: -6px; position: absolute; z-index: 2; width: 9px; height: 18px; color: #222222; outline: 0; }
-.slider .ui-state-default,
-.slider .ui-widget-content .ui-state-default { border: 1px solid #666666; background: #CCCCCC; color: #555555; }
-.slider .ui-state-active,
-.slider .ui-widget-content .ui-state-active  { border: 1px solid #AAAAAA; background: #FFFFFF; color: #212121; }
-.slider .ui-state-hover,
-.slider .ui-widget-content .ui-state-hover, 
-.slider .ui-state-focus,
-.slider .ui-widget-content .ui-state-focus   { border: 1px solid #CC0000; background: #DDDDDD; color: #212121; }
-.slider .slider_label                        { bottom: 23px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
+.slider_wrapper                               { display: none; }
+.slider_wrapper .slider,
+.slider_wrapper .slider_left,
+.slider_wrapper .slider_right                 { display: inline-block; position: relative; height: 20px; float: left; background: url(/i/slider.gif) no-repeat 0 center; }
+.slider_wrapper .slider                       { width: 150px; }
+.slider_wrapper .slider_left,
+.slider_wrapper .slider_right                 { width: 5px; z-index: 0 }
+.slider_wrapper .slider_left                  { background-position: -1px center; }
+.slider_wrapper .slider .ui-slider-handle     { margin-left: -6px; position: absolute; z-index: 2; width: 9px; height: 18px; color: #222222; outline: 0; }
+.slider_wrapper .slider .ui-state-default,
+.slider_wrapper .slider .ui-widget-content .ui-state-default { border: 1px solid #666666; background: #CCCCCC; color: #555555; }
+.slider_wrapper .slider .ui-state-active,
+.slider_wrapper .slider .ui-widget-content .ui-state-active  { border: 1px solid #AAAAAA; background: #FFFFFF; color: #212121; }
+.slider_wrapper .slider .ui-state-hover,
+.slider_wrapper .slider .ui-widget-content .ui-state-hover, 
+.slider_wrapper .slider .ui-state-focus,
+.slider_wrapper .slider .ui-widget-content .ui-state-focus   { border: 1px solid #CC0000; background: #DDDDDD; color: #212121; }
+.slider_wrapper .slider .slider_label                        { bottom: 23px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
 
-body.ie67 .slider_right                      { z-index: -1; }
+body.ie67 .slider_wrapper .slider_right                      { z-index: -1; }
 
 ul.autocomplete               { position: absolute; display: none; margin: 0; padding: 0; width: 258px; background: #FFF; list-style: none; border: 1px solid [[TINT_BORDER]]; z-index: 9999999999999; }
 ul.autocomplete li            { font-weight: normal; list-style-image: none; text-align: left; padding: 4px 10px; margin: 0; height: 14px; cursor: pointer; clear: both; }

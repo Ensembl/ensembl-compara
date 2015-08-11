@@ -70,6 +70,7 @@ sub content {
         $self->thousandify($object->seq_region_start),
         $self->thousandify($object->seq_region_end)
       ),
+      link_class => 'location_change',
       link  => $hub->url({
         type   => 'Location',
         action => 'View',
@@ -123,6 +124,7 @@ sub content {
     ## Only link to individual exons if the user has clicked squarely
     ## on an exon (i.e. ignore when zoomed out or exons are tiny)
     for (@exons) {
+      next unless $_; # eg Genscan
       $self->add_entry({
         type  => !$self->{'_exon_count'} ? @exons > 1 ? 'Exons' : 'Exon' : ' ',
         label => $_,
@@ -164,10 +166,10 @@ sub content {
   }
 
   if ($object->analysis) {
-    my $label = $transcript->analysis->display_label . ' Transcript';
+    my $analysis = $transcript->analysis;
     $self->add_entry({
-      type  => 'Source',
-      label => $label
+      type        => 'Source',
+      label_html  => $self->helptip($analysis->display_label, $analysis->description)
     });
   }
   my $alt_allele_link = $object->get_alt_allele_link('Location');

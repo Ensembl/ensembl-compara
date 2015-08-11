@@ -61,7 +61,7 @@ eval {
   # stop the server
   warn "Stopping httpd daemon...\n";
 
-  open (P, "<$PID") or warn
+  open (P, "<$PID") or die
     "Could not open PID file $PID: $!\n" .
     "STOP failed.\n";
 

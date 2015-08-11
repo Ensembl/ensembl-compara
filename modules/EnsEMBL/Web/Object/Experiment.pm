@@ -59,21 +59,20 @@ sub new {
       while (my ($filter, $value) = each(%$filters)) {
         if ($filter eq 'cell_type') {
           my $cell_type_adaptor = $funcgen_db_adaptor->get_CellTypeAdaptor;
-          $constraints->{'cell_types'} = [ map $cell_type_adaptor->fetch_by_name($_), @$value ];
-        }
-        elsif ($filter eq 'evidence_type') {
+          push @{$constraints->{'cell_types'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
+        } elsif ($filter eq 'evidence_type') {
           $constraints->{'evidence_types'} = $value;
-        }
-        elsif ($filter eq 'project') {
+        } elsif ($filter eq 'project') {
           my $experimental_group_adaptor = $funcgen_db_adaptor->get_ExperimentalGroupAdaptor;
-          $constraints->{'projects'} = [ map $experimental_group_adaptor->fetch_by_name($_), @$value ];
-        }
-        elsif ($filter eq 'feature_type') {
-          $constraints->{'feature_types'} = [ map $feature_type_adaptor->fetch_by_name($_), @$value ];
+          push @{$constraints->{'projects'}}, $_ for map $experimental_group_adaptor->fetch_by_name($_) || (), @$value;
+        } elsif ($filter eq 'feature_type') {
+          push @{$constraints->{'feature_types'}}, $_ for map $feature_type_adaptor->fetch_by_name($_) || (), @$value;
         }
       }
     }
-    $feature_sets = $feature_set_adaptor->fetch_all_displayable_by_type('annotated', keys %$constraints ? {'constraints' => $constraints} : ());
+    $feature_sets = $param eq 'all' || keys %$constraints
+      ? $feature_set_adaptor->fetch_all_displayable_by_type('annotated', keys %$constraints ? {'constraints' => $constraints} : ())
+      : [];
   }
 
   my $binding_matrix_adaptor = $funcgen_db_adaptor->get_BindingMatrixAdaptor;
@@ -100,6 +99,7 @@ sub new {
     push @$feature_sets_info, {
       'source_info'         => $source_info,
       'project_name'        => $project_name,
+      'experimental_group'  => $experiment->experimental_group->name,
       'project_url'         => $experiment_group ? $experiment_group->url : '',
       'feature_set_name'    => $feature_set->name,
       'feature_type_name'   => $feature_type->name,

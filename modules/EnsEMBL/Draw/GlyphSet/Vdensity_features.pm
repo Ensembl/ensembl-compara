@@ -24,6 +24,9 @@ package EnsEMBL::Draw::GlyphSet::Vdensity_features;
 use strict;
 use warnings;
 no warnings 'uninitialized';
+
+use POSIX qw(ceil);
+
 use base qw(EnsEMBL::Draw::GlyphSet::V_density);
 
 sub _init {
@@ -82,7 +85,8 @@ sub _init {
     $key = $_->{'key'};
 
     ## Scale values
-    $_->{'density'}->scale_to_fit( ($self->my_config( 'width' )||80) * $_->{'scale'} );
+    my $track_width = $self->my_config('width') || 80;
+    $_->{'density'}->scale_to_fit($track_width * $_->{'scale'});
     $_->{'density'}->stretch(0);
     my $scores = [];
     my $features = $_->{'density'}->get_all_binvalues || [];
@@ -90,13 +94,21 @@ sub _init {
 
     ## Convert to a simple array of scores (since that's all we need for the display)
     foreach (@$features) {
-      push @$scores, $_->scaledvalue;
+      my $value = $_->scaledvalue;
+      if ($key eq 'snpdensity') {
+        $value = log(ceil($value)) if $value;
+      }
+      push @$scores, $value;
     }
     $data->{$key} = {
       'scores' => $scores,
       'colour' => $self->my_colour($_->{'key'}),
       'sort'   => $i,
     };
+
+    if ($key eq 'snpdensity') {
+      $data->{$key}{'max_value'} = log($max_value); 
+    }
 
     ## Deal with styling differences between preconfigured tracks and new options
     my $style = $self->my_colour($_->{'key'},'style');

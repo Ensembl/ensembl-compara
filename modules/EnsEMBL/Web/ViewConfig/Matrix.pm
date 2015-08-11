@@ -312,17 +312,18 @@ sub form {
       <input type="text" class="filter" value="Enter terms to filter by" />
       $tutorials{'fil'}
     </div>
-    <div class="matrix_key">
-      <h2>Key</h2>
-      <div class="key"><div>On</div><div class="cell on"></div></div>
-      <div class="key"><div>Off</div><div class="cell off"></div></div>
-      <div class="key"><div>No Data</div><div class="cell disabled"></div></div>
-      <div class="key"><h2>Filtered:</h2></div>
-      <div class="key"><div>On</div><div class="cell filter on"><p></p></div></div>
-      <div class="key"><div>Off</div><div class="cell off filter"><p></p></div></div>
-    </div>
     <div class="config_matrix_scroller"><div></div></div>
     <div class="config_matrix_wrapper$wrapper_class">
+    <div class="matrix_key">
+      <h2>Key</h2>
+      <div class="key"><div>Shown</div><div class="cell on"></div></div>
+      <div class="key"><div>Hidden</div><div class="cell off"></div></div>
+      <div class="key"><div>No Data</div><div class="cell disabled"></div></div>
+      <div class="key"><h2>Filtered:</h2></div>
+      <div class="key"><div>Shown</div><div class="cell filter on"><p></p></div></div>
+      <div class="key"><div>Hidden</div><div class="cell off filter"><p></p></div></div>
+    </div>
+
       <div class="table_wrapper" style="width:${width}px">
         <table class="config_matrix" cellspacing="0" cellpadding="0">
           <thead>

@@ -36,7 +36,7 @@ BEGIN {
 # Used to enable symbolic debugging support in dynamic_use.
   if($ENV{'PERLDB'}) {
     require Inline;
-    Inline->import(C => Config => DIRECTORY => "$SiteDefs::ENSEMBL_WEBROOT/cbuild");
+    Inline->import(C => Config => DIRECTORY => "$SiteDefs::ENSEMBL_WEBROOT");
     Inline->import(C => "void lvalues_nodebug(CV* cv) { CvNODEBUG_on(cv); }");
   }
 }

@@ -34,7 +34,7 @@ div.config div.config_matrix div.help                               { height: 18
 div.config div.config_matrix div.help.open                          { background-position: 0 -36px; }
 div.config div.config_matrix div.desc                               { margin: 7px 0 2px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid transparent; text-align: left; clear: both; }
 
-div.config div.matrix_key                                           { margin-bottom: 0; width: 545px; height: 41px; border-bottom: 0; clear: both; }
+div.config div.matrix_key                                           { margin-bottom: 0; width: 690px; height: 41px; border-bottom: 0; clear: both; overflow-x: auto;}
 div.config div.matrix_key h2                                        { border: 0; width: 55px; float: left; position: relative; top: 10px; }
 div.config div.matrix_key div                                       { float: left; margin-left: 10px!important; margin-right: 0!important; font-weight: bold; position: relative; }
 div.config div.matrix_key .key                                      { top: 7px; }
@@ -128,7 +128,7 @@ div.config div.config_matrix div.subtracks div.select_all .current  { font-weigh
 
 /* tutorial */
 
-div.config div.config_matrix .toggle_tutorial           { position: absolute; top: 8px; right: 5px; width: 110px; height: 25px; background: url(/i/tutorial.png) 0 top no-repeat; cursor: pointer; }
+div.config div.config_matrix .toggle_tutorial           { position: absolute; top: 8px; left: 800px; width: 110px; height: 25px; background: url(/i/tutorial.png) 0 top no-repeat; cursor: pointer; }
 div.config div.config_matrix .toggle_tutorial.on        { background-position: 0 bottom; }
 div.config div.config_matrix .tutorial                  { position: absolute; display: none; padding: 8px; background: #444; color: #FFF; text-align: center; z-index: 10000; white-space: normal; line-height: 16px; border-radius: 10px; }
 div.config div.config_matrix .tutorial:before, 
@@ -151,7 +151,7 @@ div.config div.config_matrix .tutorial.col:after        { border-width: 0 25px 8
 div.config div.config_matrix .tutorial.fil              { width: 180px; top: 3px; left: 300px; padding: 4px; border-radius: 0; }
 div.config div.config_matrix .tutorial.fil:before       { border-width: 30px 30px 0 0; bottom: 50%; left: -30px; }
 div.config div.config_matrix .tutorial.fil:after        { border-width: 0 30px 30px 0; top:    50%; left: -30px; }
-div.config div.config_matrix .tutorial.video            { top: 45px; right: 5px; }
+div.config div.config_matrix .tutorial.video            { top: 45px; left: 800px; }
 div.config div.config_matrix .tutorial.video a          { color: #FFF!important; }
 div.config div.config_matrix .tutorial.video:before,    
 div.config div.config_matrix .tutorial.video:after      { display: none; }

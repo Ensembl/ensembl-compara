@@ -48,6 +48,10 @@ sub populate_tree {
   $data_menu->append($self->create_node('UploadFile',   '', [], { command => 'EnsEMBL::Web::Command::UserData::UploadFile'   }));
   $data_menu->append($self->create_node('AttachRemote', '', [], { command => 'EnsEMBL::Web::Command::UserData::AttachRemote' }));
   $data_menu->append($self->create_node('CheckShare',   '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckShare'   }));
+  $data_menu->append($self->create_node('TrackHubRedirect',   '', [], { command => 'EnsEMBL::Web::Command::UserData::TrackHubRedirect'   }));
+
+  ## Trackhub registry
+  #$data_menu->append($self->create_node('SelectHub',     'Track Hubs', [qw(track_hubs  EnsEMBL::Web::Component::UserData::SelectHub)]));
   
   ## Attach DAS "wizard"
   # Component:     SelectServer
@@ -128,14 +132,6 @@ sub populate_tree {
   $tools_menu->append($self->create_node('MapIDs',          '', [], { command => 'EnsEMBL::Web::Command::UserData::MapIDs'          }));
   $tools_menu->append($self->create_node('DropUpload',      '', [], { command => 'EnsEMBL::Web::Command::UserData::DropUpload'      }));
   
-  ## Region Report
-=pod
-  $tools_menu->append($self->create_node('SelectReportOptions', 'Region Report', [qw(report_options EnsEMBL::Web::Component::UserData::SelectReportOptions)]));
-  $tools_menu->append($self->create_node('RegionReportOutput',  '',              [qw(region_report  EnsEMBL::Web::Component::UserData::RegionReportOutput)]));
-  
-  $tools_menu->append($self->create_node('CheckRegions',  '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckRegions'  }));
-  $tools_menu->append($self->create_node('RunRegionTool', '', [], { command => 'EnsEMBL::Web::Command::UserData::RunRegionTool' }));
-=cut
 }
 
 1;

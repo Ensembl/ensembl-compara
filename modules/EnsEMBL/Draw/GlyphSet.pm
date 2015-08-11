@@ -75,6 +75,7 @@ sub new {
     label2     => undef,
     bumped     => undef,
     error      => undef,
+    features   => [],
     highlights => $data->{'highlights'},
     strand     => $data->{'strand'},
     container  => $data->{'container'},
@@ -87,6 +88,7 @@ sub new {
   
   bless $self, $class;
   
+  $self->{'features'} = $self->init;
   $self->init_label;
 
   return $self;
@@ -99,6 +101,8 @@ sub get_parameter      { return $_[0]->{'config'}->get_parameter($_[1]);        
 sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};                                                                                    }
 sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};                                                                                        }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
+sub get_features       { return $_[0]->{'features'}; }
+
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label_caption   { return $_[0]->my_config('labelcaption');                                                                                                }
 sub depth              { return $_[0]->my_config('depth');                                                                                                       }
@@ -208,13 +212,11 @@ sub unshift {
          $gx1 = $gx + $Glyph->width();
     $gy  =     $Glyph->y();
          $gy1 = $gy + $Glyph->height();
-      warn ">>> GY = $gy, GY1 = $gy1";
 
     $self->minx($gx)  unless defined $self->minx && $self->minx < $gx;
     $self->maxx($gx1) unless defined $self->maxx && $self->maxx > $gx1;
     $self->miny($gy)  unless defined $self->miny && $self->miny < $gy;
     $self->maxy($gy1) unless defined $self->maxy && $self->maxy > $gy1;
-    warn "... SET MAX Y to ".$self->maxy;
   }
 }
 
@@ -253,6 +255,8 @@ sub _init {
   print STDERR qq($self unimplemented\n);
 }
 
+sub init { return []; } ## New method used by refactored glyphsets
+
 sub bumped {
   my ($self, $val) = @_;
   $self->{'bumped'} = $val if(defined $val);
@@ -284,6 +288,19 @@ sub transform {
   }
 }
 
+sub track_style_config {
+### Bring together the various config options in a format
+### that can be used by the new Style modules
+  my $self = shift;
+  my ($fontname, $fontsize) = $self->get_font_details('outertext');
+  return {
+          'image_config' => $self->{'config'},
+          'track_config' => $self->{'my_config'},
+          'pix_per_bp'   => $self->{'config'}->image_width / $self->{'container'}->length, 
+          'font_name'    => $fontname,
+          'font_size'    => $fontsize,
+          };
+}
 
 ############### GENERIC RENDERING ####################
 
@@ -381,7 +398,9 @@ sub subtitle_text {
 sub use_subtitles {
   my ($self) = @_;
 
-  return $self->supports_subtitles && $self->subtitle_text;
+  return
+    $self->{'config'}->get_option('opt_subtitles') &&
+    $self->supports_subtitles && $self->subtitle_text;
 }
 
 sub subtitle_height {
@@ -398,6 +417,18 @@ sub subtitle_colour {
 
 sub supports_subtitles {
   return 0;
+}
+
+################### GANGS #######################
+
+sub gang_prepare {
+}
+
+sub gang {
+  my ($self,$val) = @_;
+
+  $self->{'_gang'} = $val if @_>1;
+  return $self->{'_gang'};
 }
 
 ################### LABELS ##########################
@@ -460,6 +491,8 @@ sub init_label {
   my $component = $config->get_parameter('component');
   my $hover     = $component && !$hub->param('export') && $node->get('menu') ne 'no';
   my $class     = random_string(8);
+  ## Store this where the glyphset can find it later...
+  $self->{'hover_label_class'} = $class;
 
   if ($hover) {
     my $fav       = $config->get_favourite_tracks->{$track};
@@ -1274,13 +1307,24 @@ sub check {
   return $name;
 }
 
-    
+sub truncate_ellipse {
+  my ($self, $x, $a, $b) = @_;
+  my $h = $self->ellipse_y($x, $a, $b);
+  my $theta =  $self->atan_in_degrees($x, $h);
+  return ($h, $theta);
+}
 
-sub acos_in_degrees {
-  my ($self, $x) = @_;
-  my $pi   = 4*atan2(1,1);
-  my $acos = atan2(sqrt(1 - $x * $x), $x);
-  return int($acos/$pi * 180);
+sub ellipse_y {
+  my ($self, $x, $a, $b) = @_;
+  my $y = sqrt(abs((1 - (($x * $x) / ($a * $a))) * $b * $b));
+  return int($y);
+}
+
+sub atan_in_degrees {
+  my ($self, $x, $y) = @_;
+  my $pi   = 4 * atan2(1, 1);
+  my $atan = atan2($y, $x);
+  return int($atan * (180 / $pi));
 }
 
 1;

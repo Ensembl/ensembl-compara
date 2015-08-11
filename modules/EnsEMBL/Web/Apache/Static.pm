@@ -84,13 +84,7 @@ sub handler {
     ## Not temporary static files are pluggable:
     unless ($file =~ s/^$SiteDefs::ENSEMBL_TMP_URL_IMG/$SiteDefs::ENSEMBL_TMP_DIR_IMG/g + $file =~ s/^$SiteDefs::ENSEMBL_TMP_URL/$SiteDefs::ENSEMBL_TMP_DIR/g) {
       ## walk through plugins tree and search for the file in all htdocs dirs
-      foreach my $dir (@HTDOCS_TRANS_DIRS) {
-        my $f = sprintf $dir, $file;
-        if (-d $f or -r $f) {
-          $file = $f;
-          last;
-        }
-      }
+      $file = htdoc_dir($file, $r);
     }
 
     return DECLINED if $file eq $uri; # absolute file path provided via url
@@ -130,5 +124,20 @@ sub mime_type {
   my $mimeobj = $MIME->mimeTypeOf($file);
   return $mimeobj ? $mimeobj->type : 'text/plain';
 }
+
+#overwritten in mobile plugin
+sub htdoc_dir { 
+  my ($file, $r) = @_;
+  
+  foreach my $dir (@HTDOCS_TRANS_DIRS) {
+    my $f = sprintf $dir, $file;
+    if (-d $f or -r $f) {
+      $file = $f;
+      last;
+    }
+  }
+  return $file;
+}
+
 
 1;

@@ -114,5 +114,17 @@ $.extend($.fn.dataTableExt.oSort, {
   },
   'html-desc': function (a, b) {
     return this['string-desc'](a.replace(/<.*?>/g, ''), b.replace(/<.*?>/g, ''));
+  },
+  'html_numeric-asc': function (a, b) {
+    function the_number(x) {
+      return x.replace(/<.*?>/g,'').replace(/[^0-9]/g,'');
+    };
+    return this['numeric-asc'](the_number(a),the_number(b));
+  },
+  'html_numeric-desc': function (a, b) {
+    function the_number(x) {
+      return x.replace(/<.*?>/g,'').replace(/[^0-9]/g,'');
+    };
+    return this['numeric-desc'](the_number(a),the_number(b));
   }
 });

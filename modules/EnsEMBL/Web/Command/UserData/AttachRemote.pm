@@ -20,12 +20,9 @@ package EnsEMBL::Web::Command::UserData::AttachRemote;
 
 use strict;
 
-use Digest::MD5 qw(md5_hex);
-
 use EnsEMBL::Web::File::AttachedFormat;
-use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
-use base qw(EnsEMBL::Web::Command);
+use base qw(EnsEMBL::Web::Command::UserData);
 
 sub process {
   my $self          = shift;
@@ -44,7 +41,8 @@ sub process {
   my @bits          = split /\./, $filename;
   my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my $pattern       = "^$extension\$";
-  my %params;
+  my $new_action    = '';
+  my $params        = {};
 
   ## We have to do some intelligent checking here, in case the user
   ## tries to attach a large format file with a small format selected in the form
@@ -69,115 +67,25 @@ sub process {
   }
 
   if ($url) {
-    my $format_package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
-    my $trackline      = $self->hub->param('trackline');
-    my $format;
-    
-    if ($self->dynamic_use($format_package)) {
-      $format = $format_package->new($self->hub, $format_name, $url, $trackline);
-    } else {
-      $format = EnsEMBL::Web::File::AttachedFormat->new($self->hub, $format_name, $url, $trackline);
+    ## Is this file already attached?
+    ($new_action, $params) = $self->check_attachment($url);
+
+    if ($new_action) {
+      $redirect .= $new_action; 
     }
-   
-    ## For datahubs, pass assembly info so we can check if there's suitable data
-    my $assemblies = $species_defs->assembly_lookup;
- 
-    my ($url, $error, $options) = $format->check_data($assemblies);
+    else {
+      my $format_package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
+      my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $self->hub->param('trackline'));
+      my $format;
     
-    if ($error) {
-      $redirect .= 'SelectFile';
-      
-      $session->add_data(
-        type     => 'message',
-        code     => 'AttachURL',
-        message  => $error,
-        function => '_error'
-      );
-    } else {
-      ## This next bit is a hack - we need to implement userdata configuration properly! 
-      my $extra_config_page = $format->extra_config_page;
-      my $name              = $hub->param('name') || $options->{'name'} || $filename;
-         $redirect         .= $extra_config_page || 'RemoteFeedback';
-     
-      delete $options->{'name'};
+      if ($self->dynamic_use($format_package)) {
+        $format = $format_package->new(%args);
+      } else {
+      $format = EnsEMBL::Web::File::AttachedFormat->new(%args);
+      }
  
-      my $assemblies = $options->{'assemblies'} || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
-      my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
-
-      my ($flag_info, $code); 
-
-      foreach (@$assemblies) {
-
-        my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies{$_}||[]};         
-
-        ## This is a bit messy, but there are so many permutations!
-        if ($assembly) {
-          if ($current_species eq $hub->param('species')) {
-            $flag_info->{'species'}{'this'} = 1;
-            if ($is_old) {
-              $flag_info->{'assembly'}{'this_old'} = 1;
-            }
-            else {
-              $flag_info->{'assembly'}{'this_new'} = 1;
-            }
-          }
-          else {
-            $flag_info->{'species'}{'other'}++;
-            if ($is_old) {
-              $flag_info->{'assembly'}{'other_old'} = 1;
-            }
-            else {
-              $flag_info->{'assembly'}{'other_new'} = 1;
-            }
-          }
-            
-          unless ($is_old) {
-            my $data = $session->add_data(
-              type        => 'url',
-              code        => join('_', md5_hex($name . $current_species . $assembly . $url), $session->session_id),
-              url         => $url,
-              name        => $name,
-              format      => $format->name,
-              style       => $format->trackline,
-              species     => $current_species,
-              assembly    => $assembly, 
-              timestamp   => time,
-              %$options,
-            );
-    
-            $session->configure_user_data('url', $data);
-  
-            if ($current_species eq $hub->param('species')) {
-              $code = $data->{'code'};
-            }
-     
-            $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
-          }
-        }
-      }    
-
-      ## For datahubs, work out what feedback we need to give the user
-      my ($species_flag, $assembly_flag); 
-      if ($flag_info->{'species'}{'other'} && !$flag_info->{'species'}{'this'}) {
-        $species_flag = 'other_only';
-      }
-
-      if ($flag_info->{'assembly'}{'this_new'} && $flag_info->{'assembly'}{'this_old'}) {
-        $assembly_flag = 'old_and_new';
-      }
-      elsif (!$flag_info->{'assembly'}{'this_new'} && !$flag_info->{'assembly'}{'other_new'}) {
-        $assembly_flag = 'old_only';
-      }
-        
-      %params = (
-          format          => $format->name,
-          type            => 'url',
-          name            => $name,
-          species         => $hub->param('species'),
-          species_flag    => $species_flag,
-          assembly_flag   => $assembly_flag,
-          code            => $code,
-      );
+      ($new_action, $params) = $self->attach($format, $filename);
+      $redirect .= $new_action;
     }
   } else {
     $redirect .= 'SelectFile';
@@ -189,7 +97,7 @@ sub process {
       );
   }
   
-  $self->ajax_redirect($redirect, \%params);  
+  $self->ajax_redirect($redirect, $params);  
 }
 
 1;

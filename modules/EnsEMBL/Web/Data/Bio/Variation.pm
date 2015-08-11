@@ -50,13 +50,21 @@ sub convert_to_drawing_parameters {
   my $count_features  = scalar @data;
 
   if ($count_features > $max_features) {
-    throw exception('TooManyFeatures', qq(There are <b>$count_features</b> genomic locations associated with this phenotype. Please, use <a href="/biomart/martview/">BioMart</a> to retrieve a table of all the variants associated with this phenotype instead as there are too many to display on a karyotype.));
+
+    my $biomart_link = ($hub->species_defs->ENSEMBL_MART_ENABLED && $hub->species =~ /homo_sapiens/i) ? '?VIRTUALSCHEMANAME=default'.
+                          '&ATTRIBUTES=hsapiens_snp.default.snp.refsnp_id|hsapiens_snp.default.snp.chr_name|'.
+                          'hsapiens_snp.default.snp.chrom_start|hsapiens_snp.default.snp.associated_gene'.
+                          '&FILTERS=hsapiens_snp.default.filters.phenotype_description.&quot;'.$hub->param('name').'&quot;'.
+                          '&VISIBLEPANEL=resultspanel' : '/';
+
+
+    throw exception('TooManyFeatures', qq(There are <b>$count_features</b> genomic locations associated with this phenotype. Please, use <a href="/biomart/martview$biomart_link">BioMart</a> to retrieve a table of all the variants associated with this phenotype instead as there are too many to display on a karyotype.));
   }
 
   # getting associated phenotypes and associated genes
   foreach my $pf (@data) {
     my $object_id   = $pf->object_id;
-    my $source_name = $pf->source;
+    my $source_name = $pf->source_name;
        $source_name =~ s/_/ /g;
     my $study_xref  = ($pf->study) ? $pf->study->external_reference : undef;
     my $external_id = ($pf->external_id) ? $pf->external_id : undef;
@@ -165,7 +173,7 @@ sub convert_to_drawing_parameters {
       strand  => $pf->strand,
       html_id => "${name}_$dbID", # The html id is used to match the feature on the karyotype (html_id in area tag) with the row in the feature table (table_class in the table row)
       label   => $name,
-      href    => $hub->url(\%url_params),       
+      href    => \%url_params,
       p_value => $p_value_logs{$name},
       extra   => {
         feat_type   => $object_type,

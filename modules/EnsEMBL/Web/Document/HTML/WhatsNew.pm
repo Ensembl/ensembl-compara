@@ -60,7 +60,7 @@ sub render {
   }
   $html .= $blog if $blog;
 
-  return if ($species_defs->ENSEMBL_SITETYPE eq 'Archive');
+  return $html if ($species_defs->ENSEMBL_SUBTYPE eq 'Archive');
   
   $html .= $self->show_twitter();
 
@@ -80,7 +80,7 @@ sub show_twitter {
                 $twitter_user, $widget_id, $twitter_user);
   }
 
-  return $twitter_html;
+  return qq(<div class="homepage-twitter">$twitter_html</div>);
 }
 
 sub show_headlines {
@@ -176,7 +176,7 @@ sub _include_blog {
     $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
   }
 
-  $html .= qq(<p style="text-align:right"><a href="$blog_url">Go to Ensembl blog &rarr;</a></p>);
+  $html .= qq(<p style="text-align:right"><a href="$blog_url">Go to Ensembl blog</a></p>);
 
   return $html;
 

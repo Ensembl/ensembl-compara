@@ -29,8 +29,8 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
-sub feature_group { my ($self, $f) = @_; return $f->id;       }
-sub feature_label { my ($self, $f) = @_; return $f->hseqname; }
+sub feature_group { my ($self, $f) = @_; return $f->display_id; }
+sub feature_label { my ($self, $f) = @_; return $f->hseqname;   }
 
 sub wiggle_subtitle { return $_[0]->my_config('description'); }
 
@@ -92,7 +92,7 @@ sub feature_title {
   my $title       = sprintf(
     '%s: %s; Start: %d; End: %d; Strand: %s',
     $self->my_config('caption'),
-    $f->id,
+    $f->display_id,
     $f->seq_region_start,
     $f->seq_region_end,
     $strand_name[$f->seq_region_strand]

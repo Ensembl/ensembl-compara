@@ -74,15 +74,16 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
 # used to boost certain records
 my $boosts = {
 	      'GeneTrans' => {
-			      'core'    => '40',
-			      'is_ref' => '10',
+			      'core'    => 40,
+			      'is_ref'  => 10,
+                              'non_ref' => 0,
 			     },
 	      'Family' => {
-			   'species' => '50',
-                           'ms'      => '10', 
+			   'species' => 50,
+                           'ms'      => 10,
 			  },
 	      'GeneTree' => {
-			     'All' => '50',
+			     'All' => 50,
 			    },
 	     };
 
@@ -579,8 +580,7 @@ sub dumpVariation {
 
   my $sth;
   my ($all_hgvs_names,$hgvs_sth);
-	if (1) { 
-#if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
+  if ($dbspecies ne 'Homo_sapiens') {
     print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
     $sth = $conf->{'variation_dbh'}->prepare(qq(
     SELECT variation_id, hgvs_name
@@ -676,9 +676,8 @@ sub dumpVariation {
   }
 
   my ($ssid_sth, $stmt,$ssid_hash);
-  # the mouse and human databases are so big that that dumping in one go runs out of memory even with 48Gb!
-	if (1) {
-#  if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
+  # the human database is so big that that dumping in one go runs out of memory even with 128Gb!
+  if ($dbspecies ne 'Homo_sapiens') {
     print LOG "    Preparing to get extra ssID info ".&date_and_mem()."\n";
     $stmt = qq{SELECT variation_id,
                       GROUP_CONCAT('ss',subsnp_id) as ssid
@@ -693,7 +692,7 @@ sub dumpVariation {
     print LOG "     Retrieved extra ssID info ".&date_and_mem()."\n";
   }
   else {
-    #for human and mouse we need to get the extra allele info as we go along
+    #for human we need to get the extra allele info as we go along
     print LOG "    Will get extra ssID info as we go along ".&date_and_mem()."\n";
     $stmt = qq{SELECT GROUP_CONCAT('ss',subsnp_id) as ssid
                  FROM subsnp_map
@@ -744,8 +743,8 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       my $variation_id       = $row->[0];
       my $variation_name     = $row->[1];
       my $source_id          = $row->[2];
-      my $synonyms           = $synonyms->{$variation_id} || '';
-      my $failed_desc        = $failures->{$variation_id} || '';
+      my $synonym_list       = $synonyms->{$variation_id};
+      my $failed_desc        = $failures->{$variation_id};
       my $somatic_var        = $row->[3];
       my $ssids;
       if ($ssid_hash) {
@@ -774,7 +773,7 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       }
       my %synonyms;
       my $syn_c = 0;
-      foreach my $syn (split /,/, $synonyms) {
+      foreach my $syn (split /,/, $synonym_list) {
         my ($source_id,$sname) = split / /,$syn;
         $synonyms{$sname} = $sources->{$source_id};
         $syn_c++;
@@ -2077,6 +2076,9 @@ sub dumpGene {
     print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
     header($fh);
 
+    #does this species have PATCHES
+    (my $has_patches) = $conf->{'dbh'}->selectrow_array(qq(select count(*) from assembly_exception where exc_type != 'PAR'));
+
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
       'select external_db_id, db_display_name
          from external_db', 'external_db_id'
@@ -2186,7 +2188,6 @@ sub dumpGene {
        WHERE g.seq_region_id = sr.seq_region_id 
          AND sr.coord_system_id = cs.coord_system_id);
     my $gene_locations = $conf->{'dbh'}->selectall_hashref($sql,'stable_id');
-
     $sql = qq(
       SELECT g.gene_id, t.transcript_id, tr.translation_id,
              g.stable_id as gsid, g.version as gversion, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
@@ -2233,6 +2234,7 @@ sub dumpGene {
                        $old->{'synonyms'},
                        '',
                        $gene_locations->{$old_gsi},
+                       $has_patches,
                        $db,
                        $counter),
               $fh);
@@ -2302,6 +2304,7 @@ sub dumpGene {
                         $old->{'synonyms'},
                         '',
                         $gene_locations->{$old_gsi},
+                        $has_patches,
                         $db,
                         $counter),
           $fh);
@@ -2400,6 +2403,9 @@ sub dumpTranscript {
     open( $fh, ">$file" ) or die "Can't open $file: $!";
     print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
     header($fh);
+
+    #does this species have PATCHES
+    (my $has_patches) = $conf->{'dbh'}->selectrow_array(qq(select count(*) from assembly_exception where exc_type != 'PAR'));
 
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
       'select external_db_id, db_name, db_display_name, description
@@ -2534,6 +2540,7 @@ sub dumpTranscript {
        WHERE t.seq_region_id = sr.seq_region_id
          AND sr.coord_system_id = cs.coord_system_id);
     my $trans_locations = $conf->{'dbh'}->selectall_hashref($sql,'stable_id');
+    $trans_locations->{'has_patches'} = $has_patches;
     $sql = qq(
       SELECT t.transcript_id, tr.translation_id, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
              t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.status, t.biotype, a.logic_name
@@ -2579,6 +2586,7 @@ sub dumpTranscript {
                         $old->{'synonyms'},
                         $old->{'supporting_evidence'},
                         $trans_locations->{$old_tsi},
+                        $has_patches,
                         $db,
                         $counter),
               $fh);
@@ -2660,6 +2668,7 @@ sub dumpTranscript {
                         $old->{'synonyms'},
                         $old->{'supporting_evidence'},
                         $trans_locations->{$old_tsi},
+                        $has_patches,
                         $db,
                         $counter),
           $fh) if ($old->{'tsid'});
@@ -2676,7 +2685,7 @@ sub dumpTranscript {
 }
 
 sub GeneTransLine {
-  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $feat_loc, $db, $counter) = @_;
+  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $feat_loc, $has_patches, $db, $counter) = @_;
 
   #get stable ID of object
   my ($sid,$sid_ver);
@@ -2688,8 +2697,12 @@ sub GeneTransLine {
   }
   my $boost = 0;
   $boost += $boosts->{'GeneTrans'}{$db};
-  my $is_ref = $feat_loc->{'non_ref'} ? '' : 'is_ref';
-  $boost += $boosts->{'GeneTrans'}{$is_ref};
+  my $ref_boost_value;
+  if ($has_patches) {
+    my $is_ref = $feat_loc->{'non_ref'} ? 'non_ref' : 'is_ref';
+    $ref_boost_value = $boosts->{'GeneTrans'}{$is_ref};
+    $boost += $ref_boost_value;
+  }
 
   my $url = sprintf(qq(%s/%s/Summary?%s=%s&amp;db=%s),
                     $species,
@@ -2723,7 +2736,7 @@ sub GeneTransLine {
     $xml .= qq(
   <field name="db_boost">$db_boost_value</field>);
   }
-  if (my $ref_boost_value =  $boosts->{'GeneTrans'}{$is_ref}) {
+  if (defined($ref_boost_value)) {
     $xml .= qq(
   <field name="ref_boost">$ref_boost_value</field>);
   }
@@ -2940,10 +2953,8 @@ sub dumpRegulatoryFeature {
   my $ftype = 'RegulatoryFeature';
   my $params;
 
-  my $prefix = ($dbspecies =~/Mus/) ? 'ENSMUSR' : 'ENSR';
   my $d = $conf->{'dbh'}->selectall_arrayref(
-    "select concat('$prefix', lpad(rf.stable_id, 11, 0)),
-            sr.name, (rf.seq_region_start - rf.bound_start_length), (rf.seq_region_end + rf.bound_end_length), ft.name
+    "select rf.stable_id, sr.name, (rf.seq_region_start - rf.bound_start_length), (rf.seq_region_end + rf.bound_end_length), ft.name
        from $dbname.regulatory_feature rf, $dbname.seq_region sr, $dbname.coord_system cs,
             $dbname.feature_type ft, $dbname.feature_set fs
       where fs.name='RegulatoryFeatures:MultiCell' and fs.feature_set_id=rf.feature_set_id and

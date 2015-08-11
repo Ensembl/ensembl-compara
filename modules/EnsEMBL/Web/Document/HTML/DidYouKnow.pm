@@ -66,7 +66,7 @@ sub render {
     $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $MEMD;
   }
 
-  $html .= '<div class="did-you-know"><ul class="bxslider">';
+  $html .= '<ul class="bxslider">';
 
   ## We want all the news plus some random tips
   my $limit = 5;
@@ -92,7 +92,7 @@ sub render {
     $html .= sprintf('<li><div><b>%s</b><br />%s</div></li>', $_->[0], $_->[1]);
   }
 
-  $html .= '</ul></div>';
+  $html .= '</ul>';
 
   return $html;
 }

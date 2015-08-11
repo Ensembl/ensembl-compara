@@ -24,6 +24,7 @@ use strict;
 
 use LWP::UserAgent;
 use Time::HiRes;
+use Try::Tiny;
 use Test::Exception;
 use Test::More "no_plan";
 
@@ -34,11 +35,11 @@ my $TESTMORE_OUTPUT;
 sub new {
   my($class, %args) = @_;
 
-  return ('bug', 'Must supply a url') unless $args{url};
+  return ('bug', 'Must supply a url', $class, 'new') unless $args{url};
   
   my $self = {
     _url      => $args{url},
-    _sel      => $args{selenium},
+    _sel      => $args{sel},
     _timeout  => $args{timeout} || 50000,
     _verbose  => $args{verbose},
     _species  => $args{species},
@@ -55,43 +56,24 @@ sub new {
 
 ############### GENERIC TESTS #################################
 
-sub test_lh_menu {
-### Tests all links on lefthand menu of a given page type (e.g. Gene)
-  my $self    = shift;
-  my $sel     = $self->sel;
-  my $current = $self->get_current_url();
-
-  my ($goto, $error) = $self->default_url;
-  return ($goto, $error) if $error;
-
-  $self->no_mirrors_redirect;
-  $sel->open_ok($goto);
-  if ($sel->ensembl_wait_for_page_to_load) {
-    $sel->ensembl_click_all_links('.local_context');
-  }
-  else {
-    return ('fail', "Couldn't open page $goto to check navigation links");
-  }
-}
-
 sub default_url {
   my $self = shift;
-  return ('bug', "default_url method not implemented in test module ".ref($self);
+  return ('bug', "default_url method not implemented in test module", ref($self), 'default_url');
 }
 
 sub test_debug {
 ### Quick'n'dirty test to ensure that the test script is working!
   my $self = shift;
-  return ('pass', 'DEBUG OK!');
+  return ('pass', 'DEBUG OK!', ref($self), 'test_debug');
 }
 
 ############### ACCESSORS AND UTILITY METHODS ################## 
 
-sub url     {$_[0]->{_url}};
-sub sel     {$_[0]->{_sel}};
-sub verbose {$_[0]->{_verbose}};
-sub species {$_[0]->{_species}};
-sub timeout {$_[0]->{_timeout}};
+sub url     {return $_[0]->{_url}};
+sub sel     {return $_[0]->{_sel}};
+sub verbose {return $_[0]->{_verbose}};
+sub species {return $_[0]->{_species}};
+sub timeout {return $_[0]->{_timeout}};
 
 sub conf {
   my ($self, $key) = @_;
@@ -117,7 +99,7 @@ sub check_website {
   my $url = $self->url;
   $self->sel->open("/");
   if ($self->sel->get_title eq "The Ensembl Genome Browser (development)") {
-    return ('fail', "$url IS DOWN");
+    return ('fail', "$url IS DOWN", ref($self), 'check_website');
   }
 }
 

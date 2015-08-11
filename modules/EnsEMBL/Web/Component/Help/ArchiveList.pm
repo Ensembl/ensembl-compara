@@ -59,21 +59,23 @@ sub content {
   # is this a species page?
   
   my @check = split '/', $path;
-  my ($part1, $part2, $part3, $part4, $species, $type, $action);
+  my ($part1, $part2, $part3, $part4, $species, $type, $action, $function);
   
   if ($match) {
     ($part1, $part2, $part3, $part4) = ($check[1], $check[2], $check[3], $check[4]);
   } else {
-    ($part1, $part2, $part3) = ($check[0], $check[1], $check[2]);
+    ($part1, $part2, $part3, $part4) = ($check[0], $check[1], $check[2]);
   }
   
   if ($species_defs->valid_species($part1)) {
-    $species = $part1;
-    $type    = $part2;
-    $action  = $part4 ? "$part3/$part4" : $part3;
+    $species  = $part1;
+    $type     = $part2;
+    $action   = $part3;
+    $function = $part4;
   } else {
-    $type    = $part1;
-    $action  = $part2;
+    $type     = $part1;
+    $action   = $part2;
+    $function = $part3;
   }
   
   ## NB: we create an array of links in ascending date order so we can build the
@@ -97,26 +99,36 @@ sub content {
           push @links, $self->output_link($archives, $_, $url);
         }
       } else {
-        my $releases = get_archive_redirect($type, $action, $hub) || [];
-        my $missing  = 0;
-        
-        foreach my $poss_release (sort {$b <=> $a} keys %$archives) {
-          next if $poss_release == $current;
-          
-          my $release_happened = 0;
-          
-          foreach my $r (@$releases) {
-            my ($old_view, $initial_release, $final_release, $missing_releases) = @$r;
-            
-            if ($poss_release < $initial_release || ($final_release && $poss_release > $final_release) || grep $poss_release == $_, @$missing_releases) {
-              $missing = 1;
-              next;
-            }
-            
-            $release_happened = 1;
+        my $page = join('/', $type, $action);
+        $page   .= "/$function" if $function;
+        my $page_info = get_archive_redirect($page) || {};
+        my @mappings = reverse sort keys %{$page_info->{'formerly'}};
+        my $missing;
+    
+        foreach (sort {$b <=> $a} keys %$archives) {
+
+          if ($page_info->{'initial_release'} && $page_info->{'initial_release'} > $_) {
+            $missing = 1;
+            last;
           }
-          
-          push @links, $self->output_link($archives, $poss_release, $url) if $release_happened;
+
+          next if $_ == $current;
+
+          if (@mappings) {
+            my $new_url;
+            foreach my $release (@mappings) {
+              last if ($_ > $release);
+              $new_url = $page_info->{'formerly'}{$release};
+            }
+            ($type, $action, $function) = split('/', $new_url) if $new_url;
+          }
+
+          $url = join('/', $species, $type, $action);
+          $url .= "/$function" if $function;
+          $url .= "?$params" if $params;
+
+          push @links, $self->output_link($archives, $_, $url);
+
         }
         
         $html .= '<p>Some earlier archives are available, but this view was not present in those releases.</p>' if $missing;

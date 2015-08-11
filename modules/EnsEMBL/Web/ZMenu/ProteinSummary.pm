@@ -37,14 +37,16 @@ sub content {
   $self->add_entry({
     type  => 'View record',
     label => $hit_name,
-    link  => $hub->get_ExtURL($hit_db, $hit_name)
+    link  => $hub->get_ExtURL($hit_db, $hit_name),
+    external => 1,
   });
   
   if ($interpro_ac) {
     $self->add_entry({
       type  => 'View InterPro',
       label => $interpro_ac,
-      link  => $hub->get_ExtURL('interpro', $interpro_ac)
+      link  => $hub->get_ExtURL('interpro', $interpro_ac),
+      external => 1,
     });
   }
   
