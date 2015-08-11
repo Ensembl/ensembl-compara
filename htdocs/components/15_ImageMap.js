@@ -1077,6 +1077,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (typeof speciesNumber !== 'undefined') {
       els.addClass(originalClass);
     }
+
+    this.selectArea(false);
     
     els = null;
   },
