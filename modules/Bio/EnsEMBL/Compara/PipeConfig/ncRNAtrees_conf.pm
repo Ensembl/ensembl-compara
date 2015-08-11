@@ -292,6 +292,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'species_tree',
                 binary          => 0,
+                n_missing_species_in_tree   => 0,
             },
             -flow_into          => [ 'load_members_factory', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('find_epo_database') ],
             %hc_params,

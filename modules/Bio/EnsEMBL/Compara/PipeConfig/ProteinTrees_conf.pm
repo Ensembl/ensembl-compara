@@ -682,6 +682,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'species_tree',
                 binary          => 0,
+                n_missing_species_in_tree   => 0,
             },
             -flow_into  => [ $self->o('use_notung') ? ( $self->o('binary_species_tree_input_file') ? 'load_binary_species_tree' : 'make_binary_species_tree' ) : ($self->o('initialise_cafe_pipeline') ? 'CAFE_species_tree' : ()) ],
             %hc_analysis_params,
@@ -715,6 +716,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'species_tree',
                 binary          => 1,
+                n_missing_species_in_tree   => 0,
             },
             %hc_analysis_params,
             -flow_into  => [ $self->o('initialise_cafe_pipeline') ? 'CAFE_species_tree' : () ],

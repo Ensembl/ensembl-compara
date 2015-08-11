@@ -171,6 +171,7 @@ sub pipeline_analyses_species_tree {
             -parameters         => {
                 mode            => 'species_tree',
                 binary          => 0,
+                n_missing_species_in_tree   => 0,
             },
             -flow_into          => [ 'CAFE_species_tree' ],
         },

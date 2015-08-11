@@ -105,6 +105,9 @@ sub fetch_input {
     if ((not defined $cafe_species) or ($cafe_species eq '') or (scalar(@{$cafe_species}) == 0)) {  # No species for the tree. Make a full tree
         print STDERR "No species provided for the CAFE tree. I will take them all\n" if ($self->debug());
         $self->param('cafe_species', undef);
+        $self->param('n_missing_species_in_tree', 0);
+    } else {
+        $self->param('n_missing_species_in_tree', scalar(@{$genomeDB_Adaptor->fetch_all()})-scalar(@{$cafe_species}));
     }
 
     return;
@@ -159,7 +162,10 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-    $self->dataflow_output_id( {'species_tree_root_id' => $self->param('full_species_tree')->root_id}, 2);
+    $self->dataflow_output_id( {
+        'species_tree_root_id' => $self->param('full_species_tree')->root_id,
+        'n_missing_species_in_tree' => $self->param('n_missing_species_in_tree'),
+    }, 2);
 }
 
 

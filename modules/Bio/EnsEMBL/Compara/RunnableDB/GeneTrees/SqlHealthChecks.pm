@@ -60,7 +60,7 @@ our $config = {
     #################
 
     species_tree => {
-        params => [ 'species_tree_root_id', 'binary' ],
+        params => [ 'species_tree_root_id', 'binary', 'n_missing_species_in_tree' ],
         tests => [
             {
                 description => 'genome_db_id can only be populated on leaves',
@@ -73,6 +73,7 @@ our $config = {
             {
                 description => 'All the genome_dbs should be in the species tree',
                 query => 'SELECT gdb.* FROM genome_db gdb LEFT JOIN species_tree_node stn ON gdb.genome_db_id = stn.genome_db_id AND stn.root_id = #species_tree_root_id# WHERE stn.node_id IS NULL',
+                expected_size => '= #n_missing_species_in_tree#',
             },
             {
                 description => 'Checks that the species tree is minimized (i.e. nodes cannot have a single child)',
