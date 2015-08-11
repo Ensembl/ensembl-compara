@@ -42,7 +42,7 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .drag_select.drag_select_pointer          { cursor: pointer; }
 
 .drag_select .selector                    { background-color: rgba(229, 121, 5, 0.1); position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; }
-.drag_select .hlrselector                 { background-color: rgba(100, 100, 100, 0.1); border: rgba(100, 100, 100, 0.5) dotted 1px; pointer-events: none; }
+.drag_select .hlrselector                 { background-color: rgba(140, 100, 140, 0.1); border: rgba(140, 100, 140, 0.5) dashed 1px; pointer-events: none; }
 .drag_select .selector.vertical           { border-width: 1px; }
 .drag_select .selector .left-border,
 .drag_select .selector .right-border      { width: 4px; position: absolute; height: 100%; left: 0; border: 1px dashed red; border-width: 0 0 0 1px; cursor: ew-resize; }
