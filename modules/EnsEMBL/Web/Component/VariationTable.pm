@@ -626,14 +626,6 @@ sub variation_table {
 
             my $status = $self->render_evidence_status($evidences);
 
-            $clin_sig = join("",
-              map {
-                sprintf(
-                  '<img src="/i/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
-                  $clin_sign_icon{$_}, $_, $_
-                )
-              } @$clin_sig
-            );
             my $clin_sig = $self->render_clinical_significance($clin_sigs);
 
             my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
