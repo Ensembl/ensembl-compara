@@ -73,7 +73,7 @@ sub _content {
       $self->thousandify($object->seq_region_start),
       $self->thousandify($object->seq_region_end)
     ),
-    link_class => 'location_change',
+    link_class => '_location_change',
     link  => $hub->url({
       type   => 'Location',
       action => 'View',

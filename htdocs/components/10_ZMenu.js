@@ -86,7 +86,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.el.on('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
-    }).on('click', 'a.location_change', function () {
+    }).on('click', 'a._location_change', function () {
 
       if (!window.location.pathname.match(/\/Location\/View(\/|$)/)) {
         return true;
@@ -301,8 +301,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       this.location = parseInt(r[1], 10) + (r[2] - r[1]) / 2;
       
-      extra += this.row(' ', '<a class="location_change" href="' + this.zoomURL(1) + '">Centre on feature</a>');
-      extra += this.row(' ', '<a class="location_change" href="' + this.baseURL.replace(/%s/, loc[1]) + '">Zoom to feature</a>');
+      extra += this.row(' ', '<a class="_location_change" href="' + this.zoomURL(1) + '">Centre on feature</a>');
+      extra += this.row(' ', '<a class="_location_change" href="' + this.baseURL.replace(/%s/, loc[1]) + '">Zoom to feature</a>');
     }
     
     this.populate(true, extra);
@@ -386,7 +386,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         } else if (this.multi !== false) {
           multi();
         } else {
-          cls = 'location_change';
+          cls = '_location_change';
           
           if (end - start + 1 > Ensembl.maxRegionLength) {
             if (url.match('/View')) {
@@ -417,10 +417,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
           multi();
         } else {
           menu = [
-            '<a class="location_change" href="' + this.zoomURL(10) + '">Zoom out x10</a>',
-            '<a class="location_change" href="' + this.zoomURL(5)  + '">Zoom out x5</a>',
-            '<a class="location_change" href="' + this.zoomURL(2)  + '">Zoom out x2</a>',
-            '<a class="location_change" href="' + url + '">Centre here</a>'
+            '<a class="_location_change" href="' + this.zoomURL(10) + '">Zoom out x10</a>',
+            '<a class="_location_change" href="' + this.zoomURL(5)  + '">Zoom out x5</a>',
+            '<a class="_location_change" href="' + this.zoomURL(2)  + '">Zoom out x2</a>',
+            '<a class="_location_change" href="' + url + '">Centre here</a>'
           ];
           
           // Only add zoom in links if there is space to zoom in to.
@@ -428,7 +428,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
             var href = panel.zoomURL(1 / this);
             
             if (href !== '') {
-              menu.push('<a class="location_change" href="' + href + '">Zoom in x' + this + '</a>');
+              menu.push('<a class="_location_change" href="' + href + '">Zoom in x' + this + '</a>');
             }
           });
         }
