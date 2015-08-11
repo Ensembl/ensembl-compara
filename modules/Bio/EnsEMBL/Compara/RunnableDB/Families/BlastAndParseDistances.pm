@@ -25,7 +25,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub load_fasta_sequences_from_db {
-    my ($self, $start_seq_id, $minibatch) = @_;
+    my ($self, $start_seq_id, $end_seq_id) = @_;
 
     my $idprefixed              = $self->param('idprefixed')  || 0;
     my $debug                   = $self->debug() || $self->param('debug') || 0;
@@ -44,7 +44,7 @@ sub load_fasta_sequences_from_db {
     }
 
     my $sth = $self->compara_dba->dbc->prepare( $sql );
-    $sth->execute( $start_seq_id, $start_seq_id+$minibatch-1 );
+    $sth->execute( $start_seq_id, $end_seq_id );
 
     my @fasta_list = ();
     while( my ($seq_id, $stable_id, $seq) = $sth->fetchrow() ) {
@@ -103,11 +103,12 @@ sub name2index { # can load the name2index mapping from db/file if necessary
 sub fetch_input {
     my $self = shift @_;
 
-    my $start_seq_id            = $self->param_required('sequence_id');
+    my $start_seq_id            = $self->param_required('start_seq_id');
+    my $end_seq_id              = $self->param_required('end_seq_id');
     my $minibatch               = $self->param('minibatch')   || 1;
     my $debug                   = $self->debug() || $self->param('debug') || 0;
 
-    my $fasta_list = $self->load_fasta_sequences_from_db($start_seq_id, $minibatch);
+    my $fasta_list = $self->load_fasta_sequences_from_db($start_seq_id, $end_seq_id);
 
     if(scalar(@$fasta_list)<$minibatch) {
         die "Could not load all ($minibatch) sequences, please investigate";
@@ -180,8 +181,7 @@ sub run {
     my $blastdb_dir             = $self->param('blastdb_dir');
     my $blastdb_name            = $self->param_required('blastdb_name');
 
-    my $start_seq_id            = $self->param('sequence_id');
-    my $minibatch               = $self->param('minibatch')     || 1;
+    my $start_seq_id            = $self->param('start_seq_id');
 
     my $blast_bin_dir           = $self->param_required('blast_bin_dir');
     my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
