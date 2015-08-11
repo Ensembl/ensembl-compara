@@ -122,6 +122,7 @@ sub fetch_input {
     }
 
     $gene_tree->preload();
+    $gene_tree->_load_all_missing_sequences();
     $self->param('gene_tree', $gene_tree->root);
 
     if($self->debug) {
