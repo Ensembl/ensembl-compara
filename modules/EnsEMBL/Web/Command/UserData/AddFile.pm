@@ -55,7 +55,7 @@ sub process {
     else {
       ## Is this an indexed file? Check formats that could be either
       my $not_indexed = 0;
-      if (uc($format_name) eq 'VCF') {
+      if (uc($format_name) eq 'VCF' || uc($format_name) eq 'PAIRWISE') {
         my $tabix_url   = $url.'.tbi';
         $not_indexed = $self->check_for_index($tabix_url);
       } 
@@ -80,7 +80,6 @@ sub process {
           $attachable = EnsEMBL::Web::File::AttachedFormat->new(%args);
         }
       }
-      warn ">>> FORMAT $attachable";
       ($new_action, $url_params) = $self->attach($attachable, $filename);
       $url_params->{'action'} = $new_action;
     }
