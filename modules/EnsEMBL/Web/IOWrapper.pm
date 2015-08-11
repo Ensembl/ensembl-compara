@@ -42,9 +42,9 @@ sub new {
   ## 'Nearest' should be relative to the size of the genome
   my $scale = 1;
   if ($self->{'hub'}) {
-    my $species = $self->{'species'} || $self->hub->species;
-    $scale = $hub->species_defs->get_config($species, 'ENSEMBL_GENOME_SIZE');
-    $scale = 1 if $scale = 0;
+    my $species = $self->{'species'} || $self->{'hub'}->species;
+    $scale = $self->{'hub'}->species_defs->get_config($species, 'ENSEMBL_GENOME_SIZE');
+    $scale = 1 if $scale == 0;
   }
   $self->{'nearest_window_size'} = 100000 * $scale; 
 
@@ -245,7 +245,7 @@ sub nearest_feature {
   my $first_done = 0;
 
   while ($self->parser->next) {
-    next if $parser->is_metadata;
+    next if $self->parser->is_metadata;
     my ($seqname, $start, $end) = $self->coords;
     next unless $seqname && $start;
 
