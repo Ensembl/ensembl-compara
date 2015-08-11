@@ -139,7 +139,8 @@ sub fetch_all_by_taxon_id_assembly {
                If more than one GenomeDB is found in the database with the same
                taxon_id, gives the first one found.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if GenomeDB of taxon_id $taxon_id cannot be found.
+  Exceptions : thrown if $taxon_id is not given, or if there are more than 1
+               GenomeDB with this taxon_id.
   Caller     : general
   Status     : Stable
 
@@ -151,6 +152,7 @@ sub fetch_by_taxon_id {
     throw("taxon_id argument is required") unless($taxon_id);
 
     my $found_gdbs = $self->_id_cache->get_all_by_additional_lookup('taxon_id', $taxon_id);
+    die "There are ".scalar(@$found_gdbs)." GenomeDBs with taxon_id = $taxon_id. GenomeDBAdaptor::fetch_by_taxon_id() doesn't know how to return only one.\n" if scalar(@$found_gdbs) >= 2;
 
     return $found_gdbs->[0];
 }
