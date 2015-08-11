@@ -23,7 +23,6 @@ use strict;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::Component::Variation EnsEMBL::Web::Component::NewTable);
-use Time::HiRes qw(time);
 
 sub _init {
   my $self = shift;
@@ -408,8 +407,6 @@ sub variation_table {
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
   
-  my ($ROW,$NONOUTLINE,$SPECIAL) = (0,0,0);
-
   # create some URLs - quicker than calling the url method for every variant
   my $base_url = $hub->url({
     type   => 'Variation',
@@ -458,8 +455,6 @@ sub variation_table {
    
     next unless %snps;
    
-    $ROW -= time();
- 
     my $transcript_stable_id = $transcript->stable_id;
     my $gene_snps            = $transcript->__data->{'transformed'}{'gene_snps'} || [];
     my $tr_start             = $transcript->__data->{'transformed'}{'start'};
@@ -500,7 +495,6 @@ sub variation_table {
           $row->{'Source'} = $source;
 
           unless($phase eq 'outline') {
-            $NONOUTLINE -= time();
             my $evidences            = $snp->get_all_evidence_values || [];
             my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
             my $var_class            = $snp->var_class;
@@ -558,15 +552,12 @@ sub variation_table {
               HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
             };
             $row = { %$row, %$more_row };
-            $NONOUTLINE += time();
           }
           push @rows,$row;
         }
       }
     }
-    $ROW += time();
   }
-  warn sprintf("%f/%f (%s)",$ROW-$NONOUTLINE,$ROW,$phase);
 
   return \@rows;
 }
