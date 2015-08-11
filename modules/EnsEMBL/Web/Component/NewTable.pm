@@ -33,12 +33,11 @@ sub ajax_table_content {
   my @out;
   foreach my $region (@$regions) {
     my $columns = $region->{'columns'};
-    #my $rows = $region->{'rows'};
     my $more = $region->{'more'};
 
     my $iconfig = from_json($hub->param('config'));
 
-    # Rows to send
+    # Start row
     my $rows = $phases->[$more]{'rows'} || [0,-1];
 
     # Calculate columns to send
@@ -64,7 +63,7 @@ sub ajax_table_content {
     push @out,{
       request => $regions,
       data => \@data_out,
-      region => { columns => $columns_out, rows => $rows },
+      region => { columns => $columns_out, start => $rows->[0] },
       more => $more,
     };
   }

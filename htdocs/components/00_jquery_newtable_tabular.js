@@ -111,9 +111,8 @@
     return $("<table><tbody></tbody></table>");
   }
 
-  function extend_rows($table,rows) {
+  function extend_rows($table,target) {
     console.log("extend_rows");
-    var target = rows[1];
     var $subtables = $('table',$table);
     target -= ($subtables.length-1)*rows_per_subtable;
     while(target > 0) {
@@ -185,12 +184,12 @@
           add_sort($table,$(this).data('key'),!e.shiftKey); 
         });
       },
-      add_data: function($table,data,rows,columns) {
+      add_data: function($table,data,start,columns) {
         console.log("add_data");
-        extend_rows($table,rows);
+        extend_rows($table,start+data.length);
         var subtabs = [];
         $.each(data,function(i,val) {
-          subtabs[update_row2($table,val,i+rows[0],columns)]=1;
+          subtabs[update_row2($table,val,i+start,columns)]=1;
         });
         d = $.Deferred().resolve(subtabs);
         loop(d,function(tabnum,v) {

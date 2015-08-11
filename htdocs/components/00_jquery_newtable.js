@@ -97,11 +97,7 @@
 
   function use_response(widgets,$table,data) {
     var view = $table.data('view');
-    rows = [data.region.rows[0],data.region.rows[1]];
-    if(rows[1]==-1) {
-      rows[1] = rows[0] + data.data.length;
-    }
-    widgets[view.format].add_data($table,data.data,rows,
+    widgets[view.format].add_data($table,data.data,data.region.start,
                                   data.region.columns);
   }
   
