@@ -46,6 +46,17 @@ sub new_content {
   return qq(<a class="enstab" href="$url">data</a>);
 }
 
+my @INCREMENTAL = (
+  {
+    name => "outline",
+    cols =>  [ qw(ID Source) ],
+  },{
+    name => "full",
+    cols => [ qw(ID chr Alleles gmaf class Source Submitters clinsig
+                 snptype aachange aacoord sift polyphen Transcript)  ],
+  }
+);
+
 sub ajax_table_content {
   my ($self) = @_;
 
@@ -68,27 +79,21 @@ sub ajax_table_content {
       @transcripts = grep $_->stable_id eq $t, @transcripts;
     }
 
-    my @outline_cols = qw(ID Source);
-    my @cols = qw(ID chr Alleles gmaf class Source Submitters clinsig snptype aachange aacoord sift polyphen Transcript);
+    my $I=$more_in;
+
+    my $iconfig = from_json($hub->param('config'));
+    my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
     my %cols_pos;
     $cols_pos{$cols[$_]} = $_ for(0..$#cols);
-    my @outline_cols_bitmap = (0) x @cols;
-    $outline_cols_bitmap[$cols_pos{$_}] = 1 for @outline_cols;
 
-    my ($data,$more_out,$columns_out,$used_cols);
-    if($more_in) {
-      # Full table required
-      $data = $self->variation_table($consequence_type,\@transcripts);
-      $more_out = 0;
-      $columns_out = [ (1) x @cols ];
-      $used_cols = \@cols;
-    } else {
-      # Outline table only
-      $data = $self->variation_table($consequence_type,\@transcripts,1);
-      $more_out = 1;
-      $columns_out = \@outline_cols_bitmap;
-      $used_cols = \@outline_cols;
-    }
+    my $more_out = $I+1;
+    my $data = $self->variation_table($consequence_type,\@transcripts,
+                                      $INCREMENTAL[$I]->{'name'});
+    my $used_cols = $INCREMENTAL[$I]->{'cols'};
+    my $columns_out = [ (0) x @cols ];
+    $columns_out->[$cols_pos{$_}] = 1 for @$used_cols;
+    $more_out = 0 if $more_out == @INCREMENTAL;
+
     my @data_out;
     foreach my $d (@$data) {
       push @data_out,[ map { $d->{$_}||'' } @$used_cols ];
@@ -449,7 +454,7 @@ sub tree {
 }
 
 sub variation_table {
-  my ($self, $consequence_type, $transcripts, $outline) = @_;
+  my ($self, $consequence_type, $transcripts, $phase) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
@@ -545,7 +550,7 @@ sub variation_table {
           $row->{'ID'} = qq(<a href="$url">$variation_name</a>);
           $row->{'Source'} = $source;
 
-          unless($outline) {
+          unless($phase eq 'outline') {
             $NONOUTLINE -= time();
             my $evidences            = $snp->get_all_evidence_values || [];
             my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
@@ -612,7 +617,7 @@ sub variation_table {
     }
     $ROW += time();
   }
-  warn sprintf("%f/%f (%d)",$ROW-$NONOUTLINE,$ROW,$outline);
+  warn sprintf("%f/%f (%s)",$ROW-$NONOUTLINE,$ROW,$phase);
 
   return \@rows;
 }

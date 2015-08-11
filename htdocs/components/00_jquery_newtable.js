@@ -129,7 +129,8 @@
     console.log("data changed, should issue request");
     $.get($table.data('src'),{
       data: JSON.stringify(data),
-      regions: JSON.stringify(regions)
+      regions: JSON.stringify(regions),
+      config: JSON.stringify($table.data('config'))
     },function(res) {
       maybe_use_response(widgets,$table,res);
     },'json');
