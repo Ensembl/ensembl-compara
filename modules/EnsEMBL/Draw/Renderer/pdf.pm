@@ -26,8 +26,6 @@ use base qw(EnsEMBL::Draw::Renderer);
 
 use List::Util qw(max);
 
-1;
-
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
 
@@ -41,7 +39,7 @@ sub init_canvas {
   $self->canvas(
     { 'im_height' => $im_height, 'page' => $page, 'pdf' => $pdf, 'g' => $page->gfx, 't'=>$page->text, 'font' => $pdf->corefont('Helvetica-Bold',1) }
   );
-  $self->{'canvas'}{'g'}->linewidth(0.25);
+  $self->{'canvas'}{'g'}->linewidth(0.5);
 }
 
 sub add_canvas_frame {
@@ -81,6 +79,10 @@ sub render_Rect {
 
 	my($x,$y) = $self->XY($glyph->pixelx,$glyph->pixely);
 	my($a,$b) = $self->XY($glyph->pixelx+$glyph->pixelwidth,$glyph->pixely+$glyph->pixelheight);
+
+  ## Fix invisible glyphs!
+  if ($a - $x < 1) { $a += 1; }
+  if ($b - $y < 1) { $b += 1; }
 
   if(defined $gcolour) {
     unless( $gcolour eq 'transparent' ) {
