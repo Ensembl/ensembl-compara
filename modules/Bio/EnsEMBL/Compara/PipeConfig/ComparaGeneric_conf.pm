@@ -79,7 +79,7 @@ sub init_basic_tables_analyses {
             },
             -input_ids => $input_ids,
             -flow_into => {
-                ($target_analysis ? '2->A' : 2) => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
+                ($target_analysis ? '2->A' : 2) => { 'copy_table' => { 'table' => '#table#' } },
                 ($target_analysis ? ( 'A->1' => [ $target_analysis ] ) : ()),
             },
         },
