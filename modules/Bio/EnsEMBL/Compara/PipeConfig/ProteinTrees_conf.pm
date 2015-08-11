@@ -627,7 +627,6 @@ sub core_pipeline_analyses {
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
-            -analysis_capacity => 1,
             -flow_into => [ 'create_mlss_ss' ],
         },
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
@@ -736,7 +735,6 @@ sub core_pipeline_analyses {
                  4 => [ 'alignment_entry_point' ],
             },
             -hive_capacity        => $self->o('copy_trees_capacity'),
-            -analysis_capacity 	  => $self->o('copy_trees_capacity'),
             -rc_name => '8Gb_job',
         },
 
@@ -747,7 +745,6 @@ sub core_pipeline_analyses {
             },
             -flow_into  			=> [ 'mafft_update' ],
             -hive_capacity          => $self->o('copy_alignments_capacity'),
-            -analysis_capacity 		=> $self->o('copy_alignments_capacity'),
             -rc_name => '8Gb_job',
         },
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
@@ -1524,7 +1521,6 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'sql'         => 'INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
             },
-            -analysis_capacity => 1,
         },
 
 
@@ -1667,7 +1663,6 @@ sub core_pipeline_analyses {
                 'mafft_home'                 => $self->o('mafft_home'),
             },
             -hive_capacity        => $self->o('mafft_update_capacity'),
-            -analysis_capacity 	  => $self->o('mafft_update_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into      => [ 'raxml_update' ],
         },
@@ -2293,7 +2288,6 @@ sub core_pipeline_analyses {
                 'output_clusterset_id'      => 'default',
             },
             -hive_capacity        => $self->o('raxml_update_capacity'),
-            -analysis_capacity 	  => $self->o('raxml_update_capacity'),
             -rc_name    => '8Gb_job',
             -flow_into  => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
         },
