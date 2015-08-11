@@ -240,7 +240,7 @@ sub run_analysis {
           when ('dubious')    { $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0) }
           when ('gene_split') { $self->tag_genepairlink($genepairlink, 'gene_split', 1) }
           when ('duplication'){ push @pair_group, $genepairlink }
-          default             { die sprintf("Unknown node type: %s\n", $ancestor->get_value_for_tag('node_type')) }
+          default             { die sprintf("Unknown node type '%s' for node_id %d\n", $ancestor->get_value_for_tag('node_type'), $ancestor->node_id) }
       }
 
      }
