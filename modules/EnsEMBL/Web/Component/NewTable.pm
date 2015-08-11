@@ -27,7 +27,9 @@ sub ajax_table_content {
 
   my $hub = $self->hub;
   my $regions = from_json($hub->param('regions'));
-  my $incremental = $self->incremental_table;
+
+  my $phases = [{ name => undef }];
+  $phases = $self->incremental_table if $self->can('incremental_table');
   my @out;
   foreach my $region (@$regions) {
     my $columns = $region->{'columns'};
@@ -40,12 +42,12 @@ sub ajax_table_content {
     my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
     my %cols_pos;
     $cols_pos{$cols[$_]} = $_ for(0..$#cols);
-    my $used_cols = $incremental->[$more]{'cols'} || \@cols;
+    my $used_cols = $phases->[$more]{'cols'} || \@cols;
     my $columns_out = [ (0) x @cols ];
     $columns_out->[$cols_pos{$_}] = 1 for @$used_cols;
 
     # Populate data
-    my $data = $self->table_content($incremental->[$more]{'name'});
+    my $data = $self->table_content($phases->[$more]{'name'});
     my @data_out;
     foreach my $d (@$data) {
       push @data_out,[ map { $d->{$_}||'' } @$used_cols ];
@@ -53,7 +55,7 @@ sub ajax_table_content {
 
     # Move on continuation counter
     $more++;
-    $more=0 if $more == @$incremental;
+    $more=0 if $more == @$phases;
 
     # Send it
     push @out,{
