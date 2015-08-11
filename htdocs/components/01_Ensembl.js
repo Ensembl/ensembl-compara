@@ -287,7 +287,7 @@ Ensembl.extend({
       }
     }
     
-    url = url.replace(/([?;]);+/g, '$1');
+    url = url.replace(/([?;]);+/g, '$1').replace(/[?;&]$/, '');
     
     if (inputURL) {
       return url;
