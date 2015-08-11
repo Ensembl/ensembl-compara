@@ -304,6 +304,11 @@ sub update_from_url {
     $input->delete('trackhub'); 
   }
 
+  ## Backwards compatibility
+  if ($input->param('format') eq 'DATAHUB') {
+    $input->param('format', 'TRACKHUB');
+  }
+
   $hub->get_imageconfig($image_config)->update_from_url(@values) if @values;
   
   $session->store;
