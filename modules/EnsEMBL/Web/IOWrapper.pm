@@ -35,11 +35,19 @@ sub new {
   ### Instantiates a parser for the appropriate file type 
   ### and opens the file for reading
   ### @param file EnsEMBL::Web::File object
-  my ($class, $parser) = @_;
+  my ($class, $self) = @_;
 
-  my $greyscale = [qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000)]; 
+  $self->{'greyscale'} = [qw(e2e2e2 c6c6c6 aaaaaa 8d8d8d 717171 555555 383838 1c1c1c 000000)]; 
 
-  my $self = { parser => $parser, greyscale => $greyscale };
+  ## 'Nearest' should be relative to the size of the genome
+  my $scale = 1;
+  if ($self->{'hub'}) {
+    my $species = $self->{'species'} || $self->{'hub'}->species;
+    $scale = $self->{'hub'}->species_defs->get_config($species, 'ENSEMBL_GENOME_SIZE');
+    $scale = 1 if $scale == 0;
+  }
+  $self->{'nearest_window_size'} = 100000 * $scale; 
+
   bless $self, $class;  
   return $self;
 }
@@ -47,7 +55,7 @@ sub new {
 sub open {
   ## Factory method - creates a wrapper of the appropriate type
   ## based on the format of the file given
-  my $file = shift;
+  my ($file, %args) = @_;
 
   my %format_to_class = Bio::EnsEMBL::IO::Utils::format_to_class;
   my $subclass = $format_to_class{$file->get_format};
@@ -65,11 +73,17 @@ sub open {
     }
   }
   else {
-    $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_read_path);
+    ## Open file from where we wrote to, otherwise it can cause issues
+    $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
   }
 
   if (dynamic_use($class, 1)) {
-    $class->new($parser);  
+    $class->new({
+                'parser' => $parser, 
+                'file'   => $file, 
+                'format' => $format,
+                %args,
+                });  
   }
   else {
     warn ">>> NO SUCH MODULE $class";
@@ -80,6 +94,18 @@ sub parser {
   ### a
   my $self = shift;
   return $self->{'parser'};
+}
+
+sub file {
+  ### a
+  my $self = shift;
+  return $self->{'file'};
+}
+
+sub format {
+  ### a
+  my $self = shift;
+  return $self->{'format'};
 }
 
 sub convert_to_gradient {
@@ -183,6 +209,14 @@ sub create_hash {
   ### the web display
 }
 
+sub validate {
+  ### Wrapper around the parser's validation method
+  my $self = shift;
+  my $valid = $self->parser->validate;
+
+  return $valid ? undef : 'File did not validate as format '.$self->format;
+}
+
 sub coords {
   ### Simple accessor to return the coordinates from the parser
   my $self = shift;
@@ -196,6 +230,51 @@ sub rgb_to_hex {
   my ($self, $triple_ref) = @_;
   my @rgb = split(',', $triple_ref);
   return sprintf("%02x%02x%02x", @rgb);
+}
+
+sub nearest_feature {
+### Try to find the nearest feature to the browser's current location
+  my $self = shift;
+
+  my $location = $self->hub->param('r');
+  return undef unless $location;
+
+  my ($browser_region, $browser_start, $browser_end) = split(':|-', $location);
+  my ($nearest_region, $nearest_start, $nearest_end, $first_region, $first_start, $first_end);
+  my $nearest_distance;
+  my $first_done = 0;
+
+  while ($self->parser->next) {
+    next if $self->parser->is_metadata;
+    my ($seqname, $start, $end) = $self->coords;
+    next unless $seqname && $start;
+
+    ## Capture the first feature, in case we don't find anything on the current chromosome
+    unless ($first_done) {
+      ($first_region, $first_start, $first_end) = ($seqname, $start, $end);
+      $first_done = 1;
+    }
+
+    ## We only measure distance within the current chromosome
+    next unless $seqname eq $browser_region;
+
+    my $feature_distance  = $browser_start > $start ? $browser_start - $start : $start - $browser_start;
+    $nearest_start      ||= $start;
+    $nearest_distance     = $browser_start > $nearest_start ? $browser_start - $nearest_start 
+                                                           : $nearest_start - $browser_start;
+
+    if ($feature_distance <= $nearest_distance) {
+      $nearest_start = $start;
+      $nearest_end   = $end;
+    }
+  }
+
+  if ($nearest_region) {
+    return ($nearest_region, $nearest_start, $nearest_end, 'nearest');
+  }
+  else {
+    return ($first_region, $first_start, $first_end, 'first');
+  }
 }
 
 1;

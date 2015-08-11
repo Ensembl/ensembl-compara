@@ -48,6 +48,42 @@ sub ICON_MAPPINGS {
   };
 }
 
+sub PARSER_FORMATS {
+### Maps file formats to correct module classes
+  return {
+    'bed'       => {'class' => 'Bed',     'ext' => 'bed'},
+    'bedgraph'  => {'class' => 'Bed',     'ext' => 'bed|bgr'},
+    'bigbed'    => {'class' => 'BigBed',  'ext' => 'bb'},
+    'bigwig'    => {'class' => 'BigWig',  'ext' => 'bw'},
+    'gff'       => {'class' => 'GFF3',    'ext' => 'gff'},
+    'gtf'       => {'class' => 'GFF3',    'ext' => 'gtf'},
+    'gvf'       => {'class' => 'GVF',     'ext' => ''},
+    'hgvs'      => {'class' => 'HGVS',    'ext' => ''},
+    'psl'       => {'class' => 'Psl',     'ext' => 'psl'},
+    'evf'       => {'class' => 'VEP_input', 'ext' => 'evf'},
+    'wig'       => {'class' => 'Wig',     'ext' => 'wig'},
+  };
+}
+
+sub USERDATA_FORMATS {
+  return {
+    'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph',   'limit' => 'remote'},
+    'bed'       => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature'},
+    'bedgraph'  => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph'},
+    'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph',   'limit' => 'remote'},
+    'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph',   'limit' => 'remote'},
+    'gene_list' => {'ext' => 'txt', 'label' => 'Gene or feature list', 'display' => 'feature'},
+    'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
+    'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
+    'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
+    'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
+    'trackhub'  => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph',   'limit' => 'remote'},
+    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
+    'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
+    'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
+  };
+}
+
 sub FORMATS {
   warn "!!! DEPRECATED - PLEASE USE 'EXPORT_FORMATS' INSTEAD";
   return &EXPORT_FORMATS;

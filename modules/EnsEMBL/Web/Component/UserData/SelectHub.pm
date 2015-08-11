@@ -48,12 +48,12 @@ sub content {
   my $current_species = $hub->species;
   my $current_assembly = $species_defs->ASSEMBLY_VERSION;
 
-  my $datahubs = {};
+  my $trackhubs = {};
   my (%this_assembly, %this_species, %other_species);
   my $imageconfig   = $hub->get_imageconfig('contigviewbottom');
   foreach my $sp (@valid_species) {
-    ## This is all a bit hacky, but makes configuration of multi-species datahubs simpler
-    my %sp_hubs = (%{$species_defs->get_config($sp, 'PUBLIC_DATAHUBS')||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_DATAHUBS'));
+    ## This is all a bit hacky, but makes configuration of multi-species trackhubs simpler
+    my %sp_hubs = (%{$species_defs->get_config($sp, 'PUBLIC_TRACKHUBS')||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_TRACKHUBS'));
 
     ## Get hub information
     if (keys %sp_hubs) {
@@ -73,7 +73,7 @@ sub content {
           }
         }
         $config{'priority'} = 0 unless $config{'priority'};
-        $datahubs->{$key} = {'menu' => $menu, %config};
+        $trackhubs->{$key} = {'menu' => $menu, %config};
         foreach my $assembly (sort { $assemblies{$a} cmp $assemblies{$b} || $a cmp $b } keys %assemblies) {
           my $sp = $assemblies{$assembly};
           if ($sp eq $current_species) {
@@ -87,11 +87,11 @@ sub content {
           else {
             $other_species{$key} = 1;
           }
-          if ($datahubs->{$key}{'species'}) {
-            push @{$datahubs->{$key}{'species'}}, {'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly};
+          if ($trackhubs->{$key}{'species'}) {
+            push @{$trackhubs->{$key}{'species'}}, {'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly};
           }
           else {
-            $datahubs->{$key}{'species'} = [{'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly}];
+            $trackhubs->{$key}{'species'} = [{'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly}];
           }
         }
       }
@@ -104,7 +104,7 @@ sub content {
   $html .= $self->info_panel('Tip', qq(If you don't see the hub you are interested in listed here, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.));
 
   my @keys_1 = keys %this_assembly;
-  my $table_1 = $self->create_table($datahubs, \@keys_1);
+  my $table_1 = $self->create_table($trackhubs, \@keys_1);
   $html .= '<h3>Hubs with data on the current species and assembly</h3>';
   if ($table_1) {
     $html .= '<p>Links for other species may go to archive sites</p>';
@@ -115,7 +115,7 @@ sub content {
   }
 
   my @keys_2 = keys %this_species;
-  my $table_2 = $self->create_table($datahubs, \@keys_2);
+  my $table_2 = $self->create_table($trackhubs, \@keys_2);
   $html .= '<h3>Hubs with data on the current species but older assemblies</h3>';
   if ($table_2) {
     $html .= '<p>Links may go to archive sites</p>';
@@ -126,7 +126,7 @@ sub content {
   }
 
   my @keys_3 = keys %other_species;
-  my $table_3 = $self->create_table($datahubs, \@keys_3);
+  my $table_3 = $self->create_table($trackhubs, \@keys_3);
   $html .= '<h3>Hubs with data on other species</h3>';
   if ($table_3) {
     $html .= '<p>Links may go to archive sites</p>';
@@ -141,7 +141,7 @@ sub content {
 }
 
 sub create_table {
-  my ($self, $datahubs, $keys) = @_;
+  my ($self, $trackhubs, $keys) = @_;
   my $species_defs  = $self->hub->species_defs;
   my $adaptor       = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($self->hub);
 
@@ -151,13 +151,13 @@ sub create_table {
       { key => 'species',      title => 'Species and assembly', width => '40%', align => 'left', sort => 'html' },
   ], [], {});
 
-  my @order = sort { $datahubs->{$b}->{'priority'} <=> $datahubs->{$a}->{'priority'}
-                    || lc($datahubs->{$a}->{'name'}) cmp lc($datahubs->{$b}->{'name'})
+  my @order = sort { $trackhubs->{$b}->{'priority'} <=> $trackhubs->{$a}->{'priority'}
+                    || lc($trackhubs->{$a}->{'name'}) cmp lc($trackhubs->{$b}->{'name'})
                     } @$keys;
 
   my $row_count = 0;
   foreach my $key (@order) {
-    my $hub_info = $datahubs->{$key};
+    my $hub_info = $trackhubs->{$key};
     next unless keys %$hub_info;
     my $row = {
               'name'        => $hub_info->{'name'},
@@ -193,7 +193,7 @@ sub create_table {
             $sp_info->{'site'} = '' if $archive_version < 75;
           }
         }
-        ## Don't link back to archives with no/buggy datahub support!
+        ## Don't link back to archives with no/buggy trackhub support!
       }
             
 
@@ -201,7 +201,7 @@ sub create_table {
       if ($sp_info->{'site'}) {
         my $site = $sp_info->{'site'} eq 'current' ? '' : $sp_info->{'site'};
         my $link;
-        $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s#modal_user_data',
+        $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=TRACKHUB;menu=%s#modal_user_data',
                          $site, $sp_info->{'dir'}, $location,
                          $hub_info->{'url'}, $hub_info->{'menu'}, $hub_info->{'menu'}
                         );
@@ -219,7 +219,7 @@ sub create_table {
     }
     $row->{'species'} = $species_html;
     $table->add_row($row);
-    delete $datahubs->{$key};
+    delete $trackhubs->{$key};
   }
   return $row_count > 0 ? $table->render : undef;
 }

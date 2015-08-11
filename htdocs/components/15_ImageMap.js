@@ -1077,6 +1077,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (typeof speciesNumber !== 'undefined') {
       els.addClass(originalClass);
     }
+
+    this.selectArea(false);
     
     els = null;
   },
@@ -1176,71 +1178,93 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   highlightLocation: function (r, offset) {
-    var panel = this;
-
-    if (this.vertical) { // not for vertical images
-      return;
-    }
+    var panel   = this;
+    var imgBox  = this.draggables && this.draggables[0];
+    var start, end;
 
     offset = offset || 0;
 
-    var imgBox = this.draggables && this.draggables[0];
-    var start, end;
+    // not for vertical images
+    if (this.vertical) {
+      return;
+    }
 
+    // if image box is not interactive
+    if (!imgBox) {
+      return;
+    }
+
+    // create the highlighted area div
+    if (!this.elLk.highlightedLocation) {
+      this.elLk.highlightedLocation = $('<div class="selector hlrselector"><div class="hlrselector-close">X</div></div>').hide().insertAfter(this.elLk.img)
+        .find('div').helptip({content: 'Clear highlighted region'}).on('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          Ensembl.highlightLocation(false);
+        })
+      .end();
+    }
+
+    // create the highlight button
+    if (!this.elLk.highlightButton) {
+      this.elLk.highlightButton = $('<a class="hlr-reset">').hide().appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
+        e.preventDefault();
+        if (this.className.match('selected')) {
+          Ensembl.highlightLocation(false);
+        } else if (this.className.match('outside')) {
+          var hlr     = Ensembl.getHighlightedLocation();
+          var length  = Math.abs(hlr[1] === imgBox.range.chr ? imgBox.range.end - imgBox.range.start : (hlr[3] - hlr[2]) * 3); // keep the scale if we are on the same chromosome
+          var centre  = (hlr[2] + hlr[3]) / 2;
+          Ensembl.updateLocation(hlr[1] + ':' + Math.round(centre - length / 2) + '-' + Math.round(centre + length / 2));
+        } else {
+          Ensembl.highlightLocation(panel.lastHighlightedLoc);
+        }
+      });
+    }
+
+    // if clearing the highlighted area
     if (r === false) {
+      if (!this.highlightedLoc) { // highlighted area is already cleared
+        return;
+      }
+
       this.lastHighlightedLoc = this.highlightedLoc;
       this.highlightedLoc     = false;
-      if (this.elLk.highlightLocation) {
-        this.elLk.highlightLocation.hide();
-      }
-      if (this.elLk.resetHighlightLocation) {
-        if (this.lastHighlightedLoc) {
-          this.elLk.resetHighlightLocation.removeClass('selected').helptip('option', 'content', 'Highlight region').show();
-        } else {
-          this.elLk.resetHighlightLocation.hide();
-        }
-      }
+      this.elLk.highlightedLocation.hide();
+      this.elLk.highlightButton.removeClass('outside selected').helptip('option', 'content', 'Re-highlight region').show();
       return;
     }
 
-    if (!r || !imgBox || imgBox.range.chr !== r[1]) {
+    // if r is null or undefined - no param in the url
+    if (!r) {
       return;
     }
 
+    // save the highlighted location whether or not it falls in the current region
+    this.highlightedLoc = r;
+
+    // remove image selector if any
+    this.selectArea(false);
+
+    // calculate start and end of the current image
     start = imgBox.range.start - offset;
     end   = imgBox.range.end - offset;
 
-    this.selectArea(false);
+    // display the highlighted region if it overlaps the current region
+    if (imgBox.range.chr === r[1] && (start > r[2] && start < r[3] || end > r[2] && end < r[3] || start <= r[2] && end >= r[3])) {
 
-    if (start > r[2] && start < r[3] || end > r[2] && end < r[3] || start <= r[2] && end >= r[3]) {
-
-      if (!this.elLk.highlightLocation) {
-        this.elLk.highlightLocation = $('<div class="selector hlrselector"></div>').insertAfter(this.elLk.img);
-      }
-
-      if (!this.elLk.resetHighlightLocation) {
-        this.elLk.resetHighlightLocation = $('<a class="hlr-reset">')
-          .appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
-            e.preventDefault();
-            Ensembl.highlightLocation(this.className.match('selected') ? false : panel.lastHighlightedLoc);
-          }
-        );
-      }
-
-      this.elLk.highlightLocation.css({
+      this.elLk.highlightedLocation.css({
         left:   imgBox.l + Math.max(r[2] - start, 0) / imgBox.range.scale,
         width:  (Math.min(end, r[3] + 1) - Math.max(r[2], start)) / imgBox.range.scale - 1,
         top:    imgBox.t,
         height: imgBox.b - imgBox.t
       }).show();
 
-      this.elLk.resetHighlightLocation.addClass('selected').helptip('option', 'content', 'Clear highlighted region').show();
+      this.elLk.highlightButton.addClass('selected').removeClass('outside').helptip('option', 'content', 'Clear highlighted region').show();
 
-      this.highlightedLoc = r;
     } else {
-      if (this.elLk.highlightLocation) {
-        this.elLk.highlightLocation.hide();
-      }
+      this.elLk.highlightedLocation.hide();
+      this.elLk.highlightButton.addClass('outside').removeClass('selected').helptip('option', 'content', 'Jump back to the highlighted region').show();
     }
   },
 

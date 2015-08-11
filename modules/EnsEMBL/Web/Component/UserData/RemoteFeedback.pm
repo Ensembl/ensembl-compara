@@ -44,7 +44,7 @@ sub content {
   my $form = $self->new_form({'id' => 'url_feedback', 'method' => 'post'});
   my $message;
 
-  if ($hub->param('format') eq 'DATAHUB') {
+  if ($hub->param('format') eq 'TRACKHUB') {
     $message = $self->get_message($hub->param('species_flag'), $hub->param('assembly_flag'));
   }
   else {

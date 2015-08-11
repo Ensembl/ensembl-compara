@@ -20,7 +20,7 @@ package EnsEMBL::Web::Command::UserData::TrackHubRedirect;
 
 use strict;
 
-use EnsEMBL::Web::File::AttachedFormat::DATAHUB;
+use EnsEMBL::Web::File::AttachedFormat::TRACKHUB;
 use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Command::UserData);
@@ -46,7 +46,7 @@ sub process {
     ($new_action, $params)  = $self->check_attachment($url);
 
     unless ($new_action) {
-      my $trackhub = EnsEMBL::Web::File::AttachedFormat::DATAHUB->new('hub' => $self->hub, 'url' => $url);
+      my $trackhub = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
     
       ($new_action, $params) = $self->attach($trackhub, $filename); 
    }
