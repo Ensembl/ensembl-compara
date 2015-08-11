@@ -90,8 +90,8 @@ sub _has_duplicates {
 sub run {
     my $self = shift;
 
-    # Reusability is only possible if there is a master database
-    if ($self->param('reference_dba')) {
+    # Reusability is only possible if there is a master database and if the arrays have been used
+    if ($self->param('reference_dba') and (scalar(@{$self->param('reused_gdb_ids')}) or scalar(@{$self->param('nonreused_gdb_ids')}))) {
         $self->find_reusable_genomes();
     } else {
         foreach my $gdb (@{$self->param('genome_dbs')}) {
