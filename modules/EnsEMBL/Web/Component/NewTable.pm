@@ -33,10 +33,13 @@ sub ajax_table_content {
   my @out;
   foreach my $region (@$regions) {
     my $columns = $region->{'columns'};
-    my $rows = $region->{'rows'};
+    #my $rows = $region->{'rows'};
     my $more = $region->{'more'};
 
     my $iconfig = from_json($hub->param('config'));
+
+    # Rows to send
+    my $rows = $phases->[$more]{'rows'} || [0,-1];
 
     # Calculate columns to send
     my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
@@ -47,7 +50,7 @@ sub ajax_table_content {
     $columns_out->[$cols_pos{$_}] = 1 for @$used_cols;
 
     # Populate data
-    my $data = $self->table_content($phases->[$more]{'name'});
+    my $data = $self->table_content($phases->[$more]{'name'},$rows);
     my @data_out;
     foreach my $d (@$data) {
       push @data_out,[ map { $d->{$_}||'' } @$used_cols ];
@@ -61,7 +64,7 @@ sub ajax_table_content {
     push @out,{
       request => $regions,
       data => \@data_out,
-      region => { columns => $columns_out, rows => [0,-1] },
+      region => { columns => $columns_out, rows => $rows },
       more => $more,
     };
   }

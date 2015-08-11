@@ -33,6 +33,9 @@ sub _init {
 sub incremental_table {
   return [
   {
+    name => "taster",
+    rows => [0,50],
+  },{
     name => "outline",
     cols =>  [ qw(ID Source) ],
   },{
@@ -41,7 +44,7 @@ sub incremental_table {
 }
 
 sub table_content {
-  my ($self,$phase) = @_;
+  my ($self,$phase,$rows) = @_;
 
   my $hub = $self->hub;
   my $consequence_type = $hub->param('sub_table');
@@ -54,7 +57,7 @@ sub table_content {
     my $t = $hub->param('t');
     @transcripts = grep $_->stable_id eq $t, @transcripts;
   }
-  return $self->variation_table($consequence_type,\@transcripts,$phase);
+  return $self->variation_table($consequence_type,\@transcripts,$phase,$rows);
 }
 
 sub content {
@@ -402,11 +405,12 @@ sub tree {
 }
 
 sub variation_table {
-  my ($self, $consequence_type, $transcripts, $phase) = @_;
+  my ($self, $consequence_type, $transcripts, $phase, $offlim) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
-  
+  my $num = 0;
+
   # create some URLs - quicker than calling the url method for every variant
   my $base_url = $hub->url({
     type   => 'Variation',
@@ -450,7 +454,7 @@ sub variation_table {
     });
   }
   
-  foreach my $transcript (@$transcripts) {
+  ROWS: foreach my $transcript (@$transcripts) {
     my %snps = %{$transcript->__data->{'transformed'}{'snps'} || {}};
    
     next unless %snps;
@@ -553,7 +557,10 @@ sub variation_table {
             };
             $row = { %$row, %$more_row };
           }
+          $num++;
+          next if $num <= $offlim->[0];
           push @rows,$row;
+          last ROWS if $offlim->[1] != -1 and $num >= $offlim->[1];
         }
       }
     }
