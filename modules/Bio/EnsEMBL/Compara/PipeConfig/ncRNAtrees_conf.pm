@@ -137,23 +137,35 @@ sub pipeline_analyses {
     return [
 
 # --------------------------------------------- [ backbone ]-----------------------------------------------------------------------------
-            {   -logic_name => 'backbone_fire_db_prepare',
+            {   -logic_name => 'backbone_fire_init_compara_tables',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -input_ids  => [ {} ],
                 -flow_into  => {
-                                '1->A'  => [ 'copy_table_factory' ],
-                                'A->1'  => [ 'backbone_fire_load' ],
+                                '1->A'  => [ 'copy_ncbi_tables_factory' ],
+                                'A->1'  => [ 'backbone_fire_load_genomes' ],
                                },
                 %backbone_params,
             },
 
-            {   -logic_name => 'backbone_fire_load',
+            {   -logic_name => 'backbone_fire_load_genomes',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
                 -parameters  => {
                                   'output_file'          => $self->o('dump_dir').'/snapshot_before_load.sql',
                                 },
                 -flow_into  => {
-                               '1->A'   => [ 'load_genomedb_factory' ],
+                               '1->A'   => [ 'load_members_factory' ],
+                               'A->1'   => [ 'backbone_fire_classify_genes' ],
+                              },
+                %backbone_params,
+            },
+
+            {   -logic_name => 'backbone_fire_classify_genes',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+                -parameters  => {
+                                  'output_file'          => $self->o('dump_dir').'/snapshot_before_classify.sql',
+                                },
+                -flow_into  => {
+                               '1->A'   => [ 'load_rfam_models' ],
                                'A->1'   => [ 'backbone_fire_tree_building' ],
                               },
                 %backbone_params,
@@ -165,7 +177,7 @@ sub pipeline_analyses {
                                   'output_file'          => $self->o('dump_dir').'/snapshot_before_tree_building.sql',
                                  },
                 -flow_into  => {
-                                '1->A'  => [ 'rfam_classify' ],
+                                '1->A'  => [ 'clusters_factory' ],
                                 'A->1'  => [ 'backbone_pipeline_finished' ],
                                },
                 %backbone_params,
@@ -178,7 +190,38 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[copy tables from master and fix the offsets]---------------------------------------------
 
-            @{$self->init_basic_tables_analyses('#master_db#', 'offset_tables', 0, 0, 1)},
+        {   -logic_name => 'copy_ncbi_tables_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+                'column_names' => [ 'table' ],
+                'fan_branch_code' => 2,
+            },
+            -flow_into => {
+                '2->A' => [ 'copy_ncbi_table'  ],
+                'A->1' => [ 'populate_method_links_from_db' ],
+            },
+        },
+
+        {   -logic_name    => 'copy_ncbi_table',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'   => '#master_db#',
+                'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+            },
+        },
+
+        {   -logic_name    => 'populate_method_links_from_db',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'   => '#master_db#',
+                'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+                'table'         => 'method_link',
+            },
+            -flow_into      => [ 'offset_tables' ],
+        },
 
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -192,8 +235,11 @@ sub pipeline_analyses {
                     'ALTER TABLE gene_tree_node    AUTO_INCREMENT=100000001',
                     'ALTER TABLE CAFE_gene_family  AUTO_INCREMENT=100000001',
                     'ALTER TABLE CAFE_species_gene AUTO_INCREMENT=100000001',
+                    'ALTER TABLE species_set_header      AUTO_INCREMENT=10000001',
+                    'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
                 ],
             },
+            -flow_into  => [ 'load_genomedb_factory' ],
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
@@ -202,12 +248,12 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -parameters => {
                                 'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
+                                'mlss_id'               => $self->o('mlss_id'),
                                 'extra_parameters'      => [ 'locator' ],
                                },
                 -flow_into => {
                                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, }, # fan
-                               'A->1' => [ 'load_genomedb_funnel' ],
-                               1      => [ 'load_rfam_models' ],
+                               'A->1' => [ 'create_mlss_ss' ],
                               },
             },
 
@@ -219,6 +265,16 @@ sub pipeline_analyses {
             -analysis_capacity => 10,
         },
 
+        {   -logic_name => 'create_mlss_ss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
+            -parameters => {
+                tree_method_link    => 'NC_TREES',
+            },
+            -rc_name => '2Gb_job',
+            -flow_into => {
+                1 => [ 'make_species_tree' ],
+            },
+        },
 
         {   -logic_name         => 'hc_members_per_genome',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
@@ -243,19 +299,6 @@ sub pipeline_analyses {
         {   -logic_name => 'per_genome_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             -rc_name    => '4Gb_job',
-        },
-
-        {   -logic_name => 'load_genomedb_funnel',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                            # Removes the SS and the MLSS associated with non-valid genome_db_ids
-                            'sql' => [ 'CREATE TEMPORARY TABLE tmp_ss SELECT species_set_id FROM species_set LEFT JOIN genome_db USING (genome_db_id) GROUP BY species_set_id HAVING COUNT(*) != COUNT(genome_db.genome_db_id)',
-                                       'DELETE method_link_species_set FROM method_link_species_set JOIN tmp_ss USING (species_set_id)',
-                                       'DELETE species_set             FROM species_set             JOIN tmp_ss USING (species_set_id)',
-                                       'DELETE species_set_header      FROM species_set_header      JOIN tmp_ss USING (species_set_id)',
-                                     ]
-                           },
-            -flow_into  => [ 'make_species_tree' ],
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -294,7 +337,7 @@ sub pipeline_analyses {
                 binary          => 0,
                 n_missing_species_in_tree   => 0,
             },
-            -flow_into          => [ 'load_members_factory', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('find_epo_database') ],
+            -flow_into          => [ $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('find_epo_database') ],
             %hc_params,
         },
 
@@ -336,19 +379,23 @@ sub pipeline_analyses {
                                'type'              => 'infernal',
                                'skip_consensus'    => 1,
                               },
+            -flow_into     => [ 'rfam_classify' ],
         },
 
 # ---------------------------------------------[run RFAM classification]--------------------------------------------------------------
 
             {   -logic_name    => 'rfam_classify',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
-                -flow_into     => {
-                                   '1->A' => ['create_additional_clustersets'],
-                                   'A->1' => ['clusters_factory'],
-                                  },
+                -flow_into     => [ 'clusterset_backup', 'create_additional_clustersets' ],
                 -rc_name       => '1Gb_job',
             },
 
+            {   -logic_name    => 'clusterset_backup',
+                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+                -parameters    => {
+                    'sql'         => 'INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
+                },
+            },
 
             {   -logic_name    => 'create_additional_clustersets',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
@@ -358,6 +405,7 @@ sub pipeline_analyses {
                                   },
             },
 
+# -------------------------------------------------[build trees]------------------------------------------------------------------
 
             {   -logic_name    => 'clusters_factory',
                 -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -365,7 +413,7 @@ sub pipeline_analyses {
                                 'inputquery'      => 'SELECT root_id AS gene_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
                                },
                 -flow_into     => {
-                                   '2->A' => ['clusterset_backup'],
+                                   '2->A' => [ $self->o('skip_epo') ? 'msa_chooser' : 'recover_epo' ],
                                    'A->1' => [ 'hc_tree_final_checks' ],
                                   },
             },
@@ -417,16 +465,6 @@ sub pipeline_analyses {
                 'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
             },
         },
-
-            {   -logic_name    => 'clusterset_backup',
-                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-                -parameters    => {
-                                   'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
-                                  },
-                -analysis_capacity => 1,
-                -flow_into      => [ $self->o('skip_epo') ? 'msa_chooser' : 'recover_epo' ],
-            },
-
 
             {   -logic_name    => 'recover_epo',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
