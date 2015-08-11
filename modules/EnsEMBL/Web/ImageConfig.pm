@@ -1285,7 +1285,7 @@ sub _add_vcf_track {
   );
 }
 
-sub _add_pairwise_tabix_track {
+sub _add_pairwise_track {
   shift->_add_file_format_track(
     format    => 'PAIRWISE',
     renderers => [
