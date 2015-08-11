@@ -1256,7 +1256,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     } else {
       this.elLk.highlightedLocation.hide();
-      this.elLk.highlightButton.addClass('outside').removeClass('selected').helptip('option', 'content', 'Centre to the highlighted region').show();
+      this.elLk.highlightButton.addClass('outside').removeClass('selected').helptip('option', 'content', 'Jump back to the highlighted region').show();
     }
   },
 
