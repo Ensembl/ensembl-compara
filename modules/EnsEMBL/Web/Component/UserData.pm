@@ -42,8 +42,8 @@ sub add_file_format_dropdown {
   my @upload_formats  = $limit && $limit eq 'remote' ? () : @{$sd->multi_val('UPLOAD_FILE_FORMATS')||[]};
   my $format_info     = $sd->multi_val('DATA_FORMAT_INFO');
   my %format_type     = (map({$_ => 'remote'} @remote_formats), map({$_ => 'upload'} @upload_formats));
-  ## Override defaults for datahub, which is a special case
-  $format_type{'datahub'} = 'datahub';
+  ## Override defaults for trackhub, which is a special case
+  $format_type{'trackhub'} = 'trackhub';
 
   if (scalar @remote_formats || scalar @upload_formats) {
     my $values = [

@@ -24,7 +24,7 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::ViewConfig);
 
-# TODO: Support other datahub dimensions as filters?
+# TODO: Support other track hub dimensions as filters?
 
 sub matrix_image_config :lvalue { $_[0]{'matrix_image_config'}; }
 

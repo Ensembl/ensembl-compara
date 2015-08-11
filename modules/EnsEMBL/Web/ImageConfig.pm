@@ -63,7 +63,7 @@ sub new {
     _parameters      => { # Default parameters
       storable     => 1,      
       has_das      => 1,
-      datahubs     => 0,
+      trackhubs     => 0,
       image_width  => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
       image_resize => 0,      
       margin       => 5,
@@ -618,7 +618,7 @@ sub load_user_tracks {
   my $session  = $hub->session;
   my $user     = $hub->user;
   my $das      = $hub->get_all_das;
-  my $datahubs = $self->get_parameter('datahubs') == 1;
+  my $trackhubs = $self->get_parameter('trackhubs') == 1;
   my (%url_sources, %upload_sources);
   
   $self->_load_url_feature($menu);
@@ -732,8 +732,8 @@ sub load_user_tracks {
         source   => $url_sources{$code},
         external => 'user'
       );
-    } elsif (lc $url_sources{$code}{'format'} eq 'datahub') {
-      $self->_add_datahub($url_sources{$code}{'source_name'}, $url_sources{$code}{'source_url'}) if $datahubs;
+    } elsif (lc $url_sources{$code}{'format'} eq 'trackhub') {
+      $self->_add_trackhub($url_sources{$code}{'source_name'}, $url_sources{$code}{'source_url'}) if $trackhubs;
     } else {
       $self->_add_flat_file_track($menu, 'url', $code, $url_sources{$code}{'source_name'},
         sprintf('
@@ -795,13 +795,13 @@ sub load_user_tracks {
   $ENV{'CACHE_TAGS'}{'user_data'} = sprintf 'USER_DATA[%s]', md5_hex(join '|', map $_->id, $menu->nodes) if $menu->has_child_nodes;
 }
 
-sub _add_datahub {
+sub _add_trackhub {
   my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $hide) = @_;
   if (defined($self->hub->species_defs->TRACKHUB_VISIBILITY)) {
     $hide = $self->hub->species_defs->TRACKHUB_VISIBILITY;
   }
 
-  return ($menu_name, {}) if $self->{'_attached_datahubs'}{$url};
+  return ($menu_name, {}) if $self->{'_attached_trackhubs'}{$url};
 
   my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
   my $hub_info = $trackhub->get_hub({'assembly_lookup' => $self->species_defs->assembly_lookup, 
@@ -814,7 +814,7 @@ sub _add_datahub {
     my $shortLabel = $hub_info->{'details'}{'shortLabel'};
     $menu_name = $shortLabel if $shortLabel and $is_poor_name;
 
-    my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
+    my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, trackhub_menu => 1 }));
 
     my $node;
     my $assemblies = $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
@@ -830,9 +830,9 @@ sub _add_datahub {
       last if $node;
     }
     if ($node) {
-      $self->_add_datahub_node($node, $menu, $menu_name, $hide);
+      $self->_add_trackhub_node($node, $menu, $menu_name, $hide);
 
-      $self->{'_attached_datahubs'}{$url} = 1;
+      $self->{'_attached_trackhubs'}{$url} = 1;
     } else {
       my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
       $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];
@@ -841,7 +841,7 @@ sub _add_datahub {
   return ($menu_name, $hub_info);
 }
 
-sub _add_datahub_node {
+sub _add_trackhub_node {
   my ($self, $node, $menu, $name, $hide) = @_;
   
   my (@next_level, @childless);
@@ -857,7 +857,7 @@ sub _add_datahub_node {
   }
 
   if (scalar(@next_level)) {
-    $self->_add_datahub_node($_, $menu, $name) for @next_level;
+    $self->_add_trackhub_node($_, $menu, $name) for @next_level;
   } 
 
   if (scalar(@childless)) {
@@ -891,11 +891,11 @@ sub _add_datahub_node {
       }
     };
 
-    $self->_add_datahub_tracks($node, \@childless, $config, $menu, $name);
+    $self->_add_trackhub_tracks($node, \@childless, $config, $menu, $name);
   }
 }
 
-sub _add_datahub_tracks {
+sub _add_trackhub_tracks {
   my ($self, $parent, $children, $config, $menu, $name) = @_;
   my $hub    = $self->hub;
   my $data   = $parent->data;
@@ -907,7 +907,7 @@ sub _add_datahub_tracks {
     menu_name    => $name,
     submenu_key  => $self->tree->clean_id("${name}_$data->{'track'}", '\W'),
     submenu_name => $data->{'shortLabel'},
-    datahub      => 1,
+    trackhub      => 1,
   );
 
   if ($matrix) {
@@ -1032,7 +1032,7 @@ sub _add_datahub_tracks {
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
 
-sub _add_datahub_extras_options {
+sub _add_trackhub_extras_options {
   my ($self, %args) = @_;
   
   if (exists $args{'menu'}{'maxHeightPixels'} || exists $args{'source'}{'maxHeightPixels'}) {
@@ -1058,7 +1058,7 @@ sub _add_datahub_extras_options {
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'subset'}     = $self->tree->clean_id($args{'source'}{'submenu_key'}, '\W') unless $args{'source'}{'matrix'};
-  $args{'options'}{$_}           = $args{'source'}{$_} for qw(datahub matrix column_data colour description desc_url);
+  $args{'options'}{$_}           = $args{'source'}{$_} for qw(trackhub matrix column_data colour description desc_url);
   
   return %args;
 }
@@ -1115,13 +1115,13 @@ sub load_configured_bigbed {
 }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
-sub load_configured_datahubs { shift->load_file_format('datahub') }
+sub load_configured_trackhubs { shift->load_file_format('trackhub') }
 
 sub load_file_format {
   my ($self, $format, $sources) = @_;
   my $function = "_add_${format}_track";
   
-  return unless ($format eq 'datahub' || $self->can($function));
+  return unless ($format eq 'trackhub' || $self->can($function));
   
   my $internal = !defined $sources;
   $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
@@ -1135,14 +1135,14 @@ sub load_file_format {
       $source = $self->sd_call($source_name);
       $view   = $source->{'view'};
     } else {
-      ## Probably an external datahub source
+      ## Probably an external trackhub source
          $source       = $sources->{$source_name};
          $view         = $source->{'view'};
       my $menu_key     = $source->{'menu_key'};
       my $menu_name    = $source->{'menu_name'};
       my $submenu_key  = $source->{'submenu_key'};
       my $submenu_name = $source->{'submenu_name'};
-      my $main_menu    = $self->get_node($menu_key) || $self->tree->append_child($self->create_submenu($menu_key, $menu_name, { external => 1, datahub_menu => !!$source->{'datahub'} }));
+      my $main_menu    = $self->get_node($menu_key) || $self->tree->append_child($self->create_submenu($menu_key, $menu_name, { external => 1, trackhub_menu => !!$source->{'trackhub'} }));
          $menu         = $self->get_node($submenu_key);
       
       if (!$menu) {
@@ -1151,8 +1151,8 @@ sub load_file_format {
       }
     }
     if ($source) {
-      if ($format eq 'datahub') {
-        $self->_add_datahub($source->{'source_name'}, $source->{'url'}, undef, $menu, 1);
+      if ($format eq 'trackhub') {
+        $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu, 1);
       }
       else { 
         my $is_internal = $source->{'source_url'} ? 0 : $internal;
@@ -1333,7 +1333,7 @@ sub _add_file_format_track {
 
   return unless $menu;
 
-  %args = $self->_add_datahub_extras_options(%args) if $args{'source'}{'datahub'};
+  %args = $self->_add_trackhub_extras_options(%args) if $args{'source'}{'trackhub'};
 
   my $type    = lc $args{'format'};
   my $article = $args{'format'} =~ /^[aeiou]/ ? 'an' : 'a';
@@ -1549,13 +1549,13 @@ sub update_from_url {
 
         if (uc $format eq 'TRACKHUB') {
           my $info;
-          ($n, $info) = $self->_add_datahub($n, $p,1);
+          ($n, $info) = $self->_add_trackhub($n, $p,1);
           if ($info->{'error'}) {
             my @errors = @{$info->{'error'}||[]};
             $session->add_data(
               type     => 'message',
               function => '_warning',
-              code     => 'datahub:' . md5_hex($p),
+              code     => 'trackhub:' . md5_hex($p),
               message  => "There was a problem attaching trackhub $n: @errors",
             );
           }
@@ -3694,7 +3694,7 @@ sub add_somatic_structural_variations {
 sub share {
   # Remove anything from user settings that is:
   #   Custom data that the user isn't sharing
-  #   A track from a datahub that the user isn't sharing
+  #   A track from a trackhub that the user isn't sharing
   #   Not for the species in the image
   # Reduced track order of explicitly ordered tracks if they are after custom tracks which aren't shared
   
@@ -3702,10 +3702,10 @@ sub share {
   my $user_settings     = EnsEMBL::Web::Root->deepcopy($self->get_user_settings);
   my $species           = $self->species;
   my $user_data         = $self->get_node('user_data');
-  my @unshared_datahubs = grep $_->get('datahub_menu') && !$shared_custom_tracks{$_->id}, @{$self->tree->child_nodes};
+  my @unshared_trackhubs = grep $_->get('trackhub_menu') && !$shared_custom_tracks{$_->id}, @{$self->tree->child_nodes};
   my @user_tracks       = map { $_ ? $_->nodes : () } $user_data;
   my %user_track_ids    = map { $_->id => 1 } @user_tracks;
-  my %datahub_tracks    = map { $_->id => [ map $_->id, $_->nodes ] } @unshared_datahubs;
+  my %trackhub_tracks    = map { $_->id => [ map $_->id, $_->nodes ] } @unshared_trackhubs;
   my %to_delete;
   
   foreach (keys %$user_settings) {
@@ -3718,13 +3718,13 @@ sub share {
     $to_delete{$_} = 1 if $user_track_ids{$_};             # delete anything that isn't shared
   }
   
-  foreach (@unshared_datahubs) {
-    $to_delete{$_} = 1 for grep $user_settings->{$_}, @{$datahub_tracks{$_->id} || []};  # delete anything for tracks in datahubs that aren't shared
+  foreach (@unshared_trackhubs) {
+    $to_delete{$_} = 1 for grep $user_settings->{$_}, @{$trackhub_tracks{$_->id} || []};  # delete anything for tracks in trackhubs that aren't shared
   }
   
   # Reduce track orders if custom tracks aren't shared
   if (scalar keys %to_delete) {
-    my %track_ids_to_delete  = map { $_ => 1 } keys %to_delete, map { @{$datahub_tracks{$_->id} || []} } @unshared_datahubs;
+    my %track_ids_to_delete  = map { $_ => 1 } keys %to_delete, map { @{$trackhub_tracks{$_->id} || []} } @unshared_trackhubs;
     my @removed_track_orders = map { $track_ids_to_delete{$_->id} && $_->{'data'}{'node_type'} eq 'track' ? $_->{'data'}{'order'} : () } @{$self->glyphset_configs};
     
     foreach my $order (values %{$user_settings->{'track_order'}{$species}}) {

@@ -29,7 +29,7 @@ sub glyphset_configs {
   my $self = shift;
   
   if (!$self->{'ordered_tracks'}) {
-    $self->get_node('user_data')->after($_) for grep $_->get('datahub_menu'), $self->tree->nodes;
+    $self->get_node('user_data')->after($_) for grep $_->get('trockhub_menu'), $self->tree->nodes;
     $self->SUPER::glyphset_configs;
   }
   
@@ -42,7 +42,7 @@ sub init {
   $self->set_parameters({
     toolbars        => { top => 1, bottom => 1 },
     sortable_tracks => 'drag', # allow the user to reorder tracks on the image
-    datahubs        => 1,      # allow datahubs
+    trackhubs        => 1,      # allow track hubs
     opt_halfheight  => 0,      # glyphs are half-height [ probably removed when this becomes a track config ]
     opt_lines       => 1,      # draw registry lines
   });
@@ -158,7 +158,7 @@ sub init {
   # Add in additional tracks
   $self->load_tracks;
   $self->load_configured_das;
-  $self->load_configured_datahubs;
+  $self->load_configured_trackhubs;
   $self->load_configured_bigwig;
   $self->load_configured_bigbed;
 #  $self->load_configured_bam;
