@@ -80,7 +80,18 @@ sub _content {
       r      => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end
     })
   });
-  
+
+  $self->add_entry({
+    type  => ' ',
+    label => '(Highlight region)',
+    link_class => '_location_highlight',
+    link  => $hub->url({
+      type   => 'Location',
+      action => 'View',
+      hlr    => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end
+    })
+  });
+
   $self->add_entry({
     type  => 'Gene type',
     label => $object->gene_type
