@@ -40,7 +40,7 @@ sub ajax_table_content {
     my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
     my %cols_pos;
     $cols_pos{$cols[$_]} = $_ for(0..$#cols);
-    my $used_cols = $incremental->[$more]{'cols'};
+    my $used_cols = $incremental->[$more]{'cols'} || \@cols;
     my $columns_out = [ (0) x @cols ];
     $columns_out->[$cols_pos{$_}] = 1 for @$used_cols;
 

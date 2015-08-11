@@ -20,8 +20,6 @@ package EnsEMBL::Web::Component::VariationTable;
 
 use strict;
 
-use JSON qw(from_json);
-
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::Component::Variation EnsEMBL::Web::Component::NewTable);
@@ -33,19 +31,6 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub new_content {
-  my $self = shift;
-
-  my $url = $self->hub->url('Ajax', {
-    type => 'enstab',
-    action => undef,
-    function => undef,
-    source => 'VariationTable',
-  },0,1);
-
-  return qq(<a class="enstab" href="$url">data</a>);
-}
-
 sub incremental_table {
   return [
   {
@@ -53,8 +38,6 @@ sub incremental_table {
     cols =>  [ qw(ID Source) ],
   },{
     name => "full",
-    cols => [ qw(ID chr Alleles gmaf class Source Submitters clinsig
-                 snptype aachange aacoord sift polyphen Transcript)  ],
   }];
 }
 
