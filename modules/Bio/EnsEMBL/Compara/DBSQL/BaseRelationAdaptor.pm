@@ -34,6 +34,8 @@ Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor
 Base class for the adaptors that deal with sets of members, like
 FamilyAdaptor or HomologyAdaptor
 
+NB: only used to provide fetch_all_by_method_link_type() to those
+two adaptors
 
 =head1 INHERITANCE TREE
 

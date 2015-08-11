@@ -84,6 +84,7 @@ sub fetch_input {
     my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id )
                                         or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
     $gene_tree->preload();
+    $gene_tree->_load_all_missing_sequences();
     $gene_tree->print_tree(10) if($self->debug);
 
     $self->param('gene_tree', $gene_tree);

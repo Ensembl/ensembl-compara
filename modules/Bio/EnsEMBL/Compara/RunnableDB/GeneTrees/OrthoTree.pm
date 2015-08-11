@@ -115,18 +115,14 @@ sub fetch_input {
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
     my $tree_id = $self->param_required('gene_tree_id');
-    my $default_gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
-	my $gene_tree;
+    my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
     if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
-        my $selected_tree = $default_gene_tree->alternative_trees->{$self->param('input_clusterset_id')};
-        die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
-        $gene_tree = $selected_tree;
-	}
-	else{
-		$gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
-	}
+        $gene_tree = $gene_tree->alternative_trees->{$self->param('input_clusterset_id')};
+        die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $gene_tree;
+    }
 
     $gene_tree->preload();
+    $gene_tree->_load_all_missing_sequences();
     $self->param('gene_tree', $gene_tree->root);
 
     if($self->debug) {
@@ -244,7 +240,7 @@ sub run_analysis {
           when ('dubious')    { $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0) }
           when ('gene_split') { $self->tag_genepairlink($genepairlink, 'gene_split', 1) }
           when ('duplication'){ push @pair_group, $genepairlink }
-          default             { die sprintf("Unknown node type: %s\n", $ancestor->get_value_for_tag('node_type')) }
+          default             { die sprintf("Unknown node type '%s' for node_id %d\n", $ancestor->get_value_for_tag('node_type'), $ancestor->node_id) }
       }
 
      }

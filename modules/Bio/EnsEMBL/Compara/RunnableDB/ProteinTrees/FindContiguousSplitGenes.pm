@@ -58,11 +58,12 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes;
 
 use strict;
+use warnings;
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs;
-use Bio::EnsEMBL::Compara::AlignedMemberSet;
+use Bio::EnsEMBL::Compara::MemberSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -105,12 +106,13 @@ sub fetch_input {
     # Let's preload the gene members
     # Note that we have already filtered the list at this stage, to reduce
     # the number of sequences to load, and thus the memory usage
-    $self->compara_dba->get_GeneMemberAdaptor->load_all_from_seq_members($all_protein_leaves);
+    $self->compara_dba->get_GeneMemberAdaptor->load_all_from_seq_members(\@good_leaves);
+    Bio::EnsEMBL::Compara::MemberSet->new(-members => \@good_leaves)->_load_all_missing_sequences();
 
     # Note that if $self->param('genome_db_id') is set, the hash will
     # contain a single entry
     my %protein_leaves_by_genome_db_id = ();
-    foreach my $leaf (@$all_protein_leaves) {
+    foreach my $leaf (@good_leaves) {
         push @{$protein_leaves_by_genome_db_id{$leaf->genome_db_id}}, $leaf;
     }
     $self->param('protein_leaves_by_genome_db_id', \%protein_leaves_by_genome_db_id);

@@ -119,7 +119,7 @@ sub fetch_by_name_assembly {
 
 =cut
 
-sub fetch_all_by_taxon_id_assembly {
+sub fetch_all_by_taxon_id_assembly {  ## UNUSED
     my ($self, $taxon_id, $assembly) = @_;
 
     throw("taxon_id argument is required") unless ($taxon_id);
@@ -139,7 +139,8 @@ sub fetch_all_by_taxon_id_assembly {
                If more than one GenomeDB is found in the database with the same
                taxon_id, gives the first one found.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if GenomeDB of taxon_id $taxon_id cannot be found.
+  Exceptions : thrown if $taxon_id is not given, or if there are more than 1
+               GenomeDB with this taxon_id.
   Caller     : general
   Status     : Stable
 
@@ -151,6 +152,7 @@ sub fetch_by_taxon_id {
     throw("taxon_id argument is required") unless($taxon_id);
 
     my $found_gdbs = $self->_id_cache->get_all_by_additional_lookup('taxon_id', $taxon_id);
+    die "There are ".scalar(@$found_gdbs)." GenomeDBs with taxon_id = $taxon_id. GenomeDBAdaptor::fetch_by_taxon_id() doesn't know how to return only one.\n" if scalar(@$found_gdbs) >= 2;
 
     return $found_gdbs->[0];
 }
@@ -275,7 +277,7 @@ sub fetch_all_by_ancestral_taxon_id {
 
 =cut
 
-sub fetch_all_by_low_coverage {
+sub fetch_all_by_low_coverage {  ## UNUSED
     my ($self) = @_;
     return $self->_id_cache->get_all_by_additional_lookup('is_high_coverage', 0);
 }
@@ -313,7 +315,7 @@ sub fetch_by_core_DBAdaptor {
 
 =cut
 
-sub fetch_all_polyploid {
+sub fetch_all_polyploid {   ## UNUSED
     my $self = shift;
     return $self->_id_cache->get_all_by_additional_lookup('is_polyploid', 0);
 }
@@ -529,19 +531,19 @@ sub compute_keys {
             # The extant species
             $genome_db->taxon_id ? (
                 taxon_id => $genome_db->taxon_id,
-                taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly),
+                taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly),   ## UNUSED
             ) : (),
 
-            # The extant species that are current
+            # The species that are current and have a taxon_id (i.e. all but "ancestral_sequences")
             ($genome_db->taxon_id and $genome_db->is_current) ? (
-                taxon_id_default_assembly => $genome_db->taxon_id,
-                is_high_coverage => $genome_db->is_high_coverage,
-                is_polyploid => $genome_db->is_polyploid,
+                taxon_id_default_assembly => $genome_db->taxon_id,  ## UNUSED
+                is_high_coverage => $genome_db->is_high_coverage,   ## UNUSED
+                is_polyploid => $genome_db->is_polyploid,           ## UNUSED
             ) : (),
 
             # All the species that are current
             $genome_db->is_current ? (
-                name_default_assembly => lc $genome_db->name
+                name_default_assembly => lc $genome_db->name    ## UNUSED
             ) : (),
 
             %{$self->SUPER::compute_keys($genome_db)},

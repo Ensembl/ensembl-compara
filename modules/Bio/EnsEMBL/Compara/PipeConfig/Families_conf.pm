@@ -60,7 +60,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Families_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.3;
+use Bio::EnsEMBL::Hive::Version 2.4;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -101,7 +101,7 @@ sub default_options {
             # resource requirements:
         'blast_gigs'      =>  3,
         'blast_hm_gigs'   =>  6,
-        'mcl_gigs'        => 64,
+        'mcl_gigs'        => 72,
         'mcl_threads'     => 12,
         'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
@@ -110,7 +110,6 @@ sub default_options {
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
         'HMMer_classify_capacity' => 100,
-        'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
 
             # used by the StableIdMapper as the reference:
         'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #release# - 1)expr#',
@@ -163,13 +162,13 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
         'urgent'       => { 'LSF' => '-q yesterday' },
-        'RegBlast'    => { 'LSF' => [ '-C0 -M'.$self->o('blast_gigs').$self->o('reservation_sfx').'000 -q normal -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"', '-lifespan 360' ]  },
-        'LongBlastHM'  => { 'LSF' => [ '-C0 -M'.$self->o('blast_hm_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_hm_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_hm_gigs').'000]"', '-lifespan 1440' ]  },
-        'BigMcxload'   => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -q hugemem -R"select[mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000]"' },
-        'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -n '.$self->o('mcl_threads').' -q hugemem -R"select[ncpus>='.$self->o('mcl_threads').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
-        'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
-        '4GigMem'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').$self->o('reservation_sfx').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('lomafft_gigs').'000]"' },
-        '2GigMem'      => { 'LSF' => '-C0 -M2'.$self->o('reservation_sfx').'000 -R"select[mem>2000] rusage[mem=2000]"' },
+        'RegBlast'    => { 'LSF' => [ '-C0 -M'.$self->o('blast_gigs').'000 -q normal -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"', '-lifespan 360' ]  },
+        'LongBlastHM'  => { 'LSF' => [ '-C0 -M'.$self->o('blast_hm_gigs').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_hm_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_hm_gigs').'000]"', '-lifespan 1440' ]  },
+        'BigMcxload'   => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000 -q hugemem -R"select[mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000]"' },
+        'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000 -n '.$self->o('mcl_threads').' -q hugemem -R"select[ncpus>='.$self->o('mcl_threads').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
+        'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
+        'LoMafft'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('lomafft_gigs').'000]"' },
+        '2GigMem'      => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
 
@@ -364,10 +363,10 @@ sub pipeline_analyses {
                 'step'            => 50,
             },
             -flow_into => {
-                '2->A' => { 'blast' => { 'sequence_id' => '#_start_seqid#', 'minibatch' => '#_range_count#' } },
+                '2->A' => { 'blast' => { 'start_seq_id' => '#_start_seqid#', 'end_seq_id' => '#_end_seqid#', 'minibatch' => '#_range_count#' } },
                 'A->1' => [ 'snapshot_after_blast' ],
             },
-            -rc_name => '4GigMem',
+            -rc_name => 'LoMafft',
         },
 
         {   -logic_name    => 'blast',
@@ -453,14 +452,14 @@ sub pipeline_analyses {
                              'only_canonical'      => 0,
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
-             -rc_name => '4GigMem',
+             -rc_name => 'LoMafft',
             },
 
 
             {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize',
-             -rc_name => '4GigMem',
+             -rc_name => 'LoMafft',
              -flow_into  => {
                 '1->A'  => [ 'fire_family_building' ],
                 'A->1'  => [ 'warehouse_working_directory' ],
@@ -477,7 +476,8 @@ sub pipeline_analyses {
                 'command_out'   => ['#mcl_bin_dir#/mcxload', '-abc', '-', '-ri', 'max', '-o', '#work_dir#/#file_basename#.tcx', '-write-tab', '#work_dir#/#file_basename#.itab',    # run the actual command
                                     #### FIXME: The healthcheck part below is not currently working - see DbCmd runnable
                                     ## '\\;',      # NB: make sure it is properly escaped!
-                                    ## 'tail', '-n', '1', '#work_dir#/#file_basename#.tcx', '|', 'grep', ')' ],    # then test that the file finishes with a closing round bracket
+                                    ## 'tail', '-n', '1', '#work_dir#/#file_basename#.tcx', '|', 'grep', ')'
+                                   ],    # then test that the file finishes with a closing round bracket
             },
             -flow_into => {
                 1 => [ 'mcl' ],
@@ -560,7 +560,7 @@ sub pipeline_analyses {
                 2 => [ 'mafft_big'  ],
                 3 => [ 'mafft_main' ],
             },
-            -rc_name => '4GigMem',
+            -rc_name => 'LoMafft',
         },
 
         {   -logic_name         => 'mafft_main',
