@@ -31,6 +31,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Compara::SpeciesSet;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -38,9 +39,14 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub run {
     my $self = shift @_;
 
-    my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
-    my @lowcov_gdbs = map {$genome_db_adaptor->fetch_by_dbID($_->[0])} split(/,/, $self->param('genome_db_ids'));
+    my $epo_db_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('epo_db') );
+    my $epo_hc_mlss = $epo_db_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('EPO')->[0]
+        || die "Could not find an 'EPO' MLSS in ".$self->param('epo_db')."\n";
+    my $epo_lc_mlss = $epo_db_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')->[0]
+        || die "Could not find an 'EPO_LOW_COVERAGE' MLSS in ".$self->param('epo_db')."\n";
 
+    my %hc_gdb_id = (map {$_->dbID => 1} @{$epo_hc_mlss->species_set_obj->genome_dbs});
+    my @lowcov_gdbs = grep {not exists $hc_gdb_id{$_->dbID}} @{$epo_lc_mlss->species_set_obj->genome_dbs};
     my $species_set     = Bio::EnsEMBL::Compara::SpeciesSet->new(
         -NAME => 'low-coverage-assembly',
         -GENOME_DBS => \@lowcov_gdbs,
