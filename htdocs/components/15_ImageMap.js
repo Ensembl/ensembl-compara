@@ -1201,7 +1201,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (!this.elLk.highlightButton) {
       this.elLk.highlightButton = $('<a class="hlr-reset">').appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
         e.preventDefault();
-        Ensembl.highlightLocation(this.className.match('selected') ? false : panel.lastHighlightedLoc);
+        if (this.className.match('selected')) {
+          Ensembl.highlightLocation(false);
+        } else if (this.className.match('outside')) {
+          var hlr     = Ensembl.getHighlightedLocation();
+          var length  = Math.abs(hlr[1] === imgBox.range.chr ? imgBox.range.end - imgBox.range.start : (hlr[3] - hlr[2]) * 3); // keep the scale if we are on the same chromosome
+          var centre  = (hlr[2] + hlr[3]) / 2;
+          Ensembl.updateLocation(hlr[1] + ':' + Math.round(centre - length / 2) + '-' + Math.round(centre + length / 2));
+        } else {
+          Ensembl.highlightLocation(panel.lastHighlightedLoc);
+        }
       });
     }
 
@@ -1214,7 +1223,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.lastHighlightedLoc = this.highlightedLoc;
       this.highlightedLoc     = false;
       this.elLk.highlightedLocation.hide();
-      this.elLk.highlightButton.removeClass('selected').helptip('option', 'content', 'Re-highlight region').show();
+      this.elLk.highlightButton.removeClass('outside selected').helptip('option', 'content', 'Re-highlight region').show();
       return;
     }
 
@@ -1243,11 +1252,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         height: imgBox.b - imgBox.t
       }).show();
 
-      this.elLk.highlightButton.addClass('selected').helptip('option', 'content', 'Clear highlighted region').show();
+      this.elLk.highlightButton.addClass('selected').removeClass('outside').helptip('option', 'content', 'Clear highlighted region').show();
 
     } else {
       this.elLk.highlightedLocation.hide();
-      this.elLk.highlightButton.helptip('option', 'content', 'Centre to the highlighted region').show();
+      this.elLk.highlightButton.addClass('outside').removeClass('selected').helptip('option', 'content', 'Centre to the highlighted region').show();
     }
   },
 
