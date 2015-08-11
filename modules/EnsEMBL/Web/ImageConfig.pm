@@ -1281,7 +1281,7 @@ sub _add_vcf_track {
       colourset  => 'variation',
       %options,
     },
-    @_
+    %args
   );
 }
 
