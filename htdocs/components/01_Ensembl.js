@@ -192,7 +192,21 @@ Ensembl.extend({
       });
     }
   },
-  
+
+  changeCoreParam: function (param, value) {
+    var inp = $('#core_params input[name=' + param + ']');
+
+    if (!inp.length) {
+      inp = $('<input name=' + param + '>').appendTo($('#core_params'));
+    }
+
+    if (value === false) {
+      inp.remove();
+    } else {
+      inp.val(value);
+    }
+  },
+
   cleanURL: function (url) {
     return url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([?;])time=[^;]+;?/g, '$1').replace(/[?;]$/g, '');
   },
@@ -245,6 +259,8 @@ Ensembl.extend({
 
     if (r || r === false) {
       this.updateURL({ hlr: r && r[0] });
+      this.changeCoreParam('hlr', r[0]);
+      this.setCoreParams();
       this.EventManager.trigger('highlightLocation', r);
     }
   },
