@@ -92,7 +92,6 @@ sub init_basic_tables_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
             -analysis_capacity => 10,
-            -flow_into         => [ 'innodbise_table' ],
         },
 
     ];
