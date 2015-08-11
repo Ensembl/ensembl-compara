@@ -24,7 +24,7 @@ use JSON qw(from_json);
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
-use base qw(EnsEMBL::Web::Component::Variation);
+use base qw(EnsEMBL::Web::Component::Variation EnsEMBL::Web::Component::NewTable);
 use Time::HiRes qw(time);
 
 sub _init {
@@ -46,7 +46,8 @@ sub new_content {
   return qq(<a class="enstab" href="$url">data</a>);
 }
 
-my @INCREMENTAL = (
+sub incremental_table {
+  return [
   {
     name => "outline",
     cols =>  [ qw(ID Source) ],
@@ -54,59 +55,24 @@ my @INCREMENTAL = (
     name => "full",
     cols => [ qw(ID chr Alleles gmaf class Source Submitters clinsig
                  snptype aachange aacoord sift polyphen Transcript)  ],
-  }
-);
+  }];
+}
 
-sub ajax_table_content {
-  my ($self) = @_;
+sub table_content {
+  my ($self,$phase) = @_;
 
   my $hub = $self->hub;
-  my $regions = from_json($hub->param('regions'));
-  my @out;
-  foreach my $region (@$regions) {
-    my $columns = $region->{'columns'};
-    my $rows = $region->{'rows'};
-    my $more_in = $region->{'more'};
-    # Get the data
-    my $object_type      = $hub->type;
-    my $consequence_type = $hub->param('sub_table');
-    my $icontext         = $hub->param('context') || 100;
-    my $gene_object      = $self->configure($icontext, $consequence_type);
-    my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
+  my $consequence_type = $hub->param('sub_table');
+  my $icontext         = $hub->param('context') || 100;
+  my $gene_object      = $self->configure($icontext, $consequence_type);
+  my $object_type      = $hub->type;
+  my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
   
-    if ($object_type eq 'Transcript') {
-      my $t = $hub->param('t');
-      @transcripts = grep $_->stable_id eq $t, @transcripts;
-    }
-
-    my $I=$more_in;
-
-    my $iconfig = from_json($hub->param('config'));
-    my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
-    my %cols_pos;
-    $cols_pos{$cols[$_]} = $_ for(0..$#cols);
-
-    my $more_out = $I+1;
-    my $data = $self->variation_table($consequence_type,\@transcripts,
-                                      $INCREMENTAL[$I]->{'name'});
-    my $used_cols = $INCREMENTAL[$I]->{'cols'};
-    my $columns_out = [ (0) x @cols ];
-    $columns_out->[$cols_pos{$_}] = 1 for @$used_cols;
-    $more_out = 0 if $more_out == @INCREMENTAL;
-
-    my @data_out;
-    foreach my $d (@$data) {
-      push @data_out,[ map { $d->{$_}||'' } @$used_cols ];
-    }
-  
-    push @out,{
-      request => $regions,
-      data => \@data_out,
-      region => { columns => $columns_out, rows => [0,-1] },
-      more => $more_out,
-    };
+  if ($object_type eq 'Transcript') {
+    my $t = $hub->param('t');
+    @transcripts = grep $_->stable_id eq $t, @transcripts;
   }
-  return \@out;
+  return $self->variation_table($consequence_type,\@transcripts,$phase);
 }
 
 sub content {
