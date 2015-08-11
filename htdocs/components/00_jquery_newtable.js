@@ -97,35 +97,26 @@
 
   function use_response(widgets,$table,data) {
     var view = $table.data('view');
-    widgets[view.format].add_data($table,data.data,data.region.start,
-                                  data.region.columns);
+    widgets[view.format].add_data($table,data.data,data.start,data.columns);
   }
   
   function maybe_use_response(widgets,$table,result) {
     var cur_data = $table.data('data');
     var in_data = result.data;
     if(compares_equal(cur_data,in_data)) {
-      var got = [];
-      var more = [];
-      $.each(result.response,function(i,data) {
-        use_response(widgets,$table,data);
-        got.push(data.region);
-        if(data.more) {
-          more.push({ region: data.request, more: data.more });
-        }
-      });
-      if(more.length) {
+      use_response(widgets,$table,result.response);
+      if(result.response.more) {
         console.log("continue");
-        get_new_data(widgets,$table,in_data,more);
+        get_new_data(widgets,$table,in_data,result.response.more);
       }
     }
   }
 
-  function get_new_data(widgets,$table,data,regions) {
+  function get_new_data(widgets,$table,data,more) {
     console.log("data changed, should issue request");
     $.get($table.data('src'),{
       data: JSON.stringify(data),
-      regions: JSON.stringify(regions),
+      more: JSON.stringify(more),
       config: JSON.stringify($table.data('config'))
     },function(res) {
       maybe_use_response(widgets,$table,res);
@@ -136,17 +127,12 @@
     var old_data = $table.data('old-data');
     var view = $table.data('view');
     var data = $.extend(true,{},view);
-    delete data.columns;
-    delete data.rows;
     delete data.format;
     $table.data('data',data);
     console.log("old-data",JSON.stringify(old_data));
     console.log("data",JSON.stringify(data));
     if(!compares_equal(data,old_data)) {
-      get_new_data(widgets,$table,data,[{
-        columns: view.columns,
-        rows: view.rows
-      }]);
+      get_new_data(widgets,$table,data,null);
     }
     $table.data('old-data',data);
   }

@@ -56,7 +56,6 @@ sub ajax_enstab {
     print $self->jsonify({
       data => from_json($hub->param('data')),
       response => $component->ajax_table_content(),
-      regions => from_json($hub->param('regions')),
     });
   };
   if($@) {
