@@ -1215,18 +1215,23 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // create the highlight button
     if (!this.elLk.highlightButton) {
-      this.elLk.highlightButton = $('<a class="hlr-reset">').hide().appendTo(this.elLk.toolbars).helptip().on('click', function (e) {
-        e.preventDefault();
-        if (this.className.match('selected')) {
-          Ensembl.highlightLocation(false);
-        } else if (this.className.match('outside')) {
-          var hlr     = Ensembl.getHighlightedLocation() || panel.lastHighlightedLoc;
-          var length  = imgBox.range.end - imgBox.range.start; // preserve the scale
-          var centre  = (hlr[2] + hlr[3]) / 2;
-          Ensembl.highlightLocation(hlr);
-          Ensembl.updateLocation(hlr[1] + ':' + Math.max(1, Math.round(centre - length / 2)) + '-' + Math.round(centre + length / 2));
-        } else {
-          Ensembl.highlightLocation(panel.lastHighlightedLoc);
+      this.elLk.highlightButton = $('<a class="hlr-reset">').hide().appendTo(this.elLk.toolbars).helptip().on({
+        'refreshTip': function () {
+          $(this).helptip('option', 'content', this.className.match(/outside/) ? 'Jump back to the highlighted region' : (this.className.match(/selected/) ? 'Clear highlighted region' : 'Reinstate highlighted region'))
+        },
+        'click': function (e) {
+          e.preventDefault();
+          if (this.className.match('selected')) {
+            Ensembl.highlightLocation(false);
+          } else if (this.className.match('outside')) {
+            var hlr     = Ensembl.getHighlightedLocation() || panel.lastHighlightedLoc;
+            var length  = imgBox.range.end - imgBox.range.start; // preserve the scale
+            var centre  = (hlr[2] + hlr[3]) / 2;
+            Ensembl.highlightLocation(hlr);
+            Ensembl.updateLocation(hlr[1] + ':' + Math.max(1, Math.round(centre - length / 2)) + '-' + Math.round(centre + length / 2));
+          } else {
+            Ensembl.highlightLocation(panel.lastHighlightedLoc);
+          }
         }
       });
     }
@@ -1240,7 +1245,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.lastHighlightedLoc = this.highlightedLoc;
       this.highlightedLoc     = false;
       this.elLk.highlightedLocation.hide();
-      this.elLk.highlightButton.removeClass('outside selected').helptip('option', 'content', 'Re-highlight region').show();
+      this.elLk.highlightButton.removeClass('selected').trigger('refreshTip').show();
       return;
     }
 
@@ -1269,12 +1274,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         height: imgBox.b - imgBox.t
       }).show();
 
-      this.elLk.highlightButton.addClass('selected').removeClass('outside').helptip('option', 'content', 'Clear highlighted region').show();
+      this.elLk.highlightButton.addClass('selected').removeClass('outside').trigger('refreshTip').show();
 
     } else {
       this.elLk.highlightedLocation.hide();
       if (this.panningAllowed) {
-        this.elLk.highlightButton.addClass('outside').removeClass('selected').helptip('option', 'content', 'Jump back to the highlighted region').show();
+        this.elLk.highlightButton.addClass('outside').removeClass('selected').trigger('refreshTip').show();
       } else {
         this.elLk.highlightButton.hide();
       }
