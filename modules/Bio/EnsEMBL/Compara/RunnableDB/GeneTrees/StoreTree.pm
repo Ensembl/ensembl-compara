@@ -534,7 +534,17 @@ sub parse_filtered_align {
     return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings, $cdna);
 }
 
-# Hacky way of invoking the HCs directly here
+
+# Wrapper around Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks
+# NB: this will be testing $self->param('gene_tree_id')
+sub call_one_hc {
+    my ($self, $test_name) = @_;
+    $self->param('tests', $Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::config->{$test_name}->{tests});
+    $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_validate_tests();
+    $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::run();
+}
+
+# ... because SqlHealthChecks::run() calls $self->_run_test(), we need to implement it here (as an alias)
 sub _run_test {
     my $self = shift;
     return $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_run_test(@_);
@@ -543,29 +553,22 @@ sub _run_test {
 sub call_hcs_all_trees {
     my $self = shift;
 
+    $self->call_one_hc('alignment');
+
     my $ini_gene_tree_id = $self->param('gene_tree_id');
     my $alt_root_ids = $self->compara_dba->dbc->db_handle->selectcol_arrayref('SELECT root_id FROM gene_tree_root WHERE ref_root_id = ?', undef, $self->param('gene_tree_id'));
     foreach my $root_id ($ini_gene_tree_id, @$alt_root_ids) {
         $self->param('gene_tree_id', $root_id);
-        my @test_groups;
         if ($root_id == $ini_gene_tree_id) {
-            if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
-                @test_groups = ('alignment');
-            } else {
-                if ($self->param('read_tags')) {
-                    @test_groups = ('alignment');
-                } else {
-                    @test_groups = ('alignment', 'tree_structure', 'tree_attributes');
-                }
+            if ($self->param('output_clusterset_id') and ($self->param('output_clusterset_id') ne 'default')) {
+                next;  # we're storing an alternative tree, so the default tree is probably still flat at this stage
+            } elsif ($self->param('read_tags')) {
+                next;  # similarly: in read_tags mode, the default tree is probably still flat
             }
-        } else {
-                @test_groups = ('tree_structure', 'tree_attributes');
         }
 
-        foreach my $test_name (@test_groups) {
-            $self->param('tests', $Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::config->{$test_name}->{tests});
-            $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_validate_tests();
-            $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::run();
+        foreach my $test_name ('tree_structure', 'tree_attributes') {
+            $self->call_one_hc($test_name);
         }
     }
     $self->param('gene_tree_id', $ini_gene_tree_id);
