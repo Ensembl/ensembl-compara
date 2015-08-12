@@ -1213,9 +1213,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           Ensembl.highlightLocation(false);
         } else if (this.className.match('outside')) {
           var hlr     = Ensembl.getHighlightedLocation();
-          var length  = Math.abs(hlr[1] === imgBox.range.chr ? imgBox.range.end - imgBox.range.start : (hlr[3] - hlr[2]) * 3); // keep the scale if we are on the same chromosome
+          var length  = imgBox.range.end - imgBox.range.start; // preserve the scale
           var centre  = (hlr[2] + hlr[3]) / 2;
-          Ensembl.updateLocation(hlr[1] + ':' + Math.round(centre - length / 2) + '-' + Math.round(centre + length / 2));
+          Ensembl.updateLocation(hlr[1] + ':' + Math.max(1, Math.round(centre - length / 2)) + '-' + Math.round(centre + length / 2));
         } else {
           Ensembl.highlightLocation(panel.lastHighlightedLoc);
         }
