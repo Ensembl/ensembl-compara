@@ -415,7 +415,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       }
 
       if (this.multi === false) {
-        menu.unshift('<a class="_location_highlight" href="' + Ensembl.updateURL({hlr: this.chr + ':' + start + '-' + end}, window.location.href) + '">Highlight region (' + (end - start + 1) + ' bp)</a>');
+        menu.unshift('<a class="_location_highlight loc-highlight-a" href="' + Ensembl.updateURL({hlr: this.chr + ':' + start + '-' + end}, window.location.href) + '"><span></span>Highlight region (' + (end - start + 1) + ' bp)</a>');
       }
 
     } else { // Point select
