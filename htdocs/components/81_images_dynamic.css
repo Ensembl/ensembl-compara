@@ -65,9 +65,11 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .hover_label div.spinner                  { display: none; }
 .hover_label_spinner div                  { display: none; }
 .hover_label_spinner div.spinner          { display: block; }
-.label_layer.hover .label_layer_bg,
+.label_layer.focused .label_layer_bg,
+.label_layer.pinned .label_layer_bg,
 .label_layer:hover .label_layer_bg,
-.label_layer.hover .hover_label,
+.label_layer.focused .hover_label,
+.label_layer.pinned .hover_label,
 .label_layer:hover .hover_label           { display: block; }
 .hover_label.name_only                    { padding: 0; }
 .hover_label.name_only p.header           { margin: 0; }
@@ -78,7 +80,10 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .hover_label a.closetrack                 { background-image: url(/i/16/cross.png); }
 .hover_label a.config                     { text-decoration: none; }
 .hover_label p                            { padding: 4px 0; margin: 0; line-height: 1.5em; }
-.hover_label p.header                     { margin: 0; padding: 4px; background-color: [[BUTTON_BG]]; color: #FFF; }
+.hover_label p.header                     { margin: 0; padding: 4px; background-color: [[BUTTON_BG]]; color: #FFF; cursor: pointer; }
+.hover_label p.header span.hl-pin         { background-color: [[BUTTON_BG]]; background-image: url(/i/16/rev/pin.png); background-size: 12px auto; border: 2px solid [[BUTTON_BG]];
+                                            border-radius: 2px; float: left; height: 12px; width: 12px; margin-right: 4px; }
+.hover_label p.header.on span.hl-pin      { background-color: [[BUTTON_BG_HOVER]]; border-color: [[BUTTON_BG_HOVER]]; }
 .hover_label div.config ul,
 .hover_label div.config li                { margin: 0; padding: 0; list-style: none; list-style-image: none; }
 .hover_label div.config li                { line-height: 22px; }

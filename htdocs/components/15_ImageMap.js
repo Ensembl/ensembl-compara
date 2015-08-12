@@ -496,7 +496,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.hoverLabels.each(function() {
 
       // init the tab styled icons inside the hover menus
-      $(this).find('._hl_icon').removeClass('_hl_icon').tabs($(this).find('._hl_tab'));
+      $(this).find('._hl_icon').removeClass('_hl_icon').tabs($(this).find('._hl_tab')).end().find('._hl_pin').off().on('click', function () {
+        $(this).toggleClass('on').closest('.label_layer').toggleClass('pinned', $(this).hasClass('on'));
+      });
 
     // init config tab, fav icon and close icon
     }).find('a.config').off().on('click', function (e) {
@@ -530,7 +532,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
       $this = null;
     }).end().find('input._copy_url').off().on('click focus blur', function(e) {
-      $(this).val(this.defaultValue).select().parents('.label_layer').toggleClass('hover', e.type !== 'blur');
+      $(this).val(this.defaultValue).select().closest('.label_layer').toggleClass('focused', e.type !== 'blur');
     });
   },
 
