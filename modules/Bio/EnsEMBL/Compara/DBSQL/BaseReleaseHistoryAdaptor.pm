@@ -137,7 +137,12 @@ sub update_first_last_release {
 sub retire_object {
     my ($self, $object) = @_;
     return if not $object->is_current;
-    $object->last_release(software_version() - 1);
+    if ($object->first_release >= software_version()) {
+        # The object was scheduled for release but is now cancelled
+        $self->first_release(undef);
+    } else {
+        $object->last_release(software_version() - 1);
+    }
     return $self->update_first_last_release($object);
 }
 
