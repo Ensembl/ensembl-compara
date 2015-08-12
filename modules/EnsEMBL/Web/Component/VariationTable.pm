@@ -44,7 +44,7 @@ sub incremental_table {
 }
 
 sub table_content {
-  my ($self,$phase,$rows) = @_;
+  my ($self,$phase,$rows,$unique) = @_;
 
   my $hub = $self->hub;
   my $consequence_type = $hub->param('sub_table');

@@ -45,8 +45,14 @@ sub ajax_table_content {
   my $columns = [ (0) x @cols ];
   $columns->[$cols_pos{$_}] = 1 for @$used_cols;
 
+  # Calculate function name
+  my $type = $iconfig->{'type'};
+  $type =~ s/\W//g;
+  my $func = "table_content";
+  $func .= "_$type" if $type;
+
   # Populate data
-  my $data = $self->table_content($phases->[$more]{'name'},$rows);
+  my $data = $self->$func($phases->[$more]{'name'},$rows,$iconfig->{'unique'});
   my @data_out;
   foreach my $d (@$data) {
     push @data_out,[ map { $d->{$_}||'' } @$used_cols ];

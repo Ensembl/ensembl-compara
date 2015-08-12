@@ -666,7 +666,8 @@ sub new_new_table {
   $table->export_url = $hub->url unless defined $options->{'exportable'} || $self->{'_table_count'}++;
   $table->filename   = join '-', $self->id, $filename;
   $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
-  
+  $table->type($options->{'type'} || '');
+
   return $table;
 }
 

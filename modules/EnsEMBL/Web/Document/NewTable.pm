@@ -28,6 +28,8 @@ use EnsEMBL::Draw::Utils::ColourMap;
 use base qw(EnsEMBL::Web::Root);
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
+
 sub new {
   my ($class, $cols, $rows, $options, $spanning) = @_;
   
@@ -57,6 +59,8 @@ sub code       :lvalue { $_[0]{'code'}        }
 sub format     :lvalue { $_[0]{'format'};     }
 sub export_url :lvalue { $_[0]{'export_url'}; }
 sub filename   :lvalue { $_[0]{'filename'};   }
+
+sub type { $_[0]->{'type'} = $_[1]; }
 
 sub has_rows { return ! !@{$_[0]{'rows'}}; }
 
@@ -152,6 +156,8 @@ sub render {
   },0,1);
  
   my $data = $self->jsonify({
+    unique => random_string(32),
+    type => $self->{'type'},
     columns => $self->{'columns'},
     head => [
       [ "page_sizer" ],

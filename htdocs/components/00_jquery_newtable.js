@@ -160,7 +160,11 @@
     }
     var $table = $('<div class="new_table_wrapper"><div class="topper"></div><div class="layout"></div></div>');
     $('.topper',$table).html(new_top(widgets,config));
-    var stored_config = { columns: config.columns };
+    var stored_config = {
+      columns: config.columns,
+      unique: config.unique,
+      type: config.type
+    };
     $table.data('view',config.view).data('old-view',$.extend(true,{},config.view))
       .data('config',stored_config);
     build_format(widgets,$table);
