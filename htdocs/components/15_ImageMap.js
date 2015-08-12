@@ -86,6 +86,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeImageMap();
     this.makeHoverLabels();
     this.initImageButtons();
+    this.initImagePanning();
     this.highlightLocation(Ensembl.getHighlightedLocation());
     
     if (!this.vertical) {
@@ -135,24 +136,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       return false;
     });
-
-    if (this.elLk.boundaries.length && this.draggables.length) {
-      this.elLk.dragSwitch = this.elLk.toolbars.first().append([
-        '<div class="scroll-switch">',
-          '<span>Drag/Select:</span>',
-          '<div><button title="Scroll to a region" class="dragging on"></button></div>',
-          '<div class="last"><button title="Select a region" class="dragging"></button></div>',
-        '</div>'].join('')).find('button').helptip().on('click', function() {
-        var panning = $(this).hasClass('on');
-        panel.setPanning(panning);
-        if (panning) {
-          panel.selectArea(false);
-          panel.removeZMenus();
-        }
-      }).parent();
-      this.panningAllowed = true;
-      this.setPanning();
-    }
   },
 
   loadJSON: function(str) {
@@ -196,6 +179,27 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
       });
     });
+  },
+
+  initImagePanning: function () {
+    var panel = this;
+    if (this.elLk.boundaries.length && this.draggables.length) {
+      this.elLk.dragSwitch = this.elLk.toolbars.first().append([
+        '<div class="scroll-switch">',
+          '<span>Drag/Select:</span>',
+          '<div><button title="Scroll to a region" class="dragging on"></button></div>',
+          '<div class="last"><button title="Select a region" class="dragging"></button></div>',
+        '</div>'].join('')).find('button').helptip().on('click', function() {
+        var panning = $(this).hasClass('on');
+        panel.setPanning(panning);
+        if (panning) {
+          panel.selectArea(false);
+          panel.removeZMenus();
+        }
+      }).parent();
+      this.panningAllowed = true;
+      this.setPanning();
+    }
   },
 
   hashChange: function (r) {
