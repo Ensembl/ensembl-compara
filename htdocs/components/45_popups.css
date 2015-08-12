@@ -77,6 +77,9 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .zmenu_holder .row .zmenu tr.header th { width: 180px; }
 .zmenu_holder .grid                    { max-height: 250px; overflow-x: hidden; overflow-y: scroll; }
 
+.zmenu .loc-highlight                  { display: inline-block; background-color: [[BUTTON_BG_HOVER]]; background-image: url("/i/16/rev/highlight.png"); background-size: 12px auto;
+                                          border: 2px solid [[BUTTON_BG_HOVER]]; border-radius: 2px;  height: 12px; margin: 2px 0; text-decoration: none; width: 12px; }
+
 body.ie  .zmenu_holder .grid           { width: 200px; }
 body.ie  .zmenu_holder div.header      { width: 202px; }
 body.ie6 .zmenu_holder span.close,

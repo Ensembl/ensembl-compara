@@ -73,22 +73,11 @@ sub _content {
       $self->thousandify($object->seq_region_start),
       $self->thousandify($object->seq_region_end)
     ),
-    link_class => '_location_change',
+    link_class => '_location_change _location_highlight',
     link  => $hub->url({
       type   => 'Location',
       action => 'View',
       r      => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end
-    })
-  });
-
-  $self->add_entry({
-    type  => ' ',
-    label => '(Highlight region)',
-    link_class => '_location_highlight',
-    link  => $hub->url({
-      type   => 'Location',
-      action => 'View',
-      hlr    => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end
     })
   });
 
