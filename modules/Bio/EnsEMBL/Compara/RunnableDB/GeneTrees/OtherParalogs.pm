@@ -76,6 +76,7 @@ sub fetch_input {
 
     my $alignment_id = $self->param('gene_tree')->tree->gene_align_id;
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
+    $aln->_load_all_missing_sequences();
 
     my %super_align;
     foreach my $member (@{$aln->get_all_Members}) {
