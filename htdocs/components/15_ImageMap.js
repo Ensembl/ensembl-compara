@@ -32,8 +32,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.labelWidth         = 0;
     this.boxCoords          = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
     this.altKeyDragging     = false;
-    this.highlightedLoc     = false;
-    this.lastHighlightedLoc = false;
     
     function resetOffset() {
       delete this.imgOffset;
@@ -87,7 +85,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeHoverLabels();
     this.initImageButtons();
     this.initImagePanning();
-    this.highlightLocation(Ensembl.getHighlightedLocation());
+    this.highlightLocation(Ensembl.highlightedLoc);
     
     if (!this.vertical) {
       this.makeResizable();
@@ -817,7 +815,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (!this.newLocation) {
           this.elLk.boundariesPanning.parent().remove();
           this.elLk.boundariesPanning = false;
-          this.highlightLocation(this.highlightedLoc);
+          this.highlightLocation(Ensembl.highlightedLoc);
           return;
         }
 
@@ -886,7 +884,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (locationDisplacement) {
       this.newLocation = this.dragRegion.range.chr + ':' + (this.dragRegion.range.start - locationDisplacement) + '-' + (this.dragRegion.range.end - locationDisplacement);
       this.elLk.boundariesPanning.helptip('option', 'content', this.newLocation).helptip('open');
-      this.highlightLocation(this.highlightedLoc, locationDisplacement);
+      this.highlightLocation(Ensembl.highlightedLoc, locationDisplacement);
     } else {
       this.newLocation = false;
       this.elLk.boundariesPanning.helptip('close');
@@ -919,8 +917,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return;
     }
 
-    if (area.a.attrs.href && this.highlightedLoc) {
-      area.a.attrs.href = Ensembl.updateURL({hlr: this.highlightedLoc[0]}, area.a.attrs.href);
+    if (area.a.attrs.href && Ensembl.highlightedLoc) {
+      area.a.attrs.href = Ensembl.updateURL({hlr: Ensembl.highlightedLoc[0]}, area.a.attrs.href);
     }
 
     var id = 'zmenu_' + area.a.coords.join('_');
@@ -1224,13 +1222,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           if (this.className.match('selected')) {
             Ensembl.highlightLocation(false);
           } else if (this.className.match('outside')) {
-            var hlr     = Ensembl.getHighlightedLocation() || panel.lastHighlightedLoc;
+            var hlr     = Ensembl.getHighlightedLocation() || Ensembl.lastHighlightedLoc;
             var length  = imgBox.range.end - imgBox.range.start; // preserve the scale
             var centre  = (hlr[2] + hlr[3]) / 2;
             Ensembl.highlightLocation(hlr);
             Ensembl.updateLocation(hlr[1] + ':' + Math.max(1, Math.round(centre - length / 2)) + '-' + Math.round(centre + length / 2));
           } else {
-            Ensembl.highlightLocation(panel.lastHighlightedLoc);
+            Ensembl.highlightLocation(Ensembl.lastHighlightedLoc);
           }
         }
       });
@@ -1238,12 +1236,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // if clearing the highlighted area
     if (r === false) {
-      if (!this.highlightedLoc) { // highlighted area is already cleared
-        return;
-      }
-
-      this.lastHighlightedLoc = this.highlightedLoc;
-      this.highlightedLoc     = false;
       this.elLk.highlightedLocation.hide();
       this.elLk.highlightButton.removeClass('selected').trigger('refreshTip').show();
       return;
@@ -1253,9 +1245,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (!r) {
       return;
     }
-
-    // save the highlighted location whether or not it falls in the current region
-    this.highlightedLoc = r;
 
     // remove image selector if any
     this.selectArea(false);

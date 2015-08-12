@@ -29,23 +29,25 @@ Ensembl.extend({
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
     }
     
-    this.browser         = {};
-    this.locationURL     = typeof window.history.pushState === 'function' ? 'search' : 'hash';
-    this.hashParamRegex  = '([#?;&])(__PARAM__=)[^;&]+((;&)?)';
-    this.locationMatch   = new RegExp(/[#?;&]r=([^;&]+)/);
-    this.hightlightMatch = new RegExp(/[#?;&]hlr=([^;&]+)/);
-    this.locationReplace = new RegExp(this.hashParamRegex.replace('__PARAM__', 'r'));
-    this.width           = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
-    this.dynamicWidth    = !!this.cookie.get('DYNAMIC_WIDTH');
-    this.hideHints       = {};
-    this.initialPanels   = $('.initial_panel');
-    this.minWidthEl      = $('#min_width_container');
-    this.maxRegionLength = parseInt($('#max_region_length').val() || 0, 10);
-    this.speciesPath     = $('#species_path').val()        || '';
-    this.speciesCommon   = $('#species_common_name').val() || '';
-    this.species         = this.speciesPath.split('/').pop();
-    this.images          = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
-    
+    this.browser            = {};
+    this.locationURL        = typeof window.history.pushState === 'function' ? 'search' : 'hash';
+    this.hashParamRegex     = '([#?;&])(__PARAM__=)[^;&]+((;&)?)';
+    this.locationMatch      = new RegExp(/[#?;&]r=([^;&]+)/);
+    this.hightlightMatch    = new RegExp(/[#?;&]hlr=([^;&]+)/);
+    this.locationReplace    = new RegExp(this.hashParamRegex.replace('__PARAM__', 'r'));
+    this.width              = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
+    this.dynamicWidth       = !!this.cookie.get('DYNAMIC_WIDTH');
+    this.hideHints          = {};
+    this.initialPanels      = $('.initial_panel');
+    this.minWidthEl         = $('#min_width_container');
+    this.maxRegionLength    = parseInt($('#max_region_length').val() || 0, 10);
+    this.speciesPath        = $('#species_path').val()        || '';
+    this.speciesCommon      = $('#species_common_name').val() || '';
+    this.species            = this.speciesPath.split('/').pop();
+    this.images             = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
+    this.highlightedLoc     = this.getHighlightedLocation();
+    this.lastHighlightedLoc = false;
+
     for (var i in bodyClass) {
       if (bodyClass[i]) {
         this.browser[bodyClass[i]] = true;
@@ -261,6 +263,8 @@ Ensembl.extend({
       this.updateURL({ hlr: r && r[0] });
       this.changeCoreParam('hlr', r[0]);
       this.setCoreParams();
+      this.lastHighlightedLoc = this.highlightedLoc || this.lastHighlightedLoc;
+      this.highlightedLoc     = r;
       this.EventManager.trigger('highlightLocation', r);
     }
   },
