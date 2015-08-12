@@ -280,7 +280,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_members_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
-                '2->A' => 'load_members',
+                '2->A' => 'dnafrag_table_reuse',
                 'A->1' => [ 'hc_members_globally' ],
             },
         },
@@ -348,6 +348,18 @@ sub pipeline_analyses {
         },
 
 # ---------------------------------------------[load ncRNA and gene members]---------------------------------------------
+
+        {   -logic_name => 'dnafrag_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#reuse_db#',
+                'table'         => 'dnafrag',
+                'where'         => 'genome_db_id = #genome_db_id#',
+                'mode'          => 'insertignore',
+            },
+            -flow_into         => [ 'load_members' ],
+            -analysis_capacity => 10,
+        },
 
         {   -logic_name        => 'load_members',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers',
