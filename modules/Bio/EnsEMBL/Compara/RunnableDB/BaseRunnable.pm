@@ -180,7 +180,9 @@ Checks that the parameter is defined, and that the file is executable
 sub require_executable {
     my ($self, $param_name) = @_;
     my $exe = $self->param_required($param_name);
+    $self->input_job->transient_error(0);
     die "Cannot execute $param_name: '$exe'" unless(-x $exe);
+    $self->input_job->transient_error(1);
     return $exe;
 }
 

@@ -1813,7 +1813,8 @@ sub core_pipeline_analyses {
             -parameters => {
                 'condition'             => '#tree_gene_count# < 4',
             },
-            -batch_size     => 50,
+            -batch_size           => 50,
+            -analysis_capacity 	  => 80,
             -flow_into  => {
                 2  => [ 'treebest_small_families' ],
                 3  => [ 'prottest' ],
@@ -2024,6 +2025,7 @@ sub core_pipeline_analyses {
             -max_retry_count			=> 1,
             -flow_into  => {
                 -1 => [ 'get_num_of_patterns_himem' ],
+                2 => [ 'treebest_small_families' ],
                 1 => [ 'raxml_decision' ],
             }
         },
@@ -2079,6 +2081,8 @@ sub core_pipeline_analyses {
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
+            -hive_capacity  => 80,
+            -batch_size     => 50,
             -flow_into  => {
                 2  => [ 'raxml' ],
                 3  => [ 'raxml_8_cores' ],

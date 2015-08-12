@@ -108,7 +108,9 @@ sub write_output {
 
     my $treebest_stored_tree = $self->param('gene_tree');
     if ($self->param('output_clusterset_id') and ($self->param('output_clusterset_id') ne 'default')) {
-        $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), $self->param('output_clusterset_id'), $self->param('gene_tree'), \@ref_support);
+        #We need to parse_newick_into_tree to be able to unmerge the split_genes.
+        $self->parse_newick_into_tree( $self->param('treebest_stdout'), $self->param('gene_tree'), \@ref_support );
+        $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), $self->param('output_clusterset_id'), $self->param('gene_tree'), \@ref_support, 1);
     } else {
         #parse the tree into the datastucture:
         if ($self->parse_newick_into_tree( $self->param('treebest_stdout'), $self->param('gene_tree'), \@ref_support )) {
