@@ -19,6 +19,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.base(id, params);
     
     this.dragging           = false;
+    this.panningAllowed     = false;
     this.panning            = false;
     this.clicking           = true;
     this.dragCoords         = {};
@@ -149,6 +150,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           panel.removeZMenus();
         }
       }).parent();
+      this.panningAllowed = true;
       this.setPanning();
     }
   },
@@ -849,16 +851,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   setPanning: function (flag) {
-    if (typeof flag === 'undefined') {
-      flag = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
-    } else {
-      Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
-    }
+    if (this.panningAllowed) {
+      if (typeof flag === 'undefined') {
+        flag = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
+      } else {
+        Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
+      }
 
-    this.panning = flag;
-    this.elLk.dragSwitch.toggleClass2('selected', function() {
-      return $(this).find('button').hasClass('on') ? flag : !flag;
-    });
+      this.panning = flag;
+      this.elLk.dragSwitch.toggleClass2('selected', function() {
+        return $(this).find('button').hasClass('on') ? flag : !flag;
+      });
+    }
   },
 
   panImage: function(e) {
