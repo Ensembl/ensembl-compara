@@ -132,9 +132,6 @@ sub fetch_input {
         $gene_tree->print_tree($self->param('tree_scale'));
         printf("%d genes in tree\n", scalar(@{$gene_tree->root->get_all_leaves}));
     }
-    unless($self->param('gene_tree')) {
-        $self->throw("undefined GeneTree as input\n");
-    }
 
     $self->param('homology_consistency', {});
     $self->param('has_match', {});
