@@ -293,7 +293,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       links.each(function () {
         var locationMatch = this.href.match(Ensembl.locationMatch);
         if (locationMatch) {
-          $('<br /><a class="loc-highlight _location_highlight _ht" title="Highlighted feature on image" href="' + Ensembl.updateURL({hlr: locationMatch[1]}, this.href) +'"></a>').insertAfter(this);
+          $('<br /><a class="loc-highlight _location_highlight _ht" title="Highlight feature on image" href="' + Ensembl.updateURL({hlr: locationMatch[1]}, this.href) +'"></a>').insertAfter(this);
         }
         return true;
       });
