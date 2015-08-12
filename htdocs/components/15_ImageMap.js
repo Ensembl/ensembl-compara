@@ -1220,9 +1220,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (this.className.match('selected')) {
           Ensembl.highlightLocation(false);
         } else if (this.className.match('outside')) {
-          var hlr     = Ensembl.getHighlightedLocation();
+          var hlr     = Ensembl.getHighlightedLocation() || panel.lastHighlightedLoc;
           var length  = imgBox.range.end - imgBox.range.start; // preserve the scale
           var centre  = (hlr[2] + hlr[3]) / 2;
+          Ensembl.highlightLocation(hlr);
           Ensembl.updateLocation(hlr[1] + ':' + Math.max(1, Math.round(centre - length / 2)) + '-' + Math.round(centre + length / 2));
         } else {
           Ensembl.highlightLocation(panel.lastHighlightedLoc);
