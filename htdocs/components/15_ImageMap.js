@@ -1192,8 +1192,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     offset = offset || 0;
 
-    // not for vertical images
-    if (this.vertical) {
+    // not for vertical or multi species images
+    if (this.vertical || this.multi) {
       return;
     }
 
