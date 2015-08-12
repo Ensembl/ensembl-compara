@@ -52,6 +52,10 @@ sub run {
     $self->run_ncgenomic_tree($self->param('method'));
 }
 
+sub write_output {
+    my ($self) = @_;
+    $self->call_hcs_all_trees();
+}
 
 sub run_ncgenomic_tree {
     my ($self, $method) = @_;

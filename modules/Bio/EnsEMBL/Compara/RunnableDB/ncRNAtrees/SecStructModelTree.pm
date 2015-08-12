@@ -178,6 +178,7 @@ sub cleanup {
 
 sub write_output {
     my $self= shift @_;
+    $self->call_hcs_all_trees();
 }
 
 

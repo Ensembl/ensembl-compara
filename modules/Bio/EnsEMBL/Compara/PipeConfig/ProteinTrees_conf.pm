@@ -2444,34 +2444,13 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[orthologies]-------------------------------------------------------------
 
+        # FIXME: at this stage, if $self->o('use_notung') is set, the
+        # default tree is still flat. we should put an analysis to copy the
+        # most recent clusterset to default
         {   -logic_name => 'hc_post_tree',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE ref_root_id = #gene_tree_id#',
-                'fan_branch_code'   => 2,
-            },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
+            -flow_into  => [ 'ortho_tree' ],
             -hive_capacity        => $self->o('hc_post_tree_capacity'),
-            -flow_into  => {
-                 '2->A' => [ 'hc_tree_structure', 'hc_tree_attributes' ],
-                 'A->1' => 'ortho_tree',
-                 '1->A' => $self->o('use_notung') ? [ 'hc_alignment_post_tree' ] : [ 'hc_alignment_post_tree', 'hc_tree_structure', 'hc_tree_attributes' ]
-            },
-            %hc_analysis_params,
-        },
-
-        {   -logic_name         => 'hc_alignment_post_tree',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'alignment',
-            },
-            %hc_analysis_params,
-        },
-
-        {   -logic_name         => 'hc_tree_structure',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'tree_structure',
-            },
             %hc_analysis_params,
         },
 
@@ -2498,14 +2477,6 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '2Gb_job',
             -flow_into      => [ 'hc_tree_homologies' ],
-        },
-
-        {   -logic_name         => 'hc_tree_attributes',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'tree_attributes',
-            },
-            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_tree_homologies',

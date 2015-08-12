@@ -27,7 +27,7 @@ use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 # We should receive:
 # gene_tree_id
@@ -103,6 +103,7 @@ sub run {
 sub write_output {
     my ($self) = @_;
     $self->store_fasta_alignment("prank_output");
+    $self->call_one_hc('alignment');
     for my $method (qw/phyml nj/) {
         $self->dataflow_output_id (
                                    {

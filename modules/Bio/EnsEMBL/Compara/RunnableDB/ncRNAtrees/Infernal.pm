@@ -78,7 +78,7 @@ use Bio::EnsEMBL::BaseAlignFeature;
 use Bio::EnsEMBL::Compara::HMMProfile;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 
 sub param_defaults {
@@ -167,6 +167,8 @@ sub write_output {
     print STDERR "ALIGNMENT ID IS: ", $self->param('alignment_id'), "\n";
     $self->store_refined_profile;
     $self->_store_aln_tags;
+
+    $self->call_one_hc('alignment');
 
     my $gene_tree_id = $self->param('gene_tree_id');
 

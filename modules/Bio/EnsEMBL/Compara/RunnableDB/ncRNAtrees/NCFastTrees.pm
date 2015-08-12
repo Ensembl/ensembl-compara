@@ -131,7 +131,7 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-
+    $self->call_hcs_all_trees();
 }
 
 

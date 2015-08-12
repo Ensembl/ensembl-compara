@@ -507,8 +507,7 @@ sub pipeline_analyses {
                 -flow_into     => {
                                    '1->A' => [ 'genomic_alignment', 'infernal' ],
                                    'A->1' => [ 'treebest_mmerge' ],
-                                   '3->B' => [ 'aligner_for_tree_break' ],
-                                   'B->4' => [ 'quick_tree_break' ],
+                                   3 => [ 'aligner_for_tree_break' ],
                                   },
             },
 
@@ -519,20 +518,9 @@ sub pipeline_analyses {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
                                },
-                -flow_into    => {
-                                  1 => [ 'hc_alignment' ],
-                                 },
+                -flow_into     => [ 'quick_tree_break' ],
                 -rc_name => '2Gb_job',
             },
-
-
-        {   -logic_name         => 'hc_alignment',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'alignment',
-            },
-            %hc_params,
-        },
 
             {   -logic_name => 'quick_tree_break',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
@@ -577,7 +565,7 @@ sub pipeline_analyses {
                                    'cmalign_exe' => $self->o('cmalign_exe'),
                                   },
                 -flow_into     => {
-                                   1 => ['pre_sec_struct_tree', 'hc_alignment' ],
+                                   1 => ['pre_sec_struct_tree'],
                                    3 => $self->o('create_ss_pics') ? ['create_ss_picts'] : [],
                                   },
                 -rc_name       => '2Gb_job',
@@ -644,7 +632,6 @@ sub pipeline_analyses {
             -flow_into => {
                            -2 => ['genomic_alignment_long'],
                            -1 => ['genomic_alignment_long'],
-                           1  => ['hc_alignment' ],
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
                           },
@@ -676,7 +663,6 @@ sub pipeline_analyses {
                            },
          -rc_name => '8Gb_basement_ncores_job',
          -flow_into => {
-                        1 => [ 'hc_alignment' ],
                         2 => [ 'genomic_tree_himem' ],
                        },
         },
@@ -711,28 +697,13 @@ sub pipeline_analyses {
             -parameters => {
                             'treebest_exe' => $self->o('treebest_exe'),
                            },
-            -flow_into => {
-                           '1->A' =>  [ 'hc_alignment_post_tree', 'hc_tree_structure' ],
-                           'A->1' => [ 'orthotree' ],
-                           1 => [ 'ktreedist' ],
-                           '2->A' => [ 'hc_tree_structure' ],
-            },
+            -flow_into => [ 'hc_one_tree' ],
             -rc_name => '2Gb_job',
         },
 
-        {   -logic_name         => 'hc_alignment_post_tree',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'alignment',
-            },
-            %hc_params,
-        },
-
-        {   -logic_name         => 'hc_tree_structure',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'tree_structure',
-            },
+        {   -logic_name => 'hc_one_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
+            -flow_into  => [ 'orthotree', 'ktreedist' ],
             %hc_params,
         },
 
@@ -742,7 +713,7 @@ sub pipeline_analyses {
             -parameters => {
                             'tag_split_genes'   => 0,
             },
-            -flow_into  => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
+            -flow_into  => [ 'hc_tree_homologies' ],
            -rc_name => '1Gb_job',
         },
 
@@ -753,14 +724,6 @@ sub pipeline_analyses {
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                            },
             -rc_name => '2Gb_job',
-        },
-
-        {   -logic_name         => 'hc_tree_attributes',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'tree_attributes',
-            },
-            %hc_params,
         },
 
         {   -logic_name         => 'hc_tree_homologies',
