@@ -141,7 +141,7 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -input_ids  => [ {} ],
                 -flow_into  => {
-                                '1->A'  => [ 'copy_ncbi_tables_factory' ],
+                                '1->A'  => [ 'copy_tables_factory' ],
                                 'A->1'  => [ 'backbone_fire_load_genomes' ],
                                },
                 %backbone_params,
@@ -190,37 +190,26 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[copy tables from master and fix the offsets]---------------------------------------------
 
-        {   -logic_name => 'copy_ncbi_tables_factory',
+        {   -logic_name => 'copy_tables_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name', 'method_link' ],
                 'column_names' => [ 'table' ],
                 'fan_branch_code' => 2,
             },
             -flow_into => {
-                '2->A' => [ 'copy_ncbi_table'  ],
-                'A->1' => [ 'populate_method_links_from_db' ],
+                '2->A' => [ 'copy_table'  ],
+                'A->1' => [ 'offset_tables' ],
             },
         },
 
-        {   -logic_name    => 'copy_ncbi_table',
+        {   -logic_name    => 'copy_table',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
                 'src_db_conn'   => '#master_db#',
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
-        },
-
-        {   -logic_name    => 'populate_method_links_from_db',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'src_db_conn'   => '#master_db#',
-                'mode'          => 'overwrite',
-                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-                'table'         => 'method_link',
-            },
-            -flow_into      => [ 'offset_tables' ],
         },
 
         {   -logic_name => 'offset_tables',
