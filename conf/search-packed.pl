@@ -30,6 +30,10 @@ use warnings;
 # Latimeria_chalumnae/DATABASE_OTHERFEATURES/data_file/coelacanth_bwa v bam
 # ...
 #
+# As an alternative, all keys, values and arrays can be searched for a
+# string by specifying a final path component '*<match>', for example
+#
+# $ ./search-packed.pl 'Homo_sapiens/*segway'
 
 use FindBin;
 use Storable qw(retrieve);
@@ -38,6 +42,7 @@ my $pattern = shift @ARGV;
 my @pattern;
 
 @pattern = split('/',$pattern) if $pattern;
+my $match = pop @pattern if @pattern and $pattern[-1] =~ /^\*/;
 
 my @s = ([[],retrieve("$FindBin::Bin/config.packed")]);
 foreach my $p (@pattern) {
@@ -62,8 +67,33 @@ foreach my $p (@pattern) {
   @s = @s2;
 }
 
+sub match {
+  my ($path,$data,$type,$match,$out) = @_;
+
+  if(ref($data) eq 'HASH') {
+    foreach my $k (keys %$data) {
+      if($k =~ /$match/) {
+        push @$out,[[@$path,$k],undef];
+      }
+      match([@$path,$k],$data->{$k},$type,$match,$out);
+    }
+  }
+}
+
+my $type;
+if($match) {
+  $match =~ s/^([*])//;
+  $type = $1;
+  my @s2;
+  foreach my $s (@s) {
+    match($s->[0],$s->[1],$type,$match,\@s2);
+  }
+  @s = @s2;
+}
 foreach my $s (@s) {
-  if(ref($s->[1]) eq 'HASH') {
+  if(!defined($s->[1])) {
+    print join('/',@{$s->[0]})." f\n";
+  } elsif(ref($s->[1]) eq 'HASH') {
     foreach my $k (keys %{$s->[1]}) {
       print join('/',@{$s->[0]})." k $k\n";
     }
