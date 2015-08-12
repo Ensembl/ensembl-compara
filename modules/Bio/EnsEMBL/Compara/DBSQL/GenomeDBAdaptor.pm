@@ -391,7 +391,6 @@ sub update {
     $sth->execute( $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->genome_component, $gdb->locator, $gdb->first_release, $gdb->last_release, $gdb->dbID );
 
     $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
-    $self->_id_cache->remove($gdb->dbID);
     $self->_id_cache->put($gdb->dbID, $gdb);
 
     return $gdb;
