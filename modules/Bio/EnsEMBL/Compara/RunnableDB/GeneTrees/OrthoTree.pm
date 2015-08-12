@@ -88,12 +88,15 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
+    my $self = shift;
     return {
+            %{ $self->SUPER::param_defaults() },
             'tree_scale'            => 1,
             'store_homologies'      => 1,
             'no_between'            => 0.25, # dont store all possible_orthologs
             '_readonly'             => 0,
             'tag_split_genes'       => 0,
+            'input_clusterset_id'   => undef,
     };
 }
 

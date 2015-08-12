@@ -59,6 +59,18 @@ use strict;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        # For Treebest
+        extra_args      => undef,
+        filt_cmdline    => undef,
+    };
+}
+
+
 # First of all, we need a tree of node_ids, since our foreign keys are based on that
 
 sub _load_species_tree_string_from_db {
@@ -263,7 +275,7 @@ sub _get_alignment_filtering_cmd {
     my $cmd = $self->_get_treebest_cmd($args).' ';
 
     # External alignment filtering ?
-    if (defined $self->param('filt_cmdline')) {
+    if ($self->param('filt_cmdline')) {
         my $tmp_align = $self->worker_temp_directory.'prog-filtalign.fa';
         $cmd .= $tmp_align;
         $cmd = sprintf($self->param('filt_cmdline'), $input_aln, $tmp_align).' ; '.$cmd;

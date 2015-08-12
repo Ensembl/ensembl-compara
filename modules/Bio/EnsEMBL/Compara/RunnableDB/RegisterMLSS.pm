@@ -51,7 +51,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
+    my $self = shift;
     return {
+        %{$self->SUPER::param_defaults},
         'allow_reregistration'              => 0,   # Boolean. 0 means: die if the current database is already registered for this MLSS
         'allow_overwrite_other_database'    => 0,   # Boolean. 0 means: die if another database has been registered for this MLSS
     }

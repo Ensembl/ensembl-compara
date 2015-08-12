@@ -64,6 +64,11 @@ sub param_defaults {
         'extra_parameters'  => [],
 
         'fan_branch_code'   => 2,
+
+        # Definition of the species-set
+        'species_set_id'    => undef,
+        'mlss_id'           => undef,
+        'all_current'       => undef,
     }
 }
 

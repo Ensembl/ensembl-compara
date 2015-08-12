@@ -64,15 +64,22 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMB
 
 
 sub param_defaults {
+    my $self = shift;
     return {
+        %{$self->SUPER::param_defaults},
             'cdna'              => 1,   # always use cdna for njtree_phyml
             'check_split_genes' => 1,
             'store_tree_support'    => 1,
             'intermediate_prefix'   => 'interm',
             'extra_lk_scale'    => undef,
             'treebest_stderr'   => undef,
+            'output_dir'        => undef,
+            # To please StoreTree (parameters usually found in GenericRunnable)
+            'read_tags'         => 0,
+
     };
 }
+
 
 
 sub fetch_input {
@@ -174,7 +181,7 @@ sub write_output {
         }
     }
 
-    if (defined $self->param('output_dir')) {
+    if ($self->param('output_dir')) {
         system(sprintf('cd %s; zip -r -9 %s/%d.zip', $self->worker_temp_directory, $self->param('output_dir'), $self->param('gene_tree_id')));
     }
 

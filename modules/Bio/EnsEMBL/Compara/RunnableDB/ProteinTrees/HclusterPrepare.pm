@@ -64,6 +64,16 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        'outgroup_category' => undef,
+        'outgroups'         => {},
+    };
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
@@ -80,7 +90,7 @@ sub fetch_input {
     $self->param('table_name', $table_name);
 
     unless(defined($self->param('outgroup_category'))) {    # it can either be passed in or computed
-        my $outgroups = $self->param('outgroups') || {};
+        my $outgroups = $self->param('outgroups');
         my $outgroup_category =  $outgroups->{$genome_db->name} || 1;
         $self->param('outgroup_category', $outgroup_category);
     }

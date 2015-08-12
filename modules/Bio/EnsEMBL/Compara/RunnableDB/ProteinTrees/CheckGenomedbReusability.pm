@@ -59,8 +59,14 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 my $suffix_separator = '__cut_here__';
 
 sub param_defaults {
+    my $self = shift;
     return {
+        %{$self->SUPER::param_defaults},
         check_gene_content  => 1,
+
+        # "reuse_this" is used throughout the Runnable. Default value is
+        # undef, so that the calling job can set it to 0 or 1
+        reuse_this  => undef,
     }
 }
 

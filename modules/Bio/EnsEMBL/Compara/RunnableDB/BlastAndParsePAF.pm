@@ -66,11 +66,14 @@ use Bio::EnsEMBL::Compara::MemberSet;
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
 sub param_defaults {
+    my $self = shift;
     return {
+            %{$self->SUPER::param_defaults},
             'evalue_limit'  => 1e-5,
             'tophits'       => 20,
             'no_cigars'     => 0,
             'allow_same_species_hits'  => 0,
+            'blast_db'      => undef,
     };
 }
 

@@ -67,6 +67,7 @@ sub param_defaults {
         'options'               => '',
         'cutoff'                => 2,                       # for filtering
         'check_seq'             => 0,
+        'redo_alnname'          => undef,
     };
 }
 

@@ -55,8 +55,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
+    my $self = shift;
     return {
-            'step'  => 100,
+        %{$self->SUPER::param_defaults},
+        'step'  => 100,
+        'species_set_id'    => undef,
     };
 }
 

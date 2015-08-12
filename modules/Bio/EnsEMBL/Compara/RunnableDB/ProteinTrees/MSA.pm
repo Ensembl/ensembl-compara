@@ -62,6 +62,15 @@ use Bio::EnsEMBL::Compara::Utils::Cigars;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults() },
+        escape_branch   => undef,
+        cmd_max_runtime => undef,
+
+    };
+}
 
 =head2 fetch_input
 
@@ -119,8 +128,8 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    return if ($self->param('single_peptide_tree'));
     $self->param('msa_starttime', time()*1000);
+    return if ($self->param('single_peptide_tree'));
     $self->run_msa;
 }
 
@@ -248,6 +257,8 @@ sub dumpProteinTreeToWorkdir {
   if ($num_pep <= 1) {
     $self->update_single_peptide_tree($tree);
     $self->param('single_peptide_tree', 1);
+  } else {
+    $self->param('single_peptide_tree', 0);
   }
 
   return $fastafile;

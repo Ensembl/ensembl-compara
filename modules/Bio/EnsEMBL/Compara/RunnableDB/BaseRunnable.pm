@@ -55,6 +55,16 @@ use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
+# Default values for the parameters used in this Runnable
+# Make sure the sub-classes import this with $self->SUPER::param_defaults() !
+sub param_defaults {
+    return {
+        'species_tree_file'     => undef,
+        'species_tree_string'   => undef,
+        'master_password'       => undef,   # Will default to $ENSADMIN_PSW
+    }
+}
+
 
 =head2 compara_dba
 

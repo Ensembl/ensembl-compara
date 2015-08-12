@@ -97,6 +97,17 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 my $suffix_separator = '__cut_here__';
 
+
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        'first_found'   => 0,
+        'genome_db_id'  => undef,
+    }
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 

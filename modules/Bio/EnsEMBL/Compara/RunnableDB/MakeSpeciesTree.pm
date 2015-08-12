@@ -55,9 +55,18 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
+    my $self = shift;
     return {
+        %{$self->SUPER::param_defaults},
+            'label'                 => 'default',
             'newick_format'         => 'ncbi_taxon',    # the desired output format
+            'species_set_id'        => undef,
             'do_transactions'       => 0,
+            'no_previous'           => undef,
+            'blength_tree_file'     => undef,
+            'extrataxon_sequenced'  => undef,
+            'multifurcation_deletes_node'           => undef,
+            'multifurcation_deletes_all_subnodes'   => undef,
     };
 }
 
@@ -158,8 +167,7 @@ sub write_output {
     $species_tree->method_link_species_set_id($self->param_required('mlss_id'));
     $species_tree->root($species_tree_root);
 
-    my $label = $self->param('label') || 'default';
-    $species_tree->label($label);
+    $species_tree->label($self->param('label'));
 
     my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
 
