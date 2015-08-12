@@ -1213,15 +1213,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // create the highlight button
     if (!this.elLk.highlightButton) {
-      this.elLk.highlightButton = $('<a class="hlr-reset">').hide().appendTo(this.elLk.toolbars).helptip().on({
+      this.elLk.highlightButton = $('<a class="hlr-reset outside">').hide().appendTo(this.elLk.toolbars).helptip().on({
         'refreshTip': function () {
-          $(this).helptip('option', 'content', this.className.match(/outside/) ? 'Jump back to the highlighted region' : (this.className.match(/selected/) ? 'Clear highlighted region' : 'Reinstate highlighted region'))
+          $(this).helptip('option', 'content', this.className.match(/outside/) ? 'Jump to the highlighted region' : (this.className.match(/selected/) ? 'Clear highlighted region' : 'Reinstate highlighted region'))
         },
         'click': function (e) {
           e.preventDefault();
           if (this.className.match('selected')) {
             Ensembl.highlightLocation(false);
-          } else if (this.className.match('outside')) {
+          } else if (this.className.match(/outside/)) {
             var hlr     = Ensembl.getHighlightedLocation() || Ensembl.lastHighlightedLoc;
             var length  = imgBox.range.end - imgBox.range.start; // preserve the scale
             var centre  = (hlr[2] + hlr[3]) / 2;
