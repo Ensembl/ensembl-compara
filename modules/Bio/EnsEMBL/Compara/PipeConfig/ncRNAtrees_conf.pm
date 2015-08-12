@@ -352,7 +352,7 @@ sub pipeline_analyses {
         {   -logic_name => 'dnafrag_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => '#reuse_db#',
+                'src_db_conn'   => '#master_db#',
                 'table'         => 'dnafrag',
                 'where'         => 'genome_db_id = #genome_db_id#',
                 'mode'          => 'insertignore',
