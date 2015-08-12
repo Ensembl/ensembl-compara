@@ -1272,7 +1272,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     } else {
       this.elLk.highlightedLocation.hide();
-      this.elLk.highlightButton.addClass('outside').removeClass('selected').helptip('option', 'content', 'Jump back to the highlighted region').show();
+      if (this.panningAllowed) {
+        this.elLk.highlightButton.addClass('outside').removeClass('selected').helptip('option', 'content', 'Jump back to the highlighted region').show();
+      } else {
+        this.elLk.highlightButton.hide();
+      }
     }
   },
 
