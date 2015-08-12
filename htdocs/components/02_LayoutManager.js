@@ -236,7 +236,7 @@ Ensembl.LayoutManager.extend({
   },
 
   updateHighlightParam: function (hlr) {
-    $('a:not(.constant)').filter(function () { // only for the links that have r param
+    $('a:not(.constant):not(._location_highlight)').filter(function () { // only for the links that have r param
       return this.hostname === window.location.hostname && !!this.href.match(Ensembl.locationMatch);
     }).attr('href', function () {
       return Ensembl.updateURL({hlr: hlr && hlr[0]}, this.href);
