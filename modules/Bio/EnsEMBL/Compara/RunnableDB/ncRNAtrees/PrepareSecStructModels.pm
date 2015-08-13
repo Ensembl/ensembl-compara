@@ -272,8 +272,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     $sa->set_displayname_flat(1);
 
     # Phylip header
-    print OUTSEQ $sa->no_sequences, " ", $sa->length, "\n";
-    $self->param('tag_residue_count', $sa->no_sequences * $sa->length);
+    print OUTSEQ $sa->num_sequences, " ", $sa->length, "\n";
+    $self->param('tag_residue_count', $sa->num_sequences * $sa->length);
     # Phylip body
     my $count = 0;
     foreach my $aln_seq ($sa->each_seq) {

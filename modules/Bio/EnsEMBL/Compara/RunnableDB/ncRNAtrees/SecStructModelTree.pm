@@ -217,7 +217,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     $sa->set_displayname_flat(1);
 
   # Phylip header
-    print OUTSEQ $sa->no_sequences, " ", $sa->length, "\n";
+    print OUTSEQ $sa->num_sequences, " ", $sa->length, "\n";
     # Phylip body
     my $count = 0;
     foreach my $aln_seq ($sa->each_seq) {

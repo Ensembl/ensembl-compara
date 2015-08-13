@@ -538,7 +538,7 @@ sub _store_aln_tags {
     }
 
     # Alignment residue count.
-    my $aln_num_residues = $sa->no_residues;
+    my $aln_num_residues = $sa->num_residues;
     $tree->store_tag("aln_num_residues",$aln_num_residues);
 
 }
