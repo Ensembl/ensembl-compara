@@ -397,7 +397,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (hoverLabel.length) {
           // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
           panel.elLk.labelLayers = panel.elLk.labelLayers.add(
-            $('<div class="label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(panel.elLk.container).data({area: this})
+            $('<div class="label_layer _label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(panel.elLk.container).data({area: this})
           );
         }
 
@@ -496,12 +496,32 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.hoverLabels.each(function() {
 
       // init the tab styled icons inside the hover menus
-      $(this).find('._hl_icon').removeClass('_hl_icon').tabs($(this).find('._hl_tab')).end().find('._hl_pin').off().on('click', function () {
-        $(this).toggleClass('on').closest('.label_layer').toggleClass('pinned', $(this).hasClass('on'));
+      $(this).find('._hl_icon').removeClass('_hl_icon').tabs($(this).find('._hl_tab')).end()
+
+      // init the header/pin icon that holds the hover label if clicked
+      .find('._hl_pin').off().on('click', function () {
+        $(this).toggleClass('on').closest('._label_layer').toggleClass('pinned', $(this).hasClass('on'));
+      }).end()
+
+      // init the extend icon to drag-change hover label's width
+      .find('._hl_extend').off().on({
+        click: function (e) {
+          e.stopPropagation() // prevent click on the header/pin
+        },
+        mousedown: function (e) {
+          e.preventDefault(); // this is to prevent any text selection when mouse moves
+          var hoverLabel = $(this).closest('.hover_label');
+          $(document).on('mousemove.resizeHoverLabel', { hoverLabel: hoverLabel, startX: e.pageX, startW: hoverLabel.width() }, function (e) {
+            e.data.hoverLabel.css('width', Math.max(300, Math.min(Ensembl.cookie.get('ENSEMBL_WIDTH') - 300, e.data.startW + e.pageX - e.data.startX)));
+          }).on('mouseup.resizeHoverLabel', function () {
+            $(document).off('.resizeHoverLabel');
+          });
+        }
       });
+    })
 
     // init config tab, fav icon and close icon
-    }).find('a.config').off().on('click', function (e) {
+    .find('a.config').off().on('click', function (e) {
       e.preventDefault();
 
       if ($(this).parent().hasClass('current')) {
@@ -517,7 +537,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         fav = $this.hasClass('selected') ? 'off' : 'on';
         Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
       } else {
-        $this.parents('.label_layer').addClass('hover_label_spinner');
+        $this.parents('._label_layer').addClass('hover_label_spinner');
       }
 
       $.ajax({
@@ -531,8 +551,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       });
 
       $this = null;
-    }).end().find('input._copy_url').off().on('click focus blur', function(e) {
-      $(this).val(this.defaultValue).select().closest('.label_layer').toggleClass('focused', e.type !== 'blur');
+    }).end()
+
+    // while url input is focused, don't hide the hover label
+    .find('input._copy_url').off().on('click focus blur', function(e) {
+      $(this).val(this.defaultValue).select().closest('._label_layer').toggleClass('focused', e.type !== 'blur');
     });
   },
 

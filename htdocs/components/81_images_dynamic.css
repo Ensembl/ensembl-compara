@@ -84,6 +84,9 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .hover_label p.header span.hl-pin         { background-color: [[BUTTON_BG]]; background-image: url(/i/16/rev/pin.png); background-size: 12px auto; border: 2px solid [[BUTTON_BG]];
                                             border-radius: 2px; float: left; height: 12px; width: 12px; margin-right: 4px; }
 .hover_label p.header.on span.hl-pin      { background-color: [[BUTTON_BG_HOVER]]; border-color: [[BUTTON_BG_HOVER]]; }
+.hover_label p.header .hl-extend          { background: transparent url("/i/16/extend.png") no-repeat right center; cursor: ew-resize; height: 16px; width: 16px; float: right; display: none; }
+.pinned .hover_label p.header .hl-extend  { display: block; }
+
 .hover_label div.config ul,
 .hover_label div.config li                { margin: 0; padding: 0; list-style: none; list-style-image: none; }
 .hover_label div.config li                { line-height: 22px; }
