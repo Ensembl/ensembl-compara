@@ -698,14 +698,8 @@ sub pipeline_analyses {
             -parameters => {
                             'treebest_exe' => $self->o('treebest_exe'),
                            },
-            -flow_into => [ 'hc_one_tree' ],
-            -rc_name => '2Gb_job',
-        },
-
-        {   -logic_name => 'hc_one_tree',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
             -flow_into  => [ 'orthotree', 'ktreedist' ],
-            %hc_params,
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name    => 'orthotree',

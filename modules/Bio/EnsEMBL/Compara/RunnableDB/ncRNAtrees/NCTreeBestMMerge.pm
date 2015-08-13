@@ -155,6 +155,9 @@ sub write_output {
     my ($self) = @_;
 
     $self->store_genetree($self->param('gene_tree')) if defined $self->param('inputtrees_unrooted');
+    $self->call_one_hc('alignment');
+    $self->call_one_hc('tree_attributes');
+    $self->call_one_hc('tree_structure');
 }
 
 sub post_cleanup {
