@@ -49,7 +49,11 @@ use Carp;
 
 use Bio::EnsEMBL::Registry;
 
+use Exporter qw(import);
+our @EXPORT_OK = qw(register_cleaner);
+
 my $reg = 'Bio::EnsEMBL::Registry';
+my %CLEANERS;
 
 sub new {
   my( $class, $species, $species_defs ) = @_;
@@ -57,8 +61,25 @@ sub new {
     '_default_species'  => $species,
     'species_defs'      => $species_defs,
     '_dbs'              => {}
-  }, $class; 
+  }, $class;
   return $self;
+}
+
+# Call me to register a cleanup function to make an adaptor "good" after
+#   creating it for a certain target class
+sub register_cleaner {
+  my ($target,$cleaner) = @_;
+
+  push @{$CLEANERS{ref $target || $target}||=[]},$cleaner;
+}
+
+sub clean {
+  my ($self,$db) = @_;
+
+  foreach my $klass (keys %CLEANERS) {
+    next unless $db->isa($klass);
+    $_->($db,$self->{'species_defs'}) for (@{$CLEANERS{$klass}});
+  }
 }
 
 =head2 get_DBAdaptor
@@ -91,6 +112,7 @@ sub get_DBAdaptor {
     
   # try to retrieve the DBAdaptor from the Registry
   my $dba = $reg->get_DBAdaptor($species, $database);
+  $self->clean($dba);
   # warn "$species - $database - $dba";
 
   # Funcgen Database Files Overwrite
@@ -139,6 +161,7 @@ sub get_databases_species {
   for my $database (@databases){
     unless( defined($self->{'_dbs'}->{$species}->{$database}) ) {
       my $dba = $reg->get_DBAdaptor( $species, $database );
+      $self->clean($dba);
       if (!defined($dba) || $database eq 'glovar'){
         $self->_get_databases_common( $species, $database );
       } else{
@@ -342,6 +365,7 @@ sub _get_userdata_database{
 sub _get_compara_database{
   my $self = shift;
   my $dba =  $reg->get_DBAdaptor('Multi','compara');
+  $self->clean($dba);
   if(defined($dba)){
     return $dba;
   }
