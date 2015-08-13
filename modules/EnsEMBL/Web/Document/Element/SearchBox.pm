@@ -35,7 +35,7 @@ sub search_options {
     'ensembl_all'     => { 'label' => 'Search all species',     'icon' => 'search/ensembl.gif'          },
     'ensembl_genomes' => { 'label' => 'Search Ensembl genomes', 'icon' => 'search/ensembl_genomes.gif'  },
     'vega'            => { 'label' => 'Search Vega',            'icon' => 'search/vega.gif'             },
-    'ebi'             => { 'label' => 'Search EBI',             'icon' => 'search/ebi.gif'              },
+    'ebi'             => { 'label' => 'Search EMBL-EBI',        'icon' => 'search/ebi.gif'              },
     'sanger'          => { 'label' => 'Search Sanger',          'icon' => 'search/sanger.gif'           }
   ];
 }
