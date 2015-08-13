@@ -541,13 +541,14 @@ sub call_one_hc {
     my ($self, $test_name) = @_;
     $self->param('tests', $Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::config->{$test_name}->{tests});
     $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_validate_tests();
-    $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::run();
-}
-
-# ... because SqlHealthChecks::run() calls $self->_run_test(), we need to implement it here (as an alias)
-sub _run_test {
-    my $self = shift;
-    return $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_run_test(@_);
+    my $failures = 0;
+    foreach my $test (@{ $self->param('tests') }) {
+        if (not $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_run_test($test)) {
+            $failures++;
+            $self->warning(sprintf("The following test has failed: %s\n   > %s\n", $test->{description}, $test->{subst_query}));
+        }
+    }
+    die "$failures HCs failed.\n" if $failures;
 }
 
 sub call_hcs_all_trees {
