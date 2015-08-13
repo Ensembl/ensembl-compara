@@ -122,7 +122,7 @@ sub pipeline_wide_parameters {
 
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
-	'reg_conf' => $self->o('reg_conf')
+	'reg_conf' => $self->o('reg_conf'),
         'export_dir'    => $self->o('export_dir'),
     };
 }
