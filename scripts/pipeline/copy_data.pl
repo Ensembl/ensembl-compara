@@ -170,7 +170,7 @@ my $from_reg_name = undef;
 my $from_url = undef;
 my $to_reg_name = undef;
 my $to_url = undef;
-my $ancestral_dbID= 22;
+my $ancestral_dbID= 63;
 my @method_link_types = ();
 my @mlss_id = ();
 
@@ -801,7 +801,7 @@ sub copy_ancestral_dnafrags {
        $min_dnafrag_id, $max_dnafrag_id,
        "SELECT dnafrag_id+$fix_dnafrag_id, length, name, genome_db_id, coord_system_name, is_reference".
          " FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id)" .
-         " WHERE method_link_species_set_id = $mlss_id AND genome_db_id=22");
+         " WHERE method_link_species_set_id = $mlss_id AND genome_db_id=$ancestral_dbID");
 
 }
 
