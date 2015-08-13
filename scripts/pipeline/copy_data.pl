@@ -170,7 +170,7 @@ my $from_reg_name = undef;
 my $from_url = undef;
 my $to_reg_name = undef;
 my $to_url = undef;
-
+my $ancestral_dbID= 22;
 my @method_link_types = ();
 my @mlss_id = ();
 
@@ -211,6 +211,7 @@ GetOptions(
            'trust_ce!'                      => \$trust_ce,
            'merge!'                         => \$merge,
            'patch_merge!'                   => \$patch_merge,
+    'ancestral_dbID=i'                        => \$ancestral_dbID,
 );
 
 # Print Help and exit if help is requested
@@ -489,7 +490,7 @@ sub copy_genomic_align_blocks {
 
   exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild", "genome_db_id IN ($gdb_ids)" );
   #ignore ancestral dnafrags, will add those later
-  if (!check_table("dnafrag", $from_dba, $to_dba, undef, "genome_db_id != 63 AND genome_db_id IN ($gdb_ids)")) {
+  if (!check_table("dnafrag", $from_dba, $to_dba, undef, "genome_db_id != $ancestral_dbID AND genome_db_id IN ($gdb_ids)")) {
       $fix_dnafrag = 1;
       if ($fix_dnafrag && !$trust_to) {
           print " To fix the dnafrags in the genomic_align table, you can use the trust_to flag\n\n";
@@ -738,7 +739,7 @@ sub copy_ancestral_dnafrags {
   my $dnafrag_name = "Ancestor_" . $mlss_id . "_";
   my $sth = $from_dba->dbc->prepare("SELECT name FROM genomic_align
                                          LEFT JOIN dnafrag USING (dnafrag_id)
-                                         WHERE genome_db_id = 63
+                                         WHERE genome_db_id = $ancestral_dbID
                                          AND method_link_species_set_id = ?");
   $sth->execute($mlss_id);
   my @names = $sth->fetchrow_array();
@@ -751,7 +752,7 @@ sub copy_ancestral_dnafrags {
       throw("name is not $dnafrag_name format\n");
   }
   #Check name does not already exist in TO database
-  $sth = $to_dba->dbc->prepare("SELECT count(*) FROM dnafrag WHERE genome_db_id = 63 AND name LIKE '" . $dnafrag_name . "%'");
+  $sth = $to_dba->dbc->prepare("SELECT count(*) FROM dnafrag WHERE genome_db_id = $ancestral_dbID AND name LIKE '" . $dnafrag_name . "%'");
   
   $sth->execute();
   my ($count) = $sth->fetchrow_array();
@@ -765,7 +766,7 @@ sub copy_ancestral_dnafrags {
                                          MAX(dnafrag_id)
                                          FROM genomic_align
                                          LEFT JOIN dnafrag USING (dnafrag_id)
-                                         WHERE genome_db_id = 63
+                                         WHERE genome_db_id =ancestral_dbId
                                          AND method_link_species_set_id = ?");
   $sth->execute($mlss_id);
   my ($min_dnafrag_id, $max_dnafrag_id) = $sth->fetchrow_array();
@@ -800,7 +801,7 @@ sub copy_ancestral_dnafrags {
        $min_dnafrag_id, $max_dnafrag_id,
        "SELECT dnafrag_id+$fix_dnafrag_id, length, name, genome_db_id, coord_system_name, is_reference".
          " FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id)" .
-         " WHERE method_link_species_set_id = $mlss_id AND genome_db_id=63");
+         " WHERE method_link_species_set_id = $mlss_id AND genome_db_id=22");
 
 }
 

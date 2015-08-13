@@ -84,6 +84,7 @@ sub fetch_input {
     #and store in param('mlss_id')
     #
     my $mlss_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
+<<<<<<< Updated upstream
     my $mlss         = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
     if ($mlss->method->type eq "GERP_CONSERVATION_SCORE") {
       $self->param('mlss_id', $mlss->get_value_for_tag('msa_mlss_id'));
@@ -121,7 +122,6 @@ sub write_output {
         # coordinate systems, we let createOtherJobs bin the alignment
         # blocks into chunks
         $self->dataflow_output_id($output_ids, 4);
-
     } elsif ($self->param_required('format') eq 'emf2maf') {
 
         # In this mode, we read the EMF files from one directory, and
