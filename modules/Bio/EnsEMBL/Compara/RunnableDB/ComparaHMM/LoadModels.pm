@@ -63,6 +63,17 @@ use Bio::EnsEMBL::Compara::HMMProfile;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+# Default values for the parameters used in this Runnable
+# Make sure the sub-classes import this with $self->SUPER::param_defaults() !
+sub param_defaults {
+    return {
+        'cm_file_or_directory'  => undef,
+        'temp_dir'              => undef,
+    }
+}
+
+
+
 =head2 download_models
 
     Parameters:

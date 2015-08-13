@@ -80,8 +80,14 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMB
 
 
 sub param_defaults {
+    my $self = shift;
     return {
-            'store_tree_support'    => 1,
+        %{$self->SUPER::param_defaults},
+        'cdna'  => 0,
+        'filt_cmdline'          => undef,
+        'remove_columns'        => undef,
+        'check_split_genes'     => 0,
+        'store_tree_support'    => 1,
     };
 }
 

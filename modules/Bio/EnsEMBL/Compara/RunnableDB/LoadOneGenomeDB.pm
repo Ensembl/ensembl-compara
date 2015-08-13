@@ -102,8 +102,14 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
+
         'first_found'   => 0,
         'genome_db_id'  => undef,
+
+        # Registry configuration
+        'registry_dbs'          => undef,
+        'registry_files'        => undef,
+        'registry_conf_file'    => undef,
     }
 }
 

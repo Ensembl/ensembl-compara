@@ -33,6 +33,8 @@ use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+# Should we define hidden_genes here ?
+
 ########################################
 # Gene split mirroring code
 #

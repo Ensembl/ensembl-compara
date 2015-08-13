@@ -81,6 +81,14 @@ use Bio::EnsEMBL::Compara::GeneTreeNode;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults() },
+        'cdna'              => 0,
+        'remove_columns'    => 0,
+    };
+}
 
 =head2 fetch_input
 
