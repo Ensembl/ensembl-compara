@@ -76,6 +76,8 @@ sub register_cleaner {
 sub clean {
   my ($self,$db) = @_;
 
+  return unless $db;
+
   foreach my $klass (keys %CLEANERS) {
     next unless $db->isa($klass);
     $_->($db,$self->{'species_defs'}) for (@{$CLEANERS{$klass}});
