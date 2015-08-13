@@ -69,7 +69,7 @@ use strict;
 use Time::HiRes qw(time);
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCStoreTree');
 
 sub param_defaults {
     return {
@@ -241,7 +241,7 @@ sub _run_bootstrap_raxml {
 
   my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree." . "$raxml_tag.$bootstrap_num";
 
-  $self->_store_newick_into_nc_tree_tag_string($tag,$raxml_output);
+  $self->store_newick_into_nc_tree($tag, $raxml_output);
 
   # Unlink run files
   my $temp_dir = $self->worker_temp_directory;

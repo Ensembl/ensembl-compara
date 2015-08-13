@@ -49,7 +49,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree;
 use strict;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCStoreTree');
 
 
 =head2 fetch_input
@@ -155,7 +155,7 @@ sub run {
     print STDERR "RAxML runtime_msec: ", $command->runtime_msec, "\n";
 
     my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree.$raxml_tag.$model";
-    $self->_store_newick_into_protein_tree_tag_string($tag,$raxml_output);
+    $self->store_newick_into_nc_tree($tag, $raxml_output);
     my $model_runtime = "${model}_runtime_msec";
     $nc_tree->store_tag($model_runtime,$command->runtime_msec);
 
@@ -188,21 +188,6 @@ sub write_output {
 #
 ##########################################
 
-sub _store_newick_into_protein_tree_tag_string {
-
-  my $self = shift;
-  my $tag = shift;
-  my $newick_file = shift;
-
-  print STDERR "load from file $newick_file\n" if($self->debug);
-  my $newick = $self->_slurp($newick_file);
-  my $newtree = $self->store_alternative_tree($newick, $tag, $self->param('gene_tree'));
-
-  if (defined($self->param('model'))) {
-    my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
-    $self->param('gene_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
-  }
-}
 
 sub _dumpMultipleAlignmentStructToWorkdir {
     my $self = shift;

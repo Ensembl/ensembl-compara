@@ -64,7 +64,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees;
 
 use strict;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCStoreTree');
 
 =head2 fetch_input
 
@@ -88,7 +88,7 @@ sub fetch_input {
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Couldn't fetch nc_tree with id $nc_tree_id\n");
     $nc_tree->species_tree->attach_to_genome_dbs();
-    $self->param('nc_tree', $nc_tree);
+    $self->param('gene_tree', $nc_tree);
 
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($self->param_required('alignment_id'));
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
@@ -152,7 +152,7 @@ sub _run_fasttree {
 #    my $aln_file = $self->param('input_aln');
     return unless (defined($aln_file));
 
-    my $root_id = $self->param('nc_tree')->root_id;
+    my $root_id = $self->param('gene_tree')->root_id;
     my $fasttree_tag = $root_id . ".". $self->worker->process_id . ".fasttree";
 
     my $fasttree_exe = $self->require_executable('fasttree_exe');
@@ -170,7 +170,7 @@ sub _run_fasttree {
         $self->throw("error running parsimonator\n$cmd\n");
     }
 
-    $self->_store_newick_into_nc_tree_tag_string($tag, $fasttree_output);
+    $self->store_newick_into_nc_tree($tag, $fasttree_output);
 
     return 1;
 }
@@ -182,7 +182,7 @@ sub _run_parsimonator {
     die "$aln_file is not defined" unless (defined($aln_file));
 #    return unless(defined($aln_file));
 
-    my $root_id = $self->param('nc_tree')->root_id;
+    my $root_id = $self->param('gene_tree')->root_id;
     my $parsimonator_tag = $root_id . "." . $self->worker->process_id . ".parsimonator";
 
     my $parsimonator_exe = $self->require_executable('parsimonator_exe');
@@ -208,7 +208,7 @@ sub _run_raxml_light {
     my $aln_file = $self->param('input_aln');
     my $parsimony_tree = $self->param('parsimony_tree_file');
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $root_id = $self->param('nc_tree')->root_id;
+    my $root_id = $self->param('gene_tree')->root_id;
 
     my $raxmlight_tag = $root_id . "." . $self->worker->process_id . ".raxmlight";
 
@@ -230,7 +230,7 @@ sub _run_raxml_light {
     }
 
     my $raxmlight_output = $worker_temp_directory . "/RAxML_result.${raxmlight_tag}";
-    $self->_store_newick_into_nc_tree_tag_string($tag, $raxmlight_output);
+    $self->store_newick_into_nc_tree($tag, $raxmlight_output);
 
     # Unlink run files
     my $temp_regexp = $self->worker_temp_directory;
@@ -297,21 +297,6 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   close OUTSEQ;
 
   return $aln_file;
-}
-
-sub _store_newick_into_nc_tree_tag_string {
-  my $self = shift;
-  my $tag = shift;
-  my $newick_file = shift;
-
-  print("load from file $newick_file\n") if($self->debug);
-  my $newick = $self->_slurp($newick_file);
-
-  $self->store_alternative_tree($newick, $tag, $self->param('nc_tree'));
-  if (defined($self->param('model'))) {
-    my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
-    $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
-  }
 }
 
 
