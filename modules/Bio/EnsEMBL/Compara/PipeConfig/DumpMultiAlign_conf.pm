@@ -99,12 +99,7 @@ sub default_options {
         'mlss_id'   => undef,
     };
 }
-sub pipeline_wide_parameters{
-    my ($self) = @_;
-return {
-	reg_conf => $self->o('reg_conf'),
-    };    
-}
+
 
 # Ensures species output parameter gets propagated implicitly
 sub hive_meta_table {
@@ -127,9 +122,9 @@ sub pipeline_wide_parameters {
 
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
-
+	'reg_conf' => $self->o('reg_conf')
         'export_dir'    => $self->o('export_dir'),
-    }
+    };
 }
 
 sub resource_classes {
