@@ -129,6 +129,12 @@ sub content {
 
   $table->add_row('Frameshift introns', $self->glossary_helptip('Frameshift introns', 'Frameshift intron') . " occur at intron number(s)  $frameshift_introns.") if $frameshift_introns;
 
+
+  ## add trans-spliced transcript info
+  my $trans_spliced_transcript_info = $object->get_trans_spliced_transcript_info;
+  $table->add_row($trans_spliced_transcript_info->name, $trans_spliced_transcript_info->description) if $trans_spliced_transcript_info;
+
+  
   ## add stop gained/lost variation info
   my @attrib_codes = qw(StopLost StopGained);
   my $codons;
