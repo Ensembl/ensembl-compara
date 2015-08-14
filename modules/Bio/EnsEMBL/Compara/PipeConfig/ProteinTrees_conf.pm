@@ -76,20 +76,15 @@ sub default_options {
     # User details
         #'email'                 => 'john.smith@example.com',
 
-    # parameters inherited from EnsemblGeneric_conf and unlikely to be redefined:
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
+    # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
+        # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
         # 'ensembl_release'       => 68,
-        # Automatically concatenates 'ensembl_release' and 'rel_suffix'.
-        # 'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
 
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #'mlss_id'               => 40077,
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
-        #'ensembl_release'       => 68,
         # Change this one to allow multiple runs
         #'rel_suffix'            => 'b',
-        # 'rel_with_suffix' is automatically built from the two above parameters
 
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
@@ -98,6 +93,7 @@ sub default_options {
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
 
     # custom pipeline name, in case you don't like the default one
+        # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
         #'pipeline_name'        => 'protein_trees_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
         'division'              => undef,
