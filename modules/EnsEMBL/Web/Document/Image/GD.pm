@@ -454,7 +454,7 @@ sub render {
   return unless $self->drawable_container;
 
   if ($format) {
-    print $self->drawable_container->render($format, from_json($self->hub->param('box') || "{}"));
+    print $self->drawable_container->render($format, from_json($self->hub->param('extra') || "{}"));
     return;
   }
 

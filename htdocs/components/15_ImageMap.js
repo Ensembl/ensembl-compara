@@ -1311,7 +1311,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         href = this.href;
       }
 
-      this.href = href + ';box=' + encodeURIComponent(JSON.stringify(panel.boxCoords));
+      this.href = href + ';extra=' + encodeURIComponent(JSON.stringify({boxes: panel.boxCoords}));
     });
   },
 
