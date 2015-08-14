@@ -264,7 +264,6 @@ sub pipeline_analyses {
             -parameters => {
                 tree_method_link    => 'NC_TREES',
             },
-            -rc_name => '2Gb_job',
             -flow_into => {
                 1 => [ 'make_species_tree' ],
             },
@@ -292,7 +291,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'per_genome_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
-            -rc_name    => '4Gb_job',
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -369,7 +367,7 @@ sub pipeline_analyses {
         {   -logic_name        => 'load_members',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers',
             -analysis_capacity => 10,
-            -rc_name           => '2Gb_job',
+            -rc_name           => '1Gb_job',
             -flow_into         => [ 'hc_members_per_genome' ],
         },
 
@@ -489,7 +487,7 @@ sub pipeline_analyses {
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => [ 'hc_epo_removed_members' ],
-                -rc_name => '8Gb_long_job',
+                -rc_name => '8Gb_job',
             },
 
             {  -logic_name        => 'hc_epo_removed_members',
@@ -536,7 +534,7 @@ sub pipeline_analyses {
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
-                -rc_name        => '4Gb_job',
+                -rc_name        => '2Gb_job',
                 -priority       => 50,
                 -flow_into      => [ 'hc_supertrees' ],
             },
@@ -556,7 +554,7 @@ sub pipeline_analyses {
                                     'dataflow_subclusters' => 1,
                                    },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
-                -rc_name            => '1Gb_job',
+                -rc_name            => '250Mb_long_job',
                 -priority           => 40,
                 -flow_into     => {
                                    2 => [ 'tree_backup' ],
@@ -574,7 +572,7 @@ sub pipeline_analyses {
                                    1 => ['pre_sec_struct_tree'],
                                    3 => $self->o('create_ss_pics') ? ['create_ss_picts'] : [],
                                   },
-                -rc_name       => '2Gb_job',
+                -rc_name       => '1Gb_job',
             },
 
             {   -logic_name    => 'tree_backup',
@@ -654,7 +652,7 @@ sub pipeline_analyses {
                              'raxmlLight_exe'        => $self->o('raxmlLight_exe'),
                              'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
-             -rc_name => '8Gb_basement_ncores_job',
+             -rc_name => '8Gb_ncores_job',
             },
 
         {
@@ -667,7 +665,7 @@ sub pipeline_analyses {
                             'raxml_exe' => $self->o('raxml_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                            },
-         -rc_name => '8Gb_basement_ncores_job',
+         -rc_name => '8Gb_ncores_job',
          -flow_into => {
                         2 => [ 'genomic_tree_himem' ],
                        },
@@ -684,7 +682,7 @@ sub pipeline_analyses {
                             -2 => ['genomic_tree_himem'],
                             -1 => ['genomic_tree_himem'],
                            },
-             -rc_name => '2Gb_job',
+             -rc_name => '250Mb_job',
             },
 
             {
@@ -694,7 +692,7 @@ sub pipeline_analyses {
              -parameters => {
                              'treebest_exe' => $self->o('treebest_exe'),
                             },
-             -rc_name => '4Gb_job',
+             -rc_name => '500Mb_job',
             },
 
         {   -logic_name    => 'treebest_mmerge',
@@ -704,7 +702,7 @@ sub pipeline_analyses {
                             'treebest_exe' => $self->o('treebest_exe'),
                            },
             -flow_into  => [ 'orthotree', 'ktreedist' ],
-            -rc_name => '2Gb_job',
+            -rc_name => '1Gb_job',
         },
 
         {   -logic_name    => 'orthotree',
@@ -714,7 +712,7 @@ sub pipeline_analyses {
                             'tag_split_genes'   => 0,
             },
             -flow_into  => [ 'hc_tree_homologies' ],
-           -rc_name => '1Gb_job',
+           -rc_name => '250Mb_job',
         },
 
         {   -logic_name    => 'ktreedist',
@@ -723,7 +721,7 @@ sub pipeline_analyses {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                            },
-            -rc_name => '2Gb_job',
+            -rc_name => '1Gb_job',
         },
 
         {   -logic_name         => 'hc_tree_homologies',
