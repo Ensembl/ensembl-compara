@@ -433,7 +433,11 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[backbone]--------------------------------------------------------------------------------
 
         {   -logic_name => 'backbone_fire_db_prepare',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'description'   => 'The version of the Compara schema must match the Core API',
+                'query'         => 'SELECT * FROM meta WHERE meta_key = "schema_version" AND meta_value != '.$self->o('ensembl_release'),
+            },
             -input_ids  => [ { } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
