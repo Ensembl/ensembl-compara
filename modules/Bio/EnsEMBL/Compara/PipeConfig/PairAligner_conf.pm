@@ -480,11 +480,18 @@ sub pipeline_analyses {
 	    {  -logic_name => 'delete_trivial_alignments',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DeleteTrivialAlignments',
 	       -parameters => { },
-	       -flow_into => {
-			      1 => [ 'update_max_alignment_length_before_FD' ],
-			     },
+	       -flow_into => [ 'check_not_too_many_blocks' ],
 	       -rc_name => '1Gb',
 	    },
+            {   -logic_name => 'check_not_too_many_blocks',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+                -parameters => {
+                    'description'   => q{filter_duplicates / axtChain won't work if there are too many blocks},
+                    'query'         => 'SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = #method_link_species_set_id#',
+                    'expected_size' => '< 10000000',
+                },
+                -flow_into  => [ 'update_max_alignment_length_before_FD' ],
+            },
  	    {  -logic_name => 'update_max_alignment_length_before_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 
