@@ -1056,19 +1056,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
         
         link = false;
-      }
-      
-      coords = {
-        t: highlight.region.t + 2,
-        b: highlight.region.b - 2,
-        l: ((start - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l,
-        r: ((end   - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l
-      };
-      
-      // Highlight unless it's the bottom image on the page
-      if (this.params.highlight) {
-        this.updateExportMenu(coords, speciesNumber, imageNumber);
-        this.highlight(coords, 'redbox2', speciesNumber, i);
+
+        coords = {
+          t: highlight.region.t + 2,
+          b: highlight.region.b - 2,
+          l: ((start - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l,
+          r: ((end   - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l
+        };
+
+        // Highlight unless it's the bottom image on the page
+        if (this.params.highlight) {
+          this.boxCoords[speciesNumber] = coords;
+          this.updateExportMenu();
+          this.highlight(coords, 'redbox2', speciesNumber, i);
+        }
       }
     }
   },
@@ -1300,23 +1301,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
   },
 
-  updateExportMenu: function(coords, speciesNumber, imageNumber) {
+  updateExportMenu: function() {
     var panel = this;
 
-    if (this.imageNumber === imageNumber) {
+    this.elLk.exportMenu.find('a').each(function() {
+      var href = $(this).data('href');
+      if (!href) {
+        $(this).data('href', this.href);
+        href = this.href;
+      }
 
-      this.boxCoords[speciesNumber] = coords;
-
-      this.elLk.exportMenu.find('a').each(function() {
-        var href = $(this).data('href');
-        if (!href) {
-          $(this).data('href', this.href);
-          href = this.href;
-        }
-
-        this.href = href + ';box=' + encodeURIComponent(JSON.stringify(panel.boxCoords));
-      });
-    }
+      this.href = href + ';box=' + encodeURIComponent(JSON.stringify(panel.boxCoords));
+    });
   },
 
   getMapCoords: function (e) {
