@@ -1303,15 +1303,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   updateExportMenu: function() {
     var panel = this;
+    var extra = {};
 
-    this.elLk.exportMenu.find('a').each(function() {
-      var href = $(this).data('href');
-      if (!href) {
-        $(this).data('href', this.href);
-        href = this.href;
-      }
+    if (!$.isEmptyObject(this.boxCoords)) {
+      extra.boxes = this.boxCoords;
+    }
 
-      this.href = href + ';extra=' + encodeURIComponent(JSON.stringify({boxes: panel.boxCoords}));
+    extra = $.isEmptyObject(extra) ? false : encodeURIComponent(JSON.stringify(extra));
+
+    this.elLk.exportMenu.find('a').attr('href', function() {
+      return Ensembl.updateURL({extra: extra}, this.href);
     });
   },
 
