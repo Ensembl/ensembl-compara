@@ -193,7 +193,7 @@ sub content {
       else {
         $txt .= sprintf('<p><a href="%s/%s/Search/Results?q=%s" rel="external">Search for this gene</a> on assembly %s.</p>', $url, $hub->species_path, $hub->param('g'), $alt_assembly);
       } 
-      $table->add_row("$alt_assembly assembly", $txt);
+      $table->add_row("Other assemblies", $txt);
     }
 
   # add some Vega info
