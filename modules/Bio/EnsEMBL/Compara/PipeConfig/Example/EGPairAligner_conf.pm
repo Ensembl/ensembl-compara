@@ -163,10 +163,6 @@ sub default_options {
 	#min length to dump dna as nib file
 	'dump_min_size' => 11500000, 
 
-	#Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
-	#accurate method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
-	'quick' => 1,
-
 	#
 	#Default chunking parameters
 	#

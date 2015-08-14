@@ -122,10 +122,6 @@ sub default_options {
 
         'step' => 10000, #size used in ImportAlignment for selecting how many entries to copy at once
 
-	#Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
-	#accurate (and slow) method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
-	'quick' => 1,
-
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
 	'gerp_window_sizes'    => '[1,10,100,500]',         #gerp window sizes
@@ -405,7 +401,6 @@ sub pipeline_analyses {
 	    {  -logic_name => 'update_max_alignment_length',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	        -parameters => {
-#			       'quick' => $self->o('quick'),
 			       'method_link_species_set_id' => $self->o('low_epo_mlss_id'),
 			      },
 	       -flow_into => {

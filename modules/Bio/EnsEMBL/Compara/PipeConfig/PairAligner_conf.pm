@@ -145,6 +145,7 @@ sub default_options {
 
 	#Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
 	#accurate method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
+        #NB: this is only used for the raw blocks and the chains. We always use the accurate version for the final nets
 	'quick' => 1,
 
 	#
@@ -730,9 +731,6 @@ sub pipeline_analyses {
            },
  	   {  -logic_name => 'update_max_alignment_length_after_net',
  	      -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
-# 	       -parameters => { 
-#			       'quick' => $self->o('quick'),
-#			      },
 	      -rc_name => '1Gb',
 	      -wait_for =>  [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
               -flow_into => [ 'set_internal_ids_collection' ],
