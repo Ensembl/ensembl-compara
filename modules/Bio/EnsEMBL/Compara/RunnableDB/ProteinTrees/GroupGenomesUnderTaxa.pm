@@ -96,7 +96,7 @@ sub write_output {      # dataflow the results
     my $species_sets = $self->param('species_sets');
 
     foreach my $ss (@$species_sets) {
-        $self->dataflow_output_id( { 'species_set' => $ss }, 2);
+        $self->dataflow_output_id( { 'genome_db_ids' => $ss }, 2);
     }
 }
 
