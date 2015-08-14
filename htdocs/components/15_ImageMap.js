@@ -1264,6 +1264,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (r === false) {
       this.elLk.highlightedLocation.hide();
       this.elLk.highlightButton.removeClass('selected').trigger('refreshTip').show();
+      this.updateExportMenu();
       return;
     }
 
@@ -1299,6 +1300,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         this.elLk.highlightButton.hide();
       }
     }
+
+    this.updateExportMenu();
   },
 
   updateExportMenu: function() {
@@ -1307,6 +1310,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     if (!$.isEmptyObject(this.boxCoords)) {
       extra.boxes = this.boxCoords;
+    }
+
+    if (Ensembl.highlightedLoc) {
+      extra.highlight = {
+        x: Math.round((Ensembl.highlightedLoc[2] - this.draggables[0].range.start) / this.draggables[0].range.scale + this.draggables[0].l),
+        y: this.draggables[0].t,
+        w: Math.round((Ensembl.highlightedLoc[3] - Ensembl.highlightedLoc[2]) / this.draggables[0].range.scale),
+        h: this.draggables[0].b - this.draggables[0].t
+      };
     }
 
     extra = $.isEmptyObject(extra) ? false : encodeURIComponent(JSON.stringify(extra));

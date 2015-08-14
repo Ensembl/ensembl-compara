@@ -212,7 +212,7 @@ sub render {
     push @{$layers{$_->{'z'}||0}}, $_ for @{$glyphset->{'glyphs'}};
   }
 
-  # add the highlight boxes
+  # add the red boxes
   my ($top_layer) = sort { $b <=> $a } keys %layers;
   my $boxes = $self->{'extra'}{'boxes'} || {};
   for (sort keys %$boxes) {
@@ -221,6 +221,18 @@ sub render {
       EnsEMBL::Draw::Glyph::Line->new({colour => 'red', pixelx => $boxes->{$_}{'r'}, pixely => $boxes->{$_}{'t'}, pixelwidth => 0, pixelheight => $boxes->{$_}{'b'} - $boxes->{$_}{'t'} }),
       EnsEMBL::Draw::Glyph::Line->new({colour => 'red', pixelx => $boxes->{$_}{'l'}, pixely => $boxes->{$_}{'b'}, pixelwidth => $boxes->{$_}{'r'} - $boxes->{$_}{'l'}, pixelheight => 0 }),
       EnsEMBL::Draw::Glyph::Line->new({colour => 'red', pixelx => $boxes->{$_}{'l'}, pixely => $boxes->{$_}{'t'}, pixelwidth => 0, pixelheight => $boxes->{$_}{'b'} - $boxes->{$_}{'t'} });
+  }
+
+  # add transparent layer for highlighted area
+  if (my $hl = $self->{'extra'}{'highlight'}) {
+    push @{$layers{$top_layer + 2}}, EnsEMBL::Draw::Glyph::Rect->new({
+      colour      => '#8C648C',
+      alpha       => 0.9,
+      pixelx      => $hl->{'x'},
+      pixely      => $hl->{'y'},
+      pixelwidth  => $hl->{'w'},
+      pixelheight => $hl->{'h'}
+    });
   }
 
   my %M;
