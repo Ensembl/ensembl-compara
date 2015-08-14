@@ -91,7 +91,9 @@ sub content {
     my $lrg_link;
     for my $i(0..$#lrg_matches) {
       my $lrg = $lrg_matches[$i];
-      my $link = $hub->get_ExtURL_link($lrg->display_id, 'ENS_LRG_gene', $lrg->display_id);
+
+      my $lrg_url = $hub->url({ type => 'LRG', action => 'Summary', lrg => $lrg->display_id });
+      my $link = sprintf(qq{<a href="%s">%s</a>}, $lrg_url, $lrg->display_id);
 
       if($i == 0) { # first one
         $lrg_link .= $link;
