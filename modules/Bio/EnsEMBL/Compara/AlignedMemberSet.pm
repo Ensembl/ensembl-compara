@@ -473,7 +473,7 @@ sub get_SimpleAlign {
   Arg [...]   : all the other arguments of L<get_SimpleAlign>
   Example     : $family->print_alignment_to_file(-APPEND_TAXON_ID => 1);
   Description : Wrapper around get_SimpleAlign to print the alignment to a file (stdout by default)
-  Returntype  : none
+  Returntype  : Bio::SimpleAlign
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -488,6 +488,7 @@ sub print_alignment_to_file {
     $sa->set_displayname_flat(1);
     my $alignIO = Bio::AlignIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
     $alignIO->write_aln($sa);
+    return $sa
 }
 
 
