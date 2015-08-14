@@ -195,7 +195,7 @@ print "Press Enter to continue\n";
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 $helper->transaction( -CALLBACK => sub {
     my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
-    print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $collection_ss and ($new_collection_ss->dbID != $collection_ss->dbID);
+    print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $collection_ss;
     die "Dry-run mode required. Now aborting the transaction. Review the above-mentionned changes and re-run with the --nodry-run option\n" if $dry_run;
 } );
 
@@ -304,6 +304,10 @@ sub print_method_link_species_sets_to_update {
     foreach my $this_method_link_species_set (sort {$a->dbID <=> $b->dbID} @$method_link_species_sets) {
         printf "%8d: ", $this_method_link_species_set->dbID,;
         print $this_method_link_species_set->method->type, " (", $this_method_link_species_set->name, ")\n";
+        if ($this_method_link_species_set->url) {
+            $this_method_link_species_set->url('');
+            $compara_dba->dbc->do('UPDATE method_link_species_set SET url = "" WHERE method_link_species_set_id = ?', undef, $this_method_link_species_set->dbID);
+        }
     }
     print "  NONE\n" unless scalar(@$method_link_species_sets);
 
