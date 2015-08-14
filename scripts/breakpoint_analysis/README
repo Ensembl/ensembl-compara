@@ -1,0 +1,12 @@
+BREAKPOINTS
+-----------
+
+Breakpoints, here, are defined as the start and end positions of an alignment block between two species of interest.
+There are 4 scripts available for finding, analysing and manipulating breakpoint information.
+
+1. breakpoints.pl: find all breakpoints in the database and dump information to a file
+2. breakpoint_intersection.pl: given two sets of breakpoints, find their intersection
+3. breakpoint_difference.pl: almost the exact opposite of breakpoint_intersection.pl. given two sets of breakpoints, A and B, find breakpoints only present in set A.
+4. format_output.pl: when intersecting multiple times, columns can accumulate in the output. format_output.pl will rearrange the columns to resemble a BED file, while filtering out data from species that are not of interest
+
+A help text is available in all scripts by using the -h option.
