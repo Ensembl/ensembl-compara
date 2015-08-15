@@ -94,11 +94,7 @@ sub fetch_input {
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
     $nc_tree->alignment($aln);
 
-    if (my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
-        $self->param('input_aln', $input_aln);
-    } else {
-        die "I can't write input alignment to disc";
-    }
+    $self->param('input_aln',  $self->_dumpMultipleAlignmentToWorkdir($nc_tree));
 }
 
 =head2 run
@@ -117,20 +113,6 @@ sub run {
     $self->_run_fasttree;
     $self->_run_parsimonator;
     $self->_run_raxml_light;
-}
-
-=head2 write_output
-
-    Title     : write_output
-    Usage     : $self->write_output
-    Function  : stores something
-    Returns   : none
-    Args      : none
-
-=cut
-
-sub write_output {
-    my ($self) = @_;
 }
 
 
@@ -238,65 +220,6 @@ sub _run_raxml_light {
     return
 }
 
-sub _dumpMultipleAlignmentStructToWorkdir {
-    my ($self, $tree) = @_;
-
-  my $root_id = $tree->root_id;
-  my $leafcount = scalar(@{$tree->get_all_leaves});
-  if($leafcount<4) {
-      $self->input_job->autoflow(0);
-      $self->complete_early("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
-  }
-
-  my $file_root = $self->worker_temp_directory. "nctree_". $root_id;
-  $file_root    =~ s/\/\//\//g;  # converts any // in path to /
-
-  my $aln_file = $file_root . ".aln";
-
-  open(OUTSEQ, ">$aln_file")
-    or $self->throw("Error opening $aln_file for write");
-
-  my $sa = $tree->get_SimpleAlign(-APPEND_SPECIES_TREE_NODE_ID => 1, -ID_TYPE => 'MEMBER');
-  $sa->set_displayname_flat(1);
-
-    # Aln in fasta format (if needed)
-    if ($sa->length() >= 4000) {
-        # For FastTree it is better to give the alignment in fasta format
-        my $aln_fasta = $file_root . ".fa";
-        open my $aln_fasta_fh, ">" , $aln_fasta or $self->throw("Error opening $aln_fasta for writing");
-        for my $aln_seq ($sa->each_seq) {
-            my $header = $aln_seq->display_id;
-            my $seq = $aln_seq->seq;
-            print $aln_fasta_fh ">$header\n$seq\n";
-        }
-        close($aln_fasta_fh);
-        $self->param('aln_fasta',$aln_fasta);
-    }
-
-
-  # Phylip header
-  print OUTSEQ $sa->num_sequences, " ", $sa->length, "\n";
-
-  $self->param('tag_residue_count', $sa->num_sequences * $sa->length);
-  # Phylip body
-  my $count = 0;
-  foreach my $aln_seq ($sa->each_seq) {
-    print OUTSEQ $aln_seq->display_id, " ";
-    my $seq = $aln_seq->seq;
-
-    # Here we do a trick for all Ns sequences by changing the first
-    # nucleotide to an A so that raxml can at least do the tree for
-    # the rest of the sequences, instead of giving an error
-    if ($seq =~ /N+/) { $seq =~ s/^N/A/; }
-
-    print OUTSEQ "$seq\n";
-    $count++;
-    print STDERR "sequences $count\n" if (($count % 50 == 0) && ($self->debug()));
-  }
-  close OUTSEQ;
-
-  return $aln_file;
-}
 
 
 1;

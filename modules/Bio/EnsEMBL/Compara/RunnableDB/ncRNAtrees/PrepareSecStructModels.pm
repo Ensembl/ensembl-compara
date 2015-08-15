@@ -104,11 +104,9 @@ sub fetch_input {
     $nc_tree->alignment($aln);
 
 ### !! Struct files are not used in this first tree!!
-    if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir() ) {
-        $self->param('input_aln', $input_aln);
-    } else {
-        die "I can't write input alignment";
-    }
+    # But calling _dumpStructToWorkdir helps detecting problematic ss_cons strings
+    $self->param('input_aln',  $self->_dumpMultipleAlignmentToWorkdir($nc_tree));
+    $self->param('struct_aln', $self->_dumpStructToWorkdir($nc_tree));
 }
 
 =head2 run
@@ -234,80 +232,6 @@ sub _run_bootstrap_raxml {
   my $temp_regexp = $temp_dir."*$raxml_tag.$bootstrap_num.RUN.*";
   system("rm -f $temp_regexp");
   return 1;
-}
-
-sub _dumpMultipleAlignmentStructToWorkdir {
-    my ($self) = @_;
-    my $tree = $self->param('gene_tree');
-
-    my $leafcount = scalar(@{$tree->get_all_leaves});
-    if($leafcount<4) {
-        $self->input_job->autoflow(0);
-        $self->complete_early(sprintf("tree cluster %d has <4 proteins -- can not build a raxml tree\n", $tree->root_id));
-    }
-
-    my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;
-    $file_root    =~ s/\/\//\//g;  # converts any // in path to /
-
-    my $aln_file = $file_root . ".aln";
-
-    open(OUTSEQ, ">$aln_file")
-        or $self->throw("Error opening $aln_file for write");
-
-    my $sa = $tree->get_SimpleAlign(-APPEND_SPECIES_TREE_NODE_ID => 1, -ID_TYPE => 'MEMBER');
-    $sa->set_displayname_flat(1);
-
-    # Phylip header
-    print OUTSEQ $sa->num_sequences, " ", $sa->length, "\n";
-    $self->param('tag_residue_count', $sa->num_sequences * $sa->length);
-    # Phylip body
-    my $count = 0;
-    foreach my $aln_seq ($sa->each_seq) {
-        print OUTSEQ $aln_seq->display_id, " ";
-        my $seq = $aln_seq->seq;
-
-    # Here we do a trick for all Ns sequences by changing the first
-    # nucleotide to an A so that raxml can at least do the tree for
-    # the rest of the sequences, instead of giving an error
-    if ($seq =~ /N+/) { $seq =~ s/^N/A/; }
-
-    print OUTSEQ "$seq\n";
-    $count++;
-    print STDERR "sequences $count\n" if ($count % 50 == 0);
-  }
-  close OUTSEQ;
-
-  my $struct_string = $self->param('gene_tree')->get_tagvalue('ss_cons');
-  # Allowed Characters are "( ) < > [ ] { } " and "."
-  $struct_string =~ s/[^\(^\)^\<^\>^\[^\]^\{^\}^\.]/\./g;
-  my $struct_file = $file_root . ".struct";
-  if ($struct_string =~ /^\.+$/) {
-    $struct_file = undef;
-    # No struct file
-  } else {
-    open(STRUCT, ">$struct_file")
-      or $self->throw("Error opening $struct_file for write");
-    print STRUCT "$struct_string\n";
-    close STRUCT;
-  }
-  $self->param('input_aln', $aln_file);
-  $self->param('struct_aln', $struct_file);
-  return $aln_file;
-}
-
-sub _store_newick_into_nc_tree_tag_string {
-  my $self = shift;
-  my $tag = shift;
-  my $newick_file = shift;
-
-  print("load from file $newick_file\n") if($self->debug);
-  my $newick = $self->_slurp($newick_file);
-
-  $self->store_alternative_tree($newick, $tag, $self->param('gene_tree'));
-  if (defined($self->param('model'))) {
-    my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
-    $self->param('gene_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
-  }
 }
 
 
