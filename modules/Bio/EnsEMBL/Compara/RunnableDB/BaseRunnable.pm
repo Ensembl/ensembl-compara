@@ -181,6 +181,20 @@ sub _slurp {
 }
 
 
+=head2 _spurt
+
+Prints $content to a file
+
+=cut
+
+sub _spurt {
+    my ($self, $file_name, $content) = @_;
+    open(my $fh, '>', $file_name) or $self->throw("Couldnt open file [$file_name]");
+    print $fh $content;
+    close($fh);
+}
+
+
 =head2 require_executable
 
 Checks that the parameter is defined, and that the file is executable
