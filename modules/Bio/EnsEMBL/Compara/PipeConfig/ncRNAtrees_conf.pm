@@ -634,8 +634,8 @@ sub pipeline_analyses {
                             'prank_exe'             => $self->o('prank_exe'),
                            },
             -flow_into => {
-                           -2 => ['genomic_alignment_long'],
-                           -1 => ['genomic_alignment_long'],
+                           -2 => ['genomic_alignment_basement_himem'],
+                           -1 => ['genomic_alignment_himem'],
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
                           },
@@ -652,11 +652,11 @@ sub pipeline_analyses {
                              'raxmlLight_exe'        => $self->o('raxmlLight_exe'),
                              'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
-             -rc_name => '8Gb_ncores_job',
+             -rc_name => '8Gb_long_ncores_job',
             },
 
         {
-         -logic_name => 'genomic_alignment_long',
+         -logic_name => 'genomic_alignment_himem',
          -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
          -analysis_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
@@ -666,6 +666,22 @@ sub pipeline_analyses {
                             'prank_exe' => $self->o('prank_exe'),
                            },
          -rc_name => '8Gb_ncores_job',
+         -flow_into => {
+                        2 => [ 'genomic_tree_himem' ],
+                        -2 => [ 'genomic_alignment_basement_himem' ],
+                       },
+        },
+        {
+         -logic_name => 'genomic_alignment_basement_himem',
+         -module => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
+         -analysis_capacity => $self->o('genomic_alignment_capacity'),
+            -parameters => {
+                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'mafft_exe' => $self->o('mafft_exe'),
+                            'raxml_exe' => $self->o('raxml_exe'),
+                            'prank_exe' => $self->o('prank_exe'),
+                           },
+         -rc_name => '8Gb_basement_ncores_job',
          -flow_into => {
                         2 => [ 'genomic_tree_himem' ],
                        },

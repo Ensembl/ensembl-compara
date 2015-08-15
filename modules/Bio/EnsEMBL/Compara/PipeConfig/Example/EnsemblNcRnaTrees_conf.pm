@@ -176,12 +176,15 @@ sub resource_classes {
             '8Gb_job'                 => { 'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
             '2Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
+            '8Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
 
             # When we grab a machine in the long queue, let's keep it as long as we can
             # this is for other_paralogs
             '250Mb_long_job'          => { 'LSF' => ['-C0 -q long -M250   -R"select[mem>250]   rusage[mem=250]"', '-lifespan 360' ] },
-            # this one must be "long" for fast_trees and genomic_alignment_long. it is only used by those two analyses
-            '8Gb_ncores_job'          => { 'LSF' => ['-C0 -q long -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] }
+            # this is for fast_trees
+            '8Gb_long_ncores_job'     => { 'LSF' => ['-C0 -q long -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] },
+            # this is for genomic_alignment_basement_himem
+            '8Gb_basement_ncores_job' => { 'LSF' => ['-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 2880' ] },
            };
 }
 
