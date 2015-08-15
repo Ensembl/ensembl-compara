@@ -100,19 +100,6 @@ sub run {
 
     my $raxml_exe = $self->require_executable('raxml_exe');
 
-    my $tag = 'ss_it_' . $model;
-    if ($self->param('gene_tree')->has_tag($tag)) {
-        my $eval_tree;
-        # Checks the tree string can be parsed successfully
-        eval {
-            $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('gene_tree')->get_value_for_tag($tag));
-        };
-        if (defined($eval_tree) and !$@) {
-            # The secondary structure RAxML tree for this model has been obtained already and the tree can be parsed successfully.
-            return;  # We have ended with this model
-        }
-    }
-
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
     my $worker_temp_directory = $self->worker_temp_directory;
@@ -155,7 +142,7 @@ sub run {
     print STDERR "RAxML runtime_msec: ", $command->runtime_msec, "\n";
 
     my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree.$raxml_tag.$model";
-    $self->store_newick_into_nc_tree($tag, $raxml_output);
+    $self->store_newick_into_nc_tree('ss_it_'.$model, $raxml_output);
     my $model_runtime = "${model}_runtime_msec";
     $nc_tree->store_tag($model_runtime,$command->runtime_msec);
 

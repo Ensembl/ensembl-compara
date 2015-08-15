@@ -192,20 +192,6 @@ sub _run_bootstrap_raxml {
     my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $bootstrap_num = 10;
-    my $tag = 'ml_it_' . $bootstrap_num;
-
-    # Checks if the bootstrap tree is already in the DB (is this a rerun?)
-    if ($self->param('gene_tree')->has_tag($tag)) {
-        my $eval_tree;
-        # Checks the tree string can be parsed succsesfully
-        eval {
-            $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('gene_tree')->get_value_for_tag($tag));
-        };
-        if (defined($eval_tree) and !$@ and !$self->debug) {
-            # The bootstrap RAxML tree has been obtained already and the tree can be parsed successfully.
-            return;
-        }
-    }
 
     my $cores = $self->param('raxml_number_of_cores');
 
@@ -241,7 +227,7 @@ sub _run_bootstrap_raxml {
 
   my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree." . "$raxml_tag.$bootstrap_num";
 
-  $self->store_newick_into_nc_tree($tag, $raxml_output);
+  $self->store_newick_into_nc_tree('ml_it_'.$bootstrap_num, $raxml_output);
 
   # Unlink run files
   my $temp_dir = $self->worker_temp_directory;
