@@ -22,6 +22,29 @@ use strict;
 
 use JSON qw(from_json);
 
+# XXX move all this stuff to somewhere it's more suited
+
+sub server_sort {
+  my ($self,$data,$sort,$cols) = @_;
+
+  my %col_idx;
+  foreach my $i (0..(@$cols-1)) {
+    $col_idx{$cols->[$i]{'key'}} = $i;
+  }
+  @$data = sort {
+    my $c = 0;
+    foreach my $col (@$sort) {
+      my ($aa,$bb) = ($a,$b);
+      ($aa,$bb) = ($b,$a) if $col->{'dir'} < 0;
+      my $av = $aa->[$col_idx{$col->{'key'}}];
+      my $bv = $bb->[$col_idx{$col->{'key'}}];
+      $c = ( $av cmp $bv );
+      last if $c;
+    }
+    $c;
+  } @$data;
+}
+
 sub ajax_table_content {
   my ($self) = @_;
 
@@ -34,8 +57,20 @@ sub ajax_table_content {
 
   my $iconfig = from_json($hub->param('config'));
 
+  my $view = from_json($hub->param('data'));
+  use Data::Dumper;
+  warn Dumper('view',$view);
+
+  # Check if we need to request all rows due to sorting
+  my $all_data = 0;
+  if($view->{'sort'} and @{$view->{'sort'}}) {
+    $all_data = 1;
+  }
+
   # Start row
-  my $rows = $phases->[$more]{'rows'} || [0,-1];
+  my $irows = $phases->[$more]{'rows'} || [0,-1];
+  my $rows = $irows;
+  $rows = [0,-1] if $all_data;
 
   # Calculate columns to send
   my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
@@ -61,6 +96,13 @@ sub ajax_table_content {
   # Move on continuation counter
   $more++;
   $more=0 if $more == @$phases;
+
+  # Sort it, if necessary
+  if($view->{'sort'} and @{$view->{'sort'}}) {
+    $self->server_sort(\@data_out,$view->{'sort'},$iconfig->{'columns'});
+    splice(@data_out,0,$irows->[0]);
+    splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
+  }
 
   # Send it
   return {
