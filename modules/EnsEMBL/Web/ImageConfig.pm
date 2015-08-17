@@ -845,7 +845,6 @@ sub _add_trackhub_node {
   my ($self, $node, $menu, $name, $force_hide) = @_;
   
   my (@next_level, @childless);
-  #warn ">>> NODE HAS CHILDREN? ".$node->has_child_nodes;
   if ($node->has_child_nodes) {
     foreach my $child (@{$node->child_nodes}) {
       if ($child->has_child_nodes) {
@@ -856,8 +855,6 @@ sub _add_trackhub_node {
       }
     }
   }
-  #warn "@@@ NEXT LEVEL @next_level";
-  #warn "@@@ CHILDLESS @childless";
 
   if (scalar(@next_level)) {
     $self->_add_trackhub_node($_, $menu, $name, $force_hide) for @next_level;
@@ -868,9 +865,6 @@ sub _add_trackhub_node {
     ## combine visibility and on_off later to produce Ensembl-friendly settings
     my $n       = $node;
     my $data    = $n->data;
-    while (my ($k, $v) = each (%$data)) {
-      warn "@@@ $k = $v";
-    }
     my $config  = {};
     ## The only parameter we override from superTrack nodes is visibility
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
@@ -885,25 +879,13 @@ sub _add_trackhub_node {
     ## Add any setting inherited from parents
     while ($n = $n->parent_node) {
       $data = $n->data;
-      while (my ($k, $v) = each (%$data)) {
-        warn ">>> $k = $v";
-      }
       if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
         $config->{'visibility'} = $data->{'visibility'};
         $config->{'on_off'}     = $force_hide ? 'off' : $data->{'on_off'};
-        #warn ">>> CONFIG ".$config->{'on_off'};
         last;
       }
       $config->{$_} ||= $data->{$_} for keys %$data;
       $config->{'on_off'} = 'off' if $force_hide;
-    }
-
-    #warn ">>> TRACK ".$data->{'track'}." ON/OFF SET TO ".$data->{'on_off'};
-    #warn "... CONFIG ON/OFF SET TO ".$config->{'on_off'};
-
-    ## Turn track on if there's no higher setting turning it off
-    if (!$config->{'on_off'} && !$data->{'on_off'}) {
-      $data->{'on_off'} = 'on';
     }
 
     $self->_add_trackhub_tracks($node, \@childless, $config, $menu, $name);
@@ -979,11 +961,14 @@ sub _add_trackhub_tracks {
   foreach (@{$children||[]}) {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
-    my $on_off        = $config->{'on_off'} || $track->{'on_off'};
+
+    my $on_off = $config->{'on_off'} || $track->{'on_off'};
+    ## Turn track on if there's no higher setting turning it off
+    if (!$config->{'on_off'} && !$track->{'on_off'}) {
+      $on_off = 'on';
+    }
+
     my $ucsc_display  = $config->{'visibility'} || $track->{'visibility'};
-    #warn "@@@ TRACK ".$track->{'track'};
-    #warn ">>> ON/OFF? $on_off";
-    #warn "... UCSC = $ucsc_display";
 
     ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
     my $squish       = $ucsc_display eq 'squish';
