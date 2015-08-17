@@ -956,6 +956,10 @@ sub _add_trackhub_tracks {
                                       'full'    => 'tiling',
                                       'default' => 'compact',
                                     },
+                        'vcf' =>    {
+                                      'full'    => 'histogram',
+                                      'dense'   => 'compact',
+                                    },
                       };
  
   foreach (@{$children||[]}) {
@@ -979,7 +983,7 @@ sub _add_trackhub_tracks {
                               || $style_mappings->{lc($type)}{'default'};
     $options{'default_display'} = $default_display;
 
-    ## Set track style on if appropriate 
+    ## Set track style if appropriate 
     if ($on_off && $on_off eq 'on') {
       $options{'display'} = $default_display;
       $count_visible++;
