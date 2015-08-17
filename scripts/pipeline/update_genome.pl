@@ -52,6 +52,7 @@ in production phase and update it in several steps:
     [--taxon_id 1234]
     [--[no]force]
     [--offset 1000]
+    [--file_of_production_names path/to/file]
 
 =head1 OPTIONS
 
@@ -123,6 +124,12 @@ from that number (and we will assign according to the current number
 of Genome DBs exceeding the offset). First ID will be equal to the
 offset+1
 
+=item B<[--file_of_production_names path/to/file]>
+
+File that contains the production names of all the species to import.
+Mainly used by Ensembl Genomes, this allows a bulk import of many species.
+In this mode, --species, --genome_db_name and --taxon_id are ignored.
+
 =back
 
 =head1 INTERNAL METHODS
@@ -132,6 +139,7 @@ offset+1
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
+use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
@@ -146,6 +154,7 @@ my $genome_db_name;
 my $taxon_id;
 my $force = 0;
 my $offset = 0;
+my $file;
 
 GetOptions(
     "help" => \$help,
@@ -156,18 +165,16 @@ GetOptions(
     "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
     'offset=i' => \$offset,
+    'file_of_production_names=s' => \$file,
   );
 
 $| = 0;
 
 # Print Help and exit if help is requested
-if ($help or !$species or !$compara) {
+if ($help or (!$species and !$file) or !$compara) {
     use Pod::Usage;
     pod2usage({-exitvalue => 0, -verbose => 2});
 }
-
-my $species_no_underscores = $species;
-$species_no_underscores =~ s/\_/\ /;
 
 ##
 ## Configure the Bio::EnsEMBL::Registry
@@ -176,27 +183,56 @@ $species_no_underscores =~ s/\_/\ /;
 ##
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
-if(! $species_db) {
-    $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
-}
-throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
-
 my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 throw ("Cannot connect to database [$compara]") if (!$compara_db);
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_db->dbc);
 
-$helper->transaction( -CALLBACK => sub {
-    my $genome_db = update_genome_db($species_db, $compara_db, $force);
-    update_dnafrags($compara_db, $genome_db, $species_db);
-    my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_db);
-    foreach my $component_gdb (@$component_genome_dbs) {
-        update_dnafrags($compara_db, $component_gdb, $species_db);
+if ($species) {
+    process_species($species);
+} else {
+    $taxon_id = undef;
+    $genome_db_name = undef;
+    $species = undef;
+    my $names = slurp_to_array($file, 1);
+    foreach my $species (@$names) {
+        process_species($species);
     }
-    print_method_link_species_sets_to_update($compara_db, $genome_db);
-} );
+}
 
 exit(0);
+
+
+=head2 process_species
+
+  Arg[1]      : string $string
+  Description : Does everything for this species: create / update the GenomeDB entry, and load the DnaFrags
+  Returntype  : none
+  Exceptions  : none
+
+=cut
+
+sub process_species {
+    my $species = shift;
+
+    my $species_no_underscores = $species;
+    $species_no_underscores =~ s/\_/\ /;
+
+    my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
+    if(! $species_db) {
+        $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
+    }
+    throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
+
+    $helper->transaction( -CALLBACK => sub {
+        my $genome_db = update_genome_db($species_db, $compara_db, $force);
+        update_dnafrags($compara_db, $genome_db, $species_db);
+        my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_db);
+        foreach my $component_gdb (@$component_genome_dbs) {
+            update_dnafrags($compara_db, $component_gdb, $species_db);
+        }
+        print_method_link_species_sets_to_update($compara_db, $genome_db);
+    } );
+}
 
 
 =head2 update_genome_db
