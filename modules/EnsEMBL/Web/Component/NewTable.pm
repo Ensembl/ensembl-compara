@@ -42,81 +42,78 @@ sub html_hidden {
   return $x;
 }
 
-sub num_if_num {
-  my ($a,$b) = @_;
+sub server_sort_numeric {
+  my ($self,$a,$b,$f) = @_;
 
+  $a =~ s/([\d\.e\+-])\s.*$/$1/;
+  $b =~ s/([\d\.e\+-])\s.*$/$1/;
+  use Data::Dumper;
   if(looks_like_number($a)) {
     if(looks_like_number($b)) {
-      return $a <=> $b;
+      return ($a <=> $b)*$f;
     } else {
       return -1;
     }
   } elsif(looks_like_number($b)) {
     return 1;
   } else {
-    return $a cmp $b;
+    return ($a cmp $b)*$f;
   }
 }
 
-sub server_sort_numeric {
-  my ($self,$a,$b) = @_;
-
-  return $a <=> $b;
-}
-
 sub server_sort_position {
-  my ($self,$a,$b) = @_;
+  my ($self,$a,$b,$f) = @_;
 
   my @a = split(/:-/,$a);
   my @b = split(/:-/,$b);
   my $it = each_array(@a,@b);
   while(my ($aa,$bb) = $it->()) {
-    my $c = num_if_num($aa,$bb);
+    my $c = $self->server_sort_numeric($aa,$bb,$f);
     return $c if $c; 
   }
   return 0;
 }
 
 sub server_sort_position_html {
-  my ($self,$a,$b) = @_;
+  my ($self,$a,$b,$f) = @_;
 
-  return $self->server_sort_position(html_cleaned($a),html_cleaned($b));
+  return $self->server_sort_position(html_cleaned($a),html_cleaned($b),$f);
 }
 
 sub server_sort_html_numeric {
-  my ($self,$a,$b) = @_;
+  my ($self,$a,$b,$f) = @_;
 
-  return $self->server_sort_numeric(html_cleaned($a),html_cleaned($b));
+  return $self->server_sort_numeric(html_cleaned($a),html_cleaned($b),$f);
 }
 
 sub server_sort_html {
-  my ($self,$a,$b) = @_;
+  my ($self,$a,$b,$f) = @_;
 
-  return $self->server_sort_string(html_cleaned($a),html_cleaned($b));
+  return $self->server_sort_string(html_cleaned($a),html_cleaned($b),$f);
 }
 
 sub server_sort_hidden_position {
-  my ($self,$a,$b) = @_;
+  my ($self,$a,$b,$f) = @_;
 
-  return $self->server_sort_position(html_hidden($a),html_hidden($b));
+  return $self->server_sort_position(html_hidden($a),html_hidden($b),$f);
 }
 
 sub server_sort_string {
-  my ($self,$a,$b) = @_;
+  my ($self,$a,$b,$f) = @_;
 
-  return lc $a cmp lc $b;
+  return (lc $a cmp lc $b)*$f;
 }
 
 sub server_sort_string_hidden {
-  my ($self,$a,$b) = @_;
+  my ($self,$a,$b,$f) = @_;
 
-  return $self->server_sort_string(html_hidden($a),html_hidden($b));
+  return $self->server_sort_string(html_hidden($a),html_hidden($b),$f);
 }
 
 sub server_sort_numeric_hidden {
-  my ($self,$a,$b) = @_;
+  my ($self,$a,$b,$f) = @_;
 
-  return $self->server_sort_numeric(html_hidden($a),html_hidden($b));
+  return $self->server_sort_numeric(html_hidden($a),html_hidden($b),$f);
 }
 
 sub server_sort {
@@ -134,11 +131,9 @@ sub server_sort {
   @$data = sort {
     my $c = 0;
     foreach my $col (@$sort) {
-      my ($aa,$bb) = ($a,$b);
-      ($aa,$bb) = ($b,$a) if $col->{'dir'} < 0;
-      my $av = $aa->[$col_idx{$col->{'key'}}];
-      my $bv = $bb->[$col_idx{$col->{'key'}}];
-      $c = $sort_fn{$col->{'key'}}->($self,$av,$bv);
+      my $av = $a->[$col_idx{$col->{'key'}}];
+      my $bv = $b->[$col_idx{$col->{'key'}}];
+      $c = $sort_fn{$col->{'key'}}->($self,$av,$bv,$col->{'dir'});
       last if $c;
     }
     $c;
