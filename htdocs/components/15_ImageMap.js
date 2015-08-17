@@ -86,6 +86,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeHoverLabels();
     this.initImageButtons();
     this.initImagePanning();
+    this.initSelector();
     this.highlightLocation(Ensembl.highlightedLoc);
     
     if (!this.vertical) {
@@ -1156,13 +1157,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       coords.b = this.dragRegion.b;
     }
 
+    this.elLk.selector.css({ left: coords.l, top: coords.t, width: coords.r - coords.l + 1, height: coords.b - coords.t - 1 }).show();
+  },
+
+  initSelector: function () {
     if (!this.elLk.selector || !this.elLk.selector.length) {
       this.elLk.selector = $('<div class="_selector selector"></div>').insertAfter(this.elLk.img).toggleClass('vertical', this.vertical).filter(':not(.vertical)')
         .append('<div class="left-border"></div><div class="right-border"></div>').end();
       this.activateSelector();
     }
-
-    this.elLk.selector.css({ left: coords.l, top: coords.t, width: coords.r - coords.l + 1, height: coords.b - coords.t - 1 }).show();
   },
 
   activateSelector: function() {
@@ -1233,7 +1236,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // create the highlighted area div
     if (!this.elLk.highlightedLocation) {
-      this.elLk.highlightedLocation = $('<div class="selector hlrselector"><div class="hlrselector-close">X</div></div>').hide().insertAfter(this.elLk.img)
+      this.elLk.highlightedLocation = $('<div class="selector hlrselector"><div class="hlrselector-close">X</div></div>').hide().insertAfter(this.elLk.selector)
         .find('div').helptip({content: 'Clear highlighted region'}).on('click', function(e) {
           e.preventDefault();
           e.stopPropagation();
