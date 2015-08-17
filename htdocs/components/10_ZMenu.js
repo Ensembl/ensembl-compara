@@ -281,10 +281,25 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     if (length > 1) {
       this.elLk.header = $('<div class="header">' + (json.header ? json.header : length + ' features') + '</div>').insertBefore(this.elLk.container.addClass('row' + (length > cols ? ' grid' : '')));
     }
-    
+
+    this.addLocationHighlightLinks();
+
     this.show();
   },
-  
+
+  addLocationHighlightLinks: function () {
+    var links = this.elLk.container.find('._location_highlight').removeClass('_location_highlight');
+    if (!this.imageId.match('Multi')) {
+      links.each(function () {
+        var locationMatch = this.href.match(Ensembl.locationMatch);
+        if (locationMatch) {
+          $('<br /><a class="loc-highlight _location_highlight _ht" title="Highlight feature on image" href="' + Ensembl.updateURL({hlr: locationMatch[1]}, this.href) +'"></a>').insertAfter(this);
+        }
+        return true;
+      });
+    }
+  },
+
   populateNoAjax: function (force) {
     if (this.das && force !== true) {
       this.populated = true;
@@ -399,7 +414,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         }
       }
 
-      menu.unshift('<a class="_location_highlight" href="' + Ensembl.updateURL({hlr: this.chr + ':' + start + '-' + end}, window.location.href) + '">Highlight region (' + (end - start + 1) + ' bp)</a>');
+      if (this.multi === false) {
+        menu.unshift('<a class="_location_highlight loc-highlight-a" href="' + Ensembl.updateURL({hlr: this.chr + ':' + start + '-' + end}, window.location.href) + '"><span></span>Highlight region (' + (end - start + 1) + ' bp)</a>');
+      }
 
     } else { // Point select
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);

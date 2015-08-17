@@ -62,7 +62,8 @@ sub content {
   $self->add_entry({
     type  => 'Core bp',
     label => $object->location_string,
-    link  => $object->get_location_url
+    link  => $object->get_location_url,
+    link_class => '_location_change'
   });
   
   unless ($object->bound_start == $object->seq_region_start && $object->bound_end == $object->seq_region_end) {

@@ -791,7 +791,7 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       }
 
       my $somatic_mutation = $somatic_var;
-      my $type             = $somatic_mutation ? 'Somatic Mutation' : 'Variation';
+      my $type             = $somatic_mutation ? 'Somatic Mutation' : 'Variant';
       my $snp_source       = $sources->{ $source_id };
       my $desc;
       my $x = $snp_extra{$variation_id};

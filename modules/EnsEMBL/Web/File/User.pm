@@ -213,7 +213,7 @@ sub upload {
                                     filesize  => length($result->{'content'}),
                                     code      => $code,
                                     md5       => $md5,
-                                    name      => $name,
+                                    name      => $args{'name'},
                                     species   => $species,
                                     format    => $format,
                                     no_attach => $no_attach,

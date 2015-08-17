@@ -25,12 +25,13 @@ Ensembl.LayoutManager.extend({
   initialize: function () {
     this.id = 'LayoutManager';
     
-    Ensembl.EventManager.register('reloadPage',    this, this.reloadPage);
-    Ensembl.EventManager.register('validateForms', this, this.validateForms);
-    Ensembl.EventManager.register('makeZMenu',     this, this.makeZMenu);
-    Ensembl.EventManager.register('hashChange',    this, this.hashChange);
-    Ensembl.EventManager.register('toggleContent', this, this.toggleContent);
-    Ensembl.EventManager.register('changeWidth',   this, this.changeWidth);
+    Ensembl.EventManager.register('reloadPage',         this, this.reloadPage);
+    Ensembl.EventManager.register('validateForms',      this, this.validateForms);
+    Ensembl.EventManager.register('makeZMenu',          this, this.makeZMenu);
+    Ensembl.EventManager.register('hashChange',         this, this.hashChange);
+    Ensembl.EventManager.register('highlightLocation',  this, this.updateHighlightParam);
+    Ensembl.EventManager.register('toggleContent',      this, this.toggleContent);
+    Ensembl.EventManager.register('changeWidth',        this, this.changeWidth);
         
     $('#page_nav .tool_buttons > p').show();
     
@@ -233,7 +234,15 @@ Ensembl.LayoutManager.extend({
     
     document.title = document.title.replace(/(Chromosome ).+/, '$1' + text);
   },
-  
+
+  updateHighlightParam: function (hlr) {
+    $('a:not(.constant):not(._location_highlight)').filter(function () { // only for the links that have r param
+      return this.hostname === window.location.hostname && !!this.href.match(Ensembl.locationMatch);
+    }).attr('href', function () {
+      return Ensembl.updateURL({hlr: hlr && hlr[0]}, this.href);
+    });
+  },
+
   toggleContent: function (rel, delay) {
     if (rel) {
       window.setTimeout(function() {

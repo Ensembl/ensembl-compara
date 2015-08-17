@@ -497,13 +497,7 @@ sub get_trans_spliced_transcript_info {
     my $self = shift;
     my $trans_spliced_transcript_info = $self->Obj->get_all_Attributes('trans_spliced');
 
-    if ( $trans_spliced_transcript_info->[0] ) {
-        return @$trans_spliced_transcript_info->[0];
-    }
-    else {
-        return 0;
-    }
-
+    return $trans_spliced_transcript_info->[0];
 }
 
 sub get_domain_genes {

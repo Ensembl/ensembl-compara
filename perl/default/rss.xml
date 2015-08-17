@@ -60,7 +60,7 @@ print qq(
     </image>
     <ttl>1440</ttl>
     <description>
-      Ensembl is a joint project between EMBL - EBI and the Sanger Institute
+      Ensembl is a joint project between EMBL-EBI and the Sanger Institute
       to develop a software system which produces and maintains automatic
       annotation on selected eukaryotic genomes. Ensembl is primarily
       funded by the Wellcome Trust. The site provides free access to all

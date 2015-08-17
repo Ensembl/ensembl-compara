@@ -173,8 +173,7 @@ SPECIES: foreach my $sp (sort @species) {
           print "If not, please patch the database and run this script again (it will skip any species already added)\n";
 
           while (<STDIN>) {
-            chomp;
-            next SPECIES unless (/^y$/i);
+            next SPECIES if (/n/i);
           } 
         }
       }
