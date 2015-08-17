@@ -95,16 +95,16 @@
     return good;
   }
 
-  function use_response(widgets,$table,data) {
+  function use_response(widgets,$table,data,orientation) {
     var view = $table.data('view');
-    widgets[view.format].add_data($table,data.data,data.start,data.columns);
+    widgets[view.format].add_data($table,data.data,data.start,data.columns,orientation);
   }
   
   function maybe_use_response(widgets,$table,result) {
     var cur_data = $table.data('data');
     var in_data = result.data;
     if(compares_equal(cur_data,in_data)) {
-      use_response(widgets,$table,result.response);
+      use_response(widgets,$table,result.response,result.data);
       if(result.response.more) {
         console.log("continue");
         get_new_data(widgets,$table,in_data,result.response.more);

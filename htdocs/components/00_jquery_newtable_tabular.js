@@ -79,7 +79,16 @@
     });
     return '<thead><tr>'+columns.join('')+"</tr></thead>";
   }
-  
+ 
+  function header_fix($table,orientation) {
+    console.log("header_fix ori:",orientation.columns);
+    var $th = $('th',$table);
+    $.each(orientation.columns,function(i,v) {
+      var $h = $th.eq(i);
+      if(v) { $h.show(); } else { $h.hide(); }
+    });
+  }
+ 
   function add_sort($table,key,clear) {
     // Update data
     var view = $table.data('view');
@@ -140,7 +149,7 @@
     return table_num;
   }
 
-  function build_html($table,table_num) {
+  function build_html($table,table_num,orientation) {
     var $subtable = $('table',$table).eq(table_num+1);
     var $th = $('table:first th',$table);
     var markup = $subtable.data('markup') || [];
@@ -148,6 +157,7 @@
     for(var i=0;i<markup.length;i++) {
       html += "<tr>";
       for(var j=0;j<$th.length;j++) {
+        if(!orientation.columns[j]) { continue; }
         var start = "<td>";
         if(i==0) {
           start = "<td style=\"width: "+$th.eq(j).width()+"px\">";
@@ -172,6 +182,10 @@
     // $('tbody',$subtable).html(html);
   }
 
+  function replace_header($table,header) {
+    $('thead',$table).replaceWith(header);
+  }
+
   $.fn.new_table_tabular = function(config,data) {
     return {
       layout: function($table) {
@@ -184,8 +198,10 @@
           add_sort($table,$(this).data('key'),!e.shiftKey); 
         });
       },
-      add_data: function($table,data,start,columns) {
+      add_data: function($table,data,start,columns,orientation) {
+        console.log("orientation",orientation);
         console.log("add_data");
+        header_fix($table,orientation);
         extend_rows($table,start+data.length);
         var subtabs = [];
         $.each(data,function(i,val) {
@@ -193,7 +209,7 @@
         });
         d = $.Deferred().resolve(subtabs);
         loop(d,function(tabnum,v) {
-          var html = build_html($table,tabnum);
+          var html = build_html($table,tabnum,orientation);
           apply_html($table,tabnum,html);
         },1,100);
       }
