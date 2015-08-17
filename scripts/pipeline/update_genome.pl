@@ -142,6 +142,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 use Bio::EnsEMBL::Utils::SqlHelper;
 
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 use Getopt::Long;
@@ -183,9 +184,14 @@ if ($help or (!$species and !$file) or !$compara) {
 ##
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
-throw ("Cannot connect to database [$compara]") if (!$compara_db);
-my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_db->dbc);
+my $compara_dba;
+if ($compara =~ /mysql:\/\//) {
+    $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara);
+} else {
+    $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
+}
+throw ("Cannot connect to database [$compara]") if (!$compara_dba);
+my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 
 if ($species) {
     process_species($species);
@@ -224,13 +230,13 @@ sub process_species {
     throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
 
     $helper->transaction( -CALLBACK => sub {
-        my $genome_db = update_genome_db($species_db, $compara_db, $force);
-        update_dnafrags($compara_db, $genome_db, $species_db);
-        my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_db);
+        my $genome_db = update_genome_db($species_db, $compara_dba, $force);
+        update_dnafrags($compara_dba, $genome_db, $species_db);
+        my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_dba);
         foreach my $component_gdb (@$component_genome_dbs) {
-            update_dnafrags($compara_db, $component_gdb, $species_db);
+            update_dnafrags($compara_dba, $component_gdb, $species_db);
         }
-        print_method_link_species_sets_to_update($compara_db, $genome_db);
+        print_method_link_species_sets_to_update($compara_dba, $genome_db);
     } );
 }
 
