@@ -39,7 +39,7 @@ sub content {
   my $self = shift;
   my $current_species = $self->object->species_path($self->object->data_species); 
   
-  my $form = $self->new_form('url_feedback', "$current_species/UserData/SaveExtraConfig", 'post');
+  my $form = $self->new_form({id => 'url_feedback', action => "$current_species/UserData/SaveExtraConfig", method => 'post'});
 
   ## This next bit is a hack - we need to implement userdata configuration properly!
   $form->add_element(
