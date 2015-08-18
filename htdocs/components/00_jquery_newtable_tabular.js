@@ -134,7 +134,7 @@
     console.log("/extend_rows");
   }
 
-  function update_row2($table,data,row,columns) {
+  function update_row2($table,data,row,columns,orient) {
     var table_num = Math.floor(row/rows_per_subtable);
     var $subtable = $('table',$table).eq(table_num+1);
     var markup = $subtable.data('markup') || [];
@@ -146,6 +146,7 @@
         markup[idx][i] = data[di++];
     }
     $subtable.data('markup',markup);
+    $subtable.data('markup-orient',orient);
     return table_num;
   }
 
@@ -183,6 +184,14 @@
     return $subtable;
   }
 
+  function set_active_orient($subtable,active_orient) {
+    var our_orient = $subtable.data('markup-orient');
+    if(!$.orient_compares_equal(active_orient,our_orient)) {
+      // TODO: something subtler
+      $('tbody',$subtable).html('');
+    }
+  }
+
   function replace_header($table,header) {
     $('thead',$table).replaceWith(header);
   }
@@ -206,7 +215,7 @@
         extend_rows($table,start+data.length);
         var subtabs = [];
         $.each(data,function(i,val) {
-          subtabs[update_row2($table,val,i+start,columns)]=1;
+          subtabs[update_row2($table,val,i+start,columns,orient)]=1;
         });
         d = $.Deferred().resolve(subtabs);
         loop(d,function(tabnum,v) {
@@ -217,6 +226,12 @@
             $subtable.togglewrap();
           }
         },1,100);
+      },
+      set_orient: function($table,orient) {
+        var $subtables = $('table',$table);
+        $subtables.each(function() {
+          set_active_orient($subtables,orient);
+        });
       }
     };
   }; 

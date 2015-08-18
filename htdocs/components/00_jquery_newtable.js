@@ -80,6 +80,11 @@
     widgets[view.format].go($table,$widget);
   }
 
+  function set_orient(widgets,$table,orient) {
+    var view = $table.data('view');
+    widgets[view.format].set_orient($table,orient);
+  }
+
   function use_response(widgets,$table,data,orient) {
     var view = $table.data('view');
     widgets[view.format].add_data($table,data.data,data.start,data.columns,orient);
@@ -104,6 +109,9 @@
       more: JSON.stringify(more),
       config: JSON.stringify($table.data('config'))
     },function(res) {
+      if(more===null) {
+        set_orient(widgets,$table,orient);
+      }
       maybe_use_response(widgets,$table,res);
     },'json');
   }
