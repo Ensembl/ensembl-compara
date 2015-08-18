@@ -156,7 +156,6 @@ sub features {
     ## Don't assume the adaptor can find and open the file!
     my $consensus   = eval { $vcf_adaptor->fetch_variations($slice->seq_region_name, $slice->start, $slice->end); };
     if ($@) {
-      warn ">>> VCF ERROR: $@";
       return @features;
     }
 
