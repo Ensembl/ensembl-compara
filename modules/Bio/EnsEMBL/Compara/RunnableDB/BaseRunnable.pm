@@ -59,6 +59,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 # Make sure the sub-classes import this with $self->SUPER::param_defaults() !
 sub param_defaults {
     return {
+        'do_transactions'       => undef,
         'species_tree_file'     => undef,
         'species_tree_string'   => undef,
         'master_password'       => undef,   # Will default to $ENSADMIN_PSW
