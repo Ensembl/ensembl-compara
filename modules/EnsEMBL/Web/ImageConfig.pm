@@ -980,7 +980,8 @@ sub _add_trackhub_tracks {
 
     ## Translate between UCSC terms and Ensembl ones
     my $default_display = $style_mappings->{lc($type)}{$ucsc_display}
-                              || $style_mappings->{lc($type)}{'default'};
+                              || $style_mappings->{lc($type)}{'default'}
+                              || 'normal';
     $options{'default_display'} = $default_display;
 
     ## Set track style if appropriate 
