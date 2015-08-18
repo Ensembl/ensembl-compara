@@ -124,10 +124,10 @@ tr.row-sub td:first-child { text-indent:24px; }
 .new_table th,.new_table td { padding: 4px; word-wrap: break-word; }
 
 .new_table_wrapper { clear: both; margin: 0 0 16px; }
-.new_table_top     { background-color: #8b9bc1; border: 1px solid #ccc; color: #fff; height: 22px; padding: 7px 0 5px 10px; }
+.new_table_top     { background-color: #8b9bc1; border: 1px solid #ccc; color: #fff; height: 22px; padding: 7px 0 5px 10px; position: relative; }
 .new_table_section { float: left; width: 33%; height: 100%; }
 .new_table_section_2 > * { float: right; }
 div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: center; }
 .new_table_section div { display: inline-block; }
 .new_table_pagesize select { border: 1px solid #ccc; }
-
+.new_table_loading { background: white url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid #8b9bc1; border-radius: 5px; color: #8b9bc1; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }

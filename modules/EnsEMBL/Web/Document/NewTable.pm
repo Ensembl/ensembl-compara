@@ -162,7 +162,7 @@ sub render {
     columns => $self->{'columns'},
     head => [
       [ "page_sizer" ],
-      [ "columns" ],
+      [ "loading","columns" ],
       [ "new_table_export", "new_table_filter", "styles" ]
     ],
     view => {
@@ -179,7 +179,8 @@ sub render {
             "styles" => [ [ "tabular", "Tabular" ], [ "paragraph", "Paragraph" ] ]
          }
       ],
-      "columns" => [ "new_table_columns", { } ]
+      "columns" => [ "new_table_columns", { } ],
+      "loading" => [ "new_table_loading", { } ],
    },
   });
   $data = encode_entities($data);

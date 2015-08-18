@@ -93,17 +93,21 @@
   function maybe_use_response(widgets,$table,result) {
     var cur_orient = $table.data('orient');
     var in_orient = result.orient;
+    var more = 0;
     if($.orient_compares_equal(cur_orient,in_orient)) {
       use_response(widgets,$table,result.response,in_orient);
       if(result.response.more) {
         console.log("continue");
+        more = 1;
         get_new_data(widgets,$table,in_orient,result.response.more);
       }
     }
+    if(!more) { flux(widgets,$table,-1); }
   }
 
   function get_new_data(widgets,$table,orient,more) {
     console.log("data changed, should issue request");
+    if(more===null) { flux(widgets,$table,1); }
     $.get($table.data('src'),{
       orient: JSON.stringify(orient),
       more: JSON.stringify(more),
@@ -127,6 +131,18 @@
       get_new_data(widgets,$table,orient,null);
     }
     $table.data('old-orient',orient);
+  }
+
+  var fluxion = 0;
+  function flux(widgets,$table,state) {
+    var change = -1;
+    if(fluxion == 0 && state) { change = 1; }
+    fluxion += state;
+    if(fluxion == 0 && state) { change = 0; }
+    if(change == -1) { return; }
+    $.each(widgets,function(key,fn) {
+      if(fn.flux) { fn.flux($table,change); }
+    });
   }
 
   function new_table($target) {
