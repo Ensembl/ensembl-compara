@@ -105,9 +105,9 @@ sub render {
       <input type="hidden" class="panel_type" value="Content">';
 
   my $columns = [
-      { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'string' },
+      { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'html'   },
       { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
-      { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'integer' },
+      { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'numeric'},
       { key => 'assembly',    title => 'Ensembl Assembly',width => '10%', align => 'left' },
       { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
       { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
