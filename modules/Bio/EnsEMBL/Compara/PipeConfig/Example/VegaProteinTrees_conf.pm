@@ -81,6 +81,7 @@ sub default_options {
     'rel_suffix'            => 'vega',
     'work_dir'              => '/lustre/scratch109/ensembl/ds23/compara-80/ds23_vega_genetree_20150611_80b',
     'outgroups'             => { },   # affects 'hcluster_dump_input_per_genome'
+    'gene_blacklist_file'   => '/dev/null',
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
 

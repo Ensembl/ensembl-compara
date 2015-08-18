@@ -122,6 +122,9 @@ sub default_options {
         'outgroups'                     => {},
         # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
         'clustering_max_gene_halfcount' => 750,
+        # File with gene / peptide names that must be excluded from the
+        # clusters (e.g. know to disturb the trees)
+        'gene_blacklist_file'           => '/dev/null',
 
     # tree building parameters:
         'use_raxml'                 => 0,
@@ -1393,7 +1396,7 @@ sub core_pipeline_analyses {
                         : 'panther_databases_factory'
                       )
                     ],
-                'A->1' => [ 'hc_clusters' ],
+                'A->1' => [ 'remove_blacklisted_genes' ],
             },
         },
 
@@ -1464,6 +1467,15 @@ sub core_pipeline_analyses {
             -rc_name => '500Mb_job',
         },
 
+
+        {   -logic_name         => 'remove_blacklisted_genes',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlacklistedGenes',
+            -parameters         => {
+                blacklist_file      => $self->o('gene_blacklist_file'),
+            },
+            -flow_into          => [ 'hc_clusters' ],
+            -rc_name => '500Mb_job',
+        },
 
         {   -logic_name         => 'hc_clusters',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
