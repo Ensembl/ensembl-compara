@@ -95,27 +95,27 @@
     return good;
   }
 
-  function use_response(widgets,$table,data,orientation) {
+  function use_response(widgets,$table,data,orient) {
     var view = $table.data('view');
-    widgets[view.format].add_data($table,data.data,data.start,data.columns,orientation);
+    widgets[view.format].add_data($table,data.data,data.start,data.columns,orient);
   }
   
   function maybe_use_response(widgets,$table,result) {
-    var cur_data = $table.data('data');
-    var in_data = result.data;
-    if(compares_equal(cur_data,in_data)) {
+    var cur_orient = $table.data('orient');
+    var in_orient = result.orient;
+    if(compares_equal(cur_orient,in_orient)) {
       use_response(widgets,$table,result.response,result.data);
       if(result.response.more) {
         console.log("continue");
-        get_new_data(widgets,$table,in_data,result.response.more);
+        get_new_data(widgets,$table,in_orient,result.response.more);
       }
     }
   }
 
-  function get_new_data(widgets,$table,data,more) {
+  function get_new_data(widgets,$table,orient,more) {
     console.log("data changed, should issue request");
     $.get($table.data('src'),{
-      data: JSON.stringify(data),
+      orient: JSON.stringify(orient),
       more: JSON.stringify(more),
       config: JSON.stringify($table.data('config'))
     },function(res) {
@@ -124,17 +124,16 @@
   }
 
   function maybe_get_new_data(widgets,$table) {
-    var old_data = $table.data('old-data');
-    var view = $table.data('view');
-    var data = $.extend(true,{},view);
-    delete data.format;
-    $table.data('data',data);
-    console.log("old-data",JSON.stringify(old_data));
-    console.log("data",JSON.stringify(data));
-    if(!compares_equal(data,old_data)) {
-      get_new_data(widgets,$table,data,null);
+    var old_orient = $table.data('old-orient');
+    var orient = $.extend(true,{},$table.data('view'));
+    delete orient.format;
+    $table.data('orient',orient);
+    console.log("old_orient",JSON.stringify(old_orient));
+    console.log("orient",JSON.stringify(orient));
+    if(!compares_equal(orient,old_orient)) {
+      get_new_data(widgets,$table,orient,null);
     }
-    $table.data('old-data',data);
+    $table.data('old-orient',orient);
   }
 
   function new_table($target) {

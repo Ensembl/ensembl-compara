@@ -47,7 +47,6 @@ sub server_sort_numeric {
 
   $a =~ s/([\d\.e\+-])\s.*$/$1/;
   $b =~ s/([\d\.e\+-])\s.*$/$1/;
-  use Data::Dumper;
   if(looks_like_number($a)) {
     if(looks_like_number($b)) {
       return ($a <=> $b)*$f;
@@ -152,11 +151,11 @@ sub ajax_table_content {
 
   my $iconfig = from_json($hub->param('config'));
 
-  my $view = from_json($hub->param('data'));
+  my $orient = from_json($hub->param('orient'));
 
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
-  if($view->{'sort'} and @{$view->{'sort'}}) {
+  if($orient->{'sort'} and @{$orient->{'sort'}}) {
     $all_data = 1;
   }
 
@@ -191,8 +190,8 @@ sub ajax_table_content {
   $more=0 if $more == @$phases;
 
   # Sort it, if necessary
-  if($view->{'sort'} and @{$view->{'sort'}}) {
-    $self->server_sort(\@data_out,$view->{'sort'},$iconfig);
+  if($orient->{'sort'} and @{$orient->{'sort'}}) {
+    $self->server_sort(\@data_out,$orient->{'sort'},$iconfig);
     splice(@data_out,0,$irows->[0]);
     splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
   }

@@ -80,10 +80,10 @@
     return '<thead><tr>'+columns.join('')+"</tr></thead>";
   }
  
-  function header_fix($table,orientation) {
-    console.log("header_fix ori:",orientation.columns);
+  function header_fix($table,orient) {
+    console.log("header_fix ori:",orient.columns);
     var $th = $('th',$table);
-    $.each(orientation.columns,function(i,v) {
+    $.each(orient.columns,function(i,v) {
       var $h = $th.eq(i);
       if(v) { $h.show(); } else { $h.hide(); }
     });
@@ -149,7 +149,7 @@
     return table_num;
   }
 
-  function build_html($table,table_num,orientation) {
+  function build_html($table,table_num,orient) {
     var $subtable = $('table',$table).eq(table_num+1);
     var $th = $('table:first th',$table);
     var markup = $subtable.data('markup') || [];
@@ -157,7 +157,7 @@
     for(var i=0;i<markup.length;i++) {
       html += "<tr>";
       for(var j=0;j<$th.length;j++) {
-        if(!orientation.columns[j]) { continue; }
+        if(!orient.columns[j]) { continue; }
         var start = "<td>";
         if(i==0) {
           start = "<td style=\"width: "+$th.eq(j).width()+"px\">";
@@ -199,10 +199,10 @@
           add_sort($table,$(this).data('key'),!e.shiftKey); 
         });
       },
-      add_data: function($table,data,start,columns,orientation) {
-        console.log("orientation",orientation);
+      add_data: function($table,data,start,columns,orient) {
+        console.log("orient",orient);
         console.log("add_data");
-        header_fix($table,orientation);
+        header_fix($table,orient);
         extend_rows($table,start+data.length);
         var subtabs = [];
         $.each(data,function(i,val) {
@@ -210,7 +210,7 @@
         });
         d = $.Deferred().resolve(subtabs);
         loop(d,function(tabnum,v) {
-          var html = build_html($table,tabnum,orientation);
+          var html = build_html($table,tabnum,orient);
           var $subtable = apply_html($table,tabnum,html);
           // XXX have generic decoration method
           if($.fn.togglewrap) {
