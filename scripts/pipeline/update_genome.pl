@@ -238,6 +238,7 @@ sub process_species {
         }
         print_method_link_species_sets_to_update($compara_dba, $genome_db);
     } );
+    $species_db->dbc()->disconnect_if_idle();
 }
 
 
