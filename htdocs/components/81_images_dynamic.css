@@ -162,6 +162,7 @@ div.image_toolbar a.share         { background-image: url(/i/16/rev/share.png); 
 div.image_toolbar a.order-reset   { background-image: url(/i/16/rev/order-reset.png);   }
 div.image_toolbar a.config-reset  { background-image: url(/i/16/rev/setting-reset.png); }
 div.image_toolbar a.hlr-reset     { background-image: url(/i/16/rev/highlight.png);     }
+div.image_toolbar a.hlr-reset.outside { background-image: url(/i/16/rev/back.png);      }
 
 /* Drag/Select switch */
 div.image_toolbar div.scroll-switch               { float: right; line-height: 16px; }
