@@ -138,7 +138,7 @@ sub add_image_config_notes {
 
   $panel->set_content(qq(
     <div class="info-box">
-    <p>Looking for more data? See our <a href="${trackhub_link}" class="modal_link">Track Hub list</a> for external sources of annotation</p>
+    <p>Looking for more data? See our <a href="${trackhub_link}">Track Hub list</a> for external sources of annotation</p>
     </div>
     <h2 class="border clear">Key</h2>
     <div>
