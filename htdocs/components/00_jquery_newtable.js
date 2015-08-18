@@ -80,21 +80,6 @@
     widgets[view.format].go($table,$widget);
   }
 
-  function compares_equal(fa,fb) {
-    if(fa===fb) { return true; }
-    if(!$.isPlainObject(fa) && !$.isArray(fa)) { return false; }
-    if(!$.isPlainObject(fb) && !$.isArray(fb)) { return false; }
-    if($.isArray(fa)?!$.isArray(fb):$.isArray(fb)) { return false; }
-    var good = true;
-    $.each(fa,function(idx,val) {
-      if(!compares_equal(fb[idx],val)) { good = false; }
-    });
-    $.each(fb,function(idx,val) {
-      if(!compares_equal(fa[idx],val)) { good = false; }
-    });
-    return good;
-  }
-
   function use_response(widgets,$table,data,orient) {
     var view = $table.data('view');
     widgets[view.format].add_data($table,data.data,data.start,data.columns,orient);
@@ -103,8 +88,8 @@
   function maybe_use_response(widgets,$table,result) {
     var cur_orient = $table.data('orient');
     var in_orient = result.orient;
-    if(compares_equal(cur_orient,in_orient)) {
-      use_response(widgets,$table,result.response,result.data);
+    if($.orient_compares_equal(cur_orient,in_orient)) {
+      use_response(widgets,$table,result.response,in_orient);
       if(result.response.more) {
         console.log("continue");
         get_new_data(widgets,$table,in_orient,result.response.more);
@@ -130,7 +115,7 @@
     $table.data('orient',orient);
     console.log("old_orient",JSON.stringify(old_orient));
     console.log("orient",JSON.stringify(orient));
-    if(!compares_equal(orient,old_orient)) {
+    if(!$.orient_compares_equal(orient,old_orient)) {
       get_new_data(widgets,$table,orient,null);
     }
     $table.data('old-orient',orient);
@@ -189,6 +174,21 @@
     maybe_get_new_data(widgets,$table);
     $target.replaceWith($table);
   }
+
+  $.orient_compares_equal = function(fa,fb) {
+    if(fa===fb) { return true; }
+    if(!$.isPlainObject(fa) && !$.isArray(fa)) { return false; }
+    if(!$.isPlainObject(fb) && !$.isArray(fb)) { return false; }
+    if($.isArray(fa)?!$.isArray(fb):$.isArray(fb)) { return false; }
+    var good = true;
+    $.each(fa,function(idx,val) {
+      if(!$.orient_compares_equal(fb[idx],val)) { good = false; }
+    });
+    $.each(fb,function(idx,val) {
+      if(!$.orient_compares_equal(fa[idx],val)) { good = false; }
+    });
+    return good;
+  };
 
   $.fn.newTable = function() {
     this.each(function(i,outer) {
