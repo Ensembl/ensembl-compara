@@ -180,6 +180,7 @@
     //   but a third of the speed.
     //   Maybe browser checks if there are compat issues raised in testing?
     // $('tbody',$subtable).html(html);
+    return $subtable;
   }
 
   function replace_header($table,header) {
@@ -210,7 +211,11 @@
         d = $.Deferred().resolve(subtabs);
         loop(d,function(tabnum,v) {
           var html = build_html($table,tabnum,orientation);
-          apply_html($table,tabnum,html);
+          var $subtable = apply_html($table,tabnum,html);
+          // XXX have generic decoration method
+          if($.fn.togglewrap) {
+            $subtable.togglewrap();
+          }
         },1,100);
       }
     };

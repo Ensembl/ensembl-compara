@@ -145,10 +145,10 @@ sub render {
   
   return unless @{$self->{'columns'}};
   
-#  my $func = 'render_' . $self->format;
-  
-#  return $self->$func if $self->can($func);
-  
+  my $options     = $self->{'options'}        || {};
+  my %table_class = map { $_ => 1 } split ' ', $options->{'class'};
+  my $class   = join ' ', keys %table_class;
+
   my $url = $hub->url('ComponentAjax', {
     source => 'enstab',
     action => 'Web',
@@ -158,6 +158,7 @@ sub render {
   my $data = $self->jsonify({
     unique => random_string(32),
     type => $self->{'type'},
+    cssclass => $class,
     columns => $self->{'columns'},
     head => [
       [ "page_sizer" ],

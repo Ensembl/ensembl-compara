@@ -158,7 +158,7 @@
         config.view.columns.push(true);
       }
     }
-    var $table = $('<div class="new_table_wrapper"><div class="topper"></div><div class="layout"></div></div>');
+    var $table = $('<div class="new_table_wrapper '+config.cssclass+'"><div class="topper"></div><div class="layout"></div></div>');
     $('.topper',$table).html(new_top(widgets,config));
     var stored_config = {
       columns: config.columns,

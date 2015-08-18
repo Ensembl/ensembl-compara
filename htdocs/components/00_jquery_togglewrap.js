@@ -195,7 +195,6 @@
         elements.removeData('togglewrap');
       }
       var classes = '.heightwrap_inside, .cellwrap_inside';
-      elements = elements.filter(classes).add(elements.find(classes));
       init();
     }
   }

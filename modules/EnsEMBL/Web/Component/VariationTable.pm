@@ -153,7 +153,7 @@ sub make_table {
     push @$columns, { key => 'Transcript', sort => 'string', width => '11u', help => $glossary->{'Transcript'} };
   }
 
-  return $self->new_new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside fast_fixed_table' });
+  return $self->new_new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside' });
 } 
 
 sub render_content {
