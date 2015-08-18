@@ -155,7 +155,7 @@ sub cleanup {
     my $cmd = $self->run_command("rm -f $tmp_regexp");
     $cmd->run();
     if ($cmd->exit_code) {
-        $self->throw($cmd->cmd , " gave exit status ", $cmd->exit_code);
+        $self->throw($cmd->cmd . " gave exit status ". $cmd->exit_code);
     }
     return 1;
 }

@@ -192,7 +192,7 @@ sub run_mafft {
 
     my $command = $self->run_command($cmd);
     if ($command->exit_code) {
-        $self->throw("problem running command $cmd: ", $command->err ,"\n");
+        $self->throw("problem running command $cmd: ". $command->err . "\n");
     }
 }
 
@@ -283,7 +283,7 @@ sub run_prank {
     $cmd .= " -d=$input_fasta";
     my $command = $self->run_command($cmd);
     if ($command->exit_code) {
-        $self->throw("problem running prank $cmd: " , $command->err , "\n");
+        $self->throw("problem running prank $cmd: " . $command->err . "\n");
     }
 
     # prank renames the output by adding ".2.fas" => .1.fas" because it doesn't need to make the tree
