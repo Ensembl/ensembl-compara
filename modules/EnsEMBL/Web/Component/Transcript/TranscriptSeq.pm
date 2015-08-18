@@ -140,7 +140,8 @@ sub get_sequence_data {
       ($pos_start) = grep $protein_seq->{'seq'}[$_ - 1]{'letter'} eq '.', 1..3; # Find the positions of . characters at the start
     }
 
-    if ($strip_end = 3 - ($cd_end - $cd_start + 1) % 3) {
+    # If length is multiple of 3, ignore it. If length is 1 or 2 more than a multiple of 3 we use 2 or 1 (respectively) characters from @partial to complete 3 bases.
+    if ($strip_end = (3 - ($cd_end - $cd_start + 1) % 3) % 3) {
       ($pos_end) = grep $protein_seq->{'seq'}[$_ + 1]{'letter'} =~ /\*|\-/, -3..-1; # Find the positions of - or * characters at the end
     }
 
