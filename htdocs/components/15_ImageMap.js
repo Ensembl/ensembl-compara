@@ -1237,10 +1237,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     // create the highlighted area div
     if (!this.elLk.highlightedLocation) {
       this.elLk.highlightedLocation = $('<div class="selector hlrselector"><div class="hlrselector-close">X</div></div>').hide().insertAfter(this.elLk.selector)
-        .find('div').helptip({content: 'Clear highlighted region'}).on('click', function(e) {
-          e.preventDefault();
+        .find('div').helptip({content: 'Clear highlighted region'}).on('click mousedown', function(e) {
           e.stopPropagation();
-          Ensembl.highlightLocation(false);
+          if (e.type === 'click') {
+            Ensembl.highlightLocation(false);
+          }
         })
       .end();
     }
