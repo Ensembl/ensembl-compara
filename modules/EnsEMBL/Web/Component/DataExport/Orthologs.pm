@@ -61,7 +61,7 @@ sub content {
   $settings->{'Hidden'} = $species_options;
 
   ## Options per format
-  my $fields_by_format = {'OrthoXML' => []};
+  my $fields_by_format = {'OrthoXML' => [], 'PhyloXML' => []};
 
   ## Add formats output by BioPerl
   foreach ($self->alignment_formats) {
