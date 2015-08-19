@@ -85,9 +85,31 @@
     widgets[view.format].set_orient($table,orient);
   }
 
+  function store_response_in_grid($table,rows,start,columns,orient_in) {
+    var grid = $table.data('grid') || [];
+    var grid_orient = $table.data('grid-orient') || [];
+    if(!$.orient_compares_equal(orient_in,grid_orient)) {
+      console.log("clearing grid");
+      grid = [];
+      $table.data('grid-orient',orient_in);
+    }
+    $.each(rows,function (i,row) {
+      var k = 0;
+      $.each(columns,function(j,on) {
+        if(on) {
+          grid[start+i] = (grid[start+i]||[]);
+          grid[start+i][j] = row[k++];
+        }
+      });
+    });
+    $table.data('grid',grid);
+    return grid;
+  }
+
   function use_response(widgets,$table,data,orient) {
     var view = $table.data('view');
-    widgets[view.format].add_data($table,data.data,data.start,data.columns,orient);
+    grid = store_response_in_grid($table,data.data,data.start,data.columns,orient);
+    widgets[view.format].add_data($table,grid,data.start,data.data.length,orient);
   }
   
   function maybe_use_response(widgets,$table,result) {

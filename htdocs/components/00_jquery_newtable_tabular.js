@@ -160,16 +160,14 @@
     console.log("/extend_rows");
   }
 
-  function update_row2($table,data,row,columns,orient) {
+  function update_row2($table,grid,row,orient) {
     var table_num = Math.floor(row/rows_per_subtable);
     var $subtable = $('.subtable',$table).eq(table_num);
     var markup = $subtable.data('markup') || [];
     var idx = row-table_num*rows_per_subtable;
     markup[idx] = markup[idx] || [];
-    di = 0;
-    for(var i=0;i<columns.length;i++) {
-      if(columns[i])
-        markup[idx][i] = data[di++];
+    for(var i=0;i<grid[row].length;i++) {
+      markup[idx][i] = (grid[row][i]||'');
     }
     $subtable.data('markup',markup);
     $subtable.data('markup-orient',orient);
@@ -241,17 +239,16 @@
           add_sort($table,$(this).data('key'),!e.shiftKey); 
         });
       },
-      add_data: function($table,data,start,columns,orient) {
+      add_data: function($table,grid,start,num,orient) {
         var config = $table.data('config');
         fix_widths($table,config,orient);
-        console.log("orient",orient);
-        console.log("add_data");
+        console.log("add_data orient",orient);
         header_fix($table,orient);
-        extend_rows($table,start+data.length);
+        extend_rows($table,start+num);
         var subtabs = [];
-        $.each(data,function(i,val) {
-          subtabs[update_row2($table,val,i+start,columns,orient)]=1;
-        });
+        for(var i=0;i<num;i++) {
+          subtabs[update_row2($table,grid,i+start,orient)]=1;
+        }
         d = $.Deferred().resolve(subtabs);
         loop(d,function(tabnum,v) {
           var html = build_html($table,tabnum,orient);
