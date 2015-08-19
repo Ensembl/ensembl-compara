@@ -148,15 +148,23 @@ sub ajax_table_content {
   my ($self) = @_;
 
   my $hub = $self->hub;
+  my $iconfig = from_json($hub->param('config'));
+  my $orient = from_json($hub->param('orient'));
+  my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
 
   my $phases = [{ name => undef }];
   $phases = $self->incremental_table if $self->can('incremental_table');
   my @out;
+
+  # What phase should we be?
+  my @required;
+  push @required,map { $_->{'key'} } @{$orient->{'sort'}||[]};
   my $more = $hub->param('more');
-
-  my $iconfig = from_json($hub->param('config'));
-
-  my $orient = from_json($hub->param('orient'));
+  while($more < $#$phases) {
+    my %gets_cols = map { $_ => 1 } (@{$phases->[$more]{'cols'}||\@cols});
+    last unless scalar(grep { !$gets_cols{$_} } @required);
+    $more++;
+  }
 
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
@@ -170,7 +178,6 @@ sub ajax_table_content {
   $rows = [0,-1] if $all_data;
 
   # Calculate columns to send
-  my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
   my %cols_pos;
   $cols_pos{$cols[$_]} = $_ for(0..$#cols);
   my $used_cols = $phases->[$more]{'cols'} || \@cols;
