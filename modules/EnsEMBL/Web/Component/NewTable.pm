@@ -116,12 +116,11 @@ sub server_sort_numeric_hidden {
 }
 
 sub server_sort {
-  my ($self,$data,$sort,$iconfig) = @_;
+  my ($self,$data,$sort,$iconfig,$col_idx) = @_;
 
-  my (%col_idx,%sort_fn);
+  my %sort_fn;
   my $cols = $iconfig->{'columns'};
   foreach my $i (0..(@$cols-1)) {
-    $col_idx{$cols->[$i]{'key'}} = $i;
     ( my $fn = $cols->[$i]{'sort'} ) =~ s/[^A-Za-z_-]//g;
     my $sort_fn = $self->can("server_sort_$fn");
     $sort_fn = $self->can("server_sort_string") unless defined $sort_fn;
@@ -130,14 +129,13 @@ sub server_sort {
   foreach my $i (0..$#$data) {
     push @{$data->[$i]},$i;
   }
-  $col_idx{'__tie'} = -1;
+  $col_idx->{'__tie'} = -1;
   $sort_fn{'__tie'} = $self->can("server_sort_numeric");
-  warn "size=".scalar(@$data)."\n";
   @$data = sort {
     my $c = 0;
     foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
-      my $av = $a->[$col_idx{$col->{'key'}}];
-      my $bv = $b->[$col_idx{$col->{'key'}}];
+      my $av = $a->[$col_idx->{$col->{'key'}}];
+      my $bv = $b->[$col_idx->{$col->{'key'}}];
       $c = $sort_fn{$col->{'key'}}->($self,$av,$bv,$col->{'dir'});
       last if $c;
     }
@@ -198,7 +196,9 @@ sub ajax_table_content {
 
   # Sort it, if necessary
   if($orient->{'sort'} and @{$orient->{'sort'}}) {
-    $self->server_sort(\@data_out,$orient->{'sort'},$iconfig);
+    my %sort_pos;
+    $sort_pos{$used_cols->[$_]} = $_ for (0..@$used_cols);
+    $self->server_sort(\@data_out,$orient->{'sort'},$iconfig,\%sort_pos);
     splice(@data_out,0,$irows->[0]);
     splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
   }
