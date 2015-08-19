@@ -86,6 +86,7 @@ sub create_species_tree {
             next if ($taxon_name =~ /ncestral/);
             my $taxon_id = $gdb->taxon_id;
             my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
+            $taxon->{_gdb_id_for_cast} = $gdb->dbID;
             push @taxa_for_tree, $taxon;
             push @{$gdbs_by_taxon_id{$taxon_id}}, $gdb;
         }

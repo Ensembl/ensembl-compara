@@ -54,6 +54,7 @@ use base ('Bio::EnsEMBL::Compara::NestedSet');
 
 sub _complete_cast_node {
     my ($self, $orig) = @_;
+    $self->genome_db_id($orig->{_gdb_id_for_cast}) if exists $orig->{_gdb_id_for_cast};
     $self->taxon_id($orig->taxon_id);
     $self->node_name($orig->name);
 }
