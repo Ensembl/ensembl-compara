@@ -118,7 +118,7 @@ sub getFakeMungedVariationFeatures {
     my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
     $vfa->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
   }
-  my $all_snps = $self->Obj->get_all_VariationFeatures($so_terms);
+  my $all_snps = [ @{$self->Obj->get_all_VariationFeatures($so_terms)} ];
   my $ngot =  scalar(@$all_snps);
   push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures()};
 
