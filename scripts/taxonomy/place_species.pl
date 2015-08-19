@@ -72,6 +72,6 @@ for my $taxon_id (@taxon_ids) {
 
 $species_tree->print_tree(0.2);
 
-my $fmt = '%{-n}%{x-}:%{d}';
+my $fmt = '%{n}';
 my $sp_tree_string = $species_tree->newick_format('ryo', $fmt);
 print $sp_tree_string, "\n";
