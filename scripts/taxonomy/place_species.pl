@@ -24,21 +24,24 @@ use Getopt::Long;
 my $master_url = 'mysql://ensro@compara1/mm14_ensembl_compara_master';
 my $taxon_ids;
 my $help;
+my $collection;
 
 GetOptions (
             "master_url=s"    => \$master_url,
             "taxon_ids=s"      => \$taxon_ids,
+            "collection=s"    => \$collection,
             "help"            => \$help,
            );
 
 
-if ($help || ! defined $taxon_ids) {
+if ($help || ! defined $taxon_ids || !$collection) {
     print <<'EOH';
 place_species.pl -- Get the correct insertion point of new ensembl species in the species gene tree
-./place_species.pl -master_url <master_url> -taxon_ids <taxon_id1,taxon_id2,taxon_id3>
+./place_species.pl -master_url <master_url> -collection <collection_name> -taxon_ids <taxon_id1,taxon_id2,taxon_id3>
 
 Options
    --master_url         [Optional] url for the compara master database
+   --collection         Name of the collection (species-set) in which to add the new taxa
    --taxon_ids                     taxon_ids to place in the tree separated by commas (no spaces)
    --help               [Optional] prints this message & exits
 
@@ -51,8 +54,10 @@ my @taxon_ids = split /,/, $taxon_ids;
 # ADAPTORS
 my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$master_url);
 
+my $collection_ss = $master_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($collection);
+
 # SPECIES TREE
-my $species_tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree (-compara_dba => $master_dba, -extrataxon_sequenced=>[@taxon_ids]);
+my $species_tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree (-compara_dba => $master_dba, -species_set => $collection_ss, -extrataxon_sequenced=>[@taxon_ids]);
 
 for my $taxon_id (@taxon_ids) {
     my $nodes = $species_tree->find_nodes_by_field_value('taxon_id', $taxon_id);
