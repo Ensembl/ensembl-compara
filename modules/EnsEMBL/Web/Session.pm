@@ -53,6 +53,7 @@ use URI::Escape    qw(uri_unescape);
 
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
+use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
 
