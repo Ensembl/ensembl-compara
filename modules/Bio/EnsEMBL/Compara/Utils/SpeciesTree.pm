@@ -225,7 +225,7 @@ sub get_timetree_estimate {
         return;
     }
 
-    my $url_template = 'http://www.timetree.org/index.php?taxon_a=%s&taxon_b=%s&submit=Search';
+    my $url_template = 'http://www.timetree.org/search/pairwise/%s/%s';
     my $last_page;
 
     # For multifurcations, if a comparison fails, we can still try the other ones
