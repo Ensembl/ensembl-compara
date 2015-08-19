@@ -48,12 +48,11 @@
     });
   }
 
-  function new_th(index,colconf,$header) {
+  function new_th(index,colconf) {
     var text = colconf.label || colconf.title || colconf.key;
     var attrs = {};
     var classes = [];
     attrs['data-key'] = colconf.key || '';
-    if(colconf.width) { attrs.width = colconf.width; }
     if(colconf.sort)  { classes.push('sorting'); }
     if(colconf.help) {
       var help = $('<div/>').text(colconf.help).html();
@@ -70,12 +69,39 @@
     return "<th "+attr_str+">"+text+"</th>";
   }
 
-  function new_header(config) {
+  // TODO fix widths on load
+  // TODO initial orient
+  function fix_widths($table,config,orient) {
+    var totals = { u: 0, px: 0 };
+    var widths = [];
+    $.each(config.columns,function(i,data) {
+      var m = data.width.match(/^(\d+)(.*)$/)
+      widths.push([m[1],m[2]]);
+      if(orient.columns[i]) {
+        if(data.width[1] == 'u' || data.width[1] == 'px') {
+          totals[data.width[1]] += parseInt(data.width[0]);
+        }
+      }
+    });
+    console.log("widths",totals);
+    var table_width = $table.width();
+    totals['px'] *= 100/table_width;
+    if(totals['px'] > 100) { totals['px'] = 100; }
+    totals['u'] = (100-totals['px']) / (totals['u']||1);
+    console.log("widths2",totals);
+    var $head = $('table:first th',$table);
+    $head.each(function(i) {
+      if(orient.columns[i]) {
+        $(this).css('width',(widths[i][0]*totals[widths[i][1]])+"%");
+      }
+    });
+  }
+
+  function new_header($table,config) {
     var columns = [];
 
-    var $header = $('<thead></thead>');
     $.each(config.columns,function(i,data) {
-      columns.push(new_th(i,data,$header));
+      columns.push(new_th(i,data));
     });
     return '<thead><tr>'+columns.join('')+"</tr></thead>";
   }
@@ -207,7 +233,7 @@
     return {
       layout: function($table) {
         var config = $table.data('config');
-        var header = new_header(config);
+        var header = new_header($table,config);
         return '<div class="new_table"><table>'+header+'<tbody></tbody></table></div>';
       },
       go: function($table,$el) {
@@ -216,6 +242,8 @@
         });
       },
       add_data: function($table,data,start,columns,orient) {
+        var config = $table.data('config');
+        fix_widths($table,config,orient);
         console.log("orient",orient);
         console.log("add_data");
         header_fix($table,orient);

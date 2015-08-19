@@ -167,6 +167,8 @@
       }
     }
     var $table = $('<div class="new_table_wrapper '+config.cssclass+'"><div class="topper"></div><div class="layout"></div></div>');
+    $table.data('src',$target.attr('href'));
+    $target.replaceWith($table);
     $('.topper',$table).html(new_top(widgets,config));
     var stored_config = {
       columns: config.columns,
@@ -194,9 +196,7 @@
       $widget.addClass('_inited');
       widgets[name].go($table,$widget);
     });
-    $table.data('src',$target.attr('href'));
     maybe_get_new_data(widgets,$table);
-    $target.replaceWith($table);
   }
 
   $.orient_compares_equal = function(fa,fb) {

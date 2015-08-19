@@ -48,7 +48,6 @@ sub new {
   
   bless $self, $class;
   
-  $self->preprocess_widths;
   $self->preprocess_hyphens;
   
   return $self;
