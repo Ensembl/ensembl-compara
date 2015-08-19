@@ -67,7 +67,7 @@ for my $taxon_id (@taxon_ids) {
     my $new_internal_node = $new_leaf->parent;
     my $timetree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($new_internal_node);
     $new_leaf->node_name(sprintf('======>New species: taxon_id=%d name="%s"<======', $taxon_id, $new_leaf->node_name));
-    $new_internal_node->node_name(sprintf('======>New ancestor taxon_id=%d name="%s" timetree="%s mya")<======', $new_internal_node->taxon_id, $new_internal_node->node_name, $timetree));
+    $new_internal_node->node_name(sprintf('======>New ancestor taxon_id=%d name="%s" timetree="%s mya")<======', $new_internal_node->taxon_id, $new_internal_node->node_name, $timetree || '?'));
 }
 
 $species_tree->print_tree(0.2);
