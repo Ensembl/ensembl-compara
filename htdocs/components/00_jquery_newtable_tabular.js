@@ -117,13 +117,13 @@
   }
 
   function new_subtable($table) {
-    return $("<table><tbody></tbody></table>");
+    return $('<div class="subtable"><table><tbody></tbody></table></div>');
   }
 
   function extend_rows($table,target) {
     console.log("extend_rows");
-    var $subtables = $('table',$table);
-    target -= ($subtables.length-1)*rows_per_subtable;
+    var $subtables = $('.subtable',$table);
+    target -= $subtables.length*rows_per_subtable;
     while(target > 0) {
       var $subtable = new_subtable($table).appendTo($('.new_table',$table));
       var to_add = target;
@@ -136,7 +136,7 @@
 
   function update_row2($table,data,row,columns,orient) {
     var table_num = Math.floor(row/rows_per_subtable);
-    var $subtable = $('table',$table).eq(table_num+1);
+    var $subtable = $('.subtable',$table).eq(table_num);
     var markup = $subtable.data('markup') || [];
     var idx = row-table_num*rows_per_subtable;
     markup[idx] = markup[idx] || [];
@@ -151,7 +151,7 @@
   }
 
   function build_html($table,table_num,orient) {
-    var $subtable = $('table',$table).eq(table_num+1);
+    var $subtable = $('.subtable',$table).eq(table_num);
     var $th = $('table:first th',$table);
     var markup = $subtable.data('markup') || [];
     var html = "";
@@ -175,20 +175,27 @@
   }
 
   function apply_html($table,table_num,html) {
-    var $subtable = $('table',$table).eq(table_num+1);
+    var $subtable = $($('.subtable',$table).eq(table_num));
+    var $body = $('tbody',$subtable);
+    if(!$body.length) {
+      var $newtable = new_subtable();
+      $subtable.replaceWith($newtable);
+      $subtable = $newtable;
+    }
     $('tbody',$subtable)[0].innerHTML = html;
     // The line below is probably more portable than the line above,
     //   but a third of the speed.
     //   Maybe browser checks if there are compat issues raised in testing?
     // $('tbody',$subtable).html(html);
+    $subtable.css('height',$('table',$subtable).css('height'));
     return $subtable;
   }
 
   function set_active_orient($subtable,active_orient) {
     var our_orient = $subtable.data('markup-orient');
+
     if(!$.orient_compares_equal(active_orient,our_orient)) {
-      // TODO: something subtler
-      $('tbody',$subtable).html('');
+      $subtable[0].innerHTML = '';
     }
   }
 
@@ -228,9 +235,9 @@
         },1,100);
       },
       set_orient: function($table,orient) {
-        var $subtables = $('table',$table);
+        var $subtables = $('.subtable',$table);
         $subtables.each(function() {
-          set_active_orient($subtables,orient);
+          set_active_orient($(this),orient);
         });
       }
     };
