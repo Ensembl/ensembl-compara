@@ -127,9 +127,15 @@ sub server_sort {
     $sort_fn = $self->can("server_sort_string") unless defined $sort_fn;
     $sort_fn{$cols->[$i]{'key'}} = $sort_fn;
   }
+  foreach my $i (0..$#$data) {
+    push @{$data->[$i]},$i;
+  }
+  $col_idx{'__tie'} = -1;
+  $sort_fn{'__tie'} = $self->can("server_sort_numeric");
+  warn "size=".scalar(@$data)."\n";
   @$data = sort {
     my $c = 0;
-    foreach my $col (@$sort) {
+    foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
       my $av = $a->[$col_idx{$col->{'key'}}];
       my $bv = $b->[$col_idx{$col->{'key'}}];
       $c = $sort_fn{$col->{'key'}}->($self,$av,$bv,$col->{'dir'});
@@ -137,6 +143,7 @@ sub server_sort {
     }
     $c;
   } @$data;
+  pop @$_ for(@$data);
 }
 
 sub ajax_table_content {
