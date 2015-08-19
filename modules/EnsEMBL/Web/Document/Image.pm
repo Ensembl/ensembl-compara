@@ -310,14 +310,14 @@ sub add_image_export_menu {
     },
     print => {
       r => 2,
-      title => 'Hi-res (for print)',
+      title => 'Hi-res (for print):',
       formats => [
         { f => 'png-s-5', label => 'PNG (x5)' },
       ],
     },
     proj => {
       r => 3,
-      title => 'Hi-vis (projectors)',
+      title => 'Hi-vis (projectors):',
       formats => [],
     }
   };
