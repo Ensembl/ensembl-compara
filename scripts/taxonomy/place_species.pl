@@ -65,9 +65,14 @@ for my $taxon_id (@taxon_ids) {
     die "There should be a single node with taxon_id=$taxon_id in the tree !\n" if scalar(@$nodes) >= 2;
     my $new_leaf = $nodes->[0];
     my $new_internal_node = $new_leaf->parent;
+    my $internal_taxon = $master_dba->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($new_internal_node->taxon_id);
+    my @common_names = ();
+    push @common_names, @{$internal_taxon->get_all_values_for_tag('common name')};
+    push @common_names, @{$internal_taxon->get_all_values_for_tag('genbank common name')};
+    my $cn_string = scalar(@common_names) ? join('/', map {qq{"$_"}} @common_names) : '?';
     my $timetree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($new_internal_node);
     $new_leaf->node_name(sprintf('======>New species: taxon_id=%d name="%s"<======', $taxon_id, $new_leaf->node_name));
-    $new_internal_node->node_name(sprintf('======>New ancestor taxon_id=%d name="%s" timetree="%s mya")<======', $new_internal_node->taxon_id, $new_internal_node->node_name, $timetree || '?'));
+    $new_internal_node->node_name(sprintf('======>New ancestor taxon_id=%d name="%s" common_names=%s timetree="%s mya")<======', $new_internal_node->taxon_id, $new_internal_node->node_name, $cn_string, $timetree || '?'));
 }
 
 $species_tree->print_tree(0.2);
