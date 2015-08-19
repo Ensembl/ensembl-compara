@@ -132,7 +132,7 @@ sub content {
 
   ## add trans-spliced transcript info
   my $trans_spliced_transcript_info = $object->get_trans_spliced_transcript_info;
-  $table->add_row($trans_spliced_transcript_info->name, $trans_spliced_transcript_info->description) if $trans_spliced_transcript_info;
+  $table->add_row('Trans-spliced' , sprintf('This is a %s transcript', $self->helptip('trans-spliced', $trans_spliced_transcript_info->description))) if $trans_spliced_transcript_info;
 
   
   ## add stop gained/lost variation info
