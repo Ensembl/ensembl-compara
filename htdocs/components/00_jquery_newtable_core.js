@@ -15,21 +15,43 @@
  */
 
 (function($) {
-  $.fn.new_table_core = function(config,data) {
+  $.fn.new_table_clientsort = function(config,data) {
+
+    function compare(a,b,plan) {
+      var c = 0;
+      $.each(plan,function(i,stage) {
+        if(!c) {
+          c = a[stage[0]].localeCompare(b[stage[0]]) * stage[1];
+        }
+      });
+      return c;
+    }
 
     return {
       generate: function() {},
       go: function($table,$el) {},
       pipe: function() {
+        var col_idxs = {};
+        $.each(config.columns,function(i,val) {
+          col_idxs[val.key] = i;
+        });
         return [
-          // Example pipeline step
           function(orient) {
-            console.log("forward");
-            orient.hello = "world";
-            return [orient,function(manifest,data) {
-              console.log("back atcha",manifest.hello);
-              delete manifest.world;
-              return [manifest,data];
+            if(!orient.sort) { return [orient,null]; }
+            var plan  = [];
+            $.each(orient.sort,function(i,stage) {
+              if(!plan) { return; }
+              var type = data[stage.key];
+              if(!type) { plan = null; return; }
+              plan.push([col_idxs[stage.key],stage.dir,type]);
+            });
+            if(!plan) { return [orient,null]; }
+            delete orient.sort;
+            return [orient,function(manifest,grid) {
+              grid.sort(function(a,b) {
+                return compare(a,b,plan);
+              });
+              return [manifest,grid];
             }];
           }
         ];

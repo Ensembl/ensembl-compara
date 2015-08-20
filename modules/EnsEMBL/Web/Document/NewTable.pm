@@ -133,7 +133,9 @@ sub render {
     orient => $orient,
     formats => [ "tabular", "paragraph" ],
     widgets => {
-      core => [ "new_table_core", {} ],
+      clientsort => [ "new_table_clientsort", {
+        Source => 'string',
+      }],
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
       "tabular" => [ "new_table_tabular", { } ],
       "paragraph" => [ "new_table_paragraph", { } ],

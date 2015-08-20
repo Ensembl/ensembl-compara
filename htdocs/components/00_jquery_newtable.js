@@ -108,13 +108,13 @@
     widgets[view.format].go($table,$widget);
   }
 
-  function store_response_in_grid($table,rows,start,columns,orient_in) {
+  function store_response_in_grid($table,rows,start,columns,manifest_in) {
     var grid = $table.data('grid') || [];
-    var grid_orient = $table.data('grid-orient') || [];
-    if(!$.orient_compares_equal(orient_in,grid_orient)) {
+    var grid_manifest = $table.data('grid-manifest') || [];
+    if(!$.orient_compares_equal(manifest_in,grid_manifest)) {
       console.log("clearing grid");
       grid = [];
-      $table.data('grid-orient',orient_in);
+      $table.data('grid-manifest',manifest_in);
     }
     $.each(rows,function (i,row) {
       var k = 0;
@@ -126,13 +126,23 @@
       });
     });
     $table.data('grid',grid);
-    return grid;
   }
 
-  function use_response(widgets,$table,data,orient) {
+  function render_grid(widgets,$table,manifest_c,start,length) {
     var view = $table.data('view');
-    grid = store_response_in_grid($table,data.data,data.start,data.columns,orient);
-    widgets[view.format].add_data($table,grid,data.start,data.data.length,orient);
+    var grid = $table.data('grid');
+    if(length==-1) { length = grid.length; }
+    var orient_c = build_orient(manifest_c,grid);
+    widgets[view.format].add_data($table,orient_c[0],start,length,orient_c[1]);
+  }
+
+  function rerender_grid(widgets,$table,manifest_c) {
+    render_grid(widgets,$table,manifest_c,0,-1);
+  }
+
+  function use_response(widgets,$table,manifest_c,response) {
+    store_response_in_grid($table,response.data,response.start,response.columns,manifest_c[0]);
+    render_grid(widgets,$table,manifest_c,response.start,response.data.length);
   }
   
   function maybe_use_response(widgets,$table,result,config,manifest_c) {
@@ -140,10 +150,8 @@
     var in_manifest = result.orient;
     var more = 0;
     if($.orient_compares_equal(cur_manifest,in_manifest)) {
-      var orient_c = build_orient(manifest_c,result.response);
-      use_response(widgets,$table,orient_c[0],orient_c[1]);
+      use_response(widgets,$table,manifest_c,result.response);
       if(result.response.more) {
-        console.log("continue");
         more = 1;
         get_new_data(widgets,$table,manifest_c,result.response.more,config);
       }
@@ -179,6 +187,8 @@
     $table.data('manifest',manifest_c[0]);
     if(!$.orient_compares_equal(manifest_c[0],old_manifest)) {
       get_new_data(widgets,$table,manifest_c,null,config);
+    } else {
+      rerender_grid(widgets,$table,manifest_c);
     }
     $table.data('old-manifest',manifest_c[0]);
   }
