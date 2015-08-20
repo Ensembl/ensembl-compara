@@ -77,11 +77,8 @@ sub fetch_input {
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
     $nc_tree->alignment($aln);
-    if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
-        $self->param('input_aln', $input_aln);
-    } else {
-        die "An input_aln is mandatory";
-    }
+    $self->param('input_aln',  $self->_dumpMultipleAlignmentToWorkdir($nc_tree));
+    $self->param('struct_aln', $self->_dumpStructToWorkdir($nc_tree));
 }
 
 sub run {
@@ -99,19 +96,6 @@ sub run {
     $self->param('raxml_tag', $raxml_tag);
 
     my $raxml_exe = $self->require_executable('raxml_exe');
-
-    my $tag = 'ss_it_' . $model;
-    if ($self->param('gene_tree')->has_tag($tag)) {
-        my $eval_tree;
-        # Checks the tree string can be parsed successfully
-        eval {
-            $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('gene_tree')->get_value_for_tag($tag));
-        };
-        if (defined($eval_tree) and !$@) {
-            # The secondary structure RAxML tree for this model has been obtained already and the tree can be parsed successfully.
-            return;  # We have ended with this model
-        }
-    }
 
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
@@ -155,7 +139,7 @@ sub run {
     print STDERR "RAxML runtime_msec: ", $command->runtime_msec, "\n";
 
     my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree.$raxml_tag.$model";
-    $self->store_newick_into_nc_tree($tag, $raxml_output);
+    $self->store_newick_into_nc_tree('ss_it_'.$model, $raxml_output);
     my $model_runtime = "${model}_runtime_msec";
     $nc_tree->store_tag($model_runtime,$command->runtime_msec);
 
@@ -171,87 +155,10 @@ sub cleanup {
     my $cmd = $self->run_command("rm -f $tmp_regexp");
     $cmd->run();
     if ($cmd->exit_code) {
-        $self->throw($cmd->cmd , " gave exit status ", $cmd->exit_code);
+        $self->throw($cmd->cmd . " gave exit status ". $cmd->exit_code);
     }
     return 1;
 }
 
-sub write_output {
-    my $self= shift @_;
-}
-
-
-##########################################
-#
-# internal methods
-#
-##########################################
-
-
-sub _dumpMultipleAlignmentStructToWorkdir {
-    my $self = shift;
-    my $tree = shift;
-
-    my $leafcount = scalar(@{$tree->get_all_leaves});
-    if($leafcount<4) {
-        my $node_id = $tree->root_id;
-        $self->input_job->autoflow(0);
-        $self->complete_early("tree cluster $node_id has <4 proteins - can not build a raxml tree\n");
-    }
-
-    my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;
-    $file_root    =~ s/\/\//\//g;  # converts any // in path to /
-
-    my $aln_file = $file_root . ".aln";
-    print STDERR "ALN FILE IS: $aln_file\n" if ($self->debug());
-
-    open(OUTSEQ, ">$aln_file")
-        or $self->throw("Error opening $aln_file for write");
-
-    my $sa = $tree->get_SimpleAlign
-        (
-         -ID_TYPE => 'MEMBER',
-         -APPEND_SPECIES_TREE_NODE_ID => 1,
-         -keep_gaps => 1,
-        );
-    $sa->set_displayname_flat(1);
-
-  # Phylip header
-    print OUTSEQ $sa->num_sequences, " ", $sa->length, "\n";
-    # Phylip body
-    my $count = 0;
-    foreach my $aln_seq ($sa->each_seq) {
-        print OUTSEQ $aln_seq->display_id, "\n";
-        my $seq = $aln_seq->seq;
-
-    # Here we do a trick for all Ns sequences by changing the first
-    # nucleotide to an A so that raxml can at least do the tree for
-    # the rest of the sequences, instead of giving an error
-        if ($seq =~ /N+/) { $seq =~ s/^N/A/; }
-
-        print OUTSEQ "$seq\n";
-        $count++;
-        print STDERR "sequences $count\n" if ($count % 50 == 0);
-    }
-    close OUTSEQ;
-
-    my $struct_string = $self->param('gene_tree')->get_tagvalue('ss_cons_filtered');
-    # Allowed Characters are "( ) < > [ ] { } " and "."
-    $struct_string =~ s/[^\(^\)^\<^\>^\[^\]^\{^\}^\.]/\./g;  ## We should have a "clean" structure now?
-
-    my $struct_file = $file_root . ".struct";
-    if ($struct_string =~ /^\.+$/) {
-        $self->input_job->autoflow(0);
-        $self->complete_early("struct string is $struct_string\n");
-    } else {
-        open(STRUCT, ">$struct_file")
-            or $self->throw("Error opening $struct_file for write");
-        print STRUCT "$struct_string\n";
-        close STRUCT;
-    }
-    $self->param('input_aln', $aln_file);
-    $self->param('struct_aln', $struct_file);
-    return $aln_file;
-}
 
 1;

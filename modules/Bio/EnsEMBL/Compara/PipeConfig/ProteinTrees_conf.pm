@@ -76,20 +76,15 @@ sub default_options {
     # User details
         #'email'                 => 'john.smith@example.com',
 
-    # parameters inherited from EnsemblGeneric_conf and unlikely to be redefined:
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
+    # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
+        # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
         # 'ensembl_release'       => 68,
-        # Automatically concatenates 'ensembl_release' and 'rel_suffix'.
-        # 'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
 
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #'mlss_id'               => 40077,
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
-        #'ensembl_release'       => 68,
         # Change this one to allow multiple runs
         #'rel_suffix'            => 'b',
-        # 'rel_with_suffix' is automatically built from the two above parameters
 
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
@@ -98,6 +93,7 @@ sub default_options {
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
 
     # custom pipeline name, in case you don't like the default one
+        # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
         #'pipeline_name'        => 'protein_trees_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
         'division'              => undef,
@@ -126,6 +122,9 @@ sub default_options {
         'outgroups'                     => {},
         # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
         'clustering_max_gene_halfcount' => 750,
+        # File with gene / peptide names that must be excluded from the
+        # clusters (e.g. know to disturb the trees)
+        'gene_blacklist_file'           => '/dev/null',
 
     # tree building parameters:
         'use_raxml'                 => 0,
@@ -437,7 +436,11 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[backbone]--------------------------------------------------------------------------------
 
         {   -logic_name => 'backbone_fire_db_prepare',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'description'   => 'The version of the Compara schema must match the Core API',
+                'query'         => 'SELECT * FROM meta WHERE meta_key = "schema_version" AND meta_value != '.$self->o('ensembl_release'),
+            },
             -input_ids  => [ { } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
@@ -1393,7 +1396,7 @@ sub core_pipeline_analyses {
                         : 'panther_databases_factory'
                       )
                     ],
-                'A->1' => [ 'hc_clusters' ],
+                'A->1' => [ 'remove_blacklisted_genes' ],
             },
         },
 
@@ -1464,6 +1467,15 @@ sub core_pipeline_analyses {
             -rc_name => '500Mb_job',
         },
 
+
+        {   -logic_name         => 'remove_blacklisted_genes',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlacklistedGenes',
+            -parameters         => {
+                blacklist_file      => $self->o('gene_blacklist_file'),
+            },
+            -flow_into          => [ 'hc_clusters' ],
+            -rc_name => '500Mb_job',
+        },
 
         {   -logic_name         => 'hc_clusters',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',

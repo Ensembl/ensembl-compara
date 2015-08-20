@@ -13,6 +13,9 @@
 -- limitations under the License.
 
 
+/* Reset all the counters */
+UPDATE gene_member SET families = 0, gene_trees = 0, gene_gain_loss_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0;
+
 /******************/
 /**** FAMILIES ****/
 /******************/

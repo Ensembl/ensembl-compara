@@ -112,9 +112,6 @@ sub default_options {
   'gerp_version' => '2.1', #gerp program version
   'gerp_window_sizes'    => '[1,10,100,500]', #gerp window sizes
   'gerp_exe_dir'    => '/software/ensembl/compara/gerp/GERPv2.1', #gerp program
-  # Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
-  # accurate (and slow) method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
-  'quick' => 1,
   'skip_multiplealigner_stats' => 0, #skip this module if set to 1
   'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
   'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
@@ -444,7 +441,6 @@ return
             {  -logic_name => 'update_max_alignment_length',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
                 -parameters => {
-                               'quick' => $self->o('quick'),
                                'method_link_species_set_id' => $self->o('epo_mlss_id'),
                               },  
                -flow_into => {

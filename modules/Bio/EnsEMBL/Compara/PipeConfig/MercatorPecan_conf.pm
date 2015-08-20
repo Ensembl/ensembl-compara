@@ -95,10 +95,6 @@ sub default_options {
     #master database
         'master_db_name' => 'mm14_ensembl_compara_master',
 
-    #update_max_alignment_length
-    'quick' => 1, #use quick method for calculating the max_alignment_length (genomic_align_block->length 
-                  #instead of genomic_align->dnafrag_end - genomic_align->dnafrag_start + 1
-
     'do_transactions'   => 1, #use transactions in Pecan and Gerp modules
 
 

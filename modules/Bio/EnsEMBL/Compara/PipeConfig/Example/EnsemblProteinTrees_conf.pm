@@ -95,6 +95,9 @@ sub default_options {
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
+        # File with gene / peptide names that must be excluded from the
+        # clusters (e.g. know to disturb the trees)
+        'gene_blacklist_file'           => '/nfs/users/nfs_m/mm14/workspace/proteintree_blacklist.e82.txt',
 
     # tree building parameters:
         'use_quick_tree_break'      => 0,

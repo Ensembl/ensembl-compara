@@ -121,7 +121,7 @@ sub fetch_all_AlignedMember_by_Member {
 =head2 fetch_default_AlignedMember_for_Member
 
   Arg[1]     : GeneMember, SeqMember or seq_member_id
-  Example    : $align_member = $genetreenode_adaptor->fetch_adefault_AlignedMember_for_Member($member);
+  Example    : $align_member = $genetreenode_adaptor->fetch_default_AlignedMember_for_Member($member);
   Description: Transforms the member into an AlignedMember for the default gene-tree
                If the member is a non-canonical SeqMember, returns undef
   Returntype : Bio::EnsEMBL::Compara::AlignedMember

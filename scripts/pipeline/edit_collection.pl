@@ -76,6 +76,13 @@ The Bio::EnsEMBL::Registry configuration file. If none given,
 the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
+=item B<[--file_of_production_names path/to/file]>
+
+File that contains the production names of all the species to import.
+Mainly used by Ensembl Genomes, this allows a bulk import of many species.
+In this mode, the species listed in the file are pre-selected. The script
+will still ask the uer to confirm the selection.
+
 =back
 
 =head2 OPTIONS
@@ -100,6 +107,7 @@ database (and would be happy with a read-only connection).
 
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Utils::SqlHelper;
+use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
@@ -113,6 +121,7 @@ my $compara;
 my $collection_name;
 my $ask_to_remove_species;
 my $dry_run = 1;
+my $file;
 
 GetOptions(
     "help" => \$help,
@@ -121,6 +130,7 @@ GetOptions(
     'collection=s'  => \$collection_name,
     'ask_to_remove_species' => \$ask_to_remove_species,
     "dry_run|dry-run!" => \$dry_run,
+    'file_of_production_names=s' => \$file,
   );
 
 $| = 0;
@@ -152,6 +162,9 @@ warn "*** This script thinks that the Ensembl version is ".software_version().".
 my $collection_ss = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($collection_name);
 my $all_current_gdbs = [grep {($_->is_current or not $_->has_been_released) and ($_->name ne 'ancestral_sequences')} @{$compara_dba->get_GenomeDBAdaptor->fetch_all()}];
 my @new_collection_gdbs = ();
+
+my %preselection = ();
+$preselection{$_} = 1 for @{ slurp_to_array($file, 1) };
 
 if ($collection_ss) {
     ## Here we are in "update mode"
@@ -195,7 +208,7 @@ print "Press Enter to continue\n";
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 $helper->transaction( -CALLBACK => sub {
     my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
-    print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $collection_ss and ($new_collection_ss->dbID != $collection_ss->dbID);
+    print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $collection_ss;
     die "Dry-run mode required. Now aborting the transaction. Review the above-mentionned changes and re-run with the --nodry-run option\n" if $dry_run;
 } );
 
@@ -209,7 +222,7 @@ sub ask_for_genome_dbs {
     return () unless scalar(@$all_genome_dbs);
 
     my $genome_dbs_hash = {map {$_->dbID => $_} @{$all_genome_dbs}};
-    my $genome_dbs_in = {};
+    my $genome_dbs_in = {map {$_->dbID => $_} grep {$preselection{$_->name}} @{$all_genome_dbs}};
     $genome_dbs_in = $genome_dbs_hash if $dont_ask;
     while (1) {
         print "$title\n";
@@ -304,6 +317,10 @@ sub print_method_link_species_sets_to_update {
     foreach my $this_method_link_species_set (sort {$a->dbID <=> $b->dbID} @$method_link_species_sets) {
         printf "%8d: ", $this_method_link_species_set->dbID,;
         print $this_method_link_species_set->method->type, " (", $this_method_link_species_set->name, ")\n";
+        if ($this_method_link_species_set->url) {
+            $this_method_link_species_set->url('');
+            $compara_dba->dbc->do('UPDATE method_link_species_set SET url = "" WHERE method_link_species_set_id = ?', undef, $this_method_link_species_set->dbID);
+        }
     }
     print "  NONE\n" unless scalar(@$method_link_species_sets);
 

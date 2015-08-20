@@ -184,14 +184,15 @@ sub run_mafft {
     $self->param('mafft_output',$mafft_output);
 
     my $mafft_exe      = $self->require_executable('mafft_exe');
+    my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
 
-    my $cmd = "$mafft_exe --auto $input_fasta > $mafft_output";
+    my $cmd = "$mafft_exe --auto --thread $raxml_number_of_cores $input_fasta > $mafft_output";
     print STDERR "Running mafft\n$cmd\n" if ($self->debug);
     print STDERR "mafft_output has been set to " . $self->param('mafft_output') . "\n" if ($self->debug);
 
     my $command = $self->run_command($cmd);
     if ($command->exit_code) {
-        $self->throw("problem running command $cmd: ", $command->err ,"\n");
+        $self->throw("problem running command $cmd: ". $command->err . "\n");
     }
 }
 
@@ -282,7 +283,7 @@ sub run_prank {
     $cmd .= " -d=$input_fasta";
     my $command = $self->run_command($cmd);
     if ($command->exit_code) {
-        $self->throw("problem running prank $cmd: " , $command->err , "\n");
+        $self->throw("problem running prank $cmd: " . $command->err . "\n");
     }
 
     # prank renames the output by adding ".2.fas" => .1.fas" because it doesn't need to make the tree

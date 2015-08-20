@@ -381,10 +381,12 @@ sub fetch_collection_by_name {
 
 =head2 update_collection
 
-  Arg[1]      : Bio::EnsEMBL::Compara::SpeciesSet $old_ss: The old "collection" species-set
-  Arg[2]      : arrayref of Bio::EnsEMBL::Compara::GenomeDB $new_genome_dbs: The list of GenomeDBs the new collection should contain
+  Arg[1]      : string $collection_name
+  Arg[2]      : Bio::EnsEMBL::Compara::SpeciesSet $old_ss: The old "collection" species-set
+  Arg[3]      : arrayref of Bio::EnsEMBL::Compara::GenomeDB $new_genome_dbs: The list of GenomeDBs the new collection should contain
   Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, [@{$collection_ensembl->genome_dbs}, $new_genome_db]);
   Description : Creates a new collection species-set that contains the new list of GenomeDBs
+                The method assumes that all the species names in $new_genome_dbs are different
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
   Exceptions  : none
   Caller      : general
@@ -401,31 +403,26 @@ sub update_collection {
     my $species_set = $self->fetch_by_GenomeDBs($new_genome_dbs);
 
     if ($species_set) {
-        if ($old_ss and ($old_ss->dbID == $species_set->dbID)) {
-            warn sprintf("The new '%s' collection is already in the database ! Nothing to retire / release.\n", $old_ss->name);
-            # The content hasn't changed, we can assume that the name is
-            # there as well and return the original species set
-            # We should check that first/last_release are correctly set
-            return $old_ss;
-        }
+        # The new species-set already exists in the database
         if ($species_set->name) {
             if ($species_set->name ne "collection-$collection_name") {
                 die sprintf("The species-set for the new '%s' collection content already exists and has a name ('%s'). Cannot store the collection\n", $collection_name, $species_set->name);
-            } else {
-                # Being here would mean that the new collection is already
-                # stored with the correct name.
-                # We're going to change their first/last_release anyway
             }
+        } else {
+            $species_set->name("collection-$collection_name");
+            $self->update_header($species_set);
         }
     } else {
         $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -GENOME_DBS => $new_genome_dbs, -NAME => "collection-$collection_name" );
         $self->store($species_set);
     }
 
+    # At this stage, $species_set is stored with the correct name
+
     # This is probably redundant with line 462
     $self->make_object_current($species_set);
 
-    if ($old_ss) {
+    if ($old_ss and ($old_ss->dbID != $species_set->dbID)) {
         my %curr_gdb_ids = map {$_->dbID => 1} @{$species_set->genome_dbs};
         # Retire all the GenomeDBs ...
         foreach my $gdb (@{$old_ss->genome_dbs}) {
@@ -438,10 +435,17 @@ sub update_collection {
                 $self->retire_object($ss);
                 # And now the MLSSs that use the species-set
                 foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
-                    warn "Retiring mlss_id ", $mlss->dbID, " ", $mlss->name, "\n" if $mlss->is_current;
+                    next if not $mlss->is_current;
+                    warn "Retiring mlss_id ", $mlss->dbID, " ", $mlss->name, "\n";
                     $mlss_a->retire_object($mlss);
                 }
             }
+        }
+        if (not $old_ss->has_been_released) {
+            # $old_ss is not used, so we could delete it
+            # Let's retire it instead
+            $old_ss->name('tmp'.$old_ss->name);
+            $self->update_header($old_ss);
         }
     }
 
@@ -450,7 +454,7 @@ sub update_collection {
     foreach my $gdb (@{$species_set->genome_dbs}) {
         next if $gdb->is_current;
         push @released_gdbs, $gdb;
-        warn "Releasing ", $gdb->toString, "\n" unless $gdb->is_current;
+        warn "Releasing ", $gdb->toString, "\n";
         $gdb_a->make_object_current($gdb);
     }
 
@@ -462,7 +466,8 @@ sub update_collection {
             $self->make_object_current($ss);
             # And now the MLSSs that use the species-set
             foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
-                warn "Releasing mlss_id ", $mlss->dbID, " ", $mlss->name, "\n" unless $mlss->is_current;
+                next if $mlss->is_current;
+                warn "Releasing mlss_id ", $mlss->dbID, " ", $mlss->name, "\n";
                 $mlss_a->make_object_current($mlss);
             }
         }

@@ -129,7 +129,7 @@ sub default_options {
             'cafe_species'          => ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
 
             # Other parameters
-            'raxml_number_of_cores' => 2,
+            'raxml_number_of_cores' => 4,
             'epo_species_set_name'  => 'mammals',
 
             # connection parameters
@@ -167,13 +167,24 @@ sub default_options {
 sub resource_classes {
     my ($self) = @_;
     return {
-            'default'                 => { 'LSF' => '-M2000 -R"select[mem>2000] rusage[mem=2000]"' },
+        %{ $self->SUPER::resource_classes() },
+            '250Mb_job'               => { 'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
+            '500Mb_job'               => { 'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
             '1Gb_job'                 => { 'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
             '2Gb_job'                 => { 'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
             '4Gb_job'                 => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-            '8Gb_long_job'            => { 'LSF' => '-C0 -q long -M8000 -R"select[mem>8000]  rusage[mem=8000]"' },
-            '2Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"'},
-            '8Gb_basement_ncores_job' => { 'LSF' => '-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"'}
+            '8Gb_job'                 => { 'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+
+            '2Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
+            '8Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
+
+            # When we grab a machine in the long queue, let's keep it as long as we can
+            # this is for other_paralogs
+            '250Mb_long_job'          => { 'LSF' => ['-C0 -q long -M250   -R"select[mem>250]   rusage[mem=250]"', '-lifespan 360' ] },
+            # this is for fast_trees
+            '8Gb_long_ncores_job'     => { 'LSF' => ['-C0 -q long -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] },
+            # this is for genomic_alignment_basement_himem
+            '8Gb_basement_ncores_job' => { 'LSF' => ['-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 2880' ] },
            };
 }
 

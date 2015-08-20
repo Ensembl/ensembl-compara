@@ -145,6 +145,7 @@ sub default_options {
 
 	#Use 'quick' method for finding max alignment length (ie max(genomic_align_block.length)) rather than the more
 	#accurate method of max(genomic_align.dnafrag_end-genomic_align.dnafrag_start+1)
+        #NB: this is only used for the raw blocks and the chains. We always use the accurate version for the final nets
 	'quick' => 1,
 
 	#
@@ -480,11 +481,18 @@ sub pipeline_analyses {
 	    {  -logic_name => 'delete_trivial_alignments',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DeleteTrivialAlignments',
 	       -parameters => { },
-	       -flow_into => {
-			      1 => [ 'update_max_alignment_length_before_FD' ],
-			     },
+	       -flow_into => [ 'check_not_too_many_blocks' ],
 	       -rc_name => '1Gb',
 	    },
+            {   -logic_name => 'check_not_too_many_blocks',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+                -parameters => {
+                    'description'   => q{filter_duplicates / axtChain won't work if there are too many blocks},
+                    'query'         => 'SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = #method_link_species_set_id#',
+                    'expected_size' => '< 10000000',
+                },
+                -flow_into  => [ 'update_max_alignment_length_before_FD' ],
+            },
  	    {  -logic_name => 'update_max_alignment_length_before_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 
@@ -723,9 +731,6 @@ sub pipeline_analyses {
            },
  	   {  -logic_name => 'update_max_alignment_length_after_net',
  	      -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
-# 	       -parameters => { 
-#			       'quick' => $self->o('quick'),
-#			      },
 	      -rc_name => '1Gb',
 	      -wait_for =>  [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
               -flow_into => [ 'set_internal_ids_collection' ],
