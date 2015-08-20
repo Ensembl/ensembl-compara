@@ -236,8 +236,7 @@ sub write_pairaligner_statistics {
     my $method_link_species_set = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
     
     if (!$method_link_species_set) {
-	print " ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID (" . $self->param('mlss_id') . ")\n";
-	exit(1);
+	$self->throw(" ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID (" . $self->param('mlss_id') . ")\n");
     }
 
     #Fetch the number of genomic_align_blocks
