@@ -42,6 +42,34 @@
     return widgets;
   }
 
+  function make_chain(widgets,config) {
+    config.pipes = [];
+    $.each(widgets,function(key,widget) {
+      if(widget.pipe) { config.pipes = config.pipes.concat(widget.pipe()); }
+    });
+  }
+
+  function build_manifest(config,orient) {
+    var revpipe = [];
+    var manifest = $.extend(true,{},orient);
+    $.each(config.pipes,function(i,step) {
+      var out = step(manifest);
+      manifest = out[0];
+      if(out[1]) { revpipe.push(out[1]); }
+    });
+    return [manifest,revpipe];
+  }
+
+  function build_orient(manifest_c,data) {
+    var orient = $.extend(true,{},manifest_c[0]);
+    $.each(manifest_c[1],function(i,step) {
+      var out = step(orient,data);
+      orient = out[0];
+      data = out[1];
+    });
+    return [data,orient];
+  }
+
   function new_top_section(widgets,config,pos) {
     var content = '';
     $.each(config.head[pos],function(i,widget) {
@@ -107,51 +135,52 @@
     widgets[view.format].add_data($table,grid,data.start,data.data.length,orient);
   }
   
-  function maybe_use_response(widgets,$table,result,config) {
-    var cur_orient = $table.data('orient');
-    var in_orient = result.orient;
+  function maybe_use_response(widgets,$table,result,config,manifest_c) {
+    var cur_manifest = $table.data('manifest');
+    var in_manifest = result.orient;
     var more = 0;
-    if($.orient_compares_equal(cur_orient,in_orient)) {
-      use_response(widgets,$table,result.response,in_orient);
+    if($.orient_compares_equal(cur_manifest,in_manifest)) {
+      var orient_c = build_orient(manifest_c,result.response);
+      use_response(widgets,$table,orient_c[0],orient_c[1]);
       if(result.response.more) {
         console.log("continue");
         more = 1;
-        get_new_data(widgets,$table,in_orient,result.response.more,config);
+        get_new_data(widgets,$table,manifest_c,result.response.more,config);
       }
     }
     if(!more) { flux(widgets,$table,-1); }
   }
 
-  function get_new_data(widgets,$table,orient,more,config) {
+  function get_new_data(widgets,$table,manifest_c,more,config) {
     console.log("data changed, should issue request");
     if(more===null) { flux(widgets,$table,1); }
     console.log("get_new_data config",config);
 
     var payload_one = $table.data('payload_one');
-    if(payload_one && $.orient_compares_equal(orient,config.orient)) {
+    if(payload_one && $.orient_compares_equal(manifest_c[0],config.orient)) {
       $table.data('payload_one','');
-      maybe_use_response(widgets,$table,payload_one,config);
+      maybe_use_response(widgets,$table,payload_one,config,manifest_c);
     } else {
       $.get($table.data('src'),{
-        orient: JSON.stringify(orient),
+        orient: JSON.stringify(manifest_c[0]),
         more: JSON.stringify(more),
         config: JSON.stringify($table.data('config'))
       },function(res) {
-        maybe_use_response(widgets,$table,res,config);
+        maybe_use_response(widgets,$table,res,config,manifest_c);
       },'json');
     }
   }
 
   function maybe_get_new_data(widgets,$table,config) {
-    var old_orient = $table.data('old-orient');
+    var old_manifest = $table.data('old-manifest');
     var orient = $.extend(true,{},$table.data('view'));
     $table.data('orient',orient);
-    console.log("old_orient",JSON.stringify(old_orient));
-    console.log("orient",JSON.stringify(orient));
-    if(!$.orient_compares_equal(orient,old_orient)) {
-      get_new_data(widgets,$table,orient,null,config);
+    var manifest_c = build_manifest(config,orient);
+    $table.data('manifest',manifest_c[0]);
+    if(!$.orient_compares_equal(manifest_c[0],old_manifest)) {
+      get_new_data(widgets,$table,manifest_c,null,config);
     }
-    $table.data('old-orient',orient);
+    $table.data('old-manifest',manifest_c[0]);
   }
 
   var fluxion = 0;
@@ -170,6 +199,7 @@
     console.log('table',$target);
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
+    make_chain(widgets,config);
     $.each(config.formats,function(i,fmt) {
       if(!config.orient.format && widgets[fmt]) {
         config.orient.format = fmt;

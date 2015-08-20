@@ -262,7 +262,7 @@
             $subtable.togglewrap();
           }
         },1,100);
-      },
+      }
     };
   }; 
 
