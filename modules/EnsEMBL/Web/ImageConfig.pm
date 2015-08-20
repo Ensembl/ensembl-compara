@@ -855,6 +855,7 @@ sub _add_trackhub_node {
       }
     }
   }
+  warn ">>> NEXT LEVEL @next_level, CHILDLESS ".@childless;
 
   if (scalar(@next_level)) {
     $self->_add_trackhub_node($_, $menu, $name, $force_hide) for @next_level;
@@ -887,6 +888,7 @@ sub _add_trackhub_node {
       $config->{$_} ||= $data->{$_} for keys %$data;
     }
     $config->{'on_off'} = 'off' if $force_hide;
+    warn ">>> CONFIG ON/OFF = ".$config->{'on_off'};
 
     $self->_add_trackhub_tracks($node, \@childless, $config, $menu, $name);
   }
