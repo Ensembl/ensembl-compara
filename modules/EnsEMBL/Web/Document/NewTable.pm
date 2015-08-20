@@ -135,6 +135,7 @@ sub render {
     widgets => {
       clientsort => [ "new_table_clientsort", {
         Source => 'string',
+        aacoord => 'numeric',
       }],
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
       "tabular" => [ "new_table_tabular", { } ],
