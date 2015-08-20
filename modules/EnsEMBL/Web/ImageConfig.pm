@@ -869,11 +869,11 @@ sub _add_trackhub_node {
     ## The only parameter we override from superTrack nodes is visibility
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
       $config->{'visibility'} = $data->{'visibility'};
-      $config->{'on_off'}     = $force_hide ? 'off' : $data->{'on_off'};
+      $config->{'on_off'}     = $data->{'on_off'};
     }
     else {
       $config->{$_}       = $data->{$_} for keys %$data;
-      $config->{'on_off'} = $force_hide ? 'off' : $data->{'on_off'};
+      $config->{'on_off'} = $data->{'on_off'};
     }
 
     ## Add any setting inherited from parents
@@ -881,12 +881,12 @@ sub _add_trackhub_node {
       $data = $n->data;
       if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
         $config->{'visibility'} = $data->{'visibility'};
-        $config->{'on_off'}     = $force_hide ? 'off' : $data->{'on_off'};
+        $config->{'on_off'}     = $data->{'on_off'};
         last;
       }
       $config->{$_} ||= $data->{$_} for keys %$data;
-      $config->{'on_off'} = 'off' if $force_hide;
     }
+    $config->{'on_off'} = 'off' if $force_hide;
 
     $self->_add_trackhub_tracks($node, \@childless, $config, $menu, $name);
   }
