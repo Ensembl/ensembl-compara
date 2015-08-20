@@ -72,6 +72,15 @@
     return [data,orient];
   }
 
+  function manifest_subset(widgets,got,need) {
+    if(!got) { return false; }
+    need = $.extend(true,{},need);
+    $.each(widgets,function(key,widget) {
+      if(widget.subset) { need = widget.subset(got,need); }
+    });
+    return $.orient_compares_equal(got,need);
+  }
+
   function new_top_section(widgets,config,pos) {
     var content = '';
     $.each(config.head[pos],function(i,widget) {
@@ -183,17 +192,18 @@
   }
 
   function maybe_get_new_data(widgets,$table,config) {
-    var old_manifest = $table.data('old-manifest');
+    var old_manifest = $table.data('manifest');
     var orient = $.extend(true,{},$table.data('view'));
     $table.data('orient',orient);
     var manifest_c = build_manifest(config,orient);
-    $table.data('manifest',manifest_c[0]);
-    if(!$.orient_compares_equal(manifest_c[0],old_manifest)) {
-      get_new_data(widgets,$table,manifest_c,null,config);
-    } else {
+    if($.orient_compares_equal(manifest_c[0],old_manifest)) {
       rerender_grid(widgets,$table,manifest_c);
+    } else if(manifest_subset(widgets,old_manifest,manifest_c[0])) {
+      rerender_grid(widgets,$table,manifest_c);
+    } else {
+      $table.data('manifest',manifest_c[0]);
+      get_new_data(widgets,$table,manifest_c,null,config);
     }
-    $table.data('old-manifest',manifest_c[0]);
   }
 
   var fluxion = 0;

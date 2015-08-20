@@ -68,6 +68,14 @@
           e.stopPropagation();
         });
         update_ticks($table,$popup);
+      },
+      subset: function(got,need) {
+        var ok = true;
+        $.each(got.columns,function(i,v) {
+          if(need.columns[i] && !got.columns[i]) { ok = false; }
+        });
+        if(ok) { need.columns = got.columns; }
+        return need;
       }
     };
   }; 
