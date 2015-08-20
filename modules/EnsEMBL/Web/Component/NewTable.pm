@@ -151,12 +151,13 @@ sub ajax_table_content {
   my $iconfig = from_json($hub->param('config'));
   my $orient = from_json($hub->param('orient'));
   my $more = $hub->param('more');
+  my $incr_ok = ($hub->param('incr_ok') eq 'true');
 
-  return $self->newtable_data_request($iconfig,$orient,$more);
+  return $self->newtable_data_request($iconfig,$orient,$more,$incr_ok);
 }
 
 sub newtable_data_request {
-  my ($self,$iconfig,$orient,$more) = @_;
+  my ($self,$iconfig,$orient,$more,$incr_ok) = @_;
 
   my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
 
@@ -167,10 +168,14 @@ sub newtable_data_request {
   # What phase should we be?
   my @required;
   push @required,map { $_->{'key'} } @{$orient->{'sort'}||[]};
-  while($more < $#$phases) {
-    my %gets_cols = map { $_ => 1 } (@{$phases->[$more]{'cols'}||\@cols});
-    last unless scalar(grep { !$gets_cols{$_} } @required);
-    $more++;
+  if($incr_ok) {
+    while($more < $#$phases) {
+      my %gets_cols = map { $_ => 1 } (@{$phases->[$more]{'cols'}||\@cols});
+      last unless scalar(grep { !$gets_cols{$_} } @required);
+      $more++;
+    }
+  } else {
+    $more = $#$phases;
   }
 
   # Check if we need to request all rows due to sorting

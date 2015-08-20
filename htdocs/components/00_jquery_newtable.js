@@ -50,14 +50,16 @@
   }
 
   function build_manifest(config,orient) {
+    var incr_ok = true;
     var revpipe = [];
     var manifest = $.extend(true,{},orient);
     $.each(config.pipes,function(i,step) {
       var out = step(manifest);
       manifest = out[0];
       if(out[1]) { revpipe.push(out[1]); }
+      if(!out[2]) { incr_ok = false; }
     });
-    return [manifest,revpipe];
+    return [manifest,revpipe,incr_ok];
   }
 
   function build_orient(manifest_c,data) {
@@ -172,7 +174,8 @@
       $.get($table.data('src'),{
         orient: JSON.stringify(manifest_c[0]),
         more: JSON.stringify(more),
-        config: JSON.stringify($table.data('config'))
+        config: JSON.stringify($table.data('config')),
+        incr_ok: manifest_c[2]
       },function(res) {
         maybe_use_response(widgets,$table,res,config,manifest_c);
       },'json');

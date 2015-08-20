@@ -134,8 +134,8 @@ sub render {
     formats => [ "tabular", "paragraph" ],
     widgets => {
       clientsort => [ "new_table_clientsort", {
-        Source => 'string',
-        aacoord => 'numeric',
+        Source => ['string',1],
+        aacoord => ['numeric',1],
       }],
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
       "tabular" => [ "new_table_tabular", { } ],
@@ -150,7 +150,7 @@ sub render {
       "loading" => [ "new_table_loading", { } ],
    },
   };
-  my $payload_one = $self->{'component'}->newtable_data_request($data,$orient,undef);
+  my $payload_one = $self->{'component'}->newtable_data_request($data,$orient,undef,1);
   $data->{'payload_one'} = $payload_one;
  
   $data = encode_entities($self->jsonify($data));

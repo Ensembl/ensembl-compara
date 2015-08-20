@@ -53,18 +53,21 @@
         $.each(config.columns,function(i,val) { col_idxs[val.key] = i; });
         return [
           function(orient) {
-            if(!orient.sort) { return [orient,null]; }
+            if(!orient.sort) { return [orient,null,true]; }
             var plan  = [];
+            var incr_ok = true;
             $.each(orient.sort,function(i,stage) {
               if(!plan) { return; }
-              var type = $.fn['newtable_sort_'+data[stage.key]];
+              if(!data[stage.key]) { plan = null; return; }
+              var type = $.fn['newtable_sort_'+data[stage.key][0]];
               if(!type) { plan = null; return; }
               plan.push([col_idxs[stage.key],stage.dir,type]);
+              if(!data[stage.key][1]) { incr_ok = false; }
             });
-            if(!plan) { return [orient,null]; }
+            if(!plan) { return [orient,null,true]; }
             plan.push([config.columns.length,1,$.fn.newtable_sort_numeric]); // ties
             var orient_sort = orient.sort;
-            //delete orient.sort;
+            if(!incr_ok) { delete orient.sort; }
             return [orient,function(manifest,grid) {
               var fabric = grid.slice();
               $.each(fabric,function(i,val) { val.push(i); }); // ties
@@ -73,7 +76,7 @@
               });
               manifest.sort = orient_sort;
               return [manifest,fabric];
-            }];
+            },incr_ok];
           }
         ];
       }
