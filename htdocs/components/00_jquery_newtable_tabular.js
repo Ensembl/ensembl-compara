@@ -240,6 +240,10 @@
         });
       },
       add_data: function($table,grid,start,num,orient) {
+        var $subtables = $('.subtable',$table);
+        $subtables.each(function() {
+          set_active_orient($(this),orient);
+        });
         var config = $table.data('config');
         fix_widths($table,config,orient);
         console.log("add_data orient",orient);
@@ -259,12 +263,6 @@
           }
         },1,100);
       },
-      set_orient: function($table,orient) {
-        var $subtables = $('.subtable',$table);
-        $subtables.each(function() {
-          set_active_orient($(this),orient);
-        });
-      }
     };
   }; 
 

@@ -150,6 +150,14 @@ sub ajax_table_content {
   my $hub = $self->hub;
   my $iconfig = from_json($hub->param('config'));
   my $orient = from_json($hub->param('orient'));
+  my $more = $hub->param('more');
+
+  return $self->newtable_data_request($iconfig,$orient,$more);
+}
+
+sub newtable_data_request {
+  my ($self,$iconfig,$orient,$more) = @_;
+
   my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
 
   my $phases = [{ name => undef }];
@@ -159,7 +167,6 @@ sub ajax_table_content {
   # What phase should we be?
   my @required;
   push @required,map { $_->{'key'} } @{$orient->{'sort'}||[]};
-  my $more = $hub->param('more');
   while($more < $#$phases) {
     my %gets_cols = map { $_ => 1 } (@{$phases->[$more]{'cols'}||\@cols});
     last unless scalar(grep { !$gets_cols{$_} } @required);
@@ -212,10 +219,13 @@ sub ajax_table_content {
 
   # Send it
   return {
-    data => \@data_out,
-    columns => $columns,
-    start => $rows->[0],
-    more => $more,
+    response => {
+      data => \@data_out,
+      columns => $columns,
+      start => $rows->[0],
+      more => $more,
+    },
+    orient => $orient,
   };
 }
 

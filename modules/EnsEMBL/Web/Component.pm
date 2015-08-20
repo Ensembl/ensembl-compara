@@ -657,7 +657,7 @@ sub new_table {
 sub new_new_table {
   my $self     = shift;
   my $hub      = $self->hub;
-  my $table    = EnsEMBL::Web::Document::NewTable->new(@_);
+  my $table    = EnsEMBL::Web::Document::NewTable->new($self,@_);
   my $filename = $hub->filename($self->object);
   my $options  = $_[2];
   

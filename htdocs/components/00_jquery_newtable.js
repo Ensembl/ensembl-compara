@@ -80,11 +80,6 @@
     widgets[view.format].go($table,$widget);
   }
 
-  function set_orient(widgets,$table,orient) {
-    var view = $table.data('view');
-    widgets[view.format].set_orient($table,orient);
-  }
-
   function store_response_in_grid($table,rows,start,columns,orient_in) {
     var grid = $table.data('grid') || [];
     var grid_orient = $table.data('grid-orient') || [];
@@ -112,7 +107,7 @@
     widgets[view.format].add_data($table,grid,data.start,data.data.length,orient);
   }
   
-  function maybe_use_response(widgets,$table,result) {
+  function maybe_use_response(widgets,$table,result,config) {
     var cur_orient = $table.data('orient');
     var in_orient = result.orient;
     var more = 0;
@@ -121,36 +116,40 @@
       if(result.response.more) {
         console.log("continue");
         more = 1;
-        get_new_data(widgets,$table,in_orient,result.response.more);
+        get_new_data(widgets,$table,in_orient,result.response.more,config);
       }
     }
     if(!more) { flux(widgets,$table,-1); }
   }
 
-  function get_new_data(widgets,$table,orient,more) {
+  function get_new_data(widgets,$table,orient,more,config) {
     console.log("data changed, should issue request");
     if(more===null) { flux(widgets,$table,1); }
-    $.get($table.data('src'),{
-      orient: JSON.stringify(orient),
-      more: JSON.stringify(more),
-      config: JSON.stringify($table.data('config'))
-    },function(res) {
-      if(more===null) {
-        set_orient(widgets,$table,orient);
-      }
-      maybe_use_response(widgets,$table,res);
-    },'json');
+    console.log("get_new_data config",config);
+
+    var payload_one = $table.data('payload_one');
+    if(payload_one && $.orient_compares_equal(orient,config.orient)) {
+      $table.data('payload_one','');
+      maybe_use_response(widgets,$table,payload_one,config);
+    } else {
+      $.get($table.data('src'),{
+        orient: JSON.stringify(orient),
+        more: JSON.stringify(more),
+        config: JSON.stringify($table.data('config'))
+      },function(res) {
+        maybe_use_response(widgets,$table,res,config);
+      },'json');
+    }
   }
 
-  function maybe_get_new_data(widgets,$table) {
+  function maybe_get_new_data(widgets,$table,config) {
     var old_orient = $table.data('old-orient');
     var orient = $.extend(true,{},$table.data('view'));
-    delete orient.format;
     $table.data('orient',orient);
     console.log("old_orient",JSON.stringify(old_orient));
     console.log("orient",JSON.stringify(orient));
     if(!$.orient_compares_equal(orient,old_orient)) {
-      get_new_data(widgets,$table,orient,null);
+      get_new_data(widgets,$table,orient,null,config);
     }
     $table.data('old-orient',orient);
   }
@@ -172,20 +171,20 @@
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
     $.each(config.formats,function(i,fmt) {
-      if(!config.view.format && widgets[fmt]) {
-        config.view.format = fmt;
+      if(!config.orient.format && widgets[fmt]) {
+        config.orient.format = fmt;
       }
     });
-    if(config.view.format === undefined) {
+    if(config.orient.format === undefined) {
       console.error("No valid format specified for table");
     }
-    if(config.view.rows === undefined) {
-      config.view.rows = [0,-1];
+    if(config.orient.rows === undefined) {
+      config.orient.rows = [0,-1];
     }
-    if(config.view.columns === undefined) {
-      config.view.columns = [];
+    if(config.orient.columns === undefined) {
+      config.orient.columns = [];
       for(var i=0;i<config.columns.length;i++) {
-        config.view.columns.push(true);
+        config.orient.columns.push(true);
       }
     }
     var $table = $('<div class="new_table_wrapper '+config.cssclass+'"><div class="topper"></div><div class="layout"></div></div>');
@@ -197,8 +196,12 @@
       unique: config.unique,
       type: config.type
     };
-    $table.data('view',config.view).data('old-view',$.extend(true,{},config.view))
+    var view = $.extend(true,{},config.orient);
+    var old_view = $.extend(true,{},config.orient);
+
+    $table.data('view',view).data('old-view',$.extend(true,{},old_view))
       .data('config',stored_config);
+    $table.data('payload_one',config.payload_one);
     build_format(widgets,$table);
 //    $table.helptip();
     $table.on('view-updated',function() {
@@ -208,7 +211,7 @@
       if(view.format != old_view.format) {
         build_format(widgets,$table);
       }
-      maybe_get_new_data(widgets,$table);
+      maybe_get_new_data(widgets,$table,config);
       $table.data('old-view',$.extend(true,{},view));
     });
     $('div[data-widget-name]',$table).each(function(i,el) {
@@ -218,7 +221,7 @@
       $widget.addClass('_inited');
       widgets[name].go($table,$widget);
     });
-    maybe_get_new_data(widgets,$table);
+    maybe_get_new_data(widgets,$table,config);
   }
 
   $.orient_compares_equal = function(fa,fb) {

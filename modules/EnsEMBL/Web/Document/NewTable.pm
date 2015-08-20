@@ -31,14 +31,15 @@ use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 sub new {
-  my ($class, $cols, $rows, $options, $spanning) = @_;
-  
+  my ($class, $component, $cols, $rows, $options, $spanning) = @_;
+ 
   $cols     ||= [];
   $rows     ||= [];
   $options  ||= {};
   $spanning ||= [];
   
   my $self = {
+    component  => $component,
     columns    => $cols,
     rows       => $rows,
     options    => $options,
@@ -62,47 +63,6 @@ sub filename   :lvalue { $_[0]{'filename'};   }
 sub type { $_[0]->{'type'} = $_[1]; }
 
 sub has_rows { return ! !@{$_[0]{'rows'}}; }
-
-sub preprocess_widths {
-  my $self           = shift;
-  my $perc_remaining = 100;
-  my $units_used     = 0;
-  my @unitcols;
-  
-  foreach my $column (@{$self->{'columns'}}) {
-    local $_  = $column->{'width'};
-    my $units = -1;
-    
-    if (/(\d+)%/) {
-      $perc_remaining -= $1;
-    } elsif (/(\d+)px/) {
-      return;
-    } elsif (/(\d+)u/) {
-      $units_used += $1;
-      push @unitcols, { units => $1, column => $column, percent => 0 };
-    }
-  }
-  
-  return unless $units_used;
-  
-  # careful alg. to avoid 99%, 101% tables due to rounding.
-  my $perc_per_unit = $perc_remaining / $units_used;
-  my $total         = -0.5; # correct for rounding bias
-  
-  foreach (@unitcols) {
-    $_->{'total'} = $_->{'units'} * $perc_per_unit + $total;
-    $total       += $_->{'units'} * $perc_per_unit;
-  }
-  
-  my $col = 0;
-  
-  for (my $i = 0; $i < $perc_remaining; $i++) {
-    $col++ if $i > $unitcols[$col]->{'total'} && $col < @unitcols;
-    $unitcols[$col]->{'percent'}++;
-  }
-  
-  $_->{'column'}{'width'} = "$_->{'percent'}%" for @unitcols;
-}
 
 # \f -- optional hyphenation point
 # \a -- optional break point (no hyphen)
@@ -153,8 +113,14 @@ sub render {
     action => 'Web',
     function => 'VariationTable',
   },0,1);
- 
-  my $data = $self->jsonify({
+
+  my $orient = {
+    pagesize => 10,
+    rows => [0,-1],
+    columns => [ (1) x scalar(@{$self->{'columns'}}) ],
+    format => 'tabular',
+  }; # XXX fix me: separate view from orient
+  my $data = {
     unique => random_string(32),
     type => $self->{'type'},
     cssclass => $class,
@@ -164,9 +130,7 @@ sub render {
       [ "loading","columns" ],
       [ "new_table_export", "new_table_filter", "styles" ]
     ],
-    view => {
-      pagesize => 10,
-    },
+    orient => $orient,
     formats => [ "tabular", "paragraph" ],
     widgets => {
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
@@ -181,8 +145,11 @@ sub render {
       "columns" => [ "new_table_columns", { } ],
       "loading" => [ "new_table_loading", { } ],
    },
-  });
-  $data = encode_entities($data);
+  };
+  my $payload_one = $self->{'component'}->newtable_data_request($data,$orient,undef);
+  $data->{'payload_one'} = $payload_one;
+ 
+  $data = encode_entities($self->jsonify($data));
   return qq(
     <a class="new_table" href="$url">$data</a>
   );
