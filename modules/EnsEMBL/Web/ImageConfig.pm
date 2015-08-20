@@ -2087,7 +2087,7 @@ sub add_matrix {
   $data->{'column_key'}  = $column_key;
   $data->{'menu'}        = 'matrix_subtrack';
   $data->{'source_name'} = $data->{'name'};
-  $data->{'display'}     = 'default';
+  $data->{'display'}   ||= 'default';
   
   if (!$menu_data->{'matrix'}) {
     my $hub = $self->hub;
@@ -2102,15 +2102,21 @@ sub add_matrix {
   
   foreach (@rows) {
     my $option_key = $self->tree->clean_id("${subset}_${column}_$_->{'row'}");
+    my $display = ($_->{'on'} || ($data->{'display'} ne 'off' && $data->{'display'} ne 'default')) ? 'on' : 'off';
     
-    $column_track->append($self->create_track($option_key, $_->{'row'}, {
+    my $node = $self->create_track($option_key, $_->{'row'}, {
       node_type => 'option',
       menu      => 'no',
-      display   => $_->{'on'} ? 'on' : 'off',
+      display   => $display,
       renderers => [qw(on on off off)],
       caption   => "$column - $_->{'row'}",
       group => $_->{'group'},
-    }));
+    });
+    ## Hack to get trackhub matrix visibility to work
+    if ($display eq 'on') {
+      $node->{'user_data'}{$option_key} = {'display' => 'on'};
+    }
+    $column_track->append($node);
     
     $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };
   }
