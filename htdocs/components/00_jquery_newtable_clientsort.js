@@ -62,14 +62,17 @@
               plan.push([col_idxs[stage.key],stage.dir,type]);
             });
             if(!plan) { return [orient,null]; }
+            plan.push([config.columns.length,1,$.fn.newtable_sort_numeric]); // ties
             var orient_sort = orient.sort;
-            delete orient.sort;
+            //delete orient.sort;
             return [orient,function(manifest,grid) {
-              grid.sort(function(a,b) {
+              var fabric = grid.slice();
+              $.each(fabric,function(i,val) { val.push(i); }); // ties
+              fabric.sort(function(a,b) {
                 return compare(a,b,plan);
               });
               manifest.sort = orient_sort;
-              return [manifest,grid];
+              return [manifest,fabric];
             }];
           }
         ];
