@@ -340,6 +340,32 @@ sub _fetch_all_by_dnafrag_id_start_end_strand_limit {
 }
 
 
+=head2 fetch_all_by_dnafrag_id_start_end
+
+  Arg [1]    : dnafrag db ID
+  Arg [2]    : int Start - the start position of the region you want
+  Arg [3]    : int End - the end position of the region you want
+  Example    : my $genemembers_arrayref = $memberDBA->fetch_all_by_dnafrag_id_start_end($dnafragID, $start, $end);
+  Description: Returns a arrayref of the list of gene members spanning the given region on the given dnafrag
+  Returntype : Array ref
+  Exceptions : undefined arguments
+
+=cut
+sub fetch_all_by_dnafrag_id_start_end {
+
+  my ($self,$dnafrag_id,$dnafrag_start,$dnafrag_end) = @_;
+    $self->throw("all args are required")
+      unless($dnafrag_start && $dnafrag_end && defined ($dnafrag_id));
+
+  my $constraint = '(m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?)';
+  $self->bind_param_generic_fetch($dnafrag_id, SQL_INTEGER);
+  $self->bind_param_generic_fetch($dnafrag_start, SQL_INTEGER);
+  $self->bind_param_generic_fetch($dnafrag_end, SQL_INTEGER);
+  $self->bind_param_generic_fetch($dnafrag_start, SQL_INTEGER);
+  $self->bind_param_generic_fetch($dnafrag_end, SQL_INTEGER);
+  return $self->generic_fetch($constraint);
+}
+
 =head2 get_source_taxon_count
 
   Arg [1]    : string $source_name
