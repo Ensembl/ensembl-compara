@@ -69,13 +69,22 @@
         });
         update_ticks($table,$popup);
       },
-      subset: function(got,need) {
-        var ok = true;
-        $.each(got.columns,function(i,v) {
-          if(need.columns[i] && !got.columns[i]) { ok = false; }
-        });
-        if(ok) { need.columns = got.columns; }
-        return need;
+      pipe: function() {
+        return [
+          function(need,got) {
+            if(!got) { return [need,null,true]; }
+            var ok = true;
+            $.each(got.columns,function(i,v) {
+              if(need.columns[i] && !got.columns[i]) { ok = false; }
+            });
+            var old_columns = need.columns;
+            if(ok) { need.columns = got.columns; }
+            return [need,function(manifest,grid) {
+              manifest.columns = old_columns;
+              return [manifest,grid];
+            },true];
+          }
+        ];
       }
     };
   }; 
