@@ -168,12 +168,14 @@ my $singleton = 0;
 my $use_genomedb_ids = 0;
 my $species_set_name;
 my $collection;
+my $method_link_class;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     "method_link_type=s" => \$method_link_type,
+    "method_link_class=s" => \$method_link_class,
     "genome_db_id=s@" => \@input_genome_db_ids,
     "name=s" => \$name,
     "source=s" => \$source,
@@ -233,7 +235,10 @@ if (!$method_link_type) {
 }
 my $method = $ma->fetch_by_type($method_link_type);
 if (not $method) {
-    $method = Bio::EnsEMBL::Compara::Method->new( -TYPE => $method_link_type );
+    if (not $method_link_class) {
+        die "The method '$method_link_type' could not be found in the database, and --class was mmitted. I don't know how to create the new method !\n";
+    }
+    $method = Bio::EnsEMBL::Compara::Method->new( -TYPE => $method_link_type, -CLASS => $method_link_class );
 }
 
 if ($collection) {
