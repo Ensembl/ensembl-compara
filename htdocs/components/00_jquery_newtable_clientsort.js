@@ -50,7 +50,6 @@
     function build_plan(orient) {
       var plan  = [];
       var incr_ok = true;
-      incr_ok = false; // XXX FIX ME
       $.each(orient.sort,function(i,stage) {
         if(!plan) { return; }
         if(!data[stage.key]) { plan = null; return; }
@@ -83,14 +82,14 @@
       go: function($table,$el) {},
       pipe: function() {
         return [
-          function(orient,target) {
-            var rev = mere_reversal(orient,target);
+          function(need,got,wire) {
+            var rev = mere_reversal(need,got);
             if(rev) { return { undo: rev }; }
-            if(!orient.sort) { return null; }
-            var plan = build_plan(orient);
+            if(!need.sort) { return null; } // TODO can do more?
+            var plan = build_plan(need);
             if(!plan) { return null; }
-            var orient_sort = orient.sort;
-            if(!plan.incr_ok) { delete orient.sort; }
+            wire.sort = need.sort;
+            need.sort = got.sort;
             return {
               undo: function(manifest,grid) {
                 var fabric = grid.slice();
@@ -98,7 +97,7 @@
                 fabric.sort(function(a,b) {
                   return compare(a,b,plan.stages);
                 });
-                manifest.sort = orient_sort;
+                manifest.sort = wire.sort;
                 return [manifest,fabric];
               },
               no_incr: !plan.incr_ok

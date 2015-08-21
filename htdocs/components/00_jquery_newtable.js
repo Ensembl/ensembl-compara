@@ -50,23 +50,24 @@
   }
 
   function build_manifest(config,orient,target) {
-    var incr_ok = true;
+    var incr = true;
     var revpipe = [];
+    var wire = {};
     var manifest = $.extend(true,{},orient);
     $.each(config.pipes,function(i,step) {
-      var out = step(manifest,target);
+      var out = step(manifest,target,wire);
       if(out) {
         if(out.manifest) { manifest = out.manifest; }
         if(out.undo) { revpipe.push(out.undo); }
-        if(out.no_incr) { incr_ok = false; }
+        if(out.no_incr) { incr = false; }
       }
     });
-    return [manifest,revpipe,incr_ok];
+    return { manifest: manifest, undo: revpipe, wire: wire, incr_ok: incr };
   }
 
   function build_orient(manifest_c,data) {
-    var orient = $.extend(true,{},manifest_c[0]);
-    $.each(manifest_c[1],function(i,step) {
+    var orient = $.extend(true,{},manifest_c.manifest);
+    $.each(manifest_c.undo,function(i,step) {
       var out = step(orient,data);
       orient = out[0];
       data = out[1];
@@ -145,7 +146,7 @@
   }
 
   function use_response(widgets,$table,manifest_c,response) {
-    store_response_in_grid($table,response.data,response.start,response.columns,manifest_c[0]);
+    store_response_in_grid($table,response.data,response.start,response.columns,manifest_c.manifest);
     render_grid(widgets,$table,manifest_c,response.start,response.data.length);
   }
   
@@ -169,15 +170,16 @@
     console.log("get_new_data config",config);
 
     var payload_one = $table.data('payload_one');
-    if(payload_one && $.orient_compares_equal(manifest_c[0],config.orient)) {
+    if(payload_one && $.orient_compares_equal(manifest_c.manifest,config.orient)) {
       $table.data('payload_one','');
       maybe_use_response(widgets,$table,payload_one,config,manifest_c);
     } else {
+      var wire_manifest = $.extend(false,{},manifest_c.manifest,manifest_c.wire);
       $.get($table.data('src'),{
-        orient: JSON.stringify(manifest_c[0]),
+        orient: JSON.stringify(wire_manifest),
         more: JSON.stringify(more),
         config: JSON.stringify($table.data('config')),
-        incr_ok: manifest_c[2]
+        incr_ok: manifest_c.incr_ok
       },function(res) {
         maybe_use_response(widgets,$table,res,config,manifest_c);
       },'json');
@@ -189,10 +191,10 @@
     var orient = $.extend(true,{},$table.data('view'));
     $table.data('orient',orient);
     var manifest_c = build_manifest(config,orient,old_manifest);
-    if($.orient_compares_equal(manifest_c[0],old_manifest)) {
+    if($.orient_compares_equal(manifest_c.manifest,old_manifest)) {
       rerender_grid(widgets,$table,manifest_c);
     } else {
-      $table.data('manifest',manifest_c[0]);
+      $table.data('manifest',manifest_c.manifest);
       get_new_data(widgets,$table,manifest_c,null,config);
     }
   }
