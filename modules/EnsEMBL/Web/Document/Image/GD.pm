@@ -181,18 +181,18 @@ sub add_pointers {
                     : $p_value_sorted->{sprintf("%.1f", $row->{'p_value'})};
     my $href = $row->{'href'};
     if (!$href && $extra->{'zmenu'}) {
-      $href = $hub->url({'type' => 'ZMenu', 'action' => $extra->{'zmenu'},
+      $href = {'type' => 'ZMenu', 'action' => $extra->{'zmenu'},
                         'config' => $extra->{'config_name'}, 'track' => $extra->{'track'},
                         'fake_click_chr' => $chr, 'fake_click_start' => $row->{'start'}, 
                         'fake_click_end' => $row->{'end'},
-                        });
+                        };
     }
     my $point = {
       start     => $row->{'start'},
       end       => $row->{'end'},
       id        => $row->{'label'},
       col       => $item_colour || $grad_colour || $default_colour,
-      href      => $hub->url({$config_name ? ('config' => $config_name) : (), %$href}),
+      href      => $href ? $hub->url({$config_name ? ('config' => $config_name) : (), %$href}) : '',
       html_id   => $row->{'html_id'} || '',
     };
 
