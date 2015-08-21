@@ -55,9 +55,11 @@
     var manifest = $.extend(true,{},orient);
     $.each(config.pipes,function(i,step) {
       var out = step(manifest,target);
-      manifest = out[0];
-      if(out[1]) { revpipe.push(out[1]); }
-      if(!out[2]) { incr_ok = false; }
+      if(out) {
+        if(out.manifest) { manifest = out.manifest; }
+        if(out.undo) { revpipe.push(out.undo); }
+        if(out.no_incr) { incr_ok = false; }
+      }
     });
     return [manifest,revpipe,incr_ok];
   }

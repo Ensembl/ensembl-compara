@@ -84,23 +84,25 @@
       pipe: function() {
         return [
           function(orient,target) {
-            console.log("FRIDAY",orient,target);
             var rev = mere_reversal(orient,target);
-            if(rev) { return [orient,rev,true]; }
-            if(!orient.sort) { return [orient,null,true]; }
+            if(rev) { return { undo: rev }; }
+            if(!orient.sort) { return null; }
             var plan = build_plan(orient);
-            if(!plan) { return [orient,null,true]; }
+            if(!plan) { return null; }
             var orient_sort = orient.sort;
             if(!plan.incr_ok) { delete orient.sort; }
-            return [orient,function(manifest,grid) {
-              var fabric = grid.slice();
-              $.each(fabric,function(i,val) { val.push(i); }); // ties
-              fabric.sort(function(a,b) {
-                return compare(a,b,plan.stages);
-              });
-              manifest.sort = orient_sort;
-              return [manifest,fabric];
-            },plan.incr_ok];
+            return {
+              undo: function(manifest,grid) {
+                var fabric = grid.slice();
+                $.each(fabric,function(i,val) { val.push(i); }); // ties
+                fabric.sort(function(a,b) {
+                  return compare(a,b,plan.stages);
+                });
+                manifest.sort = orient_sort;
+                return [manifest,fabric];
+              },
+              no_incr: !plan.incr_ok
+            }
           }
         ];
       }

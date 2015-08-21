@@ -72,17 +72,19 @@
       pipe: function() {
         return [
           function(need,got) {
-            if(!got) { return [need,null,true]; }
+            if(!got) { return null; }
             var ok = true;
             $.each(got.columns,function(i,v) {
               if(need.columns[i] && !got.columns[i]) { ok = false; }
             });
             var old_columns = need.columns;
             if(ok) { need.columns = got.columns; }
-            return [need,function(manifest,grid) {
-              manifest.columns = old_columns;
-              return [manifest,grid];
-            },true];
+            return {
+              undo: function(manifest,grid) {
+                manifest.columns = old_columns;
+                return [manifest,grid];
+              }
+            };
           }
         ];
       }
