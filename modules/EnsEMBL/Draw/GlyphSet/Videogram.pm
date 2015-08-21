@@ -27,6 +27,9 @@ use Carp;
 use warnings;
 no warnings 'uninitialized';
 
+use List::Util qw(sum);
+use EnsEMBL::Draw::Utils::ColourMap;
+
 use base qw(EnsEMBL::Draw::GlyphSet::Videogram_legend);
 
 ####################################################################
@@ -387,6 +390,8 @@ sub _init {
   
   # Add highlights
   if (defined $self->{'highlights'} && $self->{'highlights'} ne '') {
+    my $colourmap = new EnsEMBL::Draw::Utils::ColourMap;
+
     foreach my $highlight_set (reverse @{$self->{'highlights'}}) {
       my $highlight_style  = $style || $highlight_set->{'style'};
       my $type             = "highlight_$highlight_style";
@@ -428,8 +433,16 @@ sub _init {
               push @{$highlights[$offset - 1]{'html_ids'}}, $_->{'html_id'} || ();
               
               # Deal with colour aggregation
-              $is_aggregated = 1 if $_->{'col'} eq $aggregate_colour;
-              $highlights[$offset - 1]{'col'} = $aggregate_colour if $is_aggregated;
+              if ($aggregate_colour) {
+                $is_aggregated = 1 if $_->{'col'} eq $aggregate_colour;
+                $highlights[$offset - 1]{'col'} = $aggregate_colour if $is_aggregated;
+              }
+              else {
+                ## Keep track of all colours used in this bin
+                my @rgb = $colourmap->rgb_by_name($_->{'col'});
+                $highlights[$offset - 1]{'bin_colour'}{$_->{'col'}}{'rgb'} = \@rgb;
+                $highlights[$offset - 1]{'bin_colour'}{$_->{'col'}}{'freq'}++;
+              }
             } else {
               push @{$_->{'hrefs'}},    $_->{'href'}    || ();
               push @{$_->{'html_ids'}}, $_->{'html_id'} || ();
@@ -457,7 +470,23 @@ sub _init {
             $high_flag = shift @flags;
             $type      = "highlight_${high_flag}h$highlight_style";
           }
-          
+         
+          ## set commonest and lightest colour as aggregate
+          my $bc = $_->{'bin_colour'} || {};
+          my (@top_colours, $freq);
+          foreach my $colour (sort { $bc->{$b}{'freq'} <=> $bc->{$a}{'freq'} } keys %$bc) {
+            last if $freq && $bc->{$colour}{'freq'} < $freq; 
+            push @top_colours, $colour;
+            $freq = $bc->{$colour}{'freq'};
+          }
+          if (scalar @top_colours > 1) {
+            my @sorted = sort { sum(@{$bc->{$b}{'rgb'}}) <=> sum(@{$bc->{$a}{'rgb'}}) } @top_colours;
+            $_->{'col'} = $sorted[0]; 
+          }
+          elsif (scalar @top_colours == 1) {
+            $_->{'col'} = $top_colours[0];
+          }
+ 
           # dynamic require of the right type of renderer
           if ($self->can($type)) {
             my ($href, %queries);
