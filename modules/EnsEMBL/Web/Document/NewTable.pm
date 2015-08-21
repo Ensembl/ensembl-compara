@@ -30,6 +30,8 @@ use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
+use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_client_config);
+
 sub new {
   my ($class, $component, $cols, $rows, $options, $spanning) = @_;
  
@@ -114,6 +116,12 @@ sub render {
     function => 'VariationTable',
   },0,1);
 
+  my %sorting;
+  foreach my $col (@{$self->{'columns'}}) {
+    $sorting{$col->{'key'}} = $col->{'sort'};
+  }
+  my $sort_conf = newtable_sort_client_config(\%sorting);
+
   my $orient = {
     pagesize => 10,
     rows => [0,-1],
@@ -133,10 +141,7 @@ sub render {
     orient => $orient,
     formats => [ "tabular", "paragraph" ],
     widgets => {
-      clientsort => [ "new_table_clientsort", {
-        Source => ['string',1],
-        aacoord => ['numeric',1],
-      }],
+      clientsort => [ "new_table_clientsort",$sort_conf],
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
       "tabular" => [ "new_table_tabular", { } ],
       "paragraph" => [ "new_table_paragraph", { } ],

@@ -21,126 +21,27 @@ package EnsEMBL::Web::Component::NewTable;
 use strict;
 
 use JSON qw(from_json);
-use Scalar::Util qw(looks_like_number);
-use List::MoreUtils qw(each_array);
+
+use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_isnull newtable_sort_cmp);
 
 # XXX move all this stuff to somewhere it's more suited
-
-# XXX sort to end
-
-sub html_cleaned {
-  my ($x) = @_;
-
-  $x =~ s/<.*?>//g;
-  return $x; 
-}
-
-sub html_hidden {
-  my ($x) = @_;
-
-  return $1 if $x =~ m!<span class="hidden">(.*?)</span>!;
-  return $x;
-}
-
-sub server_null_numeric {
-  my ($self,$v) = @_;
-
-  return !looks_like_number($v);
-}
-
-sub server_sort_numeric {
-  my ($self,$a,$b,$f) = @_;
-
-  $a =~ s/([\d\.e\+-])\s.*$/$1/;
-  $b =~ s/([\d\.e\+-])\s.*$/$1/;
-  if(looks_like_number($a)) {
-    if(looks_like_number($b)) {
-      return ($a <=> $b)*$f;
-    } else {
-      return -1;
-    }
-  } elsif(looks_like_number($b)) {
-    return 1;
-  } else {
-    return ($a cmp $b)*$f;
-  }
-}
-
-sub server_sort_position {
-  my ($self,$a,$b,$f) = @_;
-
-  my @a = split(/:-/,$a);
-  my @b = split(/:-/,$b);
-  my $it = each_array(@a,@b);
-  while(my ($aa,$bb) = $it->()) {
-    my $c = $self->server_sort_numeric($aa,$bb,$f);
-    return $c if $c; 
-  }
-  return 0;
-}
-
-sub server_sort_position_html {
-  my ($self,$a,$b,$f) = @_;
-
-  return $self->server_sort_position(html_cleaned($a),html_cleaned($b),$f);
-}
-
-sub server_sort_html_numeric {
-  my ($self,$a,$b,$f) = @_;
-
-  return $self->server_sort_numeric(html_cleaned($a),html_cleaned($b),$f);
-}
-
-sub server_sort_html {
-  my ($self,$a,$b,$f) = @_;
-
-  return $self->server_sort_string(html_cleaned($a),html_cleaned($b),$f);
-}
-
-sub server_sort_hidden_position {
-  my ($self,$a,$b,$f) = @_;
-
-  return $self->server_sort_position(html_hidden($a),html_hidden($b),$f);
-}
-
-sub server_sort_string {
-  my ($self,$a,$b,$f) = @_;
-
-  return (lc $a cmp lc $b)*$f;
-}
-
-sub server_sort_string_hidden {
-  my ($self,$a,$b,$f) = @_;
-
-  return $self->server_sort_string(html_hidden($a),html_hidden($b),$f);
-}
-
-sub server_sort_numeric_hidden {
-  my ($self,$a,$b,$f) = @_;
-
-  return $self->server_sort_numeric(html_hidden($a),html_hidden($b),$f);
-}
 
 sub server_sort {
   my ($self,$data,$sort,$iconfig,$col_idx) = @_;
 
-  my %sort_fn;
   my $cols = $iconfig->{'columns'};
   foreach my $i (0..(@$cols-1)) {
     ( my $fn = $cols->[$i]{'sort'} ) =~ s/[^A-Za-z_-]//g;
-    my $sort_fn = $self->can("server_sort_$fn");
-    $sort_fn = $self->can("server_sort_string") unless defined $sort_fn;
-    $sort_fn{$cols->[$i]{'key'}} = $sort_fn;
   }
   foreach my $i (0..$#$data) { push @{$data->[$i]},$i; }
   $col_idx->{'__tie'} = -1;
-  $sort_fn{'__tie'} = $self->can("server_sort_numeric");
   @$data = sort {
     my $c = 0;
     foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
-      my $av = $a->[$col_idx->{$col->{'key'}}];
-      my $bv = $b->[$col_idx->{$col->{'key'}}];
-      $c = $sort_fn{$col->{'key'}}->($self,$av,$bv,$col->{'dir'});
+      my $idx = $col_idx->{$col->{'key'}};
+      my $type = $cols->[$idx]{'sort'}||'string';
+      $type = 'numeric' if $col->{'key'} eq '__tie';
+      $c = newtable_sort_cmp($type,$a->[$idx],$b->[$idx],$col->{'dir'});
       last if $c;
     }
     $c;
@@ -152,19 +53,11 @@ sub server_nulls {
   my ($self,$data,$iconfig) = @_;
 
   my $cols = $iconfig->{'columns'};
-  my %null_fn;
-  foreach my $col (@$cols) {
-    ( my $fn = $col->{'sort'} ) =~ s/[^A-Za-z_-]//g;
-    my $null_fn = $self->can("server_null_$fn");
-    $null_fn = $self->can("server_null_string") unless defined $null_fn;
-    $null_fn{$col->{'key'}} = $null_fn;
-  }
   foreach my $j (0..$#$cols) {
     my $col = $cols->[$j];
-    my $key = $col->{'key'};
-    my $fn = $null_fn{$key} || sub { return 0; };
     foreach my $i (0..$#$data) {
-      $data->[$i][$j] = [$data->[$i][$j],0+$fn->($self,$data->[$i][$j])];
+      my $is_null = newtable_sort_isnull($col->{'sort'},$data->[$i][$j]);
+      $data->[$i][$j] = [$data->[$i][$j],0+$is_null];
     }
   }
 }

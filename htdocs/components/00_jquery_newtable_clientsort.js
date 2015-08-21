@@ -58,10 +58,10 @@
       $.each(orient.sort,function(i,stage) {
         if(!plan) { return; }
         if(!data[stage.key]) { plan = null; return; }
-        var type = $.fn['newtable_sort_'+data[stage.key][0]];
+        var type = $.fn['newtable_sort_'+data[stage.key].fn];
         if(!type) { plan = null; return; }
         plan.push([col_idxs[stage.key],stage.dir,type]);
-        if(!data[stage.key][1]) { incr_ok = false; }
+        if(!data[stage.key].incr_ok) { incr_ok = false; }
       });
       if(!plan) { return null; }
       plan.push([config.columns.length,1,$.fn.newtable_sort_numeric]);
