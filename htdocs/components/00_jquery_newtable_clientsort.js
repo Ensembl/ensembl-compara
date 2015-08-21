@@ -36,6 +36,8 @@
   }
 
   $.fn.new_table_clientsort = function(config,data) {
+    var col_idxs = {};
+    $.each(config.columns,function(i,val) { col_idxs[val.key] = i; });
 
     function compare(a,b,plan) {
       var c = 0;
@@ -45,38 +47,60 @@
       return c;
     }
 
+    function build_plan(orient) {
+      var plan  = [];
+      var incr_ok = true;
+      incr_ok = false; // XXX FIX ME
+      $.each(orient.sort,function(i,stage) {
+        if(!plan) { return; }
+        if(!data[stage.key]) { plan = null; return; }
+        var type = $.fn['newtable_sort_'+data[stage.key][0]];
+        if(!type) { plan = null; return; }
+        plan.push([col_idxs[stage.key],stage.dir,type]);
+        if(!data[stage.key][1]) { incr_ok = false; }
+      });
+      if(!plan) { return null; }
+      plan.push([config.columns.length,1,$.fn.newtable_sort_numeric]);
+      return { stages: plan, incr_ok: incr_ok};
+    }
+
+    function mere_reversal(orient,target) {
+      if(!orient.sort || !target.sort) { return null; }
+      if(orient.sort.length>1 || target.sort.length>1) { return null; }
+      if(orient.sort[0].key != target.sort[0].key) { return null; }
+      if(orient.sort[0].dir != -target.sort[0].dir) { return null; }
+      orient.sort[0].dir *= -1;
+      return function(manifest,grid) {
+        var fabric = grid.slice();
+        fabric.reverse();
+        manifest.sort[0].dir *= -1;
+        return [manifest,fabric];
+      }
+    }
+
     return {
       generate: function() {},
       go: function($table,$el) {},
       pipe: function() {
-        var col_idxs = {};
-        $.each(config.columns,function(i,val) { col_idxs[val.key] = i; });
         return [
-          function(orient) {
+          function(orient,target) {
+            console.log("FRIDAY",orient,target);
+            var rev = mere_reversal(orient,target);
+            if(rev) { return [orient,rev,true]; }
             if(!orient.sort) { return [orient,null,true]; }
-            var plan  = [];
-            var incr_ok = true;
-            $.each(orient.sort,function(i,stage) {
-              if(!plan) { return; }
-              if(!data[stage.key]) { plan = null; return; }
-              var type = $.fn['newtable_sort_'+data[stage.key][0]];
-              if(!type) { plan = null; return; }
-              plan.push([col_idxs[stage.key],stage.dir,type]);
-              if(!data[stage.key][1]) { incr_ok = false; }
-            });
+            var plan = build_plan(orient);
             if(!plan) { return [orient,null,true]; }
-            plan.push([config.columns.length,1,$.fn.newtable_sort_numeric]); // ties
             var orient_sort = orient.sort;
-            if(!incr_ok) { delete orient.sort; }
+            if(!plan.incr_ok) { delete orient.sort; }
             return [orient,function(manifest,grid) {
               var fabric = grid.slice();
               $.each(fabric,function(i,val) { val.push(i); }); // ties
               fabric.sort(function(a,b) {
-                return compare(a,b,plan);
+                return compare(a,b,plan.stages);
               });
               manifest.sort = orient_sort;
               return [manifest,fabric];
-            },incr_ok];
+            },plan.incr_ok];
           }
         ];
       }

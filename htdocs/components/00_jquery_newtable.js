@@ -49,12 +49,12 @@
     });
   }
 
-  function build_manifest(config,orient) {
+  function build_manifest(config,orient,target) {
     var incr_ok = true;
     var revpipe = [];
     var manifest = $.extend(true,{},orient);
     $.each(config.pipes,function(i,step) {
-      var out = step(manifest);
+      var out = step(manifest,target);
       manifest = out[0];
       if(out[1]) { revpipe.push(out[1]); }
       if(!out[2]) { incr_ok = false; }
@@ -195,7 +195,7 @@
     var old_manifest = $table.data('manifest');
     var orient = $.extend(true,{},$table.data('view'));
     $table.data('orient',orient);
-    var manifest_c = build_manifest(config,orient);
+    var manifest_c = build_manifest(config,orient,old_manifest);
     if($.orient_compares_equal(manifest_c[0],old_manifest)) {
       rerender_grid(widgets,$table,manifest_c);
     } else if(manifest_subset(widgets,old_manifest,manifest_c[0])) {
