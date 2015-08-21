@@ -223,6 +223,7 @@ if (!$compara_dba) {
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 my $gdba = $compara_dba->get_GenomeDBAdaptor();
 my $ma = $compara_dba->get_MethodAdaptor();
+my $ssa = $compara_dba->get_SpeciesSetAdaptor();
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 ##
 #################################################
@@ -242,7 +243,6 @@ if (not $method) {
 }
 
 if ($collection) {
-  my $ssa = $compara_dba->get_SpeciesSetAdaptor();
   my $ss = $ssa->fetch_collection_by_name($collection);
   # For ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES we need to exclude the
   # component genome_dbs because they are only temporary for production
@@ -350,11 +350,11 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids, 1);
   if ($mlss) {
     print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
-      join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n",
-        "  Name: ", $mlss->name, "\n",
-          "  Source: ", $mlss->source, "\n",
-            "  URL: $url\n";
-    print "  SpeciesSet name: $species_set_name\n";
+        join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n";
+    print "  Name: ", $mlss->name, "\n";
+    print "  Source: ", $mlss->source, "\n";
+    print "  URL: $url\n";
+    print "  SpeciesSet name: $species_set_name"\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     $name = undef if ($pairwise || $singleton);
     next;
@@ -383,11 +383,11 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   }
 
   print "You are about to store the following MethodLinkSpeciesSet\n  $method_link_type: ",
-    join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n",
-      "  Name: $name\n",
-        "  Source: $source\n",
-          "  URL: $url\n";
-    print "  SpeciesSet name: $species_set_name\n";
+    join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n";
+  print "  Name: $name\n";
+  print "  Source: $source\n";
+  print "  URL: $url\n";
+  print "  SpeciesSet name: $species_set_name\n";
   unless ($force) {
     print "\nDo you want to continue? [y/N]? ";
     
