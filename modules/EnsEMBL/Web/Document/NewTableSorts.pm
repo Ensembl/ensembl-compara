@@ -57,7 +57,6 @@ sub sort_position {
   my $it = each_array(@a,@b);
   while(my ($aa,$bb) = $it->()) {
     my $c = newtable_sort_cmp('numeric',$aa,$bb,$f);
-    warn "pos $aa / $bb / $f = $c\n";
     return $c if $c; 
   }
   return 0;
@@ -71,48 +70,67 @@ my %SORTS = (
   },
   'string' => {
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
-    null => sub { $_[0] =~ /\S/; },
+    null => sub { $_[0] !~ /\S/; },
+    js => 'string'
+  },
+  'string_dashnull' => {
+    perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
+    null => sub { $_[0] !~ /\S/ || $_[0] =~ /^\s*-\s*$/; },
     js => 'string'
   },
   'string_hidden' => {
     clean => \&html_hidden,
     null => sub { $_[0] =~ /\S/; },
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
+    js => 'string',
+    js_clean => 'html_hidden',
   },
   'numeric_hidden' => {
     clean => sub { return number_cleaned(html_hidden($_[0])); },
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
     null => sub { return !looks_like_number($_[0]); },
+    js => 'numeric',
+    js_clean => 'hidden_number',
   },
   'numeric' => {
     clean => \&number_cleaned, 
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
     null => sub { return !looks_like_number($_[0]); },
-    js => 'numeric'
+    js => 'numeric',
+    js_clean => 'clean_number',
   },
   'html' => {
     clean => \&html_cleaned,
     null => sub { $_[0] =~ /\S/; },
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
+    js => 'string',
+    js_clean => 'html_cleaned',
   },
   'html_numeric' => {
     clean => sub { return number_cleaned(html_cleaned($_[0])); },
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
     null => sub { return !looks_like_number($_[0]); },
+    js => 'numeric',
+    js_clean => 'html_number'
   },
   'position' => {
     null => \&null_position,
     perl => \&sort_position,
+    js => 'position',
   },
   'position_html' => {
     clean => \&html_cleaned,
     null => \&null_position,
     perl => \&sort_position,
+    js => 'position',
+    js_clean => 'html_cleaned',
   },
   'hidden_position' => {
     clean => \&html_hidden,
     null => \&null_position,
     perl => \&sort_position,
+    js_clean => 'html_hidden',
+    js => 'position',
   },
 );
 
@@ -132,6 +150,7 @@ sub newtable_sort_client_config {
     if($conf->{'js'}) {
       $config->{$col} = {
         fn => $conf->{'js'},
+        clean => $conf->{'js_clean'},
         type => $column_map->{$col},
         incr_ok => !($conf->{'options'}{'no_incr'}||0)
       };

@@ -119,10 +119,10 @@ sub make_table {
     { key => 'Alleles',  width => '16u', sort => 'string',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
     { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
     { key => 'Source',   width => '8u',  sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
-    { key => 'status',   width => '9u',  sort => 'string',          label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
-    { key => 'clinsig',  width => '6u',  sort => 'string',          label => "Clin\f sig",                    help => 'Clinical significance'                  },
+    { key => 'status',   width => '9u',  sort => 'string_dashnull',          label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
+    { key => 'clinsig',  width => '6u',  sort => 'string_dashnull',          label => "Clin\f sig",                    help => 'Clinical significance'                  },
     { key => 'snptype',  width => '12u', sort => 'position_html',   label => 'Type',                          help => 'Consequence type'                       },
-    { key => 'aachange', width => '6u',  sort => 'string',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
+    { key => 'aachange', width => '6u',  sort => 'string_dashnull',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
     { key => 'aacoord',  width => '6u',  sort => 'numeric',        label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
   ];
   

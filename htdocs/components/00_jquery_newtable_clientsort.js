@@ -16,23 +16,42 @@
 
 (function($) {
   $.fn.newtable_sort_numeric = function(a,b,c) {
-    a = parseFloat(a);
-    b = parseFloat(b);
-    if(isNaN(a) || a === ' ' || a === '') {
-      if(isNaN(b) || b === ' ' || b === '') {
-        return $.fn.newtable_sort_string(''+a,''+b,c);
-      } else {
-        return 1;
-      }
-    } else if(isNaN(b) || b === ' ' || b === '') {
-      return -1;
-    } else {
-      return (a-b)*c;
-    }
+    return (parseFloat(a)-parseFloat(b))*c;
   }
 
   $.fn.newtable_sort_string = function(a,b,c) {
     return a.toLowerCase().localeCompare(b.toLowerCase())*c;
+  }
+
+  $.fn.newtable_sort_position = function(a,b,f) {
+    var aa = a.split(/[:-]/);
+    var bb = b.split(/[:-]/);
+    for(var i=0;i<aa.length;i++) {
+      var c = $.fn.newtable_sort_numeric(aa[i],bb[i],f);
+      if(c) { return c; }
+    }
+    return 0;
+  }
+
+  // TODO clean prior to sort for speed
+  $.fn.newtable_clean_none = function(v) { return v; }
+  $.fn.newtable_clean_html_hidden = function(v) {
+    var m = v.match(/<span class="hidden">(.*?)<\/span>/);
+    if(m) { return m[1]; }
+    return v;
+  } 
+  $.fn.newtable_clean_html_cleaned = function(v) {
+    return v.replace(/<.*?>/,'');
+  } 
+  $.fn.newtable_clean_number = function(v) {
+    return v.replace(/([\d\.e\+-])\s.*$/,'$1');
+  }
+  $.fn.newtable_clean_html_number = function(v) {
+    return v.replace(/<.*?>/,'').replace(/([\d\.e\+-])\s.*$/,'$1');
+  }
+  $.fn.newtable_clean_hidden_number = function(v) {
+    v = $.fn.newtable_clean_html_hidden(v);
+    return v.replace(/([\d\.e\+-])\s.*$/,'$1');
   }
 
   $.fn.new_table_clientsort = function(config,data) {
@@ -43,10 +62,12 @@
       var c = 0;
       $.each(plan,function(i,stage) {
         if(!c) {
-          var av = a[stage[0]];
-          var bv = b[stage[0]];
+          var av = a[stage.idx];
+          var bv = b[stage.idx];
           c = av[1]-bv[1];
-          if(!c) { c = stage[2](av[0],bv[0],stage[1]); }
+          if(!c) {
+            c = stage.fn(stage.clean(av[0]),stage.clean(bv[0]),stage.dir);
+          }
         }
       });
       return c;
@@ -60,11 +81,13 @@
         if(!data[stage.key]) { plan = null; return; }
         var type = $.fn['newtable_sort_'+data[stage.key].fn];
         if(!type) { plan = null; return; }
-        plan.push([col_idxs[stage.key],stage.dir,type]);
+        var clean = $.fn['newtable_clean_'+data[stage.key].clean];
+        if(!clean) { clean = $.fn.newtable_clean_none; }
+        plan.push({ idx: col_idxs[stage.key], dir: stage.dir, fn: type, clean: clean});
         if(!data[stage.key].incr_ok) { incr_ok = false; }
       });
       if(!plan) { return null; }
-      plan.push([config.columns.length,1,$.fn.newtable_sort_numeric]);
+      plan.push({ idx: config.columns.length, dir: 1, fn: $.fn.newtable_sort_numeric, clean: $.fn.newtable_clean_none});
       return { stages: plan, incr_ok: incr_ok};
     }
 
