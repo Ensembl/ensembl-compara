@@ -267,6 +267,11 @@ if ($pairwise) {
 
 foreach my $genome_db_ids (@new_input_genome_db_ids) {
 
+  if ($pairwise || $singleton) {
+    $name = undef;
+    $species_set_name = undef;
+  }
+
   if (!@$genome_db_ids) {
     my @genome_dbs = ask_for_genome_dbs($compara_dba);
     $genome_db_ids = [ map {$_->dbID} @genome_dbs ];
@@ -394,9 +399,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     my $resp = <STDIN>;
     if ($resp !~ /^y$/i and $resp !~ /^yes$/i) {
       print "Cancelled.\n";
-      $name = undef if ($pairwise || $singleton);
       next;
-#      exit(0);
     }
   }
   
@@ -414,7 +417,6 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   } );
 
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
-  $name = undef if ($pairwise || $singleton);
 }
 
 
