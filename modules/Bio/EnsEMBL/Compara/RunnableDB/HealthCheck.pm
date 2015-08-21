@@ -143,6 +143,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::HealthCheck;
 use strict;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
+use Data::Dumper;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
@@ -545,8 +547,38 @@ sub _run_compare_to_previous_db_test {
       #find corresponding method_link_species_set in previous database
       my $previous_mlss;
       eval {
-	  $previous_mlss = $previous_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, $previous_gdbs);
+	      $previous_mlss = $previous_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, $previous_gdbs);
+
+        ### HACK ###
+        # if this is the first time this type of analysis is run, the MLSS will not exist in previous DB
+        # in this case, find another MLSS of the same class
+        unless ( defined $previous_mlss ) {
+            # my $prev_mlss_class = $previous_mlss
+
+            my $ss_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
+            my $species_set = $ss_adaptor->fetch_by_GenomeDBs( $previous_gdbs );
+            my $species_set_id = $species_set->dbID;
+            my @alt_mlss_list = @{ $previous_mlss_adaptor->fetch_all_by_species_set_id( $species_set_id ) };
+
+            #print Dumper \@alt_mlss_list;
+
+            foreach my $mlss ( @alt_mlss_list ){
+              my $mlss_class = $mlss->method->class;
+              #print "MLSS_CLASS: $mlss_class\n";
+              if ( $mlss_class =~ /pairwise_alignment/ ){
+                $previous_mlss = $mlss;
+                #print Dumper $previous_mlss;
+                
+                last;
+              }
+            }
+        }  
+        ### HACK END ###   
+
       };
+
+
+
 
       #Catch throw if these species do not exist in the previous database
       #and return success.
