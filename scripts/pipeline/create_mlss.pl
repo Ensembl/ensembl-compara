@@ -252,12 +252,24 @@ if ($collection) {
 
 my @new_input_genome_db_ids;
 if ($pairwise) {
+  # Only makes sense for GenomicAlignBlock.pairwise_alignment,
+  # SyntenyRegion.synteny and Homology.homology
+  my $this_class = $method->class;
+  my %valid_classes = map {$_ => 1} qw(GenomicAlignBlock.pairwise_alignment SyntenyRegion.synteny Homology.homology);
+  die "The --pw option only makes sense for these method_link_classes, not for $this_class.\n" unless $valid_classes{$this_class};
+
   while (my $gdb_id1 = shift @input_genome_db_ids) {
     foreach my $gdb_id2 (@input_genome_db_ids) {
       push @new_input_genome_db_ids, [$gdb_id1, $gdb_id2]
     }
   }
 } elsif ($singleton) {
+  # Only makes sense for GenomicAlignBlock.pairwise_alignment,
+  # SyntenyRegion.synteny and Homology.homology
+  my $this_class = $method->class;
+  my %valid_classes = map {$_ => 1} qw(GenomicAlignBlock.pairwise_alignment SyntenyRegion.synteny Homology.homology);
+  die "The --sg option only makes sense for these method_link_classes, not for $this_class.\n" unless $valid_classes{$this_class};
+
   foreach my $gdb_id (@input_genome_db_ids) {
     push @new_input_genome_db_ids, [$gdb_id]
   }
