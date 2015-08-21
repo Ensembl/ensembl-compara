@@ -231,6 +231,10 @@ if (!$method_link_type) {
   $method_link_type = ask_for_method_link_type($compara_dba);
   print "METHOD_LINK_TYPE = $method_link_type\n";
 }
+my $method = $ma->fetch_by_type($method_link_type);
+if (not $method) {
+    $method = Bio::EnsEMBL::Compara::Method->new( -TYPE => $method_link_type );
+}
 
 if ($collection) {
   my $ssa = $compara_dba->get_SpeciesSetAdaptor();
@@ -391,7 +395,6 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     }
   }
   
-  my $method = $ma->fetch_by_type($method_link_type) or Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type );
   my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -name => $species_set_name, -genome_dbs => $all_genome_dbs );
 
   my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
