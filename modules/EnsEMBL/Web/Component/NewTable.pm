@@ -42,6 +42,12 @@ sub html_hidden {
   return $x;
 }
 
+sub server_null_numeric {
+  my ($self,$v) = @_;
+
+  return !looks_like_number($v);
+}
+
 sub server_sort_numeric {
   my ($self,$a,$b,$f) = @_;
 
@@ -126,9 +132,7 @@ sub server_sort {
     $sort_fn = $self->can("server_sort_string") unless defined $sort_fn;
     $sort_fn{$cols->[$i]{'key'}} = $sort_fn;
   }
-  foreach my $i (0..$#$data) {
-    push @{$data->[$i]},$i;
-  }
+  foreach my $i (0..$#$data) { push @{$data->[$i]},$i; }
   $col_idx->{'__tie'} = -1;
   $sort_fn{'__tie'} = $self->can("server_sort_numeric");
   @$data = sort {
@@ -142,6 +146,27 @@ sub server_sort {
     $c;
   } @$data;
   pop @$_ for(@$data);
+}
+
+sub server_nulls {
+  my ($self,$data,$iconfig) = @_;
+
+  my $cols = $iconfig->{'columns'};
+  my %null_fn;
+  foreach my $col (@$cols) {
+    ( my $fn = $col->{'sort'} ) =~ s/[^A-Za-z_-]//g;
+    my $null_fn = $self->can("server_null_$fn");
+    $null_fn = $self->can("server_null_string") unless defined $null_fn;
+    $null_fn{$col->{'key'}} = $null_fn;
+  }
+  foreach my $j (0..$#$cols) {
+    my $col = $cols->[$j];
+    my $key = $col->{'key'};
+    my $fn = $null_fn{$key} || sub { return 0; };
+    foreach my $i (0..$#$data) {
+      $data->[$i][$j] = [$data->[$i][$j],0+$fn->($self,$data->[$i][$j])];
+    }
+  }
 }
 
 sub ajax_table_content {
@@ -221,6 +246,7 @@ sub newtable_data_request {
     splice(@data_out,0,$irows->[0]);
     splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
   }
+  $self->server_nulls(\@data_out,$iconfig);
 
   # Send it
   return {

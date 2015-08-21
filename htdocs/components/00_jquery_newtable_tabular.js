@@ -167,7 +167,7 @@
     var idx = row-table_num*rows_per_subtable;
     markup[idx] = markup[idx] || [];
     for(var i=0;i<grid[row].length;i++) {
-      markup[idx][i] = (grid[row][i]||'');
+      markup[idx][i] = (grid[row][i]||[''])[0];
     }
     $subtable.data('markup',markup);
     $subtable.data('markup-orient',orient);

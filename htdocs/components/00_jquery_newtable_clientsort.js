@@ -42,7 +42,12 @@
     function compare(a,b,plan) {
       var c = 0;
       $.each(plan,function(i,stage) {
-        if(!c) { c = stage[2](a[stage[0]],b[stage[0]],stage[1]); }
+        if(!c) {
+          var av = a[stage[0]];
+          var bv = b[stage[0]];
+          c = av[1]-bv[1];
+          if(!c) { c = stage[2](av[0],bv[0],stage[1]); }
+        }
       });
       return c;
     }
@@ -68,12 +73,18 @@
       if(orient.sort.length>1 || target.sort.length>1) { return null; }
       if(orient.sort[0].key != target.sort[0].key) { return null; }
       if(orient.sort[0].dir != -target.sort[0].dir) { return null; }
+      var idx = col_idxs[target.sort[0].key];
       orient.sort[0].dir *= -1;
       return function(manifest,grid) {
         var fabric = grid.slice();
-        fabric.reverse();
+        var partitioned = [[],[]];
+        $.each(grid,function(i,row) {
+          partitioned[row[idx][1]].push(row);
+        });
+        partitioned[0].reverse();
+        partitioned[1].reverse();
         manifest.sort[0].dir *= -1;
-        return [manifest,fabric];
+        return [manifest,partitioned[0].concat(partitioned[1])];
       }
     }
 
