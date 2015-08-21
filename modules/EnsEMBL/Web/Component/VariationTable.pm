@@ -123,7 +123,7 @@ sub make_table {
     { key => 'clinsig',  width => '6u',  sort => 'string',          label => "Clin\f sig",                    help => 'Clinical significance'                  },
     { key => 'snptype',  width => '12u', sort => 'position_html',   label => 'Type',                          help => 'Consequence type'                       },
     { key => 'aachange', width => '6u',  sort => 'string',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
-    { key => 'aacoord',  width => '6u',  sort => 'position',        label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
+    { key => 'aacoord',  width => '6u',  sort => 'numeric',        label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
   ];
   
   # submitter data for LRGs
@@ -137,13 +137,13 @@ sub make_table {
 
   if ($sd->{'SIFT'}) {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'} });
+      { key => 'sift',     sort => 'numeric_hidden', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'} });
   }
 
   # add GMAF and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'polyphen', sort => 'position_html', width => '6u', label => "Poly\fPhen", align => 'center', help => $glossary->{'PolyPhen'} },
+      { key => 'polyphen', sort => 'numeric_hidden', width => '6u', label => "Poly\fPhen", align => 'center', help => $glossary->{'PolyPhen'} },
     );
 
     splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $glossary->{'Global MAF'} };
