@@ -15,7 +15,7 @@
  */
 
 (function($) {
-  var rows_per_subtable = 1000;
+  var rows_per_subtable = 250;
 
   function beat(def,sleeplen) {
     return def.then(function(data) {
@@ -143,7 +143,12 @@
   }
 
   function new_subtable($table) {
-    return $('<div class="subtable"><table><tbody></tbody></table></div>');
+    var $out = $('<div class="subtable"><table><tbody></tbody></table></div>');
+    $out.elementResize(function(e) {
+      $out.css('height',$('table',$out).css('height'));
+    });
+    $out.on('awaken',function() { wakeup($out); });
+    return $out;
   }
 
   function extend_rows($table,target) {
@@ -152,11 +157,13 @@
     target -= $subtables.length*rows_per_subtable;
     while(target > 0) {
       var $subtable = new_subtable($table).appendTo($('.new_table',$table));
+      $subtable.lazy();
       var to_add = target;
       if(to_add > rows_per_subtable)
         to_add = rows_per_subtable;
       target -= to_add;
     }
+    $.lazy('refresh');
     console.log("/extend_rows");
   }
 
@@ -195,11 +202,25 @@
       }
       html += "</tr>";
     }
+    $subtable.data('backing',html);
+    $subtable.data('xxx',table_num);
     return html;
   }
 
-  function apply_html($table,table_num,html) {
+  function apply_html($table,table_num) {
     var $subtable = $($('.subtable',$table).eq(table_num));
+    console.log("setting redraw "+$subtable.data('xxx'));
+    $subtable.data('redraw',1);
+    $subtable.lazy(); // data has changed so not awake
+    $.lazy('refresh');
+    return $subtable;
+  }
+
+  function wakeup($subtable) {
+    if(!$subtable.data('redraw')) { return; }
+    console.log("redrawing "+$subtable.data('xxx'));
+    var html = $subtable.data('backing');
+    $subtable.data('redraw',0);
     var $body = $('tbody',$subtable);
     if(!$body.length) {
       var $newtable = new_subtable();
@@ -211,8 +232,7 @@
     //   but a third of the speed.
     //   Maybe browser checks if there are compat issues raised in testing?
     // $('tbody',$subtable).html(html);
-    $subtable.css('height',$('table',$subtable).css('height'));
-    return $subtable;
+    $.lazy('refresh');
   }
 
   function set_active_orient($subtable,active_orient) {
@@ -220,11 +240,17 @@
 
     if(!$.orient_compares_equal(active_orient,our_orient)) {
       $subtable[0].innerHTML = '';
+      $subtable.lazy();
     }
   }
 
   function replace_header($table,header) {
     $('thead',$table).replaceWith(header);
+  }
+
+  function eager() {
+    $.lazy('eager');
+    setTimeout(function() { eager(); },3000);
   }
 
   $.fn.new_table_tabular = function(config,data) {
@@ -238,6 +264,7 @@
         $('th',$table).click(function(e) {
           add_sort($table,$(this).data('key'),!e.shiftKey); 
         });
+        $.lazy('periodic',5000);
       },
       add_data: function($table,grid,start,num,orient) {
         var $subtables = $('.subtable',$table);
@@ -254,16 +281,16 @@
           subtabs[update_row2($table,grid,i+start,orient)]=1;
         }
         d = $.Deferred().resolve(subtabs);
-        loop(d,function(tabnum,v) {
-          var html = build_html($table,tabnum,orient);
-          var $subtable = apply_html($table,tabnum,html);
+        var e = loop(d,function(tabnum,v) {
+          build_html($table,tabnum,orient);
+          var $subtable = apply_html($table,tabnum);
           // XXX have generic decoration method
-          if($.fn.togglewrap) {
-            $subtable.togglewrap();
-          }
+          //if($.fn.togglewrap) {
+          //  $subtable.togglewrap();
+          //}
         },1,100);
       }
     };
   }; 
-
+  eager();
 })(jQuery);
