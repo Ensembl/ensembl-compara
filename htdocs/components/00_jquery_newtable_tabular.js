@@ -144,9 +144,6 @@
 
   function new_subtable($table) {
     var $out = $('<div class="subtable"><table><tbody></tbody></table></div>');
-    $out.elementResize(function(e) {
-      $out.css('height',$('table',$out).css('height'));
-    });
     $out.on('awaken',function() { wakeup($out); });
     return $out;
   }
@@ -228,6 +225,7 @@
       $subtable = $newtable;
     }
     $('tbody',$subtable)[0].innerHTML = html;
+    $subtable.css('height','');
     // The line below is probably more portable than the line above,
     //   but a third of the speed.
     //   Maybe browser checks if there are compat issues raised in testing?
@@ -239,6 +237,7 @@
     var our_orient = $subtable.data('markup-orient');
 
     if(!$.orient_compares_equal(active_orient,our_orient)) {
+      $subtable.css('height',$subtable.height()+'px');
       $subtable[0].innerHTML = '';
       $subtable.lazy();
     }
