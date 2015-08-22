@@ -19,6 +19,7 @@
   var coords = [];
 
   var wiggle = 1000;
+  var miles_away = 50000;
 
   function debounce(fn,msec) {
     var id;
@@ -52,10 +53,18 @@
     refresh();
   }
 
+  function sleepen(el) {
+    el.trigger('sleepen');
+    el.removeClass('__awake');
+    refresh();
+  }
+
   function check() {
     var wtop = $(window).scrollTop();
     var wbot = wtop + $(window).height();
+    var height = $(document).height();
 
+    // Awaken some elements?
     while(true) {
       for(var i=0;i<elements.length;i++) {
         if(elements[i].hasClass('__awake')) { continue; }
@@ -66,20 +75,45 @@
       }
       break; // all done
     }
+    // Send some to sleep?
+    for(var i=0;i<elements.length;i++) {
+      if(coords[i][0] < miles_away/2 ||
+         coords[i][1] > height - miles_away/2) {
+        elements[i].removeClass('__miles_away');
+      } else if(coords[i][0]-wtop > miles_away ||
+                wbot-coords[i][1] > miles_away) {
+        if(!elements[i].hasClass('__miles_away')) {
+          elements[i].addClass('__miles_away');
+          if(elements[i].hasClass('__awake')) {
+            sleepen(elements[i]);
+          }
+        }
+      } else {
+        elements[i].removeClass('__miles_away');
+      }
+    }
   }
 
   function eager() {
+    refresh();
+    check();
     var wtop = $(window).scrollTop();
     var wbot = wtop + $(window).height();
+    var height = $(document).height();
     var nearby = 0;
-    var target = null;
+    var targets = [null,null,null,null];
     for(var i=0;i<elements.length;i++) {
-      if(wbot>coords[i][0] && wtop<coords[i][1]) { nearby = 1; }
+      var prio = 3;
+      if(coords[i][1] > height - miles_away/2) { prio = 2; }
+      if(coords[i][0] < miles_away && !targets[1]) { prio = 1; }
+      if(wbot>coords[i][0] && wtop<coords[i][1]) { prio = 0; }
       if(elements[i].hasClass('__awake')) { continue; }
-      if(nearby) { target = elements[i]; break; }
-      if(!target) { target = elements[i]; }
+      if(elements[i].hasClass('__miles_away')) { continue; }
+      targets[prio] = elements[i];
     }
-    if(target) { awaken(target); }
+    for(var i=0;i<targets.length;i++) {
+      if(targets[i]) { console.log('prio',i); awaken(targets[i]); break; }
+    }
   }
 
   var check_soon = debounce(check,500);

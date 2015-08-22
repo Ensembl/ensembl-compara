@@ -144,8 +144,28 @@
 
   function new_subtable($table) {
     var $out = $('<div class="subtable"><table><tbody></tbody></table></div>');
-    $out.on('awaken',function() { wakeup($out); });
+    $out.on('awaken',function() { wakeup($table,$out); });
+    $out.on('sleepen',function() { sleep($out); });
+    guess_subtable_sizes($table);
     return $out;
+  }
+
+  function guess_subtable_sizes($table) {
+    var h_n = 0;
+    var h_d = 0;
+    $('.subtable',$table).each(function() {
+      var $this = $(this);
+      var h = $this.data('known-height');
+      if(h) { h_n += h; h_d++; }
+    });
+    var h = rows_per_subtable * 50;
+    //if(h_d) { h = h_n/h_d; }
+    $('.subtable',$table).each(function() {
+      var $this = $(this);
+      if(!$this.data('known-height')) {
+        $this.css('height',h+'px');
+      }
+    });
   }
 
   function extend_rows($table,target) {
@@ -213,19 +233,20 @@
     return $subtable;
   }
 
-  function wakeup($subtable) {
+  function wakeup($table,$subtable) {
     if(!$subtable.data('redraw')) { return; }
     console.log("redrawing "+$subtable.data('xxx'));
     var html = $subtable.data('backing');
     $subtable.data('redraw',0);
     var $body = $('tbody',$subtable);
     if(!$body.length) {
-      var $newtable = new_subtable();
-      $subtable.replaceWith($newtable);
-      $subtable = $newtable;
+      var $newtable = $('<table><tbody></tbody></table>');
+      $subtable.empty().append($newtable);
     }
     $('tbody',$subtable)[0].innerHTML = html;
     $subtable.css('height','');
+    $subtable.data('known-height',$subtable.height());
+    guess_subtable_sizes($table);
     // The line below is probably more portable than the line above,
     //   but a third of the speed.
     //   Maybe browser checks if there are compat issues raised in testing?
@@ -233,13 +254,19 @@
     $.lazy('refresh');
   }
 
+  function sleep($subtable) {
+    $subtable.data('redraw',1);
+    console.log("undrawing "+$subtable.data('xxx'));
+    $subtable.css('height',$subtable.height()+'px');
+    $subtable[0].innerHTML = '';
+    $subtable.lazy();
+  }
+
   function set_active_orient($subtable,active_orient) {
     var our_orient = $subtable.data('markup-orient');
 
     if(!$.orient_compares_equal(active_orient,our_orient)) {
-      $subtable.css('height',$subtable.height()+'px');
-      $subtable[0].innerHTML = '';
-      $subtable.lazy();
+      sleep($subtable);
     }
   }
 
