@@ -186,115 +186,167 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   },
 
   initNavForms: function() {
-  /*
-   * Initialises the gene and location navigation form
-   */
-    var panel = this;
+        /*
+         * Initialises the gene and location navigation form
+         */
+        var panel = this;
 
-    this.elLk.regionInput = this.elLk.forms.find('input[name=r]');
-    this.elLk.geneInput   = this.elLk.forms.find('input[name=q]');
+        this.elLk.regionInput = this.elLk.forms.find('input[name=r]');
+        this.elLk.geneInput = this.elLk.forms.find('input[name=q]');
 
-    // attach form submit event
-    this.elLk.forms.on('submit', {panel: this}, function (e) {
-      e.preventDefault();
+        // attach form submit event
+        this.elLk.forms.on('submit', {
+            panel: this
+        }, function(e) {
+            e.preventDefault();
 
-      var params = {};
-      var gene   = {};
-      var term   = '';
-      var tmp;
+            var params = {};
+            var gene = {};
+            var term = '';
+            var tmp;
 
-      if (panel.alignmentPage) {
+            if (panel.alignmentPage) {
 
-        $.each($(this).serializeArray(), function (v, k) {
-          params[k.name] = k.value;
+                $.each($(this).serializeArray(), function(v, k) {
+                    params[k.name] = k.value;
+                });
+
+                Ensembl.redirect(panel.newHref([], params));
+                return;
+            }
+
+            // g and db params needed for gene navigation
+            if (this.className.match(/_nav_gene/)) {
+
+                term = this.q.value.trim();
+
+                if (term.length < 3) {
+                    alert('Please type in at least 3 characters to get a list of matching genes');
+                    return;
+                }
+
+                // gene = (e.data.panel.geneCache[term.substr(0, 3).toUpperCase()] || {})[term.toUpperCase()];
+
+                if (gene = (e.data.panel.geneCache[term.substr(0, 3).toUpperCase()] || {})[term.toUpperCase()]) {
+                    params = {
+                        g: gene.g,
+                        db: gene.db,
+                        r: gene.r
+                    };
+                    e.data.panel.elLk.geneInput.autocomplete('close').val(gene.label);
+                    panel.updateURL(params);
+                } else if (gene = (e.data.panel.geneCache[term.toUpperCase()] || {})[term.toUpperCase()]) {
+                    params = {
+                        g: gene.g,
+                        db: gene.db,
+                        r: gene.r
+                    };
+                    e.data.panel.elLk.geneInput.autocomplete('close').val(gene.label);
+                    panel.updateURL(params);
+                } else {
+                    $.ajax({
+                        url: Ensembl.speciesPath + '/Ajax/check_stable_id',
+                        cache: true,
+                        data: {
+                            stable_id: term
+                        },
+                        dataType: 'json',
+                        success: function(json) {
+                            e.data.panel.geneCache[term.toUpperCase()] = json;
+                            if (gene = (e.data.panel.geneCache[term.toUpperCase()] || {})[term.toUpperCase()]) {
+                                params = {
+                                    g: gene.g,
+                                    db: gene.db,
+                                    r: gene.r
+                                };
+                                e.data.panel.elLk.geneInput.autocomplete('close').val(gene.label);
+                                panel.updateURL(params);
+                            } else {
+                                alert("No gene found for '" + term + "'");
+                                return;
+                            }
+
+                        }
+                    });
+
+                }
+
+            } else {
+                params = {
+                    r: this.r.value
+                };
+                panel.updateURL(params);
+            }
+
+        }).find('a').on('click', function(e) {
+            e.preventDefault();
+            $(this).closest('form').trigger('submit');
         });
 
-        Ensembl.redirect(panel.newHref([], params));
-        return;
-      }
+        // autocomplete on the gene input field
+        this.elLk.geneInput.autocomplete({
+            minLength: 3,
+            source: function(request, responseCallback) {
 
-      // g and db params needed for gene navigation
-      if (this.className.match(/_nav_gene/)) {
+                var context = { // context to be passed to ajax callbacks
+                    panel: panel,
+                    term: request.term,
+                    key: request.term.substr(0, 3).toUpperCase(),
+                    callback: function(str, group) {
+                        var regexp = new RegExp('^' + $.ui.autocomplete.escapeRegex(str), 'i');
+                        return responseCallback($.map(group, function(val, geneLabel) {
+                            return regexp.test(geneLabel) ? val.label : null;
+                        }));
+                    }
+                }
 
-        term = this.q.value;
+                if (context.key in panel.geneCache) {
+                    return context.callback(request.term, panel.geneCache[context.key]);
+                }
 
-        if (term.length < 3) {
-          alert('Please type in at least 3 characters to get a list of matching genes');
-          return;
+                $.ajax({
+                    url: Ensembl.speciesPath + '/Ajax/autocomplete',
+                    cache: true,
+                    data: {
+                        q: context.key
+                    },
+                    dataType: 'json',
+                    context: context,
+                    success: function(json) {
+                        this.panel.geneCache[this.key] = json;
+                    },
+                    complete: function() {
+                        return this.callback(this.term, this.panel.geneCache[this.key]);
+                    }
+                });
+            },
+            select: function(e, ui) {
+                $(this).closest('form').find('input[name=q]').val(ui.item.value).end().trigger('submit');
+            }
+        });
+    },
+
+    //  
+
+    updateURL: function(params) {
+
+        tmp = params.r.match(/^([^:]+):([0-9]+)-([0-9]+)$/);
+        if (!tmp || tmp.length !== 4 || tmp[3] - tmp[2] < 0) {
+            alert('Invalid location: ' + params.r);
+            return;
         }
 
-        gene = (e.data.panel.geneCache[term.substr(0, 3).toUpperCase()] || {})[term.toUpperCase()];
 
-        if (!gene) {
-          alert("No gene found for '" + term + "'");
-          return;
-        }
-
-        params = {g: gene.g, db: gene.db, r: gene.r};
-      } else {
-        params = {r: this.r.value};
-      }
-
-      tmp = params.r.match(/^([^:]+):([0-9]+)-([0-9]+)$/);
-      if (!tmp || tmp.length !== 4 || tmp[3] - tmp[2] < 0) {
-        alert('Invalid location: ' + params.r);
-        return;
-      }
-
-      e.data.panel.elLk.geneInput.autocomplete('close').val(gene.label);
-
-      if (panel.refreshOnly) {
-        Ensembl.updateURL($.extend({}, panel.extraParams, {g: params.g, db: params.db}));
-        Ensembl.updateLocation(params.r);
-      } else {
-        Ensembl.redirect(panel.newHref([], params));
-      }
-
-    }).find('a').on('click', function (e) {
-      e.preventDefault();
-      $(this).closest('form').trigger('submit');
-    });
-
-    // autocomplete on the gene input field
-    this.elLk.geneInput.autocomplete({
-      minLength: 3,
-      source: function(request, responseCallback) {
-
-        var context = { // context to be passed to ajax callbacks
-          panel     : panel,
-          term      : request.term,
-          key       : request.term.substr(0, 3).toUpperCase(),
-          callback  : function(str, group) {
-            var regexp = new RegExp('^' + $.ui.autocomplete.escapeRegex(str), 'i');
-            return responseCallback($.map(group, function(val, geneLabel) {
-              return regexp.test(geneLabel) ? val.label : null;
+        if (this.refreshOnly) {
+            Ensembl.updateURL($.extend({}, this.extraParams, {
+                g: params.g,
+                db: params.db
             }));
-          }
+            Ensembl.updateLocation(params.r);
+        } else {
+            Ensembl.redirect(this.newHref([], params));
         }
-
-        if (context.key in panel.geneCache) {
-          return context.callback(request.term, panel.geneCache[context.key]);
-        }
-
-        $.ajax({
-          url: Ensembl.speciesPath + '/Ajax/autocomplete',
-          cache: true,
-          data: { q: context.key },
-          dataType: 'json',
-          context: context,
-          success: function (json) {
-            this.panel.geneCache[this.key] = json;
-          },
-          complete: function () {
-            return this.callback(this.term, this.panel.geneCache[this.key]);
-          }
-        });
-      },
-      select: function(e, ui) {
-        $(this).closest('form').find('input[name=q]').val(ui.item.value).end().trigger('submit');
-      }
-    });
-  },
+    },
 
   initNavLinks: function () {
   /*
