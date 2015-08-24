@@ -142,8 +142,9 @@ sub init {
 
     ## If being really paranoid about input, e.g. for user uploads
     if ($args{'check_compression'}) {
-      my $content = $self->fetch;      
-      if ($content) {
+      my $fetched = $self->fetch;      
+      if ($fetched->{'content'}) {
+        my $content = $fetched->{'content'};
         $compression = check_compression(\$content);
       }
     }
