@@ -139,6 +139,8 @@ sub upload {
       $extension = $last;
     }
     $args{'extension'} = $extension;
+    ## Always check compression for file-based data, because users make mistakes!
+    $args{'check_compression'} = 1;
 
     ## This block is unlikely to be called, as the interface _should_ pass a format
     if (!$format) {
