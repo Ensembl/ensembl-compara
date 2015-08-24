@@ -116,3 +116,4 @@ td:hover a.hover_show  { display: inline; }
 
 tr.row-sub td { font-size: 85%; }
 tr.row-sub td:first-child { text-indent:24px; }
+td.colour-swatch { border:2px solid #ffffff; }
