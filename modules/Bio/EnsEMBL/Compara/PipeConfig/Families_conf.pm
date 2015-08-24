@@ -678,6 +678,26 @@ sub pipeline_analyses {
 
 =head1 STATS and TIMING
 
+=head2 rel.82 stats
+
+    sequences to cluster:           7,936,461       [ SELECT count(*) from sequence; ] -- took 1m12s to run
+    distances by Blast:         1,561,866,354       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 43m to run
+
+    non-reference genes:         3176               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          9337               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         11.3d              [ call time_analysis('%'); ]    -- could have been shorter by 1-2 days (mcxload was run while quota was exceeded, which caused a silent format error in the tcx file)
+    uniprot_loading time:       18.5h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               5.8d               [ call time_analysis('blast%'); ]
+    mcxload running time:       22.3h               [ select (UNIX_TIMESTAMP(when_finished)-UNIX_TIMESTAMP(when_started))/3600 hours from role join analysis_base using(analysis_id) where done_jobs=1 and logic_name='mcxload_matrix' order by role_id DESC limit 1; ]
+    mcl running time:           13.7h               [ select (UNIX_TIMESTAMP(when_finished)-UNIX_TIMESTAMP(when_started))/3600 hours from role join analysis_base using(analysis_id) where done_jobs=1 and logic_name='mcl' order by role_id DESC limit 1; ]
+
+    memory used by mcxload:     41.6G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         63.2G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
+
+
 =head2 rel.81 stats
 
     sequences to cluster:           7,936,228       [ SELECT count(*) from sequence; ] -- took 1m12s to run
