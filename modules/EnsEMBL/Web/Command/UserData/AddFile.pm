@@ -40,11 +40,14 @@ sub process {
   my $url_params  = {};
   my $new_action  = '';
 
-  if ($method eq 'text' && $hub->param('text') =~ /^(http|ftp)/) {
+  if ($method eq 'text' && $hub->param('text') =~ /^\s*(http|ftp)/) {
     ## Attach the file from the remote URL
     my $url       = $hub->param('text'); 
     $url          =~ s/(^\s+|\s+$)//g; # Trim leading and trailing whitespace
-    my $filename  = [split '/', $url]->[-1];
+
+    ## Move URL into appropriate parameter, because we need to distinguish it from pasted data
+    $hub->param('url', $url);
+    $hub->param('text', '');
 
     ## Is this file already attached?
     ($new_action, $url_params) = $self->check_attachment($url);
@@ -80,6 +83,7 @@ sub process {
           $attachable = EnsEMBL::Web::File::AttachedFormat->new(%args);
         }
       }
+      my $filename  = [split '/', $url]->[-1];
       ($new_action, $url_params) = $self->attach($attachable, $filename);
       $url_params->{'action'} = $new_action;
     }
