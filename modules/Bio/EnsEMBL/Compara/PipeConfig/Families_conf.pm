@@ -99,14 +99,15 @@ sub default_options {
         'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
 
             # resource requirements:
-        'blast_gigs'      =>  3,
+        'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
+        'blast_gigs'      =>  4,
         'blast_hm_gigs'   =>  6,
         'mcl_gigs'        => 72,
         'mcl_threads'     => 12,
         'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
         'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
-        'blast_capacity'  => 4000,                                  # work both as hive_capacity and resource-level throttle
+        'blast_capacity'  => 5000,                                  # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
         'HMMer_classify_capacity' => 100,
@@ -360,7 +361,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'      => 'SELECT DISTINCT m.sequence_id seqid FROM seq_member m',
-                'step'            => 50,
+                'step'            => $self->o('blast_minibatch_size'),
             },
             -flow_into => {
                 '2->A' => { 'blast' => { 'start_seq_id' => '#_start_seqid#', 'end_seq_id' => '#_end_seqid#', 'minibatch' => '#_range_count#' } },
@@ -381,6 +382,7 @@ sub pipeline_analyses {
             -flow_into => {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
                 -1 => 'blast_himem',
+                -2 => 'blast_himem',
             },
             -rc_name => 'RegBlast',
         },
