@@ -43,7 +43,10 @@ sub content {
   my $source            = $species_defs->ASSEMBLY_ACCESSION_SOURCE || 'NCBI';
   my $source_type       = $species_defs->ASSEMBLY_ACCESSION_TYPE;
 
+  my $side_menu         = $self->side_nav(); #implemented in mobile plugins
+
   my $html = qq(
+  $side_menu
 <div class="column-wrapper">  
   <div class="column-one">
     <div class="column-padding no-left-margin">
@@ -91,6 +94,12 @@ sub content {
 </div>';
 
   return $html;  
+}
+
+# MOBILE - This is implemented in the mobile plugins to create the side menu for the species annotation page
+# Return empty string for www
+sub side_nav {
+  return "";
 }
 
 sub _wikipedia_link {
