@@ -352,36 +352,32 @@ sub ajax_fetch_html {
   print $content;
 }
 
-sub ajax_check_stable_id {
-    my ( $self, $hub ) = @_;
-    my $gene_id = $hub->param('stable_id');
-    my @dbs = map lc( substr $_, 9 ),
-        @{ $hub->species_defs->core_like_databases || [] };
-    my $results = {};
+sub ajax_autocomplete_geneid {
+  my ($self, $hub) = @_;
+  my $gene_id = $hub->param('q');
+  my @dbs     = map lc(substr $_, 9), @{$hub->species_defs->core_like_databases || []};
+  my $results = {};
 
-    foreach my $db (@dbs) {
+  foreach my $db (@dbs) {
+    my $gene_adaptor = $hub->get_adaptor('get_GeneAdaptor', $db);
 
-        my $gene_adaptor = $hub->get_adaptor( 'get_GeneAdaptor', $db );
-        if ( my $gene = $gene_adaptor->fetch_by_stable_id($gene_id) ) {
-            $gene = $gene->transform('toplevel');
+    if (my $gene = $gene_adaptor->fetch_by_stable_id($gene_id)) {
 
-            # print Dumper($gene);
-            $results = {
-                uc $gene_id => {
-                    'label' => $gene_id,
-                    'r' => $gene->seq_region_name() . ':'
-                        . $gene->start() . "-"
-                        . $gene->end(),
-                    'db' => $db,
-                    'g'  => $gene_id
+      $gene = $gene->transform('toplevel');
 
-                }
-            };
-            last;
-        } 
+      $results = {
+        uc $gene_id => {
+          'label' => $gene->display_xref && $gene->display_xref->display_id || '',
+          'r'     => sprintf('%s:%d-%d', $gene->seq_region_name, $gene->start, $gene->end),
+          'db'    => $db,
+          'g'     => $gene_id
+        }
+      };
+      last;
     }
-    print $self->jsonify($results);
-}
+  }
 
+  print $self->jsonify($results);
+}
 
 1;
