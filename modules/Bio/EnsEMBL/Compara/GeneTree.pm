@@ -339,18 +339,20 @@ sub root {
 
 =head2 preload
 
+  Arg [1]     : (optional) Arrayref of strings $species. If given, genes that
+                do not belong to those species are pruned of the tree
   Description : Method to load all the tree data in one go. This currently
-                includes if not loaded yet, and all the gene Members
-                associated with the leaves.
-                In the future, it will include all the tags
+                includes (if not loaded yet) the nodes, the tags, and the
+                gene Members associated with the leaves.
   Returntype  : node
   Example     : $tree->preload();
+                $tree->preload(['human', 'mouse', 'chicken']);
   Caller      : General
 
 =cut
 
 sub preload {
-    my $self = shift;
+    my ($self, $species) = @_;
     return unless defined $self->adaptor;
     return if $self->{_preloaded};
 
@@ -361,6 +363,44 @@ sub preload {
         delete $gtn_adaptor->{'_ref_tree'};
     }
     $self->clear;
+
+    if ($species) {
+        my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
+        my %genome_db_ids = ();
+        foreach my $s (@$species) {
+            my $gdb = $genome_db_adaptor->fetch_by_name_assembly($s) || $genome_db_adaptor->fetch_by_registry_name($s);
+            if ($gdb) {
+                $genome_db_ids{$gdb->dbID} = 1;
+            } else {
+                warn "$s could not be found in the GenomeDB entries\n";
+            }
+        }
+        my @to_delete;
+        my $root = $self->root;
+        foreach my $leaf (@{$root->get_all_leaves}) {
+            if (UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember') and not exists $genome_db_ids{$leaf->genome_db_id}) {
+                my $internal_node = $leaf->parent;
+                die "All the leaves are lost after pruning the tree !\n" if not defined $internal_node;     # $leaf was the last leaf of the tree. The tree is now empty
+                $leaf->disavow_parent;
+                # $parent
+                # +--- XXX
+                # `--- $internal_node
+                #      +--- $leaf
+                #      `--- $sibling
+                #           +--- $child1
+                #           `--- $child2
+                my $sibling = $internal_node->children->[0];
+                if ($internal_node->node_id == $root->node_id) {
+                    $root = $sibling;
+                    $sibling->disavow_parent;
+                } else {
+                    $internal_node->parent->add_child($sibling, $sibling->distance_to_parent+$internal_node->distance_to_parent);
+                    $internal_node->disavow_parent;
+                }
+            }
+        }
+        $self->{'_root'} = $root;
+    }
 
     my $all_nodes = $self->root->get_all_nodes;
 
