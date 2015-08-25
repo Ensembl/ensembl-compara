@@ -114,6 +114,7 @@ sub param_defaults {
         'minimum_genes'     => 0,
         'maximum_genes'     => 1e9,
         'cmd_max_runtime'   => undef,
+        'do_hcs'            => 1,
 
         'run_treebest_sdi'  => 0,
         'reroot_with_sdi'   => 0,
@@ -201,7 +202,7 @@ sub write_output {
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
 
-    $self->call_hcs_all_trees();
+    $self->call_hcs_all_trees() if $self->param('do_hcs');
 }
 
 
