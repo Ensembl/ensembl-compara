@@ -47,6 +47,7 @@ sub param_defaults {
         'runtime_tree_tag'     => 'examl_runtime',
         'output_clusterset_id' => 'raxml',
         'output_file'          => 'ExaML_result.#gene_tree_id#',
+        'info_file'            => 'ExaML_info.#gene_tree_id#',
         'remove_columns'       => 1,
     };
 }
@@ -102,6 +103,29 @@ sub fetch_input {
 
 }
 
+sub write_output {
+    my $self = shift;
+
+    my $overall_time;
+    open( my $info_file, "<", $self->worker_temp_directory.'/'.$self->param('info_file') ) || die "Could not open info_file";
+    while (<$info_file>) {
+        if ( $_ =~ /^Overall accumulated Time/ ) {
+            print $_;
+			my @tok = split (/\s/,$_);
+			$overall_time = $tok[7];
+        }
+    }
+
+    #We need to have the run times in milliseconds
+    $overall_time *= 1000;
+
+    print "overall_running_time: $overall_time\n" if $self->debug;
+    $self->param('runtime_msec',$overall_time);
+
+    $self->SUPER::write_output();
+}
+
+
 ## Because Examl is using MPI, it has to be run in a shared directory
 #  Here we override the eHive method to use #examl_dir# instead
 sub worker_temp_directory_name {
@@ -109,6 +133,8 @@ sub worker_temp_directory_name {
 
     my $username = $ENV{'USER'};
     my $worker_id = $self->worker ? $self->worker->dbID : "standalone.$$";
+    my $worker_dir = $self->param('examl_dir')."/worker_${username}.${worker_id}/";
+    #system("chmod 775 -R $worker_id");
     return $self->param('examl_dir')."/worker_${username}.${worker_id}/";
 }
 
