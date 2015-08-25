@@ -187,6 +187,8 @@ sub write_output {
         delete $self->param('default_gene_tree')->{'_member_array'};   # To make sure we use the freshest data
 
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
+            #We need to parse_newick_into_tree to be able to unmerge the split_genes.
+            $self->parse_newick_into_tree( $self->param('newick_output'), $self->param('default_gene_tree'), [] );
             $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $self->param('default_gene_tree'), [], 1) || die "Could not store ". $self->param('output_clusterset_id') . " tree.\n";
         } else {
             $target_tree = $self->param('default_gene_tree');
