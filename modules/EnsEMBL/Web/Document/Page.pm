@@ -541,6 +541,9 @@ sub html_template {
           <div class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}
             <p class="invisible">.</p>
           </div>
+          <div class="column-wrapper">$elements->{'fatfooter'}
+            <p class="invisible">.</p>
+          </div>
         </div>
       </div>
     </div>
