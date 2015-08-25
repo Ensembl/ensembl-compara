@@ -528,7 +528,7 @@ sub build_imageconfig_form {
     $div->append_child('h2', { class => 'config_header', inner_HTML => $caption});
     
     if($data->{'description'}){
-      $div->append_child('div', { class => 'select_all long_label',   inner_HTML => $data->{'description'} });
+      $div->append_child('div', { class => 'long_label',   inner_HTML => $data->{'description'} });
     }
 
     my $parent_menu = $tree->append($tree->create_node($section, {
