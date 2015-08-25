@@ -126,6 +126,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_ensembl_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters => {
+                # Gets #compara_db# from pipeline_wide_parameters
                 'label'     => 'Ensembl',
                 'mlss_id'   => '#method_link_species_set_id#',
                 'species_tree_input_file'   => $self->o('ensembl_topology_species_tree'),
@@ -138,6 +139,7 @@ sub pipeline_analyses {
         {   -logic_name => 'hc_binary_species_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters => {
+                # Gets #compara_db# from pipeline_wide_parameters
                 mode            => 'species_tree',
                 binary          => 1,
                 n_missing_species_in_tree   => 0,
@@ -148,6 +150,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_ncbi_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters => {
+                # Gets #compara_db# from pipeline_wide_parameters
                 'label'     => 'NCBI Taxonomy',
                 'mlss_id'   => '#method_link_species_set_id#',
             },
@@ -159,6 +162,7 @@ sub pipeline_analyses {
         {   -logic_name => 'hc_species_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters => {
+                # Gets #compara_db# from pipeline_wide_parameters
                 mode            => 'species_tree',
                 binary          => 0,
                 n_missing_species_in_tree   => 0,
@@ -174,14 +178,14 @@ sub pipeline_analyses {
                 'column_names' => [ 'scientific_name', 'common_name' ],
             },
             -flow_into => {
-                #2 => { ':////method_link_species_set_tag' => { 'tag' => 'filter:#scientific_name#', 'value' => '#common_name#' } },
-                2 => [ 'insert_taxon_filters' ],
+                2 => [ 'insert_taxon_filters' ],    # Cannot flow directly into the table because table-dataflows can only reach the eHive database, not #db_conn#
             },
         },
 
         {   -logic_name => 'insert_taxon_filters',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
+                # Gets #db_conn# from pipeline_wide_parameters
                 'sql'       => 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#method_link_species_set_id#, "filter:#scientific_name#", "#common_name#")',
             },
         },
