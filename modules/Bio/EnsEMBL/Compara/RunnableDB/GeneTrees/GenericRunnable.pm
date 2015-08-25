@@ -99,6 +99,7 @@ sub param_defaults {
     return {
         'cdna'              => 0,
         'aln_format'        => 'fasta',
+        'map_long_seq_names'=> undef,
         'remove_columns'    => 0,
         'check_split_genes' => 1,
         'read_tags'         => 0,
@@ -244,9 +245,23 @@ sub run_generic_command {
     } else {
         $aln_tree = $gene_tree;
     }
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($aln_tree)";
-    $self->param('alignment_file', $input_aln);
 
+    if (($self->param('aln_format') eq 'phylip') && (!defined($self->param('map_long_seq_names'))) ){
+        $self->param('map_long_seq_names', 1);
+    }
+
+    $self->param('map_long_seq_names') ? (my %map_long_seq_names) : ();
+
+    my $input_aln;
+
+    if ($self->param('map_long_seq_names')){
+        $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}, \%map_long_seq_names) || die "Could not fetch alignment for ($aln_tree)";
+    }
+    else{
+        $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($aln_tree)";
+    }
+
+    $self->param('alignment_file', $input_aln);
     $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root));
 
     my $number_actual_genes = scalar(@{$gene_tree->get_all_leaves});
@@ -288,10 +303,24 @@ sub run_generic_command {
         my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
         if ($self->param('run_treebest_sdi')) {
             print "Re-rooting the tree with 'treebest sdi'\n" if($self->debug);
+
+            if ($self->param('map_long_seq_names')){
+                #we need to re-map to the lond indentidiers
+                foreach my $tmp_seq ( keys( %map_long_seq_names ) ) {
+                    my $fix_seq = $map_long_seq_names{$tmp_seq}{'seq'};
+                    my $fix_suf = $map_long_seq_names{$tmp_seq}{'suf'};
+
+                    my $fix_seq_name = "$fix_seq\_$fix_suf";
+
+                    #Replace only whole words:
+                    $output =~ s/\b$tmp_seq\b/$fix_seq_name/;
+                }
+            }
+
             $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi'));
         }
 		unless($output){
-			sleep 30;
+            sleep 60;
             die "The Newick output is empty\n";
 		}
         $self->param('newick_output', $output);
