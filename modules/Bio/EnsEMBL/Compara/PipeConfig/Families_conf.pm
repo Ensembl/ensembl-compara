@@ -683,6 +683,8 @@ sub pipeline_analyses {
     sequences to cluster:           7,936,461       [ SELECT count(*) from sequence; ] -- took 1m12s to run
     distances by Blast:         1,561,866,354       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 43m to run
 
+    LRG dnafrags:                 610               [ SELECT count(*) FROM dnafrag WHERE coord_system_name='lrg'; ]
+    LRG gene members:             608               [ SELECT count(*) FROM gene_member WHERE stable_id LIKE 'LRG_%'; ]
     non-reference genes:         3176               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
     non-reference peps:          9337               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
 
@@ -703,6 +705,8 @@ sub pipeline_analyses {
     sequences to cluster:           7,936,228       [ SELECT count(*) from sequence; ] -- took 1m12s to run
     distances by Blast:         1,561,834,584       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 43m to run
 
+    LRG dnafrags:                 575               [ SELECT count(*) FROM dnafrag WHERE coord_system_name='lrg'; ]
+    LRG gene members:             573               [ SELECT count(*) FROM gene_member WHERE stable_id LIKE 'LRG_%'; ]
     non-reference genes:         3120               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
     non-reference peps:          9260               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
 
