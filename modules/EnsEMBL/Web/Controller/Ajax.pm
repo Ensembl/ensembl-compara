@@ -352,4 +352,32 @@ sub ajax_fetch_html {
   print $content;
 }
 
+sub ajax_autocomplete_geneid {
+  my ($self, $hub) = @_;
+  my $gene_id = $hub->param('q');
+  my @dbs     = map lc(substr $_, 9), @{$hub->species_defs->core_like_databases || []};
+  my $results = {};
+
+  foreach my $db (@dbs) {
+    my $gene_adaptor = $hub->get_adaptor('get_GeneAdaptor', $db);
+
+    if (my $gene = $gene_adaptor->fetch_by_stable_id($gene_id)) {
+
+      $gene = $gene->transform('toplevel');
+
+      $results = {
+        uc $gene_id => {
+          'label' => $gene->display_xref && $gene->display_xref->display_id || '',
+          'r'     => sprintf('%s:%d-%d', $gene->seq_region_name, $gene->start, $gene->end),
+          'db'    => $db,
+          'g'     => $gene_id
+        }
+      };
+      last;
+    }
+  }
+
+  print $self->jsonify($results);
+}
+
 1;
