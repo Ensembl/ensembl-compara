@@ -46,6 +46,7 @@ sub param_defaults {
         'minimum_genes'    => 4,
         'read_tags'        => 1,
         'remove_columns'   => 1,
+        'do_hcs'           => 0, #if we run HCs in here it will cause erros, since the tree isnt computed at this point.
 	};
 }
 
