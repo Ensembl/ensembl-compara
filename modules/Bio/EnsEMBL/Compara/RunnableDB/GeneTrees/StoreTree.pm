@@ -117,6 +117,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     my $gene_tree = shift;
     my $format = shift;
     my $simple_align_options = shift || {};
+    $self->param('map_long_seq_names') ? (my $map_long_seq_names = shift) : ();
 
     my $removed_columns = undef;
     if ($self->param('remove_columns')) {
@@ -138,6 +139,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
         -STOP2X => 1,
         -REMOVED_COLUMNS => $removed_columns,
         %$simple_align_options,
+        $self->param('map_long_seq_names') ? (-MAP_LONG_SEQ_NAMES => $map_long_seq_names) : (),
     );
 
     unless(-e $aln_file and -s $aln_file) {
@@ -146,7 +148,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
     return $aln_file;
 }
-
 
 
 sub store_genetree
