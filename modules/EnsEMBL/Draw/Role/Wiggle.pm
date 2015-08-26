@@ -22,7 +22,25 @@ package EnsEMBL::Draw::Role::Wiggle;
 
 use Role::Tiny;
 
-## Renderers
+### Subtitles
+
+sub supports_subtitles { 1; }
+
+sub wiggle_subtitle { undef; }
+
+sub subtitle_colour { $_[0]->{'subtitle_colour'} || 'slategray' }
+
+sub subtitle_text {
+  my ($self) = @_;
+
+  my $name = $self->my_config('short_name') || $self->my_config('name');
+  my $label = $self->wiggle_subtitle;
+  $label =~ s/\[\[name\]\]/$name/;
+  $label =~ s/<.*?>//g;
+  return $label;
+}
+
+### Renderers
 
 sub render_compact { 
   my $self = shift;
@@ -56,6 +74,13 @@ sub _render {
   }
 
   $self->{'my_config'}->set('bumped', 0);
+  $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
+
+  # Make sure subtitles will be correctly coloured
+  unless ($self->{'my_config'}->get('subtitle_colour')) {
+    my $sub_colour = $self->{'my_config'}->get('score_colour') || $self->my_colour('score') || 'blue';
+    $self->{'my_config'}->set('subtitle_colour', $sub_colour);
+  }
 
   ## Now we try and draw the features
   my $error = $self->draw_features(@_);
