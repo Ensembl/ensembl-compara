@@ -141,31 +141,32 @@ sub draw_features {
       $hover_label->{'extra_desc'} .= $description;
     }
 
-    my $drawing_style = $self->{'my_config'}->get('drawing_style');
-    my $style_class   = $drawing_style ? "EnsEMBL::Draw::Style::Feature::$drawing_style" 
-                                       : 'EnsEMBL::Draw::Style::Feature::Structured';
+    my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
-    my $style = $style_class->new($config, $features);
-    $self->push($style->create_glyphs);
+    foreach (@{$drawing_style||[]}) {
+      my $style_class = 'EnsEMBL::Draw::Style::'.$_;
+      my $style = $style_class->new($config, $features);
+      $self->push($style->create_glyphs);
+    }
   }
 }
 
 sub render_as_transcript_nolabel {
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', 'Transcript');
+  $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
   $self->draw_features;
 }
 
 sub render_as_transcript_label {
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', 'Transcript');
+  $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
   $self->{'my_config'}->set('show_labels', 1);
   $self->draw_features;
 }
 
 sub render_interaction {
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', 'Interaction');
+  $self->{'my_config'}->set('drawing_style', ['Feature::Interaction']);
   $self->{'my_config'}->set('bumped', 0); 
   $self->draw_features;
   ## Limit track height to that of biggest arc
