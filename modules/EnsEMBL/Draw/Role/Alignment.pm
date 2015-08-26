@@ -22,6 +22,8 @@ package EnsEMBL::Draw::Role::Alignment;
 
 use Role::Tiny;
 
+sub colour_key { return $_[0]->my_config('colour_key') || $_[0]->my_config('sub_type'); }
+
 ## Renderers which tweak the standard track style
 
 sub render_as_alignment_nolabel {
