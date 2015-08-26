@@ -1555,7 +1555,7 @@ sub hgvs {
       foreach my $type ('hgvs_genomic', 'hgvs_transcript', 'hgvs_protein') {
         my $h = $tv->{$type};
         
-        next unless $h && $h !~ m/\(p\.=\)/;
+        # next unless $h && $h !~ m/\(p\.=\)/;
         next if $type eq 'hgvs_genomic' && $seen_genomic{$h}++;
         
         push @{$hgvs{$allele}}, $h;
