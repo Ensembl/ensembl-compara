@@ -26,6 +26,8 @@ use EnsEMBL::Web::Document::Table;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
+sub get_pre_species { return $_[0]->hub->species_defs->get_config('MULTI', 'PRE_SPECIES'); } # MOBILE: overwritten in the mobile site so that pre species are not shown
+
 sub render {
   my ($self, $request) = @_;
 
@@ -56,7 +58,7 @@ sub render {
 
   if ($sitename !~ /Archive/) {
     ## Add in pre species
-    my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
+    my $pre_species = $self->get_pre_species();
     if ($pre_species) {
       while (my ($bioname, $array) = each (%$pre_species)) {
         my ($common, $assembly, $taxon_id) = @$array;
@@ -104,20 +106,9 @@ sub render {
   $html .= '<div class="js_panel" id="species-table">
       <input type="hidden" class="panel_type" value="Content">';
 
-  my $columns = [
-      { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'html'   },
-      { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
-      { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'numeric'},
-      { key => 'assembly',    title => 'Ensembl Assembly',width => '10%', align => 'left' },
-      { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
-      { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
-      { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
-  ];
-  if ($sitename !~ /Archive/) {
-    push @$columns, { key => 'pre', title => 'Pre assembly', width => '5%', align => 'left' };
-  }
-
+  my $columns = $self->table_columns();
   my $table = EnsEMBL::Web::Document::Table->new($columns, [], { data_table => 1, exportable => 1 });
+  $table->code        = 'SpeciesTable::99';
   
   $table->filename = 'Species';
   
@@ -172,6 +163,27 @@ sub render {
   $html .= $table->render;
   $html .= '</div>';
   return $html;  
+}
+
+# Overwritten in mobile plugins to hide some columns
+# Return array of columns
+sub table_columns {
+  my $self = shift;
+
+  my $columns = [
+      { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'html'   },
+      { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
+      { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'numeric' },
+      { key => 'assembly',    title => 'Ensembl Assembly',width => '10%', align => 'left' },
+      { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
+      { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
+      { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
+  ];
+  if ($self->hub->species_defs->ENSEMBL_SITETYPE !~ /Archive/) {
+    push @$columns, { key => 'pre', title => 'Pre assembly', width => '5%', align => 'left' };
+  }
+
+  return $columns;
 }
 
 1;
