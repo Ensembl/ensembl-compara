@@ -671,11 +671,12 @@ sub load_user_tracks {
       
       $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external    => 'user',
-        glyphset    => '_flat_file',
+        glyphset    => 'flat_file',
         colourset   => 'classes',
         sub_type    => 'tmp',
         file        => $entry->{'file'},
         format      => $entry->{'format'},
+        style       => $entry->{'style'},
         caption     => $entry->{'name'},
         renderers   => $renderers,
         description => 'Data that has been temporarily uploaded to the web server.',
@@ -1102,7 +1103,7 @@ sub _load_url_feature {
 
   my $track = $self->create_track('custom_feature', 'Single feature', {
         external    => 'user',
-        glyphset    => '_flat_file',
+        glyphset    => 'flat_file',
         colourset   => 'classes',
         sub_type    => 'single_feature',
         format      => $format,
@@ -1327,7 +1328,7 @@ sub _add_flat_file_track {
     display     => 'off',
     strand      => $strand,
     external    => 'external',
-    glyphset    => '_flat_file',
+    glyphset    => 'flat_file',
     colourset   => 'classes',
     caption     => $name,
     sub_type    => $sub_type,
