@@ -41,6 +41,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use List::Util qw(min max);
+
 use parent qw(EnsEMBL::Draw::Style);
 
 sub create_glyphs {
@@ -86,20 +88,14 @@ sub create_glyphs {
   my $bottom = $top + $pix_per_score * $range;
   my $line_px = $bottom - ($line_score-$min_score) * $pix_per_score;
 
-  # Make sure subtitles will be correctly coloured
-  unless ($track_config->get('subtitle_colour')) {
-    my $sub_colour = $track_config->get('score_colour') || $self->my_colour('score') || 'blue';
-    $track_config->set('subtitle_colour', $sub_colour);
-  }
-
   # Shift down the lhs label to between the axes unless the subtitle is within the track
-  if($bottom-$top > 30 && $self->wiggle_subtitle) {
+  if ($bottom - $top > 30 && $track_config->get('wiggle_subtitle')) {
     # luxurious space for centred label
     # graph is offset down if subtitled
     $self->{'label_y_offset'} =
-        ($bottom-$top)/2             # half-way-between
-        + $self->subtitle_height
-        - 16;                        # two-line label so centre its centre
+        ($bottom - $top) / 2        # half-way-between
+        + $track_config->get('subtitle_height')
+        - 16;                       # two-line label so centre its centre
   } else {
     # tight, just squeeze it down a little
     $self->{'label_y_offset'} = 0;
@@ -107,7 +103,7 @@ sub create_glyphs {
 
   # Extra left-legend stuff
   if ($track_config->get('labels')) {
-    $self->_add_minilabel($top);
+    $self->add_minilabel($top);
   }
 
   # Draw axes and their numerical labels
@@ -145,7 +141,7 @@ sub draw_axes {
                 width     => $slice_length,
                 height    => 0,
                 absolutey => 1,
-                colour    => $self->track_config->get('axis_colour') || $self->my_colour('axis') || 'red',
+                colour    => $self->track_config->get('axis_colour') || 'red',
                 dotted    => $self->track_config->get('graph_type') eq 'line' ? 0 : 1,
   };
   push @{$self->glyphs}, $self->Line($params);
@@ -162,11 +158,11 @@ sub draw_score {
 ### Max and min scores on axes
   my ($self, $y, $value) = @_;
 
-  my $text = sprintf('%.2f',$value);
-  my %font = $self->get_font_details('innertext', 1);
-  my $width = [ $self->get_text_width(0, $text, '', %font) ]->[2];
-  my $height = [ $self->get_text_width(0, 1, '', %font) ]->[3];
-  my $colour = $self->track_config->('axis_colour') || $self->my_colour('axis')  || 'red';
+  my $text      = sprintf('%.2f',$value);
+  my $text_info = $self->get_text_info($text);
+  my $width     = $text_info->{'width'};
+  my $height    = $text_info->{'height'};
+  my $colour    = $self->track_config->get('axis_colour') || 'red';
 
   my %params = ( 
     absolutey     => 1,
@@ -176,14 +172,15 @@ sub draw_score {
   );
 
   push @{$self->glyphs}, $self->Text({
-                                      text          => $text,
-                                      height        => $height,
-                                      width         => $width,
-                                      x             => -10 - $width,
-                                      y             => $y - $height/2,
-                                      textwidth     => $width,
-                                      halign        => 'right',
-                                      %font,
+                                      text        => $text,
+                                      height      => $height,
+                                      width       => $width,
+                                      x           => -10 - $width,
+                                      y           => $y - $height/2,
+                                      textwidth   => $width,
+                                      halign      => 'right',
+                                      font        => $self->{'font_name'}, 
+                                      ptsize      => $self->{'font_size'},
                                       %params
                                     });
 
@@ -196,6 +193,21 @@ sub draw_score {
                                     });
 }
 
+sub draw_guideline {
+  my ($self, $width, $y, $type) = @_;
 
+  $type ||= '1';
+  push @{$self->glyphs}, $self->Line({
+                                        x         => 0,
+                                        y         => $y,
+                                        width     => $width,
+                                        height    => 1,
+                                        colour    => 'grey90',
+                                        absolutey => 1,
+                                        dotted => $type,
+                                      });
+}
+
+sub add_minilabel {}
 
 1;
