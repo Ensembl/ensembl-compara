@@ -32,6 +32,7 @@ use EnsEMBL::Web::Utils::FormatText qw(add_links);
 use EnsEMBL::Draw::Style::Feature::Structured;
 use EnsEMBL::Draw::Style::Feature::Transcript;
 use EnsEMBL::Draw::Style::Feature::Interaction;
+use EnsEMBL::Draw::Style::Graph;
 
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
