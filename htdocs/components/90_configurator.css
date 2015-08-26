@@ -59,7 +59,7 @@ div.config_wrapper div.config ul.config_menu li div.desc h2         { font-size:
 div.config_wrapper div.config ul.config_menu li div.desc h2         { font-size: 12px; }
 div.config_wrapper div.config ul.config_menu li .controls           { margin-right: -5px; float: right; height: 17px; padding: 2px; }
 div.config_wrapper div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; }
-div.config_wrapper div.config ul.config_menu li .controls .empty    { cursor: default; }
+div.config_wrapper div.config ul.config_menu li .controls .empty    { visibility: hidden; }
 div.config_wrapper div.config ul.config_menu li .menu_help.open,
 div.config_wrapper div.config ul.config_menu li.fav .fave_icon      { background-position: 0 -36px; }
 div.config_wrapper div.config ul.config_menu                        { margin-left: 5px; }

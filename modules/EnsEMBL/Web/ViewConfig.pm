@@ -709,7 +709,7 @@ sub build_imageconfig_menus {
       $desc = qq{<div class="desc">$desc</div>};
       $help = qq{<div class="sprite info_icon menu_help _ht" title="Click for more information"></div>};
     } else {
-      $help = qq{<div class="empty"></div>};
+      $help = qq{<div class="empty info_icon sprite"></div>};
     }
     
     push @classes, 'on'             if $display ne 'off';
