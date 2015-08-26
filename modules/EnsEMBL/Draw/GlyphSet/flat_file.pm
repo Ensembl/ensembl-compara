@@ -23,6 +23,8 @@ package EnsEMBL::Draw::GlyphSet::flat_file;
 
 use strict;
 
+use Role::Tiny;
+
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
@@ -31,7 +33,25 @@ use EnsEMBL::Draw::Style::Feature::Structured;
 use EnsEMBL::Draw::Style::Feature::Transcript;
 use EnsEMBL::Draw::Style::Feature::Interaction;
 
-use base qw(EnsEMBL::Draw::GlyphSet::Alignment);
+use parent qw(EnsEMBL::Draw::GlyphSet);
+
+sub init {
+  my $self = shift;
+  my @roles;
+
+  my $style = $self->my_config('style');
+  if ($style eq 'wiggle') {
+    push @roles, 'EnsEMBL::Draw::Role::Wiggle';
+  }
+  else {
+    push @roles, 'EnsEMBL::Draw::Role::Alignment';
+  }
+
+  ## Don't try to apply non-existent roles, or Role::Tiny will complain
+  if (scalar @roles) {
+    Role::Tiny->apply_roles_to_object($self, @roles);
+  }
+}
 
 sub features {
   my $self         = shift;
@@ -68,6 +88,8 @@ sub features {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
   }
+  use Data::Dumper;
+  warn ">>> FEATURES ".Dumper($features);
 
   return $features;
 }

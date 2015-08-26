@@ -16,15 +16,11 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::Alignment;
+package EnsEMBL::Draw::Role::Alignment;
 
-### Parent class of many Ensembl tracks that draw features as simple coloured blocks
+### Role for tracks that draw individual features aligned to the genome
 
-use strict;
-
-use base qw(EnsEMBL::Draw::GlyphSet);
-
-sub colour_key { return $_[0]->my_config('colour_key') || $_[0]->my_config('sub_type'); }
+use Role::Tiny;
 
 ## Renderers which tweak the standard track style
 
@@ -39,16 +35,16 @@ sub render_as_alignment_label {
   $self->draw_features;
 }
 
-sub render_half_height { 
+sub render_half_height {
   my $self = shift;
   my $height = $self->my_config('height') / 2 || 4;
   $self->{'my_config'}->set('height', $height);
   $self->{'my_config'}->set('depth', 20);
-  
-  $self->draw_features;
-}                                                           
 
-sub render_stack { 
+  $self->draw_features;
+}
+
+sub render_stack {
   my $self = shift;
   ## Show as a deep stack of densely packed features
   $self->{'my_config'}->set('height', 1);
@@ -104,7 +100,7 @@ sub convert_cigar_to_blocks {
       push @$blocks, [$start, $length];
     }
     $current_start += $length;
-  } 
+  }
 
   return $blocks;
 }
