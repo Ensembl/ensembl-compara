@@ -371,7 +371,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     print "  Name: ", $mlss->name, "\n";
     print "  Source: ", $mlss->source, "\n";
     print "  URL: $url\n";
-    print "  SpeciesSet name: $species_set_name"\n";
+    print "  SpeciesSet name: $species_set_name\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     $name = undef if ($pairwise || $singleton);
     next;
