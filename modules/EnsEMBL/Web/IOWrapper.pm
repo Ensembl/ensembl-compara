@@ -162,16 +162,16 @@ sub create_tracks {
     else {
       my $track_key = $parser->get_metadata_value('name') || 'data';
       ## Default track order is how they come out of the file
-      push @order, $track_key;
 
       ## If we haven't done so already, grab all the metadata for this track
       unless (keys %{$data->{$track_key}{'metadata'}||{}}) {
         $data->{$track_key}{'metadata'} = $parser->get_all_metadata;
         $prioritise = 1 if $data->{$track_key}{'metadata'}{'priority'};
+        push @order, $track_key;
+        my $records_seen = 1;
       }
 
       my ($seqname, $start, $end) = $self->coords;
-      my $records_seen = 1 if $seqname;
       ## Skip features that lie outside the current slice
       if ($slice) {
         next if ($seqname ne $slice->seq_region_name
