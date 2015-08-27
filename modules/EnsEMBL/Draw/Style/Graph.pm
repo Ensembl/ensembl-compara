@@ -283,19 +283,21 @@ sub draw_score {
     colour        => $colour,
   );
 
+  ## Score label - make it slightly smaller than other labels
   push @{$self->glyphs}, $self->Text({
                                       text        => $text,
                                       height      => $height,
                                       width       => $width,
-                                      x           => -10 - $width,
-                                      y           => $y - $height/2,
-                                      textwidth   => $width,
+                                      x           => -2 - $width,
+                                      y           => $y - $height * 0.75,
+                                      textwidth   => $width * 0.9,
                                       halign      => 'right',
                                       font        => $self->{'font_name'}, 
-                                      ptsize      => $self->{'font_size'},
+                                      ptsize      => $self->{'font_size'} * 0.9,
                                       %params
                                     });
 
+  ## 'Tick' on y-axis 
   push @{$self->glyphs}, $self->Rect({
                                       height        => 0,
                                       width         => 5,
