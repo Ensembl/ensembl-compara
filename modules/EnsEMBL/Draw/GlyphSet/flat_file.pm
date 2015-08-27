@@ -39,8 +39,8 @@ use parent qw(EnsEMBL::Draw::GlyphSet);
 sub init {
   my $self = shift;
   my @roles;
-
   my $style = $self->my_config('style');
+
   if ($style eq 'wiggle') {
     push @roles, 'EnsEMBL::Draw::Role::Wiggle';
   }
@@ -122,8 +122,21 @@ sub draw_features {
   foreach (@$subtracks) {
     my $features  = $_->{'features'};
     my $metadata  = $_->{'metadata'};
-    my $name      = $metadata->{'name'};
-    if ($name) {
+
+    if ($self->{'my_config'}->get('wiggle')) {
+      my ($min_score, $max_score);
+      if ($metadata->{'viewLimits'}) {
+        ($min_score, $max_score) = split ':', $metadata->{'viewLimits'};
+      }
+      else {
+        ($min_score, $max_score) = $self->_get_min_max($features);
+      }
+      $self->{'my_config'}->set('min_score', $min_score);
+      $self->{'my_config'}->set('max_score', $max_score);
+    }
+
+    my $name = $metadata->{'name'};
+    if ($name && $hover_label->{'header'} !~ /$name/) { ## Don't add the track name more than once!
       if ($mod_header) {
         $hover_label->{'header'} .= ': ';
         $mod_header = 0;
@@ -134,9 +147,9 @@ sub draw_features {
       $hover_label->{'header'} .= $name;
     }
 
-    ## Add description to track name mouseover menu
+    ## Add description to track name mouseover menu (if not added already)
     my $description = $metadata->{'description'};
-    if ($description) {
+    if ($description && $hover_label->{'extra_desc'} !~ /$description/) {
       $description = add_links($description);
       $hover_label->{'extra_desc'} .= '<br>' if $hover_label->{'extra_desc'}; 
       $hover_label->{'extra_desc'} .= $description;
@@ -178,6 +191,16 @@ sub render_interaction {
 sub href {
 }
 
+sub _get_min_max {
+  my ($self, $features) = @_;
+  my ($min, $max);
 
+  foreach (@{$features||[]}) {
+    $min = $_->{'score'} if !$min || $_->{'score'} < $min;
+    $max = $_->{'score'} if !$max || $_->{'score'} > $min;
+  }
+  
+  return ($min, $max);
+}
 
 1;
