@@ -298,7 +298,7 @@
       layout: function($table) {
         var config = $table.data('config');
         var header = new_header($table,config);
-        return '<div class="new_table"><table>'+header+'<tbody></tbody></table></div>';
+        return '<div class="new_table"><table>'+header+'<tbody></tbody></table><div class="no_results">Empty Table</div></div>';
       },
       go: function($table,$el) {
         $('th',$table).click(function(e) {
@@ -334,6 +334,11 @@
         },1,10);
       },
       truncate_to: function($table,length,orient) {
+        if(length) {
+          $('.no_results').hide();
+        } else {
+          $('.no_results').show();
+        }
         retreat_rows($table,length,orient);
       }
     };

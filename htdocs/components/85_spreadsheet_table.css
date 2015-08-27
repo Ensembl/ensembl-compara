@@ -133,3 +133,4 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .new_table_section div { display: inline-block; }
 .new_table_pagesize select { border: 1px solid #ccc; }
 .new_table_loading { background: white url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid #8b9bc1; border-radius: 5px; color: #8b9bc1; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }
+.new_table .no_results { font-size: 128px; font-weight: bold; background-color: #ddd; text-align: center; color: #ccc; padding: 16px; display: none; }
