@@ -116,6 +116,9 @@ sub draw_features {
     $self->{'my_config'}->set('depth', 10);
   }
 
+  ## Most wiggle plots make more sense if the baseline is zero
+  $self->{'my_config'}->set('baseline_zero', 1);
+
   my $subtracks = $self->{'features'};
   my %config    = %{$self->track_style_config};
 

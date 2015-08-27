@@ -84,6 +84,7 @@ sub create_glyphs {
       $max_score = 0.1;
     }
   }
+  $min_score = 0 if $min_score >= 0 && $track_config->get('baseline_zero');
   $range = $max_score - $min_score;
   my $pix_per_score = $row_height/$range;
 
@@ -92,9 +93,9 @@ sub create_glyphs {
   # line_px: value to draw "to" up/down, in pixel units (usu. 0)
   # bottom: bottom of graph in pixel units (usu. approx. pixel height)
   my $top = ($track_config->get('initial_offset')||0);
-  my $line_score = max(0,$min_score);
+  my $line_score = max(0, $min_score);
   my $bottom = $top + $pix_per_score * $range;
-  my $line_px = $bottom - ($line_score-$min_score) * $pix_per_score;
+  my $line_px = $bottom - ($line_score - $min_score) * $pix_per_score;
 
   ## Extra left-legend stuff
   if ($track_config->get('labels')) {
@@ -151,7 +152,6 @@ sub create_glyphs {
   foreach my $feature_set (@$data) {
     $plot_conf->{'colour'} = shift(@$feature_colours) if $feature_colours and @$feature_colours;
     $self->draw_wiggle($plot_conf, $feature_set);
-    }
   }
 
   return @{$self->glyphs||[]};
