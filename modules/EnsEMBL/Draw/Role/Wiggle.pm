@@ -26,20 +26,38 @@ use Role::Tiny;
 
 sub render_compact { 
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Feature']);
+  my $graph_class = $self->_select_graph_type;
+  $self->{'my_config'}->set('drawing_style', [$graph_class]);
   $self->_render;
 }
 
 sub render_tiling { 
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph']);
+  my $graph_class = $self->_select_graph_type;
+  $self->{'my_config'}->set('drawing_style', [$graph_class]);
   $self->_render; 
 }
 
 sub render_tiling_feature { 
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph', 'Feature']);
+  my $graph_class = $self->_select_graph_type;
+  $self->{'my_config'}->set('drawing_style', [$graph_class, 'Feature']);
   $self->_render; 
+}
+
+sub select_graph_type {
+  my $self = shift;
+  my $graph_class;
+  if ($self->{'my_config'}->get('unit')) {
+    $graph_class = 'Graph::Barcode';
+  }
+  elsif ($self->track_config->get('graph_type') eq 'line') {
+    $graph_class = 'Graph';
+  }
+  else {
+    $graph_class = 'Graph::Histogram';
+  }
+  return $graph_class;
 }
 
 sub _render {
