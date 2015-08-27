@@ -158,15 +158,15 @@
     render_grid(widgets,$table,manifest_c,response.start,response.data.length);
   }
   
-  function maybe_use_response(widgets,$table,result,config,manifest_c) {
+  function maybe_use_response(widgets,$table,result,config) {
     var cur_manifest = $table.data('manifest');
     var in_manifest = result.orient;
     var more = 0;
-    if($.orient_compares_equal(cur_manifest,in_manifest)) {
-      use_response(widgets,$table,manifest_c,result.response);
+    if($.orient_compares_equal(cur_manifest.manifest,in_manifest)) {
+      use_response(widgets,$table,cur_manifest,result.response);
       if(result.response.more) {
         more = 1;
-        get_new_data(widgets,$table,manifest_c,result.response.more,config);
+        get_new_data(widgets,$table,cur_manifest,result.response.more,config);
       }
     }
     if(!more) { flux(widgets,$table,-1); }
@@ -180,7 +180,7 @@
     var payload_one = $table.data('payload_one');
     if(payload_one && $.orient_compares_equal(manifest_c.manifest,config.orient)) {
       $table.data('payload_one','');
-      maybe_use_response(widgets,$table,payload_one,config,manifest_c);
+      maybe_use_response(widgets,$table,payload_one,config);
     } else {
       var wire_manifest = $.extend(false,{},manifest_c.manifest,manifest_c.wire);
       $.get($table.data('src'),{
@@ -189,20 +189,20 @@
         config: JSON.stringify($table.data('config')),
         incr_ok: manifest_c.incr_ok
       },function(res) {
-        maybe_use_response(widgets,$table,res,config,manifest_c);
+        maybe_use_response(widgets,$table,res,config);
       },'json');
     }
   }
 
   function maybe_get_new_data(widgets,$table,config) {
-    var old_manifest = $table.data('manifest');
+    var old_manifest = $table.data('manifest') || {};
     var orient = $.extend(true,{},$table.data('view'));
     $table.data('orient',orient);
-    var manifest_c = build_manifest(config,orient,old_manifest);
-    if($.orient_compares_equal(manifest_c.manifest,old_manifest)) {
+    var manifest_c = build_manifest(config,orient,old_manifest.manifest);
+    $table.data('manifest',manifest_c);
+    if($.orient_compares_equal(manifest_c.manifest,old_manifest.manifest)) {
       rerender_grid(widgets,$table,manifest_c);
     } else {
-      $table.data('manifest',manifest_c.manifest);
       get_new_data(widgets,$table,manifest_c,null,config);
     }
   }
