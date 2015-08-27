@@ -37,6 +37,10 @@
       $table.data('view',view).trigger('view-updated');
     };
 
+    var record_ticks_soon = $.debounce(function($table,$popup) {
+      record_ticks($table,$popup);
+    },1000);
+
     return {
       generate: function() {
         var out = '<div class="col_toggle"><div class="toggle">'+
@@ -60,11 +64,11 @@
         $('li',$popup).click(function() {
           var $input = $('input',this);
           $input.prop('checked',!$input.prop('checked'));
-          record_ticks($table,$popup);
+          record_ticks_soon($table,$popup);
           return false;
         });
         $('input',$popup).click(function(e) {
-          record_ticks($table,$popup);
+          record_ticks_soon($table,$popup);
           e.stopPropagation();
         });
         update_ticks($table,$popup);
