@@ -24,7 +24,8 @@ Renders a track as a graph or continuous plot
 This module expects data in the following format:
 
   $data = [
-            {
+            [
+              {
               'start'         => 123456,
               'end'           => 123789,
               'colour'        => 'red',                             # mandatory unless bordercolour set
@@ -33,8 +34,12 @@ This module expects data in the following format:
               'label_colour'  => 'red',                             # optional
               'href'          => '/Location/View?r=123456-124789',  # optional  
               'title'         => 'Some text goes here',             # optional  
-            },
+              },
+            ],
           ];
+
+Note that in order to support multi-wiggle tracks, the data should be passed as an a array of arrays
+
 =cut
 
 use strict;
@@ -55,6 +60,7 @@ sub create_glyphs {
   my $track_config    = $self->track_config;
 
   ## Set some track-wide variables
+  my $feature_colours = $track_config->get('feature_colours');
   my $default_colour  = $track_config->get('default_colour');
   my $slice_width     = $image_config->container_width;
   my $row_height      = $track_config->get('height') || 60;
@@ -124,11 +130,117 @@ sub create_glyphs {
     }
   }
 
-  return @{$self->glyphs||[]};
+  ## Single line? Build into singleton set.
+  $data = [ $data ] if ref $data->[0] ne 'ARRAY';
 
+  ## Draw them! 
+  my $plot_conf = {
+    line_score    => $line_score,
+    line_px       => $line_px,
+    pix_per_score => $pix_per_score,
+    colour        => $track_config->get('score_colour') || 'blue',
+    };
+
+  foreach my $feature_set (@$data) {
+    $plot_conf->{'colour'} = shift(@$feature_colours) if $feature_colours and @$feature_colours;
+  
+    if ($track_config->get('unit')) {
+      $self->_draw_wiggle_points_as_graph($plot_conf, $feature_set);
+    } 
+    elsif ($self->track_config->get('graph_type') eq 'line') {
+      $self->_draw_wiggle_points_as_line($plot_conf, $feature_set);
+    } 
+    else {
+      $self->_draw_wiggle_points_as_bar_or_points($plot_conf, $feature_set);
+    }
+  }
+
+  return @{$self->glyphs||[]};
 }
 
-########## DRAW INDIVIDUAL GLYPHS
+########## DRAW INDIVIDUAL GLYPHS ###################
+
+####### FEATURES ##################
+
+sub _draw_wiggle_points_as_graph {
+  my ($self, $c, $features) = @_;
+
+  my $height = $c->{'pix_per_score'} * $self->track_config->get('max_score');
+
+  push @{$self->glyphs}, $self->Barcode({
+    values    => $features,
+    x         => 1,
+    y         => 0,
+    height    => $height,
+    unit      => $self->track_config->get('unit'),
+    max       => $self->track_config->get('max_score'),
+    colours   => [$c->{'colour'}],
+    wiggle    => $self->track_config->get('graph_type'),
+  });
+}
+
+sub _draw_wiggle_points_as_line {
+  my ($self, $c, $features) = @_;
+  return unless $features && $features->[0];
+
+  my $slice_length = $self->{'container'}->length;
+  $features = [ sort { $a->{'start'} <=> $b->{'start'} } @$features ];
+  my ($previous_x,$previous_y);
+
+  for (my $i = 0; $i < @$features; $i++) {
+    my $f = $features->[$i];
+
+    my ($current_x,$current_score);
+    $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
+    $current_score = $f->{'score'};
+    my $current_y  = $c->{'line_px'}-($current_score-$c->{'line_score'}) * $c->{'pix_per_score'};
+    next unless $current_x <= $slice_length;
+
+    if(defined $previous_x) {
+      push @{$self->glyphs}, $self->Line({
+                                            x         => $current_x,
+                                            y         => $current_y,
+                                            width     => $previous_x - $current_x,
+                                            height    => $previous_y - $current_y,
+                                            colour    => $f->{'colour'},
+                                            absolutey => 1,
+                                          });
+    }
+
+    $previous_x     = $current_x;
+    $previous_y     = $current_y;
+  }
+}
+
+sub _draw_wiggle_points_as_bar_or_points {
+  my ($self, $c, $features) = @_;
+
+  my $use_points    = $self->track_config->get('graph_type') eq 'points';
+  my $max_score     = $self->track_config->get('max_score');
+
+  foreach my $f (@$features) {
+    my $start   = $f->{'start'};
+    my $end     = $f->{'end'};
+    my $score   = $f->{'score'};
+    my $href    = $f->{'href'};
+    my $height  = ($score - $c->{'line_score'}) * $c->{'pix_per_score'};
+    my $title   = sprintf('%.2f',$score);
+
+    push @{$self->glyphs}, $self->Rect({
+                              y         => $c->{'line_px'} - max($height, 0),
+                              height    => $use_points ? 0 : abs $height,
+                              x         => $start - 1,
+                              width     => $end - $start + 1,
+                              absolutey => 1,
+                              colour    => $f->{'colour'},
+                              alpha     => $self->track_config->get('use_alpha') ? 0.5 : 0,
+                              title     => $self->track_config->get('no_titles') ? undef : $title,
+                              href      => $href,
+                            });
+  }
+}
+
+####### AXES AND LABELS ###########
 
 sub draw_axes {
 ### Axes for the graph
