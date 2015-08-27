@@ -150,15 +150,7 @@ sub create_glyphs {
 
   foreach my $feature_set (@$data) {
     $plot_conf->{'colour'} = shift(@$feature_colours) if $feature_colours and @$feature_colours;
-  
-    if ($track_config->get('unit')) {
-      $self->_draw_wiggle_points_as_graph($plot_conf, $feature_set);
-    } 
-    elsif ($self->track_config->get('graph_type') eq 'line') {
-      $self->_draw_wiggle_points_as_line($plot_conf, $feature_set);
-    } 
-    else {
-      $self->_draw_wiggle_points_as_bar_or_points($plot_conf, $feature_set);
+    $self->draw_wiggle($plot_conf, $feature_set);
     }
   }
 
@@ -169,24 +161,7 @@ sub create_glyphs {
 
 ####### FEATURES ##################
 
-sub _draw_wiggle_points_as_graph {
-  my ($self, $c, $features) = @_;
-
-  my $height = $c->{'pix_per_score'} * $self->track_config->get('max_score');
-
-  push @{$self->glyphs}, $self->Barcode({
-    values    => $features,
-    x         => 1,
-    y         => 0,
-    height    => $height,
-    unit      => $self->track_config->get('unit'),
-    max       => $self->track_config->get('max_score'),
-    colours   => [$c->{'colour'}],
-    wiggle    => $self->track_config->get('graph_type'),
-  });
-}
-
-sub _draw_wiggle_points_as_line {
+sub draw_wiggle {
   my ($self, $c, $features) = @_;
   return unless $features && $features->[0];
 
@@ -214,36 +189,8 @@ sub _draw_wiggle_points_as_line {
                                           });
     }
 
-    $previous_x     = $current_x;
-    $previous_y     = $current_y;
-  }
-}
-
-sub _draw_wiggle_points_as_bar_or_points {
-  my ($self, $c, $features) = @_;
-
-  my $use_points    = $self->track_config->get('graph_type') eq 'points';
-  my $max_score     = $self->track_config->get('max_score');
-
-  foreach my $f (@$features) {
-    my $start   = $f->{'start'};
-    my $end     = $f->{'end'};
-    my $score   = $f->{'score'};
-    my $href    = $f->{'href'};
-    my $height  = ($score - $c->{'line_score'}) * $c->{'pix_per_score'};
-    my $title   = sprintf('%.2f',$score);
-
-    push @{$self->glyphs}, $self->Rect({
-                              y         => $c->{'line_px'} - max($height, 0),
-                              height    => $use_points ? 0 : abs $height,
-                              x         => $start - 1,
-                              width     => $end - $start + 1,
-                              absolutey => 1,
-                              colour    => $f->{'colour'},
-                              alpha     => $self->track_config->get('use_alpha') ? 0.5 : 0,
-                              title     => $self->track_config->get('no_titles') ? undef : $title,
-                              href      => $href,
-                            });
+    $previous_x = $current_x;
+    $previous_y = $current_y;
   }
 }
 
