@@ -21,20 +21,6 @@
   var wiggle = 1000;
   var miles_away = 50000;
 
-  function debounce(fn,msec) {
-    var id;
-    return function () {
-      var that = this;
-      var args = arguments;
-      if(!id) {
-        id = setTimeout(function() {
-          id = null;
-          fn.apply(that,args);
-        },msec);
-      }
-    }
-  }
-
   function refresh_element(i,el) {
     var etop = el.offset().top;
     var ebot = etop + +el.outerHeight(true);
@@ -112,11 +98,11 @@
       targets[prio] = elements[i];
     }
     for(var i=0;i<targets.length;i++) {
-      if(targets[i]) { console.log('prio',i); awaken(targets[i]); break; }
+      if(targets[i]) { awaken(targets[i]); break; }
     }
   }
 
-  var check_soon = debounce(check,500);
+  var check_soon = $.debounce(check,500);
   $(window).scroll(function() { check_soon(); });
 
   $.fn.lazy = function(arg) {
@@ -132,14 +118,13 @@
     }); 
   };
 
-  var refresh_soon = debounce(refresh,500);
+  var refresh_soon = $.debounce(refresh,500);
   $.lazy = function(arg,val) {
     if(arg == 'refresh') {
       refresh_soon();
     } else if(arg == 'periodic') {
       setInterval(function() { refresh_soon(); check_soon(); },5000);
     } else if(arg == 'eager') {
-      console.log('eager');
       eager();
     }
   }

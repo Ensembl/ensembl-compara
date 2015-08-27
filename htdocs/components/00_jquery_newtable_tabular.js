@@ -181,7 +181,22 @@
       target -= to_add;
     }
     $.lazy('refresh');
-    console.log("/extend_rows");
+  }
+
+  function retreat_rows($table,length,orient) {
+    var last_table = Math.floor(length/rows_per_subtable);
+    $('.subtable',$table).each(function(i) {
+      if(i>last_table) {
+        $(this).remove();
+      } else if(i==last_table) {
+        var markup = $(this).data('markup') || [];
+        markup = markup.slice(0,length-last_table*rows_per_subtable);
+        $(this).data('markup',markup);
+        build_html($table,i,orient);
+        apply_html($table,i);
+      }
+    });
+    $.lazy('refresh');
   }
 
   function update_row2($table,grid,row,orient) {
@@ -226,7 +241,6 @@
 
   function apply_html($table,table_num) {
     var $subtable = $($('.subtable',$table).eq(table_num));
-    console.log("setting redraw "+$subtable.data('xxx'));
     $subtable.data('redraw',1);
     $subtable.lazy(); // data has changed so not awake
     $.lazy('refresh');
@@ -314,7 +328,10 @@
           //if($.fn.togglewrap) {
           //  $subtable.togglewrap();
           //}
-        },1,100);
+        },1,10);
+      },
+      truncate_to: function($table,length,orient) {
+        retreat_rows($table,length,orient);
       }
     };
   }; 

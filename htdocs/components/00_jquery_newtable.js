@@ -51,6 +51,7 @@
 
   function build_manifest(config,orient,target) {
     var incr = true;
+    var all_rows = false;
     var revpipe = [];
     var wire = {};
     var manifest = $.extend(true,{},orient);
@@ -60,9 +61,11 @@
         if(out.manifest) { manifest = out.manifest; }
         if(out.undo) { revpipe.push(out.undo); }
         if(out.no_incr) { incr = false; }
+        if(out.all_rows) { all_rows = true; }
       }
     });
-    return { manifest: manifest, undo: revpipe, wire: wire, incr_ok: incr };
+    return { manifest: manifest, undo: revpipe, wire: wire,
+             incr_ok: incr, all_rows: all_rows };
   }
 
   function build_orient(manifest_c,data) {
@@ -138,7 +141,12 @@
     var grid = $table.data('grid');
     if(length==-1) { length = grid.length; }
     var orient_c = build_orient(manifest_c,grid);
+    if(manifest_c.all_rows) {
+      start = 0;
+      length = orient_c[0].length;
+    }
     widgets[view.format].add_data($table,orient_c[0],start,length,orient_c[1]);
+    widgets[view.format].truncate_to($table,orient_c[0].length,orient_c[1]);
   }
 
   function rerender_grid(widgets,$table,manifest_c) {
@@ -284,6 +292,20 @@
     });
     return good;
   };
+
+  $.debounce = function(fn,msec) {
+    var id;
+    return function () {
+      var that = this;
+      var args = arguments;
+      if(!id) {
+        id = setTimeout(function() {
+          id = null;
+          fn.apply(that,args);
+        },msec);
+      }
+    }
+  }
 
   $.fn.newTable = function() {
     this.each(function(i,outer) {
