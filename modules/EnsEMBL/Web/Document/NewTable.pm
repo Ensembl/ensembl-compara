@@ -140,9 +140,10 @@ sub render {
     ],
     orient => $orient,
     formats => [ "tabular", "paragraph" ],
+    colconf => $sort_conf,
     widgets => {
       search => [ "new_table_search",{}],
-      clientsort => [ "new_table_clientsort",$sort_conf],
+      clientsort => [ "new_table_clientsort",{}],
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
       "tabular" => [ "new_table_tabular", { } ],
       "paragraph" => [ "new_table_paragraph", { } ],

@@ -17,15 +17,20 @@
 (function($) {
   $.fn.new_table_search = function(config,data) {
 
-    function match(row,search) {
+    function match(row,search,manifest,cleaner) {
       for(var i=0;i<row.length;i++) {
         if(!row[i] || row[i][0]===undefined) { continue; }
-        if(~row[i][0].toLowerCase().indexOf(search)) { return true; }
+        var val = row[i][0];
+        if(cleaner[i]) { val = cleaner[i](val); }
+        if(~val.toLowerCase().indexOf(search)) { return true; }
       }
       return false;
     }
 
     function changed($table,value) {
+      var old_val = $table.data('search-value');
+      if(old_val == value) { return; }
+      $table.data('search-value',value);
       var view = $table.data('view');
       view.search = value;
       $table.data('view',view).trigger('view-updated');
@@ -55,11 +60,21 @@
             delete need.search;
             if(!search_was_defined) { search = ""; }
             if(!search) { return null; }
+            var cleaner = [];
+            var j = 0;
+            for(var i=0;i<need.columns.length;i++) {
+              if(need.columns[i]) {
+                var fn = config.colconf[config.columns[i].key].search_clean;
+                if(!fn) { fn = "html_cleaned"; }
+                if(fn) { var clean = $.fn['newtable_clean_'+fn]; }
+                if(clean) { cleaner[i] = clean; }
+              }
+            }
             return {
               undo: function(manifest,grid) {
                 fabric = [];
                 $.each(grid,function(i,v) {
-                  if(match(grid[i],search.toLowerCase())) {
+                  if(match(grid[i],search.toLowerCase(),manifest,cleaner)) {
                     fabric.push(grid[i]);
                   }
                 });

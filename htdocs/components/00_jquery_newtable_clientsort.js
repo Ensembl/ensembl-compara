@@ -41,13 +41,13 @@
     return v;
   } 
   $.fn.newtable_clean_html_cleaned = function(v) {
-    return v.replace(/<.*?>/,'');
+    return v.replace(/<.*?>/g,'');
   } 
   $.fn.newtable_clean_number = function(v) {
     return v.replace(/([\d\.e\+-])\s.*$/,'$1');
   }
   $.fn.newtable_clean_html_number = function(v) {
-    return v.replace(/<.*?>/,'').replace(/([\d\.e\+-])\s.*$/,'$1');
+    return v.replace(/<.*?>/g,'').replace(/([\d\.e\+-])\s.*$/,'$1');
   }
   $.fn.newtable_clean_hidden_number = function(v) {
     v = $.fn.newtable_clean_html_hidden(v);
@@ -79,13 +79,13 @@
       var incr_ok = true;
       $.each(orient.sort,function(i,stage) {
         if(!plan) { return; }
-        if(!data[stage.key]) { plan = null; return; }
-        var type = $.fn['newtable_sort_'+data[stage.key].fn];
+        if(!config.colconf[stage.key]) { plan = null; return; }
+        var type = $.fn['newtable_sort_'+config.colconf[stage.key].fn];
         if(!type) { plan = null; return; }
-        var clean = $.fn['newtable_clean_'+data[stage.key].clean];
+        var clean = $.fn['newtable_clean_'+config.colconf[stage.key].clean];
         if(!clean) { clean = $.fn.newtable_clean_none; }
         plan.push({ idx: col_idxs[stage.key], dir: stage.dir, fn: type, clean: clean});
-        if(!data[stage.key].incr_ok) { incr_ok = false; }
+        if(!config.colconf[stage.key].incr_ok) { incr_ok = false; }
       });
       if(!plan) { return null; }
       plan.push({ idx: config.columns.length, dir: 1, fn: $.fn.newtable_sort_numeric, clean: $.fn.newtable_clean_none});
