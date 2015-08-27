@@ -118,9 +118,9 @@
       pipe: function() {
         return [
           function(need,got,wire) {
+            if(!need.sort) { return null; }
             var rev = mere_reversal(need,got);
             if(rev) { return { undo: rev }; }
-            if(!need.sort) { return null; } // TODO can do more?
             var plan = build_plan(need);
             if(!plan) { return null; }
             wire.sort = need.sort;

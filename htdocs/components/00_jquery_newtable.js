@@ -175,16 +175,16 @@
   function get_new_data(widgets,$table,manifest_c,more,config) {
     console.log("data changed, should issue request");
     if(more===null) { flux(widgets,$table,1); }
-    console.log("get_new_data config",config);
 
     var payload_one = $table.data('payload_one');
     if(payload_one && $.orient_compares_equal(manifest_c.manifest,config.orient)) {
       $table.data('payload_one','');
       maybe_use_response(widgets,$table,payload_one,config);
     } else {
-      var wire_manifest = $.extend(false,{},manifest_c.manifest,manifest_c.wire);
+      wire_manifest = $.extend(false,{},manifest_c.manifest,manifest_c.wire);
       $.get($table.data('src'),{
-        orient: JSON.stringify(wire_manifest),
+        wire: JSON.stringify(wire_manifest),
+        orient: JSON.stringify(manifest_c.manifest),
         more: JSON.stringify(more),
         config: JSON.stringify($table.data('config')),
         incr_ok: manifest_c.incr_ok
@@ -220,7 +220,6 @@
   }
 
   function new_table($target) {
-    console.log('table',$target);
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
     make_chain(widgets,config);
@@ -261,7 +260,6 @@
     $table.on('view-updated',function() {
       var view = $table.data('view');
       var old_view = $table.data('old-view');
-      console.log('updated',old_view,view);
       if(view.format != old_view.format) {
         build_format(widgets,$table);
       }

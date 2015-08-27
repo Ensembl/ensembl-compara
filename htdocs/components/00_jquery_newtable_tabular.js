@@ -105,7 +105,6 @@
   }
  
   function header_fix($table,orient) {
-    console.log("header_fix ori:",orient.columns);
     var $th = $('th',$table);
     $.each(orient.columns,function(i,v) {
       var $h = $th.eq(i);
@@ -311,7 +310,6 @@
         var $subtables = $('.subtable',$table);
         var config = $table.data('config');
         fix_widths($table,config,orient);
-        console.log("add_data orient",orient);
         header_fix($table,orient);
         extend_rows($table,start+num);
         var subtabs = [];

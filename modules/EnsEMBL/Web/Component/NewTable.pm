@@ -68,14 +68,15 @@ sub ajax_table_content {
   my $hub = $self->hub;
   my $iconfig = from_json($hub->param('config'));
   my $orient = from_json($hub->param('orient'));
+  my $wire = from_json($hub->param('wire'));
   my $more = $hub->param('more');
   my $incr_ok = ($hub->param('incr_ok') eq 'true');
 
-  return $self->newtable_data_request($iconfig,$orient,$more,$incr_ok);
+  return $self->newtable_data_request($iconfig,$orient,$wire,$more,$incr_ok);
 }
 
 sub newtable_data_request {
-  my ($self,$iconfig,$orient,$more,$incr_ok) = @_;
+  my ($self,$iconfig,$orient,$wire,$more,$incr_ok) = @_;
 
   my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
 
@@ -85,7 +86,7 @@ sub newtable_data_request {
 
   # What phase should we be?
   my @required;
-  push @required,map { $_->{'key'} } @{$orient->{'sort'}||[]};
+  push @required,map { $_->{'key'} } @{$wire->{'sort'}||[]};
   if($incr_ok) {
     while($more < $#$phases) {
       my %gets_cols = map { $_ => 1 } (@{$phases->[$more]{'cols'}||\@cols});
@@ -98,7 +99,7 @@ sub newtable_data_request {
 
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
-  if($orient->{'sort'} and @{$orient->{'sort'}}) {
+  if($wire->{'sort'} and @{$wire->{'sort'}}) {
     $all_data = 1;
   }
 
@@ -132,10 +133,10 @@ sub newtable_data_request {
   $more=0 if $more == @$phases;
 
   # Sort it, if necessary
-  if($orient->{'sort'} and @{$orient->{'sort'}}) {
+  if($wire->{'sort'} and @{$wire->{'sort'}}) {
     my %sort_pos;
     $sort_pos{$used_cols->[$_]} = $_ for (0..@$used_cols);
-    $self->server_sort(\@data_out,$orient->{'sort'},$iconfig,\%sort_pos);
+    $self->server_sort(\@data_out,$wire->{'sort'},$iconfig,\%sort_pos);
     splice(@data_out,0,$irows->[0]);
     splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
   }

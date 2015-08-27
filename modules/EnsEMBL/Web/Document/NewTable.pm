@@ -157,7 +157,7 @@ sub render {
       "loading" => [ "new_table_loading", { } ],
    },
   };
-  my $payload_one = $self->{'component'}->newtable_data_request($data,$orient,undef,1);
+  my $payload_one = $self->{'component'}->newtable_data_request($data,$orient,$orient,undef,1);
   $data->{'payload_one'} = $payload_one;
  
   $data = encode_entities($self->jsonify($data));
