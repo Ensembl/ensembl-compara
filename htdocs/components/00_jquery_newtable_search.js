@@ -40,7 +40,7 @@
 
     return {
       generate: function() {
-        var out = '<input class="search"/>';
+        var out = '<input class="search" placeholder="Filter..."/>';
         return out;
       },
       go: function($table,$el) {
