@@ -33,6 +33,8 @@ use EnsEMBL::Draw::Style::Feature::Structured;
 use EnsEMBL::Draw::Style::Feature::Transcript;
 use EnsEMBL::Draw::Style::Feature::Interaction;
 use EnsEMBL::Draw::Style::Graph;
+use EnsEMBL::Draw::Style::Graph::Histogram;
+use EnsEMBL::Draw::Style::Graph::Barcode;
 
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
