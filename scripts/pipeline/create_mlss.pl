@@ -168,12 +168,14 @@ my $singleton = 0;
 my $use_genomedb_ids = 0;
 my $species_set_name;
 my $collection;
+my $method_link_class;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     "method_link_type=s" => \$method_link_type,
+    "method_link_class=s" => \$method_link_class,
     "genome_db_id=s@" => \@input_genome_db_ids,
     "name=s" => \$name,
     "source=s" => \$source,
@@ -221,6 +223,7 @@ if (!$compara_dba) {
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 my $gdba = $compara_dba->get_GenomeDBAdaptor();
 my $ma = $compara_dba->get_MethodAdaptor();
+my $ssa = $compara_dba->get_SpeciesSetAdaptor();
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 ##
 #################################################
@@ -231,9 +234,15 @@ if (!$method_link_type) {
   $method_link_type = ask_for_method_link_type($compara_dba);
   print "METHOD_LINK_TYPE = $method_link_type\n";
 }
+my $method = $ma->fetch_by_type($method_link_type);
+if (not $method) {
+    if (not $method_link_class) {
+        die "The method '$method_link_type' could not be found in the database, and --class was mmitted. I don't know how to create the new method !\n";
+    }
+    $method = Bio::EnsEMBL::Compara::Method->new( -TYPE => $method_link_type, -CLASS => $method_link_class );
+}
 
 if ($collection) {
-  my $ssa = $compara_dba->get_SpeciesSetAdaptor();
   my $ss = $ssa->fetch_collection_by_name($collection);
   # For ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES we need to exclude the
   # component genome_dbs because they are only temporary for production
@@ -243,12 +252,24 @@ if ($collection) {
 
 my @new_input_genome_db_ids;
 if ($pairwise) {
+  # Only makes sense for GenomicAlignBlock.pairwise_alignment,
+  # SyntenyRegion.synteny and Homology.homology
+  my $this_class = $method->class;
+  my %valid_classes = map {$_ => 1} qw(GenomicAlignBlock.pairwise_alignment SyntenyRegion.synteny Homology.homology);
+  die "The --pw option only makes sense for these method_link_classes, not for $this_class.\n" unless $valid_classes{$this_class};
+
   while (my $gdb_id1 = shift @input_genome_db_ids) {
     foreach my $gdb_id2 (@input_genome_db_ids) {
       push @new_input_genome_db_ids, [$gdb_id1, $gdb_id2]
     }
   }
 } elsif ($singleton) {
+  # Only makes sense for GenomicAlignBlock.pairwise_alignment,
+  # SyntenyRegion.synteny and Homology.homology
+  my $this_class = $method->class;
+  my %valid_classes = map {$_ => 1} qw(GenomicAlignBlock.pairwise_alignment SyntenyRegion.synteny Homology.homology);
+  die "The --sg option only makes sense for these method_link_classes, not for $this_class.\n" unless $valid_classes{$this_class};
+
   foreach my $gdb_id (@input_genome_db_ids) {
     push @new_input_genome_db_ids, [$gdb_id]
   }
@@ -257,6 +278,11 @@ if ($pairwise) {
 }
 
 foreach my $genome_db_ids (@new_input_genome_db_ids) {
+
+  if ($pairwise || $singleton) {
+    $name = undef;
+    $species_set_name = undef;
+  }
 
   if (!@$genome_db_ids) {
     my @genome_dbs = ask_for_genome_dbs($compara_dba);
@@ -341,10 +367,10 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids, 1);
   if ($mlss) {
     print "This MethodLinkSpeciesSet already exists in the database!\n  $method_link_type: ",
-      join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n",
-        "  Name: ", $mlss->name, "\n",
-          "  Source: ", $mlss->source, "\n",
-            "  URL: $url\n";
+        join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n";
+    print "  Name: ", $mlss->name, "\n";
+    print "  Source: ", $mlss->source, "\n";
+    print "  URL: $url\n";
     print "  SpeciesSet name: $species_set_name\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     $name = undef if ($pairwise || $singleton);
@@ -374,24 +400,21 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   }
 
   print "You are about to store the following MethodLinkSpeciesSet\n  $method_link_type: ",
-    join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n",
-      "  Name: $name\n",
-        "  Source: $source\n",
-          "  URL: $url\n";
-    print "  SpeciesSet name: $species_set_name\n";
+    join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n";
+  print "  Name: $name\n";
+  print "  Source: $source\n";
+  print "  URL: $url\n";
+  print "  SpeciesSet name: $species_set_name\n";
   unless ($force) {
     print "\nDo you want to continue? [y/N]? ";
     
     my $resp = <STDIN>;
     if ($resp !~ /^y$/i and $resp !~ /^yes$/i) {
       print "Cancelled.\n";
-      $name = undef if ($pairwise || $singleton);
       next;
-#      exit(0);
     }
   }
   
-  my $method = $ma->fetch_by_type($method_link_type) or Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type );
   my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -name => $species_set_name, -genome_dbs => $all_genome_dbs );
 
   my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
@@ -406,7 +429,6 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   } );
 
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
-  $name = undef if ($pairwise || $singleton);
 }
 
 

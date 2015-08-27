@@ -298,7 +298,7 @@ sub pipeline_analyses {
         'dump_large_nib_for_chains_factory' => 'crowd',
         'create_filter_duplicates_jobs'     => 'crowd',
         'create_pair_aligner_jobs'  => 'crowd',
-        'populate_new_database' => 'crowd',
+        'populate_new_database' => '8.4Gb',
         'parse_pair_aligner_conf' => '1Gb',
         'store_sequence'        => '1Gb',
         'store_sequence_again'  => 'crowd_himem',

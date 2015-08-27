@@ -230,7 +230,7 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@compara5:3306/mm14_ensembl_compara_80',
+        'prev_rel_db' => 'mysql://ensro@compara5:3306/lg4_ensembl_compara_81',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'

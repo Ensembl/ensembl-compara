@@ -99,14 +99,15 @@ sub default_options {
         'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
 
             # resource requirements:
-        'blast_gigs'      =>  3,
+        'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
+        'blast_gigs'      =>  4,
         'blast_hm_gigs'   =>  6,
         'mcl_gigs'        => 72,
         'mcl_threads'     => 12,
         'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
         'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
-        'blast_capacity'  => 4000,                                  # work both as hive_capacity and resource-level throttle
+        'blast_capacity'  => 5000,                                  # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
         'HMMer_classify_capacity' => 100,
@@ -360,7 +361,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'      => 'SELECT DISTINCT m.sequence_id seqid FROM seq_member m',
-                'step'            => 50,
+                'step'            => $self->o('blast_minibatch_size'),
             },
             -flow_into => {
                 '2->A' => { 'blast' => { 'start_seq_id' => '#_start_seqid#', 'end_seq_id' => '#_end_seqid#', 'minibatch' => '#_range_count#' } },
@@ -381,6 +382,7 @@ sub pipeline_analyses {
             -flow_into => {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
                 -1 => 'blast_himem',
+                -2 => 'blast_himem',
             },
             -rc_name => 'RegBlast',
         },
@@ -676,11 +678,35 @@ sub pipeline_analyses {
 
 =head1 STATS and TIMING
 
+=head2 rel.82 stats
+
+    sequences to cluster:           7,936,461       [ SELECT count(*) from sequence; ] -- took 1m12s to run
+    distances by Blast:         1,561,866,354       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 43m to run
+
+    LRG dnafrags:                 610               [ SELECT count(*) FROM dnafrag WHERE coord_system_name='lrg'; ]
+    LRG gene members:             608               [ SELECT count(*) FROM gene_member WHERE stable_id LIKE 'LRG_%'; ]
+    non-reference genes:         3176               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          9337               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         11.3d              [ call time_analysis('%'); ]    -- could have been shorter by 1-2 days (mcxload was run while quota was exceeded, which caused a silent format error in the tcx file)
+    uniprot_loading time:       18.5h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               5.8d               [ call time_analysis('blast%'); ]
+    mcxload running time:       22.3h               [ select (UNIX_TIMESTAMP(when_finished)-UNIX_TIMESTAMP(when_started))/3600 hours from role join analysis_base using(analysis_id) where done_jobs=1 and logic_name='mcxload_matrix' order by role_id DESC limit 1; ]
+    mcl running time:           13.7h               [ select (UNIX_TIMESTAMP(when_finished)-UNIX_TIMESTAMP(when_started))/3600 hours from role join analysis_base using(analysis_id) where done_jobs=1 and logic_name='mcl' order by role_id DESC limit 1; ]
+
+    memory used by mcxload:     41.6G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         63.2G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
+
+
 =head2 rel.81 stats
 
     sequences to cluster:           7,936,228       [ SELECT count(*) from sequence; ] -- took 1m12s to run
     distances by Blast:         1,561,834,584       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 43m to run
 
+    LRG dnafrags:                 575               [ SELECT count(*) FROM dnafrag WHERE coord_system_name='lrg'; ]
+    LRG gene members:             573               [ SELECT count(*) FROM gene_member WHERE stable_id LIKE 'LRG_%'; ]
     non-reference genes:         3120               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
     non-reference peps:          9260               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
 
