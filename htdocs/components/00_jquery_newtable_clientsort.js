@@ -64,7 +64,9 @@
         if(!c) {
           var av = a[stage.idx];
           var bv = b[stage.idx];
-          if(!av || !bv) { return 0; }
+          if(!av || !bv) {
+            return (!av)-(!bv);
+          }
           c = av[1]-bv[1];
           if(!c) {
             c = stage.fn(stage.clean(av[0]),stage.clean(bv[0]),stage.dir);
@@ -128,7 +130,7 @@
             return {
               undo: function(manifest,grid) {
                 var fabric = grid.slice();
-                $.each(fabric,function(i,val) { val.push(i); }); // ties
+                $.each(fabric,function(i,val) { val[config.columns.length] = [i,1]; }); // ties
                 fabric.sort(function(a,b) {
                   return compare(a,b,plan.stages);
                 });
