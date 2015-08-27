@@ -145,27 +145,33 @@ sub create_tracks {
   my $data        = {};
   my $prioritise  = 0;
   my @order;
-  my $saved_key;
+  my $records_seen;
 
   while ($parser->next) {
     my $track_line = $parser->is_metadata;
     if ($track_line) {
+      if ($records_seen) { 
+        ## We were previously in the data, so start a new track -
+        ## slurp metadata into this track and wipe it from the parser
+        ## so that we don't get values copied between tracks
+        $parser->start_new_track;
+        $records_seen = 0;
+      }
       $parser->read_metadata;
     }
     else {
-      my $track_key = $parser->get_metadata_value('name') || $saved_key || 'data';
+      my $track_key = $parser->get_metadata_value('name') || 'data';
+      ## Default track order is how they come out of the file
+      push @order, $track_key;
 
-      ## Slurp metadata into this track and wipe it from the parser
-      ## so that we don't get values copied between tracks
+      ## If we haven't done so already, grab all the metadata for this track
       unless (keys %{$data->{$track_key}{'metadata'}||{}}) {
         $data->{$track_key}{'metadata'} = $parser->get_all_metadata;
         $prioritise = 1 if $data->{$track_key}{'metadata'}{'priority'};
-        push @order, $track_key;
-        $saved_key = $track_key;
-        $parser->start_new_track;
       }
 
       my ($seqname, $start, $end) = $self->coords;
+      my $records_seen = 1 if $seqname;
       ## Skip features that lie outside the current slice
       if ($slice) {
         next if ($seqname ne $slice->seq_region_name
