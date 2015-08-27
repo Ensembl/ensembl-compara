@@ -65,13 +65,15 @@ sub create_glyphs {
   my $slice_width     = $image_config->container_width;
   my $row_height      = $track_config->get('height') || 60;
 
+  ## LOTS OF POSITIONAL MATHS!
+
   # max_score: score at top of y-axis on graph
   # min_score: score at bottom of y-axis on graph
   # range: scores spanned by graph (small value used if identically zero)
   # pix_per_score: vertical pixels per unit score
   my $max_score     = $track_config->get('max_score');
   my $min_score     = $track_config->get('min_score');
-  my $range = $max_score-$min_score;
+  my $range = $max_score - $min_score;
   if($range < 0.01) {
     # Oh dear, data all has pretty much same value ...
     if($max_score > 0.01) {
@@ -94,25 +96,12 @@ sub create_glyphs {
   my $bottom = $top + $pix_per_score * $range;
   my $line_px = $bottom - ($line_score-$min_score) * $pix_per_score;
 
-  # Shift down the lhs label to between the axes unless the subtitle is within the track
-  if ($bottom - $top > 30 && $track_config->get('wiggle_subtitle')) {
-    # luxurious space for centred label
-    # graph is offset down if subtitled
-    $self->{'label_y_offset'} =
-        ($bottom - $top) / 2        # half-way-between
-        + $track_config->get('subtitle_height')
-        - 16;                       # two-line label so centre its centre
-  } else {
-    # tight, just squeeze it down a little
-    $self->{'label_y_offset'} = 0;
-  }
-
-  # Extra left-legend stuff
+  ## Extra left-legend stuff
   if ($track_config->get('labels')) {
     $self->add_minilabel($top);
   }
 
-  # Draw axes and their numerical labels
+  ## Draw axes and their numerical labels
   if (!$track_config->get('no_axis')) {
     $self->draw_axes($top, $line_px, $bottom, $slice_width);
   }
@@ -120,8 +109,26 @@ sub create_glyphs {
   if ($track_config->get('axis_label') ne 'off') {
     $self->draw_score($top, $max_score);
     $self->draw_score($bottom, $min_score);
+
+    # Shift down the lhs label to between the axes
+    my $label_y_offset;
+    if ($bottom - $top > 30) {
+      # luxurious space for centred label
+      $label_y_offset =  ($bottom - $top) / 2;  # half-way-between 
+      # graph is offset further if subtitled
+      if ($track_config->get('wiggle_subtitle')) {
+        # two-line label so centre its centre
+        $label_y_offset += $self->subtitle_height - 16;                        
+      }
+    } else {
+      # tight, just squeeze it down a little
+      $label_y_offset = 0;
+    }
+    ## Put this into track_config, so it can be passed back to GlyphSet
+    $track_config->set('label_y_offset', $label_y_offset);
   }
 
+  ## Horizontal guidelines at 25% intervals
   if(!$track_config->get('no_axis') and !$track_config->get('no_guidelines')) {
     foreach my $i (1..4) {
       my $type;
