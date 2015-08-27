@@ -45,13 +45,13 @@ sub render_tiling_feature {
   $self->_render; 
 }
 
-sub select_graph_type {
+sub _select_graph_type {
   my $self = shift;
   my $graph_class;
   if ($self->{'my_config'}->get('unit')) {
     $graph_class = 'Graph::Barcode';
   }
-  elsif ($self->track_config->get('graph_type') eq 'line') {
+  elsif ($self->{'my_config'}->get('graph_type') eq 'line') {
     $graph_class = 'Graph';
   }
   else {
