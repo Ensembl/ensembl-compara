@@ -22,24 +22,6 @@ package EnsEMBL::Draw::Role::Wiggle;
 
 use Role::Tiny;
 
-### Subtitles
-
-sub supports_subtitles { 1; }
-
-sub wiggle_subtitle { undef; }
-
-sub subtitle_colour { $_[0]->{'subtitle_colour'} || 'slategray' }
-
-sub subtitle_text {
-  my ($self) = @_;
-
-  my $name = $self->my_config('short_name') || $self->my_config('name');
-  my $label = $self->wiggle_subtitle;
-  $label =~ s/\[\[name\]\]/$name/;
-  $label =~ s/<.*?>//g;
-  return $label;
-}
-
 ### Renderers
 
 sub render_compact { 
@@ -73,10 +55,16 @@ sub _render {
     return 1;
   }
 
-  $self->{'my_config'}->set('wiggle', 1);
   $self->{'my_config'}->set('height', 60);
   $self->{'my_config'}->set('bumped', 0);
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
+
+  my $tracks = $self->{'features'};
+
+  ## Work out maximum and minimum scores
+  my ($min_score, $max_score) = $self->_get_min_max($tracks);
+  $self->{'my_config'}->set('min_score', $min_score);
+  $self->{'my_config'}->set('max_score', $max_score);
 
   # Make sure subtitles will be correctly coloured
   unless ($self->{'my_config'}->get('subtitle_colour')) {
@@ -97,6 +85,34 @@ sub _render {
 
   return 1;
 =cut
+}
+
+sub _get_min_max {
+### Get minimum and maximum scores for a set of features
+  my ($self, $features) = @_;
+  my ($min, $max);
+
+  foreach my $f (@{$features||[]}) {
+    if (ref($f) eq 'HASH') {
+      if ($f->{'metadata'} && $f->{'metadata'}{'viewLimits'}) {
+        return split ':', $f->{'metadata'}{'viewLimits'};
+      }
+      elsif ($f->{'features'}) {
+        foreach (@{$f->{'features'}}) {
+          next unless $_->{'score'};
+          $min = $_->{'score'} if !$min || $_->{'score'} < $min;
+          $max = $_->{'score'} if !$max || $_->{'score'} > $min;
+        }
+      }
+    }
+    else {
+      next unless $f->{'score'};
+      $min = $f->{'score'} if !$min || $f->{'score'} < $min;
+      $max = $f->{'score'} if !$max || $f->{'score'} > $min;
+    }
+  }
+ 
+  return ($min, $max);
 }
 
 1;
