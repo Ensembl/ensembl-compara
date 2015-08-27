@@ -21,15 +21,27 @@
   var wiggle = 1000;
   var miles_away = 50000;
 
+  function still_alive(el) {
+    var p = el.parents();
+    if(!p.length) { return false; }
+    if($(p[p.length-1]).prop("tagName") != "HTML") { return false; }
+    return true;
+  }
+
   function refresh_element(i,el) {
     var etop = el.offset().top;
-    var ebot = etop + +el.outerHeight(true);
+    var ebot = etop +el.outerHeight(true);
     coords[i] = [etop-wiggle,ebot+wiggle];
   }
 
   function refresh() {
     for(var i=0;i<elements.length;i++) {
       refresh_element(i,elements[i]);
+      if(!still_alive(elements[i])) {
+        elements.splice(i,1);
+        coords.splice(i,1);
+        i--;
+      }
     }
   }
 
