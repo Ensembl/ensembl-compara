@@ -83,12 +83,10 @@
         }
       }
     });
-    console.log("widths",totals);
     var table_width = $table.width();
     totals['px'] *= 100/table_width;
     if(totals['px'] > 100) { totals['px'] = 100; }
     totals['u'] = (100-totals['px']) / (totals['u']||1);
-    console.log("widths2",totals);
     var $head = $('table:first th',$table);
     $head.each(function(i) {
       if(orient.columns[i]) {
@@ -169,7 +167,6 @@
   }
 
   function extend_rows($table,target) {
-    console.log("extend_rows");
     var $subtables = $('.subtable',$table);
     target -= $subtables.length*rows_per_subtable;
     while(target > 0) {
@@ -191,9 +188,13 @@
       } else if(i==last_table) {
         var markup = $(this).data('markup') || [];
         markup = markup.slice(0,length-last_table*rows_per_subtable);
-        $(this).data('markup',markup);
-        build_html($table,i,orient);
-        apply_html($table,i);
+        if(markup.length) {
+          $(this).data('markup',markup);
+          build_html($table,i,orient);
+          apply_html($table,i);
+        } else {
+          $(this).remove();
+        }
       }
     });
     $.lazy('refresh');
@@ -308,9 +309,6 @@
       },
       add_data: function($table,grid,start,num,orient) {
         var $subtables = $('.subtable',$table);
-        $subtables.each(function() {
-          set_active_orient($(this),orient);
-        });
         var config = $table.data('config');
         fix_widths($table,config,orient);
         console.log("add_data orient",orient);
@@ -321,9 +319,16 @@
           subtabs[update_row2($table,grid,i+start,orient)]=1;
         }
         d = $.Deferred().resolve(subtabs);
+        var has_reset = false;
         var e = loop(d,function(tabnum,v) {
           build_html($table,tabnum,orient);
           var $subtable = apply_html($table,tabnum);
+          if(!has_reset) {
+            $subtables.each(function() {
+              set_active_orient($(this),orient);
+            });
+            has_reset = true;
+          }
           // XXX have generic decoration method
           //if($.fn.togglewrap) {
           //  $subtable.togglewrap();

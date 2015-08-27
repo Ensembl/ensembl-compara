@@ -19,7 +19,7 @@
 
     function match(row,search) {
       for(var i=0;i<row.length;i++) {
-        if(!row[i]) { continue; }
+        if(!row[i] || row[i][0]===undefined) { continue; }
         if(~row[i][0].toLowerCase().indexOf(search)) { return true; }
       }
       return false;

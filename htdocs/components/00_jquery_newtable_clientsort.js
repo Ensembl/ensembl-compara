@@ -64,6 +64,7 @@
         if(!c) {
           var av = a[stage.idx];
           var bv = b[stage.idx];
+          if(!av || !bv) { return 0; }
           c = av[1]-bv[1];
           if(!c) {
             c = stage.fn(stage.clean(av[0]),stage.clean(bv[0]),stage.dir);
