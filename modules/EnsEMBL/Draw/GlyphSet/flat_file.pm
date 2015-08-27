@@ -52,6 +52,8 @@ sub init {
   if (scalar @roles) {
     Role::Tiny->apply_roles_to_object($self, @roles);
   }
+
+  $self->{'features'} = $self->features;
 }
 
 sub features {
@@ -112,8 +114,8 @@ sub draw_features {
     $self->{'my_config'}->set('depth', 10);
   }
 
-  my $subtracks = $self->features;
-  my $config    = $self->track_style_config;
+  my $subtracks = $self->{'features'};
+  my %config    = %{$self->track_style_config};
 
   my $key         = $self->{'hover_label_class'};
   my $hover_label = $self->{'config'}->{'hover_labels'}{$key};
@@ -122,18 +124,6 @@ sub draw_features {
   foreach (@$subtracks) {
     my $features  = $_->{'features'};
     my $metadata  = $_->{'metadata'};
-
-    if ($self->{'my_config'}->get('wiggle')) {
-      my ($min_score, $max_score);
-      if ($metadata->{'viewLimits'}) {
-        ($min_score, $max_score) = split ':', $metadata->{'viewLimits'};
-      }
-      else {
-        ($min_score, $max_score) = $self->_get_min_max($features);
-      }
-      $self->{'my_config'}->set('min_score', $min_score);
-      $self->{'my_config'}->set('max_score', $max_score);
-    }
 
     my $name = $metadata->{'name'};
     if ($name && $hover_label->{'header'} !~ /$name/) { ## Don't add the track name more than once!
@@ -148,21 +138,30 @@ sub draw_features {
     }
 
     ## Add description to track name mouseover menu (if not added already)
-    my $description = $metadata->{'description'};
-    if ($description && $hover_label->{'extra_desc'} !~ /$description/) {
+    my $description   = $metadata->{'description'};
+    my $already_seen  = ($hover_label->{'extra_desc'} && $description 
+                          && $hover_label->{'extra_desc'} =~ /$description/);
+    if ($description && !$already_seen) {
       $description = add_links($description);
       $hover_label->{'extra_desc'} .= '<br>' if $hover_label->{'extra_desc'}; 
       $hover_label->{'extra_desc'} .= $description;
     }
+    ## Also put it into config, for subtitles
+
+    $config{'subtitle'} = $description;
 
     my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
     foreach (@{$drawing_style||[]}) {
       my $style_class = 'EnsEMBL::Draw::Style::'.$_;
-      my $style = $style_class->new($config, $features);
+      my $style = $style_class->new(\%config, $features);
       $self->push($style->create_glyphs);
     }
   }
+  ## This is clunky, but it's the only way we can make the new code
+  ## work in a nice backwards-compatible way right now!
+  ## Get label position, which is set in Style::Graph
+  $self->{'label_y_offset'} = $self->{'my_config'}->get('label_y_offset');
 }
 
 sub render_as_transcript_nolabel {
@@ -189,18 +188,6 @@ sub render_interaction {
 }
 
 sub href {
-}
-
-sub _get_min_max {
-  my ($self, $features) = @_;
-  my ($min, $max);
-
-  foreach (@{$features||[]}) {
-    $min = $_->{'score'} if !$min || $_->{'score'} < $min;
-    $max = $_->{'score'} if !$max || $_->{'score'} > $min;
-  }
-  
-  return ($min, $max);
 }
 
 1;
