@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::Style::Graph::Histogram;
 
+use List::Util qw(min max);
+
 use parent qw(EnsEMBL::Draw::Style::Graph);
 
 sub draw_wiggle {
