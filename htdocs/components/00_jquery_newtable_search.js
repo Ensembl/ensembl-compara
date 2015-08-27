@@ -19,9 +19,11 @@
 
     function match(row,search,manifest,cleaner) {
       for(var i=0;i<row.length;i++) {
+        if(!manifest.columns[i]) { continue; }
         if(!row[i] || row[i][0]===undefined) { continue; }
         var val = row[i][0];
         if(cleaner[i]) { val = cleaner[i](val); }
+        if(val == undefined) { return false; }
         if(~val.toLowerCase().indexOf(search)) { return true; }
       }
       return false;
@@ -71,10 +73,10 @@
               }
             }
             return {
-              undo: function(manifest,grid) {
+              undo: function(manifest,grid,dest) {
                 fabric = [];
                 $.each(grid,function(i,v) {
-                  if(match(grid[i],search.toLowerCase(),manifest,cleaner)) {
+                  if(match(grid[i],search.toLowerCase(),dest,cleaner)) {
                     fabric.push(grid[i]);
                   }
                 });

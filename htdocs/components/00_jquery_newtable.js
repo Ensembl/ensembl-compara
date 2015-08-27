@@ -68,10 +68,10 @@
              incr_ok: incr, all_rows: all_rows };
   }
 
-  function build_orient(manifest_c,data) {
+  function build_orient(manifest_c,data,destination) {
     var orient = $.extend(true,{},manifest_c.manifest);
     $.each(manifest_c.undo,function(i,step) {
-      var out = step(orient,data);
+      var out = step(orient,data,destination);
       orient = out[0];
       data = out[1];
     });
@@ -140,7 +140,7 @@
     var view = $table.data('view');
     var grid = $table.data('grid');
     if(length==-1) { length = grid.length; }
-    var orient_c = build_orient(manifest_c,grid);
+    var orient_c = build_orient(manifest_c,grid,view);
     if(manifest_c.all_rows) {
       start = 0;
       length = orient_c[0].length;
