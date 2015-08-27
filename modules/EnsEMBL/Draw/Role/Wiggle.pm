@@ -73,6 +73,8 @@ sub _render {
     return 1;
   }
 
+  $self->{'my_config'}->set('wiggle', 1);
+  $self->{'my_config'}->set('height', 60);
   $self->{'my_config'}->set('bumped', 0);
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
 
@@ -83,7 +85,7 @@ sub _render {
   }
 
   ## Now we try and draw the features
-  my $error = $self->draw_features(@_);
+  my $error = $self->draw_features;
 
 =pod
   return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
