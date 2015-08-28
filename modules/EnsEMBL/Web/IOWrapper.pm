@@ -108,6 +108,12 @@ sub format {
   return $self->{'format'};
 }
 
+sub hub {
+  ### a
+  my $self = shift;
+  return $self->{'hub'};
+}
+
 sub convert_to_gradient {
 ### Convert a 0-1000 score to a value on a colour gradient
 ### Default is greyscale
@@ -206,6 +212,13 @@ sub build_feature {
   else {
     $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'}, $slice)];
   }
+}
+
+sub href {
+  my ($self, $params) = @_;
+  return $self->hub->url('ZMenu', 
+                        {'action' => 'UserData', 'format' => $self->format, 
+                          'file' => $self->file, %$params});
 }
 
 sub create_hash {
