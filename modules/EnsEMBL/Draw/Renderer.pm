@@ -224,15 +224,8 @@ sub render {
   }
 
   # add transparent layer for highlighted area
-  if (my $hl = $self->{'extra'}{'highlight'}) {
-    push @{$layers{$top_layer + 2}}, EnsEMBL::Draw::Glyph::Rect->new({
-      colour      => '#8C648C',
-      alpha       => 0.9,
-      pixelx      => $hl->{'x'},
-      pixely      => $hl->{'y'},
-      pixelwidth  => $hl->{'w'},
-      pixelheight => $hl->{'h'}
-    });
+  if (my $highlight_layer = $self->add_highlight_layer($self->{'extra'}{'highlight'})) {
+    push @{$layers{$top_layer + 2}}, $highlight_layer;
   }
 
   my %M;
@@ -266,6 +259,10 @@ sub render {
   
   # the last thing we do in the render process is add a frame so that it appears on the top of everything else
   $self->add_canvas_frame($config, $im_width, $im_height);
+}
+
+sub add_highlight_layer {
+  ## not all renderers support transparency
 }
 
 sub canvas {
