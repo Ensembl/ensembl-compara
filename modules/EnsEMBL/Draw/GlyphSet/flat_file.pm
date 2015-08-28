@@ -98,8 +98,6 @@ sub features {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
   }
-  #use Data::Dumper;
-  #warn ">>> FEATURES ".Dumper($features);
 
   return $features;
 }
