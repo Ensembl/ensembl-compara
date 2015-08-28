@@ -41,7 +41,9 @@
     return v;
   } 
   $.fn.newtable_clean_html_cleaned = function(v) {
-    return v.replace(/<.*?>/g,'');
+    v = v.replace(/<[^>]*? class="[^"]*?hidden.*?<\/.*?>/,'');
+    v = v.replace(/<.*?>/g,'').replace(/&.*?;/g,'');
+    return v;
   } 
   $.fn.newtable_clean_number = function(v) {
     return v.replace(/([\d\.e\+-])\s.*$/,'$1');

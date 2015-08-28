@@ -29,7 +29,15 @@ our @EXPORT_OK = qw(newtable_sort_client_config newtable_sort_isnull
                     newtable_sort_cmp newtable_sort_range_value
                     newtable_sort_range_finish newtable_sort_range_match);
 
-sub html_cleaned { $_[0] =~ s/<.*?>//g; return $_[0]; }
+sub html_cleaned {
+  local $_ = $_[0];
+
+  s/<[^>]*? class="[^"]*?hidden.*?<\/.*?>//g;
+  s/<.*?>//g;
+  s/\&.*?;//g;
+  return $_;
+}
+
 sub number_cleaned { $_[0] =~ s/([\d\.e\+-])\s.*$/$1/; return $_[0]; }
 
 sub html_hidden {

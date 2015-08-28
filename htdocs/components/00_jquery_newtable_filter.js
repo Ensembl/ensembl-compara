@@ -26,6 +26,8 @@
   $.fn.newtable_filterrange_class = function($el,values,state) {
     var v = {};
     var $out = $("<ul/>");
+    values = values.slice();
+    values.sort(function(a,b) { return a.localeCompare(b); });
     $.each(values,function(i,val) {
       var $li = $("<li/>").text(val).data('key',val).appendTo($out);
       $li.data('val',val);
@@ -37,6 +39,7 @@
         $el.trigger('update',state);
       });
     });
+    if(values.length>2) { $out.addClass('use_cols'); }
     return $out;
   };
 
