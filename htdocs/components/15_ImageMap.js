@@ -1373,7 +1373,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   updateExportMenu: function() {
-    var panel = this;
     var extra = {};
 
     if (!$.isEmptyObject(this.boxCoords)) {
@@ -1387,6 +1386,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         w: Math.round((Ensembl.highlightedLoc[3] - Ensembl.highlightedLoc[2]) / this.highlightBoundary.range.scale),
         h: this.highlightBoundary.b - this.highlightBoundary.t
       };
+
+      if (extra.highlight.x < this.highlightBoundary.l) {
+        extra.highlight.w = extra.highlight.w - this.highlightBoundary.l + extra.highlight.x;
+        extra.highlight.x = this.highlightBoundary.l;
+      }
     }
 
     extra = $.isEmptyObject(extra) ? false : encodeURIComponent(JSON.stringify(extra));
