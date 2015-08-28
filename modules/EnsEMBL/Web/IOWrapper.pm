@@ -236,6 +236,7 @@ sub href {
                                     'fake_click_chr'    => $params->{'seq_region'}, 
                                     'fake_click_start'  => $params->{'start'}, 
                                     'fake_click_end'    => $params->{'end'},
+                                    'feature_id'        => $params->{'id'},              
                                   });
 }
 
