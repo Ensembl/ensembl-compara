@@ -85,7 +85,11 @@ sub features {
   }
 
   my $file  = EnsEMBL::Web::File::User->new(%args);
-  my $iow   = EnsEMBL::Web::IOWrapper::open($file, 'hub' => $hub);
+  my $iow   = EnsEMBL::Web::IOWrapper::open($file, 
+                                            'hub'         => $hub, 
+                                            'config_type' => $self->{'config'}{'type'},
+                                            'track'       => $self->{'my_config'}{'id'},
+                                            );
 
   if ($iow) {
     ## Parse the file, filtering on the current slice
