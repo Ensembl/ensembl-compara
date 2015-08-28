@@ -39,6 +39,7 @@ sub create_hash {
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
+  my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
 
@@ -66,15 +67,24 @@ sub create_hash {
     $colour = $metadata->{'color'};
   }
 
+  my $id = $self->parser->can('get_id') ? $self->parser->get_id
+            : $self->parser->can('get_name') ? $self->parser->get_name : undef;
+
+  my $href = $self->href({
+                        'id'  => $id,
+                        'url' => $metadata->{'url'},
+                        });
+
   return {
     'start'         => $feature_start - $slice->start,
     'end'           => $feature_end - $slice->start,
-    'seq_region'    => $self->parser->get_seqname,
+    'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,
     'label'         => $self->parser->get_name,
     'colour'        => $colour, 
     'structure'     => $self->create_structure($feature_start, $slice->start),
+    'href'          => $href,
   };
 }
 
