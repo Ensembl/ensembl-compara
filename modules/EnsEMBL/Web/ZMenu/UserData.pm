@@ -32,24 +32,66 @@ sub content {
   my $click_data = $self->click_data;
   
   return unless $click_data;
-  
+
+  my @coords = map { $hub->param("fake_click_$_") } qw(chr start end);
+
   my $type     = $click_data->{'my_config'}->data->{'glyphset'};
   my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
-  
-  return unless $self->dynamic_use($glyphset);
-  
-  $glyphset = $glyphset->new($click_data);
-  
-  my $i = 0;
-  my @features;
-  
-  if ($type eq 'bigbed') {
-    my %feats    = $glyphset->features; # bigbed returns a stupid data structure
 
-    @features = map { ref $_->[0] eq 'ARRAY' ? @{$_->[0]} : @$_ } values %feats;
-  } else {
-    @features = @{$glyphset->features};
+  if ($self->dynamic_use($glyphset)) {
+    $glyphset = $glyphset->new($click_data);
+
+    my $i = 0;
+    my @features;
+
+    if ($type eq 'flat_file') { ## Can contain multiple tracks 
+      my $data = $glyphset->features;
+      foreach (@$data) {
+        push @features, @{$_->{'features'}};
+      }
+    }
+    elsif ($type eq 'bigbed') {
+      my %feats    = $glyphset->features; # bigbed returns a stupid data structure
+
+      @features = map { ref $_->[0] eq 'ARRAY' ? @{$_->[0]} : @$_ } values %feats;
+    } 
+    else {
+      @features = @{$glyphset->features};
+    }
+
+    my $feature_id  = $hub->param('feature_id') || $hub->param('id');
+    my $slice       = $click_data->{'container'};
+
+    if ($feature_id) {
+      @features = grep { $_->{'id'} eq $feature_id || $_->{'name'} eq $feature_id } @features;
+    }
+    else {
+      @features = grep { $_->{'seq_region'} eq $coords[0]
+                          && $_->{'start'} >= 0 
+                          && $_->{'end'} <= $slice->length } @features;
+    }  
+
+    foreach (@features) {
+      my $caption     = $_->{'id'} || $_->{'name'} || $hub->param('format').' feature';
+      $self->caption($caption);
+
+      $self->add_entry({'type' => 'Location', 
+                        'label' => sprintf('%s:%s-%s', 
+                                              $_->{'seq_region'}, 
+                                              $_->{'start'} + $slice->start, 
+                                              $_->{'end'} + $slice->start)
+                        });
+
+      if ($_->{'score'}) {
+        $self->add_entry({'type' => 'Score', 'label' => $_->{'score'}});
+      }
+    }
+
   }
+}
+
+=pod  
+  
   my $id = $hub->param('id');
   if($id && $glyphset->can('feature_id')) {
     @features = grep { $glyphset->feature_id($_) eq $id } @features;
@@ -183,5 +225,7 @@ sub format_type {
   $type =~ s/_/ /g;
   return ucfirst lc $type;
 }
+
+=cut
 
 1;
