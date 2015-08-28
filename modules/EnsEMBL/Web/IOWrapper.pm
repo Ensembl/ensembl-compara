@@ -114,6 +114,18 @@ sub hub {
   return $self->{'hub'};
 }
 
+sub config_type {
+  ### a
+  my $self = shift;
+  return $self->{'config_type'};
+}
+
+sub track {
+  ### a
+  my $self = shift;
+  return $self->{'track'};
+}
+
 sub convert_to_gradient {
 ### Convert a 0-1000 score to a value on a colour gradient
 ### Default is greyscale
@@ -216,9 +228,15 @@ sub build_feature {
 
 sub href {
   my ($self, $params) = @_;
-  return $self->hub->url('ZMenu', 
-                        {'action' => 'UserData', 'format' => $self->format, 
-                          'file' => $self->file, %$params});
+  return $self->hub->url('ZMenu', {
+                                    'action'            => 'UserData', 
+                                    'config'            => $self->config_type,  
+                                    'track'             => $self->track,
+                                    'format'            => $self->format, 
+                                    'fake_click_chr'    => $params->{'seq_region'}, 
+                                    'fake_click_start'  => $params->{'start'}, 
+                                    'fake_click_end'    => $params->{'end'},
+                                  });
 }
 
 sub create_hash {
