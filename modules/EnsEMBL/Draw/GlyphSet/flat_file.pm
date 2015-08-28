@@ -61,6 +61,7 @@ sub init {
 sub features {
   my $self         = shift;
   my $container    = $self->{'container'};
+  my $hub          = $self->{'config'}->hub;
   my $species_defs = $self->species_defs;
   my $sub_type     = $self->my_config('sub_type');
   my $format       = $self->my_config('format');
@@ -68,7 +69,7 @@ sub features {
 
   ## Get the file contents
   my %args = (
-              'hub'     => $self->{'config'}->hub,
+              'hub'     => $hub,
               'format'  => $format,
               );
 
@@ -84,7 +85,7 @@ sub features {
   }
 
   my $file  = EnsEMBL::Web::File::User->new(%args);
-  my $iow   = EnsEMBL::Web::IOWrapper::open($file);
+  my $iow   = EnsEMBL::Web::IOWrapper::open($file, 'hub' => $hub);
 
   if ($iow) {
     ## Parse the file, filtering on the current slice
@@ -190,9 +191,6 @@ sub render_interaction {
   ## Limit track height to that of biggest arc
   my $max_height  = $self->{'my_config'}->get('max_height');
   $self->{'maxy'} = $max_height if $max_height;
-}
-
-sub href {
 }
 
 1;
