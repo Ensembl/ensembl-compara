@@ -80,6 +80,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     this.el.find('._ht').helptip();
     this.el.find('._stt').selectToToggle({}, this.el);
+    this.el.find('._sdd').speciesDropdown();
   },
   
   getContent: function (link, url) {

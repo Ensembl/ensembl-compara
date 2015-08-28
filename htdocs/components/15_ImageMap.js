@@ -568,6 +568,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   changeConfiguration: function (config, trackName, renderer) {
     Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, trackName, renderer);
+
+    if (renderer === 'off') {
+      if (this.removeTrack(trackName)) {
+        return;
+      }
+    }
+
     Ensembl.EventManager.trigger('reloadPage', this.id);
     Ensembl.EventManager.trigger('partialReload');
   },
@@ -636,6 +643,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         for (var j = lis.length - 1; j >= 0; j--) {
           if (lis[j].top <= this.t + i && lis[j].bottom >= this.b - i) {
             lis[j].areas.push(this);
+            this.assigned = true;
             break assignArea;
           }
         }
@@ -667,6 +675,46 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $(this.parentNode).stop().animate({opacity: 1}, 200);
       }
     });
+
+    // split img into two image to show top and bottom of the image separately
+    this.elLk.img2 = this.elLk.img.wrap('<div>').parent().css({overflow: 'hidden', height: wrapperTop}).clone().insertAfter(this.elLk.img.parent()).css({height: 'auto'}).find('img').css({marginTop: -wrapperTop});
+  },
+
+  removeTrack: function (trackName) {
+    var panel = this;
+
+    if (!this.elLk.img2) {
+      return false;
+    }
+
+    //remove track and areas and get the height of the removed tracks
+    var heightChange = 0;
+    this.el.find('li.' + trackName).each(function() {
+      var li    = $(this);
+      var areas = li.data('areas');
+
+      panel.areas = $.grep(panel.areas, function (a) {
+        return $.inArray(a, areas) === -1;
+      });
+
+      heightChange += parseInt(li.css('height'));
+      li = null;
+
+    }).remove();
+
+    // remove hover labels
+    this.elLk.labelLayers = this.elLk.labelLayers.has('.' + trackName).remove().end().filter(function() { return !!this.parentNode; });
+
+    // now reduce the height of the img to make sure the LIs still completely overlap the img
+    this.elLk.img2.css('marginTop', parseInt(this.elLk.img2.css('marginTop')) - heightChange);
+
+    this.positionAreas(-heightChange);
+    this.positionLayers();
+    this.removeShare();
+    this.highlightImage(this.imageNumber, 0);
+    this.highlightLocation(Ensembl.highlightedLoc);
+
+    return true;
   },
 
   sortStart: function (e, ui) {
@@ -753,7 +801,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
   },
 
-  positionAreas: function () {
+  positionAreas: function (change) {
     var tracks = this.elLk.boundaries.children();
 
     tracks.each(function (i) {
@@ -774,6 +822,17 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
       li = null;
     });
+
+    if (change) {
+      $.each(this.areas, function (i, area) {
+        if (area.a.klass.drag) {
+          area.b += change;
+        } else if (area.a.klass.label && !area.assigned) {
+          area.t += change;
+          area.b += change;
+        }
+      });
+    }
 
     tracks = null;
   },

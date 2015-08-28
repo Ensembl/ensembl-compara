@@ -25,8 +25,9 @@ div.modal_content div.configuration_search img         { position: absolute; top
 div.modal_content div.configuration_search input       { color: #999999; border: 1px solid #000; padding: 2px 3px; position: relative; right: 3px; width: 170px; margin: 0; }
 div.modal_content div.configuration_search input:hover { background: [[CONTRAST_BG]]; }
 
-div.modal_content div.species_select        { font-weight: bold; margin: 2px 0; padding: 0 10px; border-bottom: 1px solid [[PANEL_BORDER]]; }
-div.modal_content div.species_select select { display: block; width: 100%; margin-bottom: 5px; }
+div.modal_content div.species_select            { font-weight: bold; margin: 0 0 16px; padding: 8px; border: 1px solid [[PANEL_BORDER]]; }
+div.modal_content div.species_select .ff-right  { margin-top: 8px; padding: 0; }
+div.modal_content div.species_select input      { border: 1px solid [[PANEL_BORDER]]; padding-left: 4px; }
 
 /* configuration form */
 
@@ -39,7 +40,7 @@ form.configuration div.config h3                                    { margin: 10
 form.configuration div.config h4                                    { margin: 10px 0 5px 5px; color: [[PAGE_TEXT]]; }
 div.config_wrapper div.config img                                   { height: 17px; width: 17px; margin-right: 4px; padding: 2px; vertical-align: top; }
 
-div.config_wrapper div.config div.long_label                        { font-style: italic; font-size: 90%; }
+div.config_wrapper div.config div.long_label                        { font-style: italic; font-size: 90%; margin-bottom:10px; }
 
 div.config_wrapper div.config div.select_all                        { margin: 10px 0 5px; padding: 2px 0; }
 div.config_wrapper div.config div.select_all strong                 { text-decoration: underline; font-size: 14px; padding: 2px 5px; cursor: pointer; line-height: 17px; }
