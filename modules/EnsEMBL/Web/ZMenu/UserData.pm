@@ -26,6 +26,12 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 use EnsEMBL::Web::Tools::Sanitize qw(strict_clean);
 
+our %strand_text = (
+                    '1'   => 'Forward',
+                    '-1'  => 'Reverse',
+                    '0'   => '-',
+);
+
 sub content {
   my $self       = shift;
   my $hub        = $self->hub;
@@ -43,13 +49,29 @@ sub content {
 
     my $i = 0;
     my @features;
+    my $feature_id  = $hub->param('feature_id') || $hub->param('id');
+    my $slice       = $click_data->{'container'};
 
     if ($type eq 'flat_file') { ## Can contain multiple tracks 
       my $data = $glyphset->features;
-      foreach (@$data) {
-        push @features, @{$_->{'features'}};
+      use Data::Dumper; #warn Dumper($data);
+      foreach my $track (@$data) {
+        foreach (@{$track->{'features'}||[]}) {
+          if (($feature_id && $_->{'label'} eq $feature_id) 
+                || ($_->{'seq_region'} eq $coords[0]
+                      && $_->{'start'} >= 0 
+                      && $_->{'end'} <= $slice->length)  
+              ) {
+            $_->{'track_name'} = $track->{'metadata'}{'name'};
+            $_->{'url'}        = $track->{'metadata'}{'url'};
+            delete($_->{'href'});
+            warn Dumper($_);
+            push @features, $_;
+          }
+        } 
       }
     }
+=pod
     elsif ($type eq 'bigbed') {
       my %feats    = $glyphset->features; # bigbed returns a stupid data structure
 
@@ -58,57 +80,57 @@ sub content {
     else {
       @features = @{$glyphset->features};
     }
+=cut
 
-    my $feature_id  = $hub->param('feature_id') || $hub->param('id');
-    my $slice       = $click_data->{'container'};
-
-    if ($feature_id) {
-      @features = grep { $_->{'id'} eq $feature_id || $_->{'name'} eq $feature_id } @features;
+    if (scalar @features > 5) {
+      $self->summary_content(\@features);
+    } else {
+      $self->feature_content(\@features, $slice);
     }
-    else {
-      @features = grep { $_->{'seq_region'} eq $coords[0]
-                          && $_->{'start'} >= 0 
-                          && $_->{'end'} <= $slice->length } @features;
-    }  
-
-    foreach (@features) {
-      my $caption     = $_->{'id'} || $_->{'name'} || $hub->param('format').' feature';
-      $self->caption($caption);
-
-      $self->add_entry({'type' => 'Location', 
-                        'label' => sprintf('%s:%s-%s', 
-                                              $_->{'seq_region'}, 
-                                              $_->{'start'} + $slice->start, 
-                                              $_->{'end'} + $slice->start)
-                        });
-
-      if ($_->{'score'}) {
-        $self->add_entry({'type' => 'Score', 'label' => $_->{'score'}});
-      }
-    }
-
   }
+}
+
+sub summary_content {
+}
+
+sub feature_content {
+  my ($self, $features, $slice) = @_;
+
+  my $caption = $_->{'track_name'};
+
+  foreach (@$features) {
+    my $id = $_->{'label'};
+    $caption .= ': '.$id if scalar(@$features) == 1 && $id; 
+
+    $self->add_entry({'type' => 'Location', 
+                      'label' => sprintf('%s:%s-%s', 
+                                            $_->{'seq_region'}, 
+                                            $_->{'start'} + $slice->start, 
+                                            $_->{'end'} + $slice->start)
+                      });
+
+    if (defined($_->{'strand'})) {
+      $self->add_entry({'type' => 'Strand', 'label' => $strand_text{$_->{'strand'}}});
+    }
+
+    if (defined($_->{'score'})) {
+      $self->add_entry({'type' => 'Score', 'label' => $_->{'score'}});
+    }
+
+    my $url = $_->{'url'};
+    if ($url) {
+      if ($id) {
+        $url =~ s/\$\$/$id/e;
+      }
+      $self->add_entry({'type' => 'Link', 'label_html' => sprintf('<a href="%s">%s</a>', $url, $id)});
+    }
+  }
+
+  $self->caption($caption);
 }
 
 =pod  
   
-  my $id = $hub->param('id');
-  if($id && $glyphset->can('feature_id')) {
-    @features = grep { $glyphset->feature_id($_) eq $id } @features;
-  }
-  
-  if (scalar @features > 5) {
-    $self->summary_content(\@features);
-  } else {
-    $self->feature_content($_, $i++) for @features;
-    
-    if (scalar @{$self->{'features'}} == 1) { # The first feature is empty, so in this case there are actually no features
-      $self->caption('No features found');
-      $self->add_entry({ label => sprintf('This track has no features in the region %s:%s-%s', $self->click_location) });
-    }
-  }
-}
-
 # This is a hack, we really need an order to be supplied by the glyphset
 sub sorted_extra_keys {
   my ($self,$extra,$order) = @_;
