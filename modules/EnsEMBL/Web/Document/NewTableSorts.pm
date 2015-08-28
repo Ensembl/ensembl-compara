@@ -26,7 +26,8 @@ use List::MoreUtils qw(each_array);
 
 use Exporter qw(import);
 our @EXPORT_OK = qw(newtable_sort_client_config newtable_sort_isnull
-                    newtable_sort_cmp);
+                    newtable_sort_cmp newtable_sort_range_value
+                    newtable_sort_range_finish newtable_sort_range_match);
 
 sub html_cleaned { $_[0] =~ s/<.*?>//g; return $_[0]; }
 sub number_cleaned { $_[0] =~ s/([\d\.e\+-])\s.*$/$1/; return $_[0]; }
@@ -67,6 +68,11 @@ my %SORTS = (
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
     null => sub { return 0; },
     clean => sub { return $_[0]; },
+    range_merge => "class",
+    range_display => "class",
+    range_value => sub { $_[0]->{$_[1]} = 1; },
+    range_finish => sub { return [sort keys %{$_[0]}]; },
+    range_match => sub { return lc $_[0] eq lc $_[1]; },
   },
   'string' => {
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
@@ -151,6 +157,7 @@ sub newtable_sort_client_config {
       $config->{$col} = {
         fn => $conf->{'js'},
         clean => $conf->{'js_clean'},
+        range => $conf->{'range_display'},
         type => $column_map->{$col},
         incr_ok => !($conf->{'options'}{'no_incr'}||0)
       };
@@ -159,11 +166,41 @@ sub newtable_sort_client_config {
   return $config;
 }
 
+sub newtable_sort_range_value {
+  my ($type,$values,$value) = @_;
+
+  $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
+  $value = $SORTS{$type}->{'clean'}->($value) if defined $value;
+  return unless defined $value;
+  $SORTS{$type}->{'range_value'}->($values,$value);
+}
+
+sub newtable_sort_range_finish {
+  my ($type,$values) = @_;
+
+  $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
+  my $out = $SORTS{$type}->{'range_finish'}->($values);
+  my $rtype = $SORTS{$type}->{'range_merge'};
+  return { merge => $rtype, values => $out };
+}
+
+sub newtable_sort_range_match {
+  my ($type,$x,$y) = @_;
+
+  $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
+  return 0 unless defined $y;
+  $y = $SORTS{$type}->{'clean'}->($y);
+  return 0 unless defined $y;
+  return $SORTS{$type}->{'range_match'}->($x,$y); 
+}
+
 sub newtable_sort_isnull {
   my ($type,$value) = @_;
 
   $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
+  return 1 unless defined $value;
   $value = $SORTS{$type}->{'clean'}->($value);
+  return 1 unless defined $value;
   return !!($SORTS{$type}->{'null'}->($value));
 }
 

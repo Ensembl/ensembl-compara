@@ -92,6 +92,19 @@
     return content;
   }
 
+  function new_slices(widgets,config) {
+    var slices = "";
+    $.each(config.head[3],function(i,widget) {
+      if(widget && widgets[widget]) {
+        slices +=
+          '<div data-widget-name="'+widget+'">'+
+            widgets[widget].generate()+
+          '</div>';
+      }
+    });
+    return slices;
+  }
+
   function new_top(widgets,config) {
     var ctrls = "";
     for(var pos=0;pos<3;pos++) {
@@ -99,8 +112,8 @@
                + new_top_section(widgets,config,pos) +
                '</div>';
     }
-
-    return '<div class="new_table_top">'+ctrls+'</div>';
+    var slices = new_slices(widgets,config);
+    return '<div class="new_table_top">'+ctrls+'</div>'+slices;
   }
     
   function build_format(widgets,$table) {
@@ -136,6 +149,23 @@
     $table.data('grid',grid);
   }
 
+  function store_ranges($table,enums,manifest_in) {
+    var ranges = $table.data('ranges') || {};
+    var range_manifest = $table.data('range-manifest') || [];
+    if(!$.orient_compares_equal(manifest_in,range_manifest)) {
+      console.log("clearing ranges",manifest_in,range_manifest);
+      ranges = {};
+      $table.data('range-manifest',manifest_in);
+    }
+    $.each(enums,function(column,range) {
+      var fn = $['newtable_rangemerge_'+range.merge];
+      if(!fn) { fn = $['newtable_rangemerge_class']; }
+      ranges[column] = fn(ranges[column],range.values);
+    });
+    $table.data('ranges',ranges);
+    $table.trigger('range-updated');
+  }
+
   function render_grid(widgets,$table,manifest_c,start,length) {
     var view = $table.data('view');
     var grid = $table.data('grid');
@@ -146,7 +176,7 @@
       length = orient_c[0].length;
     }
     widgets[view.format].add_data($table,orient_c[0],start,length,orient_c[1]);
-    widgets[view.format].truncate_to($table,orient_c[0].length,orient_c[1]);
+    widgets[view.format].truncate_to($table,length,orient_c[1]);
   }
 
   function rerender_grid(widgets,$table,manifest_c) {
@@ -155,6 +185,7 @@
 
   function use_response(widgets,$table,manifest_c,response) {
     store_response_in_grid($table,response.data,response.start,response.columns,manifest_c.manifest);
+    store_ranges($table,response.enums||{},response.shadow);
     render_grid(widgets,$table,manifest_c,response.start,response.data.length);
   }
   
@@ -274,6 +305,17 @@
       widgets[name].go($table,$widget);
     });
     maybe_get_new_data(widgets,$table,config);
+  }
+
+  $.newtable_rangemerge_class = function(a,b) {
+    var v = {};
+    if(!a) { a = []; }
+    a = a.slice();
+    for(var i=0;i<a.length;i++) { v[a[i]] = 1; }
+    for(var i=0;i<b.length;i++) {
+      if(!v.hasOwnProperty(b[i])) { a.push(b[i]); }
+    }
+    return a;
   }
 
   $.orient_compares_equal = function(fa,fb) {

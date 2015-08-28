@@ -22,7 +22,7 @@ use strict;
 
 use JSON qw(from_json);
 
-use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_isnull newtable_sort_cmp);
+use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_isnull newtable_sort_cmp newtable_sort_range_value newtable_sort_range_finish newtable_sort_range_match);
 
 # XXX move all this stuff to somewhere it's more suited
 
@@ -30,9 +30,6 @@ sub server_sort {
   my ($self,$data,$sort,$iconfig,$col_idx) = @_;
 
   my $cols = $iconfig->{'columns'};
-  foreach my $i (0..(@$cols-1)) {
-    ( my $fn = $cols->[$i]{'sort'} ) =~ s/[^A-Za-z_-]//g;
-  }
   foreach my $i (0..$#$data) { push @{$data->[$i]},$i; }
   $col_idx->{'__tie'} = -1;
   @$data = sort {
@@ -79,6 +76,8 @@ sub newtable_data_request {
   my ($self,$iconfig,$orient,$wire,$more,$incr_ok) = @_;
 
   my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
+  my %cols_pos;
+  $cols_pos{$cols[$_]} = $_ for(0..$#cols);
 
   my $phases = [{ name => undef }];
   $phases = $self->incremental_table if $self->can('incremental_table');
@@ -109,11 +108,11 @@ sub newtable_data_request {
   $rows = [0,-1] if $all_data;
 
   # Calculate columns to send
-  my %cols_pos;
-  $cols_pos{$cols[$_]} = $_ for(0..$#cols);
   my $used_cols = $phases->[$more]{'cols'} || \@cols;
   my $columns = [ (0) x @cols ];
   $columns->[$cols_pos{$_}] = 1 for @$used_cols;
+  my %sort_pos;
+  $sort_pos{$used_cols->[$_]} = $_ for (0..@$used_cols);
 
   # Calculate function name
   my $type = $iconfig->{'type'};
@@ -132,10 +131,43 @@ sub newtable_data_request {
   $more++;
   $more=0 if $more == @$phases;
 
+  # Enumerate, if necessary
+  my %enums;
+  foreach my $colkey (@{$wire->{'enumerate'}||[]}) {
+    my $colconf = $iconfig->{'columns'}[$cols_pos{$colkey}];
+    my $row_pos = $sort_pos{$colkey};
+    next unless defined $row_pos;
+    my %values;
+    foreach my $r (@data_out) {
+      my $value = $r->[$sort_pos{$colkey}];
+      newtable_sort_range_value($colconf->{'sort'},\%values,$value);
+    }
+    $enums{$colkey} =
+      newtable_sort_range_finish($colconf->{'sort'},\%values);
+  }
+  my %shadow = %$orient;
+  delete $shadow{'filter'};
+  
+  # Filter, if necessary
+  if($wire->{'filter'}) {
+    my @data;
+    foreach my $row (@data_out) {
+      my $ok = 1;
+      foreach my $col (keys %{$wire->{'filter'}}) {
+        my $colconf = $iconfig->{'columns'}[$cols_pos{$col}];
+        my $val = $row->[$sort_pos{$col}];
+        if(grep { newtable_sort_range_match($colconf->{'sort'},$_,$val) } keys %{$wire->{'filter'}{$col}}) {
+          $ok = 0;
+          last;
+        }
+      }
+      push @data,$row if $ok;
+    }
+    @data_out = @data;
+  }
+
   # Sort it, if necessary
   if($wire->{'sort'} and @{$wire->{'sort'}}) {
-    my %sort_pos;
-    $sort_pos{$used_cols->[$_]} = $_ for (0..@$used_cols);
     $self->server_sort(\@data_out,$wire->{'sort'},$iconfig,\%sort_pos);
     splice(@data_out,0,$irows->[0]);
     splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
@@ -149,6 +181,8 @@ sub newtable_data_request {
       columns => $columns,
       start => $rows->[0],
       more => $more,
+      enums => \%enums,
+      shadow => \%shadow,
     },
     orient => $orient,
   };

@@ -136,12 +136,14 @@ sub render {
     head => [
       [ "page_sizer" ],
       [ "loading","columns" ],
-      [ "new_table_export", "new_table_filter", "styles", "search" ]
+      [ "new_table_export", "new_table_filter", "search" ],
+      [ "filter" ]
     ],
     orient => $orient,
     formats => [ "tabular", "paragraph" ],
     colconf => $sort_conf,
     widgets => {
+      filter => [ "new_table_filter",{}],
       search => [ "new_table_search",{}],
       clientsort => [ "new_table_clientsort",{}],
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
