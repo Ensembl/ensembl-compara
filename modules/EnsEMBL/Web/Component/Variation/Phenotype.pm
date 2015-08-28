@@ -414,9 +414,10 @@ sub source_link {
 sub external_reference_link {
   my ($self, $study, $allele) = @_;
   my $link;
-  if($study =~ /pubmed/) {
+  if ($study =~ /(pubmed|PMID)/) {
     my $study_id = $study;
        $study_id =~ s/pubmed\///;
+       $study_id =~ s/PMID://;
     $link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
     $link =~ s/###ID###/$study_id/;
     $study =~ s/\//:/g;
