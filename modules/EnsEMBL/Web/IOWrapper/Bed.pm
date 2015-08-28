@@ -71,8 +71,11 @@ sub create_hash {
             : $self->parser->can('get_name') ? $self->parser->get_name : undef;
 
   my $href = $self->href({
-                        'id'  => $id,
-                        'url' => $metadata->{'url'},
+                        'id'          => $id,
+                        'url'         => $metadata->{'url'},
+                        'seq_region'  => $seqname,
+                        'start'       => $feature_start,
+                        'end'         => $feature_end,
                         });
 
   return {
