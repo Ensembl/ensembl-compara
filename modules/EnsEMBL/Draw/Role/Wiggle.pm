@@ -51,7 +51,7 @@ sub _select_graph_type {
   if ($self->{'my_config'}->get('unit')) {
     $graph_class = 'Graph::Barcode';
   }
-  elsif ($self->{'my_config'}->get('graph_type') eq 'line') {
+  elsif ($self->{'my_config'}->get('graph_type') && $self->{'my_config'}->get('graph_type') eq 'line') {
     $graph_class = 'Graph';
   }
   else {
