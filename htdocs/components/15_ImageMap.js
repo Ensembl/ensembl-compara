@@ -1373,6 +1373,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   updateExportMenu: function() {
+    var extra = this.getExportMenuExtra();
+
+    extra = $.isEmptyObject(extra) ? false : encodeURIComponent(JSON.stringify(extra));
+
+    this.elLk.exportMenu.find('a').attr('href', function() {
+      return Ensembl.updateURL({extra: extra}, this.href);
+    });
+  },
+
+  getExportMenuExtra: function () {
     var extra = {};
 
     if (!$.isEmptyObject(this.boxCoords)) {
@@ -1393,11 +1403,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     }
 
-    extra = $.isEmptyObject(extra) ? false : encodeURIComponent(JSON.stringify(extra));
-
-    this.elLk.exportMenu.find('a').attr('href', function() {
-      return Ensembl.updateURL({extra: extra}, this.href);
-    });
+    return extra;
   },
 
   getMapCoords: function (e) {
