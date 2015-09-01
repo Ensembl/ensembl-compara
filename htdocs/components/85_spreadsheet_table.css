@@ -137,7 +137,8 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 
 .newtable_filter { -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; -ms-user-select: none; }
 .newtable_filter ul { display: inline-block; margin: 0; padding: 4px 2px; }
-.newtable_filter li.t { list-style: none; padding: 2px 0 2px 6px; margin: 0px 2px; background-color: #ccc; border-radius: 8px; color: #555; display: inline-block; border: 1px solid #ccc; font-size: 14px; cursor: pointer; line-height: 20px; }
+.newtable_filter li.t { list-style: none; padding: 2px 0 2px 6px; margin: 0px 2px; background-color: #ccc; border-radius: 8px; color: #555; display: none; border: 1px solid #ccc; font-size: 14px; cursor: pointer; line-height: 20px; }
+.newtable_filter li.t.valid { display: inline-block; }
 .newtable_filter li.t:hover { background: linear-gradient(to top,#ddd,#eee) #fff; border: 1px solid #999; text-shadow: 0 1px white; }
 .newtable_filter { padding: 0 0px; margin: 0; background-color: #ccc; font-size: 16px; color: #333; border-bottom: 1px solid #aaa; }
 .newtable_filter li .k:after { content: ": "; }

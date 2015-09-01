@@ -66,9 +66,13 @@
       if(!view.filter) { view.filter = {}; }
       var idx = $el.data('idx');
       var key = config.columns[idx].key;
+      var values = ($table.data('ranges')||{})[key];
+      if(!values) { values = []; }
+      $el.toggleClass('valid',!!values.length);
+      var $filters = $('.newtable_filter',$table);
+      var $vbuts = $('.t.valid',$filters);
+      $filters.toggle(!!$vbuts.length);
       if(view.filter.hasOwnProperty(key)) {
-        var values = ($table.data('ranges')||{})[key];
-        if(!values) { values = []; }
         var skipping = {};
         $.each(view.filter[key],function(k,v) { skipping[k]=1; });
         var on = [];
