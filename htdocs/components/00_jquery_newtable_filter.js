@@ -121,7 +121,7 @@
       go: function($table,$el) {
         var trigger_soon = $.debounce(function() {
           $table.trigger('view-updated');
-        },1000);
+        },10000);
         $('li.t',$el).on('update',function(e,state) {
           update_state($table,$(this),state);
           update_button($table,$(this));
@@ -142,8 +142,15 @@
           if($button.length && !$menu.length) {
             if(!$el.is(":visible")) {
               $el.empty().append(menu($table,$button));
+              $el.show();
+              if($el.offset().left+$el.width()>$el.width()) {
+                $el.addClass('edge');
+              } else {
+                $el.removeClass('edge');
+              }
+            } else {
+              $el.hide();
             }
-            $el.toggle();
           }
         });
       },

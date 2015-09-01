@@ -153,3 +153,4 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter .m li.on { background: #dfd; }
 .newtable_filter .m ul.use_cols { -moz-column-count: 3; -webkit-column-count: 3; }
 .newtable_filter .m li { page-break-inside: avoid; -webkit-column-break-inside: avoid; display: inline-block; width: 150px;  }
+.newtable_filter .m.edge { right: 0; left: auto;  }
