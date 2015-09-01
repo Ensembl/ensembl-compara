@@ -140,7 +140,15 @@
           trigger_soon();
         });
         $table.on('range-updated',function(e) {
-          $('li.t',$el).each(function() { update_button($table,$(this)); });
+          $('li.t',$el).each(function() {
+            var $button = $(this);
+            update_button($table,$button);
+            var $menu = $('.m',$button);
+            if($menu.is(':visible')) {
+              $menu.empty().append(menu($table,$button));
+              show_menu($menu);
+            }
+          });
         });
         $('li.t',$el).each(function() { update_button($table,$(this)); });
         $('html').on('click',function(e) {
