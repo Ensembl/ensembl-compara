@@ -59,6 +59,31 @@ sub server_nulls {
   }
 }
 
+sub passes_muster {
+  my ($self,$row,$rq) = @_;
+
+  my $ok = 1;
+  foreach my $col (keys %{$rq->{'wire'}{'filter'}}) {
+    my $colconf = $rq->{'config'}{'columns'}[$rq->{'cols_pos'}{$col}];
+    next unless exists $row->{$col};
+    my $val = $row->{$col};
+    my $ok_col = 0;
+    my $values = newtable_sort_range_split($colconf->{'sort'},$val);
+    foreach my $value (@{$values||[]}) {
+      my $ok_value = 1;
+      foreach my $pat (keys %{$rq->{'wire'}{'filter'}{$col}}) {
+        if(newtable_sort_range_match($colconf->{'sort'},$pat,$value)) {
+          $ok_value = 0;
+          last;
+        }
+      }
+      if($ok_value) { $ok_col=1; last; }
+    }
+    unless($ok_col) { $ok = 0; last; }
+  }
+  return $ok;
+}
+
 sub ajax_table_content {
   my ($self) = @_;
 
@@ -121,15 +146,12 @@ sub newtable_data_request {
   $func .= "_$type" if $type;
 
   # Populate data
-  my $data = $self->$func($phases->[$more]{'name'},$rows,$iconfig->{'unique'});
-  my @data_out;
-  foreach my $d (@$data) {
-    push @data_out,[ map { $d->{$_}||'' } @$used_cols ];
-  }
-
-  # Move on continuation counter
-  $more++;
-  $more=0 if $more == @$phases;
+  my $rq = {
+    config => $iconfig,
+    cols_pos => \%cols_pos,
+    wire => $wire,
+  };
+  my $data = $self->$func($phases->[$more]{'name'},$rows,$iconfig->{'unique'},$rq);
 
   # Enumerate, if necessary
   my %enums;
@@ -138,8 +160,8 @@ sub newtable_data_request {
     my $row_pos = $sort_pos{$colkey};
     next unless defined $row_pos;
     my %values;
-    foreach my $r (@data_out) {
-      my $value = $r->[$sort_pos{$colkey}];
+    foreach my $r (@$data) {
+      my $value = $r->{$colkey};
       newtable_sort_range_value($colconf->{'sort'},\%values,$value);
     }
     $enums{$colkey} =
@@ -147,34 +169,25 @@ sub newtable_data_request {
   }
   my %shadow = %$orient;
   delete $shadow{'filter'};
-  
+
   # Filter, if necessary
   if($wire->{'filter'}) {
-    my @data;
-    foreach my $row (@data_out) {
-      my $ok = 1;
-      foreach my $col (keys %{$wire->{'filter'}}) {
-        my $colconf = $iconfig->{'columns'}[$cols_pos{$col}];
-        next unless defined $sort_pos{$col};
-        my $val = $row->[$sort_pos{$col}];
-        my $ok_col = 0;
-        my $values = newtable_sort_range_split($colconf->{'sort'},$val);
-        foreach my $value (@{$values||[]}) {
-          my $ok_value = 1;
-          foreach my $pat (keys %{$wire->{'filter'}{$col}}) {
-            if(newtable_sort_range_match($colconf->{'sort'},$pat,$value)) {
-              $ok_value = 0;
-              last;
-            }
-          }
-          if($ok_value) { $ok_col=1; last; }
-        }
-        unless($ok_col) { $ok = 0; last; }
-      }
-      push @data,$row if $ok;
+    my @new;
+    foreach my $row (@$data) {
+      push @new,$row if $self->passes_muster($row,$rq);
     }
-    @data_out = @data;
+    $data = \@new;
   }
+
+  # Map to column format
+  my @data_out;
+  foreach my $d (@$data) {
+    push @data_out,[ map { $d->{$_}||'' } @$used_cols ];
+  }
+
+  # Move on continuation counter
+  $more++;
+  $more=0 if $more == @$phases;
 
   # Sort it, if necessary
   if($wire->{'sort'} and @{$wire->{'sort'}}) {

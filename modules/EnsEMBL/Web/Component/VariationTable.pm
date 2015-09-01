@@ -44,7 +44,7 @@ sub incremental_table {
 }
 
 sub table_content {
-  my ($self,$phase,$rows,$unique) = @_;
+  my ($self,$phase,$rows,$unique,$rq) = @_;
 
   my $hub = $self->hub;
   my $consequence_type = $hub->param('sub_table');
@@ -57,7 +57,7 @@ sub table_content {
     my $t = $hub->param('t');
     @transcripts = grep $_->stable_id eq $t, @transcripts;
   }
-  return $self->variation_table($consequence_type,\@transcripts,$phase,$rows);
+  return $self->variation_table($consequence_type,\@transcripts,$phase,$rows,$rq);
 }
 
 sub content {
@@ -405,7 +405,7 @@ sub tree {
 }
 
 sub variation_table {
-  my ($self, $consequence_type, $transcripts, $phase, $offlim) = @_;
+  my ($self, $consequence_type, $transcripts, $phase, $offlim,$rq) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
@@ -557,6 +557,7 @@ sub variation_table {
             };
             $row = { %$row, %$more_row };
           }
+          next unless $self->passes_muster($row,$rq);
           $num++;
           next if $num <= $offlim->[0];
           push @rows,$row;
