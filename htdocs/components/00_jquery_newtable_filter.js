@@ -89,6 +89,10 @@
       } else {
         $('.v',$el).text('All');
       }
+      var $menu = $('.m',$el);
+      if($menu.length && $menu.is(":visible")) {
+        show_menu($menu);
+      }
     }
 
     function update_state($table,$el,state) {
@@ -103,6 +107,14 @@
       }
       if(obj_empty(view.filter)) { delete view.filter; }
       $table.data('view',view);
+    }
+
+    function show_menu($el) {
+      $el.removeClass('edge');
+      $el.show();
+      if($el.offset().left+$el.width()>$('html').width()) {
+        $el.addClass('edge');
+      }
     }
 
     return {
@@ -142,12 +154,7 @@
           if($button.length && !$menu.length) {
             if(!$el.is(":visible")) {
               $el.empty().append(menu($table,$button));
-              $el.show();
-              if($el.offset().left+$el.width()>$el.width()) {
-                $el.addClass('edge');
-              } else {
-                $el.removeClass('edge');
-              }
+              show_menu($el);
             } else {
               $el.hide();
             }
