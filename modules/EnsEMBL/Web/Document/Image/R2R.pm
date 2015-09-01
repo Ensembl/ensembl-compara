@@ -75,7 +75,7 @@ sub find_ss_in_core {
     my $gene        = $self->hub->core_object('gene')->Obj;
     my $transcript  = $gene->canonical_transcript;
     if ($transcript) {
-      my $model_name  = $gene->display_xref->display_id;
+      my $model_name  = $gene->display_xref && $gene->display_xref->display_id || $gene->stable_id;
       my $ss_attr     = $transcript->get_all_Attributes('ncRNA');
       if ($ss_attr and scalar(@$ss_attr)) {
         my $ss_cons = $ss_attr->[0]->value;
