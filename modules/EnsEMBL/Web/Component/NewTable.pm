@@ -22,7 +22,7 @@ use strict;
 
 use JSON qw(from_json);
 
-use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_isnull newtable_sort_cmp newtable_sort_range_value newtable_sort_range_finish newtable_sort_range_match);
+use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_isnull newtable_sort_cmp newtable_sort_range_value newtable_sort_range_finish newtable_sort_range_match newtable_sort_range_split);
 
 # XXX move all this stuff to somewhere it's more suited
 
@@ -155,11 +155,21 @@ sub newtable_data_request {
       my $ok = 1;
       foreach my $col (keys %{$wire->{'filter'}}) {
         my $colconf = $iconfig->{'columns'}[$cols_pos{$col}];
+        next unless defined $sort_pos{$col};
         my $val = $row->[$sort_pos{$col}];
-        if(grep { newtable_sort_range_match($colconf->{'sort'},$_,$val) } keys %{$wire->{'filter'}{$col}}) {
-          $ok = 0;
-          last;
+        my $ok_col = 0;
+        my $values = newtable_sort_range_split($colconf->{'sort'},$val);
+        foreach my $value (@{$values||[]}) {
+          my $ok_value = 1;
+          foreach my $pat (keys %{$wire->{'filter'}{$col}}) {
+            if(newtable_sort_range_match($colconf->{'sort'},$pat,$value)) {
+              $ok_value = 0;
+              last;
+            }
+          }
+          if($ok_value) { $ok_col=1; last; }
         }
+        unless($ok_col) { $ok = 0; last; }
       }
       push @data,$row if $ok;
     }
