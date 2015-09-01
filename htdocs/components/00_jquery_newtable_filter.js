@@ -43,6 +43,88 @@
     return $out;
   };
 
+  $.fn.newtable_filtersummary_class = function(state,all) {
+    var skipping = {};
+    $.each(state,function(k,v) { skipping[k]=1; });
+    var on = [];
+    var off = [];
+    $.each(all,function(i,v) {
+      if(skipping[v]) { off.push(v); } else { on.push(v); }
+    });
+    var out = "None";
+    if(on.length<=off.length) {
+      out = on.join(', ');
+    } else if(on.length) {
+      out = 'All except '+off.join(', ');
+    }
+    if(out.length>20) {
+      out = out.substr(0,20)+'...('+on.length+'/'+all.length+')';
+    }
+    return out;
+  }
+
+  $.fn.newtable_filtervalid_class = function(values) {
+    return values && !!values.length;
+  }
+
+  function slider(min,max,vmin,vmax,fn) {
+    var $out = $("<div/>").addClass('newtable_range');
+    var $feedback = $('<div/>').addClass('slider_feedback').appendTo($out);
+    if(min || min===0) {
+      console.log("SLIDER");
+      var $slider = $('<div/>').addClass('slider').appendTo($out).slider({
+        range: true,
+        min: parseInt(min),
+        max: parseInt(max),
+        values: [parseInt(vmin),parseInt(vmax)],
+        slide: function(e,ui) {
+          $feedback.text( ui.values[0] + " - " + ui.values[1] );
+        },
+        stop: function(e,ui) {
+          fn(ui.values[0],ui.values[1]);
+        }
+      });
+      $feedback.text( min + " - " + max );
+    }
+    return $out;
+  }
+
+  $.fn.newtable_filterrange_range = function($el,values,state) {
+    if(!$el.data('slider-set')) {
+      if(values.hasOwnProperty('min')) {
+        $el.data('slider-min',values.min);
+        $el.data('slider-max',values.max);
+      } else {
+        return "";
+      }
+    }
+    var slider_update_soon = $.debounce(function() {
+      $el.trigger('update',{
+        min: $el.data('slider-min'),
+        max: $el.data('slider-max')
+      });
+    },2000);
+    var vmin = $el.data('slider-min');
+    var vmax = $el.data('slider-max');
+    return slider(values.min,values.max,vmin,vmax,function(min,max) {
+      $el.data('slider-min',min);
+      $el.data('slider-max',max);
+      $el.data('slider-set',true);
+      slider_update_soon();
+    });
+  };
+
+  $.fn.newtable_filtersummary_range = function(state,all) {
+    if(state.hasOwnProperty('min') && state.hasOwnProperty('max')) {
+      return state.min+"-"+state.max;
+    }
+    return "All";
+  };
+
+  $.fn.newtable_filtervalid_range = function(values) {
+    return true;
+  }
+
   $.fn.new_table_filter = function(config,data) {
 
     var filterable_columns = [];
@@ -67,29 +149,14 @@
       var idx = $el.data('idx');
       var key = config.columns[idx].key;
       var values = ($table.data('ranges')||{})[key];
-      if(!values) { values = []; }
-      $el.toggleClass('valid',!!values.length);
+      var kind = config.colconf[key].range;
+      $el.toggleClass('valid',$.fn['newtable_filtervalid_'+kind](values));
       var $filters = $('.newtable_filter',$table);
       var $vbuts = $('.t.valid',$filters);
       $filters.toggle(!!$vbuts.length);
       if(view.filter.hasOwnProperty(key)) {
-        var skipping = {};
-        $.each(view.filter[key],function(k,v) { skipping[k]=1; });
-        var on = [];
-        var off = [];
-        $.each(values,function(i,v) {
-          if(skipping[v]) { off.push(v); } else { on.push(v); }
-        });
-        var out = "None";
-        if(on.length<=off.length) {
-          out = on.join(', ');
-        } else if(on.length) {
-          out = 'All except '+off.join(', ');
-        }
-        if(out.length>20) {
-          out = out.substr(0,20)+'...('+on.length+'/'+values.length+')';
-        }
-        $('.v',$el).text(out);
+        var text = $.fn['newtable_filtersummary_'+kind](view.filter[key],values);
+        $('.v',$el).text(text);
       } else {
         $('.v',$el).text('All');
       }

@@ -22,6 +22,8 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(looks_like_number);
+use List::Util qw(min max);
+
 use List::MoreUtils qw(each_array);
 
 use Exporter qw(import);
@@ -102,7 +104,12 @@ my %SORTS = (
     range_display => "class",
     range_value => sub { $_[0]->{$_[1]} = 1; },
     range_finish => sub { return [sort keys %{$_[0]}]; },
-    range_match => sub { return lc $_[0] eq lc $_[1]; },
+    range_match => sub {
+      foreach my $x (keys %{$_[0]}) {
+        return 0 if lc $x eq lc $_[1];
+      }
+      return 1;
+    },
   },
   'string' => {
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
@@ -134,6 +141,24 @@ my %SORTS = (
     null => sub { return !looks_like_number($_[0]); },
     js => 'numeric',
     js_clean => 'clean_number',
+    range_display => 'range',
+    range_merge => 'range',
+    range_value => sub {
+      if(!looks_like_number($_[1])) { return; }
+      if(exists $_[0]->{'min'}) {
+        $_[0]->{'max'} = max($_[0]->{'max'},$_[1]);
+        $_[0]->{'min'} = min($_[0]->{'min'},$_[1]);
+      } else {
+        $_[0]->{'min'} = $_[0]->{'max'} = $_[1];
+      }
+    },
+    range_finish => sub { return $_[0]||={}; },
+    range_match => sub {
+      if(exists $_[0]->{'min'}) {
+        return $_[1]>=$_[0]->{'min'} && $_[1]<=$_[0]->{'max'};
+      }
+      return 1;
+    },
   },
   'html' => {
     clean => \&html_cleaned,

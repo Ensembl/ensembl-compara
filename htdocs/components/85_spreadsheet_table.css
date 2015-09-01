@@ -155,3 +155,6 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter .m ul.use_cols { -moz-column-count: 3; -webkit-column-count: 3; }
 .newtable_filter .m li { page-break-inside: avoid; -webkit-column-break-inside: avoid; display: inline-block; width: 150px;  }
 .newtable_filter .m.edge { right: 0; left: auto;  }
+.newtable_range { padding: 4px; }
+.newtable_filter .slider { width: 200px; margin: 8px; font-size: 10px; }
+.newtable_filter .slider_feedback { text-align: center; font-weight: bold; }

@@ -318,6 +318,19 @@
     return a;
   }
 
+  $.newtable_rangemerge_range = function(a,b) {
+    a = $.extend({},true,a);
+    if(b.min) {
+      if(!a.hasOwnProperty('min')) { a.min = b.min; }
+      a.min = a.min<b.min?a.min:b.min;
+    }
+    if(b.max) {
+      if(!a.hasOwnProperty('max')) { a.max = b.max; }
+      a.max = a.max>b.max?a.max:b.max;
+    }
+    return a;
+  }
+
   $.orient_compares_equal = function(fa,fb) {
     if(fa===fb) { return true; }
     if(!$.isPlainObject(fa) && !$.isArray(fa)) { return false; }

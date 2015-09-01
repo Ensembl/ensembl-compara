@@ -70,14 +70,11 @@ sub passes_muster {
     my $ok_col = 0;
     my $values = newtable_sort_range_split($colconf->{'sort'},$val);
     foreach my $value (@{$values||[]}) {
-      my $ok_value = 1;
-      foreach my $pat (keys %{$rq->{'wire'}{'filter'}{$col}}) {
-        if(newtable_sort_range_match($colconf->{'sort'},$pat,$value)) {
-          $ok_value = 0;
-          last;
-        }
+      my $fv = $rq->{'wire'}{'filter'}{$col};
+      if(newtable_sort_range_match($colconf->{'sort'},$fv,$value)) {
+        $ok_col = 1;
+        last;
       }
-      if($ok_value) { $ok_col=1; last; }
     }
     unless($ok_col) { $ok = 0; last; }
   }
