@@ -1122,20 +1122,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
         
         link = false;
+      }
 
-        coords = {
-          t: Math.round(highlight.region.t + 2),
-          b: Math.round(highlight.region.b - 2),
-          l: Math.round(((start - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l),
-          r: Math.round(((end   - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l)
-        };
+      coords = {
+        t: Math.round(highlight.region.t + 2),
+        b: Math.round(highlight.region.b - 2),
+        l: Math.round(((start - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l),
+        r: Math.round(((end   - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l)
+      };
 
-        // Highlight unless it's the bottom image on the page
-        if (this.params.highlight) {
-          this.boxCoords[speciesNumber] = coords;
-          this.updateExportMenu();
-          this.highlight(coords, 'redbox2', speciesNumber, i);
-        }
+      // Highlight unless it's the bottom image on the page
+      if (this.params.highlight) {
+        this.boxCoords[speciesNumber] = coords;
+        this.updateExportMenu();
+        this.highlight(coords, 'redbox2', speciesNumber, i);
       }
     }
   },
