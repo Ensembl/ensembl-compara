@@ -132,6 +132,7 @@
     },2000);
     var vmin = $el.data('slider-min');
     var vmax = $el.data('slider-max');
+    $el.data('slider-range',[values.min,values.max]);
     var vnulls = $el.data('slider-nulls');
     return slider($el,values.min,values.max,vmin,vmax,vnulls,
       function(min,max,nulls) {
@@ -145,10 +146,19 @@
   };
 
   $.fn.newtable_filtersummary_range = function(state,all) {
+    var range = null;
+    var no_blanks = (state.hasOwnProperty('nulls') && !state.nulls);
     if(state.hasOwnProperty('min') && state.hasOwnProperty('max')) {
-      return state.min+"-"+state.max;
+      if(!(all.hasOwnProperty('min') && all.hasOwnProperty('max') &&
+           all.min==state.min && all.max==state.max)) {
+        var range = state.min+"-"+state.max;
+        if(!no_blanks) { range = range + " or blank"; }
+        return range;
+      }
     }
-    return "All";
+    range = "All";
+    if(no_blanks) { range += " except blank"; }
+    return range;
   };
 
   $.fn.newtable_filtervalid_range = function(values) {
