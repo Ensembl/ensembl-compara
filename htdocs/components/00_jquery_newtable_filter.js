@@ -67,25 +67,49 @@
     return values && !!values.length;
   }
 
-  function slider(min,max,vmin,vmax,fn) {
+  function update_widget($button,$el,min,max,nulls) {
+    var $feedback = $('.slider_feedback',$el);
+    var $slider = $('.slider',$el);
+    var $tickbox = $('.slider_unspecified input',$el);
+    $feedback.text(min+" - "+max);
+    if(!$button.data('unspec-explicit')) {
+      var all = (min == $slider.slider('option','min') &&
+                max == $slider.slider('option','max'));
+      if(all) {
+        $tickbox.prop('checked',true);
+      } else {
+        $tickbox.prop('checked',false);
+      }
+    }
+  }
+
+  function slider($button,min,max,vmin,vmax,nulls,fn) {
     var $out = $("<div/>").addClass('newtable_range');
     var $feedback = $('<div/>').addClass('slider_feedback').appendTo($out);
-    if(min || min===0) {
-      console.log("SLIDER");
-      var $slider = $('<div/>').addClass('slider').appendTo($out).slider({
-        range: true,
-        min: parseInt(min),
-        max: parseInt(max),
-        values: [parseInt(vmin),parseInt(vmax)],
-        slide: function(e,ui) {
-          $feedback.text( ui.values[0] + " - " + ui.values[1] );
-        },
-        stop: function(e,ui) {
-          fn(ui.values[0],ui.values[1]);
-        }
-      });
-      $feedback.text( min + " - " + max );
-    }
+    var $unspec = $('<div/>').addClass('slider_unspecified');
+    $unspec.append("<span>include blank</span>");
+    var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
+    min = parseInt(min);
+    max = parseInt(max);
+    console.log("SLIDER");
+    var $slider = $('<div/>').addClass('slider').appendTo($out).slider({
+      range: true,
+      min: min, max: max,
+      values: [parseInt(vmin),parseInt(vmax)],
+      slide: function(e,ui) {
+        update_widget($button,$out,ui.values[0],ui.values[1]);
+      },
+      stop: function(e,ui) {
+        fn(ui.values[0],ui.values[1],$tickbox.prop('checked'));
+      }
+    });
+    $unspec.appendTo($out);
+    $tickbox.on('click',function() {
+      $button.data('unspec-explicit',true);
+      fn($slider.slider('option','values.0'),
+         $slider.slider('option','values.1'),$tickbox.prop('checked'));
+    }).prop('checked',nulls);
+    update_widget($button,$out,vmin,vmax);
     return $out;
   }
 
@@ -94,6 +118,7 @@
       if(values.hasOwnProperty('min')) {
         $el.data('slider-min',values.min);
         $el.data('slider-max',values.max);
+        $el.data('slider-nulls',true);
       } else {
         return "";
       }
@@ -101,17 +126,22 @@
     var slider_update_soon = $.debounce(function() {
       $el.trigger('update',{
         min: $el.data('slider-min'),
-        max: $el.data('slider-max')
+        max: $el.data('slider-max'),
+        nulls: $el.data('slider-nulls')
       });
     },2000);
     var vmin = $el.data('slider-min');
     var vmax = $el.data('slider-max');
-    return slider(values.min,values.max,vmin,vmax,function(min,max) {
-      $el.data('slider-min',min);
-      $el.data('slider-max',max);
-      $el.data('slider-set',true);
-      slider_update_soon();
-    });
+    var vnulls = $el.data('slider-nulls');
+    return slider($el,values.min,values.max,vmin,vmax,vnulls,
+      function(min,max,nulls) {
+        console.log(min,max,nulls);
+        $el.data('slider-min',min);
+        $el.data('slider-max',max);
+        $el.data('slider-nulls',nulls);
+        $el.data('slider-set',true);
+        slider_update_soon();
+      });
   };
 
   $.fn.newtable_filtersummary_range = function(state,all) {

@@ -158,3 +158,5 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_range { padding: 4px; }
 .newtable_filter .slider { width: 200px; margin: 8px; font-size: 10px; }
 .newtable_filter .slider_feedback { text-align: center; font-weight: bold; }
+.newtable_range .slider_unspecified { padding: 0 6px; }
+.newtable_range .slider_unspecified input { vertical-align: bottom; }

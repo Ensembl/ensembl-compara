@@ -154,10 +154,15 @@ my %SORTS = (
     },
     range_finish => sub { return $_[0]||={}; },
     range_match => sub {
-      if(exists $_[0]->{'min'}) {
-        return $_[1]>=$_[0]->{'min'} && $_[1]<=$_[0]->{'max'};
+      if(looks_like_number($_[1])) {
+        if(exists $_[0]->{'min'}) {
+          return $_[1]>=$_[0]->{'min'} && $_[1]<=$_[0]->{'max'};
+        }
+        return 1;
+      } else {
+        if(exists $_[0]->{'nulls'}) { return $_[0]->{'nulls'}; }
+        return 1;
       }
-      return 1;
     },
   },
   'html' => {
