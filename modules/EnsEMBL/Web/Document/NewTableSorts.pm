@@ -102,6 +102,7 @@ my %SORTS = (
     range_split => sub { return [$_[0]->{'clean'}->($_[1])]; },
     range_merge => "class",
     range_display => "class",
+    range_display_params => {},
     range_value => sub { $_[0]->{$_[1]} = 1; },
     range_finish => sub { return [sort keys %{$_[0]}]; },
     range_match => sub {
@@ -165,6 +166,10 @@ my %SORTS = (
       }
     },
   },
+  'integer' => {
+    range_display_params => { steptype => 'integer' },
+    _inherit => ['numeric'],
+  },
   'html' => {
     clean => \&html_cleaned,
     null => sub { $_[0] =~ /\S/; },
@@ -210,9 +215,23 @@ my %SORTS = (
   },
 );
 
-foreach my $k (keys %SORTS) {
-  foreach my $d (keys %{$SORTS{'_default'}}) {
-    $SORTS{$k}->{$d} ||= $SORTS{'_default'}->{$d};
+my $skips = 1;
+while($skips) {
+  $skips = 0;
+  TYPE: foreach my $k (keys %SORTS) {
+    my @inherit = @{$SORTS{$k}->{'_inherit'}||[]};
+    push @inherit,'_default';
+    delete $SORTS{$k}->{'_inherit'};
+    foreach my $t (@inherit) {
+      next unless $SORTS{$t}->{'_inherit'};
+      $skips = 1;
+      next TYPE;
+    }
+    foreach my $t (@inherit) {
+      foreach my $d (keys %{$SORTS{$t}}) {
+        $SORTS{$k}->{$d} ||= $SORTS{$t}->{$d};
+      }
+    }
   }
 }
 
@@ -228,6 +247,7 @@ sub newtable_sort_client_config {
         fn => $conf->{'js'},
         clean => $conf->{'js_clean'},
         range => $conf->{'range_display'},
+        range_params => $conf->{'range_display_params'},
         type => $column_map->{$col},
         incr_ok => !($conf->{'options'}{'no_incr'}||0)
       };

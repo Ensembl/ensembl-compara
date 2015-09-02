@@ -123,7 +123,7 @@ sub make_table {
     { key => 'clinsig',  width => '6u',  filter => "class", sort => 'string_dashnull', label => "Clin\f sig",                    help => 'Clinical significance'                  },
     { key => 'snptype',  width => '12u', filter => "class", sort => 'html_split',   label => 'Type',                          help => 'Consequence type'                       },
     { key => 'aachange', width => '6u',  filter => "",      sort => 'string_dashnull', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
-    { key => 'aacoord',  width => '6u',  filter => "range", sort => 'numeric',         label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
+    { key => 'aacoord',  width => '6u',  filter => "range", sort => 'integer',         label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
   ];
   
   # submitter data for LRGs

@@ -23,7 +23,7 @@
     return true;
   }
 
-  $.fn.newtable_filterrange_class = function($el,values,state) {
+  $.fn.newtable_filterrange_class = function($el,values,state,kparams) {
     var v = {};
     var $out = $("<ul/>");
     values = values.slice();
@@ -83,19 +83,21 @@
     }
   }
 
-  function slider($button,min,max,vmin,vmax,nulls,fn) {
+  function slider($button,min,max,vmin,vmax,nulls,kparams,fn) {
     var $out = $("<div/>").addClass('newtable_range');
     var $feedback = $('<div/>').addClass('slider_feedback').appendTo($out);
     var $unspec = $('<div/>').addClass('slider_unspecified');
     $unspec.append("<span>include blank</span>");
     var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
-    min = parseInt(min);
-    max = parseInt(max);
+    min = parseFloat(min);
+    max = parseFloat(max);
+    var step = (max-min)/200;
+    if(kparams.steptype == 'integer') { step = 1; }
     console.log("SLIDER");
     var $slider = $('<div/>').addClass('slider').appendTo($out).slider({
       range: true,
-      min: min, max: max,
-      values: [parseInt(vmin),parseInt(vmax)],
+      min: min, max: max, step: step,
+      values: [parseFloat(vmin),parseFloat(vmax)],
       slide: function(e,ui) {
         update_widget($button,$out,ui.values[0],ui.values[1]);
       },
@@ -113,7 +115,7 @@
     return $out;
   }
 
-  $.fn.newtable_filterrange_range = function($el,values,state) {
+  $.fn.newtable_filterrange_range = function($el,values,state,kparams) {
     if(!$el.data('slider-set')) {
       if(values.hasOwnProperty('min')) {
         $el.data('slider-min',values.min);
@@ -123,23 +125,22 @@
         return "";
       }
     }
-    $el.trigger('update',{
-      min: $el.data('slider-min'),
-      max: $el.data('slider-max'),
-      nulls: $el.data('slider-nulls')
-    });
     var vmin = $el.data('slider-min');
     var vmax = $el.data('slider-max');
     $el.data('slider-range',[values.min,values.max]);
     var vnulls = $el.data('slider-nulls');
-    return slider($el,values.min,values.max,vmin,vmax,vnulls,
+    return slider($el,values.min,values.max,vmin,vmax,vnulls,kparams,
       function(min,max,nulls) {
         console.log(min,max,nulls);
         $el.data('slider-min',min);
         $el.data('slider-max',max);
         $el.data('slider-nulls',nulls);
         $el.data('slider-set',true);
-        slider_update_soon();
+        $el.trigger('update',{
+          min: $el.data('slider-min'),
+          max: $el.data('slider-max'),
+          nulls: $el.data('slider-nulls')
+        });
       });
   };
 
@@ -178,7 +179,8 @@
       var kind = config.colconf[key].range;
       var values = ($table.data('ranges')||{})[key];
       if(!values) { values = []; }
-      return $.fn['newtable_filterrange_'+kind]($button,values,state);
+      var kparams = config.colconf[key].range_params;
+      return $.fn['newtable_filterrange_'+kind]($button,values,state,kparams);
     }
 
     function update_button($table,$el) {
@@ -242,7 +244,7 @@
       go: function($table,$el) {
         var trigger_soon = $.debounce(function() {
           $table.trigger('view-updated');
-        },10000);
+        },5000);
         $('li.t',$el).on('update',function(e,state) {
           update_state($table,$(this),state);
           update_button($table,$(this));
