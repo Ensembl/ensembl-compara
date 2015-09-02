@@ -55,7 +55,15 @@ sub features {
   
   if (!scalar @genes) {
     ## FIXME - this is an ugly hack!
-    if ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {
+    if ($analyses->[0] eq 'LRG_import' && !$slice->isa('Bio::EnsEMBL::LRGSlice')) {
+      my $lrg_slices = $slice->project('lrg');
+      if ($lrg_slices->[0]) {
+        my $lrg_slice = $lrg_slices->[0]->to_Slice;
+        @genes = map @{$self->_get_all_genes($lrg_slice,$_,$db_alias) || []}, @$analyses;
+        $display = 'transcript_label';
+      }
+    }
+    elsif ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {
       @genes = map @{$slice->feature_Slice->get_all_Genes($_, $db_alias) || []}, @$analyses;
     } else {
       @genes = map @{$self->_get_all_genes($slice,$_,$db_alias) || []}, @$analyses;
