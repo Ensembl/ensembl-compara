@@ -123,13 +123,11 @@
         return "";
       }
     }
-    var slider_update_soon = $.debounce(function() {
-      $el.trigger('update',{
-        min: $el.data('slider-min'),
-        max: $el.data('slider-max'),
-        nulls: $el.data('slider-nulls')
-      });
-    },2000);
+    $el.trigger('update',{
+      min: $el.data('slider-min'),
+      max: $el.data('slider-max'),
+      nulls: $el.data('slider-nulls')
+    });
     var vmin = $el.data('slider-min');
     var vmax = $el.data('slider-max');
     $el.data('slider-range',[values.min,values.max]);
