@@ -15,14 +15,6 @@
  */
 
 (function($) {
-
-  function obj_empty(x) {
-    for(var k in x) {
-      if(x.hasOwnProperty(k)) { return false; }
-    }
-    return true;
-  }
-  
   $.fn.newtable_filter_class = function(config,data) {
     return {
       filters: [{
