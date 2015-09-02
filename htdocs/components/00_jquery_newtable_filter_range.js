@@ -32,6 +32,22 @@
     }
   }
 
+  function calc_step(kparams,min,max) {
+    min = parseFloat(min);
+    max = parseFloat(max);
+    var step = (max-min)/200;
+    if(step == 0) { step = 1; }
+    if(kparams.steptype == 'integer') { step = 1; }
+    return step;
+  }
+
+  function send_update($button,$tickbox,pmin,pmax,fn) {
+    var range = $button.data('slider-range');
+    if(pmin < range[0]) { pmin = null; }
+    if(pmax > range[1]) { pmax = null; }
+    fn(pmin,pmax,$tickbox.prop('checked'));
+  }
+
   function slider($button,min,max,vmin,vmax,nulls,kparams,fn) {
     var $out = $("<div/>").addClass('newtable_range');
     var $feedback = $('<div/>').addClass('slider_feedback').appendTo($out);
@@ -40,13 +56,11 @@
     var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
     min = parseFloat(min);
     max = parseFloat(max);
-    var step = (max-min)/200;
-    if(step == 0) { step = 1; }
+    var step = calc_step(kparams,min,max);
     if(vmin===null) { vmin = min-step; }
     if(vmax===null) { vmax = max+step; }
     vmin = parseFloat(vmin);
     vmax = parseFloat(vmax);
-    if(kparams.steptype == 'integer') { step = 1; }
     var $slider = $('<div/>').addClass('slider').appendTo($out).slider({
       range: true,
       min: min-step, max: max+step, step: step,
@@ -55,11 +69,7 @@
         update_widget($button,$out,ui.values[0],ui.values[1]);
       },
       stop: function(e,ui) {
-        var pmin = ui.values[0];
-        var pmax = ui.values[1];
-        if(pmin < min) { pmin = null; }
-        if(pmax > max) { pmax = null; }
-        fn(pmin,pmax,$tickbox.prop('checked'));
+        send_update($button,$tickbox,ui.values[0],ui.values[1],fn);
       }
     });
     $unspec.appendTo($out);
@@ -67,9 +77,7 @@
       $button.data('unspec-explicit',true);
         var pmin = $slider.slider('option','values.0');
         var pmax = $slider.slider('option','values.1');
-        if(pmin < min) { pmin = null; }
-        if(pmax > max) { pmax = null; }
-        fn(pmin,pmax,$tickbox.prop('checked'));
+        send_update($button,$tickbox,pmin,pmax,fn);
     }).prop('checked',nulls);
     update_widget($button,$out,vmin-step,vmax+step);
     return $out;
@@ -80,26 +88,31 @@
       filters: [{
         name: "range",
         display: function($menu,$el,values,state,kparams) {
-          if(!$el.data('slider-set')) {
-            if(values.hasOwnProperty('min')) {
-              $el.data('slider-minp',true);
-              $el.data('slider-maxp',true);
-              $el.data('slider-min',null);
-              $el.data('slider-max',null);
-              $el.data('slider-nulls',true);
-            } else {
-              return "";
+          var $slider = $('.slider',$menu);
+          if($slider.length) {
+            console.log("Got one");
+            var step = calc_step(kparams,values.min,values.max);
+            var range = $el.data('slider-range');
+            var is_min = ($slider.slider('option','values.0') < range[0]);
+            var is_max = ($slider.slider('option','values.1') > range[1]);
+            $slider.slider('option','step',step);
+            $slider.slider('option','min',parseFloat(values.min)-step);
+            $slider.slider('option','max',parseFloat(values.max)+step);
+            if(is_min) {
+              $slider.slider('values',0,parseFloat($slider.slider('option','min')));
             }
-          }
-          var vmin = $el.data('slider-min');
-          var vmax = $el.data('slider-max');
-          $el.data('slider-range',[values.min,values.max]);
-          var vnulls = $el.data('slider-nulls');
-          var $out = slider($el,values.min,values.max,vmin,vmax,
-                            vnulls,kparams,function(min,max,nulls) {
-              console.log(min,max,nulls);
-              $el.data('slider-minp',min===null);
-              $el.data('slider-maxp',max===null);
+            if(is_max) {
+              $slider.slider('values',1,parseFloat($slider.slider('option','max')));
+            }
+            $el.data('slider-range',[values.min,values.max]);
+          } else {
+            $el.data('slider-min',null);
+            $el.data('slider-max',null);
+            $el.data('slider-nulls',true);
+            $el.data('slider-range',[values.min,values.max]);
+            var vnulls = $el.data('slider-nulls');
+            var $out = slider($el,values.min,values.max,null,null,true,
+                              kparams,function(min,max,nulls) {
               $el.data('slider-min',min);
               $el.data('slider-max',max);
               $el.data('slider-nulls',nulls);
@@ -109,7 +122,8 @@
               if(max!==null) { update.max = $el.data('slider-max'); }
               $el.trigger('update',update);
             });
-          $menu.empty().append($out);
+            $menu.empty().append($out);
+          }
         },
         text: function(state,all) {
           var no_blanks = (state.hasOwnProperty('nulls') && !state.nulls);
