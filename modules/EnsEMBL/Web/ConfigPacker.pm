@@ -1178,7 +1178,7 @@ sub _summarise_compara_db {
 
   ###################################################################
   ## Section for storing the genome_db_ids <=> species_name
-  $res_aref = $dbh->selectall_arrayref('SELECT genome_db_id, name, assembly FROM genome_db WHERE assembly_default = 1');
+  $res_aref = $dbh->selectall_arrayref('SELECT genome_db_id, name, assembly FROM genome_db');
   
   foreach my $row (@$res_aref) {
     my ($genome_db_id, $species_name) = @$row;
