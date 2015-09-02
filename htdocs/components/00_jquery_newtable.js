@@ -157,6 +157,9 @@
       ranges = {};
       $table.data('range-manifest',manifest_in);
     }
+    $.each($table.data('range-fixed'),function(k,v) {
+      if(!ranges[k]) { ranges[k] = v.slice(); }
+    });
     $.each(enums,function(column,range) {
       var fn = $['newtable_rangemerge_'+range.merge];
       if(!fn) { fn = $['newtable_rangemerge_class']; }
@@ -250,6 +253,16 @@
     });
   }
 
+  function prepopulate_ranges($table,config) {
+    var fixed = {};
+    $.each(config.columns,function(i,col) {
+      if(col.range) {
+        fixed[col.key] = col.range;
+      }
+    });
+    $table.data('range-fixed',fixed);
+  }
+
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
@@ -283,6 +296,7 @@
     var view = $.extend(true,{},config.orient);
     var old_view = $.extend(true,{},config.orient);
 
+    prepopulate_ranges($table,config);
     $table.data('view',view).data('old-view',$.extend(true,{},old_view))
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
