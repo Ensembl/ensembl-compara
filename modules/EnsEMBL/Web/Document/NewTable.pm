@@ -144,6 +144,8 @@ sub render {
     colconf => $sort_conf,
     widgets => {
       filter => [ "new_table_filter",{}],
+      filter_class => ["newtable_filter_class",{}],
+      filter_range => ["newtable_filter_range",{}],
       search => [ "new_table_search",{}],
       clientsort => [ "new_table_clientsort",{}],
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],

@@ -23,150 +23,25 @@
     return true;
   }
 
-  $.fn.newtable_filterrange_class = function($el,values,state,kparams) {
-    var v = {};
-    var $out = $("<ul/>");
-    values = values.slice();
-    values.sort(function(a,b) { return a.localeCompare(b); });
-    $.each(values,function(i,val) {
-      var $li = $("<li/>").text(val).data('key',val).appendTo($out);
-      $li.data('val',val);
-      if(!state[val]) { $li.addClass("on"); }
-      $li.on('click',function() {
-        $(this).toggleClass('on');
-        var key = $(this).data('key');
-        if(state[val]) { delete state[val]; } else { state[val] = 1; }
-        $el.trigger('update',state);
-      });
-    });
-    if(values.length>2) { $out.addClass('use_cols'); }
-    return $out;
-  };
-
-  $.fn.newtable_filtersummary_class = function(state,all) {
-    var skipping = {};
-    $.each(state,function(k,v) { skipping[k]=1; });
-    var on = [];
-    var off = [];
-    $.each(all,function(i,v) {
-      if(skipping[v]) { off.push(v); } else { on.push(v); }
-    });
-    var out = "None";
-    if(on.length<=off.length) {
-      out = on.join(', ');
-    } else if(on.length) {
-      out = 'All except '+off.join(', ');
-    }
-    if(out.length>20) {
-      out = out.substr(0,20)+'...('+on.length+'/'+all.length+')';
-    }
-    return out;
-  }
-
-  $.fn.newtable_filtervalid_class = function(values) {
-    return values && !!values.length;
-  }
-
-  function update_widget($button,$el,min,max,nulls) {
-    var $feedback = $('.slider_feedback',$el);
-    var $slider = $('.slider',$el);
-    var $tickbox = $('.slider_unspecified input',$el);
-    $feedback.text(min+" - "+max);
-    if(!$button.data('unspec-explicit')) {
-      var all = (min == $slider.slider('option','min') &&
-                max == $slider.slider('option','max'));
-      if(all) {
-        $tickbox.prop('checked',true);
-      } else {
-        $tickbox.prop('checked',false);
-      }
-    }
-  }
-
-  function slider($button,min,max,vmin,vmax,nulls,kparams,fn) {
-    var $out = $("<div/>").addClass('newtable_range');
-    var $feedback = $('<div/>').addClass('slider_feedback').appendTo($out);
-    var $unspec = $('<div/>').addClass('slider_unspecified');
-    $unspec.append("<span>include blank</span>");
-    var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
-    min = parseFloat(min);
-    max = parseFloat(max);
-    var step = (max-min)/200;
-    if(kparams.steptype == 'integer') { step = 1; }
-    console.log("SLIDER");
-    var $slider = $('<div/>').addClass('slider').appendTo($out).slider({
-      range: true,
-      min: min, max: max, step: step,
-      values: [parseFloat(vmin),parseFloat(vmax)],
-      slide: function(e,ui) {
-        update_widget($button,$out,ui.values[0],ui.values[1]);
-      },
-      stop: function(e,ui) {
-        fn(ui.values[0],ui.values[1],$tickbox.prop('checked'));
-      }
-    });
-    $unspec.appendTo($out);
-    $tickbox.on('click',function() {
-      $button.data('unspec-explicit',true);
-      fn($slider.slider('option','values.0'),
-         $slider.slider('option','values.1'),$tickbox.prop('checked'));
-    }).prop('checked',nulls);
-    update_widget($button,$out,vmin,vmax);
-    return $out;
-  }
-
-  $.fn.newtable_filterrange_range = function($el,values,state,kparams) {
-    if(!$el.data('slider-set')) {
-      if(values.hasOwnProperty('min')) {
-        $el.data('slider-min',values.min);
-        $el.data('slider-max',values.max);
-        $el.data('slider-nulls',true);
-      } else {
-        return "";
-      }
-    }
-    var vmin = $el.data('slider-min');
-    var vmax = $el.data('slider-max');
-    $el.data('slider-range',[values.min,values.max]);
-    var vnulls = $el.data('slider-nulls');
-    return slider($el,values.min,values.max,vmin,vmax,vnulls,kparams,
-      function(min,max,nulls) {
-        console.log(min,max,nulls);
-        $el.data('slider-min',min);
-        $el.data('slider-max',max);
-        $el.data('slider-nulls',nulls);
-        $el.data('slider-set',true);
-        $el.trigger('update',{
-          min: $el.data('slider-min'),
-          max: $el.data('slider-max'),
-          nulls: $el.data('slider-nulls')
-        });
-      });
-  };
-
-  $.fn.newtable_filtersummary_range = function(state,all) {
-    var range = null;
-    var no_blanks = (state.hasOwnProperty('nulls') && !state.nulls);
-    if(state.hasOwnProperty('min') && state.hasOwnProperty('max')) {
-      if(!(all.hasOwnProperty('min') && all.hasOwnProperty('max') &&
-           all.min==state.min && all.max==state.max)) {
-        var range = state.min+"-"+state.max;
-        if(!no_blanks) { range = range + " or blank"; }
-        return range;
-      }
-    }
-    range = "All";
-    if(no_blanks) { range += " except blank"; }
-    return range;
-  };
-
-  $.fn.newtable_filtervalid_range = function(values) {
-    return values && values.hasOwnProperty('min');
-  }
-
-  $.fn.new_table_filter = function(config,data) {
+  $.fn.new_table_filter = function(config,data,widgets) {
 
     var filterable_columns = [];
+
+    function find_widget(filter_name) {
+      var w;
+      $.each(widgets,function(name,contents) {
+        if(contents.filters) {
+          for(var i=0;i<contents.filters.length;i++) {
+            if(contents.filters[i].name == filter_name) {
+              w = contents.filters[i];
+            }
+          }
+        }
+      });
+      if(w) { return w; }
+      if(filter_name != 'class') { return find_widget('class'); }
+      return null;
+    }
 
     function dropdown(idx,key,filter,label) {
       return '<li class="t" data-idx="'+idx+'"><span class="k">'+label+'</span><span class="v">All</span><div class="m" data-filter="'+filter+'">'+label+'</div></li>';
@@ -180,7 +55,8 @@
       var values = ($table.data('ranges')||{})[key];
       if(!values) { values = []; }
       var kparams = config.colconf[key].range_params;
-      return $.fn['newtable_filterrange_'+kind]($button,values,state,kparams);
+      var w = find_widget(kind);
+      return w.display($button,values,state,kparams);
     }
 
     function update_button($table,$el) {
@@ -190,12 +66,14 @@
       var key = config.columns[idx].key;
       var values = ($table.data('ranges')||{})[key];
       var kind = config.colconf[key].range;
-      $el.toggleClass('valid',!!$.fn['newtable_filtervalid_'+kind](values));
+      var w = find_widget(kind);
+      $el.toggleClass('valid',!!w.visible(values));
       var $filters = $('.newtable_filter',$table);
       var $vbuts = $('.t.valid',$filters);
       $filters.toggle(!!$vbuts.length);
       if(view.filter.hasOwnProperty(key)) {
-        var text = $.fn['newtable_filtersummary_'+kind](view.filter[key],values);
+        var w = find_widget(kind);
+        var text = w.text(view.filter[key],values);
         $('.v',$el).text(text);
       } else {
         $('.v',$el).text('All');

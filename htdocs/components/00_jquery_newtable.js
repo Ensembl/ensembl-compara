@@ -36,7 +36,7 @@
         name = name[0];
       }
       if($.isFunction($.fn[name])) {
-        widgets[key] = $.fn[name](config,data);
+        widgets[key] = $.fn[name](config,data,widgets);
       }
     });
     return widgets;
