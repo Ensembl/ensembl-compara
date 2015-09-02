@@ -79,7 +79,7 @@
     return {
       filters: [{
         name: "range",
-        display: function($el,values,state,kparams) {
+        display: function($menu,$el,values,state,kparams) {
           if(!$el.data('slider-set')) {
             if(values.hasOwnProperty('min')) {
               $el.data('slider-minp',true);
@@ -95,8 +95,8 @@
           var vmax = $el.data('slider-max');
           $el.data('slider-range',[values.min,values.max]);
           var vnulls = $el.data('slider-nulls');
-          return slider($el,values.min,values.max,vmin,vmax,vnulls,kparams,
-            function(min,max,nulls) {
+          var $out = slider($el,values.min,values.max,vmin,vmax,
+                            vnulls,kparams,function(min,max,nulls) {
               console.log(min,max,nulls);
               $el.data('slider-minp',min===null);
               $el.data('slider-maxp',max===null);
@@ -109,8 +109,9 @@
               if(max!==null) { update.max = $el.data('slider-max'); }
               $el.trigger('update',update);
             });
+          $menu.empty().append($out);
         },
-        text: function($button,state,all) {
+        text: function(state,all) {
           var no_blanks = (state.hasOwnProperty('nulls') && !state.nulls);
           var has_min = state.hasOwnProperty('min');
           var has_max = state.hasOwnProperty('max');

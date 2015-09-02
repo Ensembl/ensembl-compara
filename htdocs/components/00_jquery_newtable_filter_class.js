@@ -27,7 +27,7 @@
     return {
       filters: [{
         name: "class",
-        display: function($el,values,state,kparams) {
+        display: function($menu,$el,values,state,kparams) {
           var v = {};
           var $out = $("<ul/>");
           values = values.slice();
@@ -44,7 +44,7 @@
             });
           });
           if(values.length>2) { $out.addClass('use_cols'); }
-          return $out;
+          $menu.empty().append($out);
         },
         text: function(state,all) {
           var skipping = {};

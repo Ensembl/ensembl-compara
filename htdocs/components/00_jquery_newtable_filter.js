@@ -47,7 +47,7 @@
       return '<li class="t" data-idx="'+idx+'"><span class="k">'+label+'</span><span class="v">All</span><div class="m" data-filter="'+filter+'">'+label+'</div></li>';
     }
 
-    function menu($table,$button) {
+    function menu($table,$button,$menu) {
       var idx = $button.data('idx');
       var key = config.columns[idx].key;
       var state = (($table.data('view').filter||{})[key])||{};
@@ -56,7 +56,7 @@
       if(!values) { values = []; }
       var kparams = config.colconf[key].range_params;
       var w = find_widget(kind);
-      return w.display($button,values,state,kparams);
+      w.display($menu,$button,values,state,kparams);
     }
 
     function update_button($table,$el) {
@@ -134,7 +134,7 @@
             update_button($table,$button);
             var $menu = $('.m',$button);
             if($menu.is(':visible')) {
-              $menu.empty().append(menu($table,$button));
+              menu($table,$button,$menu);
               show_menu($menu);
             }
           });
@@ -150,7 +150,7 @@
           });
           if($button.length && !$menu.length) {
             if(!$el.is(":visible")) {
-              $el.empty().append(menu($table,$button));
+              menu($table,$button,$el);
               show_menu($el);
             } else {
               $el.hide();
