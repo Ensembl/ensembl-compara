@@ -157,7 +157,10 @@ my %SORTS = (
     range_match => sub {
       if(looks_like_number($_[1])) {
         if(exists $_[0]->{'min'}) {
-          return $_[1]>=$_[0]->{'min'} && $_[1]<=$_[0]->{'max'};
+          return 0 unless $_[1]>=$_[0]->{'min'};
+        }
+        if(exists $_[0]->{'max'}) {
+          return 0 unless $_[1]<=$_[0]->{'max'};
         }
         return 1;
       } else {
