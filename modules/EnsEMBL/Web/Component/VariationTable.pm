@@ -58,8 +58,6 @@ sub content {
     $msg .= qq( To extend or reduce the intronic sequence, use the "<b>Configure this page - Intron Context</b>" link on the left.</p>);
   }
   
-  $msg .= qq(<p>Note: From release 68, Ensembl uses Sequence Ontology (SO) terms to describe consequences. <a href="/info/genome/variation/predicted_data.html#consequence_type_table">More information about this table</a>.</p>);
-
   if ($consequence_type || $count < 25) {
     $consequence_type ||= 'ALL';
 
