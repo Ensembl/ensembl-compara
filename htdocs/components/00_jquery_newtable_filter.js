@@ -160,7 +160,7 @@
   };
 
   $.fn.newtable_filtervalid_range = function(values) {
-    return true;
+    return values && values.hasOwnProperty('min');
   }
 
   $.fn.new_table_filter = function(config,data) {
@@ -188,7 +188,7 @@
       var key = config.columns[idx].key;
       var values = ($table.data('ranges')||{})[key];
       var kind = config.colconf[key].range;
-      $el.toggleClass('valid',$.fn['newtable_filtervalid_'+kind](values));
+      $el.toggleClass('valid',!!$.fn['newtable_filtervalid_'+kind](values));
       var $filters = $('.newtable_filter',$table);
       var $vbuts = $('.t.valid',$filters);
       $filters.toggle(!!$vbuts.length);
