@@ -73,6 +73,7 @@ sub init_config {
   my $hub         = $controller->hub;
   my $action      = $hub->action;
   my $view_config = $hub->get_viewconfig($action);
+  my $img_url     = $self->img_url;
   
   return unless $view_config;
   
@@ -88,17 +89,20 @@ sub init_config {
       my @sp = @{$image_config->species_list};
 
       if (@sp) {
-
-        $species_select = sprintf '<div class="species_select">Species to configure: %s</div>', EnsEMBL::Web::Form->new({})->add_field({
-          'type'          => 'speciesdropdown',
-          'name'          => 'species',
-          'value'         => $hub->species,
-          'values'        => [ map {
-            'value'         => $_->[0],
-            'caption'       => $_->[1],
-            'class'         => $hub->url('Config', { 'species' => $_->[0], '__clear' => 1 })
-          }, @{$image_config->species_list} ]
-        })->elements->[0]->render;
+        $species_select = sprintf('<div class="species_select">Species to configure: %s%s</div>',
+          EnsEMBL::Web::Form->new({})->add_field({
+            'type'      => 'dropdown',
+            'name'      => 'species',
+            'class'     => '_stt',
+            'values'    => [ map {
+              'caption'   => $_->[1],
+              'value'     => $hub->url('Config', { 'species' => $_->[0], '__clear' => 1 }),
+              'class'     => "_stt__$_->[0]",
+              'selected'  => $hub->species eq $_->[0] ? 1 : 0
+            }, @{$image_config->species_list} ]
+          })->elements->[0]->render,
+          join('', map { sprintf '<span class="_stt_%s"><img src="%sspecies/16/%1$s.png"></span>', $_->[0], $img_url } @{$image_config->species_list})
+        );
       }
     }
     
