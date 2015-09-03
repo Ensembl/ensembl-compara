@@ -106,6 +106,10 @@
       }
     }
 
+    function hide_menu($el) {
+      $el.hide();
+    }
+
     return {
       generate: function() {
         var dropdowns = "";
@@ -146,14 +150,14 @@
           var $menu = $(e.target).closest('.newtable_filter li.t .m');
           $('.newtable_filter li .m:visible').each(function() {
             if($el.length && $el[0] == this) { return; }
-            $(this).hide();
+            hide_menu($(this));
           });
           if($button.length && !$menu.length) {
             if(!$el.is(":visible")) {
               menu($table,$button,$el);
               show_menu($el);
             } else {
-              $el.hide();
+              hide_menu($el);
             }
           }
         });
