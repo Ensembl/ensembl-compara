@@ -39,21 +39,35 @@ sub content {
   my $hub      = $self->hub;
   my $html;
 
-  my $message = $self->get_message($hub->param('error'));  
-
-  $html .= $message;
+  my $error_type = $hub->param('error');
+  $html         .= $self->$error_type if $self->can($error_type);
 
   return $html;
 }
 
-sub get_message {
-  my ($self, $error_code) = @_;
+sub unknown_species {
+  my $self = shift;
+  my $hub  = $self->hub;
 
-  my %messages = (
-    'not_valid_species' => '<p>The species linked to could not be found on this site. Please check the spelling in your URL, or try one of our sister sites.</p>',
-  );
+  my $species = $hub->param('species') || 'Your species';
 
-  return $messages{$error_code};
+  my $message = qq(<p>$species could not be found on this site. Please check the spelling in your URL, or try one of our sister sites:</p>
+<ul>);
+
+  my @sisters   = qw(www pre bacteria fungi plants protists metazoa);
+  my @domain    = split(/\./, $hub->species_defs->ENSEMBL_SERVERNAME);
+  my $subdomain = $domain[0];
+
+  foreach (@sisters) {
+    next if $subdomain eq $_;
+    my $name  = 'Ensembl';
+    $name    .= ' '.ucfirst($_) unless $_ eq 'www';
+    $message .= sprintf('<li><a href="http://%s.ensembl.org">%s</a></li>', $_, $name);
+  }
+
+  $message .= '</ul>';
+
+  return $message;
 }
 
 
