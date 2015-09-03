@@ -16,25 +16,16 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Help::Trackhub;
+package EnsEMBL::Web::Document::HTML::TrackHubError;
 
-### Popup panel for situations where we don't support any of the assemblies in a hub
+### Help page for situations where we don't support any of the assemblies in a hub
 
 use strict;
 use warnings;
 
-use base qw(EnsEMBL::Web::Component::Help);
+use parent qw(EnsEMBL::Web::Document::HTML);
 
-no warnings "uninitialized";
-
-sub _init {
-  my $self = shift;
-  $self->cacheable(1);
-  $self->ajaxable(0);
-  $self->configurable(0);
-}
-
-sub content {
+sub render {
   my $self     = shift;
   my $hub      = $self->hub;
   my $html;
