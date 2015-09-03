@@ -282,18 +282,21 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.elLk.header = $('<div class="header">' + (json.header ? json.header : length + ' features') + '</div>').insertBefore(this.elLk.container.addClass('row' + (length > cols ? ' grid' : '')));
     }
 
-    this.addLocationHighlightLinks();
+    this.addLocationIcons();
 
     this.show();
   },
 
-  addLocationHighlightLinks: function () {
+  addLocationIcons: function () {
     var links = this.elLk.container.find('._location_highlight').removeClass('_location_highlight');
     if (!this.imageId.match('Multi')) {
       links.each(function () {
         var locationMatch = this.href.match(Ensembl.locationMatch);
         if (locationMatch) {
-          $('<br /><a class="loc-highlight _location_highlight _ht" title="Highlight feature on image" href="' + Ensembl.updateURL({hlr: locationMatch[1]}, this.href) +'"></a>').insertAfter(this);
+          $('<br />' +
+            '<a class="loc-icon loc-highlight _location_highlight _ht" title="Highlight feature on image" href="' + Ensembl.updateURL({hlr: locationMatch[1]}, this.href) +'"></a>' +
+            '<a class="loc-icon loc-zoom _location_change _ht" title="Zoom on feature" href="' + this.href +'"></a>'
+          ).insertAfter(this);
         }
         return true;
       });
@@ -311,13 +314,13 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var loc   = this.title.match(/Location: (\S+)/);
     var r;
     
-    if (loc) {          
+    if (loc) {
       r = loc[1].split(/\W/);
       
       this.location = parseInt(r[1], 10) + (r[2] - r[1]) / 2;
       
-      extra += this.row(' ', '<a class="_location_change" href="' + this.zoomURL(1) + '">Centre on feature</a>');
-      extra += this.row(' ', '<a class="_location_change" href="' + this.baseURL.replace(/%s/, loc[1]) + '">Zoom to feature</a>');
+      extra += this.row(' ', '<a class="loc-icon-a _location_change" href="' + this.zoomURL(1) + '"><span class="loc-icon loc-pin"></span>Centre on feature</a>');
+      extra += this.row(' ', '<a class="loc-icon-a _location_change" href="' + this.baseURL.replace(/%s/, loc[1]) + '"><span class="loc-icon loc-zoom"></span>Zoom to feature</a>');
     }
     
     this.populate(true, extra);
@@ -336,7 +339,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     function notLocation() {
       var view = end - start + 1 > Ensembl.maxRegionLength ? 'Overview' : 'View';
           url  = url.replace(/.+\?/, '?');
-          menu = [ '<a href="' + panel.speciesPath + '/Location/' + view + url + '">Jump to region ' + view.toLowerCase() + '</a>' ];
+          menu = [ '<a class="loc-icon-a" href="' + panel.speciesPath + '/Location/' + view + url + '"><span class="loc-icon loc-change"></span>Jump to region ' + view.toLowerCase() + '</a>' ];
     }
     
     // Multi species view
@@ -406,12 +409,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
             }
           }
           
-          menu = [ '<a class="' + cls + '" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>' ];
+          menu = [ '<a class="' + cls + ' loc-icon-a" href="' + url + '"><span class="loc-icon loc-change"></span>Jump to region (' + (end - start + 1) + ' bp)</a>' ];
         }
       }
 
       if (this.multi === false) {
-        menu.unshift('<a class="_location_highlight loc-highlight-a" href="' + Ensembl.updateURL({hlr: this.chr + ':' + start + '-' + end}, window.location.href) + '"><span></span>Highlight region (' + (end - start + 1) + ' bp)</a>');
+        menu.unshift('<a class="_location_highlight loc-icon-a" href="' + Ensembl.updateURL({hlr: this.chr + ':' + start + '-' + end}, window.location.href) + '"><span class="loc-icon loc-highlight"></span>Highlight region (' + (end - start + 1) + ' bp)</a>');
       }
 
     } else { // Point select
