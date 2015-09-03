@@ -54,46 +54,69 @@ sub process {
 
   if ($species) {
     my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
-
-    $redirect       = $hub->species_path($species) . '/UserData/';
-    $anchor         = 'modal_config_viewbottom';
-    my $new_action  = '';
+    unless ($location) {
+      my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
+      $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+    }
+    $params->{'r'} = $location;
 
     if ($url) {
-      ## Is this file already attached?
+      my $new_action  = '';
       ($new_action, $params)  = $self->check_attachment($url);
 
-      unless ($new_action) {
+      if ($new_action) {
+        ## Hub is already attached, so just go there
+        $redirect = sprintf('/%s/Location/View', $species);
+        $anchor   = 'modal_config_viewbottom';
+      }
+      else {
+        ## Check if we have any supported assemblies
         my $trackhub = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
-     
-        ($new_action, $params) = $self->attach($trackhub, $filename); 
-      }
+        my $assembly_lookup = $hub->species_defs->assembly_lookup;
+        my $hub_info = $trackhub->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup, 'parse_tracks' => 0});
 
-      ## Override standard redirect with sample location
-      $redirect           = sprintf('/%s/Location/View', $species);
-      unless ($location) {
-        my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
-        $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
-      }
-      $params->{'r'} = $location;
+        if ($hub_info->{'unsupported_genomes'}) {
+          $redirect = '/trackhub_error.html';
+          $params->{'error'}  = 'archive_only';
+          $params->{'url'}    = $url;
+          ## Get lookup that includes old assemblies
+          my $lookup = $hub->species_defs->assembly_lookup(1);
+          foreach (@{$hub_info->{'unsupported_genomes'}||{}}) {
+            my $info = $lookup->{$_};
+            $params->{'species_'.$info->[0]} = $info->[1];
+          }
+        }
+        else {
+          ($new_action, $params) = $self->attach($trackhub, $filename); 
 
-      my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
-      my $p         = $params->{'reattach'} || $params->{'species_flag'} 
-                        || $params->{'assembly_flag'} || 'ok';
-      my $key       = sprintf('hub_%s', $p);
+          ## Override standard redirect with sample location
+          $redirect     = sprintf('/%s/Location/View', $species);
+          $anchor       = 'modal_config_viewbottom';
 
-      if ($messages{$key}) {
-        $anchor = 'modal_user_data' unless $p eq 'ok';
-        $hub->session->add_data(
-          type     => 'message',
-          code     => 'AttachURL',
-          message  => $messages{$key}{'message'},
-          function => '_'.$messages{$key}{'type'},
-        );
+          my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
+          my $p         = $params->{'reattach'} || $params->{'species_flag'} 
+                            || $params->{'assembly_flag'} || 'ok';
+          my $key       = sprintf('hub_%s', $p);
+
+          if ($messages{$key}) {
+            ## Open control panel at Manage Your Data if chosen species not supported
+            if ($params->{'species_flag'} && $params->{'species_flag'} eq 'other_only') {
+              $anchor = 'modal_user_data';
+            }
+            else {
+              $hub->session->add_data(
+                type     => 'message',
+                code     => 'AttachURL',
+                message  => $messages{$key}{'message'},
+                function => '_'.$messages{$key}{'type'},
+              );
+            }
+          }
+        }
       }
     } else {
-      $redirect = '/trackhub_error.html';
-      $params->{'error'}    = 'no_url';
+      $redirect           = '/trackhub_error.html';
+      $params->{'error'}  = 'no_url';
     }
   }
   
