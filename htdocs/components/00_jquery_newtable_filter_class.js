@@ -21,11 +21,21 @@
         name: "class",
         display: function($menu,$el,values,state,kparams) {
           var v = {};
-          var $out = $("<ul/>");
+          var $out = $('<div/>');
           values = values.slice();
           values.sort(function(a,b) { return a.localeCompare(b); });
+          var $ul;
+          var splits = [0];
+          if(values.length > 4) {
+            splits = [0,values.length/3,2*values.length/3];
+            $out.addClass('use_cols');
+          }
           $.each(values,function(i,val) {
-            var $li = $("<li/>").text(val).data('key',val).appendTo($out);
+            if(i>=splits[0]) {
+              $ul = $("<ul/>").appendTo($out);
+              splits.shift();
+            }
+            var $li = $("<li/>").text(val).data('key',val).appendTo($ul);
             $li.data('val',val);
             if(!state[val]) { $li.addClass("on"); }
             $li.on('click',function() {
@@ -35,7 +45,6 @@
               $el.trigger('update',state);
             });
           });
-          if(values.length>2) { $out.addClass('use_cols'); }
           $menu.empty().append($out);
         },
         text: function(state,all) {

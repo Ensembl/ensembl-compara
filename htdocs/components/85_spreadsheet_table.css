@@ -147,13 +147,12 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter li { position: relative; }
 .newtable_filter li .m { position: absolute; top: 22px; left: 4px; background: white; padding: 4px; border: 1px solid #999; display: none; z-index: 100; text-shadow: none; }
 
-.newtable_filter .m ul { margin: -3px; padding: 0; display: block; }
-.newtable_filter .m li { background: #fdd; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; }
-.newtable_filter .m li:before { content: "Off"; background: red; position: absolute; right: 0; top: 0; bottom: 0; padding: 4px; width: 24px; display: block; text-align: center; color: black; }
-.newtable_filter .m li.on:before { content: "On"; background: green; }
-.newtable_filter .m li.on { background: #dfd; }
-.newtable_filter .m ul.use_cols { -moz-column-count: 3; -webkit-column-count: 3; }
-.newtable_filter .m li { page-break-inside: avoid; -webkit-column-break-inside: avoid; display: inline-block; width: 150px;  }
+.newtable_filter .m ul { margin: -3px 0; padding: 0; display: block; float: left; }
+.newtable_filter .m li { background: #aaa; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; border: 1px solid #ccc; display: block; width: 150px; }
+.newtable_filter .m li:before { content: "Off"; background: #633; position: absolute; right: 0; top: 0; bottom: 0; padding: 4px; width: 26px; display: inline-block; text-align: center; color: black; overflow: hidden; }
+.newtable_filter .m li.on:before { content: "On"; background: #396; }
+.newtable_filter .m li.on { background: white; }
+.newtable_filter .m div.use_cols { width: 600px; }
 .newtable_filter .m.edge { right: 0; left: auto;  }
 .newtable_range { padding: 4px; }
 .newtable_filter .slider { width: 200px; margin: 8px; font-size: 10px; }
