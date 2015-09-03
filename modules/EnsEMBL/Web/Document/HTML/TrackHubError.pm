@@ -36,6 +36,10 @@ sub render {
   return $html;
 }
 
+sub no_url { 
+  return '<p>No trackhub URL was provided.</p>'; 
+}
+
 sub unknown_species {
   my $self = shift;
   my $hub  = $self->hub;

@@ -92,13 +92,8 @@ sub process {
         );
       }
     } else {
-      $session->add_data(
-        type     => 'message',
-        code     => 'AttachURL',
-        message  => 'No URL was provided',
-        function => '_error'
-      );
-      $redirect .= 'SelectFile';
+      $redirect = '/trackhub_error.html';
+      $params->{'error'}    = 'no_url';
     }
   }
   
