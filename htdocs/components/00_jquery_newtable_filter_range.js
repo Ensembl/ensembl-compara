@@ -15,21 +15,83 @@
  */
 
 (function($) {
-  function update_widget($button,$el,min,max,nulls) {
+  function obj_empty(x) {
+    for(var k in x) {
+      if(x.hasOwnProperty(k)) { return false; }
+    }
+    return true;
+  }
+
+  var varieties = {
+    position: {
+      summary_prefix: function($button) {
+        return $button.data('slider-chr')+':';
+      },
+      additional_update: function(update,$button) {
+        update.chr = $button.data('slider-chr');
+      },
+      preproc_values: function(values) {
+        var best = null;
+        $.each(values,function(name,value) {
+          if(value.best) { best = value; }
+        });
+        return best;
+      },
+      detect_catastrophe: function($el,$slider,best) {
+        var minmax = is_minmax($el,$slider,null,null);
+        if(best.chr != $el.data('slider-chr') &&
+          (!minmax.min || !minmax.max)) {
+          $el.data('slider-chr',best.chr);
+          return true;
+        } else {
+          return false;
+        }
+      },
+      text_prefix: function(state) { return state.chr+':'; },
+      draw_additional: function($el,values) {
+        $el.data('slider-chr',values.chr);
+      }
+    },
+    range: {
+      summary_prefix: function($button) { return ''; },
+      additional_update: function(update,$button) {},
+      preproc_values: function(values) { return values; },
+      detect_catastrophe: function($el,$slider,values) { return false; },
+      text_prefix: function(state) { return ''; },
+      draw_additional: function($el,values) {},
+    },
+  };
+
+  function is_minmax($el,$slider,min,max) {
+    var range = $el.data('slider-range');
+    if($slider) {
+      if(min===null) { min = $slider.slider('option','values.0'); }
+      if(max===null) { max = $slider.slider('option','values.1'); }
+    }
+    var is_min = (min===null || 1*min < 1*range[0]);
+    var is_max = (max===null || 1*max > 1*range[1]);
+    return { min: is_min, max: is_max };
+  }
+
+  function update_widget(variety,$button,$el,min,max) {
     var $feedback = $('.slider_feedback',$el);
     var $slider = $('.slider',$el);
     var $tickbox = $('.slider_unspecified input',$el);
-    var range = $button.data('slider-range');
-    var is_min = (min < range[0]);
-    var is_max = (max > range[1]);
-    $feedback.text((is_min?"Min":min)+" - "+(is_max?"Max":max));
+    var prefix = variety.summary_prefix($button);
+    var minmax = is_minmax($button,null,min,max);
+    $feedback.text(prefix+(minmax.min?"Min":min)+" - "+
+                   prefix+(minmax.max?"Max":max));
     if(!$button.data('unspec-explicit')) {
-      if(is_min && is_max) {
+      if(minmax.min && minmax.max) {
         $tickbox.prop('checked',true);
       } else {
         $tickbox.prop('checked',false);
       }
     }
+  }
+
+  function force_blanks($el,val) {
+    $('.slider_unspecified input',$el).prop('checked',val);
   }
 
   function calc_step(kparams,min,max) {
@@ -41,88 +103,93 @@
     return step;
   }
 
-  function send_update($button,$tickbox,pmin,pmax,fn) {
-    var range = $button.data('slider-range');
-    if(pmin < range[0]) { pmin = null; }
-    if(pmax > range[1]) { pmax = null; }
-    fn(pmin,pmax,$tickbox.prop('checked'));
+  function send_update(variety,$button) {
+    var $slider = $('.slider',$button);
+    var pmin = $slider.slider('option','values.0');
+    var pmax = $slider.slider('option','values.1');
+    var $tickbox = $('.slider_unspecified input',$button);
+    var minmax = is_minmax($button,null,pmin,pmax);
+    var update = { nulls: $tickbox.prop('checked') };
+    variety.additional_update(update,$button);
+    if(!minmax.min) { update.min = pmin; }
+    if(!minmax.max) { update.max = pmax; }
+    console.log("UPDATE",update);
+    $button.trigger('update',update);
   }
 
-  function slider($button,min,max,vmin,vmax,nulls,kparams,fn) {
+  function draw_slider(variety,$out,$button,min,max,kparams) {
+    min = 1*min;
+    max = 1*max;
+    var step = calc_step(kparams,min,max);
+    $button.data('slider-range',[min,max]);
+    return $('<div/>').addClass('slider').appendTo($out).slider({
+      range: true,
+      min: min-step, max: max+step, step: step,
+      values: [min-step,max+step],
+      slide: function(e,ui) {
+        update_widget(variety,$button,$out,ui.values[0],ui.values[1]);
+      },
+      stop: function(e,ui) {
+        send_update(variety,$button);
+      }
+    });
+  }
+
+  function draw_widget(variety,$button,min,max,kparams) {
     var $out = $("<div/>").addClass('newtable_range');
     var $feedback = $('<div/>').addClass('slider_feedback').appendTo($out);
     var $unspec = $('<div/>').addClass('slider_unspecified');
-    $unspec.append("<span>include blank</span>");
+    $unspec.append("<span>include blank / other chrs.</span>");
     var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
-    min = parseFloat(min);
-    max = parseFloat(max);
-    var step = calc_step(kparams,min,max);
-    if(vmin===null) { vmin = min-step; }
-    if(vmax===null) { vmax = max+step; }
-    vmin = parseFloat(vmin);
-    vmax = parseFloat(vmax);
-    var $slider = $('<div/>').addClass('slider').appendTo($out).slider({
-      range: true,
-      min: min-step, max: max+step, step: step,
-      values: [vmin,vmax],
-      slide: function(e,ui) {
-        update_widget($button,$out,ui.values[0],ui.values[1]);
-      },
-      stop: function(e,ui) {
-        send_update($button,$tickbox,ui.values[0],ui.values[1],fn);
-      }
-    });
+    var $slider = draw_slider(variety,$out,$button,min,max,kparams);
     $unspec.appendTo($out);
     $tickbox.on('click',function() {
       $button.data('unspec-explicit',true);
-        var pmin = $slider.slider('option','values.0');
-        var pmax = $slider.slider('option','values.1');
-        send_update($button,$tickbox,pmin,pmax,fn);
-    }).prop('checked',nulls);
-    update_widget($button,$out,vmin-step,vmax+step);
+      send_update(variety,$button);
+    }).prop('checked',true);
+    update_widget(variety,$button,$out,null,null);
     return $out;
   }
 
+  function slider_update_size($el,$slider,min,max,kparams) {
+    var step = calc_step(kparams,min,max);
+    $slider.slider('option','min',parseFloat(min)-step);
+    $slider.slider('option','max',parseFloat(max)+step);
+    $el.data('slider-range',[min,max]);
+  }
+
+  function slider_set_minmax($slider,pos) {
+    var val = $slider.slider('option',pos?'max':'min');
+    $slider.slider('values',pos,val);
+  }
+
   $.fn.newtable_filter_range = function(config,data) {
-    return {
-      filters: [{
-        name: "range",
+    var filters = [];
+    $.each(varieties,function(name,variety) {
+      filters.push({
+        name: name,
         display: function($menu,$el,values,state,kparams) {
+          values = variety.preproc_values(values);
           var $slider = $('.slider',$menu);
           if($slider.length) {
-            console.log("Got one");
-            var step = calc_step(kparams,values.min,values.max);
-            var range = $el.data('slider-range');
-            var is_min = ($slider.slider('option','values.0') < range[0]);
-            var is_max = ($slider.slider('option','values.1') > range[1]);
-            $slider.slider('option','step',step);
-            $slider.slider('option','min',parseFloat(values.min)-step);
-            $slider.slider('option','max',parseFloat(values.max)+step);
-            if(is_min) {
-              $slider.slider('values',0,parseFloat($slider.slider('option','min')));
+            var minmax = is_minmax($el,$slider,null,null);
+            if(variety.detect_catastrophe($el,$slider,values)) {
+              slider_update_size($el,$slider,values.min,values.max,kparams);
+              slider_set_minmax($slider,0);
+              slider_set_minmax($slider,1);
+              update_widget(variety,$el,$menu,null,null);
+              force_blanks($menu,true);
+              send_update(variety,$el);
+            } else {
+              slider_update_size($el,$slider,values.min,values.max,kparams);
+              if(minmax.min) { slider_set_minmax($slider,0); }
+              if(minmax.max) { slider_set_minmax($slider,1); }
             }
-            if(is_max) {
-              $slider.slider('values',1,parseFloat($slider.slider('option','max')));
-            }
-            $el.data('slider-range',[values.min,values.max]);
           } else {
-            $el.data('slider-min',null);
-            $el.data('slider-max',null);
-            $el.data('slider-nulls',true);
-            $el.data('slider-range',[values.min,values.max]);
-            var vnulls = $el.data('slider-nulls');
-            var $out = slider($el,values.min,values.max,null,null,true,
-                              kparams,function(min,max,nulls) {
-              $el.data('slider-min',min);
-              $el.data('slider-max',max);
-              $el.data('slider-nulls',nulls);
-              $el.data('slider-set',true);
-              var update = { nulls: $el.data('slider-nulls') };
-              if(min!==null) { update.min = $el.data('slider-min'); }
-              if(max!==null) { update.max = $el.data('slider-max'); }
-              $el.trigger('update',update);
-            });
+            var $out = draw_widget(variety,$el,values.min,values.max,kparams);
+            variety.draw_additional($el,values);
             $menu.empty().append($out);
+            update_widget(variety,$el,$menu,null,null);
           }
         },
         text: function(state,all) {
@@ -131,19 +198,23 @@
           var has_max = state.hasOwnProperty('max');
           if(!has_min && !has_max) {
             var out = "All";
-            if(no_blanks) { out += " except blank"; }
+            if(no_blanks) { out += " except blank/other"; }
             return out;
           } else {
-            var out = ((has_min?state.min:"Min") + " - " +
-                      (has_max?state.max:"Max"));
-            if(!no_blanks) { out += " or blank"; }
+            var out = variety.text_prefix(state)+(has_min?state.min:"Min") +
+                      " - " +
+                      variety.text_prefix(state)+(has_max?state.max:"Max");
+            if(!no_blanks) { out += " or blank/other"; }
             return out;
           }
         },
         visible: function(values) {
+          if(!values) { return false; }
+          values = variety.preproc_values(values);
           return values && values.hasOwnProperty('min');
         }
-      }]
-    };
+      });
+    });
+    return { filters: filters }; 
   };
 })(jQuery);
