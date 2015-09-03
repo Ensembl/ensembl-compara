@@ -46,7 +46,7 @@ sub process {
     $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
   }
   elsif (!$hub->species_defs->valid_species($species)) {
-    $redirect = '/info/website/trackhub_error.html';
+    $redirect = '/trackhub_error.html';
     $params->{'species'}  = $species;
     $params->{'error'}    = 'unknown_species';
     $species              = undef;
