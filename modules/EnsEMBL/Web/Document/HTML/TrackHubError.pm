@@ -23,6 +23,8 @@ package EnsEMBL::Web::Document::HTML::TrackHubError;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
+
 use parent qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
@@ -36,11 +38,68 @@ sub render {
   return $html;
 }
 
+sub archive_only {
+### Hub has no species on current assemblies - link to archives if possible
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $message = '<p>Sorry, this hub is on an old assembly not supported by this site.';
+
+  if ($hub->species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
+
+    my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
+    my $archive_info = $adaptor->fetch_archive_assemblies(75); 
+
+    my (@species) = grep { $_ =~ /^species_/ } $hub->param;
+    my %archives;
+
+    foreach (@species) {
+      (my $species = $_) =~ s/species_//;
+      my $assembly = $hub->param($_);
+      my $info = $archive_info->{$species};
+      foreach my $release (reverse sort keys %$info) {
+        my $archive_assembly = $info->{$release}{'assembly_version'};
+        if ($archive_assembly eq $assembly) {
+          $archives{$species} = $release;
+          last;
+        }
+      }
+    }
+
+    my $count = scalar keys %archives;
+    if ($count) {
+      my $trackhub = $hub->param('url');
+      my $plural = $count > 1 ? 's' : '';
+      $message .= " Please try the following archive site$plural:</p><ul>";
+
+      foreach my $species (sort keys %archives) {
+        my $subdomain = $species eq 'Homo_sapiens' ? 'grch37' : 'e'.$archives{$species};
+        my $r   = $hub->species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
+        my $url = $subdomain.'.ensembl.org';
+        $message .= qq(<li><a href="http://$url/$species/Location/View?r=$r;contigviewbottom=url:$trackhub;format=DATAHUB#modal_user_data">$url</a>);
+      }
+
+      $message .= '</ul>';
+    }
+  
+=pod
+    if ($hub->param('assembly_hg19') || $hub->param('assembly_')) {
+      $message .= qq( Try our <a href="http://grch37.ensembl.org">GRCh37 archive site</a>);
+    }
+=cut
+  }
+  else {
+    $message .= '</p>';
+  }
+
+  return $message;
+}
+
 sub no_url { 
   return '<p>No trackhub URL was provided.</p>'; 
 }
 
 sub unknown_species {
+### Hub (or link) contains no valid species for this site
   my $self = shift;
   my $hub  = $self->hub;
 
