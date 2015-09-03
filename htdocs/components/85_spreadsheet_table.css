@@ -153,7 +153,6 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter .m li.on:before { content: "On"; background: #396; }
 .newtable_filter .m li.on { background: white; }
 .newtable_filter .m div.use_cols { width: 600px; }
-.newtable_filter .m.edge { right: 0; left: auto;  }
 .newtable_range { padding: 4px; }
 .newtable_filter .slider { width: 200px; margin: 8px; font-size: 10px; }
 .newtable_filter .slider_feedback { text-align: center; font-weight: bold; }

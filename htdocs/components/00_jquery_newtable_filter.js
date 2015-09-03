@@ -99,10 +99,10 @@
     }
 
     function show_menu($el) {
-      $el.removeClass('edge');
       $el.show();
-      if($el.offset().left+$el.width()>$('html').width()) {
-        $el.addClass('edge');
+      var right = $el.offset().left+$el.width();
+      if(right>$('html').width()) {
+        $el.css("left",($('html').width()-right-8)+"px");
       }
     }
 
