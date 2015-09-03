@@ -86,7 +86,7 @@ sub render_content {
     
     $html = $self->toggleable_table("$phenotype associated variants", $table_id, $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>));
   } else {
-    $html = qq(<a id="$self->{'id'}_top"></a><h2>Phenotypes associated with the genomic location of this LRG, from variation annotations</h2>) . $table->render;
+    $html = qq(<a id="$self->{'id'}_top"></a><h2>Phenotypes, diseases and traits associated with the genomic location of this LRG, from variation annotations</h2>) . $table->render;
   }
 
   return $html;
@@ -100,7 +100,7 @@ sub stats_table {
   my ($total_counts, %phenotypes, @va_ids);
 
   my $columns = [
-    { key => 'phen',    title => 'Phenotype', sort => 'string', width => '38%'  },
+    { key => 'phen',    title => 'Phenotype, disease and trait', sort => 'string', width => '38%'  },
     { key => 'source',  title => 'Source(s)', sort => 'string', width => '11%'  },
     $species_defs->ENSEMBL_CHROMOSOMES
     ? { key => 'loc',   title => 'Genomic locations', sort => 'none',   width => '13%'  }
@@ -114,11 +114,11 @@ sub stats_table {
 
  
   foreach my $pf ($obj_slice ? @{$pf_adaptor->fetch_all_by_Slice_type($obj_slice,'Variation')} : ()) {
-    next unless ($pf->is_significant);
+    my $phe_source = $pf->source_name;
+    next if ($self->check_source($phe_source));
 
     my $var_name   = $pf->object->name;  
     my $phe        = $pf->phenotype->description;
-    my $phe_source = $pf->source_name;
    
     $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} , name => $pf->{'_phenotype_name'}};
     $phenotypes{$phe}{'count'}{$var_name} = 1;
@@ -218,6 +218,8 @@ sub variation_table {
     next unless ($pf->is_significant);  
     next if ($phenotype ne $pf->phenotype->description && $all_flag == 0);
     
+    my $phe_source = $pf->source_name;
+    next if ($self->check_source($phe_source));
 
     #### Phenotype ####
     my $var        = $pf->object;
@@ -241,9 +243,9 @@ sub variation_table {
         last;
       }
     
-      $list_variations->{$var_name} = { 'class'      => $var->var_class,
-                                        'chr'        => $location,
-                                        'allele'     => $allele
+      $list_variations->{$var_name} = { 'class'  => $var->var_class,
+                                        'chr'    => $location,
+                                        'allele' => $allele
                                       };
     }
       
@@ -363,9 +365,10 @@ sub external_reference_link {
   my ($self, $source, $study, $phenotype) = @_;
   my $hub = $self->hub;
   
-  if ($study =~ /pubmed/) {
+  if ($study =~ /(pubmed|PMID)/) {
     my $study_id = $study;
        $study_id =~ s/pubmed\///;
+       $study_id =~ s/PMID://;
     my $link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
        $link =~ s/###ID###/$study_id/;
     $study =~ s/\//:/g;
@@ -390,6 +393,13 @@ sub external_reference_link {
   else {
     return '-';
   }
+}
+
+sub check_source {
+  my $self        = shift;
+  my $source_name = shift;
+
+  return ($source_name eq 'COSMIC') ? 1 : 0;
 }
 
 1;
