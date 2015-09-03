@@ -131,10 +131,8 @@ my %SORTS = (
   },
   'numeric_hidden' => {
     clean => sub { return number_cleaned(html_hidden($_[0])); },
-    perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
-    null => sub { return !looks_like_number($_[0]); },
-    js => 'numeric',
     js_clean => 'hidden_number',
+    _inherit => ['numeric'],
   },
   'numeric' => {
     clean => \&number_cleaned, 

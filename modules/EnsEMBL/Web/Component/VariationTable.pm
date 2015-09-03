@@ -131,8 +131,8 @@ sub make_table {
     { key => 'Alleles',  width => '16u', filter => "",      sort => 'string',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
     { key => 'class',    width => '11u', filter => "class", sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
     { key => 'Source',   width => '8u',  filter => "class", sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
-    { key => 'status',   width => '9u',  filter => "class", sort => 'string_dashnull', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
-    { key => 'clinsig',  width => '6u',  filter => "class", sort => 'string_dashnull', label => "Clin\f sig",                    help => 'Clinical significance'                  },
+    { key => 'status',   width => '9u',  filter => "class", sort => 'html_split', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
+    { key => 'clinsig',  width => '6u',  filter => "class", sort => 'html_split', label => "Clin\f sig",                    help => 'Clinical significance'                  },
     { key => 'snptype',  width => '12u', filter => "class", range => [values %{$self->all_terms}], sort => 'html_split',   label => 'Type',                          help => 'Consequence type'                       },
     { key => 'aachange', width => '6u',  filter => "",      sort => 'string_dashnull', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
     { key => 'aacoord',  width => '6u',  filter => "range", sort => 'integer',         label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
@@ -162,7 +162,7 @@ sub make_table {
   }
  
   if ($hub->type ne 'Transcript') {
-    push @$columns, { key => 'Transcript', filter => "class", sort => 'string', width => '11u', help => $glossary->{'Transcript'} };
+    push @$columns, { key => 'Transcript', filter => "class", sort => 'html', width => '11u', help => $glossary->{'Transcript'} };
   }
 
   return $self->new_new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside' });

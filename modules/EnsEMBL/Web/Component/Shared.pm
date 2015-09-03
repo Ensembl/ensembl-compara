@@ -1292,7 +1292,7 @@ sub render_evidence_status {
   foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$evidences){
     my $evidence_label = $evidence;
        $evidence_label =~ s/_/ /g;
-    $render .= sprintf('<img src="%s/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+    $render .= sprintf('<img src="%s/val/evidence_%s.png" class="_ht" title="%s"/><div class="hidden export">%s</div>',
                         $self->img_url, $evidence, $evidence_label, $evidence
                       );
   }
@@ -1307,7 +1307,7 @@ sub render_clinical_significance {
   foreach my $cs (sort {$a cmp $b} @$clin_signs){
     my $cs_img = $cs;
        $cs_img =~ s/\s/-/g;
-    $render .= sprintf('<img src="%s/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+    $render .= sprintf('<img src="%s/val/clinsig_%s.png" class="_ht" title="%s"/><div class="hidden export">%s</div>',
                         $self->img_url, $cs_img, $cs, $cs
                       );
   }
