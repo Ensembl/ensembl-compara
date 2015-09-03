@@ -89,9 +89,10 @@ sub content {
     my $location_html = sprintf(
       '<p><a href="%s" class="constant">%s: %s-%s</a> %s.</p>',
       $hub->url({
-        type   => 'Location',
-        action => 'View',
-        r      => $slice->seq_region_name . ':' . $slice->start . '-' . $slice->end
+        type             => 'Location',
+        action           => 'View',
+        r                => $slice->seq_region_name . ':' . $slice->start . '-' . $slice->end,
+        contigviewbottom => 'lrg=normal'
       }),
       $self->neat_sr_name($slice->coord_system->name, $slice->seq_region_name),
       $self->thousandify($slice->start),
