@@ -36,7 +36,16 @@ sub process {
   my @bits          = split /\./, $filename;
   my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my $pattern       = "^$extension\$";
-  my $redirect      = $hub->species_path($hub->data_species) . '/UserData/';
+
+  ## Allow for manually-created URLs with capitalisation, and 
+  ## also validate any user-provided species name
+  my $species       = $hub->param('species') || $hub->param('Species');
+  if (!$species || !$hub->species_defs->valid_species($species)) {
+    $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
+  }
+  my $location      = $hub->param('r') || $hub->param('location') || $hub->param('Location');
+
+  my $redirect      = $hub->species_path($species) . '/UserData/';
   my $new_action    = '';
   my $params        = {};
 
@@ -52,13 +61,12 @@ sub process {
    }
 
     ## Override standard redirect with sample location
-    my $species = $hub->param('species');
-    if (!$species || !$hub->species_defs->valid_species($species)) {
-      $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
-    }
     $redirect           = sprintf('/%s/Location/View', $species);
-    my $sample_links    = $species_defs->get_config($species, 'SAMPLE_DATA');
-    $params->{'r'}      = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+    unless ($location) {
+      my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
+      $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+    }
+    $params->{'r'} = $location;
 
     my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
     my $p         = $params->{'reattach'} || $params->{'species_flag'} 
