@@ -213,6 +213,39 @@ my %SORTS = (
     perl => \&sort_position,
     js_clean => 'html_hidden',
     js => 'position',
+    range_display_params => { steptype => 'integer' },
+    range_display => 'position',
+    range_merge => 'position',
+    range_value => sub {
+      my ($acc,$value) = @_;
+
+      return unless $value =~ /^(.*?):(\d+)/;
+      my ($chr,$pos) = ($1,$2);
+      $acc->{$chr} ||= { chr => $chr };
+      if(exists $acc->{$chr}{'min'}) {
+        $acc->{$chr}{'max'} = max($acc->{$chr}{'max'},$pos);
+        $acc->{$chr}{'min'} = min($acc->{$chr}{'min'},$pos);
+      } else {
+        $acc->{$chr}{'min'} = $acc->{$chr}{'max'} = $pos;
+      }
+      ($acc->{$chr}{'count'}||=0)++;
+    },
+    range_finish => sub { return $_[0]; },
+    range_match => sub {
+      my ($man,$val) = @_;
+      if($val =~ s/^$man->{'chr'}://) {
+        if(exists $man->{'min'}) {
+          return 0 unless $val>=$man->{'min'};
+        }
+        if(exists $man->{'max'}) {
+          return 0 unless $val<=$man->{'max'};
+        }
+        return 1;
+      } else {
+        if(exists $man->{'nulls'}) { return $man->{'nulls'}; }
+        return 1;
+      }
+    },
   },
 );
 

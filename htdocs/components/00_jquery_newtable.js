@@ -345,6 +345,27 @@
     return a;
   }
 
+  $.newtable_rangemerge_position = function(a,b) {
+    a = $.extend({},true,a);
+    $.each(b,function(name,chr) {
+      if(!a[name]) { a[name] = { count: 0, chr: name }; }
+      a[name].count += chr.count;
+      if(chr.hasOwnProperty('min')) {
+        if(!a[name].min || a[name].min>chr.min) { a[name].min = chr.min; }
+      }
+      if(chr.hasOwnProperty('max')) {
+        if(!a[name].max || a[name].max<chr.max) { a[name].max = chr.max; }
+      }
+    });
+    var best = null;
+    $.each(a,function(name,chr) {
+      if(best===null || chr.count > best.count) { best = chr; }
+      chr.best = false;
+    });
+    best.best = true;
+    return a;
+  }
+
   $.orient_compares_equal = function(fa,fb) {
     if(fa===fb) { return true; }
     if(!$.isPlainObject(fa) && !$.isArray(fa)) { return false; }
