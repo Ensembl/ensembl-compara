@@ -58,7 +58,7 @@ sub feature_content {
   my $position    = $start;
   my $length      = $end - $start;
   my $max_length  = ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1) * 1e6; 
-  my ($pubmed_link, $location_link, $study_name, $study_url, $is_breakpoint, @allele_types);  
+  my ($pubmed_link, $location_link, $location_link_class, $study_name, $study_url, $is_breakpoint, @allele_types);
   
   $self->new_feature;
   
@@ -89,6 +89,7 @@ sub feature_content {
       action => 'View',
       r      => "$seq_region:$start-$end",
     });
+    $location_link_class = '_location_change _location_highlight';
   }
   
   if ($description =~ /PMID/) {
@@ -151,9 +152,10 @@ sub feature_content {
     });
 	} else {
     $self->add_entry({
-      type  => 'Location',
-      label => sprintf('%s: %s', $self->neat_sr_name($feature->slice->coord_system->name, $seq_region), $position),
-      link  => $location_link,
+      type        => 'Location',
+      label       => sprintf('%s: %s', $self->neat_sr_name($feature->slice->coord_system->name, $seq_region), $position),
+      link        => $location_link,
+      link_class  => $location_link_class
     });
 	}
   
