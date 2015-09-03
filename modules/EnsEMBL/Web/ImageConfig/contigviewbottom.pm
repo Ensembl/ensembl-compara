@@ -201,20 +201,22 @@ sub init {
   );
 
   ## LRG track
-  $self->add_tracks('lrg',
-    [ 'lrg_transcript', 'LRG', '_transcript', {
-      display     => 'transcript_label',
-      strand      => 'f',
-      name        => 'LRG transcripts',
-      description => 'Shows LRG transcripts',
-      logic_names => [ 'LRG_import' ],
-      logic_name  => 'LRG_import',
-      colours     => $self->species_defs->colour('gene'),
-      label_key   => '[display_label]',
-      colour_key  => '[logic_name]',
-      zmenu       => 'LRG',
-    }]
-  );
+  if ($self->species_defs->HAS_LRG) {
+    $self->add_tracks('lrg',
+      [ 'lrg_transcript', 'LRG', '_transcript', {
+        display     => 'transcript_label',
+        strand      => 'f',
+        name        => 'LRG transcripts',
+        description => 'Shows LRG transcripts',
+        logic_names => [ 'LRG_import' ],
+        logic_name  => 'LRG_import',
+        colours     => $self->species_defs->colour('gene'),
+        label_key   => '[display_label]',
+        colour_key  => '[logic_name]',
+        zmenu       => 'LRG',
+      }]
+    );
+  }
 
   ## Switch on multiple alignments defined in MULTI.ini
   my $compara_db      = $self->hub->database('compara');
