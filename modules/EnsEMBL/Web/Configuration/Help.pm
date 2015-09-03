@@ -59,6 +59,7 @@ sub populate_tree {
   $self->create_node('Preview',         '', [qw(preview EnsEMBL::Web::Component::Help::Preview)]);
   $self->create_node('MovieFeedback',   '', [qw(preview EnsEMBL::Web::Component::Help::MovieFeedback)]);
   $self->create_node('FeedbackPreview', '', [qw(preview EnsEMBL::Web::Component::Help::FeedbackPreview)]);
+  $self->create_node('Trackhub',        '', [qw(preview EnsEMBL::Web::Component::Help::Trackhub)]);
   
   $self->create_node('EmailSent',   '', [qw(sent      EnsEMBL::Web::Component::Help::EmailSent)]);
   $self->create_node('Results',     '', [qw(results   EnsEMBL::Web::Component::Help::Results)]);
