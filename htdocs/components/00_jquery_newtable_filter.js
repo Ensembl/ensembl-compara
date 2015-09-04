@@ -157,6 +157,85 @@
       $el.hide();
     }
 
+    function eundo(client_enums,enums,grid) {
+      $.each(client_enums,function(col,plugin) {
+        for(var i=0;i<config.columns.length;i++) {
+          if(config.columns[i].key == col) {
+            var value = {};
+            for(var j=0;j<grid.length;j++) {
+              var v = grid[j][i];
+              if(v===null || v===undefined || v[1]) { continue; }
+              v = v[0];
+              if(plugin.split) {
+                v = plugin.split(v);
+              } else {
+                v = [v];
+              }
+              if(v===null || v===undefined) { continue; }
+              for(var k=0;k<v.length;k++) {
+                plugin.value(value,v[k]);
+              }
+            }
+            if(plugin.finish) { value = plugin.finish(value); }
+            enums[col] = value;
+          }
+        }
+      });
+      return enums;
+    }
+
+    function build_client_filter(out,need,got) {
+      var needf = (need||{}).filter || {};
+      var gotf = (got||{}).filter || {};
+      var to_filter = {};
+      $.each(needf,function(col,v) { to_filter[col]=1; });
+      var ok = 1;
+      $.each(gotf,function(col,v) {
+        if(!to_filter.hasOwnProperty(col)) {
+          ok = 0; // Unwanted filter, can't undo that on the client
+        }
+      });
+      if(!ok) { return null; }
+      $.each(to_filter,function(col,v) {
+        var cc = config.colconf[col];
+        var cf = find_widget(cc.enum_js,'enums',null);
+        if(cf && cf.match) {
+          to_filter[col] = cf;
+        } else {
+          ok = 0;
+        }
+      });
+      if(!ok) { return null; }
+      var colidx = {};
+      $.each(to_filter,function(col,v) {
+        for(var i=0;i<config.columns.length;i++) {
+          if(config.columns[i].key == col) { colidx[col] = i; }
+        }
+      });
+      out.undo = function(manifest,grid,dest) {
+        fabric = [];
+        for(var i=0;i<grid.length;i++) {
+          var ok = true;
+          $.each(to_filter,function(col,fn) {
+            var v = grid[i][colidx[col]];
+            if(fn.split) { v = fn.split(v); } else { v = [v]; }
+            var ok_col = false;
+            for(var j=0;j<v.length;j++) {
+              if(fn.match(needf[col],v[j][0])) { ok_col = true; break; }
+            }
+            if(!ok_col) { ok = false; }
+          });
+          if(ok) {
+            fabric.push(grid[i]);
+          }
+        }
+        return [manifest,fabric];
+      };
+      out.all_rows = true;
+      out.no_incr = true;
+      delete need.filter;
+    }
+
     return {
       generate: function() {
         var dropdowns = "";
@@ -219,34 +298,14 @@
               }
             });
             need.enumerate = server_filter;
-            return {
+            var out = {
               eundo: function(enums,grid) {
-                $.each(client_enums,function(col,plugin) {
-                  for(var i=0;i<config.columns.length;i++) {
-                    if(config.columns[i].key == col) {
-                      var value = {};
-                      for(var j=0;j<grid.length;j++) {
-                        var v = grid[j][i];
-                        if(v===null || v===undefined || v[1]) { continue; }
-                        v = v[0];
-                        if(plugin.split) {
-                          v = plugin.split(v);
-                        } else {
-                          v = [v];
-                        }
-                        if(v===null || v===undefined) { continue; }
-                        for(var k=0;k<v.length;k++) {
-                          plugin.value(value,v[k]);
-                        }
-                      }
-                      if(plugin.finish) { value = plugin.finish(value); }
-                      enums[col] = value;
-                    }
-                  }
-                });
-                return enums;
+                return eundo(client_enums,enums,grid);
               }
             };
+            if(obj_empty(need.filter)) { delete need.filter; }
+            build_client_filter(out,need,got);
+            return out;
           }
         ];
       }

@@ -80,7 +80,15 @@
       enums: [{
         name: "string",
         value: function(vv,v) { vv[v]=1; },
-        finish: function(vv) { return Object.keys(vv); }
+        finish: function(vv) { return Object.keys(vv); },
+        match: function(ori,val) {
+          var ok = 1;
+          if(!val && val!=="") { return true; }
+          $.each(ori,function(col,v) {
+            if((col || col==="") && col==val) { ok = false; }
+          });
+          return ok;
+        }
       },{
         name: "numeric",
         split: function(v) { return [number_clean(v)]; },
