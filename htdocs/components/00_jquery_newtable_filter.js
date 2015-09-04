@@ -43,12 +43,52 @@
       return null;
     }
 
-    function dropdown(idx,key,filter,label) {
-      return '<li class="t" data-idx="'+idx+'"><span class="k">'+label+'</span><span class="v">All</span><div class="m" data-filter="'+filter+'">'+label+'</div></li>';
+    function dropdown(idx,filter,label) {
+      var prec = "sec";
+      if(filter.indexOf("!")==0) {
+        prec = "pri";
+        filter = filter.substr(1);
+      }
+      if(filter=='') { filter = 'more'; }
+      return '<li class="t prec_'+prec+'" data-idx="'+idx+'"><span class="k">'+label+'</span><span class="v">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></li>';
+    }
+
+    function activate_menu($table,$button,others_only) {
+      var $el = $button.find('.m');
+      $('.newtable_filter li .m:visible').each(function() {
+        if($el.length && $el[0] == this) { return; }
+        hide_menu($(this));
+      });
+      if($button.length && !others_only) {
+        if(!$el.is(":visible")) {
+          menu($table,$button,$el);
+          show_menu($el);
+        } else {
+          hide_menu($el);
+        }
+      }
+    }
+
+    function draw_more($table,$menu) {
+      var $out = $("<ul/>");
+      $('.newtable_filter .prec_sec.valid',$table).each(function() {
+        var $item = $(this);
+        var $li = $("<li/>").text($('.k',$item).text()).appendTo($out);
+        $li.on('click',function(e) {
+          $item.removeClass('prec_sec').addClass('prec_pri');
+          activate_menu($table,$item,false);
+          e.stopPropagation();
+        });
+      });
+      $menu.empty().append($out);
     }
 
     function menu($table,$button,$menu) {
       var idx = $button.data('idx');
+      if(idx==-1) {
+        draw_more($table,$menu);
+        return;
+      }
       var key = config.columns[idx].key;
       var state = (($table.data('view').filter||{})[key])||{};
       var kind = config.colconf[key].range;
@@ -59,24 +99,35 @@
       w.display($menu,$button,values,state,kparams);
     }
 
-    function update_button($table,$el) {
-      var view = $table.data('view');
-      if(!view.filter) { view.filter = {}; }
-      var idx = $el.data('idx');
-      var key = config.columns[idx].key;
-      var values = ($table.data('ranges')||{})[key];
-      var kind = config.colconf[key].range;
-      var w = find_widget(kind);
-      $el.toggleClass('valid',!!w.visible(values));
+    function show_or_hide_all($table) {
       var $filters = $('.newtable_filter',$table);
       var $vbuts = $('.t.valid',$filters);
       $filters.toggle(!!$vbuts.length);
+    }
+
+    function set_button($el,view,w,key,values) {
+      $el.toggleClass('valid',!!w.visible(values));
       if(view.filter.hasOwnProperty(key)) {
-        var w = find_widget(kind);
         var text = w.text(view.filter[key],values);
         $('.v',$el).text(text);
       } else {
         $('.v',$el).text('All');
+      }
+    }
+
+    function update_button($table,$el) {
+      var view = $table.data('view');
+      if(!view.filter) { view.filter = {}; }
+      var idx = $el.data('idx');
+      if(idx==-1) { // More button
+        $el.addClass('more');
+      } else { // Not more button
+        var key = config.columns[idx].key;
+        var values = ($table.data('ranges')||{})[key];
+        var kind = config.colconf[key].range;
+        var w = find_widget(kind);
+        set_button($el,view,w,key,values);
+        show_or_hide_all($table);
       }
       var $menu = $('.m',$el);
       if($menu.length && $menu.is(":visible")) {
@@ -116,10 +167,12 @@
         for(var i=0;i<config.columns.length;i++) {
           var c = config.columns[i];
           if(c.filter) {
-            dropdowns += dropdown(i,c.key,c.filter,c.label||c.key);
+            dropdowns += dropdown(i,c.filter,c.label||c.key);
             filterable_columns.push(c.key);
           }
         }
+        dropdowns += dropdown(-1,'!','More');
+
         var out='<div class="newtable_filter"><ul>'+dropdowns+'</ul></div>';
         return out;
       },
@@ -146,20 +199,8 @@
         $('li.t',$el).each(function() { update_button($table,$(this)); });
         $('html').on('click',function(e) {
           var $button = $(e.target).closest('.newtable_filter li.t');
-          var $el = $button.find('.m');
           var $menu = $(e.target).closest('.newtable_filter li.t .m');
-          $('.newtable_filter li .m:visible').each(function() {
-            if($el.length && $el[0] == this) { return; }
-            hide_menu($(this));
-          });
-          if($button.length && !$menu.length) {
-            if(!$el.is(":visible")) {
-              menu($table,$button,$el);
-              show_menu($el);
-            } else {
-              hide_menu($el);
-            }
-          }
+          activate_menu($table,$button,!!$menu.length);
         });
       },
       pipe: function() {
