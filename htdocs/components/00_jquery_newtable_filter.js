@@ -218,10 +218,10 @@
           var ok = true;
           $.each(to_filter,function(col,fn) {
             var v = grid[i][colidx[col]];
-            if(fn.split) { v = fn.split(v); } else { v = [v]; }
+            if(fn.split) { v = fn.split(v[0]); } else { v = [v[0]]; }
             var ok_col = false;
             for(var j=0;j<v.length;j++) {
-              if(fn.match(needf[col],v[j][0])) { ok_col = true; break; }
+              if(fn.match(needf[col],v[j])) { ok_col = true; break; }
             }
             if(!ok_col) { ok = false; }
           });

@@ -16,7 +16,7 @@
 
 (function($) {
   function is_number(x) {
-    try { parseFloat(x); return true; } catch(error) { return false; }
+    try { return !isNaN(parseFloat(x)); } catch(error) { return false; }
   }
 
   function html_cleaned(x) {
@@ -92,7 +92,17 @@
       },{
         name: "numeric",
         split: function(v) { return [number_clean(v)]; },
-        value: function(vv,v) { minmax(vv,v); }
+        value: function(vv,v) { minmax(vv,v); },
+        match: function(ori,val) {
+          if(is_number(val)) {
+            val = parseFloat(val);
+            if(ori.hasOwnProperty('min') && val<ori.min) { return false; }
+            if(ori.hasOwnProperty('max') && val>ori.max) { return false; }
+          } else {
+            if(ori.hasOwnProperty('nulls')) { return ori.nulls; }
+          }
+          return true;
+        }
       },{
         name: "numeric_hidden",
         split: function(v) { return [number_clean(html_hidden(v))]; },
