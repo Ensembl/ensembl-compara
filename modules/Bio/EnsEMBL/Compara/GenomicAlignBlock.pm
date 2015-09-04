@@ -596,7 +596,7 @@ sub add_GenomicAlign {
 
 =head2 get_all_GenomicAligns
 
-  Arg [1]    : none
+  Arg [1]    : (optional) arrayref of genome db ids 
   Example    : $genomic_aligns = $genomic_align_block->get_all_GenomicAligns();
   Description: returns the set of Bio::EnsEMBL::Compara::GenomicAlign objects in
                the attribute genomic_align_array.
@@ -608,7 +608,21 @@ sub add_GenomicAlign {
 =cut
 
 sub get_all_GenomicAligns {
-  my ($self) = @_;
+  my ($self, $genome_db_id) = @_;
+
+  if (defined($genome_db_id)) {
+    my %gdb_id = ();
+    foreach my $id (@{$genome_db_id}) {
+      $gdb_id{$id}= 1;
+    }
+    my $ggaln=[];
+    foreach my $galn (@{$self->genomic_align_array or []}){
+      if ( exists $gdb_id{$galn->genome_db->dbID()}) {
+        push (@$ggaln, $galn);
+      }
+    }
+    return ($ggaln); 
+  }
  
   return ($self->genomic_align_array or []);
 }
