@@ -196,16 +196,18 @@
         }
       });
       if(!ok) { return null; }
+      var n = 0;
       $.each(to_filter,function(col,v) {
         var cc = config.colconf[col];
         var cf = find_widget(cc.enum_js,'enums',null);
         if(cf && cf.match) {
           to_filter[col] = cf;
+          n++;
         } else {
           ok = 0;
         }
       });
-      if(!ok) { return null; }
+      if(!ok || !n) { return null; }
       var colidx = {};
       $.each(to_filter,function(col,v) {
         for(var i=0;i<config.columns.length;i++) {
