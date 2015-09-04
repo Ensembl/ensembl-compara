@@ -75,38 +75,55 @@
     return out;
   }
 
+  function string_match(ori,val) {
+    var ok = 1;
+    if(!val && val!=="") { return true; }
+    $.each(ori,function(col,v) {
+      if((col || col==="") && col==val) { ok = false; }
+    });
+    return ok;
+  }
+
+  function number_match(ori,val) {
+    if(is_number(val)) {
+      val = parseFloat(val);
+      if(ori.hasOwnProperty('min') && val<ori.min) { return false; }
+      if(ori.hasOwnProperty('max') && val>ori.max) { return false; }
+    } else {
+      if(ori.hasOwnProperty('nulls')) { return ori.nulls; }
+    }
+    return true;
+  }
+
+  function position_match(ori,val) {
+    var pat = ori.chr+":";
+    if(val.indexOf(pat)==0) {
+      val = parseFloat(val.substr(pat.length));
+      if(ori.hasOwnProperty('min') && val<ori.min) { return false; }
+      if(ori.hasOwnProperty('max') && val>ori.max) { return false; }
+    } else {
+      if(ori.hasOwnProperty('nulls')) { return ori.nulls; }
+    }
+    return true;
+  }
+
   $.fn.newtable_filter_enumclient = function(config,data) {
     return {
       enums: [{
         name: "string",
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
-        match: function(ori,val) {
-          var ok = 1;
-          if(!val && val!=="") { return true; }
-          $.each(ori,function(col,v) {
-            if((col || col==="") && col==val) { ok = false; }
-          });
-          return ok;
-        }
+        match: function(ori,val) { return string_match(ori,val); }
       },{
         name: "numeric",
         split: function(v) { return [number_clean(v)]; },
         value: function(vv,v) { minmax(vv,v); },
-        match: function(ori,val) {
-          if(is_number(val)) {
-            val = parseFloat(val);
-            if(ori.hasOwnProperty('min') && val<ori.min) { return false; }
-            if(ori.hasOwnProperty('max') && val>ori.max) { return false; }
-          } else {
-            if(ori.hasOwnProperty('nulls')) { return ori.nulls; }
-          }
-          return true;
-        }
+        match: function(ori,val) { return number_match(ori,val); }
       },{
         name: "numeric_hidden",
         split: function(v) { return [number_clean(html_hidden(v))]; },
-        value: function(vv,v) { minmax(vv,v); }
+        value: function(vv,v) { minmax(vv,v); },
+        match: function(ori,val) { return number_match(ori,val); }
       },{
         name: "html_split",
         split: function(v) {
@@ -116,7 +133,8 @@
           return out;
         },
         value: function(vv,v) { vv[v]=1; },
-        finish: function(vv) { return Object.keys(vv); }
+        finish: function(vv) { return Object.keys(vv); },
+        match: function(ori,val) { return string_match(ori,val); }
       },{
         name: "html_hidden_split",
         split: function(v) {
@@ -126,12 +144,14 @@
           return out;
         },
         value: function(vv,v) { vv[v]=1; },
-        finish: function(vv) { return Object.keys(vv); }
+        finish: function(vv) { return Object.keys(vv); },
+        match: function(ori,val) { return string_match(ori,val); }
       },{
         name: "html",
         split: function(v) { return [html_cleaned(v)]; },
         value: function(vv,v) { vv[v]=1; },
-        finish: function(vv) { return Object.keys(vv); }
+        finish: function(vv) { return Object.keys(vv); },
+        match: function(ori,val) { return string_match(ori,val); }
       },{
         name: "hidden_position",
         split: function(v) { return [html_hidden(v)]; },
@@ -148,6 +168,7 @@
           if(!vv[m[1]].count) { vv[m[1]].count = 0; }
           vv[m[1]].count++;
         },
+        match: function(ori,val) { return position_match(ori,val); }
       }]
     };
   };
