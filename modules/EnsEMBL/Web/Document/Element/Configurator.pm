@@ -101,7 +101,7 @@ sub init_config {
               'selected'  => $hub->species eq $_->[0] ? 1 : 0
             }, @{$image_config->species_list} ]
           })->elements->[0]->render,
-          join('', map { sprintf '<span class="_stt_%s"><img src="%sspecies/16/%1$s.png"></span>', $_->[0], $img_url } @{$image_config->species_list})
+          join('', map { sprintf '<span class="_stt_%s"><img src="%sspecies/48/%1$s.png"></span>', $_->[0], $img_url } @{$image_config->species_list})
         );
       }
     }
