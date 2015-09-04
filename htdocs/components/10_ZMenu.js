@@ -103,8 +103,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         
         return false;
       }
-    }).on('click', 'a._location_highlight', function () {
-      Ensembl.highlightLocation(this.href);
+    }).on('click', 'a._location_mark', function () {
+      Ensembl.markLocation(this.href);
 
       panel.hide();
 
@@ -288,13 +288,13 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
 
   addLocationIcons: function () {
-    var links = this.elLk.container.find('._location_highlight').removeClass('_location_highlight');
+    var links = this.elLk.container.find('._location_mark').removeClass('_location_mark');
     if (!this.imageId.match('Multi')) {
       links.each(function () {
         var locationMatch = this.href.match(Ensembl.locationMatch);
         if (locationMatch) {
           $('<br />' +
-            '<a class="loc-icon loc-highlight _location_highlight _ht" title="Highlight feature on image" href="' + Ensembl.updateURL({hlr: locationMatch[1]}, this.href) +'"></a>' +
+            '<a class="loc-icon loc-mark _location_mark _ht" title="Mark feature on image" href="' + Ensembl.updateURL({mr: locationMatch[1]}, this.href) +'"></a>' +
             '<a class="loc-icon loc-zoom _location_change _ht" title="Zoom on feature" href="' + this.href +'"></a>'
           ).insertAfter(this);
         }
@@ -414,7 +414,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       }
 
       if (this.multi === false) {
-        menu.unshift('<a class="_location_highlight loc-icon-a" href="' + Ensembl.updateURL({hlr: this.chr + ':' + start + '-' + end}, window.location.href) + '"><span class="loc-icon loc-highlight"></span>Highlight region (' + (end - start + 1) + ' bp)</a>');
+        menu.unshift('<a class="_location_mark loc-icon-a" href="' + Ensembl.updateURL({mr: this.chr + ':' + start + '-' + end}, window.location.href) + '"><span class="loc-icon loc-mark"></span>Mark region (' + (end - start + 1) + ' bp)</a>');
       }
 
     } else { // Point select

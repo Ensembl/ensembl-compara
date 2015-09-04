@@ -32,7 +32,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.labelWidth         = 0;
     this.boxCoords          = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
     this.altKeyDragging     = false;
-    this.highlightBoundary  = false;
+    this.locationMarkingArea = false;
     
     function resetOffset() {
       delete this.imgOffset;
@@ -47,7 +47,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.register('ajaxLoaded',         this, resetOffset); // Adding content could cause scrollbars to appear, changing the offset, but this does not fire the window resize event
     Ensembl.EventManager.register('changeWidth',        this, function () { this.params.updateURL = Ensembl.updateURL({ image_width: false }, this.params.updateURL); Ensembl.EventManager.trigger('queuePageReload', this.id); });
     Ensembl.EventManager.register('highlightAllImages', this, function () { if (!this.align) { this.highlightAllImages(); } });
-    Ensembl.EventManager.register('highlightLocation',  this, this.highlightLocation);
+    Ensembl.EventManager.register('markLocation',       this, this.markLocation);
   },
   
   init: function () {
@@ -87,7 +87,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.initImageButtons();
     this.initImagePanning();
     this.initSelector();
-    this.highlightLocation(Ensembl.highlightedLoc);
+    this.markLocation(Ensembl.markedLocation);
     
     if (!this.vertical) {
       this.makeResizable();
@@ -313,9 +313,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     });
 
-    // boundary for location highlighting
+    // boundary for location marking
     if (this.draggables.length) {
-      this.highlightBoundary = this.draggables[0];
+      this.locationMarkingArea = this.draggables[0];
     }
 
     if (Ensembl.images.total) {
@@ -712,7 +712,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.positionLayers();
     this.removeShare();
     this.highlightImage(this.imageNumber, 0);
-    this.highlightLocation(Ensembl.highlightedLoc);
+    this.markLocation(Ensembl.markedLocation);
 
     return true;
   },
@@ -906,7 +906,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (!this.newLocation) {
           this.elLk.boundariesPanning.parent().remove();
           this.elLk.boundariesPanning = false;
-          this.highlightLocation(Ensembl.highlightedLoc);
+          this.markLocation(Ensembl.markedLocation);
           return;
         }
 
@@ -975,7 +975,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (locationDisplacement) {
       this.newLocation = this.dragRegion.range.chr + ':' + (this.dragRegion.range.start - locationDisplacement) + '-' + (this.dragRegion.range.end - locationDisplacement);
       this.elLk.boundariesPanning.helptip('option', 'content', this.newLocation).helptip('open');
-      this.highlightLocation(Ensembl.highlightedLoc, locationDisplacement);
+      this.markLocation(Ensembl.markedLocation, locationDisplacement);
     } else {
       this.newLocation = false;
       this.elLk.boundariesPanning.helptip('close');
@@ -1008,8 +1008,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return;
     }
 
-    if (area.a.attrs.href && Ensembl.highlightedLoc) {
-      area.a.attrs.href = Ensembl.updateURL({hlr: Ensembl.highlightedLoc[0]}, area.a.attrs.href);
+    if (area.a.attrs.href && Ensembl.markedLocation) {
+      area.a.attrs.href = Ensembl.updateURL({mr: Ensembl.markedLocation[0]}, area.a.attrs.href);
     }
 
     var id = 'zmenu_' + area.a.coords.join('_');
@@ -1277,7 +1277,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }).end();
   },
 
-  highlightLocation: function (r, offset) {
+  markLocation: function (r, offset) {
     var panel = this;
     var start, end;
 
@@ -1289,49 +1289,49 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
 
     // if image box is not interactive
-    if (!this.highlightBoundary) {
+    if (!this.locationMarkingArea) {
       return;
     }
 
-    // create the highlighted area div
-    if (!this.elLk.highlightedLocation) {
-      this.elLk.highlightedLocation = $('<div class="selector hlrselector"><div class="hlrselector-close">X</div></div>').hide().insertAfter(this.elLk.selector)
-        .find('div').helptip({content: 'Clear highlighted region'}).on('click mousedown', function(e) {
+    // create the marked area div
+    if (!this.elLk.markedLocation) {
+      this.elLk.markedLocation = $('<div class="selector mrselector"><div class="mrselector-close">X</div></div>').hide().insertAfter(this.elLk.selector)
+        .find('div').helptip({content: 'Clear marked region'}).on('click mousedown', function(e) {
           e.stopPropagation();
           if (e.type === 'click') {
-            Ensembl.highlightLocation(false);
+            Ensembl.markLocation(false);
           }
         })
       .end();
     }
 
-    // create the highlight button
-    if (!this.elLk.highlightButton) {
-      this.elLk.highlightButton = $('<a class="hlr-reset outside">').hide().appendTo(this.elLk.toolbars).helptip().on({
+    // create the marker button
+    if (!this.elLk.markerButton) {
+      this.elLk.markerButton = $('<a class="mr-reset outside">').hide().appendTo(this.elLk.toolbars).helptip().on({
         'refreshTip': function () {
-          $(this).helptip('option', 'content', this.className.match(/outside/) ? 'Jump to the highlighted region' : (this.className.match(/selected/) ? 'Clear highlighted region' : 'Reinstate highlighted region'))
+          $(this).helptip('option', 'content', this.className.match(/outside/) ? 'Jump to the marked region' : (this.className.match(/selected/) ? 'Clear marked region' : 'Reinstate marked region'))
         },
         'click': function (e) {
           e.preventDefault();
           if (this.className.match('selected')) {
-            Ensembl.highlightLocation(false);
+            Ensembl.markLocation(false);
           } else if (this.className.match(/outside/)) {
-            var hlr     = Ensembl.getHighlightedLocation() || Ensembl.lastHighlightedLoc;
-            var length  = panel.highlightBoundary.range.end - panel.highlightBoundary.range.start; // preserve the scale
-            var centre  = (hlr[2] + hlr[3]) / 2;
-            Ensembl.highlightLocation(hlr);
-            Ensembl.updateLocation(hlr[1] + ':' + Math.max(1, Math.round(centre - length / 2)) + '-' + Math.round(centre + length / 2));
+            var mr      = Ensembl.getMarkedLocation() || Ensembl.lastMarkedLocation;
+            var length  = panel.locationMarkingArea.range.end - panel.locationMarkingArea.range.start; // preserve the scale
+            var centre  = (mr[2] + mr[3]) / 2;
+            Ensembl.markLocation(mr);
+            Ensembl.updateLocation(mr[1] + ':' + Math.max(1, Math.round(centre - length / 2)) + '-' + Math.round(centre + length / 2));
           } else {
-            Ensembl.highlightLocation(Ensembl.lastHighlightedLoc);
+            Ensembl.markLocation(Ensembl.lastMarkedLocation);
           }
         }
       });
     }
 
-    // if clearing the highlighted area
+    // if clearing the marked area
     if (r === false) {
-      this.elLk.highlightedLocation.hide();
-      this.elLk.highlightButton.removeClass('selected').trigger('refreshTip').show();
+      this.elLk.markedLocation.hide();
+      this.elLk.markerButton.removeClass('selected').trigger('refreshTip').show();
       this.updateExportMenu();
       return;
     }
@@ -1345,27 +1345,27 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.selectArea(false);
 
     // calculate start and end of the current image
-    start = this.highlightBoundary.range.start - offset;
-    end   = this.highlightBoundary.range.end - offset;
+    start = this.locationMarkingArea.range.start - offset;
+    end   = this.locationMarkingArea.range.end - offset;
 
-    // display the highlighted region if it overlaps the current region
-    if (this.highlightBoundary.range.chr === r[1] && (start > r[2] && start < r[3] || end > r[2] && end < r[3] || start <= r[2] && end >= r[3])) {
+    // display the marked region if it overlaps the current region
+    if (this.locationMarkingArea.range.chr === r[1] && (start > r[2] && start < r[3] || end > r[2] && end < r[3] || start <= r[2] && end >= r[3])) {
 
-      this.elLk.highlightedLocation.css({
-        left:   this.highlightBoundary.l + Math.max(r[2] - start, 0) / this.highlightBoundary.range.scale,
-        width:  (Math.min(end, r[3] + 1) - Math.max(r[2], start)) / this.highlightBoundary.range.scale - 1,
-        top:    this.highlightBoundary.t,
-        height: this.highlightBoundary.b - this.highlightBoundary.t
+      this.elLk.markedLocation.css({
+        left:   this.locationMarkingArea.l + Math.max(r[2] - start, 0) / this.locationMarkingArea.range.scale,
+        width:  (Math.min(end, r[3] + 1) - Math.max(r[2], start)) / this.locationMarkingArea.range.scale - 1,
+        top:    this.locationMarkingArea.t,
+        height: this.locationMarkingArea.b - this.locationMarkingArea.t
       }).show();
 
-      this.elLk.highlightButton.addClass('selected').removeClass('outside').trigger('refreshTip').show();
+      this.elLk.markerButton.addClass('selected').removeClass('outside').trigger('refreshTip').show();
 
     } else {
-      this.elLk.highlightedLocation.hide();
+      this.elLk.markedLocation.hide();
       if (this.panningAllowed) {
-        this.elLk.highlightButton.addClass('outside').removeClass('selected').trigger('refreshTip').show();
+        this.elLk.markerButton.addClass('outside').removeClass('selected').trigger('refreshTip').show();
       } else {
-        this.elLk.highlightButton.hide();
+        this.elLk.markerButton.hide();
       }
     }
 
@@ -1389,17 +1389,17 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       extra.boxes = this.boxCoords;
     }
 
-    if (Ensembl.highlightedLoc && this.highlightBoundary) {
-      extra.highlight = {
-        x: Math.round((Ensembl.highlightedLoc[2] - this.highlightBoundary.range.start) / this.highlightBoundary.range.scale + this.highlightBoundary.l),
-        y: this.highlightBoundary.t,
-        w: Math.round((Ensembl.highlightedLoc[3] - Ensembl.highlightedLoc[2]) / this.highlightBoundary.range.scale),
-        h: this.highlightBoundary.b - this.highlightBoundary.t
+    if (Ensembl.markedLocation && this.locationMarkingArea) {
+      extra.mark = {
+        x: Math.round((Ensembl.markedLocation[2] - this.locationMarkingArea.range.start) / this.locationMarkingArea.range.scale + this.locationMarkingArea.l),
+        y: this.locationMarkingArea.t,
+        w: Math.round((Ensembl.markedLocation[3] - Ensembl.markedLocation[2]) / this.locationMarkingArea.range.scale),
+        h: this.locationMarkingArea.b - this.locationMarkingArea.t
       };
 
-      if (extra.highlight.x < this.highlightBoundary.l) {
-        extra.highlight.w = extra.highlight.w - this.highlightBoundary.l + extra.highlight.x;
-        extra.highlight.x = this.highlightBoundary.l;
+      if (extra.mark.x < this.locationMarkingArea.l) {
+        extra.mark.w = extra.mark.w - this.locationMarkingArea.l + extra.mark.x;
+        extra.mark.x = this.locationMarkingArea.l;
       }
     }
 

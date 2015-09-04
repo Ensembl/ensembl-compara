@@ -89,7 +89,7 @@ sub feature_content {
       action => 'View',
       r      => "$seq_region:$start-$end",
     });
-    $location_link_class = '_location_change _location_highlight';
+    $location_link_class = '_location_change _location_mark';
   }
   
   if ($description =~ /PMID/) {

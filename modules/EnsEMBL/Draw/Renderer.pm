@@ -223,9 +223,9 @@ sub render {
       EnsEMBL::Draw::Glyph::Line->new({colour => 'red', pixelx => $boxes->{$_}{'l'}, pixely => $boxes->{$_}{'t'}, pixelwidth => 0, pixelheight => $boxes->{$_}{'b'} - $boxes->{$_}{'t'} });
   }
 
-  # add transparent layer for highlighted area
-  if (my $highlight_layer = $self->add_highlight_layer($self->{'extra'}{'highlight'})) {
-    push @{$layers{$top_layer + 2}}, $highlight_layer;
+  # add transparent layer for marked area
+  if (my $marked_layer = $self->add_location_marking_layer($self->{'extra'}{'mark'})) {
+    push @{$layers{$top_layer + 2}}, $marked_layer;
   }
 
   my %M;
@@ -261,7 +261,7 @@ sub render {
   $self->add_canvas_frame($config, $im_width, $im_height);
 }
 
-sub add_highlight_layer {
+sub add_location_marking_layer {
   ## not all renderers support transparency
 }
 
