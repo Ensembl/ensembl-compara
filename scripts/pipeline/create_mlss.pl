@@ -352,7 +352,8 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
       }
       if (not $species_set_name) {
         if (scalar(@{$genome_db_ids}) >= 3) {
-          die "A species-set name must be given if the set contains 3 or more species.\n"
+          $species_set_name = "collection-$collection" if $collection;
+          die "A species-set name must be given if the set contains 3 or more species.\n" unless $species_set_name;
         } else {
           $species_set_name = $auto_species_set_name;
         }

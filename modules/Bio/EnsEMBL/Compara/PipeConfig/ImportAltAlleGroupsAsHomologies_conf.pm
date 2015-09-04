@@ -40,7 +40,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'compara1',    # where the pipeline database will be created
+        'host'            => 'compara5',    # where the pipeline database will be created
 
         'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
