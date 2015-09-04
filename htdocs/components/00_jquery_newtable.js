@@ -53,6 +53,7 @@
     var incr = true;
     var all_rows = false;
     var revpipe = [];
+    var erevpipe = [];
     var wire = {};
     var manifest = $.extend(true,{},orient);
     $.each(config.pipes,function(i,step) {
@@ -60,11 +61,12 @@
       if(out) {
         if(out.manifest) { manifest = out.manifest; }
         if(out.undo) { revpipe.push(out.undo); }
+        if(out.eundo) { erevpipe.push(out.eundo); }
         if(out.no_incr) { incr = false; }
         if(out.all_rows) { all_rows = true; }
       }
     });
-    return { manifest: manifest, undo: revpipe, wire: wire,
+    return { manifest: manifest, undo: revpipe, eundo: erevpipe, wire: wire,
              incr_ok: incr, all_rows: all_rows };
   }
 
@@ -76,6 +78,13 @@
       data = out[1];
     });
     return [data,orient];
+  }
+
+  function build_enums(manifest_c,grid,enums) {
+    $.each(manifest_c.eundo,function(i,step) {
+      enums = step(enums,grid);
+    });
+    return enums;
   }
 
   function new_top_section(widgets,config,pos) {
@@ -149,7 +158,9 @@
     $table.data('grid',grid);
   }
 
-  function store_ranges($table,enums,manifest_in) {
+  function store_ranges($table,enums,cur_manifest,manifest_in,config) {
+    var grid = $table.data('grid') || [];
+    var enums = build_enums(cur_manifest,grid,enums) || {};
     var ranges = $table.data('ranges') || {};
     var range_manifest = $table.data('range-manifest') || [];
     if(!$.orient_compares_equal(manifest_in,range_manifest)) {
@@ -161,9 +172,9 @@
       if(!ranges[k]) { ranges[k] = v.slice(); }
     });
     $.each(enums,function(column,range) {
-      var fn = $['newtable_rangemerge_'+range.merge];
+      var fn = $['newtable_rangemerge_'+config.colconf[column].enum_merge];
       if(!fn) { fn = $['newtable_rangemerge_class']; }
-      ranges[column] = fn(ranges[column],range.values);
+      ranges[column] = fn(ranges[column],range);
     });
     $table.data('ranges',ranges);
     $table.trigger('range-updated');
@@ -186,10 +197,10 @@
     render_grid(widgets,$table,manifest_c,0,-1);
   }
 
-  function use_response(widgets,$table,manifest_c,response) {
+  function use_response(widgets,$table,manifest_c,response,config) {
     store_response_in_grid($table,response.data,response.start,response.columns,manifest_c.manifest);
-    store_ranges($table,response.enums||{},response.shadow);
     render_grid(widgets,$table,manifest_c,response.start,response.data.length);
+    store_ranges($table,response.enums,manifest_c,response.shadow,config);
   }
   
   function maybe_use_response(widgets,$table,result,config) {
@@ -197,7 +208,7 @@
     var in_manifest = result.orient;
     var more = 0;
     if($.orient_compares_equal(cur_manifest.manifest,in_manifest)) {
-      use_response(widgets,$table,cur_manifest,result.response);
+      use_response(widgets,$table,cur_manifest,result.response,config);
       if(result.response.more) {
         more = 1;
         get_new_data(widgets,$table,cur_manifest,result.response.more,config);
@@ -362,7 +373,9 @@
       if(best===null || chr.count > best.count) { best = chr; }
       chr.best = false;
     });
-    best.best = true;
+    if(best) {
+      best.best = true;
+    }
     return a;
   }
 

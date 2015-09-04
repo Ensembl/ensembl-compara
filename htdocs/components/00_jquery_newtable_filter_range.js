@@ -59,7 +59,7 @@
       detect_catastrophe: function($el,$slider,values) { return false; },
       text_prefix: function(state) { return ''; },
       draw_additional: function($el,values) {},
-    },
+    }
   };
 
   function is_minmax($el,$slider,min,max) {

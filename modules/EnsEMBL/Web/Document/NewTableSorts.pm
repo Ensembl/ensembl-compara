@@ -55,10 +55,11 @@ sub null_position {
 
   $v =~ s/^.*://;
   my @v = split(/:-/,$v);
+  shift @v;
   foreach my $c (@v) {
-    return 0 if newtable_sort_isnull('numeric',$c);
+    return 1 if newtable_sort_isnull('numeric',$c);
   } 
-  return 1;
+  return 0;
 }
 
 sub sort_position {
@@ -111,20 +112,30 @@ my %SORTS = (
       }
       return 1;
     },
+    filter_primary => 0,
   },
   'string' => {
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
     null => sub { $_[0] !~ /\S/; },
-    js => 'string'
+    js => 'string',
+    enum_js => 'string',
+  },
+  'string_nofilter' => {
+    range_display => "",
+    _inherit => ['string'],
   },
   'string_dashnull' => {
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
     null => sub { $_[0] !~ /\S/ || $_[0] =~ /^\s*-\s*$/; },
     js => 'string'
   },
+  'string_dashnull_nofilter' => {
+    range_display => "",
+    _inherit => ['string_dashnull'],
+  },
   'string_hidden' => {
     clean => \&html_hidden,
-    null => sub { $_[0] =~ /\S/; },
+    null => sub { $_[0] !~ /\S/; },
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
     js => 'string',
     js_clean => 'html_hidden',
@@ -133,6 +144,7 @@ my %SORTS = (
     clean => sub { return number_cleaned(html_hidden($_[0])); },
     js_clean => 'hidden_number',
     _inherit => ['numeric'],
+    enum_js => "numeric_hidden",
   },
   'numeric' => {
     clean => \&number_cleaned, 
@@ -166,6 +178,7 @@ my %SORTS = (
         return 1;
       }
     },
+    enum_js => "numeric",
   },
   'integer' => {
     range_display_params => { steptype => 'integer' },
@@ -173,27 +186,49 @@ my %SORTS = (
   },
   'html' => {
     clean => \&html_cleaned,
-    null => sub { $_[0] =~ /\S/; },
+    null => sub { $_[0] !~ /\S/; },
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
     js => 'string',
     js_clean => 'html_cleaned',
+    enum_js => 'html',
+  },
+  'html_nofilter' => {
+    range_display => "",
+    _inherit => ['html'],
   },
   'html_split' => {
     clean => \&html_cleaned,
-    null => sub { $_[0] =~ /\S/; },
+    null => sub { $_[0] !~ /\S/; },
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
     js => 'string',
     js_clean => 'html_cleaned',
     range_split => sub {
       return [ map { $_[0]->{'clean'}->($_) } @{split_top_level($_[1])} ];
     },
+    enum_js => "html_split",
+  },
+  'html_hidden_split_dashnull' => {
+    clean => \&html_hidden,
+    null => sub { $_[0] !~ /\S/ || $_[0] =~ /^\s*-\s*$/; },
+    perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
+    js => 'string',
+    js_clean => 'html_cleaned',
+    range_split => sub {
+      return [ map { $_[0]->{'clean'}->($_) } @{split_top_level($_[1])} ];
+    },
+    enum_js => "html_hidden_split",
+  },
+  'html_split_primary' => {
+    filter_primary => 1,
+    _inherit => ['html_split'],
   },
   'html_numeric' => {
     clean => sub { return number_cleaned(html_cleaned($_[0])); },
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
     null => sub { return !looks_like_number($_[0]); },
     js => 'numeric',
-    js_clean => 'html_number'
+    js_clean => 'html_number',
+    enum_js => "",
   },
   'position' => {
     null => \&null_position,
@@ -246,6 +281,7 @@ my %SORTS = (
         return 1;
       }
     },
+    enum_js => "hidden_position",
   },
 );
 
@@ -263,7 +299,7 @@ while($skips) {
     }
     foreach my $t (@inherit) {
       foreach my $d (keys %{$SORTS{$t}}) {
-        $SORTS{$k}->{$d} ||= $SORTS{$t}->{$d};
+        $SORTS{$k}->{$d} = $SORTS{$t}->{$d} unless exists $SORTS{$k}->{$d};
       }
     }
   }
@@ -281,6 +317,9 @@ sub newtable_sort_client_config {
         fn => $conf->{'js'},
         clean => $conf->{'js_clean'},
         range => $conf->{'range_display'},
+        enum_merge => $conf->{'range_merge'},
+        primary => $conf->{'filter_primary'},
+        enum_js => $conf->{'enum_js'},
         range_params => $conf->{'range_display_params'},
         type => $column_map->{$col},
         incr_ok => !($conf->{'options'}{'no_incr'}||0)
@@ -313,8 +352,7 @@ sub newtable_sort_range_finish {
 
   $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
   my $out = $SORTS{$type}->{'range_finish'}->($values);
-  my $rtype = $SORTS{$type}->{'range_merge'};
-  return { merge => $rtype, values => $out };
+  return $out;
 }
 
 sub newtable_sort_range_match {

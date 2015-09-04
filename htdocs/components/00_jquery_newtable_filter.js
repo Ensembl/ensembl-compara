@@ -25,30 +25,26 @@
 
   $.fn.new_table_filter = function(config,data,widgets) {
 
-    var filterable_columns = [];
+    var filterable_columns = {};
 
-    function find_widget(filter_name) {
+    function find_widget(wanted_name,type,def) {
       var w;
       $.each(widgets,function(name,contents) {
-        if(contents.filters) {
-          for(var i=0;i<contents.filters.length;i++) {
-            if(contents.filters[i].name == filter_name) {
-              w = contents.filters[i];
+        if(contents[type]) {
+          for(var i=0;i<contents[type].length;i++) {
+            if(contents[type][i].name == wanted_name) {
+              w = contents[type][i];
             }
           }
         }
       });
       if(w) { return w; }
-      if(filter_name != 'class') { return find_widget('class'); }
+      if(def!==null) { return find_widget(def,type,null); }
       return null;
     }
 
-    function dropdown(idx,filter,label) {
-      var prec = "sec";
-      if(filter.indexOf("!")==0) {
-        prec = "pri";
-        filter = filter.substr(1);
-      }
+    function dropdown(idx,filter,label,primary) {
+      var prec = primary?"pri":"sec";
       if(filter=='') { filter = 'more'; }
       return '<li class="t prec_'+prec+'" data-idx="'+idx+'"><span class="k">'+label+'</span><span class="v">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></li>';
     }
@@ -95,7 +91,7 @@
       var values = ($table.data('ranges')||{})[key];
       if(!values) { values = []; }
       var kparams = config.colconf[key].range_params;
-      var w = find_widget(kind);
+      var w = find_widget(kind,'filters','class');
       w.display($menu,$button,values,state,kparams);
     }
 
@@ -125,7 +121,7 @@
         var key = config.columns[idx].key;
         var values = ($table.data('ranges')||{})[key];
         var kind = config.colconf[key].range;
-        var w = find_widget(kind);
+        var w = find_widget(kind,'filters','class');
         set_button($el,view,w,key,values);
         show_or_hide_all($table);
       }
@@ -164,16 +160,22 @@
     return {
       generate: function() {
         var dropdowns = "";
-        for(var i=0;i<config.columns.length;i++) {
-          var c = config.columns[i];
-          if(c.filter) {
-            dropdowns += dropdown(i,c.filter,c.label||c.key);
-            filterable_columns.push(c.key);
+        $.each(config.colconf,function(key,cc) {
+          if(!cc.range) { return; }
+          var label = "";
+          var j = -1;
+          for(var i=0;i<config.columns.length;i++) {
+            if(config.columns[i].key == key) { j = i; break; }
           }
-        }
-        dropdowns += dropdown(-1,'!','More');
+          var label = config.columns[j].label || config.columns[j].key;
+          if(cc.range) {
+            dropdowns += dropdown(j,cc.range,label,cc.primary);
+            filterable_columns[key] = cc;
+          }
+        });
+        dropdowns += dropdown(-1,'','More',true);
 
-        var out='<div class="newtable_filter"><ul>'+dropdowns+'</ul></div>';
+        var out='<div class="newtable_filter"><span class="intro">Filter</span><ul>'+dropdowns+'</ul></div>';
         return out;
       },
       go: function($table,$el) {
@@ -206,7 +208,45 @@
       pipe: function() {
         return [
           function(need,got) {
-            need.enumerate = filterable_columns;
+            var server_filter = [];
+            var client_enums = {};
+            $.each(filterable_columns,function(key,cc) {
+              var cf = find_widget(cc.enum_js,'enums',null);
+              if(cf) {
+                client_enums[key] = cf;
+              } else {
+                server_filter.push(key);
+              }
+            });
+            need.enumerate = server_filter;
+            return {
+              eundo: function(enums,grid) {
+                $.each(client_enums,function(col,plugin) {
+                  for(var i=0;i<config.columns.length;i++) {
+                    if(config.columns[i].key == col) {
+                      var value = {};
+                      for(var j=0;j<grid.length;j++) {
+                        var v = grid[j][i];
+                        if(v===null || v===undefined || v[1]) { continue; }
+                        v = v[0];
+                        if(plugin.split) {
+                          v = plugin.split(v);
+                        } else {
+                          v = [v];
+                        }
+                        if(v===null || v===undefined) { continue; }
+                        for(var k=0;k<v.length;k++) {
+                          plugin.value(value,v[k]);
+                        }
+                      }
+                      if(plugin.finish) { value = plugin.finish(value); }
+                      enums[col] = value;
+                    }
+                  }
+                });
+                return enums;
+              }
+            };
           }
         ];
       }

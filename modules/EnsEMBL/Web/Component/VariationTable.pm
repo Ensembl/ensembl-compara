@@ -126,43 +126,43 @@ sub make_table {
   # Using explicit wdiths speeds things up and makes layout more predictable
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
-    { key => 'ID',       width => '12u', filter => "",      sort => 'html',                                                      help => 'Variant identifier'                     },
-    { key => 'chr' ,     width => '10u', filter => "range", sort => 'hidden_position', label => 'Chr: bp',                       help => $glossary->{'Chr:bp'}                    },
-    { key => 'Alleles',  width => '16u', filter => "",      sort => 'string',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
-    { key => 'class',    width => '11u', filter => "class", sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
-    { key => 'Source',   width => '8u',  filter => "class", sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
-    { key => 'status',   width => '9u',  filter => "class", sort => 'html_split', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
-    { key => 'clinsig',  width => '6u',  filter => "class", sort => 'html_split', label => "Clin\f sig",                    help => 'Clinical significance'                  },
-    { key => 'snptype',  width => '12u', filter => "!class", range => [values %{$self->all_terms}], sort => 'html_split',   label => 'Type',                          help => 'Consequence type'                       },
-    { key => 'aachange', width => '6u',  filter => "",      sort => 'string_dashnull', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
-    { key => 'aacoord',  width => '6u',  filter => "range", sort => 'integer',         label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
+    { key => 'ID',       width => '12u',     sort => 'html_nofilter',                                                      help => 'Variant identifier'                     },
+    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp',                       help => $glossary->{'Chr:bp'}                    },
+    { key => 'Alleles',  width => '16u',      sort => 'string_nofilter',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
+    { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
+    { key => 'Source',   width => '8u', sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
+    { key => 'status',   width => '9u', sort => 'html_hidden_split_dashnull', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
+    { key => 'clinsig',  width => '6u', sort => 'html_hidden_split_dashnull', label => "Clin\f sig",                    help => 'Clinical significance'                  },
+    { key => 'snptype',  width => '12u', range => [values %{$self->all_terms}], sort => 'html_split_primary',   label => 'Type',                          help => 'Consequence type'                       },
+    { key => 'aachange', width => '6u',      sort => 'string_dashnull_nofilter', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
+    { key => 'aacoord',  width => '6u', sort => 'integer',         label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
   ];
   
   # submitter data for LRGs
-  splice @$columns, 5, 0, { key => 'Submitters', width => '10u', filter => "", sort => 'string', align => 'center', export_options => { split_newline => 2 } } if $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
+  splice @$columns, 5, 0, { key => 'Submitters', width => '10u', sort => 'string_nofilter', align => 'center', export_options => { split_newline => 2 } } if $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
 
   # HGVS
-  splice @$columns, 3, 0, { key => 'HGVS', width => '10u', filter => "", sort => 'string', title => 'HGVS name(s)', align => 'center', export_options => { split_newline => 2 } } if $hub->param('hgvs') eq 'on';
+  splice @$columns, 3, 0, { key => 'HGVS', width => '10u', sort => 'string_nofilter', title => 'HGVS name(s)', align => 'center', export_options => { split_newline => 2 } } if $hub->param('hgvs') eq 'on';
 
   # add SIFT for supported species
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
 
   if ($sd->{'SIFT'}) {
     push @$columns, (
-      { key => 'sift', filter => "range", sort => 'numeric_hidden', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'} });
+      { key => 'sift', sort => 'numeric_hidden', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'} });
   }
 
   # add GMAF and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'polyphen', filter => "range", sort => 'numeric_hidden', width => '6u', label => "Poly\fPhen", align => 'center', help => $glossary->{'PolyPhen'} },
+      { key => 'polyphen', sort => 'numeric_hidden', width => '6u', label => "Poly\fPhen", align => 'center', help => $glossary->{'PolyPhen'} },
     );
 
-    splice @$columns, 3, 0, { key => 'gmaf', filter => "range", sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $glossary->{'Global MAF'} };
+    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $glossary->{'Global MAF'} };
   }
  
   if ($hub->type ne 'Transcript') {
-    push @$columns, { key => 'Transcript', filter => "class", sort => 'html', width => '11u', help => $glossary->{'Transcript'} };
+    push @$columns, { key => 'Transcript', sort => 'html', width => '11u', help => $glossary->{'Transcript'} };
   }
 
   return $self->new_new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside' });
