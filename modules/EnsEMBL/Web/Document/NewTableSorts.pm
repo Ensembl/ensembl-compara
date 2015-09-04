@@ -115,37 +115,29 @@ my %SORTS = (
     filter_primary => 0,
   },
   'string' => {
-    perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
     null => sub { $_[0] !~ /\S/; },
     js => 'string',
     enum_js => 'string',
   },
-  'string_nofilter' => {
-    range_display => "",
-    _inherit => ['string'],
-  },
-  'string_dashnull' => {
-    perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
+  'string_nofilter' => [qw(nofilter string)],
+  'dashnull' => {
     null => sub { $_[0] !~ /\S/ || $_[0] =~ /^\s*-\s*$/; },
-    js => 'string'
   },
-  'string_dashnull_nofilter' => {
+  'nofilter' => {
     range_display => "",
-    _inherit => ['string_dashnull'],
   },
+  'string_dashnull' => [qw(dashnull string)],
+  'string_dashnull_nofilter' => [qw(nofilter dashnull string)],
   'string_hidden' => {
     clean => \&html_hidden,
-    null => sub { $_[0] !~ /\S/; },
-    perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
-    js => 'string',
     js_clean => 'html_hidden',
   },
-  'numeric_hidden' => {
+  '_hidden_number' => {
     clean => sub { return number_cleaned(html_hidden($_[0])); },
     js_clean => 'hidden_number',
-    _inherit => ['numeric'],
     enum_js => "numeric_hidden",
   },
+  'numeric_hidden' => [qw(_hidden_number numeric)],
   'numeric' => {
     clean => \&number_cleaned, 
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
@@ -180,10 +172,10 @@ my %SORTS = (
     },
     enum_js => "numeric",
   },
-  'integer' => {
+  '_int' => {
     range_display_params => { steptype => 'integer' },
-    _inherit => ['numeric'],
   },
+  'integer' => [qw(_int numeric)],
   'html' => {
     clean => \&html_cleaned,
     null => sub { $_[0] !~ /\S/; },
@@ -192,10 +184,7 @@ my %SORTS = (
     js_clean => 'html_cleaned',
     enum_js => 'html',
   },
-  'html_nofilter' => {
-    range_display => "",
-    _inherit => ['html'],
-  },
+  'html_nofilter' => [qw(nofilter html)],
   'html_split' => {
     clean => \&html_cleaned,
     null => sub { $_[0] !~ /\S/; },
@@ -218,10 +207,10 @@ my %SORTS = (
     },
     enum_js => "html_hidden_split",
   },
-  'html_split_primary' => {
+  'primary' => {
     filter_primary => 1,
-    _inherit => ['html_split'],
   },
+  'html_split_primary' => [qw(primary html_split)],
   'html_numeric' => {
     clean => sub { return number_cleaned(html_cleaned($_[0])); },
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
@@ -285,24 +274,26 @@ my %SORTS = (
   },
 );
 
-my $skips = 1;
-while($skips) {
-  $skips = 0;
-  TYPE: foreach my $k (keys %SORTS) {
-    my @inherit = @{$SORTS{$k}->{'_inherit'}||[]};
-    push @inherit,'_default';
-    delete $SORTS{$k}->{'_inherit'};
-    foreach my $t (@inherit) {
-      next unless $SORTS{$t}->{'_inherit'};
-      $skips = 1;
-      next TYPE;
-    }
-    foreach my $t (@inherit) {
-      foreach my $d (keys %{$SORTS{$t}}) {
-        $SORTS{$k}->{$d} = $SORTS{$t}->{$d} unless exists $SORTS{$k}->{$d};
-      }
-    }
+sub get_sort {
+  my ($names) = @_;
+
+  my $out = {};
+  $names = [$names] unless ref($names) eq 'ARRAY';
+  add_sort($out,[@$names,'_default']);
+  return $out;
+}
+
+sub add_sort {
+  my ($out,$names) = @_;
+
+  foreach my $name (@$names) {
+    my $ss = $SORTS{$name};
+    if(ref($ss) eq 'ARRAY') { add_sort($out,$ss); next; }
+    foreach my $k (keys %$ss) {
+      $out->{$k} = $ss->{$k} unless exists $out->{$k};
+    } 
   }
+  return $out;
 }
 
 sub newtable_sort_client_config {
@@ -310,7 +301,7 @@ sub newtable_sort_client_config {
 
   my $config;
   foreach my $col (keys %$column_map) {
-    my $conf = $SORTS{$column_map->{$col}};
+    my $conf = get_sort($column_map->{$col});
     $conf->{'options'} ||= {};
     if($conf->{'js'}) {
       $config->{$col} = {
@@ -332,58 +323,53 @@ sub newtable_sort_client_config {
 sub newtable_sort_range_split {
   my ($type,$values) = @_;
 
-  $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
-  return $SORTS{$type}->{'range_split'}->($SORTS{$type},$values);
+  my $conf = get_sort($type);
+  return $conf->{'range_split'}->($conf,$values);
 }
 
 sub newtable_sort_range_value {
   my ($type,$values,$value) = @_;
 
-  $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
+  my $conf = get_sort($type);
   my $vv = newtable_sort_range_split($type,$value) if defined $value;
   return unless defined $values;
   foreach my $v (@$vv) {
-    $SORTS{$type}->{'range_value'}->($values,$v);
+    $conf->{'range_value'}->($values,$v);
   }
 }
 
 sub newtable_sort_range_finish {
   my ($type,$values) = @_;
 
-  $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
-  my $out = $SORTS{$type}->{'range_finish'}->($values);
-  return $out;
+  return get_sort($type)->{'range_finish'}->($values);
 }
 
 sub newtable_sort_range_match {
   my ($type,$x,$y) = @_;
 
-  $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
   return 0 unless defined $y;
-  return $SORTS{$type}->{'range_match'}->($x,$y);
+  return get_sort($type)->{'range_match'}->($x,$y);
 }
 
 sub newtable_sort_isnull {
   my ($type,$value) = @_;
 
-  $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
   return 1 unless defined $value;
-  $value = $SORTS{$type}->{'clean'}->($value);
+  $value = get_sort($type)->{'clean'}->($value);
   return 1 unless defined $value;
-  return !!($SORTS{$type}->{'null'}->($value));
+  return !!(get_sort($type)->{'null'}->($value));
 }
 
 sub newtable_sort_cmp {
   my ($type,$a,$b,$f) = @_;
 
-  $SORTS{$type} = $SORTS{'_default'} unless $SORTS{$type};
-  my $av = $SORTS{$type}->{'clean'}->($a);
-  my $bv = $SORTS{$type}->{'clean'}->($b);
+  my $av = get_sort($type)->{'clean'}->($a);
+  my $bv = get_sort($type)->{'clean'}->($b);
   my $an = newtable_sort_isnull($type,$av);
   my $bn = newtable_sort_isnull($type,$bv);
   return $an-$bn if $an-$bn;
   $type = '_default' if $an;
-  return $SORTS{$type}->{'perl'}->($av,$bv,$f);
+  return get_sort($type)->{'perl'}->($av,$bv,$f);
 }
 
 1;
