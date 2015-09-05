@@ -70,18 +70,19 @@ sub default_options {
         # Do we want to backup the target merge table before-hand ?
         'backup_tables'     => 1,
 
-        # All the databases that have to be analyzed
+        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+
+            # All the databases that have to be analyzed:
         'urls'              => {
             # This is the only mandatory entry name
-            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara5/'.$self->o('dbowner').'_ensembl_compara_'.$self->o('ensembl_release'),
+            'curr_rel_db'   => 'compara_curr',
 
-            'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_81',   # <----- make sure this refers to the previous release!
+            'master_db'     => 'compara_master',
+            'prev_rel_db'   => 'compara_prev',
 
-            # make sure that for the rest of the databases you have servers' and owners' names right:
-            'protein_db'    => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
-            'ncrna_db'      => 'mysql://ensro@compara1/mm14_compara_nctrees_'.$self->o('ensembl_release'),
-            'family_db'     => 'mysql://ensro@compara2/lg4_families_'.$self->o('ensembl_release'),
+            'protein_db'    => 'compara_ptrees',
+            'ncrna_db'      => 'compara_nctrees',
+            'family_db'     => 'compara_families',
             'projection_db' => 'mysql://ensro@compara5/lg4_homology_projections_'.$self->o('ensembl_release'),
         },
 
@@ -114,6 +115,17 @@ sub default_options {
             $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
         ],
    };
+}
+
+
+sub resource_classes {
+    my ($self) = @_;
+
+    return {
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+
+        'default' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
+    };
 }
 
 
