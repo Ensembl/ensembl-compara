@@ -81,7 +81,7 @@ sub fetch_input {
     # Build the url string
     my $this_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc);
     # Trick to avoid leaking the password in the master database
-    if ($this_dbc->username ne 'ensro') {
+    if ($this_dbc->username eq 'ensadmin') {
         $this_dbc->username('ensro');
         $this_dbc->password('');
     }
