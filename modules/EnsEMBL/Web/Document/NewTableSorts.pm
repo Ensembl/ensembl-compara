@@ -95,6 +95,33 @@ sub split_top_level {
   return \@out;
 }
 
+sub iconic_build_key {
+  my ($km,$col,$in) = @_;
+
+  my @vals = split(/;/,$in||'');
+  if($km) {
+    @vals = map {
+      $km->{"decorate/iconic/$col/$_"}{'order'} ||
+      $km->{"decorate/iconic/$col/$_"}{'export'} || '~';
+    } @vals;
+  }
+  return join('~',reverse sort @vals);
+}
+
+# perl -- sorting routine for server side sort
+# null -- is this value fo be considered null (server side)
+# clean -- remving crud from a value (server side)
+# range_split -- server side code for breaking up composite values
+# range_merge -- client side code for merging multiple range results
+# range_display -- filter code to use on client
+# range_display_params -- params to pass to filter code to use on client
+# range_value -- server side code for adding to enumeration
+# range_finish -- server side code for finalising enumeration
+# range_match -- server side code for applying filter
+# enum_js -- suite of functions for client-side filtering
+# js_clean -- client side cleaning for sorting
+# filter_primary -- dropdown directly on filter, not inside more
+
 my %SORTS = (
   '_default' => {
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
@@ -272,6 +299,20 @@ my %SORTS = (
     },
     enum_js => "hidden_position",
   },
+  iconic => {
+    js => "iconic",
+    null => sub { $_[0] !~ /\S/; },
+    perl => sub {
+      my ($x,$y,$f,$c,$km,$col) = @_;
+
+      $c->{$x} = iconic_build_key($km,$col,$x) unless exists $c->{$x};
+      $c->{$y} = iconic_build_key($km,$col,$y) unless exists $c->{$y};
+      return ($c->{$x} cmp $c->{$y})*$f;
+    },
+    range_split => sub { return [ split(/;/,$_[1]) ]; },
+    range_display => 'class',
+    enum_js => "iconic",
+  },
 );
 
 sub get_sort {
@@ -361,7 +402,7 @@ sub newtable_sort_isnull {
 }
 
 sub newtable_sort_cmp {
-  my ($type,$a,$b,$f) = @_;
+  my ($type,$a,$b,$f,$keymeta,$cache,$col) = @_;
 
   my $av = get_sort($type)->{'clean'}->($a);
   my $bv = get_sort($type)->{'clean'}->($b);
@@ -369,7 +410,7 @@ sub newtable_sort_cmp {
   my $bn = newtable_sort_isnull($type,$bv);
   return $an-$bn if $an-$bn;
   $type = '_default' if $an;
-  return get_sort($type)->{'perl'}->($av,$bv,$f);
+  return get_sort($type)->{'perl'}->($av,$bv,$f,$cache,$keymeta,$col);
 }
 
 1;

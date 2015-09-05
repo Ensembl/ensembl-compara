@@ -27,18 +27,20 @@ use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_isnull newtable_sort_
 # XXX move all this stuff to somewhere it's more suited
 
 sub server_sort {
-  my ($self,$data,$sort,$iconfig,$col_idx) = @_;
+  my ($self,$data,$sort,$iconfig,$col_idx,$keymeta) = @_;
 
   my $cols = $iconfig->{'columns'};
   foreach my $i (0..$#$data) { push @{$data->[$i]},$i; }
   $col_idx->{'__tie'} = -1;
+  my %cache;
   @$data = sort {
     my $c = 0;
     foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
+      $cache{$col->{'key'}}||={};
       my $idx = $col_idx->{$col->{'key'}};
       my $type = $cols->[$idx]{'sort'}||'string';
       $type = 'numeric' if $col->{'key'} eq '__tie';
-      $c = newtable_sort_cmp($type,$a->[$idx],$b->[$idx],$col->{'dir'});
+      $c = newtable_sort_cmp($type,$a->[$idx],$b->[$idx],$col->{'dir'},$keymeta,$cache{$col->{'key'}},$col->{'key'});
       last if $c;
     }
     $c;
@@ -81,6 +83,16 @@ sub passes_muster {
   return $ok;
 }
 
+sub register_key {
+  my ($self,$key,$meta) = @_;
+
+  $self->{'key_meta'}||={};
+  $self->{'key_meta'}{$key}||={};
+  foreach my $k (keys %{$meta||{}}) {
+    $self->{'key_meta'}{$key}{$k} = $meta->{$k} unless exists $self->{'key_meta'}{$key}{$k};
+  } 
+}
+
 sub ajax_table_content {
   my ($self) = @_;
 
@@ -90,12 +102,13 @@ sub ajax_table_content {
   my $wire = from_json($hub->param('wire'));
   my $more = $hub->param('more');
   my $incr_ok = ($hub->param('incr_ok') eq 'true');
+  my $keymeta = from_json($hub->param('keymeta'));
 
-  return $self->newtable_data_request($iconfig,$orient,$wire,$more,$incr_ok);
+  return $self->newtable_data_request($iconfig,$orient,$wire,$more,$incr_ok,$keymeta);
 }
 
 sub newtable_data_request {
-  my ($self,$iconfig,$orient,$wire,$more,$incr_ok) = @_;
+  my ($self,$iconfig,$orient,$wire,$more,$incr_ok,$keymeta) = @_;
 
   my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
   my %cols_pos;
@@ -188,7 +201,7 @@ sub newtable_data_request {
 
   # Sort it, if necessary
   if($wire->{'sort'} and @{$wire->{'sort'}}) {
-    $self->server_sort(\@data_out,$wire->{'sort'},$iconfig,\%sort_pos);
+    $self->server_sort(\@data_out,$wire->{'sort'},$iconfig,\%sort_pos,$keymeta);
     splice(@data_out,0,$irows->[0]);
     splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
   }
@@ -203,6 +216,7 @@ sub newtable_data_request {
       more => $more,
       enums => \%enums,
       shadow => \%shadow,
+      keymeta => $self->{'key_meta'},
     },
     orient => $orient,
   };

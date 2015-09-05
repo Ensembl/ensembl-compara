@@ -132,7 +132,7 @@ sub make_table {
     { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
     { key => 'Source',   width => '8u', sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
     { key => 'status',   width => '9u', sort => 'html_hidden_split_dashnull', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
-    { key => 'clinsig',  width => '6u', sort => 'html_hidden_split_dashnull', label => "Clin\f sig",                    help => 'Clinical significance'                  },
+    { key => 'clinsig',  width => '6u', sort => 'iconic', label => "Clin\f sig",                    help => 'Clinical significance'                  },
     { key => 'snptype',  width => '12u', range => [values %{$self->all_terms}], sort => 'html_split_primary',   label => 'Type',                          help => 'Consequence type'                       },
     { key => 'aachange', width => '6u',      sort => 'string_dashnull_nofilter', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
     { key => 'aacoord',  width => '6u', sort => 'integer',         label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
@@ -431,7 +431,27 @@ sub variation_table {
     v      => undef,
     source => undef,
   });
-  
+
+  # This order is a guess at the most useful and isn't strongly motivated.
+  # Feel free to rearrange.
+  my @clinsig_order = reverse qw(
+    pathogenic
+    protective
+    likely-pathogenic
+    risk-factor
+    drug-response
+    confers-sensitivity
+    histocompatibility
+    association
+    likely-benign
+    benign
+    other
+    not-provided
+    uncertain-significance
+  );
+  my %clinsig_order;
+  $clinsig_order{$clinsig_order[$_]} = sprintf("%8d",$_) for(0..$#clinsig_order);
+
   # colourmap
   my $var_styles = $hub->species_defs->colour('variation');
   my $colourmap  = $hub->colourmap;
@@ -546,7 +566,18 @@ sub variation_table {
 
             my $status = $self->render_evidence_status($evidences);
 
-            my $clin_sig = $self->render_clinical_significance($clin_sigs);
+            my $clin_sig = join(";",@$clin_sigs);
+            foreach my $cs (@$clin_sigs) {
+              my $cs_img = $cs;
+              $cs_img =~ s/\s/-/g;
+              $self->register_key("decorate/iconic/clinsig/$cs",{
+                icon => sprintf("%s/val/clinsig_%s.png",
+                                $self->img_url,$cs_img),
+                helptip => $cs,
+                export => $cs,
+                order => $clinsig_order{$cs_img},
+              });
+            }
 
             my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
           
@@ -556,7 +587,7 @@ sub variation_table {
               Ambiguity  => $snp->ambig_code,
               gmaf       => $gmaf   || '-',
               status     => $status || '-',
-              clinsig    => $clin_sig || '-',
+              clinsig    => $clin_sig,
               chr        => "<span class=\"hidden\">$chr:".($start > $end ? $end : $start)."</span>$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
               Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
               snptype    => $type,

@@ -75,9 +75,10 @@
     return out;
   }
 
-  function string_match(ori,val) {
-    var ok = 1;
+  function string_match(ori,val,empty) {
+    var ok = true;
     if(!val && val!=="") { return true; }
+    if(Object.keys(ori).length && !val) { return false; }
     $.each(ori,function(col,v) {
       if((col || col==="") && col==val) { ok = false; }
     });
@@ -169,6 +170,12 @@
           vv[m[1]].count++;
         },
         match: function(ori,val) { return position_match(ori,val); }
+      },{
+        name: "iconic",
+        split: function(v) { return v.split(/;/); },
+        value: function(vv,v) { vv[v]=1; },
+        finish: function(vv) { return Object.keys(vv); },
+        match: function(ori,val) { return string_match(ori,val); }
       }]
     };
   };

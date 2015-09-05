@@ -149,6 +149,8 @@ sub render {
       filter_enum => ["newtable_filter_enumclient",{}],
       search => [ "new_table_search",{}],
       clientsort => [ "new_table_clientsort",{}],
+      decorate => [ "newtable_decorate", {}],
+      decorate_iconic => [ "newtable_decorate_iconic", {}],
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
       "tabular" => [ "new_table_tabular", { } ],
       "paragraph" => [ "new_table_paragraph", { } ],

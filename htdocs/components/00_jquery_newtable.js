@@ -42,10 +42,13 @@
     return widgets;
   }
 
-  function make_chain(widgets,config) {
+  function make_chain(widgets,config,$table) {
     config.pipes = [];
-    $.each(widgets,function(key,widget) {
-      if(widget.pipe) { config.pipes = config.pipes.concat(widget.pipe()); }
+    cwidgets = [];
+    $.each(widgets,function(key,widget) { cwidgets.push(widget); });
+    cwidgets.sort(function(a,b) { return (a.prio||50)-(b.prio||50); });
+    $.each(cwidgets,function(key,widget) {
+      if(widget.pipe) { config.pipes = config.pipes.concat(widget.pipe($table)); }
     });
   }
 
@@ -180,6 +183,17 @@
     $table.trigger('range-updated');
   }
 
+  function store_keymeta($table,incoming) {
+    var keymeta = $table.data('keymeta') || {};
+    $.each(incoming||{},function(key,indata) {
+      if(!keymeta[key]) { keymeta[key] = {}; }
+      $.each(indata,function(k,v) {
+        if(!keymeta[key].hasOwnProperty(k)) { keymeta[key][k] = v; }
+      });
+    });
+    $table.data('keymeta',keymeta);
+  }
+
   function render_grid(widgets,$table,manifest_c,start,length) {
     var view = $table.data('view');
     var grid = $table.data('grid');
@@ -204,6 +218,7 @@
   }
   
   function maybe_use_response(widgets,$table,result,config) {
+    store_keymeta($table,result.response.keymeta);
     var cur_manifest = $table.data('manifest');
     var in_manifest = result.orient;
     var more = 0;
@@ -228,6 +243,7 @@
     } else {
       wire_manifest = $.extend(false,{},manifest_c.manifest,manifest_c.wire);
       $.get($table.data('src'),{
+        keymeta: JSON.stringify($table.data('keymeta')||{}),
         wire: JSON.stringify(wire_manifest),
         orient: JSON.stringify(manifest_c.manifest),
         more: JSON.stringify(more),
@@ -277,7 +293,6 @@
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
-    make_chain(widgets,config);
     $.each(config.formats,function(i,fmt) {
       if(!config.orient.format && widgets[fmt]) {
         config.orient.format = fmt;
@@ -296,6 +311,7 @@
       }
     }
     var $table = $('<div class="new_table_wrapper '+config.cssclass+'"><div class="topper"></div><div class="layout"></div></div>');
+    make_chain(widgets,config,$table);
     $table.data('src',$target.attr('href'));
     $target.replaceWith($table);
     $('.topper',$table).html(new_top(widgets,config));

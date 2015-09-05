@@ -33,6 +33,32 @@
     return 0;
   }
 
+  function iconic_string(val,km,col) {
+    var vals = (val||'').split(/;/);
+    if(km) {
+      var new_vals = [];
+      for(var i=0;i<vals.length;i++) {
+        var v = vals[i];
+        var w = km['decorate/iconic/'+col+'/'+v];
+        if(w && w.order) { v = w.order; }
+        else if(w && w['export']) { v = w['export']; }
+        else { v = '~'; }
+        new_vals.push(v);
+      }
+      vals = new_vals;
+    }
+    vals.sort();
+    vals.reverse();
+    return vals.join('~');
+  }
+
+  $.fn.newtable_sort_iconic = function(a,b,f,c,km,col) {
+    if(!c[a] && c[a]!=='') { c[a] = iconic_string(a,km,col); }
+    if(!c[b] && c[b]!=='') { c[b] = iconic_string(b,km,col); }
+    console.log(c[a],c[b],(c[a]-c[b])*f);
+    return c[a].localeCompare(c[b])*f;
+  }
+
   // TODO clean prior to sort for speed
   $.fn.newtable_clean_none = function(v) { return v; }
   $.fn.newtable_clean_html_hidden = function(v) {
@@ -60,10 +86,11 @@
     var col_idxs = {};
     $.each(config.columns,function(i,val) { col_idxs[val.key] = i; });
 
-    function compare(a,b,plan) {
+    function compare(a,b,plan,cache,keymeta) {
       var c = 0;
       $.each(plan,function(i,stage) {
         if(!c) {
+          if(!cache[stage.key]) { cache[stage.key] = {}; }
           var av = a[stage.idx];
           var bv = b[stage.idx];
           if(!av || !bv) {
@@ -71,7 +98,8 @@
           }
           c = av[1]-bv[1];
           if(!c) {
-            c = stage.fn(stage.clean(av[0]),stage.clean(bv[0]),stage.dir);
+            c = stage.fn(stage.clean(av[0]),stage.clean(bv[0]),stage.dir,
+                         cache[stage.key],keymeta,stage.key);
           }
         }
       });
@@ -88,7 +116,7 @@
         if(!type) { plan = null; return; }
         var clean = $.fn['newtable_clean_'+config.colconf[stage.key].clean];
         if(!clean) { clean = $.fn.newtable_clean_none; }
-        plan.push({ idx: col_idxs[stage.key], dir: stage.dir, fn: type, clean: clean});
+        plan.push({ idx: col_idxs[stage.key], dir: stage.dir, fn: type, clean: clean, key: stage.key });
         if(!config.colconf[stage.key].incr_ok) { incr_ok = false; }
       });
       if(!plan) { return null; }
@@ -119,7 +147,7 @@
     return {
       generate: function() {},
       go: function($table,$el) {},
-      pipe: function() {
+      pipe: function($table) {
         return [
           function(need,got,wire) {
             if(!need.sort) { return null; }
@@ -133,8 +161,10 @@
               undo: function(manifest,grid) {
                 var fabric = grid.slice();
                 $.each(fabric,function(i,val) { val[config.columns.length] = [i,1]; }); // ties
+                var cache = {};
+                var keymeta = $table.data('keymeta') || {};
                 fabric.sort(function(a,b) {
-                  return compare(a,b,plan.stages);
+                  return compare(a,b,plan.stages,cache,keymeta);
                 });
                 manifest.sort = wire.sort;
                 return [manifest,fabric];
