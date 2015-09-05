@@ -16,32 +16,39 @@
 
 (function($) {
   $.fn.newtable_decorate_iconic = function(config,data) {
+    function decorate_fn(extras) {
+      return function(html) {
+        var values = html.split(';');
+        new_html = "";
+        for(var i=0;i<values.length;i++) {
+          var ann = {};
+          if(extras[values[i]]) { ann = extras[values[i]]; }
+          if(ann.icon) {
+            more = '';
+            if(ann.helptip) {
+              more += ' class="_ht" title="'+ann.helptip+'" ';
+            }
+            new_html += '<img src="'+ann.icon+'" '+more+'/>';
+          } else {
+            new_html += values[i];
+            if(!values[i]) { new_html += '-'; }
+          }
+          new_html += '<div class="hidden export">'+values[i]+'</div>';
+        }
+        return new_html;
+      };
+    }
+
+    var decorators = {};
+    $.each(config.colconf,function(key,cc) {
+      if(cc.decorate && cc.decorate == "iconic") {
+        decorators[key] = [decorate_fn];
+      }
+    });
+
     return {
       decorators: {
-        iconic: {
-          clinsig: [function(extras) {
-            return function(html) {
-              var values = html.split(';');
-              new_html = "";
-              for(var i=0;i<values.length;i++) {
-                var ann = {};
-                if(extras[values[i]]) { ann = extras[values[i]]; }
-                if(ann.icon) {
-                  more = '';
-                  if(ann.helptip) {
-                    more += ' class="_ht" title="'+ann.helptip+'" ';
-                  } 
-                  new_html += '<img src="'+ann.icon+'" '+more+'/>';
-                } else {
-                  new_html += values[i];
-                  if(!values[i]) { new_html += '-'; }
-                }
-                new_html += '<div class="hidden export">'+values[i]+'</div>';
-              }
-              return new_html;
-            };
-          }]
-        },
+        iconic: decorators
       }
     };
   }; 

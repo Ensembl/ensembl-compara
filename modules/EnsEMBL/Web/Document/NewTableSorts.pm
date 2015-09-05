@@ -140,6 +140,7 @@ my %SORTS = (
       return 1;
     },
     filter_primary => 0,
+    decorate => "",
   },
   'string' => {
     null => sub { $_[0] !~ /\S/; },
@@ -312,6 +313,7 @@ my %SORTS = (
     range_split => sub { return [ split(/;/,$_[1]) ]; },
     range_display => 'class',
     enum_js => "iconic",
+    decorate => "iconic",
   },
 );
 
@@ -354,7 +356,8 @@ sub newtable_sort_client_config {
         enum_js => $conf->{'enum_js'},
         range_params => $conf->{'range_display_params'},
         type => $column_map->{$col},
-        incr_ok => !($conf->{'options'}{'no_incr'}||0)
+        incr_ok => !($conf->{'options'}{'no_incr'}||0),
+        decorate => $conf->{'decorate'},
       };
     }
   }

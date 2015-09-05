@@ -131,7 +131,7 @@ sub make_table {
     { key => 'Alleles',  width => '16u',      sort => 'string_nofilter',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
     { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
     { key => 'Source',   width => '8u', sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
-    { key => 'status',   width => '9u', sort => 'html_hidden_split_dashnull', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
+    { key => 'status',   width => '9u', sort => 'iconic', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
     { key => 'clinsig',  width => '6u', sort => 'iconic', label => "Clin\f sig",                    help => 'Clinical significance'                  },
     { key => 'snptype',  width => '12u', range => [values %{$self->all_terms}], sort => 'html_split_primary',   label => 'Type',                          help => 'Consequence type'                       },
     { key => 'aachange', width => '6u',      sort => 'string_dashnull_nofilter', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
@@ -452,6 +452,18 @@ sub variation_table {
   my %clinsig_order;
   $clinsig_order{$clinsig_order[$_]} = sprintf("%8d",$_) for(0..$#clinsig_order);
 
+  my @evidence_order = reverse qw(
+    1000Genomes
+    HapMap
+    Cited
+    ESP
+    Frequency
+    Multiple_observations
+    Phenotype_or_Disease
+  );
+  my %evidence_order;
+  $evidence_order{$evidence_order[$_]} = sprintf("%8d",$_) for(0..$#evidence_order);
+
   # colourmap
   my $var_styles = $hub->species_defs->colour('variation');
   my $colourmap  = $hub->colourmap;
@@ -564,8 +576,18 @@ sub variation_table {
             my $gmaf   = $snp->minor_allele_frequency; # global maf
               $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
 
-            my $status = $self->render_evidence_status($evidences);
-
+            my $status = join(';',@$evidences);
+            foreach my $ev (@$evidences) {
+              my $evidence_label = $ev;
+              $evidence_label =~ s/_/ /g;
+              $self->register_key("decorate/iconic/status/$ev",{
+                icon => sprintf("%s/val/evidence_%s.png",
+                                $self->img_url,$ev),
+                helptip => $evidence_label,
+                export => $evidence_label,
+                order => $evidence_order{$ev}
+              });
+            }
             my $clin_sig = join(";",@$clin_sigs);
             foreach my $cs (@$clin_sigs) {
               my $cs_img = $cs;
@@ -586,7 +608,7 @@ sub variation_table {
               Alleles    => $allele_string,
               Ambiguity  => $snp->ambig_code,
               gmaf       => $gmaf   || '-',
-              status     => $status || '-',
+              status     => $status,
               clinsig    => $clin_sig,
               chr        => "<span class=\"hidden\">$chr:".($start > $end ? $end : $start)."</span>$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
               Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
