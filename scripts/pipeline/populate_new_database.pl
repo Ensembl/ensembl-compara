@@ -734,7 +734,7 @@ sub copy_all_species_tres {
   my ($from_dba, $to_dba, $mlsss) = @_;
 
   foreach my $this_mlss (@$mlsss) {
-    next unless $this_mlss->method->class =~ /GenomicAlign(Tree|Block).(tree|ancestral|multiple)_alignment/;
+    next unless $this_mlss->method->class =~ /(GenomicAlign(Tree|Block).(tree|ancestral|multiple)_alignment|SpeciesTree.species_tree_root)/;
     copy_table($from_dba, $to_dba, 'species_tree_root', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
     copy_table($from_dba, $to_dba, 'species_tree_node', "JOIN species_tree_root USING (root_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
   }
