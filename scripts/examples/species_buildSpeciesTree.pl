@@ -18,6 +18,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 
 #
@@ -36,23 +37,25 @@ $reg->load_registry_from_db(
 my $taxonDBA = $reg->get_adaptor("Multi", "compara", "NCBITaxon");
 
 my @list_of_species = ("Homo sapiens","Mus musculus","Drosophila melanogaster","Caenorhabditis elegans");
-my $root;
+
+my @taxon_ids = ();
 foreach my $species_name (@list_of_species) {
   my $taxon = $taxonDBA->fetch_node_by_name($species_name);
-  next unless defined($taxon);
-  unless (defined($taxon->binomial)) {
-    print STDERR "WARN: No binomial for $species_name\n";
-    next;
+  unless ($taxon) {
+      warn "Cannot find '$species_name' in the NCBI taxonomy tables\n";
+      next;
   }
-  my $taxon_name = $taxon->name;
-  my $taxon_id = $taxon->taxon_id;
-  print STDERR "  $taxon_name [$taxon_id]\n";
-  $taxon->release_children;
-
-  $root = $taxon->root unless($root);
-  $root->merge_node_via_shared_ancestor($taxon);
+  push @taxon_ids, $taxon->dbID;
+  print STDERR sprintf("  %s [%d]\n", $species_name, $taxon->dbID);
 }
-$root = $root->minimize_tree;
+
+my $root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(
+    -COMPARA_DBA    => $reg->get_DBAdaptor("Multi", "compara"),
+    -SPECIES_SET    => undef,
+    -NO_PREVIOUS    => 1,
+    -EXTRATAXON_SEQUENCED   => \@taxon_ids,
+);
+
 print "MRCA is ", $root->name, "\t", $root->taxon_id, "\n";
 $root->print_tree(10);
 
