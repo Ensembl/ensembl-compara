@@ -73,7 +73,7 @@ sub create_species_tree {
     $taxon_adaptor->_id_cache->clear_cache();
 
     my $root;
-    my @taxa_for_tree = ();
+    my %taxa_for_tree = ();
     my %gdbs_by_taxon_id = ();
 
         # loading the initial set of taxa from genome_db:
@@ -84,9 +84,14 @@ sub create_species_tree {
         foreach my $gdb (@$gdb_list) {
             my $taxon_id = $gdb->taxon_id;
             next unless $taxon_id;
+            if ($taxa_for_tree{$taxon_id}) {
+                my $ogdb = $compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($taxa_for_tree{$taxon_id}->{_gdb_id_for_cast});
+                warn sprintf("GenomeDB %d (%s) and %d (%s) have the same taxon_id: %d\n", $gdb->dbID, $gdb->name, $ogdb->dbID, $ogdb->name, $taxon_id);
+                next;
+            }
             my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
             $taxon->{_gdb_id_for_cast} = $gdb->dbID;
-            push @taxa_for_tree, $taxon;
+            $taxa_for_tree{$taxon_id} = $taxon;
             push @{$gdbs_by_taxon_id{$taxon_id}}, $gdb;
         }
     }
@@ -95,12 +100,16 @@ sub create_species_tree {
     foreach my $extra_taxon (@$extrataxon_sequenced) {
         my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
         throw("Unknown taxon_id '$extra_taxon'") unless $taxon;
-        push @taxa_for_tree, $taxon;
+        if ($taxa_for_tree{$extra_taxon}) {
+            warn $taxon->name, " is already in the tree\n";
+            next;
+        }
+        $taxa_for_tree{$extra_taxon} = $taxon;
     }
 
 
     # build the tree
-    foreach my $taxon (@taxa_for_tree) {
+    foreach my $taxon (values %taxa_for_tree) {
         $taxon->release_children;
         if (not $root) {
             $root = $taxon->root;
@@ -110,7 +119,12 @@ sub create_species_tree {
         $root->merge_node_via_shared_ancestor($taxon);
         my $n2 = scalar(@{$root->get_all_leaves});
         if ($n1 != ($n2-1)) {
-            throw(sprintf('Adding %s to the tree did not increase the number of leaves. Are you trying to include a species and some of its sub-species/strains ?', $taxon->name));
+            my @anc = grep {$taxa_for_tree{$_->node_id}} @{$taxon->get_all_ancestors};
+            if (@anc) {
+                throw(sprintf('Cannot add %s because an ancestral node (%s) is already in the tree', $taxon->name, $anc[0]->name));
+            } else {
+                throw(sprintf('Cannot add %s because a descendant (%s) is already in the tree', $taxon->name, $taxon->get_all_leaves->[0]->name));
+            }
         }
     }
 
