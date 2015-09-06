@@ -36,7 +36,6 @@ $self->{'outputFasta'} = undef;
 $self->{'noSplitSeqLines'} = undef;
 $self->{'cdna'} = 0;
 $self->{'scale'} = 10;
-$self->{'drawtree'} = 0;
 $self->{'extrataxon_sequenced'} = undef;
 $self->{'multifurcation_deletes_node'} = undef;
 $self->{'multifurcation_deletes_all_subnodes'} = undef;
@@ -57,7 +56,6 @@ GetOptions('help'        => \$help,
            'reroot=i'    => \$self->{'new_root_id'},
            'align'       => \$self->{'print_align'},
            'cdna'        => \$self->{'cdna'},
-           'draw'        => \$self->{'drawtree'},
            'query_ncbi_name=s'     => \$self->{'query_ncbi_name'},
            'tag=s'     => \$self->{'tag'},
            'no_previous'             => \$self->{'no_previous'},
@@ -196,7 +194,6 @@ sub fetch_compara_ncbi_taxa {
   $root->print_tree($self->{'scale'});
 
   $self->{'root'} = $root;
-  drawPStree($self) if ($self->{'drawtree'});
 }
 
 sub create_species_tree {
@@ -370,7 +367,6 @@ unless($self->{'no_print_tree'}) {
   warn "$s\n";
 
   $self->{'root'} = $root;
-  drawPStree($self) if ($self->{'drawtree'});
 }
 
 
@@ -600,29 +596,6 @@ sub dumpTreeAsNHX
 
   print OUTSEQ "$nhx\n\n";
   close OUTSEQ;
-}
-
-
-sub drawPStree
-{
-  my $self = shift;
-  
-  unless($self->{'newick_file'}) {
-    $self->{'dump'} = 1;
-    dumpTreeAsNewick($self, $self->{'root'});
-    dumpTreeAsNHX($self, $self->{'root'});
-  }
-  
-  my $ps_file = "proteintree_". $self->{'root'}->taxon_id;
-  $ps_file =~ s/\/\//\//g;  # converts any // in path to /
-  $ps_file .= ".ps";
-  $self->{'plot_file'} = $ps_file;
-
-  my $cmd = sprintf("drawtree -auto -charht 0.1 -intree %s -fontfile /usr/local/ensembl/bin/font5 -plotfile %s", 
-                    $self->{'newick_file'}, $ps_file);
-  warn("$cmd\n");
-  system($cmd);
-  system("open $ps_file");
 }
 
 
