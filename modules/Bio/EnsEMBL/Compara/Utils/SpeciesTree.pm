@@ -81,7 +81,18 @@ sub create_species_tree {
 
         my $gdb_list = $species_set ? $species_set->genome_dbs() : $compara_dba->get_GenomeDBAdaptor->fetch_all();
 
+        # Identify the genome components that have their principal GenomeDB in the list
+        my %principal_gdbs = map {$_->dbID => 1} grep {$_->taxon_id and $_->is_polyploid} @$gdb_list;
+        my %component_gdbs = map {$_->dbID => 1} grep {$_->taxon_id and $_->genome_component and $principal_gdbs{$_->principal_genome_db->dbID}} @$gdb_list;
+
         foreach my $gdb (@$gdb_list) {
+            if ($component_gdbs{$gdb->dbID}) {
+                # This is the component of a polyploid genome that is
+                # in the list. Expand it later
+                push @{$gdbs_by_taxon_id{$gdb->taxon_id}}, $gdb;
+                warn $gdb->dbID, " is the component ", $gdb->genome_component;
+                next;
+            }
             my $taxon_id = $gdb->taxon_id;
             next unless $taxon_id;
             if ($taxa_for_tree{$taxon_id}) {
@@ -92,7 +103,6 @@ sub create_species_tree {
             my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
             $taxon->{_gdb_id_for_cast} = $gdb->dbID;
             $taxa_for_tree{$taxon_id} = $taxon;
-            push @{$gdbs_by_taxon_id{$taxon_id}}, $gdb;
         }
     }
 
@@ -166,25 +176,23 @@ sub create_species_tree {
     my $stn_root = $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
 
     # We need to duplicate all the taxa that are supposed in several copies (several genome_dbs sharing the same taxon_id)
+    # Currently, we only do that for component GenomeDBs
     foreach my $taxon_id (keys %gdbs_by_taxon_id) {
-        next if scalar(@{$gdbs_by_taxon_id{$taxon_id}}) == 1;
         my $current_nodes = $stn_root->find_nodes_by_field_value('taxon_id', $taxon_id);
-        next if scalar(@$current_nodes) == 0;
-        my %seen_gdb_ids = map {$_->genome_db_id => 1} @$current_nodes;
+        throw("There should exactly 1 node with taxon_id $taxon_id") if scalar(@$current_nodes) != 1;
+        my $current_leaf = $current_nodes->[0];
+        my $new_node = $current_leaf->copy();
+        $new_node->_complete_cast_node($current_leaf);
+        $new_node->node_id($taxon_id);
+        $current_leaf->parent->add_child($new_node);
+        $new_node->add_child($current_leaf);
         foreach my $genome_db (@{$gdbs_by_taxon_id{$taxon_id}}) {
-            next if $seen_gdb_ids{$genome_db->dbID};
-            my $current_leaf = $current_nodes->[0];
             my $new_leaf = $current_leaf->copy();
             $new_leaf->_complete_cast_node($current_leaf);
             $new_leaf->genome_db_id($genome_db->dbID);
             $new_leaf->node_id($taxon_id);
             $new_leaf->node_name(sprintf('%s (component %s)', $new_leaf->node_name, $genome_db->genome_component)) if $genome_db->genome_component;
-            my $new_node = $current_leaf->copy();
-            $new_node->_complete_cast_node($current_leaf);
-            $new_node->node_id($taxon_id);
-            $current_leaf->parent->add_child($new_node);
             $new_node->add_child($new_leaf);
-            $new_node->add_child($current_leaf);
         }
     }
 
