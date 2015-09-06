@@ -1160,14 +1160,16 @@ sub merge_node_via_shared_ancestor {
   my $self = shift;
   my $node = shift;
 
-  my $node_dup = $self->find_node_by_node_id($node->node_id);
+  my $node_id_index = $self->_make_search_index_on_nodes('node_id', 1);
+
+  my $node_dup = $node_id_index->{$node->node_id};
   if($node_dup) {
     #warn("trying to merge in a node with already exists\n");
     return $node_dup;
   }
   return undef unless($node->parent);
   
-  my $ancestor = $self->find_node_by_node_id($node->parent->node_id);
+  my $ancestor = $node_id_index->{$node->parent->node_id};
   if($ancestor) {
     $ancestor->add_child($node);
     #print("common ancestor at : "); $ancestor->print_node;
@@ -1186,8 +1188,9 @@ sub extract_subtree_from_leaves {
 
     # Add all ancestors of kept nodes to the keep list.
     my @all_keepers = ();
+    my $node_id_index = $copy->_make_search_index_on_nodes('node_id', 1);
     foreach my $keeper (@keepers) {
-	my $node = $copy->find_node_by_node_id($keeper);
+	my $node = $node_id_index->{$keeper};
 	push @all_keepers, $keeper;
 
 	my $parent = $node->parent;
@@ -1481,6 +1484,21 @@ sub find_nodes_by_field {
     }
     return $acc;
 #    return undef;
+}
+
+sub _make_search_index_on_nodes {
+    my ($self, $field, $keep_only_one) = @_;
+    my %hash = ();
+    foreach my $node (@{$self->get_all_nodes}) {
+        if ($node->can($field) and (defined $node->$field)) {
+            if ($keep_only_one) {
+                $hash{$node->$field} = $node;
+            } else {
+                push @{$hash{$node->$field}}, $node;
+            }
+        }
+    }
+    return \%hash;
 }
 
 sub find_node_by_name {
