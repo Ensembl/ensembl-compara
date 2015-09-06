@@ -82,9 +82,8 @@ sub create_species_tree {
         my $gdb_list = $species_set ? $species_set->genome_dbs() : $compara_dba->get_GenomeDBAdaptor->fetch_all();
 
         foreach my $gdb (@$gdb_list) {
-            my $taxon_name = $gdb->name;
-            next if ($taxon_name =~ /ncestral/);
             my $taxon_id = $gdb->taxon_id;
+            next unless $taxon_id;
             my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
             $taxon->{_gdb_id_for_cast} = $gdb->dbID;
             push @taxa_for_tree, $taxon;
