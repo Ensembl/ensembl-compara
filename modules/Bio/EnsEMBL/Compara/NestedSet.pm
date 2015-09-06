@@ -1167,15 +1167,16 @@ sub merge_node_via_shared_ancestor {
     #warn("trying to merge in a node with already exists\n");
     return $node_dup;
   }
-  return undef unless($node->parent);
-  
-  my $ancestor = $node_id_index->{$node->parent->node_id};
-  if($ancestor) {
-    $ancestor->add_child($node);
-    #print("common ancestor at : "); $ancestor->print_node;
-    return $ancestor;
+
+  while ($node->parent) {
+    my $ancestor = $node_id_index->{$node->parent->node_id};
+    if($ancestor) {
+      $ancestor->add_child($node);
+      #print("common ancestor at : "); $ancestor->print_node;
+      return $ancestor;
+    }
+    $node = $node->parent;
   }
-  return $self->merge_node_via_shared_ancestor($node->parent);
 }
 
 
