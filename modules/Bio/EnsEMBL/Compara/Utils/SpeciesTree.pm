@@ -110,7 +110,7 @@ sub create_species_tree {
 
     # build the tree
     foreach my $taxon (values %taxa_for_tree) {
-        $taxon->release_children;
+        $taxon->no_autoload_children;
         if (not $root) {
             $root = $taxon->root;
             next;
