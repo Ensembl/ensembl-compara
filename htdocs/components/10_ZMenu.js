@@ -86,7 +86,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.el.on('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
-    }).on('click', 'a._location_change', function () {
+    }).on('click', 'a._location_change', function (e) {
 
       if (!window.location.pathname.match(/\/Location\/View(\/|$)/)) {
         return true;
@@ -95,20 +95,21 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       var locationMatch = this.href.match(Ensembl.locationMatch);
       
       if (locationMatch) {
+        e.preventDefault()
+
         if (locationMatch[1] !== Ensembl.coreParams.r) {
           Ensembl.updateLocation(locationMatch[1]);
         }
         
         panel.hide();
-        
-        return false;
       }
-    }).on('click', 'a._location_mark', function () {
+    }).on('click', 'a._location_mark', function (e) {
+
+      e.preventDefault();
+
       Ensembl.markLocation(this.href);
 
       panel.hide();
-
-      return false;
     });
     
     $('.close', this.el).on('click', function () { 
