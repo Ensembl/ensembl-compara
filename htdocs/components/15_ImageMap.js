@@ -32,6 +32,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.labelWidth         = 0;
     this.boxCoords          = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
     this.altKeyDragging     = false;
+    this.allowHighlight     = !!(window.location.pathname.match(/\/Location\//));
     this.locationMarkingArea = false;
     
     function resetOffset() {
@@ -265,12 +266,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   
   makeImageMap: function () {
     var panel = this;
-    
-    var highlight = !!(window.location.pathname.match(/\/Location\//) && !this.vertical);
-    var rect      = [ 'l', 't', 'r', 'b' ];
-    var speciesNumber, c, r, start, end, scale;
-    
+    var rect  = [ 'l', 't', 'r', 'b' ];
+
     $.each(this.elLk.areas,function () {
+
+      var speciesNumber, c, r, start, end, scale;
+
       c = { a: this };
       
       if (this.shape && this.shape.toLowerCase() !== 'rect') {
@@ -284,7 +285,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       if (this.klass.drag || this.klass.vdrag) {
         // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
-        r        = c.a.attrs.href.split('|');
+        r        = this.attrs.href.split('|');
         start    = parseInt(r[5], 10);
         end      = parseInt(r[6], 10);
         scale    = (end - start + 1) / (this.vertical ? (c.b - c.t) : (c.r - c.l)); // bps per pixel on image
@@ -293,8 +294,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         panel.draggables.push(c);
         
-        if (highlight === true) {
-          r = this.attrs.href.split('|');
+        if (panel.allowHighlight && !panel.vertical) {
           speciesNumber = parseInt(r[1], 10) - 1;
           
           if (panel.multi || !speciesNumber) {
