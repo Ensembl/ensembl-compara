@@ -66,7 +66,6 @@ GetOptions('help'        => \$help,
            'no_other_files'             => \$self->{'no_other_files'},          # and shut up the rest of it :)
            'no_print_tree'              => \$self->{'no_print_tree'},           # so all output goes to STDERR
            'scale=f'     => \$self->{'scale'},
-           'count'       => \$self->{'stats'},
           );
 
 if ($help) { usage(); }
@@ -109,10 +108,6 @@ if($self->{'tree_id'}) {
   my $tree = $treeDBA->fetch_by_dbID($self->{'tree_id'});
   $tree->preload();
   $self->{'root'} = $tree->root;
-}
-
-if($self->{'stats'}) {
-  warn ''.scalar(@{$self->{'root'}->get_all_leaves})." proteins\n";
 }
 
 if ($self->{'tree_id'}) {
