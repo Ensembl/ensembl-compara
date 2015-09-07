@@ -78,7 +78,7 @@ use warnings;
 use Data::Dumper;
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils ('url2dbconn_hash');
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -117,9 +117,8 @@ sub fetch_input {
     my $ignored_tables = $self->param_required('ignored_tables');
     my $curr_rel_name = $self->param('curr_rel_name');
 
-    my $connection_params = {map {$_ => url2dbconn_hash($self->param_required($_))} @$db_aliases};
+    my $dbconnections = { map {$_ => go_figure_dbc( $self->param_required($_) ) } @$db_aliases };
 
-    my $dbconnections = {map {$_ => Bio::EnsEMBL::DBSQL::DBConnection->new(%{$connection_params->{$_}})} keys %{$connection_params}};
     $self->param('dbconnections', $dbconnections);
 
     # Expand the exclusive tables that have a "%" in their name
