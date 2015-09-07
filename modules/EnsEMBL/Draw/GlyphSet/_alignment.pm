@@ -839,6 +839,9 @@ sub render_interaction {
       @features = @tmp;
     }
 
+    my $rainbow = $self->{'config'}->hub->species_defs->RAINBOW;
+    my $next = 0;
+
     foreach my $f (@features) {
         my $s1 = $f->start_1;
         my $e1 = $f->end_1;
@@ -857,6 +860,9 @@ sub render_interaction {
         else {
           $feature_colour = $greyscale[min($ngreyscale - 1, int(($f->score * $ngreyscale) / $greyscale_max))];
         }
+        $feature_colour = $rainbow->[$next];
+        $next++;
+        $next = 0 if $next > scalar(@$rainbow - 1);
 
         my $join_colour    = $feature_colour;
         my $label_colour   = $feature_colour;
@@ -903,6 +909,10 @@ sub render_interaction {
             $arc_end   = $e2;
           }
         }
+
+        ## Flip start and end if necessary
+        ($arc_start, $arc_end) = ($arc_end, $arc_start) if ($arc_start > $arc_end);
+
         ## Don't show arcs if both ends lie outside viewport
         next if ( ($arc_start < 0 && $arc_end <= 0)
                   || ($arc_start >= $length && $arc_end > $length)
