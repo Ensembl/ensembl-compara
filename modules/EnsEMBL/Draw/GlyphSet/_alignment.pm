@@ -839,32 +839,11 @@ sub render_interaction {
       @features = @tmp;
     }
 
-    my (%id, $y_pos);
-    foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_], @features) {
-      my ($s1, $e1, $s2, $e2, $f) = @$_;
-
-      my $fgroup_name = $self->feature_group($f);
-
-      push @{$id{$fgroup_name}}, [ $s1, $e1, $s2, $e2, $f,
-                                    int($s1 * $pix_per_bp), int($e1 * $pix_per_bp),
-                                    int($s2 * $pix_per_bp), int($e2 * $pix_per_bp),
-                                  ];
-    }
-
-    my %idl;
-    foreach my $k (keys %id) {
-      $idl{$k} = $strand * ( max(map { $_->[1] } @{$id{$k}}) -
-                             min(map { $_->[0] } @{$id{$k}}));
-    }
-
-    next unless keys %id;
-
-    foreach my $i (sort { $idl{$a} <=> $idl{$b} } keys %id) {
-      my @feat  = @{$id{$i}};
-      my $x     = -1e8;
-
-      foreach (@feat) {
-        my ($s1, $e1, $s2, $e2, $f) = @$_;
+    foreach my $f (@features) {
+        my $s1 = $f->start_1;
+        my $e1 = $f->end_1;
+        my $s2 = $f->start_2;
+        my $e2 = $f->end_2;
 
         my $feature_colour;
 
@@ -882,10 +861,11 @@ sub render_interaction {
         my $join_colour    = $feature_colour;
         my $label_colour   = $feature_colour;
 
-        my $start_1         = max($s1, 1);
-        my $start_2         = max($s2, 2);
-        my $end_1           = min($e1, $length - 1);
-        my $end_2           = min($e2, $length);
+        ## Drawn coordinates, constrained to viewport
+        my $start_1  = max($s1, 1);
+        my $start_2  = max($s2, 1);
+        my $end_1    = min($e1, $length);
+        my $end_2    = min($e2, $length);
 
         ## Unlike other tracks, we need to show partial features that are outside this slice
 
@@ -924,7 +904,10 @@ sub render_interaction {
           }
         }
         ## Don't show arcs if both ends lie outside viewport
-        next if ($arc_start < 0 && $arc_end > $length);
+        next if ( ($arc_start < 0 && $arc_end <= 0)
+                  || ($arc_start >= $length && $arc_end > $length)
+                  || ($arc_start < 0 && $arc_end > $length)
+                );
 
         ## Set some sensible limits
         my $max_width = $width * 2;
@@ -1060,7 +1043,6 @@ sub render_interaction {
           }));
         }
       }
-    }
   }
   ## Limit track height to that of biggest arc
   my $track_height = $max_arc / 2 + 10;
