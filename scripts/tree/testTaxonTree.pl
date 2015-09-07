@@ -407,53 +407,6 @@ sub fetch_protein_tree_with_gene {
 }
 
 
-sub create_taxon_tree {
-  my $self = shift;
-
-  my $count = 1;
-  my $root = Bio::EnsEMBL::Compara::NestedSet->new;
-  $root->node_id($count++);
-  $root->name('ROOT');
-  
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
-  foreach my $gdb (@$gdb_list) {
-    my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
-    my @levels = reverse($taxon->classification);
-    my $taxon_info = join(":", @levels);
-    warn("$taxon_info\n");
-
-    my $prev_level = '';
-    my $parent = undef;
-    foreach my $level_name (@levels) {
-      #print("  $level_name\n");
-      my $taxon_level = $root->find_node_by_name($level_name);
-      unless($taxon_level) {
-        if($prev_level) {
-          $parent = $root->find_node_by_name($prev_level);
-        } else { $parent=$root; }
-
-        my $new_node = Bio::EnsEMBL::Compara::NestedSet->new;
-        $new_node->node_id($count++);
-        $new_node->name($level_name);
-        
-        $parent->add_child($new_node);
-	      $new_node->distance_to_parent(0.01);
-      }
-      $prev_level = $level_name;
-    }
-    $root->find_node_by_name($taxon->species)->node_id($taxon->ncbi_taxid);
-  }
-  
-  $root->print_tree($self->{'scale'});
-
-#  $self->{'comparaDBA'}->get_TreeNodeAdaptor->store($root);
-#  printf("store as node_id=%d\n", $root->node_id);
-  
-#   my $fetchTree = $self->{'comparaDBA'}->get_TreeNodeAdaptor->fetch_tree_rooted_at_node_id($root->node_id);
-#   $fetchTree->print_tree($self->{'scale'});
-}
-
 sub parse_newick {
   my $self = shift;
   
@@ -529,83 +482,6 @@ sub dumpTreeMultipleAlignment
   print $alignIO $sa;
 
   close OUTSEQ;
-}
-
-
-sub dumpTreeAsNewick 
-{
-  my $self = shift;
-  my $tree = shift;
-  
-  warn("missing tree\n") unless($tree);
-
-  my $newick = $tree->newick_format('simple');
-
-  if($self->{'dump'}) {
-    my $aln_file = "proteintree_". $tree->node_id;
-    $aln_file =~ s/\/\//\//g;  # converts any // in path to /
-    $aln_file .= ".newick";
-    
-    $self->{'newick_file'} = $aln_file;
-    
-    open(OUTSEQ, ">$aln_file")
-      or $self->throw("Error opening $aln_file for write");
-  } else {
-    open OUTSEQ, ">&STDOUT";
-  }
-
-  print OUTSEQ "$newick\n\n";
-  close OUTSEQ;
-}
-
-
-sub dumpTreeAsNHX 
-{
-  my $self = shift;
-  my $tree = shift;
-  
-  warn("missing tree\n") unless($tree);
-
-  my $nhx;
-  if ($self->{'nhx_gene_id'}) {
-    $nhx = $tree->nhx_format("gene_id");
-  } else {
-    $nhx = $tree->nhx_format;
-  }
-
-  if($self->{'dump'}) {
-    my $aln_file = "proteintree_". $tree->node_id;
-    $aln_file =~ s/\/\//\//g;  # converts any // in path to /
-    $aln_file .= ".nhx";
-    
-    # we still call this newick_file as we dont need it for much else
-    $self->{'newick_file'} = $aln_file;
-    
-    open(OUTSEQ, ">$aln_file")
-      or $self->throw("Error opening $aln_file for write");
-  } else {
-    open OUTSEQ, ">&STDOUT";
-  }
-
-  print OUTSEQ "$nhx\n\n";
-  close OUTSEQ;
-}
-
-
-sub min_taxon_id {
-  my $node = shift;
-
-  return $node->taxon_id if($node->is_leaf);
-  return $node->{'_leaves_min_taxon_id'} 
-    if (defined($node->{'_leaves_min_taxon_id'}));
-
-  my $minID = undef;
-  foreach my $child (@{$node->children}) {
-    my $taxon_id = min_taxon_id($child);
-    $minID = $taxon_id unless(defined($minID) and $taxon_id>$minID);
-  }
-  $node->{'_leaves_min_taxon_id'} = $minID;
-  return $minID;
 }
 
 
