@@ -57,7 +57,7 @@ print $cafe_tree->pvalue_avg, "\n";
 for my $node (@{$cafe_tree->root->get_all_nodes}) {
   my $node_name = $node->taxon->name;
   my $node_n_members = $node->n_members;
-  my $node_pvalue = $node->pvalue || "birth";
+  my $node_pvalue = $node->has_parent ? ($node->pvalue || 'NA') : 'birth';
   my $dynamics = "[no change]";
   if ($node->is_contraction) {
     $dynamics = "[contraction]";
