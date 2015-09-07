@@ -94,10 +94,8 @@ sub dumpChunkToCWD
     $chunk->sequence($bioseq->seq);
   }
 
-  open(OUTSEQ, ">$fastafile");
-  my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
+  my $output_seq = Bio::SeqIO->new( -file => ">$fastafile", -format => 'Fasta');
   $output_seq->write_seq($bioseq);
-  close OUTSEQ;
 
   return $fastafile
 }
@@ -135,9 +133,7 @@ sub dumpChunkSetToWorkdir
   return $fastafile if(-e $fastafile);
   #print("fastafile = '$fastafile'\n");
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
-  my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
+  my $output_seq = Bio::SeqIO->new( -file => ">$fastafile", -format => 'Fasta');
 
   my $chunk_array = $chunkSet->get_all_DnaFragChunks;
   printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());
@@ -147,7 +143,6 @@ sub dumpChunkSetToWorkdir
     my $bioseq = $chunk->bioseq;
     $output_seq->write_seq($bioseq);
   }
-  close OUTSEQ;
 
   return $fastafile
 }
