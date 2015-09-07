@@ -315,7 +315,12 @@ my %SORTS = (
     enum_js => "iconic",
     decorate => "iconic",
   },
+  link => {
+    decorate => "link",
+  },
   iconic_primary => [qw(iconic primary)],
+  link_html => [qw(link html)],
+  link_html_nofilter => [qw(nofilter link html)],
 );
 
 my %sort_cache;

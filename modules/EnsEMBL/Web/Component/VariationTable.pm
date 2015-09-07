@@ -160,7 +160,7 @@ sub make_table {
   # Using explicit wdiths speeds things up and makes layout more predictable
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
-    { key => 'ID',       width => '12u',     sort => 'html_nofilter',                                                      help => 'Variant identifier'                     },
+    { key => 'ID',       width => '12u',     sort => 'link_html_nofilter',                                                      help => 'Variant identifier'                     },
     { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp',                       help => $glossary->{'Chr:bp'}                    },
     { key => 'Alleles',  width => '16u',      sort => 'string_nofilter',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
     { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
@@ -196,7 +196,7 @@ sub make_table {
   }
  
   if ($hub->type ne 'Transcript') {
-    push @$columns, { key => 'Transcript', sort => 'html', width => '11u', help => $glossary->{'Transcript'} };
+    push @$columns, { key => 'Transcript', sort => 'link_html', width => '11u', help => $glossary->{'Transcript'} };
   }
 
   return $self->new_new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside' });
@@ -531,7 +531,14 @@ sub variation_table {
       t      => undef,
     });
   }
-  
+
+  $self->register_key('decorate/link/Transcript/*',{
+    base_url => $base_trans_url,
+  });
+  $self->register_key('decorate/link/ID/*',{
+    base_url => $base_url,
+  });
+
   ROWS: foreach my $transcript (@$transcripts) {
     my %snps = %{$transcript->__data->{'transformed'}{'snps'} || {}};
    
@@ -572,7 +579,7 @@ sub variation_table {
 
           my $variation_name = $snp->variation_name;
           my $source = $snp->source_name;
-          my $url = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
+          my $url = ";v=$variation_name;vf=$raw_id;source=$source";
           $row->{'ID'} = qq(<a href="$url">$variation_name</a>);
           $row->{'Source'} = $source;
 
@@ -582,7 +589,7 @@ sub variation_table {
             my $var_class            = $snp->var_class;
             my $translation_start    = $transcript_variation->translation_start;
             my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('-', '-');
-            my $trans_url            = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
+            my $trans_url            = ";$url_transcript_prefix=$transcript_stable_id";
             my $vf_allele            = $tva->variation_feature_seq;
             my $allele_string        = $snp->allele_string;
               $allele_string        = $self->trim_large_allele_string($allele_string, 'allele_' . $tva->dbID, 20) if length $allele_string > 20; # Check allele string size (for display issues)
