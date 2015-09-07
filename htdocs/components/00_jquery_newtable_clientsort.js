@@ -55,7 +55,6 @@
   $.fn.newtable_sort_iconic = function(a,b,f,c,km,col) {
     if(!c[a] && c[a]!=='') { c[a] = iconic_string(a,km,col); }
     if(!c[b] && c[b]!=='') { c[b] = iconic_string(b,km,col); }
-    console.log(c[a],c[b],(c[a]-c[b])*f);
     return c[a].localeCompare(c[b])*f;
   }
 
