@@ -46,6 +46,12 @@ sub content {
   my @CCDS         = @{$transcript->get_all_DBLinks('CCDS')};
   my @Uniprot      = @{$transcript->get_all_DBLinks('Uniprot/SWISSPROT')};
   my ($tsl)        = @{$transcript->get_all_Attributes('TSL')};
+  my $incomplete;
+  foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF)){
+    if (my @attribs = @{$transcript->get_all_Attributes($attrib_type)}) {
+      $incomplete->{$attrib_type}=1;
+    }
+  }
   my $html         = "<strong>Exons:</strong> $exons <strong>Coding exons:</strong> $coding_exons <strong>Transcript length:</strong> $basepairs bps";
   $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
 
@@ -69,6 +75,12 @@ sub content {
     my $key = $tsl =~ s/^tsl([^\s]+).*$/TSL:$1/gr;
     $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag">%s</span>', $self->helptip($key, $self->get_glossary_entry($key).$self->get_glossary_entry('TSL'))));
   }
+
+  # add incomplete CDS info
+  if ($incomplete) {
+    $table->add_row('Incomplete CDS', sprintf('<span class="ts_flag">%s</span>',$self->get_CDS_text($incomplete)));
+  }
+
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
 
   ## add some Vega info

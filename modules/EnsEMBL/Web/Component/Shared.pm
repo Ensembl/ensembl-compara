@@ -185,9 +185,6 @@ sub transcript_table {
 
   #text for tooltips
   my $gencode_desc    = "The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).";
-  my $trans_5_3_desc  = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
-  my $trans_5_desc    = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
-  my $trans_3_desc    = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
   my $gene_html       = '';
   my $transc_table;
 
@@ -313,16 +310,8 @@ sub transcript_table {
         }
       }
       if ($trans_attribs->{$tsi}) {
-        if ($trans_attribs->{$tsi}{'CDS_start_NF'}) {
-          if ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-            push @flags, $self->helptip("CDS 5' and 3' incomplete", $trans_5_3_desc);
-          }
-          else {
-            push @flags, $self->helptip("CDS 5' incomplete", $trans_5_desc);
-          }
-        }
-        elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-         push @flags, $self->helptip("CDS 3' incomplete", $trans_3_desc);
+        if (my $incomplete = $self->get_CDS_text($trans_attribs->{$tsi})) {
+          push @flags, $incomplete;
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
@@ -413,6 +402,28 @@ sub transcript_table {
   $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
 
   return sprintf '<div class="summary_panel">%s%s</div>', $table->render, $transc_table ? $transc_table->render : '';
+}
+
+sub get_CDS_text {
+  my $self = shift;
+  my $attribs = shift;
+  my $trans_5_3_desc  = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
+  my $trans_5_desc    = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
+  my $trans_3_desc    = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
+  if ($attribs->{'CDS_start_NF'}) {
+    if ($attribs->{'CDS_end_NF'}) {
+      return $self->helptip("CDS 5' and 3' incomplete", $trans_5_3_desc);
+    }
+    else {
+      return $self->helptip("CDS 5' incomplete", $trans_5_desc);
+    }
+  }
+  elsif ($attribs->{'CDS_end_NF'}) {
+    return $self->helptip("CDS 3' incomplete", $trans_3_desc);
+  }
+  else {
+    return undef;
+  }
 }
 
 # return the same columns; implemented in mobile plugin to remove some columns
