@@ -66,7 +66,7 @@ sub gene_phenotypes {
       foreach my $pf (@{$pfa->fetch_all_by_Gene($obj)}) {
         my $phen   = $pf->phenotype->description;
         my $ext_id = $pf->external_id;
-        my $source = $pf->source;
+        my $source = $pf->source_name;
         my $strain = $pf->strain;
         my $strain_name = encode_entities($strain->name);
         my $strain_gender = $strain->gender;
@@ -163,14 +163,14 @@ sub gene_phenotypes {
     }
   }
   if (scalar @rows) {
-    $html = qq{<a id="gene_phenotype"></a><h2>Phenotype(s) and disease(s) associated with this gene $g_name</h2>};
+    $html = qq{<a id="gene_phenotype"></a><h2>Phenotype(s), disease(s) and trait(s) associated with this gene $g_name</h2>};
     my @columns = (
-      { key => 'phenotype', align => 'left', title => 'Phenotype' },
+      { key => 'phenotype', align => 'left', title => 'Phenotype, disease and trait' },
       { key => 'source',    align => 'left', title => 'Source'    }
     );
 
     if ($has_study == 1) {
-        push @columns, { key => 'study', align => 'left', title => 'Study' , align => 'left', sort => 'html' };
+      push @columns, { key => 'study', align => 'left', title => 'Study' , align => 'left', sort => 'html' };
     }
     if ($species eq 'Mouse') {
       push @columns, (
@@ -188,7 +188,7 @@ sub gene_phenotypes {
     }
   }
   else {
-    $html = "<p>No phenotype or disease is known to be directly associated with this gene $g_name.</p>";
+    $html = "<p>No phenotype, disease or trait is known to be directly associated with this gene $g_name.</p>";
   }
   return $html;
 }
