@@ -53,6 +53,7 @@ my $root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(
     -COMPARA_DBA    => $reg->get_DBAdaptor("Multi", "compara"),
     -SPECIES_SET    => undef,
     -NO_PREVIOUS    => 1,
+    -RETURN_NCBI_TREE       => 1,
     -EXTRATAXON_SEQUENCED   => \@taxon_ids,
 );
 

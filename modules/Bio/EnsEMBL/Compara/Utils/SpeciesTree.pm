@@ -66,8 +66,8 @@ use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 sub create_species_tree {
     my ($self, @args) = @_;
 
-    my ($compara_dba, $no_previous, $species_set, $extrataxon_sequenced, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes) =
-        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES)], @args);
+    my ($compara_dba, $no_previous, $species_set, $extrataxon_sequenced, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes, $return_ncbi_tree) =
+        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES RETURN_NCBI_TREE)], @args);
 
     my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
     $taxon_adaptor->_id_cache->clear_cache();
@@ -172,6 +172,8 @@ sub create_species_tree {
             $node->disavow_parent;
         }
     }
+
+    return $root if $return_ncbi_tree;
 
     my $stn_root = $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
 
