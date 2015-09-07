@@ -51,11 +51,16 @@ sub server_sort {
 sub server_nulls {
   my ($self,$data,$iconfig) = @_;
 
+  my %null_cache;
   my $cols = $iconfig->{'columns'};
   foreach my $j (0..$#$cols) {
     my $col = $cols->[$j];
     foreach my $i (0..$#$data) {
-      my $is_null = newtable_sort_isnull($col->{'sort'},$data->[$i][$j]);
+      my $is_null = $null_cache{$data->[$i][$j]};
+      unless(defined $is_null) {
+        $null_cache{$data->[$i][$j]} =
+          newtable_sort_isnull($col->{'sort'},$data->[$i][$j]);
+      }
       $data->[$i][$j] = [$data->[$i][$j],0+$is_null];
     }
   }
@@ -107,6 +112,8 @@ sub ajax_table_content {
   return $self->newtable_data_request($iconfig,$orient,$wire,$more,$incr_ok,$keymeta);
 }
 
+use Time::HiRes qw(time);
+
 sub newtable_data_request {
   my ($self,$iconfig,$orient,$wire,$more,$incr_ok,$keymeta) = @_;
 
@@ -117,6 +124,8 @@ sub newtable_data_request {
   my $phases = [{ name => undef }];
   $phases = $self->incremental_table if $self->can('incremental_table');
   my @out;
+
+  my $A = time();
 
   # What phase should we be?
   my @required;
@@ -136,6 +145,7 @@ sub newtable_data_request {
   if($wire->{'sort'} and @{$wire->{'sort'}}) {
     $all_data = 1;
   }
+  my $A2 = time();
 
   # Start row
   my $irows = $phases->[$more]{'rows'} || [0,-1];
@@ -155,6 +165,7 @@ sub newtable_data_request {
   my $func = "table_content";
   $func .= "_$type" if $type;
 
+  my $B = time();
   # Populate data
   my $rq = {
     config => $iconfig,
@@ -162,6 +173,7 @@ sub newtable_data_request {
     wire => $wire,
   };
   my $data = $self->$func($phases->[$more]{'name'},$rows,$iconfig->{'unique'},$rq);
+  my $C = time();
 
   # Enumerate, if necessary
   my %enums;
@@ -189,6 +201,7 @@ sub newtable_data_request {
     $data = \@new;
   }
 
+  my $D = time();
   # Map to column format
   my @data_out;
   foreach my $d (@$data) {
@@ -205,7 +218,12 @@ sub newtable_data_request {
     splice(@data_out,0,$irows->[0]);
     splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
   }
+  my $E = time();
   $self->server_nulls(\@data_out,$iconfig);
+
+  my $F = time();
+
+  warn sprintf("%f/%f/%f/%f/%f\n",$F-$E,$E-$D,$D-$C,$C-$B,$B-$A);
 
   # Send it
   return {

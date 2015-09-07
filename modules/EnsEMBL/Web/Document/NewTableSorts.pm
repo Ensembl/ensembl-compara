@@ -317,13 +317,15 @@ my %SORTS = (
   },
 );
 
+my %sort_cache;
 sub get_sort {
-  my ($names) = @_;
+  my ($name) = @_;
 
   my $out = {};
-  $names = [$names] unless ref($names) eq 'ARRAY';
-  add_sort($out,[@$names,'_default']);
-  return $out;
+  return $sort_cache{$name} if exists $sort_cache{$name};
+  $sort_cache{$name}||= {};
+  add_sort($sort_cache{$name},[$name,'_default']);
+  return $sort_cache{$name};
 }
 
 sub add_sort {
