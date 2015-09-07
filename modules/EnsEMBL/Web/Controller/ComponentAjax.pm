@@ -53,7 +53,9 @@ sub ajax_enstab {
   my $data;
   eval {
     $component->can('ajax_table_content') or die "$component has no ajax_table_content method";
-    print $self->jsonify($component->ajax_table_content());
+    my $out = $component->ajax_table_content();
+    $out = $self->jsonify($out) if ref($out);
+    print $out;
   };
   if($@) {
     warn $@;

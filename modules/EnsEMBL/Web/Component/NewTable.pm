@@ -24,6 +24,10 @@ use JSON qw(from_json);
 
 use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_isnull newtable_sort_cmp newtable_sort_range_value newtable_sort_range_finish newtable_sort_range_match newtable_sort_range_split);
 
+use Compress::Zlib;
+use Digest::MD5 qw(md5_hex);
+use SiteDefs;
+
 # XXX move all this stuff to somewhere it's more suited
 
 sub server_sort {
@@ -114,8 +118,63 @@ sub ajax_table_content {
 
 use Time::HiRes qw(time);
 
+sub get_cache {
+  my ($self,$key) = @_;
+
+  my $cache = $self->hub->cache;
+  return undef unless $cache;
+  my $main_key = "newtable_".md5_hex($key);
+  warn "GET: $main_key\n";
+  my $main_val = $cache->get($main_key);
+  return undef unless $main_val;
+  $main_val = JSON->new->decode($main_val);
+  my $out = "";
+  foreach my $k (@$main_val) {
+    my $frag = $cache->get($k);
+    return undef unless defined $frag;
+    $out .= $frag;
+  }
+  return $out;
+}
+
+sub set_cache {
+  my ($self,$key,$value) = @_;
+
+  my $cache = $self->hub->cache;
+  return undef unless $cache;
+  my $main_key = "newtable_".md5_hex($key);
+  my $i = 0;
+  my @ids;
+  while($value) {
+    warn "!i=$i (".(length $value).")\n";
+    push @ids,$main_key.'_'.($i++);
+    my $more = substr($value,0,256*1024,'');
+    next unless length $more;
+    $cache->set($ids[-1],$more);
+  }
+  warn "SET: $main_key\n";
+  $cache->set($main_key,JSON->new->encode(\@ids));
+}
+
 sub newtable_data_request {
   my ($self,$iconfig,$orient,$wire,$more,$incr_ok,$keymeta) = @_;
+
+  my $cache_key = {
+    iconfig => $iconfig,
+    orient => $orient,
+    wire => $wire,
+    more => $more,
+    incr_ok => $incr_ok,
+    keymeta => $keymeta,
+    url => $self->hub->url,
+    base => $SiteDefs::ENSEMBL_BASE_URL,
+    version => $SiteDefs::ENSEMBL_VERSION,
+  };
+  delete $cache_key->{'iconfig'}{'unique'};
+  $cache_key = JSON->new->canonical->encode($cache_key);
+  my $out = $self->get_cache($cache_key);
+  return $out if $out;
+  warn "Cache miss\n";
 
   my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
   my %cols_pos;
@@ -226,7 +285,7 @@ sub newtable_data_request {
   warn sprintf("%f/%f/%f/%f/%f\n",$F-$E,$E-$D,$D-$C,$C-$B,$B-$A);
 
   # Send it
-  return {
+  $out = {
     response => {
       data => \@data_out,
       columns => $columns,
@@ -238,6 +297,8 @@ sub newtable_data_request {
     },
     orient => $orient,
   };
+  $self->set_cache($cache_key,JSON->new->encode($out));
+  return $out;
 }
 
 1;
