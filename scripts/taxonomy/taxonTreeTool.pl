@@ -15,7 +15,8 @@
 
 
 use strict;
-use Switch;
+use warnings;
+
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::URLFactory;
 
@@ -45,29 +46,16 @@ GetOptions('help'           => \$help,
            'memory_leak'    => \$self->{'memory_leak'}
           );
 
-my $state;
-if($self->{'taxon_id'}) { $state = 1; }
-if($self->{'scientific_name'}) { $state = 2; }
 if($self->{'taxa_list'}) { 
   $self->{'taxa_list'} = [ split(",",$self->{'taxa_list'}) ];
-  $state = 3;
 }
-if ($self->{'build_leftright_index'}) {
-  $state = 4;
-}
-if ($self->{'taxa_compara'}) {
-  $state = 5;
-}
-if($self->{'taxon_id'} && $url_core) { $state = 6; };
-if($self->{'scientific_name'} && $url_core) { $state = 6; };
-if($self->{'memory_leak'}) { $state = 7; }
 
 if ($self->{'taxon_id'} && $self->{'scientific_name'}) {
   print "You can't use -taxon_id and -name together. Use one or the other.\n\n";
   exit 3;
 }
 
-if ($help or !$state) { usage(); }
+if ($help) { usage(); }
 
 $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara') if($url);
 unless(defined($self->{'comparaDBA'})) {
@@ -77,16 +65,23 @@ unless(defined($self->{'comparaDBA'})) {
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-switch($state) {
-  case 1 { fetch_by_ncbi_taxon_id($self); }
-  case 2 { fetch_by_scientific_name($self); }
-  case 3 { fetch_by_ncbi_taxa_list($self); }
-  case 4 { update_leftright_index($self); }
-  case 5 { fetch_compara_ncbi_taxa($self); }
-  case 6 { load_taxonomy_in_core($self); }
-  case 7 { test_memory_leak($self); }
+if ($self->{'taxon_id'}) {
+    fetch_by_ncbi_taxon_id($self);
+} elsif ($self->{'scientific_name'}) {
+    fetch_by_scientific_name($self);
+} elsif ($self->{'taxa_list'}) {
+    fetch_by_ncbi_taxa_list($self);
+} elsif ($self->{'build_leftright_index'}) {
+    update_leftright_index($self);
+} elsif ($self->{'taxa_compara'}) {
+    fetch_compara_ncbi_taxa($self);
+} elsif ($url_core and ($self->{'taxon_id'} or $self->{'scientific_name'})) {
+    load_taxonomy_in_core($self);
+} elsif ($self->{'memory_leak'}) {
+    test_memory_leak($self);
+} else {
+    usage();
 }
-
 
 #cleanup memory
 if($self->{'root'}) {
