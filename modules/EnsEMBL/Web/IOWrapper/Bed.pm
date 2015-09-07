@@ -48,7 +48,7 @@ sub create_hash {
   my $strand  = $self->parser->get_strand;
   my $score   = $self->parser->get_score;
 
-  if ($metadata->{'useScore'}) {
+  if ($metadata->{'useScore'} || $metadata->{'spectrum'}) {
     $colour = $self->convert_to_gradient($score, $metadata->{'color'});
   }
   elsif ($metadata->{'itemRgb'} eq 'On') {
