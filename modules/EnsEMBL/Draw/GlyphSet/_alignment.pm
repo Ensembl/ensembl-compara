@@ -887,7 +887,6 @@ sub render_interaction {
             })) unless $e1 < 0;
 
         ## Arc between features
-        my $width = $self->image_width;
 
         ## Default behaviour is to draw arc from middles of features
         ## Of course for the arcs we have to use the real coordinates, 
@@ -919,14 +918,21 @@ sub render_interaction {
                   || ($arc_start < 0 && $arc_end > $length)
                 );
 
+        ## Somewhat confusingly, the drawing code uses coordinates for horizontal dimensions
+        ## but pixels for vertical ones, which makes the following maths hideous!
+        ## Convert horizontal dimensions to pixels to make things sane:
+        $arc_start = ceil($arc_start * $pix_per_bp);
+        $arc_end   = ceil($arc_end * $pix_per_bp);
+
         ## Set some sensible limits
+        my $width     = $self->image_width;
         my $max_width = $width * 2;
         my $max_depth = 250; ## should be less than image width! 
 
         ## Start with a basic circular arc, then constrain to above limits
         my $start_point   = 0; ## righthand end of arc
         my $end_point     = 180; ### lefthand end of arc
-        my $major_axis    = abs(ceil(($arc_end - $arc_start) * $pix_per_bp));
+        my $major_axis    = $arc_end - $arc_start;
         my $minor_axis    = $major_axis;
         $major_axis       = $max_width if $major_axis > $max_width; 
         $minor_axis       = $max_depth if $minor_axis > $max_depth; 
@@ -934,7 +940,7 @@ sub render_interaction {
         my $b             = $minor_axis / 2;
         
         ## Measurements needed for drawing partial arcs
-        my $centre        = ceil($arc_start * $pix_per_bp + $a);
+        my $centre        = $arc_start + $a;
         my $left_height   = $minor_axis; ## height of curve at left of image
         my $right_height  = $minor_axis; ## height of curve at right of image
 
@@ -955,14 +961,14 @@ sub render_interaction {
 
         if ($s2 >= $length) {
           my ($x, $theta);
-          if ($centre > $length) {
-            $x = $centre - $length;
+          if ($centre > $width) {
+            $x = $centre - $width;
             $x = $a if $x > $a;
             ($right_height, $theta) = $self->truncate_ellipse($x, $a, $b);
             $start_point = 180 - $theta;
           }
           else {
-            $x = $length - $centre;
+            $x = $width - $centre;
             $x = $a if $x > $a;
             ($right_height, $theta) = $self->truncate_ellipse($x, $a, $b);
             $start_point = $theta;
@@ -986,6 +992,10 @@ sub render_interaction {
         else {
           $max_arc = $minor_axis if $minor_axis > $max_arc;
         }
+
+        ## Convert horizontal dimensions back to coordinates
+        my $arc_width = ($arc_end - $arc_start) / $pix_per_bp;
+        $arc_start /= $pix_per_bp;
 
         ## Finally, we have the coordinates to draw 
         $self->push($self->Arc({
