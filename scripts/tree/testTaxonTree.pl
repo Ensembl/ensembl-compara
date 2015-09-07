@@ -23,7 +23,6 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
-use Switch;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -42,7 +41,6 @@ $self->{'multifurcation_deletes_all_subnodes'} = undef;
 $self->{'njtree_output_filename'} = undef;
 $self->{'no_other_files'} = undef;
 $self->{'no_print_tree'}  = undef;
-my $state = 4;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
@@ -72,15 +70,7 @@ GetOptions('help'        => \$help,
            'count'       => \$self->{'stats'},
           );
 
-if($self->{'newick_file'}) { $state=6; }
-if($self->{'create_species_tree'}) { $state=9; }
-if($self->{'query_ncbi_name'}) { $state=10; }
-if($self->{'tree_id'}) { $state=1; }
-if($self->{'gene_stable_id'}) { $state=5; }
-if($self->{'new_root_id'}) { $state=7; }
-if($self->{'print_align'}) { $state=8; }
-
-if ($help or !$state) { usage(); }
+if ($help) { usage(); }
 
 if ($url) {
   eval { require Bio::EnsEMBL::Hive::URLFactory ;};
@@ -123,23 +113,26 @@ if($self->{'tree_id'}) {
 }
 
 if($self->{'stats'}) {
-  $state=0;
   warn ''.scalar(@{$self->{'root'}->get_all_leaves})." proteins\n";
 }
 
-
-switch($state) {
-  case 1 { fetch_protein_tree($self, $self->{'tree_id'}); }
-  case 2 { create_taxon_tree($self); }
-  case 4 { fetch_compara_ncbi_taxa($self); }
-  case 5 { fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'}); }
-  case 6 { parse_newick($self); }
-  case 7 { reroot($self); }
-  case 8 { dumpTreeMultipleAlignment($self); }
-  case 9 { create_species_tree($self); }
-  case 10 { query_ncbi_name($self); }
+if ($self->{'tree_id'}) {
+    fetch_protein_tree($self, $self->{'tree_id'});
+} elsif ($self->{'gene_stable_id'}) {
+    fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'});
+} elsif ($self->{'newick_file'}) {
+    parse_newick($self);
+} elsif ($self->{'new_root_id'}) {
+    reroot($self);
+} elsif ($self->{'print_align'}) {
+    dumpTreeMultipleAlignment($self);
+} elsif ($self->{'create_species_tree'}) {
+    create_species_tree($self);
+} elsif ($self->{'query_ncbi_name'}) {
+    query_ncbi_name($self);
+} else {
+    fetch_compara_ncbi_taxa($self);
 }
-
 
 #cleanup memory
 if($self->{'root'}) {

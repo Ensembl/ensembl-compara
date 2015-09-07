@@ -15,7 +15,8 @@
 
 
 use strict;
-use Switch;
+use warnings;
+
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
@@ -29,18 +30,19 @@ use Bio::EnsEMBL::Hive::URLFactory;
 # the globals into a nice '$self' package
 my $self = bless {};
 
-my $conf_file;
-my $help;
+GetOptions(
+    'help'          => \$self->{'help'},
+    'url=s'         => \$self->{'url'},
+    'chunkset=s'    => \$self->{'chunkSetID'},
+);
 
-$self->{'dnafrag_chunk_ids'} = [];
+$self->{'dnafrag_chunk_ids'} = [@ARGV];
 
-parse_cmd_line($self);
-          
-if ($help) { usage(); }
+if ($self->{'help'}) { usage(); }
 unless ($self->{'url'}) { usage(); }
 
 
-my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{'url'}) if($self->{'url'});
+my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{'url'});
 print("$dba\n");
 $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$dba->dbc);
 
@@ -71,32 +73,6 @@ sub usage {
   print "dumpDnaFragChunks.pl v1.1\n";
   
   exit(1);  
-}
-
-sub parse_cmd_line {
-  my $self = shift;
-
-  my $state=0;
-  
-  foreach my $token (@ARGV) {
-    print("state=$state  token:'$token'\n");
-
-    $state = 1 if($token =~ /^-/);
-    switch($state) {
-      case 0 #non parameter
-        { push @{$self->{'dnafrag_chunk_ids'}}, $token; }
-      case 1 {
-        switch($token) {
-          case '-url' {$state=10;}
-          case '-chunkset' {$state=11;}
-          else  {$state=0;}
-        };}
-      case 10 { $self->{'url'} = $token; $state=0; }
-      case 11 { $self->{'chunkSetID'} = $token; $state=0; }
-    }
-    print("  state=$state\n");
-    
-  }
 }
 
 
