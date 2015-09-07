@@ -68,9 +68,11 @@ sub convert_to_drawing_parameters {
        $source_name =~ s/_/ /g;
     my $study_xref  = ($pf->study) ? $pf->study->external_reference : undef;
     my $external_id = ($pf->external_id) ? $pf->external_id : undef;
+    my $attribs     = $pf->get_all_attributes;
 
     $phenotypes_sources{$object_id}{$source_name}{'study_xref'} = $study_xref;
     $phenotypes_sources{$object_id}{$source_name}{'external_id'} = $external_id;
+    $phenotypes_sources{$object_id}{$source_name}{'xref_id'} = $attribs->{'xref_id'} if ($attribs->{'xref_id'});
     $phenotypes_studies{$object_id}{$study_xref} = 1 if ($study_xref);
     
     # only get the p value log 10 for the pointer matching phenotype id and variation id
@@ -163,7 +165,7 @@ sub convert_to_drawing_parameters {
     # make source link out
     my $sources;
     foreach my $source(keys %{$phenotypes_sources{$name} || {}}) {
-      $sources .= ($sources ? ', ' : '').$self->_pf_source_link($name,$source,$phenotypes_sources{$name}{$source}{'external_id'},$phenotypes_sources{$name}{$source}{'study_xref'});
+      $sources .= ($sources ? ', ' : '').$self->_pf_source_link($name,$source,$phenotypes_sources{$name}{$source}{'external_id'},$phenotypes_sources{$name}{$source}{'xref_id'});
     }
     
     push @results, {
@@ -198,18 +200,21 @@ sub convert_to_drawing_parameters {
 sub _pf_external_reference_link {
   my ($self, $xrefs) = @_;
   
-  my $html;
-  
+  my $html; 
+ 
   foreach my $xref (sort keys(%$xrefs)) {
     my $link;
-    if($xref =~ /pubmed/) {
-      my $xref_id = $xref;
-         $xref_id =~ s/pubmed\///;
-      $link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
-      $link =~ s/###ID###/$xref_id/;
-      $xref =~ s/\//:/g;
-      $xref =~ s/pubmed/PMID/;
-      $html .= qq{<a rel="external" href="$link">$xref</a>; };
+    if($xref =~ /(pubmed|PMID)/) {
+      foreach my $pmid (split(',',$xref)) {
+        my $id = $pmid;
+           $id =~ s/pubmed\///;
+           $id =~ s/PMID://;
+        $link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
+        $link =~ s/###ID###/$id/;
+        $pmid =~ s/\//:/g;
+        $pmid =~ s/pubmed/PMID/;
+        $html .= qq{<a rel="external" href="$link">$pmid</a>; };
+      }
     }
     elsif($xref =~ /^MIM\:/) {
       foreach my $mim (split /\,\s*/, $xref) {
@@ -233,7 +238,7 @@ sub _pf_external_reference_link {
 sub _pf_source_link {
   my ($self, $obj_name, $source, $ext_id, $ext_ref_id) = @_;
   
-  if($source eq 'Animal QTLdb') {
+  if ($source eq 'Animal QTLdb') {
     $source =~ s/ /\_/g;
     my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $self->hub->species)));
     
@@ -241,6 +246,13 @@ sub _pf_source_link {
       $source,
       $source,
       { ID => $obj_name, SP => $species}
+    );
+  }
+  if ($source eq 'GOA') {
+    return $self->hub->get_ExtURL_link(
+      $source,
+      'QUICK_GO_IMP',
+      { ID => $ext_id, PR_ID => $ext_ref_id}
     );
   }
   
