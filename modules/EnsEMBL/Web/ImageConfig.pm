@@ -1003,12 +1003,14 @@ sub _add_trackhub_tracks {
       longLabel   => $track->{'longLabel'},
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
+      colorByStrand => exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef,
+      spectrum    => exists $track->{'spectrum'} ? $track->{'spectrum'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
       squish      => $squish,
       signal_range => $track->{'signal_range'},
       %options
     };
-    
+
     # Graph range - Track Hub default is 0-127
 
     if (exists $track->{'viewLimits'}) {
@@ -1213,15 +1215,17 @@ sub _add_bigbed_track {
   unless ($renderers) {
     ($strand, $renderers) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
   }
-  
+ 
   my $options = {
-    external     => 'external',
-    sub_type     => 'url',
-    colourset    => 'feature',
-    strand       => $strand,
-    style        => $args{'source'}{'style'},
-    longLabel    => $args{'source'}{'longLabel'},
-    addhiddenbgd => 1,
+    external      => 'external',
+    sub_type      => 'url',
+    colourset     => 'feature',
+    colorByStrand => $args{'source'}{'colorByStrand'},
+    spectrum      => $args{'source'}{'spectrum'},
+    strand        => $strand,
+    style         => $args{'source'}{'style'},
+    longLabel     => $args{'source'}{'longLabel'},
+    addhiddenbgd  => 1,
     max_label_rows => 2,
   };
   ## Override default renderer (mainly used by trackhubs)
