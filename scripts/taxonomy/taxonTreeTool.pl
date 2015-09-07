@@ -19,6 +19,7 @@ use warnings;
 
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::URLFactory;
+use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 $| = 1;
 
@@ -39,7 +40,6 @@ GetOptions('help'           => \$help,
            'taxa_compara'   => \$self->{'taxa_compara'},
            'name=s'         => \$self->{'scientific_name'},
            'scale=f'        => \$self->{'scale'},
-           'mini'           => \$self->{'minimize_tree'},
            'index'          => \$self->{'build_leftright_index'},
            'genetree_dist'  => \$self->{'genetree_dist'},
            'url_core=s'     => \$url_core,
@@ -163,25 +163,14 @@ sub fetch_by_scientific_name {
 sub fetch_by_ncbi_taxa_list {
   my $self = shift;
   
-  my @taxa_list = @{$self->{'taxa_list'}};
+  my $root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(
+    -COMPARA_DBA    => $self->{'comparaDBA'},
+    -SPECIES_SET    => undef,
+    -NO_PREVIOUS    => 1,
+    -RETURN_NCBI_TREE       => 1,
+    -EXTRATAXON_SEQUENCED   => $self->{'taxa_list'},
+  );
 
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $first_taxon_id = shift @taxa_list;
-  my $node = $taxonDBA->fetch_node_by_taxon_id($first_taxon_id);
-  $node->no_autoload_children;
-  my $root = $node->root;
-
-  foreach my $taxon_id (@taxa_list) {
-    my $node = $taxonDBA->fetch_node_by_taxon_id($taxon_id);
-    unless (defined $node) {
-      print STDERR "$taxon_id not in the database\n";
-      next;
-    }
-    $node->no_autoload_children;
-    $root->merge_node_via_shared_ancestor($node);
-  }
-
-  $root = $root->minimize_tree if($self->{'minimize_tree'});
   $root->print_tree($self->{'scale'});
   $root->flatten_tree->print_tree($self->{'scale'});
   $self->{'root'} = $root;
@@ -212,24 +201,11 @@ sub fetch_compara_ncbi_taxa {
   
   printf("fetch_compara_ncbi_taxa\n");
   
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $root;
+  my $root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(
+    -COMPARA_DBA    => $self->{'comparaDBA'},
+    -RETURN_NCBI_TREE       => 1,
+  );
 
-  my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
-  foreach my $gdb (@$gdb_list) {
-    next unless $gdb->taxon_id;
-    my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
-    if (not $taxon) {
-        warn sprintf('Cannot fetch taxon_id=%d (%s)', $gdb->taxon_id, $gdb->name);
-        next;
-    }
-    $taxon->no_autoload_children;
-
-    $root = $taxon->root unless($root);
-    $root->merge_node_via_shared_ancestor($taxon);
-  }
-
-  $root = $root->minimize_tree if($self->{'minimize_tree'});
   if ($self->{'genetree_dist'}) {
     # Used to get the average branch lengths from the trees
     my $sql_dist_1 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN gene_tree_node_attr gtna USING (node_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtna.node_type = "speciation" AND gtnap.node_type = "speciation" AND gtnap.taxon_id = ? AND gtna.taxon_id = ?';
@@ -246,7 +222,6 @@ sub fetch_compara_ncbi_taxa {
   print $root->newick_format('ncbi_taxon'), "\n";
 
   $self->{'root'} = $root;
-#  drawPStree($self);
 }
 
 sub update_leftright_index {

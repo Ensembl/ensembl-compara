@@ -23,6 +23,7 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -66,7 +67,6 @@ GetOptions('help'        => \$help,
            'no_other_files'             => \$self->{'no_other_files'},          # and shut up the rest of it :)
            'no_print_tree'              => \$self->{'no_print_tree'},           # so all output goes to STDERR
            'scale=f'     => \$self->{'scale'},
-           'mini'        => \$self->{'minimize_tree'},
            'count'       => \$self->{'stats'},
           );
 
@@ -172,18 +172,11 @@ sub fetch_compara_ncbi_taxa {
   
   warn("fetch_compara_ncbi_taxa\n");
   
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $root = $self->{'root'};
+  my $root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(
+    -COMPARA_DBA    => $self->{'comparaDBA'},
+    -RETURN_NCBI_TREE       => 1,
+  );
 
-  my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
-  foreach my $gdb (@$gdb_list) {
-    my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
-    $taxon->release_children;
-
-    $root = $taxon->root unless($root);
-    $root->merge_node_via_shared_ancestor($taxon);
-  }
-  $root = $root->minimize_tree if($self->{'minimize_tree'});
   $root->print_tree($self->{'scale'});
 
   $self->{'root'} = $root;
@@ -210,84 +203,13 @@ sub create_species_tree {
     @multifurcation_deletes_all_subnodes = split ('_',$temp);
   }
 
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $root = $self->{'root'};
-
-  my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
-  unless (defined($self->{no_previous})) {
-    warn "Loading taxa from gdbs in $url...\n";
-    foreach my $gdb (@$gdb_list) {
-      my $taxon_name = $gdb->name;
-      next if ($taxon_name =~ /ncestral/);
-      my $taxon_id = $gdb->taxon_id;
-      my $taxon = $taxonDBA->fetch_node_by_taxon_id($taxon_id);
-      warn "  $taxon_name [$taxon_id]\n";
-      $taxon->release_children;
-
-      $root = $taxon->root unless($root);
-      $root->merge_node_via_shared_ancestor($taxon);
-    }
-  }
-  warn "Loading taxa from extrataxon_sequenced...\n" if (0 != scalar(@extrataxon_sequenced));
-  foreach my $extra_taxon (@extrataxon_sequenced) {
-    $DB::single=1;1;
-    my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
-    next unless defined($taxon);
-    my $taxon_name = $taxon->name;
-    my $taxon_id = $taxon->taxon_id;
-    warn "  $taxon_name [$taxon_id]\n";
-    $taxon->release_children;
-
-    $root = $taxon->root unless($root);
-    $root->merge_node_via_shared_ancestor($taxon);
-  }
-
-  #$root = $root->minimize_tree if($self->{'minimize_tree'});
-  $root = $root->minimize_tree if (defined($root));
-
-#   warn "# Before multifurcation_deletes_node\n\n";
-#   $root->print_tree($self->{'scale'});
-
-  # Deleting nodes to further multifurcate
-  my @subnodes = $root->get_all_subnodes;
-  warn "Multifurcating nodes...\n" if (0 != scalar(@multifurcation_deletes_node));
-  foreach my $extra_taxon (@multifurcation_deletes_node) {
-    my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
-    my $taxon_name = $taxon->name;
-    my $taxon_id = $taxon->taxon_id;
-    warn "* $taxon_name [$taxon_id]\n";
-    foreach my $node (@subnodes) {
-      next unless ($node->node_id == $extra_taxon);
-      my $node_children = $node->children;
-      foreach my $child (@$node_children) {
-        $node->parent->add_child($child);
-      }
-      $node->disavow_parent;
-    }
-  }
-
-  # Deleting subnodes down to a given node
-  @subnodes = $root->get_all_subnodes;
-  warn "Multifurcating subnodes...\n" if (0 != scalar(@multifurcation_deletes_all_subnodes));
-  foreach my $extra_taxon (@multifurcation_deletes_all_subnodes) {
-    my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
-    my $taxon_name = $taxon->name;
-    my $taxon_id = $taxon->taxon_id;
-    warn "* $taxon_name [$taxon_id]\n";
-    $DB::single=1;1;
-    my $node_in_root = $root->find_node_by_node_id($taxon_id);
-    foreach my $node ($node_in_root->get_all_subnodes) {
-      next if ($node->is_leaf);
-      my $node_children = $node->children;
-      foreach my $child (@$node_children) {
-        $node->parent->add_child($child);
-      }
-      $node->disavow_parent;
-    }
-  }
-
-
-#   warn "#\n After multifurcation_deletes_node\n\n";
+  my $root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(
+    -COMPARA_DBA    => $self->{'comparaDBA'},
+    -RETURN_NCBI_TREE       => 1,
+    -EXTRATAXON_SEQUENCED   => \@extrataxon_sequenced,
+    -MULTIFURCATION_DELETES_NODE    => \@multifurcation_deletes_node,
+    -MULTIFURCATION_DELETES_ALL_SUBNODES    => @multifurcation_deletes_all_subnodes,
+  );
 
 unless($self->{'no_print_tree'}) {
   $root->print_tree($self->{'scale'});
