@@ -15,6 +15,8 @@
 
     -output     -> output file  
 
+    example run : perl get_genomic_rearrangements.pl -species1 mus_caroli -species2 mus_pahari -kb 10 -output trial_b -reg_conf /nfs/users/nfs_w/wa2/mouse_reg_livemirror.conf
+
 
 =cut
 
@@ -61,31 +63,21 @@ my %gblocks_hash; #will contain the rat chr number as keys mapping to an hash ta
 
 my $whole_gblocks_hash_ref ={}; # so that i will be able to use the string form of the genomic aln block to get back the objects
 
-my $ref_id=0;
-my $non_ref_id=1;
-#print $ref," hahahaha \n\n";
 my $ref_gdbID = $GDB_adaptor->fetch_by_name_assembly($ref)->dbID();
+my $non_ref_gdbID = $GDB_adaptor->fetch_by_name_assembly($non_ref)->dbID();
+#print "ref gbid ", $ref_gdbID , "   non ref gb id ", $non_ref_gdbID , "\n\n";
 #separate gblocks in hashes composed of blocks on the same chromosome
 my $count = 0;
 while ( my $gblock = shift @gblocks ) { 
-    my $ref_gns;
-	my @galigns = @{ $gblock->get_all_GenomicAligns() };
-    my $dnafrag_id; #ref species galigns dnafrag id
-    my $non_ref_gns;
-    for my $gns (@galigns) {
-        if ($gns->genome_db()->dbID() eq $ref_gdbID) {
-	       $dnafrag_id = $gns->dnafrag()->name();
-           $ref_gns = $gns;
-        }else{
-	       #separate gblocks in hashes composed of blocks on the same chromosome
-           $non_ref_gns = $gns;
-        }
-    }
-
+    my $ref_gns= $gblock->get_all_GenomicAligns([$ref_gdbID])->[0];
+#    print $ref_gns->dnafrag->genome_db->name, " ref hahahahahaha\n\n\n";
+    my $dnafrag_id = $ref_gns->dnafrag()->name(); #ref species galigns dnafrag id
+    my $non_ref_gns = $gblock->get_all_GenomicAligns([$non_ref_gdbID])->[0];
+#    print $non_ref_gns->dnafrag->genome_db->name, " non ref hahahahahaha\n\n\n";
     $gblocks_hash{$dnafrag_id}{$non_ref_gns->dnafrag()->name()}{$gblock} = $ref_gns->dnafrag_start();
     $whole_gblocks_hash_ref->{$gblock}=$gblock;
     $count ++;
-#	if ($count == 100){
+#	if ($count == 400){
 #		print Dumper(\%gblocks_hash);
 #		last;
 #	}
@@ -118,20 +110,12 @@ while (my $key = shift (@keys)) {
         my @gbs = keys %$gbs_hash_ref;
         if (scalar @gbs ==1){
 
-#       print "chr contains only one block \n\n";
+#            print "chr contains only one block \n\n";
 #        $merged_hash_ref->{$key}{$nonref_chr_hash_keys} = {};
-            my $galigns = $whole_gblocks_hash_ref->{$gbs[0]}->get_all_GenomicAligns();
-            my $length;
-            my $non_ref_gns1;
-            my $ref_gns1;
-            for my $gns (@$galigns) {
-                if ($gns->genome_db()->dbID() eq $ref_gdbID) {
-                    $length = $gns->length();
-                    $ref_gns1 = $gns;
-                }else{
-                    $non_ref_gns1 = $gns;
-                }
-            }
+            my $non_ref_gns1 = $whole_gblocks_hash_ref->{$gbs[0]}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
+            my $ref_gns1 = $whole_gblocks_hash_ref->{$gbs[0]}->get_all_GenomicAligns([$ref_gdbID])->[0];
+            my $length = $ref_gns1->length();
+
             if ($length > $kilobase) {
                 my $start = $ref_gns1->dnafrag_start();
                 my $end = $ref_gns1->dnafrag_end();
@@ -157,21 +141,14 @@ while (my $key = shift (@keys)) {
         while (my $q_gb = shift @chr_gblocks_sorted) {
 
             if( exists $remove_ref->{$q_gb}) {
-#               print " 111111 yAlreadyyyyyy in remove so skipping ", $gblocks_sorted[$idx], "\n";
+#                print " 111111 yAlreadyyyyyy in remove so skipping ", $q_gb, "\n";
                 next;
             }
-#            print "FIRST while looooooooop", scalar @chr_gblocks_sorted," \n\n";
-            my $qgalign_ref = $whole_gblocks_hash_ref->{$q_gb}->get_all_GenomicAligns();
-
-            my $non_ref_gns0;
-            my $ref_gns0;
-            for my $gns (@$qgalign_ref) {
-                if ($gns->genome_db()->dbID() eq $ref_gdbID) {
-                    $ref_gns0 = $gns;
-                }else{
-                    $non_ref_gns0 = $gns;
-                }
-            }
+#            print "FIRST while looooooooop  ", scalar @chr_gblocks_sorted," \n\n";
+#            print $q_gb, "  ????????????????\n\n";
+            my $non_ref_gns0 = $whole_gblocks_hash_ref->{$q_gb}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
+            my $ref_gns0 = $whole_gblocks_hash_ref->{$q_gb}->get_all_GenomicAligns([$ref_gdbID])->[0];
+        
             my $query_ref_galign_end = $ref_gns0->dnafrag_end();
             my $query_nonref_galign_end = $non_ref_gns0->dnafrag_end();
             my @merged;
@@ -181,25 +158,16 @@ while (my $key = shift (@keys)) {
             foreach my $t_gb (@chr_gblocks_sorted) {
 
                 if( exists $remove_ref->{$t_gb}) {
-#                   print " 111111 yAlreadyyyyyy in remove so skipping ", $gblocks_sorted[$idx], "\n";
+#                    print " 22222222 yAlreadyyyyyy in remove so skipping ", $t_gb, "\n";
                     next;
                 }
 #                print "FOREACH  looooooooop ", scalar @chr_gblocks_sorted, " \n\n";
 
-                my $tgalign_ref = $whole_gblocks_hash_ref->{$t_gb}->get_all_GenomicAligns(); 
-
-                my $non_ref_gns2;
-                my $ref_gns2;
-                for my $gns (@$tgalign_ref) {
-                    if ($gns->genome_db()->dbID() eq $ref_gdbID) {
-                        $ref_gns2 = $gns;
-                    }else{
-                        $non_ref_gns2 = $gns;
-                    }
-                }
+                my $non_ref_gns2 = $whole_gblocks_hash_ref->{$t_gb}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
+                my $ref_gns2 = $whole_gblocks_hash_ref->{$t_gb}->get_all_GenomicAligns([$ref_gdbID])->[0];
                 my $target_ref_galign_start =  $ref_gns2->dnafrag_start();
                 my $target_nonref_galign_start =  $non_ref_gns2->dnafrag_start();
-
+#                print $target_ref_galign_start, " target_ref_galign_start and ",  $target_nonref_galign_start, "  target_nonref_galign_start \n";
                 my $ref_is_between = (sort {$a <=> $b} $query_ref_galign_end - $kilobase, $query_ref_galign_end + $kilobase, $target_ref_galign_start )[1] == $target_ref_galign_start;
                 if ($ref_is_between) {
                     my $nonref_is_between = (sort {$a <=> $b} $query_nonref_galign_end - $kilobase, $query_nonref_galign_end + $kilobase, $target_nonref_galign_start )[1] == $target_nonref_galign_start;
@@ -211,25 +179,18 @@ while (my $key = shift (@keys)) {
                         $remove_ref->{$t_gb} = 1;
 
                     }
-                 }
+                }
             }
 
             my $length=0;
             #find the total length of the merged blocks
+#            print "this is the merged \n";
+#            print Dumper(\@merged);
 #            print "NOW going to get the total length of merged  ", scalar @merged, "\n\n\n";
             my $galigns;
             foreach my $gbk (@merged ) {
-
-                $galigns = $whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns();
-                my $non_ref_gns3;
-                my $ref_gns3;
-                for my $gns (@$galigns) {
-                    if ($gns->genome_db()->dbID() eq $ref_gdbID) {
-                        $ref_gns3 = $gns;
-                    }else{
-                        $non_ref_gns3 = $gns;
-                    }
-                }
+                my $non_ref_gns3 = $whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
+                my $ref_gns3 = $whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns([$ref_gdbID])->[0];
 #               print $ref_gns3->length() , " JJJJJJj\n";
                 $length += $ref_gns3->length();
 
@@ -246,17 +207,8 @@ while (my $key = shift (@keys)) {
 
 #               print $gbk , "kkkkkkkkkk\n";
                     $block_ids .= "\t" . $whole_gblocks_hash_ref->{$gbk}->dbID();
-                    my $galigns = $whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns();
-
-                    my $non_ref_gns4;
-                    my $ref_gns4;
-                    for my $gns (@$galigns) {
-                        if ($gns->genome_db()->dbID() eq $ref_gdbID) {
-                            $ref_gns4 = $gns;
-                        }else{
-                            $non_ref_gns4 = $gns;
-                        }
-                    }
+                    my $non_ref_gns4 = $whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
+                    my $ref_gns4 = $whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns([$ref_gdbID])->[0];
 
                     $chr = $ref_gns4->dnafrag()->name();
                     if ($start > $ref_gns4->dnafrag_start()){
@@ -267,7 +219,7 @@ while (my $key = shift (@keys)) {
                         $end = $ref_gns4->dnafrag_end();
                     }
                 }
-
+#                print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
                 print OUT1 $chr, "\t\t",$length, "\t\t", $start ,"\t\t", $end, $block_ids,"\n\n";
                 $no_of_col_blocks ++;
 #                unshift @merged, $length;
@@ -278,7 +230,7 @@ while (my $key = shift (@keys)) {
             }
         }
     }
-#    print Dumper($result_inner_hash_ref);
+ #   print Dumper($result_inner_hash_ref);
 #    POSIX::_exit(0);
 }
 
