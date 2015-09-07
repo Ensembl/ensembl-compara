@@ -31,7 +31,7 @@ my $self = bless {};
 
 $self->{'scale'} = 10;
 
-my ($help, $url, $url_core);
+my ($help, $url);
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -42,7 +42,6 @@ GetOptions('help'           => \$help,
            'scale=f'        => \$self->{'scale'},
            'index'          => \$self->{'build_leftright_index'},
            'genetree_dist'  => \$self->{'genetree_dist'},
-           'url_core=s'     => \$url_core,
           );
 
 if($self->{'taxa_list'}) { 
@@ -74,8 +73,6 @@ if ($self->{'taxon_id'}) {
     update_leftright_index($self);
 } elsif ($self->{'taxa_compara'}) {
     fetch_compara_ncbi_taxa($self);
-} elsif ($url_core and ($self->{'taxon_id'} or $self->{'scientific_name'})) {
-    load_taxonomy_in_core($self);
 } elsif ($self->{'genetree_dist'}) {
     get_distances_from_genetrees($self);
 } else {
@@ -108,11 +105,7 @@ sub usage {
   print "  -taxa_compara          : print tree of the taxa in compara\n";
   print "  -name <string>         : print tree by scientific name e.g. \"Homo sapiens\"\n";
   print "  -scale <int>           : scale factor for printing tree (def: 10)\n";
-  print "  -mini                  : minimize tree\n";
   print "  -genetree_dist         : get the species-tree used to reconcile the protein-trees and compute the median branch-lengths\n";
-  print "  -url_core              : core database url used to load the taxonomy info in the meta table\n";
-  print "                           to be used with -taxon_id or -name\n";
-  print "                           mysql://login:password\@ecs2:3364/a_core_db\n";
   print " -index                  : build left and right node index to speed up subtree queries.\n";
   print "                           to be used only by the person who sets up a taxonomy database.\n";
   print "taxonTreeTool.pl v1.1\n";
@@ -257,43 +250,4 @@ sub build_store_leftright_indexing {
   return $counter;
 }
 
-sub load_taxonomy_in_core {
-  my $self = shift;
-  $self->{'coreDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url_core . ';type=core') if($url_core);
-  unless(defined($self->{'coreDBA'})) {
-    print("no core url\n\n");
-    usage();
-  }
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $node;
-  if (defined $self->{'taxon_id'}) {
-    $node = $taxonDBA->fetch_node_by_taxon_id($self->{'taxon_id'});
-  } else {
-    $node = $taxonDBA->fetch_node_by_name($self->{'scientific_name'});
-  }
-  unless ($node->rank eq 'species') {
-    print "ERROR: taxon_id=",$self->{'taxon_id'},", '",$node->name,"' is rank '",$node->rank,"'.\n";
-    print "It is not a rank 'species'. So it can't be loaded.\n\n";
-    exit 2;
-  }
-  $node->no_autoload_children;
-  my $root = $node->root;
-
-  my $mc = $self->{'coreDBA'}->get_MetaContainer;
-  $mc->delete_key('species.classification');
-  $mc->delete_key('species.common_name');
-  $mc->delete_key('species.taxonomy_id');
-  print "Loading species.taxonomy_id = ",$node->node_id,"\n";
-  $mc->store_key_value('species.taxonomy_id',$node->node_id);
-  if (defined $node->common_name) {
-    $mc->store_key_value('species.common_name',$node->common_name);
-    print "Loading species.common_name = ",$node->common_name,"\n";
-  }
-  my @classification = split(",",$node->classification(","));
-  foreach my $level (@classification) {
-    print "Loading species.classification = ",$level,"\n";
-    $mc->store_key_value('species.classification',$level);
-  }
-  $self->{'root'} = $root;
-}
 
