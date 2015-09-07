@@ -20,8 +20,6 @@
  
     # 2. edit $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/web_name_patches.sql to patch web names if needed.
 
-            For "ensembl alias name", it is used at the top of the web page of each species,
-            when it says e.g. "e!EnsemblHuman" or "e!EnsemblMouse".
             This should be agreed with the web team or just take the one they have chosen from the pre site.
 		WARNING: This, again, must be updated with the retirement of some keys
 
