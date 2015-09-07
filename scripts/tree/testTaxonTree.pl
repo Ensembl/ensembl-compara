@@ -55,7 +55,6 @@ GetOptions('help'        => \$help,
            'reroot=i'    => \$self->{'new_root_id'},
            'align'       => \$self->{'print_align'},
            'cdna'        => \$self->{'cdna'},
-           'query_ncbi_name=s'     => \$self->{'query_ncbi_name'},
            'tag=s'     => \$self->{'tag'},
            'no_previous'             => \$self->{'no_previous'},
 
@@ -128,8 +127,6 @@ if ($self->{'tree_id'}) {
     dumpTreeMultipleAlignment($self);
 } elsif ($self->{'create_species_tree'}) {
     create_species_tree($self);
-} elsif ($self->{'query_ncbi_name'}) {
-    query_ncbi_name($self);
 } else {
     fetch_compara_ncbi_taxa($self);
 }
@@ -297,21 +294,6 @@ sub fetch_protein_tree {
   my $newick = $tree->newick_format('simple');
   warn("$newick\n");
 
-}
-
-sub query_ncbi_name {
-  my $self = shift;
-  my $name = $self->{query_ncbi_name};
-  $name =~ s/\_/\ /g;
-
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $taxon = $taxonDBA->fetch_node_by_name($name);
-  warn "taxon_name -- ".$taxon->name."\n";
-  warn "taxon_id -- ".$taxon->taxon_id."\n\n";
-  foreach my $tag ($taxon->get_all_tags) {
-    my $value = $taxon->get_tagvalue($tag);
-    warn "$tag -- $value\n";
-  }
 }
 
 sub fetch_protein_tree_with_gene {

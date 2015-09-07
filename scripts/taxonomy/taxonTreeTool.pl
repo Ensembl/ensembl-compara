@@ -35,10 +35,8 @@ my ($help, $url);
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
-           'taxon_id=i'     => \$self->{'taxon_id'},
            'taxa_list=s'    => \$self->{'taxa_list'},
            'taxa_compara'   => \$self->{'taxa_compara'},
-           'name=s'         => \$self->{'scientific_name'},
            'scale=f'        => \$self->{'scale'},
            'index'          => \$self->{'build_leftright_index'},
            'genetree_dist'  => \$self->{'genetree_dist'},
@@ -46,11 +44,6 @@ GetOptions('help'           => \$help,
 
 if($self->{'taxa_list'}) { 
   $self->{'taxa_list'} = [ split(",",$self->{'taxa_list'}) ];
-}
-
-if ($self->{'taxon_id'} && $self->{'scientific_name'}) {
-  print "You can't use -taxon_id and -name together. Use one or the other.\n\n";
-  exit 3;
 }
 
 if ($help) { usage(); }
@@ -63,11 +56,7 @@ unless(defined($self->{'comparaDBA'})) {
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-if ($self->{'taxon_id'}) {
-    fetch_by_ncbi_taxon_id($self);
-} elsif ($self->{'scientific_name'}) {
-    fetch_by_scientific_name($self);
-} elsif ($self->{'taxa_list'}) {
+if ($self->{'taxa_list'}) {
     fetch_by_ncbi_taxa_list($self);
 } elsif ($self->{'build_leftright_index'}) {
     update_leftright_index($self);
@@ -100,10 +89,8 @@ sub usage {
   print "testTaxonTree.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -url <string>          : connect to compara at url e.g. mysql://ensro\@ecs2:3365/ncbi_taxonomy\n";
-  print "  -taxon_id <int>        : print tree by taxon_id\n";
   print "  -taxa_list <string>    : print tree by taxa list e.g. \"9606,10090\"\n";
   print "  -taxa_compara          : print tree of the taxa in compara\n";
-  print "  -name <string>         : print tree by scientific name e.g. \"Homo sapiens\"\n";
   print "  -scale <int>           : scale factor for printing tree (def: 10)\n";
   print "  -genetree_dist         : get the species-tree used to reconcile the protein-trees and compute the median branch-lengths\n";
   print " -index                  : build left and right node index to speed up subtree queries.\n";
@@ -113,45 +100,6 @@ sub usage {
   exit(1);
 }
 
-sub fetch_by_ncbi_taxon_id {
-  my $self = shift;
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $node = $taxonDBA->fetch_node_by_taxon_id($self->{'taxon_id'});
-  $node->no_autoload_children;
-  my $root = $node->root;
-  
-  $root->print_tree($self->{'scale'});
-  print "classification: ",$node->classification,"\n";
-  if ($node->rank eq 'species') {
-    print "scientific name: ",$node->binomial,"\n";
-    if (defined $node->common_name) {
-      print "common name: ",$node->common_name,"\n";
-    } else {
-      print "no common name\n";
-    }
-  }
-  $self->{'root'} = $root;
-}
-
-sub fetch_by_scientific_name {
-  my $self = shift;
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  my $node = $taxonDBA->fetch_node_by_name($self->{'scientific_name'});
-  $node->no_autoload_children;
-  my $root = $node->root;
-
-  $root->print_tree($self->{'scale'});
-  print "classification: ",$node->classification,"\n";
-  if ($node->rank eq 'species') {
-    print "scientific name: ",$node->binomial,"\n";
-    if (defined $node->common_name) {
-      print "common name: ",$node->common_name,"\n";
-    } else {
-      print "no common name\n";
-    }
-  }
-  $self->{'root'} = $root;
-}
 
 sub fetch_by_ncbi_taxa_list {
   my $self = shift;
