@@ -76,6 +76,8 @@ if ($self->{'taxon_id'}) {
     fetch_compara_ncbi_taxa($self);
 } elsif ($url_core and ($self->{'taxon_id'} or $self->{'scientific_name'})) {
     load_taxonomy_in_core($self);
+} elsif ($self->{'genetree_dist'}) {
+    get_distances_from_genetrees($self);
 } else {
     usage();
 }
@@ -107,6 +109,7 @@ sub usage {
   print "  -name <string>         : print tree by scientific name e.g. \"Homo sapiens\"\n";
   print "  -scale <int>           : scale factor for printing tree (def: 10)\n";
   print "  -mini                  : minimize tree\n";
+  print "  -genetree_dist         : get the species-tree used to reconcile the protein-trees and compute the median branch-lengths\n";
   print "  -url_core              : core database url used to load the taxonomy info in the meta table\n";
   print "                           to be used with -taxon_id or -name\n";
   print "                           mysql://login:password\@ecs2:3364/a_core_db\n";
@@ -176,21 +179,31 @@ sub fetch_by_ncbi_taxa_list {
 
 sub get_distances_from_genetrees {
     my $self = shift;
-    my $node = shift;
-    foreach my $child (@{$node->children}) {
-        my $sth = $self->{$child->get_child_count ? 'sth_dist_1' : 'sth_dist_2'};
-        $sth->execute($node->taxon_id, $child->taxon_id);
+
+    my $protein_tree_mlss = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('PROTEIN_TREES')->[0];
+    my $root = $self->{'comparaDBA'}->get_SpeciesTreeAdaptor()->fetch_by_method_link_species_set_id_label($protein_tree_mlss->dbID, 'default')->root;
+
+    # Used to get the average branch lengths from the trees
+    my $sql_dist_1 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN gene_tree_node_attr gtna USING (node_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtna.node_type = "speciation" AND gtnap.node_type = "speciation" AND gtnap.species_tree_node_id = ? AND gtna.species_tree_node_id = ?';
+    my $sql_dist_2 = 'SELECT gtn.distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN seq_member USING (seq_member_id) JOIN species_tree_node stn USING (genome_db_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = gtn.parent_id WHERE clusterset_id = "default" AND gtnap.node_type = "speciation" AND gtnap.species_tree_node_id = ? AND stn.node_id = ? AND stn.root_id = ?';
+    my $sth_dist_1 = $self->{'comparaDBA'}->dbc->prepare($sql_dist_1);
+    my $sth_dist_2 = $self->{'comparaDBA'}->dbc->prepare($sql_dist_2);
+
+    foreach my $node ($root->get_all_subnodes) {
+        my $sth = $node->is_leaf ? $sth_dist_2 : $sth_dist_1;
+        $sth->execute($node->parent->node_id, $node->node_id, $node->is_leaf ? ($root->node_id) : ());
         my @allval = sort {$a <=> $b} map {$_->[0]} @{$sth->fetchall_arrayref};
         $sth->finish;
         my $n = scalar(@allval);
         if ($n) {
             my $i = int($n/2);
             my $val = $allval[$i];
-            print $node->taxon_id, "/", $node->name, " ", $child->taxon_id, "/", $child->name, " $val ($n/$i)\n";
-            $child->distance_to_parent($val);
+            print $node->parent->node_id, "/", $node->parent->name, " ", $node->node_id, "/", $node->name, " $val ($n/$i)\n";
+            $node->distance_to_parent($val);
         }
-        $self->get_distances_from_genetrees($child);
     }
+    $root->print_tree($self->{'scale'});
+    $self->{'root'} = $root;
 }
 
 sub fetch_compara_ncbi_taxa {
@@ -203,14 +216,6 @@ sub fetch_compara_ncbi_taxa {
     -RETURN_NCBI_TREE       => 1,
   );
 
-  if ($self->{'genetree_dist'}) {
-    # Used to get the average branch lengths from the trees
-    my $sql_dist_1 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN gene_tree_node_attr gtna USING (node_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtna.node_type = "speciation" AND gtnap.node_type = "speciation" AND gtnap.taxon_id = ? AND gtna.taxon_id = ?';
-    my $sql_dist_2 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN seq_member USING (seq_member_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtnap.node_type = "speciation" AND gtnap.taxon_id = ? AND seq_member.taxon_id = ?';
-    $self->{'sth_dist_1'} = $self->{'comparaDBA'}->dbc->prepare($sql_dist_1);
-    $self->{'sth_dist_2'} = $self->{'comparaDBA'}->dbc->prepare($sql_dist_2);
-    $self->get_distances_from_genetrees($root);
-  }
   $root->print_tree($self->{'scale'});
   
   my $newick = $root->newick_format;
