@@ -43,7 +43,6 @@ GetOptions('help'           => \$help,
            'index'          => \$self->{'build_leftright_index'},
            'genetree_dist'  => \$self->{'genetree_dist'},
            'url_core=s'     => \$url_core,
-           'memory_leak'    => \$self->{'memory_leak'}
           );
 
 if($self->{'taxa_list'}) { 
@@ -77,8 +76,6 @@ if ($self->{'taxon_id'}) {
     fetch_compara_ncbi_taxa($self);
 } elsif ($url_core and ($self->{'taxon_id'} or $self->{'scientific_name'})) {
     load_taxonomy_in_core($self);
-} elsif ($self->{'memory_leak'}) {
-    test_memory_leak($self);
 } else {
     usage();
 }
@@ -295,13 +292,3 @@ sub load_taxonomy_in_core {
   $self->{'root'} = $root;
 }
 
-sub test_memory_leak {
-  my $self = shift;
-  
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-  while(1) {
-    my $node = $taxonDBA->fetch_node_by_taxon_id(9606);
-    my $root = $node->root;
-    $root->release_tree;
-  }
-}
