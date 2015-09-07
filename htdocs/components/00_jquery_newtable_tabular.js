@@ -258,6 +258,7 @@
       $subtable.empty().append($newtable);
     }
     $('tbody',$subtable)[0].innerHTML = html;
+    $('._ht',$subtable).helptip();
     $subtable.css('height','');
     $subtable.data('known-height',$subtable.height());
     guess_subtable_sizes($table);

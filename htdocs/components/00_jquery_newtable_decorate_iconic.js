@@ -30,8 +30,23 @@
             }
             new_html += '<img src="'+ann.icon+'" '+more+'/>';
           } else {
+            if(ann.coltab) {
+              new_html += '<div class="coltab">'+
+                '<span class="coltab-tab" style="background-color: '+
+                ann.coltab+';">&nbsp;</span><div class="coltab-text">';
+            }
+            if(ann.helptip) {
+              new_html += '<span class="ht _ht">'+
+                '<span class="_ht_tip hidden">'+ann.helptip+'</span>';
+            }
             new_html += values[i];
             if(!values[i]) { new_html += '-'; }
+            if(ann.helptip) {
+              new_html += '</span>';
+            }
+            if(ann.coltab) {
+              new_html += '</div></div>';
+            }
           }
           new_html += '<div class="hidden export">'+values[i]+'</div>';
         }

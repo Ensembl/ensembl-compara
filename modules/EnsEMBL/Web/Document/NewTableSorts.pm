@@ -315,6 +315,7 @@ my %SORTS = (
     enum_js => "iconic",
     decorate => "iconic",
   },
+  iconic_primary => [qw(iconic primary)],
 );
 
 my %sort_cache;

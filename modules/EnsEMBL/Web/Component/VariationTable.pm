@@ -35,13 +35,47 @@ sub incremental_table {
   {
     name => "taster",
     rows => [0,50],
-  },{
-    name => "outline",
-    cols =>  [ qw(ID Source) ],
+#  },{
+#    name => "outline",
+#    cols =>  [ qw(ID Source) ],
   },{
     name => "full",
   }];
 }
+
+sub new_consequence_type {
+  my $self        = shift;
+  my $tva         = shift;
+  my $most_severe = shift;
+  my $var_styles  = $self->hub->species_defs->colour('variation');
+  my $colourmap   = $self->hub->colourmap;
+
+  my $overlap_consequences = ($most_severe) ? [$tva->most_severe_OverlapConsequence] || [] : $tva->get_all_OverlapConsequences || [];
+
+  # Sort by rank, with only one copy per consequence type
+  my @consequences = sort {$a->rank <=> $b->rank} (values %{{map {$_->label => $_} @{$overlap_consequences}}});
+
+  my @type;
+  foreach my $c (@consequences) {
+    push @type,$c->label;
+
+      my $hex = $var_styles->{lc $c->SO_term}
+        ? $colourmap->hex_by_name(
+            $var_styles->{lc $c->SO_term}->{'default'}
+          )
+        : $colourmap->hex_by_name($var_styles->{'default'}->{'default'});
+      $self->coltab($c->label, $hex, $c->description);
+    $self->register_key("decorate/iconic/snptype/$type[-1]",{
+      export => $c->label,
+      order => "^".sprintf("%8.8d",$c->rank),
+      helptip => $c->description,
+      coltab => $hex,
+    });
+    warn sprintf("%s -> %s\n",$c->label,$c->rank);
+  }
+  return join(';',@type);
+}
+
 
 sub table_content {
   my ($self,$phase,$rows,$unique,$rq) = @_;
@@ -133,7 +167,7 @@ sub make_table {
     { key => 'Source',   width => '8u', sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
     { key => 'status',   width => '9u', sort => 'iconic', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
     { key => 'clinsig',  width => '6u', sort => 'iconic', label => "Clin\f sig",                    help => 'Clinical significance'                  },
-    { key => 'snptype',  width => '12u', range => [values %{$self->all_terms}], sort => 'html_split_primary',   label => 'Type',                          help => 'Consequence type'                       },
+    { key => 'snptype',  width => '12u', range => [values %{$self->all_terms}], sort => 'iconic_primary',   label => 'Type',                          help => 'Consequence type'                       },
     { key => 'aachange', width => '6u',      sort => 'string_dashnull_nofilter', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
     { key => 'aacoord',  width => '6u', sort => 'integer',         label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
   ];
@@ -555,7 +589,7 @@ sub variation_table {
               $allele_string        =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\/.+\//; # highlight variant allele in allele string
             
             # Sort out consequence type string
-            my $type = $self->render_consequence_type($tva);
+            my $type = $self->new_consequence_type($tva);
             
             my $sift = $self->render_sift_polyphen($tva->sift_prediction,     $tva->sift_score);
             my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
