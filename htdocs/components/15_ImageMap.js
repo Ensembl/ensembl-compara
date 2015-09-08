@@ -323,7 +323,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     this.elLk.drag.on({
-      mousedown: function (e) {
+      mousedown: function (e, e2) {
+
+        e = e2 || e;
 
         if (!e.which || e.which === 1) { // Only draw the drag box for left clicks.
           panel.dragStart(e);
@@ -331,7 +333,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         return false;
       },
-      mousemove: function(e) {
+      mousemove: function(e, e2) {
+
+        e = e2 || e;
 
         if (panel.dragging !== false) {
           return;
@@ -363,7 +367,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           }
         }
       },
-      mouseleave: function(e) {
+      mouseleave: function(e, e2) {
+
+        e = e2 || e;
+
         if (e.relatedTarget) {
 
           if (panel.elLk.navHelptip) {
@@ -373,8 +380,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
       },
       click: function (e, e2) {
+
+        e = e2 || e;
+
         if (panel.clicking) {
-          panel.makeZMenu(e2 || e, panel.getMapCoords(e2 || e));
+          panel.makeZMenu(e, panel.getMapCoords(e));
         } else {
           panel.clicking = true;
         }
@@ -415,11 +425,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       } else if (this.a.klass.hover) {
 
         panel.elLk.hoverLayers = panel.elLk.hoverLayers.add(
-          $('<div class="hover_layer">').appendTo(panel.elLk.container).data({area: this}).on('click', function(e) {
-            panel.clicking = true;
-            panel.elLk.drag.triggerHandler('click', e);
-          }
-        ));
+          $('<div class="hover_layer">').appendTo(panel.elLk.container).data({area: this}).on('mousedown mousemove click', function (e) {
+            panel.elLk.drag.triggerHandler(e.type, e);
+          })
+        );
       } else if(this.a.klass.hoverzmenu) { // hover simulates click
         var layer = $('<div class="label_layer">');
         layer.appendTo(panel.elLk.container).data({area: this});
@@ -851,9 +860,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.dragRegion = this.getArea(this.dragCoords.map, true);
     
     if (this.dragRegion) {
-      this.mousemove = function (e2) {
+      this.mousemove = function (e1, e2) {
         panel.dragging = e; // store mousedown event
-        panel.drag(e2);
+        panel.drag(e2 || e1);
         return false;
       };
       
@@ -877,6 +886,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       if (this.panning) {
         this.selectArea(false);
         this.removeZMenus();
+        this.elLk.hoverLayers.hide();
       }
     }
   },
@@ -896,6 +906,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     if (this.dragging !== false) {
+
+      this.elLk.hoverLayers.show();
+
       if (this.elLk.boundariesPanning) {
 
         this.dragging = false;
