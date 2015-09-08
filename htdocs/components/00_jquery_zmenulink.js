@@ -25,8 +25,6 @@
 
       var link = $($(this).siblings('._zmenu_link')[0] || this);
 
-      console.log(link[0])
-
       Ensembl.EventManager.trigger('makeZMenu', link.attr('href').replace(/\W/g, '_'), { event: e, area: { link: link }}); // unique zmenu for every href
     });
   }
