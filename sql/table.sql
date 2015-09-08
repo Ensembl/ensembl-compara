@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS meta (
 @colour   #3CB371
 
 @example    This examples shows how to get the lineage for Homo sapiens:
-    @sql    SELECT * FROM ncbi_taxa_node WHERE left_index <= 339687 AND right_index >= 339690 ORDER BY left_index;
+    @sql    SELECT n2.taxon_id, n2.parent_id, na.name, n2.rank, n2.left_index, n2.right_index FROM ncbi_taxa_node n1 JOIN (ncbi_taxa_node n2 LEFT JOIN ncbi_taxa_name na ON n2.taxon_id = na.taxon_id AND na.name_class = "scientific name")  ON n2.left_index <= n1.left_index AND n2.right_index >= n1.right_index WHERE n1.taxon_id = 9606 ORDER BY left_index;
 
 @column taxon_id                The NCBI Taxonomy ID
 @column parent_id               The parent taxonomy ID for this node (refers to ncbi_taxa_node.taxon_id)
@@ -172,10 +172,11 @@ CREATE TABLE genome_db (
 @colour   #3CB371
 
 @example     This query shows the first 10 species_sets having human
-   @sql      SELECT species_set_id, GROUP_CONCAT(name) AS species FROM species_set JOIN genome_db USING(genome_db_id) GROUP BY species_set_id HAVING species LIKE '%homo_sapiens%' ORDER BY species_set_id LIMIT 10;
+    @sql      SELECT ssh.species_set_id, ssh.name, ssh.size, gdb.genome_db_id, gdb.name, gdb.assembly FROM species_set_header ssh JOIN species_set ss USING(species_set_id) JOIN genome_db gdb USING(genome_db_id) WHERE ssh.name="primates";
   
 @column species_set_id    Internal (non-unique) ID for the table
-@column genome_db_id      External reference to genome_db_id in the @link genome_db table
+@column name              Name of the species set (e.g. "H.sap" for one species, "H.sap-M.mus" for two species and "amniotes" for larger sets)
+@column size              Number of species in the set
 @column first_release     The first release this set genome was present in
 @column last_release      The last release this set was present in, or NULL if it is still current
 
@@ -228,9 +229,6 @@ CREATE TABLE species_set (
 @table species_set_tag
 @desc  This table contains descriptive tags for the species_set_ids in the species_set table. It is used to store options on clades and group of species. It has been initially developed for the gene tree view.
 @colour   #3CB371
-
-@example     This query retrieves all the species_sets tagged as 'primates' and links to the @link genome_db table to retrieve the species names 
-     @sql     SELECT species_set_id, name, tag, value FROM species_set JOIN species_set_tag USING(species_set_id) JOIN genome_db USING(genome_db_id) WHERE value = 'primates';
 
 @column species_set_id     External reference to species_set_id in the @link species_set table
 @column tag                Tag name
@@ -451,11 +449,8 @@ CREATE TABLE `species_tree_node_tag` (
 @desc  Contains all the syntenic relationships found and the relative orientation of both syntenic regions.
 @colour #FF8500
 
-@example    This query shows that the syntenic region 34965 corresponds to a synteny relationship between the Human and Opossum genomes
-   @sql                                  SELECT * FROM synteny_region WHERE synteny_region_id = 41285;
-
-@example    Linking with the @link method_link_species_set table we get the names:
-   @sql                                  SELECT synteny_region_id, name FROM synteny_region join method_link_species_set USING(method_link_species_set_id) WHERE synteny_region_id = 41285;
+@example    This query shows the 4 first syntenic regions between the Human and Opossum genomes by linking with the @link method_link_species_set table 
+    @sql    SELECT synteny_region.* FROM synteny_region JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) WHERE species_set_header.name = "H.sap-M.dom" LIMIT 4;
 
 @column synteny_region_id             Internal unique ID
 @column method_link_species_set_id    External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -480,7 +475,7 @@ CREATE TABLE synteny_region (
 @desc  This table defines the genomic sequences used in the comparative genomics analyisis. It is used by the @link genomic_align_block table to define aligned sequences. It is also used by the @link dnafrag_region table to define syntenic regions.<br />NOTE: Index <name> has genome_db_id in the first place because unless fetching all dnafrags or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause. Unique key <name> is used to ensure that Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name will always fetch a single row. This can be used in the EnsEMBL Compara DB because we store top-level dnafrags only.
 @colour #FF8500
 
-@example    This query shows the chromosome 14 of the Human genome (genome_db.genome_db_id = 90 refers to Human genome in this example) which is 107349540 nucleotides long.
+@example    This query shows the chromosome 14 of the Human genome (genome_db.genome_db_id = 150 refers to Human genome in this example) which is 107349540 nucleotides long.
     @sql                   SELECT dnafrag.* FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE dnafrag.name = "14" AND genome_db.name = "homo_sapiens";
 
 @column dnafrag_id         Internal unique ID
@@ -514,10 +509,11 @@ CREATE TABLE dnafrag (
 @desc  This table contains the genomic regions corresponding to every synteny relationship found. There are two genomic regions for every synteny relationship.
 @colour #FF8500
 
-@example     Example of dnafrag_region query
-    @sql                        SELECT * FROM dnafrag_region WHERE synteny_region_id = 41285;
-@example     When joining to @link dnafrag and @link genome_db tables we get more comprehensive information:
-    @sql                        SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE synteny_region_id = 41285;
+@example    Return two top dnafrag regions
+    @sql    SELECT * FROM dnafrag_region ORDER BY synteny_region_id LIMIT 2;
+
+@example    Same two dnafrag regions, but annotated
+    @sql    SELECT genome_db.name AS species_name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) ORDER BY synteny_region_id LIMIT 2;
 
 @column synteny_region_id   External reference to synteny_region_id in the @link synteny_region table
 @column dnafrag_id          External reference to dnafrag_id in the @link dnafrag table
@@ -549,8 +545,8 @@ CREATE TABLE dnafrag_region (
 @desc  This table is the key table for the genomic alignments. The software used to align the genomic blocks is refered as an external key to the @link method_link table. Nevertheless, actual aligned sequences are defined in the @link genomic_align table.<br />Tree alignments (EPO alignments) are best accessed through the @link genomic_align_tree table although the alignments are also indexed in this table. This allows the user to also access the tree alignments as normal multiple alignments.<br />NOTE: All queries in the API uses the primary key as rows are always fetched using the genomic_align_block_id. The key 'method_link_species_set_id' is used by MART when fetching all the genomic_align_blocks corresponding to a given method_link_species_set_id
 @colour #FF8500
 
-@example    The following query refers to a primates EPO alignment:
-    @sql                                 SELECT * FROM genomic_align_block WHERE genomic_align_block_id = 2250002943513;
+@example    The following query refers to the LastZ alignment between medaka and zebrafish:
+    @sql    SELECT genomic_align_block.* FROM genomic_align_block JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) WHERE method_link_id = 16 AND species_set_header.name = "O.lat-D.rer" ORDER BY genomic_align_block_id LIMIT 4;
 
 @column genomic_align_block_id       Internal unique ID
 @column method_link_species_set_id   External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -586,10 +582,10 @@ CREATE TABLE genomic_align_block (
 @colour #FF8500
 
 @example      The following query corresponds to the root of a tree, because parent_id = 0 and root_id = node_id
-      @sql                        SELECT * FROM genomic_align_tree WHERE node_id = root_id LIMIT 1;
+    @sql      SELECT * FROM genomic_align_tree WHERE node_id = root_id LIMIT 1;
 
-@example      In order to fetch all the nodes of this tree, one can use the left_index and right_index values:
-      @sql                        SELECT * FROM genomic_align_tree WHERE left_index >= 100000019 and left_index <= 100000096;
+@example      Grab the first two trees that have exactly 5 nodes
+    @sql      SELECT * FROM genomic_align_tree WHERE root_id IN (SELECT root_id FROM genomic_align_tree GROUP BY root_id HAVING COUNT(*) = 5) LIMIT 10;
 
 @column node_id             Internal unique ID
 @column parent_id           Link to the parent node
@@ -658,10 +654,12 @@ The aligned sequence will be:<br />
       </tbody>
     </table>
 
-@example      The following query corresponds to the three sequences included in the alignment described above (see @link genomic_align_block table description).
-      @sql                                   SELECT * FROM genomic_align WHERE genomic_align_block_id = 2250002943513;
-@example      Here is a better way to get this by joining the @link dnafrag and @link genome_db tables:
-      @sql                                   SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand str, cigar_line FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE genomic_align_block_id = 2250002943513;
+@example    The following query corresponds to the 4x2 sequences included in the alignment described above (see @link genomic_align_block table description).
+    @sql    SELECT genomic_align.* FROM genomic_align_block JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) JOIN genomic_align USING (genomic_align_block_id) WHERE method_link_id = 16 AND species_set_header.name = "O.lat-D.rer" ORDER BY genomic_align_block_id LIMIT 8;
+
+@example    Here is a better way to get this by joining the @link dnafrag and @link genome_db tables:
+    @sql    SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand str, cigar_line FROM genomic_align_block JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) JOIN genomic_align USING (genomic_align_block_id) JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE method_link_id = 16 AND species_set_header.name = "O.lat-D.rer" ORDER BY genomic_align_block_id LIMIT 8;
+
 @colour #FF8500
 
 @column genomic_align_id               Unique internal ID
@@ -737,12 +735,13 @@ CREATE TABLE conservation_score (
 @desc  This table contains constrained elements calculated from the whole-genome multiple alignments stored in the @link genomic_align_block table
 @colour #FF8500
 
-@example   Example entry for a constrained_element:
-     @sql                                SELECT * FROM constrained_element LIMIT 1;
-@example   There are 2 other elements in the same constrained_element:
-     @sql                                SELECT constrained_element_id, genome_db.name, dnafrag.name FROM constrained_element JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE constrained_element_id = 6650000000001;
+@example    Example entry for a constrained_element:
+    @sql    SELECT * FROM constrained_element ORDER BY constrained_element_id LIMIT 1;
 
-@column constrained_element_id      Internal ID
+@example    There are 2 other elements in the same constrained_element:
+    @sql    SELECT * FROM constrained_element JOIN (SELECT MIN(constrained_element_id) AS constrained_element_id FROM constrained_element) t USING (constrained_element_id);
+
+@column constrained_element_id      Internal (but unique) ID
 @column dnafrag_id                  External reference to dnafrag_id in the @link dnafrag table
 @column dnafrag_start               Start of the constrained element
 @column dnafrag_end                 End of the constrained element
@@ -809,7 +808,7 @@ CREATE TABLE sequence (
 @desc  This table links sequences to the EnsEMBL core DB or to external DBs.
 @colour   #1E90FF
 
-@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 90) gene ENSG00000173213
+@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) gene ENSG00000173213
       @sql                          SELECT * FROM gene_member WHERE stable_id = "ENSG00000173213";
 
 @column gene_member_id             Internal unique ID
@@ -876,7 +875,7 @@ CREATE TABLE gene_member (
 @desc  This table links sequences to the EnsEMBL core DB or to external DBs.
 @colour   #1E90FF
 
-@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 90) peptide ENSP00000309431
+@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) peptide ENSP00000309431
       @sql                          SELECT * FROM seq_member WHERE stable_id = "ENSP00000309431";
 
 @column seq_member_id             Internal unique ID
@@ -1021,7 +1020,7 @@ CREATE TABLE other_member_sequence (
 
 /**
 @table peptide_align_feature
-@desc: This table stores the raw local alignment results of peptide to peptide alignments returned by a BLAST run. The hits are actually stored in species-specific tables rather than in a single table. For example, human has the genome_db_id 90, and all the hits that have a human gene as a query are stored in peptide_align_feature_90
+@desc: This table stores the raw local alignment results of peptide to peptide alignments returned by a BLAST run. The hits are actually stored in species-specific tables rather than in a single table. For example, human has the genome_db_id 150, and all the hits that have a human gene as a query are stored in peptide_align_feature_150
 @colour   #1E90FF
 
 @example    Example of peptide_align_feature entry:
@@ -1128,8 +1127,8 @@ CREATE TABLE family (
 @desc  This table contains the proteins corresponding to protein family relationship found. There are several family_member entries for each family entry
 @colour   #1E90FF
 
-@example      The following query refers to the four members of the protein family 54177. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
-    @sql                   SELECT * FROM family_member WHERE family_id = 29739;
+@example    The following query refers to the members of the protein family ENSFM00500000300962. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
+    @sql    SELECT family_member.* FROM family_member JOIN family USING (family_id) WHERE stable_id = "ENSFM00500000300962";
 
 @column family_id      External reference to family_id in the @link family table
 @column seq_member_id  External reference to the seq_member_id in the @link seq_member table
