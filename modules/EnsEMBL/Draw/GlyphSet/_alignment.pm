@@ -157,6 +157,7 @@ sub render_histogram {
       no_axis              => 1,
       axis_label           => 'off',
       use_alpha            => 1,
+      class                => 'hover',
       hrefs                => $hrefs,
       non_can_score_colour => $non_can_feature_colour,
     });

@@ -205,6 +205,7 @@ sub _draw_wiggle_points_as_bar_or_points {
       alpha     => $parameters->{'use_alpha'} ? 0.5 : 0,
       title     => $parameters->{'no_titles'} ? undef : $title,
       href      => $href,
+      class     => $parameters->{'class'} // ''
     };
   }
 
