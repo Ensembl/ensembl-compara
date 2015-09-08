@@ -290,7 +290,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
 
   addLocationIcons: function () {
     var links = this.elLk.container.find('._location_mark').removeClass('_location_mark');
-    if (!this.imageId.match('Multi')) {
+    if (links.length && this.imageId && !this.imageId.match('Multi')) {
       links.each(function () {
         var locationMatch = this.href.match(Ensembl.locationMatch);
         if (locationMatch) {
