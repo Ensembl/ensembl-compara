@@ -496,8 +496,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var area  = $this.data('area');
 
       $this.css({
-        left:   left + area.l,
-        top:    top + area.t,
+        left:   left + area.l + 1,
+        top:    top + area.t + 1,
         height: area.b - area.t,
         width:  area.r - area.l
       });
