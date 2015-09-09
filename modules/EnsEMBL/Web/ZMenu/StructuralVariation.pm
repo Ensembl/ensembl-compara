@@ -51,7 +51,7 @@ sub feature_content {
   my $start       = $feature->seq_region_start;
   my $end         = $feature->seq_region_end;
   my $class       = $variation->var_class;
-  my $vstatus     = $variation->get_all_validation_states;
+  my $vstatus     = $variation->validation_status;
   my $study       = $variation->study;
   my $ssvs        = $variation->isa('Bio::EnsEMBL::Variation::SupportingStructuralVariation') ? [ $variation ] : $variation->get_all_SupportingStructuralVariants;
   my $description = $variation->source_description;
@@ -161,7 +161,7 @@ sub feature_content {
   
   $self->add_entry({
     type  => 'Source',
-    label => $variation->source,
+    label => $variation->source_name,
   });
   
   if (defined $study_name) {
