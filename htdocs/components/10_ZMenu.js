@@ -296,7 +296,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         if (locationMatch) {
           $('<br />' +
             '<a class="loc-icon loc-mark _location_mark _ht" title="Mark feature on image" href="' + Ensembl.updateURL({mr: locationMatch[1]}, this.href) +'"></a>' +
-            '<a class="loc-icon loc-zoom _location_change _ht" title="Zoom on feature" href="' + this.href +'"></a>'
+            (this.className.match(/_location_change/) ? '<a class="loc-icon loc-zoom _location_change _ht" title="Zoom on feature" href="' + this.href +'"></a>' : '')
           ).insertAfter(this);
         }
         return true;
