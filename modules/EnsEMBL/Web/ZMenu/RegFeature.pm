@@ -56,6 +56,7 @@ sub content {
   $self->add_entry({
     type       => 'bp',
     label_html => $location,
+    link_class => '_location_change _location_mark',
     link       => $hub->url({
       type   => 'Location',
       action => 'View',
