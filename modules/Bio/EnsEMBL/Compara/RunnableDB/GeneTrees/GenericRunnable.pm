@@ -264,19 +264,14 @@ sub run_generic_command {
         $self->param('map_long_seq_names', 1);
     }
 
-    $self->param('map_long_seq_names') ? (my %map_long_seq_names) : ();
-
-    my $input_aln;
-
+    my $map_long_seq_names;
     if ($self->param('map_long_seq_names')){
-        $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}, \%map_long_seq_names) || die "Could not fetch alignment for ($aln_tree)";
-    }
-    else{
-        $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($aln_tree)";
+        $map_long_seq_names = {};
     }
 
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}, $map_long_seq_names) || die "Could not fetch alignment for ($aln_tree)";
     $self->param('alignment_file', $input_aln);
-    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root));
+    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root,$map_long_seq_names));
 
     my $number_actual_genes = scalar(@{$gene_tree->get_all_leaves});
     if ($number_actual_genes < $self->param('minimum_genes')) {
@@ -318,11 +313,11 @@ sub run_generic_command {
         if ($self->param('run_treebest_sdi')) {
             print "Re-rooting the tree with 'treebest sdi'\n" if($self->debug);
 
-            if ($self->param('map_long_seq_names')){
+            if (defined $map_long_seq_names){
                 #we need to re-map to the lond indentidiers
-                foreach my $tmp_seq ( keys( %map_long_seq_names ) ) {
-                    my $fix_seq = $map_long_seq_names{$tmp_seq}{'seq'};
-                    my $fix_suf = $map_long_seq_names{$tmp_seq}{'suf'};
+                foreach my $tmp_seq ( keys( %$map_long_seq_names ) ) {
+                    my $fix_seq = $map_long_seq_names->{$tmp_seq}{'seq'};
+                    my $fix_suf = $map_long_seq_names->{$tmp_seq}{'suf'};
 
                     my $fix_seq_name = "$fix_seq\_$fix_suf";
 
