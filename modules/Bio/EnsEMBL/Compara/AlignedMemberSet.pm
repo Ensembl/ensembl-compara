@@ -403,7 +403,15 @@ sub get_SimpleAlign {
     #Counter for the unique temporary sequence name.
     my $countSeq = 0;
 
-    foreach my $member (@{$self->get_all_Members}) {
+    #This is to assure that we have always the same order when dumping and mapping an alignment. 
+    my @all_members; 
+    if ($map_long_seq_names){
+        @all_members = sort {$b->dbID <=> $a->dbID} @{$self->get_all_Members};
+    }else{
+        @all_members = @{$self->get_all_Members};
+    }
+
+    foreach my $member (@all_members) {
 
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
