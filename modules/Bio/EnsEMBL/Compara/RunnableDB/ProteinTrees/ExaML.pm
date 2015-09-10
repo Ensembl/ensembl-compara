@@ -94,11 +94,18 @@ sub fetch_input {
 
     if ($self->param('newest_checkPointFile')) {
 		$self->param('cmd',$self->param('cmd_checkpoint'));
+
+        my $restarts = $self->param('default_gene_tree')->get_value_for_tag('examl_restarts') + 1;
+        $self->param('default_gene_tree')->store_tag('examl_restarts', $restarts);
+
         print "ExaML will run on Check Point mode using the file " . $self->param('newest_checkPointFile') . " as a checkpoint\n" if ($self->debug);
 		print "CMD:" . $self->param('cmd_checkpoint') . "\n" if ($self->debug);
     }
     else {
 		$self->param('cmd',$self->param('cmd_from_scratch'));
+
+        $self->param('default_gene_tree')->store_tag('examl_restarts', 0);
+
         print "No checkpoint was found running on standard mode\n" if ($self->debug);
 		print "CMD:" . $self->param('cmd_from_scratch') . "\n" if ($self->debug);
     }
