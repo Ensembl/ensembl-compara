@@ -338,7 +338,9 @@ sub run_generic_command {
 
 
 sub get_gene_tree_file {
-    my ($self, $gene_tree_root) = @_;
+    my $self                    = shift;
+    my $gene_tree_root          = shift;
+    my $map_long_seq_names      = shift;
 
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$gene_tree_root->get_all_leaves}) {
@@ -347,7 +349,23 @@ sub get_gene_tree_file {
 
     my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree_root->node_id);
     open( my $genetree, '>', $self->worker_temp_directory."/".$gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
-    print $genetree $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
+
+    my $newick = $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
+
+    if ($map_long_seq_names){
+        #we need to re-map to the small indentidiers
+        foreach my $tmp_seq ( keys( %{$map_long_seq_names} ) ) {
+            my $fix_seq = $map_long_seq_names->{$tmp_seq}->{'seq'};
+            my $fix_suf = $map_long_seq_names->{$tmp_seq}->{'suf'};
+
+            my $fix_seq_name = "$fix_seq\_$fix_suf";
+
+            #Replace only whole words:
+            $newick =~ s/\b$fix_seq_name\b/$tmp_seq/;
+        }
+    }
+    print $genetree $newick;
+
     close $genetree;
 
     return $gene_tree_file;
