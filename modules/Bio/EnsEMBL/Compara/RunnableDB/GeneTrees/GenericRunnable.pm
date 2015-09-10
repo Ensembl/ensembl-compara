@@ -196,9 +196,12 @@ sub write_output {
 
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
             #We need to parse_newick_into_tree to be able to unmerge the split_genes.
+            print "Using: " . $self->param('output_clusterset_id') . " clusterset\n" if($self->debug) ;
+
             $self->parse_newick_into_tree( $self->param('newick_output'), $self->param('default_gene_tree'), [] );
             $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $self->param('default_gene_tree'), [], 1) || die "Could not store ". $self->param('output_clusterset_id') . " tree.\n";
         } else {
+            print "Using: default clusterset\n" if($self->debug);
             $target_tree = $self->param('default_gene_tree');
             $self->parse_newick_into_tree($self->param('newick_output'), $target_tree, []);
             $self->store_genetree($target_tree);
