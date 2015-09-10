@@ -119,6 +119,8 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     my $simple_align_options = shift || {};
     $self->param('map_long_seq_names') ? (my $map_long_seq_names = shift) : ();
 
+    my $dbID = (ref($gene_tree) eq 'Bio::EnsEMBL::Compara::GeneTree' ? $gene_tree->root_id : $gene_tree->dbID) || 0;
+
     my $removed_columns = undef;
     if ($self->param('remove_columns')) {
         if ($gene_tree->has_tag('removed_columns')) {
@@ -126,11 +128,11 @@ sub dumpTreeMultipleAlignmentToWorkdir {
             $removed_columns = \@removed_columns;
             print Dumper $removed_columns if ( $self->debug() );
         } else {
-            $self->warning(sprintf("The 'removed_columns' is missing from tree dbID=%d\n", $gene_tree->dbID));
+            $self->warning(sprintf("The 'removed_columns' is missing from tree dbID=%d\n", $dbID));
         }
     }
 
-    my $aln_file = $self->worker_temp_directory.sprintf('align.%d.%s', $gene_tree->dbID || 0, $format);
+    my $aln_file = $self->worker_temp_directory.sprintf('align.%d.%s', $dbID || 0, $format);
 
     $gene_tree->print_alignment_to_file( $aln_file,
         -FORMAT => $format,
