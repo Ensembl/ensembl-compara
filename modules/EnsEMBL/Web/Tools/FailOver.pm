@@ -145,7 +145,7 @@ sub is_dead {
   my ($noticed,$expiry) = ($now,-1);
   if(-e $filename) {
     eval { 
-      my $contents = join("",file_get_contents($filename));
+      my $contents = file_get_contents($filename);
       my ($n,$e,$end) = split(/ /,$contents);
       ($noticed,$expiry) = ($n,$e) if defined($end) and $end eq 'END';
     };
@@ -175,7 +175,7 @@ sub report_life {
   my $filename = $failbase."/.ok-".$self->{'prefix'}."-".md5_hex($endpoint);
   my $then = 0;
   if(-e $filename) {
-    $then = join('',file_get_contents($filename));
+    $then = file_get_contents($filename);
   }
   my $now = time;
   if(!$then or $then + $self->report_up < $now) {
