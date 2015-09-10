@@ -142,6 +142,14 @@ sub fetch_input {
     if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
         print STDERR "getting the tree '".$self->param('input_clusterset_id')."'\n";
         my $selected_tree = $gene_tree->alternative_trees->{$self->param('input_clusterset_id')};
+
+        #In case we are using a non default input_clusterset_id, we need to use the same gene_tree_id label.
+        #If we dont set this to the alternative root_id, it will cause a discrepancy between the file names.
+        #   some will have the ref_root_id and others will have the alternative root_id 
+        #   but we should store the ref_tree to be used by the healthchecks
+        $self->param('ref_gene_tree_id', $self->param('gene_tree_id'));
+        $self->param('gene_tree_id', $selected_tree->root->node_id);
+
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
         $selected_tree->add_tag('removed_columns', $gene_tree->get_value_for_tag('removed_columns')) if $gene_tree->has_tag('removed_columns');
         $gene_tree = $selected_tree;
