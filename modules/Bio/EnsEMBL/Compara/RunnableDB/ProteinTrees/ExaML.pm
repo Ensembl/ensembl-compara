@@ -42,13 +42,15 @@ sub param_defaults {
         %{ $self->SUPER::param_defaults },
 		'newest_checkPointFile'=> undef,
 		'cmd_checkpoint'       => 'cp #examl_dir#/#worker_dir#/#gene_tree_id#.binary . ; cp #newest_checkPointFile# latest_ExaML_binaryCheckpoint.#gene_tree_id# ; sleep 10 ; /nfs/production/mpi/mpich/mpich3/3.1.1-intel/bin/mpiexec.hydra #examl_exe# -s #gene_tree_id#.binary -R latest_ExaML_binaryCheckpoint.#gene_tree_id# -m GAMMA -n #gene_tree_id# -S',
-		'cmd_from_scratch'     => '#parse_examl_exe# -s #alignment_file# -m PROT -n #gene_tree_id# ; rm RAxML_info.#gene_tree_id# ; #raxml_exe# #extra_raxml_args# -y -m #best_fit_model# -p 99123746531 -s #alignment_file# -n #gene_tree_id# ; sleep 10 ; /nfs/production/mpi/mpich/mpich3/3.1.1-intel/bin/mpiexec.hydra #examl_exe# -s #gene_tree_id#.binary -t RAxML_parsimonyTree.#gene_tree_id# -m GAMMA -n #gene_tree_id# -S',
+		'cmd_from_scratch'     => '#parse_examl_exe# -s align.#gene_tree_id#.phylip -m PROT -n #gene_tree_id# ; sleep 10 ; /nfs/production/mpi/mpich/mpich3/3.1.1-intel/bin/mpiexec.hydra #examl_exe# -s #gene_tree_id#.binary -t gene_tree_#gene_tree_id#.nhx -m GAMMA -n #gene_tree_id# -S',
         'aln_format'           => 'phylip',
         'runtime_tree_tag'     => 'examl_runtime',
         'output_clusterset_id' => 'raxml',
+        'input_clusterset_id'  => 'raxml_parsimony',
         'output_file'          => 'ExaML_result.#gene_tree_id#',
         'info_file'            => 'ExaML_info.#gene_tree_id#',
         'remove_columns'       => 1,
+
     };
 }
 
