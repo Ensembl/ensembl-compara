@@ -560,15 +560,24 @@ sub call_hcs_all_trees {
         if ($root_id == $ini_gene_tree_id) {
             if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
                 @test_groups = ('alignment');
+                print "test_groups ('alignment')\n" if ($self->debug);
             } else {
                 if ($self->param('read_tags')) {
                     @test_groups = ('alignment');
+                    print "test_groups ('alignment')\n" if ($self->debug);
                 } else {
                     @test_groups = ('alignment', 'tree_structure', 'tree_attributes');
+                    print "test_groups ('alignment', 'tree_structure', 'tree_attributes')\n" if ($self->debug);
                 }
             }
         } else {
-                @test_groups = ('tree_structure', 'tree_attributes');
+                if ($self->param('read_tags')) {
+                    @test_groups = ('alignment');
+                    print "test_groups ('alignment')\n" if ($self->debug);
+                } else {
+                    @test_groups = ('tree_structure', 'tree_attributes');
+                    print "test_groups ('tree_structure', 'tree_attributes')\n" if ($self->debug);
+                }
         }
 
         foreach my $test_name (@test_groups) {
