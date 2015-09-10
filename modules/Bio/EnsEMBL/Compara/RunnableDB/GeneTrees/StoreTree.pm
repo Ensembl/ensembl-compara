@@ -546,7 +546,13 @@ sub _run_test {
 sub call_hcs_all_trees {
     my $self = shift;
 
-    my $ini_gene_tree_id = $self->param('gene_tree_id');
+    my $ini_gene_tree_id;
+    if ($self->param('ref_gene_tree_id')){
+        $ini_gene_tree_id = $self->param('ref_gene_tree_id');
+    }else{
+        $ini_gene_tree_id = $self->param('gene_tree_id');
+    }
+
     my $alt_root_ids = $self->compara_dba->dbc->db_handle->selectcol_arrayref('SELECT root_id FROM gene_tree_root WHERE ref_root_id = ?', undef, $self->param('gene_tree_id'));
     foreach my $root_id ($ini_gene_tree_id, @$alt_root_ids) {
         $self->param('gene_tree_id', $root_id);
