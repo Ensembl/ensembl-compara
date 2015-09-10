@@ -117,7 +117,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     my $gene_tree = shift;
     my $format = shift;
     my $simple_align_options = shift || {};
-    $self->param('map_long_seq_names') ? (my $map_long_seq_names = shift) : ();
+    my $map_long_seq_names = shift;
 
     my $dbID = (ref($gene_tree) eq 'Bio::EnsEMBL::Compara::GeneTree' ? $gene_tree->root_id : $gene_tree->dbID) || 0;
 
@@ -137,11 +137,11 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     $gene_tree->print_alignment_to_file( $aln_file,
         -FORMAT => $format,
         -ID_TYPE => 'MEMBER',
-        $self->param('cdna') ? (-SEQ_TYPE => 'cds') : (),
+        -SEQ_TYPE => $self->param('cdna') ? 'cds' : undef,
         -STOP2X => 1,
         -REMOVED_COLUMNS => $removed_columns,
+        -MAP_LONG_SEQ_NAMES => $map_long_seq_names,
         %$simple_align_options,
-        $self->param('map_long_seq_names') ? (-MAP_LONG_SEQ_NAMES => $map_long_seq_names) : (),
     );
 
     unless(-e $aln_file and -s $aln_file) {
