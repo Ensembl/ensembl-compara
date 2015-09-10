@@ -50,6 +50,7 @@ sub param_defaults {
         'output_file'          => 'ExaML_result.#gene_tree_id#',
         'info_file'            => 'ExaML_info.#gene_tree_id#',
         'remove_columns'       => 1,
+        'ryo_gene_tree'     => '%{-m}%{"_"-x}',
 
     };
 }
