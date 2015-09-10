@@ -317,6 +317,12 @@ sub resource_classes {
          '32Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
+         '16Gb_32c_job' => {'LSF' => '-q production-rh6 -n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_32c_job' => {'LSF' => '-q production-rh6 -n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '16Gb_64c_job' => {'LSF' => '-q production-rh6 -n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_64c_job' => {'LSF' => '-q production-rh6 -n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+
+
          '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
          '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
@@ -387,6 +393,16 @@ sub tweak_analyses {
     $analyses_by_name->{'ortho_tree'}->{'-parameters'}{'store_homologies'} = 0;
     $analyses_by_name->{'ortho_tree'}->{'-parameters'}{'input_clusterset_id'} = 'notung';
     $analyses_by_name->{'ortho_tree_himem'}->{'-parameters'}{'store_homologies'} = 0;
+
+    #ExaML running times
+    foreach my $logic_name (keys %{$analyses_by_name}) {
+        if ( ($logic_name =~ /examl_/) || ($logic_name =~ /raxml_\d/) ){
+            #   Setup running time to 6 days, then dataflows into branch -2
+            #   himem analysis are not dataflowing to -2, they should dataflow to the himem of the corresponding next analysis
+            $analyses_by_name->{$logic_name}->{'-parameters'}{'cmd_max_runtime'} = 518400;
+        }
+    }
+
 }
 
 
