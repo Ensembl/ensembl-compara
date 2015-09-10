@@ -414,8 +414,8 @@ sub clear {
 
 =head2 get_all_GeneMembers
 
-  Arg [1]    : None
-  Example    : 
+  Arg [1]    : (optional) genome db id 
+  Example    : my $gene_members = $ortholog->get_all_GeneMembers($genome_db->dbID')
   Description: 
   Returntype : array reference of Bio::EnsEMBL::Compara::Member
   Exceptions : 
@@ -424,7 +424,7 @@ sub clear {
 =cut
 
 sub get_all_GeneMembers {
-    my ($self) = @_;
+    my ($self,$genome_db_id) = @_;
 
     my %seen_gene_members = ();
     foreach my $aligned_member (@{$self->get_all_Members}) {
@@ -432,7 +432,13 @@ sub get_all_GeneMembers {
         if ($seen_gene_members{$aligned_member->gene_member_id}) {
             $aligned_member->gene_member($seen_gene_members{$aligned_member->gene_member_id});
         } else {
+          if (defined($genome_db_id)) {
+            if ( $aligned_member->genome_db_id() eq $genome_db_id) {
+              $seen_gene_members{$aligned_member->gene_member_id} = $aligned_member->gene_member;
+            }
+          } else {
             $seen_gene_members{$aligned_member->gene_member_id} = $aligned_member->gene_member;
+          }
         }
     }
 
