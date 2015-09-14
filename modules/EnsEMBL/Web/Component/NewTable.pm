@@ -210,8 +210,6 @@ sub newtable_data_request {
 
   # Calculate columns to send
   my $used_cols = $phases->[$more]{'cols'} || \@cols;
-  my $columns = [ (0) x @cols ];
-  $columns->[$cols_pos{$_}] = 1 for @$used_cols;
   my %sort_pos;
   $sort_pos{$used_cols->[$_]} = $_ for (0..@$used_cols);
 
@@ -247,6 +245,7 @@ sub newtable_data_request {
   }
   my %shadow = %$orient;
   delete $shadow{'filter'};
+  $shadow{'series'} = $used_cols;
 
   # Filter, if necessary
   if($wire->{'filter'}) {
@@ -285,7 +284,7 @@ sub newtable_data_request {
   $out = {
     response => {
       data => \@data_out,
-      columns => $columns,
+      series => $used_cols,
       start => $rows->[0],
       more => $more,
       enums => \%enums,

@@ -107,10 +107,10 @@
   }
  
   function header_fix($table,orient) {
-    var $th = $('th',$table);
-    $.each(orient.columns,function(i,v) {
-      var $h = $th.eq(i);
-      if(v) { $h.show(); } else { $h.hide(); }
+    var off = orient.off_columns || {};
+    $('th',$table).each(function() {
+      var $th = $(this);
+      if(off[$th.data('key')]) { $th.hide(); } else { $th.show(); }
     });
   }
  
@@ -181,7 +181,7 @@
     $.lazy('refresh');
   }
 
-  function retreat_rows($table,length,orient) {
+  function retreat_rows($table,config,length,orient) {
     var last_table = Math.floor(length/rows_per_subtable);
     $('.subtable',$table).each(function(i) {
       if(i>last_table) {
@@ -191,7 +191,7 @@
         markup = markup.slice(0,length-last_table*rows_per_subtable);
         if(markup.length) {
           $(this).data('markup',markup);
-          build_html($table,i,orient);
+          build_html($table,config,i,orient);
           apply_html($table,i);
         } else {
           $(this).remove();
@@ -215,7 +215,7 @@
     return table_num;
   }
 
-  function build_html($table,table_num,orient) {
+  function build_html($table,config,table_num,orient) {
     var $subtable = $('.subtable',$table).eq(table_num);
     var $th = $('table:first th',$table);
     var markup = $subtable.data('markup') || [];
@@ -223,7 +223,9 @@
     for(var i=0;i<markup.length;i++) {
       html += "<tr>";
       for(var j=0;j<$th.length;j++) {
-        if(!orient.columns[j]) { continue; }
+        if(orient && orient.off_columns && orient.off_columns[config.columns[j]]) {
+          continue;
+        }
         var start = "<td>";
         if(i==0) {
           start = "<td style=\"width: "+$th.eq(j).width()+"px\">";
@@ -320,7 +322,7 @@
         d = $.Deferred().resolve(subtabs);
         var has_reset = false;
         var e = loop(d,function(tabnum,v) {
-          build_html($table,tabnum,orient);
+          build_html($table,config,tabnum,orient);
           var $subtable = apply_html($table,tabnum);
           if(!has_reset) {
             $subtables.each(function() {
@@ -340,7 +342,7 @@
         } else {
           $('.no_results').show();
         }
-        retreat_rows($table,length,orient);
+        retreat_rows($table,config,length,orient);
       }
     };
   }; 

@@ -73,14 +73,14 @@
              incr_ok: incr, all_rows: all_rows };
   }
 
-  function build_orient(manifest_c,data,destination) {
+  function build_orient(manifest_c,data,data_series,destination) {
     var orient = $.extend(true,{},manifest_c.manifest);
     $.each(manifest_c.undo,function(i,step) {
-      var out = step(orient,data,destination);
+      var out = step(orient,data,data_series,destination);
       orient = out[0];
       data = out[1];
     });
-    return [data,orient];
+    return { data: data, orient: orient };
   }
 
   function build_enums(manifest_c,grid,enums) {
@@ -141,22 +141,38 @@
     widgets[view.format].go($table,$widget);
   }
 
-  function store_response_in_grid($table,rows,start,columns,manifest_in) {
+  function build_series_index($table,series) {
+    var fwd = $table.data('grid-series') || [];
+    var rev = {};
+    for(var i=0;i<fwd.length;i++) { rev[fwd[i]] = i; }
+    for(var i=0;i<series.length;i++) {
+      if(rev.hasOwnProperty(series[i])) { continue; }
+      rev[series[i]] = fwd.length;
+      fwd.push(series[i]);
+    }
+    $table.data('grid-series',fwd);
+    var out = [];
+    for(var i=0;i<series.length;i++) {
+      out.push(rev[series[i]]);
+    }
+    return out;
+  }
+
+  function store_response_in_grid($table,rows,start,manifest_in,series) {
     var grid = $table.data('grid') || [];
     var grid_manifest = $table.data('grid-manifest') || [];
+    var indexes = build_series_index($table,series);
+    console.log('indexes',series,indexes);
     if(!$.orient_compares_equal(manifest_in,grid_manifest)) {
       console.log("clearing grid");
       grid = [];
       $table.data('grid-manifest',manifest_in);
     }
     $.each(rows,function (i,row) {
-      var k = 0;
-      $.each(columns,function(j,on) {
-        if(on) {
-          grid[start+i] = (grid[start+i]||[]);
-          grid[start+i][j] = row[k++];
-        }
-      });
+      for(var k=0;k<row.length;k++) {
+        grid[start+i] = (grid[start+i]||[]);
+        grid[start+i][indexes[k]] = row[k]; 
+      }
     });
     $table.data('grid',grid);
   }
@@ -197,13 +213,14 @@
   function render_grid(widgets,$table,manifest_c,start,length) {
     var view = $table.data('view');
     var grid = $table.data('grid');
+    var grid_series = $table.data('grid-series');
     if(length==-1) { length = grid.length; }
-    var orient_c = build_orient(manifest_c,grid,view);
+    var orient_c = build_orient(manifest_c,grid,grid_series,view);
     if(manifest_c.all_rows) {
       start = 0;
-      length = orient_c[0].length;
+      length = orient_c.data.length;
     }
-    widgets[view.format].add_data($table,orient_c[0],start,length,orient_c[1]);
+    widgets[view.format].add_data($table,orient_c.data,start,length,orient_c.orient);
     widgets[view.format].truncate_to($table,length,orient_c[1]);
   }
 
@@ -212,7 +229,7 @@
   }
 
   function use_response(widgets,$table,manifest_c,response,config) {
-    store_response_in_grid($table,response.data,response.start,response.columns,manifest_c.manifest);
+    store_response_in_grid($table,response.data,response.start,manifest_c.manifest,response.series);
     render_grid(widgets,$table,manifest_c,response.start,response.data.length);
     store_ranges($table,response.enums,manifest_c,response.shadow,config);
   }
@@ -253,7 +270,7 @@
       $table.data('payload_one','');
       maybe_use_response(widgets,$table,payload_one,config);
     } else {
-      wire_manifest = $.extend(false,{},manifest_c.manifest,manifest_c.wire);
+      wire_manifest = $.extend({},manifest_c.manifest,manifest_c.wire);
       src = $table.data('src');
       params = $.extend({},extract_params(src),{
         keymeta: JSON.stringify($table.data('keymeta')||{}),
@@ -261,7 +278,8 @@
         orient: JSON.stringify(manifest_c.manifest),
         more: JSON.stringify(more),
         config: JSON.stringify(config),
-        incr_ok: manifest_c.incr_ok
+        incr_ok: manifest_c.incr_ok,
+        series: JSON.stringify(config.columns)
       });
       $.post($table.data('src'),params,function(res) {
         maybe_use_response(widgets,$table,res,config);
@@ -345,6 +363,7 @@
 //    $table.helptip();
     $table.on('view-updated',function() {
       var view = $table.data('view');
+      console.log("view updated",view);
       var old_view = $table.data('old-view');
       if(view.format != old_view.format) {
         build_format(widgets,$table);

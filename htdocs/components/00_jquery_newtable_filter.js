@@ -214,12 +214,15 @@
           if(config.columns[i] == col) { colidx[col] = i; }
         }
       });
-      out.undo = function(manifest,grid,dest) {
+      out.undo = function(manifest,grid,series,dest) {
+        var rev_series = {};
+        for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
         fabric = [];
         for(var i=0;i<grid.length;i++) {
           var ok = true;
           $.each(to_filter,function(col,fn) {
-            var v = grid[i][colidx[col]];
+            var v = grid[i][rev_series[col]];
+            if(v===null || v===undefined) { ok = false; return; }
             if(fn.split) { v = fn.split(v[0]); } else { v = [v[0]]; }
             var ok_col = false;
             for(var j=0;j<v.length;j++) {

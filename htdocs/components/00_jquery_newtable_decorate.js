@@ -63,17 +63,18 @@
         return [
           function(need,got) {
             return {
-              undo: function(manifest,grid,dest) {
+              undo: function(manifest,grid,series,dest) {
                 var fabric = [];
                 var decorators = make_decorators($table);
                 for(var i=0;i<grid.length;i++) {
                   var new_row = [];
                   for(var j=0;j<grid[i].length;j++) {
                     var v = grid[i][j];
-                    if(v!==undefined && config.columns[j]) {
+                    var key = series[j];
+                    if(v!==undefined) {
                       v = v[0];
-                      if(decorators[config.columns[j]]) {
-                        var ff = decorators[config.columns[j]];
+                      if(decorators[key]) {
+                        var ff = decorators[key];
                         for(var k=0;k<ff.length;k++) {
                           v = ff[k](v);
                         }

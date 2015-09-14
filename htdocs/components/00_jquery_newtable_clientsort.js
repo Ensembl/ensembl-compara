@@ -85,13 +85,13 @@
     var col_idxs = {};
     $.each(config.columns,function(i,val) { col_idxs[val] = i; });
 
-    function compare(a,b,plan,cache,keymeta) {
+    function compare(a,b,rev_series,plan,cache,keymeta) {
       var c = 0;
       $.each(plan,function(i,stage) {
         if(!c) {
           if(!cache[stage.key]) { cache[stage.key] = {}; }
-          var av = a[stage.idx];
-          var bv = b[stage.idx];
+          var av = a[rev_series[stage.key]];
+          var bv = b[rev_series[stage.key]];
           if(!av || !bv) {
             return (!av)-(!bv);
           }
@@ -115,11 +115,11 @@
         if(!type) { plan = null; return; }
         var clean = $.fn['newtable_clean_'+config.colconf[stage.key].clean];
         if(!clean) { clean = $.fn.newtable_clean_none; }
-        plan.push({ idx: col_idxs[stage.key], dir: stage.dir, fn: type, clean: clean, key: stage.key });
+        plan.push({ dir: stage.dir, fn: type, clean: clean, key: stage.key });
         if(!config.colconf[stage.key].incr_ok) { incr_ok = false; }
       });
       if(!plan) { return null; }
-      plan.push({ idx: config.columns.length, dir: 1, fn: $.fn.newtable_sort_numeric, clean: $.fn.newtable_clean_none});
+      plan.push({ dir: 1, fn: $.fn.newtable_sort_numeric, clean: $.fn.newtable_clean_none, key: '__tie' });
       return { stages: plan, incr_ok: incr_ok};
     }
 
@@ -128,9 +128,12 @@
       if(orient.sort.length>1 || target.sort.length>1) { return null; }
       if(orient.sort[0].key != target.sort[0].key) { return null; }
       if(orient.sort[0].dir != -target.sort[0].dir) { return null; }
-      var idx = col_idxs[target.sort[0].key];
       orient.sort[0].dir *= -1;
-      return function(manifest,grid) {
+      return function(manifest,grid,series) {
+        var idx = -1;
+        for(var i=0;i<series.length;i++) {
+          if(series[i]==target.sort[0].key) { idx = i; }
+        }
         var fabric = grid.slice();
         var partitioned = [[],[]];
         $.each(grid,function(i,row) {
@@ -157,13 +160,19 @@
             wire.sort = need.sort;
             need.sort = got.sort;
             return {
-              undo: function(manifest,grid) {
+              undo: function(manifest,grid,series) {
+                var rev_series = {};
+                for(var i=0;i<series.length;i++) {
+                  rev_series[series[i]] = i;
+                }
                 var fabric = grid.slice();
-                $.each(fabric,function(i,val) { val[config.columns.length] = [i,1]; }); // ties
+                $.each(fabric,function(i,val) { val[series.length] = [i,1]; }); // ties
                 var cache = {};
                 var keymeta = $table.data('keymeta') || {};
+                series = series.slice();
+                series.push('__tie');
                 fabric.sort(function(a,b) {
-                  return compare(a,b,plan.stages,cache,keymeta);
+                  return compare(a,b,rev_series,plan.stages,cache,keymeta);
                 });
                 manifest.sort = wire.sort;
                 return [manifest,fabric];

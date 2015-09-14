@@ -35,9 +35,9 @@ sub incremental_table {
   {
     name => "taster",
     rows => [0,50],
-#  },{
-#    name => "outline",
-#    cols =>  [ qw(ID Source) ],
+  },{
+    name => "outline",
+    cols =>  [ qw(ID Source) ],
   },{
     name => "full",
   }];

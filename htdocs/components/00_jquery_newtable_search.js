@@ -17,12 +17,13 @@
 (function($) {
   $.fn.new_table_search = function(config,data) {
 
-    function match(row,search,manifest,cleaner) {
+    function match(row,series,search,cleaner) {
       for(var i=0;i<row.length;i++) {
-        if(!manifest.columns[i]) { continue; }
+        var key =series[i];
+        if(cleaner[key]==undefined) { continue; }
         if(!row[i] || row[i][0]===undefined) { continue; }
         var val = row[i][0];
-        if(cleaner[i]) { val = cleaner[i](val); }
+        if(cleaner[key]) { val = cleaner[key](val); }
         if(val == undefined) { return false; }
         if(~val.toLowerCase().indexOf(search)) { return true; }
       }
@@ -62,21 +63,22 @@
             delete need.search;
             if(!search_was_defined) { search = ""; }
             if(!search) { return null; }
-            var cleaner = [];
+            var cleaner = {};
             var j = 0;
-            for(var i=0;i<need.columns.length;i++) {
-              if(need.columns[i]) {
-                var fn = config.colconf[config.columns[i]].search_clean;
-                if(!fn) { fn = "html_cleaned"; }
-                if(fn) { var clean = $.fn['newtable_clean_'+fn]; }
-                if(clean) { cleaner[i] = clean; }
-              }
+            var off = need.off_columns || {};
+            for(var i=0;i<config.columns.length;i++) {
+              if(off[config.columns[i]]) { continue; }
+              var fn = config.colconf[config.columns[i]].search_clean;
+              if(!fn) { fn = "html_cleaned"; }
+              if(fn) { var clean = $.fn['newtable_clean_'+fn]; }
+              if(clean) { cleaner[config.columns[i]] = clean; }
             }
+            // XXX should search be searching columns or series?
             return {
               undo: function(manifest,grid,series,dest) {
                 fabric = [];
                 $.each(grid,function(i,v) {
-                  if(match(grid[i],search.toLowerCase(),dest,cleaner)) {
+                  if(match(grid[i],series,search.toLowerCase(),cleaner)) {
                     fabric.push(grid[i]);
                   }
                 });

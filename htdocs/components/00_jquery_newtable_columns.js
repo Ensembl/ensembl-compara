@@ -19,21 +19,21 @@
 
     function update_ticks($table,$popup) {
       var view = $table.data('view');
-      var columns = view.columns;
+      var off_columns = view.off_columns;
       $('li input',$popup).each(function() {
         var $input = $(this);
-        $input.prop('checked',!columns || columns[$input.data('key')]);
+        $input.prop('checked',!off_columns || !off_columns[$input.data('key')]);
       });
     };
 
     function record_ticks($table,$popup) {
-      var columns = [];
+      var off_columns = {};
       $('li input',$popup).each(function() {
         var $input = $(this);
-        columns[$input.data('key')] = $input.prop('checked');
+        off_columns[$input.data('key')] = !$input.prop('checked');
       });
       var view = $table.data('view');
-      view.columns = columns;
+      view.off_columns = off_columns;
       $table.data('view',view).trigger('view-updated');
     };
 
@@ -49,7 +49,7 @@
         $.each(config.columns,function(i,key) {
           var cc = config.colconf[key];
           var label = cc.label || key;
-          out += '<li><input type="checkbox" data-key="'+cc.idx+'">'+
+          out += '<li><input type="checkbox" data-key="'+key+'">'+
                  '<span>'+label+'</span></li>';
         });
         out += '</ul></div></div>';
@@ -79,14 +79,14 @@
           function(need,got) {
             if(!got) { return null; }
             var ok = true;
-            $.each(got.columns,function(i,v) {
-              if(need.columns[i] && !got.columns[i]) { ok = false; }
+            $.each(got.off_columns||{},function(k,v) {
+              if(!need.off_columns[k] && got.off_columns[k]) { ok = false; }
             });
-            var old_columns = need.columns;
-            if(ok) { need.columns = got.columns; }
+            var old_columns = need.off_columns;
+            if(ok) { need.off_columns = got.off_columns; }
             return {
               undo: function(manifest,grid) {
-                manifest.columns = old_columns;
+                manifest.off_columns = old_columns;
                 return [manifest,grid];
               }
             };
