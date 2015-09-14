@@ -60,6 +60,7 @@ sub variation_content {
   my $allele     = $feature->allele_string;
   my @failed     = @{$feature->variation->get_all_failed_descriptions};
   my $position   = "$seq_region$chr_start";
+
   my ($lrg_position, %population_data, %population_allele);
  
   my $v = $feature->variation()->name(); 
@@ -110,6 +111,8 @@ sub variation_content {
     if ($tv) {
       my $pep_alleles = $tv->pep_allele_string;
       my $codons      = $tv->codons;
+      my $cdna_pos    = $tv->cdna_start;
+      my $aa_pos      = $tv->translation_start;
       ## Also truncate long peptides
       if (length $pep_alleles > 10) {
         $pep_alleles =~ /(\w{10})\w+(\w\/\w)(\w+)/;
@@ -121,6 +124,9 @@ sub variation_content {
         $codons = $1.'...'.$2;
         $codons .= '...' if $3;
       }
+
+      push @entries, { type => 'cDNA position', 'label' => $cdna_pos} if $cdna_pos; 
+      push @entries, { type => 'Residue number', 'label' => $aa_pos} if $aa_pos; 
       
       push @entries, { type => 'Amino acids', label => $pep_alleles} if $pep_alleles && $pep_alleles =~ /\//;
       push @entries, { type => 'Codons',      label => $codons}      if $codons      && $codons      =~ /\//;
