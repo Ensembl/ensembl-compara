@@ -268,7 +268,7 @@ sub render_Arc {
   my $filled         = $glyph->filled();
   my ($cx, $cy)      = $glyph->pixelcentre();
 
-  $canvas->setThickness($glyph->{'thickness'});
+  $canvas->setThickness($self->{sf} * $glyph->{'thickness'});
 
   my $method = $filled ? 'filledArc' : 'arc';
   $canvas->$method(
