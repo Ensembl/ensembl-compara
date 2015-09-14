@@ -162,8 +162,10 @@ sub variation_content {
   push @entries, { link => $hub->url({ action => 'Phenotype', %url_params }), label => 'Phenotype Data' } if scalar @{$object->get_external_data};
 
   foreach my $pop (sort { $a->{'pop_info'}{'Name'} cmp $b->{'pop_info'}{'Name'} } grep { $_->{'pop_info'}{'Name'} =~ /^1000genomes.+phase_\d/i } values %{$object->freqs($feature)}) {
+
+    next if (!scalar keys %{$pop->{'pop_info'}{'Sub-Population'}});
+
     my $name = [ split /:/, $pop->{'pop_info'}{'Name'} ]->[-1]; # shorten the population name
-       $name = $name =~ /phase_1_(.+)/ ? $1 : '';
     
     foreach my $ssid (sort { $a->{'submitter'} cmp $b->{'submitter'} } values %{$pop->{'ssid'}}) {
       my @afreqs = @{$ssid->{'AlleleFrequency'}};
