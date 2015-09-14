@@ -66,7 +66,7 @@ sub format_wga_list {
         my $count = scalar(@$species_order);
         $html .= sprintf '<h3>%s</h3>
               <p><b>(method_link_type="%s" : species_set_name="%s")</b></p>',
-              $_->name, $method, $_->species_set_obj->get_value_for_tag('name');
+              $_->name, $method, $_->species_set_obj->name;
 
         my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '22%', align => 'left', sort => 'string' },
