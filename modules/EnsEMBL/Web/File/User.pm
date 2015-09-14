@@ -188,7 +188,7 @@ sub upload {
       ## Now validate it using the appropriate parser - 
       ## note that we have to do this after upload, otherwise we can't validate pasted data
       my $iow = EnsEMBL::Web::IOWrapper::open($self, 'hub' => $hub);
-      $error = $iow->validate;
+      $error = $iow->validate if $iow;
 
       if ($error) {
         ## If something went wrong, delete the upload
