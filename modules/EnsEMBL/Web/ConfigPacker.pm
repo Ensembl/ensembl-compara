@@ -1750,7 +1750,7 @@ sub _munge_file_formats {
     'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'remote' => 1},
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'remote' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'remote' => 1},
-    'trackhub'  => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'remote' => 1},
+    'trackhub'  => {'ext' => 'txt', 'label' => 'Track Hub', 'display' => 'graph', 'remote' => 1},
     ## Export only
     'fasta'     => {'ext' => 'fa',   'label' => 'FASTA'},
     'clustalw'  => {'ext' => 'aln',  'label' => 'CLUSTALW'},
