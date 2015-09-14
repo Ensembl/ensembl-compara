@@ -48,14 +48,15 @@
     });
   }
 
-  function new_th(index,colconf) {
-    var text = colconf.label || colconf.title || colconf.key;
+  function new_th(colconf,key) {
+    var cc =colconf[key];
+    var text = cc.label || cc.title || key;
     var attrs = {};
     var classes = [];
-    attrs['data-key'] = colconf.key || '';
-    if(colconf.sort)  { classes.push('sorting'); }
-    if(colconf.help) {
-      var help = $('<div/>').text(colconf.help).html();
+    attrs['data-key'] = key || '';
+    if(cc.sort)  { classes.push('sorting'); }
+    if(cc.help) {
+      var help = $('<div/>').text(cc.help).html();
       text =
         '<span class="ht _ht" title="'+help+'">'+text+'</span>';
     }
@@ -74,12 +75,13 @@
   function fix_widths($table,config,orient) {
     var totals = { u: 0, px: 0 };
     var widths = [];
-    $.each(config.columns,function(i,data) {
-      var m = data.width.match(/^(\d+)(.*)$/)
+    $.each(config.columns,function(i,key) {
+      var cc = config.colconf[key];
+      var m = cc.width.match(/^(\d+)(.*)$/)
       widths.push([m[1],m[2]]);
       if(orient.columns[i]) {
-        if(data.width[1] == 'u' || data.width[1] == 'px') {
-          totals[data.width[1]] += parseInt(data.width[0]);
+        if(cc.width[1] == 'u' || cc.width[1] == 'px') {
+          totals[cc.width[1]] += parseInt(cc.width[0]);
         }
       }
     });
@@ -98,8 +100,8 @@
   function new_header($table,config) {
     var columns = [];
 
-    $.each(config.columns,function(i,data) {
-      columns.push(new_th(i,data));
+    $.each(config.columns,function(i,key) {
+      columns.push(new_th(config.colconf,key));
     });
     return '<thead><tr>'+columns.join('')+"</tr></thead>";
   }
@@ -297,7 +299,6 @@
   $.fn.new_table_tabular = function(config,data) {
     return {
       layout: function($table) {
-        var config = $table.data('config');
         var header = new_header($table,config);
         return '<div class="new_table"><table>'+header+'<tbody></tbody></table><div class="no_results">Empty Table</div></div>';
       },
@@ -309,7 +310,6 @@
       },
       add_data: function($table,grid,start,num,orient) {
         var $subtables = $('.subtable',$table);
-        var config = $table.data('config');
         fix_widths($table,config,orient);
         header_fix($table,orient);
         extend_rows($table,start+num);

@@ -66,14 +66,14 @@
             var j = 0;
             for(var i=0;i<need.columns.length;i++) {
               if(need.columns[i]) {
-                var fn = config.colconf[config.columns[i].key].search_clean;
+                var fn = config.colconf[config.columns[i]].search_clean;
                 if(!fn) { fn = "html_cleaned"; }
                 if(fn) { var clean = $.fn['newtable_clean_'+fn]; }
                 if(clean) { cleaner[i] = clean; }
               }
             }
             return {
-              undo: function(manifest,grid,dest) {
+              undo: function(manifest,grid,series,dest) {
                 fabric = [];
                 $.each(grid,function(i,v) {
                   if(match(grid[i],search.toLowerCase(),dest,cleaner)) {

@@ -85,7 +85,7 @@
         draw_more($table,$menu);
         return;
       }
-      var key = config.columns[idx].key;
+      var key = config.columns[idx];
       var state = (($table.data('view').filter||{})[key])||{};
       var kind = config.colconf[key].range;
       var values = ($table.data('ranges')||{})[key];
@@ -118,7 +118,7 @@
       if(idx==-1) { // More button
         $el.addClass('more');
       } else { // Not more button
-        var key = config.columns[idx].key;
+        var key = config.columns[idx];
         var values = ($table.data('ranges')||{})[key];
         var kind = config.colconf[key].range;
         var w = find_widget(kind,'filters','class');
@@ -135,7 +135,7 @@
       var view = $table.data('view');
       if(!view.filter) { view.filter = {}; }
       var idx = $el.data('idx');
-      var key = config.columns[idx].key;
+      var key = config.columns[idx];
       if(obj_empty(state)) {
         delete view.filter[key];
       } else {
@@ -160,7 +160,7 @@
     function eundo(client_enums,enums,grid) {
       $.each(client_enums,function(col,plugin) {
         for(var i=0;i<config.columns.length;i++) {
-          if(config.columns[i].key == col) {
+          if(config.columns[i] == col) {
             var value = {};
             for(var j=0;j<grid.length;j++) {
               var v = grid[j][i];
@@ -211,7 +211,7 @@
       var colidx = {};
       $.each(to_filter,function(col,v) {
         for(var i=0;i<config.columns.length;i++) {
-          if(config.columns[i].key == col) { colidx[col] = i; }
+          if(config.columns[i] == col) { colidx[col] = i; }
         }
       });
       out.undo = function(manifest,grid,dest) {
@@ -244,13 +244,9 @@
         $.each(config.colconf,function(key,cc) {
           if(!cc.range) { return; }
           var label = "";
-          var j = -1;
-          for(var i=0;i<config.columns.length;i++) {
-            if(config.columns[i].key == key) { j = i; break; }
-          }
-          var label = config.columns[j].label || config.columns[j].key;
+          var label = cc.label || key;
           if(cc.range) {
-            dropdowns += dropdown(j,cc.range,label,cc.primary);
+            dropdowns += dropdown(cc.idx,cc.range,label,cc.primary);
             filterable_columns[key] = cc;
           }
         });

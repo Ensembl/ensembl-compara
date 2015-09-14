@@ -83,7 +83,7 @@
 
   $.fn.new_table_clientsort = function(config,data) {
     var col_idxs = {};
-    $.each(config.columns,function(i,val) { col_idxs[val.key] = i; });
+    $.each(config.columns,function(i,val) { col_idxs[val] = i; });
 
     function compare(a,b,plan,cache,keymeta) {
       var c = 0;

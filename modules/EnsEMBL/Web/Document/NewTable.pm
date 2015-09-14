@@ -1,4 +1,4 @@
-=head1 LICENSE
+=head1 sLICENSE
 
 Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
@@ -116,11 +116,12 @@ sub render {
     function => 'VariationTable',
   },0,1);
 
-  my %sorting;
-  foreach my $col (@{$self->{'columns'}}) {
-    $sorting{$col->{'key'}} = $col->{'sort'};
+  my %colmap;
+  foreach my $i (0..$#{$self->{'columns'}}) {
+    $colmap{$self->{'columns'}[$i]{'key'}} = $i;
   }
-  my $sort_conf = newtable_sort_client_config(\%sorting);
+
+  my $sort_conf = newtable_sort_client_config(\%colmap,$self->{'columns'});
 
   my $orient = {
     pagesize => 10,
@@ -132,7 +133,7 @@ sub render {
     unique => random_string(32),
     type => $self->{'type'},
     cssclass => $class,
-    columns => $self->{'columns'},
+    columns => [ map { $_->{'key'} } @{$self->{'columns'}} ],
     head => [
       [ "page_sizer" ],
       [ "loading","columns" ],

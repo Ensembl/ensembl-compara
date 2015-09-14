@@ -72,8 +72,8 @@
                     var v = grid[i][j];
                     if(v!==undefined && config.columns[j]) {
                       v = v[0];
-                      if(decorators[config.columns[j].key]) {
-                        var ff = decorators[config.columns[j].key];
+                      if(decorators[config.columns[j]]) {
+                        var ff = decorators[config.columns[j]];
                         for(var k=0;k<ff.length;k++) {
                           v = ff[k](v);
                         }

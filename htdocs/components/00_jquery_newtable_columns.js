@@ -46,9 +46,10 @@
         var out = '<div class="col_toggle"><div class="toggle">'+
                   'Show/hide columns'+
                   '<ul class="floating_popup">';
-        $.each(config.columns,function(i,col) {
-          var label = col.label || col.key;
-          out += '<li><input type="checkbox" data-key="'+i+'">'+
+        $.each(config.columns,function(i,key) {
+          var cc = config.colconf[key];
+          var label = cc.label || key;
+          out += '<li><input type="checkbox" data-key="'+cc.idx+'">'+
                  '<span>'+label+'</span></li>';
         });
         out += '</ul></div></div>';

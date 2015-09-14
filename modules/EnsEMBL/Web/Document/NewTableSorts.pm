@@ -348,14 +348,16 @@ sub add_sort {
 }
 
 sub newtable_sort_client_config {
-  my ($column_map) = @_;
+  my ($colmap,$cols) = @_;
 
   my $config;
-  foreach my $col (keys %$column_map) {
-    my $conf = get_sort($column_map->{$col});
+  foreach my $col (keys %$colmap) {
+    my $idx = $colmap->{$col};
+    my $conf = get_sort($cols->[$idx]{'sort'});
     $conf->{'options'} ||= {};
+    my @conf;
     if($conf->{'js'}) {
-      $config->{$col} = {
+      push @conf, {
         fn => $conf->{'js'},
         clean => $conf->{'js_clean'},
         range => $conf->{'range_display'},
@@ -363,10 +365,23 @@ sub newtable_sort_client_config {
         primary => $conf->{'filter_primary'},
         enum_js => $conf->{'enum_js'},
         range_params => $conf->{'range_display_params'},
-        type => $column_map->{$col},
+        type => $cols->[$idx]{'sort'},
         incr_ok => !($conf->{'options'}{'no_incr'}||0),
         decorate => $conf->{'decorate'},
+        range_range => $cols->[$idx]{'range'},
+        label => $cols->[$idx]{'label'},
+        idx => $idx, # TODO this can go when fully transitioned to named columns
       };
+    }
+    push @conf, {
+      range_range => $cols->[$idx]{'range'},
+      sort => $cols->[$idx]{'sort'},
+      width => $cols->[$idx]{'width'},
+      help => $cols->[$idx]{'help'},
+    };
+    $config->{$col} = {};
+    foreach my $x (@conf) {
+      $config->{$col}{$_} = $x->{$_} for keys %$x;
     }
   }
   return $config;

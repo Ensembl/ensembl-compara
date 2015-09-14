@@ -57,13 +57,14 @@ sub server_nulls {
 
   my %null_cache;
   my $cols = $iconfig->{'columns'};
+  my $colconf = $iconfig->{'colconf'};
   foreach my $j (0..$#$cols) {
-    my $col = $cols->[$j];
+    my $cc = $colconf->{$cols->[$j]};
     foreach my $i (0..$#$data) {
       my $is_null = $null_cache{$data->[$i][$j]};
       unless(defined $is_null) {
         $null_cache{$data->[$i][$j]} =
-          newtable_sort_isnull($col->{'sort'},$data->[$i][$j]);
+          newtable_sort_isnull($cc->{'sort'},$data->[$i][$j]);
       }
       $data->[$i][$j] = [$data->[$i][$j],0+$is_null];
     }
@@ -124,7 +125,6 @@ sub get_cache {
   my $cache = $self->hub->cache;
   return undef unless $cache;
   my $main_key = "newtable_".md5_hex($key);
-  warn "GET: $main_key\n";
   my $main_val = $cache->get($main_key);
   return undef unless $main_val;
   $main_val = JSON->new->decode($main_val);
@@ -146,13 +146,11 @@ sub set_cache {
   my $i = 0;
   my @ids;
   while($value) {
-    warn "!i=$i (".(length $value).")\n";
     push @ids,$main_key.'_'.($i++);
     my $more = substr($value,0,256*1024,'');
     next unless length $more;
     $cache->set($ids[-1],$more);
   }
-  warn "SET: $main_key\n";
   $cache->set($main_key,JSON->new->encode(\@ids));
 }
 
@@ -174,9 +172,8 @@ sub newtable_data_request {
   $cache_key = JSON->new->canonical->encode($cache_key);
   my $out = $self->get_cache($cache_key);
   return $out if $out;
-  warn "Cache miss\n";
 
-  my @cols = map { $_->{'key'} } @{$iconfig->{'columns'}};
+  my @cols = @{$iconfig->{'columns'}};
   my %cols_pos;
   $cols_pos{$cols[$_]} = $_ for(0..$#cols);
 

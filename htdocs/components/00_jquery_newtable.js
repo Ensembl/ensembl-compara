@@ -232,6 +232,18 @@
     if(!more) { flux(widgets,$table,-1); }
   }
 
+  function extract_params(url) {
+    var out = {};
+    var parts = url.split('?',2);
+    if(parts.length<2) { return out; }
+    var kvs = parts[1].split(';');
+    for(var i=0;i<kvs.length;i++) {
+      var kv = kvs[i].split('=');
+      out[kv[0]] = kv[1];
+    }
+    return out;
+  }
+
   function get_new_data(widgets,$table,manifest_c,more,config) {
     console.log("data changed, should issue request");
     if(more===null) { flux(widgets,$table,1); }
@@ -242,14 +254,16 @@
       maybe_use_response(widgets,$table,payload_one,config);
     } else {
       wire_manifest = $.extend(false,{},manifest_c.manifest,manifest_c.wire);
-      $.get($table.data('src'),{
+      src = $table.data('src');
+      params = $.extend({},extract_params(src),{
         keymeta: JSON.stringify($table.data('keymeta')||{}),
         wire: JSON.stringify(wire_manifest),
         orient: JSON.stringify(manifest_c.manifest),
         more: JSON.stringify(more),
-        config: JSON.stringify($table.data('config')),
+        config: JSON.stringify(config),
         incr_ok: manifest_c.incr_ok
-      },function(res) {
+      });
+      $.post($table.data('src'),params,function(res) {
         maybe_use_response(widgets,$table,res,config);
       },'json');
     }
@@ -282,9 +296,9 @@
 
   function prepopulate_ranges($table,config) {
     var fixed = {};
-    $.each(config.columns,function(i,col) {
-      if(col.range) {
-        fixed[col.key] = col.range;
+    $.each(config.colconf,function(key,cc) {
+      if(cc.range_range) {
+        fixed[key] = cc.range_range;
       }
     });
     $table.data('range-fixed',fixed);
