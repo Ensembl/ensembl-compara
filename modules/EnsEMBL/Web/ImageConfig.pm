@@ -2779,7 +2779,7 @@ sub add_alignments {
         $description = 'Pairwise alignments';
       }
       
-      $description  = qq{<a href="$static" class="cp-external">$description</a> between $self_label and $other_label"};
+      $description  = qq{<a href="$static" class="cp-external">$description</a> between $self_label and $other_label};
       $description .= " $1" if $row->{'name'} =~ /\((on.+)\)/;
 
       $alignments->{$menu_key}{$row->{'id'}} = {
