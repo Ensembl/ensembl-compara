@@ -2769,7 +2769,7 @@ sub add_alignments {
         $type        = sprintf '%sLASTz %s', $1, lc $2;
         $description = "$type pairwise alignments";
       } elsif ($row->{'type'} =~ /TRANSLATED_BLAT/) {
-        $type        = '';
+        $type        = 'TBLAT';
         $menu_key    = 'pairwise_tblat';
         $description = 'Trans. BLAT net pairwise alignments';
       } else {
