@@ -184,7 +184,7 @@ sub transcript_table {
   my $gene = $object->gene;
 
   #text for tooltips
-  my $gencode_desc    = "The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).";
+  my $gencode_desc    = qq(The GENCODE set is the gene set for human and mouse. <a href="/Help/Glossary?id=500" class="popup">GENCODE Basic</a> is a subset of representative transcripts (splice variants).);
   my $gene_html       = '';
   my $transc_table;
 
