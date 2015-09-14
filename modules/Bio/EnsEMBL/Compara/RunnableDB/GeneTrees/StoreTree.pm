@@ -132,7 +132,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
         }
     }
 
-    my $aln_file = $self->worker_temp_directory.sprintf('align.%d.%s', $dbID || 0, $format);
+    my $aln_file = $self->worker_temp_directory.sprintf('align.%d.%s', $dbID, $format);
 
     $gene_tree->print_alignment_to_file( $aln_file,
         -FORMAT => $format,
