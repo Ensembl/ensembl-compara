@@ -42,7 +42,7 @@ sub content {
                 };
 
   ## Options per format
-  my $fields_by_format = [{'Homology formats'  => {'OrthoXML' => []}}];
+  my $fields_by_format = [{'Homology formats'  => {'OrthoXML' => [], 'PhyloXML' => []}}];
 
   ## Add formats output by BioPerl
   my $align_formats = {};
