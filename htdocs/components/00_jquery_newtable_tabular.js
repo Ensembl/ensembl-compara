@@ -201,14 +201,18 @@
     $.lazy('refresh');
   }
 
-  function update_row2($table,grid,row,orient) {
+  function update_row2($table,config,grid,rev_series,row,orient) {
     var table_num = Math.floor(row/rows_per_subtable);
     var $subtable = $('.subtable',$table).eq(table_num);
     var markup = $subtable.data('markup') || [];
     var idx = row-table_num*rows_per_subtable;
     markup[idx] = markup[idx] || [];
+    var offset = [];
+    for(var i=0;i<config.columns.length;i++) {
+      offset[rev_series[config.columns[i]]] = i;
+    }
     for(var i=0;i<grid[row].length;i++) {
-      markup[idx][i] = (grid[row][i]||[''])[0];
+      markup[idx][i] = (grid[row][offset[i]]||[''])[0];
     }
     $subtable.data('markup',markup);
     $subtable.data('markup-orient',orient);
@@ -310,14 +314,16 @@
         });
         $.lazy('periodic',5000);
       },
-      add_data: function($table,grid,start,num,orient) {
+      add_data: function($table,grid,series,start,num,orient) {
         var $subtables = $('.subtable',$table);
         fix_widths($table,config,orient);
         header_fix($table,orient);
         extend_rows($table,start+num);
+        var rev_series = {};
+        for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
         var subtabs = [];
         for(var i=0;i<num;i++) {
-          subtabs[update_row2($table,grid,i+start,orient)]=1;
+          subtabs[update_row2($table,config,grid,rev_series,i+start,orient)]=1;
         }
         d = $.Deferred().resolve(subtabs);
         var has_reset = false;
