@@ -126,7 +126,7 @@ sub variation_content {
       }
 
       push @entries, { type => 'cDNA position', 'label' => $cdna_pos} if $cdna_pos; 
-      push @entries, { type => 'Residue number', 'label' => $aa_pos} if $aa_pos; 
+      push @entries, { type => 'Protein position', 'label' => $aa_pos} if $aa_pos; 
       
       push @entries, { type => 'Amino acids', label => $pep_alleles} if $pep_alleles && $pep_alleles =~ /\//;
       push @entries, { type => 'Codons',      label => $codons}      if $codons      && $codons      =~ /\//;
