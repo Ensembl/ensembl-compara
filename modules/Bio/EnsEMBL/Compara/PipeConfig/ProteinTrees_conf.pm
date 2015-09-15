@@ -1458,7 +1458,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update)],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update raxml_parsimony)],
             },
             -flow_into          => [ 'run_qc_tests' ],
         },
