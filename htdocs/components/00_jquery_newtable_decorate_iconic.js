@@ -16,7 +16,7 @@
 
 (function($) {
   $.fn.newtable_decorate_iconic = function(config,data) {
-    function decorate_fn(extras) {
+    function decorate_fn(column,extras) {
       return function(html) {
         var values = html.split(';');
         new_html = "";

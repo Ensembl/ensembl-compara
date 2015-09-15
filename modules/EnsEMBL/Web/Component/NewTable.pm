@@ -43,11 +43,12 @@ sub server_sort {
   @$data = sort {
     my $c = 0;
     foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
-      $cache{$col->{'key'}}||={};
-      my $idx = $rseries{$col->{'key'}};
-      my $type = $colconf->{$col->{'key'}}{'sort'}||'string';
-      $type = 'numeric' if $col->{'key'} eq '__tie';
-      $c = newtable_sort_cmp($type,$a->[$idx],$b->[$idx],$col->{'dir'},$keymeta,$cache{$col->{'key'}},$col->{'key'});
+      my $key = $col->{'key'};
+      $cache{$key}||={};
+      my $idx = $rseries{$key};
+      my $type = $colconf->{$key}{'sort'}||'string';
+      $type = 'numeric' if $key eq '__tie';
+      $c = newtable_sort_cmp($type,$a->[$idx],$b->[$idx],$col->{'dir'},$keymeta,$cache{$key},$key);
       last if $c;
     }
     $c;
@@ -62,7 +63,7 @@ sub server_nulls {
   my $cols = $iconfig->{'columns'};
   my $colconf = $iconfig->{'colconf'};
   foreach my $j (0..$#$series) {
-    my $cc = $colconf->{$->[$j]};
+    my $cc = $colconf->{$series->[$j]};
     foreach my $i (0..$#$data) {
       my $is_null = $null_cache{$data->[$i][$j]};
       unless(defined $is_null) {
@@ -259,13 +260,13 @@ sub newtable_data_request {
     $data = \@new;
   }
 
-  #$used_cols = [ reverse @$used_cols ];
+  $used_cols = [ reverse @$used_cols ];
 
   my $D = time();
   # Map to column format
   my @data_out;
   foreach my $d (@$data) {
-    push @data_out,[ map { $d->{$_}||'' } @$used_cols ];
+    push @data_out,[ map { $d->{$_} } @$used_cols ];
   }
 
   # Move on continuation counter

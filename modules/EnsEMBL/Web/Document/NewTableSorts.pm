@@ -321,6 +321,11 @@ my %SORTS = (
   iconic_primary => [qw(iconic primary)],
   link_html => [qw(link html)],
   link_html_nofilter => [qw(nofilter link html)],
+  editorial => {
+    decorate => "editorial",
+  },
+  numeric_editorial => [qw(numeric editorial)],
+  numeric_nofilter => [qw(nofilter numeric)],
 );
 
 my %sort_cache;
@@ -370,6 +375,7 @@ sub newtable_sort_client_config {
         decorate => $conf->{'decorate'},
         range_range => $cols->[$idx]{'range'},
         label => $cols->[$idx]{'label'},
+        type => $cols->[$idx]{'type'},
         idx => $idx, # TODO this can go when fully transitioned to named columns
       };
     }

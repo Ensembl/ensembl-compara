@@ -157,30 +157,24 @@
       $el.hide();
     }
 
-    function eundo(client_enums,enums,grid) {
-      $.each(client_enums,function(col,plugin) {
-        for(var i=0;i<config.columns.length;i++) {
-          if(config.columns[i] == col) {
-            var value = {};
-            for(var j=0;j<grid.length;j++) {
-              var v = grid[j][i];
-              if(v===null || v===undefined || v[1]) { continue; }
-              v = v[0];
-              if(plugin.split) {
-                v = plugin.split(v);
-              } else {
-                v = [v];
-              }
-              if(v===null || v===undefined) { continue; }
-              for(var k=0;k<v.length;k++) {
-                plugin.value(value,v[k]);
-              }
-            }
-            if(plugin.finish) { value = plugin.finish(value); }
-            enums[col] = value;
+    function eundo(client_enums,enums,grid,series) {
+      for(var i=0;i<series.length;i++) {
+        var plugin = client_enums[series[i]];
+        if(!plugin) { continue; }
+        var value = {};
+        for(var j=0;j<grid.length;j++) {
+          var v = grid[j][i];
+          if(v===null || v===undefined || v[1]) { continue; }
+          v = v[0];
+          if(plugin.split) { v = plugin.split(v); } else { v = [v]; }
+          if(v===null || v===undefined) { continue; }
+          for(var k=0;k<v.length;k++) {
+            plugin.value(value,v[k]);
           }
         }
-      });
+        if(plugin.finish) { value = plugin.finish(value); }
+        enums[series[i]] = value;
+      }
       return enums;
     }
 
@@ -244,7 +238,8 @@
     return {
       generate: function() {
         var dropdowns = "";
-        $.each(config.colconf,function(key,cc) {
+        $.each(config.columns,function(i,key) {
+          var cc =config.colconf[key];
           if(!cc.range) { return; }
           var label = "";
           var label = cc.label || key;
@@ -300,8 +295,8 @@
             });
             need.enumerate = server_filter;
             var out = {
-              eundo: function(enums,grid) {
-                return eundo(client_enums,enums,grid);
+              eundo: function(enums,grid,series) {
+                return eundo(client_enums,enums,grid,series);
               }
             };
             if(obj_empty(need.filter)) { delete need.filter; }

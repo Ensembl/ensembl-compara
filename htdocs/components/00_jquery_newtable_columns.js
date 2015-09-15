@@ -48,6 +48,9 @@
                   '<ul class="floating_popup">';
         $.each(config.columns,function(i,key) {
           var cc = config.colconf[key];
+          if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
+            return;
+          }
           var label = cc.label || key;
           out += '<li><input type="checkbox" data-key="'+key+'">'+
                  '<span>'+label+'</span></li>';

@@ -48,8 +48,7 @@
     });
   }
 
-  function new_th(colconf,key) {
-    var cc =colconf[key];
+  function new_th(key,cc) {
     var text = cc.label || cc.title || key;
     var attrs = {};
     var classes = [];
@@ -101,7 +100,12 @@
     var columns = [];
 
     $.each(config.columns,function(i,key) {
-      columns.push(new_th(config.colconf,key));
+      var cc = config.colconf[key];
+      // TODO to plugin
+      if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
+        return;
+      }
+      columns.push(new_th(key,cc));
     });
     return '<thead><tr>'+columns.join('')+"</tr></thead>";
   }
@@ -113,23 +117,35 @@
       if(off[$th.data('key')]) { $th.hide(); } else { $th.show(); }
     });
   }
+
+  function sort_for_col(config,col) {
+    // TODO pluginise this
+    var out = col;
+    $.each(config.colconf,function(key,cc) {
+      if(cc.type && cc.type.sort_for && cc.type.sort_for.col == col) {
+        out = key;
+      }
+    });
+    return out;
+  }
  
-  function add_sort($table,key,clear) {
+  function add_sort($table,config,key,clear) {
     // Update data
     var view = $table.data('view');
     var sort = [];
     if(view && view.sort) { sort = view.sort; }
     var new_sort = [];
     var dir = 0;
+    var sort_col = sort_for_col(config,key);
     $.each(sort,function(i,val) {
-      if(val.key == key) {
+      if(val.key == sort_col) {
         dir = -val.dir;
       } else if(!clear) {
         new_sort.push(val);
       }
     });
     if(!dir) { dir = 1; }
-    new_sort.push({ key: key, dir: dir });
+    new_sort.push({ key: sort_col, dir: dir });
     view.sort = new_sort;
     $table.data('view',view);
     $table.trigger('view-updated');
@@ -137,7 +153,7 @@
     $('th',$table).removeClass('sorting_asc').removeClass('sorting_desc');
     $.each(new_sort,function(i,val) {
       var dir = val.dir>0?'asc':'desc';
-      $('th[data-key="'+val.key+'"]').addClass('sorting_'+dir);
+      $('th[data-key="'+key+'"]').addClass('sorting_'+dir);
     }); 
   }
 
@@ -207,12 +223,16 @@
     var markup = $subtable.data('markup') || [];
     var idx = row-table_num*rows_per_subtable;
     markup[idx] = markup[idx] || [];
-    var offset = [];
+    var shown = [];
     for(var i=0;i<config.columns.length;i++) {
-      offset[rev_series[config.columns[i]]] = i;
+      var cc = config.colconf[config.columns[i]];
+      if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
+        continue;
+      }
+      shown.push(rev_series[config.columns[i]]);
     }
-    for(var i=0;i<grid[row].length;i++) {
-      markup[idx][i] = (grid[row][offset[i]]||[''])[0];
+    for(var i=0;i<shown.length;i++) {
+      markup[idx][i] = (grid[row][shown[i]]||[''])[0];
     }
     $subtable.data('markup',markup);
     $subtable.data('markup-orient',orient);
@@ -310,7 +330,7 @@
       },
       go: function($table,$el) {
         $('th',$table).click(function(e) {
-          add_sort($table,$(this).data('key'),!e.shiftKey); 
+          add_sort($table,config,$(this).data('key'),!e.shiftKey);
         });
         $.lazy('periodic',5000);
       },

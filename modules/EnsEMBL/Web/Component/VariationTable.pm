@@ -71,7 +71,6 @@ sub new_consequence_type {
       helptip => $c->description,
       coltab => $hex,
     });
-    warn sprintf("%s -> %s\n",$c->label,$c->rank);
   }
   return join(';',@type);
 }
@@ -182,15 +181,38 @@ sub make_table {
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
 
   if ($sd->{'SIFT'}) {
-    push @$columns, (
-      { key => 'sift', sort => 'numeric_hidden', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'} });
+    push @$columns,
+      { key => 'sift_sort', sort => 'numeric_nofilter', width => '6u', label => "SI\aFT sort",     align => 'center', help => $glossary->{'SIFT'},
+        type => {
+          sort_for => { col => 'sift_value' },
+          screen => { unshowable => 1 },
+        },
+      },
+      { key => 'sift_class', sort => 'iconic', width => '6u', label => "SI\aFT class",     align => 'center', help => $glossary->{'SIFT'},
+        type => {
+          screen => { unshowable => 1 },
+        },
+       },
+      { key => 'sift_value', sort => 'numeric_editorial', width => '6u', label => "SI\aFT score",     align => 'center', help => $glossary->{'SIFT'},
+      };
   }
 
   # add GMAF and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
-    push @$columns, (
-      { key => 'polyphen', sort => 'numeric_hidden', width => '6u', label => "Poly\fPhen", align => 'center', help => $glossary->{'PolyPhen'} },
-    );
+    push @$columns,
+      { key => 'polyphen_sort', sort => 'numeric_nofilter', width => '6u', label => "Poly\fPhen sort",     align => 'center', help => $glossary->{'PolyPhen'},
+        type => {
+          sort_for => { col => 'polyphen_value' },
+          screen => { unshowable => 1 },
+        },
+      },
+      { key => 'polyphen_class', sort => 'iconic', width => '6u', label => "Poly\fPhen class",     align => 'center', help => $glossary->{'PolyPhen'},
+        type => {
+          screen => { unshowable => 1 },
+        },
+       },
+      { key => 'polyphen_value', sort => 'numeric_editorial', width => '6u', label => "Poly\fPhen score",     align => 'center', help => $glossary->{'PolyPhen'},
+      };
 
     splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $glossary->{'Global MAF'} };
   }
@@ -538,6 +560,38 @@ sub variation_table {
   $self->register_key('decorate/link/ID/*',{
     base_url => $base_url,
   });
+  $self->register_key('decorate/editorial/sift_value/*',{
+    type => 'lozenge',
+    source => 'sift_class',
+  });
+  $self->register_key('decorate/editorial/polyphen_value/*',{
+    type => 'lozenge',
+    source => 'polyphen_class',
+  });
+  
+  my %sp_classes = (
+    '-'                 => '',
+    'probably damaging' => 'bad',
+    'possibly damaging' => 'ok',
+    'benign'            => 'good',
+    'unknown'           => 'neutral',
+    'tolerated'         => 'good',
+    'deleterious'       => 'bad',
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
+  );
+  foreach my $pred (keys %sp_classes) {
+    $self->register_key("decorate/editorial/sift_value/$pred",{
+      cssclass => "score_$sp_classes{$pred}",
+      helptip => $pred,
+    });
+    $self->register_key("decorate/editorial/polyphen_value/$pred",{
+      cssclass => "score_$sp_classes{$pred}",
+      helptip => $pred,
+    });
+  }
 
   ROWS: foreach my $transcript (@$transcripts) {
     my %snps = %{$transcript->__data->{'transformed'}{'snps'} || {}};
@@ -598,8 +652,8 @@ sub variation_table {
             # Sort out consequence type string
             my $type = $self->new_consequence_type($tva);
             
-            my $sift = $self->render_sift_polyphen($tva->sift_prediction,     $tva->sift_score);
-            my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+            my $sifts = $self->classify_sift_polyphen($tva->sift_prediction,$tva->sift_score);
+            my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
             
             # Adds LSDB/LRG sources
             if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
@@ -657,8 +711,12 @@ sub variation_table {
               Transcript => qq{<a href="$trans_url">$transcript_name</a>},
               aachange   => $aachange,
               aacoord    => $aacoord,
-              sift       => $sift,
-              polyphen   => $poly,
+              sift_sort  => $sifts->[0],
+              sift_class => $sifts->[1],
+              sift_value => $sifts->[2],
+              polyphen_sort  => $polys->[0],
+              polyphen_class => $polys->[1],
+              polyphen_value => $polys->[2],
               HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
             };
             $row = { %$row, %$more_row };

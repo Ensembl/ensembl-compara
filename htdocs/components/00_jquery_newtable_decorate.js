@@ -16,10 +16,10 @@
 
 (function($) {
   $.fn.newtable_decorate = function(config,data,widgets) {
-    function do_decorate(ff_in,extras) {
+    function do_decorate(column,ff_in,extras) {
       var ff_out = [];
       for(var i=0;i<ff_in.length;i++) {
-        var f = ff_in[i](extras);
+        var f = ff_in[i](column,extras);
         if(f) { ff_out.push(f); }
       }
       return ff_out;
@@ -29,7 +29,7 @@
       $.each(widgets,function(name,w) {
         if(w.decorators && w.decorators[type] && 
            w.decorators[type][column]) {
-          var ff = do_decorate(w.decorators[type][column],extras);
+          var ff = do_decorate(column,w.decorators[type][column],extras);
           if(!decorators[column]) { decorators[column] = []; }
           decorators[column] = decorators[column].concat(ff);
         }
@@ -76,7 +76,7 @@
                       if(decorators[key]) {
                         var ff = decorators[key];
                         for(var k=0;k<ff.length;k++) {
-                          v = ff[k](v);
+                          v = ff[k](v,grid[i],series);
                         }
                       }
                       v = [v,grid[i][j][1]];

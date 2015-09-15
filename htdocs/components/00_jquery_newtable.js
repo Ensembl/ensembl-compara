@@ -83,9 +83,9 @@
     return { data: data, orient: orient };
   }
 
-  function build_enums(manifest_c,grid,enums) {
+  function build_enums(manifest_c,grid,series,enums) {
     $.each(manifest_c.eundo,function(i,step) {
-      enums = step(enums,grid);
+      enums = step(enums,grid,series);
     });
     return enums;
   }
@@ -179,7 +179,8 @@
 
   function store_ranges($table,enums,cur_manifest,manifest_in,config) {
     var grid = $table.data('grid') || [];
-    var enums = build_enums(cur_manifest,grid,enums) || {};
+    var series = $table.data('grid-series') || [];
+    var enums = build_enums(cur_manifest,grid,series,enums) || {};
     var ranges = $table.data('ranges') || {};
     var range_manifest = $table.data('range-manifest') || [];
     if(!$.orient_compares_equal(manifest_in,range_manifest)) {

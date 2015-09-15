@@ -16,7 +16,7 @@
 
 (function($) {
   $.fn.newtable_decorate_link = function(config,data) {
-    function decorate_fn(extras) {
+    function decorate_fn(column,extras) {
       return function(html) {
         if(extras['*'] && extras['*'].base_url) {
           var base = extras['*'].base_url;
