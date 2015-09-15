@@ -31,18 +31,21 @@ use SiteDefs;
 # XXX move all this stuff to somewhere it's more suited
 
 sub server_sort {
-  my ($self,$data,$sort,$iconfig,$col_idx,$keymeta) = @_;
+  my ($self,$data,$sort,$iconfig,$series,$keymeta) = @_;
 
   my $cols = $iconfig->{'columns'};
+  my $colconf = $iconfig->{'colconf'};
   foreach my $i (0..$#$data) { push @{$data->[$i]},$i; }
-  $col_idx->{'__tie'} = -1;
   my %cache;
+  my %rseries;
+  $rseries{$series->[$_]} = $_ for (0..$#$series);
+  $rseries{'__tie'} = -1;
   @$data = sort {
     my $c = 0;
     foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
       $cache{$col->{'key'}}||={};
-      my $idx = $col_idx->{$col->{'key'}};
-      my $type = $cols->[$idx]{'sort'}||'string';
+      my $idx = $rseries{$col->{'key'}};
+      my $type = $colconf->{$col->{'key'}}{'sort'}||'string';
       $type = 'numeric' if $col->{'key'} eq '__tie';
       $c = newtable_sort_cmp($type,$a->[$idx],$b->[$idx],$col->{'dir'},$keymeta,$cache{$col->{'key'}},$col->{'key'});
       last if $c;
@@ -53,13 +56,13 @@ sub server_sort {
 }
 
 sub server_nulls {
-  my ($self,$data,$iconfig) = @_;
+  my ($self,$data,$iconfig,$series) = @_;
 
   my %null_cache;
   my $cols = $iconfig->{'columns'};
   my $colconf = $iconfig->{'colconf'};
-  foreach my $j (0..$#$cols) {
-    my $cc = $colconf->{$cols->[$j]};
+  foreach my $j (0..$#$series) {
+    my $cc = $colconf->{$->[$j]};
     foreach my $i (0..$#$data) {
       my $is_null = $null_cache{$data->[$i][$j]};
       unless(defined $is_null) {
@@ -256,6 +259,8 @@ sub newtable_data_request {
     $data = \@new;
   }
 
+  #$used_cols = [ reverse @$used_cols ];
+
   my $D = time();
   # Map to column format
   my @data_out;
@@ -269,12 +274,12 @@ sub newtable_data_request {
 
   # Sort it, if necessary
   if($wire->{'sort'} and @{$wire->{'sort'}}) {
-    $self->server_sort(\@data_out,$wire->{'sort'},$iconfig,\%sort_pos,$keymeta);
+    $self->server_sort(\@data_out,$wire->{'sort'},$iconfig,$used_cols,$keymeta);
     splice(@data_out,0,$irows->[0]);
     splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
   }
   my $E = time();
-  $self->server_nulls(\@data_out,$iconfig);
+  $self->server_nulls(\@data_out,$iconfig,$used_cols);
 
   my $F = time();
 
