@@ -85,8 +85,8 @@ sub table_data {
   my %pf_publication;
   foreach my $pf (@$pfs) {
     if ($pf->study && $pf->is_significant==1) {
-      if ($pf->study->external_reference =~ /^pubmed\/(\d+)/) {
-        $pf_publication{$1}{$pf->phenotype->description} = 1;
+      if ($pf->study->external_reference =~ /^(pubmed|PMID)\/|:(\d+)/) {
+        $pf_publication{$2}{$pf->phenotype->description} = 1;
       }
     }
   }
