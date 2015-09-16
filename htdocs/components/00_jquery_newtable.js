@@ -323,6 +323,12 @@
     $table.data('range-fixed',fixed);
   }
 
+  function markup_activate(widgets,config,$table,$some) {
+    $.each(widgets,function(key,fn) {
+      if(fn.go_data) { fn.go_data($some); }
+    });
+  }
+
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
@@ -371,6 +377,9 @@
       }
       maybe_get_new_data(widgets,$table,config);
       $table.data('old-view',$.extend(true,{},view));
+    });
+    $table.on('markup-activate',function(e,$some) {
+      markup_activate(widgets,config,$table,$some);
     });
     $table.on('spawn',function(e,extra,$frame) {
       var src = $table.data('src');

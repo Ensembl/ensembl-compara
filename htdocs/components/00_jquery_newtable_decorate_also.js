@@ -15,50 +15,37 @@
  */
 
 (function($) {
-  $.fn.newtable_decorate_link = function(config,data) {
+  $.fn.newtable_decorate_also = function(config,data) {
     function decorate_fn(column,extras) {
       return function(html,row,series) {
-        var base = extras['*'].base_url;
-        var params = (extras['*'].params || {});
+        var cols = (extras['*'].cols || []);
         var extra = [];
-        var rseries = {};
         var ok = true;
+        var rseries = {};
         $.each(series,function(i,v) { rseries[v] = i; });
-        $.each(params,function(k,v) {
+        $.each(cols,function(i,v) {
           val = row[rseries[v]];
           if(val===null || val===undefined) {
             ok = false;
           } else {
-            extra.push(k+'='+encodeURIComponent(row[rseries[v]][0]));
+            extra.push('<small>('+row[rseries[v]][0]+')</small>');
           }
         });
         if(!ok) { return html; }
-        var rest = '';
-        if(extra.length) {
-          if(base.match(/\?/)) { rest = ';'; } else { rest = '?'; }
-        }
-        var rest = rest + extra.join(';');
-        if(extras['*'] && extras['*'].base_url) {
-          if(html.match(/<a/)) {
-            html = html.replace(/href="/g,'href="'+base+rest);
-          } else {
-            html = '<a href="'+base+rest+'">'+html+'</a>';
-          }
-        }
-        return html;
+        return html + ' ' + extra.join(' ');
       };
     }
 
     var decorators = {};
     $.each(config.colconf,function(key,cc) {
-      if(cc.decorate && cc.decorate == "link") {
+      if(cc.decorate && cc.decorate == "also") {
         decorators[key] = [decorate_fn];
       }
     });
 
     return {
       decorators: {
-        link: decorators
+        also: decorators
       }
     };
   }; 

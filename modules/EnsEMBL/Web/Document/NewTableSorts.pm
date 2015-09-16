@@ -251,6 +251,40 @@ my %SORTS = (
     null => \&null_position,
     perl => \&sort_position,
     js => 'position',
+    range_display_params => { steptype => 'integer' },
+    range_display => 'position',
+    range_merge => 'position',
+    range_value => sub {
+      my ($acc,$value) = @_;
+
+      return unless $value =~ /^(.*?):(\d+)/;
+      my ($chr,$pos) = ($1,$2);
+      $acc->{$chr} ||= { chr => $chr };
+      if(exists $acc->{$chr}{'min'}) {
+        $acc->{$chr}{'max'} = max($acc->{$chr}{'max'},$pos);
+        $acc->{$chr}{'min'} = min($acc->{$chr}{'min'},$pos);
+      } else {
+        $acc->{$chr}{'min'} = $acc->{$chr}{'max'} = $pos;
+      }
+      ($acc->{$chr}{'count'}||=0)++;
+    },
+    range_finish => sub { return $_[0]; },
+    range_match => sub {
+      my ($man,$val) = @_;
+      if($val =~ s/^$man->{'chr'}://) {
+        if(exists $man->{'min'}) {
+          return 0 unless $val>=$man->{'min'};
+        }
+        if(exists $man->{'max'}) {
+          return 0 unless $val<=$man->{'max'};
+        }
+        return 1;
+      } else {
+        if(exists $man->{'nulls'}) { return $man->{'nulls'}; }
+        return 1;
+      }
+    },
+    enum_js => "position",
   },
   'position_html' => {
     clean => \&html_cleaned,
@@ -318,6 +352,9 @@ my %SORTS = (
   link => {
     decorate => "link",
   },
+  also => {
+    decorate => "also",
+  },
   iconic_primary => [qw(iconic primary)],
   link_html => [qw(link html)],
   link_html_nofilter => [qw(nofilter link html)],
@@ -325,7 +362,13 @@ my %SORTS = (
     decorate => "editorial",
   },
   numeric_editorial => [qw(numeric editorial)],
+  numeric_also => [qw(numeric also)],
   numeric_nofilter => [qw(nofilter numeric)],
+  position_nofilter => [qw(nofilter position)],
+  toggle => {
+    decorate => "toggle",
+  },
+  string_nofilter_toggle => [qw(nofilter string toggle)],
 );
 
 my %sort_cache;

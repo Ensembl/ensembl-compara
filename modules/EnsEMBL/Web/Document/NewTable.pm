@@ -155,6 +155,8 @@ sub render {
       decorate_iconic => [ "newtable_decorate_iconic", {}],
       decorate_link => [ "newtable_decorate_link", {}],
       decorate_editorial => [ "newtable_decorate_editorial", {}],
+      decorate_also => [ "newtable_decorate_also", {}],
+      decorate_toggle => [ "newtable_decorate_toggle", {}],
       page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
       "tabular" => [ "new_table_tabular", { } ],
       "paragraph" => [ "new_table_paragraph", { } ],

@@ -154,6 +154,22 @@
         finish: function(vv) { return Object.keys(vv); },
         match: function(ori,val) { return string_match(ori,val); }
       },{
+        name: "position",
+        value: function(vv,v) {
+          var m = v.match(/^(.*?):(\d+)/);
+          if(!m) { return; }
+          if(!vv[m[1]]) { vv[m[1]] = { chr: m[1] }; }
+          if(vv[m[1]].hasOwnProperty('min')) {
+            vv[m[1]].min = vv[m[1]].min<m[2]?vv[m[1]].min:m[2];
+            vv[m[1]].max = vv[m[1]].max>m[2]?vv[m[1]].max:m[2];
+          } else {
+            vv[m[1]].min = vv[m[1]].max = m[2];
+          }
+          if(!vv[m[1]].count) { vv[m[1]].count = 0; }
+          vv[m[1]].count++;
+        },
+        match: function(ori,val) { return position_match(ori,val); }
+      },{
         name: "hidden_position",
         split: function(v) { return [html_hidden(v)]; },
         value: function(vv,v) {

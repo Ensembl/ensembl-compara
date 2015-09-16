@@ -81,7 +81,7 @@ sub passes_muster {
 
   my $ok = 1;
   foreach my $col (keys %{$rq->{'wire'}{'filter'}}) {
-    my $colconf = $rq->{'config'}{'columns'}[$rq->{'cols_pos'}{$col}];
+    my $colconf = $rq->{'config'}{'colconf'}[$rq->{'cols_pos'}{$col}];
     next unless exists $row->{$col};
     my $val = $row->{$col};
     my $ok_col = 0;
@@ -269,7 +269,7 @@ sub newtable_data_request {
   # Enumerate, if necessary
   my %enums;
   foreach my $colkey (@{$wire->{'enumerate'}||[]}) {
-    my $colconf = $iconfig->{'columns'}[$cols_pos{$colkey}];
+    my $colconf = $iconfig->{'colconf'}{$cols_pos{$colkey}};
     my $row_pos = $sort_pos{$colkey};
     next unless defined $row_pos;
     my %values;

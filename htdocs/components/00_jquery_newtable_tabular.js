@@ -77,11 +77,11 @@
     $.each(config.columns,function(i,key) {
       var cc = config.colconf[key];
       var m = cc.width.match(/^(\d+)(.*)$/)
+      if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
       widths.push([m[1],m[2]]);
-      if(orient.columns[i]) {
-        if(cc.width[1] == 'u' || cc.width[1] == 'px') {
-          totals[cc.width[1]] += parseInt(cc.width[0]);
-        }
+      if(orient.off_columns && orient.off_columns[key]) { return; }
+      if(m[2] == 'u' || m[2] == 'px') {
+        totals[m[2]] += parseInt(m[1]);
       }
     });
     var table_width = $table.width();
@@ -90,9 +90,11 @@
     totals['u'] = (100-totals['px']) / (totals['u']||1);
     var $head = $('table:first th',$table);
     $head.each(function(i) {
-      if(orient.columns[i]) {
-        $(this).css('width',(widths[i][0]*totals[widths[i][1]])+"%");
-      }
+      var key = config.columns[i];
+      var cc = config.colconf[key];
+      if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
+      if(orient.off_columns && orient.off_columns[key]) { return; }
+      $(this).css('width',(widths[i][0]*totals[widths[i][1]])+"%");
     });
   }
 
@@ -247,7 +249,8 @@
     for(var i=0;i<markup.length;i++) {
       html += "<tr>";
       for(var j=0;j<$th.length;j++) {
-        if(orient && orient.off_columns && orient.off_columns[config.columns[j]]) {
+        var key = $($th.eq(j)).data('key');
+        if(orient && orient.off_columns && orient.off_columns[key]) {
           continue;
         }
         var start = "<td>";
@@ -286,7 +289,8 @@
       $subtable.empty().append($newtable);
     }
     $('tbody',$subtable)[0].innerHTML = html;
-    $('._ht',$subtable).helptip();
+    $table.trigger('markup-activate',[$subtable]);
+    $('._ht',$subtable).helptip(); // XXX merge into the above
     $subtable.css('height','');
     $subtable.data('known-height',$subtable.height());
     guess_subtable_sizes($table);

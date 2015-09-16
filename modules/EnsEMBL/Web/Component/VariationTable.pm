@@ -160,8 +160,24 @@ sub make_table {
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
     { key => 'ID',       width => '12u',     sort => 'link_html_nofilter',                                                      help => 'Variant identifier'                     },
-    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp',                       help => $glossary->{'Chr:bp'}                    },
-    { key => 'Alleles',  width => '16u',      sort => 'string_nofilter',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
+    { key => 'vf',       width => '12u',     sort => 'numeric',                                                      help => 'Variant identifier',
+      type => {
+          screen => { unshowable => 1 },
+      }
+                     },
+    { key => 'chr' ,     width => '10u', sort => 'position_nofilter', label => 'Chr: bp',                       help => $glossary->{'Chr:bp'}                    },
+    { key => 'location' ,     width => '10u', sort => 'position', label => 'Location: bp',                       help => $glossary->{'Chr:bp'},
+      type => {
+        sort_for => { col => 'chr' },
+        screen => { unshowable => 1 },
+      },
+                    },
+    { key => 'Alleles',  width => '16u',      sort => 'string_nofilter_toggle',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
+    { key => 'vf_allele',  width => '6u',      sort => 'string_nofilter',          label => "Vari\fant Alle\fle",  align => 'center', help => 'Variant allele',
+     type => {
+        screen => { unshowable => 1 },
+      }
+     },
     { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
     { key => 'Source',   width => '8u', sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
     { key => 'status',   width => '9u', sort => 'iconic', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
@@ -214,7 +230,12 @@ sub make_table {
       { key => 'polyphen_value', sort => 'numeric_editorial', width => '6u', label => "Poly\fPhen score",     align => 'center', help => $glossary->{'PolyPhen'},
       };
 
-    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $glossary->{'Global MAF'} };
+    splice @$columns, 4, 0, { key => 'gmaf', sort => 'numeric_also', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $glossary->{'Global MAF'} },{
+      key => 'gmaf_allele', sort => 'html', width => '1u', label => "GMAF Allele", align => 'center', help => $glossary->{'Global MAF'},
+        type => {
+          screen => { unshowable => 1 },
+        },
+    };
   }
  
   if ($hub->type ne 'Transcript') {
@@ -485,7 +506,6 @@ sub variation_table {
     action => 'Summary',
     vf     => undef,
     v      => undef,
-    source => undef,
   });
 
   # This order is a guess at the most useful and isn't strongly motivated.
@@ -550,15 +570,20 @@ sub variation_table {
     $base_trans_url = $hub->url({
       type   => 'Transcript',
       action => 'Summary',
-      t      => undef,
     });
   }
 
   $self->register_key('decorate/link/Transcript/*',{
     base_url => $base_trans_url,
+    params => {
+      t => "Transcript",
+    },
   });
   $self->register_key('decorate/link/ID/*',{
     base_url => $base_url,
+    params => {
+      vf => "vf",
+    },
   });
   $self->register_key('decorate/editorial/sift_value/*',{
     type => 'lozenge',
@@ -567,6 +592,15 @@ sub variation_table {
   $self->register_key('decorate/editorial/polyphen_value/*',{
     type => 'lozenge',
     source => 'polyphen_class',
+  });
+  $self->register_key('decorate/also/gmaf/*',{
+    cols => ['gmaf_allele'],
+  });
+  $self->register_key('decorate/toggle/Alleles/*',{
+    separator => '/',
+    max => 20,
+    highlight_col => 'vf_allele',
+    highlight_over => 2,
   });
   
   my %sp_classes = (
@@ -632,9 +666,9 @@ sub variation_table {
           my $row;
 
           my $variation_name = $snp->variation_name;
+          my $url = ";vf=$raw_id";
+          $row->{'ID'} = $variation_name;
           my $source = $snp->source_name;
-          my $url = ";v=$variation_name;vf=$raw_id;source=$source";
-          $row->{'ID'} = qq(<a href="$url">$variation_name</a>);
           $row->{'Source'} = $source;
 
           unless($phase eq 'outline') {
@@ -646,8 +680,6 @@ sub variation_table {
             my $trans_url            = ";$url_transcript_prefix=$transcript_stable_id";
             my $vf_allele            = $tva->variation_feature_seq;
             my $allele_string        = $snp->allele_string;
-              $allele_string        = $self->trim_large_allele_string($allele_string, 'allele_' . $tva->dbID, 20) if length $allele_string > 20; # Check allele string size (for display issues)
-              $allele_string        =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\/.+\//; # highlight variant allele in allele string
             
             # Sort out consequence type string
             my $type = $self->new_consequence_type($tva);
@@ -669,7 +701,11 @@ sub variation_table {
             }
             
             my $gmaf   = $snp->minor_allele_frequency; # global maf
-              $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
+            my $gmaf_allele;
+            if(defined $gmaf) {
+              $gmaf = sprintf("%.3f",$gmaf);
+              $gmaf_allele = $snp->minor_allele;
+            }
 
             my $status = join('~',@$evidences);
             foreach my $ev (@$evidences) {
@@ -683,7 +719,7 @@ sub variation_table {
                 order => $evidence_order{$ev}
               });
             }
-            my $clin_sig = join(";",@$clin_sigs);
+            my $clin_sig = join("~",@$clin_sigs);
             foreach my $cs (@$clin_sigs) {
               my $cs_img = $cs;
               $cs_img =~ s/\s/-/g;
@@ -699,16 +735,20 @@ sub variation_table {
             my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
           
             my $more_row = {
+              vf         => $raw_id,
               class      => $var_class,
               Alleles    => $allele_string,
+              vf_allele  => $vf_allele,
               Ambiguity  => $snp->ambig_code,
               gmaf       => $gmaf   || '-',
+              gmaf_allele => $gmaf_allele || '-',
               status     => $status,
               clinsig    => $clin_sig,
-              chr        => "<span class=\"hidden\">$chr:".($start > $end ? $end : $start)."</span>$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
+              chr        => "$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
+              location   => "$chr:".($start>$end?$end:$start),
               Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
               snptype    => $type,
-              Transcript => qq{<a href="$trans_url">$transcript_name</a>},
+              Transcript => $transcript_name,
               aachange   => $aachange,
               aacoord    => $aacoord,
               sift_sort  => $sifts->[0],
