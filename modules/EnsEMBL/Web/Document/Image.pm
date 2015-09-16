@@ -27,6 +27,7 @@ package EnsEMBL::Web::Document::Image;
 
 use strict;
 
+use POSIX qw(ceil);
 use List::Util qw(min max);
 use List::MoreUtils qw(uniq);
 
@@ -298,6 +299,8 @@ sub add_image_export_menu {
   return unless $self->{'export'};
 
   my ($menu, $print_header);
+  ## Scale image appropriate to an A4 page
+  my $a4_scale = ceil(1200/$self->image_width);
   my $sections = {
     main => {
       r => 1,
@@ -312,7 +315,8 @@ sub add_image_export_menu {
       r => 2,
       title => 'Hi-res (for print):',
       formats => [
-        { f => 'png-s-5', label => 'PNG (x5)' },
+        { f => "png-c-2-s-$a4_scale", label => 'Journal' },
+        { f => 'png-c-2-s-5', label => 'Poster' },
       ],
     },
     proj => {
@@ -322,11 +326,6 @@ sub add_image_export_menu {
     }
   };
 
-  unless($self->height > 32000) {
-    ## PNG renderer will crash if image too tall!
-    push @{$sections->{'print'}{'formats'}},
-      { f => 'png-s-10', label => 'PNG (x10)' };
-  }
   # Scale /down/ for projectors, to get nice thick lines
   my $scale =sprintf("%2.2f",max(min(1,1280/($self->image_width||1)),0.01));
   push @{$sections->{'proj'}{'formats'}},
@@ -343,7 +342,7 @@ sub add_image_export_menu {
       if ($_->{'text'}) {
         next if $self->{'export'} =~ /no_text/;
 
-        $menu .= qq(<div><div>$_->{'label'}</div><a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a></div>);
+        $menu .= qq(<div><div>$_->{'label'}</div><a class="download" href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a></div>);
 
       } elsif ($_->{'f'} eq 'pdf') {
         # option not to include pdf export
@@ -353,7 +352,7 @@ sub add_image_export_menu {
             <div>
               <div>$_->{'label'}</div>
               <a class="view" href="$href" target="_blank"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
-              <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
+              <a class="download" href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
             </div>
         );
 
@@ -361,8 +360,17 @@ sub add_image_export_menu {
         $menu .= qq(
             <div>
               <div>$_->{'label'}</div>
+        );
+
+        if ($section eq 'print') {
+          $menu .= qq(
+              <a class="help" href="/Help/Faq?id=502" class="popup"><img src="/i/16/help.png" alt="help" title="How to adjust your image for optimal export" /></a>
+          );
+        }
+
+        $menu .= qq(
               <a class="view" href="$href" target="_blank"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
-              <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
+              <a class="download" href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
             </div>
         );
       }

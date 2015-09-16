@@ -182,7 +182,8 @@ div.iexport_menu div         { border: 1px solid #999999; border-top: 0; font-si
 div.iexport_menu div.header  { background-color: [[TABLE_HEADER]]; color: #FFFFFF; font-weight: bold; }
 div.iexport_menu div div     { display: inline-block; border: none; background: none; margin: 0; padding: 0; width: 60px; }
 div.iexport_menu div a       { position: absolute; right: 6px; text-decoration: none; font-weight: bold; }
-div.iexport_menu div a.view  { right: 26px; margin: 0; float: none; }
+div.iexport_menu div a.help  { right: 42px; margin: 0; float: none; }
+div.iexport_menu div a.view  { right: 24px; margin: 0; float: none; }
 div.iexport_menu div a img   { float: none; margin: 0; }
 
 body.ie67 div.iexport_menu a { margin-top: -16px; }
