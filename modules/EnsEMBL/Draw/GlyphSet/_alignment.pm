@@ -938,39 +938,38 @@ sub render_interaction {
         $minor_axis       = $max_depth if $minor_axis > $max_depth; 
         my $a             = $major_axis / 2;
         my $b             = $minor_axis / 2;
-        
+       
         ## Measurements needed for drawing partial arcs
         my $centre        = $arc_start + $a;
         my $left_height   = $minor_axis; ## height of curve at left of image
         my $right_height  = $minor_axis; ## height of curve at right of image
 
         ## Cut curve off at edge of track if ends lie outside the current window
-        if ($end_1 < 0) {
+        ## Note that we have to calculate the angle theta as if we were drawing a
+        ## circle, as there's something funky going on in GD!
+        if ($arc_start < 0) {
           my $x = abs($centre);
           $x = $a if $x > $a;
-          my $theta;
+          $left_height = $self->ellipse_y($x, $a, $b);
+          my $theta = $self->truncate_ellipse($x, $a, $a);
           if ($centre > 0) {
-            ($left_height, $theta) = $self->truncate_ellipse($x, $a, $b);
             $end_point -= $theta;
           }
           else {
-            ($left_height, $theta) = $self->truncate_ellipse($x, $a, $b);
             $end_point = $theta;
           }
         }
 
         if ($s2 >= $length) {
           my ($x, $theta);
+          $x = abs($width - $centre);
+          $x = $a if $x > $a;
+          $right_height = $self->ellipse_y($x, $a, $b);
+          my $theta = $self->truncate_ellipse($x, $a, $a);
           if ($centre > $width) {
-            $x = $centre - $width;
-            $x = $a if $x > $a;
-            ($right_height, $theta) = $self->truncate_ellipse($x, $a, $b);
             $start_point = 180 - $theta;
           }
           else {
-            $x = $width - $centre;
-            $x = $a if $x > $a;
-            ($right_height, $theta) = $self->truncate_ellipse($x, $a, $b);
             $start_point = $theta;
           }
         }
