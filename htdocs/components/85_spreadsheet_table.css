@@ -165,3 +165,5 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filtertype_more li:hover { background: linear-gradient(to top,#ddd,#eee) #fff; border: 1px solid #999; text-shadow: 0 1px white; }
 .newtable_filter ul li.t.prec_sec { display: none; }
 .newtable_filter .intro { font-weight: bold; margin: 0 0 0 8px; color: #666; }
+.newtable_export_iframe { display: none; }
+.newtable_export { background: url(/i/export_csv.png); height: 24px; font-size: 0; width: 24px; display: inline-block; vertical-align: top; margin-top: -2px; margin-left: 8px; }

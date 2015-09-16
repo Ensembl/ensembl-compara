@@ -172,7 +172,7 @@
         match: function(ori,val) { return position_match(ori,val); }
       },{
         name: "iconic",
-        split: function(v) { return v.split(/;/); },
+        split: function(v) { return v.split(/~/); },
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
         match: function(ori,val) { return string_match(ori,val); }

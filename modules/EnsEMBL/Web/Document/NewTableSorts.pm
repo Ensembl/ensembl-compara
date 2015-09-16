@@ -310,7 +310,7 @@ my %SORTS = (
       $c->{$y} = iconic_build_key($km,$col,$y) unless exists $c->{$y};
       return ($c->{$x} cmp $c->{$y})*$f;
     },
-    range_split => sub { return [ split(/;/,$_[1]) ]; },
+    range_split => sub { return [ split(/~/,$_[1]) ]; },
     range_display => 'class',
     enum_js => "iconic",
     decorate => "iconic",

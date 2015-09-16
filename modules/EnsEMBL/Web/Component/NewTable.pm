@@ -27,6 +27,7 @@ use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_isnull newtable_sort_
 use Compress::Zlib;
 use Digest::MD5 qw(md5_hex);
 use SiteDefs;
+use Text::CSV;
 
 # XXX move all this stuff to somewhere it's more suited
 
@@ -107,6 +108,31 @@ sub register_key {
   } 
 }
 
+sub convert_to_csv {
+  my ($config,$data) = @_;
+
+  my $csv = Text::CSV->new({ binary => 1 });
+  my $out;
+  my $series = $data->{'response'}{'series'};
+  my %rseries;
+  $rseries{$series->[$_]} = $_ for(0..$#$series);
+  my @index;
+  foreach my $key (@{$config->{'columns'}}) {
+    push @index,$rseries{$key};
+  }
+  $csv->combine(@{$config->{'columns'}});
+  $out .= $csv->string()."\n";
+  foreach my $row (@{$data->{'response'}{'data'}}) {
+    my @row;
+    foreach my $col (@index) {
+      push @row,$row->[$col][0];
+    }
+    $csv->combine(@row);
+    $out .= $csv->string()."\n";
+  }
+  return $out;
+}
+
 sub ajax_table_content {
   my ($self) = @_;
 
@@ -118,7 +144,14 @@ sub ajax_table_content {
   my $incr_ok = ($hub->param('incr_ok') eq 'true');
   my $keymeta = from_json($hub->param('keymeta'));
 
-  return $self->newtable_data_request($iconfig,$orient,$wire,$more,$incr_ok,$keymeta);
+  my $out = $self->newtable_data_request($iconfig,$orient,$wire,$more,$incr_ok,$keymeta);
+  if($wire->{'format'} eq 'export') {
+    $out = convert_to_csv($iconfig,$out);
+    my $r = $hub->apache_handle;
+    $r->content_type('application/octet-string');
+    $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $hub->param('filename')||'ensembl-export.csv');
+  }
+  return $out;
 }
 
 use Time::HiRes qw(time);

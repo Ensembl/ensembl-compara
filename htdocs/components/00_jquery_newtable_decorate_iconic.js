@@ -18,7 +18,7 @@
   $.fn.newtable_decorate_iconic = function(config,data) {
     function decorate_fn(column,extras) {
       return function(html) {
-        var values = html.split(';');
+        var values = html.split('~');
         new_html = "";
         for(var i=0;i<values.length;i++) {
           var ann = {};

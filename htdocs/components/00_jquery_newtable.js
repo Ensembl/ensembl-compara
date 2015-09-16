@@ -372,6 +372,24 @@
       maybe_get_new_data(widgets,$table,config);
       $table.data('old-view',$.extend(true,{},view));
     });
+    $table.on('spawn',function(e,extra,$frame) {
+      var src = $table.data('src');
+      var orient = $.extend({},$table.data('view'),extra);
+      var params = $.extend({},extract_params(src),{
+        keymeta: JSON.stringify($table.data('keymeta')||{}),
+        config: JSON.stringify(config),
+        orient: JSON.stringify(orient),
+        wire: JSON.stringify(orient),
+      });
+      var out = '<form method="POST" id="spawn" action="'+src+'">';
+      $.each(params,function(k,v) {
+        var v_esc = $("<div/>").text(v).html().replace(/"/g,"&quot;");
+        out += '<input type="hidden" name="'+k+'" value="'+v_esc+'"/>';
+      });
+      out += "</form><script></script>";
+      $frame.contents().find('body').append(out);
+      $frame.contents().find('#spawn').submit();
+    });
     $('div[data-widget-name]',$table).each(function(i,el) {
       var $widget = $(el);
       var name = $widget.attr('data-widget-name');

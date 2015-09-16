@@ -72,7 +72,7 @@ sub new_consequence_type {
       coltab => $hex,
     });
   }
-  return join(';',@type);
+  return join('~',@type);
 }
 
 
@@ -671,7 +671,7 @@ sub variation_table {
             my $gmaf   = $snp->minor_allele_frequency; # global maf
               $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
 
-            my $status = join(';',@$evidences);
+            my $status = join('~',@$evidences);
             foreach my $ev (@$evidences) {
               my $evidence_label = $ev;
               $evidence_label =~ s/_/ /g;
