@@ -28,24 +28,31 @@ sub test_upload_file {
   my ($self, $args) = @_;
   my $sel           = $self->sel;
   my $species       = $self->species;
+  my $upload_text   = 'Display your data in Ensembl';
 
   $self->no_mirrors_redirect;
 
-  my $error = try { $sel->open("/$species/Info/Index"); }
-                catch { return ['fail', "Couldn't open species home page at ".$sel->{'browser_url'}]; };
-  return $error if $error;
+  my @responses;
 
-  my $upload_text = 'Display your data in Ensembl';
+  foreach (keys %$species) {
 
-  $error = $sel->ensembl_wait_for_page_to_load;
-  if ($error && $error->[0] eq 'fail') {
-    return $error;
+    my $error = try { $sel->open("/$_/Info/Index"); }
+                  catch { return ['fail', "Couldn't open $_ species home page at ".$sel->{'browser_url'}]; };
+    if ($error && $error->[0] eq 'fail') {
+      push @responses, $error;
+    }
+    else { 
+      $error = $sel->ensembl_wait_for_page_to_load;
+      if ($error && $error->[0] eq 'fail') {
+        push @responses, $error;
+      }
+      else {
+        $error = $sel->ensembl_click_links(["link=$upload_text"]); 
+        push @responses, $error;
+      }
+    }
   }
-  else {
-    $error = $sel->ensembl_click_links(["link=$upload_text"]); 
-    return $error if $error;
-  }
-
+  return @responses;
 }
 
 1;
