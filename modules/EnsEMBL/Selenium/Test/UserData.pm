@@ -48,7 +48,7 @@ sub test_upload_file {
     }
     else {
       my $upload_text = 'Display your data in Ensembl';
-      $error = $sel->ensembl_click_links(["link=$upload_text"]); 
+      $error = $sel->ensembl_click("link=$upload_text"); 
       if ($error && $error ne 'OK') {
         push @responses, $error;
       }
