@@ -15,24 +15,40 @@
  */
 
 (function($) {
+  function update_counts($el,state,values) {
+    var m = 0;
+    var n = 0;
+    $.each(values,function(i,val) {
+      n++;
+      if(!state[val]) { m++; }
+    });
+    $el.text('('+m+'/'+n+' on)');
+  }
+
   $.fn.newtable_filter_class = function(config,data) {
     return {
       filters: [{
         name: "class",
-        display: function($menu,$el,values,state,kparams) {
+        display: function($menu,$el,values,state,kparams,key) {
           var v = {};
+          var cc = config.colconf[key];
+          var title = (cc.label || cc.title || key);
           var $out = $('<div/>');
+          var $head = $('<div class="head"/>').appendTo($out);
+          var $title = $('<div class="title"/>').appendTo($head).html(title);
+          var $summary = $('<div class="summary"/>').text('(x/y on)').appendTo($head);
+          var $body = $('<div class="body"/>').appendTo($out);
           values = values.slice();
           values.sort(function(a,b) { return a.localeCompare(b); });
           var $ul;
           var splits = [0];
           if(values.length > 4) {
             splits = [0,values.length/3,2*values.length/3];
-            $out.addClass('use_cols');
+            $body.addClass('use_cols');
           }
           $.each(values,function(i,val) {
             if(i>=splits[0]) {
-              $ul = $("<ul/>").appendTo($out);
+              $ul = $("<ul/>").appendTo($body);
               splits.shift();
             }
             var $li = $("<li/>").text(val).data('key',val).appendTo($ul);
@@ -42,9 +58,11 @@
               $(this).toggleClass('on');
               var key = $(this).data('key');
               if(state[val]) { delete state[val]; } else { state[val] = 1; }
+              update_counts($summary,state,values);
               $el.trigger('update',state);
             });
           });
+          update_counts($summary,state,values);
           $menu.empty().append($out);
         },
         text: function(state,all) {

@@ -92,7 +92,7 @@
       if(!values) { values = []; }
       var kparams = config.colconf[key].range_params;
       var w = find_widget(kind,'filters','class');
-      w.display($menu,$button,values,state,kparams);
+      w.display($menu,$button,values,state,kparams,key);
     }
 
     function show_or_hide_all($table) {
