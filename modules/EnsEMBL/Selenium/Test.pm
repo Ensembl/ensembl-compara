@@ -36,14 +36,16 @@ sub new {
   my($class, %args) = @_;
 
   return ('bug', 'Must supply a url', $class, 'new') unless $args{url};
-  
+ 
+  my $selenium = EnsEMBL::Selenium->new($args{'sel_config'});
+ 
   my $self = {
     _url      => $args{url},
-    _sel      => $args{sel},
     _timeout  => $args{timeout} || 50000,
     _verbose  => $args{verbose},
     _species  => $args{species},
     _conf     => $args{conf},
+    _sel      => $selenium,
   };
     
   bless $self, $class;
