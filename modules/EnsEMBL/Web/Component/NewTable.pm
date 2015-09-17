@@ -60,16 +60,16 @@ sub server_sort {
 sub server_nulls {
   my ($self,$data,$iconfig,$series) = @_;
 
-  my %null_cache;
   my $cols = $iconfig->{'columns'};
   my $colconf = $iconfig->{'colconf'};
   foreach my $j (0..$#$series) {
     my $cc = $colconf->{$series->[$j]};
+    my %null_cache;
     foreach my $i (0..$#$data) {
       my $is_null = $null_cache{$data->[$i][$j]};
       unless(defined $is_null) {
-        $null_cache{$data->[$i][$j]} =
-          newtable_sort_isnull($cc->{'sort'},$data->[$i][$j]);
+        $is_null = newtable_sort_isnull($cc->{'sort'},$data->[$i][$j]);
+        $null_cache{$data->[$i][$j]} = $is_null;
       }
       $data->[$i][$j] = [$data->[$i][$j],0+$is_null];
     }

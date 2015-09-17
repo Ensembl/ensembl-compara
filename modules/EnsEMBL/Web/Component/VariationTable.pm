@@ -160,7 +160,7 @@ sub make_table {
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
     { key => 'ID',       width => '12u',     sort => 'link_html_nofilter',                                                      help => 'Variant identifier'                     },
-    { key => 'vf',       width => '12u',     sort => 'numeric',                                                      help => 'Variant identifier',
+    { key => 'vf',       width => '12u',     sort => 'numeric_nofilter',                                                      help => 'Variant identifier',
       type => {
           screen => { unshowable => 1 },
       }
@@ -183,7 +183,7 @@ sub make_table {
     { key => 'status',   width => '9u', sort => 'iconic', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
     { key => 'clinsig',  width => '6u', sort => 'iconic', label => "Clin\f sig",                    help => 'Clinical significance'                  },
     { key => 'snptype',  width => '12u', range => [values %{$self->all_terms}], sort => 'iconic_primary',   label => 'Type',                          help => 'Consequence type'                       },
-    { key => 'aachange', width => '6u',      sort => 'string_dashnull_nofilter', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
+    { key => 'aachange', width => '6u',      sort => 'string_nofilter', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
     { key => 'aacoord',  width => '6u', sort => 'integer',         label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
   ];
   
@@ -231,7 +231,7 @@ sub make_table {
       };
 
     splice @$columns, 4, 0, { key => 'gmaf', sort => 'numeric_also', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $glossary->{'Global MAF'} },{
-      key => 'gmaf_allele', sort => 'html', width => '1u', label => "GMAF Allele", align => 'center', help => $glossary->{'Global MAF'},
+      key => 'gmaf_allele', sort => 'string_nofilter', width => '1u', label => "GMAF Allele", align => 'center', help => $glossary->{'Global MAF'},
         type => {
           screen => { unshowable => 1 },
         },
