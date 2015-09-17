@@ -979,39 +979,9 @@ sub sample_table {
   my $pop_geno_adaptor   = $self->hub->database('variation')->get_PopulationGenotypeAdaptor();
   my $pop_genos = $pop_geno_adaptor->fetch_all_by_Variation($self->vari);
 
-  my %sp_hash_new; #sample_population
   my %synonym;
   my %pop_seen;
   my %pop_data;
-
-  foreach my $pop_geno (@{$pop_genos}){
-      my $pop_obj = $pop_geno->population();
-      my $pop_id  = $pop_obj->dbID();   
-
-      ## look up samples in each population once
-      next if $pop_seen{ $pop_id} ==1;
-      $pop_seen{ $pop_id} =1;
-
-      my $samples = $pop_obj->get_all_Samples(); 
-      foreach my $sample_ob (@{$samples}){
-          ## link on name & apply to geno structure later
-          push @{$sp_hash_new{$sample_ob->name()}}, $pop_id;
-      }
-
-      ## look up synonyms (for dbSNP link) once
-      $synonym{$pop_obj->name} = $pop_obj->get_all_synonyms(),
-
-      # Add population information
-      $pop_data{$pop_id} = {
-         Name => $pop_obj->name(),
-         Size => $pop_obj->size(),
-         Link => $synonym{$pop_obj->name},
-         ID   => $pop_obj->dbID(),
-         Priority => $pop_obj->display_group_priority(),
-         Group    => $pop_obj->display_group_name()
-      };
-  }
-  
   my %data;
   
   foreach my $sample_gt_obj ( @$sample_genotypes ) { 
@@ -1032,13 +1002,32 @@ sub sample_table {
     $data{$sample_id}{Children}    = $self->child($ind_obj);
     $data{$sample_id}{Object}      = $sample_obj;
   
-    if(defined $sp_hash_new{$sample_obj->name()}->[0]){
-      foreach my $pop_id (@{$sp_hash_new{$sample_obj->name()}}){
-        push (@{$data{$sample_id}{Population}}, $pop_data{$pop_id});
+    my $pop_objs = $sample_obj->get_all_Populations();
+
+    foreach my $pop_obj (@{$pop_objs}) {
+      my $pop_id  = $pop_obj->dbID();
+
+      ## look up samples in each population once
+      if (!$pop_seen{$pop_id}) {
+
+        ## look up synonyms (for dbSNP link) once
+        $synonym{$pop_obj->name} = $pop_obj->get_all_synonyms(),
+
+        # Add population information
+        $pop_data{$pop_id} = {
+          Name => $pop_obj->name(),
+          Size => $pop_obj->size(),
+          Link => $synonym{$pop_obj->name},
+          ID   => $pop_obj->dbID(),
+          Priority => $pop_obj->display_group_priority(),
+          Group    => $pop_obj->display_group_name()
+        };
+        $pop_seen{$pop_id} = 1;
       }
+      push (@{$data{$sample_id}{Population}}, $pop_data{$pop_id}); 
     }
-    else{
-      ## force the rest to the 'Other samples' table to be reported seperately
+
+    if (scalar @{$pop_objs} == 0) {
       push (@{$data{$sample_id}{Population}}, {
         Name => $sample_obj->name(),
         Size => 1,
