@@ -15,14 +15,22 @@
  */
 
 (function($) {
+  function tabify(colour,html) {
+    return '<div class="coltab">'+
+      '<span class="coltab-tab" style="background-color: '+
+      colour+';">&nbsp;</span><div class="coltab-text">'+
+      html + '</div></div>';
+  }
+
   $.fn.newtable_decorate_iconic = function(config,data) {
     function paint_fn(column,extras) {
       return function(value) {
         var ann = extras[value] || {};
         if(ann.icon) {
           value = '<img src="'+ann.icon+'"/>' + value;
+        } else {
+          if(ann.coltab) { value = tabify(ann.coltab,value); }
         }
-        console.log("hi",column,extras,value);
         return value;
       };
     }
@@ -41,11 +49,6 @@
             }
             new_html += '<img src="'+ann.icon+'" '+more+'/>';
           } else {
-            if(ann.coltab) {
-              new_html += '<div class="coltab">'+
-                '<span class="coltab-tab" style="background-color: '+
-                ann.coltab+';">&nbsp;</span><div class="coltab-text">';
-            }
             if(ann.helptip) {
               new_html += '<span class="ht _ht">'+
                 '<span class="_ht_tip hidden">'+ann.helptip+'</span>';
@@ -55,9 +58,7 @@
             if(ann.helptip) {
               new_html += '</span>';
             }
-            if(ann.coltab) {
-              new_html += '</div></div>';
-            }
+            if(ann.coltab) { new_html = tabify(ann.coltab,new_html); }
           }
           new_html += '<div class="hidden export">'+values[i]+'</div>';
         }

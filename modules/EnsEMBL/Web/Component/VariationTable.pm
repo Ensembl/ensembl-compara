@@ -47,8 +47,6 @@ sub new_consequence_type {
   my $self        = shift;
   my $tva         = shift;
   my $most_severe = shift;
-  my $var_styles  = $self->hub->species_defs->colour('variation');
-  my $colourmap   = $self->hub->colourmap;
 
   my $overlap_consequences = ($most_severe) ? [$tva->most_severe_OverlapConsequence] || [] : $tva->get_all_OverlapConsequences || [];
 
@@ -58,19 +56,6 @@ sub new_consequence_type {
   my @type;
   foreach my $c (@consequences) {
     push @type,$c->label;
-
-      my $hex = $var_styles->{lc $c->SO_term}
-        ? $colourmap->hex_by_name(
-            $var_styles->{lc $c->SO_term}->{'default'}
-          )
-        : $colourmap->hex_by_name($var_styles->{'default'}->{'default'});
-      $self->coltab($c->label, $hex, $c->description);
-    $self->register_key("decorate/iconic/snptype/$type[-1]",{
-      export => $c->label,
-      order => "^".sprintf("%8.8d",$c->rank),
-      helptip => $c->description,
-      coltab => $hex,
-    });
   }
   return join('~',@type);
 }
@@ -570,6 +555,22 @@ sub variation_table {
     $base_trans_url = $hub->url({
       type   => 'Transcript',
       action => 'Summary',
+    });
+  }
+
+  my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  foreach my $con (@all_cons) {
+    next if $con->SO_accession =~ /x/i;
+    
+    my $term = $con->SO_term;
+   
+    my $so_term = lc $con->SO_term;
+    my $colour = $var_styles->{$so_term||'default'}->{'default'};
+    $self->register_key("decorate/iconic/snptype/".$con->label,{
+      export => $con->label,
+      order => "^".sprintf("%8.8d",$con->rank),
+      helptip => $con->description,
+      coltab => $colourmap->hex_by_name($colour),
     });
   }
 
