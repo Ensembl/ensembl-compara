@@ -40,6 +40,7 @@
         var values = html.split('~');
         new_html = "";
         for(var i=0;i<values.length;i++) {
+          var val = "";
           var ann = {};
           if(extras[values[i]]) { ann = extras[values[i]]; }
           if(ann.icon) {
@@ -47,20 +48,20 @@
             if(ann.helptip) {
               more += ' class="_ht" title="'+ann.helptip+'" ';
             }
-            new_html += '<img src="'+ann.icon+'" '+more+'/>';
+            val = '<img src="'+ann.icon+'" '+more+'/>';
           } else {
             if(ann.helptip) {
-              new_html += '<span class="ht _ht">'+
+              val = '<span class="ht _ht">'+
                 '<span class="_ht_tip hidden">'+ann.helptip+'</span>';
             }
-            new_html += values[i];
-            if(!values[i]) { new_html += '-'; }
+            val += values[i];
+            if(!values[i]) { val += '-'; }
             if(ann.helptip) {
-              new_html += '</span>';
+              val += '</span>';
             }
-            if(ann.coltab) { new_html = tabify(ann.coltab,new_html); }
+            if(ann.coltab) { val = tabify(ann.coltab,val); }
           }
-          new_html += '<div class="hidden export">'+values[i]+'</div>';
+          new_html += val;
         }
         return new_html;
       };
