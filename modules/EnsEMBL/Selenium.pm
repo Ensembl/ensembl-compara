@@ -124,7 +124,8 @@ sub ensembl_open_zmenu_at {
 
 sub ensembl_click {
 ### Overloading click function so that it returns the current url when it fails. 
-### Only use this function when ensembl_click_links below does not work like an ajax button
+### Only use this function when ensembl_click_links below does not work,
+### for example when opening an AJAX panel
   my ($self, $link, $timeout) = @_;
   my $url = $self->get_location();
     
