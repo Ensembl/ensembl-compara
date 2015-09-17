@@ -21,6 +21,7 @@ package EnsEMBL::Web::Component::VariationTable;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
+use EnsEMBL::Web::NewTable::NewTable;
 
 use base qw(EnsEMBL::Web::Component::Variation EnsEMBL::Web::Component::NewTable);
 
@@ -227,7 +228,7 @@ sub make_table {
     push @$columns, { key => 'Transcript', sort => 'link_html', width => '11u', help => $glossary->{'Transcript'} };
   }
 
-  return $self->new_new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside' });
+  return EnsEMBL::Web::NewTable::NewTable->new($self,$columns,{ data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside' });
 } 
 
 sub render_content {
@@ -241,7 +242,7 @@ sub render_content {
        $consequence_label =~ s/_/ /g;
        $consequence_label =~ s/children/\(with children\)/;
     
-    $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>),[$self->hub,'VariationTable']);
+    $html = $table->render($self->hub);
   } else {
     my $hub      = $self->hub;
     my $current  = $hub->param('summary_type') || 'table';

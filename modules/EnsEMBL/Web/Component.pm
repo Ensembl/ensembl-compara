@@ -43,7 +43,6 @@ use EnsEMBL::Draw::VDrawableContainer;
 
 use EnsEMBL::Web::Document::Image::GD;
 use EnsEMBL::Web::Document::Table;
-use EnsEMBL::Web::Document::NewTable;
 use EnsEMBL::Web::Document::TwoCol;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::DOM;
@@ -651,23 +650,6 @@ sub new_table {
   $table->filename   = join '-', $self->id, $filename;
   $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
   
-  return $table;
-}
-
-sub new_new_table {
-  my $self     = shift;
-  my $hub      = $self->hub;
-  my $table    = EnsEMBL::Web::Document::NewTable->new($self,@_);
-  my $filename = $hub->filename($self->object);
-  my $options  = $_[2];
-  
-  $table->session    = $hub->session;
-  $table->format     = $self->format;
-  $table->export_url = $hub->url unless defined $options->{'exportable'} || $self->{'_table_count'}++;
-  $table->filename   = join '-', $self->id, $filename;
-  $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
-  $table->type($options->{'type'} || '');
-
   return $table;
 }
 
