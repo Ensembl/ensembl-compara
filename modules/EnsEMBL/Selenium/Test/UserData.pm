@@ -36,11 +36,10 @@ sub test_upload_file {
 
   my $species_name = $species->{'name'};
 
-  my $error = try { $sel->open("/$species_name/Info/Index"); }
-                catch { return ['fail', "Couldn't open $species_name species home page at ".$sel->{'browser_url'}]; };
-
-  if ($error && $error->[0] eq 'fail') {
-    push @responses, $error;
+  my $home_page = sprintf('%s/Info/Index', $species_name);
+  my $error = eval { $self->sel->open($homepage); };
+  if ($error && $error ne 'OK') {
+    return ['fail', "Couldn't open $species_name home page", ref($self), 'test_lh_menu'];
   }
   else { 
     $error = $sel->ensembl_wait_for_page_to_load;
