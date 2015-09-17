@@ -247,7 +247,7 @@
         get_new_data(widgets,$table,cur_manifest,result.response.more,config);
       }
     }
-    if(!more) { flux(widgets,$table,-1); }
+    if(!more) { flux(widgets,$table,'load',-1); }
   }
 
   function extract_params(url) {
@@ -264,7 +264,7 @@
 
   function get_new_data(widgets,$table,manifest_c,more,config) {
     console.log("data changed, should issue request");
-    if(more===null) { flux(widgets,$table,1); }
+    if(more===null) { flux(widgets,$table,'load',1); }
 
     var payload_one = $table.data('payload_one');
     if(payload_one && $.orient_compares_equal(manifest_c.manifest,config.orient)) {
@@ -301,16 +301,20 @@
     }
   }
 
-  var fluxion = 0;
-  function flux(widgets,$table,state) {
+  var fluxion = {};
+  function flux(widgets,$table,type,state) {
     var change = -1;
-    if(fluxion == 0 && state) { change = 1; }
-    fluxion += state;
-    if(fluxion == 0 && state) { change = 0; }
-    if(change == -1) { return; }
+    if(!fluxion[type]) { fluxion[type] = 0; }
+    if(fluxion[type] == 0 && state) { change = 1; }
+    fluxion[type] += state;
+    if(fluxion[type] == 0 && state) { change = 0; }
+    if(change == -1) { return $.Deferred().resolve(); }
     $.each(widgets,function(key,fn) {
-      if(fn.flux) { fn.flux($table,change); }
+      if(fn.flux) { fn.flux($table,type,change); }
     });
+    var $d = $.Deferred();
+    setTimeout(function() { $d.resolve(); },1);
+    return $d;
   }
 
   function prepopulate_ranges($table,config) {
@@ -375,8 +379,11 @@
       if(view.format != old_view.format) {
         build_format(widgets,$table);
       }
-      maybe_get_new_data(widgets,$table,config);
-      $table.data('old-view',$.extend(true,{},view));
+      flux(widgets,$table,'think',1).then(function() {
+        maybe_get_new_data(widgets,$table,config);
+        $table.data('old-view',$.extend(true,{},view));
+        flux(widgets,$table,'think',-1);
+      });
     });
     $table.on('markup-activate',function(e,$some) {
       markup_activate(widgets,config,$table,$some);
@@ -406,7 +413,10 @@
       $widget.addClass('_inited');
       widgets[name].go($table,$widget);
     });
-    maybe_get_new_data(widgets,$table,config);
+    flux(widgets,$table,'think',1).then(function() {
+      maybe_get_new_data(widgets,$table,config);
+      flux(widgets,$table,'think',-1);
+    });
   }
 
   $.newtable_rangemerge_class = function(a,b) {

@@ -18,15 +18,14 @@
   $.fn.new_table_loading = function(config,data) {
     return {
       generate: function() {
-        return '<span class="new_table_loading">loading</span>';
+        return '<span class="new_table_thinking">working</span>';
       },
       go: function($table,$el) {
-        $('.new_table_loading',$table).hide();
-        console.log("GO");
+        $('.new_table_thinking',$table).hide();
       },
-      flux: function($table,change) {
-        console.log("FLUX",change);
-        var $el = $('.new_table_loading',$table);
+      flux: function($table,type,change) {
+        console.log("FLUX",type,change);
+        var $el = $('.new_table_'+type+'ing',$table);
         if(change) { $el.show(); } else { $el.hide(); }
       }
     };

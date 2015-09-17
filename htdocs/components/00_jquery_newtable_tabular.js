@@ -189,7 +189,7 @@
     var $subtables = $('.subtable',$table);
     target -= $subtables.length*rows_per_subtable;
     while(target > 0) {
-      var $subtable = new_subtable($table).appendTo($('.new_table',$table));
+      var $subtable = new_subtable($table).appendTo($('.newtable_tabular',$table));
       $subtable.lazy();
       var to_add = target;
       if(to_add > rows_per_subtable)
@@ -330,7 +330,7 @@
     return {
       layout: function($table) {
         var header = new_header($table,config);
-        return '<div class="new_table"><table>'+header+'<tbody></tbody></table><div class="no_results">Empty Table</div></div>';
+        return '<div class="new_table"><table>'+header+'<tbody></tbody></table><div class="no_results">Empty Table</div><div class="newtable_tabular"></div><div class="new_table_loading"><div>more rows loading</div></div>';
       },
       go: function($table,$el) {
         $('th',$table).click(function(e) {
