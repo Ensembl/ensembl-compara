@@ -37,7 +37,7 @@ sub test_upload_file {
   my $species_name = $species->{'name'};
 
   my $home_page = sprintf('%s/Info/Index', $species_name);
-  my $error = eval { $self->sel->open($homepage); };
+  my $error = eval { $self->sel->open($home_page); };
   if ($error && $error ne 'OK') {
     return ['fail', "Couldn't open $species_name home page", ref($self), 'test_lh_menu'];
   }
