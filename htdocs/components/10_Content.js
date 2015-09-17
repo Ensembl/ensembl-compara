@@ -64,6 +64,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
     }
 
+    // Initialise ZMenus on table links
+    this.el.find('a._zmenu').zMenuLink();
+
     this.el.externalLinks();
   },
   
