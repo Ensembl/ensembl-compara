@@ -835,6 +835,7 @@ sub fetch_homology_species_hash {
 sub get_homologue_alignments {
   my $self        = shift;
   my $compara_db  = shift || 'compara';
+  my $type        = shift || 'ENSEMBL_ORTHOLOGUES';
   my $database    = $self->database($compara_db);
   my $hub         = $self->hub;
   my $msa;
@@ -842,7 +843,7 @@ sub get_homologue_alignments {
   if ($database) {  
     my $member  = $database->get_GeneMemberAdaptor->fetch_by_stable_id($self->Obj->stable_id);
     my $tree    = $database->get_GeneTreeAdaptor->fetch_default_for_Member($member);
-    my @params  = ($member, 'ENSEMBL_ORTHOLOGUES');
+    my @params  = ($member, $type);
     my $species = [];
     foreach (grep { /species_/ } $hub->param) {
       (my $sp = $_) =~ s/species_//;

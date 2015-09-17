@@ -189,7 +189,7 @@ sub get_export_data {
   my $object       = $self->object || $hub->core_object('gene');
 
   if ($flag eq 'sequence') {
-    return $object->get_homologue_alignments;
+    return $object->get_homologue_alignments('compara', 'ENSEMBL_PARALOGUES');
   }
   else {
     my $cdb = $flag || $hub->param('cdb') || 'compara';
