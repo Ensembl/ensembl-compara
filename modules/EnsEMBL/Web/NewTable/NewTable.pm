@@ -33,14 +33,13 @@ use EnsEMBL::Web::Utils::RandomString qw(random_string);
 use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_client_config);
 
 sub new {
-  my ($class, $component, $cols, $options) = @_;
+  my ($class, $component, $options) = @_;
 
-  $cols     ||= [];
   $options  ||= {};
 
   my $self = {
     component  => $component,
-    columns    => $cols,
+    columns    => [],
     options    => $options,
   };
 
@@ -152,9 +151,10 @@ sub render {
   );
 }
 
-sub add_columns {
-  my $self = shift;
-  push @{$self->{'columns'}}, @_;
+sub add_column {
+  my ($self,$key,$options) = @_;
+
+  push @{$self->{'columns'}},{ key => $key, %{$options||{}} };
 }
 
 1;

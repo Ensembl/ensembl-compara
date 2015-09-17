@@ -142,94 +142,211 @@ sub make_table {
   my $hub      = $self->hub;
   my $glossary = $hub->glossary_lookup;
   
-  # Using explicit wdiths speeds things up and makes layout more predictable
-  # u = 1unit, where unit is calculated so that total width is 100%
-  my $columns = [
-    { key => 'ID',       width => '12u',     sort => 'link_html_nofilter',                                                      help => 'Variant identifier'                     },
-    { key => 'vf',       width => '12u',     sort => 'numeric_nofilter',                                                      help => 'Variant identifier',
-      type => {
-          screen => { unshowable => 1 },
-      }
-                     },
-    { key => 'chr' ,     width => '10u', sort => 'position_nofilter', label => 'Chr: bp',                       help => $glossary->{'Chr:bp'}                    },
-    { key => 'location' ,     width => '10u', sort => 'position', label => 'Location: bp',                       help => $glossary->{'Chr:bp'},
-      type => {
-        sort_for => { col => 'chr' },
-        screen => { unshowable => 1 },
-      },
-                    },
-    { key => 'Alleles',  width => '16u',      sort => 'string_nofilter_toggle',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
-    { key => 'vf_allele',  width => '6u',      sort => 'string_nofilter',          label => "Vari\fant Alle\fle",  align => 'center', help => 'Variant allele',
-     type => {
-        screen => { unshowable => 1 },
-      }
-     },
-    { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
-    { key => 'Source',   width => '8u', sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
-    { key => 'status',   width => '9u', sort => 'iconic', label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
-    { key => 'clinsig',  width => '6u', sort => 'iconic', label => "Clin\f sig",                    help => 'Clinical significance'                  },
-    { key => 'snptype',  width => '12u', range => [values %{$self->all_terms}], sort => 'iconic_primary',   label => 'Type',                          help => 'Consequence type'                       },
-    { key => 'aachange', width => '6u',      sort => 'string_nofilter', label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
-    { key => 'aacoord',  width => '6u', sort => 'integer',         label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
-  ];
+  my $table = EnsEMBL::Web::NewTable::NewTable->new($self,{ data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside' });
   
-  # submitter data for LRGs
-  splice @$columns, 5, 0, { key => 'Submitters', width => '10u', sort => 'string_nofilter', align => 'center', export_options => { split_newline => 2 } } if $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
-
-  # HGVS
-  splice @$columns, 3, 0, { key => 'HGVS', width => '10u', sort => 'string_nofilter', title => 'HGVS name(s)', align => 'center', export_options => { split_newline => 2 } } if $hub->param('hgvs') eq 'on';
-
   # add SIFT for supported species
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
-
-  if ($sd->{'SIFT'}) {
-    push @$columns,
-      { key => 'sift_sort', sort => 'numeric_nofilter', width => '6u', label => "SI\aFT sort",     align => 'center', help => $glossary->{'SIFT'},
-        type => {
-          sort_for => { col => 'sift_value' },
-          screen => { unshowable => 1 },
-        },
-      },
-      { key => 'sift_class', sort => 'iconic', width => '6u', label => "SI\aFT class",     align => 'center', help => $glossary->{'SIFT'},
-        type => {
-          screen => { unshowable => 1 },
-        },
-       },
-      { key => 'sift_value', sort => 'numeric_editorial', width => '6u', label => "SI\aFT score",     align => 'center', help => $glossary->{'SIFT'},
-      };
-  }
-
-  # add GMAF and PolyPhen for human
+  $table->add_column('ID',{
+    width => '12u',
+    sort => 'link_html_nofilter',
+    help => 'Variant identifier'
+  });
+  $table->add_column('vf',{
+    width => '12u',
+    sort => 'numeric_nofilter',
+    help => 'Variant identifier',
+    type => {
+      screen => { unshowable => 1 },
+    }
+  });
+  $table->add_column('chr',{
+    width => '10u',
+    sort => 'position_nofilter',
+    label => 'Chr: bp',
+    help => $glossary->{'Chr:bp'}
+  });
+  $table->add_column('location',{
+    width => '10u',
+    sort => 'position',
+    label => 'Location: bp',
+    help => $glossary->{'Chr:bp'},
+    type => {
+      sort_for => { col => 'chr' },
+      screen => { unshowable => 1 },
+    },
+  });
+  $table->add_column('Alleles',{
+    width => '16u',
+    sort => 'string_nofilter_toggle',
+    label => "Alle\fles",
+    align => 'center',
+    help => 'Alternative nucleotides'
+  });
+  $table->add_column('vf_allele',{
+    width => '6u',
+    sort => 'string_nofilter',
+    label => "Vari\fant Alle\fle",
+    align => 'center',
+    help => 'Variant allele',
+    type => {
+      screen => { unshowable => 1 },
+    }
+  });
   if ($hub->species eq 'Homo_sapiens') {
-    push @$columns,
-      { key => 'polyphen_sort', sort => 'numeric_nofilter', width => '6u', label => "Poly\fPhen sort",     align => 'center', help => $glossary->{'PolyPhen'},
-        type => {
-          sort_for => { col => 'polyphen_value' },
-          screen => { unshowable => 1 },
-        },
+    $table->add_column('gmaf',{
+      sort => 'numeric_also',
+      width => '6u',
+      label => "Glo\fbal MAF",
+      align => 'center',
+      help => $glossary->{'Global MAF'}
+    });
+    $table->add_column('gmaf_allele',{
+      sort => 'string_nofilter',
+      width => '1u',
+      label => "GMAF Allele",
+      align => 'center',
+      help => $glossary->{'Global MAF'},
+      type => {
+        screen => { unshowable => 1 },
       },
-      { key => 'polyphen_class', sort => 'iconic', width => '6u', label => "Poly\fPhen class",     align => 'center', help => $glossary->{'PolyPhen'},
-        type => {
-          screen => { unshowable => 1 },
-        },
-       },
-      { key => 'polyphen_value', sort => 'numeric_editorial', width => '6u', label => "Poly\fPhen score",     align => 'center', help => $glossary->{'PolyPhen'},
-      };
-
-    splice @$columns, 4, 0, { key => 'gmaf', sort => 'numeric_also', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $glossary->{'Global MAF'} },{
-      key => 'gmaf_allele', sort => 'string_nofilter', width => '1u', label => "GMAF Allele", align => 'center', help => $glossary->{'Global MAF'},
-        type => {
-          screen => { unshowable => 1 },
-        },
-    };
+    });
   }
- 
+  # HGVS
+  if($hub->param('hgvs') eq 'on') {
+    $table->add_column('HGVS',{
+      width => '10u',
+      sort => 'string_nofilter',
+      title => 'HGVS name(s)',
+      align => 'center',
+      export_options => { split_newline => 2 }
+    });
+  }
+  $table->add_column('class',{
+    width => '11u',
+    sort => 'string',
+    label => 'Class',
+    align => 'center',
+    help => $glossary->{'Class'}
+  });
+  $table->add_column('Source',{
+    width => '8u',
+    sort => 'string',
+    label => "Sour\fce",
+    help => $glossary->{'Source'}
+  });
+  # submitter data for LRGs
+  if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+    $table->add_column('Submitters',{
+      width => '10u',
+      sort => 'string_nofilter',
+      align => 'center',
+      export_options => { split_newline => 2 }
+    });
+  }
+  $table->add_column('status',{
+    width => '9u',
+    sort => 'iconic',
+    label => "Evid\fence",
+    align => 'center',
+    help => $glossary->{'Evidence status (variant)'}
+  });
+  $table->add_column('clinsig',{
+    width => '6u',
+    sort => 'iconic',
+    label => "Clin\f sig",
+    help => 'Clinical significance'
+  });
+  $table->add_column('snptype',{
+    width => '12u',
+    range => [values %{$self->all_terms}],
+    sort => 'iconic_primary',
+    label => 'Type',
+    help => 'Consequence type'
+  });
+  $table->add_column('aachange',{
+    width => '6u',
+    sort => 'string_nofilter',
+    label => 'AA',
+    align => 'center',
+    help => 'Resulting amino acid(s)'
+  });
+  $table->add_column('aacoord',{
+    width => '6u',
+    sort => 'integer',
+    label => "AA co\ford",
+    align => 'center',
+    help => 'Amino Acid Co-ordinate'
+  });
+  
+  if ($sd->{'SIFT'}) {
+    $table->add_column('sift_sort',{
+      sort => 'numeric_nofilter',
+      width => '6u',
+      label => "SI\aFT sort",
+      align => 'center',
+      help => $glossary->{'SIFT'},
+      type => {
+        sort_for => { col => 'sift_value' },
+        screen => { unshowable => 1 },
+      },
+    });
+    $table->add_column('sift_class',{
+      sort => 'iconic',
+      width => '6u',
+      label => "SI\aFT class",
+      align => 'center',
+      help => $glossary->{'SIFT'},
+      type => {
+        screen => { unshowable => 1 },
+      },
+    });
+    $table->add_column('sift_value',{
+      sort => 'numeric_editorial',
+      width => '6u',
+      label => "SI\aFT score",
+      align => 'center',
+      help => $glossary->{'SIFT'},
+    });
+  }
+  if ($hub->species eq 'Homo_sapiens') {
+    $table->add_column('polyphen_sort',{
+      sort => 'numeric_nofilter',
+      width => '6u',
+      label => "Poly\fPhen sort",
+      align => 'center',
+      help => $glossary->{'PolyPhen'},
+      type => {
+        sort_for => { col => 'polyphen_value' },
+        screen => { unshowable => 1 },
+      },
+    });
+    $table->add_column('polyphen_class',{
+      sort => 'iconic',
+      width => '6u',
+      label => "Poly\fPhen class",
+      align => 'center',
+      help => $glossary->{'PolyPhen'},
+      type => {
+        screen => { unshowable => 1 },
+      },
+    });
+    $table->add_column('polyphen_value',{
+      sort => 'numeric_editorial',
+      width => '6u',
+      label => "Poly\fPhen score",
+      align => 'center',
+      help => $glossary->{'PolyPhen'},
+    });
+  }
   if ($hub->type ne 'Transcript') {
-    push @$columns, { key => 'Transcript', sort => 'link_html', width => '11u', help => $glossary->{'Transcript'} };
+    $table->add_column('Transcript',{
+      sort => 'link_html',
+      width => '11u',
+      help => $glossary->{'Transcript'}
+    });
   }
-
-  return EnsEMBL::Web::NewTable::NewTable->new($self,$columns,{ data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside' });
-} 
+  return $table;
+}
 
 sub render_content {
   my ($self, $table, $consequence_type) = @_;
