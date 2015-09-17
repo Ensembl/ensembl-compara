@@ -35,37 +35,17 @@ sub test_upload_file {
                 catch { return ['fail', "Couldn't open species home page at ".$sel->{'browser_url'}]; };
   return $error if $error;
 
-  my @responses; 
+  my $upload_text = 'Display your data in Ensembl';
 
-=pod
-  ## Check main content
-  my $load_error = $sel->ensembl_wait_for_page_to_load;
-  if ($load_error && ref($load_error) eq 'ARRAY' && $load_error->[0] eq 'fail') {
-    push @responses, $load_error;
+  $error = $sel->ensembl_wait_for_page_to_load;
+  if ($error && $error->[0] eq 'fail') {
+    return $error;
   }
   else {
-    push @responses, $sel->ensembl_is_text_present("Ensembl release $this_release");
-    push @responses, $sel->ensembl_is_text_present("What's New");
-    push @responses, $sel->ensembl_is_text_present('Did you know');
-    push @responses, $sel->ensembl_click_links(["link=View full list of all Ensembl species"]);
-  
-    $sel->go_back();
+    $error = $sel->ensembl_click_links(["link=$upload_text"]); 
+    return $error if $error;
   }
-  
-  ## Try links
-  my @links = ('acknowledgements page', 'About Ensembl', 'Privacy Policy');
-  foreach (@links) {
-    $load_error = $sel->ensembl_wait_for_page_to_load;
-    if ($load_error && $load_error->[0] eq 'fail') {
-      push @responses, $load_error;
-    }
-    else {
-      push @responses, $sel->ensembl_click_links(["link=$_"]); 
-      $sel->go_back();
-    }
-  }
-=cut
-  return @responses;
+
 }
 
 1;
