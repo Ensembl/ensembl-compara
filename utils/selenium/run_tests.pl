@@ -131,9 +131,11 @@ unless (defined($verbose)) {
                 : 0;
 }
 
+my $ua;
+
 unless ($DEBUG) {
   ## Check to see if the selenium server is online 
-  my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
+  $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
   $ua->timeout(10);
   my $response = $ua->get("http://$host:$port/selenium-server/driver/?cmd=testComplete");
   if ($response->content ne 'OK') { 
@@ -148,6 +150,7 @@ my $test_config = {
                     verbose     => $verbose,  
                     conf        => {'release' => $release},
                     sel_config  => { 
+                                      ua          => $ua,
                                       host        => $host,
                                       port        => $port,
                                       browser     => $browser,
