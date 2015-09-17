@@ -34,22 +34,22 @@ sub test_upload_file {
 
   my @responses;
 
-  foreach (keys %$species) {
+  my $species_name = $species->{'name'};
 
-    my $error = try { $sel->open("/$_/Info/Index"); }
-                  catch { return ['fail', "Couldn't open $_ species home page at ".$sel->{'browser_url'}]; };
+  my $error = try { $sel->open("/$species_name/Info/Index"); }
+                catch { return ['fail', "Couldn't open $species_name species home page at ".$sel->{'browser_url'}]; };
+
+  if ($error && $error->[0] eq 'fail') {
+    push @responses, $error;
+  }
+  else { 
+    $error = $sel->ensembl_wait_for_page_to_load;
     if ($error && $error->[0] eq 'fail') {
       push @responses, $error;
     }
-    else { 
-      $error = $sel->ensembl_wait_for_page_to_load;
-      if ($error && $error->[0] eq 'fail') {
-        push @responses, $error;
-      }
-      else {
-        $error = $sel->ensembl_click_links(["link=$upload_text"]); 
-        push @responses, $error;
-      }
+    else {
+      $error = $sel->ensembl_click_links(["link=$upload_text"]); 
+      push @responses, $error;
     }
   }
   return @responses;
