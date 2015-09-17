@@ -223,7 +223,7 @@ sub format_table {
       next;
     }
 
-    my $hash  = $freq_data->{$pop_id}{'pop_info'}{'Super-Population'};
+    my $hash = $freq_data->{$pop_id}{'pop_info'}{'Super-Population'};
     my ($super) = keys %{$hash||{}};
     if ($super) {
       $tree->{$super}{'children'}{$pop_id} = $name;
@@ -254,7 +254,7 @@ sub format_table {
     my $pop_info = $freq_data->{$pop_id}{'pop_info'};
 
     my ($row_class, $group_member);
-    if ($pop_info->{'Name'} =~ /(\W+|_)ALL/) {
+    if ($pop_info->{'Name'} =~ /(\W+|_)ALL/ && $tree->{$pop_id}{'children'}) {
       $row_class = 'supergroup';
     }
     elsif ($tree->{$pop_id}{'children'}) {
