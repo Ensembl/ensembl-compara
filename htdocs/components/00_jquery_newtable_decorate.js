@@ -25,18 +25,17 @@
       return ff_out;
     }
 
-    function find_decorators(decorators,type,column,extras) {
+    function find_decorators(decorators,type,column,extras,fnname) {
       $.each(widgets,function(name,w) {
-        if(w.decorators && w.decorators[type] && 
-           w.decorators[type][column]) {
-          var ff = do_decorate(column,w.decorators[type][column],extras);
+        if(w[fnname] && w[fnname][type] && w[fnname][type][column]) {
+          var ff = do_decorate(column,w[fnname][type][column],extras);
           if(!decorators[column]) { decorators[column] = []; }
           decorators[column] = decorators[column].concat(ff);
         }
       });
     }
 
-    function make_decorators($table) {
+    function make_decorators($table,fnname) {
       var decorators = {};
       var km = $table.data('keymeta') || {};
       var extras = {};
@@ -51,7 +50,7 @@
       var decorators = {};
       $.each(extras,function(type,vv) {
         $.each(vv,function(col,extras) {
-          find_decorators(decorators,type,col,extras);
+          find_decorators(decorators,type,col,extras,fnname);
         });
       });
       return decorators;
@@ -59,13 +58,24 @@
 
     return {
       prio: 90,
+      paint: function($table,key,value) {
+        return [
+          function() {
+            var decorators = make_decorators($table,'decorate_one');
+            var ff = decorators[key] || [];
+            for(var i=0;i<ff.length;i++) {
+              value = ff[i](value);
+            }
+            return value;
+          }]; 
+      },
       pipe: function($table) {
         return [
           function(need,got) {
             return {
               undo: function(manifest,grid,series,dest) {
                 var fabric = [];
-                var decorators = make_decorators($table);
+                var decorators = make_decorators($table,'decorators');
                 for(var i=0;i<grid.length;i++) {
                   var new_row = [];
                   for(var j=0;j<grid[i].length;j++) {

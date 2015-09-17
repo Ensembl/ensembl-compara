@@ -333,6 +333,13 @@
     });
   }
 
+  function paint_individual(widgets,$table,key,val) {
+    $.each(widgets,function(name,fn) {
+      if(fn.paint) { val = fn.paint($table,key,val); }
+    });
+    return val;
+  }
+
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
@@ -405,6 +412,9 @@
       out += "</form><script></script>";
       $frame.contents().find('body').append(out);
       $frame.contents().find('#spawn').submit();
+    });
+    $table.on('paint-individual',function(e,$el,key,val) {
+      $el.html(paint_individual(widgets,$table,key,val));
     });
     $('div[data-widget-name]',$table).each(function(i,el) {
       var $widget = $(el);

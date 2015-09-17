@@ -16,6 +16,17 @@
 
 (function($) {
   $.fn.newtable_decorate_iconic = function(config,data) {
+    function paint_fn(column,extras) {
+      return function(value) {
+        var ann = extras[value] || {};
+        if(ann.icon) {
+          value = '<img src="'+ann.icon+'"/>' + value;
+        }
+        console.log("hi",column,extras,value);
+        return value;
+      };
+    }
+
     function decorate_fn(column,extras) {
       return function(html) {
         var values = html.split('~');
@@ -55,15 +66,20 @@
     }
 
     var decorators = {};
+    var paints = {};
     $.each(config.colconf,function(key,cc) {
       if(cc.decorate && cc.decorate == "iconic") {
         decorators[key] = [decorate_fn];
+        paints[key] = [paint_fn];
       }
     });
 
     return {
       decorators: {
         iconic: decorators
+      },
+      decorate_one: {
+        iconic: paints
       }
     };
   }; 

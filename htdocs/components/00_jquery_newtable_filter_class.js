@@ -29,7 +29,7 @@
     return {
       filters: [{
         name: "class",
-        display: function($menu,$el,values,state,kparams,key) {
+        display: function($menu,$el,values,state,kparams,key,$table) {
           var v = {};
           var cc = config.colconf[key];
           var title = (cc.label || cc.title || key);
@@ -51,7 +51,8 @@
               $ul = $("<ul/>").appendTo($body);
               splits.shift();
             }
-            var $li = $("<li/>").text(val).data('key',val).appendTo($ul);
+            var $li = $("<li/>").data('key',val).appendTo($ul);
+            $table.trigger('paint-individual',[$li,key,val]);
             $li.data('val',val);
             if(!state[val]) { $li.addClass("on"); }
             $li.on('click',function() {
