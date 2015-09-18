@@ -61,22 +61,27 @@
   // TODO clean prior to sort for speed
   $.fn.newtable_clean_none = function(v) { return v; }
   $.fn.newtable_clean_html_hidden = function(v) {
+    if(!v) { return v; }
     var m = v.match(/<span class="hidden">(.*?)<\/span>/);
     if(m) { return m[1]; }
     return v;
   } 
   $.fn.newtable_clean_html_cleaned = function(v) {
+    if(!v) { return v; }
     v = v.replace(/<[^>]*? class="[^"]*?hidden.*?<\/.*?>/,'');
     v = v.replace(/<.*?>/g,'').replace(/&.*?;/g,'');
     return v;
   } 
   $.fn.newtable_clean_number = function(v) {
+    if(!v) { return v; }
     return v.replace(/([\d\.e\+-])\s.*$/,'$1');
   }
   $.fn.newtable_clean_html_number = function(v) {
+    if(!v) { return v; }
     return v.replace(/<.*?>/g,'').replace(/([\d\.e\+-])\s.*$/,'$1');
   }
   $.fn.newtable_clean_hidden_number = function(v) {
+    if(!v) { return v; }
     v = $.fn.newtable_clean_html_hidden(v);
     return v.replace(/([\d\.e\+-])\s.*$/,'$1');
   }
