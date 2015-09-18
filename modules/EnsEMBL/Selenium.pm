@@ -53,7 +53,8 @@ sub ensembl_wait_for_ajax {
                       !(\$(".ajax_load").length || \$(".ajax_error").length || \$(".syntax-error").length)/,
                     $timeout || $self->_timeout
                     );}
-                catch { return 1; };
+                catch { ['fail', "AJAX load failed"]; };
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "AJAX load OK"] : $error;
   return $error; 
 }
 
