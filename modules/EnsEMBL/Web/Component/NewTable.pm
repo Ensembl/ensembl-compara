@@ -80,7 +80,7 @@ sub passes_muster {
   my ($self,$row,$rq) = @_;
 
   my $ok = 1;
-  foreach my $col (keys %{$rq->{'wire'}{'filter'}}) {
+  foreach my $col (keys %{$rq->{'wire'}{'filter'}||{}}) {
     my $colconf = $rq->{'config'}{'colconf'}[$rq->{'cols_pos'}{$col}];
     next unless exists $row->{$col};
     my $val = $row->{$col};

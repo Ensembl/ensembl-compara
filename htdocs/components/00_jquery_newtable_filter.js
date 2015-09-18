@@ -103,7 +103,7 @@
 
     function set_button($el,view,w,key,values) {
       $el.toggleClass('valid',!!w.visible(values));
-      if(view.filter.hasOwnProperty(key)) {
+      if((view.filter||{}).hasOwnProperty(key)) {
         var text = w.text(view.filter[key],values);
         $('.v',$el).text(text);
       } else {
@@ -113,7 +113,6 @@
 
     function update_button($table,$el) {
       var view = $table.data('view');
-      if(!view.filter) { view.filter = {}; }
       var idx = $el.data('idx');
       if(idx==-1) { // More button
         $el.addClass('more');
@@ -294,7 +293,11 @@
                 server_filter.push(key);
               }
             });
-            need.enumerate = server_filter;
+            if(server_filter.length) {
+              need.enumerate = server_filter;
+            } else {
+              delete need.enumerate;
+            }
             var out = {
               eundo: function(enums,grid,series) {
                 return eundo(client_enums,enums,grid,series);

@@ -150,11 +150,8 @@ sub render {
   my $sort_conf = newtable_sort_client_config(\%colmap,$self->{'columns'});
 
   my $orient = {
-    pagesize => 10,
-    rows => [0,-1],
-    columns => [ (1) x scalar(@{$self->{'columns'}}) ],
     format => 'Tabular',
-  }; # XXX fix me: separate view from orient
+  };
   my $data = {
     unique => random_string(32),
     type => $self->{'options'}{'type'}||'',

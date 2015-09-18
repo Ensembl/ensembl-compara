@@ -365,19 +365,6 @@
         config.orient.format = fmt;
       }
     });
-    if(config.orient.format === undefined) {
-      console.error("No valid format specified for table");
-    }
-    if(config.orient.rows === undefined) {
-      config.orient.rows = [0,-1];
-    }
-    if(config.orient.columns === undefined) {
-      config.orient.columns = [];
-      for(var i=0;i<config.columns.length;i++) {
-        config.orient.columns.push(true);
-      }
-    }
-    //var $table = $('<div class="new_table_wrapper '+config.cssclass+'"><div class="topper"></div><div class="layout"></div></div>');
     var $table = $('<div class="layout"/>');
     $table = build_frame(config,widgets,$table);
     make_chain(widgets,config,$table);
