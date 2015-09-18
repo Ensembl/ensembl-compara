@@ -47,16 +47,23 @@ sub test_upload_file {
       push @responses, $error;
     }
     else {
-      my $upload_text = 'Display your data in Ensembl';
-      while (my($format, $file_url) = each(%$files)) {
-        $error = $sel->ensembl_click("link=$upload_text"); 
-        if ($error && $error ne 'OK') {
-          push @responses, $error;
-        }
-        else {
-          $error = $sel->ensembl_wait_for_ajax(undef,10000);
-          push @responses, $error;
-          push @responses, $self->_upload_file($format, $file_url);
+      ## Check we're on the right page!
+      my $error = $sel->ensembl_is_text_present('Genome assembly: '.$species->{'assembly_name'});
+      if ($error) {
+        push @responses, $error;
+      }
+      else {
+        my $upload_text = 'Display your data in Ensembl';
+        while (my($format, $file_url) = each(%$files)) {
+          $error = $sel->ensembl_click("link=$upload_text"); 
+          if ($error && $error ne 'OK') {
+            push @responses, $error;
+          }
+          else {
+            $error = $sel->ensembl_wait_for_ajax(undef,10000);
+            push @responses, $error;
+            push @responses, $self->_upload_file($format, $file_url);
+          }
         }
       }
     }
