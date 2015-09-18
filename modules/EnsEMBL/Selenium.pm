@@ -342,7 +342,7 @@ sub ensembl_images_loaded {
 
 
 sub ensembl_is_text_present {
-#Overloading is_text_present function so that it returns the current url when it fails
+### Wrapper around standard selenium method to return useful error message 
   my ($self, $text) = @_;
   my $url = $self->get_location();
   
@@ -351,13 +351,28 @@ sub ensembl_is_text_present {
   return $error; 
 }
 
+sub ensembl_type {
+### Wrapper around standard selenium method to return useful error message 
+  my ($self, $locator, $text) = @_;
+  my $url = $self->get_location();
+    
+  return ('fail', "Failure to input text $text at URL $url") unless $self->type($locator, $text);  
+}
+
 sub ensembl_select {
-### overloading select to return URL where the action fails.
+### Wrapper around standard selenium method to return useful error message 
   my ($self, $select_locator, $option_locator) = @_;
   my $url = $self->get_location();
     
-  return ('fail', "Failure at URL $url") unless $self->select($select_locator,$option_locator);  
+  return ('fail', "Failure to select value at URL $url") unless $self->select($select_locator,$option_locator);  
 }
 
+sub ensembl_submit {
+### Wrapper around standard selenium method to return useful error message 
+  my ($self, $locator) = @_;
+  my $url = $self->get_location();
+    
+  return ('fail', "Form submission failure at URL $url") unless $self->submit($locator);  
+}
 
 1;
