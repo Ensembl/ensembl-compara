@@ -88,8 +88,12 @@ sub _upload_file {
   push @responses, $result;
   return @responses if $self->test_fails($result);
 
-  ## Select the format
+  ## Select the format - N.B. field is unhidden by JavaScript
   my $dropdown = "$form/fieldset/div[5]/div/select";
+  $result = $sel->ensembl_wait_for_element("xpath=$dropdown");
+  push @responses, $result;
+  return @responses if $self->test_fails($result);
+
   $result = $sel->ensembl_type("xpath=$dropdown", $format);
   push @responses, $result;
   return @responses if $self->test_fails($result);
