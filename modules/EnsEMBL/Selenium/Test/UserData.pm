@@ -80,16 +80,16 @@ sub _upload_file {
   return $result if $self->test_fails($result);
  
   ## Interact with form
-  my $form = "//div[\@id='SelectFile']/form";
+  my $form = "//form[\@id='select']";
 
   ## Type file name into textarea
-  my $textarea = "$form/fieldset/div[4]/div[1]/textarea";
+  my $textarea = "$form/fieldset/div[4]/div/textarea";
   $result = $sel->ensembl_type($textarea, $url);
   push @responses, $result;
   return @responses if $self->test_fails($result);
 
   ## Select the format
-  my $dropdown = "$form/fieldset/div[5]/div[1]/select";
+  my $dropdown = "$form/fieldset/div[5]/div/select";
   $result = $sel->ensembl_type($dropdown, $format);
   push @responses, $result;
   return @responses if $self->test_fails($result);
