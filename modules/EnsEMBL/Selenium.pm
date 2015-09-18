@@ -348,7 +348,8 @@ sub ensembl_is_text_present {
   
   my $error = try { $self->is_text_present($text); }
               catch { ['fail', "MISSING TEXT $text at URL $url"]; }; 
-  return $error; 
+  ## $error is set to 1 if test succeeds
+  return $error == 1 ? 0 : $error;
 }
 
 sub ensembl_type {
