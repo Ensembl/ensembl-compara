@@ -31,42 +31,35 @@ sub test_upload_file {
 
   $self->no_mirrors_redirect;
 
+  ## Go to the species homepage
+  my $species_name = $species->{'name'};
+  my $home_page = sprintf('%s/Info/Index', $species_name);
+
+  my $result = $sel->ensembl_open($home_page);
+  return $result if $self->test_fails($result);
+
+  $result = $sel->ensembl_wait_for_page_to_load;
+  return $result if $self->test_fails($result);
+
+  ## Check we're on the right page!
+  $result = $sel->ensembl_is_text_present('Genome assembly: '.$species->{'assembly_name'});
+  return $result if $self->test_fails($result);
+
+  ## Loop through the test files in the species configuration, opening 
+  ## the interface for each one and attempting an upload
+  my $files       = $species->{'files'} || {};
+  my $upload_text = 'Display your data in Ensembl';
   my @responses;
 
-  my $species_name = $species->{'name'};
-  my $files        = $species->{'files'} || {};
+  while (my($format, $file_url) = each(%$files)) {
+    $result = $sel->ensembl_click("link=$upload_text"); 
+    next if $self->test_fails($result);
 
-  my $home_page = sprintf('%s/Info/Index', $species_name);
-  my $error = eval { $self->sel->open($home_page); };
-  if ($error && $error ne 'OK') {
-    return ['fail', "Couldn't open $species_name home page", ref($self), 'test_lh_menu'];
-  }
-  else { 
-    $error = $sel->ensembl_wait_for_page_to_load;
-    if ($error && $error ne 'OK') {
-      push @responses, $error;
-    }
-    else {
-      ## Check we're on the right page!
-      my $error = $sel->ensembl_is_text_present('Genome assembly: '.$species->{'assembly_name'});
-      if ($error) {
-        push @responses, $error;
-      }
-      else {
-        my $upload_text = 'Display your data in Ensembl';
-        while (my($format, $file_url) = each(%$files)) {
-          $error = $sel->ensembl_click("link=$upload_text"); 
-          if ($error && $error ne 'OK') {
-            push @responses, $error;
-          }
-          else {
-            $error = $sel->ensembl_wait_for_ajax(undef,10000);
-            push @responses, $error;
-            push @responses, $self->_upload_file($format, $file_url);
-          }
-        }
-      }
-    }
+    $result = $sel->ensembl_wait_for_ajax(undef,10000);
+    next if $self->test_fails($result);
+
+    push @responses, $self->_upload_file($format, $file_url);
+    $sel->go_back();
   }
   return @responses;
 }
@@ -80,21 +73,28 @@ sub _upload_file {
   my @responses;
 
   ## Sanity check - have we opened the form?
-  push @responses, $sel->ensembl_is_text_present('Add a custom track');
+  my $result = $sel->ensembl_is_text_present('Add a custom track');
+  return $result if $self->test_fails($result);
  
   ## Interact with form
   my $form = "//div[\@id='SelectFile']/form";
 
   ## Type file name into textarea
   my $textarea = "$form/fieldset/div[4]/div[1]/textarea";
-  push @responses, $sel->ensembl_type($textarea, $url);
+  $result = $sel->ensembl_type($textarea, $url);
+  return $result if $self->test_fails($result);
+  push @responses, $result;
 
   ## Select the format
   my $dropdown = "$form/fieldset/div[5]/div[1]/select";
-  push @responses, $sel->ensembl_type($dropdown, $format);
+  $result = $sel->ensembl_type($dropdown, $format);
+  return $result if $self->test_fails($result);
+  push @responses, $result;
 
   ## Submit the form
-  push @responses, $sel->ensembl_submit("xpath=$form");
+  $result = $sel->ensembl_submit("xpath=$form");
+  return $result if $self->test_fails($result);
+  push @responses, $result;
 
   return @responses;
 }
