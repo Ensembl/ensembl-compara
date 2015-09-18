@@ -376,10 +376,14 @@ sub ensembl_type {
 ### Wrapper around standard selenium method to return useful error message 
   my ($self, $locator, $text) = @_;
   my $url = $self->get_location();
-   
+  my $real_error;
+ 
   my $error = try { $self->type($locator, $text) }
-              catch { ['fail', "Failure to input text $text at URL $url"]; };
-  return $error == 1 ? ['pass', "Input text $text"] : $error;
+              catch { "Failure to input text $text at URL $url"; }
+              finally { if (@_) { $real_error = join(' ', @_); } };
+  $error .= "\n$real_error";
+
+  return $error == 1 ? ['pass', "Input text $text"] : ['fail', $error];
 }
 
 sub ensembl_select {
@@ -388,8 +392,11 @@ sub ensembl_select {
   my $url = $self->get_location();
   
   my $error = try { $self->select($select_locator,$option_locator) }
-              catch { ['fail', "Failure to select value at URL $url"]; };  
-  return $error == 1 ? ['pass', "Selected value $option_locator"] : $error;
+              catch { "Failure to select value at URL $url"; }
+              finally { if (@_) { $real_error = join(' ', @_); } };
+  $error .= "\n$real_error";
+
+  return $error == 1 ? ['pass', "Selected value $option_locator"] : ['fail', $error];
 }
 
 sub ensembl_submit {
@@ -398,8 +405,11 @@ sub ensembl_submit {
   my $url = $self->get_location();
   
   my $error = try { $self->submit($locator) }
-              catch { ['fail', "Form submission failure at URL $url"]; };  
-  return $error == 1 ? ['pass', "Form $locator submitted"] : $error;
+              catch { "Form submission failure at URL $url"; } 
+              finally { if (@_) { $real_error = join(' ', @_); } };
+  $error .= "\n$real_error";
+
+  return $error == 1 ? ['pass', "Form $locator submitted"] : ['fail', $error];
 }
 
 1;
