@@ -58,6 +58,23 @@ sub ensembl_wait_for_ajax {
   return $error; 
 }
 
+sub ensembl_wait_for_element {
+### Wait for an element to be present, e.g. if Javascript controlled
+  my ($self, $locator, $timeout) = @_;
+  my $url = $self->get_location();
+  my $real_error;
+ 
+  $timeout ||= $self->_timeout;
+  $timeout += 20000 if ($url =~ /staging|uswest|useast|ec2/);
+
+  my $error = try { $self->wait_for_element_present($locator, $timeout) }
+              catch { "ELEMENT $locator NOT FOUND"; }
+              finally { if (@_) { $real_error = join(' ', @_); } };
+  $error .= "\n$real_error";
+
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Element $locator found"] : ['fail', $error];
+}
+
 sub ensembl_wait_for_page_to_load {
 ### Wait for a 200 OK response, then wait until all ajax has loaded
 ### Also, we have custom error pages, so we need to specifically check for error text 
