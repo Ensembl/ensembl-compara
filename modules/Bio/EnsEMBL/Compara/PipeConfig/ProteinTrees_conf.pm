@@ -2569,7 +2569,9 @@ sub core_pipeline_analyses {
                 'output_clusterset_id'      => 'notung',
                 'notung_memory'             => 1500,
             },
-            -hive_capacity  => $self->o('notung_capacity'),
+            -hive_capacity                  => $self->o('notung_capacity'),
+            -analysis_capacity              => $self->o('notung_capacity'),
+            -batch_size    => 2,
             -rc_name        => '2Gb_job',
             -flow_into      => {
                 1  => [ 'raxml_bl' ],
@@ -2602,7 +2604,7 @@ sub core_pipeline_analyses {
                 'escape_branch'             => -1,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '1Gb_job',
+            -rc_name    => '8Gb_job',
             -flow_into  => {
                 -1 => [ 'raxml_bl_himem' ],
             }
@@ -2618,7 +2620,7 @@ sub core_pipeline_analyses {
                 'escape_branch'             => -1,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '4Gb_job',
+            -rc_name    => '16Gb_job',
         },
 
 # ---------------------------------------------[orthologies]-------------------------------------------------------------
