@@ -52,7 +52,7 @@ sub test_upload_file {
   my @responses;
 
   while (my($format, $file_url) = each(%$files)) {
-    $result = $sel->ensembl_click("link=$upload_text"); 
+    $result = $sel->ensembl_click($upload_text); 
     push @responses, $result;
     next if $self->test_fails($result);
 

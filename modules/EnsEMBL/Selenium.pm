@@ -140,12 +140,15 @@ sub ensembl_click {
 ### Overloading click function so that it returns the current url when it fails. 
 ### Only use this function when ensembl_click_links below does not work,
 ### for example when opening an AJAX panel
+### @param link String - text of link to click on
+### @param timeout Integer - number of milliseconds to allow
+### @return ArrayRef - error code and message
   my ($self, $link, $timeout) = @_;
   my $url = $self->get_location();
     
-  return $self->click($link,$timeout) 
-    ? ['pass', "Click on link $link succeeded"] : 
-      ['fail', "CLICK ON LINK $link FAILED: URL $url"];
+  return $self->click("link=$link",$timeout) 
+    ? ['pass', "Click on link '$link' succeeded"] : 
+      ['fail', "CLICK ON LINK '$link' FAILED: URL $url"];
 }
 
 sub ensembl_click_links {
