@@ -76,6 +76,7 @@ sub _upload_file {
 
   ## Sanity check - have we opened the form?
   my $result = $sel->ensembl_is_text_present('Add a custom track');
+  push @responses, $result;
   return $result if $self->test_fails($result);
  
   ## Interact with form
@@ -84,20 +85,17 @@ sub _upload_file {
   ## Type file name into textarea
   my $textarea = "$form/fieldset/div[4]/div[1]/textarea";
   $result = $sel->ensembl_type($textarea, $url);
-  return $result if $self->test_fails($result);
   push @responses, $result;
+  return @responses if $self->test_fails($result);
 
   ## Select the format
   my $dropdown = "$form/fieldset/div[5]/div[1]/select";
   $result = $sel->ensembl_type($dropdown, $format);
-  return $result if $self->test_fails($result);
   push @responses, $result;
+  return @responses if $self->test_fails($result);
 
   ## Submit the form
-  $result = $sel->ensembl_submit("xpath=$form");
-  return $result if $self->test_fails($result);
-  push @responses, $result;
-
+  push @responses, $sel->ensembl_submit("xpath=$form");
   return @responses;
 }
 
