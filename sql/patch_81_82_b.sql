@@ -71,6 +71,12 @@ CREATE TEMPORARY TABLE method_link_species_set_time AS
 ALTER TABLE method_link_species_set ADD COLUMN first_release smallint unsigned, ADD COLUMN last_release smallint unsigned;
 UPDATE method_link_species_set JOIN method_link_species_set_time USING (method_link_species_set_id) SET first_release = fr, last_release = lr;
 
+-- update the species_set table
+ALTER TABLE species_set
+	MODIFY COLUMN species_set_id int(10) unsigned NOT NULL,
+	MODIFY COLUMN genome_db_id int(10) unsigned NOT NULL,
+	DROP INDEX species_set_id.
+	ADD PRIMARY KEY (species_set_id,genome_db_id);
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
