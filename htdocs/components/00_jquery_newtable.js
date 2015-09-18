@@ -373,7 +373,6 @@
     var stored_config = {
       columns: config.columns,
       unique: config.unique,
-      type: config.type
     };
     var view = $.extend(true,{},config.orient);
     var old_view = $.extend(true,{},config.orient);

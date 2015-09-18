@@ -142,7 +142,7 @@ sub make_table {
   my $hub      = $self->hub;
   my $glossary = $hub->glossary_lookup;
   
-  my $table = EnsEMBL::Web::NewTable::NewTable->new($self,{ data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside' });
+  my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
   
   # add SIFT for supported species
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};

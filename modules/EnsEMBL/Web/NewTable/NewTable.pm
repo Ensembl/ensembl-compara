@@ -54,14 +54,11 @@ foreach my $plugin (@PACKAGES) {
 }
 
 sub new {
-  my ($class, $component, $options) = @_;
-
-  $options  ||= {};
+  my ($class, $component) = @_;
 
   my $self = {
     component  => $component,
     columns    => [],
-    options    => $options,
     plugins => {},
   };
 
@@ -132,10 +129,6 @@ sub render {
     ];
   }
 
-  my $options     = $self->{'options'}        || {};
-  my %table_class = map { $_ => 1 } split ' ', $options->{'class'};
-  my $class   = join ' ', keys %table_class;
-
   my $url = $hub->url('ComponentAjax', {
     source => 'enstab',
     action => 'Web',
@@ -154,8 +147,6 @@ sub render {
   };
   my $data = {
     unique => random_string(32),
-    type => $self->{'options'}{'type'}||'',
-    cssclass => $class,
     columns => [ map { $_->{'key'} } @{$self->{'columns'}} ],
     orient => $orient,
     formats => [ "tabular", "paragraph" ],
