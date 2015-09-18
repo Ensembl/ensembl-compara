@@ -706,6 +706,71 @@ sub freqs {
   return \%data;
 }
 
+sub format_group_population_freqs {
+  my ($self, $only_super_populations) = @_;
+  my $hub = $self->hub;
+  my $pop_freq;
+  my $main_priority_level;
+
+  my $freq_data = $self->freqs();
+
+  # Get the main priority group level
+  foreach my $pop_id (keys %$freq_data) {
+    my $priority_level = $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
+    next if (!defined($priority_level));
+
+    $main_priority_level = $priority_level if (!defined($main_priority_level) || $main_priority_level > $priority_level);
+  }
+  return undef if (!defined($main_priority_level));
+
+  foreach my $pop_id (keys %$freq_data) {
+    ## is it a priority project ?
+    my $priority_level = $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
+    next if (!defined($priority_level) || $priority_level!=$main_priority_level);
+
+    my $pop_name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
+
+    if ($only_super_populations && scalar(keys(%{$freq_data->{$pop_id}{'pop_info'}{'Sub-Population'}})) == 0) {
+      next;
+    }
+    elsif (!$only_super_populations && scalar(keys(%{$freq_data->{$pop_id}{'pop_info'}{'Sub-Population'}})) != 0) {
+      $pop_freq->{$pop_name}{'sub_pop'} = $freq_data->{$pop_id}{'pop_info'}{'Sub-Population'};
+    }
+
+    my @composed_name = split(':', $pop_name);
+    $pop_freq->{$pop_name}{'label'} = $composed_name[$#composed_name];
+    $pop_freq->{$pop_name}{'desc'}  = length($freq_data->{$pop_id}{'pop_info'}{'Description'}) > 40 ? $pop_name : $freq_data->{$pop_id}{'pop_info'}{'Description'};
+    $pop_freq->{$pop_name}{'group'} = $freq_data->{$pop_id}{'pop_info'}{'PopGroup'};
+
+    foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
+      next if $freq_data->{$pop_id}{$ssid}{'failed_desc'};
+
+      my @allele_freq = @{$freq_data->{$pop_id}{'ssid'}{$ssid}{'AlleleFrequency'}};
+
+      foreach my $gt (@{$freq_data->{$pop_id}{'ssid'}{$ssid}{'Alleles'}}) {
+        next unless $gt =~ /(\w|\-)+/;
+
+        my $freq = $self->format_freqs_number(shift @allele_freq);
+
+        $pop_freq->{$pop_name}{'freq'}{$ssid}{$gt} = $freq if $freq ne 'unknown';
+      }
+    }
+  }
+  return $pop_freq;
+}
+
+sub format_freqs_number {
+  ### Population_genotype_alleles
+  ### Arg1 : null or a number
+  ### Returns "unknown" if null or formats the number to 3 decimal places
+
+  my ($self, $number) = @_;
+
+  return 'unknown' if (!defined $number);
+  return ($number < 0.01) ? sprintf '%.3f', $number : sprintf '%.2f', $number;
+}
+
+
 sub calculate_allele_freqs_from_genotype {
   my ($self, $variation_feature, $temp_data) = @_;
   my %data = %$temp_data;
