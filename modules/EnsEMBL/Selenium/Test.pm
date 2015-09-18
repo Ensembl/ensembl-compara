@@ -87,6 +87,24 @@ sub testmore_output {
   return $TESTMORE_OUTPUT;
 }
 
+sub test_fails {
+### Parses the test output for failure
+### @param result - any possible output from a test
+### @return Boolean - 1 = fail, 0 = pass
+  my ($self, $result) = @_;
+  my $fail = 0;
+
+  if ($result) {
+    if (ref($result) eq 'ARRAY' && $result->[0] ne 'pass') {
+      $fail = 1;
+    }
+    elsif (!$result || $result ne 'OK') {
+      $fail = 1;
+    }
+  }
+  return $fail;
+}
+
 sub get_current_url {
 ### Gets the current URL in the window (to know which page is being tested)
   my $self = shift;
