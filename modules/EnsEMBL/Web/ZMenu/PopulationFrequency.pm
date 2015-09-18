@@ -34,8 +34,7 @@ sub content {
   my $vfa    = $hub->database($db)->get_VariationFeatureAdaptor;
   
   my $feature  = $vfa->fetch_by_dbID($vf);
-  my $freq_data = $object->freqs;
-  my $pop_freq  = $self->format_frequencies($freq_data);
+  my $pop_freq = $self->object->format_group_population_freqs(1);
 
   my @entries = @{$self->population_frequency_popup($feature, $allele, $pop_freq)};
 
@@ -49,21 +48,23 @@ sub content {
       my $pop_label = $pop_freq->{$pop_name}{'label'};
 
       # Keep the alleles order
-      foreach my $al (sort { $a cmp $b } keys (%{$pop_freq->{$pop_name}{'freq'}})) {
-        $colours{$al} ||= "base_".(scalar(keys %colours)%4);
-        my $freq = $pop_freq->{$pop_name}{'freq'}{$al};
-        push @freqs, $colours{$al};
-        push @freqs, $freq;
-        $af .= $af ? ', ' : '';
-        $af .= "$al: ";
-        $af .= ($freq > 0.01) ? $freq : qq{<span style="color:red">$freq</span>};
+      foreach my $ssid (keys %{$pop_freq->{$pop_name}{'freq'}}) {
+        foreach my $al (sort { $a cmp $b } keys (%{$pop_freq->{$pop_name}{'freq'}{$ssid}})) {
+          $colours{$al} ||= "base_".(scalar(keys %colours)%4);
+          my $freq = $pop_freq->{$pop_name}{'freq'}{$ssid}{$al};
+          push @freqs, $colours{$al};
+          push @freqs, $freq;
+          $af .= $af ? ', ' : '';
+          $af .= "$al: ";
+          $af .= ($freq > 0.01) ? $freq : qq{<span style="color:red">$freq</span>};
+        }
+
+        my $img;
+           $img .= sprintf '<span class="freq %s" style="width:%spx"></span>', shift @freqs, 100 * shift @freqs while @freqs;
+           $af   = "<div>$af</div>";
+
+        push @entries, { type => $pop_label, label_html => "$img$af" };
       }
-
-      my $img;
-         $img .= sprintf '<span class="freq %s" style="width:%spx"></span>', shift @freqs, 100 * shift @freqs while @freqs;
-         $af   = "<div>$af</div>";
-
-      push @entries, { type => $pop_label, label_html => "$img$af" };
     }
     if (scalar @entries != 0) {
       $self->caption('Population allele frequencies');
@@ -91,40 +92,43 @@ sub population_frequency_popup {
 #  my $extra_info = '';
   my @vf_alleles = split('/',$feature->allele_string);
   foreach my $pop_name (sort { ($a !~ /ALL/ cmp $b !~ /ALL/) || $a cmp $b } keys %$pop_freq) {
-    my $allele_label;
 
+    my $group     = $pop_freq->{$pop_name}{'group'};
     my $pop_label = $pop_freq->{$pop_name}{'label'};
 
-    if ($pop_freq->{$pop_name}{'freq'}{$allele}) {
-      $allele_label = $allele;
-    }
-    elsif ($allele =~ /[ATGC]+/){
-      if (!grep{$allele eq $_} @vf_alleles) { # Check if allele in VF (not found in the $pop_freq hash)
-        my $reverse_allele = $allele;
-        reverse_comp(\$reverse_allele);
-        if ($pop_freq->{$pop_name}{'freq'}{$reverse_allele}) {
-          $allele_label = $reverse_allele;
+    foreach my $ssid (keys %{$pop_freq->{$pop_name}{'freq'}}) {  
+      my $allele_label;
+
+      if ($pop_freq->{$pop_name}{'freq'}{$ssid}{$allele}) {
+        $allele_label = $allele;
+      }
+      elsif ($allele =~ /[ATGC]+/){
+        if (!grep{$allele eq $_} @vf_alleles) { # Check if allele in VF (not found in the $pop_freq hash)
+          my $reverse_allele = $allele;
+          reverse_comp(\$reverse_allele);
+          if ($pop_freq->{$pop_name}{'freq'}{$ssid}{$reverse_allele}) {
+            $allele_label = $reverse_allele;
+          }
         }
       }
-    }
 
-    if ($allele_label) {
-      my $freq = $pop_freq->{$pop_name}{'freq'}{$allele_label};
-      my $group = $pop_freq->{$pop_name}{'group'};
-      if (!$allele_header || $allele_header eq '') {
-        my $allele_type = ($allele_label eq $vf_alleles[0]) ? 'Reference ' : 'Alternative';
-        my $allele_strand = ($feature->seq_region_strand == 1) ? 'forward' : 'reverse';
+      if ($allele_label) {
+        my $freq = $pop_freq->{$pop_name}{'freq'}{$ssid}{$allele_label};
+        if (!$allele_header || $allele_header eq '') {
+          my $allele_type = ($allele_label eq $vf_alleles[0]) ? 'Reference ' : 'Alternative';
+          my $allele_strand = ($feature->seq_region_strand == 1) ? 'forward' : 'reverse';
 
-        $allele_header = "Allele $allele_label";
-        $self->caption($allele_header);
-        $self->add_entry({ label_html => "$allele_type allele ($allele_strand strand)" });
-        $self->add_subheader($group);
+          $allele_header = "Allele $allele_label";
+          $self->caption($allele_header);
+          $self->add_entry({ label_html => "$allele_type allele ($allele_strand strand)" });
+          $self->add_subheader($group);
 
-        push @entries, { type => 'Population', label_html => "Frequency $allele_label" };
+          push @entries, { type => 'Population', label_html => "Frequency $allele_label" };
         
+        }
+        $freq = ($freq > 0.01) ? $freq : qq{<span style="color:red">$freq</span>};
+        push @entries, { type => $pop_label, label_html => $freq };
       }
-      $freq = ($freq > 0.01) ? $freq : qq{<span style="color:red">$freq</span>};
-      push @entries, { type => $pop_label, label_html => $freq };
     }
   }
   if (scalar @entries != 0) {
@@ -134,68 +138,6 @@ sub population_frequency_popup {
   return \@entries;
 }
 
-
-sub format_frequencies {
-  my ($self, $freq_data) = @_;
-  my $hub = $self->hub;
-  my $pop_freq;
-  my $main_priority_level;
-
-  # Get the main priority group level
-  foreach my $pop_id (keys %$freq_data) {
-    my $priority_level = $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
-    next if (!defined($priority_level));
-
-    $main_priority_level = $priority_level if (!defined($main_priority_level) || $main_priority_level > $priority_level);
-  }
-  return undef if (!defined($main_priority_level));
-
-  foreach my $pop_id (keys %$freq_data) {
-    ## is it a priority project ?
-    my $priority_level = $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
-    next if (!defined($priority_level) || $priority_level!=$main_priority_level);
-
-    next if (scalar(keys(%{$freq_data->{$pop_id}{'pop_info'}{'Sub-Population'}})) == 0);
-
-    my $pop_name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
-
-    my @composed_name = split(':', $pop_name);
-    $pop_freq->{$pop_name}{'label'} = $composed_name[$#composed_name];
-    $pop_freq->{$pop_name}{'desc'}  = length($freq_data->{$pop_id}{'pop_info'}{'Description'}) > 40 ? $pop_name : $freq_data->{$pop_id}{'pop_info'}{'Description'};
-    $pop_freq->{$pop_name}{'group'} = $freq_data->{$pop_id}{'pop_info'}{'PopGroup'};
-
-    foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
-      next if $freq_data->{$pop_id}{$ssid}{'failed_desc'};
-
-      my @allele_freq = @{$freq_data->{$pop_id}{'ssid'}{$ssid}{'AlleleFrequency'}};
-
-      foreach my $gt (@{$freq_data->{$pop_id}{'ssid'}{$ssid}{'Alleles'}}) {
-        next unless $gt =~ /(\w|\-)+/;
-
-        my $freq = $self->format_number(shift @allele_freq);
-
-        $pop_freq->{$pop_name}{'freq'}{$gt} = $freq if $freq ne 'unknown';
-      }
-    }
-  }
-
-  return $pop_freq;
-}
-
-sub format_number {
-  ### Population_genotype_alleles
-  ### Arg1 : null or a number
-  ### Returns "unknown" if null or formats the number to 3 decimal places
-
-  my ($self, $number) = @_;
-  if (defined $number) {
-    $number = ($number < 0.01) ? sprintf '%.3f', $number : sprintf '%.2f', $number;
-  }
-  else {
-    $number = 'unknown';
-  }
-  return $number;
-}
 
 sub add_footer {
   my $self    = shift;
