@@ -118,7 +118,7 @@ my $type_key = lc($type);
     my $cons_desc = $feature->most_severe_OverlapConsequence->description;
     $consequence_label = sprintf(
          '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-         '<span class="_ht conhelp coltab_text" title="%s">%s</span></nobr>',
+         '<span class="_ht ht coltab_text" title="%s">%s</span></nobr>',
          $color,
          $cons_desc,
          $types->{$type_key}{'text'}
