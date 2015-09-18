@@ -390,6 +390,7 @@ sub ensembl_select {
 ### Wrapper around standard selenium method to return useful error message 
   my ($self, $select_locator, $option_locator) = @_;
   my $url = $self->get_location();
+  my $real_error;
   
   my $error = try { $self->select($select_locator,$option_locator) }
               catch { "Failure to select value at URL $url"; }
@@ -403,6 +404,7 @@ sub ensembl_submit {
 ### Wrapper around standard selenium method to return useful error message 
   my ($self, $locator) = @_;
   my $url = $self->get_location();
+  my $real_error;
   
   my $error = try { $self->submit($locator) }
               catch { "Form submission failure at URL $url"; } 
