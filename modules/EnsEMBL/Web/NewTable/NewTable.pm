@@ -28,9 +28,30 @@ use EnsEMBL::Draw::Utils::ColourMap;
 use base qw(EnsEMBL::Web::Root);
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_client_config);
+
+our @PLUGINS = qw(Core Decorate Filter Misc);
+
+my %PLUGINS;
+my @PACKAGES;
+while(@PLUGINS) {
+  my $plugin = shift @PLUGINS;
+  my $package = dynamic_require("EnsEMBL::Web::NewTable::Plugins::$plugin",1);
+  push @PACKAGES,$plugin;
+  if($package) {
+    my $children = $package->children();
+    push @PLUGINS,@$children;
+  }
+}
+foreach my $plugin (@PACKAGES) {
+  my $package = "EnsEMBL::Web::NewTable::Plugins::$plugin";
+  if(UNIVERSAL::isa($package,"EnsEMBL::Web::NewTable::Plugin")) {
+    $PLUGINS{$plugin} = $package;
+  }
+}
 
 sub new {
   my ($class, $component, $options) = @_;
@@ -41,6 +62,7 @@ sub new {
     component  => $component,
     columns    => [],
     options    => $options,
+    plugins => {},
   };
 
   bless $self, $class;
@@ -73,10 +95,41 @@ sub preprocess_hyphens {
   }
 }
 
+sub add_plugin {
+  my ($self,$plugin,$conf,$_ours) = @_;
+
+  $_ours ||= {};
+  return undef unless $PLUGINS{$plugin};
+  my $pp = $self->{'plugins'}{$plugin};
+  $self->{'plugins'}{$plugin} = $pp = $PLUGINS{$plugin}->new() unless $pp;
+  return undef unless $pp;
+  $pp->configure($conf);
+  foreach my $sub (@{$pp->requires()}) {
+    next if $_ours->{$sub};
+    $_ours->{$sub} = 1;
+    $self->add_plugin($sub,$conf,$_ours);
+  }
+}
+
 sub render {
   my ($self,$hub) = @_;
 
+  $self->add_plugin('Core',{});
+  $self->add_plugin('Decorate',{});
+  $self->add_plugin('Filter',{});
+  $self->add_plugin('Misc',{});
+  $self->add_plugin('PageSizer',{});
+  $self->add_plugin('Styles',{});
+
   return unless @{$self->{'columns'}};
+
+  my $widgets = {};
+  foreach my $p (keys %{$self->{'plugins'}}) {
+    $widgets->{$p} = [
+      $self->{'plugins'}{$p}->js_plugin,
+      $self->{'plugins'}{$p}->js_config,
+    ];
+  }
 
   my $options     = $self->{'options'}        || {};
   my %table_class = map { $_ => 1 } split ' ', $options->{'class'};
@@ -99,7 +152,7 @@ sub render {
     pagesize => 10,
     rows => [0,-1],
     columns => [ (1) x scalar(@{$self->{'columns'}}) ],
-    format => 'tabular',
+    format => 'Tabular',
   }; # XXX fix me: separate view from orient
   my $data = {
     unique => random_string(32),
@@ -107,40 +160,15 @@ sub render {
     cssclass => $class,
     columns => [ map { $_->{'key'} } @{$self->{'columns'}} ],
     head => [
-      [ "page_sizer" ],
-      [ "loading","columns" ],
-      [ "export", "new_table_filter", "search" ],
-      [ "filter" ]
+      [ "PageSizer" ],
+      [ "loading","Columns" ],
+      [ "Export",  "Search" ],
+      [ "Filter" ]
     ],
     orient => $orient,
     formats => [ "tabular", "paragraph" ],
     colconf => $sort_conf,
-    widgets => {
-      export => [ "newtable_export",{}],
-      filter => [ "new_table_filter",{}],
-      filter_class => ["newtable_filter_class",{}],
-      filter_range => ["newtable_filter_range",{}],
-      filter_enum => ["newtable_filter_enumclient",{}],
-      search => [ "new_table_search",{}],
-      clientsort => [ "new_table_clientsort",{}],
-      decorate => [ "newtable_decorate", {}],
-      decorate_iconic => [ "newtable_decorate_iconic", {}],
-      decorate_link => [ "newtable_decorate_link", {}],
-      decorate_editorial => [ "newtable_decorate_editorial", {}],
-      decorate_also => [ "newtable_decorate_also", {}],
-      decorate_toggle => [ "newtable_decorate_toggle", {}],
-      page_sizer => ["new_table_pagesize", { "sizes" => [ 0, 10, 100 ] } ],
-      "tabular" => [ "new_table_tabular", { } ],
-      "paragraph" => [ "new_table_paragraph", { } ],
-      "styles" => [
-         "new_table_style",
-         {
-            "styles" => [ [ "tabular", "Tabular" ], [ "paragraph", "Paragraph" ] ]
-         }
-      ],
-      "columns" => [ "new_table_columns", { } ],
-      "loading" => [ "new_table_loading", { } ],
-   },
+    widgets => $widgets,
   };
   my $payload_one = $self->{'component'}->newtable_data_request($data,$orient,$orient,undef,1);
   $data->{'payload_one'} = $payload_one;
