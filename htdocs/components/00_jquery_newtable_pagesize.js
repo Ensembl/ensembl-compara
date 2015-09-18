@@ -42,7 +42,8 @@
           $table.data('view',view);
           $table.trigger('view-updated');
         });
-      }
+      },
+      position: data.position,
     };
   }; 
 

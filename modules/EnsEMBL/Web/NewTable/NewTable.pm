@@ -33,7 +33,7 @@ use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_client_config);
 
-our @PLUGINS = qw(Core Decorate Filter Misc);
+our @PLUGINS = qw(Core Frame Decorate Filter Misc);
 
 my %PLUGINS;
 my @PACKAGES;
@@ -115,6 +115,7 @@ sub render {
   my ($self,$hub) = @_;
 
   $self->add_plugin('Core',{});
+  $self->add_plugin('Frame',{});
   $self->add_plugin('Decorate',{});
   $self->add_plugin('Filter',{});
   $self->add_plugin('Misc',{});
@@ -159,12 +160,6 @@ sub render {
     type => $self->{'options'}{'type'}||'',
     cssclass => $class,
     columns => [ map { $_->{'key'} } @{$self->{'columns'}} ],
-    head => [
-      [ "PageSizer" ],
-      [ "loading","Columns" ],
-      [ "Export",  "Search" ],
-      [ "Filter" ]
-    ],
     orient => $orient,
     formats => [ "tabular", "paragraph" ],
     colconf => $sort_conf,

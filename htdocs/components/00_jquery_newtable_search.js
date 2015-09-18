@@ -53,6 +53,7 @@
           change_event($table);
         });
       },
+      position: data.position,
       pipe: function() {
         return [
           function(need,got) {

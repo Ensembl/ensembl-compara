@@ -42,6 +42,60 @@
     return widgets;
   }
 
+  function build_frame(config,widgets,$html) {
+    /* Build full list of slots and construct frame */
+    full_frame = {};
+    cwidgets = [];
+    tags = {};
+    $.each(widgets,function(key,widget) { cwidgets.push(key); });
+    cwidgets.sort(function(a,b) { return (widgets[a].prio||50)-(widgets[b].prio||50); });
+    $.each(cwidgets,function(i,key) {
+      var widget = widgets[key];
+      if(widget.frame) {
+        var out = widget.frame($html);
+        $.each(out,function(name,details) {
+          if(name=='$') { return; }
+          details.name = name;
+          details.widget = widget;
+          full_frame[key+'--'+name] = details;
+          for(var i=0;i<details.tags.length;i++) {
+            if(!tags[details.tags[i]]) { tags[details.tags[i]] = []; }
+            tags[details.tags[i]].push(details);
+          }
+        });
+        $html = out['$'];
+      }
+    });
+    /* Survey for those that need a position */
+    var candidates = {};
+    $.each(cwidgets,function(i,key) {
+      var widget = widgets[key];
+      if(widget.position) {
+        var position = null;
+        for(var i=0;i<widget.position.length;i++) {
+          if(!tags.hasOwnProperty(widget.position[i])) { continue; }
+          var slots = tags[widget.position[i]];
+          if(!candidates[slots[0].name]) { candidates[slots[0].name] = []; }
+          candidates[slots[0].name].push([key,widget,slots[0]]);
+          slots.push(slots.shift());
+          break;
+        }
+      }
+    });
+    /* Go for each position */
+    $.each(candidates,function(pos,widgets) {
+      var ww = widgets.slice();
+      ww.sort(function(a,b) { return (b[1].position_order||50)-(a[1].position_order||50); });
+      for(var i=0;i<ww.length;i++) {
+        var $widget = $('<div data-widget-name="'+ww[i][0]+'"/>');
+        $widget.append(ww[i][1].generate);
+        $widget = $('<div/>').append($widget);
+        ww[i][2]['$'].append($widget);
+      } 
+    });
+    return $html;
+  }
+
   function make_chain(widgets,config,$table) {
     config.pipes = [];
     cwidgets = [];
@@ -90,44 +144,6 @@
     return enums;
   }
 
-  function new_top_section(widgets,config,pos) {
-    var content = '';
-    $.each(config.head[pos],function(i,widget) {
-      if(widget && widgets[widget]) {
-        content +=
-          '<div data-widget-name="'+widget+'">'+
-            widgets[widget].generate()+
-          '</div>';
-      }
-    });
-    if(pos==1) { content = '<div>'+content+'</div>'; }
-    return content;
-  }
-
-  function new_slices(widgets,config) {
-    var slices = "";
-    $.each(config.head[3],function(i,widget) {
-      if(widget && widgets[widget]) {
-        slices +=
-          '<div data-widget-name="'+widget+'">'+
-            widgets[widget].generate()+
-          '</div>';
-      }
-    });
-    return slices;
-  }
-
-  function new_top(widgets,config) {
-    var ctrls = "";
-    for(var pos=0;pos<3;pos++) {
-      ctrls += '<div class="new_table_section new_table_section_'+pos+'">'
-               + new_top_section(widgets,config,pos) +
-               '</div>';
-    }
-    var slices = new_slices(widgets,config);
-    return '<div class="new_table_top">'+ctrls+'</div>'+slices;
-  }
-    
   function build_format(widgets,$table) {
     var view = $table.data('view');
     console.log("build_format '"+view.format+"'");
@@ -343,6 +359,7 @@
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
+
     $.each(config.formats,function(i,fmt) {
       if(!config.orient.format && widgets[fmt]) {
         config.orient.format = fmt;
@@ -360,11 +377,12 @@
         config.orient.columns.push(true);
       }
     }
-    var $table = $('<div class="new_table_wrapper '+config.cssclass+'"><div class="topper"></div><div class="layout"></div></div>');
+    //var $table = $('<div class="new_table_wrapper '+config.cssclass+'"><div class="topper"></div><div class="layout"></div></div>');
+    var $table = $('<div class="layout"/>');
+    $table = build_frame(config,widgets,$table);
     make_chain(widgets,config,$table);
     $table.data('src',$target.attr('href'));
     $target.replaceWith($table);
-    $('.topper',$table).html(new_top(widgets,config));
     var stored_config = {
       columns: config.columns,
       unique: config.unique,

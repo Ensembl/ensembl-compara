@@ -77,6 +77,7 @@
         });
         update_ticks($table,$popup);
       },
+      position: data.position,
       pipe: function() {
         return [
           function(need,got) {

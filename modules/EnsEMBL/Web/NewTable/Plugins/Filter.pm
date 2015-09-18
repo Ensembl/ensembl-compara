@@ -7,6 +7,7 @@ use parent qw(EnsEMBL::Web::NewTable::Plugin);
 sub children { return [qw(FilterClass FilterRange FilterEnum)]; }
 sub requires { return children(); }
 sub js_plugin { return "new_table_filter"; }
+sub position{ return [qw(top-full-inner)]; }
 
 package EnsEMBL::Web::NewTable::Plugins::FilterClass;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);

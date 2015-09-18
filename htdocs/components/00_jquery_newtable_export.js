@@ -32,6 +32,8 @@
           return false;
         });
       },
+      position: data.position,
+      position_order: 90, // Towards the right
     };
   }; 
 

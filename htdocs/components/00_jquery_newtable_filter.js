@@ -253,6 +253,7 @@
         var out='<div class="newtable_filter"><span class="intro">Filter</span><ul>'+dropdowns+'</ul></div>';
         return out;
       },
+      position: data.position,
       go: function($table,$el) {
         var trigger_soon = $.debounce(function() {
           $table.trigger('view-updated');

@@ -13,8 +13,16 @@ sub new {
 
 sub children { return []; }
 sub js_plugin { return undef; }
-sub js_config { return {}; }
 sub configure { $_[0]->{'config'} = $_[1]; }
 sub requires { return []; }
+sub position { return []; }
+
+sub js_config {
+  my ($self) = @_;
+
+  return {
+    position => $self->{'config'}->{'position'} || $self->position,
+  };
+}
 
 1;
