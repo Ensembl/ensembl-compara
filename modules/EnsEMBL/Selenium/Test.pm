@@ -95,8 +95,8 @@ sub test_fails {
   my $fail = 0;
 
   if ($result) {
-    if (ref($result) eq 'ARRAY' && $result->[0] ne 'pass') {
-      $fail = 1;
+    if (ref($result) eq 'ARRAY') {
+      $fail = 1 if $result->[0] ne 'pass';
     }
     elsif (!$result || $result ne 'OK') {
       $fail = 1;
