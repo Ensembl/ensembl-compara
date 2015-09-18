@@ -84,13 +84,13 @@ sub _upload_file {
 
   ## Type file name into textarea
   my $textarea = "$form/fieldset/div[4]/div/textarea";
-  $result = $sel->ensembl_type($textarea, $url);
+  $result = $sel->ensembl_type("xpath=$textarea", $url);
   push @responses, $result;
   return @responses if $self->test_fails($result);
 
   ## Select the format
   my $dropdown = "$form/fieldset/div[5]/div/select";
-  $result = $sel->ensembl_type($dropdown, $format);
+  $result = $sel->ensembl_type("xpath=$dropdown", $format);
   push @responses, $result;
   return @responses if $self->test_fails($result);
 
