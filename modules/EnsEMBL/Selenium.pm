@@ -369,7 +369,7 @@ sub ensembl_select {
   
   my $error = try { $self->select($select_locator,$option_locator) }
               catch { ['fail', "Failure to select value at URL $url"]; };  
-  return $error == 1 ? ['pass', "Selected value $option_locatior"] : $error;
+  return $error == 1 ? ['pass', "Selected value $option_locator"] : $error;
 }
 
 sub ensembl_submit {
