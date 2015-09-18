@@ -82,6 +82,20 @@ sub ensembl_wait_for_page_to_load {
   return $error;
 }
 
+sub ensembl_open {
+### Wrapper around standard selenium method to return useful error message 
+### @param url String - URL of page to open
+### @param message String [optional] - additional text for error message
+### @return ArrayRef - error code plus error message
+  my ($self, $url, $message) = @_;
+  my $error = "Couldn't open page $url";
+  $error .= ": $message" if $message; 
+  
+  my $error = try { $self->open($url); }
+              catch { ['fail', $error]; };
+  return $error == 1 ? ['pass', "Opened page $url"] : $error;
+}
+
 sub ensembl_open_zmenu {
 ### Open a ZMenu by title for the given imagemap panel or, if title not provided,
 ### will get the coords based on the area tag for the given imagemap panel 
