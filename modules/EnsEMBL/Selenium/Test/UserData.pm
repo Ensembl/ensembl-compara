@@ -53,9 +53,11 @@ sub test_upload_file {
 
   while (my($format, $file_url) = each(%$files)) {
     $result = $sel->ensembl_click("link=$upload_text"); 
+    push @responses, $result;
     next if $self->test_fails($result);
 
     $result = $sel->ensembl_wait_for_ajax(undef,10000);
+    push @responses, $result;
     next if $self->test_fails($result);
 
     push @responses, $self->_upload_file($format, $file_url);
