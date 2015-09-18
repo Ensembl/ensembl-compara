@@ -332,7 +332,7 @@ sub toString {
     my $self = shift;
     my $txt = sprintf('Homology dbID=%d %s @ %s', $self->dbID, $self->description, $self->taxonomy_level);
     $txt .= ' between '.join(' and ', map {$_->stable_id} @{$self->gene_list});
-    $txt .= sprintf(' [dN=%.2f dS=%.2f dN/dS=%.2f]', $self->dn, $self->ds, $self->dnds_ratio) if $self->ds;
+    $txt .= sprintf(' [dN=%.2f dS=%.2f dN/dS=%s]', $self->dn, $self->ds, $self->dnds_ratio ? sprintf('%.2f', $self->dnds_ratio) : 'NA' ) if $self->ds;
     return $txt;
 }
 
