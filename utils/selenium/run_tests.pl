@@ -228,7 +228,7 @@ close($pass_log);
 close($fail_log);
 
 my $total = $pass + $fail;
-my $plural = $total == 1 ? 's' : '';
+my $plural = $total == 1 ? '' : 's';
 
 print "\n==========================\n";
 print "TEST RUN COMPLETED!\n";
