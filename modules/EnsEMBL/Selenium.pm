@@ -383,7 +383,7 @@ sub ensembl_type {
               finally { if (@_) { $real_error = join(' ', @_); } };
   $error .= "\n$real_error";
 
-  return ($error == 1 || $error eq 'OK') ? ['pass', "Input text $text"] : ['fail', $error];
+  return ($error == 1 || =~ /^OK/) ? ['pass', "Input text $text"] : ['fail', $error];
 }
 
 sub ensembl_select {
@@ -397,7 +397,7 @@ sub ensembl_select {
               finally { if (@_) { $real_error = join(' ', @_); } };
   $error .= "\n$real_error";
 
-  return ($error == 1 || $error eq 'OK') ? ['pass', "Selected value $option_locator"] : ['fail', $error];
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Selected value $option_locator"] : ['fail', $error];
 }
 
 sub ensembl_submit {
@@ -411,7 +411,7 @@ sub ensembl_submit {
               finally { if (@_) { $real_error = join(' ', @_); } };
   $error .= "\n$real_error";
 
-  return ($error == 1 || $error eq 'OK') ? ['pass', "Form $locator submitted"] : ['fail', $error];
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Form $locator submitted"] : ['fail', $error];
 }
 
 1;
