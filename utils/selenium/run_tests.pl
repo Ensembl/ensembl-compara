@@ -338,8 +338,8 @@ sub write_to_log {
   
   my $line = uc($code);
   $line    .= " in $module" if $module;
-  $line    .= "::$method" if $method;
-  $line    .= "- $message $timestamp\n";
+  $line    .= " ::$method" if $method;
+  $line    .= " - $message $timestamp\n";
 
   my $log = $code eq 'pass' ? $pass_log : $fail_log;
 
