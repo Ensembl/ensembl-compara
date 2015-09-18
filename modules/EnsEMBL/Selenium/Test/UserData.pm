@@ -49,14 +49,14 @@ sub test_upload_file {
     else {
       my $upload_text = 'Display your data in Ensembl';
       while (my($format, $file_url) = each(%$files)) {
-        ## Open the modal window, allowing generous time for it to load
-        $error = $sel->ensembl_click("link=$upload_text", 5000); 
+        $error = $sel->ensembl_click("link=$upload_text"); 
         if ($error && $error ne 'OK') {
           push @responses, $error;
         }
         else {
-          $error = $self->_upload_file($format, $file_url);
+          $error = $sel->ensembl_wait_for_ajax(undef,10000);
           push @responses, $error;
+          push @responses, $self->_upload_file($format, $file_url);
         }
       }
     }
@@ -70,26 +70,26 @@ sub _upload_file {
 ### @param $url String - URL of the test file
   my ($self, $format, $url) = @_;
   my $sel = $self->sel;
-  my $error;
+  my @responses;
 
+  ## Sanity check - have we opened the form?
+  push @responses, $sel->ensembl_is_text_present('Add a custom track');
+ 
   ## Interact with form
-  my $form = './/*[@id=\'select\']';
+  my $form = "//div[\@id='SelectFile']/form";
 
   ## Type file name into textarea
-  my $textarea = "xpath=$form/fieldset/div[4]/div[1]/textarea[1]";
-  $error = $sel->type($textarea, $url);
-  warn ">>> ERROR 1: $error";
+  my $textarea = "$form/fieldset/div[4]/div[1]/textarea";
+  push @responses, $sel->type($textarea, $url);
 
   ## Select the format
-  my $dropdown = "xpath=$form/fieldset/div[5]/div[1]/select[1]";
-  $error = $sel->type($dropdown, $format);
-  warn ">>> ERROR 2: $error";
+  my $dropdown = "$form/fieldset/div[5]/div[1]/select";
+  push @responses, $sel->type($dropdown, $format);
 
   ## Submit the form
-  $error = $sel->submit("xpath=$form");
-  warn ">>> ERROR 3: $error";
+  push @responses, $sel->submit("xpath=$form");
 
-  return $error;
+  return @responses;
 }
 
 1;
