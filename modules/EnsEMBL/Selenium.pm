@@ -143,7 +143,9 @@ sub ensembl_click {
   my ($self, $link, $timeout) = @_;
   my $url = $self->get_location();
     
-  return $self->click($link,$timeout) ? 0 : "CLICK FAILED: URL $url \n\n";
+  return $self->click($link,$timeout) 
+    ? ['pass', "Click on link $link succeeded"] : 
+      ['fail', "CLICK ON LINK $link FAILED: URL $url"];
 }
 
 sub ensembl_click_links {
