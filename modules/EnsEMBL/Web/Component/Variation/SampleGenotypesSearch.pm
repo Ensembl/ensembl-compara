@@ -121,7 +121,13 @@ sub content_results {
       my $sample_obj = $sample_gt_obj->sample;
       my $sample_id  = $sample_obj->dbID;
      
-      my $sample_name   = $sample_obj->name;
+      my $sample_name  = $sample_obj->name;
+      my $sample_label = $sample_name;
+      if ($sample_label =~ /(1000\s*genomes|hapmap)/i) {
+        my @composed_name = split(':', $sample_label);
+        $sample_label = $composed_name[$#composed_name];
+      }
+
       my $gender        = $sample_obj->individual->gender;
       my $description   = $object->description($sample_obj);
          $description ||= '-';
@@ -135,7 +141,7 @@ sub content_results {
     
       # Format the content of each cell of the line
       my $row = {
-        Sample      => sprintf("<small>$sample_name (%s)</small>", substr($gender, 0, 1)),
+        Sample      => sprintf("<small id=\"%s\">%s (%s)</small>", $sample_name, $sample_label, substr($gender, 0, 1)),
         Genotype    => "<small>$genotype</small>",
         Description => "<small>$description</small>",
         Population  => "<small>$population</small>",
