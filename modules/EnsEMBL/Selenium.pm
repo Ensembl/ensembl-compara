@@ -406,16 +406,16 @@ sub ensembl_type {
 
 sub ensembl_select {
 ### Wrapper around standard selenium method to return useful error message 
-  my ($self, $select_locator, $option_locator) = @_;
+  my ($self, $locator, $value) = @_;
   my $url = $self->get_location();
   my $real_error;
   
-  my $error = try { $self->select($select_locator,$option_locator) }
-              catch { "Failure to select value at URL $url"; }
+  my $error = try { $self->select($locator, $value) }
+              catch { "Failure to select value $value at URL $url"; }
               finally { if (@_) { $real_error = join(' ', @_); } };
   $error .= "\n$real_error";
 
-  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Selected value $option_locator"] : ['fail', $error];
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Selected value $value in dropdown"] : ['fail', $error];
 }
 
 sub ensembl_submit {
