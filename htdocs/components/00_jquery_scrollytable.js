@@ -22,10 +22,10 @@
 
     return this.hasClass('_scrollytable_active') ? this : this.wrap('<div style="overflow:auto">').parent().on('scroll.scrollyTable', function () {
       $(this.previousSibling).scrollLeft($(this).scrollLeft());
-    }).before('<div style="overflow:auto"><div style="height:1px;margin-top:-1px"></div></div>').prev().on('scroll.scrollyTable', function () {
+    }).before('<div style="overflow:auto"><div style="height:1.02px;margin-top:-1px"></div></div>').prev().on('scroll.scrollyTable', function () {
       $(this.nextSibling).scrollLeft($(this).scrollLeft());
     }).children().width(this.outerWidth()).end().filter(function () {
-      return !!$(this).outerHeight();
+      return $(this).outerHeight() >= 1;
     }).children().helptip({
       content   : 'Scroll to see more columns &raquo;',
       position  : { my: 'right-20 top+12', at: 'left+' + this.parent().width() + ' top' },
