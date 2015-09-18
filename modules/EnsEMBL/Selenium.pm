@@ -349,7 +349,7 @@ sub ensembl_is_text_present {
   my $error = try { $self->is_text_present($text); }
               catch { ['fail', "MISSING TEXT $text at URL $url"]; }; 
   ## $error is set to 1 if test succeeds
-  return $error == 1 ? 0 : $error;
+  return $error == 1 ? ['pass'] : $error;
 }
 
 sub ensembl_type {
@@ -359,7 +359,7 @@ sub ensembl_type {
    
   my $error = try { $self->type($locator, $text) }
               catch { ['fail', "Failure to input text $text at URL $url"]; };
-  return $error == 1 ? 0 : $error;
+  return $error == 1 ? ['pass'] : $error;
 }
 
 sub ensembl_select {
@@ -369,7 +369,7 @@ sub ensembl_select {
   
   my $error = try { $self->select($select_locator,$option_locator) }
               catch { ['fail', "Failure to select value at URL $url"]; };  
-  return $error == 1 ? 0 : $error;
+  return $error == 1 ? ['pass'] : $error;
 }
 
 sub ensembl_submit {
@@ -379,7 +379,7 @@ sub ensembl_submit {
   
   my $error = try { $self->submit($locator) }
               catch { ['fail', "Form submission failure at URL $url"]; };  
-  return $error == 1 ? 0 : $error;
+  return $error == 1 ? ['pass'] : $error;
 }
 
 1;
