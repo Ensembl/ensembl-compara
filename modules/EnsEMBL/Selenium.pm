@@ -222,6 +222,7 @@ sub try_link {
 }
 
 sub test_fails {
+  warn ">>> DEPRECATED - use Test::test_fails instead";
   my ($self, $error) = @_;
   my $fail = 0;
 
