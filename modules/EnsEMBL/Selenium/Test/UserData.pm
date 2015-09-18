@@ -48,12 +48,13 @@ sub test_upload_file {
     }
     else {
       my $upload_text = 'Display your data in Ensembl';
-      $error = $sel->ensembl_click("link=$upload_text"); 
-      if ($error && $error ne 'OK') {
-        push @responses, $error;
-      }
-      else {
-        while (my($format, $file_url) = each(%$files)) {
+      while (my($format, $file_url) = each(%$files)) {
+        ## Open the modal window, allowing generous time for it to load
+        $error = $sel->ensembl_click("link=$upload_text", 5000); 
+        if ($error && $error ne 'OK') {
+          push @responses, $error;
+        }
+        else {
           $error = $self->_upload_file($format, $file_url);
           push @responses, $error;
         }
@@ -72,20 +73,20 @@ sub _upload_file {
   my $error;
 
   ## Interact with form
-  my $form = "dom=document.forms['select']";
+  my $form = './/*[@id=\'select\']';
 
   ## Type file name into textarea
-  my $textarea = $form.'.textareas[0]';
+  my $textarea = "xpath=$form/fieldset/div[4]/div[1]/textarea[1]";
   $error = $sel->type($textarea, $url);
   warn ">>> ERROR 1: $error";
 
   ## Select the format
-  my $dropdown = 'name=format';
+  my $dropdown = "xpath=$form/fieldset/div[5]/div[1]/select[1]";
   $error = $sel->type($dropdown, $format);
   warn ">>> ERROR 2: $error";
 
   ## Submit the form
-  $error = $sel->submit($form);
+  $error = $sel->submit("xpath=$form");
   warn ">>> ERROR 3: $error";
 
   return $error;
