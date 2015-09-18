@@ -356,24 +356,30 @@ sub ensembl_type {
 ### Wrapper around standard selenium method to return useful error message 
   my ($self, $locator, $text) = @_;
   my $url = $self->get_location();
-    
-  return ('fail', "Failure to input text $text at URL $url") unless $self->type($locator, $text);  
+   
+  my $error = try { $self->type($locator, $text) }
+              catch { ['fail', "Failure to input text $text at URL $url"]; };
+  return $error == 1 ? 0 : $error;
 }
 
 sub ensembl_select {
 ### Wrapper around standard selenium method to return useful error message 
   my ($self, $select_locator, $option_locator) = @_;
   my $url = $self->get_location();
-    
-  return ('fail', "Failure to select value at URL $url") unless $self->select($select_locator,$option_locator);  
+  
+  my $error = try { $self->select($select_locator,$option_locator) }
+              catch { ['fail', "Failure to select value at URL $url"]; };  
+  return $error == 1 ? 0 : $error;
 }
 
 sub ensembl_submit {
 ### Wrapper around standard selenium method to return useful error message 
   my ($self, $locator) = @_;
   my $url = $self->get_location();
-    
-  return ('fail', "Form submission failure at URL $url") unless $self->submit($locator);  
+  
+  my $error = try { $self->submit($locator) }
+              catch { ['fail', "Form submission failure at URL $url"]; };  
+  return $error == 1 ? 0 : $error;
 }
 
 1;
