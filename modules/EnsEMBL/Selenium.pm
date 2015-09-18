@@ -383,7 +383,7 @@ sub ensembl_type {
               finally { if (@_) { $real_error = join(' ', @_); } };
   $error .= "\n$real_error";
 
-  return ($error == 1 || =~ /^OK/) ? ['pass', "Input text $text"] : ['fail', $error];
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Input text $text"] : ['fail', $error];
 }
 
 sub ensembl_select {
