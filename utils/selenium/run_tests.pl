@@ -233,8 +233,8 @@ my $plural = $total == 1 ? '' : 's';
 print "\n==========================\n";
 print "TEST RUN COMPLETED!\n";
 print "Ran $total test$plural:\n";
-print "- $pass succeeded\n";
-print "- $fail failed\n";
+print " - $pass succeeded\n";
+print " - $fail failed\n";
 
 if ($tests_path =~ /debug/) {
   print "\n\nIgnore this next message - it simply means that no real selenium tests 
