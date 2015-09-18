@@ -364,7 +364,7 @@ sub add_image_export_menu {
 
         if ($section eq 'print') {
           $menu .= qq(
-              <a class="help" href="/Help/Faq?id=502" class="popup"><img src="/i/16/help.png" alt="help" title="How to adjust your image for optimal export" /></a>
+              <a class="help popup" href="/Help/Faq?id=502"><img src="/i/16/swp/help.png" alt="help" title="How to adjust your image for optimal export" /></a>
           );
         }
 
