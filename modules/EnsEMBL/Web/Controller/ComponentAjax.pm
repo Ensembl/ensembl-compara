@@ -28,6 +28,7 @@ use URI::Escape     qw(uri_unescape);
 use EnsEMBL::Web::ViewConfig::Regulation::Page;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::NewTable::Callback;
 
 use base qw(EnsEMBL::Web::Controller::Component);
 
@@ -52,8 +53,8 @@ sub ajax_enstab {
   my $hub = $self->hub;
   my $data;
   eval {
-    $component->can('ajax_table_content') or die "$component has no ajax_table_content method";
-    my $out = $component->ajax_table_content();
+    my $callback = EnsEMBL::Web::NewTable::Callback->new($hub,$component);
+    my $out = $callback->go();
     $out = $self->jsonify($out) if ref($out);
     print $out;
   };

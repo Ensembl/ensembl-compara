@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::NewTable;
+package EnsEMBL::Web::NewTable::Callback;
 
 use strict;
 
@@ -30,6 +30,45 @@ use SiteDefs;
 use Text::CSV;
 
 # XXX move all this stuff to somewhere it's more suited
+
+sub new {
+  my ($proto,$hub,$component) = @_;
+
+  my $class = ref($proto) || $proto;
+  my $self = {
+    hub => $hub,
+    component => $component,
+  };
+  bless $self,$class;
+  return $self;
+}
+
+sub go {
+  my ($self) = @_;
+
+  my $hub = $self->{'hub'};
+  my $iconfig = from_json($hub->param('config'));
+  my $orient = from_json($hub->param('orient'));
+  my $wire = from_json($hub->param('wire'));
+  my $more = $hub->param('more');
+  my $incr_ok = ($hub->param('incr_ok') eq 'true');
+  my $keymeta = from_json($hub->param('keymeta'));
+
+  my $out = $self->newtable_data_request($iconfig,$orient,$wire,$more,$incr_ok,$keymeta);
+  if($wire->{'format'} eq 'export') {
+    $out = convert_to_csv($iconfig,$out);
+    my $r = $hub->apache_handle;
+    $r->content_type('application/octet-string');
+    $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $hub->param('filename')||'ensembl-export.csv');
+  }
+  return $out;
+}
+
+sub preload {
+  my ($self,$config,$orient) = @_;
+
+  return $self->newtable_data_request($config,$orient,$orient,undef,1);
+}
 
 sub server_sort {
   my ($self,$data,$sort,$iconfig,$series,$keymeta) = @_;
@@ -133,33 +172,12 @@ sub convert_to_csv {
   return $out;
 }
 
-sub ajax_table_content {
-  my ($self) = @_;
-
-  my $hub = $self->hub;
-  my $iconfig = from_json($hub->param('config'));
-  my $orient = from_json($hub->param('orient'));
-  my $wire = from_json($hub->param('wire'));
-  my $more = $hub->param('more');
-  my $incr_ok = ($hub->param('incr_ok') eq 'true');
-  my $keymeta = from_json($hub->param('keymeta'));
-
-  my $out = $self->newtable_data_request($iconfig,$orient,$wire,$more,$incr_ok,$keymeta);
-  if($wire->{'format'} eq 'export') {
-    $out = convert_to_csv($iconfig,$out);
-    my $r = $hub->apache_handle;
-    $r->content_type('application/octet-string');
-    $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $hub->param('filename')||'ensembl-export.csv');
-  }
-  return $out;
-}
-
 use Time::HiRes qw(time);
 
 sub get_cache {
   my ($self,$key) = @_;
 
-  my $cache = $self->hub->cache;
+  my $cache = $self->{'hub'}->cache;
   return undef unless $cache;
   my $main_key = "newtable_".md5_hex($key);
   my $main_val = $cache->get($main_key);
@@ -177,7 +195,7 @@ sub get_cache {
 sub set_cache {
   my ($self,$key,$value) = @_;
 
-  my $cache = $self->hub->cache;
+  my $cache = $self->{'hub'}->cache;
   return undef unless $cache;
   my $main_key = "newtable_".md5_hex($key);
   my $i = 0;
@@ -201,7 +219,7 @@ sub newtable_data_request {
     more => $more,
     incr_ok => $incr_ok,
     keymeta => $keymeta,
-    url => $self->hub->url,
+    url => $self->{'hub'}->url,
     base => $SiteDefs::ENSEMBL_BASE_URL,
     version => $SiteDefs::ENSEMBL_VERSION,
   };
@@ -215,7 +233,7 @@ sub newtable_data_request {
   $cols_pos{$cols[$_]} = $_ for(0..$#cols);
 
   my $phases = [{ name => undef }];
-  $phases = $self->incremental_table if $self->can('incremental_table');
+  $phases = $self->{'component'}->incremental_table if $self->{'component'}->can('incremental_table');
   my @out;
 
   my $A = time();
@@ -263,7 +281,7 @@ sub newtable_data_request {
     cols_pos => \%cols_pos,
     wire => $wire,
   };
-  my $data = $self->$func($phases->[$more]{'name'},$rows,$iconfig->{'unique'},$rq);
+  my $data = $self->{'component'}->$func($self,$phases->[$more]{'name'},$rows,$iconfig->{'unique'},$rq);
   my $C = time();
 
   # Enumerate, if necessary

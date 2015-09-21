@@ -33,6 +33,8 @@ use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_client_config);
 
+use EnsEMBL::Web::NewTable::Callback;
+
 our @PLUGINS = qw(Core Frame Decorate Filter Misc);
 
 my %PLUGINS;
@@ -109,7 +111,7 @@ sub add_plugin {
 }
 
 sub render {
-  my ($self,$hub) = @_;
+  my ($self,$hub,$component) = @_;
 
   $self->add_plugin('Core',{});
   $self->add_plugin('Frame',{});
@@ -153,8 +155,8 @@ sub render {
     colconf => $sort_conf,
     widgets => $widgets,
   };
-  my $payload_one = $self->{'component'}->newtable_data_request($data,$orient,$orient,undef,1);
-  $data->{'payload_one'} = $payload_one;
+  my $callback = EnsEMBL::Web::NewTable::Callback->new($hub,$component);
+  $data->{'payload_one'} = $callback->preload($data,$orient);
 
   $data = encode_entities($self->jsonify($data));
   return qq(

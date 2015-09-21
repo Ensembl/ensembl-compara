@@ -23,7 +23,7 @@ use strict;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use EnsEMBL::Web::NewTable::NewTable;
 
-use base qw(EnsEMBL::Web::Component::Variation EnsEMBL::Web::Component::NewTable);
+use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
   my $self = shift;
@@ -63,7 +63,7 @@ sub new_consequence_type {
 
 
 sub table_content {
-  my ($self,$phase,$rows,$unique,$rq) = @_;
+  my ($self,$callback,$phase,$rows,$unique,$rq) = @_;
 
   my $hub = $self->hub;
   my $consequence_type = $hub->param('sub_table');
@@ -76,7 +76,7 @@ sub table_content {
     my $t = $hub->param('t');
     @transcripts = grep $_->stable_id eq $t, @transcripts;
   }
-  return $self->variation_table($consequence_type,\@transcripts,$phase,$rows,$rq);
+  return $self->variation_table($callback,$consequence_type,\@transcripts,$phase,$rows,$rq);
 }
 
 sub content {
@@ -112,8 +112,7 @@ sub content {
   if ($consequence_type || $count < 25) {
     $consequence_type ||= 'ALL';
 
-    my $table_rows = $self->variation_table($consequence_type, \@transcripts);
-    my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
+    my $table      = $self->make_table($consequence_type);
 
     $html = $self->render_content($table, $consequence_type);
   } else {
@@ -137,14 +136,13 @@ sub all_terms {
 }
 
 sub make_table {
-  my ($self, $table_rows, $consequence_type) = @_;
+  my ($self,$consequence_type) = @_;
 
   my $hub      = $self->hub;
   my $glossary = $hub->glossary_lookup;
   
   my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
   
-  # add SIFT for supported species
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
   $table->add_column('ID',{
     width => '12u',
@@ -359,7 +357,7 @@ sub render_content {
        $consequence_label =~ s/_/ /g;
        $consequence_label =~ s/children/\(with children\)/;
     
-    $html = $table->render($self->hub);
+    $html = $table->render($self->hub,$self);
   } else {
     my $hub      = $self->hub;
     my $current  = $hub->param('summary_type') || 'table';
@@ -597,7 +595,7 @@ sub tree {
 }
 
 sub variation_table {
-  my ($self, $consequence_type, $transcripts, $phase, $offlim,$rq) = @_;
+  my ($self,$callback,$consequence_type, $transcripts, $phase, $offlim,$rq) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
@@ -681,10 +679,10 @@ sub variation_table {
     next if $con->SO_accession =~ /x/i;
     
     my $term = $con->SO_term;
-   
+  
     my $so_term = lc $con->SO_term;
     my $colour = $var_styles->{$so_term||'default'}->{'default'};
-    $self->register_key("decorate/iconic/snptype/".$con->label,{
+    $callback->register_key("decorate/iconic/snptype/".$con->label,{
       export => $con->label,
       order => "^".sprintf("%8.8d",$con->rank),
       helptip => $con->description,
@@ -692,30 +690,30 @@ sub variation_table {
     });
   }
 
-  $self->register_key('decorate/link/Transcript/*',{
+  $callback->register_key('decorate/link/Transcript/*',{
     base_url => $base_trans_url,
     params => {
       t => "Transcript",
     },
   });
-  $self->register_key('decorate/link/ID/*',{
+  $callback->register_key('decorate/link/ID/*',{
     base_url => $base_url,
     params => {
       vf => "vf",
     },
   });
-  $self->register_key('decorate/editorial/sift_value/*',{
+  $callback->register_key('decorate/editorial/sift_value/*',{
     type => 'lozenge',
     source => 'sift_class',
   });
-  $self->register_key('decorate/editorial/polyphen_value/*',{
+  $callback->register_key('decorate/editorial/polyphen_value/*',{
     type => 'lozenge',
     source => 'polyphen_class',
   });
-  $self->register_key('decorate/also/gmaf/*',{
+  $callback->register_key('decorate/also/gmaf/*',{
     cols => ['gmaf_allele'],
   });
-  $self->register_key('decorate/toggle/Alleles/*',{
+  $callback->register_key('decorate/toggle/Alleles/*',{
     separator => '/',
     max => 20,
     highlight_col => 'vf_allele',
@@ -736,11 +734,11 @@ sub variation_table {
     'deleterious low confidence'   => 'neutral',
   );
   foreach my $pred (keys %sp_classes) {
-    $self->register_key("decorate/editorial/sift_value/$pred",{
+    $callback->register_key("decorate/editorial/sift_value/$pred",{
       cssclass => "score_$sp_classes{$pred}",
       helptip => $pred,
     });
-    $self->register_key("decorate/editorial/polyphen_value/$pred",{
+    $callback->register_key("decorate/editorial/polyphen_value/$pred",{
       cssclass => "score_$sp_classes{$pred}",
       helptip => $pred,
     });
@@ -830,7 +828,7 @@ sub variation_table {
             foreach my $ev (@$evidences) {
               my $evidence_label = $ev;
               $evidence_label =~ s/_/ /g;
-              $self->register_key("decorate/iconic/status/$ev",{
+              $callback->register_key("decorate/iconic/status/$ev",{
                 icon => sprintf("%s/val/evidence_%s.png",
                                 $self->img_url,$ev),
                 helptip => $evidence_label,
@@ -842,7 +840,7 @@ sub variation_table {
             foreach my $cs (@$clin_sigs) {
               my $cs_img = $cs;
               $cs_img =~ s/\s/-/g;
-              $self->register_key("decorate/iconic/clinsig/$cs",{
+              $callback->register_key("decorate/iconic/clinsig/$cs",{
                 icon => sprintf("%s/val/clinsig_%s.png",
                                 $self->img_url,$cs_img),
                 helptip => $cs,
@@ -880,7 +878,7 @@ sub variation_table {
             };
             $row = { %$row, %$more_row };
           }
-          next unless $self->passes_muster($row,$rq);
+          next unless $callback->passes_muster($row,$rq);
           $num++;
           next if $num <= $offlim->[0];
           push @rows,$row;
