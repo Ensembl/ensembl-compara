@@ -121,6 +121,101 @@ sub all_terms {
   }
   return \%labels;
 }
+  
+sub sift_poly_classes {
+  my ($self,$table,$type) = @_;
+
+  my %sp_classes = (
+    '-'                 => '',
+    'probably damaging' => 'bad',
+    'possibly damaging' => 'ok',
+    'benign'            => 'good',
+    'unknown'           => 'neutral',
+    'tolerated'         => 'good',
+    'deleterious'       => 'bad',
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
+  );
+  foreach my $pred (keys %sp_classes) {
+    $table->register_key("decorate/editorial/${type}_value/$pred",{
+      cssclass => "score_$sp_classes{$pred}",
+      helptip => $pred,
+    });
+  }
+}
+
+sub evidence_classes {
+  my ($self,$table) = @_;
+
+  my @evidence_order = reverse qw(
+    1000Genomes HapMap Cited ESP Frequency
+    Multiple_observations Phenotype_or_Disease
+  );
+  my %evidence_order;
+  $evidence_order{$evidence_order[$_]} = sprintf("%8d",$_) for(0..$#evidence_order);
+
+  foreach my $ev (keys %evidence_order) {
+    my $evidence_label = $ev;
+    $evidence_label =~ s/_/ /g;
+    $table->register_key("decorate/iconic/status/$ev",{
+      icon => sprintf("%s/val/evidence_%s.png",
+                      $self->img_url,$ev),
+      helptip => $evidence_label,
+      export => $evidence_label,
+      order => $evidence_order{$ev}
+    });
+  }
+}
+
+sub clinsig_classes {
+  my ($self,$table) = @_;
+  
+  # This order is a guess at the most useful and isn't strongly motivated.
+  # Feel free to rearrange.
+  my @clinsig_order = reverse qw(
+    pathogenic protective likely-pathogenic risk-factor drug-response
+    confers-sensitivity histocompatibility association likely-benign
+    benign other not-provided uncertain-significance
+  );
+  my %clinsig_order;
+  $clinsig_order{$clinsig_order[$_]} = sprintf("%8d",$_) for(0..$#clinsig_order);
+
+  foreach my $cs_img (keys %clinsig_order) {
+    my $cs = $cs_img;
+    $cs =~ s/-/ /g;
+    $table->register_key("decorate/iconic/clinsig/$cs",{
+      icon => sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img),
+      helptip => $cs,
+      export => $cs,
+      order => $clinsig_order{$cs_img},
+    });
+  }
+}
+  
+sub snptype_classes {
+  my ($self,$table,$hub) = @_;
+
+  my $species_defs = $hub->species_defs;
+  my $var_styles   = $species_defs->colour('variation');
+  my $colourmap    = $hub->colourmap;
+  my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  foreach my $con (@all_cons) {
+    next if $con->SO_accession =~ /x/i;
+    
+    my $term = $con->SO_term;
+  
+    my $so_term = lc $con->SO_term;
+    my $colour = $var_styles->{$so_term||'default'}->{'default'};
+    $table->register_key("decorate/iconic/snptype/".$con->label,{
+      export => $con->label,
+      order => "^".sprintf("%8.8d",$con->rank),
+      helptip => $con->description,
+      coltab => $colourmap->hex_by_name($colour),
+    });
+  }
+}
 
 sub make_table {
   my ($self,$consequence_type) = @_;
@@ -138,6 +233,18 @@ sub make_table {
     width => '12u',
     sort => 'link_html_nofilter',
     help => 'Variant identifier'
+  });
+  my $base_url = $hub->url({
+    type   => 'Variation',
+    action => 'Summary',
+    vf     => undef,
+    v      => undef,
+  });
+  $table->register_key('decorate/link/ID/*',{
+    base_url => $base_url,
+    params => {
+      vf => "vf",
+    },
   });
   $table->add_column('vf',{
     width => '12u',
@@ -170,6 +277,12 @@ sub make_table {
     align => 'center',
     help => 'Alternative nucleotides'
   });
+  $table->register_key('decorate/toggle/Alleles/*',{
+    separator => '/',
+    max => 20,
+    highlight_col => 'vf_allele',
+    highlight_over => 2,
+  });
   $table->add_column('vf_allele',{
     width => '6u',
     sort => 'string_nofilter',
@@ -187,6 +300,9 @@ sub make_table {
       label => "Glo\fbal MAF",
       align => 'center',
       help => $glossary->{'Global MAF'}
+    });
+    $table->register_key('decorate/also/gmaf/*',{
+      cols => ['gmaf_allele'],
     });
     $table->add_column('gmaf_allele',{
       sort => 'string_nofilter',
@@ -238,12 +354,14 @@ sub make_table {
     align => 'center',
     help => $glossary->{'Evidence status (variant)'}
   });
+  $self->evidence_classes($table);
   $table->add_column('clinsig',{
     width => '6u',
     sort => 'iconic',
     label => "Clin\f sig",
     help => 'Clinical significance'
   });
+  $self->clinsig_classes($table);
   $table->add_column('snptype',{
     width => '12u',
     range => [values %{$self->all_terms}],
@@ -251,6 +369,7 @@ sub make_table {
     label => 'Type',
     help => 'Consequence type'
   });
+  $self->snptype_classes($table,$self->hub);
   $table->add_column('aachange',{
     width => '6u',
     sort => 'string_nofilter',
@@ -295,6 +414,11 @@ sub make_table {
       align => 'center',
       help => $glossary->{'SIFT'},
     });
+    $table->register_key('decorate/editorial/sift_value/*',{
+      type => 'lozenge',
+      source => 'sift_class',
+    });
+    $self->sift_poly_classes($table,'sift');
   }
   if ($hub->species eq 'Homo_sapiens') {
     $table->add_column('polyphen_sort',{
@@ -325,12 +449,38 @@ sub make_table {
       align => 'center',
       help => $glossary->{'PolyPhen'},
     });
+    $table->register_key('decorate/editorial/polyphen_value/*',{
+      type => 'lozenge',
+      source => 'polyphen_class',
+    });
+    $self->sift_poly_classes($table,'poly');
   }
   if ($hub->type ne 'Transcript') {
     $table->add_column('Transcript',{
       sort => 'link_html',
       width => '11u',
       help => $glossary->{'Transcript'}
+    });
+    my $base_trans_url;
+    if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+      my $gene_stable_id = "XXX"; # XXX fix before release
+      $base_trans_url = $hub->url({
+        type    => 'LRG',
+        action  => 'Summary',
+        lrg     => $gene_stable_id,
+        __clear => 1
+      });
+    } else {
+      $base_trans_url = $hub->url({
+        type   => 'Transcript',
+        action => 'Summary',
+      });
+    }
+    $table->register_key('decorate/link/Transcript/*',{
+      base_url => $base_trans_url,
+      params => {
+        t => "Transcript",
+      },
     });
   }
   return $table;
@@ -599,38 +749,6 @@ sub variation_table {
     v      => undef,
   });
 
-  # This order is a guess at the most useful and isn't strongly motivated.
-  # Feel free to rearrange.
-  my @clinsig_order = reverse qw(
-    pathogenic
-    protective
-    likely-pathogenic
-    risk-factor
-    drug-response
-    confers-sensitivity
-    histocompatibility
-    association
-    likely-benign
-    benign
-    other
-    not-provided
-    uncertain-significance
-  );
-  my %clinsig_order;
-  $clinsig_order{$clinsig_order[$_]} = sprintf("%8d",$_) for(0..$#clinsig_order);
-
-  my @evidence_order = reverse qw(
-    1000Genomes
-    HapMap
-    Cited
-    ESP
-    Frequency
-    Multiple_observations
-    Phenotype_or_Disease
-  );
-  my %evidence_order;
-  $evidence_order{$evidence_order[$_]} = sprintf("%8d",$_) for(0..$#evidence_order);
-
   # colourmap
   my $var_styles = $hub->species_defs->colour('variation');
   my $colourmap  = $hub->colourmap;
@@ -638,13 +756,6 @@ sub variation_table {
   if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
     my $gene_stable_id        = $transcripts->[0] && $transcripts->[0]->gene ? $transcripts->[0]->gene->stable_id : undef;
        $url_transcript_prefix = 'lrgt';
-    
-    $base_trans_url = $hub->url({
-      type    => 'LRG',
-      action  => 'Summary',
-      lrg     => $gene_stable_id,
-      __clear => 1
-    });
     
     my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
     
@@ -657,81 +768,6 @@ sub variation_table {
     %handles = %{$vfa->_get_all_subsnp_handles_from_variation_ids(\@var_ids)};
   } else {
     $url_transcript_prefix = 't';
-    
-    $base_trans_url = $hub->url({
-      type   => 'Transcript',
-      action => 'Summary',
-    });
-  }
-
-  my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  foreach my $con (@all_cons) {
-    next if $con->SO_accession =~ /x/i;
-    
-    my $term = $con->SO_term;
-  
-    my $so_term = lc $con->SO_term;
-    my $colour = $var_styles->{$so_term||'default'}->{'default'};
-    $callback->register_key("decorate/iconic/snptype/".$con->label,{
-      export => $con->label,
-      order => "^".sprintf("%8.8d",$con->rank),
-      helptip => $con->description,
-      coltab => $colourmap->hex_by_name($colour),
-    });
-  }
-
-  $callback->register_key('decorate/link/Transcript/*',{
-    base_url => $base_trans_url,
-    params => {
-      t => "Transcript",
-    },
-  });
-  $callback->register_key('decorate/link/ID/*',{
-    base_url => $base_url,
-    params => {
-      vf => "vf",
-    },
-  });
-  $callback->register_key('decorate/editorial/sift_value/*',{
-    type => 'lozenge',
-    source => 'sift_class',
-  });
-  $callback->register_key('decorate/editorial/polyphen_value/*',{
-    type => 'lozenge',
-    source => 'polyphen_class',
-  });
-  $callback->register_key('decorate/also/gmaf/*',{
-    cols => ['gmaf_allele'],
-  });
-  $callback->register_key('decorate/toggle/Alleles/*',{
-    separator => '/',
-    max => 20,
-    highlight_col => 'vf_allele',
-    highlight_over => 2,
-  });
-  
-  my %sp_classes = (
-    '-'                 => '',
-    'probably damaging' => 'bad',
-    'possibly damaging' => 'ok',
-    'benign'            => 'good',
-    'unknown'           => 'neutral',
-    'tolerated'         => 'good',
-    'deleterious'       => 'bad',
-    'tolerated - low confidence'   => 'neutral',
-    'deleterious - low confidence' => 'neutral',
-    'tolerated low confidence'     => 'neutral',
-    'deleterious low confidence'   => 'neutral',
-  );
-  foreach my $pred (keys %sp_classes) {
-    $callback->register_key("decorate/editorial/sift_value/$pred",{
-      cssclass => "score_$sp_classes{$pred}",
-      helptip => $pred,
-    });
-    $callback->register_key("decorate/editorial/polyphen_value/$pred",{
-      cssclass => "score_$sp_classes{$pred}",
-      helptip => $pred,
-    });
   }
 
   ROWS: foreach my $transcript (@$transcripts) {
@@ -815,29 +851,7 @@ sub variation_table {
             }
 
             my $status = join('~',@$evidences);
-            foreach my $ev (@$evidences) {
-              my $evidence_label = $ev;
-              $evidence_label =~ s/_/ /g;
-              $callback->register_key("decorate/iconic/status/$ev",{
-                icon => sprintf("%s/val/evidence_%s.png",
-                                $self->img_url,$ev),
-                helptip => $evidence_label,
-                export => $evidence_label,
-                order => $evidence_order{$ev}
-              });
-            }
             my $clin_sig = join("~",@$clin_sigs);
-            foreach my $cs (@$clin_sigs) {
-              my $cs_img = $cs;
-              $cs_img =~ s/\s/-/g;
-              $callback->register_key("decorate/iconic/clinsig/$cs",{
-                icon => sprintf("%s/val/clinsig_%s.png",
-                                $self->img_url,$cs_img),
-                helptip => $cs,
-                export => $cs,
-                order => $clinsig_order{$cs_img},
-              });
-            }
 
             my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
           

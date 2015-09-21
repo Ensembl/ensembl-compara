@@ -19,13 +19,15 @@ limitations under the License.
 package EnsEMBL::Web::NewTable::NewTable;
 
 use strict;
+use warnings;
 
-use JSON qw(from_json);
+use parent qw(EnsEMBL::Web::NewTable::Endpoint);
+ 
+use JSON qw(from_json to_json);
 use Scalar::Util qw(looks_like_number);
 
 use EnsEMBL::Draw::Utils::ColourMap;
 
-use base qw(EnsEMBL::Web::Root);
 use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
@@ -166,11 +168,12 @@ sub render {
     colconf => $sort_conf,
     widgets => $widgets,
     phases  => $self->{'phases'},
+    keymeta => $self->{'key_meta'},
   };
   my $callback = EnsEMBL::Web::NewTable::Callback->new($hub,$component);
   $data->{'payload_one'} = $callback->preload($data,$orient);
 
-  $data = encode_entities($self->jsonify($data));
+  $data = encode_entities(to_json($data));
   return qq(
     <a class="new_table" href="$url">$data</a>
   );

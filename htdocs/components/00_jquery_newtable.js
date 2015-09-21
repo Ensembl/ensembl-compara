@@ -369,6 +369,7 @@
     $table = build_frame(config,widgets,$table);
     make_chain(widgets,config,$table);
     $table.data('src',$target.attr('href'));
+    store_keymeta($table,config.keymeta); 
     $target.replaceWith($table);
     var stored_config = {
       columns: config.columns,

@@ -19,6 +19,9 @@ limitations under the License.
 package EnsEMBL::Web::NewTable::Callback;
 
 use strict;
+use warnings;
+
+use parent qw(EnsEMBL::Web::NewTable::Endpoint);
 
 use JSON qw(from_json);
 
