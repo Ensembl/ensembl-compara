@@ -204,7 +204,7 @@ sub linked_var_table {
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH    = $species_defs->ENSEMBL_TMP_TMP;
   
   my $v               = $object->name;
-  my $source          = $variation->source;
+  my $source          = $variation->source_name;
   my $pfa             = $variation->adaptor->db->get_PhenotypeFeatureAdaptor;
   my $ldca            = $variation->adaptor->db->get_LDFeatureContainerAdaptor;
   my $max_distance    = $hub->param('max_distance') || 50000;  
@@ -236,13 +236,14 @@ sub linked_var_table {
   my $temp_slice          = $vf->feature_Slice->expand($max_distance, $max_distance);
   my $pop_id              = $pop->dbID;
   my $pop_name            = $pop->name;
+  my $glossary            = $hub->glossary_lookup;
   my $tables_with_no_rows = 0;
   my $table               = $self->new_table([
     { key => 'variation',   title => 'Variant',               align => 'left', sort => 'html'                 },
     { key => 'location',    title => 'Location',                align => 'left', sort => 'position_html'        },
     { key => 'distance',    title => 'Distance (bp)',           align => 'left', sort => 'numeric'              },
-    { key => 'r2',          title => 'r<sup>2</sup>',           align => 'left', sort => 'numeric'              },
-    { key => 'd_prime',     title => q{D'},                     align => 'left', sort => 'numeric'              },
+    { key => 'r2',          title => 'r<sup>2</sup>',           align => 'left', sort => 'numeric', help => $glossary->{'r2'} },
+    { key => 'd_prime',     title => q{D'},                     align => 'left', sort => 'numeric', help => $glossary->{"D'"} },
     { key => 'tags',        title => 'Tags',                    align => 'right',  sort => 'string'               },
     { key => 'tagged',      title => 'Tagged by',               align => 'right',  sort => 'string'               },
     { key => 'pfs',         title => 'Associated phenotype(s)', align => 'left', sort => 'html', width => '20%' },
