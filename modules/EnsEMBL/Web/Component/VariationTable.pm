@@ -63,7 +63,7 @@ sub new_consequence_type {
 
 
 sub table_content {
-  my ($self,$callback,$phase) = @_;
+  my ($self,$callback) = @_;
 
   my $hub = $self->hub;
   my $consequence_type = $hub->param('sub_table');
@@ -76,7 +76,7 @@ sub table_content {
     my $t = $hub->param('t');
     @transcripts = grep $_->stable_id eq $t, @transcripts;
   }
-  return $self->variation_table($callback,$consequence_type,\@transcripts,$phase);
+  return $self->variation_table($callback,$consequence_type,\@transcripts);
 }
 
 sub content {
@@ -595,7 +595,7 @@ sub tree {
 }
 
 sub variation_table {
-  my ($self,$callback,$consequence_type, $transcripts, $phase) = @_;
+  my ($self,$callback,$consequence_type, $transcripts) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
@@ -788,7 +788,7 @@ sub variation_table {
           my $source = $snp->source_name;
           $row->{'Source'} = $source;
 
-          unless($phase eq 'outline') {
+          unless($callback->phase eq 'outline') {
             my $evidences            = $snp->get_all_evidence_values || [];
             my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
             my $var_class            = $snp->var_class;

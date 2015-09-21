@@ -222,6 +222,7 @@ sub set_cache {
 }
 
 sub unique { return $_[0]->{'iconfig'}{'unique'}; }
+sub phase { return $_[0]->{'phase_name'}; }
 
 sub newtable_data_request {
   my ($self,$orient,$more,$incr_ok,$keymeta) = @_;
@@ -265,6 +266,7 @@ sub newtable_data_request {
   } else {
     $more = $#$phases;
   }
+  $self->{'phase_name'} = $phases->[$more]{'name'};
 
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
@@ -291,7 +293,7 @@ sub newtable_data_request {
 
   my $B = time();
   # Populate data
-  my $data = $self->{'component'}->$func($self,$phases->[$more]{'name'});
+  my $data = $self->{'component'}->$func($self);
   my $C = time();
 
   # Enumerate, if necessary
