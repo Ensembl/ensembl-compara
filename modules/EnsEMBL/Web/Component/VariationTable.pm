@@ -31,19 +31,6 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub incremental_table {
-  return [
-  {
-    name => "taster",
-    rows => [0,50],
-  },{
-    name => "outline",
-    cols =>  [ qw(ID Source) ],
-  },{
-    name => "full",
-  }];
-}
-
 sub new_consequence_type {
   my $self        = shift;
   my $tva         = shift;
@@ -142,6 +129,9 @@ sub make_table {
   my $glossary = $hub->glossary_lookup;
   
   my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
+  $table->add_phase("taster",[0,50]);
+  $table->add_phase("outline",undef,[qw(ID Source)]);
+  $table->add_phase("full");
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
   $table->add_column('ID',{

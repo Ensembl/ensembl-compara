@@ -248,8 +248,8 @@ sub newtable_data_request {
   $cols_pos{$cols[$_]} = $_ for(0..$#cols);
   $self->{'cols_pos'} = \%cols_pos;
 
-  my $phases = [{ name => undef }];
-  $phases = $self->{'component'}->incremental_table if $self->{'component'}->can('incremental_table');
+  my $phases = $self->{'iconfig'}{'phases'};
+  $phases = [{ name => undef }] unless $phases and @$phases;
   my @out;
 
   my $A = time();

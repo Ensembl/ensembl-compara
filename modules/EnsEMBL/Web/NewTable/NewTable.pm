@@ -59,9 +59,10 @@ sub new {
   my ($class, $component) = @_;
 
   my $self = {
-    component  => $component,
-    columns    => [],
-    plugins => {},
+    component => $component,
+    columns   => [],
+    plugins   => {},
+    phases    => [],
   };
 
   bless $self, $class;
@@ -110,6 +111,16 @@ sub add_plugin {
   }
 }
 
+sub add_phase {
+  my ($self,$name,$rows,$cols) = @_;
+
+  push @{$self->{'phases'}},{
+    name => $name,
+    rows => $rows,
+    cols => $cols,
+  };
+}
+
 sub render {
   my ($self,$hub,$component) = @_;
 
@@ -154,6 +165,7 @@ sub render {
     formats => [ "tabular", "paragraph" ],
     colconf => $sort_conf,
     widgets => $widgets,
+    phases  => $self->{'phases'},
   };
   my $callback = EnsEMBL::Web::NewTable::Callback->new($hub,$component);
   $data->{'payload_one'} = $callback->preload($data,$orient);
