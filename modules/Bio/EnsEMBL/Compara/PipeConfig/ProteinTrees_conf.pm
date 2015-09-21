@@ -2669,7 +2669,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'input_clusterset_id'    => 'notung',
+                'input_clusterset_id'    => 'raxml_bl',
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
@@ -2683,7 +2683,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'input_clusterset_id'    => 'notung',
+                'input_clusterset_id'    => 'raxml_bl',
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '4Gb_job',
