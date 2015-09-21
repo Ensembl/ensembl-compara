@@ -2601,12 +2601,12 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'input_clusterset_id'       => 'notung',
                 'output_clusterset_id'      => 'raxml_bl',
-                'escape_branch'             => -1,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '8Gb_job',
             -flow_into  => {
                 -1 => [ 'raxml_bl_himem' ],
+                2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
             }
         },
 
@@ -2617,10 +2617,20 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'input_clusterset_id'       => 'notung',
                 'output_clusterset_id'      => 'raxml_bl',
-                'escape_branch'             => -1,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '16Gb_job',
+        },
+
+        {   -logic_name => 'copy_treebest_tree_2_raxml_bl_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
+            -parameters => {
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'input_clusterset_id'   => 'raxml',
+                'output_clusterset_id'  => 'raxml_bl',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name => '2Gb_job',
         },
 
 # ---------------------------------------------[orthologies]-------------------------------------------------------------
