@@ -47,16 +47,16 @@ sub go {
   my ($self) = @_;
 
   my $hub = $self->{'hub'};
-  my $iconfig = from_json($hub->param('config'));
+  $self->{'iconfig'} = from_json($hub->param('config'));
   my $orient = from_json($hub->param('orient'));
-  my $wire = from_json($hub->param('wire'));
+  $self->{'wire'} = from_json($hub->param('wire'));
   my $more = $hub->param('more');
   my $incr_ok = ($hub->param('incr_ok') eq 'true');
   my $keymeta = from_json($hub->param('keymeta'));
 
-  my $out = $self->newtable_data_request($iconfig,$orient,$wire,$more,$incr_ok,$keymeta);
-  if($wire->{'format'} eq 'export') {
-    $out = convert_to_csv($iconfig,$out);
+  my $out = $self->newtable_data_request($orient,$more,$incr_ok,$keymeta);
+  if($self->{'wire'}{'format'} eq 'export') {
+    $out = convert_to_csv($self->{'iconfig'},$out);
     my $r = $hub->apache_handle;
     $r->content_type('application/octet-string');
     $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $hub->param('filename')||'ensembl-export.csv');
@@ -67,7 +67,9 @@ sub go {
 sub preload {
   my ($self,$config,$orient) = @_;
 
-  return $self->newtable_data_request($config,$orient,$orient,undef,1);
+  $self->{'iconfig'} = $config;
+  $self->{'wire'} = $orient;
+  return $self->newtable_data_request($orient,undef,1);
 }
 
 sub server_sort {
@@ -116,17 +118,17 @@ sub server_nulls {
 }
 
 sub passes_muster {
-  my ($self,$row,$rq) = @_;
+  my ($self,$row) = @_;
 
   my $ok = 1;
-  foreach my $col (keys %{$rq->{'wire'}{'filter'}||{}}) {
-    my $colconf = $rq->{'config'}{'colconf'}[$rq->{'cols_pos'}{$col}];
+  foreach my $col (keys %{$self->{'wire'}{'filter'}||{}}) {
+    my $colconf = $self->{'iconfig'}{'colconf'}[$self->{'cols_pos'}{$col}];
     next unless exists $row->{$col};
     my $val = $row->{$col};
     my $ok_col = 0;
     my $values = newtable_sort_range_split($colconf->{'sort'},$val);
     foreach my $value (@{$values||[]}) {
-      my $fv = $rq->{'wire'}{'filter'}{$col};
+      my $fv = $self->{'wire'}{'filter'}{$col};
       if(newtable_sort_range_match($colconf->{'sort'},$fv,$value)) {
         $ok_col = 1;
         last;
@@ -210,12 +212,12 @@ sub set_cache {
 }
 
 sub newtable_data_request {
-  my ($self,$iconfig,$orient,$wire,$more,$incr_ok,$keymeta) = @_;
+  my ($self,$orient,$more,$incr_ok,$keymeta) = @_;
 
   my $cache_key = {
-    iconfig => $iconfig,
+    iconfig => $self->{'iconfig'},
     orient => $orient,
-    wire => $wire,
+    wire => $self->{'wire'},
     more => $more,
     incr_ok => $incr_ok,
     keymeta => $keymeta,
@@ -228,9 +230,10 @@ sub newtable_data_request {
   my $out = $self->get_cache($cache_key);
   return $out if $out;
 
-  my @cols = @{$iconfig->{'columns'}};
+  my @cols = @{$self->{'iconfig'}{'columns'}};
   my %cols_pos;
   $cols_pos{$cols[$_]} = $_ for(0..$#cols);
+  $self->{'cols_pos'} = \%cols_pos;
 
   my $phases = [{ name => undef }];
   $phases = $self->{'component'}->incremental_table if $self->{'component'}->can('incremental_table');
@@ -240,7 +243,7 @@ sub newtable_data_request {
 
   # What phase should we be?
   my @required;
-  push @required,map { $_->{'key'} } @{$wire->{'sort'}||[]};
+  push @required,map { $_->{'key'} } @{$self->{'wire'}{'sort'}||[]};
   if($incr_ok) {
     while($more < $#$phases) {
       my %gets_cols = map { $_ => 1 } (@{$phases->[$more]{'cols'}||\@cols});
@@ -253,7 +256,7 @@ sub newtable_data_request {
 
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
-  if($wire->{'sort'} and @{$wire->{'sort'}}) {
+  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $all_data = 1;
   }
   my $A2 = time();
@@ -269,25 +272,20 @@ sub newtable_data_request {
   $sort_pos{$used_cols->[$_]} = $_ for (0..@$used_cols);
 
   # Calculate function name
-  my $type = $iconfig->{'type'};
+  my $type = $self->{'iconfig'}{'type'};
   $type =~ s/\W//g;
   my $func = "table_content";
   $func .= "_$type" if $type;
 
   my $B = time();
   # Populate data
-  my $rq = {
-    config => $iconfig,
-    cols_pos => \%cols_pos,
-    wire => $wire,
-  };
-  my $data = $self->{'component'}->$func($self,$phases->[$more]{'name'},$rows,$iconfig->{'unique'},$rq);
+  my $data = $self->{'component'}->$func($self,$phases->[$more]{'name'},$rows,$self->{'iconfig'}{'unique'});
   my $C = time();
 
   # Enumerate, if necessary
   my %enums;
-  foreach my $colkey (@{$wire->{'enumerate'}||[]}) {
-    my $colconf = $iconfig->{'colconf'}{$cols_pos{$colkey}};
+  foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
+    my $colconf = $self->{'iconfig'}{'colconf'}{$self->{'cols_pos'}{$colkey}};
     my $row_pos = $sort_pos{$colkey};
     next unless defined $row_pos;
     my %values;
@@ -303,10 +301,10 @@ sub newtable_data_request {
   $shadow{'series'} = $used_cols;
 
   # Filter, if necessary
-  if($wire->{'filter'}) {
+  if($self->{'wire'}{'filter'}) {
     my @new;
     foreach my $row (@$data) {
-      push @new,$row if $self->passes_muster($row,$rq);
+      push @new,$row if $self->passes_muster($row);
     }
     $data = \@new;
   }
@@ -325,13 +323,13 @@ sub newtable_data_request {
   $more=0 if $more == @$phases;
 
   # Sort it, if necessary
-  if($wire->{'sort'} and @{$wire->{'sort'}}) {
-    $self->server_sort(\@data_out,$wire->{'sort'},$iconfig,$used_cols,$keymeta);
+  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
+    $self->server_sort(\@data_out,$self->{'wire'}{'sort'},$self->{'iconfig'},$used_cols,$keymeta);
     splice(@data_out,0,$irows->[0]);
     splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
   }
   my $E = time();
-  $self->server_nulls(\@data_out,$iconfig,$used_cols);
+  $self->server_nulls(\@data_out,$self->{'iconfig'},$used_cols);
 
   my $F = time();
 
