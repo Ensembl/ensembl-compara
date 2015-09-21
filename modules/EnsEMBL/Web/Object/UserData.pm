@@ -277,9 +277,11 @@ sub delete_upload {
     }
   } else {
     my $upload = $session->get_data(type => 'upload', code => $code);
-       $owner  = $code =~ /_$session_id$/;
+    if ($code =~ /_$session_id$/) {
+      $owner = $session_id;
+    }
     
-    if ($upload->{'filename'}) {
+    if ($upload->{'file'}) {
       push @track_names, "upload_$code";
       if ($owner) {
         my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $upload->{'file'});
