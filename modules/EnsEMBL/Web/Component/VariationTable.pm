@@ -63,7 +63,7 @@ sub new_consequence_type {
 
 
 sub table_content {
-  my ($self,$callback,$phase,$rows,$unique) = @_;
+  my ($self,$callback,$phase) = @_;
 
   my $hub = $self->hub;
   my $consequence_type = $hub->param('sub_table');
@@ -76,7 +76,7 @@ sub table_content {
     my $t = $hub->param('t');
     @transcripts = grep $_->stable_id eq $t, @transcripts;
   }
-  return $self->variation_table($callback,$consequence_type,\@transcripts,$phase,$rows);
+  return $self->variation_table($callback,$consequence_type,\@transcripts,$phase);
 }
 
 sub content {
@@ -595,7 +595,7 @@ sub tree {
 }
 
 sub variation_table {
-  my ($self,$callback,$consequence_type, $transcripts, $phase, $offlim) = @_;
+  my ($self,$callback,$consequence_type, $transcripts, $phase) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
   my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
@@ -878,11 +878,10 @@ sub variation_table {
             };
             $row = { %$row, %$more_row };
           }
-          next unless $callback->passes_muster($row);
           $num++;
-          next if $num <= $offlim->[0];
+          next unless $callback->passes_muster($row,$num);
           push @rows,$row;
-          last ROWS if $offlim->[1] != -1 and $num >= $offlim->[1];
+          last ROWS if $callback->stand_down($row,$num);
         }
       }
     }

@@ -117,9 +117,19 @@ sub server_nulls {
   }
 }
 
-sub passes_muster {
-  my ($self,$row) = @_;
+sub rows { return $_[0]->{'rows'}; }
 
+sub stand_down {
+  my ($self,$row,$num) = @_;
+
+  return 1 if $self->{'rows'}[1]!=-1 && $num >= $self->{'rows'}[1];
+  return 0;
+}
+
+sub passes_muster {
+  my ($self,$row,$num) = @_;
+
+  return 0 if $num <= $self->{'rows'}[0];
   my $ok = 1;
   foreach my $col (keys %{$self->{'wire'}{'filter'}||{}}) {
     my $colconf = $self->{'iconfig'}{'colconf'}[$self->{'cols_pos'}{$col}];
@@ -211,6 +221,8 @@ sub set_cache {
   $cache->set($main_key,JSON->new->encode(\@ids));
 }
 
+sub unique { return $_[0]->{'iconfig'}{'unique'}; }
+
 sub newtable_data_request {
   my ($self,$orient,$more,$incr_ok,$keymeta) = @_;
 
@@ -263,8 +275,8 @@ sub newtable_data_request {
 
   # Start row
   my $irows = $phases->[$more]{'rows'} || [0,-1];
-  my $rows = $irows;
-  $rows = [0,-1] if $all_data;
+  $self->{'rows'} = $irows;
+  $self->{'rows'} = [0,-1] if $all_data;
 
   # Calculate columns to send
   my $used_cols = $phases->[$more]{'cols'} || \@cols;
@@ -279,7 +291,7 @@ sub newtable_data_request {
 
   my $B = time();
   # Populate data
-  my $data = $self->{'component'}->$func($self,$phases->[$more]{'name'},$rows,$self->{'iconfig'}{'unique'});
+  my $data = $self->{'component'}->$func($self,$phases->[$more]{'name'});
   my $C = time();
 
   # Enumerate, if necessary
@@ -340,7 +352,7 @@ sub newtable_data_request {
     response => {
       data => \@data_out,
       series => $used_cols,
-      start => $rows->[0],
+      start => $self->{'rows'}[0],
       more => $more,
       enums => \%enums,
       shadow => \%shadow,
