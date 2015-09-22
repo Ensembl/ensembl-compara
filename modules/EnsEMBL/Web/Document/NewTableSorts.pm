@@ -114,7 +114,6 @@ my %SORTS = (
   },
   'string' => {
     null => sub { $_[0] !~ /\S/; },
-    js => 'string',
     type_js => 'string',
   },
   'string_nofilter' => [qw(nofilter string)],
@@ -125,8 +124,6 @@ my %SORTS = (
     clean => \&number_cleaned, 
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
     null => sub { return !looks_like_number($_[0]); },
-    js => 'numeric',
-    js_clean => 'clean_number',
     range_display => 'range',
     range_merge => 'range',
     range_value => sub {
@@ -163,15 +160,12 @@ my %SORTS = (
     clean => \&html_cleaned,
     null => sub { $_[0] !~ /\S/; },
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
-    js => 'string',
-    js_clean => 'html_cleaned',
     type_js => 'html',
   },
   'html_nofilter' => [qw(nofilter html)],
   'position' => {
     null => \&null_position,
     perl => \&sort_position,
-    js => 'position',
     range_display_params => { steptype => 'integer' },
     range_display => 'position',
     range_merge => 'position',
@@ -208,7 +202,6 @@ my %SORTS = (
     type_js => "position",
   },
   iconic => {
-    js => "iconic",
     null => sub { $_[0] !~ /\S/; },
     perl => sub {
       my ($x,$y,$f,$c,$km,$col) = @_;
@@ -258,10 +251,8 @@ sub newtable_sort_client_config {
     my $conf = get_sort($cols->[$idx]{'sort'});
     $conf->{'options'} ||= {};
     my @conf;
-    if($conf->{'js'}) {
+    if($conf->{'type_js'}) {
       push @conf, {
-        fn => $conf->{'js'},
-        clean => $conf->{'js_clean'},
         range => $conf->{'range_display'},
         enum_merge => $conf->{'range_merge'},
         type_js => $conf->{'type_js'},

@@ -15,78 +15,8 @@
  */
 
 (function($) {
-  $.fn.newtable_sort_numeric = function(a,b,c) {
-    return (parseFloat(a)-parseFloat(b))*c;
-  }
-
-  $.fn.newtable_sort_string = function(a,b,c) {
-    return a.toLowerCase().localeCompare(b.toLowerCase())*c;
-  }
-
-  $.fn.newtable_sort_position = function(a,b,f) {
-    var aa = a.split(/[:-]/);
-    var bb = b.split(/[:-]/);
-    for(var i=0;i<aa.length;i++) {
-      var c = $.fn.newtable_sort_numeric(aa[i],bb[i],f);
-      if(c) { return c; }
-    }
-    return 0;
-  }
-
-  function iconic_string(val,km,col) {
-    var vals = (val||'').split(/;/);
-    if(km) {
-      var new_vals = [];
-      for(var i=0;i<vals.length;i++) {
-        var v = vals[i];
-        var w = km['decorate/iconic/'+col+'/'+v];
-        if(w && w.order) { v = w.order; }
-        else if(w && w['export']) { v = w['export']; }
-        else { v = '~'; }
-        new_vals.push(v);
-      }
-      vals = new_vals;
-    }
-    vals.sort();
-    vals.reverse();
-    return vals.join('~');
-  }
-
-  $.fn.newtable_sort_iconic = function(a,b,f,c,km,col) {
-    if(!c[a] && c[a]!=='') { c[a] = iconic_string(a,km,col); }
-    if(!c[b] && c[b]!=='') { c[b] = iconic_string(b,km,col); }
-    return c[a].localeCompare(c[b])*f;
-  }
-
   // TODO clean prior to sort for speed
-  $.fn.newtable_clean_none = function(v) { return v; }
-  $.fn.newtable_clean_html_hidden = function(v) {
-    if(!v) { return v; }
-    var m = v.match(/<span class="hidden">(.*?)<\/span>/);
-    if(m) { return m[1]; }
-    return v;
-  } 
-  $.fn.newtable_clean_html_cleaned = function(v) {
-    if(!v) { return v; }
-    v = v.replace(/<[^>]*? class="[^"]*?hidden.*?<\/.*?>/,'');
-    v = v.replace(/<.*?>/g,'').replace(/&.*?;/g,'');
-    return v;
-  } 
-  $.fn.newtable_clean_number = function(v) {
-    if(!v) { return v; }
-    return v.replace(/([\d\.e\+-])\s.*$/,'$1');
-  }
-  $.fn.newtable_clean_html_number = function(v) {
-    if(!v) { return v; }
-    return v.replace(/<.*?>/g,'').replace(/([\d\.e\+-])\s.*$/,'$1');
-  }
-  $.fn.newtable_clean_hidden_number = function(v) {
-    if(!v) { return v; }
-    v = $.fn.newtable_clean_html_hidden(v);
-    return v.replace(/([\d\.e\+-])\s.*$/,'$1');
-  }
-
-  $.fn.new_table_clientsort = function(config,data) {
+  $.fn.new_table_clientsort = function(config,data,widgets) {
     var col_idxs = {};
     $.each(config.columns,function(i,val) { col_idxs[val] = i; });
 
@@ -110,21 +40,23 @@
       return c;
     }
 
+    function clean_none(v) { return v; }
+
     function build_plan(orient) {
       var plan  = [];
       var incr_ok = true;
       $.each(orient.sort,function(i,stage) {
         if(!plan) { return; }
         if(!config.colconf[stage.key]) { plan = null; return; }
-        var type = $.fn['newtable_sort_'+config.colconf[stage.key].fn];
-        if(!type) { plan = null; return; }
-        var clean = $.fn['newtable_clean_'+config.colconf[stage.key].clean];
-        if(!clean) { clean = $.fn.newtable_clean_none; }
-        plan.push({ dir: stage.dir, fn: type, clean: clean, key: stage.key });
+        var type = $.find_type(widgets,config.colconf[stage.key]);
+        if(!type.sort) { plan = null; return; }
+        var clean = type.clean;
+        if(!clean) { clean = clean_none; }
+        plan.push({ dir: stage.dir, fn: type.sort, clean: clean, key: stage.key });
         if(!config.colconf[stage.key].incr_ok) { incr_ok = false; }
       });
       if(!plan) { return null; }
-      plan.push({ dir: 1, fn: $.fn.newtable_sort_numeric, clean: $.fn.newtable_clean_none, key: '__tie' });
+      plan.push({ dir: 1, fn: $.fn.newtable_sort_numeric, clean: clean_none, key: '__tie' });
       return { stages: plan, incr_ok: incr_ok};
     }
 

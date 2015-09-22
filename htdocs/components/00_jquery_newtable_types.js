@@ -20,6 +20,7 @@
   }
 
   function html_cleaned(x) {
+    if(!x) { return x; }
     x = x.replace(/<[^>]*? class="[^"]*?hidden.*?<\/.*?>/g,'');
     x = x.replace(/<.*?>/g,'');
     x = x.replace(/\&.*?;/g,'');
@@ -27,6 +28,7 @@
   }
 
   function number_clean(x) {
+    if(!x) { return x; }
     return x.replace(/([\d\.e\+-])\s.*$/,'$1');
   }
 
@@ -72,6 +74,41 @@
     }
     return true;
   }
+  
+  function position_sort(a,b,f) {
+    var aa = a.split(/[:-]/);
+    var bb = b.split(/[:-]/);
+    for(var i=0;i<aa.length;i++) {
+      var c = $.fn.newtable_sort_numeric(aa[i],bb[i],f);
+      if(c) { return c; }
+    }
+    return 0;
+  }
+  
+  function iconic_string(val,km,col) {
+    var vals = (val||'').split(/;/);
+    if(km) {
+      var new_vals = [];
+      for(var i=0;i<vals.length;i++) {
+        var v = vals[i];
+        var w = km['decorate/iconic/'+col+'/'+v];
+        if(w && w.order) { v = w.order; }
+        else if(w && w['export']) { v = w['export']; }
+        else { v = '~'; }
+        new_vals.push(v);
+      }
+      vals = new_vals;
+    }
+    vals.sort();
+    vals.reverse();
+    return vals.join('~');
+  }
+
+  function iconic_sort(a,b,f,c,km,col) {
+    if(!c[a] && c[a]!=='') { c[a] = iconic_string(a,km,col); }
+    if(!c[b] && c[b]!=='') { c[b] = iconic_string(b,km,col); }
+    return c[a].localeCompare(c[b])*f;
+  }
 
   $.fn.newtable_types = function(config,data) {
     return {
@@ -79,14 +116,20 @@
         name: "string",
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
-        match: function(ori,val) { return string_match(ori,val); }
+        match: function(ori,val) { return string_match(ori,val); },
+        sort: function(a,b,c) {
+          return a.toLowerCase().localeCompare(b.toLowerCase())*c;
+        },
       },{
         name: "numeric",
+        clean: function(v) { return number_clean(v); },
         split: function(v) { return [number_clean(v)]; },
         value: function(vv,v) { minmax(vv,v); },
-        match: function(ori,val) { return number_match(ori,val); }
+        match: function(ori,val) { return number_match(ori,val); },
+        sort: function(a,b,c) { return (parseFloat(a)-parseFloat(b))*c; }
       },{
         name: "html",
+        clean: function(v) { return html_cleaned(v); },
         split: function(v) { return [html_cleaned(v)]; },
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
@@ -106,13 +149,15 @@
           if(!vv[m[1]].count) { vv[m[1]].count = 0; }
           vv[m[1]].count++;
         },
-        match: function(ori,val) { return position_match(ori,val); }
+        match: function(ori,val) { return position_match(ori,val); },
+        sort: position_sort
       },{
         name: "iconic",
         split: function(v) { return v.split(/~/); },
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
-        match: function(ori,val) { return string_match(ori,val); }
+        match: function(ori,val) { return string_match(ori,val); },
+        sort: iconic_sort
       }]
     };
   };
