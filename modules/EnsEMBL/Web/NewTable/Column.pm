@@ -31,6 +31,7 @@ sub new {
       width => "100u",
       primary => 0,
       sort => 1,
+      incr_ok => 1,
     },
   };
 

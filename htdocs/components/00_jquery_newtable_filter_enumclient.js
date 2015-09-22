@@ -26,12 +26,6 @@
     return x;
   }
 
-  function html_hidden(x) {
-    var m = x.match(/<span class="hidden">(.*?)<\/span>/);
-    if(m) { return m[1]; }
-    return x;
-  }
-
   function number_clean(x) {
     return x.replace(/([\d\.e\+-])\s.*$/,'$1');
   }
@@ -44,35 +38,6 @@
     } else {
       vv.min = vv.max = v;
     }
-  }
-
-  function split_top_level(all) {
-    var seq = [];
-    while(true) {
-      var m = /<\/?div.*?>/.exec(all);
-      if(m===null) {
-        seq.push(all);
-        break;
-      } else {
-        seq.push(all.substring(0,m.index));
-        all = all.substring(m.index);
-        seq.push(all.substring(0,m[0].length));
-        all = all.substring(m[0].length);
-      }
-    }
-    var count = 0;
-    var out = [];
-    for(var i=0;i<seq.length;i++) {
-      if(seq[i].match(/<div/)) {
-        count++;
-        if(count==1) { out.push(""); continue; }
-      } else if(seq[i].match(/<\/div/)) {
-        count--;
-        if(!count) { continue; }
-      }
-      if(count) { out[out.length-1] += seq[i]; }
-    }
-    return out;
   }
 
   function string_match(ori,val,empty) {
@@ -121,33 +86,6 @@
         value: function(vv,v) { minmax(vv,v); },
         match: function(ori,val) { return number_match(ori,val); }
       },{
-        name: "numeric_hidden",
-        split: function(v) { return [number_clean(html_hidden(v))]; },
-        value: function(vv,v) { minmax(vv,v); },
-        match: function(ori,val) { return number_match(ori,val); }
-      },{
-        name: "html_split",
-        split: function(v) {
-          var raw = split_top_level(v);
-          var out = [];
-          for(var i=0;i<raw.length;i++) { out[i] = html_cleaned(raw[i]); }
-          return out;
-        },
-        value: function(vv,v) { vv[v]=1; },
-        finish: function(vv) { return Object.keys(vv); },
-        match: function(ori,val) { return string_match(ori,val); }
-      },{
-        name: "html_hidden_split",
-        split: function(v) {
-          var raw = split_top_level(v);
-          var out = [];
-          for(var i=0;i<raw.length;i++) { out[i] = html_hidden(raw[i]); }
-          return out;
-        },
-        value: function(vv,v) { vv[v]=1; },
-        finish: function(vv) { return Object.keys(vv); },
-        match: function(ori,val) { return string_match(ori,val); }
-      },{
         name: "html",
         split: function(v) { return [html_cleaned(v)]; },
         value: function(vv,v) { vv[v]=1; },
@@ -155,23 +93,6 @@
         match: function(ori,val) { return string_match(ori,val); }
       },{
         name: "position",
-        value: function(vv,v) {
-          var m = v.match(/^(.*?):(\d+)/);
-          if(!m) { return; }
-          if(!vv[m[1]]) { vv[m[1]] = { chr: m[1] }; }
-          if(vv[m[1]].hasOwnProperty('min')) {
-            vv[m[1]].min = vv[m[1]].min<m[2]?vv[m[1]].min:m[2];
-            vv[m[1]].max = vv[m[1]].max>m[2]?vv[m[1]].max:m[2];
-          } else {
-            vv[m[1]].min = vv[m[1]].max = m[2];
-          }
-          if(!vv[m[1]].count) { vv[m[1]].count = 0; }
-          vv[m[1]].count++;
-        },
-        match: function(ori,val) { return position_match(ori,val); }
-      },{
-        name: "hidden_position",
-        split: function(v) { return [html_hidden(v)]; },
         value: function(vv,v) {
           var m = v.match(/^(.*?):(\d+)/);
           if(!m) { return; }

@@ -43,13 +43,6 @@ sub html_cleaned {
 
 sub number_cleaned { $_[0] =~ s/([\d\.e\+-])\s.*$/$1/; return $_[0]; }
 
-sub html_hidden {
-  my ($x) = @_;
-
-  return $1 if $x =~ m!<span class="hidden">(.*?)</span>!;
-  return $x;
-}
-
 sub null_position {
   my ($v) = @_;
 
@@ -73,26 +66,6 @@ sub sort_position {
     return $c if $c; 
   }
   return 0;
-}
-
-sub split_top_level {
-  my ($all) = @_;
-
-  my @seq = split(m!(</?div.*?>)!,$all);
-  my $count = 0;
-  my @out;
-  foreach my $x (@seq) {
-    if($x =~ m!^<div!) {
-      $count++;
-      if($count==1) {
-        push @out,"";
-        next;
-      }
-    }
-    if($x =~ m!^</div>!) { $count--; next unless $count; }
-    if($count) { $out[$#out] .= $x; }
-  }
-  return \@out;
 }
 
 sub iconic_build_key {
@@ -145,24 +118,9 @@ my %SORTS = (
     enum_js => 'string',
   },
   'string_nofilter' => [qw(nofilter string)],
-  'dashnull' => {
-    null => sub { $_[0] !~ /\S/ || $_[0] =~ /^\s*-\s*$/; },
-  },
   'nofilter' => {
     range_display => "",
   },
-  'string_dashnull' => [qw(dashnull string)],
-  'string_dashnull_nofilter' => [qw(nofilter dashnull string)],
-  'string_hidden' => {
-    clean => \&html_hidden,
-    js_clean => 'html_hidden',
-  },
-  '_hidden_number' => {
-    clean => sub { return number_cleaned(html_hidden($_[0])); },
-    js_clean => 'hidden_number',
-    enum_js => "numeric_hidden",
-  },
-  'numeric_hidden' => [qw(_hidden_number numeric)],
   'numeric' => {
     clean => \&number_cleaned, 
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
@@ -210,36 +168,6 @@ my %SORTS = (
     enum_js => 'html',
   },
   'html_nofilter' => [qw(nofilter html)],
-  'html_split' => {
-    clean => \&html_cleaned,
-    null => sub { $_[0] !~ /\S/; },
-    perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
-    js => 'string',
-    js_clean => 'html_cleaned',
-    range_split => sub {
-      return [ map { $_[0]->{'clean'}->($_) } @{split_top_level($_[1])} ];
-    },
-    enum_js => "html_split",
-  },
-  'html_hidden_split_dashnull' => {
-    clean => \&html_hidden,
-    null => sub { $_[0] !~ /\S/ || $_[0] =~ /^\s*-\s*$/; },
-    perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
-    js => 'string',
-    js_clean => 'html_cleaned',
-    range_split => sub {
-      return [ map { $_[0]->{'clean'}->($_) } @{split_top_level($_[1])} ];
-    },
-    enum_js => "html_hidden_split",
-  },
-  'html_numeric' => {
-    clean => sub { return number_cleaned(html_cleaned($_[0])); },
-    perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
-    null => sub { return !looks_like_number($_[0]); },
-    js => 'numeric',
-    js_clean => 'html_number',
-    enum_js => "",
-  },
   'position' => {
     null => \&null_position,
     perl => \&sort_position,
@@ -278,54 +206,6 @@ my %SORTS = (
       }
     },
     enum_js => "position",
-  },
-  'position_html' => {
-    clean => \&html_cleaned,
-    null => \&null_position,
-    perl => \&sort_position,
-    js => 'position',
-    js_clean => 'html_cleaned',
-  },
-  'hidden_position' => {
-    clean => \&html_hidden,
-    null => \&null_position,
-    perl => \&sort_position,
-    js_clean => 'html_hidden',
-    js => 'position',
-    range_display_params => { steptype => 'integer' },
-    range_display => 'position',
-    range_merge => 'position',
-    range_value => sub {
-      my ($acc,$value) = @_;
-
-      return unless $value =~ /^(.*?):(\d+)/;
-      my ($chr,$pos) = ($1,$2);
-      $acc->{$chr} ||= { chr => $chr };
-      if(exists $acc->{$chr}{'min'}) {
-        $acc->{$chr}{'max'} = max($acc->{$chr}{'max'},$pos);
-        $acc->{$chr}{'min'} = min($acc->{$chr}{'min'},$pos);
-      } else {
-        $acc->{$chr}{'min'} = $acc->{$chr}{'max'} = $pos;
-      }
-      ($acc->{$chr}{'count'}||=0)++;
-    },
-    range_finish => sub { return $_[0]; },
-    range_match => sub {
-      my ($man,$val) = @_;
-      if($val =~ s/^$man->{'chr'}://) {
-        if(exists $man->{'min'}) {
-          return 0 unless $val>=$man->{'min'};
-        }
-        if(exists $man->{'max'}) {
-          return 0 unless $val<=$man->{'max'};
-        }
-        return 1;
-      } else {
-        if(exists $man->{'nulls'}) { return $man->{'nulls'}; }
-        return 1;
-      }
-    },
-    enum_js => "hidden_position",
   },
   iconic => {
     js => "iconic",
@@ -386,7 +266,6 @@ sub newtable_sort_client_config {
         enum_merge => $conf->{'range_merge'},
         enum_js => $conf->{'enum_js'},
         range_params => $conf->{'range_display_params'},
-        incr_ok => !($conf->{'options'}{'no_incr'}||0),
       };
     }
     $config->{$col} = {};
