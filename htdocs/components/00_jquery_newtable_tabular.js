@@ -78,8 +78,8 @@
       var cc = config.colconf[key];
       var m = cc.width.match(/^(\d+)(.*)$/)
       if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
-      widths.push([m[1],m[2]]);
       if(orient.off_columns && orient.off_columns[key]) { return; }
+      widths.push([m[1],m[2]]);
       if(m[2] == 'u' || m[2] == 'px') {
         totals[m[2]] += parseInt(m[1]);
       }
@@ -89,12 +89,14 @@
     if(totals['px'] > 100) { totals['px'] = 100; }
     totals['u'] = (100-totals['px']) / (totals['u']||1);
     var $head = $('table:first th',$table);
-    $head.each(function(i) {
-      var key = config.columns[i];
+    var j = 0;
+    $.each(config.columns,function(i,key) {
       var cc = config.colconf[key];
       if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
       if(orient.off_columns && orient.off_columns[key]) { return; }
-      $(this).css('width',(widths[i][0]*totals[widths[i][1]])+"%");
+      var $th = $head.eq(j);
+      $th.css('width',(widths[j][0]*totals[widths[j][1]])+"%");
+      j++;
     });
   }
 
