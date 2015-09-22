@@ -381,10 +381,11 @@ sub get_SimpleAlign {
     my $remove_gaps = 0;
     my $seq_type = undef;
     my $removed_columns = undef;
+    my $removed_members = undef;
     my $map_long_seq_names = undef;
     if (scalar @args) {
-        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $map_long_seq_names) =
-            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS MAP_LONG_SEQ_NAMES)], @args);
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $removed_members, $map_long_seq_names) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS REMOVED_MEMBERS MAP_LONG_SEQ_NAMES)], @args);
     }
 
     die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
@@ -414,6 +415,8 @@ sub get_SimpleAlign {
     foreach my $member (@all_members) {
 
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
+
+        next if $removed_members->{$member->dbID};
 
         my $seqstr = $member->alignment_string($seq_type);
         next unless $seqstr;
@@ -455,7 +458,6 @@ sub get_SimpleAlign {
 
             #Permanent suffix that will be used in the DB, it needs to be here to be replaced by the devived classes
             $map_long_seq_names->{$seqID}->{'suf'} = $suffix;
-
 
         }else{
             $seqID = $member->stable_id;
