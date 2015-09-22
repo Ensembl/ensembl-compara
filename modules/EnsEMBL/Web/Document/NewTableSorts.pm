@@ -395,7 +395,6 @@ sub newtable_sort_client_config {
         enum_js => $conf->{'enum_js'},
         range_params => $conf->{'range_display_params'},
         incr_ok => !($conf->{'options'}{'no_incr'}||0),
-        range_range => $cols->[$idx]{'range'},
         label => $cols->[$idx]{'label'},
         idx => $idx, # TODO this can go when fully transitioned to named columns
       };

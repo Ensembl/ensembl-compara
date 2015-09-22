@@ -27,7 +27,9 @@ sub new {
   my $self = {
     table => $table,
     key => $key,
-    conf => {},
+    conf => {
+      width => "100u",
+    },
   };
 
   bless $self, $class;
@@ -61,6 +63,24 @@ sub set_helptip {
   my ($self,$help) = @_;
 
   $self->{'conf'}{'help'} = $help;
+}
+
+sub set_label {
+  my ($self,$label) = @_;
+
+  $self->{'conf'}{'label'} = $label;
+}
+
+sub set_width {
+  my ($self,$mul) = @_;
+
+  $self->{'conf'}{'width'} = ($mul*100)."u";
+}
+
+sub set_range {
+  my ($self,$range) = @_;
+
+  $self->{'conf'}{'range_range'} = $range;
 }
 
 sub colconf { return $_[0]->{'conf'}; }
