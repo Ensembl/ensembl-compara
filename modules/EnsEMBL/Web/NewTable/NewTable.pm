@@ -36,6 +36,7 @@ use EnsEMBL::Web::Utils::RandomString qw(random_string);
 use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_client_config);
 
 use EnsEMBL::Web::NewTable::Callback;
+use EnsEMBL::Web::NewTable::Column;
 
 our @PLUGINS = qw(Core Frame Decorate Filter Misc);
 
@@ -65,15 +66,26 @@ sub new {
     columns   => [],
     plugins   => {},
     phases    => [],
+    colobjs   => {},
   };
 
   bless $self, $class;
 
   $self->preprocess_hyphens;
+  
+  # XXX these should be optional. That's why they're plugins! :-)
+  $self->add_plugin('Core',{});
+  $self->add_plugin('Frame',{});
+  $self->add_plugin('Decorate',{});
+  $self->add_plugin('Filter',{});
+  $self->add_plugin('Misc',{});
+  $self->add_plugin('PageSizer',{});
+  $self->add_plugin('Styles',{});
 
   return $self;
 }
 
+sub component { return $_[0]->{'component'}; }
 sub has_rows { return ! !@{$_[0]{'rows'}}; }
 
 # \f -- optional hyphenation point
@@ -103,7 +115,8 @@ sub add_plugin {
   $_ours ||= {};
   return undef unless $PLUGINS{$plugin};
   my $pp = $self->{'plugins'}{$plugin};
-  $self->{'plugins'}{$plugin} = $pp = $PLUGINS{$plugin}->new() unless $pp;
+  $self->{'plugins'}{$plugin} = $PLUGINS{$plugin}->new($self) unless $pp;
+  $pp = $self->{'plugins'}{$plugin};
   return undef unless $pp;
   $pp->configure($conf);
   foreach my $sub (@{$pp->requires()}) {
@@ -111,6 +124,22 @@ sub add_plugin {
     $_ours->{$sub} = 1;
     $self->add_plugin($sub,$conf,$_ours);
   }
+}
+
+sub column {
+  my ($self,$key) = @_;
+
+  unless(defined $self->{'colobj'}{$key}) {
+    $self->{'colobj'}{$key} =
+      EnsEMBL::Web::NewTable::Column->new($self,$key); 
+  }
+  return $self->{'colobj'}{$key};
+}
+
+sub get_plugin {
+  my ($self,$plugin) = @_;
+
+  return $self->{'plugins'}{$plugin};
 }
 
 sub add_phase {
@@ -125,14 +154,6 @@ sub add_phase {
 
 sub render {
   my ($self,$hub,$component) = @_;
-
-  $self->add_plugin('Core',{});
-  $self->add_plugin('Frame',{});
-  $self->add_plugin('Decorate',{});
-  $self->add_plugin('Filter',{});
-  $self->add_plugin('Misc',{});
-  $self->add_plugin('PageSizer',{});
-  $self->add_plugin('Styles',{});
 
   return unless @{$self->{'columns'}};
 

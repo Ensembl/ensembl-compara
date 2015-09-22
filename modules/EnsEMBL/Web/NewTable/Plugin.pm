@@ -4,12 +4,16 @@ use strict;
 use warnings;
 
 sub new {
-  my ($proto) = @_;
+  my ($proto,$table) = @_;
   my $class = ref($proto) || $proto;
-  my $self = {};
+  my $self = {
+    table => $table
+  };
   bless $self,$class;
   return $self;
 }
+
+sub table { return $_[0]->{'table'}; }
 
 sub children { return []; }
 sub js_plugin { return undef; }

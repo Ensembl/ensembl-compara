@@ -123,7 +123,7 @@ sub all_terms {
 }
   
 sub sift_poly_classes {
-  my ($self,$table,$type) = @_;
+  my ($self,$table) = @_;
 
   my %sp_classes = (
     '-'                 => '',
@@ -138,11 +138,16 @@ sub sift_poly_classes {
     'tolerated low confidence'     => 'neutral',
     'deleterious low confidence'   => 'neutral',
   );
-  foreach my $pred (keys %sp_classes) {
-    $table->register_key("decorate/editorial/${type}_value/$pred",{
-      cssclass => "score_$sp_classes{$pred}",
-      helptip => $pred,
-    });
+  foreach my $column_name (qw(sift polyphen)) {
+    my $value_column = $table->column("${column_name}_value");
+    my $class_column = $table->column("${column_name}_class");
+    $value_column->value('DecorateEditorial')->set_type('lozenge');
+    $value_column->value('DecorateEditorial')->set_source($class_column);
+    foreach my $pred (keys %sp_classes) {
+      my $value = $value_column->value('DecorateEditorial',$pred);
+      $value->set_css_class("score_$sp_classes{$pred}");
+      $value->set_helptip($pred);
+    } 
   }
 }
 
@@ -156,16 +161,15 @@ sub evidence_classes {
   my %evidence_order;
   $evidence_order{$evidence_order[$_]} = sprintf("%8d",$_) for(0..$#evidence_order);
 
+  my $evidence_col = $table->column('status');
   foreach my $ev (keys %evidence_order) {
     my $evidence_label = $ev;
     $evidence_label =~ s/_/ /g;
-    $table->register_key("decorate/iconic/status/$ev",{
-      icon => sprintf("%s/val/evidence_%s.png",
-                      $self->img_url,$ev),
-      helptip => $evidence_label,
-      export => $evidence_label,
-      order => $evidence_order{$ev}
-    });
+    my $icon = $evidence_col->value('DecorateIconic',$ev);
+    $icon->set_icon(sprintf("%s/val/evidence_%s.png",$self->img_url,$ev));
+    $icon->set_helptip($evidence_label);
+    $icon->set_export($evidence_label);
+    $icon->set_order($evidence_order{$ev});
   }
 }
 
@@ -182,15 +186,15 @@ sub clinsig_classes {
   my %clinsig_order;
   $clinsig_order{$clinsig_order[$_]} = sprintf("%8d",$_) for(0..$#clinsig_order);
 
+  my $clinsig_col = $table->column('clinsig');
   foreach my $cs_img (keys %clinsig_order) {
     my $cs = $cs_img;
     $cs =~ s/-/ /g;
-    $table->register_key("decorate/iconic/clinsig/$cs",{
-      icon => sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img),
-      helptip => $cs,
-      export => $cs,
-      order => $clinsig_order{$cs_img},
-    });
+    my $icon = $clinsig_col->value('DecorateIconic',$cs);
+    $icon->set_icon(sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img));
+    $icon->set_helptip($cs);
+    $icon->set_export($cs);
+    $icon->set_order($clinsig_order{$cs_img});
   }
 }
   
@@ -199,8 +203,8 @@ sub snptype_classes {
 
   my $species_defs = $hub->species_defs;
   my $var_styles   = $species_defs->colour('variation');
-  my $colourmap    = $hub->colourmap;
   my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my $column = $table->column('snptype');
   foreach my $con (@all_cons) {
     next if $con->SO_accession =~ /x/i;
     
@@ -208,12 +212,11 @@ sub snptype_classes {
   
     my $so_term = lc $con->SO_term;
     my $colour = $var_styles->{$so_term||'default'}->{'default'};
-    $table->register_key("decorate/iconic/snptype/".$con->label,{
-      export => $con->label,
-      order => "^".sprintf("%8.8d",$con->rank),
-      helptip => $con->description,
-      coltab => $colourmap->hex_by_name($colour),
-    });
+    my $value = $column->value('DecorateIconic',$con->label);
+    $value->set_export($con->label);
+    $value->set_order(sprintf("^%8.8d",$con->rank));
+    $value->set_helptip($con->description);
+    $value->set_coltab($colour);
   }
 }
 
@@ -240,12 +243,8 @@ sub make_table {
     vf     => undef,
     v      => undef,
   });
-  $table->register_key('decorate/link/ID/*',{
-    base_url => $base_url,
-    params => {
-      vf => "vf",
-    },
-  });
+  my $id_col = $table->column('ID');
+  $id_col->value('DecorateLink')->set_url($base_url,{ vf => "vf" });
   $table->add_column('vf',{
     width => '12u',
     sort => 'numeric_nofilter',
@@ -277,12 +276,6 @@ sub make_table {
     align => 'center',
     help => 'Alternative nucleotides'
   });
-  $table->register_key('decorate/toggle/Alleles/*',{
-    separator => '/',
-    max => 20,
-    highlight_col => 'vf_allele',
-    highlight_over => 2,
-  });
   $table->add_column('vf_allele',{
     width => '6u',
     sort => 'string_nofilter',
@@ -293,6 +286,12 @@ sub make_table {
       screen => { unshowable => 1 },
     }
   });
+  my $vf_allele_col = $table->column('vf_allele');
+  my $alleles_col = $table->column('Alleles');
+  $alleles_col->value('DecorateToggle')->set_separator('/');
+  $alleles_col->value('DecorateToggle')->set_maxlen(20);
+  $alleles_col->value('DecorateToggle')->set_highlight_column($vf_allele_col);
+  $alleles_col->value('DecorateToggle')->set_highlight_over(2);
   if ($hub->species eq 'Homo_sapiens') {
     $table->add_column('gmaf',{
       sort => 'numeric_also',
@@ -301,9 +300,7 @@ sub make_table {
       align => 'center',
       help => $glossary->{'Global MAF'}
     });
-    $table->register_key('decorate/also/gmaf/*',{
-      cols => ['gmaf_allele'],
-    });
+    $table->column('gmaf')->value('DecorateAlso')->set_cols(['gmaf_allele']);
     $table->add_column('gmaf_allele',{
       sort => 'string_nofilter',
       width => '1u',
@@ -414,11 +411,6 @@ sub make_table {
       align => 'center',
       help => $glossary->{'SIFT'},
     });
-    $table->register_key('decorate/editorial/sift_value/*',{
-      type => 'lozenge',
-      source => 'sift_class',
-    });
-    $self->sift_poly_classes($table,'sift');
   }
   if ($hub->species eq 'Homo_sapiens') {
     $table->add_column('polyphen_sort',{
@@ -449,11 +441,6 @@ sub make_table {
       align => 'center',
       help => $glossary->{'PolyPhen'},
     });
-    $table->register_key('decorate/editorial/polyphen_value/*',{
-      type => 'lozenge',
-      source => 'polyphen_class',
-    });
-    $self->sift_poly_classes($table,'poly');
   }
   if ($hub->type ne 'Transcript') {
     $table->add_column('Transcript',{
@@ -470,19 +457,18 @@ sub make_table {
         lrg     => $gene_stable_id,
         __clear => 1
       });
+      die "UNIMPLEMENTED: mail dan\@ebi.ac.uk\n";
     } else {
       $base_trans_url = $hub->url({
         type   => 'Transcript',
         action => 'Summary',
       });
+      $table->column('Transcript')->value('DecorateLink')->set_url($base_trans_url,{
+        t => "Transcript"
+      });
     }
-    $table->register_key('decorate/link/Transcript/*',{
-      base_url => $base_trans_url,
-      params => {
-        t => "Transcript",
-      },
-    });
   }
+  $self->sift_poly_classes($table);
   return $table;
 }
 

@@ -110,7 +110,8 @@ sub server_nulls {
     my $cc = $colconf->{$series->[$j]};
     my %null_cache;
     foreach my $i (0..$#$data) {
-      my $is_null = $null_cache{$data->[$i][$j]};
+      my $is_null = (!defined $data->[$i][$j]);
+      $is_null = $null_cache{$data->[$i][$j]} unless $is_null;
       unless(defined $is_null) {
         $is_null = newtable_sort_isnull($cc->{'sort'},$data->[$i][$j]);
         $null_cache{$data->[$i][$j]} = $is_null;
