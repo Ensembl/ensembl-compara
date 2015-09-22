@@ -27,6 +27,7 @@ sub new {
   my $self = {
     table => $table,
     key => $key,
+    conf => {},
   };
 
   bless $self, $class;
@@ -40,7 +41,15 @@ sub value {
 
   $value ||= '*';
   my $plugin = $self->{'table'}->get_plugin($plugin_name);
-  return $plugin->value($self->{'key'},$value);
+  return $plugin->value($self,$value);
 }
+
+sub decorate {
+  my ($self,$type) = @_;
+
+  $self->{'conf'}{'decorate'} = $type;
+}
+
+sub colconf { return $_[0]->{'conf'}; }
 
 1;

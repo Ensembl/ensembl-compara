@@ -177,6 +177,11 @@ sub render {
   }
 
   my $sort_conf = newtable_sort_client_config(\%colmap,$self->{'columns'});
+  foreach my $key (keys %colmap) {
+    my $column = $self->column($key);
+    my $config = $column->colconf();
+    $sort_conf->{$key}{$_} = $config->{$_} for keys %$config;
+  }
 
   my $orient = {
     format => 'Tabular',
@@ -204,6 +209,7 @@ sub add_column {
   my ($self,$key,$options) = @_;
 
   push @{$self->{'columns'}},{ key => $key, %{$options||{}} };
+  return $self->column($key);
 }
 
 1;

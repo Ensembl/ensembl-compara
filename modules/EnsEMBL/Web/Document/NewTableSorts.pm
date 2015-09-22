@@ -140,7 +140,6 @@ my %SORTS = (
       return 1;
     },
     filter_primary => 0,
-    decorate => "",
   },
   'string' => {
     null => sub { $_[0] !~ /\S/; },
@@ -347,28 +346,10 @@ my %SORTS = (
     range_split => sub { return [ split(/~/,$_[1]) ]; },
     range_display => 'class',
     enum_js => "iconic",
-    decorate => "iconic",
-  },
-  link => {
-    decorate => "link",
-  },
-  also => {
-    decorate => "also",
   },
   iconic_primary => [qw(iconic primary)],
-  link_html => [qw(link html)],
-  link_html_nofilter => [qw(nofilter link html)],
-  editorial => {
-    decorate => "editorial",
-  },
-  numeric_editorial => [qw(numeric editorial)],
-  numeric_also => [qw(numeric also)],
   numeric_nofilter => [qw(nofilter numeric)],
   position_nofilter => [qw(nofilter position)],
-  toggle => {
-    decorate => "toggle",
-  },
-  string_nofilter_toggle => [qw(nofilter string toggle)],
 );
 
 my %sort_cache;
@@ -415,7 +396,6 @@ sub newtable_sort_client_config {
         range_params => $conf->{'range_display_params'},
         type => $cols->[$idx]{'sort'},
         incr_ok => !($conf->{'options'}{'no_incr'}||0),
-        decorate => $conf->{'decorate'},
         range_range => $cols->[$idx]{'range'},
         label => $cols->[$idx]{'label'},
         type => $cols->[$idx]{'type'},

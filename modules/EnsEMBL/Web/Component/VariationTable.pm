@@ -234,7 +234,7 @@ sub make_table {
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
   $table->add_column('ID',{
     width => '12u',
-    sort => 'link_html_nofilter',
+    sort => 'html_nofilter',
     help => 'Variant identifier'
   });
   my $base_url = $hub->url({
@@ -271,7 +271,7 @@ sub make_table {
   });
   $table->add_column('Alleles',{
     width => '16u',
-    sort => 'string_nofilter_toggle',
+    sort => 'string_nofilter',
     label => "Alle\fles",
     align => 'center',
     help => 'Alternative nucleotides'
@@ -293,15 +293,14 @@ sub make_table {
   $alleles_col->value('DecorateToggle')->set_highlight_column($vf_allele_col);
   $alleles_col->value('DecorateToggle')->set_highlight_over(2);
   if ($hub->species eq 'Homo_sapiens') {
-    $table->add_column('gmaf',{
-      sort => 'numeric_also',
+    my $gmaf = $table->add_column('gmaf',{
+      sort => 'numeric',
       width => '6u',
       label => "Glo\fbal MAF",
       align => 'center',
       help => $glossary->{'Global MAF'}
     });
-    $table->column('gmaf')->value('DecorateAlso')->set_cols(['gmaf_allele']);
-    $table->add_column('gmaf_allele',{
+    my $gmaf_allele = $table->add_column('gmaf_allele',{
       sort => 'string_nofilter',
       width => '1u',
       label => "GMAF Allele",
@@ -311,6 +310,7 @@ sub make_table {
         screen => { unshowable => 1 },
       },
     });
+    $gmaf->value('DecorateAlso')->set_cols($gmaf_allele);
   }
   # HGVS
   if($hub->param('hgvs') eq 'on') {
@@ -405,7 +405,7 @@ sub make_table {
       },
     });
     $table->add_column('sift_value',{
-      sort => 'numeric_editorial',
+      sort => 'numeric',
       width => '6u',
       label => "SI\aFT score",
       align => 'center',
@@ -435,7 +435,7 @@ sub make_table {
       },
     });
     $table->add_column('polyphen_value',{
-      sort => 'numeric_editorial',
+      sort => 'numeric',
       width => '6u',
       label => "Poly\fPhen score",
       align => 'center',
@@ -444,7 +444,7 @@ sub make_table {
   }
   if ($hub->type ne 'Transcript') {
     $table->add_column('Transcript',{
-      sort => 'link_html',
+      sort => 'html',
       width => '11u',
       help => $glossary->{'Transcript'}
     });
