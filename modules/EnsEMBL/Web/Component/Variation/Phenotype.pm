@@ -124,11 +124,12 @@ sub table_data {
                          '&VISIBLEPANEL=resultspanel' : '';
                  
   my %clin_review_status = (
-                            'not classified by submitter'       => 0,
-                            'classified by single submitter'    => 1,
-                            'classified by multiple submitters' => 2,
-                            'reviewed by expert panel'          => 3,
-                            'reviewed by professional society'  => 4
+                            'not classified by submitter' => 0,
+                            'no assertion'                => 0,
+                            'single submitter'            => 1,
+                            'multiple submitters'         => 2,
+                            'reviewed by expert panel'    => 3,
+                            'practice guideline'          => 4
                            );
 
   my $inner_table_open  = qq{<table style="border-spacing:0px"><tr><td style="padding:1px 2px"><b>};
@@ -185,7 +186,13 @@ sub table_data {
       # ClinVar review stars
       if ($attributes->{$review_status}) {
         my $clin_status = $attributes->{$review_status};
-        my $count_stars = $clin_review_status{$clin_status};
+        my $count_stars = 0;
+        foreach my $status (keys(%clin_review_status)) {
+          if ($clin_status =~ /$status/g) {
+            $count_stars = $clin_review_status{$status};
+            last;
+          }
+        }
         my $stars = "";
         for (my $i=1; $i<5; $i++) {
           my $star_color = ($i <= $count_stars) ? 'gold' : 'grey';
