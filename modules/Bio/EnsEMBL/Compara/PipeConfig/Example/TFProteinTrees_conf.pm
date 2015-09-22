@@ -386,6 +386,8 @@ sub tweak_analyses {
     $analyses_by_name->{'prottest'}->{'-parameters'}{'java'} = '/nfs/production/panda/ensemblgenomes/production/compara/mp14/java/jre1.8.0_40/bin/java';
     $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'prottest_memory'} = 14500;
     $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'n_cores'} = 16;
+    $analyses_by_name->{'prottest'}->{'-parameters'}{'cmd_max_runtime'} = 518400;
+    $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'cmd_max_runtime'} = 518400;
 	#$analyses_by_name->{'prottest_himem'}->{'-parameters'}{'java'} = '/usr/bin/java';
     $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'java'} = '/nfs/production/panda/ensemblgenomes/production/compara/mp14/java/jre1.8.0_40/bin/java';
     $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
