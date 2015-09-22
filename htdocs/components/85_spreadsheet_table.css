@@ -38,7 +38,7 @@ body.ienew table.fixed { table-layout: auto; }
 table.padded-cell td,
 table.padded-cell th   { padding: 8px; }
  
-table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; margin: 0; }
+table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; margin: 0; min-width: 421px; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 4px; }
 table.data_table th:first-child,
 table.data_table td:first-child.wrap { padding-left: 4px; }
@@ -49,7 +49,7 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_wrapper, .toggleTable_wrapper { margin: 0 0 16px; clear: both; }
 
 .dataTables_top,
-.dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[NEUTRAL_BORDER]]; background-color: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }
+.dataTables_bottom { min-width: 400px; height: 22px; padding: 7px 10px 5px; border: 1px solid [[NEUTRAL_BORDER]]; background-color: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }
 .dataTables_top    { border-bottom: 0; }
 .dataTables_bottom { border-top: 0; }
 .dataTables_info   { float: left; line-height: 20px; }
