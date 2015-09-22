@@ -232,222 +232,197 @@ sub make_table {
   $table->add_phase("full");
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
-  $table->add_column('ID',{
+  my $id = $table->add_column('ID',{
     width => '12u',
     sort => 'html_nofilter',
-    help => 'Variant identifier'
   });
+  $id->set_helptip('Variant identifier'); 
   my $base_url = $hub->url({
     type   => 'Variation',
     action => 'Summary',
     vf     => undef,
     v      => undef,
   });
-  my $id_col = $table->column('ID');
-  $id_col->value('DecorateLink')->set_url($base_url,{ vf => "vf" });
-  $table->add_column('vf',{
+  $id->value('DecorateLink')->set_url($base_url,{ vf => "vf" });
+
+  my $vf = $table->add_column('vf',{
     width => '12u',
     sort => 'numeric_nofilter',
-    help => 'Variant identifier',
-    type => {
-      screen => { unshowable => 1 },
-    }
   });
-  $table->add_column('chr',{
+  $vf->set_type('screen',{ unshowable => 1 });
+
+  my $chr = $table->add_column('chr',{
     width => '10u',
     sort => 'position_nofilter',
     label => 'Chr: bp',
-    help => $glossary->{'Chr:bp'}
   });
-  $table->add_column('location',{
+  $chr->set_helptip($glossary->{'Chr:bp'});
+  my $location = $table->add_column('location',{
     width => '10u',
     sort => 'position',
     label => 'Location: bp',
-    help => $glossary->{'Chr:bp'},
-    type => {
-      sort_for => { col => 'chr' },
-      screen => { unshowable => 1 },
-    },
   });
-  $table->add_column('Alleles',{
+
+  $location->set_type('screen',{ unshowable => 1 });
+  $location->set_type('sort_for',{ col => 'chr' });
+  my $alleles = $table->add_column('Alleles',{
     width => '16u',
     sort => 'string_nofilter',
     label => "Alle\fles",
-    align => 'center',
-    help => 'Alternative nucleotides'
   });
-  $table->add_column('vf_allele',{
+
+  $alleles->set_helptip('Alternative nucleotides');
+  my $vf_allele = $table->add_column('vf_allele',{
     width => '6u',
     sort => 'string_nofilter',
     label => "Vari\fant Alle\fle",
-    align => 'center',
-    help => 'Variant allele',
-    type => {
-      screen => { unshowable => 1 },
-    }
   });
+  $vf_allele->set_type('screen',{ unshowable => 1 });
   my $vf_allele_col = $table->column('vf_allele');
   my $alleles_col = $table->column('Alleles');
   $alleles_col->value('DecorateToggle')->set_separator('/');
   $alleles_col->value('DecorateToggle')->set_maxlen(20);
   $alleles_col->value('DecorateToggle')->set_highlight_column($vf_allele_col);
   $alleles_col->value('DecorateToggle')->set_highlight_over(2);
+ 
   if ($hub->species eq 'Homo_sapiens') {
     my $gmaf = $table->add_column('gmaf',{
       sort => 'numeric',
       width => '6u',
       label => "Glo\fbal MAF",
-      align => 'center',
-      help => $glossary->{'Global MAF'}
     });
+    $gmaf->set_helptip($glossary->{'Global MAF'});
     my $gmaf_allele = $table->add_column('gmaf_allele',{
       sort => 'string_nofilter',
       width => '1u',
       label => "GMAF Allele",
-      align => 'center',
-      help => $glossary->{'Global MAF'},
-      type => {
-        screen => { unshowable => 1 },
-      },
     });
+    $gmaf_allele->set_type('screen',{ unshowable => 1 });
     $gmaf->value('DecorateAlso')->set_cols($gmaf_allele);
   }
-  # HGVS
+  
   if($hub->param('hgvs') eq 'on') {
     $table->add_column('HGVS',{
       width => '10u',
       sort => 'string_nofilter',
       title => 'HGVS name(s)',
-      align => 'center',
       export_options => { split_newline => 2 }
     });
   }
-  $table->add_column('class',{
+  
+  my $class = $table->add_column('class',{
     width => '11u',
     sort => 'string',
     label => 'Class',
-    align => 'center',
-    help => $glossary->{'Class'}
   });
-  $table->add_column('Source',{
+  $class->set_helptip($glossary->{'Class'});
+  
+  my $source = $table->add_column('Source',{
     width => '8u',
     sort => 'string',
     label => "Sour\fce",
-    help => $glossary->{'Source'}
   });
-  # submitter data for LRGs
+  $source->set_helptip($glossary->{'Source'});
+  
   if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
     $table->add_column('Submitters',{
       width => '10u',
       sort => 'string_nofilter',
-      align => 'center',
       export_options => { split_newline => 2 }
     });
   }
-  $table->add_column('status',{
+
+  my $evidence = $table->add_column('status',{
     width => '9u',
     sort => 'iconic',
     label => "Evid\fence",
-    align => 'center',
-    help => $glossary->{'Evidence status (variant)'}
   });
+  $evidence->set_helptip($glossary->{'Evidence status (variant)'});
   $self->evidence_classes($table);
-  $table->add_column('clinsig',{
+
+  my $clinsig = $table->add_column('clinsig',{
     width => '6u',
     sort => 'iconic',
     label => "Clin\f sig",
-    help => 'Clinical significance'
   });
+  $clinsig->set_helptip('Clinical significance');
   $self->clinsig_classes($table);
-  $table->add_column('snptype',{
+
+  my $snptype = $table->add_column('snptype',{
     width => '12u',
     range => [values %{$self->all_terms}],
     sort => 'iconic_primary',
     label => 'Type',
-    help => 'Consequence type'
   });
+  $snptype->set_helptip('Consequence type');
   $self->snptype_classes($table,$self->hub);
-  $table->add_column('aachange',{
+
+  my $aachange = $table->add_column('aachange',{
     width => '6u',
     sort => 'string_nofilter',
     label => 'AA',
-    align => 'center',
-    help => 'Resulting amino acid(s)'
   });
-  $table->add_column('aacoord',{
+  $aachange->set_helptip('Resulting amino acid(s)');
+
+  my $aacoord = $table->add_column('aacoord',{
     width => '6u',
     sort => 'integer',
     label => "AA co\ford",
-    align => 'center',
-    help => 'Amino Acid Co-ordinate'
   });
+  $aacoord->set_helptip('Amino Acid Co-ordinate');
   
   if ($sd->{'SIFT'}) {
-    $table->add_column('sift_sort',{
+    my $sift_sort = $table->add_column('sift_sort',{
       sort => 'numeric_nofilter',
       width => '6u',
       label => "SI\aFT sort",
-      align => 'center',
-      help => $glossary->{'SIFT'},
-      type => {
-        sort_for => { col => 'sift_value' },
-        screen => { unshowable => 1 },
-      },
     });
-    $table->add_column('sift_class',{
+    $sift_sort->set_type('screen',{ unshowable => 1 });
+    $sift_sort->set_type('sort_for',{ col => 'sift_value' });
+
+    my $sift_class = $table->add_column('sift_class',{
       sort => 'iconic',
       width => '6u',
       label => "SI\aFT class",
-      align => 'center',
-      help => $glossary->{'SIFT'},
-      type => {
-        screen => { unshowable => 1 },
-      },
     });
-    $table->add_column('sift_value',{
+    $sift_class->set_helptip($glossary->{'SIFT'});
+    $sift_class->set_type('screen',{ unshowable => 1 });
+
+    my $sift_value = $table->add_column('sift_value',{
       sort => 'numeric',
       width => '6u',
       label => "SI\aFT score",
-      align => 'center',
-      help => $glossary->{'SIFT'},
     });
+    $sift_value->set_helptip($glossary->{'SIFT'});
   }
   if ($hub->species eq 'Homo_sapiens') {
-    $table->add_column('polyphen_sort',{
+    my $polyphen_sort = $table->add_column('polyphen_sort',{
       sort => 'numeric_nofilter',
       width => '6u',
       label => "Poly\fPhen sort",
-      align => 'center',
-      help => $glossary->{'PolyPhen'},
-      type => {
-        sort_for => { col => 'polyphen_value' },
-        screen => { unshowable => 1 },
-      },
     });
-    $table->add_column('polyphen_class',{
+    $polyphen_sort->set_helptip($glossary->{'PolyPhen'});
+    $polyphen_sort->set_type('screen',{ unshowable => 1 });
+    $polyphen_sort->set_type('sort_for',{ col => 'polyphen_value' });
+    my $polyphen_class = $table->add_column('polyphen_class',{
       sort => 'iconic',
       width => '6u',
       label => "Poly\fPhen class",
-      align => 'center',
-      help => $glossary->{'PolyPhen'},
-      type => {
-        screen => { unshowable => 1 },
-      },
     });
-    $table->add_column('polyphen_value',{
+    $polyphen_class->set_type('screen',{ unshowable => 1 });
+    my $polyphen_value = $table->add_column('polyphen_value',{
       sort => 'numeric',
       width => '6u',
       label => "Poly\fPhen score",
-      align => 'center',
-      help => $glossary->{'PolyPhen'},
     });
+    $polyphen_value->set_helptip($glossary->{'PolyPhen'});
   }
   if ($hub->type ne 'Transcript') {
-    $table->add_column('Transcript',{
+    my $transcript = $table->add_column('Transcript',{
       sort => 'html',
       width => '11u',
-      help => $glossary->{'Transcript'}
     });
+    $transcript->set_helptip($glossary->{'Transcript'});
     my $base_trans_url;
     if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
       my $gene_stable_id = "XXX"; # XXX fix before release

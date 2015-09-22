@@ -394,11 +394,9 @@ sub newtable_sort_client_config {
         primary => $conf->{'filter_primary'},
         enum_js => $conf->{'enum_js'},
         range_params => $conf->{'range_display_params'},
-        type => $cols->[$idx]{'sort'},
         incr_ok => !($conf->{'options'}{'no_incr'}||0),
         range_range => $cols->[$idx]{'range'},
         label => $cols->[$idx]{'label'},
-        type => $cols->[$idx]{'type'},
         idx => $idx, # TODO this can go when fully transitioned to named columns
       };
     }
@@ -406,7 +404,6 @@ sub newtable_sort_client_config {
       range_range => $cols->[$idx]{'range'},
       sort => $cols->[$idx]{'sort'},
       width => $cols->[$idx]{'width'},
-      help => $cols->[$idx]{'help'},
     };
     $config->{$col} = {};
     foreach my $x (@conf) {

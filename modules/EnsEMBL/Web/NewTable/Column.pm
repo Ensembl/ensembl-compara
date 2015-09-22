@@ -50,6 +50,19 @@ sub decorate {
   $self->{'conf'}{'decorate'} = $type;
 }
 
+sub set_type {
+  my ($self,$key,$value) = @_;
+
+  $self->{'conf'}{'type'} ||= {};
+  $self->{'conf'}{'type'}{$key} = $value;
+}
+
+sub set_helptip {
+  my ($self,$help) = @_;
+
+  $self->{'conf'}{'help'} = $help;
+}
+
 sub colconf { return $_[0]->{'conf'}; }
 
 1;
