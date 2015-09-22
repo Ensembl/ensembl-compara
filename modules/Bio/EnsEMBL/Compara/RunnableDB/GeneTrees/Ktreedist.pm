@@ -283,7 +283,6 @@ sub load_input_trees {
         $other_tree->preload();
         #print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
         print "tree:" . $other_tree->clusterset_id . "\n" if ($self->debug);
-        $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->check_distances_to_parent($other_tree));
 
         #Parsimony trees dont have branch lengths.
         if ($other_tree->clusterset_id eq "raxml_parsimony"){
