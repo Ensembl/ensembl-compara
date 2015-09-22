@@ -243,7 +243,7 @@
           var label = "";
           var label = cc.label || key;
           if(cc.range) {
-            dropdowns += dropdown(cc.idx,cc.range,label,cc.primary);
+            dropdowns += dropdown(i,cc.range,label,cc.primary);
             filterable_columns[key] = cc;
           }
         });

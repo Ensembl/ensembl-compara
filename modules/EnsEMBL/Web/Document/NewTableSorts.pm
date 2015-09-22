@@ -120,7 +120,6 @@ sub iconic_build_key {
 # range_match -- server side code for applying filter
 # enum_js -- suite of functions for client-side filtering
 # js_clean -- client side cleaning for sorting
-# filter_primary -- dropdown directly on filter, not inside more
 
 my %SORTS = (
   '_default' => {
@@ -139,7 +138,6 @@ my %SORTS = (
       }
       return 1;
     },
-    filter_primary => 0,
   },
   'string' => {
     null => sub { $_[0] !~ /\S/; },
@@ -234,10 +232,6 @@ my %SORTS = (
     },
     enum_js => "html_hidden_split",
   },
-  'primary' => {
-    filter_primary => 1,
-  },
-  'html_split_primary' => [qw(primary html_split)],
   'html_numeric' => {
     clean => sub { return number_cleaned(html_cleaned($_[0])); },
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
@@ -347,7 +341,6 @@ my %SORTS = (
     range_display => 'class',
     enum_js => "iconic",
   },
-  iconic_primary => [qw(iconic primary)],
   numeric_nofilter => [qw(nofilter numeric)],
   position_nofilter => [qw(nofilter position)],
 );
@@ -391,19 +384,11 @@ sub newtable_sort_client_config {
         clean => $conf->{'js_clean'},
         range => $conf->{'range_display'},
         enum_merge => $conf->{'range_merge'},
-        primary => $conf->{'filter_primary'},
         enum_js => $conf->{'enum_js'},
         range_params => $conf->{'range_display_params'},
         incr_ok => !($conf->{'options'}{'no_incr'}||0),
-        label => $cols->[$idx]{'label'},
-        idx => $idx, # TODO this can go when fully transitioned to named columns
       };
     }
-    push @conf, {
-      range_range => $cols->[$idx]{'range'},
-      sort => $cols->[$idx]{'sort'},
-      width => $cols->[$idx]{'width'},
-    };
     $config->{$col} = {};
     foreach my $x (@conf) {
       $config->{$col}{$_} = $x->{$_} for keys %$x;

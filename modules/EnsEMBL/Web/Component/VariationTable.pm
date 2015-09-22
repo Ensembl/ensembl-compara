@@ -269,6 +269,7 @@ sub make_table {
   $alleles->set_width(2);
   $alleles->set_label("Alle\fles");
   $alleles->set_helptip('Alternative nucleotides');
+  $alleles->no_sort();
   my $vf_allele = $table->add_column('vf_allele',{
     sort => 'string_nofilter',
   });
@@ -339,8 +340,9 @@ sub make_table {
   $self->clinsig_classes($table);
 
   my $snptype = $table->add_column('snptype',{
-    sort => 'iconic_primary',
+    sort => 'iconic',
   });
+  $snptype->set_primary();
   $snptype->set_range([values %{$self->all_terms}]);
   $snptype->set_width(1.5);
   $snptype->set_label('Type');
@@ -350,6 +352,7 @@ sub make_table {
   my $aachange = $table->add_column('aachange',{
     sort => 'string_nofilter',
   });
+  $aachange->no_sort();
   $aachange->set_label('AA');
   $aachange->set_helptip('Resulting amino acid(s)');
 

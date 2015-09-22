@@ -29,6 +29,8 @@ sub new {
     key => $key,
     conf => {
       width => "100u",
+      primary => 0,
+      sort => 1,
     },
   };
 
@@ -77,11 +79,9 @@ sub set_width {
   $self->{'conf'}{'width'} = ($mul*100)."u";
 }
 
-sub set_range {
-  my ($self,$range) = @_;
-
-  $self->{'conf'}{'range_range'} = $range;
-}
+sub set_range { $_[0]->{'conf'}{'range_range'} = $_[1]; }
+sub set_primary { $_[0]->{'conf'}{'primary'} = 1; }
+sub no_sort { $_[0]->{'conf'}{'sort'} = 0; }
 
 sub colconf { return $_[0]->{'conf'}; }
 
