@@ -132,6 +132,18 @@ sub dumpTreeMultipleAlignmentToWorkdir {
         }
     }
 
+    my $removed_members = undef;
+    if ($self->param('remove_columns')) {
+        if ($gene_tree->has_tag('removed_members')) {
+            my %removed_members;
+            map {$removed_members{$_}=1} split(/\//,$gene_tree->get_value_for_tag('removed_members'));
+            $removed_members = \%removed_members;
+            print Dumper $removed_members if ( $self->debug() );
+        } else {
+            $self->warning(sprintf("The 'removed_members' is missing from tree dbID=%d\n", $dbID));
+        }
+    }
+
     my $aln_file = $self->worker_temp_directory.sprintf('align.%d.%s', $dbID, $format);
 
     $gene_tree->print_alignment_to_file( $aln_file,
@@ -140,6 +152,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
         -SEQ_TYPE => $self->param('cdna') ? 'cds' : undef,
         -STOP2X => 1,
         -REMOVED_COLUMNS => $removed_columns,
+        -REMOVED_MEMBERS => $removed_members,
         -MAP_LONG_SEQ_NAMES => $map_long_seq_names,
         %$simple_align_options,
     );
