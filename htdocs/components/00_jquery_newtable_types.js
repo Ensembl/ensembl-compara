@@ -73,9 +73,9 @@
     return true;
   }
 
-  $.fn.newtable_filter_enumclient = function(config,data) {
+  $.fn.newtable_types = function(config,data) {
     return {
-      enums: [{
+      types: [{
         name: "string",
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },

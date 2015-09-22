@@ -192,7 +192,7 @@
       var n = 0;
       $.each(to_filter,function(col,v) {
         var cc = config.colconf[col];
-        var cf = find_widget(cc.enum_js,'enums',null);
+        var cf = $.find_type(widgets,cc);
         if(cf && cf.match) {
           to_filter[col] = cf;
           n++;
@@ -286,7 +286,7 @@
             var server_filter = [];
             var client_enums = {};
             $.each(filterable_columns,function(key,cc) {
-              var cf = find_widget(cc.enum_js,'enums',null);
+              var cf = $.find_type(widgets,cc);
               if(cf) {
                 client_enums[key] = cf;
               } else {

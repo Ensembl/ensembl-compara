@@ -29,6 +29,7 @@
 
   function make_widgets(config) {
     var widgets = {};
+    var types = {};
     $.each(config.widgets,function(key,name) {
       var data = {};
       if($.isArray(name)) {
@@ -359,7 +360,6 @@
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
-
     $.each(config.formats,function(i,fmt) {
       if(!config.orient.format && widgets[fmt]) {
         config.orient.format = fmt;
@@ -494,6 +494,21 @@
       if(!$.orient_compares_equal(fa[idx],val)) { good = false; }
     });
     return good;
+  };
+
+  $.find_type = function(widgets,cc) {
+    var w;
+    $.each(widgets,function(name,contents) {
+      if(contents.types) {
+        for(var i=0;i<contents.types.length;i++) {
+          if(contents.types[i].name == cc.type_js) {
+            w = contents.types[i];
+          }
+        }
+      }
+    });
+    if(w) { return w; }
+    return null;
   };
 
   $.debounce = function(fn,msec) {

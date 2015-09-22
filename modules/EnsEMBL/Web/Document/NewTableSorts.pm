@@ -91,7 +91,7 @@ sub iconic_build_key {
 # range_value -- server side code for adding to enumeration
 # range_finish -- server side code for finalising enumeration
 # range_match -- server side code for applying filter
-# enum_js -- suite of functions for client-side filtering
+# type_js -- suite of functions for client-side filtering
 # js_clean -- client side cleaning for sorting
 
 my %SORTS = (
@@ -115,7 +115,7 @@ my %SORTS = (
   'string' => {
     null => sub { $_[0] !~ /\S/; },
     js => 'string',
-    enum_js => 'string',
+    type_js => 'string',
   },
   'string_nofilter' => [qw(nofilter string)],
   'nofilter' => {
@@ -153,7 +153,7 @@ my %SORTS = (
         return 1;
       }
     },
-    enum_js => "numeric",
+    type_js => "numeric",
   },
   '_int' => {
     range_display_params => { steptype => 'integer' },
@@ -165,7 +165,7 @@ my %SORTS = (
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
     js => 'string',
     js_clean => 'html_cleaned',
-    enum_js => 'html',
+    type_js => 'html',
   },
   'html_nofilter' => [qw(nofilter html)],
   'position' => {
@@ -205,7 +205,7 @@ my %SORTS = (
         return 1;
       }
     },
-    enum_js => "position",
+    type_js => "position",
   },
   iconic => {
     js => "iconic",
@@ -219,7 +219,7 @@ my %SORTS = (
     },
     range_split => sub { return [ split(/~/,$_[1]) ]; },
     range_display => 'class',
-    enum_js => "iconic",
+    type_js => "iconic",
   },
   numeric_nofilter => [qw(nofilter numeric)],
   position_nofilter => [qw(nofilter position)],
@@ -264,7 +264,7 @@ sub newtable_sort_client_config {
         clean => $conf->{'js_clean'},
         range => $conf->{'range_display'},
         enum_merge => $conf->{'range_merge'},
-        enum_js => $conf->{'enum_js'},
+        type_js => $conf->{'type_js'},
         range_params => $conf->{'range_display_params'},
       };
     }
