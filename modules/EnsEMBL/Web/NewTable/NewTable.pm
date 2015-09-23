@@ -64,7 +64,7 @@ sub new {
     columns   => [],
     plugins   => {},
     phases    => [],
-    colobjs   => {},
+    colobj    => {},
   };
 
   bless $self, $class;
@@ -125,6 +125,7 @@ sub add_plugin {
 }
 
 sub column { return $_[0]->{'colobj'}{$_[1]}; }
+sub columns { return $_[0]->{'colobj'}; }
 
 sub get_plugin {
   my ($self,$plugin) = @_;
@@ -200,7 +201,7 @@ sub render {
     keymeta => $self->{'key_meta'},
   };
   my $callback = EnsEMBL::Web::NewTable::Callback->new($hub,$component);
-  $data->{'payload_one'} = $callback->preload($data,$orient);
+  $data->{'payload_one'} = $callback->preload($self,$data,$orient);
 
   $data = encode_entities(to_json($data));
   return qq(

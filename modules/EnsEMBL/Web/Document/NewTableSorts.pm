@@ -27,74 +27,17 @@ use List::Util qw(min max);
 use List::MoreUtils qw(each_array);
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(newtable_sort_isnull
-                    newtable_sort_cmp newtable_sort_range_value
+our @EXPORT_OK = qw(newtable_sort_range_value
                     newtable_sort_range_split
                     newtable_sort_range_finish newtable_sort_range_match);
 
-sub html_cleaned {
-  local $_ = $_[0];
-
-  s/<[^>]*? class="[^"]*?hidden.*?<\/.*?>//g;
-  s/<.*?>//g;
-  s/\&.*?;//g;
-  return $_;
-}
-
-sub number_cleaned { $_[0] =~ s/([\d\.e\+-])\s.*$/$1/; return $_[0]; }
-
-sub null_position {
-  my ($v) = @_;
-
-  $v =~ s/^.*://;
-  my @v = split(/:-/,$v);
-  shift @v;
-  foreach my $c (@v) {
-    return 1 if newtable_sort_isnull('numeric',$c);
-  } 
-  return 0;
-}
-
-sub sort_position {
-  my ($a,$b,$f) = @_;
-
-  my @a = split(/:-/,$a);
-  my @b = split(/:-/,$b);
-  my $it = each_array(@a,@b);
-  while(my ($aa,$bb) = $it->()) {
-    my $c = newtable_sort_cmp('numeric',$aa,$bb,$f);
-    return $c if $c; 
-  }
-  return 0;
-}
-
-sub iconic_build_key {
-  my ($km,$col,$in) = @_;
-
-  my @vals = split(/;/,$in||'');
-  if($km) {
-    @vals = map {
-      $km->{"decorate/iconic/$col/$_"}{'order'} ||
-      $km->{"decorate/iconic/$col/$_"}{'export'} || '~';
-    } @vals;
-  }
-  return join('~',reverse sort @vals);
-}
-
-# perl -- sorting routine for server side sort
-# null -- is this value fo be considered null (server side)
-# clean -- remving crud from a value (server side)
 # range_split -- server side code for breaking up composite values
 # range_value -- server side code for adding to enumeration
 # range_finish -- server side code for finalising enumeration
 # range_match -- server side code for applying filter
-# js_clean -- client side cleaning for sorting
 
 my %SORTS = (
   '_default' => {
-    perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
-    null => sub { return 0; },
-    clean => sub { return $_[0]; },
     range_split => sub { return [$_[0]->{'clean'}->($_[1])]; },
     range_value => sub { $_[0]->{$_[1]} = 1; },
     range_finish => sub { return [sort keys %{$_[0]}]; },
@@ -106,12 +49,8 @@ my %SORTS = (
     },
   },
   'string' => {
-    null => sub { $_[0] !~ /\S/; },
   },
   'numeric' => {
-    clean => \&number_cleaned, 
-    perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
-    null => sub { return !looks_like_number($_[0]); },
     range_value => sub {
       if(!looks_like_number($_[1])) { return; }
       if(exists $_[0]->{'min'}) {
@@ -138,14 +77,7 @@ my %SORTS = (
     },
   },
   'integer' => [qw(numeric)],
-  'html' => {
-    clean => \&html_cleaned,
-    null => sub { $_[0] !~ /\S/; },
-    perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
-  },
   'position' => {
-    null => \&null_position,
-    perl => \&sort_position,
     range_value => sub {
       my ($acc,$value) = @_;
 
@@ -178,14 +110,6 @@ my %SORTS = (
     },
   },
   iconic => {
-    null => sub { $_[0] !~ /\S/; },
-    perl => sub {
-      my ($x,$y,$f,$c,$km,$col) = @_;
-
-      $c->{$x} = iconic_build_key($km,$col,$x) unless exists $c->{$x};
-      $c->{$y} = iconic_build_key($km,$col,$y) unless exists $c->{$y};
-      return ($c->{$x} cmp $c->{$y})*$f;
-    },
     range_split => sub { return [ split(/~/,$_[1]) ]; },
   },
 );
@@ -243,27 +167,6 @@ sub newtable_sort_range_match {
 
   return 0 unless defined $y;
   return get_sort($type)->{'range_match'}->($x,$y);
-}
-
-sub newtable_sort_isnull {
-  my ($type,$value) = @_;
-
-  return 1 unless defined $value;
-  $value = get_sort($type)->{'clean'}->($value);
-  return 1 unless defined $value;
-  return !!(get_sort($type)->{'null'}->($value));
-}
-
-sub newtable_sort_cmp {
-  my ($type,$a,$b,$f,$keymeta,$cache,$col) = @_;
-
-  my $av = get_sort($type)->{'clean'}->($a);
-  my $bv = get_sort($type)->{'clean'}->($b);
-  my $an = newtable_sort_isnull($type,$av);
-  my $bn = newtable_sort_isnull($type,$bv);
-  return $an-$bn if $an-$bn;
-  $type = '_default' if $an;
-  return get_sort($type)->{'perl'}->($av,$bv,$f,$cache,$keymeta,$col);
 }
 
 1;

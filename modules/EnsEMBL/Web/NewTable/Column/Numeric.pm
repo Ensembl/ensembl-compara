@@ -22,7 +22,13 @@ use strict;
 use warnings;
 use parent qw(EnsEMBL::Web::NewTable::Column);
 
+use Scalar::Util qw(looks_like_number);
+
 sub js_type { return 'numeric'; }
 sub js_range { return 'range'; }
+sub clean { my $x=$_[1]; $x =~ s/([\d\.e\+-])\s.*$/$1/; return $x; }
+sub null { return !looks_like_number($_[1]); }
+sub cmp { return ($_[1] <=> $_[2])*$_[3]; }
+
 
 1;

@@ -39,6 +39,7 @@ sub new {
       primary => 0,
       sort => 1,
       incr_ok => 1,
+      sstype => $type,
     },
   };
 
@@ -50,6 +51,8 @@ sub new {
 }
 
 sub js_params { return {}; }
+sub clean { return $_[1]; }
+sub null { return 0; }
 
 sub key { return $_[0]->{'key'}; }
 
@@ -90,6 +93,26 @@ sub set_width {
   my ($self,$mul) = @_;
 
   $self->{'conf'}{'width'} = ($mul*100)."u";
+}
+
+sub is_null {
+  my ($self,$value) = @_;
+
+  return 1 unless defined $value;
+  $value = $self->clean($value);
+  return 1 unless defined $value;
+  return !!($self->null($value));
+}
+
+sub compare {
+  my ($self,$a,$b,$f,$keymeta,$cache,$col) = @_;
+
+  my $av = $self->clean($a||'');
+  my $bv = $self->clean($b||'');
+  my $an = $self->is_null($av);
+  my $bn = $self->is_null($bv);
+  return $an-$bn if $an-$bn;
+  return $self->cmp($av,$bv,$f,$cache,$keymeta,$col);
 }
 
 sub set_range { $_[0]->{'conf'}{'range_range'} = $_[1]; }

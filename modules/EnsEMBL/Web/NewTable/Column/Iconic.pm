@@ -24,5 +24,27 @@ use parent qw(EnsEMBL::Web::NewTable::Column);
 
 sub js_type { return 'iconic'; }
 sub js_range { return 'iconic'; }
+sub null { return $_[1] !~ /\S/; }
+
+sub iconic_build_key {
+  my ($km,$col,$in) = @_;
+
+  my @vals = split(/;/,$in||'');
+  if($km) {
+    @vals = map {
+      $km->{"decorate/iconic/$col/$_"}{'order'} ||
+      $km->{"decorate/iconic/$col/$_"}{'export'} || '~';
+    } @vals;
+  }
+  return join('~',reverse sort @vals);
+}
+
+sub cmp {
+  my ($x,$y,$f,$c,$km,$col) = @_;
+
+  $c->{$x} = iconic_build_key($km,$col,$x) unless exists $c->{$x};
+  $c->{$y} = iconic_build_key($km,$col,$y) unless exists $c->{$y};
+  return ($c->{$x} cmp $c->{$y})*$f;
+}
 
 1;

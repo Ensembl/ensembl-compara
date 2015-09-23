@@ -22,8 +22,36 @@ use strict;
 use warnings;
 use parent qw(EnsEMBL::Web::NewTable::Column);
 
+use Scalar::Util qw(looks_like_number);
+use List::MoreUtils qw(each_array);
+
+sub null {
+  my ($v) = @_; 
+
+  $v =~ s/^.*://;
+  my @v = split(/:-/,$v);
+  shift @v; 
+  foreach my $c (@v) {
+    return 1 if !looks_like_number($c);
+  }   
+  return 0;
+}
+
 sub js_type { return 'position'; }
 sub js_range { return 'position'; }
 sub js_params { return { steptype => 'integer' }; }
+
+sub cmp {
+  my ($a,$b,$f) = @_; 
+
+  my @a = split(/:-/,$a);
+  my @b = split(/:-/,$b);
+  my $it = each_array(@a,@b);
+  while(my ($aa,$bb) = $it->()) {
+    my $c = ($aa <=> $bb)*$f;
+    return $c if $c; 
+  }
+  return 0;
+}
 
 1;

@@ -20,7 +20,7 @@ package EnsEMBL::Web::NewTable::Column::Integer;
 
 use strict;
 use warnings;
-use parent qw(EnsEMBL::Web::NewTable::Column);
+use parent qw(EnsEMBL::Web::NewTable::Column::Numeric);
 
 sub js_type { return 'numeric'; }
 sub js_range { return 'range'; }

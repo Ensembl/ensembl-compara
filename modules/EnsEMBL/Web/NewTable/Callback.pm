@@ -25,7 +25,7 @@ use parent qw(EnsEMBL::Web::NewTable::Endpoint);
 
 use JSON qw(from_json);
 
-use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_isnull newtable_sort_cmp newtable_sort_range_value newtable_sort_range_finish newtable_sort_range_match newtable_sort_range_split);
+use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_range_value newtable_sort_range_finish newtable_sort_range_match newtable_sort_range_split);
 
 use Compress::Zlib;
 use Digest::MD5 qw(md5_hex);
@@ -56,6 +56,14 @@ sub go {
   my $more = $hub->param('more');
   my $incr_ok = ($hub->param('incr_ok') eq 'true');
   my $keymeta = from_json($hub->param('keymeta'));
+  warn "B\n";
+  # Add columns
+  $self->{'columns'} = {};
+  foreach my $key (keys %{$self->{'iconfig'}{'colconf'}}) {
+    my $cc = $self->{'iconfig'}{'colconf'}{$key};
+    $self->{'columns'}{$key} =
+      EnsEMBL::Web::NewTable::Column->new($self,$cc->{'sstype'},$key);
+  }
 
   my $out = $self->newtable_data_request($orient,$more,$incr_ok,$keymeta);
   if($self->{'wire'}{'format'} eq 'export') {
@@ -68,10 +76,11 @@ sub go {
 }
 
 sub preload {
-  my ($self,$config,$orient) = @_;
+  my ($self,$table,$config,$orient) = @_;
 
   $self->{'iconfig'} = $config;
   $self->{'wire'} = $orient;
+  $self->{'columns'} = $table->columns;
   return $self->newtable_data_request($orient,undef,1);
 }
 
@@ -89,11 +98,15 @@ sub server_sort {
     my $c = 0;
     foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
       my $key = $col->{'key'};
+      my $column;
+      if($key eq '__tie') {
+        $column = EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
+      } else {
+        $column = $self->{'columns'}{$key};
+      }
       $cache{$key}||={};
       my $idx = $rseries{$key};
-      my $type = $colconf->{$key}{'sort'}||'string';
-      $type = 'numeric' if $key eq '__tie';
-      $c = newtable_sort_cmp($type,$a->[$idx],$b->[$idx],$col->{'dir'},$keymeta,$cache{$key},$key);
+      $c = $column->compare($a->[$idx],$b->[$idx],$col->{'dir'},$keymeta,$cache{$key},$key);
       last if $c;
     }
     $c;
@@ -108,12 +121,13 @@ sub server_nulls {
   my $colconf = $iconfig->{'colconf'};
   foreach my $j (0..$#$series) {
     my $cc = $colconf->{$series->[$j]};
+    my $col = $self->{'columns'}{$series->[$j]};
     my %null_cache;
     foreach my $i (0..$#$data) {
       my $is_null = (!defined $data->[$i][$j]);
       $is_null = $null_cache{$data->[$i][$j]} unless $is_null;
       unless(defined $is_null) {
-        $is_null = newtable_sort_isnull($cc->{'sort'},$data->[$i][$j]);
+        $is_null = $col->is_null($data->[$i][$j]);
         $null_cache{$data->[$i][$j]} = $is_null;
       }
       $data->[$i][$j] = [$data->[$i][$j],0+$is_null];
