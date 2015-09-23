@@ -30,37 +30,17 @@ use EnsEMBL::Draw::Utils::ColourMap;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use EnsEMBL::Web::NewTable::Callback;
 use EnsEMBL::Web::NewTable::Column;
-
-our @PLUGINS = qw(Core Frame Decorate Filter Misc);
-
-my %PLUGINS;
-my @PACKAGES;
-while(@PLUGINS) {
-  my $plugin = shift @PLUGINS;
-  my $package = dynamic_require("EnsEMBL::Web::NewTable::Plugins::$plugin",1);
-  push @PACKAGES,$plugin;
-  if($package) {
-    my $children = $package->children();
-    push @PLUGINS,@$children;
-  }
-}
-foreach my $plugin (@PACKAGES) {
-  my $package = "EnsEMBL::Web::NewTable::Plugins::$plugin";
-  if(UNIVERSAL::isa($package,"EnsEMBL::Web::NewTable::Plugin")) {
-    $PLUGINS{$plugin} = $package;
-  }
-}
 
 sub new {
   my ($class, $component) = @_;
 
   my $self = {
     component => $component,
+    hub => $component->hub,
     columns   => [],
     plugins   => {},
     phases    => [],
@@ -104,23 +84,6 @@ sub preprocess_hyphens {
   foreach (@{$self->{'columns'}}) {
     my $h = $_->{'label'} ? $self->hyphenate($_, 'label') : 0;
     $_->{'class'} .= ' hyphenated' if $h;
-  }
-}
-
-sub add_plugin {
-  my ($self,$plugin,$conf,$_ours) = @_;
-
-  $_ours ||= {};
-  return undef unless $PLUGINS{$plugin};
-  my $pp = $self->{'plugins'}{$plugin};
-  $self->{'plugins'}{$plugin} = $PLUGINS{$plugin}->new($self) unless $pp;
-  $pp = $self->{'plugins'}{$plugin};
-  return undef unless $pp;
-  $pp->configure($conf);
-  foreach my $sub (@{$pp->requires()}) {
-    next if $_ours->{$sub};
-    $_ours->{$sub} = 1;
-    $self->add_plugin($sub,$conf,$_ours);
   }
 }
 
@@ -199,6 +162,7 @@ sub render {
     widgets => $widgets,
     phases  => $self->{'phases'},
     keymeta => $self->{'key_meta'},
+    ssplugins => $self->plugins,
   };
   my $callback = EnsEMBL::Web::NewTable::Callback->new($hub,$component);
   $data->{'payload_one'} = $callback->preload($self,$data,$orient);

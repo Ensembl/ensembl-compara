@@ -54,7 +54,12 @@ sub go {
   my $more = $hub->param('more');
   my $incr_ok = ($hub->param('incr_ok') eq 'true');
   my $keymeta = from_json($hub->param('keymeta'));
-  warn "B\n";
+  # Add plugins
+  my $ssplugins = from_json($hub->param('ssplugins'));
+  foreach my $name (keys %$ssplugins) {
+    $name =~ s/\W//g;
+    $self->add_plugin($name,$ssplugins->{$name});
+  } 
   # Add columns
   $self->{'columns'} = {};
   foreach my $key (keys %{$self->{'iconfig'}{'colconf'}}) {

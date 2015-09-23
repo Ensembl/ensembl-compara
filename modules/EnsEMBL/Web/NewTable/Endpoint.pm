@@ -27,6 +27,10 @@ package EnsEMBL::Web::NewTable::Endpoint;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
+
+our @PLUGINS = qw(Core Frame Decorate Filter Misc);
+
 sub new {
   my ($proto,$hub,$component) = @_;
 
@@ -38,6 +42,24 @@ sub new {
   return $self;
 }
 
+my %PLUGINS;
+my @PACKAGES;
+while(@PLUGINS) {
+  my $plugin = shift @PLUGINS;
+  my $package = dynamic_require("EnsEMBL::Web::NewTable::Plugins::$plugin",1);
+  push @PACKAGES,$plugin;
+  if($package) {
+    my $children = $package->children();
+    push @PLUGINS,@$children;
+  }
+}
+foreach my $plugin (@PACKAGES) {
+  my $package = "EnsEMBL::Web::NewTable::Plugins::$plugin";
+  if(UNIVERSAL::isa($package,"EnsEMBL::Web::NewTable::Plugin")) {
+    $PLUGINS{$plugin} = $package;
+  }
+}
+
 sub register_key {
   my ($self,$key,$meta) = @_;
 
@@ -46,5 +68,49 @@ sub register_key {
     $self->{'key_meta'}{$key}{$k} = $meta->{$k} unless exists $self->{'key_meta'}{$key}{$k};
   } 
 }
+
+sub add_plugin {
+  my ($self,$plugin,$conf,$_ours) = @_;
+
+  $_ours ||= {};
+  return undef unless $PLUGINS{$plugin};
+  my $pp = $self->{'plugins'}{$plugin};
+  $self->{'plugins'}{$plugin} = $PLUGINS{$plugin}->new($self) unless $pp;
+  $pp = $self->{'plugins'}{$plugin};
+  return undef unless $pp;
+  $pp->configure($conf);
+  foreach my $sub (@{$pp->requires()}) {
+    next if $_ours->{$sub};
+    $_ours->{$sub} = 1;
+    $self->add_plugin($sub,$conf,$_ours);
+  }
+}
+
+sub plugins {
+  my ($self) = @_;
+
+  my %out;
+  foreach my $plugin (keys %{$self->{'plugins'}}) {
+    $out{$plugin} = $self->{'plugins'}{$plugin}{'conf'};
+  }
+  return \%out;
+}
+
+sub delegate {
+  my ($self,$obj,$type,$fn,$data) = @_;
+
+  my $orig_fn = $fn;
+  $fn = "${type}_$fn" if $type;
+  foreach my $plugin (values %{$self->{'plugins'}}) {
+    warn "plugin = $plugin fn = $fn\n";
+    if($plugin->can($fn)) {
+      warn "Trying $fn\n";
+      return $plugin->$fn($obj,@$data);
+    }
+  }
+  die "No such method '$orig_fn'";
+}
+
+sub hub { return $_[0]->{'hub'}; }
 
 1;

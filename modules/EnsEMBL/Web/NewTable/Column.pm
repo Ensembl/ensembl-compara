@@ -24,14 +24,14 @@ use warnings;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 sub new {
-  my ($proto,$table,$type,$key) = @_;
+  my ($proto,$endpoint,$type,$key) = @_;
 
   my $class = "EnsEMBL::Web::NewTable::Column";
   $class .= "::".ucfirst($type) if $type;
   dynamic_require($class);
 
   my $self = {
-    table => $table,
+    endpoint => $endpoint,
     key => $key,
     type => $type,
     conf => {
@@ -55,14 +55,6 @@ sub clean { return $_[1]; }
 sub null { return 0; }
 
 sub key { return $_[0]->{'key'}; }
-
-sub value {
-  my ($self,$plugin_name,$value) = @_;
-
-  $value ||= '*';
-  my $plugin = $self->{'table'}->get_plugin($plugin_name);
-  return $plugin->value($self,$value);
-}
 
 sub decorate {
   my ($self,$type) = @_;
@@ -151,5 +143,15 @@ sub set_filter { $_[0]->{'conf'}{'range'} = $_[1]; }
 sub no_filter { $_[0]->set_filter(''); }
 
 sub colconf { return $_[0]->{'conf'}; }
+
+# For things defined in plugins. Maybe use roles in future?
+sub AUTOLOAD {
+  our $AUTOLOAD;
+  my $fn = $AUTOLOAD;
+  $fn =~ s/^.*:://;
+  my $self = shift;
+
+  return $self->{'endpoint'}->delegate($self,'col',$fn,\@_);
+}
 
 1;

@@ -141,12 +141,11 @@ sub sift_poly_classes {
   foreach my $column_name (qw(sift polyphen)) {
     my $value_column = $table->column("${column_name}_value");
     my $class_column = $table->column("${column_name}_class");
-    $value_column->value('DecorateEditorial')->set_type('lozenge');
-    $value_column->value('DecorateEditorial')->set_source($class_column);
+    $value_column->editorial_type('lozenge');
+    $value_column->editorial_source($class_column);
     foreach my $pred (keys %sp_classes) {
-      my $value = $value_column->value('DecorateEditorial',$pred);
-      $value->set_css_class("score_$sp_classes{$pred}");
-      $value->set_helptip($pred);
+      $value_column->editorial_cssclass($pred,"score_$sp_classes{$pred}");
+      $value_column->editorial_helptip($pred,$pred);
     } 
   }
 }
@@ -165,11 +164,10 @@ sub evidence_classes {
   foreach my $ev (keys %evidence_order) {
     my $evidence_label = $ev;
     $evidence_label =~ s/_/ /g;
-    my $icon = $evidence_col->value('DecorateIconic',$ev);
-    $icon->set_icon(sprintf("%s/val/evidence_%s.png",$self->img_url,$ev));
-    $icon->set_helptip($evidence_label);
-    $icon->set_export($evidence_label);
-    $icon->set_order($evidence_order{$ev});
+    $evidence_col->icon_url($ev,sprintf("%s/val/evidence_%s.png",$self->img_url,$ev));
+    $evidence_col->icon_helptip($ev,$evidence_label);
+    $evidence_col->icon_export($ev,$evidence_label);
+    $evidence_col->icon_order($ev,$evidence_order{$ev});
   }
 }
 
@@ -190,11 +188,10 @@ sub clinsig_classes {
   foreach my $cs_img (keys %clinsig_order) {
     my $cs = $cs_img;
     $cs =~ s/-/ /g;
-    my $icon = $clinsig_col->value('DecorateIconic',$cs);
-    $icon->set_icon(sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img));
-    $icon->set_helptip($cs);
-    $icon->set_export($cs);
-    $icon->set_order($clinsig_order{$cs_img});
+    $clinsig_col->icon_url($cs,sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img));
+    $clinsig_col->icon_helptip($cs,$cs);
+    $clinsig_col->icon_export($cs,$cs);
+    $clinsig_col->icon_order($cs,$clinsig_order{$cs_img});
   }
 }
   
@@ -212,11 +209,10 @@ sub snptype_classes {
   
     my $so_term = lc $con->SO_term;
     my $colour = $var_styles->{$so_term||'default'}->{'default'};
-    my $value = $column->value('DecorateIconic',$con->label);
-    $value->set_export($con->label);
-    $value->set_order(sprintf("^%8.8d",$con->rank));
-    $value->set_helptip($con->description);
-    $value->set_coltab($colour);
+    $column->icon_export($con->label,$con->label);
+    $column->icon_order($con->label,sprintf("^%8.8d",$con->rank));
+    $column->icon_helptip($con->label,$con->description);
+    $column->icon_coltab($con->label,$colour);
   }
 }
 
@@ -242,7 +238,7 @@ sub make_table {
     vf     => undef,
     v      => undef,
   });
-  $id->value('DecorateLink')->set_url($base_url,{ vf => "vf" });
+  $id->link_url($base_url,{ vf => "vf" });
 
   my $vf = $table->add_column('vf','numeric');
   $vf->set_type('screen',{ unshowable => 1 });
@@ -269,10 +265,10 @@ sub make_table {
   $vf_allele->set_type('screen',{ unshowable => 1 });
   my $vf_allele_col = $table->column('vf_allele');
   my $alleles_col = $table->column('Alleles');
-  $alleles_col->value('DecorateToggle')->set_separator('/');
-  $alleles_col->value('DecorateToggle')->set_maxlen(20);
-  $alleles_col->value('DecorateToggle')->set_highlight_column($vf_allele_col);
-  $alleles_col->value('DecorateToggle')->set_highlight_over(2);
+  $alleles_col->toggle_set_separator('/');
+  $alleles_col->toggle_set_maxlen(20);
+  $alleles_col->toggle_highlight_column($vf_allele_col);
+  $alleles_col->toggle_highlight_over(2);
  
   if ($hub->species eq 'Homo_sapiens') {
     my $gmaf = $table->add_column('gmaf','numeric');
@@ -281,7 +277,7 @@ sub make_table {
     my $gmaf_allele = $table->add_column('gmaf_allele','string');
     $gmaf_allele->no_filter();
     $gmaf_allele->set_type('screen',{ unshowable => 1 });
-    $gmaf->value('DecorateAlso')->set_cols($gmaf_allele);
+    $gmaf->also_cols($gmaf_allele);
   }
   
   if($hub->param('hgvs') eq 'on') {
@@ -384,7 +380,7 @@ sub make_table {
         type   => 'Transcript',
         action => 'Summary',
       });
-      $table->column('Transcript')->value('DecorateLink')->set_url($base_trans_url,{
+      $table->column('Transcript')->link_url($base_trans_url,{
         t => "Transcript"
       });
     }

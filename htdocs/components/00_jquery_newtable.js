@@ -296,7 +296,8 @@
         more: JSON.stringify(more),
         config: JSON.stringify(config),
         incr_ok: manifest_c.incr_ok,
-        series: JSON.stringify(config.columns)
+        series: JSON.stringify(config.columns),
+        ssplugins: JSON.stringify(config.ssplugins)
       });
       $.post($table.data('src'),params,function(res) {
         maybe_use_response(widgets,$table,res,config);

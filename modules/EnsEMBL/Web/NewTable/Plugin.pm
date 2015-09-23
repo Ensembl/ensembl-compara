@@ -10,8 +10,11 @@ sub new {
     table => $table
   };
   bless $self,$class;
+  $self->init();
   return $self;
 }
+
+sub init {}
 
 sub table { return $_[0]->{'table'}; }
 
