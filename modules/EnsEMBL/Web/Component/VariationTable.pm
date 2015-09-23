@@ -232,14 +232,17 @@ sub make_table {
   my @exclude;
   push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
   push @exclude,'HGVS' unless $hub->param('hgvs') eq 'on';
-  unless($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-    push @exclude,'Submitters';
+  if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+    push @exclude,'Submitters','Transcript';
+  } else {
+    push @exclude,'LRGTranscript';
   }
   push @exclude,'sift_sort','sift_class','sift_value' unless $sd->{'SIFT'};
   unless($hub->species eq 'Homo_sapiens') {
     push @exclude,'polyphen_sort','polyphen_class','polyphen_value';
   }
   push @exclude,'Transcript' if $hub->type eq 'Transcript';
+
 
   my @columns = ({
     _key => 'ID', _type => 'string no_filter',
@@ -328,6 +331,9 @@ sub make_table {
     label => "Poly\fPhen",
     helptip => $glossary->{'PolyPhen'}
   },{
+    _key => 'LRG', _type => 'string unshowable',
+    label => "LRG",
+  },{
     _key => 'Transcript', _type => 'string',
     width => 2,
     helptip => $glossary->{'Transcript'},
@@ -336,6 +342,17 @@ sub make_table {
       action => 'Summary',
       t => ["Transcript"] 
     }
+   },{
+    _key => 'LRGTranscript', _type => 'string',
+    width => 2,
+    helptip => $glossary->{'Transcript'},
+    link_url => {
+      type   => 'LRG',
+      action => 'Summary',
+      lrgt => ["LRGTranscript"],
+      lrg => ["LRG"],
+      __clear => 1
+   }
   });
   $table->add_columns(\@columns,\@exclude);
 
@@ -344,19 +361,6 @@ sub make_table {
   $self->snptype_classes($table,$self->hub);
   $self->sift_poly_classes($table);
 
-  if ($hub->type ne 'Transcript') {
-    my $base_trans_url;
-    if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-      my $gene_stable_id = "XXX"; # XXX fix before release
-      $base_trans_url = $hub->url({
-        type    => 'LRG',
-        action  => 'Summary',
-        lrg     => $gene_stable_id,
-        __clear => 1
-      });
-      die "UNIMPLEMENTED: mail dan\@ebi.ac.uk\n";
-    }
-  }
   return $table;
 }
 
@@ -744,6 +748,8 @@ sub variation_table {
               Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
               snptype    => $type,
               Transcript => $transcript_name,
+              LRGTranscript => $transcript_name,
+              LRG        => $gene->stable_id,
               aachange   => $aachange,
               aacoord    => $aacoord,
               sift_sort  => $sifts->[0],
