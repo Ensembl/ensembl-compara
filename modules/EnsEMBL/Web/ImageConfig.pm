@@ -1041,7 +1041,7 @@ sub _add_trackhub_tracks {
     
     $tracks{$type}{$source->{'name'}} = $source;
   }
-  warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
+#  warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
   
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
