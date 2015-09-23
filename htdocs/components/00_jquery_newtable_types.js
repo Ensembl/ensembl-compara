@@ -71,7 +71,7 @@
     var aa = a.split(/[:-]/);
     var bb = b.split(/[:-]/);
     for(var i=0;i<aa.length;i++) {
-      var c = $.fn.newtable_sort_numeric(aa[i],bb[i],f);
+      var c = (parseFloat(aa[i])-parseFloat(bb[i]))*f;
       if(c) { return c; }
     }
     return 0;
