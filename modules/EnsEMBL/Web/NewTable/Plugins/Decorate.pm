@@ -62,7 +62,14 @@ use parent qw(EnsEMBL::Web::NewTable::Plugins::Decorate);
 sub decorate_key { return 'link'; }
 
 sub col_link_url {
-  $_[0]->set_decorates($_[1],'*',{ base_url => $_[2], params => $_[3]||{}});
+  my ($self,$col,$spec) = @_;
+  my (%base,%params);
+  foreach my $k (keys %$spec) {
+    if(ref($spec->{$k}) eq 'ARRAY') { $params{$k} = $spec->{$k}[0]; }
+    else { $base{$k} = $spec->{$k}; }
+  }
+  my $base = $self->table->hub->url(\%base);
+  $self->set_decorates($col,'*',{ base_url => $base, params => \%params});
 }
 
 package EnsEMBL::Web::NewTable::Plugins::DecorateEditorial;
@@ -75,7 +82,7 @@ sub col_editorial_type {
 }
 
 sub col_editorial_source {
-  $_[0]->set_decorates($_[1],'*',{ source => $_[2]->key() });
+  $_[0]->set_decorates($_[1],'*',{ source => $_[2] });
 }
 
 sub col_editorial_cssclass {
@@ -95,7 +102,7 @@ sub col_also_cols {
   my ($self,$col,$cols) = @_;
 
   $cols = [ $cols ] unless ref($cols) eq 'ARRAY';
-  $self->set_decorates($col,'*',{ cols => [ map { $_->key } @$cols ] });
+  $self->set_decorates($col,'*',{ cols => $cols });
 }
 
 package EnsEMBL::Web::NewTable::Plugins::DecorateToggle;
@@ -112,7 +119,7 @@ sub col_toggle_set_maxlen {
 }
 
 sub col_toggle_highlight_column {
-  $_[0]->set_decorates($_[1],'*',{ highlight_col => $_[2]->key() });
+  $_[0]->set_decorates($_[1],'*',{ highlight_col => $_[2] });
 }
 
 sub col_toggle_highlight_over {

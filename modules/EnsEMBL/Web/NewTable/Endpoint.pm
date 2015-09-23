@@ -96,15 +96,25 @@ sub plugins {
   return \%out;
 }
 
+sub can_delegate {
+  my ($self,$type,$fn) = @_;
+
+  $fn = "${type}_$fn" if $type;
+  foreach my $plugin (values %{$self->{'plugins'}}) {
+    if($plugin->can($fn)) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 sub delegate {
   my ($self,$obj,$type,$fn,$data) = @_;
 
   my $orig_fn = $fn;
   $fn = "${type}_$fn" if $type;
   foreach my $plugin (values %{$self->{'plugins'}}) {
-    warn "plugin = $plugin fn = $fn\n";
     if($plugin->can($fn)) {
-      warn "Trying $fn\n";
       return $plugin->$fn($obj,@$data);
     }
   }

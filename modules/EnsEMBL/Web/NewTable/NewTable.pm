@@ -174,12 +174,29 @@ sub render {
 }
 
 sub add_column {
-  my ($self,$key,$type) = @_;
+  my ($self,$key,$type,$args) = @_;
 
+  my @type = split(' ',$type);
+  $type = shift @type;
+  my $confstr = "";
   push @{$self->{'columns'}},{ key => $key };
   $self->{'colobj'}{$key} =
-    EnsEMBL::Web::NewTable::Column->new($self,$type,$key); 
+    EnsEMBL::Web::NewTable::Column->new($self,$type,$key,\@type,$args); 
   return $self->column($key);
+}
+
+sub add_columns {
+  my ($self,$columns,$exclude) = @_;
+
+  my %exclude;
+  $exclude{$_}=1 for @$exclude;
+  foreach my $col (@$columns) {
+    next if $exclude{$col->{'_key'}};
+    my %args = %$col;
+    delete $args{'_key'};
+    delete $args{'_type'};
+    $self->add_column($col->{'_key'},$col->{'_type'},\%args);
+  }
 }
 
 1;

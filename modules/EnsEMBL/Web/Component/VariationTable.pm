@@ -142,7 +142,7 @@ sub sift_poly_classes {
     my $value_column = $table->column("${column_name}_value");
     my $class_column = $table->column("${column_name}_class");
     $value_column->editorial_type('lozenge');
-    $value_column->editorial_source($class_column);
+    $value_column->editorial_source("${column_name}_class");
     foreach my $pred (keys %sp_classes) {
       $value_column->editorial_cssclass($pred,"score_$sp_classes{$pred}");
       $value_column->editorial_helptip($pred,$pred);
@@ -228,143 +228,123 @@ sub make_table {
   $table->add_phase("full");
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
-  my $id = $table->add_column('ID','string');
-  $id->set_width(2);
-  $id->no_filter();
-  $id->set_helptip('Variant identifier'); 
-  my $base_url = $hub->url({
-    type   => 'Variation',
-    action => 'Summary',
-    vf     => undef,
-    v      => undef,
+
+  my @exclude;
+  push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
+  push @exclude,'HGVS' unless $hub->param('hgvs') eq 'on';
+  unless($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+    push @exclude,'Submitters';
+  }
+  push @exclude,'sift_sort','sift_class','sift_value' unless $sd->{'SIFT'};
+  unless($hub->species eq 'Homo_sapiens') {
+    push @exclude,'polyphen_sort','polyphen_class','polyphen_value';
+  }
+  push @exclude,'Transcript' if $hub->type eq 'Transcript';
+
+  my @columns = ({
+    _key => 'ID', _type => 'string no_filter',
+    width => 2,
+    helptip => 'Variant identifier',
+    link_url => {
+      type   => 'Variation',
+      action => 'Summary',
+      vf     => ["vf"],
+    }
+  },{
+    _key => 'vf', _type => 'numeric unshowable no_filter'
+  },{
+    _key => 'chr', _type => 'position no_filter', label => 'Chr: bp',
+    width => 1.75,
+    helptip => $glossary->{'Chr:bp'}
+  },{
+    _key => 'location', _type => 'position unshowable',
+    sort_for => 'chr'
+  },{
+    _key => 'vf_allele', _type => 'string no_filter unshowable',
+  },{
+    _key => 'Alleles', _type => 'string no_filter no_sort',
+    label => "Alle\fles",
+    helptip => 'Alternative nucleotides',
+    toggle_separator => '/',
+    toggle_maxlen => 20,
+    toggle_highlight_column => 'vf_allele',
+    toggle_highlight_over => 2
+  },{
+    _key => 'gmaf_allele', _type => 'string no_filter unshowable',
+  },{
+    _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
+    helptip => $glossary->{'Global MAF'},
+    also_cols => 'gmaf_allele'
+  },{
+    _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
+    width => 1.75
+  },{
+    _key => 'class', _type => 'string', label => 'Class',
+    width => 2,
+    helptip => $glossary->{'Class'}
+  },{
+    _key => 'Source', _type => 'string', label => "Sour\fce",
+    width => 1.25,
+    helptip => $glossary->{'Source'}
+  },{
+    _key => 'Submitters', _type => 'string no_filter',
+    label => 'Submitters',
+    width => 1.75
+    # export_options => { split_newline => 2 },
+  },{
+    _key => 'status', _type => 'iconic', label => "Evid\fence",
+    width => 1.5,
+    helptip => $glossary->{'Evidence status (variant)'}
+  },{
+    _key => 'clinsig', _type => 'iconic', label => "Clin\fsig",
+    helptip => 'Clinical significance'
+  },{
+    _key => 'snptype', _type => 'iconic set_primary', label => "Type",
+    set_range => [values %{$self->all_terms}],
+    width => 1.5,
+    helptip => 'Consequence type'
+  },{
+    _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
+    helptip => "Resulting amino acid(s)"
+  },{
+    _key => 'aacoord', _type => 'integer', label => "AA co\ford",
+    helptip => 'Amino Acid Co-ordinate'
+  },{
+    _key => 'sift_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'sift_value'
+  },{
+    _key => 'sift_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'sift_value', _type => 'numeric',
+    label => "SI\aFT",
+    helptip => $glossary->{'SIFT'}
+  },{
+    _key => 'polyphen_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'polyphen_value'
+  },{
+    _key => 'polyphen_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'polyphen_value', _type => 'numeric',
+    label => "Poly\fPhen",
+    helptip => $glossary->{'PolyPhen'}
+  },{
+    _key => 'Transcript', _type => 'string',
+    width => 2,
+    helptip => $glossary->{'Transcript'},
+    link_url => {
+      type   => 'Transcript',
+      action => 'Summary',
+      t => ["Transcript"] 
+    }
   });
-  $id->link_url($base_url,{ vf => "vf" });
+  $table->add_columns(\@columns,\@exclude);
 
-  my $vf = $table->add_column('vf','numeric');
-  $vf->set_type('screen',{ unshowable => 1 });
-  $vf->no_filter();
-
-  my $chr = $table->add_column('chr','position');
-  $chr->no_filter();
-  $chr->set_width(1.75);
-  $chr->set_label('Chr: bp');
-  $chr->set_helptip($glossary->{'Chr:bp'});
-  
-  my $location = $table->add_column('location','position');
-  $location->set_type('screen',{ unshowable => 1 });
-  $location->set_type('sort_for',{ col => 'chr' });
-
-  my $alleles = $table->add_column('Alleles','string');
-  $alleles->no_filter();
-  $alleles->set_width(2);
-  $alleles->set_label("Alle\fles");
-  $alleles->set_helptip('Alternative nucleotides');
-  $alleles->no_sort();
-  my $vf_allele = $table->add_column('vf_allele','string');
-  $vf_allele->no_filter();
-  $vf_allele->set_type('screen',{ unshowable => 1 });
-  my $vf_allele_col = $table->column('vf_allele');
-  my $alleles_col = $table->column('Alleles');
-  $alleles_col->toggle_set_separator('/');
-  $alleles_col->toggle_set_maxlen(20);
-  $alleles_col->toggle_highlight_column($vf_allele_col);
-  $alleles_col->toggle_highlight_over(2);
- 
-  if ($hub->species eq 'Homo_sapiens') {
-    my $gmaf = $table->add_column('gmaf','numeric');
-    $gmaf->set_label("Glo\fbal MAF");
-    $gmaf->set_helptip($glossary->{'Global MAF'});
-    my $gmaf_allele = $table->add_column('gmaf_allele','string');
-    $gmaf_allele->no_filter();
-    $gmaf_allele->set_type('screen',{ unshowable => 1 });
-    $gmaf->also_cols($gmaf_allele);
-  }
-  
-  if($hub->param('hgvs') eq 'on') {
-    my $hgvs = $table->add_column('HGVS','string');
-    $hgvs->no_filter();
-    $hgvs->set_width(1.75);
-    $hgvs->set_label('HGVS name(s)');
-  }
-  
-  my $class = $table->add_column('class','string');
-  $class->set_width(2);
-  $class->set_label('Class');
-  $class->set_helptip($glossary->{'Class'});
-  
-  my $source = $table->add_column('Source','string');
-  $source->set_width(1.25);
-  $source->set_label("Sour\fce");
-  $source->set_helptip($glossary->{'Source'});
-  
-  if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-    # export_options => { split_newline => 2 }
-    my $sub = $table->add_column('Submitters','string');
-    $sub->no_filter();
-    $sub->set_width(1.75);
-  }
-
-  my $evidence = $table->add_column('status','iconic');
-  $evidence->set_width(1.5);
-  $evidence->set_label("Evid\fence");
-  $evidence->set_helptip($glossary->{'Evidence status (variant)'});
   $self->evidence_classes($table);
-
-  my $clinsig = $table->add_column('clinsig','iconic');
-  $clinsig->set_label("Clin\fsig");
-  $clinsig->set_helptip('Clinical significance');
   $self->clinsig_classes($table);
-
-  my $snptype = $table->add_column('snptype','iconic');
-  $snptype->set_primary();
-  $snptype->set_range([values %{$self->all_terms}]);
-  $snptype->set_width(1.5);
-  $snptype->set_label('Type');
-  $snptype->set_helptip('Consequence type');
   $self->snptype_classes($table,$self->hub);
+  $self->sift_poly_classes($table);
 
-  my $aachange = $table->add_column('aachange','string');
-  $aachange->no_filter();
-  $aachange->no_sort();
-  $aachange->set_label('AA');
-  $aachange->set_helptip('Resulting amino acid(s)');
-
-  my $aacoord = $table->add_column('aacoord','integer');
-  $aacoord->set_label("AA co\ford");
-  $aacoord->set_helptip('Amino Acid Co-ordinate');
-  
-  if ($sd->{'SIFT'}) {
-    my $sift_sort = $table->add_column('sift_sort','numeric');
-    $sift_sort->no_filter();
-    $sift_sort->set_type('screen',{ unshowable => 1 });
-    $sift_sort->set_type('sort_for',{ col => 'sift_value' });
-
-    my $sift_class = $table->add_column('sift_class','iconic');
-    $sift_class->no_filter();
-    $sift_class->set_helptip($glossary->{'SIFT'});
-    $sift_class->set_type('screen',{ unshowable => 1 });
-
-    my $sift_value = $table->add_column('sift_value','numeric');
-    $sift_value->set_label("SI\aFT");
-    $sift_value->set_helptip($glossary->{'SIFT'});
-  }
-  if ($hub->species eq 'Homo_sapiens') {
-    my $polyphen_sort = $table->add_column('polyphen_sort','numeric');
-    $polyphen_sort->no_filter();
-    $polyphen_sort->set_helptip($glossary->{'PolyPhen'});
-    $polyphen_sort->set_type('screen',{ unshowable => 1 });
-    $polyphen_sort->set_type('sort_for',{ col => 'polyphen_value' });
-    my $polyphen_class = $table->add_column('polyphen_class','iconic');
-    $polyphen_class->no_filter();
-    $polyphen_class->set_type('screen',{ unshowable => 1 });
-    my $polyphen_value = $table->add_column('polyphen_value','numeric');
-    $polyphen_value->set_label("Poly\fPhen");
-    $polyphen_value->set_helptip($glossary->{'PolyPhen'});
-  }
   if ($hub->type ne 'Transcript') {
-    my $transcript = $table->add_column('Transcript','string');
-    $transcript->set_width(2);
-    $transcript->set_helptip($glossary->{'Transcript'});
     my $base_trans_url;
     if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
       my $gene_stable_id = "XXX"; # XXX fix before release
@@ -375,17 +355,8 @@ sub make_table {
         __clear => 1
       });
       die "UNIMPLEMENTED: mail dan\@ebi.ac.uk\n";
-    } else {
-      $base_trans_url = $hub->url({
-        type   => 'Transcript',
-        action => 'Summary',
-      });
-      $table->column('Transcript')->link_url($base_trans_url,{
-        t => "Transcript"
-      });
     }
   }
-  $self->sift_poly_classes($table);
   return $table;
 }
 

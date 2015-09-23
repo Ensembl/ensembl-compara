@@ -24,7 +24,7 @@ use warnings;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 sub new {
-  my ($proto,$endpoint,$type,$key) = @_;
+  my ($proto,$endpoint,$type,$key,$confarr,$confarg) = @_;
 
   my $class = "EnsEMBL::Web::NewTable::Column";
   $class .= "::".ucfirst($type) if $type;
@@ -47,6 +47,7 @@ sub new {
   $self->{'conf'}{'type_js'} = $self->js_type();
   $self->{'conf'}{'range'} = $self->js_range();
   $self->{'conf'}{'range_params'} = $self->js_params();
+  $self->configure($confarr,$confarg);
   return $self;
 }
 
@@ -142,7 +143,37 @@ sub no_sort { $_[0]->{'conf'}{'sort'} = 0; }
 sub set_filter { $_[0]->{'conf'}{'range'} = $_[1]; }
 sub no_filter { $_[0]->set_filter(''); }
 
+sub unshowable { $_[0]->set_type('screen',{ unshowable => 1 }); }
+sub sort_for { $_[0]->set_type('sort_for',{ col => $_[1] }); }
+
 sub colconf { return $_[0]->{'conf'}; }
+
+sub configure {
+  my ($self,$mods,$args) = @_;
+
+  foreach my $mod (@{$mods||[]}) {
+    if($self->can($mod)) { $self->$mod(); }
+    else { die "Bad argument '$mod'"; }
+  }
+  foreach my $k (keys %$args) {
+    my $v = $args->{$k};
+    my @names = ($k,"set_$k");
+    push @names,$k if $k =~ s/_/_set_/;
+    my $ok = 0;
+    foreach my $fn (@names) {
+      warn "fn=$fn\n";
+      if($self->can($fn)) { $self->$fn($v); $ok=1; last; }
+    }
+    die "Bad option '$names[0]'" unless $ok;
+  }
+}
+
+sub can {
+  my ($self,$fn) = @_;
+
+  return 1 if $self->SUPER::can($fn);
+  return $self->{'endpoint'}->can_delegate('col',$fn);
+}
 
 # For things defined in plugins. Maybe use roles in future?
 sub AUTOLOAD {
