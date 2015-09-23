@@ -25,8 +25,6 @@ use parent qw(EnsEMBL::Web::NewTable::Endpoint);
 
 use JSON qw(from_json);
 
-use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_range_value newtable_sort_range_finish newtable_sort_range_match newtable_sort_range_split);
-
 use Compress::Zlib;
 use Digest::MD5 qw(md5_hex);
 use SiteDefs;
@@ -319,15 +317,15 @@ sub newtable_data_request {
   my %enums;
   foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
     my $colconf = $self->{'iconfig'}{'colconf'}{$self->{'cols_pos'}{$colkey}};
+    my $column = $self->{'columns'}{$colkey};
     my $row_pos = $sort_pos{$colkey};
     next unless defined $row_pos;
     my %values;
     foreach my $r (@$data) {
       my $value = $r->{$colkey};
-      newtable_sort_range_value($colconf->{'sort'},\%values,$value);
+      $column->add_value(\%values,$value);
     }
-    $enums{$colkey} =
-      newtable_sort_range_finish($colconf->{'sort'},\%values);
+    $enums{$colkey} = $column->range(\%values);
   }
   my %shadow = %$orient;
   delete $shadow{'filter'};

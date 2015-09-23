@@ -22,6 +22,7 @@ use strict;
 use warnings;
 use parent qw(EnsEMBL::Web::NewTable::Column);
 
+use List::Util qw(min max);
 use Scalar::Util qw(looks_like_number);
 use List::MoreUtils qw(each_array);
 
@@ -68,6 +69,21 @@ sub match {
     if($range->{'nulls'}) { return $range->{'nulls'}; }
   }
   return 1;
+}
+
+sub has_value {
+  my ($self,$range,$value) = @_;
+
+  return unless $value =~ /^(.*?):(\d+)/;
+  my ($chr,$pos) = ($1,$2);
+  $range->{$chr} ||= { chr => $chr };
+  if(exists $range->{$chr}{'min'}) {
+    $range->{$chr}{'max'} = max($range->{$chr}{'max'},$pos);
+    $range->{$chr}{'min'} = min($range->{$chr}{'min'},$pos);
+  } else {
+    $range->{$chr}{'min'} = $range->{$chr}{'max'} = $pos;
+  }   
+  ($range->{$chr}{'count'}||=0)++;
 }
 
 1;

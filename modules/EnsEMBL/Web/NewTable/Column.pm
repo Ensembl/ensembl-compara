@@ -125,12 +125,23 @@ sub match {
   }
   return 1;
 }
+sub range { return $_[1]||{}; }
 
 sub is_match {
   my ($self,$x,$y) = @_;
 
   return 0 unless defined $y;
   return $self->match($x,$y);
+}
+
+sub add_value {
+  my ($self,$range,$value) = @_;
+
+  my $values = $self->split($value);
+  return unless defined $values;
+  foreach my $v (@$values) {
+    $self->has_value($range,$v);
+  }
 }
 
 sub set_range { $_[0]->{'conf'}{'range_range'} = $_[1]; }

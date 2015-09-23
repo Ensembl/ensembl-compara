@@ -22,6 +22,7 @@ use strict;
 use warnings;
 use parent qw(EnsEMBL::Web::NewTable::Column);
 
+use List::Util qw(min max);
 use Scalar::Util qw(looks_like_number);
 
 sub js_type { return 'numeric'; }
@@ -44,6 +45,18 @@ sub match {
     if($range->{'nulls'}) { return $range->{'nulls'}; }
   }
   return 1;
+}
+
+sub has_value {
+  my ($self,$range,$value) = @_;
+
+  if(!looks_like_number($value)) { return; }
+  if(exists $range->{'min'}) {
+    $range->{'max'} = max($range->{'max'},$value);
+    $range->{'min'} = max($range->{'min'},$value);
+  } else {
+    $range->{'min'} = $range->{'max'} = $value;
+  }
 }
 
 1;
