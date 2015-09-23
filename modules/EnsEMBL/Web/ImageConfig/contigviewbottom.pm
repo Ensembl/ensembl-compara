@@ -205,7 +205,7 @@ sub init {
     $self->add_tracks('lrg',
       [ 'lrg_transcript', 'LRG', '_transcript', {
         display     => 'transcript_label',
-        strand      => 'f',
+        strand      => 'b',
         name        => 'LRG transcripts',
         description => 'Shows LRG transcripts',
         logic_names => [ 'LRG_import' ],
