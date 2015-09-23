@@ -99,6 +99,18 @@
       var $filters = $('.newtable_filter',$table);
       var $vbuts = $('.t.valid',$filters);
       $filters.toggle(!!$vbuts.length);
+      if($vbuts.length) {
+        var $el = $('.prec_pri').eq(0);
+        if(!$el.hasClass('tipped')) {
+          $el.addClass('tipped').helptip({
+            'content': 'Click here to filter table by type',
+            'position': { 'of': $el },
+            'close': function(event,ui) {
+              $el.helptip('disable');
+            }
+          }).helptip('open'); // XXX this is a hack
+        }
+      }
     }
 
     function set_button($el,view,w,key,values) {
