@@ -251,7 +251,7 @@
     }
     var html = '';
     if(key) { html += '<dl>' + key +'</dl>'; }
-    if(messages) { html += '<ul>' + messages + '</ul>'; }
+    if(messages) { html += '<ul class="alignment-key">' + messages + '</ul>'; }
     $key.html(html).toggle(!!html).find('span[title]').helptip();
   }
 
