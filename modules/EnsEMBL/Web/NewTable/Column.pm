@@ -21,12 +21,19 @@ package EnsEMBL::Web::NewTable::Column;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
+
 sub new {
-  my ($class,$table,$key) = @_;
+  my ($proto,$table,$type,$key) = @_;
+
+  my $class = "EnsEMBL::Web::NewTable::Column";
+  $class .= "::".ucfirst($type) if $type;
+  dynamic_require($class);
 
   my $self = {
     table => $table,
     key => $key,
+    type => $type,
     conf => {
       width => "100u",
       primary => 0,
@@ -36,8 +43,13 @@ sub new {
   };
 
   bless $self, $class;
+  $self->{'conf'}{'type_js'} = $self->js_type();
+  $self->{'conf'}{'range'} = $self->js_range();
+  $self->{'conf'}{'range_params'} = $self->js_params();
   return $self;
 }
+
+sub js_params { return {}; }
 
 sub key { return $_[0]->{'key'}; }
 
@@ -83,6 +95,8 @@ sub set_width {
 sub set_range { $_[0]->{'conf'}{'range_range'} = $_[1]; }
 sub set_primary { $_[0]->{'conf'}{'primary'} = 1; }
 sub no_sort { $_[0]->{'conf'}{'sort'} = 0; }
+sub set_filter { $_[0]->{'conf'}{'range'} = $_[1]; }
+sub no_filter { $_[0]->set_filter(''); }
 
 sub colconf { return $_[0]->{'conf'}; }
 

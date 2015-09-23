@@ -33,8 +33,6 @@ use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
-use EnsEMBL::Web::Document::NewTableSorts qw(newtable_sort_client_config);
-
 use EnsEMBL::Web::NewTable::Callback;
 use EnsEMBL::Web::NewTable::Column;
 
@@ -126,20 +124,25 @@ sub add_plugin {
   }
 }
 
-sub column {
-  my ($self,$key) = @_;
-
-  unless(defined $self->{'colobj'}{$key}) {
-    $self->{'colobj'}{$key} =
-      EnsEMBL::Web::NewTable::Column->new($self,$key); 
-  }
-  return $self->{'colobj'}{$key};
-}
+sub column { return $_[0]->{'colobj'}{$_[1]}; }
 
 sub get_plugin {
   my ($self,$plugin) = @_;
 
   return $self->{'plugins'}{$plugin};
+}
+
+# TODO more somewhere more pluginy
+sub filter_types {
+  my ($self) = @_;
+
+  my %types;
+  foreach my $p (values %{$self->{'plugins'}}) {
+    next unless $p->can('for_types');
+    my $t = $p->for_types();
+    $types{$_} = $t->{$_} for keys %$t;
+  }
+  return \%types;
 }
 
 sub add_phase {
@@ -176,7 +179,7 @@ sub render {
     $colmap{$self->{'columns'}[$i]{'key'}} = $i;
   }
 
-  my $sort_conf = newtable_sort_client_config(\%colmap,$self->{'columns'});
+  my $sort_conf = {};
   foreach my $key (keys %colmap) {
     my $column = $self->column($key);
     my $config = $column->colconf();
@@ -209,6 +212,9 @@ sub add_column {
   my ($self,$key,$options) = @_;
 
   push @{$self->{'columns'}},{ key => $key, %{$options||{}} };
+  my $type = $options->{'sort'}||'string';
+  $self->{'colobj'}{$key} =
+    EnsEMBL::Web::NewTable::Column->new($self,$type,$key); 
   return $self->column($key);
 }
 

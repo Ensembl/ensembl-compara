@@ -27,7 +27,7 @@ use List::Util qw(min max);
 use List::MoreUtils qw(each_array);
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(newtable_sort_client_config newtable_sort_isnull
+our @EXPORT_OK = qw(newtable_sort_isnull
                     newtable_sort_cmp newtable_sort_range_value
                     newtable_sort_range_split
                     newtable_sort_range_finish newtable_sort_range_match);
@@ -85,13 +85,9 @@ sub iconic_build_key {
 # null -- is this value fo be considered null (server side)
 # clean -- remving crud from a value (server side)
 # range_split -- server side code for breaking up composite values
-# range_merge -- client side code for merging multiple range results
-# range_display -- filter code to use on client
-# range_display_params -- params to pass to filter code to use on client
 # range_value -- server side code for adding to enumeration
 # range_finish -- server side code for finalising enumeration
 # range_match -- server side code for applying filter
-# type_js -- suite of functions for client-side filtering
 # js_clean -- client side cleaning for sorting
 
 my %SORTS = (
@@ -100,9 +96,6 @@ my %SORTS = (
     null => sub { return 0; },
     clean => sub { return $_[0]; },
     range_split => sub { return [$_[0]->{'clean'}->($_[1])]; },
-    range_merge => "class",
-    range_display => "class",
-    range_display_params => {},
     range_value => sub { $_[0]->{$_[1]} = 1; },
     range_finish => sub { return [sort keys %{$_[0]}]; },
     range_match => sub {
@@ -114,18 +107,11 @@ my %SORTS = (
   },
   'string' => {
     null => sub { $_[0] !~ /\S/; },
-    type_js => 'string',
-  },
-  'string_nofilter' => [qw(nofilter string)],
-  'nofilter' => {
-    range_display => "",
   },
   'numeric' => {
     clean => \&number_cleaned, 
     perl => sub { return ($_[0] <=> $_[1])*$_[2]; },
     null => sub { return !looks_like_number($_[0]); },
-    range_display => 'range',
-    range_merge => 'range',
     range_value => sub {
       if(!looks_like_number($_[1])) { return; }
       if(exists $_[0]->{'min'}) {
@@ -150,25 +136,16 @@ my %SORTS = (
         return 1;
       }
     },
-    type_js => "numeric",
   },
-  '_int' => {
-    range_display_params => { steptype => 'integer' },
-  },
-  'integer' => [qw(_int numeric)],
+  'integer' => [qw(numeric)],
   'html' => {
     clean => \&html_cleaned,
     null => sub { $_[0] !~ /\S/; },
     perl => sub { return (lc $_[0] cmp lc $_[1])*$_[2]; },
-    type_js => 'html',
   },
-  'html_nofilter' => [qw(nofilter html)],
   'position' => {
     null => \&null_position,
     perl => \&sort_position,
-    range_display_params => { steptype => 'integer' },
-    range_display => 'position',
-    range_merge => 'position',
     range_value => sub {
       my ($acc,$value) = @_;
 
@@ -199,7 +176,6 @@ my %SORTS = (
         return 1;
       }
     },
-    type_js => "position",
   },
   iconic => {
     null => sub { $_[0] !~ /\S/; },
@@ -211,11 +187,7 @@ my %SORTS = (
       return ($c->{$x} cmp $c->{$y})*$f;
     },
     range_split => sub { return [ split(/~/,$_[1]) ]; },
-    range_display => 'class',
-    type_js => "iconic",
   },
-  numeric_nofilter => [qw(nofilter numeric)],
-  position_nofilter => [qw(nofilter position)],
 );
 
 my %sort_cache;
@@ -240,31 +212,6 @@ sub add_sort {
     } 
   }
   return $out;
-}
-
-sub newtable_sort_client_config {
-  my ($colmap,$cols) = @_;
-
-  my $config;
-  foreach my $col (keys %$colmap) {
-    my $idx = $colmap->{$col};
-    my $conf = get_sort($cols->[$idx]{'sort'});
-    $conf->{'options'} ||= {};
-    my @conf;
-    if($conf->{'type_js'}) {
-      push @conf, {
-        range => $conf->{'range_display'},
-        enum_merge => $conf->{'range_merge'},
-        type_js => $conf->{'type_js'},
-        range_params => $conf->{'range_display_params'},
-      };
-    }
-    $config->{$col} = {};
-    foreach my $x (@conf) {
-      $config->{$col}{$_} = $x->{$_} for keys %$x;
-    }
-  }
-  return $config;
 }
 
 sub newtable_sort_range_split {
