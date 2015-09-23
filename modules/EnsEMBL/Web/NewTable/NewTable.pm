@@ -210,10 +210,9 @@ sub render {
 }
 
 sub add_column {
-  my ($self,$key,$options) = @_;
+  my ($self,$key,$type) = @_;
 
-  push @{$self->{'columns'}},{ key => $key, %{$options||{}} };
-  my $type = $options->{'sort'}||'string';
+  push @{$self->{'columns'}},{ key => $key };
   $self->{'colobj'}{$key} =
     EnsEMBL::Web::NewTable::Column->new($self,$type,$key); 
   return $self->column($key);

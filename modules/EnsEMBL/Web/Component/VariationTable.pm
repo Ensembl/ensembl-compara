@@ -232,9 +232,7 @@ sub make_table {
   $table->add_phase("full");
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
-  my $id = $table->add_column('ID',{
-    sort => 'string',
-  });
+  my $id = $table->add_column('ID','string');
   $id->set_width(2);
   $id->no_filter();
   $id->set_helptip('Variant identifier'); 
@@ -246,37 +244,27 @@ sub make_table {
   });
   $id->value('DecorateLink')->set_url($base_url,{ vf => "vf" });
 
-  my $vf = $table->add_column('vf',{
-    sort => 'numeric',
-  });
+  my $vf = $table->add_column('vf','numeric');
   $vf->set_type('screen',{ unshowable => 1 });
   $vf->no_filter();
 
-  my $chr = $table->add_column('chr',{
-    sort => 'position',
-  });
+  my $chr = $table->add_column('chr','position');
   $chr->no_filter();
   $chr->set_width(1.75);
   $chr->set_label('Chr: bp');
   $chr->set_helptip($glossary->{'Chr:bp'});
   
-  my $location = $table->add_column('location',{
-    sort => 'position',
-  });
+  my $location = $table->add_column('location','position');
   $location->set_type('screen',{ unshowable => 1 });
   $location->set_type('sort_for',{ col => 'chr' });
 
-  my $alleles = $table->add_column('Alleles',{
-    sort => 'string',
-  });
+  my $alleles = $table->add_column('Alleles','string');
   $alleles->no_filter();
   $alleles->set_width(2);
   $alleles->set_label("Alle\fles");
   $alleles->set_helptip('Alternative nucleotides');
   $alleles->no_sort();
-  my $vf_allele = $table->add_column('vf_allele',{
-    sort => 'string',
-  });
+  my $vf_allele = $table->add_column('vf_allele','string');
   $vf_allele->no_filter();
   $vf_allele->set_type('screen',{ unshowable => 1 });
   my $vf_allele_col = $table->column('vf_allele');
@@ -287,69 +275,51 @@ sub make_table {
   $alleles_col->value('DecorateToggle')->set_highlight_over(2);
  
   if ($hub->species eq 'Homo_sapiens') {
-    my $gmaf = $table->add_column('gmaf',{
-      sort => 'numeric',
-    });
+    my $gmaf = $table->add_column('gmaf','numeric');
     $gmaf->set_label("Glo\fbal MAF");
     $gmaf->set_helptip($glossary->{'Global MAF'});
-    my $gmaf_allele = $table->add_column('gmaf_allele',{
-      sort => 'string',
-    });
+    my $gmaf_allele = $table->add_column('gmaf_allele','string');
     $gmaf_allele->no_filter();
     $gmaf_allele->set_type('screen',{ unshowable => 1 });
     $gmaf->value('DecorateAlso')->set_cols($gmaf_allele);
   }
   
   if($hub->param('hgvs') eq 'on') {
-    my $hgvs = $table->add_column('HGVS',{
-      sort => 'string',
-    });
+    my $hgvs = $table->add_column('HGVS','string');
     $hgvs->no_filter();
     $hgvs->set_width(1.75);
     $hgvs->set_label('HGVS name(s)');
   }
   
-  my $class = $table->add_column('class',{
-    sort => 'string',
-  });
+  my $class = $table->add_column('class','string');
   $class->set_width(2);
   $class->set_label('Class');
   $class->set_helptip($glossary->{'Class'});
   
-  my $source = $table->add_column('Source',{
-    sort => 'string',
-  });
+  my $source = $table->add_column('Source','string');
   $source->set_width(1.25);
   $source->set_label("Sour\fce");
   $source->set_helptip($glossary->{'Source'});
   
   if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
     # export_options => { split_newline => 2 }
-    my $sub = $table->add_column('Submitters',{
-      sort => 'string',
-    });
+    my $sub = $table->add_column('Submitters','string');
     $sub->no_filter();
     $sub->set_width(1.75);
   }
 
-  my $evidence = $table->add_column('status',{
-    sort => 'iconic',
-  });
+  my $evidence = $table->add_column('status','iconic');
   $evidence->set_width(1.5);
   $evidence->set_label("Evid\fence");
   $evidence->set_helptip($glossary->{'Evidence status (variant)'});
   $self->evidence_classes($table);
 
-  my $clinsig = $table->add_column('clinsig',{
-    sort => 'iconic',
-  });
+  my $clinsig = $table->add_column('clinsig','iconic');
   $clinsig->set_label("Clin\fsig");
   $clinsig->set_helptip('Clinical significance');
   $self->clinsig_classes($table);
 
-  my $snptype = $table->add_column('snptype',{
-    sort => 'iconic',
-  });
+  my $snptype = $table->add_column('snptype','iconic');
   $snptype->set_primary();
   $snptype->set_range([values %{$self->all_terms}]);
   $snptype->set_width(1.5);
@@ -357,64 +327,46 @@ sub make_table {
   $snptype->set_helptip('Consequence type');
   $self->snptype_classes($table,$self->hub);
 
-  my $aachange = $table->add_column('aachange',{
-    sort => 'string',
-  });
+  my $aachange = $table->add_column('aachange','string');
   $aachange->no_filter();
   $aachange->no_sort();
   $aachange->set_label('AA');
   $aachange->set_helptip('Resulting amino acid(s)');
 
-  my $aacoord = $table->add_column('aacoord',{
-    sort => 'integer',
-  });
+  my $aacoord = $table->add_column('aacoord','integer');
   $aacoord->set_label("AA co\ford");
   $aacoord->set_helptip('Amino Acid Co-ordinate');
   
   if ($sd->{'SIFT'}) {
-    my $sift_sort = $table->add_column('sift_sort',{
-      sort => 'numeric',
-    });
+    my $sift_sort = $table->add_column('sift_sort','numeric');
     $sift_sort->no_filter();
     $sift_sort->set_type('screen',{ unshowable => 1 });
     $sift_sort->set_type('sort_for',{ col => 'sift_value' });
 
-    my $sift_class = $table->add_column('sift_class',{
-      sort => 'iconic',
-    });
+    my $sift_class = $table->add_column('sift_class','iconic');
     $sift_class->no_filter();
     $sift_class->set_helptip($glossary->{'SIFT'});
     $sift_class->set_type('screen',{ unshowable => 1 });
 
-    my $sift_value = $table->add_column('sift_value',{
-      sort => 'numeric',
-    });
+    my $sift_value = $table->add_column('sift_value','numeric');
     $sift_value->set_label("SI\aFT");
     $sift_value->set_helptip($glossary->{'SIFT'});
   }
   if ($hub->species eq 'Homo_sapiens') {
-    my $polyphen_sort = $table->add_column('polyphen_sort',{
-      sort => 'numeric',
-    });
+    my $polyphen_sort = $table->add_column('polyphen_sort','numeric');
     $polyphen_sort->no_filter();
     $polyphen_sort->set_helptip($glossary->{'PolyPhen'});
     $polyphen_sort->set_type('screen',{ unshowable => 1 });
     $polyphen_sort->set_type('sort_for',{ col => 'polyphen_value' });
-    my $polyphen_class = $table->add_column('polyphen_class',{
-      sort => 'iconic',
-    });
+    my $polyphen_class = $table->add_column('polyphen_class','iconic');
     $polyphen_class->no_filter();
     $polyphen_class->set_type('screen',{ unshowable => 1 });
-    my $polyphen_value = $table->add_column('polyphen_value',{
-      sort => 'numeric',
-    });
+    my $polyphen_value = $table->add_column('polyphen_value','numeric');
     $polyphen_value->set_label("Poly\fPhen");
     $polyphen_value->set_helptip($glossary->{'PolyPhen'});
   }
   if ($hub->type ne 'Transcript') {
-    my $transcript = $table->add_column('Transcript',{
-      sort => 'string',
-    });
+    my $transcript = $table->add_column('Transcript','string');
     $transcript->set_width(2);
     $transcript->set_helptip($glossary->{'Transcript'});
     my $base_trans_url;
