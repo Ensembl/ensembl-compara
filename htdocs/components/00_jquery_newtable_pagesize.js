@@ -43,7 +43,7 @@
           $table.trigger('view-updated');
         });
       },
-      position: data.position,
+      position: data.position
     };
   }; 
 

@@ -96,7 +96,7 @@
                   fabric[i] = new_row;
                 }
                 return [manifest,fabric];
-              },
+              }
             };
           }
         ];

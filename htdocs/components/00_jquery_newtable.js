@@ -373,7 +373,7 @@
     $target.replaceWith($table);
     var stored_config = {
       columns: config.columns,
-      unique: config.unique,
+      unique: config.unique
     };
     var view = $.extend(true,{},config.orient);
     var old_view = $.extend(true,{},config.orient);
@@ -407,7 +407,7 @@
         keymeta: JSON.stringify($table.data('keymeta')||{}),
         config: JSON.stringify(config),
         orient: JSON.stringify(orient),
-        wire: JSON.stringify(orient),
+        wire: JSON.stringify(orient)
       });
       var out = '<form method="POST" id="spawn" action="'+src+'">';
       $.each(params,function(k,v) {

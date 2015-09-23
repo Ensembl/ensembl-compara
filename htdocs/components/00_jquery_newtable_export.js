@@ -33,7 +33,7 @@
         });
       },
       position: data.position,
-      position_order: 90, // Towards the right
+      position_order: 90 // Towards the right
     };
   }; 
 

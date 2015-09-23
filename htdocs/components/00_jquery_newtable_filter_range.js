@@ -58,7 +58,7 @@
       preproc_values: function(values) { return values; },
       detect_catastrophe: function($el,$slider,values) { return false; },
       text_prefix: function(state) { return ''; },
-      draw_additional: function($el,values) {},
+      draw_additional: function($el,values) {}
     }
   };
 

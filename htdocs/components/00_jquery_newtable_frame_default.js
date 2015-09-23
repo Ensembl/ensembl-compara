@@ -34,19 +34,19 @@
           '$': $out,
           'topper': {
             'tags': ['full','inner','full-inner','top-full-inner'],
-            '$': $slices,
+            '$': $slices
           },
           'nw': {
             'tags': ['top','left','top-left'],
-            '$': triptych[0],
+            '$': triptych[0]
           },
           'n': {
             'tags': ['top','middle','top-middle'],
-            '$': triptych[1],
+            '$': triptych[1]
           },
           'ne': {
             'tags': ['top','right','top-right'],
-            '$': triptych[2],
+            '$': triptych[2]
           }
         };
       }
