@@ -115,6 +115,24 @@ sub compare {
   return $self->cmp($av,$bv,$f,$cache,$keymeta,$col);
 }
 
+sub split { return [$_[0]->clean($_[1])]; }
+
+sub match {
+  my ($self,$range,$value) = @_;
+
+  foreach my $x (keys %$range) {
+    return 0 if lc $x eq lc $value;
+  }
+  return 1;
+}
+
+sub is_match {
+  my ($self,$x,$y) = @_;
+
+  return 0 unless defined $y;
+  return $self->match($x,$y);
+}
+
 sub set_range { $_[0]->{'conf'}{'range_range'} = $_[1]; }
 sub set_primary { $_[0]->{'conf'}{'primary'} = 1; }
 sub no_sort { $_[0]->{'conf'}{'sort'} = 0; }

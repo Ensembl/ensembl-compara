@@ -54,4 +54,20 @@ sub cmp {
   return 0;
 }
 
+sub match {
+  my ($self,$range,$value) = @_;
+
+  if($value =~ s/^$range->{'chr'}://) {
+    if(exists $range->{'min'}) {
+      return 0 unless $value>=$range->{'min'};
+    }
+    if(exists $range->{'max'}) {
+      return 0 unless $value<=$range->{'max'};
+    }
+  } else {
+    if($range->{'nulls'}) { return $range->{'nulls'}; }
+  }
+  return 1;
+}
+
 1;

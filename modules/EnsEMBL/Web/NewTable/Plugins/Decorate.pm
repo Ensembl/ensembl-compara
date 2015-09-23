@@ -8,7 +8,7 @@ sub children { return [qw(DecorateIconic DecorateLink DecorateEditorial
                           DecorateAlso DecorateToggle)]; }
 sub decorate_key { return undef; }
 sub js_plugin {
-  my $dk = $_[0]->decorate_key();
+  my $dk = $_[0]->decorate_key()||'';
   $dk = "_$dk" if $dk;
   return "newtable_decorate$dk";
 }

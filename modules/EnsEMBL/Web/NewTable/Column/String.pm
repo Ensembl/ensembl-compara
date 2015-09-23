@@ -23,7 +23,7 @@ use warnings;
 use parent qw(EnsEMBL::Web::NewTable::Column);
 
 sub js_type { return 'string'; }
-sub js_range { return 'string'; }
+sub js_range { return 'class'; }
 
 sub null { return $_[1] !~ /\S/; }
 sub cmp { return (lc $_[1] cmp lc $_[2])*$_[3]; }

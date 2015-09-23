@@ -30,5 +30,20 @@ sub clean { my $x=$_[1]; $x =~ s/([\d\.e\+-])\s.*$/$1/; return $x; }
 sub null { return !looks_like_number($_[1]); }
 sub cmp { return ($_[1] <=> $_[2])*$_[3]; }
 
+sub match {
+  my ($self,$range,$value) = @_;
+
+  if(looks_like_number($value)) {
+    if(exists $range->{'min'}) {
+      return 0 unless $value>=$range->{'min'};
+    }
+    if(exists $range->{'max'}) {
+      return 0 unless $value<=$range->{'max'};
+    }
+  } else {
+    if($range->{'nulls'}) { return $range->{'nulls'}; }
+  }
+  return 1;
+}
 
 1;

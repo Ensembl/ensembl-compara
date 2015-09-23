@@ -150,14 +150,15 @@ sub passes_muster {
   return 0 if $num <= $self->{'rows'}[0];
   my $ok = 1;
   foreach my $col (keys %{$self->{'wire'}{'filter'}||{}}) {
-    my $colconf = $self->{'iconfig'}{'colconf'}[$self->{'cols_pos'}{$col}];
+    my $colconf = $self->{'iconfig'}{'colconf'}{$col};
+    my $column = $self->{'columns'}->{$col};
     next unless exists $row->{$col};
     my $val = $row->{$col};
     my $ok_col = 0;
-    my $values = newtable_sort_range_split($colconf->{'sort'},$val);
+    my $values = $column->split($val);
     foreach my $value (@{$values||[]}) {
       my $fv = $self->{'wire'}{'filter'}{$col};
-      if(newtable_sort_range_match($colconf->{'sort'},$fv,$value)) {
+      if($column->is_match($fv,$value)) {
         $ok_col = 1;
         last;
       }
@@ -335,8 +336,10 @@ sub newtable_data_request {
   # Filter, if necessary
   if($self->{'wire'}{'filter'}) {
     my @new;
+    my $num = 1;
     foreach my $row (@$data) {
-      push @new,$row if $self->passes_muster($row);
+      push @new,$row if $self->passes_muster($row,$num);
+      $num++;
     }
     $data = \@new;
   }
