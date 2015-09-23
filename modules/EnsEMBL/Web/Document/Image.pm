@@ -300,7 +300,8 @@ sub add_image_export_menu {
 
   my ($menu, $print_header);
   ## Scale image appropriate to an A4 page
-  my $a4_scale = ceil(1200/$self->image_width);
+  my $width    = $self->image_width || 1200;
+  my $a4_scale = ceil(1200/$width);
   my $sections = {
     main => {
       r => 1,
