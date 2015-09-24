@@ -236,8 +236,10 @@
 
   function remarkup_sub($table,$subtable,config,grid,rev_series,table_num,orient) {
     var markup = build_markup($table,config,grid,rev_series,table_num,orient);
-    $subtable.data('markup',markup);
     $subtable.data('markup-orient',orient);
+    var html = convert_markup($table,markup);
+    $subtable.data('backing',html);
+    $subtable.data('xxx',table_num);
   }
 
   function remarkup($table,config,grid,rev_series,start,rows,orient) {
@@ -249,19 +251,18 @@
     }
     return subtabs;
   }
-
-  function build_html($table,config,table_num,orient,grid,rev_series) {
-    var $subtable = $('.subtable',$table).eq(table_num);
+  
+  function convert_markup($table,markup) {
     var $th = $('table:first th',$table);
-    var markup = $subtable.data('markup') || [];
     var html = "";
+    var keys = [];
+    for(var j=0;j<$th.length;j++) {
+      keys[j] = $th.eq(j).data('key');
+    }
     for(var i=0;i<markup.length;i++) {
       html += "<tr>";
       for(var j=0;j<$th.length;j++) {
-        var key = $($th.eq(j)).data('key');
-        if(orient && orient.off_columns && orient.off_columns[key]) {
-          continue;
-        }
+        var key = keys[j];
         var start = "<td>";
         if(i==0) {
           start = "<td style=\"width: "+$th.eq(j).width()+"px\">";
@@ -274,8 +275,6 @@
       }
       html += "</tr>";
     }
-    $subtable.data('backing',html);
-    $subtable.data('xxx',table_num);
     return html;
   }
 
@@ -358,7 +357,6 @@
         d = $.Deferred().resolve(subtabs);
         var has_reset = false;
         var e = loop(d,function(tabnum,v) {
-          build_html($table,config,tabnum,orient,grid,rev_series);
           var $subtable = apply_html($table,tabnum);
           if(!has_reset) {
             $subtables.each(function() {
