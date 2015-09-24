@@ -39,7 +39,7 @@ sub process {
   my $format_name = $hub->param('format');
   my $url_params  = {};
   my $new_action  = '';
-  my $indexed     = 0;
+  my $attach      = 0;
   my $url;
 
   if ($method eq 'text' && $hub->param('text') =~ /^\s*(http|ftp)/) {
@@ -52,16 +52,19 @@ sub process {
     $hub->param('text', '');
     $method = 'url';
 
-    ## Is this an indexed file? Check formats that could be either
-    if (uc($format_name) eq 'VCF' || uc($format_name) eq 'PAIRWISE') {
+    ## Set 'attach' flag if we can't upload it
+    my $format_info = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
+    if ($format_info->{lc($format_name)}{'remote'}) {
+      $attach = 1;
+    } 
+    elsif (uc($format_name) eq 'VCF' || uc($format_name) eq 'PAIRWISE') {
+      ## Is this an indexed file? Check formats that could be either
       my $tabix_url   = $url.'.tbi';
-      $indexed = $self->check_for_index($tabix_url);
+      $attach = $self->check_for_index($tabix_url);
     } 
   }
 
-  if ($indexed) {
-    ## Attach file, as it's too big to upload
-
+  if ($attach) {
     ## Is this file already attached?
     ($new_action, $url_params) = $self->check_attachment($url);
 
@@ -72,7 +75,7 @@ sub process {
       my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $self->hub->param('trackline'));
       my $attachable;
 
-      if ($indexed eq 'error') {
+      if ($attach eq 'error') {
         ## Something went wrong with check
         $url_params->{'restart'} = 1;
       }
