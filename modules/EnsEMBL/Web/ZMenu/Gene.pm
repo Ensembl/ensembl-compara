@@ -122,7 +122,7 @@ sub _multi_genes_content {
       'label_html' => sprintf '<a href="%s" class="_zmenu">%s</a><a class="_zmenu_link" href="%s"></a>',
                         $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_, '__clear' => 1}),
                         $_,
-                        $hub->url('ZMenu', {'g' => $_})
+                        $hub->url('ZMenu', {'g' => $_, 'ftype' => $hub->param('ftype') || '', 'config' => $hub->param('config') || ''})
     });
   }
 }
