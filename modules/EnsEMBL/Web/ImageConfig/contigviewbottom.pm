@@ -29,7 +29,7 @@ sub glyphset_configs {
   my $self = shift;
   
   if (!$self->{'ordered_tracks'}) {
-    $self->get_node('user_data')->after($_) for grep $_->get('trockhub_menu'), $self->tree->nodes;
+    $self->get_node('user_data')->after($_) for grep $_->get('trackhub_menu'), $self->tree->nodes;
     $self->SUPER::glyphset_configs;
   }
   
