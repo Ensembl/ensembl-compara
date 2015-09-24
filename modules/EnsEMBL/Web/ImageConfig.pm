@@ -869,22 +869,19 @@ sub _add_trackhub_node {
     ## The only parameter we override from superTrack nodes is visibility
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
       $config->{'visibility'} = $data->{'visibility'};
-      $config->{'on_off'}     = $data->{'on_off'};
     }
-    else {
-      $config->{$_}       = $data->{$_} for keys %$data;
-      $config->{'on_off'} = $data->{'on_off'};
-    }
+    #else {
+    #  $config->{$_}       = $data->{$_} for keys %$data;
+    #}
 
     ## Add any setting inherited from parents
     while ($n = $n->parent_node) {
       $data = $n->data;
       if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
         $config->{'visibility'} = $data->{'visibility'};
-        $config->{'on_off'}     = $data->{'on_off'};
         last;
       }
-      $config->{$_} ||= $data->{$_} for keys %$data;
+      #$config->{$_} ||= $data->{$_} for keys %$data;
     }
     $config->{'on_off'} = 'off' if $force_hide;
 
@@ -1041,7 +1038,7 @@ sub _add_trackhub_tracks {
     
     $tracks{$type}{$source->{'name'}} = $source;
   }
-#  warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
+  #warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
   
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
