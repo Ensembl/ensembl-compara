@@ -25,14 +25,16 @@
         var params = (extras['*'].params || {});
         var extra = [];
         var ok = true;
-        $.each(params,function(k,v) {
+        for(var k in params) {
+          if(!params.hasOwnProperty(params)) { continue; }
+          v = params[k];
           val = row[rseries[v]];
           if(val===null || val===undefined) {
             ok = false;
           } else {
             extra.push(k+'='+encodeURIComponent(row[rseries[v]][0]));
           }
-        });
+        }
         if(!ok) { return html; }
         var rest = '';
         if(extra.length) {
