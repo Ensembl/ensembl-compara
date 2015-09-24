@@ -123,7 +123,7 @@ sub preload {
   return $self->newtable_data_request($orient,undef,1);
 }
 
-sub server_sort {
+sub server_order {
   my ($self,$data,$sort,$iconfig,$series,$keymeta) = @_;
 
   my $cols = $iconfig->{'columns'};
@@ -133,7 +133,7 @@ sub server_sort {
   my %rseries;
   $rseries{$series->[$_]} = $_ for (0..$#$series);
   $rseries{'__tie'} = -1;
-  @$data = sort {
+  my @data2 = sort {
     my $c = 0;
     foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
       my $key = $col->{'key'};
@@ -150,7 +150,8 @@ sub server_sort {
     }
     $c;
   } @$data;
-  pop @$_ for(@$data);
+  my @order = map { $_->[-1] } @data2;
+  return \@order;
 }
 
 sub server_nulls {
@@ -311,12 +312,18 @@ sub newtable_data_request {
   my @out;
 
   my $A = time();
+  
+  # Check if we need to request all rows due to sorting
+  my $all_data = 0;
+  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
+    $all_data = 1;
+  }
 
   # What phase should we be?
   my @required;
   push @required,map { $_->{'key'} } @{$self->{'wire'}{'sort'}||[]};
-  if($incr_ok) {
-    while($more < $#$phases) {
+  if($incr_ok && !$all_data) {
+    while(($more||0) < $#$phases) {
       my %gets_cols = map { $_ => 1 } (@{$phases->[$more]{'cols'}||\@cols});
       last unless scalar(grep { !$gets_cols{$_} } @required);
       $more++;
@@ -325,12 +332,8 @@ sub newtable_data_request {
     $more = $#$phases;
   }
   $self->{'phase_name'} = $phases->[$more]{'name'};
+  warn "CHOSEN PHASE $self->{'phase_name'}\n";
 
-  # Check if we need to request all rows due to sorting
-  my $all_data = 0;
-  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $all_data = 1;
-  }
   my $A2 = time();
 
   # Start row
@@ -342,7 +345,7 @@ sub newtable_data_request {
   $self->{'used_cols'} = $phases->[$more]{'cols'} || \@cols;
 
   # Calculate function name
-  my $type = $self->{'iconfig'}{'type'};
+  my $type = $self->{'iconfig'}{'type'}||'';
   $type =~ s/\W//g;
   my $func = "table_content";
   $func .= "_$type" if $type;
@@ -359,15 +362,12 @@ sub newtable_data_request {
 
   my $D = time();
 
-  # Move on continuation counter
-  $more++;
-  $more=0 if $more == @$phases;
-
   # Sort it, if necessary
+  my $order;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $self->server_sort($data,$self->{'wire'}{'sort'},$self->{'iconfig'},$self->{'used_cols'},$keymeta);
-    splice($data,0,$irows->[0]);
-    splice($data,$irows->[1]) if $irows->[1] >= 0;
+    $order = $self->server_order($data,$self->{'wire'}{'sort'},$self->{'iconfig'},$self->{'used_cols'},$keymeta);
+  } else {
+    $order->[$_] = $_ for(0..$#$data);
   }
   my $E = time();
   $self->server_nulls($data,$self->{'iconfig'},$self->{'used_cols'});
@@ -375,12 +375,17 @@ sub newtable_data_request {
   my $F = time();
 
   warn sprintf("%f/%f/%f/%f/%f\n",$F-$E,$E-$D,$D-$C,$C-$B,$B-$A);
+  
+  # Move on continuation counter
+  $more++;
+  $more=0 if $more == @$phases;
 
   # Send it
   $out = {
     response => {
       data => $data,
       series => $self->{'used_cols'},
+      order => $order,
       start => $self->{'rows'}[0],
       more => $more,
       enums => $self->finish_enum(),
