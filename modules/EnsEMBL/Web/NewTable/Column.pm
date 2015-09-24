@@ -161,7 +161,6 @@ sub configure {
     push @names,$k if $k =~ s/_/_set_/;
     my $ok = 0;
     foreach my $fn (@names) {
-      warn "fn=$fn\n";
       if($self->can($fn)) { $self->$fn($v); $ok=1; last; }
     }
     die "Bad option '$names[0]'" unless $ok;

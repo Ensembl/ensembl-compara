@@ -383,7 +383,6 @@
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
     build_format(widgets,$table);
-//    $table.helptip();
     $table.on('view-updated',function() {
       var view = $table.data('view');
       console.log("view updated",view);

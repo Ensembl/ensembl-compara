@@ -4,7 +4,7 @@ use warnings;
 package EnsEMBL::Web::NewTable::Plugins::Misc;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
-sub children { return [qw(Export Search Columns PageSizer Styles)]; }
+sub children { return [qw(Export Search Columns PageSizer Styles HelpTips)]; }
 sub requires { return [qw(Export Search Columns)]; }
 
 package EnsEMBL::Web::NewTable::Plugins::Export;
@@ -46,5 +46,10 @@ sub js_config {
     styles => [["tabular","Tabular"],["paragraph","Paragraph"]]
   };
 }
+
+package EnsEMBL::Web::NewTable::Plugins::HelpTips;
+use parent qw(EnsEMBL::Web::NewTable::Plugin);
+
+sub js_plugin { return "newtable_helptip"; }
 
 1;

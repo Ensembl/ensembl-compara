@@ -298,7 +298,7 @@
     }
     $('tbody',$subtable)[0].innerHTML = html;
     $table.trigger('markup-activate',[$subtable]);
-    $('._ht',$subtable).helptip(); // XXX merge into the above
+//    $('._ht',$subtable).helptip(); // XXX merge into the above
     $subtable.css('height','');
     $subtable.data('known-height',$subtable.height());
     guess_subtable_sizes($table);
