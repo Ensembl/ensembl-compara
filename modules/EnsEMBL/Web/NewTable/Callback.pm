@@ -42,6 +42,7 @@ sub new {
     rows => [],
     enum_values => {},
     sort_data => [],
+    null_cache => [],
     num => 0,
   };
   bless $self,$class;
@@ -77,10 +78,11 @@ sub add_row {
   $self->{'num'}++;
   return 0 unless $self->passes_muster($row,$self->{'num'}); 
   $self->add_enum($row); 
-  push @{$self->{'data'}},[ map { $row->{$_} } @{$self->{'used_cols'}} ];
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $self->server_sortdata($row,$self->{'wire'}{'sort'},$self->{'used_cols'});
   }
+  $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
+  push @{$self->{'data'}},[ map { $row->{$_} } @{$self->{'used_cols'}} ];
   return 1;
 }
 
@@ -137,7 +139,7 @@ sub server_sortdata {
   push @{$self->{'sort_data'}[@$sort]||=[]},$self->{'num'}-1;
 }
 
-sub server_order2 {
+sub server_order {
   my ($self,$sort,$series,$keymeta) = @_;
 
   my @cache;
@@ -162,23 +164,19 @@ sub server_order2 {
 }
 
 sub server_nulls {
-  my ($self,$data,$iconfig,$series) = @_;
+  my ($self,$row,$iconfig,$series) = @_;
 
-  my $cols = $iconfig->{'columns'};
-  my $colconf = $iconfig->{'colconf'};
   foreach my $j (0..$#$series) {
-    my $cc = $colconf->{$series->[$j]};
     my $col = $self->{'columns'}{$series->[$j]};
-    my %null_cache;
-    foreach my $i (0..$#$data) {
-      my $is_null = (!defined $data->[$i][$j]);
-      $is_null = $null_cache{$data->[$i][$j]} unless $is_null;
-      unless(defined $is_null) {
-        $is_null = $col->is_null($data->[$i][$j]);
-        $null_cache{$data->[$i][$j]} = $is_null;
-      }
-      $data->[$i][$j] = [$data->[$i][$j],0+$is_null];
+    my $null_cache = ($self->{'null_cache'}[$j]||={});
+    my $v = $row->{$series->[$j]};
+    my $is_null = (!defined $v);
+    $is_null = $null_cache->{$v} unless $is_null;
+    unless(defined $is_null) {
+      $is_null = $col->is_null($v);
+      $null_cache->{$v} = $is_null;
     }
+    $row->{$series->[$j]} = [$v,0+$is_null];
   }
 }
 
@@ -372,12 +370,11 @@ sub newtable_data_request {
   # Sort it, if necessary
   my $order;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $order = $self->server_order2($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
+    $order = $self->server_order($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
   } else {
     $order->[$_] = $_ for(0..$#$data);
   }
   my $E = time();
-  $self->server_nulls($data,$self->{'iconfig'},$self->{'used_cols'});
 
   my $F = time();
 
