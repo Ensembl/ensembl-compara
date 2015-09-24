@@ -159,7 +159,7 @@ sub motif_links {
 sub gene_links {
   my ($self, $genes) = @_;
   my $hub = $self->hub;
-  return $self->join_with_and(map sprintf('<a href="%s" title="View gene">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_}), $_), @$genes);
+  return $self->join_with_and(map sprintf('<a href="%s" title="View gene">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_, 'db' => 'core'}), $_), @$genes);
 }
 
 1;
