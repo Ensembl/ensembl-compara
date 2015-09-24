@@ -94,7 +94,7 @@ sub content {
   }
   
   my $table      = $self->make_table();
-  return $html;
+  return $table->render($self->hub,$self);
 }
 
 sub all_terms {
@@ -393,6 +393,7 @@ sub variation_table {
     next unless %snps;
    
     my $transcript_stable_id = $transcript->stable_id;
+    warn "stable id $transcript_stable_id\n";
     my $gene_snps            = $transcript->__data->{'transformed'}{'gene_snps'} || [];
     my $tr_start             = $transcript->__data->{'transformed'}{'start'};
     my $tr_end               = $transcript->__data->{'transformed'}{'end'};
