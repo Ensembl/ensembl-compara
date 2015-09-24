@@ -263,7 +263,7 @@ sub newtable_data_request {
   delete $cache_key->{'iconfig'}{'unique'};
   $cache_key = JSON->new->canonical->encode($cache_key);
   my $out = $self->get_cache($cache_key);
-  return $out if $out;
+  return JSON->new->decode($out) if $out;
 
   my @cols = @{$self->{'iconfig'}{'columns'}};
   my %cols_pos;
