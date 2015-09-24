@@ -53,7 +53,7 @@ sub has_value {
   if(!looks_like_number($value)) { return; }
   if(exists $range->{'min'}) {
     $range->{'max'} = max($range->{'max'},$value);
-    $range->{'min'} = max($range->{'min'},$value);
+    $range->{'min'} = min($range->{'min'},$value);
   } else {
     $range->{'min'} = $range->{'max'} = $value;
   }

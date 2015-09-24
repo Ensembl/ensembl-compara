@@ -355,7 +355,7 @@ sub variation_table {
   my ($self,$callback,$consequence_type, $transcripts) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
-  my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
+  my ($base_trans_url, $url_transcript_prefix, %handles);
   my $num = 0;
 
   # create some URLs - quicker than calling the url method for every variant
@@ -393,7 +393,6 @@ sub variation_table {
     next unless %snps;
    
     my $transcript_stable_id = $transcript->stable_id;
-    warn "stable id $transcript_stable_id\n";
     my $gene_snps            = $transcript->__data->{'transformed'}{'gene_snps'} || [];
     my $tr_start             = $transcript->__data->{'transformed'}{'start'};
     my $tr_end               = $transcript->__data->{'transformed'}{'end'};
@@ -504,14 +503,12 @@ sub variation_table {
           }
           $num++;
           next unless $callback->passes_muster($row,$num);
-          push @rows,$row;
+          $callback->add_row($row);
           last ROWS if $callback->stand_down($row,$num);
         }
       }
     }
   }
-
-  return \@rows;
 }
 
 sub create_so_term_subsets {

@@ -130,10 +130,11 @@ sub is_match {
 sub add_value {
   my ($self,$range,$value) = @_;
 
+  return unless defined $value;
   my $values = $self->split($value);
   return unless defined $values;
   foreach my $v (@$values) {
-    $self->has_value($range,$v);
+    $self->has_value($range,$v) if defined $v;
   }
 }
 
