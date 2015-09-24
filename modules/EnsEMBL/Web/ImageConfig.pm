@@ -796,9 +796,9 @@ sub load_user_tracks {
 }
 
 sub _add_trackhub {
-  my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $hide) = @_;
+  my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $force_hide) = @_;
   if (defined($self->hub->species_defs->TRACKHUB_VISIBILITY)) {
-    $hide = $self->hub->species_defs->TRACKHUB_VISIBILITY;
+    $force_hide = $self->hub->species_defs->TRACKHUB_VISIBILITY;
   }
 
   return ($menu_name, {}) if $self->{'_attached_trackhubs'}{$url};
@@ -814,7 +814,7 @@ sub _add_trackhub {
     my $shortLabel = $hub_info->{'details'}{'shortLabel'};
     $menu_name = $shortLabel if $shortLabel and $is_poor_name;
 
-    my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, trackhub_menu => 1 }));
+    my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, trackhub_menu => 1, description =>  $hub_info->{'details'}{'longLabel'}}));
 
     my $node;
     my $assemblies = $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
@@ -830,7 +830,7 @@ sub _add_trackhub {
       last if $node;
     }
     if ($node) {
-      $self->_add_trackhub_node($node, $menu, $menu_name, $hide);
+      $self->_add_trackhub_node($node, $menu, $menu_name, $force_hide);
 
       $self->{'_attached_trackhubs'}{$url} = 1;
     } else {
@@ -842,7 +842,7 @@ sub _add_trackhub {
 }
 
 sub _add_trackhub_node {
-  my ($self, $node, $menu, $name, $hide) = @_;
+  my ($self, $node, $menu, $name, $force_hide) = @_;
   
   my (@next_level, @childless);
   if ($node->has_child_nodes) {
@@ -857,39 +857,36 @@ sub _add_trackhub_node {
   }
 
   if (scalar(@next_level)) {
-    $self->_add_trackhub_node($_, $menu, $name) for @next_level;
+    $self->_add_trackhub_node($_, $menu, $name, $force_hide) for @next_level;
   } 
 
   if (scalar(@childless)) {
-    ## Get additional/overridden settings from parent nodes
+    ## Get additional/overridden settings from parent nodes. Note that we will
+    ## combine visibility and on_off later to produce Ensembl-friendly settings
     my $n       = $node;
     my $data    = $n->data;
     my $config  = {};
     ## The only parameter we override from superTrack nodes is visibility
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
-      $config->{'visibility'} = $hide ? '' : $data->{'visibility'}; 
+      $config->{'visibility'} = $data->{'visibility'};
+      $config->{'on_off'}     = $data->{'on_off'};
     }
     else {
-      $config->{$_} = $data->{$_} for keys %$data;
-      $config->{'visibility'} = 'hide' if $hide;
+      $config->{$_}       = $data->{$_} for keys %$data;
+      $config->{'on_off'} = $data->{'on_off'};
     }
 
     ## Add any setting inherited from parents
     while ($n = $n->parent_node) {
       $data = $n->data;
       if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
-        $config->{'visibility'} = $hide ? '' : $data->{'visibility'}; 
+        $config->{'visibility'} = $data->{'visibility'};
+        $config->{'on_off'}     = $data->{'on_off'};
         last;
       }
       $config->{$_} ||= $data->{$_} for keys %$data;
-      if ($hide) {
-        $config->{'visibility'} = 'hide';
-      }
-      else {
-        ## Override visibility with that of parent
-        $config->{'visibility'} = $data->{'visibility'} if defined $data->{'visibility'};
-      }
-    };
+    }
+    $config->{'on_off'} = 'off' if $force_hide;
 
     $self->_add_trackhub_tracks($node, \@childless, $config, $menu, $name);
   }
@@ -947,40 +944,55 @@ sub _add_trackhub_tracks {
   $self->alphabetise_tracks($submenu, $menu);
  
   my $count_visible = 0;
+
+  my $style_mappings = {
+                        'bigbed' => {
+                                      'full'    => 'as_transcript_label',
+                                      'squish'  => 'half_height',
+                                      'pack'    => 'stack',
+                                      'dense'   => 'ungrouped',
+                                      },
+                        'bigwig' => {
+                                      'full'    => 'tiling',
+                                      'default' => 'compact',
+                                    },
+                        'vcf' =>    {
+                                      'full'    => 'histogram',
+                                      'dense'   => 'compact',
+                                    },
+                      };
  
   foreach (@{$children||[]}) {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
-    my $visibility   = $config->{'visibility'} || $track->{'visibility'};
+
+    my $on_off = $config->{'on_off'} || $track->{'on_off'};
+    ## Turn track on if there's no higher setting turning it off
+    if (!$config->{'on_off'} && !$track->{'on_off'}) {
+      $on_off = 'on';
+    }
+
+    my $ucsc_display  = $config->{'visibility'} || $track->{'visibility'};
+
     ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
-    my $squish       = $visibility eq 'squish';
+    my $squish       = $ucsc_display eq 'squish';
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
 
-    ## Set track style according to format and visibility
-    my $display;
-    if ($visibility && $visibility ne 'hide' && $visibility ne 'none') {
-      if (lc($type) eq 'bigbed') {
-        if ($visibility eq 'full') {
-          $display = 'as_transcript_label';
-        }
-        elsif ($visibility eq 'squish') {
-          $display = 'half_height';
-        }
-        elsif ($visibility eq 'pack') {
-          $display = 'stack';
-        }
-        elsif ($visibility eq 'dense') {
-          $display = 'ungrouped';
-        }
-      }
-      elsif (lc($type) eq 'bigwig') {
-        $display = $visibility eq 'full' ? 'tiling' : 'compact';
-      }
-      $options{'display'} = $display;
+    ## Translate between UCSC terms and Ensembl ones
+    my $default_display = $style_mappings->{lc($type)}{$ucsc_display}
+                              || $style_mappings->{lc($type)}{'default'}
+                              || 'normal';
+    $options{'default_display'} = $default_display;
+
+    ## Set track style if appropriate 
+    if ($on_off && $on_off eq 'on') {
+      $options{'display'} = $default_display;
       $count_visible++;
-      ## TODO - remove this warn once we've benchmarked trackhub visibility
-      #warn sprintf('... SETTING TRACK STYLE TO %s FOR %s TRACK %s', $display, uc($type), $track->{'track'});
     }
+    else {
+      $options{'display'} = 'off';
+    }
+
     ## Note that we use a duplicate value in description and longLabel, because non-hub files 
     ## often have much longer descriptions so we need to distinguish the two
     my $source       = {
@@ -991,12 +1003,14 @@ sub _add_trackhub_tracks {
       longLabel   => $track->{'longLabel'},
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
+      colorByStrand => exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef,
+      spectrum    => exists $track->{'spectrum'} ? $track->{'spectrum'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
       squish      => $squish,
       signal_range => $track->{'signal_range'},
       %options
     };
-    
+
     # Graph range - Track Hub default is 0-127
 
     if (exists $track->{'viewLimits'}) {
@@ -1027,7 +1041,7 @@ sub _add_trackhub_tracks {
     
     $tracks{$type}{$source->{'name'}} = $source;
   }
-  warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
+#  warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
   
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
@@ -1115,10 +1129,10 @@ sub load_configured_bigbed {
 }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
-sub load_configured_trackhubs { shift->load_file_format('trackhub') }
+sub load_configured_trackhubs { shift->load_file_format('trackhub', undef, 1) }
 
 sub load_file_format {
-  my ($self, $format, $sources) = @_;
+  my ($self, $format, $sources, $force_hide) = @_;
   my $function = "_add_${format}_track";
   
   return unless ($format eq 'trackhub' || $self->can($function));
@@ -1152,7 +1166,7 @@ sub load_file_format {
     }
     if ($source) {
       if ($format eq 'trackhub') {
-        $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu, 1);
+        $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu, $force_hide);
       }
       else { 
         my $is_internal = $source->{'source_url'} ? 0 : $internal;
@@ -1201,15 +1215,17 @@ sub _add_bigbed_track {
   unless ($renderers) {
     ($strand, $renderers) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
   }
-  
+ 
   my $options = {
-    external     => 'external',
-    sub_type     => 'url',
-    colourset    => 'feature',
-    strand       => $strand,
-    style        => $args{'source'}{'style'},
-    longLabel    => $args{'source'}{'longLabel'},
-    addhiddenbgd => 1,
+    external      => 'external',
+    sub_type      => 'url',
+    colourset     => 'feature',
+    colorByStrand => $args{'source'}{'colorByStrand'},
+    spectrum      => $args{'source'}{'spectrum'},
+    strand        => $strand,
+    style         => $args{'source'}{'style'},
+    longLabel     => $args{'source'}{'longLabel'},
+    addhiddenbgd  => 1,
     max_label_rows => 2,
   };
   ## Override default renderer (mainly used by trackhubs)
@@ -2075,7 +2091,7 @@ sub add_matrix {
   $data->{'column_key'}  = $column_key;
   $data->{'menu'}        = 'matrix_subtrack';
   $data->{'source_name'} = $data->{'name'};
-  $data->{'display'}     = 'default';
+  $data->{'display'}   ||= 'default';
   
   if (!$menu_data->{'matrix'}) {
     my $hub = $self->hub;
@@ -2090,15 +2106,21 @@ sub add_matrix {
   
   foreach (@rows) {
     my $option_key = $self->tree->clean_id("${subset}_${column}_$_->{'row'}");
+    my $display = ($_->{'on'} || ($data->{'display'} ne 'off' && $data->{'display'} ne 'default')) ? 'on' : 'off';
     
-    $column_track->append($self->create_track($option_key, $_->{'row'}, {
+    my $node = $self->create_track($option_key, $_->{'row'}, {
       node_type => 'option',
       menu      => 'no',
-      display   => $_->{'on'} ? 'on' : 'off',
+      display   => $display,
       renderers => [qw(on on off off)],
       caption   => "$column - $_->{'row'}",
       group => $_->{'group'},
-    }));
+    });
+    ## Hack to get trackhub matrix visibility to work
+    if ($display eq 'on') {
+      $node->{'user_data'}{$option_key} = {'display' => 'on'};
+    }
+    $column_track->append($node);
     
     $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };
   }
@@ -2747,7 +2769,7 @@ sub add_alignments {
         $type        = sprintf '%sLASTz %s', $1, lc $2;
         $description = "$type pairwise alignments";
       } elsif ($row->{'type'} =~ /TRANSLATED_BLAT/) {
-        $type        = '';
+        $type        = 'TBLAT';
         $menu_key    = 'pairwise_tblat';
         $description = 'Trans. BLAT net pairwise alignments';
       } else {
@@ -2757,7 +2779,7 @@ sub add_alignments {
         $description = 'Pairwise alignments';
       }
       
-      $description  = qq{<a href="$static" class="cp-external">$description</a> between $self_label and $other_label"};
+      $description  = qq{<a href="$static" class="cp-external">$description</a> between $self_label and $other_label};
       $description .= " $1" if $row->{'name'} =~ /\((on.+)\)/;
 
       $alignments->{$menu_key}{$row->{'id'}} = {
@@ -3721,13 +3743,14 @@ sub share {
   foreach (@unshared_trackhubs) {
     $to_delete{$_} = 1 for grep $user_settings->{$_}, @{$trackhub_tracks{$_->id} || []};  # delete anything for tracks in trackhubs that aren't shared
   }
-  
+ 
+=pod 
   # Reduce track orders if custom tracks aren't shared
   if (scalar keys %to_delete) {
     my %track_ids_to_delete  = map { $_ => 1 } keys %to_delete, map { @{$trackhub_tracks{$_->id} || []} } @unshared_trackhubs;
     my @removed_track_orders = map { $track_ids_to_delete{$_->id} && $_->{'data'}{'node_type'} eq 'track' ? $_->{'data'}{'order'} : () } @{$self->glyphset_configs};
     
-    foreach my $order (values %{$user_settings->{'track_order'}{$species}}) {
+    foreach my $order (@{$user_settings->{'track_order'}{$species}}) {
       my $i = 0;
       
       for (@removed_track_orders) {
@@ -3746,7 +3769,7 @@ sub share {
   }
   
   delete $user_settings->{'track_order'}{$_} for grep $_ ne $species, keys %{$user_settings->{'track_order'}};
-  
+=cut  
   return $user_settings;
 }
 

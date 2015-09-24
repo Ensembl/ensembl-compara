@@ -69,7 +69,7 @@ sub init {
   );
 
   $self->modify_configs(
-    [ 'regulatory_features', 'functional_other_regulatory_regions' ],
+    [ 'reg_feats_MultiCell' ],
     { display => 'normal' }
   );
   
@@ -77,7 +77,7 @@ sub init {
     [ 'regulatory_features_core', 'regulatory_features_non_core' ],
     { display => 'off', menu => 'no' }
   );
-  
+ 
   # hack to stop zmenus having the URL ZMenu/Transcript/Regulation, since this causes a ZMenu::Regulation to be created instead of a ZMenu::Transcript
   $_->data->{'zmenu'} ||= 'x' for $self->get_node('transcript')->nodes;
   

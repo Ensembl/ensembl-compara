@@ -191,6 +191,10 @@ sub get_custom_tracks {
   my @custom_tracks;
   
   foreach (grep $species_check->{$_->{'species'}}, map { $session->get_data(type => $_), $user ? $user->get_records($_ . 's') : () } qw(upload url)) {
+
+    ## Hack to prevent sharing of uploaded pairwise data, as it's badly broken
+    next if ($_->{'type'} eq 'upload' && $_->{'format'} =~ /pairwise/i);
+
     my @track_ids = split ', ', $_->{'analyses'} || "$_->{'type'}_$_->{'code'}";
     
     # don't prompt to share custom tracks which are turned off

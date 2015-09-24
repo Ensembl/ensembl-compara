@@ -26,6 +26,7 @@ use RTF::Writer;
 use Bio::AlignIO;
 use IO::String;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::HomologyPhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
@@ -137,7 +138,7 @@ sub process {
     $url_params->{'__clear'}        = 1;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
-    push @core_params, qw(export_action data_type data_action component align);
+    push @core_params, qw(export_action data_type data_action component align g1);
     push @core_params, $self->config_params; 
     foreach my $species (grep { /species_/ } $hub->param) {
       push @core_params, $species;
@@ -566,20 +567,29 @@ sub write_phyloxml {
 
   my $tree = $component->get_export_data('genetree');
 
-  my $type = ref($component) =~ /SpeciesTree/ ? 'CAFE' : 'Gene';
-  $type .= 'Tree';
-  $type .= 'Node' if ref($tree) =~ /Node/;
+  my ($type, $method);
+  if (ref($component) =~ /Tree/) {
+    $method = 'trees';
+    $type = ref($component) =~ /SpeciesTree/ ? 'CAFE' : 'Gene';
+    $type .= 'Tree';
+    $type .= 'Node' if ref($tree) =~ /Node/;
+  }
+  else {
+    $method = 'homologies';
+    $type = 'Homology';
+  }
   my $class = sprintf('Bio::EnsEMBL::Compara::Graph::%sPhyloXMLWriter', $type);
 
   my $handle = IO::String->new();
   my $w = $class->new(
-    -SOURCE       => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
-    -ALIGNED      => $hub->param('aligned') eq 'on' ? 1 : 0,
-    -CDNA         => $hub->param('cdna') eq 'on' ? 1 : 0,
-    -NO_SEQUENCES => $hub->param('no_sequences') eq 'on' ? 1 : 0,
-    -HANDLE       => $handle,
+      -SOURCE       => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
+      -ALIGNED      => $hub->param('aligned') eq 'on' ? 1 : 0,
+      -CDNA         => $hub->param('cdna') eq 'on' ? 1 : 0,
+      -NO_SEQUENCES => $hub->param('no_sequences') eq 'on' ? 1 : 0,
+      -HANDLE       => $handle,
   );
-  $self->_writexml('trees', $tree, $handle, $w);
+
+  $self->_writexml($method, $tree, $handle, $w);
 }
 
 sub write_orthoxml {

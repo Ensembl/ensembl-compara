@@ -150,13 +150,19 @@ sub features {
     my $ppbp        = $self->scalex;
     my $slice       = $self->{'container'};
     my $start       = $slice->start;
+    my @features;
+
     my $vcf_adaptor = $self->vcf_adaptor;
-    my $consensus   = $vcf_adaptor->fetch_variations($slice->seq_region_name, $slice->start, $slice->end);
+    ## Don't assume the adaptor can find and open the file!
+    my $consensus   = eval { $vcf_adaptor->fetch_variations($slice->seq_region_name, $slice->start, $slice->end); };
+    if ($@) {
+      return @features;
+    }
+
     my $fnum        = scalar @$consensus;
     my $calc_type   = $fnum > 200 ? 0 : 1;
     my $config      = $self->{'config'};
     my $species     = $slice->adaptor->db->species;
-    my @features;
 
     # Can we actually draw this many features?
     unless ($calc_type) {

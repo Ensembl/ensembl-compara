@@ -84,17 +84,9 @@ sub content {
     my $slice_name = $original_slice->name;
     
     my (undef, undef, $region, $start, $end) = split ':', $slice_name;
-    my $url   = $hub->url({ action => 'View', r => "$region:$start-$end" });
-    my $table = qq(
-      <table>
-        <tr>
-          <th>$config->{'species'} &gt;&nbsp;</th>
-          <td><a href="$url">$slice_name</a><br /></td>
-        </tr>
-      </table>
-    );
-    
-    $config->{'html_template'} = "$table<pre>%s</pre>";
+    my $url = $hub->url({ action => 'View', r => "$region:$start-$end" });
+
+    $config->{'html_template'} = qq(<p><b>$config->{'species'}</b>&nbsp;&gt;&nbsp;<a href="$url">$slice_name</a></p><pre>%s</pre>);
     
     $html  = $self->build_sequence($sequence, $config);
     $html .= $self->_hint(

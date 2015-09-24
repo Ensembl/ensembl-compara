@@ -77,6 +77,7 @@
               ui.tooltip.remove();
               return false;
             }
+            ui.tooltip.externalLinks();
           }
         }, opts));
 

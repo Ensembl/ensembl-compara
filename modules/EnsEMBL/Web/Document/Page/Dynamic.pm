@@ -50,6 +50,7 @@ sub initialize_HTML {
     mobile_nav       EnsEMBL::Web::Document::Element::MobileNavigation
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
+    fatfooter        EnsEMBL::Web::Document::Element::FatFooter
     body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
   ));
 }

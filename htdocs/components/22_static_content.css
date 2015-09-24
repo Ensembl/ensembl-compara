@@ -151,7 +151,8 @@ form.homepage-search-form .fselect { width: 182px; }
 
 form.homepage-search-form span.inp-group { white-space: nowrap; }
 
-form.search-form input.ftext          { padding: 2px 0; }
+form.search-form          input.ftext          
+form.homepage-search-form input.ftext { padding: 2px 3px; }
 form.search-form input.inactive       { color: [[PAGE_TEXT]]; font-style: italic; }
 form.search-form input.inactive:focus { color: [[PANEL_BORDER]]; }
 form.search-form div.ff-right label   { margin-right: 6px; margin-left: 0; line-height: 20px; }
@@ -172,7 +173,7 @@ contact link on help and faq page
 -------------------------------------------------------------------------*/
 
 div.help-contact img { padding-top: 0; height: 42px; width: 45px; }
-div.help-contact p   { padding: 0; line-height: 42px; }
+div.help-contact p   { padding: 0; }
 
 /*-----------------------------------------------------------------------
 floating archive box on help page

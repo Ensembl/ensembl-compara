@@ -54,6 +54,7 @@ sub init {
     trans_associated
     transcript
     prediction
+    lrg
     dna_align_cdna
     dna_align_est
     dna_align_rna
@@ -198,6 +199,24 @@ sub init {
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
   );
+
+  ## LRG track
+  if ($self->species_defs->HAS_LRG) {
+    $self->add_tracks('lrg',
+      [ 'lrg_transcript', 'LRG', '_transcript', {
+        display     => 'transcript_label',
+        strand      => 'b',
+        name        => 'LRG transcripts',
+        description => 'Shows LRG transcripts',
+        logic_names => [ 'LRG_import' ],
+        logic_name  => 'LRG_import',
+        colours     => $self->species_defs->colour('gene'),
+        label_key   => '[display_label]',
+        colour_key  => '[logic_name]',
+        zmenu       => 'LRG',
+      }]
+    );
+  }
 
   ## Switch on multiple alignments defined in MULTI.ini
   my $compara_db      = $self->hub->database('compara');

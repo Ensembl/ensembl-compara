@@ -1112,18 +1112,11 @@ sub get_synteny_matches {
 
     if (@$homologues) {
       foreach my $homol (@$homologues) {
-        my $gene       = $gene2_adaptor->fetch_by_stable_id($homol->stable_id, 1);
+        my $gene       = $gene2_adaptor->fetch_by_stable_id($homol->stable_id);
         my $homol_id   = $gene->external_name || $gene->stable_id;
         my $gene_slice = $gene->slice;
         my $h_start    = $gene->start;
-        my $h_chr;
-        
-        if ($gene_slice->coord_system->name eq 'chromosome') {
-          $h_chr = $gene_slice->seq_region_name;
-        } else {
-          my $coords = $gene_slice->project('chromosome');
-          $h_chr = $coords->[0]->[2]->seq_region_name if @$coords;
-        }
+       
         push @data, {
           'sp_stable_id'    => $localgene->stable_id,
           'sp_synonym'      => $gene_synonym,
@@ -1133,7 +1126,7 @@ sub get_synteny_matches {
           'sp_length'       => $self->bp_to_nearest_unit($localgene->start + $offset),
           'other_stable_id' => $homol->stable_id,
           'other_synonym'   => $homol_id,
-          'other_chr'       => $h_chr,
+          'other_chr'       => $gene_slice->seq_region_name,
           'other_start'     => $h_start,
           'other_end'       => $gene->end,
           'other_length'    => $self->bp_to_nearest_unit($gene->end - $h_start),

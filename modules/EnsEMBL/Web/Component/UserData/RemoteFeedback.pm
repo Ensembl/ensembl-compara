@@ -63,7 +63,7 @@ sub content {
 sub get_message {
   my ($self, $species_flag, $assembly_flag) = @_;
   my $hub         = $self->hub;
-  my $species     = $hub->param('species');
+  my $species     = $hub->param('species') || $hub->species;
   my $reattach    = $hub->param('reattach');
   my %messages    = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
   my $trackhub_ok = 1;
@@ -97,12 +97,13 @@ sub get_message {
     (my $menu_name = $hub->param('name')) =~ s/ /_/g;
     my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
+    my $current_loc = $hub->referer->{'params'}->{'r'}[0];
     my $url = $hub->url({
                           species   => $species,
                           type      => 'Location',
                           action    => 'View',
                           function  => undef,
-                          r         => $hub->param('r') || $default_loc,
+                          r         => $current_loc || $default_loc,
               });
     $message .= sprintf('</p><p><a href="%s#modal_config_viewbottom-%s">Configure your hub</a>', $url, $menu_name);
   }

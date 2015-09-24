@@ -24,6 +24,8 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Form;
+
 use base qw(EnsEMBL::Web::Document::Element::Content);
 
 sub tree    :lvalue { $_[0]->{'tree'};    }
@@ -71,6 +73,7 @@ sub init_config {
   my $hub         = $controller->hub;
   my $action      = $hub->action;
   my $view_config = $hub->get_viewconfig($action);
+  my $img_url     = $self->img_url;
   
   return unless $view_config;
   
@@ -82,16 +85,25 @@ sub init_config {
   
   if ($image_config) {
     if ($image_config->multi_species) {
-      foreach (@{$image_config->species_list}) {
-        $species_select .= sprintf(
-          '<option value="%s"%s>%s</option>', 
-          $hub->url('Config', { species => $_->[0], __clear => 1 }), 
-          $hub->species eq $_->[0] ? ' selected="selected"' : '',
-          $_->[1]
+
+      my @sp = @{$image_config->species_list};
+
+      if (@sp) {
+        $species_select = sprintf('<div class="species_select">Species to configure: %s%s</div>',
+          EnsEMBL::Web::Form->new({})->add_field({
+            'type'      => 'dropdown',
+            'name'      => 'species',
+            'class'     => '_stt',
+            'values'    => [ map {
+              'caption'   => $_->[1],
+              'value'     => $hub->url('Config', { 'species' => $_->[0], '__clear' => 1 }),
+              'class'     => "_stt__$_->[0]",
+              'selected'  => $hub->species eq $_->[0] ? 1 : 0
+            }, @{$image_config->species_list} ]
+          })->elements->[0]->render,
+          join('', map { sprintf '<span class="_stt_%s"><img src="%sspecies/48/%1$s.png"></span>', $_->[0], $img_url } @{$image_config->species_list})
         );
       }
-      
-      $species_select = qq{<div class="species_select">Species to configure: <select class="species">$species_select</select></div>} if $species_select;
     }
     
     $search_box = qq{<div class="configuration_search"><input class="configuration_search_text" value="Find a track" name="configuration_search_text" /></div>};
@@ -138,7 +150,7 @@ sub add_image_config_notes {
 
   $panel->set_content(qq(
     <div class="info-box">
-    <p>Looking for more data? See our <a href="${trackhub_link}" class="modal_link">Track Hub list</a> for external sources of annotation</p>
+    <p>Looking for more data? See our <a href="${trackhub_link}">Track Hub list</a> for external sources of annotation</p>
     </div>
     <h2 class="border clear">Key</h2>
     <div>

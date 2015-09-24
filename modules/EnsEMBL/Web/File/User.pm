@@ -139,6 +139,8 @@ sub upload {
       $extension = $last;
     }
     $args{'extension'} = $extension;
+    ## Always check compression for file-based data, because users make mistakes!
+    $args{'check_compression'} = 1;
 
     ## This block is unlikely to be called, as the interface _should_ pass a format
     if (!$format) {
@@ -186,7 +188,7 @@ sub upload {
       ## Now validate it using the appropriate parser - 
       ## note that we have to do this after upload, otherwise we can't validate pasted data
       my $iow = EnsEMBL::Web::IOWrapper::open($self, 'hub' => $hub);
-      $error = $iow->validate;
+      $error = $iow->validate if $iow;
 
       if ($error) {
         ## If something went wrong, delete the upload

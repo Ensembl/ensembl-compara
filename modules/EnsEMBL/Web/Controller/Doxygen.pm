@@ -26,7 +26,7 @@ use base qw(EnsEMBL::Web::Controller::SSI);
 
 sub content {
   my $self = shift;
-  return $self->{'content'} ||= join '', file_get_contents($self->r->filename);
+  return $self->{'content'} ||= file_get_contents($self->r->filename);
 }
 
 sub render_page {

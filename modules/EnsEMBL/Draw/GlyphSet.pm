@@ -1310,8 +1310,7 @@ sub check {
 sub truncate_ellipse {
   my ($self, $x, $a, $b) = @_;
   my $h = $self->ellipse_y($x, $a, $b);
-  my $theta =  $self->atan_in_degrees($x, $h);
-  return ($h, $theta);
+  return $self->atan_in_degrees($x, $h);
 }
 
 sub ellipse_y {

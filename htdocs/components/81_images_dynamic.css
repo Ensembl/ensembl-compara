@@ -41,9 +41,9 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .drag_select                              { cursor: default; position: relative; }
 .drag_select.drag_select_pointer          { cursor: pointer; }
 
-.drag_select .selector                    { background-color: rgba(229, 121, 5, 0.1); position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; }
-.drag_select .hlrselector                 { background-color: rgba(140, 100, 140, 0.1); border: rgba(140, 100, 140, 0.5) dashed 1px; pointer-events: none; }
-.drag_select .hlrselector-close           { background-color: rgba(40, 0, 40, 1); border-radius: 0 0 0 4px; color: #ccc; cursor: pointer; font-size: 70%; font-weight: bold; height: 16px;
+.drag_select .selector                    { background-color: rgba(229, 121, 5, 0.1); position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; display: none; }
+.drag_select .mrselector                  { background-color: rgba(140, 100, 140, 0.1); border: rgba(140, 100, 140, 0.5) dashed 1px; pointer-events: none; }
+.drag_select .mrselector-close            { background-color: rgba(40, 0, 40, 1); border-radius: 0 0 0 4px; color: #ccc; cursor: pointer; font-size: 70%; font-weight: bold; height: 16px;
                                             line-height: 18px; pointer-events: auto; position: absolute; right: -1px; text-align: center; top: -1px; width: 16px; }
 .drag_select .selector.vertical           { border-width: 1px; }
 .drag_select .selector .left-border,
@@ -161,7 +161,8 @@ div.image_toolbar a.resize        { background-image: url(/i/16/rev/image_resize
 div.image_toolbar a.share         { background-image: url(/i/16/rev/share.png);         }
 div.image_toolbar a.order-reset   { background-image: url(/i/16/rev/order-reset.png);   }
 div.image_toolbar a.config-reset  { background-image: url(/i/16/rev/setting-reset.png); }
-div.image_toolbar a.hlr-reset     { background-image: url(/i/16/rev/highlight.png);     }
+div.image_toolbar a.mr-reset      { background-image: url(/i/16/rev/marker.png);        }
+div.image_toolbar a.mr-reset.outside { background-image: url(/i/16/rev/jump.png);       }
 
 /* Drag/Select switch */
 div.image_toolbar div.scroll-switch               { float: right; line-height: 16px; }
@@ -181,7 +182,8 @@ div.iexport_menu div         { border: 1px solid #999999; border-top: 0; font-si
 div.iexport_menu div.header  { background-color: [[TABLE_HEADER]]; color: #FFFFFF; font-weight: bold; }
 div.iexport_menu div div     { display: inline-block; border: none; background: none; margin: 0; padding: 0; width: 60px; }
 div.iexport_menu div a       { position: absolute; right: 6px; text-decoration: none; font-weight: bold; }
-div.iexport_menu div a.view  { right: 26px; margin: 0; float: none; }
+div.iexport_menu div a.help  { right: 42px; margin: 0; float: none; }
+div.iexport_menu div a.view  { right: 24px; margin: 0; float: none; }
 div.iexport_menu div a img   { float: none; margin: 0; }
 
 body.ie67 div.iexport_menu a { margin-top: -16px; }

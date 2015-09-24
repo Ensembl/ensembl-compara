@@ -90,7 +90,7 @@ sub content {
   my $object = $self->object;
   
   ## first check we have uniquely determined variation
-  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
+  return $self->_info('A unique location can not be determined for this variant', $object->not_unique_location) if $object->not_unique_location;
   
   my ($sequence, $config, $raw_seq) = $self->initialize;
  

@@ -46,6 +46,12 @@ sub content {
   my @CCDS         = @{$transcript->get_all_DBLinks('CCDS')};
   my @Uniprot      = @{$transcript->get_all_DBLinks('Uniprot/SWISSPROT')};
   my ($tsl)        = @{$transcript->get_all_Attributes('TSL')};
+  my $incomplete;
+  foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF)){
+    if (my @attribs = @{$transcript->get_all_Attributes($attrib_type)}) {
+      $incomplete->{$attrib_type}=1;
+    }
+  }
   my $html         = "<strong>Exons:</strong> $exons <strong>Coding exons:</strong> $coding_exons <strong>Transcript length:</strong> $basepairs bps";
   $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
 
@@ -69,6 +75,12 @@ sub content {
     my $key = $tsl =~ s/^tsl([^\s]+).*$/TSL:$1/gr;
     $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag">%s</span>', $self->helptip($key, $self->get_glossary_entry($key).$self->get_glossary_entry('TSL'))));
   }
+
+  # add incomplete CDS info
+  if ($incomplete) {
+    $table->add_row('Incomplete CDS', sprintf('<span class="ts_flag">%s</span>',$self->get_CDS_text($incomplete)));
+  }
+
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
 
   ## add some Vega info
@@ -132,7 +144,7 @@ sub content {
 
   ## add trans-spliced transcript info
   my $trans_spliced_transcript_info = $object->get_trans_spliced_transcript_info;
-  $table->add_row($trans_spliced_transcript_info->name, $trans_spliced_transcript_info->description) if $trans_spliced_transcript_info;
+  $table->add_row('Trans-spliced' , sprintf('This is a %s transcript', $self->helptip('trans-spliced', $trans_spliced_transcript_info->description))) if $trans_spliced_transcript_info;
 
   
   ## add stop gained/lost variation info
@@ -198,7 +210,7 @@ sub content {
   }
 
   ## add gencode basic info
-  $table->add_row('GENCODE basic gene', "This transcript is a member of the Gencode basic gene set.") if(@{$transcript->get_all_Attributes('gencode_basic')});
+  $table->add_row('GENCODE basic gene', qq(This transcript is a member of the <a href="/Help/Glossary?id=500" class="popup">Gencode basic</a> gene set.)) if(@{$transcript->get_all_Attributes('gencode_basic')});
 
   return $table->render;
 }

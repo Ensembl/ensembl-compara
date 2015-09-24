@@ -63,9 +63,10 @@ sub content {
                    $feature->seq_region_start,
                    $feature->seq_region_end);
   $self->add_entry ({
-    type   => 'bp',
-    label => $r,
-    link  => $hub->url({ r => $r, type => 'Location',  action => 'View' })
+    type        => 'bp',
+    label       => $r,
+    link        => $hub->url({ r => $r, type => 'Location',  action => 'View' }),
+    link_class  => '_location_change _location_mark'
   });
 
   my @gene_links;

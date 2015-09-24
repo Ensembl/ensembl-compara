@@ -23,7 +23,7 @@ use strict;
 use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
-use EnsEMBL::Web::File::Utils qw/sanitise_filename get_extension get_compression/;
+use EnsEMBL::Web::File::Utils qw/sanitise_filename get_extension get_compression check_compression/;
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
 use EnsEMBL::Web::File::Utils::URL qw/:all/;
 use EnsEMBL::Web::File::Utils::Memcached qw/:all/;
@@ -139,6 +139,15 @@ sub init {
     }
 
     my ($name, $extension, $compression) = _parse_filename($read_name);
+
+    ## If being really paranoid about input, e.g. for user uploads
+    if ($args{'check_compression'}) {
+      my $fetched = $self->fetch;      
+      if ($fetched->{'content'}) {
+        my $content = $fetched->{'content'};
+        $compression = check_compression(\$content);
+      }
+    }
 
     $bare_name                  = $name;
     $self->{'read_name'}        = $read_name;

@@ -77,7 +77,7 @@ sub USERDATA_FORMATS {
     'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
     'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
     'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
-    'trackhub'  => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph',   'limit' => 'remote'},
+    'trackhub'  => {'ext' => 'txt', 'label' => 'Track Hub', 'display' => 'graph',   'limit' => 'remote'},
     'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
     'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
     'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},

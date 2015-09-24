@@ -202,30 +202,27 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
     });
     
-    $('select.species', this.el).on('change', function () {
-      if (this.value) {
-        var species = this.value.split('/')[1];
-        var id      = 'modal_config_' + (panel.component + (species === Ensembl.species ? '' : '_' + species)).toLowerCase();
-        var change  = $('#' + id);
-        
-        panel.hide();
-        
-        if (!change.length || !change.children().length || change.data('reload')) {
-          Ensembl.EventManager.trigger('updateConfiguration', true);
-          change = change.length ? !change.removeData('reload') : $('<div>', { id: id, 'class': 'modal_content js_panel active', html: '<div class="spinner">Loading Content</div>' });
-          Ensembl.EventManager.trigger('addModalContent', change, this.value, id, 'modal_config_' + panel.component.toLowerCase());
-        } else {
-          change.find('select.species')[0].selectedIndex = this.selectedIndex;
-          change.addClass('active').show();
-        }
-        
-        $(panel.el).removeClass('active');
-        Ensembl.EventManager.trigger('setActivePanel', id);
-        panel.updateConfiguration(true);
-        
-        change = null;
+    this.el.find('select[name=species]').on('change', function () {
+      var species = this.value.replace(/^\//, '').split(/\//).shift();
+      var id      = 'modal_config_' + (panel.component + (species === Ensembl.species ? '' : '_' + species)).toLowerCase();
+      var change  = $('#' + id);
+
+      panel.hide();
+
+      if (!change.length || !change.children().length || change.data('reload')) {
+        Ensembl.EventManager.trigger('updateConfiguration', true);
+        change = change.length ? !change.removeData('reload') : $('<div>', { id: id, 'class': 'modal_content js_panel active', html: '<div class="spinner">Loading Content</div>' });
+        Ensembl.EventManager.trigger('addModalContent', change, this.value, id, 'modal_config_' + panel.component.toLowerCase());
+      } else {
+        change.addClass('active').show().find('select[name=species]').prop('selectedIndex', this.selectedIndex).selectToToggle('trigger').focus();
       }
-    }).parent().prependTo(this.el.find('.nav')); // Move to above the nav
+
+      $(panel.el).removeClass('active');
+      Ensembl.EventManager.trigger('setActivePanel', id);
+      panel.updateConfiguration(true);
+
+      change = null;
+    });
     
     $('.save_configuration', this.el).on('click', function () {
       panel.elLk.saveAsInputs.each(function () {

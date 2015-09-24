@@ -123,6 +123,9 @@ div.ui-tooltip div.ui-tooltip-content              { position: relative; backgro
 div.ui-tooltip div.ui-tooltip-content p:last-child { margin-bottom: 0; }
 div.ui-tooltip div.ui-tooltip-content a            { color: inherit; }
 
+div.ui-tooltip div.ui-tooltip-content a[rel=external],
+div.ui-tooltip div.ui-tooltip-content a[rel=external]:hover { background-image: url("[[IMG:external_link_helptip.svg]]") }
+
 /* IE is stupid and can't cope with :before and :after on different classnames, so have to use .helptip-top/.helptip-bottom instead of .ui-tooltip */
 div.helptip-top    div.ui-tooltip-content:before,
 div.helptip-top    div.ui-tooltip-content:after,

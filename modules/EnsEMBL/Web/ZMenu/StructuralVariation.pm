@@ -51,14 +51,14 @@ sub feature_content {
   my $start       = $feature->seq_region_start;
   my $end         = $feature->seq_region_end;
   my $class       = $variation->var_class;
-  my $vstatus     = $variation->get_all_validation_states;
+  my $vstatus     = $variation->validation_status;
   my $study       = $variation->study;
   my $ssvs        = $variation->isa('Bio::EnsEMBL::Variation::SupportingStructuralVariation') ? [ $variation ] : $variation->get_all_SupportingStructuralVariants;
   my $description = $variation->source_description;
   my $position    = $start;
   my $length      = $end - $start;
   my $max_length  = ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1) * 1e6; 
-  my ($pubmed_link, $location_link, $study_name, $study_url, $is_breakpoint, @allele_types);  
+  my ($pubmed_link, $location_link, $location_link_class, $study_name, $study_url, $is_breakpoint, @allele_types);
   
   $self->new_feature;
   
@@ -89,13 +89,14 @@ sub feature_content {
       action => 'View',
       r      => "$seq_region:$start-$end",
     });
+    $location_link_class = '_location_change _location_mark';
   }
   
   if ($description =~ /PMID/) {
     my @description_string = split (':', $description);
     my $pubmed_id          = pop @description_string;
        $pubmed_id          =~ s/\s+.+//g;
-       $pubmed_link        = $hub->get_ExtURL('PUBMED', $pubmed_id);  
+       $pubmed_link        = $hub->get_ExtURL('EPMC_MED', $pubmed_id);
   }    
   
   foreach my $ssv (@$ssvs) {
@@ -151,15 +152,16 @@ sub feature_content {
     });
 	} else {
     $self->add_entry({
-      type  => 'Location',
-      label => sprintf('%s: %s', $self->neat_sr_name($feature->slice->coord_system->name, $seq_region), $position),
-      link  => $location_link,
+      type        => 'Location',
+      label       => sprintf('%s: %s', $self->neat_sr_name($feature->slice->coord_system->name, $seq_region), $position),
+      link        => $location_link,
+      link_class  => $location_link_class
     });
 	}
   
   $self->add_entry({
     type  => 'Source',
-    label => $variation->source,
+    label => $variation->source_name,
   });
   
   if (defined $study_name) {
@@ -188,7 +190,7 @@ sub feature_content {
     });
   }
   
-  if (scalar @$vstatus && $vstatus->[0]) {
+  if ($vstatus && scalar @$vstatus && $vstatus->[0]) {
     $self->add_entry({
       type  => 'Validation',
       label => join(',', @$vstatus),

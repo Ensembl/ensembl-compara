@@ -118,7 +118,7 @@ my $type_key = lc($type);
     my $cons_desc = $feature->most_severe_OverlapConsequence->description;
     $consequence_label = sprintf(
          '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-         '<span class="_ht conhelp coltab_text" title="%s">%s</span></nobr>',
+         '<span class="_ht ht coltab_text" title="%s">%s</span></nobr>',
          $color,
          $cons_desc,
          $types->{$type_key}{'text'}
@@ -127,10 +127,20 @@ my $type_key = lc($type);
 
   my $sources = join(', ', @{$feature->get_all_sources});
   
-  my @entries = (
-    [ 'Class',    $feature->var_class ],
-    [ 'Location', $bp                 ]
-  );
+  my @entries = ([ 'Class', $feature->var_class ]);
+
+  push @entries, [
+    'Location',
+    sprintf('%s<a href="%s" class="_location_mark hidden"></a>',
+      $bp,
+      $hub->url({
+        type    => 'Location',
+        action  => 'View',
+        r       => "$chr:$chr_start-$chr_end"
+      })
+    )
+  ];
+
   push @entries, [ 'LRG location',   $lrg_bp              ] if $lrg_bp;
   push @entries, [ 'Alleles',        $alleles             ];
   push @entries, [ 'Ambiguity code', $feature->ambig_code ];

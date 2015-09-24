@@ -64,6 +64,8 @@ pre.wrap            { white-space: pre-wrap; }
 .hilite { background: [[CONTRAST_BORDER]]; }
 .red    { color: #933; }
 
+hr { display:block; height:4px; border:0; border-top: 4px solid [[MH_TAB]]; margin: 1em 0; padding: 0; }
+
 /*----------------------------------------------------------------------
   Columns and boxes 
 ----------------------------------------------------------------------*/

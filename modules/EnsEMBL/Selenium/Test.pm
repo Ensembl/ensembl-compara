@@ -36,14 +36,16 @@ sub new {
   my($class, %args) = @_;
 
   return ('bug', 'Must supply a url', $class, 'new') unless $args{url};
-  
+ 
+  my $selenium = EnsEMBL::Selenium->new(%{$args{'sel_config'}});
+ 
   my $self = {
     _url      => $args{url},
-    _sel      => $args{sel},
     _timeout  => $args{timeout} || 50000,
     _verbose  => $args{verbose},
     _species  => $args{species},
     _conf     => $args{conf},
+    _sel      => $selenium,
   };
     
   bless $self, $class;
@@ -83,6 +85,24 @@ sub conf {
 sub testmore_output {
   # test builder output (this will be empty if we are in verbose mode)
   return $TESTMORE_OUTPUT;
+}
+
+sub test_fails {
+### Parses the test output for failure
+### @param result - any possible output from a test
+### @return Boolean - 1 = fail, 0 = pass
+  my ($self, $result) = @_;
+  my $fail = 0;
+
+  if ($result) {
+    if (ref($result) eq 'ARRAY') {
+      $fail = 1 if $result->[0] ne 'pass';
+    }
+    elsif (!$result || $result ne 'OK') {
+      $fail = 1;
+    }
+  }
+  return $fail;
 }
 
 sub get_current_url {

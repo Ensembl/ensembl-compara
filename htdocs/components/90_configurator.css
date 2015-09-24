@@ -25,8 +25,9 @@ div.modal_content div.configuration_search img         { position: absolute; top
 div.modal_content div.configuration_search input       { color: #999999; border: 1px solid #000; padding: 2px 3px; position: relative; right: 3px; width: 170px; margin: 0; }
 div.modal_content div.configuration_search input:hover { background: [[CONTRAST_BG]]; }
 
-div.modal_content div.species_select        { font-weight: bold; margin: 2px 0; padding: 0 10px; border-bottom: 1px solid [[PANEL_BORDER]]; }
-div.modal_content div.species_select select { display: block; width: 100%; margin-bottom: 5px; }
+div.modal_content div.species_select            { font-weight: bold; margin: 0 0 16px; padding: 8px; border: 1px solid [[PANEL_BORDER]]; }
+div.modal_content div.species_select .ff-right  { margin: 0 10px; display: inline-block; padding: 0; }
+div.modal_content div.species_select img        { vertical-align: middle; height: 24px; }
 
 /* configuration form */
 
@@ -38,6 +39,8 @@ form.configuration div.config h2                                    { cursor: po
 form.configuration div.config h3                                    { margin: 10px 0 5px; color: [[PAGE_TEXT]]; text-decoration: underline; font-size: 14px; padding: 2px 5px; }
 form.configuration div.config h4                                    { margin: 10px 0 5px 5px; color: [[PAGE_TEXT]]; }
 div.config_wrapper div.config img                                   { height: 17px; width: 17px; margin-right: 4px; padding: 2px; vertical-align: top; }
+
+div.config_wrapper div.config div.long_label                        { font-style: italic; font-size: 90%; margin-bottom:10px; }
 
 div.config_wrapper div.config div.select_all                        { margin: 10px 0 5px; padding: 2px 0; }
 div.config_wrapper div.config div.select_all strong                 { text-decoration: underline; font-size: 14px; padding: 2px 5px; cursor: pointer; line-height: 17px; }
@@ -57,7 +60,7 @@ div.config_wrapper div.config ul.config_menu li div.desc h2         { font-size:
 div.config_wrapper div.config ul.config_menu li div.desc h2         { font-size: 12px; }
 div.config_wrapper div.config ul.config_menu li .controls           { margin-right: -5px; float: right; height: 17px; padding: 2px; }
 div.config_wrapper div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; }
-div.config_wrapper div.config ul.config_menu li .controls .empty    { cursor: default; }
+div.config_wrapper div.config ul.config_menu li .controls .empty    { visibility: hidden; }
 div.config_wrapper div.config ul.config_menu li .menu_help.open,
 div.config_wrapper div.config ul.config_menu li.fav .fave_icon      { background-position: 0 -36px; }
 div.config_wrapper div.config ul.config_menu                        { margin-left: 5px; }
@@ -92,6 +95,7 @@ form.configuration.multi div.config                                 { margin-bot
 form.configuration.multi div.config h3,
 form.configuration.multi div.config h4,
 form.configuration.multi div.config div.select_all                  { display: none!important; }
+form.configuration.multi div.config div.long_label                  { display: none!important; }
 form.configuration.multi div.config ul.config_menu ul.config_menu   { margin-left: 0!important; }
 form.configuration.multi div.favourite_tracks                       { margin-bottom: 0; }
 form.configuration.multi div.favourite_tracks img                   { margin: 0; padding: 0; width: auto; height: auto; }

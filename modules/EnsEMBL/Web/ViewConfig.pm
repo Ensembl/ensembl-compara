@@ -116,9 +116,9 @@ sub set_defaults {
 }
 
 sub set {
-  my ($self, $key, $value, $force) = @_; 	 
+  my ($self, $key, $value, $force) = @_;   
   
-  return unless $force || exists $self->{'options'}{$key}; 	 
+  return unless $force || exists $self->{'options'}{$key};   
   return if $self->{'options'}{$key}{'user'} eq $value;
   $self->altered = 1;
   $self->{'options'}{$key}{'user'} = $value;
@@ -484,7 +484,7 @@ sub build_imageconfig_form {
   my $form         = $self->get_form;
   my %node_options = ( availability => 1, url => '#', rel => 'multi' );
   my $track_order;
-  
+
   $tree->append($tree->create_node('active_tracks',    { caption => 'Active tracks',    class => 'active_tracks',    %node_options })) if $extra_menus->{'active_tracks'};
   $tree->append($tree->create_node('favourite_tracks', { caption => 'Favourite tracks', class => 'favourite_tracks', %node_options })) if $extra_menus->{'favourite_tracks'};
   
@@ -519,13 +519,17 @@ sub build_imageconfig_form {
     
     $section =~ s|-|_|g;
     next if $section eq 'track_order';
-    
+
     my $data    = $node->data;
     my $caption = $data->{'caption'};
     my $class   = $data->{'trackhub_menu'} || $section eq 'user_data' ? 'move_to_top' : ''; # add a class to user data and data hubs to get javascript to move them to the top of the navigation
     my $div     = $form->append_child('div', { class => "config $section $class" });
     
-    $div->append_child('h2', { class => 'config_header', inner_HTML => $caption });
+    $div->append_child('h2', { class => 'config_header', inner_HTML => $caption});
+    
+    if($data->{'description'}){
+      $div->append_child('div', { class => 'long_label',   inner_HTML => $data->{'description'} });
+    }
 
     my $parent_menu = $tree->append($tree->create_node($section, {
       caption  => $caption,
@@ -705,7 +709,7 @@ sub build_imageconfig_menus {
       $desc = qq{<div class="desc">$desc</div>};
       $help = qq{<div class="sprite info_icon menu_help _ht" title="Click for more information"></div>};
     } else {
-      $help = qq{<div class="empty"></div>};
+      $help = qq{<div class="empty info_icon sprite"></div>};
     }
     
     push @classes, 'on'             if $display ne 'off';

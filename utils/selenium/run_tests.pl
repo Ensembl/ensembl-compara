@@ -131,9 +131,11 @@ unless (defined($verbose)) {
                 : 0;
 }
 
+my $ua;
+
 unless ($DEBUG) {
   ## Check to see if the selenium server is online 
-  my $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
+  $ua = LWP::UserAgent->new(keep_alive => 5, env_proxy => 1);
   $ua->timeout(10);
   my $response = $ua->get("http://$host:$port/selenium-server/driver/?cmd=testComplete");
   if ($response->content ne 'OK') { 
@@ -148,6 +150,7 @@ my $test_config = {
                     verbose     => $verbose,  
                     conf        => {'release' => $release},
                     sel_config  => { 
+                                      ua          => $ua,
                                       host        => $host,
                                       port        => $port,
                                       browser     => $browser,
@@ -225,13 +228,13 @@ close($pass_log);
 close($fail_log);
 
 my $total = $pass + $fail;
-my $plural = $total > 1 ? 's' : '';
+my $plural = $total == 1 ? '' : 's';
 
 print "\n==========================\n";
 print "TEST RUN COMPLETED!\n";
 print "Ran $total test$plural:\n";
-print "- $pass succeeded\n";
-print "- $fail failed\n";
+print " - $pass succeeded\n";
+print " - $fail failed\n";
 
 if ($tests_path =~ /debug/) {
   print "\n\nIgnore this next message - it simply means that no real selenium tests 
@@ -335,8 +338,8 @@ sub write_to_log {
   
   my $line = uc($code);
   $line    .= " in $module" if $module;
-  $line    .= "::$method" if $method;
-  $line    .= "- $message $timestamp\n";
+  $line    .= " ::$method" if $method;
+  $line    .= " - $message $timestamp\n";
 
   my $log = $code eq 'pass' ? $pass_log : $fail_log;
 

@@ -48,14 +48,14 @@ sub _init {
   }
   return unless $show; 
  
-  my %features = %{$self->my_config('colours')};
+  my @features = @{$self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}||[]};
   # Let them accumulate in structure if accumulating and not last
   my $Config         = $self->{'config'};
   return if ($self->my_config('accumulate') eq 'yes' &&
              $Config->get_parameter('more_slices'));
   # Clear features (for next legend)
   $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
-  return unless %features;
+  return unless @features;
   return unless $self->{'legend'}{[split '::', ref $self]->[-1]};
  
   $self->init_legend();
@@ -64,7 +64,7 @@ sub _init {
 
   $self->_check_build_type;
  
-  foreach (sort keys %features) {
+  foreach (@features) {
     my $legend = $self->my_colour($_, 'text'); 
     
     next if $legend =~ /unknown/i; 

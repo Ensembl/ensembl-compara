@@ -23,17 +23,14 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   
   init: function () {
     var panel = this;
-    
-    this.popups = {};
-    Ensembl.Panel.TextSequence.zmenuId = 1;
-    
+
     this.base();
     
     if (!Ensembl.browser.ie) {
       $('pre > [title]', this.el).helptip({ track: true });
     }
-   
-    $('.adornment',this.el).each(function() {
+
+    this.el.find('.adornment').each(function() {
       var $this = $(this);
       $this.adorn(function(outer) {
         var $outer = $(outer);
@@ -48,13 +45,9 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       });
     });
 
+    // to make sure among multiple zmenu popup menus, the one that gets clicked comes on the top
     this.el.on('mousedown', '.info_popup', function () {
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
-    }).on('click', '.info_popup .close', function () {
-      $(this).parent().hide();
-    }).on('click', 'pre a.sequence_info', function (e) {
-        panel.makeZMenu(e, $(this));
-        return false;
     });
   },
   
@@ -92,20 +85,8 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   },
 
   initPopups: function (el) {
-    var keys = [];
-    $('.info_popup',el).hide();
-   
-    $('pre a.sequence_info',el).each(function() {
-      if (!keys[this.href]) {
-        var zid = Ensembl.Panel.TextSequence.zmenuId++;
-        keys[this.href] = 'zmenu_' + zid;
-      }
-      $(this).data('menuId', keys[this.href]); // Store a single reference <a> for all identical hrefs - don't duplicate the popups
-    });
-  },
-  
-  makeZMenu: function (e, el) {
-    Ensembl.EventManager.trigger('makeZMenu', el.data('menuId'), { event: e, area: { link: el } });
+    el.find('.info_popup').hide();
+    el.find('pre a.sequence_info:not(._zmenu_initalised)').zMenuLink().addClass('_zmenu_initalised');
   },
 
   getContent: function (url, el, params, newContent, attrs) {

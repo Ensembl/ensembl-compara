@@ -72,9 +72,14 @@ sub handle {
 }
 
 sub type {
-  ## Gets the type of the Exception
+  ## Gets/Sets the type of the Exception
+  ## @param String (if setting)
   ## @return String
-  return shift->{'_type'};
+  my $self = shift;
+
+  $self->{'_type'} = "$_[0]" if @_;
+
+  return $self->{'_type'};
 }
 
 sub isa {

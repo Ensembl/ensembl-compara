@@ -56,7 +56,7 @@ sub content {
   my $fieldset  = $form->add_fieldset;
 
   my @core_params = keys %{$hub->core_object('parameters')};
-  push @core_params, qw(name format compression data_type data_action component export_action align);
+  push @core_params, qw(name format compression data_type data_action component export_action align g1);
 
   ## Have to pass species selection back to form, as it's not stored in viewconfig
   foreach my $species (grep { /species_/ } $hub->param) {

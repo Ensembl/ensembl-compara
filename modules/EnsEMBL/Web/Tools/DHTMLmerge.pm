@@ -91,7 +91,7 @@ use Digest::MD5 qw(md5_hex);
 use CSS::Minifier;
 use JavaScript::Minifier;
 
-use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents file_get_contents);
+use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents);
 use EnsEMBL::Web::Utils::FileSystem qw(create_path);
 
 sub new {
@@ -276,7 +276,7 @@ sub get_contents {
   ## @param Type of the file (css or js)
   ## @return File contents (string)
   my ($self, $species_defs, $type) = @_;
-  my $content = join '', file_get_contents($self->{'absolute_path'});
+  my $content = file_get_contents($self->{'absolute_path'});
 
   # For css file, convert style placeholders to actual colours
   if ($type eq 'css') {
@@ -314,7 +314,7 @@ sub _substitute_images {
     push @$matches, [ $-[1], $+[1] - $-[1] ]; # offset and length
 
     my ($img) = map { -r "$_/$2" ? "$_/$2" : () } @$dirs;
-        $img  = join('', file_get_contents($img)) =~ s/\R\s*//r if $img;
+        $img  = file_get_contents($img) =~ s/\R\s*//r if $img;
         $img  = $img ? sprintf('data:image/svg+xml,%s', uri_escape(_substitute_colours($img, $colours))) : "none /*image $2 not found*/";
 
     push @{$matches->[-1]}, $img; # replacement

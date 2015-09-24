@@ -34,6 +34,7 @@ sub content {
   my $hub            = $self->hub;
   my $species        = $hub->species;
   my $location       = $self->builder->object('Location');
+  return unless $location;
   my $chromosome     = $location->seq_region_name;
   my $ensembl_start  = $location->seq_region_start;
   my $current_assembly  = $hub->species_defs->ASSEMBLY_VERSION;

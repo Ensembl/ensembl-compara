@@ -23,8 +23,10 @@ package EnsEMBL::Web::JSONServer;
 use strict;
 use warnings;
 
-use base qw(EnsEMBL::Web::Root);
+use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Exceptions;
+
+use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $hub) = @_;
@@ -36,9 +38,8 @@ sub object {
   return $self->new_object($self->object_type, {}, {'_hub' => $self->hub});
 }
 
-sub object_type {
+sub object_type :Abstract {
   ## @abstract
-  throw exception('NotImplimented', 'Abstract method not implemented.');
 }
 
 sub hub {

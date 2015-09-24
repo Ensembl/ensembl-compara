@@ -126,16 +126,16 @@ sub content {
     }
   }
   if (scalar @rows) { 
-    $html .= '<h2>Phenotype and disease annotations associated orthologues of this gene in other species</h2>'.
+    $html .= '<h2>Phenotype, disease and trait annotations associated orthologues of this gene in other species</h2>'.
       $self->new_table([ 
-        { key => 'phenotype', align => 'left', title => 'Phenotype', sort => 'html' },
-        { key => 'source',    align => 'left', title => 'Source'                    },
-        { key => 'species',   align => 'left', title => 'Species'                   },
-        { key => 'gene',      align => 'left', title => 'Gene'                      },
+        { key => 'phenotype', align => 'left', title => 'Phenotype, disease and trait', sort => 'html' },
+        { key => 'source',    align => 'left', title => 'Source'                                       },
+        { key => 'species',   align => 'left', title => 'Species'                                      },
+        { key => 'gene',      align => 'left', title => 'Gene'                                         },
       ], \@rows, { data_table => 'no_col_toggle', exportable => 1 })->render if @rows;
   }
   else {
-    $html .= '<p>No phenotype or disease associated with orthologues of this gene in other species.</p>';
+    $html .= '<p>No phenotype, disease or trait associated with orthologues of this gene in other species.</p>';
   }
   return $html;
 }

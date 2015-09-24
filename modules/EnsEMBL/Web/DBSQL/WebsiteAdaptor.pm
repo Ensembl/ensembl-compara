@@ -259,4 +259,31 @@ sub fetch_glossary_lookup {
   return { map { $_->{'word'} => $_->{'meaning'} } @{ $self->fetch_glossary || [] } };
 }
 
+sub fetch_lookup {
+### Not to be confused with glossary lookup!
+  my $self = shift;
+
+  return unless $self->db;
+  my $records = {};
+
+  my $sql = qq(
+    SELECT
+      data
+    FROM
+      help_record
+    WHERE
+      status = 'live'
+      AND type = 'lookup'
+  );
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute();
+
+  while (my @row = $sth->fetchrow_array()) {
+    my $data = eval($row[0]);
+    $records->{$data->{'word'}} = $data->{'meaning'};
+  }
+  return $records;
+}
+
 1;

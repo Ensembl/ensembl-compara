@@ -182,10 +182,11 @@ sub _feature_href {
 sub _draw_wiggle_points_as_bar_or_points {
   my ($self,$c,$features,$parameters) = @_;
 
-  my $hrefs     = $parameters->{'hrefs'};
+  my $hrefs         = $parameters->{'hrefs'};
   my $use_points    = $parameters->{'graph_type'} eq 'points';
-  my $max_score = $parameters->{'max_score'};
-  my $slice_length = $self->{'container'}->length;
+  my $max_score     = $parameters->{'max_score'};
+  my $slice_length  = $self->{'container'}->length;
+  my @rectangles;
 
   foreach my $f (@$features) {
     my $href = $self->_feature_href($f,$hrefs||{});
@@ -194,7 +195,7 @@ sub _draw_wiggle_points_as_bar_or_points {
     my $height = ($score-$c->{'line_score'}) * $c->{'pix_per_score'};
     my $title = sprintf('%.2f',$score);
 
-    $self->push($self->Rect({
+    push @rectangles, {
       y         => $c->{'line_px'} - max($height, 0),
       height    => $use_points ? 0 : abs $height,
       x         => $start - 1,
@@ -204,8 +205,11 @@ sub _draw_wiggle_points_as_bar_or_points {
       alpha     => $parameters->{'use_alpha'} ? 0.5 : 0,
       title     => $parameters->{'no_titles'} ? undef : $title,
       href      => $href,
-    }));
+      class     => $parameters->{'class'} // ''
+    };
   }
+
+  $self->push($self->Rect($_)) for sort { $b->{'height'} <=> $a->{'height'} } @rectangles;
 }
 
 sub _discrete_features {

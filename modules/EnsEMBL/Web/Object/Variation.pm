@@ -706,6 +706,71 @@ sub freqs {
   return \%data;
 }
 
+sub format_group_population_freqs {
+  my ($self, $only_super_populations) = @_;
+  my $hub = $self->hub;
+  my $pop_freq;
+  my $main_priority_level;
+
+  my $freq_data = $self->freqs();
+
+  # Get the main priority group level
+  foreach my $pop_id (keys %$freq_data) {
+    my $priority_level = $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
+    next if (!defined($priority_level));
+
+    $main_priority_level = $priority_level if (!defined($main_priority_level) || $main_priority_level > $priority_level);
+  }
+  return undef if (!defined($main_priority_level));
+
+  foreach my $pop_id (keys %$freq_data) {
+    ## is it a priority project ?
+    my $priority_level = $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
+    next if (!defined($priority_level) || $priority_level!=$main_priority_level);
+
+    my $pop_name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
+
+    if ($only_super_populations && scalar(keys(%{$freq_data->{$pop_id}{'pop_info'}{'Sub-Population'}})) == 0) {
+      next;
+    }
+    elsif (!$only_super_populations && scalar(keys(%{$freq_data->{$pop_id}{'pop_info'}{'Sub-Population'}})) != 0) {
+      $pop_freq->{$pop_name}{'sub_pop'} = $freq_data->{$pop_id}{'pop_info'}{'Sub-Population'};
+    }
+
+    my @composed_name = split(':', $pop_name);
+    $pop_freq->{$pop_name}{'label'} = $composed_name[$#composed_name];
+    $pop_freq->{$pop_name}{'desc'}  = length($freq_data->{$pop_id}{'pop_info'}{'Description'}) > 40 ? $pop_name : $freq_data->{$pop_id}{'pop_info'}{'Description'};
+    $pop_freq->{$pop_name}{'group'} = $freq_data->{$pop_id}{'pop_info'}{'PopGroup'};
+
+    foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
+      next if $freq_data->{$pop_id}{$ssid}{'failed_desc'};
+
+      my @allele_freq = @{$freq_data->{$pop_id}{'ssid'}{$ssid}{'AlleleFrequency'}};
+
+      foreach my $gt (@{$freq_data->{$pop_id}{'ssid'}{$ssid}{'Alleles'}}) {
+        next unless $gt =~ /(\w|\-)+/;
+
+        my $freq = $self->format_freqs_number(shift @allele_freq);
+
+        $pop_freq->{$pop_name}{'freq'}{$ssid}{$gt} = $freq if $freq ne 'unknown';
+      }
+    }
+  }
+  return $pop_freq;
+}
+
+sub format_freqs_number {
+  ### Population_genotype_alleles
+  ### Arg1 : null or a number
+  ### Returns "unknown" if null or formats the number to 3 decimal places
+
+  my ($self, $number) = @_;
+
+  return 'unknown' if (!defined $number);
+  return ($number < 0.01) ? sprintf '%.3f', $number : sprintf '%.2f', $number;
+}
+
+
 sub calculate_allele_freqs_from_genotype {
   my ($self, $variation_feature, $temp_data) = @_;
   my %data = %$temp_data;
@@ -979,39 +1044,9 @@ sub sample_table {
   my $pop_geno_adaptor   = $self->hub->database('variation')->get_PopulationGenotypeAdaptor();
   my $pop_genos = $pop_geno_adaptor->fetch_all_by_Variation($self->vari);
 
-  my %sp_hash_new; #sample_population
   my %synonym;
   my %pop_seen;
   my %pop_data;
-
-  foreach my $pop_geno (@{$pop_genos}){
-      my $pop_obj = $pop_geno->population();
-      my $pop_id  = $pop_obj->dbID();   
-
-      ## look up samples in each population once
-      next if $pop_seen{ $pop_id} ==1;
-      $pop_seen{ $pop_id} =1;
-
-      my $samples = $pop_obj->get_all_Samples(); 
-      foreach my $sample_ob (@{$samples}){
-          ## link on name & apply to geno structure later
-          push @{$sp_hash_new{$sample_ob->name()}}, $pop_id;
-      }
-
-      ## look up synonyms (for dbSNP link) once
-      $synonym{$pop_obj->name} = $pop_obj->get_all_synonyms(),
-
-      # Add population information
-      $pop_data{$pop_id} = {
-         Name => $pop_obj->name(),
-         Size => $pop_obj->size(),
-         Link => $synonym{$pop_obj->name},
-         ID   => $pop_obj->dbID(),
-         Priority => $pop_obj->display_group_priority(),
-         Group    => $pop_obj->display_group_name()
-      };
-  }
-  
   my %data;
   
   foreach my $sample_gt_obj ( @$sample_genotypes ) { 
@@ -1032,13 +1067,32 @@ sub sample_table {
     $data{$sample_id}{Children}    = $self->child($ind_obj);
     $data{$sample_id}{Object}      = $sample_obj;
   
-    if(defined $sp_hash_new{$sample_obj->name()}->[0]){
-      foreach my $pop_id (@{$sp_hash_new{$sample_obj->name()}}){
-        push (@{$data{$sample_id}{Population}}, $pop_data{$pop_id});
+    my $pop_objs = $sample_obj->get_all_Populations();
+
+    foreach my $pop_obj (@{$pop_objs}) {
+      my $pop_id  = $pop_obj->dbID();
+
+      ## look up samples in each population once
+      if (!$pop_seen{$pop_id}) {
+
+        ## look up synonyms (for dbSNP link) once
+        $synonym{$pop_obj->name} = $pop_obj->get_all_synonyms(),
+
+        # Add population information
+        $pop_data{$pop_id} = {
+          Name => $pop_obj->name(),
+          Size => $pop_obj->size(),
+          Link => $synonym{$pop_obj->name},
+          ID   => $pop_obj->dbID(),
+          Priority => $pop_obj->display_group_priority(),
+          Group    => $pop_obj->display_group_name()
+        };
+        $pop_seen{$pop_id} = 1;
       }
+      push (@{$data{$sample_id}{Population}}, $pop_data{$pop_id}); 
     }
-    else{
-      ## force the rest to the 'Other samples' table to be reported seperately
+
+    if (scalar @{$pop_objs} == 0) {
       push (@{$data{$sample_id}{Population}}, {
         Name => $sample_obj->name(),
         Size => 1,
@@ -1555,8 +1609,7 @@ sub hgvs {
       foreach my $type ('hgvs_genomic', 'hgvs_transcript', 'hgvs_protein') {
         my $h = $tv->{$type};
         
-        next unless $h && $h !~ m/\(p\.=\)/;
-        next if $type eq 'hgvs_genomic' && $seen_genomic{$h}++;
+        next if !$h || $type eq 'hgvs_genomic' && $seen_genomic{$h}++;
         
         push @{$hgvs{$allele}}, $h;
       }

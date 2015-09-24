@@ -58,6 +58,7 @@ sub initialize_HTML {
     modal           EnsEMBL::Web::Document::Element::Modal
     copyright       EnsEMBL::Web::Document::Element::Copyright
     footerlinks     EnsEMBL::Web::Document::Element::FooterLinks
+    fatfooter       EnsEMBL::Web::Document::Element::FatFooter
     body_javascript EnsEMBL::Web::Document::Element::BodyJavascript
   ));
 }
