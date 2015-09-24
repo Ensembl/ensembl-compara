@@ -238,7 +238,7 @@
       length = orient_c.data.length;
     }
     widgets[view.format].add_data($table,orient_c.data,grid_series,start,length,orient_c.orient);
-    widgets[view.format].truncate_to($table,length,orient_c[1]);
+    widgets[view.format].truncate_to($table,orient_c.data,grid_series,orient_c[1]);
   }
 
   function rerender_grid(widgets,$table,manifest_c) {
