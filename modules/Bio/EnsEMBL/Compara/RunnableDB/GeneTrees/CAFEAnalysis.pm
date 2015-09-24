@@ -143,7 +143,7 @@ sub run_cafe_script {
     # Populate the script file
     open my $sf, ">", $script_file or die $!;
 
-    my $cafe_shell = $self->param('cafe_shell');
+    my $cafe_shell = $self->param_required('cafe_shell');
     chop($cafe_tree_str); #remove final semicolon
     $cafe_tree_str =~ s/:\d+$//; # remove last branch length
 
