@@ -21,7 +21,10 @@ package Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor;
 use strict;
 use warnings;
 
+use DBI qw(:sql_types);
+
 use Scalar::Util qw(looks_like_number);
+
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
@@ -237,6 +240,11 @@ sub _objs_from_sth {
     return \@ss_list;
 }
 
+sub _uncached_fetch_by_dbID {
+    my ($self, $id) = @_;
+    $self->bind_param_generic_fetch($id, SQL_INTEGER);
+    return $self->generic_fetch_one('sh.species_set_id = ?');
+}
 
 
 ###################
