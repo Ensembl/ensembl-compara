@@ -356,7 +356,7 @@ sub get_AlignedMemberSet {
 
   Example     : $tree->get_SimpleAlign(-SEQ_TYPE => 'cds');
   Description : Returns the tree with removed nodes in taxon_id list.
-  Returntype  : Bio::EnsEMBL::Compara::GeneTreeNode object
+  Returntype  : Bio::SimpleAlign
   Exceptions  :
   Caller      : general
   Status      : At risk (may become deprecated soon)
