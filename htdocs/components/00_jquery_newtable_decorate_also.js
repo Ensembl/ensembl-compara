@@ -16,13 +16,13 @@
 
 (function($) {
   $.fn.newtable_decorate_also = function(config,data) {
-    function decorate_fn(column,extras) {
-      return function(html,row,series) {
+    function decorate_fn(column,extras,series) {
+      var rseries = {};
+      $.each(series,function(i,v) { rseries[v] = i; });
+      return function(html,row) {
         var cols = (extras['*'].cols || []);
         var extra = [];
         var ok = true;
-        var rseries = {};
-        $.each(series,function(i,v) { rseries[v] = i; });
         $.each(cols,function(i,v) {
           val = row[rseries[v]];
           if(val===null || val===undefined) {

@@ -16,26 +16,26 @@
 
 (function($) {
   $.fn.newtable_decorate = function(config,data,widgets) {
-    function do_decorate(column,ff_in,extras) {
+    function do_decorate(column,ff_in,extras,series) {
       var ff_out = [];
       for(var i=0;i<ff_in.length;i++) {
-        var f = ff_in[i](column,extras);
+        var f = ff_in[i](column,extras,series);
         if(f) { ff_out.push(f); }
       }
       return ff_out;
     }
 
-    function find_decorators(decorators,type,column,extras,fnname) {
+    function find_decorators(decorators,type,column,extras,fnname,series) {
       $.each(widgets,function(name,w) {
         if(w[fnname] && w[fnname][type] && w[fnname][type][column]) {
-          var ff = do_decorate(column,w[fnname][type][column],extras);
+          var ff = do_decorate(column,w[fnname][type][column],extras,series);
           if(!decorators[column]) { decorators[column] = []; }
           decorators[column] = decorators[column].concat(ff);
         }
       });
     }
 
-    function make_decorators($table,fnname) {
+    function make_decorators($table,fnname,series) {
       var decorators = {};
       var km = $table.data('keymeta') || {};
       var extras = {};
@@ -50,7 +50,7 @@
       var decorators = {};
       $.each(extras,function(type,vv) {
         $.each(vv,function(col,extras) {
-          find_decorators(decorators,type,col,extras,fnname);
+          find_decorators(decorators,type,col,extras,fnname,series);
         });
       });
       return decorators;
@@ -75,7 +75,7 @@
             return {
               undo: function(manifest,grid,series,dest) {
                 var fabric = [];
-                var decorators = make_decorators($table,'decorators');
+                var decorators = make_decorators($table,'decorators',series);
                 for(var i=0;i<grid.length;i++) {
                   var new_row = [];
                   for(var j=0;j<grid[i].length;j++) {

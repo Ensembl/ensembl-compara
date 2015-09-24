@@ -16,14 +16,15 @@
 
 (function($) {
   $.fn.newtable_decorate_link = function(config,data) {
-    function decorate_fn(column,extras) {
-      return function(html,row,series) {
+    function decorate_fn(column,extras,series) {
+      var rseries = {};
+      $.each(series,function(i,v) { rseries[v] = i; });
+
+      return function(html,row) {
         var base = extras['*'].base_url;
         var params = (extras['*'].params || {});
         var extra = [];
-        var rseries = {};
         var ok = true;
-        $.each(series,function(i,v) { rseries[v] = i; });
         $.each(params,function(k,v) {
           val = row[rseries[v]];
           if(val===null || val===undefined) {
