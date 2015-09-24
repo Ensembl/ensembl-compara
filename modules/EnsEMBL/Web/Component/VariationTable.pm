@@ -211,7 +211,7 @@ sub make_table {
   
   my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
   $table->add_phase("taster",[0,50]);
-  $table->add_phase("outline",undef,[qw(ID Source)]);
+#  $table->add_phase("outline",undef,[qw(ID Source)]);
   $table->add_phase("full");
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
