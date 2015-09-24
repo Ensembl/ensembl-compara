@@ -76,7 +76,7 @@ sub add_row {
   $self->{'num'}++;
   return 0 unless $self->passes_muster($row,$self->{'num'}); 
   $self->add_enum($row); 
-  push @{$self->{'data'}},$row;
+  push @{$self->{'data'}},[ map { $row->{$_} } @{$self->{'used_cols'}} ];
   return 1;
 }
 
@@ -339,9 +339,7 @@ sub newtable_data_request {
   $self->{'rows'} = [0,-1] if $all_data;
 
   # Calculate columns to send
-  my $used_cols = $phases->[$more]{'cols'} || \@cols;
-  my %sort_pos;
-  $sort_pos{$used_cols->[$_]} = $_ for (0..$#$used_cols);
+  $self->{'used_cols'} = $phases->[$more]{'cols'} || \@cols;
 
   # Calculate function name
   my $type = $self->{'iconfig'}{'type'};
@@ -357,16 +355,9 @@ sub newtable_data_request {
 
   my %shadow = %$orient;
   delete $shadow{'filter'};
-  $shadow{'series'} = $used_cols;
-
-  $used_cols = [ reverse @$used_cols ];
+  $shadow{'series'} = $self->{'used_cols'};
 
   my $D = time();
-  # Map to column format
-  my @data_out;
-  foreach my $d (@$data) {
-    push @data_out,[ map { $d->{$_} } @$used_cols ];
-  }
 
   # Move on continuation counter
   $more++;
@@ -374,12 +365,12 @@ sub newtable_data_request {
 
   # Sort it, if necessary
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $self->server_sort(\@data_out,$self->{'wire'}{'sort'},$self->{'iconfig'},$used_cols,$keymeta);
-    splice(@data_out,0,$irows->[0]);
-    splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
+    $self->server_sort($data,$self->{'wire'}{'sort'},$self->{'iconfig'},$self->{'used_cols'},$keymeta);
+    splice($data,0,$irows->[0]);
+    splice($data,$irows->[1]) if $irows->[1] >= 0;
   }
   my $E = time();
-  $self->server_nulls(\@data_out,$self->{'iconfig'},$used_cols);
+  $self->server_nulls($data,$self->{'iconfig'},$self->{'used_cols'});
 
   my $F = time();
 
@@ -388,8 +379,8 @@ sub newtable_data_request {
   # Send it
   $out = {
     response => {
-      data => \@data_out,
-      series => $used_cols,
+      data => $data,
+      series => $self->{'used_cols'},
       start => $self->{'rows'}[0],
       more => $more,
       enums => $self->finish_enum(),
