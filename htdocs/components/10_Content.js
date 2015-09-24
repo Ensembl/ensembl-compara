@@ -24,6 +24,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       ajaxLoad:         $('.ajax', this.el),
       hideHints:        $('.hint', this.el),
       helpTips:         $('._ht', this.el),
+      zMenuLink:        $('._zmenu', this.el),
       wrapping:         $('table.cellwrap_inside, table.heightwrap_inside', this.el),
       selectToToggle:   $('._stt', this.el),
       selectAll:        $('input._selectall', this.el),
@@ -64,9 +65,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return false;
       });
     }
-
-    // Initialise ZMenus on table links
-    this.el.find('a._zmenu').zMenuLink();
 
     this.el.externalLinks();
   },
@@ -329,7 +327,11 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   helpTips: function () {
     this.elLk.helpTips.helptip();
   },
-  
+
+  zMenuLink: function () {
+    this.elLk.zMenuLink.zMenuLink();
+  },
+
   wrapping: function () {
     this.elLk.wrapping.togglewrap();
   },
