@@ -379,11 +379,9 @@ sub init_legend { # begin (or reset)
 
   $self->{'box_width'} = 20;
   my $im_width = $config->get_parameter('panel_width'); 
-  if($c) {
-    $self->{'columns'} = $c;
-  } else {
-    $self->{'columns'} = int($im_width / $MAX_WIDTH);
-  }
+
+  $self->{'columns'} =  $c || int($im_width / $MAX_WIDTH) || 1;
+
   $self->{'font'} = { $self->get_font_details('legend', 1) };
 
   my @sizes = $self->get_text_width(0,'X','',%{$self->{'font'}});
