@@ -148,7 +148,7 @@ sub run_cafe_script {
     $cafe_tree_str =~ s/:\d+$//; # remove last branch length
 
     my $lambda = $self->param('lambda');  ## For now, it only works with 1 lambda
-    my $cafe_struct_tree = $self->param('cafe_struct_tree_str');
+    #my $cafe_struct_tree = $self->param('cafe_struct_tree_str');
 
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_str\n\n";
