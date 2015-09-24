@@ -58,8 +58,8 @@ foreach my $gene (@$genes) {
 	# finds the query gene
 	$node_h = $leaf if ($leaf->gene_member->stable_id eq $gene->stable_id);
   }
-  $node_h->print_member;
-  $node_z->print_member,
+  print "human: ", $node_h->toString(), "\n";
+  print "zebra: ", $node_z->toString(), "\n",
 
   print "root to human: ", $node_h->distance_to_ancestor($tree->root), "\n";
   print "root to zebra: ", $node_z->distance_to_ancestor($tree->root), "\n";

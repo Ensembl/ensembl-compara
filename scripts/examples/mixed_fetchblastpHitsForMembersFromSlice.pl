@@ -48,13 +48,14 @@ foreach my $pep (@{$members}) {
   next unless($pep->dnafrag_start < 4801065 );
   next unless($pep->dnafrag_end > 4791387 );
 
-  $pep->print_member;
+  print $pep->toString(), "\n";
 
   my $pafs = $pafDBA->fetch_all_RH_by_member_genomedb($pep->dbID, $humanGDB->dbID);
 
   foreach my $paf (@{$pafs}) {
-    $paf->display_short;
-    $paf->hit_member->gene_member->print_member;
+    print $paf->toString, "\n";
+    print "  ", $paf->hit_member->gene_member->toString(), "\n";
   }
+  print "\n";
 }
 

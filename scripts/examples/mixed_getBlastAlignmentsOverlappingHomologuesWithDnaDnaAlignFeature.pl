@@ -65,8 +65,8 @@ foreach my $homology (@{$homology_list}) {
         if($member->genome_db_id == $human_gdb_id) { $human_gene = $member; }
     }
     next unless($mouse_gene and $human_gene);
-    $mouse_gene->print_member;
-    $human_gene->print_member;
+    print $mouse_gene->toString(), "\n";
+    print $human_gene->toString(), "\n";
 
     # get the alignments on a piece of the DnaFrag
     printf("fetch_all_by_species_region(%s,%s,%s,%s,%d,%d,%s)\n", 

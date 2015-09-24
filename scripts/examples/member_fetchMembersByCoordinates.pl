@@ -47,7 +47,7 @@ foreach my $pep (@{$members}) {
   next unless($pep->dnafrag_id == $rat_dnafrag->dbID);
   next unless($pep->dnafrag_start < 10000000);
   if($pep->get_Transcript->five_prime_utr) {
-    $pep->gene_member->print_member;
+    print $pep->gene_member->toString(), "\n";
   }
 }
 

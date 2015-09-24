@@ -87,16 +87,13 @@ if ($compara_url) {
 
 my $gene_member = $compara_dba->get_GeneMemberAdaptor->fetch_by_stable_id($gene_stable_id);
 my $peptide_member = $gene_member->get_canonical_SeqMember;
-print "QUERY PEP: ";
-$peptide_member->print_member();
+print "QUERY PEP: ", $peptide_member->toString(), "\n";
 
 my $peptide_align_feature_adaptor = $compara_dba->get_PeptideAlignFeatureAdaptor;
 my $peptide_align_features = $peptide_align_feature_adaptor->fetch_all_RH_by_member($peptide_member->dbID);
 
 # loop through and print
 foreach my $this_peptide_align_feature (@{$peptide_align_features}) {
-  $this_peptide_align_feature->display_short;
+  print $this_peptide_align_feature->toString(), "\n";
 }
 
-
-exit(0);

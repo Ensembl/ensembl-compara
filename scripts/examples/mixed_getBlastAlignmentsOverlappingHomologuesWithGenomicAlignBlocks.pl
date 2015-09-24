@@ -69,8 +69,8 @@ foreach my $homology (@{$homology_list}) {
         if($member->genome_db_id == $human_gdb_id) { $human_gene = $member; }
     }
     next unless($mouse_gene and $human_gene);
-    $mouse_gene->print_member;
-    $human_gene->print_member;
+    print $mouse_gene->toString(), "\n";
+    print $human_gene->toString(), "\n";
 
     my $dnafrag = $mouse_gene->dnafrag;
     unless($dnafrag) { print("oops no dnafrag\n"); next; }

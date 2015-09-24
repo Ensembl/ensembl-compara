@@ -75,10 +75,10 @@ $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'
 
 my $member;
 $member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_stable_id($self->{'gene_stable_id'});
-#$member->print_member() if($member);
+#print $member->toString(), "\n" if($member);
 
 my ($homology) = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_all_by_Member_paired_species($member, $self->{'species'})};
-#print $homology->toString() if($homology);
+#print $homology->toString(), "\n" if($homology);
 
 my $queryMA;
 my $orthMA;
