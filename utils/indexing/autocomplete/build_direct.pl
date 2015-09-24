@@ -7,7 +7,7 @@ use FindBin qw($Bin);
 
 die "Please specify path to xml files" unless $ARGV[0];
 
-my $files = qx{ find $ARGV[0] -name \\*_Phenotype.xml -or -name \\*_Gene.xml };
+my $files = qx{ find $ARGV[0] -name \\*_Phenotype.xml -or -name \\*_Gene.xml -and -not -name \\*_otherfeatures_\\* };
 
 my %doc;
 foreach my $file (split("\n",$files)) {
