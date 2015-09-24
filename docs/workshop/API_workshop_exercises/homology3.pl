@@ -1,21 +1,5 @@
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#      http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 use strict;
 use warnings;
-
-use Bio::AlignIO;
 
 use Bio::EnsEMBL::Registry;
 
@@ -43,12 +27,20 @@ foreach my $mouse_stable_id (qw(ENSMUSG00000004843 ENSMUSG00000025746)) {
   ## For each homology
   foreach my $this_homology (@{$all_homologies}) {
 
-    $this_homology->print_homology();
-    print "The non-synonymous substitution rate is: ", $this_homology->dn(), "\n";
+    ## Get the alignments
+    my $aa_align = $this_homology->get_SimpleAlign();
+    my $nt_align = $this_homology->get_SimpleAlign(-SEQ_TYPE => 'cds');
 
-    ## Get and print the alignment
-    my $simple_align = $this_homology->get_SimpleAlign();
-    print $alignIO $simple_align;
+    ## Print the summary of the homology
+    print $this_homology->toString(), "\n";
+    printf("Alignments have %.2f%% identiity at the protein-level and %.2f%% at the nucleotide level.\n", $aa_align->average_percentage_identity(), $nt_align->average_percentage_identity());
+    print "The non-synonymous substitution rate is: ", $this_homology->dn(), "\n";
+    print "The synonymous substitution rate is: ", $this_homology->ds(), "\n";
+    print "The ratio is: ", $this_homology->dnds_ratio(), "\n";
+
+    ## Print the alignments
+    print $alignIO $aa_align;
+    print $alignIO $nt_align;
   }
   print "\n";
 }
