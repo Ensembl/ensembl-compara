@@ -18,7 +18,10 @@
   $.fn.newtable_helptip = function(config,data) {
     return {
       go_data: function($some) {
-        $('._ht',$some).helptip(); // XXX merge into the above
+        $('._tht',$some).on('mouseenter',function() {
+          var $this = $(this);
+          $this.addClass('_ht').removeClass('_tht').helptip().helptip('open');
+        });
       }
     };
   }; 
