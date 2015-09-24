@@ -184,5 +184,6 @@ sub AUTOLOAD {
 
   return $self->{'endpoint'}->delegate($self,'col',$fn,\@_);
 }
+sub DESTROY {} # For AUTOLOAD
 
 1;

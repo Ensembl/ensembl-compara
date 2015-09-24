@@ -41,6 +41,7 @@ sub new {
     component => $component,
     rows => [],
     enum_values => {},
+    sort_data => [],
     num => 0,
   };
   bless $self,$class;
@@ -77,6 +78,9 @@ sub add_row {
   return 0 unless $self->passes_muster($row,$self->{'num'}); 
   $self->add_enum($row); 
   push @{$self->{'data'}},[ map { $row->{$_} } @{$self->{'used_cols'}} ];
+  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
+    $self->server_sortdata($row,$self->{'wire'}{'sort'},$self->{'used_cols'});
+  }
   return 1;
 }
 
@@ -123,34 +127,37 @@ sub preload {
   return $self->newtable_data_request($orient,undef,1);
 }
 
-sub server_order {
-  my ($self,$data,$sort,$iconfig,$series,$keymeta) = @_;
+sub server_sortdata {
+  my ($self,$row,$sort,$series) = @_;
 
-  my $cols = $iconfig->{'columns'};
-  my $colconf = $iconfig->{'colconf'};
-  foreach my $i (0..$#$data) { push @{$data->[$i]},$i; }
-  my %cache;
+  my $colconf = $self->{'iconfig'}{'colconf'};
+  foreach my $i (0..$#$sort) {
+    push @{$self->{'sort_data'}[$i]||=[]},$row->{$sort->[$i]{'key'}};
+  }
+  push @{$self->{'sort_data'}[@$sort]||=[]},$self->{'num'}-1;
+}
+
+sub server_order2 {
+  my ($self,$sort,$series,$keymeta) = @_;
+
+  my @cache;
   my %rseries;
   $rseries{$series->[$_]} = $_ for (0..$#$series);
   $rseries{'__tie'} = -1;
-  my @data2 = sort {
+  my @columns = map { $self->{'columns'}{$_->{'key'}} } @$sort;
+  push @columns,EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
+  my $sd = $self->{'sort_data'};
+  my @order = sort {
     my $c = 0;
-    foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
-      my $key = $col->{'key'};
-      my $column;
-      if($key eq '__tie') {
-        $column = EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
-      } else {
-        $column = $self->{'columns'}{$key};
-      }
-      $cache{$key}||={};
-      my $idx = $rseries{$key};
-      $c = $column->compare($a->[$idx],$b->[$idx],$col->{'dir'},$keymeta,$cache{$key},$key);
+    foreach my $i (0..@$sort) {
+      $cache[$i]||={};
+      $c = $columns[$i]->compare($sd->[$i][$a],$sd->[$i][$b],
+                                 $sort->[$i]{'dir'}||1,$keymeta,$cache[$i],
+                                 $sort->[$i]{'key'}||'__tie');
       last if $c;
     }
     $c;
-  } @$data;
-  my @order = map { $_->[-1] } @data2;
+  } (0..$#{$sd->[0]});
   return \@order;
 }
 
@@ -365,7 +372,7 @@ sub newtable_data_request {
   # Sort it, if necessary
   my $order;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $order = $self->server_order($data,$self->{'wire'}{'sort'},$self->{'iconfig'},$self->{'used_cols'},$keymeta);
+    $order = $self->server_order2($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
   } else {
     $order->[$_] = $_ for(0..$#$data);
   }
