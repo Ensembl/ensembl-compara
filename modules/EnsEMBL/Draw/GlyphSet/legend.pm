@@ -378,7 +378,7 @@ sub init_legend { # begin (or reset)
   return unless $self->strand == -1;
 
   $self->{'box_width'} = 20;
-  my $im_width = $config->get_parameter('panel_width'); 
+  my $im_width = $self->image_width;
 
   $self->{'columns'} =  $c || int($im_width / $MAX_WIDTH) || 1;
 
@@ -409,7 +409,7 @@ sub init_legend { # begin (or reset)
 
 sub add_space {
   my $self = shift;
-  my $im_width = $self->{'config'}->get_parameter('panel_width'); 
+  my $im_width = $self->image_width;
   my $space = 4;
 
   $self->push($self->Rect({
