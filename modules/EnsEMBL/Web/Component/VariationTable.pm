@@ -23,6 +23,8 @@ use strict;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use EnsEMBL::Web::NewTable::NewTable;
 
+use Bio::EnsEMBL::Variation::Utils::VariationEffect;
+
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -74,14 +76,12 @@ sub content {
   my $sum_type         = $hub->param('summary_type') || 'table';
   my $gene_object      = $self->configure($icontext, $consequence_type);
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
-  my ($count, $msg, $html);
+  my ($msg, $html);
   
   if ($object_type eq 'Transcript') {
     my $t = $hub->param('t');
     @transcripts = grep $_->stable_id eq $t, @transcripts;
   }
-  
-  $count += scalar @{$_->__data->{'transformed'}{'gene_snps'}} for @transcripts;
 
   if ($icontext) {
     if ($icontext eq 'FULL') {
@@ -387,43 +387,30 @@ sub variation_table {
     $url_transcript_prefix = 't';
   }
 
+  my $vfs = $self->_get_variation_features();
+  
   ROWS: foreach my $transcript (@$transcripts) {
-    my %snps = %{$transcript->__data->{'transformed'}{'snps'} || {}};
-   
-    next unless %snps;
+
+    # get TVs
+    my $tvs = $self->_get_transcript_variations($transcript->Obj);
    
     my $transcript_stable_id = $transcript->stable_id;
     warn "stable id $transcript_stable_id\n";
-    my $gene_snps            = $transcript->__data->{'transformed'}{'gene_snps'} || [];
-    my $tr_start             = $transcript->__data->{'transformed'}{'start'};
-    my $tr_end               = $transcript->__data->{'transformed'}{'end'};
-    my $extent               = $transcript->__data->{'transformed'}{'extent'};
     my $gene                 = $transcript->gene;
 
-    foreach (@$gene_snps) {
-      my ($snp, $chr, $start, $end) = @$_;
-      my $raw_id               = $snp->dbID;
-      my $transcript_variation = $snps{$raw_id};
-      
-      next unless $transcript_variation;
-     
+    foreach my $transcript_variation (@$tvs) {
+      my $raw_id = $transcript_variation->{_variation_feature_id};
+
+      my $snp = $vfs->{$raw_id};
+      next unless $snp;
+
+      my ($chr, $start, $end) = ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end);
+
       foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
-        my $skip = 1;
         
-        if ($consequence_type eq 'ALL') {
-          $skip = 0;
-        } elsif ($tva) {
-          foreach my $con (map {$_->SO_term} @{$tva->get_all_OverlapConsequences}) {
-            if (grep $con eq $_, split /\,/, $consequence_type) {
-              $skip = 0;
-              last;
-            }
-          }
-        }
-        
-        next if $skip;
-        
-        if ($tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
+        # this isn't needed anymore, I don't think!!!
+        # thought I'd leave this indented though to keep the diff neater
+        if (1) {#$tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
           my $row;
 
           my $variation_name = $snp->variation_name;
@@ -514,6 +501,36 @@ sub variation_table {
   return \@rows;
 }
 
+sub _get_transcript_variations {
+  my $self = shift;
+  my $tr   = shift;
+
+  if(!exists($self->{_transcript_variations}->{$tr->stable_id})) {
+    my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+
+    $self->{_transcript_variations}->{$tr->stable_id} = $tva->fetch_all_by_Transcripts([$tr]);
+  }
+
+  return $self->{_transcript_variations}->{$tr->stable_id};
+}
+
+sub _get_variation_features {
+  my $self = shift;
+
+  if(!exists($self->{_variation_features})) {
+
+    # get appropriate slice
+    my $slice = $self->object->Obj->feature_Slice->expand(
+      $Bio::EnsEMBL::Variation::Utils::VariationEffect::UPSTREAM_DISTANCE,
+      $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
+    );
+
+    $self->{_variation_features} = {map {$_->dbID => $_} @{$slice->get_all_VariationFeatures}};
+  }
+
+  return $self->{_variation_features};
+}
+
 sub create_so_term_subsets {
   my $self     = shift;
   my @all_cons = grep $_->feature_class =~ /Bio::EnsEMBL::(Feature|Transcript)/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
@@ -558,37 +575,6 @@ sub configure {
     [ 'gene',        'normal', '33%'   ],
     [ 'transcripts', 'munged', $extent ]
   );
-  
-  $gene_object->store_TransformedTranscripts; ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
- 
-  my $transcript_slice = $gene_object->__data->{'slices'}{'transcripts'}[1];
-  my (undef, $snps)    = $gene_object->getVariationsOnSlice($transcript_slice, $gene_object->__data->{'slices'}{'transcripts'}[2], undef, scalar @so_terms ? \@so_terms : undef);
-  my $vf_objs          = [ map $_->[2], @$snps];
-  
-  # For stats table (no $consquence) without a set intron context ($context). Also don't try for a single transcript (because its slower)
-  if (!$consequence && !$transcript_object && $context eq 'FULL') {
-    my $so_term_subsets = $self->create_so_term_subsets;
-    $gene_object->store_ConsequenceCounts($so_term_subsets, $vf_objs);
-  }
-  
-  # If doing subtable or can't calculate consequence counts
-  if ($consequence || !exists($gene_object->__data->{'conscounts'}) || scalar @$vf_objs < 50) {
-    $gene_object->store_TransformedSNPS(\@so_terms,$vf_objs); ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
-  }
-  
-  ## Map SNPs for the last SNP display  
-  my @gene_snps = map {[
-    $_->[2], $transcript_slice->seq_region_name,
-    $transcript_slice->strand > 0 ?
-      ( $transcript_slice->start + $_->[2]->start - 1, $transcript_slice->start + $_->[2]->end   - 1 ) :
-      ( $transcript_slice->end   - $_->[2]->end   + 1, $transcript_slice->end   - $_->[2]->start + 1 )
-  ]} @$snps;
-  
-  foreach (@{$gene_object->get_all_transcripts}) {
-    next if $object_type eq 'Transcript' && $_->stable_id ne $self->hub->param('t'); 
-    $_->__data->{'transformed'}{'extent'}    = $extent;
-    $_->__data->{'transformed'}{'gene_snps'} = \@gene_snps;
-  }
   
   return $gene_object;
 }
