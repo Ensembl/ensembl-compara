@@ -502,7 +502,6 @@ sub variation_table {
             $row = { %$row, %$more_row };
           }
           $num++;
-          next unless $callback->passes_muster($row,$num);
           $callback->add_row($row);
           last ROWS if $callback->stand_down($row,$num);
         }

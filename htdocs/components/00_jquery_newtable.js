@@ -406,7 +406,8 @@
         keymeta: JSON.stringify($table.data('keymeta')||{}),
         config: JSON.stringify(config),
         orient: JSON.stringify(orient),
-        wire: JSON.stringify(orient)
+        wire: JSON.stringify(orient),
+        ssplugins: JSON.stringify(config.ssplugins)
       });
       var out = '<form method="POST" id="spawn" action="'+src+'">';
       $.each(params,function(k,v) {

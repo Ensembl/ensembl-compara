@@ -40,7 +40,8 @@ sub new {
     hub => $hub,
     component => $component,
     rows => [],
-    enum_values => {}
+    enum_values => {},
+    num => 0,
   };
   bless $self,$class;
   return $self;
@@ -71,9 +72,12 @@ sub finish_enum {
 
 sub add_row {
   my ($self,$row) = @_;
- 
+
+  $self->{'num'}++;
+  return 0 unless $self->passes_muster($row,$self->{'num'}); 
   $self->add_enum($row); 
   push @{$self->{'data'}},$row;
+  return 1;
 }
 
 sub go {
@@ -84,7 +88,7 @@ sub go {
   my $orient = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
   my $more = $hub->param('more');
-  my $incr_ok = ($hub->param('incr_ok') eq 'true');
+  my $incr_ok = ($hub->param('incr_ok')||'' eq 'true');
   my $keymeta = from_json($hub->param('keymeta'));
   # Add plugins
   my $ssplugins = from_json($hub->param('ssplugins'));
@@ -337,7 +341,7 @@ sub newtable_data_request {
   # Calculate columns to send
   my $used_cols = $phases->[$more]{'cols'} || \@cols;
   my %sort_pos;
-  $sort_pos{$used_cols->[$_]} = $_ for (0..@$used_cols);
+  $sort_pos{$used_cols->[$_]} = $_ for (0..$#$used_cols);
 
   # Calculate function name
   my $type = $self->{'iconfig'}{'type'};
@@ -354,17 +358,6 @@ sub newtable_data_request {
   my %shadow = %$orient;
   delete $shadow{'filter'};
   $shadow{'series'} = $used_cols;
-
-  # Filter, if necessary
-  if($self->{'wire'}{'filter'}) {
-    my @new;
-    my $num = 1;
-    foreach my $row (@$data) {
-      push @new,$row if $self->passes_muster($row,$num);
-      $num++;
-    }
-    $data = \@new;
-  }
 
   $used_cols = [ reverse @$used_cols ];
 
