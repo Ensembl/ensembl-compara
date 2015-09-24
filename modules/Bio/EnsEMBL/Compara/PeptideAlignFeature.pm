@@ -320,12 +320,7 @@ sub rhit_dbID {
   return $self->{'_rhit_dbID'};
 }
 
-sub display_short {
-  my $self = shift;
-  print($self->get_description(), "\n");
-}
-
-sub get_description {
+sub toString {
   my($self) = @_;
 
   unless(defined($self)) {

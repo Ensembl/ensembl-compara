@@ -507,7 +507,7 @@ sub _objs_from_sth {
       $paf->hit_member($memberDBA->fetch_by_dbID($row_hashref->{'hmember_id'}));
     }
   
-    #$paf->display_short();
+    #print $paf->toString(), "\n";
     
     push @pafs, $paf;
   }
