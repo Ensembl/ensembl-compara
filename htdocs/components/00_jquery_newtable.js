@@ -250,7 +250,18 @@
   }
 
   function use_response(widgets,$table,manifest_c,response,config) {
-    store_response_in_grid($table,response.data,response.nulls,response.order,response.start,manifest_c.manifest,response.series);
+    var nulls = [];
+    for(var i=0;i<response.nulls.length;i++) {
+      nulls[i] = $.euncompress(response.nulls[i]);
+    }
+    var order = response.order;
+    if(!order) {
+      order = [];
+      if(response.data.length) {
+        for(var i=0;i<response.data[0].length;i++) { order[i] = i; }
+      }
+    }
+    store_response_in_grid($table,response.data,nulls,order,response.start,manifest_c.manifest,response.series);
     render_grid(widgets,$table,manifest_c,response.start,response.data.length);
     store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
   }

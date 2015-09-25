@@ -23,6 +23,7 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::NewTable::Endpoint);
 
+use EnsEMBL::Web::Utils::Compress qw(ecompress);
 use JSON qw(from_json);
 
 use Compress::Zlib;
@@ -382,8 +383,6 @@ sub newtable_data_request {
   my $order;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $order = $self->server_order($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
-  } else {
-    $order->[$_] = $_ for(0..$#{$data->[0]});
   }
   my $E = time();
 
@@ -399,7 +398,7 @@ sub newtable_data_request {
   $out = {
     response => {
       data => $data,
-      nulls => $self->{'nulls'},
+      nulls => [map { ecompress($_) } @{$self->{'nulls'}}],
       series => $self->{'used_cols'},
       order => $order,
       start => $self->{'rows'}[0],
@@ -410,9 +409,12 @@ sub newtable_data_request {
     },
     orient => $orient,
   };
-  open(ZZ,">/tmp/zz");
-  print ZZ JSON->new->encode($out);
-  close ZZ;
+  #open(ZZ,">/tmp/zz");
+  #print ZZ JSON->new->encode($out->{'response'}{'nulls'});
+  #close ZZ;
+  #open(ZZ,">/tmp/zz2");
+  #print ZZ JSON->new->encode([map { ecompress($_) } @{$out->{'response'}{'nulls'}}]);
+  #close ZZ;
   $self->set_cache($cache_key,JSON->new->encode($out));
   return $out;
 }
