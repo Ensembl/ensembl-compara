@@ -257,12 +257,16 @@
     var order = response.order;
     if(!order) {
       order = [];
-      if(response.data.length) {
-        for(var i=0;i<response.data[0].length;i++) { order[i] = i; }
-      }
+      for(var i=0;i<response.len;i++) { order[i] = i; }
     }
-    store_response_in_grid($table,response.data,nulls,order,response.start,manifest_c.manifest,response.series);
-    render_grid(widgets,$table,manifest_c,response.start,response.data.length);
+    var data = [];
+    for(var i=0;i<response.data.length;i++) {
+      var d = response.data[i];
+      var ctype = $.find_type(widgets,{ 'ctype': d[0] },'ctypes','ctype');
+      data[i] = ctype.uncompress(d[1]);
+    }
+    store_response_in_grid($table,data,nulls,order,response.start,manifest_c.manifest,response.series);
+    render_grid(widgets,$table,manifest_c,response.start,response.len);
     store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
   }
   
@@ -464,13 +468,15 @@
     return good;
   };
 
-  $.find_type = function(widgets,cc) {
+  $.find_type = function(widgets,cc,key,cckey) {
+    if(!key) { key = "types"; }
+    if(!cckey) { cckey = "type_js"; }
     var w;
     $.each(widgets,function(name,contents) {
-      if(contents.types) {
-        for(var i=0;i<contents.types.length;i++) {
-          if(contents.types[i].name == cc.type_js) {
-            w = contents.types[i];
+      if(contents[key]) {
+        for(var i=0;i<contents[key].length;i++) {
+          if(contents[key][i].name == cc[cckey]) {
+            w = contents[key][i];
           }
         }
       }

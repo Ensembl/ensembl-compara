@@ -271,7 +271,6 @@
           supreme = k;
         }
       }
-      console.log(rfreqs[supreme],length,rfreqs[supreme]/length);
       if(supreme==null || rfreqs[supreme]<length/2 || rfreqs[supreme]<2) {
         break;
       }

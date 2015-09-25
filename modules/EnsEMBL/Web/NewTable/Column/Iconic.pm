@@ -22,6 +22,34 @@ use strict;
 use warnings;
 use parent qw(EnsEMBL::Web::NewTable::Column);
 
+use EnsEMBL::Web::Utils::Compress qw(ecompress);
+
+sub compress {
+  my ($self,$data) = @_;
+
+  my (@classes,%classes,@num,@seq);
+  my $d_last = "";
+  foreach my $d (@$data) {
+    if($d eq $d_last) {
+      push @num,0;
+      next;
+    }
+    $d_last = $d;
+    my @vv = split(/~/,$d);
+    push @num,scalar(@vv);
+    my $i = 0;
+    foreach my $v (sort @vv) {
+      unless(exists $classes{$v}) {
+        $classes{$v} = @classes;
+        push @classes,$v;
+      }
+      push @{$seq[$i++]||=[]},$classes{$v};
+    }
+  }
+  my $seq = [ map { ecompress($_) } @seq ];
+  return ['iconic',{ classes => \@classes, num => ecompress(\@num), seq => $seq }];
+}
+
 sub js_type { return 'iconic'; }
 sub js_range { return 'class'; }
 sub null { return $_[1] !~ /\S/; }

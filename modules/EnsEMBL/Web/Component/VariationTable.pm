@@ -220,9 +220,9 @@ sub make_table {
   push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
   push @exclude,'HGVS' unless $hub->param('hgvs') eq 'on';
   if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-    push @exclude,'Submitters','Transcript';
+    push @exclude,'Transcript';
   } else {
-    push @exclude,'LRGTranscript';
+    push @exclude,'Submitters','LRGTranscript','LRG';
   }
   push @exclude,'sift_sort','sift_class','sift_value' unless $sd->{'SIFT'};
   unless($hub->species eq 'Homo_sapiens') {
@@ -250,9 +250,9 @@ sub make_table {
     _key => 'location', _type => 'position unshowable',
     sort_for => 'chr'
   },{
-    _key => 'vf_allele', _type => 'string no_filter unshowable',
+    _key => 'vf_allele', _type => 'string no_filter unshowable class_compress',
   },{
-    _key => 'Alleles', _type => 'string no_filter no_sort',
+    _key => 'Alleles', _type => 'string no_filter no_sort class_compress',
     label => "Alle\fles",
     helptip => 'Alternative nucleotides',
     toggle_separator => '/',
@@ -260,7 +260,7 @@ sub make_table {
     toggle_highlight_column => 'vf_allele',
     toggle_highlight_over => 2
   },{
-    _key => 'gmaf_allele', _type => 'string no_filter unshowable',
+    _key => 'gmaf_allele', _type => 'string no_filter unshowable class_compress',
   },{
     _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
     helptip => $glossary->{'Global MAF'},
@@ -269,11 +269,11 @@ sub make_table {
     _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
     width => 1.75
   },{
-    _key => 'class', _type => 'string', label => 'Class',
+    _key => 'class', _type => 'string class_compress', label => 'Class',
     width => 2,
     helptip => $glossary->{'Class'}
   },{
-    _key => 'Source', _type => 'string', label => "Sour\fce",
+    _key => 'Source', _type => 'string class_compress', label => "Sour\fce",
     width => 1.25,
     helptip => $glossary->{'Source'}
   },{
@@ -294,7 +294,7 @@ sub make_table {
     width => 1.5,
     helptip => 'Consequence type'
   },{
-    _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
+    _key => 'aachange', _type => 'string no_filter no_sort class_compress', label => "AA",
     helptip => "Resulting amino acid(s)"
   },{
     _key => 'aacoord', _type => 'integer', label => "AA co\ford",
@@ -318,19 +318,19 @@ sub make_table {
     label => "Poly\fPhen",
     helptip => $glossary->{'PolyPhen'}
   },{
-    _key => 'LRG', _type => 'string unshowable',
+    _key => 'LRG', _type => 'string unshowable class_compress',
     label => "LRG",
   },{
-    _key => 'Transcript', _type => 'string',
+    _key => 'Transcript', _type => 'string class_compress',
     width => 2,
     helptip => $glossary->{'Transcript'},
     link_url => {
       type   => 'Transcript',
       action => 'Summary',
       t => ["Transcript"] 
-    }
+    },
    },{
-    _key => 'LRGTranscript', _type => 'string',
+    _key => 'LRGTranscript', _type => 'string class_compress',
     width => 2,
     helptip => $glossary->{'Transcript'},
     link_url => {

@@ -47,6 +47,7 @@ sub new {
     data => [],
     nulls => [],
     num => 0,
+    len => 0,
   };
   bless $self,$class;
   return $self;
@@ -93,6 +94,7 @@ sub add_row {
   my $nulls = $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
   $self->rotate('data',[ map { $row->{$_} } @{$self->{'used_cols'}} ]);
   $self->rotate('nulls',[ map { $nulls->{$_} } @{$self->{'used_cols'}} ]);
+  $self->{'len'}++;
   return 1;
 }
 
@@ -117,7 +119,7 @@ sub go {
   foreach my $key (keys %{$self->{'iconfig'}{'colconf'}}) {
     my $cc = $self->{'iconfig'}{'colconf'}{$key};
     $self->{'columns'}{$key} =
-      EnsEMBL::Web::NewTable::Column->new($self,$cc->{'sstype'},$key);
+      EnsEMBL::Web::NewTable::Column->new($self,$cc->{'sstype'},$key,$cc->{'ssconf'});
   }
 
   my $out = $self->newtable_data_request($orient,$more,$incr_ok,$keymeta);
@@ -394,10 +396,18 @@ sub newtable_data_request {
   $more++;
   $more=0 if $more == @$phases;
 
+  # Compress it
+  my @data2;
+  foreach my $i (0..$#$data) {
+    my $column = $self->{'columns'}{$self->{'used_cols'}[$i]};
+    $data2[$i] = $column->compress($data->[$i]);
+  }
+  
   # Send it
   $out = {
     response => {
-      data => $data,
+      len => $self->{'len'},
+      data => \@data2,
       nulls => [map { ecompress($_) } @{$self->{'nulls'}}],
       series => $self->{'used_cols'},
       order => $order,
@@ -409,12 +419,16 @@ sub newtable_data_request {
     },
     orient => $orient,
   };
-  #open(ZZ,">/tmp/zz");
-  #print ZZ JSON->new->encode($out->{'response'}{'nulls'});
-  #close ZZ;
-  #open(ZZ,">/tmp/zz2");
-  #print ZZ JSON->new->encode([map { ecompress($_) } @{$out->{'response'}{'nulls'}}]);
-  #close ZZ;
+  foreach my $i (0..$#data2) {
+    #open(ZZ,">/tmp/zz-$i") || die;
+    #warn "=$data2[$i]\n";
+    #print ZZ JSON->new->encode($data2[$i]);
+    #close ZZ;
+  }
+
+  open(ZZ,">/tmp/zz2");
+#  print ZZ JSON->new->encode([map { ecompress($_) } @{$out->{'response'}{'nulls'}}]);
+  close ZZ;
   $self->set_cache($cache_key,JSON->new->encode($out));
   return $out;
 }
