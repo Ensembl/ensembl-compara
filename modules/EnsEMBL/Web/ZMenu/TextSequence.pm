@@ -146,7 +146,7 @@ sub variation_content {
          '  <nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
          '  <span class="_ht ht coltab_text" title="%s">%s</span></nobr>'.
          '</li>',
-         $var_styles->{$_} ? $colourmap->hex_by_name($var_styles->{$_}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'}),
+         $var_styles->{lc $_} ? $colourmap->hex_by_name($var_styles->{lc $_}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'}),
          $ct{$_}->{'description'},
          $ct{$_}->{'label'}
        )
