@@ -29,7 +29,7 @@
           if(val===null || val===undefined) {
             ok = false;
           } else {
-            extra.push('<small>('+row[rseries[v]][0]+')</small>');
+            extra.push('<small>('+row[rseries[v]]+')</small>');
           }
         }
         if(!ok) { return html; }

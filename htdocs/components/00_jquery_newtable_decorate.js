@@ -81,15 +81,13 @@
                   for(var j=0;j<grid[i].length;j++) {
                     var v = grid[i][j];
                     var key = series[j];
-                    if(v!==undefined) {
-                      v = v[0];
+                    if(v!==undefined && v!==null) {
                       if(decorators[key]) {
                         var ff = decorators[key];
                         for(var k=0;k<ff.length;k++) {
                           v = ff[k](v,grid[i],series);
                         }
                       }
-                      v = [v,grid[i][j][1]];
                     }
                     new_row[j] = v;
                   }

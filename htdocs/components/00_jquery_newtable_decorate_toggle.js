@@ -56,7 +56,7 @@
         var highlight_over = (extras['*'].highlight_over || 0);
         var highlight_value;
         if(highlight_col && parts.length>2*highlight_over) {
-          highlight_value = row[rseries[highlight_col]][0];
+          highlight_value = row[rseries[highlight_col]];
         }
         for(var i=0;i<parts.length;i+=2) {
           var highlight = (parts[i] == highlight_value);

@@ -15,6 +15,10 @@
  */
 
 (function($) {
+  function cmp_numeric(a,b,f) {
+    return (parseFloat(a)-parseFloat(b))*f;
+  }
+
   // TODO clean prior to sort for speed
   $.fn.new_table_clientsort = function(config,data,widgets) {
     var col_idxs = {};
@@ -27,12 +31,9 @@
           if(!cache[stage.key]) { cache[stage.key] = {}; }
           var av = a[rev_series[stage.key]];
           var bv = b[rev_series[stage.key]];
-          if(!av || !bv) {
-            return (!av)-(!bv);
-          }
-          c = av[1]-bv[1];
+          c = (!!(av===null || av===undefined))-(!!(bv===null || bv===undefined));
           if(!c) {
-            c = stage.fn(stage.clean(av[0]),stage.clean(bv[0]),stage.dir,
+            c = stage.fn(stage.clean(av),stage.clean(bv),stage.dir,
                          cache[stage.key],keymeta,stage.key);
           }
         }
@@ -56,7 +57,7 @@
         if(!config.colconf[stage.key].incr_ok) { incr_ok = false; }
       });
       if(!plan) { return null; }
-      plan.push({ dir: 1, fn: $.fn.newtable_sort_numeric, clean: clean_none, key: '__tie' });
+      plan.push({ dir: 1, fn: cmp_numeric, clean: clean_none, key: '__tie' });
       return { stages: plan, incr_ok: incr_ok};
     }
 
@@ -74,7 +75,7 @@
         var fabric = grid.slice();
         var partitioned = [[],[]];
         $.each(grid,function(i,row) {
-          partitioned[row[idx][1]].push(row);
+          partitioned[!!(row[idx]===null)].push(row);
         });
         partitioned[0].reverse();
         partitioned[1].reverse();
@@ -103,11 +104,12 @@
                   rev_series[series[i]] = i;
                 }
                 var fabric = grid.slice();
-                $.each(fabric,function(i,val) { val[series.length] = [i,1]; }); // ties
+                $.each(fabric,function(i,val) { val[series.length] = i; });
                 var cache = {};
                 var keymeta = $table.data('keymeta') || {};
                 series = series.slice();
                 series.push('__tie');
+                rev_series['__tie'] = series.length-1;
                 fabric.sort(function(a,b) {
                   return compare(a,b,rev_series,plan.stages,cache,keymeta);
                 });

@@ -175,7 +175,7 @@
     return out;
   }
 
-  function store_response_in_grid($table,rows,order,start,manifest_in,series) {
+  function store_response_in_grid($table,rows,nulls,order,start,manifest_in,series) {
     var grid = $table.data('grid') || [];
     var grid_manifest = $table.data('grid-manifest') || [];
     var indexes = build_series_index($table,series);
@@ -188,7 +188,11 @@
     for(var i=0;i<rows.length;i++) {
       for(var k=0;k<rows[order[i]].length;k++) {
         grid[start+i] = (grid[start+i]||[]);
-        grid[start+i][indexes[k]] = rows[order[i]][k]; 
+        if(nulls[order[i]][k]) {
+          grid[start+i][indexes[k]] = null;
+        } else {
+          grid[start+i][indexes[k]] = rows[order[i]][k];
+        }
       }
     }
     $table.data('grid',grid);
@@ -246,7 +250,7 @@
   }
 
   function use_response(widgets,$table,manifest_c,response,config) {
-    store_response_in_grid($table,response.data,response.order,response.start,manifest_c.manifest,response.series);
+    store_response_in_grid($table,response.data,response.nulls,response.order,response.start,manifest_c.manifest,response.series);
     render_grid(widgets,$table,manifest_c,response.start,response.data.length);
     store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
   }

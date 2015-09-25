@@ -32,7 +32,7 @@
           if(val===null || val===undefined) {
             ok = false;
           } else {
-            extra.push(k+'='+encodeURIComponent(row[rseries[v]][0]));
+            extra.push(k+'='+encodeURIComponent(row[rseries[v]]));
           }
         }
         if(!ok) { return html; }

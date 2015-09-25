@@ -43,6 +43,8 @@ sub new {
     enum_values => {},
     sort_data => [],
     null_cache => [],
+    data => [],
+    nulls => [],
     num => 0,
   };
   bless $self,$class;
@@ -81,8 +83,9 @@ sub add_row {
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $self->server_sortdata($row,$self->{'wire'}{'sort'},$self->{'used_cols'});
   }
-  $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
+  my $nulls = $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
   push @{$self->{'data'}},[ map { $row->{$_} } @{$self->{'used_cols'}} ];
+  push @{$self->{'nulls'}},[ map { $nulls->{$_} } @{$self->{'used_cols'}} ];
   return 1;
 }
 
@@ -166,6 +169,7 @@ sub server_order {
 sub server_nulls {
   my ($self,$row,$iconfig,$series) = @_;
 
+  my %nulls;
   foreach my $j (0..$#$series) {
     my $col = $self->{'columns'}{$series->[$j]};
     my $null_cache = ($self->{'null_cache'}[$j]||={});
@@ -176,8 +180,9 @@ sub server_nulls {
       $is_null = $col->is_null($v);
       $null_cache->{$v} = $is_null;
     }
-    $row->{$series->[$j]} = [$v,0+$is_null];
+    $nulls{$series->[$j]} = 0+$is_null;
   }
+  return \%nulls;
 }
 
 sub rows { return $_[0]->{'rows'}; }
@@ -388,6 +393,7 @@ sub newtable_data_request {
   $out = {
     response => {
       data => $data,
+      nulls => $self->{'nulls'},
       series => $self->{'used_cols'},
       order => $order,
       start => $self->{'rows'}[0],
@@ -398,6 +404,9 @@ sub newtable_data_request {
     },
     orient => $orient,
   };
+  #open(ZZ,">/tmp/zz");
+  #print ZZ JSON->new->encode($out);
+  #close ZZ;
   $self->set_cache($cache_key,JSON->new->encode($out));
   return $out;
 }
