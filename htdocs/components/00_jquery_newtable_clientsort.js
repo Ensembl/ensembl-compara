@@ -75,7 +75,7 @@
         var fabric = grid.slice();
         var partitioned = [[],[]];
         $.each(grid,function(i,row) {
-          partitioned[!!(row[idx]===null)].push(row);
+          partitioned[0+!!(row[idx]===null)].push(row);
         });
         partitioned[0].reverse();
         partitioned[1].reverse();

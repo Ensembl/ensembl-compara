@@ -175,7 +175,7 @@
     return out;
   }
 
-  function store_response_in_grid($table,rows,nulls,order,start,manifest_in,series) {
+  function store_response_in_grid($table,cols,nulls,order,start,manifest_in,series) {
     var grid = $table.data('grid') || [];
     var grid_manifest = $table.data('grid-manifest') || [];
     var indexes = build_series_index($table,series);
@@ -185,13 +185,13 @@
       grid = [];
       $table.data('grid-manifest',manifest_in);
     }
-    for(var i=0;i<rows.length;i++) {
-      for(var k=0;k<rows[order[i]].length;k++) {
-        grid[start+i] = (grid[start+i]||[]);
-        if(nulls[order[i]][k]) {
-          grid[start+i][indexes[k]] = null;
+    for(var i=0;i<cols.length;i++) {
+      for(var j=0;j<cols[i].length;j++) {
+        grid[start+j] = (grid[start+j]||[]);
+        if(nulls[i][order[j]]) {
+          grid[start+j][indexes[i]] = null;
         } else {
-          grid[start+i][indexes[k]] = rows[order[i]][k];
+          grid[start+j][indexes[i]] = cols[i][order[j]];
         }
       }
     }

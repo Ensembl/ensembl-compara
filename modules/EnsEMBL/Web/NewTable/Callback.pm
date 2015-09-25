@@ -74,6 +74,12 @@ sub finish_enum {
   return \%enums;
 }
 
+sub rotate {
+  my ($self,$target,$row) = @_;
+
+  push @{$self->{$target}[$_]||=[]},$row->[$_] for(0..$#$row);
+}
+
 sub add_row {
   my ($self,$row) = @_;
 
@@ -84,8 +90,8 @@ sub add_row {
     $self->server_sortdata($row,$self->{'wire'}{'sort'},$self->{'used_cols'});
   }
   my $nulls = $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
-  push @{$self->{'data'}},[ map { $row->{$_} } @{$self->{'used_cols'}} ];
-  push @{$self->{'nulls'}},[ map { $nulls->{$_} } @{$self->{'used_cols'}} ];
+  $self->rotate('data',[ map { $row->{$_} } @{$self->{'used_cols'}} ]);
+  $self->rotate('nulls',[ map { $nulls->{$_} } @{$self->{'used_cols'}} ]);
   return 1;
 }
 
@@ -377,7 +383,7 @@ sub newtable_data_request {
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $order = $self->server_order($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
   } else {
-    $order->[$_] = $_ for(0..$#$data);
+    $order->[$_] = $_ for(0..$#{$data->[0]});
   }
   my $E = time();
 
@@ -404,9 +410,9 @@ sub newtable_data_request {
     },
     orient => $orient,
   };
-  #open(ZZ,">/tmp/zz");
-  #print ZZ JSON->new->encode($out);
-  #close ZZ;
+  open(ZZ,">/tmp/zz");
+  print ZZ JSON->new->encode($out);
+  close ZZ;
   $self->set_cache($cache_key,JSON->new->encode($out));
   return $out;
 }
