@@ -27,6 +27,7 @@ package EnsEMBL::Web::NewTable::Endpoint;
 use strict;
 use warnings;
 
+use Carp;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 our @PLUGINS = qw(Core Frame Decorate Filter Misc);
@@ -118,7 +119,7 @@ sub delegate {
       return $plugin->$fn($obj,@$data);
     }
   }
-  die "No such method '$orig_fn'";
+  confess "No such method '$orig_fn'";
 }
 
 sub hub { return $_[0]->{'hub'}; }

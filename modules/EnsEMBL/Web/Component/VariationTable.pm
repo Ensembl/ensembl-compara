@@ -355,7 +355,7 @@ sub variation_table {
   my ($self,$callback,$consequence_type, $transcripts) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
-  my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
+  my ($base_trans_url, $url_transcript_prefix, %handles);
   my $num = 0;
 
   # create some URLs - quicker than calling the url method for every variant
@@ -503,15 +503,12 @@ sub variation_table {
             $row = { %$row, %$more_row };
           }
           $num++;
-          next unless $callback->passes_muster($row,$num);
-          push @rows,$row;
+          $callback->add_row($row);
           last ROWS if $callback->stand_down($row,$num);
         }
       }
     }
   }
-
-  return \@rows;
 }
 
 sub create_so_term_subsets {

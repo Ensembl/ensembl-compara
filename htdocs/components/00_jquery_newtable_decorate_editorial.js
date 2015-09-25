@@ -16,16 +16,16 @@
 
 (function($) {
   $.fn.newtable_decorate_editorial = function(config,data) {
-    function decorate_fn(column,extras) {
-      return function(html,row,series) {
-        var colkey = column;
-        if(extras['*'] && extras['*'].source) {
-          colkey = extras['*'].source;
-        }
-        var idx = -1;
-        for(var i=0;i<series.length;i++) {
-          if(series[i]==colkey) { idx = i; }
-        }
+    function decorate_fn(column,extras,series) {
+      var colkey = column;
+      if(extras['*'] && extras['*'].source) {
+        colkey = extras['*'].source;
+      }
+      var idx = -1;
+      for(var i=0;i<series.length;i++) {
+        if(series[i]==colkey) { idx = i; }
+      }
+      return function(html,row) {
         if(idx==-1) { return html; }
         var type = row[idx][0];
         var style = extras[type];

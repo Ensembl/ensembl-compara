@@ -29,6 +29,8 @@ sub set_decorates {
 package EnsEMBL::Web::NewTable::Plugins::DecorateIconic;
 use parent qw(EnsEMBL::Web::NewTable::Plugins::Decorate);
 
+sub requires { return [qw(HelpTips)]; }
+
 sub init {
  $_[0]->{'colourmap'} = $_[0]->table->hub->colourmap;
 }

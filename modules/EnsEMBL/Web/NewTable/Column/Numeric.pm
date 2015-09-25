@@ -29,7 +29,7 @@ sub js_type { return 'numeric'; }
 sub js_range { return 'range'; }
 sub clean { my $x=$_[1]; $x =~ s/([\d\.e\+-])\s.*$/$1/; return $x; }
 sub null { return !looks_like_number($_[1]); }
-sub cmp { return ($_[1] <=> $_[2])*$_[3]; }
+sub cmp { return (($_[1]||0) <=> ($_[2]||0))*$_[3]; }
 
 sub match {
   my ($self,$range,$value) = @_;
@@ -53,7 +53,7 @@ sub has_value {
   if(!looks_like_number($value)) { return; }
   if(exists $range->{'min'}) {
     $range->{'max'} = max($range->{'max'},$value);
-    $range->{'min'} = max($range->{'min'},$value);
+    $range->{'min'} = min($range->{'min'},$value);
   } else {
     $range->{'min'} = $range->{'max'} = $value;
   }

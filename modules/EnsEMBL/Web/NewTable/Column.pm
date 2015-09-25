@@ -130,10 +130,11 @@ sub is_match {
 sub add_value {
   my ($self,$range,$value) = @_;
 
+  return unless defined $value;
   my $values = $self->split($value);
   return unless defined $values;
   foreach my $v (@$values) {
-    $self->has_value($range,$v);
+    $self->has_value($range,$v) if defined $v;
   }
 }
 
@@ -161,7 +162,6 @@ sub configure {
     push @names,$k if $k =~ s/_/_set_/;
     my $ok = 0;
     foreach my $fn (@names) {
-      warn "fn=$fn\n";
       if($self->can($fn)) { $self->$fn($v); $ok=1; last; }
     }
     die "Bad option '$names[0]'" unless $ok;
@@ -184,5 +184,6 @@ sub AUTOLOAD {
 
   return $self->{'endpoint'}->delegate($self,'col',$fn,\@_);
 }
+sub DESTROY {} # For AUTOLOAD
 
 1;

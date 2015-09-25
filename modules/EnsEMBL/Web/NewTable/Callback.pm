@@ -39,9 +39,51 @@ sub new {
   my $self = {
     hub => $hub,
     component => $component,
+    rows => [],
+    enum_values => {},
+    sort_data => [],
+    null_cache => [],
+    num => 0,
   };
   bless $self,$class;
   return $self;
+}
+  
+
+sub add_enum {
+  my ($self,$row) = @_;
+
+  foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
+    my $column = $self->{'columns'}{$colkey};
+    my $values = ($self->{'enum_values'}{$colkey}||={});
+    my $value = $row->{$colkey};
+    $column->add_value($values,$value);
+  }
+}
+
+sub finish_enum {
+  my ($self,$row) = @_;
+
+  my %enums;
+  foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
+    my $column = $self->{'columns'}{$colkey};
+    $enums{$colkey} = $column->range($self->{'enum_values'}{$colkey}||{});
+  }
+  return \%enums;
+}
+
+sub add_row {
+  my ($self,$row) = @_;
+
+  $self->{'num'}++;
+  return 0 unless $self->passes_muster($row,$self->{'num'}); 
+  $self->add_enum($row); 
+  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
+    $self->server_sortdata($row,$self->{'wire'}{'sort'},$self->{'used_cols'});
+  }
+  $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
+  push @{$self->{'data'}},[ map { $row->{$_} } @{$self->{'used_cols'}} ];
+  return 1;
 }
 
 sub go {
@@ -52,7 +94,7 @@ sub go {
   my $orient = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
   my $more = $hub->param('more');
-  my $incr_ok = ($hub->param('incr_ok') eq 'true');
+  my $incr_ok = ($hub->param('incr_ok')||'' eq 'true');
   my $keymeta = from_json($hub->param('keymeta'));
   # Add plugins
   my $ssplugins = from_json($hub->param('ssplugins'));
@@ -87,54 +129,54 @@ sub preload {
   return $self->newtable_data_request($orient,undef,1);
 }
 
-sub server_sort {
-  my ($self,$data,$sort,$iconfig,$series,$keymeta) = @_;
+sub server_sortdata {
+  my ($self,$row,$sort,$series) = @_;
 
-  my $cols = $iconfig->{'columns'};
-  my $colconf = $iconfig->{'colconf'};
-  foreach my $i (0..$#$data) { push @{$data->[$i]},$i; }
-  my %cache;
+  my $colconf = $self->{'iconfig'}{'colconf'};
+  foreach my $i (0..$#$sort) {
+    push @{$self->{'sort_data'}[$i]||=[]},$row->{$sort->[$i]{'key'}};
+  }
+  push @{$self->{'sort_data'}[@$sort]||=[]},$self->{'num'}-1;
+}
+
+sub server_order {
+  my ($self,$sort,$series,$keymeta) = @_;
+
+  my @cache;
   my %rseries;
   $rseries{$series->[$_]} = $_ for (0..$#$series);
   $rseries{'__tie'} = -1;
-  @$data = sort {
+  my @columns = map { $self->{'columns'}{$_->{'key'}} } @$sort;
+  push @columns,EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
+  my $sd = $self->{'sort_data'};
+  my @order = sort {
     my $c = 0;
-    foreach my $col ((@$sort,{'dir'=>1,'key'=>'__tie'})) {
-      my $key = $col->{'key'};
-      my $column;
-      if($key eq '__tie') {
-        $column = EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
-      } else {
-        $column = $self->{'columns'}{$key};
-      }
-      $cache{$key}||={};
-      my $idx = $rseries{$key};
-      $c = $column->compare($a->[$idx],$b->[$idx],$col->{'dir'},$keymeta,$cache{$key},$key);
+    foreach my $i (0..@$sort) {
+      $cache[$i]||={};
+      $c = $columns[$i]->compare($sd->[$i][$a],$sd->[$i][$b],
+                                 $sort->[$i]{'dir'}||1,$keymeta,$cache[$i],
+                                 $sort->[$i]{'key'}||'__tie');
       last if $c;
     }
     $c;
-  } @$data;
-  pop @$_ for(@$data);
+  } (0..$#{$sd->[0]});
+  return \@order;
 }
 
 sub server_nulls {
-  my ($self,$data,$iconfig,$series) = @_;
+  my ($self,$row,$iconfig,$series) = @_;
 
-  my $cols = $iconfig->{'columns'};
-  my $colconf = $iconfig->{'colconf'};
   foreach my $j (0..$#$series) {
-    my $cc = $colconf->{$series->[$j]};
     my $col = $self->{'columns'}{$series->[$j]};
-    my %null_cache;
-    foreach my $i (0..$#$data) {
-      my $is_null = (!defined $data->[$i][$j]);
-      $is_null = $null_cache{$data->[$i][$j]} unless $is_null;
-      unless(defined $is_null) {
-        $is_null = $col->is_null($data->[$i][$j]);
-        $null_cache{$data->[$i][$j]} = $is_null;
-      }
-      $data->[$i][$j] = [$data->[$i][$j],0+$is_null];
+    my $null_cache = ($self->{'null_cache'}[$j]||={});
+    my $v = $row->{$series->[$j]};
+    my $is_null = (!defined $v);
+    $is_null = $null_cache->{$v} unless $is_null;
+    unless(defined $is_null) {
+      $is_null = $col->is_null($v);
+      $null_cache->{$v} = $is_null;
     }
+    $row->{$series->[$j]} = [$v,0+$is_null];
   }
 }
 
@@ -275,12 +317,18 @@ sub newtable_data_request {
   my @out;
 
   my $A = time();
+  
+  # Check if we need to request all rows due to sorting
+  my $all_data = 0;
+  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
+    $all_data = 1;
+  }
 
   # What phase should we be?
   my @required;
   push @required,map { $_->{'key'} } @{$self->{'wire'}{'sort'}||[]};
-  if($incr_ok) {
-    while($more < $#$phases) {
+  if($incr_ok && !$all_data) {
+    while(($more||0) < $#$phases) {
       my %gets_cols = map { $_ => 1 } (@{$phases->[$more]{'cols'}||\@cols});
       last unless scalar(grep { !$gets_cols{$_} } @required);
       $more++;
@@ -289,12 +337,8 @@ sub newtable_data_request {
     $more = $#$phases;
   }
   $self->{'phase_name'} = $phases->[$more]{'name'};
+  warn "CHOSEN PHASE $self->{'phase_name'}\n";
 
-  # Check if we need to request all rows due to sorting
-  my $all_data = 0;
-  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $all_data = 1;
-  }
   my $A2 = time();
 
   # Start row
@@ -303,84 +347,52 @@ sub newtable_data_request {
   $self->{'rows'} = [0,-1] if $all_data;
 
   # Calculate columns to send
-  my $used_cols = $phases->[$more]{'cols'} || \@cols;
-  my %sort_pos;
-  $sort_pos{$used_cols->[$_]} = $_ for (0..@$used_cols);
+  $self->{'used_cols'} = $phases->[$more]{'cols'} || \@cols;
 
   # Calculate function name
-  my $type = $self->{'iconfig'}{'type'};
+  my $type = $self->{'iconfig'}{'type'}||'';
   $type =~ s/\W//g;
   my $func = "table_content";
   $func .= "_$type" if $type;
 
   my $B = time();
   # Populate data
-  my $data = $self->{'component'}->$func($self);
+  $self->{'component'}->$func($self);
+  my $data = $self->{'data'};
   my $C = time();
 
-  # Enumerate, if necessary
-  my %enums;
-  foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
-    my $colconf = $self->{'iconfig'}{'colconf'}{$self->{'cols_pos'}{$colkey}};
-    my $column = $self->{'columns'}{$colkey};
-    my $row_pos = $sort_pos{$colkey};
-    next unless defined $row_pos;
-    my %values;
-    foreach my $r (@$data) {
-      my $value = $r->{$colkey};
-      $column->add_value(\%values,$value);
-    }
-    $enums{$colkey} = $column->range(\%values);
-  }
   my %shadow = %$orient;
   delete $shadow{'filter'};
-  $shadow{'series'} = $used_cols;
-
-  # Filter, if necessary
-  if($self->{'wire'}{'filter'}) {
-    my @new;
-    my $num = 1;
-    foreach my $row (@$data) {
-      push @new,$row if $self->passes_muster($row,$num);
-      $num++;
-    }
-    $data = \@new;
-  }
-
-  $used_cols = [ reverse @$used_cols ];
+  $shadow{'series'} = $self->{'used_cols'};
 
   my $D = time();
-  # Map to column format
-  my @data_out;
-  foreach my $d (@$data) {
-    push @data_out,[ map { $d->{$_} } @$used_cols ];
-  }
-
-  # Move on continuation counter
-  $more++;
-  $more=0 if $more == @$phases;
 
   # Sort it, if necessary
+  my $order;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $self->server_sort(\@data_out,$self->{'wire'}{'sort'},$self->{'iconfig'},$used_cols,$keymeta);
-    splice(@data_out,0,$irows->[0]);
-    splice(@data_out,$irows->[1]) if $irows->[1] >= 0;
+    $order = $self->server_order($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
+  } else {
+    $order->[$_] = $_ for(0..$#$data);
   }
   my $E = time();
-  $self->server_nulls(\@data_out,$self->{'iconfig'},$used_cols);
 
   my $F = time();
 
   warn sprintf("%f/%f/%f/%f/%f\n",$F-$E,$E-$D,$D-$C,$C-$B,$B-$A);
+  
+  # Move on continuation counter
+  $more++;
+  $more=0 if $more == @$phases;
 
   # Send it
   $out = {
     response => {
-      data => \@data_out,
-      series => $used_cols,
+      data => $data,
+      series => $self->{'used_cols'},
+      order => $order,
       start => $self->{'rows'}[0],
       more => $more,
-      enums => \%enums,
+      enums => $self->finish_enum(),
       shadow => \%shadow,
       keymeta => $self->{'key_meta'},
     },
