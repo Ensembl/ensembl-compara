@@ -30,6 +30,7 @@ ALTER TABLE genome_db ADD COLUMN first_release smallint unsigned, ADD COLUMN las
 # Insert dummy values for first_release and last_release
 UPDATE genome_db SET first_release = 80;    -- must be set, so that all the genomes are considered as released
 UPDATE genome_db SET last_release = 80 WHERE assembly_default=0;    -- non-default genome_dbs were not current any more in e81, so must have ended in e80 or before
+UPDATE genome_db gdb1 JOIN genome_db gdb2 USING (name, assembly) SET gdb2.first_release = gdb1.first_release, gdb2.last_release = gdb1.last_release WHERE gdb1.genome_component IS NULL AND gdb2.genome_component IS NOT NULL;   -- Make sure the components are in sync with their principal genome_db
 
 ALTER TABLE genome_db DROP COLUMN assembly_default;
 
