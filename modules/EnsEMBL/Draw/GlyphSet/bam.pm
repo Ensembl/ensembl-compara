@@ -82,14 +82,13 @@ sub render_normal {
     if (!scalar(@{$self->features})) {
       $self->no_features;
     } else {
-
+      $self->render_caption;
       #print STDERR "Rendering coverage\n";
       $self->render_coverage(%options) if $options{show_coverage};
       #print STDERR "Done rendering coverage\n";
       #print STDERR "Rendering reads\n";
       $self->render_sequence_reads(%options) if $options{show_reads};
       #print STDERR "Done rendering reads\n";
-      $self->render_caption;
     }
     alarm 0;
   };
@@ -264,7 +263,7 @@ sub render_caption {
         'font'      => $fontname_i,
         'ptsize'    => $fontsize_i,
         'colour'    => $self->my_colour('consensus'), 
-        'text'      => $self->my_config('caption'),
+        'text'      => $self->my_config('short_name') || $self->my_config('name'),
    }));
 
 

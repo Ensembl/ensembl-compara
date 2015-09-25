@@ -33,7 +33,7 @@ sub content {
     
     push @{$self->{'features'}}, @{EnsEMBL::Web::ZMenu::Transcript->new($hub, $self->new_object('Transcript', $_, $object->__data))->{'features'}} for @{$object->Obj->get_all_Transcripts};
   } else {
-    return $self->_content;
+    return $self->object ? $self->_content : $self->_multi_genes_content;
   }
 }
 
@@ -106,6 +106,25 @@ sub _content {
                   }) 
     if $alt_allele_link;
   
+}
+
+sub _multi_genes_content {
+  # hack for ENSWEB-1706
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my @ids   = split ',', $hub->param('g');
+
+  $self->caption('Multiple Genes:');
+
+  for (@ids) {
+    $self->add_entry({
+      'label_html' => sprintf '<a href="%s" class="_zmenu">%s</a><a class="_zmenu_link" href="%s"></a>',
+                        $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_, '__clear' => 1}),
+                        $_,
+                        $hub->url('ZMenu', {'g' => $_, 'ftype' => $hub->param('ftype') || '', 'config' => $hub->param('config') || ''})
+    });
+  }
 }
 
 1;

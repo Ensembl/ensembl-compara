@@ -77,9 +77,11 @@ sub content {
         $populations{$pop_id} = 1;
         $pop_names{$pop_id} = $pop->{'Name'};
         
-        my @composed_name = split(':', $pop->{'Label'});
-        $pop->{'Label'} = $composed_name[$#composed_name];
-      
+        if ($pop->{'Label'} =~ /(1000genomes|hapmap)/i) {
+          my @composed_name = split(':', $pop->{'Label'});
+          $pop->{'Label'} = $composed_name[$#composed_name];
+        }
+
         my $priority_level = $pop->{'Priority'};
         if ($priority_level) {
           $group_name{$priority_level} = $pop->{'Group'} unless defined $group_name{$priority_level};

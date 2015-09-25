@@ -597,6 +597,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     // enable helptips
     this.elLk.container.find('._ht').helptip();
 
+    // any zmenus inside zmenus
+    this.elLk.container.find('._zmenu').zMenuLink();
+
     // Hover ZMenus can be closed before they load!
     if(this.el.hasClass('closed')) {
       this.hide();

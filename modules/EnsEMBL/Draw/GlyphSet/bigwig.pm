@@ -100,18 +100,20 @@ sub render_normal {
   my $name            = $self->my_config('name');
   my @greyscale       = qw(ffffff d8d8d8 cccccc a8a8a8 999999 787878 666666 484848 333333 181818 000000);
 
-  $self->push($self->Barcode({
-    values    => $agg->{'values'},
-    x         => 1,
-    y         => 0,
-    height    => $h,
-    unit      => $agg->{'unit'},
-    max       => $agg->{'max'},
-    colours   => \@greyscale,
-  }));
-  $self->_render_hidden_bgd($h) if @{$agg->{'values'}};
+  if (@{$agg->{'values'}||[]}) {
+    $self->push($self->Barcode({
+      values    => $agg->{'values'},
+      x         => 1,
+      y         => 0,
+      height    => $h,
+      unit      => $agg->{'unit'},
+      max       => $agg->{'max'},
+      colours   => \@greyscale,
+    }));
+    $self->_render_hidden_bgd($h);
+  }
   
-  $self->errorTrack("No features from '$name' on this strand") unless @{$agg->{'values'}} || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
+  $self->errorTrack("No features from '$name' on this strand") unless @{$agg->{'values'}||[]} || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
 }
 
 sub render_text {
@@ -161,7 +163,7 @@ sub wiggle_aggregate {
     my $slice     = $self->{'container'};
     my $bins      = min($self->{'config'}->image_width, $slice->length);
     my $adaptor   = $self->bigwig_adaptor;
-    return [] unless $adaptor;
+    return {} unless $adaptor;
     my $values   = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
     my $bin_width = $slice->length / $bins;
     my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
