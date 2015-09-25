@@ -41,9 +41,11 @@
   }
 
   $.fn.newtable_decorate_toggle = function(config,data) {
-    function decorate_fn(column,extras) {
-      // XXX move out series
-      return function(html,row,series) {
+    function decorate_fn(column,extras,series) {
+      var rseries = {};
+      $.each(series,function(i,v) { rseries[v] = i; });
+
+      return function(html,row) {
         var sep = RegExp(extras['*'].separator || '\s');
         var max = (extras['*'].max || 20);
         var parts = split_up(sep,html);
@@ -54,8 +56,6 @@
         var highlight_over = (extras['*'].highlight_over || 0);
         var highlight_value;
         if(highlight_col && parts.length>2*highlight_over) {
-          var rseries = {};
-          $.each(series,function(i,v) { rseries[v] = i; });
           highlight_value = row[rseries[highlight_col]][0];
         }
         for(var i=0;i<parts.length;i+=2) {

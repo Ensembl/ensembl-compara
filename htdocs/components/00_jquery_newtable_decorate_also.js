@@ -16,21 +16,22 @@
 
 (function($) {
   $.fn.newtable_decorate_also = function(config,data) {
-    function decorate_fn(column,extras) {
-      return function(html,row,series) {
+    function decorate_fn(column,extras,series) {
+      var rseries = {};
+      $.each(series,function(i,v) { rseries[v] = i; });
+      return function(html,row) {
         var cols = (extras['*'].cols || []);
         var extra = [];
         var ok = true;
-        var rseries = {};
-        $.each(series,function(i,v) { rseries[v] = i; });
-        $.each(cols,function(i,v) {
+        for(var i=0;i<cols.length;i++) {
+          var v = cols[i];
           val = row[rseries[v]];
           if(val===null || val===undefined) {
             ok = false;
           } else {
             extra.push('<small>('+row[rseries[v]][0]+')</small>');
           }
-        });
+        }
         if(!ok) { return html; }
         return html + ' ' + extra.join(' ');
       };

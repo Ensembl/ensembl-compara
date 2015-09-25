@@ -175,7 +175,7 @@
     return out;
   }
 
-  function store_response_in_grid($table,rows,start,manifest_in,series) {
+  function store_response_in_grid($table,rows,order,start,manifest_in,series) {
     var grid = $table.data('grid') || [];
     var grid_manifest = $table.data('grid-manifest') || [];
     var indexes = build_series_index($table,series);
@@ -185,12 +185,12 @@
       grid = [];
       $table.data('grid-manifest',manifest_in);
     }
-    $.each(rows,function (i,row) {
-      for(var k=0;k<row.length;k++) {
+    for(var i=0;i<rows.length;i++) {
+      for(var k=0;k<rows[order[i]].length;k++) {
         grid[start+i] = (grid[start+i]||[]);
-        grid[start+i][indexes[k]] = row[k]; 
+        grid[start+i][indexes[k]] = rows[order[i]][k]; 
       }
-    });
+    }
     $table.data('grid',grid);
   }
 
@@ -238,7 +238,7 @@
       length = orient_c.data.length;
     }
     widgets[view.format].add_data($table,orient_c.data,grid_series,start,length,orient_c.orient);
-    widgets[view.format].truncate_to($table,length,orient_c[1]);
+    widgets[view.format].truncate_to($table,orient_c.data,grid_series,orient_c[1]);
   }
 
   function rerender_grid(widgets,$table,manifest_c) {
@@ -246,7 +246,7 @@
   }
 
   function use_response(widgets,$table,manifest_c,response,config) {
-    store_response_in_grid($table,response.data,response.start,manifest_c.manifest,response.series);
+    store_response_in_grid($table,response.data,response.order,response.start,manifest_c.manifest,response.series);
     render_grid(widgets,$table,manifest_c,response.start,response.data.length);
     store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
   }
@@ -383,7 +383,6 @@
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
     build_format(widgets,$table);
-//    $table.helptip();
     $table.on('view-updated',function() {
       var view = $table.data('view');
       console.log("view updated",view);
@@ -407,7 +406,8 @@
         keymeta: JSON.stringify($table.data('keymeta')||{}),
         config: JSON.stringify(config),
         orient: JSON.stringify(orient),
-        wire: JSON.stringify(orient)
+        wire: JSON.stringify(orient),
+        ssplugins: JSON.stringify(config.ssplugins)
       });
       var out = '<form method="POST" id="spawn" action="'+src+'">';
       $.each(params,function(k,v) {

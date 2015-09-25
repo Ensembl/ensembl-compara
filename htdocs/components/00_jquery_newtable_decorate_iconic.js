@@ -46,12 +46,12 @@
           if(ann.icon) {
             more = '';
             if(ann.helptip) {
-              more += ' class="_ht" title="'+ann.helptip+'" ';
+              more += ' class="_tht" title="'+ann.helptip+'" ';
             }
             val = '<img src="'+ann.icon+'" '+more+'/>';
           } else {
             if(ann.helptip) {
-              val = '<span class="ht _ht">'+
+              val = '<span class="ht _tht">'+
                 '<span class="_ht_tip hidden">'+ann.helptip+'</span>';
             }
             val += values[i];
