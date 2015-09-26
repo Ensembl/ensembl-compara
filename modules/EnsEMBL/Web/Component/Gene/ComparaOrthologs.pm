@@ -235,7 +235,7 @@ sub content {
         $column_name => $self->html_format ? qq{<span class="small">$target_links</span>} : $description,
         'Target %id' => $target,
         'Query %id'  => $query,
-        'options'    => { class => join(' ', 'all', @{$sets_by_species->{$species} || []}) }
+        'options'    => { class => join(' ', @{$sets_by_species->{$species} || []}) }
       };      
       $table_details->{'Gene name(Xref)'}=$orthologue->{'display_id'} if(!$self->html_format);
       
