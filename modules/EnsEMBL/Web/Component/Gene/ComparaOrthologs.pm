@@ -80,9 +80,9 @@ sub content {
     $columns = [
       { key => 'set',       title => 'Species set',    align => 'left',    width => '26%' },
       { key => 'show',      title => 'Show details',   align => 'center',  width => '10%' },
-      { key => '1:1',       title => 'With 1:1 orthologues',       align => 'center',  width => '16%', help => 'Number of species with 1:1 orthologues' },
-      { key => '1:many',    title => 'With 1:many orthologues',    align => 'center',  width => '16%', help => 'Number of species with 1:many orthologues' },
-      { key => 'many:many', title => 'With many:many orthologues', align => 'center',  width => '16%', help => 'Number of species with many:many orthologues' },
+      { key => '1:1',       title => 'With 1:1 orthologues',       align => 'center',  width => '16%', help => 'Number of species with 1:1 orthologues<em>'.$self->get_glossary_entry('1-to-1 orthologues').'</em>' },
+      { key => '1:many',    title => 'With 1:many orthologues',    align => 'center',  width => '16%', help => 'Number of species with 1:many orthologues<em>'.$self->get_glossary_entry('1-to-many orthologues').'</em>' },
+      { key => 'many:many', title => 'With many:many orthologues', align => 'center',  width => '16%', help => 'Number of species with many:many orthologues<em>'.$self->get_glossary_entry('Many-to-many orthologues').'</em>' },
       { key => 'none',      title => 'Without orthologues',        align => 'center',  width => '16%', help => 'Number of species without orthologues' },
     ];
 
@@ -115,8 +115,8 @@ sub content {
     { key => 'identifier', align => 'left', width => '15%', sort => 'html', title => $self->html_format ? 'Ensembl identifier &amp; gene name' : 'Ensembl identifier'},    
     { key => $column_name, align => 'left', width => '10%', sort => 'none'                                                },
     { key => 'Location',   align => 'left', width => '20%', sort => 'position_html'                                       },
-    { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric'                                             },
-    { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric'                                             },
+    { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric', label => 'Target %id', title => $self->get_glossary_entry('Target % id')    },
+    { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric', label => 'Query %id',  title => $self->get_glossary_entry('Query %id')      },
   ];
   
   push @$columns, { key => 'Gene name(Xref)',  align => 'left', width => '15%', sort => 'html', title => 'Gene name(Xref)'} if(!$self->html_format);
@@ -228,7 +228,7 @@ sub content {
       
       my $table_details = {
         'Species'    => join('<br />(', split /\s*\(/, $species_defs->species_label($species)),
-        'Type'       => ucfirst $orthologue_desc,
+        'Type'       => $self->glossary_helptip(ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues"),
         'dN/dS'      => $orthologue_dnds_ratio,
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Location'   => qq{<a href="$location_link">$orthologue->{'location'}</a>},
