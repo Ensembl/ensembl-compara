@@ -194,50 +194,7 @@
         match: function(ori,val) { return string_match(ori,val); },
         sort: iconic_sort,
         merge: rangemerge_class
-      }],
-      ctypes: [{
-        name: "none",
-        uncompress: function(x) { return x; }
-      },{
-        name: "iconic",
-        uncompress: function(raw) {
-          var out = [];
-          var num = $.euncompress(raw.num);
-          var seq = [];
-          var seqc = [];
-          for(var i=0;i<raw.seq.length;i++) {
-            seq[i] = $.euncompress(raw.seq[i]);
-            seqc[i] = 0;
-          }
-          var prev = "";
-          for(var i=0;i<num.length;i++) {
-            if(num[i]==0) {
-              out.push(prev);
-            } else {
-              var here = [];
-              for(var j=0;j<num[i];j++) {
-                here.push(raw.classes[seq[j][seqc[j]++]]);
-              }
-              prev = here.join('~');
-              out.push(prev);
-            }
-          }
-          console.log(out); 
-          return out;
-        }
-      },{
-        name: "class",
-        uncompress: function(raw) {
-          var out = [];
-          var seq = $.euncompress(raw.seq);
-          var prev = "";
-          for(var i=0;i<seq.length;i++) {
-            if(seq[i]!=0) { prev = raw.classes[seq[i]]; }
-            out.push(prev);
-          }
-          return out;
-        }
-      }],
+      }]
     };
   };
 })(jQuery);

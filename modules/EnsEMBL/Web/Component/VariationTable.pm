@@ -243,16 +243,16 @@ sub make_table {
   },{
     _key => 'vf', _type => 'numeric unshowable no_filter'
   },{
-    _key => 'chr', _type => 'position no_filter', label => 'Chr: bp',
-    width => 1.75,
-    helptip => $glossary->{'Chr:bp'}
-  },{
     _key => 'location', _type => 'position unshowable',
-    sort_for => 'chr'
+    sort_for => 'chr',
   },{
-    _key => 'vf_allele', _type => 'string no_filter unshowable class_compress',
+    _key => 'chr', _type => 'string no_filter', label => 'Chr: bp',
+    width => 1.75,
+    helptip => $glossary->{'Chr:bp'},
   },{
-    _key => 'Alleles', _type => 'string no_filter no_sort class_compress',
+    _key => 'vf_allele', _type => 'string no_filter unshowable',
+  },{
+    _key => 'Alleles', _type => 'string no_filter no_sort',
     label => "Alle\fles",
     helptip => 'Alternative nucleotides',
     toggle_separator => '/',
@@ -260,7 +260,7 @@ sub make_table {
     toggle_highlight_column => 'vf_allele',
     toggle_highlight_over => 2
   },{
-    _key => 'gmaf_allele', _type => 'string no_filter unshowable class_compress',
+    _key => 'gmaf_allele', _type => 'string no_filter unshowable',
   },{
     _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
     helptip => $glossary->{'Global MAF'},
@@ -269,13 +269,13 @@ sub make_table {
     _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
     width => 1.75
   },{
-    _key => 'class', _type => 'string class_compress', label => 'Class',
+    _key => 'class', _type => 'string', label => 'Class',
     width => 2,
     helptip => $glossary->{'Class'}
   },{
-    _key => 'Source', _type => 'string class_compress', label => "Sour\fce",
+    _key => 'Source', _type => 'string', label => "Sour\fce",
     width => 1.25,
-    helptip => $glossary->{'Source'}
+    helptip => $glossary->{'Source'},
   },{
     _key => 'Submitters', _type => 'string no_filter',
     label => 'Submitters',
@@ -294,7 +294,7 @@ sub make_table {
     width => 1.5,
     helptip => 'Consequence type'
   },{
-    _key => 'aachange', _type => 'string no_filter no_sort class_compress', label => "AA",
+    _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
     helptip => "Resulting amino acid(s)"
   },{
     _key => 'aacoord', _type => 'integer', label => "AA co\ford",
@@ -318,10 +318,10 @@ sub make_table {
     label => "Poly\fPhen",
     helptip => $glossary->{'PolyPhen'}
   },{
-    _key => 'LRG', _type => 'string unshowable class_compress',
+    _key => 'LRG', _type => 'string unshowable',
     label => "LRG",
   },{
-    _key => 'Transcript', _type => 'string class_compress',
+    _key => 'Transcript', _type => 'string',
     width => 2,
     helptip => $glossary->{'Transcript'},
     link_url => {
@@ -330,7 +330,7 @@ sub make_table {
       t => ["Transcript"] 
     },
    },{
-    _key => 'LRGTranscript', _type => 'string class_compress',
+    _key => 'LRGTranscript', _type => 'string',
     width => 2,
     helptip => $glossary->{'Transcript'},
     link_url => {
@@ -398,6 +398,7 @@ sub variation_table {
     warn "stable id $transcript_stable_id\n";
     my $gene                 = $transcript->gene;
 
+    my @tv_sorted;
     foreach my $transcript_variation (@$tvs) {
       my $raw_id = $transcript_variation->{_variation_feature_id};
 
@@ -405,7 +406,16 @@ sub variation_table {
       next unless $snp;
 
       my ($chr, $start, $end) = ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end);
+      push @tv_sorted,[$transcript_variation,$snp->seq_region_start];
+    }
+    @tv_sorted = map { $_->[0] } sort { $a->[1] <=> $b->[1] } @tv_sorted;
 
+    foreach my $transcript_variation (@tv_sorted) {
+      my $raw_id = $transcript_variation->{_variation_feature_id};
+      my $snp = $vfs->{$raw_id};
+      next unless $snp;
+
+      my ($chr, $start, $end) = ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end);
       foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
         
         # this isn't needed anymore, I don't think!!!

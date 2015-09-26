@@ -22,8 +22,6 @@ use strict;
 use warnings;
 use parent qw(EnsEMBL::Web::NewTable::Column);
 
-use EnsEMBL::Web::Utils::Compress qw(ecompress);
-
 sub js_type { return 'string'; }
 sub js_range { return 'class'; }
 
@@ -31,29 +29,5 @@ sub null { return $_[1] !~ /\S/; }
 sub cmp { return (lc $_[1] cmp lc $_[2])*$_[3]; }
 sub has_value { return $_[1]->{$_[2]} = 1; }
 sub range { return [sort keys %{$_[1]}]; }
-
-sub compress {
-  my ($self,$data) = @_;
-
-  return ['none',$data] if !$self->{'class_compress'};
-  my (@classes,%classes,@seq);
-  push @classes,''; # Unused to prevent 0 being used
-  my $d_last = "";
-  foreach my $d (@$data) {
-    if($d eq $d_last) {
-      push @seq,0;
-      next;
-    }
-    $d_last = $d;
-    unless(exists $classes{$d}) {
-      $classes{$d} = @classes;
-      push @classes,$d;
-    }
-    push @seq,$classes{$d};
-  }
-  return ['class',{ classes => \@classes, seq => ecompress(\@seq) }];
-}
-
-sub class_compress { $_[0]->{'class_compress'} = 1;  }
 
 1;

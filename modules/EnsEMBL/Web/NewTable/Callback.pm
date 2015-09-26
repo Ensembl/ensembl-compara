@@ -23,15 +23,20 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::NewTable::Endpoint);
 
-use EnsEMBL::Web::Utils::Compress qw(ecompress);
 use JSON qw(from_json);
 
+use MIME::Base64;
 use Compress::Zlib;
 use Digest::MD5 qw(md5_hex);
 use SiteDefs;
 use Text::CSV;
 
 # XXX move all this stuff to somewhere it's more suited
+
+sub compress_block {
+  warn Dumper($_[0]);
+  return encode_base64(compress(JSON->new->encode($_[0])));
+}
 
 sub new {
   my ($proto,$hub,$component) = @_;
@@ -52,7 +57,6 @@ sub new {
   bless $self,$class;
   return $self;
 }
-  
 
 sub add_enum {
   my ($self,$row) = @_;
@@ -76,12 +80,6 @@ sub finish_enum {
   return \%enums;
 }
 
-sub rotate {
-  my ($self,$target,$row) = @_;
-
-  push @{$self->{$target}[$_]||=[]},$row->[$_] for(0..$#$row);
-}
-
 sub add_row {
   my ($self,$row) = @_;
 
@@ -92,8 +90,12 @@ sub add_row {
     $self->server_sortdata($row,$self->{'wire'}{'sort'},$self->{'used_cols'});
   }
   my $nulls = $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
-  $self->rotate('data',[ map { $row->{$_} } @{$self->{'used_cols'}} ]);
-  $self->rotate('nulls',[ map { $nulls->{$_} } @{$self->{'used_cols'}} ]);
+  foreach my $i (0..$#{$self->{'used_cols'}}) {
+    my $k = $self->{'used_cols'}[$i];
+    $self->{'data'}[$i]||=[];
+    push @{$self->{'nulls'}[$i]||=[]},$nulls->{$k};
+    push @{$self->{'data'}[$i]||=[]},$row->{$k} unless $nulls->{$k};
+  }
   $self->{'len'}++;
   return 1;
 }
@@ -119,7 +121,7 @@ sub go {
   foreach my $key (keys %{$self->{'iconfig'}{'colconf'}}) {
     my $cc = $self->{'iconfig'}{'colconf'}{$key};
     $self->{'columns'}{$key} =
-      EnsEMBL::Web::NewTable::Column->new($self,$cc->{'sstype'},$key,$cc->{'ssconf'});
+      EnsEMBL::Web::NewTable::Column->new($self,$cc->{'sstype'},$key,$cc->{'ssconf'},$cc->{'ssarg'});
   }
 
   my $out = $self->newtable_data_request($orient,$more,$incr_ok,$keymeta);
@@ -385,6 +387,8 @@ sub newtable_data_request {
   my $order;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $order = $self->server_order($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
+  } else {
+    $order = [(0..$self->{'len'}-1)];
   }
   my $E = time();
 
@@ -396,19 +400,13 @@ sub newtable_data_request {
   $more++;
   $more=0 if $more == @$phases;
 
-  # Compress it
-  my @data2;
-  foreach my $i (0..$#$data) {
-    my $column = $self->{'columns'}{$self->{'used_cols'}[$i]};
-    $data2[$i] = $column->compress($data->[$i]);
-  }
-  
   # Send it
+  use Data::Dumper;
   $out = {
     response => {
       len => $self->{'len'},
-      data => \@data2,
-      nulls => [map { ecompress($_) } @{$self->{'nulls'}}],
+      data => [ map { compress_block($_) } @$data ],
+      nulls => compress_block($self->{'nulls'}),
       series => $self->{'used_cols'},
       order => $order,
       start => $self->{'rows'}[0],
@@ -419,12 +417,17 @@ sub newtable_data_request {
     },
     orient => $orient,
   };
-  foreach my $i (0..$#data2) {
-    #open(ZZ,">/tmp/zz-$i") || die;
-    #warn "=$data2[$i]\n";
-    #print ZZ JSON->new->encode($data2[$i]);
-    #close ZZ;
-  }
+  my $zout = "";
+  my $deflate = deflateInit();
+  open(YY,">/tmp/yy");
+  my ($output,$status) = $deflate->deflate(JSON->new->encode($self->{'nulls'}));
+  $zout .= $output;
+  ($output,$status) = $deflate->flush();
+  die "Cannot compress" unless $status == Z_OK;
+  $zout .= $output;
+  print YY encode_base64($zout);
+  print YY JSON->new->encode($self->{'nulls'});
+  close YY;
 
   open(ZZ,">/tmp/zz2");
 #  print ZZ JSON->new->encode([map { ecompress($_) } @{$out->{'response'}{'nulls'}}]);

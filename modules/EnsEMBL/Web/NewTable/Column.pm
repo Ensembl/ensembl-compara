@@ -40,16 +40,21 @@ sub new {
       sort => 1,
       incr_ok => 1,
       sstype => $type,
+      ssconf => $confarr,
+      ssarg => $confarg,
     },
   };
 
   bless $self, $class;
+  $self->init();
   $self->{'conf'}{'type_js'} = $self->js_type();
   $self->{'conf'}{'range'} = $self->js_range();
   $self->{'conf'}{'range_params'} = $self->js_params();
   $self->configure($confarr,$confarg);
   return $self;
 }
+
+sub init {}
 
 sub js_params { return {}; }
 sub clean { return $_[1]; }

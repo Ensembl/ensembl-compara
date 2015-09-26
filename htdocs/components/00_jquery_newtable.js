@@ -15,6 +15,17 @@
  */
 
 (function($) {
+  function uncompress(raw) {
+    var inflate = new Zlib.Inflate(decodeB64(raw));
+    var plain = inflate.decompress();
+    var out = "";
+    // TODO do it faster
+    for(var i=0;i<plain.length;i++) {
+      out = out + String.fromCharCode(plain[i]);
+    }
+    return $.parseJSON(out);
+  }
+
   function make_widget(config,widget) {
     var data = {};
     if($.isArray(widget)) {
@@ -250,10 +261,7 @@
   }
 
   function use_response(widgets,$table,manifest_c,response,config) {
-    var nulls = [];
-    for(var i=0;i<response.nulls.length;i++) {
-      nulls[i] = $.euncompress(response.nulls[i]);
-    }
+    var nulls = uncompress(response.nulls);
     var order = response.order;
     if(!order) {
       order = [];
@@ -261,9 +269,15 @@
     }
     var data = [];
     for(var i=0;i<response.data.length;i++) {
-      var d = response.data[i];
-      var ctype = $.find_type(widgets,{ 'ctype': d[0] },'ctypes','ctype');
-      data[i] = ctype.uncompress(d[1]);
+      data[i] = uncompress(response.data[i]);
+    }
+    for(var i=0;i<nulls.length;i++) {
+      var j=0;
+      var out = [];
+      for(var k=0;k<nulls[i].length;k++) {
+        if(nulls[i][k]) { out.push(null); } else { out.push(data[i][j++]); }
+      }
+      data[i] = out;
     }
     store_response_in_grid($table,data,nulls,order,response.start,manifest_c.manifest,response.series);
     render_grid(widgets,$table,manifest_c,response.start,response.len);
@@ -468,15 +482,13 @@
     return good;
   };
 
-  $.find_type = function(widgets,cc,key,cckey) {
-    if(!key) { key = "types"; }
-    if(!cckey) { cckey = "type_js"; }
+  $.find_type = function(widgets,cc) {
     var w;
     $.each(widgets,function(name,contents) {
-      if(contents[key]) {
-        for(var i=0;i<contents[key].length;i++) {
-          if(contents[key][i].name == cc[cckey]) {
-            w = contents[key][i];
+      if(contents.types) {
+        for(var i=0;i<contents.types.length;i++) {
+          if(contents.types[i].name == cc.type_js) {
+            w = contents.types[i];
           }
         }
       }
