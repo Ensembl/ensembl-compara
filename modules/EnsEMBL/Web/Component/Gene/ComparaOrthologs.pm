@@ -51,12 +51,15 @@ sub content {
 
   my %orthologue_list;
   my %skipped;
+  my %not_seen = map {$_ => 1} ($species_defs->valid_species);
+  delete $not_seen{$hub->species};
   
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
       $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$_}}};
       $skipped{$species}        += keys %{$homology_type->{$_}} if $hub->param('species_' . lc $species) eq 'off';
+      delete $not_seen{$species};
     }
   }
   
@@ -89,13 +92,14 @@ sub content {
     foreach my $set (@$set_order) {
       my $set_info = $species_sets->{$set};
       
+      my $none_title = $set_info->{'none'} ? sprintf('<a href="#list_no_ortho">%d</a>', $set_info->{'none'}) : 0;
       push @rows, {
         'set'       => "<strong>$set_info->{'title'}</strong> (<i>$set_info->{'all'} species</i>)<br />$set_info->{'desc'}",
         'show'      => qq{<input type="checkbox" class="table_filter" title="Check to show these species in table below" name="orthologues" value="$set" />},
         '1:1'       => $set_info->{'1-to-1'}       || 0,
         '1:many'    => $set_info->{'1-to-many'}    || 0,
         'many:many' => $set_info->{'Many-to-many'} || 0,
-        'none'      => $set_info->{'none'}         || 0,
+        'none'      => $none_title,
       };
     }
     
@@ -264,6 +268,19 @@ sub content {
       )
     );
   }  
+
+  if (%not_seen) {
+    $html .= '<br /><a name="list_no_ortho"/>' . $self->_info(
+      'Species without orthologues',
+      sprintf(
+        '<p>%d species are not shown in the table above because they don\'t have any orthologue with %s.<ul><li>%s</li></ul></p>',
+        scalar(keys %not_seen),
+        $self->object->Obj->stable_id,
+        join "</li>\n<li>", sort map {$species_defs->species_label($_)} keys %not_seen,
+      )
+    );
+  }
+
   return $html;
 }
 
