@@ -260,7 +260,7 @@ sub content {
       sprintf(
         '<p>%d orthologues not shown in the table above from the following species. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
         $count,
-        join "</li>\n<li>", map "$_ ($skipped{$_})", sort keys %skipped
+        join "</li>\n<li>", sort map {$species_defs->species_label($_)." ($skipped{$_})"} keys %skipped
       )
     );
   }  
