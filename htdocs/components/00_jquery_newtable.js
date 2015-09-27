@@ -261,7 +261,16 @@
   }
 
   function use_response(widgets,$table,manifest_c,response,config) {
-    var nulls = uncompress(response.nulls);
+    var nulls = [];
+    for(var i=0;i<response.nulls.length;i++) {
+      var d = uncompress(response.nulls[i]);
+      if(i==0) { nulls = d; }
+      else {
+        for(var j=0;j<d.length;j++) {
+          nulls[j] = nulls[j].concat(d[j]);
+        }
+      }
+    }
     var order = response.order;
     if(!order) {
       order = [];
@@ -269,7 +278,13 @@
     }
     var data = [];
     for(var i=0;i<response.data.length;i++) {
-      data[i] = uncompress(response.data[i]);
+      var d = uncompress(response.data[i]);
+      if(i==0) { data = d; }
+      else {
+        for(var j=0;j<d.length;j++) {
+          data[j] = data[j].concat(d[j]);
+        }
+      }
     }
     for(var i=0;i<nulls.length;i++) {
       var j=0;

@@ -34,7 +34,6 @@ use Text::CSV;
 # XXX move all this stuff to somewhere it's more suited
 
 sub compress_block {
-  warn Dumper($_[0]);
   return encode_base64(compress(JSON->new->encode($_[0])));
 }
 
@@ -46,11 +45,13 @@ sub new {
     hub => $hub,
     component => $component,
     rows => [],
+    outdata => [],
     enum_values => {},
     sort_data => [],
     null_cache => [],
     data => [],
     nulls => [],
+    outnulls => [],
     num => 0,
     len => 0,
   };
@@ -80,6 +81,14 @@ sub finish_enum {
   return \%enums;
 }
 
+sub consolidate {
+  my ($self) = @_;
+  push @{$self->{'outdata'}},compress_block($self->{'data'});
+  push @{$self->{'outnulls'}},compress_block($self->{'nulls'});
+  $self->{'data'} = [];
+  $self->{'nulls'} = [];
+}
+
 sub add_row {
   my ($self,$row) = @_;
 
@@ -97,6 +106,7 @@ sub add_row {
     push @{$self->{'data'}[$i]||=[]},$row->{$k} unless $nulls->{$k};
   }
   $self->{'len'}++;
+  $self->consolidate() unless $self->{'len'}%10000;
   return 1;
 }
 
@@ -264,8 +274,6 @@ sub convert_to_csv {
   return $out;
 }
 
-use Time::HiRes qw(time);
-
 sub get_cache {
   my ($self,$key) = @_;
 
@@ -332,8 +340,6 @@ sub newtable_data_request {
   $phases = [{ name => undef }] unless $phases and @$phases;
   my @out;
 
-  my $A = time();
-  
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
@@ -355,8 +361,6 @@ sub newtable_data_request {
   $self->{'phase_name'} = $phases->[$more]{'name'};
   warn "CHOSEN PHASE $self->{'phase_name'}\n";
 
-  my $A2 = time();
-
   # Start row
   my $irows = $phases->[$more]{'rows'} || [0,-1];
   $self->{'rows'} = $irows;
@@ -371,17 +375,12 @@ sub newtable_data_request {
   my $func = "table_content";
   $func .= "_$type" if $type;
 
-  my $B = time();
   # Populate data
   $self->{'component'}->$func($self);
-  my $data = $self->{'data'};
-  my $C = time();
 
   my %shadow = %$orient;
   delete $shadow{'filter'};
   $shadow{'series'} = $self->{'used_cols'};
-
-  my $D = time();
 
   # Sort it, if necessary
   my $order;
@@ -390,11 +389,6 @@ sub newtable_data_request {
   } else {
     $order = [(0..$self->{'len'}-1)];
   }
-  my $E = time();
-
-  my $F = time();
-
-  warn sprintf("%f/%f/%f/%f/%f\n",$F-$E,$E-$D,$D-$C,$C-$B,$B-$A);
   
   # Move on continuation counter
   $more++;
@@ -402,11 +396,12 @@ sub newtable_data_request {
 
   # Send it
   use Data::Dumper;
+  $self->consolidate();
   $out = {
     response => {
       len => $self->{'len'},
-      data => [ map { compress_block($_) } @$data ],
-      nulls => compress_block($self->{'nulls'}),
+      data => $self->{'outdata'},
+      nulls => $self->{'outnulls'},
       series => $self->{'used_cols'},
       order => $order,
       start => $self->{'rows'}[0],
