@@ -15,14 +15,16 @@
  */
 
 (function($) {
-  $.fn.new_table_search = function(config,data) {
+  $.fn.new_table_search = function(config,data,widgets) {
+
+    function identity_fn(x) { return x; }
 
     function match(row,series,search,cleaner) {
       for(var i=0;i<row.length;i++) {
         var key =series[i];
         if(cleaner[key]==undefined) { continue; }
-        if(!row[i] || row[i][0]===undefined) { continue; }
-        var val = row[i][0];
+        if(!row[i]) { continue; }
+        var val = row[i];
         if(cleaner[key]) { val = cleaner[key](val); }
         if(val == undefined) { return false; }
         if(~val.toLowerCase().indexOf(search)) { return true; }
@@ -69,10 +71,11 @@
             var off = need.off_columns || {};
             for(var i=0;i<config.columns.length;i++) {
               if(off[config.columns[i]]) { continue; }
-              var fn = config.colconf[config.columns[i]].search_clean;
-              if(!fn) { fn = "html_cleaned"; }
-              if(fn) { var clean = $.fn['newtable_clean_'+fn]; }
-              if(clean) { cleaner[config.columns[i]] = clean; }
+              var type = $.find_type(widgets,config.colconf[config.columns[i]]);
+              var fn;
+              if(type) { fn = type.clean; }
+              if(!fn) { fn = identity_fn; }
+              if(fn) { cleaner[config.columns[i]] = fn; }
             }
             // XXX should search be searching columns or series?
             return {

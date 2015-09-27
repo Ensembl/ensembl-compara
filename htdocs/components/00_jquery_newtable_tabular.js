@@ -227,7 +227,7 @@
     for(var i=start;i<start+rows_per_subtable && i<grid.length;i++) {
       var row = [];
       for(var j=0;j<shown.length;j++) {
-        row[j] = (grid[i][shown[j]]||[''])[0];
+        row[j] = grid[i][shown[j]]||'';
       }
       markup.push(row);
     }
@@ -298,7 +298,6 @@
     }
     $('tbody',$subtable)[0].innerHTML = html;
     $table.trigger('markup-activate',[$subtable]);
-//    $('._ht',$subtable).helptip(); // XXX merge into the above
     $subtable.css('height','');
     $subtable.data('known-height',$subtable.height());
     guess_subtable_sizes($table);

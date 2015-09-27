@@ -15,6 +15,25 @@
  */
 
 (function($) {
+  function beat(def,sleeplen) {
+    return def.then(function(data) {
+      var d = $.Deferred();
+      setTimeout(function() { d.resolve(data); },sleeplen);
+      return d;
+    });
+  }
+
+  function uncompress(raw) {
+    var inflate = new Zlib.Inflate(decodeB64(raw));
+    var plain = inflate.decompress();
+    var out = "";
+    // TODO do it faster
+    for(var i=0;i<plain.length;i++) {
+      out = out + String.fromCharCode(plain[i]);
+    }
+    return $.parseJSON(out);
+  }
+
   function make_widget(config,widget) {
     var data = {};
     if($.isArray(widget)) {
@@ -128,14 +147,23 @@
              incr_ok: incr, all_rows: all_rows };
   }
 
-  function build_orient(manifest_c,data,data_series,destination) {
+  function build_orient(widgets,$table,manifest_c,data,data_series,destination) {
     var orient = $.extend(true,{},manifest_c.manifest);
-    $.each(manifest_c.undo,function(i,step) {
-      var out = step(orient,data,data_series,destination);
-      orient = out[0];
-      data = out[1];
+    var d = $.Deferred();
+    d.resolve([orient,data,0]);
+    flux(widgets,$table,'think',1);
+    for(var i=0;i<manifest_c.undo.length;i++) {
+      d = beat(d.then(function(input) {
+        var step = manifest_c.undo[input[2]];
+        var output = step(input[0],input[1],data_series,destination);
+        return [output[0],output[1],input[2]+1];
+      }),10);
+    }
+    d = d.then(function(input) {
+      flux(widgets,$table,'think',-1);
+      return { orient: input[0], data: input[1] };
     });
-    return { data: data, orient: orient };
+    return d;
   }
 
   function build_enums(manifest_c,grid,series,enums) {
@@ -175,20 +203,23 @@
     return out;
   }
 
-  function store_response_in_grid($table,rows,order,start,manifest_in,series) {
+  function store_response_in_grid($table,cols,nulls,order,start,manifest_in,series) {
     var grid = $table.data('grid') || [];
     var grid_manifest = $table.data('grid-manifest') || [];
     var indexes = build_series_index($table,series);
-    console.log('indexes',series,indexes);
     if(!$.orient_compares_equal(manifest_in,grid_manifest)) {
       console.log("clearing grid");
       grid = [];
       $table.data('grid-manifest',manifest_in);
     }
-    for(var i=0;i<rows.length;i++) {
-      for(var k=0;k<rows[order[i]].length;k++) {
-        grid[start+i] = (grid[start+i]||[]);
-        grid[start+i][indexes[k]] = rows[order[i]][k]; 
+    for(var i=0;i<cols.length;i++) {
+      for(var j=0;j<cols[i].length;j++) {
+        grid[start+j] = (grid[start+j]||[]);
+        if(nulls[i][order[j]]) {
+          grid[start+j][indexes[i]] = null;
+        } else {
+          grid[start+j][indexes[i]] = cols[i][order[j]];
+        }
       }
     }
     $table.data('grid',grid);
@@ -232,22 +263,57 @@
     var grid = $table.data('grid');
     var grid_series = $table.data('grid-series');
     if(length==-1) { length = grid.length; }
-    var orient_c = build_orient(manifest_c,grid,grid_series,view);
-    if(manifest_c.all_rows) {
-      start = 0;
-      length = orient_c.data.length;
-    }
-    widgets[view.format].add_data($table,orient_c.data,grid_series,start,length,orient_c.orient);
-    widgets[view.format].truncate_to($table,orient_c.data,grid_series,orient_c[1]);
+    build_orient(widgets,$table,manifest_c,grid,grid_series,view).done(function(orient_c) {
+      if(manifest_c.all_rows) {
+        start = 0;
+        length = orient_c.data.length;
+      }
+      if($.orient_compares_equal(orient_c.orient,view)) {
+        widgets[view.format].add_data($table,orient_c.data,grid_series,start,length,orient_c.orient);
+        widgets[view.format].truncate_to($table,orient_c.data,grid_series,orient_c.orient);
+      }
+    });
   }
 
   function rerender_grid(widgets,$table,manifest_c) {
     render_grid(widgets,$table,manifest_c,0,-1);
   }
 
+  function uncompress_response(response) {
+    var data = [];
+    var nulls = [];
+    var totlen = 0;
+    for(var i=0;i<response.nulls.length;i++) {
+      var n = uncompress(response.nulls[i]);
+      var d = uncompress(response.data[i]);
+      totlen += response.len[i];
+      for(var j=0;j<n.length;j++) {
+        if(i==0) { data[j] = []; nulls[j] = []; }
+        var m = 0;
+        var dd = [];
+        for(var k=0;k<n[j].length;k++) {
+          if(n[j][k]) { dd.push(null); }
+          else { dd.push(d[j][m++]); }
+        }
+        data[j] = data[j].concat(dd);
+        nulls[j] = nulls[j].concat(n[j]);
+      }
+    }
+    var order = response.order;
+    if(!order) {
+      order = [];
+      for(var i=0;i<totlen;i++) { order[i] = i; }
+    }
+    return { 'data': data, 'nulls': nulls,
+             'order': order, 'totlen': totlen };
+  }
+
   function use_response(widgets,$table,manifest_c,response,config) {
-    store_response_in_grid($table,response.data,response.order,response.start,manifest_c.manifest,response.series);
-    render_grid(widgets,$table,manifest_c,response.start,response.data.length);
+    var data = uncompress_response(response);
+    store_response_in_grid($table,data.data,data.nulls,data.order,
+                           response.start,manifest_c.manifest,
+                           response.series);
+    render_grid(widgets,$table,manifest_c,response.start,data.totlen);
     store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
   }
   
@@ -476,6 +542,19 @@
         },msec);
       }
     }
+  }
+
+  $.whenquiet = function(fn,msec) {
+    var id;
+    return function() {
+      var that = this;
+      var args = arguments;
+      if(id) { clearTimeout(id); }
+      id = setTimeout(function() {
+        id = null;
+        fn.apply(that,args);
+      },msec);
+    };
   }
 
   $.fn.newTable = function() {

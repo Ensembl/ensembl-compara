@@ -38,14 +38,15 @@ use EnsEMBL::Web::NewTable::Column;
 sub new {
   my ($class, $component) = @_;
 
-  my $self = {
+  my $self = $class->SUPER::new($component->hub,$component);
+  $self = { %$self, (
     component => $component,
     hub => $component->hub,
     columns   => [],
     plugins   => {},
     phases    => [],
     colobj    => {},
-  };
+  )};
 
   bless $self, $class;
 

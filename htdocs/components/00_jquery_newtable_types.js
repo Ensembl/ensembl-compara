@@ -21,7 +21,7 @@
 
   function number_clean(x) {
     if(!x) { return x; }
-    return x.replace(/([\d\.e\+-])\s.*$/,'$1');
+    return (x+"").replace(/([\d\.e\+-])\s.*$/,'$1');
   }
 
   function minmax(vv,v) {

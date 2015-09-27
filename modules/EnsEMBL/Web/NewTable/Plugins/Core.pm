@@ -21,6 +21,7 @@ package EnsEMBL::Web::NewTable::Plugins::Loading;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
 sub js_plugin { return "new_table_loading"; }
+sub position { return [qw(top-middle)]; }
 
 package EnsEMBL::Web::NewTable::Plugins::ClientSort;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);

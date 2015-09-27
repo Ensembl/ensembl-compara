@@ -27,7 +27,7 @@
       }
       return function(html,row) {
         if(idx==-1) { return html; }
-        var type = row[idx][0];
+        var type = row[idx];
         var style = extras[type];
         if(!style) { return html; }
         var helptip = (style.helptip || type);

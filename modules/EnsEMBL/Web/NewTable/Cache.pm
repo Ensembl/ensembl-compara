@@ -16,41 +16,49 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::NewTable::Plugin;
+package EnsEMBL::Web::NewTable::Cache;
 
 use strict;
 use warnings;
 
-use Scalar::Util qw(weaken);
+use Digest::MD5 qw(md5_hex);
+use JSON qw(from_json);
 
 sub new {
-  my ($proto,$table) = @_;
+  my ($proto,$hub) = @_;
   my $class = ref($proto) || $proto;
   my $self = {
-    table => $table
+    base => $hub->species_defs->ENSEMBL_TMP_DIR.'/table',
   };
   bless $self,$class;
-  weaken($self->{'table'});
-  $self->init();
+  mkdir $self->{'base'};
   return $self;
 }
 
-sub init {}
+sub _key {
+  return md5_hex(JSON->new->canonical->encode($_[0]));
+}
 
-sub table { return $_[0]->{'table'}; }
+sub set {
+  my ($self,$conf,$data) = @_;
 
-sub children { return []; }
-sub js_plugin { return undef; }
-sub configure { $_[0]->{'config'} = $_[1]; }
-sub requires { return []; }
-sub position { return []; }
+  my $fn = $self->{'base'}.'/table_'._key($conf).'.json';
+  open(FN,'>',"$fn.tmp") || return;
+  print FN JSON->new->encode($data);
+  close FN;
+  rename("$fn.tmp",$fn);
+}
 
-sub js_config {
-  my ($self) = @_;
-
-  return {
-    position => $self->{'config'}->{'position'} || $self->position,
-  };
+sub get {
+  my ($self,$conf) = @_;
+  
+  my $fn = $self->{'base'}.'/table_'._key($conf).'.json';
+  return undef unless -e $fn;
+  open(FN,$fn) || return undef;
+  local $/ = undef;
+  my $raw = <FN>;
+  close FN;
+  return JSON->new->decode($raw);
 }
 
 1;

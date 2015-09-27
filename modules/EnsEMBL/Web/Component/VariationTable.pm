@@ -220,9 +220,9 @@ sub make_table {
   push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
   push @exclude,'HGVS' unless $hub->param('hgvs') eq 'on';
   if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-    push @exclude,'Submitters','Transcript';
+    push @exclude,'Transcript';
   } else {
-    push @exclude,'LRGTranscript';
+    push @exclude,'Submitters','LRGTranscript','LRG';
   }
   push @exclude,'sift_sort','sift_class','sift_value' unless $sd->{'SIFT'};
   unless($hub->species eq 'Homo_sapiens') {
@@ -243,12 +243,12 @@ sub make_table {
   },{
     _key => 'vf', _type => 'numeric unshowable no_filter'
   },{
-    _key => 'chr', _type => 'position no_filter', label => 'Chr: bp',
-    width => 1.75,
-    helptip => $glossary->{'Chr:bp'}
-  },{
     _key => 'location', _type => 'position unshowable',
-    sort_for => 'chr'
+    sort_for => 'chr',
+  },{
+    _key => 'chr', _type => 'string no_filter', label => 'Chr: bp',
+    width => 1.75,
+    helptip => $glossary->{'Chr:bp'},
   },{
     _key => 'vf_allele', _type => 'string no_filter unshowable',
   },{
@@ -275,7 +275,7 @@ sub make_table {
   },{
     _key => 'Source', _type => 'string', label => "Sour\fce",
     width => 1.25,
-    helptip => $glossary->{'Source'}
+    helptip => $glossary->{'Source'},
   },{
     _key => 'Submitters', _type => 'string no_filter',
     label => 'Submitters',
@@ -328,7 +328,7 @@ sub make_table {
       type   => 'Transcript',
       action => 'Summary',
       t => ["Transcript"] 
-    }
+    },
    },{
     _key => 'LRGTranscript', _type => 'string',
     width => 2,
@@ -398,6 +398,7 @@ sub variation_table {
     warn "stable id $transcript_stable_id\n";
     my $gene                 = $transcript->gene;
 
+    my @tv_sorted;
     foreach my $transcript_variation (@$tvs) {
       my $raw_id = $transcript_variation->{_variation_feature_id};
 
@@ -405,7 +406,16 @@ sub variation_table {
       next unless $snp;
 
       my ($chr, $start, $end) = ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end);
+      push @tv_sorted,[$transcript_variation,$snp->seq_region_start];
+    }
+    @tv_sorted = map { $_->[0] } sort { $a->[1] <=> $b->[1] } @tv_sorted;
 
+    foreach my $transcript_variation (@tv_sorted) {
+      my $raw_id = $transcript_variation->{_variation_feature_id};
+      my $snp = $vfs->{$raw_id};
+      next unless $snp;
+
+      my ($chr, $start, $end) = ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end);
       foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
         
         # this isn't needed anymore, I don't think!!!
@@ -502,13 +512,8 @@ sub _get_transcript_variations {
   my $self = shift;
   my $tr   = shift;
 
-  if(!exists($self->{_transcript_variations}->{$tr->stable_id})) {
-    my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
-
-    $self->{_transcript_variations}->{$tr->stable_id} = $tva->fetch_all_by_Transcripts([$tr]);
-  }
-
-  return $self->{_transcript_variations}->{$tr->stable_id};
+  my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  return $tva->fetch_all_by_Transcripts([$tr]);
 }
 
 sub _get_variation_features {

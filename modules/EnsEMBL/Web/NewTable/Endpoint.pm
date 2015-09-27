@@ -30,6 +30,8 @@ use warnings;
 use Carp;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
+use EnsEMBL::Web::NewTable::Cache;
+
 our @PLUGINS = qw(Core Frame Decorate Filter Misc);
 
 sub new {
@@ -38,6 +40,7 @@ sub new {
   my $class = ref($proto) || $proto;
   my $self = {
     key_meta => {},
+    cache => EnsEMBL::Web::NewTable::Cache->new($hub),
   };
   bless $self,$class;
   return $self;

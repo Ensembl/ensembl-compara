@@ -175,8 +175,7 @@
         var value = {};
         for(var j=0;j<grid.length;j++) {
           var v = grid[j][i];
-          if(v===null || v===undefined || v[1]) { continue; }
-          v = v[0];
+          if(v===null || v===undefined) { continue; }
           if(plugin.split) { v = plugin.split(v); } else { v = [v]; }
           if(v===null || v===undefined) { continue; }
           for(var k=0;k<v.length;k++) {
@@ -228,7 +227,7 @@
           $.each(to_filter,function(col,fn) {
             var v = grid[i][rev_series[col]];
             if(v===null || v===undefined) { ok = false; return; }
-            if(fn.split) { v = fn.split(v[0]); } else { v = [v[0]]; }
+            if(fn.split) { v = fn.split(v); } else { v = [v]; }
             var ok_col = false;
             for(var j=0;j<v.length;j++) {
               if(fn.match(needf[col],v[j])) { ok_col = true; break; }
@@ -239,6 +238,7 @@
             fabric.push(grid[i]);
           }
         }
+        manifest.filter = needf;
         return [manifest,fabric];
       };
       out.all_rows = true;
@@ -266,7 +266,7 @@
       },
       position: data.position,
       go: function($table,$el) {
-        var trigger_soon = $.debounce(function() {
+        var trigger_soon = $.whenquiet(function() {
           $table.trigger('view-updated');
         },5000);
         $('li.t',$el).on('update',function(e,state) {

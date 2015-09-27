@@ -25,6 +25,7 @@ use parent qw(EnsEMBL::Web::NewTable::Endpoint);
 
 use JSON qw(from_json);
 
+use MIME::Base64;
 use Compress::Zlib;
 use Digest::MD5 qw(md5_hex);
 use SiteDefs;
@@ -32,23 +33,37 @@ use Text::CSV;
 
 # XXX move all this stuff to somewhere it's more suited
 
+sub compress_block {
+  return encode_base64(compress(JSON->new->encode($_[0])));
+}
+
+sub uncompress_block {
+  return JSON->new->decode(uncompress(decode_base64($_[0])));
+}
+
 sub new {
   my ($proto,$hub,$component) = @_;
 
   my $class = ref($proto) || $proto;
-  my $self = {
+  my $self = $class->SUPER::new($hub,$component);
+  $self = { %$self, (
     hub => $hub,
     component => $component,
     rows => [],
+    outdata => [],
     enum_values => {},
     sort_data => [],
     null_cache => [],
+    data => [],
+    nulls => [],
+    outnulls => [],
     num => 0,
-  };
+    len => 0,
+    outlen => [],
+  )};
   bless $self,$class;
   return $self;
 }
-  
 
 sub add_enum {
   my ($self,$row) = @_;
@@ -72,6 +87,16 @@ sub finish_enum {
   return \%enums;
 }
 
+sub consolidate {
+  my ($self) = @_;
+  push @{$self->{'outdata'}},compress_block($self->{'data'});
+  push @{$self->{'outnulls'}},compress_block($self->{'nulls'});
+  push @{$self->{'outlen'}},$self->{'len'};
+  $self->{'data'} = [];
+  $self->{'nulls'} = [];
+  $self->{'len'} = 0;
+}
+
 sub add_row {
   my ($self,$row) = @_;
 
@@ -81,8 +106,15 @@ sub add_row {
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $self->server_sortdata($row,$self->{'wire'}{'sort'},$self->{'used_cols'});
   }
-  $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
-  push @{$self->{'data'}},[ map { $row->{$_} } @{$self->{'used_cols'}} ];
+  my $nulls = $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
+  foreach my $i (0..$#{$self->{'used_cols'}}) {
+    my $k = $self->{'used_cols'}[$i];
+    $self->{'data'}[$i]||=[];
+    push @{$self->{'nulls'}[$i]||=[]},$nulls->{$k};
+    push @{$self->{'data'}[$i]||=[]},$row->{$k} unless $nulls->{$k};
+  }
+  $self->{'len'}++;
+  $self->consolidate() unless $self->{'len'}%10000;
   return 1;
 }
 
@@ -107,7 +139,7 @@ sub go {
   foreach my $key (keys %{$self->{'iconfig'}{'colconf'}}) {
     my $cc = $self->{'iconfig'}{'colconf'}{$key};
     $self->{'columns'}{$key} =
-      EnsEMBL::Web::NewTable::Column->new($self,$cc->{'sstype'},$key);
+      EnsEMBL::Web::NewTable::Column->new($self,$cc->{'sstype'},$key,$cc->{'ssconf'},$cc->{'ssarg'});
   }
 
   my $out = $self->newtable_data_request($orient,$more,$incr_ok,$keymeta);
@@ -166,6 +198,7 @@ sub server_order {
 sub server_nulls {
   my ($self,$row,$iconfig,$series) = @_;
 
+  my %nulls;
   foreach my $j (0..$#$series) {
     my $col = $self->{'columns'}{$series->[$j]};
     my $null_cache = ($self->{'null_cache'}[$j]||={});
@@ -176,8 +209,9 @@ sub server_nulls {
       $is_null = $col->is_null($v);
       $null_cache->{$v} = $is_null;
     }
-    $row->{$series->[$j]} = [$v,0+$is_null];
+    $nulls{$series->[$j]} = 0+$is_null;
   }
+  return \%nulls;
 }
 
 sub rows { return $_[0]->{'rows'}; }
@@ -237,52 +271,22 @@ sub convert_to_csv {
   }
   $csv->combine(@{$config->{'columns'}});
   $out .= $csv->string()."\n";
-  foreach my $row (@{$data->{'response'}{'data'}}) {
-    my @row;
-    foreach my $col (@index) {
-      push @row,$row->[$col][0];
+  foreach my $i (0..$#{$data->{'response'}{'nulls'}}) {
+    my $rows = uncompress_block($data->{'response'}{'data'}[$i]);
+    my $nulls = uncompress_block($data->{'response'}{'nulls'}[$i]);
+    my $len = $data->{'response'}{'len'}[$i];
+    my @idx;
+    foreach my $row (0..$len-1) {
+      my @row;
+      foreach my $col (@index) {
+        if($nulls->[$col][$row]) { push @row,''; }
+        else { push @row,$rows->[$col][($idx[$col]||=0)++]; }
+      }
+      $csv->combine(@row);
+      $out .= $csv->string()."\n";
     }
-    $csv->combine(@row);
-    $out .= $csv->string()."\n";
   }
   return $out;
-}
-
-use Time::HiRes qw(time);
-
-sub get_cache {
-  my ($self,$key) = @_;
-
-  my $cache = $self->{'hub'}->cache;
-  return undef unless $cache;
-  my $main_key = "newtable_".md5_hex($key);
-  my $main_val = $cache->get($main_key);
-  return undef unless $main_val;
-  $main_val = JSON->new->decode($main_val);
-  my $out = "";
-  foreach my $k (@$main_val) {
-    my $frag = $cache->get($k);
-    return undef unless defined $frag;
-    $out .= $frag;
-  }
-  return $out;
-}
-
-sub set_cache {
-  my ($self,$key,$value) = @_;
-
-  my $cache = $self->{'hub'}->cache;
-  return undef unless $cache;
-  my $main_key = "newtable_".md5_hex($key);
-  my $i = 0;
-  my @ids;
-  while($value) {
-    push @ids,$main_key.'_'.($i++);
-    my $more = substr($value,0,256*1024,'');
-    next unless length $more;
-    $cache->set($ids[-1],$more);
-  }
-  $cache->set($main_key,JSON->new->encode(\@ids));
 }
 
 sub unique { return $_[0]->{'iconfig'}{'unique'}; }
@@ -303,9 +307,8 @@ sub newtable_data_request {
     version => $SiteDefs::ENSEMBL_VERSION,
   };
   delete $cache_key->{'iconfig'}{'unique'};
-  $cache_key = JSON->new->canonical->encode($cache_key);
-  my $out = $self->get_cache($cache_key);
-  return JSON->new->decode($out) if $out;
+  my $out = $self->{'cache'}->get($cache_key);
+  return $out if defined $out;
 
   my @cols = @{$self->{'iconfig'}{'columns'}};
   my %cols_pos;
@@ -316,8 +319,6 @@ sub newtable_data_request {
   $phases = [{ name => undef }] unless $phases and @$phases;
   my @out;
 
-  my $A = time();
-  
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
@@ -339,8 +340,6 @@ sub newtable_data_request {
   $self->{'phase_name'} = $phases->[$more]{'name'};
   warn "CHOSEN PHASE $self->{'phase_name'}\n";
 
-  my $A2 = time();
-
   # Start row
   my $irows = $phases->[$more]{'rows'} || [0,-1];
   $self->{'rows'} = $irows;
@@ -355,39 +354,30 @@ sub newtable_data_request {
   my $func = "table_content";
   $func .= "_$type" if $type;
 
-  my $B = time();
   # Populate data
   $self->{'component'}->$func($self);
-  my $data = $self->{'data'};
-  my $C = time();
 
   my %shadow = %$orient;
   delete $shadow{'filter'};
   $shadow{'series'} = $self->{'used_cols'};
 
-  my $D = time();
-
   # Sort it, if necessary
   my $order;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $order = $self->server_order($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
-  } else {
-    $order->[$_] = $_ for(0..$#$data);
   }
-  my $E = time();
-
-  my $F = time();
-
-  warn sprintf("%f/%f/%f/%f/%f\n",$F-$E,$E-$D,$D-$C,$C-$B,$B-$A);
   
   # Move on continuation counter
   $more++;
   $more=0 if $more == @$phases;
 
   # Send it
-  $out = {
+  $self->consolidate();
+  my $out = {
     response => {
-      data => $data,
+      len => $self->{'outlen'},
+      data => $self->{'outdata'},
+      nulls => $self->{'outnulls'},
       series => $self->{'used_cols'},
       order => $order,
       start => $self->{'rows'}[0],
@@ -398,7 +388,7 @@ sub newtable_data_request {
     },
     orient => $orient,
   };
-  $self->set_cache($cache_key,JSON->new->encode($out));
+  $self->{'cache'}->set($cache_key,$out);
   return $out;
 }
 
