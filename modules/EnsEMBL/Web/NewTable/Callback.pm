@@ -37,6 +37,10 @@ sub compress_block {
   return encode_base64(compress(JSON->new->encode($_[0])));
 }
 
+sub uncompress_block {
+  return JSON->new->decode(uncompress(decode_base64($_[0])));
+}
+
 sub new {
   my ($proto,$hub,$component) = @_;
 
@@ -54,6 +58,7 @@ sub new {
     outnulls => [],
     num => 0,
     len => 0,
+    outlen => [],
   };
   bless $self,$class;
   return $self;
@@ -85,8 +90,10 @@ sub consolidate {
   my ($self) = @_;
   push @{$self->{'outdata'}},compress_block($self->{'data'});
   push @{$self->{'outnulls'}},compress_block($self->{'nulls'});
+  push @{$self->{'outlen'}},$self->{'len'};
   $self->{'data'} = [];
   $self->{'nulls'} = [];
+  $self->{'len'} = 0;
 }
 
 sub add_row {
@@ -263,13 +270,20 @@ sub convert_to_csv {
   }
   $csv->combine(@{$config->{'columns'}});
   $out .= $csv->string()."\n";
-  foreach my $row (@{$data->{'response'}{'data'}}) {
-    my @row;
-    foreach my $col (@index) {
-      push @row,$row->[$col][0];
+  foreach my $i (0..$#{$data->{'response'}{'nulls'}}) {
+    my $rows = uncompress_block($data->{'response'}{'data'}[$i]);
+    my $nulls = uncompress_block($data->{'response'}{'nulls'}[$i]);
+    my $len = $data->{'response'}{'len'}[$i];
+    my @idx;
+    foreach my $row (0..$len-1) {
+      my @row;
+      foreach my $col (@index) {
+        if($nulls->[$col][$row]) { push @row,''; }
+        else { push @row,$rows->[$col][($idx[$col]||=0)++]; }
+      }
+      $csv->combine(@row);
+      $out .= $csv->string()."\n";
     }
-    $csv->combine(@row);
-    $out .= $csv->string()."\n";
   }
   return $out;
 }
@@ -386,8 +400,6 @@ sub newtable_data_request {
   my $order;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $order = $self->server_order($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
-  } else {
-    $order = [(0..$self->{'len'}-1)];
   }
   
   # Move on continuation counter
@@ -399,7 +411,7 @@ sub newtable_data_request {
   $self->consolidate();
   $out = {
     response => {
-      len => $self->{'len'},
+      len => $self->{'outlen'},
       data => $self->{'outdata'},
       nulls => $self->{'outnulls'},
       series => $self->{'used_cols'},

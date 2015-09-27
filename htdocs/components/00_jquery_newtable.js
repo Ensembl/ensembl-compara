@@ -261,41 +261,32 @@
   }
 
   function use_response(widgets,$table,manifest_c,response,config) {
+    var data = [];
     var nulls = [];
+    var totlen = 0;
     for(var i=0;i<response.nulls.length;i++) {
-      var d = uncompress(response.nulls[i]);
-      if(i==0) { nulls = d; }
-      else {
-        for(var j=0;j<d.length;j++) {
-          nulls[j] = nulls[j].concat(d[j]);
+      var n = uncompress(response.nulls[i]);
+      var d = uncompress(response.data[i]);
+      totlen += response.len[i];
+      for(var j=0;j<n.length;j++) {
+        if(i==0) { data[j] = []; nulls[j] = []; }
+        var m = 0;
+        var dd = [];
+        for(var k=0;k<n[j].length;k++) {
+          if(n[j][k]) { dd.push(null); }
+          else { dd.push(d[j][m++]); }
         }
+        data[j] = data[j].concat(dd);
+        nulls[j] = nulls[j].concat(n[j]);
       }
     }
     var order = response.order;
     if(!order) {
       order = [];
-      for(var i=0;i<response.len;i++) { order[i] = i; }
-    }
-    var data = [];
-    for(var i=0;i<response.data.length;i++) {
-      var d = uncompress(response.data[i]);
-      if(i==0) { data = d; }
-      else {
-        for(var j=0;j<d.length;j++) {
-          data[j] = data[j].concat(d[j]);
-        }
-      }
-    }
-    for(var i=0;i<nulls.length;i++) {
-      var j=0;
-      var out = [];
-      for(var k=0;k<nulls[i].length;k++) {
-        if(nulls[i][k]) { out.push(null); } else { out.push(data[i][j++]); }
-      }
-      data[i] = out;
+      for(var i=0;i<totlen;i++) { order[i] = i; }
     }
     store_response_in_grid($table,data,nulls,order,response.start,manifest_c.manifest,response.series);
-    render_grid(widgets,$table,manifest_c,response.start,response.len);
+    render_grid(widgets,$table,manifest_c,response.start,totlen);
     store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
   }
   
