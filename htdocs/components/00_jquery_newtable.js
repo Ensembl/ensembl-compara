@@ -146,7 +146,9 @@
       orient = out[0];
       data = out[1];
     });
-    return { data: data, orient: orient };
+    var d = $.Deferred();
+    d.resolve({ data: data, orient: orient });
+    return d;
   }
 
   function build_enums(manifest_c,grid,series,enums) {
@@ -190,7 +192,6 @@
     var grid = $table.data('grid') || [];
     var grid_manifest = $table.data('grid-manifest') || [];
     var indexes = build_series_index($table,series);
-    console.log('indexes',series,indexes);
     if(!$.orient_compares_equal(manifest_in,grid_manifest)) {
       console.log("clearing grid");
       grid = [];
@@ -247,20 +248,23 @@
     var grid = $table.data('grid');
     var grid_series = $table.data('grid-series');
     if(length==-1) { length = grid.length; }
-    var orient_c = build_orient(manifest_c,grid,grid_series,view);
-    if(manifest_c.all_rows) {
-      start = 0;
-      length = orient_c.data.length;
-    }
-    widgets[view.format].add_data($table,orient_c.data,grid_series,start,length,orient_c.orient);
-    widgets[view.format].truncate_to($table,orient_c.data,grid_series,orient_c[1]);
+    build_orient(manifest_c,grid,grid_series,view).done(function(orient_c) {
+      if(manifest_c.all_rows) {
+        start = 0;
+        length = orient_c.data.length;
+      }
+      if($.orient_compares_equal(orient_c.orient,view)) {
+        widgets[view.format].add_data($table,orient_c.data,grid_series,start,length,orient_c.orient);
+        widgets[view.format].truncate_to($table,orient_c.data,grid_series,orient_c.orient);
+      }
+    });
   }
 
   function rerender_grid(widgets,$table,manifest_c) {
     render_grid(widgets,$table,manifest_c,0,-1);
   }
 
-  function use_response(widgets,$table,manifest_c,response,config) {
+  function uncompress_response(response) {
     var data = [];
     var nulls = [];
     var totlen = 0;
@@ -285,8 +289,16 @@
       order = [];
       for(var i=0;i<totlen;i++) { order[i] = i; }
     }
-    store_response_in_grid($table,data,nulls,order,response.start,manifest_c.manifest,response.series);
-    render_grid(widgets,$table,manifest_c,response.start,totlen);
+    return { 'data': data, 'nulls': nulls,
+             'order': order, 'totlen': totlen };
+  }
+
+  function use_response(widgets,$table,manifest_c,response,config) {
+    var data = uncompress_response(response);
+    store_response_in_grid($table,data.data,data.nulls,data.order,
+                           response.start,manifest_c.manifest,
+                           response.series);
+    render_grid(widgets,$table,manifest_c,response.start,data.totlen);
     store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
   }
   
