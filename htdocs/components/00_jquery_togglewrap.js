@@ -98,8 +98,6 @@
       return els.parents().filter(function () {
         return $(this).css('display') !== 'inline';
       }).first();
-      
-      els = null;
     }
     
     // dutyCycle: do as many as possible at same time but don't cause delays
