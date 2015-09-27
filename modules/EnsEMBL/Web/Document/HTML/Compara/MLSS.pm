@@ -109,10 +109,21 @@ sub render {
     return $self->error_message('Unknown MLSS', qq{<p>The Compara MethodLinkSpeciesSet dbID '$mlss_id' cannot be found in the database. Check that it is correct and that this is the correct version of Ensembl.</p>} );
   }
 
+  if ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') {
+    return $self->render_pairwise($mlss);
+  } elsif ($mlss->method->class eq 'SyntenyRegion.synteny') {
+    return $self->render_pairwise($mlss);
+  }
+}
+
+sub render_pairwise {
+  my $self    = shift;
+  my $mlss    = shift;
+  my $hub     = $self->hub;
   my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
   my $html;
 
-  my ($alignment_results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config) = $self->fetch_input($mlss_id);
+  my ($alignment_results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config) = $self->fetch_pairwise_input($mlss);
 
   my $ref_sp          = $ref_dna_collection_config->{'name'};
   my $ref_common      = $ref_dna_collection_config->{'common_name'};
@@ -368,17 +379,15 @@ sub-chain is chosen in each region on the reference species.</p>',
 
 ## HELPER METHODS ##################################
 
-sub fetch_input {
-  my ($self, $mlss_id) = @_;
-  
-  return unless $mlss_id;
+sub fetch_pairwise_input {
+  my ($self, $mlss) = @_;
   
   my $hub        = $self->hub;
   my $compara_db = $hub->database('compara');
   my ($results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
   
     my $genome_db_adaptor             = $compara_db->get_adaptor('GenomeDB');
-    my $mlss                          = $compara_db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($mlss_id);
+    my $mlss_id                       = $mlss->dbID;
     my $num_blocks                    = $mlss->get_value_for_tag('num_blocks');
     my $ref_species                   = $mlss->get_value_for_tag('reference_species');
     my $non_ref_species               = $mlss->get_value_for_tag('non_reference_species');
