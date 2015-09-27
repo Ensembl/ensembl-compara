@@ -77,10 +77,38 @@ our $references = {
 
 ## HTML OUTPUT ######################################
 
+sub error_message {
+  my ($self, $title, $message) = @_;
+  return qq{
+      <div class="error left-margin right-margin">
+        <h3>$title</h3>
+        <div class="message-pad">
+          $message
+          <p>Please email a report giving the URL and details on how to replicate the error (for example, how you got here), to helpdesk\@ensembl.org</p>
+        </div>
+      </div>
+  };
+}
+
 sub render { 
   my $self    = shift;
   my $hub     = $self->hub;
+
   my $mlss_id = $hub->param('mlss');
+  unless ($mlss_id) {
+    return $self->error_message('No <em>mlss_id</em>', '<p>You need a MethodLinkSpeciesSet dbID to access this page.</p>' );
+  }
+
+  my $compara_db = $hub->database('compara');
+  unless ($compara_db) {
+    return $self->error_message('No Compara databse', '<p>No Compara database is configured on this site.</p>' );
+  }
+
+  my $mlss = $compara_db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($mlss_id);
+  unless ($mlss) {
+    return $self->error_message('Unknown MLSS', qq{<p>The Compara MethodLinkSpeciesSet dbID '$mlss_id' cannot be found in the database. Check that it is correct and that this is the correct version of Ensembl.</p>} );
+  }
+
   my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
   my $html;
 
@@ -349,7 +377,6 @@ sub fetch_input {
   my $compara_db = $hub->database('compara');
   my ($results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
   
-  if ($compara_db) {
     my $genome_db_adaptor             = $compara_db->get_adaptor('GenomeDB');
     my $mlss                          = $compara_db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($mlss_id);
     my $num_blocks                    = $mlss->get_value_for_tag('num_blocks');
@@ -447,7 +474,6 @@ sub fetch_input {
         $blastz_parameters->{'Q'} = $v;
       }
     }
-  }
   
   return ($results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
 }
