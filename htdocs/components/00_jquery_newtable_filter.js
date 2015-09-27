@@ -266,7 +266,7 @@
       },
       position: data.position,
       go: function($table,$el) {
-        var trigger_soon = $.debounce(function() {
+        var trigger_soon = $.whenquiet(function() {
           $table.trigger('view-updated');
         },5000);
         $('li.t',$el).on('update',function(e,state) {

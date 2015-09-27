@@ -544,6 +544,19 @@
     }
   }
 
+  $.whenquiet = function(fn,msec) {
+    var id;
+    return function() {
+      var that = this;
+      var args = arguments;
+      if(id) { clearTimeout(id); }
+      id = setTimeout(function() {
+        id = null;
+        fn.apply(that,args);
+      },msec);
+    };
+  }
+
   $.fn.newTable = function() {
     this.each(function(i,outer) {
       new_table($(outer));
