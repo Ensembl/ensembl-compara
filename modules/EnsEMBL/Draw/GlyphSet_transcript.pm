@@ -1213,7 +1213,7 @@ sub get_homologous_gene_ids {
   my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
   my @homologues;
   
-  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member_paired_species($qy_member, $species, $method)}) {
+  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member($qy_member, -TARGET_SPECIES => [$species], -METHOD_LINK_TYPE => $method)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
@@ -1221,11 +1221,8 @@ sub get_homologous_gene_ids {
     my $colour = $self->my_colour($colour_key . '_join');
     my $label  = $self->my_colour($colour_key . '_join', 'text');
     
-    foreach my $member (@{$homology->get_all_GeneMembers}) {
-      next if $member->stable_id eq $qy_member->stable_id;
-      
-      push @homologues, [ $member->stable_id, $colour, $label ];
-    }
+    my $tg_member = $homology->get_all_Members()->[1];
+    push @homologues, [ $tg_member->gene_member->stable_id, $colour, $label ];
   }
   
   return @homologues;
@@ -1236,7 +1233,7 @@ sub get_homologous_peptide_ids_from_gene {
   my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
   my ($stable_id, @homologues, @homologue_genes);
   
-  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member_paired_species($qy_member, $species, $method)}) {
+  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member($qy_member, -TARGET_SPECIES => [$species], -METHOD_LINK_TYPE => $method)}) {
     my $colour_key = $join_types->{$homology->description};
     
     next if $colour_key eq 'hidden';
@@ -1244,16 +1241,10 @@ sub get_homologous_peptide_ids_from_gene {
     my $colour = $self->my_colour($colour_key . '_join');
     my $label  = $self->my_colour($colour_key . '_join', 'text');
     
-    foreach my $member (@{$homology->get_all_Members}) {
-      my $gene_member = $member->gene_member;
-      
-      if ($gene_member->stable_id eq $qy_member->stable_id) {
-        $stable_id = $member->stable_id;
-      } else {
-        push @homologues,      [ $member->stable_id,      $colour, $label ];
-        push @homologue_genes, [ $gene_member->stable_id, $colour         ];
-      }
-    }
+    $stable_id    = $homology->get_all_Members()->[0]->stable_id;
+    my $tg_member = $homology->get_all_Members()->[1];
+    push @homologues,      [ $tg_member->stable_id,              $colour, $label ];
+    push @homologue_genes, [ $tg_member->gene_member->stable_id, $colour         ];
   }
   
   return ($stable_id, \@homologues, \@homologue_genes);

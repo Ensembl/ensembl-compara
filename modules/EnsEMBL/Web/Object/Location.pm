@@ -1064,11 +1064,9 @@ sub fetch_homologues_of_gene_in_species {
   my $ha = $self->database('compara')->get_HomologyAdaptor;
   my @homologues;
   
-  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $paired_species, ['ENSEMBL_ORTHOLOGUES'])}){
-    foreach my $member (@{$homology->get_all_GeneMembers}) {
-      next if $member->stable_id eq $qy_member->stable_id;
-      push @homologues, $member;  
-    }
+  foreach my $homology (@{$ha->fetch_all_by_Member($qy_member, -TARGET_SPECIES => [$paired_species])}) {
+    # The target member is guaranteed to be in second position in the array
+    push @homologues, $homology->get_all_Members()->[1]->gene_member();
   }
   
   return \@homologues;
