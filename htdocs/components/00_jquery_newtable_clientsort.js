@@ -26,7 +26,8 @@
 
     function compare(a,b,rev_series,plan,cache,keymeta) {
       var c = 0;
-      $.each(plan,function(i,stage) {
+      for(var i=0;i<plan.length;i++) {
+        var stage = plan[i];
         if(!c) {
           if(!cache[stage.key]) { cache[stage.key] = {}; }
           var av = a[rev_series[stage.key]];
@@ -37,7 +38,7 @@
                          cache[stage.key],keymeta,stage.key);
           }
         }
-      });
+      }
       return c;
     }
 

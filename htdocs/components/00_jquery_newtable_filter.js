@@ -238,6 +238,7 @@
             fabric.push(grid[i]);
           }
         }
+        manifest.filter = needf;
         return [manifest,fabric];
       };
       out.all_rows = true;

@@ -15,6 +15,14 @@
  */
 
 (function($) {
+  function beat(def,sleeplen) {
+    return def.then(function(data) {
+      var d = $.Deferred();
+      setTimeout(function() { d.resolve(data); },sleeplen);
+      return d;
+    });
+  }
+
   function uncompress(raw) {
     var inflate = new Zlib.Inflate(decodeB64(raw));
     var plain = inflate.decompress();
@@ -139,15 +147,22 @@
              incr_ok: incr, all_rows: all_rows };
   }
 
-  function build_orient(manifest_c,data,data_series,destination) {
+  function build_orient(widgets,$table,manifest_c,data,data_series,destination) {
     var orient = $.extend(true,{},manifest_c.manifest);
-    $.each(manifest_c.undo,function(i,step) {
-      var out = step(orient,data,data_series,destination);
-      orient = out[0];
-      data = out[1];
-    });
     var d = $.Deferred();
-    d.resolve({ data: data, orient: orient });
+    d.resolve([orient,data,0]);
+    flux(widgets,$table,'think',1);
+    for(var i=0;i<manifest_c.undo.length;i++) {
+      d = beat(d.then(function(input) {
+        var step = manifest_c.undo[input[2]];
+        var output = step(input[0],input[1],data_series,destination);
+        return [output[0],output[1],input[2]+1];
+      }),10);
+    }
+    d = d.then(function(input) {
+      flux(widgets,$table,'think',-1);
+      return { orient: input[0], data: input[1] };
+    });
     return d;
   }
 
@@ -248,7 +263,7 @@
     var grid = $table.data('grid');
     var grid_series = $table.data('grid-series');
     if(length==-1) { length = grid.length; }
-    build_orient(manifest_c,grid,grid_series,view).done(function(orient_c) {
+    build_orient(widgets,$table,manifest_c,grid,grid_series,view).done(function(orient_c) {
       if(manifest_c.all_rows) {
         start = 0;
         length = orient_c.data.length;
