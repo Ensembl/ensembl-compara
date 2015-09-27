@@ -21,6 +21,8 @@ package EnsEMBL::Web::NewTable::Plugin;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 sub new {
   my ($proto,$table) = @_;
   my $class = ref($proto) || $proto;
@@ -28,6 +30,7 @@ sub new {
     table => $table
   };
   bless $self,$class;
+  weaken($self->{'table'});
   $self->init();
   return $self;
 }

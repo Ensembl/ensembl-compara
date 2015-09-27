@@ -407,7 +407,6 @@ sub newtable_data_request {
   $more=0 if $more == @$phases;
 
   # Send it
-  use Data::Dumper;
   $self->consolidate();
   $out = {
     response => {
@@ -426,19 +425,6 @@ sub newtable_data_request {
   };
   my $zout = "";
   my $deflate = deflateInit();
-  open(YY,">/tmp/yy");
-  my ($output,$status) = $deflate->deflate(JSON->new->encode($self->{'nulls'}));
-  $zout .= $output;
-  ($output,$status) = $deflate->flush();
-  die "Cannot compress" unless $status == Z_OK;
-  $zout .= $output;
-  print YY encode_base64($zout);
-  print YY JSON->new->encode($self->{'nulls'});
-  close YY;
-
-  open(ZZ,">/tmp/zz2");
-#  print ZZ JSON->new->encode([map { ecompress($_) } @{$out->{'response'}{'nulls'}}]);
-  close ZZ;
   $self->set_cache($cache_key,JSON->new->encode($out));
   return $out;
 }

@@ -512,13 +512,8 @@ sub _get_transcript_variations {
   my $self = shift;
   my $tr   = shift;
 
-  if(!exists($self->{_transcript_variations}->{$tr->stable_id})) {
-    my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
-
-    $self->{_transcript_variations}->{$tr->stable_id} = $tva->fetch_all_by_Transcripts([$tr]);
-  }
-
-  return $self->{_transcript_variations}->{$tr->stable_id};
+  my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  return $tva->fetch_all_by_Transcripts([$tr]);
 }
 
 sub _get_variation_features {

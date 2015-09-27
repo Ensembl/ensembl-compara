@@ -21,6 +21,7 @@ package EnsEMBL::Web::NewTable::Column;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 sub new {
@@ -44,6 +45,7 @@ sub new {
       ssarg => $confarg,
     },
   };
+  weaken($self->{'endpoint'});
 
   bless $self, $class;
   $self->init();
