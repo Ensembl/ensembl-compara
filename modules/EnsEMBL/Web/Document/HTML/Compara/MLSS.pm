@@ -78,9 +78,10 @@ our $references = {
 ## HTML OUTPUT ######################################
 
 sub error_message {
-  my ($self, $title, $message) = @_;
+  my ($self, $title, $message, $type) = @_;
+  $type ||= 'error';
   return qq{
-      <div class="error left-margin right-margin">
+      <div class="$type left-margin right-margin">
         <h3>$title</h3>
         <div class="message-pad">
           $message
@@ -113,6 +114,8 @@ sub render {
     return $self->render_pairwise($mlss);
   } elsif ($mlss->method->class eq 'SyntenyRegion.synteny') {
     return $self->render_pairwise($mlss);
+  } else {
+    return $self->error_message('No statistics', sprintf('There are no statistics available for the analysis "%s".', $mlss->name), 'warning');
   }
 }
 
