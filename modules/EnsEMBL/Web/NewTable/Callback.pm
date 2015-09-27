@@ -45,7 +45,8 @@ sub new {
   my ($proto,$hub,$component) = @_;
 
   my $class = ref($proto) || $proto;
-  my $self = {
+  my $self = $class->SUPER::new($hub,$component);
+  $self = { %$self, (
     hub => $hub,
     component => $component,
     rows => [],
@@ -59,7 +60,7 @@ sub new {
     num => 0,
     len => 0,
     outlen => [],
-  };
+  )};
   bless $self,$class;
   return $self;
 }
@@ -288,41 +289,6 @@ sub convert_to_csv {
   return $out;
 }
 
-sub get_cache {
-  my ($self,$key) = @_;
-
-  my $cache = $self->{'hub'}->cache;
-  return undef unless $cache;
-  my $main_key = "newtable_".md5_hex($key);
-  my $main_val = $cache->get($main_key);
-  return undef unless $main_val;
-  $main_val = JSON->new->decode($main_val);
-  my $out = "";
-  foreach my $k (@$main_val) {
-    my $frag = $cache->get($k);
-    return undef unless defined $frag;
-    $out .= $frag;
-  }
-  return $out;
-}
-
-sub set_cache {
-  my ($self,$key,$value) = @_;
-
-  my $cache = $self->{'hub'}->cache;
-  return undef unless $cache;
-  my $main_key = "newtable_".md5_hex($key);
-  my $i = 0;
-  my @ids;
-  while($value) {
-    push @ids,$main_key.'_'.($i++);
-    my $more = substr($value,0,256*1024,'');
-    next unless length $more;
-    $cache->set($ids[-1],$more);
-  }
-  $cache->set($main_key,JSON->new->encode(\@ids));
-}
-
 sub unique { return $_[0]->{'iconfig'}{'unique'}; }
 sub phase { return $_[0]->{'phase_name'}; }
 
@@ -341,9 +307,8 @@ sub newtable_data_request {
     version => $SiteDefs::ENSEMBL_VERSION,
   };
   delete $cache_key->{'iconfig'}{'unique'};
-  $cache_key = JSON->new->canonical->encode($cache_key);
-  my $out = $self->get_cache($cache_key);
-  return JSON->new->decode($out) if $out;
+  my $out = $self->{'cache'}->get($cache_key);
+  return $out if defined $out;
 
   my @cols = @{$self->{'iconfig'}{'columns'}};
   my %cols_pos;
@@ -408,7 +373,7 @@ sub newtable_data_request {
 
   # Send it
   $self->consolidate();
-  $out = {
+  my $out = {
     response => {
       len => $self->{'outlen'},
       data => $self->{'outdata'},
@@ -423,9 +388,7 @@ sub newtable_data_request {
     },
     orient => $orient,
   };
-  my $zout = "";
-  my $deflate = deflateInit();
-  $self->set_cache($cache_key,JSON->new->encode($out));
+  $self->{'cache'}->set($cache_key,$out);
   return $out;
 }
 
