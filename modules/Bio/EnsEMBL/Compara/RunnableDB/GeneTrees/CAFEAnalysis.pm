@@ -165,7 +165,7 @@ sub run_cafe_script {
 
     my $run_cmd = $self->run_command($script_file);
     my $err = $run_cmd->exit_code;
-    unless ($err == 4096) {
+    unless ($err == 16) {
         print STDERR "CAFE returning error $err\n";
     }
     return;
