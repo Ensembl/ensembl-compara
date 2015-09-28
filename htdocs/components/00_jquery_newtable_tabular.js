@@ -289,15 +289,17 @@
       var $newtable = $('<table><tbody></tbody></table>');
       $subtable.empty().append($newtable);
     }
-    $('tbody',$subtable)[0].innerHTML = html;
+    if(document.documentMode && document.documentMode < 10) {
+      // IE<10, more precisely document mode<10. Slow.
+      $('tbody',$subtable).html(html);
+    } else {
+      // Efficeint
+      $('tbody',$subtable)[0].innerHTML = html;
+    }
     $table.trigger('markup-activate',[$subtable]);
     $subtable.css('height','');
     $subtable.data('known-height',$subtable.height());
     guess_subtable_sizes($table);
-    // The line below is probably more portable than the line above,
-    //   but a third of the speed.
-    //   Maybe browser checks if there are compat issues raised in testing?
-    // $('tbody',$subtable).html(html);
     $.lazy('refresh');
   }
 
