@@ -37,7 +37,11 @@
       if(old_val == value) { return; }
       $table.data('search-value',value);
       var view = $table.data('view');
-      view.search = value;
+      if(value!="") {
+        view.search = value;
+      } else {
+        delete view.search;
+      }
       $table.data('view',view).trigger('view-updated');
     }
 
@@ -48,7 +52,7 @@
       },
       go: function($table,$el) {
         var $box = $('.search',$el);
-        var change_event = $.debounce(function($table) {
+        var change_event = $.whenquiet(function($table) {
           changed($table,$box.val());
         },1000);
         $box.on("propertychange change keyup paste input",function() {
