@@ -4,7 +4,7 @@ use warnings;
 package EnsEMBL::Web::NewTable::Plugins::Misc;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
-sub children { return [qw(Export Search Columns PageSizer Styles HelpTips)]; }
+sub children { return [qw(Export Search Columns Styles HelpTips)]; }
 sub requires { return [qw(Export Search Columns)]; }
 
 package EnsEMBL::Web::NewTable::Plugins::Export;
