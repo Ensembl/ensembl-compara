@@ -29,9 +29,14 @@
           triptych[pos].appendTo($toprow);
         }
         var $slices = $('<div/>').appendTo($out);
-        $out.append($html);
+        var $before = $('<div class="before"/>');
+        $out.prepend($before).append($html);
         return {
           '$': $out,
+          'before': {
+            'tags': ['before'],
+            '$': $before
+          },
           'topper': {
             'tags': ['full','inner','full-inner','top-full-inner'],
             '$': $slices
