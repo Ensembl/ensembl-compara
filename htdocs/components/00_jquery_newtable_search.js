@@ -19,11 +19,15 @@
 
     function identity_fn(x) { return x; }
 
-    function match(row,series,search,cleaner) {
+    function match(colconf,row,series,search,cleaner) {
       for(var i=0;i<row.length;i++) {
         var key =series[i];
+        var cc = colconf[key];
         if(cleaner[key]===undefined) { continue; }
         if(!row[i]) { continue; }
+        if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
+          continue;
+        }
         var val = row[i];
         if(cleaner[key]) { val = cleaner[key](val); }
         if(val===undefined) { return false; }
@@ -85,11 +89,11 @@
             return {
               undo: function(manifest,grid,series,dest) {
                 var fabric = [];
-                $.each(grid,function(i,v) {
-                  if(match(grid[i],series,search.toLowerCase(),cleaner)) {
+                for(var i=0;i<grid.length;i++) {
+                  if(match(config.colconf,grid[i],series,search.toLowerCase(),cleaner)) {
                     fabric.push(grid[i]);
                   }
-                });
+                }
                 if(search_was_defined) {
                   manifest.search = orig_search;
                 }
