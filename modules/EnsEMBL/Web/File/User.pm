@@ -156,9 +156,11 @@ sub upload {
   $args{'format'}         = $format; 
   $args{'timestamp_name'} = 1;
 
+  my $url;
   if ($method eq 'url') {
-    $args{'file'}          = $hub->param($method);
-    $args{'upload'}        = 'url';
+    $url            = $hub->param('url');
+    $args{'file'}   = $url;
+    $args{'upload'} = 'url';
   }
   elsif ($method eq 'text') {
     ## Get content straight from CGI, since there's no input file
@@ -213,6 +215,7 @@ sub upload {
         my $data = $session->add_data(
                                     type      => 'upload',
                                     file      => $self->write_location,
+                                    url       => $url || '',
                                     filesize  => length($result->{'content'}),
                                     code      => $code,
                                     md5       => $md5,
