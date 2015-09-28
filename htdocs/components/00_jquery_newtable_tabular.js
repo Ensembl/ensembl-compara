@@ -230,8 +230,7 @@
   function remarkup_sub($table,$subtable,config,grid,rev_series,table_num,orient) {
     var markup = build_markup($table,config,grid,rev_series,table_num,orient);
     $subtable.data('markup-orient',orient);
-    var html = convert_markup($table,markup);
-    $subtable.data('backing',html);
+    $subtable.data('markup',markup);
     $subtable.data('xxx',table_num);
   }
 
@@ -282,7 +281,8 @@
   function wakeup($table,$subtable) {
     if(!$subtable.data('redraw')) { return; }
     console.log("redrawing "+$subtable.data('xxx'));
-    var html = $subtable.data('backing');
+    var markup = $subtable.data('markup');
+    var html = convert_markup($table,markup);
     $subtable.data('redraw',0);
     var $body = $('tbody',$subtable);
     if(!$body.length) {
