@@ -61,8 +61,6 @@
     return "<th "+attr_str+">"+text+"</th>";
   }
 
-  // TODO fix widths on load
-  // TODO initial orient
   function fix_widths($table,config,orient) {
     var totals = { u: 0, px: 0 };
     var widths = [];
@@ -82,13 +80,17 @@
     totals.u = (100-totals.px) / (totals.u||1);
     var $head = $('table:first th',$table);
     var j = 0;
+    var k = 0;
     $.each(config.columns,function(i,key) {
       var cc = config.colconf[key];
       if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
-      if(orient.off_columns && orient.off_columns[key]) { return; }
-      var $th = $head.eq(j);
-      $th.css('width',(widths[j][0]*totals[widths[j][1]])+"%");
-      j++;
+      var $th = $head.eq(j++);
+      if(orient.off_columns && orient.off_columns[key]) {
+        $th.css('width','0px').addClass('invisible');
+        return;
+      }
+      $th.css('width',(widths[k][0]*totals[widths[k][1]])+"%").removeClass('invisible');
+      k++;
     });
   }
 
@@ -208,12 +210,14 @@
   function build_markup($table,config,grid,rev_series,table_num,orient) {
     var markup = [];
     var shown = [];
+    var off = orient.off_columns || {};
     var i,j;
     for(i=0;i<config.columns.length;i++) {
       var cc = config.colconf[config.columns[i]];
       if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
         continue;
       }
+      if(off[config.columns[i]]) { continue; } 
       shown.push(rev_series[config.columns[i]]);
     }
     var start = table_num*rows_per_subtable;
@@ -254,16 +258,20 @@
     }
     for(var i=0;i<markup.length;i++) {
       html += "<tr>";
+      var k = 0;
       for(j=0;j<$th.length;j++) {
+        $header = $th.eq(j);
+        if($header.hasClass('invisible')) { continue; }
         var start = "<td>";
         if(i===0) {
-          start = "<td style=\"width: "+$th.eq(j).width()+"px\">";
+          start = "<td style=\"width: "+$header.width()+"px\">";
         }
-        if(markup[i][j]) {
-          html += start+markup[i][j]+"</td>";
+        if(markup[i][k]) {
+          html += start+markup[i][k]+"</td>";
         } else {
           html += start+"</td>";
         }
+        k++;
       }
       html += "</tr>";
     }
