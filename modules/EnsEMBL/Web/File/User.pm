@@ -101,21 +101,22 @@ sub upload {
   my ($method)  = $args{'method'} || grep $hub->param($_), qw(file url text);
   my $type      = $args{'type'};
 
+  ## Need the filename (for handling zipped files)
   my @orig_path = split '/', $hub->param($method);
   my $filename  = $orig_path[-1];
   my $name      = $hub->param('name');
   my $f_param   = $hub->param('format');
   my ($error, $format, $full_ext);
 
-  ## Need the filename (for handling zipped files)
+  ## Give the track a default name
   unless ($name) {
     if ($method eq 'text') {
-      $args{'name'} = 'Data';
+      $name = 'Data';
     } else {
-      my @orig_path = split('/', $hub->param($method));
-      $args{'name'} = $orig_path[-1];
+      $name = $filename;
     }
   }
+  $args{'name'} = $name;
 
   ## Some uploads shouldn't be viewable as tracks, e.g. assembly converter input
   my $no_attach = $type eq 'no_attach' ? 1 : 0;
