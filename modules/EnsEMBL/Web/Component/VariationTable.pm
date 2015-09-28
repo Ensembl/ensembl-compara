@@ -128,6 +128,7 @@ sub sift_poly_classes {
   foreach my $column_name (qw(sift polyphen)) {
     my $value_column = $table->column("${column_name}_value");
     my $class_column = $table->column("${column_name}_class");
+    next unless $value_column and $class_column;
     $value_column->editorial_type('lozenge');
     $value_column->editorial_source("${column_name}_class");
     foreach my $pred (keys %sp_classes) {
