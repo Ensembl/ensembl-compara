@@ -48,6 +48,7 @@ sub availability {
   if (!$self->{'_availability'}) {
     my $availability = $self->_availability;
     my $obj = $self->Obj;
+    $availability->{'has_phenotypes'} = 0; # Defaults to off - see below
     
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
@@ -82,7 +83,7 @@ sub availability {
       $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
       
       if ($self->database('variation')) {
-        $availability->{'has_phenotypes'} = $self->get_phenotype;
+        $availability->{'has_phenotypes'} = 1; #Don't try to calculate - too slow!
       }
 
       if ($self->database('compara_pan_ensembl')) {
