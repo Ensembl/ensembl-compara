@@ -26,7 +26,7 @@
         var extra = [];
         var ok = true;
         for(var k in params) {
-          if(!params.hasOwnProperty(params)) { continue; }
+          if(!params.hasOwnProperty(k)) { continue; }
           var v = params[k];
           var val = row[rseries[v]];
           if(val===null || val===undefined) {
