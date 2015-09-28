@@ -90,7 +90,7 @@ sub populate_tree {
     { 'availability' => 'transcript database:funcgen has_oligos', 'concise' => 'Oligo probes' }
   ));
  
-  $self->create_node('Ontology/Table', 'GO table',
+  $self->create_node('Ontology/Table', 'Ontology',
     [qw( go EnsEMBL::Web::Component::Transcript::Go )],
     { 'availability' => 'transcript has_go', 'concise' => 'GO table' }
   );
