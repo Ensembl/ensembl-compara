@@ -120,6 +120,7 @@ tr.row-sub td:first-child { text-indent:24px; }
 .new_table { border: 1px [[NEUTRAL_BORDER]] solid; margin: 0 0 16px; }
 .new_table table    { table-layout: fixed;  width: 100%; border-spacing: 0; }
 .new_table th { cursor: pointer; padding: 2px 20px 2px 4px; background-color: [[NEUTRAL_BORDER]]; line-height: 16px; }
+.new_table tbody tr { background-color: #fff; }
 .new_table tbody tr:nth-child(odd) { background-color: #eee; }
 .new_table tbody tr:nth-child(even) { background-color: #fff; }
 .new_table .subtable { background: #f8f8f0;  }
@@ -167,7 +168,8 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter ul li.t.prec_sec { display: none; }
 .newtable_filter .intro { font-weight: bold; margin: 0 0 0 8px; color: #666; }
 .newtable_export_iframe { display: none; }
-.newtable_export { background: url(/i/export_csv.png); height: 24px; font-size: 0; width: 24px; display: inline-block; vertical-align: top; margin-top: -2px; margin-left: 8px; }
+.newtable_export { background: url(/i/export_csv.png); height: 24px; color: transparent; width: 24px; display: inline-block; vertical-align: top; margin-top: -2px; margin-left: 8px; }
+.newtable_export:hover { color: transparent; }
 .newtable_toggle { padding-right: 16px; position: relative; word-break: break-all; }
 .newtable_toggle_img { background: url(/i/closed2.gif); width: 14px; height: 14px; position: absolute; right: 0; top: 0; }
 .newtable_toggle.open .newtable_toggle_img { background: url(/i/open2.gif); }
