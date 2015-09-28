@@ -25,26 +25,18 @@
     });
   }
 
-  function loop(def,fn,group,sleeplen) {
-    return def.then(function(raw_input) {
-      var input = [];
-      $.each(raw_input,function(a,b) { input.push([a,b]); });
-      d = $.Deferred().resolve(input);
-      var output = [];
-      for(var ii=0;ii<input.length;ii+=group) {
-        (function(i) {
-          d = beat(d.then(function(j) {
-            for(j=0;j<group && i+j<input.length;j++) {
-              var c = fn(input[i+j][0],input[i+j][1]);
-              if(c !== undefined) {
-                output.push(c);
-              }
-            }
-            return $.Deferred().resolve(output);
-          }),sleeplen);
-        })(ii);
+  function loop(def,fn,sleeplen) {
+    return def.then(function(input) {
+      var e = $.Deferred();
+      e.resolve(0);
+      var inner = function(i) {
+        fn(i,input[i]);
+        return $.Deferred().resolve(i+1);
+      };
+      for(var i=0;i<input.length;i++) {
+        e = beat(e.then(inner),sleeplen);
       }
-      return d;
+      return e;
     });
   }
 
@@ -65,7 +57,7 @@
     });
     if(classes.length) {
       attr_str += ' class="'+classes.join(' ')+'"';
-    };
+    }
     return "<th "+attr_str+">"+text+"</th>";
   }
 
@@ -76,7 +68,7 @@
     var widths = [];
     $.each(config.columns,function(i,key) {
       var cc = config.colconf[key];
-      var m = cc.width.match(/^(\d+)(.*)$/)
+      var m = cc.width.match(/^(\d+)(.*)$/);
       if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
       if(orient.off_columns && orient.off_columns[key]) { return; }
       widths.push([m[1],m[2]]);
@@ -85,9 +77,9 @@
       }
     });
     var table_width = $table.width();
-    totals['px'] *= 100/table_width;
-    if(totals['px'] > 100) { totals['px'] = 100; }
-    totals['u'] = (100-totals['px']) / (totals['u']||1);
+    totals.px *= 100/table_width;
+    if(totals.px > 100) { totals.px = 100; }
+    totals.u = (100-totals.px) / (totals.u||1);
     var $head = $('table:first th',$table);
     var j = 0;
     $.each(config.columns,function(i,key) {
@@ -216,7 +208,8 @@
   function build_markup($table,config,grid,rev_series,table_num,orient) {
     var markup = [];
     var shown = [];
-    for(var i=0;i<config.columns.length;i++) {
+    var i,j;
+    for(i=0;i<config.columns.length;i++) {
       var cc = config.colconf[config.columns[i]];
       if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
         continue;
@@ -224,9 +217,9 @@
       shown.push(rev_series[config.columns[i]]);
     }
     var start = table_num*rows_per_subtable;
-    for(var i=start;i<start+rows_per_subtable && i<grid.length;i++) {
+    for(i=start;i<start+rows_per_subtable && i<grid.length;i++) {
       var row = [];
-      for(var j=0;j<shown.length;j++) {
+      for(j=0;j<shown.length;j++) {
         row[j] = grid[i][shown[j]]||'';
       }
       markup.push(row);
@@ -256,15 +249,15 @@
     var $th = $('table:first th',$table);
     var html = "";
     var keys = [];
-    for(var j=0;j<$th.length;j++) {
+    var j;
+    for(j=0;j<$th.length;j++) {
       keys[j] = $th.eq(j).data('key');
     }
     for(var i=0;i<markup.length;i++) {
       html += "<tr>";
-      for(var j=0;j<$th.length;j++) {
-        var key = keys[j];
+      for(j=0;j<$th.length;j++) {
         var start = "<td>";
-        if(i==0) {
+        if(i===0) {
           start = "<td style=\"width: "+$th.eq(j).width()+"px\">";
         }
         if(markup[i][j]) {
@@ -324,10 +317,6 @@
     }
   }
 
-  function replace_header($table,header) {
-    $('thead',$table).replaceWith(header);
-  }
-
   function eager() {
     $.lazy('eager');
     setTimeout(function() { eager(); },3000);
@@ -353,17 +342,17 @@
         var rev_series = {};
         for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
         var subtabs = remarkup($table,config,grid,rev_series,start,num,orient);
-        d = $.Deferred().resolve(subtabs);
+        var d = $.Deferred().resolve(subtabs);
         var has_reset = false;
-        var e = loop(d,function(tabnum,v) {
-          var $subtable = apply_html($table,tabnum);
+        loop(d,function(tabnum,v) {
+          apply_html($table,tabnum);
           if(!has_reset) {
             $subtables.each(function() {
               set_active_orient($(this),orient);
             });
             has_reset = true;
           }
-        },1,10);
+        },10);
       },
       truncate_to: function($table,grid,series,orient) {
         if(length) {

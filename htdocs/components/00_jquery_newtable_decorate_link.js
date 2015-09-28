@@ -27,8 +27,8 @@
         var ok = true;
         for(var k in params) {
           if(!params.hasOwnProperty(params)) { continue; }
-          v = params[k];
-          val = row[rseries[v]];
+          var v = params[k];
+          var val = row[rseries[v]];
           if(val===null || val===undefined) {
             ok = false;
           } else {
@@ -40,7 +40,7 @@
         if(extra.length) {
           if(base.match(/\?/)) { rest = ';'; } else { rest = '?'; }
         }
-        var rest = rest + extra.join(';');
+        rest = rest + extra.join(';');
         if(extras['*'] && extras['*'].base_url) {
           if(html.match(/<a/)) {
             html = html.replace(/href="/g,'href="'+base+rest);

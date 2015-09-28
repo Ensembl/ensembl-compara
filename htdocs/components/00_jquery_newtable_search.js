@@ -22,11 +22,11 @@
     function match(row,series,search,cleaner) {
       for(var i=0;i<row.length;i++) {
         var key =series[i];
-        if(cleaner[key]==undefined) { continue; }
+        if(cleaner[key]===undefined) { continue; }
         if(!row[i]) { continue; }
         var val = row[i];
         if(cleaner[key]) { val = cleaner[key](val); }
-        if(val == undefined) { return false; }
+        if(val===undefined) { return false; }
         if(~val.toLowerCase().indexOf(search)) { return true; }
       }
       return false;
@@ -80,7 +80,7 @@
             // XXX should search be searching columns or series?
             return {
               undo: function(manifest,grid,series,dest) {
-                fabric = [];
+                var fabric = [];
                 $.each(grid,function(i,v) {
                   if(match(grid[i],series,search.toLowerCase(),cleaner)) {
                     fabric.push(grid[i]);

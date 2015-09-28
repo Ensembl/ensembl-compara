@@ -38,13 +38,13 @@
     function decorate_fn(column,extras) {
       return function(html) {
         var values = html.split('~');
-        new_html = "";
+        var new_html = "";
         for(var i=0;i<values.length;i++) {
           var val = "";
           var ann = {};
           if(extras[values[i]]) { ann = extras[values[i]]; }
           if(ann.icon) {
-            more = '';
+            var more = '';
             if(ann.helptip) {
               more += ' class="_tht" title="'+ann.helptip+'" ';
             }

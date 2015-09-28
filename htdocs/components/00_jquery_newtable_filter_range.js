@@ -15,13 +15,6 @@
  */
 
 (function($) {
-  function obj_empty(x) {
-    for(var k in x) {
-      if(x.hasOwnProperty(k)) { return false; }
-    }
-    return true;
-  }
-
   var varieties = {
     position: {
       summary_prefix: function($button) {
@@ -75,7 +68,6 @@
 
   function update_widget(variety,$button,$el,min,max) {
     var $feedback = $('.slider_feedback',$el);
-    var $slider = $('.slider',$el);
     var $tickbox = $('.slider_unspecified input',$el);
     var prefix = variety.summary_prefix($button);
     var minmax = is_minmax($button,null,min,max);
@@ -98,7 +90,7 @@
     min = parseFloat(min);
     max = parseFloat(max);
     var step = (max-min)/200;
-    if(step == 0) { step = 1; }
+    if(step === 0) { step = 1; }
     if(kparams.steptype == 'integer') { step = 1; }
     return step;
   }
@@ -137,11 +129,11 @@
 
   function draw_widget(variety,$button,min,max,kparams) {
     var $out = $("<div/>").addClass('newtable_range');
-    var $feedback = $('<div/>').addClass('slider_feedback').appendTo($out);
+    $('<div/>').addClass('slider_feedback').appendTo($out);
     var $unspec = $('<div/>').addClass('slider_unspecified');
     $unspec.append("<span>include blank / other chrs.</span>");
     var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
-    var $slider = draw_slider(variety,$out,$button,min,max,kparams);
+    draw_slider(variety,$out,$button,min,max,kparams);
     $unspec.appendTo($out);
     $tickbox.on('click',function() {
       $button.data('unspec-explicit',true);
@@ -196,14 +188,15 @@
           var no_blanks = (state.hasOwnProperty('nulls') && !state.nulls);
           var has_min = state.hasOwnProperty('min');
           var has_max = state.hasOwnProperty('max');
+          var out;
           if(!has_min && !has_max) {
-            var out = "All";
+            out = "All";
             if(no_blanks) { out += " except blank/other"; }
             return out;
           } else {
-            var out = variety.text_prefix(state)+(has_min?state.min:"Min") +
-                      " - " +
-                      variety.text_prefix(state)+(has_max?state.max:"Max");
+            out = variety.text_prefix(state)+(has_min?state.min:"Min") +
+                  " - " +
+                  variety.text_prefix(state)+(has_max?state.max:"Max");
             if(!no_blanks) { out += " or blank/other"; }
             return out;
           }

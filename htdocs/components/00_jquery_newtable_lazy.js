@@ -61,10 +61,10 @@
     var wtop = $(window).scrollTop();
     var wbot = wtop + $(window).height();
     var height = $(document).height();
-
+    var i;
     // Awaken some elements?
     while(true) {
-      for(var i=0;i<elements.length;i++) {
+      for(i=0;i<elements.length;i++) {
         if(elements[i].hasClass('__awake')) { continue; }
         if(wbot>coords[i][0] && wtop<coords[i][1]) {
           awaken(elements[i]);
@@ -74,7 +74,7 @@
       break; // all done
     }
     // Send some to sleep?
-    for(var i=0;i<elements.length;i++) {
+    for(i=0;i<elements.length;i++) {
       if(coords[i][0] < miles_away/2 ||
          coords[i][1] > height - miles_away/2) {
         elements[i].removeClass('__miles_away');
@@ -93,14 +93,14 @@
   }
 
   function eager() {
+    var i;
     refresh();
     check();
     var wtop = $(window).scrollTop();
     var wbot = wtop + $(window).height();
     var height = $(document).height();
-    var nearby = 0;
     var targets = [null,null,null,null];
-    for(var i=0;i<elements.length;i++) {
+    for(i=0;i<elements.length;i++) {
       var prio = 3;
       if(coords[i][1] > height - miles_away/2) { prio = 2; }
       if(coords[i][0] < miles_away && !targets[1]) { prio = 1; }
@@ -109,7 +109,7 @@
       if(elements[i].hasClass('__miles_away')) { continue; }
       targets[prio] = elements[i];
     }
-    for(var i=0;i<targets.length;i++) {
+    for(i=0;i<targets.length;i++) {
       if(targets[i]) { awaken(targets[i]); break; }
     }
   }
@@ -139,6 +139,6 @@
     } else if(arg == 'eager') {
       eager();
     }
-  }
+  };
 
 })(jQuery);
