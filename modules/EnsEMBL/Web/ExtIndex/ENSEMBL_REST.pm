@@ -41,7 +41,7 @@ sub get_sequence {
 
   # invalid id
   throw exception('WebException', "No valid ID provided.")              unless $params->{'id'};
-  throw exception('WebException', "$params->{'id'} is not a valid ID.") unless $params->{'id'} =~ /^[a-z]+[0-9]+$/i;
+  throw exception('WebException', "$params->{'id'} is not a valid ID.") unless $params->{'id'} =~ /^[a-z0-9]+$/i;
 
   # make the request
   my $content;
