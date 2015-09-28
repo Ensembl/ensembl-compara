@@ -371,25 +371,32 @@ sub variation_table {
   my $var_styles = $hub->species_defs->colour('variation');
   my $colourmap  = $hub->colourmap;
   
+  my $vfs = $self->_get_variation_features();
+
   if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
     my $gene_stable_id        = $transcripts->[0] && $transcripts->[0]->gene ? $transcripts->[0]->gene->stable_id : undef;
        $url_transcript_prefix = 'lrgt';
     
     my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+
+    my @var_ids;
+    foreach my $transcript (@$transcripts) {
+      # get TVs
+      my $tvs = $self->_get_transcript_variations($transcript->Obj);
     
-    my @var_ids =
-      map $_->{'_variation_id'},
-      map $_->[0],
-      map @{$_->__data->{'transformed'}{'gene_snps'}},
-      @$transcripts;
-    
-    %handles = %{$vfa->_get_all_subsnp_handles_from_variation_ids(\@var_ids)};
+      my @tv_sorted;
+      foreach my $transcript_variation (@$tvs) {
+        my $raw_id = $transcript_variation->{_variation_feature_id};
+
+        my $snp = $vfs->{$raw_id};
+        next unless $snp;
+        push @var_ids,$snp->get_Variation_dbID();
+      }
+    }
   } else {
     $url_transcript_prefix = 't';
   }
 
-  my $vfs = $self->_get_variation_features();
-  
   ROWS: foreach my $transcript (@$transcripts) {
 
     # get TVs
