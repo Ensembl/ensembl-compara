@@ -79,7 +79,7 @@ sub init {
       display     => 'transcript_label',
       strand      => 'b',
       name        => 'LRG transcripts', 
-      description => 'Shows LRG transcripts',
+      description => 'Transcripts from the <a class="external" href="http://www.lrg-sequence.org">Locus Reference Genomic sequence</a> project.',
       logic_names => [ 'LRG_import' ], 
       logic_name  => 'LRG_import',
       colours     => $self->species_defs->colour('gene'),
@@ -87,11 +87,11 @@ sub init {
       colour_key  => '[logic_name]',
       zmenu       => 'LRG',
     }],
-    [ 'lrg_band', 'LRG', 'lrg_band', {
+    [ 'lrg_band', 'LRG gene', 'lrg_band', {
       display     => 'normal',
       strand      => 'f',
-      name        => 'LRG',
-      description => 'Shows LRG band',
+      name        => 'LRG gene',
+      description => 'Track showing the underlying LRG gene from the <a class="external" href="http://www.lrg-sequence.org">Locus Reference Genomic sequence</a> project.',
       colours     => $self->species_defs->colour('gene'),
       zmenu       => 'LRG',
     }]

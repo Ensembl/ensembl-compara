@@ -34,7 +34,7 @@ sub init {
   });
   
   $self->create_menus(      
-    lrg        => 'LRG transcripts',
+    lrg        => 'LRG',
     transcript => 'Other Genes',
     variation  => 'Germline variation',
     somatic    => 'Somatic Mutations',
@@ -46,8 +46,8 @@ sub init {
   $self->add_tracks('lrg',
     [ 'lrg_transcript', 'LRG', '_lrg_transcript', {
       display     => 'normal', 
-      name        => 'LRG transcripts', 
-      description => 'Shows LRG transcripts', 
+      name        => 'LRG', 
+      description => 'Transcripts from the <a class="external" href="http://www.lrg-sequence.org">Locus Reference Genomic sequence</a> project.', 
       logic_names => [ 'LRG_import' ], 
       logic_name  => 'LRG_import',
       colours     => $self->species_defs->colour('gene'),

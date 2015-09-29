@@ -171,7 +171,7 @@ sub menus {
     gene_transcript     => 'Genes and transcripts',
     transcript          => [ 'Genes',                  'gene_transcript' ],    
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
-    lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
+    lrg                 => [ 'LRG',                    'gene_transcript' ],
     rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
     
     # Supporting evidence
