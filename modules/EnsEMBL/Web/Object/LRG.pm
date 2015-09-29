@@ -33,6 +33,14 @@ sub create_features {
     return {'LRG' => $self->_generic_create( 'Slice', 'fetch_by_region' ) };
 }
 
+sub get_transcript {
+  my $self        = shift;
+  my $param       = $self->hub->param('lrgt');
+  my $transcripts = $self->get_all_transcripts;
+  return $param ? grep $_->stable_id eq $param, @$transcripts : $transcripts->[0];
+}
+
+
 sub default_action {
   my $self         = shift;
   my $availability = $self->availability;

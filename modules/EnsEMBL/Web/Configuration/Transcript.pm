@@ -89,7 +89,12 @@ sub populate_tree {
     [qw( arrays EnsEMBL::Web::Component::Transcript::OligoArrays )],
     { 'availability' => 'transcript database:funcgen has_oligos', 'concise' => 'Oligo probes' }
   ));
-  
+ 
+  $self->create_node('Ontology/Table', 'Ontology',
+    [qw( go EnsEMBL::Web::Component::Transcript::Go )],
+    { 'availability' => 'transcript has_go', 'concise' => 'GO table' }
+  );
+=pod 
   my $go_menu = $self->create_submenu('GO', 'Ontology');
   $go_menu->append($self->create_node('Ontology/Image', 'GO graph',
     [qw( go EnsEMBL::Web::Component::Transcript::Goimage )],
@@ -100,6 +105,7 @@ sub populate_tree {
     [qw( go EnsEMBL::Web::Component::Transcript::Go )],
     { 'availability' => 'transcript has_go', 'concise' => 'GO table' }
   ));
+=cut
 
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 

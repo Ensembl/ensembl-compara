@@ -38,7 +38,7 @@ sub content {
   my $hub   = $self->hub;
 
   my $settings = {
-                'Hidden' => ['align', 'g1', 'data_action']
+                'Hidden' => ['align', 'g1', 'data_action', 'hom_id']
                 };
 
   ## Options per format

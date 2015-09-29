@@ -35,8 +35,16 @@ sub non_coding_error {
 sub get_export_data {
 ## Get data for export
   my $self = shift;
+  my $hub  = $self->hub;
   ## Fetch transcript explicitly, as we're probably coming from a DataExport URL
-  my $transcript = $self->hub->core_object('transcript');
+  my $transcript;
+  if ($hub->param('data_type') eq 'LRG') {
+    my $object = $self->builder->object('LRG');
+    $transcript = $object->get_transcript;
+  }
+  else {
+    $transcript = $hub->core_object('transcript');
+  }
   return $transcript->Obj;
 }
 

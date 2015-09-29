@@ -58,7 +58,7 @@ sub availability {
       
       $availability->{'variation'} = 1;
       
-      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts regfeats features populations samples ega citation);
+      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts regfeats features populations samples ega citation locations);
       if($self->param('vf')){
           ## only show these if a mapping available
           $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
@@ -98,6 +98,7 @@ sub counts {
     $counts->{'ldpops'}      = $self->count_ldpops;
     $counts->{'alignments'}  = $self->count_alignments->{'multi'};
     $counts->{'citation'}    = $self->count_citations;
+    $counts->{'locations'}   = scalar @{$self->get_variation_features};
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;

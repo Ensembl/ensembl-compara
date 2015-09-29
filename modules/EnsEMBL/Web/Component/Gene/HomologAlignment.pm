@@ -41,7 +41,6 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $gene_id      = $self->object->stable_id;
   my $second_gene  = $hub->param('g1');
-  my $homology_id  = $hub->param('hom_id');
   my $seq          = $hub->param('seq');
   my $text_format  = $hub->param('text_format');
   my (%skipped, $html);
@@ -260,6 +259,7 @@ sub buttons {
                   'gene_name'   => $name, 
                   'align'       => $hub->param('seq') || 'protein',
                   'g1'          => $hub->param('g1'),
+                  'hom_id'      => $hub->param('hom_id'),
                 };
 
   return {

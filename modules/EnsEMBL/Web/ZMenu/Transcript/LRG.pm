@@ -77,9 +77,16 @@ sub content {
     });
   }
 
+  my $strand = 1;
+  my $chr_slices = $object->slice->project('chromosome');
+  if ($chr_slices->[0]) {
+    my $chr_slice = $chr_slices->[0]->to_Slice;
+    $strand = $chr_slice->strand;
+  }
+
   $self->add_entry({
     type  => 'Strand',
-    label => $object->seq_region_strand < 0 ? 'Reverse' : 'Forward'
+    label => $strand < 0 ? 'Reverse' : 'Forward'
   });
 
   $self->add_entry({
