@@ -283,7 +283,7 @@ sub make_table {
     width => 1.5,
     helptip => $glossary->{'Evidence status (variant)'}
   },{
-    _key => 'clinsig', _type => 'iconic', label => "Clin\fsig",
+    _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
     helptip => 'Clinical significance'
   },{
     _key => 'snptype', _type => 'iconic set_primary', label => "Type",
