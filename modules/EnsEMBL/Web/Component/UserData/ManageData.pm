@@ -272,10 +272,10 @@ sub table_row {
 
   my $config_html = $config_link ? sprintf $conf_template, $config_link : '';
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
-  my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params });
-  
+  my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => lc($file->{'type'}) eq 'url' ? 'delete_remote' : 'delete_upload', %url_params });
+ 
   return {
-    type    => $file->{'url'} ? 'URL' : 'Upload',
+    type    => ucfirst($file->{'type'}),
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,
