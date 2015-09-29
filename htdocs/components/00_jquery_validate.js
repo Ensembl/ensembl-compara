@@ -58,6 +58,7 @@ $.validator = function (options, form) {
   this.settings      = $.extend({}, $.validator.defaults, options);
   this.rules         = this.settings.rules;
   this.tests         = this.settings.tests; // Precompiled regular expressions
+  this.trim          = this.settings.trim;
   this.inputs        = $('input[type="text"], input[type="password"], input[type="file"], textarea, select', form);
   this.submitButtons = $('input[type="submit"]', form);
   this.result        = true;
@@ -121,6 +122,7 @@ $.extend($.validator, {
     validClass:    'valid',
     invalidClass:  'invalid',
     requiredClass: 'required',
+    trim: [ 'int', 'nonnegint', 'posint', 'float', 'nonnegfloat', 'posfloat', 'email', 'url' ],
     tests: {
       'int':    new RegExp(/^[\-+]?\d+$/),
       'float':  new RegExp(/^([\-+]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([\-+]?\d+))?$/),
@@ -167,6 +169,10 @@ $.extend($.validator, {
         inputs.each(function () {
           var el    = $(this);
           var input = $.extend({}, el.data());
+
+          if (validator.trim.indexOf(input.rule) >= 0) {
+            this.value = this.value.trim();
+          }
 
           if (this.value === '' && ('default' in input)) {
             this.value = input['default'];
