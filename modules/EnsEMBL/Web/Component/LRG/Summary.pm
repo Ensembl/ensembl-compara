@@ -87,12 +87,12 @@ sub content {
     $description .= qq{ Source: <a rel="external" href="$source_url">$source</a>.} if $source_url;
     
     my $location_html = sprintf(
-      '<p><a href="%s" class="constant">%s: %s-%s</a> %s.</p>',
+      '<p>maps to <a href="%s" class="constant">%s: %s-%s</a> %s.</p>',
       $hub->url({
         type             => 'Location',
         action           => 'View',
         r                => $slice->seq_region_name . ':' . $slice->start . '-' . $slice->end,
-        contigviewbottom => 'lrg=normal'
+        contigviewbottom => 'lrg_transcript=transcript_label'
       }),
       $self->neat_sr_name($slice->coord_system->name, $slice->seq_region_name),
       $self->thousandify($slice->start),
@@ -128,8 +128,8 @@ sub content {
     
     $html = $self->new_twocol(
       ['Description', $description],
-      ['Location', $location_html],
-      ['Transcripts', $tr_line]
+      ['LRG location', $location_html],
+      ['LRG transcripts', $tr_line]
     )->render;
     $html .= $self->transcript_table($tr_cookie);
   }
