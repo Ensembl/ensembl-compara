@@ -231,6 +231,7 @@ div.icon                      { padding: 4px 8px 4px 0; }
 .config_icon   { background-image: url(/i/16/swp/setting.png);      }
 .delete_icon   { background-image: url(/i/16/swp/trash.png);        }
 .share_icon    { background-image: url(/i/16/swp/share.png);        }
+.reload_icon   { background-image: url(/i/16/swp/reload.png);       }
 .download_icon { background-image: url(/i/16/swp/download.png);     }
 .add_icon      { background-image: url(/i/16/swp/add.png);          }
 .edit_icon     { background-image: url(/i/16/swp/pencil.png);       }
