@@ -448,6 +448,8 @@
     $table.data('view',view).data('old-view',$.extend(true,{},old_view))
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
+    $table.on('think-on',function(e,key) { flux(widgets,$table,'think',1,key); });
+    $table.on('think-off',function(e,key) { flux(widgets,$table,'think',-1,key); });
     build_format(widgets,$table);
     $table.on('view-updated',function() {
       var view = $table.data('view');
@@ -560,14 +562,16 @@
     };
   };
 
-  $.whenquiet = function(fn,msec) {
+  $.whenquiet = function(fn,msec,$table,key) {
     var id;
     return function() {
+      if($table) { $table.trigger('think-on',[key]); }
       var that = this;
       var args = arguments;
       if(id) { clearTimeout(id); }
       id = setTimeout(function() {
         id = null;
+        if($table) { $table.trigger('think-off',[key]); }
         fn.apply(that,args);
       },msec);
     };

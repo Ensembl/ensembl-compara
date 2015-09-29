@@ -281,7 +281,7 @@
       go: function($table,$el) {
         var trigger_soon = $.whenquiet(function() {
           $table.trigger('view-updated');
-        },5000);
+        },5000,$table,'filter');
         $('li.t',$el).on('update',function(e,state) {
           update_state($table,$(this),state);
           update_button($table,$(this));
