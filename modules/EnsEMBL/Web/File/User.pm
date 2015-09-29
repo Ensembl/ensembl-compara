@@ -99,12 +99,13 @@ sub upload {
   $self->{'absolute'} = 1;
 
   my ($method)  = $args{'method'} || grep $hub->param($_), qw(file url text);
+  my $path      = $self->read_location || $hub->param($method);
   my $type      = $args{'type'};
 
   ## Need the filename (for handling zipped files)
-  my @orig_path = split '/', $hub->param($method);
+  my @orig_path = split '/', $path;
   my $filename  = $orig_path[-1];
-  my $name      = $hub->param('name');
+  my $name      = $args{'name'} || $hub->param('name');
   my $f_param   = $hub->param('format');
   my ($error, $format, $full_ext);
 
@@ -158,7 +159,7 @@ sub upload {
 
   my $url;
   if ($method eq 'url') {
-    $url            = $hub->param('url');
+    $url            = $self->read_location || $hub->param('url');
     $args{'file'}   = $url;
     $args{'upload'} = 'url';
   }
@@ -202,7 +203,7 @@ sub upload {
         my $session = $hub->session;
         my $md5     = $self->md5($result->{'content'});
         my $code    = join '_', $md5, $session->session_id;
-        my $format  = $hub->param('format');
+        my $format  = $self->get_format || $hub->param('format');
         $format     = 'BED' if $format =~ /bedgraph/i;
         my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
 

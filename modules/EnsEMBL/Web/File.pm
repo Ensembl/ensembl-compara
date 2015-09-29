@@ -167,7 +167,18 @@ sub init {
   my ($name, $extension, $compression);
   my $sub_dir = $args{'sub_dir'};
 
-  if ($args{'upload'} || !$read_path) {
+  if ($args{'write_location'}) {
+    ## Refreshing a previous upload
+    $self->{'write_location'} = $args{'write_location'};
+    my @path = split('/', $args{'write_location'});
+    ($name, $extension, $compression) = _parse_filename($path[-1]);
+    $self->{'write_ext'} = $extension;
+    $self->{'write_name'} = $name.'.'.$extension;
+
+    $self->{'write_compression'} = $compression;
+    $self->{'write_name'} .= '.'.$compression if $compression;
+  }
+  elsif ($args{'upload'} || !$read_path) {
     my $filename = $args{'name'};
     if ($filename) {
 
