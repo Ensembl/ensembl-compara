@@ -204,7 +204,7 @@ sub init {
   if ($self->species_defs->HAS_LRG) {
     $self->add_tracks('lrg',
       [ 'lrg_transcript', 'LRG', '_transcript', {
-        display     => 'transcript_label',
+        display     => 'off', # Switched off by default
         strand      => 'b',
         name        => 'LRG transcripts',
         description => 'Shows LRG transcripts',
