@@ -374,13 +374,23 @@
   }
 
   var fluxion = {};
-  function flux(widgets,$table,type,state) {
+  var fluxes = {};
+  function flux(widgets,$table,type,state,kind) {
+    if(kind!==undefined && kind!==null) {
+      if(fluxes.hasOwnProperty(kind) && state>0) {
+        return;
+      }
+      fluxes[kind] = 1;
+    }
     var change = -1;
     if(!fluxion[type]) { fluxion[type] = 0; }
     if(fluxion[type] === 0 && state) { change = 1; }
     fluxion[type] += state;
     if(fluxion[type] === 0 && state) { change = 0; }
     if(change == -1) { return $.Deferred().resolve(); }
+    if(kind!==undefined && kind!==null && change===0) {
+      if(fluxes.hasOwnProperty(kind)) { delete fluxes[kind]; }
+    }
     $.each(widgets,function(key,fn) {
       if(fn.flux) { fn.flux($table,type,change); }
     });
@@ -457,12 +467,14 @@
     $table.on('spawn',function(e,extra,$frame) {
       var src = $table.data('src');
       var orient = $.extend({},$table.data('view'),extra);
+      var spawntoken = Math.floor(Math.random()*1000000000);
       var params = $.extend({},extract_params(src),{
         keymeta: JSON.stringify($table.data('keymeta')||{}),
         config: JSON.stringify(config),
         orient: JSON.stringify(orient),
         wire: JSON.stringify(orient),
-        ssplugins: JSON.stringify(config.ssplugins)
+        ssplugins: JSON.stringify(config.ssplugins),
+        spawntoken: spawntoken,
       });
       var out = '<form method="POST" id="spawn" action="'+src+'">';
       $.each(params,function(k,v) {
@@ -470,8 +482,21 @@
         out += '<input type="hidden" name="'+k+'" value="'+v_esc+'"/>';
       });
       out += "</form><script></script>";
-      $frame.contents().find('body').append(out);
+      $frame.contents().find('body').empty().append(out);
       $frame.contents().find('#spawn').submit();
+      var iter=0;
+      var spawn_done_test = function() {
+        var parts = document.cookie.split("spawntoken=");
+        var value = null;
+        if(parts.length==2) { value = parts.pop().split(";").shift(); }
+        if(value==spawntoken) {
+          flux(widgets,$table,'think',-1,'spawn');
+        } else {
+          if(iter++<600) { setTimeout(spawn_done_test,1000); }
+        }
+      };
+      flux(widgets,$table,'think',1,'spawn');
+      spawn_done_test();
     });
     $table.on('paint-individual',function(e,$el,key,val) {
       $el.html(paint_individual(widgets,$table,key,val));
