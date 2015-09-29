@@ -262,7 +262,7 @@
             filterable_columns[key] = cc;
           }
         });
-        dropdowns += dropdown(-1,'','More',true);
+        dropdowns += dropdown(-1,'','Other Columns',true);
 
         var out='<div class="newtable_filter"><span class="intro">Filter</span><ul>'+dropdowns+'</ul></div>';
         return out;
