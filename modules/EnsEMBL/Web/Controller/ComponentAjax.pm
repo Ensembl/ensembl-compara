@@ -40,7 +40,8 @@ sub render_page {
   $func = "ajax_$func";
   warn "func=$func\n";
   my $module_name = $self->hub->function;
-  my $pkg = "EnsEMBL::Web::Component::${module_name}";
+  my $type = $self->hub->type;
+  my $pkg = "EnsEMBL::Web::Component::${type}::${module_name}";
   $self->dynamic_use($pkg);
   my $renderer = undef;
   my $component = $pkg->new($self->hub,$self->builder,$renderer);

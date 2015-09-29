@@ -404,9 +404,15 @@ sub variation_table {
     my $tvs = $self->_get_transcript_variations($transcript->Obj);
    
     my $transcript_stable_id = $transcript->stable_id;
-    warn "stable id $transcript_stable_id\n";
     my $gene                 = $transcript->gene;
-
+    my $lrg_correction = 0;
+    if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+      my $gs = $gene->slice->project("chromosome");
+      foreach my $ps(@{$gs}) {
+        $lrg_correction = 1-$ps->to_Slice->start;
+      }
+    }
+    my $chr = $transcript->seq_region_name;
     my @tv_sorted;
     foreach my $transcript_variation (@$tvs) {
       my $raw_id = $transcript_variation->{_variation_feature_id};
@@ -414,7 +420,6 @@ sub variation_table {
       my $snp = $vfs->{$raw_id};
       next unless $snp;
 
-      my ($chr, $start, $end) = ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end);
       push @tv_sorted,[$transcript_variation,$snp->seq_region_start];
     }
     @tv_sorted = map { $_->[0] } sort { $a->[1] <=> $b->[1] } @tv_sorted;
@@ -424,7 +429,8 @@ sub variation_table {
       my $snp = $vfs->{$raw_id};
       next unless $snp;
 
-      my ($chr, $start, $end) = ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end);
+      my ($start, $end) = ($snp->seq_region_start+$lrg_correction, $snp->seq_region_end+$lrg_correction);
+
       foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
         
         # this isn't needed anymore, I don't think!!!
