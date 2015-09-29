@@ -393,6 +393,7 @@ sub variation_table {
         push @var_ids,$snp->get_Variation_dbID();
       }
     }
+    %handles = %{$vfa->_get_all_subsnp_handles_from_variation_ids(\@var_ids)};
   } else {
     $url_transcript_prefix = 't';
   }
