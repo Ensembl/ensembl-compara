@@ -406,10 +406,16 @@ sub variation_table {
     my $transcript_stable_id = $transcript->stable_id;
     my $gene                 = $transcript->gene;
     my $lrg_correction = 0;
+    my $lrg_strand = 0;
     if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
       my $gs = $gene->slice->project("chromosome");
       foreach my $ps(@{$gs}) {
-        $lrg_correction = 1-$ps->to_Slice->start;
+        $lrg_strand = $ps->to_Slice->strand;
+        if($lrg_strand>0) {
+          $lrg_correction = 1-$ps->to_Slice->start;
+        } else {
+          $lrg_correction = $ps->to_Slice->end+1;
+        }
       }
     }
     my $chr = $transcript->seq_region_name;
@@ -429,7 +435,12 @@ sub variation_table {
       my $snp = $vfs->{$raw_id};
       next unless $snp;
 
-      my ($start, $end) = ($snp->seq_region_start+$lrg_correction, $snp->seq_region_end+$lrg_correction);
+      my ($start, $end) = ($snp->seq_region_start,$snp->seq_region_end);
+      if($lrg_strand) {
+        $start = $start*$lrg_strand + $lrg_correction;
+        $end = $end*$lrg_strand + $lrg_correction;
+        ($start,$end) = ($end,$start) if $lrg_strand < 0;
+      }
 
       foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
         
