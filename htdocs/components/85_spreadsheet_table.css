@@ -163,7 +163,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_range .slider_unspecified { padding: 0 6px; }
 .newtable_range .slider_unspecified input { vertical-align: bottom; }
 .newtable_filtertype_more ul { padding: 0; }
-.newtable_filtertype_more li { background-color: #ccc; padding: 4px; width: 100px; border-radius: 8px; margin: 4px; border: 1px solid #ccc; }
+.newtable_filtertype_more li { background-color: #ccc; padding: 4px; width: 100px; border-radius: 8px; margin: 4px; border: 1px solid #ccc; list-style: none; }
 .newtable_filtertype_more li:hover { background: linear-gradient(to top,#ddd,#eee) #fff; border: 1px solid #999; text-shadow: 0 1px white; }
 .newtable_filter ul li.t.prec_sec { display: none; }
 .newtable_filter .intro { font-weight: bold; margin: 0 0 0 8px; color: #666; }
