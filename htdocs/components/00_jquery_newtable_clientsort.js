@@ -73,7 +73,6 @@
         for(var i=0;i<series.length;i++) {
           if(series[i]==target.sort[0].key) { idx = i; }
         }
-        var fabric = grid.slice();
         var partitioned = [[],[]];
         $.each(grid,function(i,row) {
           partitioned[0+!!(row[idx]===null)].push(row);
@@ -82,7 +81,7 @@
         partitioned[1].reverse();
         manifest.sort[0].dir *= -1;
         return [manifest,partitioned[0].concat(partitioned[1])];
-      }
+      };
     }
 
     return {
@@ -110,7 +109,7 @@
                 var keymeta = $table.data('keymeta') || {};
                 series = series.slice();
                 series.push('__tie');
-                rev_series['__tie'] = series.length-1;
+                rev_series.__tie = series.length-1;
                 fabric.sort(function(a,b) {
                   return compare(a,b,rev_series,plan.stages,cache,keymeta);
                 });
@@ -118,7 +117,7 @@
                 return [manifest,fabric];
               },
               no_incr: !plan.incr_ok
-            }
+            };
           }
         ];
       }

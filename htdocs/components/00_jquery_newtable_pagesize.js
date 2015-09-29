@@ -23,7 +23,7 @@
                '<select size="1">';
         $.each(data.sizes,function(i,el) {
           var text = el;
-          if(el == 0) { text = "All"; el = -1; }
+          if(el===0) { text = "All"; el = -1; }
           out += '<option value="'+el+'">'+text+'</option>';
         });
         out += '</select></div> entries';

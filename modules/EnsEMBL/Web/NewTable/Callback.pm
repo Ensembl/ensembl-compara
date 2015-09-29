@@ -25,6 +25,7 @@ use parent qw(EnsEMBL::Web::NewTable::Endpoint);
 
 use JSON qw(from_json);
 
+use CGI::Cookie;
 use MIME::Base64;
 use Compress::Zlib;
 use Digest::MD5 qw(md5_hex);
@@ -146,8 +147,12 @@ sub go {
   if($self->{'wire'}{'format'} eq 'export') {
     $out = convert_to_csv($self->{'iconfig'},$out);
     my $r = $hub->apache_handle;
+    # TODO find bits of ensembl which can do this as we do
     $r->content_type('application/octet-string');
-    $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $hub->param('filename')||'ensembl-export.csv');
+    my $cookie = CGI::Cookie->new(-name  => 'spawntoken',
+                                  -value => $hub->param('spawntoken'));
+    $r->headers_out->add('Set-Cookie' => $cookie);
+    $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $hub->param('filename')||'ensembl-export');
   }
   return $out;
 }

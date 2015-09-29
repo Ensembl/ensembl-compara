@@ -34,21 +34,8 @@
     return $.parseJSON(out);
   }
 
-  function make_widget(config,widget) {
-    var data = {};
-    if($.isArray(widget)) {
-      data = widget[1];
-      widget = widget[0];
-    }
-    if(!$.isFunction($.fn[widget])) {
-      return null;
-    }
-    return $.fn[widget](config,data);
-  }
-
   function make_widgets(config) {
     var widgets = {};
-    var types = {};
     $.each(config.widgets,function(key,name) {
       var data = {};
       if($.isArray(name)) {
@@ -64,9 +51,9 @@
 
   function build_frame(config,widgets,$html) {
     /* Build full list of slots and construct frame */
-    full_frame = {};
-    cwidgets = [];
-    tags = {};
+    var full_frame = {};
+    var cwidgets = [];
+    var tags = {};
     $.each(widgets,function(key,widget) { cwidgets.push(key); });
     cwidgets.sort(function(a,b) { return (widgets[a].prio||50)-(widgets[b].prio||50); });
     $.each(cwidgets,function(i,key) {
@@ -83,15 +70,14 @@
             tags[details.tags[i]].push(details);
           }
         });
-        $html = out['$'];
+        $html = out.$;
       }
     });
     /* Survey for those that need a position */
     var candidates = {};
-    $.each(cwidgets,function(i,key) {
+    $.each(cwidgets,function(j,key) {
       var widget = widgets[key];
       if(widget.position) {
-        var position = null;
         for(var i=0;i<widget.position.length;i++) {
           if(!tags.hasOwnProperty(widget.position[i])) { continue; }
           var slots = tags[widget.position[i]];
@@ -110,7 +96,7 @@
         var $widget = $('<div data-widget-name="'+ww[i][0]+'"/>');
         $widget.append(ww[i][1].generate);
         $widget = $('<div/>').append($widget);
-        ww[i][2]['$'].append($widget);
+        ww[i][2].$.append($widget);
       } 
     });
     return $html;
@@ -118,7 +104,7 @@
 
   function make_chain(widgets,config,$table) {
     config.pipes = [];
-    cwidgets = [];
+    var cwidgets = [];
     $.each(widgets,function(key,widget) { cwidgets.push(widget); });
     cwidgets.sort(function(a,b) { return (a.prio||50)-(b.prio||50); });
     $.each(cwidgets,function(key,widget) {
@@ -152,12 +138,13 @@
     var d = $.Deferred();
     d.resolve([orient,data,0]);
     flux(widgets,$table,'think',1);
+    var fn = function(input) {
+      var step = manifest_c.undo[input[2]];
+      var output = step(input[0],input[1],data_series,destination);
+      return [output[0],output[1],input[2]+1];
+    };
     for(var i=0;i<manifest_c.undo.length;i++) {
-      d = beat(d.then(function(input) {
-        var step = manifest_c.undo[input[2]];
-        var output = step(input[0],input[1],data_series,destination);
-        return [output[0],output[1],input[2]+1];
-      }),10);
+      d = beat(d.then(fn),10);
     }
     d = d.then(function(input) {
       flux(widgets,$table,'think',-1);
@@ -187,17 +174,18 @@
   }
 
   function build_series_index($table,series) {
+    var i;
     var fwd = $table.data('grid-series') || [];
     var rev = {};
-    for(var i=0;i<fwd.length;i++) { rev[fwd[i]] = i; }
-    for(var i=0;i<series.length;i++) {
+    for(i=0;i<fwd.length;i++) { rev[fwd[i]] = i; }
+    for(i=0;i<series.length;i++) {
       if(rev.hasOwnProperty(series[i])) { continue; }
       rev[series[i]] = fwd.length;
       fwd.push(series[i]);
     }
     $table.data('grid-series',fwd);
     var out = [];
-    for(var i=0;i<series.length;i++) {
+    for(i=0;i<series.length;i++) {
       out.push(rev[series[i]]);
     }
     return out;
@@ -228,7 +216,7 @@
   function store_ranges($table,enums,cur_manifest,manifest_in,config,widgets) {
     var grid = $table.data('grid') || [];
     var series = $table.data('grid-series') || [];
-    var enums = build_enums(cur_manifest,grid,series,enums) || {};
+    enums = build_enums(cur_manifest,grid,series,enums) || {};
     var ranges = $table.data('ranges') || {};
     var range_manifest = $table.data('range-manifest') || [];
     if(!$.orient_compares_equal(manifest_in,range_manifest)) {
@@ -280,15 +268,16 @@
   }
 
   function uncompress_response(response) {
+    var i;
     var data = [];
     var nulls = [];
     var totlen = 0;
-    for(var i=0;i<response.nulls.length;i++) {
+    for(i=0;i<response.nulls.length;i++) {
       var n = uncompress(response.nulls[i]);
       var d = uncompress(response.data[i]);
       totlen += response.len[i];
       for(var j=0;j<n.length;j++) {
-        if(i==0) { data[j] = []; nulls[j] = []; }
+        if(i===0) { data[j] = []; nulls[j] = []; }
         var m = 0;
         var dd = [];
         for(var k=0;k<n[j].length;k++) {
@@ -302,7 +291,7 @@
     var order = response.order;
     if(!order) {
       order = [];
-      for(var i=0;i<totlen;i++) { order[i] = i; }
+      for(i=0;i<totlen;i++) { order[i] = i; }
     }
     return { 'data': data, 'nulls': nulls,
              'order': order, 'totlen': totlen };
@@ -353,9 +342,9 @@
       $table.data('payload_one','');
       maybe_use_response(widgets,$table,payload_one,config);
     } else {
-      wire_manifest = $.extend({},manifest_c.manifest,manifest_c.wire);
-      src = $table.data('src');
-      params = $.extend({},extract_params(src),{
+      var wire_manifest = $.extend({},manifest_c.manifest,manifest_c.wire);
+      var src = $table.data('src');
+      var params = $.extend({},extract_params(src),{
         keymeta: JSON.stringify($table.data('keymeta')||{}),
         wire: JSON.stringify(wire_manifest),
         orient: JSON.stringify(manifest_c.manifest),
@@ -385,13 +374,23 @@
   }
 
   var fluxion = {};
-  function flux(widgets,$table,type,state) {
+  var fluxes = {};
+  function flux(widgets,$table,type,state,kind) {
+    if(kind!==undefined && kind!==null) {
+      if(fluxes.hasOwnProperty(kind) && state>0) {
+        return;
+      }
+      fluxes[kind] = 1;
+    }
     var change = -1;
     if(!fluxion[type]) { fluxion[type] = 0; }
-    if(fluxion[type] == 0 && state) { change = 1; }
+    if(fluxion[type] === 0 && state) { change = 1; }
     fluxion[type] += state;
-    if(fluxion[type] == 0 && state) { change = 0; }
+    if(fluxion[type] === 0 && state) { change = 0; }
     if(change == -1) { return $.Deferred().resolve(); }
+    if(kind!==undefined && kind!==null && change===0) {
+      if(fluxes.hasOwnProperty(kind)) { delete fluxes[kind]; }
+    }
     $.each(widgets,function(key,fn) {
       if(fn.flux) { fn.flux($table,type,change); }
     });
@@ -410,7 +409,7 @@
     $table.data('range-fixed',fixed);
   }
 
-  function markup_activate(widgets,config,$table,$some) {
+  function markup_activate(widgets,$some) {
     $.each(widgets,function(key,fn) {
       if(fn.go_data) { fn.go_data($some); }
     });
@@ -463,17 +462,19 @@
       });
     });
     $table.on('markup-activate',function(e,$some) {
-      markup_activate(widgets,config,$table,$some);
+      markup_activate(widgets,$some);
     });
     $table.on('spawn',function(e,extra,$frame) {
       var src = $table.data('src');
       var orient = $.extend({},$table.data('view'),extra);
+      var spawntoken = Math.floor(Math.random()*1000000000);
       var params = $.extend({},extract_params(src),{
         keymeta: JSON.stringify($table.data('keymeta')||{}),
         config: JSON.stringify(config),
         orient: JSON.stringify(orient),
         wire: JSON.stringify(orient),
-        ssplugins: JSON.stringify(config.ssplugins)
+        ssplugins: JSON.stringify(config.ssplugins),
+        spawntoken: spawntoken,
       });
       var out = '<form method="POST" id="spawn" action="'+src+'">';
       $.each(params,function(k,v) {
@@ -481,8 +482,21 @@
         out += '<input type="hidden" name="'+k+'" value="'+v_esc+'"/>';
       });
       out += "</form><script></script>";
-      $frame.contents().find('body').append(out);
+      $frame.contents().find('body').empty().append(out);
       $frame.contents().find('#spawn').submit();
+      var iter=0;
+      var spawn_done_test = function() {
+        var parts = document.cookie.split("spawntoken=");
+        var value = null;
+        if(parts.length==2) { value = parts.pop().split(";").shift(); }
+        if(value==spawntoken) {
+          flux(widgets,$table,'think',-1,'spawn');
+        } else {
+          if(iter++<600) { setTimeout(spawn_done_test,1000); }
+        }
+      };
+      flux(widgets,$table,'think',1,'spawn');
+      spawn_done_test();
     });
     $table.on('paint-individual',function(e,$el,key,val) {
       $el.html(paint_individual(widgets,$table,key,val));
@@ -494,6 +508,7 @@
       $widget.addClass('_inited');
       widgets[name].go($table,$widget);
     });
+    if($table.data('abandon-ship')) { return; }
     flux(widgets,$table,'think',1).then(function() {
       maybe_get_new_data(widgets,$table,config);
       flux(widgets,$table,'think',-1);
@@ -541,8 +556,8 @@
           fn.apply(that,args);
         },msec);
       }
-    }
-  }
+    };
+  };
 
   $.whenquiet = function(fn,msec) {
     var id;
@@ -555,7 +570,7 @@
         fn.apply(that,args);
       },msec);
     };
-  }
+  };
 
   $.fn.newTable = function() {
     this.each(function(i,outer) {

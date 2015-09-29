@@ -25,7 +25,7 @@
         var ok = true;
         for(var i=0;i<cols.length;i++) {
           var v = cols[i];
-          val = row[rseries[v]];
+          var val = row[rseries[v]];
           if(val===null || val===undefined) {
             ok = false;
           } else {

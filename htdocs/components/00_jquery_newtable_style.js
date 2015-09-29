@@ -23,7 +23,7 @@
         $.each(data.styles,function(i,el) {
           var key = el[0];
           var text = el[1];
-          if(el == 0) { text = "All"; }
+          if(el===0) { text = "All"; }
           out += '<option value="'+key+'">'+text+'</option>';
         });
         out += '</select></div>';

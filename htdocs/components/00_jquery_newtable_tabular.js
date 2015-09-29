@@ -25,26 +25,18 @@
     });
   }
 
-  function loop(def,fn,group,sleeplen) {
-    return def.then(function(raw_input) {
-      var input = [];
-      $.each(raw_input,function(a,b) { input.push([a,b]); });
-      d = $.Deferred().resolve(input);
-      var output = [];
-      for(var ii=0;ii<input.length;ii+=group) {
-        (function(i) {
-          d = beat(d.then(function(j) {
-            for(j=0;j<group && i+j<input.length;j++) {
-              var c = fn(input[i+j][0],input[i+j][1]);
-              if(c !== undefined) {
-                output.push(c);
-              }
-            }
-            return $.Deferred().resolve(output);
-          }),sleeplen);
-        })(ii);
+  function loop(def,fn,sleeplen) {
+    return def.then(function(input) {
+      var e = $.Deferred();
+      e.resolve(0);
+      var inner = function(i) {
+        fn(i,input[i]);
+        return $.Deferred().resolve(i+1);
+      };
+      for(var i=0;i<input.length;i++) {
+        e = beat(e.then(inner),sleeplen);
       }
-      return d;
+      return e;
     });
   }
 
@@ -65,18 +57,16 @@
     });
     if(classes.length) {
       attr_str += ' class="'+classes.join(' ')+'"';
-    };
+    }
     return "<th "+attr_str+">"+text+"</th>";
   }
 
-  // TODO fix widths on load
-  // TODO initial orient
   function fix_widths($table,config,orient) {
     var totals = { u: 0, px: 0 };
     var widths = [];
     $.each(config.columns,function(i,key) {
       var cc = config.colconf[key];
-      var m = cc.width.match(/^(\d+)(.*)$/)
+      var m = cc.width.match(/^(\d+)(.*)$/);
       if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
       if(orient.off_columns && orient.off_columns[key]) { return; }
       widths.push([m[1],m[2]]);
@@ -85,18 +75,22 @@
       }
     });
     var table_width = $table.width();
-    totals['px'] *= 100/table_width;
-    if(totals['px'] > 100) { totals['px'] = 100; }
-    totals['u'] = (100-totals['px']) / (totals['u']||1);
+    totals.px *= 100/table_width;
+    if(totals.px > 100) { totals.px = 100; }
+    totals.u = (100-totals.px) / (totals.u||1);
     var $head = $('table:first th',$table);
     var j = 0;
+    var k = 0;
     $.each(config.columns,function(i,key) {
       var cc = config.colconf[key];
       if(cc.type && cc.type.screen && cc.type.screen.unshowable) { return; }
-      if(orient.off_columns && orient.off_columns[key]) { return; }
-      var $th = $head.eq(j);
-      $th.css('width',(widths[j][0]*totals[widths[j][1]])+"%");
-      j++;
+      var $th = $head.eq(j++);
+      if(orient.off_columns && orient.off_columns[key]) {
+        $th.css('width','0px').addClass('invisible');
+        return;
+      }
+      $th.css('width',(widths[k][0]*totals[widths[k][1]])+"%").removeClass('invisible');
+      k++;
     });
   }
 
@@ -216,17 +210,20 @@
   function build_markup($table,config,grid,rev_series,table_num,orient) {
     var markup = [];
     var shown = [];
-    for(var i=0;i<config.columns.length;i++) {
+    var off = orient.off_columns || {};
+    var i,j;
+    for(i=0;i<config.columns.length;i++) {
       var cc = config.colconf[config.columns[i]];
       if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
         continue;
       }
+      if(off[config.columns[i]]) { continue; } 
       shown.push(rev_series[config.columns[i]]);
     }
     var start = table_num*rows_per_subtable;
-    for(var i=start;i<start+rows_per_subtable && i<grid.length;i++) {
+    for(i=start;i<start+rows_per_subtable && i<grid.length;i++) {
       var row = [];
-      for(var j=0;j<shown.length;j++) {
+      for(j=0;j<shown.length;j++) {
         row[j] = grid[i][shown[j]]||'';
       }
       markup.push(row);
@@ -237,8 +234,7 @@
   function remarkup_sub($table,$subtable,config,grid,rev_series,table_num,orient) {
     var markup = build_markup($table,config,grid,rev_series,table_num,orient);
     $subtable.data('markup-orient',orient);
-    var html = convert_markup($table,markup);
-    $subtable.data('backing',html);
+    $subtable.data('markup',markup);
     $subtable.data('xxx',table_num);
   }
 
@@ -256,22 +252,26 @@
     var $th = $('table:first th',$table);
     var html = "";
     var keys = [];
-    for(var j=0;j<$th.length;j++) {
+    var j;
+    for(j=0;j<$th.length;j++) {
       keys[j] = $th.eq(j).data('key');
     }
     for(var i=0;i<markup.length;i++) {
       html += "<tr>";
-      for(var j=0;j<$th.length;j++) {
-        var key = keys[j];
+      var k = 0;
+      for(j=0;j<$th.length;j++) {
+        $header = $th.eq(j);
+        if($header.hasClass('invisible')) { continue; }
         var start = "<td>";
-        if(i==0) {
-          start = "<td style=\"width: "+$th.eq(j).width()+"px\">";
+        if(i===0) {
+          start = "<td style=\"width: "+$header.width()+"px\">";
         }
-        if(markup[i][j]) {
-          html += start+markup[i][j]+"</td>";
+        if(markup[i][k]) {
+          html += start+markup[i][k]+"</td>";
         } else {
           html += start+"</td>";
         }
+        k++;
       }
       html += "</tr>";
     }
@@ -289,22 +289,25 @@
   function wakeup($table,$subtable) {
     if(!$subtable.data('redraw')) { return; }
     console.log("redrawing "+$subtable.data('xxx'));
-    var html = $subtable.data('backing');
+    var markup = $subtable.data('markup');
+    var html = convert_markup($table,markup);
     $subtable.data('redraw',0);
     var $body = $('tbody',$subtable);
     if(!$body.length) {
       var $newtable = $('<table><tbody></tbody></table>');
       $subtable.empty().append($newtable);
     }
-    $('tbody',$subtable)[0].innerHTML = html;
+    if(document.documentMode && document.documentMode < 10) {
+      // IE<10, more precisely document mode<10. Slow.
+      $('tbody',$subtable).html(html);
+    } else {
+      // Efficeint
+      $('tbody',$subtable)[0].innerHTML = html;
+    }
     $table.trigger('markup-activate',[$subtable]);
     $subtable.css('height','');
     $subtable.data('known-height',$subtable.height());
     guess_subtable_sizes($table);
-    // The line below is probably more portable than the line above,
-    //   but a third of the speed.
-    //   Maybe browser checks if there are compat issues raised in testing?
-    // $('tbody',$subtable).html(html);
     $.lazy('refresh');
   }
 
@@ -322,10 +325,6 @@
     if(!$.orient_compares_equal(active_orient,our_orient)) {
       sleep($subtable);
     }
-  }
-
-  function replace_header($table,header) {
-    $('thead',$table).replaceWith(header);
   }
 
   function eager() {
@@ -353,17 +352,17 @@
         var rev_series = {};
         for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
         var subtabs = remarkup($table,config,grid,rev_series,start,num,orient);
-        d = $.Deferred().resolve(subtabs);
+        var d = $.Deferred().resolve(subtabs);
         var has_reset = false;
-        var e = loop(d,function(tabnum,v) {
-          var $subtable = apply_html($table,tabnum);
+        loop(d,function(tabnum,v) {
+          apply_html($table,tabnum);
           if(!has_reset) {
             $subtables.each(function() {
               set_active_orient($(this),orient);
             });
             has_reset = true;
           }
-        },1,10);
+        },10);
       },
       truncate_to: function($table,grid,series,orient) {
         if(length) {

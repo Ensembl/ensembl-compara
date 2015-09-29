@@ -24,7 +24,7 @@
         var $input = $(this);
         $input.prop('checked',!off_columns || !off_columns[$input.data('key')]);
       });
-    };
+    }
 
     function record_ticks($table,$popup) {
       var off_columns = {};
@@ -35,7 +35,7 @@
       var view = $table.data('view');
       view.off_columns = off_columns;
       $table.data('view',view).trigger('view-updated');
-    };
+    }
 
     var record_ticks_soon = $.debounce(function($table,$popup) {
       record_ticks($table,$popup);

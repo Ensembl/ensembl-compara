@@ -30,12 +30,11 @@
       filters: [{
         name: "class",
         display: function($menu,$el,values,state,kparams,key,$table) {
-          var v = {};
           var cc = config.colconf[key];
           var title = (cc.label || cc.title || key);
           var $out = $('<div/>');
           var $head = $('<div class="head"/>').appendTo($out);
-          var $title = $('<div class="title"/>').appendTo($head).html(title);
+          $('<div class="title"/>').appendTo($head).html(title);
           var $summary = $('<div class="summary"/>').text('(x/y on)').appendTo($head);
           var $body = $('<div class="body"/>').appendTo($out);
           values = values.slice();
@@ -57,7 +56,6 @@
             if(!state[val]) { $li.addClass("on"); }
             $li.on('click',function() {
               $(this).toggleClass('on');
-              var key = $(this).data('key');
               if(state[val]) { delete state[val]; } else { state[val] = 1; }
               update_counts($summary,state,values);
               $el.trigger('update',state);

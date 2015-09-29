@@ -19,14 +19,18 @@
 
     function identity_fn(x) { return x; }
 
-    function match(row,series,search,cleaner) {
+    function match(colconf,row,series,search,cleaner) {
       for(var i=0;i<row.length;i++) {
         var key =series[i];
-        if(cleaner[key]==undefined) { continue; }
+        var cc = colconf[key];
+        if(cleaner[key]===undefined) { continue; }
         if(!row[i]) { continue; }
+        if(cc.type && cc.type.screen && cc.type.screen.unshowable) {
+          continue;
+        }
         var val = row[i];
         if(cleaner[key]) { val = cleaner[key](val); }
-        if(val == undefined) { return false; }
+        if(val===undefined) { return false; }
         if(~val.toLowerCase().indexOf(search)) { return true; }
       }
       return false;
@@ -37,7 +41,11 @@
       if(old_val == value) { return; }
       $table.data('search-value',value);
       var view = $table.data('view');
-      view.search = value;
+      if(value!="") {
+        view.search = value;
+      } else {
+        delete view.search;
+      }
       $table.data('view',view).trigger('view-updated');
     }
 
@@ -48,7 +56,7 @@
       },
       go: function($table,$el) {
         var $box = $('.search',$el);
-        var change_event = $.debounce(function($table) {
+        var change_event = $.whenquiet(function($table) {
           changed($table,$box.val());
         },1000);
         $box.on("propertychange change keyup paste input",function() {
@@ -80,12 +88,12 @@
             // XXX should search be searching columns or series?
             return {
               undo: function(manifest,grid,series,dest) {
-                fabric = [];
-                $.each(grid,function(i,v) {
-                  if(match(grid[i],series,search.toLowerCase(),cleaner)) {
+                var fabric = [];
+                for(var i=0;i<grid.length;i++) {
+                  if(match(config.colconf,grid[i],series,search.toLowerCase(),cleaner)) {
                     fabric.push(grid[i]);
                   }
-                });
+                }
                 if(search_was_defined) {
                   manifest.search = orig_search;
                 }
