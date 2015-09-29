@@ -352,7 +352,8 @@
         config: JSON.stringify(config),
         incr_ok: manifest_c.incr_ok,
         series: JSON.stringify(config.columns),
-        ssplugins: JSON.stringify(config.ssplugins)
+        ssplugins: JSON.stringify(config.ssplugins),
+        source: 'enstab'
       });
       $.post($table.data('src'),params,function(res) {
         maybe_use_response(widgets,$table,res,config);
