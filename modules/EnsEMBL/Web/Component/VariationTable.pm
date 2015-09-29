@@ -539,7 +539,9 @@ sub _get_transcript_variations {
   my $tr   = shift;
 
   my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
-  return $tva->fetch_all_by_Transcripts([$tr]);
+  my $all_snps = $tva->fetch_all_by_Transcripts([$tr]);
+  push @$all_snps, @{$tva->fetch_all_somatic_by_Transcripts([$tr])};
+  return $all_snps;
 }
 
 sub _get_variation_features {
@@ -553,7 +555,7 @@ sub _get_variation_features {
       $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
     );
 
-    $self->{_variation_features} = {map {$_->dbID => $_} @{$slice->get_all_VariationFeatures}};
+    $self->{_variation_features} = {map {$_->dbID => $_} (@{$slice->get_all_VariationFeatures},@{$slice->get_all_somatic_VariationFeatures})};
   }
 
   return $self->{_variation_features};
