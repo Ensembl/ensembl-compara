@@ -68,21 +68,16 @@ sub init {
   
   $self->add_tracks('information',
     [ 'scalebar',  '', 'lrg_scalebar', { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
-    [ 'ruler',     '', 'ruler',        { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable',    { display => 'normal', strand => 'b', menu => 'no' }],
-  );
-  
-  $self->add_tracks('sequence',
-    [ 'contig', 'Contigs',  'contig', { display => 'normal', strand => 'r' }]
   );
 
   $self->load_tracks;
   $self->load_configured_das;
 
   $self->add_tracks('lrg',
-    [ 'lrg_transcript', 'LRG', '_transcript', {
+    [ 'lrg_transcript', 'LRG transcripts', '_transcript', {
       display     => 'transcript_label',
-      strand      => 'f',
+      strand      => 'b',
       name        => 'LRG transcripts', 
       description => 'Shows LRG transcripts',
       logic_names => [ 'LRG_import' ], 
@@ -91,10 +86,18 @@ sub init {
       label_key   => '[display_label]',
       colour_key  => '[logic_name]',
       zmenu       => 'LRG',
+    }],
+    [ 'lrg_band', 'LRG', 'lrg_band', {
+      display     => 'normal',
+      strand      => 'f',
+      name        => 'LRG',
+      description => 'Shows LRG band',
+      colours     => $self->species_defs->colour('gene'),
+      zmenu       => 'LRG',
     }]
   );
  
-  $self->modify_configs(['transcript'], { strand => 'f'});
+  $self->modify_configs(['transcript'], { strand => 'b'});
  
   $self->modify_configs(
     [ 'fg_regulatory_features_funcgen', 'transcript', 'prediction', 'variation' ],
