@@ -73,6 +73,9 @@
         $li.on('click',function(e) {
           $item.removeClass('prec_sec').addClass('prec_pri');
           activate_menu($table,$item,false);
+          if(!$('.newtable_filter .prec_sec.valid',$table).length) {
+            $out.closest('.more').hide();
+          }
           e.stopPropagation();
         });
       });
