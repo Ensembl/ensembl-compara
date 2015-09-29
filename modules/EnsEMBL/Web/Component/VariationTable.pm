@@ -460,7 +460,7 @@ sub variation_table {
             my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
             my $var_class            = $snp->var_class;
             my $translation_start    = $transcript_variation->translation_start;
-            my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('-', '-');
+            my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('', '');
             my $trans_url            = ";$url_transcript_prefix=$transcript_stable_id";
             my $vf_allele            = $tva->variation_feature_seq;
             my $allele_string        = $snp->allele_string;

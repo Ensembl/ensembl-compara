@@ -27,6 +27,7 @@
       }
       return function(html,row) {
         if(idx==-1) { return html; }
+        if(!html) { return '-'; }
         var type = row[idx];
         var style = extras[type];
         if(!style) { return html; }
