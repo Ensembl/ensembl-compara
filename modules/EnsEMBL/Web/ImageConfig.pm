@@ -2088,7 +2088,9 @@ sub add_matrix {
   $data->{'column_key'}  = $column_key;
   $data->{'menu'}        = 'matrix_subtrack';
   $data->{'source_name'} = $data->{'name'};
-  $data->{'display'}   ||= 'default';
+  if (!$data->{'display'} || $data->{'display'} eq 'off') {
+    $data->{'display'} = 'default';
+  }
   
   if (!$menu_data->{'matrix'}) {
     my $hub = $self->hub;
