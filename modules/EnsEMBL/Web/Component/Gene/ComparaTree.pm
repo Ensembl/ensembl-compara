@@ -335,9 +335,10 @@ sub content {
 
   {
     my @rank_options = ( q{<option value="/">-- Select a rank--</option>} );
+    my $selected_rank = $hub->param('gtr') || '';
     foreach my $rank (qw(species genus family order class phylum kingdom)) {
       my $collapsed_to_rank = $self->collapsed_nodes($tree, $node, "rank_$rank", $highlight_genome_db_id, $highlight_gene);
-      push @rank_options, sprintf qq{<option value="%s">%s</option>\n}, $hub->url({ collapse => $collapsed_to_rank, g1 => $highlight_gene }), ucfirst $rank;
+      push @rank_options, sprintf qq{<option value="%s" %s>%s</option>\n}, $hub->url({ collapse => $collapsed_to_rank, g1 => $highlight_gene, gtr => $rank }), $rank eq $selected_rank ? 'selected' : '', ucfirst $rank;
     }
     push @view_links, sprintf qq{<li>Collapse all the nodes at the taxonomic rank <select onchange="Ensembl.redirect(this.value)">%s</select></li>}, join("\n", @rank_options);
   }
