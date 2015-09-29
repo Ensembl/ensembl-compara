@@ -58,9 +58,9 @@ sub init {
   $self->add_tracks('lrg',
     [ 'lrg_transcript', 'LRG', '_transcript', {
       display     => 'transcript_label',
-      strand      => 'f',
-      name        => 'LRG transcripts',
-      description => 'Shows LRG transcripts',
+      strand      => 'b',
+      name        => 'LRG',
+      description => 'Transcripts from the <a class="external" href="http://www.lrg-sequence.org">Locus Reference Genomic sequence</a> project.',
       logic_names => [ 'LRG_import' ],
       logic_name  => 'LRG_import',
       colours     => $self->species_defs->colour('gene'),

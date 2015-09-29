@@ -206,8 +206,8 @@ sub init {
       [ 'lrg_transcript', 'LRG', '_transcript', {
         display     => 'off', # Switched off by default
         strand      => 'b',
-        name        => 'LRG transcripts',
-        description => 'Shows LRG transcripts',
+        name        => 'LRG',
+        description => 'Transcripts from the <a class="external" href="http://www.lrg-sequence.org">Locus Reference Genomic sequence</a> project.',
         logic_names => [ 'LRG_import' ],
         logic_name  => 'LRG_import',
         colours     => $self->species_defs->colour('gene'),
