@@ -342,6 +342,10 @@ sub make_table {
       __clear => 1
    }
   });
+  # Disable filters except type for e82
+  $_->{'_type'} .= " no_filter" for @columns;
+  $columns[14]->{'_type'} = "iconic set_primary";
+
   $table->add_columns(\@columns,\@exclude);
 
   $self->evidence_classes($table);
