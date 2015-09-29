@@ -145,6 +145,7 @@ sub add_value {
   }
 }
 
+sub colconf { return $_[0]->{'conf'}; }
 sub set_range { $_[0]->{'conf'}{'range_range'} = $_[1]; }
 sub set_primary { $_[0]->{'conf'}{'primary'} = 1; }
 sub no_sort { $_[0]->{'conf'}{'sort'} = 0; }

@@ -474,7 +474,7 @@
         orient: JSON.stringify(orient),
         wire: JSON.stringify(orient),
         ssplugins: JSON.stringify(config.ssplugins),
-        spawntoken: spawntoken,
+        spawntoken: spawntoken
       });
       var out = '<form method="POST" id="spawn" action="'+src+'">';
       $.each(params,function(k,v) {

@@ -106,7 +106,7 @@
         var $el = $('.prec_pri').eq(0);
         if(!$el.hasClass('tipped')) {
           $el.addClass('tipped').helptip({
-            'content': 'Click here to filter table by type',
+            'content': 'Click here to filter table by consequence type',
             'position': { 'of': $el },
             'close': function(event,ui) {
               $el.helptip('disable');
@@ -256,7 +256,7 @@
           var cc =config.colconf[key];
           if(!cc.range) { return; }
           var label = "";
-          var label = cc.label || key;
+          var label = cc.filter_label || cc.label || key;
           if(cc.range) {
             dropdowns += dropdown(i,cc.range,label,cc.primary);
             filterable_columns[key] = cc;
