@@ -46,7 +46,7 @@
     function dropdown(idx,filter,label,primary) {
       var prec = primary?"pri":"sec";
       if(filter=='') { filter = 'more'; }
-      return '<li class="t prec_'+prec+'" data-idx="'+idx+'"><span class="k">'+label+'</span><span class="v">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></li>';
+      return '<li class="t prec_'+prec+'" data-idx="'+idx+'"><div class="x"><span></span></div><div class="b"><span class="k">'+label+'</span><span class="v">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></div></li>';
     }
 
     function activate_menu($table,$button,others_only) {
@@ -116,13 +116,23 @@
       }
     }
 
+    function unrestrict(config,$el,view) {
+      var key = config.columns[$el.closest('li').data('idx')];
+      if(view.filter && view.filter.hasOwnProperty(key)) {
+        delete view.filter[key];
+      }
+      if(obj_empty(view.filter)) { delete view.filter; }
+    }
+
     function set_button($el,view,w,key,values) {
       $el.toggleClass('valid',!!w.visible(values));
       if((view.filter||{}).hasOwnProperty(key)) {
         var text = w.text(view.filter[key],values);
         $('.v',$el).text(text);
+        $el.addClass('restricted');
       } else {
         $('.v',$el).text('All');
+        $el.removeClass('restricted');
       }
     }
 
@@ -287,6 +297,18 @@
               show_menu($menu);
             }
           });
+        });
+        $('.x',$el).on('click',function(e) {
+          var view = $table.data('view');
+          unrestrict(config,$(this),view);
+          $table.data('view',view);
+          $table.trigger('view-updated');
+          var $button = $(this).closest('li');
+          update_button($table,$button);
+          $('.newtable_filter li .m:visible',$el).each(function() {
+            hide_menu($(this));
+          });
+          e.stopPropagation();
         });
         $('li.t',$el).each(function() { update_button($table,$(this)); });
         $('html').on('click',function(e) {

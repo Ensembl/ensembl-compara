@@ -138,12 +138,17 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 
 .newtable_filter { -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; -ms-user-select: none; }
 .newtable_filter ul { display: inline-block; margin: 0; padding: 4px 2px; }
-.newtable_filter li.t { list-style: none; padding: 2px 0 2px 6px; margin: 0px 2px; background-color: #ccc; border-radius: 8px; color: #555; display: none; border: 1px solid #ccc; font-size: 14px; cursor: pointer; line-height: 20px; }
-.newtable_filter li.t.valid { display: inline-block; }
-.newtable_filter li.t.more { display: inline-block; }
-.newtable_filter li.more .k:after { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #333; display: inline-block; content: ""; margin: 2px 7px; }
+.newtable_filter li.t { list-style: none; background-color: #ccc; line-height: 20px; display: inline-block; margin: 0; }
+.newtable_filter .x { display: inline-block; visibility: hidden; height: 20px; width: 16px; vertical-align: bottom; margin: 0 0 3px 0; border: 1px solid #ccc; border-radius: 4px; }
+.newtable_filter .x:hover { border: 1px solid black; background: linear-gradient(to top,#ddd,#eee) #fff; border: 1px solid #999; text-shadow: 0 1px white; }
+.newtable_filter .x span { background: url(/i/16/cross-grey.png) no-repeat 2px 4px; display: inline-block; width: 16px; height: 20px; }
+.newtable_filter li.t .b { padding: 2px 0 2px 2px; margin: 0px 2px 0px 0px; border-radius: 8px; color: #555; display: none; border: 1px solid #ccc; font-size: 14px; cursor: pointer; } 
+.newtable_filter li.t.valid .b { display: inline-block; }
+.newtable_filter li.t.restricted .x { visibility: visible; }
+.newtable_filter li.t.more .b { display: inline-block; }
+.newtable_filter li.more .k:after { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #333; display: inline-block; content: ""; margin: 2px 4px; }
 .newtable_filter li.t.more .v { display: none; }
-.newtable_filter li.t:hover { background: linear-gradient(to top,#ddd,#eee) #fff; border: 1px solid #999; text-shadow: 0 1px white; }
+.newtable_filter li .b:hover { background: linear-gradient(to top,#ddd,#eee) #fff; border: 1px solid #999; text-shadow: 0 1px white; }
 .newtable_filter { padding: 0 0px; margin: 0; background-color: #ccc; font-size: 16px; color: #333; border-bottom: 1px solid #aaa; }
 .newtable_filter li .k:after { content: ": "; }
 .newtable_filter li:hover .v { color: black; }
