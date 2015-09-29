@@ -64,6 +64,12 @@
         }
       }
     }
+    
+    function maybe_hide_more($table,$out) {
+      if(!$('.newtable_filter .prec_sec.valid',$table).length) {
+        $table.find('.more').hide();
+      }
+    }
 
     function draw_more($table,$menu) {
       var $out = $("<ul/>");
@@ -73,9 +79,7 @@
         $li.on('click',function(e) {
           $item.removeClass('prec_sec').addClass('prec_pri');
           activate_menu($table,$item,false);
-          if(!$('.newtable_filter .prec_sec.valid',$table).length) {
-            $out.closest('.more').hide();
-          }
+          maybe_hide_more($table);
           e.stopPropagation();
         });
       });
@@ -102,6 +106,7 @@
       var $filters = $('.newtable_filter',$table);
       var $vbuts = $('.t.valid',$filters);
       $filters.toggle(!!$vbuts.length);
+      maybe_hide_more($table);
       if($vbuts.length) {
         var $el = $('.prec_pri').eq(0);
         if(!$el.hasClass('tipped')) {
