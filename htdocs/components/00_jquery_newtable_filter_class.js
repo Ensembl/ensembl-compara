@@ -52,6 +52,23 @@
               $ul = $("<ul/>").appendTo($body);
               splits.shift();
             }
+            if(i===0) {
+              var $allon = $('<div/>').addClass('allon').text('All On');
+              $allon.click(function() {
+                state = {};
+                $body.children('ul').children('li').addClass('on');
+                $el.trigger('update',state);
+              });
+              var $alloff = $('<div/>').addClass('alloff').text('All Off');
+              $alloff.click(function() {
+                state = {};
+                $body.children('ul').children('li').removeClass('on').each(function() {
+                  state[$(this).data('key')] = 1;
+                });
+                $el.trigger('update',state);
+              });
+              $('<li/>').addClass('allonoff').append($allon).append($alloff).appendTo($ul);
+            }
             var $li = $("<li/>").data('key',val).appendTo($ul);
             $table.trigger('paint-individual',[$li,key,val]);
             $li.data('val',val);
