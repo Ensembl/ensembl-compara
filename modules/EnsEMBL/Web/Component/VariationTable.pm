@@ -94,7 +94,9 @@ sub content {
   }
   
   my $table      = $self->make_table();
-  return $table->render($self->hub,$self);
+  $html  = $self->_hint('snp_table', 'Variant table', "This table shows known variants for this gene. Use the 'Consequence Type' filter to view a subset of these.");
+  $html .= $table->render($self->hub,$self);
+  return $html;
 }
 
 sub all_terms {
