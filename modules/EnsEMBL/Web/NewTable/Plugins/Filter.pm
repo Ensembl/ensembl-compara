@@ -15,6 +15,12 @@ sub col_filter_label {
   $col->colconf->{'filter_label'} = $label;
 }
 
+sub col_filter_sorted {
+  my ($self,$col,$yn) = @_;
+
+  $col->colconf->{'filter_sorted'} = $yn;
+}
+
 package EnsEMBL::Web::NewTable::Plugins::FilterClass;
 use parent qw(EnsEMBL::Web::NewTable::Plugins::Filter);
 

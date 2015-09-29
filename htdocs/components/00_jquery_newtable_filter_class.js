@@ -31,14 +31,16 @@
         name: "class",
         display: function($menu,$el,values,state,kparams,key,$table) {
           var cc = config.colconf[key];
-          var title = (cc.label || cc.title || key);
+          var title = (cc.filter_label || cc.label || cc.title || key);
           var $out = $('<div/>');
           var $head = $('<div class="head"/>').appendTo($out);
           $('<div class="title"/>').appendTo($head).html(title);
           var $summary = $('<div class="summary"/>').text('(x/y on)').appendTo($head);
           var $body = $('<div class="body"/>').appendTo($out);
           values = values.slice();
-          values.sort(function(a,b) { return a.localeCompare(b); });
+          if(!cc.filter_sorted) {
+            values.sort(function(a,b) { return a.localeCompare(b); });
+          }
           var $ul;
           var splits = [0];
           if(values.length > 4) {

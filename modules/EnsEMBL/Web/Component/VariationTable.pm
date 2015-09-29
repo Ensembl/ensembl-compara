@@ -292,6 +292,7 @@ sub make_table {
   },{
     _key => 'snptype', _type => 'iconic set_primary', label => "Type",
     filter_label => 'Consequence Type',
+    filter_sorted => 1,
     set_range => [values %{$self->all_terms}],
     width => 1.5,
     helptip => 'Consequence type'
