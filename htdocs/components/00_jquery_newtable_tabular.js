@@ -288,7 +288,6 @@
 
   function wakeup($table,$subtable) {
     if(!$subtable.data('redraw')) { return; }
-    console.log("redrawing "+$subtable.data('xxx'));
     var markup = $subtable.data('markup');
     var html = convert_markup($table,markup);
     $subtable.data('redraw',0);
@@ -313,7 +312,6 @@
 
   function sleep($subtable) {
     $subtable.data('redraw',1);
-    console.log("undrawing "+$subtable.data('xxx'));
     $subtable.css('height',$subtable.height()+'px');
     $subtable[0].innerHTML = '';
     $subtable.lazy();

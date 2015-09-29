@@ -16,7 +16,6 @@
 
 (function($) {
   $.fn.new_table_pagesize = function(config,data) {
-    console.log('data',data);
     return {
       generate: function() {
         var out = 'Show <div class="new_table_pagesize new_table_widget">' +

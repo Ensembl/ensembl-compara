@@ -105,7 +105,6 @@
     variety.additional_update(update,$button);
     if(!minmax.min) { update.min = pmin; }
     if(!minmax.max) { update.max = pmax; }
-    console.log("UPDATE",update);
     $button.trigger('update',update);
   }
 

@@ -24,7 +24,6 @@
         $('.new_table_thinking',$table).hide();
       },
       flux: function($table,type,change) {
-        console.log("FLUX",type,change);
         var $el = $('.new_table_'+type+'ing',$table);
         if(change) { $el.show(); } else { $el.hide(); }
       },
