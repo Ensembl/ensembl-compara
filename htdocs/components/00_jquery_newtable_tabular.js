@@ -342,6 +342,7 @@
         $('th',$table).click(function(e) {
           add_sort($table,config,$(this).data('key'),!e.shiftKey);
         });
+        $('th ._ht',$table).helptip();
         $.lazy('periodic',5000);
       },
       add_data: function($table,grid,series,start,num,orient) {
