@@ -52,9 +52,13 @@ sub content {
   $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Drag to select region');
-  
-  my $html = $image->render;
-  $html   .= $self->_info(
+
+  my $html = $self->_info(
+    'LRG image',
+    '<p>The image below displays LRG transcripts and the features overlapping <b>'.$gene->display_id.'</b>.</p>'
+  );
+  $html .= $image->render;
+  $html .= $self->_info(
     'Configuring the display',
     '<p>Tip: use the "<strong>Configure this page</strong>" link on the left to show additional data in this region.</p>'
   );
