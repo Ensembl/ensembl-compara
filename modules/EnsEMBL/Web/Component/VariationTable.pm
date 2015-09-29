@@ -98,15 +98,11 @@ sub content {
 }
 
 sub all_terms {
-  my (%labels);
-
   my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  foreach my $con (@all_cons) {
-    next if $con->SO_accession =~ /x/i;
-    my $term = $con->SO_term;
-    $labels{$term} = $con->label;
-  }
-  return \%labels;
+
+  my @cons = grep { $_->SO_accession !~ /x/i } @all_cons;
+  my @labels = map { [$_->label,$_->rank] } @cons;
+  return [ map { $_->[0] } sort { $a->[1] <=> $b->[1] } @labels ];
 }
   
 sub sift_poly_classes {
@@ -293,7 +289,7 @@ sub make_table {
     _key => 'snptype', _type => 'iconic set_primary', label => "Type",
     filter_label => 'Consequence Type',
     filter_sorted => 1,
-    set_range => [values %{$self->all_terms}],
+    set_range => $self->all_terms,
     width => 1.5,
     helptip => 'Consequence type'
   },{
