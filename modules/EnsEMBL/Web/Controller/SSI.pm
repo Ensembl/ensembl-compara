@@ -222,6 +222,20 @@ sub template_MOVIE {
   return EnsEMBL::Web::Document::HTML::Movie->new($self->hub)->render($movie_params) || '<p><i>Movie not found</i></p>';
 }
 
+sub template_PERL {
+  my ($self, $code) = @_;
+
+  my $string = '';
+
+  {
+    local $_  = $self->hub;
+    $string   = eval($code);
+    warn $@ if $@;
+  }
+
+  return $string;
+}
+
 sub add_JSCSS {
   my ($self, $page) = @_;
 

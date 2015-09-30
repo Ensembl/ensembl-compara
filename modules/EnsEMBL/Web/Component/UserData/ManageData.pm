@@ -174,6 +174,7 @@ sub table_row {
   my $delete       = $self->_icon({ link_class => $delete_class, class => 'delete_icon', link_extra => $title });
   my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
   my $download     = $self->_no_icon;
+  my $reload       = $self->_no_icon;
   my $conf_template = $self->_no_icon;
   my $user_record  = ref($file) =~ /Record/;
   my $name         = qq{<div><strong class="val" title="Click here to rename your data">$file->{'name'}</strong>};
@@ -272,15 +273,19 @@ sub table_row {
 
   my $config_html = $config_link ? sprintf $conf_template, $config_link : '';
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
-  my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params });
-  
+  my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => lc($file->{'type'}) eq 'url' ? 'delete_remote' : 'delete_upload', %url_params });
+  if ($file->{'type'} eq 'upload' && $file->{'url'}) {
+    my $reload_url = $hub->url({'action' => 'RefreshUpload', %url_params});
+    $reload = $self->_icon({'link' => $reload_url, 'title' => 'Reload this file from URL', 'link_class' => 'modal_link', 'class' => 'reload_icon'});
+  }
+ 
   return {
-    type    => $file->{'url'} ? 'URL' : 'Upload',
+    type    => ucfirst($file->{'type'}),
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,
     date    => sprintf('<span class="hidden">%s</span>%s', $file->{'timestamp'} || '-', $self->pretty_date($file->{'timestamp'}, 'simple_datetime')),
-    actions => "$config_html$download$save$share_html$delete_html",
+    actions => "$config_html$download$reload$save$share_html$delete_html",
   };
 }
 

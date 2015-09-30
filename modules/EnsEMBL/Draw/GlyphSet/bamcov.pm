@@ -22,10 +22,13 @@ package EnsEMBL::Draw::GlyphSet::bamcov;
 ### (initially only for internal data sources where we can
 ### guarantee there is a BigWig file)
 
-### At the moment this module doesn't actually do anything 
-### apart from enabling a track to inherit from both bam and bigwig!
-
 use strict;
 use base qw(EnsEMBL::Draw::GlyphSet::bigwig EnsEMBL::Draw::GlyphSet::bam);
+
+sub render_unlimited {
+## Make sure we use the method in bam glyphset, not the one inherited by bigwig
+  return EnsEMBL::Draw::GlyphSet::bam::render_unlimited(@_);
+}
+
 
 1;

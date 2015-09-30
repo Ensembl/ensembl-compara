@@ -51,12 +51,15 @@ sub content {
 
   my %orthologue_list;
   my %skipped;
+  my %not_seen = map {$_ => 1} ($species_defs->valid_species);
+  delete $not_seen{$hub->species};
   
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
       $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$_}}};
       $skipped{$species}        += keys %{$homology_type->{$_}} if $hub->param('species_' . lc $species) eq 'off';
+      delete $not_seen{$species};
     }
   }
   
@@ -80,22 +83,23 @@ sub content {
     $columns = [
       { key => 'set',       title => 'Species set',    align => 'left',    width => '26%' },
       { key => 'show',      title => 'Show details',   align => 'center',  width => '10%' },
-      { key => '1:1',       title => 'With 1:1 orthologues',       align => 'center',  width => '16%', help => 'Number of species with 1:1 orthologues' },
-      { key => '1:many',    title => 'With 1:many orthologues',    align => 'center',  width => '16%', help => 'Number of species with 1:many orthologues' },
-      { key => 'many:many', title => 'With many:many orthologues', align => 'center',  width => '16%', help => 'Number of species with many:many orthologues' },
+      { key => '1:1',       title => 'With 1:1 orthologues',       align => 'center',  width => '16%', help => 'Number of species with 1:1 orthologues<em>'.$self->get_glossary_entry('1-to-1 orthologues').'</em>' },
+      { key => '1:many',    title => 'With 1:many orthologues',    align => 'center',  width => '16%', help => 'Number of species with 1:many orthologues<em>'.$self->get_glossary_entry('1-to-many orthologues').'</em>' },
+      { key => 'many:many', title => 'With many:many orthologues', align => 'center',  width => '16%', help => 'Number of species with many:many orthologues<em>'.$self->get_glossary_entry('Many-to-many orthologues').'</em>' },
       { key => 'none',      title => 'Without orthologues',        align => 'center',  width => '16%', help => 'Number of species without orthologues' },
     ];
 
     foreach my $set (@$set_order) {
       my $set_info = $species_sets->{$set};
       
+      my $none_title = $set_info->{'none'} ? sprintf('<a href="#list_no_ortho">%d</a>', $set_info->{'none'}) : 0;
       push @rows, {
         'set'       => "<strong>$set_info->{'title'}</strong> (<i>$set_info->{'all'} species</i>)<br />$set_info->{'desc'}",
         'show'      => qq{<input type="checkbox" class="table_filter" title="Check to show these species in table below" name="orthologues" value="$set" />},
         '1:1'       => $set_info->{'1-to-1'}       || 0,
         '1:many'    => $set_info->{'1-to-many'}    || 0,
         'many:many' => $set_info->{'Many-to-many'} || 0,
-        'none'      => $set_info->{'none'}         || 0,
+        'none'      => $none_title,
       };
     }
     
@@ -115,8 +119,8 @@ sub content {
     { key => 'identifier', align => 'left', width => '15%', sort => 'html', title => $self->html_format ? 'Ensembl identifier &amp; gene name' : 'Ensembl identifier'},    
     { key => $column_name, align => 'left', width => '10%', sort => 'none'                                                },
     { key => 'Location',   align => 'left', width => '20%', sort => 'position_html'                                       },
-    { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric'                                             },
-    { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric'                                             },
+    { key => 'Target %id', align => 'left', width => '5%',  sort => 'numeric', label => 'Target %id', title => $self->get_glossary_entry('Target % id')    },
+    { key => 'Query %id',  align => 'left', width => '5%',  sort => 'numeric', label => 'Query %id',  title => $self->get_glossary_entry('Query %id')      },
   ];
   
   push @$columns, { key => 'Gene name(Xref)',  align => 'left', width => '15%', sort => 'html', title => 'Gene name(Xref)'} if(!$self->html_format);
@@ -228,14 +232,14 @@ sub content {
       
       my $table_details = {
         'Species'    => join('<br />(', split /\s*\(/, $species_defs->species_label($species)),
-        'Type'       => ucfirst $orthologue_desc,
+        'Type'       => $self->glossary_helptip(ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues"),
         'dN/dS'      => $orthologue_dnds_ratio,
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Location'   => qq{<a href="$location_link">$orthologue->{'location'}</a>},
         $column_name => $self->html_format ? qq{<span class="small">$target_links</span>} : $description,
         'Target %id' => $target,
         'Query %id'  => $query,
-        'options'    => { class => join(' ', 'all', @{$sets_by_species->{$species} || []}) }
+        'options'    => { class => join(' ', @{$sets_by_species->{$species} || []}) }
       };      
       $table_details->{'Gene name(Xref)'}=$orthologue->{'display_id'} if(!$self->html_format);
       
@@ -260,10 +264,23 @@ sub content {
       sprintf(
         '<p>%d orthologues not shown in the table above from the following species. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
         $count,
-        join "</li>\n<li>", map "$_ ($skipped{$_})", sort keys %skipped
+        join "</li>\n<li>", sort map {$species_defs->species_label($_)." ($skipped{$_})"} keys %skipped
       )
     );
   }  
+
+  if (%not_seen) {
+    $html .= '<br /><a name="list_no_ortho"/>' . $self->_info(
+      'Species without orthologues',
+      sprintf(
+        '<p>%d species are not shown in the table above because they don\'t have any orthologue with %s.<ul><li>%s</li></ul></p>',
+        scalar(keys %not_seen),
+        $self->object->Obj->stable_id,
+        join "</li>\n<li>", sort map {$species_defs->species_label($_)} keys %not_seen,
+      )
+    );
+  }
+
   return $html;
 }
 

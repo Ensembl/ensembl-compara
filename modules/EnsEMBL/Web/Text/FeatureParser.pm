@@ -134,6 +134,7 @@ sub parse {
   ## Make sure format is given as uppercase
   $format = uc($format);
   $format = 'BED' if $format =~ /BEDGRAPH|BGR/;
+  return 'No format supplied' unless $format;
   return 'No data supplied' unless $data;
 
   my $error = $self->check_format($data, $format);
