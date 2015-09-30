@@ -69,7 +69,7 @@ sub fetch {
   $url     .= "?content-type=$type" unless $endpoint =~ /content-type/;
 
   ## make the request
-  my $response = read_file($url);
+  my $response = read_file($url, {'nice' => 1, 'no_exceptions' => 1});
   unless ($response->{'error'}) {
     if (lc($format) eq 'json') {
       $response = from_json($response->{'content'});
