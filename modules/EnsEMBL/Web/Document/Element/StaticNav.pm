@@ -80,7 +80,7 @@ sub content {
       
       foreach my $child (@child_order) {
         next unless ref $page_tree->{$child} eq 'HASH' && $page_tree->{$child}{'_title'};
-        $submenu .= sprintf '<li%s><img src="%s"><a href="%s%s">%s</a></li>', $child eq $last ? ' class="last"' : '', $image, $url, $child, $page_tree->{$child}{'_title'};
+        $submenu .= sprintf '<li%s><img src="%s"><a href="%s%s" title="%s">%s</a></li>', $child eq $last ? ' class="last"' : '', $image, $url, $child, $page_tree->{$child}{'_title'}, $page_tree->{$child}{'_title'};
       }
       
       $submenu .= '</ul>';
