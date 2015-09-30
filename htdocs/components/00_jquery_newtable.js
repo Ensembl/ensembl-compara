@@ -162,7 +162,6 @@
 
   function build_format(widgets,$table) {
     var view = $table.data('view');
-    console.log("build_format '"+view.format+"'");
     $('.layout',$table).html(
       '<div data-widget-name="'+view.format+'">'+
       widgets[view.format].layout($table)+"</div>"
@@ -196,7 +195,6 @@
     var grid_manifest = $table.data('grid-manifest') || [];
     var indexes = build_series_index($table,series);
     if(!$.orient_compares_equal(manifest_in,grid_manifest)) {
-      console.log("clearing grid");
       grid = [];
       $table.data('grid-manifest',manifest_in);
     }
@@ -220,7 +218,6 @@
     var ranges = $table.data('ranges') || {};
     var range_manifest = $table.data('range-manifest') || [];
     if(!$.orient_compares_equal(manifest_in,range_manifest)) {
-      console.log("clearing ranges",manifest_in,range_manifest);
       ranges = {};
       $table.data('range-manifest',manifest_in);
     }
@@ -334,7 +331,6 @@
   }
 
   function get_new_data(widgets,$table,manifest_c,more,config) {
-    console.log("data changed, should issue request");
     if(more===null) { flux(widgets,$table,'load',1); }
 
     var payload_one = $table.data('payload_one');
@@ -352,7 +348,8 @@
         config: JSON.stringify(config),
         incr_ok: manifest_c.incr_ok,
         series: JSON.stringify(config.columns),
-        ssplugins: JSON.stringify(config.ssplugins)
+        ssplugins: JSON.stringify(config.ssplugins),
+        source: 'enstab'
       });
       $.post($table.data('src'),params,function(res) {
         maybe_use_response(widgets,$table,res,config);
@@ -447,10 +444,11 @@
     $table.data('view',view).data('old-view',$.extend(true,{},old_view))
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
+    $table.on('think-on',function(e,key) { flux(widgets,$table,'think',1,key); });
+    $table.on('think-off',function(e,key) { flux(widgets,$table,'think',-1,key); });
     build_format(widgets,$table);
     $table.on('view-updated',function() {
       var view = $table.data('view');
-      console.log("view updated",view);
       var old_view = $table.data('old-view');
       if(view.format != old_view.format) {
         build_format(widgets,$table);
@@ -559,14 +557,16 @@
     };
   };
 
-  $.whenquiet = function(fn,msec) {
+  $.whenquiet = function(fn,msec,$table,key) {
     var id;
     return function() {
+      if($table) { $table.trigger('think-on',[key]); }
       var that = this;
       var args = arguments;
       if(id) { clearTimeout(id); }
       id = setTimeout(function() {
         id = null;
+        if($table) { $table.trigger('think-off',[key]); }
         fn.apply(that,args);
       },msec);
     };

@@ -94,19 +94,17 @@ sub content {
   }
   
   my $table      = $self->make_table();
-  return $table->render($self->hub,$self);
+  $html  = $self->_hint('snp_table', 'Variant table', "This table shows known variants for this gene. Use the 'Consequence Type' filter to view a subset of these.");
+  $html .= $table->render($self->hub,$self);
+  return $html;
 }
 
 sub all_terms {
-  my (%labels);
-
   my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  foreach my $con (@all_cons) {
-    next if $con->SO_accession =~ /x/i;
-    my $term = $con->SO_term;
-    $labels{$term} = $con->label;
-  }
-  return \%labels;
+
+  my @cons = grep { $_->SO_accession !~ /x/i } @all_cons;
+  my @labels = map { [$_->label,$_->rank] } @cons;
+  return [ map { $_->[0] } sort { $a->[1] <=> $b->[1] } @labels ];
 }
   
 sub sift_poly_classes {
@@ -287,11 +285,13 @@ sub make_table {
     width => 1.5,
     helptip => $glossary->{'Evidence status (variant)'}
   },{
-    _key => 'clinsig', _type => 'iconic', label => "Clin\fsig",
+    _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
     helptip => 'Clinical significance'
   },{
     _key => 'snptype', _type => 'iconic set_primary', label => "Type",
-    set_range => [values %{$self->all_terms}],
+    filter_label => 'Consequence Type',
+    filter_sorted => 1,
+    set_range => $self->all_terms,
     width => 1.5,
     helptip => 'Consequence type'
   },{
@@ -342,6 +342,10 @@ sub make_table {
       __clear => 1
    }
   });
+  # Disable filters except type for e82
+  $_->{'_type'} .= " no_filter" for @columns;
+  $columns[14]->{'_type'} = "iconic set_primary";
+
   $table->add_columns(\@columns,\@exclude);
 
   $self->evidence_classes($table);
@@ -393,6 +397,7 @@ sub variation_table {
         push @var_ids,$snp->get_Variation_dbID();
       }
     }
+    %handles = %{$vfa->_get_all_subsnp_handles_from_variation_ids(\@var_ids)};
   } else {
     $url_transcript_prefix = 't';
   }
@@ -403,9 +408,21 @@ sub variation_table {
     my $tvs = $self->_get_transcript_variations($transcript->Obj);
    
     my $transcript_stable_id = $transcript->stable_id;
-    warn "stable id $transcript_stable_id\n";
     my $gene                 = $transcript->gene;
-
+    my $lrg_correction = 0;
+    my $lrg_strand = 0;
+    if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+      my $gs = $gene->slice->project("chromosome");
+      foreach my $ps(@{$gs}) {
+        $lrg_strand = $ps->to_Slice->strand;
+        if($lrg_strand>0) {
+          $lrg_correction = 1-$ps->to_Slice->start;
+        } else {
+          $lrg_correction = $ps->to_Slice->end+1;
+        }
+      }
+    }
+    my $chr = $transcript->seq_region_name;
     my @tv_sorted;
     foreach my $transcript_variation (@$tvs) {
       my $raw_id = $transcript_variation->{_variation_feature_id};
@@ -413,7 +430,6 @@ sub variation_table {
       my $snp = $vfs->{$raw_id};
       next unless $snp;
 
-      my ($chr, $start, $end) = ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end);
       push @tv_sorted,[$transcript_variation,$snp->seq_region_start];
     }
     @tv_sorted = map { $_->[0] } sort { $a->[1] <=> $b->[1] } @tv_sorted;
@@ -423,7 +439,13 @@ sub variation_table {
       my $snp = $vfs->{$raw_id};
       next unless $snp;
 
-      my ($chr, $start, $end) = ($snp->seq_region_name, $snp->seq_region_start, $snp->seq_region_end);
+      my ($start, $end) = ($snp->seq_region_start,$snp->seq_region_end);
+      if($lrg_strand) {
+        $start = $start*$lrg_strand + $lrg_correction;
+        $end = $end*$lrg_strand + $lrg_correction;
+        ($start,$end) = ($end,$start) if $lrg_strand < 0;
+      }
+
       foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
         
         # this isn't needed anymore, I don't think!!!
@@ -442,7 +464,7 @@ sub variation_table {
             my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
             my $var_class            = $snp->var_class;
             my $translation_start    = $transcript_variation->translation_start;
-            my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('-', '-');
+            my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('', '');
             my $trans_url            = ";$url_transcript_prefix=$transcript_stable_id";
             my $vf_allele            = $tva->variation_feature_seq;
             my $allele_string        = $snp->allele_string;
@@ -521,7 +543,9 @@ sub _get_transcript_variations {
   my $tr   = shift;
 
   my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
-  return $tva->fetch_all_by_Transcripts([$tr]);
+  my $all_snps = $tva->fetch_all_by_Transcripts([$tr]);
+  push @$all_snps, @{$tva->fetch_all_somatic_by_Transcripts([$tr])};
+  return $all_snps;
 }
 
 sub _get_variation_features {
@@ -535,7 +559,7 @@ sub _get_variation_features {
       $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
     );
 
-    $self->{_variation_features} = {map {$_->dbID => $_} @{$slice->get_all_VariationFeatures}};
+    $self->{_variation_features} = {map {$_->dbID => $_} (@{$slice->get_all_VariationFeatures},@{$slice->get_all_somatic_VariationFeatures})};
   }
 
   return $self->{_variation_features};

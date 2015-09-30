@@ -63,6 +63,9 @@
           }
           new_html += val;
         }
+        if(!values.length || html=='') {
+          new_html = '-';
+        }
         return new_html;
       };
     }

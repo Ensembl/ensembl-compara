@@ -31,14 +31,16 @@
         name: "class",
         display: function($menu,$el,values,state,kparams,key,$table) {
           var cc = config.colconf[key];
-          var title = (cc.label || cc.title || key);
+          var title = (cc.filter_label || cc.label || cc.title || key);
           var $out = $('<div/>');
           var $head = $('<div class="head"/>').appendTo($out);
           $('<div class="title"/>').appendTo($head).html(title);
           var $summary = $('<div class="summary"/>').text('(x/y on)').appendTo($head);
           var $body = $('<div class="body"/>').appendTo($out);
           values = values.slice();
-          values.sort(function(a,b) { return a.localeCompare(b); });
+          if(!cc.filter_sorted) {
+            values.sort(function(a,b) { return a.localeCompare(b); });
+          }
           var $ul;
           var splits = [0];
           if(values.length > 4) {
@@ -49,6 +51,23 @@
             if(i>=splits[0]) {
               $ul = $("<ul/>").appendTo($body);
               splits.shift();
+            }
+            if(i===0) {
+              var $allon = $('<div/>').addClass('allon').text('All On');
+              $allon.click(function() {
+                state = {};
+                $body.children('ul').children('li').addClass('on');
+                $el.trigger('update',state);
+              });
+              var $alloff = $('<div/>').addClass('alloff').text('All Off');
+              $alloff.click(function() {
+                state = {};
+                $body.children('ul').children('li').removeClass('on').each(function() {
+                  state[$(this).data('key')] = 1;
+                });
+                $el.trigger('update',state);
+              });
+              $('<li/>').addClass('allonoff').append($allon).append($alloff).appendTo($ul);
             }
             var $li = $("<li/>").data('key',val).appendTo($ul);
             $table.trigger('paint-individual',[$li,key,val]);

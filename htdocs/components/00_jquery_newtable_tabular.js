@@ -198,12 +198,14 @@
   function retreat_rows($table,config,orient,grid,rev_series) {
     var last_table = Math.floor(grid.length/rows_per_subtable);
     $('.subtable',$table).each(function(i) {
-      if(i>last_table) {
+      if(i>last_table || grid.length==0) {
         $(this).remove();
       } else if(i==last_table) {
         remarkup($table,config,grid,rev_series,i,rows_per_subtable,orient);
+        apply_html($table,i);
       }
     });
+    guess_subtable_sizes($table);
     $.lazy('refresh');
   }
   
@@ -288,7 +290,6 @@
 
   function wakeup($table,$subtable) {
     if(!$subtable.data('redraw')) { return; }
-    console.log("redrawing "+$subtable.data('xxx'));
     var markup = $subtable.data('markup');
     var html = convert_markup($table,markup);
     $subtable.data('redraw',0);
@@ -313,7 +314,6 @@
 
   function sleep($subtable) {
     $subtable.data('redraw',1);
-    console.log("undrawing "+$subtable.data('xxx'));
     $subtable.css('height',$subtable.height()+'px');
     $subtable[0].innerHTML = '';
     $subtable.lazy();
@@ -342,6 +342,7 @@
         $('th',$table).click(function(e) {
           add_sort($table,config,$(this).data('key'),!e.shiftKey);
         });
+        $('th ._ht',$table).helptip();
         $.lazy('periodic',5000);
       },
       add_data: function($table,grid,series,start,num,orient) {
@@ -365,7 +366,7 @@
         },10);
       },
       truncate_to: function($table,grid,series,orient) {
-        if(length) {
+        if(grid.length) {
           $('.no_results').hide();
         } else {
           $('.no_results').show();

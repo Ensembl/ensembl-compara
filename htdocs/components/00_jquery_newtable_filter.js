@@ -46,7 +46,7 @@
     function dropdown(idx,filter,label,primary) {
       var prec = primary?"pri":"sec";
       if(filter=='') { filter = 'more'; }
-      return '<li class="t prec_'+prec+'" data-idx="'+idx+'"><span class="k">'+label+'</span><span class="v">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></li>';
+      return '<li class="t prec_'+prec+'" data-idx="'+idx+'"><div class="x"><span></span></div><div class="b"><span class="k">'+label+'</span><span class="v">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></div></li>';
     }
 
     function activate_menu($table,$button,others_only) {
@@ -64,6 +64,12 @@
         }
       }
     }
+    
+    function maybe_hide_more($table,$out) {
+      if(!$('.newtable_filter .prec_sec.valid',$table).length) {
+        $table.find('.more').hide();
+      }
+    }
 
     function draw_more($table,$menu) {
       var $out = $("<ul/>");
@@ -73,9 +79,7 @@
         $li.on('click',function(e) {
           $item.removeClass('prec_sec').addClass('prec_pri');
           activate_menu($table,$item,false);
-          if(!$('.newtable_filter .prec_sec.valid',$table).length) {
-            $out.closest('.more').hide();
-          }
+          maybe_hide_more($table);
           e.stopPropagation();
         });
       });
@@ -102,11 +106,12 @@
       var $filters = $('.newtable_filter',$table);
       var $vbuts = $('.t.valid',$filters);
       $filters.toggle(!!$vbuts.length);
+      maybe_hide_more($table);
       if($vbuts.length) {
         var $el = $('.prec_pri').eq(0);
         if(!$el.hasClass('tipped')) {
           $el.addClass('tipped').helptip({
-            'content': 'Click here to filter table by type',
+            'content': 'Click here to filter table by consequence type',
             'position': { 'of': $el },
             'close': function(event,ui) {
               $el.helptip('disable');
@@ -116,13 +121,23 @@
       }
     }
 
+    function unrestrict(config,$el,view) {
+      var key = config.columns[$el.closest('li').data('idx')];
+      if(view.filter && view.filter.hasOwnProperty(key)) {
+        delete view.filter[key];
+      }
+      if(obj_empty(view.filter)) { delete view.filter; }
+    }
+
     function set_button($el,view,w,key,values) {
       $el.toggleClass('valid',!!w.visible(values));
       if((view.filter||{}).hasOwnProperty(key)) {
         var text = w.text(view.filter[key],values);
         $('.v',$el).text(text);
+        $el.addClass('restricted');
       } else {
         $('.v',$el).text('All');
+        $el.removeClass('restricted');
       }
     }
 
@@ -224,7 +239,7 @@
       out.undo = function(manifest,grid,series,dest) {
         var rev_series = {};
         for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
-        fabric = [];
+        var fabric = [];
         for(var i=0;i<grid.length;i++) {
           var ok = true;
           $.each(to_filter,function(col,fn) {
@@ -256,13 +271,13 @@
           var cc =config.colconf[key];
           if(!cc.range) { return; }
           var label = "";
-          var label = cc.label || key;
+          var label = cc.filter_label || cc.label || key;
           if(cc.range) {
             dropdowns += dropdown(i,cc.range,label,cc.primary);
             filterable_columns[key] = cc;
           }
         });
-        dropdowns += dropdown(-1,'','More',true);
+        dropdowns += dropdown(-1,'','Other Columns',true);
 
         var out='<div class="newtable_filter"><span class="intro">Filter</span><ul>'+dropdowns+'</ul></div>';
         return out;
@@ -271,7 +286,7 @@
       go: function($table,$el) {
         var trigger_soon = $.whenquiet(function() {
           $table.trigger('view-updated');
-        },5000);
+        },5000,$table,'filter');
         $('li.t',$el).on('update',function(e,state) {
           update_state($table,$(this),state);
           update_button($table,$(this));
@@ -287,6 +302,18 @@
               show_menu($menu);
             }
           });
+        });
+        $('.x',$el).on('click',function(e) {
+          var view = $table.data('view');
+          unrestrict(config,$(this),view);
+          $table.data('view',view);
+          $table.trigger('view-updated');
+          var $button = $(this).closest('li');
+          update_button($table,$button);
+          $('.newtable_filter li .m:visible',$el).each(function() {
+            hide_menu($(this));
+          });
+          e.stopPropagation();
         });
         $('li.t',$el).each(function() { update_button($table,$(this)); });
         $('html').on('click',function(e) {

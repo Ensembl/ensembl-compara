@@ -133,11 +133,7 @@ sub render {
     ];
   }
 
-  my $url = $hub->url('ComponentAjax', {
-    source => 'enstab',
-    action => 'Web',
-    function => 'VariationTable',
-  },0,1);
+  my $url = $component->ajax_url(undef,{},'ComponentAjax');
 
   my %colmap;
   foreach my $i (0..$#{$self->{'columns'}}) {
