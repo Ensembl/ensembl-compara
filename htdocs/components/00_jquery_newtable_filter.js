@@ -239,7 +239,7 @@
       out.undo = function(manifest,grid,series,dest) {
         var rev_series = {};
         for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
-        fabric = [];
+        var fabric = [];
         for(var i=0;i<grid.length;i++) {
           var ok = true;
           $.each(to_filter,function(col,fn) {

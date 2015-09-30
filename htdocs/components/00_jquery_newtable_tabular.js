@@ -198,12 +198,14 @@
   function retreat_rows($table,config,orient,grid,rev_series) {
     var last_table = Math.floor(grid.length/rows_per_subtable);
     $('.subtable',$table).each(function(i) {
-      if(i>last_table) {
+      if(i>last_table || grid.length==0) {
         $(this).remove();
       } else if(i==last_table) {
         remarkup($table,config,grid,rev_series,i,rows_per_subtable,orient);
+        apply_html($table,i);
       }
     });
+    guess_subtable_sizes($table);
     $.lazy('refresh');
   }
   
@@ -366,7 +368,7 @@
         },10);
       },
       truncate_to: function($table,grid,series,orient) {
-        if(length) {
+        if(grid.length) {
           $('.no_results').hide();
         } else {
           $('.no_results').show();
