@@ -35,6 +35,12 @@ sub new {
   return $self;
 }
 
+sub hub {
+### a
+  my $self = shift;
+  return $self->{'hub'};
+}
+
 our %content_type = (
                       'json'      => 'application/json',
                       'jsonp'     => 'text/javascript',
