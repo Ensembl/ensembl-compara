@@ -27,8 +27,6 @@ use JSON qw(from_json);
 
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
-use parent qw(EnsEMBL::Web::Root);
-
 sub new {
 ### c
   my ($class, $hub) = @_;
