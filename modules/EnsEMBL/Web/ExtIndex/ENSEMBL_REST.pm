@@ -23,8 +23,6 @@ package EnsEMBL::Web::ExtIndex::ENSEMBL_REST;
 use strict;
 use warnings;
 
-use JSON qw(from_json);
-
 use EnsEMBL::Web::REST;
 use EnsEMBL::Web::Exceptions;
 
@@ -43,7 +41,7 @@ sub get_sequence {
   # make the request
   my $rest      = EnsEMBL::Web::REST->new($self->hub);
   my $endpoint  = sprintf('sequence/id/%s', $params->{'id'});
-  my $content   = $rest->fetch_as_json($endpoint);
+  my $content   = $rest->fetch($endpoint);
 
   # REST API returned error or error parsing response
   throw exception('WebException', $content->{'error'}) if $content->{'error'};

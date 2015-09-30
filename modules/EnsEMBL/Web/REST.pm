@@ -37,20 +37,42 @@ sub new {
   return $self;
 }
 
-sub fetch_as_json {
-### Fetch JSON for a given endpoint
-### @param endpoint String - any valid REST endpoint, relative to the server base URL
-### @return Hashref - data converted from JSON
-  my ($self, $endpoint) = @_;
+our %content_type = (
+                      'json'      => 'application/json',
+                      'jsonp'     => 'text/javascript',
+                      'fasta'     => 'text/x-fasta',
+                      'gff3'      => 'text/x-gff3',
+                      'bed'       => 'text/x-bed',
+                      'newick'    => 'text/x-nh',
+                      'xml'       => 'text/xml',
+                      'seqxml'    => 'text/x-seqxml+xml',
+                      'phyloxml'  => 'text/x-phyloxml+xml',
+                      'yaml'      => 'text/x-yaml',
+                    );
 
-  my $hub = $self->hub;
-  my $url = sprintf('%s/%s', $hub->species_defs->ENSEMBL_REST_URL, $endpoint);
-  $url   .= '?content-type=application/json' unless $endpoint =~ /content-type/;
+sub fetch {
+### Fetch data from a given endpoint
+### @param endpoint String - any valid REST endpoint, relative to the server base URL
+### @param format String (optional) - format to request data as. Defaults to JSON.
+### @return - type depends on format requested. Defaults to a hashref which has been
+###           converted from json
+  my ($self, $endpoint, $format) = @_;
+  $format ||= 'json';
+
+  my $hub   = $self->hub;
+  my $url   = sprintf('%s/%s', $hub->species_defs->ENSEMBL_REST_URL, $endpoint);
+  my $type  = $content_type{lc($format)};
+  $url     .= "?content-type=$type" unless $endpoint =~ /content-type/;
 
   ## make the request
   my $response = read_file($url);
   unless ($response->{'error'}) {
-    $response = from_json($response->{'content'});
+    if (lc($format) eq 'json') {
+      $response = from_json($response->{'content'});
+    }
+    else {
+      $response = $response->{'content'};
+    }
   }
 
   return $response;
