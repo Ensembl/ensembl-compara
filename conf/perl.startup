@@ -203,7 +203,11 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
       map { sprintf '%4d  %-6.6s %-32.32s %s', ++$i, $conf->get_config($_, 'SPECIES_RELEASE_VERSION'), $_, $conf->get_config($_, 'SPECIES_COMMON_NAME') } @{$conf->ENSEMBL_DATASETS}
     );
   }
-  
+ 
+  # Timestamp file for last start
+  open(STARTED,'>',"${SiteDefs::ENSEMBL_SERVERROOT}/ensembl-webcode/conf/started");
+  close STARTED;
+ 
   warn sprintf '
 ==============================================================================
  Server information:

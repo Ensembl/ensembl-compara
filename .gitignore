@@ -1,6 +1,7 @@
 /cbuild/*
 /.cbuild-*
 !/cbuild/README.txt
+/conf/started
 /conf/Plugins.pm
 /conf/packed
 /conf/config.packed

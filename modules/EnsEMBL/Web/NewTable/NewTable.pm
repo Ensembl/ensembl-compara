@@ -30,8 +30,6 @@ use EnsEMBL::Draw::Utils::ColourMap;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Utils::RandomString qw(random_string);
-
 use EnsEMBL::Web::NewTable::Callback;
 use EnsEMBL::Web::NewTable::Column;
 
@@ -151,7 +149,6 @@ sub render {
     format => 'Tabular',
   };
   my $data = {
-    unique => random_string(32),
     columns => [ map { $_->{'key'} } @{$self->{'columns'}} ],
     orient => $orient,
     formats => [ "tabular", "paragraph" ],
