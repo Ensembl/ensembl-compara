@@ -128,7 +128,7 @@ sub go {
   $self->{'iconfig'} = from_json($hub->param('config'));
   my $orient = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
-  my $more = from_json($hub->param('more'));
+  my $more = JSON->new->allow_nonref->decode($hub->param('more'));
   my $incr_ok = ($hub->param('incr_ok')||'' eq 'true');
   my $keymeta = from_json($hub->param('keymeta'));
   # Add plugins
