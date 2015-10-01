@@ -109,12 +109,13 @@ sub filter_types {
 }
 
 sub add_phase {
-  my ($self,$name,$rows,$cols) = @_;
+  my ($self,$name,$era,$rows,$cols) = @_;
 
   push @{$self->{'phases'}},{
     name => $name,
     rows => $rows,
     cols => $cols,
+    era => $era || $name,
   };
 }
 

@@ -12,6 +12,7 @@ use JSON;
 use File::Path qw(make_path);
 
 my $DEBUG=0; # TODO: to sitedefs?
+my $ENABLED = 0;
 
 sub new {
   my ($proto,$hub,$context) = @_;
@@ -89,6 +90,7 @@ sub cachefile {
 sub cache_get {
   my ($self) = @_;
 
+  return undef unless $ENABLED;
   my $fn = $self->cachefile();
   unless(-e $fn) {
     warn "CACHE: miss\n" if $DEBUG;

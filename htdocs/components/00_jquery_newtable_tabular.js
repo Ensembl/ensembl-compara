@@ -242,7 +242,9 @@
 
   function remarkup($table,config,grid,rev_series,start,rows,orient) {
     var subtabs = [];
-    for(var j=start/rows_per_subtable;j<(start+rows)/rows_per_subtable;j++) {
+    var tab_a = Math.floor(start/rows_per_subtable);
+    var tab_b = Math.floor((start+rows)/rows_per_subtable);
+    for(var j=tab_a;j<=tab_b;j++) {
       var $subtable = $('.subtable',$table).eq(j);
       remarkup_sub($table,$subtable,config,grid,rev_series,j,orient);
       subtabs.push(j);
@@ -290,8 +292,8 @@
 
   function wakeup($table,$subtable) {
     if(!$subtable.data('redraw')) { return; }
-    console.log("redrawing "+$subtable.data('xxx'));
-    var markup = $subtable.data('markup');
+    console.log("wakeup "+$subtable.data('xxx'));
+    var markup = $subtable.data('markup') || '';
     var html = convert_markup($table,markup);
     $subtable.data('redraw',0);
     var $body = $('tbody',$subtable);
@@ -357,8 +359,8 @@
         var subtabs = remarkup($table,config,grid,rev_series,start,num,orient);
         var d = $.Deferred().resolve(subtabs);
         var has_reset = false;
-        loop(d,function(tabnum,v) {
-          apply_html($table,tabnum);
+        loop(d,function(i,v) {
+          apply_html($table,v);
           if(!has_reset) {
             $subtables.each(function() {
               set_active_orient($(this),orient);
