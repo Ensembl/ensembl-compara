@@ -59,10 +59,13 @@ sub table_content {
   my $gene_object      = $self->configure($icontext,'ALL');
   my $object_type      = $hub->type;
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
-  
-  if ($object_type eq 'Transcript') {
-    my $t = $hub->param('t');
-    @transcripts = grep $_->stable_id eq $t, @transcripts;
+ 
+  my $transcript;
+  $transcript = $hub->param('t') if $object_type eq 'Transcript';
+  my $phase = $callback->phase;
+  $transcript = $phase if $phase =~ s/^full-//;
+  if(defined $transcript) {
+    @transcripts = grep $_->stable_id eq $transcript, @transcripts;
   }
   return $self->variation_table($callback,'ALL',\@transcripts);
 }
@@ -209,9 +212,6 @@ sub make_table {
   my $glossary = $hub->glossary_lookup;
   
   my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
-  $table->add_phase("taster",[0,50]);
-#  $table->add_phase("outline",undef,[qw(ID Source)]);
-  $table->add_phase("full");
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
 
@@ -352,6 +352,21 @@ sub make_table {
   $self->clinsig_classes($table);
   $self->snptype_classes($table,$self->hub);
   $self->sift_poly_classes($table);
+  
+  # Separate phase for each transcript speeds up gene variation table
+ 
+   
+  my $icontext         = $self->hub->param('context') || 100;
+  my $gene_object      = $self->configure($icontext,'ALL');
+  my $object_type      = $self->hub->type;
+  my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
+  if ($object_type eq 'Transcript') {
+    my $t = $hub->param('t');
+    @transcripts = grep $_->stable_id eq $t, @transcripts;
+  }
+
+  $table->add_phase("taster",'taster',[0,50]);
+  $table->add_phase("full-$_",'full') for(map { $_->stable_id } @transcripts);
 
   return $table;
 }
@@ -371,9 +386,7 @@ sub variation_table {
     v      => undef,
   });
 
-  # colourmap
   my $var_styles = $hub->species_defs->colour('variation');
-  my $colourmap  = $hub->colourmap;
   
   my $vfs = $self->_get_variation_features();
 

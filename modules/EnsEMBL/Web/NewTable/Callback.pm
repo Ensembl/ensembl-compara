@@ -128,7 +128,7 @@ sub go {
   $self->{'iconfig'} = from_json($hub->param('config'));
   my $orient = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
-  my $more = $hub->param('more');
+  my $more = from_json($hub->param('more'));
   my $incr_ok = ($hub->param('incr_ok')||'' eq 'true');
   my $keymeta = from_json($hub->param('keymeta'));
   # Add plugins
@@ -327,28 +327,35 @@ sub newtable_data_request {
     $all_data = 1;
   }
 
+  my $phase = 0;
+  my %lengths;
+  if(defined $more) {
+    $phase = $more->{'phase'};
+    %lengths = %{$more->{'lengths'}};
+  }
   # What phase should we be?
   my @required;
   push @required,map { $_->{'key'} } @{$self->{'wire'}{'sort'}||[]};
   if($incr_ok && !$all_data) {
-    while(($more||0) < $#$phases) {
-      my %gets_cols = map { $_ => 1 } (@{$phases->[$more]{'cols'}||\@cols});
+    while(($phase||0) < $#$phases) {
+      my %gets_cols = map { $_ => 1 } (@{$phases->[$phase]{'cols'}||\@cols});
       last unless scalar(grep { !$gets_cols{$_} } @required);
-      $more++;
+      $phase++;
     }
   } else {
-    $more = $#$phases;
+    die "XXX Fix before merging\n";
+    $phase = $#$phases;
   }
-  $self->{'phase_name'} = $phases->[$more]{'name'};
+  $self->{'phase_name'} = $phases->[$phase]{'name'};
   warn "CHOSEN PHASE $self->{'phase_name'}\n";
 
   # Start row
-  my $irows = $phases->[$more]{'rows'} || [0,-1];
+  my $irows = $phases->[$phase]{'rows'} || [0,-1];
   $self->{'rows'} = $irows;
   $self->{'rows'} = [0,-1] if $all_data;
 
   # Calculate columns to send
-  $self->{'used_cols'} = $phases->[$more]{'cols'} || \@cols;
+  $self->{'used_cols'} = $phases->[$phase]{'cols'} || \@cols;
 
   # Calculate function name
   my $type = $self->{'iconfig'}{'type'}||'';
@@ -368,13 +375,18 @@ sub newtable_data_request {
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $order = $self->server_order($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
   }
-  
-  # Move on continuation counter
-  $more++;
-  $more=0 if $more == @$phases;
 
   # Send it
   $self->consolidate();
+  # Move on continuation counter
+  my $start = ($lengths{$phases->[$phase]{'era'}}||=0);
+  $lengths{$phases->[$phase]{'era'}} += $self->{'num'};
+  $phase++;
+  $more = { phase => $phase, lengths => \%lengths };
+  $more= undef if $phase == @$phases;
+  warn "start = $start\n";
+  use Data::Dumper;
+  warn Dumper($self->{'num'},\%lengths,$start);
   my $out = {
     response => {
       len => $self->{'outlen'},
@@ -382,7 +394,7 @@ sub newtable_data_request {
       nulls => $self->{'outnulls'},
       series => $self->{'used_cols'},
       order => $order,
-      start => $self->{'rows'}[0],
+      start => $start + $self->{'rows'}[0],
       more => $more,
       enums => $self->finish_enum(),
       shadow => \%shadow,
