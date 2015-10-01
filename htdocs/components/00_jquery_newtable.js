@@ -434,8 +434,7 @@
     store_keymeta($table,config.keymeta); 
     $target.replaceWith($table);
     var stored_config = {
-      columns: config.columns,
-      unique: config.unique
+      columns: config.columns
     };
     var view = $.extend(true,{},config.orient);
     var old_view = $.extend(true,{},config.orient);

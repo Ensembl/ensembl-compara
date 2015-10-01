@@ -32,6 +32,8 @@ use Digest::MD5 qw(md5_hex);
 use SiteDefs;
 use Text::CSV;
 
+use EnsEMBL::Web::Procedure;
+
 # XXX move all this stuff to somewhere it's more suited
 
 sub compress_block {
@@ -143,7 +145,14 @@ sub go {
       EnsEMBL::Web::NewTable::Column->new($self,$cc->{'sstype'},$key,$cc->{'ssconf'},$cc->{'ssarg'});
   }
 
-  my $out = $self->newtable_data_request($orient,$more,$incr_ok,$keymeta);
+  my $proc = EnsEMBL::Web::Procedure->new($self->{'hub'},'callback');
+  $proc->set_variables({
+    orient => $orient, more => $more, incr_ok => $incr_ok,
+    keymeta => $keymeta
+  });
+  my $out = $proc->go(sub {
+    return $self->newtable_data_request($orient,$more,$incr_ok,$keymeta);
+  });
   if($self->{'wire'}{'format'} eq 'export') {
     $out = convert_to_csv($self->{'iconfig'},$out);
     my $r = $hub->apache_handle;
@@ -163,7 +172,11 @@ sub preload {
   $self->{'iconfig'} = $config;
   $self->{'wire'} = $orient;
   $self->{'columns'} = $table->columns;
-  return $self->newtable_data_request($orient,undef,1);
+  my $proc = EnsEMBL::Web::Procedure->new($self->{'hub'},'preload');
+  $proc->set_variables({ orient => $orient, config => $config });
+  return $proc->go(sub {
+    return $self->newtable_data_request($orient,undef,1);
+  }); 
 }
 
 sub server_sortdata {
@@ -294,26 +307,10 @@ sub convert_to_csv {
   return $out;
 }
 
-sub unique { return $_[0]->{'iconfig'}{'unique'}; }
 sub phase { return $_[0]->{'phase_name'}; }
 
 sub newtable_data_request {
   my ($self,$orient,$more,$incr_ok,$keymeta) = @_;
-
-  my $cache_key = {
-    iconfig => $self->{'iconfig'},
-    orient => $orient,
-    wire => $self->{'wire'},
-    more => $more,
-    incr_ok => $incr_ok,
-    keymeta => $keymeta,
-    url => $self->{'hub'}->url,
-    base => $SiteDefs::ENSEMBL_BASE_URL,
-    version => $SiteDefs::ENSEMBL_VERSION,
-  };
-  delete $cache_key->{'iconfig'}{'unique'};
-  my $out = $self->{'cache'}->get($cache_key);
-  return $out if defined $out;
 
   my @cols = @{$self->{'iconfig'}{'columns'}};
   my %cols_pos;
@@ -393,7 +390,6 @@ sub newtable_data_request {
     },
     orient => $orient,
   };
-  $self->{'cache'}->set($cache_key,$out);
   return $out;
 }
 
