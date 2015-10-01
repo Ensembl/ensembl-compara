@@ -472,6 +472,7 @@
         wire: JSON.stringify(orient),
         ssplugins: JSON.stringify(config.ssplugins),
         spawntoken: spawntoken,
+        more: JSON.stringify(null),
         source: 'enstab'
       });
       var out = '<form method="POST" id="spawn" action="'+src+'">';
