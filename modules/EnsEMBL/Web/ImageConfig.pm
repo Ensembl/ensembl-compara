@@ -3742,33 +3742,17 @@ sub share {
   foreach (@unshared_trackhubs) {
     $to_delete{$_} = 1 for grep $user_settings->{$_}, @{$trackhub_tracks{$_->id} || []};  # delete anything for tracks in trackhubs that aren't shared
   }
- 
-=pod 
+
   # Reduce track orders if custom tracks aren't shared
   if (scalar keys %to_delete) {
-    my %track_ids_to_delete  = map { $_ => 1 } keys %to_delete, map { @{$trackhub_tracks{$_->id} || []} } @unshared_trackhubs;
-    my @removed_track_orders = map { $track_ids_to_delete{$_->id} && $_->{'data'}{'node_type'} eq 'track' ? $_->{'data'}{'order'} : () } @{$self->glyphset_configs};
-    
-    foreach my $order (@{$user_settings->{'track_order'}{$species}}) {
-      my $i = 0;
-      
-      for (@removed_track_orders) {
-        last if $_ > $order;
-        $i++;
-      }
-      
-      $i-- if $i && $removed_track_orders[$i] > $order;
-      $order -= $i;
-    }
+    my %track_ids_to_delete = map {( $_ => 1, "$_.b" => 1, "$_.f" => 1 )} keys %to_delete, map { @{$trackhub_tracks{$_->id} || []} } @unshared_trackhubs;
+
+    $user_settings->{'track_order'}{$species} = [ grep { !$track_ids_to_delete{$_->[0]} && !$track_ids_to_delete{$_->[1]} } @{$user_settings->{'track_order'}{$species}} ];
   }
-  
-  foreach (keys %to_delete) {
-    delete $user_settings->{$_};
-    delete $user_settings->{'track_order'}{$species}{$_} for $_, "$_.f", "$_.r";
-  }
-  
+
+  # remove track order for other species
   delete $user_settings->{'track_order'}{$_} for grep $_ ne $species, keys %{$user_settings->{'track_order'}};
-=cut  
+
   return $user_settings;
 }
 
