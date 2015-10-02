@@ -312,19 +312,19 @@
     });
   }
   
-  function maybe_use_response(widgets,$table,result,config) {
-    store_keymeta($table,result.response.keymeta);
+  function maybe_use_response(widgets,$table,response,config) {
+    store_keymeta($table,response.keymeta);
     var cur_manifest = $table.data('manifest');
-    var in_manifest = result.orient;
-    var more = 0;
+    var in_manifest = response.orient;
+    var more = [];
     if($.orient_compares_equal(cur_manifest.manifest,in_manifest)) {
-      use_response(widgets,$table,cur_manifest,result.response,config);
-      if(result.response.more) {
-        more = 1;
-        get_new_data(widgets,$table,cur_manifest,result.response.more,config);
+      use_response(widgets,$table,cur_manifest,response,config);
+      if(response.more) {
+        more.push([cur_manifest,response.more]);
       }
     }
-    if(!more) { flux(widgets,$table,'load',-1); }
+    if(!more.length) { flux(widgets,$table,'load',-1); }
+    return more;
   }
 
   function extract_params(url) {
@@ -339,6 +339,17 @@
     return out;
   }
 
+  function maybe_use_responses(widgets,$table,got,config) {
+    var more = [];
+    for(var i=0;i<got.responses.length;i++) {
+      var m = maybe_use_response(widgets,$table,got.responses[i],config);
+      more = more.concat(m);
+    }
+    for(var i=0;i<more.length;i++) {
+      get_new_data(widgets,$table,more[i][0],more[i][1],config);
+    }
+  }
+
   function get_new_data(widgets,$table,manifest_c,more,config) {
     console.log("data changed, should issue request");
     if(more===null) { flux(widgets,$table,'load',1); }
@@ -346,7 +357,7 @@
     var payload_one = $table.data('payload_one');
     if(payload_one && $.orient_compares_equal(manifest_c.manifest,config.orient)) {
       $table.data('payload_one','');
-      maybe_use_response(widgets,$table,payload_one,config);
+      maybe_use_responses(widgets,$table,payload_one,config);
     } else {
       var wire_manifest = $.extend({},manifest_c.manifest,manifest_c.wire);
       var src = $table.data('src');
@@ -362,7 +373,7 @@
         source: 'enstab'
       });
       $.post($table.data('src'),params,function(res) {
-        maybe_use_response(widgets,$table,res,config);
+        maybe_use_responses(widgets,$table,res,config);
       },'json');
     }
   }

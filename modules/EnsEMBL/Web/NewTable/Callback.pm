@@ -402,7 +402,7 @@ sub newtable_data_request {
   $more = { phase => $phase, req_lengths => \%req_lengths, shadow_lengths => \%shadow_lengths };
   $more= undef if $phase == @$phases;
   my $out = {
-    response => {
+    responses => [{
       len => $self->{'outlen'},
       data => $self->{'outdata'},
       nulls => $self->{'outnulls'},
@@ -414,8 +414,8 @@ sub newtable_data_request {
       shadow => \%shadow,
       minsize => $self->{'shadow_num'},
       keymeta => $self->{'key_meta'},
-    },
-    orient => $self->{'orient'},
+      orient => $self->{'orient'},
+    }],
   };
   return $out;
 }
