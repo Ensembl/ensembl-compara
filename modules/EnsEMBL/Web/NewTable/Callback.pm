@@ -52,7 +52,6 @@ sub new {
   $self = { %$self, (
     hub => $hub,
     component => $component,
-    rows => [],
     outdata => [],
     enum_values => {},
     sort_data => [],
@@ -60,9 +59,12 @@ sub new {
     data => [],
     nulls => [],
     outnulls => [],
-    num => 0,
+    shadow_num => 0,
+    reqeust_num => 0,
+    generator_num => 0,
     len => 0,
     outlen => [],
+    stand_down => 0,
   )};
   bless $self,$class;
   return $self;
@@ -103,8 +105,11 @@ sub consolidate {
 sub add_row {
   my ($self,$row) = @_;
 
-  $self->{'num'}++;
-  return 0 unless $self->passes_muster($row,$self->{'num'}); 
+  my $rows = $self->{'orient'}{'pagerows'};
+  $self->{'stand_down'} = 1 if $rows && $self->{'shadow_num'} >= $rows->[1];
+  $self->{'shadow_num'}++;
+  return 0 unless $self->passes_muster($row); 
+  $self->{'request_num'}++;
   $self->add_enum($row); 
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $self->server_sortdata($row,$self->{'wire'}{'sort'},$self->{'used_cols'});
@@ -126,7 +131,7 @@ sub go {
 
   my $hub = $self->{'hub'};
   $self->{'iconfig'} = from_json($hub->param('config'));
-  my $orient = from_json($hub->param('orient'));
+  $self->{'orient'} = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
   my $more = JSON->new->allow_nonref->decode($hub->param('more'));
   my $incr_ok = ($hub->param('incr_ok')||'' eq 'true');
@@ -146,12 +151,13 @@ sub go {
   }
 
   my $proc = EnsEMBL::Web::Procedure->new($self->{'hub'},'callback');
+
   $proc->set_variables({
-    orient => $orient, more => $more, incr_ok => $incr_ok,
+    orient => $self->{'orient'}, more => $more, incr_ok => $incr_ok,
     keymeta => $keymeta
   });
   my $out = $proc->go(sub {
-    return $self->newtable_data_request($orient,$more,$incr_ok,$keymeta);
+    return $self->newtable_data_request($more,$incr_ok,$keymeta);
   });
   if($self->{'wire'}{'format'} eq 'export') {
     $out = convert_to_csv($self->{'iconfig'},$out);
@@ -171,11 +177,12 @@ sub preload {
 
   $self->{'iconfig'} = $config;
   $self->{'wire'} = $orient;
+  $self->{'orient'} = $orient;
   $self->{'columns'} = $table->columns;
   my $proc = EnsEMBL::Web::Procedure->new($self->{'hub'},'preload');
-  $proc->set_variables({ orient => $orient, config => $config });
+  $proc->set_variables({ orient => $self->{'orient'}, config => $config });
   return $proc->go(sub {
-    return $self->newtable_data_request($orient,undef,1);
+    return $self->newtable_data_request(undef,1);
   }); 
 }
 
@@ -186,7 +193,7 @@ sub server_sortdata {
   foreach my $i (0..$#$sort) {
     push @{$self->{'sort_data'}[$i]||=[]},$row->{$sort->[$i]{'key'}};
   }
-  push @{$self->{'sort_data'}[@$sort]||=[]},$self->{'num'}-1;
+  push @{$self->{'sort_data'}[@$sort]||=[]},$self->{'shadow_num'}-1;
 }
 
 sub server_order {
@@ -232,19 +239,31 @@ sub server_nulls {
   return \%nulls;
 }
 
-sub rows { return $_[0]->{'rows'}; }
-
 sub stand_down {
-  my ($self,$row,$num) = @_;
+  my ($self) = @_;
 
-  return 1 if $self->{'rows'}[1]!=-1 && $num >= $self->{'rows'}[1];
-  return 0;
+  return 0 if $self->size_needed;
+  return $self->{'stand_down'};
+}
+
+sub free_wheel {
+  my ($self,$acct) = @_;
+
+  if($self->{'stand_down'}) {
+    $self->{'shadow_num'}++;
+    return 1;
+  }
+  return 0; 
 }
 
 sub passes_muster {
-  my ($self,$row,$num) = @_;
+  my ($self,$row) = @_;
 
-  return 0 if $num <= $self->{'rows'}[0];
+  my $rows = $self->{'orient'}{'pagerows'};
+  if($rows) {
+    my $global_num = $self->{'shadow_num'}-1;
+    return 0 if $global_num < $rows->[0] or $global_num >= $rows->[1];
+  }
   my $ok = 1;
   foreach my $col (keys %{$self->{'wire'}{'filter'}||{}}) {
     my $colconf = $self->{'iconfig'}{'colconf'}{$col};
@@ -310,7 +329,7 @@ sub convert_to_csv {
 sub phase { return $_[0]->{'phase_name'}; }
 
 sub newtable_data_request {
-  my ($self,$orient,$more,$incr_ok,$keymeta) = @_;
+  my ($self,$more,$incr_ok,$keymeta) = @_;
 
   my @cols = @{$self->{'iconfig'}{'columns'}};
   my %cols_pos;
@@ -328,10 +347,11 @@ sub newtable_data_request {
   }
 
   my $phase = 0;
-  my %lengths;
+  my (%req_lengths,%shadow_lengths);
   if(defined $more) {
     $phase = $more->{'phase'};
-    %lengths = %{$more->{'lengths'}};
+    %req_lengths = %{$more->{'req_lengths'}};
+    %shadow_lengths = %{$more->{'shadow_lengths'}};
   }
   # What phase should we be?
   my @required;
@@ -348,11 +368,8 @@ sub newtable_data_request {
   }
   $self->{'phase_name'} = $phases->[$phase]{'name'};
   warn "CHOSEN PHASE $self->{'phase_name'}\n";
-
-  # Start row
-  my $irows = $phases->[$phase]{'rows'} || [0,-1];
-  $self->{'rows'} = $irows;
-  $self->{'rows'} = [0,-1] if $all_data;
+  $self->{'start'} = ($req_lengths{$phases->[$phase]{'era'}}||=0);
+  $self->{'shadow_num'} = ($shadow_lengths{$phases->[$phase]{'era'}}||=0);
 
   # Calculate columns to send
   $self->{'used_cols'} = $phases->[$phase]{'cols'} || \@cols;
@@ -366,7 +383,7 @@ sub newtable_data_request {
   # Populate data
   $self->{'component'}->$func($self);
 
-  my %shadow = %$orient;
+  my %shadow = %{$self->{'orient'}};
   delete $shadow{'filter'};
   $shadow{'series'} = $self->{'used_cols'};
 
@@ -378,15 +395,12 @@ sub newtable_data_request {
 
   # Send it
   $self->consolidate();
-  # Move on continuation counter
-  my $start = ($lengths{$phases->[$phase]{'era'}}||=0);
-  $lengths{$phases->[$phase]{'era'}} += $self->{'num'};
+  # Move on continuation counters
+  $req_lengths{$phases->[$phase]{'era'}} = $self->{'request_num'};
+  $shadow_lengths{$phases->[$phase]{'era'}} = $self->{'shadow_num'};
   $phase++;
-  $more = { phase => $phase, lengths => \%lengths };
+  $more = { phase => $phase, req_lengths => \%req_lengths, shadow_lengths => \%shadow_lengths };
   $more= undef if $phase == @$phases;
-  warn "start = $start\n";
-  use Data::Dumper;
-  warn Dumper($self->{'num'},\%lengths,$start);
   my $out = {
     response => {
       len => $self->{'outlen'},
@@ -394,13 +408,14 @@ sub newtable_data_request {
       nulls => $self->{'outnulls'},
       series => $self->{'used_cols'},
       order => $order,
-      start => $start + $self->{'rows'}[0],
+      start => $self->{'start'},
       more => $more,
       enums => $self->finish_enum(),
       shadow => \%shadow,
+      minsize => $self->{'shadow_num'},
       keymeta => $self->{'key_meta'},
     },
-    orient => $orient,
+    orient => $self->{'orient'},
   };
   return $out;
 }

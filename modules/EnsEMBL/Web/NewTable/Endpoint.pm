@@ -30,7 +30,7 @@ use warnings;
 use Carp;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
-our @PLUGINS = qw(Core Frame Decorate Filter Misc);
+our @PLUGINS = qw(Core Frame Decorate Filter Misc Paging);
 
 sub new {
   my ($proto,$hub,$component) = @_;
@@ -38,6 +38,7 @@ sub new {
   my $class = ref($proto) || $proto;
   my $self = {
     key_meta => {},
+    size_needed => 0,
   };
   bless $self,$class;
   return $self;
@@ -123,5 +124,10 @@ sub delegate {
 }
 
 sub hub { return $_[0]->{'hub'}; }
+
+sub size_needed {
+  $_[0]->{'size_needed'} = $_[1] if @_>1;
+  return $_[0]->{'size_needed'};
+}
 
 1;
