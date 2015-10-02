@@ -44,6 +44,43 @@ sub content {
   my $filename = $hub->param('filename') || $self->default_file_name;
   $filename =~ s/\.[\w|\.]+//;
 
+  my @radio       = qw(text journal poster web projector custom);
+  my $radio_info  = {
+                    'text'      => {'label' => 'Text file',
+                                    'desc'  => 'Output features as BED, GFF or other data format',
+                                    },
+                    'journal'   => {'label' => 'Journal/report',
+                                    'desc'  => 'High resolution, suitable for printing at A4/letter size',
+                                    },
+                    'poster'    => {'label' => 'Poster',
+                                    'desc'  => 'Higher resolution, suitable for posters and other large print uses',
+                                    },
+                    'web'       => {'label' => 'Web image',
+                                    'desc'  => 'Standard resolution, suitable for web pages, blog posts, etc.',
+                                    },
+                    'projector' => {'label' => 'Projector/presentation',
+                                    'desc'  => 'Saturated image, better suited to projectors',
+                                    },
+                    'custom'    => {'label' => 'Custom image',
+                                    'desc'  => 'Select from a range of formats and sizes', 
+                                    },
+                    };
+  my $formats = [];
+  foreach (@radio) {
+    push @$formats, {'value' => $_, 'label' => $radio_info->{$_}{'label'}};
+  }
+
+  ## Radio buttons for different formats
+  my %params = (
+                'type'    => 'Radiolist',
+                'name'    => 'format',
+                'label'   => 'Format',
+                'class'   => '_stt_format',
+                'values'  => $formats,
+                'value'   => 'journal',
+                );
+  $fieldset->add_field(\%params);
+
 
   return $form->render;
 }
