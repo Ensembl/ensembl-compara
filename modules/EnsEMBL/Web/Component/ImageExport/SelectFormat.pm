@@ -51,24 +51,31 @@ sub content {
                                     },
                     'journal'   => {'label' => 'Journal/report',
                                     'desc'  => 'High resolution, suitable for printing at A4/letter size',
+                                    'info'  => '<ul><li>PNG</li><li>2000px wide</li><li>Darker colours</li></ul>',
                                     },
                     'poster'    => {'label' => 'Poster',
                                     'desc'  => 'Higher resolution, suitable for posters and other large print uses',
+                                    'info'  => '<ul><li>PNG</li><li>5000px wide</li><li>Darker colours</li></ul>',
                                     },
                     'web'       => {'label' => 'Web image',
                                     'desc'  => 'Standard resolution, suitable for web pages, blog posts, etc.',
+                                    'info'  => '<ul><li>PNG</li><li>Same size and colours as original image</li></ul>',
                                     },
                     'projector' => {'label' => 'Projector/presentation',
                                     'desc'  => 'Saturated image, better suited to projectors',
+                                    'info'  => '<ul><li>PNG</li><li>1200px wide</li><li>Darker colours</li></ul>',
                                     },
                     'custom'    => {'label' => 'Custom image',
                                     'desc'  => 'Select from a range of formats and sizes', 
                                     },
                     };
   my $formats = [];
-  my $info_icon = '<img src="/i/16/info.png" class="alignright" />';
+  my $info_icon = '<img src="/i/16/info.png" class="alignright" title="More information" />';
   foreach (@radio) {
-    my $caption = sprintf('<b>%s</b> - %s %s', $radio_info->{$_}{'label'}, $radio_info->{$_}{'desc'}, $info_icon);
+    my $caption = sprintf('<b>%s</b> - %s', $radio_info->{$_}{'label'}, $radio_info->{$_}{'desc'});
+    if ($radio_info->{$_}{'info'}) {
+      $caption .= sprintf(' %s<br><div>%s</div>', $info_icon, $radio_info->{$_}{'info'});
+    }
     push @$formats, {'value' => $_, 'caption' => {'inner_HTML' => $caption}};
   }
 
@@ -82,8 +89,8 @@ sub content {
                 );
   $fieldset->add_field(\%params);
 
-  $form->add_button(type => 'Submit', name => 'preview', value => 'Preview');
-  $form->add_button(type => 'Submit', name => 'download', value => 'Download');
+  #$form->add_button(type => 'Submit', name => 'preview', value => 'Preview');
+  #$form->add_button(type => 'Submit', name => 'download', value => 'Download');
 
   return $form->render;
 }
