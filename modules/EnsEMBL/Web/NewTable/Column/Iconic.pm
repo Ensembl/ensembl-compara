@@ -40,7 +40,7 @@ sub iconic_build_key {
 }
 
 sub cmp {
-  my ($x,$y,$f,$c,$km,$col) = @_;
+  my ($self,$x,$y,$f,$c,$km,$col) = @_;
 
   $c->{$x} = iconic_build_key($km,$col,$x) unless exists $c->{$x};
   $c->{$y} = iconic_build_key($km,$col,$y) unless exists $c->{$y};

@@ -43,7 +43,7 @@ sub js_range { return 'position'; }
 sub js_params { return { steptype => 'integer' }; }
 
 sub cmp {
-  my ($a,$b,$f) = @_; 
+  my ($self,$a,$b,$f) = @_;
 
   my @a = split(/:-/,$a);
   my @b = split(/:-/,$b);

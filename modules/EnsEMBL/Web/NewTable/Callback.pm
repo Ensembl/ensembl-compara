@@ -50,20 +50,15 @@ sub new {
   my $class = ref($proto) || $proto;
   my $self = $class->SUPER::new($hub,$component);
   $self = { %$self, (
+    # NOT RESET EACH PHASE
     hub => $hub,
     component => $component,
-    outdata => [],
     enum_values => {},
-    sort_data => [],
+    out => [],
+    # RESET EACH PHASE
+    request_num => 0,
     null_cache => [],
-    data => [],
-    nulls => [],
-    outnulls => [],
-    shadow_num => 0,
-    reqeust_num => 0,
-    generator_num => 0,
-    len => 0,
-    outlen => [],
+    sort_data => [],
     stand_down => 0,
   )};
   bless $self,$class;
@@ -94,35 +89,38 @@ sub finish_enum {
 
 sub consolidate {
   my ($self) = @_;
-  push @{$self->{'outdata'}},compress_block($self->{'data'});
-  push @{$self->{'outnulls'}},compress_block($self->{'nulls'});
-  push @{$self->{'outlen'}},$self->{'len'};
-  $self->{'data'} = [];
-  $self->{'nulls'} = [];
-  $self->{'len'} = 0;
+
+  my $out = $self->{'out'}[-1];
+  push @{$out->{'data'}},compress_block($out->{'indata'});
+  push @{$out->{'nulls'}},compress_block($out->{'innulls'});
+  push @{$out->{'len'}},$out->{'inlen'};
+  $out->{'indata'} = [];
+  $out->{'innulls'} = [];
+  $out->{'inlen'} = 0;
 }
 
 sub add_row {
   my ($self,$row) = @_;
 
+  my $out = $self->{'out'}[-1];
   my $rows = $self->{'orient'}{'pagerows'};
-  $self->{'stand_down'} = 1 if $rows && $self->{'shadow_num'} >= $rows->[1];
-  $self->{'shadow_num'}++;
+  $self->{'stand_down'} = 1 if $rows && $out->{'shadow_num'} >= $rows->[1];
+  $out->{'shadow_num'}++;
   return 0 unless $self->passes_muster($row); 
   $self->{'request_num'}++;
   $self->add_enum($row); 
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $self->server_sortdata($row,$self->{'wire'}{'sort'},$self->{'used_cols'});
+    $self->server_sortdata($out,$row);
   }
-  my $nulls = $self->server_nulls($row,$self->{'iconfig'},$self->{'used_cols'});
-  foreach my $i (0..$#{$self->{'used_cols'}}) {
-    my $k = $self->{'used_cols'}[$i];
-    $self->{'data'}[$i]||=[];
-    push @{$self->{'nulls'}[$i]||=[]},$nulls->{$k};
-    push @{$self->{'data'}[$i]||=[]},$row->{$k} unless $nulls->{$k};
+  my $nulls = $self->server_nulls($out,$row);
+  foreach my $i (0..$#{$out->{'series'}}) {
+    my $k = $out->{'series'}[$i];
+    $out->{'indata'}[$i]||=[];
+    push @{$out->{'innulls'}[$i]||=[]},$nulls->{$k};
+    push @{$out->{'indata'}[$i]||=[]},$row->{$k} unless $nulls->{$k};
   }
-  $self->{'len'}++;
-  $self->consolidate() unless $self->{'len'}%10000;
+  $out->{'inlen'}++;
+  $self->consolidate() unless $out->{'inlen'}%10000;
   return 1;
 }
 
@@ -187,42 +185,48 @@ sub preload {
 }
 
 sub server_sortdata {
-  my ($self,$row,$sort,$series) = @_;
-
+  my ($self,$out,$row) = @_;
+    
+  my $sort = $self->{'wire'}{'sort'};
+  my $series = $out->{'series'};
   my $colconf = $self->{'iconfig'}{'colconf'};
   foreach my $i (0..$#$sort) {
     push @{$self->{'sort_data'}[$i]||=[]},$row->{$sort->[$i]{'key'}};
   }
-  push @{$self->{'sort_data'}[@$sort]||=[]},$self->{'shadow_num'}-1;
+  push @{$self->{'sort_data'}[@$sort]||=[]},$out->{'shadow_num'};
 }
 
 sub server_order {
-  my ($self,$sort,$series,$keymeta) = @_;
+  my ($self,$keymeta) = @_;
 
+  my $out = $self->{'out'}[-1];
+  my @sort = @{$self->{'wire'}{'sort'}};
+  my $series = $out->{'series'};
   my @cache;
   my %rseries;
   $rseries{$series->[$_]} = $_ for (0..$#$series);
   $rseries{'__tie'} = -1;
-  my @columns = map { $self->{'columns'}{$_->{'key'}} } @$sort;
+  my @columns = map { $self->{'columns'}{$_->{'key'}} } @sort;
   push @columns,EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
   my $sd = $self->{'sort_data'};
   my @order = sort {
     my $c = 0;
-    foreach my $i (0..@$sort) {
+    foreach my $i (0..@sort) {
       $cache[$i]||={};
       $c = $columns[$i]->compare($sd->[$i][$a],$sd->[$i][$b],
-                                 $sort->[$i]{'dir'}||1,$keymeta,$cache[$i],
-                                 $sort->[$i]{'key'}||'__tie');
+                                 $sort[$i]->{'dir'}||1,$keymeta,$cache[$i],
+                                 $sort[$i]->{'key'}||'__tie');
       last if $c;
     }
     $c;
   } (0..$#{$sd->[0]});
-  return \@order;
+  $out->{'order'} = \@order;
 }
 
 sub server_nulls {
-  my ($self,$row,$iconfig,$series) = @_;
+  my ($self,$out,$row) = @_;
 
+  my $series = $out->{'series'};
   my %nulls;
   foreach my $j (0..$#$series) {
     my $col = $self->{'columns'}{$series->[$j]};
@@ -250,7 +254,7 @@ sub free_wheel {
   my ($self,$acct) = @_;
 
   if($self->{'stand_down'}) {
-    $self->{'shadow_num'}++;
+    $self->{'out'}[-1]{'shadow_num'}++;
     return 1;
   }
   return 0; 
@@ -261,7 +265,7 @@ sub passes_muster {
 
   my $rows = $self->{'orient'}{'pagerows'};
   if($rows) {
-    my $global_num = $self->{'shadow_num'}-1;
+    my $global_num = $self->{'out'}[-1]{'shadow_num'}-1;
     return 0 if $global_num < $rows->[0] or $global_num >= $rows->[1];
   }
   my $ok = 1;
@@ -309,6 +313,7 @@ sub convert_to_csv {
   $csv->combine(@{$config->{'columns'}});
   $out .= $csv->string()."\n";
   foreach my $i (0..$#{$data->{'response'}{'nulls'}}) {
+    # XXX THIS WILL BE BROKEN DO NOT MERGE
     my $rows = uncompress_block($data->{'response'}{'data'}[$i]);
     my $nulls = uncompress_block($data->{'response'}{'nulls'}[$i]);
     my $len = $data->{'response'}{'len'}[$i];
@@ -327,6 +332,47 @@ sub convert_to_csv {
 }
 
 sub phase { return $_[0]->{'phase_name'}; }
+  
+sub run_phase {
+  my ($self,$phases,$phase,$keymeta) = @_;
+
+  $self->{'phase_name'} = $phases->[$phase]{'name'};
+  warn "CHOSEN PHASE $self->{'phase_name'}\n";
+  my $era = $phases->[$phase]{'era'};
+  my @cols = @{$self->{'iconfig'}{'columns'}};
+  push @{$self->{'out'}},{
+    data => [], nulls => [], len => [],
+    indata => [], innulls => [], inlen => 0,
+    series => ($phases->[$phase]{'cols'} || \@cols),
+    order => undef,
+    start => ($self->{'req_lengths'}{$era}||=0),
+    shadow_num => ($self->{'shadow_lengths'}{$era}||=0)
+  };
+  $self->{'sort_data'} = [];
+  $self->{'null_cache'} = [];
+  $self->{'request_num'} = 0;
+  $self->{'stand_down'} = 0;
+
+  # Calculate function name
+  my $type = $self->{'iconfig'}{'type'}||'';
+  $type =~ s/\W//g;
+  my $func = "table_content";
+  $func .= "_$type" if $type;
+
+  # Populate data
+  $self->{'component'}->$func($self);
+
+  # Sort it, if necessary
+  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
+    $self->server_order($keymeta);
+  }
+
+  # Send it
+  $self->consolidate();
+  # Move on continuation counters
+  $self->{'req_lengths'}{$era} = $self->{'request_num'};
+  $self->{'shadow_lengths'}{$era} = $self->{'out'}[-1]{'shadow_num'};
+}
 
 sub newtable_data_request {
   my ($self,$more,$incr_ok,$keymeta) = @_;
@@ -345,77 +391,42 @@ sub newtable_data_request {
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $all_data = 1;
   }
+  
+  my %shadow = %{$self->{'orient'}};
+  delete $shadow{'filter'};
+  delete $shadow{'pagerows'};
+  delete $shadow{'series'};
 
-  my $phase = 0;
-  my (%req_lengths,%shadow_lengths);
+  my $phase;
   if(defined $more) {
     $phase = $more->{'phase'};
-    %req_lengths = %{$more->{'req_lengths'}};
-    %shadow_lengths = %{$more->{'shadow_lengths'}};
+    $self->{'req_lengths'} = $more->{'req_lengths'};
+    $self->{'shadow_lengths'} = $more->{'shadow_lengths'};
   }
   # What phase should we be?
   my @required;
   push @required,map { $_->{'key'} } @{$self->{'wire'}{'sort'}||[]};
   if($incr_ok && !$all_data) {
-    while(($phase||0) < $#$phases) {
-      my %gets_cols = map { $_ => 1 } (@{$phases->[$phase]{'cols'}||\@cols});
-      last unless scalar(grep { !$gets_cols{$_} } @required);
-      $phase++;
-    }
+    $self->run_phase($phases,$phase,$keymeta);
+    $phase++;
   } else {
-    die "XXX Fix before merging\n";
-    $phase = $#$phases;
-  }
-  $self->{'phase_name'} = $phases->[$phase]{'name'};
-  warn "CHOSEN PHASE $self->{'phase_name'}\n";
-  $self->{'start'} = ($req_lengths{$phases->[$phase]{'era'}}||=0);
-  $self->{'shadow_num'} = ($shadow_lengths{$phases->[$phase]{'era'}}||=0);
-
-  # Calculate columns to send
-  $self->{'used_cols'} = $phases->[$phase]{'cols'} || \@cols;
-
-  # Calculate function name
-  my $type = $self->{'iconfig'}{'type'}||'';
-  $type =~ s/\W//g;
-  my $func = "table_content";
-  $func .= "_$type" if $type;
-
-  # Populate data
-  $self->{'component'}->$func($self);
-
-  my %shadow = %{$self->{'orient'}};
-  delete $shadow{'filter'};
-  $shadow{'series'} = $self->{'used_cols'};
-
-  # Sort it, if necessary
-  my $order;
-  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $order = $self->server_order($self->{'wire'}{'sort'},$self->{'used_cols'},$keymeta);
+    $self->run_phase($phases,$_,$keymeta) for (0..$#$phases);
+    $phase = @$phases;
   }
 
-  # Send it
-  $self->consolidate();
-  # Move on continuation counters
-  $req_lengths{$phases->[$phase]{'era'}} = $self->{'request_num'};
-  $shadow_lengths{$phases->[$phase]{'era'}} = $self->{'shadow_num'};
-  $phase++;
-  $more = { phase => $phase, req_lengths => \%req_lengths, shadow_lengths => \%shadow_lengths };
-  $more= undef if $phase == @$phases;
+  $more = {
+    phase => $phase,
+    req_lengths => $self->{'req_lengths'},
+    shadow_lengths => $self->{'shadow_lengths'}
+  };
+  $more = undef if $phase == @$phases;
   my $out = {
-    responses => [{
-      len => $self->{'outlen'},
-      data => $self->{'outdata'},
-      nulls => $self->{'outnulls'},
-      series => $self->{'used_cols'},
-      order => $order,
-      start => $self->{'start'},
-      more => $more,
-      enums => $self->finish_enum(),
-      shadow => \%shadow,
-      minsize => $self->{'shadow_num'},
-      keymeta => $self->{'key_meta'},
-      orient => $self->{'orient'},
-    }],
+    responses => $self->{'out'},
+    keymeta => $self->{'key_meta'},
+    shadow => \%shadow,
+    enums => $self->finish_enum(),
+    orient => $self->{'orient'},
+    more => $more,
   };
   return $out;
 }
