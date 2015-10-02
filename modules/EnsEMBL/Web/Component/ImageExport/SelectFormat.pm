@@ -75,7 +75,7 @@ sub content {
   foreach (@radio) {
     my $label   = $self->helptip($radio_info->{$_}{'label'}, $radio_info->{$_}{'info'});
     my $caption = sprintf('<b>%s</b> - %s', $label, $radio_info->{$_}{'desc'});
-    push @$formats, {'value' => $_, 'class' => '_stt__'.$_, 'caption' => {'inner_HTML' => $caption}};
+    push @$formats, {'value' => $_, 'class' => '_stt', 'caption' => {'inner_HTML' => $caption}};
   }
 
   ## Radio buttons for different formats
@@ -91,7 +91,7 @@ sub content {
   my $format_options = $self->format_options;
 
   while (my($type, $fields) = each (%$format_options)) {
-    my $params = {'class' => '_stt _stt_'.$type};
+    my $params = {'class' => '_stt_'.$type};
     $params->{'legend'} = 'Options' if scalar(@$fields);
     my $opt_fieldset  = $form->add_fieldset($params);
 
