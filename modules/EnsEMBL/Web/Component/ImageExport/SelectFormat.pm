@@ -75,23 +75,64 @@ sub content {
   foreach (@radio) {
     my $label   = $self->helptip($radio_info->{$_}{'label'}, $radio_info->{$_}{'info'});
     my $caption = sprintf('<b>%s</b> - %s', $label, $radio_info->{$_}{'desc'});
-    push @$formats, {'value' => $_, 'caption' => {'inner_HTML' => $caption}};
+    push @$formats, {'value' => $_, 'class' => '_stt__'.$_, 'caption' => {'inner_HTML' => $caption}};
   }
 
   ## Radio buttons for different formats
   my %params = (
                 'type'    => 'Radiolist',
                 'name'    => 'format',
-                'class'   => '_stt_format',
                 'values'  => $formats,
                 'value'   => 'journal',
                 );
   $fieldset->add_field(\%params);
 
-  #$form->add_button(type => 'Submit', name => 'preview', value => 'Preview');
-  #$form->add_button(type => 'Submit', name => 'download', value => 'Download');
+
+  my $format_options = $self->format_options;
+
+  while (my($type, $fields) = each (%$format_options)) {
+    my $params = {'class' => '_stt _stt_'.$type};
+    $params->{'legend'} = 'Options' if scalar(@$fields);
+    my $opt_fieldset  = $form->add_fieldset($params);
+
+    ## Add custom fields for this format
+    foreach (@$fields) {
+      $opt_fieldset->add_element($_);
+    }
+
+    $opt_fieldset->add_button(type => 'Submit', name => 'preview', value => 'Preview');
+    $opt_fieldset->add_button(type => 'Submit', name => 'download', value => 'Download');
+  }
+  
 
   return $form->render;
+}
+
+sub format_options {
+  my $self = shift;
+
+  my $text_formats = [
+                      {'value' => 'bed', 'caption' => 'BED'},
+                      {'value' => 'gff', 'caption' => 'GFF'},
+                      {'value' => '', 'caption' => ''},
+                      ];
+
+  my $image_formats = [
+                      {'value' => 'png', 'caption' => 'PNG'},
+                      {'value' => 'pdf', 'caption' => 'PDF'},
+                      {'value' => 'svg', 'caption' => 'SVG'},
+                      ];
+
+  my $options = {
+    'text'      => [{'type' => 'Dropdown', 'label' => 'format', 'values' => $text_formats}],
+    'journal'   => [],
+    'poster'    => [],
+    'web'       => [],
+    'projector' => [],
+    'custom'    => [{'type' => 'Dropdown', 'label' => 'format', 'values' => $image_formats}],
+  };
+
+  return $options;
 }
 
 sub default_file_name {
