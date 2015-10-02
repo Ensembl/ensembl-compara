@@ -37,9 +37,9 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $form = $self->new_form({'id' => 'image_export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post'});
+  my $form = $self->new_form({'id' => 'image_export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post', 'class' => 'freeform'});
 
-  my $fieldset = $form->add_fieldset;
+  my $fieldset = $form->add_fieldset({'legend' => 'Select Format'});
 
   my $filename = $hub->param('filename') || $self->default_file_name;
   $filename =~ s/\.[\w|\.]+//;
@@ -66,21 +66,24 @@ sub content {
                                     },
                     };
   my $formats = [];
+  my $info_icon = '<img src="/i/16/info.png" class="alignright" />';
   foreach (@radio) {
-    push @$formats, {'value' => $_, 'label' => $radio_info->{$_}{'label'}};
+    my $caption = sprintf('<b>%s</b> - %s %s', $radio_info->{$_}{'label'}, $radio_info->{$_}{'desc'}, $info_icon);
+    push @$formats, {'value' => $_, 'caption' => {'inner_HTML' => $caption}};
   }
 
   ## Radio buttons for different formats
   my %params = (
                 'type'    => 'Radiolist',
                 'name'    => 'format',
-                'label'   => 'Format',
                 'class'   => '_stt_format',
                 'values'  => $formats,
                 'value'   => 'journal',
                 );
   $fieldset->add_field(\%params);
 
+  $form->add_button(type => 'Submit', name => 'preview', value => 'Preview');
+  $form->add_button(type => 'Submit', name => 'download', value => 'Download');
 
   return $form->render;
 }
