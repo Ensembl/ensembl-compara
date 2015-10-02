@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Controller:ImageExport;
+package EnsEMBL::Web::Controller::ImageExport;
 
 use strict;
 
