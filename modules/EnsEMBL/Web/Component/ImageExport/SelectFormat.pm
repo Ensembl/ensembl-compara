@@ -21,6 +21,8 @@ package EnsEMBL::Web::Component::ImageExport::SelectFormat;
 use strict;
 use warnings;
 
+use HTML::Entities qw(encode_entities);
+
 use EnsEMBL::Web::Constants;
 
 use parent qw(EnsEMBL::Web::Component);
@@ -70,12 +72,9 @@ sub content {
                                     },
                     };
   my $formats = [];
-  my $info_icon = '<img src="/i/16/info.png" class="alignright" title="More information" />';
   foreach (@radio) {
-    my $caption = sprintf('<b>%s</b> - %s', $radio_info->{$_}{'label'}, $radio_info->{$_}{'desc'});
-    if ($radio_info->{$_}{'info'}) {
-      $caption .= sprintf(' %s<br><div>%s</div>', $info_icon, $radio_info->{$_}{'info'});
-    }
+    my $label   = $self->helptip($radio_info->{$_}{'label'}, $radio_info->{$_}{'info'});
+    my $caption = sprintf('<b>%s</b> - %s', $label, $radio_info->{$_}{'desc'});
     push @$formats, {'value' => $_, 'caption' => {'inner_HTML' => $caption}};
   }
 
