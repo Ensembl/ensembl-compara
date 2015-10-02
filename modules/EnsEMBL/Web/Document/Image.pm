@@ -274,10 +274,11 @@ sub add_image_export_icon {
 ### @return Hashref of icon parameters
   my $self = shift;
   my $hub  = $self->hub;
+  warn ">>> EXPORT? ".$self->{'export'};
   return {
-          'href'      => $self->_export_url.'pdf',
-          'class'     => 'export popup '.$self->{'export'},,
-          'icon_key'  => 'image',
+          'href'      => $hub->url({'type' => 'ImageExport', 'action' => 'SelectFormat'}),
+          'class'     => 'download modal_link '.$self->{'export'},
+          'icon_key'  => 'download',
           };
 }
 
@@ -296,6 +297,7 @@ sub add_image_export_menu {
 ### @return String
   my $self = shift;
   my $hub  = $self->hub;
+  return;
   return unless $self->{'export'};
 
   my ($menu, $print_header);
