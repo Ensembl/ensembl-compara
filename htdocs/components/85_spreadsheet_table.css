@@ -192,3 +192,6 @@ td.colour-swatch { border:2px solid #ffffff; }
 .newtable_filter li .allon { display: inline-block; width: 103px; text-align: center; border: 1px solid #ccc; margin: 2px 4px; padding: 6px; background-color: #cfc; cursor: pointer; }
 .newtable_filter li .alloff { display: inline-block; width: 103px; text-align: center; border: 1px solid #ccc; margin: 2px 4px; padding: 6px; background-color: #fcc; cursor: pointer; }
 .newtable_filter li.allonoff:before { visibility: hidden; }
+.newtable_pager { margin: 0; padding: 0; }
+.newtable_pager li { display: inline-block; padding: 2px 3px; color: black; }
+.newtable_pager a { color: white; }

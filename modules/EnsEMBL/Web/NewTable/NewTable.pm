@@ -56,7 +56,7 @@ sub new {
   $self->add_plugin('Decorate',{});
   $self->add_plugin('Filter',{});
   $self->add_plugin('Misc',{});
-  $self->add_plugin('PageSizer',{});
+#  $self->add_plugin('Paging',{});
   $self->add_plugin('Styles',{});
 
   return $self;
@@ -149,6 +149,9 @@ sub render {
   my $orient = {
     format => 'Tabular',
   };
+  foreach my $p (values %{$self->{'plugins'}}) {
+    $orient = { %$orient, %{$p->initial} };
+  }
   my $data = {
     columns => [ map { $_->{'key'} } @{$self->{'columns'}} ],
     orient => $orient,

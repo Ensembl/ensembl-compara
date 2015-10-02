@@ -459,8 +459,10 @@ sub variation_table {
         ($start,$end) = ($end,$start) if $lrg_strand < 0;
       }
 
-      foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
-        
+      my $tvas = $transcript_variation->get_all_alternate_TranscriptVariationAlleles;
+
+      foreach my $tva (@$tvas) {
+        next if $callback->free_wheel();
         # this isn't needed anymore, I don't think!!!
         # thought I'd leave this indented though to keep the diff neater
         if (1) {#$tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
@@ -544,7 +546,7 @@ sub variation_table {
           }
           $num++;
           $callback->add_row($row);
-          last ROWS if $callback->stand_down($row,$num);
+          last ROWS if $callback->stand_down;
         }
       }
     }

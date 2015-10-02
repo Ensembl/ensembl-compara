@@ -301,6 +301,12 @@
                            response.series);
     render_grid(widgets,$table,manifest_c,response.start,data.totlen);
     store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
+    var size = $table.data('min-size')||0;
+    if(size<response.minsize) { size = response.minsize; }
+    $table.data('min-size',size);
+    $.each(widgets,function(name,w) {
+      if(w.size) { w.size($table,size); }
+    });
   }
   
   function maybe_use_response(widgets,$table,result,config) {
@@ -473,7 +479,8 @@
         ssplugins: JSON.stringify(config.ssplugins),
         spawntoken: spawntoken,
         more: JSON.stringify(null),
-        source: 'enstab'
+        source: 'enstab',
+        incr_ok: 0
       });
       var out = '<form method="POST" id="spawn" action="'+src+'">';
       $.each(params,function(k,v) {
