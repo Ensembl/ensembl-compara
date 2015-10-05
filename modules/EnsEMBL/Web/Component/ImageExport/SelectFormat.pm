@@ -49,21 +49,21 @@ sub content {
   my @radio       = qw(text journal poster web projector custom);
   my $radio_info  = {
                     'text'      => {'label' => 'Text file',
-                                    'desc'  => 'Output features as BED, GFF or other data format',
+                                    'desc'  => 'Output sequence as FASTA or features as BED, GFF or other data format',
                                     },
-                    'journal'   => {'label' => 'Journal/report',
-                                    'desc'  => 'High resolution image, suitable for printing at A4/letter size',
+                    'journal'   => {'label' => 'Image for journal/report',
+                                    'desc'  => 'High resolution, suitable for printing at A4/letter size',
                                     'info'  => '<ul><li>PNG</li><li>2000px wide</li><li>Darker colours</li></ul>',
                                     },
-                    'poster'    => {'label' => 'Poster',
-                                    'desc'  => 'Very high resolution image, suitable for posters and other large print uses',
+                    'poster'    => {'label' => 'Image for poster',
+                                    'desc'  => 'Very high resolution, suitable for posters and other large print uses',
                                     'info'  => '<ul><li>PNG</li><li>5000px wide</li><li>Darker colours</li></ul>',
                                     },
-                    'web'       => {'label' => 'Web image',
+                    'web'       => {'label' => 'Image for web',
                                     'desc'  => 'Standard image, suitable for web pages, blog posts, etc.',
                                     'info'  => '<ul><li>PNG</li><li>Same size and colours as original image</li></ul>',
                                     },
-                    'projector' => {'label' => 'Projector/presentation',
+                    'projector' => {'label' => 'Image for presentation',
                                     'desc'  => 'Saturated image, better suited to projectors',
                                     'info'  => '<ul><li>PNG</li><li>1200px wide</li><li>Darker colours</li></ul>',
                                     },
@@ -102,17 +102,24 @@ sub content {
     foreach (@$fields) {
       $opt_fieldset->add_element($_);
     }
-    $opt_fieldset->add_element({
-                          'type'    => 'Radiolist',
-                          'name'    => $type.'_tracks', 
-                          'label'   => 'Tracks to export',
-                          'value'   => 'all',
-                          'class'   => '_stt',
-                          'values'  => [{'label' => 'All visible feature tracks', 'value' => 'all'},
-                                      {'label' => 'Selected tracks only', 'value' => 'selection'}],
-                              });
 
+    my $tracks = {
+                  'type'    => 'Radiolist',
+                  'name'    => $type.'_tracks', 
+                  'label'   => 'Tracks to export',
+                  'value'   => 'all',
+                  'class'   => '_stt',
+                  'values'  => [{'label' => 'All visible feature tracks', 'value' => 'all'},
+                                {'label' => 'Selected tracks only', 'value' => 'selection'}],
+                  };
 
+    if ($type eq 'text') {
+      my $tracks_fieldset = $form->add_fieldset({'class' => '_stt_bed _stt_gff _stt_gff3 _stt_gtf'});
+      $tracks_fieldset->add_element($tracks);
+    }
+    else {
+      $opt_fieldset->add_element($tracks);
+    }
   }
   my $next_fieldset = $form->add_fieldset({'class' => '_stt_selection'});
   $next_fieldset->add_button('type' => 'Submit', 'name' => 'next', 'value' => 'Next');
@@ -146,7 +153,7 @@ sub format_options {
   my $options = {
     'text'      => [
                     {'type' => 'Dropdown', 'name' => 'text_format', 'label' => 'format', 
-                      'values' => $text_formats},
+                      'values' => $text_formats, 'class' => '_stt'},
                     {'type' => 'Radiolist', 'name' => 'compression', 'label' => 'Output',
                       'notes' => 'Select "uncompressed" to get a preview of your file',
                       'values' => [
