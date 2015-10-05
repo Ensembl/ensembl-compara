@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Command::ImageExport::ImageOutput;
+package EnsEMBL::Web::Command::ImageExport::Output;
 
 ### Redirects to the view's standard image export mode
 
