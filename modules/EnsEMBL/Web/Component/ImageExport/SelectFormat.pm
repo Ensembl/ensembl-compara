@@ -52,15 +52,15 @@ sub content {
                                     'desc'  => 'Output features as BED, GFF or other data format',
                                     },
                     'journal'   => {'label' => 'Journal/report',
-                                    'desc'  => 'High resolution, suitable for printing at A4/letter size',
+                                    'desc'  => 'High resolution image, suitable for printing at A4/letter size',
                                     'info'  => '<ul><li>PNG</li><li>2000px wide</li><li>Darker colours</li></ul>',
                                     },
                     'poster'    => {'label' => 'Poster',
-                                    'desc'  => 'Higher resolution, suitable for posters and other large print uses',
+                                    'desc'  => 'Very high resolution image, suitable for posters and other large print uses',
                                     'info'  => '<ul><li>PNG</li><li>5000px wide</li><li>Darker colours</li></ul>',
                                     },
                     'web'       => {'label' => 'Web image',
-                                    'desc'  => 'Standard resolution, suitable for web pages, blog posts, etc.',
+                                    'desc'  => 'Standard image, suitable for web pages, blog posts, etc.',
                                     'info'  => '<ul><li>PNG</li><li>Same size and colours as original image</li></ul>',
                                     },
                     'projector' => {'label' => 'Projector/presentation',
@@ -73,8 +73,12 @@ sub content {
                     };
   my $formats = [];
   foreach (@radio) {
-    my $label   = $self->helptip($radio_info->{$_}{'label'}, $radio_info->{$_}{'info'});
-    my $caption = sprintf('<b>%s</b> - %s', $label, $radio_info->{$_}{'desc'});
+    my $info_icon = $radio_info->{$_}{'info'} 
+                      ? sprintf '<img src="/i/16/info.png" class="alignright _ht" title="%s%s" />', 
+                                    $radio_info->{$_}{'label'}, $radio_info->{$_}{'info'} 
+                      : '';
+    my $caption = sprintf('<b>%s</b> - %s%s', 
+                            $radio_info->{$_}{'label'}, $radio_info->{$_}{'desc'}, $info_icon);
     push @$formats, {'value' => $_, 'class' => '_stt', 'caption' => {'inner_HTML' => $caption}};
   }
 
