@@ -158,7 +158,7 @@ sub go {
     return $self->newtable_data_request($more,$incr_ok,$keymeta);
   });
   if($self->{'wire'}{'format'} eq 'export') {
-    $out = convert_to_csv($self->{'iconfig'},$out);
+    $out = $self->convert_to_csv($out);
     my $r = $hub->apache_handle;
     # TODO find bits of ensembl which can do this as we do
     $r->content_type('application/octet-string');
@@ -299,36 +299,16 @@ sub register_key {
 }
 
 sub convert_to_csv {
-  my ($config,$data) = @_;
+  my ($self,$data) = @_;
 
+  my $out = '';
   my $csv = Text::CSV->new({ binary => 1 });
-  my $out;
-  my $series = $data->{'response'}{'series'};
-  my %rseries;
-  $rseries{$series->[$_]} = $_ for(0..$#$series);
-  my @index;
-  foreach my $key (@{$config->{'columns'}}) {
-    push @index,$rseries{$key};
-  }
-  $csv->combine(@{$config->{'columns'}});
-  $out .= $csv->string()."\n";
-  foreach my $i (0..$#{$data->{'response'}{'nulls'}}) {
-    # XXX THIS WILL BE BROKEN DO NOT MERGE
-    my $rows = uncompress_block($data->{'response'}{'data'}[$i]);
-    my $nulls = uncompress_block($data->{'response'}{'nulls'}[$i]);
-    my $len = $data->{'response'}{'len'}[$i];
-    my @idx;
-    foreach my $row (0..$len-1) {
-      my @row;
-      foreach my $col (@index) {
-        if($nulls->[$col][$row]) { push @row,''; }
-        else { push @row,$rows->[$col][($idx[$col]||=0)++]; }
-      }
-      $csv->combine(@row);
-      $out .= $csv->string()."\n";
-    }
-  }
-  return $out;
+  $self->convert($data,sub {
+    my ($row) = @_;
+    $csv->combine(@$row);
+    $out .= $csv->string()."\n";
+  });
+  return $out; 
 }
 
 sub phase { return $_[0]->{'phase_name'}; }
@@ -340,12 +320,13 @@ sub run_phase {
   warn "CHOSEN PHASE $self->{'phase_name'}\n";
   my $era = $phases->[$phase]{'era'};
   my @cols = @{$self->{'iconfig'}{'columns'}};
+  my $start = ($self->{'req_lengths'}{$era}||=0); 
   push @{$self->{'out'}},{
     data => [], nulls => [], len => [],
     indata => [], innulls => [], inlen => 0,
     series => ($phases->[$phase]{'cols'} || \@cols),
     order => undef,
-    start => ($self->{'req_lengths'}{$era}||=0),
+    start => $start,
     shadow_num => ($self->{'shadow_lengths'}{$era}||=0)
   };
   $self->{'sort_data'} = [];
@@ -372,6 +353,56 @@ sub run_phase {
   # Move on continuation counters
   $self->{'req_lengths'}{$era} = $self->{'request_num'};
   $self->{'shadow_lengths'}{$era} = $self->{'out'}[-1]{'shadow_num'};
+}
+
+sub convert {
+  my ($self,$output,$fn) = @_;
+
+  my $ob_size = 10000;
+  my (@series,%rseries,@outblock);
+  my $outblock = -1;
+  my $rows = [];
+  foreach my $resp (@{$output->{'responses'}}) {
+    # Columns
+    foreach my $col (@{$resp->{'series'}}) {
+      next if exists $rseries{$col};
+      push @series,$col;
+      $rseries{$col} = $#series;
+    }
+    # Data
+    foreach my $block (0..$#{$resp->{'len'}}) {
+      my $data = uncompress_block($resp->{'data'}[$block]);
+      my $null = uncompress_block($resp->{'nulls'}[$block]);
+      foreach my $row (0..$resp->{'len'}[$block]-1) {
+        my $rownum = $resp->{'start'}+$row;
+        my $new_ob = int($rownum/$ob_size);
+        my $offset = $rownum-($new_ob*$ob_size);
+        if($outblock != $new_ob) {
+          $outblock[$outblock] = compress_block($rows) if $outblock != -1;
+          $outblock = $new_ob;
+          if($outblock[$outblock]) {
+            $rows = uncompress_block($outblock[$outblock]);
+          } else {
+            $rows = [];
+          }
+        }
+        my @row;
+        foreach my $i (0..$#{$resp->{'series'}}) {
+          next if $null->[$i][$row];
+          $row[$rseries{$resp->{'series'}[$i]}] = $data->[$i][$row];
+        }
+        $rows->[$offset] = \@row;
+      }
+    }
+  }
+  $outblock[$outblock] = compress_block($rows) if $outblock != -1;
+  $fn->(\@series);
+  foreach my $outblock (@outblock) {
+    my $rows = uncompress_block($outblock);
+    foreach my $row (@$rows) {
+      $fn->($row);
+    }
+  }
 }
 
 sub newtable_data_request {
