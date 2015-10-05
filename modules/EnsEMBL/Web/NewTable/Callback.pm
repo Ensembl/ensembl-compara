@@ -60,6 +60,7 @@ sub new {
     null_cache => [],
     sort_data => [],
     stand_down => 0,
+    phase_rows => undef
   )};
   bless $self,$class;
   return $self;
@@ -104,7 +105,11 @@ sub add_row {
 
   my $out = $self->{'out'}[-1];
   my $rows = $self->{'orient'}{'pagerows'};
-  $self->{'stand_down'} = 1 if $rows && $out->{'shadow_num'} >= $rows->[1];
+  my $prows = $self->{'phase_rows'};
+  if(( $rows and $out->{'shadow_num'}>= $rows->[1]) or
+     ($prows and $out->{'shadow_num'}>=$prows->[1])) {
+    $self->{'stand_down'} = 1;
+  }
   $out->{'shadow_num'}++;
   return 0 unless $self->passes_muster($row); 
   $self->{'request_num'}++;
@@ -263,10 +268,14 @@ sub free_wheel {
 sub passes_muster {
   my ($self,$row) = @_;
 
-  my $rows = $self->{'orient'}{'pagerows'};
+  my $global_num = $self->{'out'}[-1]{'shadow_num'}-1;
+  my $rows  = $self->{'orient'}{'pagerows'};
+  my $prows = $self->{'phase_rows'};
   if($rows) {
-    my $global_num = $self->{'out'}[-1]{'shadow_num'}-1;
     return 0 if $global_num < $rows->[0] or $global_num >= $rows->[1];
+  }
+  if($prows) {
+    return 0 if $global_num < $prows->[0] or $global_num >= $prows->[1];
   }
   my $ok = 1;
   foreach my $col (keys %{$self->{'wire'}{'filter'}||{}}) {
@@ -333,6 +342,7 @@ sub run_phase {
   $self->{'null_cache'} = [];
   $self->{'request_num'} = 0;
   $self->{'stand_down'} = 0;
+  $self->{'phase_rows'} = $phases->[$phase]{'rows'};
 
   # Calculate function name
   my $type = $self->{'iconfig'}{'type'}||'';
