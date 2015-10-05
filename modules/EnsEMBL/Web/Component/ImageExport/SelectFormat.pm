@@ -95,19 +95,33 @@ sub content {
   my $format_options = $self->format_options;
 
   while (my($type, $fields) = each (%$format_options)) {
-    my $params = {'class' => '_stt_'.$type};
-    $params->{'legend'} = 'Options' if scalar(@$fields);
+    my $params = {'class' => '_stt_'.$type, 'legend' => 'Options'};
     my $opt_fieldset  = $form->add_fieldset($params);
 
     ## Add custom fields for this format
     foreach (@$fields) {
       $opt_fieldset->add_element($_);
     }
+    $opt_fieldset->add_element({
+                          'type'    => 'Radiolist',
+                          'name'    => $type.'_tracks', 
+                          'label'   => 'Tracks to export',
+                          'value'   => 'all',
+                          'class'   => '_stt',
+                          'values'  => [{'label' => 'All visible feature tracks', 'value' => 'all'},
+                                      {'label' => 'Selected tracks only', 'value' => 'selection'}],
+                              });
 
-    $opt_fieldset->add_button(type => 'Submit', name => 'preview', value => 'Preview', 'class' => 'multi-button');
-    $opt_fieldset->add_button(type => 'Submit', name => 'download', value => 'Download', 'class' => 'multi-button');
+
   }
-  
+  my $next_fieldset = $form->add_fieldset({'class' => '_stt_selection'});
+  $next_fieldset->add_button('type' => 'Submit', 'name' => 'next', 'value' => 'Next');
+
+  my $all_fieldset = $form->add_fieldset({'class' => '_stt_all'});
+  $all_fieldset->add_button('type' => 'Submit', 'name' => 'preview', 
+                            'value' => 'Preview', 'class' => 'multi-button');
+  $all_fieldset->add_button('type' => 'Submit', 'name' => 'download', 
+                            'value' => 'Download', 'class' => 'multi-button');
 
   return '<h1>Image download</h1>'.$form->render;
 }
@@ -130,12 +144,22 @@ sub format_options {
                       ];
 
   my $options = {
-    'text'      => [{'type' => 'Dropdown', 'label' => 'format', 'values' => $text_formats}],
+    'text'      => [
+                    {'type' => 'Dropdown', 'name' => 'text_format', 'label' => 'format', 
+                      'values' => $text_formats},
+                    {'type' => 'Radiolist', 'name' => 'compression', 'label' => 'Output',
+                      'notes' => 'Select "uncompressed" to get a preview of your file',
+                      'values' => [
+                                    {'caption' => 'Uncompressed', 'value' => '', 'checked' => 1},
+                                    {'caption' => 'Gzip', 'value' => 'gz'}]
+                    },
+                    ],
     'journal'   => [],
     'poster'    => [],
     'web'       => [],
     'projector' => [],
-    'custom'    => [{'type' => 'Dropdown', 'label' => 'format', 'values' => $image_formats}],
+    'custom'    => [{'type' => 'Dropdown', 'name' => 'image_format', 'label' => 'format', 
+                      'values' => $image_formats}],
   };
 
   return $options;
