@@ -74,7 +74,7 @@ sub content {
   my $formats = [];
   foreach (@radio) {
     my $info_icon = $radio_info->{$_}{'info'} 
-                      ? sprintf '<img src="/i/16/info.png" class="alignright _ht" title="%s%s" />', 
+                      ? sprintf '<img src="/i/16/info.png" class="alignright _ht" title="<p>%s</p>%s" />', 
                                     $radio_info->{$_}{'label'}, $radio_info->{$_}{'info'} 
                       : '';
     my $caption = sprintf('<b>%s</b> - %s%s', 
@@ -109,16 +109,18 @@ sub content {
   }
   
 
-  return $form->render;
+  return '<h1>Image download</h1>'.$form->render;
 }
 
 sub format_options {
   my $self = shift;
 
   my $text_formats = [
-                      {'value' => 'bed', 'caption' => 'BED'},
-                      {'value' => 'gff', 'caption' => 'GFF'},
-                      {'value' => '', 'caption' => ''},
+                      {'value' => 'fasta',  'caption' => 'FASTA sequence'},
+                      {'value' => 'bed',    'caption' => 'BED'},
+                      {'value' => 'gff',    'caption' => 'GFF'},
+                      {'value' => 'gff3',   'caption' => 'GFF3'},
+                      {'value' => 'gtf',    'caption' => 'GTF'},
                       ];
 
   my $image_formats = [
