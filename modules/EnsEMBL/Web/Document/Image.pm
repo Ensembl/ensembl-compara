@@ -274,9 +274,9 @@ sub add_image_export_icon {
 ### @return Hashref of icon parameters
   my $self = shift;
   my $hub  = $self->hub;
-  warn ">>> EXPORT? ".$self->{'export'};
   return {
-          'href'      => $hub->url({'type' => 'ImageExport', 'action' => 'SelectFormat'}),
+          'href'      => $hub->url({'type' => 'ImageExport', 'action' => 'SelectFormat', 
+                                    'data_type' => $hub->type, 'component' => $self->component}),
           'class'     => 'download modal_link '.$self->{'export'},
           'icon_key'  => 'download',
           };
