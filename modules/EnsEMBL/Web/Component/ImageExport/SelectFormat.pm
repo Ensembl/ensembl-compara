@@ -39,7 +39,7 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $form = $self->new_form({'id' => 'image_export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post', 'class' => 'freeform'});
+  my $form = $self->new_form({'id' => 'image_export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post', 'class' => 'freeform-stt'});
 
   my $fieldset = $form->add_fieldset({'legend' => 'Select Format'});
 
@@ -100,8 +100,8 @@ sub content {
       $opt_fieldset->add_element($_);
     }
 
-    $opt_fieldset->add_button(type => 'Submit', name => 'preview', value => 'Preview');
-    $opt_fieldset->add_button(type => 'Submit', name => 'download', value => 'Download');
+    $opt_fieldset->add_button(type => 'Submit', name => 'preview', value => 'Preview', 'class' => 'multi-button');
+    $opt_fieldset->add_button(type => 'Submit', name => 'download', value => 'Download', 'class' => 'multi-button');
   }
   
 
