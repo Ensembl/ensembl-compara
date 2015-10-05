@@ -49,7 +49,7 @@ sub content {
   my @radio       = qw(text journal poster web projector custom);
   my $radio_info  = {
                     'text'      => {'label' => 'Text file',
-                                    'desc'  => 'Output sequence as FASTA or features as BED, GFF or other data format',
+                                    'desc'  => 'Output sequence as FASTA, or features as BED, GFF, etc',
                                     },
                     'journal'   => {'label' => 'Image for journal/report',
                                     'desc'  => 'High resolution, suitable for printing at A4/letter size',
