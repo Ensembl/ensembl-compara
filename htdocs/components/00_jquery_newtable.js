@@ -332,6 +332,8 @@
 
   function maybe_use_responses(widgets,$table,got,config) {
     var cur_manifest = $table.data('manifest');
+    if(got.more)
+      get_new_data(widgets,$table,cur_manifest,got.more,config);
     if($.orient_compares_equal(cur_manifest.manifest,got.orient)) {
       for(var i=0;i<got.responses.length;i++) {
         maybe_use_response(widgets,$table,got,got.responses[i],config);
@@ -339,8 +341,6 @@
     }
     var cur_manifest = $table.data('manifest');
     if(!got.more) { flux(widgets,$table,'load',-1); }
-    if(got.more)
-      get_new_data(widgets,$table,cur_manifest,got.more,config);
   }
 
   function get_new_data(widgets,$table,manifest_c,more,config) {
