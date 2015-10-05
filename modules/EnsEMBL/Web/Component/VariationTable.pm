@@ -58,14 +58,16 @@ sub table_content {
   my $icontext         = $hub->param('context') || 100;
   my $gene_object      = $self->configure($icontext,'ALL');
   my $object_type      = $hub->type;
-  my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
  
   my $transcript;
   $transcript = $hub->param('t') if $object_type eq 'Transcript';
   my $phase = $callback->phase;
   $transcript = $phase if $phase =~ s/^full-//;
+  my @transcripts;
   if(defined $transcript) {
-    @transcripts = grep $_->stable_id eq $transcript, @transcripts;
+    @transcripts = ($gene_object->get_transcript_by_stable_id($transcript));
+  } else {
+    @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
   }
   return $self->variation_table($callback,'ALL',\@transcripts);
 }

@@ -448,8 +448,14 @@ sub newtable_data_request {
   my @required;
   push @required,map { $_->{'key'} } @{$self->{'wire'}{'sort'}||[]};
   if($incr_ok && !$all_data) {
-    $self->run_phase($phases,$phase,$keymeta);
-    $phase++;
+    my $start = time();
+    my $end = $start;
+    while($end-$start < 3 && $phase < @$phases) {
+      $self->run_phase($phases,$phase,$keymeta);
+      $end = time();
+      warn "Phase $phases->[$phase]{'name'} : ".($end-$start)."\n";
+      $phase++;
+    }
   } else {
     $self->run_phase($phases,$_,$keymeta) for (0..$#$phases);
     $phase = @$phases;

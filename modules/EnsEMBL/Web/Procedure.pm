@@ -11,7 +11,7 @@ use Digest::MD5 qw(md5_hex);
 use JSON;
 use File::Path qw(make_path);
 
-my $DEBUG=0; # TODO: to sitedefs?
+my $DEBUG = 0; # TODO: to sitedefs?
 my $ENABLED = 0;
 
 sub new {
@@ -56,11 +56,14 @@ sub objkey {
 
 sub hexkey {
   my ($self) = @_;
+
+  return $self->{'hexkey'} if $self->{'hexkey'};
   my $objkey = $self->objkey();
   my $json = JSON->new->canonical->encode($objkey);
   my $out = md5_hex($json);
   warn "CACHE: key=$json md5=$out\n" if $DEBUG>1;
   warn "CACHE: md5=$out\n" if $DEBUG==1;
+  $self->{'hexkey'} = $out;
   return $out;
 }
 
