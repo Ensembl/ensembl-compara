@@ -43,6 +43,10 @@ sub content {
 
   my $fieldset = $form->add_fieldset({'legend' => 'Select Format'});
 
+  ## Hidden fields needed for redirection to image output
+  $fieldset->add_hidden({'name' => 'data_type', 'value' => $hub->param('data_type')});
+  $fieldset->add_hidden({'name' => 'component', 'value' => $hub->param('component')});
+
   my $filename = $hub->param('filename') || $self->default_file_name;
   $filename =~ s/\.[\w|\.]+//;
 
@@ -137,6 +141,7 @@ sub format_options {
   my $self = shift;
 
   my $text_formats = [
+                      {'value' => '',       'caption' => '-- Choose --'},
                       {'value' => 'fasta',  'caption' => 'FASTA sequence'},
                       {'value' => 'bed',    'caption' => 'BED'},
                       {'value' => 'gff',    'caption' => 'GFF'},
@@ -145,9 +150,10 @@ sub format_options {
                       ];
 
   my $image_formats = [
-                      {'value' => 'png', 'caption' => 'PNG'},
-                      {'value' => 'pdf', 'caption' => 'PDF'},
-                      {'value' => 'svg', 'caption' => 'SVG'},
+                      {'value' => '',     'caption' => '-- Choose --'},
+                      {'value' => 'png',  'caption' => 'PNG'},
+                      {'value' => 'pdf',  'caption' => 'PDF'},
+                      {'value' => 'svg',  'caption' => 'SVG'},
                       ];
 
   my $options = {
