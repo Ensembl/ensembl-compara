@@ -31,24 +31,28 @@ sub process {
   my $self      = shift;
   my $hub       = $self->hub;
 
-  my $url = sprintf('%s/Component/%s/Web/%s', $hub->param('data_type'), $hub->param('component'));
-
   my $format = $hub->param('format') || 'png';
+  if ($format eq 'text') {
+    ## Convert all selected tracks to a text-based file format
+  }
+  else {
+    ## Output the actual image
+    my $url = sprintf('%s/Component/%s/Web/%s', $hub->param('data_type'), $hub->param('component'));
 
-  my $canned = {
-                'journal'   => '-c-2-s-2',
-                'poster'    => '-c-2-s-5',
-                'projector' => '-c-2-s-1.00',
-                };
-  my ($extra) = first { $hub->param($_) } qw(journal projector poster);
-  $format .= $extra if $extra;
+    my $canned = {
+                  'journal'   => '-c-2-s-2',
+                  'poster'    => '-c-2-s-5',
+                  'projector' => '-c-2-s-1.00',
+                  };
+    my ($extra) = first { $hub->param($_) } qw(journal projector poster);
+    $format .= $extra if $extra;
  
-  my $params = {
-                'export'    => $format,
-                'download'  => $hub->param('download') || 0,
-                };
- 
-  $self->ajax_redirect($url, $params); 
+    my $params = {
+                  'export'    => $format,
+                  'download'  => $hub->param('download') || 0,
+                  };
+    $self->ajax_redirect($url, $params); 
+  }
 }
 
 1;
