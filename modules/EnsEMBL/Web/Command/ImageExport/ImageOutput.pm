@@ -30,14 +30,23 @@ use parent qw(EnsEMBL::Web::Command);
 sub process {
   my $self      = shift;
   my $hub       = $self->hub;
+  my ($url, $params);
 
   my $format = $hub->param('format') || 'png';
-  if ($format eq 'text') {
+
+  if ($hub->param('next')) {
+    ## User wants to choose which tracks are output
+    $url = hub->url({'action' => 'SelectTracks'});
+    foreach ($hub->param) {
+      $params->{$_} = $hub->param($_);
+    }
+  }
+  elsif ($format eq 'text') {
     ## Convert all selected tracks to a text-based file format
   }
   else {
     ## Output the actual image
-    my $url = sprintf('%s/Component/%s/Web/%s', $hub->param('data_type'), $hub->param('component'));
+    $url = sprintf('/%s/Component/%s/Web/%s', $hub->species_path, $hub->param('data_type'), $hub->param('component'));
 
     my $canned = {
                   'journal'   => '-c-2-s-2',
@@ -47,12 +56,12 @@ sub process {
     my ($extra) = first { $hub->param($_) } qw(journal projector poster);
     $format .= $extra if $extra;
  
-    my $params = {
-                  'export'    => $format,
-                  'download'  => $hub->param('download') || 0,
-                  };
-    $self->ajax_redirect($url, $params); 
+    $params = {
+                'export'    => $format,
+                'download'  => $hub->param('download') || 0,
+                };
   }
+  $self->ajax_redirect($url, $params); 
 }
 
 1;
