@@ -455,4 +455,8 @@ form.freeform-stt fieldset .form-field .ff-right {
   padding: 0;
 }
 
-input.multi-button { margin:0 2px; }
+form.freeform-stt fieldset .form-field .ff-label {
+  width: 15%!important;
+}
+
+form.freeform-stt label { font-weight:bold; }
