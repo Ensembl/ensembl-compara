@@ -41,17 +41,20 @@ sub content {
 
   my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'Output',  '__clear' => 1}), 'method' => 'post', 'class' => 'freeform-stt'});
 
+  my $intro_fieldset = $form->add_fieldset();
+
+  $intro_fieldset->add_field({
+                        'type'  => 'String',
+                        'name'  => 'filename',
+                        'label' => 'File name (optional)',
+                        'value' => $self->default_file_name,
+                        });
+
   my $fieldset = $form->add_fieldset({'legend' => 'Select Format'});
 
   ## Hidden fields needed for redirection to image output
   $fieldset->add_hidden({'name' => 'data_type', 'value' => $hub->param('data_type')});
   $fieldset->add_hidden({'name' => 'component', 'value' => $hub->param('component')});
-
-  $fieldset->add_element({
-                          'type'  => 'String',
-                          'label' => 'File name (optional)',
-                          'value' => $self->default_file_name,
-                          });
 
   my @radio       = qw(journal poster web projector pdf custom);
   my $radio_info  = {
@@ -98,8 +101,6 @@ sub content {
                 );
   $fieldset->add_field(\%params);
 
-  $fieldset->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Download', 'class' => 'download');
-
   my $format_options = $self->format_options;
 
   while (my($type, $fields) = each (%$format_options)) {
@@ -109,10 +110,13 @@ sub content {
 
     ## Add custom fields for this format
     foreach (@$fields) {
-      $opt_fieldset->add_element($_);
+      $opt_fieldset->add_field($_);
     }
 
   }
+
+  my $final_fieldset = $form->add_fieldset();
+  $final_fieldset->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Download', 'class' => 'download');
 
   return '<h1>Image download</h1>'.$form->render;
 }
@@ -142,12 +146,12 @@ sub format_options {
 sub default_file_name {
   my $self  = shift;
   my $hub   = $self->hub;
-  my $name  = $hub->species;
+  my $name  = $hub->species_defs->SPECIES_COMMON_NAME;
 
-  my $type = $hub->type;
+  my $type = $hub->param('data_type');
 
   if ($type eq 'Location') {
-    $name .= '_region_'.$hub->param('r');
+    $name .= '_'.$hub->param('r');
   }
   elsif ($type eq 'Gene') {
     my $data_object = $hub->param('g') ? $hub->core_object('gene') : undef;
@@ -158,7 +162,7 @@ sub default_file_name {
       $name .= $disp_id || $stable_id;
     }
   }
-  return $name;
+  return $name.'.png';
 }
 
 1;
