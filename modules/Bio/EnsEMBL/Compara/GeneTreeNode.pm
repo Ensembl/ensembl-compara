@@ -382,7 +382,11 @@ sub get_SimpleAlign {
 
 sub consensus_cigar_line {
     my $self = shift;
-    return $self->get_AlignedMemberSet->consensus_cigar_line(@_);
+    my @cigars;
+    foreach my $leaf (@{$self->get_all_leaves}) {
+        push @cigars, $leaf->cigar_line if $leaf->isa('Bio::EnsEMBL::Compara::GeneTreeMember') and $leaf->cigar_line;
+    }
+    return Bio::EnsEMBL::Compara::Utils::Cigars::consensus_cigar_line(@cigars);
 }
 
 
