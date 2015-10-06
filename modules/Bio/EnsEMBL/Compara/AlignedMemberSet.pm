@@ -470,6 +470,8 @@ sub get_SimpleAlign {
 
   Arg [1]     : scalar (string or file handle) - output file
   Arg [-FORMAT] : string - format of the output (cf BioPerl capabilities) (example: 'fasta')
+  Arg [-FLAT_DISPLAYNAME] : boolean - whether the sequence names in the alignment should be displayed "flat".
+                            "flat" is a BioPerl option that means: without alignment start/end (e.g "/1-2542").
   Arg [...]   : all the other arguments of L<get_SimpleAlign>
   Example     : $family->print_alignment_to_file(-APPEND_TAXON_ID => 1);
   Description : Wrapper around get_SimpleAlign to print the alignment to a file (stdout by default)
@@ -482,10 +484,10 @@ sub get_SimpleAlign {
 
 sub print_alignment_to_file {
     my ($self, $file, @args) = @_;
-    my ($format) = rearrange([qw(FORMAT)], @args);
+    my ($format, $flat_display_name) = rearrange([qw(FORMAT FLAT_DISPLAYNAME)], @args);
 
     my $sa = $self->get_SimpleAlign(@args);    # We assume that none of print_alignment_to_file() arguments clash with get_SimpleAlign()'s
-    $sa->set_displayname_flat(1);
+    $sa->set_displayname_flat($flat_display_name // 1);
     my $alignIO = Bio::AlignIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
     $alignIO->write_aln($sa);
     return $sa
