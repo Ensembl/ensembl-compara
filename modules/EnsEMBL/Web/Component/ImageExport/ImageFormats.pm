@@ -56,23 +56,23 @@ sub content {
   $fieldset->add_hidden({'name' => 'data_type', 'value' => $hub->param('data_type')});
   $fieldset->add_hidden({'name' => 'component', 'value' => $hub->param('component')});
 
-  my @radio       = qw(journal poster web projector pdf custom);
+  my @radio       = qw(journal poster projector png pdf custom);
   my $radio_info  = {
-                    'journal'   => {'label' => 'Image for journal/report',
+                    'journal'   => {'label' => 'Journal/report',
                                     'desc'  => 'High resolution, suitable for printing at A4/letter size',
                                     'info'  => '<ul><li>PNG</li><li>2000px wide</li><li>Darker colours</li></ul>',
                                     },
-                    'poster'    => {'label' => 'Image for poster',
+                    'poster'    => {'label' => 'Poster',
                                     'desc'  => 'Very high resolution, suitable for posters and other large print uses',
                                     'info'  => '<ul><li>PNG</li><li>5000px wide</li><li>Darker colours</li></ul>',
                                     },
-                    'web'       => {'label' => 'Image for web',
-                                    'desc'  => 'Standard image, suitable for web pages, blog posts, etc.',
-                                    'info'  => '<ul><li>PNG</li><li>Same size and colours as original image</li></ul>',
-                                    },
-                    'projector' => {'label' => 'Image for presentation',
+                    'projector' => {'label' => 'Presentation',
                                     'desc'  => 'Saturated image, better suited to projectors',
                                     'info'  => '<ul><li>PNG</li><li>1200px wide</li><li>Darker colours</li></ul>',
+                                    },
+                    'png'       => {'label' => 'Web',
+                                    'desc'  => 'Standard image, suitable for web pages, blog posts, etc.',
+                                    'info'  => '<ul><li>PNG</li><li>Same size and colours as original image</li></ul>',
                                     },
                     'pdf'       => {'label' => 'PDF file',
                                     'desc'  => 'Standard image as PDF file',
@@ -101,28 +101,8 @@ sub content {
                 );
   $fieldset->add_field(\%params);
 
-  my $format_options = $self->format_options;
-
-  while (my($type, $fields) = each (%$format_options)) {
-    next unless scalar @$fields;
-    my $params = {'class' => '_stt_'.$type, 'legend' => 'Options'};
-    my $opt_fieldset  = $form->add_fieldset($params);
-
-    ## Add custom fields for this format
-    foreach (@$fields) {
-      $opt_fieldset->add_field($_);
-    }
-
-  }
-
-  my $final_fieldset = $form->add_fieldset();
-  $final_fieldset->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Download', 'class' => 'download');
-
-  return '<h1>Image download</h1>'.$form->render;
-}
-
-sub format_options {
-  my $self = shift;
+  ## Options for custom format
+  my $opt_fieldset  = $form->add_fieldset({'class' => '_stt_custom', 'legend' => 'Options'});
 
   my $image_formats = [
                       {'value' => '',     'caption' => '-- Choose --'},
@@ -130,17 +110,23 @@ sub format_options {
                       {'value' => 'pdf',  'caption' => 'PDF'},
                       {'value' => 'svg',  'caption' => 'SVG'},
                       ];
+  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'image_format', 'label' => 'Format', 'values' => $image_formats});
 
-  my $options = {
-    'journal'   => [],
-    'poster'    => [],
-    'web'       => [],
-    'projector' => [],
-    'custom'    => [{'type' => 'Dropdown', 'name' => 'image_format', 'label' => 'format', 
-                      'values' => $image_formats}],
-  };
+  my $image_sizes = [{'value' => '', 'caption' => 'Current size'}];
+  my @sizes = qw(500 750 1000 1250 1500 1750 2000);
+  foreach (@sizes) {
+    push @$image_sizes, {'value' => $_, 'caption' => "$_ px"};
+  }
 
-  return $options;
+  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'resize', 'label' => 'Image size', 'values' => $image_sizes});
+
+  $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'colour', 'label' => 'Darken colours', 'value' => 'yes'}); 
+
+  ## Place submit button at end of form
+  my $final_fieldset = $form->add_fieldset();
+  $final_fieldset->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Download', 'class' => 'download');
+
+  return '<h1>Image download</h1>'.$form->render;
 }
 
 sub default_file_name {
