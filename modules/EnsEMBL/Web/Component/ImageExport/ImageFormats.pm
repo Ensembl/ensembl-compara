@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::ImageExport::SelectFormat;
+package EnsEMBL::Web::Component::ImageExport::ImageFormats;
 
 use strict;
 use warnings;
@@ -39,7 +39,7 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $form = $self->new_form({'id' => 'image_export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post', 'class' => 'freeform-stt'});
+  my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'Output',  '__clear' => 1}), 'method' => 'post', 'class' => 'freeform-stt'});
 
   my $fieldset = $form->add_fieldset({'legend' => 'Select Format'});
 
@@ -47,14 +47,14 @@ sub content {
   $fieldset->add_hidden({'name' => 'data_type', 'value' => $hub->param('data_type')});
   $fieldset->add_hidden({'name' => 'component', 'value' => $hub->param('component')});
 
-  my $filename = $hub->param('filename') || $self->default_file_name;
-  $filename =~ s/\.[\w|\.]+//;
+  $fieldset->add_element({
+                          'type'  => 'String',
+                          'label' => 'File name (optional)',
+                          'value' => $self->default_file_name,
+                          });
 
-  my @radio       = qw(text journal poster web projector custom);
+  my @radio       = qw(journal poster web projector pdf custom);
   my $radio_info  = {
-                    'text'      => {'label' => 'Text file',
-                                    'desc'  => 'Output sequence as FASTA, or features as BED, GFF, etc',
-                                    },
                     'journal'   => {'label' => 'Image for journal/report',
                                     'desc'  => 'High resolution, suitable for printing at A4/letter size',
                                     'info'  => '<ul><li>PNG</li><li>2000px wide</li><li>Darker colours</li></ul>',
@@ -70,6 +70,9 @@ sub content {
                     'projector' => {'label' => 'Image for presentation',
                                     'desc'  => 'Saturated image, better suited to projectors',
                                     'info'  => '<ul><li>PNG</li><li>1200px wide</li><li>Darker colours</li></ul>',
+                                    },
+                    'pdf'       => {'label' => 'PDF file',
+                                    'desc'  => 'Standard image as PDF file',
                                     },
                     'custom'    => {'label' => 'Custom image',
                                     'desc'  => 'Select from a range of formats and sizes', 
@@ -95,10 +98,12 @@ sub content {
                 );
   $fieldset->add_field(\%params);
 
+  $fieldset->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Download', 'class' => 'download');
 
   my $format_options = $self->format_options;
 
   while (my($type, $fields) = each (%$format_options)) {
+    next unless scalar @$fields;
     my $params = {'class' => '_stt_'.$type, 'legend' => 'Options'};
     my $opt_fieldset  = $form->add_fieldset($params);
 
@@ -107,47 +112,13 @@ sub content {
       $opt_fieldset->add_element($_);
     }
 
-    my $tracks = {
-                  'type'    => 'Radiolist',
-                  'name'    => $type.'_tracks', 
-                  'label'   => 'Tracks to export',
-                  'value'   => 'all',
-                  'class'   => '_stt',
-                  'values'  => [{'label' => 'All visible feature tracks', 'value' => 'all'},
-                                {'label' => 'Selected tracks only', 'value' => 'selection'}],
-                  };
-
-    if ($type eq 'text') {
-      my $tracks_fieldset = $form->add_fieldset({'class' => '_stt_bed _stt_gff _stt_gff3 _stt_gtf'});
-      $tracks_fieldset->add_element($tracks);
-    }
-    else {
-      $opt_fieldset->add_element($tracks);
-    }
   }
-  my $next_fieldset = $form->add_fieldset({'class' => '_stt_selection'});
-  $next_fieldset->add_button('type' => 'Submit', 'name' => 'next', 'value' => 'Next');
-
-  my $all_fieldset = $form->add_fieldset({'class' => '_stt_all'});
-  $all_fieldset->add_button('type' => 'Submit', 'name' => 'preview', 
-                            'value' => 'Preview', 'class' => 'multi-button');
-  $all_fieldset->add_button('type' => 'Submit', 'name' => 'download', 
-                            'value' => 'Download', 'class' => 'multi-button');
 
   return '<h1>Image download</h1>'.$form->render;
 }
 
 sub format_options {
   my $self = shift;
-
-  my $text_formats = [
-                      {'value' => '',       'caption' => '-- Choose --'},
-                      {'value' => 'fasta',  'caption' => 'FASTA sequence'},
-                      {'value' => 'bed',    'caption' => 'BED'},
-                      {'value' => 'gff',    'caption' => 'GFF'},
-                      {'value' => 'gff3',   'caption' => 'GFF3'},
-                      {'value' => 'gtf',    'caption' => 'GTF'},
-                      ];
 
   my $image_formats = [
                       {'value' => '',     'caption' => '-- Choose --'},
@@ -157,16 +128,6 @@ sub format_options {
                       ];
 
   my $options = {
-    'text'      => [
-                    {'type' => 'Dropdown', 'name' => 'text_format', 'label' => 'format', 
-                      'values' => $text_formats, 'class' => '_stt'},
-                    {'type' => 'Radiolist', 'name' => 'compression', 'label' => 'Output',
-                      'notes' => 'Select "uncompressed" to get a preview of your file',
-                      'values' => [
-                                    {'caption' => 'Uncompressed', 'value' => '', 'checked' => 1},
-                                    {'caption' => 'Gzip', 'value' => 'gz'}]
-                    },
-                    ],
     'journal'   => [],
     'poster'    => [],
     'web'       => [],
@@ -179,16 +140,24 @@ sub format_options {
 }
 
 sub default_file_name {
-  my $self = shift;
-  my $name = $self->hub->species;
-  my $data_object = $self->hub->param('g') ? $self->hub->core_object('gene') : undef;
-  if ($data_object) {
-    $name .= '_';
-    my $stable_id = $data_object->stable_id;
-    my ($disp_id) = $data_object->display_xref;
-    $name .= $disp_id || $stable_id;
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $name  = $hub->species;
+
+  my $type = $hub->type;
+
+  if ($type eq 'Location') {
+    $name .= '_region_'.$hub->param('r');
   }
-  $name .= '_download';
+  elsif ($type eq 'Gene') {
+    my $data_object = $hub->param('g') ? $hub->core_object('gene') : undef;
+    if ($data_object) {
+      $name .= '_';
+      my $stable_id = $data_object->stable_id;
+      my ($disp_id) = $data_object->display_xref;
+      $name .= $disp_id || $stable_id;
+    }
+  }
   return $name;
 }
 

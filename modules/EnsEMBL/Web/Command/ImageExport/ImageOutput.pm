@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Command::ImageExport::Output;
+package EnsEMBL::Web::Command::ImageExport::ImageOutput;
 
 ### Redirects to the view's standard image export mode
 
@@ -32,11 +32,19 @@ sub process {
   my $hub       = $self->hub;
   my ($url, $params);
 
-  my $format = $hub->param('format') || 'png';
+  my $presets = {
+                  'journal'   => {'format' => 'png', 'extra' => '-c-2-s-2'},
+                  'poster'    => {'format' => 'png', 'extra' =>'-c-2-s-5'},
+                  'projector' => {'format' => 'png', 'extra' =>'-c-2-s-1.00'},
+                  'web'       => {'format' => 'png'},
+                  };
+  my $format = $hub->param('image_format') || $presets->{$hub->param('format')}{'format'} 
+                || $hub->param('format') || 'png';
+  warn ">>> OUTPUTTING AS $format";
 
-  if ($hub->param('next')) {
+  if ($hub->param('submit') eq 'Next') {
     ## User wants to choose which tracks are output
-    $url = hub->url({'action' => 'SelectTracks'});
+    $url = $hub->url({'action' => 'SelectTracks'});
     foreach ($hub->param) {
       $params->{$_} = $hub->param($_);
     }
@@ -46,22 +54,19 @@ sub process {
   }
   else {
     ## Output the actual image
-    $url = sprintf('/%s/Component/%s/Web/%s', $hub->species_path, $hub->param('data_type'), $hub->param('component'));
+    $url = sprintf('%s/Component/%s/Web/%s', $hub->species_path, $hub->param('data_type'), $hub->param('component'));
+    warn ">>> URL $url";
 
-    my $canned = {
-                  'journal'   => '-c-2-s-2',
-                  'poster'    => '-c-2-s-5',
-                  'projector' => '-c-2-s-1.00',
-                  };
     my ($extra) = first { $hub->param($_) } qw(journal projector poster);
-    $format .= $extra if $extra;
+    $format .= $presets->{$extra}{'extra'} if $extra;
  
     $params = {
-                'export'    => $format,
-                'download'  => $hub->param('download') || 0,
+                'export'        => $format,
+                'download'      => 1,
                 };
   }
-  $self->ajax_redirect($url, $params); 
+  use Data::Dumper; warn Dumper($params);
+  $self->ajax_redirect($url, $params, undef, 'download'); 
 }
 
 1;

@@ -33,13 +33,16 @@ sub populate_tree {
   my $self  = shift;
 
   ## Input nodes
-  $self->create_node('SelectFormat', 'Select Format', 
-                      ['select_format', 'EnsEMBL::Web::Component::ImageExport::SelectFormat']);
+  $self->create_node('ImageFormats', 'Image Formats', 
+                      ['image_formats', 'EnsEMBL::Web::Component::ImageExport::ImageFormats']);
+  $self->create_node('TextFormats', 'Text Formats', 
+                      ['text_formats', 'EnsEMBL::Web::Component::ImageExport::TextFormats']);
   $self->create_node('SelectTracks', 'Select Tracks', 
                       ['select_tracks', 'EnsEMBL::Web::Component::ImageExport::SelectTracks']);
 
   ## Output nodes
-  $self->create_node('Output',  '', [], { 'command' => 'EnsEMBL::Web::Command::ImageExport::Output'});
+  $self->create_node('ImageOutput',  '', [], { 'command' => 'EnsEMBL::Web::Command::ImageExport::ImageOutput'});
+  $self->create_node('TextOutput',  '', [], { 'command' => 'EnsEMBL::Web::Command::ImageExport::TextOutput'});
   $self->create_node('Error', 'Output Error', ['error', 'EnsEMBL::Web::Component::ImageExport::Error']);
 }
 
