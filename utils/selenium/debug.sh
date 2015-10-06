@@ -14,4 +14,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-perl run_tests.pl --config=selenium.conf --tests=debug_basic.conf
+perl run_tests.pl --config=selenium.conf --tests=debug_basic.conf --species=release_82_species.conf

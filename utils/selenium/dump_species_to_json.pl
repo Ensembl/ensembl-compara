@@ -23,8 +23,8 @@ use FindBin qw($Bin);
 use JSON qw(to_json); 
 
 BEGIN {
-  unshift @INC, "$Bin/../conf";
-  unshift @INC, "$Bin/../";
+  unshift @INC, "$Bin/../../conf";
+  unshift @INC, "$Bin/../../";
   require SiteDefs;
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 }
