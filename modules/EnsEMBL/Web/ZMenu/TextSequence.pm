@@ -134,29 +134,13 @@ sub variation_content {
   }
 
   # Consequence terms and display
-  my %ct    = map { $_->SO_term => { label => $_->label, 'rank' => $_->rank, 'description' => $_->description } } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  my %types = map {$_ => $ct{$_}{rank}} @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};  
-
-  my $var_styles = $self->hub->species_defs->colour('variation');
-  my $colourmap  = $self->hub->colourmap;
-  my $type = join ' ',
-     map {
-       sprintf(
-         '<li>'.
-         '  <nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-         '  <span class="_ht ht coltab_text" title="%s">%s</span></nobr>'.
-         '</li>',
-         $var_styles->{lc $_} ? $colourmap->hex_by_name($var_styles->{lc $_}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'}),
-         $ct{$_}->{'description'},
-         $ct{$_}->{'label'}
-       )
-     }
-     sort { $types{$a} <=> $types{$b} } keys %types;
+  my %feature_cons = map { $_ => 1 } @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
+  my @feature_cons = map $self->variant_consequence_label($_), grep { $feature_cons{$_} } map { $_->SO_term } sort { $a->rank <=> $b->rank } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
 
   push @entries, (
-    { type  => 'Consequences',   label_html => "<ul>$type</ul>" },
-    { link  => $hub->url({ action => 'Explore', %url_params}), label => 'Explore this variant'},
-    { link  => $hub->url({ action => 'Mappings', %url_params }), label => 'Gene/Transcript Locations' }
+    { type  => 'Consequences',                                    label_html  => sprintf('<ul>%s</ul>', join('', map("<li>$_<li>", @feature_cons))) },
+    { link  => $hub->url({ action => 'Explore', %url_params}),    label       => 'Explore this variant'       },
+    { link  => $hub->url({ action => 'Mappings', %url_params }),  label       => 'Gene/Transcript Locations'  }
   );
 
   push @entries, { link => $hub->url({ action => 'Phenotype', %url_params }), label => 'Phenotype Data' } if scalar @{$object->get_external_data};

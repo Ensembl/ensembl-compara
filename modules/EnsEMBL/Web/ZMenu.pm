@@ -22,6 +22,8 @@ use strict;
 
 use HTML::Entities qw(encode_entities decode_entities);
 
+use Bio::EnsEMBL::Variation::Utils::Constants;
+
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
@@ -253,6 +255,22 @@ sub render {
   }
   
   print $self->jsonify({'header' => $self->header, 'features' => \@features});
+}
+
+sub variant_consequence_label {
+  my ($self, $consequence_type) = @_;
+  warn $consequence_type;
+
+  $consequence_type = lc $consequence_type;
+  my ($consequence) = grep { lc $_->SO_term eq $consequence_type } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my $var_styles    = $self->{'_var_styles'}  || $self->hub->species_defs->colour('variation');
+  my $colourmap     = $self->{'_colourmap'}   || $self->hub->colourmap;
+
+  return sprintf('<nobr><span class="colour" style="background-color:%s">&nbsp;</span>&nbsp;<span class="_ht ht" title="%s">%s</span></nobr>',
+    $var_styles->{$consequence_type} ? $colourmap->hex_by_name($var_styles->{$consequence_type}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'}),
+    $consequence->description,
+    $consequence->label
+  );
 }
 
 1;
