@@ -33,6 +33,7 @@ use SiteDefs;
 use Text::CSV;
 
 use EnsEMBL::Web::Procedure;
+use EnsEMBL::Web::NewTable::Phase;
 
 # XXX move all this stuff to somewhere it's more suited
 
@@ -60,21 +61,11 @@ sub new {
     null_cache => [],
     sort_data => [],
     stand_down => 0,
-    phase_rows => undef
+    phase_rows => undef,
+    phase_name => undef
   )};
   bless $self,$class;
   return $self;
-}
-
-sub add_enum {
-  my ($self,$row) = @_;
-
-  foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
-    my $column = $self->{'columns'}{$colkey};
-    my $values = ($self->{'enum_values'}{$colkey}||={});
-    my $value = $row->{$colkey};
-    $column->add_value($values,$value);
-  }
 }
 
 sub finish_enum {
@@ -86,47 +77,6 @@ sub finish_enum {
     $enums{$colkey} = $column->range($self->{'enum_values'}{$colkey}||{});
   }
   return \%enums;
-}
-
-sub consolidate {
-  my ($self) = @_;
-
-  my $out = $self->{'out'}[-1];
-  push @{$out->{'data'}},compress_block($out->{'indata'});
-  push @{$out->{'nulls'}},compress_block($out->{'innulls'});
-  push @{$out->{'len'}},$out->{'inlen'};
-  $out->{'indata'} = [];
-  $out->{'innulls'} = [];
-  $out->{'inlen'} = 0;
-}
-
-sub add_row {
-  my ($self,$row) = @_;
-
-  my $out = $self->{'out'}[-1];
-  my $rows = $self->{'orient'}{'pagerows'};
-  my $prows = $self->{'phase_rows'};
-  if(( $rows and $out->{'shadow_num'}>= $rows->[1]) or
-     ($prows and $out->{'shadow_num'}>=$prows->[1])) {
-    $self->{'stand_down'} = 1;
-  }
-  $out->{'shadow_num'}++;
-  return 0 unless $self->passes_muster($row); 
-  $self->{'request_num'}++;
-  $self->add_enum($row); 
-  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $self->server_sortdata($out,$row);
-  }
-  my $nulls = $self->server_nulls($out,$row);
-  foreach my $i (0..$#{$out->{'series'}}) {
-    my $k = $out->{'series'}[$i];
-    $out->{'indata'}[$i]||=[];
-    push @{$out->{'innulls'}[$i]||=[]},$nulls->{$k};
-    push @{$out->{'indata'}[$i]||=[]},$row->{$k} unless $nulls->{$k};
-  }
-  $out->{'inlen'}++;
-  $self->consolidate() unless $out->{'inlen'}%10000;
-  return 1;
 }
 
 sub go {
@@ -189,114 +139,6 @@ sub preload {
   }); 
 }
 
-sub server_sortdata {
-  my ($self,$out,$row) = @_;
-    
-  my $sort = $self->{'wire'}{'sort'};
-  my $series = $out->{'series'};
-  my $colconf = $self->{'iconfig'}{'colconf'};
-  foreach my $i (0..$#$sort) {
-    push @{$self->{'sort_data'}[$i]||=[]},$row->{$sort->[$i]{'key'}};
-  }
-  push @{$self->{'sort_data'}[@$sort]||=[]},$out->{'shadow_num'};
-}
-
-sub server_order {
-  my ($self,$keymeta) = @_;
-
-  my $out = $self->{'out'}[-1];
-  my @sort = @{$self->{'wire'}{'sort'}};
-  my $series = $out->{'series'};
-  my @cache;
-  my %rseries;
-  $rseries{$series->[$_]} = $_ for (0..$#$series);
-  $rseries{'__tie'} = -1;
-  my @columns = map { $self->{'columns'}{$_->{'key'}} } @sort;
-  push @columns,EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
-  my $sd = $self->{'sort_data'};
-  my @order = sort {
-    my $c = 0;
-    foreach my $i (0..@sort) {
-      $cache[$i]||={};
-      $c = $columns[$i]->compare($sd->[$i][$a],$sd->[$i][$b],
-                                 $sort[$i]->{'dir'}||1,$keymeta,$cache[$i],
-                                 $sort[$i]->{'key'}||'__tie');
-      last if $c;
-    }
-    $c;
-  } (0..$#{$sd->[0]});
-  $out->{'order'} = \@order;
-}
-
-sub server_nulls {
-  my ($self,$out,$row) = @_;
-
-  my $series = $out->{'series'};
-  my %nulls;
-  foreach my $j (0..$#$series) {
-    my $col = $self->{'columns'}{$series->[$j]};
-    my $null_cache = ($self->{'null_cache'}[$j]||={});
-    my $v = $row->{$series->[$j]};
-    my $is_null = (!defined $v);
-    $is_null = $null_cache->{$v} unless $is_null;
-    unless(defined $is_null) {
-      $is_null = $col->is_null($v);
-      $null_cache->{$v} = $is_null;
-    }
-    $nulls{$series->[$j]} = 0+$is_null;
-  }
-  return \%nulls;
-}
-
-sub stand_down {
-  my ($self) = @_;
-
-  return 0 if $self->size_needed;
-  return $self->{'stand_down'};
-}
-
-sub free_wheel {
-  my ($self,$acct) = @_;
-
-  if($self->{'stand_down'}) {
-    $self->{'out'}[-1]{'shadow_num'}++;
-    return 1;
-  }
-  return 0; 
-}
-
-sub passes_muster {
-  my ($self,$row) = @_;
-
-  my $global_num = $self->{'out'}[-1]{'shadow_num'}-1;
-  my $rows  = $self->{'orient'}{'pagerows'};
-  my $prows = $self->{'phase_rows'};
-  if($rows) {
-    return 0 if $global_num < $rows->[0] or $global_num >= $rows->[1];
-  }
-  if($prows) {
-    return 0 if $global_num < $prows->[0] or $global_num >= $prows->[1];
-  }
-  my $ok = 1;
-  foreach my $col (keys %{$self->{'wire'}{'filter'}||{}}) {
-    my $colconf = $self->{'iconfig'}{'colconf'}{$col};
-    my $column = $self->{'columns'}->{$col};
-    next unless exists $row->{$col};
-    my $val = $row->{$col};
-    my $ok_col = 0;
-    my $values = $column->split($val);
-    foreach my $value (@{$values||[]}) {
-      my $fv = $self->{'wire'}{'filter'}{$col};
-      if($column->is_match($fv,$value)) {
-        $ok_col = 1;
-        last;
-      }
-    }
-    unless($ok_col) { $ok = 0; last; }
-  }
-  return $ok;
-}
-
 sub register_key {
   my ($self,$key,$meta) = @_;
 
@@ -320,8 +162,6 @@ sub convert_to_csv {
   return $out; 
 }
 
-sub phase { return $_[0]->{'phase_name'}; }
-  
 sub run_phase {
   my ($self,$phases,$phase,$keymeta) = @_;
 
@@ -329,40 +169,23 @@ sub run_phase {
   warn "CHOSEN PHASE $self->{'phase_name'}\n";
   my $era = $phases->[$phase]{'era'};
   my @cols = @{$self->{'iconfig'}{'columns'}};
+  $phases->[$phase]{'cols'} ||= \@cols;
   my $start = ($self->{'req_lengths'}{$era}||=0); 
-  push @{$self->{'out'}},{
-    data => [], nulls => [], len => [],
-    indata => [], innulls => [], inlen => 0,
-    series => ($phases->[$phase]{'cols'} || \@cols),
-    order => undef,
-    start => $start,
-    shadow_num => ($self->{'shadow_lengths'}{$era}||=0)
-  };
   $self->{'sort_data'} = [];
   $self->{'null_cache'} = [];
   $self->{'request_num'} = 0;
   $self->{'stand_down'} = 0;
   $self->{'phase_rows'} = $phases->[$phase]{'rows'};
 
-  # Calculate function name
-  my $type = $self->{'iconfig'}{'type'}||'';
-  $type =~ s/\W//g;
-  my $func = "table_content";
-  $func .= "_$type" if $type;
+  # Populate
+  my $phase = EnsEMBL::Web::NewTable::Phase->new($self->{'component'},$self,$phases->[$phase],$start,($self->{'shadow_lengths'}{$era}||=0),$self->{'iconfig'}{'type'},$self->size_needed,$self->{'orient'}{'pagerows'},$self->{'wire'}{'filter'},$self->{'columns'},$self->{'wire'}{'enumerate'},$self->{'wire'}{'sort'});
+  my $out = $phase->go();
 
-  # Populate data
-  $self->{'component'}->$func($self);
+  push @{$self->{'out'}},$out->{'out'};
 
-  # Sort it, if necessary
-  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $self->server_order($keymeta);
-  }
-
-  # Send it
-  $self->consolidate();
   # Move on continuation counters
-  $self->{'req_lengths'}{$era} = $self->{'request_num'};
-  $self->{'shadow_lengths'}{$era} = $self->{'out'}[-1]{'shadow_num'};
+  $self->{'req_lengths'}{$era} = $out->{'request_num'};
+  $self->{'shadow_lengths'}{$era} = $out->{'shadow_num'};
 }
 
 sub convert {

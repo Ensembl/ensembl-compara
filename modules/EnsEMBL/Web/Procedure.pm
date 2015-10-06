@@ -74,7 +74,7 @@ sub cachefile {
   my ($self) = @_;
 
   my $key = $self->hexkey();
-  my $dir = join('/',$self->{'base'},substr($key,0,2),substr($key,3,2));
+  my $dir = join('/',$self->{'base'},substr($key,0,2),substr($key,2,2));
   make_path($dir);
   if(opendir(DIR,$dir)) {
     my @files = grep { -f "$dir/$_" and $_ ne $key } readdir(DIR);

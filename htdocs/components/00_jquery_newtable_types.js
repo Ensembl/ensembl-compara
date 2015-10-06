@@ -168,6 +168,7 @@
     return {
       types: [{
         name: "string",
+        split: function(v) { return v?[v]:[]; },
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
         match: function(ori,val) { return string_match(ori,val); },
@@ -203,7 +204,7 @@
         merge: rangemerge_position
       },{
         name: "iconic",
-        split: function(v) { return v.split(/~/); },
+        split: function(v) { return v?v.split(/~/):[]; },
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
         match: function(ori,val) { return string_match(ori,val); },
