@@ -259,7 +259,6 @@ sub render {
 
 sub variant_consequence_label {
   my ($self, $consequence_type) = @_;
-  warn $consequence_type;
 
   $consequence_type = lc $consequence_type;
   my ($consequence) = grep { lc $_->SO_term eq $consequence_type } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
