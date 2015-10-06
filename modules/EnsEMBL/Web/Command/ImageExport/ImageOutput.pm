@@ -18,7 +18,7 @@ limitations under the License.
 
 package EnsEMBL::Web::Command::ImageExport::ImageOutput;
 
-### Redirects to the view's standard image export mode
+## Output an image for downloading
 
 use strict;
 use warnings;
@@ -36,37 +36,24 @@ sub process {
                   'journal'   => {'format' => 'png', 'extra' => '-c-2-s-2'},
                   'poster'    => {'format' => 'png', 'extra' =>'-c-2-s-5'},
                   'projector' => {'format' => 'png', 'extra' =>'-c-2-s-1.00'},
-                  'web'       => {'format' => 'png'},
                   };
   my $format = $hub->param('image_format') || $presets->{$hub->param('format')}{'format'} 
                 || $hub->param('format') || 'png';
   warn ">>> OUTPUTTING AS $format";
+  ## Reset parameters to something that the image component will understand
+  $hub->param('format', $format);
 
-  if ($hub->param('submit') eq 'Next') {
-    ## User wants to choose which tracks are output
-    $url = $hub->url({'action' => 'SelectTracks'});
-    foreach ($hub->param) {
-      $params->{$_} = $hub->param($_);
-    }
-  }
-  elsif ($format eq 'text') {
-    ## Convert all selected tracks to a text-based file format
+  ## Create component
+  my ($component, $error) = $self->object->create_component;
+  my $controller;
+
+  if ($error) {
   }
   else {
-    ## Output the actual image
-    $url = sprintf('%s/Component/%s/Web/%s', $hub->species_path, $hub->param('data_type'), $hub->param('component'));
-    warn ">>> URL $url";
-
-    my ($extra) = first { $hub->param($_) } qw(journal projector poster);
-    $format .= $presets->{$extra}{'extra'} if $extra;
- 
-    $params = {
-                'export'        => $format,
-                'download'      => 1,
-                };
+    warn ">>> COMPONENT $component";
   }
   use Data::Dumper; warn Dumper($params);
-  $self->ajax_redirect($url, $params, undef, 'download'); 
+  $self->ajax_redirect($hub->url($controller || (), $params), $controller ? (undef, undef, 'download') : ());
 }
 
 1;
