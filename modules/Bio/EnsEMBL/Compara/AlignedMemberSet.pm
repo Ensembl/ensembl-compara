@@ -407,10 +407,6 @@ sub get_SimpleAlign {
         $sa->id("$self");
     }
 
-    #Hack to try to work with both bioperl 0.7 and 1.2:
-    #Check to see if the method is called 'addSeq' or 'add_seq'
-    my $bio07 = ($sa->can('add_seq') ? 0 : 1);
-
     $self->_load_all_missing_sequences($seq_type);
 
     my $seq_hash = {};
@@ -463,11 +459,7 @@ sub get_SimpleAlign {
                 -STRAND     => 0
         );
 
-        if($bio07) {
-            $sa->addSeq($seq);
-        } else {
-            $sa->add_seq($seq);
-        }
+        $sa->add_seq($seq);
     }
     $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps') and ($remove_gaps or scalar(@{$self->get_all_Members}) != $sa->num_sequences());
     $sa = $sa->remove_columns(@$removed_columns) if $removed_columns and scalar(@$removed_columns);
@@ -633,13 +625,6 @@ sub get_4D_SimpleAlign {
 
     my $sa = Bio::SimpleAlign->new();
 
-    #Hack to try to work with both bioperl 0.7 and 1.2:
-    #Check to see if the method is called 'addSeq' or 'add_seq'
-    my $bio07 = 0;
-    if(!$sa->can('add_seq')) {
-        $bio07 = 1;
-    }
-
     my %member_seqstr;
     foreach my $member (@{$self->get_all_Members}) {
         # Only peptides can have a CDS sequence
@@ -708,11 +693,7 @@ sub get_4D_SimpleAlign {
                 -STRAND => 0
         );
 
-        if($bio07) {
-            $sa->addSeq($seq);
-        } else {
-            $sa->add_seq($seq);
-        }
+        $sa->add_seq($seq);
     }
 
     $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps');

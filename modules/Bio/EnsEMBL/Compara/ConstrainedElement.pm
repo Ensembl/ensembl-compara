@@ -548,11 +548,7 @@ sub get_SimpleAlign {
                 # Avoid warning in BioPerl about len(seq) != end-start+1
                 $loc_seq->{end} = $genomic_align->dnafrag_end;
 
-		if($bio07) { 
-			$sa->addSeq($loc_seq); 
-		}else{ 
-			$sa->add_seq($loc_seq); 
-		}				
+                $sa->add_seq($loc_seq);
 	}
 	return $sa;
 }

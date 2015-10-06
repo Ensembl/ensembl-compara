@@ -920,13 +920,6 @@ sub get_SimpleAlign {
 
   my $sa = Bio::SimpleAlign->new();
 
-  #Hack to try to work with both bioperl 0.7 and 1.2:
-  #Check to see if the method is called 'addSeq' or 'add_seq'
-  my $bio07 = 0;
-  if(!$sa->can('add_seq')) {
-    $bio07 = 1;
-  }
-
   my $all_genomic_aligns;
   if ($self->reference_genomic_align) {
     $all_genomic_aligns = [$self->reference_genomic_align,@{$self->get_all_non_reference_genomic_aligns}];
@@ -950,8 +943,7 @@ sub get_SimpleAlign {
     $loc_seq->seq($uc ? uc $loc_seq->translate->seq
                       : lc $loc_seq->translate->seq) if ($translated);
 
-    if($bio07) { $sa->addSeq($loc_seq); }
-    else       { $sa->add_seq($loc_seq); }
+    $sa->add_seq($loc_seq);
 
   }
   return $sa;
