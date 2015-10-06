@@ -104,6 +104,7 @@ sub column { return $_[0]->{'columns'}{$_[1]}; }
 sub type { return $_[0]->{'type'}; }
 sub phase { return $_[0]->{'phases'}[$_[1]]; }
 sub num_phases { return @{$_[0]->{'phases'}}; }
+sub keymeta { return $_[0]->{'keymeta'}; }
 
 sub _add_plugin {
   my ($self,$plugin,$conf,$_ours) = @_;
