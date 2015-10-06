@@ -24,10 +24,11 @@ use warnings;
 use Scalar::Util qw(weaken);
 
 sub new {
-  my ($proto,$table) = @_;
+  my ($proto,$config,$table) = @_;
   my $class = ref($proto) || $proto;
   my $self = {
-    table => $table
+    table => $table,
+    tconf => $config,
   };
   bless $self,$class;
   weaken($self->{'table'});
@@ -38,6 +39,7 @@ sub new {
 sub init {}
 
 sub table { return $_[0]->{'table'}; }
+sub config { return $_[0]->{'tconf'}; }
 
 sub children { return []; }
 sub js_plugin { return undef; }

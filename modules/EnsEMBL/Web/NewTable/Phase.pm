@@ -34,20 +34,20 @@ sub uncompress_block {
 }
 
 sub new {
-  my ($proto,$component,$callback,$phase,$row_start,$shadow_start,$type,$size_needed,$page_rows,$filter,$columns,$enumerate,$sort) = @_;
+  my ($proto,$component,$callback,$phase,$row_start,$shadow_start,$size_needed,$config,$wire) = @_;
   my $class = ref($proto) || $proto;
   my $self = {
-    type => $type,
+    type => $config->type,
     callback => $callback,
     component => $component,
     phase_name => $phase->{'name'},
     size_needed => $size_needed,
-    page_rows => $page_rows,
+    page_rows => $wire->{'pagerows'},
     phase_rows => $phase->{'rows'},
-    filter => $filter,
-    columns => $columns,
-    enumerate => $enumerate,
-    sort => $sort,
+    filter => $wire->{'filter'},
+    config => $config,
+    enumerate => $wire->{'enumerate'},
+    sort => $wire->{'sort'},
     #
     data => [], nulls => [], len => [],
     indata => [], innulls => [], inlen => 0,
@@ -88,7 +88,7 @@ sub add_enum {
   my ($self,$row) = @_;
 
   foreach my $colkey (@{$self->{'enumerate'}||[]}) {
-    my $column = $self->{'columns'}{$colkey};
+    my $column = $self->{'config'}->column($colkey);
     my $values = ($self->{'callback'}{'enum_values'}{$colkey}||={});
     $column->add_value($values,$row->{$colkey});
   }
@@ -98,7 +98,7 @@ sub server_filter {
   my ($self,$row) = @_;
 
   foreach my $col (keys %{$self->{'filter'}||{}}) {
-    my $column = $self->{'columns'}{$col};
+    my $column = $self->{'config'}->column($col);
     next unless exists $row->{$col};
     my $ok_col = 0;
     my $values = $column->split($row->{$col});
@@ -147,7 +147,7 @@ sub server_nulls {
   my $series = $self->{'series'};
   my %nulls;
   foreach my $j (0..$#$series) {
-    my $col = $self->{'columns'}{$series->[$j]};
+    my $col = $self->{'config'}->column($series->[$j]);
     my $null_cache = ($self->{'null_cache'}[$j]||={});
     my $v = $row->{$series->[$j]};
     my $is_null = (!defined $v);

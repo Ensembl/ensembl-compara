@@ -32,6 +32,7 @@ use Digest::MD5 qw(md5_hex);
 use SiteDefs;
 use Text::CSV;
 
+use EnsEMBL::Web::NewTable::Config;
 use EnsEMBL::Web::Procedure;
 use EnsEMBL::Web::NewTable::Phase;
 
@@ -62,7 +63,6 @@ sub new {
     sort_data => [],
     stand_down => 0,
     phase_rows => undef,
-    phase_name => undef
   )};
   bless $self,$class;
   return $self;
@@ -73,7 +73,7 @@ sub finish_enum {
 
   my %enums;
   foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
-    my $column = $self->{'columns'}{$colkey};
+    my $column = $self->{'config'}->column($colkey);
     $enums{$colkey} = $column->range($self->{'enum_values'}{$colkey}||{});
   }
   return \%enums;
@@ -83,25 +83,15 @@ sub go {
   my ($self) = @_;
 
   my $hub = $self->{'hub'};
-  $self->{'iconfig'} = from_json($hub->param('config'));
+  my $config = from_json($hub->param('config'));
+  my $ssplugins = from_json($hub->param('ssplugins'));
+  my $keymeta = from_json($hub->param('keymeta'));
+  $self->{'config'} = EnsEMBL::Web::NewTable::Config->new($self,$config,$ssplugins,$keymeta);
   $self->{'orient'} = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
   my $more = JSON->new->allow_nonref->decode($hub->param('more'));
   my $incr_ok = ($hub->param('incr_ok')||'' eq 'true');
-  my $keymeta = from_json($hub->param('keymeta'));
   # Add plugins
-  my $ssplugins = from_json($hub->param('ssplugins'));
-  foreach my $name (keys %$ssplugins) {
-    $name =~ s/\W//g;
-    $self->add_plugin($name,$ssplugins->{$name});
-  } 
-  # Add columns
-  $self->{'columns'} = {};
-  foreach my $key (keys %{$self->{'iconfig'}{'colconf'}}) {
-    my $cc = $self->{'iconfig'}{'colconf'}{$key};
-    $self->{'columns'}{$key} =
-      EnsEMBL::Web::NewTable::Column->new($self,$cc->{'sstype'},$key,$cc->{'ssconf'},$cc->{'ssarg'});
-  }
 
   my $proc = EnsEMBL::Web::Procedure->new($self->{'hub'},'callback');
 
@@ -126,27 +116,16 @@ sub go {
 }
 
 sub preload {
-  my ($self,$table,$config,$orient) = @_;
+  my ($self,$table,$config) = @_;
 
-  $self->{'iconfig'} = $config;
-  $self->{'wire'} = $orient;
-  $self->{'orient'} = $orient;
-  $self->{'columns'} = $table->columns;
+  $self->{'config'} = $table->config;
+  $self->{'wire'} = $table->config->orient_out;
+  $self->{'orient'} = $table->config->orient_out;
   my $proc = EnsEMBL::Web::Procedure->new($self->{'hub'},'preload');
   $proc->set_variables({ orient => $self->{'orient'}, config => $config });
   return $proc->go(sub {
     return $self->newtable_data_request(undef,1);
   }); 
-}
-
-sub register_key {
-  my ($self,$key,$meta) = @_;
-
-  $self->{'key_meta'}||={};
-  $self->{'key_meta'}{$key}||={};
-  foreach my $k (keys %{$meta||{}}) {
-    $self->{'key_meta'}{$key}{$k} = $meta->{$k} unless exists $self->{'key_meta'}{$key}{$k};
-  } 
 }
 
 sub convert_to_csv {
@@ -163,23 +142,15 @@ sub convert_to_csv {
 }
 
 sub run_phase {
-  my ($self,$phases,$phase,$keymeta) = @_;
+  my ($self,$phase,$keymeta) = @_;
 
-  $self->{'phase_name'} = $phases->[$phase]{'name'};
-  warn "CHOSEN PHASE $self->{'phase_name'}\n";
-  my $era = $phases->[$phase]{'era'};
-  my @cols = @{$self->{'iconfig'}{'columns'}};
-  $phases->[$phase]{'cols'} ||= \@cols;
+  my $era = $phase->{'era'};
+  $phase->{'cols'} ||= $self->{'config'}->columns;
   my $start = ($self->{'req_lengths'}{$era}||=0); 
-  $self->{'sort_data'} = [];
-  $self->{'null_cache'} = [];
-  $self->{'request_num'} = 0;
-  $self->{'stand_down'} = 0;
-  $self->{'phase_rows'} = $phases->[$phase]{'rows'};
 
   # Populate
-  my $phase = EnsEMBL::Web::NewTable::Phase->new($self->{'component'},$self,$phases->[$phase],$start,($self->{'shadow_lengths'}{$era}||=0),$self->{'iconfig'}{'type'},$self->size_needed,$self->{'orient'}{'pagerows'},$self->{'wire'}{'filter'},$self->{'columns'},$self->{'wire'}{'enumerate'},$self->{'wire'}{'sort'});
-  my $out = $phase->go();
+  my $p = EnsEMBL::Web::NewTable::Phase->new($self->{'component'},$self,$phase,$start,($self->{'shadow_lengths'}{$era}||=0),$self->size_needed,$self->{'config'},$self->{'wire'});
+  my $out = $p->go();
 
   push @{$self->{'out'}},$out->{'out'};
 
@@ -241,15 +212,6 @@ sub convert {
 sub newtable_data_request {
   my ($self,$more,$incr_ok,$keymeta) = @_;
 
-  my @cols = @{$self->{'iconfig'}{'columns'}};
-  my %cols_pos;
-  $cols_pos{$cols[$_]} = $_ for(0..$#cols);
-  $self->{'cols_pos'} = \%cols_pos;
-
-  my $phases = $self->{'iconfig'}{'phases'};
-  $phases = [{ name => undef }] unless $phases and @$phases;
-  my @out;
-
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
@@ -267,21 +229,19 @@ sub newtable_data_request {
     $self->{'req_lengths'} = $more->{'req_lengths'};
     $self->{'shadow_lengths'} = $more->{'shadow_lengths'};
   }
-  # What phase should we be?
-  my @required;
-  push @required,map { $_->{'key'} } @{$self->{'wire'}{'sort'}||[]};
+  
+  my $num_phases = $self->{'config'}->num_phases();
   if($incr_ok && !$all_data) {
     my $start = time();
     my $end = $start;
-    while($end-$start < 3 && $phase < @$phases) {
-      $self->run_phase($phases,$phase,$keymeta);
+    while($end-$start < 3 && $phase < $num_phases) {
+      $self->run_phase($self->{'config'}->phase($phase),$keymeta);
       $end = time();
-      warn "Phase $phases->[$phase]{'name'} : ".($end-$start)."\n";
       $phase++;
     }
   } else {
-    $self->run_phase($phases,$_,$keymeta) for (0..$#$phases);
-    $phase = @$phases;
+    $self->run_phase($self->{'config'}->phase($_),$keymeta) for (0..$num_phases-1);
+    $phase = $num_phases;
   }
 
   $more = {
@@ -289,8 +249,8 @@ sub newtable_data_request {
     req_lengths => $self->{'req_lengths'},
     shadow_lengths => $self->{'shadow_lengths'}
   };
-  $more = undef if $phase == @$phases;
-  my $out = {
+  $more = undef if $phase == $num_phases;
+  return {
     responses => $self->{'out'},
     keymeta => $self->{'key_meta'},
     shadow => \%shadow,
@@ -298,7 +258,6 @@ sub newtable_data_request {
     orient => $self->{'orient'},
     more => $more,
   };
-  return $out;
 }
 
 1;
