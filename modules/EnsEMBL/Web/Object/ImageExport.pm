@@ -40,4 +40,32 @@ use parent qw(EnsEMBL::Web::Object);
 sub caption       { return 'Export';  }
 sub short_caption { return 'Export';  }
 
+sub create_component {
+## Creates the component that the user requested data from. This both 
+### avoids code duplication and ensures we are using exactly the same 
+### data that the user sees 
+### @return Array: object (Component::<data_type>::<component_name>)
+###                plus error message (if any)
+  my $self = shift;
+  my $hub  = $self->hub;
+  my ($component, $error);
+
+  my $class = 'EnsEMBL::Web::Component::'.$hub->param('data_type').'::'.$hub->param('component');
+  if ($self->dynamic_use($class)) {
+    my $builder = EnsEMBL::Web::Builder->new({
+                      hub           => $hub,
+                      object_params => EnsEMBL::Web::Controller::OBJECT_PARAMS,
+    });
+    $builder->create_objects(ucfirst($hub->param('data_type')), 'lazy');
+    $hub->set_builder($builder);
+    $component = $class->new($hub, $builder);
+  }
+  if (!$component) {
+    warn "!!! Could not create component $class";
+    $error = 'Export not available';
+  }
+  return ($component, $error);
+}
+
+
 1;
