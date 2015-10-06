@@ -275,10 +275,10 @@ sub add_image_export_icon {
   my $self = shift;
   my $hub  = $self->hub;
   return {
-          'href'      => $hub->url({'type' => 'ImageExport', 'action' => 'SelectFormat', 
+          'href'      => $hub->url({'type' => 'ImageExport', 'action' => 'ImageFormats', 
                                     'data_type' => $hub->type, 'component' => $self->component}),
-          'class'     => 'download modal_link '.$self->{'export'},
-          'icon_key'  => 'download',
+          'class'     => 'export modal_link '.$self->{'export'},
+          'icon_key'  => 'export',
           };
 }
 
