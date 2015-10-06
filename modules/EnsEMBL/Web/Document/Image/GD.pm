@@ -461,19 +461,18 @@ sub render {
 
   my $hub = $self->hub;
   my $image;
-
   if ($hub->param('filename')) {
-    $image = EnsEMBL::Web::File::User->new(
-                                          'hub' => $hub,
-                                          'name' => $hub->param('filename'),
-                                          ); 
+    $image = EnsEMBL::Web::File::Dynamic::Image->new(
+                                                      'hub'  => $hub,
+                                                      'name' => $hub->param('filename'),
+                                                      );
   }
   else {
     $image = EnsEMBL::Web::File::Dynamic::Image->new(
-                                                        'hub'             => $hub,
-                                                        'name_timestamp'  => 1,
-                                                        'extension'       => 'png',
-                                                        );
+                                                      'hub'             => $hub,
+                                                      'name_timestamp'  => 1,
+                                                      'extension'       => 'png',
+                                                      );
   }
   my $content = $self->drawable_container->render('png');
 
