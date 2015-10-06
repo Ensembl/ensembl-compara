@@ -397,6 +397,15 @@ sub get_SimpleAlign {
     $seq_type = $self->seq_type unless $seq_type;
 
     my $sa = Bio::SimpleAlign->new();
+    if ($self->stable_id) {
+        $sa->id($self->stable_id);
+    } elsif ($self->dbID) {
+        my $type = ref($self);
+        $type =~ s/^.*://;
+        $sa->id($type."/".($self->dbID));
+    } else {
+        $sa->id("$self");
+    }
 
     #Hack to try to work with both bioperl 0.7 and 1.2:
     #Check to see if the method is called 'addSeq' or 'add_seq'
