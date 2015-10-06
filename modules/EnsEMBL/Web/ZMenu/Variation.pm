@@ -75,10 +75,9 @@ sub feature_content {
   my $allele        = $feature->allele_string;
   my $alleles       = length $allele < 16 ? $allele : substr($allele, 0, 14) . '..';
   my $gmaf          = $feature->minor_allele_frequency . ' (' . $feature->minor_allele . ')' if defined $feature->minor_allele;
+  my $colourmap     = $hub->colourmap;
   my ($lrg_bp, $codon_change);
 
-  my $var_styles = $self->hub->species_defs->colour('variation');
-  my $colourmap  = $self->hub->colourmap;
   
   $self->new_feature;
   
@@ -108,25 +107,9 @@ sub feature_content {
     }
   }
 
+  my $consequence_label = $feature->most_severe_OverlapConsequence->SO_term eq $type ? $self->variant_consequence_label($type) : $types->{lc $type}{'text'};
+  my $sources           = join(', ', @{$feature->get_all_sources});
 
-
-my $type_key = lc($type);
-  my $color = $var_styles->{$type_key} ? $colourmap->hex_by_name($var_styles->{$type_key}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'});
-  my $consequence_label = $types->{$type_key}{'text'};
-
-  if ($feature->most_severe_OverlapConsequence->SO_term eq $type) {
-    my $cons_desc = $feature->most_severe_OverlapConsequence->description;
-    $consequence_label = sprintf(
-         '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-         '<span class="_ht ht coltab_text" title="%s">%s</span></nobr>',
-         $color,
-         $cons_desc,
-         $types->{$type_key}{'text'}
-    );
-  }
-
-  my $sources = join(', ', @{$feature->get_all_sources});
-  
   my @entries = ([ 'Class', $feature->var_class ]);
 
   push @entries, [
