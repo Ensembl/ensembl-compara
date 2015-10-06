@@ -207,6 +207,10 @@
     }
 
     function build_client_filter(out,need,got) {
+      out.undo = function(manifest,grid,series,dest) {
+        delete manifest.enumerate;
+        return [manifest,grid];
+      };
       var needf = (need||{}).filter || {};
       var gotf = (got||{}).filter || {};
       var to_filter = {};
@@ -237,6 +241,7 @@
         }
       });
       out.undo = function(manifest,grid,series,dest) {
+        delete manifest.enumerate;
         var rev_series = {};
         for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
         var fabric = [];
