@@ -39,7 +39,7 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'Output',  '__clear' => 1}), 'method' => 'post', 'class' => 'freeform-stt'});
+  my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'ImageOutput',  '__clear' => 1}), 'method' => 'post', 'class' => 'freeform-stt'});
 
   my $intro_fieldset = $form->add_fieldset();
 
@@ -97,7 +97,8 @@ sub content {
                 'type'    => 'Radiolist',
                 'name'    => 'format',
                 'values'  => $formats,
-                'value'   => 'journal',
+                'value'   => 'png',
+                #'value'   => 'journal',
                 );
   $fieldset->add_field(\%params);
 
@@ -124,6 +125,18 @@ sub content {
 
   ## Place submit button at end of form
   my $final_fieldset = $form->add_fieldset();
+
+  ## Don't forget the core params!
+  my @core_params = keys %{$hub->core_object('parameters')};
+  foreach (@core_params) {
+    $final_fieldset->add_hidden([
+      {
+        'name'    => $_,
+        'value'   => $hub->param($_),
+      },
+    ]);
+  }
+
   $final_fieldset->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Download', 'class' => 'download');
 
   return '<h1>Image download</h1>'.$form->render;
