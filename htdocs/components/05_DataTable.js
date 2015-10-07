@@ -94,7 +94,7 @@ Ensembl.DataTable = {
       },
       fnInitComplete: function () {
         var hidden = this.is(':hidden');
-        var parent = this.parent();
+        var parent = this.closest('.toggleTable_wrapper, .dataTables_wrapper');
         var hide   = this.css('display') === 'none';
         
         if (this[0].style.width !== '100%') {
