@@ -144,7 +144,7 @@ foreach my $homology (@mouse_homologies, @rat_homologies) {
     $gene1 = $gene2;
     $gene2 = $temp;
   }
-  my $member2 = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene2->stable_id);
+  my $member2 = $gene_member_adaptor->fetch_by_stable_id($gene2->stable_id);
 
   print_transcript($member->get_canonical_SeqMember->get_Transcript, $cdna_simple_align);
   print_transcript($member2->get_canonical_SeqMember->get_Transcript, $cdna_simple_align);
