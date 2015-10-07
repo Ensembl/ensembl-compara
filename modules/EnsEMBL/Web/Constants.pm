@@ -87,12 +87,7 @@ sub USERDATA_FORMATS {
   };
 }
 
-sub FORMATS {
-  warn "!!! DEPRECATED - PLEASE USE 'EXPORT_FORMATS' INSTEAD";
-  return &EXPORT_FORMATS;
-}
-
-sub EXPORT_FORMATS {
+sub IMAGE_EXPORT_FORMATS {
 ### Metadata for image export formats
   return (
 	  'png'  => { 'name' => 'PNG', 'extn' => 'png', 'mime' => 'image/png'        },

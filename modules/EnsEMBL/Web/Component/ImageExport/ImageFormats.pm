@@ -106,7 +106,7 @@ sub content {
   my $opt_fieldset  = $form->add_fieldset({'class' => '_stt_custom', 'legend' => 'Options'});
 
   my $image_formats = [{'value' => '',     'caption' => '-- Choose --'}];
-  my %format_info   = EnsEMBL::Web::Constants::EXPORT_FORMATS;
+  my %format_info   = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   foreach (sort keys %format_info) {
     push @$image_formats, {'value' => $_, 'caption' => $format_info{$_}{'name'}};
   }
