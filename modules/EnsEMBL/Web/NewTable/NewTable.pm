@@ -48,8 +48,6 @@ sub new {
   my $config = EnsEMBL::Web::NewTable::NewTableConfig->new($self);
   $self->{'config'} = $config;
 
-#  $self->preprocess_hyphens;
-  
   # XXX these should be optional. That's why they're plugins! :-)
   $config->add_plugin('Core',{});
   $config->add_plugin('Frame',{});
@@ -65,27 +63,6 @@ sub new {
 sub component { return $_[0]->{'component'}; }
 sub has_rows { return !!@{$_[0]{'rows'}}; }
 sub column { return $_[0]->{'config'}->column($_[1]); }
-
-# \f -- optional hyphenation point
-# \a -- optional break point (no hyphen)
-#sub hyphenate {
-#  my ($self, $data, $key) = @_;
-#
-#  return unless exists $data->{$key};
-#
-#  my $any = ($data->{$key} =~ s/\f/&shy;/g | $data->{$key} =~ s/\a/&#8203;/g);
-#
-#  return $any;
-#}
-#
-#sub preprocess_hyphens {
-#  my $self = shift;
-#
-#  foreach (@{$self->{'columns'}}) {
-#    my $h = $_->{'label'} ? $self->hyphenate($_, 'label') : 0;
-#    $_->{'class'} .= ' hyphenated' if $h;
-#  }
-#}
 
 sub config { return $_[0]->{'config'}; }
 
