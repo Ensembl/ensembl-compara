@@ -105,12 +105,11 @@ sub content {
   ## Options for custom format
   my $opt_fieldset  = $form->add_fieldset({'class' => '_stt_custom', 'legend' => 'Options'});
 
-  my $image_formats = [
-                      {'value' => '',     'caption' => '-- Choose --'},
-                      {'value' => 'png',  'caption' => 'PNG'},
-                      {'value' => 'pdf',  'caption' => 'PDF'},
-                      {'value' => 'svg',  'caption' => 'SVG'},
-                      ];
+  my $image_formats = [{'value' => '',     'caption' => '-- Choose --'}];
+  my %format_info   = EnsEMBL::Web::Constants::EXPORT_FORMATS;
+  foreach (sort keys %format_info) {
+    push @$image_formats, {'value' => $_, 'caption' => $format_info{$_}{'name'}};
+  }
   $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'image_format', 'label' => 'Format', 'values' => $image_formats});
 
   my $image_sizes = [{'value' => '', 'caption' => 'Current size'}];
