@@ -121,7 +121,7 @@ sub content {
 
   $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'resize', 'label' => 'Image size', 'values' => $image_sizes});
 
-  $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'colour', 'label' => 'Darken colours', 'value' => 'yes'}); 
+  $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'contrast', 'label' => 'Increase contrast', 'value' => 'yes'}); 
 
   ## Place submit button at end of form
   my $final_fieldset = $form->add_fieldset();
@@ -139,7 +139,13 @@ sub content {
 
   $final_fieldset->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Download', 'class' => 'download');
 
-  return '<h1>Image download</h1>'.$form->render;
+  my $wrapped_form = $self->dom->create_element('div', {
+    'id'        => 'ImageExport',
+    'class'     => 'js_panel',
+    'children'  => [ {'node_name' => 'input', 'class' => 'subpanel_type', 'value' => 'ImageExport', 'type' => 'hidden' }, $form ]
+  });
+
+  return '<h1>Image download</h1>'.$wrapped_form->render;
 }
 
 sub default_file_name {
