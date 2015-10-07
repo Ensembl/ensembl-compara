@@ -96,6 +96,51 @@ sub IMAGE_EXPORT_FORMATS {
   );
 }
 
+sub IMAGE_EXPORT_PRESETS {
+## Metadata for preset image export - format, size, etc
+  return {
+          'journal'   => {'label'     => 'Journal/report',
+                          'desc'      => 'High resolution, suitable for printing at A4/letter size',
+                          'info'      => '<ul><li>PNG</li><li>2000px wide</li><li>Darker colours</li></ul>',
+                          'format'    => 'png',
+                          'size'      => '2000',
+                          'contrast'  => 2,
+                          'order'     => 1,
+                          },
+          'poster'    => {'label'     => 'Poster',
+                          'desc'      => 'Very high resolution, suitable for posters and other large print uses',
+                          'info'      => '<ul><li>PNG</li><li>5000px wide</li><li>Darker colours</li></ul>',
+                          'format'    => 'png',
+                          'size'      => '5000',
+                          'contrast'  => 2,
+                          'order'     => 2,
+                          },
+          'projector' => {'label'     => 'Presentation',
+                          'desc'      => 'Saturated image, better suited to projectors',
+                          'info'      => '<ul><li>PNG</li><li>1200px wide</li><li>Darker colours</li></ul>',
+                          'format'    => 'png',
+                          'size'      => '1200',
+                          'contrast'  => 2,
+                          'order'     => 3,
+                          },
+          'png'       => {'label'     => 'Web',
+                          'desc'      => 'Standard image, suitable for web pages, blog posts, etc.',
+                          'info'      => '<ul><li>PNG</li><li>Same size and colours as original image</li></ul>',
+                          'format'    => 'png',
+                          'order'     => 4,
+                          },
+          'pdf'       => {'label'     => 'PDF file',
+                          'desc'      => 'Standard image as PDF file',
+                          'format'    => 'pdf',
+                          'order'     => 5,
+                          },
+          'custom'    => {'label'     => 'Custom image',
+                          'desc'      => 'Select from a range of formats and sizes',
+                          'order'     => 6,
+                          },
+        };
+}
+
 sub FASTA_OPTIONS {
   return  (
         { 'value' => 'cdna',       'caption' => 'cDNA (transcripts)'},

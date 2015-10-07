@@ -56,33 +56,10 @@ sub content {
   $fieldset->add_hidden({'name' => 'data_type', 'value' => $hub->param('data_type')});
   $fieldset->add_hidden({'name' => 'component', 'value' => $hub->param('component')});
 
-  my @radio       = qw(journal poster projector png pdf custom);
-  my $radio_info  = {
-                    'journal'   => {'label' => 'Journal/report',
-                                    'desc'  => 'High resolution, suitable for printing at A4/letter size',
-                                    'info'  => '<ul><li>PNG</li><li>2000px wide</li><li>Darker colours</li></ul>',
-                                    },
-                    'poster'    => {'label' => 'Poster',
-                                    'desc'  => 'Very high resolution, suitable for posters and other large print uses',
-                                    'info'  => '<ul><li>PNG</li><li>5000px wide</li><li>Darker colours</li></ul>',
-                                    },
-                    'projector' => {'label' => 'Presentation',
-                                    'desc'  => 'Saturated image, better suited to projectors',
-                                    'info'  => '<ul><li>PNG</li><li>1200px wide</li><li>Darker colours</li></ul>',
-                                    },
-                    'png'       => {'label' => 'Web',
-                                    'desc'  => 'Standard image, suitable for web pages, blog posts, etc.',
-                                    'info'  => '<ul><li>PNG</li><li>Same size and colours as original image</li></ul>',
-                                    },
-                    'pdf'       => {'label' => 'PDF file',
-                                    'desc'  => 'Standard image as PDF file',
-                                    },
-                    'custom'    => {'label' => 'Custom image',
-                                    'desc'  => 'Select from a range of formats and sizes', 
-                                    },
-                    };
-  my $formats = [];
-  foreach (@radio) {
+  my $radio_info  = EnsEMBL::Web::Constants::IMAGE_EXPORT_PRESETS;
+  my $formats     = [];
+
+  foreach (sort {$radio_info->{$a}{'order'} <=> $radio_info->{$b}{'order'}} keys %$radio_info) {
     my $info_icon = $radio_info->{$_}{'info'} 
                       ? sprintf '<img src="/i/16/info.png" class="alignright _ht" title="<p>%s</p>%s" />', 
                                     $radio_info->{$_}{'label'}, $radio_info->{$_}{'info'} 

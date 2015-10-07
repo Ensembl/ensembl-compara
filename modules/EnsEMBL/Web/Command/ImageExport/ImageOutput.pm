@@ -23,6 +23,7 @@ package EnsEMBL::Web::Command::ImageExport::ImageOutput;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::File::Utils qw(sanitise_path);
 
 use parent qw(EnsEMBL::Web::Command);
@@ -32,15 +33,20 @@ sub process {
   my $hub       = $self->hub;
   my ($url, $params);
 
-  my $presets = {
-                  'journal'   => {'format' => 'png', 'extra' => '-c-2-s-2'},
-                  'poster'    => {'format' => 'png', 'extra' =>'-c-2-s-5'},
-                  'projector' => {'format' => 'png', 'extra' =>'-c-2-s-1.00'},
-                  };
+  my $presets = EnsEMBL::Web::Constants::IMAGE_EXPORT_PRESETS;
+
   my $format = $hub->param('image_format') || $presets->{$hub->param('format')}{'format'} 
                 || $hub->param('format') || 'png';
-  my $export = $format;
-  $export .= $presets->{$hub->param('format')}{'extra'} if $presets->{$hub->param('format')}{'extra'};
+
+  ## Set contrast flag
+  my $export    = $format;
+  my $contrast  = $hub->param('contrast') || $presets->{$hub->param('format')}{'contrast'};
+  if ($contrast) {
+    $export .= sprintf('-c-%s', $contrast);
+  }
+
+  ## Resize image
+  my $resize = $hub->param('resize') || $presets->{$hub->param('format')}{'size'};
 
   ## Reset parameters to something that the image component will understand
   $hub->param('format', $format);
