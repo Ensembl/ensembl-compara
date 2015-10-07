@@ -44,10 +44,16 @@ sub clear_old_boots {
   remove_tree("$base/$_") for @files;
 }
 
-my $MULT = 3; # 2^(4*$MULT) buckets
-my $MAX_FILES = 32; # $MAX_FILES*$MULT in total
-my $MAX_BUCKET_SIZE = 1024*1024*2;
-# Max total cache size = $MAX_BUCKET_SIZE*number of buckets
+# $MEMOIZE_SIZE contains [mult,size,mbs]
+# Maximum total cache size = mbs*2^mult
+# Maximum number files = size*2^mult
+# Maximum individual file size = mbs
+# To help filesystems, size should not be larger than 4096
+# dev [12,32,1024*1024*2] =>
+#   max total size = 8Gb, max files = 131072, max file size = 2Mb
+# live [14,32,1024*1024*4] =>
+#   max total size = 64Gb, max files = 524208, max file size = 4Mb
+
 sub prune_partners {
   my ($dir,$live) = @_;
 
@@ -60,7 +66,7 @@ sub prune_partners {
     $size{$file} = $s[7];
     $age{$file} = $s[9];
   }
-  if(@files>$MAX_FILES) {
+  if(@files>$SiteDefs::MEMOIZE_SIZE->[1]) {
     my @age = sort { $age{$a} <=> $age{$b} } @files;
     unlink "$dir/$age[0]";
   }
@@ -68,10 +74,21 @@ sub prune_partners {
   my @size = sort { $size{$a} <=> $size{$b} } @files;
   foreach my $file (@size) {
     $size += $size{$file};
-    if($size>$MAX_BUCKET_SIZE) {
+    if($size>$SiteDefs::MEMOIZE_SIZE->[2]) {
       unlink "$dir/$file";
     }
   }
+}
+
+sub mult {
+  my ($hex) = @_;
+
+  my $val = hex(substr($hex,0,8)) & ((1<<$SiteDefs::MEMOIZE_SIZE->[0])-1);
+  my $digits = int(($SiteDefs::MEMOIZE_SIZE->[0]+3)/4);
+  my $out = sprintf("%0${digits}x",$val);
+  my @mult;
+  while(length $out) { push @mult,substr($out,0,2,''); }
+  return join('/',@mult);
 }
 
 sub filebase {
@@ -81,10 +98,7 @@ sub filebase {
   my $mach = join('/',$SiteDefs::ENSEMBL_TMP_DIR,'procedure',
                   substr(md5_hex($SiteDefs::ENSEMBL_BASE_URL),0,8));
   my $boot = join('/',$mach,$boottime);
-  my $mult = substr($hex,0,$MULT);
-  my @mult;
-  while(length $mult) { push @mult,substr($mult,0,2,''); }
-  my $dir = join('/',$boot,@mult);
+  my $dir = join('/',$boot,mult($hex));
   make_path($dir);
   clear_old_boots($mach,$boottime);
   prune_partners($dir,$hex);
@@ -104,7 +118,6 @@ sub _get_cached {
   return (1,JSON->new->decode($raw)->{'value'});
 }
 
-my $DEBUG = 1;
 
 sub _set_cached {
   my ($base,$data) = @_;
@@ -115,16 +128,10 @@ sub _set_cached {
   rename("$base.tmp.$$","$base.data");
 }
 
-# TODO skip cache
-# TODO dump tag debug
-# TODO size tidy
-# TODO num tidy Y
-# TODO boot tidy Y
-# TODO boottime config
-
 sub _memoized {
   my ($name,$fn,$args) = @_;
 
+  return $fn->(@$args) unless $SiteDefs::MEMOIZE_ENABLED;
   my $tag = {
     call => $name,
     arguments => _build_argument($args),
@@ -135,11 +142,11 @@ sub _memoized {
   my $hex = hexkey($tag);
   my $base = filebase($hex);
   my ($found,$value) = _get_cached($base);
-  warn "CACHE $name : hit=$found\n";
+  warn "CACHE $name : hit=$found\n" if $SiteDefs::MEMOIZE_DEBUG;
   return $value if $found;
   my $out = $fn->(@$args);
   _set_cached($base,$out);
-  if($DEBUG) {
+  if($SiteDefs::MEMOIZE_DEBUG) {
     open(FN,'>',"$base.key") || return;
     print FN JSON->new->encode($tag);
     close FN;
