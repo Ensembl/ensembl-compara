@@ -33,7 +33,7 @@ use SiteDefs;
 use Text::CSV;
 
 use EnsEMBL::Web::NewTable::Config;
-use EnsEMBL::Web::Procedure;
+use EnsEMBL::Web::Memoize;
 use EnsEMBL::Web::NewTable::Phase;
 
 # XXX move all this stuff to somewhere it's more suited
@@ -86,15 +86,7 @@ sub go {
   my $incr_ok = ($hub->param('incr_ok')||'' eq 'true');
   # Add plugins
 
-  my $proc = EnsEMBL::Web::Procedure->new($self->{'hub'},'callback');
-
-  $proc->set_variables({
-    orient => $self->{'orient'}, more => $more, incr_ok => $incr_ok,
-    keymeta => $keymeta
-  });
-  my $out = $proc->go(sub {
-    return $self->newtable_data_request($more,$incr_ok,$keymeta);
-  });
+  my $out = $self->newtable_data_request($more,$incr_ok,$keymeta,0);
   if($self->{'wire'}{'format'} eq 'export') {
     $out = $self->convert_to_csv($out);
     my $r = $hub->apache_handle;
@@ -114,11 +106,7 @@ sub preload {
   $self->{'config'} = $table->config;
   $self->{'wire'} = $table->config->orient_out;
   $self->{'orient'} = $table->config->orient_out;
-  my $proc = EnsEMBL::Web::Procedure->new($self->{'hub'},'preload');
-  $proc->set_variables({ orient => $self->{'orient'}, config => $config });
-  return $proc->go(sub {
-    return $self->newtable_data_request(undef,1);
-  }); 
+  return $self->newtable_data_request(undef,1,1);
 }
 
 sub convert_to_csv {
@@ -134,23 +122,41 @@ sub convert_to_csv {
   return $out; 
 }
 
+sub merge_enum {
+  my ($self,$into,$more) = @_;
+
+  foreach my $colkey (@{$self->{'wire'}{'enumerate'}}) {
+    my $column = $self->{'config'}->column($colkey);
+    $into->{$colkey} = $column->merge_values($into->{$colkey}||{},$more->{$colkey}||{});
+  }
+}
+
+sub go_phase {
+  my ($component,$phase,$req_start,$shadow_start,$config,$wire) = @_;
+
+  return EnsEMBL::Web::NewTable::Phase->new(
+    $component,$phase,$req_start,$shadow_start,$config,$wire
+  )->go();
+}
+
+EnsEMBL::Web::Memoize::memoize('go_phase');
+
 sub run_phase {
   my ($self,$phase,$keymeta) = @_;
 
   my $era = $phase->{'era'};
-  $phase->{'cols'} ||= $self->{'config'}->columns;
   my $req_start = ($self->{'req_lengths'}{$era}||=0);
   my $shadow_start = ($self->{'shadow_lengths'}{$era}||=0);
 
+  $req_start = 0+$req_start;
+
   # Populate
-  my $p = EnsEMBL::Web::NewTable::Phase->new($self->{'component'},$self->{'enum_values'},$phase,$req_start,$shadow_start,$self->{'config'},$self->{'wire'});
-  my $out = $p->go();
+  my $out = go_phase_cached($self->{'component'},$phase,$req_start,$shadow_start,$self->{'config'},$self->{'wire'});
 
   push @{$self->{'out'}},$out->{'out'};
-
-  # Move on continuation counters
   $self->{'req_lengths'}{$era} = $out->{'request_num'};
   $self->{'shadow_lengths'}{$era} = $out->{'shadow_num'};
+  $self->merge_enum($self->{'enum_values'},$out->{'enum_values'});
 }
 
 sub convert {
@@ -204,7 +210,7 @@ sub convert {
 }
 
 sub newtable_data_request {
-  my ($self,$more,$incr_ok,$keymeta) = @_;
+  my ($self,$more,$incr_ok,$keymeta,$one_phase) = @_;
 
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
@@ -232,6 +238,7 @@ sub newtable_data_request {
       $self->run_phase($self->{'config'}->phase($phase),$keymeta);
       $end = time();
       $phase++;
+      last if $one_phase;
     }
   } else {
     $self->run_phase($self->{'config'}->phase($_),$keymeta) for (0..$num_phases-1);

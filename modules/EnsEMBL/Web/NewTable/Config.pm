@@ -66,6 +66,9 @@ sub new {
     keymeta => $config->{'keymeta'},
     size_needed => 0,
     hub => $hub,
+    memo => {
+      config => $config, ssplugins => $ssplugins, keymeta => $keymeta
+    }
   };
   bless $self,$class;
   foreach my $name (keys %$ssplugins) {
@@ -81,6 +84,8 @@ sub new {
   }
   return $self;
 }
+
+sub memo_argument { return $_[0]->{'memo'}; }
 
 sub register_key {
   my ($self,$key,$meta) = @_; 
@@ -103,7 +108,13 @@ sub add_keymeta {
 sub columns { return $_[0]->{'colorder'}; }
 sub column { return $_[0]->{'columns'}{$_[1]}; }
 sub type { return $_[0]->{'type'}; }
-sub phase { return $_[0]->{'phases'}[$_[1]]; }
+sub phase {
+  my ($self,$idx) = @_;
+  my %phase = %{$self->{'phases'}[$idx]};
+  $phase{'cols'} = $self->columns unless defined $phase{'cols'};
+  return \%phase;
+}
+
 sub num_phases { return @{$_[0]->{'phases'}}; }
 sub keymeta { return $_[0]->{'keymeta'}; }
 

@@ -34,11 +34,11 @@ sub uncompress_block {
 }
 
 sub new {
-  my ($proto,$component,$enum_values,$phase,$row_start,$shadow_start,$config,$wire) = @_;
+  my ($proto,$component,$phase,$row_start,$shadow_start,$config,$wire) = @_;
   my $class = ref($proto) || $proto;
   my $self = {
     type => $config->type,
-    enum_values => $enum_values,
+    enum_values => {},
     component => $component,
     phase_name => $phase->{'name'},
     phase_rows => $phase->{'rows'},
@@ -54,7 +54,7 @@ sub new {
     #
     sort_data => [],
     null_cache => [],
-    request_num => 0,
+    request_num => $row_start,
     stand_down => 0,
   };
   bless $self,$class;
@@ -252,6 +252,7 @@ sub go {
     },
     request_num => $self->{'request_num'},
     shadow_num => $self->{'shadow_num'},
+    enum_values => $self->{'enum_values'},
   };
 }
 

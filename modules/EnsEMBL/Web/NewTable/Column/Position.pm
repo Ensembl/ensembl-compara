@@ -86,4 +86,23 @@ sub has_value {
   ($range->{$chr}{'count'}||=0)++;
 }
 
+sub merge_values {
+  my ($self,$a,$b) = @_;
+
+  my $c = {};
+  $c->{$_} = { chr => $_ } for keys %$a;
+  $c->{$_} = { chr => $_ } for keys %$b;
+  foreach my $chr (keys %$c) {
+    my $av = $a->{$chr};
+    my $bv = $b->{$chr};
+    ($av,$bv) = ($bv,$av) if exists $bv->{'min'};
+    %{$c->{$chr}} = %$av if exists $av->{'min'};
+    if(exists $bv->{'min'}) {
+      $c->{$chr}{'min'} = min($c->{$chr}{'min'},$bv->{'min'});
+      $c->{$chr}{'max'} = min($c->{$chr}{'max'},$bv->{'max'});
+    }
+  }
+  return $c;
+}
+
 1;

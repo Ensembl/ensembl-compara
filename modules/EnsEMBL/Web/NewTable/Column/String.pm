@@ -31,4 +31,6 @@ sub has_value { return $_[1]->{$_[2]} = 1; }
 sub range { return [sort keys %{$_[1]}]; }
 sub split { return $_[1]?[$_[1]]:[]; }
 
+sub merge_values { return { %{$_[1]}, %{$_[2]} }; }
+
 1;
