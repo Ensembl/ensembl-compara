@@ -255,6 +255,11 @@ our $SAMTOOLS_DIR         = "$ENSEMBL_SERVERROOT/samtools";
 our $BIOPERL_DIR          = "$ENSEMBL_SERVERROOT/bioperl-live";
 our $MINI_BIOPERL_161_DIR = "$ENSEMBL_SERVERROOT/mini-bioperl-161";
 
+# See Memoize.pm for meaning of these
+our $MEMOIZE_ENABLED      = 1;
+our $MEMOIZE_DEBUG        = 0;
+our $MEMOIZE_SIZE         = [14,32,4*1024*1024];
+
 ###############################################################################
 ######################### END OF LOCAL CONFIGURATION SECTION ##################
 ###############################################################################
