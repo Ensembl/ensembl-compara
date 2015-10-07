@@ -596,21 +596,10 @@ sub parse_defaults {
         if ($self->param('ref_species')) {
             #ref vs all
 
-            #find reference genome_db
-            my $ref_genome_db;
-            foreach my $genome_db (@$genome_dbs) {
-                if ($genome_db->name eq $self->param('ref_species')) {
-                    $ref_genome_db = $genome_db;
-                    last;
-                }
-            }
+            my ($ref_genome_db, @non_ref_gdbs) = $self->find_reference_species($genome_dbs);
             die "Cannot find reference species " . $self->param('ref_species') . " in collection " . $self->param('collection') unless ($ref_genome_db);
-            foreach my $genome_db (@$genome_dbs) {
-                #skip over ref species
-                next if ($genome_db->name eq $self->param('ref_species'));
-                my $pair;
-                %$pair = ('ref_genome_db'     => $ref_genome_db,
-                          'non_ref_genome_db' => $genome_db);
+            foreach my $genome_db (@non_ref_gdbs) {
+                my $pair = { 'ref_genome_db' => $ref_genome_db, 'non_ref_genome_db' => $genome_db };
                 push @$collection, $pair;
             }
         } else {
@@ -641,16 +630,10 @@ sub parse_defaults {
             }
         }
     } elsif (@$genome_dbs == 2) {
+        my ($ref_genome_db, @non_ref_gdbs) = $self->find_reference_species($genome_dbs);
 	#Normal case of a pair of species
-	my $pair;
-	foreach my $genome_db (@$genome_dbs) {
-	    if ($genome_db->name eq $self->param('ref_species')) {
-		$pair->{ref_genome_db} = $genome_db;
-	    } else {
-		$pair->{non_ref_genome_db} = $genome_db;
-	    }
-	}
-	unless ($pair->{ref_genome_db}) {
+        my $pair = { 'ref_genome_db' => $ref_genome_db, 'non_ref_genome_db' => $non_ref_gdbs[0] };
+	unless ($ref_genome_db) {
 	    if ($mlss) {
 		throw ("Unable to find " . $self->param('ref_species') . " in this mlss " . $mlss->name . " (" . $mlss->dbID . ")") 
 	    } else {
@@ -780,6 +763,25 @@ sub parse_defaults {
     push @$all_configs, @$pair_aligners, @$chain_configs, @$net_configs;
     $self->param('all_configs', $all_configs);
 }
+
+sub find_reference_species {
+    my ($self, $genome_dbs) = @_;
+
+    my $ref_species = $self->param('ref_species');
+    my $ref_genome_db;
+    my @non_ref_gdbs;
+
+    foreach my $genome_db (@$genome_dbs) {
+        if (($ref_species eq $genome_db->dbID) or ($ref_species eq $genome_db->name)) {
+            $ref_genome_db = $genome_db;
+        } else {
+            push @non_ref_gdbs, $genome_db;
+        }
+    }
+
+    return ($ref_genome_db, @non_ref_gdbs);
+}
+
 
 #
 #Write new method_link and method_link_species_set entries in database
