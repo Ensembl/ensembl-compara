@@ -95,11 +95,9 @@ sub FORMATS {
 sub EXPORT_FORMATS {
 ### Metadata for image export formats
   return (
-	  'png'  => { 'name' => 'PNG', 'longname' => 'Portable Network Graphics',   'extn' => 'png', 'mime' => 'image/png'              },
-    'gif'  => { 'name' => 'GIF', 'longname' => 'Graphics Interchange Format', 'extn' => 'gif', 'mime' => 'image/gif'              },
-	  'svg'  => { 'name' => 'SVG', 'longname' => 'Scalable Vector Graphics',    'extn' => 'svg', 'mime' => 'image/svg+xml'          },
-	  'pdf'  => { 'name' => 'PDF', 'longname' => 'Portable Document Format',    'extn' => 'pdf', 'mime' => 'application/pdf'        },
-	  'gff'  => { 'name' => 'GFF', 'longname' => 'General Feature Format',      'extn' => 'txt', 'mime' => 'text/plain'             }
+	  'png'  => { 'name' => 'PNG', 'extn' => 'png', 'mime' => 'image/png'        },
+	  'svg'  => { 'name' => 'SVG', 'extn' => 'svg', 'mime' => 'image/svg+xml'    },
+	  'pdf'  => { 'name' => 'PDF', 'extn' => 'pdf', 'mime' => 'application/pdf'  },
   );
 }
 
