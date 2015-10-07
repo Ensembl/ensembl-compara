@@ -15,6 +15,6 @@ sub requires { return [qw(Paging)]; }
 sub position { return [qw(top-left)]; }
 
 sub initial { return { pagerows => [0,10] }; }
-sub init { $_[0]->table->size_needed(1); }
+sub init { $_[0]->config->size_needed(1); }
 
 1;

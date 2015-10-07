@@ -32,8 +32,6 @@ sub new {
 
   my $class = ref($proto) || $proto;
   my $self = {
-    key_meta => {},
-    size_needed => 0,
   };
   bless $self,$class;
   return $self;
@@ -46,10 +44,5 @@ sub register_key {
 }
 
 sub hub { return $_[0]->{'hub'}; }
-
-sub size_needed {
-  $_[0]->{'size_needed'} = $_[1] if @_>1;
-  return $_[0]->{'size_needed'};
-}
 
 1;

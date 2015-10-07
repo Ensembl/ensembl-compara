@@ -52,17 +52,10 @@ sub new {
   my $class = ref($proto) || $proto;
   my $self = $class->SUPER::new($hub,$component);
   $self = { %$self, (
-    # NOT RESET EACH PHASE
     hub => $hub,
     component => $component,
     enum_values => {},
     out => [],
-    # RESET EACH PHASE
-    request_num => 0,
-    null_cache => [],
-    sort_data => [],
-    stand_down => 0,
-    phase_rows => undef,
   )};
   bless $self,$class;
   return $self;
@@ -86,7 +79,7 @@ sub go {
   my $config = from_json($hub->param('config'));
   my $ssplugins = from_json($hub->param('ssplugins'));
   my $keymeta = from_json($hub->param('keymeta'));
-  $self->{'config'} = EnsEMBL::Web::NewTable::Config->new($self,$config,$ssplugins,$keymeta);
+  $self->{'config'} = EnsEMBL::Web::NewTable::Config->new($hub,$config,$ssplugins,$keymeta);
   $self->{'orient'} = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
   my $more = JSON->new->allow_nonref->decode($hub->param('more'));
@@ -146,10 +139,11 @@ sub run_phase {
 
   my $era = $phase->{'era'};
   $phase->{'cols'} ||= $self->{'config'}->columns;
-  my $start = ($self->{'req_lengths'}{$era}||=0); 
+  my $req_start = ($self->{'req_lengths'}{$era}||=0);
+  my $shadow_start = ($self->{'shadow_lengths'}{$era}||=0);
 
   # Populate
-  my $p = EnsEMBL::Web::NewTable::Phase->new($self->{'component'},$self,$phase,$start,($self->{'shadow_lengths'}{$era}||=0),$self->size_needed,$self->{'config'},$self->{'wire'});
+  my $p = EnsEMBL::Web::NewTable::Phase->new($self->{'component'},$self->{'enum_values'},$phase,$req_start,$shadow_start,$self->{'config'},$self->{'wire'});
   my $out = $p->go();
 
   push @{$self->{'out'}},$out->{'out'};
