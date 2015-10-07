@@ -6,7 +6,7 @@ use warnings;
 use SiteDefs;
 use JSON;
 use Digest::MD5 qw(md5_hex);
-use File::Path qw(make_path);
+use File::Path qw(make_path remove_tree);
 
 sub _build_argument {
   my ($args) = @_;
@@ -34,14 +34,42 @@ sub hexkey {
   return $out;
 }
 
+sub clear_old_boots {
+  my ($base,$live) = @_;
+
+  return if int rand 1000;
+  opendir(BASE,$base) || return;
+  my @files = grep { /^\d+$/ and $_ ne $live } readdir(BASE);
+  closedir BASE;
+  remove_tree("$base/$_") for @files;
+}
+
+my $MAX_FILES = 8; # $MAX_FILES*65536 in total
+sub prune_partners {
+  my ($dir,$live) = @_;
+
+  opendir(DIR,$dir) || return;
+  my @files = grep { -f "$dir/$_" and $_ ne $live } readdir(DIR);
+  closedir DIR;
+  if(@files>$MAX_FILES) {
+    my @age =
+      map { $_->[0] } sort { $a->[1] <=> $b->[1] }
+      map { [$_,[stat("$dir/$_")]->[9]] } @files;
+    unlink "$dir/$age[0]";
+  }
+}
+
 sub filebase {
   my ($hex) = @_;
 
-  my $dir = join('/',
-    $SiteDefs::ENSEMBL_TMP_DIR,'procedure',
-    substr($hex,0,2),substr($hex,2,2)
-  );
+  my $boottime = [stat("$SiteDefs::ENSEMBL_SERVERROOT/ensembl-webcode/conf/started")]->[9];
+  my $mach = join('/',$SiteDefs::ENSEMBL_TMP_DIR,'procedure',
+                  substr(md5_hex($SiteDefs::ENSEMBL_BASE_URL),0,8));
+  my $boot = join('/',$mach,$boottime);
+  my $dir = join('/',$boot,substr($hex,0,2),substr($hex,2,2));
   make_path($dir);
+  clear_old_boots($mach,$boottime);
+  prune_partners($dir,$hex);
   return "$dir/$hex";
 }
 
@@ -72,8 +100,8 @@ sub _set_cached {
 # TODO skip cache
 # TODO dump tag debug
 # TODO size tidy
-# TODO num tidy
-# TODO boot tidy
+# TODO num tidy Y
+# TODO boot tidy Y
 # TODO boottime config
 
 sub _memoized {
@@ -90,8 +118,6 @@ sub _memoized {
   my $base = filebase($hex);
   my ($found,$value) = _get_cached($base);
   warn "CACHE $name : hit=$found\n";
-  use Data::Dumper;
-  #warn Dumper($tag);
   return $value if $found;
   my $out = $fn->(@$args);
   _set_cached($base,$out);
