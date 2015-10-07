@@ -461,7 +461,9 @@ sub render {
 
   my $hub = $self->hub;
   my $image;
-  if ($hub->param('filename')) {
+  my $filename = $hub->param('filename');
+
+  if ($filename) {
     $image = EnsEMBL::Web::File::Dynamic::Image->new(
                                                       'hub'  => $hub,
                                                       'name' => $hub->param('filename'),
@@ -478,8 +480,9 @@ sub render {
 
   $image->write($content);
 
-  if ($hub->param('filename')) {
-    return;
+  if ($filename || ($hub->param('submit') && $hub->param('submit') eq 'Download' && !$filename)) {
+    ## User export, so we need to know where the file was written to
+    return $image->write_location;
   }
 
   ## Not user export, so render image wrapped in HTML
