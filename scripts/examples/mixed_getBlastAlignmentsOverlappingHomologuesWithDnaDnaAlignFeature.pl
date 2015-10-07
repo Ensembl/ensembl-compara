@@ -69,7 +69,7 @@ foreach my $homology (@{$homology_list}) {
     print $human_gene->toString(), "\n";
 
     # get the alignments on a piece of the DnaFrag
-    printf("fetch_all_by_species_region(%s,%s,%s,%s,%d,%d,%s)\n", 
+    printf("fetch_all_by_species_region(%s,%s,%s,%s,%s,%d,%s)\n",
             $mouse_gene->genome_db->name, $mouse_gene->genome_db->assembly,
             $human_gene->genome_db->name, $human_gene->genome_db->assembly,
             $mouse_gene->dnafrag->name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
