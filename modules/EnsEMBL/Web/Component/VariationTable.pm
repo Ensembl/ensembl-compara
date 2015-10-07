@@ -655,4 +655,11 @@ sub get_hgvs {
   return $hgvs;
 }
 
+sub memo_argument {
+  my ($self) = @_;
+  return {
+    url => $self->hub->url
+  };
+}
+
 1;

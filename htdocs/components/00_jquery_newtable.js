@@ -457,6 +457,7 @@
     $table.data('view',view).data('old-view',$.extend(true,{},old_view))
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
+    delete config.payload_one;
     $table.on('think-on',function(e,key) { flux(widgets,$table,'think',1,key); });
     $table.on('think-off',function(e,key) { flux(widgets,$table,'think',-1,key); });
     build_format(widgets,$table);
