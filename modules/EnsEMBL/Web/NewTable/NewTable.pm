@@ -45,7 +45,7 @@ sub new {
   )};
 
   bless $self, $class;
-  my $config = EnsEMBL::Web::NewTable::NewTableConfig->new($self);
+  my $config = EnsEMBL::Web::NewTable::NewTableConfig->new($component->hub);
   $self->{'config'} = $config;
 
   # XXX these should be optional. That's why they're plugins! :-)

@@ -334,7 +334,7 @@
             var client_enums = {};
             $.each(filterable_columns,function(key,cc) {
               var cf = $.find_type(widgets,cc);
-              if(cf) {
+              if(cf && 0) {
                 client_enums[key] = cf;
               } else {
                 server_filter.push(key);

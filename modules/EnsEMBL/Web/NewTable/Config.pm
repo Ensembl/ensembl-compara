@@ -51,7 +51,7 @@ foreach my $plugin (@PACKAGES) {
 #
 
 sub new {
-  my ($proto,$endpoint,$config,$ssplugins,$keymeta) = @_;
+  my ($proto,$hub,$config,$ssplugins,$keymeta) = @_;
 
   $ssplugins ||= {};
   $keymeta ||= {};
@@ -64,7 +64,8 @@ sub new {
     plugins => {},
     phases => $config->{'phases'},
     keymeta => $config->{'keymeta'},
-    endpoint => $endpoint,
+    size_needed => 0,
+    hub => $hub,
   };
   bless $self,$class;
   foreach my $name (keys %$ssplugins) {
@@ -110,7 +111,7 @@ sub _add_plugin {
   my ($self,$plugin,$conf,$_ours) = @_;
   return 0 unless $PLUGINS{$plugin};
   my $pp = $self->{'plugins'}{$plugin};
-  $self->{'plugins'}{$plugin} = $PLUGINS{$plugin}->new($self,$self->{'endpoint'}) unless $pp;
+  $self->{'plugins'}{$plugin} = $PLUGINS{$plugin}->new($self,$self->{'hub'}) unless $pp;
   $pp = $self->{'plugins'}{$plugin};
   return 0 unless $pp;
   $pp->configure($conf);
@@ -120,6 +121,11 @@ sub _add_plugin {
     return 0 unless $self->_add_plugin($sub,$conf,$_ours);
   }
   return 1;
+}
+
+sub size_needed {
+  $_[0]->{'size_needed'} = $_[1] if @_>1;
+  return $_[0]->{'size_needed'};
 }
 
 sub plugins {

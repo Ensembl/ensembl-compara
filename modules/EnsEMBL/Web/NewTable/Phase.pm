@@ -34,20 +34,16 @@ sub uncompress_block {
 }
 
 sub new {
-  my ($proto,$component,$callback,$phase,$row_start,$shadow_start,$size_needed,$config,$wire) = @_;
+  my ($proto,$component,$enum_values,$phase,$row_start,$shadow_start,$config,$wire) = @_;
   my $class = ref($proto) || $proto;
   my $self = {
     type => $config->type,
-    callback => $callback,
+    enum_values => $enum_values,
     component => $component,
     phase_name => $phase->{'name'},
-    size_needed => $size_needed,
-    page_rows => $wire->{'pagerows'},
     phase_rows => $phase->{'rows'},
-    filter => $wire->{'filter'},
     config => $config,
-    enumerate => $wire->{'enumerate'},
-    sort => $wire->{'sort'},
+    wire => $wire,
     #
     data => [], nulls => [], len => [],
     indata => [], innulls => [], inlen => 0,
@@ -68,7 +64,7 @@ sub new {
 sub stand_down {
   my ($self) = @_;
 
-  return 0 if $self->{'size_needed'};
+  return 0 if $self->{'config'}->size_needed;
   return $self->{'stand_down'};
 }
 
@@ -87,9 +83,9 @@ sub phase { return $_[0]->{'phase_name'}; }
 sub add_enum {
   my ($self,$row) = @_;
 
-  foreach my $colkey (@{$self->{'enumerate'}||[]}) {
+  foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
     my $column = $self->{'config'}->column($colkey);
-    my $values = ($self->{'callback'}{'enum_values'}{$colkey}||={});
+    my $values = ($self->{'enum_values'}{$colkey}||={});
     $column->add_value($values,$row->{$colkey});
   }
 }
@@ -97,13 +93,13 @@ sub add_enum {
 sub server_filter {
   my ($self,$row) = @_;
 
-  foreach my $col (keys %{$self->{'filter'}||{}}) {
+  foreach my $col (keys %{$self->{'wire'}{'filter'}||{}}) {
     my $column = $self->{'config'}->column($col);
     next unless exists $row->{$col};
     my $ok_col = 0;
     my $values = $column->split($row->{$col});
     foreach my $value (@{$values||[]}) {
-      my $fv = $self->{'filter'}{$col};
+      my $fv = $self->{'wire'}{'filter'}{$col};
       if($column->is_match($fv,$value)) {
         $ok_col = 1;
         last;
@@ -117,7 +113,7 @@ sub server_filter {
 sub passes_muster {
   my ($self,$row) = @_;
 
-  my $rows = $self->{'page_rows'};
+  my $rows = $self->{'wire'}{'pagerows'};
   my $prows = $self->{'phase_rows'};
   if($rows) {
     return 0 if $self->{'shadow_num'}-1 <  $rows->[0];
@@ -134,7 +130,7 @@ sub passes_muster {
 sub server_order_capture {
   my ($self,$row) = @_;
 
-  my $sort = $self->{'sort'};
+  my $sort = $self->{'wire'}{'sort'};
   foreach my $i (0..$#$sort) {
     push @{$self->{'sort_data'}[$i]||=[]},$row->{$sort->[$i]{'key'}};
   }
@@ -145,7 +141,7 @@ sub server_order_calc {
   my ($self) = @_;
 
   my $keymeta = $self->{'config'}->keymeta();
-  my @sort = @{$self->{'sort'}};
+  my @sort = @{$self->{'wire'}{'sort'}};
   my $series = $self->{'series'};
   my @cache;
   my %rseries;
@@ -214,7 +210,7 @@ sub consolidate {
 sub add_row {
   my ($self,$row) = @_;
 
-  my $rows = $self->{'page_rows'};
+  my $rows = $self->{'wire'}{'pagerows'};
   my $prows = $self->{'phase_rows'};
   if(($rows  and $self->{'shadow_num'}>= $rows->[1]) or
      ($prows and $self->{'shadow_num'}>=$prows->[1])) {
@@ -224,7 +220,7 @@ sub add_row {
   return 0 unless $self->passes_muster($row);
   $self->{'request_num'}++;
   $self->add_enum($row);
-  if($self->{'sort'} and @{$self->{'sort'}}) {
+  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $self->server_order_capture($row);
   }
   my $nulls = $self->server_nulls($row);
@@ -241,7 +237,7 @@ sub go {
 
   $self->{'component'}->$func($self);
   $self->consolidate();
-  if($self->{'sort'} and @{$self->{'sort'}}) {
+  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $self->server_order_calc();
   }
   return {
