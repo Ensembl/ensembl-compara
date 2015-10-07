@@ -23,6 +23,8 @@ package EnsEMBL::Web::Command::ImageExport::ImageOutput;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::File::Utils qw(sanitise_path);
+
 use parent qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -45,6 +47,11 @@ sub process {
   $hub->param('export', $export);
   $hub->param('download', 1);
 
+  ## Clean up user-provided filename
+  my $filename = $hub->param('filename'); 
+  $filename = sanitise_path($filename);
+  $hub->param('filename', $filename);
+
   ## Create component
   my ($component, $error) = $self->object->create_component;
   my $controller;
@@ -54,7 +61,7 @@ sub process {
     my $path = $hub->param('file');
     $controller = 'Download';
 
-    $params->{'filename'}       = $hub->param('filename');
+    $params->{'filename'}       = $filename;
     $params->{'format'}         = $format;
     $params->{'file'}           = $path;
     $params->{'__clear'}        = 1;
