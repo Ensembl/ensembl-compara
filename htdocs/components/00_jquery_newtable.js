@@ -248,7 +248,7 @@
     var grid = $table.data('grid');
     var grid_series = $table.data('grid-series');
     if(length==-1) { length = grid.length; }
-    build_orient(widgets,$table,manifest_c,grid,grid_series,view).done(function(orient_c) {
+    return build_orient(widgets,$table,manifest_c,grid,grid_series,view).then(function(orient_c) {
       if(manifest_c.all_rows) {
         start = 0;
         length = orient_c.data.length;
@@ -261,7 +261,7 @@
   }
 
   function rerender_grid(widgets,$table,manifest_c) {
-    render_grid(widgets,$table,manifest_c,0,-1);
+    return render_grid(widgets,$table,manifest_c,0,-1);
   }
 
   function uncompress_response(response) {
@@ -296,10 +296,10 @@
 
   function use_response(widgets,$table,manifest_c,response,phase,config) {
     var data = uncompress_response(phase);
+    console.log(phase.start);
     store_response_in_grid($table,data.data,data.nulls,data.order,
                            phase.start,manifest_c.manifest,
                            phase.series);
-    render_grid(widgets,$table,manifest_c,phase.start,data.totlen);
     store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
     var size = $table.data('min-size')||0;
     if(size<phase.shadow_num) { size = phase.shadow_num; }
@@ -307,12 +307,13 @@
     $.each(widgets,function(name,w) {
       if(w.size) { w.size($table,size); }
     });
+    return render_grid(widgets,$table,manifest_c,phase.start,data.totlen);
   }
   
   function maybe_use_response(widgets,$table,response,phase,config) {
     store_keymeta($table,response.keymeta);
     var cur_manifest = $table.data('manifest');
-    use_response(widgets,$table,cur_manifest,response,phase,config);
+    return use_response(widgets,$table,cur_manifest,response,phase,config);
   }
 
   function extract_params(url) {
@@ -332,8 +333,15 @@
     if(got.more)
       get_new_data(widgets,$table,cur_manifest,got.more,config);
     if($.orient_compares_equal(cur_manifest.manifest,got.orient)) {
+      var d = $.Deferred().resolve(0);
       for(var i=0;i<got.responses.length;i++) {
-        maybe_use_response(widgets,$table,got,got.responses[i],config);
+        d = d.then(function(idx) {
+          var e = $.Deferred();
+          maybe_use_response(widgets,$table,got,got.responses[idx],config).then(function() {
+            e.resolve(idx+1);
+          });
+          return beat(e,100);
+        });
       }
     }
     var cur_manifest = $table.data('manifest');
