@@ -587,7 +587,7 @@ sub modal_form {
 sub new_image {
   my $self        = shift;
   my $hub         = $self->hub;
-  my %formats     = EnsEMBL::Web::Constants::EXPORT_FORMATS;
+  my %formats     = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   my $export      = $hub->param('export');
   my $id          = $self->id;
   my $config_type = $self->view_config ? $self->view_config->image_config : undef;
@@ -684,7 +684,7 @@ sub _export_image {
   my $scale = abs($params{'s'}) || 1;
   my $contrast = abs($params{'c'}) || 1;
 
-  my %formats = EnsEMBL::Web::Constants::EXPORT_FORMATS;
+  my %formats = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   
   if ($formats{$format}) {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
