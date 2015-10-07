@@ -47,6 +47,7 @@ foreach my $gene (@$genes) {
 
   # Fetch the gene tree
   my $tree = $gene_tree_adaptor->fetch_default_for_Member($gene_member);
+  next unless $tree;
   my $all_leaves = $tree->get_all_leaves();
 
   my $node_h;
