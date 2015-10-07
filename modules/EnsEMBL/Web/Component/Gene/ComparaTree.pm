@@ -298,7 +298,7 @@ sub content {
 
   my $image = $self->new_image($tree, $image_config, \@highlights);
   
-  return $html if $self->_export_image($image, 'no_text');
+  return if $self->_export_image($image, 'no_text');
 
   my $image_id = $gene ? $gene->stable_id : $tree_stable_id;
   my $li_tmpl  = '<li><a href="%s">%s</a></li>';
