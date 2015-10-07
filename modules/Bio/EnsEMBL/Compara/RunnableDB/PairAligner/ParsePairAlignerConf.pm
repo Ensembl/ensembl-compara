@@ -161,9 +161,6 @@ sub write_output {
 		}
 
 	    } else {
-#		my $dnafrags = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($non_ref_genome_db, 'chromosome');
-#		print "num chr dnafrags for " .$non_ref_genome_db->name . " is " . @$dnafrags . "\n" if ($self->debug);
-#		if (@$dnafrags == 0) {
 		if($non_ref_genome_db->has_karyotype){
 		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 1;
 		} else {
@@ -1410,17 +1407,6 @@ sub update_dnafrags {
     $compara_dba->dbc->do("DELETE FROM dnafrag WHERE dnafrag_id = ".$deprecated_dnafrag_id) ;
   }
   print "  ok!\n\n";
-}
-
-sub load_mlss_from_master {
-    my ($self, $genome_db1, $genome_db2, $method_link_type) = @_;
-
-    my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('master_db') );
-    my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($method_link_type, [$genome_db1, $genome_db2]);
-    
-    if ($mlss) {
-	$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
-    }
 }
 
 1;
