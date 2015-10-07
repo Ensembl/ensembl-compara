@@ -28,6 +28,7 @@ package EnsEMBL::Web::Object::ImageExport;
 ### data via their own Objects, and does any additional 
 ### export-specific munging as required. 
 
+use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Controller;
 use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::File::User;
@@ -85,12 +86,9 @@ sub handle_download {
   $path =~ s/[^\w|-|\.|\/]//g;
 
   ## Get content
-  my %mime_types = (
-        'png' => 'image/png',
-        'pdf' => 'application/pdf',
-        'svg' => 'image/svg+xml',
-  );
-  my $mime_type = $mime_types{$format} || 'text/plain';
+  my %format_info = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
+  my $mime_type   = $format_info{$format}{'mime'} || 'text/plain';
+  warn ">>> SENDING $format MIME TYPE $mime_type";
 
   my %params = (hub => $hub, file => $path);
   my $file = EnsEMBL::Web::File::Dynamic::Image->new(%params);
