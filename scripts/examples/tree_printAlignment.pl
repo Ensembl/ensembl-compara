@@ -72,5 +72,5 @@ foreach my $gene (@$genes) {
     -interleaved => 1,
     -idlength => 30);
   $phylip_alignio->write_aln($cds_align);
-  print STDERR "Your file $filename has been generated\n";
+  print "Your file $filename has been generated\n";
 }
