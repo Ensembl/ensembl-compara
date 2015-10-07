@@ -23,8 +23,6 @@ package EnsEMBL::Web::Command::ImageExport::ImageOutput;
 use strict;
 use warnings;
 
-use List::Util qw(first);
-
 use parent qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -39,21 +37,30 @@ sub process {
                   };
   my $format = $hub->param('image_format') || $presets->{$hub->param('format')}{'format'} 
                 || $hub->param('format') || 'png';
-  warn ">>> OUTPUTTING AS $format";
+  my $export = $format;
+  $export .= $presets->{$hub->param('format')}{'extra'} if $presets->{$hub->param('format')}{'extra'};
+
   ## Reset parameters to something that the image component will understand
   $hub->param('format', $format);
+  $hub->param('export', $export);
+  $hub->param('download', 1);
 
   ## Create component
   my ($component, $error) = $self->object->create_component;
   my $controller;
 
-  if ($error) {
+  unless ($error) {
+    $component->content;
+    my $path = $hub->param('file');
+    $controller = 'Download';
+
+    $params->{'filename'}       = $hub->param('filename');
+    $params->{'format'}         = $format;
+    $params->{'file'}           = $path;
+    $params->{'__clear'}        = 1;
+
+    $self->ajax_redirect($hub->url('Download', $params), undef, undef, 'download');
   }
-  else {
-    warn ">>> COMPONENT $component";
-  }
-  use Data::Dumper; warn Dumper($params);
-  $self->ajax_redirect($hub->url($controller || (), $params), $controller ? (undef, undef, 'download') : ());
 }
 
 1;
