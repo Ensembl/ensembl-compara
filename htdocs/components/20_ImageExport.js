@@ -20,15 +20,29 @@ Ensembl.Panel.ImageExport = Ensembl.Panel.extend({
     var panel = this;
 
     this.base();
+    this.elLk.form = this.el.find('form').first();
 
-    this.elLk.form      = this.el.find('form').first();
+    // Extension change for custom format dropdown
     this.elLk.extSwitch = this.elLk.form.find('select[name=image_format]').on('change', function() { panel.updateExtension(this.value); });
+    // Extension change for PDF preset
+    this.elLk.pdfSwitch = this.elLk.form.find('input[name=format]').on('change', function() { 
+                            if (this.value == 'pdf') {
+                              panel.updateExtension(this.value); 
+                            }
+                            else if (this.value == 'custom') {
+                              // do nothing - wait until format is selected, as per code above
+                            }
+                            else {
+                              // reset to default PNG
+                              panel.updateExtension('png'); 
+                            }
+                          });
   },
 
   updateExtension: function(newExt) {
     this.elLk.fileName  = this.elLk.form.find('input[name=filename]');
     var oldName         = this.elLk.fileName.val();
-    var regex           = /\.(\w)+$/i;
+    var regex           = /\.(\w)*$/i;
     var newName         = oldName.replace(regex, '.' + newExt);
     this.elLk.fileName.val(newName);
   }
