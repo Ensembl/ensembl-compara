@@ -689,22 +689,9 @@ sub _export_image {
   if ($formats{$format}) {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
     $image->drawable_container->{'config'}->set_parameter('contrast',$contrast);
-    (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
-    my $filename = sprintf '%s-%s-%s.%s', $comp, $hub->filename($self->object), $scale, $formats{$format}{'extn'};
     
-    if ($hub->param('download')) {
-      $hub->input->header(-type => $formats{$format}{'mime'}, -attachment => $filename);
-    } else {
-      $hub->input->header(-type => $formats{$format}{'mime'}, -inline => $filename);
-    }
-
-    if ($formats{$format}{'extn'} eq 'txt') {
-      print $image->drawable_container->{'export'};
-      return 1;
-    }
-
-    $image->render($format);
-    return 1;
+    my $path = $image->render($format);
+    $hub->param('file', $path);
   }
   
   return 0;

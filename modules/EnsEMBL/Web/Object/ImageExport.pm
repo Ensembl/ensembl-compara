@@ -67,5 +67,57 @@ sub create_component {
   return ($component, $error);
 }
 
+sub handle_download {
+### Retrieves file contents and outputs direct to Apache
+### request, so that the browser will download it instead
+### of displaying it in the window.
+### Uses Controller::Download, via url /Download/ImageExport/
+  my ($self, $r) = @_;
+  my $hub = $self->hub;
+
+  my $filename    = $hub->param('filename');
+  my $format      = $hub->param('format');
+  my $path        = $hub->param('file');
+
+  ## Strip double dots to prevent downloading of files outside tmp directory
+  $path =~ s/\.\.//g;
+  ## Remove any remaining illegal characters
+  $path =~ s/[^\w|-|\.|\/]//g;
+
+  ## Get content
+  my %mime_types = (
+        'png' => 'image/png',
+        'pdf' => 'application/pdf',
+        'svg' => 'image/svg+xml',
+  );
+  my $mime_type = $mime_types{$format} || 'text/plain';
+
+  my %params = (hub => $hub, file => $path);
+  my $file = EnsEMBL::Web::File::Dynamic::Image->new(%params);
+  my $error;
+
+  if ($file->exists) {
+    my $result = $file->fetch;
+    my $content = $result->{'content'};
+    if ($content) {
+
+      $r->headers_out->add('Content-Type'         => $mime_type);
+      $r->headers_out->add('Content-Length'       => length $content);
+      $r->headers_out->add('Content-Disposition'  => sprintf 'attachment; filename=%s', $filename);
+
+      print $content;
+    }
+    else {
+      $error = $result->{'error'};
+    }
+  }
+  else {
+    $error =  ["Sorry, could not find download file $filename."];
+  }
+
+  if ($error) {
+    warn ">>> DOWNLOAD ERROR: @$error";
+  }
+}
 
 1;
