@@ -45,8 +45,9 @@ sub process {
     $export .= sprintf('-c-%s', $contrast);
   }
 
-  ## Resize image
-  my $resize = $hub->param('resize') || $presets->{$hub->param('format')}{'size'};
+  ## Save size parameters (because we reset format in next block)
+  my $resize = $hub->param('image_format') ? $hub->param('resize') : $presets->{$hub->param('format')}{'size'};
+  my $current_width = $ENV{'ENSEMBL_IMAGE_WIDTH'};
 
   ## Reset parameters to something that the image component will understand
   $hub->param('format', $format);
@@ -63,6 +64,17 @@ sub process {
   my $controller;
 
   unless ($error) {
+    ## Resize image as necessary
+    if ($resize && $resize != $current_width) {
+      my $type        = $hub->param('data_type');
+      my $view_config = $component->view_config($type);
+      if ($view_config) {
+        my $ic_name       = $view_config->image_config;
+        my $image_config  = $hub->get_imageconfig($ic_name);
+        $image_config->image_width($resize) if $image_config;
+      }
+    }
+
     $component->content;
     my $path = $hub->param('file');
     $controller = 'Download';
