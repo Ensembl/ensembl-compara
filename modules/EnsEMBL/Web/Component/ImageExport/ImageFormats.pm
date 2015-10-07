@@ -46,7 +46,7 @@ sub content {
   $intro_fieldset->add_field({
                         'type'  => 'String',
                         'name'  => 'filename',
-                        'label' => 'File name (optional)',
+                        'label' => 'File name',
                         'value' => $self->default_file_name,
                         });
 
