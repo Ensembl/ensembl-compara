@@ -59,6 +59,15 @@ sub new {
 
 sub init {}
 
+# \f -- optional hyphenation point
+# \a -- optional break point (no hyphen)
+sub hyphenate {
+  local $_ = $_[0];
+  s/\f/&shy;/g;
+  s/\a/&#8203;/g;
+  return $_;
+}
+
 sub js_params { return {}; }
 sub clean { return $_[1]; }
 sub null { return 0; }
@@ -87,7 +96,7 @@ sub set_helptip {
 sub set_label {
   my ($self,$label) = @_;
 
-  $self->{'conf'}{'label'} = $label;
+  $self->{'conf'}{'label'} = hyphenate($label);
 }
 
 sub set_width {
