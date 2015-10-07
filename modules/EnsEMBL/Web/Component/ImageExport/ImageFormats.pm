@@ -156,7 +156,9 @@ sub default_file_name {
   my $type = $hub->param('data_type');
 
   if ($type eq 'Location') {
-    $name .= '_'.$hub->param('r');
+    ## Replace hyphens, because they aren't export-friendly
+    (my $location = $hub->param('r')) =~ s/-/_/g;
+    $name .= "_$location";
   }
   elsif ($type eq 'Gene') {
     my $data_object = $hub->param('g') ? $hub->core_object('gene') : undef;
