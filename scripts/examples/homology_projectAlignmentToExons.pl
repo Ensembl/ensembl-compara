@@ -42,8 +42,8 @@ my $genes = $human_gene_adaptor-> fetch_all_by_external_name('BRCA2');
 my $gene = shift @$genes; # We assume we have only one gene
 
 my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
-my @mouse_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Mus_musculus",['ENSEMBL_ORTHOLOGUES'])};
-my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Rattus_norvegicus",['ENSEMBL_ORTHOLOGUES'])};
+my @mouse_homologies = @{$homology_adaptor->fetch_all_by_Member($member, -TARGET_SPECIES => 'Mus_musculus', -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES')};
+my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member($member, -TARGET_SPECIES => 'Rattus_norvegicus', -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES')};
 
 my $aligned_member = $member->get_canonical_SeqMember;
 
