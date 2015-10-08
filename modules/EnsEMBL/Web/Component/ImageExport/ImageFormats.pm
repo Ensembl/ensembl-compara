@@ -81,11 +81,11 @@ sub content {
   ## Options for custom format
   my $opt_fieldset  = $form->add_fieldset({'class' => '_stt_custom', 'legend' => 'Options'});
 
-  my $image_formats = [{'value' => '',     'caption' => '-- Choose --', 'class' => '_stt'}];
+  my $image_formats = [{'value' => '', 'caption' => '-- Choose --', 'class' => '_stt'}];
   my %format_info   = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   foreach (sort keys %format_info) {
     my $params = {'value' => $_, 'caption' => $format_info{$_}{'name'}, 'class' => ['_stt']};
-    push @{$params->{'class'}}, '_stt__raster' if $format_info{$_}{'type'} eq 'raster';
+    push @{$params->{'class'}}, '_stt__raster ' if $format_info{$_}{'type'} eq 'raster';
     push @$image_formats, $params;
   }
   $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'image_format', 'class' => '_stt', 
@@ -99,7 +99,7 @@ sub content {
   foreach (@sizes) {
     push @$image_sizes, {'value' => $_, 'caption' => "$_ px"};
   }
-  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'resize', 'field_class' => '_stt_raster',
+  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'resize', 'field_class' => '_stt_raster', 
                             'label' => 'Image size', 'values' => $image_sizes});
 
   my $image_scales = [
