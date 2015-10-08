@@ -74,7 +74,6 @@ sub go {
   $self->{'wire'} = from_json($hub->param('wire'));
   my $more = JSON->new->allow_nonref->decode($hub->param('more'));
   my $incr_ok = ($hub->param('incr_ok')||'' eq 'true');
-  # Add plugins
 
   my $out = $self->newtable_data_request($more,$incr_ok,$keymeta,0);
   if($self->{'wire'}{'format'} eq 'export') {
@@ -116,45 +115,23 @@ sub convert_to_csv {
   return $out; 
 }
 
-sub server_sort {
-  my ($self,$responses,$sort) = @_;
+sub run_extensions {
+  my ($self,$responses) = @_;
 
-  my @sort = @$sort;
-  my @columns = map { $self->{'config'}->column($_->{'key'}) } @sort;
-  push @sort,{ key => '__tie', dir => 1 };
-  push @columns,
-    EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
+  my @plugins;
 
-  # Capture the data
-  my $convert = EnsEMBL::Web::NewTable::Convert->new(0);
-  $convert->add_response($_) for @$responses;
-  my $i = 0;
-  my @keys;
-  $convert->run(sub {
-    my ($row) = @_;
-    $row->{'__tie'} = $i++;
-    push @keys, [ map { $row->{$_->{'key'}} } @sort ]; 
-  });
-
-  # Sort it
-  my $keymeta = $self->{'config'}->keymeta();
-  my @cache;
-  my @order = sort {
-    my $c = 0;
-    foreach my $i (0..$#sort) {
-      $cache[$i]||={};
-      $c = $columns[$i]->compare($a->[$i],$b->[$i],
-                                 $sort[$i]->{'dir'},$keymeta,
-                                 $cache[$i],$sort[$i]->{'key'});
-      last if $c;
-    }
-    $c;
-  } @keys;
-  
-  # Invert index
-  my @out;
-  $out[$order[$_]->[-1]] = $_ for (0..$#order);
-  return \@out;
+  # Get a list
+  foreach my $p (values %{$self->{'config'}->plugins}) {
+    next unless $p->can('extend_response');
+    my $pp = $p->extend_response($self->{'config'},$self->{'wire'});
+    next unless defined $pp;
+    push @plugins,$pp;
+  }
+  $_->{'pre'}->() for @plugins;
+  my $convert = EnsEMBL::Web::NewTable::Convert->new(0); 
+  $convert->add_response($_) for @{$self->{'response'}{'responses'}};
+  $convert->run(sub { $_->{'run'}->($_[0]) for @plugins; });
+  $self->{'response'}{$_->{'name'}} = $_->{'post'}->() for @plugins;
 }
 
 sub merge_enum {
@@ -223,10 +200,6 @@ sub newtable_data_request {
     $self->run_phase($self->{'config'}->phase($_),$keymeta) for (0..$num_phases-1);
     $phase = $num_phases;
   }
-  my $order;
-  if($self->{'wire'}{'sort'}) {
-    $order = $self->server_sort($self->{'out'},$self->{'wire'}{'sort'});
-  }
 
   $more = {
     phase => $phase,
@@ -234,15 +207,17 @@ sub newtable_data_request {
     shadow_lengths => $self->{'shadow_lengths'}
   };
   $more = undef if $phase == $num_phases;
-  return {
+  $self->{'response'} = {
     responses => $self->{'out'},
-    order => $order,
+#    order => $order,
     keymeta => $self->{'key_meta'},
     shadow => \%shadow,
     enums => $self->finish_enum(),
     orient => $self->{'orient'},
     more => $more,
   };
+  $self->run_extensions();
+  return $self->{'response'};
 }
 
 1;
