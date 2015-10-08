@@ -66,7 +66,10 @@ sub process {
   my ($component, $error) = $self->object->create_component;
   my $controller;
 
-  unless ($error) {
+  if ($error) {
+    warn ">>> ERROR CREATING COMPONENT: $error";
+  }
+  else {
     ## Resize image as necessary
     if ($resize && $resize != $current_width) {
       $hub->param('image_width', $resize);
