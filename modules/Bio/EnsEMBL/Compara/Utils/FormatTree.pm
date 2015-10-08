@@ -56,6 +56,10 @@ modifier_dot   : "."
 {
     $tokens[-1]->{modifier} = "dot";
 }
+modifier_comma : ","
+{
+    $tokens[-1]->{modifier} = "comma";
+}
 modifier_underscore: "_"
 {
     $tokens[-1]->{modifier} = "underscore";
@@ -123,7 +127,7 @@ Token       : "%"  (Len_limit)(?) "{" (has_parent)(?) ('"' <skip: ''> preliteral
     push @tokens, {}
 }
 
-Condition   : Code ( modifier_dot | modifier_underscore )(?) (modifier_upper)(?)  ( or Letter_code )(s?)
+Condition   : Code ( modifier_dot | modifier_comma | modifier_underscore )(?) (modifier_upper)(?)  ( or Letter_code )(s?)
 {
     if (scalar @{$item[4]}) {
         $tokens[-1]->{alternatives} = join "", @{$item[4]}
@@ -420,7 +424,7 @@ sub _internal_format_newick {
                         'underscore' => '_',
                     }->{$token->{modifier} || ''};
 
-                    my $forbidden_char = '[ ,(:;)]';
+                    my $forbidden_char = $token->{modifier} ? '[ ,(:;)]' : '[,(:;)]';
                     $itemstr =~ s/^$forbidden_char+//;
                     $itemstr =~ s/$forbidden_char+$//;
                     $itemstr =~ s/$forbidden_char+/$modifier/g;
