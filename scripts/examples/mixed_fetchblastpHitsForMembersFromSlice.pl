@@ -45,8 +45,8 @@ my $rat_dnafrag = $comparaDBA->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($r
 
 foreach my $pep (@{$members}) {
   next unless($pep->dnafrag_id == $rat_dnafrag->dbID);
-  next unless($pep->dnafrag_start < 4801065 );
-  next unless($pep->dnafrag_end > 4791387 );
+  next unless($pep->dnafrag_start < 4893881 );
+  next unless($pep->dnafrag_end > 4883962 );
 
   print $pep->toString(), "\n";
 
