@@ -52,8 +52,7 @@ if ($compara_url) {
   $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
 }
 
-my $tree_Adaptor = $compara_dba->get_GeneTreeAdaptor();
-my $tree = $tree_Adaptor->fetch_by_dbID($tree_id);
+my $tree = $compara_dba->get_GeneTreeAdaptor()->fetch_by_dbID($tree_id);
 die "The ID supplied ($tree_id) is not a valid ProteinTree ID or NCTree ID\n" unless (defined $tree);
 $tree->preload;
 
