@@ -33,20 +33,22 @@ GetOptions(
   "tree_id=i" => \$tree_id,
 );
 
-if ($registry_file) {
-  die if (!-e $registry_file);
-  $reg->load_all($registry_file);
-} elsif ($url) {
-  $reg->load_registry_from_url($url);
-} else {
-  $reg->load_all();
-}
-
 my $compara_dba;
 if ($compara_url) {
   use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
   $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara_url);
 } else {
+  if ($registry_file) {
+    die if (!-e $registry_file);
+    $reg->load_all($registry_file);
+  } elsif ($url) {
+    $reg->load_registry_from_url($url);
+  } else {
+    $reg->load_registry_from_db(
+      -host=>'ensembldb.ensembl.org',
+      -user=>'anonymous',
+    );
+  }
   $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
 }
 
