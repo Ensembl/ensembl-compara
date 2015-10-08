@@ -331,6 +331,7 @@
     if(got.more)
       get_new_data(widgets,$table,cur_manifest,got.more,config);
     if($.orient_compares_equal(cur_manifest.manifest,got.orient)) {
+      flux(widgets,$table,'think',1);
       var d = $.Deferred().resolve([0,-1,-1]);
       for(var i=0;i<got.responses.length;i++) {
         d = d.then(function(x) {
@@ -342,11 +343,13 @@
         });
       }
       d = d.then(function(x) {
-        render_grid(widgets,$table,cur_manifest,x[1],x[2]);
+        return render_grid(widgets,$table,cur_manifest,x[1],x[2]);
+      }).then(function() {
+        if(!got.more) { flux(widgets,$table,'load',-1); }
+        flux(widgets,$table,'think',-1);
       });
     }
     var cur_manifest = $table.data('manifest');
-    if(!got.more) { flux(widgets,$table,'load',-1); }
   }
 
   function get_new_data(widgets,$table,manifest_c,more,config) {
