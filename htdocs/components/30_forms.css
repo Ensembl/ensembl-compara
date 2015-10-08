@@ -445,11 +445,9 @@ textarea.inactive {
 /* Override standard layout - SelectToToggle compatible */
 
 form.freeform-stt fieldset .form-field {
-  display:block!important;
 } 
 
 form.freeform-stt fieldset .form-field .ff-right {
-  display:inline!important;
   margin: 0;
   padding: 0;
 }
