@@ -40,7 +40,7 @@ my $pafDBA = $comparaDBA-> get_PeptideAlignFeatureAdaptor;
 my $humanGDB = $comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("human");
 my $ratGDB = $comparaDBA->get_GenomeDBAdaptor-> fetch_by_registry_name("rat");
 
-my $members = $comparaDBA->get_SeqMemberAdaptor->fetch_all_by_source_taxon( 'ENSEMBLPEP', $ratGDB->taxon_id);
+my $members = $comparaDBA->get_GeneMemberAdaptor->fetch_all_by_GenomeDB($ratGDB);
 my $rat_dnafrag = $comparaDBA->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($ratGDB, '15');
 
 foreach my $pep (@{$members}) {
@@ -50,7 +50,7 @@ foreach my $pep (@{$members}) {
 
   print $pep->toString(), "\n";
 
-  my $pafs = $pafDBA->fetch_all_RH_by_member_genomedb($pep->dbID, $humanGDB->dbID);
+  my $pafs = $pafDBA->fetch_all_RH_by_member_genomedb($pep->canonical_member_id, $humanGDB->dbID);
 
   foreach my $paf (@{$pafs}) {
     print $paf->toString, "\n";
