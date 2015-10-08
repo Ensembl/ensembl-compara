@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Tools::PluginInspector;
+package EnsEMBL::Web::Utils::PluginInspector;
 
 ## TODO
 
