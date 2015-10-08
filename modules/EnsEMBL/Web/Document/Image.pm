@@ -278,7 +278,7 @@ sub add_image_export_icon {
           'href'      => $hub->url({'type' => 'ImageExport', 'action' => 'ImageFormats', 
                                     'data_type' => $hub->type, 'component' => $self->component}),
           'class'     => 'export modal_link '.$self->{'export'},
-          'icon_key'  => 'export',
+          'icon_key'  => 'image',
           };
 }
 
