@@ -4,7 +4,7 @@ use warnings;
 package EnsEMBL::Web::NewTable::Plugins::Core;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
-sub children { return [qw(Tabular Paragraph Loading ClientSort Types Ancient)]; }
+sub children { return [qw(Tabular Paragraph Loading Types Ancient)]; }
 sub requires { return children(); }
 
 package EnsEMBL::Web::NewTable::Plugins::Tabular;

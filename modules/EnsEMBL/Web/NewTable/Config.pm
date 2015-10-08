@@ -23,7 +23,7 @@ use warnings;
 
 use Carp;
 
-our @PLUGINS = qw(Core Frame Decorate Filter Misc Paging);
+our @PLUGINS = qw(Core Frame Decorate Filter Misc Paging Sort);
 our %PLUGINS;
 
 use EnsEMBL::Web::NewTable::Column;
@@ -45,6 +45,8 @@ foreach my $plugin (@PACKAGES) {
   my $package = "EnsEMBL::Web::NewTable::Plugins::$plugin";
   if(UNIVERSAL::isa($package,"EnsEMBL::Web::NewTable::Plugin")) {
     $PLUGINS{$plugin} = $package;
+  } else {
+    warn "NOT A PLUGIN! $plugin\n";
   }
 }
 
@@ -139,7 +141,9 @@ sub size_needed {
   return $_[0]->{'size_needed'};
 }
 
-sub plugins {
+sub plugins { return $_[0]->{'plugins'}; }
+
+sub plugins_conf {
   my ($self) = @_; 
 
   my %out;
@@ -206,7 +210,7 @@ sub config {
     widgets => \%widgets,
     phases => $self->{'phases'},
     keymeta => $self->{'keymeta'},
-    ssplugins => $self->plugins
+    ssplugins => $self->plugins_conf
   };
 }
 
