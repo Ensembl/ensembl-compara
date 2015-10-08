@@ -24,33 +24,67 @@ use warnings;
 use List::Util qw(first);
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(get_all_plugins get_file_plugins current_plugin previous_plugin next_plugin); # And more?
-
-sub current_plugin {
-  ## Gets the current plugin package and path name
-  my $caller  = [ caller ]->[1];
-  my $plugins = __PACKAGE__->get_all_plugins;
-
-  return first { $caller =~ /^$_->{path}/} @$plugins;
-}
+our @EXPORT_OK = qw(get_all_plugins get_file_plugins current_plugin previous_plugin next_plugin);
 
 sub get_all_plugins {
   ## Gets a list of all active plugins
   ## @return Ref to an ordered array of hashes (Each hash corresponds to individual plugin and contains 'path' and 'package' key)
-  my $plugins = $SiteDefs::ENSEMBL_PLUGINS;
-  my @plugins;
+  my @plugins = reverse @{$SiteDefs::ENSEMBL_PLUGINS};
+  my $plugins = [{ 'path' => $SiteDefs::ENSEMBL_WEBROOT, 'package' => 'core' }];
 
-  for (my $i = 0; $plugins->[$i]; $i += 2) {
-    push @plugins, { 'package' => $plugins->[$i], 'path' => $plugins->[$i+1] };
+  for (my $i = 0; $plugins[$i]; $i += 2) {
+    push @$plugins, { 'path' => $plugins[$i], 'package' => $plugins[$i+1] };
   }
 
-  return \@plugins;
+  return $plugins;
 }
 
-sub get_file_plugins {}
+sub get_file_plugins {
+  ## Gets list of all the plugins for the calling file
+  ## @return Ref to an ordered array of hashes (Each hash corresponds to individual plugin in which the calling file exists and contains 'file_path', 'path' and 'package' key)
+  my $caller  = $_[1] || [ caller ]->[1];
+  my %plugins = map { $_->{'package'} => $_ } @{__PACKAGE__->get_all_plugins};
+  my $plugins = ref $INC{$caller} eq 'ARRAY' ? $INC{$caller} : [[ 'core', $INC{$caller} ]];
 
-sub previous_plugin {}
+  return [ map { { 'file_path' => $_->[1], %{$plugins{$_->[0]}} } } @$plugins ];
+}
 
-sub next_plugin {}
+sub current_plugin {
+  ## Gets the current plugin package and path name
+  ## @return Hashref with keys 'path' and 'package'
+  my $caller = [ caller ]->[1];
+
+  for (@{__PACKAGE__->get_file_plugins($caller)}) {
+    return $_ if $caller eq $_->{'file_path'};
+  }
+}
+
+sub previous_plugin {
+  ## Gets the current plugin package and path name
+  ## @return Hashref with keys 'file_path', 'path' and 'package' if previous plugin exists, undef otherwise
+  my $caller = [ caller ]->[1];
+  my $previous;
+
+  for (@{__PACKAGE__->get_file_plugins($caller)}) {
+    last if $caller eq $_->{'file_path'};
+    $previous = $_;
+  }
+
+  return $previous;
+}
+
+sub next_plugin {
+  ## Gets the current plugin package and path name
+  ## @return Hashref with keys 'file_path', 'path' and 'package' if next plugin exists, undef otherwise
+  my $caller = [ caller ]->[1];
+  my $next;
+
+  for (reverse @{__PACKAGE__->get_file_plugins($caller)}) {
+    last if $caller eq $_->{'file_path'};
+    $next = $_;
+  }
+
+  return $next;
+}
 
 1;
