@@ -50,10 +50,9 @@ printf("mlss(%d) %s : %s\n", $mlss->dbID, $mlss->method->type, $species_names);
 my $homology_list = $comparaDBA->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
 printf("fetched %d homologies\n", scalar(@{$homology_list}));
 
+my $alignIO = Bio::AlignIO->newFh(-interleaved => 0, -fh => \*STDOUT, -format => "phylip", -idlength => 20);
 foreach my $homology (@{$homology_list}) {
   my $sa = $homology->get_SimpleAlign(-seq_type => 'cds');
-  my $alignIO = Bio::AlignIO->newFh(-interleaved => 0, -fh => \*STDOUT, -format => "phylip", -idlength => 20);
-
   print $alignIO $sa;
 }
 
