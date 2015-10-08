@@ -970,7 +970,7 @@ sub string_node {
 my %ryo_modes = (
     'member_id' => '%{^-m}:%{d}',
     'member_id_taxon_id' => '%{-m}%{"_"-x}:%{d}',
-    'display_label_composite' => '%{-l,"_"}%{n}%{"_"-s}:%{d}',
+    'display_label_composite' => '%{-l"_"}%{n}%{"_"-s}:%{d}',
     'full_common' => '%{n}%{" "-c.^}%{"."-g}%{"_"-t"_MYA"}:%{d}',
     'gene_stable_id_composite' => '%{-i"_"}%{n}%{"_"-s}:%{d}',
     'gene_stable_id' => '%{-i}:%{d}',
@@ -983,10 +983,10 @@ my %ryo_modes = (
     'otu_id' => '%{-s"|"}%{-l"|"}%{n}:%{d}',
     'int_node_id' => '%{-n}%{o-}:%{d}',
     'full_web' => '%{n-}%{-n|p}%{"_"-s"_"}%{":"d}',
-    'phylip' => '%21{n,}:%{d}',
+    'phylip' => '%21{n}:%{d}',
 );
 
-my $nhx0 = '%{-n,|i|C(taxonomy_level)}:%{d}';
+my $nhx0 = '%{-n|i|C(taxonomy_level)}:%{d}';
 my $nhx1 = ':%{-E"D=N"}%{C(_newick_dup_code)-}%{":B="C(bootstrap)}';
 my $nhx2 = ':T=%{-x}%{C(species_tree_node,taxon_id)-}';
 

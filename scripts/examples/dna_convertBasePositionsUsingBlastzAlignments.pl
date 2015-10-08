@@ -52,7 +52,7 @@ my $method_link_species_set =
 	$method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
 	$alignment_type, $genome_dbs);
 
-die "need a file with human SNP positions \"chr:pos\" eg 6:136365469\n" unless ( -f $ARGV[0] );
+die "need a file with human SNP positions \"chr:pos\" eg 6:136365469\n" unless ( scalar(@ARGV) and (-r $ARGV[0]) );
 
 open(IN, $ARGV[0]) or die;
 

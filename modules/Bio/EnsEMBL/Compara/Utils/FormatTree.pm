@@ -56,10 +56,6 @@ modifier_dot   : "."
 {
     $tokens[-1]->{modifier} = "dot";
 }
-modifier_comma : ","
-{
-    $tokens[-1]->{modifier} = "comma";
-}
 modifier_underscore: "_"
 {
     $tokens[-1]->{modifier} = "underscore";
@@ -127,7 +123,7 @@ Token       : "%"  (Len_limit)(?) "{" (has_parent)(?) ('"' <skip: ''> preliteral
     push @tokens, {}
 }
 
-Condition   : Code ( modifier_dot | modifier_comma | modifier_underscore )(?) (modifier_upper)(?)  ( or Letter_code )(s?)
+Condition   : Code ( modifier_dot | modifier_underscore )(?) (modifier_upper)(?)  ( or Letter_code )(s?)
 {
     if (scalar @{$item[4]}) {
         $tokens[-1]->{alternatives} = join "", @{$item[4]}
@@ -208,7 +204,6 @@ my $node_id_cb = sub {  ## only if we are in a leaf? ... if ($self->{tree}->is_l
 my $label_cb = sub { ## only if we are in a leaf? ... if ($self->{tree}->is_leaf);
   my ($self) = @_;
   my $display_label = $self->{tree}->gene_member->display_label;
-  $display_label =~ s/\;//g;
   return $display_label;
 };
 
@@ -220,11 +215,7 @@ my $label_ext_cb = sub {
         my $display_xref = $self->{tree}->gene_member->get_Gene->display_xref;
         $display_label = $display_xref->display_id if (defined($display_xref));
     }    
-    $display_label =~ s/\;//g if $display_label;
-    if (defined($display_label) && $display_label =~ /^\w+$/) {
-        return $display_label;
-    }
-    return undef;
+    return $display_label;
 };
 
 # C(genome_db,short_name)
@@ -277,7 +268,6 @@ my $sp_name_cb = sub {
   my $species_name;
   if ($self->{tree}->can('genome_db')) {
       $species_name = $self->{tree}->genome_db->name;
-      $species_name =~ s/\ /\_/g;
       return $species_name;
   } elsif ($self->{tree}->can('taxon_id')) {
       my $taxon_id = $self->{tree}->taxon_id();
@@ -424,17 +414,17 @@ sub _internal_format_newick {
                 if (defined $itemstr) {
                     #print Dumper($itemstr);
                     #print Dumper($token);
-                    if (exists $token->{modifier}) {
-                        if ($token->{modifier} eq 'comma') {
-                            $itemstr =~ s/[,(:)+]//g;
-                        } elsif ($token->{modifier} eq 'dot') {
-                            $itemstr =~ s/\,//g;
-                            $itemstr =~ s/\ /\./g;
-                            $itemstr =~ s/\'//g;
-                        } elsif ($token->{modifier} eq 'underscore') {
-                            $itemstr =~ s/\ /\_/g;
-                        }
-                    }
+                    my $modifier = {
+                        '' => '',
+                        'dot' => '.',
+                        'underscore' => '_',
+                    }->{$token->{modifier} || ''};
+
+                    my $forbidden_char = '[ ,\[(:;)\]]';
+                    $itemstr =~ s/^$forbidden_char+//;
+                    $itemstr =~ s/$forbidden_char+$//;
+                    $itemstr =~ s/$forbidden_char+/$modifier/g;
+
                     $itemstr = uc $itemstr if exists $token->{upper};
 
                     my $str_to_append = $token->{preliteral}x!!$token->{preliteral}.$itemstr.$token->{postliteral}x!!$token->{postliteral};

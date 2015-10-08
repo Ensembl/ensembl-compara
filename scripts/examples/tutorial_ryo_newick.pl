@@ -21,50 +21,43 @@ use Getopt::Long;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
-my $help;
 my $registry_file;
 my $url;
 my $compara_url;
-my $tree_id = 2; # 112589 for NCTree
+my $tree_id = 3;  # This is a protein-tree
 
 GetOptions(
-  "help" => \$help,
   "url=s" => \$url,
   "compara_url=s" => \$compara_url,
   "conf|registry=s" => \$registry_file,
   "tree_id=i" => \$tree_id,
 );
 
-if ($registry_file) {
-  die if (!-e $registry_file);
-  $reg->load_all($registry_file);
-} elsif ($url) {
-  $reg->load_registry_from_url($url);
-} else {
-  $reg->load_all();
-}
-
 my $compara_dba;
 if ($compara_url) {
   use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
   $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara_url);
 } else {
+  if ($registry_file) {
+    die if (!-e $registry_file);
+    $reg->load_all($registry_file);
+  } elsif ($url) {
+    $reg->load_registry_from_url($url);
+  } else {
+    $reg->load_registry_from_db(
+      -host=>'ensembldb.ensembl.org',
+      -user=>'anonymous',
+    );
+  }
   $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
 }
 
-my $clusterset_id = 1;
-
-print "\nPlease insert an ncRNA tree ID to run the example with (or just press \"enter\" to use the default $tree_id ID): ";
-my $new_id = <>;
-chomp $new_id;
-$tree_id = $new_id eq '' ? $tree_id : $new_id;
-
-my $tree_Adaptor = $compara_dba->get_GeneTreeAdaptor();
-my $tree = $tree_Adaptor->fetch_by_dbID($tree_id);
+my $tree = $compara_dba->get_GeneTreeAdaptor()->fetch_by_dbID($tree_id);
 die "The ID supplied ($tree_id) is not a valid ProteinTree ID or NCTree ID\n" unless (defined $tree);
 $tree->preload;
+my $member_type = $tree->member_type;
 
-print "Running the script with ncRNA tree with ID: $tree_id\n\n";
+print "Running the script with $member_type tree with ID: $tree_id\n\n";
 print "The new 'role-your-own' option in NestedSet's format_newick method allows you to specify the format you want for your tree\n";
 print "Here you can find 7 examples showing you all the details of this functionality\n\n";
 print "You can press Ctrl-C at any moment to exit this script\n\n";

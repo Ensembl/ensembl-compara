@@ -46,7 +46,6 @@ foreach my $species_name (@list_of_species) {
       next;
   }
   push @taxon_ids, $taxon->dbID;
-  print STDERR sprintf("  %s [%d]\n", $species_name, $taxon->dbID);
 }
 
 my $root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(

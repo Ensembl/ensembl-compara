@@ -33,15 +33,13 @@ my $reg = 'Bio::EnsEMBL::Registry';
 $reg->load_registry_from_db(
   -host=>'ensembldb.ensembl.org',
   -user=>'anonymous', 
-  -db_version=>66,
-  -verbose
 );
 
 
 my $spp = "Homo sapiens";
 my $chr = "15";
-my $start = 76628758; 
-my $end = 76635191;
+my $start = 76336417;
+my $end = 76337417;
 
 # set up an AlignIO to format SimpleAlign output
 my $alignIO = Bio::AlignIO->newFh(-interleaved => 0, -fh => \*STDOUT, -format => 'clustalw');

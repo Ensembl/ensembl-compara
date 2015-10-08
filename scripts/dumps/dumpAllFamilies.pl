@@ -24,17 +24,13 @@ use Getopt::Long;
 use Bio::EnsEMBL::Registry;
 
 my $continue     =  0;    # skip already dumped families
-my $ens_only     =  0;    # allow Uniprot members as well
-my $fasta_len    = 72;    # length of fasta lines
-my $db_version   = 57;    # needs to be set manually while compara is in production
+my $db_version       ;    # needs to be set manually while compara is in production
 my $min_fam_size =  1;    # set to 2 to exclude singletons (or even higher)
-my $target_dir   = "family${db_version}_dumps";     # put them there
+my $target_dir       ;    # put them there
 
 GetOptions(
     'continue!'      => \$continue,
-    'ens_only!'      => \$ens_only,
-    'fasta_len=i'    => \$fasta_len,
-    'db_ver=i'       => \$db_version,
+    'db_version=i'   => \$db_version,
     'min_fam_size=i' => \$min_fam_size,
     'target_dir=s'   => \$target_dir,
 );
@@ -46,6 +42,8 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
 );
 
 my $family_adaptor = Bio::EnsEMBL::Registry->get_adaptor('multi', 'compara', 'family');
+
+$target_dir = sprintf('family%d_dumps', $family_adaptor->db->get_MetaContainerAdaptor->get_schema_version) unless $target_dir;
 
 my $families = $family_adaptor->fetch_all();
 
@@ -62,8 +60,8 @@ while (my $f = shift @$families) {
         next;
     }
 
-    if ($f->Member_count_by_source('ENSEMBLPEP') >= $min_fam_size) {
-        my $n = $f->print_sequences_to_file($file_name, id_type => 'VERSION');
+    if (scalar(@{$f->get_all_Members()}) >= $min_fam_size) {
+        my $n = $f->print_sequences_to_file($file_name, -id_type => 'VERSION');
         warn "$file_name ($n members)\n";
     }
 }

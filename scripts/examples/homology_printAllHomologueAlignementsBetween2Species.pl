@@ -37,14 +37,9 @@ $reg->load_registry_from_db(
 # get compara DBAdaptor
 my $comparaDBA = $reg->get_DBAdaptor('Multi', 'compara');
 
-# get GenomeDB for human and mouse
-my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
-my $human_gdb_id = $humanGDB->dbID;
-my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
-my $mouse_gdb_id = $mouseGDB->dbID;
-
-my $mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[$human_gdb_id,$mouse_gdb_id]);
+my $sp1 = "human";
+my $sp2 = "mouse";
+my $mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_registry_aliases('ENSEMBL_ORTHOLOGUES', [$sp1, $sp2]);
 
 my $species_names = '';
 foreach my $gdb (@{$mlss->species_set_obj->genome_dbs}) {
@@ -55,10 +50,9 @@ printf("mlss(%d) %s : %s\n", $mlss->dbID, $mlss->method->type, $species_names);
 my $homology_list = $comparaDBA->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
 printf("fetched %d homologies\n", scalar(@{$homology_list}));
 
+my $alignIO = Bio::AlignIO->newFh(-interleaved => 0, -fh => \*STDOUT, -format => "phylip", -idlength => 20);
 foreach my $homology (@{$homology_list}) {
   my $sa = $homology->get_SimpleAlign(-seq_type => 'cds');
-  my $alignIO = Bio::AlignIO->newFh(-interleaved => 0, -fh => \*STDOUT, -format => "phylip", -idlength => 20);
-
   print $alignIO $sa;
 }
 

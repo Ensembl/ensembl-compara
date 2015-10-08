@@ -42,9 +42,10 @@ my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta");
 #my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta","mus_musculus","rattus_norvegicus","canis_familiaris","bos_taurus","sus_scrofa","monodelphis_domestica","ornithorhynchus_anatinus","gallus_gallus","danio_rerio");
 my $hash_of_species;
 my @gdbs;
-foreach my $species_binomial (@list_of_species) {
-  push @gdbs, $genomedb_adaptor->fetch_by_name_assembly($species_binomial);
-  $hash_of_species->{$species_binomial} = 1;
+foreach my $species_name (@list_of_species) {
+  my $gdb = $genomedb_adaptor->fetch_by_registry_name($species_name);
+  push @gdbs, $gdb;
+  $hash_of_species->{$gdb->name} = 1;
 }
 
 my $present_in_all = undef;
@@ -72,29 +73,29 @@ my %gene_member_id_2_stable_id = map {$_->dbID => $_->stable_id} @{$gene_member_
 
 # This code below is optional and is only to sort out cases where all
 # genomes are in the list and print the list of ids if it is the case
-my @list = keys %$hash_of_species;
+my @all_species_names = keys %$hash_of_species;
 my $tagged_stable_id;
 print STDERR "Printing the orthology groups\n";
-foreach my $stable_id (keys %$present_in_all) {
-  my @set = $present_in_all->{$stable_id};
+foreach my $gene_member_id (keys %$present_in_all) {
+  my @set = $present_in_all->{$gene_member_id};
   my $present;
   foreach my $element (@set) {
-    foreach my $name (@list) {
+    foreach my $name (@all_species_names) {
       $present->{$name} = 1 if (defined($element->{$name}));
     }
   }
-  if (scalar keys %$present == scalar @list) {
-    next if (defined($tagged_stable_id->{$stable_id})); #Print only once
-    $tagged_stable_id->{$stable_id} = 1;
-    my $stable_ids;
-    $stable_ids->{$stable_id} = 1;
-    foreach my $name (@list) {
-      foreach my $id (keys %{$present_in_all->{$stable_id}{$name}}) {
+  if (scalar keys %$present == scalar @all_species_names) {
+    next if (defined($tagged_stable_id->{$gene_member_id})); #Print only once
+    $tagged_stable_id->{$gene_member_id} = 1;
+    my $gene_member_ids;
+    $gene_member_ids->{$gene_member_id} = 1;
+    foreach my $name (@all_species_names) {
+      foreach my $id (keys %{$present_in_all->{$gene_member_id}{$name}}) {
         $tagged_stable_id->{$id} = 1;
-        $stable_ids->{$id} = 1;
+        $gene_member_ids->{$id} = 1;
       }
     }
-    print join(",", map {$gene_member_id_2_stable_id{$_}} keys %$stable_ids), "\n";
+    print join(",", map {$gene_member_id_2_stable_id{$_}} keys %$gene_member_ids), "\n";
   }
 }
 
