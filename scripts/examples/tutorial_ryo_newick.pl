@@ -21,14 +21,12 @@ use Getopt::Long;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
-my $help;
 my $registry_file;
 my $url;
 my $compara_url;
 my $tree_id = 3;  # This is a protein-tree
 
 GetOptions(
-  "help" => \$help,
   "url=s" => \$url,
   "compara_url=s" => \$compara_url,
   "conf|registry=s" => \$registry_file,
