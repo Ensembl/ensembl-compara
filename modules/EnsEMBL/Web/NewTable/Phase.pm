@@ -39,7 +39,7 @@ sub new {
   my ($proto,$component,$phase,$row_start,$shadow_start,$config,$wire) = @_;
   my $class = ref($proto) || $proto;
   my $self = {
-    type => $config->type,
+    type => $config->type||'',
     enum_values => {},
     component => $component,
     phase_name => $phase->{'name'},
@@ -135,44 +135,6 @@ sub passes_muster {
   return 1;
 }
 
-sub server_order_capture {
-  my ($self,$row) = @_;
-
-  my $sort = $self->{'wire'}{'sort'};
-  foreach my $i (0..$#$sort) {
-    push @{$self->{'sort_data'}[$i]||=[]},$row->{$sort->[$i]{'key'}};
-  }
-  push @{$self->{'sort_data'}[@$sort]||=[]},$self->{'shadow_num'};
-}
-
-sub server_order_calc {
-  my ($self) = @_;
-
-  my $keymeta = $self->{'config'}->keymeta();
-  my @sort = @{$self->{'wire'}{'sort'}};
-  my $series = $self->{'series'};
-  my @cache;
-  my %rseries;
-  $rseries{$series->[$_]} = $_ for (0..$#$series);
-  $rseries{'__tie'} = -1;
-  my @columns = map { $self->{'config'}->column($_->{'key'}) } @sort;
-  push @sort,{ key => '__tie', dir => 1 };
-  push @columns,EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
-  my $sd = $self->{'sort_data'};
-  my @order = sort {
-    my $c = 0;
-    foreach my $i (0..$#sort) {
-      $cache[$i]||={};
-      $c = $columns[$i]->compare($sd->[$i][$a],$sd->[$i][$b],
-                                 $sort[$i]->{'dir'},$keymeta,$cache[$i],
-                                 $sort[$i]->{'key'});
-      last if $c;
-    }
-    $c;
-  } (0..$#{$sd->[0]});
-  $self->{'order'} = \@order;
-}
-
 sub server_nulls {
   my ($self,$row) = @_;
 
@@ -228,9 +190,6 @@ sub add_row {
   return 0 unless $self->passes_muster($row);
   $self->{'request_num'}++;
   $self->add_enum($row);
-  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $self->server_order_capture($row);
-  }
   my $nulls = $self->server_nulls($row);
   $self->add_row_data($row);
   $self->{'inlen'}++;
@@ -254,9 +213,6 @@ sub go {
   my ($self) = @_;
 
   $self->go_data_cached;  
-  if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
-    $self->server_order_calc();
-  }
   return {
     out => {
       data => $self->{'data'},
