@@ -31,7 +31,7 @@ package EnsEMBL::Web::Object::ImageExport;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Controller;
 use EnsEMBL::Web::Builder;
-use EnsEMBL::Web::File::User;
+use EnsEMBL::Web::File::Dynamic::Image;
 
 use strict;
 use warnings;
@@ -88,7 +88,6 @@ sub handle_download {
   ## Get content
   my %format_info = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   my $mime_type   = $format_info{$format}{'mime'} || 'text/plain';
-  warn ">>> SENDING $format MIME TYPE $mime_type";
 
   my %params = (hub => $hub, file => $path);
   my $file = EnsEMBL::Web::File::Dynamic::Image->new(%params);
@@ -98,11 +97,8 @@ sub handle_download {
     my $result = $file->fetch;
     my $content = $result->{'content'};
     if ($content) {
-
-      $r->headers_out->add('Content-Type'         => $mime_type);
-      $r->headers_out->add('Content-Length'       => length $content);
-      $r->headers_out->add('Content-Disposition'  => sprintf 'attachment; filename=%s', $filename);
-
+      ## Create headers via hub, otherwise they get lost somewhere in the guts of the code. Don't ask...
+      $hub->input->header(-type => $mime_type, -attachment => $filename);
       print $content;
     }
     else {
