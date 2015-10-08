@@ -44,22 +44,10 @@ sub new {
   $self = { %$self, (
     hub => $hub,
     component => $component,
-    enum_values => {},
     out => [],
   )};
   bless $self,$class;
   return $self;
-}
-
-sub finish_enum {
-  my ($self,$row) = @_;
-
-  my %enums;
-  foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
-    my $column = $self->{'config'}->column($colkey);
-    $enums{$colkey} = $column->range($self->{'enum_values'}{$colkey}||{});
-  }
-  return \%enums;
 }
 
 sub go {
@@ -168,7 +156,6 @@ sub run_phase {
 
   $self->{'req_lengths'}{$era} = $out->{'request_num'};
   $self->{'shadow_lengths'}{$era} = $out->{'shadow_num'};
-  $self->merge_enum($self->{'enum_values'},$out->{'enum_values'});
 }
 
 sub newtable_data_request {
@@ -219,7 +206,6 @@ sub newtable_data_request {
     responses => $self->{'out'},
     keymeta => $self->{'key_meta'},
     shadow => \%shadow,
-    enums => $self->finish_enum(),
     orient => $self->{'orient'},
     more => $more,
   };
