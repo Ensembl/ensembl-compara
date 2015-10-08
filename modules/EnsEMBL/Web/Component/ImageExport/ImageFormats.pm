@@ -93,8 +93,15 @@ sub content {
   foreach (@sizes) {
     push @$image_sizes, {'value' => $_, 'caption' => "$_ px"};
   }
-
   $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'resize', 'label' => 'Image size', 'values' => $image_sizes});
+
+  my $image_scales = [
+                      {'value' => '', 'caption' => 'Standard'},
+                      {'value' => '2', 'caption' => 'High (x2)'},
+                      {'value' => '5', 'caption' => 'Very high (x5)'},
+                      ];
+
+  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'scale', 'label' => 'Resolution', 'values' => $image_scales});
 
   $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'contrast', 'label' => 'Increase contrast', 'value' => 'yes'}); 
 
