@@ -47,7 +47,7 @@ foreach my $gene (@$genes) {
   die "no members" unless (defined $member);
 
   # Fetch the tree
-  my $genetree = $genetree_adaptor->fetch_all_by_Member($member)->[0];
+  my $genetree = $genetree_adaptor->fetch_default_for_Member($member);
   next unless $genetree;
 
   # Get the protein multialignment and the back-translated CDS alignment
