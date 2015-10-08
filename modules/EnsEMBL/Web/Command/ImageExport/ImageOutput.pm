@@ -41,7 +41,7 @@ sub process {
 
   ## Set flags for scale and contrast
   my %flags = ('contrast' => 'c', 'scale' => 's');
-  foreach (keys %flags) {
+  foreach (sort keys %flags) {
     my $flag =  $hub->param($_) || $presets->{$hub->param('format')}{$_};
     if ($flag) {
       $export .= sprintf('-%s-%s', $flags{$_}, $flag);
