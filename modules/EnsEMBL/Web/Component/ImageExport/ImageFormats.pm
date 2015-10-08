@@ -91,7 +91,7 @@ sub content {
   $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'image_format', 'class' => '_stt', 
                             'label' => 'Format', 'values' => $image_formats});
 
-  $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'contrast', 'label' => 'Increase contrast', 'value' => 'yes'}); 
+  $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'contrast', 'label' => 'Increase contrast', 'value' => '2'}); 
 
   ## Size and resolution are only relevant to raster formats like PNG
   my $image_sizes = [{'value' => '', 'caption' => 'Current size'}];
