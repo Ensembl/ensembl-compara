@@ -25,6 +25,8 @@ use MIME::Base64;
 use Compress::Zlib;
 use JSON;
 
+use EnsEMBL::Web::Memoize;
+
 sub compress_block {
   return encode_base64(compress(JSON->new->encode($_[0])));
 }
@@ -59,6 +61,12 @@ sub new {
   };
   bless $self,$class;
   return $self;
+}
+
+sub memo_argument {
+  my ($self) = @_;
+
+  return { map { $_ => $self->{$_} } qw(component phase_name phase_rows series start shadow_num config wire) };
 }
 
 sub stand_down {
@@ -228,15 +236,24 @@ sub add_row {
   $self->{'inlen'}++;
 }
 
-sub go {
+sub go_data {
   my ($self) = @_;
 
-  my $type =~ s/\W//g;
+  my $type = $self->{'type'};
+  $type =~ s/\W//g;
   my $func = "table_content";
   $func .= "_$type" if $type;
 
   $self->{'component'}->$func($self);
   $self->consolidate();
+} 
+
+EnsEMBL::Web::Memoize::memoize('go_data');
+
+sub go {
+  my ($self) = @_;
+
+  $self->go_data_cached;  
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $self->server_order_calc();
   }
