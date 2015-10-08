@@ -26,25 +26,15 @@ use parent qw(EnsEMBL::Web::NewTable::Endpoint);
 use JSON qw(from_json);
 
 use CGI::Cookie;
-use MIME::Base64;
-use Compress::Zlib;
 use Digest::MD5 qw(md5_hex);
 use SiteDefs;
 use Text::CSV;
 
 use EnsEMBL::Web::NewTable::Config;
-use EnsEMBL::Web::Memoize;
+use EnsEMBL::Web::NewTable::Convert;
 use EnsEMBL::Web::NewTable::Phase;
 
 # XXX move all this stuff to somewhere it's more suited
-
-sub compress_block {
-  return encode_base64(compress(JSON->new->encode($_[0])));
-}
-
-sub uncompress_block {
-  return JSON->new->decode(uncompress(decode_base64($_[0])));
-}
 
 sub new {
   my ($proto,$hub,$component) = @_;
@@ -114,7 +104,11 @@ sub convert_to_csv {
 
   my $out = '';
   my $csv = Text::CSV->new({ binary => 1 });
-  $self->convert($data,sub {
+  my $convert = EnsEMBL::Web::NewTable::Convert->new;
+  $convert->add_response($_) for @{$data->{'responses'}};
+  $csv->combine(@{$convert->series});
+  $out .= $csv->string()."\n";
+  $convert->run(sub {
     my ($row) = @_;
     $csv->combine(@$row);
     $out .= $csv->string()."\n";
@@ -150,56 +144,6 @@ sub run_phase {
   $self->{'req_lengths'}{$era} = $out->{'request_num'};
   $self->{'shadow_lengths'}{$era} = $out->{'shadow_num'};
   $self->merge_enum($self->{'enum_values'},$out->{'enum_values'});
-}
-
-sub convert {
-  my ($self,$output,$fn) = @_;
-
-  my $ob_size = 10000;
-  my (@series,%rseries,@outblock);
-  my $outblock = -1;
-  my $rows = [];
-  foreach my $resp (@{$output->{'responses'}}) {
-    # Columns
-    foreach my $col (@{$resp->{'series'}}) {
-      next if exists $rseries{$col};
-      push @series,$col;
-      $rseries{$col} = $#series;
-    }
-    # Data
-    foreach my $block (0..$#{$resp->{'len'}}) {
-      my $data = uncompress_block($resp->{'data'}[$block]);
-      my $null = uncompress_block($resp->{'nulls'}[$block]);
-      foreach my $row (0..$resp->{'len'}[$block]-1) {
-        my $rownum = $resp->{'start'}+$row;
-        my $new_ob = int($rownum/$ob_size);
-        my $offset = $rownum-($new_ob*$ob_size);
-        if($outblock != $new_ob) {
-          $outblock[$outblock] = compress_block($rows) if $outblock != -1;
-          $outblock = $new_ob;
-          if($outblock[$outblock]) {
-            $rows = uncompress_block($outblock[$outblock]);
-          } else {
-            $rows = [];
-          }
-        }
-        my @row;
-        foreach my $i (0..$#{$resp->{'series'}}) {
-          next if $null->[$i][$row];
-          $row[$rseries{$resp->{'series'}[$i]}] = $data->[$i][$row];
-        }
-        $rows->[$offset] = \@row;
-      }
-    }
-  }
-  $outblock[$outblock] = compress_block($rows) if $outblock != -1;
-  $fn->(\@series);
-  foreach my $outblock (@outblock) {
-    my $rows = uncompress_block($outblock);
-    foreach my $row (@$rows) {
-      $fn->($row);
-    }
-  }
 }
 
 sub newtable_data_request {
