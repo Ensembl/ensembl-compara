@@ -18,17 +18,34 @@ limitations under the License.
 
 package EnsEMBL::Web::Utils::PluginInspector;
 
-## TODO
-
 use strict;
 use warnings;
 
+use List::Util qw(first);
+
 use Exporter qw(import);
-our @EXPORT_OK = qw(get_all_plugins get_file_plugins previous_plugin next_plugin); # And more?
+our @EXPORT_OK = qw(get_all_plugins get_file_plugins current_plugin previous_plugin next_plugin); # And more?
 
-use SiteDefs;
+sub current_plugin {
+  ## Gets the current plugin package and path name
+  my $caller  = [ caller ]->[1];
+  my $plugins = __PACKAGE__->get_all_plugins;
 
-sub get_all_plugins {}
+  return first { $caller =~ /^$_->{path}/} @$plugins;
+}
+
+sub get_all_plugins {
+  ## Gets a list of all active plugins
+  ## @return Ref to an ordered array of hashes (Each hash corresponds to individual plugin and contains 'path' and 'package' key)
+  my $plugins = $SiteDefs::ENSEMBL_PLUGINS;
+  my @plugins;
+
+  for (my $i = 0; $plugins->[$i]; $i += 2) {
+    push @plugins, { 'package' => $plugins->[$i], 'path' => $plugins->[$i+1] };
+  }
+
+  return \@plugins;
+}
 
 sub get_file_plugins {}
 
