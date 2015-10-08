@@ -25,7 +25,7 @@ my $help;
 my $registry_file;
 my $url;
 my $compara_url;
-my $tree_id = 2; # 112589 for NCTree
+my $tree_id = 3;  # This is a protein-tree
 
 GetOptions(
   "help" => \$help,
@@ -51,13 +51,6 @@ if ($compara_url) {
 } else {
   $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
 }
-
-my $clusterset_id = 1;
-
-print "\nPlease insert an ncRNA tree ID to run the example with (or just press \"enter\" to use the default $tree_id ID): ";
-my $new_id = <>;
-chomp $new_id;
-$tree_id = $new_id eq '' ? $tree_id : $new_id;
 
 my $tree_Adaptor = $compara_dba->get_GeneTreeAdaptor();
 my $tree = $tree_Adaptor->fetch_by_dbID($tree_id);
