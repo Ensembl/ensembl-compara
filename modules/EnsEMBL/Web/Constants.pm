@@ -90,9 +90,9 @@ sub USERDATA_FORMATS {
 sub IMAGE_EXPORT_FORMATS {
 ### Metadata for image export formats
   return (
-	  'png'  => { 'name' => 'PNG', 'extn' => 'png', 'mime' => 'image/png'        },
-	  'svg'  => { 'name' => 'SVG', 'extn' => 'svg', 'mime' => 'image/svg+xml'    },
-	  'pdf'  => { 'name' => 'PDF', 'extn' => 'pdf', 'mime' => 'application/pdf'  },
+	  'png'  => { 'name' => 'PNG', 'extn' => 'png', 'type' => 'raster', 'mime' => 'image/png'        },
+	  'svg'  => { 'name' => 'SVG', 'extn' => 'svg', 'type' => 'vector', 'mime' => 'image/svg+xml'    },
+	  'pdf'  => { 'name' => 'PDF', 'extn' => 'pdf', 'type' => 'vector', 'mime' => 'application/pdf'  },
   );
 }
 
