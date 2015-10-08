@@ -83,7 +83,7 @@ sub preload {
   $self->{'config'} = $table->config;
   $self->{'wire'} = $table->config->orient_out;
   $self->{'orient'} = $table->config->orient_out;
-  return $self->newtable_data_request(undef,1,1);
+  return $self->newtable_data_request(undef,1,undef,1);
 }
 
 sub convert_to_csv {
