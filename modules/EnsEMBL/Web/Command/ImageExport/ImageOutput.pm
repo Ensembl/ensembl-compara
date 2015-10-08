@@ -37,12 +37,15 @@ sub process {
 
   my $format = $hub->param('image_format') || $presets->{$hub->param('format')}{'format'} 
                 || $hub->param('format') || 'png';
+  my $export = $format;
 
-  ## Set contrast flag
-  my $export    = $format;
-  my $contrast  = $hub->param('contrast') || $presets->{$hub->param('format')}{'contrast'};
-  if ($contrast) {
-    $export .= sprintf('-c-%s', $contrast);
+  ## Set flags for scale and contrast
+  my %flags = ('contrast' => 'c', 'scale' => 's');
+  foreach (keys %flags) {
+    my $flag =  $hub->param($_) || $presets->{$hub->param('format')}{$_};
+    if ($flag) {
+      $export .= sprintf('-%s-%s', $flags{$_}, $flag);
+    }
   }
 
   ## Save size parameters (because we reset format in next block)
@@ -66,13 +69,7 @@ sub process {
   unless ($error) {
     ## Resize image as necessary
     if ($resize && $resize != $current_width) {
-      my $type        = $hub->param('data_type');
-      my $view_config = $component->view_config($type);
-      if ($view_config) {
-        my $ic_name       = $view_config->image_config;
-        my $image_config  = $hub->get_imageconfig($ic_name);
-        $image_config->image_width($resize) if $image_config;
-      }
+      $hub->param('image_width', $resize);
     }
 
     $component->content;
