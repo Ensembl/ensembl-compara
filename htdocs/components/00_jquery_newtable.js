@@ -352,9 +352,24 @@
     var cur_manifest = $table.data('manifest');
   }
 
+  var o_num = 0;
+  var outstanding = [];
+  var o_manifest = {};
+
   function get_new_data(widgets,$table,manifest_c,more,config) {
     console.log("data changed, should issue request");
     if(more===null) { flux(widgets,$table,'load',1); }
+
+    // Cancel any ongoing fruitless requests
+    if(!$.orient_compares_equal(manifest_c.manifest,o_manifest)) {
+      console.log("Cancelling outstanding");
+      for(var i=0;i<outstanding.length;i++) {
+        if(outstanding[i]) { outstanding[i].abort(); }
+        outstanding[i] = null;
+      }
+      o_num = 0;
+    }
+    if(!o_num) { outstanding = []; }
 
     var payload_one = $table.data('payload_one');
     if(payload_one && $.orient_compares_equal(manifest_c.manifest,config.orient)) {
@@ -374,7 +389,11 @@
         ssplugins: JSON.stringify(config.ssplugins),
         source: 'enstab'
       });
-      $.post($table.data('src'),params,function(res) {
+      var o_idx = outstanding.length;
+      o_num++;
+      outstanding[o_idx] = $.post($table.data('src'),params,function(res) {
+        outstanding[o_idx] = null;
+        o_num--;
         maybe_use_responses(widgets,$table,res,config);
       },'json');
     }
