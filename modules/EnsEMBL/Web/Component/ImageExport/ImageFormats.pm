@@ -81,19 +81,26 @@ sub content {
   ## Options for custom format
   my $opt_fieldset  = $form->add_fieldset({'class' => '_stt_custom', 'legend' => 'Options'});
 
-  my $image_formats = [{'value' => '',     'caption' => '-- Choose --'}];
+  my $image_formats = [{'value' => '',     'caption' => '-- Choose --', 'class' => '_stt'}];
   my %format_info   = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   foreach (sort keys %format_info) {
-    push @$image_formats, {'value' => $_, 'caption' => $format_info{$_}{'name'}};
+    my $params = {'value' => $_, 'caption' => $format_info{$_}{'name'}, 'class' => ['_stt']};
+    push @{$params->{'class'}}, '_stt__raster' if $format_info{$_}{'type'} eq 'raster';
+    push @$image_formats, $params;
   }
-  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'image_format', 'label' => 'Format', 'values' => $image_formats});
+  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'image_format', 'class' => '_stt', 
+                            'label' => 'Format', 'values' => $image_formats});
 
+  $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'contrast', 'label' => 'Increase contrast', 'value' => 'yes'}); 
+
+  ## Size and resolution are only relevant to raster formats like PNG
   my $image_sizes = [{'value' => '', 'caption' => 'Current size'}];
   my @sizes = qw(500 750 1000 1250 1500 1750 2000);
   foreach (@sizes) {
     push @$image_sizes, {'value' => $_, 'caption' => "$_ px"};
   }
-  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'resize', 'label' => 'Image size', 'values' => $image_sizes});
+  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'resize', 'field_class' => '_stt_raster',
+                            'label' => 'Image size', 'values' => $image_sizes});
 
   my $image_scales = [
                       {'value' => '', 'caption' => 'Standard'},
@@ -101,9 +108,8 @@ sub content {
                       {'value' => '5', 'caption' => 'Very high (x5)'},
                       ];
 
-  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'scale', 'label' => 'Resolution', 'values' => $image_scales});
-
-  $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'contrast', 'label' => 'Increase contrast', 'value' => 'yes'}); 
+  $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'scale', 'field_class' => '_stt_raster',
+                            'label' => 'Resolution', 'values' => $image_scales});
 
   ## Place submit button at end of form
   my $final_fieldset = $form->add_fieldset();
