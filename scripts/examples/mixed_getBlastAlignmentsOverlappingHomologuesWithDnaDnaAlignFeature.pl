@@ -37,14 +37,11 @@ $reg->load_registry_from_db(
 # get compara DBAdaptor
 my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('Multi', 'compara');
 
-# get GenomeDB for human and mouse
-my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
-my $human_gdb_id = $humanGDB->dbID;
-my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
-my $mouse_gdb_id = $mouseGDB->dbID;
+my $sp1 = "human";
+my $sp2 = "mouse";
 
-my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[$human_gdb_id,$mouse_gdb_id]);
+# get MethodLinkSpeciesSet for orthologies alignments between human and mouse
+my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_registry_aliases("ENSEMBL_ORTHOLOGUES", [$sp1, $sp2]);
 
 my $homology_list = $comparaDBA->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($homology_mlss);
 printf("fetched %d homologies\n", scalar(@$homology_list));
@@ -58,32 +55,29 @@ foreach my $homology (@{$homology_list}) {
     $count++;
     print $homology->toString;
 
-    my $human_gene = undef;
-    my $mouse_gene = undef;
-    foreach my $member (@{$homology->get_all_Members}) {
-        if($member->genome_db_id == $mouse_gdb_id) { $mouse_gene = $member; }
-        if($member->genome_db_id == $human_gdb_id) { $human_gene = $member; }
+    foreach my $member (sort {$a->genome_db_id <=> $b->genome_db_id} @{$homology->get_all_Members}) {
+        print $member->toString(), "\n";
     }
-    next unless($mouse_gene and $human_gene);
-    print $mouse_gene->toString(), "\n";
-    print $human_gene->toString(), "\n";
+
+    my $one_member = $homology->get_all_Members->[0];
+    my $other_member = $homology->get_all_Members->[1];
 
     # get the alignments on a piece of the DnaFrag
     printf("fetch_all_by_species_region(%s,%s,%s,%s,%s,%d,%s)\n",
-            $mouse_gene->genome_db->name, $mouse_gene->genome_db->assembly,
-            $human_gene->genome_db->name, $human_gene->genome_db->assembly,
-            $mouse_gene->dnafrag->name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
+            $other_member->genome_db->name, $other_member->genome_db->assembly,
+            $one_member->genome_db->name, $one_member->genome_db->assembly,
+            $other_member->dnafrag->name, $other_member->dnafrag_start, $other_member->dnafrag_end,
             'LASTZ_NET');
 
 
     my $dnafeatures = $comparaDBA->get_DnaAlignFeatureAdaptor->fetch_all_by_species_region(
-            $mouse_gene->genome_db->name, $mouse_gene->genome_db->assembly,
-            $human_gene->genome_db->name, $human_gene->genome_db->assembly,
-            $mouse_gene->dnafrag->name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
+            $other_member->genome_db->name, $other_member->genome_db->assembly,
+            $one_member->genome_db->name, $one_member->genome_db->assembly,
+            $other_member->dnafrag->name, $other_member->dnafrag_start, $other_member->dnafrag_end,
             'LASTZ_NET');
 
     foreach my $ddaf (@{$dnafeatures}) {
-        next unless (($mouse_gene->dnafrag->name eq $ddaf->seqname) and ($human_gene->dnafrag->name eq $ddaf->hseqname));
+        next unless (($other_member->dnafrag->name eq $ddaf->seqname) and ($one_member->dnafrag->name eq $ddaf->hseqname));
 
         print "=====================================================\n";
         print " length: ", $ddaf->alignment_length, "; score: ", $ddaf->score, "\n";
