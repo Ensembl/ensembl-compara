@@ -15,6 +15,7 @@ sub extend_response {
   my $i = 0;
   return {
     name => 'order',
+    solves => 'sort',
     pre => sub {
       @columns = map { $config->column($_->{'key'}) } @sort;
       push @sort,{ key => '__tie', dir => 1 };
@@ -44,8 +45,6 @@ sub extend_response {
       # Invert index
       my @out;
       $out[$order[$_]->[-1]] = $_ for (0..$#order);
-      use Data::Dumper;
-      warn Dumper(\@out);
       return \@out;
     },
   };

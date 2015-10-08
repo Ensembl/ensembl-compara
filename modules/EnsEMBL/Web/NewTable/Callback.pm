@@ -115,23 +115,29 @@ sub convert_to_csv {
   return $out; 
 }
 
+sub preflight_extensions {
+  my ($self) = @_;
+
+  $self->{'extensions'} = [];
+  $self->{'unwire'} = { %{$self->{'wire'}} };
+  foreach my $p (values %{$self->{'config'}->plugins}) {
+    next unless $p->can('extend_response');
+    my $pp = $p->extend_response($self->{'config'},$self->{'unwire'});
+    next unless defined $pp;
+    push @{$self->{'extensions'}},$pp;
+    delete $self->{'wire'}{$pp->{'solves'}} if defined $pp->{'solves'};
+  }
+}
+
 sub run_extensions {
   my ($self,$responses) = @_;
 
-  my @plugins;
-
-  # Get a list
-  foreach my $p (values %{$self->{'config'}->plugins}) {
-    next unless $p->can('extend_response');
-    my $pp = $p->extend_response($self->{'config'},$self->{'wire'});
-    next unless defined $pp;
-    push @plugins,$pp;
-  }
-  $_->{'pre'}->() for @plugins;
+  my $plugins = $self->{'extensions'};
+  $_->{'pre'}->() for @$plugins;
   my $convert = EnsEMBL::Web::NewTable::Convert->new(0); 
   $convert->add_response($_) for @{$self->{'response'}{'responses'}};
-  $convert->run(sub { $_->{'run'}->($_[0]) for @plugins; });
-  $self->{'response'}{$_->{'name'}} = $_->{'post'}->() for @plugins;
+  $convert->run(sub { $_->{'run'}->($_[0]) for @$plugins; });
+  $self->{'response'}{$_->{'name'}} = $_->{'post'}->() for @$plugins;
 }
 
 sub merge_enum {
@@ -173,7 +179,9 @@ sub newtable_data_request {
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $all_data = 1;
   }
-  
+ 
+  $self->preflight_extensions();
+ 
   my %shadow = %{$self->{'orient'}};
   delete $shadow{'filter'};
   delete $shadow{'pagerows'};
@@ -209,7 +217,6 @@ sub newtable_data_request {
   $more = undef if $phase == $num_phases;
   $self->{'response'} = {
     responses => $self->{'out'},
-#    order => $order,
     keymeta => $self->{'key_meta'},
     shadow => \%shadow,
     enums => $self->finish_enum(),

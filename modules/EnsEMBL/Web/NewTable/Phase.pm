@@ -205,14 +205,6 @@ sub go_data {
 
   $self->{'component'}->$func($self);
   $self->consolidate();
-} 
-
-EnsEMBL::Web::Memoize::memoize('go_data');
-
-sub go {
-  my ($self) = @_;
-
-  $self->go_data_cached;  
   return {
     out => {
       data => $self->{'data'},
@@ -227,6 +219,14 @@ sub go {
     shadow_num => $self->{'shadow_num'},
     enum_values => $self->{'enum_values'},
   };
+}
+
+EnsEMBL::Web::Memoize::memoize('go_data');
+
+sub go {
+  my ($self) = @_;
+
+  return $self->go_data_cached;
 }
 
 1;

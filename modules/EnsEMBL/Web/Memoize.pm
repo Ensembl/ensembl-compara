@@ -37,7 +37,6 @@ sub hexkey {
 sub clear_old_boots {
   my ($base,$live) = @_;
 
-  return if int rand 1000;
   opendir(BASE,$base) || return;
   my @files = grep { /^\d+$/ and $_ ne $live } readdir(BASE);
   closedir BASE;
