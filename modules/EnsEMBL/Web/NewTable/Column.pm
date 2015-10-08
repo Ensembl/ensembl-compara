@@ -117,8 +117,10 @@ sub is_null {
 sub compare {
   my ($self,$a,$b,$f,$keymeta,$cache,$col) = @_;
 
-  my $av = $self->clean($a||'');
-  my $bv = $self->clean($b||'');
+  $a = '' unless defined $a;
+  $b = '' unless defined $b;
+  my $av = $self->clean($a);
+  my $bv = $self->clean($b);
   my $an = $self->is_null($av);
   my $bn = $self->is_null($bv);
   return $an-$bn if $an-$bn;
