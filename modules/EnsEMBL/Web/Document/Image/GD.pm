@@ -450,24 +450,39 @@ sub moveable_tracks {
 
 sub render {
   my ($self, $format) = @_;
+  $format ||= 'png';
 
   return unless $self->drawable_container;
 
-  if ($format) {
-    print $self->drawable_container->render($format, from_json($self->hub->param('extra') || "{}"));
-    return;
-  }
+  my $hub = $self->hub;
+  my $image;
+  my $filename = $hub->param('filename');
 
-  my $html    = $self->introduction;
-  my $image   = EnsEMBL::Web::File::Dynamic::Image->new(
-                                                        'hub'             => $self->hub,
-                                                        'name_timestamp'  => 1,
-                                                        'extension'       => 'png',
-                                                        );
-  my $content = $self->drawable_container->render('png');
-  my $caption_style  = 'image-caption';
+  if ($filename) {
+    $image = EnsEMBL::Web::File::Dynamic::Image->new(
+                                                      'hub'  => $hub,
+                                                      'name' => $hub->param('filename'),
+                                                      );
+  }
+  else {
+    $image = EnsEMBL::Web::File::Dynamic::Image->new(
+                                                      'hub'             => $hub,
+                                                      'name_timestamp'  => 1,
+                                                      'extension'       => 'png',
+                                                      );
+  }
+  my $content = $self->drawable_container->render($format, from_json($self->hub->param('extra') || "{}"));
 
   $image->write($content);
+
+  if ($filename || ($hub->param('submit') && $hub->param('submit') eq 'Download' && !$filename)) {
+    ## User export, so we need to know where the file was written to
+    return $image->write_location;
+  }
+
+  ## Not user export, so render image wrapped in HTML
+  my $html            = $self->introduction;
+  my $caption_style   = 'image-caption';
   $self->height = $image->height;
 
   my ($top_toolbar, $bottom_toolbar) = $self->has_toolbars ? $self->render_toolbar : ();

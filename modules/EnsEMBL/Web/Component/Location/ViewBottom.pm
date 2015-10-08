@@ -33,7 +33,7 @@ sub _init {
 sub content {
   my $self        = shift;
   my $hub         = $self->hub;
-  my $object      = $self->object;
+  my $object      = $self->object || $hub->core_object('location');
   my $threshold   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $image_width = $self->image_width;
   

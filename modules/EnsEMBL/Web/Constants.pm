@@ -34,11 +34,14 @@ sub ICON_MAPPINGS {
 ### Metadata for the icons that appear on the configuration bar
 ### attached to images
   my $component = shift || 'page';
+  my $download  = $component eq 'image' 
+                      ? 'Download this image or its data'
+                      : "Download data from this $component";
   
   return {
     'config'        => { 'file' => 'setting.png',         'alt' => 'config',      'title' => "Configure this $component"          },
     'search'        => { 'file' => 'search.png',          'alt' => 'search',      'title' => "Search this $component"             },
-    'download'      => { 'file' => 'download.png',        'alt' => 'download',    'title' => "Download data from this $component" },
+    'download'      => { 'file' => 'download.png',        'alt' => 'download',    'title' => $download },
     'image'         => { 'file' => 'picture.png',         'alt' => 'image',       'title' => "Export this image"                  },
     'userdata'      => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Manage your data"                   },
     'share'         => { 'file' => 'share.png',           'alt' => 'share',       'title' => "Share this $component"              },
@@ -84,20 +87,61 @@ sub USERDATA_FORMATS {
   };
 }
 
-sub FORMATS {
-  warn "!!! DEPRECATED - PLEASE USE 'EXPORT_FORMATS' INSTEAD";
-  return &EXPORT_FORMATS;
-}
-
-sub EXPORT_FORMATS {
+sub IMAGE_EXPORT_FORMATS {
 ### Metadata for image export formats
   return (
-	  'png'  => { 'name' => 'PNG', 'longname' => 'Portable Network Graphics',   'extn' => 'png', 'mime' => 'image/png'              },
-    'gif'  => { 'name' => 'GIF', 'longname' => 'Graphics Interchange Format', 'extn' => 'gif', 'mime' => 'image/gif'              },
-	  'svg'  => { 'name' => 'SVG', 'longname' => 'Scalable Vector Graphics',    'extn' => 'svg', 'mime' => 'image/svg+xml'          },
-	  'pdf'  => { 'name' => 'PDF', 'longname' => 'Portable Document Format',    'extn' => 'pdf', 'mime' => 'application/pdf'        },
-	  'gff'  => { 'name' => 'GFF', 'longname' => 'General Feature Format',      'extn' => 'txt', 'mime' => 'text/plain'             }
+	  'png'  => { 'name' => 'PNG', 'extn' => 'png', 'type' => 'raster', 'mime' => 'image/png'        },
+	  'svg'  => { 'name' => 'SVG', 'extn' => 'svg', 'type' => 'vector', 'mime' => 'image/svg+xml'    },
+	  'pdf'  => { 'name' => 'PDF', 'extn' => 'pdf', 'type' => 'vector', 'mime' => 'application/pdf'  },
   );
+}
+
+sub IMAGE_EXPORT_PRESETS {
+## Metadata for preset image export - format, size, etc
+  return {
+          'journal'   => {'label'     => 'Journal/report',
+                          'desc'      => 'High resolution, suitable for printing at A4/letter size',
+                          'info'      => '<ul><li>PNG</li><li>2000px wide</li><li>Darker colours</li></ul>',
+                          'format'    => 'png',
+                          'size'      => '1000',
+                          'scale'     => '2',
+                          'contrast'  => 2,
+                          'order'     => 1,
+                          },
+          'poster'    => {'label'     => 'Poster',
+                          'desc'      => 'Very high resolution, suitable for posters and other large print uses',
+                          'info'      => '<ul><li>PNG</li><li>5000px wide</li><li>Darker colours</li></ul>',
+                          'format'    => 'png',
+                          'size'      => '1000',
+                          'scale'     => '5',
+                          'contrast'  => 2,
+                          'order'     => 2,
+                          },
+          'projector' => {'label'     => 'Presentation',
+                          'desc'      => 'Saturated image, better suited to projectors',
+                          'info'      => '<ul><li>PNG</li><li>1200px wide</li><li>Darker colours</li></ul>',
+                          'format'    => 'png',
+                          'size'      => '1200',
+                          'scale'     => '1.00',
+                          'contrast'  => 2,
+                          'order'     => 3,
+                          },
+          'png'       => {'label'     => 'Web',
+                          'desc'      => 'Standard image, suitable for web pages, blog posts, etc.',
+                          'info'      => '<ul><li>PNG</li><li>Same size and colours as original image</li></ul>',
+                          'format'    => 'png',
+                          'order'     => 4,
+                          },
+          'pdf'       => {'label'     => 'PDF file',
+                          'desc'      => 'Standard image as PDF file',
+                          'format'    => 'pdf',
+                          'order'     => 5,
+                          },
+          'custom'    => {'label'     => 'Custom image',
+                          'desc'      => 'Select from a range of formats and sizes',
+                          'order'     => 6,
+                          },
+        };
 }
 
 sub FASTA_OPTIONS {

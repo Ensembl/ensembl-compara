@@ -441,3 +441,19 @@ textarea.inactive {
   font-style: italic;
   color: #999;
 }
+
+/* Override standard layout - SelectToToggle compatible */
+
+form.freeform-stt fieldset .form-field {
+} 
+
+form.freeform-stt fieldset .form-field .ff-right {
+  margin: 0;
+  padding: 0;
+}
+
+form.freeform-stt fieldset .form-field .ff-label {
+  width: 15%!important;
+}
+
+form.freeform-stt label { font-weight:bold; }

@@ -316,6 +316,7 @@ our $OBJECT_TO_SCRIPT = {
   Share               => 'Share',
   Export              => 'Export',
   DataExport          => 'DataExport',
+  ImageExport         => 'ImageExport',
 
   Gene                => 'Page',
   Transcript          => 'Page',
