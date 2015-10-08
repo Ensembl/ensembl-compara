@@ -201,13 +201,18 @@
       $table.data('grid-manifest',manifest_in);
     }
     for(var i=0;i<cols.length;i++) {
+      var pos = order;
+      if(!pos) {
+        pos = [];
+        for(var j=0;j<cols[i].length;j++) { pos[start+j] = start+j; }
+      }
       for(var j=0;j<cols[i].length;j++) {
-        grid[start+j] = (grid[start+j]||[]);
-        if(nulls[i][order[j]]) {
-          grid[start+j][indexes[i]] = null;
-        } else {
-          grid[start+j][indexes[i]] = cols[i][order[j]];
+        var val = null;
+        if(!nulls[i][j]) { val = cols[i][j]; }
+        if(!grid[pos[j+start]]) {
+          for(var k=0;k<=pos[j+start];k++) { if(!grid[k]) grid[k] = []; }
         }
+        grid[pos[j+start]][i] = val;
       }
     }
     $table.data('grid',grid);
@@ -288,37 +293,27 @@
         nulls[j] = nulls[j].concat(n[j]);
       }
     }
-    var order = response.order;
-    if(!order) {
-      order = [];
-      for(i=0;i<totlen;i++) { order[i] = i; }
-    }
-    return { 'data': data, 'nulls': nulls,
-             'order': order, 'totlen': totlen };
+    return { 'data': data, 'nulls': nulls, 'totlen': totlen };
   }
 
-  function use_response(widgets,$table,manifest_c,response,phase,config) {
+  function use_response(widgets,$table,response,phase,config,order) {
+    store_keymeta($table,response.keymeta);
+    var cur_manifest = $table.data('manifest');
     var data = uncompress_response(phase);
     console.log(phase.start);
-    store_response_in_grid($table,data.data,data.nulls,data.order,
-                           phase.start,manifest_c.manifest,
+    store_response_in_grid($table,data.data,data.nulls,order,
+                           phase.start,cur_manifest.manifest,
                            phase.series);
-    store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
+    store_ranges($table,response.enums,cur_manifest,response.shadow,config,widgets);
     var size = $table.data('min-size')||0;
     if(size<phase.shadow_num) { size = phase.shadow_num; }
     $table.data('min-size',size);
     $.each(widgets,function(name,w) {
       if(w.size) { w.size($table,size); }
     });
-    return render_grid(widgets,$table,manifest_c,phase.start,data.totlen);
+    return [phase.start,data.totlen];
   }
   
-  function maybe_use_response(widgets,$table,response,phase,config) {
-    store_keymeta($table,response.keymeta);
-    var cur_manifest = $table.data('manifest');
-    return use_response(widgets,$table,cur_manifest,response,phase,config);
-  }
-
   function extract_params(url) {
     var out = {};
     var parts = url.split('?',2);
@@ -336,16 +331,19 @@
     if(got.more)
       get_new_data(widgets,$table,cur_manifest,got.more,config);
     if($.orient_compares_equal(cur_manifest.manifest,got.orient)) {
-      var d = $.Deferred().resolve(0);
+      var d = $.Deferred().resolve([0,-1,-1]);
       for(var i=0;i<got.responses.length;i++) {
-        d = d.then(function(idx) {
-          var e = $.Deferred();
-          maybe_use_response(widgets,$table,got,got.responses[idx],config).then(function() {
-            e.resolve(idx+1);
-          });
-          return beat(e,100);
+        d = d.then(function(x) {
+          var loc = use_response(widgets,$table,got,got.responses[x[0]],config,got.order);
+          if(x[1]==-1 || loc[0]<x[1]) { x[1] = loc[0]; }
+          if(x[2]==-1 || loc[0]+loc[1]>x[2]) { x[2] = loc[0]+loc[1]; }
+          var e = $.Deferred().resolve([x[0]+1,x[1],x[2]]);
+          return beat(e,10);
         });
       }
+      d = d.then(function(x) {
+        render_grid(widgets,$table,cur_manifest,x[1],x[2]);
+      });
     }
     var cur_manifest = $table.data('manifest');
     if(!got.more) { flux(widgets,$table,'load',-1); }

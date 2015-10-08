@@ -104,7 +104,7 @@ sub convert_to_csv {
 
   my $out = '';
   my $csv = Text::CSV->new({ binary => 1 });
-  my $convert = EnsEMBL::Web::NewTable::Convert->new;
+  my $convert = EnsEMBL::Web::NewTable::Convert->new(1);
   $convert->add_response($_) for @{$data->{'responses'}};
   $csv->combine(@{$convert->series});
   $out .= $csv->string()."\n";
@@ -114,6 +114,47 @@ sub convert_to_csv {
     $out .= $csv->string()."\n";
   });
   return $out; 
+}
+
+sub server_sort {
+  my ($self,$responses,$sort) = @_;
+
+  my @sort = @$sort;
+  my @columns = map { $self->{'config'}->column($_->{'key'}) } @sort;
+  push @sort,{ key => '__tie', dir => 1 };
+  push @columns,
+    EnsEMBL::Web::NewTable::Column->new($self,'numeric','__tie');
+
+  # Capture the data
+  my $convert = EnsEMBL::Web::NewTable::Convert->new(0);
+  $convert->add_response($_) for @$responses;
+  my $i = 0;
+  my @keys;
+  $convert->run(sub {
+    my ($row) = @_;
+    $row->{'__tie'} = $i++;
+    push @keys, [ map { $row->{$_->{'key'}} } @sort ]; 
+  });
+
+  # Sort it
+  my $keymeta = $self->{'config'}->keymeta();
+  my @cache;
+  my @order = sort {
+    my $c = 0;
+    foreach my $i (0..$#sort) {
+      $cache[$i]||={};
+      $c = $columns[$i]->compare($a->[$i],$b->[$i],
+                                 $sort[$i]->{'dir'},$keymeta,
+                                 $cache[$i],$sort[$i]->{'key'});
+      last if $c;
+    }
+    $c;
+  } @keys;
+  
+  # Invert index
+  my @out;
+  $out[$order[$_]->[-1]] = $_ for (0..$#order);
+  return \@out;
 }
 
 sub merge_enum {
@@ -141,6 +182,7 @@ sub run_phase {
   )->go();
 
   push @{$self->{'out'}},$out->{'out'};
+
   $self->{'req_lengths'}{$era} = $out->{'request_num'};
   $self->{'shadow_lengths'}{$era} = $out->{'shadow_num'};
   $self->merge_enum($self->{'enum_values'},$out->{'enum_values'});
@@ -181,6 +223,10 @@ sub newtable_data_request {
     $self->run_phase($self->{'config'}->phase($_),$keymeta) for (0..$num_phases-1);
     $phase = $num_phases;
   }
+  my $order;
+  if($self->{'wire'}{'sort'}) {
+    $order = $self->server_sort($self->{'out'},$self->{'wire'}{'sort'});
+  }
 
   $more = {
     phase => $phase,
@@ -190,6 +236,7 @@ sub newtable_data_request {
   $more = undef if $phase == $num_phases;
   return {
     responses => $self->{'out'},
+    order => $order,
     keymeta => $self->{'key_meta'},
     shadow => \%shadow,
     enums => $self->finish_enum(),

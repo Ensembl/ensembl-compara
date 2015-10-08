@@ -32,12 +32,13 @@ sub uncompress_block {
 }
 
 sub new {
-  my ($proto) = @_;
+  my ($proto,$squarify) = @_;
   my $class = ref($proto) || $proto;
   my $self = {
     series => [],
     rseries => {},
     out => EnsEMBL::Web::NewTable::CompressedArray->new,
+    squarify => $squarify,
   };
   bless $self,$class;
   return $self;
@@ -58,12 +59,21 @@ sub add_response {
     my $null = uncompress_block($response->{'nulls'}[$block]);
     foreach my $row (0..$response->{'len'}[$block]-1) {
       my $rownum = $response->{'start'}+$row;
-      my @row;
-      foreach my $i (0..$#{$response->{'series'}}) {
-        next if $null->[$i][$row];
-        $row[$self->{'rseries'}{$response->{'series'}[$i]}] = $data->[$i][$row];
+      my $out = $self->{'out'}->row($rownum);
+      if($self->{'squarify'}) {
+        $out ||= [];
+        foreach my $i (0..$#{$response->{'series'}}) {
+          next if $null->[$i][$row];
+          $out->[$self->{'rseries'}{$response->{'series'}[$i]}] = $data->[$i][$row];
+        }
+      } else {
+        $out ||= {};
+        foreach my $i (0..$#{$response->{'series'}}) {
+          next if $null->[$i][$row];
+          $out->{$response->{'series'}[$i]} = $data->[$i][$row];
+        }
       }
-      $self->{'out'}->row($rownum,\@row);
+      $self->{'out'}->row($rownum,$out);
     }   
   }   
 }
