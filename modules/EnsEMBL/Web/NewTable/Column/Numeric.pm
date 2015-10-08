@@ -59,17 +59,4 @@ sub has_value {
   }
 }
 
-sub merge_values {
-  my ($self,$a,$b) = @_;
-
-  my $c = {};
-  ($b,$a) = ($a,$b) if exists $b->{'min'};
-  %$c = %$a if exists $a->{'min'};
-  if(exists $b->{'min'}) {
-    $c->{'min'} = min($c->{'min'},$b->{'min'});
-    $c->{'max'} = max($c->{'max'},$b->{'max'});
-  }
-  return $c;
-}
-
 1;

@@ -88,16 +88,6 @@ sub free_wheel {
 
 sub phase { return $_[0]->{'phase_name'}; }
 
-sub add_enum {
-  my ($self,$row) = @_;
-
-  foreach my $colkey (@{$self->{'wire'}{'enumerate'}||[]}) {
-    my $column = $self->{'config'}->column($colkey);
-    my $values = ($self->{'enum_values'}{$colkey}||={});
-    $column->add_value($values,$row->{$colkey});
-  }
-}
-
 sub server_filter {
   my ($self,$row) = @_;
 
@@ -189,7 +179,6 @@ sub add_row {
   $self->{'shadow_num'}++;
   return 0 unless $self->passes_muster($row);
   $self->{'request_num'}++;
-  $self->add_enum($row);
   my $nulls = $self->server_nulls($row);
   $self->add_row_data($row);
   $self->{'inlen'}++;
@@ -217,7 +206,6 @@ sub go_data {
     },
     request_num => $self->{'request_num'},
     shadow_num => $self->{'shadow_num'},
-    enum_values => $self->{'enum_values'},
   };
 }
 
