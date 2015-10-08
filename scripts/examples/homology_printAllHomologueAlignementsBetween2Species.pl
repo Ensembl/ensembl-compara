@@ -37,14 +37,9 @@ $reg->load_registry_from_db(
 # get compara DBAdaptor
 my $comparaDBA = $reg->get_DBAdaptor('Multi', 'compara');
 
-# get GenomeDB for human and mouse
-my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
-my $human_gdb_id = $humanGDB->dbID;
-my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
-my $mouse_gdb_id = $mouseGDB->dbID;
-
-my $mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[$human_gdb_id,$mouse_gdb_id]);
+my $sp1 = "human";
+my $sp2 = "mouse";
+my $mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_registry_aliases('ENSEMBL_ORTHOLOGUES', [$sp1, $sp2]);
 
 my $species_names = '';
 foreach my $gdb (@{$mlss->species_set_obj->genome_dbs}) {
