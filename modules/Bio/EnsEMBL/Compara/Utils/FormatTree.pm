@@ -420,7 +420,7 @@ sub _internal_format_newick {
                         'underscore' => '_',
                     }->{$token->{modifier} || ''};
 
-                    my $forbidden_char = '[ ,\[(:;)\]]';
+                    my $forbidden_char = '[ ,(:;)]';
                     $itemstr =~ s/^$forbidden_char+//;
                     $itemstr =~ s/$forbidden_char+$//;
                     $itemstr =~ s/$forbidden_char+/$modifier/g;
