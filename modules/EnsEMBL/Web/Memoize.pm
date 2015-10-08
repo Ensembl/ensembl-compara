@@ -17,7 +17,7 @@ sub _build_argument {
     return { map { $_ => _build_argument($args->{$_}) } keys %$args };
   } elsif(ref($args)) {
     if($args->can('memo_argument')) {
-      return $args->memo_argument;
+      return _build_argument($args->memo_argument);
     } else {
       die "Unknown blessed object, cannot memoize: $args\n";
     }

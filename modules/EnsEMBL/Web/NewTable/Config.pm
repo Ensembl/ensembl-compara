@@ -152,8 +152,6 @@ sub plugins {
 sub can_delegate {
   my ($self,$type,$fn) = @_; 
 
-  warn "CAN_DELEGATE ($self) $type/$fn\n";
-  warn "plugins: ".join(', ',keys %{$self->{'plugins'}})."\n";
   $fn = "${type}_$fn" if $type;
   foreach my $plugin (values %{$self->{'plugins'}}) {
     if($plugin->can($fn)) {

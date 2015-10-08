@@ -131,16 +131,6 @@ sub merge_enum {
   }
 }
 
-sub go_phase {
-  my ($component,$phase,$req_start,$shadow_start,$config,$wire) = @_;
-
-  return EnsEMBL::Web::NewTable::Phase->new(
-    $component,$phase,$req_start,$shadow_start,$config,$wire
-  )->go();
-}
-
-EnsEMBL::Web::Memoize::memoize('go_phase');
-
 sub run_phase {
   my ($self,$phase,$keymeta) = @_;
 
@@ -151,7 +141,10 @@ sub run_phase {
   $req_start = 0+$req_start;
 
   # Populate
-  my $out = go_phase_cached($self->{'component'},$phase,$req_start,$shadow_start,$self->{'config'},$self->{'wire'});
+  my $out = EnsEMBL::Web::NewTable::Phase->new(
+    $self->{'component'},$phase,$req_start,
+    $shadow_start,$self->{'config'},$self->{'wire'}
+  )->go();
 
   push @{$self->{'out'}},$out->{'out'};
   $self->{'req_lengths'}{$era} = $out->{'request_num'};
