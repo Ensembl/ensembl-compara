@@ -454,11 +454,6 @@ sub render {
 
   return unless $self->drawable_container;
 
-  if ($format ne 'png') {
-    print $self->drawable_container->render($format, from_json($self->hub->param('extra') || "{}"));
-    return;
-  }
-
   my $hub = $self->hub;
   my $image;
   my $filename = $hub->param('filename');
@@ -476,7 +471,7 @@ sub render {
                                                       'extension'       => 'png',
                                                       );
   }
-  my $content = $self->drawable_container->render('png');
+  my $content = $self->drawable_container->render($format, from_json($self->hub->param('extra') || "{}"));
 
   $image->write($content);
 
