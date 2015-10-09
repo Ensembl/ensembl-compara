@@ -193,6 +193,7 @@
   }
 
   function store_response_in_grid($table,cols,nulls,order,start,manifest_in,series) {
+    var i,j;
     var grid = $table.data('grid') || [];
     var grid_manifest = $table.data('grid-manifest') || [];
     var indexes = build_series_index($table,series);
@@ -200,20 +201,20 @@
       grid = [];
       $table.data('grid-manifest',manifest_in);
     }
-    for(var i=0;i<cols.length;i++) {
+    for(i=0;i<cols.length;i++) {
       var pos = order;
       var pos_max = 0;
       if(!pos) {
         pos = [];
-        for(var j=0;j<cols[i].length;j++) { pos[start+j] = start+j; }
+        for(j=0;j<cols[i].length;j++) { pos[start+j] = start+j; }
       }
-      for(var j=0;j<pos.length;j++) {
+      for(j=0;j<pos.length;j++) {
         if(pos[j] && pos[j]>pos_max) { pos_max=pos[j]; }
       }
-      for(var j=0;j<=pos_max;j++) {
+      for(j=0;j<=pos_max;j++) {
         if(!grid[j]) { grid[j] = []; }
       }
-      for(var j=0;j<cols[i].length;j++) {
+      for(j=0;j<cols[i].length;j++) {
         var val = null;
         if(!nulls[i][j]) { val = cols[i][j]; }
         grid[pos[j+start]][indexes[i]] = val;
@@ -399,16 +400,17 @@
         $table.data('complete',true);
         run_render_grid(widgets,$table);
       }
+      var fn = function(x) {
+        var start = new Date().getTime();
+        var loc = use_response(widgets,$table,got,got.responses[x[0]],config,got.order);
+        if(x[1]==-1 || loc[0]<x[1]) { x[1] = loc[0]; }
+        if(x[2]==-1 || loc[0]+loc[1]>x[2]) { x[2] = loc[0]+loc[1]; }
+        var e = $.Deferred().resolve([x[0]+1,x[1],x[2]]);
+        var took = (new Date().getTime())-start;
+        if(took<25) { return e; } else { return beat(e,10); }
+      };
       for(var i=0;i<got.responses.length;i++) {
-        d = d.then(function(x) {
-          var start = new Date().getTime();
-          var loc = use_response(widgets,$table,got,got.responses[x[0]],config,got.order);
-          if(x[1]==-1 || loc[0]<x[1]) { x[1] = loc[0]; }
-          if(x[2]==-1 || loc[0]+loc[1]>x[2]) { x[2] = loc[0]+loc[1]; }
-          var e = $.Deferred().resolve([x[0]+1,x[1],x[2]]);
-          var took = (new Date().getTime())-start;
-          if(took<25) { return e; } else { return beat(e,10); }
-        });
+        d = d.then(fn);
       }
       d = d.then(function(x) {
         return maybe_render_grid(widgets,$table,cur_manifest,x[1],x[2]-x[1]);
@@ -417,7 +419,6 @@
         flux(widgets,$table,'think',-1);
       });
     }
-    var cur_manifest = $table.data('manifest');
   }
 
   var o_num = 0;
@@ -476,8 +477,6 @@
     $table.data('orient',orient);
     var manifest_c = build_manifest(config,orient,old_manifest.manifest);
     $table.data('manifest',manifest_c); 
-    var complete = $table.data('complete');
-   
     clear_render_grid();
     if($.orient_compares_equal(manifest_c.manifest,old_manifest.manifest)) {
       maybe_render_grid(widgets,$table,manifest_c,0,-1);
