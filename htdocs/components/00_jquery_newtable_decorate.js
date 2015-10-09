@@ -78,7 +78,7 @@
                 var fabric = [];
                 var decorators = make_decorators($table,'decorators',series);
                 for(var i=0;i<grid.length;i++) { fabric[i] = grid[i]; }
-                for(var i=start;i<length;i++) {
+                for(var i=start;i<start+length;i++) {
                   var new_row = [];
                   for(var j=0;j<grid[i].length;j++) {
                     var v = grid[i][j];
@@ -95,6 +95,7 @@
                   }
                   fabric[i] = new_row;
                 }
+                console.log("dundo done");
                 return fabric;
               }
             };
