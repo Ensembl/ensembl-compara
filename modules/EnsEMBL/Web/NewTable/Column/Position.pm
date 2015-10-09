@@ -45,8 +45,8 @@ sub js_params { return { steptype => 'integer' }; }
 sub cmp {
   my ($self,$a,$b,$f) = @_;
 
-  my @a = split(/:-/,$a);
-  my @b = split(/:-/,$b);
+  my @a = split(/[:-]/,$a);
+  my @b = split(/[:-]/,$b);
   my $it = each_array(@a,@b);
   while(my ($aa,$bb) = $it->()) {
     my $c = ($aa <=> $bb)*$f;
