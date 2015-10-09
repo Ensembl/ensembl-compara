@@ -99,8 +99,7 @@
                 }
                 return [manifest,fabric];
               },
-              all_rows: true,
-              no_incr: true
+              all_rows: true
             };
           }
         ];

@@ -265,6 +265,7 @@
   }
 
   function run_pr_queue() {
+    console.log("run_pr_queue");
     if(pr_head) {
       pr_tail.then(function() { pr_after.resolve(); });
       pr_head.resolve();
@@ -296,6 +297,7 @@
   }
 
   function render_grid(widgets,$table,manifest_c,start,length) {
+    console.log("render_grid",start,length);
     var view = $table.data('view');
     var grid = $table.data('grid');
     var grid_series = $table.data('grid-series');
