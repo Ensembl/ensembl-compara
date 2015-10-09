@@ -39,6 +39,8 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
+  my $html = '<h1>Image download</h1>';
+
   my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'ImageOutput',  '__clear' => 1}), 'method' => 'post', 'class' => 'freeform-stt'});
 
   my $intro_fieldset = $form->add_fieldset();
@@ -135,7 +137,11 @@ sub content {
     'children'  => [ {'node_name' => 'input', 'class' => 'subpanel_type', 'value' => 'ImageExport', 'type' => 'hidden' }, $form ]
   });
 
-  return '<h1>Image download</h1>'.$wrapped_form->render;
+  $html .= $wrapped_form->render;
+
+  $html .= '<p>For more information about print options, see our <a href="/Help/Faq?id=502" class="popup">image export FAQ</a>';
+
+  return $html;
 }
 
 sub default_file_name {
