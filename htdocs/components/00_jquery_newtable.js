@@ -117,6 +117,7 @@
     var all_rows = false;
     var revpipe = [];
     var erevpipe = [];
+    var drevpipe = [];
     var wire = {};
     var manifest = $.extend(true,{},orient);
     $.each(config.pipes,function(i,step) {
@@ -124,13 +125,14 @@
       if(out) {
         if(out.manifest) { manifest = out.manifest; }
         if(out.undo) { revpipe.push(out.undo); }
+        if(out.dundo) { drevpipe.push(out.dundo); }
         if(out.eundo) { erevpipe.push(out.eundo); }
         if(out.no_incr) { incr = false; }
         if(out.all_rows) { all_rows = true; }
       }
     });
     return { manifest: manifest, undo: revpipe, eundo: erevpipe, wire: wire,
-             incr_ok: incr, all_rows: all_rows };
+             incr_ok: incr, all_rows: all_rows, dundo: drevpipe };
   }
 
   function build_orient(widgets,$table,manifest_c,data,data_series,destination) {
@@ -191,6 +193,7 @@
   }
 
   function store_response_in_grid($table,cols,nulls,order,start,manifest_in,series) {
+    var i,j;
     var grid = $table.data('grid') || [];
     var grid_manifest = $table.data('grid-manifest') || [];
     var indexes = build_series_index($table,series);
@@ -198,14 +201,23 @@
       grid = [];
       $table.data('grid-manifest',manifest_in);
     }
-    for(var i=0;i<cols.length;i++) {
-      for(var j=0;j<cols[i].length;j++) {
-        grid[start+j] = (grid[start+j]||[]);
-        if(nulls[i][order[j]]) {
-          grid[start+j][indexes[i]] = null;
-        } else {
-          grid[start+j][indexes[i]] = cols[i][order[j]];
-        }
+    for(i=0;i<cols.length;i++) {
+      var pos = order;
+      var pos_max = 0;
+      if(!pos) {
+        pos = [];
+        for(j=0;j<cols[i].length;j++) { pos[start+j] = start+j; }
+      }
+      for(j=0;j<pos.length;j++) {
+        if(pos[j] && pos[j]>pos_max) { pos_max=pos[j]; }
+      }
+      for(j=0;j<=pos_max;j++) {
+        if(!grid[j]) { grid[j] = []; }
+      }
+      for(j=0;j<cols[i].length;j++) {
+        var val = null;
+        if(!nulls[i][j]) { val = cols[i][j]; }
+        grid[pos[j+start]][indexes[i]] = val;
       }
     }
     $table.data('grid',grid);
@@ -243,25 +255,81 @@
     $table.data('keymeta',keymeta);
   }
 
+  function decorate(widgets,$table,grid,manifest_c,orient,series,start,length) {
+    var d = $.Deferred();
+    d.resolve([0,grid]);
+    flux(widgets,$table,'think',1);
+    var fn = function(input) {
+      var step = manifest_c.dundo[input[0]];
+      var data = step(orient,grid,series,start,length);
+      return [input[0]+1,data];
+    };
+    for(var i=0;i<manifest_c.dundo.length;i++) {
+      d = beat(d.then(fn),10);
+    }
+    return d.then(function(x) {
+      flux(widgets,$table,'think',-1);
+      return x[1];
+    });
+  }
+
   function render_grid(widgets,$table,manifest_c,start,length) {
     var view = $table.data('view');
     var grid = $table.data('grid');
     var grid_series = $table.data('grid-series');
     if(length==-1) { length = grid.length; }
-    build_orient(widgets,$table,manifest_c,grid,grid_series,view).done(function(orient_c) {
+    return build_orient(widgets,$table,manifest_c,grid,grid_series,view).then(function(orient_c) {
       if(manifest_c.all_rows) {
         start = 0;
         length = orient_c.data.length;
       }
       if($.orient_compares_equal(orient_c.orient,view)) {
-        widgets[view.format].add_data($table,orient_c.data,grid_series,start,length,orient_c.orient);
-        widgets[view.format].truncate_to($table,orient_c.data,grid_series,orient_c.orient);
+        decorate(widgets,$table,orient_c.data,manifest_c,orient_c.orient,grid_series,start,length).then(function(decorated) {
+          widgets[view.format].add_data($table,decorated,grid_series,start,length,orient_c.orient);
+          widgets[view.format].truncate_to($table,decorated,grid_series,orient_c.orient);
+        });
       }
     });
   }
+ 
+  var pr_start = 0;
+  var pr_length = 0;
+  var pr_manifest = null;
+  var pr_after = null;
 
-  function rerender_grid(widgets,$table,manifest_c) {
-    render_grid(widgets,$table,manifest_c,0,-1);
+  function clear_render_grid() { pr_manifest = null; }
+
+  function run_render_grid(widgets,$table) {
+    if(pr_manifest===null) { return; }
+    render_grid(widgets,$table,pr_manifest,pr_start,pr_length).then(function() {
+    if(pr_after!==null) { pr_after.resolve(); }
+    pr_after = null;
+    pr_manifest = null;
+  });
+  }
+ 
+  function maybe_render_grid(widgets,$table,manifest_c,start,length) {
+    if(pr_manifest===null) { pr_manifest = manifest_c; }
+    if(!$.orient_compares_equal(pr_manifest,manifest_c)) {
+      if(pr_after!==null) { pr_after.resolve(); pr_after = null; }
+      pr_start = start;
+      pr_length = length;
+      pr_manifest = manifest_c;
+    }
+    if(pr_after===null) { pr_after = $.Deferred(); }
+    if(start<pr_start) {
+      if(pr_length>-1) { pr_length += pr_start-start; }
+      pr_start = start;
+    }
+    if(pr_length==-1 || length==-1) {
+      pr_length = -1;
+    } else if(start+length>pr_start+pr_length) {
+      pr_length = start+length-pr_start;
+    }
+    if(manifest_c.incr_ok || $table.data('complete')) {
+      run_render_grid(widgets,$table);
+    }
+    return pr_after;
   }
 
   function uncompress_response(response) {
@@ -285,39 +353,26 @@
         nulls[j] = nulls[j].concat(n[j]);
       }
     }
-    var order = response.order;
-    if(!order) {
-      order = [];
-      for(i=0;i<totlen;i++) { order[i] = i; }
-    }
-    return { 'data': data, 'nulls': nulls,
-             'order': order, 'totlen': totlen };
+    return { 'data': data, 'nulls': nulls, 'totlen': totlen };
   }
 
-  function use_response(widgets,$table,manifest_c,response,config) {
-    var data = uncompress_response(response);
-    store_response_in_grid($table,data.data,data.nulls,data.order,
-                           response.start,manifest_c.manifest,
-                           response.series);
-    render_grid(widgets,$table,manifest_c,response.start,data.totlen);
-    store_ranges($table,response.enums,manifest_c,response.shadow,config,widgets);
+  function use_response(widgets,$table,response,phase,config,order) {
+    store_keymeta($table,response.keymeta);
+    var cur_manifest = $table.data('manifest');
+    var data = uncompress_response(phase);
+    store_response_in_grid($table,data.data,data.nulls,order,
+                           phase.start,cur_manifest.manifest,
+                           phase.series);
+    store_ranges($table,response.enums||{},cur_manifest,response.shadow,config,widgets);
+    var size = $table.data('min-size')||0;
+    if(size<phase.shadow_num) { size = phase.shadow_num; }
+    $table.data('min-size',size);
+    $.each(widgets,function(name,w) {
+      if(w.size) { w.size($table,size); }
+    });
+    return [phase.start,data.totlen];
   }
   
-  function maybe_use_response(widgets,$table,result,config) {
-    store_keymeta($table,result.response.keymeta);
-    var cur_manifest = $table.data('manifest');
-    var in_manifest = result.orient;
-    var more = 0;
-    if($.orient_compares_equal(cur_manifest.manifest,in_manifest)) {
-      use_response(widgets,$table,cur_manifest,result.response,config);
-      if(result.response.more) {
-        more = 1;
-        get_new_data(widgets,$table,cur_manifest,result.response.more,config);
-      }
-    }
-    if(!more) { flux(widgets,$table,'load',-1); }
-  }
-
   function extract_params(url) {
     var out = {};
     var parts = url.split('?',2);
@@ -330,14 +385,65 @@
     return out;
   }
 
+  function maybe_use_responses(widgets,$table,got,config) {
+    if(!$table.closest('html').length) { return; }
+    var cur_manifest = $table.data('manifest');
+    if(got.more) {
+      get_new_data(widgets,$table,cur_manifest,got.more,config);
+    }
+    if($.orient_compares_equal(cur_manifest.manifest,got.orient)) {
+      flux(widgets,$table,'think',1);
+      var d = $.Deferred().resolve([0,-1,-1]);
+      if(!got.more) {
+        $table.data('complete',true);
+        run_render_grid(widgets,$table);
+      }
+      var fn = function(x) {
+        var start = new Date().getTime();
+        var loc = use_response(widgets,$table,got,got.responses[x[0]],config,got.order);
+        if(x[1]==-1 || loc[0]<x[1]) { x[1] = loc[0]; }
+        if(x[2]==-1 || loc[0]+loc[1]>x[2]) { x[2] = loc[0]+loc[1]; }
+        var e = $.Deferred().resolve([x[0]+1,x[1],x[2]]);
+        var took = (new Date().getTime())-start;
+        if(took<25) { return e; } else { return beat(e,10); }
+      };
+      for(var i=0;i<got.responses.length;i++) {
+        d = d.then(fn);
+      }
+      d = d.then(function(x) {
+        return maybe_render_grid(widgets,$table,cur_manifest,x[1],x[2]-x[1]);
+      }).then(function() {
+        if(!got.more) { flux(widgets,$table,'load',-1); }
+        flux(widgets,$table,'think',-1);
+      });
+    }
+  }
+
+  var o_num = 0;
+  var outstanding = [];
+  var o_manifest = {};
+
   function get_new_data(widgets,$table,manifest_c,more,config) {
     if(more===null) { flux(widgets,$table,'load',1); }
+    $table.data('complete',false);
+
+    // Cancel any ongoing fruitless requests
+    if(!$.orient_compares_equal(manifest_c.manifest,o_manifest)) {
+      for(var i=0;i<outstanding.length;i++) {
+        if(outstanding[i]) { outstanding[i].abort(); }
+        outstanding[i] = null;
+      }
+      o_num = 0;
+      o_manifest = manifest_c.manifest;
+    }
+    if(!o_num) { outstanding = []; }
 
     var payload_one = $table.data('payload_one');
     if(payload_one && $.orient_compares_equal(manifest_c.manifest,config.orient)) {
       $table.data('payload_one','');
-      maybe_use_response(widgets,$table,payload_one,config);
+      maybe_use_responses(widgets,$table,payload_one,config);
     } else {
+      if(more===null) { flux(widgets,$table,'think',1); }
       var wire_manifest = $.extend({},manifest_c.manifest,manifest_c.wire);
       var src = $table.data('src');
       var params = $.extend({},extract_params(src),{
@@ -346,13 +452,17 @@
         orient: JSON.stringify(manifest_c.manifest),
         more: JSON.stringify(more),
         config: JSON.stringify(config),
-        incr_ok: manifest_c.incr_ok,
         series: JSON.stringify(config.columns),
         ssplugins: JSON.stringify(config.ssplugins),
         source: 'enstab'
       });
-      $.post($table.data('src'),params,function(res) {
-        maybe_use_response(widgets,$table,res,config);
+      var o_idx = outstanding.length;
+      o_num++;
+      outstanding[o_idx] = $.post($table.data('src'),params,function(res) {
+        outstanding[o_idx] = null;
+        o_num--;
+        if(more===null) { flux(widgets,$table,'think',-1); }
+        maybe_use_responses(widgets,$table,res,config);
       },'json');
     }
   }
@@ -362,9 +472,10 @@
     var orient = $.extend(true,{},$table.data('view'));
     $table.data('orient',orient);
     var manifest_c = build_manifest(config,orient,old_manifest.manifest);
-    $table.data('manifest',manifest_c);
+    $table.data('manifest',manifest_c); 
+    clear_render_grid();
     if($.orient_compares_equal(manifest_c.manifest,old_manifest.manifest)) {
-      rerender_grid(widgets,$table,manifest_c);
+      maybe_render_grid(widgets,$table,manifest_c,0,-1);
     } else {
       get_new_data(widgets,$table,manifest_c,null,config);
     }
@@ -422,11 +533,6 @@
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
-    $.each(config.formats,function(i,fmt) {
-      if(!config.orient.format && widgets[fmt]) {
-        config.orient.format = fmt;
-      }
-    });
     var $table = $('<div class="layout"/>');
     $table = build_frame(config,widgets,$table);
     make_chain(widgets,config,$table);
@@ -434,8 +540,7 @@
     store_keymeta($table,config.keymeta); 
     $target.replaceWith($table);
     var stored_config = {
-      columns: config.columns,
-      unique: config.unique
+      columns: config.columns
     };
     var view = $.extend(true,{},config.orient);
     var old_view = $.extend(true,{},config.orient);
@@ -444,6 +549,7 @@
     $table.data('view',view).data('old-view',$.extend(true,{},old_view))
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
+    delete config.payload_one;
     $table.on('think-on',function(e,key) { flux(widgets,$table,'think',1,key); });
     $table.on('think-off',function(e,key) { flux(widgets,$table,'think',-1,key); });
     build_format(widgets,$table);
@@ -473,7 +579,9 @@
         wire: JSON.stringify(orient),
         ssplugins: JSON.stringify(config.ssplugins),
         spawntoken: spawntoken,
-        source: 'enstab'
+        more: JSON.stringify(null),
+        source: 'enstab',
+        incr_ok: 0
       });
       var out = '<form method="POST" id="spawn" action="'+src+'">';
       $.each(params,function(k,v) {

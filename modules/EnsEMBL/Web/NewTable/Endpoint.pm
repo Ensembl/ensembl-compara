@@ -27,102 +27,20 @@ package EnsEMBL::Web::NewTable::Endpoint;
 use strict;
 use warnings;
 
-use Carp;
-use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
-
-use EnsEMBL::Web::NewTable::Cache;
-
-our @PLUGINS = qw(Core Frame Decorate Filter Misc);
-
 sub new {
   my ($proto,$hub,$component) = @_;
 
   my $class = ref($proto) || $proto;
   my $self = {
-    key_meta => {},
-    cache => EnsEMBL::Web::NewTable::Cache->new($hub),
   };
   bless $self,$class;
   return $self;
 }
 
-my %PLUGINS;
-my @PACKAGES;
-while(@PLUGINS) {
-  my $plugin = shift @PLUGINS;
-  my $package = dynamic_require("EnsEMBL::Web::NewTable::Plugins::$plugin",1);
-  push @PACKAGES,$plugin;
-  if($package) {
-    my $children = $package->children();
-    push @PLUGINS,@$children;
-  }
-}
-foreach my $plugin (@PACKAGES) {
-  my $package = "EnsEMBL::Web::NewTable::Plugins::$plugin";
-  if(UNIVERSAL::isa($package,"EnsEMBL::Web::NewTable::Plugin")) {
-    $PLUGINS{$plugin} = $package;
-  }
-}
-
 sub register_key {
   my ($self,$key,$meta) = @_;
 
-  $self->{'key_meta'}{$key}||={};
-  foreach my $k (keys %{$meta||{}}) {
-    $self->{'key_meta'}{$key}{$k} = $meta->{$k} unless exists $self->{'key_meta'}{$key}{$k};
-  } 
-}
-
-sub add_plugin {
-  my ($self,$plugin,$conf,$_ours) = @_;
-
-  $_ours ||= {};
-  return undef unless $PLUGINS{$plugin};
-  my $pp = $self->{'plugins'}{$plugin};
-  $self->{'plugins'}{$plugin} = $PLUGINS{$plugin}->new($self) unless $pp;
-  $pp = $self->{'plugins'}{$plugin};
-  return undef unless $pp;
-  $pp->configure($conf);
-  foreach my $sub (@{$pp->requires()}) {
-    next if $_ours->{$sub};
-    $_ours->{$sub} = 1;
-    $self->add_plugin($sub,$conf,$_ours);
-  }
-}
-
-sub plugins {
-  my ($self) = @_;
-
-  my %out;
-  foreach my $plugin (keys %{$self->{'plugins'}}) {
-    $out{$plugin} = $self->{'plugins'}{$plugin}{'conf'};
-  }
-  return \%out;
-}
-
-sub can_delegate {
-  my ($self,$type,$fn) = @_;
-
-  $fn = "${type}_$fn" if $type;
-  foreach my $plugin (values %{$self->{'plugins'}}) {
-    if($plugin->can($fn)) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-sub delegate {
-  my ($self,$obj,$type,$fn,$data) = @_;
-
-  my $orig_fn = $fn;
-  $fn = "${type}_$fn" if $type;
-  foreach my $plugin (values %{$self->{'plugins'}}) {
-    if($plugin->can($fn)) {
-      return $plugin->$fn($obj,@$data);
-    }
-  }
-  confess "No such method '$orig_fn'";
+  $self->{'config'}->add_keymeta($key,$meta);
 }
 
 sub hub { return $_[0]->{'hub'}; }

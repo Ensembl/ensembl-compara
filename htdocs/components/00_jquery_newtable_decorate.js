@@ -73,10 +73,11 @@
         return [
           function(need,got) {
             return {
-              undo: function(manifest,grid,series,dest) {
+              dundo: function(manifest,grid,series,start,length) {
                 var fabric = [];
                 var decorators = make_decorators($table,'decorators',series);
-                for(var i=0;i<grid.length;i++) {
+                for(var i=0;i<grid.length;i++) { fabric[i] = grid[i]; }
+                for(var i=start;i<start+length;i++) {
                   var new_row = [];
                   for(var j=0;j<grid[i].length;j++) {
                     var v = grid[i][j];
@@ -93,7 +94,7 @@
                   }
                   fabric[i] = new_row;
                 }
-                return [manifest,fabric];
+                return fabric;
               }
             };
           }

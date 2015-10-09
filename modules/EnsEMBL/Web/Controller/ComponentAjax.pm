@@ -38,7 +38,6 @@ sub render_page {
   my $func = $self->hub->param('source');
   $func =~ s/\W//g;
   $func = "ajax_$func";
-  warn "func=$func\n";
   my $module_name = $self->hub->function;
   my $type = $self->hub->type;
   my $pkg = "EnsEMBL::Web::Component::${type}::${module_name}";

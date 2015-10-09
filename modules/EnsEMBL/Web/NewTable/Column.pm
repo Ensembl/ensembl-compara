@@ -21,31 +21,32 @@ package EnsEMBL::Web::NewTable::Column;
 use strict;
 use warnings;
 
+use Carp;
 use Scalar::Util qw(weaken);
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 sub new {
-  my ($proto,$endpoint,$type,$key,$confarr,$confarg) = @_;
+  my ($proto,$config,$type,$key,$confarr,$confarg) = @_;
 
   my $class = "EnsEMBL::Web::NewTable::Column";
   $class .= "::".ucfirst($type) if $type;
   dynamic_require($class);
 
   my $self = {
-    endpoint => $endpoint,
+    config => $config,
     key => $key,
     type => $type,
     conf => {
       width => "100u",
       primary => 0,
       sort => 1,
-      incr_ok => 1,
+      incr_ok => 0,
       sstype => $type,
       ssconf => $confarr,
       ssarg => $confarg,
     },
   };
-  weaken($self->{'endpoint'});
+  weaken($self->{'config'});
 
   bless $self, $class;
   $self->init();
@@ -57,6 +58,15 @@ sub new {
 }
 
 sub init {}
+
+# \f -- optional hyphenation point
+# \a -- optional break point (no hyphen)
+sub hyphenate {
+  local $_ = $_[0];
+  s/\f/&shy;/g;
+  s/\a/&#8203;/g;
+  return $_;
+}
 
 sub js_params { return {}; }
 sub clean { return $_[1]; }
@@ -86,7 +96,7 @@ sub set_helptip {
 sub set_label {
   my ($self,$label) = @_;
 
-  $self->{'conf'}{'label'} = $label;
+  $self->{'conf'}{'label'} = hyphenate($label);
 }
 
 sub set_width {
@@ -107,8 +117,10 @@ sub is_null {
 sub compare {
   my ($self,$a,$b,$f,$keymeta,$cache,$col) = @_;
 
-  my $av = $self->clean($a||'');
-  my $bv = $self->clean($b||'');
+  $a = '' unless defined $a;
+  $b = '' unless defined $b;
+  my $av = $self->clean($a);
+  my $bv = $self->clean($b);
   my $an = $self->is_null($av);
   my $bn = $self->is_null($bv);
   return $an-$bn if $an-$bn;
@@ -154,8 +166,7 @@ sub no_filter { $_[0]->set_filter(''); }
 
 sub unshowable { $_[0]->set_type('screen',{ unshowable => 1 }); }
 sub sort_for { $_[0]->set_type('sort_for',{ col => $_[1] }); }
-
-sub colconf { return $_[0]->{'conf'}; }
+sub sort_down_first { $_[0]->set_type('sort_down',$_[1]); }
 
 sub configure {
   my ($self,$mods,$args) = @_;
@@ -172,7 +183,7 @@ sub configure {
     foreach my $fn (@names) {
       if($self->can($fn)) { $self->$fn($v); $ok=1; last; }
     }
-    die "Bad option '$names[0]'" unless $ok;
+    confess "Bad option '$names[0]' for $self ($self->{'config'})" unless $ok;
   }
 }
 
@@ -180,7 +191,7 @@ sub can {
   my ($self,$fn) = @_;
 
   return 1 if $self->SUPER::can($fn);
-  return $self->{'endpoint'}->can_delegate('col',$fn);
+  return $self->{'config'}->can_delegate('col',$fn);
 }
 
 # For things defined in plugins. Maybe use roles in future?
@@ -190,7 +201,7 @@ sub AUTOLOAD {
   $fn =~ s/^.*:://;
   my $self = shift;
 
-  return $self->{'endpoint'}->delegate($self,'col',$fn,\@_);
+  return $self->{'config'}->delegate($self,'col',$fn,\@_);
 }
 sub DESTROY {} # For AUTOLOAD
 

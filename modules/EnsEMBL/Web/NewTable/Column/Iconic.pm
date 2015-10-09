@@ -40,14 +40,14 @@ sub iconic_build_key {
 }
 
 sub cmp {
-  my ($x,$y,$f,$c,$km,$col) = @_;
+  my ($self,$x,$y,$f,$c,$km,$col) = @_;
 
   $c->{$x} = iconic_build_key($km,$col,$x) unless exists $c->{$x};
   $c->{$y} = iconic_build_key($km,$col,$y) unless exists $c->{$y};
   return ($c->{$x} cmp $c->{$y})*$f;
 }
 
-sub split { return [ split(/~/,$_[1]) ]; }
+sub split { return $_[1]?[split(/~/,$_[1])]:[]; }
 sub has_value { return $_[1]->{$_[2]} = 1; }
 sub range { return [sort keys %{$_[1]}]; }
 

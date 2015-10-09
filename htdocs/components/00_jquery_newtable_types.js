@@ -57,7 +57,7 @@
 
   function position_match(ori,val) {
     var pat = ori.chr+":";
-    if(val.indexOf(pat)==0) {
+    if(val.indexOf(pat)===0) {
       val = parseFloat(val.substr(pat.length));
       if(ori.hasOwnProperty('min') && val<ori.min) { return false; }
       if(ori.hasOwnProperty('max') && val>ori.max) { return false; }
@@ -103,11 +103,12 @@
   }
   
   function rangemerge_class(a,b) {
+    var i;
     var v = {};
     if(!a) { a = []; }
     a = a.slice();
-    for(var i=0;i<a.length;i++) { v[a[i]] = 1; }
-    for(var i=0;i<b.length;i++) {
+    for(i=0;i<a.length;i++) { v[a[i]] = 1; }
+    for(i=0;i<b.length;i++) {
       if(!v.hasOwnProperty(b[i])) { a.push(b[i]); }
     }
     return a;
@@ -168,6 +169,7 @@
     return {
       types: [{
         name: "string",
+        split: function(v) { return v?[v]:[]; },
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
         match: function(ori,val) { return string_match(ori,val); },
@@ -203,7 +205,7 @@
         merge: rangemerge_position
       },{
         name: "iconic",
-        split: function(v) { return v.split(/~/); },
+        split: function(v) { return v?v.split(/~/):[]; },
         value: function(vv,v) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
         match: function(ori,val) { return string_match(ori,val); },

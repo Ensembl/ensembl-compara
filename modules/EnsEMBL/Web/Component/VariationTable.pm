@@ -58,11 +58,16 @@ sub table_content {
   my $icontext         = $hub->param('context') || 100;
   my $gene_object      = $self->configure($icontext,'ALL');
   my $object_type      = $hub->type;
-  my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
-  
-  if ($object_type eq 'Transcript') {
-    my $t = $hub->param('t');
-    @transcripts = grep $_->stable_id eq $t, @transcripts;
+ 
+  my $transcript;
+  $transcript = $hub->param('t') if $object_type eq 'Transcript';
+  my $phase = $callback->phase;
+  $transcript = $phase if $phase =~ s/^full-//;
+  my @transcripts;
+  if(defined $transcript) {
+    @transcripts = ($gene_object->get_transcript_by_stable_id($transcript));
+  } else {
+    @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
   }
   return $self->variation_table($callback,'ALL',\@transcripts);
 }
@@ -209,9 +214,6 @@ sub make_table {
   my $glossary = $hub->glossary_lookup;
   
   my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
-  $table->add_phase("taster",[0,50]);
-#  $table->add_phase("outline",undef,[qw(ID Source)]);
-  $table->add_phase("full");
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
 
@@ -283,17 +285,20 @@ sub make_table {
   },{
     _key => 'status', _type => 'iconic', label => "Evid\fence",
     width => 1.5,
-    helptip => $glossary->{'Evidence status (variant)'}
+    helptip => $glossary->{'Evidence status (variant)'},
+    sort_down_first => 1,
   },{
     _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
-    helptip => 'Clinical significance'
+    helptip => 'Clinical significance',
+    sort_down_first => 1,
   },{
     _key => 'snptype', _type => 'iconic set_primary', label => "Type",
     filter_label => 'Consequence Type',
     filter_sorted => 1,
     set_range => $self->all_terms,
     width => 1.5,
-    helptip => 'Consequence type'
+    helptip => 'Consequence type',
+    sort_down_first => 1,
   },{
     _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
     helptip => "Resulting amino acid(s)"
@@ -302,7 +307,8 @@ sub make_table {
     helptip => 'Amino Acid Co-ordinate'
   },{
     _key => 'sift_sort', _type => 'numeric no_filter unshowable',
-    sort_for => 'sift_value'
+    sort_for => 'sift_value',
+    sort_down_first => 1,
   },{
     _key => 'sift_class', _type => 'iconic no_filter unshowable',
   },{
@@ -311,7 +317,8 @@ sub make_table {
     helptip => $glossary->{'SIFT'}
   },{
     _key => 'polyphen_sort', _type => 'numeric no_filter unshowable',
-    sort_for => 'polyphen_value'
+    sort_for => 'polyphen_value',
+    sort_down_first => 1,
   },{
     _key => 'polyphen_class', _type => 'iconic no_filter unshowable',
   },{
@@ -352,6 +359,21 @@ sub make_table {
   $self->clinsig_classes($table);
   $self->snptype_classes($table,$self->hub);
   $self->sift_poly_classes($table);
+  
+  # Separate phase for each transcript speeds up gene variation table
+ 
+   
+  my $icontext         = $self->hub->param('context') || 100;
+  my $gene_object      = $self->configure($icontext,'ALL');
+  my $object_type      = $self->hub->type;
+  my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
+  if ($object_type eq 'Transcript') {
+    my $t = $hub->param('t');
+    @transcripts = grep $_->stable_id eq $t, @transcripts;
+  }
+
+  $table->add_phase("taster",'taster',[0,50]);
+  $table->add_phase("full-$_",'full') for(map { $_->stable_id } @transcripts);
 
   return $table;
 }
@@ -371,9 +393,7 @@ sub variation_table {
     v      => undef,
   });
 
-  # colourmap
   my $var_styles = $hub->species_defs->colour('variation');
-  my $colourmap  = $hub->colourmap;
   
   my $vfs = $self->_get_variation_features();
 
@@ -446,8 +466,10 @@ sub variation_table {
         ($start,$end) = ($end,$start) if $lrg_strand < 0;
       }
 
-      foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
-        
+      my $tvas = $transcript_variation->get_all_alternate_TranscriptVariationAlleles;
+
+      foreach my $tva (@$tvas) {
+        next if $callback->free_wheel();
         # this isn't needed anymore, I don't think!!!
         # thought I'd leave this indented though to keep the diff neater
         if (1) {#$tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
@@ -531,7 +553,7 @@ sub variation_table {
           }
           $num++;
           $callback->add_row($row);
-          last ROWS if $callback->stand_down($row,$num);
+          last ROWS if $callback->stand_down;
         }
       }
     }
@@ -640,6 +662,13 @@ sub get_hgvs {
   }
   
   return $hgvs;
+}
+
+sub memo_argument {
+  my ($self) = @_;
+  return {
+    url => $self->hub->url
+  };
 }
 
 1;

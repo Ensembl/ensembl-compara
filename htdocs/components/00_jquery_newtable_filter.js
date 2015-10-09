@@ -207,6 +207,10 @@
     }
 
     function build_client_filter(out,need,got) {
+      out.undo = function(manifest,grid,series,dest) {
+        delete manifest.enumerate;
+        return [manifest,grid];
+      };
       var needf = (need||{}).filter || {};
       var gotf = (got||{}).filter || {};
       var to_filter = {};
@@ -237,6 +241,7 @@
         }
       });
       out.undo = function(manifest,grid,series,dest) {
+        delete manifest.enumerate;
         var rev_series = {};
         for(var i=0;i<series.length;i++) { rev_series[series[i]] = i; }
         var fabric = [];
@@ -260,7 +265,6 @@
         return [manifest,fabric];
       };
       out.all_rows = true;
-      out.no_incr = true;
       delete need.filter;
     }
 
@@ -317,6 +321,7 @@
         });
         $('li.t',$el).each(function() { update_button($table,$(this)); });
         $('html').on('click',function(e) {
+          if(!$table.closest('html').length) { return; }
           var $button = $(e.target).closest('.newtable_filter li.t');
           var $menu = $(e.target).closest('.newtable_filter li.t .m');
           activate_menu($table,$button,!!$menu.length);

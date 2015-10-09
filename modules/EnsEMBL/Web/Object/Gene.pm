@@ -514,6 +514,15 @@ sub get_all_transcripts {
   return $self->{'data'}{'_transcripts'};
 }
 
+sub get_transcript_by_stable_id {
+  my ($self,$stable_id) = @_;
+
+  my $th = $self->hub->get_adaptor('get_TranscriptAdaptor');
+  my $trans = $th->fetch_by_stable_id($stable_id);
+  return undef unless $trans;
+  return $self->new_object('Transcript',$trans,$self->__data);
+}
+
 sub get_all_families {
   my $self = shift;
   my $compara_db = shift || 'compara';

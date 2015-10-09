@@ -95,7 +95,7 @@
             if(rev) { return { undo: rev }; }
             var plan = build_plan(need);
             if(!plan) { return null; }
-            wire.sort = need.sort;
+            var msort = need.sort;
             need.sort = got.sort;
             return {
               undo: function(manifest,grid,series) {
@@ -113,7 +113,7 @@
                 fabric.sort(function(a,b) {
                   return compare(a,b,rev_series,plan.stages,cache,keymeta);
                 });
-                manifest.sort = wire.sort;
+                manifest.sort = msort;
                 return [manifest,fabric];
               },
               no_incr: !plan.incr_ok

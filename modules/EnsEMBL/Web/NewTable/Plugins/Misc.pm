@@ -25,18 +25,6 @@ use parent qw(EnsEMBL::Web::NewTable::Plugin);
 sub js_plugin { return "new_table_columns"; }
 sub position { return [qw(top-middle)]; }
 
-package EnsEMBL::Web::NewTable::Plugins::PageSizer;
-use parent qw(EnsEMBL::Web::NewTable::Plugin);
-
-sub position { return [qw(top-left)]; }
-sub js_plugin { return "new_table_pagesize"; }
-sub js_config {
-  return {
-    %{$_[0]->SUPER::js_config()},
-    sizes => [0,10,100],
-  };
-}
-
 package EnsEMBL::Web::NewTable::Plugins::Styles;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 

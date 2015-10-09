@@ -22,7 +22,7 @@ sub set_decorates {
 
   my $pkey = $self->decorate_key();
   my $colkey = $col->key();
-  $self->{'table'}->register_key("decorate/$pkey/$colkey/$cval",$data);
+  $self->config->add_keymeta("decorate/$pkey/$colkey/$cval",$data);
   $col->decorate($self->decorate_key);
 }
 
@@ -32,7 +32,7 @@ use parent qw(EnsEMBL::Web::NewTable::Plugins::Decorate);
 sub requires { return [qw(HelpTips)]; }
 
 sub init {
- $_[0]->{'colourmap'} = $_[0]->table->hub->colourmap;
+ $_[0]->{'colourmap'} = $_[0]->hub->colourmap;
 }
 
 sub decorate_key { return 'iconic'; }
@@ -70,7 +70,7 @@ sub col_link_url {
     if(ref($spec->{$k}) eq 'ARRAY') { $params{$k} = $spec->{$k}[0]; }
     else { $base{$k} = $spec->{$k}; }
   }
-  my $base = $self->table->hub->url(\%base);
+  my $base = $self->hub->url(\%base);
   $self->set_decorates($col,'*',{ base_url => $base, params => \%params});
 }
 

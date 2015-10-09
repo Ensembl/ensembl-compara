@@ -41,7 +41,7 @@
       if(old_val == value) { return; }
       $table.data('search-value',value);
       var view = $table.data('view');
-      if(value!="") {
+      if(value!=="") {
         view.search = value;
       } else {
         delete view.search;
@@ -75,7 +75,6 @@
             if(!search_was_defined) { search = ""; }
             if(!search) { return null; }
             var cleaner = {};
-            var j = 0;
             var off = need.off_columns || {};
             for(var i=0;i<config.columns.length;i++) {
               if(off[config.columns[i]]) { continue; }
@@ -99,8 +98,7 @@
                 }
                 return [manifest,fabric];
               },
-              all_rows: true,
-              no_incr: true
+              all_rows: true
             };
           }
         ];
