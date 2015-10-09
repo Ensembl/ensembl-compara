@@ -274,7 +274,6 @@
   }
 
   function render_grid(widgets,$table,manifest_c,start,length) {
-    console.log("render_grid",start,length);
     var view = $table.data('view');
     var grid = $table.data('grid');
     var grid_series = $table.data('grid-series');
@@ -396,7 +395,6 @@
       flux(widgets,$table,'think',1);
       var d = $.Deferred().resolve([0,-1,-1]);
       if(!got.more) {
-        console.log("complete");
         $table.data('complete',true);
         run_render_grid(widgets,$table);
       }
@@ -428,11 +426,9 @@
   function get_new_data(widgets,$table,manifest_c,more,config) {
     if(more===null) { flux(widgets,$table,'load',1); }
     $table.data('complete',false);
-    console.log("incomplete");
 
     // Cancel any ongoing fruitless requests
     if(!$.orient_compares_equal(manifest_c.manifest,o_manifest)) {
-      console.log("Cancelling outstanding");
       for(var i=0;i<outstanding.length;i++) {
         if(outstanding[i]) { outstanding[i].abort(); }
         outstanding[i] = null;
@@ -481,7 +477,6 @@
     if($.orient_compares_equal(manifest_c.manifest,old_manifest.manifest)) {
       maybe_render_grid(widgets,$table,manifest_c,0,-1);
     } else {
-      console.log("crusty data");
       get_new_data(widgets,$table,manifest_c,null,config);
     }
   }
