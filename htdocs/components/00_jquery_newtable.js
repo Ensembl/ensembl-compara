@@ -257,30 +257,6 @@
     $table.data('keymeta',keymeta);
   }
 
-  var pr_tail; // XXX out of global! Should be per-table.
-  var pr_head = null;
-  var pr_after = null;
-
-  function clear_pr_queue() {
-    pr_head = null;
-    pr_tail = null;
-    pr_after = null;
-  }
-
-  function run_pr_queue() {
-    console.log("run_pr_queue");
-    if(pr_head) {
-      pr_tail.then(function() { pr_after.resolve(); });
-      pr_head.resolve();
-    }
-    clear_pr_queue();
-  }
-
-  function mark_complete($table) {
-    $table.data('complete',true);
-    run_pr_queue();
-  }
-
   function decorate(widgets,$table,grid,manifest_c,orient,series,start,length) {
     var d = $.Deferred();
     d.resolve([0,grid]);
@@ -306,7 +282,7 @@
     var grid_series = $table.data('grid-series');
     if(length==-1) { length = grid.length; }
     return build_orient(widgets,$table,manifest_c,grid,grid_series,view).then(function(orient_c) {
-      if(manifest_c.all_rows) { // XXX What is this?
+      if(manifest_c.all_rows) {
         start = 0;
         length = orient_c.data.length;
       }
@@ -318,20 +294,43 @@
       }
     });
   }
-  
+ 
+  var pr_start = 0;
+  var pr_length = 0;
+  var pr_manifest = null;
+  var pr_after = null;
+
+  function clear_render_grid() { pr_manifest = null; }
+
+  function run_render_grid(widgets,$table) {
+    if(pr_manifest===null) { return; }
+    render_grid(widgets,$table,pr_manifest,pr_start,pr_length).then(function() {
+    if(pr_after!==null) { pr_after.resolve(); }
+    pr_after = null;
+    pr_manifest = null;
+  });
+  }
+ 
   function maybe_render_grid(widgets,$table,manifest_c,start,length) {
-    console.log("scheduling render");
-    if(pr_head == null) {
-      pr_head = $.Deferred();
-      pr_tail = pr_head;
-      pr_after = $.Deferred();
+    if(pr_manifest===null) { pr_manifest = manifest_c; }
+    if(!$.orient_compares_equal(pr_manifest,manifest_c)) {
+      if(pr_after!==null) { pr_after.resolve(); pr_after = null; }
+      pr_start = start;
+      pr_length = length;
+      pr_manifest = manifest_c;
     }
-    pr_tail = pr_tail.then(function() {
-      console.log("render");
-      render_grid(widgets,$table,manifest_c,start,length);
-    });
+    if(pr_after===null) { pr_after = $.Deferred(); }
+    if(start<pr_start) {
+      if(pr_length>-1) { pr_length += pr_start-start; }
+      pr_start = start;
+    }
+    if(pr_length==-1 || length==-1) {
+      pr_length = -1;
+    } else if(start+length>pr_start+pr_length) {
+      pr_length = start+length-pr_start;
+    }
     if(manifest_c.incr_ok || $table.data('complete')) {
-      run_pr_queue();
+      run_render_grid(widgets,$table);
     }
     return pr_after;
   }
@@ -400,7 +399,8 @@
       var d = $.Deferred().resolve([0,-1,-1]);
       if(!got.more) {
         console.log("complete");
-        mark_complete($table);
+        $table.data('complete',true);
+        run_render_grid(widgets,$table);
       }
       for(var i=0;i<got.responses.length;i++) {
         d = d.then(function(x) {
@@ -414,7 +414,7 @@
         });
       }
       d = d.then(function(x) {
-        return maybe_render_grid(widgets,$table,cur_manifest,x[1],x[2]);
+        return maybe_render_grid(widgets,$table,cur_manifest,x[1],x[2]-x[1]);
       }).then(function() {
         if(!got.more) { flux(widgets,$table,'load',-1); }
         flux(widgets,$table,'think',-1);
@@ -482,7 +482,7 @@
     $table.data('manifest',manifest_c); 
     var complete = $table.data('complete');
    
-    clear_pr_queue(); 
+    clear_render_grid();
     if($.orient_compares_equal(manifest_c.manifest,old_manifest.manifest)) {
       maybe_render_grid(widgets,$table,manifest_c,0,-1);
     } else {

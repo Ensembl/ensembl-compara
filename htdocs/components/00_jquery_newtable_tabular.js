@@ -212,8 +212,8 @@
     $.lazy('refresh');
   }
   
-  function build_markup($table,config,grid,rev_series,table_num,orient) {
-    var markup = [];
+  function remarkup_sub($table,$subtable,config,grid,rev_series,table_num,orient,mstart,mrows) {
+    // show which columns?
     var shown = [];
     var off = orient.off_columns || {};
     var i,j;
@@ -225,19 +225,18 @@
       if(off[config.columns[i]]) { continue; } 
       shown.push(rev_series[config.columns[i]]);
     }
-    var start = table_num*rows_per_subtable;
-    for(i=start;i<start+rows_per_subtable && i<grid.length;i++) {
-      var row = [];
-      for(j=0;j<shown.length;j++) {
-        row[j] = grid[i][shown[j]]||'';
-      }
-      markup.push(row);
-    }
-    return markup;
-  }
 
-  function remarkup_sub($table,$subtable,config,grid,rev_series,table_num,orient) {
-    var markup = build_markup($table,config,grid,rev_series,table_num,orient);
+    //
+    var markup = $subtable.data('markup')||[];
+    var tstart = table_num*rows_per_subtable;
+    for(i=Math.max(mstart-tstart,0);
+        i<rows_per_subtable && i+tstart<mstart+mrows && i+tstart < grid.length;
+        i++) {
+      markup[i] = [];
+      for(j=0;j<shown.length;j++) {
+        markup[i][j] = grid[i+tstart][shown[j]];
+      }
+    }
     $subtable.data('markup-orient',orient);
     $subtable.data('markup',markup);
     $subtable.data('xxx',table_num);
@@ -246,10 +245,10 @@
   function remarkup($table,config,grid,rev_series,start,rows,orient) {
     var subtabs = [];
     var tab_a = Math.floor(start/rows_per_subtable);
-    var tab_b = Math.floor((start+rows)/rows_per_subtable);
+    var tab_b = Math.floor((start+rows-1)/rows_per_subtable);
     for(var j=tab_a;j<=tab_b;j++) {
       var $subtable = $('.subtable',$table).eq(j);
-      remarkup_sub($table,$subtable,config,grid,rev_series,j,orient);
+      remarkup_sub($table,$subtable,config,grid,rev_series,j,orient,start,rows);
       subtabs.push(j);
     }
     return subtabs;
