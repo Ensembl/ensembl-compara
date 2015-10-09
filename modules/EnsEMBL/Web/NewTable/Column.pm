@@ -40,7 +40,7 @@ sub new {
       width => "100u",
       primary => 0,
       sort => 1,
-      incr_ok => 1,
+      incr_ok => 0,
       sstype => $type,
       ssconf => $confarr,
       ssarg => $confarg,

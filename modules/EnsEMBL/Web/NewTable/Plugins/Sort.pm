@@ -10,6 +10,6 @@ sub requires { return children(); }
 package EnsEMBL::Web::NewTable::Plugins::ClientSort;
 use parent qw(EnsEMBL::Web::NewTable::Plugin);
 
-#sub js_plugin { return "new_table_clientsort"; }
+sub js_plugin { return "new_table_clientsort"; }
 
 1;
