@@ -292,7 +292,10 @@
     for(var i=0;i<manifest_c.dundo.length;i++) {
       d = beat(d.then(fn),10);
     }
-    return d.then(function(x) { return x[1]; });
+    return d.then(function(x) {
+      flux(widgets,$table,'think',-1);
+      return x[1];
+    });
   }
 
   function render_grid(widgets,$table,manifest_c,start,length) {
