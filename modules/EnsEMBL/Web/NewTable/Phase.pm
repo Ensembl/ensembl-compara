@@ -180,7 +180,7 @@ sub add_row {
   return 0 unless $self->passes_muster($row);
   $self->{'request_num'}++;
   my $nulls = $self->server_nulls($row);
-  $self->add_row_data($row);
+  $self->add_row_data($row,$nulls);
   $self->{'inlen'}++;
 }
 
