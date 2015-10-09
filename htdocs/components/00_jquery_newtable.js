@@ -268,10 +268,6 @@
     });
   }
 
-  function rerender_grid(widgets,$table,manifest_c) {
-    return render_grid(widgets,$table,manifest_c,0,-1);
-  }
-
   function uncompress_response(response) {
     var i;
     var data = [];
@@ -304,7 +300,7 @@
     store_response_in_grid($table,data.data,data.nulls,order,
                            phase.start,cur_manifest.manifest,
                            phase.series);
-    store_ranges($table,response.enums,cur_manifest,response.shadow,config,widgets);
+    store_ranges($table,response.enums||{},cur_manifest,response.shadow,config,widgets);
     var size = $table.data('min-size')||0;
     if(size<phase.shadow_num) { size = phase.shadow_num; }
     $table.data('min-size',size);
@@ -376,6 +372,7 @@
       $table.data('payload_one','');
       maybe_use_responses(widgets,$table,payload_one,config);
     } else {
+      if(more===null) { flux(widgets,$table,'think',1); }
       var wire_manifest = $.extend({},manifest_c.manifest,manifest_c.wire);
       var src = $table.data('src');
       var params = $.extend({},extract_params(src),{
@@ -394,6 +391,7 @@
       outstanding[o_idx] = $.post($table.data('src'),params,function(res) {
         outstanding[o_idx] = null;
         o_num--;
+        if(more===null) { flux(widgets,$table,'think',-1); }
         maybe_use_responses(widgets,$table,res,config);
       },'json');
     }
@@ -406,7 +404,7 @@
     var manifest_c = build_manifest(config,orient,old_manifest.manifest);
     $table.data('manifest',manifest_c);
     if($.orient_compares_equal(manifest_c.manifest,old_manifest.manifest)) {
-      rerender_grid(widgets,$table,manifest_c);
+      render_grid(widgets,$table,manifest_c,0,-1);
     } else {
       get_new_data(widgets,$table,manifest_c,null,config);
     }
