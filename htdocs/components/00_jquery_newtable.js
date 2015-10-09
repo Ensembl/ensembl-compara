@@ -248,21 +248,63 @@
     $table.data('keymeta',keymeta);
   }
 
+  var pr_tail; // XXX out of global! Should be per-table.
+  var pr_head = null;
+  var pr_after = null;
+
+  function clear_pr_queue() {
+    pr_head = null;
+    pr_tail = null;
+    pr_after = null;
+  }
+
+  function run_pr_queue() {
+    if(pr_head) {
+      pr_tail.then(function() { pr_after.resolve(); });
+      pr_head.resolve();
+    }
+    clear_pr_queue();
+  }
+
+  function mark_complete($table) {
+    $table.data('complete',true);
+    run_pr_queue();
+  }
+
   function render_grid(widgets,$table,manifest_c,start,length) {
     var view = $table.data('view');
     var grid = $table.data('grid');
     var grid_series = $table.data('grid-series');
     if(length==-1) { length = grid.length; }
     return build_orient(widgets,$table,manifest_c,grid,grid_series,view).then(function(orient_c) {
-      if(manifest_c.all_rows) {
+      if(manifest_c.all_rows) { // XXX What is this?
         start = 0;
         length = orient_c.data.length;
       }
+      console.log("ok?",manifest_c);
       if($.orient_compares_equal(orient_c.orient,view)) {
+        console.log("ok");
         widgets[view.format].add_data($table,orient_c.data,grid_series,start,length,orient_c.orient);
         widgets[view.format].truncate_to($table,orient_c.data,grid_series,orient_c.orient);
       }
     });
+  }
+  
+  function maybe_render_grid(widgets,$table,manifest_c,start,length) {
+    console.log("scheduling render");
+    if(pr_head == null) {
+      pr_head = $.Deferred();
+      pr_tail = pr_head;
+      pr_after = $.Deferred();
+    }
+    pr_tail = pr_tail.then(function() {
+      console.log("render");
+      render_grid(widgets,$table,manifest_c,start,length);
+    });
+    if(manifest_c.incr_ok || $table.data('complete')) {
+      run_pr_queue();
+    }
+    return pr_after;
   }
 
   function uncompress_response(response) {
@@ -293,7 +335,6 @@
     store_keymeta($table,response.keymeta);
     var cur_manifest = $table.data('manifest');
     var data = uncompress_response(phase);
-    console.log(phase.start);
     store_response_in_grid($table,data.data,data.nulls,order,
                            phase.start,cur_manifest.manifest,
                            phase.series);
@@ -321,11 +362,16 @@
 
   function maybe_use_responses(widgets,$table,got,config) {
     var cur_manifest = $table.data('manifest');
-    if(got.more)
+    if(got.more) {
       get_new_data(widgets,$table,cur_manifest,got.more,config);
+    }
     if($.orient_compares_equal(cur_manifest.manifest,got.orient)) {
       flux(widgets,$table,'think',1);
       var d = $.Deferred().resolve([0,-1,-1]);
+      if(!got.more) {
+        console.log("complete");
+        mark_complete($table);
+      }
       for(var i=0;i<got.responses.length;i++) {
         d = d.then(function(x) {
           var start = new Date().getTime();
@@ -338,7 +384,7 @@
         });
       }
       d = d.then(function(x) {
-        return render_grid(widgets,$table,cur_manifest,x[1],x[2]);
+        return maybe_render_grid(widgets,$table,cur_manifest,x[1],x[2]);
       }).then(function() {
         if(!got.more) { flux(widgets,$table,'load',-1); }
         flux(widgets,$table,'think',-1);
@@ -353,6 +399,8 @@
 
   function get_new_data(widgets,$table,manifest_c,more,config) {
     if(more===null) { flux(widgets,$table,'load',1); }
+    $table.data('complete',false);
+    console.log("incomplete");
 
     // Cancel any ongoing fruitless requests
     if(!$.orient_compares_equal(manifest_c.manifest,o_manifest)) {
@@ -362,6 +410,7 @@
         outstanding[i] = null;
       }
       o_num = 0;
+      o_manifest = manifest_c.manifest;
     }
     if(!o_num) { outstanding = []; }
 
@@ -379,7 +428,6 @@
         orient: JSON.stringify(manifest_c.manifest),
         more: JSON.stringify(more),
         config: JSON.stringify(config),
-        incr_ok: manifest_c.incr_ok,
         series: JSON.stringify(config.columns),
         ssplugins: JSON.stringify(config.ssplugins),
         source: 'enstab'
@@ -400,10 +448,14 @@
     var orient = $.extend(true,{},$table.data('view'));
     $table.data('orient',orient);
     var manifest_c = build_manifest(config,orient,old_manifest.manifest);
-    $table.data('manifest',manifest_c);
+    $table.data('manifest',manifest_c); 
+    var complete = $table.data('complete');
+   
+    clear_pr_queue(); 
     if($.orient_compares_equal(manifest_c.manifest,old_manifest.manifest)) {
-      render_grid(widgets,$table,manifest_c,0,-1);
+      maybe_render_grid(widgets,$table,manifest_c,0,-1);
     } else {
+      console.log("crusty data");
       get_new_data(widgets,$table,manifest_c,null,config);
     }
   }
@@ -460,11 +512,6 @@
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
-    $.each(config.formats,function(i,fmt) {
-      if(!config.orient.format && widgets[fmt]) {
-        config.orient.format = fmt;
-      }
-    });
     var $table = $('<div class="layout"/>');
     $table = build_frame(config,widgets,$table);
     make_chain(widgets,config,$table);

@@ -61,9 +61,8 @@ sub go {
   $self->{'orient'} = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
   my $more = JSON->new->allow_nonref->decode($hub->param('more'));
-  my $incr_ok = ($hub->param('incr_ok')||'' eq 'true');
 
-  my $out = $self->newtable_data_request($more,$incr_ok,$keymeta,0);
+  my $out = $self->newtable_data_request($more,$keymeta,0);
   if($self->{'wire'}{'format'} eq 'export') {
     $out = $self->convert_to_csv($out);
     my $r = $hub->apache_handle;
@@ -83,7 +82,7 @@ sub preload {
   $self->{'config'} = $table->config;
   $self->{'wire'} = $table->config->orient_out;
   $self->{'orient'} = $table->config->orient_out;
-  return $self->newtable_data_request(undef,1,undef,1);
+  return $self->newtable_data_request(undef,undef,1);
 }
 
 sub convert_to_csv {
@@ -159,7 +158,7 @@ sub run_phase {
 }
 
 sub newtable_data_request {
-  my ($self,$more,$incr_ok,$keymeta,$one_phase) = @_;
+  my ($self,$more,$keymeta,$one_phase) = @_;
 
   # Check if we need to request all rows due to sorting
   my $all_data = 0;
@@ -182,7 +181,7 @@ sub newtable_data_request {
   }
   
   my $num_phases = $self->{'config'}->num_phases();
-  if($incr_ok && !$all_data) {
+  if(!$all_data) {
     my $start = time();
     my $end = $start;
     while($end-$start < 3 && $phase < $num_phases) {
