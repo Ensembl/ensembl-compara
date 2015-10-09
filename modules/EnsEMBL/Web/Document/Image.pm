@@ -112,7 +112,6 @@ sub render_toolbar {
 
   if ($self->{'export'}) {
     push @$icons, $self->add_image_export_icon;
-    $extra_html .= $self->add_image_export_menu;
   }
 
   if ($self->{'data_export'}) {
@@ -282,113 +281,6 @@ sub add_image_export_icon {
           };
 }
 
-sub _export_url {
-### Helper function to build export URL
-### @return String
-  my $self = shift;
-  my $url  = $ENV{'REQUEST_URI'};
-  $url  =~ s/;$//;
-  $url .= ($url =~ /\?/ ? ';' : '?') . 'export=';
-  return $url;
-}
-
-sub add_image_export_menu {
-### Create HTML for image export popup menu 
-### @return String
-  my $self = shift;
-  my $hub  = $self->hub;
-  return;
-  return unless $self->{'export'};
-
-  my ($menu, $print_header);
-  ## Scale image appropriate to an A4 page
-  my $width    = $self->image_width || 1200;
-  my $a4_scale = ceil(1200/$width);
-  my $sections = {
-    main => {
-      r => 1,
-      formats => [
-        { f => 'png', label => 'PNG' },
-        { f => 'pdf', label => 'PDF'},
-        { f => 'svg', label => 'SVG' },
-        { f => 'gff', label => 'Text (GFF)', text => 1 },
-      ],
-    },
-    print => {
-      r => 2,
-      title => 'Hi-res (for print):',
-      formats => [
-        { f => "png-c-2-s-$a4_scale", label => 'Journal' },
-        { f => 'png-c-2-s-5', label => 'Poster' },
-      ],
-    },
-    proj => {
-      r => 3,
-      title => 'Hi-vis (projectors):',
-      formats => [],
-    }
-  };
-
-  # Scale /down/ for projectors, to get nice thick lines
-  my $scale =sprintf("%2.2f",max(min(1,1280/($self->image_width||1)),0.01));
-  push @{$sections->{'proj'}{'formats'}},
-    { f => "png-c-2-s-$scale", label => 'PNG' };
-
-  my $url = $self->_export_url;
-
-  foreach my $section (sort keys %$sections) {
-    my $title = $sections->{$section}{'title'};
-    $menu .= qq(<div class="header">$title</div>) if $title;
-    foreach (@{$sections->{$section}{'formats'}}) {
-      my $href = $url . $_->{'f'};
-
-      if ($_->{'text'}) {
-        next if $self->{'export'} =~ /no_text/;
-
-        $menu .= qq(<div><div>$_->{'label'}</div><a class="download" href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a></div>);
-
-      } elsif ($_->{'f'} eq 'pdf') {
-        # option not to include pdf export
-        next if $self->{'export'} =~ /no_pdf/;
-
-        $menu .= qq(
-            <div>
-              <div>$_->{'label'}</div>
-              <a class="view" href="$href" target="_blank"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
-              <a class="download" href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
-            </div>
-        );
-
-      } else {
-        $menu .= qq(
-            <div>
-              <div>$_->{'label'}</div>
-        );
-
-        if ($section eq 'print') {
-          $menu .= qq(
-              <a class="help popup" href="/Help/Faq?id=502"><img src="/i/16/help.png" alt="help" title="How to adjust your image for optimal export" /></a>
-          );
-        }
-
-        $menu .= qq(
-              <a class="view" href="$href" target="_blank"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
-              <a class="download" href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
-            </div>
-        );
-      }
-    }
-  }
-
-  $menu = qq(
-      <div class="toggle iexport_menu">
-        <div class="header">Export as:</div>
-        $menu
-      </div>
-  );
-
-  return $menu;
-}
 
 sub add_config_reset_icon {
 ### Configure icon for resetting track configuration

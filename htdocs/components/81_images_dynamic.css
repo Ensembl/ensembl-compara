@@ -175,19 +175,6 @@ div.image_toolbar div.scroll-switch button        { border: none; cursor: pointe
 div.image_toolbar div.scroll-switch button.on     { background-position: -68px 0; }
 div.image_toolbar div.image_loading               { position: absolute; font-size: 120%; left: 50%; line-height: 16px; margin-left: -30px; }
 
-/* Image exporting */
-
-div.iexport_menu             { z-index: 1000; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; width: 120px;  }
-div.iexport_menu div         { border: 1px solid #999999; border-top: 0; font-size: 12px; line-height: 16px; background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; text-align: left; padding: 0 4px; }
-div.iexport_menu div.header  { background-color: [[TABLE_HEADER]]; color: #FFFFFF; font-weight: bold; }
-div.iexport_menu div div     { display: inline-block; border: none; background: none; margin: 0; padding: 0; width: 60px; }
-div.iexport_menu div a       { position: absolute; right: 6px; text-decoration: none; font-weight: bold; }
-div.iexport_menu div a.help  { right: 42px; margin: 0; float: none; }
-div.iexport_menu div a.view  { right: 24px; margin: 0; float: none; }
-div.iexport_menu div a img   { float: none; margin: 0; }
-
-body.ie67 div.iexport_menu a { margin-top: -16px; }
-
 /* Image resize */
 div.image_resize_menu                 { z-index: 1000; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; width: 120px; }
 div.image_resize_menu div             { border: 1px solid #999999; border-top: 0; font-size: 12px; line-height: 20px; background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; text-align: left; padding: 0 4px; }

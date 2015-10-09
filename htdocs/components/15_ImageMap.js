@@ -69,7 +69,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.map           = $('.json_imagemap',     this.elLk.container);
     var data                = this.loadJSON(this.elLk.map.html());
     this.elLk.areas         = data.out;
-    this.elLk.exportMenu    = $('.iexport_menu',      this.elLk.container).appendTo('body').css('left', this.el.offset().left).attr('rel', this.id);
     this.elLk.resizeMenu    = $('.image_resize_menu', this.elLk.container).appendTo('body').css('left', this.el.offset().left).attr('rel', this.id);
     this.elLk.img           = $('img.imagemap',       this.elLk.container);
     this.elLk.hoverLabels   = $('.hover_label',       this.elLk.container);
@@ -113,7 +112,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     $('a',         this.elLk.toolbars).helptip({ track: false });
-    $('a.iexport', this.elLk.toolbars).data('popup', this.elLk.exportMenu);
     $('a.resize',  this.elLk.toolbars).data('popup', this.elLk.resizeMenu);
     
     this.elLk.popupLinks.on('click', function () {
