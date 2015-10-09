@@ -361,6 +361,7 @@
   }
 
   function maybe_use_responses(widgets,$table,got,config) {
+    if(!$table.closest('html').length) { return; }
     var cur_manifest = $table.data('manifest');
     if(got.more) {
       get_new_data(widgets,$table,cur_manifest,got.more,config);

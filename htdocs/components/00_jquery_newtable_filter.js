@@ -322,6 +322,7 @@
         });
         $('li.t',$el).each(function() { update_button($table,$(this)); });
         $('html').on('click',function(e) {
+          if(!$table.closest('html').length) { return; }
           var $button = $(e.target).closest('.newtable_filter li.t');
           var $menu = $(e.target).closest('.newtable_filter li.t .m');
           activate_menu($table,$button,!!$menu.length);
