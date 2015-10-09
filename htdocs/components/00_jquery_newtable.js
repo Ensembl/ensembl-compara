@@ -328,11 +328,13 @@
       var d = $.Deferred().resolve([0,-1,-1]);
       for(var i=0;i<got.responses.length;i++) {
         d = d.then(function(x) {
+          var start = new Date().getTime();
           var loc = use_response(widgets,$table,got,got.responses[x[0]],config,got.order);
           if(x[1]==-1 || loc[0]<x[1]) { x[1] = loc[0]; }
           if(x[2]==-1 || loc[0]+loc[1]>x[2]) { x[2] = loc[0]+loc[1]; }
           var e = $.Deferred().resolve([x[0]+1,x[1],x[2]]);
-          return beat(e,10);
+          var took = (new Date().getTime())-start;
+          if(took<25) { return e; } else { return beat(e,10); }
         });
       }
       d = d.then(function(x) {
