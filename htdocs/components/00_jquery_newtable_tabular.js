@@ -201,7 +201,7 @@
   function retreat_rows($table,config,orient,grid,rev_series) {
     var last_table = Math.floor(grid.length/rows_per_subtable);
     $('.subtable',$table).each(function(i) {
-      if(i>last_table || grid.length==0) {
+      if(i>last_table || grid.length===0) {
         $(this).remove();
       } else if(i==last_table) {
         remarkup($table,config,grid,rev_series,i,rows_per_subtable,orient);
@@ -266,7 +266,7 @@
       html += "<tr>";
       var k = 0;
       for(j=0;j<$th.length;j++) {
-        $header = $th.eq(j);
+        var $header = $th.eq(j);
         if($header.hasClass('invisible')) { continue; }
         var start = "<td>";
         if(i===0) {

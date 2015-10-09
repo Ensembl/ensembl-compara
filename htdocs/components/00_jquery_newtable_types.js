@@ -57,7 +57,7 @@
 
   function position_match(ori,val) {
     var pat = ori.chr+":";
-    if(val.indexOf(pat)==0) {
+    if(val.indexOf(pat)===0) {
       val = parseFloat(val.substr(pat.length));
       if(ori.hasOwnProperty('min') && val<ori.min) { return false; }
       if(ori.hasOwnProperty('max') && val>ori.max) { return false; }
@@ -103,11 +103,12 @@
   }
   
   function rangemerge_class(a,b) {
+    var i;
     var v = {};
     if(!a) { a = []; }
     a = a.slice();
-    for(var i=0;i<a.length;i++) { v[a[i]] = 1; }
-    for(var i=0;i<b.length;i++) {
+    for(i=0;i<a.length;i++) { v[a[i]] = 1; }
+    for(i=0;i<b.length;i++) {
       if(!v.hasOwnProperty(b[i])) { a.push(b[i]); }
     }
     return a;
