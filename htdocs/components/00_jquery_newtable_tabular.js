@@ -162,7 +162,6 @@
     var $out = $('<div class="subtable"><table><tbody></tbody></table></div>');
     $out.on('awaken',function() { wakeup($table,$out); });
     $out.on('sleepen',function() { sleep($out); });
-    guess_subtable_sizes($table);
     return $out;
   }
 
@@ -195,6 +194,7 @@
         to_add = rows_per_subtable;
       target -= to_add;
     }
+    guess_subtable_sizes($table);
     $.lazy('refresh');
   }
 
