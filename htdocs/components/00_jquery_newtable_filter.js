@@ -265,7 +265,6 @@
         return [manifest,fabric];
       };
       out.all_rows = true;
-      out.no_incr = true;
       delete need.filter;
     }
 
