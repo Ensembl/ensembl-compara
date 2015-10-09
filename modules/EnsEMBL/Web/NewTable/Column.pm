@@ -166,6 +166,7 @@ sub no_filter { $_[0]->set_filter(''); }
 
 sub unshowable { $_[0]->set_type('screen',{ unshowable => 1 }); }
 sub sort_for { $_[0]->set_type('sort_for',{ col => $_[1] }); }
+sub sort_down_first { $_[0]->set_type('sort_down',$_[1]); }
 
 sub configure {
   my ($self,$mods,$args) = @_;

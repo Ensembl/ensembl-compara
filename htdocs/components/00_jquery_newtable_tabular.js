@@ -142,7 +142,10 @@
         new_sort.push(val);
       }
     });
-    if(!dir) { dir = 1; }
+    var cc = config.colconf[key];
+    if(!dir) {
+      if(cc.type && cc.type.sort_down) { dir = -1; } else { dir = 1; }
+    }
     new_sort.push({ key: sort_col, dir: dir });
     view.sort = new_sort;
     $table.data('view',view);

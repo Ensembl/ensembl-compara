@@ -285,17 +285,20 @@ sub make_table {
   },{
     _key => 'status', _type => 'iconic', label => "Evid\fence",
     width => 1.5,
-    helptip => $glossary->{'Evidence status (variant)'}
+    helptip => $glossary->{'Evidence status (variant)'},
+    sort_down_first => 1,
   },{
     _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
-    helptip => 'Clinical significance'
+    helptip => 'Clinical significance',
+    sort_down_first => 1,
   },{
     _key => 'snptype', _type => 'iconic set_primary', label => "Type",
     filter_label => 'Consequence Type',
     filter_sorted => 1,
     set_range => $self->all_terms,
     width => 1.5,
-    helptip => 'Consequence type'
+    helptip => 'Consequence type',
+    sort_down_first => 1,
   },{
     _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
     helptip => "Resulting amino acid(s)"
@@ -304,7 +307,8 @@ sub make_table {
     helptip => 'Amino Acid Co-ordinate'
   },{
     _key => 'sift_sort', _type => 'numeric no_filter unshowable',
-    sort_for => 'sift_value'
+    sort_for => 'sift_value',
+    sort_down_first => 1,
   },{
     _key => 'sift_class', _type => 'iconic no_filter unshowable',
   },{
@@ -313,7 +317,8 @@ sub make_table {
     helptip => $glossary->{'SIFT'}
   },{
     _key => 'polyphen_sort', _type => 'numeric no_filter unshowable',
-    sort_for => 'polyphen_value'
+    sort_for => 'polyphen_value',
+    sort_down_first => 1,
   },{
     _key => 'polyphen_class', _type => 'iconic no_filter unshowable',
   },{
