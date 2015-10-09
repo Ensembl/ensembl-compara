@@ -124,7 +124,7 @@ sub new {
 
   # sort the files according to original order if asked for, or give priority to the .min.js or .min.css among the files with same prefix if files are not sorted already
   my $sort_files = $params->{'ordered'}
-    ? sub { $a->{'plugin_order'} <=> $b->{'plugin_order'} || $a->{'order'} <=> $b->{'order'} }
+    ? sub { $a->{'order'} <=> $b->{'order'} }
     : sub {
       my $x = { 'a' => $a, 'b' => $b };
 
