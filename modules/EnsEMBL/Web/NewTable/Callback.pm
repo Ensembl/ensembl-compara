@@ -173,7 +173,7 @@ sub newtable_data_request {
   delete $shadow{'pagerows'};
   delete $shadow{'series'};
 
-  my $phase;
+  my $phase = 0;
   if(defined $more) {
     $phase = $more->{'phase'};
     $self->{'req_lengths'} = $more->{'req_lengths'};
