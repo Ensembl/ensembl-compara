@@ -18,8 +18,8 @@
   var elements = [];
   var coords = [];
 
-  var wiggle = 10000;
-  var miles_away = 100000;
+  var wiggle = 1000;
+  var miles_away = 50000;
 
   function still_alive(el) {
     var p = el.parents();
