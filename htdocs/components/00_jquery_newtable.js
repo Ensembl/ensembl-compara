@@ -218,7 +218,7 @@
       for(var j=0;j<cols[i].length;j++) {
         var val = null;
         if(!nulls[i][j]) { val = cols[i][j]; }
-        grid[pos[j+start]][i] = val;
+        grid[pos[j+start]][indexes[i]] = val;
       }
     }
     $table.data('grid',grid);
