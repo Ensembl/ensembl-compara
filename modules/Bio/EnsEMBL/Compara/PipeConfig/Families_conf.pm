@@ -142,11 +142,13 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
         'mlss_id'           => $self->o('mlss_id'),
+        'blast_params'      => $self->o('blast_params'),
 
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
         'warehouse_dir'     => $self->o('warehouse_dir'),
         'blastdb_dir'       => $self->o('blastdb_dir'),
         'file_basename'     => $self->o('file_basename'),
+        'blastdb_name'      => $self->o('blastdb_name'),
 
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
@@ -328,7 +330,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql.gz',
-                'blastdb_name'  => $self->o('blastdb_name'),
             },
             -flow_into => {
                 1 => $self->o('hmm_clustering') ? 'HMMer_classifyCurated' : { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
@@ -373,8 +374,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'blast',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::BlastAndParseDistances',
             -parameters    => {
-                'blastdb_name'  => $self->o('blastdb_name'),
-                'blast_params'  => $self->o('blast_params'),
                 'idprefixed'    => 1,
             },
             -hive_capacity => $self->o('blast_capacity'),
@@ -390,8 +389,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'blast_himem',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::BlastAndParseDistances',
             -parameters    => {
-                'blastdb_name'  => $self->o('blastdb_name'),
-                'blast_params'  => $self->o('blast_params'),
                 'idprefixed'    => 1,
             },
             -hive_capacity => $self->o('blast_capacity'),
