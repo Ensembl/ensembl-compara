@@ -919,10 +919,11 @@ CREATE TABLE constrained_element (
 CREATE TABLE sequence (
   sequence_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   length                      int(10) NOT NULL,
+  md5sum                      BINARY(16) NOT NULL,
   sequence                    longtext NOT NULL,
 
   PRIMARY KEY (sequence_id),
-  KEY sequence (sequence(18))
+  KEY md5sum (md5sum)
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
