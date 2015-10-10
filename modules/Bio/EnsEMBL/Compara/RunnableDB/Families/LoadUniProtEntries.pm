@@ -177,7 +177,7 @@ sub store_bioseq {
 
     if($self->debug) {
         my $species_name = $bioseq->species && $bioseq->species->species;
-        printf("store_bioseq %s %s : %d : %s", $source_name, $bioseq->display_id, $ncbi_taxon_id, $species_name);
+        printf("store_bioseq %s %s : %d : %s\n", $source_name, $bioseq->display_id, $ncbi_taxon_id, $species_name);
     }
    
     my $member = new Bio::EnsEMBL::Compara::SeqMember(
