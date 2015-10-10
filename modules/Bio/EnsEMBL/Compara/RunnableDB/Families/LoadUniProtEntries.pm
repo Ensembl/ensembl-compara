@@ -45,6 +45,8 @@ BEGIN {         # Because BioPerl switched from not recordin version to 1.4 to 1
 
 use Bio::SeqIO;
 
+use Bio::EnsEMBL::Compara::SeqMember;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
