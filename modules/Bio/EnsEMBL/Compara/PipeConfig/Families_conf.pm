@@ -89,10 +89,11 @@ sub default_options {
             # data directories:
         'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
         'warehouse_dir'   => '/warehouse/ensembl05/lg4/families/',      # ToDo: move to a Compara-wide warehouse location
+        'uniprot_dir'     => $self->o('work_dir').'/uniprot',
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => $self->o('file_basename').'.pep',
 
-        'uniprot_version' => 'uniprot',
+        'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
 
         'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
@@ -128,6 +129,7 @@ sub pipeline_create_commands {
         
         'mkdir -p '.$self->o('work_dir'),
         'mkdir -p '.$self->o('blastdb_dir'),
+        'mkdir -p '.$self->o('uniprot_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('blastdb_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('blastdb_dir').' -c -1 || echo "Striping is not available on this system" ',
@@ -147,6 +149,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
         'warehouse_dir'     => $self->o('warehouse_dir'),
         'blastdb_dir'       => $self->o('blastdb_dir'),
+        'uniprot_dir'       => $self->o('uniprot_dir'),
         'file_basename'     => $self->o('file_basename'),
         'blastdb_name'      => $self->o('blastdb_name'),
 
@@ -173,6 +176,14 @@ sub resource_classes {
         'LoMafft'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('lomafft_gigs').'000]"' },
         '2GigMem'      => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
+}
+
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    }
 }
 
 
@@ -269,52 +280,51 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'nonref_members',
             },
-            -flow_into  => [ 'load_uniprot_superfactory' ],
+            -flow_into  => [ 'download_uniprot_factory' ],
         },
 
-        {   -logic_name => 'load_uniprot_superfactory',
+        {   -logic_name => 'download_uniprot_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'column_names'    => [ 'uniprot_source', 'tax_div' ],
                 'inputlist'       => [
-                    [ 'SWISSPROT', 'FUN' ],
-                    [ 'SWISSPROT', 'HUM' ],
-                    [ 'SWISSPROT', 'MAM' ],
-                    [ 'SWISSPROT', 'ROD' ],
-                    [ 'SWISSPROT', 'VRT' ],
-                    [ 'SWISSPROT', 'INV' ],
+                    [ 'sprot', 'fungi' ],
+                    [ 'sprot', 'human' ],
+                    [ 'sprot', 'mammals' ],
+                    [ 'sprot', 'rodents' ],
+                    [ 'sprot', 'vertebrates' ],
+                    [ 'sprot', 'invertebrates' ],
 
-                    [ 'SPTREMBL',  'FUN' ],
-                    [ 'SPTREMBL',  'HUM' ],
-                    [ 'SPTREMBL',  'MAM' ],
-                    [ 'SPTREMBL',  'ROD' ],
-                    [ 'SPTREMBL',  'VRT' ],
-                    [ 'SPTREMBL',  'INV' ],
+                    [ 'trembl',  'fungi' ],
+                    [ 'trembl',  'human' ],
+                    [ 'trembl',  'mammals' ],
+                    [ 'trembl',  'rodents' ],
+                    [ 'trembl',  'vertebrates' ],
+                    [ 'trembl',  'invertebrates' ],
                 ],
             },
             -flow_into => {
-                '2->A' => [ 'load_uniprot_factory' ],
+                '2->A' => [ 'download_and_chunk_uniprot' ],
                 'A->1' => [ 'register_mlss' ],
             },
             -rc_name => 'urgent',
         },
 
-        {   -logic_name    => 'load_uniprot_factory',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtIndex',
+        {   -logic_name    => 'download_and_chunk_uniprot',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::DownloadAndChunkUniProtFile',
             -parameters => {
-                'uniprot_version'   => $self->o('uniprot_version'),
+                'uniprot_ftp_url'   => $self->o('uniprot_ftp_url'),
             },
-            -analysis_capacity => 3,
             -flow_into => {
                 2 => [ 'load_uniprot' ],
             },
-            -rc_name => '2GigMem',
+            -rc_name => 'urgent',
         },
         
         {   -logic_name    => 'load_uniprot',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtEntries',
             -parameters => {
-                'seq_loader_name'   => 'pfetch', # {'pfetch' x 20} takes 1.3h; {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
+                'seq_loader_name'   => 'file', # {'pfetch' x 20} takes 1.3h; {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
             },
             -analysis_capacity => 20,
             -batch_size    => 100,
