@@ -208,6 +208,8 @@ sub parse_description {
     my @top_parts = split(/(?!\[\s*)(Includes|Contains):/,$old_desc);
     unshift @top_parts, '';
 
+    my %seen_evidences = ();
+
     my ($name, $desc, $flags, $top_prefix, $prev_top_prefix) = (('') x 3);
     while(@top_parts) {
         $prev_top_prefix = $top_prefix;
@@ -238,6 +240,13 @@ sub parse_description {
                 } else {
                     while($data=~/(\w+)\=([^\[;]*?(?:\[[^\]]*?\])?[^\[;]*?);/g) {
                         my($subprefix,$subdata) = ($1,$2);
+                        if ($subdata =~ /({.*})/) {
+                            if ($seen_evidences{$1}) {
+                                $subdata =~ s/ *{.*}//;
+                            } else {
+                                $seen_evidences{$1} = 1;
+                            }
+                        }
                         if($subprefix eq 'Full') {
                             if($prefix eq 'RecName') {
                                 if($top_prefix) {
