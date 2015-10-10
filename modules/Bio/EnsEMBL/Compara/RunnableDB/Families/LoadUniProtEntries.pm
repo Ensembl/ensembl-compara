@@ -248,20 +248,20 @@ sub parse_description {
                             } elsif($prefix eq 'SubName') {
                                 $name .= $subdata;
                             } elsif($prefix eq 'AltName') {
-                                $desc .= "($subdata)";
+                                $desc .= " ($subdata)";
                             }
                         } elsif($subprefix eq 'Short') {
-                            $desc .= "($subdata)";
+                            $desc .= " ($subdata)";
                         } elsif($subprefix eq 'EC') {
-                            $desc .= "(EC $subdata)";
+                            $desc .= " (EC $subdata)";
                         } elsif($subprefix eq 'Allergen') {
-                            $desc .= "(Allergen $subdata)";
+                            $desc .= " (Allergen $subdata)";
                         } elsif($subprefix eq 'INN') {
-                            $desc .= "($subdata)";
+                            $desc .= " ($subdata)";
                         } elsif($subprefix eq 'Biotech') {
-                            $desc .= "($subdata)";
+                            $desc .= " ($subdata)";
                         } elsif($subprefix eq 'CD_antigen') {
-                            $desc .= "($subdata antigen)";
+                            $desc .= " ($subdata antigen)";
                         }
                     }
                 }
