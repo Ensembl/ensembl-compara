@@ -297,6 +297,8 @@ sub parse_cafe_output {
         $cafeGeneFamily->pvalue_avg($pvalue_avg);
         $cafeGeneFamily->lambdas($lambda);
 
+        my $n_nonzero_internal_nodes = 0;
+
         # We store the attributes
         for my $node (@{$fam_tree->get_all_nodes()}) {
             my $n = $node->name();
@@ -323,10 +325,11 @@ sub parse_cafe_output {
             for my $cafe_node (@$cafe_nodes) {
                 $cafe_node->n_members($n_members);
                 $cafe_node->pvalue($pvalue);
+                $n_nonzero_internal_nodes++ if $n_members;
             }
 
         }
-        $cafeTree_Adaptor->store($cafeGeneFamily);
+        $cafeTree_Adaptor->store($cafeGeneFamily) if $n_nonzero_internal_nodes > 1;
     }
     return
 }
