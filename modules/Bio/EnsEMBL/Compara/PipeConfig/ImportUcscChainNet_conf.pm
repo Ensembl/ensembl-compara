@@ -202,7 +202,7 @@ sub pipeline_analyses {
 				  'mlss_id'        => $self->o('mlss_id'),
 				  'speciesList'    => "",
 				  'reg_conf'        => $self->o('reg_conf'),
-				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --mlss #mlss_id# ",
+				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->pipeline_url() . " --mlss #mlss_id# ",
 				 },
 	       -flow_into => {
 			      1 => [ 'load_genomedb_factory' ],

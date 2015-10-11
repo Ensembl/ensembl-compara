@@ -162,7 +162,7 @@ sub pipeline_analyses {
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_exe'),
 				  'mlss_id'        => $self->o('mlss_id'),
-                                  'pipeline_db'    => $self->dbconn_2_url('pipeline_db'),
+                                  'pipeline_db'    => $self->pipeline_url(),
 				 },
 	       -flow_into => {
 			      1 => [ 'load_genomedb_factory' ],
