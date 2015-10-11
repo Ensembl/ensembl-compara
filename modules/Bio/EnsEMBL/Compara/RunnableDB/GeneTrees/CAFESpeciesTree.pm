@@ -200,12 +200,9 @@ sub include_distance_to_parent {
             my $taxon_id = $node->taxon_id();
             my $ncbiTaxon = $NCBItaxon_Adaptor->fetch_node_by_taxon_id($taxon_id);
             my $mya = $ncbiTaxon->get_tagvalue('ensembl timetree mya');
+            die "No 'ensembl timetree mya' tag for taxon_id=$taxon_id\n" unless $mya;
             for my $child (@{$node->children}) {
-                if ($mya) {
-                    $child->distance_to_parent(int($mya));
-                } else {
-                    $child->distance_to_parent(0);
-                }
+                $child->distance_to_parent(int($mya));
             }
         }
     }
@@ -228,7 +225,10 @@ sub fix_path {
                 next;
             }
             if ($node->parent()->distance_to_parent() < $node->distance_to_parent()) {
-                $node->distance_to_parent($node->parent()->distance_to_parent()) if ($node->parent->has_parent); ## The last if is because the root doesn't have proper mya set
+                # The if is because the root doesn't have proper mya set
+                if ($node->parent->has_parent) {
+                    die "'ensembl timetree mya' tags are not monotonous. Check ".$node->taxon_id." and ".$node->parent->taxon_id."\n";
+                }
             }
         } else {
             return
