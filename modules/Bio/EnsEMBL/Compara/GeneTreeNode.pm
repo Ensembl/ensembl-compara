@@ -143,8 +143,7 @@ sub _species_tree_node_id {
 
 sub taxonomy_level {
     my $self = shift;
-    return undef unless $self->species_tree_node();
-    return $self->species_tree_node()->node_name();
+    return $self->species_tree_node()->node_name() if $self->species_tree_node();
 }
 
 
