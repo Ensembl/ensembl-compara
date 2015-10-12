@@ -234,7 +234,7 @@ sub _wrap_content {
 
 sub get_content {
   my ($self, $function) = @_;
-  my $cache = $self->mcacheable && $self->ajaxable && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
+  my $cache = $self->mcacheable && $self->ajaxable && $self->renderer && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
   my $content;
   
   if ($cache) {
