@@ -93,7 +93,8 @@ sub mult {
 sub filebase {
   my ($hex) = @_;
 
-  my $boottime = [stat("$SiteDefs::ENSEMBL_SERVERROOT/ensembl-webcode/conf/started")]->[9];
+  my $bootfile = "$SiteDefs::ENSEMBL_TMP_DIR/procedure/started";
+  my $boottime = [stat($bootfile)]->[9];
   my $mach = join('/',$SiteDefs::ENSEMBL_TMP_DIR,'procedure',
                   substr(md5_hex($SiteDefs::ENSEMBL_BASE_URL),0,8));
   my $boot = join('/',$mach,$boottime);
@@ -136,7 +137,7 @@ sub _memoized {
     arguments => _build_argument($args),
     machine => $SiteDefs::ENSEMBL_BASE_URL,
     version => $SiteDefs::ENSEMBL_VERSION,
-    boottime => [stat("${SiteDefs::ENSEMBL_SERVERROOT}/ensembl-webcode/conf/started")]->[9],
+    boottime => [stat("${SiteDefs::ENSEMBL_TMP_DIR}/procedure/started")]->[9],
   };
   my $hex = hexkey($tag);
   my $base = filebase($hex);
