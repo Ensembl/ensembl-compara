@@ -207,6 +207,11 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
   # Timestamp file for last start
   open(STARTED,'>',"${SiteDefs::ENSEMBL_SERVERROOT}/ensembl-webcode/conf/started");
   close STARTED;
+  if($SiteDefs::MEMOIZE_ENABLED) {
+    warn "MEMOIZE ${SiteDefs::ENSEMBL_TMP_DIR}/procedure/started\n";
+    open(STARTED,'>',"${SiteDefs::ENSEMBL_TMP_DIR}/procedure/started");
+    close STARTED;
+  }
  
   warn sprintf '
 ==============================================================================
