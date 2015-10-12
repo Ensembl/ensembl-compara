@@ -33,10 +33,11 @@ sub content {
   my $self        = shift;
   my $hub         = $self->hub;
   my $image_width = $self->image_width;
+  my $object      = $self->object || $self->hub->core_object('location');
   my $i           = 1;
   my @images;
   
-  foreach (@{$self->object->multi_locations}) {
+  foreach (@{$object->multi_locations}) {
     my $image_config      = $hub->get_imageconfig('chromosome', "chromosome_$i", $_->{'species'});
     my $chromosome        = $_->{'slice'}->adaptor->fetch_by_region(undef, $_->{'name'});
     my $annotation_status = $image_config->get_node('annotation_status');

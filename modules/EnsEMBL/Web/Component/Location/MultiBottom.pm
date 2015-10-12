@@ -36,7 +36,7 @@ sub content {
 
   my $self   = shift;
   my $hub    = $self->hub;
-  my $object = $self->object;
+  my $object = $self->object || $self->hub->core_object('location');
   
   return if $hub->param('show_bottom_panel') eq 'no';
   

@@ -35,7 +35,7 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  my $object       = $self->object;
+  my $object       = $self->object || $self->hub->core_object('location');
   my $threshold    = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $align_params = $hub->param('align');
   my %options      = ( scores => $hub->param('opt_conservation_scores'), constrained => $hub->param('opt_constrained_elements') );

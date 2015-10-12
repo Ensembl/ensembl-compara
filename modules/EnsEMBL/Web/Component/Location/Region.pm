@@ -31,7 +31,7 @@ sub _init {
 
 sub content {
   my $self         = shift;
-  my $object       = $self->object;
+  my $object       = $self->object || $self->hub->core_object('location');
   my $slice        = $object->slice;
   my $length       = $slice->end - $slice->start + 1;
   my $image_config = $object->get_imageconfig('cytoview');

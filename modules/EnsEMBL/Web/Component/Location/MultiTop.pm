@@ -41,7 +41,8 @@ sub content {
   my $threshold       = 1e6 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1); # get a slice corresponding to the region to be shown for Navigational Overview
   my $image_width     = $self->image_width;
   my $primary_species = $hub->species;
-  my $slices          = $self->object->multi_locations;
+  my $object          = $self->object || $self->hub->core_object('location');
+  my $slices          = $object->multi_locations;
   my $max             = scalar @$slices;
   my $i               = 1;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;

@@ -148,10 +148,7 @@ sub object {
   ## @return EnsEMBL::Web::Object::[type]
   my $self = shift;
   $self->{'object'} = shift if @_;
-  my $object = $self->builder ? $self->builder->object : $self->{'object'};
-  ## Fall back to creating object on fly if it doesn't already exist
-  $object = $self->hub->core_object(lc($self->type)) if !$object;
-  return $object;
+  return $self->builder ? $self->builder->object : $self->{'object'};
 }
 
 sub cacheable {
