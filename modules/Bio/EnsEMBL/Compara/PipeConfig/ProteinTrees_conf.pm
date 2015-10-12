@@ -2222,6 +2222,7 @@ sub core_pipeline_analyses {
             -flow_into      => {
                 1  => [ 'raxml_decision' ],
                 -1 => [ 'raxml_parsimony_64_cores_himem' ],
+                -2 => [ 'fasttree' ],
             }
         },
 
@@ -2239,7 +2240,20 @@ sub core_pipeline_analyses {
             -rc_name 		=> '32Gb_64c_job',
             -flow_into      => {
                 1  => [ 'raxml_decision' ],
+                -2 => [ 'fasttree' ],
             }
+        },
+
+        {   -logic_name => 'fasttree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FastTree',
+            -parameters => {
+                'fasttree_exe'                 => $self->o('fasttree_mp_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'      => 'default',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name 		=> '32Gb_32c_job',
         },
 
         {   -logic_name => 'raxml_decision',
@@ -2441,9 +2455,10 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_64c_mpi',
-            -max_retry_count => 0,
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge. 
             -flow_into => {
                -1 => [ 'examl_64_cores_himem' ],  # MEMLIMIT
+               -2 => [ 'fasttree' ],  # RUNLIMIT
             }
         },
 
@@ -2464,7 +2479,10 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_64c_mpi',
-            -max_retry_count => 0,
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
+            -flow_into => {
+               -2 => [ 'fasttree' ],  # RUNLIMIT
+            }
         },
 
         {   -logic_name => 'raxml',
