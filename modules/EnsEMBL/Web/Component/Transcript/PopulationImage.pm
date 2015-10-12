@@ -32,7 +32,7 @@ sub _init {
 sub content {
   my $self      = shift;
   my $hub       = $self->hub;
-  my $object    = $self->object;
+  my $object    = $self->object || $self->hub->core_object('transcript');
   my $stable_id = $object->stable_id;
   my $extent    = $object->extent;
   

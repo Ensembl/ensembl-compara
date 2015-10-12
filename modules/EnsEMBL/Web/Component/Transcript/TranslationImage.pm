@@ -31,7 +31,7 @@ sub _init {
 
 sub content {
   my $self        = shift;
-  my $object      = $self->object;
+  my $object      = $self->object || $self->hub->core_object('transcript');
   my $translation = $object->translation_object;
   
   return $self->non_coding_error unless $translation;

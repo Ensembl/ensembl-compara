@@ -31,7 +31,7 @@ sub _init {
 
 sub content {
   my $self        = shift;
-  my $object      = $self->object;
+  my $object      = $self->object || $self->hub->core_object('lrg');
   my $transcript  = $self->get_lrg_transcript;
   my $translation = $transcript->translation_object;
   
