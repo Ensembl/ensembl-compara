@@ -82,6 +82,7 @@ sub process {
     $params->{'filename'}       = $filename;
     $params->{'format'}         = $format;
     $params->{'file'}           = $path;
+    $params->{'extra'}          = $hub->param('extra');
     $params->{'__clear'}        = 1;
 
     $self->ajax_redirect($hub->url('Download', $params), undef, undef, 'download');
