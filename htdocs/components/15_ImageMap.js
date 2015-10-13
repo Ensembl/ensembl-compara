@@ -136,6 +136,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       return false;
     });
+
+    this.highlightAllImages()
   },
 
   loadJSON: function(str) {
