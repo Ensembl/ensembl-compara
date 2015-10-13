@@ -273,9 +273,24 @@ sub add_image_export_icon {
 ### @return Hashref of icon parameters
   my $self = shift;
   my $hub  = $self->hub;
+  my $params = {
+                'type' => 'ImageExport',
+                'action' => 'ImageFormats',
+                'data_type' => $hub->type,
+                'component' => $self->component,
+                };
+
+  foreach (@{$self->{'export_params'}||[]}) {
+    if (ref($_) eq 'ARRAY') {
+      $params->{$_->[0]} = $_->[1];
+    }
+    else {
+      $params->{$_} = $hub->param($_);
+    }
+  }
+
   return {
-          'href'      => $hub->url({'type' => 'ImageExport', 'action' => 'ImageFormats', 
-                                    'data_type' => $hub->type, 'component' => $self->component}),
+          'href'      => $hub->url($params),
           'class'     => 'export modal_link '.$self->{'export'},
           'icon_key'  => 'image',
           };
