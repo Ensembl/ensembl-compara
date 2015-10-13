@@ -120,7 +120,7 @@ sub content {
 
   ## Don't forget the core params!
   my @core_params = keys %{$hub->core_object('parameters')};
-  push @core_params, qw(align);
+  push @core_params, qw(extra align);
   foreach (@core_params) {
     $final_fieldset->add_hidden([
       {
