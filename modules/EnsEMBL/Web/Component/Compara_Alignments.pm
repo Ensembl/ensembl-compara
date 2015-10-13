@@ -32,7 +32,7 @@ sub _init { $_[0]->SUPER::_init(100); }
 sub content {
   my $self      = shift;
   my $hub       = $self->hub;
-  my $object    = $self->object;
+  my $object    = $self->object || $hub->core_object(lc($hub->param('data_type')));
   my $cdb       = shift || $hub->param('cdb') || 'compara';
   my $slice     = $object->slice;
   my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE||1);
@@ -54,7 +54,7 @@ sub content {
 
   my ($alert_box, $error) = $self->check_for_align_problems({
                     'align' => $align,
-                    'species' => $self->object->species,
+                    'species' => $object->species,
                   });
   return $alert_box if $error;
   my ($warnings, $image_link);
@@ -89,7 +89,7 @@ sub content {
 
   # Get all alignment blocks and group_ids when asking for a specific alignment
   if ($align) {
-      $align_blocks = $self->object->get_align_blocks($slice, $align, $cdb);
+      $align_blocks = $object->get_align_blocks($slice, $align, $cdb);
 
       #find out if this species is low_coverage by looking at the un-restricted genomic_align from the first block and the alignment is EPO_LOW_COVERAGE 
       if ($method_type =~ /EPO_LOW_COVERAGE/ && @$align_blocks) {
@@ -101,12 +101,12 @@ sub content {
       }
 
       #Group alignments together by group_id and/or dbID
-      $groups = $self->object->get_groups($align_blocks, $is_low_coverage_species);
+      $groups = $object->get_groups($align_blocks, $is_low_coverage_species);
       $num_groups = keys %$groups;
 
       #Find if the align_blocks are overlapping one another
       if ($num_groups > 1) {
-          $is_overlap = $self->object->find_is_overlapping($align_blocks);
+          $is_overlap = $object->find_is_overlapping($align_blocks);
       }
   }
 
@@ -125,7 +125,7 @@ sub content {
   #When we can directly show the text ie do not need a table of results
   unless ($need_target_slice_table) {
     # Get all slices for the gene
-    ($slices, $slice_length) = $self->object->get_slices({
+    ($slices, $slice_length) = $object->get_slices({
           'slice'   => $slice, 
           'align'   => $align_param, 
           'species' => $species, 
@@ -148,7 +148,10 @@ sub content {
 
   #If the slice_length is long, split the sequence into chunks to speed up the process
   #Note that slice_length is not set if need to display a target_slice_eable
-  if ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
+  if ($hub->param('export')) {
+    return $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
+  }
+  elsif ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
     $html .= $image_link . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
@@ -378,14 +381,17 @@ sub draw_tree {
   push @$highlights, $low_coverage_species;
 
   my $image = $self->new_image($restricted_tree, $image_config, $highlights);
+  $image->{'export_params'} = ['align'];
 
-  return $html if $self->_export_image($image, 'no_text');
+  return if $self->_export_image($image);
 
-  my $image_id = $gab->dbID || $gab->original_dbID;
-  $image->image_type       = 'genetree';
-  $image->image_name       = ($hub->param('image_width')) . "-$image_id";
-  $image->imagemap         = 'yes';
-  $image->{'panel_number'} = 'tree';
+  my $image_name            = $hub->param('image_width') || $image_width;  
+  my $image_id              = $gab->dbID || $gab->original_dbID;
+  $image_name              .= "-$image_id";
+  $image->image_type        = 'genetree';
+  $image->image_name        = $image_name;
+  $image->imagemap          = 'yes';
+  $image->{'panel_number'}  = 'tree';
   $image->set_button('drag', 'title' => 'Drag to select region');
 
   $html .= $image->render;

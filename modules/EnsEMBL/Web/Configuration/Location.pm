@@ -250,8 +250,16 @@ sub add_archive_link {
 
   if ($current_assembly ne $alt_assembly ) {
     my $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly;
-    my $link  = $self->hub->url({ type => 'Help', action => 'ListMappings', alt_assembly => $alt_assembly });
-    $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 0, class => 'modal_link external-link' }));
+    my $link; 
+    my $class = 'external-link';
+    if ($hub->param('r')) {
+      $link  = $self->hub->url({ type => 'Help', action => 'ListMappings', alt_assembly => $alt_assembly });
+      $class .= ' modal_link';
+    }
+    else {
+      $link = $site.$hub->url();
+    }
+    $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 0, class => $class }));
   }
 }
 

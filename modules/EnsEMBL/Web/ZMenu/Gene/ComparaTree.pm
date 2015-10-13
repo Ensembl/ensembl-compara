@@ -45,10 +45,10 @@ sub content {
   }
   
   $self->add_entry({
-    type     => 'Species',
-    label    => $hub->species_defs->species_label($species),
-    link     => $species_path,
-    position => 1
+    type        => 'Species',
+    label_html  => $hub->species_defs->species_label($species),
+    link        => $species_path,
+    position    => 1
   });
   
   if ($phy_link) {

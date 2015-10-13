@@ -41,9 +41,9 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .drag_select                              { cursor: default; position: relative; }
 .drag_select.drag_select_pointer          { cursor: pointer; }
 
-.drag_select .selector                    { background-color: rgba(229, 121, 5, 0.1); position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; }
-.drag_select .hlrselector                 { background-color: rgba(140, 100, 140, 0.1); border: rgba(140, 100, 140, 0.5) dashed 1px; pointer-events: none; }
-.drag_select .hlrselector-close           { background-color: rgba(40, 0, 40, 1); border-radius: 0 0 0 4px; color: #ccc; cursor: pointer; font-size: 70%; font-weight: bold; height: 16px;
+.drag_select .selector                    { background-color: rgba(229, 121, 5, 0.1); position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; display: none; }
+.drag_select .mrselector                  { background-color: rgba(140, 100, 140, 0.1); border: rgba(140, 100, 140, 0.5) dashed 1px; pointer-events: none; }
+.drag_select .mrselector-close            { background-color: rgba(40, 0, 40, 1); border-radius: 0 0 0 4px; color: #ccc; cursor: pointer; font-size: 70%; font-weight: bold; height: 16px;
                                             line-height: 18px; pointer-events: auto; position: absolute; right: -1px; text-align: center; top: -1px; width: 16px; }
 .drag_select .selector.vertical           { border-width: 1px; }
 .drag_select .selector .left-border,
@@ -161,8 +161,8 @@ div.image_toolbar a.resize        { background-image: url(/i/16/rev/image_resize
 div.image_toolbar a.share         { background-image: url(/i/16/rev/share.png);         }
 div.image_toolbar a.order-reset   { background-image: url(/i/16/rev/order-reset.png);   }
 div.image_toolbar a.config-reset  { background-image: url(/i/16/rev/setting-reset.png); }
-div.image_toolbar a.hlr-reset     { background-image: url(/i/16/rev/highlight.png);     }
-div.image_toolbar a.hlr-reset.outside { background-image: url(/i/16/rev/back.png);      }
+div.image_toolbar a.mr-reset      { background-image: url(/i/16/rev/marker.png);        }
+div.image_toolbar a.mr-reset.outside { background-image: url(/i/16/rev/jump.png);       }
 
 /* Drag/Select switch */
 div.image_toolbar div.scroll-switch               { float: right; line-height: 16px; }
@@ -174,18 +174,6 @@ div.image_toolbar div.scroll-switch div:hover     { background-color: [[BUTTON_B
 div.image_toolbar div.scroll-switch button        { border: none; cursor: pointer; height: 17px; outline: none; width: 16px; vertical-align: top; background: url(/i/controls_white.png) repeat scroll -68px -18px transparent; }
 div.image_toolbar div.scroll-switch button.on     { background-position: -68px 0; }
 div.image_toolbar div.image_loading               { position: absolute; font-size: 120%; left: 50%; line-height: 16px; margin-left: -30px; }
-
-/* Image exporting */
-
-div.iexport_menu             { z-index: 1000; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; width: 120px;  }
-div.iexport_menu div         { border: 1px solid #999999; border-top: 0; font-size: 12px; line-height: 16px; background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; text-align: left; padding: 0 4px; }
-div.iexport_menu div.header  { background-color: [[TABLE_HEADER]]; color: #FFFFFF; font-weight: bold; }
-div.iexport_menu div div     { display: inline-block; border: none; background: none; margin: 0; padding: 0; width: 60px; }
-div.iexport_menu div a       { position: absolute; right: 6px; text-decoration: none; font-weight: bold; }
-div.iexport_menu div a.view  { right: 26px; margin: 0; float: none; }
-div.iexport_menu div a img   { float: none; margin: 0; }
-
-body.ie67 div.iexport_menu a { margin-top: -16px; }
 
 /* Image resize */
 div.image_resize_menu                 { z-index: 1000; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; width: 120px; }
@@ -230,6 +218,7 @@ div.icon                      { padding: 4px 8px 4px 0; }
 .config_icon   { background-image: url(/i/16/swp/setting.png);      }
 .delete_icon   { background-image: url(/i/16/swp/trash.png);        }
 .share_icon    { background-image: url(/i/16/swp/share.png);        }
+.reload_icon   { background-image: url(/i/16/swp/reload.png);       }
 .download_icon { background-image: url(/i/16/swp/download.png);     }
 .add_icon      { background-image: url(/i/16/swp/add.png);          }
 .edit_icon     { background-image: url(/i/16/swp/pencil.png);       }

@@ -32,7 +32,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $object = $self->object || $self->hub->core_object('gene');
   my $extended_slice = $object->get_extended_reg_region_slice;
 
   my $wuc = $object->get_imageconfig( 'generegview' );

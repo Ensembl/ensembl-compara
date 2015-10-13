@@ -78,7 +78,7 @@ sub transcript_table {
     $table->add_row('Description', $description);
   }
 
-  my $location    = $hub->param('r') || sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
+  my $location    = sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
 
   my $site_type         = $hub->species_defs->ENSEMBL_SITETYPE; 
   my @SYNONYM_PATTERNS  = qw(%HGNC% %ZFIN%);
@@ -184,10 +184,7 @@ sub transcript_table {
   my $gene = $object->gene;
 
   #text for tooltips
-  my $gencode_desc    = "The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).";
-  my $trans_5_3_desc  = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
-  my $trans_5_desc    = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
-  my $trans_3_desc    = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
+  my $gencode_desc    = qq(The GENCODE set is the gene set for human and mouse. <a href="/Help/Glossary?id=500" class="popup">GENCODE Basic</a> is a subset of representative transcripts (splice variants).);
   my $gene_html       = '';
   my $transc_table;
 
@@ -313,16 +310,8 @@ sub transcript_table {
         }
       }
       if ($trans_attribs->{$tsi}) {
-        if ($trans_attribs->{$tsi}{'CDS_start_NF'}) {
-          if ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-            push @flags, $self->helptip("CDS 5' and 3' incomplete", $trans_5_3_desc);
-          }
-          else {
-            push @flags, $self->helptip("CDS 5' incomplete", $trans_5_desc);
-          }
-        }
-        elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-         push @flags, $self->helptip("CDS 3' incomplete", $trans_3_desc);
+        if (my $incomplete = $self->get_CDS_text($trans_attribs->{$tsi})) {
+          push @flags, $incomplete;
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
@@ -413,6 +402,28 @@ sub transcript_table {
   $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
 
   return sprintf '<div class="summary_panel">%s%s</div>', $table->render, $transc_table ? $transc_table->render : '';
+}
+
+sub get_CDS_text {
+  my $self = shift;
+  my $attribs = shift;
+  my $trans_5_3_desc  = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
+  my $trans_5_desc    = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
+  my $trans_3_desc    = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
+  if ($attribs->{'CDS_start_NF'}) {
+    if ($attribs->{'CDS_end_NF'}) {
+      return $self->helptip("CDS 5' and 3' incomplete", $trans_5_3_desc);
+    }
+    else {
+      return $self->helptip("CDS 5' incomplete", $trans_5_desc);
+    }
+  }
+  elsif ($attribs->{'CDS_end_NF'}) {
+    return $self->helptip("CDS 3' incomplete", $trans_3_desc);
+  }
+  else {
+    return undef;
+  }
 }
 
 # return the same columns; implemented in mobile plugin to remove some columns
@@ -806,9 +817,10 @@ sub check_for_align_problems {
   ## Compile possible error messages for a given alignment
   ## @return HTML
   my ($self, $args) = @_;
+  my $object = $self->object || $self->hub->core_object(lc($self->hub->param('data_type')));
 
-  my @messages = $self->object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
-  push @messages, $self->object->check_for_missing_species($args);
+  my @messages = $object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
+  push @messages, $object->check_for_missing_species($args);
 
   return $self->show_warnings(\@messages);
 }
@@ -1257,6 +1269,58 @@ sub render_sift_polyphen {
   );
 }
 
+sub classify_sift_polyphen {
+  ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
+  my ($self, $pred, $score) = @_;
+
+  return [undef,'-','','-'] unless defined($pred) || defined($score);
+
+  my %classes = (
+    '-'                 => '',
+    'probably damaging' => 'bad',
+    'possibly damaging' => 'ok',
+    'benign'            => 'good',
+    'unknown'           => 'neutral',
+    'tolerated'         => 'good',
+    'deleterious'       => 'bad',
+
+    # slightly different format for SIFT low confidence states
+    # depending on whether they come direct from the API
+    # or via the VEP's no-whitespace processing
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
+  );
+
+  my %ranks = (
+    '-'                 => 0,
+    'probably damaging' => 4,
+    'possibly damaging' => 3,
+    'benign'            => 1,
+    'unknown'           => 2,
+    'tolerated'         => 1,
+    'deleterious'       => 2,
+  );
+
+  my ($rank, $rank_str);
+
+  if(defined($score)) {
+    $rank = int(1000 * $score) + 1;
+    $rank_str = "$score";
+  }
+  else {
+    $rank = $ranks{$pred};
+    $rank_str = $pred;
+  }
+
+  # 0 -- a value to use for sorting
+  # 1 -- a value to use for exporting
+  # 2 -- a class to use for styling
+  # 3 -- a value for display
+  return [$rank,$pred,$rank_str];
+}
+
 sub render_consequence_type {
   my $self        = shift;
   my $tva         = shift;
@@ -1292,7 +1356,7 @@ sub render_evidence_status {
   foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$evidences){
     my $evidence_label = $evidence;
        $evidence_label =~ s/_/ /g;
-    $render .= sprintf('<img src="%s/val/evidence_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+    $render .= sprintf('<img src="%s/val/evidence_%s.png" class="_ht" title="%s"/><div class="hidden export">%s</div>',
                         $self->img_url, $evidence, $evidence_label, $evidence
                       );
   }
@@ -1307,7 +1371,7 @@ sub render_clinical_significance {
   foreach my $cs (sort {$a cmp $b} @$clin_signs){
     my $cs_img = $cs;
        $cs_img =~ s/\s/-/g;
-    $render .= sprintf('<img src="%s/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
+    $render .= sprintf('<img src="%s/val/clinsig_%s.png" class="_ht" title="%s"/><div class="hidden export">%s</div>',
                         $self->img_url, $cs_img, $cs, $cs
                       );
   }

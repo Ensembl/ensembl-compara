@@ -101,7 +101,7 @@ sub embed_html_file {
 
   return "<p><i>Error: File $file_name not found.</i></p>" unless $file_path;
 
-  my $file  = $self->parse_help_html(join('', file_get_contents($file_path)) =~ s/^(.+)<\s*body\s*>//sr =~ s/<\s*\/\s*body\s*>(.+)$//sr, $adaptor); # this will parse any tags in the html doc itself
+  my $file  = $self->parse_help_html(file_get_contents($file_path) =~ s/^(.+)<\s*body\s*>//sr =~ s/<\s*\/\s*body\s*>(.+)$//sr, $adaptor); # this will parse any tags in the html doc itself
   my $div   = $self->dom->create_element('div');
 
   my @replacements;

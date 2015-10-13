@@ -38,11 +38,11 @@ sub content {
   my $hub   = $self->hub;
 
   my $settings = {
-                'Hidden' => ['align', 'g1', 'data_action']
+                'Hidden' => ['align', 'g1', 'data_action', 'hom_id']
                 };
 
   ## Options per format
-  my $fields_by_format = [{'Homology formats'  => {'OrthoXML' => []}}];
+  my $fields_by_format = [{'Homology formats'  => {'OrthoXML' => [], 'PhyloXML' => []}}];
 
   ## Add formats output by BioPerl
   my $align_formats = {};

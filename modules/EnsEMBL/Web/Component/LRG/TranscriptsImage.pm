@@ -34,7 +34,7 @@ sub caption { return 'Transcripts'; }
 
 sub content {
   my $self         = shift;
-  my $object       = $self->object;
+  my $object       = $self->object || $self->hub->core_object('lrg');
   my $slice        = $object->Obj;
   my $gene         = $object->gene;
   my $image_config = $object->get_imageconfig('lrg_summary');
@@ -52,9 +52,13 @@ sub content {
   $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Drag to select region');
-  
-  my $html = $image->render;
-  $html   .= $self->_info(
+
+  my $html = $self->_info(
+    'LRG image',
+    '<p>The image below displays LRG transcripts and the features overlapping <b>'.$gene->display_id.'</b>.</p>'
+  );
+  $html .= $image->render;
+  $html .= $self->_info(
     'Configuring the display',
     '<p>Tip: use the "<strong>Configure this page</strong>" link on the left to show additional data in this region.</p>'
   );

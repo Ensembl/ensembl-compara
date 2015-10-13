@@ -53,8 +53,26 @@ sub ensembl_wait_for_ajax {
                       !(\$(".ajax_load").length || \$(".ajax_error").length || \$(".syntax-error").length)/,
                     $timeout || $self->_timeout
                     );}
-                catch { return 1; };
+                catch { ['fail', "AJAX load failed"]; };
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "AJAX load OK"] : $error;
   return $error; 
+}
+
+sub ensembl_wait_for_element {
+### Wait for an element to be present, e.g. if Javascript controlled
+  my ($self, $locator, $timeout) = @_;
+  my $url = $self->get_location();
+  my $real_error;
+ 
+  $timeout ||= $self->_timeout;
+  $timeout += 20000 if ($url =~ /staging|uswest|useast|ec2/);
+
+  my $error = try { $self->wait_for_element_present($locator, $timeout) }
+              catch { "ELEMENT $locator NOT FOUND"; }
+              finally { if (@_) { $real_error = join(' ', @_); } };
+  $error .= "\n$real_error";
+
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Element $locator found"] : ['fail', $error];
 }
 
 sub ensembl_wait_for_page_to_load {
@@ -80,6 +98,20 @@ sub ensembl_wait_for_page_to_load {
   $error = try {$self->ensembl_wait_for_ajax('50000');}
             catch {return ['fail', 'Ajax load failed at '.$self->get_location];};
   return $error;
+}
+
+sub ensembl_open {
+### Wrapper around standard selenium method to return useful error message 
+### @param url String - URL of page to open
+### @param message String [optional] - additional text for error message
+### @return ArrayRef - error code plus error message
+  my ($self, $url, $message) = @_;
+  my $error = "Couldn't open page $url";
+  $error .= ": $message" if $message; 
+  
+  my $error = try { $self->open($url); }
+              catch { ['fail', $error]; };
+  return $error == 1 ? ['pass', "Opened page $url"] : $error;
 }
 
 sub ensembl_open_zmenu {
@@ -124,11 +156,17 @@ sub ensembl_open_zmenu_at {
 
 sub ensembl_click {
 ### Overloading click function so that it returns the current url when it fails. 
-### Only use this function when ensembl_click_links below does not work like an ajax button
+### Only use this function when ensembl_click_links below does not work,
+### for example when opening an AJAX panel
+### @param link String - text of link to click on
+### @param timeout Integer - number of milliseconds to allow
+### @return ArrayRef - error code and message
   my ($self, $link, $timeout) = @_;
   my $url = $self->get_location();
     
-  return $self->click($link,$timeout) ? 0 : "CLICK FAILED: URL $url \n\n";
+  return $self->click("link=$link",$timeout) 
+    ? ['pass', "Click on link '$link' succeeded"] : 
+      ['fail', "CLICK ON LINK '$link' FAILED: URL $url"];
 }
 
 sub ensembl_click_links {
@@ -221,6 +259,7 @@ sub try_link {
 }
 
 sub test_fails {
+  warn ">>> DEPRECATED - use Test::test_fails instead";
   my ($self, $error) = @_;
   my $fail = 0;
 
@@ -341,22 +380,56 @@ sub ensembl_images_loaded {
 
 
 sub ensembl_is_text_present {
-#Overloading is_text_present function so that it returns the current url when it fails
+### Wrapper around standard selenium method to return useful error message 
   my ($self, $text) = @_;
   my $url = $self->get_location();
   
   my $error = try { $self->is_text_present($text); }
               catch { ['fail', "MISSING TEXT $text at URL $url"]; }; 
-  return $error; 
+  ## $error is set to 1 if test succeeds
+  return $error == 1 ? ['pass', "Text $text found at URL $url"] : $error;
+}
+
+sub ensembl_type {
+### Wrapper around standard selenium method to return useful error message 
+  my ($self, $locator, $text) = @_;
+  my $url = $self->get_location();
+  my $real_error;
+ 
+  my $error = try { $self->type($locator, $text) }
+              catch { "Failure to input text $text at URL $url"; }
+              finally { if (@_) { $real_error = join(' ', @_); } };
+  $error .= "\n$real_error";
+
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Input text $text"] : ['fail', $error];
 }
 
 sub ensembl_select {
-### overloading select to return URL where the action fails.
-  my ($self, $select_locator, $option_locator) = @_;
+### Wrapper around standard selenium method to return useful error message 
+  my ($self, $locator, $value) = @_;
   my $url = $self->get_location();
-    
-  return ('fail', "Failure at URL $url") unless $self->select($select_locator,$option_locator);  
+  my $real_error;
+  
+  my $error = try { $self->select($locator, $value) }
+              catch { "Failure to select value $value at URL $url"; }
+              finally { if (@_) { $real_error = join(' ', @_); } };
+  $error .= "\n$real_error";
+
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Selected value $value in dropdown"] : ['fail', $error];
 }
 
+sub ensembl_submit {
+### Wrapper around standard selenium method to return useful error message 
+  my ($self, $locator) = @_;
+  my $url = $self->get_location();
+  my $real_error;
+  
+  my $error = try { $self->submit($locator) }
+              catch { "Form submission failure at URL $url"; } 
+              finally { if (@_) { $real_error = join(' ', @_); } };
+  $error .= "\n$real_error";
+
+  return ($error == 1 || $error =~ /^OK/) ? ['pass', "Form $locator submitted"] : ['fail', $error];
+}
 
 1;

@@ -178,12 +178,14 @@ sub list_dir_contents {
   ##  - hidden : if on, will return hidden files too (off by default)
   ##  - no_exception :  if set true will not throw an exception if there's any problem
   ##  - recursive: flag if on, will get all the files recursively going through each sub folder
+  ##  - absolute_path: flag if on, will return the absolute path for the files/folders (off by default)
   ## @return Arrayref of files/dir, undef if dir not existing
   my ($dir, $params) = @_;
 
   $params ||= {};
   my $ls    = [];
   my $dh    = DirHandle->new($dir);
+  my $abs   = delete $params->{'absolute_path'}; # delete param so it doesn't get passed to recursive calls
 
   if (!$dh) {
     throw exception('FileSystemException', "An error occoured while reading the directory $dir: $!") unless $params->{'no_exception'};
@@ -201,6 +203,8 @@ sub list_dir_contents {
   }
 
   $dh->close;
+
+  @$ls = map "$dir/$_", @$ls if $abs;
 
   return $ls;
 }

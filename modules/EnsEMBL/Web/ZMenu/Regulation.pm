@@ -60,17 +60,18 @@ sub content {
   });
   
   $self->add_entry({
-    type  => 'Core bp',
-    label => $object->location_string,
-    link  => $object->get_location_url,
-    link_class => '_location_change'
+    type        => 'Core bp',
+    label       => $object->location_string,
+    link        => $object->get_location_url,
+    link_class  => '_location_change _location_mark'
   });
   
   unless ($object->bound_start == $object->seq_region_start && $object->bound_end == $object->seq_region_end) {
     $self->add_entry({
-      type  => 'Bounds bp',
-      label => $object->bound_location_string,
-      link  => $object->get_bound_location_url
+      type        => 'Bounds bp',
+      label       => $object->bound_location_string,
+      link        => $object->get_bound_location_url,
+      link_class  => '_location_change _location_mark'
     });
   }
 

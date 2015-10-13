@@ -202,8 +202,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
     });
     
-    this.el.find('input[name=species]').on('change', function () {
-      var species = this.value;
+    this.el.find('select[name=species]').on('change', function () {
+      var species = this.value.replace(/^\//, '').split(/\//).shift();
       var id      = 'modal_config_' + (panel.component + (species === Ensembl.species ? '' : '_' + species)).toLowerCase();
       var change  = $('#' + id);
 
@@ -212,9 +212,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       if (!change.length || !change.children().length || change.data('reload')) {
         Ensembl.EventManager.trigger('updateConfiguration', true);
         change = change.length ? !change.removeData('reload') : $('<div>', { id: id, 'class': 'modal_content js_panel active', html: '<div class="spinner">Loading Content</div>' });
-        Ensembl.EventManager.trigger('addModalContent', change, this.className, id, 'modal_config_' + panel.component.toLowerCase());
+        Ensembl.EventManager.trigger('addModalContent', change, this.value, id, 'modal_config_' + panel.component.toLowerCase());
       } else {
-        change.addClass('active').show().find('input[name=species][value=' + this.value + ']').prop('checked', true).closest('._sdd').speciesDropdown({refresh: true});
+        change.addClass('active').show().find('select[name=species]').prop('selectedIndex', this.selectedIndex).selectToToggle('trigger').focus();
       }
 
       $(panel.el).removeClass('active');

@@ -42,7 +42,7 @@ sub handler_species {
   my $seg    = shift @path_segments;
   my $script = $SiteDefs::OBJECT_TO_SCRIPT->{$seg};
   
-  if ($seg eq 'Component' || $seg eq 'ZMenu' || $seg eq 'Config' || $seg eq 'Json' || $seg eq 'Download') {
+  if ($seg eq 'Component' || $seg eq 'ComponentAjax' || $seg eq 'ZMenu' || $seg eq 'Config' || $seg eq 'Json' || $seg eq 'Download') {
     $type   = shift @path_segments if $SiteDefs::OBJECT_TO_SCRIPT->{$path_segments[0]} || $seg eq 'ZMenu' || $seg eq 'Json' || $seg eq 'Download';
     $plugin = shift @path_segments if $seg eq 'Component';
   } else {

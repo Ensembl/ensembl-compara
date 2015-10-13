@@ -48,6 +48,7 @@ sub availability {
   if (!$self->{'_availability'}) {
     my $availability = $self->_availability;
     my $obj = $self->Obj;
+    $availability->{'has_phenotypes'} = 0; # Defaults to off - see below
     
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
@@ -82,7 +83,7 @@ sub availability {
       $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
       
       if ($self->database('variation')) {
-        $availability->{'has_phenotypes'} = $self->get_phenotype;
+        $availability->{'has_phenotypes'} = 1; #Don't try to calculate - too slow!
       }
 
       if ($self->database('compara_pan_ensembl')) {
@@ -513,6 +514,15 @@ sub get_all_transcripts {
   return $self->{'data'}{'_transcripts'};
 }
 
+sub get_transcript_by_stable_id {
+  my ($self,$stable_id) = @_;
+
+  my $th = $self->hub->get_adaptor('get_TranscriptAdaptor');
+  my $trans = $th->fetch_by_stable_id($stable_id);
+  return undef unless $trans;
+  return $self->new_object('Transcript',$trans,$self->__data);
+}
+
 sub get_all_families {
   my $self = shift;
   my $compara_db = shift || 'compara';
@@ -835,6 +845,7 @@ sub fetch_homology_species_hash {
 sub get_homologue_alignments {
   my $self        = shift;
   my $compara_db  = shift || 'compara';
+  my $type        = shift || 'ENSEMBL_ORTHOLOGUES';
   my $database    = $self->database($compara_db);
   my $hub         = $self->hub;
   my $msa;
@@ -842,7 +853,7 @@ sub get_homologue_alignments {
   if ($database) {  
     my $member  = $database->get_GeneMemberAdaptor->fetch_by_stable_id($self->Obj->stable_id);
     my $tree    = $database->get_GeneTreeAdaptor->fetch_default_for_Member($member);
-    my @params  = ($member, 'ENSEMBL_ORTHOLOGUES');
+    my @params  = ($member, $type);
     my $species = [];
     foreach (grep { /species_/ } $hub->param) {
       (my $sp = $_) =~ s/species_//;

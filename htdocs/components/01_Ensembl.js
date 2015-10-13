@@ -33,7 +33,7 @@ Ensembl.extend({
     this.locationURL        = typeof window.history.pushState === 'function' ? 'search' : 'hash';
     this.hashParamRegex     = '([#?;&])(__PARAM__=)[^;&]+((;&)?)';
     this.locationMatch      = new RegExp(/[#?;&]r=([^;&]+)/);
-    this.hightlightMatch    = new RegExp(/[#?;&]hlr=([^;&]+)/);
+    this.markLocationMatch  = new RegExp(/[#?;&]mr=([^;&]+)/);
     this.locationReplace    = new RegExp(this.hashParamRegex.replace('__PARAM__', 'r'));
     this.width              = parseInt(this.cookie.get('ENSEMBL_WIDTH'), 10) || this.setWidth(undefined, 1);
     this.dynamicWidth       = !!this.cookie.get('DYNAMIC_WIDTH');
@@ -45,8 +45,8 @@ Ensembl.extend({
     this.speciesCommon      = $('#species_common_name').val() || '';
     this.species            = this.speciesPath.split('/').pop();
     this.images             = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
-    this.highlightedLoc     = this.getHighlightedLocation();
-    this.lastHighlightedLoc = false;
+    this.markedLocation     = this.getMarkedLocation();
+    this.lastMarkedLocation = false;
 
     for (var i in bodyClass) {
       if (bodyClass[i]) {
@@ -247,25 +247,25 @@ Ensembl.extend({
     }
   },
 
-  getHighlightedLocation: function(url) {
-    var r = ((url || window.location.href).match(this.hightlightMatch) || ['']).pop().match(/(.+):(\d+)-(\d+)/);
+  getMarkedLocation: function(url) {
+    var r = ((url || window.location.href).match(this.markLocationMatch) || ['']).pop().match(/(.+):(\d+)-(\d+)/);
 
     return r ? [ r[0], r[1], parseInt(r[2]), parseInt(r[3]) ] : null;
   },
 
-  highlightLocation: function (r) {
+  markLocation: function (r) {
 
-    if (r && typeof r === 'string') { // r can be false to clear hightlighted area, or can be an object already
-      r = this.getHighlightedLocation(r);
+    if (r && typeof r === 'string') { // r can be false to clear marked area, or can be an object already
+      r = this.getMarkedLocation(r);
     }
 
     if (r || r === false) {
-      this.updateURL({ hlr: r && r[0] });
-      this.changeCoreParam('hlr', r[0]);
+      this.updateURL({ mr: r && r[0] });
+      this.changeCoreParam('mr', r[0]);
       this.setCoreParams();
-      this.lastHighlightedLoc = this.highlightedLoc || this.lastHighlightedLoc;
-      this.highlightedLoc     = r;
-      this.EventManager.trigger('highlightLocation', r);
+      this.lastMarkedLocation = this.markedLocation || this.lastMarkedLocation;
+      this.markedLocation     = r;
+      this.EventManager.trigger('markLocation', r);
     }
   },
   
@@ -321,7 +321,7 @@ Ensembl.extend({
     var hash = r && this.locationURL === 'search' ? { r: r } : {};
 
     if (hash.r) {
-      $.each(['g', 'db', 'hlr'], function (i, param) {
+      $.each(['g', 'db', 'mr'], function (i, param) {
         if (Ensembl.coreParams[param]) {
           hash[param] = Ensembl.coreParams[param];
         }

@@ -35,7 +35,7 @@ sub caption {
 
 sub content {
   my $self   = shift;
-  my $object = $self->object;
+  my $object = $self->object || $self->hub->core_object('gene');
   my $gene   = $object->Obj;
   
   my $gene_slice = $gene->feature_Slice->expand(10e3, 10e3);

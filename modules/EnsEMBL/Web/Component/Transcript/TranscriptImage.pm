@@ -31,7 +31,7 @@ sub _init {
 
 sub content {
   my $self         = shift;
-  my $object       = $self->object;
+  my $object       = $self->object || $self->hub->core_object('transcript');
   my $transcript   = $object->Obj;
   my $slice        = $transcript->feature_Slice;
      $slice        = $slice->invert if $slice->strand < 1; ## Put back onto correct strand

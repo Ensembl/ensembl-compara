@@ -50,7 +50,7 @@ sub populate_tree {
   
   my $context_menu = $self->create_node('Context', 'Genomic context',
     [qw( context EnsEMBL::Web::Component::Variation::Context )],
-    { 'availability' => 'variation', 'concise' => 'Context' }
+    { 'availability' => 'variation has_locations', 'concise' => 'Context' }
   );
   
   $context_menu->append($self->create_node('Mappings', 'Genes and regulation',
@@ -59,7 +59,7 @@ sub populate_tree {
   ));
   $context_menu->append($self->create_node('Sequence', 'Flanking sequence',
     [qw( flanking EnsEMBL::Web::Component::Variation::FlankingSequence )],
-    { 'availability' => 'variation' }
+    { 'availability' => 'variation has_locations' }
   ));  
     
   $self->create_node('Population', 'Population genetics',

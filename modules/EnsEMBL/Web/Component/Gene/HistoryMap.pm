@@ -40,7 +40,7 @@ sub content {
   my $self    = shift;
   my $protein = shift;
   my $hub     = $self->hub;
-  my $object  = $self->object;
+  my $object  = $self->object || $self->hub->core_object('gene');
   my $archive;
   my $htree;
 

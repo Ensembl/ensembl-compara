@@ -163,22 +163,22 @@ sub populate_tree {
       variation EnsEMBL::Web::Component::Gene::GenePhenotypeVariation
       orthologue EnsEMBL::Web::Component::Gene::GenePhenotypeOrthologue
     )],
-    { 'availability' => 1 } #set as true since getting the orthologs is really slow
+    { 'availability' => 'has_phenotypes' } 
   );
 	
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
-  $var_menu->append($self->create_node('Variation_Gene/Table', 'Variation table',
+  $var_menu->append($self->create_node('Variation_Gene/Table', 'Variant table',
     [qw( snptable EnsEMBL::Web::Component::Gene::VariationTable )],
     { 'availability' => 'gene database:variation core not_patch' }
   ));
   
-  $var_menu->append($self->create_node('Variation_Gene/Image',  'Variation image',
+  $var_menu->append($self->create_node('Variation_Gene/Image',  'Variant image',
     [qw( image EnsEMBL::Web::Component::Gene::VariationImage )],
     { 'availability' => 'gene database:variation core not_patch' }
   ));
 	
-	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural variation',
+	$var_menu->append($self->create_node('StructuralVariation_Gene', 'Structural variants',
     [qw(
       svimage EnsEMBL::Web::Component::Gene::SVImage
       svtable EnsEMBL::Web::Component::Gene::SVTable

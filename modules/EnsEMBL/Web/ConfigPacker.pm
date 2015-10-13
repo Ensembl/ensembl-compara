@@ -1178,7 +1178,7 @@ sub _summarise_compara_db {
 
   ###################################################################
   ## Section for storing the genome_db_ids <=> species_name
-  $res_aref = $dbh->selectall_arrayref('SELECT genome_db_id, name, assembly FROM genome_db WHERE assembly_default = 1');
+  $res_aref = $dbh->selectall_arrayref('SELECT genome_db_id, name, assembly FROM genome_db');
   
   foreach my $row (@$res_aref) {
     my ($genome_db_id, $species_name) = @$row;
@@ -1750,7 +1750,7 @@ sub _munge_file_formats {
     'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'remote' => 1},
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'remote' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'remote' => 1},
-    'trackhub'  => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'remote' => 1},
+    'trackhub'  => {'ext' => 'txt', 'label' => 'Track Hub', 'display' => 'graph', 'remote' => 1},
     ## Export only
     'fasta'     => {'ext' => 'fa',   'label' => 'FASTA'},
     'clustalw'  => {'ext' => 'aln',  'label' => 'CLUSTALW'},

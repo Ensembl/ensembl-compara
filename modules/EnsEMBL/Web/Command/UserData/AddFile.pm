@@ -39,16 +39,32 @@ sub process {
   my $format_name = $hub->param('format');
   my $url_params  = {};
   my $new_action  = '';
+  my $attach      = 0;
+  my $url;
 
   if ($method eq 'text' && $hub->param('text') =~ /^\s*(http|ftp)/) {
     ## Attach the file from the remote URL
-    my $url       = $hub->param('text'); 
-    $url          =~ s/(^\s+|\s+$)//g; # Trim leading and trailing whitespace
+    $url = $hub->param('text'); 
+    $url =~ s/(^\s+|\s+$)//g; # Trim leading and trailing whitespace
 
     ## Move URL into appropriate parameter, because we need to distinguish it from pasted data
     $hub->param('url', $url);
     $hub->param('text', '');
+    $method = 'url';
 
+    ## Set 'attach' flag if we can't upload it
+    my $format_info = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
+    if ($format_info->{lc($format_name)}{'remote'}) {
+      $attach = 1;
+    } 
+    elsif (uc($format_name) eq 'VCF' || uc($format_name) eq 'PAIRWISE') {
+      ## Is this an indexed file? Check formats that could be either
+      my $tabix_url   = $url.'.tbi';
+      $attach = $self->check_for_index($tabix_url);
+    } 
+  }
+
+  if ($attach) {
     ## Is this file already attached?
     ($new_action, $url_params) = $self->check_attachment($url);
 
@@ -56,22 +72,12 @@ sub process {
       $url_params->{'action'} = $new_action;
     }
     else {
-      ## Is this an indexed file? Check formats that could be either
-      my $not_indexed = 0;
-      if (uc($format_name) eq 'VCF' || uc($format_name) eq 'PAIRWISE') {
-        my $tabix_url   = $url.'.tbi';
-        $not_indexed = $self->check_for_index($tabix_url);
-      } 
-
       my %args = ('hub' => $self->hub, 'format' => $format_name, 'url' => $url, 'track_line' => $self->hub->param('trackline'));
       my $attachable;
 
-      if (!defined($not_indexed)) {
+      if ($attach eq 'error') {
         ## Something went wrong with check
         $url_params->{'restart'} = 1;
-      }
-      elsif ($not_indexed) {
-        $attachable = EnsEMBL::Web::File::AttachedFormat->new(%args);
       }
       else {
         my $package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
@@ -82,18 +88,17 @@ sub process {
         else {
           $attachable = EnsEMBL::Web::File::AttachedFormat->new(%args);
         }
+        my $filename  = [split '/', $url]->[-1];
+        ($new_action, $url_params) = $self->attach($attachable, $filename);
+        $url_params->{'action'} = $new_action;
       }
-      my $filename  = [split '/', $url]->[-1];
-      ($new_action, $url_params) = $self->attach($attachable, $filename);
-      $url_params->{'action'} = $new_action;
     }
-
   }
   else {
     ## Upload the data
-      $url_params = $self->upload($method, $format_name);
-      $url_params->{ __clear} = 1;
-      $url_params->{'action'} = 'UploadFeedback';
+    $url_params = $self->upload($method, $format_name);
+    $url_params->{ __clear} = 1;
+    $url_params->{'action'} = 'UploadFeedback';
   }
 
   if ($url_params->{'restart'}) {
@@ -125,10 +130,10 @@ sub check_for_index {
   
   if ($error) {
     warn "!!! URL ERROR: $error";
-    return;
+    return 'error';
   }
   else {
-    return $index_exists ? 0 : 1;
+    return $index_exists;
   }
 }
 

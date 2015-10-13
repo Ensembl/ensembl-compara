@@ -60,6 +60,7 @@ sub variation_content {
   my $allele     = $feature->allele_string;
   my @failed     = @{$feature->variation->get_all_failed_descriptions};
   my $position   = "$seq_region$chr_start";
+
   my ($lrg_position, %population_data, %population_allele);
  
   my $v = $feature->variation()->name(); 
@@ -110,6 +111,8 @@ sub variation_content {
     if ($tv) {
       my $pep_alleles = $tv->pep_allele_string;
       my $codons      = $tv->codons;
+      my $cdna_pos    = $tv->cdna_start;
+      my $aa_pos      = $tv->translation_start;
       ## Also truncate long peptides
       if (length $pep_alleles > 10) {
         $pep_alleles =~ /(\w{10})\w+(\w\/\w)(\w+)/;
@@ -121,6 +124,9 @@ sub variation_content {
         $codons = $1.'...'.$2;
         $codons .= '...' if $3;
       }
+
+      push @entries, { type => 'cDNA position', 'label' => $cdna_pos} if $cdna_pos; 
+      push @entries, { type => 'Protein position', 'label' => $aa_pos} if $aa_pos; 
       
       push @entries, { type => 'Amino acids', label => $pep_alleles} if $pep_alleles && $pep_alleles =~ /\//;
       push @entries, { type => 'Codons',      label => $codons}      if $codons      && $codons      =~ /\//;
@@ -128,36 +134,22 @@ sub variation_content {
   }
 
   # Consequence terms and display
-  my %ct    = map { $_->SO_term => { label => $_->label, 'rank' => $_->rank, 'description' => $_->description } } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  my %types = map {$_ => $ct{$_}{rank}} @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};  
-
-  my $var_styles = $self->hub->species_defs->colour('variation');
-  my $colourmap  = $self->hub->colourmap;
-  my $type = join ' ',
-     map {
-       sprintf(
-         '<li>'.
-         '  <nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-         '  <span class="_ht conhelp coltab_text" title="%s">%s</span></nobr>'.
-         '</li>',
-         $var_styles->{$_} ? $colourmap->hex_by_name($var_styles->{$_}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'}),
-         $ct{$_}->{'description'},
-         $ct{$_}->{'label'}
-       )
-     }
-     sort { $types{$a} <=> $types{$b} } keys %types;
+  my %feature_cons = map { $_ => 1 } @{($self->{'transcript'} ? $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0] : $feature)->consequence_type};
+  my @feature_cons = map $self->variant_consequence_label($_), grep { $feature_cons{$_} } map { $_->SO_term } sort { $a->rank <=> $b->rank } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
 
   push @entries, (
-    { type  => 'Consequences',   label_html => "<ul>$type</ul>" },
-    { link  => $hub->url({ action => 'Explore', %url_params}), label => 'Explore this variant'},
-    { link  => $hub->url({ action => 'Mappings', %url_params }), label => 'Gene/Transcript Locations' }
+    { type  => 'Consequences',                                    label_html  => sprintf('<ul>%s</ul>', join('', map("<li>$_<li>", @feature_cons))) },
+    { link  => $hub->url({ action => 'Explore', %url_params}),    label       => 'Explore this variant'       },
+    { link  => $hub->url({ action => 'Mappings', %url_params }),  label       => 'Gene/Transcript Locations'  }
   );
 
   push @entries, { link => $hub->url({ action => 'Phenotype', %url_params }), label => 'Phenotype Data' } if scalar @{$object->get_external_data};
 
   foreach my $pop (sort { $a->{'pop_info'}{'Name'} cmp $b->{'pop_info'}{'Name'} } grep { $_->{'pop_info'}{'Name'} =~ /^1000genomes.+phase_\d/i } values %{$object->freqs($feature)}) {
+
+    next if (!scalar keys %{$pop->{'pop_info'}{'Sub-Population'}});
+
     my $name = [ split /:/, $pop->{'pop_info'}{'Name'} ]->[-1]; # shorten the population name
-       $name = $name =~ /phase_1_(.+)/ ? $1 : '';
     
     foreach my $ssid (sort { $a->{'submitter'} cmp $b->{'submitter'} } values %{$pop->{'ssid'}}) {
       my @afreqs = @{$ssid->{'AlleleFrequency'}};

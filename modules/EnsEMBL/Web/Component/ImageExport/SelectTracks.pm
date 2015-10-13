@@ -16,24 +16,26 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Tools::PluginInspector;
-
-## TODO
+package EnsEMBL::Web::Component::ImageExport::SelectTracks;
 
 use strict;
 use warnings;
 
-use Exporter qw(import);
-our @EXPORT_OK = qw(get_all_plugins get_file_plugins previous_plugin next_plugin); # And more?
+use parent qw(EnsEMBL::Web::Component);
 
-use SiteDefs;
+sub _init {
+  my $self = shift;
+  $self->cacheable( 0 );
+  $self->ajaxable(  0 );
+  $self->configurable( 0 );
+}
 
-sub get_all_plugins {}
+sub content {
+  ### Options for gene sequence output
+  my $self  = shift;
+  my $hub   = $self->hub;
 
-sub get_file_plugins {}
-
-sub previous_plugin {}
-
-sub next_plugin {}
+  return '<h1>Select tracks to export</h1>';
+}
 
 1;

@@ -378,12 +378,10 @@ sub init_legend { # begin (or reset)
   return unless $self->strand == -1;
 
   $self->{'box_width'} = 20;
-  my $im_width = $config->get_parameter('panel_width'); 
-  if($c) {
-    $self->{'columns'} = $c;
-  } else {
-    $self->{'columns'} = int($im_width / $MAX_WIDTH);
-  }
+  my $im_width = $self->image_width;
+
+  $self->{'columns'} =  $c || int($im_width / $MAX_WIDTH) || 1;
+
   $self->{'font'} = { $self->get_font_details('legend', 1) };
 
   my @sizes = $self->get_text_width(0,'X','',%{$self->{'font'}});
@@ -411,7 +409,7 @@ sub init_legend { # begin (or reset)
 
 sub add_space {
   my $self = shift;
-  my $im_width = $self->{'config'}->get_parameter('panel_width'); 
+  my $im_width = $self->image_width;
   my $space = 4;
 
   $self->push($self->Rect({

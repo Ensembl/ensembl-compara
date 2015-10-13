@@ -183,8 +183,8 @@ sub _draw_wiggle {
 
 sub features {
   my ($self, $options) = @_;
-  my %config_in = map { $_ => $self->my_config($_) } qw(colouredscore style);
-  
+  my %config_in = map { $_ => $self->my_config($_) } qw(colouredscore colorByStrand spectrum style);
+ 
   $options = { %config_in, %{$options || {}} };
 
   my $bba       = $options->{'adaptor'} || $self->bigbed_adaptor;
@@ -219,7 +219,7 @@ sub features {
     $config->{'useScore'}        = 1;
     $config->{'implicit_colour'} = 1;
     $config->{'greyscale_max'}   = $max_score;
-  } elsif ($style eq 'colouredscore') {
+  } elsif ($style eq 'colouredscore' || $options->{'spectrum'}) {
     $config->{'useScore'} = 2;    
   } else {
     $config->{'useScore'} = 2;
@@ -231,12 +231,20 @@ sub features {
     } else {
       $default_rgb_string = $self->my_config('colour') || '0,0,0';
     }
-   
+ 
+    my $strand_colours = {}; 
+    if ($options->{'colorByStrand'}) {
+      my ($pos, $neg) = split(' ', $options->{'colorByStrand'});
+      $strand_colours = { 1 => $pos, -1 => $neg };
+    }
+ 
     foreach (@$features) {
       if ($_->external_data->{'BlockCount'}) {
         $self->{'my_config'}->set('has_blocks', 1);
       }
-      my $colour = $_->external_data->{'item_colour'};
+      my $colour = (keys %$strand_colours && $_->strand) ? [$strand_colours->{$_->strand}]
+                      : $_->external_data->{'item_colour'};
+      $_->external_data->{'item_colour'} = $colour;
       next if defined $colour && $colour->[0] =~ /^\d+,\d+,\d+$/;
       $_->external_data->{'item_colour'}[0] = $default_rgb_string;
     }

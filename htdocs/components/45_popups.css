@@ -77,13 +77,17 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .zmenu_holder .row .zmenu tr.header th { width: 180px; }
 .zmenu_holder .grid                    { max-height: 250px; overflow-x: hidden; overflow-y: scroll; }
 
-.zmenu .loc-highlight-a                { line-height: 22px; }
-.zmenu .loc-highlight-a span,
-.zmenu .loc-highlight                  { display: inline-block; background-color: [[BUTTON_BG]]; background-image: url("/i/16/rev/highlight.png"); background-size: 12px auto;
-                                          border: 2px solid [[BUTTON_BG]]; border-radius: 2px;  height: 12px; margin: 2px 0; text-decoration: none; width: 12px; }
-.zmenu .loc-highlight-a:hover span,
-.zmenu .loc-highlight:hover            { background-color: [[BUTTON_BG_HOVER]]; border: 2px solid [[BUTTON_BG_HOVER]]; }
-.zmenu .loc-highlight-a span           { float: left; margin-right: 4px; }
+.zmenu .loc-icon-a                     { line-height: 20px; }
+.zmenu .loc-icon                       { display: inline-block; background-color: [[BUTTON_BG]]; background-size: 12px auto; border: 2px solid [[BUTTON_BG]]; border-radius: 2px;  height: 12px; margin: 2px 4px 2px 0; text-decoration: none; width: 12px; }
+.zmenu .loc-icon-a .loc-icon           { float: left; margin-right: 4px; }
+
+.zmenu .loc-mark                       { background-image: url("/i/16/rev/marker.png");       }
+.zmenu .loc-change                     { background-image: url("/i/16/rev/jump.png");         }
+.zmenu .loc-zoom                       { background-image: url("/i/16/rev/search.png");       }
+.zmenu .loc-pin                        { background-image: url("/i/16/rev/location_pin.png"); }
+
+.zmenu .loc-icon-a:hover .loc-icon,
+.zmenu .loc-icon:hover                 { background-color: [[BUTTON_BG_HOVER]]; border: 2px solid [[BUTTON_BG_HOVER]]; }
 
 body.ie  .zmenu_holder .grid           { width: 200px; }
 body.ie  .zmenu_holder div.header      { width: 202px; }

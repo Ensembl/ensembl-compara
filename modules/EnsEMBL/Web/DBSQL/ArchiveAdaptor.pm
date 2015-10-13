@@ -110,7 +110,7 @@ sub fetch_archive_assemblies {
   my @args;
   my $sql = qq(
     SELECT
-      s.name, s.common_name, r.number, rs.assembly_name
+      s.name, s.common_name, r.number, rs.assembly_name, rs.assembly_version
     FROM
       ens_release as r,
       species as s,
@@ -133,8 +133,9 @@ sub fetch_archive_assemblies {
   my $records = {};
   while (my @data = $sth->fetchrow_array()) {
     $records->{$data[0]}{$data[2]} = {
-      'common_name'     => $data[1],
-      'assembly'        => $data[3],
+      'common_name'      => $data[1],
+      'assembly'         => $data[3],
+      'assembly_version' => $data[4],
     };
   }
   return $records;

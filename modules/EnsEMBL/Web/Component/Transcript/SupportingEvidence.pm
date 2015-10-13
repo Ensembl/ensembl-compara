@@ -36,7 +36,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $hub    = $self->hub;
-  my $object = $self->object;
+  my $object = $self->object || $self->hub->core_object('transcript');
   my $html   = '<div class="content">';
   
   if (!$object->count_supporting_evidence) {

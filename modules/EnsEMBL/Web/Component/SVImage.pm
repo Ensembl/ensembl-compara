@@ -32,7 +32,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $hub    = $self->hub;
-  my $object = $self->object;
+  my $object = $self->object || $hub->core_object(lc($hub->param('data_type')));
   my $slice  = $object->slice;
 
   my $im_cfg = 'gene_sv_view';

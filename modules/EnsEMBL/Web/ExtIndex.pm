@@ -27,6 +27,7 @@ use IO::Socket::INET;
 use LWP::UserAgent;
 use HTTP::Request;
 
+use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Exceptions;
 
 use parent qw(EnsEMBL::Web::Root);
@@ -39,13 +40,12 @@ sub new {
   return bless {'_hub' => $hub}, $class;
 }
 
-sub get_sequence {
+sub get_sequence :Abstract {
   ## @abstract
   ## @return Hashref (or list of similar hashrefs for multiple sequences if applicable) with keys:
   ##  - sequence    Fasta format sequence
   ##  - id          ID of the sequence
   ##  - length      Length of the sequence
-  throw exception('AbstractMethodNotImplemented');
 }
 
 sub get_server {

@@ -157,6 +157,7 @@ sub render_histogram {
       no_axis              => 1,
       axis_label           => 'off',
       use_alpha            => 1,
+      class                => 'hover',
       hrefs                => $hrefs,
       non_can_score_colour => $non_can_feature_colour,
     });
@@ -838,32 +839,11 @@ sub render_interaction {
       @features = @tmp;
     }
 
-    my (%id, $y_pos);
-    foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_], @features) {
-      my ($s1, $e1, $s2, $e2, $f) = @$_;
-
-      my $fgroup_name = $self->feature_group($f);
-
-      push @{$id{$fgroup_name}}, [ $s1, $e1, $s2, $e2, $f,
-                                    int($s1 * $pix_per_bp), int($e1 * $pix_per_bp),
-                                    int($s2 * $pix_per_bp), int($e2 * $pix_per_bp),
-                                  ];
-    }
-
-    my %idl;
-    foreach my $k (keys %id) {
-      $idl{$k} = $strand * ( max(map { $_->[1] } @{$id{$k}}) -
-                             min(map { $_->[0] } @{$id{$k}}));
-    }
-
-    next unless keys %id;
-
-    foreach my $i (sort { $idl{$a} <=> $idl{$b} } keys %id) {
-      my @feat  = @{$id{$i}};
-      my $x     = -1e8;
-
-      foreach (@feat) {
-        my ($s1, $e1, $s2, $e2, $f) = @$_;
+    foreach my $f (@features) {
+        my $s1 = $f->start_1;
+        my $e1 = $f->end_1;
+        my $s2 = $f->start_2;
+        my $e2 = $f->end_2;
 
         my $feature_colour;
 
@@ -881,10 +861,11 @@ sub render_interaction {
         my $join_colour    = $feature_colour;
         my $label_colour   = $feature_colour;
 
-        my $start_1         = max($s1, 1);
-        my $start_2         = max($s2, 2);
-        my $end_1           = min($e1, $length - 1);
-        my $end_2           = min($e2, $length);
+        ## Drawn coordinates, constrained to viewport
+        my $start_1  = max($s1, 1);
+        my $start_2  = max($s2, 1);
+        my $end_1    = min($e1, $length);
+        my $end_2    = min($e2, $length);
 
         ## Unlike other tracks, we need to show partial features that are outside this slice
 
@@ -900,7 +881,6 @@ sub render_interaction {
             })) unless $e1 < 0;
 
         ## Arc between features
-        my $width = $self->image_width;
 
         ## Default behaviour is to draw arc from middles of features
         ## Of course for the arcs we have to use the real coordinates, 
@@ -922,55 +902,68 @@ sub render_interaction {
             $arc_end   = $e2;
           }
         }
+
+        ## Flip start and end if necessary
+        ($arc_start, $arc_end) = ($arc_end, $arc_start) if ($arc_start > $arc_end);
+
         ## Don't show arcs if both ends lie outside viewport
-        next if ($arc_start < 0 && $arc_end > $length);
+        next if ( ($arc_start < 0 && $arc_end <= 0)
+                  || ($arc_start >= $length && $arc_end > $length)
+                  || ($arc_start < 0 && $arc_end > $length)
+                );
+
+        ## Somewhat confusingly, the drawing code uses coordinates for horizontal dimensions
+        ## but pixels for vertical ones, which makes the following maths hideous!
+        ## Convert horizontal dimensions to pixels to make things sane:
+        $arc_start = ceil($arc_start * $pix_per_bp);
+        $arc_end   = ceil($arc_end * $pix_per_bp);
 
         ## Set some sensible limits
+        my $width     = $self->image_width;
         my $max_width = $width * 2;
         my $max_depth = 250; ## should be less than image width! 
 
         ## Start with a basic circular arc, then constrain to above limits
         my $start_point   = 0; ## righthand end of arc
         my $end_point     = 180; ### lefthand end of arc
-        my $major_axis    = abs(ceil(($arc_end - $arc_start) * $pix_per_bp));
+        my $major_axis    = $arc_end - $arc_start;
         my $minor_axis    = $major_axis;
         $major_axis       = $max_width if $major_axis > $max_width; 
         $minor_axis       = $max_depth if $minor_axis > $max_depth; 
         my $a             = $major_axis / 2;
         my $b             = $minor_axis / 2;
-        
+       
         ## Measurements needed for drawing partial arcs
-        my $centre        = ceil($arc_start * $pix_per_bp + $a);
+        my $centre        = $arc_start + $a;
         my $left_height   = $minor_axis; ## height of curve at left of image
         my $right_height  = $minor_axis; ## height of curve at right of image
 
         ## Cut curve off at edge of track if ends lie outside the current window
-        if ($end_1 < 0) {
+        ## Note that we have to calculate the angle theta as if we were drawing a
+        ## circle, as there's something funky going on in GD!
+        if ($arc_start < 0) {
           my $x = abs($centre);
           $x = $a if $x > $a;
-          my $theta;
+          $left_height = $self->ellipse_y($x, $a, $b);
+          my $theta = $self->truncate_ellipse($x, $a, $a);
           if ($centre > 0) {
-            ($left_height, $theta) = $self->truncate_ellipse($x, $a, $b);
             $end_point -= $theta;
           }
           else {
-            ($left_height, $theta) = $self->truncate_ellipse($x, $a, $b);
             $end_point = $theta;
           }
         }
 
         if ($s2 >= $length) {
           my ($x, $theta);
-          if ($centre > $length) {
-            $x = $centre - $length;
-            $x = $a if $x > $a;
-            ($right_height, $theta) = $self->truncate_ellipse($x, $a, $b);
+          $x = abs($width - $centre);
+          $x = $a if $x > $a;
+          $right_height = $self->ellipse_y($x, $a, $b);
+          my $theta = $self->truncate_ellipse($x, $a, $a);
+          if ($centre > $width) {
             $start_point = 180 - $theta;
           }
           else {
-            $x = $length - $centre;
-            $x = $a if $x > $a;
-            ($right_height, $theta) = $self->truncate_ellipse($x, $a, $b);
             $start_point = $theta;
           }
         }
@@ -992,6 +985,10 @@ sub render_interaction {
         else {
           $max_arc = $minor_axis if $minor_axis > $max_arc;
         }
+
+        ## Convert horizontal dimensions back to coordinates
+        my $arc_width = ($arc_end - $arc_start) / $pix_per_bp;
+        $arc_start /= $pix_per_bp;
 
         ## Finally, we have the coordinates to draw 
         $self->push($self->Arc({
@@ -1059,7 +1056,6 @@ sub render_interaction {
           }));
         }
       }
-    }
   }
   ## Limit track height to that of biggest arc
   my $track_height = $max_arc / 2 + 10;

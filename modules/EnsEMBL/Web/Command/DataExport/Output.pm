@@ -138,7 +138,7 @@ sub process {
     $url_params->{'__clear'}        = 1;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
-    push @core_params, qw(export_action data_type data_action component align);
+    push @core_params, qw(export_action data_type data_action component align g1);
     push @core_params, $self->config_params; 
     foreach my $species (grep { /species_/ } $hub->param) {
       push @core_params, $species;
@@ -390,7 +390,7 @@ sub write_fasta {
       peptide => sub { my ($t, $id, $type) = @_; eval { [[ "$id peptide: " . $t->translation->stable_id . " pep:$type", $t->translate->seq ]] }},
       utr3    => sub { my ($t, $id, $type) = @_; eval { [[ "$id utr3:$type", $t->three_prime_utr->seq ]] }},
       utr5    => sub { my ($t, $id, $type) = @_; eval { [[ "$id utr5:$type", $t->five_prime_utr->seq ]] }},
-      exon    => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id " . $_->id . " exon:$type", $_->seq->seq ]} @{$t->get_all_Exons} ] }},
+      exon    => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id " . $_->display_id . " exon:$type", $_->seq->seq ]} @{$t->get_all_Exons} ] }},
       intron  => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id intron " . $intron_id++ . ":$type", $_->seq ]} @{$t->get_all_Introns} ] }}
   };
 

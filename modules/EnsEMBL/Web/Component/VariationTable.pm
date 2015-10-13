@@ -21,6 +21,9 @@ package EnsEMBL::Web::Component::VariationTable;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
+use EnsEMBL::Web::NewTable::NewTable;
+
+use Bio::EnsEMBL::Variation::Utils::VariationEffect;
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -28,6 +31,45 @@ sub _init {
   my $self = shift;
   $self->cacheable(0);
   $self->ajaxable(1);
+}
+
+sub new_consequence_type {
+  my $self        = shift;
+  my $tva         = shift;
+  my $most_severe = shift;
+
+  my $overlap_consequences = ($most_severe) ? [$tva->most_severe_OverlapConsequence] || [] : $tva->get_all_OverlapConsequences || [];
+
+  # Sort by rank, with only one copy per consequence type
+  my @consequences = sort {$a->rank <=> $b->rank} (values %{{map {$_->label => $_} @{$overlap_consequences}}});
+
+  my @type;
+  foreach my $c (@consequences) {
+    push @type,$c->label;
+  }
+  return join('~',@type);
+}
+
+
+sub table_content {
+  my ($self,$callback) = @_;
+
+  my $hub = $self->hub;
+  my $icontext         = $hub->param('context') || 100;
+  my $gene_object      = $self->configure($icontext,'ALL');
+  my $object_type      = $hub->type;
+ 
+  my $transcript;
+  $transcript = $hub->param('t') if $object_type eq 'Transcript';
+  my $phase = $callback->phase;
+  $transcript = $phase if $phase =~ s/^full-//;
+  my @transcripts;
+  if(defined $transcript) {
+    @transcripts = ($gene_object->get_transcript_by_stable_id($transcript));
+  } else {
+    @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
+  }
+  return $self->variation_table($callback,'ALL',\@transcripts);
 }
 
 sub content {
@@ -39,14 +81,12 @@ sub content {
   my $sum_type         = $hub->param('summary_type') || 'table';
   my $gene_object      = $self->configure($icontext, $consequence_type);
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
-  my ($count, $msg, $html);
+  my ($msg, $html);
   
   if ($object_type eq 'Transcript') {
     my $t = $hub->param('t');
     @transcripts = grep $_->stable_id eq $t, @transcripts;
   }
-  
-  $count += scalar @{$_->__data->{'transformed'}{'gene_snps'}} for @transcripts;
 
   if ($icontext) {
     if ($icontext eq 'FULL') {
@@ -58,475 +98,493 @@ sub content {
     $msg .= qq( To extend or reduce the intronic sequence, use the "<b>Configure this page - Intron Context</b>" link on the left.</p>);
   }
   
-  $msg .= qq(<p>Note: From release 68, Ensembl uses Sequence Ontology (SO) terms to describe consequences. <a href="/info/genome/variation/predicted_data.html#consequence_type_table">More information about this table</a>.</p>);
-
-  if ($consequence_type || $count < 25) {
-    $consequence_type ||= 'ALL';
-
-    my $table_rows = $self->variation_table($consequence_type, \@transcripts);
-    my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
-
-    $html = $self->render_content($table, $consequence_type);
-  } else {
-    $html  = $self->_hint('snp_table', 'Configuring the page', $msg);
-    $html .= $self->render_content($sum_type eq 'tree' ? $self->tree(\@transcripts, $gene_object) : $self->stats_table(\@transcripts, $gene_object)->render); # no sub-table selected, just show stats
-  }
-  
+  my $table      = $self->make_table();
+  $html  = $self->_hint('snp_table', 'Variant table', "This table shows known variants for this gene. Use the 'Consequence Type' filter to view a subset of these.");
+  $html .= $table->render($self->hub,$self);
   return $html;
 }
 
-sub make_table {
-  my ($self, $table_rows, $consequence_type) = @_;
-  my $hub      = $self->hub;
-  my $glossary = $hub->glossary_lookup;
+sub all_terms {
+  my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+
+  my @cons = grep { $_->SO_accession !~ /x/i } @all_cons;
+  my @labels = map { [$_->label,$_->rank] } @cons;
+  return [ map { $_->[0] } sort { $a->[1] <=> $b->[1] } @labels ];
+}
   
-  # Using explicit wdiths speeds things up and makes layout more predictable
-  # u = 1unit, where unit is calculated so that total width is 100%
-  my $columns = [
-    { key => 'ID',       width => '12u', sort => 'html',                                                      help => 'Variant identifier'                     },
-    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp',                       help => $glossary->{'Chr:bp'}                    },
-    { key => 'Alleles',  width => '16u', sort => 'string',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                },
-    { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $glossary->{'Class'}                     },
-    { key => 'Source',   width => '8u',  sort => 'string',          label => "Sour\fce",                      help => $glossary->{'Source'}                    },
-    { key => 'status',   width => '9u',  sort => 'string',          label => "Evid\fence", align => 'center', help => $glossary->{'Evidence status (variant)'} },
-    { key => 'clinsig',  width => '6u',  sort => 'string',          label => "Clin\f sig",                    help => 'Clinical significance'                  },
-    { key => 'snptype',  width => '12u', sort => 'position_html',   label => 'Type',                          help => 'Consequence type'                       },
-    { key => 'aachange', width => '6u',  sort => 'string',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                },
-    { key => 'aacoord',  width => '6u',  sort => 'position',        label => "AA co\ford", align => 'center', help => 'Amino Acid Co-ordinate'                 }
-  ];
-  
-  # submitter data for LRGs
-  splice @$columns, 5, 0, { key => 'Submitters', width => '10u', sort => 'string', align => 'center', export_options => { split_newline => 2 } } if $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
+sub sift_poly_classes {
+  my ($self,$table) = @_;
 
-  # HGVS
-  splice @$columns, 3, 0, { key => 'HGVS', width => '10u', sort => 'string', title => 'HGVS name(s)', align => 'center', export_options => { split_newline => 2 } } if $hub->param('hgvs') eq 'on';
-
-  # add SIFT for supported species
-  my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
-
-  if ($sd->{'SIFT'}) {
-    push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $glossary->{'SIFT'} });
+  my %sp_classes = (
+    '-'                 => '',
+    'probably damaging' => 'bad',
+    'possibly damaging' => 'ok',
+    'benign'            => 'good',
+    'unknown'           => 'neutral',
+    'tolerated'         => 'good',
+    'deleterious'       => 'bad',
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
+  );
+  foreach my $column_name (qw(sift polyphen)) {
+    my $value_column = $table->column("${column_name}_value");
+    my $class_column = $table->column("${column_name}_class");
+    next unless $value_column and $class_column;
+    $value_column->editorial_type('lozenge');
+    $value_column->editorial_source("${column_name}_class");
+    foreach my $pred (keys %sp_classes) {
+      $value_column->editorial_cssclass($pred,"score_$sp_classes{$pred}");
+      $value_column->editorial_helptip($pred,$pred);
+    } 
   }
-
-  # add GMAF and PolyPhen for human
-  if ($hub->species eq 'Homo_sapiens') {
-    push @$columns, (
-      { key => 'polyphen', sort => 'position_html', width => '6u', label => "Poly\fPhen", align => 'center', help => $glossary->{'PolyPhen'} },
-    );
-
-    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $glossary->{'Global MAF'} };
-  }
- 
-  if ($hub->type ne 'Transcript') {
-    push @$columns, { key => 'Transcript', sort => 'string', width => '11u', help => $glossary->{'Transcript'} };
-  }
-
-  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside fast_fixed_table' });
-} 
-
-sub render_content {
-  my ($self, $table, $consequence_type) = @_;
-  my $stable_id = $self->object->stable_id;
-  my $html;
-  
-  if ($consequence_type) {
-    my $table_id          = $self->hub->param('table_title') || $consequence_type;
-    my $consequence_label = ucfirst $table_id;
-       $consequence_label =~ s/_/ /g;
-       $consequence_label =~ s/children/\(with children\)/;
-    
-    $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>));
-  } else {
-    my $hub      = $self->hub;
-    my $current  = $hub->param('summary_type') || 'table';
-    my $switched = $current eq 'tree' ? 'table' : 'tree';
-    my $url      = $hub->url({ summary_type => $switched });
-    
-    $html = qq(
-      <a id="$self->{'id'}_top"></a>
-      <span style="float:right;">
-        <a href="$url">Switch to $switched view <img src="/i/16/reload.png" height="12px"/></a>
-      </span>
-      <h2>Summary of variant consequences in $stable_id</h2>
-    ) . $table;
-  }
-  
-  return $html;
 }
 
+sub evidence_classes {
+  my ($self,$table) = @_;
 
-sub stats_table {
-  my ($self, $transcripts, $gene_object) = @_;
-  my $hub     = $self->hub;
-  my $columns = [
-    { key => 'count', title => 'Number of variant consequences', sort => 'numeric_hidden', width => '20%', align => 'right'  },   
-    { key => 'view',  title => '',                               sort => 'none',           width => '5%',  align => 'center' },   
-    { key => 'key',   title => '',                               sort => 'none',           width => '2%',  align => 'center' },
-    { key => 'type',  title => 'Type',                           sort => 'numeric_hidden', width => '20%'                    },   
-    { key => 'desc',  title => 'Description',                    sort => 'none',           width => '53%'                    },
-  ];
+  my @evidence_order = reverse qw(
+    1000Genomes HapMap Cited ESP Frequency
+    Multiple_observations Phenotype_or_Disease
+  );
+  my %evidence_order;
+  $evidence_order{$evidence_order[$_]} = sprintf("%8d",$_) for(0..$#evidence_order);
+
+  my $evidence_col = $table->column('status');
+  foreach my $ev (keys %evidence_order) {
+    my $evidence_label = $ev;
+    $evidence_label =~ s/_/ /g;
+    $evidence_col->icon_url($ev,sprintf("%s/val/evidence_%s.png",$self->img_url,$ev));
+    $evidence_col->icon_helptip($ev,$evidence_label);
+    $evidence_col->icon_export($ev,$evidence_label);
+    $evidence_col->icon_order($ev,$evidence_order{$ev});
+  }
+}
+
+sub clinsig_classes {
+  my ($self,$table) = @_;
   
-  my (%counts, $total_counts, %ranks, %descriptions, %labels, %colours);
+  # This order is a guess at the most useful and isn't strongly motivated.
+  # Feel free to rearrange.
+  my @clinsig_order = reverse qw(
+    pathogenic protective likely-pathogenic risk-factor drug-response
+    confers-sensitivity histocompatibility association likely-benign
+    benign other not-provided uncertain-significance
+  );
+  my %clinsig_order;
+  $clinsig_order{$clinsig_order[$_]} = sprintf("%8d",$_) for(0..$#clinsig_order);
+
+  my $clinsig_col = $table->column('clinsig');
+  foreach my $cs_img (keys %clinsig_order) {
+    my $cs = $cs_img;
+    $cs =~ s/-/ /g;
+    $clinsig_col->icon_url($cs,sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img));
+    $clinsig_col->icon_helptip($cs,$cs);
+    $clinsig_col->icon_export($cs,$cs);
+    $clinsig_col->icon_order($cs,$clinsig_order{$cs_img});
+  }
+}
   
-  # colour stuff
+sub snptype_classes {
+  my ($self,$table,$hub) = @_;
+
   my $species_defs = $hub->species_defs;
   my $var_styles   = $species_defs->colour('variation');
-  my $colourmap    = $hub->colourmap;
   my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  
+  my $column = $table->column('snptype');
   foreach my $con (@all_cons) {
     next if $con->SO_accession =~ /x/i;
     
     my $term = $con->SO_term;
-    
-    $labels{$term}       = $con->label;
-    $descriptions{$term} = $con->description.' <span class="small">(' . $hub->get_ExtURL_link($con->SO_accession, 'SEQUENCE_ONTOLOGY', $con->SO_accession) . ')</span>' unless $descriptions{$term};
-    $colours{$term}      = $colourmap->hex_by_name($var_styles->{lc $con->SO_term}->{'default'});
-    $ranks{$term}        = $con->rank if $con->rank < $ranks{$term} || !defined $ranks{$term};
-  }
-
-  if (!exists($gene_object->__data->{'conscounts'})) {
-    # Generate the data the hard way - from all the vfs and tvs
-    my (%counts_hash, %total_counts_hash);
-
-    foreach my $tr (@$transcripts) { 
-      my $tr_stable_id = $tr->stable_id;
-      my $tvs          = $tr->__data->{'transformed'}{'snps'} || {};
-      my $gene_snps    = $tr->__data->{'transformed'}{'gene_snps'};
-      my $tr_start     = $tr->__data->{'transformed'}{'start'};
-      my $tr_end       = $tr->__data->{'transformed'}{'end'};
-      my $extent       = $tr->__data->{'transformed'}{'extent'};
-      
-      foreach (@$gene_snps) {
-        my ($snp, $chr, $start, $end) = @$_;
-        my $vf_id = $snp->dbID;
-        my $tv    = $tvs->{$vf_id};
-        
-        if ($tv && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-          foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
-            foreach my $con (@{$tva->get_all_OverlapConsequences}) {
-              my $key  = join '_', $tr_stable_id, $vf_id, $tva->variation_feature_seq;
-              my $term = $con->SO_term;
-              
-              $counts_hash{$term}{$key} = 1 if $con;
-              $total_counts_hash{$key}++;
-            }
-          }
-        }
-      }
-    }
-    
-    $counts{$_}   = scalar keys %{$counts_hash{$_}} for keys %descriptions;
-    $total_counts = scalar keys %total_counts_hash;
-  } else {
-    # Use the results of the TV count queries
-    %counts       = %{$gene_object->__data->{'conscounts'}};
-    $total_counts = $counts{'ALL'};
-  }
-  my $species_name = $hub->species;
-  my ($species_name_first, $species_name_second) = split('_', $species_name);
-  my $first_letter = lc substr($species_name_first, 0, 1);
-  my $mart_species_name = $first_letter . $species_name_second; 
-  my $mart_url = $self->hub->species_defs->ENSEMBL_MART_ENABLED ? '/biomart/martview/?VIRTUALSCHEMANAME=default' : '';
-  my @mart_attribute_values = ("$mart_species_name\_snp.default.snp.refsnp_id|",
-                            "$mart_species_name\_snp.default.snp.refsnp_source|",
-                            "$mart_species_name\_snp.default.snp.chr_name|",
-                            "$mart_species_name\_snp.default.snp.chrom_start|",
-                            "$mart_species_name\_snp.default.snp.validated|",
-                            "$mart_species_name\_snp.default.snp.consequence_type_tv|",
-                            "$mart_species_name\_snp.default.snp.consequence_allele_string|",
-                            "$mart_species_name\_snp.default.snp.ensembl_peptide_allele|",
-                            "$mart_species_name\_snp.default.snp.translation_start|",
-                            "$mart_species_name\_snp.default.snp.translation_end|",
-                            "$mart_species_name\_snp.default.snp.sift_prediction|");
-  if ($species_name eq 'Homo_sapiens') {
-    push @mart_attribute_values, ("$mart_species_name\_snp.default.snp.minor_allele_freq|", "$mart_species_name\_snp.default.snp.polyphen_prediction|");
-  }
-  my $mart_attributes =  '&ATTRIBUTES=' . join('', @mart_attribute_values); 
-  my $mart_gene_filter = "&FILTERS=$mart_species_name\_snp.default.filters.ensembl_gene.&quot;###GENE_ID###&quot;";
-  my $mart_con_type_filter = "|$mart_species_name\_snp.default.filters.so_parent_name.&quot;###SO_TERM###&quot;";
-  my $mart_result_panel = '&VISIBLEPANEL=resultspanel';
-  my $warning_text = '';
   
-  my @rows;
-  
-  foreach my $con (keys %descriptions) {
-    my $colour_block = sprintf '<div style="background-color: %s; width: 10px;">&nbsp;</div>', $colours{$con};
-    
-    if ($counts{$con}) {
-      my $count = $counts{$con};
-      my $warning;
-      if ($count > 5000) {
-        $warning = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)};
-        # optional Biomart link
-        if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
-          my $gene_id = $gene_object->stable_id;
-          $mart_gene_filter =~ s/###GENE_ID###/$gene_id/;
-		      $mart_con_type_filter =~ s/###SO_TERM###/$con/;
-          my $mart_variation_table_url = join('', $mart_url, $mart_attributes, $mart_gene_filter, $mart_con_type_filter, $mart_result_panel);
-          $mart_con_type_filter =~ s/$con/###SO_TERM###/;
-          $warning .= qq{ <a href="$mart_variation_table_url">View list in BioMart</a>};
-        }
-        $warning .= '</span>';
-      }
-
-      push @rows, {
-        type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
-        desc  => "$descriptions{$con} $warning",
-        count => $count,
-        view  => $self->ajax_add($self->ajax_url(undef, { sub_table => $con, update_panel => 1 }), $con),
-        key   => $colour_block,
-      };
-    } else {
-      push @rows, {
-        type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
-        desc  => $descriptions{$con},
-        count => 0,
-        view  => '-',
-        key   => $colour_block,
-      };
-    }
+    my $so_term = lc $con->SO_term;
+    my $colour = $var_styles->{$so_term||'default'}->{'default'};
+    $column->icon_export($con->label,$con->label);
+    $column->icon_order($con->label,sprintf("^%8.8d",$con->rank));
+    $column->icon_helptip($con->label,$con->description);
+    $column->icon_coltab($con->label,$colour);
   }
-  
-  # add the row for ALL variants if there are any
-  if ($total_counts) {
-    my $hidden_span = '<span class="hidden">-</span>'; # create a hidden span to add so that ALL is always last in the table
-    my $warning = '';
-    if ($total_counts > 5000) {
-      $warning = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)};
-      # optional Biomart link
-      my $gene_id = $gene_object->stable_id;
-      if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
-        $mart_gene_filter =~ s/###GENE_ID###/$gene_id/;
-        my $mart_variation_table_url = join('', $mart_url, $mart_attributes, $mart_gene_filter, $mart_result_panel);
-        $warning .= qq{ <a href="$mart_variation_table_url">View list in BioMart</a></span>};
-      }
-      $warning .= '</span>';
-    }
-    
-    push @rows, {
-      type  => $hidden_span . 'ALL',
-      view  => $self->ajax_add($self->ajax_url(undef, { sub_table => 'ALL', update_panel => 1 }), 'ALL'),
-      desc  => "All variants $warning",
-      count => $hidden_span . $total_counts,
-    };
-  }
-
-  return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', sorting => [ 'type asc' ], exportable => 0 });
 }
 
-sub tree {
-  my ($self, $transcripts, $gene_object) = @_;
-  my $hub         = $self->hub;
-  my $top_SO_term = 'feature_variant'; # define top-level SO term
-  my %counts;
-  
-  if (!exists $gene_object->__data->{'conscounts'}) {
-    # Generate the data the hard way - from all the vfs and tvs
-    my (%counts_hash, %total_counts_hash);
+sub make_table {
+  my ($self) = @_;
 
-    foreach my $tr (@$transcripts) { 
-      my $tr_stable_id = $tr->stable_id;
-      my $tvs          = $tr->__data->{'transformed'}{'snps'} || {};
-      my $gene_snps    = $tr->__data->{'transformed'}{'gene_snps'};
-      my $tr_start     = $tr->__data->{'transformed'}{'start'};
-      my $tr_end       = $tr->__data->{'transformed'}{'end'};
-      my $extent       = $tr->__data->{'transformed'}{'extent'};
-      
-      foreach (@$gene_snps) {
-        my ($snp, $chr, $start, $end) = @$_;
-        my $vf_id = $snp->dbID;
-        my $tv    = $tvs->{$vf_id};
-        
-        if ($tv && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-          foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
-            foreach my $con (@{$tva->get_all_OverlapConsequences}) {
-              my $key  = join '_', $tr_stable_id, $vf_id, $tva->variation_feature_seq;
-              my $term = $con->SO_term;
-              
-              $counts_hash{$term}{$key} = 1 if $con;
-            }
-          }
-        }
-      }
-    }
-    
-    $counts{$_} = scalar keys %{$counts_hash{$_}} for keys %counts_hash;
+  my $hub      = $self->hub;
+  my $glossary = $hub->glossary_lookup;
+  
+  my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
+  
+  my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
+
+  my @exclude;
+  push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
+  push @exclude,'HGVS' unless $hub->param('hgvs') eq 'on';
+  if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+    push @exclude,'Transcript';
   } else {
-    %counts = %{$gene_object->__data->{'conscounts'}}; # Use the results of the TV count queries
+    push @exclude,'Submitters','LRGTranscript','LRG';
   }
-  
-  # get SO tree
-  my $tree = $self->get_SO_tree($top_SO_term);
-  
-  # add counts to tree
-  $self->add_counts_to_tree($tree, \%counts);
-  
-  # add colors
-  my $species_defs = $hub->species_defs;
-  my $var_styles   = $species_defs->colour('variation');
-  my $colourmap    = $hub->colourmap;
-  
-  $self->add_colours_to_tree($tree, $var_styles, $colourmap);
-  
-  return sprintf '<ul class="tree variation_consequence_tree">%s</ul>', $self->tree_html($tree, 1);
-}
+  push @exclude,'sift_sort','sift_class','sift_value' unless $sd->{'SIFT'};
+  unless($hub->species eq 'Homo_sapiens') {
+    push @exclude,'polyphen_sort','polyphen_class','polyphen_value';
+  }
+  push @exclude,'Transcript' if $hub->type eq 'Transcript';
 
+
+  my @columns = ({
+    _key => 'ID', _type => 'string no_filter',
+    width => 2,
+    helptip => 'Variant identifier',
+    link_url => {
+      type   => 'Variation',
+      action => 'Summary',
+      vf     => ["vf"],
+    }
+  },{
+    _key => 'vf', _type => 'numeric unshowable no_filter'
+  },{
+    _key => 'location', _type => 'position unshowable',
+    sort_for => 'chr',
+  },{
+    _key => 'chr', _type => 'string no_filter', label => 'Chr: bp',
+    width => 1.75,
+    helptip => $glossary->{'Chr:bp'},
+  },{
+    _key => 'vf_allele', _type => 'string no_filter unshowable',
+  },{
+    _key => 'Alleles', _type => 'string no_filter no_sort',
+    label => "Alle\fles",
+    helptip => 'Alternative nucleotides',
+    toggle_separator => '/',
+    toggle_maxlen => 20,
+    toggle_highlight_column => 'vf_allele',
+    toggle_highlight_over => 2
+  },{
+    _key => 'gmaf_allele', _type => 'string no_filter unshowable',
+  },{
+    _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
+    helptip => $glossary->{'Global MAF'},
+    also_cols => 'gmaf_allele'
+  },{
+    _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
+    width => 1.75
+  },{
+    _key => 'class', _type => 'string', label => 'Class',
+    width => 2,
+    helptip => $glossary->{'Class'}
+  },{
+    _key => 'Source', _type => 'string', label => "Sour\fce",
+    width => 1.25,
+    helptip => $glossary->{'Source'},
+  },{
+    _key => 'Submitters', _type => 'string no_filter',
+    label => 'Submitters',
+    width => 1.75
+    # export_options => { split_newline => 2 },
+  },{
+    _key => 'status', _type => 'iconic', label => "Evid\fence",
+    width => 1.5,
+    helptip => $glossary->{'Evidence status (variant)'},
+    sort_down_first => 1,
+  },{
+    _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
+    helptip => 'Clinical significance',
+    sort_down_first => 1,
+  },{
+    _key => 'snptype', _type => 'iconic set_primary', label => "Type",
+    filter_label => 'Consequence Type',
+    filter_sorted => 1,
+    set_range => $self->all_terms,
+    width => 1.5,
+    helptip => 'Consequence type',
+    sort_down_first => 1,
+  },{
+    _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
+    helptip => "Resulting amino acid(s)"
+  },{
+    _key => 'aacoord', _type => 'integer', label => "AA co\ford",
+    helptip => 'Amino Acid Co-ordinate'
+  },{
+    _key => 'sift_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'sift_value',
+    sort_down_first => 1,
+  },{
+    _key => 'sift_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'sift_value', _type => 'numeric',
+    label => "SI\aFT",
+    helptip => $glossary->{'SIFT'}
+  },{
+    _key => 'polyphen_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'polyphen_value',
+    sort_down_first => 1,
+  },{
+    _key => 'polyphen_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'polyphen_value', _type => 'numeric',
+    label => "Poly\fPhen",
+    helptip => $glossary->{'PolyPhen'}
+  },{
+    _key => 'LRG', _type => 'string unshowable',
+    label => "LRG",
+  },{
+    _key => 'Transcript', _type => 'string',
+    width => 2,
+    helptip => $glossary->{'Transcript'},
+    link_url => {
+      type   => 'Transcript',
+      action => 'Summary',
+      t => ["Transcript"] 
+    },
+   },{
+    _key => 'LRGTranscript', _type => 'string',
+    width => 2,
+    helptip => $glossary->{'Transcript'},
+    link_url => {
+      type   => 'LRG',
+      action => 'Summary',
+      lrgt => ["LRGTranscript"],
+      lrg => ["LRG"],
+      __clear => 1
+   }
+  });
+  # Disable filters except type for e82
+  $_->{'_type'} .= " no_filter" for @columns;
+  $columns[14]->{'_type'} = "iconic set_primary";
+
+  $table->add_columns(\@columns,\@exclude);
+
+  $self->evidence_classes($table);
+  $self->clinsig_classes($table);
+  $self->snptype_classes($table,$self->hub);
+  $self->sift_poly_classes($table);
+  
+  # Separate phase for each transcript speeds up gene variation table
+ 
+   
+  my $icontext         = $self->hub->param('context') || 100;
+  my $gene_object      = $self->configure($icontext,'ALL');
+  my $object_type      = $self->hub->type;
+  my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene_object->get_all_transcripts};
+  if ($object_type eq 'Transcript') {
+    my $t = $hub->param('t');
+    @transcripts = grep $_->stable_id eq $t, @transcripts;
+  }
+
+  $table->add_phase("taster",'taster',[0,50]);
+  $table->add_phase("full-$_",'full') for(map { $_->stable_id } @transcripts);
+
+  return $table;
+}
 
 sub variation_table {
-  my ($self, $consequence_type, $transcripts, $slice) = @_;
+  my ($self,$callback,$consequence_type, $transcripts) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
-  my (@rows, $base_trans_url, $url_transcript_prefix, %handles);
-  
+  my ($base_trans_url, $url_transcript_prefix, %handles);
+  my $num = 0;
+
   # create some URLs - quicker than calling the url method for every variant
   my $base_url = $hub->url({
     type   => 'Variation',
     action => 'Summary',
     vf     => undef,
     v      => undef,
-    source => undef,
   });
-  
-  # colourmap
+
   my $var_styles = $hub->species_defs->colour('variation');
-  my $colourmap  = $hub->colourmap;
   
+  my $vfs = $self->_get_variation_features();
+
   if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
     my $gene_stable_id        = $transcripts->[0] && $transcripts->[0]->gene ? $transcripts->[0]->gene->stable_id : undef;
        $url_transcript_prefix = 'lrgt';
     
-    $base_trans_url = $hub->url({
-      type    => 'LRG',
-      action  => 'Summary',
-      lrg     => $gene_stable_id,
-      __clear => 1
-    });
-    
     my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+
+    my @var_ids;
+    foreach my $transcript (@$transcripts) {
+      # get TVs
+      my $tvs = $self->_get_transcript_variations($transcript->Obj);
     
-    my @var_ids =
-      map $_->{'_variation_id'},
-      map $_->[0],
-      map @{$_->__data->{'transformed'}{'gene_snps'}},
-      @$transcripts;
-    
+      my @tv_sorted;
+      foreach my $transcript_variation (@$tvs) {
+        my $raw_id = $transcript_variation->{_variation_feature_id};
+
+        my $snp = $vfs->{$raw_id};
+        next unless $snp;
+        push @var_ids,$snp->get_Variation_dbID();
+      }
+    }
     %handles = %{$vfa->_get_all_subsnp_handles_from_variation_ids(\@var_ids)};
   } else {
     $url_transcript_prefix = 't';
-    
-    $base_trans_url = $hub->url({
-      type   => 'Transcript',
-      action => 'Summary',
-      t      => undef,
-    });
   }
-  
-  foreach my $transcript (@$transcripts) {
-    my %snps = %{$transcript->__data->{'transformed'}{'snps'} || {}};
+
+  ROWS: foreach my $transcript (@$transcripts) {
+
+    # get TVs
+    my $tvs = $self->_get_transcript_variations($transcript->Obj);
    
-    next unless %snps;
-    
     my $transcript_stable_id = $transcript->stable_id;
-    my $gene_snps            = $transcript->__data->{'transformed'}{'gene_snps'} || [];
-    my $tr_start             = $transcript->__data->{'transformed'}{'start'};
-    my $tr_end               = $transcript->__data->{'transformed'}{'end'};
-    my $extent               = $transcript->__data->{'transformed'}{'extent'};
     my $gene                 = $transcript->gene;
-
-    foreach (@$gene_snps) {
-      my ($snp, $chr, $start, $end) = @$_;
-      my $raw_id               = $snp->dbID;
-      my $transcript_variation = $snps{$raw_id};
-      
-      next unless $transcript_variation;
-      
-      foreach my $tva (@{$transcript_variation->get_all_alternate_TranscriptVariationAlleles}) {
-        my $skip = 1;
-        
-        if ($consequence_type eq 'ALL') {
-          $skip = 0;
-        } elsif ($tva) {
-          foreach my $con (map {$_->SO_term} @{$tva->get_all_OverlapConsequences}) {
-            if (grep $con eq $_, split /\,/, $consequence_type) {
-              $skip = 0;
-              last;
-            }
-          }
+    my $lrg_correction = 0;
+    my $lrg_strand = 0;
+    if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+      my $gs = $gene->slice->project("chromosome");
+      foreach my $ps(@{$gs}) {
+        $lrg_strand = $ps->to_Slice->strand;
+        if($lrg_strand>0) {
+          $lrg_correction = 1-$ps->to_Slice->start;
+        } else {
+          $lrg_correction = $ps->to_Slice->end+1;
         }
-        
-        next if $skip;
-        
-        if ($tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-          #my $var                  = $snp->variation;
-          my $evidences            = $snp->get_all_evidence_values || [];
-          my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
-          my $variation_name       = $snp->variation_name;
-          my $var_class            = $snp->var_class;
-          my $translation_start    = $transcript_variation->translation_start;
-          my $source               = $snp->source_name;
-          my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('-', '-');
-          my $url                  = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
-          my $trans_url            = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
-          my $vf_allele            = $tva->variation_feature_seq;
-          my $allele_string        = $snp->allele_string;
-             $allele_string        = $self->trim_large_allele_string($allele_string, 'allele_' . $tva->dbID, 20) if length $allele_string > 20; # Check allele string size (for display issues)
-             $allele_string        =~ s/$vf_allele/<b>$vf_allele<\/b>/g if $allele_string =~ /\/.+\//; # highlight variant allele in allele string
-          
-          # Sort out consequence type string
-          my $type = $self->render_consequence_type($tva);
-          
-          my $sift = $self->render_sift_polyphen($tva->sift_prediction,     $tva->sift_score);
-          my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
-          
-          # Adds LSDB/LRG sources
-          if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-            my $var         = $snp->variation;
-            my $syn_sources = $var->get_all_synonym_sources;
+      }
+    }
+    my $chr = $transcript->seq_region_name;
+    my @tv_sorted;
+    foreach my $transcript_variation (@$tvs) {
+      my $raw_id = $transcript_variation->{_variation_feature_id};
+
+      my $snp = $vfs->{$raw_id};
+      next unless $snp;
+
+      push @tv_sorted,[$transcript_variation,$snp->seq_region_start];
+    }
+    @tv_sorted = map { $_->[0] } sort { $a->[1] <=> $b->[1] } @tv_sorted;
+
+    foreach my $transcript_variation (@tv_sorted) {
+      my $raw_id = $transcript_variation->{_variation_feature_id};
+      my $snp = $vfs->{$raw_id};
+      next unless $snp;
+
+      my ($start, $end) = ($snp->seq_region_start,$snp->seq_region_end);
+      if($lrg_strand) {
+        $start = $start*$lrg_strand + $lrg_correction;
+        $end = $end*$lrg_strand + $lrg_correction;
+        ($start,$end) = ($end,$start) if $lrg_strand < 0;
+      }
+
+      my $tvas = $transcript_variation->get_all_alternate_TranscriptVariationAlleles;
+
+      foreach my $tva (@$tvas) {
+        next if $callback->free_wheel();
+        # this isn't needed anymore, I don't think!!!
+        # thought I'd leave this indented though to keep the diff neater
+        if (1) {#$tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
+          my $row;
+
+          my $variation_name = $snp->variation_name;
+          my $url = ";vf=$raw_id";
+          $row->{'ID'} = $variation_name;
+          my $source = $snp->source_name;
+          $row->{'Source'} = $source;
+
+          unless($callback->phase eq 'outline') {
+            my $evidences            = $snp->get_all_evidence_values || [];
+            my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
+            my $var_class            = $snp->var_class;
+            my $translation_start    = $transcript_variation->translation_start;
+            my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('', '');
+            my $trans_url            = ";$url_transcript_prefix=$transcript_stable_id";
+            my $vf_allele            = $tva->variation_feature_seq;
+            my $allele_string        = $snp->allele_string;
             
-            foreach my $s_source (@$syn_sources) {
-              next if $s_source !~ /LSDB|LRG/;
+            # Sort out consequence type string
+            my $type = $self->new_consequence_type($tva);
+            
+            my $sifts = $self->classify_sift_polyphen($tva->sift_prediction,$tva->sift_score);
+            my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+            
+            # Adds LSDB/LRG sources
+            if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+              my $var         = $snp->variation;
+              my $syn_sources = $var->get_all_synonym_sources;
               
-              my ($synonym) = $var->get_all_synonyms($s_source);
-                 $source   .= ', ' . $hub->get_ExtURL_link($s_source, $s_source, $synonym);
+              foreach my $s_source (@$syn_sources) {
+                next if $s_source !~ /LSDB|LRG/;
+                
+                my ($synonym) = $var->get_all_synonyms($s_source);
+                  $source   .= ', ' . $hub->get_ExtURL_link($s_source, $s_source, $synonym);
+              }
             }
+            
+            my $gmaf   = $snp->minor_allele_frequency; # global maf
+            my $gmaf_allele;
+            if(defined $gmaf) {
+              $gmaf = sprintf("%.3f",$gmaf);
+              $gmaf_allele = $snp->minor_allele;
+            }
+
+            my $status = join('~',@$evidences);
+            my $clin_sig = join("~",@$clin_sigs);
+
+            my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
+          
+            my $more_row = {
+              vf         => $raw_id,
+              class      => $var_class,
+              Alleles    => $allele_string,
+              vf_allele  => $vf_allele,
+              Ambiguity  => $snp->ambig_code,
+              gmaf       => $gmaf   || '-',
+              gmaf_allele => $gmaf_allele || '-',
+              status     => $status,
+              clinsig    => $clin_sig,
+              chr        => "$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
+              location   => "$chr:".($start>$end?$end:$start),
+              Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
+              snptype    => $type,
+              Transcript => $transcript_name,
+              LRGTranscript => $transcript_name,
+              LRG        => $gene->stable_id,
+              aachange   => $aachange,
+              aacoord    => $aacoord,
+              sift_sort  => $sifts->[0],
+              sift_class => $sifts->[1],
+              sift_value => $sifts->[2],
+              polyphen_sort  => $polys->[0],
+              polyphen_class => $polys->[1],
+              polyphen_value => $polys->[2],
+              HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
+            };
+            $row = { %$row, %$more_row };
           }
-          
-          my $gmaf   = $snp->minor_allele_frequency; # global maf
-             $gmaf   = sprintf '%.3f <span class="small">(%s)</span>', $gmaf, $snp->minor_allele if defined $gmaf;
-
-          my $status = $self->render_evidence_status($evidences);
-
-          my $clin_sig = $self->render_clinical_significance($clin_sigs);
-
-          my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
-          
-          push @rows, {
-            ID         => qq{<a href="$url">$variation_name</a>},
-            class      => $var_class,
-            Alleles    => $allele_string,
-            Ambiguity  => $snp->ambig_code,
-            gmaf       => $gmaf   || '-',
-            status     => $status || '-',
-            clinsig    => $clin_sig || '-',
-            chr        => "<span class=\"hidden\">$chr:".($start > $end ? $end : $start)."</span>$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
-            Source     => $source,
-            Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
-            snptype    => $type,
-            Transcript => qq{<a href="$trans_url">$transcript_name</a>},
-            aachange   => $aachange,
-            aacoord    => $aacoord,
-            sift       => $sift,
-            polyphen   => $poly,
-            HGVS       => $hub->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
-          };
+          $num++;
+          $callback->add_row($row);
+          last ROWS if $callback->stand_down;
         }
       }
     }
   }
+}
 
-  return \@rows;
+sub _get_transcript_variations {
+  my $self = shift;
+  my $tr   = shift;
+
+  my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  my $all_snps = $tva->fetch_all_by_Transcripts([$tr]);
+  push @$all_snps, @{$tva->fetch_all_somatic_by_Transcripts([$tr])};
+  return $all_snps;
+}
+
+sub _get_variation_features {
+  my $self = shift;
+
+  if(!exists($self->{_variation_features})) {
+
+    # get appropriate slice
+    my $slice = $self->object->Obj->feature_Slice->expand(
+      $Bio::EnsEMBL::Variation::Utils::VariationEffect::UPSTREAM_DISTANCE,
+      $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
+    );
+
+    $self->{_variation_features} = {map {$_->dbID => $_} (@{$slice->get_all_VariationFeatures},@{$slice->get_all_somatic_VariationFeatures})};
+  }
+
+  return $self->{_variation_features};
 }
 
 sub create_so_term_subsets {
@@ -574,37 +632,6 @@ sub configure {
     [ 'transcripts', 'munged', $extent ]
   );
   
-  $gene_object->store_TransformedTranscripts; ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
- 
-  my $transcript_slice = $gene_object->__data->{'slices'}{'transcripts'}[1];
-  my (undef, $snps)    = $gene_object->getVariationsOnSlice($transcript_slice, $gene_object->__data->{'slices'}{'transcripts'}[2], undef, scalar @so_terms ? \@so_terms : undef);
-  my $vf_objs          = [ map $_->[2], @$snps];
-  
-  # For stats table (no $consquence) without a set intron context ($context). Also don't try for a single transcript (because its slower)
-  if (!$consequence && !$transcript_object && $context eq 'FULL') {
-    my $so_term_subsets = $self->create_so_term_subsets;
-    $gene_object->store_ConsequenceCounts($so_term_subsets, $vf_objs);
-  }
-  
-  # If doing subtable or can't calculate consequence counts
-  if ($consequence || !exists($gene_object->__data->{'conscounts'}) || scalar @$vf_objs < 50) {
-    $gene_object->store_TransformedSNPS(\@so_terms,$vf_objs); ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
-  }
-  
-  ## Map SNPs for the last SNP display  
-  my @gene_snps = map {[
-    $_->[2], $transcript_slice->seq_region_name,
-    $transcript_slice->strand > 0 ?
-      ( $transcript_slice->start + $_->[2]->start - 1, $transcript_slice->start + $_->[2]->end   - 1 ) :
-      ( $transcript_slice->end   - $_->[2]->end   + 1, $transcript_slice->end   - $_->[2]->start + 1 )
-  ]} @$snps;
-  
-  foreach (@{$gene_object->get_all_transcripts}) {
-    next if $object_type eq 'Transcript' && $_->stable_id ne $self->hub->param('t'); 
-    $_->__data->{'transformed'}{'extent'}    = $extent;
-    $_->__data->{'transformed'}{'gene_snps'} = \@gene_snps;
-  }
-  
   return $gene_object;
 }
 
@@ -637,96 +664,11 @@ sub get_hgvs {
   return $hgvs;
 }
 
-sub get_SO_tree {
-  my ($self, $top_SO_term) = @_;
-  my $oa           = $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
-  my ($top_SO_obj) = @{$oa->fetch_all_by_name($top_SO_term)};
-  return $top_SO_obj;
-}
-
-sub add_counts_to_tree {
-  my ($self, $term_obj, $counts) = @_;
-  my $count = 0;
-  
-  $self->add_counts_to_tree($_, $counts) for @{$term_obj->children};
-  
-  $term_obj->{'this_count'} = defined $counts->{$term_obj->name} ? $counts->{$term_obj->name} : 0;
-  $count += $term_obj->{'this_count'};
-  $count += defined $_->{'count'} ? $_->{'count'} : 0 for @{$term_obj->children};
-  
-  push @{$term_obj->{'term_list'}}, ($term_obj->name, map {@{$_->{'term_list'}}} @{$term_obj->children});
-  
-  $term_obj->{'count'} = $count;
-}
-
-sub add_colours_to_tree {
-  my ($self, $term_obj, $var_styles, $colourmap) = @_;
-  $term_obj->{'colour'} = $colourmap->hex_by_name($var_styles->{lc $term_obj->name}->{'default'}) if defined $var_styles->{lc $term_obj->name};
-  $self->add_colours_to_tree($_, $var_styles, $colourmap) for @{$term_obj->children};
-}
-
-sub tree_html {
-  my ($self, $term_obj, $last) = @_;
-  my $con          = $term_obj->name;
-     $con          =~ s/\_/ /g;
-     $con          = "\u$con";
-     $con          = 'All variants' if $con eq 'Feature variant';
-  my %include_cons = map { $_->SO_term => 1 } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-  my @children     = grep $_->{'count'}, @{$term_obj->children};
- 
-  # don't go further in these cases only
-  #undef @children if $term_obj->name =~ /feature.+ation/i;
-  my $side_padding = '7px'; #scalar @children ? '7px' : '5px';
-  
-  my $html = sprintf(
-    '<li%s>%s<span title="%s" class="_ht%s">%s%s</span>',
-    $last ? ' class="last"' : scalar @children ? ' class="parent top_level"' : '',                                              # last css class
-    @children ? '<a href="#" class="toggle open leaf" rel="' . $term_obj->name . '">&nbsp;</a>' : '<img src="/i/leaf.gif" />',  # toggle bit
-    (split /\"/, $term_obj->definition)[1],                                                                                     # consequence definition etc
-    defined $term_obj->{'colour'} ? '' : ' no_colour',                                                                          # span class
-    defined $term_obj->{'colour'} ? qq{<span class="colour" style="background-color:$term_obj->{'colour'}">&nbsp;</span>} : '', # colour block
-    $con,                                                                                                                       # name and link
-  );
-  
-  # this term only
-  if ($term_obj->{'this_count'} || $term_obj->{'count'}) {
-    my $sub_table = scalar @children ? join ',', grep defined $include_cons{$_}, @{$term_obj->{'term_list'}} : $term_obj->name;
-    my $link      = $self->ajax_add($self->ajax_url(undef, {
-        sub_table    => $sub_table,
-        update_panel => 1,
-        table_title  => $term_obj->name,
-      }),
-      $term_obj->name
-    );
-    
-    $html .= sprintf ' | %s (%i)', $link, $term_obj->{'count'};
-  }
-  
-  $html .= ' | <span class="small">' . $self->hub->get_ExtURL_link($term_obj->accession, 'SEQUENCE_ONTOLOGY', $term_obj->accession) . '</span>' unless $con eq 'All variants';
-  
-  my $warning_text = $term_obj->{'count'} > 10000 ? qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>} : '';
-
-  $html .= " $warning_text";
-
-  # iterate  
-  if (scalar @children) {
-    @children = sort {
-      ($b->name =~ /stream/) <=> ($a->name =~ /stream/) ||
-      scalar @{$a->children} <=> scalar @{$b->children}
-    } @children;
-    
-    $html .= sprintf '<div class="%s" ><ul class="toggleable">', $term_obj->name;
-    
-    for (my $i = 0; $i < scalar @children; $i++) {
-      $html .= $self->tree_html($children[$i], $i + 1 == scalar @children ? 1 : 0);
-    }
-    
-    $html .= '</ul></div>';
-  }
-  
-  $html .= '</li>';
-  
-  return $html;
+sub memo_argument {
+  my ($self) = @_;
+  return {
+    url => $self->hub->url
+  };
 }
 
 1;

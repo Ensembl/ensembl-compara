@@ -99,23 +99,25 @@ sub upload {
   $self->{'absolute'} = 1;
 
   my ($method)  = $args{'method'} || grep $hub->param($_), qw(file url text);
+  my $path      = $self->read_location || $hub->param($method);
   my $type      = $args{'type'};
 
-  my @orig_path = split '/', $hub->param($method);
+  ## Need the filename (for handling zipped files)
+  my @orig_path = split '/', $path;
   my $filename  = $orig_path[-1];
-  my $name      = $hub->param('name');
+  my $name      = $args{'name'} || $hub->param('name');
   my $f_param   = $hub->param('format');
   my ($error, $format, $full_ext);
 
-  ## Need the filename (for handling zipped files)
+  ## Give the track a default name
   unless ($name) {
     if ($method eq 'text') {
-      $args{'name'} = 'Data';
+      $name = 'Data';
     } else {
-      my @orig_path = split('/', $hub->param($method));
-      $args{'name'} = $orig_path[-1];
+      $name = $filename;
     }
   }
+  $args{'name'} = $name;
 
   ## Some uploads shouldn't be viewable as tracks, e.g. assembly converter input
   my $no_attach = $type eq 'no_attach' ? 1 : 0;
@@ -155,9 +157,11 @@ sub upload {
   $args{'format'}         = $format; 
   $args{'timestamp_name'} = 1;
 
+  my $url;
   if ($method eq 'url') {
-    $args{'file'}          = $hub->param($method);
-    $args{'upload'}        = 'url';
+    $url            = $self->read_location || $hub->param('url');
+    $args{'file'}   = $url;
+    $args{'upload'} = 'url';
   }
   elsif ($method eq 'text') {
     ## Get content straight from CGI, since there's no input file
@@ -188,7 +192,7 @@ sub upload {
       ## Now validate it using the appropriate parser - 
       ## note that we have to do this after upload, otherwise we can't validate pasted data
       my $iow = EnsEMBL::Web::IOWrapper::open($self, 'hub' => $hub);
-      $error = $iow->validate;
+      $error = $iow->validate if $iow;
 
       if ($error) {
         ## If something went wrong, delete the upload
@@ -199,7 +203,7 @@ sub upload {
         my $session = $hub->session;
         my $md5     = $self->md5($result->{'content'});
         my $code    = join '_', $md5, $session->session_id;
-        my $format  = $hub->param('format');
+        my $format  = $self->get_format || $hub->param('format');
         $format     = 'BED' if $format =~ /bedgraph/i;
         my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
 
@@ -212,6 +216,7 @@ sub upload {
         my $data = $session->add_data(
                                     type      => 'upload',
                                     file      => $self->write_location,
+                                    url       => $url || '',
                                     filesize  => length($result->{'content'}),
                                     code      => $code,
                                     md5       => $md5,

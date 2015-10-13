@@ -30,15 +30,26 @@ our @EXPORT_OK = qw(file_get_contents file_put_contents file_append_contents);
 sub file_get_contents {
   ## Reads a file from memory location
   ## @param File location
-  ## @return List of lines of files
-  my $filename    = shift;
+  ## @param (optional) Subroutine to apply to every line of content before returning it (Inside the sub, $_ is the current line string itself and first argument is the line number starting from 0)
+  ## @return Whole file content as a string in scalar content, list of lines of file for list content
+  my ($filename, $iterate_sub) = @_;
 
   throw exception('FileHandlerException', "File $filename could not be found") if !-e $filename || -d $filename;
 
   my $file_handle = get_file_handle($filename, 'r');
-  my @lines       = $file_handle->getlines;
+  my @lines;
+
+  if ($iterate_sub) {
+    my $i = 0;
+    while ($_ = $file_handle->getline) { # getline doesn't assign $_ automatically
+      push @lines, $iterate_sub->($i++);
+    }
+  } else {
+    @lines = $file_handle->getlines;
+  }
   $file_handle->close;
-  return @lines;
+
+  return wantarray ? @lines : join('', @lines);
 }
 
 sub file_put_contents {

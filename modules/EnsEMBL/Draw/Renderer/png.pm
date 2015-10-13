@@ -73,7 +73,7 @@ sub render_Sprite {
   return $self->SUPER::render_Sprite($glyph);
 }
 
-sub add_highlight_layer {
+sub add_location_marking_layer {
   my ($self, $coords) = @_;
 
   return $coords && EnsEMBL::Draw::Glyph::Rect->new({

@@ -216,7 +216,8 @@ sub _render_features {
     $image->set_button('drag', 'title' => 'Click on a chromosome');
     $image->caption  = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
     $image->imagemap = 'yes';
-    $image->karyotype($hub, $self->object, $pointers, 'Vkaryotype');
+    my $object = $self->object || $self->hub->core_object('location');
+    $image->karyotype($hub, $object, $pointers, 'Vkaryotype');
       
     return if $self->_export_image($image,'no_text');
       

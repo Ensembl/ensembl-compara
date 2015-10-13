@@ -234,7 +234,7 @@ sub _wrap_content {
 
 sub get_content {
   my ($self, $function) = @_;
-  my $cache = $self->mcacheable && $self->ajaxable && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
+  my $cache = $self->mcacheable && $self->ajaxable && $self->renderer && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
   my $content;
   
   if ($cache) {
@@ -540,11 +540,12 @@ sub ajax_url {
   my $self     = shift;
   my $function = shift;
   my $params   = shift || {};
+  my $extra    = shift || 'Component';
   my (undef, $plugin, undef, $type, @module) = split '::', ref $self;
 
   my $module   = sprintf '%s%s', join('__', @module), $function && $self->can("content_$function") ? "/$function" : '';
 
-  return $self->hub->url('Component', { type => $type, action => $plugin, function => $module, %$params }, undef, !$params->{'__clear'});
+  return $self->hub->url($extra, { type => $type, action => $plugin, function => $module, %$params }, undef, !$params->{'__clear'});
 }
 
 sub EC_URL {
@@ -586,7 +587,7 @@ sub modal_form {
 sub new_image {
   my $self        = shift;
   my $hub         = $self->hub;
-  my %formats     = EnsEMBL::Web::Constants::EXPORT_FORMATS;
+  my %formats     = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   my $export      = $hub->param('export');
   my $id          = $self->id;
   my $config_type = $self->view_config ? $self->view_config->image_config : undef;
@@ -672,10 +673,10 @@ sub new_form {
 }
 
 sub _export_image {
-  my ($self, $image, $flag) = @_;
+  my ($self, $image) = @_;
   my $hub = $self->hub;
   
-  $image->{'export'} = 'iexport' . ($flag ? " $flag" : '');
+  $image->{'export'} = 'iexport';
 
   my @export = split(/-/,$hub->param('export'));
   my $format = (shift @export)||'';
@@ -683,34 +684,21 @@ sub _export_image {
   my $scale = abs($params{'s'}) || 1;
   my $contrast = abs($params{'c'}) || 1;
 
-  my %formats = EnsEMBL::Web::Constants::EXPORT_FORMATS;
+  my %formats = EnsEMBL::Web::Constants::IMAGE_EXPORT_FORMATS;
   
   if ($formats{$format}) {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
     $image->drawable_container->{'config'}->set_parameter('contrast',$contrast);
-    (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
-    my $filename = sprintf '%s-%s-%s.%s', $comp, $hub->filename($self->object), $scale, $formats{$format}{'extn'};
     
-    if ($hub->param('download')) {
-      $hub->input->header(-type => $formats{$format}{'mime'}, -attachment => $filename);
-    } else {
-      $hub->input->header(-type => $formats{$format}{'mime'}, -inline => $filename);
-    }
-
-    if ($formats{$format}{'extn'} eq 'txt') {
-      print $image->drawable_container->{'export'};
-      return 1;
-    }
-
-    $image->render($format);
-    return 1;
+    my $path = $image->render($format);
+    $hub->param('file', $path);
   }
   
   return 0;
 }
 
 sub toggleable_table {
-  my ($self, $title, $id, $table, $open, $extra_html) = @_;
+  my ($self, $title, $id, $table, $open, $extra_html, $for_render) = @_;
   my @state = $open ? qw(show open) : qw(hide closed);
   
   $table->add_option('class', $state[0]);
@@ -723,7 +711,7 @@ sub toggleable_table {
       <h2><a rel="%s_table" class="toggle _slide_toggle %s" href="#%s_table">%s</a></h2>
       %s
     </div>',
-    $extra_html, $id, $state[1], $id, $title, $table->render
+    $extra_html, $id, $state[1], $id, $title, $table->render(@{$for_render||[]})
   ); 
 }
 

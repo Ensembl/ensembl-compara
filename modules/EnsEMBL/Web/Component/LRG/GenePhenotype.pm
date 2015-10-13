@@ -56,10 +56,11 @@ sub gene_phenotypes {
   my $species          = $hub->species_defs->SPECIES_COMMON_NAME;
   my $g_name           = $obj->stable_id;
   my $g_display        = $obj->display_xref->display_id;
-  my $html             = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the Ensembl gene $g_name ($g_display)</h2>};
+  my $html             = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s), disease(s) and trait(s) associated with the Ensembl gene $g_name ($g_display)</h2>};
   my (@rows, %list, $list_html);
   my $has_allelic = 0;
-  
+  my $has_study   = 0;  
+
   # add rows from Variation DB, PhenotypeFeature
   if ($hub->database('variation')) {
     my $pfa = $hub->database('variation')->get_PhenotypeFeatureAdaptor;
@@ -67,14 +68,23 @@ sub gene_phenotypes {
     foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
       my $phen    = $pf->phenotype->description;
       my $ext_id  = $pf->external_id;
-      my $source  = $pf->source;
+      my $source  = $pf->source_name;
       my $attribs = $pf->get_all_attributes;
 
-      if($ext_id && $source) {
-        my $source_uc = uc $source;
-           $source_uc =~ s/\s/_/g;
-        $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id });
+      my $source_uc = uc $source;
+      $source_uc =~ s/\s/_/g;
+      my $source_url = "";
+      if ($ext_id) {
+        if ($source_uc =~ /GOA/) {
+          $source_url = $hub->get_ExtURL_link($source, 'QUICK_GO_IMP', { ID => $ext_id, PR_ID => $attribs->{'xref_id'}});
+        }
+        else {
+          $source_url = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id });
+        }
+      } else {
+        $source_url = $hub->get_ExtURL_link($source, $source_uc);
       }
+      $source_url = $source if ($source_url eq "" || !$source_url);
         
       my $locs = sprintf(
         '<a href="%s" class="karyotype_link">View on Karyotype</a>',
@@ -91,15 +101,24 @@ sub gene_phenotypes {
         $has_allelic = 1;
       }
 
-      push @rows, { source => $source, phenotype => $phen, locations => $locs, allelic => $allelic_requirement };
+      my $pmids   = '-';
+      if ($pf->study) {
+        $pmids = $self->add_study_links($pf->study->external_reference);
+        $has_study = 1;
+      }
+
+      push @rows, { source => $source_url, phenotype => $phen, locations => $locs, allelic => $allelic_requirement, study => $pmids };
     }
   }
  
   if (scalar @rows) {
     my @columns = (
-      { key => 'phenotype', align => 'left', title => 'Phenotype' },
-      { key => 'source',    align => 'left', title => 'Source'    }
+      { key => 'phenotype', align => 'left', title => 'Phenotype, disease and trait' },
+      { key => 'source',    align => 'left', title => 'Source'                       }
     );
+    if ($has_study == 1) {
+      push @columns, { key => 'study', align => 'left', title => 'Study' , align => 'left', sort => 'html' };
+    }
     if ($has_allelic == 1) {
       push @columns, { key => 'allelic', align => 'left', title => 'Allelic requirement' , help => 'Allelic status associated with the disease (monoallelic, biallelic, etc)' };
     }
@@ -108,9 +127,28 @@ sub gene_phenotypes {
     $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_sort no_col_toggle', sorting => [ 'phenotype asc' ], exportable => 1 })->render;
   }
   else {
-    $html = "<p>No phenotypes directly associated with gene $g_name.</p>";
+    $html = "<p>No phenotype, disease or trait directly associated with gene $g_name.</p>";
   }
   return $html;
+}
+
+sub add_study_links {
+  my $self = shift;
+  my $pmids  = shift;
+
+  $pmids =~ s/ //g;
+
+  my @pmids_list;
+  my $epmc_link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
+  foreach my $pmid (split(',',$pmids)) {
+    my $id = (split(':',$pmid))[1];
+    my $link = $epmc_link;
+       $link =~ s/###ID###/$id/;
+
+    push @pmids_list, qq{<a rel="external" href="$link">$pmid</a>};
+  }
+
+  return join(', ', @pmids_list);
 }
 
 1;

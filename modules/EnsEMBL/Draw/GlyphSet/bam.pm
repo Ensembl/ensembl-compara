@@ -22,6 +22,9 @@ package EnsEMBL::Draw::GlyphSet::bam;
 ### internally configured via an ini file or database record
 ### Note: uses Inline C for faster handling of these huge files
 
+### Note also that in several places we are explicitly calling local methods, 
+### e.g. &features($self), because of multiple inheritance in bamcov.pm
+
 use strict;
 use base qw(EnsEMBL::Draw::GlyphSet::sequence);
 
@@ -50,7 +53,7 @@ sub render_unlimited {
   # SMJS 3000 just never works, go down to something which might - 500
   # SMJS 3000 does now render - BUT it sends such a big image map it upsets the browser!
   #$self->render_normal(max_depth => 3000); # effectively unlimited
-  $self->render_normal(max_depth => 500); # effectively unlimited
+  &render_normal($self, max_depth => 500); # effectively unlimited
 }
 
 sub render_normal {
@@ -79,17 +82,16 @@ sub render_normal {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
-    if (!scalar(@{$self->features})) {
+    if (!scalar(@{&features($self)})) {
       $self->no_features;
     } else {
-
+      $self->render_caption;
       #print STDERR "Rendering coverage\n";
       $self->render_coverage(%options) if $options{show_coverage};
       #print STDERR "Done rendering coverage\n";
       #print STDERR "Rendering reads\n";
       $self->render_sequence_reads(%options) if $options{show_reads};
       #print STDERR "Done rendering reads\n";
-      $self->render_caption;
     }
     alarm 0;
   };
@@ -264,7 +266,7 @@ sub render_caption {
         'font'      => $fontname_i,
         'ptsize'    => $fontsize_i,
         'colour'    => $self->my_colour('consensus'), 
-        'text'      => $self->my_config('caption'),
+        'text'      => $self->my_config('short_name') || $self->my_config('name'),
    }));
 
 
@@ -575,7 +577,7 @@ sub render_sequence_reads {
     $options{max_depth} = $self->my_config('max_depth') || 50;
   }
 
-  my $fs =   [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$self->features} ];
+  my $fs =   [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{&features($self)} ];
 
   my $ppbp = $self->scalex; # pixels per base pair
   my $slice = $self->{'container'};
@@ -642,7 +644,7 @@ sub render_sequence_reads {
     my $composite = $self->Composite({
       'height' => $h,
 #      'title' => ($text_fits ? $self->feature_title($f) : $self->feature_brief_title($f)),
-      'title' => $self->feature_title($f),
+      'title' => &feature_title($self, $f),
     });
     
     # draw box    
@@ -738,7 +740,7 @@ sub render_sequence_reads {
     
   $self->{_yoffset} += $max_y + $h;
 
-  my $features_bumped = scalar(@{$self->features}) - $nrendered;
+  my $features_bumped = scalar(@{&features($self)}) - $nrendered;
   if( $features_bumped ) {
 #    my $y_pos = $strand < 0
 #              ? $y_offset
@@ -883,7 +885,7 @@ sub calc_coverage {
 ## calculate the coverage
   my ($self) = @_;
   
-  my $features = $self->features;
+  my $features = &features($self);
 
   my $slice = $self->{'container'};
   my $START = $slice->start;

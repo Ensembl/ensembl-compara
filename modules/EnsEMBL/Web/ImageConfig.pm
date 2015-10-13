@@ -171,7 +171,7 @@ sub menus {
     gene_transcript     => 'Genes and transcripts',
     transcript          => [ 'Genes',                  'gene_transcript' ],    
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
-    lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
+    lrg                 => [ 'LRG',                    'gene_transcript' ],
     rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
     
     # Supporting evidence
@@ -870,22 +870,19 @@ sub _add_trackhub_node {
     ## The only parameter we override from superTrack nodes is visibility
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
       $config->{'visibility'} = $data->{'visibility'};
-      $config->{'on_off'}     = $data->{'on_off'};
     }
-    else {
-      $config->{$_}       = $data->{$_} for keys %$data;
-      $config->{'on_off'} = $data->{'on_off'};
-    }
+    #else {
+    #  $config->{$_}       = $data->{$_} for keys %$data;
+    #}
 
     ## Add any setting inherited from parents
     while ($n = $n->parent_node) {
       $data = $n->data;
       if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
         $config->{'visibility'} = $data->{'visibility'};
-        $config->{'on_off'}     = $data->{'on_off'};
         last;
       }
-      $config->{$_} ||= $data->{$_} for keys %$data;
+      #$config->{$_} ||= $data->{$_} for keys %$data;
     }
     $config->{'on_off'} = 'off' if $force_hide;
 
@@ -1004,12 +1001,14 @@ sub _add_trackhub_tracks {
       longLabel   => $track->{'longLabel'},
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
+      colorByStrand => exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef,
+      spectrum    => exists $track->{'spectrum'} ? $track->{'spectrum'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
       squish      => $squish,
       signal_range => $track->{'signal_range'},
       %options
     };
-    
+
     # Graph range - Track Hub default is 0-127
 
     if (exists $track->{'viewLimits'}) {
@@ -1040,7 +1039,7 @@ sub _add_trackhub_tracks {
     
     $tracks{$type}{$source->{'name'}} = $source;
   }
-  warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
+  #warn ">>> HUB $name HAS $count_visible TRACKS TURNED ON BY DEFAULT!";
   
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
@@ -1214,15 +1213,17 @@ sub _add_bigbed_track {
   unless ($renderers) {
     ($strand, $renderers) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
   }
-  
+ 
   my $options = {
-    external     => 'external',
-    sub_type     => 'url',
-    colourset    => 'feature',
-    strand       => $strand,
-    style        => $args{'source'}{'style'},
-    longLabel    => $args{'source'}{'longLabel'},
-    addhiddenbgd => 1,
+    external      => 'external',
+    sub_type      => 'url',
+    colourset     => 'feature',
+    colorByStrand => $args{'source'}{'colorByStrand'},
+    spectrum      => $args{'source'}{'spectrum'},
+    strand        => $strand,
+    style         => $args{'source'}{'style'},
+    longLabel     => $args{'source'}{'longLabel'},
+    addhiddenbgd  => 1,
     max_label_rows => 2,
   };
   ## Override default renderer (mainly used by trackhubs)
@@ -2088,7 +2089,9 @@ sub add_matrix {
   $data->{'column_key'}  = $column_key;
   $data->{'menu'}        = 'matrix_subtrack';
   $data->{'source_name'} = $data->{'name'};
-  $data->{'display'}   ||= 'default';
+  if (!$data->{'display'} || $data->{'display'} eq 'off') {
+    $data->{'display'} = 'default';
+  }
   
   if (!$menu_data->{'matrix'}) {
     my $hub = $self->hub;
@@ -2766,7 +2769,7 @@ sub add_alignments {
         $type        = sprintf '%sLASTz %s', $1, lc $2;
         $description = "$type pairwise alignments";
       } elsif ($row->{'type'} =~ /TRANSLATED_BLAT/) {
-        $type        = '';
+        $type        = 'TBLAT';
         $menu_key    = 'pairwise_tblat';
         $description = 'Trans. BLAT net pairwise alignments';
       } else {
@@ -2776,7 +2779,7 @@ sub add_alignments {
         $description = 'Pairwise alignments';
       }
       
-      $description  = qq{<a href="$static" class="cp-external">$description</a> between $self_label and $other_label"};
+      $description  = qq{<a href="$static" class="cp-external">$description</a> between $self_label and $other_label};
       $description .= " $1" if $row->{'name'} =~ /\((on.+)\)/;
 
       $alignments->{$menu_key}{$row->{'id'}} = {
@@ -3740,32 +3743,17 @@ sub share {
   foreach (@unshared_trackhubs) {
     $to_delete{$_} = 1 for grep $user_settings->{$_}, @{$trackhub_tracks{$_->id} || []};  # delete anything for tracks in trackhubs that aren't shared
   }
-  
+
   # Reduce track orders if custom tracks aren't shared
   if (scalar keys %to_delete) {
-    my %track_ids_to_delete  = map { $_ => 1 } keys %to_delete, map { @{$trackhub_tracks{$_->id} || []} } @unshared_trackhubs;
-    my @removed_track_orders = map { $track_ids_to_delete{$_->id} && $_->{'data'}{'node_type'} eq 'track' ? $_->{'data'}{'order'} : () } @{$self->glyphset_configs};
-    
-    foreach my $order (values %{$user_settings->{'track_order'}{$species}}) {
-      my $i = 0;
-      
-      for (@removed_track_orders) {
-        last if $_ > $order;
-        $i++;
-      }
-      
-      $i-- if $i && $removed_track_orders[$i] > $order;
-      $order -= $i;
-    }
+    my %track_ids_to_delete = map {( $_ => 1, "$_.b" => 1, "$_.f" => 1 )} keys %to_delete, map { @{$trackhub_tracks{$_->id} || []} } @unshared_trackhubs;
+
+    $user_settings->{'track_order'}{$species} = [ grep { !$track_ids_to_delete{$_->[0]} && !$track_ids_to_delete{$_->[1]} } @{$user_settings->{'track_order'}{$species}} ];
   }
-  
-  foreach (keys %to_delete) {
-    delete $user_settings->{$_};
-    delete $user_settings->{'track_order'}{$species}{$_} for $_, "$_.f", "$_.r";
-  }
-  
+
+  # remove track order for other species
   delete $user_settings->{'track_order'}{$_} for grep $_ ne $species, keys %{$user_settings->{'track_order'}};
-  
+
   return $user_settings;
 }
 

@@ -28,7 +28,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 use EnsEMBL::Web::Form;
 
 sub render {
-  my $self = shift;
+  my ($self, $is_help) = @_;
   
   return if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
 
@@ -38,7 +38,8 @@ sub render {
   my $species_name        = $page_species eq 'Multi' ? '' : $species_defs->DISPLAY_NAME;
   my $search_url          = $species_defs->ENSEMBL_WEB_ROOT . "$page_species/psychic";
   my $default_search_code = $species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
-  my $is_home_page        = $page_species eq 'Multi';
+  $is_help              ||= $hub->type eq 'Help';
+  my $is_home_page        = !$is_help && $page_species eq 'Multi';
   my $input_size          = $is_home_page ? 30 : 50;
   my $favourites          = $hub->get_favourite_species;
   my $q                   = $hub->param('q');
@@ -48,23 +49,28 @@ sub render {
   $form->add_hidden({'name' => 'site', 'value' => $default_search_code});
 
   # examples
-  my $examples;
-  my $sample_data;
+  my ($examples, $extra_params, %sample_data, @keys);
 
-  if ($is_home_page) {
-    $sample_data = $species_defs->get_config('MULTI', 'GENERIC_DATA') || {};
-  } else {
-    $sample_data = { %{$species_defs->SAMPLE_DATA || {}} };
-    $sample_data->{'GENE_TEXT'} = "$sample_data->{'GENE_TEXT'}" if $sample_data->{'GENE_TEXT'};
+  if ($is_help) {
+    @keys = ('biotype', 'API tutorial', 'citing Ensembl');
+    %sample_data = map { $_ => $_ } @keys;
+    $extra_params = ';species=help';
+  }
+  else {
+    if ($is_home_page) {
+      %sample_data = %{$species_defs->get_config('MULTI', 'GENERIC_DATA')};
+    } else {
+      %sample_data = %{$species_defs->SAMPLE_DATA || {}};
+      $sample_data{'GENE_TEXT'} = "$sample_data{'GENE_TEXT'}" if $sample_data{'GENE_TEXT'};
+    }
+    @keys = qw(GENE_TEXT LOCATION_TEXT SEARCH_TEXT);
   }
 
-  if (keys %$sample_data) {
-    $examples = join ' or ', map { $sample_data->{$_}
-      ? qq(<a class="nowrap" href="$search_url?q=$sample_data->{$_}">$sample_data->{$_}</a>)
-      : ()
-    } qw(GENE_TEXT LOCATION_TEXT SEARCH_TEXT);
-    $examples = qq(<p class="search-example">e.g. $examples</p>) if $examples;
+  if (keys %sample_data) {
+    $examples = join ' or ', map { $sample_data{$_} ? sprintf('<a class="nowrap" href="%s?q=%s%s">%s</a>', $search_url, $sample_data{$_}, $extra_params, $sample_data{$_}) : ()
+    } @keys;
   }
+  $examples = qq(<p class="search-example">e.g. $examples</p>) if $examples;
 
   # form field
   my $f_params = {'notes' => $examples};
@@ -72,7 +78,7 @@ sub render {
   my $field = $form->add_field($f_params);
 
   # species dropdown
-  if ($page_species eq 'Multi') {
+  if ($page_species eq 'Multi' && !$is_help) {
     my %species      = map { $species_defs->get_config($_, 'DISPLAY_NAME') => $_ } @{$species_defs->ENSEMBL_DATASETS};
     my %common_names = reverse %species;
 
@@ -95,6 +101,7 @@ sub render {
   # search input box & submit button
   my $q_params = {'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q', 'class' => 'query input inactive'};
   unless ($is_home_page) {
+    $species_name = 'Help and documentation' if $is_help;
     $q_params->{'value'}      = "Search $species_name&hellip;";
     $q_params->{'is_encoded'} = 1;
   }
@@ -105,6 +112,11 @@ sub render {
   $elements_wrapper->append_child('span', {'class' => 'inp-group', 'children' => [ splice @{$elements_wrapper->child_nodes}, 0, 2 ]})->after({'node_name' => 'wbr'}) for (0..1);
 
   return sprintf '<div id="SpeciesSearch" class="js_panel"><input type="hidden" class="panel_type" value="SearchBox" />%s</div>', $form->render;
+}
+
+sub render_help {
+  my $self = shift;
+  $self->render(1);
 }
 
 1;

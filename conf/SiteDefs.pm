@@ -19,9 +19,9 @@ use Text::Wrap;
 
 $Text::Wrap::columns = 75;
 
-our $ENSEMBL_VERSION           = 81;
-our $ARCHIVE_VERSION           = 'Jul2015';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'July 2015';
+our $ENSEMBL_VERSION           = 82;
+our $ARCHIVE_VERSION           = 'Sep2015';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'September 2015';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -255,6 +255,11 @@ our $SAMTOOLS_DIR         = "$ENSEMBL_SERVERROOT/samtools";
 our $BIOPERL_DIR          = "$ENSEMBL_SERVERROOT/bioperl-live";
 our $MINI_BIOPERL_161_DIR = "$ENSEMBL_SERVERROOT/mini-bioperl-161";
 
+# See Memoize.pm for meaning of these
+our $MEMOIZE_ENABLED      = 1;
+our $MEMOIZE_DEBUG        = 0;
+our $MEMOIZE_SIZE         = [14,32,4*1024*1024];
+
 ###############################################################################
 ######################### END OF LOCAL CONFIGURATION SECTION ##################
 ###############################################################################
@@ -311,6 +316,7 @@ our $OBJECT_TO_SCRIPT = {
   Share               => 'Share',
   Export              => 'Export',
   DataExport          => 'DataExport',
+  ImageExport         => 'ImageExport',
 
   Gene                => 'Page',
   Transcript          => 'Page',

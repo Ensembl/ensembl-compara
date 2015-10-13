@@ -1,0 +1,345 @@
+/*! jQuery UI - v1.10.4 - 2015-09-01
+* http://jqueryui.com
+* Includes: jquery.ui.core.css, jquery.ui.slider.css, jquery.ui.theme.css
+* Copyright 2015 jQuery Foundation and other contributors; Licensed MIT */
+
+/* Layout helpers
+----------------------------------*/
+.newtable_range .ui-helper-hidden {
+  display: none;
+}
+.newtable_range .ui-helper-hidden-accessible {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
+.newtable_range .ui-helper-reset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  line-height: 1.3;
+  text-decoration: none;
+  font-size: 100%;
+  list-style: none;
+}
+.newtable_range .ui-helper-clearfix:before,
+.newtable_range .ui-helper-clearfix:after {
+  content: "";
+  display: table;
+  border-collapse: collapse;
+}
+.newtable_range .ui-helper-clearfix:after {
+  clear: both;
+}
+.newtable_range .ui-helper-clearfix {
+  min-height: 0; /* support: IE7 */
+}
+.newtable_range .ui-helper-zfix {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  position: absolute;
+  opacity: 0;
+  filter:Alpha(Opacity=0);
+}
+
+.newtable_range .ui-front {
+  z-index: 100;
+}
+
+
+/* Interaction Cues
+----------------------------------*/
+.newtable_range .ui-state-disabled {
+  cursor: default !important;
+}
+
+
+/* Icons
+----------------------------------*/
+
+/* states and images */
+.newtable_range .ui-icon {
+  display: block;
+  text-indent: -99999px;
+  overflow: hidden;
+  background-repeat: no-repeat;
+}
+
+
+/* Misc visuals
+----------------------------------*/
+
+/* Overlays */
+.newtable_range .ui-widget-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.newtable_range .ui-slider {
+  position: relative;
+  text-align: left;
+}
+.newtable_range .ui-slider .ui-slider-handle {
+  position: absolute;
+  z-index: 2;
+  width: 1.2em;
+  height: 1.2em;
+  cursor: default;
+}
+.newtable_range .ui-slider .ui-slider-range {
+  position: absolute;
+  z-index: 1;
+  font-size: .7em;
+  display: block;
+  border: 0;
+  background-position: 0 0;
+}
+
+/* For IE8 - See #6727 */
+.newtable_range .ui-slider.ui-state-disabled .ui-slider-handle,
+.newtable_range .ui-slider.ui-state-disabled .ui-slider-range {
+  filter: inherit;
+}
+
+.newtable_range .ui-slider-horizontal {
+  height: .8em;
+}
+.newtable_range .ui-slider-horizontal .ui-slider-handle {
+  top: -.3em;
+  margin-left: -.6em;
+}
+.newtable_range .ui-slider-horizontal .ui-slider-range {
+  top: 0;
+  height: 100%;
+}
+.newtable_range .ui-slider-horizontal .ui-slider-range-min {
+  left: 0;
+}
+.newtable_range .ui-slider-horizontal .ui-slider-range-max {
+  right: 0;
+}
+
+.newtable_range .ui-slider-vertical {
+  width: .8em;
+  height: 100px;
+}
+.newtable_range .ui-slider-vertical .ui-slider-handle {
+  left: -.3em;
+  margin-left: 0;
+  margin-bottom: -.6em;
+}
+.newtable_range .ui-slider-vertical .ui-slider-range {
+  left: 0;
+  width: 100%;
+}
+.newtable_range .ui-slider-vertical .ui-slider-range-min {
+  bottom: 0;
+}
+.newtable_range .ui-slider-vertical .ui-slider-range-max {
+  top: 0;
+}
+
+/* Component containers
+----------------------------------*/
+.newtable_range .ui-widget {
+  font-family: Verdana,Arial,sans-serif;
+  font-size: 1.1em;
+}
+.newtable_range .ui-widget .ui-widget {
+  font-size: 1em;
+}
+.newtable_range .ui-widget input,
+.newtable_range .ui-widget select,
+.newtable_range .ui-widget textarea,
+.newtable_range .ui-widget button {
+  font-family: Verdana,Arial,sans-serif;
+  font-size: 1em;
+}
+.newtable_range .ui-widget-content {
+  border: 1px solid #a6c9e2;
+  background: #fcfdfd;
+  color: #222222;
+}
+.newtable_range .ui-widget-content a {
+  color: #222222;
+}
+.newtable_range .ui-widget-header {
+  border: 1px solid #4297d7;
+  background: #2191c0;
+  color: #eaf5f7;
+  font-weight: bold;
+}
+.newtable_range .ui-widget-header a {
+  color: #eaf5f7;
+}
+
+/* Interaction states
+----------------------------------*/
+.newtable_range .ui-state-default,
+.newtable_range .ui-widget-content .ui-state-default,
+.newtable_range .ui-widget-header .ui-state-default {
+  border: 1px solid #77d5f7;
+  background: #0078ae;
+  font-weight: normal;
+  color: #ffffff;
+}
+.newtable_range .ui-state-default a,
+.newtable_range .ui-state-default a:link,
+.newtable_range .ui-state-default a:visited {
+  color: #ffffff;
+  text-decoration: none;
+}
+.newtable_range .ui-state-hover,
+.newtable_range .ui-widget-content .ui-state-hover,
+.newtable_range .ui-widget-header .ui-state-hover,
+.newtable_range .ui-state-focus,
+.newtable_range .ui-widget-content .ui-state-focus,
+.newtable_range .ui-widget-header .ui-state-focus {
+  border: 1px solid #448dae;
+  background: #79c9ec;
+  font-weight: normal;
+  color: #026890;
+}
+.newtable_range .ui-state-hover a,
+.newtable_range .ui-state-hover a:hover,
+.newtable_range .ui-state-hover a:link,
+.newtable_range .ui-state-hover a:visited,
+.newtable_range .ui-state-focus a,
+.newtable_range .ui-state-focus a:hover,
+.newtable_range .ui-state-focus a:link,
+.newtable_range .ui-state-focus a:visited {
+  color: #026890;
+  text-decoration: none;
+}
+.newtable_range .ui-state-active,
+.newtable_range .ui-widget-content .ui-state-active,
+.newtable_range .ui-widget-header .ui-state-active {
+  border: 1px solid #acdd4a;
+  background: #6eac2c;
+  font-weight: normal;
+  color: #ffffff;
+}
+.newtable_range .ui-state-active a,
+.newtable_range .ui-state-active a:link,
+.newtable_range .ui-state-active a:visited {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* Interaction Cues
+----------------------------------*/
+.newtable_range .ui-state-highlight,
+.newtable_range .ui-widget-content .ui-state-highlight,
+.newtable_range .ui-widget-header .ui-state-highlight {
+  border: 1px solid #fcd113;
+  background: #f8da4e;
+  color: #915608;
+}
+.newtable_range .ui-state-highlight a,
+.newtable_range .ui-widget-content .ui-state-highlight a,
+.newtable_range .ui-widget-header .ui-state-highlight a {
+  color: #915608;
+}
+.newtable_range .ui-state-error,
+.newtable_range .ui-widget-content .ui-state-error,
+.newtable_range .ui-widget-header .ui-state-error {
+  border: 1px solid #cd0a0a;
+  background: #e14f1c;
+  color: #ffffff;
+}
+.newtable_range .ui-state-error a,
+.newtable_range .ui-widget-content .ui-state-error a,
+.newtable_range .ui-widget-header .ui-state-error a {
+  color: #ffffff;
+}
+.newtable_range .ui-state-error-text,
+.newtable_range .ui-widget-content .ui-state-error-text,
+.newtable_range .ui-widget-header .ui-state-error-text {
+  color: #ffffff;
+}
+.newtable_range .ui-priority-primary,
+.newtable_range .ui-widget-content .ui-priority-primary,
+.newtable_range .ui-widget-header .ui-priority-primary {
+  font-weight: bold;
+}
+.newtable_range .ui-priority-secondary,
+.newtable_range .ui-widget-content .ui-priority-secondary,
+.newtable_range .ui-widget-header .ui-priority-secondary {
+  opacity: .7;
+  filter:Alpha(Opacity=70);
+  font-weight: normal;
+}
+.newtable_range .ui-state-disabled,
+.newtable_range .ui-widget-content .ui-state-disabled,
+.newtable_range .ui-widget-header .ui-state-disabled {
+  opacity: .35;
+  filter:Alpha(Opacity=35);
+  background-image: none;
+}
+.newtable_range .ui-state-disabled .ui-icon {
+  filter:Alpha(Opacity=35); /* For IE8 - See #6059 */
+}
+
+/* Icons
+----------------------------------*/
+
+/* states and images */
+.newtable_range .ui-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Misc visuals
+----------------------------------*/
+
+/* Corner radius */
+.newtable_range .ui-corner-all,
+.newtable_range .ui-corner-top,
+.newtable_range .ui-corner-left,
+.newtable_range .ui-corner-tl {
+  border-top-left-radius: 5px;
+}
+.newtable_range .ui-corner-all,
+.newtable_range .ui-corner-top,
+.newtable_range .ui-corner-right,
+.newtable_range .ui-corner-tr {
+  border-top-right-radius: 5px;
+}
+.newtable_range .ui-corner-all,
+.newtable_range .ui-corner-bottom,
+.newtable_range .ui-corner-left,
+.newtable_range .ui-corner-bl {
+  border-bottom-left-radius: 5px;
+}
+.newtable_range .ui-corner-all,
+.newtable_range .ui-corner-bottom,
+.newtable_range .ui-corner-right,
+.newtable_range .ui-corner-br {
+  border-bottom-right-radius: 5px;
+}
+
+/* Overlays */
+.newtable_range .ui-widget-overlay {
+  background: #aaaaaa;
+  opacity: .3;
+  filter: Alpha(Opacity=30);
+}
+.newtable_range .ui-widget-shadow {
+  margin: 5px 0 0 5px;
+  padding: 0px;
+  background: #999999;
+  opacity: .45;
+  filter: Alpha(Opacity=45);
+  border-radius: 5px;
+}
+

@@ -191,7 +191,10 @@ sub _known_feature {
       $hub->problem('redirect', $url);
     } else {
       $hub->problem('fatal', "$type '$name' not found", $self->_help("The identifier '$name' is not present in the current release of the $sitetype database.")) if $type eq $hub->type;
-      $hub->delete_param($var);
+      $hub->delete_param($var)
+        ## hack for ENSWEB-1706 - do not delete 'g' param since it might contain comma separated multiple gene ids
+        unless $hub->script eq 'ZMenu' && $hub->type eq 'Gene' && $var eq 'g';
+        ## hack end - remove once Gene factory is capable of dealing with multiple Gene objects
     }
   }
   

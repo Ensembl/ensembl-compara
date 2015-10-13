@@ -39,8 +39,10 @@ sub content {
   my ($seq_url, $gt_url, $pop_url, $geno_url, $context_url, $ld_url, $pheno_url, $phylo_url, $cit_url);
   my ($gt_count, $geno_count, $pheno_count, $cit_count);
 
-  $seq_url      = $hub->url({'action' => 'Sequence'});
-  $context_url  = $hub->url({'action' => 'Context'});
+  if ($avail->{'has_locations'}) {
+    $seq_url      = $hub->url({'action' => 'Sequence'});
+    $context_url  = $hub->url({'action' => 'Context'});
+  }
 
   if ($avail->{'has_features'}) {
     $gt_url   = $hub->url({'action' => 'Mappings'});

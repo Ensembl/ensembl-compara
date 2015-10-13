@@ -33,22 +33,6 @@ sub init {
     hgvs               => 'off',
   }; # Don't change context if you want the page to come back!!
   
-  $defaults->{"opt_pop_$_"} = 'off' for @{$variations->{'DISPLAY_STRAINS'}};
-  $defaults->{"opt_pop_$_"} = 'on'  for @{$variations->{'DEFAULT_STRAINS'}};
-  $defaults->{"opt_pop_$variations->{'REFERENCE_STRAIN'}"} = 'off';
-
-  # Add source information if we have a variation database
-  foreach (keys %{$variations->{'tables'}{'source'}{'counts'} || {}}){
-    my $name = 'opt_' . lc $_;
-    $name    =~ s/\s+/_/g;
-    $defaults->{$name} = 'on';
-  }
-
-  foreach (keys %options) {
-    my %hash = %{$options{$_}};
-    $defaults->{lc $_} = $hash{$_}[0] for keys %hash;
-  }
-  
   $self->set_defaults($defaults);
 
   $self->title = 'Variations';
@@ -57,52 +41,6 @@ sub init {
 sub form {
   my $self       = shift;
   my $hub        = $self->hub;
-  my %options    = EnsEMBL::Web::Constants::VARIATION_OPTIONS;
-  my %validation = %{$options{'variation'}};
-  my %class      = %{$options{'class'}};
-  my %type       = %{$options{'type'}};
-  
-  # Add source selection
-  $self->add_fieldset('Variation source');
-  
-  foreach (sort keys %{$hub->table_info('variation', 'source')->{'counts'}}) {
-    my $name = 'opt_' . lc($_);
-    $name =~ s/\s+/_/g;
-    
-    $self->add_form_element({
-      type  => 'CheckBox', 
-      label => $_,
-      name  => $name,
-      value => 'on',
-      raw   => 1
-    });
-  }
-  
-  # Add class selection
-  $self->add_fieldset('Variation class');
-  
-  foreach (keys %class) {
-    $self->add_form_element({
-      type  => 'CheckBox',
-      label => $class{$_}[1],
-      name  => lc($_),
-      value => 'on',
-      raw   => 1
-    });
-  }
-  
-  # Add Validation selection
-  $self->add_fieldset('Validation');
-  
-  foreach (keys %validation) {
-    $self->add_form_element({
-      type  => 'CheckBox',
-      label => $validation{$_}[1],
-      name  =>  lc($_),
-      value => 'on',
-      raw   => 1
-    });
-  }
   
   # Add type selection
   $self->add_fieldset('Consequence options');
@@ -114,21 +52,6 @@ sub form {
     value => 'on',
     raw   => 1
   });
-  
-  # Add type selection
-  $self->add_fieldset('Consequence type');
-  
-  foreach (sort { $type{$a}->[2] <=> $type{$b}->[2] } keys %type) { 
-    next if $_ eq 'opt_sara';
-    
-    $self->add_form_element({
-      type  => 'CheckBox',
-      label => $type{$_}[1],
-      name  => lc($_),
-      value => 'on',
-      raw   => 1
-    });
-  }
 
   # Add context selection
   $self->add_fieldset('Intron Context');

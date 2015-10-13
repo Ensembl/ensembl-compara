@@ -39,11 +39,17 @@
             update();
           }
         });
-        
-        el.on('click', '.height_wrap .toggle_img', function () {
-          toggle($(this));
-          return false;
-        }).data('togglewrap', true).find('.toggle_div').each(function () {
+
+        var $img = el.find('.toggle_img');
+        if(!$img.hasClass('_bound')) {
+          el.on('click', '.height_wrap .toggle_img', function () {
+            toggle($(this));
+            return false;
+          });
+          $img.addClass('_bound');
+        }
+        el.find('.toggle_img').addClass('_bound');
+        el.data('togglewrap', true).find('.toggle_div').each(function () {
           $(this).data('togglewrap', {});
         });
         
@@ -57,14 +63,14 @@
     function update() {
       $('.height_wrap', elements).each(function () {
         var el      = $(this);
-        var toggler = el.children('span.toggle_img');
+        var toggler = el.find('span.toggle_img');
         
         if (!toggler.length) {
           toggler = $('<span class="toggle_img" />').appendTo(this);
         }
         
         var open  = el.hasClass('open');
-        var val   = el.children('.val');
+        var val   = el.find('.val,.cell_detail');
         var empty = val.text() === '';
         
         if (open) {
@@ -98,8 +104,6 @@
       return els.parents().filter(function () {
         return $(this).css('display') !== 'inline';
       }).first();
-      
-      els = null;
     }
     
     // dutyCycle: do as many as possible at same time but don't cause delays

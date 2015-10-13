@@ -26,8 +26,8 @@ div.modal_content div.configuration_search input       { color: #999999; border:
 div.modal_content div.configuration_search input:hover { background: [[CONTRAST_BG]]; }
 
 div.modal_content div.species_select            { font-weight: bold; margin: 0 0 16px; padding: 8px; border: 1px solid [[PANEL_BORDER]]; }
-div.modal_content div.species_select .ff-right  { margin-top: 8px; padding: 0; }
-div.modal_content div.species_select input      { border: 1px solid [[PANEL_BORDER]]; padding-left: 4px; }
+div.modal_content div.species_select .ff-right  { margin: 0 10px; display: inline-block; padding: 0; }
+div.modal_content div.species_select img        { vertical-align: middle; height: 24px; }
 
 /* configuration form */
 

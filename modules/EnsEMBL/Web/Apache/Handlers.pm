@@ -305,7 +305,7 @@ sub handler {
   }
 
   ## Trackhub short URL
-  if ($raw_path[0] eq 'TrackHub') {
+  if ($raw_path[0] =~ /^trackhub$/i) {
     $file = '/UserData/TrackHubRedirect?'.$querystring;
     $r->uri($file);
     $redirect = 1;

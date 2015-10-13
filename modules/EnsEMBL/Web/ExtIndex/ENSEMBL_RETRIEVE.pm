@@ -42,7 +42,7 @@ sub get_sequence {
 
   # invalid id
   throw exception('WebException', "No valid $sitetype ID provided.")              unless $params->{'id'};
-  throw exception('WebException', "$params->{'id'} is not a valid $sitetype ID.") unless $params->{'id'} =~ /^[a-z]+[0-9]+$/i;
+  throw exception('WebException', "$params->{'id'} is not a valid $sitetype ID.") unless $params->{'id'} =~ /^[a-z0-9_\.\-]+$/i;
 
   my $registry    = 'Bio::EnsEMBL::Registry';
   my $stable_id   = sprintf '%s%011d', split(/(?=[0-9])/, $params->{'id'}, 2); # prefix '0's before the number part if it's less than 11 digits

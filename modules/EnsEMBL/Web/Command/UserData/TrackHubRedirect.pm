@@ -36,55 +36,91 @@ sub process {
   my @bits          = split /\./, $filename;
   my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my $pattern       = "^$extension\$";
-  my $redirect      = $hub->species_path($hub->data_species) . '/UserData/';
-  my $new_action    = '';
+  my ($redirect, $anchor);
   my $params        = {};
 
+  ## Allow for manually-created URLs with capitalisation, and 
+  ## also validate any user-provided species name
+  my $species       = $hub->param('species') || $hub->param('Species');
+  if (!$species) {
+    $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
+  }
+  elsif (!$hub->species_defs->valid_species($species)) {
+    $redirect = '/trackhub_error.html';
+    $params->{'species'}  = $species;
+    $params->{'error'}    = 'unknown_species';
+    $species              = undef;
+  }
 
-  if ($url) {
-    ## Is this file already attached?
-    ($new_action, $params)  = $self->check_attachment($url);
-
-    unless ($new_action) {
-      my $trackhub = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
-    
-      ($new_action, $params) = $self->attach($trackhub, $filename); 
-   }
-
-    ## Override standard redirect with sample location
-    my $species = $hub->param('species');
-    if (!$species || !$hub->species_defs->valid_species($species)) {
-      $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
+  if ($species) {
+    my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
+    unless ($location) {
+      my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
+      $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
     }
-    $redirect           = sprintf('/%s/Location/View', $species);
-    my $sample_links    = $species_defs->get_config($species, 'SAMPLE_DATA');
-    $params->{'r'}      = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+    $params->{'r'} = $location;
 
-    my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
-    my $p         = $params->{'reattach'} || $params->{'species_flag'} 
-                      || $params->{'assembly_flag'} || 'ok';
-    my $key       = sprintf('hub_%s', $p);
+    if ($url) {
+      my $new_action  = '';
+      ($new_action, $params)  = $self->check_attachment($url);
 
-    if ($messages{$key}) {
-      $hub->session->add_data(
-        type     => 'message',
-        code     => 'AttachURL',
-        message  => $messages{$key}{'message'},
-        function => '_'.$messages{$key}{'type'},
-      );
+      if ($new_action) {
+        ## Hub is already attached, so just go there
+        $redirect = sprintf('/%s/Location/View', $species);
+        $anchor   = 'modal_config_viewbottom';
+      }
+      else {
+        ## Check if we have any supported assemblies
+        my $trackhub = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
+        my $assembly_lookup = $hub->species_defs->assembly_lookup;
+        my $hub_info = $trackhub->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup, 'parse_tracks' => 0});
+
+        if ($hub_info->{'unsupported_genomes'}) {
+          $redirect = '/trackhub_error.html';
+          $params->{'error'}  = 'archive_only';
+          $params->{'url'}    = $url;
+          ## Get lookup that includes old assemblies
+          my $lookup = $hub->species_defs->assembly_lookup(1);
+          foreach (@{$hub_info->{'unsupported_genomes'}||{}}) {
+            my $info = $lookup->{$_};
+            $params->{'species_'.$info->[0]} = $info->[1];
+          }
+        }
+        else {
+          ($new_action, $params) = $self->attach($trackhub, $filename); 
+
+          ## Override standard redirect with sample location
+          $redirect     = sprintf('/%s/Location/View', $species);
+          $anchor       = 'modal_config_viewbottom';
+
+          my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
+          my $p         = $params->{'reattach'} || $params->{'species_flag'} 
+                            || $params->{'assembly_flag'} || 'ok';
+          my $key       = sprintf('hub_%s', $p);
+
+          if ($messages{$key}) {
+            ## Open control panel at Manage Your Data if chosen species not supported
+            if ($params->{'species_flag'} && $params->{'species_flag'} eq 'other_only') {
+              $anchor = 'modal_user_data';
+            }
+            else {
+              $hub->session->add_data(
+                type     => 'message',
+                code     => 'AttachURL',
+                message  => $messages{$key}{'message'},
+                function => '_'.$messages{$key}{'type'},
+              );
+            }
+          }
+        }
+      }
+    } else {
+      $redirect           = '/trackhub_error.html';
+      $params->{'error'}  = 'no_url';
     }
-
-  } else {
-      $session->add_data(
-        type     => 'message',
-        code     => 'AttachURL',
-        message  => 'No URL was provided',
-        function => '_error'
-      );
-    $redirect .= 'SelectFile';
   }
   
-  $self->ajax_redirect($redirect, $params);  
+  $self->ajax_redirect($redirect, $params, $anchor);  
 }
 
 1;

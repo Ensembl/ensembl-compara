@@ -23,8 +23,7 @@ package EnsEMBL::Web::ExtIndex::ENSEMBL_REST;
 use strict;
 use warnings;
 
-use JSON qw(from_json);
-
+use EnsEMBL::Web::REST;
 use EnsEMBL::Web::Exceptions;
 
 use parent qw(EnsEMBL::Web::ExtIndex);
@@ -35,22 +34,14 @@ sub get_sequence {
   ## @exception If sequence could not be found, or rest api request failed
   my ($self, $params) = @_;
 
-  my $hub = $self->hub;
-  my $sd  = $hub->species_defs;
-  my $url = $sd->ENSEMBL_REST_URL;
-
   # invalid id
   throw exception('WebException', "No valid ID provided.")              unless $params->{'id'};
-  throw exception('WebException', "$params->{'id'} is not a valid ID.") unless $params->{'id'} =~ /^[a-z]+[0-9]+$/i;
+  throw exception('WebException', "$params->{'id'} is not a valid ID.") unless $params->{'id'} =~ /^[a-z0-9_\.\-]+$/i;
 
   # make the request
-  my $content;
-  try {
-    $content = from_json($self->do_http_request('GET', "$url/sequence/id/$params->{'id'}?content-type=application/json"));
-  } catch {
-    throw $_ if $_->type eq 'WebException';
-    $content = { 'error' => 'Error parsing REST API response' };
-  };
+  my $rest      = EnsEMBL::Web::REST->new($self->hub);
+  my $endpoint  = sprintf('sequence/id/%s', $params->{'id'});
+  my $content   = $rest->fetch($endpoint);
 
   # REST API returned error or error parsing response
   throw exception('WebException', $content->{'error'}) if $content->{'error'};
