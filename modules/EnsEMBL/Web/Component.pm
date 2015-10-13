@@ -673,10 +673,10 @@ sub new_form {
 }
 
 sub _export_image {
-  my ($self, $image, $flag) = @_;
+  my ($self, $image) = @_;
   my $hub = $self->hub;
   
-  $image->{'export'} = 'iexport' . ($flag ? " $flag" : '');
+  $image->{'export'} = 'iexport';
 
   my @export = split(/-/,$hub->param('export'));
   my $format = (shift @export)||'';
