@@ -31,7 +31,7 @@ sub _init {
 
 sub content {
   my $self   = shift; 
-  my $object = $self->object;
+  my $object = $self->object || $hub->core_object(lc($hub->param('data_type')));
   
   ## first check we have a location
   return $self->_info('A unique location can not be determined for this variation', $object->not_unique_location) if $object->not_unique_location;
@@ -288,7 +288,8 @@ sub feature_is_too_long {
   my $max_displayable = shift;
   my $htype           = shift;
   my $hub             = $self->hub;
-  my $type            = lc($self->object->type);
+  my $object          = $self->object || $hub->core_object(lc($hub->param('data_type')));
+  my $type            = lc($object->type);
   
   $htype ||= 'display';
   $type =~ s/structuralv/structural v/;
