@@ -817,9 +817,10 @@ sub check_for_align_problems {
   ## Compile possible error messages for a given alignment
   ## @return HTML
   my ($self, $args) = @_;
+  my $object = $self->object || $self->hub->core_object(lc($self->hub->param('data_type')));
 
-  my @messages = $self->object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
-  push @messages, $self->object->check_for_missing_species($args);
+  my @messages = $object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
+  push @messages, $object->check_for_missing_species($args);
 
   return $self->show_warnings(\@messages);
 }
