@@ -163,47 +163,33 @@ sub create_tracks {
   my $data        = {};
   my $prioritise  = 0;
   my @order;
-  my $records_seen;
 
   while ($parser->next) {
-    my $track_line = $parser->is_metadata;
-    if ($track_line) {
-      if ($records_seen) { 
-        ## We were previously in the data, so start a new track -
-        ## slurp metadata into this track and wipe it from the parser
-        ## so that we don't get values copied between tracks
-        $parser->start_new_track;
-        $records_seen = 0;
-      }
-      $parser->read_metadata;
-    }
-    else {
-      my $track_key = $parser->get_metadata_value('name') || 'data';
+    my $track_key = $parser->get_metadata_value('name') || 'data';
+
+    ## If we haven't done so already, grab all the metadata for this track
+    unless (keys %{$data->{$track_key}{'metadata'}||{}}) {
+      my %metadata = %{$parser->get_all_metadata};
+      $data->{$track_key}{'metadata'} = \%metadata;
+      $prioritise = 1 if $data->{$track_key}{'metadata'}{'priority'};
       ## Default track order is how they come out of the file
+      push @order, $track_key;
+    }
 
-      ## If we haven't done so already, grab all the metadata for this track
-      unless (keys %{$data->{$track_key}{'metadata'}||{}}) {
-        $data->{$track_key}{'metadata'} = $parser->get_all_metadata;
-        $prioritise = 1 if $data->{$track_key}{'metadata'}{'priority'};
-        push @order, $track_key;
-        my $records_seen = 1;
-      }
-
-      my ($seqname, $start, $end) = $self->coords;
-      ## Skip features that lie outside the current slice
-      if ($slice) {
-        next if ($seqname ne $slice->seq_region_name
+    my ($seqname, $start, $end) = $self->coords;
+    ## Skip features that lie outside the current slice
+    if ($slice) {
+      next if ($seqname ne $slice->seq_region_name
                   || $end < $slice->start
                   || $start > $slice->end);
-      }
-      $self->build_feature($data, $track_key, $slice);
     }
+    $self->build_feature($data, $track_key, $slice);
   }
 
   $self->post_process($data);
 
   if ($prioritise) {
-    @order = sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} 
+    @order = sort {$data->{$b}{'metadata'}{'priority'} <=> $data->{$a}{'metadata'}{'priority'}} 
               keys %$data;
   }
 
