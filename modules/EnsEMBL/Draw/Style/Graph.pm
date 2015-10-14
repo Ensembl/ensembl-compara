@@ -171,7 +171,7 @@ sub create_glyphs {
 
     my $subtitle = {
                     'text'    => $subtrack->{'metadata'}{'name'},
-                    'colour'  => $subtrack->{'metadata'}{'color'},
+                    'colour'  => $self->make_readable($subtrack->{'metadata'}{'color'}),
                     'y'       => $top + 8,
                     };
     $self->draw_subtitle($subtitle);

@@ -176,8 +176,14 @@ sub add_label {
 ### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the label's size and position
   my ($self, $feature, $position) = @_;
-  ## TODO - darken label colour if it's too pale - see "projector" image export
-  my $colour = $feature->{'label_colour'} || $feature->{'colour'} || 'black';
+  
+  my $colour = $feature->{'label_colour'} || $feature->{'colour'};
+  if ($colour) {
+    $colour = $self->make_readable($colour);
+  }
+  else {
+    $colour = 'black';
+  }
 
   ## Stop labels from overlapping edge of image
   my $x = $feature->{'start'};
