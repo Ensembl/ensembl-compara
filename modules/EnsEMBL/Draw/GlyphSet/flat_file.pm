@@ -133,6 +133,14 @@ sub draw_features {
     my $features  = $_->{'features'};
     my $metadata  = $_->{'metadata'} || {};
 
+    ## Set alternative colour (used by some styles)
+    if ($metadata->{'color'} && !$metadata->{'altColor'}) {
+        ## No alt set, so default to a half-tint of the main colour
+        my @gradient = EnsEMBL::Draw::Utils::ColourMap::build_linear_gradient(3, ['white', $metadata->{'color'}]);
+        $metadata->{'altColor'} = $gradient[1];
+      }
+
+
     my $name = $metadata->{'name'};
     if ($name && $hover_label->{'header'} !~ /$name/) { ## Don't add the track name more than once!
       if ($mod_header) {
