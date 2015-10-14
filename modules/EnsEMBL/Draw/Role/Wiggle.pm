@@ -87,6 +87,7 @@ sub _render {
   }
 
   foreach (@$tracks) {
+    next unless scalar(@{$_->{'features'}||[]});
     ## Work out maximum and minimum scores
     my $track_min = $self->{'my_config'}->get('min_score');
     my $track_max = $self->{'my_config'}->get('max_score');
@@ -101,16 +102,13 @@ sub _render {
 
   ## Now we try and draw the features
   my $error = $self->draw_features($_);
-=pod
   return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
 
   my $here = $self->my_config('strand') eq 'b' ? 'on this strand' : 'in this region';
 
-  my $height = $self->errorTrack("No $error $here", 0, $self->_offset);
-  $self->_offset($height + 4);
+  my $height = $self->errorTrack("No $error $here", 0, $self->{'my_config'}->{'initial_offset'});
 
   return 1;
-=cut
 }
 
 sub _get_min_max {
