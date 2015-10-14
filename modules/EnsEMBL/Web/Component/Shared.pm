@@ -1368,7 +1368,7 @@ sub render_clinical_significance {
   my $clin_signs = shift;
 
   my $render;
-  foreach my $cs (sort {$a cmp $b} @$clin_signs){
+  foreach my $cs (sort {$b =~ /pathogenic/i cmp $a =~ /pathogenic/i || $a cmp $b} @$clin_signs){
     my $cs_img = $cs;
        $cs_img =~ s/\s/-/g;
     $render .= sprintf('<img src="%s/val/clinsig_%s.png" class="_ht" title="%s"/><div class="hidden export">%s</div>',

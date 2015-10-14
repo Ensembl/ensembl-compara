@@ -659,7 +659,7 @@ sub clinical_significance {
         '<a href="%s"><img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" title="%s" src="%s/val/clinsig_%s.png" /></a>',
         $url, $_, $self->img_url, $clin_sign_icon{$_}
       )
-    } @$clin_sign
+    } sort { ($a !~ /pathogenic/ cmp $b !~ /pathogenic/) || $a cmp $b } @$clin_sign
   );
 
   return [ "Clinical significance $info_link" , $cs_content ];
