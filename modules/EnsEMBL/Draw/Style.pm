@@ -114,6 +114,24 @@ sub get_text_info {
   return {'width' => $info[2] + 10, 'height' => $info[3]};
 }
 
+sub draw_subtitle {
+  my ($self, $subtitle) = @_;
+  return unless $subtitle && $subtitle->{'text'};
+  push @{$self->glyphs}, 
+    $self->Text({
+                  font      => 'Arial',
+                  text      => $subtitle->{'text'},
+                  ptsize    => 8,
+                  height    => 8,
+                  colour    => $subtitle->{'colour'} || 'black',
+                  x         => 2,
+                  y         => $subtitle->{'y'} || 6,
+                  halign    => 'left',
+                  absolutex => 1,
+                });
+}
+
+
 sub set_bump_row {
   my ($self, $start, $end, $show_label, $text_info) = @_;
   my $row = 0;
