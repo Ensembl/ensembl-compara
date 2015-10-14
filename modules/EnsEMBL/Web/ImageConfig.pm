@@ -515,7 +515,7 @@ sub create_track {
   };
   
   $details->{'strand'}    ||= 'b';      # Make sure we have a strand setting
-  $details->{'display'}   ||= 'normal'; # Show unless we explicitly say no
+  $details->{'display'}   ||= $details->{'default_style'} || 'normal'; # Show unless we explicitly say no
   $details->{'renderers'} ||= [qw(off Off normal On)];
   $details->{'colours'}   ||= $self->species_defs->colour($options->{'colourset'}) if exists $options->{'colourset'};
   $details->{'glyphset'}  ||= $code;
@@ -1323,18 +1323,19 @@ sub _add_flat_file_track {
 
   return unless $menu;
 
-  my ($strand, $renderers) = $self->_user_track_settings($options{'style'}, $options{'format'});
+  my ($strand, $renderers, $default) = $self->_user_track_settings($options{'style'}, $options{'format'});
 
   my $track = $self->create_track($key, $name, {
-    display     => 'off',
-    strand      => $strand,
-    external    => 'external',
-    glyphset    => 'flat_file',
-    colourset   => 'classes',
-    caption     => $name,
-    sub_type    => $sub_type,
-    renderers   => $renderers,
-    description => $description,
+    display       => 'off',
+    strand        => $strand,
+    external      => 'external',
+    glyphset      => 'flat_file',
+    colourset     => 'classes',
+    caption       => $name,
+    sub_type      => $sub_type,
+    renderers     => $renderers,
+    default_style => $default,
+    description   => $description,
     %options
   });
 
@@ -1388,28 +1389,28 @@ sub _add_file_format_track {
 
 sub _user_track_settings {
   my ($self, $style, $format) = @_;
-  my ($strand, @user_renderers);
+  my ($strand, @user_renderers, $default);
 
   if (lc($format) eq 'pairwise') {
     $strand         = 'f';
-    @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction',
-                        'interaction_label', 'Pairwise interaction with labels');
+    @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
   }
   elsif ($style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   }
-  elsif (uc $format =~ /BED/) {
+  elsif (uc($format) =~ /BED/) {
     $strand = 'b';
     @user_renderers = @{$self->{'alignment_renderers'}};
     splice @user_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels';
+    $default = 'as_transcript_label';
   }
   else {
     $strand         = (uc($format) eq 'VEP_INPUT' || uc($format) eq 'VCF') ? 'f' : 'b';
     @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
   }
 
-  return ($strand, \@user_renderers);
+  return ($strand, \@user_renderers, $default);
 }
 
 sub _compare_assemblies {
