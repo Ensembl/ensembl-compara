@@ -105,6 +105,16 @@ sub features {
 sub draw_features {
   my ($self, $subtracks) = @_;
   $subtracks ||= $self->{'features'};
+  my $has_features = 0;
+
+  foreach (@$subtracks) {
+    $has_features += scalar $_->{'features'};
+  }
+
+  unless ($has_features) {
+    ## Text for error message
+    return 'data';
+  }
 
   ## Defaults
   my $colour_key     = $self->colour_key('default');
@@ -177,6 +187,9 @@ sub draw_features {
   ## work in a nice backwards-compatible way right now!
   ## Get label position, which is set in Style::Graph
   $self->{'label_y_offset'} = $self->{'my_config'}->get('label_y_offset');
+
+  ## Everything went OK, so no error to return
+  return 0;
 }
 
 sub render_as_transcript_nolabel {
