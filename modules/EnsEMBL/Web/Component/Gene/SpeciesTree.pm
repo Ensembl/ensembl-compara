@@ -57,8 +57,9 @@ sub content {
   my $self        = shift;
   my $cdb         = shift || 'compara';
   my $hub         = $self->hub;
-  my $object      = $self->object;
+  my $object      = $self->object || $self->hub->core_object('gene');
   my $stable_id   = $hub->param('g');
+
   my $is_speciestree = $object->isa('EnsEMBL::Web::Object::SpeciesTree') ? 1 : 0;
   my $show_exons     = $hub->param('exons') eq 'on' ? 1 : 0; 
     
