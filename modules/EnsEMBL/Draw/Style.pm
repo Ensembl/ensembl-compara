@@ -124,8 +124,8 @@ sub draw_subtitle {
                   ptsize    => 8,
                   height    => 8,
                   colour    => $subtitle->{'colour'} || 'black',
-                  x         => 2,
-                  y         => $subtitle->{'y'} || 6,
+                  x         => 4,
+                  y         => $subtitle->{'y'} || 8,
                   halign    => 'left',
                   absolutex => 1,
                 });

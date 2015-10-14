@@ -168,6 +168,13 @@ sub create_glyphs {
 
     $plot_conf->{'colour'} = shift(@$feature_colours) if $feature_colours and @$feature_colours;
     $self->draw_wiggle($plot_conf, $features);
+
+    my $subtitle = {
+                    'text'    => $subtrack->{'metadata'}{'name'},
+                    'colour'  => $subtrack->{'metadata'}{'color'},
+                    'y'       => $top + 8,
+                    };
+    $self->draw_subtitle($subtitle);
   }
 
   return @{$self->glyphs||[]};
