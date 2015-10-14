@@ -42,30 +42,16 @@ sub create_hash {
   my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
+  my $strand        = $self->parser->get_strand;
+  my $score         = $self->parser->get_score;
 
-  ## Only set colour if we have something in file, otherwise
-  ## we will override the default colour in the drawing code
-  my $colour;
-  my $strand  = $self->parser->get_strand;
-  my $score   = $self->parser->get_score;
-
-  if ($metadata->{'useScore'} || $metadata->{'spectrum'}) {
-    $colour = $self->convert_to_gradient($score, $metadata->{'color'});
-  }
-  elsif ($metadata->{'itemRgb'} eq 'On') {
-    my $rgb = $self->parser->get_itemRgb;
-    if ($rgb) {
-      $colour = $self->rgb_to_hex($rgb);
-    }
-  }
-  elsif ($metadata->{'colorByStrand'} && $strand) {
-    my ($pos, $neg) = split(' ', $metadata->{'colorByStrand'});
-    my $rgb = $strand == 1 ? $pos : $neg;
-    $colour = $self->rgb_to_hex($rgb);
-  }
-  elsif ($metadata->{'color'}) {
-    $colour = $metadata->{'color'};
-  }
+  my $colour_params  = {
+                        'metadata'  => $metadata, 
+                        'strand'    => $strand, 
+                        'score'     => $score,
+                        'itemRgb'   => $self->parser->get_itemRgb,
+                        };
+  my $colour = $self->set_colour($colour_params);
 
   my $id = $self->parser->can('get_id') ? $self->parser->get_id
             : $self->parser->can('get_name') ? $self->parser->get_name : undef;
@@ -85,7 +71,7 @@ sub create_hash {
     'strand'        => $strand,
     'score'         => $score,
     'label'         => $self->parser->get_name,
-    'colour'        => $colour, 
+    'colour'        => $colour,
     'structure'     => $self->create_structure($feature_start, $slice->start),
     'href'          => $href,
   };

@@ -42,19 +42,20 @@ sub create_hash {
   my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
+  my $score         = $self->parser->get_score;
 
-  ## Only set colour if we have something in file, otherwise
-  ## we will override the default colour in the drawing code
-  my $colour;
-  if ($metadata->{'color'}) {
-    $colour = $metadata->{'color'};
-  }
+  my $colour_params  = {
+                        'metadata'  => $metadata,
+                        'score'     => $score,
+                        };
+
+  my $colour = $self->set_colour($colour_params);
 
   return {
     'start'       => $feature_start - $slice->start,
     'end'         => $feature_end - $slice->start,
     'seq_region'  => $seqname,
-    'score'       => $self->parser->get_score,
+    'score'       => $score,
     'colour'      => $colour,
   };
 }

@@ -28,6 +28,8 @@ no warnings 'uninitialized';
 use Bio::EnsEMBL::IO::Parser;
 use Bio::EnsEMBL::IO::Utils;
 
+use EnsEMBL::Draw::Utils::ColourMap qw(build_linear_gradient);
+
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 
 sub new {
@@ -147,9 +149,17 @@ sub convert_to_gradient {
 }
 
 sub _create_gradient {
-  my ($self, $colour) = @_;
-  my $gradient = [];
-  return $gradient;
+### Simple wrapper around colourmap function. Parameters are optional, as the method
+### defaults to a 10-step greyscale
+### @param colours ArrayRef (optional) - at least two colours to mix
+### @param steps Integer (optional) - number of steps in the scale
+  my ($self, $colours, $steps) = @_;
+  unless ($colours && ref $colours eq 'ARRAY') {
+    $colours = [qw(white black)];
+  }
+  $steps ||= 10;
+  my @gradient = EnsEMBL::Draw::Utils::ColourMap::build_linear_gradient($steps, $colours);
+  return \@gradient;
 }
 
 sub create_tracks {
@@ -189,7 +199,7 @@ sub create_tracks {
   $self->post_process($data);
 
   if ($prioritise) {
-    @order = sort {$data->{$b}{'metadata'}{'priority'} <=> $data->{$a}{'metadata'}{'priority'}} 
+    @order = sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} 
               keys %$data;
   }
 
@@ -245,6 +255,36 @@ sub coords {
   ### Simple accessor to return the coordinates from the parser
   my $self = shift;
   return ($self->parser->get_seqname, $self->parser->get_start, $self->parser->get_end);
+}
+
+sub set_colour {
+  ### Set feature colour according to possible values in the metadata
+  my ($self, $params) = @_;
+  my $colour;
+
+  ## Only set colour if we have something in file, otherwise
+  ## we will override the default colour in the drawing code
+  my $metadata  = $params->{'metadata'};
+  my $strand    = $params->{'strand'};
+  my $score     = $params->{'score'};
+  my $rgb       = $params->{'rgb'};
+
+  if ($score && ($metadata->{'useScore'} || $metadata->{'spectrum'})) {
+    $colour = $self->convert_to_gradient($score, $metadata->{'color'});
+  }
+  elsif ($rgb && $metadata->{'itemRgb'} eq 'On') {
+    $colour = $self->rgb_to_hex($rgb);
+  }
+  elsif ($strand && $metadata->{'colorByStrand'}) {
+    my ($pos, $neg) = split(' ', $metadata->{'colorByStrand'});
+    my $rgb = $strand == 1 ? $pos : $neg;
+    $colour = $self->rgb_to_hex($rgb);
+  }
+  elsif ($metadata->{'color'}) {
+    $colour = $metadata->{'color'};
+  }
+
+  return $colour;
 }
 
 sub rgb_to_hex {
