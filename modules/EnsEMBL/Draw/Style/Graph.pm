@@ -161,6 +161,7 @@ sub create_glyphs {
       line_score    => $line_score,
       line_px       => $line_px,
       pix_per_score => $pix_per_score,
+      graph_type    => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
       colour        => $track_config->get('score_colour') || 'blue',
       alt_colour    => $subtrack->{'metadata'}{'altColor'},
     };

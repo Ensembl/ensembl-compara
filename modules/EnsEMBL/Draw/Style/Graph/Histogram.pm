@@ -25,7 +25,7 @@ use parent qw(EnsEMBL::Draw::Style::Graph);
 sub draw_wiggle {
   my ($self, $c, $features) = @_;
 
-  my $use_points    = $self->track_config->get('graph_type') eq 'points';
+  my $use_points    = $c->{'graph_type'} && $c->{'graph_type'} eq 'points';
   my $max_score     = $self->track_config->get('max_score');
 
   foreach my $f (@$features) {
