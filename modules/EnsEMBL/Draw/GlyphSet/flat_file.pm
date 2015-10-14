@@ -105,13 +105,13 @@ sub features {
 sub draw_features {
   my ($self, $subtracks) = @_;
   $subtracks ||= $self->{'features'};
-  my $has_features = 0;
+  my $feature_count = 0;
 
   foreach (@$subtracks) {
-    $has_features += scalar(@{$_->{'features'}||[]});
+    $feature_count += scalar(@{$_->{'features'}||[]});
   }
 
-  unless ($has_features) {
+  unless ($feature_count > 0) {
     ## Text for error message
     return 'data';
   }
