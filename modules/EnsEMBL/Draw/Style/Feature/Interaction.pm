@@ -45,21 +45,23 @@ sub create_glyphs {
   my $max_arc         = 0;
   my $current_max     = 0;
 
-  foreach my $feature (@$data) {
+  foreach my $subtrack (@$data) {
+    foreach my $feature (@{$subtrack->{'features'}||[]}) {
 
-    ## Set default colour if there is one
-    my $colour      = $feature->{'colour'} || $default_colour;
+      ## Set default colour if there is one
+      my $colour      = $feature->{'colour'} || $default_colour;
 
-    my %defaults = (
-                    'y'           => 0,
-                    'height'      => $feature_height,
-                    'colour'      => $colour,
-                    'absolute_y'  => 1,
-                    );
+      my %defaults = (
+                      'y'           => 0,
+                      'height'      => $feature_height,
+                      'colour'      => $colour,
+                      'absolute_y'  => 1,
+                      );
 
-    $current_max = $self->draw_feature($feature, %defaults);
-    $max_arc = $current_max if $current_max > $max_arc;
+      $current_max = $self->draw_feature($feature, %defaults);
+      $max_arc = $current_max if $current_max > $max_arc;
 
+    }
   }
 
   ## Limit track height to that of biggest arc plus some padding
@@ -126,6 +128,7 @@ sub draw_join {
   my $e2 = $feature->{'structure'}[1]{'end'};
 
   my $image_width = $self->image_config->container_width;
+  my $length      = $self->track_config->get('slice_length');
   my $pix_per_bp  = $self->image_config->transform->{'scalex'};
 
   ## Default behaviour is to draw arc from middles of features
@@ -148,17 +151,31 @@ sub draw_join {
     }
   }
 
+  ## Flip start and end if necessary
+  ($arc_start, $arc_end) = ($arc_end, $arc_start) if ($arc_start > $arc_end);
+
   ## Don't show arcs if both ends lie outside viewport
-  next if ($arc_start < 0 && $arc_end > $image_width);
+  next if ( ($arc_start < 0 && $arc_end <= 0)
+                  || ($arc_start >= $length && $arc_end > $length)
+                  || ($arc_start < 0 && $arc_end > $length)
+           );
+
+  ## Somewhat confusingly, the drawing code uses coordinates for horizontal dimensions
+  ## but pixels for vertical ones, which makes the following maths hideous!
+  ## Convert horizontal dimensions to pixels to make things sane:
+  $arc_start = ceil($arc_start * $pix_per_bp);
+  $arc_end   = ceil($arc_end * $pix_per_bp);
 
   ## Set some sensible limits
-  my $max_width = $image_width * 2;
+  my $width     = $image_width;
+  my $max_width = $width * 2;
   my $max_depth = 250; ## should be less than image width! 
+
 
   ## Start with a basic circular arc, then constrain to above limits
   my $start_point   = 0; ## righthand end of arc
   my $end_point     = 180; ### lefthand end of arc
-  my $major_axis    = abs(ceil(($arc_end - $arc_start) * $pix_per_bp));
+  my $major_axis    = $arc_end - $arc_start;
   my $minor_axis    = $major_axis;
   $major_axis       = $max_width if $major_axis > $max_width;
   $minor_axis       = $max_depth if $minor_axis > $max_depth;
@@ -166,37 +183,36 @@ sub draw_join {
   my $b             = $minor_axis / 2;
 
   ## Measurements needed for drawing partial arcs
-  my $centre        = ceil($arc_start * $pix_per_bp + $a);
+  my $centre        = $arc_start + $a;
   my $left_height   = $minor_axis; ## height of curve at left of image
   my $right_height  = $minor_axis; ## height of curve at right of image
 
   ## Cut curve off at edge of track if ends lie outside the current window
-  if ($e1 < 0) {
+  ## Note that we have to calculate the angle theta as if we were drawing a
+  ## circle, as there's something funky going on in GD!
+  if ($arc_start < 0) {
     my $x = abs($centre);
     $x = $a if $x > $a;
-    my $theta;
+    $left_height = $self->ellipse_y($x, $a, $b);
+    my $theta = $self->truncate_ellipse($x, $a, $a);
     if ($centre > 0) {
-      ($left_height, $theta) = $self->_truncate_ellipse($x, $a, $b);
       $end_point -= $theta;
     }
     else {
-      ($left_height, $theta) = $self->_truncate_ellipse($x, $a, $b);
       $end_point = $theta;
     }
   }
 
-  if ($s2 >= $image_width) {
+  if ($s2 >= $length) {
     my ($x, $theta);
-    if ($centre > $image_width) {
-      $x = $centre - $image_width;
-      $x = $a if $x > $a;
-      ($right_height, $theta) = $self->_truncate_ellipse($x, $a, $b);
+    $x = abs($width - $centre);
+    $x = $a if $x > $a;
+    $right_height = $self->ellipse_y($x, $a, $b);
+    my $theta = $self->truncate_ellipse($x, $a, $a);
+    if ($centre > $width) {
       $start_point = 180 - $theta;
     }
     else {
-      $x = $image_width - $centre;
-      $x = $a if $x > $a;
-      ($right_height, $theta) = $self->_truncate_ellipse($x, $a, $b);
       $start_point = $theta;
     }
   }
@@ -204,7 +220,7 @@ sub draw_join {
   ## Are one or both ends of this interaction visible?
   my $end = {};
   $end->{'left'} = 1 if $e1 > 0;
-  $end->{'right'} = 1 if $s2 < $image_width;
+  $end->{'right'} = 1 if $s2 < $length;
 
   ## Keep track of the maximum visible arc height, to save us a lot of grief
   ## trying to get rid of white space below the arcs
@@ -219,6 +235,10 @@ sub draw_join {
   else {
     $max_arc = $minor_axis if $minor_axis > $max_arc;
   }
+
+  ## Convert horizontal dimensions back to coordinates
+  my $arc_width = ($arc_end - $arc_start) / $pix_per_bp;
+  $arc_start /= $pix_per_bp;
 
   ## Finally, we have the coordinates to draw 
   my $arc_params = {
@@ -236,20 +256,6 @@ sub draw_join {
 
   push @{$self->glyphs}, $self->Arc($arc_params);
   return $max_arc;
-}
-
-sub _truncate_ellipse {
-  my ($self, $x, $a, $b) = @_;
-
-  ## Calculate y coordinate using general equation of ellipse
-  my $y = sqrt(abs((1 - (($x * $x) / ($a * $a))) * $b * $b));
-
-  ## Calculate angle subtended by these coordinates
-  my $pi    = 4 * atan2(1, 1);
-  my $atan  = atan2($y, $x);
-  my $theta = $atan * (180 / $pi);
-
-  return ($y, $theta);
 }
 
 1;

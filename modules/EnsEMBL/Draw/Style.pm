@@ -153,6 +153,28 @@ sub set_bump_row {
   return $row;
 }
 
+#### TRIGONOMETRY FOR CIRCULAR GLYPHS
+
+sub truncate_ellipse {
+  my ($self, $x, $a, $b) = @_;
+  my $h = $self->ellipse_y($x, $a, $b);
+  return $self->atan_in_degrees($x, $h);
+}
+
+sub ellipse_y {
+  my ($self, $x, $a, $b) = @_;
+  my $y = sqrt(abs((1 - (($x * $x) / ($a * $a))) * $b * $b));
+  return int($y);
+}
+
+sub atan_in_degrees {
+  my ($self, $x, $y) = @_;
+  my $pi   = 4 * atan2(1, 1);
+  my $atan = atan2($y, $x);
+  return int($atan * (180 / $pi));
+}
+
+
 #### BASIC ACCESSORS #################
 
 sub glyphs {
