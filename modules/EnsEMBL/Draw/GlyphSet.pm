@@ -29,6 +29,7 @@ use GD::Simple;
 use URI::Escape qw(uri_escape);
 use List::Util qw(max min);
 use POSIX qw(floor ceil);
+use JSON qw(to_json);
 
 use EnsEMBL::Draw::Glyph::Circle;
 use EnsEMBL::Draw::Glyph::Composite;
@@ -300,6 +301,31 @@ sub track_style_config {
           'font_name'    => $fontname,
           'font_size'    => $fontsize,
           };
+}
+
+sub features_as_json {
+### Fetch normal feature hash, then convert to JSON  
+  my $self = shift;
+  if ($self->can_json) {
+    my $features = $self->features;
+    if ($features) {
+      if (ref $features eq 'ARRAY' || ref $features eq 'HASH') {
+        return to_json($features);
+      }
+      else {
+        warn "!!! FEATURES NOT JSON-COMPATIBLE";
+      }
+    }
+  }
+  else {
+    warn "!!! NO JSON SUPPORT IN GLYPHSET $self";
+  }
+}
+
+sub can_json {
+### Temporary method - needed until all drawing code is moved to new structure
+### Should be set to 1 in modules that support it
+  return 0;
 }
 
 ############### GENERIC RENDERING ####################
