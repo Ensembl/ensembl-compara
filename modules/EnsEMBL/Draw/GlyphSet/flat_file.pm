@@ -65,7 +65,7 @@ sub features {
   my $species_defs = $self->species_defs;
   my $sub_type     = $self->my_config('sub_type');
   my $format       = $self->my_config('format');
-  my $features     = [];
+  my $data         = [];
 
   ## Get the file contents
   my %args = (
@@ -93,17 +93,18 @@ sub features {
 
   if ($iow) {
     ## Parse the file, filtering on the current slice
-    $features = $iow->create_tracks($container);
+    $data = $iow->create_tracks($container);
   } else {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
   }
 
-  return $features;
+  return $data;
 }
 
 sub draw_features {
-  my $self = shift;
+  my ($self, $subtracks) = @_;
+  $subtracks ||= $self->{'features'};
 
   ## Defaults
   my $colour_key     = $self->colour_key('default');
@@ -122,7 +123,6 @@ sub draw_features {
   ## Most wiggle plots make more sense if the baseline is zero
   $self->{'my_config'}->set('baseline_zero', 1);
 
-  my $subtracks = $self->{'features'};
   my %config    = %{$self->track_style_config};
 
   my $key         = $self->{'hover_label_class'};
@@ -131,7 +131,7 @@ sub draw_features {
 
   foreach (@$subtracks) {
     my $features  = $_->{'features'};
-    my $metadata  = $_->{'metadata'};
+    my $metadata  = $_->{'metadata'} || {};
 
     my $name = $metadata->{'name'};
     if ($name && $hover_label->{'header'} !~ /$name/) { ## Don't add the track name more than once!
@@ -157,14 +157,13 @@ sub draw_features {
     ## Also put it into config, for subtitles
 
     $config{'subtitle'} = $description;
+  }
+  my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
-    my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
-
-    foreach (@{$drawing_style||[]}) {
-      my $style_class = 'EnsEMBL::Draw::Style::'.$_;
-      my $style = $style_class->new(\%config, $features);
-      $self->push($style->create_glyphs);
-    }
+  foreach (@{$drawing_style||[]}) {
+    my $style_class = 'EnsEMBL::Draw::Style::'.$_;
+    my $style = $style_class->new(\%config, $subtracks);
+    $self->push($style->create_glyphs);
   }
   ## This is clunky, but it's the only way we can make the new code
   ## work in a nice backwards-compatible way right now!

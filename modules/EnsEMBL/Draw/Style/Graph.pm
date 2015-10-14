@@ -24,7 +24,8 @@ Renders a track as a graph or continuous plot
 This module expects data in the following format:
 
   $data = [
-            [
+          {'metadata' => {},
+           'features'  => [
               {
               'start'         => 123456,
               'end'           => 123789,
@@ -35,10 +36,10 @@ This module expects data in the following format:
               'href'          => '/Location/View?r=123456-124789',  # optional  
               'title'         => 'Some text goes here',             # optional  
               },
-            ],
+            ]},
           ];
 
-Note that in order to support multi-wiggle tracks, the data should be passed as an a array of arrays
+Note that in order to support multiple subtracks within a glyphset (whether multi-wiggle or separate), we must pass an array of hashes with optional metadata for each subtrack 
 
 =cut
 
@@ -60,98 +61,111 @@ sub create_glyphs {
   my $track_config    = $self->track_config;
 
   ## Set some track-wide variables
-  my $feature_colours = $track_config->get('feature_colours');
-  my $default_colour  = $track_config->get('default_colour');
   my $slice_width     = $image_config->container_width;
   my $row_height      = $track_config->get('height') || 60;
 
-  ## LOTS OF POSITIONAL MATHS!
+  foreach my $subtrack (@$data) {
+    my $metadata        = $subtrack->{'metadata'} || {};
+    my $feature_colours = $track_config->get('feature_colours');
+    my $default_colour  = $metadata->{'default_colour'} || $track_config->get('default_colour');
 
-  # max_score: score at top of y-axis on graph
-  # min_score: score at bottom of y-axis on graph
-  # range: scores spanned by graph (small value used if identically zero)
-  # pix_per_score: vertical pixels per unit score
-  my $max_score     = $track_config->get('max_score');
-  my $min_score     = $track_config->get('min_score');
-  my $range = $max_score - $min_score;
-  if($range < 0.01) {
-    # Oh dear, data all has pretty much same value ...
-    if($max_score > 0.01) {
-      # ... but it's not zero, so just move minimum down
-      $min_score = 0;
-    } else {
-      # ... just create some sky
-      $max_score = 0.1;
-    }
-  }
-  $min_score = 0 if $min_score >= 0 && $track_config->get('baseline_zero');
-  $range = $max_score - $min_score;
-  my $pix_per_score = $row_height/$range;
+    ## LOTS OF POSITIONAL MATHS!
 
-  # top: top of graph in pixel units, offset from track top (usu. 0)
-  # line_score: value to draw "to" up/down, in score units (usu. 0)
-  # line_px: value to draw "to" up/down, in pixel units (usu. 0)
-  # bottom: bottom of graph in pixel units (usu. approx. pixel height)
-  my $top = ($track_config->get('initial_offset')||0);
-  my $line_score = max(0, $min_score);
-  my $bottom = $top + $pix_per_score * $range;
-  my $line_px = $bottom - ($line_score - $min_score) * $pix_per_score;
-
-  ## Extra left-legend stuff
-  if ($track_config->get('labels')) {
-    $self->add_minilabel($top);
-  }
-
-  ## Draw axes and their numerical labels
-  if (!$track_config->get('no_axis')) {
-    $self->draw_axes($top, $line_px, $bottom, $slice_width);
-  }
-
-  if ($track_config->get('axis_label') ne 'off') {
-    $self->draw_score($top, $max_score);
-    $self->draw_score($bottom, $min_score);
-
-    # Shift down the lhs label to between the axes
-    my $label_y_offset;
-    if ($bottom - $top > 30) {
-      # luxurious space for centred label
-      $label_y_offset =  ($bottom - $top) / 2;  # half-way-between 
-      # graph is offset further if subtitled
-      if ($track_config->get('wiggle_subtitle')) {
-        # two-line label so centre its centre
-        $label_y_offset += $self->subtitle_height - 16;                        
+    # max_score: score at top of y-axis on graph
+    # min_score: score at bottom of y-axis on graph
+    # range: scores spanned by graph (small value used if identically zero)
+    # pix_per_score: vertical pixels per unit score
+    my $min_score     = defined($metadata->{'min_score'}) 
+                          ? $metadata->{'min_score'} : $track_config->get('min_score');
+    my $max_score     = defined($metadata->{'max_score'}) 
+                          ? $metadata->{'max_score'} : $track_config->get('max_score');
+    my $baseline_zero = defined($metadata->{'baseline_zero'}) 
+                          ? $metadata->{'baseline_zero'} : $track_config->get('baseline_zero');
+    my $range = $max_score - $min_score;
+    if ($range < 0.01) {
+      ## Oh dear, data all has pretty much same value ...
+      if ($max_score > 0.01) {
+        ## ... but it's not zero, so just move minimum down
+        $min_score = 0;
+      } else {
+        ## ... just create some sky
+        $max_score = 0.1;
       }
-    } else {
-      # tight, just squeeze it down a little
-      $label_y_offset = 0;
     }
-    ## Put this into track_config, so it can be passed back to GlyphSet
-    $track_config->set('label_y_offset', $label_y_offset);
-  }
+    $min_score = 0 if $min_score >= 0 && $baseline_zero;
+    $range = $max_score - $min_score;
+    my $pix_per_score = $row_height/$range;
 
-  ## Horizontal guidelines at 25% intervals
-  if(!$track_config->get('no_axis') and !$track_config->get('no_guidelines')) {
-    foreach my $i (1..4) {
-      my $type;
-      $type = 'small' unless $i % 2;
-      $self->draw_guideline($slice_width, ($top*$i+$bottom*(4-$i))/4, $type);
+    ## top: top of graph in pixel units, offset from track top (usu. 0)
+    ## line_score: value to draw "to" up/down, in score units (usu. 0)
+    ## line_px: value to draw "to" up/down, in pixel units (usu. 0)
+    ## bottom: bottom of graph in pixel units (usu. approx. pixel height)
+    my $top = $track_config->get('initial_offset') || 0;
+    ## Reset offset for subsequent tracks
+    unless ($track_config->get('multiwiggle')) {
+      $track_config->set('initial_offset', $top + $row_height + 20);
     }
-  }
+    my $line_score = max(0, $min_score);
+    my $bottom = $top + $pix_per_score * $range;
+    my $line_px = $bottom - ($line_score - $min_score) * $pix_per_score;
 
-  ## Single line? Build into singleton set.
-  $data = [ $data ] if ref $data->[0] ne 'ARRAY';
+    ## Extra left-legend stuff
+    if ($track_config->get('labels')) {
+      $self->add_minilabel($top);
+    }
 
-  ## Draw them! 
-  my $plot_conf = {
-    line_score    => $line_score,
-    line_px       => $line_px,
-    pix_per_score => $pix_per_score,
-    colour        => $track_config->get('score_colour') || 'blue',
+    ## Draw axes and their numerical labels
+    if (!$track_config->get('no_axis')) {
+      $self->draw_axes($top, $line_px, $bottom, $slice_width);
+    }
+
+    if ($track_config->get('axis_label') ne 'off') {
+      $self->draw_score($top, $max_score);
+      $self->draw_score($bottom, $min_score);
+
+      ## Shift down the lhs label to between the axes
+      my $label_y_offset;
+      if ($bottom - $top > 30) {
+        ## luxurious space for centred label
+        $label_y_offset =  ($bottom - $top) / 2;  # half-way-between 
+        ## graph is offset further if subtitled
+        if ($track_config->get('wiggle_subtitle')) {
+          ## two-line label so centre its centre
+          $label_y_offset += $self->subtitle_height - 16;                        
+        }
+      } else {
+        ## tight, just squeeze it down a little
+        $label_y_offset = 0;
+      }
+      ## Put this into track_config, so it can be passed back to GlyphSet
+      $track_config->set('label_y_offset', $label_y_offset);
+    }
+
+    ## Horizontal guidelines at 25% intervals
+    ## Note that we assume these settings will be the same for all tracks
+    if (!$track_config->get('no_axis') and !$track_config->get('no_guidelines')) {
+      foreach my $i (1..4) {
+        my $type;
+        $type = 'small' unless $i % 2;
+        $self->draw_guideline($slice_width, ($top * $i + $bottom * (4 - $i))/4, $type);
+      }
+    } 
+
+    my $features = $subtrack->{'features'};
+
+    ## Single line? Build into singleton set.
+    $features = [ $features ] if ref $features ne 'ARRAY';
+
+    ## Draw them! 
+    my $plot_conf = {
+      line_score    => $line_score,
+      line_px       => $line_px,
+      pix_per_score => $pix_per_score,
+      colour        => $track_config->get('score_colour') || 'blue',
     };
 
-  foreach my $feature_set (@$data) {
     $plot_conf->{'colour'} = shift(@$feature_colours) if $feature_colours and @$feature_colours;
-    $self->draw_wiggle($plot_conf, $feature_set);
+    $self->draw_wiggle($plot_conf, $features);
   }
 
   return @{$self->glyphs||[]};
