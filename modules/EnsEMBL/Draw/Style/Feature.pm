@@ -28,15 +28,20 @@ This module expects data in the following format:
 
   $data = [
             {
-              'start'         => 123456,
-              'end'           => 123789,
-              'colour'        => 'red',                             # mandatory unless bordercolour set
-              'bordercolour'  => 'black',                           # optional
-              'label'         => 'Feature 1',                       # optional
-              'label_colour'  => 'red',                             # optional
-              'href'          => '/Location/View?r=123456-124789',  # optional  
-              'title'         => 'Some text goes here',             # optional  
-            },
+            'metadata' => {},
+            'features' => [
+                {
+                'start'         => 123456,
+                'end'           => 123789,
+                'colour'        => 'red',                             # mandatory unless bordercolour set
+                'bordercolour'  => 'black',                           # optional
+                'label'         => 'Feature 1',                       # optional
+                'label_colour'  => 'red',                             # optional
+                'href'          => '/Location/View?r=123456-124789',  # optional  
+                'title'         => 'Some text goes here',             # optional  
+                },
+              ],
+            }
           ];
 =cut
 
@@ -66,81 +71,82 @@ sub create_glyphs {
   my $label_height    = 0;
   my $total_height    = 0;
 
-  foreach my $feature (@$data) {
+  foreach my $subtrack (@$data) {
+    foreach my $feature (@{$subtrack->{'features'}||[]}) {
+      next if defined($same_strand) && $feature->{'strand'} != $same_strand;
 
-    next if defined($same_strand) && $feature->{'strand'} != $same_strand;
+      $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
+      my $text_info   = $self->get_text_info($feature->{'label'});
+      my $feature_row = 0;
+      my $label_row   = 0;
+      my $new_y;
 
-    $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
-    my $text_info   = $self->get_text_info($feature->{'label'});
-    my $feature_row = 0;
-    my $label_row   = 0;
-    my $new_y;
+      ## Set default colour if there is one
+      $feature->{'colour'} ||= $default_colour;
 
-    ## Set default colour if there is one
-    $feature->{'colour'} ||= $default_colour;
+      ## Work out if we're bumping the whole feature or just the label
+      if ($bumped) {
+        my $bump = $self->set_bump_row($feature->{'start'}, $feature->{'end'}, $show_label, $text_info);
+        $label_row   = $bump;
+        $feature_row = $bump unless $bumped eq 'labels_only';       
+      }
+      next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
-    ## Work out if we're bumping the whole feature or just the label
-    if ($bumped) {
-      my $bump = $self->set_bump_row($feature->{'start'}, $feature->{'end'}, $show_label, $text_info);
-      $label_row   = $bump;
-      $feature_row = $bump unless $bumped eq 'labels_only';       
-    }
-    next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
+      ## Work out where to place the feature
+      my $feature_height  = $track_config->get('height') || $text_info->{'height'};
+      $label_height    = $show_label ? $text_info->{'height'} : 0;
 
-    ## Work out where to place the feature
-    my $feature_height  = $track_config->get('height') || $text_info->{'height'};
-    $label_height    = $show_label ? $text_info->{'height'} : 0;
+      my $feature_width   = $feature->{'end'} - $feature->{'start'};
 
-    my $feature_width   = $feature->{'end'} - $feature->{'start'};
-
-    if ($feature_width == 0) {
-      ## Fix for single base-pair features
-      $feature_width = 1;
-    }
-    else {
-      ## Truncate to viewport - but don't alter feature hash because we may need it
-      my ($drawn_start, $drawn_end) = $feature->{'end'} - $feature->{'start'}
-                                        ? ($feature->{'start'}, $feature->{'end'})
-                                        : ($feature->{'end'}, $feature->{'start'});
-      $drawn_start        = 0 if $drawn_start < 0;
-      $drawn_end          = $slice_width if $drawn_end > $slice_width;
-      $feature_width      = $drawn_end - $drawn_start; 
-    }
-
-    my $labels_height   = $label_row * $label_height;
-    my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
-    my $y               = ($y_start + ($feature_row + 1) * ($feature_height + $vspacing)) + $add_labels;
-    my $position  = {
-                    'y'           => $y,
-                    'width'       => $feature_width,
-                    'height'      => $feature_height,
-                    'image_width' => $slice_width,
-                    };
-
-    $self->draw_feature($feature, $position);
-    $total_height = $y if $y > $total_height;
-  
-    ## Optional label
-    if ($show_label) {
-      if ($track_config->get('label_overlay')) {
-        $new_y = $position->{'y'};
+      if ($feature_width == 0) {
+        ## Fix for single base-pair features
+        $feature_width = 1;
       }
       else {
-        $new_y = $position->{'y'} + $feature_height;
-        $new_y += $labels_height if ($bumped eq 'labels_only');
+        ## Truncate to viewport - but don't alter feature hash because we may need it
+        my ($drawn_start, $drawn_end) = $feature->{'end'} - $feature->{'start'}
+                                        ? ($feature->{'start'}, $feature->{'end'})
+                                        : ($feature->{'end'}, $feature->{'start'});
+        $drawn_start        = 0 if $drawn_start < 0;
+        $drawn_end          = $slice_width if $drawn_end > $slice_width;
+        $feature_width      = $drawn_end - $drawn_start; 
       }
-      $position = {
-                    'y'       => $new_y,
-                    'width'   => $text_info->{'width'}, 
-                    'height'  => $text_info->{'height'},
-                    'image_width' => $slice_width,
-                  };
-      $self->add_label($feature, $position);
-      $total_height = $new_y if $new_y > $total_height;
+
+      my $labels_height   = $label_row * $label_height;
+      my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
+      my $y               = ($y_start + ($feature_row + 1) * ($feature_height + $vspacing)) + $add_labels;
+      my $position  = {
+                      'y'           => $y,
+                      'width'       => $feature_width,
+                      'height'      => $feature_height,
+                      'image_width' => $slice_width,
+                      };
+
+      $self->draw_feature($feature, $position);
+      $total_height = $y if $y > $total_height;
+  
+      ## Optional label
+      if ($show_label) {
+        if ($track_config->get('label_overlay')) {
+          $new_y = $position->{'y'};
+        }
+        else {
+          $new_y = $position->{'y'} + $feature_height;
+          $new_y += $labels_height if ($bumped eq 'labels_only');
+        }
+        $position = {
+                      'y'       => $new_y,
+                      'width'   => $text_info->{'width'}, 
+                      'height'  => $text_info->{'height'},
+                      'image_width' => $slice_width,
+                    };
+        $self->add_label($feature, $position);
+        $total_height = $new_y if $new_y > $total_height;
+      }
     }
+    ## Add label height if last feature had a label
+    $total_height += $label_height if $show_label;
   }
-  ## Add label height if last feature had a label
-  $total_height += $label_height if $show_label;
   $track_config->set('y_start', $y_start + $total_height);
   return @{$self->glyphs||[]};
 }
