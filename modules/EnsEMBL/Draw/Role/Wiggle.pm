@@ -79,20 +79,28 @@ sub _render {
 
   my $tracks = $self->{'features'};
 
-  ## Work out maximum and minimum scores
-  my ($min_score, $max_score) = $self->_get_min_max($tracks);
-  $self->{'my_config'}->set('min_score', $min_score);
-  $self->{'my_config'}->set('max_score', $max_score);
-
   # Make sure subtitles will be correctly coloured
   unless ($self->{'my_config'}->get('subtitle_colour')) {
-    my $sub_colour = $self->{'my_config'}->get('score_colour') || $self->my_colour('score') || 'blue';
+    my $sub_colour = $self->{'my_config'}->get('score_colour') 
+                      || $self->my_colour('score') || 'blue';
     $self->{'my_config'}->set('subtitle_colour', $sub_colour);
   }
 
-  ## Now we try and draw the features
-  my $error = $self->draw_features;
+  foreach (@$tracks) {
+    ## Work out maximum and minimum scores
+    my $track_min = $self->{'my_config'}->get('min_score');
+    my $track_max = $self->{'my_config'}->get('max_score');
+    my ($min_score, $max_score) = $self->_get_min_max($_);
+    $_->{'metadata'}{'min_score'} = $min_score;
+    $_->{'metadata'}{'max_score'} = $max_score;
+    $self->{'my_config'}->set('min_score', $min_score) 
+      if !$track_min || $min_score < $track_min;
+    $self->{'my_config'}->set('max_score', $max_score) 
+      if !$track_max || $max_score > $track_max;
+  }
 
+  ## Now we try and draw the features
+  my $error = $self->draw_features($_);
 =pod
   return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
 
@@ -107,29 +115,22 @@ sub _render {
 
 sub _get_min_max {
 ### Get minimum and maximum scores for a set of features
-  my ($self, $features) = @_;
-  my ($min, $max);
+  my ($self, $dataset) = @_;
+  my $features = $dataset->{'features'} || [];
+  return unless scalar @$features;
+  my $metadata = $dataset->{'metadata'} || {};
+  my ($min, $max) = (0, 0);
 
-  foreach my $f (@{$features||[]}) {
-    if (ref($f) eq 'HASH') {
-      if ($f->{'metadata'} && $f->{'metadata'}{'viewLimits'}) {
-        return split ':', $f->{'metadata'}{'viewLimits'};
-      }
-      elsif ($f->{'features'}) {
-        foreach (@{$f->{'features'}}) {
-          next unless $_->{'score'};
-          $min = $_->{'score'} if !$min || $_->{'score'} < $min;
-          $max = $_->{'score'} if !$max || $_->{'score'} > $min;
-        }
-      }
-    }
-    else {
-      next unless $f->{'score'};
-      $min = $f->{'score'} if !$min || $f->{'score'} < $min;
-      $max = $f->{'score'} if !$max || $f->{'score'} > $min;
+  if ($metadata->{'viewLimits'}) {
+    ($min, $max) = split ':', $metadata->{'viewLimits'};
+  }
+  else {
+    foreach (@$features) {
+      next unless $_->{'score'};
+      $min = $_->{'score'} if !$min || $_->{'score'} < $min;
+      $max = $_->{'score'} if !$max || $_->{'score'} > $min;
     }
   }
- 
   return ($min, $max);
 }
 
