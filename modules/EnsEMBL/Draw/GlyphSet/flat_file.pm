@@ -108,7 +108,7 @@ sub draw_features {
   my $has_features = 0;
 
   foreach (@$subtracks) {
-    $has_features += scalar $_->{'features'};
+    $has_features += scalar(@{$_->{'features'}||[]});
   }
 
   unless ($has_features) {
