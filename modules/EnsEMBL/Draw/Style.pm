@@ -131,6 +131,13 @@ sub draw_subtitle {
                 });
 }
 
+sub make_readable {
+### Darken pale text colours so that they can be read on a pale background
+  my ($self, $colour) = @_;
+  my @rgb = EnsEMBL::Draw::Utils::ColourMap::rgb_by_name(undef, $colour);
+  @rgb = EnsEMBL::Draw::Utils::ColourMap::hivis(undef, 2, @rgb);
+  return join(',', @rgb);
+}
 
 sub set_bump_row {
   my ($self, $start, $end, $show_label, $text_info) = @_;
