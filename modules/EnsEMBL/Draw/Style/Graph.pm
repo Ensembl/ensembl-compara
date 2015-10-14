@@ -162,6 +162,7 @@ sub create_glyphs {
       line_px       => $line_px,
       pix_per_score => $pix_per_score,
       colour        => $track_config->get('score_colour') || 'blue',
+      alt_colour    => $subtrack->{'metadata'}{'altColor'},
     };
 
     $plot_conf->{'colour'} = shift(@$feature_colours) if $feature_colours and @$feature_colours;
@@ -198,7 +199,7 @@ sub draw_wiggle {
                                             y         => $current_y,
                                             width     => $previous_x - $current_x,
                                             height    => $previous_y - $current_y,
-                                            colour    => $f->{'colour'},
+                                            colour    => $self->set_colour($c, $f),
                                             absolutey => 1,
                                           });
     }
@@ -232,6 +233,17 @@ sub draw_axes {
   $params->{'height'}     = $bottom - $top;
   $params->{'absolutex'}  = 1;
   push @{$self->glyphs}, $self->Line($params);
+}
+
+sub set_colour {
+### Make final decision on feature colour before drawing it
+### @param c Hashref - track configuration
+### @param f Hashref - feature
+### @return String - colour of feature
+  my ($self, $c, $f) = @_;
+  my $cutoff = $c->{'alt_colour_cutoff'} || 0;
+  return ($c->{'alt_colour'} && $f->{'score'} < $cutoff)
+                  ? $c->{'alt_colour'} : $f->{'colour'};
 }
 
 sub draw_score {

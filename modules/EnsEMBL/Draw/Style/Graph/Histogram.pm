@@ -42,7 +42,7 @@ sub draw_wiggle {
                               x         => $start - 1,
                               width     => $end - $start + 1,
                               absolutey => 1,
-                              colour    => $f->{'colour'},
+                              colour    => $self->set_colour($c, $f),
                               alpha     => $self->track_config->get('use_alpha') ? 0.5 : 0,
                               title     => $self->track_config->get('no_titles') ? undef : $title,
                               href      => $href,
