@@ -3392,12 +3392,7 @@ sub add_phenotypes {
     renderers  => [ 'off', 'Off', 'gene_nolabel', 'Expanded', 'compact', 'Compact' ],
   );
 
-#  $pf_menu->append($self->create_track('phenotype_all', 'Phenotype annotations (all types)', {
-#    %options,
-#    caption => 'Phenotypes',
-#    type => undef,
-#    description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
-#  }));
+  my $track_desc = 'Disease, Trait and Phenotype annotations on ';
  
   foreach my $type( sort {$a cmp $b} keys %{$hashref->{'phenotypes'}{'types'}}) {  
     next unless ref $hashref->{'phenotypes'}{'types'}{$type} eq 'HASH';
@@ -3406,7 +3401,7 @@ sub add_phenotypes {
       %options,
       caption => 'Phenotypes ('.$type.'s)',
       type => $type,
-      description => 'Phenotype annotations on '.$type.'s (from '.$pf_sources.')',
+      description => $track_desc.$type.'s (from '.$pf_sources.')',
     }));
   }
 
@@ -3414,7 +3409,7 @@ sub add_phenotypes {
     %options,
     caption => 'Phenotypes',
     type => undef,
-    description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
+    description => $track_desc.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
   }));
   $p_menu->append($pf_menu);
 }
