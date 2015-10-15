@@ -38,6 +38,9 @@ use EnsEMBL::Draw::Style::Graph::Barcode;
 
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
+
+sub can_json { return 1; }
+
 sub init {
   my $self = shift;
   my @roles;
@@ -66,6 +69,7 @@ sub features {
   my $sub_type     = $self->my_config('sub_type');
   my $format       = $self->my_config('format');
   my $data         = [];
+  my $legend       = {};
 
   ## Get the file contents
   my %args = (
@@ -98,6 +102,7 @@ sub features {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
   }
+  #$self->{'config'}->add_to_legend($legend);
 
   return $data;
 }
@@ -105,6 +110,7 @@ sub features {
 sub draw_features {
   my ($self, $subtracks) = @_;
   $subtracks ||= $self->{'features'};
+  return unless ref $subtracks eq 'ARRAY';
   my $feature_count = 0;
 
   foreach (@$subtracks) {
@@ -120,6 +126,7 @@ sub draw_features {
   my $colour_key     = $self->colour_key('default');
   $self->{'my_config'}->set('default_colour', $self->my_colour($colour_key));
 
+  $self->{'my_config'}->set('slice_length', $self->{'container'}->length);
   $self->{'my_config'}->set('bumped', 1) unless defined($self->{'my_config'}->get('bumped'));
   $self->{'my_config'}->set('same_strand', $self->strand);
   unless ($self->{'my_config'}->get('height')) {
