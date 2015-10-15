@@ -152,9 +152,9 @@ sub populate_tree {
   
   $prot_menu->append($D);
   
-  $prot_menu->append($self->create_node('ProtVariations', 'Variations',
+  $prot_menu->append($self->create_node('ProtVariations', 'Variants',
     [qw( protvars EnsEMBL::Web::Component::Transcript::ProteinVariations )],
-    { 'availability' => 'either database:variation has_variations', 'concise' => 'Variations' }
+    { 'availability' => 'either database:variation has_variations', 'concise' => 'Variants' }
   ));
   
   # External Data tree, including non-positional DAS sources
