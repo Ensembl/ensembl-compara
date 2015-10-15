@@ -47,7 +47,7 @@ sub create_hash {
 
   if ($metadata->{'useScore'}) {
     ## UCSC use greyscale with PSL, but it's not clear how it's calculated!
-    $colour = $self->convert_to_gradient(1000);
+    $colour = $self->convert_to_gradient(1000, $metadata->{'color'});
   }
   elsif ($metadata->{'color'}) {
     $colour = $metadata->{'color'};
