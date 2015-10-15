@@ -470,12 +470,6 @@ sub about_feature {
       g      => $gene->stable_id
     });
 
-    my $phenotype_url = $hub->url({
-      type   => 'Gene',
-      action => 'Phenotype',
-      g      => $gene->stable_id
-    });    
-
     my $splice_url = $hub->url({
       type   => 'Gene',
       action => 'Splice',
@@ -504,11 +498,6 @@ sub about_feature {
                         $avail->{family_count}, 
                         $avail->{family_count} eq "1" ? "family" : "families"
                     ) if($avail->{family_count});
-    push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
-                        $phenotype_url, 
-                        $avail->{has_phenotypes}, 
-                        $avail->{has_phenotypes} eq "1" ? "phenotype" : "phenotypes"
-                    ) if($avail->{has_phenotypes});
    
     $counts_summary  = sprintf('This gene has %s.',$self->join_with_and(@str_array));  
   }
