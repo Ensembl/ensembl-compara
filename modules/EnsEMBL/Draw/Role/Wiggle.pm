@@ -78,6 +78,7 @@ sub _render {
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
 
   my $tracks = $self->{'features'};
+  return unless ref $tracks eq 'ARRAY';
 
   # Make sure subtitles will be correctly coloured
   unless ($self->{'my_config'}->get('subtitle_colour')) {
@@ -101,7 +102,7 @@ sub _render {
   }
 
   ## Now we try and draw the features
-  my $error = $self->draw_features($_);
+  my $error = $self->draw_features($tracks);
   return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
 
   my $here = $self->my_config('strand') eq 'b' ? 'on this strand' : 'in this region';
