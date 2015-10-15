@@ -187,10 +187,11 @@ sub store_no_redundancy {
 
     $matching_ids = $self->dbc->db_handle->selectcol_arrayref('SELECT sequence_id FROM sequence WHERE md5sum = ? AND sequence = ? ORDER BY sequence_id', undef, $md5sum, $sequence);
     die "The sequence disappeared !\n" unless scalar(@$matching_ids);
-    my $seqID = $matching_ids->[0];
+    my $seqID = shift @$matching_ids;
 
-    if (scalar(@$matching_ids) > 1) {
-        $self->dbc->do('DELETE FROM sequence WHERE md5sum = ? AND sequence = ? AND sequence_id != ?', undef, $md5sum, $sequence, $seqID);
+    if (scalar(@$matching_ids)) {
+        my $other_ids = join(",", @$matching_ids);
+        $self->dbc->do("DELETE FROM sequence WHERE sequence_id IN ($other_ids)");
     }
 
     return $seqID;
