@@ -54,6 +54,8 @@ sub new {
   return $self;
 }
 
+sub colourset { return 'userdata'; }
+
 sub open {
   ## Factory method - creates a wrapper of the appropriate type
   ## based on the format of the file given

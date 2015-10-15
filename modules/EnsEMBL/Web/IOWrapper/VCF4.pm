@@ -27,6 +27,8 @@ no warnings 'uninitialized';
 
 use parent qw(EnsEMBL::Web::IOWrapper);
 
+sub colourset { return 'variation'; }
+
 sub create_hash {
 ### Create a hash of feature information in a format that
 ### can be used by the drawing code
@@ -41,8 +43,6 @@ sub create_hash {
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
   my @feature_ids   = @{$self->parser->get_IDs};
-
-  my $colour;
 
   my $href = $self->href({
                         'seq_region'  => $seqname,
