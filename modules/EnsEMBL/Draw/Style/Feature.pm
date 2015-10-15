@@ -73,7 +73,7 @@ sub create_glyphs {
 
   foreach my $subtrack (@$data) {
     foreach my $feature (@{$subtrack->{'features'}||[]}) {
-      next if defined($same_strand) && $feature->{'strand'} != $same_strand;
+      next if defined($same_strand) && defined($feature->{'strand'}) && $feature->{'strand'} != $same_strand;
 
       $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
       my $text_info   = $self->get_text_info($feature->{'label'});
