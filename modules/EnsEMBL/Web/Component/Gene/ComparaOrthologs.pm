@@ -51,7 +51,9 @@ sub content {
 
   my %orthologue_list;
   my %skipped;
-  my %not_seen = map {$_ => 1} ($species_defs->valid_species);
+
+  my $mlss_adaptor = $hub->get_adaptor('get_MethodLinkSpeciesSetAdaptor', $cdb);
+  my %not_seen = map {$_->name => 1} @{$mlss_adaptor->fetch_all_by_method_link_type('PROTEIN_TREES')->[0]->species_set_obj->genome_dbs};
   delete $not_seen{$hub->species};
   
   foreach my $homology_type (@orthologues) {
