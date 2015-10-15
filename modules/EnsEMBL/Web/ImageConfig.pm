@@ -94,6 +94,7 @@ sub new {
       'unlimited',            'Stacked unlimited',
       'ungrouped',            'Ungrouped',
     ],
+    legend => {'_settings' => {'max_length' => 0}},
   };
   
   return bless $self, $class;
@@ -243,6 +244,7 @@ sub texthelper          { return $_[0]->{'_texthelper'};                        
 sub transform           { return $_[0]->{'transform'};                                         }
 sub tree                { return $_[0]->{'_tree'};                                             }
 sub species             { return $_[0]->{'species'};                                           }
+sub legend              { return $_[0]->{'legend'};                                           }
 sub multi_species       { return 0;                                                            }
 sub cache_key           { return join '::', '', ref $_[0], $_[0]->species, $_[0]->code;        }
 sub bgcolor             { return $_[0]->get_parameter('bgcolor') || 'background1';             }
@@ -380,6 +382,33 @@ sub glyphset_configs {
   }
 
   return $self->{'ordered_tracks'};
+}
+
+sub add_to_legend {
+### Add a track's legend entries to the master legend
+  my ($self, $new_legend) = @_;
+  return unless ref $new_legend eq 'HASH';
+  my $legend = $self->legend;
+
+  while (my($key, $sublegend) = each (%$new_legend)) {
+    if ($legend->{$key}) {
+      ## Add to an existing legend
+      ## TODO - currently this skips existing entries and settings. 
+      ## Need to deal with possible clashes with existing data
+      foreach (@{$sublegend->{'entry_order'}}) {
+        next if $legend->{$key}{'entries'}{$_};
+        push @{$legend->{$key}{'entry_order'}}, $_;
+        my $entry_hash = $sublegend->{$key}{'entries'}{$_};
+        $legend->{$key}{'entries'}{$_} = $entry_hash;
+        my $label_length = length($entry_hash->{'title'});
+        $legend->{'_settings'}{'max_length'} = $label_length if $label_length > $legend->{'_settings'}{'max_length'}; 
+      }
+    }
+    else {
+      ## Create a new section
+      $legend->{$key} = $sublegend;
+    }
+  }
 }
 
 sub get_favourite_tracks {
