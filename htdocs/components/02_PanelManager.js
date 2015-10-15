@@ -121,6 +121,9 @@ Ensembl.PanelManager.extend({
       
       if (id) {
         this.createPanel(id, type, params);
+        if (!this.panels[id].el) {
+          throw Error("Container div 'el' is missing for panel " + id + ' (' + type + '). Perhaps panel.init is not called properly.');
+        }
         this.init($('.js_panel', this.panels[id].el));
       }
     }
