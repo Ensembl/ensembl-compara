@@ -701,7 +701,7 @@ sub load_user_tracks {
       $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external    => 'user',
         glyphset    => 'flat_file',
-        colourset   => 'classes',
+        colourset   => 'userdata',
         sub_type    => 'tmp',
         file        => $entry->{'file'},
         format      => $entry->{'format'},
@@ -804,7 +804,7 @@ sub load_user_tracks {
       push @tracks, [ $logic_name, $caption, {
         external    => 'user',
         glyphset    => '_user_data',
-        colourset   => 'classes',
+        colourset   => 'userdata',
         sub_type    => $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp',
         renderers   => $renderers,
         source_name => $source_name,
@@ -1359,7 +1359,7 @@ sub _add_flat_file_track {
     strand        => $strand,
     external      => 'external',
     glyphset      => 'flat_file',
-    colourset     => 'classes',
+    colourset     => 'userdata',
     caption       => $name,
     sub_type      => $sub_type,
     renderers     => $renderers,
