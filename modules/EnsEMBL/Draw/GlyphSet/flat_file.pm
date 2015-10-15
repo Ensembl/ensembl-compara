@@ -98,6 +98,11 @@ sub features {
   if ($iow) {
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container);
+
+    ## Override colourset based on format here, because we only want to have to do this in one place
+    my $colourset   = $iow->colourset || 'userdata';
+    $self->{'my_config'}->set('colours', $hub->species_defs->colour($colourset));
+    $self->{'my_config'}->set('default_colour', $self->my_colour('default'));
   } else {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
@@ -123,9 +128,6 @@ sub draw_features {
   }
 
   ## Defaults
-  my $colour_key     = $self->colour_key('default');
-  $self->{'my_config'}->set('default_colour', $self->my_colour($colour_key));
-
   $self->{'my_config'}->set('slice_length', $self->{'container'}->length);
   $self->{'my_config'}->set('bumped', 1) unless defined($self->{'my_config'}->get('bumped'));
   $self->{'my_config'}->set('same_strand', $self->strand);
