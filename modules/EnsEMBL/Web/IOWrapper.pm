@@ -28,7 +28,7 @@ no warnings 'uninitialized';
 use Bio::EnsEMBL::IO::Parser;
 use Bio::EnsEMBL::IO::Utils;
 
-use EnsEMBL::Draw::Utils::ColourMap qw(build_linear_gradient);
+use EnsEMBL::Draw::Utils::ColourMap;
 
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 
@@ -135,7 +135,7 @@ sub convert_to_gradient {
   ## Default to black
   $score = 1000 unless defined($score);
 
-  my @gradient = $colour ? $self->_create_gradient($colour) : @{$self->{'greyscale'}||[]};
+  my @gradient = $colour ? $self->_create_gradient(['white', $colour]) : @{$self->{'greyscale'}||[]};
 
   my $value;
   if ($score <= 166) {
@@ -158,8 +158,9 @@ sub _create_gradient {
     $colours = [qw(white black)];
   }
   $steps ||= 10;
-  my @gradient = EnsEMBL::Draw::Utils::ColourMap::build_linear_gradient($steps, $colours);
-  return \@gradient;
+  my $colourmap = new EnsEMBL::Draw::Utils::ColourMap;
+  my @gradient = $colourmap->build_linear_gradient($steps, $colours);
+  return @gradient;
 }
 
 sub create_tracks {
