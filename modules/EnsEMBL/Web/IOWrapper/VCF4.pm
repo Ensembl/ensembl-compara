@@ -27,5 +27,38 @@ no warnings 'uninitialized';
 
 use parent qw(EnsEMBL::Web::IOWrapper);
 
+sub create_hash {
+### Create a hash of feature information in a format that
+### can be used by the drawing code
+### @param metadata - Hashref of information about this track
+### @param slice - Bio::EnsEMBL::Slice object
+### @return Hashref
+  my ($self, $metadata, $slice) = @_;
+  $metadata ||= {};
+  return unless $slice;
+
+  my $seqname       = $self->parser->get_seqname;
+  my $feature_start = $self->parser->get_start;
+  my $feature_end   = $self->parser->get_end;
+  my @feature_ids   = @{$self->parser->get_IDs};
+
+  my $colour;
+
+  my $href = $self->href({
+                        'seq_region'  => $seqname,
+                        'start'       => $feature_start,
+                        'end'         => $feature_end,
+                        });
+
+  ## Start and end need to be relative to slice,
+  ## as that is how the API returns coordinates
+  return {
+    'start'         => $feature_start - $slice->start,
+    'end'           => $feature_end - $slice->start,
+    'seq_region'    => $seqname,
+    'label'         => join(',', @feature_ids),
+    'href'          => $href,
+  };
+}
 
 1;
