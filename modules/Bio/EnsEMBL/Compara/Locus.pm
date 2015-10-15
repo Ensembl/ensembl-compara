@@ -116,7 +116,8 @@ use Bio::EnsEMBL::Utils::Scalar qw(:all);
 =cut
 
 sub new {
-  my ($class, @args) = @_;
+  my ($caller, @args) = @_;
+  my $class = ref($caller) || $caller;
   my $self = bless {}, $class;
 
   if (scalar @args) {
