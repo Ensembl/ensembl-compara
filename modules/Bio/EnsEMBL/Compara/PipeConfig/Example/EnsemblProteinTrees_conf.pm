@@ -143,6 +143,7 @@ sub default_options {
         'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
         'getPatterns_exe'           => 'UNDEF',
         'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
+        'fasttree_mp_exe'           => 'UNDEF',
 
     # HMM specific parameters (set to 0 or undef if not in use)
 

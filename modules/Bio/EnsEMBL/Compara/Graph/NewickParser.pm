@@ -174,11 +174,7 @@ sub parse_newick_into_tree
           $token = next_token(\$newick, "[:,);"); 
           # it is possible to have anonymous internal nodes no name
           # no blength but with NHX tags
-          if ($token eq '[') {
-              $state=1;
-          } else {
-              $state=2;
-          }
+          $state=2;
           $bracket_level--;
         } elsif($token eq ',') {
           $token = next_token(\$newick, "[(:,)"); #can be un_blengthed nhx nodes

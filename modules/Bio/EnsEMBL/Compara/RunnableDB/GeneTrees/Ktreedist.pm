@@ -74,6 +74,13 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
+sub param_defaults {
+    return {
+        'ref_tree_clusterset'   => undef,
+        'alternative_trees'     => undef,
+        'reroot_with_sdi'       => 1,
+    };
+}
 
 =head2 fetch_input
 
@@ -120,7 +127,13 @@ sub fetch_input {
 sub run {
   my $self = shift;
 
-  $self->reroot_inputtrees;
+  #If re-root we run the method otherwise we just copy over from the unrooted hash
+  if ($self->param('reroot_with_sdi') ) {
+    $self->reroot_inputtrees;
+  }else{
+    $self->param('inputtrees_rooted', $self->param('inputtrees_unrooted'));
+  }
+
   $self->run_ktreedist;
 }
 
@@ -193,6 +206,18 @@ sub run_ktreedist {
     die ($method." is not defined in inputtrees_rooted")  unless (defined $inputtree);
     my $comparison_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree);
     my $newick_string = $comparison_tree->newick_format("simple");
+
+    #We replace all the zero branch lengths (added by the parser, since parsimony trees have no BLs) with 1s.
+    #This allows KtreeDist to run without crashing.
+
+    #!!!!!! IMPORTANT !!!!!!!!
+    # Should ONLY look into RF distances for raxml_parsimony trees. Other distances should be ignored.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    if ($method eq "raxml_parsimony"){
+        $newick_string =~ s/:0/:1/g;
+    }
+
     $self->throw("error with newick tree") unless (defined($newick_string));
     print CTFILE "TREE    $method = $newick_string\n";
   }
@@ -202,9 +227,19 @@ sub run_ktreedist {
   open RTFILE,">$referencefilename" or die $!;
   print RTFILE "#NEXUS\n\n";
   print RTFILE "Begin TREES;\n\n";
-  my $reference_string = $self->param('gene_tree')->newick_format('member_id_taxon_id');
+  my $reference_string;
+  my $ref_label;
+ 
+  if ($self->param('ref_tree_clusterset')){
+    $reference_string = $self->param('gene_tree')->alternative_trees->{$self->param('ref_tree_clusterset')}->newick_format('member_id_taxon_id');
+    $ref_label = $self->param('ref_tree_clusterset');
+  }else{
+    $reference_string = $self->param('gene_tree')->newick_format('member_id_taxon_id');
+    $ref_label = 'treebest';
+  }
+  
   $self->throw("error with newick tree") unless (defined($reference_string));
-  print RTFILE "TREE    treebest = $reference_string\n";
+  print RTFILE "TREE    $ref_label = $reference_string\n";
   print CTFILE "End;\n\n";
   close RTFILE;
 
@@ -234,11 +269,28 @@ sub load_input_trees {
     my ($self) = @_;
     my $tree = $self->param('gene_tree');
     $self->param('inputtrees_unrooted', {});
+
+    my %alternative_trees = undef;
+    if ($self->param('ref_tree_clusterset')){
+        %alternative_trees = map { $_ => 1 } @{$self->param('alternative_trees')};
+    }
+
     for my $other_tree (values %{$tree->alternative_trees}) {
+
+        #If we have a different set of alternative trees and the tags are not specified, it will skip the current tree
+        next if ($self->param('ref_tree_clusterset') && (!$alternative_trees{$other_tree->clusterset_id}));
+
         $other_tree->preload();
-        print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
-        my $tag = $other_tree->clusterset_id;
-        $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->check_distances_to_parent($other_tree));
+        #print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
+        print "tree:" . $other_tree->clusterset_id . "\n" if ($self->debug);
+
+        #Parsimony trees dont have branch lengths.
+        if ($other_tree->clusterset_id eq "raxml_parsimony"){
+            $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}');
+        }else{
+            $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->check_distances_to_parent($other_tree));
+        }
+
     }
     return 1;
 }
@@ -253,6 +305,7 @@ sub check_distances_to_parent {
         $tot_dtp += $node->distance_to_parent;
     }
     print STDERR "TOT_DTP: $tot_dtp\n";
+
     return $tot_dtp;
 }
 

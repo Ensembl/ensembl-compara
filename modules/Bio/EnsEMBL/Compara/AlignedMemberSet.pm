@@ -382,9 +382,11 @@ sub get_SimpleAlign {
     my $remove_gaps = 0;
     my $seq_type = undef;
     my $removed_columns = undef;
+    my $removed_members = undef;
+    my $map_long_seq_names = undef;
     if (scalar @args) {
-        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $cdna) =
-            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS CDNA)], @args);
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $cdna, $removed_members, $map_long_seq_names) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS CDNA REMOVED_MEMBERS MAP_LONG_SEQ_NAMES)], @args);
     }
 
     if (defined $cdna) {
@@ -410,9 +412,23 @@ sub get_SimpleAlign {
     $self->_load_all_missing_sequences($seq_type);
 
     my $seq_hash = {};
-    foreach my $member (@{$self->get_all_Members}) {
+
+    #Counter for the unique temporary sequence name.
+    my $countSeq = 0;
+
+    #This is to assure that we have always the same order when dumping and mapping an alignment. 
+    my @all_members; 
+    if ($map_long_seq_names){
+        @all_members = sort {$b->dbID <=> $a->dbID} @{$self->get_all_Members};
+    }else{
+        @all_members = @{$self->get_all_Members};
+    }
+
+    foreach my $member (@all_members) {
 
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
+
+        next if $removed_members->{$member->dbID};
 
         my $seqstr = $member->alignment_string($seq_type);
         next unless $seqstr;
@@ -425,13 +441,46 @@ sub get_SimpleAlign {
         $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
 
         # Sequence name
-        my $seqID = $member->stable_id;
-        $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
-        $seqID = $member->seq_member_id if $id_type and $id_type =~ m/^MEM/i;
-        $seqID = $member->display_label if $id_type and $id_type =~ m/^DIS/i;
-        $seqID .= "_" . $member->taxon_id if($append_taxon_id);
-        $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
-        $seqID .= "_" . $member->genome_db->_species_tree_node_id if ($append_stn_id);
+        my $seqID;
+
+        # Many phylogenetic methods take as input the sequence format phylip, which has a limit of 10 characters for the sequence names.
+        # For those cases we need to create a mapping of the original names to be re-mapped whenever needed.
+        # If map_long_seq_names is defined we need to store the mapping 
+        if ($map_long_seq_names){
+            $seqID = $member->stable_id;
+            $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
+            $seqID = $member->seq_member_id if $id_type and $id_type =~ m/^MEM/i;
+            $seqID = $member->display_label if $id_type and $id_type =~ m/^DIS/i;
+
+            my $suffix;
+            $suffix = $member->taxon_id if($append_taxon_id);
+            $suffix = $member->genome_db_id if ($append_genomedb_id);
+            $suffix = $member->genome_db->_species_tree_node_id if ($append_stn_id);
+
+            #Instead, the sequence counter needs to be incremented for each sequence.
+            $countSeq++;
+
+            #Define the new sequence naming
+            #Flanking with chars to assure that the \b regex will work just fine.
+            my $prefix = $seqID;
+            $seqID = "x".$countSeq."x";
+
+            #Store the mapping
+            #Permanent sequence name
+            $map_long_seq_names->{$seqID}->{'seq'} = $prefix;
+
+            #Permanent suffix that will be used in the DB, it needs to be here to be replaced by the devived classes
+            $map_long_seq_names->{$seqID}->{'suf'} = $suffix;
+
+        }else{
+            $seqID = $member->stable_id;
+            $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
+            $seqID = $member->seq_member_id if $id_type and $id_type =~ m/^MEM/i;
+            $seqID = $member->display_label if $id_type and $id_type =~ m/^DIS/i;
+            $seqID .= "_" . $member->taxon_id if($append_taxon_id);
+            $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
+            $seqID .= "_" . $member->genome_db->_species_tree_node_id if ($append_stn_id);
+        }
 
         ## Append $seqID with species short name, if required
         if ($append_sp_short_name and $member->genome_db_id) {

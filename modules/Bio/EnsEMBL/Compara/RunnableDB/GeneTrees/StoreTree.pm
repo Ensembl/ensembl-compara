@@ -119,6 +119,9 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     my $gene_tree = shift;
     my $format = shift;
     my $simple_align_options = shift || {};
+    my $map_long_seq_names = shift;
+
+    my $dbID = (ref($gene_tree) eq 'Bio::EnsEMBL::Compara::GeneTree' ? $gene_tree->root_id : $gene_tree->dbID) || 0;
 
     my $removed_columns = undef;
     if ($self->param('remove_columns')) {
@@ -127,18 +130,32 @@ sub dumpTreeMultipleAlignmentToWorkdir {
             $removed_columns = \@removed_columns;
             print Dumper $removed_columns if ( $self->debug() );
         } else {
-            $self->warning(sprintf("The 'removed_columns' is missing from tree dbID=%d\n", $gene_tree->dbID));
+            $self->warning(sprintf("The 'removed_columns' is missing from tree dbID=%d\n", $dbID));
         }
     }
 
-    my $aln_file = $self->worker_temp_directory.sprintf('align.%d.%s', $gene_tree->dbID || 0, $format);
+    my $removed_members = undef;
+    if ($self->param('remove_columns')) {
+        if ($gene_tree->has_tag('removed_members')) {
+            my %removed_members;
+            map {$removed_members{$_}=1} split(/\//,$gene_tree->get_value_for_tag('removed_members'));
+            $removed_members = \%removed_members;
+            print Dumper $removed_members if ( $self->debug() );
+        } else {
+            $self->warning(sprintf("The 'removed_members' is missing from tree dbID=%d\n", $dbID));
+        }
+    }
+
+    my $aln_file = $self->worker_temp_directory.sprintf('align.%d.%s', $dbID, $format);
 
     $gene_tree->print_alignment_to_file( $aln_file,
         -FORMAT => $format,
         -ID_TYPE => 'MEMBER',
-        $self->param('cdna') ? (-SEQ_TYPE => 'cds') : (),
+        -SEQ_TYPE => $self->param('cdna') ? 'cds' : undef,
         -STOP2X => 1,
         -REMOVED_COLUMNS => $removed_columns,
+        -REMOVED_MEMBERS => $removed_members,
+        -MAP_LONG_SEQ_NAMES => $map_long_seq_names,
         %$simple_align_options,
     );
 
@@ -148,7 +165,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
     return $aln_file;
 }
-
 
 
 sub store_genetree
@@ -541,6 +557,7 @@ sub parse_filtered_align {
 # NB: this will be testing $self->param('gene_tree_id')
 sub call_one_hc {
     my ($self, $test_name) = @_;
+    print "Calling the HC '$test_name'\n" if ($self->debug);
     $self->param('tests', $Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::config->{$test_name}->{tests});
     $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_validate_tests();
     my $failures = 0;
@@ -558,7 +575,13 @@ sub call_hcs_all_trees {
 
     $self->call_one_hc('alignment');
 
-    my $ini_gene_tree_id = $self->param('gene_tree_id');
+    my $ini_gene_tree_id;
+    if ($self->param('ref_gene_tree_id')){
+        $ini_gene_tree_id = $self->param('ref_gene_tree_id');
+    }else{
+        $ini_gene_tree_id = $self->param('gene_tree_id');
+    }
+
     my $alt_root_ids = $self->compara_dba->dbc->db_handle->selectcol_arrayref('SELECT root_id FROM gene_tree_root WHERE ref_root_id = ?', undef, $self->param('gene_tree_id'));
     foreach my $root_id ($ini_gene_tree_id, @$alt_root_ids) {
         $self->param('gene_tree_id', $root_id);
@@ -568,6 +591,10 @@ sub call_hcs_all_trees {
             } elsif ($self->param('read_tags')) {
                 next;  # similarly: in read_tags mode, the default tree is probably still flat
             }
+        } else {
+                if ($self->param('read_tags')) {
+                    next;  # in read_tags mode, there is no guarantee that the tree has been built
+                }
         }
 
         foreach my $test_name ('tree_structure', 'tree_attributes') {
