@@ -44,7 +44,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub param_defaults {
     return {
         'uniprot_input_cmd' => 'wget -q -O - #uniprot_ftp_url# | gunzip',   # how to get the Uniprot file
-        'buffer_size'       => 16,          # how many uniprot_ids are fetched per one execution of mfetch
+        'buffer_size'       => 1600,          # how many uniprot_ids are fetched per one execution of mfetch
     };
 }
 
