@@ -63,12 +63,12 @@ sub create_hash {
     'score'         => $score,
     'label'         => $self->parser->get_qName,
     'colour'        => $colour, 
-    'structure'     => $self->create_structure($feature_start, $slice->start),
+    'structure'     => $self->create_structure($slice->start),
   };
 }
 
 sub create_structure {
-  my ($self, $feature_start, $slice_start) = @_;
+  my ($self, $slice_start) = @_;
 
   if (!$self->parser->get_blockCount || !$self->parser->get_blockSizes 
           || !$self->parser->get_tStarts) {
@@ -79,11 +79,13 @@ sub create_structure {
 
   my @block_starts  = @{$self->parser->get_tStarts};
   my @block_lengths = @{$self->parser->get_blockSizes};
+  my $seq_length    = $self->parser->get_tSize;
 
   foreach(0..($self->parser->get_blockCount - 1)) {
     my $start   = shift @block_starts;
-    my $offset  = $feature_start - $slice_start;
-    $start      = $start + $offset;
+    ## Starts are given relative to sequence length, not in coordinates
+    ## Also need to adjust to be relative to slice
+    $start      = $seq_length - $start - $slice_start;
     my $length  = shift @block_lengths;
     my $end     = $start + $length;
 
