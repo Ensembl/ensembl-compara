@@ -180,13 +180,16 @@ sub create_tracks {
   while ($parser->next) {
     my $track_key = $parser->get_metadata_value('name') || 'data';
 
+    unless ($data->{$track_key}) {
+      ## Default track order is how they come out of the file
+      push @order, $track_key;
+    }
+
     ## If we haven't done so already, grab all the metadata for this track
     unless (keys %{$data->{$track_key}{'metadata'}||{}}) {
       my %metadata = %{$parser->get_all_metadata};
       $data->{$track_key}{'metadata'} = \%metadata;
       $prioritise = 1 if $data->{$track_key}{'metadata'}{'priority'};
-      ## Default track order is how they come out of the file
-      push @order, $track_key;
     }
 
     my ($seqname, $start, $end) = $self->coords;
