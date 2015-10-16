@@ -24,6 +24,7 @@ use HTML::Entities qw(encode_entities);
 use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::File::User;
+use EnsEMBL::Web::IOWrapper;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -51,6 +52,16 @@ sub upload {
       function => '_error'
     );
   } else {
+
+    ## Look for the nearest feature
+    my $iow   = EnsEMBL::Web::IOWrapper::open($file, 'hub' => $hub);
+
+    if ($iow) {
+      my ($chr, $start, $end, $count) = $iow->nearest_feature;
+      $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+      $params->{'count'}   = $count;
+    }
+
     $params->{'species'}  = $hub->param('species') || $hub->species;
     $params->{'code'}     = $file->code;
   } 
