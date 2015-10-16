@@ -111,6 +111,8 @@ sub post_process {
     }
 
     $data->{$key}{'features'} = \@unique_features;
+    ## VEP output doesn't have real metadata, so fake some
+    $data->{$key}{'metadata'} = {'name' => 'VEP consequence'};
   }
 }
 
