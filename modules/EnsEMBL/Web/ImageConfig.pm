@@ -1428,13 +1428,10 @@ sub _user_track_settings {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   }
-  elsif (uc($format) =~ /BED/) {
+  elsif (uc($format) =~ /BED|GFF|GTF/) {
     $strand = 'b';
     @user_renderers = @{$self->{'alignment_renderers'}};
     splice @user_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels';
-    $default = 'as_transcript_label';
-  }
-  elsif (uc($format) =~ /GFF|GTF/) {
     $default = 'as_transcript_label';
   }
   else {
