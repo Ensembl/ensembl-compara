@@ -44,7 +44,7 @@ sub can_json { return 1; }
 sub init {
   my $self = shift;
   my @roles;
-  my $style = $self->my_config('style');
+  my $style = $self->my_config('style') || '';
 
   if ($style eq 'wiggle') {
     push @roles, 'EnsEMBL::Draw::Role::Wiggle';
@@ -115,6 +115,7 @@ sub features {
 sub draw_features {
   my ($self, $subtracks) = @_;
   $subtracks ||= $self->{'features'};
+  #warn ">>> DRAWING FEATURES $subtracks";
   return unless ref $subtracks eq 'ARRAY';
   my $feature_count = 0;
 
