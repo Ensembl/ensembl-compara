@@ -94,7 +94,6 @@ sub init {
         url     => $hub->url({
           type    => 'UserData',
           action  => 'SelectFile',
-          __clear => 1 
         })
       });
     }

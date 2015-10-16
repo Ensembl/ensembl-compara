@@ -116,7 +116,6 @@ sub init {
       time    => time,
       type    => 'UserData',
       action  => $has_data ? 'ManageData' : 'SelectFile',
-      __clear => 1
     })
   });
  
