@@ -740,7 +740,7 @@ sub format_group_population_freqs {
 
     my @composed_name = split(':', $pop_name);
     $pop_freq->{$pop_name}{'label'} = $composed_name[$#composed_name];
-    $pop_freq->{$pop_name}{'desc'}  = length($freq_data->{$pop_id}{'pop_info'}{'Description'}) > 40 ? $pop_name : $freq_data->{$pop_id}{'pop_info'}{'Description'};
+    $pop_freq->{$pop_name}{'desc'}  = $freq_data->{$pop_id}{'pop_info'}{'Description'};
     $pop_freq->{$pop_name}{'group'} = $freq_data->{$pop_id}{'pop_info'}{'PopGroup'};
 
     foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
