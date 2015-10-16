@@ -52,9 +52,8 @@ sub content {
     my $feature_id  = $hub->param('feature_id') || $hub->param('id');
     my $slice       = $click_data->{'container'};
 
-    if ($type eq 'flat_file') { ## Can contain multiple tracks 
+    if ($type eq 'flat_file') { 
       my $data = $glyphset->features;
-      use Data::Dumper; #warn Dumper($data);
       foreach my $track (@$data) {
         foreach (@{$track->{'features'}||[]}) {
           if (($feature_id && $_->{'label'} eq $feature_id) 
@@ -62,10 +61,10 @@ sub content {
                       && $_->{'start'} >= 0 
                       && $_->{'end'} <= $slice->length)  
               ) {
-            $_->{'track_name'} = $track->{'metadata'}{'name'};
-            $_->{'url'}        = $track->{'metadata'}{'url'};
-            delete($_->{'href'});
-            warn Dumper($_);
+              $_->{'track_name'} = $track->{'metadata'}{'name'};
+              $_->{'url'}        = $track->{'metadata'}{'url'};
+              delete($_->{'href'});
+            }
             push @features, $_;
           }
         } 
@@ -95,10 +94,10 @@ sub summary_content {
 
 sub feature_content {
   my ($self, $features, $slice) = @_;
-
-  my $caption = $_->{'track_name'};
+  my $caption;
 
   foreach (@$features) {
+    $caption = $_->{'track_name'};
     my $id = $_->{'label'};
     $caption .= ': '.$id if scalar(@$features) == 1 && $id; 
 
