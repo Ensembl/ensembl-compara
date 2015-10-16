@@ -60,11 +60,10 @@ sub content {
                 || ($_->{'seq_region'} eq $coords[0]
                       && $_->{'start'} >= 0 
                       && $_->{'end'} <= $slice->length)  
-              ) {
-              $_->{'track_name'} = $track->{'metadata'}{'name'};
-              $_->{'url'}        = $track->{'metadata'}{'url'};
-              delete($_->{'href'});
-            }
+            ) {
+            $_->{'track_name'} = $track->{'metadata'}{'name'};
+            $_->{'url'}        = $track->{'metadata'}{'url'};
+            delete($_->{'href'});
             push @features, $_;
           }
         } 
