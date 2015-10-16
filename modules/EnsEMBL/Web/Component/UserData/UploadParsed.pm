@@ -34,6 +34,8 @@ sub content {
   my $url  = $self->ajax_url('ajax', {
     r            => $hub->referer->{'params'}->{'r'}[0],
     code         => $hub->param('code'),
+    nearest      => $hub->param('nearest'),
+    count        => $hub->param('count'),
     _type        => $hub->param('type') || 'upload',
     update_panel => 1,
     __clear      => 1
@@ -66,25 +68,21 @@ sub content_ajax {
         $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider using a smaller dataset.</p>";
       } 
       else {
-        my $session_data = $hub->get_data_from_session($type, $hub->param('code'));
-        my $parser = $session_data->{'parser'};
         my $error;
-        if ($parser) {
-          my $nearest = $parser->nearest;
-          $nearest = undef if $nearest && !$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /[^\w|\.]/, $nearest); # Make sure we have a valid location
+        my $session_data = $hub->get_data_from_session($type, $hub->param('code'));
+        my $nearest = $hub->param('nearest');
         
-          if ($nearest) {
-            $data->{'format'}  ||= $parser->format;
-            $data->{'style'}     = $parser->style;
-            $data->{'nearest'}   = $nearest;
+        if ($nearest) {
+          $data->{'nearest'}   = $nearest;
     
-            $session->set_data(%$data);
-            $session->configure_user_data($type, $data);
-    
-            $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $parser->feature_count;
-    
-            if ($nearest) {
-              $html .= sprintf('
+          $session->set_data(%$data);
+          $session->configure_user_data($type, $data);
+   
+          if ($hub->param('count')) { 
+            $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $hub->param('count');
+          }
+
+          $html .= sprintf('
                 <p class="space-below"><strong>Go to %s region with data</strong>: <a href="%s;contigviewbottom=%s">%s</a></p>
                 <p class="space-below">or</p>',
                 $hub->referer->{'params'}{'r'} ? 'nearest' : 'first',
@@ -99,15 +97,10 @@ sub content_ajax {
                 join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'}),
                 $nearest
               );
-            }
-          } 
-          else {
-            if ($error) {
-              $error = sprintf 'Region %s does not exist.', $parser->nearest if $error eq $parser->nearest;
-              $error = qq{<p class="space-below">$error</p>};
-            }
+        }
+        else {
         
-            $html .= sprintf('
+          $html .= sprintf('
               <div class="ajax_error">
                 %s
                 <p class="space-below">None of the features in your file could be mapped to the %s genome.</p>
@@ -122,9 +115,9 @@ sub content_ajax {
                 function => 'delete_upload',
                 goto     => 'SelectFile',
                 code     => $hub->param('code'),
+                r        => $hub->param('r'),
               })
             );
-          }
         }
       }
     }
