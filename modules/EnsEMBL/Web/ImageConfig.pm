@@ -1434,6 +1434,9 @@ sub _user_track_settings {
     splice @user_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels';
     $default = 'as_transcript_label';
   }
+  elsif (uc($format) =~ /GFF|GTF/) {
+    $default = 'as_transcript_label';
+  }
   else {
     $strand         = (uc($format) eq 'VEP_INPUT' || uc($format) eq 'VCF') ? 'f' : 'b';
     @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
