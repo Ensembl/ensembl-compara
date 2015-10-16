@@ -19,7 +19,8 @@ limitations under the License.
 package EnsEMBL::Web::IOWrapper::GTF;
 
 ### Wrapper for Bio::EnsEMBL::IO::Parser::GTF, which builds
-### simple hash features suitable for use in the drawing code 
+### simple hash features from a GFF2 or GFF file, suitable 
+### for use in the drawing code 
 
 use strict;
 use warnings;
@@ -34,7 +35,6 @@ sub build_feature {
 
   my $attribs       = $self->parser->get_attributes;
   my $transcript_id = $attribs->{'transcript_id'};
-  my $exon_number   = $attribs->{'exon_number'};
   my $type          = $self->parser->get_type;
 
   if ($transcript_id) { ## Feature is part of a transcript!
