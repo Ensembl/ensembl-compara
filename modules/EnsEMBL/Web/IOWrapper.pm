@@ -306,18 +306,20 @@ sub nearest_feature {
 ### Try to find the nearest feature to the browser's current location
   my $self = shift;
 
-  my $location = $self->hub->param('r');
+  my $location = $self->hub->param('r') || $self->hub->referer->{'params'}->{'r'}[0];
   return undef unless $location;
 
   my ($browser_region, $browser_start, $browser_end) = split(':|-', $location);
   my ($nearest_region, $nearest_start, $nearest_end, $first_region, $first_start, $first_end);
   my $nearest_distance;
   my $first_done = 0;
+  my $count = 0;
 
   while ($self->parser->next) {
     next if $self->parser->is_metadata;
     my ($seqname, $start, $end) = $self->coords;
     next unless $seqname && $start;
+    $count++;
 
     ## Capture the first feature, in case we don't find anything on the current chromosome
     unless ($first_done) {
@@ -340,10 +342,10 @@ sub nearest_feature {
   }
 
   if ($nearest_region) {
-    return ($nearest_region, $nearest_start, $nearest_end, 'nearest');
+    return ($nearest_region, $nearest_start, $nearest_end, $count, 'nearest');
   }
   else {
-    return ($first_region, $first_start, $first_end, 'first');
+    return ($first_region, $first_start, $first_end, $count, 'first');
   }
 }
 
