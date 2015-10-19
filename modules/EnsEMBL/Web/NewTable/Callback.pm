@@ -92,7 +92,12 @@ sub convert_to_csv {
   my $csv = Text::CSV->new({ binary => 1 });
   my $convert = EnsEMBL::Web::NewTable::Convert->new(1);
   $convert->add_response($_) for @{$data->{'responses'}};
-  $csv->combine(@{$convert->series});
+  my @headings;
+  foreach my $key (@{$convert->series}) {
+    my $col = $self->{'config'}->column($key);
+    push @headings,$col->get_label();
+  }
+  $csv->combine(@headings);
   $out .= $csv->string()."\n";
   $convert->run(sub {
     my ($row) = @_;
