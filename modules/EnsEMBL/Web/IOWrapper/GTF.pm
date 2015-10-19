@@ -26,7 +26,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use parent qw(EnsEMBL::Web::IOWrapper);
+use parent qw(EnsEMBL::Web::IOWrapper::GXF);
 
 
 sub build_feature {
@@ -92,61 +92,10 @@ sub post_process {
                                     $a->{'start'} <=> $b->{'start'}
                                     || lc($b->{'type'}) cmp lc($a->{'type'})
                                   } @$segments;
-      my $seen  = {};   
+      my $args = {'seen' => {}, 'no_separate_transcript' => $no_separate_transcript};   
       
       foreach (@ordered_segments) {
-        #warn '@@@ SEGMENT '.Dumper($_);
-        my $type              = $_->{'type'};
-        ## Strip the segment down to its bare essentials
-        my $segment           = {
-                                'start' => $_->{'start'}, 
-                                'end'   => $_->{'end'},
-                                'type'  => $type,
-                                };
-
-
-        if ($no_separate_transcript) {
-          $transcript{'start'}  = $_->{'start'} if $_->{'start'} < $transcript{'start'};
-          $transcript{'end'}    = $_->{'end'} if $_->{'end'} > $transcript{'end'};
-        }
-
-        if ($type eq 'UTR') {
-          ## which UTR are we in? Note that we go by drawing direction, not strand direction
-          if ($seen->{'cds'}) {
-            if (!$seen->{'utr_right'}) {
-              $seen->{'utr_right'}  = $_->{'start'};
-              my $previous_exon = $transcript{'structure'}->[-1];
-              $previous_exon->{'end'}   = $_->{'end'};
-              $previous_exon->{'utr_3'} = $_->{'start'} - $previous_exon->{'start'};
-
-              #warn ">>> START OF 3' UTR: ".$_->{'start'};
-            }
-          }
-          else {
-            $seen->{'utr_left_start'} = $_->{'start'};
-            $seen->{'utr_left_end'}   = $_->{'end'};
-            #warn ">>> END OF 5' UTR: ".$_->{'end'};
-          }
-        }  
-        elsif ($type eq 'CDS') {
-          $seen->{'cds'} = 1;
-          if ($seen->{'utr_left_start'} && $seen->{'utr_left_start'} < $_->{'start'}) {
-            ## Add 1 to compensate for stop/start codon
-            $segment->{'utr_5'} = $seen->{'utr_left_end'} - $seen->{'utr_left_start'} + 1;
-            delete $seen->{'utr_left_start'};
-            delete $seen->{'utr_left_end'};
-          }
-          push @{$transcript{'structure'}}, $segment; 
-        }
-        elsif ($type eq 'exon' && !$seen->{'cds'}) { ## Non-coding gene or UTR
-          if (($seen->{'utr_left'} && $seen->{'utr_left'} > $_->{'end'}) || ($_->{'transcript_biotype'} ne 'protein_coding')) {
-            $segment->{'non_coding'} = 1;
-          }
-          push @{$transcript{'structure'}}, $segment; 
-        }
-        else {
-          push @{$transcript{'structure'}}, $segment; 
-        }
+        ($args, %transcript) = $self->add_to_transcript($_, $args, %transcript);
       }
       #warn Dumper(\%transcript);
 
@@ -188,7 +137,6 @@ sub create_hash {
 
   ## Only set colour if we have something in metadata, otherwise
   ## we will override the default colour in the drawing code
-  my $colour;
   my $strand  = $self->parser->get_strand;
   my $score   = $self->parser->get_score;
 
