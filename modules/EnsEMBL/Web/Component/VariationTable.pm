@@ -234,6 +234,7 @@ sub make_table {
 
   my @columns = ({
     _key => 'ID', _type => 'string no_filter',
+    label => "Variant ID",
     width => 2,
     helptip => 'Variant identifier',
     link_url => {
