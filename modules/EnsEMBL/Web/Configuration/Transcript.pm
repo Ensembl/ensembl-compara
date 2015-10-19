@@ -109,7 +109,7 @@ sub populate_tree {
 
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
-  $var_menu->append($self->create_node('Variation_Transcript/Table', 'Variation table',
+  $var_menu->append($self->create_node('Variation_Transcript/Table', 'Variant table',
     [qw( variationtable EnsEMBL::Web::Component::Transcript::VariationTable )],
     { 'availability' => 'transcript database:variation core' }
   ));
