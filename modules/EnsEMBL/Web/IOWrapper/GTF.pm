@@ -192,17 +192,12 @@ sub create_hash {
   my $strand  = $self->parser->get_strand;
   my $score   = $self->parser->get_score;
 
-  if ($metadata->{'useScore'}) {
-    $colour = $self->convert_to_gradient($score, $metadata->{'color'});
-  }
-  elsif ($metadata->{'colorByStrand'} && $strand) {
-    my ($pos, $neg) = split(' ', $metadata->{'colorByStrand'});
-    my $rgb = $strand == 1 ? $pos : $neg;
-    $colour = $self->rgb_to_hex($rgb);
-  }
-  elsif ($metadata->{'color'}) {
-    $colour = $metadata->{'color'};
-  }
+  my $colour_params  = {
+                        'metadata'  => $metadata,
+                        'strand'    => $strand,
+                        'score'     => $score,
+                        };
+  my $colour = $self->set_colour($colour_params);
 
   ## Try to find an ID for this feature
   my $attributes = $self->parser->get_attributes;
