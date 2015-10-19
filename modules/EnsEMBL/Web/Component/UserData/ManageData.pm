@@ -123,9 +123,9 @@ sub content {
   my ($tip, $more);
   if ($html) {
     $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a></p>', $hub->url({'action'=>'SelectFile'});
-    ## Show 'add more' link at bottom as well, if table is long
+    ## Show 'add more' link at top as well, if table is long
     if (scalar(@rows) > 10) {
-      $html .= $more;
+      $html = $more.$html;
     }
 
     ## Hints
@@ -133,7 +133,7 @@ sub content {
  
     $tip = qq{
       <div class="info">
-        <h3>Help</h3>
+        <h3>Tip</h3>
         <div class="message-pad">
           <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
           <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
@@ -148,10 +148,10 @@ sub content {
   }
 
   return qq{
-    $tip
     <h2 class="legend">Your data</h2>
-    $more
     $html
+    $more
+    $tip
   };
 
 }
