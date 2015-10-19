@@ -117,12 +117,12 @@ sub create_structure {
     my $block = {'start' => $start, 'end' => $end};
     
     if (!$has_coding) {
-      $block->{'coding'} = 0; 
+      $block->{'non_coding'} = 1; 
     }
     else {
       if ($thick_start && $thick_start > $start) {## 5' UTR
         if ($thick_start > $end) {
-          $block->{'coding'} = 0; 
+          $block->{'non_coding'} = 1; 
         }
         else {
           $block->{'utr_5'} = $thick_start - $start;
@@ -130,14 +130,11 @@ sub create_structure {
       }
       elsif ($thick_end && $thick_end < $end) { ## 3' UTR
         if ($thick_end < $start) {
-          $block->{'coding'} = 0; 
+          $block->{'non_coding'} = 1; 
         }
         else {
           $block->{'utr_3'} = $thick_end - $start;
         }
-      }
-      else {
-        $block->{'coding'} = 1;
       }
     }
     push @$structure, $block;

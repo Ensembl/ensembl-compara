@@ -104,7 +104,6 @@ sub post_process {
               my $previous_exon = $transcript->{'structure'}[-1];
               $previous_exon->{'end'}   = $_->{'end'};
               $previous_exon->{'utr_3'} = $_->{'start'} - $previous_exon->{'start'};
-              delete $previous_exon->{'coding'};
 
               #warn ">>> START OF 3' UTR: ".$_->{'start'};
             }
@@ -125,18 +124,18 @@ sub post_process {
             delete $seen->{'utr_left_end'};
           }
           else {
-            push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 1};
+            push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}};
           }
         }
         elsif ($type eq 'exon' && !$seen->{'cds'}) { ## Non-coding gene or UTR
             if ($seen->{'utr_left'} && $seen->{'utr_left'} > $_->{'end'}) {
-              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 0};
+              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'non_coding' => 1};
             }
             elsif ($_->{'transcript_biotype'} eq 'protein_coding') {
-              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 1};
+              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}};
             }
             else {
-              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 0};
+              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'non_coding' => 1};
             }
         }
       }
@@ -157,6 +156,7 @@ sub post_process {
                                 || $b->{'end'} <=> $a->{'end'}
                                 } @{$data->{$track_key}{'features'}};
     $data->{$track_key}{'features'} = \@sorted_features;
+    #delete $data->{$track_key}{'transcripts'};
   }
   #warn "###########################################################";
   #warn Dumper($data);
