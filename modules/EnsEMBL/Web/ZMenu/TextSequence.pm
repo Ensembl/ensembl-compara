@@ -138,10 +138,14 @@ sub variation_content {
   my @feature_cons = map $self->variant_consequence_label($_), grep { $feature_cons{$_} } map { $_->SO_term } sort { $a->rank <=> $b->rank } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
 
   push @entries, (
-    { type  => 'Consequences',                                    label_html  => sprintf('<ul>%s</ul>', join('', map("<li>$_<li>", @feature_cons))) },
-    { link  => $hub->url({ action => 'Explore', %url_params}),    label       => 'Explore this variant'       },
-    { link  => $hub->url({ action => 'Mappings', %url_params }),  label       => 'Gene/Transcript Locations'  }
+    { type  => 'Consequences',                                 label_html => sprintf('<ul>%s</ul>', join('', map("<li>$_<li>", @feature_cons))) },
+    { link  => $hub->url({ action => 'Explore', %url_params}), label      => 'Explore this variant' }
   );
+
+  # Check that the variant overlaps at least one transcript
+  if ($object->count_transcripts) {
+    push @entries, { link => $hub->url({ action => 'Mappings', %url_params }), label => 'Gene/Transcript Locations' };
+  }
 
   push @entries, { link => $hub->url({ action => 'Phenotype', %url_params }), label => 'Phenotype Data' } if scalar @{$object->get_external_data};
 
