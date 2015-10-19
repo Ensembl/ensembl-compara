@@ -204,14 +204,20 @@
       if(i>last_table || grid.length===0) {
         $(this).remove();
       } else if(i==last_table) {
-        remarkup($table,config,grid,rev_series,i,rows_per_subtable,orient);
+        reset_sub($(this));
+        var tail_rows = grid.length - last_table*rows_per_subtable;
+        remarkup($table,config,grid,rev_series,i,tail_rows,orient);
         apply_html($table,i);
       }
     });
     guess_subtable_sizes($table);
     $.lazy('refresh');
   }
-  
+
+  function reset_sub($subtable) {
+    $subtable.data('markup',[]);
+  }
+
   function remarkup_sub($table,$subtable,config,grid,rev_series,table_num,orient,mstart,mrows) {
     // show which columns?
     var shown = [];
