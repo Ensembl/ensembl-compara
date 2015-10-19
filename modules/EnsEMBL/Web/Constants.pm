@@ -50,20 +50,20 @@ sub ICON_MAPPINGS {
 
 sub USERDATA_FORMATS {
   return {
-    'bam'         => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph',   'limit' => 'remote'},
-    'bed'         => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature'},
-    'bedgraph'    => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph'},
-    'bigbed'      => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph',   'limit' => 'remote'},
-    'bigwig'      => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph',   'limit' => 'remote'},
-    'gene_list'   => {'ext' => 'txt', 'label' => 'Gene or feature list', 'display' => 'feature'},
-    'gff'         => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
-    'gtf'         => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
-    'pairwise'    => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
-    'psl'         => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
-    'trackhub'    => {'ext' => 'txt', 'label' => 'Track Hub', 'display' => 'graph',   'limit' => 'remote'},
-    'vcf'         => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
-    'vep_output'  => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
-    'wig'         => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
+    'bam'         => {'ext' => 'bam',     'label' => 'BAM',       'display' => 'graph',   'limit' => 'remote'},
+    'bed'         => {'ext' => 'bed',     'label' => 'BED',       'display' => 'feature'},
+    'bedgraph'    => {'ext' => 'bed',     'label' => 'bedGraph',  'display' => 'graph'},
+    'bigbed'      => {'ext' => 'bb',      'label' => 'BigBed',    'display' => 'graph',   'limit' => 'remote'},
+    'bigwig'      => {'ext' => 'bw',      'label' => 'BigWig',    'display' => 'graph',   'limit' => 'remote'},
+    'gene_list'   => {'ext' => 'txt',     'label' => 'Gene or feature list', 'display' => 'feature'},
+    'gff3'        => {'ext' => 'gff3',    'label' => 'GFF3',      'display' => 'feature'},
+    'gtf'         => {'ext' => 'gff|gtf', 'label' => 'GFF2/GTF',  'display' => 'feature'},
+    'pairwise'    => {'ext' => 'txt',     'label' => 'Pairwise interactions', 'display' => 'feature'},
+    'psl'         => {'ext' => 'psl',     'label' => 'PSL',       'display' => 'feature'},
+    'trackhub'    => {'ext' => 'txt',     'label' => 'Track Hub', 'display' => 'graph',   'limit' => 'remote'},
+    'vcf'         => {'ext' => 'vcf',     'label' => 'VCF',       'display' => 'graph'},
+    'vep_output'  => {'ext' => 'txt',     'label' => 'VEP',       'display' => 'feature'},
+    'wig'         => {'ext' => 'wig',     'label' => 'WIG',       'display' => 'graph'},
   };
 }
 
