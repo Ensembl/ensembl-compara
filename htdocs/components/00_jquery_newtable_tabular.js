@@ -295,6 +295,8 @@
   function wakeup($table,$subtable) {
     if(!$subtable.data('redraw')) { return; }
     var markup = $subtable.data('markup');
+    console.log("wakeup "+$subtable.data('xxx'));
+    var markup = $subtable.data('markup') || '';
     var html = convert_markup($table,markup);
     $subtable.data('redraw',0);
     var $body = $('tbody',$subtable);
