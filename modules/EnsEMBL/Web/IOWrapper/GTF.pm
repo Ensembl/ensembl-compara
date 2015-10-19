@@ -135,6 +135,9 @@ sub post_process {
           }
           push @{$transcript->{'structure'}}, $segment; 
         }
+        else {
+          push @{$transcript->{'structure'}}, $segment; 
+        }
       }
       #warn Dumper($transcript);
 
