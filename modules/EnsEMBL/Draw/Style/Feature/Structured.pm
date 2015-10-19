@@ -64,8 +64,8 @@ sub draw_feature {
 
     my $last_element = 0;
 
-    ## Join this block to the previous one
-    if ($join && keys %previous) {
+    ## Draw a join between this block and the previous one unless they're contiguous
+    if ($join && keys %previous && ($_->{'start'} - $previous{'end'}) > 1) {
       my %params        = %defaults;
       $params{'join_colour'}  = $join_colour;
 
