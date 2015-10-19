@@ -94,6 +94,12 @@ sub post_process {
       foreach (@ordered_segments) {
         #warn '@@@ SEGMENT '.Dumper($_);
         my $type              = $_->{'type'};
+        ## Strip the segment down to its bare essentials
+        my $segment           = {
+                                'start' => $_->{'start'}, 
+                                'end'   => $_->{'end'},
+                                'type'  => $type,
+                                };
 
         if ($type eq 'UTR') {
           ## which UTR are we in? Note that we go by drawing direction, not strand direction
@@ -117,25 +123,17 @@ sub post_process {
           $seen->{'cds'} = 1;
           if ($seen->{'utr_left_start'} && $seen->{'utr_left_start'} < $_->{'start'}) {
             ## Add 1 to compensate for stop/start codon
-            push @{$transcript->{'structure'}}, {'start' => $seen->{'utr_left_start'}, 'end' => $_->{'end'},
-                                                  'utr_5' => $seen->{'utr_left_end'} - $seen->{'utr_left_start'} + 1};
+            $segment->{'utr_5'} = $seen->{'utr_left_end'} - $seen->{'utr_left_start'} + 1;
             delete $seen->{'utr_left_start'};
             delete $seen->{'utr_left_end'};
           }
-          else {
-            push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}};
-          }
+          push @{$transcript->{'structure'}}, $segment; 
         }
         elsif ($type eq 'exon' && !$seen->{'cds'}) { ## Non-coding gene or UTR
-            if ($seen->{'utr_left'} && $seen->{'utr_left'} > $_->{'end'}) {
-              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'non_coding' => 1};
-            }
-            elsif ($_->{'transcript_biotype'} eq 'protein_coding') {
-              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}};
-            }
-            else {
-              push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'non_coding' => 1};
-            }
+          if (($seen->{'utr_left'} && $seen->{'utr_left'} > $_->{'end'}) || ($_->{'transcript_biotype'} ne 'protein_coding')) {
+            $segment->{'non_coding'} = 1;
+          }
+          push @{$transcript->{'structure'}}, $segment; 
         }
       }
       #warn Dumper($transcript);
