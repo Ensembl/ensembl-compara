@@ -177,7 +177,8 @@
     //if(h_d) { h = h_n/h_d; }
     $('.subtable',$table).each(function() {
       var $this = $(this);
-      if(!$this.data('known-height')) {
+      var kh = $this.data('known-height');
+      if(!kh && kh!==0) {
         $this.css('height',h+'px');
       }
     });
@@ -204,10 +205,14 @@
       if(i>last_table || grid.length===0) {
         $(this).remove();
       } else if(i==last_table) {
-        reset_sub($(this));
         var tail_rows = grid.length - last_table*rows_per_subtable;
-        remarkup($table,config,grid,rev_series,i,tail_rows,orient);
-        apply_html($table,i);
+        if(tail_rows===0) {
+          $(this).remove();
+        } else {
+          reset_sub($(this));
+          remarkup_sub($table,$(this),config,grid,rev_series,i,orient,i*rows_per_subtable,tail_rows);
+          apply_html($table,i);
+        }
       }
     });
     guess_subtable_sizes($table);
