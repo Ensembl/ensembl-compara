@@ -137,11 +137,7 @@ sub _memoized {
     arguments => _build_argument($args),
     machine => $SiteDefs::ENSEMBL_BASE_URL,
     version => $SiteDefs::ENSEMBL_VERSION,
-<<<<<<< HEAD
     boottime => [stat("${SiteDefs::ENSEMBL_TMP_DIR}/procedure/started")]->[9],
-=======
-    boottime => [stat("${SiteDefs::ENSEMBL_SERVERROOT}/ensembl-webcode/conf/started")]->[9],
->>>>>>> feature/variation-table
   };
   my $hex = hexkey($tag);
   my $base = filebase($hex);

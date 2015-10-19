@@ -95,10 +95,7 @@
                   }
                   fabric[i] = new_row;
                 }
-<<<<<<< HEAD
-=======
                 console.log("dundo done");
->>>>>>> feature/variation-table
                 return fabric;
               }
             };
