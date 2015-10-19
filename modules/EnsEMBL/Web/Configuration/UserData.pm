@@ -93,9 +93,12 @@ sub populate_tree {
   $data_menu->append($self->create_node('ConfigureBigWig', '', [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureBigWig)]));
   
   $data_menu->append($self->create_node('SaveExtraConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::SaveExtraConfig' }));
-
+                                                      
   ## Data management
-  $data_menu->append($self->create_node('ManageData',            'Manage Data', [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)]));
+  $data_menu->append($self->create_node('ManageData',            'Manage Data', [qw(
+                                                                                  manage_remote EnsEMBL::Web::Component::UserData::ManageData
+                                                                                  select_file   EnsEMBL::Web::Component::UserData::SelectFile
+                                                                                )]));
   $data_menu->append($self->create_node('IDConversion',          '',            [qw(idmapper      EnsEMBL::Web::Component::UserData::IDmapper)]));
   $data_menu->append($self->create_node('ConsequenceCalculator', '',            [qw(consequence   EnsEMBL::Web::Component::UserData::ConsequenceTool)])); 
   

@@ -42,7 +42,7 @@ sub content {
   my $user         = $hub->user;
   my $species_defs = $hub->species_defs;
   my $not_found    = 0;
-  my (@data, $html);  
+  my (@data, @rows, $html);  
  
   my @temp_data = map $session->get_data('type' => $_), qw(upload url nonpositional);
   push @temp_data, values %{$session->get_all_das};
@@ -51,7 +51,6 @@ sub content {
   push @data, @temp_data;
   
   if (scalar @data) {
-    my @rows;
     my @columns = (
       { key => 'type',    title => 'Type',         width => '10%', align => 'left'                                  },
       { key => 'name',    title => 'Source',       width => '40%', align => 'left', sort => 'html', class => 'wrap' },
@@ -119,22 +118,39 @@ sub content {
   
   $html  .= $self->group_shared_data;
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
-  $html ||= '<p class="space-below">You have no custom data.</p>';
-  $html  .= sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add your data</a></p>', $hub->url({'action'=>'SelectFile'});
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
-  my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
-  
-  return qq{
-    <div class="info">
-      <h3>Help</h3>
-      <div class="message-pad">
-        <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
-        <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
-        $group_sharing_info
+  my ($tip, $more);
+  if ($html) {
+    $more  = sprintf '<p><a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/page-user.png" style="margin-right:8px;vertical-align:middle;" />Add more data</a></p>', $hub->url({'action'=>'SelectFile'});
+    ## Show 'add more' link at bottom as well, if table is long
+    if (scalar(@rows) > 10) {
+      $html .= $more;
+    }
+
+    ## Hints
+    my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
+ 
+    $tip = qq{
+      <div class="info">
+        <h3>Help</h3>
+        <div class="message-pad">
+          <p>You can rename your uploads and attached URLs by clicking on their current name in the Source column</p>
+          <p><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>
+          $group_sharing_info
+        </div>
       </div>
-    </div>
+    };
+
+  }
+  else {
+    $html = '<p class="space-below">You have no custom data.</p>';
+  }
+
+  return qq{
+    $tip
     <h2 class="legend">Your data</h2>
+    $more
     $html
   };
 

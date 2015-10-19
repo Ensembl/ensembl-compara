@@ -40,6 +40,17 @@ sub caption {
 sub content {
   my $self            = shift;
   my $hub             = $self->hub;
+
+  ## Only show this form on 'Manage Data' if there are no records
+  if ($hub->action eq 'ManageData') {
+    my @data = map $hub->session->get_data('type' => $_), qw(upload url nonpositional);
+    return if scalar @data;
+    if ($hub->user) {
+      @data = map $hub->user->get_records($_), qw(uploads urls dases);
+      return if scalar @data;
+    }
+  }
+
   my $sd              = $hub->species_defs;
   my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
