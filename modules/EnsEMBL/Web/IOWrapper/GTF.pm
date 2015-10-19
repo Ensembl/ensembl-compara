@@ -68,18 +68,21 @@ sub post_process {
       my $no_of_segments = scalar(@{$segments||[]});
       next unless $no_of_segments;
 
-      my $transcript;
+      my ($hashref, %transcript);
 
       ## Is this a transcript plus exons, or just exons?
+      my $no_separate_transcript = 0;
       if ($segments->[0]{'type'} eq 'transcript') {
-        $transcript = shift @$segments;
+        my $hashref = shift @$segments;
       }
       else {
-        $transcript = $segments->[0];
+        $no_separate_transcript = 1;
+        $hashref = $segments->[0];
       }
+      %transcript = %$hashref;
 
-      $transcript->{'label'}    ||= $transcript->{'transcript_name'} || $transcript->{'transcript_id'};
-      $transcript->{'structure'}  = [];
+      $transcript{'label'}    ||= $transcript{'transcript_name'} || $transcript{'transcript_id'};
+      $transcript{'structure'}  = [];
 
       ## Now turn exons into internal structure
 
@@ -89,7 +92,7 @@ sub post_process {
                                     $a->{'start'} <=> $b->{'start'}
                                     || lc($b->{'type'}) cmp lc($a->{'type'})
                                   } @$segments;
-      my $seen    = {};   
+      my $seen  = {};   
       
       foreach (@ordered_segments) {
         #warn '@@@ SEGMENT '.Dumper($_);
@@ -101,12 +104,18 @@ sub post_process {
                                 'type'  => $type,
                                 };
 
+
+        if ($no_separate_transcript) {
+          $transcript{'start'}  = $_->{'start'} if $_->{'start'} < $transcript{'start'};
+          $transcript{'end'}    = $_->{'end'} if $_->{'end'} > $transcript{'end'};
+        }
+
         if ($type eq 'UTR') {
           ## which UTR are we in? Note that we go by drawing direction, not strand direction
           if ($seen->{'cds'}) {
             if (!$seen->{'utr_right'}) {
               $seen->{'utr_right'}  = $_->{'start'};
-              my $previous_exon = $transcript->{'structure'}[-1];
+              my $previous_exon = $transcript{'structure'}->[-1];
               $previous_exon->{'end'}   = $_->{'end'};
               $previous_exon->{'utr_3'} = $_->{'start'} - $previous_exon->{'start'};
 
@@ -127,25 +136,25 @@ sub post_process {
             delete $seen->{'utr_left_start'};
             delete $seen->{'utr_left_end'};
           }
-          push @{$transcript->{'structure'}}, $segment; 
+          push @{$transcript{'structure'}}, $segment; 
         }
         elsif ($type eq 'exon' && !$seen->{'cds'}) { ## Non-coding gene or UTR
           if (($seen->{'utr_left'} && $seen->{'utr_left'} > $_->{'end'}) || ($_->{'transcript_biotype'} ne 'protein_coding')) {
             $segment->{'non_coding'} = 1;
           }
-          push @{$transcript->{'structure'}}, $segment; 
+          push @{$transcript{'structure'}}, $segment; 
         }
         else {
-          push @{$transcript->{'structure'}}, $segment; 
+          push @{$transcript{'structure'}}, $segment; 
         }
       }
-      #warn Dumper($transcript);
+      #warn Dumper(\%transcript);
 
       if ($data->{$track_key}{'features'}) {
-        push @{$data->{$track_key}{'features'}}, $transcript; 
+        push @{$data->{$track_key}{'features'}}, \%transcript; 
       }
       else {
-        $data->{$track_key}{'features'} = [$transcript]; 
+        $data->{$track_key}{'features'} = [\%transcript]; 
       }
     }
     ## Transcripts will be out of order, owing to being stored in hash
