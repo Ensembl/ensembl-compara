@@ -72,14 +72,13 @@ sub post_process {
 
       ## Is this a transcript plus exons, or just exons?
       if ($segments->[0]{'type'} eq 'transcript') {
-        $transcript              = shift @$segments;
-        $transcript->{'label'} ||= $transcript->{'transcript_name'} || $transcript->{'transcript_id'};
+        $transcript = shift @$segments;
       }
       else {
-        my $label = $segments->[0]{'transcript_name'} || $segments->[0]{'transcript_id'}; 
-        $transcript = {'label' => $label};
+        $transcript = $segments->[0];
       }
 
+      $transcript->{'label'}    ||= $transcript->{'transcript_name'} || $transcript->{'transcript_id'};
       $transcript->{'structure'}  = [];
 
       ## Now turn exons into internal structure
@@ -118,7 +117,7 @@ sub post_process {
           $seen->{'cds'} = 1;
           if ($seen->{'utr_left_start'} && $seen->{'utr_left_start'} < $_->{'start'}) {
             ## Add 1 to compensate for stop/start codon
-            push @{$transcript->{'structure'}}, {'start' => $seen->{'utr_left_start'}, 'end' => $_->{'end'}, 
+            push @{$transcript->{'structure'}}, {'start' => $seen->{'utr_left_start'}, 'end' => $_->{'end'},
                                                   'utr_5' => $seen->{'utr_left_end'} - $seen->{'utr_left_start'} + 1};
             delete $seen->{'utr_left_start'};
             delete $seen->{'utr_left_end'};
