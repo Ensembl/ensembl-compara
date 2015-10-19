@@ -134,8 +134,9 @@ sub draw_subtitle {
 sub make_readable {
 ### Darken pale text colours so that they can be read on a pale background
   my ($self, $colour) = @_;
-  my @rgb = EnsEMBL::Draw::Utils::ColourMap::rgb_by_name(undef, $colour);
-  @rgb = EnsEMBL::Draw::Utils::ColourMap::hivis(undef, 2, @rgb);
+  my $colourmap = new EnsEMBL::Draw::Utils::ColourMap;
+  my @rgb = $colourmap->rgb_by_name($colour);
+  @rgb = $colourmap->hivis(2, @rgb);
   return join(',', @rgb);
 }
 
