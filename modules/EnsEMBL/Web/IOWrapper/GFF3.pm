@@ -29,6 +29,7 @@ use parent qw(EnsEMBL::Web::IOWrapper::GXF);
 
 sub post_process {
 ### Reassemble sub-features back into features
+  my ($self, $data) = @_;
 
   while (my ($track_key, $content) = each (%$data)) {
     my $tree = {};
@@ -75,8 +76,8 @@ sub post_process {
     }
 
     $content->{'features'} = \@ok_features;
+#    use Data::Dumper; warn Dumper(\@ok_features);
   }
-
 }
 
 sub _add_to_parent {
@@ -133,13 +134,10 @@ sub create_hash {
     'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,
-    'colour'        => $colour,
     'label'         => $label,
     'href'          => $href,
   };
 }
 
-
-}
 
 1;
