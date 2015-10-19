@@ -99,7 +99,10 @@ sub content {
   }
   
   my $table      = $self->make_table();
-  $html  = $self->_hint('snp_table', 'Variant table', "This table shows known variants for this gene. Use the 'Consequence Type' filter to view a subset of these.");
+  my $thing = 'gene';
+  $thing = 'transcript' if $object_type eq 'Transcript';
+
+  $html  = $self->_hint('snp_table', 'Variant table', "This table shows known variants for this $thing. Use the 'Consequence Type' filter to view a subset of these.");
   $html .= $table->render($self->hub,$self);
   return $html;
 }
