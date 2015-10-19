@@ -58,7 +58,8 @@ sub build_feature {
 sub post_process {
 ### Reassemble sub-features back into features
   my ($self, $data) = @_;
-  use Data::Dumper;
+  #use Data::Dumper;
+  #warn Dumper($data);
   
   while (my ($track_key, $content) = each (%$data)) {
     next unless $content->{'transcripts'};
@@ -67,9 +68,19 @@ sub post_process {
       my $no_of_segments = scalar(@{$segments||[]});
       next unless $no_of_segments;
 
-      my $transcript = shift @$segments;
+      my $transcript;
+
+      ## Is this a transcript plus exons, or just exons?
+      if ($segments->[0]{'type'} eq 'transcript') {
+        $transcript              = shift @$segments;
+        $transcript->{'label'} ||= $transcript->{'transcript_name'} || $transcript->{'transcript_id'};
+      }
+      else {
+        my $label = $segments->[0]{'transcript_name'} || $segments->[0]{'transcript_id'}; 
+        $transcript = {'label' => $label};
+      }
+
       $transcript->{'structure'}  = [];
-      $transcript->{'label'}    ||= $transcript->{'transcript_name'} || $transcript->{'transcript_id'};
 
       ## Now turn exons into internal structure
 
@@ -82,7 +93,7 @@ sub post_process {
       my $seen    = {};   
       
       foreach (@ordered_segments) {
-        #warn Dumper($_);
+        #warn '@@@ SEGMENT '.Dumper($_);
         my $type              = $_->{'type'};
 
         if ($type eq 'UTR') {
@@ -118,7 +129,6 @@ sub post_process {
           }
         }
         elsif ($type eq 'exon' && !$seen->{'cds'}) { ## Non-coding gene or UTR
-=pod
             if ($seen->{'utr_left'} && $seen->{'utr_left'} > $_->{'end'}) {
               push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 0};
             }
@@ -128,7 +138,6 @@ sub post_process {
             else {
               push @{$transcript->{'structure'}}, {'start' => $_->{'start'}, 'end' => $_->{'end'}, 'coding' => 0};
             }
-=cut
         }
       }
       #warn Dumper($transcript);
@@ -149,6 +158,8 @@ sub post_process {
                                 } @{$data->{$track_key}{'features'}};
     $data->{$track_key}{'features'} = \@sorted_features;
   }
+  #warn "###########################################################";
+  #warn Dumper($data);
 }
 
 sub create_hash {
