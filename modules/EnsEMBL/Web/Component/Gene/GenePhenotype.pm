@@ -36,7 +36,7 @@ sub content {
   my $phenotype = $hub->param('sub_table');
   my $object    = $self->object;
   my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text) = $object->display_xref;
-  
+
   # Gene phenotypes
   return $self->gene_phenotypes();
 }
@@ -54,6 +54,8 @@ sub gene_phenotypes {
   my (@rows, %list, $list_html);
   my $has_allelic = 0;  
   my $has_study   = 0;
+
+  return if($obj->isa('Bio::EnsEMBL::Compara::Family'));
 
   # add rows from Variation DB, PhenotypeFeature
   if ($hub->database('variation')) {
