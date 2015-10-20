@@ -260,6 +260,8 @@ our $MEMOIZE_ENABLED      = 1;
 our $MEMOIZE_DEBUG        = 0;
 our $MEMOIZE_SIZE         = [14,32,4*1024*1024];
 
+our $PACED_MULTI = 6; # Max simultaneous connections
+
 ###############################################################################
 ######################### END OF LOCAL CONFIGURATION SECTION ##################
 ###############################################################################
