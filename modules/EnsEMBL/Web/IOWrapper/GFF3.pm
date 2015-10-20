@@ -47,44 +47,33 @@ sub post_process {
     }
     #warn Dumper($tree);
 
-    my $args;
-
     ## Convert tree into structured features
     my @ok_features;
     while (my($id, $f) = each(%$tree)) {
-      my %transcript;
-      if ($f->{'type'} =~ /gene/ && !$f->{'children'}) {
-        ## Ignore genes unless they don't have any transcript structure
-        push @ok_features, $f;
-      }
-      else {
-        if ($f->{'children'}) { ## Probably a transcript
-          
-          ## Push previous transcript onto array
-          if (keys %transcript) {
-            push @ok_features, \%transcript;
-            %transcript = ();
-          }
+      ## Add to array (though we don't normally draw genes except in collapsed view)
+      push @ok_features, $f;
+
+      foreach my $id (keys %{$f->{'children'}||{}}) {
+        my $child = $f->{'children'}{$id};
+        if (scalar keys (%{$child->{'children'}||{}})) {
+          ## Object has grandchildren - probably a transcript
+          my $args = {'seen' => {}, 'no_separate_transcript' => 0};
           ## Create a new transcript from the current feature
-          %transcript = %$f;
-          ## GFF3 shouldn't have a bunch of exons with no parent
-          $args = {'seen' => {}, 'no_separate_transcript' => 0};
+          my %transcript = %$child;
+          foreach my $sub_id (keys %{$child->{'children'}||{}}) {
+            my $grandchild = $child->{'children'}{$sub_id};
+            ($args, %transcript) = $self->add_to_transcript($grandchild, $args, %transcript);  
+          }
+          push @ok_features, \%transcript;
         }
-        else { ## exon or similar
-          if ($f->{'parent'}) {
-            ($args, %transcript) = $self->add_to_transcript($f, $args, %transcript);  
-          }
-          else { ## Singleton
-            push @ok_features, $f;
-          }
+        else {
+          push @ok_features, $child;
         }
       }
     }
-
     $content->{'features'} = \@ok_features;
-#    use Data::Dumper; warn Dumper(\@ok_features);
   }
-  warn '################# PROCESSED DATA '.Dumper($data);
+  #warn '################# PROCESSED DATA '.Dumper($data);
 }
 
 sub _add_to_parent {
