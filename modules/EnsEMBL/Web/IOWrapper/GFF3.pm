@@ -51,7 +51,7 @@ sub post_process {
     my @ok_features;
     while (my($id, $f) = each(%$tree)) {
       ## Add to array (though we don't normally draw genes except in collapsed view)
-      push @ok_features, $f;
+      push @ok_features, $self->_drawable_feature($f);
 
       foreach my $child_id (sort {$f->{'children'}{$a}{'start'} <=> $f->{'children'}{$b}{'start'}} keys %{$f->{'children'}||{}}) {
         my $child = $f->{'children'}{$child_id};
@@ -64,10 +64,10 @@ sub post_process {
             my $grandchild = $child->{'children'}{$sub_id};
             ($args, %transcript) = $self->add_to_transcript($grandchild, $args, %transcript);  
           }
-          push @ok_features, \%transcript;
+          push @ok_features, $self->_drawable_feature(\%transcript);
         }
         else {
-          push @ok_features, $child;
+          push @ok_features, $self->_drawable_feature($child);
         }
       }
     }
@@ -76,7 +76,24 @@ sub post_process {
   #warn '################# PROCESSED DATA '.Dumper($data);
 }
 
+sub _drawable_feature {
+### Simplify feature hash for drawing
+  my ($self, $f) = @_;
+  return {
+          'seq_region'  => $f->{'seq_region'},
+          'start'       => $f->{'start'},
+          'end'         => $f->{'end'},
+          'strand'      => $f->{'strand'},
+          'type'        => $f->{'type'},
+          'label'       => $f->{'label'},
+          'score'       => $f->{'score'},
+          'href'        => $f->{'href'},
+          'structure'   => $f->{'structure'},
+          };
+}
+
 sub _add_to_parent {
+### Recurse into feature tree
   my ($self, $node, $feature, $parent) = @_;
   ## Is this a child of the current level?
   if ($node->{$parent}) {
@@ -90,7 +107,6 @@ sub _add_to_parent {
     }
   }
 }
-
 
 sub create_hash {
 ### Create a hash of feature information in a format that
