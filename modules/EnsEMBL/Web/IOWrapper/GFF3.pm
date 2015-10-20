@@ -60,6 +60,7 @@ sub post_process {
           my $args = {'seen' => {}, 'no_separate_transcript' => 0};
           ## Create a new transcript from the current feature
           my %transcript = %$child;
+          $transcript{'type'} = 'transcript';
           foreach my $sub_id (sort {$child->{'children'}{$a}{'start'} <=> $child->{'children'}{$b}{'start'}} keys %{$child->{'children'}||{}}) {
             my $grandchild = $child->{'children'}{$sub_id};
             ($args, %transcript) = $self->add_to_transcript($grandchild, $args, %transcript);  
