@@ -94,6 +94,7 @@ sub new {
       'unlimited',            'Stacked unlimited',
       'ungrouped',            'Ungrouped',
     ],
+    _legend => {'_settings' => {'max_length' => 0}},
   };
   
   return bless $self, $class;
@@ -243,6 +244,7 @@ sub texthelper          { return $_[0]->{'_texthelper'};                        
 sub transform           { return $_[0]->{'transform'};                                         }
 sub tree                { return $_[0]->{'_tree'};                                             }
 sub species             { return $_[0]->{'species'};                                           }
+sub legend              { return $_[0]->{'_legend'};                                           }
 sub multi_species       { return 0;                                                            }
 sub cache_key           { return join '::', '', ref $_[0], $_[0]->species, $_[0]->code;        }
 sub bgcolor             { return $_[0]->get_parameter('bgcolor') || 'background1';             }
