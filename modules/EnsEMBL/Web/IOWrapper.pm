@@ -70,27 +70,24 @@ sub open {
   my $format = $file->get_format;
   return undef unless $format;
 
-  if ($file->source eq 'url') {
-    my $result = $file->read;
-    if ($result->{'content'}) {
-      $parser = Bio::EnsEMBL::IO::Parser::open_content_as($format, $result->{'content'});
-    }
-  }
-  else {
-    ## Open file from where we wrote to, otherwise it can cause issues
-    $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
-  }
-
   if (dynamic_use($class, 1)) {
+    if ($file->source eq 'url') {
+      my $result = $file->read;
+      if ($result->{'content'}) {
+        $parser = Bio::EnsEMBL::IO::Parser::open_content_as($format, $result->{'content'});
+      }
+    }
+    else {
+      ## Open file from where we wrote to, otherwise it can cause issues
+      $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
+    }
+
     $class->new({
                 'parser' => $parser, 
                 'file'   => $file, 
                 'format' => $format,
                 %args,
                 });  
-  }
-  else {
-    warn ">>> NO SUCH MODULE $class";
   }
 }
 
