@@ -53,14 +53,14 @@ sub post_process {
       ## Add to array (though we don't normally draw genes except in collapsed view)
       push @ok_features, $f;
 
-      foreach my $id (keys %{$f->{'children'}||{}}) {
-        my $child = $f->{'children'}{$id};
+      foreach my $child_id (sort {$f->{'children'}{$a}{'start'} <=> $f->{'children'}{$b}{'start'}} keys %{$f->{'children'}||{}}) {
+        my $child = $f->{'children'}{$child_id};
         if (scalar keys (%{$child->{'children'}||{}})) {
           ## Object has grandchildren - probably a transcript
           my $args = {'seen' => {}, 'no_separate_transcript' => 0};
           ## Create a new transcript from the current feature
           my %transcript = %$child;
-          foreach my $sub_id (keys %{$child->{'children'}||{}}) {
+          foreach my $sub_id (sort {$child->{'children'}{$a}{'start'} <=> $child->{'children'}{$b}{'start'}} keys %{$child->{'children'}||{}}) {
             my $grandchild = $child->{'children'}{$sub_id};
             ($args, %transcript) = $self->add_to_transcript($grandchild, $args, %transcript);  
           }
