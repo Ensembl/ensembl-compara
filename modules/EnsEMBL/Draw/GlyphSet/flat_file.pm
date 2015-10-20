@@ -29,13 +29,6 @@ use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
-use EnsEMBL::Draw::Style::Feature::Structured;
-use EnsEMBL::Draw::Style::Feature::Transcript;
-use EnsEMBL::Draw::Style::Feature::Interaction;
-use EnsEMBL::Draw::Style::Graph;
-use EnsEMBL::Draw::Style::Graph::Histogram;
-use EnsEMBL::Draw::Style::Graph::Barcode;
-
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
 
@@ -190,8 +183,10 @@ sub draw_features {
 
   foreach (@{$drawing_style||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
-    my $style = $style_class->new(\%config, $subtracks);
-    $self->push($style->create_glyphs);
+    if ($self->dynamic_use($style_class)) {
+      my $style = $style_class->new(\%config, $subtracks);
+      $self->push($style->create_glyphs);
+    }
   }
   ## This is clunky, but it's the only way we can make the new code
   ## work in a nice backwards-compatible way right now!
