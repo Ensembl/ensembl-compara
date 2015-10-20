@@ -25,25 +25,31 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use Data::Dumper;
+
 use parent qw(EnsEMBL::Web::IOWrapper::GXF);
 
 sub post_process {
 ### Reassemble sub-features back into features
   my ($self, $data) = @_;
+  #warn '>>> ORIGINAL DATA '.Dumper($data);
 
   while (my ($track_key, $content) = each (%$data)) {
+    ## Build a tree of features
     my $tree = {};
-    foreach (@{$content->{'features'}}) {
-      if ($_->{'parent'}) {
-        $self->_add_to_parent($tree, $_);
+    foreach my $f (@{$content->{'features'}}) {
+      if (scalar @{$f->{'parents'}||[]}) {
+        $self->_add_to_parent($tree, $f, $_) for @{$f->{'parents'}};
       }
       else {
-        $tree->{$_->{'id'}} = $_;
+        $tree->{$f->{'id'}} = $f;
       }
     }
+    #warn Dumper($tree);
 
     my $args;
 
+    ## Convert tree into structured features
     my @ok_features;
     while (my($id, $f) = each(%$tree)) {
       my %transcript;
@@ -78,18 +84,20 @@ sub post_process {
     $content->{'features'} = \@ok_features;
 #    use Data::Dumper; warn Dumper(\@ok_features);
   }
+  warn '################# PROCESSED DATA '.Dumper($data);
 }
 
 sub _add_to_parent {
-  my ($self, $node, $feature) = @_;
+  my ($self, $node, $feature, $parent) = @_;
   ## Is this a child of the current level?
-  if ($node->{$feature->{'parent'}}) {
-    $node->{$feature->{'parent'}}{'children'}{$feature->{'id'}} = $feature;
+  if ($node->{$parent}) {
+    $node->{$parent}{'children'}{$feature->{'id'}} = $feature;
     return;
   }
   else {
     while (my($k, $v) = each(%$node)) {
-      $self->_add_to_parent($v, $feature);
+      next unless $k && ref $v eq 'HASH';
+      $self->_add_to_parent($v, $feature, $parent);
     }
   }
 }
@@ -125,10 +133,12 @@ sub create_hash {
                         'end'         => $feature_end,
                         });
 
+  my @parents = split(',', $self->parser->get_attribute_by_name('Parent'));
+
   return {
     'id'            => $id,
     'type'          => $self->parser->get_type,
-    'parent'        => $self->parser->get_attribute_by_name('Parent'),
+    'parents'       => \@parents,
     'start'         => $feature_start - $slice->start,
     'end'           => $feature_end - $slice->start,
     'seq_region'    => $seqname,
