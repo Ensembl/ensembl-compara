@@ -66,11 +66,12 @@ sub open {
   return undef unless $subclass;
   my $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
 
-  my $parser;
   my $format = $file->get_format;
   return undef unless $format;
 
+  my $wrapper;
   if (dynamic_use($class, 1)) {
+    my $parser;
     if ($file->source eq 'url') {
       my $result = $file->read;
       if ($result->{'content'}) {
@@ -82,13 +83,14 @@ sub open {
       $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
     }
 
-    $class->new({
-                'parser' => $parser, 
-                'file'   => $file, 
-                'format' => $format,
-                %args,
-                });  
+    $wrapper = $class->new({
+                            'parser' => $parser, 
+                            'file'   => $file, 
+                            'format' => $format,
+                            %args,
+                            });  
   }
+  return $wrapper;
 }
 
 sub parser {
@@ -169,13 +171,16 @@ sub create_tracks {
 ### @return arrayref of one or more hashes containing track information
   my ($self, $slice) = @_;
   my $parser = $self->parser;
+  warn ">>> CREATING TRACKS WITH PARSER $parser";
   my $tracks      = [];
   my $data        = {};
   my $prioritise  = 0;
   my @order;
 
   while ($parser->next) {
-    my $track_key = $parser->get_metadata_value('name') || 'data';
+    warn ">>> READING DATA";
+    my $track_key = $parser->get_metadata_value('name') if $parser->can('get_metadata_value');
+    $track_key ||= 'data';
 
     unless ($data->{$track_key}) {
       ## Default track order is how they come out of the file
@@ -183,13 +188,14 @@ sub create_tracks {
     }
 
     ## If we haven't done so already, grab all the metadata for this track
-    unless (keys %{$data->{$track_key}{'metadata'}||{}}) {
+    if (!keys %{$data->{$track_key}{'metadata'}||{}} && $parser->can('get_all_metadata')) {
       my %metadata = %{$parser->get_all_metadata};
       $data->{$track_key}{'metadata'} = \%metadata;
       $prioritise = 1 if $data->{$track_key}{'metadata'}{'priority'};
     }
 
     my ($seqname, $start, $end) = $self->coords;
+    warn ">>> FEATURE $seqname:$start-$end";
     ## Skip features that lie outside the current slice
     if ($slice) {
       next if ($seqname ne $slice->seq_region_name
