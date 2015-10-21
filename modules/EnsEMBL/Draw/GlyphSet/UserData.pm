@@ -54,7 +54,6 @@ sub init {
 sub draw_features {
   my ($self, $subtracks) = @_;
   $subtracks ||= $self->{'features'};
-  #warn ">>> DRAWING FEATURES $subtracks";
   return unless ref $subtracks eq 'ARRAY';
   my $feature_count = 0;
 
