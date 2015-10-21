@@ -118,7 +118,7 @@ sub render_toolbar {
     push @$icons, $self->add_export_icon;
   }
 
-  if ($viewconfig) {
+  if ($viewconfig && !$self->{'remove_reset'}) {
     push @$icons, $self->add_config_reset_icon;
   }
 
