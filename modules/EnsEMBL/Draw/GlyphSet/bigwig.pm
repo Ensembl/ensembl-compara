@@ -23,280 +23,44 @@ package EnsEMBL::Draw::GlyphSet::bigwig;
 
 use strict;
 
-use List::Util qw(min max);
+use EnsEMBL::Web::IOWrapper::Indexed;
 
-use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor;
+use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
-use EnsEMBL::Web::File::Utils::URL;
+sub can_json { return 1; }
 
-use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
+sub features {
+  my $self      = shift;
+  my $hub       = $self->{'config'}->hub;
+  my $url       = $self->my_config('url');
+  my $container = $self->{'container'};
+  my $args      = {'options' => {'hub' => $hub}};
 
-sub href_bgd       { return $_[0]->_url({ action => 'UserData' }); }
+  my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigWig', $args);
+  my $data;
 
-sub wiggle_subtitle {
-  my $self = shift;
-  return $self->my_config('longLabel') || $self->my_config('caption');
-} 
+  if ($iow) {
+    ## Parse the file, filtering on the current slice
+    $data = $iow->create_tracks($container);
 
-sub bigwig_adaptor { 
-  my $self = shift;
-
-  my $url = $self->my_config('url');
-  my $error;
-  if ($url && $url =~ /^(http|ftp)/) { ## remote bigwig file
-    unless ($self->{'_cache'}->{'_bigwig_adaptor'}) {
-      ## Check file is available before trying to load it 
-      ## (Bio::DB::BigFile does not catch C exceptions)
-      my $headers = EnsEMBL::Web::File::Utils::URL::get_headers($url, {
-                                                                    'hub' => $self->{'config'}->hub, 
-                                                                    'no_exception' => 1
-                                                            });
-      if ($headers) {
-        if ($headers->{'Content-Type'} !~ 'text/html') { ## Not being redirected to a webpage, so chance it!
-          my $ad = Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor->new($url);
-          $error = "Bad BigWIG data" unless $ad->check;
-          $self->{'_cache'}->{'_bigwig_adaptor'} = $ad;
-        }
-        else {
-          $error = "File at URL $url does not appear to be of type BigWig; returned MIME type ".$headers->{'Content-Type'};
-        }
-      }
-      else {
-        $error = "No HTTP headers returned by URL $url";
-      }
-    }
-    $self->errorTrack('Could not retrieve file from trackhub') if $error;
+    ## Override colourset based on format here, because we only want to have to do this in one place
+    my $colourset   = $iow->colourset || 'userdata';
+    $self->{'my_config'}->set('colours', $hub->species_defs->colour($colourset));
+    $self->{'my_config'}->set('default_colour', $self->my_colour('default'));
+  } else {
+    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
+    warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
   }
-  else { ## local bigwig file
-    my $config    = $self->{'config'};
-    my $hub       = $config->hub;
-    my $dba       = $hub->database($self->my_config('type'), $self->species);
+  #$self->{'config'}->add_to_legend($legend);
 
-    if ($dba) {
-      my $dfa = $dba->get_DataFileAdaptor();
-      $dfa->global_base_path($hub->species_defs->DATAFILE_BASE_PATH);
-      my ($logic_name) = @{$self->my_config('logic_names')||[]};
-      my ($df) = @{$dfa->fetch_all_by_logic_name($logic_name)||[]};
-
-      $self->{_cache}->{_bigwig_adaptor} ||= $df->get_ExternalAdaptor(undef, 'BIGWIG');
-    }
-  }
-  return $self->{_cache}->{_bigwig_adaptor};
-}
-
-sub render_compact { $_[0]->render_normal(8, 0); }
-
-sub render_normal {
-  my $self = shift;
-  
-  return if $self->strand != 1;
-  return $self->render_text if $self->{'text_export'};
-
-  my $agg = $self->wiggle_aggregate();
-
-  my $h               = @_ ? shift : ($self->my_config('height') || 8);
-     $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
-  my $name            = $self->my_config('name');
-  my @greyscale       = qw(ffffff d8d8d8 cccccc a8a8a8 999999 787878 666666 484848 333333 181818 000000);
-
-  if (@{$agg->{'values'}||[]}) {
-    $self->push($self->Barcode({
-      values    => $agg->{'values'},
-      x         => 1,
-      y         => 0,
-      height    => $h,
-      unit      => $agg->{'unit'},
-      max       => $agg->{'max'},
-      colours   => \@greyscale,
-    }));
-    $self->_render_hidden_bgd($h);
-  }
-  
-  $self->errorTrack("No features from '$name' on this strand") unless @{$agg->{'values'}||[]} || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
+  return $data;
+  use Data::Dumper; warn Dumper($data);
 }
 
 sub render_text {
   my ($self, $wiggle) = @_;
   warn 'No text render implemented for bigwig';
   return '';
-}
-
-sub bins {
-  my ($self) = @_;
-
-  if(!$self->{'_bins'}) {
-    my $slice = $self->{'container'};
-    $self->{'_bins'} = min($self->{'config'}->image_width, $slice->length);
-  }
-  return $self->{'_bins'};
-}
-
-sub features {
-  my ($self, $bins, $cache_key) = @_;
-  $bins ||= $self->bins;
-  my $slice         = $self->{'container'};
-  my $fake_analysis = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
-  my @features;
-  
-  foreach (@{$self->wiggle_features($bins, $cache_key)}) {
-    push @features, {
-      start    => $_->{'start'}, 
-      end      => $_->{'end'}, 
-      score    => $_->{'score'}, 
-      slice    => $slice, 
-      analysis => $fake_analysis,
-      strand   => 1, 
-    };
-  }
-  
-  return \@features;
-}
-
-# get the alignment features
-sub wiggle_aggregate {
-  my ($self) = @_;
-  my $hub = $self->{'config'}->hub;
-  my $has_chrs = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES});
-
-  if (!$self->{'_cache'}{'wiggle_aggregate'}) {
-    my $slice     = $self->{'container'};
-    my $bins      = min($self->{'config'}->image_width, $slice->length);
-    my $adaptor   = $self->bigwig_adaptor;
-    return {} unless $adaptor;
-    my $values   = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
-    my $bin_width = $slice->length / $bins;
-    my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
-
-    $self->{'_cache'}{'wiggle_aggregate'} = {
-      unit => $bin_width,
-      length => $slice->length,
-      strand => $slice->strand,
-      max => max(@$values),
-      min => min(@$values),
-      values => $values,
-    };
-  }
-
-  return $self->{'_cache'}{'wiggle_aggregate'};
-}
-
-sub _max_val {
-  my ($self) = @_;
-
-  # TODO cache output so as not to re-call
-  my $hub = $self->{'config'}->hub;
-  my $has_chrs = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES});
-  my $slice = $self->{'container'};
-  my $adaptor = $self->bigwig_adaptor;
-  my $max_val = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $self->bins, $has_chrs);
-  return max(@$max_val);
-}
-
-sub gang_prepare {
-  my ($self,$gang) = @_;
-
-  my $max = $self->_max_val;
-  $gang->{'max'} = max($gang->{'max'}||0,$max);
-}
-
-# get the alignment features
-sub wiggle_features {
-  my ($self, $bins, $multi_key) = @_;
-  my $hub = $self->{'config'}->hub;
-  my $has_chrs = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES});
-  
-  my $wiggle_features = $multi_key ? $self->{'_cache'}{'wiggle_features'}{$multi_key} 
-                                   : $self->{'_cache'}{'wiggle_features'}; 
-
-  if (!$wiggle_features) {
-    my $slice     = $self->{'container'};
-    my $adaptor   = $self->bigwig_adaptor;
-    return [] unless $adaptor;
-
-    my $summary   = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
-    my $bin_width = $slice->length / $bins;
-    my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
-    $wiggle_features = [];
-    
-    for (my $i = 0; $i < $bins; $i++) {
-      next unless defined $summary->[$i];
-      push @$wiggle_features, {
-        start => $flip ? $flip - (($i + 1) * $bin_width) : ($i * $bin_width + 1),
-        end   => $flip ? $flip - ($i * $bin_width + 1)   : (($i + 1) * $bin_width),
-        score => $summary->[$i],
-      };
-    }
-  
-    if ($multi_key) {
-      $self->{'_cache'}{'wiggle_features'}{$multi_key} = $wiggle_features;
-    }
-    else {
-      $self->{'_cache'}{'wiggle_features'} = $wiggle_features;
-    }
-  }
-  
-  return $wiggle_features;
-}
-
-sub draw_features {
-  my ($self, $wiggle) = @_;
-  my $slice        = $self->{'container'};
-  my $colour       = $self->my_config('colour') || 'slategray';
-
-  # render wiggle if wiggle
-  if ($wiggle) {
-    my $agg = $self->wiggle_aggregate();
-
-    my $viewLimits = $self->my_config('viewLimits');
-    my $no_titles  = $self->my_config('no_titles');
-    my ($min_score,$max_score);
-    my $signal_range = $self->my_config('signal_range');
-    if(defined $signal_range) {
-      $min_score = $signal_range->[0];
-      $max_score = $signal_range->[1];
-    }
-    unless(defined $min_score) {
-      if (defined $viewLimits) {
-        $min_score = [ split ':', $viewLimits ]->[0];
-      } else {
-        $min_score = $agg->{'min'};
-      }
-    }
-    unless(defined $max_score) {
-      if (defined $viewLimits) {
-        $max_score = [ split ':', $viewLimits ]->[1];
-      } else {
-        $max_score = $agg->{'max'};
-      }
-    }
-   
-    my $gang = $self->gang();
-    if($gang and $gang->{'max'}) {
-      $max_score = $gang->{'max'};
-    }
-    if($gang and $gang->{'min'}) {
-      $min_score = $gang->{'min'};
-    }
-
-    # render wiggle plot
-    my $height = $self->my_config('height') || 60;
-    $self->draw_wiggle_plot($agg->{'values'}, {
-      min_score    => $min_score,
-      max_score    => $max_score,
-      score_colour => $colour,
-      axis_colour  => $colour,
-      no_titles    => defined $no_titles,
-      unit         => $agg->{'unit'},
-      height       => $height,
-      graph_type   => 'bar',
-    });
-    $self->_render_hidden_bgd($height) if @{$agg->{'values'}};
-  }
-
-  warn q{bigwig glyphset doesn't draw blocks} if !$wiggle || $wiggle eq 'both';
-  
-  return 0;
 }
 
 1;
