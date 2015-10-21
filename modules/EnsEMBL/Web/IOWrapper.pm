@@ -171,14 +171,12 @@ sub create_tracks {
 ### @return arrayref of one or more hashes containing track information
   my ($self, $slice) = @_;
   my $parser = $self->parser;
-  warn ">>> CREATING TRACKS WITH PARSER $parser";
   my $tracks      = [];
   my $data        = {};
   my $prioritise  = 0;
   my @order;
 
   while ($parser->next) {
-    warn ">>> READING DATA";
     my $track_key = $parser->get_metadata_value('name') if $parser->can('get_metadata_value');
     $track_key ||= 'data';
 
@@ -195,7 +193,6 @@ sub create_tracks {
     }
 
     my ($seqname, $start, $end) = $self->coords;
-    warn ">>> FEATURE $seqname:$start-$end";
     ## Skip features that lie outside the current slice
     if ($slice) {
       next if ($seqname ne $slice->seq_region_name
