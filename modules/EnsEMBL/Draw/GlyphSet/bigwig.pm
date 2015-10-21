@@ -54,7 +54,6 @@ sub features {
   #$self->{'config'}->add_to_legend($legend);
 
   return $data;
-  use Data::Dumper; warn Dumper($data);
 }
 
 sub render_text {
