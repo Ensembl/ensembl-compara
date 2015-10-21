@@ -169,9 +169,10 @@ sub create_glyphs {
     $plot_conf->{'colour'} = shift(@$feature_colours) if $feature_colours and @$feature_colours;
     $self->draw_wiggle($plot_conf, $features);
 
+    my $subtitle_colour = $subtrack->{'metadata'}{'color'} || $plot_conf->{'colour'};
     my $subtitle = {
                     'text'    => $subtrack->{'metadata'}{'name'},
-                    'colour'  => $self->make_readable($subtrack->{'metadata'}{'color'}),
+                    'colour'  => $self->make_readable($subtitle_colour),
                     'y'       => $top + 8,
                     };
     $self->draw_subtitle($subtitle);
