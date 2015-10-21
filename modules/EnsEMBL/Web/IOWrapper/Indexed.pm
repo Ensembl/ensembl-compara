@@ -51,6 +51,17 @@ sub open {
   }
 }
 
+sub create_tracks {
+  my ($self, $slice) = @_;
+
+  ## Limit file seek to current slice
+  my $parser = $self->parser;
+  $parser->seek($slice->seq_region_name, $slice->start, $slice->end);
+
+  $self->SUPER::create_tracks($slice);
+}
+
+
 sub nearest_feature { return undef; }
 
 1;
