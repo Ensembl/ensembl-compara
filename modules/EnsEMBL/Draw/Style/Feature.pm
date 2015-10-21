@@ -73,8 +73,16 @@ sub create_glyphs {
 
   foreach my $subtrack (@$data) {
     foreach my $feature (@{$subtrack->{'features'}||[]}) {
-      ## Skip unless feature is on this strand
-      next if defined($same_strand) && defined($feature->{'strand'}) && $feature->{'strand'} != $same_strand;
+      if (defined($feature->{'strand'})) {
+       if ($feature->{'strand'} == 0) {
+          ## Unstranded data goes on the reverse strand
+          next if $same_strand && $same_strand == 1;
+        }
+        else {
+        ## Skip unless feature is on this strand
+        next if defined($same_strand) && $feature->{'strand'} != $same_strand;
+        }
+      }
 
       ## Are we drawing transcripts or just genes?
       next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
