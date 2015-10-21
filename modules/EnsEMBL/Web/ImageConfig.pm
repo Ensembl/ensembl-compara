@@ -1283,12 +1283,13 @@ sub _add_bigwig_track {
   ];
 
   my $options = {
-    external     => 'external',
-    sub_type     => 'bigwig',
-    colour       => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
-    longLabel    => $args{'source'}{'longLabel'},
-    addhiddenbgd => 1,
-    max_label_rows => 2,
+    external        => 'external',
+    sub_type        => 'bigwig',
+    style           => 'wiggle',
+    colour          => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
+    longLabel       => $args{'source'}{'longLabel'},
+    addhiddenbgd    => 1,
+    max_label_rows  => 2,
   };
 
   ## Override default renderer (mainly used by trackhubs)
