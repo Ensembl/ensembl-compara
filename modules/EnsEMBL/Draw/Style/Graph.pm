@@ -260,8 +260,10 @@ sub set_colour {
 ### @return String - colour of feature
   my ($self, $c, $f) = @_;
   my $cutoff = $c->{'alt_colour_cutoff'} || 0;
-  return ($c->{'alt_colour'} && $f->{'score'} < $cutoff)
+  my $colour = ($c->{'alt_colour'} && $f->{'score'} < $cutoff)
                   ? $c->{'alt_colour'} : $f->{'colour'};
+  $colour ||= 'black';
+  return $colour;
 }
 
 sub draw_score {
