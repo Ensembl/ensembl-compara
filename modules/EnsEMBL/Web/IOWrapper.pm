@@ -168,6 +168,7 @@ sub create_tracks {
 ### Loop through the file and create one or more tracks
 ### Orders tracks by priority value if it exists
 ### @param slice - Bio::EnsEMBL::Slice object
+### @param extra_config Hashref - additional configuration e.g. default colours
 ### @return arrayref of one or more hashes containing track information
   my ($self, $slice, $extra_config) = @_;
   my $parser = $self->parser;
