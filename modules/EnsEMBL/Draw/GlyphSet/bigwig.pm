@@ -40,13 +40,29 @@ sub features {
   my $data;
 
   if ($iow) {
-    ## Parse the file, filtering on the current slice
-    $data = $iow->create_tracks($container);
+    ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
+    ## most files won't have explicit colour settings
+    my $colour = $self->my_config('colour');
+    my $metadata = {
+                    'colour'        => $colour,
+                    'join_colour'   => $colour,
+                    'label_colour'  => $colour,
+                    };
+    ## No colour defined in ImageConfig, so fall back to defaults
+    unless ($colour) {
+      my $colourset_key = $self->{'my_config'}->get('colourset') || 'userdata';
+      my $colourset     = $hub->species_defs->colour($colourset_key);
+      my $colours       = $colourset->{'url'} || $colourset->{'default'};
+      $metadata         = {
+                            'colour'        => $colours->{'default'},
+                            'join_colour'   => $colours->{'join'} || $colours->{'default'},
+                            'label_colour'  => $colours->{'text'} || $colours->{'default'},
+                          };
+    }
 
-    ## Override colourset based on format here, because we only want to have to do this in one place
-    my $colourset   = $iow->colourset || 'userdata';
-    $self->{'my_config'}->set('colours', $hub->species_defs->colour($colourset));
-    $self->{'my_config'}->set('default_colour', $self->my_colour('default'));
+    ## Parse the file, filtering on the current slice
+    $data = $iow->create_tracks($container, $metadata);
+
   } else {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
