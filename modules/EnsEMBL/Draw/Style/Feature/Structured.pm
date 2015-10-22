@@ -43,7 +43,7 @@ sub draw_feature {
   $current_x        = 0 if $current_x < 0;
 
   my $colour      = $feature->{'colour'};
-  my $join_colour = $feature->{'join_colour'} || $feature->{'bordercolour'} || $colour;
+  my $join_colour = $feature->{'join_colour'};
 
   my $track_config  = $self->track_config;
   my $join          = $track_config->get('no_join') ? 0 : 1;

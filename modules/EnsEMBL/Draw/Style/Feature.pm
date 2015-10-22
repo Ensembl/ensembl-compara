@@ -37,6 +37,7 @@ This module expects data in the following format:
                 'bordercolour'  => 'black',                           # optional
                 'label'         => 'Feature 1',                       # optional
                 'label_colour'  => 'red',                             # optional
+                'join_colour'   => 'red',                             # optional
                 'href'          => '/Location/View?r=123456-124789',  # optional  
                 'title'         => 'Some text goes here',             # optional  
                 },
@@ -60,7 +61,6 @@ sub create_glyphs {
   my $image_config    = $self->image_config;
   my $track_config    = $self->track_config;
   ## Set some track-wide variables
-  my $default_colour  = $track_config->get('default_colour');
   my $slice_width     = $image_config->container_width;
   my $bumped          = $track_config->get('bumped');
   my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
@@ -94,8 +94,15 @@ sub create_glyphs {
       my $label_row   = 0;
       my $new_y;
 
-      ## Set default colour if there is one
-      $feature->{'colour'} ||= $default_colour;
+      ## Default colours, if none set in feature
+      ## Note that a feature must have either a border colour or a fill colour,
+      ## but doesn't need to have both. However we do set join and label colours,
+      ## because other configuration options determine whether they are used
+      if (!$feature->{'bordercolour'}) {
+        $feature->{'colour'} ||= 'black';
+      } 
+      $feature->{'join_colour'}   ||= $feature->{'colour'} || $feature->{'bordercolour'};
+      $feature->{'label_colour'}  ||= $feature->{'colour'} || $feature->{'bordercolour'};
 
       ## Work out if we're bumping the whole feature or just the label
       if ($bumped) {
