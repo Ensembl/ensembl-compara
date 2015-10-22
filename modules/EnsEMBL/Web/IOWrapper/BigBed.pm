@@ -32,4 +32,15 @@ sub create_hash { return EnsEMBL::Web::IOWrapper::Bed::create_hash(@_); }
 
 sub create_structure { return EnsEMBL::Web::IOWrapper::Bed::create_structure(@_); }
 
+sub create_tracks {
+  my ($self, $slice) = @_;
+
+  ## Limit file seek to current slice
+  my $parser = $self->parser;
+  $parser->seek($slice->seq_region_name, $slice->start, $slice->end);
+
+  $self->SUPER::create_tracks($slice);
+}
+
+
 1;
