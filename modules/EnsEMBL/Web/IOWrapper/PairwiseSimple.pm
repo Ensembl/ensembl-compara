@@ -30,12 +30,12 @@ use parent qw(EnsEMBL::Web::IOWrapper);
 sub create_hash {
 ### Create a hash of feature information in a format that
 ### can be used by the drawing code
-### @param metadata - Hashref of information about this track
 ### @param slice - Bio::EnsEMBL::Slice object
+### @param metadata - Hashref of information about this track
 ### @return Hashref
-  my ($self, $metadata, $slice) = @_;
-  $metadata ||= {};
+  my ($self, $slice, $metadata) = @_;
   return unless $slice;
+  $metadata ||= {};
 
   ## Skip this feature if the interaction crosses chromosomes
   my ($seqname_2, $feature_2_start, $feature_2_end) = $self->parser->get_interacting_region;

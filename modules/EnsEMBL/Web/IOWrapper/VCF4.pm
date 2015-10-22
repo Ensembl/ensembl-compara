@@ -32,12 +32,12 @@ sub colourset { return 'variation'; }
 sub create_hash {
 ### Create a hash of feature information in a format that
 ### can be used by the drawing code
-### @param metadata - Hashref of information about this track
 ### @param slice - Bio::EnsEMBL::Slice object
+### @param metadata - Hashref of information about this track
 ### @return Hashref
-  my ($self, $metadata, $slice) = @_;
-  $metadata ||= {};
+  my ($self, $slice, $metadata) = @_;
   return unless $slice;
+  $metadata ||= {};
 
   my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;

@@ -123,12 +123,12 @@ sub post_process {
 sub create_hash {
 ### Create a hash of feature information in a format that
 ### can be used by the drawing code
-### @param metadata - Hashref of information about this track
 ### @param slice - Bio::EnsEMBL::Slice object
+### @param metadata - Hashref of information about this track
 ### @return Hashref
-  my ($self, $metadata, $slice) = @_;
-  $metadata ||= {};
+  my ($self, $slice, $metadata) = @_;
   return unless $slice;
+  $metadata ||= {};
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
