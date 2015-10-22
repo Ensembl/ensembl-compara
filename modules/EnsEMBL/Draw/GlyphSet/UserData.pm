@@ -54,7 +54,7 @@ sub init {
 sub draw_features {
   my ($self, $subtracks) = @_;
   $subtracks ||= $self->{'features'};
-  return unless ref $subtracks eq 'ARRAY';
+  return unless $subtracks && ref $subtracks eq 'ARRAY';
   my $feature_count = 0;
 
   foreach (@$subtracks) {
@@ -86,18 +86,20 @@ sub draw_features {
   my $key         = $self->{'hover_label_class'};
   my $hover_label = $self->{'config'}->{'hover_labels'}{$key};
   my $mod_header  = $hover_label->{'header'};
+  my $skipped     = 1;
 
   foreach (@$subtracks) {
     my $features  = $_->{'features'};
     my $metadata  = $_->{'metadata'} || {};
+    next if $self->skip_strand($metadata->{'strands'});
+    $skipped = 0;
 
     ## Set alternative colour (used by some styles)
     if ($metadata->{'color'} && !$metadata->{'altColor'}) {
         ## No alt set, so default to a half-tint of the main colour
         my @gradient = EnsEMBL::Draw::Utils::ColourMap::build_linear_gradient(3, ['white', $metadata->{'color'}]);
         $metadata->{'altColor'} = $gradient[1];
-      }
-
+    }
 
     my $name = $metadata->{'name'};
     if ($name && $hover_label->{'header'} !~ /$name/) { ## Don't add the track name more than once!
@@ -124,6 +126,10 @@ sub draw_features {
 
     $config{'subtitle'} = $description;
   }
+
+  ## Return nothing if we decided not to draw any subtracks
+  return if $skipped;
+
   my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
   foreach (@{$drawing_style||[]}) {
@@ -140,6 +146,25 @@ sub draw_features {
 
   ## Everything went OK, so no error to return
   return 0;
+}
+
+sub skip_strand {
+  my ($self, $strand_info) = @_;
+  my $skip = 0;
+  my $drawable_strands = $self->{'my_config'}->get('strand');
+
+  if ($drawable_strands eq 'f') {
+    $skip = 1 if $self->strand == -1;
+  }
+  elsif ($drawable_strands eq 'r') {
+    $skip = 1 if $self->strand == 1;
+  }
+  elsif (keys %{$strand_info||{}}) { ## assume both strands
+    $skip = 1 if $self->strand == 1 && !$strand_info->{1};
+    $skip = 1 if $self->strand == -1 && !$strand_info->{-1} && !$strand_info->{0};
+  }
+
+  return $skip;
 }
 
 sub render_as_transcript_nolabel {
