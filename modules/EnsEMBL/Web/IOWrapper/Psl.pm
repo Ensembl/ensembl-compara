@@ -43,6 +43,7 @@ sub create_hash {
   ## we will override the default colour in the drawing code
   my $colour;
   my $strand  = $self->parser->get_strand;
+  $metadata->{'strands'}{$strand}++;
   ## Not sure if this is the right way to calculate score, but it seems reasonable!
   my $score = ($self->parser->get_matches / $self->parser->get_misMatches) * 1000;
 

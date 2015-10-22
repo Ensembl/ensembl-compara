@@ -36,6 +36,8 @@ sub create_hash {
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
   $metadata ||= {};
+  ## WIG has no strand
+  $metadata->{'strands'}{0}++;
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates

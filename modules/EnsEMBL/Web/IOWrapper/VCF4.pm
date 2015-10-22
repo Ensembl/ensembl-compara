@@ -38,6 +38,8 @@ sub create_hash {
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
   $metadata ||= {};
+  ## VCF has no strand
+  $metadata->{'strands'}{0}++;
 
   my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;

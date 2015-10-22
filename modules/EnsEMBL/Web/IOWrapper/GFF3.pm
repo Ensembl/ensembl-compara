@@ -131,6 +131,7 @@ sub create_hash {
   my $feature_end   = $self->parser->get_end;
   my $strand        = $self->parser->get_strand;
   my $score         = $self->parser->get_score;
+  $metadata->{'strands'}{$strand}++;
 
   my $id    = $self->parser->get_attribute_by_name('ID');
   my $label = $self->parser->get_attribute_by_name('Name') || $id; 

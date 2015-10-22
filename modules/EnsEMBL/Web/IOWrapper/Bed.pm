@@ -36,7 +36,6 @@ sub create_hash {
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
   $metadata ||= {};
-  use Data::Dumper; warn '>>> METADATA '.Dumper($metadata);
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
@@ -45,6 +44,8 @@ sub create_hash {
   my $feature_end   = $self->parser->get_end;
   my $strand        = $self->parser->get_strand;
   my $score         = $self->parser->get_score;
+
+  $metadata->{'strands'}{$strand}++;
 
   my $colour_params  = {
                         'metadata'  => $metadata, 
