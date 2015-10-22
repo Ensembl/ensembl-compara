@@ -43,15 +43,15 @@ sub create_hash {
   ## we will override the default colour in the drawing code
   my $colour;
   my $strand  = $self->parser->get_strand;
-  my $score;
+  ## Not sure if this is the right way to calculate score, but it seems reasonable!
+  my $score = ($self->parser->get_matches / $self->parser->get_misMatches) * 1000;
 
-  if ($metadata->{'useScore'}) {
-    ## UCSC use greyscale with PSL, but it's not clear how it's calculated!
-    $colour = $self->convert_to_gradient(1000, $metadata->{'color'});
-  }
-  elsif ($metadata->{'color'}) {
-    $colour = $metadata->{'color'};
-  }
+  my $colour_params  = {
+                        'metadata'  => $metadata,
+                        'strand'    => $strand,
+                        'score'     => $score,
+                        };
+  my $colour = $self->set_colour($colour_params);
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
@@ -63,6 +63,8 @@ sub create_hash {
     'score'         => $score,
     'label'         => $self->parser->get_qName,
     'colour'        => $colour, 
+    'join_colour'   => $metadata->{'join_colour'} || $colour,
+    'label_colour'  => $metadata->{'label_colour'} || $colour,
     'structure'     => $self->create_structure($slice->start),
   };
 }

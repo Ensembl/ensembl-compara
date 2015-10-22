@@ -72,6 +72,8 @@ sub create_hash {
     'score'         => $score,
     'label'         => $self->parser->get_name,
     'colour'        => $colour,
+    'join_colour'   => $metadata->{'join_colour'} || $colour,
+    'label_colour'  => $metadata->{'label_colour'} || $colour,
     'structure'     => $self->create_structure($feature_start, $slice->start),
     'href'          => $href,
   };

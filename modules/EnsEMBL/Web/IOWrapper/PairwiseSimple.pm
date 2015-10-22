@@ -49,18 +49,22 @@ sub create_hash {
   $feature_2_start   -= $slice_start;
   $feature_2_end     -= $slice_start;
 
-  ## Only set colour if we have something in file, otherwise
-  ## we will override the default colour in the drawing code
-  my $colour;
+  ## Set colour for feature
+  my $colour_params  = {
+                        'metadata'  => $metadata,
+                        'strand'    => $strand,
+                        };
   my $score = $self->parser->get_score;
-  if ($score && $score =~ /\d+,\d+,\d+/) {
-    ## Score field can be 'hacked' to set a colour
-    $colour = $self->rgb_to_hex($score);
-    $score  = undef;
+  if ($score) {
+    if ($score =~ /\d+,\d+,\d+/) {
+      $colour_params->{'itemRgb'} = $score;
+    }
+    else {
+      $metadata->{'useScore'}   = 1;
+      $colour_params->{'score'} = $score;
+    }
   }
-  else {
-    $colour = $self->convert_to_gradient($score);
-  }
+  my $colour = $self->set_colour($colour_params);
 
   my $structure = [
                   {'start' => $feature_1_start, 'end' => $feature_1_end},
@@ -74,6 +78,8 @@ sub create_hash {
     'direction'     => $self->parser->get_direction,
     'score'         => $score,
     'colour'        => $colour, 
+    'join_colour'   => $metadata->{'join_colour'} || $colour,
+    'label_colour'  => $metadata->{'label_colour'} || $colour,
     'structure'     => $structure,
   };
 }

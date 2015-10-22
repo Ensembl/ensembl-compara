@@ -57,6 +57,8 @@ sub create_hash {
     'end'           => $feature_end - $slice->start,
     'seq_region'    => $seqname,
     'label'         => join(',', @feature_ids),
+    'colour'        => $metadata->{'colour'},
+    'label_colour'  => $metadata->{'label_colour'},
     'href'          => $href,
   };
 }

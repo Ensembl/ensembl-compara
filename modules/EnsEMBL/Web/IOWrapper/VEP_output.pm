@@ -105,9 +105,10 @@ sub post_process {
     foreach (@unique_features) {
       my @consequences = keys %{$_->{'consequences'}||{}};
       my $worst_consequence = reduce { $cons_lookup{$a} < $cons_lookup{$b} ? $a : $b } @consequences;
-      $worst_consequence ||= 'default';
-      $_->{'colour'} = $colours->{$worst_consequence}->{'default'};
-      $_->{'label'} = $worst_consequence; 
+      $worst_consequence  ||= 'default';
+      $_->{'colour'}        = $colours->{$worst_consequence}->{'default'};
+      $_->{'label_colour'}  = $subtrack->{'metadata'}{'label_colour'} || $_->{'colour'};
+      $_->{'label'}         = $worst_consequence; 
     }
 
     $data->{$key}{'features'} = \@unique_features;

@@ -170,6 +170,8 @@ sub create_hash {
     'strand'        => $strand,
     'score'         => $score,
     'colour'        => $colour, 
+    'join_colour'   => $metadata->{'join_colour'} || $colour,
+    'label_colour'  => $metadata->{'label_colour'} || $colour,
     'label'         => $id,
     %$attributes,
   };

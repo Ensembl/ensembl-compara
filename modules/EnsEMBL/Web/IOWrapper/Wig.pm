@@ -52,11 +52,13 @@ sub create_hash {
   my $colour = $self->set_colour($colour_params);
 
   return {
-    'start'       => $feature_start - $slice->start,
-    'end'         => $feature_end - $slice->start,
-    'seq_region'  => $seqname,
-    'score'       => $score,
-    'colour'      => $colour,
+    'start'         => $feature_start - $slice->start,
+    'end'           => $feature_end - $slice->start,
+    'seq_region'    => $seqname,
+    'score'         => $score,
+    'colour'        => $colour,
+    'join_colour'   => $metadata->{'join_colour'} || $colour,
+    'label_colour'  => $metadata->{'label_colour'} || $colour,
   };
 }
 

@@ -78,18 +78,23 @@ sub post_process {
 }
 
 sub _drawable_feature {
-### Simplify feature hash for drawing
+### Simplify feature hash for drawing 
+### (Note that we can't delete hash keys unless we dereference the hashref first, 
+### because we need the children for building the complete feature)
   my ($self, $f) = @_;
   return {
-          'seq_region'  => $f->{'seq_region'},
-          'start'       => $f->{'start'},
-          'end'         => $f->{'end'},
-          'strand'      => $f->{'strand'},
-          'type'        => $f->{'type'},
-          'label'       => $f->{'label'},
-          'score'       => $f->{'score'},
-          'href'        => $f->{'href'},
-          'structure'   => $f->{'structure'},
+          'seq_region'    => $f->{'seq_region'},
+          'start'         => $f->{'start'},
+          'end'           => $f->{'end'},
+          'strand'        => $f->{'strand'},
+          'type'          => $f->{'type'},
+          'label'         => $f->{'label'},
+          'score'         => $f->{'score'},
+          'colour'        => $f->{'colour'},
+          'join_colour'   => $f->{'join_colour'},
+          'label_colour'  => $f->{'label_colour'},
+          'href'          => $f->{'href'},
+          'structure'     => $f->{'structure'},
           };
 }
 
@@ -150,6 +155,9 @@ sub create_hash {
     'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,
+    'colour'        => $metadata->{'colour'},
+    'join_colour'   => $metadata->{'join_colour'},
+    'label_colour'  => $metadata->{'label_colour'},
     'label'         => $label,
     'href'          => $href,
   };
