@@ -226,10 +226,10 @@ sub post_process {} ## Stub
 sub build_feature {
   my ($self, $data, $track_key, $slice) = @_;
   if ($data->{$track_key}{'features'}) {
-    push @{$data->{$track_key}{'features'}}, $self->create_hash($data->{$track_key}{'metadata'}, $slice);
+    push @{$data->{$track_key}{'features'}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
   }
   else {
-    $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'}, $slice)];
+    $data->{$track_key}{'features'} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
   }
 }
 

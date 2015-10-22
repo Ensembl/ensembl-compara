@@ -36,6 +36,7 @@ sub create_hash {
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
   $metadata ||= {};
+  use Data::Dumper; warn '>>> METADATA '.Dumper($metadata);
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates

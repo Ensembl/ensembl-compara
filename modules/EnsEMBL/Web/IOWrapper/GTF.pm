@@ -39,18 +39,18 @@ sub build_feature {
 
   if ($transcript_id) { ## Feature is part of a transcript!
     if ($data->{$track_key}{'transcripts'}{$transcript_id}) {
-      push @{$data->{$track_key}{'transcripts'}{$transcript_id}}, $self->create_hash($data->{$track_key}{'metadata'}, $slice);
+      push @{$data->{$track_key}{'transcripts'}{$transcript_id}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
     }
     else {
-      $data->{$track_key}{'transcripts'}{$transcript_id} = [$self->create_hash($data->{$track_key}{'metadata'}, $slice)];
+      $data->{$track_key}{'transcripts'}{$transcript_id} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
     }
   }
   else { ## Single feature - add to track as normal
     if ($data->{$track_key}{'features'}) {
-      push @{$data->{$track_key}{'features'}}, $self->create_hash($data->{$track_key}{'metadata'}, $slice);
+      push @{$data->{$track_key}{'features'}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
     }
     else {
-      $data->{$track_key}{'features'} = [$self->create_hash($data->{$track_key}{'metadata'}, $slice)];
+      $data->{$track_key}{'features'} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
     }
   }
 }
