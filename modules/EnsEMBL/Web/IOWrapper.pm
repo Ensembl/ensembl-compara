@@ -169,7 +169,7 @@ sub create_tracks {
 ### Orders tracks by priority value if it exists
 ### @param slice - Bio::EnsEMBL::Slice object
 ### @return arrayref of one or more hashes containing track information
-  my ($self, $slice) = @_;
+  my ($self, $slice, $extra_config) = @_;
   my $parser = $self->parser;
   my $tracks      = [];
   my $data        = {};
@@ -186,11 +186,15 @@ sub create_tracks {
     }
 
     ## If we haven't done so already, grab all the metadata for this track
+    my %metadata;
     if (!keys %{$data->{$track_key}{'metadata'}||{}} && $parser->can('get_all_metadata')) {
-      my %metadata = %{$parser->get_all_metadata};
-      $data->{$track_key}{'metadata'} = \%metadata;
-      $prioritise = 1 if $data->{$track_key}{'metadata'}{'priority'};
+      %metadata = %{$parser->get_all_metadata};
+      $prioritise = 1 if $metadata{'priority'};
     }
+    
+    ## Add in any extra configuration provided by caller, which takes precedence over metadata
+    @metadata{keys %{$extra_config||{}}} = values %{$extra_config||{}};
+    $data->{$track_key}{'metadata'} = \%metadata;
 
     my ($seqname, $start, $end) = $self->coords;
     ## Skip features that lie outside the current slice
@@ -288,6 +292,9 @@ sub set_colour {
   }
   elsif ($metadata->{'color'}) {
     $colour = $metadata->{'color'};
+  }
+  elsif ($metadata->{'colour'}) {
+    $colour = $metadata->{'colour'};
   }
 
   return $colour;
