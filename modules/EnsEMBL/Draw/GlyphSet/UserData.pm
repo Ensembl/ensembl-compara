@@ -34,9 +34,9 @@ sub can_json { return 1; }
 sub init {
   my $self = shift;
   my @roles;
-  my $style = $self->my_config('style') || '';
+  my $style = $self->my_config('style') || $self->my_config('display') || '';
 
-  if ($style eq 'wiggle') {
+  if ($style eq 'wiggle' || $style =~ /tiling/) {
     push @roles, 'EnsEMBL::Draw::Role::Wiggle';
   }
   else {
