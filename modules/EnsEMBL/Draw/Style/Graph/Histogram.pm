@@ -25,10 +25,23 @@ use parent qw(EnsEMBL::Draw::Style::Graph);
 sub draw_wiggle {
   my ($self, $c, $features) = @_;
 
-  my $use_points    = $c->{'graph_type'} && $c->{'graph_type'} eq 'points';
-  my $max_score     = $self->track_config->get('max_score');
+  my $use_points  = $c->{'graph_type'} && $c->{'graph_type'} eq 'points';
+  my $max_score   = $self->track_config->get('max_score');
+  my $same_strand = $c->{'same_strand'};
 
   foreach my $f (@$features) {
+
+    if (defined($f->{'strand'})) {
+      if ($f->{'strand'} == 0) {
+        ## Unstranded data goes on the reverse strand
+        next if $same_strand && $same_strand == 1;
+      }
+      else {
+      ## Skip unless feature is on this strand
+      next if defined($same_strand) && $f->{'strand'} != $same_strand;
+      }
+    }
+
     my $start   = $f->{'start'};
     my $end     = $f->{'end'};
     my $score   = $f->{'score'};

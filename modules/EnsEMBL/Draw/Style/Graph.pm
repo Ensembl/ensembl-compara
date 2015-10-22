@@ -162,6 +162,7 @@ sub create_glyphs {
       line_px       => $line_px,
       pix_per_score => $pix_per_score,
       graph_type    => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
+      same_strand   => $track_config->get('same_strand'),
       colour        => $track_config->get('score_colour') || 'blue',
       alt_colour    => $subtrack->{'metadata'}{'altColor'},
     };
@@ -189,12 +190,24 @@ sub draw_wiggle {
   my ($self, $c, $features) = @_;
   return unless $features && $features->[0];
 
+  my $same_strand  = $c->{'same_strand'};
   my $slice_length = $self->{'container'}->length;
   $features = [ sort { $a->{'start'} <=> $b->{'start'} } @$features ];
   my ($previous_x,$previous_y);
 
   for (my $i = 0; $i < @$features; $i++) {
     my $f = $features->[$i];
+
+    if (defined($f->{'strand'})) {
+      if ($f->{'strand'} == 0) {
+        ## Unstranded data goes on the reverse strand
+        next if $same_strand && $same_strand == 1;
+      }
+      else {
+      ## Skip unless feature is on this strand
+      next if defined($same_strand) && $f->{'strand'} != $same_strand;
+      }
+    }
 
     my ($current_x,$current_score);
     $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
