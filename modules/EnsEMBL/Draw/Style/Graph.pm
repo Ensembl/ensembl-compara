@@ -66,8 +66,6 @@ sub create_glyphs {
 
   foreach my $subtrack (@$data) {
     my $metadata        = $subtrack->{'metadata'} || {};
-    my $feature_colours = $track_config->get('feature_colours');
-    my $default_colour  = $metadata->{'default_colour'} || $track_config->get('default_colour');
 
     ## LOTS OF POSITIONAL MATHS!
 
@@ -163,11 +161,9 @@ sub create_glyphs {
       pix_per_score => $pix_per_score,
       graph_type    => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
       same_strand   => $track_config->get('same_strand'),
-      colour        => $track_config->get('score_colour') || 'blue',
       alt_colour    => $subtrack->{'metadata'}{'altColor'},
     };
 
-    $plot_conf->{'colour'} = shift(@$feature_colours) if $feature_colours and @$feature_colours;
     $self->draw_wiggle($plot_conf, $features);
 
     my $subtitle_colour = $subtrack->{'metadata'}{'color'} || $plot_conf->{'colour'};
