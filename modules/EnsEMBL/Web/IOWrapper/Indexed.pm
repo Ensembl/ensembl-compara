@@ -56,7 +56,12 @@ sub create_tracks {
 
   ## Limit file seek to current slice
   my $parser = $self->parser;
-  $parser->seek($slice->seq_region_name, $slice->start, $slice->end);
+  if ($slice->length > 1000) {
+    $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, 1000);
+  }
+  else {
+    $parser->seek($slice->seq_region_name, $slice->start, $slice->end);
+  }
 
   $self->SUPER::create_tracks($slice);
 }
