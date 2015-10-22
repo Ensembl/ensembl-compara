@@ -37,15 +37,27 @@ sub create_tracks {
 
   ## Limit file seek to current slice
   my $parser = $self->parser;
-  if ($slice->length > 1000) {
+  if ($metadata->{'aggregate'}) {
+    my $values = $parser->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, 1000);
+    ## For speed, our track consists of an array of values, not an array of feature hashes
+    return [{'data' => {'metadata' => {
+                                        'unit'    => $slice->length / 1000,
+                                        'length'  => $slice->length,
+                                        'strand'  => $slice->strand,
+                                        'max'     => max(@$values),
+                                        'min'     => min(@$values), 
+                                        },
+                        'feature' => $values,
+           }}];
+  }
+  elsif ($slice->length > 1000) {
     $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, 1000);
+    $self->SUPER::create_tracks($slice, $metadata);
   }
   else {
     $parser->seek($slice->seq_region_name, $slice->start, $slice->end);
+    $self->SUPER::create_tracks($slice, $metadata);
   }
-
-  $self->SUPER::create_tracks($slice, $metadata);
 }
-
 
 1;
