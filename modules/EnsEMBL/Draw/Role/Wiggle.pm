@@ -74,7 +74,7 @@ sub _render_aggregate {
   $self->{'my_config'}->set('bumped', 0);
 
   ## Now we try and draw the features
-  my $error = $self->draw_aggregate($tracks);
+  my $error = $self->draw_aggregate($self->{'features'});
   return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
 
   my $here = $self->my_config('strand') eq 'b' ? 'on this strand' : 'in this region';

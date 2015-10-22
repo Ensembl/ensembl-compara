@@ -56,7 +56,8 @@ use EnsEMBL::Draw::Glyph::Sprite;
 use EnsEMBL::Draw::Glyph::Text;
 
 ### Wrappers around low-level drawing code
-sub Arc        { my $self = shift; return EnsEMBL::Draw::Glyph::Arc->new(@_);     }
+sub Arc        { my $self = shift; return EnsEMBL::Draw::Glyph::Arc->new(@_);        }
+sub Barcode    { my $self = shift; return EnsEMBL::Draw::Glyph::Barcode->new(@_);    }
 sub Circle     { my $self = shift; return EnsEMBL::Draw::Glyph::Circle->new(@_);     }
 sub Composite  { my $self = shift; return EnsEMBL::Draw::Glyph::Composite->new(@_);  }
 sub Intron     { my $self = shift; return EnsEMBL::Draw::Glyph::Intron->new(@_);     }

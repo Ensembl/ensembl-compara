@@ -153,6 +153,8 @@ sub draw_aggregate {
   $subtracks ||= $self->{'features'};
   return unless $subtracks && ref $subtracks eq 'ARRAY';
 
+  my %config = %{$self->track_style_config};
+
   my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
   foreach (@{$drawing_style||[]}) {
