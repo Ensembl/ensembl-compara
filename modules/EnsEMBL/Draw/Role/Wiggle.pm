@@ -28,7 +28,7 @@ sub render_compact {
   my $self = shift;
   my $graph_class = $self->_select_graph_type;
   $self->{'my_config'}->set('drawing_style', ['Graph::Barcode']);
-  $self->_render;
+  $self->_render_aggregate;
 }
 
 sub render_tiling { 
@@ -55,6 +55,33 @@ sub _select_graph_type {
     $graph_class = 'Graph::Histogram';
   }
   return $graph_class;
+}
+
+sub _render_aggregate {
+  my $self = shift;
+
+  ## Check to see if we draw anything because of size!
+  my $max_length  = $self->my_config('threshold')   || 10000;
+  my $wiggle_name = $self->my_config('wiggle_name') || $self->my_config('label');
+
+  if ($self->{'container'}->length > $max_length * 1010) {
+    my $height = $self->errorTrack("$wiggle_name only displayed for less than $max_length Kb");
+    $self->_offset($height + 4);
+    return 1;
+  }
+
+  $self->{'my_config'}->set('height', 8);
+  $self->{'my_config'}->set('bumped', 0);
+
+  ## Now we try and draw the features
+  my $error = $self->draw_aggregate($tracks);
+  return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
+
+  my $here = $self->my_config('strand') eq 'b' ? 'on this strand' : 'in this region';
+
+  my $height = $self->errorTrack("No $error $here", 0, $self->{'my_config'}->{'initial_offset'});
+
+  return 1;
 }
 
 sub _render {

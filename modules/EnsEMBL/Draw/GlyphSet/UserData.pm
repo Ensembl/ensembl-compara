@@ -148,6 +148,29 @@ sub draw_features {
   return 0;
 }
 
+sub draw_aggregate {
+  my ($self, $subtracks) = @_;
+  $subtracks ||= $self->{'features'};
+  return unless $subtracks && ref $subtracks eq 'ARRAY';
+
+  my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
+
+  foreach (@{$drawing_style||[]}) {
+    my $style_class = 'EnsEMBL::Draw::Style::'.$_;
+    if ($self->dynamic_use($style_class)) {
+      my $style = $style_class->new(\%config, $subtracks);
+      $self->push($style->create_glyphs);
+    }
+  }
+  ## This is clunky, but it's the only way we can make the new code
+  ## work in a nice backwards-compatible way right now!
+  ## Get label position, which is set in Style::Graph
+  $self->{'label_y_offset'} = $self->{'my_config'}->get('label_y_offset');
+
+  ## Everything went OK, so no error to return
+  return 0;
+}
+
 sub skip_strand {
   my ($self, $strand_info) = @_;
   my $skip = 0;
