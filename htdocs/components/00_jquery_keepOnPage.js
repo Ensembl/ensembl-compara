@@ -17,49 +17,75 @@
 /**
  * keepOnPage
  * jQuery plugin to keep an element always on the page when page scrolled vertically
- * Not yet tested in all scenarios
  */
 
 (function($) {
 
   $.keepOnPage = function (el, options) {
-    /* options
+    /* options - object with following keys or a string 'trigger' to externally trigger the outcome of window scroll on the keepOnPage instance
      *  marginTop: Margin to be kept on top when fixing the element to the top
-     *  spaced: Flag if true, will keep the actual space of the element clear while its fixed to the top
-     *  onfix: Function to be called when element's position is set 'fixed'
+     *  onfix: Function to be called when element is fixed on top
      *  onreset: Function to be called when element's position is reverted back to original
      */
 
     el = $(el);
 
-    if (el.data('keepOnTop')) {
+    if (el.data('keepOnPage')) {
 
       if (options === 'trigger') {
-        $(window).triggerHandler('scroll.keepOnTop', true);
+        $(window).triggerHandler('scroll.keepOnPage', true);
       }
     } else {
 
-      el.data('keepOnTop', {});
+      el.data('keepOnPage', {active: false});
 
-      $(window).on('load.keepOnTop scroll.keepOnTop', {
-        el        : el,
-        options   : options,
-        clone     : options.spaced ? el.clone().hide().empty().css({ visibility: 'hidden' }).insertAfter(el) : false,
-        defaults  : {
-          top       : el.offset().top,
+      $(window).on('load.keepOnPage scroll.keepOnPage',
+        $.extend({
+          el      : el,
+          options : options
+        }, (function(el, defaults) {
+          return {
+            clone     : defaults.position === 'static' ? el.clone().hide().empty().css({ visibility: 'hidden', height: el.height(), width: el.width() }).insertAfter(el) : false,
+            defaults  : defaults
+          }
+        })(el, {
+          cssTop    : el.css('top'),
+          offsetTop : el.offset().top,
           position  : el.css('position')
-      }}, function (e, force) {
-        var fixed = e.data.defaults.top - e.data.options.marginTop <= $(window).scrollTop();
-        if (!force && e.data.el.data('keepOnTop').fixed === fixed) {
-          return;
+        })),
+        function (e, force) {
+
+          // in case the offset has been changed by third party, update it before we do any calculations
+          if (!e.data.el.data('keepOnPage').active) {
+            e.data.defaults.offsetTop = e.data.el.offset().top;
+          }
+
+          var displacement  = Math.max($(window).scrollTop() - e.data.defaults.offsetTop + e.data.options.marginTop, 0);
+          var isRelative    = e.data.defaults.position === 'relative';
+          var isChanging    = e.data.el.data('keepOnPage').active === !displacement;
+
+          // only continue if it's a forced action or if there's a change required in the position or if displacement for a relatively placed element has been changed
+          if (!force && !isChanging && (!displacement || !isRelative)) {
+            return;
+          }
+
+          // save status
+          e.data.el.data('keepOnPage', {active: !!displacement});
+
+          // replace the actual element with the clone if a 'static' positioned element is not being 'fixed'
+          if (e.data.clone) {
+            e.data.clone.css(force && displacement ? {height: e.data.el.height(), width: e.data.el.width()} : {}).toggle(!!displacement);
+          }
+
+          // change positon and top
+          e.data.el.css(displacement ? isRelative ? { top: displacement } : { position: 'fixed', top: e.data.options.marginTop } : { position: e.data.defaults.position, top: isRelative ? e.data.defaults.cssTop : e.data.defaults.offsetTop });
+
+          // call the required callback function
+          if (isChanging) {
+            ((displacement ? e.data.options.onfix : e.data.options.onreset) || $.noop).apply(e.data.el[0]);
+          }
         }
-        e.data.el.data('keepOnTop', {fixed: fixed});
-        if (e.data.clone) {
-          e.data.clone.css(fixed ? {height: e.data.el.height(), width: e.data.el.width()} : {}).toggle(fixed);
-        }
-        e.data.el.css(fixed ? { position: 'fixed', top: e.data.options.marginTop } : { position: e.data.defaults.position, top: e.data.defaults.top });
-        ((fixed ? e.data.options.onfix : e.data.options.onreset) || $.noop).apply(e.data.el[0]);
-      });
+      );
     }
   };
 
@@ -77,6 +103,3 @@
 
   };
 })(jQuery);
-
-
-
