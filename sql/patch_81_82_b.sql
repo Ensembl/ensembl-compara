@@ -76,7 +76,7 @@ UPDATE method_link_species_set JOIN method_link_species_set_time USING (method_l
 ALTER TABLE species_set
 	MODIFY COLUMN species_set_id int(10) unsigned NOT NULL,
 	MODIFY COLUMN genome_db_id int(10) unsigned NOT NULL,
-	DROP INDEX species_set_id.
+	DROP INDEX species_set_id,
 	ADD PRIMARY KEY (species_set_id,genome_db_id);
 
 # Patch identifier

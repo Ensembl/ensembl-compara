@@ -558,7 +558,7 @@ sub expand_subtrees {
     # To update it at the next get_all_Members call
     delete $self->{'_member_array'};
     # Gets the global alignment
-    $self->attach_alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id));
+    $self->alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id));
 }
 
 
