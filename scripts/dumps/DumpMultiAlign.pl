@@ -349,7 +349,6 @@ use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Getopt::Long;
-use Devel::Size qw (size total_size);
 
 my $reg = "Bio::EnsEMBL::Registry";
 my $reg_conf;
