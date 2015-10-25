@@ -29,10 +29,8 @@ Questions may also be sent to the Ensembl help desk at
 This modules contains common methods used when dealing with Core DBAdaptor
 objects. Ideally, these methods should be included in the Core API:
 
-- has_karyotype: checks whether there is a non-empty karyotype
 - assembly_name: returns the assembly name
 - locator: builds a Locator string
-- is_high_coverage: checks whether the genome is high coverage
 
 They are all declared under the namespace Bio::EnsEMBL::DBSQL::DBAdaptor
 so that they can be called directly on $genome_db->db_adaptor
