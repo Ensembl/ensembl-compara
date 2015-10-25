@@ -84,8 +84,10 @@ sub fetch_input {
 
     $self->param('query_set', Bio::EnsEMBL::Compara::MemberSet->new(-members => $self->get_queries));
 
+    $self->param('expected_members',scalar(@{$self->param('query_set')->get_all_Members}));
+
     if($self->debug) {
-        print "Loaded ".scalar(@{$self->param('query_set')->get_all_Members})." query members\n";
+        print "Loaded ".$self->param('expected_members')." query members\n";
     }
 
     my $mlss_id         = $self->param_required('mlss_id');
@@ -105,6 +107,29 @@ sub fetch_input {
         #my $tmp_blast_db = $self->worker_temp_directory.(basename $self->param('blast_db'));
         #system sprintf('cp -a %s* %s', $self->param('blast_db'), $self->worker_temp_directory);
         $self->param('all_blast_db')->{$self->param('blast_db')} = undef;
+
+        #Depending on the amount of sequences and blast version.
+        # We may have multiple files, e.g.:
+        #                           unannotated.fasta.00.pog
+        #                           unannotated.fasta.01.pog
+        my $fastafile = $self->param('blast_db');
+        my @phr = <$fastafile*.phr>;
+        my @pin = <$fastafile*.pin>;
+        my @pog = <$fastafile*.pog>;
+        my @psd = <$fastafile*.psd>;
+        my @psi = <$fastafile*.psi>;
+        my @psq = <$fastafile*.psq>;
+
+        my %db_files = ( 'phr' => \@phr, 'pin' => \@pin, 'pog' => \@pog, 'psd' => \@psd, 'psi' => \@psi, 'psq' => \@psq );
+
+        foreach my $ext ( keys %db_files ) {
+            #Check if we have at least one file per each extension type
+            die "Cound no find blast_db: $ext" if(scalar(@{$db_files{$ext}}) < 1);
+            foreach my $file ( @{ $db_files{$ext} } ) {
+                #Check if all files exist and have a nonzero size 
+                die "Missing blast index: $file\n" unless -e "$file" and -s "$file";
+            }
+        }
 
     } elsif ($self->param('target_genome_db_id')) {
 
@@ -153,6 +178,7 @@ sub parse_blast_table_into_paf {
     my ($self, $filename, $qgenome_db_id, $hgenome_db_id) = @_;
 
     my @features = ();
+    $self->param('num_query_member', {});
 
     open(BLASTTABLE, '<', $filename) || die "Could not open the blast table file '$filename'";
     
@@ -160,7 +186,8 @@ sub parse_blast_table_into_paf {
 
     while(my $line = <BLASTTABLE>) {
 
-        unless ($line =~ /^#/) {
+        #unless ($line =~ /^#/) {
+        if ($line !~ /^#/) {
             my ($qmember_id, $hmember_id, $evalue, $score, $nident,$pident, $qstart, $qend, $hstart,$hend, $length, $positive, $ppos, $qseq, $sseq ) = split(/\t/, $line);
 
             my $cigar_line;
@@ -191,6 +218,13 @@ sub parse_blast_table_into_paf {
 
             print "feature query $qgenome_db_id $qmember_id hit $hgenome_db_id $hmember_id $hmember_id $qstart $qend $hstart $hend $length $nident $positive\n" if $self->debug;
             push @features, $feature;
+        }else{
+            if ($line =~ /^# Query:/) {
+                #We need to count the queries itself, because sometimes we can have zero hits. 
+                my @tok = split(/\s+/,$line);
+                my $query = $tok[2];
+                $self->param('num_query_member')->{$query} = 1;
+            }
         }
     }
     close BLASTTABLE;
@@ -235,6 +269,11 @@ sub run {
         print "Time for blast " . (time() - $start_time) . "\n";
 
         my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
+
+        unless($self->param('expected_members') == scalar(keys(%{$self->param('num_query_member')}))) {
+            die "Parsed " . scalar(keys(%{$self->param('num_query_member')})) . " out of ". $self->param('expected_members');
+        }
+
         push @$cross_pafs, @$features;
         unlink $blast_outfile unless $self->debug;
     }
