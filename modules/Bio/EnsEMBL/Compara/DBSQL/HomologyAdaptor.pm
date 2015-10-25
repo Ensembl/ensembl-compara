@@ -497,7 +497,7 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
         push @good_node_ids, @{$self->_get_suitable_species_tree_node_ids($in, $lca, 'ncrna')};
     }
 
-    if ($mlss) {
+    if ($ref->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
         return $self->fetch_all_by_MethodLinkSpeciesSet($mlss, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
     } else {
         return $self->fetch_all_by_Member($ref, -METHOD_LINK_SPECIES_SET => $mlss, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
