@@ -373,7 +373,7 @@ my $masked_seq = 0;
 my $output_file = undef;
 my $output_format = "fasta";
 my $split_size = 0;
-my $chunk_num;
+my $chunk_num = 0;
 my $file_of_genomic_align_block_ids;
 my $debug = 0;
 my $help;
@@ -400,8 +400,8 @@ GetOptions(
     "masked_seq=i" => \$masked_seq,
     "output_format=s" => \$output_format,
     "output_file=s" => \$output_file,
-    "split_size=s" => \$split_size,
-    "chunk_num=s" => \$chunk_num,
+    "split_size=i" => \$split_size,
+    "chunk_num=i" => \$chunk_num,
     "file_of_genomic_align_block_ids=s" => \$file_of_genomic_align_block_ids,
     "debug" => \$debug,
   );
