@@ -31,6 +31,7 @@ sub _init {
 
 sub content {
   my $self   = shift; 
+  my $hub    = $self->hub;
   my $object = $self->object || $hub->core_object(lc($hub->param('data_type')));
   
   ## first check we have a location
