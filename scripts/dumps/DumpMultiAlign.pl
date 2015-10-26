@@ -445,16 +445,23 @@ if ($method_link_species_set_id) {
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
   throw("The database do not contain any alignments with a MLSS id = $method_link_species_set_id!")
       if (!$method_link_species_set);
-} elsif ($set_of_species =~ /\:/) {
+} elsif ($set_of_species and ($set_of_species =~ /\:/)) {
+  throw("--alignment_type must be defined\n") unless $alignment_type;
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_registry_aliases(
           $alignment_type, [split(":", $set_of_species)]);
   throw("The database do not contain any $alignment_type data for $set_of_species!")
       if (!$method_link_species_set);
 } elsif ($set_of_species) {
+  throw("--alignment_type must be defined\n") unless $alignment_type;
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name(
           $alignment_type, $set_of_species);
   throw("The database do not contain any $alignment_type data for $set_of_species!")
       if (!$method_link_species_set);
+}
+
+unless ($method_link_species_set) {
+  print $description, $usage;
+  exit(1);
 }
 
 my $conservation_score_mlss;
