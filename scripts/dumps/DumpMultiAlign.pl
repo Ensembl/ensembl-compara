@@ -683,12 +683,20 @@ while(1) {
     ## No more genomic_align_blocks to dump
     last;
   }
-  ## We have exhausted @query_slices
-  last if @query_slices and $slice_counter == scalar(@query_slices);
-  ## We have exhausted @$skip_genomic_align_blocks
-  last if $skip_species and not $file_of_genomic_align_block_ids and not @$skip_genomic_align_blocks;
-  ## We only need one iteration of the loop to read the file
-  last if $file_of_genomic_align_block_ids;
+
+  if (@query_slices) {
+    ## We have exhausted @query_slices
+    last if $slice_counter == scalar(@query_slices);
+  } elsif ($file_of_genomic_align_block_ids) {
+    ## We only need one iteration of the loop to read the file
+    last;
+  } elsif ($skip_species) {
+    ## We have exhausted the $skip_genomic_align_blocks (the GABs that don't have $skip_species)
+    last if not @$skip_genomic_align_blocks;
+  } else {
+    ## (normal mode) No $split_size -> single iteration of the loop
+    last if not $split_size;
+  }
 
   warn "split size $split_size slice_counter $slice_counter query_slices ", scalar(@query_slices), " skip_genomic_align_blocks ", scalar(@$skip_genomic_align_blocks), "\n" if $debug;
 }
