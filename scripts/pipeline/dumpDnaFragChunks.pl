@@ -19,7 +19,7 @@ use warnings;
 
 use DBI;
 use Getopt::Long;
-use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Hive::URLFactory;
 
@@ -44,7 +44,7 @@ unless ($self->{'url'}) { usage(); }
 
 my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{'url'});
 print("$dba\n");
-$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN=>$dba->dbc);
+$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$dba->dbc);
 
 my $chunkDBA = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor;
 
