@@ -33,10 +33,10 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 # The majority of core databases live on two staging servers:
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging1/82');
+  'mysql://ensro@ens-staging1/83');
 
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging2/82');
+  'mysql://ensro@ens-staging2/83');
 
 # Extra core databases that live on genebuilders' servers:
 
@@ -101,7 +101,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_prev',
-    -dbname => 'lg4_ensembl_compara_81',
+    -dbname => 'lg4_ensembl_compara_82',
 );
 
 # current release database on one of Compara servers:
@@ -111,7 +111,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_curr',
-    -dbname => 'lg4_ensembl_compara_82',
+    -dbname => 'wa2_ensembl_compara_83',
 );
 
 # previous ancestral database on one of Compara servers:
@@ -121,7 +121,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ancestral_prev',
-    -dbname => 'lg4_ensembl_ancestral_81',
+    -dbname => 'lg4_ensembl_ancestral_82',
 );
 
 # current ancestral database on one of Compara servers:
@@ -131,7 +131,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ancestral_curr',
-    -dbname => 'lg4_ensembl_ancestral_82',
+    -dbname => 'wa2_ensembl_ancestral_83',
 );
 
 # ensembl production (maintained by production team):
@@ -161,7 +161,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_staging',
-    -dbname => 'ensembl_compara_82',
+    -dbname => 'ensembl_compara_83',
 );
 
 
