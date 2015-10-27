@@ -153,7 +153,11 @@ sub count_regfeats {
 
 sub count_populations {
   my $self = shift;
-  my $counts = scalar(keys %{$self->freqs}) || 0;
+  my $counts = 0;
+  my $freqs = $self->freqs;
+  foreach my $pop_id (keys %{$freqs}) {
+    $counts += scalar(keys %{$freqs->{$pop_id}{ssid}});
+  }
   return $counts;
 }
 
