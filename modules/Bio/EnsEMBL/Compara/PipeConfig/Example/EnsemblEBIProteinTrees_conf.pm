@@ -113,6 +113,7 @@ sub default_options {
         'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
         'cafe_shell'                => 'UNDEF',
+        'fasttree_mp_exe'           => 'UNDEF',
 
 
     # HMM specific parameters (set to 0 or undef if not in use)

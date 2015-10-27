@@ -1,5 +1,4 @@
 requires 'Data::Predicate';
-requires 'Devel::Size';
 requires 'HTML::Template';
 requires 'JSON';
 requires 'LWP::Simple';

@@ -277,7 +277,6 @@ sub pipeline_analyses {
                 allow_missing_cds_seqs => 0,
                 allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
-            -flow_into  => [ 'per_genome_qc' ],
             %hc_params,
         },
 
@@ -287,10 +286,6 @@ sub pipeline_analyses {
                 '2->A' => 'dnafrag_table_reuse',
                 'A->1' => [ 'hc_members_globally' ],
             },
-        },
-
-        {   -logic_name => 'per_genome_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -390,7 +385,7 @@ sub pipeline_analyses {
 
             {   -logic_name    => 'rfam_classify',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
-                -flow_into     => [ 'clusterset_backup', 'create_additional_clustersets' ],
+                -flow_into     => [ 'clusterset_backup', 'create_additional_clustersets', 'cluster_qc_factory' ],
                 -rc_name       => '1Gb_job',
             },
 
@@ -407,6 +402,17 @@ sub pipeline_analyses {
                                    'member_type'            => 'ncrna',
                                    'additional_clustersets' => [qw(pg_it_nj ml_it_10 pg_it_phyml ss_it_s16 ss_it_s6a ss_it_s16a ss_it_s6b ss_it_s16b ss_it_s6c ss_it_s6d ss_it_s6e ss_it_s7a ss_it_s7b ss_it_s7c ss_it_s7d ss_it_s7e ss_it_s7f ft_it_ml ft_it_nj ftga_it_ml ftga_it_nj)],
                                   },
+            },
+
+            {   -logic_name => 'cluster_qc_factory',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+                -flow_into  => {
+                    2 => [ 'per_genome_qc' ],
+                },
+            },
+
+            {   -logic_name => 'per_genome_qc',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             },
 
 # -------------------------------------------------[build trees]------------------------------------------------------------------

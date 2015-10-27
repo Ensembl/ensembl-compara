@@ -82,6 +82,7 @@ sub fetch_input {
     my $ncbi_a = $self->compara_dba()->get_NCBITaxonAdaptor;
     foreach my $taxlevel (@$taxlevels) {
         my $taxon = $ncbi_a->fetch_node_by_name($taxlevel);
+        die "Cannot find the taxon '$taxlevel' in the database" unless $taxon;
         my $all_gdb_ids = [map {$_->dbID} @{$gdb_a->fetch_all_by_ancestral_taxon_id($taxon->dbID)}];
         push @species_sets, [grep {exists $selected_gdb_ids{$_}} @$all_gdb_ids];
     }

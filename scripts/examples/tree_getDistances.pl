@@ -47,6 +47,7 @@ foreach my $gene (@$genes) {
 
   # Fetch the gene tree
   my $tree = $gene_tree_adaptor->fetch_default_for_Member($gene_member);
+  next unless $tree;
   my $all_leaves = $tree->get_all_leaves();
 
   my $node_h;
@@ -58,8 +59,8 @@ foreach my $gene (@$genes) {
 	# finds the query gene
 	$node_h = $leaf if ($leaf->gene_member->stable_id eq $gene->stable_id);
   }
-  $node_h->print_member;
-  $node_z->print_member,
+  print "human: ", $node_h->toString(), "\n";
+  print "zebra: ", $node_z->toString(), "\n",
 
   print "root to human: ", $node_h->distance_to_ancestor($tree->root), "\n";
   print "root to zebra: ", $node_z->distance_to_ancestor($tree->root), "\n";

@@ -48,10 +48,10 @@ foreach my $pep (@{$members}) {
   next unless($pep->dnafrag_id == $rat_dnafrag->dbID);
   next unless($pep->dnafrag_start < 10000000);
   if($pep->get_Transcript->five_prime_utr) {
-    $pep->gene_member->print_member;
-    my $orths = $homologyDBA->fetch_all_by_Member_paired_species($pep->gene_member, 'homo_sapiens');
+    print $pep->gene_member->toString(), "\n";
+    my $orths = $homologyDBA->fetch_all_by_Member($pep->gene_member, -TARGET_SPECIES => 'homo_sapiens');
     foreach my $homology (@{$orths}) {
-      print $homology->toString;
+      print $homology->toString(), "\n";
     }
   }
 }

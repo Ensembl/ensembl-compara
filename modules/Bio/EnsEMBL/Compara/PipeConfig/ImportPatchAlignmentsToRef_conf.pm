@@ -124,7 +124,7 @@ sub pipeline_analyses {
             -parameters => {
                 'cmd'           => '#program# --master "#master_db#" --new "#pipeline_db#" --skip-data #mlss_ids#',
                 'program'       => $self->o('populate_new_database_exe'),
-                'pipeline_db'   => $self->dbconn_2_url('pipeline_db'),      # I would like this to be generated at runtime
+                'pipeline_db'   => $self->pipeline_url(),      # I would like this to be generated at runtime
             },
             -flow_into => [ 'genomedb_factory' ],
         },

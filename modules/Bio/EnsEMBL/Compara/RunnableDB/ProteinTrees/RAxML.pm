@@ -114,7 +114,7 @@ sub set_raxml_model {
         return "PROTCATJTT";
     }
 
-    print "\n\n>>>>>MODEL:|$raxml_bestfit_model|\n\n" if ( $self->debug );
+    print "best-fit model:$raxml_bestfit_model\n" if ( $self->debug );
 
     return $raxml_model;
 }

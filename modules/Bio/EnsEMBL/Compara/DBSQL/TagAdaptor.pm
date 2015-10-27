@@ -170,6 +170,7 @@ sub _load_tagvalues_multiple {
     while ($sth->fetch()) {
         next if $all_objects and not exists $perl_keys{$obj_id};
         my $obj_tags = $perl_keys{$obj_id}->{'_tags'};
+        $tag = lc $tag;
 
         # Optimized version of Taggable::add_tag()
         if ( ! exists($obj_tags->{$tag}) ) {

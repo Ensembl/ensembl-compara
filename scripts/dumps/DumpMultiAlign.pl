@@ -342,6 +342,8 @@ perl DumpMultiAlign.pl
 };
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::SimpleAlign;
@@ -349,7 +351,6 @@ use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Getopt::Long;
-use Devel::Size qw (size total_size);
 
 my $reg = "Bio::EnsEMBL::Registry";
 my $reg_conf;
@@ -372,8 +373,9 @@ my $masked_seq = 0;
 my $output_file = undef;
 my $output_format = "fasta";
 my $split_size = 0;
-my $chunk_num;
+my $chunk_num = 0;
 my $file_of_genomic_align_block_ids;
+my $debug = 0;
 my $help;
 my $compara_dba;
 
@@ -398,9 +400,10 @@ GetOptions(
     "masked_seq=i" => \$masked_seq,
     "output_format=s" => \$output_format,
     "output_file=s" => \$output_file,
-    "split_size=s" => \$split_size,
-    "chunk_num=s" => \$chunk_num,
+    "split_size=i" => \$split_size,
+    "chunk_num=i" => \$chunk_num,
     "file_of_genomic_align_block_ids=s" => \$file_of_genomic_align_block_ids,
+    "debug" => \$debug,
   );
 
 # Print Help and exit
@@ -430,7 +433,7 @@ if ($compara_url) {
     $compara_dba = $reg->get_DBAdaptor($dbname, "compara");
 }
 
-#print "Connecting to compara_db " . $compara_dba->dbc->dbname . "\n";
+warn "Connecting to compara_db ", $compara_dba->dbc->dbname, "\n" if $debug;
 
 # Getting Bio::EnsEMBL::Compara::MethodLinkSpeciesSet obejct
 my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
@@ -442,16 +445,23 @@ if ($method_link_species_set_id) {
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
   throw("The database do not contain any alignments with a MLSS id = $method_link_species_set_id!")
       if (!$method_link_species_set);
-} elsif ($set_of_species =~ /\:/) {
+} elsif ($set_of_species and ($set_of_species =~ /\:/)) {
+  throw("--alignment_type must be defined\n") unless $alignment_type;
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_registry_aliases(
           $alignment_type, [split(":", $set_of_species)]);
   throw("The database do not contain any $alignment_type data for $set_of_species!")
       if (!$method_link_species_set);
 } elsif ($set_of_species) {
+  throw("--alignment_type must be defined\n") unless $alignment_type;
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name(
           $alignment_type, $set_of_species);
   throw("The database do not contain any $alignment_type data for $set_of_species!")
       if (!$method_link_species_set);
+}
+
+unless ($method_link_species_set) {
+  print $description, $usage;
+  exit(1);
 }
 
 my $conservation_score_mlss;
@@ -471,7 +481,7 @@ if (scalar(@{$method_link_species_set->species_set_obj->genome_dbs}) <= 2) {
     map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$method_link_species_set->species_set_obj->genome_dbs};
 }
 
-print STDERR "Dumping ", $method_link_species_set->name, "\n";
+warn "Dumping ", $method_link_species_set->name, "\n" if $debug;
 
 # Fetching the query Slices:
 my @query_slices;
@@ -483,7 +493,7 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
   if ($coord_system and !$seq_region) {
     @query_slices = grep {$_->coord_system_name eq $coord_system} @{$slice_adaptor->fetch_all('toplevel')};
     if (@query_slices == 0) {    
-	print "No slices found with coord_system $coord_system\n";
+	warn "No slices found with coord_system $coord_system\n";
 	exit(0);
     } 
   } elsif ($coord_system) { # $seq_region is defined
@@ -493,7 +503,7 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
         if (!$query_slice);
     @query_slices = ($query_slice);
     if (@query_slices == 0) {    
-	print "No slices found with coordinates $seq_region:$seq_region_start-$seq_region_end:$seq_region_strand\n";
+	warn "No slices found with coordinates $seq_region:$seq_region_start-$seq_region_end:$seq_region_strand\n";
 	exit(0);
     } 
   } elsif ($seq_region) {
@@ -503,12 +513,12 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
         if (!$query_slice);
     @query_slices = ($query_slice);
     if (@query_slices == 0) {    
-	print "No slices found with coordinates $seq_region:$seq_region_start-$seq_region_end:$seq_region_strand\n";
+	warn "No slices found with coordinates $seq_region:$seq_region_start-$seq_region_end:$seq_region_strand\n";
 	exit(0);
     } 
   }
   $slice_adaptor->dbc->disconnect_if_idle();
-  warn "here:", scalar(@query_slices), " query slices\n";
+  warn "here:", scalar(@query_slices), " query slices\n" if $debug;
 }
 
 # Get the GenomicAlignBlockAdaptor or the GenomicAlignTreeAdaptor:
@@ -531,7 +541,7 @@ my $use_several_files = 0;
 if ($output_file and $split_size) {
   $use_several_files = 1;
 }
-warn "several files ? $use_several_files\n";
+warn "several files ? $use_several_files\n" if $debug;
 
 my $slice_counter = 0;
 my $start = 0;
@@ -539,6 +549,7 @@ my $num = 0;
 if ($chunk_num and $split_size) {
   $num = $chunk_num - 1;
   $start = $split_size * $num;
+  warn "start at $start\n" if $debug;
 }
 if (!$use_several_files) {
   ## Open file now and create the header if needed
@@ -601,11 +612,11 @@ while(1) {
       $start = 0;
     } else {
       # Get the alignments using the GABadaptor
-      warn "fetching $split_size $start";
+      warn "fetching $split_size $start" if $debug;
       $genomic_align_blocks = $genomic_align_set_adaptor->
           fetch_all_by_MethodLinkSpeciesSet($method_link_species_set,
           $split_size, $start);
-      warn "fetched";
+      warn "fetched" if $debug;
       $start += $split_size;
     }
   } else {
@@ -619,6 +630,7 @@ while(1) {
         }
         #Call fetch_all_by_MethodLinkSpeciesSet_DnaFrag rather than fetch_all_by_MethodLinkSpeciesSet_Slice because of
         #issues with the PAR regions. The _Slice method will dumps alignments on the PAR whereas _DnaFrag will not.
+        warn "fetch_all_by_MethodLinkSpeciesSet_DnaFrag(".join(",",$method_link_species_set->dbID, $this_dnafrag->name, $this_slice->start, $this_slice->end, $aln_left, $start, $restrict), ")\n" if $debug;
         my $extra_genomic_align_blocks = $genomic_align_set_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
             $method_link_species_set, $this_dnafrag, $this_slice->start, $this_slice->end, $aln_left, $start, $restrict);
 
@@ -631,6 +643,7 @@ while(1) {
         }
       }
   }
+  warn scalar(@$genomic_align_blocks), " blocks\n" if $debug;
 
   if (@$genomic_align_blocks) {
     ## We've got something to dump
@@ -658,7 +671,7 @@ while(1) {
         $this_genomic_align_block = undef;
       }
     }
-    warn "dumped ", scalar(@$genomic_align_blocks), " blocks chunk_num $chunk_num split_size $split_size";
+    warn "dumped ", scalar(@$genomic_align_blocks), " blocks chunk_num $chunk_num split_size $split_size\n" if $debug;
 
     ## chunk_num means that only this chunk has to be dumped
     ## we can now exit
@@ -670,14 +683,22 @@ while(1) {
     ## No more genomic_align_blocks to dump
     last;
   }
-  ## We have exhausted @query_slices
-  last if @query_slices and $slice_counter == scalar(@query_slices);
-  ## We have exhausted @$skip_genomic_align_blocks
-  last if $skip_species and not $file_of_genomic_align_block_ids and not @$skip_genomic_align_blocks;
-  ## We only need one iteration of the loop to read the file
-  last if $file_of_genomic_align_block_ids;
 
-  warn "split size $split_size slice_counter $slice_counter query_slices ", scalar(@query_slices), " skip_genomic_align_blocks ", scalar(@$skip_genomic_align_blocks);
+  if (@query_slices) {
+    ## We have exhausted @query_slices
+    last if $slice_counter == scalar(@query_slices);
+  } elsif ($file_of_genomic_align_block_ids) {
+    ## We only need one iteration of the loop to read the file
+    last;
+  } elsif ($skip_species) {
+    ## We have exhausted the $skip_genomic_align_blocks (the GABs that don't have $skip_species)
+    last if not @$skip_genomic_align_blocks;
+  } else {
+    ## (normal mode) No $split_size -> single iteration of the loop
+    last if not $split_size;
+  }
+
+  warn "split size $split_size slice_counter $slice_counter query_slices ", scalar(@query_slices), " skip_genomic_align_blocks ", scalar(@$skip_genomic_align_blocks), "\n" if $debug;
 }
 
 exit(0);

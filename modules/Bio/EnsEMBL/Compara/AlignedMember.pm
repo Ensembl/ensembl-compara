@@ -433,8 +433,8 @@ sub alignment_string {
     if (not defined $self->{$key}) {
         my $sequence = $self->other_sequence($seq_type);
         $sequence =~ s/b|o|j/\ /g if $seq_type and ($seq_type eq 'exon_bounded');
-        my $expansion_factor = 1;
-        $expansion_factor = 3 if $seq_type and ($seq_type eq 'cds');
+        my $expansion_factor = $self->{_expansion_factor};
+        $expansion_factor ||= ($seq_type and ($seq_type eq 'cds')) ? 3 : 1;
         $self->{$key} = $self->_compose_sequence_with_cigar($sequence, $expansion_factor);
     }
 

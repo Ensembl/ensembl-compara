@@ -47,7 +47,8 @@ foreach my $gene (@$genes) {
   die "no members" unless (defined $member);
 
   # Fetch the tree
-  my $genetree = $genetree_adaptor->fetch_all_by_Member($member)->[0];
+  my $genetree = $genetree_adaptor->fetch_default_for_Member($member);
+  next unless $genetree;
 
   # Get the protein multialignment and the back-translated CDS alignment
   my $protein_align = $genetree->get_SimpleAlign;
@@ -72,5 +73,5 @@ foreach my $gene (@$genes) {
     -interleaved => 1,
     -idlength => 30);
   $phylip_alignio->write_aln($cds_align);
-  print STDERR "Your file $filename has been generated\n";
+  print "Your file $filename has been generated\n";
 }

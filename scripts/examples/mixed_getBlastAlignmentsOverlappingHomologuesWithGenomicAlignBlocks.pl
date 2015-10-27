@@ -37,18 +37,13 @@ $reg->load_registry_from_db(
 # get compara DBAdaptor
 my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('Multi', 'compara');
 
-# get GenomeDB for human and mouse
-my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
-my $human_gdb_id = $humanGDB->dbID;
-my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
-my $mouse_gdb_id = $mouseGDB->dbID;
+my $sp1 = "human";
+my $sp2 = "mouse";
 
 # get MethodLinkSpeciesSet for LASTZ_NET alignments between human and mouse
-my $blastz_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_GenomeDBs("LASTZ_NET", [$humanGDB, $mouseGDB]);
-
-my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[$human_gdb_id,$mouse_gdb_id]);
+my $blastz_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_registry_aliases("LASTZ_NET", [$sp1, $sp2]);
+# get MethodLinkSpeciesSet for orthologies alignments between human and mouse
+my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_registry_aliases("ENSEMBL_ORTHOLOGUES", [$sp1, $sp2]);
 
 my $homology_list = $comparaDBA->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($homology_mlss);
 printf("fetched %d homologies\n", scalar(@$homology_list));
@@ -62,28 +57,23 @@ foreach my $homology (@{$homology_list}) {
     $count++;
     print $homology->toString;
 
-    my $human_gene = undef;
-    my $mouse_gene = undef;
-    foreach my $member(@{$homology->get_all_Members}) {
-        if($member->genome_db_id == $mouse_gdb_id) { $mouse_gene = $member; }
-        if($member->genome_db_id == $human_gdb_id) { $human_gene = $member; }
+    foreach my $member (sort {$a->genome_db_id <=> $b->genome_db_id} @{$homology->get_all_Members}) {
+        print $member->toString(), "\n";
     }
-    next unless($mouse_gene and $human_gene);
-    $mouse_gene->print_member;
-    $human_gene->print_member;
 
-    my $dnafrag = $mouse_gene->dnafrag;
-    unless($dnafrag) { print("oops no dnafrag\n"); next; }
+    my $one_member = $homology->get_all_Members->[0];
+    my $other_member = $homology->get_all_Members->[1];
 
-# get the alignments on a piece of the DnaFrag
-    my $genomic_align_blocks = $comparaDBA->get_GenomicAlignBlockAdaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag( $blastz_mlss, $dnafrag, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end);
+    # get the alignments on a piece of the DnaFrag
+    my $genomic_align_blocks = $comparaDBA->get_GenomicAlignBlockAdaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag( $blastz_mlss, $one_member->dnafrag, $one_member->dnafrag_start, $one_member->dnafrag_end);
 
     foreach my $gab (@{$genomic_align_blocks}) {
         my $all_genomic_aligns = $gab->get_all_GenomicAligns();
         my $valid = 1;
         foreach my $ga (@$all_genomic_aligns) {
-            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $human_gdb_id) and ($ga->dnafrag->name ne $human_gene->dnafrag->name));
-            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $mouse_gdb_id) and ($ga->dnafrag->name ne $mouse_gene->dnafrag->name));
+            foreach my $member (@{$homology->get_all_Members}) {
+                $valid = 0 if (($ga->dnafrag->genome_db->dbID == $member->genome_db_id) and ($ga->dnafrag->name ne $member->dnafrag->name));
+            }
         }
         next unless ($valid);
 

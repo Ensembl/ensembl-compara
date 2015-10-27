@@ -151,6 +151,7 @@ sub fetch_input {
 
     }
     $species_tree_root->build_leftright_indexing();
+    $species_tree_root->print_tree(0.3) if $self->debug;
     $self->param('species_tree_root', $species_tree_root);
 }
 

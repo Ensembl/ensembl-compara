@@ -142,6 +142,7 @@ sub default_options {
         'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
         'getPatterns_exe'           => '/nfs/production/xfam/treefam/software/RAxML/number_of_patterns/getPatterns',
         'cafe_shell'                => 'UNDEF',
+        'fasttree_mp_exe'           => 'UNDEF',
 
     # HMM specific parameters (set to 0 or undef if not in use)
 

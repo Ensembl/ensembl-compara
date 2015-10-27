@@ -42,8 +42,8 @@ my $genes = $human_gene_adaptor-> fetch_all_by_external_name('BRCA2');
 my $gene = shift @$genes; # We assume we have only one gene
 
 my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
-my @mouse_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Mus_musculus",['ENSEMBL_ORTHOLOGUES'])};
-my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($member, "Rattus_norvegicus",['ENSEMBL_ORTHOLOGUES'])};
+my @mouse_homologies = @{$homology_adaptor->fetch_all_by_Member($member, -TARGET_SPECIES => 'Mus_musculus', -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES')};
+my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member($member, -TARGET_SPECIES => 'Rattus_norvegicus', -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES')};
 
 my $aligned_member = $member->get_canonical_SeqMember;
 
@@ -144,7 +144,7 @@ foreach my $homology (@mouse_homologies, @rat_homologies) {
     $gene1 = $gene2;
     $gene2 = $temp;
   }
-  my $member2 = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene2->stable_id);
+  my $member2 = $gene_member_adaptor->fetch_by_stable_id($gene2->stable_id);
 
   print_transcript($member->get_canonical_SeqMember->get_Transcript, $cdna_simple_align);
   print_transcript($member2->get_canonical_SeqMember->get_Transcript, $cdna_simple_align);

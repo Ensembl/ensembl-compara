@@ -143,8 +143,7 @@ sub _species_tree_node_id {
 
 sub taxonomy_level {
     my $self = shift;
-    return undef unless $self->species_tree_node();
-    return $self->species_tree_node()->node_name();
+    return $self->species_tree_node()->node_name() if $self->species_tree_node();
 }
 
 
@@ -356,7 +355,7 @@ sub get_AlignedMemberSet {
 
   Example     : $tree->get_SimpleAlign(-SEQ_TYPE => 'cds');
   Description : Returns the tree with removed nodes in taxon_id list.
-  Returntype  : Bio::EnsEMBL::Compara::GeneTreeNode object
+  Returntype  : Bio::SimpleAlign
   Exceptions  :
   Caller      : general
   Status      : At risk (may become deprecated soon)
@@ -382,7 +381,11 @@ sub get_SimpleAlign {
 
 sub consensus_cigar_line {
     my $self = shift;
-    return $self->get_AlignedMemberSet->consensus_cigar_line(@_);
+    my @cigars;
+    foreach my $leaf (@{$self->get_all_leaves}) {
+        push @cigars, $leaf->cigar_line if $leaf->isa('Bio::EnsEMBL::Compara::GeneTreeMember') and $leaf->cigar_line;
+    }
+    return Bio::EnsEMBL::Compara::Utils::Cigars::consensus_cigar_line(@cigars);
 }
 
 

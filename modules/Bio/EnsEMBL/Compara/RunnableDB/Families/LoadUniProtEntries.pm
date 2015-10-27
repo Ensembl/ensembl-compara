@@ -26,6 +26,7 @@ Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtEntries
 =head1 DESCRIPTION
 
 This object uses 'pfetch' or 'mfetch' (selectable) to fetch Uniprot sequence entries and stores them as members.
+Alternatively, the module can load a whole file by setting "seq_loader_name" to 'file'.
 
 =cut
 
@@ -45,6 +46,8 @@ BEGIN {         # Because BioPerl switched from not recordin version to 1.4 to 1
 
 use Bio::SeqIO;
 
+use Bio::EnsEMBL::Compara::SeqMember;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
@@ -52,7 +55,7 @@ sub param_defaults {
         'uniprot_version'   => 'uniprot',   # you can also ask for a specific version of uniprot that mfetch would recognize
         'genome_db_id'      => undef,       # a constant to set all members to (YOU MUST KNOW THAT YOU'RE DOING!)
         'accession_number'  => 1,           # members get their stable_ids from seq->accession_number rather than $seq->display_id
-        'seq_loader_name'   => 'pfetch',    # you can choose between 'mfetch' and 'pfetch'
+        'seq_loader_name'   => 'pfetch',    # you can choose between 'mfetch', 'pfetch' and 'file'
         'min_length'        => 80,          # we don't want to load sequences that are shorter than this (set to 0 to switch off)
     };
 }
@@ -72,6 +75,13 @@ sub run {
 
     my $uniprot_source  = $self->param_required('uniprot_source');
     my $source_name = 'Uniprot/'.$uniprot_source;
+
+    if ($self->param('seq_loader_name') eq 'file') {
+        $source_name = { 'sprot' => 'Uniprot/SWISSPROT', 'trembl' => 'Uniprot/SPTREMBL' }->{$uniprot_source};
+        $self->param('member_ids', $self->fetch_and_store_a_chunk($source_name, $self->param_required('uniprot_file'), $self->param_required('file_size')));
+        return;
+    }
+
     my $ids         = $self->param('ids');
 
     my @not_yet_stored_ids = ();
@@ -105,7 +115,7 @@ sub fetch_and_store_a_chunk {
 
     my @member_ids = ();
 
-    my $seq_loader_cmd = { 'mfetch' => "mfetch -d $uniprot_version", 'pfetch' => 'pfetch -F' }->{$seq_loader_name};
+    my $seq_loader_cmd = { 'mfetch' => "mfetch -d $uniprot_version", 'pfetch' => 'pfetch -F', 'file' => 'cat ' }->{$seq_loader_name};
     my $cmd = "$seq_loader_cmd $id_string |";
 
 
@@ -175,7 +185,7 @@ sub store_bioseq {
 
     if($self->debug) {
         my $species_name = $bioseq->species && $bioseq->species->species;
-        printf("store_bioseq %s %s : %d : %s", $source_name, $bioseq->display_id, $ncbi_taxon_id, $species_name);
+        printf("store_bioseq %s %s : %d : %s\n", $source_name, $bioseq->display_id, $ncbi_taxon_id, $species_name);
     }
    
     my $member = new Bio::EnsEMBL::Compara::SeqMember(
@@ -197,6 +207,8 @@ sub parse_description {
 
     my @top_parts = split(/(?!\[\s*)(Includes|Contains):/,$old_desc);
     unshift @top_parts, '';
+
+    my %seen_evidences = ();
 
     my ($name, $desc, $flags, $top_prefix, $prev_top_prefix) = (('') x 3);
     while(@top_parts) {
@@ -228,6 +240,13 @@ sub parse_description {
                 } else {
                     while($data=~/(\w+)\=([^\[;]*?(?:\[[^\]]*?\])?[^\[;]*?);/g) {
                         my($subprefix,$subdata) = ($1,$2);
+                        if ($subdata =~ /({.*})/) {
+                            if ($seen_evidences{$1}) {
+                                $subdata =~ s/ *{.*}//;
+                            } else {
+                                $seen_evidences{$1} = 1;
+                            }
+                        }
                         if($subprefix eq 'Full') {
                             if($prefix eq 'RecName') {
                                 if($top_prefix) {
@@ -238,20 +257,20 @@ sub parse_description {
                             } elsif($prefix eq 'SubName') {
                                 $name .= $subdata;
                             } elsif($prefix eq 'AltName') {
-                                $desc .= "($subdata)";
+                                $desc .= " ($subdata)";
                             }
                         } elsif($subprefix eq 'Short') {
-                            $desc .= "($subdata)";
+                            $desc .= " ($subdata)";
                         } elsif($subprefix eq 'EC') {
-                            $desc .= "(EC $subdata)";
+                            $desc .= " (EC $subdata)";
                         } elsif($subprefix eq 'Allergen') {
-                            $desc .= "(Allergen $subdata)";
+                            $desc .= " (Allergen $subdata)";
                         } elsif($subprefix eq 'INN') {
-                            $desc .= "($subdata)";
+                            $desc .= " ($subdata)";
                         } elsif($subprefix eq 'Biotech') {
-                            $desc .= "($subdata)";
+                            $desc .= " ($subdata)";
                         } elsif($subprefix eq 'CD_antigen') {
-                            $desc .= "($subdata antigen)";
+                            $desc .= " ($subdata antigen)";
                         }
                     }
                 }

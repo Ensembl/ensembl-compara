@@ -143,12 +143,12 @@ sub run_cafe_script {
     # Populate the script file
     open my $sf, ">", $script_file or die $!;
 
-    my $cafe_shell = $self->param('cafe_shell');
+    my $cafe_shell = $self->param_required('cafe_shell');
     chop($cafe_tree_str); #remove final semicolon
     $cafe_tree_str =~ s/:\d+$//; # remove last branch length
 
     my $lambda = $self->param('lambda');  ## For now, it only works with 1 lambda
-    my $cafe_struct_tree = $self->param('cafe_struct_tree_str');
+    #my $cafe_struct_tree = $self->param('cafe_struct_tree_str');
 
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_str\n\n";
@@ -165,7 +165,7 @@ sub run_cafe_script {
 
     my $run_cmd = $self->run_command($script_file);
     my $err = $run_cmd->exit_code;
-    unless ($err == 4096) {
+    unless ($err == 16) {
         print STDERR "CAFE returning error $err\n";
     }
     return;
@@ -297,6 +297,8 @@ sub parse_cafe_output {
         $cafeGeneFamily->pvalue_avg($pvalue_avg);
         $cafeGeneFamily->lambdas($lambda);
 
+        my $n_nonzero_internal_nodes = 0;
+
         # We store the attributes
         for my $node (@{$fam_tree->get_all_nodes()}) {
             my $n = $node->name();
@@ -323,10 +325,11 @@ sub parse_cafe_output {
             for my $cafe_node (@$cafe_nodes) {
                 $cafe_node->n_members($n_members);
                 $cafe_node->pvalue($pvalue);
+                $n_nonzero_internal_nodes++ if $n_members;
             }
 
         }
-        $cafeTree_Adaptor->store($cafeGeneFamily);
+        $cafeTree_Adaptor->store($cafeGeneFamily) if $n_nonzero_internal_nodes > 1;
     }
     return
 }

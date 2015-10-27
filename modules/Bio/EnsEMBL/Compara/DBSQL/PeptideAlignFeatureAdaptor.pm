@@ -507,7 +507,7 @@ sub _objs_from_sth {
       $paf->hit_member($memberDBA->fetch_by_dbID($row_hashref->{'hmember_id'}));
     }
   
-    #$paf->display_short();
+    #print $paf->toString(), "\n";
     
     push @pafs, $paf;
   }
@@ -520,7 +520,7 @@ sub _objs_from_sth {
 sub _get_all_genome_db_ids {
     my $self = shift;
 
-    return $self->db->get_GenomeDBAdaptor->_id_cache->cache_keys;
+    return map {$_->dbID} grep {$_->name ne 'ancestral_sequences'} @{$self->db->get_GenomeDBAdaptor->fetch_all};
 }
 
 ###############################################################################

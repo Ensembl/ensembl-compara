@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,33 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 use strict;
 use warnings;
-use Data::Dumper;
 
 use Bio::EnsEMBL::Registry;
 
-# Auto-configure the registry
-Bio::EnsEMBL::Registry->load_registry_from_db(
-	-host=>"ensembldb.ensembl.org", -user=>"anonymous",
-        -port=>'5306');
 
-# Get the Compara Adaptor for MethodLinkSpeciesSets
-my $mlssa = Bio::EnsEMBL::Registry->get_adaptor(
-    "Multi", "compara", "MethodLinkSpeciesSet");
+#
+# This script extracts statistics (number of genes, size of the alignment)
+# about the Ensembl Families
+#
 
-# fetch_all() method returns a array ref.
-my $all_mlss = $mlssa->fetch_all();
 
-my (%CT, $total_count);
+## Load the registry automatically
+my $reg = "Bio::EnsEMBL::Registry";
+$reg->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org');
 
-foreach my $method_link_species_set (@{ $all_mlss }){
-	$CT{ $method_link_species_set->method->type }++;
-	$total_count++;
-}
 
-print "number of analyses: ", $total_count, "\n";
-foreach my $method_link_type (keys %CT){
-	print $method_link_type, ": ", $CT{$method_link_type}, "\n";
+## Get the compara family adaptor
+my $family_adaptor = $reg->get_adaptor("Multi", "compara", "Family");
+
+my $all_fam = $family_adaptor->fetch_all;
+while (my $f = shift @$all_fam) {
+    my $a1 = $f->get_all_Members->[0];
+    my $c = $f->Member_count_by_source('ENSEMBLPEP');
+    print join("\t", $f->stable_id, scalar(@{$f->get_all_Members}), $c, length($a1->alignment_string)), "\n";
 }
 

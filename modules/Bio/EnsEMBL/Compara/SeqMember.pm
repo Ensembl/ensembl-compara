@@ -359,14 +359,17 @@ sub other_sequence {
 sub _prepare_cds_sequence {
     my $self = shift;
 
-    die "ncRNA transcripts don't have CDS sequences. Their nucleotide sequence is directly accessible with SeqMember::sequence().\n" if $self->source_name =~ /TRANS$/;
-    die "Uniprot entries don't have CDS sequences. They are only defined at the protein level.\n" if $self->source_name =~ m/^Uniprot/;
-
-    if ($self->source_name eq 'ENSEMBLPEP') {
+    if ($self->source_name =~ /TRANS$/) {
+        # ncRNA transcripts don't have externally-defined CDS sequences.
+        # Their nucleotide sequence is directly accessible.
+        $self->{_sequence_cds} = $self->sequence;
+        $self->{_expansion_factor} = 1;  # To tell AlignedMember not to multiply by 3 the cigar-line
+    } elsif ($self->source_name eq 'ENSEMBLPEP') {
         $self->{_sequence_cds} = $self->get_Transcript->translateable_seq;
+    } elsif ($self->source_name =~ /^Uniprot/) {
+        throw("Uniprot entries don't have CDS sequences since they are only defined at the protein level.\n");
     } else {
-        warn "SeqMember doesn't know how to get a CDS sequence for ", $self->source_name;
-        $self->{_sequence_cds} = '';
+        throw("SeqMember doesn't know how to get a CDS sequence for ", $self->source_name);
     }
 }
 

@@ -1490,7 +1490,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_bl notung copy raxml_update)],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update raxml_parsimony)],
             },
             -flow_into          => [ 'run_qc_tests' ],
         },
@@ -1865,7 +1865,7 @@ sub core_pipeline_analyses {
                 'n_cores'               => 8,
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
-            -rc_name					=> '64Gb_16c_job',
+            -rc_name					=> '32Gb_16c_job',
             -max_retry_count 			=> 1,
             -flow_into  => {
                 -1 => [ 'get_num_of_patterns' ],
@@ -2038,7 +2038,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 -1 => [ 'get_num_of_patterns_himem' ],
                 2 => [ 'treebest_small_families' ],
-                1 => [ 'raxml_decision' ],
+                1 => [ 'raxml_parsimony_decision' ],
             }
         },
 
@@ -2052,7 +2052,250 @@ sub core_pipeline_analyses {
             -rc_name    				=> '16Gb_job',
             -max_retry_count			=> 1,
             -flow_into  => {
-                1 => [ 'raxml_decision' ],
+                1 => [ 'raxml_parsimony_decision' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
+            -parameters => {
+                'branches'  => {
+					#-------------------------------------------------------------------------------	
+					# This boundaries are based on RAxML and ExaML manuals.
+					# Which suggest the following number of cores:
+					#
+					#	ExaML:	DNA: 3.5K patterns/core
+					# 			AAs: 1K   patterns/core
+					#
+					#	RAxML:	DNA: 500 patterns/core
+					#			AAs: 150 patterns/core
+					#
+					#-------------------------------------------------------------------------------	
+
+					2 => '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# <= 500)',
+					3 => '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# > 500)',
+					4 => '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# <= 500)',
+					5 => '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# > 500)',
+					6 => '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# <= 500)',
+					7 => '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# > 500)',
+					8 => '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# <= 500)',
+					9 => '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# > 500)',
+					10 => '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# <= 500)',
+					11 => '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# > 500)',
+					12 => '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# <= 500)',
+					13 => '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# > 500)',
+					14 => '(#tree_num_of_patterns# > 32000)',
+
+                },
+                'else_branch'   => 5,
+                'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
+                'raxml_threshold_aln_len'      => $self->o('raxml_threshold_aln_len'),
+                'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
+                'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
+            },
+            -hive_capacity  => 80,
+            -batch_size    	=> 50,
+            -flow_into  => {
+                2  => [ 'raxml_parsimony' ],
+                3  => [ 'raxml_parsimony' ],
+                4  => [ 'raxml_parsimony_8_cores' ],
+                5  => [ 'raxml_parsimony_8_cores' ],
+                6  => [ 'raxml_parsimony_8_cores' ],
+                7  => [ 'raxml_parsimony_16_cores' ],
+                8  => [ 'raxml_parsimony_16_cores' ],
+                9  => [ 'raxml_parsimony_16_cores' ],
+                10 => [ 'raxml_parsimony_32_cores' ],
+                11 => [ 'raxml_parsimony_32_cores' ],
+                12 => [ 'raxml_parsimony_32_cores' ],
+                13 => [ 'raxml_parsimony_64_cores' ],
+                14 => [ 'raxml_parsimony_64_cores' ],
+            },
+        },
+
+        {   -logic_name => 'raxml_parsimony',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'raxml_parsimony',
+                'escape_branch'             => -1,
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name        => '1Gb_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+                -1 => [ 'raxml_parsimony_himem' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'raxml_parsimony',
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name        => '4Gb_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_8_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'raxml_parsimony',
+                'extra_raxml_args'          => '-T 8',
+                'escape_branch'             => -1,
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name 		=> '16Gb_8c_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+                -1 => [ 'raxml_parsimony_8_cores_himem' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_8_cores_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'raxml_parsimony',
+                'extra_raxml_args'          => '-T 8',
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name 		=> '32Gb_8c_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_16_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'raxml_parsimony',
+                'extra_raxml_args'          => '-T 16',
+                'escape_branch'             => -1,
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name 		=> '16Gb_16c_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+                -1 => [ 'raxml_parsimony_16_cores_himem' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_16_cores_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'raxml_parsimony',
+                'extra_raxml_args'          => '-T 16',
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name 		=> '32Gb_16c_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_32_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'raxml_parsimony',
+                'extra_raxml_args'          => '-T 32',
+                'escape_branch'             => -1,
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name 		=> '16Gb_32c_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+                -1 => [ 'raxml_parsimony_32_cores_himem' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_32_cores_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'raxml_parsimony',
+                'extra_raxml_args'          => '-T 32',
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name 		=> '32Gb_32c_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_64_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'raxml_parsimony',
+                'extra_raxml_args'          => '-T 64',
+                'cmd_max_runtime'           => '518400',
+                'escape_branch'             => -1,
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name 		=> '16Gb_64c_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+                -1 => [ 'raxml_parsimony_64_cores_himem' ],
+                -2 => [ 'fasttree' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_64_cores_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'default',
+                'cmd_max_runtime'           => '518400',
+                'output_clusterset_id'      => 'raxml_parsimony',
+                'extra_raxml_args'          => '-T 64',
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name 		=> '32Gb_64c_job',
+            -flow_into      => {
+                1  => [ 'raxml_decision' ],
+                -2 => [ 'fasttree' ],
+            }
+        },
+
+        {   -logic_name => 'fasttree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FastTree',
+            -parameters => {
+                'fasttree_exe'                 => $self->o('fasttree_mp_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'      => 'default',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name 		=> '32Gb_32c_job',
+            -flow_into      => {
+                1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
             }
         },
 
@@ -2122,8 +2365,9 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => 8,
                 'treebest_exe'          => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
-                'input_clusterset_id'      => 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'   => 'raxml_parsimony',
+                'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_8c_mpi',
@@ -2145,8 +2389,9 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => 8,
                 'treebest_exe'          => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
-                'input_clusterset_id'      => 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'   => 'raxml_parsimony',
+                'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_8c_mpi',
@@ -2164,8 +2409,9 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => 16,
                 'treebest_exe'          => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
-                'input_clusterset_id'      => 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'   => 'raxml_parsimony',
+                'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_16c_mpi',
@@ -2187,8 +2433,9 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => 16,
                 'treebest_exe'          => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
-                'input_clusterset_id'      => 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'   => 'raxml_parsimony',
+                'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_16c_mpi',
@@ -2206,8 +2453,9 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => 32,
                 'treebest_exe'          => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
-                'input_clusterset_id'      => 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'   => 'raxml_parsimony',
+                'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_32c_mpi',
@@ -2229,8 +2477,9 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => 32,
                 'treebest_exe'          => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
-                'input_clusterset_id'      => 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'   => 'raxml_parsimony',
+                'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_32c_mpi',
@@ -2248,15 +2497,18 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => 64,
                 'treebest_exe'          => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
-                'input_clusterset_id'      => 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'   => 'raxml_parsimony',
+                'cmd_max_runtime'       => '518400',
+                'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_64c_mpi',
-            -max_retry_count => 0,
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge. 
             -flow_into => {
                 1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
                -1 => [ 'examl_64_cores_himem' ],  # MEMLIMIT
+               -2 => [ 'fasttree' ],  # RUNLIMIT
             }
         },
 
@@ -2270,13 +2522,18 @@ sub core_pipeline_analyses {
                 'parse_examl_exe'       => $self->o('parse_examl_exe'),
                 'examl_cores'           => 64,
                 'treebest_exe'          => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
-                'input_clusterset_id'      => 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'   => 'raxml_parsimony',
+                'cmd_max_runtime'       => '518400',
+                'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_64c_mpi',
-            -max_retry_count => 0,
-            -flow_into  => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
+            -flow_into => {
+                1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
+               -2 => [ 'fasttree' ],  # RUNLIMIT
+            }
         },
 
         {   -logic_name => 'raxml',
@@ -2398,7 +2655,9 @@ sub core_pipeline_analyses {
                 'output_clusterset_id'      => 'notung',
                 'notung_memory'             => 1500,
             },
-            -hive_capacity  => $self->o('notung_capacity'),
+            -hive_capacity                  => $self->o('notung_capacity'),
+            -analysis_capacity              => $self->o('notung_capacity'),
+            -batch_size    => 2,
             -rc_name        => '2Gb_job',
             -flow_into      => {
                 1  => [ 'raxml_bl' ],
@@ -2428,13 +2687,13 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'input_clusterset_id'       => 'notung',
                 'output_clusterset_id'      => 'raxml_bl',
-                'escape_branch'             => -1,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '1Gb_job',
+            -rc_name    => '8Gb_job',
             -flow_into  => {
                 1  => [ 'hc_post_tree' ],
                 -1 => [ 'raxml_bl_himem' ],
+                2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
             }
         },
 
@@ -2445,10 +2704,23 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'input_clusterset_id'       => 'notung',
                 'output_clusterset_id'      => 'raxml_bl',
-                'escape_branch'             => -1,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '4Gb_job',
+            -rc_name    => '16Gb_job',
+            -flow_into  => {
+                1  => [ 'hc_post_tree' ],
+            }
+        },
+
+        {   -logic_name => 'copy_treebest_tree_2_raxml_bl_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
+            -parameters => {
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'input_clusterset_id'   => 'raxml',
+                'output_clusterset_id'  => 'raxml_bl',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name => '2Gb_job',
             -flow_into  => {
                 1  => [ 'hc_post_tree' ],
             }
@@ -2470,7 +2742,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'input_clusterset_id'   => $self->o('use_notung') ? 'notung' : 'default',
+                'input_clusterset_id'   => $self->o('use_notung') ? 'raxml_bl' : 'default',
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
@@ -2484,7 +2756,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'input_clusterset_id'   => $self->o('use_notung') ? 'notung' : 'default',
+                'input_clusterset_id'   => $self->o('use_notung') ? 'raxml_bl' : 'default',
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '2Gb_job',
@@ -2521,7 +2793,7 @@ sub core_pipeline_analyses {
                                'ktreedist_exe' => $self->o('ktreedist_exe'),
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
-            -rc_name       => '2Gb_job',
+            -rc_name       => '4Gb_job',
         },
 
         {   -logic_name => 'build_HMM_aa_v2',

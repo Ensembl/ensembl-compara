@@ -251,7 +251,7 @@ sub run_analysis {
           my ($pep1, $pep2) = $genepairlink->get_nodes;
           if ($pep1->genome_db_id == $pep2->genome_db_id) {
               push @good_ones, [$genepairlink, 'within_species_paralog', 1];
-          } elsif ($self->is_closest_homologue($genepairlink)) {
+          } elsif (($genepairlink->get_value_for_tag('ancestor')->duplication_confidence_score < $self->param('no_between')) and $self->is_closest_homologue($genepairlink)) {
               push @good_ones, [$genepairlink, $self->tag_orthologues($genepairlink), 0];
           }
       }

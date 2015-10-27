@@ -99,6 +99,7 @@ sub param_defaults {
     return {
         'cdna'              => 0,
         'aln_format'        => 'fasta',
+        'map_long_seq_names'=> undef,
         'remove_columns'    => 0,
         'check_split_genes' => 1,
         'read_tags'         => 0,
@@ -113,6 +114,7 @@ sub param_defaults {
         'minimum_genes'     => 0,
         'maximum_genes'     => 1e9,
         'cmd_max_runtime'   => undef,
+        'do_hcs'            => 1,
 
         'run_treebest_sdi'  => 0,
         'reroot_with_sdi'   => 0,
@@ -140,6 +142,14 @@ sub fetch_input {
     if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
         print STDERR "getting the tree '".$self->param('input_clusterset_id')."'\n";
         my $selected_tree = $gene_tree->alternative_trees->{$self->param('input_clusterset_id')};
+
+        #In case we are using a non default input_clusterset_id, we need to use the same gene_tree_id label.
+        #If we dont set this to the alternative root_id, it will cause a discrepancy between the file names.
+        #   some will have the ref_root_id and others will have the alternative root_id 
+        #   but we should store the ref_tree to be used by the healthchecks
+        $self->param('ref_gene_tree_id', $self->param('gene_tree_id'));
+        $self->param('gene_tree_id', $selected_tree->root->node_id);
+
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
         $selected_tree->add_tag('removed_columns', $gene_tree->get_value_for_tag('removed_columns')) if $gene_tree->has_tag('removed_columns');
         $gene_tree = $selected_tree;
@@ -185,8 +195,13 @@ sub write_output {
         delete $self->param('default_gene_tree')->{'_member_array'};   # To make sure we use the freshest data
 
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
+            #We need to parse_newick_into_tree to be able to unmerge the split_genes.
+            print "Using: " . $self->param('output_clusterset_id') . " clusterset\n" if($self->debug) ;
+
+            $self->parse_newick_into_tree( $self->param('newick_output'), $self->param('default_gene_tree'), [] );
             $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $self->param('default_gene_tree'), [], 1) || die "Could not store ". $self->param('output_clusterset_id') . " tree.\n";
         } else {
+            print "Using: default clusterset\n" if($self->debug);
             $target_tree = $self->param('default_gene_tree');
             $self->parse_newick_into_tree($self->param('newick_output'), $target_tree, []);
             $self->store_genetree($target_tree);
@@ -200,7 +215,7 @@ sub write_output {
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
 
-    $self->call_hcs_all_trees();
+    $self->call_hcs_all_trees() if $self->param('do_hcs');
 }
 
 
@@ -244,10 +259,19 @@ sub run_generic_command {
     } else {
         $aln_tree = $gene_tree;
     }
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($aln_tree)";
-    $self->param('alignment_file', $input_aln);
 
-    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root));
+    if (($self->param('aln_format') eq 'phylip') && (!defined($self->param('map_long_seq_names'))) ){
+        $self->param('map_long_seq_names', 1);
+    }
+
+    my $map_long_seq_names;
+    if ($self->param('map_long_seq_names')){
+        $map_long_seq_names = {};
+    }
+
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}, $map_long_seq_names) || die "Could not fetch alignment for ($aln_tree)";
+    $self->param('alignment_file', $input_aln);
+    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root,$map_long_seq_names));
 
     my $number_actual_genes = scalar(@{$gene_tree->get_all_leaves});
     if ($number_actual_genes < $self->param('minimum_genes')) {
@@ -288,10 +312,24 @@ sub run_generic_command {
         my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
         if ($self->param('run_treebest_sdi')) {
             print "Re-rooting the tree with 'treebest sdi'\n" if($self->debug);
+
+            if (defined $map_long_seq_names){
+                #we need to re-map to the lond indentidiers
+                foreach my $tmp_seq ( keys( %$map_long_seq_names ) ) {
+                    my $fix_seq = $map_long_seq_names->{$tmp_seq}{'seq'};
+                    my $fix_suf = $map_long_seq_names->{$tmp_seq}{'suf'};
+
+                    my $fix_seq_name = "$fix_seq\_$fix_suf";
+
+                    #Replace only whole words:
+                    $output =~ s/\b$tmp_seq\b/$fix_seq_name/;
+                }
+            }
+
             $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi'));
         }
 		unless($output){
-			sleep 30;
+            sleep 60;
             die "The Newick output is empty\n";
 		}
         $self->param('newick_output', $output);
@@ -300,7 +338,9 @@ sub run_generic_command {
 
 
 sub get_gene_tree_file {
-    my ($self, $gene_tree_root) = @_;
+    my $self                    = shift;
+    my $gene_tree_root          = shift;
+    my $map_long_seq_names      = shift;
 
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$gene_tree_root->get_all_leaves}) {
@@ -309,7 +349,23 @@ sub get_gene_tree_file {
 
     my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree_root->node_id);
     open( my $genetree, '>', $self->worker_temp_directory."/".$gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
-    print $genetree $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
+
+    my $newick = $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
+
+    if ($map_long_seq_names){
+        #we need to re-map to the small indentidiers
+        foreach my $tmp_seq ( keys( %{$map_long_seq_names} ) ) {
+            my $fix_seq = $map_long_seq_names->{$tmp_seq}->{'seq'};
+            my $fix_suf = $map_long_seq_names->{$tmp_seq}->{'suf'};
+
+            my $fix_seq_name = "$fix_seq\_$fix_suf";
+
+            #Replace only whole words:
+            $newick =~ s/\b$fix_seq_name\b/$tmp_seq/;
+        }
+    }
+    print $genetree $newick;
+
     close $genetree;
 
     return $gene_tree_file;

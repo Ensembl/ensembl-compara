@@ -30,6 +30,7 @@ ALTER TABLE genome_db ADD COLUMN first_release smallint unsigned, ADD COLUMN las
 # Insert dummy values for first_release and last_release
 UPDATE genome_db SET first_release = 80;    -- must be set, so that all the genomes are considered as released
 UPDATE genome_db SET last_release = 80 WHERE assembly_default=0;    -- non-default genome_dbs were not current any more in e81, so must have ended in e80 or before
+UPDATE genome_db gdb1 JOIN genome_db gdb2 USING (name, assembly) SET gdb2.first_release = gdb1.first_release, gdb2.last_release = gdb1.last_release WHERE gdb1.genome_component IS NULL AND gdb2.genome_component IS NOT NULL;   -- Make sure the components are in sync with their principal genome_db
 
 ALTER TABLE genome_db DROP COLUMN assembly_default;
 
@@ -71,6 +72,12 @@ CREATE TEMPORARY TABLE method_link_species_set_time AS
 ALTER TABLE method_link_species_set ADD COLUMN first_release smallint unsigned, ADD COLUMN last_release smallint unsigned;
 UPDATE method_link_species_set JOIN method_link_species_set_time USING (method_link_species_set_id) SET first_release = fr, last_release = lr;
 
+-- update the species_set table
+ALTER TABLE species_set
+	MODIFY COLUMN species_set_id int(10) unsigned NOT NULL,
+	MODIFY COLUMN genome_db_id int(10) unsigned NOT NULL,
+	DROP INDEX species_set_id,
+	ADD PRIMARY KEY (species_set_id,genome_db_id);
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)

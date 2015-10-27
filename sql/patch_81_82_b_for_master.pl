@@ -271,6 +271,16 @@ run_command_once('INSERT INTO species_set_header (name, first_release) VALUES ("
 #find_species_set_names();
 $master_dbc->do('UPDATE species_set_header SET name = REPLACE(name, "oldcollection",  "") WHERE name LIKE "oldcollection%"');
 
+run_command_once(q{
+ALTER TABLE species_set
+	MODIFY COLUMN species_set_id int(10) unsigned NOT NULL,
+	MODIFY COLUMN genome_db_id int(10) unsigned NOT NULL,
+	DROP INDEX species_set_id.
+	ADD PRIMARY KEY (species_set_id,genome_db_id);
+});
+
+$master_dbc->do('UPDATE genome_db gdb1 JOIN genome_db gdb2 USING (name, assembly) SET gdb2.first_release = gdb1.first_release, gdb2.last_release = gdb1.last_release WHERE gdb1.genome_component IS NULL AND gdb2.genome_component IS NOT NULL;');
+
 run_command_once(q{ALTER TABLE method_link_species_set ADD COLUMN first_release smallint unsigned, ADD COLUMN last_release smallint unsigned});
 $master_dbc->do(q{
 CREATE TEMPORARY TABLE method_link_species_set_time AS

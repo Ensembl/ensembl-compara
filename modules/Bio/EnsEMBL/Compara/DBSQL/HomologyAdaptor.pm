@@ -175,6 +175,7 @@ sub _find_target_mlsss {
 
     # Find all the target species. Accepted values are: object instances,
     # genome_db_ids, and species names (incl. aliases)
+    $target_species = [$target_species] if $target_species and not ref($target_species);
     foreach my $s (@$target_species) {
         if (ref($s)) {
             assert_ref($s, 'Bio::EnsEMBL::Compara::GenomeDB');
@@ -191,6 +192,7 @@ sub _find_target_mlsss {
 
     # Find all the target taxa. Accepted values are: object instances,
     # taxon_ids, and taxon names
+    $target_taxon = [$target_taxon] if $target_taxon and not ref($target_taxon);
     foreach my $t (@$target_taxon) {
         my $tax;
         if (ref($t)) {
@@ -495,7 +497,7 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
         push @good_node_ids, @{$self->_get_suitable_species_tree_node_ids($in, $lca, 'ncrna')};
     }
 
-    if ($mlss) {
+    if ($ref->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
         return $self->fetch_all_by_MethodLinkSpeciesSet($mlss, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
     } else {
         return $self->fetch_all_by_Member($ref, -METHOD_LINK_SPECIES_SET => $mlss, -SPECIES_TREE_NODE_IDS => \@good_node_ids);

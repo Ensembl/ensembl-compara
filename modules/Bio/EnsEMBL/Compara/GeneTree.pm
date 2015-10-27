@@ -127,6 +127,8 @@ Internal methods are usually preceded with an underscore (_)
 
 package Bio::EnsEMBL::Compara::GeneTree;
 
+use Scalar::Util qw(looks_like_number);
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
@@ -368,6 +370,10 @@ sub preload {
         my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
         my %genome_db_ids = ();
         foreach my $s (@$species) {
+            if (looks_like_number($s)) {
+                $genome_db_ids{$s} = 1;
+                next;
+            }
             my $gdb = $genome_db_adaptor->fetch_by_name_assembly($s) || $genome_db_adaptor->fetch_by_registry_name($s);
             if ($gdb) {
                 $genome_db_ids{$gdb->dbID} = 1;
@@ -552,7 +558,7 @@ sub expand_subtrees {
     # To update it at the next get_all_Members call
     delete $self->{'_member_array'};
     # Gets the global alignment
-    $self->attach_alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id));
+    $self->alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id));
 }
 
 

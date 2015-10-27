@@ -333,7 +333,7 @@ sub pipeline_analyses {
 				  'mlss_id'        => $self->o('mlss_id'),
                                   'collection'     => $self->o('collection'),
                                   'master_db'      => $self->o('master_db'),
-                                  'pipeline_db'    => $self->dbconn_2_url('pipeline_db'),
+                                  'pipeline_db'    => $self->pipeline_url(),
                                   'MT_only'        => $self->o('MT_only'),
 				 },
 	       -flow_into => {

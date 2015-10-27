@@ -413,13 +413,6 @@ sub binomial {
   }
 }
 
-sub ensembl_alias { ## DEPRECATED
-  my $self = shift;
-  deprecate('NCBITaxon::ensembl_alias() is deprecated in favour of ensembl_alias_name(), and will be removed in e82');
-  return $self->ensembl_alias_name;
-}
-
-
 =head2 get_short_name
 
   Example    : $ncbi->get_short_name;
@@ -438,12 +431,6 @@ sub get_short_name {
   $name =~  s/(\S)\S+\s(\S{3})\S+/$1$2/;
   $name =~ s/\ //g;
   return $name;
-}
-
-sub short_name {
-  my $self = shift;
-  deprecate('NCBITaxon::short_name() is deprecated in favour of get_short_name(), and will be removed in e76');
-  return $self->get_short_name;
 }
 
 
