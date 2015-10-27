@@ -57,12 +57,13 @@ my $mlss_adap  = $registry->get_adaptor( 'mice_merged', 'compara', 'MethodLinkSp
 my $gblock_adap = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomicAlignBlock' );
 my $GDB_adaptor = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomeDB' );
 my $mlss = $mlss_adap->fetch_by_method_link_type_registry_aliases( "LASTZ_NET", [ $ref, $non_ref ] );
+#print $mlss, " mlssssssssssssssssss\n";
 my @gblocks = @{ $gblock_adap->fetch_all_by_MethodLinkSpeciesSet( $mlss ) };
 
 my %gblocks_hash; #will contain the rat chr number as keys mapping to an hash table of all of the genomic aln block of that chr as values. 
 
 my $whole_gblocks_hash_ref ={}; # so that i will be able to use the string form of the genomic aln block to get back the objects
-
+#print $GDB_adaptor, "   the adaptor \n the genome   ", $GDB_adaptor->fetch_by_name_assembly($ref), "\n";
 my $ref_gdbID = $GDB_adaptor->fetch_by_name_assembly($ref)->dbID();
 my $non_ref_gdbID = $GDB_adaptor->fetch_by_name_assembly($non_ref)->dbID();
 #print "ref gbid ", $ref_gdbID , "   non ref gb id ", $non_ref_gdbID , "\n\n";
@@ -77,7 +78,7 @@ while ( my $gblock = shift @gblocks ) {
     $gblocks_hash{$dnafrag_id}{$non_ref_gns->dnafrag()->name()}{$gblock} = $ref_gns->dnafrag_start();
     $whole_gblocks_hash_ref->{$gblock}=$gblock;
     $count ++;
-#	if ($count == 400){
+#	if ($count == 40){
 #		print Dumper(\%gblocks_hash);
 #		last;
 #	}
