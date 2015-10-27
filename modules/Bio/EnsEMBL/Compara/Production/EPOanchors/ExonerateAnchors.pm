@@ -56,7 +56,6 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::ExonerateAnchors;
 
 use strict;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
