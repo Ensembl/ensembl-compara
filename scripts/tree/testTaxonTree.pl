@@ -71,32 +71,7 @@ GetOptions('help'        => \$help,
 if ($help) { usage(); }
 
 if ($url) {
-  eval { require Bio::EnsEMBL::Hive::URLFactory ;};
-  if ($@) {
-    $url =~ /mysql\:\/\/(\S+)\@(\S+)\/(\S+)/g;
-    my ($myuserpass,$myhost,$mydbname) = ($1,$2,$3);
-    my ($myuser,$mypass);
-    if ($myuserpass =~ /(\S+)\:(\S+)/) {
-      $myuser = $1;
-      $mypass = $2;
-    } else {
-      $myuser = $myuserpass;
-    }
-    my $myport = 3306;
-    if ($myhost =~ /(\S+)\:(\S+)/) {
-      $myport = $2;
-      $myhost = $1;
-    }
-    my %compara_conf;
-    $compara_conf{-user} = $myuser;
-    $compara_conf{-pass} = $mypass if (defined($mypass));
-    $compara_conf{-host} = $myhost;
-    $compara_conf{-dbname} = $mydbname;
-    $compara_conf{-port} = $myport;
-    eval { $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf); }
-  } else {
-    $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara');
-  }
+  $self->{'comparaDBA'} = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( -URL => $url );
 }
 unless(defined($self->{'comparaDBA'})) {
   warn "Could not create compara_dba from url '$url'\n\n";

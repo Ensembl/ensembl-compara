@@ -22,12 +22,14 @@
 
 use strict;
 use warnings;
+
 use Getopt::Long;
-use Bio::EnsEMBL::Hive::URLFactory;
-use Bio::EnsEMBL::Compara::Production::GeneSet;
-use Bio::EnsEMBL::Compara::Production::HomologySet;
 use Time::HiRes qw { time };
 use Bio::EnsEMBL::Registry;
+
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Production::GeneSet;
+use Bio::EnsEMBL::Compara::Production::HomologySet;
 
 $| = 1;
 
@@ -76,8 +78,8 @@ unless ($conf) {
   usage();
 }
 
-$self->{$url1} = Bio::EnsEMBL::Hive::URLFactory->fetch($url1 . ';type=compara');
-$self->{$url2} = Bio::EnsEMBL::Hive::URLFactory->fetch($url2 . ';type=compara');
+$self->{$url1} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url1 );
+$self->{$url2} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url2 );
 
 my ($homology_description_ranking_set1, $homology_description_ranking_set2) = @{do($conf)};
 my @para_desc = qw(within_species_paralog other_paralog gene_split);

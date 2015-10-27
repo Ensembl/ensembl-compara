@@ -18,7 +18,8 @@ use strict;
 use warnings;
 
 use Getopt::Long;
-use Bio::EnsEMBL::Hive::URLFactory;
+
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 $| = 1;
@@ -48,7 +49,7 @@ if($self->{'taxa_list'}) {
 
 if ($help) { usage(); }
 
-$self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara') if($url);
+$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url ) if $url;
 unless(defined($self->{'comparaDBA'})) {
   print("no url\n\n");
   usage();

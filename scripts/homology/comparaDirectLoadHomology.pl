@@ -21,7 +21,6 @@ use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 
@@ -49,7 +48,7 @@ unless($url) {
   usage();
 }
 
-$self->{'comparaDBA'} = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara');
+$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url );
 
 load_orthos($self);
 

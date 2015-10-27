@@ -19,9 +19,9 @@ use warnings;
 
 use DBI;
 use Getopt::Long;
+
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
-use Bio::EnsEMBL::Hive::URLFactory;
 
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -42,9 +42,7 @@ if ($self->{'help'}) { usage(); }
 unless ($self->{'url'}) { usage(); }
 
 
-my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{'url'});
-print("$dba\n");
-$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$dba->dbc);
+$self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $self->{'url'} );
 
 my $chunkDBA = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor;
 

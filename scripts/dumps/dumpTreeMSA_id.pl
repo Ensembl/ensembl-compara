@@ -16,12 +16,12 @@
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::AlignIO;
 use File::Spec;
 use Getopt::Long;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
@@ -108,7 +108,7 @@ if($reg_conf) {
 }
 my $dba = $reg_alias
     ? Bio::EnsEMBL::Registry->get_DBAdaptor( $reg_alias, 'compara' )
-    : Bio::EnsEMBL::Hive::URLFactory->fetch( $url.';type=compara' );
+    : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url );
 
 my $adaptor = $dba->get_GeneTreeAdaptor;
 
