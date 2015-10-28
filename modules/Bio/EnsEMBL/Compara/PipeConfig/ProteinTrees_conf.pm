@@ -64,6 +64,8 @@ use Bio::EnsEMBL::Hive::Version 2.3;
 
 use Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf;
 
+use Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservasion_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -318,6 +320,9 @@ sub default_options {
             'full_species_tree_label'  => 'default',
             'per_family_table'         => 1,
             'cafe_species'             => [],
+
+        # Do we want to initialise the Ortholog quality metric part now ?
+        'initialise_orthologQM_pipeline'  => undef,
 
     };
 }
@@ -2797,10 +2802,14 @@ sub core_pipeline_analyses {
                 },
             },
             -flow_into => {
-                2 => [ 'orthology_stats' ],
+                2 => { 'orthology_stats' => undef,
+                        $self->o('initialise_orthologQM_pipeline') ? ('get_orthologs' => {'mlss_id' => '#homo_mlss_id#'}) : (),
+                    },
                 3 => [ 'paralogy_stats' ],
+
             },
         },
+
 
         {   -logic_name => 'orthology_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
@@ -2816,6 +2825,10 @@ sub core_pipeline_analyses {
             @{ Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_species_tree($self) },
             @{ Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_cafe($self) },
         ) : (),
+
+        $self->o('initialise_orthologQM_pipeline') ? (
+            @{ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservasion_conf::pipeline_analyses($self) },
+            ): (),
     ];
 }
 
