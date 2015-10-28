@@ -180,12 +180,11 @@ sub store_no_redundancy {
 
     my $md5sum = md5($sequence);
 
-    my $matching_ids = $self->dbc->db_handle->selectcol_arrayref('SELECT sequence_id FROM sequence WHERE md5sum = ? AND sequence = ? ORDER BY sequence_id', undef, $md5sum, $sequence);
-    return $matching_ids->[0] if scalar(@$matching_ids);
-
+    # We insert no matter what
     $self->dbc->do('INSERT INTO sequence (sequence, length, md5sum) VALUES (?,?,?)', undef, $sequence, length($sequence), $md5sum);
 
-    $matching_ids = $self->dbc->db_handle->selectcol_arrayref('SELECT sequence_id FROM sequence WHERE md5sum = ? AND sequence = ? ORDER BY sequence_id', undef, $md5sum, $sequence);
+    # And we delete the duplicates (the smallest sequence_id is the reference, i.e first come first served)
+    my $matching_ids = $self->dbc->db_handle->selectcol_arrayref('SELECT sequence_id FROM sequence WHERE md5sum = ? AND sequence = ? ORDER BY sequence_id', undef, $md5sum, $sequence);
     die "The sequence disappeared !\n" unless scalar(@$matching_ids);
     my $seqID = shift @$matching_ids;
 
