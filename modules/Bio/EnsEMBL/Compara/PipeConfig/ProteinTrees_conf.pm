@@ -64,7 +64,7 @@ use Bio::EnsEMBL::Hive::Version 2.3;
 
 use Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf;
 
-use Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservasion_conf;
+use Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -3099,7 +3099,7 @@ sub core_pipeline_analyses {
         ) : (),
 
         $self->o('initialise_orthologQM_pipeline') ? (
-            @{ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservasion_conf::pipeline_analyses($self) },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf::pipeline_analyses($self) },
             ): (),
     ];
 }
