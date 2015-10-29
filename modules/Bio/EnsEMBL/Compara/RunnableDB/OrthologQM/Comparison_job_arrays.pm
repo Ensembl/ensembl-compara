@@ -35,6 +35,7 @@ use Bio::EnsEMBL::Registry;
 
 sub param_defaults {
 	return {
+	    'mlss_ID'=>'20515',
 		'ref_species_dbid' =>4,
         'non_ref_species_dbid' => 31,
 		'chr_job'	=>	{ '36648' => [
@@ -63,6 +64,7 @@ sub param_defaults {
 
 sub fetch_input {
 #	my $self = shift;
+#	$self->param('mlss_ID', $self->param_required('mlss_ID'));
 #	my $chr_job = $self->param_required('ortholog_info_hashref');
 #	print "##############################\n\n";
 #	print Dumper($chr_job);
@@ -74,7 +76,7 @@ sub fetch_input {
 sub run {
 	my $self = shift;
 	my $chr_orth_hashref = $self->param('chr_job');
-#	print " -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n\n\n";
+#	print " -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n\n";
 #	print Dumper($chr_orth_hashref);
 	while (my ($ref_chr_dnafragID, $ordered_orth_arrayref) = each(%$chr_orth_hashref) ) {
 		my @ordered_orth_array = @$ordered_orth_arrayref;
@@ -110,7 +112,8 @@ sub run {
 										'right2' => $right2,
 										'ref_chr_dnafragID' => $ref_chr_dnafragID,
 										'ref_species_dbid' => $self->param('ref_species_dbid'),
-										'non_ref_species_dbid' => $self->param('non_ref_species_dbid')}, 2 );
+										'non_ref_species_dbid' => $self->param('non_ref_species_dbid'),
+										'mlss_ID' => $self->param('mlss_ID')}, 2 );
 
 		}
 	}
