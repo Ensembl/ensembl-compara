@@ -378,14 +378,14 @@ sub importAlignment_quick {
 
      #$sql = "INSERT INTO genomic_align SELECT genomic_align.* FROM ?.genomic_align LEFT JOIN WHERE method_link_species_set_id = ?\n";
     $sql = "INSERT INTO genomic_align SELECT * FROM $dbname.genomic_align\n";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
     #$sth->execute($dbname, $mlss_id);
     $sth->finish();
 
     #$sql = "INSERT INTO genomic_align_tree SELECT genomic_align_tree.* FROM ?.genomic_align_tree LEFT JOIN ?.genomic_align_group USING (node_id) LEFT JOIN ?.genomic_align USING (genomic_align_id) LEFT JOIN ?.genomic_align_block WHERE genomic_align_block.method_link_species_set_id = ?\n";
     $sql = "INSERT INTO genomic_align_tree SELECT * FROM $dbname.genomic_align_tree\n";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sth = $self->compara_dba->dbc->prepare($sql);
 
     #$sth->execute($dbname, $dbname, $dbname, $dbname, $mlss_id);
     $sth->execute();
