@@ -8,6 +8,10 @@
 
 	http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
 
+
+    Example run
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservasion_conf -mlss_id <20620> -pipeline_name <GConserve_trial> -host <host_server>
+
 =cut
 
 
@@ -45,6 +49,7 @@ sub pipeline_create_commands {
 	return [
 		@{ $self->SUPER::pipeline_create_commands },
 		$self->db_cmd( 'CREATE TABLE ortholog_quality_metric ( 
+            mlss_id varchar(255) NOT NULL,
 			homology_dbID  varchar(255) NOT NULL,
             ref_gmember_id varchar(255) NOT NULL,
 			ref_dnafrag_id  INT NOT NULL,
@@ -57,6 +62,7 @@ sub pipeline_create_commands {
         )'),
 
         $self->db_cmd( 'CREATE TABLE ortholog_metric ( 
+            mlss_id varchar(255) NOT NULL,
             homology_dbID  varchar(255) NOT NULL,
             percent_conserved_score INT NOT NULL 
             
@@ -105,7 +111,7 @@ sub pipeline_analyses {
     return [
         {   -logic_name => 'get_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
-#            -input_ids => [ { } ],
+            -input_ids => [ { } ],
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
 #            -analysis_capacity  =>  10,  # use per-analysis limiter
             -flow_into => {
