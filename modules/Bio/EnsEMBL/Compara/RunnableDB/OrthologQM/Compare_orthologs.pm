@@ -40,7 +40,7 @@ sub param_defaults {
 	my $self = shift;
 	return {
             %{ $self->SUPER::param_defaults() },
-
+	    'mlss_ID'=>'20515',
 		'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
 		'ref_species_dbid' => 31,
         'non_ref_species_dbid' => 4,
@@ -68,12 +68,13 @@ sub fetch_input{
 	$self->param('member_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
 #	print $self->param('member_adaptor');
 #	print $self->param('homolog_adaptor');
+    $self->param('mlss_ID', $self->param_required('mlss_ID'));
 }
 
 sub run {
 	my $self = shift;
 #	my $orth_hashref = $self->param_required('comparison');
-#	print " -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs \n\n\n\n";
+#	print " -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs \n\n $self->param('mlss_ID') \n\n";
 #    print $self->param('left1'), " left1 ", $self->param('left2'), " left2 ", $self->param('query'), " query ", $self->param('right1'), " right1 ", $self->param('right2'), " right2 ", $self->param('ref_chr_dnafragID'), " ref_chr_dnafragID\n\n" ;
 #	print Dumper($orth_hashref);
 #	my $ref_chr_dnafragID = $orth_hashref->{'ref_chr_dnafragID'};
@@ -111,6 +112,7 @@ sub run {
 		my $ref_gene_member = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'))->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
         $result{'ref_dnafrag_id'} = $ref_gene_member->dnafrag_id();
         $result{'ref_gmember_id'} = $ref_gene_member->dbID();
+        $result{'mlss_id'} = $self->param('mlss_ID');
 		$self->param('result', \%result);
 	} else {
 
@@ -185,6 +187,7 @@ sub run {
         $self->param('result')->{'ref_dnafrag_id'} = $ref_gene_member->dnafrag_id();
         $self->param('result')->{'ref_gmember_id'} = $ref_gene_member->dbID();
         $self->param('result')->{'homology_dbID'} = $self->param('query');
+        $self->param('result')->{'mlss_id'} = $self->param('mlss_ID');
 
 	}
 #    print Dumper($self->param('result'));
