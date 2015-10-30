@@ -56,24 +56,25 @@ sub render {
                     );
 
   ## Check the cache, then fetch new tips
-  unless($MEMD && $MEMD->get('::TIPS-FAILED')) {
-    my $got = 0;
-    foreach my $cat (keys %categories) {
-      (my $cat_url = $rss_url) =~ s/feed\/$/category\/$cat\/feed\//;
-      unless (scalar(@{$tips->{$cat}||[]}) && $cat_url) {
-        warn "TIPS $cat\n";
-        $tips->{$cat} = $self->get_rss_feed($hub, $cat_url);
-        $got += @{$tips->{$cat}} if $tips->{$cat};
-        if (scalar(@{$tips->{$cat}||[]})) {
-          $_->{'content'} = encode_utf8($_->{'content'}) for @{$tips->{$cat}};
-        }
+  if($MEMD && $MEMD->get('::TIPS-FAILED')) {
+    return '';
+  }
+  my $got = 0;
+  foreach my $cat (keys %categories) {
+    (my $cat_url = $rss_url) =~ s/feed\/$/category\/$cat\/feed\//;
+    unless (scalar(@{$tips->{$cat}||[]}) && $cat_url) {
+      warn "TIPS $cat\n";
+      $tips->{$cat} = $self->get_rss_feed($hub, $cat_url);
+      $got += @{$tips->{$cat}} if $tips->{$cat};
+      if (scalar(@{$tips->{$cat}||[]})) {
+        $_->{'content'} = encode_utf8($_->{'content'}) for @{$tips->{$cat}};
       }
-      $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $MEMD;
     }
-    if(!$got) { # No tips, probably failed
-      warn "MARKING RSS AS FAILED\n";
-      $MEMD->set('::TIPS-FAILED',1,3600,qw(STATIC TIPS)) if $MEMD;
-    }
+    $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $MEMD;
+  }
+  if(!$got) { # No tips, probably failed
+    warn "MARKING RSS AS FAILED\n";
+    $MEMD->set('::TIPS-FAILED',1,3600,qw(STATIC TIPS)) if $MEMD;
   }
 
   $html .= '<ul class="bxslider">';
