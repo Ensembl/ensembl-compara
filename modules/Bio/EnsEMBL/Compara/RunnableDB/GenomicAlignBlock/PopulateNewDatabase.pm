@@ -31,15 +31,6 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase
 
 =cut
 
-=head1 SYNOPSIS
-
-
-$runnable->fetch_input(); #reads from DB
-$runnable->run();
-$runnable->write_output(); #writes to DB
-
-=cut
-
 =head1 DESCRIPTION
 
 Runs the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_database.pl script, dealing with missing parameters
@@ -59,60 +50,24 @@ use strict;
 use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   prepares global variables and DB connections
-    Returns :   none
-    Args    :   none
-
-=cut
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift;
 
-  return 1;
+    my @cmd;
+    push @cmd, $self->param_required('program');
+    push @cmd, '--master', $self->param_required('master_db');
+    push @cmd, '--new', $self->param('pipeline_db') if $self->param('pipeline_db');
+    push @cmd, '--MT_only', $self->param('MT_only') if $self->param('MT_only');
+    push @cmd, '--species', $self->param('speciesList') if $self->param('speciesList');
+    push @cmd, '--mlss', $self->param('mlss_id') if $self->param('mlss_id');
+    push @cmd, '--reg-conf', $self->param('reg_conf') if $self->param('reg_conf');
+    push @cmd, '--collection', $self->param('collection') if $self->param('collection');
+    push @cmd, '--old', $self->param('old_compara_db') if $self->param('old_compara_db');
+    $self->param('cmd', \@cmd);
 }
 
-sub run
-{
-  my $self = shift;
-
-  my $cmd = $self->param('program');
-
-  #must have master db defined
-  unless ($self->param('master_db')) {
-      return 1;
-  }
-
-  #Append arguments if defined
-  $cmd .= " --master " . $self->param('master_db') if ($self->param('master_db'));
-  $cmd .= " --new " . $self->param('pipeline_db') if ($self->param('pipeline_db'));
-  $cmd .= " --MT_only " . $self->param('MT_only') if ($self->param('MT_only'));
-  $cmd .= " --species " . $self->param('speciesList') if ($self->param('species_list'));
-  $cmd .= " --mlss " . $self->param('mlss_id') if ($self->param('mlss_id'));
-  $cmd .= " --reg-conf " . $self->param('reg_conf') if ($self->param('reg_conf'));
-  $cmd .= " --collection " . $self->param('collection') if ($self->param('collection'));
-  $cmd .= " --old " . $self->param('old_compara_db') if ($self->param('old_compara_db'));
-
-  if($self->debug()) {
-      warn qq{cmd = "$cmd"\n};
-  }
-  
-  if(my $return_value = system($cmd)) {
-      $return_value >>= 8;
-      die "system( $cmd ) failed: $return_value";
-  }
-  return 1;
-}
-
-sub write_output
-{
-  my $self = shift;
-  return 1;
-}
 
 1;
