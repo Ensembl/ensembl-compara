@@ -292,6 +292,24 @@ sub short_name {
 }
 
 
+=head2 _get_unique_name
+
+  Example     : print $genome_db->_get_unique_name();
+  Description : Returns the name of the GenomeDB augmented with any information
+                (such as the genome-component) to make it unique
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub _get_unique_name {
+    my $self = shift;
+    my $n = $self->name;
+    $n .= '.'.$self->genome_component if $self->genome_component;
+    return $n;
+}
+
+
 =head2 assembly
 
   Arg [1]    : (optional) string
