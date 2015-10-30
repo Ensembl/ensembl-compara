@@ -1200,7 +1200,7 @@ sub get_gene_joins {
   my $ma = $compara_db->get_GeneMemberAdaptor;
   return unless $ma;
   
-  my $qy_member = $ma->fetch_by_source_stable_id($source, $gene->stable_id);
+  my $qy_member = $ma->fetch_by_stable_id($gene->stable_id);
   return unless defined $qy_member;
   
   my $method = $config->get_parameter('force_homologue') || $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
