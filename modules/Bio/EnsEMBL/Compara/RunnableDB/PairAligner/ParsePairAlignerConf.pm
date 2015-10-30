@@ -110,14 +110,14 @@ sub write_output {
 
     #No configuration file or no master_db, so no species list. Flow an empty speciesList
     if ($self->param('get_species_list') && (!$self->param('conf_file') || !$self->param('master_db'))) {
-	my $output_id = "{'speciesList'=>'\"\"'}";
+	my $output_id = {'speciesList' => ''};
 	$self->dataflow_output_id($output_id,1);
 	return;
     }
 
     #Have configuration file and getting only the speciesList. Dataflow to populate_new_database
     if ($self->param('get_species_list')) {
-	my $output_id = "{'speciesList'=>'" . join (",", $self->param('species_list')) . "', 'mlss_id'=>'\"\"'}";
+	my $output_id = {'speciesList' => $self->param('species_list'), 'mlss_id' => ''};
 	$self->dataflow_output_id($output_id,1);
 	return;
     }
