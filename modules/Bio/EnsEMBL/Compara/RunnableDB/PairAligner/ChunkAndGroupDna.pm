@@ -238,6 +238,10 @@ sub create_chunks
             push @{$chromosomes}, $SliceAdaptor->fetch_all($coord_system_name);
         }
     }
+  } elsif ($genome_db->genome_component) {
+      # We're asked to align a genome component: only take the seq_regions
+      # of that component
+      $chromosomes = $SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component);
   } else {
       #default for $include_non_reference = 0, $include_duplicates = 0
     $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef, $self->param('include_non_reference'), $self->param('include_duplicates'));
