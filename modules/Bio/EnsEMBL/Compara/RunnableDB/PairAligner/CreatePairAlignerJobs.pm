@@ -142,23 +142,21 @@ sub createPairAlignerJobs
   my $dnafrag_chunk_adaptor = $self->compara_dba->get_DnaFragChunkAdaptor;
   my $dnafrag_chunk_set_adaptor = $self->compara_dba->get_DnaFragChunkSetAdaptor;
 
+  #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job
+  #instead of reading from the mlss_tag table
+  my $pairaligner_hash = {
+      'mlss_id' => $self->param('method_link_species_set_id'),
+  };
+  if ($self->param('options')) {
+      $pairaligner_hash->{'options'} = $self->param('options');
+  }
+  if ($self->param('target_collection')->dump_loc) {
+      $pairaligner_hash->{'target_fa_dir'} = $self->param('target_collection')->dump_loc;
+  }
+
   my $count=0;
   foreach my $target_dnafrag_chunk_set (@{$target_dnafrag_chunk_set_list}) {
-    my $pairaligner_hash = {};
     
-    $pairaligner_hash->{'mlss_id'} = $self->param('method_link_species_set_id');
-
-    if ($self->param('target_collection')->dump_loc) {
-	$pairaligner_hash->{'target_fa_dir'} = $self->param('target_collection')->dump_loc;
-    }
-
-    #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job 
-    #instead of reading from the mlss_tag table
-    if ($self->param('options')) {
-        $pairaligner_hash->{'options'} = $self->param('options');
-    }
-
-    $pairaligner_hash->{'dbChunkSetID'} = undef;
     $pairaligner_hash->{'dbChunkSetID'} = $target_dnafrag_chunk_set->dbID;
 
     #find the target dnafrag name to check if it is MT. It can only be part of set of 1
@@ -175,7 +173,6 @@ sub createPairAlignerJobs
     }
 
     foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
-      $pairaligner_hash->{'qyChunkSetID'} = undef;
 
       #find the query dnafrag name to check if it is MT. It can only be part of a set of 1
       my $num_query_chunks = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
