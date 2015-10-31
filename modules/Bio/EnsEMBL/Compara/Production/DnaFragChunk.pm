@@ -126,12 +126,20 @@ sub slice {
 sub fetch_masked_sequence {
   my $self = shift;
   
-  return undef unless(my $slice = $self->slice());
+  return undef unless($self->dnafrag);
+  return undef unless($self->dnafrag->genome_db);
+  return undef unless(my $dba = $self->dnafrag->genome_db->db_adaptor);
+  my $seq;
+  $dba->dbc->prevent_disconnect( sub {
+      $seq = $self->_fetch_masked_sequence();
+  } );
+  return $seq;
+}
 
-  my $dcs = $slice->adaptor->db->dbc->disconnect_when_inactive();
-  #print("fetch_masked_sequence disconnect=$dcs\n");
-  $slice->adaptor->db->dbc->disconnect_when_inactive(0);
-  #printf("fetch_masked_sequence disconnect=%d\n", $slice->adaptor->db->dbc->disconnect_when_inactive());
+sub _fetch_masked_sequence {
+  my $self = shift;
+
+  return undef unless(my $slice = $self->slice());
 
   my $seq;
   my $id = $self->display_id;
@@ -162,9 +170,6 @@ sub fetch_masked_sequence {
     $seq = Bio::PrimarySeq->new( -id => $id, -seq => $oldseq->seq);
   }
   #print ((time()-$starttime), " secs\n");
-
-  $slice->adaptor->db->dbc->disconnect_when_inactive($dcs);
-  #printf("fetch_masked_sequence disconnect=%d\n", $slice->adaptor->db->dbc->disconnect_when_inactive());
 
   #print STDERR "sequence length : ",$seq->length,"\n";
   $seq = $seq->seq;
