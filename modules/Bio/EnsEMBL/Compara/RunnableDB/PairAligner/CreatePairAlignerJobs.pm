@@ -174,10 +174,12 @@ sub createPairAlignerJobs
 
     foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
 
+     my $query_dnafrag_name = $query_dnafrag_chunk_set->{'tmp_query_dnafrag_name'};
+     unless ($query_dnafrag_name) {
       #find the query dnafrag name to check if it is MT. It can only be part of a set of 1
       my $num_query_chunks = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
       my ($first_qy_chunk) = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
-      my $query_dnafrag_name = $first_qy_chunk->dnafrag->name;
+      $query_dnafrag_name = $first_qy_chunk->dnafrag->name;
 
       #Check synonyms for MT
       if ($first_qy_chunk->dnafrag->isMT) {
@@ -186,6 +188,8 @@ sub createPairAlignerJobs
             throw("Number of DnaFragChunk objects must be 1 not $num_query_chunks for MT");
         }
       }
+      $query_dnafrag_chunk_set->{'tmp_query_dnafrag_name'} = $query_dnafrag_name;
+    }
 
       $pairaligner_hash->{'qyChunkSetID'} = $query_dnafrag_chunk_set->dbID;
 
