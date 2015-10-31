@@ -475,12 +475,12 @@ sub display_id {
 sub isMT {
     my ($self) = @_;
 
-    return 1 if ($self->name eq "MT");
+    return 1 if ($self->name =~ /^MT$/i);
 
     #Check synonyms
     my $slice = $self->slice;
     foreach my $synonym (@{$slice->get_all_synonyms}) {
-        if ($synonym->name eq "MT") {
+        if ($synonym->name =~ /^MT$/i) {
             return 1;
         }
     }
