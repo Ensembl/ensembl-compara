@@ -196,15 +196,15 @@ sub _objs_from_sth {
 
   while( my $row_hashref = $sth->fetchrow_hashref()) {
 
-    my $dfc = Bio::EnsEMBL::Compara::Production::DnaFragChunk->new();
-
-    $dfc->adaptor($self);
-    $dfc->dbID($row_hashref->{'dnafrag_chunk_id'});
-    $dfc->seq_start($row_hashref->{'seq_start'});
-    $dfc->seq_end($row_hashref->{'seq_end'});
-    $dfc->sequence_id($row_hashref->{'sequence_id'});
-    $dfc->dnafrag_id($row_hashref->{'dnafrag_id'});
-    $dfc->dnafrag_chunk_set_id($row_hashref->{'dnafrag_chunk_set_id'}),
+    my $dfc = Bio::EnsEMBL::Compara::Production::DnaFragChunk->new_fast({
+        'adaptor'               => $self,
+        'dbID'                  => $row_hashref->{'dnafrag_chunk_id'},
+        'seq_start'             => $row_hashref->{'seq_start'} || 0,
+        'seq_end'               => $row_hashref->{'seq_end'} || 0,
+        'sequence_id'           => $row_hashref->{'sequence_id'},
+        'dnafrag_id'            => $row_hashref->{'dnafrag_id'},
+        'dnafrag_chunk_set_id'  => $row_hashref->{'dnafrag_chunk_set_id'},
+    });
 
     push @chunks, $dfc;
 

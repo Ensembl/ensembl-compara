@@ -141,11 +141,11 @@ sub _objs_from_sth {
 
   while( my $row_hashref = $sth->fetchrow_hashref()) {
 
-    my $chunkSet = Bio::EnsEMBL::Compara::Production::DnaFragChunkSet->new(
-                       -adaptor             => $self,
-                       -dbid                => $row_hashref->{'dnafrag_chunk_set_id'},
-                       -dna_collection_id   => $row_hashref->{'dna_collection_id'},
-    );
+    my $chunkSet = Bio::EnsEMBL::Compara::Production::DnaFragChunkSet->new_fast({
+        'adaptor'               => $self,
+        'dbID'                  => $row_hashref->{'dnafrag_chunk_set_id'},
+        '_dna_collection_id'    => $row_hashref->{'dna_collection_id'},
+    });
 
     push @sets, $chunkSet;
 

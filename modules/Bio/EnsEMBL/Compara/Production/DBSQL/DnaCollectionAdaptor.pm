@@ -176,13 +176,13 @@ sub _objs_from_sth {
     my $collection = $collections_hash{$row_hashref->{'dna_collection_id'}};
     
     unless($collection) {
-      $collection = Bio::EnsEMBL::Compara::Production::DnaCollection->new(
-                -dbid            => $row_hashref->{'dna_collection_id'},
-                -description     => $row_hashref->{'description'},
-                -dump_loc        => $row_hashref->{'dump_loc'},
-                -masking_options => $row_hashref->{'masking_options'},
-                -adaptor         => $self
-      );
+      $collection = Bio::EnsEMBL::Compara::Production::DnaCollection->new_fast({
+            'dbID'              => $row_hashref->{'dna_collection_id'},
+            'adaptor'           => $self,
+            '_description'      => $row_hashref->{'description'},
+            '_dump_loc'         => $row_hashref->{'dump_loc'},
+            '_masking_options'  => $row_hashref->{'masking_options'},
+      });
 
       $collections_hash{$collection->dbID} = $collection;
     }
