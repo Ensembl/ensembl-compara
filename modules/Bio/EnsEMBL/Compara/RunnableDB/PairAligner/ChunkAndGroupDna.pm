@@ -72,6 +72,13 @@ use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'region'            => undef,
+        'group_set_size'    => 0,
+    }
+}
+
 =head2 fetch_input
 
     Title   :   fetch_input
