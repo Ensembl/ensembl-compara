@@ -203,9 +203,9 @@ sub default_options {
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ $self->o('livemirror_loc'), $self->o('egmirror_loc'), $self->o('triticum_loc') ],
 
-        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://anonymous@mysql-ensembl-mirror.ebi.ac.uk:4240/ensembl_compara_74',
-        'prev_rel_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/mm14_treefam10_snapshot',
+        #'prev_rel_db' => 'mysql://ensro@mysql-e-farm-test56.ebi.ac.uk:4449/mm14_treefam10_snapshot',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'

@@ -97,7 +97,6 @@ sub default_options {
     # switch off the reuse:
     'reuse_from_prev_rel_db'    => 0,
     reuse_db                    => 0,
-    'prev_rel_db'               => undef,
     'do_stable_id_mapping'      => 0,
 
     # we're not interested in treefam
