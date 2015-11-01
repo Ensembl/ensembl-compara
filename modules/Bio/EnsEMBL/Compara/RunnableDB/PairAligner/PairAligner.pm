@@ -195,13 +195,6 @@ sub delete_fasta_dumps_but_these {
 
 sub write_output {
   my( $self) = @_;
-  my $starttime = time();
-
-  #since the Blast runnable takes in analysis parameters rather than an
-  #analysis object, it creates new Analysis objects internally
-  #(a new one for EACH FeaturePair generated)
-  #which are a shadow of the real analysis object ($self->analysis)
-  #The returned FeaturePair objects thus need to be reset to the real analysis object
 
   #
   #Start transaction
@@ -216,6 +209,7 @@ sub write_output {
 sub _write_output {
     my ($self) = @_;
     my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
+  my $starttime = time();
 
   #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
   #LOCK TABLES which does an implicit commit and prevent any rollback
@@ -223,6 +217,12 @@ sub _write_output {
   foreach my $runnable (@{$self->param('runnable')}) {
       foreach my $fp ( @{ $runnable->output() } ) {
           if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
+              #since the Blast runnable takes in analysis parameters rather than an
+              #analysis object, it creates new Analysis objects internally
+              #(a new one for EACH FeaturePair generated)
+              #which are a shadow of the real analysis object ($self->analysis)
+              #The returned FeaturePair objects thus need to be reset to the real analysis object
+
               $fp->analysis($fake_analysis);
 
               $self->store_featurePair_as_genomicAlignBlock($fp);
