@@ -65,13 +65,12 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner);
 
 
-sub configure_defaults {
-  my $self = shift;
-  
-  $self->param('method_link_type', 'LASTZ_RAW') unless defined ($self->param('method_link_type'));
-  $self->param('do_transactions', 1) unless defined ($self->param('do_transactions'));
-
-  return 0;
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        'method_link_type'  => 'LASTZ_RAW',
+    }
 }
 
 

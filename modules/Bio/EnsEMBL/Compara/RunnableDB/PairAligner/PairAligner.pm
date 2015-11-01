@@ -73,17 +73,20 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        'max_alignments'    => undef,
+        'do_transactions'   => 1,
+    }
+}
 
 ##########################################
 #
 # subclass override methods
 # 
 ##########################################
-
-sub configure_defaults {
-  my $self = shift;
-  return 0;
-}
 
 sub configure_runnable {
   my $self = shift;
@@ -110,11 +113,6 @@ sub configure_runnable {
 sub fetch_input {
   my( $self) = @_;
 
-  #
-  # run subclass configure_defaults method
-  #
-  $self->configure_defaults();
-  
   my $query_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('qyChunkSetID'));
   $self->param('query_DnaFragChunkSet',$query_DnaFragChunkSet);
 

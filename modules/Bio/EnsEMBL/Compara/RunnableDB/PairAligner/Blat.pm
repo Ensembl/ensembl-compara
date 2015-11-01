@@ -74,9 +74,10 @@ our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner);
 
 
 ############################################################
-sub configure_defaults {
-  my $self = shift;
-  
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
   
   # Target type: dna  - DNA sequence
   #              prot - protein sequence
@@ -93,11 +94,8 @@ sub configure_defaults {
   #-ooc=/tmp/worker.????/5ooc
   #
 
-  $self->param('method_link_type', 'TRANSLATED_BLAT_RAW') unless defined($self->param('method_link_type'));
-  
-  $self->param('do_transactions', 1) unless defined ($self->param('do_transactions'));
-
-  return 0;
+        'method_link_type'  => 'TRANSLATED_BLAT_RAW',
+    }
 }
 
 
