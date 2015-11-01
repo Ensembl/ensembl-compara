@@ -115,24 +115,10 @@ sub fetch_input {
   #
   $self->configure_defaults();
   
-  my $query_DnaFragChunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
-
-  if(defined($self->param('qyChunkSetID'))) {
-      my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('qyChunkSetID'));
-      $query_DnaFragChunkSet = $chunkset;
-  } else {
-      throw("Missing qyChunkSetID");
-  }
+  my $query_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('qyChunkSetID'));
   $self->param('query_DnaFragChunkSet',$query_DnaFragChunkSet);
 
-  my $db_DnaFragChunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
-
-  if(defined($self->param('dbChunkSetID'))) {
-      my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('dbChunkSetID'));
-      $db_DnaFragChunkSet = $chunkset;
-  } else {
-      throw("Missing dbChunkSetID");
-  }
+  my $db_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('dbChunkSetID'));
   $self->param('db_DnaFragChunkSet',$db_DnaFragChunkSet);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -142,29 +128,8 @@ sub fetch_input {
   throw("Missing qyChunkSet") unless($query_DnaFragChunkSet);
   throw("Missing dbChunkSet") unless($db_DnaFragChunkSet);
   throw("Missing method_link_type") unless($self->param('method_link_type'));
-  
 
-  my ($first_qy_chunk) = @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
-  my ($first_db_chunk) = @{$db_DnaFragChunkSet->get_all_DnaFragChunks};
-  
-  #
-  # create method_link_species_set
-  #
-  my $method = Bio::EnsEMBL::Compara::Method->new( -type => $self->param('method_link_type'),
-                                                   -class => "GenomicAlignBlock.pairwise_alignment");
-
-  my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
-        -genome_dbs => ($first_qy_chunk->dnafrag->genome_db->dbID == $first_db_chunk->dnafrag->genome_db->dbID)
-                            ? [$first_qy_chunk->dnafrag->genome_db]
-                            : [$first_qy_chunk->dnafrag->genome_db, $first_db_chunk->dnafrag->genome_db]
-  );
-        
-  my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-        -method             => $method,
-        -species_set_obj    => $species_set_obj,
-  );
-
-  $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
   $self->param('method_link_species_set', $mlss);
 
   if (defined $self->param('max_alignments')) {
