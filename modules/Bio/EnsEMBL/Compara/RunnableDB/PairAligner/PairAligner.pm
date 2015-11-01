@@ -401,13 +401,12 @@ sub store_featurePair_as_genomicAlignBlock
                  $fp->cigar_string."\n";
   }                 
 
-  $fp->slice($qyChunk->slice);
-  $fp->hslice($dbChunk->slice);               
-
   #
   # test if I'm getting the indexes right
   #
   if($self->debug > 2) {
+    $fp->slice($qyChunk->slice);
+    $fp->hslice($dbChunk->slice);
     print_simple_align($fp->get_SimpleAlign, 80);
 
     my $testChunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
