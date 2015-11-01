@@ -244,9 +244,6 @@ sub default_options {
         #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
         #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
 
-        # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => undef,
-
     };
 }
 
