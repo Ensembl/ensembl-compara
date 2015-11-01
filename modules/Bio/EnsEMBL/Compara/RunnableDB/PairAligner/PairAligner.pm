@@ -119,6 +119,11 @@ sub fetch_input {
   my $db_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('dbChunkSetID'));
   $self->param('db_DnaFragChunkSet',$db_DnaFragChunkSet);
 
+  my %chunks_lookup;
+  map {$chunks_lookup{$_->dbID} = $_} @{$db_DnaFragChunkSet->get_all_DnaFragChunks};
+  map {$chunks_lookup{$_->dbID} = $_} @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
+  $self->param('chunks_lookup', \%chunks_lookup);
+
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
   $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -328,14 +333,12 @@ sub store_featurePair_as_genomicAlignBlock
   if($fp->seqname =~ /chunkID(\d*):/) {
     my $chunk_id = $1;
     #printf("%s => %d\n", $fp->seqname, $chunk_id);
-    $qyChunk = $self->compara_dba->get_DnaFragChunkAdaptor->
-                     fetch_by_dbID($chunk_id);
+    $qyChunk = $self->param('chunks_lookup')->{$chunk_id};
   }
   if($fp->hseqname =~ /chunkID(\d*):/) {
     my $chunk_id = $1;
     #printf("%s => %d\n", $fp->hseqname, $chunk_id);
-    $dbChunk = $self->compara_dba->get_DnaFragChunkAdaptor->
-                     fetch_by_dbID($chunk_id);
+    $dbChunk = $self->param('chunks_lookup')->{$chunk_id};
   }
   unless($qyChunk and $dbChunk) {
     warn("unable to determine DnaFragChunk objects from FeaturePair");
