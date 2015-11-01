@@ -69,36 +69,21 @@ use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
-  my $self = shift;
+    my $self = shift;
 
-  # get DnaCollection of query
-  throw("must specify 'query_collection_name' to identify DnaCollection of query") 
-    unless(defined($self->param('query_collection_name')));
-  $self->param('query_collection', $self->compara_dba->get_DnaCollectionAdaptor->
-                                fetch_by_set_description($self->param('query_collection_name')));
-  throw("unable to find DnaCollection with name : ". $self->param('query_collection_name'))
-    unless(defined($self->param('query_collection')));
+    my $dca = $self->compara_dba->get_DnaCollectionAdaptor;
 
-  # get DnaCollection of target
-  throw("must specify 'target_collection_name' to identify DnaCollection of query") 
-    unless(defined($self->param('target_collection_name')));
-  $self->param('target_collection', $self->compara_dba->get_DnaCollectionAdaptor->
-                                fetch_by_set_description($self->param('target_collection_name')));
-  throw("unable to find DnaCollection with name : ". $self->param('target_collection_name'))
-    unless(defined($self->param('target_collection')));
+    # get DnaCollection of query
+    my $query_collection = $dca->fetch_by_set_description($self->param_required('query_collection_name'))
+                            || die "unable to find DnaCollection with name : ". $self->param('query_collection_name');
+    $self->param('query_collection', $query_collection);
 
+    # get DnaCollection of target
+    my $target_collection = $dca->fetch_by_set_description($self->param_required('target_collection_name'))
+                            || die "unable to find DnaCollection with name : ". $self->param('target_collection_name');
+    $self->param('target_collection', $target_collection);
 
-  $self->print_params;
-    
-  
-  return 1;
-}
-
-
-sub run
-{
-  my $self = shift;
-  return 1;
+    $self->print_params;
 }
 
 
