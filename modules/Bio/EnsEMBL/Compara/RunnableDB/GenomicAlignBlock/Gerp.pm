@@ -260,16 +260,9 @@ sub write_output {
 
     print "WRITE OUTPUT\n" if $self->debug;
 
-    if ($self->param('do_transactions')) {
-	my $compara_conn = $self->compara_dba->dbc;
-
-	my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-	$compara_helper->transaction(-CALLBACK => sub {
-	     $self->_write_output;
-         });
-    } else {
-	$self->_write_output;
-    }
+    $self->call_within_transaction( sub {
+        $self->_write_output;
+    } );
 
   return 1;
 

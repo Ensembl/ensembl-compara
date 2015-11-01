@@ -47,15 +47,19 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        'do_transactions'   => 1,
+    }
+}
+
 sub fetch_input {
     my ($self) = @_;
     
     $self->param('query_DnaFrag_hash', {});
     $self->param('target_DnaFrag_hash', {});
-
-    unless (defined $self->param('do_transactions')) {
-	$self->param('do_transactions', 1);
-    }
 }
 
 
@@ -114,20 +118,12 @@ sub run{
 sub write_output {
   my($self) = @_;
 
-  my @gen_al_groups;
-
   #
   #Start transaction
   #
-  if ($self->param('do_transactions'))  {
-      my $compara_conn = $self->compara_dba->dbc;
-      my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-      $compara_helper->transaction(-CALLBACK => sub {
-	  $self->_write_output;
-      });
-  } else {
+  $self->call_within_transaction( sub {
       $self->_write_output;
-  }
+  } );
 
   return 1;
 

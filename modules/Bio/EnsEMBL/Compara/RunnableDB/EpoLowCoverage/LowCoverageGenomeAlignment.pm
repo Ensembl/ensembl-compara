@@ -56,6 +56,15 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        'do_transactions'   => 1,
+    }
+}
+
+
 =head2 fetch_input
 
     Arg        :   -none-
@@ -73,11 +82,6 @@ sub fetch_input {
 
   if (!$self->param('mlss_id')) {
     throw("MethodLinkSpeciesSet->dbID is not defined for this LowCoverageAlignment job");
-  }
-
-  #set default to do transactions
-  if (!defined $self->param('do_transactions')) {
-      $self->param('do_transactions', 1);
   }
 
   #load from genomic_align_block ie using in 2X mode
@@ -173,16 +177,9 @@ sub write_output {
 
     print "WRITE OUTPUT\n" if $self->debug;
 
-    if ($self->param('do_transactions')) {
-	my $compara_conn = $self->compara_dba->dbc;
-
-	my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-	$compara_helper->transaction(-CALLBACK => sub {
-	     $self->_write_output;
-         });
-    } else {
-	$self->_write_output;
-    }
+    $self->call_within_transaction( sub {
+        $self->_write_output;
+    } );
 
   return 1;
 
