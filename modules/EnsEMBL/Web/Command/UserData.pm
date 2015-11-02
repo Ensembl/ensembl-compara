@@ -159,7 +159,7 @@ sub attach {
           my $data = $hub->session->add_data(
                                         type        => 'url',
                                         code        => join('_', md5_hex($name . $current_species . $assembly . $url), 
-                                                                  $hub->session->session_id),
+                                                                  $hub->session->create_session_id),
                                         url         => $url,
                                         name        => $name,
                                         format      => $attachable->name,
@@ -172,9 +172,7 @@ sub attach {
 
           $hub->session->configure_user_data('url', $data);
 
-          if ($current_species eq $hub->param('species')) {
-            $code = $data->{'code'};
-          }
+          $code = $data->{'code'};
     
           $self->object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
         }
