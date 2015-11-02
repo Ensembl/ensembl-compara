@@ -31,10 +31,6 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates
 
 =cut
 
-=head1 SYNOPSIS
-
-=cut
-
 =head1 DESCRIPTION
 
 This analysis/RunnableDB is designed to run after all GenomicAlignBlock entries for a 

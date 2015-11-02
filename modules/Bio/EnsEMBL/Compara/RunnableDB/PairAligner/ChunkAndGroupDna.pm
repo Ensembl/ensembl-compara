@@ -31,19 +31,6 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna
 
 =cut
 
-=head1 SYNOPSIS
-
-my $db       = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnable = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$runnable->fetch_input(); #reads from DB
-$runnable->run();
-$runnable->write_output(); #writes to DB
-
-=cut
-
 =head1 DESCRIPTION
 
 This object chunks the Dna from a genome_db and creates and stores the

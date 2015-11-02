@@ -31,19 +31,6 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence
 
 =cut
 
-=head1 SYNOPSIS
-
-my $db       = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnable = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence>new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$runnable->fetch_input(); #reads from DB
-$runnable->run();
-$runnable->write_output(); #writes to DB
-
-=cut
-
 =head1 DESCRIPTION
 
 This object gets the DnaFrag objects from a DnaFragChunkSet and stores the sequence (if short enough) in the Compara sequence table
@@ -69,15 +56,6 @@ use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   prepares global variables and DB connections
-    Returns :   none
-    Args    :   none
-
-=cut
 
 sub fetch_input {
     my( $self) = @_;

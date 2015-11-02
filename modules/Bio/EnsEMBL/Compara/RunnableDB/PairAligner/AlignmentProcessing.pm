@@ -63,17 +63,6 @@ sub fetch_input {
 }
 
 
-=head2 run
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::RunnableDB
-  Function  : cycles through all the runnables, calls run and pushes
-  their output into the RunnableDBs output array
-  Returntype: array ref
-  Exceptions: none
-  Example   : 
-
-=cut
-
 sub run{
     my ($self) = @_;
 

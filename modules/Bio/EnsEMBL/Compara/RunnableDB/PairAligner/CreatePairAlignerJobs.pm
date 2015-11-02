@@ -31,20 +31,14 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs
 
 =cut
 
-=head1 SYNOPSIS
-
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->write_output(); #writes to DB
-
-=cut
-
 =head1 DESCRIPTION
+
+Iterates over two DnaCollections (a "query" and a "target") and dataflows
+all the pairs of DnaFragChunkSets (one of each collection).
+
+Exceptions:
+ - Throws if a MT DnaFragChunkSet contains more than 1 DnaFragChunk
+ - Pairs crossing MT and non-MT dnafrags are not created
 
 =cut
 
