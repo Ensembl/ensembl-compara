@@ -108,11 +108,11 @@ sub run {
 		$result{'right1'} = undef;
 		$result{'right2'} = undef;
         $result{'percent_conserved_score'} = 0;
-		$result{'homology_dbID'} = $self->param('query');
+		$result{'homology_id'} = $self->param('query');
 		my $ref_gene_member = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'))->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
-        $result{'ref_dnafrag_id'} = $ref_gene_member->dnafrag_id();
-        $result{'ref_gmember_id'} = $ref_gene_member->dbID();
-        $result{'mlss_id'} = $self->param('mlss_ID');
+        $result{'dnafrag_id'} = $ref_gene_member->dnafrag_id();
+        $result{'gene_member_id'} = $ref_gene_member->dbID();
+        $result{'method_link_species_set_id'} = $self->param('mlss_ID');
 		$self->param('result', \%result);
 	} else {
 
@@ -184,10 +184,10 @@ sub run {
 		my $percentage = $percent * 25;
         $self->param('result')->{'percent_conserved_score'} =$percentage;
 		my $ref_gene_member = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'))->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
-        $self->param('result')->{'ref_dnafrag_id'} = $ref_gene_member->dnafrag_id();
-        $self->param('result')->{'ref_gmember_id'} = $ref_gene_member->dbID();
-        $self->param('result')->{'homology_dbID'} = $self->param('query');
-        $self->param('result')->{'mlss_id'} = $self->param('mlss_ID');
+        $self->param('result')->{'dnafrag_id'} = $ref_gene_member->dnafrag_id();
+        $self->param('result')->{'gene_member_id'} = $ref_gene_member->dbID();
+        $self->param('result')->{'homology_id'} = $self->param('query');
+        $self->param('result')->{'method_link_species_set_id'} = $self->param('mlss_ID');
 
 	}
 #    print Dumper($self->param('result'));

@@ -31,7 +31,7 @@ use Bio::EnsEMBL::Registry;
 sub fetch_input {
 	my $self = shift;
 	my $mlss_ID = $self->param_required('mlss_ID');
-	my $query = "SELECT homology_dbID, percent_conserved_score, mlss_id FROM ortholog_quality_metric where mlss_id = $mlss_ID ORDER BY homology_dbID";	
+	my $query = "SELECT homology_id, percent_conserved_score, method_link_species_set_id FROM ortholog_quality_metric where method_link_species_set_id = $mlss_ID ORDER BY homology_id";
 	my $quality_data = $self->dbc->db_handle->selectall_arrayref(
 	$query, {});
 	$self->param('quality_data', $quality_data);
@@ -46,7 +46,7 @@ sub run {
 		if (defined($orth_results->{$result->[0]})) {
 			#grab the one with the higher percent score
 			$orth_results->{$result->[0]} = $orth_results->{$result->[0]} >= $result->[1] ? $orth_results->{$result->[0]} : $result->[1] ; 
-			$self->dataflow_output_id( {'mlss_id' => $self->param_required('mlss_ID'), 'homology_dbID' => $result->[0], 'percent_conserved_score' => $orth_results->{$result->[0]} }, 2 );
+			$self->dataflow_output_id( {'method_link_species_set_id' => $self->param_required('mlss_ID'), 'homology_id' => $result->[0], 'percent_conserved_score' => $orth_results->{$result->[0]} }, 2 );
 			
 		} else {
 			$orth_results->{$result->[0]} = $result->[1];

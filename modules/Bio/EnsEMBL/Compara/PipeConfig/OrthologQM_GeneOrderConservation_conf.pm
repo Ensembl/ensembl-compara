@@ -49,10 +49,10 @@ sub pipeline_create_commands {
 	return [
 		@{ $self->SUPER::pipeline_create_commands },
 		$self->db_cmd( 'CREATE TABLE ortholog_quality_metric ( 
-            mlss_id varchar(255) NOT NULL,
-			homology_dbID  varchar(255) NOT NULL,
-            ref_gmember_id varchar(255) NOT NULL,
-			ref_dnafrag_id  INT NOT NULL,
+            method_link_species_set_id INT NOT NULL,
+			homology_id  INT NOT NULL,
+            gene_member_id INT NOT NULL,
+		        dnafrag_id  INT NOT NULL,
 			percent_conserved_score INT NOT NULL, 
             left1 INT,
          	left2	INT,
@@ -62,8 +62,8 @@ sub pipeline_create_commands {
         )'),
 
         $self->db_cmd( 'CREATE TABLE ortholog_metric ( 
-            mlss_id varchar(255) NOT NULL,
-            homology_dbID  varchar(255) NOT NULL,
+            method_link_species_set_id INT NOT NULL, 
+            homology_id INT NOT NULL,
             percent_conserved_score INT NOT NULL 
             
             
