@@ -110,7 +110,7 @@ sub run {
 			$c++;
 		}
 
-#		last if $c >= 20;
+#		last if $c >= 10;
 	}
 #	print $self->param('ref_species_dbid'), "  -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Orthologs \n\n\n\n";
 #	print Dumper($ref_ortholog_info_hashref);
