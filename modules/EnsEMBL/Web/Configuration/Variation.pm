@@ -107,7 +107,16 @@ sub populate_tree {
     [qw( alignment EnsEMBL::Web::Component::Variation::Publication  )],
     { 'availability' => 'variation has_citation','concise' => 'Citations'  } 
   );  
-  
+
+  $self->create_node('LDPlot', 'Linkage disequilibrium Plot',
+    [qw(
+      pop     EnsEMBL::Web::Component::Variation::SelectPopulation
+      ld      EnsEMBL::Web::Component::Variation::LD
+      ldplot  EnsEMBL::Web::Component::Variation::LDPlot
+    )],
+    { 'availability' => 'variation has_ldpops has_samples not_somatic', 'no_menu_entry' => 1 }
+  );
+
   # External Data tree, including non-positional DAS sources
   my $external = $self->create_node('ExternalData', 'External Data',
     [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
