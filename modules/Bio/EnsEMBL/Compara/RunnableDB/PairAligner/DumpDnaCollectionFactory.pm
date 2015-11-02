@@ -51,12 +51,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory
 
 use strict;
 use warnings;
+
+use File::Path;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Analysis::Runnable::Blat;
-use Bio::EnsEMBL::Analysis::RunnableDB;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-use File::Path;
+
 
 sub fetch_input {
   my( $self) = @_;

@@ -62,9 +62,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::DumpMercatorFiles;
 
 use strict;
 use warnings;
+
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Analysis::Runnable::Mercator;
-use Bio::EnsEMBL::Compara::DnaFragRegion;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
