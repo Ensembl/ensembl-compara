@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Location::SelectPopulation;
+package EnsEMBL::Web::Component::Variation::SelectPopulation;
 
 use strict;
 
