@@ -535,7 +535,7 @@ sub parse_referer {
   
   unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
 
-  if ($ENV{'HTTP_REFERER'} !~ /$servername/i && $ENV{'HTTP_REFERER'} !~ /$server/ && $ENV{'HTTP_REFERER'} !~ m!/Tools/!) {
+  if ($ENV{'HTTP_REFERER'} !~ /$servername/i && $ENV{'HTTP_REFERER'} !~ /$server/ && $ENV{'HTTP_REFERER'} !~ /$SiteDefs::MOBILE_URL/ && $ENV{'HTTP_REFERER'} !~ m!/Tools/!) {
     $info->{'external'} = 1;
   } else {
     $info->{'external'} = 0;
