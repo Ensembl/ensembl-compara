@@ -63,13 +63,6 @@ sub fetch_input {
 }
 
 
-sub run {
-  my ($self) = @_;
-
-  return 1;
-}
-
-
 sub write_output {  
   my ($self) = @_;
 
