@@ -34,7 +34,7 @@ sub content {
   my $url  = $self->ajax_url('ajax', {
     r            => $hub->referer->{'params'}->{'r'}[0],
     code         => $hub->param('code'),
-    _type        => $hub->param('type') || 'upload',
+    _type        => $hub->param('record_type') || 'upload',
     update_panel => 1,
     __clear      => 1
   });
