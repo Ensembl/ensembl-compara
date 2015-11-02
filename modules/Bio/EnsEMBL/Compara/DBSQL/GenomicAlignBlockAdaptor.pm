@@ -209,7 +209,7 @@ sub store {
   }
   foreach my $genomic_align (@{$genomic_align_block->genomic_align_array}) {
     # check if every GenomicAlgin has a dbID
-    if (!defined($genomic_align->dnafrag->dbID)) {
+    if (!defined($genomic_align->dnafrag_id)) {
       throw("dna_fragment in GenomicAlignBlock is not in DB");
     }
   }

@@ -176,7 +176,7 @@ sub store {
   my $genomic_align_sth = $self->prepare($genomic_align_sql);
   
   for my $ga ( @$genomic_aligns ) {
-    if(!defined($ga->dnafrag) or !defined($ga->dnafrag->dbID)) {
+    if(!defined($ga->dnafrag_id)) {
       throw( "dna_fragment in GenomicAlign is not in DB" );
     }
     if(!defined($ga->genomic_align_block) or !defined($ga->genomic_align_block->dbID)) {
@@ -208,7 +208,7 @@ sub store {
             ($ga->dbID or undef),
             $ga->genomic_align_block->dbID,
             $ga->method_link_species_set->dbID,
-            $ga->dnafrag->dbID,
+            $ga->dnafrag_id,
             $ga->dnafrag_start,
             $ga->dnafrag_end,
             $ga->dnafrag_strand,
@@ -229,7 +229,7 @@ sub store {
           ($ga->dbID or "NULL").
           ", gab=".$ga->genomic_align_block->dbID.
           ", mlss=".$ga->method_link_species_set->dbID.
-          ", dnaf=".$ga->dnafrag->dbID.
+          ", dnaf=".$ga->dnafrag_id.
           " [".$ga->dnafrag_start.
           "-".$ga->dnafrag_end."]".
           " (".$ga->dnafrag_strand.")".
