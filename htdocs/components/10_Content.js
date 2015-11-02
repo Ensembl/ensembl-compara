@@ -42,6 +42,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     $.extend(this.elLk, fnEls);
 
     this.toggleable();  
+    $(this).afterimage();
 
     for (var fn in fnEls) {
       if (fnEls[fn].length) {
