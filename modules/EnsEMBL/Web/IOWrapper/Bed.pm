@@ -42,10 +42,10 @@ sub create_hash {
   my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
-  my $strand        = $self->parser->get_strand;
+  my $strand        = $self->parser->get_strand || 0;
   my $score         = $self->parser->get_score;
 
-  $metadata->{'strands'}{$strand}++ if $strand;
+  $metadata->{'strands'}{$strand}++;
 
   my $colour_params  = {
                         'metadata'  => $metadata, 

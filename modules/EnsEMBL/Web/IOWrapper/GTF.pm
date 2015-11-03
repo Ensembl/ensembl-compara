@@ -137,7 +137,7 @@ sub create_hash {
 
   ## Only set colour if we have something in metadata, otherwise
   ## we will override the default colour in the drawing code
-  my $strand  = $self->parser->get_strand;
+  my $strand  = $self->parser->get_strand || 0;
   my $score   = $self->parser->get_score;
   $metadata->{'strands'}{$strand}++;
 
