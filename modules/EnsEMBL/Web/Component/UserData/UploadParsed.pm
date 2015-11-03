@@ -25,6 +25,7 @@ use base qw(EnsEMBL::Web::Component::UserData);
 sub _init {
   my $self = shift;
   $self->cacheable(0);
+  $self->mcacheable(0);
   $self->ajaxable(1);
 }
 
