@@ -25,6 +25,7 @@ use HTML::Entities qw(encode_entities decode_entities);
 use JSON           qw(from_json);
 
 use EnsEMBL::Web::Document::Renderer::GzFile;
+use Image::Minifier qw(generate_sprites);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -443,6 +444,7 @@ sub render_HTML {
   }
   
   $r->content_type('text/html; charset=utf-8') unless $r->content_type;
+  $content = generate_sprites($self->hub->species_defs,$content);
 
   print  $content;
   return $content;

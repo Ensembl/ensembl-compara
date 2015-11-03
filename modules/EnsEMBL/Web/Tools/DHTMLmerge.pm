@@ -32,9 +32,11 @@ sub get_filegroups {
   ## @return List of hashrefs as accepted by constructor of EnsEMBL::Web::Tools::DHTMLmerge::FileGroup
   my ($species_defs, $type) = @_;
 
+  my $dir = 'components';
+  $dir = '.' if $type eq 'image';
   return {
     'group_name'  => 'components',
-    'files'       => get_files_from_dir($species_defs, $type, 'components'),
+    'files'       => get_files_from_dir($species_defs, $type, $dir),
     'condition'   => sub { 1 },
     'ordered'     => 0
   };
@@ -48,10 +50,10 @@ sub merge_all {
   my $configs       = {};
 
   try {
-    foreach my $type (qw(js css)) {
+    foreach my $type (qw(js css image)) {
       push @{$configs->{$type}}, map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type);
     }
-
+    delete $_->{'files'} for(@{$configs->{'image'}});
     $species_defs->set_config('ENSEMBL_JSCSS_FILES', $configs);
     $species_defs->store;
   } catch {
@@ -70,8 +72,13 @@ sub get_files_from_dir {
 
   my @files;
 
+  my @types = ($type);
+  @types = qw(gif png jpg jpeg) if $type eq 'image';
   foreach my $htdocs_dir (grep { !m/biomart/ && -d "$_/$dir" } reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS || []}) {
-    push @files, map "$htdocs_dir/$dir/$_", grep m/\.$type$/, @{list_dir_contents("$htdocs_dir/$dir", {'recursive' => 1})};
+    foreach my $file (@{list_dir_contents("$htdocs_dir/$dir",{recursive=>1})}) {
+      my $path = "$htdocs_dir/$dir/$file";
+      push @files,$path if grep { $file =~ /\.$_$/ } @types;
+    }
   }
 
   return \@files;
@@ -90,9 +97,10 @@ use B::Deparse;
 use Digest::MD5 qw(md5_hex);
 use CSS::Minifier;
 use JavaScript::Minifier;
+use Image::Minifier;
 
-use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents);
-use EnsEMBL::Web::Utils::FileSystem qw(create_path);
+use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents file_get_contents);
+use EnsEMBL::Web::Utils::FileSystem qw(create_path list_dir_contents);
 
 sub new {
   ## @constructor
@@ -146,7 +154,7 @@ sub new {
   }, $class;
 
   warn " Merging $self->{'group_name'} $type files\n";
-  $self->{'minified_url_path'} = _merge_files($species_defs, $type, $self->{'files'});
+  $self->{'minified_url_path'} = $self->_merge_files($species_defs, $type, $self->{'files'});
 
   return $self;
 }
@@ -182,7 +190,7 @@ sub condition {
 
 sub _merge_files {
   ## @private
-  my ($species_defs, $type, $files) = @_;
+  my ($self, $species_defs, $type, $files) = @_;
 
   my @contents;
   my $combined = '';
@@ -198,18 +206,43 @@ sub _merge_files {
   }
 
   my $filename  = md5_hex($combined);
-  my $url_path  = sprintf '%s/%s.%s', $species_defs->ENSEMBL_MINIFIED_FILES_PATH, $filename, $type;
+  my $ext = $type;
+  $ext = 'image.css' if $type eq 'image';
+  my $url_path  = sprintf '%s/%s.%s', $species_defs->ENSEMBL_MINIFIED_FILES_PATH, $filename, $ext;
   my $abs_path  = sprintf '%s%s', $species_defs->ENSEMBL_DOCROOT, $url_path;
 
   # create and save the minified file if it doesn't already exist there
-  file_put_contents($abs_path, map { $_->{'minified'} // ($_->{'not_minified'} ? _minify_content($species_defs, $type, $abs_path, $_->{'not_minified'}) : '') } @contents) unless -e $abs_path;
+  if($type eq 'js' or $type eq 'css') {
+    unless(-e $abs_path) {
+      my @out = map { $_->{'minified'} // ($_->{'not_minified'} ? _minify_content($species_defs, $type, $abs_path, $_->{'not_minified'}) : '') } @contents;
+      file_put_contents($abs_path,@out);
+    }
+  } elsif($self->name eq 'components') {
+    my $files = join("\n",map { $_->{'not_minified'} } @contents);
+    my @files = grep { /\S/ } split("\n",$files);
+    my $css = _sprites($species_defs,\@files);
+    file_put_contents($abs_path,$css);
+  }
 
   return $url_path;
+}
+
+sub _sprites {
+  my ($species_defs,$files) = @_;
+
+  return _minify_file($species_defs,join("\n",@$files));
+}
+
+sub _minify_file {
+  my ($sd,$content) = @_;
+
+  Image::Minifier::minify($sd,$content);
 }
 
 sub _minify_content {
   ## @private
   my ($species_defs, $type, $abs_path, $content) = @_;
+
   my $compression_dir = sprintf '%s/utils/compression/', $species_defs->ENSEMBL_WEBROOT;
   my $tmp_filename    = "$abs_path.tmp";
   my $abs_path_dir    = $abs_path =~ s/\/[^\/]+$//r;
@@ -229,11 +262,8 @@ sub _minify_content {
     : join ' ', $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/yuicompressor-2.4.7.jar", '--type', 'css', $tmp_filename;
 
   my $compressed = `$jar`;
-     $compressed = $type eq 'js' ? JavaScript::Minifier::minify('input' => $compressed) : CSS::Minifier::minify('input' => $compressed);
-
-  # not needed anymore
+    $compressed = $type eq 'js' ? JavaScript::Minifier::minify('input' => $compressed) : CSS::Minifier::minify('input' => Image::Minifier::data_url($species_defs,$compressed));
   unlink $tmp_filename;
-
   return $compressed;
 }
 
@@ -276,6 +306,11 @@ sub get_contents {
   ## @param Type of the file (css or js)
   ## @return File contents (string)
   my ($self, $species_defs, $type) = @_;
+
+  if($type eq 'image') {
+    return "$self->{'url_path'}\t$self->{'absolute_path'}\n";
+  }
+
   my $content = file_get_contents($self->{'absolute_path'});
 
   # For css file, convert style placeholders to actual colours

@@ -114,6 +114,7 @@ body.ie6 #masthead div.search_holder              { width: 320px; left: 100%; ma
   #footer                     { margin-left: 16px; }
 }
 #footer img, #wide-footer img { vertical-align: middle; height: 20px }
+#footer img.autosprite, #wide-footer img.autosprite { height: 16px; transform: scale(1.25);  }
 #footer p,   #wide-footer p   { padding: 0; margin: 16px 0; }
 
 #fat-footer a                 { text-decoration:none; }
