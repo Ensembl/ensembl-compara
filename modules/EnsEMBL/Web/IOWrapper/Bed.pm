@@ -45,7 +45,7 @@ sub create_hash {
   my $strand        = $self->parser->get_strand;
   my $score         = $self->parser->get_score;
 
-  $metadata->{'strands'}{$strand}++;
+  $metadata->{'strands'}{$strand}++ if $strand;
 
   my $colour_params  = {
                         'metadata'  => $metadata, 
