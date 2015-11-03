@@ -254,17 +254,23 @@ sub handler {
   
   $ENSEMBL_WEB_REGISTRY->timer->set_name('REQUEST ' . $r->uri);
   
-  my $u           = $r->parsed_uri;
-  my $file        = $u->path;
-  my $querystring = $u->query;
+  my $u                   = $r->parsed_uri;
+  my $file                = $u->path;
+  my $querystring         = $u->query;
+  my $session_cookie_host = $SiteDefs::ENSEMBL_SESSION_COOKIEHOST;
+  my $user_cookie_host    = $SiteDefs::ENSEMBL_USER_COOKIEHOST;
+  my ($actual_host)       = split /\s*\,\s*/, ($r->headers_in->{'X-Forwarded-Host'} || $r->headers_in->{'Host'});
+     $session_cookie_host = '' if $session_cookie_host && $actual_host !~ /$session_cookie_host$/; # only use ENSEMBL_SESSION_COOKIEHOST if it's same or a subdomain of the actual domain
+     $user_cookie_host    = '' if $user_cookie_host    && $actual_host !~ /$user_cookie_host$/;    # only use ENSEMBL_USER_COOKIEHOST if it's same or a subdomain of the actual domain
+
   my @web_cookies = ({
     'name'            => $SiteDefs::ENSEMBL_SESSION_COOKIE,
     'encrypted'       => 1,
-    'domain'          => $SiteDefs::ENSEMBL_SESSION_COOKIEHOST,
+    'domain'          => $session_cookie_host,
   }, {
     'name'            => $SiteDefs::ENSEMBL_USER_COOKIE,
     'encrypted'       => 1,
-    'domain'          => $SiteDefs::ENSEMBL_USER_COOKIEHOST,
+    'domain'          => $user_cookie_host,
   });
 
   my @existing_cookies = EnsEMBL::Web::Cookie->retrieve($r, @web_cookies);
