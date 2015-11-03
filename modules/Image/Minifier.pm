@@ -134,6 +134,7 @@ sub build_conf {
 sub minify {
   my ($species_defs,$paths) = @_;
 
+  my @prefetch;
   my $conf = build_conf();
   open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log');
   my $title = sprintf("Sprite page generation at %s\n",scalar localtime);
@@ -244,6 +245,7 @@ sub minify {
       rename $tmp2,$fn;
       my $url = "/minified/$hex.$type";
       $css .= qq(.autosprite-src-$page-$type { background-image: url($url) });
+      push @prefetch,$url;
       foreach my $f (@{$files{$type}{$page}}) {
         my $nudge = $f->{'nudge'}||[0,0];
         my $x = $f->{'x'} - $nudge->[0];
@@ -254,6 +256,7 @@ sub minify {
     }
   }
   $species_defs->set_config('ENSEMBL_SPRITES',\%sprites);
+  $species_defs->set_config('ENSEMBL_PREFETCH_URIS',{ images => \@prefetch });
   $species_defs->store;
 
   close LOG;

@@ -33,8 +33,8 @@ sub initialize_HTML {
     stylesheet EnsEMBL::Web::Document::Element::Stylesheet
     links      EnsEMBL::Web::Document::Element::Links
     meta       EnsEMBL::Web::Document::Element::Meta
+    prefetch   EnsEMBL::Web::Document::Element::Prefetch
   ));
-  
   $self->add_body_elements(qw(
     logo             EnsEMBL::Web::Document::Element::Logo
     account          EnsEMBL::Web::Document::Element::AccountLinks

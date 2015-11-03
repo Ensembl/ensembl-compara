@@ -36,6 +36,7 @@ sub initialize_HTML {
     javascript EnsEMBL::Web::Document::Element::Javascript
     links      EnsEMBL::Web::Document::Element::Links
     meta       EnsEMBL::Web::Document::Element::Meta
+    prefetch   EnsEMBL::Web::Document::Element::Prefetch
   ));
   
   $self->add_body_elements(qw(
