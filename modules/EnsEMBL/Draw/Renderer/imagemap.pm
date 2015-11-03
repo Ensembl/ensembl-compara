@@ -167,4 +167,6 @@ sub get_attributes {
   return \%actions;
 }
 
+sub add_location_marking_layer {}
+
 1;
