@@ -11,67 +11,14 @@ our $VERSION = '0.01';
 
 use List::Util qw(max);
 use Digest::MD5 qw(md5_hex);
+use YAML qw(LoadFile);
 use MIME::Base64;
 use SiteDefs;
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
+use EnsEMBL::Web::Utils::PluginInspector qw(get_all_plugins);
 
 my $SPACE_PAD = 3;
 my $PAGE_WIDTH = 1000;
-
-my @EXCEPTIONS = (
-  { # Species pics
-    pattern => '.*/species/.*',
-    transcode => {
-      'png' => 'jpg'
-    }
-  },{ # Species pics
-    pattern => '.*/img/ensembl_.*',
-    transcode => {
-      'png' => 'jpg'
-    }
-  },{ # Species pics
-    pattern => '.*/img/4_species.png',
-    transcode => {
-      'png' => 'jpg'
-    }
-  },{
-    pattern => '.*/img/info/powered.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/img/(youtube|youku|e-).*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/img/(api|download|star)_.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/info/docs/api/.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/info/docs/Doxygen/.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/img/species/pic_.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/img/vep_web_.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/img/credits/.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/img/phenotype_fig_.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/i/species/64/.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/img/help/.*',
-    action => { exclude => 1 },
-  },{
-    pattern => '.*/i/96/var_.*',
-    action => { nudge => [8,8], pad => 8 },
-  }
-);
 
 my @OK_CLASSES = qw(bordered float-right ebi-logo float-left sanger-logo
   search_image homepage-link _ht overlay_close screen_hide_inline);
@@ -115,19 +62,8 @@ sub images_size {
   return \%out;
 }
 
-sub preprocess_image {
-  my ($targets,$type,$url,$file,$exc) = @_;
-
-  push @$targets,{
-    url => $url,
-    file => $file,
-    exc => $exc,
-    pad => $exc->{'action'}{'pad'}||0
-  };
-}
-
 sub filter_images {
-  my ($in,$type) = @_;
+  my ($in,$type,$page) = @_;
 
   my @out;
   my $sizes = images_size([map { $_->{'file'} } @$in]);
@@ -144,10 +80,10 @@ sub filter_images {
 }
 
 sub find_exceptions {
-  my ($file) = @_;
+  my ($conf,$file) = @_;
 
   my %out;
-  foreach my $e (@EXCEPTIONS) {
+  foreach my $e (@$conf) {
     next unless $file =~ /^$e->{'pattern'}$/;
     foreach my $k (keys %$e) {
       next if $k eq 'pattern';
@@ -175,17 +111,36 @@ sub css_rule {
   return "html img.autosprite.autosprite-$h { $payload }\n";
 }
 
-my $idx = 1;
+sub build_conf {
+  my @conf;
+  foreach my $plugin (@{get_all_plugins()}) {
+    my $filename = "$plugin->{'path'}/conf/images.yaml";
+    next unless -e $filename;
+    my $here = LoadFile($filename);
+    foreach my $entry (@{$here->{'properties'}||[]}) {
+      foreach my $pattern (@{$entry->{'patterns'}||[]}) {
+        my %properties = %$entry;
+        delete $properties{'patterns'};
+        push @conf,{
+          pattern => $pattern,
+          %properties
+        };
+      }
+    }
+  }
+  return \@conf;
+}
+
 sub minify {
   my ($species_defs,$paths) = @_;
 
+  my $conf = build_conf();
   open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log');
   my $title = sprintf("Sprite page generation at %s\n",scalar localtime);
   $title .= ('=' x length $title)."\n\n";
   print LOG $title;
   my $root = $species_defs->ENSEMBL_DOCROOT.'/'.$species_defs->ENSEMBL_MINIFIED_FILES_PATH;
   my $css = '';
-  $idx++;
   # Process each file
   my @files;
   foreach my $row (split("\n",$paths)) {
@@ -202,7 +157,7 @@ sub minify {
     $url =~ s!^/\./!/!;
     my $type = [ split('\.',$file) ]->[-1];
     next unless $type;
-    my $exc = find_exceptions($file);
+    my $exc = find_exceptions($conf,$file);
     next if $exc->{'action'} and $exc->{'action'}{'exclude'};
 
     $type = 'jpg' if $type eq 'jpeg';
@@ -212,84 +167,90 @@ sub minify {
       $outtype = $exc->{'transcode'}{$type};
     }
     $outtype = 'png' if $outtype eq 'gif';
-    print LOG "$type/$outtype ".hex_for($url)." => $url\n";
-    $files{$type} ||= [];
-    preprocess_image($files{$outtype},$type,$url,$file,$exc);
+    my $page = $exc->{'page'}{'name'} || 'default';
+    print LOG "$type/$outtype/$page ".hex_for($url)." => $url\n";
+    $files{$outtype} ||= {};
+    $files{$outtype}{$page} ||= [];
+    push @{$files{$outtype}{$page}},{
+      url => $url,
+      file => $file,
+      nudge => $exc->{'action'}{'nudge'},
+      pad => $exc->{'action'}{'pad'}||0
+    };
   }
   foreach my $type (keys %files) {
-    $files{$type} = filter_images($files{$type},$type);
-  }
-  my %page_size;
-  foreach my $type (keys %files) {
-    my ($w,$h) = ($PAGE_WIDTH,0);
-    my ($xo,$yo) = (0,0);
-    my $maxy = 0;
-    my @files = sort { $a->{'h'} <=> $b->{'h'} } @{$files{$type}};
-    foreach my $f (@files) {
-      my $hspace = $f->{'w'} + 2*$SPACE_PAD + 2*$f->{'pad'};
-      if($xo+$hspace > $w) {
-        $xo = $SPACE_PAD;
-        $yo += $maxy + 2*$SPACE_PAD;
-        $h += $maxy + 2*$SPACE_PAD;
-        $maxy = 0;
-      }
-      $f->{'x'} = $xo + $SPACE_PAD + $f->{'pad'};
-      $f->{'y'} = $yo + $SPACE_PAD + $f->{'pad'};
-      $f->{'hash'} = hex_for($f->{'url'});
-      $f->{'page'} = "/minified/x-$idx.$type";
-      $f->{'pk'} = "$idx-$type";
-      $xo += $f->{'w'} + 2*$SPACE_PAD + 2*$f->{'pad'};
-      $maxy = max($maxy,$f->{'h'}+2*$f->{'pad'});
+    foreach my $page (keys %{$files{$type}}) {
+      $files{$type}{$page} = filter_images($files{$type}{$page},$type,$page);
     }
-    $h += $maxy + 2*$SPACE_PAD;
-    next unless $h;
-    print LOG "Sprite page for $type measures ${w}x$h\n";
-    $page_size{$type} = [$w,$h];
-    my $tmp = "$root/x-$idx.tmp.$type";
-    my $tmp2 = "$root/x-$idx.tmp2.$type";
-    my $bgd = "xc:none";
-    $bgd = "xc:white" if $type eq 'jpg';
-    print LOG qx(convert -size ${w}x$h $bgd $tmp 2>&1);
-    my @batches = ([]);
-    foreach my $f (@files) {
-      push @{$batches[-1]},$f;
-      push @batches,[] if @{$batches[-1]} > 50;
-    }
-    foreach my $batch (@batches) {
-      my $cmd = qq(convert $tmp );
-      foreach my $f (@$batch) {
-        $cmd .= qq($f->{'file'} -geometry +$f->{'x'}+$f->{'y'} -composite );
-      }
-      $cmd .= qq( $tmp);
-      print LOG qx($cmd 2>&1);
-    }
-    if($type eq 'png') {
-      print LOG qx(pngcrush $tmp $tmp2 2>&1);
-    } else {
-      rename $tmp,$tmp2;
-    }
-    unlink $tmp;
-    my $md5 = Digest::MD5->new;
-    open(my $fh,$tmp2) or die "Cannot read sprite page";
-    $md5->addfile($fh);
-    close $fh;
-    my $hex = $md5->hexdigest;
-    my $fn = "$root/$hex.$type";
-    rename $tmp2,$fn;
-    my $url = "/minified/$hex.$type";
-    $css .= qq(.autosprite-src-$idx-$type { background-image: url($url) });
   }
   my %sprites;
   foreach my $type (keys %files) {
-    my ($w,$h) = @{$page_size{$type}||[0,0]};
-    next unless $w and $h;
-    foreach my $f (@{$files{$type}}) {
-      my $nudge = ($f->{'exc'}{'action'}||{})->{'nudge'} if $f->{'exc'};
-      $nudge = [0,0] unless $nudge;
-      my $x = $f->{'x'} - $nudge->[0];
-      my $y = $f->{'y'} - $nudge->[1];
-      $css .= css_rule($f->{'hash'},$f,$x,$y,$w,$h);
-      $sprites{$f->{'hash'}} = [$f->{'w'},$f->{'h'},$x,$y,$w,$h,$f->{'pk'},$f->{'page'}];
+    foreach my $page (keys %{$files{$type}}) {
+      print LOG "\nBuilding sprite page for $page/$type\n\n";
+      my ($w,$h) = ($PAGE_WIDTH,0);
+      my ($xo,$yo) = (0,0);
+      my $maxy = 0;
+      my @files = sort { $a->{'h'} <=> $b->{'h'} } @{$files{$type}{$page}};
+      foreach my $f (@files) {
+        my $hspace = $f->{'w'} + 2*$SPACE_PAD + 2*$f->{'pad'};
+        if($xo+$hspace > $w) {
+          $xo = $SPACE_PAD;
+          $yo += $maxy + 2*$SPACE_PAD;
+          $h += $maxy + 2*$SPACE_PAD;
+          $maxy = 0;
+          print LOG "NEW ROW\n";
+        }
+        $f->{'x'} = $xo + $SPACE_PAD + $f->{'pad'};
+        $f->{'y'} = $yo + $SPACE_PAD + $f->{'pad'};
+        $f->{'hash'} = hex_for($f->{'url'});
+        $f->{'pk'} = "$page-$type";
+        print LOG "  $f->{'hash'} $f->{'url'}\n";
+        $xo += $f->{'w'} + 2*$SPACE_PAD + 2*$f->{'pad'};
+        $maxy = max($maxy,$f->{'h'}+2*$f->{'pad'});
+      }
+      $h += $maxy + 2*$SPACE_PAD;
+      next unless $h;
+      print LOG "Sprite page for $page/$type measures ${w}x$h\n";
+      my $tmp = "$root/x-$page.tmp.$type";
+      my $tmp2 = "$root/x-$page.tmp2.$type";
+      my $bgd = "xc:none";
+      $bgd = "xc:white" if $type eq 'jpg';
+      print LOG qx(convert -size ${w}x$h $bgd $tmp 2>&1);
+      my @batches = ([]);
+      foreach my $f (@files) {
+        push @{$batches[-1]},$f;
+        push @batches,[] if @{$batches[-1]} > 50;
+      }
+      foreach my $batch (@batches) {
+        my $cmd = qq(convert $tmp );
+        foreach my $f (@$batch) {
+          $cmd .= qq($f->{'file'} -geometry +$f->{'x'}+$f->{'y'} -composite );
+        }
+        $cmd .= qq( $tmp);
+        print LOG qx($cmd 2>&1);
+      }
+      if($type eq 'png') {
+        print LOG qx(pngcrush $tmp $tmp2 2>&1);
+      } else {
+        rename $tmp,$tmp2;
+      }
+      unlink $tmp;
+      my $md5 = Digest::MD5->new;
+      open(my $fh,$tmp2) or die "Cannot read sprite page";
+      $md5->addfile($fh);
+      close $fh;
+      my $hex = $md5->hexdigest;
+      my $fn = "$root/$hex.$type";
+      rename $tmp2,$fn;
+      my $url = "/minified/$hex.$type";
+      $css .= qq(.autosprite-src-$page-$type { background-image: url($url) });
+      foreach my $f (@{$files{$type}{$page}}) {
+        my $nudge = $f->{'nudge'}||[0,0];
+        my $x = $f->{'x'} - $nudge->[0];
+        my $y = $f->{'y'} - $nudge->[1];
+        $css .= css_rule($f->{'hash'},$f,$x,$y,$w,$h);
+        $sprites{$f->{'hash'}} = [$f->{'w'},$f->{'h'},$x,$y,$w,$h,$f->{'pk'}];
+      }
     }
   }
   $species_defs->set_config('ENSEMBL_SPRITES',\%sprites);
@@ -298,6 +259,8 @@ sub minify {
   close LOG;
   return $css;
 }
+
+# XXX prune warns
 
 sub maybe_generate_sprite {
   my ($valid,$tag) = @_;
@@ -343,7 +306,6 @@ sub maybe_generate_sprite {
   my @classes = split(' ',$attrs{'class'}||'');
   my %ok_classes = map { $_ => 1 } @OK_CLASSES;
   my @not_ok_classes = grep { !exists $ok_classes{$_} } @classes;
-  use Data::Dumper;
   if(@not_ok_classes) {
     #warn "unhandled class: ".join(', ',@not_ok_classes)."\n";
     return "<img$tag>";
@@ -379,8 +341,7 @@ sub maybe_generate_sprite {
     return "<img$tag>";
   }
   #warn "replacing with sprite $hash\n";
-  use Data::Dumper;
-  my ($s_w,$s_h,$s_x,$s_y,$p_w,$p_h,$s_t,$s_i) = @{$valid->{$hash}};
+  my ($s_w,$s_h,$s_x,$s_y,$p_w,$p_h,$s_t) = @{$valid->{$hash}};
 
   if($width != $s_w or $height != $s_h or 1) {
     my $wscale = $s_w / $width;
@@ -397,7 +358,6 @@ sub maybe_generate_sprite {
       %styles
     );
   }
-#  $styles{'background-image'} = qq(url($s_i));
   my $style = '';
   $style = 'style="'.join(';',map { "$_: $styles{$_}" } keys %styles).'"' if %styles;
   my $classes = '';
@@ -460,7 +420,6 @@ sub data_url_convert {
 sub data_url_convert_try {
   my ($key,$prefix,$suffix,$sd,$url) = @_;
 
-  warn "$key :: $prefix // $url // $suffix\n";
   my $out = data_url_convert($key,$prefix,$suffix,$sd,$url);
   return "$key: $prefix url($url) $suffix;" unless $out;
   return $out;
