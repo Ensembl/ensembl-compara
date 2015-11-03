@@ -76,6 +76,7 @@ sub fetch_input {
 	$self->param('ref_species_dbid', $species1_dbid);
 	$self->param('non_ref_species_dbid', $species2_dbid);
 	$self->param( 'ortholog_objects', $homologs );
+	$self->param('mlss_ID', $mlss_id);
 #	print "$species1_dbid \n\n $species2_dbid \n\n";
 }
 
@@ -116,11 +117,12 @@ sub run {
 
 #	print $self->param('non_ref_species_dbid'), "  -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Orthologs \n\n\n\n";
 #	print Dumper($non_ref_ortholog_info_hashref);
-
-#	$self->param( 'ortholog_info_hashref', {'ortholog_info_hashref' => $ref_ortholog_info_hashref} );
-	$self->dataflow_output_id( {'ortholog_info_hashref' => $ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid') } , 2 );
-#	$self->param( 'ortholog_info_hashref', {'ortholog_info_hashref' => $non_ref_ortholog_info_hashref} );
-	$self->dataflow_output_id( {'ortholog_info_hashref' => $non_ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('non_ref_species_dbid'), 'non_ref_species_dbid' => $self->param('ref_species_dbid') } , 2 );
+#$self->param( 'ortholog_info_hashref', {'ortholog_info_hashref' => $ref_ortholog_info_hashref} );
+	$self->dataflow_output_id( {'ortholog_info_hashref' => $ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid'), 'mlss_ID' => $self->param('mlss_ID') } , 2 );
+#$self->param( 'ortholog_info_hashref', {'ortholog_info_hashref' => $non_ref_ortholog_info_hashref} );
+	$self->dataflow_output_id( {'ortholog_info_hashref' => $non_ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('non_ref_species_dbid'), 'non_ref_species_dbid' => $self->param('ref_species_dbid'), 'mlss_ID' => $self->param('mlss_ID') } , 2 );
+	#will be used in the ortholog_max_score runnable to pull only the percent scores for the orthologs belonging to this particular mlss id. Useful when the ortholog metric table contains orthologs from more than one pair of species like in the protein trees pipeline
+	$self->dataflow_output_id( {'mlss_ID' => $self->param('mlss_ID')} , 1);
 
 }
 

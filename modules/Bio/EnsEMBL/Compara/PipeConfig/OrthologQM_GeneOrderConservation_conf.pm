@@ -2,16 +2,20 @@
 
 =head1 NAME
 	
-	Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservasion_conf;
+	Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
 =head1 DESCRIPTION
 
 	http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
 
+
+    Example run
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -mlss_id <20620> -pipeline_name <GConserve_trial> -host <host_server>
+
 =cut
 
 
-package Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservasion_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
 use strict;
 use warnings;
@@ -45,9 +49,10 @@ sub pipeline_create_commands {
 	return [
 		@{ $self->SUPER::pipeline_create_commands },
 		$self->db_cmd( 'CREATE TABLE ortholog_quality_metric ( 
-			homology_dbID  varchar(255) NOT NULL,
-            ref_gmember_id varchar(255) NOT NULL,
-			ref_dnafrag_id  INT NOT NULL,
+            method_link_species_set_id INT NOT NULL,
+			homology_id  INT NOT NULL,
+            gene_member_id INT NOT NULL,
+		        dnafrag_id  INT NOT NULL,
 			percent_conserved_score INT NOT NULL, 
             left1 INT,
          	left2	INT,
@@ -57,7 +62,8 @@ sub pipeline_create_commands {
         )'),
 
         $self->db_cmd( 'CREATE TABLE ortholog_metric ( 
-            homology_dbID  varchar(255) NOT NULL,
+            method_link_species_set_id INT NOT NULL, 
+            homology_id INT NOT NULL,
             percent_conserved_score INT NOT NULL 
             
             
@@ -105,7 +111,7 @@ sub pipeline_analyses {
     return [
         {   -logic_name => 'get_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
-#            -input_ids => [ { } ],
+            -input_ids => [ { } ],
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
 #            -analysis_capacity  =>  10,  # use per-analysis limiter
             -flow_into => {

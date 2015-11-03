@@ -75,7 +75,6 @@ sub fetch_input {
     my $mlss_id = $self->param_required('mlss_id');
     my $master_mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     die "Could not find the MLSS dbID=$mlss_id in the master database\n" unless $master_mlss;
-    die "The master record for MLSS dbID=$mlss_id already has a URL !: $master_mlss->url\n" if $master_mlss->url;
     $self->param('master_mlss', $master_mlss);
 
     # Build the url string

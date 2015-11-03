@@ -282,11 +282,10 @@ sub default_options {
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ $self->o('master_db'), $self->o('eg_mirror'), $self->o('ensembl_mirror'), $self->o('eg_prod') ],
 
-        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
-		#'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
-		#'prev_rel_db' => 'mysql://admin:'.$self->o('password').'@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
-		'prev_rel_db' => undef,
+        #'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
+        #'prev_rel_db' => 'mysql://admin:'.$self->o('password').'@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'

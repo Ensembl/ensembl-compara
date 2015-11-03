@@ -64,7 +64,7 @@ use Bio::EnsEMBL::Hive::Version 2.3;
 
 use Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf;
 
-use Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservasion_conf;
+use Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -283,6 +283,7 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@compara3:3306/mm14_compara_homology_67'
+        'prev_rel_db' => undef,
         # By default, the stable ID mapping is done on the previous release database
         'mapping_db'  => $self->o('prev_rel_db'),
 
@@ -3099,7 +3100,7 @@ sub core_pipeline_analyses {
         ) : (),
 
         $self->o('initialise_orthologQM_pipeline') ? (
-            @{ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservasion_conf::pipeline_analyses($self) },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf::pipeline_analyses($self) },
             ): (),
     ];
 }

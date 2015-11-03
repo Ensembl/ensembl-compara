@@ -415,11 +415,8 @@ sub clear {
 =head2 get_all_GeneMembers
 
   Arg [1]    : (optional) genome db id 
-<<<<<<< Updated upstream
   Example    : my $gene_members = $ortholog->get_all_GeneMembers($genome_db->dbID')
-=======
   Example    : my $gene_members = $ortholog->get_all_GeneMembers($genome_db->dbID)
->>>>>>> Stashed changes
   Description: 
   Returntype : array reference of Bio::EnsEMBL::Compara::Member
   Exceptions : 

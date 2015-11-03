@@ -221,8 +221,8 @@ sub default_options {
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ $self->o('staging_1') ],
 
-        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
+        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
+        #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
 
     # Configuration of the pipeline worklow
 
@@ -243,9 +243,6 @@ sub default_options {
         #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
         #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
         #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
-
-        # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => undef,
 
     };
 }
