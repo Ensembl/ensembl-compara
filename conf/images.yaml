@@ -8,6 +8,11 @@ properties:
       png: jpg
 
   - patterns:
+      - .*/img/ENCODE_logo.jpg
+    transcode:
+      jpg: png
+
+  - patterns:
       - .*/img/info/powered.*
       - .*/img/(youtube|youku|e-).*
       - .*/img/(api|download|star)_.*
