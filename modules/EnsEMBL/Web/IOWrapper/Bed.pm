@@ -66,7 +66,7 @@ sub create_hash {
                         'end'         => $feature_end,
                         });
 
-  return {
+  my $feature = {
     'start'         => $feature_start - $slice->start,
     'end'           => $feature_end - $slice->start,
     'seq_region'    => $seqname,
@@ -79,6 +79,8 @@ sub create_hash {
     'structure'     => $self->create_structure($feature_start, $slice->start),
     'href'          => $href,
   };
+  #use Data::Dumper; warn Dumper($feature);
+  return $feature;
 }
 
 sub create_structure {
