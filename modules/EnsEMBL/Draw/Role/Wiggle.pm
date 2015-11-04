@@ -28,6 +28,7 @@ sub render_compact {
   my $self = shift;
   my $graph_class = $self->_select_graph_type;
   $self->{'my_config'}->set('drawing_style', ['Graph::Barcode']);
+  $self->{'my_config'}->set('no_axis', 1);
   $self->_render_aggregate;
 }
 
