@@ -84,11 +84,6 @@ sub fetch_input {
 sub run {
   my $self = shift;
 
-  my $reg = "Bio::EnsEMBL::Registry";
-
-  my $ref_species = $self->param('species');
-  my $seq_region = $self->param('seq_region');
-  
   my $compara_dba;
   if ($self->param('db_conn')) {
       #These lines are only necessary when running as not part of the PairAligner pipeline
@@ -106,13 +101,13 @@ sub run {
   my $mlss_id = $self->param('mlss_id');
   my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
 
-  my $genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
-  my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db, $seq_region);
+  my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($self->param_required('dnafrag_id'));
+  $self->param('genome_db', $dnafrag->genome_db);
 
-  my $slice_adaptor = $genome_db->db_adaptor->get_SliceAdaptor();
+  my $slice_adaptor = $dnafrag->genome_db->db_adaptor->get_SliceAdaptor();
 
   #Necessary to get unique bits of Y
-  my $slices = $slice_adaptor->fetch_by_region_unique('toplevel', $seq_region);
+  my $slices = $slice_adaptor->fetch_by_region_unique('toplevel', $dnafrag->name);
 
   my $coding_exons = [];
   foreach my $slice (@$slices) {
@@ -215,17 +210,15 @@ sub write_output {
 
   print "TOTAL\n" if($self->debug);
   my $totals = $self->param('totals');
-  my $ref_species = $self->param('species');
-  my $seq_region = $self->param('seq_region');
   my $mlss_id = $self->param('mlss_id');
 
   foreach my $key (keys %$totals) {
       print "$key " . $totals->{$key} . "\n" if($self->debug);
   }
 
-  my $sql = "INSERT INTO statistics (method_link_species_set_id, species_name, seq_region, matches, mis_matches, ref_insertions, non_ref_insertions, uncovered, coding_exon_length) VALUES (?,?,?,?,?,?,?,?,?)";
+  my $sql = "INSERT INTO statistics (method_link_species_set_id, genome_db_id, dnafrag_id, matches, mis_matches, ref_insertions, non_ref_insertions, uncovered, coding_exon_length) VALUES (?,?,?,?,?,?,?,?,?)";
   my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->execute($mlss_id, $ref_species, $seq_region, $totals->{'matches'},  $totals->{'mis_matches'}, $totals->{'ref_insertions'}, $totals->{'non_ref_insertions'},$totals->{'uncovered'}, $totals->{'coding_exon_length'});
+  $sth->execute($mlss_id, $self->param('genome_db')->dbID, $self->param('dnafrag_id'), $totals->{'matches'},  $totals->{'mis_matches'}, $totals->{'ref_insertions'}, $totals->{'non_ref_insertions'},$totals->{'uncovered'}, $totals->{'coding_exon_length'});
   $sth->finish;
 
   return 1;
@@ -293,8 +286,8 @@ sub restrict_overlapping_genomic_align_blocks {
         print "  ga_start " . $gab->reference_genomic_align->dnafrag_start . " ga_end " . $gab->reference_genomic_align->dnafrag_end . "\n" if ($self->debug);
         #print "  start " . $non_ref_ga->dnafrag_start . " end " . $non_ref_ga->dnafrag_end . " " . $non_ref_ga->dnafrag->name . "\n";
 
-        my $species1 = $ref_ga->dnafrag->genome_db->name;
-        my $species2 = $non_ref_ga->dnafrag->genome_db->name;
+        #my $species1 = $ref_ga->dnafrag->genome_db->_get_unique_name;
+        #my $species2 = $non_ref_ga->dnafrag->genome_db->_get_unique_name;
         #print "  " . $species1 . "\t" . $ref_ga->aligned_sequence . "\n";
         #print "  " . $species2 . "\t" . $non_ref_ga->aligned_sequence . "\n";
 

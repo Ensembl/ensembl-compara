@@ -181,15 +181,13 @@ sub write_output {
   my $output_hash = {};
   foreach my $dnafrag (@$ref_dnafrags) {
       %$output_hash = ('mlss_id' => $mlss_id,
-                       'seq_region' => $dnafrag->name,
-                      'species' => $ref_genome_db->name);
+                       'dnafrag_id' => $dnafrag->dbID);
       $self->dataflow_output_id($output_hash,2);
   }
 
   foreach my $dnafrag (@$non_ref_dnafrags) {
       %$output_hash = ('mlss_id' => $mlss_id,
-                       'seq_region' => $dnafrag->name,
-                       'species' => $non_ref_genome_db->name);
+                       'dnafrag_id' => $dnafrag->dbID);
       $self->dataflow_output_id($output_hash,2);
   }
 
