@@ -63,13 +63,12 @@ sub render {
   foreach my $cat (keys %categories) {
     (my $cat_url = $rss_url) =~ s/feed\/$/category\/$cat\/feed\//;
     unless (scalar(@{$tips->{$cat}||[]}) && $cat_url) {
-      warn "TIPS $cat\n";
       $tips->{$cat} = $self->get_rss_feed($hub, $cat_url);
-      $got += @{$tips->{$cat}} if $tips->{$cat};
       if (scalar(@{$tips->{$cat}||[]})) {
         $_->{'content'} = encode_utf8($_->{'content'}) for @{$tips->{$cat}};
       }
     }
+    $got += @{$tips->{$cat}} if $tips->{$cat};
     $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $MEMD;
   }
   if(!$got) { # No tips, probably failed
