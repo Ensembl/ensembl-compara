@@ -24,6 +24,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use List::Util qw(max min);
+
 use EnsEMBL::Web::IOWrapper::Wig;
 
 use parent qw(EnsEMBL::Web::IOWrapper::Indexed);
@@ -40,15 +42,16 @@ sub create_tracks {
   if ($metadata->{'aggregate'}) {
     my $values = $parser->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, 1000);
     ## For speed, our track consists of an array of values, not an array of feature hashes
-    return [{'data' => {'metadata' => {
-                                        'unit'    => $slice->length / 1000,
-                                        'length'  => $slice->length,
-                                        'strand'  => $slice->strand,
-                                        'max'     => max(@$values),
-                                        'min'     => min(@$values), 
-                                        },
-                        'feature' => $values,
-           }}];
+    return [{'metadata' => {
+                            'unit'    => $slice->length / 1000,
+                            'length'  => $slice->length,
+                            'strand'  => $slice->strand,
+                            'colour'  => $metadata->{'colour'},
+                            'max'     => max(@$values),
+                            'min'     => min(@$values), 
+                            },
+            'features' => $values,
+           }];
   }
   elsif ($slice->length > 1000) {
     $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, 1000);
