@@ -65,12 +65,23 @@ sub W { my( $self, $glyph ) = @_; return 1 + $glyph->pixelwidth()* $self->{sf}; 
 
 sub strokecolor { my $self = shift; $self->{'canvas'}{'g'}->strokecolor( $self->{'colourmap'}->hex_by_name( shift ) ); }
 sub fillcolor   { my $self = shift; $self->{'canvas'}{'g'}->fillcolor(   $self->{'colourmap'}->hex_by_name( shift ) ); }
-sub stroke    { my $self = shift; $self->{'canvas'}{'g'}->stroke; }
-sub fill    { my $self = shift; $self->{'canvas'}{'g'}->fill; }
-sub rect    { my $self = shift; $self->{'canvas'}{'g'}->rect(@_); }
-sub move    { my $self = shift; $self->{'canvas'}{'g'}->move(@_); }
-sub line    { my $self = shift; $self->{'canvas'}{'g'}->line(@_); }
-sub hybrid    { my $self = shift; $self->{'canvas'}{'page'}->hybrid; }
+sub stroke      { my $self = shift; $self->_fillstroke_alpha('stroke', @_); }
+sub fill        { my $self = shift; $self->_fillstroke_alpha('fill', @_); }
+sub rect        { my $self = shift; $self->{'canvas'}{'g'}->rect(@_); }
+sub move        { my $self = shift; $self->{'canvas'}{'g'}->move(@_); }
+sub line        { my $self = shift; $self->{'canvas'}{'g'}->line(@_); }
+sub hybrid      { my $self = shift; $self->{'canvas'}{'page'}->hybrid; }
+
+sub _fillstroke_alpha {
+  my ($self, $action, $alpha) = @_;
+
+  my $pdf = $self->{'canvas'}{'pdf'};
+  my $gfx = $self->{'canvas'}{'g'};
+
+  $gfx->egstate($self->{'_egstate'}{$alpha} ||= $pdf->egstate()->transparency($alpha)) if $alpha; # apply transparency
+  $gfx->$action;
+  $gfx->egstate($self->{'_egstate'}{0} ||= $pdf->egstate()->transparency(0)) if $alpha; # reset transparency
+}
 
 sub render_Rect {
   my ($self, $glyph) = @_;
@@ -86,17 +97,17 @@ sub render_Rect {
 
   if(defined $gcolour) {
     unless( $gcolour eq 'transparent' ) {
-    $self->fillcolor( $gcolour );
-    $self->strokecolor( $gcolour );
-    $self->rect($x,$y,$a-$x,$b-$y);
-    # $self->stroke();
-    $self->fill();
+      $self->fillcolor( $gcolour );
+      $self->strokecolor( $gcolour );
+      $self->rect($x,$y,$a-$x,$b-$y);
+      # $self->stroke();
+      $self->fill($glyph->{'alpha'});
     }
   } elsif(defined $gbordercolour) {
     unless( $gbordercolour eq 'transparent' ) {
-    $self->strokecolor( $gbordercolour );
-    $self->rect($x,$y,$a-$x,$b-$y);
-    $self->stroke();
+      $self->strokecolor( $gbordercolour );
+      $self->rect($x,$y,$a-$x,$b-$y);
+      $self->stroke($glyph->{'alpha'});
     }
   }
 }
