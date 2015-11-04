@@ -60,8 +60,8 @@ sub features {
                           };
     }
 
-    my $display = $self->{'my_config'}->get('display');
-    $metadata->{'aggregate'} = 1 if $display eq 'compact';
+    ## Tell the parser to get aggregate data if necessary
+    $metadata->{'aggregate'} = 1 if $self->{'my_config'}->get('display') eq 'compact';
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
