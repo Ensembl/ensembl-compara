@@ -44,6 +44,7 @@ sub features {
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour');
     my $metadata = {
+                    'name'          => $self->{'my_config'}->get('name'),
                     'colour'        => $colour,
                     'join_colour'   => $colour,
                     'label_colour'  => $colour,

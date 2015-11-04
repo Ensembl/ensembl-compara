@@ -44,6 +44,7 @@ sub create_tracks {
     my @gradient = $self->create_gradient(['white', $metadata->{'colour'}]);
     ## For speed, our track consists of an array of values, not an array of feature hashes
     return [{'metadata' => {
+                            'name'        => $metadata->{'name'},
                             'unit'        => $slice->length / 1000,
                             'graph_type'  => 'bar',
                             'length'      => $slice->length,
