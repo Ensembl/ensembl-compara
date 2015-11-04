@@ -30,7 +30,7 @@ sub draw_wiggle {
   push @{$self->glyphs}, $self->Barcode({
     values    => $features,
     x         => 1,
-    y         => 0,
+    y         => $c->{'y_offset'} || 0,
     height    => $height,
     unit      => $c->{'unit'},
     max       => $c->{'max_score'},

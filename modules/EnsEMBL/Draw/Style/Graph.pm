@@ -167,14 +167,20 @@ sub create_glyphs {
       alt_colour    => $subtrack->{'metadata'}{'altColor'},
     };
 
-    $self->draw_wiggle($plot_conf, $features);
-
     my $subtitle_colour = $plot_conf->{'colour'};
+    my $subtitle_y      = $top + 8;
     my $subtitle = {
                     'text'    => $subtrack->{'metadata'}{'name'},
                     'colour'  => $self->make_readable($subtitle_colour),
                     'y'       => $top + 8,
                     };
+
+    ## Shift the graph down a little if we're drawing an in-track label
+    if ($subtrack->{'metadata'}{'name'}) {
+      $plot_conf->{'y_offset'} = $subtitle_y + 12;
+    }
+
+    $self->draw_wiggle($plot_conf, $features);
     $self->draw_subtitle($subtitle);
   }
 
