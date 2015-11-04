@@ -25,18 +25,19 @@ use parent qw(EnsEMBL::Draw::Style::Graph);
 sub draw_wiggle {
   my ($self, $c, $features) = @_;
 
-  my $height = $c->{'pix_per_score'} * $self->track_config->get('max_score');
-
+  my $height = $c->{'height'} || 8;
+  
   push @{$self->glyphs}, $self->Barcode({
     values    => $features,
     x         => 1,
     y         => 0,
     height    => $height,
-    unit      => $self->track_config->get('unit'),
-    max       => $self->track_config->get('max_score'),
-    colours   => [$c->{'colour'}],
-    wiggle    => $self->track_config->get('graph_type'),
+    unit      => $c->{'unit'},
+    max       => $c->{'max_score'},
+    colours   => $c->{'colours'},
+    wiggle    => $c->{'graph_type'},
   });
+  $self->add_hidden_bgd($height);
 }
 
 1;
