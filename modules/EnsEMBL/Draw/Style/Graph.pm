@@ -158,6 +158,8 @@ sub create_glyphs {
       line_score    => $line_score,
       line_px       => $line_px,
       pix_per_score => $pix_per_score,
+      max_score     => $max_score,
+      unit          => $subtrack->{'metadata'}{'unit'},
       graph_type    => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
       same_strand   => $track_config->get('same_strand'),
       colour        => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
