@@ -174,7 +174,7 @@ sub get_sequence {
 
   $sequence =~ s/([\.\w]{60})/$1<br \/>/g;
   
-  return (qq{<span class="sequence">$sequence</span>}, $self->thousandify(length $sequence));
+  return (qq{<span class="sequence">$sequence</span>}, length $sequence);
 }
 
 sub get_type {
