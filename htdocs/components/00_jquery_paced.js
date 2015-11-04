@@ -17,7 +17,7 @@
 (function($) {
   var ajax_pending = [];
   var ajax_running = 0;
-  var max_ajax_running = 8;
+  var max_ajax_running = $('body').data('pace') || 2;
 
   function fire_paced_ajax() {
     if(!ajax_pending.length || ajax_running >= max_ajax_running) {

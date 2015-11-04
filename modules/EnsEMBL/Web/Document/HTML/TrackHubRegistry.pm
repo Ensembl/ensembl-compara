@@ -158,8 +158,9 @@ sub render {
                         );
       }
     } 
+    my $name_link = sprintf('<a href="%s">%s</a>', $hub_info->{'url'}, $hub_info->{'name'});
     $table->add_row({
-              'name'        => $hub_info->{'name'},
+              'name'        => $name_link,
               'description' => $hub_info->{'description'},
               'species'     => $species_html,
     });

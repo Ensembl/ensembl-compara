@@ -64,10 +64,7 @@ sub populate_tree {
   my $species_defs   = $self->hub->species_defs;
   my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
 
-  my $index = $self->create_node('Index', '',
-    [qw(homepage EnsEMBL::Web::Component::Info::HomePage)],
-    { title => 'Description' }
-  );
+  my $index = $self->create_node('Index', '', [qw(homepage EnsEMBL::Web::Component::Info::HomePage)], {});
 
   $self->create_node('Annotation', '',
     [qw(blurb EnsEMBL::Web::Component::Info::SpeciesBlurb)]

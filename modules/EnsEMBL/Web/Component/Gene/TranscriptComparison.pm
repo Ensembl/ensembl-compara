@@ -41,6 +41,7 @@ sub initialize {
 
   my $type   = $hub->param('data_type') || $hub->type;
   my $vc = $self->view_config($type);
+  my $adorn = $hub->param('adorn') || 'none';
 
   for (qw(exons_only snp_display title_display line_numbering hide_long_snps)) {
     $config->{$_} = $hub->param($_) unless ($hub->param($_) eq 'off' || $vc->get($_) eq 'off');
@@ -54,7 +55,7 @@ sub initialize {
     $config->{'number'}     = 1;
   }
   
-  my ($sequence, $markup) = $self->get_sequence_data($config);
+  my ($sequence, $markup) = $self->get_sequence_data($config,$adorn);
 
   $self->markup_exons($sequence, $markup, $config);
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
@@ -152,7 +153,7 @@ sub get_export_data {
 }
 
 sub get_sequence_data {
-  my ($self, $config) = @_;
+  my ($self, $config,$adorn) = @_;
   my $hub            = $self->hub;
   my $object         = $self->object || $hub->core_object('gene');
   my $gene           = $object->Obj;
@@ -224,16 +225,26 @@ sub get_sequence_data {
           $seq[$_]{'letter'} = '-' for $e+1..$#seq;
         }
       }
-      
+
       if ($exon->phase == -1) {
+
+        # if the exon phase is -1, it means it starts with a non-coding or utr makrup
         $type = $utr_type;
+
       } elsif ($exon->end_phase == -1) {
-        $type = 'exon1';
+
+        # if end phase is -1, that means it started with a coding region but then somewhere in the middle it became non-coding, so we start with $type = exon1
+        # That location where it became non-coding is coding end region of the transcript
+        # however, if we are in a subslice and the coding end region is negative wrt. the subslice coords, the start of this subslice is already non-coding then
+        # so in that case we start with utr or non-coding markup
+        $type = $cre < 0 ? $utr_type : 'exon1';
       }
       
+      # after having decided the starting markup type - exon1 or utr, we move along the sequence from start to end and add the decided markup type to each base pair
+      # but while progressing, when the current coord becomes same as coding exon start or coding exon end, we switch the markup since that point is a transition between coding and noncoding
       for ($s..$e) {
         push @{$mk->{'exons'}{$_}{'type'}}, $type;
-        $type = $type eq 'exon1' ? $utr_type : 'exon1' if $_ == $crs || $_ == $cre;
+        $type = $type eq 'exon1' ? $utr_type : 'exon1' if $_ == $crs || $_ == $cre; # transition point between coding and non-coding
         
         $mk->{'exons'}{$_}{'id'} .= ($mk->{'exons'}{$_}{'id'} ? "\n" : '') . $exon_id unless $mk->{'exons'}{$_}{'id'} =~ /$exon_id/;
       }
@@ -248,7 +259,7 @@ sub get_sequence_data {
       $mk->{'exons'}{$_}{'type'} ||= ['intron'];
     }
 
-    $self->set_variations($config, $slice, $mk, $transcript, \@seq) if $config->{'snp_display'};
+    $self->set_variations($config, $slice, $mk, $transcript, \@seq) if $config->{'snp_display'} and $adorn ne 'none';
     
     push @sequence, \@seq;
     push @markup, $mk;

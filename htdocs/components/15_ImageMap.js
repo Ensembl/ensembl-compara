@@ -243,7 +243,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     // If the panel contains an ajax loaded sub-panel, this function will be reached before ImageMap.init has been completed.
     // Make sure that this doesn't cause an error.
     if (this.imageConfig) {
-      this.elLk.labelLayers.add(this.elLk.hoverLayers).add(this.elLk.resizeMenu).remove();
+      $(this.elLk.labelLayers).add(this.elLk.hoverLayers).add(this.elLk.resizeMenu).remove();
 
       this.removeZMenus();
       this.removeShare();

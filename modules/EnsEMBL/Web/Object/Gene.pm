@@ -48,7 +48,6 @@ sub availability {
   if (!$self->{'_availability'}) {
     my $availability = $self->_availability;
     my $obj = $self->Obj;
-    $availability->{'has_phenotypes'} = 0; # Defaults to off - see below
     
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
@@ -81,11 +80,11 @@ sub availability {
       $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
       $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
       $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
-      
-      if ($self->database('variation')) {
-        $availability->{'has_phenotypes'} = 1; #Don't try to calculate - too slow!
-      }
 
+      if ($self->database('variation')) {
+        $availability->{'has_phenotypes'} = $self->get_phenotype; 
+      }
+      
       if ($self->database('compara_pan_ensembl')) {
         $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
         $availability->{'has_gene_tree_pan'}  = !!($pan_member && $pan_member->has_GeneTree);

@@ -37,7 +37,7 @@ sub content {
   my $avail     = $self->object->availability;
 
   my ($seq_url, $gt_url, $pop_url, $geno_url, $context_url, $ld_url, $pheno_url, $phylo_url, $cit_url);
-  my ($gt_count, $geno_count, $pheno_count, $cit_count);
+  my ($gt_count, $pop_count, $geno_count, $pheno_count, $cit_count);
 
   if ($avail->{'has_locations'}) {
     $seq_url      = $hub->url({'action' => 'Sequence'});
@@ -52,9 +52,11 @@ sub content {
   if ($avail->{'has_populations'}) {
     if ($avail->{'not_somatic'}) {
       $pop_url = $hub->url({'action' => 'Population'});
+      $pop_count = $avail->{'has_populations'};
     }
     elsif ($avail->{'is_somatic'}) {
       $pop_url = $hub->url({'action' => 'Populations'});
+      $pop_count = $avail->{'has_populations'};
     }
   }
 
@@ -85,7 +87,7 @@ sub content {
   my @buttons = (
     {'title' => 'Graphical neighbourhood region',                     'img' => '96/var_genomic_context.png',        'url' => $context_url                           },
     {'title' => 'Consequences (e.g. missense)',                       'img' => '96/var_gene_transcript.png',        'url' => $gt_url,       'count' => $gt_count    },
-    {'title' => $p_title,                                             'img' => $p_img,                              'url' => $pop_url                               },
+    {'title' => $p_title,                                             'img' => $p_img,                              'url' => $pop_url,      'count' => $pop_count   },
     {'title' => 'Sample genotypes',                                   'img' => '96/var_sample_genotypes.png',       'url' => $geno_url,     'count' => $geno_count  },
     {'title' => 'LD plots and tables',                                'img' => '96/var_linkage_disequilibrium.png', 'url' => $ld_url                                },
     {'title' => 'Diseases and traits',                                'img' => '96/var_phenotype_data.png',         'url' => $pheno_url,    'count' => $pheno_count },

@@ -18,24 +18,13 @@ limitations under the License.
 
 package EnsEMBL::Web::Object::Search;
 
-### NAME: EnsEMBL::Web::Object::Search
-### An empty wrapper object, used by search results pages 
-
-### PLUGGABLE: Yes, using Proxy::Object 
-
-### STATUS: At Risk
-### Has no data access functionality, just page settings
-
-### DESCRIPTION
-
-
 use strict;
 
 use base qw(EnsEMBL::Web::Object);
 
 sub default_action { return 'New'; }
 sub short_caption  { my $sitetype = $_[0]->species_defs->ENSEMBL_SITETYPE || 'Ensembl'; return $_[1] eq 'global' ? 'New Search' : "Search $sitetype"; }
-sub caption        { my $sitetype = $_[0]->species_defs->ENSEMBL_SITETYPE || 'Ensembl'; return "$sitetype text search"; }
+sub caption        { my $q = $_[0]->hub->action eq 'Results' && $_[0]->hub->param('q'); return $q && sprintf '%s%s', substr($q, 0, 20), length $q > 20 ? '...' : ''; }
 sub counts         {}
 
 1;

@@ -321,6 +321,7 @@ sub content {
   }
   $image->{'export_params'} = [['gene_name', $gene_name],['align', 'tree']];
   $image->{'data_export'}   = 'GeneTree';
+  $image->{'remove_reset'}  = 1;
 
   $image->set_button('drag', 'title' => 'Drag to select region');
   

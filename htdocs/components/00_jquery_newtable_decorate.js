@@ -74,6 +74,7 @@
           function(need,got) {
             return {
               dundo: function(manifest,grid,series,start,length) {
+                console.log("dundo",start,length);
                 var fabric = [];
                 var decorators = make_decorators($table,'decorators',series);
                 for(var i=0;i<grid.length;i++) { fabric[i] = grid[i]; }
@@ -94,6 +95,7 @@
                   }
                   fabric[i] = new_row;
                 }
+                console.log("dundo done");
                 return fabric;
               }
             };

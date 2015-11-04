@@ -36,6 +36,7 @@ sub new {
     config => $config,
     key => $key,
     type => $type,
+    label => $key,
     conf => {
       width => "100u",
       primary => 0,
@@ -96,8 +97,11 @@ sub set_helptip {
 sub set_label {
   my ($self,$label) = @_;
 
+  $self->{'label'} = $label;
   $self->{'conf'}{'label'} = hyphenate($label);
 }
+
+sub get_label { return $_[0]->{'label'}; }
 
 sub set_width {
   my ($self,$mul) = @_;

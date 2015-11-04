@@ -262,7 +262,16 @@ sub render {
 }
 
 sub add_location_marking_layer {
-  ## not all renderers support transparency
+  my ($self, $coords) = @_;
+
+  return $coords && EnsEMBL::Draw::Glyph::Rect->new({
+    colour      => '#8C648C',
+    alpha       => 0.9,
+    pixelx      => $coords->{'x'},
+    pixely      => $coords->{'y'},
+    pixelwidth  => $coords->{'w'},
+    pixelheight => $coords->{'h'}
+  });
 }
 
 sub canvas {

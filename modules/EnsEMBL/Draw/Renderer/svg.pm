@@ -92,11 +92,13 @@ sub style {
     my ($self, $glyph,$colour) = @_;
     my $gcolour       = $colour || $glyph->colour();
     my $gbordercolour = $glyph->bordercolour();
+    my $opacity       = sprintf '%.1f', 1 - ($glyph->{'alpha'} || 0);
+       $opacity       = int $opacity if int $opacity == $opacity;
 
     my $style = 
-    	defined $gcolour ? 		qq(fill:).$self->svg_rgb_by_id($gcolour).qq(;opacity:1;stroke:none;) :
-     	defined $gbordercolour ?	qq(fill:none;opacity:1;stroke:).$self->svg_rgb_by_id($gbordercolour).qq(;) : 
-					qq(fill:none;stroke:none;);
+      defined $gcolour ?        qq(fill:).$self->svg_rgb_by_id($gcolour).qq(;opacity:$opacity;stroke:none;) :
+      defined $gbordercolour ?  qq(fill:none;opacity:$opacity;stroke:).$self->svg_rgb_by_id($gbordercolour).qq(;) :
+                                qq(fill:none;stroke:none;);
     return $self->class($style);
 }
 

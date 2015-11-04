@@ -177,7 +177,8 @@
     //if(h_d) { h = h_n/h_d; }
     $('.subtable',$table).each(function() {
       var $this = $(this);
-      if(!$this.data('known-height')) {
+      var kh = $this.data('known-height');
+      if(!kh && kh!==0) {
         $this.css('height',h+'px');
       }
     });
@@ -204,14 +205,24 @@
       if(i>last_table || grid.length===0) {
         $(this).remove();
       } else if(i==last_table) {
-        remarkup($table,config,grid,rev_series,i,rows_per_subtable,orient);
-        apply_html($table,i);
+        var tail_rows = grid.length - last_table*rows_per_subtable;
+        if(tail_rows===0) {
+          $(this).remove();
+        } else {
+          reset_sub($(this));
+          remarkup_sub($table,$(this),config,grid,rev_series,i,orient,i*rows_per_subtable,tail_rows);
+          apply_html($table,i);
+        }
       }
     });
     guess_subtable_sizes($table);
     $.lazy('refresh');
   }
-  
+
+  function reset_sub($subtable) {
+    $subtable.data('markup',[]);
+  }
+
   function remarkup_sub($table,$subtable,config,grid,rev_series,table_num,orient,mstart,mrows) {
     // show which columns?
     var shown = [];
@@ -295,6 +306,8 @@
   function wakeup($table,$subtable) {
     if(!$subtable.data('redraw')) { return; }
     var markup = $subtable.data('markup');
+    console.log("wakeup "+$subtable.data('xxx'));
+    var markup = $subtable.data('markup') || '';
     var html = convert_markup($table,markup);
     $subtable.data('redraw',0);
     var $body = $('tbody',$subtable);

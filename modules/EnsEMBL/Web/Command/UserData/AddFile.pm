@@ -93,12 +93,14 @@ sub process {
         $url_params->{'action'} = $new_action;
       }
     }
+    $url_params->{'record_type'} = 'url';
   }
   else {
     ## Upload the data
     $url_params = $self->upload($method, $format_name);
-    $url_params->{ __clear} = 1;
-    $url_params->{'action'} = 'UploadFeedback';
+    $url_params->{ __clear}       = 1;
+    $url_params->{'action'}       = 'UploadFeedback';
+    $url_params->{'record_type'}  = 'upload';
   }
 
   if ($url_params->{'restart'}) {

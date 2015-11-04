@@ -163,7 +163,7 @@ sub populate_tree {
       variation EnsEMBL::Web::Component::Gene::GenePhenotypeVariation
       orthologue EnsEMBL::Web::Component::Gene::GenePhenotypeOrthologue
     )],
-    { 'availability' => 'has_phenotypes' } 
+    { 'availability' => 1 }  #set as true since getting the orthologs is really slow
   );
 	
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
