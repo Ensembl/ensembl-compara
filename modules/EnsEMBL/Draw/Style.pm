@@ -155,6 +155,23 @@ sub set_bump_row {
   return $row;
 }
 
+sub add_hidden_bgd {
+  my ($self, $height) = @_;
+
+  while (my($y, $link) = each (%{$self->{'bg_href'}||{}})) {
+    # no colour key, ie transparent
+    push @{$self->glyphs}, $self->Rect({
+                                        x         => 0,
+                                        y         => $y,
+                                        width     => $self->image_config->container_width,
+                                        height    => $height,
+                                        absolutey => 1,
+                                        href      => $link,
+                                        class     => 'group',
+                                        });
+  }
+}
+
 #### TRIGONOMETRY FOR CIRCULAR GLYPHS
 
 sub truncate_ellipse {
