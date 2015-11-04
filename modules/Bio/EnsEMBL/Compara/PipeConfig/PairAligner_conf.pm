@@ -519,6 +519,7 @@ sub pipeline_analyses {
 				 },
 	       -hive_capacity => $self->o('filter_duplicates_hive_capacity'),
 	       -batch_size    => $self->o('filter_duplicates_batch_size'),
+	       -can_be_empty  => 1,
 	       -flow_into => {
 			       -1 => [ 'filter_duplicates_himem' ], # MEMLIMIT
 			     },
@@ -539,7 +540,7 @@ sub pipeline_analyses {
  	       -parameters => {
 			       'quick' => $self->o('quick'),
 			      },
- 	       -wait_for =>  [ 'filter_duplicates', 'filter_duplicates_himem' ],
+               -wait_for =>  [ 'create_filter_duplicates_jobs', 'filter_duplicates', 'filter_duplicates_himem' ],
 	       -rc_name => '1Gb',
  	    },
 #
