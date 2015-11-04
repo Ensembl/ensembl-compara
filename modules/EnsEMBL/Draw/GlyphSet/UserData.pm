@@ -123,12 +123,13 @@ sub draw_features {
       $hover_label->{'extra_desc'} .= $description;
     }
     ## Also put it into config, for subtitles
-
     $config{'subtitle'} = $description;
   }
 
   ## Return nothing if we decided not to draw any subtracks
   return if $skipped;
+
+  $config{'bg_href'} = $self->_bg_href;
 
   my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
@@ -155,6 +156,8 @@ sub draw_aggregate {
 
   my %config = %{$self->track_style_config};
 
+  $config{'bg_href'} = $self->_bg_href;
+
   my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
   foreach (@{$drawing_style||[]}) {
@@ -171,6 +174,24 @@ sub draw_aggregate {
 
   ## Everything went OK, so no error to return
   return 0;
+}
+
+sub _bg_href {
+  my $self = shift;
+
+  ## Background link - needed for zmenus
+  ## Needs to be first to capture clicks
+  ## Useful to keep zmenus working on blank regions
+  ## only useful in nobump or strandbump modes
+  my $link    = $self->_url({ action => 'UserData' }); 
+  my $bg_href = { 0 => $link };
+  my $height  = $self->{'my_config'}->get('height');
+
+  if ($self->{'my_config'}->get('strandbump')) {
+    $bg_href->{0}        = $link;
+    $bg_href->{$height}  = $link;
+  }
+  return $bg_href;
 }
 
 sub skip_strand {
