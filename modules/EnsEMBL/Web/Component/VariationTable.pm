@@ -241,6 +241,7 @@ sub make_table {
       type   => 'Variation',
       action => 'Summary',
       vf     => ["vf"],
+      v      => undef # remove the 'v' param from the links if already present
     }
   },{
     _key => 'vf', _type => 'numeric unshowable no_filter'
