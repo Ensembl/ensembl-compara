@@ -103,7 +103,8 @@ sub make_dataflow_if_needed {
     return unless $self->param('methods')->{$method};
 
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method, $genome_db_ids);
+    my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method, $genome_db_ids)
+                || die "Could not find the MLSS with the method '$method' and the genome_db_ids ".join('/', @$genome_db_ids)."\n";
     $self->dataflow_output_id( { 'homo_mlss_id' => $mlss->dbID }, $self->param('methods')->{$method});
 }
 
