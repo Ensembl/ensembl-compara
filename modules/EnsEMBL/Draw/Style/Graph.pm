@@ -161,12 +161,14 @@ sub create_glyphs {
       pix_per_score => $pix_per_score,
       graph_type    => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
       same_strand   => $track_config->get('same_strand'),
+      colour        => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
+      colours       => $subtrack->{'metadata'}{'gradient'},
       alt_colour    => $subtrack->{'metadata'}{'altColor'},
     };
 
     $self->draw_wiggle($plot_conf, $features);
 
-    my $subtitle_colour = $subtrack->{'metadata'}{'color'} || $plot_conf->{'colour'};
+    my $subtitle_colour = $plot_conf->{'colour'};
     my $subtitle = {
                     'text'    => $subtrack->{'metadata'}{'name'},
                     'colour'  => $self->make_readable($subtitle_colour),
