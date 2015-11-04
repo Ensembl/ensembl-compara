@@ -97,7 +97,7 @@ sub _render {
     return 1;
   }
 
-  $self->{'my_config'}->set('height', 60);
+  $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
   $self->{'my_config'}->set('bumped', 0);
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
 
@@ -151,7 +151,7 @@ sub _get_min_max {
     foreach (@$features) {
       next unless $_->{'score'};
       $min = $_->{'score'} if !$min || $_->{'score'} < $min;
-      $max = $_->{'score'} if !$max || $_->{'score'} > $min;
+      $max = $_->{'score'} if !$max || $_->{'score'} > $max;
     }
   }
   return ($min, $max);
