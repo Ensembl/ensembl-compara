@@ -1415,6 +1415,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         extra.mark.w = extra.mark.w - this.locationMarkingArea.l + extra.mark.x;
         extra.mark.x = this.locationMarkingArea.l;
       }
+
+      if (extra.mark.w <= 0) {
+        delete extra.mark;
+      }
     }
 
     return extra;
