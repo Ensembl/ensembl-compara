@@ -488,8 +488,8 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
                 -parameters => {
                     'description'   => q{filter_duplicates / axtChain won't work if there are too many blocks},
-                    'query'         => 'SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = #method_link_species_set_id#',
-                    'expected_size' => '< 10000000',
+                    'query'         => 'SELECT COUNT(*) AS cnt FROM genomic_align_block WHERE method_link_species_set_id = #method_link_species_set_id# GROUP BY 1+1 HAVING cnt > #max_blocks#',
+                    'max_blocks'    => 10000000,
                 },
                 -flow_into  => [ 'update_max_alignment_length_before_FD' ],
             },
