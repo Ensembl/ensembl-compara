@@ -113,30 +113,29 @@ sub create_glyphs {
     }
 
     ## Draw axes and their numerical labels
-    if (!$track_config->get('no_axis')) {
+    unless ($track_config->get('no_axis')) {
       $self->draw_axes($top, $line_px, $bottom, $slice_width);
-    }
+      if ($track_config->get('axis_label') ne 'off') {
+        $self->draw_score($top, $max_score);
+        $self->draw_score($bottom, $min_score);
 
-    if ($track_config->get('axis_label') ne 'off') {
-      $self->draw_score($top, $max_score);
-      $self->draw_score($bottom, $min_score);
-
-      ## Shift down the lhs label to between the axes
-      my $label_y_offset;
-      if ($bottom - $top > 30) {
-        ## luxurious space for centred label
-        $label_y_offset =  ($bottom - $top) / 2;  # half-way-between 
-        ## graph is offset further if subtitled
-        if ($track_config->get('wiggle_subtitle')) {
-          ## two-line label so centre its centre
-          $label_y_offset += $self->subtitle_height - 16;                        
+        ## Shift down the lhs label to between the axes
+        my $label_y_offset;
+        if ($bottom - $top > 30) {
+          ## luxurious space for centred label
+          $label_y_offset =  ($bottom - $top) / 2;  # half-way-between 
+          ## graph is offset further if subtitled
+          if ($track_config->get('wiggle_subtitle')) {
+            ## two-line label so centre its centre
+            $label_y_offset += $self->subtitle_height - 16;                        
+          }
+        } else {
+          ## tight, just squeeze it down a little
+          $label_y_offset = 0;
         }
-      } else {
-        ## tight, just squeeze it down a little
-        $label_y_offset = 0;
+        ## Put this into track_config, so it can be passed back to GlyphSet
+        $track_config->set('label_y_offset', $label_y_offset);
       }
-      ## Put this into track_config, so it can be passed back to GlyphSet
-      $track_config->set('label_y_offset', $label_y_offset);
     }
 
     ## Horizontal guidelines at 25% intervals
