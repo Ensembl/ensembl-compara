@@ -692,6 +692,8 @@ sub _export_image {
     
     my $path = $image->render($format);
     $hub->param('file', $path);
+
+    return 1;
   }
   
   return 0;
