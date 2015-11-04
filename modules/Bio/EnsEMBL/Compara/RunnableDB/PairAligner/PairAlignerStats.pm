@@ -206,7 +206,7 @@ sub dump_bed_file {
     #Need assembly
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_registry_name($species);
     my $assembly = $genome_db->assembly;
-    my $name = $genome_db->name; #get production_name
+    my $name = $genome_db->_get_unique_name; #get production_name
     
     #Check if file already exists
     my $genome_bed_file = $self->param('bed_dir') ."/" . $name . "." . $assembly . "." . "genome.bed";
@@ -305,7 +305,7 @@ sub store_mlss_tag_block_size {
 #
 sub calc_stats {
     my ($self, $dbc_url, $genome_db, $genome_bed) = @_;
-    my $species = $genome_db->name;
+    my $species = $genome_db->_get_unique_name;
     my $assembly_name = $genome_db->assembly;
 
     my $compara_url = $self->compara_dba->dbc->url;
