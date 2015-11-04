@@ -136,7 +136,7 @@ sub convert_to_gradient {
   ## Default to black
   $score = 1000 unless defined($score);
 
-  my @gradient = $colour ? $self->_create_gradient(['white', $colour]) : @{$self->{'greyscale'}||[]};
+  my @gradient = $colour ? $self->create_gradient(['white', $colour]) : @{$self->{'greyscale'}||[]};
 
   my $value;
   if ($score <= 166) {
@@ -149,7 +149,7 @@ sub convert_to_gradient {
   return $value; 
 }
 
-sub _create_gradient {
+sub create_gradient {
 ### Simple wrapper around colourmap function. Parameters are optional, as the method
 ### defaults to a 10-step greyscale
 ### @param colours ArrayRef (optional) - at least two colours to mix
