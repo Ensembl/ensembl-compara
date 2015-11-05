@@ -365,7 +365,7 @@ sub maybe_generate_sprite {
   $style = 'style="'.join(';',map { "$_: $styles{$_}" } keys %styles).'"' if %styles;
   my $classes = '';
   $classes = join(' ',@classes) if @classes;
-  return qq(<img src='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>' class="autosprite-src-$s_t $classes" $style $more_attrs/>);
+  return qq(<img src='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' class="autosprite-src-$s_t $classes" $style $more_attrs/>);
   return qq(<img src='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>' class="autosprite-src-$s_t autosprite-$hash $classes" $style $more_attrs/>);
 }
 
