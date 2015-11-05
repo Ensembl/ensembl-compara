@@ -32,7 +32,6 @@ sub init {
   my $prefetch      = $species_defs->get_config('ENSEMBL_PREFETCH_URIS');
 
   $self->{'_prefetch_uris'} = [];
-  warn "A\n";
   foreach my $uri (@{$prefetch->{'images'}}) {
     push @{$self->{'_prefetch_uris'}}, $uri;
   }
