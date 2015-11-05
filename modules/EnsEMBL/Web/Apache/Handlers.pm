@@ -49,6 +49,8 @@ use EnsEMBL::Web::Apache::DasHandler;
 use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
 
+use Preload;
+
 our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
 our $MEMD         = EnsEMBL::Web::Cache->new;
 
