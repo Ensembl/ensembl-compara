@@ -140,6 +140,7 @@ sub fetch_all_by_Member {
   my $constraint = 'hm.seq_member_id = ?';
 
   if (defined $method_link_species_set) {
+    return [] unless scalar(@$method_link_species_set);
     $constraint .= sprintf(' AND h.method_link_species_set_id IN (%s)', join(',', @$method_link_species_set));
   }
 
