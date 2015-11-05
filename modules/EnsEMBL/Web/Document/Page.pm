@@ -444,7 +444,10 @@ sub render_HTML {
   }
   
   $r->content_type('text/html; charset=utf-8') unless $r->content_type;
-  $content = generate_sprites($self->hub->species_defs,$content);
+  my $ie = $self->hub->ie_version;
+  unless($ie and $ie < 8) {
+    $content = generate_sprites($self->hub->species_defs,$content);
+  }
 
   print  $content;
   return $content;
