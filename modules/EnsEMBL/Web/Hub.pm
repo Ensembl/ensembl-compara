@@ -938,4 +938,9 @@ sub source_url {
   return undef;
 }
 
+sub ie_version {
+  return 0 unless $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
+  return $1;
+}
+
 1;

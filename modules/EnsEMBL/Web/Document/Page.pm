@@ -475,7 +475,8 @@ sub html_template {
   $self->set_doc_type('HTML',  '5');
   $self->add_body_attr('id',    'ensembl-webpage');
   $self->add_body_attr('class', 'mac')                               if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
-  $self->add_body_attr('class', "ie ie$1" . ($1 < 8 ? ' ie67' : '')) if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 <  9;
+  my $ie = $self->hub->ie_version;
+  $self->add_body_attr('class', "ie ie$ie" . ($ie < 8 ? ' ie67' : '')) if $ie and $ie < 9;
   $self->add_body_attr('class', "ienew ie$1")                        if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 >= 9;
   $self->add_body_attr('class', 'no_tabs')                           unless $elements->{'tabs'};
   $self->add_body_attr('class', 'static')                            if $self->isa('EnsEMBL::Web::Document::Page::Static');
