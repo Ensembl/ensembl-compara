@@ -138,7 +138,6 @@ sub fetch_all_by_Member {
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint = 'hm.seq_member_id = ?';
-  $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
   if (defined $method_link_species_set) {
     $constraint .= sprintf(' AND h.method_link_species_set_id IN (%s)', join(',', @$method_link_species_set));
@@ -155,6 +154,7 @@ sub fetch_all_by_Member {
   # homology object
   $self->{'_this_one_first'} = $seq_member_id;
 
+  $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
   my $homologies = $self->generic_fetch($constraint, $join);
 
   if (defined $method_link_type) {
