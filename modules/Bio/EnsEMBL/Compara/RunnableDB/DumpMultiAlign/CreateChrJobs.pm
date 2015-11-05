@@ -120,7 +120,7 @@ sub write_output {
 	    #used in downstream analyses 
 	    my $output_ids = {
                 region_name     => $tag.$name,
-                filename_suffix => $chunk,
+                filename_suffix => "_$chunk",
                 extra_args      => ['--seq_region', $name, '--chunk_num', $chunk],
                 num_blocks      => $this_num_blocks,
             };
