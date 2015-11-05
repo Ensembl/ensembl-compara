@@ -78,11 +78,12 @@ sub get_files_from_dir {
   foreach my $htdocs_dir (grep { !m/biomart/ && -d "$_/$dir" } reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS || []}) {
     foreach my $file (@{list_dir_contents("$htdocs_dir/$dir",{recursive=>1})}) {
       my $path = "$htdocs_dir/$dir/$file";
+      next if $path =~ m!/minified/!;
       push @files,$path if grep { $file =~ /\.$_$/ } @types;
     }
   }
 
-  return \@files;
+  return sort \@files;
 }
 
 ###################################################
@@ -207,6 +208,7 @@ sub _merge_files {
   }
 
   my $filename  = md5_hex($combined);
+
   my $ext = $type;
   $ext = 'image.css' if $type eq 'image';
   $ext = 'ie7.css' if $type eq 'ie7css';
@@ -214,8 +216,8 @@ sub _merge_files {
   my $abs_path  = sprintf '%s%s', $species_defs->ENSEMBL_DOCROOT, $url_path;
 
   # create and save the minified file if it doesn't already exist there
-  if($type ne 'image') {
-    unless(-e $abs_path) {
+  unless(-e $abs_path) {
+    if($type ne 'image') {
       my @out;
       foreach my $c (@contents) {
         my $data = '';
@@ -226,12 +228,12 @@ sub _merge_files {
         push @out,$data;
       }
       file_put_contents($abs_path,@out);
+    } elsif($self->name eq 'components') {
+      my $files = join("\n",map { $_->{'not_minified'} } @contents);
+      my @files = grep { /\S/ } split("\n",$files);
+      my $css = Image::Minifier::minify($species_defs,join("\n",@files));
+      file_put_contents($abs_path,$css);
     }
-  } elsif($self->name eq 'components') {
-    my $files = join("\n",map { $_->{'not_minified'} } @contents);
-    my @files = grep { /\S/ } split("\n",$files);
-    my $css = Image::Minifier::minify($species_defs,join("\n",@files));
-    file_put_contents($abs_path,$css);
   }
 
   return $url_path;
@@ -272,6 +274,7 @@ package EnsEMBL::Web::Tools::DHTMLmerge::File;
 use strict;
 use warnings;
 
+use Digest::MD5 qw(md5_hex);
 use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
@@ -308,7 +311,12 @@ sub get_contents {
   my ($self, $species_defs, $type) = @_;
 
   if($type eq 'image') {
-    return "$self->{'url_path'}\t$self->{'absolute_path'}\n";
+    open(my $file,$self->{'absolute_path'}) || return "";
+    my $data = '';
+    { local $/ = undef; $data = <$file>; }
+    close $file;
+    my $hex = md5_hex($data);
+    return "$self->{'url_path'}\t$self->{'absolute_path'}\t$hex\n";
   }
 
   my $content = file_get_contents($self->{'absolute_path'});
