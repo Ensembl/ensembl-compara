@@ -28,6 +28,25 @@ my @OK_STYLES = qw(
 );
 my @OK_ATTRS = qw(onClick);
 
+sub kit_complete {
+  my ($effect) = @_;
+
+  my @required = (
+    ['identify --version','ImageMagick'],
+    ['convert --version','ImageMagick'],
+    ['pngcrush -version','uses libpng'],
+  );
+  foreach my $r (@required) {
+    my ($exe,$grep) = @$r;
+    my $out = qx($exe 2>&1) || '';
+    unless($out =~ /$grep/) {
+      warn "$effect: '$exe' failed. Falling back\n" if $effect;
+      return 0;
+    }
+  }
+  return 1;
+}
+
 sub hex_for {
   return substr(md5_hex($_[0]),0,16);
 }
@@ -134,6 +153,8 @@ sub build_conf {
 sub minify {
   my ($species_defs,$paths) = @_;
 
+  return if $SiteDefs::ENSEMBL_DEBUG_IMAGES;
+  return if !kit_complete('not building sprite page');
   my @prefetch;
   my $conf = build_conf();
   open(LOG,'>>',$SiteDefs::ENSEMBL_LOGDIR.'/image-minify.log');
@@ -372,6 +393,7 @@ sub generate_sprites {
   my ($species_defs,$content) = @_;
 
   return $content if $SiteDefs::ENSEMBL_DEBUG_IMAGES;
+  return $content if !kit_complete();
   my $root = $species_defs->ENSEMBL_DOCROOT.'/'.$species_defs->ENSEMBL_MINIFIED_FILES_PATH;
   my $valid_sprites = $species_defs->get_config(undef,'ENSEMBL_SPRITES');
 
@@ -407,7 +429,6 @@ sub data_url_convert {
   return undef unless -e $tmp;
   my $data = file_get_contents($tmp);
   unlink $tmp;
-  warn "$url ".length($data)."\n";
   return undef if length($data) > 2048;
   my $base64 = encode_base64($data,'');
   my $mime = $url;
@@ -430,6 +451,7 @@ sub data_url {
   my ($species_defs,$content) = @_;
 
   return $content if $SiteDefs::ENSEMBL_DEBUG_IMAGES;
+  return $content if !kit_complete('not building data URIs');
   my $root = $species_defs->ENSEMBL_DOCROOT;
   $content =~ s!background-image:\s*url\(([^\)]+)\);?!data_url_convert_try('background-image','','',$species_defs,$1)!ge;
   $content =~ s!list-style-image:\s*url\(([^\)]+)\);?!data_url_convert_try('list-style-image','','',$species_defs,$1)!ge;

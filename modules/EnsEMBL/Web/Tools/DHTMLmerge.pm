@@ -259,7 +259,7 @@ sub _minify_content {
     ? join ' ', $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/compiler.jar", '--js', $tmp_filename, '--compilation_level', 'SIMPLE_OPTIMIZATIONS', '--warning_level', 'QUIET'
     : join ' ', $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/yuicompressor-2.4.7.jar", '--type', 'css', $tmp_filename;
   my $compressed = `$jar`;
-  unless($type eq 'ie7css') {
+  if($type eq 'css') {
     $compressed = Image::Minifier::data_url($species_defs,$compressed);
   }
   $compressed = $type eq 'js' ? JavaScript::Minifier::minify('input' => $compressed) : CSS::Minifier::minify('input' => $compressed);
