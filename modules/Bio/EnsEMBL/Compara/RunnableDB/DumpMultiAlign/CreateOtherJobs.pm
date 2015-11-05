@@ -160,7 +160,7 @@ sub write_output {
                              'region_name'           =>  $region_name,
                              'start'                 =>  $start_gab_id,
                              'end'                   =>  $end_gab_id,
-                             'filename_suffix'       =>  $chunk,
+                             'filename_suffix'       =>  "_$chunk",
                              'extra_args'            =>  [@$extra_args, '--chunk_num', $chunk],
                              'num_blocks'            =>  $this_num_blocks,
                             };
