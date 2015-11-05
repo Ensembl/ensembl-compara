@@ -46,7 +46,20 @@ sub init {
 sub content {
   my $self = shift;
 
-  return join '', map sprintf(qq(<link rel="stylesheet" type="text/css" media="all" href="%s%s" />\n), $_ =~ /^\// ? $self->static_server : '', $_), @{$self->{'_sheets'} || []};
+  my @all;
+  foreach my $s (@{$self->{'_sheets'}||[]}) {
+    my $base = '';
+    $base = $self->static_server if $s =~ /^\//;
+    my $url = "$base$s";
+    my $ieu = $url;
+    $ieu =~ s/\.css$/.ie7.css/;
+    my $link = qq(<link rel="stylesheet" type="text/css" media="all");
+    push @all,qq(<!--[if lte IE 7]>$link href="$ieu"/><![endif]-->);
+    push @all,qq(<!--[if gt IE 7]>$link href="$url"/><![endif]-->);
+    push @all,qq(<!--[if !IE]><!-->$link href="$url"/><!--<![endif]-->);
+  }
+  return join('',@all);
+
 }
 
 sub add_sheet {
