@@ -6,7 +6,10 @@ $(function() {
 
   function blip() {
     if(i>=prefetch.length) { return; }
-    $.get(prefetch[i]);
+    var img = $('<img/>').attr({
+      'src': prefetch[i],
+      'style': 'display: none'
+    }).appendTo($('body'));
     i++;
     setTimeout(blip,1000);
   }
