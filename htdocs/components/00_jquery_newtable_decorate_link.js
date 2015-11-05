@@ -20,17 +20,24 @@
       var rseries = {};
       $.each(series,function(i,v) { rseries[v] = i; });
 
+      if (extras['*'] && extras['*'].base_url) {
+        if (extras['*'].base_url.match(/\?/)) {
+          extras['*'].query = (function (url) {
+            var p = {};
+            $.each(url.split('?')[1].split(/\;|\&/), function (i,v) { v = v.split('='); p[v[0]] = v[1]; });
+            return p;
+          })(extras['*'].base_url);
+          extras['*'].base_url = extras['*'].base_url.split(/\?/)[0];
+        }
+      }
+
       return function(html,row) {
         if (!extras['*'] || !extras['*'].base_url) {
           return html;
         }
         var url = extras['*'].base_url;
-        var params = (extras['*'].params || {});
-        var extra = url.match(/\?/) ? (function () {
-          var p = {};
-          $.each(url.split('?')[1].split(/\;|\&/), function (i,v) { v = v.split('='); p[v[0]] = v[1]; });
-          return p;
-        })(url) : {};
+        var params = extras['*'].params || {};
+        var query = extras['*'].query || {};
         var ok = true;
         for(var k in params) {
           if(!params.hasOwnProperty(k)) { continue; }
@@ -40,9 +47,9 @@
             ok = false;
           } else {
             if (val === false) {
-              delete extra[k];
+              delete query[k];
             } else {
-              extra[k] = encodeURIComponent(val);
+              query[k] = encodeURIComponent(val);
             }
           }
         }
@@ -50,7 +57,7 @@
         url = (function(base, params) {
           params = $.map(params, function(v,i) { return i + '=' + v }).sort().join(';');
           return params ? base + '?' + params : base;
-        })(url.split(/\?/)[0], extra);
+        })(url, query);
 
         if(html.match(/<a/)) {
           html = html.replace(/href="/g,'href="'+url);
