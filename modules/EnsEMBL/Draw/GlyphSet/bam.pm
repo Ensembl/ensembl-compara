@@ -164,6 +164,58 @@ sub _render_coverage {
 
 sub _render_reads {
 ### Draw the reads subtrack, using Style modules
+  my $self = shift;
+
+  ## Establish defaults
+  my $max_depth   = $self->my_config('max_depth') || 50;
+  my $pix_per_bp  = $self->scalex; # pixels per base pair
+  my $slice       = $self->{'container'};
+  my $slicestart  = $slice->start;
+  my $sliceend    = $slice->end;
+  my $slicelength = $slice->length;
+  my $slicestrand = $slice->strand;
+  my $read_colour = $self->my_colour('read');
+
+  my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$self->features} ];
+
+  my $features = pre_filter_depth($fs, $max_depth, $pix_per_bp, $slice->start, $slice->end);
+  $features = [reverse @$features] if $slice->strand == -1;
+
+  my $data = {'features' => [], 'metadata' => {}};
+
+  foreach my $f (@$features) {
+    my $fstart = $f->start;
+    my $fend = $f->end;
+
+    next unless $fstart and $fend;
+
+    ## Munge coordinates
+    my $start = $slicestrand == -1 ? $sliceend - $fend   + 1 : $fstart - $slicestart;
+    my $end   = $slicestrand == -1 ? $sliceend - $fstart + 1 : $fend   - $slicestart;
+
+    $start = 0 if $start < 0;
+    $end = 0 if $end < 0;
+    $end = $slicelength if $end > $slicelength;
+  
+    my $hash = {
+                'start'   => $start,
+                'end'     => $end,
+                'colour'  => $read_colour,
+                };
+
+    push @{$data->{'features'}}, $hash;
+  }
+
+  ## Draw read track
+  my %config      = %{$self->track_style_config};
+  my $style_class = 'EnsEMBL::Draw::Style::Plot::Reads';
+  if ($self->dynamic_use($style_class)) {
+    my $style = $style_class->new(\%config, [$data]);
+    $self->push($style->create_glyphs);
+  }
+
+  ## Everything went OK, so no error to return
+  return 0;
 }
 
 sub _render {
