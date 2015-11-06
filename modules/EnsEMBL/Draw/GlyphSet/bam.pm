@@ -31,7 +31,7 @@ use strict;
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Bio::EnsEMBL::IO::Adaptor::BAMAdaptor;
 
-use parent qw(EnsEMBL::Draw::GlyphSet::sequence);
+use parent qw(EnsEMBL::Draw::GlyphSet);
 
 sub can_json { return 1; }
 
@@ -197,7 +197,16 @@ sub _render {
     die unless $@ eq "alarm\n"; # propagate unexpected errors
     # timed-out
     $self->reset;
-    $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout}sec)");
+    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout}sec)");
+  }
+}
+
+sub reset {
+### Delete glyphs and reset parameters if the calls time out
+  my ($self) = @_;
+  $self->{'glyphs'} = [];
+  foreach (qw(x y width minx miny maxx maxy bumped)) {
+      delete $self->{$_};
   }
 }
 
