@@ -127,7 +127,7 @@ sub create_glyphs {
           ## graph is offset further if subtitled
           if ($track_config->get('wiggle_subtitle')) {
             ## two-line label so centre its centre
-            $label_y_offset += $self->subtitle_height - 16;                        
+            $label_y_offset -= 1;                        
           }
         } else {
           ## tight, just squeeze it down a little
@@ -167,20 +167,20 @@ sub create_glyphs {
       alt_colour    => $subtrack->{'metadata'}{'altColor'},
     };
 
-    my $subtitle_colour = $plot_conf->{'colour'};
-    my $subtitle_y      = $top + 8;
-    my $subtitle = {
-                    'text'    => $subtrack->{'metadata'}{'name'},
-                    'colour'  => $self->make_readable($subtitle_colour),
-                    'y'       => $top + 8,
-                    };
-
-    ## Shift the graph down a little if we're drawing an in-track label
-    if ($subtrack->{'metadata'}{'name'}) {
-      $plot_conf->{'y_offset'} = $subtitle_y + 12;
+    ## Draw title over track
+    if ($subtrack->{'metadata'}{'name'} && !$track_config->get('hide_subtitle')) {
+      my $subtitle_colour = $plot_conf->{'colour'};
+      my $subtitle_y      = $top;
+      $subtitle_y        += defined($track_config->get('subtitle_y')) ? $track_config->get('subtitle_y') : 8;
+      my $subtitle = {
+                      'text'    => $subtrack->{'metadata'}{'name'},
+                      'colour'  => $self->make_readable($subtitle_colour),
+                      'y'       => $subtitle_y,
+                      };
+      $self->draw_subtitle($subtitle);
     }
 
-    ## Determine absolute positioning
+    ## Determine absolute positioning for graph
     $plot_conf->{'absolute_xy'} = {'absolutey' => 1};
     ## Absolutex is weird and finicky - some graphs won't show if it's even defined
     if ($track_config->get('absolutex') || $self->{'pix_per_bp'} < 1) {
@@ -188,7 +188,6 @@ sub create_glyphs {
     }
 
     $self->draw_wiggle($plot_conf, $features);
-    $self->draw_subtitle($subtitle);
   }
 
   return @{$self->glyphs||[]};
