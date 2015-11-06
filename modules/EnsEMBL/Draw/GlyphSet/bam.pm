@@ -31,7 +31,7 @@ use strict;
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Bio::EnsEMBL::IO::Adaptor::BAMAdaptor;
 
-use parent qw(EnsEMBL::Draw::GlyphSet);
+use parent qw(EnsEMBL::Draw::GlyphSet::sequence);
 
 sub can_json { return 1; }
 
@@ -80,16 +80,15 @@ sub _render_coverage {
 
   ## Some useful stuff, mainly to do with rendering differently at different scales
   my $slice       = $self->{'container'};
+  my $slice_start = $slice->start;
   my $smax        = 100; ## Cutoff for values
   my $scale       = 3;
   my $pix_per_bp  = $self->scalex;
 
-  ## Munge into a format suitable for the Style module
-  my $show_consensus = $self->{'my_config'}->get('show_consensus');
-
-  my @consensus;
-  if ($pix_per_bp > 1 && $show_consensus) {
-    @consensus = @{$self->consensus_features};
+  my $consensus;
+  if ($pix_per_bp > 1) {
+    $consensus = $self->consensus_features;
+    $self->{'my_config'}->set('label_overlay', 1);
   }
 
   ## Set some defaults for this graph
@@ -105,6 +104,7 @@ sub _render_coverage {
     $max = $max_score;
   }
 
+  ## Munge into a format suitable for the Style module
   my $data = {'features' => [], 'metadata' => {'max_score' => $max, 'min_score' => $min_score || 0}};
 
   my %config                = %{$self->track_style_config};
@@ -114,13 +114,14 @@ sub _render_coverage {
 
   foreach my $i (0..$#coverage) {
     my $cvrg = $coverage[$i];
-    my $cons = $consensus[$i];
+    my $cons = $consensus->{$slice_start + $i};
 
-    my $colour;
-    if ($pix_per_bp < 1 or !$show_consensus) {
+    my ($colour, $label);
+    if ($pix_per_bp < 1 || !$cons) {
       $colour =  $self->my_colour('consensus');
     } else {
-      $colour = $cons ? $self->my_colour(lc($cons->seqname)) : $self->my_colour('consensus');
+      $label  = $cons;
+      $colour = $self->my_colour(lc($cons));
     }
 
     my $start = $i + 1;
@@ -129,6 +130,7 @@ sub _render_coverage {
                 'start'   => $start,
                 'end'     => $start,
                 'score'   => $cvrg,
+                'label'   => $label,
                 'colour'  => $colour,
                 };
     
@@ -215,8 +217,18 @@ sub features {
 
 sub consensus_features {
   my $self = shift;
-  my $consensus_features = [];
-  return $consensus_features;
+  unless ($self->{_cache}->{consensus_features}) {
+    my $slice = $self->{'container'};
+    my $consensus = $self->bam_adaptor->fetch_consensus($slice->seq_region_name, $slice->start, $slice->end);
+    my $cons_lookup = {};
+    foreach (@$consensus) {
+      $cons_lookup->{$_->{'x'}} = $_->{'bp'};
+    }
+    #use Data::Dumper; warn ">>> CONSENSUS ".Dumper($consensus);
+    $self->{_cache}->{consensus_features} = $cons_lookup;
+  }
+
+  return $self->{_cache}->{consensus_features}; 
 }
 
 sub bam_adaptor {
@@ -388,7 +400,7 @@ sub calc_coverage {
     $lbin = $slength;
   }
 
-  warn "sample_size = $sample_size";
+  #warn "sample_size = $sample_size";
 
   my $coverage = $self->c_coverage($features, $sample_size, $lbin, $START);
      $coverage = [reverse @$coverage] if $slice->strand == -1;
