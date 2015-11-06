@@ -180,6 +180,12 @@ sub create_glyphs {
       $plot_conf->{'y_offset'} = $subtitle_y + 12;
     }
 
+    ## Determine absolute positioning
+    $plot_conf->{'absolute_xy'} = {
+                                    'absolutex' => 1,
+                                    'absolutey' => 1,
+                                  };
+
     $self->draw_wiggle($plot_conf, $features);
     $self->draw_subtitle($subtitle);
   }
