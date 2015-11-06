@@ -170,7 +170,7 @@ sub name {
 
 sub files {
   ## @return Arrayref of all the file objects
-  return shift->{'files'};
+  return shift->{'files'} || [];
 }
 
 sub minified_url_path {
