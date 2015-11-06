@@ -79,25 +79,25 @@ sub _render_coverage {
   return if $max == 0; ## nothing to show
 
   ## Some useful stuff, mainly to do with rendering differently at different scales
-  my $slice       = $self->{'container'};
-  my $slice_start = $slice->start;
-  my $smax        = 100; ## Cutoff for values
-  my $scale       = 3;
-  my $pix_per_bp  = $self->scalex;
+  my $slice         = $self->{'container'};
+  my $slice_start   = $slice->start;
+  my $smax          = 100; ## Cutoff for values
+  my $scale         = 3;
+  my $pix_per_bp    = $self->scalex;
 
+  ## Set some defaults for this graph
+  my $default_colour = $self->my_colour('consensus');
+  $self->{'my_config'}->set('axis_colour', $default_colour);
+  $self->{'my_config'}->set('height', int($smax/$scale));
+  $self->{'my_config'}->set('no_guidelines', 1);
+  $self->{'my_config'}->set('baseline_zero', 1);
+
+  ## Do we want to show the consensus base? (ACTG)
   my $consensus;
   if ($pix_per_bp > 1) {
     $consensus = $self->consensus_features;
     $self->{'my_config'}->set('label_overlay', 1);
   }
-
-  ## Set some defaults for this graph
-  my $subtitle = $self->{'my_config'}->get('short_name') || $self->{'my_config'}->get('name');
-  $self->{'my_config'}->set('wiggle_subtitle', $subtitle);
-  $self->{'my_config'}->set('height', int($smax/$scale));
-  $self->{'my_config'}->set('axis_colour', 'slategray');
-  $self->{'my_config'}->set('no_guidelines', 1);
-  $self->{'my_config'}->set('baseline_zero', 1);
 
   my ($min_score,$max_score);
   my $viewLimits = $self->my_config('viewLimits');
@@ -107,7 +107,14 @@ sub _render_coverage {
   }
 
   ## Munge into a format suitable for the Style module
-  my $data = {'features' => [], 'metadata' => {'max_score' => $max, 'min_score' => $min_score || 0}};
+  my $name = $self->{'my_config'}->get('short_name') || $self->{'my_config'}->get('name');
+  my $data = {'features' => [], 'metadata' => {
+                                                'name'      => $name,
+                                                'colour'    => $default_colour,
+                                                'max_score' => $max, 
+                                                'min_score' => $min_score || 0
+                                              }
+              };
 
   my %config                = %{$self->track_style_config};
   $config{'pix_per_score'}  = $smax / ($scale * $max); 
@@ -120,7 +127,7 @@ sub _render_coverage {
 
     my ($colour, $label);
     if ($pix_per_bp < 1 || !$cons) {
-      $colour =  $self->my_colour('consensus');
+      $colour =  $default_colour;
     } else {
       $label  = $cons;
       $colour = $self->my_colour(lc($cons));
