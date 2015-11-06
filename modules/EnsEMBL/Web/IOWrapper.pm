@@ -188,14 +188,18 @@ sub create_tracks {
 
     ## If we haven't done so already, grab all the metadata for this track
     my %metadata;
-    if (!keys %{$data->{$track_key}{'metadata'}||{}} && $parser->can('get_all_metadata')) {
-      %metadata = %{$parser->get_all_metadata};
-      $prioritise = 1 if $metadata{'priority'};
+    if (!keys %{$data->{$track_key}{'metadata'}||{}}) {
+      if ($parser->can('get_all_metadata')) {
+        %metadata = %{$parser->get_all_metadata};
+        $prioritise = 1 if $metadata{'priority'};
+      }
+ 
+      ## Add in any extra configuration provided by caller, which takes precedence over metadata
+      if (keys %{$extra_config||{}}) {
+        @metadata{keys %{$extra_config||{}}} = values %{$extra_config||{}};
+      }
+      $data->{$track_key}{'metadata'} = \%metadata;
     }
-    
-    ## Add in any extra configuration provided by caller, which takes precedence over metadata
-    @metadata{keys %{$extra_config||{}}} = values %{$extra_config||{}};
-    $data->{$track_key}{'metadata'} = \%metadata;
 
     my ($seqname, $start, $end) = $self->coords;
     ## Skip features that lie outside the current slice
