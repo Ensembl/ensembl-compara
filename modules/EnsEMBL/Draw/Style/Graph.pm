@@ -181,10 +181,11 @@ sub create_glyphs {
     }
 
     ## Determine absolute positioning
-    $plot_conf->{'absolute_xy'} = {
-                                    'absolutex' => $self->{'pix_per_bp'} < 1 ? 1 : 0,
-                                    'absolutey' => 1,
-                                  };
+    $plot_conf->{'absolute_xy'} = {'absolutey' => 1};
+    ## Absolutex is weird and finicky - some graphs won't show if it's even defined
+    if ($track_config->get('absolutex') || $self->{'pix_per_bp'} < 1) {
+      $plot_conf->{'absolute_xy'}{'absolutex'} = 1;
+    }
 
     $self->draw_wiggle($plot_conf, $features);
     $self->draw_subtitle($subtitle);
