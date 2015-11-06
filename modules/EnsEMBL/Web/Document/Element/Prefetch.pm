@@ -29,10 +29,10 @@ sub init {
   my $self          = shift;
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
-  my $prefetch      = $species_defs->get_config('ENSEMBL_PREFETCH_URIS');
 
+  my $config = Image::Minifier::load_config($species_defs);
   $self->{'_prefetch_uris'} = [];
-  foreach my $uri (@{$prefetch->{'images'}}) {
+  foreach my $uri (@{$config->{'prefetch'}}) {
     push @{$self->{'_prefetch_uris'}}, $uri;
   }
 }

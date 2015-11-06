@@ -11,6 +11,7 @@ our $VERSION = '0.01';
 
 use List::Util qw(max);
 use Digest::MD5 qw(md5_hex);
+use JSON qw(from_json);
 use YAML qw(LoadFile);
 use MIME::Base64;
 use SiteDefs;
@@ -276,12 +277,9 @@ sub minify {
       }
     }
   }
-  $species_defs->set_config('ENSEMBL_SPRITES',\%sprites);
-  $species_defs->set_config('ENSEMBL_PREFETCH_URIS',{ images => \@prefetch });
-  $species_defs->store;
 
   close LOG;
-  return $css;
+  return ($css,\%sprites,\@prefetch);
 }
 
 # XXX prune warns
@@ -389,15 +387,28 @@ sub maybe_generate_sprite {
   return qq(<img src='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' class="autosprite-src-$s_t $classes" $style $more_attrs/>);
 }
 
+sub load_config {
+  my ($species_defs) = @_;
+
+  my $docroot = $species_defs->ENSEMBL_DOCROOT;
+  my $root = "$docroot/".$species_defs->ENSEMBL_MINIFIED_FILES_PATH;
+  my $csses = $species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'image'};
+  my $map;
+  foreach my $css (@$csses) {
+    $map = $css->minified_url_path if $css->name eq 'components';
+  }
+  $map =~ s/\.css$/.map/;
+  return from_json(file_get_contents("$docroot/$map"));
+}
+
 sub generate_sprites {
   my ($species_defs,$content) = @_;
 
   return $content if $SiteDefs::ENSEMBL_DEBUG_IMAGES;
   return $content if !kit_complete();
-  my $root = $species_defs->ENSEMBL_DOCROOT.'/'.$species_defs->ENSEMBL_MINIFIED_FILES_PATH;
-  my $valid_sprites = $species_defs->get_config(undef,'ENSEMBL_SPRITES');
-
-  $content =~ s/<img([^>]+)>/maybe_generate_sprite($valid_sprites,$1)/ge;
+  my $config = load_config($species_defs);
+  my $sprites = $config->{'sprites'};
+  $content =~ s/<img([^>]+)>/maybe_generate_sprite($sprites,$1)/ge;
   return $content;
 }
 

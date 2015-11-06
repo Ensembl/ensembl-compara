@@ -97,10 +97,12 @@ use warnings;
 
 use B::Deparse;
 use Digest::MD5 qw(md5_hex);
+use JSON qw(to_json);
 use CSS::Minifier;
 use JavaScript::Minifier;
 use Image::Minifier;
 
+use EnsEMBL::Web::Utils::PluginInspector qw(get_all_plugins);
 use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents file_get_contents);
 use EnsEMBL::Web::Utils::FileSystem qw(create_path list_dir_contents);
 
@@ -190,6 +192,10 @@ sub condition {
   return 1;
 }
 
+sub _list_plugins {
+  return map { $_->{'path'} } @{get_all_plugins()};
+}
+
 sub _merge_files {
   ## @private
   my ($self, $species_defs, $type, $files) = @_;
@@ -207,7 +213,8 @@ sub _merge_files {
     $contents[-1]->{$key} .= "$content\n";
   }
 
-  my $filename  = md5_hex($combined);
+  my $plugin_list = join("\n",_list_plugins());
+  my $filename  = md5_hex($plugin_list.$combined);
 
   my $ext = $type;
   $ext = 'image.css' if $type eq 'image';
@@ -231,8 +238,12 @@ sub _merge_files {
     } elsif($self->name eq 'components') {
       my $files = join("\n",map { $_->{'not_minified'} } @contents);
       my @files = grep { /\S/ } split("\n",$files);
-      my $css = Image::Minifier::minify($species_defs,join("\n",@files));
+      my ($css,$sprites,$prefetch) =
+        Image::Minifier::minify($species_defs,join("\n",@files));
       file_put_contents($abs_path,$css);
+      my $map_path = $abs_path;
+      $map_path =~ s/\.css/\.map/;
+      file_put_contents($map_path,to_json({ sprites => $sprites, prefetch => $prefetch }));
     }
   }
 
