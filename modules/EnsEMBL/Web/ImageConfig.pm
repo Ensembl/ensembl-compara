@@ -1425,7 +1425,7 @@ sub _user_track_settings {
     $strand         = 'f';
     @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
   }
-  elsif ($style =~ /^(wiggle|WIG)$/) {
+  elsif (lc($format) eq 'wig' || $style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   }
