@@ -26,7 +26,6 @@ sub draw_wiggle {
   my ($self, $c, $features) = @_;
 
   my $use_points  = $c->{'graph_type'} && $c->{'graph_type'} eq 'points';
-  my $max_score   = $self->track_config->get('max_score');
   my $same_strand = $c->{'same_strand'};
 
   foreach my $f (@$features) {
@@ -46,20 +45,23 @@ sub draw_wiggle {
     my $end     = $f->{'end'};
     my $score   = $f->{'score'};
     my $href    = $f->{'href'};
-    my $height  = ($score - $c->{'line_score'}) * $c->{'pix_per_score'};
-    my $title   = sprintf('%.2f',$score);
+    my $height  = int(($score - $c->{'line_score'}) * $c->{'pix_per_score'});
+    $height     = $c->{'cutoff'} if $c->{'cutoff'} && $height > $c->{'cutoff'};
+    my $title   = $c->{'score_format'} ? sprintf($c->{'score_format'}, $score) : $score;
 
-    push @{$self->glyphs}, $self->Rect({
-                              y         => $c->{'line_px'} - max($height, 0),
-                              height    => $use_points ? 0 : abs $height,
-                              x         => $start - 1,
-                              width     => $end - $start + 1,
-                              absolutey => 1,
-                              colour    => $self->set_colour($c, $f) || $c->{'colour'},
-                              alpha     => $self->track_config->get('use_alpha') ? 0.5 : 0,
-                              title     => $self->track_config->get('no_titles') ? undef : $title,
-                              href      => $href,
-                           });
+    my $params = {
+                  y         => $c->{'line_px'} - max($height, 0),
+                  height    => $use_points ? 0 : abs $height,
+                  x         => $start - 1,
+                  width     => $end - $start + 1,
+                  colour    => $self->set_colour($c, $f) || $c->{'colour'},
+                  alpha     => $self->track_config->get('use_alpha') ? 0.5 : 0,
+                  title     => $self->track_config->get('no_titles') ? undef : $title,
+                  href      => $href,
+                  %{$c->{'absolute_xy'}},
+                };
+    #use Data::Dumper; warn Dumper($params);
+    push @{$self->glyphs}, $self->Rect($params);
   }
 }
 
