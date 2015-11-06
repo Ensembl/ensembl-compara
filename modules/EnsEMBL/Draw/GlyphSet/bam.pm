@@ -91,12 +91,14 @@ sub _render_coverage {
   $self->{'my_config'}->set('height', int($smax/$scale));
   $self->{'my_config'}->set('no_guidelines', 1);
   $self->{'my_config'}->set('baseline_zero', 1);
+  $self->{'my_config'}->set('subtitle_y', -4);
 
   ## Do we want to show the consensus base? (ACTG)
   my $consensus;
   if ($pix_per_bp > 1) {
     $consensus = $self->consensus_features;
     $self->{'my_config'}->set('label_overlay', 1);
+    $self->{'my_config'}->set('hide_subtitle', 1);
   }
 
   my ($min_score,$max_score);
