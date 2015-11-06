@@ -65,9 +65,6 @@ sub render_text {
   return '';
 }
 
-sub _render_caption {
-}
-
 sub _render_coverage {
 ### Draw the coverage subtrack, using Style modules
   my $self = shift;
