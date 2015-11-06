@@ -281,13 +281,13 @@ sub get_short_name {
 
 =head2 short_name
 
-  Description: DEPRECATED. GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e76
+  Description: DEPRECATED. GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e84
 
 =cut
 
 sub short_name {
   my $self = shift;
-  deprecate('GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e76');
+  deprecate('GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e84');
   return $self->get_short_name;
 }
 

@@ -122,13 +122,13 @@ sub fetch_all_by_GeneMember {
 
 =head2 fetch_all_by_gene_member_id
 
-  Description: DEPRECATED: fetch_all_by_gene_member_id() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() instead
+  Description: DEPRECATED: fetch_all_by_gene_member_id() is deprecated and will be removed in e84. Please use fetch_all_by_GeneMember() instead
 
 =cut
 
 sub fetch_all_by_gene_member_id {  ## DEPRECATED
     my ($self, $gene_member_id) = @_;
-    deprecate('fetch_all_by_gene_member_id() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() instead');
+    deprecate('fetch_all_by_gene_member_id() is deprecated and will be removed in e84. Please use fetch_all_by_GeneMember() instead');
     return $self->fetch_all_by_GeneMember($gene_member_id);
 }
 
@@ -137,14 +137,14 @@ sub fetch_all_by_gene_member_id {  ## DEPRECATED
 
 =head2 fetch_all_canonical_by_source_genome_db_id
 
-  Description: DEPRECATED: fetch_all_canonical_by_source_genome_db_id() is deprecated and will be removed in e79. Please use fetch_all_canonical_by_GenomeDB() instead
+  Description: DEPRECATED: fetch_all_canonical_by_source_genome_db_id() is deprecated and will be removed in e84. Please use fetch_all_canonical_by_GenomeDB() instead
 
 =cut
 
 sub fetch_all_canonical_by_source_genome_db_id {  ## DEPRECATED
     my ($self, $source_name, $genome_db_id) = @_;
 
-    deprecate('fetch_all_canonical_by_source_genome_db_id() is deprecated and will be removed in e79. Please use fetch_all_canonical_by_GenomeDB() instead');
+    deprecate('fetch_all_canonical_by_source_genome_db_id() is deprecated and will be removed in e84. Please use fetch_all_canonical_by_GenomeDB() instead');
     return $self->fetch_all_canonical_by_GenomeDB($genome_db_id, $source_name);
 }
 
@@ -208,7 +208,7 @@ sub fetch_canonical_for_gene_member_id {
 
 sub fetch_canonical_member_for_gene_member_id { ## DEPRECATED
   my $self = shift;
-  deprecate('SeqMemberAdaptor::fetch_canonical_member_for_gene_member_id() is deprecated and will be removed in e79. Please use fetch_canonical_for_gene_member_id() instead');
+  deprecate('SeqMemberAdaptor::fetch_canonical_member_for_gene_member_id() is deprecated and will be removed in e84. Please use fetch_canonical_for_gene_member_id() instead');
   return $self->fetch_canonical_for_gene_member_id(@_);
 }
 

@@ -263,14 +263,14 @@ sub source_name {
 
 =head2 chr_name
 
-               DEPRECATED (will be removed in e79). Get the chromosome name with dnafrag()->name() instead.
+               DEPRECATED (will be removed in e84). Get the chromosome name with dnafrag()->name() instead.
                Define the chromosome with dnafrag() or dnafrag_id().
 
 =cut
 
 sub chr_name {  # DEPRECATED
   my $self = shift;
-  deprecate('chr_name() is deprecated and will be removed in e79. Use dnafrag()->name() instead.');
+  deprecate('chr_name() is deprecated and will be removed in e84. Use dnafrag()->name() instead.');
   return undef unless $self->dnafrag_id();
   return $self->dnafrag()->name();
 }
@@ -278,39 +278,39 @@ sub chr_name {  # DEPRECATED
 
 =head2 chr_start
 
-  Description: DEPRECATED (will be removed in e79): Alias for dnafrag_start()
+  Description: DEPRECATED (will be removed in e84): Alias for dnafrag_start()
 
 =cut
 
 sub chr_start { ## DEPRECATED
   my $self = shift;
-  deprecate('chr_start() is deprecated and will be removed in e79. Use dnafrag_start() instead.');
+  deprecate('chr_start() is deprecated and will be removed in e84. Use dnafrag_start() instead.');
   return $self->dnafrag_start(@_);
 }
 
 
 =head2 chr_end
 
-  Description: DEPRECATED (will be removed in e79): Alias for dnafrag_end()
+  Description: DEPRECATED (will be removed in e84): Alias for dnafrag_end()
 
 =cut
 
 sub chr_end { ## DEPRECATED
   my $self = shift;
-  deprecate('chr_end() is deprecated and will be removed in e79. Use dnafrag_end() instead.');
+  deprecate('chr_end() is deprecated and will be removed in e84. Use dnafrag_end() instead.');
   return $self->dnafrag_end(@_);
 }
 
 
 =head2 chr_strand
 
-  Description: DEPRECATED (will be removed in e79): Alias for dnafrag_strand().
+  Description: DEPRECATED (will be removed in e84): Alias for dnafrag_strand().
 
 =cut
 
 sub chr_strand { ## DEPRECATED
   my $self = shift;
-  deprecate('chr_strand() is deprecated and will be removed in e79. Use dnafrag_strand() instead.');
+  deprecate('chr_strand() is deprecated and will be removed in e84. Use dnafrag_strand() instead.');
   return $self->dnafrag_strand(@_);
 }
 
@@ -421,7 +421,7 @@ sub toString {
 
 sub print_member {  ## DEPRECATED
     my $self = shift;
-    deprecate('$member->print_member() is deprecated and will be removed in e84. Use $member->toString() instead.');
+    deprecate('$member->print_member() is deprecated and will be removed in e86. Use $member->toString() instead.');
     print $self->toString, "\n";
 }
 

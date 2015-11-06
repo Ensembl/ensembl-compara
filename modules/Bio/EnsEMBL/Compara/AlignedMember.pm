@@ -419,7 +419,7 @@ sub alignment_string {
     if ($seq_type) {
         if ("$seq_type" eq '1') {
             $seq_type = 'exon_cased';
-            deprecate('AlignedMember::alignment_string(1) is deprecated, its support will end with e77. Please use AlignedMember::alignment_string("exon_cased") instead');
+            deprecate('AlignedMember::alignment_string(1) is deprecated, its support will end with e84. Please use AlignedMember::alignment_string("exon_cased") instead');
         }
         $key .= "_$seq_type";
 
@@ -445,14 +445,14 @@ sub alignment_string {
 
 sub alignment_string_bounded {  ## DEPRECATED
     my $self = shift;
-    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e79. Please use SeqMember::alignment_string("exon_bounded") instead');
+    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e84. Please use SeqMember::alignment_string("exon_bounded") instead');
     return $self->alignment_string('exon_bounded');
 }
 
 
 sub cdna_alignment_string { ## DEPRECATED
     my $self = shift;
-    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e79. Please use SeqMember::alignment_string("cds") instead');
+    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e84. Please use SeqMember::alignment_string("cds") instead');
     return $self->alignment_string('cds');
 }
 
