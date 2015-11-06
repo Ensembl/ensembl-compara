@@ -208,7 +208,7 @@ sub _render_reads {
 
   ## Draw read track
   my %config      = %{$self->track_style_config};
-  my $style_class = 'EnsEMBL::Draw::Style::Plot::Reads';
+  my $style_class = 'EnsEMBL::Draw::Style::Feature::Read';
   if ($self->dynamic_use($style_class)) {
     my $style = $style_class->new(\%config, [$data]);
     $self->push($style->create_glyphs);
