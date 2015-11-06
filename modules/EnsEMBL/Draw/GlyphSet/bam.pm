@@ -92,6 +92,8 @@ sub _render_coverage {
   }
 
   ## Set some defaults for this graph
+  my $subtitle = $self->{'my_config'}->get('short_name') || $self->{'my_config'}->get('name');
+  $self->{'my_config'}->set('wiggle_subtitle', $subtitle);
   $self->{'my_config'}->set('height', int($smax/$scale));
   $self->{'my_config'}->set('axis_colour', 'slategray');
   $self->{'my_config'}->set('no_guidelines', 1);
