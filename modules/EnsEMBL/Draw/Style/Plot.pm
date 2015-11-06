@@ -14,7 +14,7 @@ limitations under the License.
 package EnsEMBL::Draw::Style::Plot;
 
 =pod
-Renders a track as a Manhattan plot or continuous plot 
+Renders a track as a scatter plot, i.e. points arranged in two dimensions 
 This module expects data in the following format:
   $data = [
             {
@@ -32,7 +32,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-#use List::Util qw(min max);
 use POSIX qw(floor ceil);
 
 use parent qw(EnsEMBL::Draw::Style);
