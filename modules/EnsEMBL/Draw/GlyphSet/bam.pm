@@ -243,7 +243,6 @@ sub _render {
     if (!scalar(@{$self->features})) {
       $self->no_features;
     } else {
-      $self->_render_caption;
       warn "Rendering coverage";
       $self->_render_coverage if $options->{coverage};
       warn "Done rendering coverage";
