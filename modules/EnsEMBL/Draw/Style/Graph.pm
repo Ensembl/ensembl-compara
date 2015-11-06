@@ -165,7 +165,6 @@ sub create_glyphs {
       colour        => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
       colours       => $subtrack->{'metadata'}{'gradient'},
       alt_colour    => $subtrack->{'metadata'}{'altColor'},
-      label_overlay => $track_config->get('label_overlay'),
     };
 
     my $subtitle_colour = $plot_conf->{'colour'};
