@@ -157,7 +157,8 @@ sub _render_reads {
 }
 
 sub _render {
-### Decide if we can actually draw this track
+### Wrapper around the individual subtrack renderers, with lots of
+### error/timeout handling to cope with the large size of BAM files
   my ($self, $options) = @_;
 
   ## check threshold
