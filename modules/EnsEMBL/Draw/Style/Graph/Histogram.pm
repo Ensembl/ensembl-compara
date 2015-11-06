@@ -28,6 +28,11 @@ sub draw_wiggle {
   my $use_points  = $c->{'graph_type'} && $c->{'graph_type'} eq 'points';
   my $same_strand = $c->{'same_strand'};
 
+  ## How wide is each bar, in pixels? (needed for label overlay)
+  my $bar_width   = $self->image_config->container_width * $self->{'pix_per_bp'} / scalar(@$features);
+
+  use Data::Dumper;
+
   foreach my $f (@$features) {
 
     if (defined($f->{'strand'})) {
@@ -49,19 +54,48 @@ sub draw_wiggle {
     $height     = $c->{'cutoff'} if $c->{'cutoff'} && $height > $c->{'cutoff'};
     my $title   = $c->{'score_format'} ? sprintf($c->{'score_format'}, $score) : $score;
 
+    my $x     = $start - 1;
+    my $y     = $c->{'line_px'} - max($height, 0);
+    my $width = $end - $start + 1;
+
     my $params = {
-                  y         => $c->{'line_px'} - max($height, 0),
+                  x         => $x,
+                  y         => $y, 
+                  width     => $width,
                   height    => $use_points ? 0 : abs $height,
-                  x         => $start - 1,
-                  width     => $end - $start + 1,
                   colour    => $self->set_colour($c, $f) || $c->{'colour'},
                   alpha     => $self->track_config->get('use_alpha') ? 0.5 : 0,
                   title     => $self->track_config->get('no_titles') ? undef : $title,
                   href      => $href,
                   %{$c->{'absolute_xy'}},
                 };
-    #use Data::Dumper; warn Dumper($params);
+    #warn Dumper($params);
     push @{$self->glyphs}, $self->Rect($params);
+
+    ## Superimposed label - mainly for sequence
+    if ($self->track_config->get('label_overlay') && $f->{'label'}) {
+
+      ## Do we have space to draw the label?
+      my $text_info   = $self->get_text_info($feature->{'label'});
+
+      if ($text_info->{'width'} < $bar_width) {
+        ## Centre the text at the base of the bar
+        $x += (($bar_width - $text_info->{'width'}) / $self->{'pix_per_bp'}) / 2;
+        $y = $c->{'line_px'} - $self->{'font_size'} - 2;
+        my $text_params = {
+                            x         => $x,
+                            y         => $y,
+                            height    => $self->{'font_size'},
+                            text      => $f->{'label'},
+                            font      => $self->{'font_name'},
+                            ptsize    => $self->{'font_size'},
+                            colour    => $f->{'label_colour'} || 'black', 
+                            %{$c->{'absolute_xy'}},
+                          };
+        #warn ">>> TEXT PARAMS ".Dumper($text_params);
+        push @{$self->glyphs}, $self->Text($text_params);
+      }
+    }
   }
 }
 
