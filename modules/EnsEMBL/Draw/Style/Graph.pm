@@ -182,7 +182,7 @@ sub create_glyphs {
 
     ## Determine absolute positioning
     $plot_conf->{'absolute_xy'} = {
-                                    'absolutex' => 1,
+                                    'absolutex' => $self->{'pix_per_bp'} < 1 ? 1 : 0,
                                     'absolutey' => 1,
                                   };
 
