@@ -57,96 +57,13 @@ sub create_glyphs {
   my $self = shift;
 
   my $data            = $self->data;
-  my $image_config    = $self->image_config;
   my $track_config    = $self->track_config;
 
-  ## Set some track-wide variables
-  my $slice_width     = $image_config->container_width;
-  my $row_height      = $track_config->get('height') || 60;
-
   foreach my $subtrack (@$data) {
-    my $metadata        = $subtrack->{'metadata'} || {};
+    my $metadata = $subtrack->{'metadata'} || {};
 
-    ## LOTS OF POSITIONAL MATHS!
-
-    # max_score: score at top of y-axis on graph
-    # min_score: score at bottom of y-axis on graph
-    # range: scores spanned by graph (small value used if identically zero)
-    # pix_per_score: vertical pixels per unit score
-    my $min_score     = defined($metadata->{'min_score'}) 
-                          ? $metadata->{'min_score'} : $track_config->get('min_score');
-    my $max_score     = defined($metadata->{'max_score'}) 
-                          ? $metadata->{'max_score'} : $track_config->get('max_score');
-    my $baseline_zero = defined($metadata->{'baseline_zero'}) 
-                          ? $metadata->{'baseline_zero'} : $track_config->get('baseline_zero');
-    my $range = $max_score - $min_score;
-    if ($range < 0.01) {
-      ## Oh dear, data all has pretty much same value ...
-      if ($max_score > 0.01) {
-        ## ... but it's not zero, so just move minimum down
-        $min_score = 0;
-      } else {
-        ## ... just create some sky
-        $max_score = 0.1;
-      }
-    }
-    $min_score = 0 if $min_score >= 0 && $baseline_zero;
-    $range = $max_score - $min_score;
-    my $pix_per_score = $row_height/$range;
-
-    ## top: top of graph in pixel units, offset from track top (usu. 0)
-    ## line_score: value to draw "to" up/down, in score units (usu. 0)
-    ## line_px: value to draw "to" up/down, in pixel units (usu. 0)
-    ## bottom: bottom of graph in pixel units (usu. approx. pixel height)
-    my $top = $track_config->get('initial_offset') || 0;
-    ## Reset offset for subsequent tracks
-    unless ($track_config->get('multiwiggle')) {
-      $track_config->set('initial_offset', $top + $row_height + 20);
-    }
-    my $line_score = max(0, $min_score);
-    my $bottom = $top + $pix_per_score * $range;
-    my $line_px = $bottom - ($line_score - $min_score) * $pix_per_score;
-
-    ## Extra left-legend stuff
-    if ($track_config->get('labels')) {
-      $self->add_minilabel($top);
-    }
-
-    ## Draw axes and their numerical labels
-    unless ($track_config->get('no_axis')) {
-      $self->draw_axes($top, $line_px, $bottom, $slice_width);
-      if ($track_config->get('axis_label') ne 'off') {
-        $self->draw_score($top, $max_score);
-        $self->draw_score($bottom, $min_score);
-
-        ## Shift down the lhs label to between the axes
-        my $label_y_offset;
-        if ($bottom - $top > 30) {
-          ## luxurious space for centred label
-          $label_y_offset =  ($bottom - $top) / 2;  # half-way-between 
-          ## graph is offset further if subtitled
-          if ($track_config->get('wiggle_subtitle')) {
-            ## two-line label so centre its centre
-            $label_y_offset -= 1;                        
-          }
-        } else {
-          ## tight, just squeeze it down a little
-          $label_y_offset = 0;
-        }
-        ## Put this into track_config, so it can be passed back to GlyphSet
-        $track_config->set('label_y_offset', $label_y_offset);
-      }
-    }
-
-    ## Horizontal guidelines at 25% intervals
-    ## Note that we assume these settings will be the same for all tracks
-    if (!$track_config->get('no_axis') and !$track_config->get('no_guidelines')) {
-      foreach my $i (1..4) {
-        my $type;
-        $type = 'small' unless $i % 2;
-        $self->draw_guideline($slice_width, ($top * $i + $bottom * (4 - $i))/4, $type);
-      }
-    } 
+    ## Draw any axes, track labels, etc
+    my $graph_conf = $self->draw_graph_base($metadata);
 
     my $features = $subtrack->{'features'};
 
@@ -155,10 +72,10 @@ sub create_glyphs {
 
     ## Draw them! 
     my $plot_conf = {
-      line_score    => $line_score,
-      line_px       => $line_px,
-      pix_per_score => $pix_per_score,
-      max_score     => $max_score,
+      line_score    => $graph_conf->{'line_score'},
+      line_px       => $graph_conf->{'line_px'},
+      pix_per_score => $graph_conf->{'pix_per_score'},
+      max_score     => $graph_conf->{'max_score'},
       unit          => $subtrack->{'metadata'}{'unit'},
       graph_type    => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
       same_strand   => $track_config->get('same_strand'),
@@ -166,19 +83,6 @@ sub create_glyphs {
       colours       => $subtrack->{'metadata'}{'gradient'},
       alt_colour    => $subtrack->{'metadata'}{'altColor'},
     };
-
-    ## Draw title over track
-    if ($subtrack->{'metadata'}{'name'} && !$track_config->get('hide_subtitle')) {
-      my $subtitle_colour = $plot_conf->{'colour'};
-      my $subtitle_y      = $top;
-      $subtitle_y        += defined($track_config->get('subtitle_y')) ? $track_config->get('subtitle_y') : 8;
-      my $subtitle = {
-                      'text'    => $subtrack->{'metadata'}{'name'},
-                      'colour'  => $self->make_readable($subtitle_colour),
-                      'y'       => $subtitle_y,
-                      };
-      $self->draw_subtitle($subtitle);
-    }
 
     ## Determine absolute positioning for graph
     $plot_conf->{'absolute_xy'} = {'absolutey' => 1};
