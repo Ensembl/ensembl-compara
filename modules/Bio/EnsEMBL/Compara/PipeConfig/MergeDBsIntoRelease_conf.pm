@@ -78,7 +78,6 @@ sub default_options {
             'curr_rel_db'   => 'compara_curr',
 
             'master_db'     => 'compara_master',
-            'prev_rel_db'   => 'compara_prev',
 
             'protein_db'    => 'compara_ptrees',
             'ncrna_db'      => 'compara_nctrees',
@@ -87,9 +86,7 @@ sub default_options {
         },
 
         # From these databases, only copy these tables
-        # TODO: should be done by populate_new_database.pl
         'only_tables'       => {
-            'prev_rel_db'   => [qw(stable_id_history)],
             # Cannot be copied by populate_new_database because it doesn't contain the new mapping_session_ids yet
             'master_db'     => [qw(mapping_session)],
         },
@@ -307,7 +304,6 @@ sub pipeline_analyses {
             'ncrna_db'      => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
             'family_db'     => 'mysql://ensro@compara4/lg4_compara_families_71',
             'projection_db' => 'mysql://ensro@compara3/mm14_homology_projections_71',
-            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_70',
 
             #'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
             'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara3/mm14_test_final_db2',
@@ -315,7 +311,6 @@ sub pipeline_analyses {
         },
 
         'only_tables'       => {
-            'prev_rel_db'   => [qw(stable_id_history)],
             'master_db'     => [qw(mapping_session)],
         },
 
@@ -335,14 +330,12 @@ sub pipeline_analyses {
             'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
             'ncrna_db'      => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
             'family_db'     => 'mysql://ensro@compara4/lg4_compara_families_71',
-            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_70',
 
             'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
             'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         },
 
         'only_tables'       => {
-            'prev_rel_db'   => [qw(stable_id_history)],
             'master_db'     => [qw(mapping_session)],
         },
 
@@ -365,7 +358,6 @@ sub pipeline_analyses {
         },
 
         'only_tables'       => {
-            'prev_rel_db'   => [qw(stable_id_history)],
             'master_db'     => [qw(mapping_session)],
         },
 

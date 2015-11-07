@@ -324,6 +324,8 @@ copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs, $MT_only);
 
 
 if ($old_dba and !$skip_data) {
+## Copy all the stable ID mapping entries
+  copy_table($old_dba, $new_dba, "stable_id_history");
 ## Copy all the MethodLinkSpeciesSetTags for MethodLinkSpeciesSets
   copy_all_mlss_tags($old_dba, $new_dba, $all_default_method_link_species_sets);
 ## Copy all the SpecieTree entries
