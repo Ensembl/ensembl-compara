@@ -276,15 +276,15 @@ sub run {
                     next if $db2 le $db1;
                     # Do the intervals overlap ?
                     if ($is_string_type) {
-                        $bad = 1 if $min_max->{$db1}->[1] ge $min_max->{$db2}->[0] and $min_max->{$db2}->[1] ge $min_max->{$db1}->[0];
+                        $bad = [$db1,$db2] if ($min_max->{$db1}->[1] ge $min_max->{$db2}->[0]) and ($min_max->{$db2}->[1] ge $min_max->{$db1}->[0]);
                     } else {
-                        $bad = 1 if $min_max->{$db1}->[1] >= $min_max->{$db2}->[0] and $min_max->{$db2}->[1] >= $min_max->{$db1}->[0];
+                        $bad = [$db1,$db2] if ($min_max->{$db1}->[1] >= $min_max->{$db2}->[0]) and ($min_max->{$db2}->[1] >= $min_max->{$db1}->[0]);
                     }
                     # Is one interval in a "hole" ?
                     if ($bad) {
                         my ($c2_in_1) = $dbconnections->{$db1}->db_handle->selectrow_array($sql_overlap, undef, $min_max->{$db2}->[0], $min_max->{$db2}->[1]);
                         my ($c1_in_2) = $dbconnections->{$db2}->db_handle->selectrow_array($sql_overlap, undef, $min_max->{$db1}->[0], $min_max->{$db1}->[1]);
-                        $bad = 0 if ($c2_in_1 or $c1_in_2);
+                        $bad = 0 if !$c2_in_1 or !$c1_in_2;
                     }
                     last if $bad;
                 }
@@ -304,8 +304,8 @@ sub run {
                         my $value;
                         $sth->bind_columns(\$value);
                         while ($sth->fetch) {
-                            die sprintf(" -ERROR- for the key '%s.%s', the value '%s' is present in several copies\n", $table, $key, $value) if exists $all_values{$value};
-                            $all_values{$value} = 1
+                            die sprintf(" -ERROR- for the key '%s.%s', the value '%s' is present in '%s' and '%s'\n", $table, $key, $value, $db, $all_values{$value}) if exists $all_values{$value};
+                            $all_values{$value} = $db;
                         }
                     }
 
