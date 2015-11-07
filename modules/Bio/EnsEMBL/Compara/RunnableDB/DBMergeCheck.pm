@@ -36,9 +36,11 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 =head1 SYNOPSYS
 
 This Runnable needs the following parameters:
- - db_aliases: hash of 'db_alias' -> URL to connect to the database
- - curr_rel_name: alias of the target database
+ - src_db_aliases: list of database aliases (the databases to merge)
+ - curr_rel_db: alias of the target database
+All the above aliases must be resolvable via $self->param(...)
 
+ - master_tables: list of Compara tables that are populated by populate_new_database
  - production_tables: list of Compara production tables (should map ensembl-compara/sql/pipeline-tables.sql)
  - hive_tables: list of eHive tables (should map ensembl-hive/sql/tables.sql)
 
@@ -85,9 +87,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
 
-        # Special databases
-        'curr_rel_name'     => 'curr_rel_db',   # the target database
-
         # Static list of the main tables that must be ignored
         'master_tables'     => [qw(meta genome_db species_set species_set_header method_link method_link_species_set ncbi_taxa_node ncbi_taxa_name dnafrag)],
         # Static list of production tables that must be ignored
@@ -112,12 +111,11 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $db_aliases = $self->param_required('db_aliases');
+    my $src_db_aliases = $self->param_required('src_db_aliases');
     my $exclusive_tables = $self->param_required('exclusive_tables');
     my $ignored_tables = $self->param_required('ignored_tables');
-    my $curr_rel_name = $self->param('curr_rel_name');
 
-    my $dbconnections = { map {$_ => go_figure_dbc( $self->param_required($_) ) } @$db_aliases };
+    my $dbconnections = { map {$_ => go_figure_dbc( $self->param_required($_) ) } (@$src_db_aliases, 'curr_rel_db') };
 
     $self->param('dbconnections', $dbconnections);
 
@@ -135,7 +133,7 @@ sub fetch_input {
 
     # Gets the list of non-empty tables for each db
     my $table_size = {};
-    foreach my $db (@$db_aliases) {
+    foreach my $db (keys %$dbconnections) {
 
         # Production-only tables
         my @bad_tables_list = (@{$self->param('hive_tables')}, @{$self->param('production_tables')}, @{$self->param('master_tables')});
@@ -144,7 +142,7 @@ sub fetch_input {
         push @bad_tables_list, (grep {$exclusive_tables->{$_} ne $db} (keys %$exclusive_tables));
 
         # We want all the tables on the release database to detect production tables
-        my $extra = $db eq $curr_rel_name ? " IS NOT NULL " : " ";
+        my $extra = $db eq 'curr_rel_db' ? " IS NOT NULL " : " ";
 
         # We may want to ignore some more tables
         push @bad_tables_list, @{$ignored_tables->{$db}} if exists $ignored_tables->{$db};
@@ -194,16 +192,15 @@ sub _find_primary_key {
 sub run {
     my $self = shift @_;
 
-    my $curr_rel_name = $self->param('curr_rel_name');
     my $table_size = $self->param('table_size');
     my $exclusive_tables = $self->param('exclusive_tables');
     my $only_tables = $self->param_required('only_tables');
+    my $src_db_aliases = $self->param_required('src_db_aliases');
     my $dbconnections = $self->param('dbconnections');
 
     # Structures the information per table
     my $all_tables = {};
-    foreach my $db (keys %$dbconnections) {
-        next if $db eq $curr_rel_name;
+    foreach my $db (@{$src_db_aliases}) {
 
         my @ok_tables;
 
@@ -239,11 +236,11 @@ sub run {
     # We decide whether the table needs to be copied or merged (and if the IDs don't overlap)
     foreach my $table (keys %$all_tables) {
 
-        unless (exists $table_size->{$curr_rel_name}->{$table} or exists $exclusive_tables->{$table}) {
+        unless (exists $table_size->{'curr_rel_db'}->{$table} or exists $exclusive_tables->{$table}) {
             die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n";
         }
 
-        if (not $table_size->{$curr_rel_name}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
+        if (not $table_size->{'curr_rel_db'}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
 
             my $db = $all_tables->{$table}->[0];
 
@@ -257,7 +254,7 @@ sub run {
 
             # Multiple source -> merge (possibly with the target db)
             my @dbs = @{$all_tables->{$table}};
-            push @dbs, $curr_rel_name if $table_size->{$curr_rel_name}->{$table};
+            push @dbs, 'curr_rel_db' if $table_size->{'curr_rel_db'}->{$table};
             print "$table is merged from ", join(" and ", @dbs), "\n" if $self->debug;
 
             my $sql = "SELECT MIN($key), MAX($key), COUNT($key) FROM $table";
@@ -327,7 +324,6 @@ sub write_output {
     my $self = shift @_;
 
     my $table_size = $self->param('table_size');
-    my $curr_rel_name = $self->param('curr_rel_name');
     my $primary_keys = $self->param('primary_keys');
 
     # If in write_output, it means that there are no ID conflict. We can safely dataflow the copy / merge operations.
@@ -337,7 +333,7 @@ sub write_output {
     }
 
     while ( my ($table, $dbs) = each(%{$self->param('merge')}) ) {
-        my $n_total_rows = $table_size->{$curr_rel_name}->{$table} || 0;
+        my $n_total_rows = $table_size->{'curr_rel_db'}->{$table} || 0;
         my @inputlist = ();
         foreach my $db (@$dbs) {
             push @inputlist, [ "#$db#" ];

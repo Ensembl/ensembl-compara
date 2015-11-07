@@ -72,18 +72,16 @@ sub default_options {
 
         'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
 
-            # All the databases that have to be analyzed:
-        'urls'              => {
-            # This is the only mandatory entry name
-            'curr_rel_db'   => 'compara_curr',
-
+        # All the databases that have to be analyzed:
+        'src_db_aliases'    => {
             'master_db'     => 'compara_master',
-
             'protein_db'    => 'compara_ptrees',
             'ncrna_db'      => 'compara_nctrees',
             'family_db'     => 'compara_families',
             'projection_db' => 'mysql://ensro@compara5/lg4_homology_projections_'.$self->o('ensembl_release'),
         },
+        # The target database
+        'curr_rel_db'   => 'compara_curr',
 
         # From these databases, only copy these tables
         'only_tables'       => {
@@ -130,12 +128,13 @@ sub resource_classes {
 sub pipeline_wide_parameters {
     my $self = shift @_;
 
-    my $urls = $self->o('urls');
+    my $src_db_aliases = $self->o('src_db_aliases');
 
     return {
         %{$self->SUPER::pipeline_wide_parameters},
         # Trick to overcome the 2-step substitution of parameters (also used below in the "generate_job_list" analysis
-        ref($urls) ? %$urls : (),
+        ref($src_db_aliases) ? %$src_db_aliases : (),
+        'curr_rel_db'   => $self->o('curr_rel_db'),
     }
 }
 
@@ -180,7 +179,7 @@ sub pipeline_analyses {
                 'ignored_tables'    => $self->o('ignored_tables'),
                 'exclusive_tables'  => $self->o('exclusive_tables'),
                 'only_tables'       => $self->o('only_tables'),
-                'db_aliases'        => [ref($self->o('urls')) ? keys %{$self->o('urls')} : ()],
+                'src_db_aliases'    => [ref($self->o('src_db_aliases')) ? keys %{$self->o('src_db_aliases')} : ()],
             },
             -flow_into  => {
                 2      => [ 'copy_table'  ],
@@ -282,7 +281,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'extra_cmd_run',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
-                'db_conn'       => ref($self->o('urls')) ? $self->o('urls')->{'curr_rel_db'} : undef,
+                'db_conn'       => '#curr_rel_db#',
                 'input_file'    => '#sql_file#',
             },
         },
@@ -299,14 +298,11 @@ sub pipeline_analyses {
 
 =item If we have projection_db:
 
-        'urls'              => {
+        'src_db_aliases'    => {
             #'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
             'ncrna_db'      => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
             'family_db'     => 'mysql://ensro@compara4/lg4_compara_families_71',
             'projection_db' => 'mysql://ensro@compara3/mm14_homology_projections_71',
-
-            #'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
-            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara3/mm14_test_final_db2',
             'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         },
 
@@ -326,12 +322,10 @@ sub pipeline_analyses {
 
 =item If we don't have projection_db:
 
-        'urls'              => {
+        'src_db_aliases'    => {
             'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
             'ncrna_db'      => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
             'family_db'     => 'mysql://ensro@compara4/lg4_compara_families_71',
-
-            'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
             'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         },
 
@@ -349,11 +343,9 @@ sub pipeline_analyses {
 
 =item If we only have trees:
 
-        'urls'              => {
+        'src_db_aliases'    => {
             'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
             'ncrna_db'      => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
-
-            'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
             'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         },
 
@@ -370,7 +362,7 @@ sub pipeline_analyses {
 
 =item If we have genomic alignments:
 
-        'urls'              => {
+        'src_db_aliases'    => {
             'sf5_epo_low_8way_fish_71' => 'mysql://ensro@compara2/sf5_epo_low_8way_fish_71',
             'sf5_ggal_acar_lastz_71' => 'mysql://ensro@compara2/sf5_ggal_acar_lastz_71',
             'sf5_olat_onil_lastz_71' => 'mysql://ensro@compara2/sf5_olat_onil_lastz_71',
@@ -387,8 +379,6 @@ sub pipeline_analyses {
             'sf5_olat_gmor_lastz_71' => 'mysql://ensro@compara3/sf5_olat_gmor_lastz_71',
             'sf5_compara_epo_6way_71' => 'mysql://ensro@compara4/sf5_compara_epo_6way_71',
             'sf5_ggal_tgut_lastz_71' => 'mysql://ensro@compara4/sf5_ggal_tgut_lastz_71',
-
-            'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
             'master_db'     => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
         },
 
