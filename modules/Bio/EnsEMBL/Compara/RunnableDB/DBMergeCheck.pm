@@ -158,6 +158,7 @@ sub fetch_input {
     }
     print Dumper($table_size) if $self->debug;
     # WARNING: In InnoDB mode, table_rows is an approximation of the true number of rows
+    #          but we assume that the zeroness is correct
     $self->param('table_size', $table_size);
 }
 
@@ -262,7 +263,11 @@ sub run {
             my $sql = "SELECT MIN($key), MAX($key), COUNT($key) FROM $table";
             my $min_max = {map {$_ => $dbconnections->{$_}->db_handle->selectrow_arrayref($sql) } @dbs};
             my $bad = 0;
+            # Since the counts may not be accurate, we need to update the hash
             map { $table_size->{$_}->{$table} = $min_max->{$_}->[2] } @dbs;
+            # and re-filter the list of databases
+            @dbs = grep {$table_size->{$_}->{$table}} @dbs;
+
             my $sql_overlap = "SELECT COUNT(*) FROM $table WHERE $key BETWEEN ? AND ?";
 
             # min and max values must not overlap
@@ -309,7 +314,7 @@ sub run {
                 }
             }
             print " -INFO- ranges of the key '$key' are fine\n" if $self->debug;
-            $merge{$table} = $all_tables->{$table};
+            $merge{$table} = [grep {$table_size->{$_}->{$table}} @{ $all_tables->{$table} }];
 
         }
     }
