@@ -38,7 +38,6 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 This Runnable needs the following parameters:
  - db_aliases: hash of 'db_alias' -> URL to connect to the database
  - curr_rel_name: alias of the target database
- - master_name: alias of the master database
 
  - production_tables: list of Compara production tables (should map ensembl-compara/sql/pipeline-tables.sql)
  - hive_tables: list of eHive tables (should map ensembl-hive/sql/tables.sql)
@@ -88,9 +87,10 @@ sub param_defaults {
 
         # Special databases
         'curr_rel_name'     => 'curr_rel_db',   # the target database
-        'master_name'       => 'master_db',     # the master database (gives the list of tables that shouldn't be copied)
 
-        # Static list of tables that must be ignored
+        # Static list of the main tables that must be ignored
+        'master_tables'     => [qw(meta genome_db species_set species_set_header method_link method_link_species_set ncbi_taxa_node ncbi_taxa_name dnafrag)],
+        # Static list of production tables that must be ignored
         'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection)],
         'hive_tables'       => [qw(accu hive_meta analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message pipeline_wide_parameters role worker_resource_usage)],
 
@@ -138,7 +138,7 @@ sub fetch_input {
     foreach my $db (@$db_aliases) {
 
         # Production-only tables
-        my @bad_tables_list = (@{$self->param('hive_tables')}, @{$self->param('production_tables')});
+        my @bad_tables_list = (@{$self->param('hive_tables')}, @{$self->param('production_tables')}, @{$self->param('master_tables')});
 
         # We don't care about tables that are exclusive to another db
         push @bad_tables_list, (grep {$exclusive_tables->{$_} ne $db} (keys %$exclusive_tables));
@@ -194,7 +194,6 @@ sub run {
     my $self = shift @_;
 
     my $curr_rel_name = $self->param('curr_rel_name');
-    my $master_name = $self->param('master_name');
     my $table_size = $self->param('table_size');
     my $exclusive_tables = $self->param('exclusive_tables');
     my $only_tables = $self->param_required('only_tables');
@@ -217,11 +216,8 @@ sub run {
 
         } else {
 
-            # The master database is a reference: most of its tables are discarded
-            foreach my $table (keys %{$table_size->{$db}}) {
-                next if (exists $table_size->{$master_name}->{$table} and not grep {$_ eq $table} @{$only_tables->{$master_name}});
-                push @ok_tables, $table;
-            }
+            # All the non-empty tables
+            push @ok_tables, keys %{$table_size->{$db}};
         }
         
         foreach my $table (@ok_tables) {

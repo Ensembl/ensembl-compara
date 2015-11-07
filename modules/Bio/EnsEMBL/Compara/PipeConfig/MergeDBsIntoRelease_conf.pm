@@ -90,6 +90,7 @@ sub default_options {
         # TODO: should be done by populate_new_database.pl
         'only_tables'       => {
             'prev_rel_db'   => [qw(stable_id_history)],
+            # Cannot be copied by populate_new_database because it doesn't contain the new mapping_session_ids yet
             'master_db'     => [qw(mapping_session)],
         },
 
