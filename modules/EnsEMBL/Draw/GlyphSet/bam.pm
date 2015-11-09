@@ -167,6 +167,12 @@ sub _render_reads {
   my $self = shift;
 
   ## Establish defaults
+  $self->{'my_config'}->set('y_start', $self->{'my_config'}->get('height') + 2);
+  $self->{'my_config'}->set('height', 1);
+  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('vspacing', 0);
+  $self->{'my_config'}->set('y_start', 35);
+
   my $max_depth   = $self->my_config('max_depth') || 50;
   my $pix_per_bp  = $self->scalex; # pixels per base pair
   my $slice       = $self->{'container'};
