@@ -167,12 +167,6 @@ sub _render_reads {
   my $self = shift;
 
   ## Establish defaults
-  $self->{'my_config'}->set('y_start', $self->{'my_config'}->get('height') + 2);
-  $self->{'my_config'}->set('height', 1);
-  $self->{'my_config'}->set('bumped', 1);
-  $self->{'my_config'}->set('vspacing', 0);
-  $self->{'my_config'}->set('y_start', 35);
-
   my $max_depth   = $self->my_config('max_depth') || 50;
   my $pix_per_bp  = $self->scalex; # pixels per base pair
   my $slice       = $self->{'container'};
@@ -192,6 +186,15 @@ sub _render_reads {
   my($tmp1, $tmp2, $font_w, $font_h) = $self->get_text_width(0, 'X', '', 'font' => $font, 'ptsize' => $fontsize);
   my $text_fits = $font_w * $slice->length <= int($slice->length * $pix_per_bp);
 
+  ## Now set some positioning
+  my $y_start = $self->{'my_config'}->get('height');
+  my $y_start += $text_fits ? -10 : 2;
+  $self->{'my_config'}->set('y_start', $y_start);
+  $self->{'my_config'}->set('height', 1);
+  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('vspacing', 0);
+  $self->{'my_config'}->set('y_start', 35);
+
   my $data = {'features' => [], 'metadata' => {}};
 
   foreach my $f (@$features) {
@@ -204,14 +207,10 @@ sub _render_reads {
     my $start = $slicestrand == -1 ? $sliceend - $fend   + 1 : $fstart - $slicestart;
     my $end   = $slicestrand == -1 ? $sliceend - $fstart + 1 : $fend   - $slicestart;
 
-    $start = 0 if $start < 0;
-    $end = 0 if $end < 0;
-    $end = $slicelength if $end > $slicelength;
-
     ## Build the feature hash  
     my $fhash = {
                 'start'     => $start,
-                'end'       => $end,
+                'end'       => $end + 1,
                 'colour'    => $read_colour,
                 'arrow'     => {},
                 'inserts'   => [],
@@ -223,18 +222,20 @@ sub _render_reads {
       my $line_length_pix = 2;
       my $width = $end - $start + 1;
       $line_length_pix = $width * $pix_per_bp if $width * $pix_per_bp < $line_length_pix;
-      my $stroke_width_pix = 1;
 
-      $fhash->{'arrow'}{'colour'}  = $self->my_colour('type_' . $self->_read_type($f));
-      $fhash->{'arrow'}{'start'}   = $f->reversed ^ $slicestrand == -1 ? $start : $end + 1 - ($line_length_pix / $pix_per_bp);
-      $fhash->{'arrow'}{'end'}     = $start + $line_length_pix / $pix_per_bp;
-      $fhash->{'arrow'}{'stroke'}  = $stroke_width_pix / $pix_per_bp;
+      $fhash->{'arrow'}{'colour'}     = $self->my_colour('type_' . $self->_read_type($f));
+      $fhash->{'arrow'}{'width'}      = $line_length_pix / $pix_per_bp;
+      $fhash->{'arrow'}{'thickness'}  = 1;
+      $fhash->{'arrow'}{'position'}   = $f->reversed ^ $slicestrand == -1 ? $start : $end + 1 - ($line_length_pix / $pix_per_bp);
     }
 
-    ## Do we want to show text?
+    ## Are we at a high enough scale to show text?
     if ($text_fits) {
-      my @consensus = @{$self->consensus_features};
-      my ($seq, $inserts) =  $self->_get_sequence_window($f);
+      $self->{'my_config'}->set('height', 8);
+      $self->{'my_config'}->set('vspacing', 4);
+
+      my $consensus       = $self->consensus_features;
+      my ($seq, $inserts) = $self->_get_sequence_window($f);
 
       # render inserts
       if (@{$inserts}) {
@@ -247,7 +248,7 @@ sub _render_reads {
       my $i = 0;
       foreach( split //, $seq ) {
         my $pos = $start + $i;
-        my $consensus_seq = $consensus[$pos] ? $consensus[$pos]->seqname : '';
+        my $consensus_seq = $consensus->{$pos} || '';
         my $cons_colour   = $self->my_colour($consensus_seq eq $_ ? 'consensus_match' : 'consensus_mismatch');
         push @{$fhash->{'consensus'}}, [$pos, $_, $cons_colour];
       }
@@ -255,7 +256,6 @@ sub _render_reads {
 
     push @{$data->{'features'}}, $fhash;
   }
-  use Data::Dumper; warn Dumper($data);
 
   ## Draw read track
   my %config      = %{$self->track_style_config};
@@ -367,6 +367,87 @@ sub _read_type {
   }
  
   return $type;
+}
+
+sub _get_sequence_window {
+## return just the sequence within the current window
+  my ($self, $f, $s) = @_;
+
+  my $slice = $self->{container};
+  my $fend = $f->end;
+
+  my $start = $f->start - $slice->start;
+  my $end = $fend - $slice->start;
+
+  my ($seq, $inserts) =  $self->_get_sequence($f, $s) ;
+
+  if ($start < 0) {
+    $seq = substr($seq, abs($start));
+  }
+
+  if ($end > $slice->length) {
+    $seq = substr($seq, 0, $slice->end - $fend);
+  }
+
+  $inserts = [grep {$_->{pos} >= $start && $_->{pos} <= $end } @{$inserts || []}];
+
+  return $seq, $inserts;
+
+}
+
+sub _get_sequence {
+## build the sequence for the given feature based on the cigar string
+  my ($self, $a, $s) = @_;
+
+#  my $seq = $a->qdna;
+  my $seq = $a->query->dna;
+  my $cl = $a->cigar_str;
+  my @inserts = () ;
+
+  # D - delete
+  # I - insert
+  # S - soft clip : effectively we need to cut the sequence by that match  or shift it left by this amount
+
+  if ($cl =~ /D|I|S|N/) {
+    my @c1 = split /(M|D|I|S|N)/, $cl;
+
+    my $s2;
+    my $i = 0;
+    my $pos = 0;
+    my $spos = 0;
+
+    while ($i < scalar(@c1)) {
+      my $os = $c1[$i++];
+      my $op = $c1[$i++];
+
+      if ($os !~ /\d+/) {
+        $os = 1;
+        $i--;
+      }
+
+      if ($op eq 'M') {
+        $s2 .= substr($seq, $pos, $os);
+        $pos += $os;
+      } elsif ($op eq 'D' || $op eq 'N') {
+        $s2 .= '-'x$os;
+      } elsif ($op eq 'I') {
+        push @inserts, {
+          pos => $s + $pos - $spos,
+          s => substr($seq, $pos, $os)
+        };
+        $pos += $os;
+      } elsif ($op eq 'S') {
+        $pos += $os;
+
+        # we need to count the positions shifted by S so the inserts are in the right place;
+        $spos += $os;
+      }
+
+    }
+    $seq = $s2;
+  }
+
+  return ($seq, \@inserts);
 }
 
 
