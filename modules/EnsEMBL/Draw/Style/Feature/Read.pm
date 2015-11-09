@@ -26,3 +26,61 @@ package EnsEMBL::Draw::Style::Feature::Read;
 
 use parent qw(EnsEMBL::Draw::Style::Feature);
 
+sub draw_feature {
+### Create a composite glyph to represent an aligned read
+### @param feature Hashref - data for a single feature
+### @param position Hashref - information about the feature's size and position
+  my ($self, $feature, $position) = @_;
+  return unless $feature->{'colour'};
+
+  my $height      = $position->{'height'};
+  my $composite   = $self->Composite({
+                                    'height'  => $height,
+                                    'title'   =>  $feature->{'label'},
+                                    });
+
+  ## First the simple feature block
+  my $x = $feature->{'start'};
+  $x    = 0 if $x < 0;
+  my $params = {
+                  x          => $x,
+                  y          => $position->{'y'},
+                  width      => $position->{'width'},
+                  height     => $height,
+                  href       => $feature->{'href'},
+                  title      => $feature->{'title'},
+                };
+  $params->{'colour'}       = $feature->{'colour'} if $feature->{'colour'};
+  $params->{'bordercolour'} = $feature->{'bordercolour'} if $feature->{'bordercolour'};
+  use Data::Dumper; warn Dumper($params);
+  $composite->push($self->Rect($params));
+
+=pod
+  ## Add an arrow if defined
+  if (keys %{$feature->{'arrow'}}) {
+    ## horizontal
+    $composite->push($self->Rect({
+        'x'         => $feature->{'arrow'}{'start'}, 
+        'y'         => $position->{'y'},
+        'width'     => $feature->{'arrow'}{'end'} - $feature->{'arrow'}{'start'},
+        'height'    => $feature->{'arrow'}{'stroke'}, 
+        'colour'    => $feature->{'arrow'}{'colour'},
+    }));
+
+    if ($height == 8) {
+      ## vertical
+      $composite->push($self->Rect({
+          'x'         => $feature->{'arrow'}{'start'}, 
+          'y'         => $position->{'y'},
+          'width'     => $feature->{'arrow'}{'stroke'} / $self->{'pix_per_bp'},
+          'height'    => $height,
+          'colour'    => $feature->{'arrow'}{'colour'},
+      }));
+    }
+  }
+=cut
+
+  push @{$self->glyphs}, $composite; 
+}
+
+1;
