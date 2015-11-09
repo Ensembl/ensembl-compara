@@ -22,7 +22,7 @@
     if ($this.data('uiTooltip')) {
       return;
     }
-    var opts  = $this.data('opts');
+    var opts  = $this.data('opts')||{};
 
     opts.content  = opts.content  || ($this.data('title')||'').replace(/\n/g, '<br />') || $this.find('>._ht_tip').first().remove().text();
     opts.track    = opts.track    || $this.hasClass('_ht_track');
@@ -60,7 +60,6 @@
 
     delete opts.delay;
 
-    console.log("build");
     $this.tooltip($.extend({
       show:     { delay: 100, duration: 1 },
       hide:     false,
