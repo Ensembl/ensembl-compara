@@ -1,6 +1,7 @@
 /* Chrome prefetches too eagerly to use <link rel="prefetch"/> */
 $(function() {
-  if(!prefetch) { return; }
+  
+  if(!('prefetch' in window) || !prefetch) { return; }
 
   var i = 0;
 
