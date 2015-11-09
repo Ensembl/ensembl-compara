@@ -111,8 +111,8 @@ sub pipeline_analyses {
             -input_ids  => [ {} ],
             -parameters => {
                 'db_conn'               => '#master_db#',
-                # What a query ... Will be shorter once first/last_release is implemented
-                'inputquery'            => 'SELECT GROUP_CONCAT(CONCAT("--mlss ", method_link_species_set_id) SEPARATOR " ") AS mlss_ids FROM method_link_species_set JOIN method_link USING (method_link_id) JOIN species_set USING (species_set_id) JOIN genome_db USING (genome_db_id) WHERE method_link.type = "#lastz_patch_method#" AND first_release IS NOT NULL AND last_release IS NULL'
+
+                'inputquery'            => 'SELECT GROUP_CONCAT(CONCAT("--mlss ", method_link_species_set_id) SEPARATOR " ") AS mlss_ids FROM method_link_species_set JOIN method_link USING (method_link_id) WHERE method_link.type = "#lastz_patch_method#" AND first_release IS NOT NULL AND last_release IS NULL'
             },
             -flow_into  => {
                 2 => [ 'populate_new_database' ],
