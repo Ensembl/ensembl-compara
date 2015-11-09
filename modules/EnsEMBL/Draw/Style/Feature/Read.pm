@@ -48,37 +48,42 @@ sub draw_feature {
                   width      => $position->{'width'},
                   height     => $height,
                   href       => $feature->{'href'},
-                  title      => $feature->{'title'},
                 };
   $params->{'colour'}       = $feature->{'colour'} if $feature->{'colour'};
   $params->{'bordercolour'} = $feature->{'bordercolour'} if $feature->{'bordercolour'};
-  use Data::Dumper; warn Dumper($params);
+  #use Data::Dumper; warn Dumper($params);
   $composite->push($self->Rect($params));
 
-=pod
   ## Add an arrow if defined
   if (keys %{$feature->{'arrow'}}) {
     ## horizontal
-    $composite->push($self->Rect({
-        'x'         => $feature->{'arrow'}{'start'}, 
+    $params = {
+    #$composite->push($self->Rect({
+        'x'         => $feature->{'arrow'}{'position'}, 
         'y'         => $position->{'y'},
-        'width'     => $feature->{'arrow'}{'end'} - $feature->{'arrow'}{'start'},
-        'height'    => $feature->{'arrow'}{'stroke'}, 
+        'width'     => $feature->{'arrow'}{'width'},
+        'height'    => $feature->{'arrow'}{'thickness'}, 
         'colour'    => $feature->{'arrow'}{'colour'},
-    }));
+    #}));
+    };
+  #use Data::Dumper; warn Dumper($params);
+    $composite->push($self->Rect($params));
 
     if ($height == 8) {
       ## vertical
-      $composite->push($self->Rect({
-          'x'         => $feature->{'arrow'}{'start'}, 
+    $params = {
+    #  $composite->push($self->Rect({
+          'x'         => $feature->{'arrow'}{'position'}, 
           'y'         => $position->{'y'},
-          'width'     => $feature->{'arrow'}{'stroke'} / $self->{'pix_per_bp'},
+          'width'     => $feature->{'arrow'}{'thickness'} / $self->{'pix_per_bp'},  
           'height'    => $height,
           'colour'    => $feature->{'arrow'}{'colour'},
-      }));
+    #}));
+    };
+  use Data::Dumper; warn Dumper($params);
+    $composite->push($self->Rect($params));
     }
   }
-=cut
 
   push @{$self->glyphs}, $composite; 
 }
