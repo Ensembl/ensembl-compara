@@ -219,14 +219,8 @@ sub _render_reads {
 
     ## Work out details of arrow, if any
     if (($f->reversed and $fstart >= $slicestart) or (!$f->reversed and $fend <= $sliceend)) {
-      my $line_length_pix = 2;
-      my $width = $end - $start + 1;
-      $line_length_pix = $width * $pix_per_bp if $width * $pix_per_bp < $line_length_pix;
-
       $fhash->{'arrow'}{'colour'}     = $self->my_colour('type_' . $self->_read_type($f));
-      $fhash->{'arrow'}{'width'}      = $line_length_pix / $pix_per_bp;
-      $fhash->{'arrow'}{'thickness'}  = 1;
-      $fhash->{'arrow'}{'position'}   = $f->reversed ^ $slicestrand == -1 ? $start : $end + 1 - ($line_length_pix / $pix_per_bp);
+      $fhash->{'arrow'}{'position'}   = $f->reversed ^ $slicestrand == -1 ? 'start' : 'end';
     }
 
     ## Are we at a high enough scale to show text?
