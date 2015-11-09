@@ -143,7 +143,7 @@ sub stable_id_redirect_uri {
   return $uri || "/Multi/psychic?q=$stable_id";
 }
 
-sub parse_uri {
+sub parse_ensembl_uri {
   ## Parses and saves uri components in subprocess_env if not already parsed
   ## @param Apache2::RequestRec request object
   ## @return undef if parsed successfully or a URL string if a redirect is needed after cleaning the species name
@@ -243,7 +243,7 @@ sub http_redirect {
   my ($r, $redirect_uri) = @_;
   $r->uri($redirect_uri);
   $r->headers_out->add('Location' => $r->uri);
-  $r->child_terminate;
+  $r->child_terminate; # TODO really needed?
 
   return HTTP_MOVED_PERMANENTLY;
 }
@@ -330,7 +330,7 @@ sub handler {
   }
 
   # populate subprocess_env with species, path and query or perform a redirect to a rectified url
-  if (my $redirect = parse_uri($r)) {
+  if (my $redirect = parse_ensembl_uri($r)) {
     return http_redirect($r, $redirect);
   }
 
@@ -434,7 +434,7 @@ sub childExitHandler {
   ## @param APR::Pool object
   ## @param Apache2::ServerRec server object
   ## This handler only adds an entry to the logs
-  my $r = shift;
+  my ($p, $s) = @_;
 
   warn sprintf "[%s] Child exited: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
