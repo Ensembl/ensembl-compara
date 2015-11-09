@@ -66,8 +66,12 @@ sub static_cache_hook {} # Overridden in plugins (eg nginx)
 sub handler {
   my $r       = shift;
   my $uri     = $r->uri;
-  my $content = $MEMD ? $MEMD->get("$SiteDefs::ENSEMBL_STATIC_BASE_URL$uri") : undef;
 
+  my $content = undef;
+  if($MEMD) {
+    $content //= $MEMD->get("$SiteDefs::ENSEMBL_STATIC_BASE_URL$uri");
+    $content //= $MEMD->get("$SiteDefs::ENSEMBL_STATIC_SERVER$uri");
+  }
   if ($content) {
     $r->headers_out->set('X-MEMCACHED'    => 'yes');
     $r->headers_out->set('Accept-Ranges'  => 'bytes');
