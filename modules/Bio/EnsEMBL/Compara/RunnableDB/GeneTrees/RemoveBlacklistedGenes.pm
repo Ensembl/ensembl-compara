@@ -48,6 +48,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlacklistedGenes;
 
 use strict;
 use warnings;
+use Data::Dumper;
 
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 
@@ -59,15 +60,26 @@ sub fetch_input {
 
     my $blacklist_genes         = slurp_to_array($self->param_required('blacklist_file'), 1);
 
+    # remove members related to blacklisted genes
     my $gene_member_adaptor     = $self->compara_dba->get_GeneMemberAdaptor;
     my $seq_member_adaptor      = $self->compara_dba->get_SeqMemberAdaptor;
     my $gene_tree_node_adaptor  = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
     my @blacklist_seq_members;
     foreach my $gene_name (@$blacklist_genes) {
-        my $member = $gene_member_adaptor->fetch_by_stable_id($gene_name) || $seq_member_adaptor->fetch_by_stable_id($gene_name) || die "Cannot find '$gene_name' in the database\n";
+        my $member = $gene_member_adaptor->fetch_by_stable_id($gene_name) || $seq_member_adaptor->fetch_by_stable_id($gene_name);
+        unless ( $member ){
+            $self->warning( "Cannot find '$gene_name' in the database\n" );
+            next;
+        }
+
         my $aligned_member = $gene_tree_node_adaptor->fetch_default_AlignedMember_for_Member($member);
-        push @blacklist_seq_members, $aligned_member if $aligned_member;
+        unless ( $aligned_member ) {
+            $self->warning( "Cannot find alignment for '$gene_name' in the database\n" );
+            next;
+        }
+
+        push @blacklist_seq_members, $aligned_member;
     }
     $self->param('blacklist_seq_members', \@blacklist_seq_members);
 }
@@ -77,12 +89,17 @@ sub write_output {
 
     my $blacklist_seq_members   = $self->param('blacklist_seq_members');
     my $gene_tree_node_adaptor  = $self->compara_dba->get_GeneTreeNodeAdaptor;
+    my $gene_tree_adaptor       = $self->compara_dba->get_GeneTreeAdaptor;
+
+    print Dumper $blacklist_seq_members;
 
     $self->call_within_transaction( sub {
         # NOTE: Here we assume that the default tree is flat !
         foreach my $m (@$blacklist_seq_members) {
             $gene_tree_node_adaptor->remove_seq_member($m);
-            $m->tree->store_tag( $m->tree->get_value_for_tag('gene_count') - 1 );
+            $m->tree->store_tag( 'gene_count', $m->tree->get_value_for_tag('gene_count') - 1 );
+            # remove cluster if too small to create tree
+            $gene_tree_adaptor->delete_tree( $m->tree ) if ( $m->tree->get_value_for_tag('gene_count') < 2 ); 
         }
     });
 }
