@@ -71,11 +71,11 @@ sub draw_feature {
     }
 
     ## horizontal
-    $x = $feature->{'arrow'}{'position'} eq 'start' ? $x + $thickness : $x - $thickness;
+    $x = $feature->{'arrow'}{'position'} eq 'start' ? $x : $x - $thickness;
     $composite->push($self->Rect({
         'x'         => $x, 
         'y'         => $position->{'y'},
-        'width'     => $feature->{'arrow'}{'width'},
+        'width'     => $thickness * 2,
         'height'    => 1, 
         'colour'    => $feature->{'arrow'}{'colour'},
     }));
