@@ -51,38 +51,34 @@ sub draw_feature {
                 };
   $params->{'colour'}       = $feature->{'colour'} if $feature->{'colour'};
   $params->{'bordercolour'} = $feature->{'bordercolour'} if $feature->{'bordercolour'};
-  #use Data::Dumper; warn Dumper($params);
   $composite->push($self->Rect($params));
 
   ## Add an arrow if defined
-  if (keys %{$feature->{'arrow'}}) {
-    ## horizontal
-    $params = {
-    #$composite->push($self->Rect({
-        'x'         => $feature->{'arrow'}{'position'}, 
-        'y'         => $position->{'y'},
-        'width'     => $feature->{'arrow'}{'width'},
-        'height'    => $feature->{'arrow'}{'thickness'}, 
-        'colour'    => $feature->{'arrow'}{'colour'},
-    #}));
-    };
-  #use Data::Dumper; warn Dumper($params);
-    $composite->push($self->Rect($params));
+  if ($feature->{'arrow'}{'position'}) {
+    my $thickness = 1 / $self->{'pix_per_bp'};
+    ## Align with correct end of feature
+    $x = $feature->{'arrow'}{'position'} eq 'start' ? $x : $feature->{'end'} - $thickness;
 
     if ($height == 8) {
       ## vertical
-    $params = {
-    #  $composite->push($self->Rect({
-          'x'         => $feature->{'arrow'}{'position'}, 
+      $composite->push($self->Rect({
+          'x'         => $x,
           'y'         => $position->{'y'},
-          'width'     => $feature->{'arrow'}{'thickness'} / $self->{'pix_per_bp'},  
+          'width'     => $thickness,  
           'height'    => $height,
           'colour'    => $feature->{'arrow'}{'colour'},
-    #}));
-    };
-  use Data::Dumper; warn Dumper($params);
-    $composite->push($self->Rect($params));
+      }));
     }
+
+    ## horizontal
+    $x = $feature->{'arrow'}{'position'} eq 'start' ? $x + $thickness : $x - $thickness;
+    $composite->push($self->Rect({
+        'x'         => $x, 
+        'y'         => $position->{'y'},
+        'width'     => $feature->{'arrow'}{'width'},
+        'height'    => 1, 
+        'colour'    => $feature->{'arrow'}{'colour'},
+    }));
   }
 
   push @{$self->glyphs}, $composite; 
