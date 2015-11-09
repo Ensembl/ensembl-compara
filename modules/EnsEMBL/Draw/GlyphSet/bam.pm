@@ -181,6 +181,11 @@ sub _render_reads {
   my $features = pre_filter_depth($fs, $max_depth, $pix_per_bp, $slice->start, $slice->end);
   $features = [reverse @$features] if $slice->strand == -1;
 
+  ## Do some text scaling calculations, so we know if it's worth fetching the data
+  my($font, $fontsize) = $self->get_font_details( $self->can('fixed') ? 'fixed' : 'innertext' );
+  my($tmp1, $tmp2, $font_w, $font_h) = $self->get_text_width(0, 'X', '', 'font' => $font, 'ptsize' => $fontsize);
+  my $text_fits = $font_w * $slice->length <= int($slice->length * $pix_per_bp);
+
   my $data = {'features' => [], 'metadata' => {}};
 
   foreach my $f (@$features) {
@@ -196,15 +201,55 @@ sub _render_reads {
     $start = 0 if $start < 0;
     $end = 0 if $end < 0;
     $end = $slicelength if $end > $slicelength;
-  
-    my $hash = {
-                'start'   => $start,
-                'end'     => $end,
-                'colour'  => $read_colour,
-                };
 
-    push @{$data->{'features'}}, $hash;
+    ## Build the feature hash  
+    my $fhash = {
+                'start'     => $start,
+                'end'       => $end,
+                'colour'    => $read_colour,
+                'arrow'     => {},
+                'inserts'   => [],
+                'consensus' => [],
+    };
+
+    ## Work out details of arrow, if any
+    if (($f->reversed and $fstart >= $slicestart) or (!$f->reversed and $fend <= $sliceend)) {
+      my $line_length_pix = 2;
+      my $width = $end - $start + 1;
+      $line_length_pix = $width * $pix_per_bp if $width * $pix_per_bp < $line_length_pix;
+      my $stroke_width_pix = 1;
+
+      $fhash->{'arrow'}{'colour'}  = $self->my_colour('type_' . $self->_read_type($f));
+      $fhash->{'arrow'}{'start'}   = $f->reversed ^ $slicestrand == -1 ? $start : $end + 1 - ($line_length_pix / $pix_per_bp);
+      $fhash->{'arrow'}{'end'}     = $start + $line_length_pix / $pix_per_bp;
+      $fhash->{'arrow'}{'stroke'}  = $stroke_width_pix / $pix_per_bp;
+    }
+
+    ## Do we want to show text?
+    if ($text_fits) {
+      my @consensus = @{$self->consensus_features};
+      my ($seq, $inserts) =  $self->_get_sequence_window($f);
+
+      # render inserts
+      if (@{$inserts}) {
+        $fhash->{'insert_colour'} = $self->my_colour('read_insert');
+        foreach my $ins (@{$inserts}) {
+          push @{$fhash->{'inserts'}}, $ins->{'pos'};
+        }
+      }
+
+      my $i = 0;
+      foreach( split //, $seq ) {
+        my $pos = $start + $i;
+        my $consensus_seq = $consensus[$pos] ? $consensus[$pos]->seqname : '';
+        my $cons_colour   = $self->my_colour($consensus_seq eq $_ ? 'consensus_match' : 'consensus_mismatch');
+        push @{$fhash->{'consensus'}}, [$pos, $_, $cons_colour];
+      }
+    }
+
+    push @{$data->{'features'}}, $fhash;
   }
+  use Data::Dumper; warn Dumper($data);
 
   ## Draw read track
   my %config      = %{$self->track_style_config};
@@ -298,6 +343,26 @@ sub consensus_features {
 
   return $self->{_cache}->{consensus_features}; 
 }
+
+sub _read_type {
+  my ($self, $f) = @_;
+  my $type = '';
+
+  if ($f->proper_pair) {
+    $type = 'regular';
+  } elsif ($f->paired) {
+    if ($f->get_tag_values('UNMAPPED') or $f->get_tag_values('M_UNMAPPED')) {
+      $type = 'singleton';
+    } else {
+      $type = 'chimera';
+    }
+  } else {
+    $type = 'singleton'
+  }
+ 
+  return $type;
+}
+
 
 sub bam_adaptor {
 ## get a bam adaptor
@@ -452,15 +517,15 @@ sub calc_coverage {
 
   my $features = $self->features;
 
-  my $slice = $self->{'container'};
-  my $START = $slice->start;
-  my $ppbp = $self->scalex;
-  my $slength = $slice->length;
+  my $slice       = $self->{'container'};
+  my $START       = $slice->start;
+  my $pix_per_bp  = $self->scalex;
+  my $slength     = $slice->length;
 
-  my $pcx = $slength * $ppbp;
+  my $pcx = $slength * $pix_per_bp;
   my $bpx = $slength / $pcx;
 
-  my $sample_size  = $slength / $pcx;
+  my $sample_size = $slength / $pcx;
   my $lbin = $pcx;
 
   if ($sample_size < 1) {
@@ -473,7 +538,6 @@ sub calc_coverage {
   my $coverage = $self->c_coverage($features, $sample_size, $lbin, $START);
      $coverage = [reverse @$coverage] if $slice->strand == -1;
 
-  warn "Done coverage, ended with type ".ref($coverage);
   return $coverage;
 }
 
