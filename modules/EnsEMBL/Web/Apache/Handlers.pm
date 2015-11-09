@@ -32,7 +32,6 @@ use Config;
 use Fcntl ':flock';
 use Sys::Hostname;
 use Time::HiRes qw(time);
-use File::Spec;
 use POSIX qw(strftime);
 
 use SiteDefs;
@@ -179,33 +178,6 @@ sub parse_ensembl_uri {
   return undef;
 }
 
-sub map_to_file {
-  ## Finds out the file that maps to a url and saves it as ENSEMBL_FILENAME entry in subprocess_env
-  ## @param Apache2::RequestRec request object
-  ## @return URL string if a redirect is needed, undef otherwise, irrespective of whether the file was found or not (If file is not found ENSEMBL_FILENAME is not set)
-  my $r     = shift;
-  my $path  = $r->subprocess_env('ENSEMBL_PATH');
-
-  if ($path =~ /\.html$/ || $path =~ /\/[^\.]+$/) { # path to file with .html extension or without extension (possibly a folder)
-
-    my @path_seg = grep { $_ ne '' } split '/', $path;
-
-    foreach my $dir (@SiteDefs::ENSEMBL_HTDOCS_DIRS) {
-
-      my $filename = File::Spec->catfile($dir, @path_seg);
-
-      return "$path/index.html" if -d $filename; # if path corresponds to a folder, redirect to it's index.html page
-
-      if (-r $filename) {
-        $r->subprocess_env('ENSEMBL_FILENAME', $filename);
-        last;
-      }
-    }
-  }
-
-  return undef;
-}
-
 sub get_sub_handler {
   ## Finds out the sub handler that should handle this request
   ## @param Apache2::RequestRec request object
@@ -230,6 +202,10 @@ sub get_sub_handler {
     $species  ||= 'Multi';
     $species    = 'Multi' if $species eq 'common';
     $handler    = 'EnsEMBL::Web::Apache::SpeciesHandler';
+
+  # Finally try the SSI handler
+  } else {
+    $handler    = 'EnsEMBL::Web::Apache::SSI';
   }
 
   return ($handler, $species, $path_seg);
@@ -357,18 +333,6 @@ sub handler {
   # check for any redirects requested by the code
   if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT')) {
     return http_redirect($r, $redirect);
-  }
-
-  # if no response code returned by the called handler, try the SSI handler
-  if (!defined $response_code) {
-
-    # Populate ENSEMBL_FILENAME or perform redirect if static file location is changed
-    if (my $redirect = map_to_file($r)) {
-      return http_redirect($r, $redirect);
-    }
-
-    # SSI handler (.html files) (Note: Other static file requests should not reach this handler anyway.)
-    $response_code = EnsEMBL::Web::Apache::SSI::handler($r, $species_defs) if $r->subprocess_env('ENSEMBL_FILENAME');
   }
 
   # give up if no response code was set by any of the handlers
