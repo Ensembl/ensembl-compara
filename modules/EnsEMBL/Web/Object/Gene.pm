@@ -76,7 +76,7 @@ sub availability {
       $availability->{'family'}               = !!$counts->{families};
       $availability->{'family_count'}         = $counts->{families};
       $availability->{'not_rnaseq'}           = $self->get_db eq 'rnaseq' ? 0 : 1;
-      $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
+      $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments go);
       $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
       $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
       $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
@@ -124,6 +124,7 @@ sub counts {
       similarity_matches => $self->get_xref_available,
       operons => 0,
       alternative_alleles =>  scalar @{$self->get_alt_alleles},
+      go                  => $self->count_go,
     };
     if ($obj->feature_Slice->can('get_all_Operons')){
       $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};
@@ -164,6 +165,123 @@ sub counts {
   
   return $counts;
 }
+
+=head2 get_go_list
+
+ Arg[1]      : none
+ Example     : @go_list = $transdata->get_go_list
+ Description : Returns a hashref conating go links 
+ Return type : a hashref
+
+=cut
+
+sub get_go_list {
+  my $self = shift ;
+  
+  # The array will have the list of ontologies mapped 
+  my $ontologies = $self->species_defs->SPECIES_ONTOLOGIES || return {};
+
+  my $dbname_to_match = shift || join '|', @$ontologies;
+  my $ancestor=shift;
+  my $gene = $self->gene;
+  my $goadaptor = $self->hub->get_databases('go')->{'go'};
+
+  my @goxrefs = @{$gene->get_all_DBLinks};
+  my @my_transcripts= @{$self->Obj->get_all_Transcripts};
+
+  my %hash;
+  my %go_hash;  
+  my $transcript_id;
+  foreach my $transcript (@my_transcripts) {    
+    $transcript_id = $transcript->stable_id;
+    
+    foreach my $goxref (sort { $a->display_id cmp $b->display_id } @{$transcript->get_all_DBLinks}) {
+      my $go = $goxref->display_id;
+      chomp $go; # Just in case
+      next unless ($goxref->dbname =~ /^($dbname_to_match)$/);
+
+      my ($otype, $go2) = $go =~ /([\w|\_]+):0*(\d+)/;
+      my $term;
+      
+      if(exists $hash{$go2}) {      
+        $go_hash{$go}{transcript_id} .= ",$transcript_id" if(exists $hash{$go}{term}); # GO terms with multiple transcript
+        next;
+      }
+
+      my $info_text;
+      my $sources;
+
+      if ($goxref->info_type eq 'PROJECTION') {
+        $info_text= $goxref->info_text; 
+      }
+
+      my $evidence = '';
+      if ($goxref->isa('Bio::EnsEMBL::OntologyXref')) {
+        $evidence = join ', ', @{$goxref->get_all_linkage_types}; 
+
+        foreach my $e (@{$goxref->get_all_linkage_info}) {      
+          my ($linkage, $xref) = @{$e || []};
+          next unless $xref;
+          my ($did, $pid, $db, $db_name) = ($xref->display_id, $xref->primary_id, $xref->dbname, $xref->db_display_name);
+          my $label = "$db_name:$did";
+
+          #db schema won't (yet) support Vega GO supporting xrefs so use a specific form of info_text to generate URL and label
+          my $vega_go_xref = 0;
+          my $info_text = $xref->info_text;
+          if ($info_text =~ /Quick_Go:/) {
+            $vega_go_xref = 1;
+            $info_text =~ s/Quick_Go://;
+            $label = "(QuickGO:$pid)";
+          }
+          my $ext_url = $self->hub->get_ExtURL_link($label, $db, $pid, $info_text);
+          $ext_url = "$did $ext_url" if $vega_go_xref;
+          push @$sources, $ext_url;
+        }
+      }
+
+      $hash{$go2} = 1;
+
+      if (my $goa = $goadaptor->get_GOTermAdaptor) {
+        my $term;
+        eval { 
+          $term = $goa->fetch_by_accession($go2); 
+        };
+
+        warn $@ if $@;
+
+        my $term_name = $term ? $term->name : '';
+        $term_name ||= $goxref->description || '';
+
+        my $has_ancestor = (!defined ($ancestor));
+        if (!$has_ancestor){
+          $has_ancestor=($go eq $ancestor);
+          my $term = $goa->fetch_by_accession($go);
+
+          if ($term) {
+            my $ancestors = $goa->fetch_all_by_descendant_term($term);
+            for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
+              $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
+            }
+          }
+        }
+     
+        if($has_ancestor){
+          $go_hash{$go} = {
+            transcript_id => $transcript_id,
+            evidence => $evidence,
+            term     => $term_name,
+            info     => $info_text,
+            source   => join ' ,', @{$sources || []},
+          };
+        }
+      }
+
+    }
+  }
+
+  return \%go_hash;
+}
+
 sub get_phenotype {
   my $self = shift;
   
@@ -251,6 +369,46 @@ sub insdc_accession {
     }
   }
   return undef;
+}
+
+sub count_go {
+
+  my $self = shift;
+  foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
+    my $transcript = $trans_obj->Obj;   
+
+    next unless $transcript->translation;
+    my $type = $self->get_db;
+    my $dbc = $self->database($type)->dbc;
+    my $tl_dbID = $transcript->translation->dbID;
+
+    # First get the available ontologies
+    if (my @ontologies = @{$self->species_defs->SPECIES_ONTOLOGIES || []}) {
+        my $ontologies_list = scalar(@ontologies) > 1 ? qq{ in ('}.(join "\', \'", @ontologies).qq{' ) } : qq{ ='$ontologies[0]' };
+
+        my $sql = qq{
+         SELECT count(distinct(x.display_label))
+             FROM object_xref ox, xref x, external_db edb
+             WHERE ox.xref_id = x.xref_id
+             AND x.external_db_id = edb.external_db_id
+             AND edb.db_name $ontologies_list
+             AND ox.ensembl_object_type = ?
+             AND ox.ensembl_id = ?};
+
+        # Count the ontology terms mapped to the translation
+        my $sth = $dbc->prepare($sql);
+
+        $sth->execute('Translation', $transcript->translation->dbID);
+        my $c = $sth->fetchall_arrayref->[0][0];
+
+        # Add those mapped to the transcript
+        $sth->execute('Transcript', $transcript->dbID);
+        $c += $sth->fetchall_arrayref->[0][0];
+
+        return $c;
+    }
+    return;
+  }
 }
 
 sub count_xrefs {
