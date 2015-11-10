@@ -73,7 +73,7 @@ sub availability {
       $availability->{'history_protein'} = 0 unless $self->translation_object;
       $availability->{'has_variations'}  = $counts->{'prot_variations'};
       $availability->{'has_domains'}     = $counts->{'prot_domains'};
-      $availability->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos go);
+      $availability->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos);
     }
   
     $self->{'_availability'} = $availability;
@@ -108,7 +108,6 @@ sub counts {
       oligos             => $self->count_oligos,
       prot_domains       => $self->count_prot_domains,
       prot_variations    => $self->count_prot_variations,
-      go                 => $self->count_go,
       %{$self->_counts}
     };
     
@@ -271,41 +270,6 @@ sub count_oligos {
   my $c = $sth->fetchall_arrayref->[0][0];
   return $c;
 }
-
-sub count_go {
-  my $self = shift;
-  return 0 unless $self->Obj->translation;
-  my $type = $self->get_db;
-  my $dbc = $self->database($type)->dbc;
-  my $tl_dbID = $self->Obj->translation->dbID; 
-
-  # First get the available ontologies
-  if (my @ontologies = @{$self->species_defs->SPECIES_ONTOLOGIES || []}) {
-      my $ontologies_list = scalar(@ontologies) > 1 ? qq{ in ('}.(join "\', \'", @ontologies).qq{' ) } : qq{ ='$ontologies[0]' };
-
-      my $sql = qq{
-       SELECT count(distinct(x.display_label))
-           FROM object_xref ox, xref x, external_db edb
-           WHERE ox.xref_id = x.xref_id
-           AND x.external_db_id = edb.external_db_id
-           AND edb.db_name $ontologies_list 
-           AND ox.ensembl_object_type = ?
-           AND ox.ensembl_id = ?};
-
-      # Count the ontology terms mapped to the translation
-      my $sth = $dbc->prepare($sql);
-      $sth->execute('Translation', $self->transcript->translation->dbID);
-      my $c = $sth->fetchall_arrayref->[0][0];
-
-      # Add those mapped to the transcript
-      $sth->execute('Transcript', $self->transcript->dbID);
-      $c += $sth->fetchall_arrayref->[0][0];
-
-      return $c;
-  }
-  return;
-}
-
 
 sub default_track_by_gene {
   my $self = shift;
@@ -1103,112 +1067,6 @@ sub get_similarity_hash {
   warn "SIMILARITY_MATCHES Error on retrieving gene DB links $@" if $@;
 
   return $DBLINKS  || [];
-}
-
-=head2 get_go_list
-
- Arg[1]      : none
- Example     : @go_list = $transdata->get_go_list
- Description : Returns a hashref conating go links
- Return type : a hashref
-
-=cut
-
-sub get_go_list {
-  my $self = shift ;
-
-  # The array will have the list of ontologies mapped 
-  my $ontologies = $self->species_defs->SPECIES_ONTOLOGIES || return {};
-
-  my $dbname_to_match = shift || join '|', @$ontologies;
-  my $ancestor=shift;
-  my $trans = $self->transcript;
-  my $goadaptor = $self->hub->get_databases('go')->{'go'};
-
-  my @goxrefs = @{$trans->get_all_DBLinks};
-
-  my %go_hash;
-  my %hash;
-
-  foreach my $goxref (sort { $a->display_id cmp $b->display_id } @goxrefs) {
-    my $go = $goxref->display_id;
-    chomp $go; # Just in case
-    next unless ($goxref->dbname =~ /^($dbname_to_match)$/);
-
-    my ($otype, $go2) = $go =~ /([\w|\_]+):0*(\d+)/;
-    my $term;
-    next if exists $hash{$go2};
-
-    my $info_text;
-    my $sources;
-
-    if ($goxref->info_type eq 'PROJECTION') {
-      $info_text= $goxref->info_text; 
-    }
-
-    my $evidence = '';
-    if ($goxref->isa('Bio::EnsEMBL::OntologyXref')) {
-      $evidence = join ', ', @{$goxref->get_all_linkage_types}; 
-
-      foreach my $e (@{$goxref->get_all_linkage_info}) {
-        my ($linkage, $xref) = @{$e || []};
-        next unless $xref;
-        my ($did, $pid, $db, $db_name) =  ($xref->display_id, $xref->primary_id, $xref->dbname, $xref->db_display_name);
-        my $label = "$db_name:$did";
-
-        #db schema won't (yet) support Vega GO supporting xrefs so use a specific form of info_text to generate URL and label
-        my $vega_go_xref = 0;
-        my $info_text = $xref->info_text;
-        if ($info_text =~ /Quick_Go:/) {
-          $vega_go_xref = 1;
-          $info_text =~ s/Quick_Go://;
-          $label = "(QuickGO:$pid)";
-        }
-        my $ext_url = $self->hub->get_ExtURL_link($label, $db, $pid, $info_text);
-        $ext_url = "$did $ext_url" if $vega_go_xref;
-        push @$sources, $ext_url;
-      }
-    }
-
-    $hash{$go2} = 1;
-
-    if (my $goa = $goadaptor->get_GOTermAdaptor) {
-      my $term;
-      eval { 
-        $term = $goa->fetch_by_accession($go2); 
-      };
-
-      warn $@ if $@;
-
-      my $term_name = $term ? $term->name : '';
-      $term_name ||= $goxref->description || '';
-
-      my $has_ancestor = (!defined ($ancestor));
-      if (!$has_ancestor){
-        $has_ancestor=($go eq $ancestor);
-        my $term = $goa->fetch_by_accession($go);
-
-        if ($term) {
-          my $ancestors = $goa->fetch_all_by_descendant_term($term);
-          for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
-            $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
-          }
-        }
-      }
-      
-      if($has_ancestor){
-        $go_hash{$go} = {
-          evidence => $evidence,
-          term     => $term_name,
-          info     => $info_text,
-          source   => join ' ,', @{$sources || []},
-        };
-      }
-    }
-
-  }
-
-  return \%go_hash;
 }
 
 
