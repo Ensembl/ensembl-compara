@@ -42,9 +42,10 @@ sub draw_feature {
   ## First the simple feature block
   my $x = $feature->{'start'};
   $x    = 0 if $x < 0;
+  my $y = $position->{'y'} + $self->track_config->get('y_offset');
   my $params = {
                   x          => $x,
-                  y          => $position->{'y'},
+                  y          => $y,
                   width      => $position->{'width'},
                   height     => $height,
                   href       => $feature->{'href'},
@@ -63,7 +64,7 @@ sub draw_feature {
       ## vertical
       $composite->push($self->Rect({
           'x'         => $arrow_x,
-          'y'         => $position->{'y'},
+          'y'         => $y,
           'width'     => $thickness,  
           'height'    => $height,
           'colour'    => $feature->{'arrow'}{'colour'},
@@ -74,7 +75,7 @@ sub draw_feature {
     $arrow_x = $feature->{'arrow'}{'position'} eq 'start' ? $arrow_x : $arrow_x - $thickness;
     $composite->push($self->Rect({
         'x'         => $arrow_x, 
-        'y'         => $position->{'y'},
+        'y'         => $y,
         'width'     => $thickness * 2,
         'height'    => 1, 
         'colour'    => $feature->{'arrow'}{'colour'},
@@ -91,7 +92,7 @@ sub draw_feature {
       next unless ref($_) eq 'ARRAY';
       $composite->push($self->Text({
                                     'x'         => $x + $_->[0],
-                                    'y'         => $position->{'y'},
+                                    'y'         => $y,
                                     'width'     => 1,
                                     'font'      => 'Tiny',
                                     'text'      => $_->[1],

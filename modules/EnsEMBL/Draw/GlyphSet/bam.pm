@@ -227,6 +227,7 @@ sub _render_reads {
     if ($text_fits) {
       $self->{'my_config'}->set('height', 8);
       $self->{'my_config'}->set('vspacing', 4);
+      $self->{'my_config'}->set('y_offset', -10);
 
       my $consensus       = $self->consensus_features;
       my ($seq, $inserts) = $self->_get_sequence_window($f);
@@ -243,7 +244,7 @@ sub _render_reads {
       foreach( split //, $seq ) {
         my $drawn_start   = $slicestart + $i;
         $drawn_start     += $start if $start > 0; 
-        my $consensus_seq = $consensus->{$real_x} || '';
+        my $consensus_seq = $consensus->{$drawn_start} || '';
         my $cons_colour   = $self->my_colour($consensus_seq eq $_ ? 'consensus_match' : 'consensus_mismatch');
         push @{$fhash->{'consensus'}}, [$i, $_, $cons_colour];
         $i++;
