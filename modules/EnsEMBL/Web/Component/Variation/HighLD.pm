@@ -61,13 +61,14 @@ sub summary_table {
   my $table_with_no_rows = 0;
   my %mappings        = %{$object->variation_feature_mapping};
   my $table              = $self->new_table([
-    { key => 'name',   title => 'Population',              sort => 'html',   align => 'left'   },
-    { key => 'desc',   title => 'Description',             sort => 'string', align => 'left'   },
-    { key => 'tags',   title => 'Tags',                    sort => 'string', align => 'right'  },
-    { key => 'tagged', title => 'Tagged by',               sort => 'string', align => 'right'  },
-    { key => 'table',  title => 'Linked variants table',   sort => 'none',   align => 'center' },
-    { key => 'plot',   title => 'LD plot (image)',         sort => 'none',   align => 'center' },
-    { key => 'export', title => 'LD plot (table)',         sort => 'none',   align => 'center' },
+    { key => 'name',     title => 'Population',              sort => 'html',   align => 'left'   },
+    { key => 'desc',     title => 'Description',             sort => 'string', align => 'left'   },
+    { key => 'tags',     title => 'Tags',                    sort => 'string', align => 'right'  },
+    { key => 'tagged',   title => 'Tagged by',               sort => 'string', align => 'right'  },
+    { key => 'manplot',  title => 'Linked variants (image)', sort => 'none',   align => 'center' },
+    { key => 'table',    title => 'Linked variants (table)', sort => 'none',   align => 'center' },
+    { key => 'plot',     title => 'LD plot (image)',         sort => 'none',   align => 'center' },
+    { key => 'export',   title => 'LD plot (table)',         sort => 'none',   align => 'center' },
   ], [], { data_table => 1, sorting => [ 'name asc' ] });
   
   my ($loc, $vf);
@@ -95,7 +96,7 @@ sub summary_table {
       my $full_desc = $self->strip_HTML($description);
       
       while ($description =~ m/^.{30}.*?(\s|\,|\.)/g) {
-        $description = sprintf '<span class="_ht" title="%s">%s...<span class="small">(more)</span>', $full_desc, substr($description, 0, (pos $description) - 1);
+        $description = sprintf '%s... <span class="_ht ht small" title="%s">(more)</span>', substr($description, 0, (pos $description) - 1), $full_desc;
         last;
       }
     }
@@ -130,8 +131,22 @@ sub summary_table {
     };
     
     if ($available_pops->{$pop->name}) {
-      # plot
+      my $id  = $pop->dbID;
+
+      # manhattan plot
       my $url = $hub->url({
+        type   => 'Variation',
+        action => 'LDPlot',
+        v      => $object->name,
+        vf     => $hub->param('vf'),
+        pop1   => $id,
+        focus  => 'variation'
+      });
+
+      $row->{'manplot'} = qq{<a href="$url">Show</a>};
+
+      # plot
+      $url = $hub->url({
         type   => 'Location',
         action => 'LD',
         r      => $object->ld_location,
@@ -142,8 +157,6 @@ sub summary_table {
       });
       
       $row->{'plot'} = qq{<a href="$url">Show</a>};
-      
-      my $id  = $pop->dbID;
       
       $row->{'table'} = $self->ajax_add($self->ajax_url(undef, { pop_id => $id, update_panel => 1 }), $id);
       

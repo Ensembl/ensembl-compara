@@ -63,6 +63,8 @@ sub feature_content {
   my $p_value       = $hub->param('p_value');
   my $transcript_id = $hub->param('t_id');
   my $consequence   = $hub->param('consequence');
+  my $ld_r2         = $hub->param('r2');
+  my $ld_d_prime    = $hub->param('d_prime');
   my $chr_start     = $feature->seq_region_start;
   my $chr_end       = $feature->seq_region_end;
   my $chr           = $feature->seq_region_name;
@@ -108,7 +110,9 @@ sub feature_content {
   }
 
   my $consequence_label = $feature->most_severe_OverlapConsequence->SO_term eq $type ? $self->variant_consequence_label($type) : $types->{lc $type}{'text'};
-  my $sources           = join(', ', @{$feature->get_all_sources});
+  my $sources_list      = $feature->get_all_sources;
+  my $source_label      = 'Source'.(scalar @$sources_list > 1 ? 's' : ''); 
+  my $sources           = join(', ', @$sources_list);
 
   my @entries = ([ 'Class', $feature->var_class ]);
 
@@ -129,8 +133,10 @@ sub feature_content {
   push @entries, [ 'Ambiguity code', $feature->ambig_code ];
   push @entries, [ 'Global MAF',     $gmaf                ] if defined $gmaf;
   push @entries, [ 'Consequence',    $consequence_label   ];
-  push @entries, [ 'Source',         $sources             ];
-  
+  push @entries, [ $source_label,    $sources             ];
+  push @entries, [ 'LD r2',          $ld_r2               ] if defined $ld_r2;
+  push @entries, [ 'LD D prime',     $ld_d_prime          ] if defined $ld_d_prime;
+ 
   if ($transcript_id) {
     foreach (@{$feature->get_all_TranscriptVariations}) {
       if ($transcript_id eq $_->transcript->stable_id) {
@@ -184,10 +190,12 @@ sub feature_content {
       label    => $var_box,
       position => 6
     });
-  } elsif ($snp_fake || $hub->type eq 'Variation') {    
+  } elsif ($snp_fake || $hub->type eq 'Variation') {
+    my $evidences = $feature->get_all_evidence_values || [];
+    my $evidence_label = 'Evidence'.(scalar @$evidences > 1 ? 's' : ''); 
     $self->add_entry({
-      type     => 'Evidence',
-      label    => join(', ', @{$feature->get_all_evidence_values || []}) || '-',
+      type     => $evidence_label,
+      label    => join(', ', @{$evidences}) || '-',
       position => (scalar @entries)+1 # Above "Source"
     });
   }

@@ -16,10 +16,10 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Location::SelectPopulation;
+package EnsEMBL::Web::Component::Variation::LD;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::PopulationSelector);
+use base qw(EnsEMBL::Web::Component::LD);
 
 1;
