@@ -195,7 +195,9 @@ sub _render_reads {
   $self->{'my_config'}->set('vspacing', 0);
   $self->{'my_config'}->set('y_start', 35);
 
-  my $data = {'features' => [], 'metadata' => {}};
+  my $total_count = scalar @$fs;
+  my $drawn_count = scalar @$features;
+  my $data = {'features' => [], 'metadata' => {'not_drawn' => $total_count - $drawn_count}};
 
   foreach my $f (@$features) {
     my $fstart = $f->start;
