@@ -268,6 +268,15 @@ sub make_readable {
   return join(',', @rgb);
 }
 
+sub centre_text {
+  my ($self, $text) = @_;
+
+  my $text_info   = $self->get_text_info($text);
+  my $slice_width = $self->image_config->container_width;
+
+  return ($slice_width - $text_info->{'width'}) / 2;
+}
+
 sub set_bump_row {
   my ($self, $start, $end, $show_label, $text_info) = @_;
   my $row = 0;
@@ -280,6 +289,38 @@ sub set_bump_row {
 
   $row = bump($self->bump_tally, $start, $end);
   return $row;
+}
+
+sub add_messages {
+### Add messages below a track
+  my ($self, $metadata, $y) = @_;
+  my @messages;
+ 
+  ## Non-rendered feature count 
+  if ($metadata->{'not_drawn'}) {
+    my $message = sprintf('%s feature', $metadata->{'not_drawn'});
+    $message   .= 's' if $metadata->{'not_drawn'} > 1;
+    $message   .= sprintf(" from '%s'", $metadata->{'name'}) if $metadata->{'name'};
+    $message   .= ' not shown';
+    push @messages, $message;
+  }
+ 
+  ## Now draw them all
+  $y += 4; ## Add a bit of space at the top
+ 
+  foreach (@messages) {
+    my $x = $self->centre_text($_);
+    push @{$self->glyphs}, $self->Text({
+                font      => $self->{'font_name'},
+                colour    => $metadata->{'message_colour'} || 'red',
+                height    => $self->{'font_size'},
+                ptsize    => $self->{'font_size'},
+                text      => $_,
+                x         => $x,
+                y         => $y,
+    });
+    $y += $self->{'font_size'} + 2;
+  }
 }
 
 sub add_hidden_bgd {
