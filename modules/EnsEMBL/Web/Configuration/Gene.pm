@@ -93,6 +93,35 @@ sub populate_tree {
     { 'availability' => 'regulation not_patch not_rnaseq' }
   );
 
+  # get all ontologies mapped to this species
+  my $go_menu = $self->create_submenu('Ontology', 'Gene Ontology');
+  my %olist   = map {$_ => 1} @{$species_defs->SPECIES_ONTOLOGIES || []};
+
+  if (%olist) {
+    # get all ontologies available in the ontology db
+    my %clusters = $species_defs->multiX('ONTOLOGIES');
+
+    # get all the clusters that can generate a graph
+    my @clist = grep {$olist{$clusters{$_}->{db}}} sort {$clusters{$a}->{db} cmp $clusters{$b}->{db}} keys %clusters;    # Find if this ontology has been loaded into ontology db
+
+    foreach my $oid (@clist) {
+      my $cluster = $clusters{$oid};
+
+      my $url2 = $hub->url(
+        {
+          type   => 'Gene',
+          action => 'Ontology/' . $cluster->{description},
+          oid    => $oid
+        }
+      );
+
+      (my $desc2 = $cluster->{db}.": ".ucfirst($cluster->{description})) =~ s/_/ /g;
+
+      $go_menu->append($self->create_node('Ontology/'. $cluster->{description}, $desc2, [qw( go EnsEMBL::Web::Component::Gene::Go )], {'availability' => 'gene has_go', 'concise' => $desc2, 'url' => $url2}));
+
+    }
+  }
+    
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
     [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
     {'availability' => 'gene database:compara core'}
