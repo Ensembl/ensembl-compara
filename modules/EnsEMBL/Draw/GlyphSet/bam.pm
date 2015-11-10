@@ -241,10 +241,12 @@ sub _render_reads {
 
       my $i = 0;
       foreach( split //, $seq ) {
-        my $pos = $start + $i;
-        my $consensus_seq = $consensus->{$pos} || '';
+        my $drawn_start   = $slicestart + $i;
+        $drawn_start     += $start if $start > 0; 
+        my $consensus_seq = $consensus->{$real_x} || '';
         my $cons_colour   = $self->my_colour($consensus_seq eq $_ ? 'consensus_match' : 'consensus_mismatch');
-        push @{$fhash->{'consensus'}}, [$pos, $_, $cons_colour];
+        push @{$fhash->{'consensus'}}, [$i, $_, $cons_colour];
+        $i++;
       }
     }
 
