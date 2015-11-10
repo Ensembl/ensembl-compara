@@ -80,7 +80,7 @@ sub handler {
     $r->headers_out->set('Expires'        => HTTP::Date::time2str(time + 60*60*24*30));
     $r->content_type(mime_type($uri));
     $r->print($content);
-    
+    static_cache_hook($uri,$content);
     return OK;
   } else {
     my $file = $uri;
