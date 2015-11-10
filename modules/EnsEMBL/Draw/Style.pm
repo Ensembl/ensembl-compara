@@ -298,9 +298,10 @@ sub add_messages {
  
   ## Non-rendered feature count 
   if ($metadata->{'not_drawn'}) {
+    my $name    = $metadata->{'name'} || $self->track_config->get('name');
     my $message = sprintf('%s feature', $metadata->{'not_drawn'});
     $message   .= 's' if $metadata->{'not_drawn'} > 1;
-    $message   .= sprintf(" from '%s'", $metadata->{'name'}) if $metadata->{'name'};
+    $message   .= sprintf(" from '%s'", $name) if $name;
     $message   .= ' not shown';
     push @messages, $message;
   }
