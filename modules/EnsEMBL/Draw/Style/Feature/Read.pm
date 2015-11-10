@@ -57,12 +57,12 @@ sub draw_feature {
   if ($feature->{'arrow'}{'position'}) {
     my $thickness = 1 / $self->{'pix_per_bp'};
     ## Align with correct end of feature
-    $x = $feature->{'arrow'}{'position'} eq 'start' ? $x : $feature->{'end'} - $thickness;
+    my $arrow_x = $feature->{'arrow'}{'position'} eq 'start' ? $x : $feature->{'end'} - $thickness;
 
     if ($height == 8) {
       ## vertical
       $composite->push($self->Rect({
-          'x'         => $x,
+          'x'         => $arrow_x,
           'y'         => $position->{'y'},
           'width'     => $thickness,  
           'height'    => $height,
@@ -71,14 +71,33 @@ sub draw_feature {
     }
 
     ## horizontal
-    $x = $feature->{'arrow'}{'position'} eq 'start' ? $x : $x - $thickness;
+    $arrow_x = $feature->{'arrow'}{'position'} eq 'start' ? $arrow_x : $arrow_x - $thickness;
     $composite->push($self->Rect({
-        'x'         => $x, 
+        'x'         => $arrow_x, 
         'y'         => $position->{'y'},
         'width'     => $thickness * 2,
         'height'    => 1, 
         'colour'    => $feature->{'arrow'}{'colour'},
     }));
+  }
+
+  ## Add inserts 
+  if ($feature->{'inserts'}) {
+  }
+
+  ## Add consensus base-pair labels
+  if ($feature->{'consensus'}) {
+    foreach (@{$feature->{'consensus'}}) {
+      next unless ref($_) eq 'ARRAY';
+      $composite->push($self->Text({
+                                    'x'         => $x + $_->[0],
+                                    'y'         => $position->{'y'},
+                                    'width'     => 1,
+                                    'font'      => 'Tiny',
+                                    'text'      => $_->[1],
+                                    'colour'    => $_->[2],
+                                    }));
+    }
   }
 
   push @{$self->glyphs}, $composite; 
