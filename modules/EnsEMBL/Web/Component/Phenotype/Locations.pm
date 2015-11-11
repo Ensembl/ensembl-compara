@@ -104,7 +104,7 @@ sub _pf_location_link {
   
   my $type = lc($f->{'extra'}->{'feat_type'});
   my $link = sprintf(
-          '<a href="%s">%s:%d-%d(%d)</a>',
+          '<a href="%s" class="mobile-nolink">%s:%d-%d(%d)</a>',
           $self->hub->url({
             type    => 'Location',
             action  => 'View',
