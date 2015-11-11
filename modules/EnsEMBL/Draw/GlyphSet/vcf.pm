@@ -51,8 +51,8 @@ sub render_compact {
     return undef;
   }
   else {
-    ## Convert raw features into consensus features
-    $self->{'features'} = $self->consensus_features;
+    ## Convert raw features into correct data format 
+    $self->{'features'} = [{'features' => $self->consensus_features}];
     $self->draw_features;
   }
 }
@@ -93,7 +93,7 @@ sub consensus_features {
   my $slice         = $self->{'container'};
   my $start         = $slice->start;
   my $species       = $self->{'config'}->hub->species;
-  my @features;
+  my $features      = [];
 
   # If we have a variation db attached we can try and find a known SNP mapped at the same position
   # But at the moment we do not display this info so we might as well just use the faster method 
@@ -103,25 +103,24 @@ sub consensus_features {
   my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my $colours = $self->species_defs->colour('variation');
    
-  foreach my $a (@$raw_features) {
-    warn ">>> SNP $a";
+  foreach my $f (@$raw_features) {
     my $unknown_type = 1;
-    my $vs           = $a->{'POS'} - $start + 1;
+    my $vs           = $f->{'POS'} - $start + 1;
     my $ve           = $vs;
     my $info;
-    $info .= ";  $_: $a->{'INFO'}{$_}" for sort keys %{$a->{'INFO'} || {}};
+    $info .= ";  $_: $f->{'INFO'}{$_}" for sort keys %{$f->{'INFO'} || {}};
 
-    if (my $sv = $a->{'INFO'}{'SVTYPE'}) {
+    if (my $sv = $f->{'INFO'}{'SVTYPE'}) {
       $unknown_type = 0;
 
       if ($sv eq 'DEL') {
-        my $svlen = $a->{'INFO'}{'SVLEN'} || 0;
+        my $svlen = $f->{'INFO'}{'SVLEN'} || 0;
         $ve       = $vs + abs $svlen;
 
-        $a->{'REF'} = substr($a->{'REF'}, 0, 30) . ' ...' if length $a->{'REF'} > 30;
+        $f->{'REF'} = substr($f->{'REF'}, 0, 30) . ' ...' if length $f->{'REF'} > 30;
       } 
       elsif ($sv eq 'TDUP') {
-        my $svlen = $a->{'INFO'}{'SVLEN'} || 0;
+        my $svlen = $f->{'INFO'}{'SVLEN'} || 0;
         $ve       = $vs + $svlen + 1;
       } 
       elsif ($sv eq 'INS') {
@@ -129,7 +128,7 @@ sub consensus_features {
       }
     } 
     else {
-      my ($reflen, $altlen) = (length $a->{'REF'}, length $a->{'ALT'}[0]);
+      my ($reflen, $altlen) = (length $f->{'REF'}, length $f->{'ALT'}[0]);
 
       if ($reflen > 1) {
         $ve = $vs + $reflen - 1;
@@ -139,8 +138,8 @@ sub consensus_features {
       }
     }
 
-    my $allele_string = join '/', $a->{'REF'}, @{$a->{'ALT'} || []};
-    my $vf_name       = $a->{'ID'} eq '.' ? "$a->{'CHROM'}_$a->{'POS'}_$allele_string" : $a->{'ID'};
+    my $allele_string = join '/', $f->{'REF'}, @{$f->{'ALT'} || []};
+    my $vf_name       = $a->{'ID'} eq '.' ? "$f->{'CHROM'}_$f->{'POS'}_$allele_string" : $f->{'ID'};
 
     if ($slice->strand == -1) {
       my $flip = $slice->length + 1;
@@ -149,23 +148,24 @@ sub consensus_features {
 
     ## Set colour by consequence if defined in file
     my $colour  = $colours->{'default'}->{'default'};
-    if (defined($a->{'INFO'}->{'VE'})) {
-      my $cons = (split /\|/, $a->{'INFO'}->{'VE'})[0];
+    if (defined($f->{'INFO'}->{'VE'})) {
+      my $cons = (split /\|/, $f->{'INFO'}->{'VE'})[0];
       if (defined($overlap_cons{$cons})) {
         $colour = $colours->{lc $cons}->{'default'};
       }
     }
 
-    my $snp = {
-      start   => $vs,
-      end     => $ve,
-      strand  => 1,
-      colour  => $colour,        
-    };
+    my $fhash = {
+                  start   => $vs,
+                  end     => $ve,
+                  strand  => 1,
+                  colour  => $colour,       
+                  label   => $vf_name, 
+                };
 
-    push @features, $snp;
+    push @$features, $fhash;
   }
-  return @features;
+  return $features;
 }
 
 sub vcf_adaptor {
