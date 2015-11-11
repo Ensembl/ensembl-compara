@@ -293,12 +293,12 @@ sub _render {
     if (!scalar(@{$self->features})) {
       $self->no_features;
     } else {
-      warn "Rendering coverage";
+      #warn "Rendering coverage";
       $self->_render_coverage if $options->{coverage};
-      warn "Done rendering coverage";
-      warn "Rendering reads";
+      #warn "Done rendering coverage";
+      #warn "Rendering reads";
       $self->_render_reads if $options->{reads};
-      warn "Done rendering reads";
+      #warn "Done rendering reads";
     }
     alarm 0;
   };
