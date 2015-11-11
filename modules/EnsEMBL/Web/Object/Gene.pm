@@ -48,7 +48,7 @@ sub availability {
   if (!$self->{'_availability'}) {
     my $availability = $self->_availability;
     my $obj = $self->Obj;
-    
+
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
     } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
@@ -80,6 +80,7 @@ sub availability {
       $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
       $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
       $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
+      $availability->{'not_human'}            = $self->species eq 'Homo_sapiens' ? 0 : 1;
 
       if ($self->database('variation')) {
         $availability->{'has_phenotypes'} = $self->get_phenotype; 
