@@ -50,11 +50,10 @@ sub content {
   my $columns     = [   
     { key => 'go',               title => 'Accession',         sort => 'html', width => '10%',  align => 'left'   },
     { key => 'description',      title => 'Term',              sort => 'text', width => '25%', align => 'left'   },
-    { key => 'evidence',         title => 'Evidence',          sort => 'text', width => '3%',  align => 'center' },
-    { key => 'desc',             title => 'Annotation Source', sort => 'html', width => '20%', align => 'center' },
-    { key => 'goslim_goa_acc',   title => 'GOSlim Accessions', sort => 'html', width => '9%',  align => 'centre' },    
-    { key => 'transcript_id',    title => 'Transcript ID',     sort => 'text', width => '15%', align => 'centre' },
-    { key => 'extra_link',       title => 'Other views',       width => '10%', align => 'centre' },
+    { key => 'evidence',         title => 'Evidence',          sort => 'text', width => '3%',  align => 'left' },
+    { key => 'desc',             title => 'Annotation Source', sort => 'html', width => '20%', align => 'left' },    
+    { key => 'transcript_id',    title => 'Transcript IDs',     sort => 'text', width => '15%', align => 'left' },
+    { key => 'extra_link',       title => '',                  sort => 'none', width => '10%', align => 'left' },
   ];
   
   my $html    = '<ul>';
@@ -66,12 +65,7 @@ sub content {
   if (%$go_hash) {
     my $table = $self->new_table($columns, [], { data_table => 1 });
     (my $desc = ucfirst $clusters{$oid}{'description'}) =~ s/_/ /g;
-    
-    # add goslim_generic
-    foreach my $key (keys %$go_hash) {
-      $go_hash->{$key}{'goslim'}{$_->accession}{'name'} = $_->name for @{$adaptor->fetch_all_by_descendant_term($adaptor->fetch_by_accession($key), '%goslim_generic%')};;
-    }
-    
+   
     $self->process_data($table, $go_hash, $clusters{$oid}{'db'});    
 
     $tables     .= $table->render;
@@ -115,7 +109,7 @@ sub process_data {
    (my $trans       = $hash->{transcript_id}) =~ s/^,/ /; # GO terms with multiple transcripts
     my %all_trans   = map{$_ => $hub->url({type => 'Transcript', action => 'Summary',t => $_,})} split(/,/,$trans) if($hash->{transcript_id} =~ /,/);
     
-    my ($goslim_goa_acc, $goslim_goa_title, $desc);
+    my ($desc);
 
     if ($hash->{'info'}) {
       my ($gene, $type, $common_name);
@@ -143,21 +137,16 @@ sub process_data {
       $desc = qq{Propagated from $common_name <a href="$url">$gene</a> by orthology};
     }
     
-    foreach (keys %$goslim) {
-      $goslim_goa_acc   .= $hub->get_ExtURL_link($_, 'GOSLIM_GOA', $_) . '<br />';
-      $goslim_goa_title .= $goslim->{$_}{'name'} . '<br />';
+    if($hash->{'term'}) {
+      $row->{'go'}               = $go_link;
+      $row->{'description'}      = $hash->{'term'};
+      $row->{'evidence'}         = join ', ', map $self->helptip($_, $description_hash->{$_} // 'No description available'), @$go_evidence;
+      $row->{'desc'}             = join ', ', grep $_, ($desc, $hash->{'source'});
+      $row->{'transcript_id'}    = %all_trans ? join("<br>", map { qq{<a href="$all_trans{$_}">$_</a>} } keys %all_trans) : '<a href="'.$hub->url({type => 'Transcript', action => 'Summary',t => $_,}).'">'.$hash->{transcript_id}.'</a>';
+      $row->{'extra_link'}       = $mart_link || $loc_link ? qq{<ul class="compact">$mart_link$loc_link</ul>} : "";
+      
+      $table->add_row($row);
     }
- 
-    $row->{'go'}               = $go_link;
-    $row->{'description'}      = $hash->{'term'};
-    $row->{'evidence'}         = join ', ', map $self->helptip($_, $description_hash->{$_} // 'No description available'), @$go_evidence;
-    $row->{'desc'}             = join ', ', grep $_, ($desc, $hash->{'source'});
-    $row->{'goslim_goa_acc'}   = $goslim_goa_acc;
-    $row->{'goslim_goa_title'} = $goslim_goa_title;
-    $row->{'transcript_id'}    = %all_trans ? join("<br>", map { qq{<a href="$all_trans{$_}">$_</a>} } keys %all_trans) : '<a href="'.$hub->url({type => 'Transcript', action => 'Summary',t => $_,}).'">'.$hash->{transcript_id}.'</a>';
-    $row->{'extra_link'}       = $mart_link || $loc_link ? qq{<ul>$mart_link$loc_link</ul>} : "";
-    
-    $table->add_row($row);
   }
   
   return $table;  
