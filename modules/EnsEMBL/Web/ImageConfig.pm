@@ -1315,7 +1315,7 @@ sub _add_vcf_track {
     renderers => [
       'off',       'Off',
       'histogram', 'Histogram',
-      'compact',   'Compact'
+      'normal',    'Compact'
     ],
     options => {
       external   => 'external',
