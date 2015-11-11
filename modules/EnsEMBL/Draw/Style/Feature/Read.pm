@@ -83,13 +83,23 @@ sub draw_feature {
   }
 
   ## Add inserts 
-  if ($feature->{'inserts'}) {
+  if (scalar @{$feature->{'inserts'}}) {
+    my $insert_colour = $self->my_colour('read_insert');
+    foreach (@{$feature->{'inserts'}}) {
+      $composite->push($self->Rect({
+                                    'x'         => $x + $_,
+                                    'y'         => $y,
+                                    'width'     => 1,
+                                    'height'    => $height,
+                                    'colour'    => $insert_colour,
+                                    'zindex'    => 10,
+      }));
+    }
   }
 
   ## Add consensus base-pair labels
   if ($feature->{'consensus'}) {
     foreach (@{$feature->{'consensus'}}) {
-      next unless ref($_) eq 'ARRAY';
       $composite->push($self->Text({
                                     'x'         => $x + $_->[0],
                                     'y'         => $y,
