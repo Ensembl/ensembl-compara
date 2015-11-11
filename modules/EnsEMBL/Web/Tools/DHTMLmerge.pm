@@ -39,6 +39,11 @@ sub get_filegroups {
     'files'       => get_files_from_dir($species_defs, $type, $dir),
     'condition'   => sub { 1 },
     'ordered'     => 0
+  },{
+    group_name => 'components/newtable',
+    files => get_files_from_dir($species_defs,$type,'components/newtable'),
+    condition => sub { 1 },
+    ordered => 0
   };
 }
 
@@ -244,6 +249,8 @@ sub _merge_files {
       my $map_path = $abs_path;
       $map_path =~ s/\.css/\.map/;
       file_put_contents($map_path,to_json({ sprites => $sprites, prefetch => $prefetch }));
+    } else {
+      $url_path = undef;
     }
   }
 
