@@ -189,7 +189,7 @@ sub draw_score {
 ### Max and min scores on axes
   my ($self, $y, $value) = @_;
 
-  my $text      = sprintf('%.2f',$value);
+  my $text      = $self->track_config->get('integer_score') ? int($value) : sprintf('%.2f',$value);
   my $text_info = $self->get_text_info($text);
   my $width     = $text_info->{'width'};
   my $height    = $text_info->{'height'};
