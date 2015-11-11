@@ -22,6 +22,9 @@ package EnsEMBL::Draw::GlyphSet::vcf;
 ### internally configured via an ini file or database record
 
 use strict;
+no warnings 'uninitialized';
+
+use Role::Tiny;
 
 use Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
@@ -33,6 +36,10 @@ sub can_json { return 1; }
 
 sub init {
   my $self = shift;
+
+  ## We only need wiggle roles, as alignment rendering has a non-standard name
+  Role::Tiny->apply_roles_to_object($self, 'EnsEMBL::Draw::Role::Wiggle');
+
   ## Cache raw VCF features
   $self->{'features'} = $self->features;
 }
@@ -40,12 +47,13 @@ sub init {
 ############# RENDERING ########################
 
 sub render_histogram {
-  my $self  = shift;
-  return scalar @{$self->features} > 200 ? $self->render_density_bar : $self->render_compact;
+  my $self = shift;
+  return scalar @{$self->features} > 200 ? $self->render_density_bar : $self->render_normal;
 }
 
-sub render_compact {
-  my $self        = shift;
+sub render_normal {
+### NB. Takes precendence of method in Role::Wiggle
+  my $self = shift;
   if (scalar @{$self->features} > 200) {
     $self->too_many_features;
     return undef;
@@ -53,13 +61,19 @@ sub render_compact {
   else {
     ## Convert raw features into correct data format 
     $self->{'features'} = [{'features' => $self->consensus_features}];
+    $self->{'my_config'}->set('drawing_style', ['Feature']);
     $self->draw_features;
   }
 }
 
 sub render_density_bar {
   my $self        = shift;
-  warn ">>> RENDERING DENSITY";
+  $self->{'my_config'}->set('height', 20);
+  $self->{'my_config'}->set('no_guidelines', 1);
+  $self->{'my_config'}->set('integer_score', 1);
+  ## Convert raw features into correct data format 
+  $self->{'features'} = [{'features' => $self->density_features}];
+  $self->render_tiling;
 }
 
 ############# DATA ACCESS & PROCESSING ########################
@@ -87,6 +101,7 @@ sub features {
 
 sub consensus_features {
 ### Turn raw features into consensus features for drawing
+### @return Arrayref of hashes
   my $self = shift;
   my $raw_features  = $self->{'features'};
   my $config        = $self->{'config'};
@@ -107,8 +122,6 @@ sub consensus_features {
     my $unknown_type = 1;
     my $vs           = $f->{'POS'} - $start + 1;
     my $ve           = $vs;
-    my $info;
-    $info .= ";  $_: $f->{'INFO'}{$_}" for sort keys %{$f->{'INFO'} || {}};
 
     if (my $sv = $f->{'INFO'}{'SVTYPE'}) {
       $unknown_type = 0;
@@ -139,7 +152,7 @@ sub consensus_features {
     }
 
     my $allele_string = join '/', $f->{'REF'}, @{$f->{'ALT'} || []};
-    my $vf_name       = $a->{'ID'} eq '.' ? "$f->{'CHROM'}_$f->{'POS'}_$allele_string" : $f->{'ID'};
+    my $vf_name       = $f->{'ID'} eq '.' ? "$f->{'CHROM'}_$f->{'POS'}_$allele_string" : $f->{'ID'};
 
     if ($slice->strand == -1) {
       my $flip = $slice->length + 1;
@@ -166,6 +179,35 @@ sub consensus_features {
     push @$features, $fhash;
   }
   return $features;
+}
+
+sub density_features {
+### Merge the features into bins
+### @return Arrayref of hashes
+  my $self     = shift;
+  my $slice    = $self->{'container'};
+  my $start    = $slice->start - 1;
+  my $vclen    = $slice->length;
+  my $im_width = $self->{'config'}->image_width;
+  my $divs     = $im_width;
+  my $divlen   = $vclen / $divs;
+  $divlen      = 10 if $divlen < 10; # Increase the number of points for short sequences
+  my $density  = {};
+  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->features};
+
+  my $colours = $self->species_defs->colour('variation');
+  my $colour  = $colours->{'default'}->{'default'};
+
+  my $density_features = [];
+  foreach (sort {$density->{$a} <=> $density->{$b}} keys %$density) {
+    push @$density_features, {
+                              'start'   => $_, 
+                              'end'     => $_ + $divlen,
+                              'colour'  => $colour,
+                              'score'   => $density->{$_}
+                              };
+  }
+  return $density_features;
 }
 
 sub vcf_adaptor {
