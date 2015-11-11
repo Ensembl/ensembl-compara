@@ -26,109 +26,58 @@ no warnings 'uninitialized';
 
 use List::Util qw(min max);
 
-use Bio::EnsEMBL::IO::Adaptor::PairwiseAdaptor;
+use EnsEMBL::Web::IOWrapper::Indexed;
 
-use EnsEMBL::Draw::Utils::PairedFeature;
-use EnsEMBL::Web::File::AttachedFormat::PAIRWISE;
-use EnsEMBL::Web::File::Utils::URL;
+use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
-use base qw(EnsEMBL::Draw::GlyphSet::_alignment);
-
-sub my_helplink   { return 'pairwise'; }
-sub feature_id    { $_[1]->id;       }
-sub feature_group { $_[1]->id;       }
-sub feature_label { $_[1]->id;       }
-sub feature_title { return undef;    }
-sub href          { return $_[0]->_url({ action => 'UserData', id => $_[1]->id, %{$_[2]||{}} }); }
-sub href_bgd      { return $_[0]->_url({ action => 'UserData' }); }
-
-sub pairwise_adaptor {
-  my ($self,$in) = @_;
-
-  $self->{'_cache'}->{'_pairwise_adaptor'} = $in if defined $in;
- 
-  my $error;
-  unless ($self->{'_cache'}->{'_pairwise_adaptor'}) { 
-    my $url = $self->my_config('url');
-    if ($url && $url =~ /^(http|ftp)/) { ## Actually a URL, not a local file
-      ## Check file is available before trying to load it 
-      ## (Bio::DB::BigFile does not catch C exceptions)
-      my $headers = EnsEMBL::Web::File::Utils::URL::get_headers($self->my_config('url'), {
-                                                                    'hub' => $self->{'config'}->hub, 
-                                                                    'no_exception' => 1
-                                                            });
-      if ($headers) {
-        if ($headers->{'Content-Type'} !~ 'text/html') { ## Not being redirected to a webpage, so chance it!
-          my $ad = Bio::EnsEMBL::IO::Adaptor::PairwiseAdaptor->new($self->my_config('url'));
-          #$error = "Broken pairwise file" unless $ad->check;
-          $self->{'_cache'}->{'_pairwise_adaptor'} = $ad;
-        }
-        else {
-          $error = "File at URL ".$self->my_config('url')." does not appear to be of type Pairwise; returned MIME type ".$headers->{'Content-Type'};
-        }
-      }
-      else {
-        $error = "No HTTP headers returned by URL ".$self->my_config('url');
-      }
-    } 
-    else {
-      my $ad = Bio::EnsEMBL::IO::Adaptor::PairwiseAdaptor->new($self->my_config('url'));
-      #$error = "Broken pairwise file" unless $ad->check;
-      $self->{'_cache'}->{'_pairwise_adaptor'} = $ad;
-    }
-  }
-  $self->errorTrack("Could not retrieve file") if $error;
-  return $self->{'_cache'}->{'_pairwise_adaptor'};
-}
-
-sub format {
-  my $self = shift;
-
-  my $format = $self->{'_cache'}->{'format'} ||=
-    EnsEMBL::Web::File::AttachedFormat::PAIRWISE->new(
-      $self->{'config'}->hub,
-      "PAIRWISE",
-      $self->my_config('url'),
-      $self->my_config('style'), # contains trackline
-    );
-  $format->_pairwise_adaptor($self->pairwise_adaptor);
-  return $format;
-}
+sub can_json { return 1; }
 
 sub features {
-  my ($self, $options) = @_;
-  my %config_in = map { $_ => $self->my_config($_) } qw(colouredscore style);
-  
-  $options = { %config_in, %{$options || {}} };
+  my $self      = shift;
+  my $hub       = $self->{'config'}->hub;
+  my $url       = $self->my_config('url');
+  my $container = $self->{'container'};
+  my $args      = {'options' => {'hub' => $hub}};
 
-  my $pwa       = $options->{'adaptor'} || $self->pairwise_adaptor;
-  return [] unless $pwa;
-  my $format    = $self->format;
-  my $slice     = $self->{'container'};
-  my $features  = $pwa->fetch_features($slice->seq_region_name, $slice->start, $slice->end + 1);
-  my $config    = {};
-  my $max_score = 0;
-  my $key       = $self->my_config('description') =~ /external webserver/ ? 'url' : 'feature';
-  
-  $self->{'_default_colour'} = $self->SUPER::my_colour($self->my_config('sub_type'));
-  
-  ## Convert raw hashes into basic objects 
-  my $feature_objects;
-  foreach (@$features) {
-    my $f = EnsEMBL::Draw::Utils::PairedFeature->new($_);
-    $f->map($slice);
-    $max_score = max($max_score, $f->score);
-    push @$feature_objects, $f;
+  my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'PairwiseTabix', $args);
+  my $data;
+
+  if ($iow) {
+    ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
+    ## most files won't have explicit colour settings
+    my $colour = $self->my_config('colour');
+    my $metadata = {
+                    'colour'        => $colour,
+                    'join_colour'   => $colour,
+                    'label_colour'  => $colour,
+                    };
+
+    ## No colour defined in ImageConfig, so fall back to defaults
+    unless ($colour) {
+      my $colourset_key = $self->{'my_config'}->get('colourset') || 'userdata';
+      my $colourset     = $hub->species_defs->colour($colourset_key);
+      my $colours       = $colourset->{'url'} || $colourset->{'default'};
+      $metadata         = {
+                            'colour'        => $colours->{'default'},
+                            'join_colour'   => $colours->{'join'} || $colours->{'default'},
+                            'label_colour'  => $colours->{'text'} || $colours->{'default'},
+                          };
+    }
+
+
+    ## Parse the file, filtering on the current slice
+    $data = $iow->create_tracks($container, $metadata);
+  } else {
+    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
+    warn "!!! ERROR CREATING PARSER FOR PAIRWISE FORMAT";
   }
-  
-  return ($key => [ $feature_objects, { %$config, %{$format->parse_trackline($format->trackline)} } ]);
+  #$self->{'config'}->add_to_legend($legend);
+
+  return $data;
 }
- 
-sub my_colour {
-  my ($self, $k, $v) = @_;
-  my $c = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'color'} || $self->{'_default_colour'};
-  return $v eq 'join' ?  $self->{'config'}->colourmap->mix($c, 'white', 0.8) : $c;
-}
+             
+
+
 
 1;
 
