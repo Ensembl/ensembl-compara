@@ -205,7 +205,7 @@ sub get_go_list {
       my $term;
       
       if(exists $hash{$go2}) {      
-        $go_hash{$go}{transcript_id} .= ",$transcript_id" if(exists $hash{$go}{term}); # GO terms with multiple transcript
+        $go_hash{$go}{transcript_id} .= ",$transcript_id" if($go_hash{$go} && $go_hash{$go}{transcript_id}); # GO terms with multiple transcript
         next;
       }
 
@@ -266,7 +266,7 @@ sub get_go_list {
           }
         }
      
-        if($has_ancestor){
+        if($has_ancestor){        
           $go_hash{$go} = {
             transcript_id => $transcript_id,
             evidence => $evidence,
