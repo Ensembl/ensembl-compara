@@ -30,12 +30,17 @@
         }
         var $slices = $('<div/>').appendTo($out);
         var $before = $('<div class="before"/>');
-        $out.prepend($before).append($html);
+        var $controller = $('<div class="newtable_controller"/>');
+        $out.prepend($controller).prepend($before).append($html);
         return {
           '$': $out,
           'before': {
             'tags': ['before'],
             '$': $before
+          },
+          'controller': {
+            'tags': ['controller','pre'],
+            '$': $controller
           },
           'topper': {
             'tags': ['full','inner','full-inner','top-full-inner'],

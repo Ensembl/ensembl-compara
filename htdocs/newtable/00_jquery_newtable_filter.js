@@ -107,18 +107,6 @@
       var $vbuts = $('.t.valid',$filters);
       $filters.toggle(!!$vbuts.length);
       maybe_hide_more($table);
-      if($vbuts.length) {
-        var $el = $('.prec_pri').eq(0);
-        if(!$el.hasClass('tipped')) {
-          $el.addClass('tipped').helptip({
-            'content': 'Click here to filter table by consequence type',
-            'position': { 'of': $el },
-            'close': function(event,ui) {
-              $el.helptip('disable');
-            }
-          }).helptip('open'); // XXX this is a hack
-        }
-      }
     }
 
     function unrestrict(config,$el,view) {

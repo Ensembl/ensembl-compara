@@ -7,7 +7,7 @@ use parent qw(EnsEMBL::Web::NewTable::Plugin);
 sub children { return [qw(FilterClass FilterRange)]; }
 sub requires { return [@{children()},'Types']; }
 sub js_plugin { return "new_table_filter"; }
-sub position{ return [qw(top-full-inner)]; }
+sub position{ return [qw(controller)]; }
 
 sub col_filter_label {
   my ($self,$col,$label) = @_;
