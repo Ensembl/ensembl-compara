@@ -53,12 +53,11 @@ sub content_ajax {
   return unless $data;
   
   my $format  = $data->{'format'};
-  my $formats = $hub->species_defs->multi_val('REMOTE_FILE_FORMATS');
   my $html;
   
   unless ($format eq 'TRACKHUB' && $hub->param('assembly') !~ $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')) { ## Don't give parsing message if this is a hub and we can't show it!
-    if (grep /^$format$/i, @$formats) {
-      $html .= '<p>We cannot parse large file formats to navigate to the nearest feature. Please select appropriate coordinates after closing this window</p>';
+    if ($type eq 'url') {
+      $html .= '<p>We cannot parse remote files to navigate to the nearest feature. Please select appropriate coordinates after closing this window</p>';
     } 
     else {
       my $size = int($data->{'filesize'} / (1024 ** 2));
