@@ -167,8 +167,8 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_range .slider_unspecified { padding: 0 6px; }
 .newtable_range .slider_unspecified input { vertical-align: bottom; }
 .newtable_filtertype_more ul { padding: 0; }
-.newtable_filtertype_more li { background-color: #667aa6; padding: 4px; width: 100px; border-radius: 0; margin: 4px; border: 3px double white; list-style: none; color: white; text-align: left; }
-.newtable_filtertype_more li:hover {  background: linear-gradient(to top,#667aa6,#869ac6) #667aa6; text-shadow: 0 1px #869ac6; }
+.newtable_filtertype_more li { background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; margin: 4px; width: 100px; border-radius: 0; padding: 2px 8px 2px 24px; border: 3px double white; list-style: none; color: white; text-align: left; }
+.newtable_filtertype_more li:hover {  background: url(/i/16/rev/filter.png) no-repeat 4px 50%,linear-gradient(to top,#667aa6,#869ac6) #667aa6; text-shadow: 0 1px #869ac6; }
 .newtable_filter ul li.t.prec_sec { display: none; }
 .newtable_filter .intro { font-weight: bold; margin: 0 0 0 8px; color: #666; }
 .newtable_export_iframe { display: none; }
