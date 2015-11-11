@@ -41,7 +41,7 @@ sub get_filegroups {
     'ordered'     => 0
   },{
     group_name => 'components/newtable',
-    files => get_files_from_dir($species_defs,$type,'components/newtable'),
+    files => get_files_from_dir($species_defs,$type,'newtable'),
     condition => sub { 1 },
     ordered => 0
   };
