@@ -380,7 +380,7 @@ sub process {
     
     if ($col->{'help'}) {
       delete $col->{'title'};
-      $label = sprintf '<span class="ht _ht"><span class="_ht_tip">%s</span>%s</span>', encode_entities($col->{'help'}), $label;
+      $label = sprintf '<span class="ht _ht"><span class="_ht_tip hidden">%s</span>%s</span>', encode_entities($col->{'help'}), $label;
     }
     
     push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq( $_="$col->{$_}") : () } qw(id class title style colspan rowspan)), $label;
