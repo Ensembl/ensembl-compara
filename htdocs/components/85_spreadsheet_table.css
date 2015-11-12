@@ -140,9 +140,9 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter { -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; -ms-user-select: none; }
 .newtable_filter ul { display: inline-block; margin: 0; padding: 4px 2px; }
 .newtable_filter li.t { list-style: none; background-color: white; line-height: 20px; display: inline-block; margin: 0; }
-.newtable_filter .x { display: inline-block; visibility: hidden; height: 20px; width: 16px; vertical-align: bottom; margin: 0 0 3px 0; border: 1px solid #ccc; border-radius: 4px; }
-.newtable_filter .x:hover { border: 1px solid black; background: linear-gradient(to top,#ddd,#eee) #fff; border: 1px solid #999; text-shadow: 0 1px white; }
-.newtable_filter .x span { background: url(/i/16/cross-grey.png) no-repeat 2px 4px; display: inline-block; width: 16px; height: 20px; }
+.newtable_filter .x { display: inline-block; visibility: hidden; height: 20px; width: 20px; vertical-align: bottom; margin: 0 -12px 3px 0; border: 2px solid #ccc; border-radius: 16px; z-index: 10; position: relative; background: #cfc; }
+.newtable_filter .x:hover { linear-gradient(to top,#cfc,#efe) #fff; border: 2px solid #999; text-shadow: 0 1px white; }
+.newtable_filter .x span { background: url(/i/16/cross-grey.png) no-repeat 4px 4px; display: inline-block; width: 20px; height: 20px; }
 .newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: white; display: none; border: 3px double white; font-size: 14px; cursor: pointer; background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
 .newtable_filter li.t.valid .b { display: inline-block; }
 .newtable_filter li.t.restricted .x { visibility: visible; }
