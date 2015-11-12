@@ -88,13 +88,25 @@ sub draw_feature {
 
   my ($block_1, $block_2) = @{$structure};
 
+  ## Flip blocks if necessary
+  ## First the coordinates within each block
+  foreach ($block_1, $block_2) {
+    if ($_->{'start'} > $_->{'end'}) {
+      ($_->{'start'}, $_->{'end'}) = ($_->{'end'}, $_->{'start'});
+    }
+  }
+  ## Then the blocks relative to one another
+  ($block_1, $block_2) = ($block_2, $block_1) if $block_2->{'end'} < $block_1->{'start'};
+
   ## Draw first block
   unless ($block_1->{'end'} < 0) { 
     my %params        = %defaults;
     my $block_start   = $block_1->{'start'};
     $block_start      = 0 if $block_start < 0;
+    my $block_end     = $block_1->{'end'};
+    $block_end        = $image_width if $block_end > $image_width;
     $params{'x'}      = $block_start;
-    $params{'width'}  = $block_1->{'end'} - $block_start;
+    $params{'width'}  = $block_end - $block_start;
     $self->draw_block(%params);
   }
 
@@ -105,10 +117,12 @@ sub draw_feature {
   ## Draw second block
   unless ($block_2->{'start'} > $image_width) {
     my %params        = %defaults;
+    my $block_start   = $block_2->{'start'};
+    $block_start      = 0 if $block_start < 0;
     my $block_end     = $block_2->{'end'};
     $block_end        = $image_width if $block_end > $image_width;
-    $params{'x'}      = $block_2->{'start'};
-    $params{'width'}  = $block_end - $block_2->{'start'};
+    $params{'x'}      = $block_start;
+    $params{'width'}  = $block_end - $block_start;
     $self->draw_block(%params);
   }
   return $max_arc;
