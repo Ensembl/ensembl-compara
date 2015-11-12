@@ -246,15 +246,8 @@ sub create_chunks
   print("number of seq_regions ".scalar @{$chromosomes}."\n");
 
   $self->param('chunkset_counter', 1);
-  $self->param('current_chunkset', new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet);
-  $self->param('current_chunkset')->dna_collection($self->param('dna_collection'));
+  $self->define_new_chunkset;
 
-  #Not sure I need this....
-  $self->param('current_chunkset')->description(sprintf("collection_id:%d group:%d",
-                                                        $self->param('dna_collection')->dbID, 
-                                                        $self->param('chunkset_counter')));
-
-  $self->param('chunkset_counter', ($self->param('chunkset_counter') + 1));
   #Temporary fix to problem in core when masking haplotypes because the
   #assembly mapper is cached but shouldn't be
   #if including haplotypes
@@ -428,7 +421,7 @@ sub define_new_chunkset {
     my ($self) = @_;
 
     # If the current chunkset is still empty we don't need to create a new one
-    return unless $self->param('current_chunkset')->count;
+    return if $self->param('current_chunkset') and !$self->param('current_chunkset')->count;
 
     my $new_chunkset = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet(
         -NAME => sprintf('collection_id:%d group:%d', $self->param('dna_collection')->dbID, $self->param('chunkset_counter')),
