@@ -326,6 +326,7 @@ sub make_table {
   },{
     _key => 'aacoord', _type => 'integer', label => "AA co\ford",
     helptip => 'Amino Acid Co-ordinate',
+    filter_blank_button => 1,
   },{
     _key => 'sift_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'sift_value',

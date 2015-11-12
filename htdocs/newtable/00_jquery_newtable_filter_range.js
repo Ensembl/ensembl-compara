@@ -68,16 +68,18 @@
 
   function update_widget(variety,$button,$el,min,max) {
     var $feedback = $('.slider_feedback',$el);
-    var $tickbox = $('.slider_unspecified input',$el);
     var prefix = variety.summary_prefix($button);
     var minmax = is_minmax($button,null,min,max);
     $feedback.text(prefix+(minmax.min?"Min":min)+" - "+
                    prefix+(minmax.max?"Max":max));
-    if(!$button.data('unspec-explicit')) {
-      if(minmax.min && minmax.max) {
-        $tickbox.prop('checked',true);
-      } else {
-        $tickbox.prop('checked',false);
+    var $tickbox = $('.slider_unspecified input',$el);
+    if($tickbox.length) {
+      if(!$button.data('unspec-explicit')) {
+        if(minmax.min && minmax.max) {
+          $tickbox.prop('checked',true);
+        } else {
+          $tickbox.prop('checked',false);
+        }
       }
     }
   }
@@ -99,9 +101,15 @@
     var $slider = $('.slider',$button);
     var pmin = $slider.slider('option','values.0');
     var pmax = $slider.slider('option','values.1');
-    var $tickbox = $('.slider_unspecified input',$button);
     var minmax = is_minmax($button,null,pmin,pmax);
-    var update = { nulls: $tickbox.prop('checked') };
+    var $tickbox = $('.slider_unspecified input',$button);
+    var update = {};
+    if($tickbox.length) {
+      update.nulls = $tickbox.prop('checked');
+    } else {
+      update.nulls = (minmax.min && minmax.max);
+    }
+    console.log("update",update);
     variety.additional_update(update,$button);
     if(!minmax.min) { update.min = pmin; }
     if(!minmax.max) { update.max = pmax; }
@@ -129,15 +137,17 @@
   function draw_widget(variety,$button,min,max,km) {
     var $out = $("<div/>").addClass('newtable_range');
     $('<div/>').addClass('slider_feedback').appendTo($out);
-    var $unspec = $('<div/>').addClass('slider_unspecified');
-    $unspec.append("<span>include blank / other chrs.</span>");
-    var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
     draw_slider(variety,$out,$button,min,max,km);
-    $unspec.appendTo($out);
-    $tickbox.on('click',function() {
-      $button.data('unspec-explicit',true);
-      send_update(variety,$button);
-    }).prop('checked',true);
+    if(km && km['*'] && km['*'].blank_button) {
+      var $unspec = $('<div/>').addClass('slider_unspecified');
+      $unspec.append("<span>include blank</span>");
+      var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
+      $unspec.appendTo($out);
+      $tickbox.on('click',function() {
+        $button.data('unspec-explicit',true);
+        send_update(variety,$button);
+      }).prop('checked',true);
+    }
     update_widget(variety,$button,$out,null,null);
     return $out;
   }
@@ -190,13 +200,13 @@
           var out;
           if(!has_min && !has_max) {
             out = "All";
-            if(no_blanks) { out += " except blank/other"; }
+            if(no_blanks) { out += " except blank"; }
             return out;
           } else {
             out = variety.text_prefix(state)+(has_min?state.min:"Min") +
                   " - " +
                   variety.text_prefix(state)+(has_max?state.max:"Max");
-            if(!no_blanks) { out += " or blank/other"; }
+            if(!no_blanks) { out += " or blank"; }
             return out;
           }
         },

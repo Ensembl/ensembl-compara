@@ -60,4 +60,12 @@ sub col_filter_integer {
   });
 }
 
+sub col_filter_blank_button {
+  my ($self,$col,$yn) = @_;
+
+  $self->config->add_keymeta("filter",$col->key(),'*',{
+    blank_button => $yn,
+  });
+}
+
 1;
