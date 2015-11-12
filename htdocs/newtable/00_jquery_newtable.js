@@ -155,9 +155,9 @@
     return d;
   }
 
-  function build_enums(manifest_c,grid,series,enums) {
+  function build_enums(manifest_c,grid,series,enums,keymeta) {
     $.each(manifest_c.eundo,function(i,step) {
-      enums = step(enums,grid,series);
+      enums = step(enums,grid,series,keymeta);
     });
     return enums;
   }
@@ -226,7 +226,8 @@
   function store_ranges($table,enums,cur_manifest,manifest_in,config,widgets) {
     var grid = $table.data('grid') || [];
     var series = $table.data('grid-series') || [];
-    enums = build_enums(cur_manifest,grid,series,enums) || {};
+    var keymeta = $table.data('keymeta')||{};
+    enums = build_enums(cur_manifest,grid,series,enums,keymeta) || {};
     var ranges = $table.data('ranges') || {};
     var range_manifest = $table.data('range-manifest') || [];
     if(!$.orient_compares_equal(manifest_in,range_manifest)) {
@@ -246,15 +247,12 @@
 
   function store_keymeta($table,incoming) {
     var keymeta = $table.data('keymeta') || {};
-    var keymeta_values = $table.data('keymeta-values') || {};
     $.each(incoming||{},function(klass,klassdata) {
       if(!keymeta[klass]) { keymeta[klass] = {}; }
       $.each(klassdata||{},function(col,coldata) {
         if(!keymeta[klass][col]) { keymeta[klass][col] = {}; }
-        if(!keymeta_values[col]) { keymeta_values[col] = {}; }
         $.each(coldata||{},function(val,valdata) {
           if(!keymeta[klass][col][val]) { keymeta[klass][col][val] = {}; }
-          keymeta_values[col][val] = 1;
           $.each(valdata||{},function(k,v) {
             if(!keymeta[klass][col][val].hasOwnProperty(k)) {
               keymeta[klass][col][val][k] = v;
@@ -264,7 +262,6 @@
       });
     });
     $table.data('keymeta',keymeta);
-    $table.data('keymeta-values',keymeta_values);
   }
 
   function decorate(widgets,$table,grid,manifest_c,orient,series,start,length) {

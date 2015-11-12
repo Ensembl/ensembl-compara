@@ -292,6 +292,7 @@ sub make_table {
     width => 1.5,
     helptip => $glossary->{'Evidence status (variant)'},
     sort_down_first => 1,
+    filter_keymeta_enum => 1,
   },{
     _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
     helptip => 'Clinical significance',

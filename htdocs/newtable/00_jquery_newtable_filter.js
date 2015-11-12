@@ -174,11 +174,31 @@
       $el.hide();
     }
 
-    function eundo(client_enums,enums,grid,series) {
+    function add_from_keymeta(value,column,plugin,keymeta) {
+      $.each(keymeta,function(klass,klassdata) {
+        $.each(klassdata,function(col,coldata) {
+          if(col == column) {
+            $.each(coldata,function(val,valdata) {
+              if(val != '*') { plugin.value(value,val); }
+            });
+          }
+        });
+      });
+    }
+
+    function eundo(client_enums,enums,grid,series,keymeta) {
       for(var i=0;i<series.length;i++) {
         var plugin = client_enums[series[i]];
         if(!plugin) { continue; }
         var value = {};
+        /* Populate from keymeta? */
+        if(keymeta.enumerate && keymeta.enumerate[series[i]]) {
+          if(keymeta.enumerate[series[i]]['*'] &&
+             keymeta.enumerate[series[i]]['*'].from_keymeta) {
+            add_from_keymeta(value,series[i],plugin,keymeta);
+          }
+        }
+        /* Populate by each value */
         for(var j=0;j<grid.length;j++) {
           var v = grid[j][i];
           if(v===null || v===undefined) { continue; }
@@ -334,8 +354,8 @@
               delete need.enumerate;
             }
             var out = {
-              eundo: function(enums,grid,series) {
-                return eundo(client_enums,enums,grid,series);
+              eundo: function(enums,grid,series,keymeta) {
+                return eundo(client_enums,enums,grid,series,keymeta);
               }
             };
             if(obj_empty(need.filter)) { delete need.filter; }
