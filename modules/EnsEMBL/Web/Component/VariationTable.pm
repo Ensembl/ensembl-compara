@@ -272,7 +272,7 @@ sub make_table {
   },{
     _key => 'gmaf_allele', _type => 'string no_filter unshowable',
   },{
-    _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
+    _key => 'gmaf', _type => 'numeric set_primary', label => "Glo\fbal MAF",
     helptip => $glossary->{'Global MAF'},
     also_cols => 'gmaf_allele',
     filter_range => [0,0.5],
@@ -301,12 +301,13 @@ sub make_table {
     sort_down_first => 1,
     filter_keymeta_enum => 1,
   },{
-    _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
+    _key => 'clinsig', _type => 'iconic set_primary', label => "Clin. Sig.",
     helptip => 'Clinical significance',
+    filter_label => 'Clinical Significance',
     sort_down_first => 1,
     filter_keymeta_enum => 1,
   },{
-    _key => 'snptype', _type => 'iconic set_primary', label => "Type",
+    _key => 'snptype', _type => 'iconic set_primary', label => "Conseq. Type",
     filter_label => 'Consequence Type',
     filter_sorted => 1,
     width => 1.5,
