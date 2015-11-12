@@ -72,7 +72,7 @@ sub store {
   my $insertCount=0;
 
   my $sth = $self->prepare("INSERT ignore INTO dnafrag_chunk_set (dna_collection_id, description) VALUES (?,?)");
-  $insertCount = $sth->execute($chunkSet->dna_collection->dbID, $description);
+  $insertCount = $sth->execute($chunkSet->dna_collection_id || $chunkSet->dna_collection->dbID, $description);
   $sth->finish;
 
   if($insertCount>0) {
