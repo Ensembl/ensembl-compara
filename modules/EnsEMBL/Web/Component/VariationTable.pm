@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::VariationTable;
 
 use strict;
 
-use Bio::EnsEMBL::Variation::Utils::Constants;
+use Bio::EnsEMBL::Variation::Utils::Constants qw(%VARIATION_CLASSES);
 use EnsEMBL::Web::NewTable::NewTable;
 
 use Bio::EnsEMBL::Variation::Utils::VariationEffect;
@@ -165,6 +165,18 @@ sub evidence_classes {
   }
 }
 
+sub class_classes {
+  my ($self,$table) = @_;
+
+  my $classes_col = $table->column('class');
+  my $i = 0;
+  foreach my $term (qw(display_term somatic_display_term)) {
+    foreach my $class (values %VARIATION_CLASSES) {
+      $classes_col->icon_order($class->{$term},$i++);
+    }
+  }
+}
+
 sub clinsig_classes {
   my ($self,$table) = @_;
   
@@ -275,11 +287,12 @@ sub make_table {
     _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
     width => 1.75
   },{
-    _key => 'class', _type => 'string', label => 'Class',
+    _key => 'class', _type => 'iconic', label => 'Class',
     width => 2,
-    helptip => $glossary->{'Class'}
+    helptip => $glossary->{'Class'},
+    filter_keymeta_enum => 1,
   },{
-    _key => 'Source', _type => 'string', label => "Sour\fce",
+    _key => 'Source', _type => 'iconic', label => "Sour\fce",
     width => 1.25,
     helptip => $glossary->{'Source'},
   },{
@@ -361,6 +374,7 @@ sub make_table {
 
   $self->evidence_classes($table);
   $self->clinsig_classes($table);
+  $self->class_classes($table);
   $self->snptype_classes($table,$self->hub);
   $self->sift_poly_classes($table);
   
