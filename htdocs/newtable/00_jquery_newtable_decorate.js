@@ -39,12 +39,10 @@
       var decorators = {};
       var km = $table.data('keymeta') || {};
       var extras = {};
-      $.each(km,function(key,kmvalues) {
-        var t = key.split('/',4);
+      $.each(km,function(key,keyvalues) {
+        var t = key.split('/',2);
         if(t[0] == 'decorate') {
-          if(!extras[t[1]]) { extras[t[1]] = {}; }
-          if(!extras[t[1]][t[2]]) { extras[t[1]][t[2]] = {}; }
-          extras[t[1]][t[2]][t[3]] = kmvalues;
+          extras[t[1]] = keyvalues;
         }
       });
       var decorators = {};

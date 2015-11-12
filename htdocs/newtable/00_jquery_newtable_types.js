@@ -83,7 +83,7 @@
       var new_vals = [];
       for(var i=0;i<vals.length;i++) {
         var v = vals[i];
-        var w = km['decorate/iconic/'+col+'/'+v];
+        var w = km['decorate/iconic'][col][v];
         if(w && w.order) { v = w.order; }
         else if(w && w['export']) { v = w['export']; }
         else { v = '~'; }

@@ -246,10 +246,18 @@
 
   function store_keymeta($table,incoming) {
     var keymeta = $table.data('keymeta') || {};
-    $.each(incoming||{},function(key,indata) {
-      if(!keymeta[key]) { keymeta[key] = {}; }
-      $.each(indata,function(k,v) {
-        if(!keymeta[key].hasOwnProperty(k)) { keymeta[key][k] = v; }
+    $.each(incoming||{},function(klass,klassdata) {
+      if(!keymeta[klass]) { keymeta[klass] = {}; }
+      $.each(klassdata||{},function(col,coldata) {
+        if(!keymeta[klass][col]) { keymeta[klass][col] = {}; }
+        $.each(coldata||{},function(val,valdata) {
+          if(!keymeta[klass][col][val]) { keymeta[klass][col][val] = {}; }
+          $.each(valdata||{},function(k,v) {
+            if(!keymeta[klass][col][val].hasOwnProperty(k)) {
+              keymeta[klass][col][val][k] = v;
+            }
+          });
+        });
       });
     });
     $table.data('keymeta',keymeta);
