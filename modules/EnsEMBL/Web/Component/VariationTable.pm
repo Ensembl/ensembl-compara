@@ -329,7 +329,9 @@ sub make_table {
   },{
     _key => 'sift_value', _type => 'numeric',
     label => "SI\aFT",
-    helptip => $glossary->{'SIFT'}
+    helptip => $glossary->{'SIFT'},
+    filter_range => [0,1],
+    filter_fixed => 1,
   },{
     _key => 'polyphen_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'polyphen_value',
@@ -339,7 +341,9 @@ sub make_table {
   },{
     _key => 'polyphen_value', _type => 'numeric',
     label => "Poly\fPhen",
-    helptip => $glossary->{'PolyPhen'}
+    helptip => $glossary->{'PolyPhen'},
+    filter_range => [0,1],
+    filter_fixed => 1,
   },{
     _key => 'LRG', _type => 'string unshowable',
     label => "LRG",
