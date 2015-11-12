@@ -265,8 +265,11 @@
           var ok = true;
           $.each(to_filter,function(col,fn) {
             var v = grid[i][rev_series[col]];
-            if(v===null || v===undefined) { ok = false; return; }
-            if(fn.split) { v = fn.split(v); } else { v = [v]; }
+            if(v===null || v===undefined) {
+              v = [v];
+            } else {
+              if(fn.split) { v = fn.split(v); } else { v = [v]; }
+            }
             var ok_col = false;
             for(var j=0;j<v.length;j++) {
               if(fn.match(needf[col],v[j])) { ok_col = true; break; }
