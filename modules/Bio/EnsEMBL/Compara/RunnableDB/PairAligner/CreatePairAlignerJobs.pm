@@ -136,43 +136,40 @@ sub createPairAlignerJobs
     #find the target dnafrag name to check if it is MT. It can only be part of set of 1
     my $num_target_chunks = @{$target_dnafrag_chunk_set->get_all_DnaFragChunks};
     my ($first_db_chunk) = @{$target_dnafrag_chunk_set->get_all_DnaFragChunks};
-    my $target_dnafrag_name = $first_db_chunk->dnafrag->name;
+    my $target_dnafrag_type = $first_db_chunk->dnafrag->dna_type;
 
     #Check synonyms for MT
-    if ($first_db_chunk->dnafrag->isMT) {
-        $target_dnafrag_name = "MT";
+    if ($target_dnafrag_type) {
         if ($num_target_chunks != 1) {
-            throw("Number of DnaFragChunk objects must be 1 not $target_dnafrag_name for MT");
+            throw("Number of DnaFragChunk objects must be 1 not $num_target_chunks for $target_dnafrag_type");
         }
     }
 
     foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
 
-     my $query_dnafrag_name = $query_dnafrag_chunk_set->{'tmp_query_dnafrag_name'};
-     unless ($query_dnafrag_name) {
+     my $query_dnafrag_type = $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'};
+     unless (defined $query_dnafrag_type) {
       #find the query dnafrag name to check if it is MT. It can only be part of a set of 1
       my $num_query_chunks = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
       my ($first_qy_chunk) = @{$query_dnafrag_chunk_set->get_all_DnaFragChunks};
-      $query_dnafrag_name = $first_qy_chunk->dnafrag->name;
+      $query_dnafrag_type = $first_qy_chunk->dnafrag->dna_type;
 
       #Check synonyms for MT
-      if ($first_qy_chunk->dnafrag->isMT) {
-          $query_dnafrag_name = "MT";
+      if ($query_dnafrag_type) {
         if ($num_query_chunks != 1) {
-            throw("Number of DnaFragChunk objects must be 1 not $num_query_chunks for MT");
+            throw("Number of DnaFragChunk objects must be 1 not $num_query_chunks for $num_query_chunks");
         }
       }
-      $query_dnafrag_chunk_set->{'tmp_query_dnafrag_name'} = $query_dnafrag_name;
+      $query_dnafrag_chunk_set->{'tmp_query_dnafrag_type'} = $query_dnafrag_type;
     }
 
       $pairaligner_hash->{'qyChunkSetID'} = $query_dnafrag_chunk_set->dbID;
 
       #only allow mitochrondria chromosomes to find matches to each other
-      next if (($query_dnafrag_name eq "MT" && $target_dnafrag_name ne "MT") || 
-	      ($query_dnafrag_name ne "MT" && $target_dnafrag_name eq "MT"));
+      next if ($target_dnafrag_type or $query_dnafrag_type) and ($target_dnafrag_type ne $query_dnafrag_type);
 
       #Skip MT unless param is set
-      next if ($query_dnafrag_name eq "MT" && $target_dnafrag_name eq "MT" && !$self->param('include_MT'));
+      next if ($query_dnafrag_type eq "MT" && $target_dnafrag_type eq "MT" && !$self->param('include_MT'));
 
       $self->dataflow_output_id($pairaligner_hash,2);
       $count++;

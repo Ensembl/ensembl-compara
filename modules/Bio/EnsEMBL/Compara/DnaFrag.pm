@@ -487,6 +487,25 @@ sub isMT {
     return 0;
 }
 
+
+=head2 dna_type
+
+  Example     : my $type = $dnafrag->dna_type();
+  Description : Tells whether the dnafrag represent a nuclear genome, the mitochondrion or the chloroplast
+  Returntype  : "", "MT", or "PT"
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub dna_type {
+    my $self = shift;
+    return 'MT' if $self->isMT;
+    return 'PT' if ($self->name =~ /^PT$/i);
+    return '';
+}
+
+
 1;
 
 

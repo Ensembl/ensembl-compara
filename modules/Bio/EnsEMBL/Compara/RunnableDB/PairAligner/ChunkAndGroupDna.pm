@@ -369,7 +369,7 @@ sub create_dnafrag_chunks {
     my $dnafrag_chunk_set_id = $self->param('current_chunkset')->dbID;
 
     # do grouping if requested but do not group MT chr
-    if($self->param('group_set_size') and ($chunk->length < $self->param('group_set_size')) and !$chunk->dnafrag->isMT) {
+    if($self->param('group_set_size') and ($chunk->length < $self->param('group_set_size')) and !$chunk->dnafrag->dna_type) {
 
       if(($self->param('current_chunkset')->count > 0) and 
          (($self->param('current_chunkset')->total_basepairs + $chunk->length) > $self->param('group_set_size'))) 
@@ -395,8 +395,8 @@ sub create_dnafrag_chunks {
         $self->store_chunk_in_chunkset($chunk);
 
         #MT must be stored on it's own in a chunkset so create a new one
-        if ($chunk->dnafrag->isMT) {
-            print "Creating new chunkset for MT\n";
+        if ($chunk->dnafrag->dna_type) {
+            print "Creating new chunkset for ".$chunk->dnafrag->dna_type."\n";
             #Create new current_chunkset object
             $self->define_new_chunkset;
         }
