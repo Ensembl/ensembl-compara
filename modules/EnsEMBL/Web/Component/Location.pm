@@ -162,16 +162,31 @@ sub configure_UserData_key {
     if ($id) {
       my $data = $features->{$id};
       while (my($name, $track) = each (%$data)) {
-        if ($track->{'config'} && $track->{'config'}{'itemRgb'} =~ /on/i) {
-          foreach my $f (@{$track->{'features'}}) {
-            my $colour = join(',', @{$f->{'item_colour'}});
-            if ($labels{$colour}) {
-              $labels{$colour} .= ', '.$f->{'label'};
-            }
-            else {
-              $labels{$colour} = $f->{'label'};
+        my %colour_key;
+        if ($track->{'config'}) { 
+
+          if ($track->{'config'}{'itemRgb'} =~ /on/i) {
+            foreach my $f (@{$track->{'features'}}) {
+              my $colour = join(',', @{$f->{'item_colour'}});
+              push @{$colour_key{$colour}}, $f->{'label'};
             }
           }
+          elsif ($track->{'config'}{'color'}) {
+            my $colour = $track->{'config'}{'color'};
+            foreach my $f (@{$track->{'features'}}) {
+              push @{$colour_key{$colour}}, $f->{'label'};
+            }
+          }
+
+          while (my($colour, $text) = each(%colour_key)) {
+            if (scalar @$text <= 5) {
+              $labels{$colour} = join(', ', @$text); 
+            }
+            else {
+              $labels{$colour} = $name;
+            }
+          }
+
         }
       }
     }
