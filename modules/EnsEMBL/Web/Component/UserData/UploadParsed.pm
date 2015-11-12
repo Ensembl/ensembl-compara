@@ -70,7 +70,6 @@ sub content_ajax {
       } 
       else {
         my $error;
-        my $session_data = $hub->get_data_from_session($type, $hub->param('code'));
         my $nearest = $hub->param('nearest');
         
         if ($nearest) {
