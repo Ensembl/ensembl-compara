@@ -107,14 +107,6 @@ sub content {
   return $html;
 }
 
-sub all_terms {
-  my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-
-  my @cons = grep { $_->SO_accession !~ /x/i } @all_cons;
-  my @labels = map { [$_->label,$_->rank] } @cons;
-  return [ map { $_->[0] } sort { $a->[1] <=> $b->[1] } @labels ];
-}
-  
 sub sift_poly_classes {
   my ($self,$table) = @_;
 
@@ -317,10 +309,10 @@ sub make_table {
     _key => 'snptype', _type => 'iconic set_primary', label => "Type",
     filter_label => 'Consequence Type',
     filter_sorted => 1,
-    set_range => $self->all_terms,
     width => 1.5,
     helptip => 'Consequence type',
     sort_down_first => 1,
+    filter_keymeta_enum => 1,
   },{
     _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
     helptip => "Resulting amino acid(s)"
