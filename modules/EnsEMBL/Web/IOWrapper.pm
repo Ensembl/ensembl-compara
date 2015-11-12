@@ -25,6 +25,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use List::Util qw(max);
+
 use Bio::EnsEMBL::IO::Parser;
 use Bio::EnsEMBL::IO::Utils;
 
