@@ -67,14 +67,13 @@ sub fetch_input {
   
   my $prev_rel_db  = $self->param('prev_rel_db');
   if(! $prev_rel_db) {
-    print q{Not running as 'prev_rel_db' not given in parameters}."\n" if $self->debug();
-    return;
+    $self->complete_early("Not running as 'prev_rel_db' not given in parameters\n");
   }
 
   $self->param_required('master_db');
   my $type         = $self->param_required('type');     # must be 't' or 'f'
   my $curr_release = $self->param('release')      || $self->compara_dba->get_MetaContainer->get_schema_version;
-  my $prev_rel_dba = $prev_rel_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db);
+  my $prev_rel_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db);
   my $prev_release = $self->param('prev_release') || $prev_rel_dba->get_MetaContainer->get_schema_version;
 
   my $adaptor   = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
@@ -91,8 +90,6 @@ sub fetch_input {
 sub run {
   my $self = shift @_;
   
-  return if ! $self->param('prev_rel_db'); #bail out early
-
   $self->compara_dba()->dbc()->disconnect_if_idle();
 
   my $ncsl = $self->param('ncsl');
@@ -103,8 +100,6 @@ sub run {
 
 sub write_output {
   my $self = shift @_;
-
-  return if ! $self->param('prev_rel_db'); #bail out early
 
   my $adaptor   = $self->param('adaptor');
   my $ncsl      = $self->param('ncsl');
