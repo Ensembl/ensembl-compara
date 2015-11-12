@@ -296,6 +296,7 @@ sub make_table {
     _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
     helptip => 'Clinical significance',
     sort_down_first => 1,
+    filter_keymeta_enum => 1,
   },{
     _key => 'snptype', _type => 'iconic set_primary', label => "Type",
     filter_label => 'Consequence Type',

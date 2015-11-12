@@ -21,6 +21,14 @@ sub col_filter_sorted {
   $col->colconf->{'filter_sorted'} = $yn;
 }
 
+sub col_filter_keymeta_enum {
+  my ($self,$col,$yn) = @_;
+
+  $self->config->add_keymeta("enumerate",$col->key(),'*',{
+    from_keymeta => $yn
+  });
+}
+
 package EnsEMBL::Web::NewTable::Plugins::FilterClass;
 use parent qw(EnsEMBL::Web::NewTable::Plugins::Filter);
 
