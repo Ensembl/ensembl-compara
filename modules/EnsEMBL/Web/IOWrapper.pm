@@ -205,8 +205,7 @@ sub create_tracks {
     ## Skip features that lie outside the current slice
     if ($slice) {
       next if ($seqname ne $slice->seq_region_name
-                  || $end < $slice->start
-                  || $start > $slice->end);
+                  || ($end < $slice->start && $start > $slice->end));
     }
     $self->build_feature($data, $track_key, $slice);
   }
