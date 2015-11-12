@@ -41,4 +41,15 @@ use parent qw(EnsEMBL::Web::NewTable::Plugins::Filter);
 sub js_plugin { return "newtable_filter_range"; }
 sub requires { return [qw(Filter)]; }
 
+sub col_filter_range {
+  my ($self,$col,$minmax) = @_;
+
+  $self->config->add_keymeta("enumerate",$col->key(),'*',{
+    merge => {
+      min => $minmax->[0],
+      max => $minmax->[1]
+    }
+  });
+}
+
 1;

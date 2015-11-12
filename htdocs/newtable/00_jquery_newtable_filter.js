@@ -193,9 +193,14 @@
         var value = {};
         /* Populate from keymeta? */
         if(keymeta.enumerate && keymeta.enumerate[series[i]]) {
-          if(keymeta.enumerate[series[i]]['*'] &&
-             keymeta.enumerate[series[i]]['*'].from_keymeta) {
-            add_from_keymeta(value,series[i],plugin,keymeta);
+          var star = keymeta.enumerate[series[i]]['*'];
+          if(star) {
+            if(star.from_keymeta) {
+              add_from_keymeta(value,series[i],plugin,keymeta);
+            }
+            if(star.merge) {
+              value = plugin.merge(value,star.merge);
+            }
           }
         }
         /* Populate by each value */

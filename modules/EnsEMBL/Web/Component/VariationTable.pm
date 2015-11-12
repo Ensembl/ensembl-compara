@@ -282,7 +282,8 @@ sub make_table {
   },{
     _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
     helptip => $glossary->{'Global MAF'},
-    also_cols => 'gmaf_allele'
+    also_cols => 'gmaf_allele',
+    filter_range => [0,0.5],
   },{
     _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
     width => 1.75

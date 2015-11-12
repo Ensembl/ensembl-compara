@@ -116,11 +116,11 @@
 
   function rangemerge_range(a,b) {
     a = $.extend({},true,a);
-    if(b.min) {
+    if(b.hasOwnProperty('min')) {
       if(!a.hasOwnProperty('min')) { a.min = b.min; }
       a.min = a.min<b.min?a.min:b.min;
     }
-    if(b.max) {
+    if(b.hasOwnProperty('max')) {
       if(!a.hasOwnProperty('max')) { a.max = b.max; }
       a.max = a.max>b.max?a.max:b.max;
     }
