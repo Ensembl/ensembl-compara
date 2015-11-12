@@ -329,7 +329,7 @@ sub create_dnafrag_chunks {
   }
 
   #print "dnafrag : ", $dnafrag->display_id, "n";
-  #print "  sequence length : ",$length,"\n";
+  #print "  sequence length : ",$dnafrag->length,"\n";
   #print "chunk_size $chunk_size\n";
 
   my $lasttime = time();
