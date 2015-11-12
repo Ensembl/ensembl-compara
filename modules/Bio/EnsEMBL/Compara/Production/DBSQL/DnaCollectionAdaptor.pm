@@ -49,7 +49,6 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Hive::Utils 'stringify';
 
 use Bio::EnsEMBL::Utils::Exception;

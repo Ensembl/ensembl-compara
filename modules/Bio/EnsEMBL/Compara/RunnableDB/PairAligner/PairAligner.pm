@@ -61,6 +61,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 
 use strict;
 use warnings;
+
 use Time::HiRes qw(time gettimeofday tv_interval);
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
@@ -69,7 +70,6 @@ use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

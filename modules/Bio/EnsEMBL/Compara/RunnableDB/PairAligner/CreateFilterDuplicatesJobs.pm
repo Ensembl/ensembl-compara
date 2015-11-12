@@ -62,7 +62,6 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

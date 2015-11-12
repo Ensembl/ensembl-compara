@@ -115,7 +115,6 @@ sub createPairAlignerJobs
   #get dnafrag adaptors
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
   my $dnafrag_chunk_adaptor = $self->compara_dba->get_DnaFragChunkAdaptor;
-  my $dnafrag_chunk_set_adaptor = $self->compara_dba->get_DnaFragChunkSetAdaptor;
 
   #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job
   #instead of reading from the mlss_tag table

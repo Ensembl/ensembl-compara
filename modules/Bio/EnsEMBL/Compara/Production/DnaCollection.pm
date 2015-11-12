@@ -47,7 +47,6 @@ package Bio::EnsEMBL::Compara::Production::DnaCollection;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Time::HiRes qw(time gettimeofday tv_interval);
