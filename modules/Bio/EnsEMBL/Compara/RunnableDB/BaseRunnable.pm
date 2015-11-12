@@ -68,28 +68,57 @@ sub param_defaults {
 
 =head2 compara_dba
 
-    Description: this is an intelligent setter/getter of a Compara DBA. Resorts to magic in order to figure out how to connect.
+    Description: Getter/setter for the main Compara DBA.
 
     Example 1:   my $family_adaptor = $self->compara_dba()->get_FamilyAdaptor();    # implicit initialization and hashing
-
     Example 2:   my $external_foo_adaptor = $self->compara_dba( $self->param('db_conn') )->get_FooAdaptor();    # explicit initialization and hashing
 
 =cut
 
 sub compara_dba {
     my $self = shift @_;
+    return $self->_cached_compara_dba('compara_db', @_);
+}
 
-    use Data::Dumper;
-    my $given_compara_db = shift @_ || ($self->param_is_defined('compara_db') ? $self->param('compara_db') : $self);
+
+=head2 get_cached_compara_dba
+
+    Description: Getter/setter for arbitrary DBAs coming from other parameters.
+
+=cut
+
+sub get_cached_compara_dba {
+    my ($self, $param_name) = @_;
+    $self->param_required($param_name);
+    return $self->_cached_compara_dba($param_name);
+}
+
+
+=head2 _cached_compara_dba
+
+    Description: This is an intelligent setter/getter of a Compara DBA. Uses go_figure_compara_dba to figure out how to connect.
+                 The DBA and its signature are kept in the Runnable, so that the connections persist and they don't have to be
+                 recreated
+
+=cut
+
+sub _cached_compara_dba {
+    my ($self, $param_name, $given_compara_db) = @_;
+
+    $given_compara_db ||= ($self->param_is_defined($param_name) ? $self->param($param_name) : $self);
+
     my $given_ref = ref( $given_compara_db );
     my $given_signature  = ($given_ref eq 'ARRAY' or $given_ref eq 'HASH') ? stringify ( $given_compara_db ) : "$given_compara_db";
 
-    if( !$self->{'_cached_compara_db_signature'} or ($self->{'_cached_compara_db_signature'} ne $given_signature) ) {
-        $self->{'_cached_compara_db_signature'} = $given_signature;
-        $self->{'_cached_compara_dba'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $given_compara_db );
+    $self->{'_cached_dba'} ||= {};
+    $self->{'_cached_signature'} ||= {};
+
+    if( !$self->{'_cached_signature'}->{$param_name} or ($self->{'_cached_signature'}->{$param_name} ne $given_signature) ) {
+        $self->{'_cached_signature'}->{$param_name} = $given_signature;
+        $self->{'_cached_dba'}->{$param_name} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $given_compara_db );
     }
 
-    return $self->{'_cached_compara_dba'};
+    return $self->{'_cached_dba'}->{$param_name};
 }
 
 
@@ -114,7 +143,7 @@ sub load_registry {
 
     # There are two consequences to not using "no_clear" in load_all():
     # 1) All the DBConnections have been closed at the db_handle level.
-    # 2) $self->{'_cached_compara_dba'} has been removed from the registry.
+    # 2) Cached DBAs have been removed from the registry.
 
     # eHive may fail with a "MySQL server has gone away" if its
     # DBConnection gets closed by load_all(). Let's check whether the
@@ -130,10 +159,10 @@ sub load_registry {
         $self->dbc->connected(0);
     }
 
-    # Finally, the best is to un-cache the Compara DBAdaptor so that it
+    # Finally, the best is to un-cache the Compara DBAs so that they
     # will be correctly recreated later.
-    delete $self->{'_cached_compara_db_signature'};
-    delete $self->{'_cached_compara_dba'};
+    delete $self->{'_cached_dba'};
+    delete $self->{'_cached_signature'};
 }
 
 
