@@ -56,7 +56,7 @@ sub fetch_input {
     $self->param_required('synteny_mlss_id');
     $self->param_required('mlss_id');
     $self->param('avg_genomic_coverage');
-    $self->param('master_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('master_db')));
+    $self->param('master_dba', $self->get_cached_compara_dba('master_db'));
     # Trick to elevate the privileges on this session only
     $self->elevate_privileges($self->param('master_dba')->dbc);
 }

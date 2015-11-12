@@ -73,7 +73,7 @@ sub fetch_input {
     my $self = shift @_;
 
     if ($self->param('foreign_keys_db')) {
-        my $foreign_keys_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('foreign_keys_db') )
+        my $foreign_keys_db = $self->get_cached_compara_dba('foreign_keys_db')
                                 || die "Could not get foreign_keys_db: " . $self->param('foreign_keys_db');
         $self->param('foreign_keys_db', $foreign_keys_db->dbc);
     }

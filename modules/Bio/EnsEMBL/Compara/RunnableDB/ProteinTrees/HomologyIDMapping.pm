@@ -97,8 +97,7 @@ sub _fetch_and_map_previous_homologies {
 
     $self->compara_dba->dbc->disconnect_if_idle;
 
-    my $previous_db             = $self->param_required('prev_rel_db');
-    my $previous_compara_dba    = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
+    my $previous_compara_dba    = $self->get_cached_compara_dba('prev_rel_db');
     my $previous_homologies     = $previous_compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($previous_mlss_id);
 
     my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($previous_compara_dba->get_AlignedMemberAdaptor, $previous_homologies);

@@ -73,7 +73,7 @@ sub fetch_input {
   $self->param_required('master_db');
   my $type         = $self->param_required('type');     # must be 't' or 'f'
   my $curr_release = $self->param('release')      || $self->compara_dba->get_MetaContainer->get_schema_version;
-  my $prev_rel_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db);
+  my $prev_rel_dba = $self->get_cached_compara_dba('prev_rel_db');
   my $prev_release = $self->param('prev_release') || $prev_rel_dba->get_MetaContainer->get_schema_version;
 
   my $adaptor   = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
@@ -103,9 +103,8 @@ sub write_output {
 
   my $adaptor   = $self->param('adaptor');
   my $ncsl      = $self->param('ncsl');
-  my $master_db = $self->param('master_db');
 
-  my $master_dbc = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($master_db)->dbc();
+  my $master_dbc = $self->get_cached_dbc('master_db');
   $self->elevate_privileges($master_dbc);
   my $time_when_started_storing = time();  
   eval {

@@ -51,7 +51,7 @@ sub fetch_input {
 
     $self->param_required('genome_db_id');
 
-    my $reuse_compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('prev_rel_db'));
+    my $reuse_compara_dba = $self->get_cached_compara_dba('prev_rel_db');
 
     $self->param('current_members', $self->_fetch_members($self->compara_dba->dbc));
     $self->param('previous_members', $self->_fetch_members($reuse_compara_dba->dbc));

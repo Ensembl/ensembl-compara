@@ -89,9 +89,7 @@ sub write_output {
 sub read_clusters_from_previous_db {
     my $self = shift;
 
-    my $reuse_db = $self->param_required('reuse_db');
-
-    my $reuse_compara_dba       = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reuse_db);    # may die if bad parameters
+    my $reuse_compara_dba       = $self->get_cached_compara_dba('reuse_db');     # may die if bad parameters
     my $sql_trees      = q{SELECT root_id, seq_member_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE clusterset_id = ? AND member_type = ? AND tree_type = "tree" AND seq_member_id IS NOT NULL};
     my $sql_supertrees = q{SELECT gtn1.root_id, gtn2.root_id FROM gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id WHERE gtr1.tree_type = "supertree" AND gtr1.clusterset_id = ?};
 

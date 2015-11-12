@@ -83,7 +83,7 @@ sub run {
     my $arglist         = $self->param('arglist') || [];
 
     if(my $reference_db = $self->param('reference_db')) {
-        my $reference_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $reference_db );
+        my $reference_dba = $self->get_cached_compara_dba('reference_db');
 
         $compara_dba->reference_dba( $reference_dba );
 

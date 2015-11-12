@@ -121,7 +121,7 @@ sub fetch_input {
     $genome_dbs = [grep {($_->name eq 'ancestral_sequences') or $_->is_polyploid or $_->genome_component} @$genome_dbs] if not $self->param('normal_genomes');
 
     if ($self->param('genome_db_data_source')) {
-        my $genomedb_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('genome_db_data_source'));
+        my $genomedb_dba = $self->get_cached_compara_dba('genome_db_data_source');
         my $genomedb_adaptor = $genomedb_dba->get_GenomeDBAdaptor;
         $genome_dbs = [map {$genomedb_adaptor->fetch_by_dbID($_->dbID)} @$genome_dbs];
     }

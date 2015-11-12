@@ -66,8 +66,7 @@ sub run {
     my $genome_dump_file = $self->param_required('genome_dump_file');
     my $batch_size = $self->param_required('anchor_batch_size');
     die "'anchor_batch_size' must be non-zero\n" unless $batch_size;
-    # We only need a DBConnection here
-    my $anchor_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('compara_anchor_db') );
+    my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
     my $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, COUNT(*) ct FROM anchor_sequence GROUP BY anchor_id ORDER BY anchor_id");
     $sth->execute();
     my $count = 1;

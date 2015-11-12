@@ -52,7 +52,7 @@ sub fetch_input {
     my $self = shift;
 
     $self->complete_early('reuse_db not defined, nothing to copy') unless $self->param('reuse_db');
-    my $reuse_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('reuse_db'));
+    my $reuse_dba = $self->get_cached_compara_dba('reuse_db');
     $self->param('reuse_dba', $reuse_dba);
 }
 

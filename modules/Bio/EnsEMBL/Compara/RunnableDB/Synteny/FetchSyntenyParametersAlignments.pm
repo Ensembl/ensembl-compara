@@ -77,8 +77,8 @@ sub fetch_input {
         $self->load_registry($self->param("registry"));
     }
 
-    $self->param('master_dba',   Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('master_db')));
-    $self->param('alignment_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('alignment_db')));
+    $self->param('master_dba',    $self->get_cached_compara_dba('master_db'));
+    $self->param('alignment_dba', $self->get_cached_compara_dba('alignment_db'));
 
     $self->param('mlsss_ok', []);
 }

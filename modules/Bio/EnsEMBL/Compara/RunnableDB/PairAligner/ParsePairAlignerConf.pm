@@ -275,7 +275,7 @@ sub parse_conf {
     if ($self->param('get_species_list')) {
 	my @spp_names;
 	if ($self->param('master_db')) {
-	    $self->get_species($speciesList, $self->param('master_db'));
+	    $self->get_species($speciesList, 'in_master_db');
 	    foreach my $species (@{$speciesList}) {
 		push @spp_names, $species->{genome_db}->dbID,
 	    }
@@ -319,12 +319,12 @@ sub parse_conf {
 #Get species fields
 #
 sub get_species {
-    my ($self, $speciesList, $master_db) = @_;
+    my ($self, $speciesList, $in_master_db) = @_;
 
     print "SPECIES\n" if ($self->debug);
     my $gdb_adaptor;
-    if ($master_db) {
-	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $master_db );
+    if ($in_master_db) {
+	my $compara_dba = $self->get_cached_compara_dba('master_db');
 	$gdb_adaptor = $compara_dba->get_GenomeDBAdaptor;
     } else {
 	$gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
@@ -448,7 +448,7 @@ sub set_pair_aligner_options {
     #####################################
 
     # check master for species sets - only pairwise LASTZ species set is copied locally
-	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('master_db') );
+	my $compara_dba = $self->get_cached_compara_dba('master_db');
 	my $gdb_adaptor = $compara_dba->get_GenomeDBAdaptor;
 
 	# check if static or dynamic params are being used

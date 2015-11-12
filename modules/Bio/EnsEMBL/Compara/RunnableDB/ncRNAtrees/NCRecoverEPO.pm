@@ -93,7 +93,6 @@ sub fetch_input {
   my $self = shift @_;
 
   my $mlss_id    = $self->param_required('mlss_id');
-  my $epo_db     = $self->param_required('epo_db');
   my $nc_tree_id = $self->param_required('gene_tree_id');
 
   $self->param('nc_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id));
@@ -108,7 +107,7 @@ sub fetch_input {
   $self->param('gene_member_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
   $self->param('treenode_adaptor', $self->compara_dba->get_GeneTreeNodeAdaptor);
 
-  my $epo_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($epo_db);
+  my $epo_dba = $self->get_cached_compara_dba('epo_db');
   $self->param('epo_gab_adaptor', $epo_dba->get_GenomicAlignBlockAdaptor);
   $self->param('epo_mlss_adaptor', $epo_dba->get_MethodLinkSpeciesSetAdaptor);
 }

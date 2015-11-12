@@ -59,7 +59,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift;
 
-    my $ref_ortholog_dba    = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('ref_ortholog_db'));
+    my $ref_ortholog_dba    = $self->get_cached_compara_dba('ref_ortholog_db');
     my $ref_mlss_adaptor    = $ref_ortholog_dba->get_MethodLinkSpeciesSetAdaptor;
     my $mlss_adaptor        = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my %homology_methods    = map {$_ => 1} qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES);

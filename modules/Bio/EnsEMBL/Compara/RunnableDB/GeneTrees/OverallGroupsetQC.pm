@@ -119,7 +119,7 @@ sub generate_dbname {
 sub overall_groupset_qc {
     my $self     = shift @_;
 
-    my $reuse_compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('reuse_db'));    # may die if bad parameters
+    my $reuse_compara_dba = $self->get_cached_compara_dba('reuse_db');    # may die if bad parameters
 
     my $xtb_filename = $self->join_one_pair( $reuse_compara_dba, $self->compara_dba );
 

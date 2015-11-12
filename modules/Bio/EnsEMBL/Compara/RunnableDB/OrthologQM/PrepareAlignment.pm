@@ -71,7 +71,7 @@ sub fetch_input {
 
         my ( $mlss_adap, $gblock_adap, $dnafrag_adaptor, $dba );
 
-        if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
+        if ( $self->param('alt_aln_db') ) { $dba = $self->get_cached_compara_dba('alt_aln_db'); }
         else { $dba = $self->compara_dba }
 
         $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;

@@ -74,8 +74,8 @@ sub fetch_input {
         $self->load_registry($self->param("registry"));
     }
 
-    $self->param('master_dba',   Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('master_db')));
-    $self->param('ptree_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('ptree_db')));
+    $self->param('master_dba', $self->get_cached_compara_dba('master_db'));
+    $self->param('ptree_dba',  $self->get_cached_compara_dba('ptree_db'));
 
     $self->param('mlsss_ok', []);
 }

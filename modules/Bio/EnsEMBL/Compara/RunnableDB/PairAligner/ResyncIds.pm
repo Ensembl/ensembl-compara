@@ -57,7 +57,7 @@ sub fetch_input {
     my $out_of_sync_mlss_id = $self->param_required('out_of_sync_mlss_id');
     my $out_of_sync_mlss    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($out_of_sync_mlss_id);
 
-    my $master_dba          = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
+    my $master_dba          = $self->get_cached_compara_dba('master_db');
     my $master_method       = $master_dba->get_MethodAdaptor->fetch_by_type($out_of_sync_mlss->method->type);
     my @master_genome_dbs   = map {$master_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($_->name, $_->assembly) || die "Cannot find ".$_->name." / ".$_->assembly} @{$out_of_sync_mlss->species_set->genome_dbs};
     my $master_mlss         = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($master_method->type, \@master_genome_dbs);

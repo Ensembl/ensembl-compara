@@ -54,9 +54,9 @@ sub write_output {
 	my $self = shift;
 	my @mlss_ids = @{ $self->param('mlss') };
 
-	my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('pipeline_url'));
+	my $dba = $self->get_cached_compara_dba('pipeline_url');
 	# my $dba;
-	# if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
+	# if ( $self->param('alt_aln_db') ) { $dba = $self->get_cached_compara_dba('alt_aln_db'); }
 	# else { $dba = $self->compara_dba }
 
 	# write threshold to mlss_tag

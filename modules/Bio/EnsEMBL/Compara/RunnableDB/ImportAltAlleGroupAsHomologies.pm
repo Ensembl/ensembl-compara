@@ -70,7 +70,7 @@ sub fetch_input {
     $self->param('homology_adaptor', $self->compara_dba->get_HomologyAdaptor);
 
     # The member database provides a localized GenomeDB
-    my $member_dba      = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('member_db') );
+    my $member_dba      = $self->get_cached_compara_dba('member_db');
     my $genome_db_id    = $self->param_required('genome_db_id');
     my $genome_db       = $member_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id)
                             or die "'$genome_db_id' is not a valid GenomeDB dbID";
@@ -80,7 +80,7 @@ sub fetch_input {
     $self->param('member_dbc', $member_dba->dbc);
 
     # The master database provides the MLSS
-    my $master_dba      = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
+    my $master_dba      = $self->get_cached_compara_dba('master_db');;
     my $mlss            = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->param('method_type'), [$genome_db])
                             or die sprintf('Cannot find the MLSS %s[%s/%s] in the master database', $self->param('method_type'), $genome_db->name, $genome_db_id);
     $self->param('mlss', $mlss);

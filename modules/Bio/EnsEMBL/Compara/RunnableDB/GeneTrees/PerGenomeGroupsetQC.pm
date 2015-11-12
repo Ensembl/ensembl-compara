@@ -95,8 +95,7 @@ sub fetch_input {
     $self->param('reuse_this', $reuse_this);
     return unless $reuse_this;
 
-    my $reuse_db                = $self->param_required('reuse_db');
-    my $reuse_compara_dba       = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reuse_db);    # may die if bad parameters
+    my $reuse_compara_dba       = $self->get_cached_compara_dba('reuse_db');     # may die if bad parameters
     my $old_genome_db           = $reuse_compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);        # since the species has been reused, the genome_db_id *must* be present
 
     my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id);

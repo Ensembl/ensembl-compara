@@ -55,7 +55,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift;
 
-    my $reuse_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('reuse_db'));
+    my $reuse_dba = $self->get_cached_compara_dba('reuse_db');
     die $self->param('reuse_db').' cannot be found' unless $reuse_dba;
     $self->param('reuse_dba', $reuse_dba);
 

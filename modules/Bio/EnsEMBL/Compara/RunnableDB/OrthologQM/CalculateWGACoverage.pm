@@ -72,8 +72,8 @@ sub fetch_input {
 	my %aln_ranges;
 	my @orth_batch = @{ $self->param_required('orth_batch') };
         
-	my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('pipeline_url'));
-	# if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
+	my $dba = $self->get_cached_compara_dba('pipeline_url');
+	# if ( $self->param('alt_aln_db') ) { $dba = $self->get_cached_compara_dba('alt_aln_db'); }
 	# else { $dba = $self->compara_dba }
 	my $do_disconnect = $dba->dbc ne $self->dbc;
 	

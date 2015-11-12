@@ -67,7 +67,7 @@ sub fetch_input {
         $self->complete_early('we are in test mode');
     }
     # Connect to the master db
-    my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
+    my $master_dba = $self->get_cached_compara_dba('master_db');
 
     # Trick to elevate the privileges on this session only
     $self->elevate_privileges($master_dba->dbc);

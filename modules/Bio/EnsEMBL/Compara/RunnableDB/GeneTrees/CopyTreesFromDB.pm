@@ -65,7 +65,7 @@ sub fetch_input {
         $self->param( 'compara_dba', $self->compara_dba );
 
         #get reuse compara_dba adaptor
-        $self->param( 'reuse_compara_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('reuse_db') ) );
+        $self->param( 'reuse_compara_dba', $self->get_cached_compara_dba('reuse_db') );
 
         #print Dumper $self->param('compara_dba')       if ( $self->debug );
         #print Dumper $self->param('reuse_compara_dba') if ( $self->debug );

@@ -81,7 +81,7 @@ sub fetch_input {
 
 	my $self = shift;
 
-	$self->param('previous_dba' , Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('ref_ortholog_db')) );
+	$self->param('previous_dba' , $self->get_cached_compara_dba('ref_ortholog_db') );
 	$self->param('prev_homolog_adaptor', $self->param('previous_dba')->get_HomologyAdaptor);
 	$self->param('prev_mlss_adaptor', $self->param('previous_dba')->get_MethodLinkSpeciesSetAdaptor);
 	$self->param('prev_genetree_adaptor', $self->param('previous_dba')->get_GeneTreeAdaptor);

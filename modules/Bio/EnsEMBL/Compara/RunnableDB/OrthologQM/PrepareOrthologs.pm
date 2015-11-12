@@ -68,14 +68,14 @@ sub fetch_input {
 
     my ($dba, $db_url);
     if ( $self->param('alt_homology_db') ) { 
-        $db_url = $self->param('alt_homology_db');
-        $dba    = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $db_url );
+        #$db_url = $self->param('alt_homology_db');
+        $dba = $self->get_cached_compara_dba('alt_homology_db');
     }
     else {
-        $db_url = $self->param('compara_db');
+        #$db_url = $self->param('compara_db');
         $dba = $self->compara_dba;
     }
-    $self->param('current_db_url', $db_url);
+    #$self->param('current_db_url', $db_url);
     $self->param('current_dba', $dba);
 
     my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor;
@@ -86,7 +86,7 @@ sub fetch_input {
     my $current_homologs = $current_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
     
     if ( defined $self->param('previous_rel_db') ){ # reuse is on
-        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->param('previous_rel_db'), $current_homologs, $mlss->dbID );
+        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->get_cached_compara_dba('previous_rel_db'), $current_homologs, $mlss->dbID );
         $self->param( 'orth_objects', $nonreuse_homologs );
     }
     else {
@@ -211,9 +211,8 @@ sub write_output {
 =cut
 
 sub _reusable_homologies {
-    my ( $self, $dba, $previous_db, $current_homologs, $mlss_id ) = @_;
+    my ( $self, $dba, $previous_compara_dba, $current_homologs, $mlss_id ) = @_;
 
-    my $previous_compara_dba  = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
     my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
 
     # first, find reusable homologies based on id mapping table

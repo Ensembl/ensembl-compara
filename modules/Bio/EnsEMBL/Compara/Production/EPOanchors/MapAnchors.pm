@@ -69,8 +69,7 @@ sub pre_cleanup {
 sub fetch_input {
 	my ($self) = @_;
         $self->dbc->disconnect_if_idle();
-        # FIXME : we only need a DBConnection here, not a Compara DBAdaptor
-        my $anchor_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('compara_anchor_db') );
+        my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
 	my $genome_db_file = $self->param_required('genome_db_file');
 	my $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id BETWEEN  ? AND ?");
         my $min_anc_id = $self->param('min_anchor_id');

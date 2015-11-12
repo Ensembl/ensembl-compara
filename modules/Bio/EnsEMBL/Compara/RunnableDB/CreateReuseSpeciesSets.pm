@@ -52,7 +52,7 @@ sub fetch_input {
     my $self = shift @_;
 
     if(my $reference_db = $self->param('master_db')) {
-        my $reference_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $reference_db );
+        my $reference_dba = $self->get_cached_compara_dba('master_db');
         $self->param('reference_dba', $reference_dba);
         warn "Storing with a reference_db ($reference_db)\n" if($self->debug());
     } else {

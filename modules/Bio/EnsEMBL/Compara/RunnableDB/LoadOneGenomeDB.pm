@@ -141,7 +141,7 @@ sub fetch_input {
     }
 
     if ($self->param('master_dbID')) {
-        $self->param('master_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') ) );
+        $self->param('master_dba', $self->get_cached_compara_dba('master_db'));
         my $master_genome_db = $self->param('master_dba')->get_GenomeDBAdaptor->fetch_by_dbID($self->param('master_dbID'));
         $self->param('master_genome_db', $master_genome_db);
         die sprintf("Could not find the genome_db_id %d in the master database\n", $self->param('master_dbID')) if not $master_genome_db;

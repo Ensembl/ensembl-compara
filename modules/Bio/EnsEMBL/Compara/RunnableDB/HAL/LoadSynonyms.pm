@@ -66,7 +66,7 @@ sub fetch_input {
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param_required('mlss_id'));
     $self->param('mlss', $mlss);
 
-    my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
+    my $master_dba = $self->get_cached_compara_dba('master_db');
     my $genome_db_adaptor = $master_dba->get_GenomeDBAdaptor;
     my $genome_db = $genome_db_adaptor->fetch_by_dbID( $self->param_required('genome_db_id') );
 

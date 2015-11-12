@@ -82,8 +82,7 @@ sub fetch_input {
 	my $mlss            = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
         my $current_gdbs    = $mlss->species_set->genome_dbs;
 
-	my $previous_db             = $self->param_required('prev_rel_db');
-	my $previous_compara_dba    = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($previous_db);
+	my $previous_compara_dba    = $self->get_cached_compara_dba('prev_rel_db');
 	my $previous_gdb_adaptor    = $previous_compara_dba->get_GenomeDBAdaptor;
 	my $previous_mlss_adaptor   = $previous_compara_dba->get_MethodLinkSpeciesSetAdaptor;
 

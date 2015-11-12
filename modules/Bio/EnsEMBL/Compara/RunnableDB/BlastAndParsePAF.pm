@@ -185,7 +185,7 @@ sub fetch_input {
     }
 
     if ($self->param('output_db')) {
-        $self->param('output_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('output_db')));
+        $self->param('output_dba', $self->get_cached_compara_dba('output_db'));
     } else {
         $self->param('output_dba', $self->compara_dba);
     }

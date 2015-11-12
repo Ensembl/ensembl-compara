@@ -65,9 +65,9 @@ sub fetch_input {
 	my $species2_id  = $self->param_required('species2_id');
 	my $aln_mlss_ids = $self->param( 'aln_mlss_ids' );
 
-	# if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
+	# if ( $self->param('alt_aln_db') ) { $dba = $self->get_cached_compara_dba('alt_aln_db'); }
 	# else { $dba = $self->compara_dba }
-	$dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('master_db'));
+	$dba = $self->get_cached_compara_dba('master_db');
 
 	# find GenomeDBs for each species
 	my $gdb_adaptor = $dba->get_GenomeDBAdaptor;
