@@ -97,9 +97,10 @@
       var kind = config.colconf[key].range;
       var values = ($table.data('ranges')||{})[key];
       if(!values) { values = []; }
-      var kparams = config.colconf[key].range_params;
+      var km = $table.data('keymeta').filter;
+      if(km) { km = km[key]; }
       var w = find_widget(kind,'filters','class');
-      w.display($menu,$button,values,state,kparams,key,$table);
+      w.display($menu,$button,values,state,km,key,$table);
     }
 
     function show_or_hide_all($table) {

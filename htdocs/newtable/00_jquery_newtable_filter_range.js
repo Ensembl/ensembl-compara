@@ -86,12 +86,12 @@
     $('.slider_unspecified input',$el).prop('checked',val);
   }
 
-  function calc_step(kparams,min,max) {
+  function calc_step(km,min,max) {
     min = parseFloat(min);
     max = parseFloat(max);
     var step = (max-min)/200;
     if(step === 0) { step = 1; }
-    if(kparams.steptype == 'integer') { step = 1; }
+    if(km && km['*'] && km['*'].integer) { step = 1; }
     return step;
   }
 
@@ -108,10 +108,10 @@
     $button.trigger('update',update);
   }
 
-  function draw_slider(variety,$out,$button,min,max,kparams) {
+  function draw_slider(variety,$out,$button,min,max,km) {
     min = 1*min;
     max = 1*max;
-    var step = calc_step(kparams,min,max);
+    var step = calc_step(km,min,max);
     $button.data('slider-range',[min,max]);
     return $('<div/>').addClass('slider').appendTo($out).slider({
       range: true,
@@ -126,13 +126,13 @@
     });
   }
 
-  function draw_widget(variety,$button,min,max,kparams) {
+  function draw_widget(variety,$button,min,max,km) {
     var $out = $("<div/>").addClass('newtable_range');
     $('<div/>').addClass('slider_feedback').appendTo($out);
     var $unspec = $('<div/>').addClass('slider_unspecified');
     $unspec.append("<span>include blank / other chrs.</span>");
     var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
-    draw_slider(variety,$out,$button,min,max,kparams);
+    draw_slider(variety,$out,$button,min,max,km);
     $unspec.appendTo($out);
     $tickbox.on('click',function() {
       $button.data('unspec-explicit',true);
@@ -142,8 +142,8 @@
     return $out;
   }
 
-  function slider_update_size($el,$slider,min,max,kparams) {
-    var step = calc_step(kparams,min,max);
+  function slider_update_size($el,$slider,min,max,km) {
+    var step = calc_step(km,min,max);
     $slider.slider('option','min',parseFloat(min)-step);
     $slider.slider('option','max',parseFloat(max)+step);
     $el.data('slider-range',[min,max]);
@@ -159,25 +159,25 @@
     $.each(varieties,function(name,variety) {
       filters.push({
         name: name,
-        display: function($menu,$el,values,state,kparams) {
+        display: function($menu,$el,values,state,km) {
           values = variety.preproc_values(values);
           var $slider = $('.slider',$menu);
           if($slider.length) {
             var minmax = is_minmax($el,$slider,null,null);
             if(variety.detect_catastrophe($el,$slider,values)) {
-              slider_update_size($el,$slider,values.min,values.max,kparams);
+              slider_update_size($el,$slider,values.min,values.max,km);
               slider_set_minmax($slider,0);
               slider_set_minmax($slider,1);
               update_widget(variety,$el,$menu,null,null);
               force_blanks($menu,true);
               send_update(variety,$el);
             } else {
-              slider_update_size($el,$slider,values.min,values.max,kparams);
+              slider_update_size($el,$slider,values.min,values.max,km);
               if(minmax.min) { slider_set_minmax($slider,0); }
               if(minmax.max) { slider_set_minmax($slider,1); }
             }
           } else {
-            var $out = draw_widget(variety,$el,values.min,values.max,kparams);
+            var $out = draw_widget(variety,$el,values.min,values.max,km);
             variety.draw_additional($el,values);
             $menu.empty().append($out);
             update_widget(variety,$el,$menu,null,null);

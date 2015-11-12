@@ -40,7 +40,13 @@ sub null {
 
 sub js_type { return 'position'; }
 sub js_range { return 'position'; }
-sub js_params { return { steptype => 'integer' }; }
+
+sub configure {
+  my ($self,$mods,$args) = @_;
+
+  $args->{'filter_integer'} = 1 unless exists $args->{'filter_integer'};
+  $self->SUPER::configure($mods,$args);
+}
 
 sub cmp {
   my ($self,$a,$b,$f) = @_;

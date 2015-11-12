@@ -53,7 +53,6 @@ sub new {
   $self->init();
   $self->{'conf'}{'type_js'} = $self->js_type();
   $self->{'conf'}{'range'} = $self->js_range();
-  $self->{'conf'}{'range_params'} = $self->js_params();
   $self->configure($confarr,$confarg);
   return $self;
 }
@@ -69,7 +68,6 @@ sub hyphenate {
   return $_;
 }
 
-sub js_params { return {}; }
 sub clean { return $_[1]; }
 sub null { return 0; }
 

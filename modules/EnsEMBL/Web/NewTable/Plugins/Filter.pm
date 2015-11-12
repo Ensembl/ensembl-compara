@@ -52,4 +52,12 @@ sub col_filter_range {
   });
 }
 
+sub col_filter_integer {
+  my ($self,$col,$yn) = @_;
+
+  $self->config->add_keymeta("filter",$col->key(),'*',{
+    integer => $yn,
+  });
+}
+
 1;

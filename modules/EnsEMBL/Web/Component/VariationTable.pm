@@ -325,7 +325,7 @@ sub make_table {
     helptip => "Resulting amino acid(s)"
   },{
     _key => 'aacoord', _type => 'integer', label => "AA co\ford",
-    helptip => 'Amino Acid Co-ordinate'
+    helptip => 'Amino Acid Co-ordinate',
   },{
     _key => 'sift_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'sift_value',

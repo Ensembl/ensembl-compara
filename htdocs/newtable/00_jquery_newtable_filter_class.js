@@ -29,7 +29,7 @@
     return {
       filters: [{
         name: "class",
-        display: function($menu,$el,values,state,kparams,key,$table) {
+        display: function($menu,$el,values,state,km,key,$table) {
           var cc = config.colconf[key];
           var title = (cc.filter_label || cc.label || cc.title || key);
           var $out = $('<div/>');
