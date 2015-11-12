@@ -167,11 +167,14 @@ sub create_gradient {
 sub create_tracks {
 ### Loop through the file and create one or more tracks
 ### Orders tracks by priority value if it exists
-### @param slice - Bio::EnsEMBL::Slice object
-### @param extra_config Hashref - additional configuration e.g. default colours
+### @param slice (optional) - Bio::EnsEMBL::Slice object
+### @param extra_config (optional) Hashref - additional configuration e.g. default colours
 ### @return arrayref of one or more hashes containing track information
   my ($self, $slice, $extra_config) = @_;
-  my $parser = $self->parser;
+  my $hub         = $self->hub;
+  my $parser      = $self->parser;
+  my $drawn_chrs  = $hub->species_defs->get_config($hub->data_species, 'ENSEMBL_CHROMOSOMES');
+  my $bins        = $extra_config->{'bins'} || 150;
   my $tracks      = [];
   my $data        = {};
   my $prioritise  = 0;
@@ -184,6 +187,12 @@ sub create_tracks {
     unless ($data->{$track_key}) {
       ## Default track order is how they come out of the file
       push @order, $track_key;
+      ## Set up density bins if needed
+      if (!$slice) {
+        foreach (@$drawn_chrs) {
+          $data->{$track_key}{'bins'}{$_} = [map { 0 } 1..$bins];
+        }
+      }
     }
 
     ## If we haven't done so already, grab all the metadata for this track
@@ -198,19 +207,30 @@ sub create_tracks {
       if (keys %{$extra_config||{}}) {
         @metadata{keys %{$extra_config||{}}} = values %{$extra_config||{}};
       }
+      $metadata{'name'} ||= $track_key; ## Default name
       $data->{$track_key}{'metadata'} = \%metadata;
     }
 
     my ($seqname, $start, $end) = $self->coords;
-    ## Skip features that lie outside the current slice
     if ($slice) {
+      ## Skip features that lie outside the current slice
       next if ($seqname ne $slice->seq_region_name
-                  || ($end < $slice->start && $start > $slice->end));
+                || ($end < $slice->start && $start > $slice->end));
+      $self->build_feature($data, $track_key, $slice);
     }
-    $self->build_feature($data, $track_key, $slice);
+    else {
+      ## Add this feature to the appropriate density bin
+      my $bin_number  = int($start / $bins);
+      $data->{$track_key}{'bins'}{$seqname}[$bin_number]++;
+    }
   }
 
-  $self->post_process($data);
+  if ($slice) {
+    $self->post_process($data);
+  }
+  else {
+    $self->munge_densities($data);
+  }
 
   if ($prioritise) {
     @order = sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} 
@@ -224,8 +244,6 @@ sub create_tracks {
   return $tracks;
 }
 
-sub post_process {} ## Stub
-
 sub build_feature {
   my ($self, $data, $track_key, $slice) = @_;
   if ($data->{$track_key}{'features'}) {
@@ -233,6 +251,21 @@ sub build_feature {
   }
   else {
     $data->{$track_key}{'features'} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
+  }
+}
+
+sub post_process {} ## Stub
+
+sub munge_densities {
+### Work out per-track densities
+  my ($self, $data) = @_;
+  while (my ($key, $info) = each (%$data)) {
+    my $track_max = 0;
+    foreach my $bin_array (keys %{$info->{'bins'})
+      my $chr_max = max(@$bin_array);
+      $track_max = $chr_max if $chr_max > $track_max;
+    }
+    $info->{'metadata'}{'max_value'} = $track_max;
   }
 }
 
