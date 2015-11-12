@@ -22,9 +22,6 @@ package EnsEMBL::Web::Command::UserData::DropUpload;
 
 use strict;
 
-use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::File::User;
-
 use base qw(EnsEMBL::Web::Command::UserData);
 
 sub process {
@@ -32,43 +29,18 @@ sub process {
   my $hub  = $self->hub;
   
   return if $hub->input->cgi_error =~ /413/; # TOO BIG
-  return unless $hub->param('text');
+  return if !$hub->param('text') || $hub->param('text') =~ /^\s*(http|ftp)/;
   
   my $species_defs = $hub->species_defs;
   
   $hub->param('assembly', $species_defs->ASSEMBLY_VERSION);
-  
+ 
   my $upload = $self->upload('text');
   
   if ($upload->{'code'}) {
-    my $session = $hub->session;
-    my $data    = $session->get_data(code => $upload->{'code'});
-    my $parser  = EnsEMBL::Web::Text::FeatureParser->new($species_defs, $hub->referer->{'params'}{'r'}[0], $data->{'species'});
-    my $format  = $data->{'format'};
-    my $formats = $hub->species_defs->multi_val('REMOTE_FILE_FORMATS');
-
-    return if grep /^$data->{'format'}$/i, @$formats; # large formats aren't parsable
-    
-    my $size = int($data->{'filesize'} / (1024 ** 2));
-
-    return if $size > 10; # Uncompressed file is too big.
-    
-    my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $data->{'file'}, extension => $data->{'extension'});
-    my $result = $file->read;    
-
-    return unless $result->{'content'};
-    
-    $parser->parse($result->{'content'}, $data->{'format'});
-    
-    my $nearest = $parser->nearest;
+    my $nearest = $upload->{'nearest'};
     
     if ($nearest && $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /[^\w|\.]/, $nearest)) {
-      $data->{'format'} ||= $parser->format;
-      $data->{'style'}    = $parser->style;
-      $data->{'nearest'}  = $nearest;
-
-      $session->set_data(%$data);
-      
       print $nearest;
     } else {
       $hub->param('code', $upload->{'code'});
