@@ -234,9 +234,6 @@
       ranges = {};
       $table.data('range-manifest',manifest_in);
     }
-    $.each($table.data('range-fixed'),function(k,v) {
-      if(!ranges[k]) { ranges[k] = v.slice(); }
-    });
     $.each(enums,function(column,range) {
       var fn = $.find_type(widgets,config.colconf[column]).merge;
       ranges[column] = fn(ranges[column],range);
@@ -521,16 +518,6 @@
     return $d;
   }
 
-  function prepopulate_ranges($table,config) {
-    var fixed = {};
-    $.each(config.colconf,function(key,cc) {
-      if(cc.range_range) {
-        fixed[key] = cc.range_range;
-      }
-    });
-    $table.data('range-fixed',fixed);
-  }
-
   function markup_activate(widgets,$some) {
     $.each(widgets,function(key,fn) {
       if(fn.go_data) { fn.go_data($some); }
@@ -557,8 +544,6 @@
     };
     var view = $.extend(true,{},config.orient);
     var old_view = $.extend(true,{},config.orient);
-
-    prepopulate_ranges($table,config);
     $table.data('view',view).data('old-view',$.extend(true,{},old_view))
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
