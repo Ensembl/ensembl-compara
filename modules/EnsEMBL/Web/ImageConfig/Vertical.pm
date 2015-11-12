@@ -23,8 +23,8 @@ use strict;
 use List::Util qw(sum);
 
 use EnsEMBL::Web::File::User;
-use EnsEMBL::Web::IO::Wrapper;
-use EnsEMBL::Web::IO::Wrapper::Indexed;
+use EnsEMBL::Web::IOWrapper;
+use EnsEMBL::Web::IOWrapper::Indexed;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -122,7 +122,7 @@ sub load_user_track_data {
     } 
     else {
       ## Create a wrapper around the appropriate parser
-      if (lc $track->get('format') eq 'bigwig') {
+      if (lc $track->get('format') eq 'bigwig' && $track->get('url')) {
         my $track_data = $track->{'data'};
         my $short_name = $track_data->{'caption'};
         my $track_name = $track_data->{'name'} || $short_name;
@@ -130,7 +130,7 @@ sub load_user_track_data {
         $track->set('label', $short_name);
         my $args      = {'options' => {'hub' => $hub}};
 
-        my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigWig', $args);
+        my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($track->get('url'), 'BigWig', $args);
   
         ($data{$track->id}, $max1, $max2) = $self->get_bigwig_features($iow->parser, $track_name, $chromosomes, $bins, $track_data->{'colour'});
       }
@@ -139,17 +139,17 @@ sub load_user_track_data {
         ## Get the file contents
         my %args = (
                     'hub'     => $hub,
-                    'format'  => $format,
+                    'format'  => $track->get('format'),
                     'file'    => $track->get('file'), 
                     );
 
         my $file  = EnsEMBL::Web::File::User->new(%args);
-        $iow = EnsEMBL::Web::IOWrapper::open($file,
+        my $iow = EnsEMBL::Web::IOWrapper::open($file,
                                              'hub'         => $hub,
-                                             'config_type' => $self->image_config,
+                                             'config_type' => $self->type,
                                              'track'       => $track->id,
                                              );
-        ( $data{$track->id}, $max1, $max2) = $self->get_parsed_features($track, $iow->parser, $bins, $colour);
+        ( $data{$track->id}, $max1, $max2) = $self->get_parsed_features($track, $iow, $bins, $colour);
       }
     }
     
@@ -171,7 +171,7 @@ sub load_user_track_data {
   $self->set_parameter('max_value', $max_value);
   $self->set_parameter('max_mean',  $max_mean);
   
-  return $data;
+  return \%data;
 }
 
 sub get_dna_align_features {
@@ -208,20 +208,21 @@ sub get_dna_align_features {
 }
 
 sub get_parsed_features {
-  my ($self, $track, $parser, $bins, $colours) = @_;
+  my ($self, $track, $wrapper, $bins, $colours) = @_;
   
-  my @tracks = $parser->create_density_tracks(undef, {'bins' => $bins}); 
+  my $tracks = $wrapper->create_tracks(undef, {'bins' => $bins}); 
   my $sort       = 0;
   my (%data, $max);
   
-  foreach my $track (@tracks) {
+  foreach my $track (@$tracks) {
     my $count;
     my $name = $track->{'metadata'}{'name'};
     
     while (my ($chr, $results) = each %{$track->{'bins'}}) {
+      my @scores = sort {$results->{$a} <=> $results->{$b}} values %$results;
       $data{$chr}{$name} = {
-        scores => [ map $results->[$_], 0..$bins-1 ],
-        colour => $track_data->{'config'}{'color'} || $colours->[$count],
+        scores => \@scores,
+        colour => $track->{'data'}{'config'}{'color'} || $colours->[$count],
         sort   => $sort
       };
     }
