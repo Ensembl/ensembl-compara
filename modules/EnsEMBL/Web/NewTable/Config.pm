@@ -89,15 +89,6 @@ sub new {
 
 sub memo_argument { return $_[0]->{'memo'}; }
 
-sub register_key {
-  my ($self,$key,$meta) = @_; 
-
-  $self->{'key_meta'}{$key}||={};
-  foreach my $k (keys %{$meta||{}}) {
-    $self->{'key_meta'}{$key}{$k} = $meta->{$k} unless exists $self->{'key_meta'}{$key}{$k};
-  }   
-}
-
 sub add_keymeta {
   my ($self,$key,$meta) = @_;
 
