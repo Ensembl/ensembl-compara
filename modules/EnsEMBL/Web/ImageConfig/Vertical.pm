@@ -22,9 +22,9 @@ use strict;
 
 use List::Util qw(sum);
 
-use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor;
-use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::User;
+use EnsEMBL::Web::IO::Wrapper;
+use EnsEMBL::Web::IO::Wrapper::Indexed;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -98,14 +98,16 @@ sub load_user_track_data {
   my $bin_size     = int($self->container_width / $bins);
   my $track_width  = $self->get_parameter('width') || 80;
   my @colours      = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
-  my ($feature_adaptor, $slice_adaptor, $parser, %data, $max_value, $max_mean);
+  my ($feature_adaptor, $slice_adaptor, %data, $max_value, $max_mean);
   
   foreach my $track ($self->get_node('user_data')->nodes) {
     my $display = $track->get('display');
     my $ftype = $track->get('ftype');
     
     next if $display eq 'off';
-    
+    ## Of the remote formats, only bigwig is currently supported on this scale
+    next if $track->get('url') && lc $track->get('format') ne 'bigwig';    
+
     my $logic_name = $track->get('logic_name');
     my $colour     = \@colours;
     my ($max1, $max2);
@@ -119,26 +121,35 @@ sub load_user_track_data {
       ($data{$track->id}, $max_value) = $self->get_dna_align_features($logic_name, $feature_adaptor, $slice_adaptor, $bins, $bin_size, $chromosomes, $colour->[0]);
     } 
     else {
+      ## Create a wrapper around the appropriate parser
       if (lc $track->get('format') eq 'bigwig') {
         my $track_data = $track->{'data'};
         my $short_name = $track_data->{'caption'};
+        my $track_name = $track_data->{'name'} || $short_name;
         $short_name = substr($short_name, 0, 17).'...' if length($short_name) > 20;
         $track->set('label', $short_name);
+        my $args      = {'options' => {'hub' => $hub}};
 
-        my $adaptor = Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor->new($track_data->{'url'}); 
-        ($data{$track->id}, $max1, $max2) = $self->get_bigwig_features($adaptor, $track_data->{'name'}, $chromosomes, $bins, $bin_size, $track_data->{'colour'}); 
+        my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigWig', $args);
+  
+        ($data{$track->id}, $max1, $max2) = $self->get_bigwig_features($iow->parser, $track_name, $chromosomes, $bins, $track_data->{'colour'});
       }
       else {
-        if ($parser) {
-          $parser->reset;
-        } else {
-          $parser = EnsEMBL::Web::Text::FeatureParser->new($species_defs);
-          $parser->no_of_bins($bins);
-          $parser->bin_size($bin_size);
-          $parser->filter($chromosomes->[0]) if scalar @$chromosomes == 1;
-        }
-      
-        ( $data{$track->id}, $max1, $max2) = $self->get_parsed_features($track, $parser, $bins, $colour);
+
+        ## Get the file contents
+        my %args = (
+                    'hub'     => $hub,
+                    'format'  => $format,
+                    'file'    => $track->get('file'), 
+                    );
+
+        my $file  = EnsEMBL::Web::File::User->new(%args);
+        $iow = EnsEMBL::Web::IOWrapper::open($file,
+                                             'hub'         => $hub,
+                                             'config_type' => $self->image_config,
+                                             'track'       => $track->id,
+                                             );
+        ( $data{$track->id}, $max1, $max2) = $self->get_parsed_features($track, $iow->parser, $bins, $colour);
       }
     }
     
@@ -160,7 +171,7 @@ sub load_user_track_data {
   $self->set_parameter('max_value', $max_value);
   $self->set_parameter('max_mean',  $max_mean);
   
-  return \%data;
+  return $data;
 }
 
 sub get_dna_align_features {
@@ -198,23 +209,16 @@ sub get_dna_align_features {
 
 sub get_parsed_features {
   my ($self, $track, $parser, $bins, $colours) = @_;
-  my $file_path = $track->get('url') || $track->get('file');
-  my %args = ('hub' => $self->hub, 'file' => $file_path);
-  my $file = EnsEMBL::Web::File::User->new(%args);
-  my $result = $file->read;
   
-  return undef unless $result->{'content'};
-  
-  $parser->parse($result->{'content'}, $track->get('format'));
-  
-  my $max_values = $parser->max_values;
+  my @tracks = $parser->create_density_tracks(undef, {'bins' => $bins}); 
   my $sort       = 0;
   my (%data, $max);
   
-  while (my ($name, $track_data) = each %{$parser->get_all_tracks}) {
+  foreach my $track (@tracks) {
     my $count;
+    my $name = $track->{'metadata'}{'name'};
     
-    while (my ($chr, $results) = each %{$track_data->{'bins'}}) {
+    while (my ($chr, $results) = each %{$track->{'bins'}}) {
       $data{$chr}{$name} = {
         scores => [ map $results->[$_], 0..$bins-1 ],
         colour => $track_data->{'config'}{'color'} || $colours->[$count],
@@ -222,7 +226,7 @@ sub get_parsed_features {
       };
     }
     
-    $max = $max_values->{$name} if $max < $max_values->{$name};
+    $max = $track->{'metadata'}{'max_value'} if $max < $track->{'metadata'}{'max_value'};
     
     $count++ unless $track->{'config'}{'color'};
     $sort++;
@@ -232,11 +236,10 @@ sub get_parsed_features {
 }
 
 sub get_bigwig_features {
-  my ($self, $adaptor, $name, $chromosomes, $bins, $bin_size, $colour) = @_;
+  my ($self, $parser, $name, $chromosomes, $bins, $colour) = @_;
   my $data;  
-  $name ||= 'BigWig';
 
-  my ($raw_data, $max, $max_mean) = $adaptor->fetch_scores_by_chromosome($chromosomes, $bins, $bin_size);
+  my ($raw_data, $max, $max_mean) = $parser->fetch_scores_by_chromosome($chromosomes, $bins);
 
   while (my($chr, $scores) = each(%$raw_data)) {
     $data->{$chr}{$name} = { 
