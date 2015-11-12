@@ -36,6 +36,14 @@ sub create_tracks {
   $self->SUPER::create_tracks($slice, $metadata);
 }
 
+sub coords {
+### Simple accessor to return the coordinates from the parser
+### Note that for pairwise features we want the whole span of the pair
+  my $self = shift;
+  my $feature_2 = $self->parser->get_interacting_region;
+  return ($self->parser->get_seqname, $self->parser->get_start, $feature_2->[2]);
+}
+
 sub create_hash {
 ### Create a hash of feature information in a format that
 ### can be used by the drawing code
@@ -46,10 +54,10 @@ sub create_hash {
   return unless $slice;
   $metadata ||= {};
   ## Pairwise interactions have no strand
-  $metadata->{'strands'}{0}++
+  $metadata->{'strands'}{0}++;
 
   ## Skip this feature if the interaction crosses chromosomes
-  my ($seqname_2, $feature_2_start, $feature_2_end, $score) = $self->parser->get_interacting_region;
+  my ($seqname_2, $feature_2_start, $feature_2_end, $score) = @{$self->parser->get_information};
   return if $seqname_2 ne $slice->seq_region_name;
 
   ## Start and end need to be relative to slice,
@@ -93,9 +101,5 @@ sub create_hash {
     'structure'     => $structure,
   };
 }
-
-
-
-} 
 
 1;
