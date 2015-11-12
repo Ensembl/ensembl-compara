@@ -175,17 +175,10 @@ sub _store_aln_tags {
     my $self = shift;
 
     print "storing_tags ...\n";
-    if ( $self->param('reuse_gene_tree')->has_tag('aln_runtime') ) {
-        $self->param('copy_gene_tree')->store_tag( "aln_runtime", $self->param('reuse_gene_tree')->get_value_for_tag('aln_runtime') );
-    }
-    if ( $self->param('reuse_gene_tree')->has_tag('aln_percent_identity') ) {
-        $self->param('copy_gene_tree')->store_tag( "aln_percent_identity", $self->param('reuse_gene_tree')->get_value_for_tag('aln_percent_identity') );
-    }
-    if ( $self->param('reuse_gene_tree')->has_tag('aln_num_residues') ) {
-        $self->param('copy_gene_tree')->store_tag( "aln_num_residues", $self->param('reuse_gene_tree')->get_value_for_tag('aln_num_residues') );
-    }
-    if ( $self->param('reuse_gene_tree')->has_tag('aln_length') ) {
-        $self->param('copy_gene_tree')->store_tag( "aln_length", $self->param('reuse_gene_tree')->get_value_for_tag('aln_length') );
+    foreach my $tag (qw(aln_runtime aln_percent_identity aln_num_residues aln_length)) {
+        if ( $self->param('reuse_gene_tree')->has_tag($tag) ) {
+            $self->param('copy_gene_tree')->store_tag($tag, $self->param('reuse_gene_tree')->get_value_for_tag($tag) );
+        }
     }
 }
 
