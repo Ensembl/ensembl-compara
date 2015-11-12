@@ -105,7 +105,7 @@ sub write_output {
   my $ncsl      = $self->param('ncsl');
   my $master_db = $self->param('master_db');
 
-  my $master_dbc = $master_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($master_db)->dbc();
+  my $master_dbc = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($master_db)->dbc();
   $self->elevate_privileges($master_dbc);
   my $time_when_started_storing = time();  
   eval {
