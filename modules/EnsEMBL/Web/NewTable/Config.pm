@@ -65,7 +65,7 @@ sub new {
     type => $config->{'type'},
     plugins => {},
     phases => $config->{'phases'},
-    keymeta => $config->{'keymeta'},
+    keymeta => $keymeta,
     size_needed => 0,
     hub => $hub,
     memo => {
@@ -209,7 +209,6 @@ sub config {
     colconf => \%colconf,
     widgets => \%widgets,
     phases => $self->{'phases'},
-    keymeta => $self->{'keymeta'},
     ssplugins => $self->plugins_conf
   };
 }

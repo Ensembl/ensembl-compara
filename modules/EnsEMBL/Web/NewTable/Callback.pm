@@ -82,6 +82,7 @@ sub preload {
   $self->{'config'} = $table->config;
   $self->{'wire'} = $table->config->orient_out;
   $self->{'orient'} = $table->config->orient_out;
+  $self->{'key_meta'} = $table->config->keymeta;
   return $self->newtable_data_request(undef,undef,1);
 }
 
