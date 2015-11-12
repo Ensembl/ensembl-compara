@@ -38,6 +38,8 @@ use warnings;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
 use DBI qw(:sql_types);
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
@@ -62,11 +64,8 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 sub store {
   my ($self,$chunkSet) = @_;
 
-  unless($chunkSet->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-    $self->throw(
-      "set arg must be a [Bio::EnsEMBL::Compara::Production::DnaFragChunkSet] "
-    . "not a $chunkSet");
-  }
+  assert_ref($chunkSet, 'Bio::EnsEMBL::Compara::Production::DnaFragChunkSet');
+
   my $description = $chunkSet->description or undef;
 
   my $insertCount=0;
@@ -103,9 +102,7 @@ sub store {
 sub fetch_all_by_DnaCollection {
     my ($self, $dna_collection) = @_;
     
-    unless (defined $dna_collection) {
-        $self->throw("fetch_by_dna_collection must have a dna_collection");
-    }
+    assert_ref($dna_collection, 'Bio::EnsEMBL::Compara::Production::DnaCollection');
     my $dna_collection_id = $dna_collection->dbID;
 
     $self->bind_param_generic_fetch($dna_collection_id, SQL_INTEGER);

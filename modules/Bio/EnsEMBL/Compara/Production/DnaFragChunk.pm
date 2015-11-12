@@ -47,6 +47,7 @@ use Bio::SeqIO;
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -263,8 +264,7 @@ sub dnafrag {
   my ($self,$dnafrag) = @_;
 
   if (defined($dnafrag)) {
-    throw("arg must be a [Bio::EnsEMBL::Compara::DnaFrag] not a [$dnafrag]")
-        unless($dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag'));
+    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag');
     $self->{'_dnafrag'} = $dnafrag;
     $self->dnafrag_id($dnafrag->dbID);
   }

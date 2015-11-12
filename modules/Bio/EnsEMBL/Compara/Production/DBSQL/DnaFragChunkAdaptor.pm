@@ -41,6 +41,8 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
 use DBI qw(:sql_types);
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
@@ -149,9 +151,7 @@ sub fetch_all_by_DnaFragChunkSet {
   my $self = shift;
   my $dnafrag_chunk_set = shift;
 
-  unless(defined $dnafrag_chunk_set) {
-    $self->throw("fetch_all_by_DnaFragChunkSet must have a DnaFragChunkSet");
-  }
+  assert_ref($dnafrag_chunk_set, 'Bio::EnsEMBL::Compara::Production::DnaFragChunkSet');
 
   my $dnafrag_chunk_set_id = $dnafrag_chunk_set->dbID;
   $self->bind_param_generic_fetch($dnafrag_chunk_set_id, SQL_INTEGER);
