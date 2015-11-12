@@ -175,12 +175,21 @@ sub create_tracks {
   my ($self, $slice, $extra_config) = @_;
   my $hub         = $self->hub;
   my $parser      = $self->parser;
-  my $drawn_chrs  = $hub->species_defs->get_config($hub->data_species, 'ENSEMBL_CHROMOSOMES');
-  my $bins        = $extra_config->{'bins'} || 150;
   my $tracks      = [];
   my $data        = {};
   my $prioritise  = 0;
-  my @order;
+  my (@order, $bin_sizes, $bins);
+
+  if (!$slice) {
+    ## Sort out chromosome info
+    my $drawn_chrs  = $hub->species_defs->get_config($hub->data_species, 'ENSEMBL_CHROMOSOMES');
+    $bins           = $extra_config->{'bins'} || 150;
+    my $adaptor     = $hub->get_adaptor('get_SliceAdaptor');
+    foreach my $chr (@$drawn_chrs) {
+      my $slice = $adaptor->fetch_by_region('chromosome', $chr);
+      $bin_sizes->{$chr} = $slice->length / $bins; 
+    }
+  }
 
   while ($parser->next) {
     my $track_key = $parser->get_metadata_value('name') if $parser->can('get_metadata_value');
@@ -191,8 +200,8 @@ sub create_tracks {
       push @order, $track_key;
       ## Set up density bins if needed
       if (!$slice) {
-        foreach (@$drawn_chrs) {
-          $data->{$track_key}{'bins'}{$_} = [map { 0 } 1..$bins];
+        foreach my $chr (keys %$bin_sizes) {
+          $data->{$track_key}{'bins'}{$chr}{$_} = 0 for 1..$bins;
         }
       }
     }
@@ -221,9 +230,11 @@ sub create_tracks {
       $self->build_feature($data, $track_key, $slice);
     }
     else {
+      next unless $seqname;
       ## Add this feature to the appropriate density bin
-      my $bin_number  = int($start / $bins);
-      $data->{$track_key}{'bins'}{$seqname}[$bin_number]++;
+      my $bin_size    = $bin_sizes->{$seqname};
+      my $bin_number  = int($start / $bin_size) + 1;
+      $data->{$track_key}{'bins'}{$seqname}{$bin_number}++;
     }
   }
 
@@ -263,8 +274,8 @@ sub munge_densities {
   my ($self, $data) = @_;
   while (my ($key, $info) = each (%$data)) {
     my $track_max = 0;
-    foreach my $bin_array (keys %{$info->{'bins'})
-      my $chr_max = max(@$bin_array);
+    foreach my $chr (keys %{$info->{'bins'}}) {
+      my $chr_max = max(values %{$info->{'bins'}{$chr}});
       $track_max = $chr_max if $chr_max > $track_max;
     }
     $info->{'metadata'}{'max_value'} = $track_max;
