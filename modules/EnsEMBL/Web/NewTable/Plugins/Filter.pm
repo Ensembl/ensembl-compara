@@ -68,4 +68,12 @@ sub col_filter_blank_button {
   });
 }
 
+sub col_filter_fixed {
+  my ($self,$col,$yn) = @_;
+
+  $self->config->add_keymeta("filter",$col->key(),'*',{
+    fixed => $yn,
+  });
+}
+
 1;

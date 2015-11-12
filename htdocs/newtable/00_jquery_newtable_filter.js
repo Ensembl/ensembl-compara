@@ -118,10 +118,10 @@
       if(obj_empty(view.filter)) { delete view.filter; }
     }
 
-    function set_button($el,view,w,key,values) {
+    function set_button($el,view,w,key,values,km) {
       $el.toggleClass('valid',!!w.visible(values));
       if((view.filter||{}).hasOwnProperty(key)) {
-        var text = w.text(view.filter[key],values);
+        var text = w.text(view.filter[key],values,km);
         $('.v',$el).text(text);
         $el.addClass('restricted');
       } else {
@@ -137,10 +137,12 @@
         $el.addClass('more');
       } else { // Not more button
         var key = config.columns[idx];
+        var km = ($table.data('keymeta')||{}).filter;
+        if(km) { km = km[key]; }
         var values = ($table.data('ranges')||{})[key];
         var kind = config.colconf[key].range;
         var w = find_widget(kind,'filters','class');
-        set_button($el,view,w,key,values);
+        set_button($el,view,w,key,values,km);
         show_or_hide_all($table);
       }
       var $menu = $('.m',$el);

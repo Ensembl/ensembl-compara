@@ -30,8 +30,8 @@
         });
         return best;
       },
-      detect_catastrophe: function($el,$slider,best) {
-        var minmax = is_minmax($el,$slider,null,null);
+      detect_catastrophe: function($el,$slider,best,km) {
+        var minmax = is_minmax($el,$slider,null,null,km);
         if(best.chr != $el.data('slider-chr') &&
           (!minmax.min || !minmax.max)) {
           $el.data('slider-chr',best.chr);
@@ -49,13 +49,14 @@
       summary_prefix: function($button) { return ''; },
       additional_update: function(update,$button) {},
       preproc_values: function(values) { return values; },
-      detect_catastrophe: function($el,$slider,values) { return false; },
+      detect_catastrophe: function($el,$slider,values,km) { return false; },
       text_prefix: function(state) { return ''; },
       draw_additional: function($el,values) {}
     }
   };
 
-  function is_minmax($el,$slider,min,max) {
+  function is_minmax($el,$slider,min,max,km) {
+    if(km && km['*'] && km['*'].fixed) { return { min: 0, max: 0 }; }
     var range = $el.data('slider-range');
     if($slider) {
       if(min===null) { min = $slider.slider('option','values.0'); }
@@ -66,10 +67,15 @@
     return { min: is_min, max: is_max };
   }
 
-  function update_widget(variety,$button,$el,min,max) {
+  function update_widget(variety,$button,$el,min,max,km,values) {
+    var fixed = (km && km['*'] && km['*'].fixed);
+    if(fixed) {
+      if(min===null) { min = values.min; }
+      if(max===null) { max = values.max; }
+    }
     var $feedback = $('.slider_feedback',$el);
     var prefix = variety.summary_prefix($button);
-    var minmax = is_minmax($button,null,min,max);
+    var minmax = is_minmax($button,null,min,max,km);
     $feedback.text(prefix+(minmax.min?"Min":min)+" - "+
                    prefix+(minmax.max?"Max":max));
     var $tickbox = $('.slider_unspecified input',$el);
@@ -97,47 +103,53 @@
     return step;
   }
 
-  function send_update(variety,$button) {
+  function send_update(variety,$button,km) {
     var $slider = $('.slider',$button);
     var pmin = $slider.slider('option','values.0');
     var pmax = $slider.slider('option','values.1');
-    var minmax = is_minmax($button,null,pmin,pmax);
+    var minmax = is_minmax($button,null,pmin,pmax,km);
     var $tickbox = $('.slider_unspecified input',$button);
+    var fixed = (km && km['*'] && km['*'].fixed);
     var update = {};
     if($tickbox.length) {
       update.nulls = $tickbox.prop('checked');
+    } else if(fixed) {
+      var range = $button.data('slider-range');
+      update.nulls = ( range[0] == pmin && range[1] == pmax );
     } else {
       update.nulls = (minmax.min && minmax.max);
     }
-    console.log("update",update);
+    console.warn("nulls",update.nulls);
     variety.additional_update(update,$button);
     if(!minmax.min) { update.min = pmin; }
     if(!minmax.max) { update.max = pmax; }
     $button.trigger('update',update);
   }
 
-  function draw_slider(variety,$out,$button,min,max,km) {
+  function draw_slider(variety,$out,$button,min,max,km,values) {
     min = 1*min;
     max = 1*max;
     var step = calc_step(km,min,max);
     $button.data('slider-range',[min,max]);
+    var fixed = (km && km['*'] && km['*'].fixed);
     return $('<div/>').addClass('slider').appendTo($out).slider({
       range: true,
-      min: min-step, max: max+step, step: step,
-      values: [min-step,max+step],
+      min: fixed?min:min-step, max: fixed?max:max+step, step: step,
+      values: [fixed?min:min-step,fixed?max:max+step],
       slide: function(e,ui) {
-        update_widget(variety,$button,$out,ui.values[0],ui.values[1]);
+        update_widget(variety,$button,$out,ui.values[0],ui.values[1],km,values);
       },
       stop: function(e,ui) {
-        send_update(variety,$button);
+        send_update(variety,$button,km);
       }
     });
   }
 
-  function draw_widget(variety,$button,min,max,km) {
+  function draw_widget(variety,$button,min,max,km,values) {
+    var fixed = (km && km['*'] && km['*'].fixed);
     var $out = $("<div/>").addClass('newtable_range');
     $('<div/>').addClass('slider_feedback').appendTo($out);
-    draw_slider(variety,$out,$button,min,max,km);
+    draw_slider(variety,$out,$button,min,max,km,values);
     if(km && km['*'] && km['*'].blank_button) {
       var $unspec = $('<div/>').addClass('slider_unspecified');
       $unspec.append("<span>include blank</span>");
@@ -145,17 +157,18 @@
       $unspec.appendTo($out);
       $tickbox.on('click',function() {
         $button.data('unspec-explicit',true);
-        send_update(variety,$button);
+        send_update(variety,$button,km);
       }).prop('checked',true);
     }
-    update_widget(variety,$button,$out,null,null);
+    update_widget(variety,$button,$out,null,null,km,values);
     return $out;
   }
 
   function slider_update_size($el,$slider,min,max,km) {
+    var fixed = (km && km['*'] && km['*'].fixed);
     var step = calc_step(km,min,max);
-    $slider.slider('option','min',parseFloat(min)-step);
-    $slider.slider('option','max',parseFloat(max)+step);
+    $slider.slider('option','min',parseFloat(min)-(fixed?0:step));
+    $slider.slider('option','max',parseFloat(max)+(fixed?0:step));
     $el.data('slider-range',[min,max]);
   }
 
@@ -173,32 +186,34 @@
           values = variety.preproc_values(values);
           var $slider = $('.slider',$menu);
           if($slider.length) {
-            var minmax = is_minmax($el,$slider,null,null);
-            if(variety.detect_catastrophe($el,$slider,values)) {
+            var minmax = is_minmax($el,$slider,null,null,km);
+            if(variety.detect_catastrophe($el,$slider,values,km)) {
               slider_update_size($el,$slider,values.min,values.max,km);
               slider_set_minmax($slider,0);
               slider_set_minmax($slider,1);
-              update_widget(variety,$el,$menu,null,null);
+              update_widget(variety,$el,$menu,null,null,km,values);
               force_blanks($menu,true);
-              send_update(variety,$el);
+              send_update(variety,$el,km);
             } else {
               slider_update_size($el,$slider,values.min,values.max,km);
               if(minmax.min) { slider_set_minmax($slider,0); }
               if(minmax.max) { slider_set_minmax($slider,1); }
             }
           } else {
-            var $out = draw_widget(variety,$el,values.min,values.max,km);
+            var $out = draw_widget(variety,$el,values.min,values.max,km,values);
             variety.draw_additional($el,values);
             $menu.empty().append($out);
-            update_widget(variety,$el,$menu,null,null);
+            update_widget(variety,$el,$menu,null,null,km,values);
           }
         },
-        text: function(state,all) {
+        text: function(state,all,km) {
+          var fixed = (km && km['*'] && km['*'].fixed);
           var no_blanks = (state.hasOwnProperty('nulls') && !state.nulls);
           var has_min = state.hasOwnProperty('min');
           var has_max = state.hasOwnProperty('max');
           var out;
-          if(!has_min && !has_max) {
+          if((!has_min && !has_max) || 
+             (fixed && state.min == all.min && state.max == all.max)) {
             out = "All";
             if(no_blanks) { out += " except blank"; }
             return out;
