@@ -145,8 +145,19 @@ sub fetch_input {
   ######## needed for output####################
   $self->param('output_MethodLinkSpeciesSet', $out_mlss);
 
-  my $query_slice = $self->param('query_dnafrag')->slice;
-  my $target_slice = $self->param('target_dnafrag')->slice;
+  my $query_slice;
+  my $target_slice;
+
+  # Let's keep the number of connections / disconnections to the minimum
+  $qy_gdb->db_adaptor->dbc->prevent_disconnect( sub {
+    $query_slice = $self->param('query_dnafrag')->slice;
+    $query_slice->seq;  # To load the sequence
+  } );
+
+  $tg_gdb->db_adaptor->dbc->prevent_disconnect( sub {
+    $target_slice = $self->param('target_dnafrag')->slice;
+    $target_slice->seq;  # To load the sequence
+  } );
 
   print STDERR "Fetching all DnaDnaAlignFeatures by query and target...\n";
   print STDERR "start fetching at time: ",scalar(localtime),"\n";
