@@ -63,6 +63,7 @@ sub upload {
     }
 
     $params->{'species'}  = $hub->param('species') || $hub->species;
+    $params->{'format'}   = $file->get_format;
     $params->{'code'}     = $file->code;
   } 
  
