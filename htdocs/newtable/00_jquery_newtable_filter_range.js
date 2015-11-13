@@ -69,9 +69,14 @@
 
   function update_widget(variety,$button,$el,min,max,km,values,no_slide) {
     var fixed = (km && km['*'] && km['*'].fixed);
+    var $slider = $('.slider',$el);
     if(fixed) {
       if(min===null || min===undefined) { min = values.min; }
       if(max===null || max===undefined) { max = values.max; }
+    } else {
+      var full_range = $slider.slider('option','values');
+      if(min===null || min===undefined) { min = full_range[0]; }
+      if(max===null || max===undefined) { max = full_range[1]; }
     }
     var $feedback = $('.slider_feedback',$el);
     var prefix = variety.summary_prefix($button);
@@ -80,7 +85,6 @@
     $feedback.text(prefix+(minmax.min?"Min":min)+" - "+
                    prefix+(minmax.max?"Max":max));
     /* Update slider */
-    var $slider = $('.slider',$el);
     if(!no_slide) {
       // no_slide set when in callback for slide to avoid loop!
       $slider.slider('option','values',[parseFloat(min),parseFloat(max)]);
@@ -174,7 +178,7 @@
         send_update(variety,$button,km);
       }).prop('checked',true);
     }
-    update_widget(variety,$button,$out,null,null,km,values);
+    update_widget(variety,$button,$out,null,null,km,values,true);
     return $out;
   }
 
