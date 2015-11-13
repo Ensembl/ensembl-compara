@@ -36,6 +36,8 @@ sub content {
   my $strain_name = $hub->species_defs->translate('strain');
   my ($html, @samples, %tables);
   
+  my $glossary = $hub->glossary_lookup;
+
   foreach my $param ($hub->param) {
     if ($param =~ /opt_pop/ && $hub->param($param) eq 'on') {
       $param =~ s/opt_pop_//;
@@ -44,35 +46,14 @@ sub content {
   }
   my $snp_data = $self->get_page_data(\@samples);
 
-  my $columns  = [
-    { key => 'ID',          sort => 'html'                                               },
-  ];
-
-  if ($hub->param('data_grouping') eq 'by_variant') {
-    push @$columns, { key => 'sample', sort => 'string',  title => 'Population'};
-  }
-
-  push @$columns,
-    { key => 'consequence', sort => 'string',   title => 'Type'                          },
-    { key => 'chr' ,        sort => 'position', title => 'Chr: bp'                       },
-    { key => 'ref_alleles', sort => 'string',   title => 'Ref. allele'                   },
-    { key => 'Alleles',     sort => 'string',   title => ucfirst "$strain_name genotype" },
-    { key => 'Ambiguity',   sort => 'string',   title => 'Ambiguity'                     },
-    { key => 'Codon',       sort => 'html',     title => 'Transcript codon'              },
-    { key => 'cdscoord',    sort => 'numeric',  title => 'CDS coord.'                    },
-    { key => 'aachange',    sort => 'string',   title => 'Amino acids'                   },
-    { key => 'aacoord',     sort => 'numeric',  title => 'AA coord.'                     },
-    { key => 'Class',       sort => 'string'                                             },
-    { key => 'Source',      sort => 'string'                                             },
-    { key => 'Status',      sort => 'string',   title => 'Validation'                    }
-  ;
- 
   my $message = '
         <p>
           There are no variants in this region in %s, or the variants have been filtered out by the options set in the page configuration. 
           To change the filtering options select the "Configure this page" link from the menu on the left hand side of this page.
         </p><br />
       ';
+
+  my $columns = $self->table_columns($strain_name);
 
   if ($hub->param('data_grouping') eq 'by_variant') {
     $html .= "<h2>Variants in position</h2>";
@@ -90,20 +71,21 @@ sub content {
       $html .= $self->_info('Configuring the display', sprintf($message, join(',', @missing)));
     }
 
-    my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc', 'ID asc'], data_table_config => {iDisplayLength => 10} })->render;
-    $html .= $table;
+    my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc', 'ID asc'], data_table_config => {iDisplayLength => 10} });
+    $html .= $table->render;
   }
   else { 
     foreach my $sample (@samples) {
       my @rows = map @{$snp_data->{$_}{$sample} || []}, sort keys %$snp_data;
     
-      if (scalar @rows) {      
-        $tables{$sample} = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc' ] })->render;
+      if (scalar @rows) {  
+        my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc', 'ID asc'], data_table_config => {iDisplayLength => 10} });    
+        $tables{$sample} = $table->render;
       } else {
         $tables{$sample} = sprintf($message, 'this strain');
       }
     }  
-  $html .= "<h2>Variants in $_:</h2>$tables{$_}" for keys %tables;
+    $html .= "<h2>Variants in $_:</h2>$tables{$_}" for keys %tables;
   }
 
   $html .= $self->_info('Configuring the display', sprintf('
@@ -205,9 +187,10 @@ sub get_page_data {
           $status   = "resequencing coverage $coverage";
         } else {
           my $tmp        = $allele->variation;
-          my @validation = $tmp ? @{$tmp->get_all_validation_states || []} : ();
-          $status        = join ', ',  @validation;
-          $status        =~ s/freq/frequency/;
+          my @evidences = $tmp ? @{$tmp->get_all_evidence_values || []} : ();
+          if (scalar @evidences) {
+            $status = $self->render_evidence_status(\@evidences);
+          }
         }
       
         # url
@@ -228,7 +211,7 @@ sub get_page_data {
           ref_alleles => $allele->ref_allele_string || '-',
           Alleles     => $allele->allele_string     || '-',
           Ambiguity   => ambiguity_code($allele->allele_string),
-          Status      => $status                    || '-',
+          Evidence    => $status                    || '-',
           chr         => "$chr:$pos",
           Codon       => $codons                    || '-',
           consequence => $type,
@@ -248,6 +231,39 @@ sub get_page_data {
     }
   }
   return \%snp_data;
+}
+
+sub table_columns {
+  my $self   = shift;
+  my $strain = shift;
+  my $hub    = $self->hub;
+
+  my $glossary = $hub->glossary_lookup; 
+
+  my @columns  = (
+    { key => 'ID', label => 'Variant ID', sort => 'html', help => 'Variant Identifier' },
+  );
+
+  if ($hub->param('data_grouping') eq 'by_variant') {
+    push @columns, ({ key => 'sample', sort => 'string',  label => 'Population'});
+  }
+
+  push @columns, (
+    { key => 'consequence', sort => 'string',   label => 'Consequence Type'                                            },
+    { key => 'chr' ,        sort => 'position', label => 'Chr: bp',   help => $glossary->{'Chr:bp'}                    },
+    { key => 'ref_alleles', sort => 'string',   label => 'Ref. allele'                                                 },
+    { key => 'Alleles',     sort => 'string',   label => ucfirst "$strain genotype"                                    },
+    { key => 'Ambiguity',   sort => 'string',   label => 'Ambiguity'                                                   },
+    { key => 'Codon',       sort => 'html',     lable => 'Transcript codon'                                            },
+    { key => 'cdscoord',    sort => 'numeric',  label => 'CDS coord.'                                                  },
+    { key => 'aachange',    sort => 'string',   label => 'Amino acids'                                                 },
+    { key => 'aacoord',     sort => 'numeric',  label => 'AA coord.', help => 'Amino Acid Co-ordinate'                 },
+    { key => 'Class',       sort => 'string',   label => 'Class',     help => $glossary->{'Class'}                     },
+    { key => 'Source',      sort => 'string',   label => 'Source',    help => $glossary->{'Source'}                    },
+    { key => 'Evidence',    sort => 'string',   label => 'Evidence',  help => $glossary->{'Evidence status (variant)'} }
+  );
+
+  return \@columns;
 } 
 
 1;
