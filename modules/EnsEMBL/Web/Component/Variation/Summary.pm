@@ -211,9 +211,8 @@ sub variation_source {
   } elsif ($source =~ /SGRP/) {
     $source_link = $hub->get_ExtURL_link("About $source", 'SGRP_PROJECT');
   } elsif ($source =~ /COSMIC/) {
-    $sname       = 'COSMIC';
     my $cname = ($name =~ /^COSM(\d+)/) ? $1 : $name;
-    $source_link = $hub->get_ExtURL_link("$source_prefix $source", "${sname}_ID", $cname);
+    $source_link = $hub->get_ExtURL_link("$source_prefix $source", $source, $cname);
   } elsif ($source =~ /HGMD/) {
     $version =~ /(\d{4})(\d+)/;
     $version = "$1.$2";

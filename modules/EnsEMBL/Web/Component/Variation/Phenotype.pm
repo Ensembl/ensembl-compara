@@ -119,7 +119,7 @@ sub table_data {
    
   my $mart_somatic_url = $self->hub->species_defs->ENSEMBL_MART_ENABLED ? '/biomart/martview?VIRTUALSCHEMANAME=default'.
                          '&ATTRIBUTES=hsapiens_snp_som.default.snp.refsnp_id|hsapiens_snp_som.default.snp.chr_name|'.
-                         'hsapiens_snp_som.default.snp.chrom_start|hsapiens_snp_som.default.snp.associated_gene'.
+                         'hsapiens_snp_som.default.snp.chrom_start'.
                          '&FILTERS=hsapiens_snp_som.default.filters.phenotype_description.&quot;###PHE###&quot;'.
                          '&VISIBLEPANEL=resultspanel' : '';
                  
@@ -391,6 +391,10 @@ sub source_link {
     my @ega_data = split('\.',$ext_id);
     $name = (scalar(@ega_data) > 1) ? $ega_data[0].'*' : $ega_data[0];
     $label = $ext_id;
+  }
+  elsif ($url =~/cosmic/) {
+    my $cname = $self->object->name; 
+    $name = ( $cname =~ /^COSM(\d+)/) ? $1 : $cname;
   } 
   elsif ($url =~/ebi\.ac\.uk\/gwas/) {
     $name = $self->object->name;
