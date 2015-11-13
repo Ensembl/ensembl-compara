@@ -62,6 +62,14 @@
     }
   };
 
+  function round_out(val) {
+    if($.isNumeric(val)) {
+      return parseFloat(val.toPrecision(2));
+    } else {
+      return val;
+    }
+  }
+
   function reset_position($el) {
     $el.data('position',{
       min: null, max: null, nulls: true,
@@ -114,8 +122,8 @@
     var is_max = (pos.max===null);
     var $feedback = $('.slider_feedback',$el);
     var prefix = variety.summary_prefix($el);
-    $feedback.text(prefix+(is_min?"Min":pos.min)+" - "+
-                   prefix+(is_max?"Max":pos.max));
+    $feedback.text(prefix+(is_min?"Min":round_out(pos.min))+" - "+
+                   prefix+(is_max?"Max":round_out(pos.max)));
   }
    
   function update_tickbox_from_position($el) {
@@ -150,15 +158,12 @@
 
   function send_position(variety,$el) {
     var pos = $el.data('position');
-    console.log('pos',pos);
     var update = {};
     if(pos.exp_nulls!==undefined && pos.exp_nulls!==null) {
       update.no_nulls = !pos.exp_nulls;
     } else {
       update.no_nulls = !pos.imp_nulls;
     }
-    update.min = pos.min;
-    update.max = pos.max;
     variety.additional_update(update,$el);
     /* Fixed at endpoint means unrestricted at that end */
     var $slider = $('.slider',$el);
@@ -167,6 +172,8 @@
       if(update.min == range[0]) { update.min = null; }
       if(update.max == range[1]) { update.max = null; }
     }
+    update.min = round_out(pos.min);
+    update.max = round_out(pos.max);
     /* Tidy so that unrestricted is empty */
     if(!update.no_nulls) { delete update.no_nulls; }
     if(update.min===null) { delete update.min; }
@@ -178,10 +185,11 @@
   function draw_slider(variety,$out,$button,min,max,km,values) {
     min = 1*min;
     max = 1*max;
-    var fixed = (km && km['*'] && km['*'].fixed);
     return $('<div/>').appendTo($out).rangeslider({
-      fixed: fixed, min: min, max: max,
+      min: min, max: max,
+      fixed: (km && km['*'] && km['*'].fixed),
       integer: (km && km['*'] && km['*'].integer),
+      soggy: (km && km['*'] && km['*'].logarithmic),
       slide: function(min,max) {
         update_position_from_sliding($button,min,max,true);
         update_text_from_position($button,variety);

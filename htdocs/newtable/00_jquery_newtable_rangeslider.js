@@ -33,21 +33,34 @@
         if(min == $this.slider('option','min')) { min = null; }
         if(max == $this.slider('option','max')) { max = null; }
       }
-      callback(min,max);
+      callback(transform(options,min,1),transform(options,max,1));
+    }
+  }
+
+  function transform(options,val,inv) {
+    if(options.soggy) {
+      if(inv) { return Math.pow(val,3/2); } else { return Math.pow(val,2/3); }
+    } else {
+      return val;
     }
   }
 
   var defaults = {
     fixed: false,
-    integer: false
+    integer: false,
+    soggy: false,
   };
 
   var methods = {
     init : function(options) {
       options = $.extend({},defaults,options);
-      options.step = calc_step(options,options.min,options.max);
-      var smin = options.fixed?options.min:options.min-options.step;
-      var smax = options.fixed?options.max:options.max+options.step;
+      /* Adjust for soggy start */
+      var smin = transform(options,options.min,0);
+      var smax = transform(options,options.max,0);
+      options.step = calc_step(options,smin,smax);
+      /* Adjust for min/max step */
+      smin = options.fixed?smin:smin-options.step;
+      smax = options.fixed?smax:smax+options.step;
       this.each(function() {
         $(this).addClass('slider').data('options',options).slider({
           range: true, step: options.step,
@@ -64,30 +77,33 @@
         if(val[0] == this.slider('option','min')) { val[0] = null; }
         if(val[1] == this.slider('option','max')) { val[1] = null; }
       }
+      val[0] = transform(options,val[0],1);
+      val[1] = transform(options,val[1],1);
       return val;
     },
     set: function(min,max) {
-      var val = this.slider('option','values')||[];
+      var options = this.data('options');
+      var val = this.slider('option','values').slice()||[];
       if(min===null) { val[0] = this.slider('option','min'); }
-      else if(min!==undefined) { val[0] = min; }
+      else if(min!==undefined) { val[0] = transform(options,min,0); }
       if(max===null) { val[1] = this.slider('option','max'); }
-      else if(max!==undefined) { val[1] = max; }
+      else if(max!==undefined) { val[1] = transform(options,max,0); }
       this.slider('option','values',[parseFloat(val[0]),parseFloat(val[1])]);
     },
     get_limits: function() {
       var options = this.data('options');
       var adj = options.fixed?0:options.step;
-      return [this.slider('option','min')+adj,
-              this.slider('option','max')-adj];
+      return [transform(options,this.slider('option','min')+adj,1),
+              transform(options,this.slider('option','max')-adj,1)];
     },
     set_limits: function(min,max) {
       var options = this.data('options');
       var adj = options.fixed?0:options.step;
       if(min!==undefined) {
-        this.slider('option','min',parseFloat(min)-adj);
+        this.slider('option','min',transform(options,parseFloat(min),0)-adj);
       }
       if(max!==undefined) {
-        this.slider('option','max',parseFloat(max)+adj);
+        this.slider('option','max',transform(options,parseFloat(max),0)+adj);
       }
     },
     options: function() { return this.data('options'); },

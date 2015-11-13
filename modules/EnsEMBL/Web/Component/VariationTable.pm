@@ -277,6 +277,7 @@ sub make_table {
     also_cols => 'gmaf_allele',
     filter_range => [0,0.5],
     filter_fixed => 1,
+    filter_logarithmic => 1,
   },{
     _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
     width => 1.75

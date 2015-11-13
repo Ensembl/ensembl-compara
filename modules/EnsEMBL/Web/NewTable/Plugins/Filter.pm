@@ -76,4 +76,12 @@ sub col_filter_fixed {
   });
 }
 
+sub col_filter_logarithmic {
+  my ($self,$col,$yn) = @_;
+
+  $self->config->add_keymeta("filter",$col->key(),'*',{
+    logarithmic => $yn,
+  });
+}
+
 1;
