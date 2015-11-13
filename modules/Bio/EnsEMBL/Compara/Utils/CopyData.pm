@@ -145,7 +145,6 @@ sub memoized_insert {
     $cached_inserts{$key} = 1;
 
     $foreign_keys_dbc ||= $to_dbc;
-    $expand_tables //= 1;
 
     warn sprintf('SELECT * FROM %s WHERE %s = "%s"', $table, $where_field, $where_value), "\n";
     my $sth = $from_dbc->prepare(sprintf('SELECT * FROM %s WHERE %s = ?', $table, $where_field));
