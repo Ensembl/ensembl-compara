@@ -29,9 +29,9 @@ sub init {
   my $self          = shift;
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
-  my @css_groups    = @{$species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'css'}};
+  my @css_groups    = @{$species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'css'}||[]};
 
-  push @css_groups,@{$species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'image'}};
+  push @css_groups,@{$species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'image'}||[]};
   for (@css_groups) {
     next unless $_->condition($hub);
 
