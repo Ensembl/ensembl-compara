@@ -167,7 +167,7 @@ sub memoized_insert {
         # no rows affected is translated into '0E0' which is true and ==0 at the same time
         if ($rows) {
             if ($rows == 0) {
-                #next;
+                # The row was already there, but we can't assume it's been expanded too
             }
         } else {
             die "FAILED: ".$to_dbc->db_handle->errstr;
