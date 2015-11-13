@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+/* We maintain an internal hash, /position/, reflecting the state of this
+ * widget. This updates even during slide, etc, and everything else reads
+ * off that to update themselves. This allows the tickbox, etc, to update
+ * as we slide along. There's then an explicit call to send this to the
+ * filter code.
+ */
+
 (function($) {
   var varieties = {
     position: {
@@ -31,9 +38,9 @@
         return best;
       },
       detect_catastrophe: function($el,$slider,best,km) {
-        var minmax = is_minmax($el,$slider,null,null,km);
+        var current = $slider.get('current');
         if(best.chr != $el.data('slider-chr') &&
-          (!minmax.min || !minmax.max)) {
+           (current[0]!==null || current[1]!==null)) {
           $el.data('slider-chr',best.chr);
           return true;
         } else {
@@ -55,110 +62,136 @@
     }
   };
 
-  function is_minmax($el,$slider,min,max,km) {
-    if(km && km['*'] && km['*'].fixed) { return { min: 0, max: 0 }; }
-    var range = $el.data('slider-range');
-    if($slider) {
-      if(min===null) { min = $slider.slider('option','values.0'); }
-      if(max===null) { max = $slider.slider('option','values.1'); }
-    }
-    var is_min = (min===null || 1*min < 1*range[0]);
-    var is_max = (max===null || 1*max > 1*range[1]);
-    return { min: is_min, max: is_max };
+  function reset_position($el) {
+    $el.data('position',{
+      min: null, max: null, nulls: true,
+      imp_nulls: true, exp_nulls: null,
+    });
   }
 
-  function update_widget(variety,$button,$el,min,max,km,values,no_slide) {
-    var fixed = (km && km['*'] && km['*'].fixed);
+  function update_position_from_state($el,state) {
+    var min = state.min;
+    var max = state.max;
     var $slider = $('.slider',$el);
-    if(fixed) {
-      if(min===null || min===undefined) { min = values.min; }
-      if(max===null || max===undefined) { max = values.max; }
-    } else {
-      var full_range = $slider.slider('option','values');
-      if(min===null || min===undefined) { min = full_range[0]; }
-      if(max===null || max===undefined) { max = full_range[1]; }
-    }
+    var fixed = $slider.rangeslider('options').fixed;
+    var limits = $slider.rangeslider('get_limits');
+    if(min===undefined) { min = fixed?limits[0]:null; }
+    if(max===undefined) { max = fixed?limits[1]:null; }
+    var pos = $el.data('position');
+    pos.min = min;
+    pos.max = max;
+  }
+
+  function update_slider_from_position($el) {
+    var $slider = $('.slider',$el);
+    var pos = $el.data('position');
+    $slider.rangeslider('set',pos.min,pos.max);
+  }
+  
+  function update_position_from_sliding($el,min,max,in_progress) {
+    var $slider = $('.slider',$el);
+    var current = $slider.rangeslider('get');
+    var pos = $el.data('position');
+    pos.min = min;
+    pos.max = max;
+    if(!in_progress) {
+      var $slider = $('.slider',$el);
+      var fixed = $slider.rangeslider('options').fixed;
+      var limits = $slider.rangeslider('get_limits');
+      pos.imp_nulls = false;
+      if(fixed && min==limits[0] && max==limits[1]) {
+        pos.imp_nulls = true;
+      }
+      if(!fixed && min===null && max===null) {
+        pos.imp_nulls = true;
+      }
+    }  
+  }
+
+  function update_text_from_position($el,variety) {
+    var pos = $el.data('position');
+    var is_min = (pos.min===null);
+    var is_max = (pos.max===null);
     var $feedback = $('.slider_feedback',$el);
-    var prefix = variety.summary_prefix($button);
-    var minmax = is_minmax($button,null,min,max,km);
-    /* Update text */
-    $feedback.text(prefix+(minmax.min?"Min":min)+" - "+
-                   prefix+(minmax.max?"Max":max));
-    /* Update slider */
-    if(!no_slide) {
-      // no_slide set when in callback for slide to avoid loop!
-      $slider.slider('option','values',[parseFloat(min),parseFloat(max)]);
-    }
-    /* Update tickbox */
+    var prefix = variety.summary_prefix($el);
+    $feedback.text(prefix+(is_min?"Min":pos.min)+" - "+
+                   prefix+(is_max?"Max":pos.max));
+  }
+   
+  function update_tickbox_from_position($el) {
     var $tickbox = $('.slider_unspecified input',$el);
+    var pos = $el.data('position');
+    var nulls = pos.exp_nulls;
+    if(nulls==null) { nulls = pos.imp_nulls; }
     if($tickbox.length) {
-      if(!$button.data('unspec-explicit')) {
-        if(minmax.min && minmax.max) {
-          $tickbox.prop('checked',true);
-        } else {
-          $tickbox.prop('checked',false);
-        }
+      if(nulls) {
+        $tickbox.prop('checked',true);
+      } else {
+        $tickbox.prop('checked',false);
       }
     }
+  }
+
+  function update_position_from_tickbox($el) {
+    var $tickbox = $('.slider_unspecified input',$el);
+    var pos = $el.data('position');
+    pos.exp_nulls = $tickbox.prop('checked');
+  }
+
+  function update_all_from_position($el,variety) {
+    update_slider_from_position($el);
+    update_text_from_position($el,variety);
+    update_tickbox_from_position($el);
   }
 
   function force_blanks($el,val) {
     $('.slider_unspecified input',$el).prop('checked',val);
   }
 
-  function calc_step(km,min,max) {
-    min = parseFloat(min);
-    max = parseFloat(max);
-    var step = (max-min)/200;
-    if(step === 0) { step = 1; }
-    if(km && km['*'] && km['*'].integer) { step = 1; }
-    return step;
-  }
-
-  function send_update(variety,$button,km) {
-    var fixed = (km && km['*'] && km['*'].fixed);
-    var $slider = $('.slider',$button);
-    var pmin = $slider.slider('option','values.0');
-    var pmax = $slider.slider('option','values.1');
-    var minmax = is_minmax($button,null,pmin,pmax,km);
-    var $tickbox = $('.slider_unspecified input',$button);
-    var fixed = (km && km['*'] && km['*'].fixed);
+  function send_position(variety,$el) {
+    var pos = $el.data('position');
+    console.log('pos',pos);
     var update = {};
-    if($tickbox.length) {
-      update.no_nulls = !$tickbox.prop('checked');
-    } else if(fixed) {
-      var range = $button.data('slider-range');
-      update.no_nulls = !( range[0] == pmin && range[1] == pmax );
+    if(pos.exp_nulls!==undefined && pos.exp_nulls!==null) {
+      update.no_nulls = !pos.exp_nulls;
     } else {
-      update.no_nulls = !(minmax.min && minmax.max);
+      update.no_nulls = !pos.imp_nulls;
     }
-    variety.additional_update(update,$button);
-    if(!minmax.min) { update.min = pmin; }
-    if(!minmax.max) { update.max = pmax; }
-    if(fixed) {
-      var range = $button.data('slider-range');
-      if(update.min == range[0]) { delete update.min; }
-      if(update.max == range[1]) { delete update.max; }
+    update.min = pos.min;
+    update.max = pos.max;
+    variety.additional_update(update,$el);
+    /* Fixed at endpoint means unrestricted at that end */
+    var $slider = $('.slider',$el);
+    if($slider.rangeslider('options').fixed) {
+      var range = $slider.rangeslider('get_limits');
+      if(update.min == range[0]) { update.min = null; }
+      if(update.max == range[1]) { update.max = null; }
     }
+    /* Tidy so that unrestricted is empty */
     if(!update.no_nulls) { delete update.no_nulls; }
-    $button.trigger('update',update);
+    if(update.min===null) { delete update.min; }
+    if(update.max===null) { delete update.max; }
+    /* Send */
+    $el.trigger('update',update);
   }
 
   function draw_slider(variety,$out,$button,min,max,km,values) {
     min = 1*min;
     max = 1*max;
-    var step = calc_step(km,min,max);
-    $button.data('slider-range',[min,max]);
     var fixed = (km && km['*'] && km['*'].fixed);
-    return $('<div/>').addClass('slider').appendTo($out).slider({
-      range: true,
-      min: fixed?min:min-step, max: fixed?max:max+step, step: step,
-      values: [fixed?min:min-step,fixed?max:max+step],
-      slide: function(e,ui) {
-        update_widget(variety,$button,$out,ui.values[0],ui.values[1],km,values,true);
+    return $('<div/>').appendTo($out).rangeslider({
+      fixed: fixed, min: min, max: max,
+      integer: (km && km['*'] && km['*'].integer),
+      slide: function(min,max) {
+        update_position_from_sliding($button,min,max,true);
+        update_text_from_position($button,variety);
+        update_tickbox_from_position($button);
       },
-      stop: function(e,ui) {
-        send_update(variety,$button,km);
+      stop: function(min,max) {
+        update_position_from_sliding($button,min,max,false);
+        update_text_from_position($button,variety);
+        update_tickbox_from_position($button);
+        send_position(variety,$button);
       }
     });
   }
@@ -174,25 +207,11 @@
       var $tickbox = $('<input type="checkbox"/>').appendTo($unspec);
       $unspec.appendTo($out);
       $tickbox.on('click',function() {
-        $button.data('unspec-explicit',true);
-        send_update(variety,$button,km);
+        update_position_from_tickbox($button);
+        send_position(variety,$button);
       }).prop('checked',true);
     }
-    update_widget(variety,$button,$out,null,null,km,values,true);
     return $out;
-  }
-
-  function slider_update_size($el,$slider,min,max,km) {
-    var fixed = (km && km['*'] && km['*'].fixed);
-    var step = calc_step(km,min,max);
-    $slider.slider('option','min',parseFloat(min)-(fixed?0:step));
-    $slider.slider('option','max',parseFloat(max)+(fixed?0:step));
-    $el.data('slider-range',[min,max]);
-  }
-
-  function slider_set_minmax($slider,pos) {
-    var val = $slider.slider('option',pos?'max':'min');
-    $slider.slider('values',pos,val);
   }
 
   $.fn.newtable_filter_range = function(config,data) {
@@ -204,25 +223,26 @@
           values = variety.preproc_values(values);
           var $slider = $('.slider',$menu);
           if($slider.length) {
-            var minmax = is_minmax($el,$slider,null,null,km);
             if(variety.detect_catastrophe($el,$slider,values,km)) {
-              slider_update_size($el,$slider,values.min,values.max,km);
-              slider_set_minmax($slider,0);
-              slider_set_minmax($slider,1);
-              update_widget(variety,$el,$menu,state.min,state.max,km,values);
+              $slider.rangeslider('set_limits',values.min,values.max);
+              $slider.rangeslider('set',null,null);
+              update_position_from_state($menu,state);
+              update_all_from_position($menu,variety);
               force_blanks($menu,true);
               send_update(variety,$el,km);
             } else {
-              slider_update_size($el,$slider,values.min,values.max,km);
-              if(minmax.min) { slider_set_minmax($slider,0); }
-              if(minmax.max) { slider_set_minmax($slider,1); }
-              update_widget(variety,$el,$menu,state.min,state.max,km,values);
+              $slider.rangeslider('set_limits',values.min,values.max);
+              update_position_from_state($el,state);
+              update_all_from_position($el,variety);
             }
           } else {
             var $out = draw_widget(variety,$el,values.min,values.max,km,values);
+            reset_position($el);
             variety.draw_additional($el,values);
             $menu.empty().append($out);
-            update_widget(variety,$el,$menu,state.min,state.max,km,values);
+            var $slider = $('.slider',$out); 
+            update_position_from_state($el,state);
+            update_all_from_position($el,variety);
           }
         },
         text: function(state,all,km) {
