@@ -192,6 +192,28 @@ sub render_Text {
   }
 }
 
+sub render_Arc {
+  my ($self, $glyph) = @_;
+
+  my $canvas         = $self->{'canvas'};
+  my $colour         = $glyph->{'colour'};
+  my ($cx, $cy)      = $glyph->pixelcentre();
+
+	my($x,$y) = $self->XY($cx, $cy);
+
+  $canvas->{'g'}->arc(
+    $self->{sf} * ($x - $glyph->{'pixelwidth'}/2),
+    $self->{sf} * ($y + $glyph->{'pixelheight'}/2),
+    $self->{sf} * $glyph->{'pixelwidth'}/2,
+    $self->{sf} * $glyph->{'pixelheight'}/2,
+    $self->{sf} * ($glyph->{'start_point'} + 180),
+    $self->{sf} * ($glyph->{'end_point'} + 180),
+    1,
+  );
+  $self->strokecolor($colour);
+  $self->stroke;
+}
+
 sub render_Circle {
 #  die "Not implemented in pdf yet!";
 }
