@@ -19,6 +19,7 @@ limitations under the License.
 package EnsEMBL::Web::Component::TextSequence;
 
 use strict;
+no warnings 'uninitialized';
 
 use RTF::Writer;
 
@@ -1109,7 +1110,7 @@ sub build_sequence {
       $line = qq(<span class="adorn adorn-$adid _seq">$line</span>);
       my $num  = shift @{$line_numbers->{$y}};
       
-      if ($config->{'number'}) {
+      if ($config->{'number'} ne 'off') {
         my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $num->{'label'});
         my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'start'});
            $line = $config->{'h_space'} . sprintf('%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}") . $line;
@@ -1117,7 +1118,7 @@ sub build_sequence {
       
       $line .= ' ' x ($config->{'display_width'} - $_->[$x]{'length'}) if $x == $length && ($config->{'end_number'} || $_->[$x]{'post'});
       
-      if ($config->{'end_number'}) {
+      if ($config->{'end_number'} ne 'off') {
         my $n    = $num->{'post_label'} || $num->{'label'};
         my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $n);
         my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'end'});
