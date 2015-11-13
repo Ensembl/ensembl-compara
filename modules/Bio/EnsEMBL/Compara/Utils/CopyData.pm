@@ -40,7 +40,7 @@ copy_data_with_foreign_keys_by_constraint() can copy individual rows with
 their own depedencies. It will also "expand" the data, for instance by
 copying homology_member too when asked to copy homology_member.
 
-=head1 SYNOPSYS
+=head1 SYNOPSIS
 
   use Bio::EnsEMBL::Compara::Utils::CopyData (:row_copy);
   # The ", 1" at the end tells the function to "expand" the data, i.e. copy

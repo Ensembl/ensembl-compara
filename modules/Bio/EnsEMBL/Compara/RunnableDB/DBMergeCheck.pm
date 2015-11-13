@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck
 
 Ensembl Team. Individual contributions can be found in the GIT log.
 
-=head1 SYNOPSYS
+=head1 SYNOPSIS
 
 This Runnable needs the following parameters:
  - src_db_aliases: list of database aliases (the databases to merge)
