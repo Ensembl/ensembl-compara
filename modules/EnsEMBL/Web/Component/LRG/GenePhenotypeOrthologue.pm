@@ -113,7 +113,13 @@ sub content {
         my $tax = $species_defs->get_config($species, 'TAXONOMY_ID');
 
         if($ext_id && $source) {
-          $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
+          if ($source =~ /^goa$/i) {
+            my $attribs = $pf->get_all_attributes;
+            $source = $hub->get_ExtURL_link($source, 'QUICK_GO_IMP', { ID => $ext_id, PR_ID => $attribs->{'xref_id'}});
+          }
+          else {
+            $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
+          }
         }
 
         $entries{$phen}{$source} = 1;
