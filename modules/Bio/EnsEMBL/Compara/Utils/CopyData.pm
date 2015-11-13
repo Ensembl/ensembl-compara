@@ -146,8 +146,9 @@ sub memoized_insert {
 
     $foreign_keys_dbc ||= $to_dbc;
 
-    warn sprintf('SELECT * FROM %s WHERE %s = "%s"', $table, $where_field, $where_value), "\n";
-    my $sth = $from_dbc->prepare(sprintf('SELECT * FROM %s WHERE %s = ?', $table, $where_field));
+    my $sql_select = sprintf('SELECT * FROM %s WHERE %s = ?', $table, $where_field);
+    #warn "<< $sql_select  using '$where_value'\n";
+    my $sth = $from_dbc->prepare($sql_select);
     $sth->execute($where_value);
     while (my $h = $sth->fetchrow_hashref()) {
         my %this_row = %$h;
@@ -156,12 +157,12 @@ sub memoized_insert {
         insert_related_rows($from_dbc, $to_dbc, \%this_row, load_foreign_keys($foreign_keys_dbc)->{$table}, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables);
 
         # Then the data
-        warn 'INSERT INTO '.$table."\n";
         my @cols = keys %this_row;
         my @qms  = map {'?'} @cols;
         my @vals = @this_row{@cols};
         # FIXME: INSERT IGNORE ?
         my $insert_sql = sprintf('INSERT IGNORE INTO %s (%s) VALUES (%s)', $table, join(',', @cols), join(',', @qms));
+        #warn ">> $insert_sql using '", join("','", @vals), "'\n";
         my $rows = $to_dbc->do($insert_sql, undef, @vals);
         #warn "".($rows ? "true" : "false")." ".($rows == 0 ? "zero" : "non-zero")."\n";
         # no rows affected is translated into '0E0' which is true and ==0 at the same time
