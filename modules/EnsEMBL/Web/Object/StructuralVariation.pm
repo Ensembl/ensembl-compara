@@ -184,7 +184,7 @@ sub caption {
 
 sub name                  { my $self = shift; return $self->Obj->variation_name;                                         }
 sub class                 { my $self = shift; return $self->Obj->var_class;                                              }
-sub source                { my $self = shift; return $self->Obj->source;                                                 }
+sub source_name           { my $self = shift; return $self->Obj->source_name;                                            }
 sub source_description    { my $self = shift; return $self->Obj->source_description;                                     }
 sub study                 { my $self = shift; return $self->Obj->study;                                                  }
 sub study_name            { my $self = shift; return (defined($self->study)) ? $self->study->name : undef;               }

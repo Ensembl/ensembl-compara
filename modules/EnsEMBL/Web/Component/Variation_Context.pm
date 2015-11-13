@@ -85,7 +85,7 @@ sub content {
     
       $html .= qq{<div style="margin-bottom:20px"><div style="font-weight:bold;margin-right:20px;vertical-align:middle;float:left">Selected breakpoint</div>};
       $html .= sprintf(q(<form action="%s" method="get">%s<select name="bpf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit"></form>),
-        $hub->url({ svf => undef, sv => $vname, source => $object->source }),
+        $hub->url({ svf => undef, sv => $vname, source => $object->source_name }),
         $core_params,
         $options
       ); 
