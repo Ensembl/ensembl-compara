@@ -53,7 +53,6 @@ sub content {
     $self->location,
     $feature_slice ? $self->co_located($feature_slice) : (),
     $self->most_severe_consequence($variation_features),
-    #$self->validation_status,
     $self->evidence_status,
     $self->clinical_significance,
     $self->synonyms,
@@ -263,6 +262,7 @@ sub co_located {
     my $name  = $self->object->name;
     my $start = $slice->start;
     my $end   = $slice->end;
+    my $count = 0;
     my %by_source;
     
     foreach (@variations) {
@@ -278,7 +278,8 @@ sub co_located {
       my $link      = $hub->url({ v => $v_name, vf => $_->dbID });
       my $alleles   = ' ('.$_->allele_string.')' if $_->allele_string =~ /\//;
       my $variation = qq{<a href="$link">$v_name</a>$alleles};
-      
+      $count ++;
+
       push @{$by_source{$_->source_name}}, $variation;
     }
     
@@ -290,7 +291,9 @@ sub co_located {
         $html .= join ', ', @{$by_source{$_}};
       }
 
-      return ['Co-located', "with $html"];
+      my $s = ($count > 1) ? 's' : '';
+
+      return ["Co-located variant$s", $html];
     }
   }
   
@@ -524,71 +527,6 @@ sub location {
   return [ 'Location', "$location$location_link" ];
 }
 
-## to be removed - replaced by evidence status
-sub validation_status {
-  my $self           = shift;
-  my $hub            = $self->hub;
-  my $object         = $self->object;
-  my $status         = $object->status;
-  my @variation_sets = sort @{$object->get_variation_set_string};
-  my (@status_list, %main_status);
-  
-  if (scalar @$status) {
-    my $snp_name = $object->name;
-    
-    foreach (@$status) {
-      my $st;
-      
-      if ($_ eq 'hapmap') {
-        $st = 'HapMap', $hub->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
-        $main_status{'HapMap'} = 1;
-        next;
-      } elsif ($_ =~ /1000Genome/i) {
-        $st = '1000 Genomes';
-        $main_status{'1000 Genomes'} = 1;
-        next;
-      } elsif ($_ ne 'failed') {
-        $st = $_ eq 'freq' ? 'frequency' : $_;
-      }
-      
-      push @status_list, $st;
-    }
-  }
-  
-  my $status_count = scalar @status_list;
-  
-  if ( !$main_status{'1000 Genomes'}) {
-    foreach my $vs (@variation_sets) {
-      if ($vs =~ /1000 Genomes/i && !$main_status{'1000 Genomes'}) {
-        $main_status{'1000 Genomes'} = 1;
-        $status_count ++;
-      }
-    }
-  }
-  
-  return unless $status_count;
-  
-  my $html;
-  
-  if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
-    my $show = $self->hub->get_cookie_value('toggle_status') eq 'open';
-    my $showed_line;
-    
-    foreach my $st (sort keys %main_status) {
-      $showed_line .= ', ' if $showed_line;
-      $showed_line .= "<b>$st</b>";
-      $status_count --;
-    }
-    
-    $showed_line .= ' and also ' . join ', ', sort @status_list if $status_count > 0;
-    $html        .= $showed_line;
-  } else {
-    $html .= join ', ', sort @status_list;
-  }
-  
-  return ['Validation status', $html];
-}
-
 sub evidence_status {
   my $self           = shift;
   my $hub            = $self->hub;
@@ -698,11 +636,9 @@ sub hgvs {
 
 sub sets{
 
-  my $self           = shift;
-  my $hub            = $self->hub;
-  my $object         = $self->object;
-  my $status         = $object->status;
-
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $object = $self->object;
 
   my $variation_sets = $object->get_variation_sub_sets('Genotyping chip variants');
 
@@ -753,16 +689,28 @@ sub most_severe_consequence {
          action => 'Mappings',
          v      => $self->object->name,
       });
- 
 
+      my $html_consequence = $self->render_consequence_type($vf_object,1);
+
+      # Check if the variant overlaps at least one transcript or regulatory feature.
+      my $consequence_link = '';
+
+      my $overlapping_features = $vf_object->get_all_TranscriptVariations;
+         $overlapping_features = $vf_object->get_all_RegulatoryFeatureVariations if (scalar(@$overlapping_features) == 0);
+
+      if (scalar(@$overlapping_features) != 0) {
+        $consequence_link = sprintf(qq{
+          <div class="text-float-left">| <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>
+        },$url);
+      }
+
+      # Line display
       my $html = sprintf(qq{
          <div>
-           <div class="text-float-left">%s</div>
-           <div class="text-float-left">| <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>
+           <div class="text-float-left">%s</div>%s
            <div class="clear"></div>
          </div>},
-         $self->render_consequence_type($vf_object,1),
-         $url
+         $html_consequence, $consequence_link
       );
 
       return [ 'Most severe consequence' , $html];
