@@ -179,7 +179,7 @@ sub memoized_insert {
 }
 
 sub insert_related_rows {
-    my ($from_dbc, $to_dbc, $this_row, $rules, $table, $where_field, $where_value, $foreign_keys_dbc) = @_;
+    my ($from_dbc, $to_dbc, $this_row, $rules, $table, $where_field, $where_value, $foreign_keys_dbc, $expand_tables) = @_;
     foreach my $x (@$rules) {
         #warn sprintf("%s(%s) needs %s(%s)\n", $table, @$x);
         if (not defined $this_row->{$x->[0]}) {
@@ -189,7 +189,7 @@ sub insert_related_rows {
             # we fall here when trying to insert a root gene_tree_node because its root_id links to itself
             next;
         }
-        memoized_insert($from_dbc, $to_dbc, $x->[1], $x->[2], $this_row->{$x->[0]}, $foreign_keys_dbc);
+        memoized_insert($from_dbc, $to_dbc, $x->[1], $x->[2], $this_row->{$x->[0]}, $foreign_keys_dbc, $expand_tables);
     }
 }
 
