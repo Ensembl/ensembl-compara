@@ -593,14 +593,14 @@ sub parse_referer {
 sub filename {
   my ($self, $object) = @_;
   
-  my $name = sprintf('%s-%s-%s-%d',
+  my $name = sprintf('%s_%s_%s_%d',
     $self->species,
     $self->type,
     $self->action,
     $self->species_defs->ENSEMBL_VERSION
   );
   
-  $name .= '-' . $object->stable_id if $object && $object->can('stable_id');
+  $name .= '_' . $object->stable_id if $object && $object->can('stable_id');
   $name  =~ s/[^-\w\.]/_/g;
   
   return $name;
