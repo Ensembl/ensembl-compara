@@ -98,7 +98,12 @@ sub handle_download {
     my $content = $result->{'content'};
     if ($content) {
       ## Create headers via hub, otherwise they get lost somewhere in the guts of the code. Don't ask...
-      $hub->input->header(-type => $mime_type, -attachment => $filename);
+      if ($hub->type eq 'ImageExport') {
+        $hub->input->header(-type => $mime_type, -attachment => $filename);
+      }
+      else {
+        $hub->input->header(-type => $mime_type, -inline => $filename);
+      }
       print $content;
     }
     else {
