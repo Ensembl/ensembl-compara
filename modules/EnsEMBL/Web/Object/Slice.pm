@@ -267,8 +267,8 @@ sub filter_munged_snps {
  
     if ($needvalidation) {
       @filtered_snps =
-        grep {( @{$_->[2]->get_all_validation_states} ? 
-          (grep { $valids->{"opt_" . lc $_} } @{$_->[2]->get_all_validation_states}) : 
+        grep {( @{$_->[2]->get_all_evidence_values} ? 
+          (grep { $valids->{"opt_" . lc $_} } @{$_->[2]->get_all_evidence_values}) : 
           $valids->{'opt_noinfo'}
         )} @filtered_snps;                                                                                      # [ fake_s, fake_e, SNP ] Grep features to see if they are valid
     }
