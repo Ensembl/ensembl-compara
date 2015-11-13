@@ -50,7 +50,7 @@
       if(ori.hasOwnProperty('min') && val<ori.min) { return false; }
       if(ori.hasOwnProperty('max') && val>ori.max) { return false; }
     } else {
-      if(ori.hasOwnProperty('nulls')) { return ori.nulls; }
+      if(ori.hasOwnProperty('no_nulls')) { return !ori.no_nulls; }
     }
     return true;
   }

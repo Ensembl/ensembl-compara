@@ -112,6 +112,7 @@
   }
 
   function send_update(variety,$button,km) {
+    var fixed = (km && km['*'] && km['*'].fixed);
     var $slider = $('.slider',$button);
     var pmin = $slider.slider('option','values.0');
     var pmax = $slider.slider('option','values.1');
@@ -120,16 +121,22 @@
     var fixed = (km && km['*'] && km['*'].fixed);
     var update = {};
     if($tickbox.length) {
-      update.nulls = $tickbox.prop('checked');
+      update.no_nulls = !$tickbox.prop('checked');
     } else if(fixed) {
       var range = $button.data('slider-range');
-      update.nulls = ( range[0] == pmin && range[1] == pmax );
+      update.no_nulls = !( range[0] == pmin && range[1] == pmax );
     } else {
-      update.nulls = (minmax.min && minmax.max);
+      update.no_nulls = !(minmax.min && minmax.max);
     }
     variety.additional_update(update,$button);
     if(!minmax.min) { update.min = pmin; }
     if(!minmax.max) { update.max = pmax; }
+    if(fixed) {
+      var range = $button.data('slider-range');
+      if(update.min == range[0]) { delete update.min; }
+      if(update.max == range[1]) { delete update.max; }
+    }
+    if(!update.no_nulls) { delete update.no_nulls; }
     $button.trigger('update',update);
   }
 
@@ -216,20 +223,18 @@
         },
         text: function(state,all,km) {
           var fixed = (km && km['*'] && km['*'].fixed);
-          var no_blanks = (state.hasOwnProperty('nulls') && !state.nulls);
           var has_min = state.hasOwnProperty('min');
           var has_max = state.hasOwnProperty('max');
           var out;
           if((!has_min && !has_max) || 
              (fixed && state.min == all.min && state.max == all.max)) {
-            out = "All";
-            if(no_blanks) { out += " except blank"; }
-            return out;
+            if(state.no_nulls) { return "All except blank"; }
+            else { return "All"; }
           } else {
             out = variety.text_prefix(state)+(has_min?state.min:"Min") +
                   " - " +
                   variety.text_prefix(state)+(has_max?state.max:"Max");
-            if(!no_blanks) { out += " or blank"; }
+            if(!state.no_nulls) { out += " or blank"; }
             return out;
           }
         },
@@ -237,7 +242,7 @@
           if(!values) { return false; }
           values = variety.preproc_values(values);
           return values && values.hasOwnProperty('min');
-        }
+        },
       });
     });
     return { filters: filters }; 
