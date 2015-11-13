@@ -160,7 +160,6 @@ sub memoized_insert {
         my @cols = keys %this_row;
         my @qms  = map {'?'} @cols;
         my @vals = @this_row{@cols};
-        # FIXME: INSERT IGNORE ?
         my $insert_sql = sprintf('INSERT IGNORE INTO %s (%s) VALUES (%s)', $table, join(',', @cols), join(',', @qms));
         #warn ">> $insert_sql using '", join("','", @vals), "'\n";
         my $rows = $to_dbc->do($insert_sql, undef, @vals);
