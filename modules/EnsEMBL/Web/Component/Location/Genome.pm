@@ -286,7 +286,7 @@ sub _render_features {
     }
 
   } elsif (!scalar @$chromosomes) {
-    $html .= $self->_info('Unassembled genome', '<p>This genome has yet to be assembled into chromosomes</p>');
+    $html .= $self->_info('Unassembled genome', '<p>No karyotype image is available for this species.</p>');
   }
 
   ## Create HTML tables for features, if any
@@ -424,7 +424,7 @@ sub _configure_ProbeFeature_table {
   
   my $column_order = [qw(loc length names)];
 
-  my $header = 'Oligoprobe Information';
+  my $header = 'Oligoprobes';
  
   my ($data, $extras) = @$feature_set;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
@@ -478,7 +478,7 @@ sub _configure_DnaAlignFeature_table {
   my ($self, $feature_type, $feature_set) = @_;
   my $info = $self->_configure_Xref_table($feature_type, $feature_set);
   ## Override default header
-  $info->{'header'} = 'Sequence Feature Information';
+  $info->{'header'} = 'Sequence Features';
   return $info; 
 }
 
@@ -486,7 +486,7 @@ sub _configure_ProteinAlignFeature_table {
   my ($self, $feature_type, $feature_set) = @_;
   my $info = $self->_configure_Xref_table($feature_type, $feature_set);
   ## Override default header
-  $info->{'header'} = 'Protein Feature Information';
+  $info->{'header'} = 'Protein Alignments';
   return $info; 
 }
 
