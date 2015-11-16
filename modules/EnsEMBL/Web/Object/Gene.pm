@@ -245,7 +245,7 @@ sub get_go_list {
       if (my $goa = $goadaptor->get_GOTermAdaptor) {
         my $term;
         eval { 
-          $term = $goa->fetch_by_accession($go2); 
+          $term = $goa->fetch_by_accession($go); 
         };
 
         warn $@ if $@;
