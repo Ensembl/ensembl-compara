@@ -179,14 +179,15 @@ sub tag {
   my $colour = $self->my_colour($self->colour_key($f), 'tag');
   my @tags;
   
-  if ($f->is_somatic && $f->breakpoint_order) {
+  if ($f->breakpoint_order) {
     foreach my $coords ([ $f->start, $f->seq_region_start ], $f->start != $f->end ? [ $f->end, $f->seq_region_end ] : ()) {
       next if $coords->[0] < 0;
       
       push @tags, {
-        style       => 'somatic_breakpoint',
-        colour      => 'gold',
+        style       => 'breakpoint',
+        colour      => $colour ? $colour : 'gold',
         border      => 'black',
+        somatic     => $f->is_somatic,
         start       => $coords->[0],
         slice_start => $coords->[1]
       };
@@ -291,33 +292,59 @@ sub render_tag {
     });
     
     $composite->push(pop @glyph);
-  } elsif ($tag->{'style'} eq 'somatic_breakpoint') {
+  } elsif ($tag->{'style'} eq 'breakpoint') {
     my $slice = $self->{'container'};
     
     if ($tag->{'slice_start'} >= $slice->start && $tag->{'slice_start'} <= $slice->end) {
-      my $x     = $tag->{'start'};
-      my $y     = 2 * ($self->my_config('height') || [$self->get_text_width(0, 'X', '', $self->get_font_details($self->my_config('font') || 'innertext'), 1)]->[3] + 2);
-      my $scale = 1 / $pix_per_bp;
-      
-      @glyph = $self->Poly({
-        z            => 10,
-        colour       => $tag->{'colour'},
-        bordercolour => $tag->{'border'},
-        points       => [
-          $x - 0.5 * $scale, 1,
-          $x + 4.5 * $scale, 1,
-          $x + 2.5 * $scale, $y / 3 + 1,
-          $x + 5.5 * $scale, $y / 3 + 1,
-          $x,                $y, 
-          $x + 0.5 * $scale, $y * 2 / 3 - 1,
-          $x - 3.5 * $scale, $y * 2 / 3 - 1
-        ],
-      });
-      
+      my $y = ($self->my_config('height') || [$self->get_text_width(0, 'X', '', $self->get_font_details($self->my_config('font') || 'innertext'), 1)]->[3] + 2);
+
+      if ($tag->{'somatic'}) {
+        my $scale = 1 / $pix_per_bp;
+        $y = $y*2;
+
+        @glyph = $self->Poly({
+          z            => 10,
+          colour       => $tag->{'colour'},
+          bordercolour => $tag->{'border'},
+          points       => [
+            $start,                0,
+            $start + 5.0 * $scale, 0,
+            $start + 2   * $scale, $y / 2 - 1,
+            $start + 5.0 * $scale, $y / 2 - 1,
+            $start - 0.5 * $scale, $y,
+            $start - 0.5 * $scale, $y / 2 + 1,
+            $start - 5.0 * $scale, $y / 2 + 1
+          ],
+        });
+      }
+      else {
+        $width = 8 / $pix_per_bp;
+
+        push @glyph, $self->Triangle({
+          mid_point    => [ $start , $y/2 ],
+          colour       => $tag->{'colour'},
+          bordercolour => '#555555',
+          absolutey    => 1,
+          width        => $width,
+          height       => $y/2,
+          direction    => 'down',
+        });
+
+        push @glyph, $self->Triangle({
+          mid_point    => [ $start , $y ],
+          colour       => $tag->{'colour'},
+          bordercolour => '#555555',
+          absolutey    => 1,
+          width        => $width,
+          height       => $y/2,
+          direction    => 'down',
+        });
+      }
+
       $composite->push($self->Rect({
         z         => 1,
-        x         => $x - 3.5 * $scale,
-        width     => 9 * $scale,
+        x         => $start - $width/2,
+        width     => $width,
         height    => $y,
         absolutey => 1,
       }));
