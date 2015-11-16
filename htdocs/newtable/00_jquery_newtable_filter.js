@@ -100,7 +100,14 @@
       var km = $table.data('keymeta').filter;
       if(km) { km = km[key]; }
       var w = find_widget(kind,'filters','class');
-      w.display($menu,$button,values,state,km,key,$table);
+      var $box = $('<div/>');
+      $menu.empty().append($box);
+      var $head = $('<div class="head"/>').appendTo($box);
+      var cc = config.colconf[key];
+      var title = (cc.filter_label || cc.label || cc.title || key);
+      $('<div class="title"/>').appendTo($head).html(title);
+      var $summary = $('<div class="summary"/>').html("&#x00A0;").appendTo($head);
+      w.display($box,$button,values,state,km,key,$table);
     }
 
     function show_or_hide_all($table) {

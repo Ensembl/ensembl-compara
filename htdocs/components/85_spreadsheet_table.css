@@ -182,9 +182,9 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_toggle.open .newtable_toggle_long { display: block; }
 .new_table_loading { height: 64px; width: 100%; display: block; font-size: 32px; font-weight: bold; color: #aaa; vertical-align: middle; text-align: center; line-height: 61px; background: #ddd; }
 .new_table_loading > div { display: inline-block; background: url(/i/table.gif) no-repeat 0 15px; padding: 0 0 0 42px; }
-.newtable_filtertype_class .head { border-bottom: 1px solid #ccc; overflow: auto; zoom: 1; margin: 4px; }
-.newtable_filtertype_class .title { float: left; }
-.newtable_filtertype_class .summary { float: right; margin: 0 4px; font-size: 80%; color: #777; }
+.newtable_filter .m .head { border-bottom: 1px solid #ccc; overflow: auto; zoom: 1; margin: 4px; }
+.newtable_filter .m .title { float: left; }
+.newtable_filter .m .summary { float: right; margin: 0 4px; font-size: 80%; color: #777; }
 td.colour-swatch { border:2px solid #ffffff; }
 .newtable_ancient { background-color: #fee; margin: 8px 4px; border: 1px solid red; padding: 8px; display: none; }
 .newtable_filter li.allonoff { background: white; padding: 0; border: none; margin: 0; }

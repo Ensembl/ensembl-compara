@@ -227,16 +227,16 @@
     $.each(varieties,function(name,variety) {
       filters.push({
         name: name,
-        display: function($menu,$el,values,state,km) {
+        display: function($box,$el,values,state,km) {
           values = variety.preproc_values(values);
-          var $slider = $('.slider',$menu);
+          var $slider = $('.slider',$box);
           if($slider.length) {
             if(variety.detect_catastrophe($el,$slider,values,km)) {
               $slider.rangeslider('set_limits',values.min,values.max);
               $slider.rangeslider('set',null,null);
-              update_position_from_state($menu,state);
-              update_all_from_position($menu,variety);
-              force_blanks($menu,true);
+              update_position_from_state($el,state);
+              update_all_from_position($el,variety);
+              force_blanks($el,true);
               send_update(variety,$el,km);
             } else {
               $slider.rangeslider('set_limits',values.min,values.max);
@@ -247,7 +247,7 @@
             var $out = draw_widget(variety,$el,values.min,values.max,km,values);
             reset_position($el);
             variety.draw_additional($el,values);
-            $menu.empty().append($out);
+            $box.append($out);
             var $slider = $('.slider',$out); 
             update_position_from_state($el,state);
             update_all_from_position($el,variety);

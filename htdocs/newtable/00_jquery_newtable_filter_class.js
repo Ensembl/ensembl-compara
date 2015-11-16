@@ -29,14 +29,11 @@
     return {
       filters: [{
         name: "class",
-        display: function($menu,$el,values,state,km,key,$table) {
+        display: function($box,$el,values,state,km,key,$table) {
           var cc = config.colconf[key];
           var title = (cc.filter_label || cc.label || cc.title || key);
-          var $out = $('<div/>');
-          var $head = $('<div class="head"/>').appendTo($out);
-          $('<div class="title"/>').appendTo($head).html(title);
-          var $summary = $('<div class="summary"/>').text('(x/y on)').appendTo($head);
-          var $body = $('<div class="body"/>').appendTo($out);
+          var $summary = $('.summary',$box).text('(x/y on)');
+          var $body = $('<div class="body"/>').appendTo($box);
           values = values.slice();
           if(!cc.filter_sorted) {
             values.sort(function(a,b) { return a.localeCompare(b); });
@@ -81,7 +78,6 @@
             });
           });
           update_counts($summary,state,values);
-          $menu.empty().append($out);
         },
         text: function(state,all) {
           var skipping = {};
