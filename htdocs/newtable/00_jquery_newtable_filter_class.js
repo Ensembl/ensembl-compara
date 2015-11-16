@@ -25,6 +25,33 @@
     $el.text('('+m+'/'+n+' on)');
   }
 
+  function add_baked($baked,$body,$el) {
+    var all = [];
+    var $allon = $('<li/>').addClass('allon').addClass('allonoff').text('All On');
+    all.push($allon);
+    $allon.click(function() {
+      state = {};
+      $body.children('ul').children('li').addClass('on');
+      $el.trigger('update',state);
+    });
+    var $some = $('<li/>').addClass('allonoff').addClass('alloff').text('Some');
+    //all.push($some);
+    var $alloff = $('<li/>').addClass('allonoff').addClass('alloff').text('All Off');
+    $alloff.click(function() {
+      state = {};
+      $body.children('ul').children('li').removeClass('on').each(function() {
+        state[$(this).data('key')] = 1;
+      });
+      $el.trigger('update',state);
+    });
+    all.push($alloff);
+    var $buttons = $('<ul/>').addClass('bakery').appendTo($baked);
+    all[0].addClass('first');
+    all[all.length-1].addClass('last');
+    if(all.length>2) { all[all.length-1].addClass('last_of_many'); }
+    for(var i=0;i<all.length;i++) { $buttons.append(all[i]); }
+  }
+
   $.fn.newtable_filter_class = function(config,data) {
     return {
       filters: [{
@@ -33,7 +60,9 @@
           var cc = config.colconf[key];
           var title = (cc.filter_label || cc.label || cc.title || key);
           var $summary = $('.summary',$box).text('(x/y on)');
+          var $baked = $('<div class="baked"/>').appendTo($box);
           var $body = $('<div class="body"/>').appendTo($box);
+          add_baked($baked,$body,$el);
           values = values.slice();
           if(!cc.filter_sorted) {
             values.sort(function(a,b) { return a.localeCompare(b); });
@@ -49,7 +78,7 @@
               $ul = $("<ul/>").appendTo($body);
               splits.shift();
             }
-            if(i===0) {
+            if(i===0 && 0) {
               var $allon = $('<div/>').addClass('allon').text('All On');
               $allon.click(function() {
                 state = {};

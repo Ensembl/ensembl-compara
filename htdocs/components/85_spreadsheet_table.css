@@ -187,10 +187,6 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter .m .summary { float: right; margin: 0 4px; font-size: 80%; color: #777; }
 td.colour-swatch { border:2px solid #ffffff; }
 .newtable_ancient { background-color: #fee; margin: 8px 4px; border: 1px solid red; padding: 8px; display: none; }
-.newtable_filter li.allonoff { background: white; padding: 0; border: none; margin: 0; }
-.newtable_filter li .allon { display: inline-block; width: 103px; text-align: center; border: 1px solid #ccc; margin: 2px 4px; padding: 6px; background-color: #cfc; cursor: pointer; }
-.newtable_filter li .alloff { display: inline-block; width: 103px; text-align: center; border: 1px solid #ccc; margin: 2px 4px; padding: 6px; background-color: #fcc; cursor: pointer; }
-.newtable_filter li.allonoff:before { visibility: hidden; }
 .newtable_filter .slider_main { display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; }
 .newtable_filter .slider_left { text-align: left; height: 24px; line-height: 24px; }
 .newtable_filter .slider_right { text-align: right; height: 24px; line-height: 24px; }
@@ -198,3 +194,13 @@ td.colour-swatch { border:2px solid #ffffff; }
 .newtable_pager li { display: inline-block; padding: 2px 3px; color: black; }
 .newtable_pager a { color: white; }
 body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5px 0; }
+.newtable_filtertype_class .baked { padding: 10px 0; }
+.newtable_filter .newtable_filtertype_class .bakery { float: none; text-align: center; }
+.newtable_filtertype_class .bakery li { width: auto; }
+.newtable_filtertype_class .bakery li { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; padding: 0; border: 3px double white; color: white; cursor: pointer; display: inline-block; width: 103px; text-align: center; margin: 2px 0; padding: 6px; }
+.newtable_filtertype_class .bakery li:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
+.newtable_filtertype_class .bakery li:before { visibility: hidden; }
+.newtable_filtertype_class .bakery .first { border-radius: 12px 0 0 12px; border-right: 0; }
+.newtable_filtertype_class .bakery .last { border-radius: 0 12px 12px 0; }
+.newtable_filtertype_class .bakery .last_of_many { border-left: 0; }
+
