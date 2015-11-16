@@ -84,4 +84,12 @@ sub col_filter_logarithmic {
   });
 }
 
+sub col_filter_endpoint_markup {
+  my ($self,$col,$left_right,$html) = @_;
+
+  $self->config->add_keymeta("filter",$col->key(),'*',{
+    ($left_right?'endpoint_right':'endpoint_left') => $html,
+  });
+}
+
 1;

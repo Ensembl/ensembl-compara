@@ -208,7 +208,20 @@
     var fixed = (km && km['*'] && km['*'].fixed);
     var $out = $("<div/>").addClass('newtable_range');
     $('<div/>').addClass('slider_feedback').appendTo($out);
-    draw_slider(variety,$out,$button,min,max,km,values);
+    var $main = $('<div/>').addClass('slider_main').appendTo($out);
+    if(km && km['*']) {
+      var end_left = km['*'].endpoint_left;
+      var end_right = km['*'].endpoint_right;
+    }
+    if(!end_left) { end_left = ''; }
+    if(!end_right) { end_right = ''; }
+    if(end_left) {
+      $('<div/>').addClass('slider_left').html(end_left).appendTo($main);
+    }
+    draw_slider(variety,$main,$button,min,max,km,values);
+    if(end_right) {
+      $('<div/>').addClass('slider_right').html(end_right).appendTo($main);
+    }
     if(km && km['*'] && km['*'].blank_button) {
       var $unspec = $('<div/>').addClass('slider_unspecified');
       $unspec.append("<span>include blank</span>");

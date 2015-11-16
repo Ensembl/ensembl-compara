@@ -132,7 +132,14 @@ sub sift_poly_classes {
     foreach my $pred (keys %sp_classes) {
       $value_column->editorial_cssclass($pred,"score_$sp_classes{$pred}");
       $value_column->editorial_helptip($pred,$pred);
-    } 
+    }
+    # TODO: make decorators accessible to filters. Complexity is that
+    # many decorators (including these) are multi-column.
+    my $lozenge = qq(<div class="score score_%s score_example">%s</div>);
+    my $left = { sift => 'bad', polyphen => 'good'}->{$column_name};
+    my $right = { sift => 'good', polyphen => 'bad'}->{$column_name};
+    $value_column->filter_endpoint_markup(0,sprintf($lozenge,$left,"0"));
+    $value_column->filter_endpoint_markup(1,sprintf($lozenge,$right,"1"));
   }
 }
 
