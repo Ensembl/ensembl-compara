@@ -94,7 +94,7 @@ sub populate_tree {
   );
 
   # get all ontologies mapped to this species
-  my $go_menu = $self->create_submenu('Ontology', 'Gene Ontology');
+  my $go_menu = $self->create_submenu('Ontologies', 'Ontologies');
   my %olist   = map {$_ => 1} @{$species_defs->SPECIES_ONTOLOGIES || []};
 
   if (%olist) {
@@ -110,14 +110,14 @@ sub populate_tree {
       my $url2 = $hub->url(
         {
           type   => 'Gene',
-          action => 'Ontology/' . $cluster->{description},
+          action => 'Ontologies/' . $cluster->{description},
           oid    => $oid
         }
       );
 
       (my $desc2 = $cluster->{db}.": ".ucfirst($cluster->{description})) =~ s/_/ /g;
 
-      $go_menu->append($self->create_node('Ontology/'. $cluster->{description}, $desc2, [qw( go EnsEMBL::Web::Component::Gene::Go )], {'availability' => 'gene has_go', 'concise' => $desc2, 'url' => $url2}));
+      $go_menu->append($self->create_node('Ontologies/'. $cluster->{description}, $desc2, [qw( go EnsEMBL::Web::Component::Gene::Go )], {'availability' => 'gene has_go', 'concise' => $desc2, 'url' => $url2}));
 
     }
   }
