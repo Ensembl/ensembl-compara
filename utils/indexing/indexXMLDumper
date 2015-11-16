@@ -2081,7 +2081,7 @@ sub dumpGene {
     (my $has_patches) = $conf->{'dbh'}->selectrow_array(qq(select count(*) from assembly_exception where exc_type != 'PAR'));
 
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
-      'select external_db_id, db_display_name
+      'select external_db_id, db_display_name, db_name
          from external_db', 'external_db_id'
        );
     my $external_synonyms;
@@ -2090,6 +2090,7 @@ sub dumpGene {
       $external_synonyms->{$_->[0]}{$_->[1]} = 1;
     }
 
+    my @xrefs_to_skip = qw(goslim_goa);
     my %xrefs = ();
     foreach my $type( qw(Gene Transcript Translation) ) {
       my $t = lc($type);
@@ -2106,6 +2107,8 @@ sub dumpGene {
         my $external_db_desc  = $_->[3];
         my $xref_id           = $_->[4];
         my $external_db = $external_dbs->{$_->[1]}{'db_display_name'};
+        my $db_name = $external_dbs->{$_->[1]}{'db_name'};
+        next if (grep {$db_name eq $_} @xrefs_to_skip);
         my $desc        = "$external_db_label ($external_db";
         my $search_term = "$external_db_label";
         if ($external_db_desc) {
@@ -2418,6 +2421,7 @@ sub dumpTranscript {
       $external_synonyms->{$_->[0]}{$_->[1]} = 1;
     }
     my %xrefs = ();
+    my @xrefs_to_skip = qw(GO goslim_goa);
     foreach my $type( qw(Transcript Translation) ) {
       my $t = lc($type);
       my $sql = qq(
@@ -2433,6 +2437,8 @@ sub dumpTranscript {
         my $external_db_desc  = $_->[3];
         my $xref_id           = $_->[4];
         my $external_db = $external_dbs->{$_->[1]}{'db_display_name'};
+        my $db_name =  $external_dbs->{$_->[1]}{'db_name'};
+        next if (grep {$db_name eq $_} @xrefs_to_skip);
         my $desc        = "$external_db_label ($external_db";
         my $search_term = "$external_db_label";
         if ($external_db_desc) {
