@@ -334,6 +334,7 @@ sub make_table {
     helptip => $glossary->{'SIFT'},
     filter_range => [0,1],
     filter_fixed => 1,
+    filter_blank_button => 1,
   },{
     _key => 'polyphen_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'polyphen_value',
@@ -346,6 +347,7 @@ sub make_table {
     helptip => $glossary->{'PolyPhen'},
     filter_range => [0,1],
     filter_fixed => 1,
+    filter_blank_button => 1,
   },{
     _key => 'LRG', _type => 'string unshowable',
     label => "LRG",
@@ -656,7 +658,7 @@ sub configure {
 
 sub get_hgvs {
   my ($self, $tva) = @_;
-  my $hgvs_c = $tva->hgvs_coding;
+  my $hgvs_c = $tva->hgvs_transcript;
   my $hgvs_p = $tva->hgvs_protein;
   my $hgvs;
 
