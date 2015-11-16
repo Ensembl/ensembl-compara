@@ -101,7 +101,23 @@
     if(!c[b] && c[b]!=='') { c[b] = iconic_string(b,km,col); }
     return c[a].localeCompare(c[b])*f;
   }
-  
+
+  function iconic_finish(vv,col,km) {
+    var out = Object.keys(vv);
+    out.sort(function(a,b) {
+      var aa = ((km['decorate/iconic'][col]||{})[a]||{}).order;
+      var bb = ((km['decorate/iconic'][col]||{})[b]||{}).order;
+      if(aa && bb) { return aa-bb; }
+      if(aa) { return 1; }
+      if(bb) { return -1; }
+      if(a && b) { return a.localeCompare(b); }
+      if(a) { return 1; }
+      if(b) { return -1; }
+      return 0;
+    });
+    return out;
+  }
+
   function rangemerge_class(a,b) {
     var i;
     var v = {};
@@ -207,7 +223,7 @@
         name: "iconic",
         split: function(v) { return v?v.split(/~/):[]; },
         value: function(vv,v) { vv[v]=1; },
-        finish: function(vv) { return Object.keys(vv); },
+        finish: iconic_finish,
         match: function(ori,val) { return string_match(ori,val); },
         sort: iconic_sort,
         merge: rangemerge_class

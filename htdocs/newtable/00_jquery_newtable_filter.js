@@ -213,10 +213,10 @@
           if(plugin.split) { v = plugin.split(v); } else { v = [v]; }
           if(v===null || v===undefined) { continue; }
           for(var k=0;k<v.length;k++) {
-            plugin.value(value,v[k]);
+            plugin.value(value,v[k],keymeta);
           }
         }
-        if(plugin.finish) { value = plugin.finish(value); }
+        if(plugin.finish) { value = plugin.finish(value,series[i],keymeta); }
         enums[series[i]] = value;
       }
       return enums;

@@ -208,7 +208,7 @@ sub snptype_classes {
     my $so_term = lc $con->SO_term;
     my $colour = $var_styles->{$so_term||'default'}->{'default'};
     $column->icon_export($con->label,$con->label);
-    $column->icon_order($con->label,sprintf("^%8.8d",$con->rank));
+    $column->icon_order($con->label,$con->rank);
     $column->icon_helptip($con->label,$con->description);
     $column->icon_coltab($con->label,$colour);
   }
