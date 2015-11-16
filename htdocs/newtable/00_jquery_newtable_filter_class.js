@@ -25,7 +25,7 @@
     $el.text('('+m+'/'+n+' on)');
   }
 
-  function add_baked($baked,$body,$el) {
+  function add_baked($baked,$body,$el,$summary,values) {
     var all = [];
     var $allon = $('<li/>').addClass('allon').addClass('allonoff').text('All On');
     all.push($allon);
@@ -33,6 +33,7 @@
       state = {};
       $body.children('ul').children('li').addClass('on');
       $el.trigger('update',state);
+      update_counts($summary,state,values);
     });
     var $some = $('<li/>').addClass('allonoff').addClass('alloff').text('Some');
     //all.push($some);
@@ -43,6 +44,7 @@
         state[$(this).data('key')] = 1;
       });
       $el.trigger('update',state);
+      update_counts($summary,state,values);
     });
     all.push($alloff);
     var $buttons = $('<ul/>').addClass('bakery').appendTo($baked);
@@ -62,7 +64,7 @@
           var $summary = $('.summary',$box).text('(x/y on)');
           var $baked = $('<div class="baked"/>').appendTo($box);
           var $body = $('<div class="body"/>').appendTo($box);
-          add_baked($baked,$body,$el);
+          add_baked($baked,$body,$el,$summary,values);
           values = values.slice();
           if(!cc.filter_sorted) {
             values.sort(function(a,b) { return a.localeCompare(b); });
