@@ -207,7 +207,7 @@ sub snptype_classes {
   my $var_styles   = $species_defs->colour('variation');
   my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my $column = $table->column('snptype');
-  $column->filter_add_baked('lof','LoF');
+  $column->filter_add_baked('lof','Only LoF');
   $column->filter_add_baked('lof_missense','LoF & Missense');
   my @lof = qw(stop_gained frameshift_variant splice_donor_variant
                splice_acceptor_variant);

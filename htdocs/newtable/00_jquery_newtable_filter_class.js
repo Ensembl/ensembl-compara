@@ -56,7 +56,7 @@
 
   function add_baked($baked,$body,$el,$summary,values,key,km) {
     var all = [];
-    var $allon = $('<li/>').addClass('allon').addClass('allonoff').text('All On');
+    var $allon = $('<li/>').addClass('allon').addClass('allonoff').text('Turn All On');
     all.push($allon);
     $allon.click(function() {
       click($el,$body,'all',true,km,$summary,values);
@@ -72,7 +72,7 @@
       })(i);
     }
 
-    var $alloff = $('<li/>').addClass('allonoff').addClass('alloff').text('All Off');
+    var $alloff = $('<li/>').addClass('allonoff').addClass('alloff').text('Turn All Off');
     $alloff.click(function() {
       click($el,$body,'all',false,km,$summary,values);
     });
