@@ -108,8 +108,6 @@ sub col_filter_bake_into {
 
   my $meta = $self->config->get_keymeta("filter",$col->key(),$value);
   my $baked = ($meta->{'baked'}||=[]);
-  use Data::Dumper;
-  warn Dumper($self->config->keymeta);
   push @$baked,$button;
 }
 
