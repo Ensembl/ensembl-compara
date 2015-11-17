@@ -455,18 +455,6 @@ sub consequence_type {
  
   return $consequence_type;
 }
-## This is replaced by ensembl evidence_status
-## To be removed
-sub status { 
-
-  ### Variation_object_calls
-  ### a
-  ### Example    : my $vari_status = $object->get_all_validation_states;
-  ### Returns List of states
-
-  my $self = shift;
-  return $self->vari->get_all_validation_states;
-}
 
 sub evidence_status { 
 
