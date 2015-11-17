@@ -207,25 +207,26 @@ sub snptype_classes {
   my $var_styles   = $species_defs->colour('variation');
   my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my $column = $table->column('snptype');
+  $column->filter_add_baked('lof','LoF');
+  $column->filter_add_baked('lof_missense','LoF & Missense');
+  my @lof = qw(stop_gained frameshift_variant splice_donor_variant
+               splice_acceptor_variant);
   foreach my $con (@all_cons) {
     next if $con->SO_accession =~ /x/i;
-    
-    my $term = $con->SO_term;
-  
     my $so_term = lc $con->SO_term;
     my $colour = $var_styles->{$so_term||'default'}->{'default'};
     $column->icon_export($con->label,$con->label);
     $column->icon_order($con->label,$con->rank);
     $column->icon_helptip($con->label,$con->description);
     $column->icon_coltab($con->label,$colour);
+    if(grep { $_ eq $so_term } @lof) {
+      $column->filter_bake_into($con->label,'lof');
+      $column->filter_bake_into($con->label,'lof_missense');
+    }
+    if($so_term eq 'missense_variant') {
+      $column->filter_bake_into($con->label,'lof_missense');
+    }
   }
-  $column->filter_add_baked('lof','LoF');
-  $column->filter_add_baked('lof_missense','LoF & Missense');
-#      members => [qw(stop_gained frameshift_variant splice_donor_variant
-#                    splice_acceptor_variant)],
-
-#      members => [qw(missense-variant)],
-#      transclude => [qw(lof)],
 }
 
 sub make_table {

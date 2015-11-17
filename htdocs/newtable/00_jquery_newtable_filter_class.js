@@ -25,30 +25,56 @@
     $el.text('('+m+'/'+n+' on)');
   }
 
+  function click($el,$body,type,bkey,km,$summary,values) {
+    var state = {};
+    $body.children('ul').children('li').each(function() {
+      var $this = $(this);
+      var key = $this.data('key');
+      var baked = (((km||{})[key]||{}).baked)||[];
+      var ok = false;
+      if(type=='bakery') {
+        for(var i=0;i<baked.length;i++) {
+          if(baked[i]==bkey) { ok = true; }
+        }
+      } else if(type=='all') {
+        if(bkey===true) { ok = true; }
+        if(bkey===false) { ok = false; }
+      } else { // type == 'one'
+        ok = $this.hasClass('on');
+        if(key==bkey) { ok = !ok; }
+      }
+      if(ok) {
+        $this.addClass('on');
+      } else {
+        state[key] = 1;
+        $this.removeClass('on');
+      }
+    });
+    $el.trigger('update',state);
+    update_counts($summary,state,values);
+  }
+
   function add_baked($baked,$body,$el,$summary,values,key,km) {
     var all = [];
     var $allon = $('<li/>').addClass('allon').addClass('allonoff').text('All On');
     all.push($allon);
     $allon.click(function() {
-      state = {};
-      $body.children('ul').children('li').addClass('on');
-      $el.trigger('update',state);
-      update_counts($summary,state,values);
+      click($el,$body,'all',true,km,$summary,values);
     });
-    var bakery = ((km['*']||{}).bakery)||[];
+    var bakery = (((km||{})['*']||{}).bakery)||[];
     for(var i=0;i<bakery.length;i++) {
       var $bake = $('<li/>').addClass('allonoff').addClass('alloff').text(bakery[i].label);
       all.push($bake);
+      (function(j) {
+        $bake.click(function() {
+          click($el,$body,'bakery',bakery[j].key,km,$summary,values);
+        });
+      })(i);
     }
 
     var $alloff = $('<li/>').addClass('allonoff').addClass('alloff').text('All Off');
     $alloff.click(function() {
-      state = {};
-      $body.children('ul').children('li').removeClass('on').each(function() {
-        state[$(this).data('key')] = 1;
-      });
-      $el.trigger('update',state);
-      update_counts($summary,state,values);
+      click($el,$body,'all',false,km,$summary,values);
     });
     all.push($alloff);
     var $buttons = $('<ul/>').addClass('bakery').appendTo($baked);
@@ -84,32 +110,12 @@
               $ul = $("<ul/>").appendTo($body);
               splits.shift();
             }
-            if(i===0 && 0) {
-              var $allon = $('<div/>').addClass('allon').text('All On');
-              $allon.click(function() {
-                state = {};
-                $body.children('ul').children('li').addClass('on');
-                $el.trigger('update',state);
-              });
-              var $alloff = $('<div/>').addClass('alloff').text('All Off');
-              $alloff.click(function() {
-                state = {};
-                $body.children('ul').children('li').removeClass('on').each(function() {
-                  state[$(this).data('key')] = 1;
-                });
-                $el.trigger('update',state);
-              });
-              $('<li/>').addClass('allonoff').append($allon).append($alloff).appendTo($ul);
-            }
             var $li = $("<li/>").data('key',val).appendTo($ul);
             $table.trigger('paint-individual',[$li,key,val]);
             $li.data('val',val);
             if(!state[val]) { $li.addClass("on"); }
             $li.on('click',function() {
-              $(this).toggleClass('on');
-              if(state[val]) { delete state[val]; } else { state[val] = 1; }
-              update_counts($summary,state,values);
-              $el.trigger('update',state);
+              click($el,$body,'one',val,km,$summary,values);
             });
           });
           update_counts($summary,state,values);
