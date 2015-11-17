@@ -190,6 +190,9 @@
           if(col == column) {
             $.each(coldata,function(val,valdata) {
               if(val != '*') { plugin.value(value,val); }
+              if(val == '*' && valdata.maybe_blank) {
+                plugin.value(value,null);
+              }
             });
           }
         });

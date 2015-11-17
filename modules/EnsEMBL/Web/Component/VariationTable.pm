@@ -198,6 +198,7 @@ sub clinsig_classes {
     $clinsig_col->icon_export($cs,$cs);
     $clinsig_col->icon_order($cs,$clinsig_order{$cs_img});
   }
+  $clinsig_col->filter_maybe_blank(1);
 }
 
 sub snptype_classes {

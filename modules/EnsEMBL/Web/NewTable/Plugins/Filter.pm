@@ -84,6 +84,14 @@ sub col_filter_logarithmic {
   });
 }
 
+sub col_filter_maybe_blank {
+  my ($self,$col,$yn) = @_;
+
+  $self->config->add_keymeta("filter",$col->key(),'*',{
+    maybe_blank => $yn,
+  });
+}
+
 sub col_filter_endpoint_markup {
   my ($self,$col,$left_right,$html) = @_;
 
