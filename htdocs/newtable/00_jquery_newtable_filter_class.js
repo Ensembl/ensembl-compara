@@ -25,7 +25,7 @@
     $el.text('('+m+'/'+n+' on)');
   }
 
-  function add_baked($baked,$body,$el,$summary,values) {
+  function add_baked($baked,$body,$el,$summary,values,key,km) {
     var all = [];
     var $allon = $('<li/>').addClass('allon').addClass('allonoff').text('All On');
     all.push($allon);
@@ -35,8 +35,12 @@
       $el.trigger('update',state);
       update_counts($summary,state,values);
     });
-    var $some = $('<li/>').addClass('allonoff').addClass('alloff').text('Some');
-    //all.push($some);
+    var bakery = ((km['*']||{}).bakery)||[];
+    for(var i=0;i<bakery.length;i++) {
+      var $bake = $('<li/>').addClass('allonoff').addClass('alloff').text(bakery[i].label);
+      all.push($bake);
+    }
+
     var $alloff = $('<li/>').addClass('allonoff').addClass('alloff').text('All Off');
     $alloff.click(function() {
       state = {};
@@ -64,7 +68,7 @@
           var $summary = $('.summary',$box).text('(x/y on)');
           var $baked = $('<div class="baked"/>').appendTo($box);
           var $body = $('<div class="body"/>').appendTo($box);
-          add_baked($baked,$body,$el,$summary,values);
+          add_baked($baked,$body,$el,$summary,values,key,km);
           values = values.slice();
           if(!cc.filter_sorted) {
             values.sort(function(a,b) { return a.localeCompare(b); });

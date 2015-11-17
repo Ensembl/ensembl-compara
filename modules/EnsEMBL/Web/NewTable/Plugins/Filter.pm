@@ -92,4 +92,15 @@ sub col_filter_endpoint_markup {
   });
 }
 
+sub col_filter_add_baked {
+  my ($self,$col,$key,$name) = @_;
+
+  my $meta = $self->config->get_keymeta("filter",$col->key(),'*');
+  my $baked = ($meta->{'bakery'}||=[]);
+  push @$baked,{
+    key => $key,
+    label => ($name||$key),
+  };
+}
+
 1;

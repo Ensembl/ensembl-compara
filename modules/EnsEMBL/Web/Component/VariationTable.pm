@@ -199,7 +199,7 @@ sub clinsig_classes {
     $clinsig_col->icon_order($cs,$clinsig_order{$cs_img});
   }
 }
-  
+
 sub snptype_classes {
   my ($self,$table,$hub) = @_;
 
@@ -219,6 +219,13 @@ sub snptype_classes {
     $column->icon_helptip($con->label,$con->description);
     $column->icon_coltab($con->label,$colour);
   }
+  $column->filter_add_baked('lof','LoF');
+  $column->filter_add_baked('lof_missense','LoF & Missense');
+#      members => [qw(stop_gained frameshift_variant splice_donor_variant
+#                    splice_acceptor_variant)],
+
+#      members => [qw(missense-variant)],
+#      transclude => [qw(lof)],
 }
 
 sub make_table {

@@ -92,13 +92,20 @@ sub memo_argument { return $_[0]->{'memo'}; }
 sub add_keymeta {
   my ($self,$class,$column,$value,$meta) = @_;
 
+  my $km = $self->get_keymeta($class,$column,$value);
+  foreach my $k (keys %{$meta||{}}) {
+    $km->{$k} = $meta->{$k} unless exists $km->{$k};
+  }
+}
+
+sub get_keymeta {
+  my ($self,$class,$column,$value) = @_;
+
   my $km = $self->{'keymeta'};
   $km = ($km->{$class}||={});
   $km = ($km->{$column}||={});
   $km = ($km->{$value}||={});
-  foreach my $k (keys %{$meta||{}}) {
-    $km->{$k} = $meta->{$k} unless exists $km->{$k};
-  } 
+  return $km;
 }
 
 sub columns { return $_[0]->{'colorder'}; }
