@@ -88,14 +88,15 @@
     return {
       filters: [{
         name: "class",
-        display: function($box,$el,values,state,km,key,$table) {
+        display: function($box,$el,enums,state,km,key,$table) {
           var cc = config.colconf[key];
           var title = (cc.filter_label || cc.label || cc.title || key);
           var $summary = $('.summary',$box).text('(x/y on)');
           var $baked = $('<div class="baked"/>').appendTo($box);
           var $body = $('<div class="body"/>').appendTo($box);
+          var counts = enums.counts;
+          var values = enums.keys.slice();
           add_baked($baked,$body,$el,$summary,values,key,km);
-          values = values.slice();
           if(!cc.filter_sorted) {
             values.sort(function(a,b) { return a.localeCompare(b); });
           }
@@ -117,7 +118,10 @@
               splits.shift();
             }
             var $li = $("<li/>").data('key',val).appendTo($ul);
-            $table.trigger('paint-individual',[$li,key,val]);
+            var count = counts[val];
+            var $li_more = $('<div/>').text("("+count+")").addClass('more').appendTo($li);
+            var $li_main = $('<div/>').addClass('main').appendTo($li);
+            $table.trigger('paint-individual',[$li_main,key,val]);
             $li.data('val',val);
             if(!state[val]) { $li.addClass("on"); }
             $li.on('click',function() {
@@ -147,7 +151,7 @@
           return out;
         },
         visible: function(values) {
-          return values && !!values.length;
+          return values && values.keys && !!values.keys.length;
         }
       }]
     };

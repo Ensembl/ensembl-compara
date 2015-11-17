@@ -103,8 +103,8 @@
   }
 
   function iconic_finish(vv,col,km) {
-    var out = Object.keys(vv);
-    out.sort(function(a,b) {
+    var kk = Object.keys(vv);
+    kk.sort(function(a,b) {
       var aa = ((km['decorate/iconic'][col]||{})[a]||{}).order;
       var bb = ((km['decorate/iconic'][col]||{})[b]||{}).order;
       if(aa && bb) { return aa-bb; }
@@ -115,19 +115,26 @@
       if(b) { return -1; }
       return 0;
     });
-    return out;
+    var cc = {};
+    for(var i=0;i<kk.length;i++) {
+      cc[kk[i]] = vv[kk[i]];
+    }
+    return { keys: kk, counts: cc };
   }
 
   function rangemerge_class(a,b) {
     var i;
-    var v = {};
-    if(!a) { a = []; }
-    a = a.slice();
-    for(i=0;i<a.length;i++) { v[a[i]] = 1; }
-    for(i=0;i<b.length;i++) {
-      if(!v.hasOwnProperty(b[i])) { a.push(b[i]); }
-    }
-    return a;
+    var kk = [];
+    var cc = {};
+    $.each(((a||{}).keys)||{},function(i,v) {
+      kk.push(v);
+      cc[v] = a.counts[v];
+    });
+    $.each(((b||{}).keys)||{},function(i,v) {
+      if(!cc.hasOwnProperty(v)) { kk.push(v); cc[v] = 0; }
+      cc[v] += b.counts[v];
+    });
+    return { keys: kk, counts: cc };
   }
 
   function rangemerge_range(a,b) {
@@ -186,7 +193,7 @@
       types: [{
         name: "string",
         split: function(v) { return v?[v]:[]; },
-        value: function(vv,v) { vv[v]=1; },
+        value: function(vv,v,s) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
         match: function(ori,val) { return string_match(ori,val); },
         sort: function(a,b,c) {
@@ -197,13 +204,13 @@
         name: "numeric",
         clean: function(v) { return number_clean(v); },
         split: function(v) { return [number_clean(v)]; },
-        value: function(vv,v) { minmax(vv,v); },
+        value: function(vv,v,s) { minmax(vv,v); },
         match: function(ori,val) { return number_match(ori,val); },
         sort: function(a,b,c) { return (parseFloat(a)-parseFloat(b))*c; },
         merge: rangemerge_range
       },{
         name: "position",
-        value: function(vv,v) {
+        value: function(vv,v,s) {
           var m = v.match(/^(.*?):(\d+)/);
           if(!m) { return; }
           if(!vv[m[1]]) { vv[m[1]] = { chr: m[1] }; }
@@ -222,7 +229,12 @@
       },{
         name: "iconic",
         split: function(v) { return v?v.split(/~/):[]; },
-        value: function(vv,v) { if(v===null) { v=''; } vv[v]=1; },
+        value: function(vv,v,s) {
+          if(s===undefined || s===null) { s=1; }
+          if(v===null) { v=''; }
+          if(!vv[v]) { vv[v]=0; }
+          vv[v]+=s;
+        },
         finish: iconic_finish,
         match: function(ori,val) {
           if(val===null && ori['']) { return false; }

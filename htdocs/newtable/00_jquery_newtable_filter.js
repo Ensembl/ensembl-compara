@@ -189,9 +189,9 @@
         $.each(klassdata,function(col,coldata) {
           if(col == column) {
             $.each(coldata,function(val,valdata) {
-              if(val != '*') { plugin.value(value,val); }
+              if(val != '*') { plugin.value(value,val,0); }
               if(val == '*' && valdata.maybe_blank) {
-                plugin.value(value,null);
+                plugin.value(value,null,0);
               }
             });
           }
@@ -224,7 +224,7 @@
           else { v = [v]; }
           if(v===undefined || v===null) { continue; }
           for(var k=0;k<v.length;k++) {
-            plugin.value(value,v[k],keymeta);
+            plugin.value(value,v[k],1);
           }
         }
         if(plugin.finish) { value = plugin.finish(value,series[i],keymeta); }
