@@ -222,9 +222,12 @@
       },{
         name: "iconic",
         split: function(v) { return v?v.split(/~/):[]; },
-        value: function(vv,v) { vv[v]=1; },
+        value: function(vv,v) { if(v===null) { v=''; } vv[v]=1; },
         finish: iconic_finish,
-        match: function(ori,val) { return string_match(ori,val); },
+        match: function(ori,val) {
+          if(val===null && ori['']) { return false; }
+          return string_match(ori,val);
+        },
         sort: iconic_sort,
         merge: rangemerge_class
       }]

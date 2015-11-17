@@ -105,6 +105,12 @@
             splits = [0,values.length/3,2*values.length/3];
             $body.addClass('use_cols');
           }
+          /* Blank always goes at the end */
+          var bidx = values.indexOf('');
+          if(bidx!==-1) {
+            values.splice(bidx,1);
+            values.push('');
+          }
           $.each(values,function(i,val) {
             if(i>=splits[0]) {
               $ul = $("<ul/>").appendTo($body);
@@ -126,7 +132,8 @@
           var on = [];
           var off = [];
           $.each(all,function(i,v) {
-            if(skipping[v]) { off.push(v); } else { on.push(v); }
+            var vout = (v===''?'blank':v);
+            if(skipping[v]) { off.push(vout); } else { on.push(vout); }
           });
           var out = "None";
           if(on.length<=off.length) {

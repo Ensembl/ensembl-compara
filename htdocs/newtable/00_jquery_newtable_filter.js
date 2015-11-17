@@ -216,9 +216,10 @@
         /* Populate by each value */
         for(var j=0;j<grid.length;j++) {
           var v = grid[j][i];
-          if(v===null || v===undefined) { continue; }
-          if(plugin.split) { v = plugin.split(v); } else { v = [v]; }
-          if(v===null || v===undefined) { continue; }
+          if(v===undefined) { continue; }
+          if(plugin.split && v!==null) { v = plugin.split(v); }
+          else { v = [v]; }
+          if(v===undefined || v===null) { continue; }
           for(var k=0;k<v.length;k++) {
             plugin.value(value,v[k],keymeta);
           }

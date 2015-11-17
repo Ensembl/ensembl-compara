@@ -26,6 +26,8 @@
     function paint_fn(column,extras) {
       return function(value) {
         var ann = extras[value] || {};
+        // TODO: support params to allow - or blank to be specified
+        if(value=='') { value = 'blank table cell'; }
         if(ann.icon) {
           value = '<img src="'+ann.icon+'"/>' + value;
         } else {
