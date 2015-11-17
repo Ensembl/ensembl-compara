@@ -449,6 +449,7 @@
     if(!o_num) { outstanding = []; }
 
     var payload_one = $table.data('payload_one');
+    store_keymeta($table,payload_one.keymeta);
     if(payload_one && $.orient_compares_equal(manifest_c.manifest,config.orient)) {
       $table.data('payload_one','');
       maybe_use_responses(widgets,$table,payload_one,config);
