@@ -64,11 +64,13 @@ sub range {
   my ($self,$values,$km,$col) = @_;
 
   my %c;
-  my @keys = sort { $self->cmp($a,$b,1,\%c,$km,$col)  } keys %$values;
+  my %all = %{$values||{}};
+  $all{$_}||=0 for keys %{($km->{'decorate/iconic'}||{})->{$col->key}};
+  my @keys = sort { $self->cmp($a,$b,1,\%c,$km,$col)  } keys %all;
 
   return {
     keys => \@keys,
-    counts => $_[1],
+    counts => \%all,
   };
 }
 

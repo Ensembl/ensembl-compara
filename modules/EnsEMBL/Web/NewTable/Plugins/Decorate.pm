@@ -21,8 +21,7 @@ sub set_decorates {
   my ($self,$col,$cval,$data) = @_;
 
   my $pkey = $self->decorate_key();
-  my $colkey = $col->key();
-  $self->config->add_keymeta("decorate/$pkey",$colkey,$cval,$data);
+  $self->config->add_keymeta("decorate/$pkey",$col,$cval,$data);
   $col->decorate($self->decorate_key);
 }
 

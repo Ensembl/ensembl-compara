@@ -24,7 +24,7 @@ sub col_filter_sorted {
 sub col_filter_keymeta_enum {
   my ($self,$col,$yn) = @_;
 
-  $self->config->add_keymeta("enumerate",$col->key(),'*',{
+  $self->config->add_keymeta("enumerate",$col,'*',{
     from_keymeta => $yn
   });
 }
@@ -44,7 +44,7 @@ sub requires { return [qw(Filter)]; }
 sub col_filter_range {
   my ($self,$col,$minmax) = @_;
 
-  $self->config->add_keymeta("enumerate",$col->key(),'*',{
+  $self->config->add_keymeta("enumerate",$col,'*',{
     merge => {
       min => $minmax->[0],
       max => $minmax->[1]
@@ -55,7 +55,7 @@ sub col_filter_range {
 sub col_filter_integer {
   my ($self,$col,$yn) = @_;
 
-  $self->config->add_keymeta("filter",$col->key(),'*',{
+  $self->config->add_keymeta("filter",$col,'*',{
     integer => $yn,
   });
 }
@@ -63,7 +63,7 @@ sub col_filter_integer {
 sub col_filter_blank_button {
   my ($self,$col,$yn) = @_;
 
-  $self->config->add_keymeta("filter",$col->key(),'*',{
+  $self->config->add_keymeta("filter",$col,'*',{
     blank_button => $yn,
   });
 }
@@ -71,7 +71,7 @@ sub col_filter_blank_button {
 sub col_filter_fixed {
   my ($self,$col,$yn) = @_;
 
-  $self->config->add_keymeta("filter",$col->key(),'*',{
+  $self->config->add_keymeta("filter",$col,'*',{
     fixed => $yn,
   });
 }
@@ -79,7 +79,7 @@ sub col_filter_fixed {
 sub col_filter_logarithmic {
   my ($self,$col,$yn) = @_;
 
-  $self->config->add_keymeta("filter",$col->key(),'*',{
+  $self->config->add_keymeta("filter",$col,'*',{
     logarithmic => $yn,
   });
 }
@@ -87,7 +87,7 @@ sub col_filter_logarithmic {
 sub col_filter_maybe_blank {
   my ($self,$col,$yn) = @_;
 
-  $self->config->add_keymeta("filter",$col->key(),'*',{
+  $self->config->add_keymeta("filter",$col,'*',{
     maybe_blank => $yn,
   });
 }
@@ -95,7 +95,7 @@ sub col_filter_maybe_blank {
 sub col_filter_endpoint_markup {
   my ($self,$col,$left_right,$html) = @_;
 
-  $self->config->add_keymeta("filter",$col->key(),'*',{
+  $self->config->add_keymeta("filter",$col,'*',{
     ($left_right?'endpoint_right':'endpoint_left') => $html,
   });
 }
@@ -103,7 +103,7 @@ sub col_filter_endpoint_markup {
 sub col_filter_add_baked {
   my ($self,$col,$key,$name) = @_;
 
-  my $meta = $self->config->get_keymeta("filter",$col->key(),'*');
+  my $meta = $self->config->get_keymeta("filter",$col,'*');
   my $baked = ($meta->{'bakery'}||=[]);
   push @$baked,{
     key => $key,
@@ -114,7 +114,7 @@ sub col_filter_add_baked {
 sub col_filter_bake_into {
   my ($self,$col,$value,$button) = @_;
 
-  my $meta = $self->config->get_keymeta("filter",$col->key(),$value);
+  my $meta = $self->config->get_keymeta("filter",$col,$value);
   my $baked = ($meta->{'baked'}||=[]);
   push @$baked,$button;
 }

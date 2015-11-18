@@ -103,7 +103,7 @@ sub get_keymeta {
 
   my $km = $self->{'keymeta'};
   $km = ($km->{$class}||={});
-  $km = ($km->{$column}||={});
+  $km = ($km->{$column->key()}||={});
   $km = ($km->{$value}||={});
   return $km;
 }

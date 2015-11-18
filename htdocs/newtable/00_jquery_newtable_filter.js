@@ -202,15 +202,23 @@
     function eundo(client_enums,enums,grid,series,keymeta) {
       for(var i=0;i<series.length;i++) {
         var plugin = client_enums[series[i]];
-        if(!plugin) { continue; }
+        var star;
+        if(keymeta && keymeta.enumerate && keymeta.enumerate[series[i]]) {
+          star = keymeta.enumerate[series[i]]['*'];
+        }
+        if(!plugin) {
+          /* Can't merge, so hope we have a range */
+          if(star && star.merge) { enums[series[i]] = star.merge; }
+          continue;
+        }
         var value = {};
-        /* Populate from keymeta? */
         if(keymeta.enumerate && keymeta.enumerate[series[i]]) {
-          var star = keymeta.enumerate[series[i]]['*'];
           if(star) {
+            /* Populate from keymeta values */
             if(star.from_keymeta) {
               add_from_keymeta(value,series[i],plugin,keymeta);
             }
+            /* Populate from keymeta merge */
             if(star.merge) {
               value = plugin.merge(value,star.merge);
             }

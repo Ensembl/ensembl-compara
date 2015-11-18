@@ -14,7 +14,6 @@ sub extend_response {
   my (@columns,%values);
   my $i = 0;
   return {
-    name => 'enums',
     solves => 'enumerate',
     pre => sub {
       @columns = map { $config->column($_) } @$enums;
@@ -27,12 +26,12 @@ sub extend_response {
       }
     },
     post => sub {
-      my %out;
       foreach my $col (@columns) {
         my $key = $col->key;
-        $out{$key} = $col->range($values{$key},$km,$col);
+        $config->add_keymeta('enumerate',$col,'*',{
+          merge => $col->range($values{$key},$km,$col)
+        });
       } 
-      return \%out;
     },
   };
 }

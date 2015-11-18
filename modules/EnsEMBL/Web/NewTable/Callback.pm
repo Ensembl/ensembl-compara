@@ -83,7 +83,6 @@ sub preload {
   $self->{'config'} = $table->config;
   $self->{'wire'} = $table->config->orient_out;
   $self->{'orient'} = $table->config->orient_out;
-  $self->{'key_meta'} = $table->config->keymeta;
   return $self->newtable_data_request(undef,undef,1);
 }
 
@@ -129,9 +128,12 @@ sub run_extensions {
   my $plugins = $self->{'extensions'};
   $_->{'pre'}->() for @$plugins;
   my $convert = EnsEMBL::Web::NewTable::Convert->new(0); 
-  $convert->add_response($_) for @{$self->{'response'}{'responses'}};
+  $convert->add_response($_) for @$responses;
   $convert->run(sub { $_->{'run'}->($_[0]) for @$plugins; });
-  $self->{'response'}{$_->{'name'}} = $_->{'post'}->() for @$plugins;
+  foreach my $p (@$plugins) {
+    my $out = $p->{'post'}->();
+    $self->{'response'}{$p->{'name'}} = $out if $p->{'name'};
+  }
 }
 
 sub merge_enum {
@@ -208,14 +210,16 @@ sub newtable_data_request {
     shadow_lengths => $self->{'shadow_lengths'}
   };
   $more = undef if $phase == $num_phases;
+  $self->{'response'} = {};
+  $self->run_extensions($self->{'out'});
   $self->{'response'} = {
+    %{$self->{'response'}},
     responses => $self->{'out'},
-    keymeta => $self->{'key_meta'},
+    keymeta => $self->{'config'}->keymeta,
     shadow => \%shadow,
     orient => $self->{'orient'},
     more => $more,
   };
-  $self->run_extensions();
   return $self->{'response'};
 }
 
