@@ -482,7 +482,11 @@ sub write_alignment {
           $data = $data->get_SimpleAlign(-SEQ_TYPE => 'cds', -APPEND_SP_SHORT_NAME => 1);
         }
         else {
-          $data = $data->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
+          my %sa_param = (-APPEND_SP_SHORT_NAME => 1);
+          if ($hub->param('data_action')) {
+            $sa_param{'-REMOVE_GAPS'} = 1;
+          }
+          $data = $data->get_SimpleAlign(%sa_param);
         }
       }
       if (ref($data) =~ 'SimpleAlign') {
