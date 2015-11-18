@@ -400,9 +400,12 @@ sub write_fasta {
   my ($result, @errors);
 
   if (scalar @selected_options) {
+    my $trans_object = $hub->core_object('transcript');
     ## Only applicable to actual transcripts
     foreach my $transcript (@data) {
-      my $id    = ($stable_id ? "$stable_id:" : '') . $transcript->stable_id;
+      #my $id    = ($stable_id ? "$stable_id:" : '') . $transcript->stable_id;
+      my @id_info = $trans_object->display_xref($transcript);
+      my $id  = $id_info[0] || $transcript->display_id;
       my $type  = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') 
                       ? $transcript->analysis->logic_name 
                       : $transcript->status . '_' . $transcript->biotype;
