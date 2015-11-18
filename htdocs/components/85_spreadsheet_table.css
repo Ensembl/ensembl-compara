@@ -211,5 +211,7 @@ body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5
 .newtable_filter .tail li { list-style: none; display: inline-block; margin: 4px; background: linear-gradient(to top,#667aa6,#899ac6),#667aa6; border: 3px double white; padding: 6px; color: white; }
 .newtable_filter .tail li.cancel { background: none; color: #667aa6; font-size: 75%; }
 .newtable_filter .tail li.apply { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; }
+.newtable_filter .tail li.apply.unchanged { background: #bbb; }
+.newtable_filter .tail li.apply.unchanged:active { background: #bbb; }
 .newtable_filter .tail li.apply:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
 .newtable_filter .tail li.cancel:hover { text-decoration: underline; }

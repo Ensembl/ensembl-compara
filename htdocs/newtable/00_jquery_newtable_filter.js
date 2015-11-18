@@ -88,8 +88,9 @@
 
     function add_ok_cancel($tail,$table,$button) {
       var $ul = $('<ul/>').appendTo($tail);
-      var $ok = $('<li/>').html("Apply &raquo;").addClass('apply').appendTo($ul);
+      var $ok = $('<li/>').html("Apply &raquo;").addClass('apply').addClass('unchanged').appendTo($ul);
       $ok.click(function() {
+        if($(this).hasClass('unchanged')) { return; }
         hide_menu($tail.closest('.m'));
         update_state($table,$button,$button.data('filter-state'));
         update_button($table,$button);
@@ -345,6 +346,7 @@
       go: function($table,$el) {
         $('li.t',$el).on('update',function(e,state) {
           $(this).data('filter-state',state);
+          $(this).find('.apply').removeClass('unchanged');
         });
         $table.on('range-updated',function(e) {
           $('li.t',$el).each(function() {
