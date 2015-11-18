@@ -90,11 +90,11 @@ sub new {
 sub memo_argument { return $_[0]->{'memo'}; }
 
 sub add_keymeta {
-  my ($self,$class,$column,$value,$meta) = @_;
+  my ($self,$class,$column,$value,$meta,$force) = @_;
 
   my $km = $self->get_keymeta($class,$column,$value);
   foreach my $k (keys %{$meta||{}}) {
-    $km->{$k} = $meta->{$k} unless exists $km->{$k};
+    $km->{$k} = $meta->{$k} if $force or not exists $km->{$k};
   }
 }
 

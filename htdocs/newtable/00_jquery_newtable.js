@@ -251,9 +251,7 @@
         $.each(coldata||{},function(val,valdata) {
           if(!keymeta[klass][col][val]) { keymeta[klass][col][val] = {}; }
           $.each(valdata||{},function(k,v) {
-            if(!keymeta[klass][col][val].hasOwnProperty(k)) {
-              keymeta[klass][col][val][k] = v;
-            }
+            keymeta[klass][col][val][k] = v;
           });
         });
       });

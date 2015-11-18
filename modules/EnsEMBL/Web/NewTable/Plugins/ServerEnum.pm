@@ -28,9 +28,10 @@ sub extend_response {
     post => sub {
       foreach my $col (@columns) {
         my $key = $col->key;
+        my $merge = $config->get_keymeta('enumerate',$col,'*')->{'merge'};
         $config->add_keymeta('enumerate',$col,'*',{
-          merge => $col->range($values{$key},$km,$col)
-        });
+          merge => $col->range($values{$key},$km,$col,$merge)
+        },1);
       } 
     },
   };

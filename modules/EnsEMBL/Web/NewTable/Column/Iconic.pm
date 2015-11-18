@@ -61,13 +61,15 @@ sub has_value {
 }
 
 sub range {
-  my ($self,$values,$km,$col) = @_;
+  my ($self,$values,$km,$col,$pre) = @_;
 
   my %c;
   my %all = %{$values||{}};
+  if($pre and $pre->{'counts'}) {
+    ($all{$_}||=0)+=$pre->{'counts'}{$_} for keys %{$pre->{'counts'}};
+  }
   $all{$_}||=0 for keys %{($km->{'decorate/iconic'}||{})->{$col->key}};
   my @keys = sort { $self->cmp($a,$b,1,\%c,$km,$col)  } keys %all;
-
   return {
     keys => \@keys,
     counts => \%all,
