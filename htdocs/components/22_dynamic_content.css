@@ -85,7 +85,9 @@ body.ie .open .cell_detail { display: block; }
 .appris_green { color:#006600; }
 .appris_yellow { color:#c19200; }
 
-a.karyotype_link { background-image: url(/i/view_on_karyotype.gif); background-position: -2px 50%; background-repeat: no-repeat; padding:2px 0 2px 20px }
+a.karyotype_link  { background-image: url(/i/view_on_karyotype.gif); background-position: -2px 50%; background-repeat: no-repeat; padding:2px 0 2px 20px }
+a.ld_plot_link    { background-image: url(/i/ld_plot.gif); background-position: 0px 50%; background-repeat: no-repeat; padding:2px 0 2px 22px }
+a.ld_manplot_link { background-image: url(/i/ld_manplot.gif); background-position: 0px 50%; background-repeat: no-repeat; padding:2px 0 2px 22px }
 
 /************************************
              other stuff
