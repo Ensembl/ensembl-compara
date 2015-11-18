@@ -39,7 +39,17 @@ sub content {
   my $hub     = $self->hub || EnsEMBL::Web::Hub->new;
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
   my $table   = $self->new_twocol({'striped' => 1});
-  my $words   = ($hub->param('id') ? $adaptor->fetch_help_by_ids([ $hub->param('id') ]) : $adaptor->fetch_glossary) || [];
+  my $words   = [];
+
+  if ($hub->param('word')) {
+    $words = [$adaptor->fetch_glossary_by_word($hub->param('word'))];
+  }
+  elsif ($hub->param('id')) {
+    $words = $adaptor->fetch_help_by_ids([ $hub->param('id') ]);
+  }
+  else {
+    $words = $adaptor->fetch_glossary;
+  }
 
   $table->add_row(
     $_->{'word'} . ( $_->{'expanded'} ? " ($_->{'expanded'})" : '' ),

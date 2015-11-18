@@ -215,6 +215,39 @@ sub fetch_movies {
   return \@sorted;
 }
 
+sub fetch_glossary_by_word {
+  my ($self, $word) = @_;
+  return unless $self->db;
+  my $records = [];
+
+  my $sql = qq(
+    SELECT
+      help_record_id, data
+    FROM
+      help_record
+    WHERE
+      status = 'live'
+      AND type = 'glossary'
+      AND data LIKE '%$word%'
+  );
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute();
+  my $record;
+
+  while (my @data = $sth->fetchrow_array()) {
+    next unless $data[1];
+    $record = {
+      'id'    => $data[0],
+    };
+    my $extra = eval($data[1]);
+    while (my ($k, $v) = each(%$extra)) {
+      $record->{$k} = $v;
+    }
+    return $record if lc($record->{'word'}) eq lc($word);
+  }
+}
+
 sub fetch_glossary {
   my $self = shift;
   return unless $self->db;
