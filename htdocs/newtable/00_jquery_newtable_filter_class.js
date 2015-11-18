@@ -56,14 +56,14 @@
 
   function add_baked($baked,$body,$el,$summary,values,key,km) {
     var all = [];
-    var $allon = $('<li/>').addClass('allon').addClass('allonoff').text('Turn All On');
-    all.push($allon);
-    $allon.click(function() {
-      click($el,$body,'all',true,km,$summary,values);
+    var $alloff = $('<li/>').text('Turn All Off');
+    all.push($alloff);
+    $alloff.click(function() {
+      click($el,$body,'all',false,km,$summary,values);
     });
     var bakery = (((km||{})['*']||{}).bakery)||[];
     for(var i=0;i<bakery.length;i++) {
-      var $bake = $('<li/>').addClass('allonoff').addClass('alloff').text(bakery[i].label);
+      var $bake = $('<li/>').text(bakery[i].label);
       all.push($bake);
       (function(j) {
         $bake.click(function() {
@@ -71,12 +71,11 @@
         });
       })(i);
     }
-
-    var $alloff = $('<li/>').addClass('allonoff').addClass('alloff').text('Turn All Off');
-    $alloff.click(function() {
-      click($el,$body,'all',false,km,$summary,values);
+    var $allon = $('<li/>').addClass('allon').text('Turn All On');
+    all.push($allon);
+    $allon.click(function() {
+      click($el,$body,'all',true,km,$summary,values);
     });
-    all.push($alloff);
     var $buttons = $('<ul/>').addClass('bakery').appendTo($baked);
     all[0].addClass('first');
     all[all.length-1].addClass('last');

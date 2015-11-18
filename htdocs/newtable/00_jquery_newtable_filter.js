@@ -86,6 +86,21 @@
       $menu.empty().append($out);
     }
 
+    function add_ok_cancel($tail,$table,$button) {
+      var $ul = $('<ul/>').appendTo($tail);
+      var $ok = $('<li/>').html("Apply &raquo;").addClass('apply').appendTo($ul);
+      $ok.click(function() {
+        hide_menu($tail.closest('.m'));
+        update_state($table,$button,$button.data('filter-state'));
+        update_button($table,$button);
+        $table.trigger('view-updated');
+      });
+      var $cancel = $('<li/>').text("Cancel").addClass('cancel').appendTo($ul);
+      $cancel.click(function() {
+        hide_menu($tail.closest('.m'));
+      });
+    }
+
     function menu($table,$button,$menu) {
       var idx = $button.data('idx');
       if(idx==-1) {
@@ -108,6 +123,8 @@
       $('<div class="title"/>').appendTo($head).html(title);
       var $summary = $('<div class="summary"/>').html("&#x00A0;").appendTo($head);
       w.display($box,$button,values,state,km,key,$table);
+      var $tail = $('<div class="tail"/>').appendTo($box);
+      add_ok_cancel($tail,$table,$button);
     }
 
     function show_or_hide_all($table) {
@@ -326,13 +343,8 @@
       },
       position: data.position,
       go: function($table,$el) {
-        var trigger_soon = $.whenquiet(function() {
-          $table.trigger('view-updated');
-        },5000,$table,'filter');
         $('li.t',$el).on('update',function(e,state) {
-          update_state($table,$(this),state);
-          update_button($table,$(this));
-          trigger_soon();
+          $(this).data('filter-state',state);
         });
         $table.on('range-updated',function(e) {
           $('li.t',$el).each(function() {
