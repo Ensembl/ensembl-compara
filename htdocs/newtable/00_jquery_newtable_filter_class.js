@@ -135,7 +135,7 @@
           $.each(state,function(k,v) { skipping[k]=1; });
           var on = [];
           var off = [];
-          $.each(all,function(i,v) {
+          $.each(all.keys,function(i,v) {
             var vout = (v===''?'blank':v);
             if(skipping[v]) { off.push(vout); } else { on.push(vout); }
           });
@@ -146,7 +146,7 @@
             out = 'All except '+off.join(', ');
           }
           if(out.length>20) {
-            out = out.substr(0,20)+'...('+on.length+'/'+all.length+')';
+            out = out.substr(0,20)+'...('+on.length+'/'+all.keys.length+')';
           }
           return out;
         },
