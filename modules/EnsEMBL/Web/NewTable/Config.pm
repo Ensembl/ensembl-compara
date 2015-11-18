@@ -65,7 +65,7 @@ sub new {
     type => $config->{'type'},
     plugins => {},
     phases => $config->{'phases'},
-    keymeta => $keymeta,
+    keymeta => $keymeta||{},
     size_needed => 0,
     hub => $hub,
     memo => {

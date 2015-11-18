@@ -7,7 +7,7 @@ use parent qw(EnsEMBL::Web::NewTable::Plugin);
 use EnsEMBL::Web::NewTable::Column;
 
 sub extend_response {
-  my ($self,$config,$wire) = @_;
+  my ($self,$config,$wire,$km) = @_;
 
   return undef unless $wire->{'enumerate'};
   my $enums = $wire->{'enumerate'};
@@ -30,7 +30,7 @@ sub extend_response {
       my %out;
       foreach my $col (@columns) {
         my $key = $col->key;
-        $out{$key} = $col->range($values{$key});
+        $out{$key} = $col->range($values{$key},$km,$col);
       } 
       return \%out;
     },

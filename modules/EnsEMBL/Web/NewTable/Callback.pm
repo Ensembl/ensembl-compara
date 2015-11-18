@@ -57,6 +57,7 @@ sub go {
   my $config = from_json($hub->param('config'));
   my $ssplugins = from_json($hub->param('ssplugins'));
   my $keymeta = from_json($hub->param('keymeta'));
+
   $self->{'config'} = EnsEMBL::Web::NewTable::Config->new($hub,$config,$ssplugins,$keymeta);
   $self->{'orient'} = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
@@ -115,7 +116,7 @@ sub preflight_extensions {
   $self->{'unwire'} = { %{$self->{'wire'}} };
   foreach my $p (values %{$self->{'config'}->plugins}) {
     next unless $p->can('extend_response');
-    my $pp = $p->extend_response($self->{'config'},$self->{'unwire'});
+    my $pp = $p->extend_response($self->{'config'},$self->{'unwire'},$self->{'config'}->keymeta);
     next unless defined $pp;
     push @{$self->{'extensions'}},$pp;
     delete $self->{'wire'}{$pp->{'solves'}} if defined $pp->{'solves'};
