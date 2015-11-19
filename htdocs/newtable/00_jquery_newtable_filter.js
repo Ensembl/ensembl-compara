@@ -66,14 +66,14 @@
     }
     
     function maybe_hide_more($table,$out) {
-      if(!$('.newtable_filter .prec_sec.valid',$table).length) {
+      if(!$('.newtable_filter .prec_sec',$table).length) {
         $table.find('.more').hide();
       }
     }
 
     function draw_more($table,$menu) {
       var $out = $("<ul/>");
-      $('.newtable_filter .prec_sec.valid',$table).each(function() {
+      $('.newtable_filter .prec_sec',$table).each(function() {
         var $item = $(this);
         var $li = $("<li/>").text($('.k',$item).text()).appendTo($out);
         $li.on('click',function(e) {
@@ -123,14 +123,18 @@
       var title = (cc.filter_label || cc.label || cc.title || key);
       $('<div class="title"/>').appendTo($head).html(title);
       var $summary = $('<div class="summary"/>').html("&#x00A0;").appendTo($head);
-      w.display($box,$button,values,state,km,key,$table);
-      var $tail = $('<div class="tail"/>').appendTo($box);
-      add_ok_cancel($tail,$table,$button);
+      if(w.visible(values)) {
+        w.display($box,$button,values,state,km,key,$table);
+        var $tail = $('<div class="tail"/>').appendTo($box);
+        add_ok_cancel($tail,$table,$button);
+      } else {
+        $('<div/>').addClass('none_present').text('None present').appendTo($box);
+      }
     }
 
     function show_or_hide_all($table) {
       var $filters = $('.newtable_filter',$table);
-      var $vbuts = $('.t.valid',$filters);
+      var $vbuts = $('.t',$filters);
       $filters.toggle(!!$vbuts.length);
       maybe_hide_more($table);
     }
@@ -144,7 +148,6 @@
     }
 
     function set_button($el,view,w,key,values,km) {
-      $el.toggleClass('valid',!!w.visible(values));
       if((view.filter||{}).hasOwnProperty(key)) {
         var text = w.text(view.filter[key],values,km);
         $('.v',$el).text(text);
