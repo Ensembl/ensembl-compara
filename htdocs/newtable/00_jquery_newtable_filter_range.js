@@ -50,7 +50,8 @@
       text_prefix: function(state) { return state.chr+':'; },
       draw_additional: function($el,values) {
         $el.data('slider-chr',values.chr);
-      }
+      },
+      round_out: function(val) { return val; },
     },
     range: {
       summary_prefix: function($button) { return ''; },
@@ -58,11 +59,12 @@
       preproc_values: function(values) { return values; },
       detect_catastrophe: function($el,$slider,values,km) { return false; },
       text_prefix: function(state) { return ''; },
-      draw_additional: function($el,values) {}
+      draw_additional: function($el,values) {},
+      round_out: function(val) { return round_2sf(val); },
     }
   };
 
-  function round_out(val) {
+  function round_2sf(val) {
     if($.isNumeric(val)) {
       return parseFloat(val.toPrecision(2));
     } else {
@@ -122,8 +124,8 @@
     var is_max = (pos.max===null);
     var $feedback = $('.slider_feedback',$el);
     var prefix = variety.summary_prefix($el);
-    $feedback.text(prefix+(is_min?"Min":round_out(pos.min))+" - "+
-                   prefix+(is_max?"Max":round_out(pos.max)));
+    $feedback.text(prefix+(is_min?"Min":variety.round_out(pos.min))+" - "+
+                   prefix+(is_max?"Max":variety.round_out(pos.max)));
   }
    
   function update_tickbox_from_position($el) {
@@ -152,10 +154,6 @@
     update_tickbox_from_position($el);
   }
 
-  function force_blanks($el,val) {
-    $('.slider_unspecified input',$el).prop('checked',val);
-  }
-
   function send_position(variety,$el) {
     var pos = $el.data('position');
     var update = {};
@@ -172,8 +170,8 @@
       if(update.min == range[0]) { update.min = null; }
       if(update.max == range[1]) { update.max = null; }
     }
-    update.min = round_out(pos.min);
-    update.max = round_out(pos.max);
+    update.min = variety.round_out(pos.min);
+    update.max = variety.round_out(pos.max);
     /* Tidy so that unrestricted is empty */
     if(!update.no_nulls) { delete update.no_nulls; }
     if(update.min===null) { delete update.min; }
@@ -244,18 +242,14 @@
           values = variety.preproc_values(values);
           var $slider = $('.slider',$box);
           if($slider.length) {
+            $slider.rangeslider('set_limits',values.min,values.max);
             if(variety.detect_catastrophe($el,$slider,values,km)) {
-              $slider.rangeslider('set_limits',values.min,values.max);
-              $slider.rangeslider('set',null,null);
-              update_position_from_state($el,state);
-              update_all_from_position($el,variety);
-              force_blanks($el,true);
-              send_update(variety,$el,km);
+              reset_position($el);
+              send_position(variety,$el);
             } else {
-              $slider.rangeslider('set_limits',values.min,values.max);
               update_position_from_state($el,state);
-              update_all_from_position($el,variety);
             }
+            update_all_from_position($el,variety);
           } else {
             var $out = draw_widget(variety,$el,values.min,values.max,km,values);
             reset_position($el);
