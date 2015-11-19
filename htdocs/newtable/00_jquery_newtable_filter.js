@@ -327,18 +327,26 @@
       delete need.filter;
     }
 
+    function add_button(idx,key) {
+      var cc = config.colconf[key];
+      if(!cc.range) { return ""; }
+      var label = "";
+      var label = cc.filter_label || cc.label || key;
+      if(!cc.range) { return ""; }
+      filterable_columns[key] = cc;
+      return dropdown(idx,cc.range,label,cc.primary);
+    }
+
     return {
       generate: function() {
         var dropdowns = "";
         $.each(config.columns,function(i,key) {
-          var cc =config.colconf[key];
-          if(!cc.range) { return; }
-          var label = "";
-          var label = cc.filter_label || cc.label || key;
-          if(cc.range) {
-            dropdowns += dropdown(i,cc.range,label,cc.primary);
-            filterable_columns[key] = cc;
-          }
+          var cc = config.colconf[key];
+          if(cc.superprimary) { dropdowns += add_button(i,key); }
+        });
+        $.each(config.columns,function(i,key) {
+          var cc = config.colconf[key];
+          if(!cc.superprimary) { dropdowns += add_button(i,key); }
         });
         dropdowns += dropdown(-1,'','Filter Other Columns',true);
 

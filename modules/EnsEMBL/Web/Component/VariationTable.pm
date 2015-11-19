@@ -324,7 +324,7 @@ sub make_table {
     sort_down_first => 1,
     filter_keymeta_enum => 1,
   },{
-    _key => 'snptype', _type => 'iconic set_primary', label => "Conseq. Type",
+    _key => 'snptype', _type => 'iconic set_primary set_superprimary', label => "Conseq. Type",
     filter_label => 'Consequence Type',
     filter_sorted => 1,
     width => 1.5,

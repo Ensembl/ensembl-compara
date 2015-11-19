@@ -143,8 +143,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter .x { display: inline-block; visibility: hidden; height: 20px; width: 20px; vertical-align: bottom; margin: 0 -12px 3px 0; border: 2px solid #ccc; border-radius: 16px; z-index: 10; position: relative; background: #cfc; }
 .newtable_filter .x:hover { border: 2px solid #999; text-shadow: 0 1px white; }
 .newtable_filter .x span { background: url(/i/16/cross-grey.png) no-repeat 4px 4px; display: inline-block; width: 20px; height: 20px; }
-.newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: white; display: none; border: 3px double white; font-size: 14px; cursor: pointer; background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
-.newtable_filter li.t.valid .b { display: inline-block; }
+.newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: white; display: inline-block; border: 3px double white; font-size: 14px; cursor: pointer; background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
 .newtable_filter li.t.restricted .x { visibility: visible; }
 .newtable_filter li.t.more .b { display: inline-block; }
 .newtable_filter li.more .k:after { content: ""; }
@@ -215,3 +214,4 @@ body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5
 .newtable_filter .tail li.apply.unchanged:active { background: #bbb; }
 .newtable_filter .tail li.apply:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
 .newtable_filter .tail li.cancel:hover { text-decoration: underline; }
+.newtable_filter .none_present { display: block; margin: 16px; }
