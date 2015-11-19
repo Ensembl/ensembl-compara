@@ -504,6 +504,7 @@
     if(!fluxion[type]) { fluxion[type] = 0; }
     if(fluxion[type] === 0 && state) { change = 1; }
     fluxion[type] += state;
+    if(fluxion[type]<0) { fluxion[type]=0; }
     if(fluxion[type] === 0 && state) { change = 0; }
     if(change == -1) { return $.Deferred().resolve(); }
     if(kind!==undefined && kind!==null && change===0) {

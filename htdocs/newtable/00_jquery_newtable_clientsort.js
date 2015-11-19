@@ -97,6 +97,7 @@
             if(!plan) { return null; }
             var msort = need.sort;
             need.sort = got.sort;
+            $table.trigger('think-on',['sort']);
             return {
               undo: function(manifest,grid,series) {
                 var rev_series = {};
@@ -114,6 +115,7 @@
                   return compare(a,b,rev_series,plan.stages,cache,keymeta);
                 });
                 manifest.sort = msort;
+                $table.trigger('think-off',['sort']);
                 return [manifest,fabric];
               },
               no_incr: !plan.incr_ok
