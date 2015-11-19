@@ -35,7 +35,7 @@ sub init {
   for (@css_groups) {
     next unless $_->condition($hub);
 
-    if (($hub->param('debug') || '') eq 'css' || $species_defs->ENSEMBL_DEBUG_CSS) {
+    if((($hub->param('debug') || '') eq 'css' || $species_defs->ENSEMBL_DEBUG_CSS) and @{$_->files}) {
       $self->add_sheet(sprintf '/CSS?%s', $_->url_path) for @{$_->files};
     } else {
       $self->add_sheet($_->minified_url_path);
