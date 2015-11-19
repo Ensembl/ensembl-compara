@@ -151,7 +151,7 @@ sub evidence_classes {
     Multiple_observations Phenotype_or_Disease
   );
   my %evidence_order;
-  $evidence_order{$evidence_order[$_]} = sprintf("%8d",$_) for(0..$#evidence_order);
+  $evidence_order{$evidence_order[$_]} = $_ for(0..$#evidence_order);
 
   my $evidence_col = $table->column('status');
   foreach my $ev (keys %evidence_order) {
@@ -187,7 +187,7 @@ sub clinsig_classes {
     benign other not-provided uncertain-significance
   );
   my %clinsig_order;
-  $clinsig_order{$clinsig_order[$_]} = sprintf("%8d",$_) for(0..$#clinsig_order);
+  $clinsig_order{$clinsig_order[$_]} = $_ for(0..$#clinsig_order);
 
   my $clinsig_col = $table->column('clinsig');
   foreach my $cs_img (keys %clinsig_order) {

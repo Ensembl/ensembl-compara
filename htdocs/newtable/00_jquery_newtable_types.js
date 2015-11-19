@@ -78,13 +78,16 @@
   }
   
   function iconic_string(val,km,col) {
-    var vals = (val||'').split(/;/);
+    var vals = (val||'').split(/~/);
     if(km) {
       var new_vals = [];
       for(var i=0;i<vals.length;i++) {
         var v = vals[i];
         var w = km['decorate/iconic'][col][v];
-        if(w && w.order) { v = w.order; }
+        if(w && w.order) {
+          v = ""+w.order;
+          v = (Array(17-v.length).join('0'))+v;
+        }
         else if(w && w['export']) { v = w['export']; }
         else { v = '~'; }
         new_vals.push(v);
@@ -99,7 +102,7 @@
   function iconic_sort(a,b,f,c,km,col) {
     if(!c[a] && c[a]!=='') { c[a] = iconic_string(a,km,col); }
     if(!c[b] && c[b]!=='') { c[b] = iconic_string(b,km,col); }
-    return c[a].localeCompare(c[b])*f;
+    return c[a].localeCompare(c[b])*-f;
   }
 
   function iconic_finish(vv,col,km) {
