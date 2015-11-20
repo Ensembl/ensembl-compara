@@ -199,6 +199,7 @@ sub clinsig_classes {
     $clinsig_col->icon_url($cs,sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img));
     $clinsig_col->icon_helptip($cs,$cs);
     $clinsig_col->icon_export($cs,$cs);
+    warn "ORDER $cs_img // $clinsig_order{$cs_img}\n";
     $clinsig_col->icon_order($cs,$clinsig_order{$cs_img});
   }
   $clinsig_col->filter_maybe_blank(1);
@@ -310,6 +311,7 @@ sub make_table {
     helptip => $glossary->{'Class'},
     filter_keymeta_enum => 1,
     filter_maybe_blank => 1,
+    filter_sorted => 1,
   },{
     _key => 'Source', _type => 'iconic', label => "Sour\fce",
     width => 1.25,
@@ -327,12 +329,14 @@ sub make_table {
     sort_down_first => 1,
     filter_keymeta_enum => 1,
     filter_maybe_blank => 1,
+    filter_sorted => 1,
   },{
     _key => 'clinsig', _type => 'iconic set_primary', label => "Clin. Sig.",
     helptip => 'Clinical significance',
     filter_label => 'Clinical Significance',
     sort_down_first => 1,
     filter_keymeta_enum => 1,
+    filter_sorted => 1,
   },{
     _key => 'snptype', _type => 'iconic set_primary set_superprimary', label => "Conseq. Type",
     filter_label => 'Consequence Type',
