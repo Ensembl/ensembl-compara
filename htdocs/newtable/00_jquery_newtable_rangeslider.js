@@ -39,7 +39,7 @@
 
   function transform(options,val,inv) {
     if(options.soggy) {
-      if(inv) { return Math.pow(val,3/2); } else { return Math.pow(val,2/3); }
+      if(inv) { return Math.pow(val,2); } else { return Math.pow(val,1/2); }
     } else {
       return val;
     }
