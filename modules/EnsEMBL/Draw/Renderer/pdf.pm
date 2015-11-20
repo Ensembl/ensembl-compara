@@ -210,8 +210,10 @@ sub render_Arc {
     $self->{sf} * ($glyph->{'end_point'} + 180),
     1,
   );
+  $self->{'canvas'}{'g'}->linewidth(1.0);
   $self->strokecolor($colour);
   $self->stroke;
+  $self->{'canvas'}{'g'}->linewidth(0.5);
 }
 
 sub render_Circle {
