@@ -86,9 +86,10 @@
       $menu.empty().append($out);
     }
 
-    function add_ok_cancel($tail,$table,$button) {
+    function add_ok_cancel($tail,$table,$button,replace) {
       var $ul = $('<ul/>').appendTo($tail);
-      var $ok = $('<li/>').html("Apply &raquo;").addClass('apply').addClass('unchanged').appendTo($ul);
+      var $ok = $('<li/>').html("Apply &raquo;").addClass('apply').appendTo($ul);
+      if(!replace) { $ok.addClass('unchanged'); }
       $ok.click(function() {
         if($(this).hasClass('unchanged')) { return; }
         hide_menu($tail.closest('.m'));
@@ -130,9 +131,12 @@
       }
       $stext = $('<div class="summary_text"/>').html("&#x00A0;").appendTo($summary);
       if(w.visible(values)) {
+        var replace = !!($button.find('.m:visible').length);
+        var replace_state = $button.data('filter-state');
+        if(replace && replace_state!==undefined) { state = replace_state; }
         w.display($box,$button,values,state,km,key,$table);
         var $tail = $('<div class="tail"/>').appendTo($box);
-        add_ok_cancel($tail,$table,$button);
+        add_ok_cancel($tail,$table,$button,replace);
       } else {
         $('<div/>').addClass('none_present').text('None present').appendTo($box);
       }
