@@ -84,13 +84,13 @@
       var new_vals = [];
       for(var i=0;i<vals.length;i++) {
         var v = vals[i];
-        var w = km['decorate/iconic'][col][v];
+        var w = (km['decorate/iconic'][col]||{})[v];
         if(w && w.order) {
           v = ""+w.order;
           v = (Array(17-v.length).join('0'))+v;
         }
         else if(w && w['export']) { v = w['export']; }
-        else { v = '~'; }
+        else { v = '~'+v; }
         new_vals.push(v);
       }
       vals = new_vals;

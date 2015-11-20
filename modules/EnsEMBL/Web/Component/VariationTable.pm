@@ -386,7 +386,7 @@ sub make_table {
     _key => 'LRG', _type => 'string unshowable',
     label => "LRG",
   },{
-    _key => 'Transcript', _type => 'string',
+    _key => 'Transcript', _type => 'iconic',
     width => 2,
     helptip => $glossary->{'Transcript'},
     link_url => {
