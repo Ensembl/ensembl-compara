@@ -42,6 +42,7 @@ sub fetch_input {
            AND fm.seq_member_id=m1.seq_member_id
            AND m1.sequence_id=m2.sequence_id
            AND m2.source_name IN ('Uniprot/SWISSPROT', 'Uniprot/SPTREMBL')
+      GROUP BY fm.family_id, m2.seq_member_id
     };
 
     my $sth = $self->compara_dba->dbc->prepare( $sql );
