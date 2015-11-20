@@ -27,6 +27,7 @@
   function minmax(vv,v) {
     if(!is_number(v)) { return; }
     if(vv.hasOwnProperty('min')) {
+      v = parseFloat(v);
       vv.min = vv.min<v?vv.min:v;
       vv.max = vv.max>v?vv.max:v;
     } else {
