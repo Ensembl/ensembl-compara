@@ -90,6 +90,9 @@
       var $ul = $('<ul/>').appendTo($tail);
       var $ok = $('<li/>').html("Apply &raquo;").addClass('apply').appendTo($ul);
       if(!replace) { $ok.addClass('unchanged'); }
+      $tail.closest('.m').on('okable',function(e,yn) {
+        $ok.toggleClass('unchanged',yn?false:true);
+      });
       $ok.click(function() {
         if($(this).hasClass('unchanged')) { return; }
         hide_menu($tail.closest('.m'));

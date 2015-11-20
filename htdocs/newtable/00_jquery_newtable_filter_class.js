@@ -23,6 +23,7 @@
       if(!state[val]) { m++; }
     });
     $el.text('('+m+'/'+n+' on)');
+    $el.closest('.m').trigger('okable',[m?true:false]);
   }
 
   function click($el,$body,type,bkey,km,$summary,values) {
