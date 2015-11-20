@@ -20,7 +20,10 @@ package EnsEMBL::Web::Component::VariationTable;
 
 use strict;
 
+use List::Util qw(max min);
+
 use Bio::EnsEMBL::Variation::Utils::Constants qw(%VARIATION_CLASSES);
+use Bio::EnsEMBL::Variation::Utils::VariationEffect qw($UPSTREAM_DISTANCE $DOWNSTREAM_DISTANCE);
 use EnsEMBL::Web::NewTable::NewTable;
 
 use Bio::EnsEMBL::Variation::Utils::VariationEffect;
@@ -401,17 +404,24 @@ sub make_table {
   $self->snptype_classes($table,$self->hub);
   $self->sift_poly_classes($table);
 
-  my $max_p_len;
+  my (@lens,@starts,@ends,@seq);
   foreach my $t (@$transcripts) {
     my $p = $t->translation_object;
-    next unless $p;
-    my $len = $p->length;
-    $max_p_len = $len if !defined($max_p_len) or $len > $max_p_len;
+    push @lens,$p->length if $p;
+    push @starts,$t->seq_region_start;
+    push @ends,$t->seq_region_end;
+    push @seq,$t->seq_region_name;
   }
-  if($max_p_len) {
+  if(@lens) {
     my $aa_col = $table->column('aacoord');
-    $aa_col->filter_range([1,$max_p_len]);
+    $aa_col->filter_range([1,max(@lens)]);
     $aa_col->filter_fixed(1);
+  }
+  if(@starts && @ends) {
+    my $loc_col = $table->column('location');
+    $loc_col->filter_seq_range($seq[0],[min(@starts)-$UPSTREAM_DISTANCE,
+                                        max(@ends)+$DOWNSTREAM_DISTANCE]);
+    $loc_col->filter_fixed(1);
   }
   
   # Separate phase for each transcript speeds up gene variation table

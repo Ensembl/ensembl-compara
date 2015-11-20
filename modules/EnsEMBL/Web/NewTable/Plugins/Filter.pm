@@ -52,6 +52,19 @@ sub col_filter_range {
   });
 }
 
+sub col_filter_seq_range {
+  my ($self,$col,$chr,$minmax) = @_;
+
+  $self->config->add_keymeta("enumerate",$col,'*',{
+    merge => {
+      $chr => {
+        min => $minmax->[0],
+        max => $minmax->[1]
+      }
+    }
+  });
+}
+
 sub col_filter_integer {
   my ($self,$col,$yn) = @_;
 
