@@ -511,11 +511,19 @@
       if(fluxes.hasOwnProperty(kind)) { delete fluxes[kind]; }
     }
     $.each(widgets,function(key,fn) {
-      if(fn.flux) { fn.flux($table,type,change); }
+      if(fn.flux) {
+        // TODO change calls to triggers everywhere
+        fn.flux($table,type,change);
+        $table.trigger('flux-'+type,[change?true:false]);
+      }
     });
     var $d = $.Deferred();
     setTimeout(function() { $d.resolve(); },1);
     return $d;
+  }
+
+  function flux_update($table,type) {
+    $table.trigger('flux-'+type,[fluxion[type]?true:false]);
   }
 
   function markup_activate(widgets,$some) {
@@ -550,6 +558,7 @@
     delete config.payload_one;
     $table.on('think-on',function(e,key) { flux(widgets,$table,'think',1,key); });
     $table.on('think-off',function(e,key) { flux(widgets,$table,'think',-1,key); });
+    $table.on('flux-update',function(e,type) { flux_update($table,type); });
     build_format(widgets,$table);
     $table.on('view-updated',function() {
       var view = $table.data('view');

@@ -122,7 +122,13 @@
       var cc = config.colconf[key];
       var title = (cc.filter_label || cc.label || cc.title || key);
       $('<div class="title"/>').appendTo($head).html(title);
-      var $summary = $('<div class="summary"/>').html("&#x00A0;").appendTo($head);
+      $summary = $('<div class="summary"/>').html("&#x00A0;").appendTo($head);
+      var $smore = $('<div class="more"/>').text('more rows pending').appendTo($summary);
+      $table.on('flux-load',function(e,onoff) { $smore.toggle(onoff); });
+      $table.trigger('flux-update',['load']);
+      if($('.new_table_loading:visible',$table).length) {
+      }
+      $stext = $('<div class="summary_text"/>').html("&#x00A0;").appendTo($summary);
       if(w.visible(values)) {
         w.display($box,$button,values,state,km,key,$table);
         var $tail = $('<div class="tail"/>').appendTo($box);

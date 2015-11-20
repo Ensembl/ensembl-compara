@@ -90,7 +90,7 @@
         display: function($box,$el,enums,state,km,key,$table) {
           var cc = config.colconf[key];
           var title = (cc.filter_label || cc.label || cc.title || key);
-          var $summary = $('.summary',$box).text('(x/y on)');
+          var $summary = $('.summary_text',$box).text('(x/y on)');
           var $baked = $('<div class="baked"/>').appendTo($box);
           var $body = $('<div class="body"/>').appendTo($box);
           var counts = enums.counts;
