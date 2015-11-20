@@ -192,6 +192,23 @@ sub render_Text {
     $self->add_string( qq(<text x="$x" y="$y" text-size="$sz" $style>$text</text>\n) );
 }
 
+sub render_Arc {
+  my ($self, $glyph) = @_;
+
+  my $style = $self->linestyle( $glyph );
+
+  my $x = $glyph->pixelx() * $self->{sf};
+  my $y = $glyph->pixely() * $self->{sf};
+  my $a = $glyph->pixelwidth * $self->{sf};
+  my $b = $glyph->pixelheight * 2 * $self->{sf};
+  my $x1 = $x - $a;
+  $y    -= $b / 4;
+
+  my $arc = "M $x1 $y A $a $b 0 0 0 $x $y";
+
+  $self->add_string(qq(<path d="$arc" $style />\n));
+}
+
 sub render_Circle {
 #    die "Not implemented in svg yet!";
 }
