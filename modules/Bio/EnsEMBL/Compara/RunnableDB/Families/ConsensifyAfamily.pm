@@ -121,6 +121,7 @@ sub apply_edits  {
 		    SIMILAR\s+TO\s+PROTEIN\$
 		    RIKEN.*FULL.*LENGTH.*ENRICHED.*LIBRARY
 		    CLONE:[0-9A-Z]+ FULL\s+INSERT\s+SEQUENCE
+                    \{[^}]*\}
 		    \w*\d{4,} HYPOTHETICAL\s+PROTEIN
 		    IN\s+CHROMOSOME\s+[0-9IVX]+ [A-Z]\d+[A-Z]\d+\.{0,1}\d*),
 		 &as_words(qw(NOVEL PUTATIVE PREDICTED 
