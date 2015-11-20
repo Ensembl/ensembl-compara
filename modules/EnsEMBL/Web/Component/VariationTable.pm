@@ -309,10 +309,12 @@ sub make_table {
     width => 2,
     helptip => $glossary->{'Class'},
     filter_keymeta_enum => 1,
+    filter_maybe_blank => 1,
   },{
     _key => 'Source', _type => 'iconic', label => "Sour\fce",
     width => 1.25,
     helptip => $glossary->{'Source'},
+    filter_maybe_blank => 1,
   },{
     _key => 'Submitters', _type => 'string no_filter',
     label => 'Submitters',
@@ -324,6 +326,7 @@ sub make_table {
     helptip => $glossary->{'Evidence status (variant)'},
     sort_down_first => 1,
     filter_keymeta_enum => 1,
+    filter_maybe_blank => 1,
   },{
     _key => 'clinsig', _type => 'iconic set_primary', label => "Clin. Sig.",
     helptip => 'Clinical significance',
