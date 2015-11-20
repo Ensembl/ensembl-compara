@@ -210,6 +210,7 @@ sub snptype_classes {
   my $column = $table->column('snptype');
   $column->filter_add_baked('lof','Only LoF');
   $column->filter_add_baked('lof_missense','LoF & Missense');
+  $column->filter_add_baked('exon','Only Exonic');
   my @lof = qw(stop_gained frameshift_variant splice_donor_variant
                splice_acceptor_variant);
   foreach my $con (@all_cons) {
@@ -226,6 +227,9 @@ sub snptype_classes {
     }
     if($so_term eq 'missense_variant') {
       $column->filter_bake_into($con->label,'lof_missense');
+    }
+    if($con->rank < 18) { # TODO: specify this properly
+      $column->filter_bake_into($con->label,'exon');
     }
   }
 }
