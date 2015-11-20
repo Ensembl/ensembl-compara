@@ -98,7 +98,7 @@ sub content {
     $msg .= qq( To extend or reduce the intronic sequence, use the "<b>Configure this page - Intron Context</b>" link on the left.</p>);
   }
   
-  my $table      = $self->make_table();
+  my $table      = $self->make_table(\@transcripts);
   my $thing = 'gene';
   $thing = 'transcript' if $object_type eq 'Transcript';
 
@@ -235,11 +235,11 @@ sub snptype_classes {
 }
 
 sub make_table {
-  my ($self) = @_;
+  my ($self,$transcripts) = @_;
 
   my $hub      = $self->hub;
   my $glossary = $hub->glossary_lookup;
-  
+
   my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
@@ -400,9 +400,21 @@ sub make_table {
   $self->class_classes($table);
   $self->snptype_classes($table,$self->hub);
   $self->sift_poly_classes($table);
+
+  my $max_p_len;
+  foreach my $t (@$transcripts) {
+    my $p = $t->translation_object;
+    next unless $p;
+    my $len = $p->length;
+    $max_p_len = $len if !defined($max_p_len) or $len > $max_p_len;
+  }
+  if($max_p_len) {
+    my $aa_col = $table->column('aacoord');
+    $aa_col->filter_range([1,$max_p_len]);
+    $aa_col->filter_fixed(1);
+  }
   
   # Separate phase for each transcript speeds up gene variation table
- 
    
   my $icontext         = $self->hub->param('context') || 100;
   my $gene_object      = $self->configure($icontext,'ALL');
