@@ -77,7 +77,11 @@ sub fetch_features {
   if (scalar @$reg_feats) {
     my $legend_entries = [];
     foreach (@$reg_feats) {
-      push $legend_entries, $self->colour_key($_);
+      my $key = $self->colour_key($_);
+      push $legend_entries, $key;
+      push $legend_entries, 'promoter_flanking';
+    }
+    if(grep { $_ eq 'promoter' } @$legend_entries) {
     }
     $self->{'legend'}{'fg_regulatory_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };	
   }
