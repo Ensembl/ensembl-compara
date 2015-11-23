@@ -31,26 +31,29 @@ a.bigtext     { text-decoration: none;                        }
   Text layout & styling
 ----------------------------------------------------------------------*/
 
-.nowrap             { white-space: nowrap;    }
-.left               { text-align: left;       }
-.right, .more       { text-align: right;      }
-.center             { text-align: center;     }
-.middle             { vertical-align: middle; }
-.bottom             { vertical-align: bottom; }
-.autocenter_wrapper { text-align: center;     }
-.autocenter         { text-align: left; margin: 0 auto; }
-.bold               { font-weight: bold; }
-.italic             { font-style: italic; }
-.text-float-left    { float: left; margin-right: 0.5em; }
-.clear              { clear: both; }
-.clear-left         { clear: left; }
-.clear-right        { clear: right; }
-.nodeco             { text-decoration: none; }
+.nowrap               { white-space: nowrap;    }
+.left                 { text-align: left;       }
+.right, .more         { text-align: right;      }
+.center               { text-align: center;     }
+.middle               { vertical-align: middle; }
+.bottom               { vertical-align: bottom; }
+.autocenter_wrapper   { text-align: center;     }
+.autocenter           { text-align: left; margin: 0 auto; }
+.bold                 { font-weight: bold; }
+.italic               { font-style: italic; }
+.text-float-left      { float: left; margin-right: 0.5em; }
+.clear                { clear: both; }
+.clear-left           { clear: left; }
+.clear-right          { clear: right; }
+.nodeco               { text-decoration: none; }
 .nodeco[rel=external],
 .nodeco[rel=external]:hover { background-image: none; }
-.spaced             { line-height: 20px !important; }
-.space-above        { margin-top: 2em; }
-pre.wrap            { white-space: pre-wrap; }
+.spaced               { line-height: 20px !important; }
+.space-above          { margin-top: 2em; }
+.space-right          { margin-right: 2em; }
+pre.wrap              { white-space: pre-wrap; }
+.text_separator       { padding:0 0.5em; }
+.text-right_separator { padding-right:0.5em; }
 
 /*----------------------------------------------------------------------
   Colours and backgrounds

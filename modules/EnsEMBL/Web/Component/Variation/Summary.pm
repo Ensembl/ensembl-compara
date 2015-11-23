@@ -237,7 +237,7 @@ sub variation_source {
   
   $version = ($version) ? " (release $version)" : '';
   
-  return ['Original source', sprintf('<p>%s%s | %s</p>', $description, $version, $source_link)];
+  return ['Original source', sprintf('<p>%s%s%s%s</p>', $description, $version, $self->text_separator, $source_link)];
 }
 
 
@@ -395,17 +395,31 @@ sub alleles {
   my $c_alleles  = scalar @l_alleles;
   my $alt_string = $c_alleles > 2 ? 's' : '';
   my $ancestor   = $object->ancestor;
-     $ancestor   = " | Ancestral: <strong>$ancestor</strong>" if $ancestor;
+     $ancestor   = "Ancestral: <strong>$ancestor</strong>" if $ancestor;
   my $ambiguity  = $variation->ambig_code;
      $ambiguity  = 'not available' if $object->source =~ /HGMD/;
-     $ambiguity  = " | Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
+     $ambiguity  = "Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
   my $freq       = sprintf '%.2f', $variation->minor_allele_frequency;
      $freq       = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
   my $maf        = $variation->minor_allele;
-     $maf        = qq{ | <span class="_ht ht" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
-  my $html;   
-  my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : ''; 
-   
+     $maf        = qq{<span class="_ht ht" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
+  my $html;
+  my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : '';
+
+  my $extra_allele_info = '';
+  if ($ancestor || $ambiguity || $maf) {
+    $extra_allele_info .= $self->text_separator;
+    $extra_allele_info .= qq{<span>$ancestor</span>} if ($ancestor);
+    if ($ambiguity) {
+      $extra_allele_info .= $self->text_separator if ($extra_allele_info ne '');
+      $extra_allele_info .= qq{<span>$ambiguity</span>};
+    }
+    if ($maf) {
+      $extra_allele_info .= $self->text_separator if ($extra_allele_info ne '');
+      $extra_allele_info .= qq{<span>$maf</span>};
+    }
+  }
+
   # Check allele string size (for display issues)
   my $large_allele = 0;
   my $display_alleles;
@@ -433,13 +447,13 @@ sub alleles {
       $show ? 'open' : 'closed',
       $alt_string,
       $alleles_strand,
-      $display_alleles, "$ancestor$ambiguity$maf",
+      $display_alleles, $extra_allele_info,
       $show ? '' : 'display:none',
       "<pre>$alleles</pre>");
   }
   else {
     my $allele_title = ($alleles =~ /\//) ? qq{Reference/Alternative$alt_string alleles $alleles_strand} : qq{$alleles$alleles_strand};
-    $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$ancestor$ambiguity$maf};
+    $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$extra_allele_info};
   }
 
   # Check somatic mutation base matches reference
@@ -508,7 +522,8 @@ sub location {
     $location = ucfirst(lc $type).' <b>'.$coord . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
     
     $location_link = sprintf(
-      ' | <a href="%s" class="constant">View in location tab</a>',
+      '%s<a href="%s" class="constant">View in location tab</a>',
+      $self->text_separator,
       $hub->url({
         type             => 'Location',
         action           => 'View',
@@ -700,8 +715,8 @@ sub most_severe_consequence {
 
       if (scalar(@$overlapping_features) != 0) {
         $consequence_link = sprintf(qq{
-          <div class="text-float-left">| <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>
-        },$url);
+          <div class="text-float-left">%s<a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>
+        }, $self->text_separator(1), $url);
       }
 
       # Line display
@@ -717,6 +732,15 @@ sub most_severe_consequence {
     }
   }
   return ();
+}
+
+sub text_separator {
+  my $self            = shift;
+  my $no_left_padding = shift;
+
+  my $tclass = ($no_left_padding) ? 'text-right_separator' : 'text_separator';
+
+  return qq{<span class="$tclass">|</span>};
 }
 
 1;
