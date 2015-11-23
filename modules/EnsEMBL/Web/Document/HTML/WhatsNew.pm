@@ -106,7 +106,7 @@ sub show_headlines {
 
       my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
       if ($adaptor) {
-        @items = @{$adaptor->fetch_headlines({'release' => $release_id, limit => 3})};
+        @items = @{$adaptor->fetch_headlines({'release' => $release_id, limit => 5})};
       }   
 
       if (scalar @items > 0) {
