@@ -16,8 +16,8 @@ sub follow_paths {
     # Literal path
     follow_paths(\@new_base,\@new_route,$out);
     # Any accompanying symlinks?
-    if(opendir(DIR,$here)) {
-      foreach my $link (grep { -l "$here/$_" } readdir(DIR)) {
+    if(opendir(my $DIR,$here)) {
+      foreach my $link (grep { -l "$here/$_" } readdir($DIR)) {
         my $dest = readlink("$here/$link");
         $dest = "$here/$dest" unless $dest =~ m!^/!;
         my $there = "/".(join("/",@new_base));
@@ -26,7 +26,7 @@ sub follow_paths {
           follow_paths(\@sym_base,\@new_route,$out);
         }
       }
-      closedir DIR;
+      closedir $DIR;
     }
   }
 }
