@@ -43,8 +43,6 @@ sub content {
   my @genes         = @{$object->Obj->get_all_Genes('lrg_import')||[]};
   my @ens_xrefs     = grep {$_->dbname =~ /Ens_Hs_gene/i} @{$genes[0]->get_all_DBEntries()};
   my $ens_stable_id = $ens_xrefs[0]->display_id;
-  #my $gene_adaptor  = $hub->database('core')->get_GeneAdaptor;
-  #my $ens_gene      = $gene_adaptor->fetch_by_stable_id($ens_stable_id);
  
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $ens_stable_id, $cdb), 
@@ -92,6 +90,8 @@ sub content {
 
       foreach my $pf(@{$pfa->fetch_all_by_object_id($stable_id, 'Gene')}) {
 
+        my $source = $pf->source_name;
+
         # phenotype
         my $phen_link = $hub->url({
           species => $species,
@@ -104,11 +104,10 @@ sub content {
           '<a href="%s">%s</a>',
           $phen_link,
           $pf->phenotype->description,
-          $pf->source
+          $source
         );
 
         # source
-        my $source = $pf->source;
         my $ext_id = $pf->external_id;
         my $tax = $species_defs->get_config($species, 'TAXONOMY_ID');
 
