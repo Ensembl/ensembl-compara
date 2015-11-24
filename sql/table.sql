@@ -808,8 +808,8 @@ CREATE TABLE sequence (
 @desc  This table links sequences to the EnsEMBL core DB or to external DBs.
 @colour   #1E90FF
 
-@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) gene ENSG00000173213
-      @sql                          SELECT * FROM gene_member WHERE stable_id = "ENSG00000173213";
+@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) gene ENSG00000176105
+      @sql                          SELECT * FROM gene_member WHERE stable_id = "ENSG00000176105";
 
 @column gene_member_id             Internal unique ID
 @column stable_id             EnsEMBL stable ID
@@ -875,8 +875,8 @@ CREATE TABLE gene_member (
 @desc  This table links sequences to the EnsEMBL core DB or to external DBs.
 @colour   #1E90FF
 
-@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) peptide ENSP00000309431
-      @sql                          SELECT * FROM seq_member WHERE stable_id = "ENSP00000309431";
+@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) peptide ENSP00000324740
+      @sql                          SELECT * FROM seq_member WHERE stable_id = "ENSP00000324740";
 
 @column seq_member_id             Internal unique ID
 @column stable_id             EnsEMBL stable ID or external ID (for Uniprot/SWISSPROT and Uniprot/SPTREMBL)
