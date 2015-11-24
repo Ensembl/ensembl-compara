@@ -27,12 +27,11 @@ use base qw(EnsEMBL::Draw::GlyphSet_simple);
 sub features {
   my $self     = shift;
   my @features = @{$self->{'container'}->get_all_MiscFeatures('NoAnnotation')};
-  
+
   foreach my $f (@features) {
     my ($ms) = @{$f->get_all_MiscSets('NoAnnotation')};
     $f->{'_miscset_code'} = $ms->code;
   }
-  
   return \@features;
 }
 
@@ -44,15 +43,7 @@ sub title {
 }
 
 sub tag {
-  my ($self, $f) = @_;
-  my $colour = $self->my_colour($f->{'_miscset_code'}, 'join');
-  
-  return {
-    style  => 'join',
-    tag    => "$f->{'start'}-$f->{'end'}",
-    colour => $colour,
-    zindex => -20,
-  };
+  return;
 }
 
 1;
