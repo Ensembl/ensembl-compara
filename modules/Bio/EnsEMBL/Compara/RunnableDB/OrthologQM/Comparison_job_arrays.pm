@@ -35,19 +35,13 @@ use Bio::EnsEMBL::Registry;
 
 sub param_defaults {
 	return {
-	    'mlss_ID'=>'20515',
-		'ref_species_dbid' =>4,
+	    'mlss_ID'=>'100021',
+		'ref_species_dbid' =>155,
         'non_ref_species_dbid' => 31,
-		'chr_job'	=>	{ '36648' => [
-                       '260211',
-                       '70220',
-                       '70250',
-                       '70569',
-                       '71665',
-                       '287636',
-                       '245625',
-                       '245564',
-                       '357304'
+		'chr_job'	=>	{ '14026395' => [
+                          '14803',
+                          '14469',
+                          '46043'
                         ]
                         },
 
