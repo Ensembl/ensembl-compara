@@ -38,8 +38,9 @@ sub param_defaults {
     my $self = shift;
     return {
             %{ $self->SUPER::param_defaults() },
-		'mlss_id'	=>	'20515',
-		'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
+		'mlss_id'	=>	'100021',
+		'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
+#		'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
     };
 }
 
@@ -52,7 +53,7 @@ sub param_defaults {
 sub fetch_input {
 	my $self = shift;
 
-	my $mlss_id = $self->param_required('mlss_id');
+#	my $mlss_id = $self->param_required('mlss_id');
 #	print "yayayayayaya  ", $mlss_id, " hahahahahah \n\n";
 #	my $registry = 'Bio::EnsEMBL::Registry';
 	#$registry->load_registry_from_url( 'mysql://ensro@ens-livemirror/80', 0 );
@@ -65,7 +66,8 @@ sub fetch_input {
 
 	my $species1_dbid;
 	my $species2_dbid;
-	my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
+	my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($self->param_required('mlss_id'));
+#	print $mlss , "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n\n";
 	my $speciesSet_obj= $mlss->species_set_obj();
 	my $speciesSet = $speciesSet_obj->genome_dbs();
 	if ($speciesSet) {
@@ -76,7 +78,7 @@ sub fetch_input {
 	$self->param('ref_species_dbid', $species1_dbid);
 	$self->param('non_ref_species_dbid', $species2_dbid);
 	$self->param( 'ortholog_objects', $homologs );
-	$self->param('mlss_ID', $mlss_id);
+	$self->param('mlss_ID', $self->param_required('mlss_id'));
 #	print "$species1_dbid \n\n $species2_dbid \n\n";
 }
 
@@ -110,7 +112,7 @@ sub run {
 			$c++;
 		}
 
-#		last if $c >= 10;
+#		last if $c >= 200;
 	}
 #	print $self->param('ref_species_dbid'), "  -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Orthologs \n\n\n\n";
 #	print Dumper($ref_ortholog_info_hashref);
