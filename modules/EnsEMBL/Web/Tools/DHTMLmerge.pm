@@ -141,28 +141,14 @@ sub new {
     };
   }
 
-  # sort the files according to original order if asked for, or give priority to the .min.js or .min.css among the files with same prefix if files are not sorted already
-  my $sort_files = $params->{'ordered'}
-    ? sub { $a->{'order'} <=> $b->{'order'} }
-    : sub {
-      my $x = { 'a' => $a, 'b' => $b };
-
-      for (qw(a b)) {
-        $x->{$_}{'url_path'} =~ /^(.*)\/(([0-9]{2})_[^\/]+)$/;
-        $x->{$_} = { 'd' => $1, 'f' => $2, 'n' => $3, 'u' => $x->{$_}{'url_path'}, 'p' => $x->{$_}{'plugin_order'} };
-      }
-
-      defined $x->{a}{d} && $x->{a}{d} eq $x->{b}{d} && $x->{a}{n} == $x->{b}{n} && ($x->{a}{f} =~ /\.min\./ xor $x->{b}{f} =~ /\.min\./)
-        ? $x->{a}{f} =~ /\.min\./ ? -1 : 1
-        : $x->{a}{p} <=> $x->{b}{p} || $x->{a}{u} cmp $x->{b}{u}
-      ;
-    };
-
   my $self = bless {
+    'type'        => $type,
     'group_name'  => $params->{'group_name'},
-    'files'       => [ map EnsEMBL::Web::Tools::DHTMLmerge::File->new($_), sort $sort_files values %files ],
     'condition'   => $params->{'condition'} && ref $params->{'condition'} eq 'CODE' ? B::Deparse->new->coderef2text($params->{'condition'}) : undef
   }, $class;
+
+  # add files after sorting and instantiating them
+  $self->{'files'} = $self->get_sorted_files([values %files], $params->{'ordered'});
 
   warn " Merging $self->{'group_name'} $type files\n";
   $self->{'minified_url_path'} = $self->_merge_files($species_defs, $type, $self->{'files'});
@@ -173,6 +159,11 @@ sub new {
 sub name {
   ## @return Name of the group
   return shift->{'group_name'};
+}
+
+sub type {
+  ## @return Type of the group
+  return shift->{'type'};
 }
 
 sub files {
@@ -197,6 +188,32 @@ sub condition {
   }
 
   return 1;
+}
+
+sub get_sorted_files {
+  ## Sort the files according to original order if asked for, or give priority to the .min.js or .min.css among the files with same prefix if files are not sorted already
+  ## @param Arrayref of hashes - one hash for each file
+  ## @param Flag if on will consider the 'order' key in the file hash
+  ## @return Arrayref of sorted EnsEMBL::Web::Tools::DHTMLmerge::File objects
+  my ($self, $files, $is_ordered) = @_;
+
+  my $sort_sub = $is_ordered
+    ? sub { $a->{'order'} <=> $b->{'order'} }
+    : sub {
+      my $x = { 'a' => $a, 'b' => $b };
+
+      for (qw(a b)) {
+        $x->{$_}{'url_path'} =~ /^(.*)\/(([0-9]{2})_[^\/]+)$/;
+        $x->{$_} = { 'd' => $1, 'f' => $2, 'n' => $3, 'u' => $x->{$_}{'url_path'}, 'p' => $x->{$_}{'plugin_order'} };
+      }
+
+      defined $x->{a}{d} && $x->{a}{d} eq $x->{b}{d} && $x->{a}{n} == $x->{b}{n} && ($x->{a}{f} =~ /\.min\./ xor $x->{b}{f} =~ /\.min\./)
+        ? $x->{a}{f} =~ /\.min\./ ? -1 : 1
+        : $x->{a}{p} <=> $x->{b}{p} || $x->{a}{u} cmp $x->{b}{u}
+      ;
+    };
+
+  return [ map EnsEMBL::Web::Tools::DHTMLmerge::File->new($_), sort $sort_sub @$files ];
 }
 
 sub _list_plugins {
