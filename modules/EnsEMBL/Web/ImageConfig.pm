@@ -874,8 +874,10 @@ sub _add_trackhub_node {
       $config->{'visibility'} = $data->{'visibility'};
     }
     else {
-      for (@ok_keys) {
-        $config->{$_} = $data->{$_} if $data->{$_};
+      for (keys %$data) {
+        if ($_ =~ /subGroup/ || grep $_, @ok_keys) {
+          $config->{$_} = $data->{$_} if $data->{$_};
+        }
       }
     }
 
@@ -886,8 +888,10 @@ sub _add_trackhub_node {
         $config->{'visibility'} = $data->{'visibility'};
       }
       else {
-        for (@ok_keys) {
-          $config->{$_} = $data->{$_} if $data->{$_};
+        for (keys %$data) {
+          if ($_ =~ /subGroup/ || grep $_, @ok_keys) {
+            $config->{$_} = $data->{$_} if $data->{$_};
+          }
         }
       }
     }
