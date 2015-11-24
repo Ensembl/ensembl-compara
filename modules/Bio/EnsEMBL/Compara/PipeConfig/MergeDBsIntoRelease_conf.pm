@@ -103,7 +103,7 @@ sub default_options {
         'ignored_tables'    => {
             #'protein_db'        => [qw(gene_tree_node)],
             'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
-            #'family_db' => [qw(gene_member seq_member sequence)],
+            #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
         },
 
         # When everything is copied and merged, apply the following scripts
