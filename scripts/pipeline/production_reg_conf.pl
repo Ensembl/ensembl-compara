@@ -59,17 +59,17 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_ptrees',
-    -dbname => 'mm14_protein_trees_82v',
+    -dbname => 'cc21_protein_trees_83',
 );
 
 # Individual pipeline database for ncRNAtrees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'compara1',
+    -host => 'compara4',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_nctrees',
-    -dbname => 'mm14_compara_nctrees_82',
+    -dbname => 'wa2_compara_nctrees_83',
 );
 
 # Individual pipeline database for Families:
@@ -79,7 +79,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_families',
-    -dbname => 'lg4_families_82',
+    -dbname => 'mp14_families_83',
 );
 
 
