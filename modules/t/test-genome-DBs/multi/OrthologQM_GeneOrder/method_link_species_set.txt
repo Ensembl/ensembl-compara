@@ -1,0 +1,1 @@
+100021	201	36126	R.nor-M.mul	orthologues	ensembl	80	\N
