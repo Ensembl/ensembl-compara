@@ -868,22 +868,28 @@ sub _add_trackhub_node {
     my $n       = $node;
     my $data    = $n->data;
     my $config  = {};
+    my @ok_keys = qw(visibility dimensions priority);
     ## The only parameter we override from superTrack nodes is visibility
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
       $config->{'visibility'} = $data->{'visibility'};
     }
-    #else {
-    #  $config->{$_}       = $data->{$_} for keys %$data;
-    #}
+    else {
+      for (@ok_keys) {
+        $config->{$_} = $data->{$_} if $data->{$_};
+      }
+    }
 
     ## Add any setting inherited from parents
     while ($n = $n->parent_node) {
       $data = $n->data;
       if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
         $config->{'visibility'} = $data->{'visibility'};
-        last;
       }
-      #$config->{$_} ||= $data->{$_} for keys %$data;
+      else {
+        for (@ok_keys) {
+          $config->{$_} = $data->{$_} if $data->{$_};
+        }
+      }
     }
     $config->{'on_off'} = 'off' if $force_hide;
 
@@ -2090,9 +2096,6 @@ sub add_matrix {
   $data->{'column_key'}  = $column_key;
   $data->{'menu'}        = 'matrix_subtrack';
   $data->{'source_name'} = $data->{'name'};
-  if (!$data->{'display'} || $data->{'display'} eq 'off') {
-    $data->{'display'} = 'default';
-  }
   
   if (!$menu_data->{'matrix'}) {
     my $hub = $self->hub;
