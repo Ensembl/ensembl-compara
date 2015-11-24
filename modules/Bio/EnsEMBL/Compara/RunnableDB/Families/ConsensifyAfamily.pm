@@ -42,6 +42,7 @@ sub fetch_input {
            AND fm.seq_member_id=m1.seq_member_id
            AND m1.sequence_id=m2.sequence_id
            AND m2.source_name IN ('Uniprot/SWISSPROT', 'Uniprot/SPTREMBL')
+      GROUP BY fm.family_id, m2.seq_member_id
     };
 
     my $sth = $self->compara_dba->dbc->prepare( $sql );
@@ -120,6 +121,7 @@ sub apply_edits  {
 		    SIMILAR\s+TO\s+PROTEIN\$
 		    RIKEN.*FULL.*LENGTH.*ENRICHED.*LIBRARY
 		    CLONE:[0-9A-Z]+ FULL\s+INSERT\s+SEQUENCE
+                    \{[^}]*\}
 		    \w*\d{4,} HYPOTHETICAL\s+PROTEIN
 		    IN\s+CHROMOSOME\s+[0-9IVX]+ [A-Z]\d+[A-Z]\d+\.{0,1}\d*),
 		 &as_words(qw(NOVEL PUTATIVE PREDICTED 

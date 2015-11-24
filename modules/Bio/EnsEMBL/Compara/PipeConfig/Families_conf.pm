@@ -482,11 +482,8 @@ sub pipeline_analyses {
             -parameters => {
                 'append'        => [qw(-N -q)],
                 'input_query'   => 'select * from mcl_sparse_matrix',
-                'command_out'   => ['#mcl_bin_dir#/mcxload', '-abc', '-', '-ri', 'max', '-o', '#work_dir#/#file_basename#.tcx', '-write-tab', '#work_dir#/#file_basename#.itab',    # run the actual command
-                                    #### FIXME: The healthcheck part below is not currently working - see DbCmd runnable
-                                    ## '\\;',      # NB: make sure it is properly escaped!
-                                    ## 'tail', '-n', '1', '#work_dir#/#file_basename#.tcx', '|', 'grep', ')'
-                                   ],    # then test that the file finishes with a closing round bracket
+                # This long string is to run the actual mcxload command and then test that the file finishes with a closing round bracket
+                'command_out'   => '#mcl_bin_dir#/mcxload -abc - -ri max -o #work_dir#/#file_basename#.tcx -write-tab #work_dir#/#file_basename#.itab; tail -n 1 #work_dir#/#file_basename#.tcx | grep ")"',
             },
             -flow_into => {
                 1 => [ 'mcl' ],

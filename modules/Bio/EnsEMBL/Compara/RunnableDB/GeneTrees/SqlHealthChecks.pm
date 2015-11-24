@@ -123,8 +123,9 @@ our $config = {
                 query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]")) AND NOT #allow_missing_cds_seqs#',
             },
             {
-                description => 'The protein sequences should not be only ACGTN (unless 5aa-long, for an immunoglobulin gene)',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND sequence REGEXP "^[ACGTN]*$" AND LENGTH(sequence) > 5',
+                description => 'The protein sequences should not be only ACGTN (unless a few exceptions like some immunoglobulin genes)',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND sequence REGEXP "^[ACGTN]*$"',
+                expected_size => '< 10',
             },
             {
                 description => 'The ncRNA sequences have to be only ACGTN',
