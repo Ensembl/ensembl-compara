@@ -66,6 +66,8 @@ sub initialize {
     
     $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} ne 'off' && join('', @consequence) ne 'off';
     $config->{'hide_long_snps'}     = $hub->param('hide_long_snps') eq 'yes';
+    $config->{'hide_rare_snps'}     = $hub->param('hide_rare_snps');
+    delete $config->{'hide_rare_snps'} if $config->{'hide_rare_snps'} eq 'off';
   }
   
   # Get flanking sequence
@@ -309,8 +311,14 @@ sub add_variations {
 
   my $object = $self->object || $self->hub->core_object('transcript');
   my $variation_features    = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
+  my @transcript_variations;
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
-     @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
+  if($config->{'hide_rare_snps'}) {
+    @transcript_variations = grep {
+      !$self->too_rare_snp($_->variation_feature,$config)
+    } @transcript_variations;
+  }
+  @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   my $length                = scalar @$sequence - 1;
   my (%href, %class);
   

@@ -59,6 +59,7 @@ sub get_sequence_data {
   if ($config->{'snp_display'}) {
     foreach my $snp (reverse @{$object->variation_data($translation->get_Slice, undef, $strand)}) {
       next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
+      next if $self->too_rare_snp($snp->{'vf'},$config);
       
       my $pos  = $snp->{'position'} - 1;
       my $dbID = $snp->{'vdbid'};
@@ -93,6 +94,8 @@ sub initialize {
   for (qw(exons snp_display number hide_long_snps)) {
     $config->{$_} = $hub->param($_) =~ /yes|on/ ? 1 : 0;
   }
+  $config->{'hide_rare_snps'} = $hub->param('hide_rare_snps');
+  delete $config->{'hide_rare_snps'} if $config->{'hide_rare_snps'} eq 'off';
   
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   

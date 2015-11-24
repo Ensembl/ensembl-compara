@@ -35,13 +35,14 @@ sub init {
     consequence_filter => 'off',
     title_display      => 'off',
     hide_long_snps     => 'on',
+    hide_rare_snps     => 'off',
   });
 }
 
 sub variation_fields {
   my $self = shift;
   my $options = shift || {};
-  my @fields  = qw(snp_display hide_long_snps);
+  my @fields  = qw(snp_display hide_long_snps hide_rare_snps);
   push @fields, 'consequence_filter' if ($options->{'consequence'} ne 'no');
   return @fields;
 }
@@ -104,6 +105,7 @@ sub variation_options {
   
   $self->add_form_element($markup{'snp_display'});
   $self->add_form_element($markup{'hide_long_snps'});
+  $self->add_form_element($markup{'hide_rare_snps'});
   
   if ($options->{'consequence'} ne 'no') {
     my %consequence_types = map { $_->label && $_->feature_class =~ /transcript/i ? ($_->label => $_->SO_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;

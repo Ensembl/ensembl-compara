@@ -56,6 +56,7 @@ sub initialize {
     species        => $hub->species,
     snp_display    => $hub->param('snp_display') || $vc->get('snp_display'),
     hide_long_snps => $hub->param('hide_long_snps') || $vc->get('hide_long_snps'),
+    hide_rare_snps => $hub->param('hide_rare_snps') || $vc->get('hide_rare_snps'),
     v              => $hub->param('v'),
     focus_variant  => $vf,
     failed_variant => 1,

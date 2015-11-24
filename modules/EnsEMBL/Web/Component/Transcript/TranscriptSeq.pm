@@ -155,6 +155,7 @@ sub get_sequence_data {
   if ($config->{'snp_display'} and $adorn ne 'none') {
     foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'}, $trans_strand)}) {
       next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
+      next if $self->too_rare_snp($snp->{'vf'},$config);
       
       my $dbID              = $snp->{'vdbid'};
       my $tv                = $snp->{'tv'};
@@ -351,7 +352,7 @@ sub initialize {
   };
  
   $config->{'display_width'} = $hub->param('display_width') || $vc->get('display_width'); 
-  $config->{$_} = ($hub->param($_) eq 'on' || $vc->get($_) eq 'on') ? 1 : 0 for qw(exons exons_case codons coding_seq translation rna snp_display utr hide_long_snps);
+  $config->{$_} = ($hub->param($_) eq 'on' || $vc->get($_) eq 'on') ? 1 : 0 for qw(exons exons_case codons coding_seq translation rna snp_display utr hide_long_snps hide_rare_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
  
   if ($hub->param('line_numbering') ne 'off') {

@@ -340,6 +340,21 @@ sub MARKUP_OPTIONS {
       'label'  => 'Hide variants longer than 10bp',
       'value'  => 'on',
     },
+    'hide_rare_snps' => {
+      'type'     => 'DropDown',
+      'select'   => 'select',
+      'name'     => 'hide_rare_snps',
+      'label'    => 'Hide snps by frequency (MAF)',
+      'values'   => [{ 'value' => 'off', 'caption' => "Don't hide" },
+                     { 'value' => 0.0001, 'caption' => 'Hide rare, MAF &lt; 0.01%' },
+                     { 'value' => 0.001, 'caption' => 'Hide rare, MAF &lt; 0.1%' },
+                     { 'value' => 0.01, 'caption' => 'Hide rare, MAF &lt; 1%' },
+                     { 'value' => 0.1, 'caption' => 'Hide rare, MAF &lt; 10%' },
+                     { 'value' => -0.0001, 'caption' => 'Hide common, MAF &lt; 0.01%' },
+                     { 'value' => -0.001, 'caption' => 'Hide common, MAF &lt; 0.1%' },
+                     { 'value' => -0.01, 'caption' => 'Hide common, MAF &lt; 1%' },
+                     { 'value' => -0.1, 'caption' => 'Hide common, MAF &gt; 10%' }]
+    },
     ### GENE-SPECIFIC TEXT SEQUENCE
     'flank5_display' => {
       'type'     => 'NonNegInt', 

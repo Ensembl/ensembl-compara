@@ -93,6 +93,17 @@ sub _init {
   }
 }
 
+# Used in subclasses
+sub too_rare_snp {
+  my ($self,$vf,$config) = @_;
+
+  return 0 unless $config->{'hide_rare_snps'};
+  my $val = abs $config->{'hide_rare_snps'};
+  my $mul = ($config->{'hide_rare_snps'}<0)?-1:1;
+  return ($mul>0) unless $vf->minor_allele_frequency;
+  return ($vf->minor_allele_frequency - $val)*$mul < 0;
+}
+
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
   my ($self, $slices, $config,$adorn) = @_;
@@ -210,6 +221,7 @@ sub set_variation_filter {
   }
   
   $config->{'hide_long_snps'} = $hub->param('hide_long_snps') eq 'yes';
+  $config->{'hide_rare_snps'} = $hub->param('hide_rare_snps');
 }
 
 sub set_variations {
@@ -225,7 +237,7 @@ sub set_variations {
   my $snps   = [];
   my $u_snps = {};
   my $adaptor;
-  
+
   if ($focus_snp_only) {
     push @$snps, $focus_snp_only;
   } else {
@@ -235,7 +247,10 @@ sub set_variations {
       if ($config->{'population'}) {
          $snps = $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'});
       } else {
-        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},  @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)});
+        my $vfa =
+          $hub->get_adaptor('get_VariationFeatureAdaptor','variation');
+        my @snps_list = @{$vfa->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0)};
+        push @snps_list,@{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)};
         $snps = \@snps_list;
       }
     };
@@ -257,7 +272,7 @@ sub set_variations {
 
     $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
   }
-  
+
   # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
   # Also prioritize shorter variations over longer ones so they don't get hidden
   # Prioritize focus (from the URL) variations over all others 
