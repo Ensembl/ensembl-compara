@@ -40,16 +40,17 @@ sub param_defaults {
 	my $self = shift;
 	return {
             %{ $self->SUPER::param_defaults() },
-	    'mlss_ID'=>'20515',
+	    'mlss_ID'=>'100021',
+#       'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
 		'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
-		'ref_species_dbid' => 31,
-        'non_ref_species_dbid' => 4,
-        'left1' => 18820822,
-        'right1' =>  18819906,
-        'query' => 18843823,
-        'left2' => 43476532,
-        'right2' => 18842721,
-        'ref_chr_dnafragID' => 1045560
+		'ref_species_dbid' =>155,
+        'non_ref_species_dbid' => 31,
+        'left1' => 14803,
+        'right1' => 46043,
+        'query' =>14469,
+#       'left2' =>  14803,
+#        'right2' => 46043,
+        'ref_chr_dnafragID' =>14026395
 	};
 }
 
@@ -65,16 +66,17 @@ sub fetch_input{
 	my $self = shift;
 	$self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
 	$self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
-	$self->param('member_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
-#	print $self->param('member_adaptor');
+	$self->param('gmember_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
+#	print $self->param('gmember_adaptor');
 #	print $self->param('homolog_adaptor');
-    $self->param('mlss_ID', $self->param_required('mlss_ID'));
+#    $self->param('mlss_ID', $self->param_required('mlss_ID'));
 }
 
 sub run {
 	my $self = shift;
 #	my $orth_hashref = $self->param_required('comparison');
-#	print " -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs \n\n $self->param('mlss_ID') \n\n";
+#	print " -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs \n\n";
+#    print  $self->param('mlss_ID')," \n\n";
 #    print $self->param('left1'), " left1 ", $self->param('left2'), " left2 ", $self->param('query'), " query ", $self->param('right1'), " right1 ", $self->param('right2'), " right2 ", $self->param('ref_chr_dnafragID'), " ref_chr_dnafragID\n\n" ;
 #	print Dumper($orth_hashref);
 #	my $ref_chr_dnafragID = $orth_hashref->{'ref_chr_dnafragID'};
@@ -134,8 +136,10 @@ sub run {
         foreach my $ortholog (@{$self->param('defined_positions')}) {
 #            print $ortholog , " orttttttttttttt\n\n";
             my $non_ref_gm = $self->param('homolog_adaptor')->fetch_by_dbID($self->param($ortholog))->get_all_GeneMembers($self->param('non_ref_species_dbid'))->[0];
+#            print "line 1388888888888 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n";
             $non_ref_gmembers_list->{$ortholog} = $non_ref_gm->dbID;
-#            print $non_ref_gm->dnafrag_id(), " JJJJJJJJJJ \n";
+#            print "line 1388888888888 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n";
+#            print $non_ref_gm->dbID(), " JJJJJJJJJJ \n";
             if ($query_non_ref_dnafragID eq $non_ref_gm->dnafrag_id()) {
 #                print " same dnafragggggggggggggggg \n";
                 if ($start > $non_ref_gm->dnafrag_start()) {
@@ -159,7 +163,8 @@ sub run {
 	# get the all gene members with source name ENSEMBLPEP (ordered by their dnafrag start position)  spanning the specified start and end range of the given chromosome. dnafrag_id  == chromosome, that have homologs on the ref genome
 		$self->param('non_ref_gmembers_ordered', $self->_get_non_ref_gmembers($query_non_ref_dnafragID, $start, $end));
 
-#		print Dumper($self->param('non_ref_gmembers_ordered'));
+#ß		print Dumper($self->param('non_ref_gmembers_ordered'));
+#        print "############## non_ref_gmembers_ordered^^^^ ##################### non_ref_gmembers_listvvvv \n\n";
 #		print Dumper($non_ref_gmembers_list);
 
         #Create the result hash showing if the order gene conservation indicated by the ortholog matches the order of genes retrieve from the geneme.
@@ -207,13 +212,14 @@ sub _get_non_ref_gmembers {
 #	print " This is the _get_non_ref_members subbbbbbbbbbbbb \n\n";
 	my ($dnafragID, $st, $ed)= @_;
 #	print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n";
-	my $non_ref_members = $self->param('member_adaptor')->fetch_all_by_dnafrag_id_start_end($dnafragID, $st, $ed); #returns a list of gene member spanning the given coordinates
+	my $non_ref_members = $self->param('gmember_adaptor')->fetch_all_by_dnafrag_id_start_end($dnafragID, $st, $ed); #returns a list of gene member spanning the given coordinates
 	my $non_ref_member_cleaned = {};
-	my $non_ref_member_refhash ={};
+#	my $non_ref_member_refhash ={};
 	my $size = @$non_ref_members;
 #	print $size," non_ref genome_members over given range \n\n";
-#	print Dumper($non_ref_member);
-	#grap only the gene members that the source is 'ENSEMBLPEP'
+#    print "NON REF MEMBERSSSSSV &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n\n";
+#	print Dumper($non_ref_members);
+	#grab only the gene members that the source is 'ENSEMBLPEP'
 	foreach my $GMember (@$non_ref_members) {
 #		print $GMember->dbID(),"\n";
 #		if ($GMember->dbID() eq '9275331'){
@@ -221,7 +227,7 @@ sub _get_non_ref_gmembers {
 #		}
 		if ($GMember->get_canonical_SeqMember()->source_name() eq 'ENSEMBLPEP') {
 			$non_ref_member_cleaned->{$GMember->dbID()} = $GMember->dnafrag_start();
-			$non_ref_member_refhash->{$GMember->dbID()} = $GMember;
+#			$non_ref_member_refhash->{$GMember->dbID()} = $GMember; #to be able to store the actual objects. must be done this way
 		}
 	}
 
@@ -235,14 +241,15 @@ sub _get_non_ref_gmembers {
 
     }
 
+ #   print "ORTH SORTED £££££££££££££££££££££££££££££££\n\n";
 #    print Dumper(\@orth_sorted);
-    my $orth_sorted = @orth_sorted;
+#    my $orth_sorted = @orth_sorted;
 #    print $orth_sorted, " orth_sorted size \n\n\n";
 #    print "TTTTTTTTTRRRRRRRIIIIIIIIIAAAAAAAAAAAAALlLLLLLLLLLLLLLLLLLLLLLL\n";
 #   check to ensure that the non ref member has an ortholog in the ref species 
     foreach my $mem (@orth_sorted) {
-#    	print $mem , "\nyayaya", $self->param('member_adaptor')->fetch_by_dbID($mem), "\n\n\n";
-    	my @homos = @{$self->param('homolog_adaptor')->fetch_all_by_Member($self->param('member_adaptor')->fetch_by_dbID($mem), -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES', -TARGET_SPECIES => [$self->param('gdb_adaptor')->fetch_by_dbID($self->param('ref_species_dbid'))->name])};
+#    	print $mem , "\nyayaya", $self->param('gmember_adaptor')->fetch_by_dbID($mem), "\n\n\n";
+    	my @homos = @{$self->param('homolog_adaptor')->fetch_all_by_Member($self->param('gmember_adaptor')->fetch_by_dbID($mem), -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES', -TARGET_SPECIES => [$self->param('gdb_adaptor')->fetch_by_dbID($self->param('ref_species_dbid'))->name])};
     	if (@homos) {
 	    	push @orth_final, $mem;
 		}
