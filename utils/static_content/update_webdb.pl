@@ -169,12 +169,7 @@ SPECIES: foreach my $sp (sort @species) {
           $is_different = 1;
         }
         if ($is_different) {
-          print "Is this correct? [y/n]\n";
-          print "If not, please patch the database and run this script again (it will skip any species already added)\n";
-
-          while (<STDIN>) {
-            next SPECIES if (/n/i);
-          } 
+          print "If this is not correct, please manually patch the core and ensembl_archive databases after this script has run\n";
         }
       }
 
