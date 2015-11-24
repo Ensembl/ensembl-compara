@@ -50,12 +50,12 @@ sub pipeline_create_commands {
 		@{ $self->SUPER::pipeline_create_commands },
 		$self->db_cmd( 'CREATE TABLE ortholog_quality_metric ( 
             method_link_species_set_id INT NOT NULL,
-			homology_id  INT NOT NULL,
+			homology_id INT NOT NULL,
             gene_member_id INT NOT NULL,
-		        dnafrag_id  INT NOT NULL,
+		    dnafrag_id INT NOT NULL,
 			percent_conserved_score INT NOT NULL, 
             left1 INT,
-         	left2	INT,
+         	left2 INT,
          	right1 INT,
          	right2 INT
             
@@ -81,8 +81,9 @@ sub default_options {
     return {
             %{ $self->SUPER::default_options() },
 
-        'mlss_id'     => '',
+        'mlss_id'     => '100021',
         'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'
+#        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
     };
 }
 
