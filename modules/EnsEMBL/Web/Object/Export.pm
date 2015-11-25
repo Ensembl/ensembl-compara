@@ -757,14 +757,14 @@ sub gff3_features {
         }
 
         if ($params->{'exon'} || $params->{'cds'}) {
+          foreach my $cds (@{$t->get_all_CDS||[]}) {
+            $self->feature('CDS', $cds, { Parent => $t_id, Name => $t->translation->stable_id }, $properties);
+          }
+        }
+
+        if ($params->{'exon'}) {
           foreach my $e (@{$t->get_all_Exons}) {
-            $self->feature('exon', $e, { Parent => $t_id, Name => $e->stable_id }, $properties) if $params->{'exon'};
- 
-            if ($params->{'cds'}) {
-              my $start = $e->coding_region_start($t);
-              next unless $start; # $start will be undef if the exon is not coding
-              $self->feature('CDS', $e, { Parent => $t_id, Name => $t->translation->stable_id }, $properties);
-            }
+            $self->feature('exon', $e, { Parent => $t_id, Name => $e->stable_id }, $properties);
           }
         }
       }
