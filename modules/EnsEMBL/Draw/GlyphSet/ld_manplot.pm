@@ -64,8 +64,14 @@ sub _init {
   my $config   = $self->track_style_config;
   my $features = $self->fetch_features();
 
-  my $style = EnsEMBL::Draw::Style::Plot::LD->new($config, $features);
-  $self->push($style->create_glyphs);
+  if (!scalar(@$features)) {
+    my $track_name = $self->my_config('name');
+    $self->errorTrack("No $track_name data for this region");
+  }
+  else {
+    my $style = EnsEMBL::Draw::Style::Plot::LD->new($config, $features);
+    $self->push($style->create_glyphs);
+  }
 }
 
 sub my_label { 
