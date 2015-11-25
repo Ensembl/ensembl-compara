@@ -36,6 +36,7 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $cdb          = shift || $hub->param('cdb') || 'compara';
+  warn "########## DEPRECATED MODULE - WILL BE REMOVED IN NOVEMBER 2016 ###########";
 
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
