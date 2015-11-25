@@ -172,11 +172,13 @@ sub table_data {
     if ($clin_sign_list) {
       # Clinical significance icons
       $clin_sign .= qq{<span class="hidden export">$clin_sign_list</span>};
-      foreach my $clin_sign_term (split(',',$clin_sign_list)) {
+      foreach my $clin_sign_term (split(/\/|,/,$clin_sign_list)) {
+        $clin_sign_term =~ s/^\s//;
         my $clin_sign_icon = $clin_sign_term;
         $clin_sign_icon =~ s/ /-/g;
+        $clin_sign_icon = 'other' if ($clin_sign_icon =~ /conflict/);
         if ($attributes->{$review_status}) {;
-           $clin_sign .= qq{<img class="clin_sign" src="/i/val/clinsig_$clin_sign_icon.png" />};
+          $clin_sign .= qq{<img class="clin_sign" src="/i/val/clinsig_$clin_sign_icon.png" />};
         }
         else {
           $clin_sign .= qq{<img class="_ht clin_sign" src="/i/val/clinsig_$clin_sign_icon.png" title="$clin_sign_term" />};

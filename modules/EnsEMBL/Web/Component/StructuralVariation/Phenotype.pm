@@ -81,10 +81,7 @@ sub table_data {
     }
 
     # Clinical significance in PF
-    my $pf_clin_sign = $pf->clinical_significance;
-    if ($pf_clin_sign) {
-      $clin_sign{$phe}{$pf_clin_sign} = 1;
-    }
+    %clin_sign = %{$self->get_pf_clin_sign($pf,$phe,\%clin_sign)};
   }
 
 
@@ -109,10 +106,7 @@ sub table_data {
         }
       }
       # Clinical significance in PF
-      my $pf_clin_sign = $sva->clinical_significance;
-      if ($pf_clin_sign) {
-        $clin_sign{$phe}{$pf_clin_sign} = 1;
-      }
+      %clin_sign = %{$self->get_pf_clin_sign($sva,$phe,\%clin_sign)};
 
       if ($phe && !$ssv_phen{$ssv_name}{$phe}) {
         $ssv_phen{$ssv_name}{$phe} = 1;
@@ -134,6 +128,7 @@ sub table_data {
     foreach my $cs (keys(%{$clin_sign{$phe}})) {
       my $icon_name = $cs;
       $icon_name =~ s/ /-/g;
+      $icon_name = 'other' if ($icon_name =~ /conflict/);
       $clin_sign_data .= sprintf(
         '<span class="hidden export">%s</span>'.
         '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" title="%s" src="/i/val/clinsig_%s.png" />',
@@ -151,5 +146,20 @@ sub table_data {
   return \%phenotypes,\%column_flags;
 }
 
+sub get_pf_clin_sign {
+  my $self      = shift;
+  my $pf        = shift;
+  my $phe       = shift;
+  my $clin_sign = shift;
+
+  my $pf_clin_sign = $pf->clinical_significance;
+  if ($pf_clin_sign) {
+    foreach my $clin_sign_term (split(/\/|,/,$pf_clin_sign)) {
+      $clin_sign_term =~ s/^\s//;
+      $clin_sign->{$phe}{$clin_sign_term} = 1;
+    }
+  }
+  return $clin_sign;
+}
 
 1;
