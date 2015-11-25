@@ -90,7 +90,7 @@ sub get_files_from_dir {
     }
   }
 
-  return sort \@files;
+  return \@files;
 }
 
 ###################################################
