@@ -35,7 +35,6 @@ sub populate_tree {
   my $sd          = $self->hub->species_defs;
   my $data_menu   = $self->create_submenu('CustomData',     'Custom Data');
   my $config_menu = $self->create_submenu('Configurations', 'Manage Configurations');
-  my $tools_menu  = $self->create_submenu('Conversion',     'Online Tools');
 
   ## Upload "wizard"
   $data_menu->append($self->create_node('SelectFile',     'Add your data', [qw(select_file  EnsEMBL::Web::Component::UserData::SelectFile)]));
@@ -117,23 +116,31 @@ sub populate_tree {
   
   $config_menu->append($self->create_node('ModifyConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::ModifyConfig' }));
   
-  ## Data conversion
-  $tools_menu->append($self->create_node('UploadVariations',  'Variant Effect Predictor', [qw(upload_snps       EnsEMBL::Web::Component::UserData::UploadVariations)])) unless $sd->ENSEMBL_VEP_ENABLED; # only if new VEP is not enabled
-  unless ($sd->ENSEMBL_AC_ENABLED) {
-    $tools_menu->append($self->create_node('SelectFeatures',    'Assembly Converter',       [qw(select_features   EnsEMBL::Web::Component::UserData::SelectFeatures)]));
-    $tools_menu->append($self->create_node('PreviewConvert',    '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvert)]));
-  }
+  ## Data conversion - show the old tools interface only if new ones are not available
+  unless ($sd->ENSEMBL_VEP_ENABLED && $sd->ENSEMBL_AC_ENABLED && $sd->ENSEMBL_IDM_ENABLED) {
+    my $tools_menu = $self->create_submenu('Conversion', 'Online Tools');
 
-  $tools_menu->append($self->create_node('UploadStableIDs',   'ID History Converter',     [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)]));
-  $tools_menu->append($self->create_node('PreviewConvertIDs', '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvertIDs)]));
-  $tools_menu->append($self->create_node('SelectOutput',      '',                         [qw(select_output     EnsEMBL::Web::Component::UserData::SelectOutput)]));
-  
-  $tools_menu->append($self->create_node('SNPConsequence',  '', [], { command => 'EnsEMBL::Web::Command::UserData::SNPConsequence'  }));
-  $tools_menu->append($self->create_node('CheckConvert',    '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckConvert'    }));
-  $tools_menu->append($self->create_node('ConvertFeatures', '', [], { command => 'EnsEMBL::Web::Command::UserData::ConvertFeatures' }));
-  $tools_menu->append($self->create_node('MapIDs',          '', [], { command => 'EnsEMBL::Web::Command::UserData::MapIDs'          }));
-  $tools_menu->append($self->create_node('DropUpload',      '', [], { command => 'EnsEMBL::Web::Command::UserData::DropUpload'      }));
-  
+    unless ($sd->ENSEMBL_VEP_ENABLED) {
+      $tools_menu->append($self->create_node('UploadVariations', 'Variant Effect Predictor', [qw(upload_snps EnsEMBL::Web::Component::UserData::UploadVariations)]));
+    }
+
+    unless ($sd->ENSEMBL_AC_ENABLED) {
+      $tools_menu->append($self->create_node('SelectFeatures',    'Assembly Converter',       [qw(select_features   EnsEMBL::Web::Component::UserData::SelectFeatures)]));
+      $tools_menu->append($self->create_node('PreviewConvert',    '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvert)]));
+    }
+
+    unless ($sd->ENSEMBL_IDM_ENABLED) {
+      $tools_menu->append($self->create_node('UploadStableIDs',   'ID History Converter',     [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)]));
+      $tools_menu->append($self->create_node('PreviewConvertIDs', '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvertIDs)]));
+      $tools_menu->append($self->create_node('SelectOutput',      '',                         [qw(select_output     EnsEMBL::Web::Component::UserData::SelectOutput)]));
+    }
+
+    $tools_menu->append($self->create_node('SNPConsequence',  '', [], { command => 'EnsEMBL::Web::Command::UserData::SNPConsequence'  }));
+    $tools_menu->append($self->create_node('CheckConvert',    '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckConvert'    }));
+    $tools_menu->append($self->create_node('ConvertFeatures', '', [], { command => 'EnsEMBL::Web::Command::UserData::ConvertFeatures' }));
+    $tools_menu->append($self->create_node('MapIDs',          '', [], { command => 'EnsEMBL::Web::Command::UserData::MapIDs'          }));
+    $tools_menu->append($self->create_node('DropUpload',      '', [], { command => 'EnsEMBL::Web::Command::UserData::DropUpload'      }));
+  }
 }
 
 1;
