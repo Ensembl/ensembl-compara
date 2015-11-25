@@ -358,7 +358,7 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_to_ensembl_ftp',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => 'cp -a #target_dir#/emf/* #ftp_dir#/emf/ensembl-compara/homologies; cp -a #target_dir#/xml/* #ftp_dir#/xml/ensembl-compara/homologies; chmod -R g+w #ftp_dir#/emf #ftp_dir#/xml',
+                'cmd' => 'cp -a #target_dir#/emf/* #ftp_dir#/emf/ensembl-compara/homologies; cp -a #target_dir#/xml/* #ftp_dir#/xml/ensembl-compara/homologies; chmod -fR g+w #ftp_dir#/emf #ftp_dir#/xml; chgrp -fR ensembl #ftp_dir#/emf #ftp_dir#/xml',
             },
             -meadow_type => 'LOCAL',
         },
