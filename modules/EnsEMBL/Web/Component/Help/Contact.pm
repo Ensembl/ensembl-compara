@@ -40,7 +40,7 @@ sub content {
   my @A = split('/', $path);
   my $source = $A[-1];
 
-  my $form      = $self->new_form({'id' => 'contact', 'action' => "/Help/SendEmail", 'method' => 'post', 'enctype'=>'multipart/form-data', 'data-ajax'=>'false'});
+  my $form      = $self->new_form({'id' => 'contact', 'class' => 'compact', 'action' => "/Help/SendEmail", 'method' => 'post', 'enctype'=>'multipart/form-data', 'data-ajax'=>'false'});
   my $fieldset  = $form->add_fieldset;
 
   if ($hub->param('strong')) {

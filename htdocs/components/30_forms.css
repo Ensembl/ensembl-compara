@@ -262,6 +262,19 @@ form.bgcolour div.form-field label.ff-label {
   padding: 8px 0 6px 8px;
   line-height: 20px;
 }
+
+/* Narrower label columns for less wasted space */
+form.compact div.form-field label.ff-label {
+  width: 100px;
+}
+form.compact div.form-field div.ff-right {
+  padding-left: 150px;
+}
+form.compact div.form-field div.ff-right textarea {
+  height: 150px;
+  width: 500px;
+}
+
 div.filterable-dropdown-tag {
   background-color: [[TINT_BG]];
   border: 1px solid [[TINT_BORDER]];
