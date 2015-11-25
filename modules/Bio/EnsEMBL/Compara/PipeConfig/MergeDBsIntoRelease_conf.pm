@@ -23,19 +23,14 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf
 
-=head1 SYNOPSIS
-
-    #1. update all databases' names and locations
-
-    #2. initialize the pipeline:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf -password <your_password>
-
-    #3. run the beekeeper.pl
-
 =head1 DESCRIPTION  
 
 A pipeline to merge some production databases onto the release one.
-It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees).
+It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees)
+because synteny_region_id is not ranged by MLSS.
+
+Not all the parameters are defined here. Have a look at PipeConfig::Example::*MergeDBsIntoRelease_conf for
+real-life implementations.
 
 =cut
 
@@ -55,12 +50,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        # Where the pipeline database will be created
-        'host'            => 'compara5',
-
-        # Also used to differentiate submitted processes
-        'pipeline_name'   => 'pipeline_dbmerge_'.$self->o('rel_with_suffix'),
-
         # How many tables can be dumped and re-created in parallel (too many will slow the process down)
         'copying_capacity'  => 10,
 
@@ -70,41 +59,41 @@ sub default_options {
         # Do we want to backup the target merge table before-hand ?
         'backup_tables'     => 1,
 
-        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        # A registry file to avoid having to use only URLs
+        #'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
 
-        # All the databases that have to be analyzed:
-        'src_db_aliases'    => {
-            'master_db'     => 'compara_master',
-            'protein_db'    => 'compara_ptrees',
-            'ncrna_db'      => 'compara_nctrees',
-            'family_db'     => 'compara_families',
-            'projection_db' => 'mysql://ensro@compara5/lg4_homology_projections_'.$self->o('ensembl_release'),
-        },
+        # All the source databases
+        #'src_db_aliases'    => {
+        #    'master_db'     => 'compara_master',
+        #    'protein_db'    => 'compara_ptrees',
+        #    'ncrna_db'      => 'compara_nctrees',
+        #    'family_db'     => 'compara_families',
+        #    'projection_db' => 'mysql://ensro@compara5/lg4_homology_projections_'.$self->o('ensembl_release'),
+        #},
         # The target database
-        'curr_rel_db'   => 'compara_curr',
+        #'curr_rel_db'   => 'compara_curr',
 
         # From these databases, only copy these tables
-        'only_tables'       => {
-            # Cannot be copied by populate_new_database because it doesn't contain the new mapping_session_ids yet
-            'master_db'     => [qw(mapping_session)],
-        },
+        #'only_tables'       => {
+        #    # Cannot be copied by populate_new_database because it doesn't contain the new mapping_session_ids yet
+        #    'master_db'     => [qw(mapping_session)],
+        #},
 
-        # For these tables, only copy from these databases and ignore the
-        # content of the other databases
-        'exclusive_tables'  => {
-            'mapping_session'   => 'master_db',
-            'gene_member'       => 'projection_db',
-            'seq_member'        => 'projection_db',
-            'sequence'          => 'projection_db',
-            'peptide_align_feature_%' => 'protein_db',
-        },
+        # These tables have a unique source. Content from other databases is ignored
+        #'exclusive_tables'  => {
+        #    'mapping_session'   => 'master_db',
+        #    'gene_member'       => 'projection_db',
+        #    'seq_member'        => 'projection_db',
+        #    'sequence'          => 'projection_db',
+        #    'peptide_align_feature_%' => 'protein_db',
+        #},
 
         # In these databases, ignore these tables
-        'ignored_tables'    => {
-            #'protein_db'        => [qw(gene_tree_node)],
-            'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
-            #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
-        },
+        #'ignored_tables'    => {
+        #    #'protein_db'        => [qw(gene_tree_node)],
+        #    'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
+        #    #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
+        #},
 
         # When everything is copied and merged, apply the following scripts
         'extra_sql_cmds'    => [
