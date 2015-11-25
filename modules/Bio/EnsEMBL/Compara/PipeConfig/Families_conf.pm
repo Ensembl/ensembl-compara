@@ -391,7 +391,7 @@ sub pipeline_analyses {
             -flow_into => {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
                 -1 => 'blast_himem',
-                -2 => 'blast_himem',
+                -2 => 'break_batch',
             },
             -rc_name => 'RegBlast',
         },
@@ -406,6 +406,17 @@ sub pipeline_analyses {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
             },
             -rc_name => 'LongBlastHM',
+        },
+
+        {   -logic_name    => 'break_batch',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'      => 'SELECT DISTINCT sm.sequence_id AS seqid FROM seq_member sm WHERE sm.sequence_id BETWEEN #start_seq_id# AND #end_seq_id#',
+                'step'            => 1,
+            },
+            -flow_into => {
+                2 => { 'blast' => { 'start_seq_id' => '#_start_seqid#', 'end_seq_id' => '#_end_seqid#', 'minibatch' => '#_range_count#' } },
+            },
         },
 
         {   -logic_name => 'snapshot_after_blast',
