@@ -63,8 +63,26 @@ sub XY { my( $self, $x, $y ) = @_; return ( $x* $self->{sf}, $self->{'canvas'}{'
 sub H { my( $self, $glyph ) = @_; return 1 + $glyph->pixelheight()* $self->{sf}; }
 sub W { my( $self, $glyph ) = @_; return 1 + $glyph->pixelwidth()* $self->{sf}; }
 
-sub strokecolor { my $self = shift; $self->{'canvas'}{'g'}->strokecolor( $self->{'colourmap'}->hex_by_name( shift ) ); }
-sub fillcolor   { my $self = shift; $self->{'canvas'}{'g'}->fillcolor(   $self->{'colourmap'}->hex_by_name( shift ) ); }
+sub strokecolor { 
+  my $self = shift; 
+  $self->{'canvas'}{'g'}->strokecolor($self->colour(shift)); 
+}
+
+sub fillcolor   { 
+  my $self = shift; 
+  $self->{'canvas'}{'g'}->fillcolor($self->colour(shift));
+}
+
+sub colour {
+  my ($self, $colour) = @_;
+  my @rgb = $self->{'colourmap'}->rgb_by_name($colour);
+  if ($self->{'contrast'} && $self->{'contrast'} != 1) {
+    @rgb = $self->{'colourmap'}->hivis($self->{'contrast'},@rgb);
+  }
+  ## hex_by_rgb doesn't include hash character. Because Reasons.
+  return '#'.$self->{'colourmap'}->hex_by_rgb(\@rgb);
+}
+
 sub stroke      { my $self = shift; $self->_fillstroke_alpha('stroke', @_); }
 sub fill        { my $self = shift; $self->_fillstroke_alpha('fill', @_); }
 sub rect        { my $self = shift; $self->{'canvas'}{'g'}->rect(@_); }
@@ -160,7 +178,7 @@ sub render_Text {
 #  return;
 
   my $gcolour = $glyph->colour() || "black";
-  $gcolour = $self->{'colourmap'}->hex_by_name( $gcolour ); 
+  $gcolour = $self->colour($gcolour); 
   my $text  = $glyph->text();
 
 	my($x,$y) = $self->XY($glyph->pixelx,$glyph->pixely);
