@@ -258,7 +258,7 @@ sub table_data {
     foreach my $attr (@stats_col) {
       if ($attributes->{$attr}) {
         my $attr_label = ($attr eq 'beta_coef') ? 'beta_coefficient' : (($attr eq 'p_value') ? 'p-value' : $attr);
-        push @stats, "$attr_label:".$attributes->{$attr};
+        push @stats, "$attr_label:".(($attr eq 'p_value') ? $self->render_p_value($attributes->{$attr}) : $attributes->{$attr});
         $column_flags{'stats'} = 1;
       }
     }
