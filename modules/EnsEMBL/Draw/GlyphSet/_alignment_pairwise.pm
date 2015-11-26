@@ -98,13 +98,16 @@ sub calc_cigar_glyphs {
 sub draw_rect {
   my ($self,$params,$start,$length,$colour) = @_;
 
-  return $self->Rect({
+  my $out = $self->Rect({
     x      => $start,
     y      => $params->{'y'} || 0,
     width  => $length,
     height => $params->{'h'},
-    colour => $params->{$colour || 'feature_colour'},
   });
+  unless($colour eq 'transparent') {
+    $out->{'colour'} = $params->{$colour || 'feature_colour'};
+  }
+  return $out;
 }
 
 # Draws CIGAR glyphs as previously calculated by calc_cigar_glyphs.
@@ -152,10 +155,15 @@ sub draw_cigar {
   if($params->{'link'}) {
     foreach my $id (keys %$boxes) {
       $joins->{join(":",@{$args->{'tag'}},$id)} = { x => $args->{'drawx'}, box => $boxes->{$id} };
+      $joins->{join(":",@{$args->{'tag'}},$id)} = { x => $args->{'drawx'}, box => $boxes->{$id} };
     }
+    # Though we are CIGAR, our joiner may not be, so add a transparent box
+    # with tag!
+    my ($x,$width,$ori,$r,$r1) = $self->calculate_region($gab);
+    my $box = $self->draw_rect($params,$x,$width,'transparent');
+    $self->push($box);
+    $joins->{join(":",@{$args->{'tag'}})} = { x => $args->{'drawx'}, box => $box };
   }
-  my $gab_nr = $gab->get_all_non_reference_genomic_aligns->[0];
-  my $ori = $gab_nr->dnafrag_strand>0 ? 'Forward' : 'Reverse';
 }
 
 # Draw a single, regular, non-CIGAR box
@@ -169,7 +177,6 @@ sub draw_non_cigar {
   if ($params->{'link'}) {
     $joins->{join(":",@{$args->{'tag'}})} = { x => $args->{'drawx'}, box => $box };
   }
-  return $box;
 }
 
 # Draw green joining crosses and quadrilaterals
