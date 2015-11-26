@@ -798,7 +798,10 @@ sub load_user_tracks {
 }
 
 sub _add_trackhub {
-  my ($self, $menu_name, $url, $is_poor_name, $existing_menu) = @_;
+  my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $force_hide) = @_;
+  if (defined($self->hub->species_defs->TRACKHUB_VISIBILITY)) {
+    $force_hide = $self->hub->species_defs->TRACKHUB_VISIBILITY;
+  }
 
   return ($menu_name, {}) if $self->{'_attached_trackhubs'}{$url};
 
@@ -829,7 +832,7 @@ sub _add_trackhub {
       last if $node;
     }
     if ($node) {
-      $self->_add_trackhub_node($node, $menu, $menu_name);
+      $self->_add_trackhub_node($node, $menu, $menu_name, $force_hide);
 
       $self->{'_attached_trackhubs'}{$url} = 1;
     } else {
@@ -841,7 +844,7 @@ sub _add_trackhub {
 }
 
 sub _add_trackhub_node {
-  my ($self, $node, $menu, $name) = @_;
+  my ($self, $node, $menu, $name, $force_hide) = @_;
   
   my (@next_level, @childless);
   if ($node->has_child_nodes) {
@@ -856,7 +859,7 @@ sub _add_trackhub_node {
   }
 
   if (scalar(@next_level)) {
-    $self->_add_trackhub_node($_, $menu, $name) for @next_level;
+    $self->_add_trackhub_node($_, $menu, $name, $force_hide) for @next_level;
   } 
 
   if (scalar(@childless)) {
@@ -892,6 +895,7 @@ sub _add_trackhub_node {
         }
       }
     }
+    $config->{'on_off'} = 'off' if $force_hide;
 
     $self->_add_trackhub_tracks($node, \@childless, $config, $menu, $name);
   }
@@ -1137,7 +1141,7 @@ sub load_configured_vcf    { shift->load_file_format('vcf');    }
 sub load_configured_trackhubs { shift->load_file_format('trackhub', undef, 1) }
 
 sub load_file_format {
-  my ($self, $format, $sources) = @_;
+  my ($self, $format, $sources, $force_hide) = @_;
   my $function = "_add_${format}_track";
   
   return unless ($format eq 'trackhub' || $self->can($function));
@@ -1171,7 +1175,7 @@ sub load_file_format {
     }
     if ($source) {
       if ($format eq 'trackhub') {
-        $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu);
+        $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu, $force_hide);
       }
       else { 
         my $is_internal = $source->{'source_url'} ? 0 : $internal;
