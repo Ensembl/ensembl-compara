@@ -180,7 +180,7 @@ sub hivis {
 
   # No, exponentiation isn't slow: takes 100ns even for perl
   return map {
-    255*(($_/255)**$contrast)
+    int(255*(($_/255)**$contrast))
   } @rgb;
 }
 
