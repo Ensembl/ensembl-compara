@@ -799,9 +799,6 @@ sub load_user_tracks {
 
 sub _add_trackhub {
   my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $force_hide) = @_;
-  if (defined($self->hub->species_defs->TRACKHUB_VISIBILITY)) {
-    $force_hide = $self->hub->species_defs->TRACKHUB_VISIBILITY;
-  }
 
   return ($menu_name, {}) if $self->{'_attached_trackhubs'}{$url};
 
