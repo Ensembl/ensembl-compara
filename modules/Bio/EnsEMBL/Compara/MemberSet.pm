@@ -510,8 +510,15 @@ sub _load_all_missing_sequences {
 
     my $sets = ref($self) ? [$self, @other_sets] : \@other_sets;
     return unless scalar(@$sets);
+
     my $one_set = $sets->[0];
-    my $random_adaptor = $one_set->adaptor ? $one_set->adaptor : $one_set->get_all_Members->[0]->adaptor;
+    my $random_adaptor = $one_set->adaptor;
+    unless ($random_adaptor) {
+        my $m = $one_set->get_all_Members->[0];
+        $random_adaptor = $m->adaptor if $m;
+        return unless $random_adaptor;
+    }
+
     my $sequence_adaptor = $random_adaptor->db->get_SequenceAdaptor;
 
     if ($seq_type) {
