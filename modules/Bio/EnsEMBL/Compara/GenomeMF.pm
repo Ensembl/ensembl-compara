@@ -146,7 +146,7 @@ sub _load_sequences {
 
     return unless exists $self->{"${type}_fasta"};
     my $input_file = $self->{"${type}_fasta"};
-    die unless -e $input_file;
+    die "Cannot find the file '$input_file'\n" unless -e $input_file;
 
     my $in_file  = Bio::SeqIO->new(-file => $input_file , '-format' => 'Fasta');
     while ( my $seq = $in_file->next_seq() ) {
