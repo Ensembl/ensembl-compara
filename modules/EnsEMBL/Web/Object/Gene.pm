@@ -52,6 +52,8 @@ sub availability {
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
     } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
+      my %clusters    = $self->hub->species_defs->multiX('ONTOLOGIES');
+      
       my $member      = $self->database('compara') ? $self->database('compara')->get_GeneMemberAdaptor->fetch_by_stable_id($obj->stable_id) : undef;
       my $pan_member  = $self->database('compara_pan_ensembl') ? $self->database('compara_pan_ensembl')->get_GeneMemberAdaptor->fetch_by_stable_id($obj->stable_id) : undef;
       my $counts      = $self->counts($member, $pan_member);
@@ -76,7 +78,8 @@ sub availability {
       $availability->{'family'}               = !!$counts->{families};
       $availability->{'family_count'}         = $counts->{families};
       $availability->{'not_rnaseq'}           = $self->get_db eq 'rnaseq' ? 0 : 1;
-      $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments go);
+      $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
+      $availability->{"has_go_$_"}            = $self->count_go($_) for (keys %clusters);
       $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
       $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
       $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
@@ -125,7 +128,6 @@ sub counts {
       similarity_matches => $self->get_xref_available,
       operons => 0,
       alternative_alleles =>  scalar @{$self->get_alt_alleles},
-      go                  => $self->count_go,
     };
     if ($obj->feature_Slice->can('get_all_Operons')){
       $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};
@@ -373,43 +375,59 @@ sub insdc_accession {
 }
 
 sub count_go {
+  my ($self, $goid) = @_;
 
-  my $self = shift;
-  foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
-    my $transcript = $trans_obj->Obj;   
+  my $key      = sprintf '::COUNTS::GENE::%s::%s::%s::GO::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g'), $goid;
+  my $counts   = $MEMD && $MEMD->get($key) ? $MEMD->get($key) : "";
+  my $go_name;
 
-    next unless $transcript->translation;
-    my $type = $self->get_db;
-    my $dbc = $self->database($type)->dbc;
-    my $tl_dbID = $transcript->translation->dbID;
+  if (!$counts) {
+    foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
+      my $transcript = $trans_obj->Obj;   
 
-    # First get the available ontologies
-    if (my @ontologies = @{$self->species_defs->SPECIES_ONTOLOGIES || []}) {
-        my $ontologies_list = scalar(@ontologies) > 1 ? qq{ in ('}.(join "\', \'", @ontologies).qq{' ) } : qq{ ='$ontologies[0]' };
+      next unless $transcript->translation;
+      my $type = $self->get_db;      
+      my $dbc = $self->database($type)->dbc;
+      my $tl_dbID = $transcript->translation->dbID;
 
-        my $sql = qq{
-         SELECT count(distinct(x.display_label))
-             FROM object_xref ox, xref x, external_db edb
-             WHERE ox.xref_id = x.xref_id
-             AND x.external_db_id = edb.external_db_id
-             AND edb.db_name $ontologies_list
-             AND ox.ensembl_object_type = ?
-             AND ox.ensembl_id = ?};
+      # First get the available ontologies
+      if (my @ontologies = @{$self->species_defs->SPECIES_ONTOLOGIES || []}) {
+          my $ontologies_list = scalar(@ontologies) > 1 ? qq{ in ('}.(join "\', \'", @ontologies).qq{' ) } : qq{ ='$ontologies[0]' };
 
-        # Count the ontology terms mapped to the translation
-        my $sth = $dbc->prepare($sql);
-
-        $sth->execute('Translation', $transcript->translation->dbID);
-        my $c = $sth->fetchall_arrayref->[0][0];
-
-        # Add those mapped to the transcript
-        $sth->execute('Transcript', $transcript->dbID);
-        $c += $sth->fetchall_arrayref->[0][0];
-
-        return $c;
+          my $sql = qq{
+           SELECT distinct(dbprimary_acc)
+               FROM object_xref ox, xref x, external_db edb
+               WHERE ox.xref_id = x.xref_id
+               AND x.external_db_id = edb.external_db_id
+               AND edb.db_name $ontologies_list
+               AND ((ox.ensembl_object_type = 'Translation' AND ox.ensembl_id = ?)               
+               OR   (ox.ensembl_object_type = 'Transcript'  AND ox.ensembl_id = ?))};
+               
+          # Count the ontology terms mapped to the translation
+          my $sth = $dbc->prepare($sql);
+          $sth->execute($transcript->translation->dbID, $transcript->dbID);
+          foreach ( @{$sth->fetchall_arrayref} ) {
+              $go_name .= '"'.$_->[0].'",';
+          }
+          
+      }    
     }
-    return;
+    $go_name =~ s/,$//g;
+
+    my $goadaptor = $self->hub->get_databases('go')->{'go'}->dbc;
+    
+    my $go_sql = qq{SELECT o.ontology_id,COUNT(*) FROM term t1  JOIN closure ON (t1.term_id=closure.child_term_id)  JOIN term t2 ON (closure.parent_term_id=t2.term_id) JOIN ontology o ON (t1.ontology_id=o.ontology_id)  WHERE t1.accession IN ($go_name)  AND t2.is_root=1  AND t1.ontology_id=t2.ontology_id GROUP BY o.namespace};
+    
+    my $sth = $goadaptor->prepare($go_sql);
+    $sth->execute();
+    
+    foreach (@{$sth->fetchall_arrayref}) {    
+      $counts = $_->[1] if($_->[0] eq "$goid");
+      $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    }
   }
+  
+  return $counts;
 }
 
 sub count_xrefs {
