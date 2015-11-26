@@ -1174,7 +1174,7 @@ sub load_file_format {
       if ($format eq 'trackhub') {
         ## Force hiding of internally configured trackhubs, because they should be 
         ## off by default regardless of the settings in the hub
-        $force_hide = $internal ? 1 : 0;  
+        my $force_hide = $internal ? 1 : 0;  
         $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu, $force_hide);
       }
       else { 
