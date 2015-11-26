@@ -42,7 +42,7 @@ sub content {
   my $var_db         = $species_defs->databases->{'DATABASE_VARIATION'};
   my $strain         = $species_defs->translate('strain') || 'strain';
   my (@samples, $html);
-    
+
   my $config = {
     display_width  => $hub->param('display_width') || 60,
     site_type      => ucfirst(lc $species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
@@ -55,7 +55,8 @@ sub content {
   foreach (qw(exon_ori match_display snp_display line_numbering codons_display title_display)) {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
-  
+  my $adorn = $hub->param('adorn') || 'none';
+ 
   # FIXME: Nasty hack to allow the parameter to be defined, but false. Used when getting variations.
   # Can be deleted once we get the correct set of variations from the API 
   # (there are currently variations returned when the resequenced samples match the reference)
@@ -72,7 +73,7 @@ sub content {
   if (scalar @samples) {
     $config->{'slices'} = $self->get_slices($ref_slice->Obj, \@samples, $config);
     
-    my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
+    my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config, $adorn);
     
     # Order is important for the key to be displayed correctly
     $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
