@@ -44,12 +44,26 @@ sub add_canvas_frame {
 sub svg_rgb_by_name {
     my ($self, $name) = @_;
     return 'none' if($name eq 'transparent');
-    return 'rgb('. (join ',',$self->{'colourmap'}->rgb_by_name($name)).')';
+    warn ">>> NAME $name";
+    my @rgb = $self->{'colourmap'}->rgb_by_name($name);
+    warn "@@@ RGB @rgb";
+    if ($self->{'contrast'} && $self->{'contrast'} != 1) {
+      @rgb = $self->{'colourmap'}->hivis($self->{'contrast'},@rgb);
+    }
+    warn "... NOW @rgb";
+    return 'rgb('. (join ',',@rgb).')';
 }
 sub svg_rgb_by_id {
     my ($self, $id) = @_;
     return 'none' if($id eq 'transparent');
-    return 'rgb('. (join ',',$self->{'colourmap'}->rgb_by_name($id)).')';
+    warn ">>> ID $id";
+    my @rgb = $self->{'colourmap'}->rgb_by_name($id);
+    warn "@@@ RGB @rgb";
+    if ($self->{'contrast'} && $self->{'contrast'} != 1) {
+      @rgb = $self->{'colourmap'}->hivis($self->{'contrast'},@rgb);
+    }
+    warn "... NOW @rgb";
+    return 'rgb('. (join ',',@rgb).')';
 }
 
 sub canvas {
