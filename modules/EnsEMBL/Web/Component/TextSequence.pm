@@ -247,31 +247,29 @@ sub set_variations {
       if ($config->{'population'}) {
          $snps = $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'});
       } else {
-        my $vfa =
-          $hub->get_adaptor('get_VariationFeatureAdaptor','variation');
+        my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor','variation');
         my @snps_list = @{$vfa->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0)};
         push @snps_list,@{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)};
         $snps = \@snps_list;
       }
     };
   }
+  return unless scalar @$snps;
   
-  if (scalar @$snps) {
-    foreach my $u_slice (@{$slice_data->{'underlying_slices'} || []}) {
-      next if $u_slice->seq_region_name eq 'GAP';
+  foreach my $u_slice (@{$slice_data->{'underlying_slices'} || []}) {
+    next if $u_slice->seq_region_name eq 'GAP';
       
-      if (!$u_slice->adaptor) {
-        my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
-        $u_slice->adaptor($slice_adaptor);
-      }
-      
-      eval {
-        map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
-      };
+    if (!$u_slice->adaptor) {
+      my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
+      $u_slice->adaptor($slice_adaptor);
     }
-
-    $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
+      
+    eval {
+      map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
+    };
   }
+
+  $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
 
   # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
   # Also prioritize shorter variations over longer ones so they don't get hidden
