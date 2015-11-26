@@ -153,8 +153,8 @@ sub default_file_name {
   my $type = $hub->param('data_type');
 
   if ($type eq 'Location') {
-    ## Replace hyphens, because they aren't export-friendly
-    (my $location = $hub->param('r')) =~ s/-/_/g;
+    ## Replace hyphens and colons, because they aren't export-friendly
+    (my $location = $hub->param('r')) =~ s/:|-/_/g;
     $name .= "_$location";
   }
   elsif ($type eq 'Gene') {
