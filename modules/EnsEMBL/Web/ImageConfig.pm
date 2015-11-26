@@ -1135,10 +1135,10 @@ sub load_configured_bigbed {
 }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
-sub load_configured_trackhubs { shift->load_file_format('trackhub', undef, 1) }
+sub load_configured_trackhubs { shift->load_file_format('trackhub'); }
 
 sub load_file_format {
-  my ($self, $format, $sources, $force_hide) = @_;
+  my ($self, $format, $sources) = @_;
   my $function = "_add_${format}_track";
   
   return unless ($format eq 'trackhub' || $self->can($function));
@@ -1172,6 +1172,9 @@ sub load_file_format {
     }
     if ($source) {
       if ($format eq 'trackhub') {
+        ## Force hiding of internally configured trackhubs, because they should be 
+        ## off by default regardless of the settings in the hub
+        $force_hide = $internal ? 1 : 0;  
         $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu, $force_hide);
       }
       else { 
