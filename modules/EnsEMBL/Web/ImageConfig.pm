@@ -1571,7 +1571,7 @@ sub update_from_url {
 
         if (uc $format eq 'TRACKHUB') {
           my $info;
-          ($n, $info) = $self->_add_trackhub($n, $p,1);
+          ($n, $info) = $self->_add_trackhub($n, $p);
           if ($info->{'error'}) {
             my @errors = @{$info->{'error'}||[]};
             $session->add_data(
