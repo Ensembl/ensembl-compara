@@ -691,9 +691,10 @@ sub _export_image {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
     $image->drawable_container->{'config'}->set_parameter('contrast',$contrast);
     
+    ## Note: write to disk, because download doesn't work with memcached
     if ($hub->type eq 'ImageExport') {
       ## User download
-      my $file = $image->render($format);
+      my $file = $image->render($format, ['IO']);
       $hub->param('file', $file);
     }
     else {
@@ -701,7 +702,7 @@ sub _export_image {
       (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
       my $filename = sprintf '%s_%s_%s.%s', $comp, $hub->filename($self->object), $scale, $formats{$format}{'extn'};
       $hub->param('filename', $filename);
-      my $path = $image->render($format);
+      my $path = $image->render($format, ['IO']);
       $hub->param('file', $path);
       $hub->param('format', $format);
       EnsEMBL::Web::Object::ImageExport::handle_download($self);
