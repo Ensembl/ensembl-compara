@@ -450,7 +450,7 @@ sub GENERAL_MARKUP_OPTIONS {
       'label'  => 'Show variants',
       'values' => [
         { 'value' => 'off', 'caption' => 'No'  },
-        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'on', 'caption' => 'Yes' },
       ]
     },
     'line_numbering' => {
