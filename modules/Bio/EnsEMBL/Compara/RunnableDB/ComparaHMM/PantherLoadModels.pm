@@ -180,7 +180,7 @@ sub get_profiles {
         while (my $subfamPath = <$famPath/*>) {
             my $subfamBasename = basename($subfamPath);
             print $subfamPath, "\n";
-            next if ($subfamBasename eq 'hmmer.hmm' || $subfamBasename eq 'tree.tree' || $subfamBasename eq 'cluster.pir');
+            next unless -d $subfamPath;
             my $subfam = "$fam:" . $subfamBasename;
             $cons_seq = $self->get_consensus_from_index($subfam);
             print STDERR "Storing $subfam HMM\n";
