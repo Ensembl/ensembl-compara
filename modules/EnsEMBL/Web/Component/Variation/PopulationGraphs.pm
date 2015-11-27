@@ -85,17 +85,17 @@ sub content {
     foreach my $al (@alleles) {
       foreach my $ssid (keys %{$pop_freq->{$pop_name}{'freq'}}) {
         my $freq = $pop_freq->{$pop_name}{'freq'}{$ssid}{$al};
-
         next unless $freq;
         
         $values .= ',' if $values ne '';
         $freq    = $self->format_number($freq);
         $freq    = 0.5 if $freq < 0.5; # Fixed bug if freq between 0 and 0.5
+        my $a_label = $al;
         if (length($al)>4) {
-          $al = substr($al,0,4).'...';
-          $width = ($freq==100) ? $max_width+5 : $max_width;
+          $a_label = substr($al,0,4).'...';
+          $width   = ($freq==100) ? $max_width+5 : $max_width;
         }
-        $values .= "[$freq,'$al']";
+        $values .= "[$freq,'$a_label']";
         last;
       }
     }
