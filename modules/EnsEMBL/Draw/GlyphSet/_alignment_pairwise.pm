@@ -412,6 +412,9 @@ sub calculate_ypos {
   my $bump_end   = ($ga_last_end > $length ? $length : $ga_last_end) * $pix_per_bp; # end in pixels
   my $row        = $self->bump_row(int $bump_start, int $bump_end);
   my $y_pos = -$row * int(1.5 * $h) * $strand;
+  # -ve coordinates on -ve strand means following correction needed
+  #   to ensure top alignment is not omitted (y deontes bottom on -ve).
+  $y_pos -= int(1.5*$h) if $strand < 0;
   return undef if $row > $depth;
   return $y_pos;
 }
