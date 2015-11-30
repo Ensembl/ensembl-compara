@@ -61,12 +61,13 @@ sub make_table {
   my ($self, $table_rows, $phenotype) = @_;
     
   my $columns = [
-    { key => 'ID',       sort => 'html',      title => 'Variant ID'                           },
-    { key => 'chr' ,     sort => 'position',  title => 'Chr: bp'                              },
-    { key => 'Alleles',  sort => 'string',                                  align => 'center' },
-    { key => 'class',    sort => 'string',    title => 'Class',             align => 'center' },
-    { key => 'psource',  sort => 'string',    title => 'Phenotype Sources'                    },
-    { key => 'pstudy',   sort => 'string',    title => 'Phenotype Studies'                    },
+    { key => 'ID',      sort => 'html',           title => 'Variant ID'                          },
+    { key => 'chr' ,    sort => 'position',       title => 'Chr: bp'                             },
+    { key => 'Alleles', sort => 'string',                                      align => 'center' },
+    { key => 'class',   sort => 'string',         title => 'Class',            align => 'center' },
+    { key => 'psource', sort => 'string',         title => 'Phenotype Sources'                   },
+    { key => 'pstudy',  sort => 'string',         title => 'Phenotype Studies'                   },
+    { key => 'pvalue',  sort => 'numeric_hidden', title => 'p-value'                             },
   ];
 
   push (@$columns, { key => 'phe',   sort => 'string',    title => 'Phenotypes' }) if ($phenotype eq 'ALL');
@@ -226,6 +227,8 @@ sub variation_table {
         my $vf_end    = $vf->end;
         my $vf_allele = $vf->allele_string;
         
+        next if ($vf_region =~ /^CHR_/i && $g_region =~ /^\d+$|^X$|^Y$|^MT$/);
+
         $vf_allele =~ s/(.{20})/$1\n/g;
         
         $location .= '<br />' if ($location);
@@ -252,15 +255,26 @@ sub variation_table {
     
     $list_phe{$var_name}{$pf->phenotype->description} = 1 if ($all_flag == 1);
     
-    if ($list_sources{$var_name}{$phe_source}) {
-      push (@{$list_sources{$var_name}{$phe_source}}, $ref_source) if $ref_source;
+    if ($list_sources{$var_name}{$phe_source}{'ref'}) {
+      push (@{$list_sources{$var_name}{$phe_source}{'ref'}}, $ref_source) if $ref_source;
     }
     else {
       if ($ref_source) {
-        $list_sources{$var_name}{$phe_source} = [$ref_source];
+        $list_sources{$var_name}{$phe_source}{'ref'} = [$ref_source];
       }
       else {
-        $list_sources{$var_name}{$phe_source} = ['no_ref'];
+        $list_sources{$var_name}{$phe_source}{'ref'} = ['no_ref'];
+      }
+    }
+
+    # List the phenotype association p-values for the variation
+    my $p_value = $pf->p_value;
+    if ($p_value) {
+      if ($list_sources{$var_name}{$phe_source}{'p-value'}) {
+        push (@{$list_sources{$var_name}{$phe_source}{'p-value'}}, $p_value);
+      }
+      else {
+        $list_sources{$var_name}{$phe_source}{'p-value'} = [$p_value];
       }
     }
   }  
@@ -268,9 +282,11 @@ sub variation_table {
   foreach my $var_name (sort (keys %list_sources)) {
     my @sources_list;
     my @ext_ref_list;
+    my @pvalues_list;
+    my ($max_exp, $max_pval);
     foreach my $p_source (sort (keys (%{$list_sources{$var_name}}))) {
 
-      foreach my $ref (@{$list_sources{$var_name}{$p_source}}) {
+      foreach my $ref (@{$list_sources{$var_name}{$p_source}{'ref'}}) {
         # Source link 
         my $s_link = $self->source_link($p_source, $ref, $var_name, $gene_name, $phenotype);
         if (!grep {$s_link eq $_} @sources_list) {
@@ -278,25 +294,51 @@ sub variation_table {
         }
         # Study link
         my $ext_link = $self->external_reference_link($p_source, $ref, $phenotype);
+        next if ($ext_link eq '-');
         if (!grep {$ext_link eq $_} @ext_ref_list) {
           push(@ext_ref_list, $ext_link);
         }
       }
-      
+
+      # P-value data
+      if ($list_sources{$var_name}{$p_source}{'p-value'}) {
+        foreach my $pval (@{$list_sources{$var_name}{$p_source}{'p-value'}}) { 
+          if (!grep {$pval eq $_} @pvalues_list) {
+            push(@pvalues_list, $pval);
+            # Get the minimal exponential value of the p-values
+            $pval =~ /^(\d+)\.?.*e-0?(\d+)$/i;
+            if (!$max_exp) {
+              $max_exp  = $2;
+              $max_pval = $1;
+            }
+            elsif ($max_exp < $2) {
+              $max_exp  = $2;
+              $max_pval = $1;
+            }
+          }
+        }
+      }
     }
+
     if (scalar(@sources_list)) {  
     
       my $var_url = "$base_url;v=$var_name";
-    
+
+      # Sort by the lowest p-value first
+      @pvalues_list = sort { $b =~ /e-0?$max_exp$/ <=> $a =~ /e-0?$max_exp$/ } @pvalues_list if (scalar @pvalues_list);
+
+      @pvalues_list = map { $self->render_p_value($_, 1) } @pvalues_list;
+
       my $row = {
             ID      => qq{<a href="$var_url">$var_name</a>},
             class   => $list_variations->{$var_name}{'class'},
             Alleles => $list_variations->{$var_name}{'allele'},
             chr     => $list_variations->{$var_name}{'chr'},
             psource => join(', ',@sources_list),
-            pstudy  => join(', ',@ext_ref_list),
-        };
-          
+            pstudy  => (scalar @ext_ref_list) ? join(', ',@ext_ref_list) : '-',
+            pvalue  => (scalar @pvalues_list) ? qq{<span class="hidden">$max_exp.$max_pval</span>} . join(', ', @pvalues_list) : '-'
+      };
+
       $row->{'phe'} = join('; ',keys(%{$list_phe{$var_name}})) if ($all_flag == 1);
 
       push @rows, $row;

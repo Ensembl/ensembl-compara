@@ -1378,6 +1378,25 @@ sub render_clinical_significance {
   return $render;
 }
 
+sub render_p_value {
+  my $self = shift;
+  my $pval = shift;
+  my $bold = shift;
+
+  my $render = $pval;
+  # Only display 2 decimals
+  if ($pval =~ /^(\d\.\d+)e-0?(\d+)$/) {
+    # Only display 2 decimals
+    my $val = sprintf("%.2f", $1);
+    # Superscript
+    my $exp = "<sup>-$2</sup>";
+    $exp = "<b>$exp</b>" if ($bold);
+
+    $render = $val.'e'.$exp;
+  }
+  return $render;
+}
+
 sub button_portal {
   my ($self, $buttons, $class) = @_;
   $class ||= '';
