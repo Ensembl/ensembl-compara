@@ -386,6 +386,7 @@ sub source_link {
   
   my $source_uc = uc $source;
      $source_uc =~ s/\s/_/g;
+     $source_uc .= '_SEARCH' if $source_uc =~ /UNIPROT/;
   my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   my $label     = $source;
   my $name;
