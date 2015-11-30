@@ -252,7 +252,8 @@ sub variation_table {
       
     # List the phenotype sources for the variation
     my $ref_source = $pf->external_reference;
-    
+       $ref_source = $pf->external_id if (!$ref_source);
+
     $list_phe{$var_name}{$pf->phenotype->description} = 1 if ($all_flag == 1);
     
     if ($list_sources{$var_name}{$phe_source}{'ref'}) {
@@ -350,7 +351,7 @@ sub variation_table {
 
 sub source_link {
   my ($self, $source, $ext_id, $vname, $gname, $phenotype) = @_;
-  
+
   my $source_uc = uc $source;
      $source_uc =~ s/\s/_/g;
 
@@ -358,6 +359,7 @@ sub source_link {
     $source_uc .= '_ID' if $source_uc =~ /COSMIC/;
     $source_uc  = $1 if $source_uc =~ /(HGMD)/;
   }
+  $source_uc .= '_SEARCH' if $source_uc =~ /UNIPROT/;
   my $url = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
 
   if ($url =~/ebi\.ac\.uk\/gwas/) {
@@ -368,15 +370,20 @@ sub source_link {
     $ext_id =~ s/MIM\://;
     $url =~ s/###ID###/$ext_id/;
   }
+  elsif ($url =~ /clinvar/ && $ext_id && $ext_id ne 'no-ref') {
+    $ext_id =~ /^(.+)\.\d+$/;
+    $ext_id = $1 if ($1);
+    $url =~ s/###ID###/$ext_id/;
+  }
   elsif ($vname || $gname) {
     if ($url =~ /omim/) {
       my $search = "search?search=".($vname || $gname);
       $url =~ s/###ID###/$search/;
     } 
-    elsif ($url =~/hgmd/) {
+    elsif ($url =~ /hgmd/) {
       $url =~ s/###ID###/$gname/;
       $url =~ s/###ACC###/$vname/;
-    } 
+    }
     elsif ($url =~/cosmic/) {
       if ($vname) {
         my $cname = ($vname =~ /^COSM(\d+)/) ? $1 : $vname;
@@ -385,7 +392,7 @@ sub source_link {
       else {
         $url =~ s/###ID###/$gname/;
       } 
-    } 
+    }
     else {
       $url =~ s/###ID###/$vname/;
     }

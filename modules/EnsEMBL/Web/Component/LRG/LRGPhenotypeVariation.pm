@@ -253,6 +253,7 @@ sub variation_table {
     # List the phenotype sources for the variation
     my $phe_source = $pf->source_name;
     my $ref_source = $pf->external_reference;
+       $ref_source = $pf->external_id if (!$ref_source);
 
     $list_phe{$var_name}{$pf->phenotype->description} = 1 if ($all_flag == 1);
 
@@ -359,6 +360,7 @@ sub source_link {
     $source_uc .= '_ID' if $source_uc =~ /COSMIC/;
     $source_uc  = $1 if $source_uc =~ /(HGMD)/;
   }
+  $source_uc .= '_SEARCH' if $source_uc =~ /UNIPROT/;
   my $url = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
 
   if ($url =~/ebi\.ac\.uk\/gwas/) {
@@ -367,6 +369,11 @@ sub source_link {
   }
   elsif ($url =~ /omim/ && $ext_id && $ext_id ne 'no-ref') {
     $ext_id =~ s/MIM\://;
+    $url =~ s/###ID###/$ext_id/;
+  }
+  elsif ($url =~ /clinvar/ && $ext_id && $ext_id ne 'no-ref') {
+    $ext_id =~ /^(.+)\.\d+$/;
+    $ext_id = $1 if ($1);
     $url =~ s/###ID###/$ext_id/;
   }
   elsif ($vname || $gname) {
