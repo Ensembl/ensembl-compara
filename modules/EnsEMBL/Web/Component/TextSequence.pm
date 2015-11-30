@@ -106,7 +106,7 @@ sub too_rare_snp {
 
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
-  my ($self, $slices, $config,$adorn) = @_;
+  my ($self, $slices, $config, $adorn) = @_;
   my $hub      = $self->hub;
   my $sequence = [];
   my @markup;
@@ -246,10 +246,14 @@ sub set_variations {
       # This isn't a problem, however, since filtering by population is disabled for now anyway.
       if ($config->{'population'}) {
          $snps = $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'});
-      } else {
+      }
+      elsif ($config->{'hide_rare_snps'} && $config->{'hide_rare_snps'} ne 'off') {
         my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor','variation');
-        my @snps_list = @{$vfa->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0)};
-        push @snps_list,@{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)};
+        $snps = $vfa->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0);
+      }
+      else {
+        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},
+                         @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)});
         $snps = \@snps_list;
       }
     };
@@ -275,9 +279,12 @@ sub set_variations {
   # Also prioritize shorter variations over longer ones so they don't get hidden
   # Prioritize focus (from the URL) variations over all others 
   my @ordered_snps = map $_->[3], sort { $a->[0] <=> $b->[0] || $b->[1] <=> $a->[1] || $b->[2] <=> $a->[2] } map [ $_->dbID == $focus, $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
-  
+
   foreach (@ordered_snps) {
-    my $dbID   = $_->dbID;
+    my $dbID = $_->dbID;
+    if (!$dbID && $_->isa('Bio::EnsEMBL::Variation::AlleleFeature')) {
+      $dbID = $_->variation_feature->dbID;
+    }
     my $failed = $_->variation ? $_->variation->is_failed : 0;
 
     my $variation_name = $_->variation_name;
@@ -289,7 +296,7 @@ sub set_variations {
        $snp_type       = lc [ grep $config->{'consequence_types'}{$_}, @{$_->consequence_type} ]->[0] if $config->{'consequence_types'};
        $snp_type       = 'failed' if $failed;
     my $ambigcode;
-    
+
     if ($config->{'variation_sequence'}) {
       my $url = $hub->url({ species => $name, r => undef, vf => $dbID, v => undef });
       
@@ -298,13 +305,12 @@ sub set_variations {
     }
     
     # Use the variation from the underlying slice if we have it.
-    my $snp = $u_snps->{$variation_name} if scalar keys %$u_snps;
-    $snp ||= $_; 
+    my $snp = (scalar keys %$u_snps && $u_snps->{$variation_name}) ? $u_snps->{$variation_name} : $_;
     
     # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
     my $seq_region_start = $snp->seq_region_start;
     my $seq_region_end   = $snp->seq_region_end;
-    
+
     # If it's a mapped slice, get the coordinates for the variation based on the reference slice
     if ($config->{'mapper'}) {
       # Constrain region to the limits of the reference slice
@@ -324,7 +330,7 @@ sub set_variations {
     # Co-ordinates relative to the sequence - used to mark up the variation's position
     my $s = $start - 1;
     my $e = $end   - 1;
-    
+
     # Co-ordinates to be used in link text - will use $start or $seq_region_start depending on line numbering style
     my ($snp_start, $snp_end);
     
@@ -362,16 +368,16 @@ sub set_variations {
       vf      => $dbID,
       vdb     => 'variation'
     });
-    
+
     my $link_text  = qq{ <a href="$url">$snp_start: $variation_name</a>;};
     (my $ambiguity = $config->{'ambiguity'} ? $_->ambig_code($strand) : '') =~ s/-//g;
-    
+
     for ($s..$e) {
       # Don't mark up variations when the secondary strain is the same as the sequence.
       # $sequence->[-1] is the current secondary strain, as it is the last element pushed onto the array
       # uncomment last part to enable showing ALL variants on ref strain (might want to add as an opt later)
       next if defined $config->{'match_display'} && $sequence->[-1][$_]{'letter'} =~ /[\.\|~$sequence->[0][$_]{'letter'}]/i;# && scalar @$sequence > 1;
-      
+
       $markup->{'variations'}{$_}{'focus'}     = 1 if $config->{'focus_variant'} && $config->{'focus_variant'} eq $dbID;
       $markup->{'variations'}{$_}{'type'}      = $snp_type;
       $markup->{'variations'}{$_}{'ambiguity'} = $ambiguity;
