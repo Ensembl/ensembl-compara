@@ -90,14 +90,14 @@ sub content {
     $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
     
     if ($i == 1) {
-      $image_config->multi($methods, $seq_region_name, $i, $max, $slices->[$i]) if $join_alignments && $max == 2 && $slices->[$i]{'species_check'} ne $primary_species;
+      $image_config->multi($methods, $seq_region_name, $i, $max, $slices, $slices->[$i]) if $join_alignments && $max == 2 && $slices->[$i]{'species_check'} ne $primary_species;
       $image_config->join_genes($i, $max, $slices->[$i]) if $join_genes && $max == 2;
       
       push @images, $primary_slice, $image_config if $max < 3;
       
       $primary_image_config = $image_config;
     } else {
-      $image_config->multi($methods, $_->{'target'} || $seq_region_name, $i, $max, $slices->[0]) if $join_alignments && $_->{'species_check'} ne $primary_species;
+      $image_config->multi($methods, $_->{'target'} || $seq_region_name, $i, $max, $slices, $slices->[0]) if $join_alignments && $_->{'species_check'} ne $primary_species;
       $image_config->join_genes($i, $max, $slices->[0]) if $join_genes;
       $image_config->highlight($highlight_gene) if $highlight_gene;
       
@@ -124,7 +124,7 @@ sub content {
           $primary_image_config->get_node('scalebar')->set('caption', $short_name =~ s/^[^\s]+\s+//r);
           $primary_image_config->get_node('scalebar')->set('name', $short_name);
           $primary_image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$slices->[0]->{'species'});
-          $primary_image_config->multi($methods, $seq_region_name, 1, $max, map $slices->[$_], $i - 1, $i);
+          $primary_image_config->multi($methods, $seq_region_name, 1, $max, $slices, map { $slices->[$_] } ($i - 1,$i));
         }
         
         $primary_image_config->join_genes(1, $max, map $slices->[$_], $i - 1, $i) if $join_genes;
