@@ -3232,7 +3232,7 @@ sub add_sequence_variations_meta {
     }
     push(@menus, $menu_item);
   }
-  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent} || 
+  foreach my $menu_item (sort {$a->{type} !~ /menu/ cmp $b->{type} !~ /menu/ || $a->{parent} cmp $b->{parent} ||
                                $a->{order} <=> $b->{order} || $a->{'long_name'} cmp $b->{'long_name'}
                               } @menus) {
     my $node;
