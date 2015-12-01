@@ -283,7 +283,7 @@ sub make_table {
     _key => 'vf', _type => 'numeric unshowable no_filter'
   },{
     _key => 'location', _type => 'position unshowable',
-    sort_for => 'chr',
+    label => 'Location', sort_for => 'chr',
   },{
     _key => 'chr', _type => 'string no_filter', label => 'Chr: bp',
     width => 1.75,
