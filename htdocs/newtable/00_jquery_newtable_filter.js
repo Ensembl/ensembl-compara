@@ -353,13 +353,16 @@
     return {
       generate: function() {
         var dropdowns = "";
+        var all_dropdowns = [];
         $.each(config.columns,function(i,key) {
           var cc = config.colconf[key];
-          if(cc.superprimary) { dropdowns += add_button(i,key); }
+          all_dropdowns.push([cc.primary,i,add_button(i,key)]);
         });
-        $.each(config.columns,function(i,key) {
-          var cc = config.colconf[key];
-          if(!cc.superprimary) { dropdowns += add_button(i,key); }
+        all_dropdowns.sort(function(a,b) {
+          return (a[0]-b[0])||(a[1]-b[1]);
+        });
+        $.each(all_dropdowns,function(i,val) {
+          dropdowns += val[2];
         });
         dropdowns += dropdown(-1,'','Filter Other Columns',true);
 
