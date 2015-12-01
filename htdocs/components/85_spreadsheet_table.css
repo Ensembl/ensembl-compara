@@ -144,6 +144,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter .x:hover { border: 2px solid #999; text-shadow: 0 1px white; }
 .newtable_filter .x span { background: url(/i/16/cross-grey.png) no-repeat 4px 4px; display: inline-block; width: 20px; height: 20px; }
 .newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: white; display: inline-block; border: 3px double white; font-size: 14px; cursor: pointer; background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
+.newtable_filter li.t.more .b { background: #506099 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
 .newtable_filter li.t.restricted .x { visibility: visible; }
 .newtable_filter li.t.more .b { display: inline-block; }
 .newtable_filter li.more .k:after { content: ""; }
