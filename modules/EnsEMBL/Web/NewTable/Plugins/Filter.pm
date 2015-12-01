@@ -124,6 +124,14 @@ sub col_filter_add_baked {
   };
 }
 
+sub col_filter_add_bakefoot {
+  my ($self,$col,$text) = @_;
+
+  my $meta = $self->config->get_keymeta("filter",$col,'*');
+  my $bakefoot = ($meta->{'bakefoot'}||=[]);
+  push @$bakefoot,$text;
+}
+
 sub col_filter_bake_into {
   my ($self,$col,$value,$button) = @_;
 

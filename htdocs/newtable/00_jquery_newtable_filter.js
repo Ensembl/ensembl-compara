@@ -45,8 +45,15 @@
 
     function dropdown(idx,filter,label,primary) {
       var prec = primary?"pri":"sec";
-      if(filter=='') { filter = 'more'; }
-      return '<li class="t prec_'+prec+'" data-idx="'+idx+'"><div class="x"><span></span></div><div class="b"><span class="k">'+label+'</span><span class="v">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></div></li>';
+      var ht_text = "Filter table rows by "+label+".";
+      if(filter=='') {
+        filter = 'more';
+        ht_text = "Filter by other columns.";
+      }
+      var out = '<li class="t prec_'+prec+'" data-idx="'+idx+'"><div class="x"><span></span></div><div class="b"><span class="k _ht">'+label+'</span><span class="v _ht">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></div></li>';
+      var $x = $('<div/>');
+      $x.append($(out)).find('.b ._ht').attr('title',ht_text);
+      return $x.html();
     }
 
     function activate_menu($table,$button,others_only) {
@@ -207,6 +214,7 @@
     }
 
     function show_menu($el) {
+      $el.closest('.b').find('._ht:data(ui-tooltip)').helptip('close');
       $el.show();
       var right = $el.offset().left+$el.width();
       if(right>$('html').width()) {
@@ -353,13 +361,16 @@
     return {
       generate: function() {
         var dropdowns = "";
+        var all_dropdowns = [];
         $.each(config.columns,function(i,key) {
           var cc = config.colconf[key];
-          if(cc.superprimary) { dropdowns += add_button(i,key); }
+          all_dropdowns.push([cc.primary,i,add_button(i,key)]);
         });
-        $.each(config.columns,function(i,key) {
-          var cc = config.colconf[key];
-          if(!cc.superprimary) { dropdowns += add_button(i,key); }
+        all_dropdowns.sort(function(a,b) {
+          return (a[0]-b[0])||(a[1]-b[1]);
+        });
+        $.each(all_dropdowns,function(i,val) {
+          dropdowns += val[2];
         });
         dropdowns += dropdown(-1,'','Filter Other Columns',true);
 
@@ -402,6 +413,7 @@
           var $menu = $(e.target).closest('.newtable_filter li.t .m');
           activate_menu($table,$button,!!$menu.length);
         });
+        $('.b ._ht',$el).helptip();
       },
       pipe: function() {
         return [

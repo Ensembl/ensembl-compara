@@ -144,6 +144,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter .x:hover { border: 2px solid #999; text-shadow: 0 1px white; }
 .newtable_filter .x span { background: url(/i/16/cross-grey.png) no-repeat 4px 4px; display: inline-block; width: 20px; height: 20px; }
 .newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: white; display: inline-block; border: 3px double white; font-size: 14px; cursor: pointer; background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
+.newtable_filter li.t.more .b { background: #506099 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
 .newtable_filter li.t.restricted .x { visibility: visible; }
 .newtable_filter li.t.more .b { display: inline-block; }
 .newtable_filter li.more .k:after { content: ""; }
@@ -152,14 +153,15 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter { padding: 0 0px; margin: 0; background-color: white; font-size: 16px; color: #333; }
 .newtable_filter li .k:after { content: ": "; }
 .newtable_filter li { position: relative; }
-.newtable_filter li .m { position: absolute; top: 22px; left: 4px; background: white; padding: 4px; border: 1px solid #999; display: none; z-index: 100; text-shadow: none; color: black; }
-.newtable_filter .newtable_filtertype_class .body ul { margin: -3px 0; padding: 0; display: block; float: left; font-size: 85%; line-height: 1em; }
-.newtable_filter .newtable_filtertype_class .body li { background: linear-gradient(to top,#777,#aaa),#aaa; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; border: 1px solid #ccc; display: block; width: 200px; white-space: nowrap; border-radius: 8px; }
+.newtable_filter li .m { position: absolute; top: 22px; left: 4px; background: white; padding: 4px; border: 1px solid #999; display: none; z-index: 100; text-shadow: none; color: black; cursor: auto; }
+.newtable_filter .newtable_filtertype_class .body ul { margin: -3px 0; padding: 0; display: block; float: left; font-size: 75%; line-height: 1em; }
+.newtable_filter .newtable_filtertype_class .body li { background: linear-gradient(to top,#444,#666),#666; color: #888; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; border: 1px solid #ccc; display: block; width: 200px; white-space: nowrap; border-radius: 8px; }
+.newtable_filter li .m .tail li { cursor: pointer; }
 .newtable_filter .newtable_filtertype_class .body li img { max-height: 12px; }
 .newtable_filter .newtable_filtertype_class .body li:before { content: "Off"; background: linear-gradient(to top,#422,#633), #633; position: absolute; right: 0; top: 0; bottom: 0; padding: 4px; width: 26px; display: inline-block; text-align: center; color: #999; overflow: hidden; border-radius: 0 8px 8px 0; }
 .newtable_filter .newtable_filtertype_class .body li.on:before { content: "On"; background: linear-gradient(to top,#174,#396) #396; border-radius: 0 8px 8px 0; color: black; }
 .newtable_filtertype_class li img { display: inline-block; vertical-align: bottom; margin-right: 4px; }
-.newtable_filter .newtable_filtertype_class .body li.on { background: linear-gradient(to top,#eee,white),white; }
+.newtable_filter .newtable_filtertype_class .body li.on { background: linear-gradient(to top,#cec,#efe),#cec; color: black; }
 .newtable_filter .newtable_filtertype_class div.use_cols { width: 750px; }
 .newtable_filter .newtable_filtertype_class .body { overflow: hidden; }
 .newtable_range { padding: 4px; }
@@ -168,7 +170,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_range .slider_unspecified { padding: 0 6px; }
 .newtable_range .slider_unspecified input { vertical-align: bottom; }
 .newtable_filtertype_more ul { padding: 0; }
-.newtable_filtertype_more li { background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; margin: 4px; width: 100px; border-radius: 0; padding: 2px 8px 2px 24px; border: 3px double white; list-style: none; color: white; text-align: left; }
+.newtable_filtertype_more li { background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; margin: 4px; width: 100px; border-radius: 0; padding: 2px 8px 2px 24px; border: 3px double white; list-style: none; color: white; text-align: left; cursor: pointer; }
 .newtable_filtertype_more li:hover {  background: url(/i/16/rev/filter.png) no-repeat 4px 50%,linear-gradient(to top,#667aa6,#869ac6) #667aa6; text-shadow: 0 1px #869ac6; }
 .newtable_filter ul li.t.prec_sec { display: none; }
 .newtable_filter .intro { font-weight: bold; margin: 0 0 0 8px; color: #666; }
@@ -197,12 +199,16 @@ td.colour-swatch { border:2px solid #ffffff; }
 body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5px 0; }
 .newtable_filtertype_class .baked { padding: 0; }
 .newtable_filter .newtable_filtertype_class .bakery { float: none; text-align: center; display: block; }
+.newtable_filtertype_class .bakery ul { padding-bottom: 0; }
 .newtable_filtertype_class .bakery li { width: auto; }
-.newtable_filtertype_class .bakery li { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; padding: 0; border: double white; color: white; cursor: pointer; display: inline-block; width: 103px; text-align: center; margin: 2px 0; padding: 6px; border-width: 3px 3px 3px 0; }
+.newtable_filtertype_class .bakery li { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; padding: 0; border: double white; color: white; cursor: pointer; display: inline-block; width: 105px; text-align: center; margin: 2px 0; padding: 6px; border-width: 3px 3px 3px 0; }
 .newtable_filtertype_class .bakery li:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
 .newtable_filtertype_class .bakery li:before { visibility: hidden; }
 .newtable_filtertype_class .bakery .first { border-radius: 12px 0 0 12px; border-width: 3px 3px 3px 3px;  }
 .newtable_filtertype_class .bakery .last { border-radius: 0 12px 12px 0; }
+.newtable_filtertype_class .bakefoot ul { padding-top: 0px; margin: auto; display: block; width: 200px; font-size: 10px; color: #667aa6; }
+.newtable_filtertype_class .body ul .coltab-text { margin-bottom: 1px; }
+.newtable_filtertype_class .bakefoot li { list-style-image: none; list-style: none; }
 .newtable_filtertype_class .body li .main { margin-right: 24px; }
 .newtable_filtertype_class .body li .more { float: right; color: #999; padding-right: 4px; }
 .newtable_filter .tail { border-top: 1px solid #ccc; margin: 8px 8px 0 8px; text-align: center; }

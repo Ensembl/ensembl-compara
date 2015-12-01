@@ -97,7 +97,7 @@ sub populate_tree {
     { 'availability' => 'transcript database:variation core' }
   ));
 
-  $var_menu->append($self->create_node('Variation_Transcript/Image', 'Variation image',
+  $var_menu->append($self->create_node('Variation_Transcript/Image', 'Variant image',
     [qw( variationimage EnsEMBL::Web::Component::Transcript::VariationImage )],
     { 'availability' => 'transcript database:variation core' }
   ));

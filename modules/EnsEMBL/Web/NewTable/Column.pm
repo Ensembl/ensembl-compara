@@ -160,8 +160,7 @@ sub add_value {
 }
 
 sub colconf { return $_[0]->{'conf'}; }
-sub set_primary { $_[0]->{'conf'}{'primary'} = 1; }
-sub set_superprimary { $_[0]->{'conf'}{'superprimary'} = 1; }
+sub set_primary { $_[0]->{'conf'}{'primary'} = $_[1]; }
 sub no_sort { $_[0]->{'conf'}{'sort'} = 0; }
 sub set_filter { $_[0]->{'conf'}{'range'} = $_[1]; }
 sub no_filter { $_[0]->set_filter(''); }

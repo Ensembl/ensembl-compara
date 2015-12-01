@@ -216,9 +216,10 @@ sub snptype_classes {
   my $var_styles   = $species_defs->colour('variation');
   my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my $column = $table->column('snptype');
-  $column->filter_add_baked('lof','Only LoF');
-  $column->filter_add_baked('lof_missense','LoF & Missense');
+  $column->filter_add_baked('lof','PTV');
+  $column->filter_add_baked('lof_missense','PTV & Missense');
   $column->filter_add_baked('exon','Only Exonic');
+  $column->filter_add_bakefoot('PTV = Protein Truncating Variant');
   my @lof = qw(stop_gained frameshift_variant splice_donor_variant
                splice_acceptor_variant);
   foreach my $con (@all_cons) {
@@ -282,7 +283,7 @@ sub make_table {
     _key => 'vf', _type => 'numeric unshowable no_filter'
   },{
     _key => 'location', _type => 'position unshowable',
-    sort_for => 'chr',
+    label => 'Location', sort_for => 'chr',
   },{
     _key => 'chr', _type => 'string no_filter', label => 'Chr: bp',
     width => 1.75,
@@ -300,12 +301,13 @@ sub make_table {
   },{
     _key => 'gmaf_allele', _type => 'string no_filter unshowable',
   },{
-    _key => 'gmaf', _type => 'numeric set_primary', label => "Glo\fbal MAF",
+    _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
     helptip => $glossary->{'Global MAF'},
     also_cols => 'gmaf_allele',
     filter_range => [0,0.5],
     filter_fixed => 1,
     filter_logarithmic => 1,
+    primary => 1,
   },{
     _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
     width => 1.75
@@ -335,20 +337,21 @@ sub make_table {
     filter_maybe_blank => 1,
     filter_sorted => 1,
   },{
-    _key => 'clinsig', _type => 'iconic set_primary', label => "Clin. Sig.",
+    _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
     helptip => 'Clinical significance',
     filter_label => 'Clinical Significance',
     sort_down_first => 1,
     filter_keymeta_enum => 1,
     filter_sorted => 1,
   },{
-    _key => 'snptype', _type => 'iconic set_primary set_superprimary', label => "Conseq. Type",
-    filter_label => 'Consequence Type',
+    _key => 'snptype', _type => 'iconic', label => "Conseq. Type",
+    filter_label => 'Consequences',
     filter_sorted => 1,
     width => 1.5,
     helptip => 'Consequence type',
     sort_down_first => 1,
     filter_keymeta_enum => 1,
+    primary => 4,
   },{
     _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
     helptip => "Resulting amino acid(s)"
@@ -369,6 +372,7 @@ sub make_table {
     filter_range => [0,1],
     filter_fixed => 1,
     filter_blank_button => 1,
+    primary => 2,
   },{
     _key => 'polyphen_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'polyphen_value',
@@ -382,6 +386,7 @@ sub make_table {
     filter_range => [0,1],
     filter_fixed => 1,
     filter_blank_button => 1,
+    primary => 3,
   },{
     _key => 'LRG', _type => 'string unshowable',
     label => "LRG",

@@ -47,9 +47,8 @@
     attrs['data-key'] = key || '';
     if(cc.sort)  { classes.push('sorting'); }
     if(cc.help) {
-      var help = $('<div/>').text(cc.help).html();
-      text =
-        '<span class="ht _ht" title="'+help+'">'+text+'</span>';
+      var help = $('<span class="ht _ht"/>').attr('title',cc.help).html(text);
+      text = $('<div/>').append(help).html();
     }
     var attr_str = "";
     $.each(attrs,function(k,v) {
