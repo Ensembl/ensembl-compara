@@ -344,7 +344,7 @@ sub make_table {
     filter_sorted => 1,
   },{
     _key => 'snptype', _type => 'iconic', label => "Conseq. Type",
-    filter_label => 'Consequence Type',
+    filter_label => 'Consequences',
     filter_sorted => 1,
     width => 1.5,
     helptip => 'Consequence type',
