@@ -36,7 +36,15 @@
       return false;
     }
 
+    // IE polyfill
+    if(typeof String.prototype.trim !== 'function') {
+      String.prototype.trim = function() {
+        return this.replace(/^\s+|\s+$/g,'');
+      }
+    }
+
     function changed($table,value) {
+      value = value.trim();
       var old_val = $table.data('search-value');
       if(old_val == value) { return; }
       $table.data('search-value',value);
