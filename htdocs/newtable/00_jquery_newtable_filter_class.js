@@ -84,6 +84,15 @@
     for(var i=0;i<all.length;i++) { $buttons.append(all[i]); }
   }
 
+  function add_bakefoot($bakefoot,km) {
+    var bakefoot = (((km||{})['*']||{}).bakefoot)||[];
+    if(!bakefoot.length) { return; }
+    var $ul = $('<ul/>').appendTo($bakefoot);
+    for(var i=0;i<bakefoot.length;i++) {
+      var $li = $('<li/>').appendTo($ul).html(bakefoot[i]);
+    }
+  }
+
   $.fn.newtable_filter_class = function(config,data) {
     return {
       filters: [{
@@ -93,10 +102,12 @@
           var title = (cc.filter_label || cc.label || cc.title || key);
           var $summary = $('.summary_text',$box).text('(x/y on)');
           var $baked = $('<div class="baked"/>').appendTo($box);
+          var $bakefoot = $('<div class="bakefoot"/>').appendTo($box);
           var $body = $('<div class="body"/>').appendTo($box);
           var counts = enums.counts;
           var values = enums.keys.slice();
           add_baked($baked,$body,$el,$summary,values,key,km);
+          add_bakefoot($bakefoot,km);
           if(!cc.filter_sorted) {
             values.sort(function(a,b) { return a.localeCompare(b); });
           }

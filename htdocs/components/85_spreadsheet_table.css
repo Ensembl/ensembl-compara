@@ -197,12 +197,15 @@ td.colour-swatch { border:2px solid #ffffff; }
 body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5px 0; }
 .newtable_filtertype_class .baked { padding: 0; }
 .newtable_filter .newtable_filtertype_class .bakery { float: none; text-align: center; display: block; }
+.newtable_filtertype_class .bakery ul { padding-bottom: 0; }
 .newtable_filtertype_class .bakery li { width: auto; }
-.newtable_filtertype_class .bakery li { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; padding: 0; border: double white; color: white; cursor: pointer; display: inline-block; width: 103px; text-align: center; margin: 2px 0; padding: 6px; border-width: 3px 3px 3px 0; }
+.newtable_filtertype_class .bakery li { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; padding: 0; border: double white; color: white; cursor: pointer; display: inline-block; width: 105px; text-align: center; margin: 2px 0; padding: 6px; border-width: 3px 3px 3px 0; }
 .newtable_filtertype_class .bakery li:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
 .newtable_filtertype_class .bakery li:before { visibility: hidden; }
 .newtable_filtertype_class .bakery .first { border-radius: 12px 0 0 12px; border-width: 3px 3px 3px 3px;  }
 .newtable_filtertype_class .bakery .last { border-radius: 0 12px 12px 0; }
+.newtable_filtertype_class .bakefoot ul { padding-top: 0px; margin: auto; display: block; width: 200px; font-size: 10px; color: #667aa6; }
+.newtable_filtertype_class .bakefoot li { list-style-image: none; list-style: none; }
 .newtable_filtertype_class .body li .main { margin-right: 24px; }
 .newtable_filtertype_class .body li .more { float: right; color: #999; padding-right: 4px; }
 .newtable_filter .tail { border-top: 1px solid #ccc; margin: 8px 8px 0 8px; text-align: center; }
