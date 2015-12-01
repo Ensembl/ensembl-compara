@@ -32,8 +32,8 @@ use base qw(EnsEMBL::Draw::GlyphSet_simple);
 sub depth {
   my $self   = shift;
   my $length = $self->{'container'}->length;
-  
-  if ($self->{'display'} =~ /labels/ || ($self->{'display'} eq 'normal' && $length <= 2e5)) {
+
+  if ($self->{'display'} =~ /labels/ || ($self->{'display'} eq 'normal' && $length <= 2e5) || $length <= 101) {
     return $length > 1e4 ? 20 : undef;
   }
   
@@ -105,12 +105,11 @@ sub check_source {
 }
 
 sub fetch_features {
-  my $self      = shift;
-  my $config    = $self->{'config'};
-  my $slice     = $self->{'container'};
-  my $colourmap = $config->colourmap;
-  my $id        = $self->{'my_config'}->id;
-  my $var_db    = $self->my_config('db') || 'variation';
+  my $self   = shift;
+  my $config = $self->{'config'};
+  my $slice  = $self->{'container'};
+  my $id     = $self->{'my_config'}->id;
+  my $var_db = $self->my_config('db') || 'variation';
   
   if (!$self->cache($id)) {
     my $variation_db_adaptor = $config->hub->database($var_db, $self->species);
@@ -129,8 +128,9 @@ sub fetch_features {
       } else { 
         @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures(undef, undef, undef, $var_db) || []};
       }
-      
-      $self->cache($id, \@somatic_mutations);   
+
+      $self->cache($id, \@somatic_mutations);
+
     } else { # get standard variations
       my $sources = $self->my_config('sources'); 
          $sources = { map { $_ => 1 } @$sources } if $sources; 
@@ -247,7 +247,8 @@ sub render_tag {
   my ($self, $tag, $composite, $slice_length, $height, $start, $end) = @_;
   my $pix_per_bp = $self->scalex;
   my @glyph;
-  
+  my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
+
   if ($tag->{'style'} eq 'insertion') {
     push @glyph, $self->Triangle({
       mid_point  => [ $start - 1, $height - 1 ],
@@ -273,7 +274,6 @@ sub render_tag {
     my $box_width = 8 / $pix_per_bp;
     
     if ($tag->{'style'} eq 'box') {
-      my %font = $self->get_font_details($self->my_config('font') || 'innertext', 1);
       my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $tag->{'letter'}, '', %font);
       my $width  = $text_width / $pix_per_bp;
       my $box_x  = $start - 4 / $pix_per_bp;
@@ -320,7 +320,6 @@ sub render_tag {
   }
   
   if ($tag->{'style'} eq 'label') {
-    my %font       = $self->get_font_details($self->my_config('font') || 'innertext', 1);
     my $text_width = [$self->get_text_width(0, $tag->{'label'}, '', %font)]->[2];
     
     $composite->push($self->Text({
