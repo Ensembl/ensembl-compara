@@ -79,16 +79,18 @@ sub fetch {
 
   ## make the request
   my $response = read_file($url, {'nice' => 1, 'no_exception' => 1});
-  unless ($response->{'error'}) {
+  if ($response->{'error'}) {
+    return ($response->{'error'}, 1);
+  }
+  else {
     if (lc($format) eq 'json') {
       $response = from_json($response->{'content'});
     }
     else {
       $response = $response->{'content'};
     }
+    return $response;
   }
-
-  return $response;
 }
 
 1;
