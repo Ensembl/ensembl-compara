@@ -65,7 +65,7 @@ sub content {
 sub _content {
   my $self             = shift;
   my $hub              = $self->hub;
-  my $object           = $self->object;
+  my $object           = $self->object || $self->hub->core_object('transcript');
   my $species          = $hub->species;
   my $dbentry_adap     = Bio::EnsEMBL::Registry->get_adaptor($species, 'core', 'DBEntry'); # dbentry adaptor used to get db_name of the hit
   my $logic_name       = $object->logic_name;
@@ -506,7 +506,7 @@ sub _content {
 sub split_evidence_and_munge_gaps {
   my $self = shift;
   my ($hit, $exons, $offset, $coding_coords, $obj_type) = @_;
-  my $object               = $self->object;
+  my $object               = $self->object || $self->hub->core_object('transcript');
   my $hit_seq_region_start = $hit->start;
   my $hit_seq_region_end   = $hit->end;
   my $hit_name             = $hit->hseqname;
