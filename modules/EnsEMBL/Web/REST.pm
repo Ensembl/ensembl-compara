@@ -18,7 +18,7 @@ limitations under the License.
 
 package EnsEMBL::Web::REST;
 
-### Generic interface to the Ensembl REST API 
+### Generic interface to a REST API - defaults to Ensembl REST server
 
 use strict;
 use warnings;
@@ -29,8 +29,11 @@ use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
 sub new {
 ### c
-  my ($class, $hub) = @_;
-  my $self = { 'hub' => $hub };
+### @param hub - EnsEMBL::Web::Hub object
+### @param server String - base URL of the REST service
+  my ($class, $hub, $server) = @_;
+  $server ||= $hub->species_defs->ENSEMBL_REST_URL;
+  my $self = { 'hub' => $hub, 'server' => $server };
   bless $self, $class;
   return $self;
 }
@@ -39,6 +42,12 @@ sub hub {
 ### a
   my $self = shift;
   return $self->{'hub'};
+}
+
+sub server {
+### a
+  my $self = shift;
+  return $self->{'server'};
 }
 
 our %content_type = (
@@ -64,7 +73,7 @@ sub fetch {
   $format ||= 'json';
 
   my $hub   = $self->hub;
-  my $url   = sprintf('%s/%s', $hub->species_defs->ENSEMBL_REST_URL, $endpoint);
+  my $url   = sprintf('%s/%s', $self->server, $endpoint);
   my $type  = $content_type{lc($format)};
   $url     .= "?content-type=$type" unless $endpoint =~ /content-type/;
 
