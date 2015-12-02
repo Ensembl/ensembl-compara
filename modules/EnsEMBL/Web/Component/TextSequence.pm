@@ -113,9 +113,9 @@ sub get_sequence_data {
  
   if($config->{'snp_display'} ne 'off') {
     if($adorn eq 'none') {
-      push @{$config->{'loading'}||=[]},'variations';
+      push @{$config->{'loading'}||=[]},'variants';
     } else {
-      push @{$config->{'loaded'}||=[]},'variations';
+      push @{$config->{'loaded'}||=[]},'variants';
     }
   }
  
@@ -378,14 +378,14 @@ sub set_variations {
       # uncomment last part to enable showing ALL variants on ref strain (might want to add as an opt later)
       next if defined $config->{'match_display'} && $sequence->[-1][$_]{'letter'} =~ /[\.\|~$sequence->[0][$_]{'letter'}]/i;# && scalar @$sequence > 1;
 
-      $markup->{'variations'}{$_}{'focus'}     = 1 if $config->{'focus_variant'} && $config->{'focus_variant'} eq $dbID;
-      $markup->{'variations'}{$_}{'type'}      = $snp_type;
-      $markup->{'variations'}{$_}{'ambiguity'} = $ambiguity;
-      $markup->{'variations'}{$_}{'alleles'}  .= ($markup->{'variations'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
+      $markup->{'variants'}{$_}{'focus'}     = 1 if $config->{'focus_variant'} && $config->{'focus_variant'} eq $dbID;
+      $markup->{'variants'}{$_}{'type'}      = $snp_type;
+      $markup->{'variants'}{$_}{'ambiguity'} = $ambiguity;
+      $markup->{'variants'}{$_}{'alleles'}  .= ($markup->{'variants'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
       
-      unshift @{$markup->{'variations'}{$_}{'link_text'}}, $link_text if $_ == $s;
+      unshift @{$markup->{'variants'}{$_}{'link_text'}}, $link_text if $_ == $s;
 
-      $markup->{'variations'}{$_}{'href'} ||= {
+      $markup->{'variants'}{$_}{'href'} ||= {
         species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
         type        => 'ZMenu',
         action      => 'TextSequence',
@@ -394,9 +394,9 @@ sub set_variations {
       };
 
       if($dbID) {
-        push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+        push @{$markup->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
       } else {
-        push @{$markup->{'variations'}{$_}{'href'}{'v'}},  $variation_name;
+        push @{$markup->{'variants'}{$_}{'href'}{'v'}},  $variation_name;
       }
       
       $sequence->[$_] = $ambigcode if $config->{'variation_sequence'} && $ambigcode;
@@ -604,8 +604,8 @@ sub markup_variation {
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
-    foreach (sort { $a <=> $b } keys %{$data->{'variations'}}) {
-      $variation = $data->{'variations'}{$_};
+    foreach (sort { $a <=> $b } keys %{$data->{'variants'}}) {
+      $variation = $data->{'variants'}{$_};
       
       $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
       $seq->[$_]{'new_letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
@@ -618,7 +618,7 @@ sub markup_variation {
       $seq->[$_]{'new_post'} = $new_post if $new_post ne $seq->[$_]{'post'};
       $seq->[$_]{'post'} = $new_post;
       
-      $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
+      $config->{'key'}{'variants'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
     }
     
     $i++;
@@ -1165,7 +1165,7 @@ sub build_sequence {
     $partial_key->{$_} = $config->{$_} for grep $config->{$_},        @{$self->{'key_params'}};
     $partial_key->{$_} = 1             for grep $config->{'key'}{$_}, @{$self->{'key_types'}};
     
-    foreach my $type (grep $config->{'key'}{$_}, qw(exons variations)) {
+    foreach my $type (grep $config->{'key'}{$_}, qw(exons variants)) {
       $partial_key->{$type}{$_} = 1 for keys %{$config->{'key'}{$type}};
     }
     
@@ -1314,7 +1314,7 @@ sub content_key {
   
   $config->{'key'}{$_} = $hub->param($_) for @{$self->{'key_types'}};
   
-  for my $p (grep $hub->param($_), qw(exons variations)) {
+  for my $p (grep $hub->param($_), qw(exons variants)) {
     $config->{'key'}{$p}{$_} = 1 for $hub->param($p);
   }
 
@@ -1378,13 +1378,13 @@ sub get_key {
     }
   }
   
-  $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
-  $key{'variations'}{'failed'}{'title'} = "Suspect variants which failed our quality control checks";
+  $key{'variants'}{$_} = $var_styles->{$_} for keys %$var_styles;
+  $key{'variants'}{'failed'}{'title'} = "Suspect variants which failed our quality control checks";
 
   my $example = ($hub->param('v')) ? ' (i.e. '.$hub->param('v').')' : '';
 
   if($config->{'focus_variant'}) {
-    $image_config->{'legend'}{'variations'}{'focus'} = {
+    $image_config->{'legend'}{'variants'}{'focus'} = {
       class     => 'focus',
       label     => 'red',
       default   => 'white',
