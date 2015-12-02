@@ -43,8 +43,7 @@ sub content {
   my $self            = shift;
   my $hub             = $self->hub;
   my $sd              = $hub->species_defs;
-  my $sitename        = $sd->ENSEMBL_SITETYPE;
-  my $current_species = $hub->data_species;
+  my $html;
 
   ## REST call
   my $rest = EnsEMBL::Web::REST->new($hub, $sd->TRACKHUB_REGISTRY_URL);
@@ -53,92 +52,91 @@ sub content {
   ## Compare species available on registry with valid species for this site
   my %local_species = map {$_ => 1} $sd->valid_species;
 
-  my $endpoint = '/api/info/species';
+  my $endpoint = 'api/info/assemblies';
   
-  my $rest_species = $rest->fetch($endpoint);
-  my $ok_species   = {};
+  my ($rest_species, $error) = $rest->fetch($endpoint);
 
-  foreach (@{$rest_species||[]}) {
-    (my $species = $_) =~ s/ /_/;
-    #warn ">>> SPECIES $species";
-    if ($local_species{$species}) {
-      $ok_species->{$species} = 1;
-    }
-  }
-
-  my $html;
-  
-  if (keys %$ok_species) {
-    my $form            = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'QueryTrackHub'}), {
-      'skip_validation'   => 1, # default JS validation is skipped as this form goes through a customised validation
-      'class'             => 'check',
-      'no_button'         => 1
-    });
-
-    my $fieldset = $form->add_fieldset({'no_required_notes' => 1});
-
-    $html .= $form->render;
+  if ($error) {
+    $html = '<p>Sorry, we are unable to fetch data from the Track Hub Registry at the moment</p>';
   }
   else {
-    $html .= '<p>Sorry, the Track Hub Registry has no species compatible with this website.</p>';
-    $html .= sprintf('<p>Please visit the <a href="%s">Track Hub Registry website</a> for more information.</p>', $rest->server);
+    my $ok_species   = {};
+
+    foreach (keys %{$rest_species||[]}) {
+      (my $species = $_) =~ s/ /_/;
+      if ($local_species{$species}) {
+        my $gca = $sd->get_config($species, 'ASSEMBLY_ACCESSION');
+        if (grep $gca, @{$rest_species->{$_}||[]}) {
+          $ok_species->{$species} = 1;
+        }
+      }
+    }
+
+    if (keys %$ok_species) {
+      my $current_species = $hub->data_species;
+
+      my $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'QueryTrackHub'}), {
+          'skip_validation'   => 1, # default JS validation is skipped as this form goes through a customised validation
+          'class'             => 'check',
+          'no_button'         => 1
+      });
+
+      my $fieldset = $form->add_fieldset({'no_required_notes' => 1});
+
+      # Create a data structure for species, with display labels and their current assemblies
+      my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, keys %$ok_species);
+
+      # Create HTML for showing/hiding assembly names to work with JS
+      my $assembly_names = join '', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, delete $_->{'assembly'} } @species;
+
+      $fieldset->add_field({
+                            'type'          => 'dropdown',
+                            'name'          => 'species',
+                            'label'         => 'Species',
+                            'values'        => \@species,
+                            'value'         => $current_species,
+                            'class'         => '_stt'
+      });
+
+      $fieldset->add_field({
+                            'type'          => 'noedit',
+                            'label'         => 'Assembly',
+                            'name'          => 'assembly_name',
+                            'value'         => $assembly_names,
+                            'no_input'      => 1,
+                            'is_html'       => 1,
+      });
+
+      my @data_types = qw(genomics transcriptomics proteomics);
+      my $values     = [{'value' => '', 'caption' => '-- all --'}];
+      push @$values, {'value' => $_, 'caption' => $_} for @data_types;
+      $fieldset->add_field({
+                            'type'          => 'dropdown',
+                            'name'          => 'datatype',
+                            'label'         => 'Data type',
+                            'values'        => $values,
+      });
+   
+      $fieldset->add_field({
+                            'type'          => 'String',
+                            'name'          => 'query',
+                            'label'         => 'Text search',
+      });
+ 
+      $fieldset->add_button({
+                            'type'          => 'Submit',
+                            'name'          => 'submit_button',
+                            'value'         => 'Search'
+      });
+
+      $html .= $form->render;
+    }
+    else {
+      $html .= '<p>Sorry, the Track Hub Registry currently has no species compatible with this website.</p>';
+      $html .= sprintf('<p>Please visit the <a href="%s">Track Hub Registry website</a> for more information.</p>', $rest->server);
+    }
   }
-
   return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Search the Track Hub Registry</h2>%s', $html;
-
-=pod
-  # Create a data structure for species, with display labels and their current assemblies
-  my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, $sd->valid_species);
-
-  # Create HTML for showing/hiding assembly names to work with JS
-  my $assembly_names = join '', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, delete $_->{'assembly'} } @species;
-
-  $fieldset->add_field({
-    'type'          => 'dropdown',
-    'name'          => 'species',
-    'label'         => 'Species',
-    'values'        => \@species,
-    'value'         => $current_species,
-    'class'         => '_stt'
-  });
-
-  $fieldset->add_field({
-    'type'          => 'noedit',
-    'label'         => 'Assembly',
-    'name'          => 'assembly_name',
-    'value'         => $assembly_names,
-    'no_input'      => 1,
-    'is_html'       => 1,
-  });
-
-  $fieldset->add_field({
-    'label'         => 'Data',
-    'field_class'   => '_userdata_add',
-    'elements'      => [{
-      'type'          => 'Text',
-      'value'         => 'Paste in data or provide a file URL',
-      'name'          => 'text',
-      'class'         => 'inactive'
-    }, {
-      'type'          => 'noedit',
-      'value'         => "Or upload file (max $max_upload_size)",
-      'no_input'      => 1,
-      'element_class' => 'inline-label'
-    }, {
-      'type'          => 'File',
-      'name'          => 'file',
-    }]
-  });
-
-  $self->add_auto_format_dropdown($form);
-
-  $fieldset->add_button({
-    'type'          => 'Submit',
-    'name'          => 'submit_button',
-    'value'         => 'Add data'
-  });
-
-=cut
 
 }
 
