@@ -90,8 +90,8 @@ sub content {
   my $self        = shift;
   my $cdb         = shift || 'compara';
   my $hub         = $self->hub;
-  my $object      = $self->object;
-  my $is_genetree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
+  my $object      = $self->object || $self->hub->core_object('gene');
+  my $is_genetree = $object && $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
   my ($gene, $member, $tree, $node, $test_tree);
 
   my $type   = $hub->param('data_type') || $hub->type;

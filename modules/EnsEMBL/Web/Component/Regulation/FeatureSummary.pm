@@ -33,7 +33,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $object = $self->object || $self->hub->core_object('regulation');
 
   $self->cell_line_button('reg_summary');
 
