@@ -53,7 +53,7 @@ sub populate_tree {
   $data_menu->append($self->create_node('RefreshTrackHub',   '', [], { command => 'EnsEMBL::Web::Command::UserData::RefreshTrackHub'   }));
 
   ## Trackhub registry
-  #$data_menu->append($self->create_node('SelectHub',     'Track Hubs', [qw(track_hubs  EnsEMBL::Web::Component::UserData::SelectHub)]));
+  $data_menu->append($self->create_node('TrackHubSearch',     'Track Hub Registry Search', [qw(track_hubs  EnsEMBL::Web::Component::UserData::TrackHubSearch)]));
   
   ## Attach DAS "wizard"
   # Component:     SelectServer
