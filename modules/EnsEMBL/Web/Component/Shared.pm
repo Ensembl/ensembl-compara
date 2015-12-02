@@ -1147,7 +1147,7 @@ sub structural_variation_table {
     my $name        = $svf->variation_name;
     my $description = $svf->source_description;
     my $sv_class    = $svf->var_class;
-    my $source      = $svf->source;
+    my $source      = $svf->source->name;
     
     if ($svf->study) {
       my $ext_ref    = $svf->study->external_reference;
