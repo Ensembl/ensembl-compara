@@ -75,7 +75,7 @@ sub content {
     if (keys %$ok_species) {
       my $current_species = $hub->data_species;
 
-      my $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'QueryTrackHub'}), {
+      my $form = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'TrackHubResults'}), {
           'skip_validation'   => 1, # default JS validation is skipped as this form goes through a customised validation
           'class'             => 'check',
           'no_button'         => 1
