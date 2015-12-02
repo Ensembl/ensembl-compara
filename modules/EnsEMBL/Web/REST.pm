@@ -23,7 +23,7 @@ package EnsEMBL::Web::REST;
 use strict;
 use warnings;
 
-use JSON qw(from_json);
+use JSON qw(from_json to_json);
 
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
@@ -69,16 +69,33 @@ sub fetch {
 ### @param format String (optional) - format to request data as. Defaults to JSON.
 ### @return - type depends on format requested. Defaults to a hashref which has been
 ###           converted from json
-  my ($self, $endpoint, $format) = @_;
-  $format ||= 'json';
+  my ($self, $endpoint, $args) = @_;
+  my $format = delete $args->{'format'} || 'json';
 
   my $hub   = $self->hub;
   my $url   = sprintf('%s/%s', $self->server, $endpoint);
   my $type  = $content_type{lc($format)};
-  $url     .= "?content-type=$type" unless $endpoint =~ /content-type/;
+
+  if ($args->{'url_params'}) {
+    $url .= '?' unless $url =~ /\?/;
+    while (my($k, $v) = each (%{$args->{'url_params'}||{}})) {
+      $url .= sprintf('%s=%s;', $k, $v);
+    }
+    delete $args->{'url_params'};
+  }
+
+  unless ($url =~ /content-type/) {
+    $url .= '?' unless $url =~ /\?/;
+    $url .= "content-type=$type";
+  }
+
+  if ($args->{'method'} && $args->{'method'} eq 'post') {
+    $args->{'headers'} = to_json($args->{'content'});
+    delete $args->{'content'};
+  }
 
   ## make the request
-  my $response = read_file($url, {'nice' => 1, 'no_exception' => 1});
+  my $response = read_file($url, {'nice' => 1, 'no_exception' => 1, %{$args||{}}});
   if ($response->{'error'}) {
     return ($response->{'error'}, 1);
   }
