@@ -412,6 +412,7 @@ sub count_go {
           
       }    
     }
+    next unless $go_name;
     $go_name =~ s/,$//g;
 
     my $goadaptor = $self->hub->get_databases('go')->{'go'}->dbc;
