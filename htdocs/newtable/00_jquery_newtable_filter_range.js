@@ -51,7 +51,7 @@
       draw_additional: function($el,values) {
         $el.data('slider-chr',values.chr);
       },
-      round_out: function(val) { return val; },
+      round_out: function(val) { return val; }
     },
     range: {
       summary_prefix: function($button) { return ''; },
@@ -60,7 +60,7 @@
       detect_catastrophe: function($el,$slider,values,km) { return false; },
       text_prefix: function(state) { return ''; },
       draw_additional: function($el,values) {},
-      round_out: function(val) { return round_2sf(val); },
+      round_out: function(val) { return round_2sf(val); }
     }
   };
 
@@ -75,7 +75,7 @@
   function reset_position($el) {
     $el.data('position',{
       min: null, max: null, nulls: true,
-      imp_nulls: true, exp_nulls: null,
+      imp_nulls: true, exp_nulls: null
     });
   }
 
@@ -281,7 +281,7 @@
           if(!values) { return false; }
           values = variety.preproc_values(values);
           return values && values.hasOwnProperty('min');
-        },
+        }
       });
     });
     return { filters: filters }; 

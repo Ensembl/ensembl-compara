@@ -48,7 +48,7 @@
   var defaults = {
     fixed: false,
     integer: false,
-    soggy: false,
+    soggy: false
   };
 
   var methods = {
@@ -66,7 +66,7 @@
           range: true, step: options.step,
           min: smin, max: smax, values: [smin,smax],
           slide: slide_stop($(this),options.slide),
-          stop: slide_stop($(this),options.stop),
+          stop: slide_stop($(this),options.stop)
         });
       });
     },
@@ -106,7 +106,7 @@
         this.slider('option','max',transform(options,parseFloat(max),0)+adj);
       }
     },
-    options: function() { return this.data('options'); },
+    options: function() { return this.data('options'); }
   };
 
   $.fn.rangeslider = function(arg) {
