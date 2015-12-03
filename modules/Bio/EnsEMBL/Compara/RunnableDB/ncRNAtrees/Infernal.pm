@@ -246,13 +246,12 @@ sub run_infernal {
   $self->param('model_id', $model_id );
 
   print STDERR "Model_id : $model_id\n" if ($self->debug);
-  my $ret1 = $self->dump_model('model_id', $model_id );
-  my $ret2 = $self->dump_model('name',     $model_id ) if (1 == $ret1);
-  if (1 == $ret2) {
+  my $ret1 = $self->dump_model( $model_id );
+  if ($ret1) {
     $self->param('gene_tree')->release_tree;
     $self->param('gene_tree', undef);
     $self->input_job->transient_error(0);
-    die ("Failed to find '$model_id' both in 'model_id' and 'name' fields of 'hmm_profile' table");
+    die ("Failed to find '$model_id' both in the 'hmm_profile' table");
   }
 
 
@@ -309,7 +308,7 @@ sub run_infernal {
 }
 
 sub dump_model {
-    my ($self, $field, $model_id) = @_;
+    my ($self, $model_id) = @_;
 
     my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_model_id_type($model_id)->[0]->profile();
 
