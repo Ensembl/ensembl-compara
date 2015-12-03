@@ -213,7 +213,7 @@ sub get_best_trimming_position {
   my @gaps;
   my @consensus;
   my @conservation;
-  foreach $this_seq (values %$seqs) {
+  foreach my $this_seq (values %$seqs) {
     my @seq = split("", $this_seq);
     for (my $i = 0; $i < @seq; $i++) {
       if ($seq[$i] eq "-") {

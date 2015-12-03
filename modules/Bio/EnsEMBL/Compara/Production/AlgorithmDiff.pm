@@ -478,14 +478,14 @@ sub _longestCommonSubsequence
 	my $thresh = [];
 	my $links = [];
 
-	my ( $i, $ai, $j, $k );
+	my ( $i, $ai, $k );
 	for ( $i = $aStart; $i <= $aFinish; $i++ )
 	{
 		$ai = &$keyGen( $a->[ $i ] );
 		if ( exists( $bMatches->{ $ai } ) )
 		{
 			$k = 0;
-			for $j ( reverse( @{ $bMatches->{ $ai } } ) )
+			for my $j ( reverse( @{ $bMatches->{ $ai } } ) )
 			{
 				# optimization: most of the time this will be true
 				if ( $k

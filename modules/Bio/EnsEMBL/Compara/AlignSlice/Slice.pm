@@ -423,7 +423,7 @@ sub get_all_Genes {
     }
     push(@$all_slices_coordinates, $this_slice_coordinates) if ($this_slice_coordinates);
 
-    foreach $this_slice_coordinates (@$all_slices_coordinates) {
+    foreach my $this_slice_coordinates (@$all_slices_coordinates) {
 # print STDERR "Foreach this_slice_coordinates...\n";
       my $this_slice = $this_slice_adaptor->fetch_by_region(
               $this_slice_coordinates->{coord_system_name},
