@@ -107,18 +107,9 @@ sub populate_tree {
     foreach my $oid (@clist) {
       my $cluster = $clusters{$oid};
 
-      my $url2 = $hub->url(
-        {
-          type   => 'Gene',
-          action => 'Ontologies/' . $cluster->{description},
-          oid    => $oid
-        }
-      );
-
       (my $desc2 = $cluster->{db}.": ".ucfirst($cluster->{description})) =~ s/_/ /g;
 
-      $go_menu->append($self->create_node('Ontologies/'. $cluster->{description}, $desc2, [qw( go EnsEMBL::Web::Component::Gene::Go )], {'availability' => "gene has_go_$oid", 'concise' => $desc2, 'url' => $url2}));
-
+      $go_menu->append($self->create_node('Ontologies/'. $cluster->{description}, $desc2, [qw( go EnsEMBL::Web::Component::Gene::Go )], {'availability' => "gene has_go_$oid", 'concise' => $desc2 }));
     }
   }
     
