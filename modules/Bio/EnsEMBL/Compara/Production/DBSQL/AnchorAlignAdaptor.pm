@@ -32,6 +32,9 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
+use strict;
+use warnings;
+
 
 package Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor;
 

@@ -16,6 +16,9 @@ limitations under the License.
 
 =cut
 
+use strict;
+use warnings;
+
 package Bio::EnsEMBL::Compara::Utils::GeneTreeHash;
 
 use namespace::autoclean;
