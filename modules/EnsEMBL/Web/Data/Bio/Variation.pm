@@ -165,7 +165,7 @@ sub convert_to_drawing_parameters {
     # make source link out
     my $sources;
     foreach my $source(keys %{$phenotypes_sources{$name} || {}}) {
-      $sources .= ($sources ? ', ' : '').$self->_pf_source_link($name,$source,$phenotypes_sources{$name}{$source}{'external_id'},$phenotypes_sources{$name}{$source}{'xref_id'});
+      $sources .= ($sources ? ', ' : '').$self->_pf_source_link($name,$source,$phenotypes_sources{$name}{$source}{'external_id'},$phenotypes_sources{$name}{$source}{'xref_id'},$pf);
     }
     
     push @results, {
@@ -236,15 +236,17 @@ sub _pf_external_reference_link {
 
 
 sub _pf_source_link {
-  my ($self, $obj_name, $source, $ext_id, $ext_ref_id) = @_;
-  
+  my ($self, $obj_name, $source, $ext_id, $ext_ref_id, $pf) = @_;
+
+  my $source_uc = uc $source;
+     $source_uc =~ s/\s/_/g;
+
   if ($source eq 'Animal QTLdb') {
-    $source =~ s/ /\_/g;
     my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $self->hub->species)));
     
     return $self->hub->get_ExtURL_link(
       $source,
-      $source,
+      $source_uc,
       { ID => $obj_name, SP => $species}
     );
   }
@@ -255,11 +257,26 @@ sub _pf_source_link {
       { ID => $ext_id, PR_ID => $ext_ref_id}
     );
   }
+  if ($source_uc eq 'RGD') {
+    return $source if (!$ext_id);
+    return $self->hub->get_ExtURL_link(
+      $source,
+      $source_uc.'_SEARCH',
+      { ID => $ext_id }
+    );
+  }
+  if ($source_uc eq 'ZFIN') {
+    my $phe = $pf->phenotype->description;
+       $phe =~ s/,//g;
+    return $self->hub->get_ExtURL_link(
+      $source,
+      $source_uc.'_SEARCH',
+      { ID => $phe }
+    );
+  }
   
-  my $source_uc = uc $source;
-     $source_uc =~ s/\s/_/g;
-  my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
-  my $label     = $source;
+  my $url   = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
+  my $label = $source;
   my $name;
   if ($url =~/ebi\.ac\.uk\/gwas/) {
     $name = $obj_name;
