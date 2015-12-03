@@ -253,10 +253,12 @@ sub make_table {
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
 
+  my $is_lrg = $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
+
   my @exclude;
   push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
   push @exclude,'HGVS' unless $hub->param('hgvs') eq 'on';
-  if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+  if($is_lrg) {
     push @exclude,'Transcript';
   } else {
     push @exclude,'Submitters','LRGTranscript','LRG';
@@ -285,7 +287,8 @@ sub make_table {
     _key => 'location', _type => 'position unshowable',
     label => 'Location', sort_for => 'chr',
   },{
-    _key => 'chr', _type => 'string no_filter', label => 'Chr: bp',
+    _key => 'chr', _type => 'string no_filter',
+    label => $is_lrg?'bp':'Chr: bp',
     width => 1.75,
     helptip => $glossary->{'Chr:bp'},
   },{
