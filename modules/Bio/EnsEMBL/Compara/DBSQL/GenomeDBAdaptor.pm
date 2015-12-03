@@ -151,10 +151,7 @@ sub fetch_by_taxon_id {
 
     throw("taxon_id argument is required") unless($taxon_id);
 
-    my $found_gdbs = $self->_id_cache->get_all_by_additional_lookup('taxon_id', $taxon_id);
-    throw("There are ".scalar(@$found_gdbs)." GenomeDBs with taxon_id = $taxon_id. GenomeDBAdaptor::fetch_by_taxon_id() doesn't know how to return only one.\n") if scalar(@$found_gdbs) >= 2;
-
-    return $found_gdbs->[0];
+    return $self->_id_cache->get_by_additional_lookup('taxon_id', $taxon_id);   # Will throw if there are more than 1 GenomeDB
 }
 
 
