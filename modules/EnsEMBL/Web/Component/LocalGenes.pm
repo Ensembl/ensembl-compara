@@ -52,9 +52,9 @@ sub content {
 
   return [] unless keys %mappings;
 
-  my $source      = $object->source;
-  my $name        = $object->name;
-  my $html        = "<br />\n<h2>Genes in this region</h2>
+  my $source = $object->source_name;
+  my $name   = $object->name;
+  my $html   = "<br />\n<h2>Genes in this region</h2>
 <p>The following gene(s) in the region of this $label_msg\variant might have associated phenotype data:</p>";
  
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
