@@ -168,16 +168,6 @@ sub store_exonerate_hits {
 #
 ###############################################################################
 
-=head2 fetch_dnafrag_id
-
-  Arg[1]     : 
-  Arg[2]     :
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : none
-  Caller     : general
-=cut
 
 sub fetch_dnafrag_id {
 	my $self = shift;
@@ -210,19 +200,6 @@ sub get_target_file {
 }
 
 
-
-
-
-=head2 fetch_anchors_by_genomedb_id
-
-  Arg[1]     : 
-  Arg[2]     :
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : none
-  Caller     : general
-=cut
 
 sub fetch_anchors_by_genomedb_id {
 	my ($self, $genome_db_id) = @_;
@@ -283,6 +260,7 @@ sub fetch_all_by_anchor_id_and_mlss_id {
   Returntype : none
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub update_failed_anchor {
@@ -314,6 +292,7 @@ sub update_failed_anchor {
   Returntype : arrayref 
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub fetch_all_dnafrag_ids {
@@ -341,6 +320,7 @@ sub fetch_all_dnafrag_ids {
   Returntype : arrayref 
   Exceptions : none
   Caller     : general
+
 =cut
 
 #HACK
@@ -370,6 +350,7 @@ sub fetch_all_anchors_by_genome_db_id_and_mlssid {
   Returntype : arrayref 
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub fetch_all_anchors_by_dnafrag_id_and_test_mlssid {
@@ -395,6 +376,7 @@ sub fetch_all_anchors_by_dnafrag_id_and_test_mlssid {
   Returntype : none
   Exceptions : none
   Caller     : general
+
 =cut
 
 sub fetch_all_filtered_anchors {
@@ -425,6 +407,7 @@ sub fetch_all_filtered_anchors {
   Returntype : Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign object
   Exceptions :
   Caller     : general
+
 =cut
 
 sub fetch_by_dbID {
