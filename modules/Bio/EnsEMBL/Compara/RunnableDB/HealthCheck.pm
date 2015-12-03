@@ -266,7 +266,7 @@ sub _run_conservation_jobs_test {
 sub _run_conservation_scores_test {
   my ($self, $parameters) = @_;
 
-  my $method_link_species_set_id = $self->param('method_link_species_set_id') if (defined($self->param('method_link_species_set_id')));
+  my $method_link_species_set_id = $self->param('method_link_species_set_id');
 
   $self->test_table("conservation_score");
   $self->test_table("genomic_align_block");
@@ -357,18 +357,11 @@ sub _run_conservation_scores_test {
 sub _run_pairwise_gabs_test {
   my ($self, $parameters) = @_;
 
-  my $method_link_species_set_id;
-  my $method_link_id;
-  my $method_link_type;
-  my $genome_db_ids;
-
   #print "_run_pairwise_gabs_test\n";
 
-  my $method_link_species_set_id = $self->param('method_link_species_set_id') if (defined($self->param('method_link_species_set_id')));
-
-  my $method_link_species_set_id = $self->param('mlss_id') if (defined($self->param('mlss_id')));
-  my $method_link_type = $self->param('method_link_type')  if (defined($self->param('method_link_type')));
-  my $genome_db_ids = eval($self->param('genome_db_ids'))   if (defined($self->param('genome_db_ids')));
+  my $method_link_species_set_id = $self->param('mlss_id') || $self->param('method_link_species_set_id');
+  my $method_link_type = $self->param('method_link_type');
+  my $genome_db_ids = eval($self->param('genome_db_ids') || '');
 
   $self->test_table("genomic_align_block");
   $self->test_table("genomic_align");
@@ -460,19 +453,15 @@ sub _run_compare_to_previous_db_test {
   
   my $max_percent_diff = 20;
   
-  my $previous_mlss_id = $self->param('previous_method_link_species_set_id') if (defined($self->param('previous_method_link_species_set_id')));
+  my $previous_mlss_id = $self->param('previous_mlss_id') || $self->param('previous_method_link_species_set_id');
   
-  my $current_mlss_id = $self->param('current_method_link_species_set_id') if (defined($self->param('current_method_link_species_set_id')));
+  my $current_mlss_id = $self->param('mlss_id') || $self->param('current_mlss_id') || $self->param('current_method_link_species_set_id');
 
-  my $previous_mlss_id = $self->param('previous_mlss_id') if (defined($self->param('previous_mlss_id')));
+  my $previous_db = $self->param_required('previous_db');
 
-  my $current_mlss_id = $self->param('current_mlss_id') if (defined($self->param('current_mlss_id')));
-  $current_mlss_id = $self->param('mlss_id') if (defined($self->param('mlss_id')));
-
-  my $previous_db = $self->param('previous_db') if (defined($self->param('previous_db')));
-
-  my $method_link_type = $self->param('method_link_type') if (defined($self->param('method_link_type')));
-  my $current_genome_db_ids = eval($self->param('current_genome_db_ids')) if (defined($self->param('current_genome_db_ids')));
+  my $method_link_type = $self->param('method_link_type');
+  my $current_genome_db_ids;
+  $current_genome_db_ids = eval($self->param('current_genome_db_ids'));
   $max_percent_diff = $self->param('max_percentage_diff') if (defined($self->param('max_percentage_diff')));
 
   my $ensembl_release = $self->param('ensembl_release');
@@ -480,8 +469,6 @@ sub _run_compare_to_previous_db_test {
   if ($self->param('prev_release') == 0) {
       $self->param('prev_release', ($ensembl_release-1));
   }
-
-  $self->throw("Must define previous database") if (!defined($self->param('previous_db')));
 
   $self->test_table("genomic_align_block");
   $self->test_table("genomic_align");
@@ -514,8 +501,8 @@ sub _run_compare_to_previous_db_test {
 
   #get the current method_link_species_set object from method_link_type and
   #current genome_db_ids
-  if (defined $self->param('method_link_type') && defined $self->param('current_genome_db_ids')) {
-      my $current_mlss = $current_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), $self->param('current_genome_db_ids'));
+  if (defined $method_link_type && defined $self->param('current_genome_db_ids')) {
+      my $current_mlss = $current_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, $self->param('current_genome_db_ids'));
       if (defined $current_mlss) {
 	  $current_mlss_id = $current_mlss->dbID;
       }

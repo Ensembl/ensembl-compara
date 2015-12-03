@@ -240,7 +240,7 @@ sub run_cmd {
     for (my $i = $seq_region_start; $i <= $seq_region_end; $i++) {
         $concat_line = "";
 
-        my $time_start1 = Time::HiRes::time if ($show_time);
+        my $time_start1 = Time::HiRes::time;
         #All bases
         $output->{'total_bases'}++;
 

@@ -159,7 +159,7 @@ sub store_node {
         $node->node_id( $node_id );
     }
 
-    my $parent_id = $node->parent->node_id if($node->parent);
+    my $parent_id = $node->parent ? $node->parent->node_id : undef;
     my $root_id = $node->root->node_id;
 
     my $node_name = $node->node_name || $node->name;

@@ -81,8 +81,8 @@ sub store {
         throw("set arg must be a [Bio::EnsEMBL::Compara::Production::DnaCollection] "
               . "not a $collection");
     }
-    my $description = $collection->description if ($collection->description);
-    my $dump_loc = $collection->dump_loc if ($collection->dump_loc);
+    my $description = $collection->description;
+    my $dump_loc = $collection->dump_loc;
     my $masking_options;
 
     if ($collection->masking_options) {
