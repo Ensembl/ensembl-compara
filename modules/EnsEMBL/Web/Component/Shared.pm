@@ -80,10 +80,8 @@ sub transcript_table {
 
   my $location    = sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
 
-  my $site_type         = $hub->species_defs->ENSEMBL_SITETYPE; 
-  my @SYNONYM_PATTERNS  = qw(%HGNC% %ZFIN%);
   my (@syn_matches, $syns_html, $about_count);
-  push @syn_matches,@{$object->get_database_matches($_)} for @SYNONYM_PATTERNS;
+  push @syn_matches,@{$object->get_database_matches()};
 
   my $gene = $page_type eq 'gene' ? $object->Obj : $object->gene;
   
