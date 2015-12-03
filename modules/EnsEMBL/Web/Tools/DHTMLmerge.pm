@@ -24,6 +24,9 @@ use warnings;
 use EnsEMBL::Web::Utils::FileSystem qw(list_dir_contents);
 use EnsEMBL::Web::Exceptions;
 
+# Set to something truthy for more verbose logging of minification
+my $DEBUG = 0;
+
 sub get_filegroups {
   ## Gets a datastructure of lists of grouped files for the given type that are served to the frontend
   ## Override this method in plugins to add any extra files that are not present in the default 'components' folder (they can grouped using the group key to serve them on-demand)
@@ -90,6 +93,8 @@ sub get_files_from_dir {
     }
   }
 
+  warn "  Found ".(scalar @files)." files type=$type in $dir\n" if $DEBUG;
+
   return \@files;
 }
 
@@ -151,6 +156,7 @@ sub new {
   $self->{'files'} = $self->get_sorted_files([values %files], $params->{'ordered'});
 
   warn " Merging $self->{'group_name'} $type files\n";
+  warn sprintf("   (%d to merge)\n",scalar @{$self->{'files'}}) if $DEBUG;
   $self->{'minified_url_path'} = $self->_merge_files($species_defs, $type, $self->{'files'});
 
   return $self;
@@ -247,7 +253,9 @@ sub _merge_files {
   my $abs_path  = sprintf '%s%s', $species_defs->ENSEMBL_DOCROOT, $url_path;
 
   # create and save the minified file if it doesn't already exist there
+  warn "   using filename $filename.$ext\n" if $DEBUG;
   unless(-e $abs_path) {
+    warn "   doesn't exist, creating\n" if $DEBUG;
     if($type ne 'image') {
       my @out;
       foreach my $c (@contents) {
@@ -271,6 +279,8 @@ sub _merge_files {
     } else {
       $url_path = undef;
     }
+  } else {
+    warn "   already exists\n" if $DEBUG;
   }
 
   return $url_path;
@@ -302,7 +312,7 @@ sub _minify_content {
     $compressed = Image::Minifier::data_url($species_defs,$compressed);
   }
   $compressed = $type eq 'js' ? JavaScript::Minifier::minify('input' => $compressed) : CSS::Minifier::minify('input' => $compressed);
-  unlink $tmp_filename;
+  unlink $tmp_filename unless $DEBUG;
   return $compressed;
 }
 
