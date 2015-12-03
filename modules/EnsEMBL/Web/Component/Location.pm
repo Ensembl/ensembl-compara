@@ -40,9 +40,8 @@ sub _configure_display {
 sub default_otherspecies {
 ## DEPRECATED - use Hub::otherspecies instead
   my $self         = shift;
-  my $object       = $self->object;
-  my $species_defs = $object->species_defs;
-  my $species      = $object->species;
+  my $species_defs = $self->hub->species_defs;
+  my $species      = $self->hub->species;
   my $primary_sp   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
   my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
   my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
@@ -58,10 +57,10 @@ sub default_otherspecies {
 sub chromosome_form {
   my ($self, $ic)   = @_;
   my $hub           = $self->hub;
-  my $object        = $self->object;
+  my $object        = $self->object || $hub->core_object('location');
   my $image_config  = $hub->get_imageconfig($ic);
   my $vwidth        = $image_config->image_height;
-  my @chrs          = map { 'caption' => $_, 'value' => $_.':1-1000' }, @{$self->object->species_defs->ENSEMBL_CHROMOSOMES};
+  my @chrs          = map { 'caption' => $_, 'value' => $_.':1-1000' }, @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
   my $form          = $self->new_form({ id => 'change_chr', action => $hub->url({ __clear => 1 }), method => 'get', class => 'autocenter', style => $vwidth ? sprintf "width:${vwidth}px" : undef });
 
   $form->add_field({
