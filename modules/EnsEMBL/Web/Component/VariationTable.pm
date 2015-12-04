@@ -171,12 +171,15 @@ sub class_classes {
   my ($self,$table) = @_;
 
   my $classes_col = $table->column('class');
+  $classes_col->filter_add_baked('somatic','Only Somatic','Only somatic variant classes');
   $classes_col->filter_add_baked('not_somatic','Not Somatic','Exclude somatic variant classes');
   my $i = 0;
   foreach my $term (qw(display_term somatic_display_term)) {
     foreach my $class (values %VARIATION_CLASSES) {
       $classes_col->icon_order($class->{$term},$i++);
-      unless($term eq 'somatic_display_term') {
+      if($term eq 'somatic_display_term') {
+        $classes_col->filter_bake_into($class->{$term},'somatic');
+      } else {
         $classes_col->filter_bake_into($class->{$term},'not_somatic');
       }
     }
