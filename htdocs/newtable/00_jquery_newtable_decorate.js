@@ -64,6 +64,7 @@
             for(var i=0;i<ff.length;i++) {
               value = ff[i](value);
             }
+            if(value=='') { value = 'No data'; }
             return value;
           }]; 
       },

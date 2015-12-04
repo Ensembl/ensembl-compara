@@ -226,15 +226,22 @@
       $el.hide();
     }
 
+    function add_blanks(value,column,plugin,keymeta) {
+      $.each(keymeta,function(klass,klassdata) {
+        $.each(klassdata,function(col,coldata) {
+          if(col == column) {
+            plugin.value(value,null,0);
+          }
+        });
+      });
+    }
+
     function add_from_keymeta(value,column,plugin,keymeta) {
       $.each(keymeta,function(klass,klassdata) {
         $.each(klassdata,function(col,coldata) {
           if(col == column) {
             $.each(coldata,function(val,valdata) {
               if(val != '*') { plugin.value(value,val,0); }
-              if(val == '*' && valdata.maybe_blank) {
-                plugin.value(value,null,0);
-              }
             });
           }
         });
@@ -244,7 +251,7 @@
     function eundo(client_enums,enums,grid,series,keymeta) {
       for(var i=0;i<series.length;i++) {
         var plugin = client_enums[series[i]];
-        var star;
+        var star = undefined;
         if(keymeta && keymeta.enumerate && keymeta.enumerate[series[i]]) {
           star = keymeta.enumerate[series[i]]['*'];
         }
@@ -254,17 +261,22 @@
           continue;
         }
         var value = {};
-        if(keymeta.enumerate && keymeta.enumerate[series[i]]) {
-          if(star) {
-            /* Populate from keymeta values */
-            if(star.from_keymeta) {
-              add_from_keymeta(value,series[i],plugin,keymeta);
-            }
-            /* Populate from keymeta merge */
-            if(star.merge) {
-              value = plugin.merge(value,star.merge);
-            }
+        if(star) {
+          /* Populate from keymeta values */
+          if(star.from_keymeta) {
+            add_from_keymeta(value,series[i],plugin,keymeta);
           }
+          /* Populate from keymeta merge */
+          if(star.merge) {
+            value = plugin.merge(value,star.merge);
+          }
+        }
+        var fstar = undefined;
+        if(keymeta && keymeta.filter && keymeta.filter[series[i]]) {
+          fstar = keymeta.filter[series[i]]['*'];
+        }
+        if(fstar && fstar.maybe_blank) {
+          add_blanks(value,series[i],plugin,keymeta);
         }
         /* Populate by each value */
         for(var j=0;j<grid.length;j++) {
