@@ -162,7 +162,7 @@ sub _icon {
 }
 
 sub _no_icon {
-  return '<span class="sprite">&nbsp;</span>';
+  return '';
 }
 
 sub table_row {
