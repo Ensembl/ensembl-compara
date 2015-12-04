@@ -187,7 +187,7 @@
         var key = config.columns[idx];
         var km = ($table.data('keymeta')||{}).filter;
         if(km) { km = km[key]; }
-        var values = ($table.data('ranges')||{})[key];
+        var values = ($table.data('ranges')||{})[key]||{};
         var kind = config.colconf[key].range;
         var w = find_widget(kind,'filters','class');
         set_button($el,view,w,key,values,km);

@@ -23,7 +23,7 @@ use warnings;
 
 use Carp;
 
-our @PLUGINS = qw(Core Frame Decorate Filter Misc Paging Sort);
+our @PLUGINS = qw(Core Frame Decorate Filter Misc Paging Sort State);
 our %PLUGINS;
 
 use EnsEMBL::Web::NewTable::Column;
@@ -189,6 +189,16 @@ sub orient_out {
   return $orient;
 }
 
+sub activity {
+  my ($self,$activity) = @_;
+
+  foreach my $p (values %{$self->{'plugins'}}) {
+    my $act = $p->can("activity_$activity");
+    return $act if $act;
+  }
+  return undef;
+}
+
 sub config {
   my ($self) = @_;
 
@@ -203,7 +213,7 @@ sub config {
   my %colconf;
   $colconf{$_} = $self->{'columns'}{$_}->colconf for keys %{$self->{'columns'}};
   
-  return {
+  my $out = {
     columns => $self->{'colorder'},
     orient => $self->orient_out,
     formats => ["tabular","paragraph"],
@@ -212,6 +222,11 @@ sub config {
     phases => $self->{'phases'},
     ssplugins => $self->plugins_conf
   };
+  foreach my $p (values %{$self->{'plugins'}}) {
+    my $ext = $p->can("extend_config");
+    $ext->($self,$self->{'hub'},$out) if $ext;
+  }
+  return $out;
 }
 
 1;

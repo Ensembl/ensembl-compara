@@ -57,6 +57,7 @@ sub new {
 #  $config->add_plugin('Paging',{});
   $config->add_plugin('Styles',{});
   $config->add_plugin('Sort',{});
+  $config->add_plugin('State',{});
 
   return $self;
 }

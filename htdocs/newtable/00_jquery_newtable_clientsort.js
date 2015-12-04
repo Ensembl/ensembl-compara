@@ -63,7 +63,7 @@
     }
 
     function mere_reversal(orient,target) {
-      if(!orient.sort || !target.sort) { return null; }
+      if(!orient || !target || !orient.sort || !target.sort) { return null; }
       if(orient.sort.length>1 || target.sort.length>1) { return null; }
       if(orient.sort[0].key != target.sort[0].key) { return null; }
       if(orient.sort[0].dir != -target.sort[0].dir) { return null; }
@@ -96,7 +96,7 @@
             var plan = build_plan(need);
             if(!plan) { return null; }
             var msort = need.sort;
-            need.sort = got.sort;
+            need.sort = (got||{}).sort;
             $table.trigger('think-on',['sort']);
             return {
               undo: function(manifest,grid,series) {

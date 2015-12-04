@@ -59,6 +59,14 @@ sub go {
   my $keymeta = from_json($hub->param('keymeta'));
 
   $self->{'config'} = EnsEMBL::Web::NewTable::Config->new($hub,$config,$ssplugins,$keymeta);
+
+  my $activity = $hub->param('activity');
+  if($activity) {
+    my $act = $self->{'config'}->activity($activity);
+    my $out = {};
+    $out = $act->($self) if $act;
+    return $out;
+  }
   $self->{'orient'} = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
   my $more = JSON->new->allow_nonref->decode($hub->param('more'));

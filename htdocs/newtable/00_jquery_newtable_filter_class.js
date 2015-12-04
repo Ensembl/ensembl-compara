@@ -191,7 +191,7 @@
           $.each(state,function(k,v) { skipping[k]=1; });
           var on = [];
           var off = [];
-          $.each(all.keys,function(i,v) {
+          $.each(all.keys||[],function(i,v) {
             var vout = (v===''?'blank':v);
             if(skipping[v]) { off.push(vout); } else { on.push(vout); }
           });

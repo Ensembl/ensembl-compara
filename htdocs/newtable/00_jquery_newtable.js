@@ -539,6 +539,22 @@
     return val;
   }
 
+  var seq = 0;
+  function save_orient($table,config,view) {
+    seq++;
+    var src = $table.data('src');
+    var params = $.extend({},extract_params(src),{
+      activity: 'save_orient',
+      source: 'enstab',
+      keymeta: JSON.stringify($table.data('keymeta')||{}),
+      config: JSON.stringify(config),
+      ssplugins: JSON.stringify(config.ssplugins),
+      orient: JSON.stringify(view),
+      seq: seq
+    });
+    $.post($table.data('src'),params,function(res) {},'json');
+  }
+
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
@@ -550,7 +566,7 @@
     var stored_config = {
       columns: config.columns
     };
-    var view = $.extend(true,{},config.orient);
+    var view = merge_orient($.extend(true,{},config.orient),config.saved_orient||{});
     var old_view = $.extend(true,{},config.orient);
     $table.data('view',view).data('old-view',$.extend(true,{},old_view))
       .data('config',stored_config);
@@ -562,6 +578,7 @@
     build_format(widgets,$table);
     $table.on('view-updated',function() {
       var view = $table.data('view');
+      save_orient($table,config,view);
       var old_view = $table.data('old-view');
       if(view.format != old_view.format) {
         build_format(widgets,$table);
@@ -627,6 +644,11 @@
       maybe_get_new_data(widgets,$table,config);
       flux(widgets,$table,'think',-1);
     });
+  }
+
+  // TODO make this configurable ENSWEB-2113
+  function merge_orient(lesser,greater) {
+    return $.extend({},lesser,greater);
   }
 
   $.orient_compares_equal = function(fa,fb) {
