@@ -122,7 +122,7 @@ sub render {
       'name' => '<b><a href="/biomart/martview">BioMart</a></b>',
       'desc' => "Use this data-mining tool to export custom datasets from $sitename.",
       'from' => qq(<a href="/biomart/martview">$sitename Biomart</a>),
-      'docs' => sprintf('<a href="http://www.biomart.org/biomart/mview/help.html" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
+      'docs' => sprintf('<a href="/info/data/biomart/index.html" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
     });
   }
 
