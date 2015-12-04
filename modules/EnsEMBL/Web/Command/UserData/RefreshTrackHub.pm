@@ -32,11 +32,10 @@ sub process {
   my $self = shift;
   my $hub  = $self->hub;
 
-  my $url_params  = {};
-  my $code        = $hub->param('code');
-  my $file_info   = $hub->session->get_data('code' => $hub->param('code'));
+  my $url_params      = {};
+  my $session_record  = $hub->session->get_data('code' => $hub->param('code'), 'type' => 'url');
  
-  my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $hub, 'url' => $file_info->{'url'});
+  my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $hub, 'url' => $session_record->{'url'});
   my $hub_info = $trackhub->get_hub({
                                       'assembly_lookup' => $hub->species_defs->assembly_lookup,
                                       'parse_tracks'    => 1,
