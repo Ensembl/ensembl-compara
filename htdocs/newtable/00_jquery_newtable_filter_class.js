@@ -26,6 +26,20 @@
     $el.closest('.m').trigger('okable',[m?true:false]);
   }
 
+  function check_this_baked($el,values,members,state,data_key,data_val) {
+    var match = true;
+    for(var j=0;j<values.length;j++) {
+      var button_on = !state[values[j]];
+      var baked_member = !!members[values[j]];
+      if(button_on != baked_member) { match = false; break; }
+    }
+    $el.find('.bakery li').each(function() {
+      var $this = $(this);
+      if($this.data(data_key) != data_val) { return; }
+      $this.toggleClass('disabled',match);
+    });
+  }
+
   function check_baked($el,state,km,values) {
     var bakes = {};
     $.each(km,function(sel,value) {
@@ -40,18 +54,12 @@
       var baked = bakery[i].key;
       var members = bakes[baked];
       if(!members) { continue; }
-      var match = true;
-      for(var j=0;j<values.length;j++) {
-        var button_on = !state[values[j]];
-        var baked_member = !!members[values[j]];
-        if(button_on != baked_member) { match = false; break; }
-      }
-      $el.find('.bakery li').each(function() {
-        var $this = $(this);
-        if($this.data('bake') != baked) { return; }
-        $this.toggleClass('disabled',match);
-      });
+      check_this_baked($el,values,members,state,'bake',baked);
     }
+    var all = {};
+    for(var i=0;i<values.length;i++) { all[values[i]] = 1; }
+    check_this_baked($el,values,[],state,'all','off');
+    check_this_baked($el,values,all,state,'all','on');
   }
 
   function click($el,$body,type,bkey,km,$summary,values) {
@@ -86,7 +94,7 @@
 
   function add_baked($baked,$body,$el,$summary,values,key,km) {
     var all = [];
-    var $alloff = $('<li/>').text('Turn All Off');
+    var $alloff = $('<li/>').text('Turn All Off').data('all','off');
     all.push($alloff);
     $alloff.click(function() {
       click($el,$body,'all',false,km,$summary,values);
@@ -101,7 +109,7 @@
         });
       })(i);
     }
-    var $allon = $('<li/>').addClass('allon').text('Turn All On');
+    var $allon = $('<li/>').addClass('allon').text('Turn All On').data('all','on');
     all.push($allon);
     $allon.click(function() {
       click($el,$body,'all',true,km,$summary,values);
