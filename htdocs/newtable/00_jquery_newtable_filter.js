@@ -367,7 +367,8 @@
           all_dropdowns.push([cc.primary,i,add_button(i,key)]);
         });
         all_dropdowns.sort(function(a,b) {
-          return (a[0]-b[0])||(a[1]-b[1]);
+          if(a[0]) { if(b[0]) { return a[0]-b[0]; } else { return -1; } }
+          if(b[0]) { return 1; } else { return a[1]-b[1]; }
         });
         $.each(all_dropdowns,function(i,val) {
           dropdowns += val[2];
