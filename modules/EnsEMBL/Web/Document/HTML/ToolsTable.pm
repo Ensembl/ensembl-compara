@@ -93,7 +93,7 @@ sub render {
     $table->add_row({
       'name'  => sprintf('<b><a class="nodeco" href="%s">ID History converter</a></b>', $link),
       'desc'  => 'Convert a set of Ensembl IDs from a previous release into their current equivalents.',
-      'tool'  => sprintf('<a href="%s" class="modal_link nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => $tools_limit,
       'code'  => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/tree/release/%s/scripts/id_history_converter" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
       'docs'  => '',
