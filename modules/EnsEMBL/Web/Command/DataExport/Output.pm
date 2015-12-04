@@ -33,6 +33,7 @@ use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
 
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::Object::Transcript;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -400,11 +401,9 @@ sub write_fasta {
   my ($result, @errors);
 
   if (scalar @selected_options) {
-    my $trans_object = $hub->core_object('transcript');
     ## Only applicable to actual transcripts
     foreach my $transcript (@data) {
-      #my $id    = ($stable_id ? "$stable_id:" : '') . $transcript->stable_id;
-      my @id_info = $trans_object->display_xref($transcript);
+      my @id_info = EnsEMBL::Web::Object::Transcript::display_xref(undef, $transcript);
       my $id  = $id_info[0] || $transcript->display_id;
       my $type  = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') 
                       ? $transcript->analysis->logic_name 
