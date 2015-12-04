@@ -114,13 +114,14 @@ sub col_filter_endpoint_markup {
 }
 
 sub col_filter_add_baked {
-  my ($self,$col,$key,$name) = @_;
+  my ($self,$col,$key,$name,$tooltip) = @_;
 
   my $meta = $self->config->get_keymeta("filter",$col,'*');
   my $baked = ($meta->{'bakery'}||=[]);
   push @$baked,{
     key => $key,
     label => ($name||$key),
+    helptip => $tooltip
   };
 }
 

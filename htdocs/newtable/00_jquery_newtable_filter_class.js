@@ -92,9 +92,14 @@
     check_baked($el,state,km,values);
   }
 
+  function button_helptip($button,helptip) {
+    $button.attr('title',helptip).addClass('_ht').helptip();
+  }
+
   function add_baked($baked,$body,$el,$summary,values,key,km) {
     var all = [];
     var $alloff = $('<li/>').text('Turn All Off').data('all','off');
+    button_helptip($alloff,"Turn off all types below");
     all.push($alloff);
     $alloff.click(function() {
       click($el,$body,'all',false,km,$summary,values);
@@ -102,6 +107,7 @@
     var bakery = (((km||{})['*']||{}).bakery)||[];
     for(var i=0;i<bakery.length;i++) {
       var $bake = $('<li/>').text(bakery[i].label).data('bake',bakery[i].key);
+      button_helptip($bake,bakery[i].helptip);
       all.push($bake);
       (function(j) {
         $bake.click(function() {
@@ -110,6 +116,7 @@
       })(i);
     }
     var $allon = $('<li/>').addClass('allon').text('Turn All On').data('all','on');
+    button_helptip($allon,"Turn on all types below");
     all.push($allon);
     $allon.click(function() {
       click($el,$body,'all',true,km,$summary,values);

@@ -171,7 +171,7 @@ sub class_classes {
   my ($self,$table) = @_;
 
   my $classes_col = $table->column('class');
-  $classes_col->filter_add_baked('not_somatic','Not Somatic');
+  $classes_col->filter_add_baked('not_somatic','Not Somatic','Exclude somatic variant classes');
   my $i = 0;
   foreach my $term (qw(display_term somatic_display_term)) {
     foreach my $class (values %VARIATION_CLASSES) {
@@ -216,9 +216,9 @@ sub snptype_classes {
   my $var_styles   = $species_defs->colour('variation');
   my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my $column = $table->column('snptype');
-  $column->filter_add_baked('lof','PTV');
-  $column->filter_add_baked('lof_missense','PTV & Missense');
-  $column->filter_add_baked('exon','Only Exonic');
+  $column->filter_add_baked('lof','PTV','Select all protein truncating variant types');
+  $column->filter_add_baked('lof_missense','PTV & Missense','Select all protein truncating and missense variant types');
+  $column->filter_add_baked('exon','Only Exonic','Select exon and splice region variant types');
   $column->filter_add_bakefoot('PTV = Protein Truncating Variant');
   my @lof = qw(stop_gained frameshift_variant splice_donor_variant
                splice_acceptor_variant);
