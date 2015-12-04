@@ -364,11 +364,13 @@ sub name {
   return $self->vari->name;
 }
 
-sub source {
+sub source { $_[0]->source_name; }
+
+sub source_name {
 
   ### Variation_object_calls
   ### Args: none
-  ### Example    : my $vari_source = $object->source;
+  ### Example    : my $vari_source = $object->source_name;
   ### Description: gets the Variation source
   ### Returns String
 
