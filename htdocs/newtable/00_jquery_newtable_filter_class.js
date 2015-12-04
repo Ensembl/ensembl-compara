@@ -26,6 +26,34 @@
     $el.closest('.m').trigger('okable',[m?true:false]);
   }
 
+  function check_baked($el,state,km,values) {
+    var bakes = {};
+    $.each(km,function(sel,value) {
+      if(sel == '*' || !value.baked) { return; }
+      for(var j=0;j<value.baked.length;j++) {
+        if(!bakes[value.baked[j]]) { bakes[value.baked[j]] = {}; }
+        bakes[value.baked[j]][sel] = 1;
+      }
+    });
+    var bakery = (((km||{})['*']||{}).bakery)||[];
+    for(var i=0;i<bakery.length;i++) {
+      var baked = bakery[i].key;
+      var members = bakes[baked];
+      if(!members) { continue; }
+      var match = true;
+      for(var j=0;j<values.length;j++) {
+        var button_on = !state[values[j]];
+        var baked_member = !!members[values[j]];
+        if(button_on != baked_member) { match = false; break; }
+      }
+      $el.find('.bakery li').each(function() {
+        var $this = $(this);
+        if($this.data('bake') != baked) { return; }
+        $this.toggleClass('disabled',match);
+      });
+    }
+  }
+
   function click($el,$body,type,bkey,km,$summary,values) {
     var state = {};
     $body.children('ul').children('li').each(function() {
@@ -53,6 +81,7 @@
     });
     $el.trigger('update',state);
     update_counts($summary,state,values);
+    check_baked($el,state,km,values);
   }
 
   function add_baked($baked,$body,$el,$summary,values,key,km) {
@@ -64,7 +93,7 @@
     });
     var bakery = (((km||{})['*']||{}).bakery)||[];
     for(var i=0;i<bakery.length;i++) {
-      var $bake = $('<li/>').text(bakery[i].label);
+      var $bake = $('<li/>').text(bakery[i].label).data('bake',bakery[i].key);
       all.push($bake);
       (function(j) {
         $bake.click(function() {

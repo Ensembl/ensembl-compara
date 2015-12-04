@@ -201,6 +201,7 @@ body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5
 .newtable_filter .newtable_filtertype_class .bakery { float: none; text-align: center; display: block; }
 .newtable_filtertype_class .bakery ul { padding-bottom: 0; }
 .newtable_filtertype_class .bakery li { width: auto; }
+.newtable_filtertype_class .bakery li.disabled { background: linear-gradient(to top,#ccc,#aaa) #ccc; }
 .newtable_filtertype_class .bakery li { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; padding: 0; border: double white; color: white; cursor: pointer; display: inline-block; width: 105px; text-align: center; margin: 2px 0; padding: 6px; border-width: 3px 3px 3px 0; }
 .newtable_filtertype_class .bakery li:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
 .newtable_filtertype_class .bakery li:before { visibility: hidden; }
