@@ -274,9 +274,18 @@ sub table_row {
   my $config_html = $config_link ? sprintf $conf_template, $config_link : '';
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
   my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => lc($file->{'type'}) eq 'url' ? 'delete_remote' : 'delete_upload', %url_params });
-  if ($file->{'type'} eq 'upload' && $file->{'url'}) {
-    my $reload_url = $hub->url({'action' => 'RefreshUpload', %url_params});
-    $reload = $self->_icon({'link' => $reload_url, 'title' => 'Reload this file from URL', 'link_class' => 'modal_link', 'class' => 'reload_icon'});
+  if ($file->{'format'} eq 'TRACKHUB' || $file->{'type'} eq 'upload' && $file->{'url'}) {
+    my ($reload_action, $reload_text);
+    if ($file->{'format'} eq 'TRACKHUB') {
+      $reload_action = 'RefreshTrackHub';
+      $reload_text   = 'Reload this track hub';
+    }
+    else {
+      $reload_action = 'RefreshUpload';
+      $reload_text   = 'Reload this file from URL';
+    }
+    my $reload_url = $hub->url({'action' => $reload_action, %url_params});
+    $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
  
   return {
