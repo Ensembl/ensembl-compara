@@ -177,6 +177,7 @@
             });
           });
           update_counts($summary,state,values);
+          check_baked($el,state,km,values);
         },
         text: function(state,all) {
           var skipping = {};
