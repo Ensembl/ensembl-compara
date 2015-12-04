@@ -84,18 +84,24 @@ sub transcript_table {
   push @syn_matches,@{$object->get_database_matches()};
 
   my $gene = $page_type eq 'gene' ? $object->Obj : $object->gene;
-  
+
   $self->add_phenotype_link($gene, $table); #function in mobile plugin
-  
+
+  my %unique_synonyms;
+  my $c=0;
   foreach (@{$object->get_similarity_hash(0, $gene)}) {
     next unless $_->{'type'} eq 'PRIMARY_DB_SYNONYM';
-    my $id           = $_->display_id;
-    my $synonym     = $self->get_synonyms($id, @syn_matches);
-    next unless $synonym;
-    $syns_html .= "<p>$synonym</p>";
+    my $id   = $_->display_id;
+    my %syns = %{$self->get_synonyms($id, @syn_matches)};
+    foreach (keys %syns) {
+      $unique_synonyms{$_}++;
+    }
   }
-
-  $table->add_row('Synonyms', $syns_html) if $syns_html;
+  if (%unique_synonyms) {
+    my $syns = join ', ', keys %unique_synonyms;
+    $syns_html = "<p>$syns</p>";
+    $table->add_row('Synonyms', $syns_html);
+  }
 
   my $seq_region_name  = $object->seq_region_name;
   my $seq_region_start = $object->seq_region_start;
@@ -591,16 +597,23 @@ sub get_gene_display_link {
 
 sub get_synonyms {
   my ($self, $match_id, @matches) = @_;
-  my @ids;
+  my $ids;
   foreach my $m (@matches) {
     my $dbname = $m->db_display_name;
     my $disp_id = $m->display_id;
     if ( $disp_id eq $match_id) {
       my $synonyms = $m->get_all_synonyms;
-      push @ids, (ref $_ eq 'ARRAY' ? "@$_" : $_) for @$synonyms;
+      foreach my $syn (@$synonyms) {
+        if (ref $syn eq 'ARRAY') {
+          $ids->{@$syn}++;
+        }
+        else {
+          $ids->{$syn}++;
+        }
+      }
     }
   }
-  return join ', ', @ids;
+  return $ids;
 }
   
 sub _add_gene_counts {
