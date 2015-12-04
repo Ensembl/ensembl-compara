@@ -24,6 +24,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use JSON qw(to_json);
+
 use EnsEMBL::Web::REST;
 
 use base qw(EnsEMBL::Web::Component::UserData);
