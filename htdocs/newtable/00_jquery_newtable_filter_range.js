@@ -37,16 +37,6 @@
         });
         return best;
       },
-      detect_catastrophe: function($el,$slider,best,km) {
-        var current = $slider.get('current');
-        if(best.chr != $el.data('slider-chr') &&
-           (current[0]!==null || current[1]!==null)) {
-          $el.data('slider-chr',best.chr);
-          return true;
-        } else {
-          return false;
-        }
-      },
       text_prefix: function(state) { return state.chr+':'; },
       draw_additional: function($el,values) {
         $el.data('slider-chr',values.chr);
@@ -57,7 +47,6 @@
       summary_prefix: function($button) { return ''; },
       additional_update: function(update,$button) {},
       preproc_values: function(values) { return values; },
-      detect_catastrophe: function($el,$slider,values,km) { return false; },
       text_prefix: function(state) { return ''; },
       draw_additional: function($el,values) {},
       round_out: function(val) { return round_2sf(val); }
@@ -241,24 +230,13 @@
         display: function($box,$el,values,state,km) {
           values = variety.preproc_values(values);
           var $slider = $('.slider',$box);
-          if($slider.length) {
-            $slider.rangeslider('set_limits',values.min,values.max);
-            if(variety.detect_catastrophe($el,$slider,values,km)) {
-              reset_position($el);
-              send_position(variety,$el);
-            } else {
-              update_position_from_state($el,state);
-            }
-            update_all_from_position($el,variety);
-          } else {
-            var $out = draw_widget(variety,$el,values.min,values.max,km,values);
-            reset_position($el);
-            variety.draw_additional($el,values);
-            $box.append($out);
-            var $slider = $('.slider',$out); 
-            update_position_from_state($el,state);
-            update_all_from_position($el,variety);
-          }
+          var $out = draw_widget(variety,$el,values.min,values.max,km,values);
+          reset_position($el);
+          variety.draw_additional($el,values);
+          $box.append($out);
+          var $slider = $('.slider',$out); 
+          update_position_from_state($el,state);
+          update_all_from_position($el,variety);
         },
         text: function(state,all,km) {
           var fixed = (km && km['*'] && km['*'].fixed);
