@@ -175,7 +175,7 @@ sub db_adaptor {
     }
 
     unless (exists $self->{'_db_adaptor'}) {
-        if ($self->locator and $self->locator ne '') {
+        if ($self->locator) {
             eval {$self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator); };
             warn sprintf("The locator '%s' of %s could not be loaded because: %s\n", $self->locator, $self->name, $@) if $@;
         } else {
@@ -420,7 +420,7 @@ sub _species_tree_node_id {
 sub locator {
   my $self = shift;
   $self->{'locator'} = shift if (@_);
-  return $self->{'locator'} || '';
+  return $self->{'locator'};
 }
 
 
@@ -598,7 +598,7 @@ sub toString {
         ."', karyotype='".$self->has_karyotype
         ."', high_coverage='".$self->is_high_coverage
         .($self->genome_component ? "', genome_component='".$self->genome_component : '')
-        ."', locator='".$self->locator
+        ."', locator='".($self->locator || '')
         ."', first_release='".($self->first_release || 'NULL')
         ."', last_release='".($self->last_release || 'NULL')
         ."'";

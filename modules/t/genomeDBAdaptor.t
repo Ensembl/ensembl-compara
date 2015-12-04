@@ -96,7 +96,7 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_dbID", sub {
     is($genome_db->assembly, $assembly, "Checking genome_db assembly");
     is($genome_db->genebuild, $genebuild, "Checking genome_db genebuild");
     is($genome_db->taxon_id, $taxon_id, "Checking genome_db taxon_id");
-    is($genome_db->locator, '', "Checking genome_db locator");
+    is($genome_db->locator, undef, "Checking genome_db locator");
 
     done_testing();
 };
