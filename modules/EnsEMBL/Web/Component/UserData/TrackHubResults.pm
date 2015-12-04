@@ -24,8 +24,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use JSON qw(to_json);
-
 use EnsEMBL::Web::REST;
 
 use base qw(EnsEMBL::Web::Component::UserData);
@@ -53,13 +51,11 @@ sub content {
 
   my $endpoint = 'api/search';
 
-  my $params = {
-                'species'   => $hub->param('species'),
-                'assembly'  => $hub->param('assembly'),
-                'query'     => $hub->param('query'),
-              };
-
-  my $post_content = to_json($params);
+  my $post_content = {};
+  my @query_params = qw(species assembly query);
+  foreach (@query_params) {
+    $post_content->{$_} = $hub->param($_) if $hub->param($_);
+  }
 
   my $args = {'method' => 'post', 'content' => $post_content};
   
