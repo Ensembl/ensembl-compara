@@ -340,7 +340,7 @@ sub add_variations {
     
     $consequence ||= lc $transcript_variation->display_consequence;
     
-    $config->{'key'}{'variations'}{$consequence} = 1;
+    $config->{'key'}{'variants'}{$consequence} = 1;
     
     for ($start..$end) {
       $class{$_}  = $consequence;
