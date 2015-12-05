@@ -310,22 +310,22 @@ sub set_variations {
     
     $consequence ||= lc $transcript_variation->display_consequence;
     
-    $config->{'key'}{'variations'}{$consequence} = 1;
+    $config->{'key'}{'variants'}{$consequence} = 1;
     
     for ($start..$end) {
       next if $sequence->[$_]{'letter'} eq '-';
       
-      $markup->{'variations'}{$_}{'type'}     = $consequence;
-      $markup->{'variations'}{$_}{'alleles'} .= ($markup->{'variations'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
-      $markup->{'variations'}{$_}{'href'}   ||= {
+      $markup->{'variants'}{$_}{'type'}     = $consequence;
+      $markup->{'variants'}{$_}{'alleles'} .= ($markup->{'variants'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
+      $markup->{'variants'}{$_}{'href'}   ||= {
         type        => 'ZMenu',
         action      => 'TextSequence',
         factorytype => 'Location',
         _transcript => $transcript_id,
       };
       
-      push @{$markup->{'variations'}{$_}{'href'}{'v'}},  $name;
-      push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+      push @{$markup->{'variants'}{$_}{'href'}{'v'}},  $name;
+      push @{$markup->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
     }
   }
 }
