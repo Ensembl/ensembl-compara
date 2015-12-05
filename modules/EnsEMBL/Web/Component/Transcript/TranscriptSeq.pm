@@ -176,13 +176,13 @@ sub get_sequence_data {
       ($_ += $start_pad)-- for $start, $end; # Adjust from start = 1 (slice coords) to start = 0 (sequence array)
       
       foreach ($start..$end) {
-        $mk->{'variations'}{$_}{'alleles'}   .= ($mk->{'variations'}{$_}{'alleles'} ? ', ' : '') . $alleles;
-        $mk->{'variations'}{$_}{'url_params'} = { vf => $dbID, vdb => 'variation' };
-        $mk->{'variations'}{$_}{'transcript'} = 1;
+        $mk->{'variants'}{$_}{'alleles'}   .= ($mk->{'variants'}{$_}{'alleles'} ? ', ' : '') . $alleles;
+        $mk->{'variants'}{$_}{'url_params'} = { vf => $dbID, vdb => 'variation' };
+        $mk->{'variants'}{$_}{'transcript'} = 1;
         
-        my $url = $mk->{'variations'}{$_}{'url_params'} ? $hub->url({ type => 'Variation', action => 'Explore', %{$mk->{'variations'}{$_}{'url_params'}} }) : '';
+        my $url = $mk->{'variants'}{$_}{'url_params'} ? $hub->url({ type => 'Variation', action => 'Explore', %{$mk->{'variants'}{$_}{'url_params'}} }) : '';
         
-        $mk->{'variations'}{$_}{'type'} = $type;
+        $mk->{'variants'}{$_}{'type'} = $type;
         
         if ($config->{'translation'} && $aa_change) {
           foreach my $aa ($amino_acid_pos..$amino_acid_pos + 2) {
@@ -192,13 +192,13 @@ sub get_sequence_data {
           }
         }
         
-        $mk->{'variations'}{$_}{'href'} ||= {
+        $mk->{'variants'}{$_}{'href'} ||= {
           type        => 'ZMenu',
           action      => 'TextSequence',
           factorytype => 'Location'
         };
         
-        push @{$mk->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+        push @{$mk->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
         
         $variation_seq->{'seq'}[$_]{'letter'} = $ambigcode;
         $variation_seq->{'seq'}[$_]{'new_letter'} = $ambigcode;
@@ -362,17 +362,17 @@ sub initialize {
   
   $self->set_variation_filter($config);
   
-  my ($sequence, $markup) = $self->get_sequence_data($object, $config,$adorn);
+  my ($sequence, $markup) = $self->get_sequence_data($object, $config, $adorn);
   
-  $self->markup_exons($sequence, $markup, $config)     if $config->{'exons'};
-  $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
-  if($adorn ne 'none') {
+  $self->markup_exons($sequence, $markup, $config)  if $config->{'exons'};
+  $self->markup_codons($sequence, $markup, $config) if $config->{'codons'};
+  if ($adorn ne 'none') {
     $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
-    push @{$config->{'loaded'}||=[]},'variations';
+    push @{$config->{'loaded'}||=[]},'variants';
   } else {
-    push @{$config->{'loading'}||=[]},'variations';
+    push @{$config->{'loading'}||=[]},'variants';
   }
-  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
+  $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
   

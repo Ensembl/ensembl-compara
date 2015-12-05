@@ -63,16 +63,16 @@ sub get_sequence_data {
       
       my $pos  = $snp->{'position'} - 1;
       my $dbID = $snp->{'vdbid'};
-      $markup->{'variations'}->{$pos}->{'type'}    = lc(($config->{'consequence_filter'} && keys %{$config->{'consequence_filter'}}) ? [ grep $config->{'consequence_filter'}{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
-      $markup->{'variations'}->{$pos}->{'alleles'} = $snp->{'allele'};
-      $markup->{'variations'}->{$pos}->{'href'} ||= {
+      $markup->{'variants'}->{$pos}->{'type'}    = lc(($config->{'consequence_filter'} && keys %{$config->{'consequence_filter'}}) ? [ grep $config->{'consequence_filter'}{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
+      $markup->{'variants'}->{$pos}->{'alleles'} = $snp->{'allele'};
+      $markup->{'variants'}->{$pos}->{'href'} ||= {
         type        => 'ZMenu',
         action      => 'TextSequence',
         factorytype => 'Location'
       };
       
-      push @{$markup->{'variations'}->{$pos}->{'href'}->{'v'}},  $snp->{'snp_id'};
-      push @{$markup->{'variations'}->{$pos}->{'href'}->{'vf'}}, $dbID;
+      push @{$markup->{'variants'}->{$pos}->{'href'}->{'v'}},  $snp->{'snp_id'};
+      push @{$markup->{'variants'}->{$pos}->{'href'}->{'vf'}}, $dbID;
     }
   }
   
