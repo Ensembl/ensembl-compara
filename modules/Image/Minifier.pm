@@ -302,11 +302,19 @@ sub maybe_generate_sprite {
     warn "skipping weird tag: $tag\n";
     return "<img$tag>";
   }
-  if($attrs{'src'} =~ m!^(https?:)?//!) {
+  my $fn = $attrs{'src'};
+  my @internal_hosts = ($SiteDefs::ENSEMBL_SERVERNAME,
+                        $SiteDefs::ENSEMBL_STATIC_SERVER);
+  my $external = ($attrs{'src'} =~ m!^(https?:)?//!);
+  foreach my $x (@internal_hosts) {
+    $x =~ s!^(https?:)?//!!;
+    $external = 0 if $attrs{'src'} =~ m!^(https?:)?//$x/!;
+    $fn =~ s!^(https?:)?//$x/!/!;
+  }
+  if($external) {
     my $class = $attrs{'class'} || '';
     return qq(<div class="_afterimage $class" data-url="$attrs{'src'}"></div>);
   }
-  my $fn = $attrs{'src'};
   $fn =~ s!//!/!g;
   #warn "File $fn\n";
   my $hash = hex_for($fn);
