@@ -37,6 +37,7 @@ sub filter_saved {
     next unless $col->colconf->{'state_filter_ephemeral'};
     delete $data->{'filter'}{$key};
   }
+  delete $data->{'filter'} unless %{$data->{'filter'}};
 }
 
 sub col_state_filter_ephemeral {
