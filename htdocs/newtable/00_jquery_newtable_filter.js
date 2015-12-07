@@ -78,15 +78,21 @@
       }
     }
 
+    function activate_sec($item) {
+      var $table = $item.closest('.new_table_wrapper');
+      if(!$item.hasClass('prec_sec')) { return; }
+      $item.removeClass('prec_sec').addClass('prec_pri');
+      maybe_hide_more($table);
+    }
+
     function draw_more($table,$menu) {
       var $out = $("<ul/>");
       $('.newtable_filter .prec_sec',$table).each(function() {
         var $item = $(this);
         var $li = $("<li/>").text($('.k',$item).text()).appendTo($out);
         $li.on('click',function(e) {
-          $item.removeClass('prec_sec').addClass('prec_pri');
+          activate_sec($item);
           activate_menu($table,$item,false);
-          maybe_hide_more($table);
           e.stopPropagation();
         });
       });
@@ -172,6 +178,7 @@
         var text = w.text(view.filter[key],values,km);
         $('.v',$el).text(text);
         $el.addClass('restricted');
+        activate_sec($el);
       } else {
         $('.v',$el).text('All');
         $el.removeClass('restricted');
