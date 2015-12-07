@@ -131,12 +131,14 @@ sub check_for_index {
   }
   
   if ($error) {
-    warn "!!! URL ERROR: $error";
-    return 'error';
+    $self->hub->session->add_data(
+      type     => 'message',
+      code     => 'userdata_upload',
+      message  => "Your file has no tabix index, so we have attempted to upload it. If the upload fails (e.g. your file is too large), please provide a tabix index and try again.",
+      function => '_info'
+    );
   }
-  else {
-    return $index_exists;
-  }
+  return $index_exists;
 }
 
 sub set_format {
