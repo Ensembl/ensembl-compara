@@ -30,11 +30,18 @@ sub activity_save_orient {
   $config->filter_saved($orient);
 
   my %args    = ( type => 'newtable', code => $config->class );
+
+  # Sequence check
+  my %data_in = %{$session->get_data(%args) || {}};
+  my $old_seq = $data_in{'seq'}||-1;
+  my $new_seq = $hub->param('seq')||0;
+
+  return if $old_seq >= $new_seq; # Out of order
+
   my %data;
-  
-  # XXX check seq
   eval {
     $data{'orient'} = JSON->new->encode($orient);
+    $data{'seq'} = $new_seq;
   };
   warn "$@\n" if $@;
 
@@ -44,8 +51,6 @@ sub activity_save_orient {
 
 sub extend_config {
   my ($self,$hub,$config) = @_;
-
-  warn "CALLED\n";
 
   my $session = $hub->session;
   

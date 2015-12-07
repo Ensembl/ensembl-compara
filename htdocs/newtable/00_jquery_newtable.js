@@ -539,7 +539,7 @@
     return val;
   }
 
-  var seq = 0;
+  var seq = +Date.now();
   function save_orient($table,config,view) {
     seq++;
     var src = $table.data('src');
