@@ -274,7 +274,7 @@ sub get_go_list {
             evidence => $evidence,
             term     => $term_name,
             info     => $info_text,
-            source   => join ' ,', @{$sources || []},
+            source   => join ', ', @{$sources || []},
           };
         }
       }
