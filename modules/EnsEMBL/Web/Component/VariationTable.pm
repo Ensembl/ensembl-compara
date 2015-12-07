@@ -289,6 +289,7 @@ sub make_table {
   },{
     _key => 'location', _type => 'position unshowable',
     label => 'Location', sort_for => 'chr',
+    state_filter_ephemeral => 1,
   },{
     _key => 'chr', _type => 'string no_filter',
     label => $is_lrg?'bp':'Chr: bp',
@@ -365,6 +366,7 @@ sub make_table {
     _key => 'aacoord', _type => 'integer', label => "AA co\ford",
     helptip => 'Amino Acid Co-ordinate',
     filter_blank_button => 1,
+    state_filter_ephemeral => 1,
   },{
     _key => 'sift_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'sift_value',
@@ -405,6 +407,7 @@ sub make_table {
       action => 'Summary',
       t => ["Transcript"] 
     },
+    state_filter_ephemeral => 1,
    },{
     _key => 'LRGTranscript', _type => 'string',
     width => 2,

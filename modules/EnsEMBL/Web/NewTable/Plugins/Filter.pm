@@ -29,6 +29,22 @@ sub col_filter_keymeta_enum {
   });
 }
 
+sub filter_saved {
+  my ($config,$data) = @_;
+
+  foreach my $key (@{$config->columns}) {
+    my $col = $config->column($key);
+    next unless $col->colconf->{'state_filter_ephemeral'};
+    delete $data->{'filter'}{$key};
+  }
+}
+
+sub col_state_filter_ephemeral {
+  my ($self,$col,$yn) = @_;
+
+  $col->colconf->{'state_filter_ephemeral'} = $yn;
+}
+
 package EnsEMBL::Web::NewTable::Plugins::FilterClass;
 use parent qw(EnsEMBL::Web::NewTable::Plugins::Filter);
 

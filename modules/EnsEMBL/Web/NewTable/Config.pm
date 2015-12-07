@@ -199,6 +199,15 @@ sub activity {
   return undef;
 }
 
+sub filter_saved {
+  my ($self,$data) = @_;
+
+  foreach my $p (values %{$self->{'plugins'}}) {
+    my $fn = $p->can("filter_saved");
+    $fn->($self,$data) if $fn;
+  }
+}
+
 sub config {
   my ($self) = @_;
 

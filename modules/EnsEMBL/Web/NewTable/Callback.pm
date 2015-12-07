@@ -64,7 +64,7 @@ sub go {
   if($activity) {
     my $act = $self->{'config'}->activity($activity);
     my $out = {};
-    $out = $act->($self) if $act;
+    $out = $act->($self,$self->{'config'}) if $act;
     return $out;
   }
   $self->{'orient'} = from_json($hub->param('orient'));
