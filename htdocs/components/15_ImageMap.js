@@ -541,39 +541,46 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     .find('a.config').off().on('click', function (e) {
       e.preventDefault();
 
-      if ($(this).parent().hasClass('current')) {
-        return;
-      }
+      panel.handleConfigClick(this);
 
-      var config  = this.rel;
-      var update  = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
-      var fav     = '';
-      var $this   = $(this);
-
-      if ($this.hasClass('favourite')) {
-        fav = $this.hasClass('selected') ? 'off' : 'on';
-        Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
-      } else {
-        $this.parents('._label_layer').addClass('hover_label_spinner');
-      }
-
-      $.ajax({
-        url: this.href + fav,
-        dataType: 'json',
-        success: function (json) {
-          if (json.updated) {
-            panel.changeConfiguration(config, update[0], update[1]);
-          }
-        }
-      });
-
-      $this = null;
     }).end()
 
     // while url input is focused, don't hide the hover label
     .find('input._copy_url').off().on('click focus blur', function(e) {
       $(this).val(this.defaultValue).select().closest('._label_layer').toggleClass('focused', e.type !== 'blur');
     });
+  },
+
+  handleConfigClick: function (link) {
+    var $link = $(link);
+
+    if ($link.parent().hasClass('current')) {
+      return;
+    }
+
+    var config  = link.rel;
+    var update  = link.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
+    var fav     = '';
+
+    if ($link.hasClass('favourite')) {
+      fav = $link.hasClass('selected') ? 'off' : 'on';
+      Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
+    } else {
+      $link.parents('._label_layer').addClass('hover_label_spinner');
+    }
+
+    $.ajax({
+      url: link.href + fav,
+      dataType: 'json',
+      context: this,
+      success: function (json) {
+        if (json.updated) {
+          this.changeConfiguration(config, update[0], update[1]);
+        }
+      }
+    });
+
+    $link = null;
   },
 
   changeConfiguration: function (config, trackName, renderer) {
