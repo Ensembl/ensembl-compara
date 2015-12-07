@@ -303,7 +303,9 @@
       var needf = (need||{}).filter || {};
       var gotf = (got||{}).filter || {};
       var to_filter = {};
-      $.each(needf,function(col,v) { to_filter[col]=1; });
+      $.each(needf,function(col,v) {
+        to_filter[col]=1;
+      });
       var ok = 1;
       $.each(gotf,function(col,v) {
         if(!to_filter.hasOwnProperty(col)) {
@@ -314,12 +316,17 @@
       var n = 0;
       $.each(to_filter,function(col,v) {
         var cc = config.colconf[col];
-        var cf = $.find_type(widgets,cc);
-        if(cf && cf.match) {
-          to_filter[col] = cf;
+        if(cc) {
+          var cf = $.find_type(widgets,cc);
+          if(cf && cf.match) {
+            to_filter[col] = cf;
+            n++;
+          } else {
+            ok = 0;
+          }
+        } else { // filter not in present table
+          to_filter[col] = null;
           n++;
-        } else {
-          ok = 0;
         }
       });
       if(!ok || !n) { return null; }
@@ -337,6 +344,7 @@
         for(var i=0;i<grid.length;i++) {
           var ok = true;
           $.each(to_filter,function(col,fn) {
+            if(fn===null) { return; } // filter not in present table
             var v = grid[i][rev_series[col]];
             if(v===null || v===undefined) {
               v = [v];
