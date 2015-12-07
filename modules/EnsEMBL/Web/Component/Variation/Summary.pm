@@ -571,8 +571,8 @@ sub evidence_status {
     $html .= qq{<a href="$url">$img_evidence</a>};
   }
 
-  my $src = $self->img_url.'/16/info.png';
-  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the evidence status descriptions"/>}; 
+  my $src = $self->img_url.'/16/info12.png';
+  my $img = qq{<img src="$src" class="_ht" style="vertical-align:bottom;margin-bottom:2px;" title="Click to see all the evidence status descriptions"/>}; 
   my $info_link = qq{<a href="/info/genome/variation/data_description.html#evidence_status" target="_blank">$img</a>};
 
   return [ "Evidence status $info_link" , $html ];
@@ -587,8 +587,8 @@ sub clinical_significance {
 
   return unless (scalar(@$clin_sign));
   
-  my $src = $self->img_url.'/16/info.png';
-  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the clinical significances"/>};
+  my $src = $self->img_url.'/16/info12.png';
+  my $img = qq{<img src="$src" class="_ht" style="vertical-align:bottom;margin-bottom:2px;" title="Click to see all the clinical significances"/>};
   my $info_link = qq{<a href="/info/genome/variation/data_description.html#clin_significance" target="_blank">$img</a>};
 
   my %clin_sign_icon;
