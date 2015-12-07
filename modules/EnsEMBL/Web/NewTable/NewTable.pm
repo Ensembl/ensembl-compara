@@ -35,7 +35,7 @@ use EnsEMBL::Web::NewTable::Column;
 use EnsEMBL::Web::NewTable::NewTableConfig;
 
 sub new {
-  my ($class, $component) = @_;
+  my ($class, $component,$type) = @_;
 
   my $self = $class->SUPER::new($component->hub,$component);
   $self = { %$self, (
@@ -45,7 +45,9 @@ sub new {
   )};
 
   bless $self, $class;
-  my $config = EnsEMBL::Web::NewTable::NewTableConfig->new($component->hub);
+
+  $type  ||= ref($component);
+  my $config = EnsEMBL::Web::NewTable::NewTableConfig->new($component->hub,undef,$type);
   $self->{'config'} = $config;
 
   # XXX these should be optional. That's why they're plugins! :-)

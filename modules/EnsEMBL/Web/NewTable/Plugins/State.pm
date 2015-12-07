@@ -29,7 +29,7 @@ sub activity_save_orient {
 
   $config->filter_saved($orient);
 
-  my %args    = ( type => 'newtable', code => 'XXX' );
+  my %args    = ( type => 'newtable', code => $config->class );
   my %data;
   
   # XXX check seq
@@ -49,7 +49,7 @@ sub extend_config {
 
   my $session = $hub->session;
   
-  my %args    = ( type => 'newtable', code => 'XXX' );
+  my %args    = ( type => 'newtable', code => $self->class );
   my %data    = %{$session->get_data(%args) || {}};
 
   $config->{'saved_orient'} = {};

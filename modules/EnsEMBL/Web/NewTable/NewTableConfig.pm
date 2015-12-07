@@ -26,9 +26,9 @@ use EnsEMBL::Web::NewTable::Config;
 use parent qw(EnsEMBL::Web::NewTable::Config);
 
 sub new {
-  my ($proto,$hub,$type) = @_;
+  my ($proto,$hub,$type,$klass) = @_;
   my $class = ref($proto) || $proto;
-  my $self = $class->SUPER::new($hub,{ type => $type });
+  my $self = $class->SUPER::new($hub,{ type => $type, class => $klass });
   $self->{'phases'} = [{ name => undef }];
   bless $self,$class;
   return $self;

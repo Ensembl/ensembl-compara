@@ -63,6 +63,7 @@ sub new {
     colorder => $config->{'columns'},
     columns => {},
     type => $config->{'type'},
+    class => $config->{'class'},
     plugins => {},
     phases => $config->{'phases'},
     keymeta => $keymeta||{},
@@ -87,6 +88,7 @@ sub new {
   return $self;
 }
 
+sub class { return $_[0]->{'class'}; }
 sub memo_argument { return $_[0]->{'memo'}; }
 
 sub add_keymeta {
@@ -227,6 +229,7 @@ sub config {
     orient => $self->orient_out,
     formats => ["tabular","paragraph"],
     colconf => \%colconf,
+    class => $self->{'class'},
     widgets => \%widgets,
     phases => $self->{'phases'},
     ssplugins => $self->plugins_conf
