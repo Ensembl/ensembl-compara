@@ -151,6 +151,13 @@ sub evidence_classes {
   my ($self,$table) = @_;
 
   my @evidence_order = reverse @{$ATTRIBS{'evidence'}};
+  my %evidence_key;
+  $evidence_key{$_} = "B".lc $_ for(@evidence_order);
+  $evidence_key{'1000Genomes'} = "A0001";
+  $evidence_key{'HapMap'}      = "A0002";
+  @evidence_order =
+    sort { $evidence_key{$a} cmp $evidence_key{$b} } @evidence_order;
+
   my %evidence_order;
   $evidence_order{$evidence_order[$_]} = $_ for(0..$#evidence_order);
 
@@ -337,7 +344,6 @@ sub make_table {
     _key => 'status', _type => 'iconic', label => "Evid\fence",
     width => 1.5,
     helptip => $glossary->{'Evidence status (variant)'},
-    sort_down_first => 1,
     filter_keymeta_enum => 1,
     filter_maybe_blank => 1,
     filter_sorted => 1,
@@ -345,7 +351,6 @@ sub make_table {
     _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
     helptip => 'Clinical significance',
     filter_label => 'Clinical Significance',
-    sort_down_first => 1,
     filter_keymeta_enum => 1,
     filter_sorted => 1,
   },{
@@ -382,7 +387,6 @@ sub make_table {
   },{
     _key => 'polyphen_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'polyphen_value',
-    sort_down_first => 1,
   },{
     _key => 'polyphen_class', _type => 'iconic no_filter unshowable',
   },{
