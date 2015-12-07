@@ -42,7 +42,7 @@
 
   function check_baked($el,state,km,values) {
     var bakes = {};
-    $.each(km,function(sel,value) {
+    $.each(km||{},function(sel,value) {
       if(sel == '*' || !value.baked) { return; }
       for(var j=0;j<value.baked.length;j++) {
         if(!bakes[value.baked[j]]) { bakes[value.baked[j]] = {}; }
