@@ -79,8 +79,7 @@ sub content {
     label_html => $object->analysis->description
   });
 
-  $self->delete_entry_by_type('Exons');
-  $self->delete_entry_by_type('Exon');
+  $self->delete_entry_by_value('Exons');
   $self->delete_entry_by_value('cDNA Sequence');
   $self->delete_entry_by_value('Protein Variations');
 
