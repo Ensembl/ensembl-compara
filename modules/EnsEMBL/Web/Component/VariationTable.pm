@@ -211,7 +211,6 @@ sub clinsig_classes {
     $clinsig_col->icon_url($cs,sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img));
     $clinsig_col->icon_helptip($cs,$cs);
     $clinsig_col->icon_export($cs,$cs);
-    warn "ORDER $cs_img // $clinsig_order{$cs_img}\n";
     $clinsig_col->icon_order($cs,$clinsig_order{$cs_img});
   }
   $clinsig_col->filter_maybe_blank(1);
