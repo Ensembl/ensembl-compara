@@ -22,6 +22,7 @@ use strict;
 
 use List::Util qw(max min);
 
+use Bio::EnsEMBL::Variation::Utils::Config qw(%ATTRIBS);
 use Bio::EnsEMBL::Variation::Utils::Constants qw(%VARIATION_CLASSES);
 use Bio::EnsEMBL::Variation::Utils::VariationEffect qw($UPSTREAM_DISTANCE $DOWNSTREAM_DISTANCE);
 use EnsEMBL::Web::NewTable::NewTable;
@@ -149,10 +150,7 @@ sub sift_poly_classes {
 sub evidence_classes {
   my ($self,$table) = @_;
 
-  my @evidence_order = reverse qw(
-    1000Genomes HapMap Cited ESP Frequency
-    Multiple_observations Phenotype_or_Disease
-  );
+  my @evidence_order = reverse @{$ATTRIBS{'evidence'}};
   my %evidence_order;
   $evidence_order{$evidence_order[$_]} = $_ for(0..$#evidence_order);
 
