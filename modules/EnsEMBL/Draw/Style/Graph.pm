@@ -72,16 +72,17 @@ sub create_glyphs {
 
     ## Draw them! 
     my $plot_conf = {
-      line_score    => $graph_conf->{'line_score'},
-      line_px       => $graph_conf->{'line_px'},
-      pix_per_score => $graph_conf->{'pix_per_score'},
-      max_score     => $graph_conf->{'max_score'},
-      unit          => $subtrack->{'metadata'}{'unit'},
-      graph_type    => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
-      same_strand   => $track_config->get('same_strand'),
-      colour        => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
-      colours       => $subtrack->{'metadata'}{'gradient'},
-      alt_colour    => $subtrack->{'metadata'}{'altColor'},
+      line_score      => $graph_conf->{'line_score'},
+      line_px         => $graph_conf->{'line_px'},
+      pix_per_score   => $graph_conf->{'pix_per_score'},
+      max_score       => $graph_conf->{'max_score'},
+      unit            => $subtrack->{'metadata'}{'unit'},
+      graph_type      => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
+      default_strand  => $track_config->get('default_strand'),
+      drawn_strand    => $track_config->get('drawn_strand'),
+      colour          => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
+      colours         => $subtrack->{'metadata'}{'gradient'},
+      alt_colour      => $subtrack->{'metadata'}{'altColor'},
     };
 
     ## Determine absolute positioning for graph
@@ -105,24 +106,15 @@ sub draw_wiggle {
   my ($self, $c, $features) = @_;
   return unless $features && $features->[0];
 
-  my $same_strand  = $c->{'same_strand'};
-  my $slice_length = $self->{'container'}->length;
-  $features = [ sort { $a->{'start'} <=> $b->{'start'} } @$features ];
+  my $slice_length    = $self->{'container'}->length;
+  $features           = [ sort { $a->{'start'} <=> $b->{'start'} } @$features ];
   my ($previous_x,$previous_y);
 
   for (my $i = 0; $i < @$features; $i++) {
     my $f = $features->[$i];
 
-    if (defined($f->{'strand'})) {
-      if ($f->{'strand'} == 0) {
-        ## Unstranded data goes on the reverse strand
-        next if $same_strand && $same_strand == 1;
-      }
-      else {
-      ## Skip unless feature is on this strand
-      next if defined($same_strand) && $f->{'strand'} != $same_strand;
-      }
-    }
+    ## Decide if we want to draw this feature here
+    next if $self->skip_feature($f, $c);
 
     my ($current_x,$current_score);
     $current_x     = ($f->{'end'} + $f->{'start'}) / 2;

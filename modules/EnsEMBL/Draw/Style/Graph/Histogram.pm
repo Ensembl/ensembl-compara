@@ -26,7 +26,6 @@ sub draw_wiggle {
   my ($self, $c, $features) = @_;
 
   my $use_points  = $c->{'graph_type'} && $c->{'graph_type'} eq 'points';
-  my $same_strand = $c->{'same_strand'};
 
   ## How wide is each bar, in pixels? (needed for label overlay)
   my $bar_width   = $self->image_config->container_width * $self->{'pix_per_bp'} / scalar(@$features);
@@ -35,16 +34,8 @@ sub draw_wiggle {
 
   foreach my $f (@$features) {
 
-    if (defined($f->{'strand'})) {
-      if ($f->{'strand'} == 0) {
-        ## Unstranded data goes on the reverse strand
-        next if $same_strand && $same_strand == 1;
-      }
-      else {
-      ## Skip unless feature is on this strand
-      next if defined($same_strand) && $f->{'strand'} != $same_strand;
-      }
-    }
+    ## Decide if we want to draw this feature here
+    next if $self->skip_feature($f, $c);
 
     my $start   = $f->{'start'};
     my $end     = $f->{'end'};

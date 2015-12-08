@@ -111,6 +111,25 @@ sub new {
 
   return $self;
 }
+
+sub skip_feature {
+### Decide if we need to skip this feature, based on the strand
+### 
+  my ($self, $feature, $track_config) = @_;
+  my $skip = 0;
+
+  ## Unstranded data goes on the reverse strand unless configured otherwise
+  my $default_strand = $track_config->get('default_strand') || -1;
+  my $drawn_strand   = $track_config->get('drawn_strand');
+  my $feature_strand = defined($feature->{'strand'}) ? $feature->{'strand'} : 0;
+
+  if (($feature_strand && $feature_strand != $drawn_strand) 
+      || (!$feature_strand && $default_strand != $drawn_strand)
+    ) {
+      $skip = 1;
+  }
+  return $skip;
+}
   
 sub create_glyphs {
 ### Method to create the glyphs needed by a given style
