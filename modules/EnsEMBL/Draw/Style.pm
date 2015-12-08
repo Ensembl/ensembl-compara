@@ -232,7 +232,7 @@ sub draw_graph_base {
 
   ## Draw title over track
   if ($metadata->{'name'} && !$track_config->get('hide_subtitle')) {
-    my $subtitle_colour = $metadata->{'colour'};
+    my $subtitle_colour = $metadata->{'colour'} || $metadata->{'color'};
     my $subtitle_y      = $top;
     $subtitle_y        += defined($track_config->get('subtitle_y')) ? $track_config->get('subtitle_y') : 8;
     my $subtitle = {
