@@ -92,7 +92,7 @@ sub transcript_table {
   foreach (@{$object->get_similarity_hash(0, $gene)}) {
     next unless $_->{'type'} eq 'PRIMARY_DB_SYNONYM';
     my $id   = $_->display_id;
-    my %syns = %{$self->get_synonyms($id, @syn_matches)};
+    my %syns = %{$self->get_synonyms($id, @syn_matches) || {}};
     foreach (keys %syns) {
       $unique_synonyms{$_}++;
     }
