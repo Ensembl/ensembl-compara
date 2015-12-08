@@ -120,12 +120,18 @@ sub gene_phenotypes {
     } else {    
       foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
         my $phen    = $pf->phenotype->description;
-        my $ext_id  = $pf->external_id;
         my $source  = $pf->source_name;
+        my $ext_id  = $pf->external_id;
+        if ($source =~ /^ZFIN$/i) {
+          $ext_id = $phen;
+          $ext_id =~ s/,//g;
+          $ext_id =~ s/ /+/g;
+        }
         my $attribs = $pf->get_all_attributes;
 
         my $source_uc = uc $source;
-        $source_uc =~ s/\s/_/g;
+           $source_uc =~ s/\s/_/g;
+           $source_uc .= "_SEARCH" if ($source_uc =~ /^RGD|ZFIN$/);
         my $source_url = "";
         if ($ext_id) {
           if ($source_uc =~ /GOA/) {
@@ -137,7 +143,7 @@ sub gene_phenotypes {
         } else {
           $source_url = $hub->get_ExtURL_link($source, $source_uc);
         }
-        $source_url = $source if ($source_url eq "" || !$source_url);
+        $source_url = $source if ($source_url eq "" || !$source_url || $source_url =~ /\(ID\)/);
         
         my $locs = sprintf(
           '<a href="%s" class="karyotype_link">View on Karyotype</a>',

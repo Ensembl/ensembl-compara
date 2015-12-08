@@ -27,6 +27,7 @@
   function minmax(vv,v) {
     if(!is_number(v)) { return; }
     if(vv.hasOwnProperty('min')) {
+      v = parseFloat(v);
       vv.min = vv.min<v?vv.min:v;
       vv.max = vv.max>v?vv.max:v;
     } else {
@@ -50,7 +51,7 @@
       if(ori.hasOwnProperty('min') && val<ori.min) { return false; }
       if(ori.hasOwnProperty('max') && val>ori.max) { return false; }
     } else {
-      if(ori.hasOwnProperty('nulls')) { return ori.nulls; }
+      if(ori.hasOwnProperty('no_nulls')) { return !ori.no_nulls; }
     }
     return true;
   }
@@ -78,15 +79,18 @@
   }
   
   function iconic_string(val,km,col) {
-    var vals = (val||'').split(/;/);
+    var vals = (val||'').split(/~/);
     if(km) {
       var new_vals = [];
       for(var i=0;i<vals.length;i++) {
         var v = vals[i];
-        var w = km['decorate/iconic/'+col+'/'+v];
-        if(w && w.order) { v = w.order; }
+        var w = (km['decorate/iconic'][col]||{})[v];
+        if(w && w.order) {
+          v = ""+w.order;
+          v = (Array(17-v.length).join('0'))+v;
+        }
         else if(w && w['export']) { v = w['export']; }
-        else { v = '~'; }
+        else { v = '~'+v; }
         new_vals.push(v);
       }
       vals = new_vals;
@@ -99,28 +103,51 @@
   function iconic_sort(a,b,f,c,km,col) {
     if(!c[a] && c[a]!=='') { c[a] = iconic_string(a,km,col); }
     if(!c[b] && c[b]!=='') { c[b] = iconic_string(b,km,col); }
-    return c[a].localeCompare(c[b])*f;
+    return c[a].localeCompare(c[b])*-f;
   }
-  
+
+  function iconic_finish(vv,col,km) {
+    var kk = Object.keys(vv);
+    kk.sort(function(a,b) {
+      var aa = ((km['decorate/iconic'][col]||{})[a]||{}).order;
+      var bb = ((km['decorate/iconic'][col]||{})[b]||{}).order;
+      if(aa && bb) { return aa-bb; }
+      if(aa) { return 1; }
+      if(bb) { return -1; }
+      if(a && b) { return a.localeCompare(b); }
+      if(a) { return 1; }
+      if(b) { return -1; }
+      return 0;
+    });
+    var cc = {};
+    for(var i=0;i<kk.length;i++) {
+      cc[kk[i]] = vv[kk[i]];
+    }
+    return { keys: kk, counts: cc };
+  }
+
   function rangemerge_class(a,b) {
     var i;
-    var v = {};
-    if(!a) { a = []; }
-    a = a.slice();
-    for(i=0;i<a.length;i++) { v[a[i]] = 1; }
-    for(i=0;i<b.length;i++) {
-      if(!v.hasOwnProperty(b[i])) { a.push(b[i]); }
-    }
-    return a;
+    var kk = [];
+    var cc = {};
+    $.each(((a||{}).keys)||{},function(i,v) {
+      kk.push(v);
+      cc[v] = a.counts[v];
+    });
+    $.each(((b||{}).keys)||{},function(i,v) {
+      if(!cc.hasOwnProperty(v)) { kk.push(v); cc[v] = 0; }
+      cc[v] += b.counts[v];
+    });
+    return { keys: kk, counts: cc };
   }
 
   function rangemerge_range(a,b) {
     a = $.extend({},true,a);
-    if(b.min) {
+    if(b.hasOwnProperty('min')) {
       if(!a.hasOwnProperty('min')) { a.min = b.min; }
       a.min = a.min<b.min?a.min:b.min;
     }
-    if(b.max) {
+    if(b.hasOwnProperty('max')) {
       if(!a.hasOwnProperty('max')) { a.max = b.max; }
       a.max = a.max>b.max?a.max:b.max;
     }
@@ -170,7 +197,7 @@
       types: [{
         name: "string",
         split: function(v) { return v?[v]:[]; },
-        value: function(vv,v) { vv[v]=1; },
+        value: function(vv,v,s) { vv[v]=1; },
         finish: function(vv) { return Object.keys(vv); },
         match: function(ori,val) { return string_match(ori,val); },
         sort: function(a,b,c) {
@@ -181,13 +208,13 @@
         name: "numeric",
         clean: function(v) { return number_clean(v); },
         split: function(v) { return [number_clean(v)]; },
-        value: function(vv,v) { minmax(vv,v); },
+        value: function(vv,v,s) { minmax(vv,v); },
         match: function(ori,val) { return number_match(ori,val); },
         sort: function(a,b,c) { return (parseFloat(a)-parseFloat(b))*c; },
         merge: rangemerge_range
       },{
         name: "position",
-        value: function(vv,v) {
+        value: function(vv,v,s) {
           var m = v.match(/^(.*?):(\d+)/);
           if(!m) { return; }
           if(!vv[m[1]]) { vv[m[1]] = { chr: m[1] }; }
@@ -206,9 +233,17 @@
       },{
         name: "iconic",
         split: function(v) { return v?v.split(/~/):[]; },
-        value: function(vv,v) { vv[v]=1; },
-        finish: function(vv) { return Object.keys(vv); },
-        match: function(ori,val) { return string_match(ori,val); },
+        value: function(vv,v,s) {
+          if(s===undefined || s===null) { s=1; }
+          if(v===null) { v=''; }
+          if(!vv[v]) { vv[v]=0; }
+          vv[v]+=s;
+        },
+        finish: iconic_finish,
+        match: function(ori,val) {
+          if(val===null && ori['']) { return false; }
+          return string_match(ori,val);
+        },
         sort: iconic_sort,
         merge: rangemerge_class
       }]

@@ -827,9 +827,6 @@ sub load_user_tracks {
 
 sub _add_trackhub {
   my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $force_hide) = @_;
-  if (defined($self->hub->species_defs->TRACKHUB_VISIBILITY)) {
-    $force_hide = $self->hub->species_defs->TRACKHUB_VISIBILITY;
-  }
 
   return ($menu_name, {}) if $self->{'_attached_trackhubs'}{$url};
 
@@ -896,22 +893,32 @@ sub _add_trackhub_node {
     my $n       = $node;
     my $data    = $n->data;
     my $config  = {};
+    my @ok_keys = qw(visibility dimensions priority);
     ## The only parameter we override from superTrack nodes is visibility
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
       $config->{'visibility'} = $data->{'visibility'};
     }
-    #else {
-    #  $config->{$_}       = $data->{$_} for keys %$data;
-    #}
+    else {
+      for (keys %$data) {
+        if ($_ =~ /subGroup/ || grep $_, @ok_keys) {
+          $config->{$_} = $data->{$_} if $data->{$_};
+        }
+      }
+    }
 
     ## Add any setting inherited from parents
     while ($n = $n->parent_node) {
       $data = $n->data;
       if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
         $config->{'visibility'} = $data->{'visibility'};
-        last;
       }
-      #$config->{$_} ||= $data->{$_} for keys %$data;
+      else {
+        for (keys %$data) {
+          if ($_ =~ /subGroup/ || grep $_, @ok_keys) {
+            $config->{$_} = $data->{$_} if $data->{$_};
+          }
+        }
+      }
     }
     $config->{'on_off'} = 'off' if $force_hide;
 
@@ -1156,10 +1163,10 @@ sub load_configured_bigbed {
 }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
-sub load_configured_trackhubs { shift->load_file_format('trackhub', undef, 1) }
+sub load_configured_trackhubs { shift->load_file_format('trackhub'); }
 
 sub load_file_format {
-  my ($self, $format, $sources, $force_hide) = @_;
+  my ($self, $format, $sources) = @_;
   my $function = "_add_${format}_track";
   
   return unless ($format eq 'trackhub' || $self->can($function));
@@ -1193,6 +1200,9 @@ sub load_file_format {
     }
     if ($source) {
       if ($format eq 'trackhub') {
+        ## Force hiding of internally configured trackhubs, because they should be 
+        ## off by default regardless of the settings in the hub
+        my $force_hide = $internal ? 1 : 0;  
         $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu, $force_hide);
       }
       else { 
@@ -1590,7 +1600,7 @@ sub update_from_url {
 
         if (uc $format eq 'TRACKHUB') {
           my $info;
-          ($n, $info) = $self->_add_trackhub($n, $p,1);
+          ($n, $info) = $self->_add_trackhub($n, $p);
           if ($info->{'error'}) {
             my @errors = @{$info->{'error'}||[]};
             $session->add_data(
@@ -2116,6 +2126,7 @@ sub add_matrix {
   $data->{'column_key'}  = $column_key;
   $data->{'menu'}        = 'matrix_subtrack';
   $data->{'source_name'} = $data->{'name'};
+
   if (!$data->{'display'} || $data->{'display'} eq 'off') {
     $data->{'display'} = 'default';
   }
@@ -3251,7 +3262,7 @@ sub add_sequence_variations_meta {
     }
     push(@menus, $menu_item);
   }
-  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent} || 
+  foreach my $menu_item (sort {$a->{type} !~ /menu/ cmp $b->{type} !~ /menu/ || $a->{parent} cmp $b->{parent} ||
                                $a->{order} <=> $b->{order} || $a->{'long_name'} cmp $b->{'long_name'}
                               } @menus) {
     my $node;

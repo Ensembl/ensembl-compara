@@ -32,8 +32,16 @@ sub iconic_build_key {
   my @vals = split(/~/,$in||'');
   if($km) {
     @vals = map {
-      $km->{"decorate/iconic/$col/$_"}{'order'} ||
-      $km->{"decorate/iconic/$col/$_"}{'export'} || '~';
+      my $m = $km->{"decorate/iconic"}{$col->key()}{$_};
+      my $value;
+      if(defined $m->{'order'}) {
+        $value = sprintf("^%16d",$m->{'order'});
+      }
+      if(defined $m->{'export'} and not defined $value) {
+        $value = '_'.substr($m->{'export'},0,16);
+      }
+      $value = '~' unless defined $value;
+      $value;
     } @vals;
   }
   return join('~',reverse sort @vals);
@@ -48,7 +56,24 @@ sub cmp {
 }
 
 sub split { return $_[1]?[split(/~/,$_[1])]:[]; }
-sub has_value { return $_[1]->{$_[2]} = 1; }
-sub range { return [sort keys %{$_[1]}]; }
+sub has_value {
+  return ($_[1]->{$_[2]}||=0)++;
+}
+
+sub range {
+  my ($self,$values,$km,$col,$pre) = @_;
+
+  my %c;
+  my %all = %{$values||{}};
+  if($pre and $pre->{'counts'}) {
+    ($all{$_}||=0)+=$pre->{'counts'}{$_} for keys %{$pre->{'counts'}};
+  }
+  $all{$_}||=0 for keys %{($km->{'decorate/iconic'}||{})->{$col->key}};
+  my @keys = sort { $self->cmp($a,$b,1,\%c,$km,$col)  } keys %all;
+  return {
+    keys => \@keys,
+    counts => \%all,
+  };
+}
 
 1;

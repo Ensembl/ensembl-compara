@@ -1,0 +1,74 @@
+properties:
+  - patterns:
+      - .*/species/.*
+      - .*/img/ensembl_.*
+      - .*/img/4_species.png
+      - .*/img/info/thumb_Canis_latrans.png
+    transcode:
+      png: jpg
+
+  - patterns:
+      - .*/img/ENCODE_logo.jpg
+    transcode:
+      jpg: png
+
+  - patterns:
+      - .*/img/info/powered.*
+      - .*/img/(youtube|youku|e-).*
+      - .*/img/(api|download|star)_.*
+      - .*/info/docs/api/.*
+      - .*/info/docs/Doxygen/.*
+      - .*/img/species/pic_.*
+      - .*/img/vep_web_.*
+      - .*/img/credits/.*
+      - .*/img/phenotype_fig_.*
+      - .*/i/species/64/.*
+      - .*/img/help/.*
+      - .*/img/blastview/.*
+      - .*/img/e_bang.png
+      - .*/img/vep_cache_build_thumb.png
+      - .*/img/variation_schema_thumb.png
+      - .*/i/mirrors/ensembl-.*
+    action:
+      exclude: 1
+
+  - patterns:
+      - .*/i/96/var_.*
+    page:
+      name: varexplore
+    action:
+      nudge: [8,8]
+      pad: 8
+
+  - patterns:
+      - .*/i/80/compara_.*
+    page:
+      name: comparaexmplore
+    action:
+      nudge: [8,8]
+      pad: 8
+
+  - patterns:
+      - .*/i/navb-reg-.*
+    page:
+      name: regexplore
+
+  - patterns:
+      - .*/i/val/val_.*
+      - .*/img/validation_status/.*
+      - .*/img/miniad/.*
+      - .*/img/sprites/missing.png
+      - .*/img/biomart_thumb.gif
+      - .*/img/double_helix.png
+      - .*/i/e-ensembl.png
+      - .*/i/help/compass.gif
+      - .*/i/loading_bg.png
+    page:
+      name: rare
+
+  - patterns:
+      - .*/i/loading_bg.png
+      - .*/i/dev-ensembl_print.gif
+      - .*/dev-ensembl.gif
+    page:
+      name: dev

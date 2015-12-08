@@ -449,7 +449,7 @@ sub moveable_tracks {
 }
 
 sub render {
-  my ($self, $format) = @_;
+  my ($self, $format, $drivers) = @_;
   $format ||= 'png';
 
   return unless $self->drawable_container;
@@ -460,8 +460,9 @@ sub render {
 
   if ($filename) {
     $image = EnsEMBL::Web::File::Dynamic::Image->new(
-                                                      'hub'  => $hub,
-                                                      'name' => $hub->param('filename'),
+                                                      'hub'             => $hub,
+                                                      'name'            => $hub->param('filename'),
+                                                      'output_drivers'  => $drivers,
                                                       );
   }
   else {
@@ -469,6 +470,7 @@ sub render {
                                                       'hub'             => $hub,
                                                       'name_timestamp'  => 1,
                                                       'extension'       => 'png',
+                                                      'output_drivers'  => $drivers,
                                                       );
   }
   my $content = $self->drawable_container->render($format, from_json($self->hub->param('extra') || "{}"));

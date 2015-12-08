@@ -43,7 +43,7 @@ sub initialize {
   my $vc = $self->view_config($type);
   my $adorn = $hub->param('adorn') || 'none';
 
-  for (qw(exons_only snp_display title_display line_numbering hide_long_snps)) {
+  for (qw(exons_only snp_display title_display line_numbering hide_long_snps hide_rare_snps)) {
     $config->{$_} = $hub->param($_) unless ($hub->param($_) eq 'off' || $vc->get($_) eq 'off');
   }
   
@@ -284,7 +284,8 @@ sub set_variations {
   my ($self, $config, $slice, $markup, $transcript, $sequence) = @_;
   my $variation_features    = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $transcript ])};
-     @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
+  @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
+  @transcript_variations = grep { !$self->too_rare_snp($_->variation_feature,$config) } @transcript_variations;
   my $length                = scalar @$sequence - 1;
   my $transcript_id         = $transcript->stable_id;
   my $strand                = $transcript->strand;
@@ -309,22 +310,22 @@ sub set_variations {
     
     $consequence ||= lc $transcript_variation->display_consequence;
     
-    $config->{'key'}{'variations'}{$consequence} = 1;
+    $config->{'key'}{'variants'}{$consequence} = 1;
     
     for ($start..$end) {
       next if $sequence->[$_]{'letter'} eq '-';
       
-      $markup->{'variations'}{$_}{'type'}     = $consequence;
-      $markup->{'variations'}{$_}{'alleles'} .= ($markup->{'variations'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
-      $markup->{'variations'}{$_}{'href'}   ||= {
+      $markup->{'variants'}{$_}{'type'}     = $consequence;
+      $markup->{'variants'}{$_}{'alleles'} .= ($markup->{'variants'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
+      $markup->{'variants'}{$_}{'href'}   ||= {
         type        => 'ZMenu',
         action      => 'TextSequence',
         factorytype => 'Location',
         _transcript => $transcript_id,
       };
       
-      push @{$markup->{'variations'}{$_}{'href'}{'v'}},  $name;
-      push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+      push @{$markup->{'variants'}{$_}{'href'}{'v'}},  $name;
+      push @{$markup->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
     }
   }
 }

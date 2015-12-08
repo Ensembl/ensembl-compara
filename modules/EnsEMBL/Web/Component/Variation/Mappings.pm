@@ -48,7 +48,7 @@ sub content {
   my $show_scores = $hub->param('show_scores');
   my $vf          = $hub->param('vf');
   my $html        = qq{<a id="$self->{'id'}_top"></a>};
-  
+
   if ($object->Obj->failed_description =~ /match.+reference\ allele/) {
     my ($feature_slice) = map $_->dbID == $vf ? $_->feature_Slice : (), @{$object->Obj->get_all_VariationFeatures};
       
@@ -348,7 +348,9 @@ sub content {
 # Description: Return hash of columns, this can be overwritten in the mobile plugins to remove columns not required.
 sub table_columns {
   my $self = shift;
-  
+
+  my $glossary = $self->hub->glossary_lookup;
+
   my @columns = (
     { key => 'gene',      title => 'Gene',                             sort => 'html'                        },
     { key => 'trans',     title => 'Transcript (strand)',              sort => 'html'                        },
@@ -361,10 +363,10 @@ sub table_columns {
     { key => 'codon',     title => 'Codons',                           sort => 'string'                      },
   );  
 
-  push @columns, ({ key => 'sift',      title => 'SIFT',     sort => 'position_html', align => 'center' },) 
-      if defined $self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'} ;
+  push @columns, ({ key => 'sift',     title => 'SIFT',     sort => 'position_html', align => 'center', help => $glossary->{'SIFT'} })
+      if defined $self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'};
 
-  push @columns, ({ key => 'polyphen',  title => 'PolyPhen', sort => 'position_html', align => 'center' },) 
+  push @columns, ({ key => 'polyphen', title => 'PolyPhen', sort => 'position_html', align => 'center', help => $glossary->{'PolyPhen'} })
       if $self->hub->species eq 'Homo_sapiens';
   
   push @columns, { key => 'detail', title => 'Detail', sort => 'string' };

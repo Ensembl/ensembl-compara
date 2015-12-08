@@ -60,14 +60,19 @@ sub summary_table {
   my @pops               = @{$variation->adaptor->db->get_PopulationAdaptor->fetch_all_LD_Populations};
   my $table_with_no_rows = 0;
   my %mappings        = %{$object->variation_feature_mapping};
+
+  my $manplot_help = "Manhattan plot of population specific LD values for variants linked to the variant $v";
+  my $linked_help  = "Links to tables showing the variants having a significant LD value (>0.8 by default) with the variant $v";
+  my $plot_help    = "LD values of the variants within the 20kb surrounding the variant $v";
+ 
   my $table              = $self->new_table([
-    { key => 'name',   title => 'Population',              sort => 'html',   align => 'left'   },
-    { key => 'desc',   title => 'Description',             sort => 'string', align => 'left'   },
-    { key => 'tags',   title => 'Tags',                    sort => 'string', align => 'right'  },
-    { key => 'tagged', title => 'Tagged by',               sort => 'string', align => 'right'  },
-    { key => 'table',  title => 'Linked variants table',   sort => 'none',   align => 'center' },
-    { key => 'plot',   title => 'LD plot (image)',         sort => 'none',   align => 'center' },
-    { key => 'export', title => 'LD plot (table)',         sort => 'none',   align => 'center' },
+    { key => 'name',     title => 'Population',          sort => 'html',   align => 'left'   },
+    { key => 'desc',     title => 'Description',         sort => 'string', align => 'left'   },
+    { key => 'tags',     title => 'Tags',                sort => 'string', align => 'right'  },
+    { key => 'tagged',   title => 'Tagged by',           sort => 'string', align => 'right'  },
+    { key => 'manplot',  title => 'LD Manhattan plot',   sort => 'none',   align => 'center', help => $manplot_help },
+    { key => 'table',    title => 'Variants in high LD', sort => 'none',   align => 'center', help => $linked_help  },
+    { key => 'plot',     title => 'LD plot',             sort => 'none',   align => 'center', help => $plot_help    },
   ], [], { data_table => 1, sorting => [ 'name asc' ] });
   
   my ($loc, $vf);
@@ -84,9 +89,7 @@ sub summary_table {
       last;
     }
   }
-  
-  my $img_info = qq{<img src="/i/16/info.png" class="_ht" style="float:right;position:relative;top:2px;width:12px;height:12px;margin-left:4px" title="Click to see more information about the population" alt=    "info" />}; 
- 
+   
   foreach my $pop (@pops) {
     my $description = $pop->description;
        $description ||= '-';
@@ -95,7 +98,7 @@ sub summary_table {
       my $full_desc = $self->strip_HTML($description);
       
       while ($description =~ m/^.{30}.*?(\s|\,|\.)/g) {
-        $description = sprintf '<span class="_ht" title="%s">%s...<span class="small">(more)</span>', $full_desc, substr($description, 0, (pos $description) - 1);
+        $description = sprintf '%s... <span class="_ht ht small" title="%s">(more)</span>', substr($description, 0, (pos $description) - 1), $full_desc;
         last;
       }
     }
@@ -130,20 +133,31 @@ sub summary_table {
     };
     
     if ($available_pops->{$pop->name}) {
-      # plot
+      my $id  = $pop->dbID;      
+
+      # manhattan plot
       my $url = $hub->url({
+        type   => 'Variation',
+        action => 'LDPlot',
+        v      => $object->name,
+        vf     => $hub->param('vf'),
+        pop1   => $id
+      });
+
+      $row->{'manplot'} = qq{<a class="ld_manplot_link" href="$url">View plot</a>};
+
+      # plot
+      $url = $hub->url({
         type   => 'Location',
         action => 'LD',
         r      => $object->ld_location,
         v      => $object->name,
         vf     => $hub->param('vf'),
-        pop1   => $pop->name ,
+        pop1   => $id,
         focus  => 'variation'
       });
       
-      $row->{'plot'} = qq{<a href="$url">Show</a>};
-      
-      my $id  = $pop->dbID;
+      $row->{'plot'} = qq{<a class="ld_plot_link space-right" href="$url">View plot</a>};
       
       $row->{'table'} = $self->ajax_add($self->ajax_url(undef, { pop_id => $id, update_panel => 1 }), $id);
       
@@ -155,16 +169,14 @@ sub summary_table {
         v       => $object->name,
         vf      => $hub->param('vf'),
         pop1    => $pop->name ,
-        focus   => 'variation',
         _format => 'HTML',
         output  => 'ld',
       });
       
-      $row->{'export'} = qq{<a href="$url">Show</a>};
+      $row->{'plot'} .= qq{<a href="$url">View table</a>};
     } else {
       $row->{'plot'}   = '-';
       $row->{'table'}  = '-';
-      $row->{'export'} = '-';
       
       $table_with_no_rows = 1;
     }

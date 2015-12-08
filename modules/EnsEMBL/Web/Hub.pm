@@ -39,7 +39,7 @@ use EnsEMBL::Draw::Utils::ColourMap;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
-use EnsEMBL::Web::DBSQL::DBConnection;
+use EnsEMBL::Web::DBSQL::DBConnection qw(register_cleaner);
 use EnsEMBL::Web::DBSQL::ConfigAdaptor;
 use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::ExtURL;
@@ -593,14 +593,14 @@ sub parse_referer {
 sub filename {
   my ($self, $object) = @_;
   
-  my $name = sprintf('%s-%s-%s-%d',
+  my $name = sprintf('%s_%s_%s_%d',
     $self->species,
     $self->type,
     $self->action,
     $self->species_defs->ENSEMBL_VERSION
   );
   
-  $name .= '-' . $object->stable_id if $object && $object->can('stable_id');
+  $name .= '_' . $object->stable_id if $object && $object->can('stable_id');
   $name  =~ s/[^-\w\.]/_/g;
   
   return $name;
@@ -937,5 +937,18 @@ sub source_url {
   }
   return undef;
 }
+
+sub ie_version {
+  return 0 unless $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
+  return $1;
+}
+
+register_cleaner('Bio::EnsEMBL::Funcgen::DBSQL::ResultSetAdaptor',sub {
+  my ($rsdv,$sd,$species) = @_;
+
+  my $file_path = join '/', $sd->DATAFILE_BASE_PATH, lc $species, $sd->ASSEMBLY_VERSION;
+  warn "PATH $file_path\n";
+  $rsdv->dbfile_data_root($file_path);
+});
 
 1;

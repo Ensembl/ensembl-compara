@@ -24,6 +24,12 @@ use parent qw(EnsEMBL::Web::NewTable::Column::Numeric);
 
 sub js_type { return 'numeric'; }
 sub js_range { return 'range'; }
-sub js_params { return { steptype => 'integer' }; }
+
+sub configure {
+  my ($self,$mods,$args) = @_;
+
+  $args->{'filter_integer'} = 1 unless exists $args->{'filter_integer'};
+  $self->SUPER::configure($mods,$args);
+}
 
 1;

@@ -59,19 +59,20 @@ sub get_sequence_data {
   if ($config->{'snp_display'}) {
     foreach my $snp (reverse @{$object->variation_data($translation->get_Slice, undef, $strand)}) {
       next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
+      next if $self->too_rare_snp($snp->{'vf'},$config);
       
       my $pos  = $snp->{'position'} - 1;
       my $dbID = $snp->{'vdbid'};
-      $markup->{'variations'}->{$pos}->{'type'}    = lc(($config->{'consequence_filter'} && keys %{$config->{'consequence_filter'}}) ? [ grep $config->{'consequence_filter'}{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
-      $markup->{'variations'}->{$pos}->{'alleles'} = $snp->{'allele'};
-      $markup->{'variations'}->{$pos}->{'href'} ||= {
+      $markup->{'variants'}->{$pos}->{'type'}    = lc(($config->{'consequence_filter'} && keys %{$config->{'consequence_filter'}}) ? [ grep $config->{'consequence_filter'}{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
+      $markup->{'variants'}->{$pos}->{'alleles'} = $snp->{'allele'};
+      $markup->{'variants'}->{$pos}->{'href'} ||= {
         type        => 'ZMenu',
         action      => 'TextSequence',
         factorytype => 'Location'
       };
       
-      push @{$markup->{'variations'}->{$pos}->{'href'}->{'v'}},  $snp->{'snp_id'};
-      push @{$markup->{'variations'}->{$pos}->{'href'}->{'vf'}}, $dbID;
+      push @{$markup->{'variants'}->{$pos}->{'href'}->{'v'}},  $snp->{'snp_id'};
+      push @{$markup->{'variants'}->{$pos}->{'href'}->{'vf'}}, $dbID;
     }
   }
   
@@ -93,6 +94,8 @@ sub initialize {
   for (qw(exons snp_display number hide_long_snps)) {
     $config->{$_} = $hub->param($_) =~ /yes|on/ ? 1 : 0;
   }
+  $config->{'hide_rare_snps'} = $hub->param('hide_rare_snps');
+  delete $config->{'hide_rare_snps'} if $config->{'hide_rare_snps'} eq 'off';
   
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
   

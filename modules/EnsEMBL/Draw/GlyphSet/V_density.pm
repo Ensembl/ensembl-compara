@@ -20,6 +20,7 @@ package EnsEMBL::Draw::GlyphSet::V_density;
 use strict;
 use base qw(EnsEMBL::Draw::GlyphSet);
 use Data::Dumper;
+use List::Util qw( max );
 
 ### Parent module for vertical density tracks - does some generic data munging
 ### and draws the histogram/graph components
@@ -87,6 +88,8 @@ sub build_tracks {
     $T->{'max_len'}   = $max_len;
     $T->{'bin_size'}  = $bin_size;
     $T->{'v_offset'}  = $v_offset;
+
+    my $current_max = max @$scores;
     if (uc($chr) eq 'MT') {
       $T->{'max_value'} = undef;
     }
@@ -109,8 +112,16 @@ sub build_tracks {
 		  $chr_min_data = $mean if ($mean < $chr_min_data || $chr_min_data eq undef); 
 		  $chr_max_data = $mean if $mean > $chr_max_data;
       ## Scale data for actual display
-      my $max = $T->{'max_value'} || $chr_max_data || 1; 
-      $local_max = $max if $max > $local_max;
+      my $max;
+
+      if ($T->{'max_value'}) {
+        $max = $T->{'max_value'};  
+        $max = $current_max if ($current_max > $max);
+      } else {
+        $max = ($current_max > $chr_max_data) ? $current_max : $chr_max_data;
+      }
+      $local_max = $max;
+
       push @$scaled_scores, $mean/$max * $width;
 	  }
     $T->{'scores'} = $scaled_scores;

@@ -43,7 +43,7 @@ sub init {
 
 sub field_order {
   my $self = shift;
-  return qw(flanking display_width sscon fullseq exons_only line_numbering snp_display hide_long_snps consequence_filter);
+  return qw(flanking display_width sscon fullseq exons_only line_numbering snp_display hide_long_snps hide_rare_snps consequence_filter);
 }
 
 sub form_fields {

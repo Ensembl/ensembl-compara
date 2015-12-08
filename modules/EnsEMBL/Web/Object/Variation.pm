@@ -58,10 +58,10 @@ sub availability {
       
       $availability->{'variation'} = 1;
       
-      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts regfeats features populations samples ega citation locations);
+      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts regfeats features populations population_freqs samples ega citation locations);
       if($self->param('vf')){
-          ## only show these if a mapping available
-          $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
+        ## only show these if a mapping available
+        $availability->{"has_$_"} = $counts->{$_} for qw(alignments ldpops);
       }
       $availability->{'is_somatic'}  = $obj->has_somatic_source;
       $availability->{'not_somatic'} = !$obj->has_somatic_source;
@@ -92,13 +92,13 @@ sub counts {
     $counts->{'transcripts'} = $self->count_transcripts;
     $counts->{'regfeats'}    = $self->count_regfeats;
     $counts->{'features'}    = $counts->{'transcripts'} + $counts->{'regfeats'};
-    $counts->{'populations'} = $self->count_populations;
     $counts->{'samples'}     = $self->count_samples;
     $counts->{'ega'}         = $self->count_ega;
     $counts->{'ldpops'}      = $self->count_ldpops;
     $counts->{'alignments'}  = $self->count_alignments->{'multi'};
     $counts->{'citation'}    = $self->count_citations;
     $counts->{'locations'}   = scalar @{$self->get_variation_features};
+    ($counts->{'population_freqs'}, $counts->{'populations'}) = @{$self->count_populations};
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;
@@ -155,10 +155,12 @@ sub count_populations {
   my $self = shift;
   my $counts = 0;
   my $freqs = $self->freqs;
-  foreach my $pop_id (keys %{$freqs}) {
+  my @freqs_pop = keys(%{$freqs});
+  my $counts_pop = scalar(@freqs_pop) || 0;
+  foreach my $pop_id (@freqs_pop) {
     $counts += scalar(keys %{$freqs->{$pop_id}{ssid}});
   }
-  return $counts;
+  return [$counts,$counts_pop];
 }
 
 sub count_samples {
@@ -362,11 +364,13 @@ sub name {
   return $self->vari->name;
 }
 
-sub source {
+sub source { $_[0]->source_name; }
+
+sub source_name {
 
   ### Variation_object_calls
   ### Args: none
-  ### Example    : my $vari_source = $object->source;
+  ### Example    : my $vari_source = $object->source_name;
   ### Description: gets the Variation source
   ### Returns String
 
@@ -452,18 +456,6 @@ sub consequence_type {
   $consequence_type =~s/_/ /g;
  
   return $consequence_type;
-}
-## This is replaced by ensembl evidence_status
-## To be removed
-sub status { 
-
-  ### Variation_object_calls
-  ### a
-  ### Example    : my $vari_status = $object->get_all_validation_states;
-  ### Returns List of states
-
-  my $self = shift;
-  return $self->vari->get_all_validation_states;
 }
 
 sub evidence_status { 

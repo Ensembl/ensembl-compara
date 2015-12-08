@@ -43,8 +43,6 @@ sub content {
   my @genes         = @{$object->Obj->get_all_Genes('lrg_import')||[]};
   my @ens_xrefs     = grep {$_->dbname =~ /Ens_Hs_gene/i} @{$genes[0]->get_all_DBEntries()};
   my $ens_stable_id = $ens_xrefs[0]->display_id;
-  #my $gene_adaptor  = $hub->database('core')->get_GeneAdaptor;
-  #my $ens_gene      = $gene_adaptor->fetch_by_stable_id($ens_stable_id);
  
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $ens_stable_id, $cdb), 
@@ -92,7 +90,14 @@ sub content {
 
       foreach my $pf(@{$pfa->fetch_all_by_object_id($stable_id, 'Gene')}) {
 
+        # source
+        my $source = $pf->source_name;
+        my $source_uc = uc $source;
+           $source_uc =~ s/\s/_/g;
+           $source_uc .= "_SEARCH" if ($source_uc =~ /^RGD|ZFIN$/);
+
         # phenotype
+        my $phen_desc = $pf->phenotype->description;
         my $phen_link = $hub->url({
           species => $species,
           type    => 'Phenotype',
@@ -103,17 +108,26 @@ sub content {
         my $phen = sprintf(
           '<a href="%s">%s</a>',
           $phen_link,
-          $pf->phenotype->description,
-          $pf->source
+          $phen_desc,
+          $source
         );
 
-        # source
-        my $source = $pf->source;
-        my $ext_id = $pf->external_id;
+        my $ext_id  = $pf->external_id;
+        if ($source =~ /^ZFIN$/i) {
+          $ext_id = $phen_desc;
+          $ext_id =~ s/,//g;
+        }
+
         my $tax = $species_defs->get_config($species, 'TAXONOMY_ID');
 
         if($ext_id && $source) {
-          $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
+          if ($source =~ /^goa$/i) {
+            my $attribs = $pf->get_all_attributes;
+            $source = $hub->get_ExtURL_link($source, 'QUICK_GO_IMP', { ID => $ext_id, PR_ID => $attribs->{'xref_id'}});
+          }
+          else {
+            $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id, TAX => $tax});
+          }
         }
 
         $entries{$phen}{$source} = 1;

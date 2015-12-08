@@ -37,12 +37,6 @@ sub new {
   return $self;
 }
 
-sub register_key {
-  my ($self,$key,$meta) = @_;
-
-  $self->{'config'}->add_keymeta($key,$meta);
-}
-
 sub hub { return $_[0]->{'hub'}; }
 
 1;

@@ -93,8 +93,7 @@ sub content {
   $opt_fieldset->add_field({'type' => 'Dropdown', 'name' => 'image_format', 'class' => '_stt', 
                             'label' => 'Format', 'values' => $image_formats});
 
-  ## Contrast change hasn't been implemented in non-PNG formats yet
-  $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'contrast', 'field_class' => '_stt_raster',
+  $opt_fieldset->add_field({'type' => 'Checkbox', 'name' => 'contrast', 
                             'label' => 'Increase contrast', 'value' => '2'}); 
 
   ## Size and resolution are only relevant to raster formats like PNG
@@ -120,7 +119,7 @@ sub content {
 
   ## Don't forget the core params!
   my @core_params = keys %{$hub->core_object('parameters')};
-  push @core_params, qw(extra align);
+  push @core_params, qw(extra align pop1);
   foreach (@core_params) {
     $final_fieldset->add_hidden([
       {
@@ -153,8 +152,8 @@ sub default_file_name {
   my $type = $hub->param('data_type');
 
   if ($type eq 'Location') {
-    ## Replace hyphens, because they aren't export-friendly
-    (my $location = $hub->param('r')) =~ s/-/_/g;
+    ## Replace hyphens and colons, because they aren't export-friendly
+    (my $location = $hub->param('r')) =~ s/:|-/_/g;
     $name .= "_$location";
   }
   elsif ($type eq 'Gene') {

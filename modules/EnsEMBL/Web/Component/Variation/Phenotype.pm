@@ -119,7 +119,7 @@ sub table_data {
    
   my $mart_somatic_url = $self->hub->species_defs->ENSEMBL_MART_ENABLED ? '/biomart/martview?VIRTUALSCHEMANAME=default'.
                          '&ATTRIBUTES=hsapiens_snp_som.default.snp.refsnp_id|hsapiens_snp_som.default.snp.chr_name|'.
-                         'hsapiens_snp_som.default.snp.chrom_start|hsapiens_snp_som.default.snp.associated_gene'.
+                         'hsapiens_snp_som.default.snp.chrom_start'.
                          '&FILTERS=hsapiens_snp_som.default.filters.phenotype_description.&quot;###PHE###&quot;'.
                          '&VISIBLEPANEL=resultspanel' : '';
                  
@@ -172,11 +172,13 @@ sub table_data {
     if ($clin_sign_list) {
       # Clinical significance icons
       $clin_sign .= qq{<span class="hidden export">$clin_sign_list</span>};
-      foreach my $clin_sign_term (split(',',$clin_sign_list)) {
+      foreach my $clin_sign_term (split(/\/|,/,$clin_sign_list)) {
+        $clin_sign_term =~ s/^\s//;
         my $clin_sign_icon = $clin_sign_term;
         $clin_sign_icon =~ s/ /-/g;
+        $clin_sign_icon = 'other' if ($clin_sign_icon =~ /conflict/);
         if ($attributes->{$review_status}) {;
-           $clin_sign .= qq{<img class="clin_sign" src="/i/val/clinsig_$clin_sign_icon.png" />};
+          $clin_sign .= qq{<img class="clin_sign" src="/i/val/clinsig_$clin_sign_icon.png" />};
         }
         else {
           $clin_sign .= qq{<img class="_ht clin_sign" src="/i/val/clinsig_$clin_sign_icon.png" title="$clin_sign_term" />};
@@ -256,7 +258,7 @@ sub table_data {
     foreach my $attr (@stats_col) {
       if ($attributes->{$attr}) {
         my $attr_label = ($attr eq 'beta_coef') ? 'beta_coefficient' : (($attr eq 'p_value') ? 'p-value' : $attr);
-        push @stats, "$attr_label:".$attributes->{$attr};
+        push @stats, "$attr_label:".(($attr eq 'p_value') ? $self->render_p_value($attributes->{$attr}) : $attributes->{$attr});
         $column_flags{'stats'} = 1;
       }
     }
@@ -384,6 +386,7 @@ sub source_link {
   
   my $source_uc = uc $source;
      $source_uc =~ s/\s/_/g;
+     $source_uc .= '_SEARCH' if $source_uc =~ /UNIPROT/;
   my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   my $label     = $source;
   my $name;
@@ -391,6 +394,10 @@ sub source_link {
     my @ega_data = split('\.',$ext_id);
     $name = (scalar(@ega_data) > 1) ? $ega_data[0].'*' : $ega_data[0];
     $label = $ext_id;
+  }
+  elsif ($url =~/cosmic/) {
+    my $cname = $self->object->name; 
+    $name = ( $cname =~ /^COSM(\d+)/) ? $1 : $cname;
   } 
   elsif ($url =~/ebi\.ac\.uk\/gwas/) {
     $name = $self->object->name;

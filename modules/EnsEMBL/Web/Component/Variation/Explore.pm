@@ -52,11 +52,11 @@ sub content {
   if ($avail->{'has_populations'}) {
     if ($avail->{'not_somatic'}) {
       $pop_url = $hub->url({'action' => 'Population'});
-      $pop_count = $avail->{'has_populations'};
+      $pop_count = $avail->{'has_population_freqs'} if ($avail->{'has_population_freqs'} != 0);
     }
     elsif ($avail->{'is_somatic'}) {
       $pop_url = $hub->url({'action' => 'Populations'});
-      $pop_count = $avail->{'has_populations'};
+      $pop_count = $avail->{'has_population_freqs'} if ($avail->{'has_population_freqs'} != 0);
     }
   }
 

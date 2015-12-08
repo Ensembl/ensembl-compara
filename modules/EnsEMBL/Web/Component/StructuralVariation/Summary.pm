@@ -31,7 +31,7 @@ sub _init {
 sub content {
   my $self         = shift;
   my $object       = $self->object;
-  my $source       = $object->source;
+  my $source_name  = $object->source_name;
   my $mappings     = $object->variation_feature_mapping;
   my $validation   = $object->validation_status;
   my $failed       = $object->Obj->failed_description ? $self->failed() : ''; ## First warn if the SV has been failed
@@ -64,8 +64,8 @@ sub content {
                   
   return sprintf qq{<div class="summary_panel">$failed%s</div>}, $self->new_twocol(
     $self->variation_class,
-    $self->get_allele_types($source),
-    $self->get_source($source, $object->source_description),
+    $self->get_allele_types($source_name),
+    $self->get_source($source_name, $object->source_description),
     $self->get_study,
     $self->get_alias,
     $self->clinical_significance,
@@ -151,7 +151,7 @@ sub get_source {
     $source_link = $hub->get_ExtURL_link($source, 'ILLUMINA', $source);
   }
   
-  $source      = "<p>$source_link - $description</p>";
+  $source = "<p>$source_link - $description</p>";
 
   return ['Source', $source];
 }
@@ -342,7 +342,7 @@ sub location {
     return (
       ['Location', $location_info],
       ['Selected location', sprintf(q(<div class="twocol-cell"><form action="%s" method="get">%s<select name="svf" class="fselect">%s</select> <input value="Go" class="fbutton" type="submit">%s</form>%s</div>),
-        $hub->url({ svf => undef, sv => $name, source => $object->source }),
+        $hub->url({ svf => undef, sv => $name, source => $object->source_name }),
         $core_params,
         $options,
         $location_link
@@ -412,8 +412,8 @@ sub clinical_significance {
 
   return unless (scalar(@$clin_sign));
 
-  my $src = $self->img_url.'/16/info.png';
-  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the clinical significances"/>};
+  my $src = $self->img_url.'/16/info12.png';
+  my $img = qq{<img src="$src" class="_ht" style="vertical-align:bottom;margin-bottom:2px;" title="Click to see all the clinical significances"/>};
   my $info_link = qq{<a href="/info/genome/variation/data_description.html#clin_significance" target="_blank">$img</a>};
 
   my %clin_sign_icon;

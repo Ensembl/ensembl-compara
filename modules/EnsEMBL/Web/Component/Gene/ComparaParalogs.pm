@@ -232,22 +232,6 @@ sub buttons {
                     };
   }
 
-  if ($button_set{'view'}) {
-
-    my $cdb = $hub->param('cdb') || 'compara';
-
-    my $params = {
-                  'action' => 'Compara_Paralog',
-                  'function' => 'Alignment'.($cdb =~ /pan/ ? '_pan_compara' : ''),
-                  };
-
-    push @buttons, {
-                    'url'     => $hub->url($params),
-                    'caption' => 'View sequence alignments',
-                    'class'   => 'view',
-                    'modal'   => 0
-    };
-  }
   return @buttons;
 }
 

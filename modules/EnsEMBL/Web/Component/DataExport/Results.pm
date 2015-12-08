@@ -101,8 +101,9 @@ sub content {
   if ($file) {
     my $read = $file->read;
     if ($read->{'content'}) {
+      (my $preview = $read->{'content'}) =~ s/\n{2,}/\n/g;
       $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
-      $html .= encode_entities($read->{'content'});
+      $html .= encode_entities($preview);
       $html .= '</pre>';
     }
   }

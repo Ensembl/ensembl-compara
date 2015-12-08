@@ -58,7 +58,7 @@ sub content {
 
   foreach my $species (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
     next unless $hub->species_defs->get_config($species, 'databases')->{'DATABASE_VARIATION'};
-    
+
     my $pfa = $hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation', $species);
     my $sp = $species;
        $sp =~ tr/ /_/;
@@ -85,6 +85,7 @@ sub content {
       foreach my $pf(@{$pfa->fetch_all_by_object_id($stable_id, 'Gene')}) {
         
         # phenotype
+        my $phen_desc = $pf->phenotype->description;
         my $phen_link = $hub->url({
           species => $species,
           type    => 'Phenotype',
@@ -95,17 +96,30 @@ sub content {
         my $phen = sprintf(
           '<a href="%s">%s</a>',
           $phen_link,
-          $pf->phenotype->description,
+          $phen_desc,
           $pf->source_name
         );
         
         # source
         my $source = $pf->source_name;
-        my $ext_id = $pf->external_id;
+        my $source_uc = uc $source;
+           $source_uc =~ s/\s/_/g;
+           $source_uc .= "_SEARCH" if ($source_uc =~ /^RGD|ZFIN$/);
+        my $ext_id  = $pf->external_id;
+        if ($source =~ /^ZFIN$/i) {
+          $ext_id = $phen_desc;
+          $ext_id =~ s/,//g;
+        }
         my $tax = $species_defs->get_config($species, 'TAXONOMY_ID');
       
         if($ext_id && $source) {
-          $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
+          if ($source =~ /^goa$/i) {
+            my $attribs = $pf->get_all_attributes;
+            $source = $hub->get_ExtURL_link($source, 'QUICK_GO_IMP', { ID => $ext_id, PR_ID => $attribs->{'xref_id'}});
+          }
+          else {
+            $source = $hub->get_ExtURL_link($source, $source_uc, { ID => $ext_id, TAX => $tax});
+          }
         }
 
         $entries{$phen}{$source} = 1;

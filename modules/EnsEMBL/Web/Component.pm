@@ -44,6 +44,7 @@ use EnsEMBL::Draw::VDrawableContainer;
 use EnsEMBL::Web::Document::Image::GD;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Document::TwoCol;
+use EnsEMBL::Web::Object::ImageExport;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
@@ -690,8 +691,22 @@ sub _export_image {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
     $image->drawable_container->{'config'}->set_parameter('contrast',$contrast);
     
-    my $path = $image->render($format);
-    $hub->param('file', $path);
+    ## Note: write to disk, because download doesn't work with memcached
+    if ($hub->type eq 'ImageExport') {
+      ## User download
+      my $file = $image->render($format, ['IO']);
+      $hub->param('file', $file);
+    }
+    else {
+      ## Output image by itself, e.g. for external services
+      (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
+      my $filename = sprintf '%s_%s_%s.%s', $comp, $hub->filename($self->object), $scale, $formats{$format}{'extn'};
+      $hub->param('filename', $filename);
+      my $path = $image->render($format, ['IO']);
+      $hub->param('file', $path);
+      $hub->param('format', $format);
+      EnsEMBL::Web::Object::ImageExport::handle_download($self);
+    }
 
     return 1;
   }

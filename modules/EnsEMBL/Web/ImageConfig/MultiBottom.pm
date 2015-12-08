@@ -104,13 +104,16 @@ sub init {
 }
 
 sub multi {
-  my ($self, $methods, $chr, $pos, $total, @slices) = @_;
+  my ($self, $methods, $chr, $pos, $total,$all_slices, @slices) = @_;
   my $sp              = $self->{'species'};
   my $multi_hash      = $self->species_defs->multi_hash;
   my $primary_species = $self->hub->species;
   my $p               = $pos == $total && $total > 2 ? 2 : 1;
   my ($i, %alignments, @strands);
   
+  my $slice_summary = join(' ',map {
+    join(':',$_->[0],$_->[1]->seq_region_name,$_->[1]->start,$_->[1]->end)
+  } map { [$_->{'species'},$_->{'slice'}] } @$all_slices);
   foreach my $db (@{$self->species_defs->compara_like_databases || []}) {
     next unless exists $multi_hash->{$db};
     
@@ -164,7 +167,7 @@ sub multi {
     
     foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
       my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
-      
+
       $decorations->before(
         $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
           glyphset                   => '_alignment_pairwise',
@@ -179,7 +182,9 @@ sub multi {
           method_link_species_set_id => $align->{'id'},
           target                     => $align->{'target_name'},
           join                       => 1,
-          menu                       => 'no'
+          menu                       => 'no',
+          slice_summary              => $slice_summary,
+          flip_vertical              => 1,
         })
       );
     }

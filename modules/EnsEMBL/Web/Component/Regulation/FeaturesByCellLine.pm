@@ -32,7 +32,7 @@ sub _init {
 sub content {
   my $self         = shift;
   my $hub          = $self->hub; 
-  my $object       = $self->object; 
+  my $object       = $self->object || $self->hub->core_object('regulation'); 
   my $highlight    = $hub->param('opt_highlight');
   my $context      = $hub->param('context') || 200;
   my $image_width  = $self->image_width     || 800;

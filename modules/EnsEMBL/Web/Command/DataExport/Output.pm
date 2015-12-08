@@ -33,6 +33,7 @@ use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
 
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::Object::Transcript;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -402,7 +403,8 @@ sub write_fasta {
   if (scalar @selected_options) {
     ## Only applicable to actual transcripts
     foreach my $transcript (@data) {
-      my $id    = ($stable_id ? "$stable_id:" : '') . $transcript->stable_id;
+      my @id_info = EnsEMBL::Web::Object::Transcript::display_xref(undef, $transcript);
+      my $id  = $id_info[0] || $transcript->display_id;
       my $type  = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') 
                       ? $transcript->analysis->logic_name 
                       : $transcript->status . '_' . $transcript->biotype;
@@ -482,7 +484,11 @@ sub write_alignment {
           $data = $data->get_SimpleAlign(-SEQ_TYPE => 'cds', -APPEND_SP_SHORT_NAME => 1);
         }
         else {
-          $data = $data->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
+          my %sa_param = (-APPEND_SP_SHORT_NAME => 1);
+          if ($hub->param('data_action')) {
+            $sa_param{'-REMOVE_GAPS'} = 1;
+          }
+          $data = $data->get_SimpleAlign(%sa_param);
         }
       }
       if (ref($data) =~ 'SimpleAlign') {

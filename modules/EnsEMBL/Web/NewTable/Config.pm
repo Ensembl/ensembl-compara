@@ -23,7 +23,7 @@ use warnings;
 
 use Carp;
 
-our @PLUGINS = qw(Core Frame Decorate Filter Misc Paging Sort);
+our @PLUGINS = qw(Core Frame Decorate Filter Misc Paging Sort State);
 our %PLUGINS;
 
 use EnsEMBL::Web::NewTable::Column;
@@ -63,9 +63,10 @@ sub new {
     colorder => $config->{'columns'},
     columns => {},
     type => $config->{'type'},
+    class => $config->{'class'},
     plugins => {},
     phases => $config->{'phases'},
-    keymeta => $config->{'keymeta'},
+    keymeta => $keymeta||{},
     size_needed => 0,
     hub => $hub,
     memo => {
@@ -87,24 +88,26 @@ sub new {
   return $self;
 }
 
+sub class { return $_[0]->{'class'}; }
 sub memo_argument { return $_[0]->{'memo'}; }
 
-sub register_key {
-  my ($self,$key,$meta) = @_; 
+sub add_keymeta {
+  my ($self,$class,$column,$value,$meta,$force) = @_;
 
-  $self->{'key_meta'}{$key}||={};
+  my $km = $self->get_keymeta($class,$column,$value);
   foreach my $k (keys %{$meta||{}}) {
-    $self->{'key_meta'}{$key}{$k} = $meta->{$k} unless exists $self->{'key_meta'}{$key}{$k};
-  }   
+    $km->{$k} = $meta->{$k} if $force or not exists $km->{$k};
+  }
 }
 
-sub add_keymeta {
-  my ($self,$key,$meta) = @_;
+sub get_keymeta {
+  my ($self,$class,$column,$value) = @_;
 
-  $self->{'keymeta'}{$key}||={};
-  foreach my $k (keys %{$meta||{}}) {
-    $self->{'keymeta'}{$key}{$k} = $meta->{$k} unless exists $self->{'keymeta'}{$key}{$k};
-  } 
+  my $km = $self->{'keymeta'};
+  $km = ($km->{$class}||={});
+  $km = ($km->{$column->key()}||={});
+  $km = ($km->{$value}||={});
+  return $km;
 }
 
 sub columns { return $_[0]->{'colorder'}; }
@@ -188,6 +191,25 @@ sub orient_out {
   return $orient;
 }
 
+sub activity {
+  my ($self,$activity) = @_;
+
+  foreach my $p (values %{$self->{'plugins'}}) {
+    my $act = $p->can("activity_$activity");
+    return $act if $act;
+  }
+  return undef;
+}
+
+sub filter_saved {
+  my ($self,$data) = @_;
+
+  foreach my $p (values %{$self->{'plugins'}}) {
+    my $fn = $p->can("filter_saved");
+    $fn->($self,$data) if $fn;
+  }
+}
+
 sub config {
   my ($self) = @_;
 
@@ -202,16 +224,21 @@ sub config {
   my %colconf;
   $colconf{$_} = $self->{'columns'}{$_}->colconf for keys %{$self->{'columns'}};
   
-  return {
+  my $out = {
     columns => $self->{'colorder'},
     orient => $self->orient_out,
     formats => ["tabular","paragraph"],
     colconf => \%colconf,
+    class => $self->{'class'},
     widgets => \%widgets,
     phases => $self->{'phases'},
-    keymeta => $self->{'keymeta'},
     ssplugins => $self->plugins_conf
   };
+  foreach my $p (values %{$self->{'plugins'}}) {
+    my $ext = $p->can("extend_config");
+    $ext->($self,$self->{'hub'},$out) if $ext;
+  }
+  return $out;
 }
 
 1;

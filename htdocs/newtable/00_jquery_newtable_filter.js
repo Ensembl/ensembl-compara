@@ -45,8 +45,15 @@
 
     function dropdown(idx,filter,label,primary) {
       var prec = primary?"pri":"sec";
-      if(filter=='') { filter = 'more'; }
-      return '<li class="t prec_'+prec+'" data-idx="'+idx+'"><div class="x"><span></span></div><div class="b"><span class="k">'+label+'</span><span class="v">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></div></li>';
+      var ht_text = "Filter table rows by "+label+".";
+      if(filter=='') {
+        filter = 'more';
+        ht_text = "Filter by other columns.";
+      }
+      var out = '<li class="t prec_'+prec+'" data-idx="'+idx+'"><div class="x"><span></span></div><div class="b"><span class="k _ht">'+label+'</span><span class="v _ht">All</span><div class="m newtable_filtertype_'+filter+'" data-filter="'+filter+'">'+label+'</div></div></li>';
+      var $x = $('<div/>');
+      $x.append($(out)).find('.b ._ht').attr('title',ht_text);
+      return $x.html();
     }
 
     function activate_menu($table,$button,others_only) {
@@ -66,24 +73,50 @@
     }
     
     function maybe_hide_more($table,$out) {
-      if(!$('.newtable_filter .prec_sec.valid',$table).length) {
+      if(!$('.newtable_filter .prec_sec',$table).length) {
         $table.find('.more').hide();
       }
     }
 
+    function activate_sec($item) {
+      var $table = $item.closest('.new_table_wrapper');
+      if(!$item.hasClass('prec_sec')) { return; }
+      $item.removeClass('prec_sec').addClass('prec_pri');
+      maybe_hide_more($table);
+    }
+
     function draw_more($table,$menu) {
       var $out = $("<ul/>");
-      $('.newtable_filter .prec_sec.valid',$table).each(function() {
+      $('.newtable_filter .prec_sec',$table).each(function() {
         var $item = $(this);
         var $li = $("<li/>").text($('.k',$item).text()).appendTo($out);
         $li.on('click',function(e) {
-          $item.removeClass('prec_sec').addClass('prec_pri');
+          activate_sec($item);
           activate_menu($table,$item,false);
-          maybe_hide_more($table);
           e.stopPropagation();
         });
       });
       $menu.empty().append($out);
+    }
+
+    function add_ok_cancel($tail,$table,$button,replace) {
+      var $ul = $('<ul/>').appendTo($tail);
+      var $ok = $('<li/>').html("Apply &raquo;").addClass('apply').appendTo($ul);
+      if(!replace) { $ok.addClass('unchanged'); }
+      $tail.closest('.m').on('okable',function(e,yn) {
+        $ok.toggleClass('unchanged',yn?false:true);
+      });
+      $ok.click(function() {
+        if($(this).hasClass('unchanged')) { return; }
+        hide_menu($tail.closest('.m'));
+        update_state($table,$button,$button.data('filter-state'));
+        update_button($table,$button);
+        $table.trigger('view-updated');
+      });
+      var $cancel = $('<li/>').text("Cancel").addClass('cancel').appendTo($ul);
+      $cancel.click(function() {
+        hide_menu($tail.closest('.m'));
+      });
     }
 
     function menu($table,$button,$menu) {
@@ -97,28 +130,39 @@
       var kind = config.colconf[key].range;
       var values = ($table.data('ranges')||{})[key];
       if(!values) { values = []; }
-      var kparams = config.colconf[key].range_params;
+      var km = $table.data('keymeta').filter;
+      if(km) { km = km[key]; }
       var w = find_widget(kind,'filters','class');
-      w.display($menu,$button,values,state,kparams,key,$table);
+      var $box = $('<div/>');
+      $menu.empty().append($box);
+      var $head = $('<div class="head"/>').appendTo($box);
+      var cc = config.colconf[key];
+      var title = (cc.filter_label || cc.label || cc.title || key);
+      $('<div class="title"/>').appendTo($head).html(title);
+      $summary = $('<div class="summary"/>').html("&#x00A0;").appendTo($head);
+      var $smore = $('<div class="more"/>').text('more rows pending').appendTo($summary);
+      $table.on('flux-load',function(e,onoff) { $smore.toggle(onoff); });
+      $table.trigger('flux-update',['load']);
+      if($('.new_table_loading:visible',$table).length) {
+      }
+      $stext = $('<div class="summary_text"/>').html("&#x00A0;").appendTo($summary);
+      if(w.visible(values)) {
+        var replace = !!($button.find('.m:visible').length);
+        var replace_state = $button.data('filter-state');
+        if(replace && replace_state!==undefined) { state = replace_state; }
+        w.display($box,$button,values,state,km,key,$table);
+        var $tail = $('<div class="tail"/>').appendTo($box);
+        add_ok_cancel($tail,$table,$button,replace);
+      } else {
+        $('<div/>').addClass('none_present').text('None present').appendTo($box);
+      }
     }
 
     function show_or_hide_all($table) {
       var $filters = $('.newtable_filter',$table);
-      var $vbuts = $('.t.valid',$filters);
+      var $vbuts = $('.t',$filters);
       $filters.toggle(!!$vbuts.length);
       maybe_hide_more($table);
-      if($vbuts.length) {
-        var $el = $('.prec_pri').eq(0);
-        if(!$el.hasClass('tipped')) {
-          $el.addClass('tipped').helptip({
-            'content': 'Click here to filter table by consequence type',
-            'position': { 'of': $el },
-            'close': function(event,ui) {
-              $el.helptip('disable');
-            }
-          }).helptip('open'); // XXX this is a hack
-        }
-      }
     }
 
     function unrestrict(config,$el,view) {
@@ -129,12 +173,12 @@
       if(obj_empty(view.filter)) { delete view.filter; }
     }
 
-    function set_button($el,view,w,key,values) {
-      $el.toggleClass('valid',!!w.visible(values));
+    function set_button($el,view,w,key,values,km) {
       if((view.filter||{}).hasOwnProperty(key)) {
-        var text = w.text(view.filter[key],values);
+        var text = w.text(view.filter[key],values,km);
         $('.v',$el).text(text);
         $el.addClass('restricted');
+        activate_sec($el);
       } else {
         $('.v',$el).text('All');
         $el.removeClass('restricted');
@@ -148,10 +192,12 @@
         $el.addClass('more');
       } else { // Not more button
         var key = config.columns[idx];
-        var values = ($table.data('ranges')||{})[key];
+        var km = ($table.data('keymeta')||{}).filter;
+        if(km) { km = km[key]; }
+        var values = ($table.data('ranges')||{})[key]||{};
         var kind = config.colconf[key].range;
         var w = find_widget(kind,'filters','class');
-        set_button($el,view,w,key,values);
+        set_button($el,view,w,key,values,km);
         show_or_hide_all($table);
       }
       var $menu = $('.m',$el);
@@ -175,6 +221,7 @@
     }
 
     function show_menu($el) {
+      $el.closest('.b').find('._ht:data(ui-tooltip)').helptip('close');
       $el.show();
       var right = $el.offset().left+$el.width();
       if(right>$('html').width()) {
@@ -186,21 +233,70 @@
       $el.hide();
     }
 
-    function eundo(client_enums,enums,grid,series) {
+    function add_blanks(value,column,plugin,keymeta) {
+      $.each(keymeta,function(klass,klassdata) {
+        $.each(klassdata,function(col,coldata) {
+          if(col == column) {
+            plugin.value(value,null,0);
+          }
+        });
+      });
+    }
+
+    function add_from_keymeta(value,column,plugin,keymeta) {
+      $.each(keymeta,function(klass,klassdata) {
+        $.each(klassdata,function(col,coldata) {
+          if(col == column) {
+            $.each(coldata,function(val,valdata) {
+              if(val != '*') { plugin.value(value,val,0); }
+            });
+          }
+        });
+      });
+    }
+
+    function eundo(client_enums,enums,grid,series,keymeta) {
       for(var i=0;i<series.length;i++) {
         var plugin = client_enums[series[i]];
-        if(!plugin) { continue; }
+        var star = undefined;
+        if(keymeta && keymeta.enumerate && keymeta.enumerate[series[i]]) {
+          star = keymeta.enumerate[series[i]]['*'];
+        }
+        if(!plugin) {
+          /* Can't merge, so hope we have a range */
+          if(star && star.merge) { enums[series[i]] = star.merge; }
+          continue;
+        }
         var value = {};
-        for(var j=0;j<grid.length;j++) {
-          var v = grid[j][i];
-          if(v===null || v===undefined) { continue; }
-          if(plugin.split) { v = plugin.split(v); } else { v = [v]; }
-          if(v===null || v===undefined) { continue; }
-          for(var k=0;k<v.length;k++) {
-            plugin.value(value,v[k]);
+        if(star) {
+          /* Populate from keymeta values */
+          if(star.from_keymeta) {
+            add_from_keymeta(value,series[i],plugin,keymeta);
+          }
+          /* Populate from keymeta merge */
+          if(star.merge) {
+            value = plugin.merge(value,star.merge);
           }
         }
-        if(plugin.finish) { value = plugin.finish(value); }
+        var fstar = undefined;
+        if(keymeta && keymeta.filter && keymeta.filter[series[i]]) {
+          fstar = keymeta.filter[series[i]]['*'];
+        }
+        if(fstar && fstar.maybe_blank) {
+          add_blanks(value,series[i],plugin,keymeta);
+        }
+        /* Populate by each value */
+        for(var j=0;j<grid.length;j++) {
+          var v = grid[j][i];
+          if(v===undefined) { continue; }
+          if(plugin.split && v!==null) { v = plugin.split(v); }
+          else { v = [v]; }
+          if(v===undefined || v===null) { continue; }
+          for(var k=0;k<v.length;k++) {
+            plugin.value(value,v[k],1);
+          }
+        }
+        if(plugin.finish) { value = plugin.finish(value,series[i],keymeta); }
         enums[series[i]] = value;
       }
       return enums;
@@ -214,7 +310,9 @@
       var needf = (need||{}).filter || {};
       var gotf = (got||{}).filter || {};
       var to_filter = {};
-      $.each(needf,function(col,v) { to_filter[col]=1; });
+      $.each(needf,function(col,v) {
+        to_filter[col]=1;
+      });
       var ok = 1;
       $.each(gotf,function(col,v) {
         if(!to_filter.hasOwnProperty(col)) {
@@ -225,12 +323,17 @@
       var n = 0;
       $.each(to_filter,function(col,v) {
         var cc = config.colconf[col];
-        var cf = $.find_type(widgets,cc);
-        if(cf && cf.match) {
-          to_filter[col] = cf;
+        if(cc) {
+          var cf = $.find_type(widgets,cc);
+          if(cf && cf.match) {
+            to_filter[col] = cf;
+            n++;
+          } else {
+            ok = 0;
+          }
+        } else { // filter not in present table
+          to_filter[col] = null;
           n++;
-        } else {
-          ok = 0;
         }
       });
       if(!ok || !n) { return null; }
@@ -248,9 +351,13 @@
         for(var i=0;i<grid.length;i++) {
           var ok = true;
           $.each(to_filter,function(col,fn) {
+            if(fn===null) { return; } // filter not in present table
             var v = grid[i][rev_series[col]];
-            if(v===null || v===undefined) { ok = false; return; }
-            if(fn.split) { v = fn.split(v); } else { v = [v]; }
+            if(v===null || v===undefined) {
+              v = [v];
+            } else {
+              if(fn.split) { v = fn.split(v); } else { v = [v]; }
+            }
             var ok_col = false;
             for(var j=0;j<v.length;j++) {
               if(fn.match(needf[col],v[j])) { ok_col = true; break; }
@@ -268,33 +375,41 @@
       delete need.filter;
     }
 
+    function add_button(idx,key) {
+      var cc = config.colconf[key];
+      if(!cc.range) { return ""; }
+      var label = "";
+      var label = cc.filter_label || cc.label || key;
+      if(!cc.range) { return ""; }
+      filterable_columns[key] = cc;
+      return dropdown(idx,cc.range,label,cc.primary);
+    }
+
     return {
       generate: function() {
         var dropdowns = "";
+        var all_dropdowns = [];
         $.each(config.columns,function(i,key) {
-          var cc =config.colconf[key];
-          if(!cc.range) { return; }
-          var label = "";
-          var label = cc.filter_label || cc.label || key;
-          if(cc.range) {
-            dropdowns += dropdown(i,cc.range,label,cc.primary);
-            filterable_columns[key] = cc;
-          }
+          var cc = config.colconf[key];
+          all_dropdowns.push([cc.primary,i,add_button(i,key)]);
         });
-        dropdowns += dropdown(-1,'','Other Columns',true);
+        all_dropdowns.sort(function(a,b) {
+          if(a[0]) { if(b[0]) { return a[0]-b[0]; } else { return -1; } }
+          if(b[0]) { return 1; } else { return a[1]-b[1]; }
+        });
+        $.each(all_dropdowns,function(i,val) {
+          dropdowns += val[2];
+        });
+        dropdowns += dropdown(-1,'','Filter Other Columns',true);
 
         var out='<div class="newtable_filter"><span class="intro">Filter</span><ul>'+dropdowns+'</ul></div>';
         return out;
       },
       position: data.position,
       go: function($table,$el) {
-        var trigger_soon = $.whenquiet(function() {
-          $table.trigger('view-updated');
-        },5000,$table,'filter');
         $('li.t',$el).on('update',function(e,state) {
-          update_state($table,$(this),state);
-          update_button($table,$(this));
-          trigger_soon();
+          $(this).data('filter-state',state);
+          $(this).find('.apply').removeClass('unchanged');
         });
         $table.on('range-updated',function(e) {
           $('li.t',$el).each(function() {
@@ -326,6 +441,7 @@
           var $menu = $(e.target).closest('.newtable_filter li.t .m');
           activate_menu($table,$button,!!$menu.length);
         });
+        $('.b ._ht',$el).helptip();
       },
       pipe: function() {
         return [
@@ -346,8 +462,8 @@
               delete need.enumerate;
             }
             var out = {
-              eundo: function(enums,grid,series) {
-                return eundo(client_enums,enums,grid,series);
+              eundo: function(enums,grid,series,keymeta) {
+                return eundo(client_enums,enums,grid,series,keymeta);
               }
             };
             if(obj_empty(need.filter)) { delete need.filter; }

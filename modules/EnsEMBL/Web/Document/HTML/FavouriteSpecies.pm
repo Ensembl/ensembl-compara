@@ -118,6 +118,19 @@ sub render_with_images {
         <span>$_->{'assembly'}</span>
       </div>
     );
+    if ($_->{'key'} eq 'Homo_sapiens' && $species_defs->SWITCH_ASSEMBLY) { 
+      my $assembly  = $species_defs->SWITCH_ASSEMBLY;
+      my $server    = 'http://'.$species_defs->SWITCH_ARCHIVE_URL;
+      $html .= qq(
+        <div class="species-box">
+          <a href="$server/$_->{'key'}/Info/Index" rel="external">
+            <span class="sp-img"><img src="$static_server/i/species/48/$_->{'key'}_$assembly.png" alt="$_->{'name'} $assembly" title="Browse $_->{'name'} $assembly" height="48" width="48" /></span>
+            <span>$_->{'common'}</span>
+          </a>
+          <span>$assembly</span>
+        </div>
+      );
+    }
   }
 
   return $html;

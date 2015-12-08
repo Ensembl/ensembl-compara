@@ -41,6 +41,7 @@ sub source             { return $_[0]->gene ? $_[0]->gene->source : undef;      
 sub gene_description   { return $_[0]->gene ? encode_entities($_[0]->gene->description) : undef; }
 sub feature_type       { return $_[0]->Obj->type;       }
 sub version            { return $_[0]->Obj->version;    }
+sub length             { return $_[0]->Obj->length;    }
 sub coord_system       { return $_[0]->transcript->slice->coord_system->name; }
 sub seq_region_type    { return $_[0]->coord_system; }
 sub seq_region_name    { return $_[0]->transcript->slice->seq_region_name; }

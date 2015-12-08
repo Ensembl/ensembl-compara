@@ -28,7 +28,7 @@ sub initialize {
   my $object            = $self->object || $hub->core_object('variation');
   my $vf                = $hub->param('vf');
 
-  my $type   = $hub->param('data_type') || $hub->type;
+  my $type = $hub->param('data_type') || $hub->type;
   my $vc = $self->view_config($type);
 
   my $flanking          = $hub->param('select_sequence') || $vc->get('select_sequence');
@@ -56,6 +56,7 @@ sub initialize {
     species        => $hub->species,
     snp_display    => $hub->param('snp_display') || $vc->get('snp_display'),
     hide_long_snps => $hub->param('hide_long_snps') || $vc->get('hide_long_snps'),
+    hide_rare_snps => $hub->param('hide_rare_snps') || $vc->get('hide_rare_snps'),
     v              => $hub->param('v'),
     focus_variant  => $vf,
     failed_variant => 1,
@@ -75,7 +76,7 @@ sub initialize {
       
       if ($config->{'snp_display'} eq 'on') {
         $self->set_variations($config, { name => $config->{'species'}, slice => $slice }, $markup);
-        $self->markup_variation($seq, $markup, $config);
+        $self->markup_variation([$seq], [$markup], $config);
       }
     }
     
@@ -131,24 +132,6 @@ sub get_export_data {
 sub initialize_export {
   my $self = shift;
   return $self->initialize;
-}
-
-sub markup_variation {
-  my ($self, $seq, $markup, $config) = @_;
-  my $hub = $self->hub;
-  my $variation;
-  
-  foreach (sort { $a <=> $b } keys %{$markup->{'variations'}}) {
-    next unless $seq->[$_];
-    
-    $variation = $markup->{'variations'}{$_};
-    
-    $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
-    $seq->[$_]{'class'} .= "$variation->{'type'} ";
-    $seq->[$_]{'href'}   = $hub->url($variation->{'href'});
-    
-    $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
-  }
 }
 
 1;

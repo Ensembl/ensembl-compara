@@ -20,33 +20,49 @@
       var rseries = {};
       $.each(series,function(i,v) { rseries[v] = i; });
 
+      if (extras['*'] && extras['*'].base_url) {
+        if (extras['*'].base_url.match(/\?/)) {
+          extras['*'].query = (function (url) {
+            var p = {};
+            $.each(url.split('?')[1].split(/\;|\&/), function (i,v) { v = v.split('='); p[v[0]] = v[1]; });
+            return p;
+          })(extras['*'].base_url);
+          extras['*'].base_url = extras['*'].base_url.split(/\?/)[0];
+        }
+      }
+
       return function(html,row) {
-        var base = extras['*'].base_url;
-        var params = (extras['*'].params || {});
-        var extra = [];
+        if (!extras['*'] || !extras['*'].base_url) {
+          return html;
+        }
+        var url = extras['*'].base_url;
+        var params = extras['*'].params || {};
+        var query = extras['*'].query || {};
         var ok = true;
         for(var k in params) {
           if(!params.hasOwnProperty(k)) { continue; }
           var v = params[k];
-          var val = row[rseries[v]];
+          var val = params[k] ? row[rseries[v]] : false;
           if(val===null || val===undefined) {
             ok = false;
           } else {
-            extra.push(k+'='+encodeURIComponent(row[rseries[v]]));
+            if (val === false) {
+              delete query[k];
+            } else {
+              query[k] = encodeURIComponent(val);
+            }
           }
         }
         if(!ok) { return html; }
-        var rest = '';
-        if(extra.length) {
-          if(base.match(/\?/)) { rest = ';'; } else { rest = '?'; }
-        }
-        rest = rest + extra.join(';');
-        if(extras['*'] && extras['*'].base_url) {
-          if(html.match(/<a/)) {
-            html = html.replace(/href="/g,'href="'+base+rest);
-          } else {
-            html = '<a href="'+base+rest+'">'+html+'</a>';
-          }
+        url = (function(base, params) {
+          params = $.map(params, function(v,i) { return i + '=' + v }).sort().join(';');
+          return params ? base + '?' + params : base;
+        })(url, query);
+
+        if(html.match(/<a/)) {
+          html = html.replace(/href="/g,'href="'+url);
+        } else {
+          html = '<a href="'+url+'">'+html+'</a>';
         }
         return html;
       };

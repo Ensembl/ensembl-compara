@@ -98,13 +98,16 @@ sub calc_cigar_glyphs {
 sub draw_rect {
   my ($self,$params,$start,$length,$colour) = @_;
 
-  return $self->Rect({
+  my $out = $self->Rect({
     x      => $start,
     y      => $params->{'y'} || 0,
     width  => $length,
     height => $params->{'h'},
-    colour => $params->{$colour || 'feature_colour'},
   });
+  unless($colour eq 'transparent') {
+    $out->{'colour'} = $params->{$colour || 'feature_colour'};
+  }
+  return $out;
 }
 
 # Draws CIGAR glyphs as previously calculated by calc_cigar_glyphs.
@@ -153,9 +156,13 @@ sub draw_cigar {
     foreach my $id (keys %$boxes) {
       $joins->{join(":",@{$args->{'tag'}},$id)} = { x => $args->{'drawx'}, box => $boxes->{$id} };
     }
+    # Though we are CIGAR, our joiner may not be, so add a transparent box
+    # with tag!
+    my ($x,$width,$ori,$r,$r1) = $self->calculate_region($gab);
+    my $box = $self->draw_rect($params,$x,$width,'transparent');
+    $self->push($box);
+    $joins->{join(":",@{$args->{'tag'}})} = { x => $args->{'drawx'}, box => $box };
   }
-  my $gab_nr = $gab->get_all_non_reference_genomic_aligns->[0];
-  my $ori = $gab_nr->dnafrag_strand>0 ? 'Forward' : 'Reverse';
 }
 
 # Draw a single, regular, non-CIGAR box
@@ -169,7 +176,6 @@ sub draw_non_cigar {
   if ($params->{'link'}) {
     $joins->{join(":",@{$args->{'tag'}})} = { x => $args->{'drawx'}, box => $box };
   }
-  return $box;
 }
 
 # Draw green joining crosses and quadrilaterals
@@ -215,9 +221,33 @@ sub should_draw_cross {
   return ($flipdata xor $flipview);
 }
 
+# Special GABs are ones where they contain a displayed GA for more than
+#   one displayed slice. This method tests all the passed GABs to see if
+#   any of them are special. A special GAB is then prioritised in sorting
+#   to try to ensure that it is displayed despite maximum depths.
+sub is_special {
+  my ($self,$gabs,$slices) = @_;
+
+  foreach my $gab (@$gabs) {
+    my $c = 0;
+    foreach my $ga (@{$gab->get_all_GenomicAligns}) {
+      foreach my $slice (@$slices) {
+        my ($species,$seq_region,$start,$end) = split(':',$slice);
+        next unless lc $species eq lc $ga->genome_db->name;
+        next unless $seq_region eq $ga->dnafrag->name;
+        next unless $end >= $ga->dnafrag_start();
+        next unless $start <= $ga->dnafrag_end();
+        $c++;
+        return 1 if $c > 1;
+      }
+    }
+  }
+  return 0;
+}
+
 # Features are grouped and rendered together: make those groups
 sub build_features_into_sorted_groups {
-  my ($self,$gabs) = @_;
+  my ($self,$gabs,$slices) = @_;
 
   my $container   = $self->{'container'};
   my $strand      = $self->strand;
@@ -244,10 +274,14 @@ sub build_features_into_sorted_groups {
     $g->{'len'} = max(map { $_->reference_slice_end   } @f) -
                   min(map { $_->reference_slice_start } @f);
     $g->{'gabs'} = \@f;
+    $g->{'special'} = $self->is_special($g->{'gabs'},$slices);
   }
   # Sort by length
   return
-    map { $_->{'gabs'} } sort { $b->{'len'} <=> $a->{'len'} } values %out;
+    map { $_->{'gabs'} } sort {
+      ($b->{'special'} <=> $a->{'special'}) ||
+      ($b->{'len'} <=> $a->{'len'})
+    } values %out;
 }
 
 # Sort and exclude irrelevant features for compact display.
@@ -404,7 +438,11 @@ sub calculate_ypos {
   my $bump_start = (($ga_first_start < 1 ? 1 : $ga_first_start) * $pix_per_bp) - 1; # start in pixels
   my $bump_end   = ($ga_last_end > $length ? $length : $ga_last_end) * $pix_per_bp; # end in pixels
   my $row        = $self->bump_row(int $bump_start, int $bump_end);
-  my $y_pos = -$row * int(1.5 * $h) * $strand;
+  my $yrow = $row;
+  # In images, "outside" is usually considered least important.
+  # Not for align images, so flip it.
+  $yrow = $depth-$row if $self->my_config('flip_vertical');
+  my $y_pos = -($yrow) * int(1.5 * $h) * $strand;
   return undef if $row > $depth;
   return $y_pos;
 }
@@ -513,12 +551,13 @@ sub render_normal {
   
   $self->_init_bump(undef, $self->depth || 6); # initialize bumping
 
+  my @slices = split(' ',$self->my_config('slice_summary')||'');
   my $features = $self->features;
   unless(@$features) {
     $self->empty_track();
     return;
   }
-  foreach my $ga_s ($self->build_features_into_sorted_groups($features)) {
+  foreach my $ga_s ($self->build_features_into_sorted_groups($features,\@slices)) {
     next unless @$ga_s;
     my $y_pos = $self->calculate_ypos($ga_s);
     next unless defined $y_pos;

@@ -294,11 +294,7 @@ Ensembl.DataTable = {
     
     $('.dataTables_top .dataTables_export', wrapper).append(
       '<div class="floating_popup"><a>Download what you see</a><a class="all">Download whole table</a></div>'
-    ).hoverIntent({
-      over:     exportHover,
-      out:      exportHover,
-      interval: 300
-    }).on('click', function (e) {
+    ).hover(exportHover, exportHover).on('click', function (e) {
       var table    = $(this).parent().next();
       var settings = table.dataTable().fnSettings();
       var form     = $(settings.nTableWrapper).siblings('form.data_table_export');

@@ -63,14 +63,43 @@ sub XY { my( $self, $x, $y ) = @_; return ( $x* $self->{sf}, $self->{'canvas'}{'
 sub H { my( $self, $glyph ) = @_; return 1 + $glyph->pixelheight()* $self->{sf}; }
 sub W { my( $self, $glyph ) = @_; return 1 + $glyph->pixelwidth()* $self->{sf}; }
 
-sub strokecolor { my $self = shift; $self->{'canvas'}{'g'}->strokecolor( $self->{'colourmap'}->hex_by_name( shift ) ); }
-sub fillcolor   { my $self = shift; $self->{'canvas'}{'g'}->fillcolor(   $self->{'colourmap'}->hex_by_name( shift ) ); }
-sub stroke    { my $self = shift; $self->{'canvas'}{'g'}->stroke; }
-sub fill    { my $self = shift; $self->{'canvas'}{'g'}->fill; }
-sub rect    { my $self = shift; $self->{'canvas'}{'g'}->rect(@_); }
-sub move    { my $self = shift; $self->{'canvas'}{'g'}->move(@_); }
-sub line    { my $self = shift; $self->{'canvas'}{'g'}->line(@_); }
-sub hybrid    { my $self = shift; $self->{'canvas'}{'page'}->hybrid; }
+sub strokecolor { 
+  my $self = shift; 
+  $self->{'canvas'}{'g'}->strokecolor($self->colour(shift)); 
+}
+
+sub fillcolor   { 
+  my $self = shift; 
+  $self->{'canvas'}{'g'}->fillcolor($self->colour(shift));
+}
+
+sub colour {
+  my ($self, $colour) = @_;
+  my @rgb = $self->{'colourmap'}->rgb_by_name($colour);
+  if ($self->{'contrast'} && $self->{'contrast'} != 1) {
+    @rgb = $self->{'colourmap'}->hivis($self->{'contrast'},@rgb);
+  }
+  ## hex_by_rgb doesn't include hash character. Because Reasons.
+  return '#'.$self->{'colourmap'}->hex_by_rgb(\@rgb);
+}
+
+sub stroke      { my $self = shift; $self->_fillstroke_alpha('stroke', @_); }
+sub fill        { my $self = shift; $self->_fillstroke_alpha('fill', @_); }
+sub rect        { my $self = shift; $self->{'canvas'}{'g'}->rect(@_); }
+sub move        { my $self = shift; $self->{'canvas'}{'g'}->move(@_); }
+sub line        { my $self = shift; $self->{'canvas'}{'g'}->line(@_); }
+sub hybrid      { my $self = shift; $self->{'canvas'}{'page'}->hybrid; }
+
+sub _fillstroke_alpha {
+  my ($self, $action, $alpha) = @_;
+
+  my $pdf = $self->{'canvas'}{'pdf'};
+  my $gfx = $self->{'canvas'}{'g'};
+
+  $gfx->egstate($self->{'_egstate'}{$alpha} ||= $pdf->egstate()->transparency($alpha)) if $alpha; # apply transparency
+  $gfx->$action;
+  $gfx->egstate($self->{'_egstate'}{0} ||= $pdf->egstate()->transparency(0)) if $alpha; # reset transparency
+}
 
 sub render_Rect {
   my ($self, $glyph) = @_;
@@ -86,17 +115,17 @@ sub render_Rect {
 
   if(defined $gcolour) {
     unless( $gcolour eq 'transparent' ) {
-    $self->fillcolor( $gcolour );
-    $self->strokecolor( $gcolour );
-    $self->rect($x,$y,$a-$x,$b-$y);
-    # $self->stroke();
-    $self->fill();
+      $self->fillcolor( $gcolour );
+      $self->strokecolor( $gcolour );
+      $self->rect($x,$y,$a-$x,$b-$y);
+      # $self->stroke();
+      $self->fill($glyph->{'alpha'});
     }
   } elsif(defined $gbordercolour) {
     unless( $gbordercolour eq 'transparent' ) {
-    $self->strokecolor( $gbordercolour );
-    $self->rect($x,$y,$a-$x,$b-$y);
-    $self->stroke();
+      $self->strokecolor( $gbordercolour );
+      $self->rect($x,$y,$a-$x,$b-$y);
+      $self->stroke($glyph->{'alpha'});
     }
   }
 }
@@ -149,7 +178,7 @@ sub render_Text {
 #  return;
 
   my $gcolour = $glyph->colour() || "black";
-  $gcolour = $self->{'colourmap'}->hex_by_name( $gcolour ); 
+  $gcolour = $self->colour($gcolour); 
   my $text  = $glyph->text();
 
 	my($x,$y) = $self->XY($glyph->pixelx,$glyph->pixely);
@@ -179,6 +208,30 @@ sub render_Text {
     $T->translate( $x, $y );
     $T->text( $text );
   }
+}
+
+sub render_Arc {
+  my ($self, $glyph) = @_;
+
+  my $canvas         = $self->{'canvas'};
+  my $colour         = $glyph->{'colour'};
+  my ($cx, $cy)      = $glyph->pixelcentre();
+
+	my($x,$y) = $self->XY($cx, $cy);
+
+  $canvas->{'g'}->arc(
+    $self->{sf} * ($x - $glyph->{'pixelwidth'}/2),
+    $self->{sf} * ($y + $glyph->{'pixelheight'}/2),
+    $self->{sf} * $glyph->{'pixelwidth'}/2,
+    $self->{sf} * $glyph->{'pixelheight'}/2,
+    $self->{sf} * ($glyph->{'start_point'} + 180),
+    $self->{sf} * ($glyph->{'end_point'} + 180),
+    1,
+  );
+  $self->{'canvas'}{'g'}->linewidth(1.0);
+  $self->strokecolor($colour);
+  $self->stroke;
+  $self->{'canvas'}{'g'}->linewidth(0.5);
 }
 
 sub render_Circle {

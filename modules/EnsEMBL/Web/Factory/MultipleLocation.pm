@@ -390,12 +390,13 @@ sub change_primary_species {
   my ($self, $inputs, $id) = @_;
   
   my $old_species = $inputs->{0}->{'s'};
+  my $old_chr = [ split(/:/,$inputs->{0}->{'r'}) ]->[0];
   
   $inputs->{$id}->{'r'} =~ s/:-?1$//; # Remove strand parameter for the new primary species
   
   $self->param('r', $inputs->{$id}->{'r'});
   $self->param('g', $inputs->{$id}->{'g'}) if $inputs->{$id}->{'g'};
-  $self->param('s99999', $old_species); # Set arbitrarily high - will be recuded by remove_species
+  $self->param('s99999', "$old_species--$old_chr"); # Set arbitrarily high - will be recuded by remove_species
   $self->delete_param('align'); # Remove the align parameter because it may not be applicable for the new species
   
   foreach my $i (grep $_, keys %$inputs) {

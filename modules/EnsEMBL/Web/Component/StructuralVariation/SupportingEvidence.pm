@@ -77,7 +77,7 @@ sub supporting_evidence_table {
         my $chr = $svf->seq_region_name.':';
         
         
-        if ($bp_order && $is_somatic == 1) {
+        if ($bp_order) {
           my @c_list = ($start!=$end) ? ($start,$end) : ($start);
             
           foreach my $coord (@c_list) {

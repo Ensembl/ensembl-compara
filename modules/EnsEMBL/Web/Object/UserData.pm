@@ -342,6 +342,13 @@ sub delete_remote {
     }
   } else {
     $track_name = "url_$code";
+    my $temp_data = $session->get_data(type => 'url', code => $code);
+    if ($temp_data->{'format'} eq 'TRACKHUB' && $self->hub->cache) {
+      # delete cached hub
+      my $url = $temp_data->{'url'};
+      my $key = 'trackhub_'.md5_hex($url);
+      $self->hub->cache->delete($key);
+    }
     $session->purge_data(type => 'url', code => $code);
   }
   

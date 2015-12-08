@@ -46,7 +46,20 @@ sub render {
   
   if (scalar @$favourites) {
     $html .= qq{<optgroup label="Favourite species">\n};
-    $html .= sprintf qq{<option value="%s/Info/Index">%s</option>\n}, encode_entities($_->{'key'}), encode_entities($_->{'common'}) for map $species_info->{$_}, @$favourites;
+    foreach (@$favourites) {
+      my $info = $species_info->{$_};
+      my $name = $info->{'common'};
+      my $url  = $info->{'key'}.'/Info/Index';
+      if ($info->{'key'} eq 'Homo_sapiens' && $species_defs->SWITCH_ASSEMBLY) {
+        ## Current assembly
+        $name .= ' '.$species_defs->ASSEMBLY_VERSION;
+        $html .= sprintf qq{<option value="%s">%s</option>\n}, encode_entities($url), encode_entities($name);
+        ## Alternative assembly
+        $url   = 'http://'.$species_defs->SWITCH_ARCHIVE_URL.'/'.$url;
+        $name = $info->{'common'}.' '.$species_defs->SWITCH_ASSEMBLY;
+      }
+      $html .= sprintf qq{<option value="%s">%s</option>\n}, encode_entities($url), encode_entities($name);
+    }
     $html .= "</optgroup>\n";
   }
   

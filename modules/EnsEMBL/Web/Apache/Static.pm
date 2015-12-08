@@ -61,11 +61,17 @@ BEGIN {
 ## error pages!
 ## PLUGINS!!!!!!!!!!!!
 
+sub static_cache_hook {} # Overridden in plugins (eg nginx)
+
 sub handler {
   my $r       = shift;
   my $uri     = $r->uri;
-  my $content = $MEMD ? $MEMD->get("$SiteDefs::ENSEMBL_STATIC_SERVER$uri") : undef;
 
+  my $content = undef;
+  if($MEMD) {
+    $content //= $MEMD->get("$SiteDefs::ENSEMBL_STATIC_BASE_URL$uri");
+    $content //= $MEMD->get("$SiteDefs::ENSEMBL_STATIC_SERVER$uri");
+  }
   if ($content) {
     $r->headers_out->set('X-MEMCACHED'    => 'yes');
     $r->headers_out->set('Accept-Ranges'  => 'bytes');
@@ -74,7 +80,7 @@ sub handler {
     $r->headers_out->set('Expires'        => HTTP::Date::time2str(time + 60*60*24*30));
     $r->content_type(mime_type($uri));
     $r->print($content);
-    
+    static_cache_hook($uri,$content);
     return OK;
   } else {
     my $file = $uri;
@@ -102,8 +108,9 @@ sub handler {
         $content = <FILE>;
         close FILE;
       }
-      
-      $MEMD->set("$SiteDefs::ENSEMBL_STATIC_SERVER$uri", $content, undef, 'STATIC') if $MEMD;
+
+      $MEMD->set("$SiteDefs::ENSEMBL_STATIC_BASE_URL$uri", $content, undef, 'STATIC') if $MEMD;
+      static_cache_hook($uri,$content);
       
       my @file_info = stat($file);
       $r->headers_out->set('Last-Modified'  => HTTP::Date::time2str($file_info[9]));

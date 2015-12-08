@@ -175,7 +175,8 @@ sub cell_line_button {
 
   my ($shown_cells,$partials) = $self->shown_cells($image_config);
   my $cell_m = scalar @$shown_cells;
-  my $cell_n = scalar @{$self->object->all_cell_types};
+  my $object = $self->object || $self->hub->core_object('regulation');
+  my $cell_n = scalar @{$object->all_cell_types};
 
   my $url = $self->hub->url('Component', {
     action   => 'Web',

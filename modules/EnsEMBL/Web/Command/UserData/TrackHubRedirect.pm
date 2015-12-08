@@ -53,13 +53,6 @@ sub process {
   }
 
   if ($species) {
-    my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
-    unless ($location) {
-      my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
-      $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
-    }
-    $params->{'r'} = $location;
-
     if ($url) {
       my $new_action  = '';
       ($new_action, $params)  = $self->check_attachment($url);
@@ -113,6 +106,14 @@ sub process {
             }
           }
         }
+      }
+      if ($redirect =~ /Location/) {
+        my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
+        unless ($location) {
+          my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
+          $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+        }
+        $params->{'r'} = $location;
       }
     } else {
       $redirect           = '/trackhub_error.html';

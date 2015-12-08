@@ -20,7 +20,11 @@ package EnsEMBL::Web::Component::VariationTable;
 
 use strict;
 
-use Bio::EnsEMBL::Variation::Utils::Constants;
+use List::Util qw(max min);
+
+use Bio::EnsEMBL::Variation::Utils::Config qw(%ATTRIBS);
+use Bio::EnsEMBL::Variation::Utils::Constants qw(%VARIATION_CLASSES);
+use Bio::EnsEMBL::Variation::Utils::VariationEffect qw($UPSTREAM_DISTANCE $DOWNSTREAM_DISTANCE);
 use EnsEMBL::Web::NewTable::NewTable;
 
 use Bio::EnsEMBL::Variation::Utils::VariationEffect;
@@ -98,7 +102,7 @@ sub content {
     $msg .= qq( To extend or reduce the intronic sequence, use the "<b>Configure this page - Intron Context</b>" link on the left.</p>);
   }
   
-  my $table      = $self->make_table();
+  my $table      = $self->make_table(\@transcripts);
   my $thing = 'gene';
   $thing = 'transcript' if $object_type eq 'Transcript';
 
@@ -107,14 +111,6 @@ sub content {
   return $html;
 }
 
-sub all_terms {
-  my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-
-  my @cons = grep { $_->SO_accession !~ /x/i } @all_cons;
-  my @labels = map { [$_->label,$_->rank] } @cons;
-  return [ map { $_->[0] } sort { $a->[1] <=> $b->[1] } @labels ];
-}
-  
 sub sift_poly_classes {
   my ($self,$table) = @_;
 
@@ -140,19 +136,30 @@ sub sift_poly_classes {
     foreach my $pred (keys %sp_classes) {
       $value_column->editorial_cssclass($pred,"score_$sp_classes{$pred}");
       $value_column->editorial_helptip($pred,$pred);
-    } 
+    }
+    # TODO: make decorators accessible to filters. Complexity is that
+    # many decorators (including these) are multi-column.
+    my $lozenge = qq(<div class="score score_%s score_example">%s</div>);
+    my $left = { sift => 'bad', polyphen => 'good'}->{$column_name};
+    my $right = { sift => 'good', polyphen => 'bad'}->{$column_name};
+    $value_column->filter_endpoint_markup(0,sprintf($lozenge,$left,"0"));
+    $value_column->filter_endpoint_markup(1,sprintf($lozenge,$right,"1"));
   }
 }
 
 sub evidence_classes {
   my ($self,$table) = @_;
 
-  my @evidence_order = reverse qw(
-    1000Genomes HapMap Cited ESP Frequency
-    Multiple_observations Phenotype_or_Disease
-  );
+  my @evidence_order = reverse @{$ATTRIBS{'evidence'}};
+  my %evidence_key;
+  $evidence_key{$_} = "B".lc $_ for(@evidence_order);
+  $evidence_key{'1000Genomes'} = "A0001";
+  $evidence_key{'HapMap'}      = "A0002";
+  @evidence_order =
+    sort { $evidence_key{$a} cmp $evidence_key{$b} } @evidence_order;
+
   my %evidence_order;
-  $evidence_order{$evidence_order[$_]} = sprintf("%8d",$_) for(0..$#evidence_order);
+  $evidence_order{$evidence_order[$_]} = $_ for(0..$#evidence_order);
 
   my $evidence_col = $table->column('status');
   foreach my $ev (keys %evidence_order) {
@@ -162,6 +169,25 @@ sub evidence_classes {
     $evidence_col->icon_helptip($ev,$evidence_label);
     $evidence_col->icon_export($ev,$evidence_label);
     $evidence_col->icon_order($ev,$evidence_order{$ev});
+  }
+}
+
+sub class_classes {
+  my ($self,$table) = @_;
+
+  my $classes_col = $table->column('class');
+  $classes_col->filter_add_baked('somatic','Only Somatic','Only somatic variant classes');
+  $classes_col->filter_add_baked('not_somatic','Not Somatic','Exclude somatic variant classes');
+  my $i = 0;
+  foreach my $term (qw(display_term somatic_display_term)) {
+    foreach my $class (values %VARIATION_CLASSES) {
+      $classes_col->icon_order($class->{$term},$i++);
+      if($term eq 'somatic_display_term') {
+        $classes_col->filter_bake_into($class->{$term},'somatic');
+      } else {
+        $classes_col->filter_bake_into($class->{$term},'not_somatic');
+      }
+    }
   }
 }
 
@@ -176,7 +202,7 @@ sub clinsig_classes {
     benign other not-provided uncertain-significance
   );
   my %clinsig_order;
-  $clinsig_order{$clinsig_order[$_]} = sprintf("%8d",$_) for(0..$#clinsig_order);
+  $clinsig_order{$clinsig_order[$_]} = $_ for(0..$#clinsig_order);
 
   my $clinsig_col = $table->column('clinsig');
   foreach my $cs_img (keys %clinsig_order) {
@@ -187,8 +213,9 @@ sub clinsig_classes {
     $clinsig_col->icon_export($cs,$cs);
     $clinsig_col->icon_order($cs,$clinsig_order{$cs_img});
   }
+  $clinsig_col->filter_maybe_blank(1);
 }
-  
+
 sub snptype_classes {
   my ($self,$table,$hub) = @_;
 
@@ -196,34 +223,49 @@ sub snptype_classes {
   my $var_styles   = $species_defs->colour('variation');
   my @all_cons     = grep $_->feature_class =~ /transcript/i, values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my $column = $table->column('snptype');
+  $column->filter_add_baked('lof','PTV','Select all protein truncating variant types');
+  $column->filter_add_baked('lof_missense','PTV & Missense','Select all protein truncating and missense variant types');
+  $column->filter_add_baked('exon','Only Exonic','Select exon and splice region variant types');
+  $column->filter_add_bakefoot('PTV = Protein Truncating Variant');
+  my @lof = qw(stop_gained frameshift_variant splice_donor_variant
+               splice_acceptor_variant);
   foreach my $con (@all_cons) {
     next if $con->SO_accession =~ /x/i;
-    
-    my $term = $con->SO_term;
-  
     my $so_term = lc $con->SO_term;
     my $colour = $var_styles->{$so_term||'default'}->{'default'};
     $column->icon_export($con->label,$con->label);
-    $column->icon_order($con->label,sprintf("^%8.8d",$con->rank));
+    $column->icon_order($con->label,$con->rank);
     $column->icon_helptip($con->label,$con->description);
     $column->icon_coltab($con->label,$colour);
+    if(grep { $_ eq $so_term } @lof) {
+      $column->filter_bake_into($con->label,'lof');
+      $column->filter_bake_into($con->label,'lof_missense');
+    }
+    if($so_term eq 'missense_variant') {
+      $column->filter_bake_into($con->label,'lof_missense');
+    }
+    if($con->rank < 18) { # TODO: specify this properly
+      $column->filter_bake_into($con->label,'exon');
+    }
   }
 }
 
 sub make_table {
-  my ($self) = @_;
+  my ($self,$transcripts) = @_;
 
   my $hub      = $self->hub;
   my $glossary = $hub->glossary_lookup;
-  
+
   my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
   
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
 
+  my $is_lrg = $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
+
   my @exclude;
   push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
   push @exclude,'HGVS' unless $hub->param('hgvs') eq 'on';
-  if($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
+  if($is_lrg) {
     push @exclude,'Transcript';
   } else {
     push @exclude,'Submitters','LRGTranscript','LRG';
@@ -244,14 +286,17 @@ sub make_table {
       type   => 'Variation',
       action => 'Summary',
       vf     => ["vf"],
+      v      => undef # remove the 'v' param from the links if already present
     }
   },{
     _key => 'vf', _type => 'numeric unshowable no_filter'
   },{
     _key => 'location', _type => 'position unshowable',
-    sort_for => 'chr',
+    label => 'Location', sort_for => 'chr',
+    state_filter_ephemeral => 1,
   },{
-    _key => 'chr', _type => 'string no_filter', label => 'Chr: bp',
+    _key => 'chr', _type => 'string no_filter',
+    label => $is_lrg?'bp':'Chr: bp',
     width => 1.75,
     helptip => $glossary->{'Chr:bp'},
   },{
@@ -269,18 +314,26 @@ sub make_table {
   },{
     _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
     helptip => $glossary->{'Global MAF'},
-    also_cols => 'gmaf_allele'
+    also_cols => 'gmaf_allele',
+    filter_range => [0,0.5],
+    filter_fixed => 1,
+    filter_logarithmic => 1,
+    primary => 1,
   },{
     _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
     width => 1.75
   },{
-    _key => 'class', _type => 'string', label => 'Class',
+    _key => 'class', _type => 'iconic', label => 'Class',
     width => 2,
-    helptip => $glossary->{'Class'}
+    helptip => $glossary->{'Class'},
+    filter_keymeta_enum => 1,
+    filter_maybe_blank => 1,
+    filter_sorted => 1,
   },{
-    _key => 'Source', _type => 'string', label => "Sour\fce",
+    _key => 'Source', _type => 'iconic', label => "Sour\fce",
     width => 1.25,
     helptip => $glossary->{'Source'},
+    filter_maybe_blank => 1,
   },{
     _key => 'Submitters', _type => 'string no_filter',
     label => 'Submitters',
@@ -290,25 +343,32 @@ sub make_table {
     _key => 'status', _type => 'iconic', label => "Evid\fence",
     width => 1.5,
     helptip => $glossary->{'Evidence status (variant)'},
-    sort_down_first => 1,
+    filter_keymeta_enum => 1,
+    filter_maybe_blank => 1,
+    filter_sorted => 1,
   },{
     _key => 'clinsig', _type => 'iconic', label => "Clin. Sig.",
     helptip => 'Clinical significance',
-    sort_down_first => 1,
-  },{
-    _key => 'snptype', _type => 'iconic set_primary', label => "Type",
-    filter_label => 'Consequence Type',
+    filter_label => 'Clinical Significance',
+    filter_keymeta_enum => 1,
     filter_sorted => 1,
-    set_range => $self->all_terms,
+  },{
+    _key => 'snptype', _type => 'iconic', label => "Conseq. Type",
+    filter_label => 'Consequences',
+    filter_sorted => 1,
     width => 1.5,
     helptip => 'Consequence type',
     sort_down_first => 1,
+    filter_keymeta_enum => 1,
+    primary => 4,
   },{
     _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
     helptip => "Resulting amino acid(s)"
   },{
     _key => 'aacoord', _type => 'integer', label => "AA co\ford",
-    helptip => 'Amino Acid Co-ordinate'
+    helptip => 'Amino Acid Co-ordinate',
+    filter_blank_button => 1,
+    state_filter_ephemeral => 1,
   },{
     _key => 'sift_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'sift_value',
@@ -318,22 +378,29 @@ sub make_table {
   },{
     _key => 'sift_value', _type => 'numeric',
     label => "SI\aFT",
-    helptip => $glossary->{'SIFT'}
+    helptip => $glossary->{'SIFT'},
+    filter_range => [0,1],
+    filter_fixed => 1,
+    filter_blank_button => 1,
+    primary => 2,
   },{
     _key => 'polyphen_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'polyphen_value',
-    sort_down_first => 1,
   },{
     _key => 'polyphen_class', _type => 'iconic no_filter unshowable',
   },{
     _key => 'polyphen_value', _type => 'numeric',
     label => "Poly\fPhen",
-    helptip => $glossary->{'PolyPhen'}
+    helptip => $glossary->{'PolyPhen'},
+    filter_range => [0,1],
+    filter_fixed => 1,
+    filter_blank_button => 1,
+    primary => 3,
   },{
     _key => 'LRG', _type => 'string unshowable',
     label => "LRG",
   },{
-    _key => 'Transcript', _type => 'string',
+    _key => 'Transcript', _type => 'iconic',
     width => 2,
     helptip => $glossary->{'Transcript'},
     link_url => {
@@ -341,6 +408,7 @@ sub make_table {
       action => 'Summary',
       t => ["Transcript"] 
     },
+    state_filter_ephemeral => 1,
    },{
     _key => 'LRGTranscript', _type => 'string',
     width => 2,
@@ -353,19 +421,36 @@ sub make_table {
       __clear => 1
    }
   });
-  # Disable filters except type for e82
-  $_->{'_type'} .= " no_filter" for @columns;
-  $columns[14]->{'_type'} = "iconic set_primary";
 
   $table->add_columns(\@columns,\@exclude);
 
   $self->evidence_classes($table);
   $self->clinsig_classes($table);
+  $self->class_classes($table);
   $self->snptype_classes($table,$self->hub);
   $self->sift_poly_classes($table);
+
+  my (@lens,@starts,@ends,@seq);
+  foreach my $t (@$transcripts) {
+    my $p = $t->translation_object;
+    push @lens,$p->length if $p;
+    push @starts,$t->seq_region_start;
+    push @ends,$t->seq_region_end;
+    push @seq,$t->seq_region_name;
+  }
+  if(@lens) {
+    my $aa_col = $table->column('aacoord');
+    $aa_col->filter_range([1,max(@lens)]);
+    $aa_col->filter_fixed(1);
+  }
+  if(@starts && @ends) {
+    my $loc_col = $table->column('location');
+    $loc_col->filter_seq_range($seq[0],[min(@starts)-$UPSTREAM_DISTANCE,
+                                        max(@ends)+$DOWNSTREAM_DISTANCE]);
+    $loc_col->filter_fixed(1);
+  }
   
   # Separate phase for each transcript speeds up gene variation table
- 
    
   my $icontext         = $self->hub->param('context') || 100;
   my $gene_object      = $self->configure($icontext,'ALL');
@@ -641,7 +726,7 @@ sub configure {
 
 sub get_hgvs {
   my ($self, $tva) = @_;
-  my $hgvs_c = $tva->hgvs_coding;
+  my $hgvs_c = $tva->hgvs_transcript;
   my $hgvs_p = $tva->hgvs_protein;
   my $hgvs;
 

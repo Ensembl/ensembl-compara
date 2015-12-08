@@ -33,7 +33,6 @@ sub process {
   my $url_params  = {};
   my $code        = $hub->param('code');
   my $file_info   = $hub->session->get_data('code' => $hub->param('code'));
-  use Data::Dumper; warn Dumper($file_info);
  
   my %args = (
               'hub'             => $hub,

@@ -53,7 +53,6 @@ sub content {
     $self->location,
     $feature_slice ? $self->co_located($feature_slice) : (),
     $self->most_severe_consequence($variation_features),
-    #$self->validation_status,
     $self->evidence_status,
     $self->clinical_significance,
     $self->synonyms,
@@ -211,9 +210,8 @@ sub variation_source {
   } elsif ($source =~ /SGRP/) {
     $source_link = $hub->get_ExtURL_link("About $source", 'SGRP_PROJECT');
   } elsif ($source =~ /COSMIC/) {
-    $sname       = 'COSMIC';
     my $cname = ($name =~ /^COSM(\d+)/) ? $1 : $name;
-    $source_link = $hub->get_ExtURL_link("$source_prefix $source", "${sname}_ID", $cname);
+    $source_link = $hub->get_ExtURL_link("$source_prefix $source", $source, $cname);
   } elsif ($source =~ /HGMD/) {
     $version =~ /(\d{4})(\d+)/;
     $version = "$1.$2";
@@ -239,7 +237,7 @@ sub variation_source {
   
   $version = ($version) ? " (release $version)" : '';
   
-  return ['Original source', sprintf('<p>%s%s | %s</p>', $description, $version, $source_link)];
+  return ['Original source', sprintf('<p>%s%s%s%s</p>', $description, $version, $self->text_separator, $source_link)];
 }
 
 
@@ -264,6 +262,7 @@ sub co_located {
     my $name  = $self->object->name;
     my $start = $slice->start;
     my $end   = $slice->end;
+    my $count = 0;
     my %by_source;
     
     foreach (@variations) {
@@ -279,7 +278,8 @@ sub co_located {
       my $link      = $hub->url({ v => $v_name, vf => $_->dbID });
       my $alleles   = ' ('.$_->allele_string.')' if $_->allele_string =~ /\//;
       my $variation = qq{<a href="$link">$v_name</a>$alleles};
-      
+      $count ++;
+
       push @{$by_source{$_->source_name}}, $variation;
     }
     
@@ -291,7 +291,9 @@ sub co_located {
         $html .= join ', ', @{$by_source{$_}};
       }
 
-      return ['Co-located', "with $html"];
+      my $s = ($count > 1) ? 's' : '';
+
+      return ["Co-located variant$s", $html];
     }
   }
   
@@ -393,17 +395,31 @@ sub alleles {
   my $c_alleles  = scalar @l_alleles;
   my $alt_string = $c_alleles > 2 ? 's' : '';
   my $ancestor   = $object->ancestor;
-     $ancestor   = " | Ancestral: <strong>$ancestor</strong>" if $ancestor;
+     $ancestor   = "Ancestral: <strong>$ancestor</strong>" if $ancestor;
   my $ambiguity  = $variation->ambig_code;
      $ambiguity  = 'not available' if $object->source =~ /HGMD/;
-     $ambiguity  = " | Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
+     $ambiguity  = "Ambiguity code: <strong>$ambiguity</strong>" if $ambiguity;
   my $freq       = sprintf '%.2f', $variation->minor_allele_frequency;
      $freq       = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
   my $maf        = $variation->minor_allele;
-     $maf        = qq{ | <span class="_ht ht" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
-  my $html;   
-  my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : ''; 
-   
+     $maf        = qq{<span class="_ht ht" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
+  my $html;
+  my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : '';
+
+  my $extra_allele_info = '';
+  if ($ancestor || $ambiguity || $maf) {
+    $extra_allele_info .= $self->text_separator;
+    $extra_allele_info .= qq{<span>$ancestor</span>} if ($ancestor);
+    if ($ambiguity) {
+      $extra_allele_info .= $self->text_separator if ($extra_allele_info ne '');
+      $extra_allele_info .= qq{<span>$ambiguity</span>};
+    }
+    if ($maf) {
+      $extra_allele_info .= $self->text_separator if ($extra_allele_info ne '');
+      $extra_allele_info .= qq{<span>$maf</span>};
+    }
+  }
+
   # Check allele string size (for display issues)
   my $large_allele = 0;
   my $display_alleles;
@@ -431,13 +447,13 @@ sub alleles {
       $show ? 'open' : 'closed',
       $alt_string,
       $alleles_strand,
-      $display_alleles, "$ancestor$ambiguity$maf",
+      $display_alleles, $extra_allele_info,
       $show ? '' : 'display:none',
       "<pre>$alleles</pre>");
   }
   else {
     my $allele_title = ($alleles =~ /\//) ? qq{Reference/Alternative$alt_string alleles $alleles_strand} : qq{$alleles$alleles_strand};
-    $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$ancestor$ambiguity$maf};
+    $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$extra_allele_info};
   }
 
   # Check somatic mutation base matches reference
@@ -506,7 +522,8 @@ sub location {
     $location = ucfirst(lc $type).' <b>'.$coord . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
     
     $location_link = sprintf(
-      ' | <a href="%s" class="constant">View in location tab</a>',
+      '%s<a href="%s" class="constant">View in location tab</a>',
+      $self->text_separator,
       $hub->url({
         type             => 'Location',
         action           => 'View',
@@ -523,71 +540,6 @@ sub location {
   }
   
   return [ 'Location', "$location$location_link" ];
-}
-
-## to be removed - replaced by evidence status
-sub validation_status {
-  my $self           = shift;
-  my $hub            = $self->hub;
-  my $object         = $self->object;
-  my $status         = $object->status;
-  my @variation_sets = sort @{$object->get_variation_set_string};
-  my (@status_list, %main_status);
-  
-  if (scalar @$status) {
-    my $snp_name = $object->name;
-    
-    foreach (@$status) {
-      my $st;
-      
-      if ($_ eq 'hapmap') {
-        $st = 'HapMap', $hub->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
-        $main_status{'HapMap'} = 1;
-        next;
-      } elsif ($_ =~ /1000Genome/i) {
-        $st = '1000 Genomes';
-        $main_status{'1000 Genomes'} = 1;
-        next;
-      } elsif ($_ ne 'failed') {
-        $st = $_ eq 'freq' ? 'frequency' : $_;
-      }
-      
-      push @status_list, $st;
-    }
-  }
-  
-  my $status_count = scalar @status_list;
-  
-  if ( !$main_status{'1000 Genomes'}) {
-    foreach my $vs (@variation_sets) {
-      if ($vs =~ /1000 Genomes/i && !$main_status{'1000 Genomes'}) {
-        $main_status{'1000 Genomes'} = 1;
-        $status_count ++;
-      }
-    }
-  }
-  
-  return unless $status_count;
-  
-  my $html;
-  
-  if ($main_status{'HapMap'} || $main_status{'1000 Genomes'}) {
-    my $show = $self->hub->get_cookie_value('toggle_status') eq 'open';
-    my $showed_line;
-    
-    foreach my $st (sort keys %main_status) {
-      $showed_line .= ', ' if $showed_line;
-      $showed_line .= "<b>$st</b>";
-      $status_count --;
-    }
-    
-    $showed_line .= ' and also ' . join ', ', sort @status_list if $status_count > 0;
-    $html        .= $showed_line;
-  } else {
-    $html .= join ', ', sort @status_list;
-  }
-  
-  return ['Validation status', $html];
 }
 
 sub evidence_status {
@@ -619,8 +571,8 @@ sub evidence_status {
     $html .= qq{<a href="$url">$img_evidence</a>};
   }
 
-  my $src = $self->img_url.'/16/info.png';
-  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the evidence status descriptions"/>}; 
+  my $src = $self->img_url.'/16/info12.png';
+  my $img = qq{<img src="$src" class="_ht" style="vertical-align:bottom;margin-bottom:2px;" title="Click to see all the evidence status descriptions"/>}; 
   my $info_link = qq{<a href="/info/genome/variation/data_description.html#evidence_status" target="_blank">$img</a>};
 
   return [ "Evidence status $info_link" , $html ];
@@ -635,8 +587,8 @@ sub clinical_significance {
 
   return unless (scalar(@$clin_sign));
   
-  my $src = $self->img_url.'/16/info.png';
-  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the clinical significances"/>};
+  my $src = $self->img_url.'/16/info12.png';
+  my $img = qq{<img src="$src" class="_ht" style="vertical-align:bottom;margin-bottom:2px;" title="Click to see all the clinical significances"/>};
   my $info_link = qq{<a href="/info/genome/variation/data_description.html#clin_significance" target="_blank">$img</a>};
 
   my %clin_sign_icon;
@@ -699,11 +651,9 @@ sub hgvs {
 
 sub sets{
 
-  my $self           = shift;
-  my $hub            = $self->hub;
-  my $object         = $self->object;
-  my $status         = $object->status;
-
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $object = $self->object;
 
   my $variation_sets = $object->get_variation_sub_sets('Genotyping chip variants');
 
@@ -754,22 +704,43 @@ sub most_severe_consequence {
          action => 'Mappings',
          v      => $self->object->name,
       });
- 
 
+      my $html_consequence = $self->render_consequence_type($vf_object,1);
+
+      # Check if the variant overlaps at least one transcript or regulatory feature.
+      my $consequence_link = '';
+
+      my $overlapping_features = $vf_object->get_all_TranscriptVariations;
+         $overlapping_features = $vf_object->get_all_RegulatoryFeatureVariations if (scalar(@$overlapping_features) == 0);
+
+      if (scalar(@$overlapping_features) != 0) {
+        $consequence_link = sprintf(qq{
+          <div class="text-float-left">%s<a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>
+        }, $self->text_separator(1), $url);
+      }
+
+      # Line display
       my $html = sprintf(qq{
          <div>
-           <div class="text-float-left">%s</div>
-           <div class="text-float-left">| <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>
+           <div class="text-float-left">%s</div>%s
            <div class="clear"></div>
          </div>},
-         $self->render_consequence_type($vf_object,1),
-         $url
+         $html_consequence, $consequence_link
       );
 
       return [ 'Most severe consequence' , $html];
     }
   }
   return ();
+}
+
+sub text_separator {
+  my $self            = shift;
+  my $no_left_padding = shift;
+
+  my $tclass = ($no_left_padding) ? 'text-right_separator' : 'text_separator';
+
+  return qq{<span class="$tclass">|</span>};
 }
 
 1;

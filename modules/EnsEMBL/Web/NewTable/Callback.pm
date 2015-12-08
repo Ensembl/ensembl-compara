@@ -57,7 +57,16 @@ sub go {
   my $config = from_json($hub->param('config'));
   my $ssplugins = from_json($hub->param('ssplugins'));
   my $keymeta = from_json($hub->param('keymeta'));
+
   $self->{'config'} = EnsEMBL::Web::NewTable::Config->new($hub,$config,$ssplugins,$keymeta);
+
+  my $activity = $hub->param('activity');
+  if($activity) {
+    my $act = $self->{'config'}->activity($activity);
+    my $out = {};
+    $out = $act->($self,$self->{'config'}) if $act;
+    return $out;
+  }
   $self->{'orient'} = from_json($hub->param('orient'));
   $self->{'wire'} = from_json($hub->param('wire'));
   my $more = JSON->new->allow_nonref->decode($hub->param('more'));
@@ -114,7 +123,7 @@ sub preflight_extensions {
   $self->{'unwire'} = { %{$self->{'wire'}} };
   foreach my $p (values %{$self->{'config'}->plugins}) {
     next unless $p->can('extend_response');
-    my $pp = $p->extend_response($self->{'config'},$self->{'unwire'});
+    my $pp = $p->extend_response($self->{'config'},$self->{'unwire'},$self->{'config'}->keymeta);
     next unless defined $pp;
     push @{$self->{'extensions'}},$pp;
     delete $self->{'wire'}{$pp->{'solves'}} if defined $pp->{'solves'};
@@ -127,9 +136,12 @@ sub run_extensions {
   my $plugins = $self->{'extensions'};
   $_->{'pre'}->() for @$plugins;
   my $convert = EnsEMBL::Web::NewTable::Convert->new(0); 
-  $convert->add_response($_) for @{$self->{'response'}{'responses'}};
+  $convert->add_response($_) for @$responses;
   $convert->run(sub { $_->{'run'}->($_[0]) for @$plugins; });
-  $self->{'response'}{$_->{'name'}} = $_->{'post'}->() for @$plugins;
+  foreach my $p (@$plugins) {
+    my $out = $p->{'post'}->();
+    $self->{'response'}{$p->{'name'}} = $out if $p->{'name'};
+  }
 }
 
 sub merge_enum {
@@ -206,14 +218,16 @@ sub newtable_data_request {
     shadow_lengths => $self->{'shadow_lengths'}
   };
   $more = undef if $phase == $num_phases;
+  $self->{'response'} = {};
+  $self->run_extensions($self->{'out'});
   $self->{'response'} = {
+    %{$self->{'response'}},
     responses => $self->{'out'},
-    keymeta => $self->{'key_meta'},
+    keymeta => $self->{'config'}->keymeta,
     shadow => \%shadow,
     orient => $self->{'orient'},
     more => $more,
   };
-  $self->run_extensions();
   return $self->{'response'};
 }
 

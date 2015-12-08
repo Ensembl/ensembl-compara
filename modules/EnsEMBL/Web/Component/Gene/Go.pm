@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Transcript::Go;
+package EnsEMBL::Web::Component::Gene::Go;
 
 # GO:0005575          cellular_component
 # GO:0008150          biological_process
@@ -24,7 +24,7 @@ package EnsEMBL::Web::Component::Transcript::Go;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Transcript);
+use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
@@ -36,53 +36,59 @@ sub content {
   my $self   = shift;
   my $object = $self->object;  
   
-  return $self->non_coding_error unless $object->translation_object;
+ # return $self->non_coding_error unless $object->translation_object;
   
   # This view very much depends on existance of the ontology db,
   # but it does not have to - you can still display the ontology terms with the links to the corresponding 
   # ontology website.
   
   my $hub         = $self->hub;
+  my $function    = $hub->function;  
   my $adaptor     = $hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
   my %clusters    = $hub->species_defs->multiX('ONTOLOGIES');
   my $terms_found = 0;
   my $label       = 'Ontology';
   my $columns     = [   
-    { key => 'go',               title => 'Accession',         sort => 'html', width => '7%',  align => 'left'   },
-    { key => 'description',      title => 'Term',              sort => 'text', width => '30%', align => 'left'   },
-    { key => 'evidence',         title => 'Evidence',          sort => 'text', width => '3%',  align => 'center' },
-    { key => 'desc',             title => 'Annotation Source', sort => 'html', width => '18%', align => 'center' },
-    { key => 'goslim_goa_acc',   title => 'GOSlim Accessions', sort => 'html', width => '9%',  align => 'centre' },
-    { key => 'goslim_goa_title', title => 'GOSlim Terms',      sort => 'text', width => '30%', align => 'centre' },
+    { key => 'go',               title => 'Accession',         sort => 'html', width => '10%',  align => 'left'   },
+    { key => 'description',      title => 'Term',              sort => 'text', width => '25%', align => 'left'   },
+    { key => 'evidence',         title => 'Evidence',          sort => 'text', width => '3%',  align => 'left' },
+    { key => 'desc',             title => 'Annotation Source', sort => 'html', width => '20%', align => 'left' },    
+    { key => 'transcript_id',    title => 'Transcript IDs',     sort => 'text', width => '15%', align => 'left' },
+    { key => 'extra_link',       title => '',                  sort => 'none', width => '10%', align => 'left' },
   ];
-  
+    
   my $html    = '<ul>';
   my $tables  = '';
-  my $i = 0;
+  my $i       = 0;
+  my $oid     = (grep { $clusters{$_}{'description'} eq $function } keys %clusters)[0];
+  my $go_hash = $object->get_go_list($clusters{$oid}{'db'}, $clusters{$oid}{'root'});
   
-  foreach my $oid (sort { $a <=> $b } keys %clusters) {
-    my $go_hash = $object->get_go_list($clusters{$oid}{'db'}, $clusters{$oid}{'root'});
-    
-    if (%$go_hash) {
-      my $table = $self->new_table($columns, [], { data_table => 1 });
-      (my $desc = ucfirst $clusters{$oid}{'description'}) =~ s/_/ /g;
-      
-      # add goslim_generic
-      foreach my $key (keys %$go_hash) {
-        $go_hash->{$key}{'goslim'}{$_->accession}{'name'} = $_->name for @{$adaptor->fetch_all_by_descendant_term($adaptor->fetch_by_accession($key), '%goslim_generic%')};;
-      }
-      
-      $self->process_data($table, $go_hash, $clusters{$oid}{'db'});
-      
-      $html       .= qq(<li><a href="#ont_$i">$clusters{$oid}{'db'}: $desc</a></li>);
-      $tables     .= qq(<h2 id="ont_$i">Descendants of $clusters{$oid}{'db'}: $desc</h2>) . $table->render;
-      $terms_found = 1;
-      $i++;
-    }
+  if (%$go_hash) {
+    my $table = $self->new_table($columns, [], { data_table => 1 });
+    (my $desc = ucfirst $clusters{$oid}{'description'}) =~ s/_/ /g;
+   
+    $self->process_data($table, $go_hash, $clusters{$oid}{'db'});    
+
+    $tables     .= $table->render;
+    $terms_found = 1;
+    $i++;
   }
+
   $html .= '</ul>'.$tables;
 
   return $terms_found ? $html : '<p>No ontology terms have been annotated to this entity.</p>';
+}
+
+sub biomart_link {
+  my ($self, $go) = @_;
+  
+  my (@species)   = split /_/, $self->object->species;
+  my $attr_prefix = lc(substr($species[0], 0, 1) . $species[scalar(@species)-1] . "_gene_ensembl"); 
+  $SiteDefs::ENSEMBL_SERVERNAME = "www.ensembl.org"; ## TO REMOVE...
+  my $link        = "http://".$SiteDefs::ENSEMBL_SERVERNAME."/biomart/martview?VIRTUALSCHEMANAME=default&ATTRIBUTES=$attr_prefix.default.feature_page.ensembl_gene_id|$attr_prefix.default.feature_page.ensembl_transcript_id|$attr_prefix.default.feature_page.external_gene_name|$attr_prefix.default.feature_page.description|$attr_prefix.default.feature_page.chromosome_name|$attr_prefix.default.feature_page.start_position|$attr_prefix.default.feature_page.end_position&FILTERS=$attr_prefix.default.filters.go_parent_term.$go"; 
+  my $url         = qq{<a rel="notexternal" href="$link">Search Biomart</a>};#$self->hub->species_defs->ENSEMBL_MART_ENABLED ? qq{<a href="$link">Search Biomart</a>} : ""; # TO UNCOMMENT....
+  
+  return $url;
 }
 
 sub process_data {
@@ -95,11 +101,16 @@ sub process_data {
   foreach my $go (sort keys %$data) {
     my $hash        = $data->{$go} || {};
     my $go_link     = $hub->get_ExtURL_link($go, $extdb, $go);
+    my $mart_link   = $self->biomart_link($go) ? "<li>".$self->biomart_link($go)."</li>": "";
+    my $loc_link    = '<li><a rel="notexternal" href="'.$hub->url({type  => 'Location', action => 'Genome', ftype => 'Gene', id  => $go}).'">View on karyotype</a></li>';
+
     my $goslim      = $hash->{'goslim'} || {};
     my $row         = {};
     my $go_evidence = [ split /\s*,\s*/, $hash->{'evidence'} || '' ];
-
-    my ($goslim_goa_acc, $goslim_goa_title, $desc);
+   (my $trans       = $hash->{transcript_id}) =~ s/^,/ /; # GO terms with multiple transcripts
+    my %all_trans   = map{$_ => $hub->url({type => 'Transcript', action => 'Summary',t => $_,})} split(/,/,$trans) if($hash->{transcript_id} =~ /,/);
+    
+    my ($desc);
 
     if ($hash->{'info'}) {
       my ($gene, $type, $common_name);
@@ -113,11 +124,12 @@ sub process_data {
         warn 'regex parse failure in EnsEMBL::Web::Component::Transcript::go()'; # parse error
       }
       
-      (my $species   = $common_name) =~ s/ /_/g;
+      (my $species   = $common_name) =~ s/ /_/g;     
+      
       my $param_type = $type eq 'translation' ? 'p' : substr $type, 0, 1;
       my $url        = $hub->url({
         species     => $species,
-        type        => $type eq 'gene'        ? 'Gene'           : 'Transcript',
+        type        => 'Gene',
         action      => $type eq 'translation' ? 'Ontology' : 'Summary',
         $param_type => $gene,
         __clear     => 1,
@@ -126,19 +138,16 @@ sub process_data {
       $desc = qq{Propagated from $common_name <a href="$url">$gene</a> by orthology};
     }
     
-    foreach (keys %$goslim) {
-      $goslim_goa_acc   .= $hub->get_ExtURL_link($_, 'GOSLIM_GOA', $_) . '<br />';
-      $goslim_goa_title .= $goslim->{$_}{'name'} . '<br />';
+    if($hash->{'term'}) {
+      $row->{'go'}               = $go_link;
+      $row->{'description'}      = $hash->{'term'};
+      $row->{'evidence'}         = join ', ', map $self->helptip($_, $description_hash->{$_} // 'No description available'), @$go_evidence;
+      $row->{'desc'}             = join ', ', grep $_, ($desc, $hash->{'source'});
+      $row->{'transcript_id'}    = %all_trans ? join("<br>", map { qq{<a href="$all_trans{$_}">$_</a>} } keys %all_trans) : '<a href="'.$hub->url({type => 'Transcript', action => 'Summary',t => $_,}).'">'.$hash->{transcript_id}.'</a>';
+      $row->{'extra_link'}       = $mart_link || $loc_link ? qq{<ul class="compact">$mart_link$loc_link</ul>} : "";
+      
+      $table->add_row($row);
     }
-    
-    $row->{'go'}               = $go_link;
-    $row->{'description'}      = $hash->{'term'};
-    $row->{'evidence'}         = join ', ', map $self->helptip($_, $description_hash->{$_} // 'No description available'), @$go_evidence;
-    $row->{'desc'}             = join ', ', grep $_, ($desc, $hash->{'source'});
-    $row->{'goslim_goa_acc'}   = $goslim_goa_acc;
-    $row->{'goslim_goa_title'} = $goslim_goa_title;
-    
-    $table->add_row($row);
   }
   
   return $table;  

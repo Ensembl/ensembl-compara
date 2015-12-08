@@ -24,6 +24,9 @@ use warnings;
 use EnsEMBL::Web::Utils::FileSystem qw(list_dir_contents);
 use EnsEMBL::Web::Exceptions;
 
+# Set to something truthy for more verbose logging of minification
+my $DEBUG = 0;
+
 sub get_filegroups {
   ## Gets a datastructure of lists of grouped files for the given type that are served to the frontend
   ## Override this method in plugins to add any extra files that are not present in the default 'components' folder (they can grouped using the group key to serve them on-demand)
@@ -32,11 +35,18 @@ sub get_filegroups {
   ## @return List of hashrefs as accepted by constructor of EnsEMBL::Web::Tools::DHTMLmerge::FileGroup
   my ($species_defs, $type) = @_;
 
+  my $dir = 'components';
+  $dir = '.' if $type eq 'image';
   return {
     'group_name'  => 'components',
-    'files'       => get_files_from_dir($species_defs, $type, 'components'),
+    'files'       => get_files_from_dir($species_defs, $type, $dir),
     'condition'   => sub { 1 },
     'ordered'     => 0
+  },{
+    group_name => 'newtable',
+    files => get_files_from_dir($species_defs,$type,'newtable'),
+    condition => sub { 1 },
+    ordered => 0
   };
 }
 
@@ -48,10 +58,12 @@ sub merge_all {
   my $configs       = {};
 
   try {
-    foreach my $type (qw(js css)) {
+    foreach my $type (qw(js css ie7css image)) {
       push @{$configs->{$type}}, map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type);
     }
-
+    for (@{$configs->{'image'}}) {
+      delete $_->{'files'};
+    }
     $species_defs->set_config('ENSEMBL_JSCSS_FILES', $configs);
     $species_defs->store;
   } catch {
@@ -70,9 +82,18 @@ sub get_files_from_dir {
 
   my @files;
 
+  my @types = ($type);
+  @types = qw(gif png jpg jpeg) if $type eq 'image';
+  @types = qw(css) if $type eq 'ie7css';
   foreach my $htdocs_dir (grep { !m/biomart/ && -d "$_/$dir" } reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS || []}) {
-    push @files, map "$htdocs_dir/$dir/$_", grep m/\.$type$/, @{list_dir_contents("$htdocs_dir/$dir", {'recursive' => 1})};
+    foreach my $file (@{list_dir_contents("$htdocs_dir/$dir",{recursive=>1})}) {
+      my $path = "$htdocs_dir/$dir/$file";
+      next if $path =~ m!/minified/!;
+      push @files,$path if grep { $file =~ /\.$_$/ } @types;
+    }
   }
+
+  warn "  Found ".(scalar @files)." files type=$type in $dir\n" if $DEBUG;
 
   return \@files;
 }
@@ -88,11 +109,14 @@ use warnings;
 
 use B::Deparse;
 use Digest::MD5 qw(md5_hex);
+use JSON qw(to_json);
 use CSS::Minifier;
 use JavaScript::Minifier;
+use Image::Minifier;
 
-use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents);
-use EnsEMBL::Web::Utils::FileSystem qw(create_path);
+use EnsEMBL::Web::Utils::PluginInspector qw(get_all_plugins);
+use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents file_get_contents);
+use EnsEMBL::Web::Utils::FileSystem qw(create_path list_dir_contents);
 
 sub new {
   ## @constructor
@@ -122,31 +146,18 @@ sub new {
     };
   }
 
-  # sort the files according to original order if asked for, or give priority to the .min.js or .min.css among the files with same prefix if files are not sorted already
-  my $sort_files = $params->{'ordered'}
-    ? sub { $a->{'order'} <=> $b->{'order'} }
-    : sub {
-      my $x = { 'a' => $a, 'b' => $b };
-
-      for (qw(a b)) {
-        $x->{$_}{'url_path'} =~ /^(.*)\/(([0-9]{2})_[^\/]+)$/;
-        $x->{$_} = { 'd' => $1, 'f' => $2, 'n' => $3, 'u' => $x->{$_}{'url_path'}, 'p' => $x->{$_}{'plugin_order'} };
-      }
-
-      defined $x->{a}{d} && $x->{a}{d} eq $x->{b}{d} && $x->{a}{n} == $x->{b}{n} && ($x->{a}{f} =~ /\.min\./ xor $x->{b}{f} =~ /\.min\./)
-        ? $x->{a}{f} =~ /\.min\./ ? -1 : 1
-        : $x->{a}{p} <=> $x->{b}{p} || $x->{a}{u} cmp $x->{b}{u}
-      ;
-    };
-
   my $self = bless {
+    'type'        => $type,
     'group_name'  => $params->{'group_name'},
-    'files'       => [ map EnsEMBL::Web::Tools::DHTMLmerge::File->new($_), sort $sort_files values %files ],
     'condition'   => $params->{'condition'} && ref $params->{'condition'} eq 'CODE' ? B::Deparse->new->coderef2text($params->{'condition'}) : undef
   }, $class;
 
+  # add files after sorting and instantiating them
+  $self->{'files'} = $self->get_sorted_files([values %files], $params->{'ordered'});
+
   warn " Merging $self->{'group_name'} $type files\n";
-  $self->{'minified_url_path'} = _merge_files($species_defs, $type, $self->{'files'});
+  warn sprintf("   (%d to merge)\n",scalar @{$self->{'files'}}) if $DEBUG;
+  $self->{'minified_url_path'} = $self->_merge_files($species_defs, $type, $self->{'files'});
 
   return $self;
 }
@@ -156,9 +167,14 @@ sub name {
   return shift->{'group_name'};
 }
 
+sub type {
+  ## @return Type of the group
+  return shift->{'type'};
+}
+
 sub files {
   ## @return Arrayref of all the file objects
-  return shift->{'files'};
+  return shift->{'files'} || [];
 }
 
 sub minified_url_path {
@@ -180,9 +196,39 @@ sub condition {
   return 1;
 }
 
+sub get_sorted_files {
+  ## Sort the files according to original order if asked for, or give priority to the .min.js or .min.css among the files with same prefix if files are not sorted already
+  ## @param Arrayref of hashes - one hash for each file
+  ## @param Flag if on will consider the 'order' key in the file hash
+  ## @return Arrayref of sorted EnsEMBL::Web::Tools::DHTMLmerge::File objects
+  my ($self, $files, $is_ordered) = @_;
+
+  my $sort_sub = $is_ordered
+    ? sub { $a->{'order'} <=> $b->{'order'} }
+    : sub {
+      my $x = { 'a' => $a, 'b' => $b };
+
+      for (qw(a b)) {
+        $x->{$_}{'url_path'} =~ /^(.*)\/(([0-9]{2})_[^\/]+)$/;
+        $x->{$_} = { 'd' => $1, 'f' => $2, 'n' => $3, 'u' => $x->{$_}{'url_path'}, 'p' => $x->{$_}{'plugin_order'} };
+      }
+
+      defined $x->{a}{d} && $x->{a}{d} eq $x->{b}{d} && $x->{a}{n} == $x->{b}{n} && ($x->{a}{f} =~ /\.min\./ xor $x->{b}{f} =~ /\.min\./)
+        ? $x->{a}{f} =~ /\.min\./ ? -1 : 1
+        : $x->{a}{p} <=> $x->{b}{p} || $x->{a}{u} cmp $x->{b}{u}
+      ;
+    };
+
+  return [ map EnsEMBL::Web::Tools::DHTMLmerge::File->new($_), sort $sort_sub @$files ];
+}
+
+sub _list_plugins {
+  return map { $_->{'path'} } @{get_all_plugins()};
+}
+
 sub _merge_files {
   ## @private
-  my ($species_defs, $type, $files) = @_;
+  my ($self, $species_defs, $type, $files) = @_;
 
   my @contents;
   my $combined = '';
@@ -197,12 +243,45 @@ sub _merge_files {
     $contents[-1]->{$key} .= "$content\n";
   }
 
-  my $filename  = md5_hex($combined);
-  my $url_path  = sprintf '%s/%s.%s', $species_defs->ENSEMBL_MINIFIED_FILES_PATH, $filename, $type;
+  my $plugin_list = join("\n",_list_plugins());
+  my $filename  = md5_hex($plugin_list.$combined);
+
+  my $ext = $type;
+  $ext = 'image.css' if $type eq 'image';
+  $ext = 'ie7.css' if $type eq 'ie7css';
+  my $url_path  = sprintf '%s/%s.%s', $species_defs->ENSEMBL_MINIFIED_FILES_PATH, $filename, $ext;
   my $abs_path  = sprintf '%s%s', $species_defs->ENSEMBL_DOCROOT, $url_path;
 
   # create and save the minified file if it doesn't already exist there
-  file_put_contents($abs_path, map { $_->{'minified'} // ($_->{'not_minified'} ? _minify_content($species_defs, $type, $abs_path, $_->{'not_minified'}) : '') } @contents) unless -e $abs_path;
+  warn "   using filename $filename.$ext\n" if $DEBUG;
+  unless(-e $abs_path) {
+    warn "   doesn't exist, creating\n" if $DEBUG;
+    if($type ne 'image') {
+      my @out;
+      foreach my $c (@contents) {
+        my $data = '';
+        $data = $c->{'minified'} if $c->{'minified'};
+        if(!$data and $c->{'not_minified'}) {
+          $data = _minify_content($species_defs,$type,$abs_path,$c->{'not_minified'});
+        }
+        push @out,$data;
+      }
+      file_put_contents($abs_path,@out);
+    } elsif($self->name eq 'components') {
+      my $files = join("\n",map { $_->{'not_minified'} } @contents);
+      my @files = grep { /\S/ } split("\n",$files);
+      my ($css,$sprites,$prefetch) =
+        Image::Minifier::minify($species_defs,join("\n",@files));
+      file_put_contents($abs_path,$css);
+      my $map_path = $abs_path;
+      $map_path =~ s/\.css/\.map/;
+      file_put_contents($map_path,to_json({ sprites => $sprites, prefetch => $prefetch }));
+    } else {
+      $url_path = undef;
+    }
+  } else {
+    warn "   already exists\n" if $DEBUG;
+  }
 
   return $url_path;
 }
@@ -210,6 +289,7 @@ sub _merge_files {
 sub _minify_content {
   ## @private
   my ($species_defs, $type, $abs_path, $content) = @_;
+
   my $compression_dir = sprintf '%s/utils/compression/', $species_defs->ENSEMBL_WEBROOT;
   my $tmp_filename    = "$abs_path.tmp";
   my $abs_path_dir    = $abs_path =~ s/\/[^\/]+$//r;
@@ -227,13 +307,12 @@ sub _minify_content {
   my $jar = $type eq 'js'
     ? join ' ', $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/compiler.jar", '--js', $tmp_filename, '--compilation_level', 'SIMPLE_OPTIMIZATIONS', '--warning_level', 'QUIET'
     : join ' ', $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/yuicompressor-2.4.7.jar", '--type', 'css', $tmp_filename;
-
   my $compressed = `$jar`;
-     $compressed = $type eq 'js' ? JavaScript::Minifier::minify('input' => $compressed) : CSS::Minifier::minify('input' => $compressed);
-
-  # not needed anymore
-  unlink $tmp_filename;
-
+  if($type eq 'css') {
+    $compressed = Image::Minifier::data_url($species_defs,$compressed);
+  }
+  $compressed = $type eq 'js' ? JavaScript::Minifier::minify('input' => $compressed) : CSS::Minifier::minify('input' => $compressed);
+  unlink $tmp_filename unless $DEBUG;
   return $compressed;
 }
 
@@ -242,6 +321,7 @@ package EnsEMBL::Web::Tools::DHTMLmerge::File;
 use strict;
 use warnings;
 
+use Digest::MD5 qw(md5_hex);
 use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
@@ -276,10 +356,20 @@ sub get_contents {
   ## @param Type of the file (css or js)
   ## @return File contents (string)
   my ($self, $species_defs, $type) = @_;
+
+  if($type eq 'image') {
+    open(my $file,$self->{'absolute_path'}) || return "";
+    my $data = '';
+    { local $/ = undef; $data = <$file>; }
+    close $file;
+    my $hex = md5_hex($data);
+    return "$self->{'url_path'}\t$self->{'absolute_path'}\t$hex\n";
+  }
+
   my $content = file_get_contents($self->{'absolute_path'});
 
   # For css file, convert style placeholders to actual colours
-  if ($type eq 'css') {
+  if ($type eq 'css' or $type eq 'ie7css') {
     my $sequence_markup = $species_defs->colour('sequence_markup') || {}; # Add sequence markup colours to ENSEMBL_STYLE - they are used in CSS. This smells a lot like a hack.
     my %colours         = (%{$species_defs->ENSEMBL_STYLE || {}}, map { $_ => $sequence_markup->{$_}{'default'} } keys %$sequence_markup);
     my @images_folders  = map "$_/css_images", @{$species_defs->ENSEMBL_HTDOCS_DIRS || []};

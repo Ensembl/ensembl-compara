@@ -23,16 +23,19 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Document::Element);
 
+use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
+
 sub init {
   my $self          = shift;
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
-  my $css_groups    = $species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'css'};
+  my @css_groups    = @{$species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'css'}||[]};
 
-  for (@$css_groups) {
+  push @css_groups,@{$species_defs->get_config('ENSEMBL_JSCSS_FILES')->{'image'}||[]};
+  for (@css_groups) {
     next unless $_->condition($hub);
 
-    if (($hub->param('debug') || '') eq 'css' || $species_defs->ENSEMBL_DEBUG_CSS) {
+    if((($hub->param('debug') || '') eq 'css' || $species_defs->ENSEMBL_DEBUG_CSS) and @{$_->files}) {
       $self->add_sheet(sprintf '/CSS?%s', $_->url_path) for @{$_->files};
     } else {
       $self->add_sheet($_->minified_url_path);
@@ -43,11 +46,25 @@ sub init {
 sub content {
   my $self = shift;
 
-  return join '', map sprintf(qq(<link rel="stylesheet" type="text/css" media="all" href="%s%s" />\n), $_ =~ /^\// ? $self->static_server : '', $_), @{$self->{'_sheets'} || []};
+  my @all;
+  foreach my $s (@{$self->{'_sheets'}||[]}) {
+    my $base = '';
+    $base = $self->static_server if $s =~ /^\//;
+    my $url = "$base$s";
+    my $ieu = $url;
+    $ieu =~ s/\.css$/.ie7.css/;
+    my $link = qq(<link rel="stylesheet" type="text/css" media="all");
+    push @all,qq(<!--[if lte IE 7]>$link href="$ieu"/><![endif]-->);
+    push @all,qq(<!--[if gt IE 7]>$link href="$url"/><![endif]-->);
+    push @all,qq(<!--[if !IE]><!-->$link href="$url"/><!--<![endif]-->);
+  }
+  return join('',@all);
+
 }
 
 sub add_sheet {
   my ($self, $sheet) = @_;
+  return unless $sheet;
   push @{$self->{'_sheets'}}, $sheet unless grep { $sheet eq $_ } @{$self->{'_sheets'}};
 }
 

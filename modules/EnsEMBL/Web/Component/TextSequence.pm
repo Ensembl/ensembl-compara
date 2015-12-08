@@ -19,6 +19,7 @@ limitations under the License.
 package EnsEMBL::Web::Component::TextSequence;
 
 use strict;
+no warnings 'uninitialized';
 
 use RTF::Writer;
 
@@ -92,18 +93,29 @@ sub _init {
   }
 }
 
+# Used in subclasses
+sub too_rare_snp {
+  my ($self,$vf,$config) = @_;
+
+  return 0 unless $config->{'hide_rare_snps'} and $config->{'hide_rare_snps'} ne 'off';
+  my $val = abs $config->{'hide_rare_snps'};
+  my $mul = ($config->{'hide_rare_snps'}<0)?-1:1;
+  return ($mul>0) unless $vf->minor_allele_frequency;
+  return ($vf->minor_allele_frequency - $val)*$mul < 0;
+}
+
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
-  my ($self, $slices, $config,$adorn) = @_;
+  my ($self, $slices, $config, $adorn) = @_;
   my $hub      = $self->hub;
   my $sequence = [];
   my @markup;
  
   if($config->{'snp_display'} ne 'off') {
     if($adorn eq 'none') {
-      push @{$config->{'loading'}||=[]},'variations';
+      push @{$config->{'loading'}||=[]},'variants';
     } else {
-      push @{$config->{'loaded'}||=[]},'variations';
+      push @{$config->{'loaded'}||=[]},'variants';
     }
   }
  
@@ -209,6 +221,7 @@ sub set_variation_filter {
   }
   
   $config->{'hide_long_snps'} = $hub->param('hide_long_snps') eq 'yes';
+  $config->{'hide_rare_snps'} = $hub->param('hide_rare_snps');
 }
 
 sub set_variations {
@@ -224,7 +237,7 @@ sub set_variations {
   my $snps   = [];
   my $u_snps = {};
   my $adaptor;
-  
+
   if ($focus_snp_only) {
     push @$snps, $focus_snp_only;
   } else {
@@ -233,37 +246,45 @@ sub set_variations {
       # This isn't a problem, however, since filtering by population is disabled for now anyway.
       if ($config->{'population'}) {
          $snps = $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'});
-      } else {
-        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},  @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)});
+      }
+      elsif ($config->{'hide_rare_snps'} && $config->{'hide_rare_snps'} ne 'off') {
+        my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor','variation');
+        $snps = $vfa->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0);
+      }
+      else {
+        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},
+                         @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)});
         $snps = \@snps_list;
       }
     };
   }
+  return unless scalar @$snps;
   
-  if (scalar @$snps) {
-    foreach my $u_slice (@{$slice_data->{'underlying_slices'} || []}) {
-      next if $u_slice->seq_region_name eq 'GAP';
+  foreach my $u_slice (@{$slice_data->{'underlying_slices'} || []}) {
+    next if $u_slice->seq_region_name eq 'GAP';
       
-      if (!$u_slice->adaptor) {
-        my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
-        $u_slice->adaptor($slice_adaptor);
-      }
-      
-      eval {
-        map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
-      };
+    if (!$u_slice->adaptor) {
+      my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
+      $u_slice->adaptor($slice_adaptor);
     }
-
-    $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
+      
+    eval {
+      map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
+    };
   }
-  
+
+  $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
+
   # order variations descending by worst consequence rank so that the 'worst' variation will overwrite the markup of other variations in the same location
   # Also prioritize shorter variations over longer ones so they don't get hidden
   # Prioritize focus (from the URL) variations over all others 
   my @ordered_snps = map $_->[3], sort { $a->[0] <=> $b->[0] || $b->[1] <=> $a->[1] || $b->[2] <=> $a->[2] } map [ $_->dbID == $focus, $_->length, $_->most_severe_OverlapConsequence->rank, $_ ], @$snps;
-  
+
   foreach (@ordered_snps) {
-    my $dbID   = $_->dbID;
+    my $dbID = $_->dbID;
+    if (!$dbID && $_->isa('Bio::EnsEMBL::Variation::AlleleFeature')) {
+      $dbID = $_->variation_feature->dbID;
+    }
     my $failed = $_->variation ? $_->variation->is_failed : 0;
 
     my $variation_name = $_->variation_name;
@@ -275,7 +296,7 @@ sub set_variations {
        $snp_type       = lc [ grep $config->{'consequence_types'}{$_}, @{$_->consequence_type} ]->[0] if $config->{'consequence_types'};
        $snp_type       = 'failed' if $failed;
     my $ambigcode;
-    
+
     if ($config->{'variation_sequence'}) {
       my $url = $hub->url({ species => $name, r => undef, vf => $dbID, v => undef });
       
@@ -284,13 +305,12 @@ sub set_variations {
     }
     
     # Use the variation from the underlying slice if we have it.
-    my $snp = $u_snps->{$variation_name} if scalar keys %$u_snps;
-    $snp ||= $_; 
+    my $snp = (scalar keys %$u_snps && $u_snps->{$variation_name}) ? $u_snps->{$variation_name} : $_;
     
     # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
     my $seq_region_start = $snp->seq_region_start;
     my $seq_region_end   = $snp->seq_region_end;
-    
+
     # If it's a mapped slice, get the coordinates for the variation based on the reference slice
     if ($config->{'mapper'}) {
       # Constrain region to the limits of the reference slice
@@ -310,7 +330,7 @@ sub set_variations {
     # Co-ordinates relative to the sequence - used to mark up the variation's position
     my $s = $start - 1;
     my $e = $end   - 1;
-    
+
     # Co-ordinates to be used in link text - will use $start or $seq_region_start depending on line numbering style
     my ($snp_start, $snp_end);
     
@@ -348,24 +368,24 @@ sub set_variations {
       vf      => $dbID,
       vdb     => 'variation'
     });
-    
+
     my $link_text  = qq{ <a href="$url">$snp_start: $variation_name</a>;};
     (my $ambiguity = $config->{'ambiguity'} ? $_->ambig_code($strand) : '') =~ s/-//g;
-    
+
     for ($s..$e) {
       # Don't mark up variations when the secondary strain is the same as the sequence.
       # $sequence->[-1] is the current secondary strain, as it is the last element pushed onto the array
       # uncomment last part to enable showing ALL variants on ref strain (might want to add as an opt later)
       next if defined $config->{'match_display'} && $sequence->[-1][$_]{'letter'} =~ /[\.\|~$sequence->[0][$_]{'letter'}]/i;# && scalar @$sequence > 1;
-      
-      $markup->{'variations'}{$_}{'focus'}     = 1 if $config->{'focus_variant'} && $config->{'focus_variant'} eq $dbID;
-      $markup->{'variations'}{$_}{'type'}      = $snp_type;
-      $markup->{'variations'}{$_}{'ambiguity'} = $ambiguity;
-      $markup->{'variations'}{$_}{'alleles'}  .= ($markup->{'variations'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
-      
-      unshift @{$markup->{'variations'}{$_}{'link_text'}}, $link_text if $_ == $s;
 
-      $markup->{'variations'}{$_}{'href'} ||= {
+      $markup->{'variants'}{$_}{'focus'}     = 1 if $config->{'focus_variant'} && $config->{'focus_variant'} eq $dbID;
+      $markup->{'variants'}{$_}{'type'}      = $snp_type;
+      $markup->{'variants'}{$_}{'ambiguity'} = $ambiguity;
+      $markup->{'variants'}{$_}{'alleles'}  .= ($markup->{'variants'}{$_}{'alleles'} ? "\n" : '') . $allele_string;
+      
+      unshift @{$markup->{'variants'}{$_}{'link_text'}}, $link_text if $_ == $s;
+
+      $markup->{'variants'}{$_}{'href'} ||= {
         species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
         type        => 'ZMenu',
         action      => 'TextSequence',
@@ -374,9 +394,9 @@ sub set_variations {
       };
 
       if($dbID) {
-        push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+        push @{$markup->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
       } else {
-        push @{$markup->{'variations'}{$_}{'href'}{'v'}},  $variation_name;
+        push @{$markup->{'variants'}{$_}{'href'}{'v'}},  $variation_name;
       }
       
       $sequence->[$_] = $ambigcode if $config->{'variation_sequence'} && $ambigcode;
@@ -584,8 +604,8 @@ sub markup_variation {
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
-    foreach (sort { $a <=> $b } keys %{$data->{'variations'}}) {
-      $variation = $data->{'variations'}{$_};
+    foreach (sort { $a <=> $b } keys %{$data->{'variants'}}) {
+      $variation = $data->{'variants'}{$_};
       
       $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
       $seq->[$_]{'new_letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
@@ -598,7 +618,7 @@ sub markup_variation {
       $seq->[$_]{'new_post'} = $new_post if $new_post ne $seq->[$_]{'post'};
       $seq->[$_]{'post'} = $new_post;
       
-      $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
+      $config->{'key'}{'variants'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
     }
     
     $i++;
@@ -1109,7 +1129,7 @@ sub build_sequence {
       $line = qq(<span class="adorn adorn-$adid _seq">$line</span>);
       my $num  = shift @{$line_numbers->{$y}};
       
-      if ($config->{'number'}) {
+      if ($config->{'number'} ne 'off') {
         my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $num->{'label'});
         my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'start'});
            $line = $config->{'h_space'} . sprintf('%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}") . $line;
@@ -1117,7 +1137,7 @@ sub build_sequence {
       
       $line .= ' ' x ($config->{'display_width'} - $_->[$x]{'length'}) if $x == $length && ($config->{'end_number'} || $_->[$x]{'post'});
       
-      if ($config->{'end_number'}) {
+      if ($config->{'end_number'} ne 'off') {
         my $n    = $num->{'post_label'} || $num->{'label'};
         my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $n);
         my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'end'});
@@ -1145,7 +1165,7 @@ sub build_sequence {
     $partial_key->{$_} = $config->{$_} for grep $config->{$_},        @{$self->{'key_params'}};
     $partial_key->{$_} = 1             for grep $config->{'key'}{$_}, @{$self->{'key_types'}};
     
-    foreach my $type (grep $config->{'key'}{$_}, qw(exons variations)) {
+    foreach my $type (grep $config->{'key'}{$_}, qw(exons variants)) {
       $partial_key->{$type}{$_} = 1 for keys %{$config->{'key'}{$type}};
     }
     
@@ -1294,7 +1314,7 @@ sub content_key {
   
   $config->{'key'}{$_} = $hub->param($_) for @{$self->{'key_types'}};
   
-  for my $p (grep $hub->param($_), qw(exons variations)) {
+  for my $p (grep $hub->param($_), qw(exons variants)) {
     $config->{'key'}{$p}{$_} = 1 for $hub->param($p);
   }
 
@@ -1358,13 +1378,13 @@ sub get_key {
     }
   }
   
-  $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
-  $key{'variations'}{'failed'}{'title'} = "Suspect variants which failed our quality control checks";
+  $key{'variants'}{$_} = $var_styles->{$_} for keys %$var_styles;
+  $key{'variants'}{'failed'}{'title'} = "Suspect variants which failed our quality control checks";
 
   my $example = ($hub->param('v')) ? ' (i.e. '.$hub->param('v').')' : '';
 
   if($config->{'focus_variant'}) {
-    $image_config->{'legend'}{'variations'}{'focus'} = {
+    $image_config->{'legend'}{'variants'}{'focus'} = {
       class     => 'focus',
       label     => 'red',
       default   => 'white',

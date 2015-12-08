@@ -267,8 +267,8 @@ sub filter_munged_snps {
  
     if ($needvalidation) {
       @filtered_snps =
-        grep {( @{$_->[2]->get_all_validation_states} ? 
-          (grep { $valids->{"opt_" . lc $_} } @{$_->[2]->get_all_validation_states}) : 
+        grep {( @{$_->[2]->get_all_evidence_values} ? 
+          (grep { $valids->{"opt_" . lc $_} } @{$_->[2]->get_all_evidence_values}) : 
           $valids->{'opt_noinfo'}
         )} @filtered_snps;                                                                                      # [ fake_s, fake_e, SNP ] Grep features to see if they are valid
     }
@@ -440,10 +440,8 @@ sub get_data {
     my $unique_feature_set_id = join ':', $_->cell_type->name, 
                                           $_->feature_type->name, 
                                           $_->dbID;
-    my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
     my $path = $_->dbfile_path;
-    $path = "$file_path/$path" unless $path =~ /^$file_path/;
-    $data->{'wiggle_data'}{$unique_feature_set_id} = $path;
+    $data->{'wiggle_data'}{$unique_feature_set_id} = $_->dbfile_path;
   }
     
   $data->{'colours'} = \%feature_sets_on;

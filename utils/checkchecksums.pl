@@ -167,7 +167,7 @@ sub get_checksum_file {
   my $in = "";
   {
     local $/ = undef;
-    open(CHECKSUMS,"ssh ensweb-1-19 zcat $BASE$dir/CHECKSUMS.gz |") or
+    open(CHECKSUMS,"ssh ensweb-1-19 zcat $BASE$dir/CHECKSUMS |") or
       die "Cannot read checksums: $!";
     $in = <CHECKSUMS>;
     close CHECKSUMS;
@@ -182,7 +182,7 @@ sub perdir {
   foreach my $k (keys %$master) {
     my @dir = split(m!/!,$k);
     my $fn = pop @dir;
-    next if $fn eq 'CHECKSUMS.gz';
+    next if $fn eq 'CHECKSUMS';
     ($out{join("/",@dir)}||={})->{$fn} = $master->{$k};
   }
   return \%out;
@@ -226,11 +226,8 @@ sub compare_checksums {
 sub update_file {
   my ($d,$contents) = @_;
 
-  system("mkdir -p test/$d");
-  open(CHECKSUMS,"| gzip -c >test/$d/CHECKSUMS.gz") || die "$d: $!";
-
-  my $path = "$BASE/$d/CHECKSUMS.gz";
-  open(CHECKSUMS,qq(| ssh ensweb-1-19 bash -c "gzip -9 >$path")) or
+  my $path = "$BASE/$d/CHECKSUMS";
+  open(CHECKSUMS,qq(| ssh ensweb-1-19 bash -c "cat >$path")) or
     die "Cannot write checksums: $!";
   print CHECKSUMS $contents;
   close CHECKSUMS;
@@ -286,7 +283,7 @@ if($mode eq 'generate') {
   my %current;
   my @ckdirs;
   foreach my $d (keys %$files) {
-    next unless grep { $_ eq 'CHECKSUMS.gz' } @{$files->{$d}};
+    next unless grep { $_ eq 'CHECKSUMS' } @{$files->{$d}};
     push @ckdirs,$d;
   }
   my $i = 0;

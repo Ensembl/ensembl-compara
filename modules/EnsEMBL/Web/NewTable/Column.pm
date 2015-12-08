@@ -53,7 +53,6 @@ sub new {
   $self->init();
   $self->{'conf'}{'type_js'} = $self->js_type();
   $self->{'conf'}{'range'} = $self->js_range();
-  $self->{'conf'}{'range_params'} = $self->js_params();
   $self->configure($confarr,$confarg);
   return $self;
 }
@@ -69,7 +68,6 @@ sub hyphenate {
   return $_;
 }
 
-sub js_params { return {}; }
 sub clean { return $_[1]; }
 sub null { return 0; }
 
@@ -162,8 +160,7 @@ sub add_value {
 }
 
 sub colconf { return $_[0]->{'conf'}; }
-sub set_range { $_[0]->{'conf'}{'range_range'} = $_[1]; }
-sub set_primary { $_[0]->{'conf'}{'primary'} = 1; }
+sub set_primary { $_[0]->{'conf'}{'primary'} = $_[1]; }
 sub no_sort { $_[0]->{'conf'}{'sort'} = 0; }
 sub set_filter { $_[0]->{'conf'}{'range'} = $_[1]; }
 sub no_filter { $_[0]->set_filter(''); }

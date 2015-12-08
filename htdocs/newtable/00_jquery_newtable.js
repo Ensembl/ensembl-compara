@@ -155,9 +155,9 @@
     return d;
   }
 
-  function build_enums(manifest_c,grid,series,enums) {
+  function build_enums(manifest_c,grid,series,enums,keymeta) {
     $.each(manifest_c.eundo,function(i,step) {
-      enums = step(enums,grid,series);
+      enums = step(enums,grid,series,keymeta);
     });
     return enums;
   }
@@ -226,16 +226,14 @@
   function store_ranges($table,enums,cur_manifest,manifest_in,config,widgets) {
     var grid = $table.data('grid') || [];
     var series = $table.data('grid-series') || [];
-    enums = build_enums(cur_manifest,grid,series,enums) || {};
+    var keymeta = $table.data('keymeta')||{};
+    enums = build_enums(cur_manifest,grid,series,enums,keymeta) || {};
     var ranges = $table.data('ranges') || {};
     var range_manifest = $table.data('range-manifest') || [];
     if(!$.orient_compares_equal(manifest_in,range_manifest)) {
       ranges = {};
       $table.data('range-manifest',manifest_in);
     }
-    $.each($table.data('range-fixed'),function(k,v) {
-      if(!ranges[k]) { ranges[k] = v.slice(); }
-    });
     $.each(enums,function(column,range) {
       var fn = $.find_type(widgets,config.colconf[column]).merge;
       ranges[column] = fn(ranges[column],range);
@@ -246,10 +244,16 @@
 
   function store_keymeta($table,incoming) {
     var keymeta = $table.data('keymeta') || {};
-    $.each(incoming||{},function(key,indata) {
-      if(!keymeta[key]) { keymeta[key] = {}; }
-      $.each(indata,function(k,v) {
-        if(!keymeta[key].hasOwnProperty(k)) { keymeta[key][k] = v; }
+    $.each(incoming||{},function(klass,klassdata) {
+      if(!keymeta[klass]) { keymeta[klass] = {}; }
+      $.each(klassdata||{},function(col,coldata) {
+        if(!keymeta[klass][col]) { keymeta[klass][col] = {}; }
+        $.each(coldata||{},function(val,valdata) {
+          if(!keymeta[klass][col][val]) { keymeta[klass][col][val] = {}; }
+          $.each(valdata||{},function(k,v) {
+            keymeta[klass][col][val][k] = v;
+          });
+        });
       });
     });
     $table.data('keymeta',keymeta);
@@ -443,6 +447,7 @@
     if(!o_num) { outstanding = []; }
 
     var payload_one = $table.data('payload_one');
+    store_keymeta($table,payload_one.keymeta);
     if(payload_one && $.orient_compares_equal(manifest_c.manifest,config.orient)) {
       $table.data('payload_one','');
       maybe_use_responses(widgets,$table,payload_one,config);
@@ -499,27 +504,26 @@
     if(!fluxion[type]) { fluxion[type] = 0; }
     if(fluxion[type] === 0 && state) { change = 1; }
     fluxion[type] += state;
+    if(fluxion[type]<0) { fluxion[type]=0; }
     if(fluxion[type] === 0 && state) { change = 0; }
     if(change == -1) { return $.Deferred().resolve(); }
     if(kind!==undefined && kind!==null && change===0) {
       if(fluxes.hasOwnProperty(kind)) { delete fluxes[kind]; }
     }
     $.each(widgets,function(key,fn) {
-      if(fn.flux) { fn.flux($table,type,change); }
+      if(fn.flux) {
+        // TODO change calls to triggers everywhere
+        fn.flux($table,type,change);
+        $table.trigger('flux-'+type,[change?true:false]);
+      }
     });
     var $d = $.Deferred();
     setTimeout(function() { $d.resolve(); },1);
     return $d;
   }
 
-  function prepopulate_ranges($table,config) {
-    var fixed = {};
-    $.each(config.colconf,function(key,cc) {
-      if(cc.range_range) {
-        fixed[key] = cc.range_range;
-      }
-    });
-    $table.data('range-fixed',fixed);
+  function flux_update($table,type) {
+    $table.trigger('flux-'+type,[fluxion[type]?true:false]);
   }
 
   function markup_activate(widgets,$some) {
@@ -535,6 +539,22 @@
     return val;
   }
 
+  var seq = +Date.now();
+  function save_orient($table,config,view) {
+    seq++;
+    var src = $table.data('src');
+    var params = $.extend({},extract_params(src),{
+      activity: 'save_orient',
+      source: 'enstab',
+      keymeta: JSON.stringify($table.data('keymeta')||{}),
+      config: JSON.stringify(config),
+      ssplugins: JSON.stringify(config.ssplugins),
+      orient: JSON.stringify(view),
+      seq: seq
+    });
+    $.post($table.data('src'),params,function(res) {},'json');
+  }
+
   function new_table($target) {
     var config = $.parseJSON($target.text());
     var widgets = make_widgets(config);
@@ -542,24 +562,23 @@
     $table = build_frame(config,widgets,$table);
     make_chain(widgets,config,$table);
     $table.data('src',$target.attr('href'));
-    store_keymeta($table,config.keymeta); 
     $target.replaceWith($table);
     var stored_config = {
       columns: config.columns
     };
-    var view = $.extend(true,{},config.orient);
+    var view = merge_orient($.extend(true,{},config.orient),config.saved_orient||{});
     var old_view = $.extend(true,{},config.orient);
-
-    prepopulate_ranges($table,config);
     $table.data('view',view).data('old-view',$.extend(true,{},old_view))
       .data('config',stored_config);
     $table.data('payload_one',config.payload_one);
     delete config.payload_one;
     $table.on('think-on',function(e,key) { flux(widgets,$table,'think',1,key); });
     $table.on('think-off',function(e,key) { flux(widgets,$table,'think',-1,key); });
+    $table.on('flux-update',function(e,type) { flux_update($table,type); });
     build_format(widgets,$table);
     $table.on('view-updated',function() {
       var view = $table.data('view');
+      save_orient($table,config,view);
       var old_view = $table.data('old-view');
       if(view.format != old_view.format) {
         build_format(widgets,$table);
@@ -625,6 +644,11 @@
       maybe_get_new_data(widgets,$table,config);
       flux(widgets,$table,'think',-1);
     });
+  }
+
+  // TODO make this configurable ENSWEB-2113
+  function merge_orient(lesser,greater) {
+    return $.extend({},lesser,greater);
   }
 
   $.orient_compares_equal = function(fa,fb) {

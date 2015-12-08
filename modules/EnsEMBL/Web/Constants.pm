@@ -40,7 +40,8 @@ sub ICON_MAPPINGS {
     'search'        => { 'file' => 'search.png',          'alt' => 'search',      'title' => "Search this $component"             },
     'download'      => { 'file' => 'download.png',        'alt' => 'download',    'title' => "Download data from this $component" },
     'image'         => { 'file' => 'picture.png',         'alt' => 'image',       'title' => "Export this image"                  },
-    'userdata'      => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Manage your data"                   },
+    'userdata_add'  => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Add your data"                   },
+    'userdata_manage' => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Manage your data"                   },
     'share'         => { 'file' => 'share.png',           'alt' => 'share',       'title' => "Share this $component"              },
     'reset_config'  => { 'file' => 'settings-reset.png',  'alt' => 'reset config','title' => "Reset configuration"                },
     'reset_order'   => { 'file' => 'order-reset.png',     'alt' => 'reset order', 'title' => "Reset track order"                  },
@@ -323,6 +324,21 @@ sub MARKUP_OPTIONS {
       'label'  => 'Hide variants longer than 10bp',
       'value'  => 'on',
     },
+    'hide_rare_snps' => {
+      'type'     => 'DropDown',
+      'select'   => 'select',
+      'name'     => 'hide_rare_snps',
+      'label'    => 'Hide variants by frequency (MAF)',
+      'values'   => [{ 'value' => 'off', 'caption' => "Don't hide" },
+                     { 'value' => 0.0001, 'caption' => 'Hide rare, MAF &lt; 0.01%' },
+                     { 'value' => 0.001, 'caption' => 'Hide rare, MAF &lt; 0.1%' },
+                     { 'value' => 0.01, 'caption' => 'Hide rare, MAF &lt; 1%' },
+                     { 'value' => 0.1, 'caption' => 'Hide rare, MAF &lt; 10%' },
+                     { 'value' => -0.0001, 'caption' => 'Hide common, MAF &gt; 0.01%' },
+                     { 'value' => -0.001, 'caption' => 'Hide common, MAF &gt; 0.1%' },
+                     { 'value' => -0.01, 'caption' => 'Hide common, MAF &gt; 1%' },
+                     { 'value' => -0.1, 'caption' => 'Hide common, MAF &gt; 10%' }]
+    },
     ### GENE-SPECIFIC TEXT SEQUENCE
     'flank5_display' => {
       'type'     => 'NonNegInt', 
@@ -417,7 +433,7 @@ sub GENERAL_MARKUP_OPTIONS {
       'label'  => 'Show variants',
       'values' => [
         { 'value' => 'off', 'caption' => 'No'  },
-        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'on', 'caption' => 'Yes' },
       ]
     },
     'line_numbering' => {

@@ -93,6 +93,26 @@ sub populate_tree {
     { 'availability' => 'regulation not_patch not_rnaseq' }
   );
 
+  # get all ontologies mapped to this species
+  my $go_menu = $self->create_submenu('Ontologies', 'Ontologies');
+  my %olist   = map {$_ => 1} @{$species_defs->SPECIES_ONTOLOGIES || []};
+
+  if (%olist) {
+    # get all ontologies available in the ontology db
+    my %clusters = $species_defs->multiX('ONTOLOGIES');
+
+    # get all the clusters that can generate a graph
+    my @clist = grep {$olist{$clusters{$_}->{db}}} sort {$clusters{$a}->{db} cmp $clusters{$b}->{db}} keys %clusters;    # Find if this ontology has been loaded into ontology db
+
+    foreach my $oid (@clist) {
+      my $cluster = $clusters{$oid};
+
+      (my $desc2 = $cluster->{db}.": ".ucfirst($cluster->{description})) =~ s/_/ /g;
+
+      $go_menu->append($self->create_node('Ontologies/'. $cluster->{description}, $desc2, [qw( go EnsEMBL::Web::Component::Gene::Go )], {'availability' => "gene has_go_$oid", 'concise' => $desc2 }));
+    }
+  }
+    
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
     [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
     {'availability' => 'gene database:compara core'}
@@ -163,7 +183,7 @@ sub populate_tree {
       variation EnsEMBL::Web::Component::Gene::GenePhenotypeVariation
       orthologue EnsEMBL::Web::Component::Gene::GenePhenotypeOrthologue
     )],
-    { 'availability' => 1 }  #set as true since getting the orthologs is really slow
+    { 'availability' => 'core' }  #can't be any cleverer than this since checking orthologs is too slow
   );
 	
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
