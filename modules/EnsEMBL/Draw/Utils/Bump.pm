@@ -43,7 +43,6 @@ sub bump {
 ### Adapted from the original bumping code from GlyphSet.pm
   my ($tally, $start, $end, $truncate_if_outside, $key) = @_;
   $key         ||= '_bump';
-  ($end, $start) = ($start, $end) if $end < $start;
   $start         = 1 if $start < 1;
   my $row_length = $tally->{$key}{'length'};
 
@@ -52,6 +51,7 @@ sub bump {
   $end   = $row_length if $end > $row_length;
   $start = floor($start);
   $end   = ceil($end);
+  ($end, $start) = ($start, $end) if $end < $start;
 
   my $row     = 0;
   my $length  = $end - $start + 1;
