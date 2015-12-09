@@ -43,18 +43,19 @@ sub bump {
 ### Adapted from the original bumping code from GlyphSet.pm
   my ($tally, $start, $end, $truncate_if_outside, $key) = @_;
   $key         ||= '_bump';
-  ($end, $start) = ($start, $end) if $end < $start;
   $start         = 1 if $start < 1;
   my $row_length = $tally->{$key}{'length'};
 
   return -1 if $end > $row_length && $truncate_if_outside; # used to not display partial text labels
+  return -1 if $start > $row_length;
 
   $end   = $row_length if $end > $row_length;
   $start = floor($start);
   $end   = ceil($end);
 
   my $row     = 0;
-  my $length  = $end - $start + 1;
+  my $length  = $end > $start ? $end - $start : $start - $end;
+  $length++;
   my $element = '0' x $row_length;
 
   substr($element, $start, $length) = '1' x $length;
