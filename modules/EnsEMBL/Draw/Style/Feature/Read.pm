@@ -84,7 +84,7 @@ sub draw_feature {
 
   ## Add inserts 
   if (scalar @{$feature->{'inserts'}}) {
-    my $insert_colour = $self->my_colour('read_insert');
+    my $insert_colour = $self->track_config->get('insert_colour');
     foreach (@{$feature->{'inserts'}}) {
       $composite->push($self->Rect({
                                     'x'         => $x + $_,

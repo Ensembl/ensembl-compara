@@ -178,6 +178,7 @@ sub _render_reads {
   my $slicelength = $slice->length;
   my $slicestrand = $slice->strand;
   my $read_colour = $self->my_colour('read');
+  $self->{'my_config'}->set('insert_colour', $self->my_colour('read_insert'));
   $self->{'my_config'}->set('default_strand', 1);
   $self->{'my_config'}->set('drawn_strand', $self->strand);
 
