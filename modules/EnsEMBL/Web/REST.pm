@@ -75,22 +75,19 @@ sub fetch {
   my $hub   = $self->hub;
   my $url   = sprintf('%s/%s', $self->server, $endpoint);
   my $type  = $content_type{lc($format)};
+  $args->{'headers'}{'Content-Type'} ||= $type;
 
   if ($args->{'url_params'}) {
-    $url .= '?' unless $url =~ /\?/;
+    $url .= '?';
     while (my($k, $v) = each (%{$args->{'url_params'}||{}})) {
       $url .= sprintf('%s=%s;', $k, $v);
     }
     delete $args->{'url_params'};
   }
 
-  unless ($url =~ /content-type/) {
-    $url .= '?' unless $url =~ /\?/;
-    $url .= "content-type=$type";
-  }
-
   if ($args->{'method'} && $args->{'method'} eq 'post') {
-    $args->{'headers'} = to_json($args->{'content'});
+    my $json = to_json($args->{'content'});
+    $args->{'headers'}{'Content'} = $json;
     delete $args->{'content'};
   }
 
