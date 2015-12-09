@@ -117,7 +117,7 @@ sub _render_coverage {
 
   my %config                = %{$self->track_style_config};
   $config{'pix_per_score'}  = $smax / ($scale * $max); 
-  $config{'absolute_x'}     = $pix_per_bp < 1 ? 1 : 0;
+  $config{'absolutex'}     = $pix_per_bp < 1 ? 1 : 0;
   $config{'line_score'}     = 0;
   $config{'cutoff'}         = $smax;
 
