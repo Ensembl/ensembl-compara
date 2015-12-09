@@ -59,14 +59,29 @@ sub content {
 
   my $args = {'method' => 'post', 'content' => $post_content};
   
-  my ($rest_species, $error) = $rest->fetch($endpoint, $args);
+  my ($result, $error) = $rest->fetch($endpoint, $args);
+  use Data::Dumper; warn Dumper($result);
 
   if ($error) {
     $html = '<p>Sorry, we are unable to fetch data from the Track Hub Registry at the moment</p>';
   }
   else {
+    my $count   = $result->{'total_entries'};
+    my $plural  = $count == 1 ? '' : 's';
+    $html .= sprintf('<p>Found %s track hub%s</p>', $count, $plural);
+    if ($count > 0) {
+      my $base_url = sprintf('/UserData/AddFile');
+      foreach (@{$result->{'items'}}) {
+        my $attachment_url = $base_url.'?'.$_->{'hub'}{'url'};
+        $html .= sprintf('<h3>%s<h3><h4>%s</h4>
+                          <p><a href="%s">Attach this hub</a>',
+                          $_->{'hub'}{'shortLabel'}, $_->{'hub'}{'longLabel'},
+                          $attachment_url,
+);
+      }
+    }
   }
-  return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Search the Track Hub Registry</h2>%s', $html;
+  return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Search Results</h2>%s', $html;
 
 }
 
