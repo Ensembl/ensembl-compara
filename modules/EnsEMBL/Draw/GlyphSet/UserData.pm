@@ -69,9 +69,7 @@ sub draw_features {
   ## Defaults
   $self->{'my_config'}->set('slice_length', $self->{'container'}->length);
   $self->{'my_config'}->set('bumped', 1) unless defined($self->{'my_config'}->get('bumped'));
-  $self->{'my_config'}->set('drawn_strand', $self->strand);
-  ## Draw unstranded data on forward strand
-  $self->{'my_config'}->set('default_strand', 1);
+  $self->{'my_config'}->set('same_strand', $self->strand);
   unless ($self->{'my_config'}->get('height')) {
     $self->{'my_config'}->set('height', 8);
   }
@@ -199,7 +197,7 @@ sub _bg_href {
 sub skip_strand {
   my ($self, $strand_info) = @_;
   my $skip = 0;
-  my $drawable_strands = $self->{'my_config'}->get('strand') || '';
+  my $drawable_strands = $self->{'my_config'}->get('strand');
 
   if ($drawable_strands eq 'f') {
     $skip = 1 if $self->strand == -1;
@@ -207,7 +205,7 @@ sub skip_strand {
   elsif ($drawable_strands eq 'r') {
     $skip = 1 if $self->strand == 1;
   }
-  elsif (keys %{$strand_info||{}}) { ## assume data on both strands
+  elsif (keys %{$strand_info||{}}) { ## assume both strands
     $skip = 1 if $self->strand == 1 && !$strand_info->{1};
     $skip = 1 if $self->strand == -1 && !$strand_info->{-1} && !$strand_info->{0};
   }
