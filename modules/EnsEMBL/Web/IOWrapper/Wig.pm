@@ -35,9 +35,6 @@ sub create_hash {
 ### @return Hashref
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
-  $metadata ||= {};
-  ## WIG has no strand
-  $metadata->{'strands'}{0}++;
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
@@ -45,6 +42,13 @@ sub create_hash {
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
   my $score         = $self->parser->get_score;
+  my $start         = $feature_start - $slice->start;
+  my $end           = $feature_end - $slice->start;
+  return if $end < 0 || $start > $slice->length;
+
+  $metadata ||= {};
+  ## WIG has no strand
+  $metadata->{'strands'}{0}++;
 
   my $colour_params  = {
                         'metadata'  => $metadata,
@@ -54,8 +58,8 @@ sub create_hash {
   my $colour = $self->set_colour($colour_params);
 
   return {
-    'start'         => $feature_start - $slice->start,
-    'end'           => $feature_end - $slice->start,
+    'start'         => $start,
+    'end'           => $end,
     'seq_region'    => $seqname,
     'score'         => $score,
     'colour'        => $colour,

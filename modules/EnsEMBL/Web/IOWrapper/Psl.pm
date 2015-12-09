@@ -38,6 +38,9 @@ sub create_hash {
   $metadata ||= {};
 
   my ($seq_region, $feature_start, $feature_end) = $self->coords;
+  my $start         = $feature_start - $slice->start;
+  my $end           = $feature_end - $slice->start;
+  return if $end < 0 || $start > $slice->length;
 
   ## Only set colour if we have something in file, otherwise
   ## we will override the default colour in the drawing code
@@ -57,8 +60,8 @@ sub create_hash {
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
   return {
-    'start'         => $feature_start - $slice->start,
-    'end'           => $feature_end - $slice->start,
+    'start'         => $start,
+    'end'           => $end,
     'seq_region'    => $seq_region,
     'strand'        => $strand,
     'score'         => $score,

@@ -37,14 +37,19 @@ sub create_hash {
 ### @return Hashref
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
+
+  my $feature_start = $self->parser->get_start;
+  my $feature_end   = $self->parser->get_end;
+  my $start         = $feature_start - $slice->start;
+  my $end           = $feature_end - $slice->start;
+  return if $end < 0 || $start > $slice->length;
+
+  my $seqname       = $self->parser->get_seqname;
+  my @feature_ids   = @{$self->parser->get_IDs};
+
   $metadata ||= {};
   ## VCF has no strand
   $metadata->{'strands'}{0}++;
-
-  my $seqname       = $self->parser->get_seqname;
-  my $feature_start = $self->parser->get_start;
-  my $feature_end   = $self->parser->get_end;
-  my @feature_ids   = @{$self->parser->get_IDs};
 
   my $href = $self->href({
                         'seq_region'  => $seqname,
@@ -55,8 +60,8 @@ sub create_hash {
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
   return {
-    'start'         => $feature_start - $slice->start,
-    'end'           => $feature_end - $slice->start,
+    'start'         => $start,
+    'end'           => $end,
     'seq_region'    => $seqname,
     'label'         => join(',', @feature_ids),
     'colour'        => $metadata->{'colour'},

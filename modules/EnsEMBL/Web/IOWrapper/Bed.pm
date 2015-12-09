@@ -35,16 +35,20 @@ sub create_hash {
 ### @return Hashref
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
-  $metadata ||= {};
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
-  my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
+  my $start         = $feature_start - $slice->start;
+  my $end           = $feature_end - $slice->start;
+  return if $end < 0 || $start > $slice->length;
+
+  my $seqname       = $self->parser->get_seqname;
   my $strand        = $self->parser->get_strand || 0;
   my $score         = $self->parser->get_score;
 
+  $metadata ||= {};
   $metadata->{'strands'}{$strand}++;
 
   my $colour_params  = {
@@ -67,8 +71,8 @@ sub create_hash {
                         });
 
   my $feature = {
-    'start'         => $feature_start - $slice->start,
-    'end'           => $feature_end - $slice->start,
+    'start'         => $start,
+    'end'           => $end,
     'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,

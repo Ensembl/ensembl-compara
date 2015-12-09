@@ -50,6 +50,7 @@ sub create_hash {
   my $feature_1_end   = $self->parser->get_end - $slice_start;
   $feature_2_start   -= $slice_start;
   $feature_2_end     -= $slice_start;
+  return if $feature_2_end < 0 || $feature_1_start > $slice->length;
 
   ## Set colour for feature
   my $colour_params  = {
