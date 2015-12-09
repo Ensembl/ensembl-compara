@@ -24,6 +24,7 @@ use parent qw(EnsEMBL::Draw::Style::Graph);
 
 sub draw_wiggle {
   my ($self, $c, $features) = @_;
+  return unless scalarC@$features);
 
   my $use_points  = $c->{'graph_type'} && $c->{'graph_type'} eq 'points';
   my $same_strand = $c->{'same_strand'};
