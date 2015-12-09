@@ -52,9 +52,14 @@ sub content {
   my $endpoint = 'api/search';
 
   my $post_content = {};
-  my @query_params = qw(species assembly query);
+  my @query_params = qw(species assembly datatype query);
   foreach (@query_params) {
     $post_content->{$_} = $hub->param($_) if $hub->param($_);
+  }
+  ## Filter on current assembly
+  if ($post_content->{'species'} && !$post_content->{'assembly'}) {
+    (my $species = $post_content->{'species'}) =~ s/ /_/;
+    $post_content->{'assembly'} = $sd->get_config($species, 'ASSEMBLY_VERSION');
   }
 
   my $args = {'method' => 'post', 'content' => $post_content};
@@ -70,14 +75,23 @@ sub content {
     my $plural  = $count == 1 ? '' : 's';
     $html .= sprintf('<p>Found %s track hub%s</p>', $count, $plural);
     if ($count > 0) {
-      my $base_url = sprintf('/UserData/AddFile');
       foreach (@{$result->{'items'}}) {
-        my $attachment_url = $base_url.'?'.$_->{'hub'}{'url'};
-        $html .= sprintf('<h3>%s<h3><h4>%s</h4>
-                          <p><a href="%s">Attach this hub</a>',
-                          $_->{'hub'}{'shortLabel'}, $_->{'hub'}{'longLabel'},
+        (my $species = $_->{'species'}{'scientific_name'}) =~ s/ /_/;
+        my $attachment_url = sprintf('/%s/UserData/AddFile?format=TRACKHUB;species=%s;text=%s', 
+                                      $species, $species, $_->{'hub'}{'url'});
+        $html .= sprintf('<div class="plain-box">
+                            <h3>%s</h3>
+                            <p class="button float-right"><a href="%s" class="modal_link">Attach this hub</a></p>
+                            <p><b>Description</b>: %s</p>
+                            <p><b>Data type</b>: %s</p>
+                            <p><b>Number of tracks</b>: %s</p>
+                          </div>',
+                          $_->{'hub'}{'shortLabel'}, 
                           $attachment_url,
-);
+                          $_->{'hub'}{'longLabel'},
+                          $_->{'type'},
+                          $_->{'status'}{'tracks'}{'total'},
+                        );
       }
     }
   }
