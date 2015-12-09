@@ -64,25 +64,21 @@ sub create_glyphs {
   my $slice_width     = $image_config->container_width;
   my $bumped          = $track_config->get('bumped');
   my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
-  my $same_strand     = $track_config->get('same_strand');
   ## In case the file contains multiple tracks, start each subtrack below the previous one
   my $y_start         = $track_config->get('y_start') || 0;
   my $show_label      = 0;
   my $label_height    = 0;
   my $total_height    = 0;
 
+  ## Strand settings
+  my $default_strand  = $track_config->get('default_strand');
+  my $drawn_strand    = $track_config->get('drawn_strand');
+
   foreach my $subtrack (@$data) {
     foreach my $feature (@{$subtrack->{'features'}||[]}) {
-      if (defined($feature->{'strand'})) {
-       if ($feature->{'strand'} == 0) {
-          ## Unstranded data goes on the reverse strand
-          next if $same_strand && $same_strand == 1;
-        }
-        else {
-        ## Skip unless feature is on this strand
-        next if defined($same_strand) && $feature->{'strand'} != $same_strand;
-        }
-      }
+
+      ## Decide if we want to draw this feature here
+      next if $self->skip_feature($feature, {'default_strand' => $default_strand, 'drawn_strand' => $drawn_strand});
 
       ## Are we drawing transcripts or just genes?
       next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
