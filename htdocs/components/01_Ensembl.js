@@ -28,7 +28,9 @@ Ensembl.extend({
     if (!window.name) {
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
     }
-    
+
+    this.setSpecies();
+
     this.browser            = {};
     this.locationURL        = typeof window.history.pushState === 'function' ? 'search' : 'hash';
     this.hashParamRegex     = '([#?;&])(__PARAM__=)[^;&]+((;&)?)';
@@ -41,9 +43,6 @@ Ensembl.extend({
     this.initialPanels      = $('.initial_panel');
     this.minWidthEl         = $('#min_width_container');
     this.maxRegionLength    = parseInt($('#max_region_length').val() || 0, 10);
-    this.speciesPath        = $('#species_path').val()        || '';
-    this.speciesCommon      = $('#species_common_name').val() || '';
-    this.species            = this.speciesPath.split('/').pop();
     this.images             = { total: imagePanels.length, last: imagePanels.last()[0] }; // Store image panel details for highlighting
     this.markedLocation     = this.getMarkedLocation();
     this.lastMarkedLocation = false;
@@ -100,7 +99,13 @@ Ensembl.extend({
       this.EventManager.trigger('hashChange', hashChange[1]); // update links and HTML for the new location
     }
   },
-  
+
+  setSpecies: function () {
+    this.speciesPath        = $('#species_path').val()        || '';
+    this.speciesCommon      = $('#species_common_name').val() || '';
+    this.species            = this.speciesPath.split('/').pop();
+  },
+
   cookie: {
     set: function (name, value, expiry, unescaped) {
       var cookie = [
