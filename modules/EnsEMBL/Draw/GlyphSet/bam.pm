@@ -89,6 +89,8 @@ sub _render_coverage {
   $self->{'my_config'}->set('no_guidelines', 1);
   $self->{'my_config'}->set('baseline_zero', 1);
   $self->{'my_config'}->set('subtitle_y', -4);
+  $self->{'my_config'}->set('default_strand', 1);
+  $self->{'my_config'}->set('drawn_strand', $self->strand);
 
   ## Do we want to show the consensus base? (ACTG)
   my $consensus;
@@ -176,6 +178,8 @@ sub _render_reads {
   my $slicelength = $slice->length;
   my $slicestrand = $slice->strand;
   my $read_colour = $self->my_colour('read');
+  $self->{'my_config'}->set('default_strand', 1);
+  $self->{'my_config'}->set('drawn_strand', $self->strand);
 
   my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$self->features} ];
 
