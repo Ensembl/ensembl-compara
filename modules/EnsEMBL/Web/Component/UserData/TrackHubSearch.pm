@@ -83,7 +83,7 @@ sub content {
       my $fieldset = $form->add_fieldset({'no_required_notes' => 1});
 
       # Create a data structure for species, with display labels and their current assemblies
-      my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $ok_species->{$_}, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, keys %$ok_species);
+      my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, keys %$ok_species);
 
       # Create HTML for showing/hiding assembly names to work with JS
       my $assembly_names = join '', map { sprintf '<span class="_stt_%s">%s</span>', $_->{'value'}, delete $_->{'assembly'} } @species;

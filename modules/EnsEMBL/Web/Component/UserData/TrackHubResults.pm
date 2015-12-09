@@ -52,20 +52,25 @@ sub content {
   my $endpoint = 'api/search';
 
   my $post_content = {};
-  my @query_params = qw(species assembly datatype query);
+  my @query_params = qw(assembly datatype query);
   foreach (@query_params) {
     $post_content->{$_} = $hub->param($_) if $hub->param($_);
   }
+  ## Registry uses species names without spaces
+  if ($hub->param('species')) {
+    (my $species = $hub->param('species')) =~ s/_/ /;
+    $post_content->{'species'} = $species;
+  }
+
   ## Filter on current assembly
   if ($post_content->{'species'} && !$post_content->{'assembly'}) {
-    (my $species = $post_content->{'species'}) =~ s/ /_/;
-    $post_content->{'assembly'} = $sd->get_config($species, 'ASSEMBLY_VERSION');
+    $post_content->{'assembly'} = $sd->get_config($hub->param('species'), 'ASSEMBLY_VERSION');
   }
 
   my $args = {'method' => 'post', 'content' => $post_content};
   
   my ($result, $error) = $rest->fetch($endpoint, $args);
-  use Data::Dumper; warn Dumper($result);
+  #use Data::Dumper; warn Dumper($result);
 
   if ($error) {
     $html = '<p>Sorry, we are unable to fetch data from the Track Hub Registry at the moment</p>';
