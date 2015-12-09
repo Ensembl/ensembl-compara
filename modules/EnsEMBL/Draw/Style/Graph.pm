@@ -87,7 +87,7 @@ sub create_glyphs {
     ## Determine absolute positioning for graph
     $plot_conf->{'absolute_xy'} = {'absolutey' => 1};
     ## Absolutex is weird and finicky - some graphs won't show if it's even defined
-    if ($track_config->get('absolutex') || $self->{'pix_per_bp'} < 1) {
+    if ($track_config->get('absolutex')) {
       $plot_conf->{'absolute_xy'}{'absolutex'} = 1;
     }
 
