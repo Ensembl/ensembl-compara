@@ -1432,21 +1432,25 @@ sub _user_track_settings {
   my ($strand, @user_renderers, $default);
 
   if (lc($format) eq 'pairwise') {
+    $strand         = 'f';
     @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
   }
   elsif (lc($format) eq 'wig' || $style =~ /^(wiggle|WIG)$/) {
+    $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   }
   elsif (uc($format) =~ /BED|GFF|GTF/) {
+    $strand = 'b';
     @user_renderers = @{$self->{'alignment_renderers'}};
     splice @user_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels';
     $default = 'as_transcript_label';
   }
   else {
+    $strand         = (uc($format) eq 'VEP_INPUT' || uc($format) eq 'VCF') ? 'f' : 'b';
     @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
   }
 
-  return ('b', \@user_renderers, $default);
+  return ($strand, \@user_renderers, $default);
 }
 
 sub _compare_assemblies {
