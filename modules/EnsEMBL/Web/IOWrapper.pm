@@ -259,11 +259,13 @@ sub create_tracks {
 
 sub build_feature {
   my ($self, $data, $track_key, $slice) = @_;
+  my $hash = $self->create_hash($slice, $data->{$track_key}{'metadata'});
+  return unless keys %$hash;
   if ($data->{$track_key}{'features'}) {
-    push @{$data->{$track_key}{'features'}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
+    push @{$data->{$track_key}{'features'}}, $hash; 
   }
   else {
-    $data->{$track_key}{'features'} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
+    $data->{$track_key}{'features'} = [$hash];
   }
 }
 
