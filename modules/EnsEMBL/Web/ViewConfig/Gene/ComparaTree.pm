@@ -55,7 +55,7 @@ sub init {
 
 sub field_order {
   my $self = shift;
-  my @order = qw(collapsability clusterset_id exons super_tree);
+  my @order = qw(collapsability clusterset_id exons super_tree colouring);
   my @groups   = ('LOWCOVERAGE', @{ $self->hub->species_defs->TAXON_ORDER });
   push @order, 'group_'.$_.'_display' for @groups;
   return @order; 
