@@ -47,7 +47,6 @@ use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Session;
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
 
@@ -854,11 +853,13 @@ sub get_data_from_session {
     return {};
   }
   else {
+=pod
     my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
 
     $parser->parse($result->{'content'}, $tempdata->{'format'});
 
     return { parser => $parser, name => $name };
+=cut
   }
 }
 
