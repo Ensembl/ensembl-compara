@@ -48,7 +48,7 @@ sub content {
     $glyphset = $glyphset->new($click_data);
 
     my $i = 0;
-    my @features;
+    my (@id_features, @other_features);
     my $feature_id  = $hub->param('feature_id') || $hub->param('id');
     my $slice       = $click_data->{'container'};
 
@@ -56,15 +56,19 @@ sub content {
       my $data = $glyphset->features;
       foreach my $track (@$data) {
         foreach (@{$track->{'features'}||[]}) {
-          if (($feature_id && $_->{'label'} eq $feature_id) 
-                || ($_->{'seq_region'} eq $coords[0]
-                      && $_->{'start'} >= 0 
-                      && $_->{'end'} <= $slice->length)  
-            ) {
+          if ($feature_id && $_->{'label'} eq $feature_id) {
             $_->{'track_name'} = $track->{'metadata'}{'name'};
             $_->{'url'}        = $track->{'metadata'}{'url'};
             delete($_->{'href'});
-            push @features, $_;
+            push @id_features, $_;
+          }
+          elsif ($_->{'seq_region'} eq $coords[0]
+                      && $_->{'start'} >= 0
+                      && $_->{'end'} <= $slice->length) {
+            $_->{'track_name'} = $track->{'metadata'}{'name'};
+            $_->{'url'}        = $track->{'metadata'}{'url'};
+            delete($_->{'href'});
+            push @other_features, $_;
           }
         } 
       }
@@ -79,6 +83,7 @@ sub content {
       @features = @{$glyphset->features};
     }
 =cut
+    my @features = scalar(@id_features) ? @id_features : @other_features;
 
     if (scalar @features > 5) {
       $self->summary_content(\@features);
