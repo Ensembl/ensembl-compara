@@ -35,9 +35,6 @@ sub draw_wiggle {
 
   foreach my $f (@$features) {
 
-    ## Decide if we want to draw this feature here
-    next if $self->skip_feature($f, $c);
-
     my $start   = $f->{'start'};
     my $end     = $f->{'end'};
     my $score   = $f->{'score'};

@@ -79,8 +79,6 @@ sub create_glyphs {
       unit            => $subtrack->{'metadata'}{'unit'},
       graph_type      => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
       default_strand  => $track_config->get('default_strand'),
-      drawn_strand    => $track_config->get('drawn_strand'),
-      same_strand     => $track_config->get('same_strand'),
       colour          => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
       colours         => $subtrack->{'metadata'}{'gradient'},
       alt_colour      => $subtrack->{'metadata'}{'altColor'},
@@ -113,8 +111,6 @@ sub draw_wiggle {
 
   for (my $i = 0; $i < @$features; $i++) {
     my $f = $features->[$i];
-
-    next if $self->skip_feature($f, $c);
 
     my ($current_x,$current_score);
     $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
