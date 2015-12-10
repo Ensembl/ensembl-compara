@@ -24,6 +24,12 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'max_n_proportion'  => 0.2,     # Max allowed proportion of Ns in the sequence of an anchor
+    };
+}
+
 sub fetch_input {
 	my ($self) = @_;
 	my $trimmed_anchor_mlssid = $self->param('input_method_link_species_set_id');
@@ -54,7 +60,7 @@ sub fetch_input {
 		if($ns){
 			$ratio = length($ns)/length($anc_seq);
 		}
-		if($ratio < 0.2) {
+		if($ratio < $self->param('max_n_proportion')) {
 			push(@anchor, [$anchor_id, $df_id, $anc_start, $anc_end, $df_strand, $trimmed_anchor_mlssid, $anc_seq]); 
 		} else {
 			return;
