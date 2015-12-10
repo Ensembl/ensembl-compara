@@ -49,56 +49,22 @@ sub populate_tree {
   $data_menu->append($self->create_node('RefreshUpload',   '', [], { command => 'EnsEMBL::Web::Command::UserData::RefreshUpload'   }));
   #$data_menu->append($self->create_node('AttachRemote', '', [], { command => 'EnsEMBL::Web::Command::UserData::AttachRemote' }));
   $data_menu->append($self->create_node('CheckShare',   '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckShare'   }));
+  ## Data management
+  $data_menu->append($self->create_node('ManageData',            'Manage Data', [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)]));
+
+  ## Trackhub attachment
   $data_menu->append($self->create_node('TrackHubRedirect',   '', [], { command => 'EnsEMBL::Web::Command::UserData::TrackHubRedirect'   }));
   $data_menu->append($self->create_node('RefreshTrackHub',   '', [], { command => 'EnsEMBL::Web::Command::UserData::RefreshTrackHub'   }));
 
   ## Trackhub registry
-  #$data_menu->append($self->create_node('SelectHub',     'Track Hubs', [qw(track_hubs  EnsEMBL::Web::Component::UserData::SelectHub)]));
-  
-  ## Attach DAS "wizard"
-  # Component:     SelectServer
-  #                    |
-  #                    V
-  # Command:        CheckServer
-  #                    |
-  #                    V
-  # Component:     DasSources                
-  #                   |                        
-  #                   V                        
-  # Command:  ValidateDAS---------+           
-  #               |   ^  \        |           
-  #               |   |   \       V           
-  # Component:    |   |    \   DasSpecies  
-  #               |   |     \     |           
-  #               |   |      V    V           
-  # Component:    |   +------DasCoords   
-  #               V                            
-  # Command:  AttachDAS
-  #               |
-  #               V
-  # Component:  DasFeedback                
-
-  $data_menu->append($self->create_node('SelectServer', 'Attach DAS', [qw(select_server EnsEMBL::Web::Component::UserData::SelectServer)]));
-  $data_menu->append($self->create_node('DasSources',   '',           [qw(das_sources   EnsEMBL::Web::Component::UserData::DasSources)]));
-  $data_menu->append($self->create_node('DasSpecies',   '',           [qw(das_species   EnsEMBL::Web::Component::UserData::DasSpecies)]));
-  $data_menu->append($self->create_node('DasCoords',    '',           [qw(das_coords    EnsEMBL::Web::Component::UserData::DasCoords)]));
-  $data_menu->append($self->create_node('DasFeedback',  '',           [qw(das_feedback  EnsEMBL::Web::Component::UserData::DasFeedback)]));
-  
-  $data_menu->append($self->create_node('CheckServer', '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckServer' }));
-  $data_menu->append($self->create_node('ValidateDAS', '', [], { command => 'EnsEMBL::Web::Command::UserData::ValidateDAS' }));
-  $data_menu->append($self->create_node('AttachDAS',   '', [], { command => 'EnsEMBL::Web::Command::UserData::AttachDAS'   }));
+  $data_menu->append($self->create_node('TrackHubSearch',     'Track Hub Registry Search', [qw(track_hubs  EnsEMBL::Web::Component::UserData::TrackHubSearch)]));
+  $data_menu->append($self->create_node('TrackHubResults',     'Track Hub Registry Search', [qw(track_hubs  EnsEMBL::Web::Component::UserData::TrackHubResults)], {'no_menu_entry' => 1}));
   
   ## Saving remote data
   $data_menu->append($self->create_node('ShowRemote',      '', [qw(show_remote     EnsEMBL::Web::Component::UserData::ShowRemote)]));
   $data_menu->append($self->create_node('ConfigureBigWig', '', [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureBigWig)]));
   
   $data_menu->append($self->create_node('SaveExtraConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::SaveExtraConfig' }));
-                                                      
-  ## Data management
-  $data_menu->append($self->create_node('ManageData',            'Manage Data', [qw(
-                                                                                  manage_remote EnsEMBL::Web::Component::UserData::ManageData
-                                                                                  select_file   EnsEMBL::Web::Component::UserData::SelectFile
-                                                                                )]));
   $data_menu->append($self->create_node('IDConversion',          '',            [qw(idmapper      EnsEMBL::Web::Component::UserData::IDmapper)]));
   $data_menu->append($self->create_node('ConsequenceCalculator', '',            [qw(consequence   EnsEMBL::Web::Component::UserData::ConsequenceTool)])); 
   
