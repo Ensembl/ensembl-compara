@@ -45,9 +45,8 @@ sub content {
   my (@data, @rows, $html);  
  
   my @temp_data = map $session->get_data('type' => $_), qw(upload url nonpositional);
-  push @temp_data, values %{$session->get_all_das};
   
-  push @data, map $user->get_records($_), qw(uploads urls dases) if $user;
+  push @data, map $user->get_records($_), qw(uploads urls) if $user;
   push @data, @temp_data;
   
   if (scalar @data) {
@@ -92,7 +91,7 @@ sub content {
         }
       }
 
-      my $row = ref($file) =~ /DAS/ || $user_record && $file->type eq 'das' ? $self->table_row_das($file, $user_record) : $self->table_row($file, $sharers);
+      my $row = $self->table_row($file, $sharers);
       
       my ($type, $id) = $file->{'analyses'} =~ /^(session|user)_(\d+)_/;
          ($id, $type) = (($file->{'code'} =~ /_(\d+)$/), 'session') unless $type;
@@ -311,34 +310,6 @@ sub table_row {
     assembly => $assembly,
     date    => sprintf('<span class="hidden">%s</span>%s', $file->{'timestamp'} || '-', $self->pretty_date($file->{'timestamp'}, 'simple_datetime')),
     actions => "$config_html$download$reload$save$share_html$delete_html",
-  };
-}
-
-sub table_row_das {
-  my ($self, $file, $user_record) = @_;
-  my $hub     = $self->hub;
-  my $img_url = $self->img_url . '16/';
-  my $link    = $self->_icon({ link_class => 'modal_link', class => 'delete_icon' });  
-  my $none    = $self->_no_icon;
-  my %url_params = ( code => $file->logic_name );
-  my $save;
-  
-  if ($user_record) {
-    $url_params{'id'} = join('-', $file->id, md5_hex($file->logic_name));
-    $save       = $self->_icon({ link_class => 'modal_link', class => 'sprite_disabled save_icon',  title => 'Already saved' });
-  } elsif ($hub->users_available) {
-    my $save_url    = $hub->url({ action => 'ModifyData', function => 'save_remote', dsn => $file->logic_name, __clear => 1 });
-    my @save_params = $hub->user ? ($save_url, 'Save to account') : ($hub->url({ type => 'Account', action => 'Login', __clear => 1, then => uri_escape($save_url), modal_tab => 'modal_user_data' }), 'Log in to save');
-       $save        = $self->_icon({ link_class => 'modal_link', class => 'save_icon', title => $save_params[1], link => $save_params[0] });
-  }
-  
-  my $delete_html = sprintf($link, $hub->url({ action => 'ModifyData', function => 'delete_remote', source => 'das', __clear => 1, %url_params }));
-  
-  return {
-    type    => 'DAS',
-    name    => { value => $file->label, class => 'wrap' },
-    date    => '<span class="hidden">-</span>-',
-    actions => "$none$save$none$delete_html",
   };
 }
 

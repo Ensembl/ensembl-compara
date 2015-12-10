@@ -62,20 +62,11 @@ sub save_remote { # TODO: move logic to object
   return unless $user;
   
   my $session     = $hub->session;
-  my @das_sources = grep $_, $hub->param('dsn');
   my @codes       = grep $_, $hub->param('code');
   my $error       = 0;
   my $url_params  = {};
 
-  if (scalar @das_sources) { ## Save any DAS data
-    my $all_das = $session->get_all_das;
-    
-    foreach my $logic_name (@das_sources) {
-      $error = 1 unless $user->add_das($all_das->{$logic_name});
-    }
-    
-    $session->save_das; # Just need to save the session to remove the source - it knows it has changed
-  } elsif (scalar @codes) { ## Save any URL data
+  if (scalar @codes) { ## Save any URL data
     foreach my $code (@codes) {
       my $url = $session->get_data(type => 'url', code => $code);
       
@@ -91,7 +82,7 @@ sub save_remote { # TODO: move logic to object
   if ($error) {
     $url_params->{'action'}        = 'ShowRemote';
     $url_params->{'filter_module'} = 'UserData';
-    $url_params->{'filter_code'}   = scalar @das_sources ? 'no_das' : 'no_url';
+    $url_params->{'filter_code'}   = 'no_url';
   }
   
   return $url_params; 
