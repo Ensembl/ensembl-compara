@@ -74,7 +74,7 @@ sub register_cleaner {
 }
 
 sub clean {
-  my ($self,$db,$species) = @_;
+  my ($self,$db) = @_;
 
   return unless $db;
 
@@ -114,7 +114,7 @@ sub get_DBAdaptor {
     
   # try to retrieve the DBAdaptor from the Registry
   my $dba = $reg->get_DBAdaptor($species, $database);
-  $self->clean($dba,$species);
+  $self->clean($dba);
   # warn "$species - $database - $dba";
 
   # Funcgen Database Files Overwrite
