@@ -26,8 +26,6 @@ use Bio::EnsEMBL::Gene;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_transcript);
 
-sub _das_type { return 'prediction_transcript'; }
-
 sub _make_gene {
   my ($self, $transcript) = @_;
   my $gene = Bio::EnsEMBL::Gene->new;

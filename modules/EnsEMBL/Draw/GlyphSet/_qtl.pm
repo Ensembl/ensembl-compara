@@ -25,7 +25,6 @@ use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
 
-sub _das_type     {  return 'qtl'; }
 sub label_overlay { return 1; }
 
 sub features {
@@ -34,7 +33,6 @@ sub features {
 }
 
 sub colour_key {
-  sub _das_type {  return 'simple'; }
   return 'default';
 }
 
