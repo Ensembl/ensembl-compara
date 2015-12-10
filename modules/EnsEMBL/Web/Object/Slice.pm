@@ -440,8 +440,10 @@ sub get_data {
     my $unique_feature_set_id = join ':', $_->cell_type->name, 
                                           $_->feature_type->name, 
                                           $_->dbID;
+    my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
     my $path = $_->dbfile_path;
-    $data->{'wiggle_data'}{$unique_feature_set_id} = $_->dbfile_path;
+    $path = "$file_path/$path" unless $path =~ /^$file_path/;
+    $data->{'wiggle_data'}{$unique_feature_set_id} = $path;
   }
     
   $data->{'colours'} = \%feature_sets_on;

@@ -41,7 +41,12 @@ BEGIN {
   }
 }
 
-my %FAILED_MODULES;
+# SOME_ ie. those known to dynamic_use to be successfully loaded either
+#   by itself, or discovered during attempts to require them. Being in this
+#   hash means that it /is/ definitely already loaded. Not being in it says
+#   nothing. As this is the most common case it's a great speedup to cache
+#   this.
+my (%FAILED_MODULES,%SOME_SUCCESSFUL_MODULES);
 
 sub new {
 ### Stub - do not instantiate this module directly!
@@ -79,6 +84,7 @@ sub dynamic_use {
   }
  
   return 0 if exists $FAILED_MODULES{$classname};
+  return 1 if exists $SOME_SUCCESSFUL_MODULES{$classname};
 
   my ($parent_namespace, $module) = $classname =~ /^(.*::)(.*)$/ ? ($1, $2) : ('::', $classname);
 
@@ -89,7 +95,10 @@ sub dynamic_use {
       foreach my $key (keys %namespace_hash) {
         $namespace_hash{$key} =~ /$_/ and delete $namespace_hash{$key} and last for keys %FAILED_MODULES;
       }
-      return 1 if keys %namespace_hash; # return if already used 
+      if(keys %namespace_hash) { # return if already used
+        $SOME_SUCCESSFUL_MODULES{$classname} = 1;
+        return 1;
+      }
     }
   }
 
@@ -108,6 +117,7 @@ sub dynamic_use {
  
   _fix_lvalues($classname) if $ENV{'PERLDB'};
   $classname->import;
+  $SOME_SUCCESSFUL_MODULES{$classname} = 1;
   return 1;
 }
 
