@@ -46,13 +46,6 @@ sub new {
     none => { none => '' },
     HTML => { '5' => '' },
     XML => {
-      'DASGFF'             => '"http://www.biodas.org/dtd/dasgff.dtd"',
-      'DASDSN'             => '"http://www.biodas.org/dtd/dasdsn.dtd"',
-      'DASEP'              => '"http://www.biodas.org/dtd/dasep.dtd"',
-      'DASDNA'             => '"http://www.biodas.org/dtd/dasdna.dtd"',
-      'DASSEQUENCE'        => '"http://www.biodas.org/dtd/dassequence.dtd"',
-      'DASSTYLE'           => '"http://www.biodas.org/dtd/dasstyle.dtd"',
-      'DASTYPES'           => '"http://www.biodas.org/dtd/dastypes.dtd"',
       'rss version="0.91"' => '"http://my.netscape.com/publish/formats/rss-0.91.dtd"',
       'rss version="2.0"'  => '"http://www.silmaril.ie/software/rss2.dtd"',
       'xhtml'              => '"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"'
@@ -319,21 +312,6 @@ sub render {
 
 sub render_start { shift->render_HTML('start'); }
 sub render_end   { shift->render_HTML('end');   }
-
-sub render_DAS {
-  my $self = shift;
-  my $r    = $self->renderer->r;
-  
-  $self->{'subtype'} = 'das'; # Possibly should come from somewhere higher up 
-  
-  if ($r) {
-    $r->headers_out->add('X-Das-Status'  => '200');
-    $r->headers_out->add('X-Das-Version' => 'DAS/1.5');
-  }
-  
-  $self->{'xsl'} = "/das/$self->{'subtype'}.xsl" if $self->{'subtype'};
-  $self->render_XML(@_);
-}
 
 sub render_XML {
   my $self    = shift;
