@@ -41,18 +41,5 @@ print join(":", $anchor_id, $dnafrag_id, $start, $end, $strand, $mlssid, $sequen
   $sth->finish;
 }
 
-sub get_anchor_sequences {
-	my ($self, $anc_ids_from_to) = @_;
-        my $sth = $self->prepare("SELECT a.anchor_id, df.genome_db_id, a.dnafrag_id, a.start, a.end, a.strand, a.sequence 
-                FROM anchor_sequence a INNER JOIN dnafrag df ON a.dnafrag_id = df.dnafrag_id WHERE a.anchor_id 
-                BETWEEN ? AND ? order by a.anchor_id");
-
-#	my $sth = $self->prepare("SELECT anchor_id, anchor_seq_id, dnafrag_id, start, end, strand, sequence 
-#		FROM anchor_sequence WHERE anchor_id BETWEEN ? AND ? order by anchor_id");
-	$sth->execute($anc_ids_from_to->[0], $anc_ids_from_to->[1]);
-	my $anchor_array_ref = $sth->fetchall_arrayref;	
-	return $anchor_array_ref;
-}
-
 1;
 

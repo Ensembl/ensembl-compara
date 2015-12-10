@@ -126,24 +126,8 @@ sub store_exonerate_hits {
 ###############################################################################
 
 
-sub fetch_dnafrag_id {
-	my $self = shift;
-	my($coord_sys, $dnafrag_name, $target_genome_db_id) = @_;
-	unless (defined($coord_sys) and defined($dnafrag_name) and defined($target_genome_db_id)) {
-		throw("fetch_dnafrag_id must have a coord_sys, dnafrag_name and target_genome_db_id");
-	}
-	my $query = qq{
-		SELECT dnafrag_id FROM dnafrag WHERE name = ? AND 
-		coord_system_name = ? AND genome_db_id = ?};
-	my $sth = $self->prepare($query);
-	$sth->execute($dnafrag_name, $coord_sys, $target_genome_db_id) or die $self->errstr;
-	while (my$row = $sth->fetchrow_arrayref) {
-		return $row->[0];
-	}
-}
 
 
-##########################
 
 
 =head2 fetch_all_by_anchor_id_and_mlss_id
