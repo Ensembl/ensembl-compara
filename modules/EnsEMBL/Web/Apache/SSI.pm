@@ -37,27 +37,8 @@ sub handler {
   ## Pick up DAS entry points requests and
   ## uncompress them dynamically
   
-  if (-e $r->filename && -r $r->filename) {
-    if ($r->filename =~ /\/entry_points$/) {
-      my $gz      = gzopen($r->filename, 'rb');
-      my $buffer  = 0;
-      my $content = '';
-      $content   .= $buffer while $gz->gzread($buffer) > 0;
-      
-      $gz->gzclose; 
-      
-      if ($ENV{'PERL_SEND_HEADER'}) {
-        print "Content-type: text/xml; charset=utf-8";
-      } else {
-        $r->content_type('text/xml; charset=utf-8');
-      }
-      
-      $r->print($content);
-      
-      return OK;
-    } elsif ($r->filename =~ /\/Doxygen\/(?!index.html)/ || $r->filename =~ /\/edoc\/index.html/) {
-      return EnsEMBL::Web::Controller::Doxygen->new($r, $cookies)->status;
-    }
+  if (-e $r->filename && -r $r->filename && ($r->filename =~ /\/Doxygen\/(?!index.html)/ || $r->filename =~ /\/edoc\/index.html/)) {
+    return EnsEMBL::Web::Controller::Doxygen->new($r, $cookies)->status;
   }
 
   $r->err_headers_out->{'Ensembl-Error' => 'Problem in module EnsEMBL::Web::Apache::SSI'};

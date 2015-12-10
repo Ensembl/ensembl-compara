@@ -169,7 +169,7 @@ sub add_image_config_notes {
       </ul>
     </div>
     <p class="border space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
-    <p>URL-based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.</p>
+    <p>URL-based tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.</p>
   ));
 
   $self->add_panel($panel);

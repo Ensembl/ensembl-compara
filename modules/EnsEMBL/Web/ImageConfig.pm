@@ -25,8 +25,6 @@ use HTML::Entities qw(encode_entities decode_entities);
 use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
 
-use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
-
 use EnsEMBL::Draw::Utils::TextHelper;
 use EnsEMBL::Web::File::Utils::TrackHub;
 use EnsEMBL::Web::DBSQL::DBConnection;
@@ -62,7 +60,6 @@ sub new {
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
       storable     => 1,      
-      has_das      => 1,
       trackhubs     => 0,
       image_width  => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
       image_resize => 0,      
@@ -231,7 +228,6 @@ sub modify {} # For plugins
 
 sub storable     :lvalue { $_[0]{'_parameters'}{'storable'};     } # Set to 1 if configuration can be altered
 sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
-sub has_das      :lvalue { $_[0]{'_parameters'}{'has_das'};      } # Set to 1 if there are DAS tracks
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }
@@ -646,21 +642,11 @@ sub load_user_tracks {
   my $hub      = $self->hub;
   my $session  = $hub->session;
   my $user     = $hub->user;
-  my $das      = $hub->get_all_das;
   my $trackhubs = $self->get_parameter('trackhubs') == 1;
   my (%url_sources, %upload_sources);
   
   $self->_load_url_feature($menu);
   
-  foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
-    my $node = $self->get_node('das_' . $source->logic_name);
-
-    next if     $node && $node->get('node_type') eq 'track';
-    next unless $source->is_on($self->{'type'});
-    
-    $self->add_das_tracks('user_data', $source);
-  }
-
   ## Data attached via URL
   foreach my $entry ($session->get_data(type => 'url')) {
     next if $entry->{'no_attach'};
@@ -1667,19 +1653,6 @@ sub update_from_url {
           code     => 'url_data:' . md5_hex($p),
           message  => $message,
         );
-      } elsif ($type eq 'das') {
-        $p = uri_unescape($p);
-
-        my $logic_name = $session->add_das_from_string($p, $self->{'type'}, { display => $renderer });
-
-        if ($logic_name) {
-          $session->add_data(
-            type     => 'message',
-            function => '_info',
-            code     => 'das:' . md5_hex($p),
-            message  => sprintf('You have attached a DAS source with DSN: %s %s.', encode_entities($p), $self->get_node("das_$logic_name") ? 'to this display' : 'but it cannot be displayed on the specified image')
-          );
-        }
       }
     } else {
       $self->update_track_renderer($key, $renderer, $hub->param('toggle_tracks'));
@@ -1904,132 +1877,6 @@ sub load_tracks {
   $self->tree->append_child($self->create_option('track_order')) if $self->get_parameter('sortable_tracks');
 }
 
-sub load_configured_das {
-  my $self          = shift;
-  my $extra         = ref $_[0] eq 'HASH' ? shift : {};
-  my %allowed_menus = map { $_ => 1 } @_;
-  my $all_menus     = !scalar @_;
-  my @adding;
-  my %seen;
-  
-  foreach my $source (sort { $a->caption cmp $b->caption } values %{$self->species_defs->get_all_das}) {
-    next unless $source->is_on($self->{'type'});
-    
-    my ($category, $sub_category) = split ' ', $source->category;
-    
-    if ($category == 1) {
-      $self->add_das_tracks('external_data', $source, $extra); # Unconfigured, will go into External data section
-      next;
-    }
-    
-    next unless $all_menus || $allowed_menus{$category};
-    
-    my $menu = $self->get_node($category);
-    my $key;
-    
-    if (!$menu && grep { $category eq $_ } @{$self->{'transcript_types'}}) {
-      foreach (@{$self->{'transcript_types'}}) {
-        $category = $_ and last if $menu = $self->get_node($_);
-      }
-    }
-    
-    if (!$menu) {
-      push @{$adding[0]}, $category unless $seen{$category}++;
-      push @{$adding[1]{$category}}, $sub_category if $sub_category && !$seen{$sub_category}++;
-      next;
-    }
-    
-    if ($sub_category) {
-      $key  = join '_', $category, lc $sub_category;
-      
-      my $sub_menu = $menu->get_node($key);
-      
-      if (!$sub_menu) {
-        push @{$adding[1]{$category}}, $sub_category unless $seen{$sub_category}++;
-        next;
-      }
-      
-      if ($sub_menu && grep !$_->get('external'), @{$sub_menu->child_nodes}) {
-        $menu = $sub_menu;
-        $key  = "${key}_external";
-      }
-    } else {
-      $key = "${category}_external";
-    }
-    
-    $menu->append($self->create_submenu($key, 'External data', { external => 1 })) if $menu && !$menu->get_node($key);
-    
-    $self->add_das_tracks($key, $source, $extra);
-  }
-  
-  # Add new menus, then run the function again - ensures that everything is printed in the right place
-  if (scalar @adding) {
-    my $external  = $self->get_node('external_data');
-    my $menus     = $self->menus;
-    my @new_menus = @{$adding[0] || []};
-       %seen      = map { $_ => 1 } @new_menus;
-    
-    foreach (@new_menus) {
-      my $parent = ref $menus->{$_} ? $self->get_node($menus->{$_}[1]) : undef;
-      my $menu   = $self->get_node($_);
-      
-      $self->create_menus($_) unless $menu;
-      
-      $menu = $self->get_node($_);
-      
-      next unless $menu && $external;
-      
-      $external->after(ref $menus->{$_} ? $self->get_node($menus->{$_}[1]) : $menu) unless $parent;
-    }
-    
-    foreach my $k (keys %{$adding[1]}) {
-      $self->create_menus(@{$adding[1]{$k}});
-      
-      foreach (@{$adding[1]{$k}}) {
-        my $key      = join '_', $k, lc $_;
-        my $menu     = $self->get_node($k);
-        my $sub_menu = $menu->get_node($key);
-        
-        if (!$sub_menu) {
-          (my $caption = $_) =~ s/_/ /g;
-          $menu->append($self->create_submenu($key, $caption));
-        }
-      }
-      
-      push @new_menus, $k unless $seen{$_};
-    }
-    
-    $self->load_configured_das($extra, @new_menus) if scalar @new_menus;
-  }
-}
-
-# Attach all das sources from an image config
-sub attach_das {
-  my $self      = shift;
-
-  my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{$_->get('logic_names')||[]} : () } $self->tree->nodes; # Look for all das sources which are configured and turned on
-
-  return unless @das_nodes; # Return if no sources to be drawn
-  
-  my $hub         = $self->hub;
-  my %T           = %{$hub->get_all_das}; # Check to see if they really exists, and get entries from get_all_das call
-  my @das_sources = @T{@das_nodes};
-
-  return unless @das_sources; # Return if no sources exist
-  
-  my $species_defs = $hub->species_defs;
-
-  # Cache the DAS Coordinator object (with key das_coord)
-  $self->cache('das_coord',  
-    Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
-      -sources => \@das_sources,
-      -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
-      -noproxy => $species_defs->ENSEMBL_NO_PROXY,
-      -timeout => $species_defs->ENSEMBL_DAS_TIMEOUT
-    )
-  );
-}
-
 sub _merge {
   my ($self, $_sub_tree, $sub_type) = @_;
   my $tree        = $_sub_tree->{'analyses'};
@@ -2164,49 +2011,6 @@ sub add_matrix {
   }
   
   return $column_track;
-}
-
-sub add_das_tracks {
-  my ($self, $menu, $source, $extra) = @_;
-  my $node = $self->get_node($menu); 
-  
-  if (!$node && grep { $menu eq "${_}_external" } @{$self->{'transcript_types'}}) {
-    for (@{$self->{'transcript_types'}}) {
-      $node = $self->get_node("${_}_external");
-      last if $node;
-    }
-  }
-  
-  $node ||= $self->get_node('external_data'); 
-  
-  return unless $node;
-  
-  my $caption  = $source->caption || $source->label;
-  my $desc     = $source->description;
-  my $homepage = $source->homepage;
-  
-  $desc .= sprintf ' [<a href="%s" rel="external">Homepage</a>]', $homepage if $homepage;
-  
-  my $track = $self->create_track('das_' . $source->logic_name, $source->label, {
-    %{$extra || {}},
-    external    => 'external',
-    glyphset    => '_das',
-    display     => 'off',
-    logic_names => [ $source->logic_name ],
-    caption     => $caption,
-    description => $desc,
-    renderers   => [
-      'off',      'Off', 
-      'nolabels', 'No labels', 
-      'normal',   'Normal', 
-      'labels',   'Labels'
-    ],
-  });
-  
-  if ($track) {
-    $node->append($track);
-    $self->has_das ||= 1;
-  }
 }
 
 #----------------------------------------------------------------------#

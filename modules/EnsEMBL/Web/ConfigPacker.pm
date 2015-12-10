@@ -22,8 +22,6 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
-
 use base qw(EnsEMBL::Web::ConfigPacker_base);
 
 sub munge {
@@ -47,12 +45,6 @@ sub munge_databases {
   $self->_summarise_variation_db('variation_private', 'DATABASE_VARIATION_PRIVATE');
   $self->_summarise_funcgen_db('funcgen', 'DATABASE_FUNCGEN');
   $self->_compare_update_db('vega_update','DATABASE_VEGA_UPDATE');
-}
-
-# creates das.packed
-sub munge_das {
-  my $self = shift;
-  $self->_summarise_dasregistry;
 }
 
 sub munge_databases_multi {
@@ -83,7 +75,6 @@ sub munge_config_tree_multi {
 # Implemented in plugins
 sub modify_databases         {}
 sub modify_databases_multi   {}
-sub modify_das               {}
 sub modify_config_tree       {}
 sub modify_config_tree_multi {}
 
@@ -1460,88 +1451,6 @@ sub _summarise_go_db {
   }
 
   $dbh->disconnect();
-}
-
-sub _summarise_dasregistry {
-  my $self = shift;
-
-  $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'}     ||= {}; # List of all enabled DAS sources acc to ini files
-  $self->das_tree->{'ENSEMBL_INTERNAL_DAS_CONFIGS'} ||= {}; # Section for each DAS source containing the config to be populated now
-
-  while (my ($key, $val) = each %{ $self->tree->{'ENSEMBL_INTERNAL_DAS_SOURCES'} }) {
-
-    # Skip disabled sources
-    $val || next;
-
-    # Start with an empty config
-    my $cfg = $self->tree->{$key};
-       $cfg = {} unless defined $cfg && ref $cfg; 
-
-    $cfg->{'logic_name'}    = $key;
-    $cfg->{'category'}      = $val;
-    $cfg->{'homepage'}    ||= $cfg->{'authority'};
-    $cfg->{'coords'}        = [ $cfg->{'coords'} ] if $cfg->{'coords'} && !ref $cfg->{'coords'}; # Make sure 'coords' is an array
-
-    if (!delete $cfg->{'no_parsing'}) {
-
-      my $src;
-
-      # Try the server URL if it's provided
-      if ($cfg->{'url'} && $cfg->{'dsn'}) {
-
-        my $full_url = $cfg->{'url'} . '/' . $cfg->{'dsn'};
-
-        eval {
-          my %server_url = map {$_->full_url => $_} @{ $self->_parse_das_server($full_url) };
-          $src = $server_url{$full_url};
-        };
-
-        if ($@) {
-          warn "Skipping DAS source $key - unable to reach source at $full_url";
-          next;
-        }
-
-        if (!$src) {
-          warn "Skipping DAS source $key - unable to parse source at $full_url";
-          next;
-        }
-
-      } else {
-#        warn "Skipping DAS source $key - unable to find 'url' or 'dsn' property in the INI file";
-        next;
-      }
-
-      # fill in any extra info obtained from the das server (data from ini files takes precedence)
-      $cfg->{'label'}       ||= $src->label;
-      $cfg->{'description'} ||= $src->description;
-      $cfg->{'maintainer'}  ||= $src->maintainer;
-      $cfg->{'homepage'}    ||= $src->homepage;
-      $cfg->{'url'}         ||= $src->url;
-      $cfg->{'dsn'}         ||= $src->dsn;
-      $cfg->{'coords'}      ||= [map { $_->to_string } @{ $src->coord_systems }];
-    }
-
-    # Add the final config hash to the das packed tree
-    $self->das_tree->{'ENSEMBL_INTERNAL_DAS_CONFIGS'}{$key} = $cfg;
-  }
-}
-
-sub _parse_das_server {
-  my ( $self, $location ) = @_;
-  
-  my $parser = $self->{'_das_parser'};
-  if (!$parser) {
-    $parser = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
-      -timeout  => $self->tree->{'ENSEMBL_DAS_TIMEOUT'},
-      -proxy    => $self->tree->{'ENSEMBL_WWW_PROXY'},
-      -noproxy  => $self->tree->{'ENSEMBL_NO_PROXY'},
-    );
-    $self->{'_das_parser'} = $parser;
-  }
-  
-  my $sources = $parser->fetch_Sources( -location => $location,
-                                        -species => $self->species );
-  return $sources;
 }
 
 sub _munge_meta {

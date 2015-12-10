@@ -51,10 +51,7 @@ use Digest::MD5    qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use URI::Escape    qw(uri_unescape);
 
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
-
 use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
-use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
 
 use base qw(EnsEMBL::Web::Root);
@@ -68,10 +65,7 @@ sub new {
     cookie             => $cookie,
     session_id         => $cookie ? $cookie->value : undef,
     species            => $hub->species,
-    das_parser         => $args->{'das_parser'},
-    das_sources        => $args->{'das_sources'},
     path               => [ 'EnsEMBL::Web', reverse @{$args->{'path'} || []} ],
-    das_image_defaults => [ 'display', 'off' ],
     view_configs       => {},
     data               => {},
     image_configs      => {},
@@ -137,7 +131,6 @@ sub store {
   
   $adaptor->link_configs(map { id => $adaptor->set_config(%params, %$_), code => $_->{'code'}, link => $links{$_->{'code'}} }, @data);
   
-  $self->save_das;
 }
 
 sub apply_to_view_config {
@@ -359,227 +352,6 @@ sub receive_shared_data {
     );
     
     $self->configure_user_data(@track_data);
-  }
-}
-
-sub das_parser {
-  my $self         = shift;
-  my $species_defs = $self->hub->species_defs;
-  
-  return $self->{'das_parser'} ||= Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
-    -timeout  => $species_defs->ENSEMBL_DAS_TIMEOUT,
-    -proxy    => $species_defs->ENSEMBL_WWW_PROXY,
-    -noproxy  => $species_defs->ENSEMBL_NO_PROXY
-  );
-}
-
-# This function will make sure that a das source is attached with a unique name
-# So in case when you try to attach MySource it will return undef if exactly same
-# source is already attached (i.e the same url, dsn and coords).
-# If it's only the name that is the same then the function will provide a unique
-# name for the new source , e.g name_1
-sub get_unique_das_source_name {
-  my ($self, $source) = @_;
-  my @sources = $self->hub->get_all_das;
-  
-  for (my $i = 0; 1; $i++) {
-    my $test_name = $i ? $source->logic_name . "_$i" : $source->logic_name;
-    my $test_url  = $i ? $source->full_url   . "_$i" : $source->full_url;
-    
-    my $test_source = $sources[0]->{$test_name} || $sources[1]->{$test_url};
-    
-    if ($test_source) {
-      return if $source->equals($test_source);
-      next;
-    }
-    
-    return $test_name;
-  }
-}
-
-# This method gets all configured DAS sources for the current session, i.e. all
-# those either added or modified externally.
-# Returns a hashref, indexed by logic_name.
-sub get_all_das {
-  my $self       = shift;
-  my $session_id = $self->session_id;
-  
-  return ({}, {}) unless $session_id;
-  
-  my $species = shift || $self->hub->species;
-     $species = '' if $species eq 'common';
-  
-  EnsEMBL::Web::Data::Session->propagate_cache_tags(type => 'das');
-  
-  # If the cache hasn't been initialised, do it
-  if (!$self->{'das_sources'}) {
-    $self->{'das_sources'} = {};
-    
-    # Retrieve all DAS configurations from the database
-    my @configs = EnsEMBL::Web::Data::Session->get_config(session_id => $session_id, type => 'das');
-    
-    foreach (map $_->data || (), @configs) {
-      my $das = EnsEMBL::Web::DASConfig->new_from_hashref({ %$_, category => 'session' });
-      $self->{'das_sources'}{$das->logic_name} = $das;
-    }
-  }
-  
-  my @das_sources = values %{$self->{'das_sources'}};
-     @das_sources = grep $_->matches_species($species), @das_sources unless $species eq 'ANY';
-  my %by_name     = map { $_->logic_name => $_ } @das_sources;
-  
-  return \%by_name unless wantarray;
-  
-  my %by_url = map { $_->full_url => $_ } @das_sources;
-  
-  return (\%by_name, \%by_url); 
-}
-
-# Save all session-specific DAS sources back to the database
-# Usage examples:
-#   $session->add_das( $source1 );
-#   $source2->mark_deleted;       # delete entirely
-#   $source3->category( 'user' ); # move from session to user
-#   $source3->mark_altered;       # mark as updated
-#   $session->save_das;           # save session data
-sub save_das {
-  my $self       = shift;
-  my $session_id = $self->create_session_id;
-  
-  foreach my $source (values %{$self->get_all_das('ANY')}) {
-    # If the source hasn't changed in some way, skip it
-    next unless $source->is_altered;
-    
-    # Delete moved or deleted records
-    if ($source->is_deleted || !$source->is_session) {
-      EnsEMBL::Web::Data::Session->reset_config(
-        session_id => $session_id,
-        type       => 'das',
-        code       => $source->logic_name,
-      );
-    } else {
-      # Create new source records
-      EnsEMBL::Web::Data::Session->set_config(
-        session_id => $session_id,
-        type       => 'das',
-        code       => $source->logic_name,
-        data       => $source,
-      );
-    }
-  }
-}
-
-# Add a new DAS source within the session
-sub add_das {
-  my ($self, $das) = @_;
-  
-  # If source is different to any thing added so far, add it
-  if (my $new_name = $self->get_unique_das_source_name($das)) {
-    $das->logic_name($new_name);
-    $das->category('session');
-    $das->mark_altered;
-    $self->{'das_sources'}{$new_name} = $das;
-    return  1;
-  }
-  
-  # Otherwise skip it
-  return 0;
-}
-
-sub add_das_from_string {
-  my $self      = shift;
-  my $string    = shift;
-  my @existing  = $self->hub->get_all_das;
-  my $parser    = $self->das_parser;
-
-  my ($source, $error);
-
-  # string could be logic name or uri of existing DAS sources
-  $source = $existing[0]->{$string} || $existing[1]->{$string};
-
-  # string could contain both url and dsn
-  if (!$source) {
-    my ($url, $dsn) = $parser->parse_das_string($string);
-    $dsn = uri_unescape($dsn || '');
-
-    $source = $existing[0]->{$dsn} || $existing[1]->{"$url/$dsn"};
-  }
-
-  if ($source) {
-    # so long as the source is 'suitable' for this view, turn it on
-    $self->configure_das_views($source, @_);
-  } else {
-    $error = "Unable to find a DAS source for $string";
-  }
-
-  if ($error) {
-    $self->add_data(
-      type     => 'message',
-      function => '_warning',
-      code     => 'das:' . md5_hex($string),
-      message  => sprintf('You attempted to attach a DAS source: %s, unfortunately we were unable to attach this source (%s).', encode_entities($string), encode_entities($error))
-    );
-  }
-
-  return $source && $source->{'logic_name'};
-}
-
-# Switch on a DAS source for the current view/image (if it is suitable)
-#
-# This method has to deal with two types of configurations - those of views
-# and those of images. Non-positional DAS sources are attached to views, and
-# positional sources are attached to images. The source automatically becomes
-# available on all the views/images it is -suitable for-, and this method
-# switches it on for the current view/image provided it is suitable.
-#
-# The DASConfig "is_on" method gives a way to test whether a source is
-# suitable for a view (e.g. Gene/ExternalData) or image (e.g contigviewbottom).
-#
-# Find images on the current view that support DAS and for which the DAS
-# source is suitable, optionally filtered with
-# an override. But don't trust the override to always indentify an image that
-# supports DAS!
-sub configure_das_views {
-  my ($self, $das, $image, $track_options) = @_;
-  my $hub     = $self->hub;
-  my $referer = $hub->referer;
-  
-  $track_options->{'display'} ||= 'normal';
-  
-  foreach (@{$hub->components}) {
-    my $view_config  = $hub->get_viewconfig(@$_);
-    my $image_config = $view_config->image_config;
-    my $logic_name   = $das->logic_name;
-    
-    # If source is suitable for this VIEW (i.e. not image) - Gene/Protein DAS
-    if ($das->is_on(join '/', reverse @$_)) {
-      # Need to set default to 'no' before we can set it to 'yes'
-      $view_config->set_defaults({ $logic_name => 'no' }) unless $view_config->get($logic_name);
-      $view_config->set($logic_name, 'yes');
-      $view_config->altered = $logic_name;
-    }
-    
-    next unless $view_config->image_config_das eq 'das'; # DAS-compatible image
-    next if     $image && $image ne $image_config;       # optional override
-    next unless $das->is_on($image_config);              # DAS source is suitable for this image
-    
-    $image_config = $hub->get_imageconfig($image_config);
-    
-    # Only attach user requested DAS source to images which have a configuration menu for them.
-    next unless $image_config->get_node('user_data');
-    
-    # For IMAGES the source needs to be turned on for
-    my $node = $image_config->get_node("das_$logic_name");
-    
-    if (!$node) {
-      my %default_keys = map { $_ => '' } keys %$track_options, @{$self->{'das_image_defaults'}};
-      $node = $image_config->tree->create_node("das_$logic_name", \%default_keys);
-      $image_config->get_node('user_data')->append($node);
-    }
-    
-    $node->set_user($_, $track_options->{$_}) for keys %$track_options;
-    my $text = $node->data->{'name'} || $node->data->{'coption'};
-    $image_config->altered($text);
   }
 }
 

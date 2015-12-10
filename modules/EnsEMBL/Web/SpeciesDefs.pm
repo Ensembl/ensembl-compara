@@ -81,7 +81,6 @@ use Bio::EnsEMBL::Utils::Exception qw(verbose);
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 
 use EnsEMBL::Web::ConfigPacker;
-use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Tools::WebTree;
 use EnsEMBL::Web::Tools::RobotsTxt;
 use EnsEMBL::Web::Tools::OpenSearchDescription;
@@ -180,27 +179,6 @@ sub session_db {
 }
 
 sub core_params { return $_[0]->{'_core_params'}; }
-
-sub get_all_das {
-  my $self         = shift;
-  my $species      = shift || $ENV{'ENSEMBL_SPECIES'};
-  my $sources_hash = $self->get_config($species, 'ENSEMBL_INTERNAL_DAS_CONFIGS') || {};
-  
-  $species = '' if $species eq 'common';
-  
-  my (%by_name, %by_url);
-  
-  foreach (values %$sources_hash) {
-    my $das = EnsEMBL::Web::DASConfig->new_from_hashref($_);
-    
-    $das->matches_species($species) || next;
-    
-    $by_name{$das->logic_name} = $das;
-    $by_url {$das->full_url}   = $das;
-  }
-  
-  return wantarray ? (\%by_name, \%by_url) : \%by_name;
-}
 
 sub name {
   ### a
@@ -661,8 +639,7 @@ sub _parse {
 
   my $tree          = {};
   my $db_tree       = {};
-  my $das_tree      = {};
-  my $config_packer = EnsEMBL::Web::ConfigPacker->new($tree, $db_tree, $das_tree);
+  my $config_packer = EnsEMBL::Web::ConfigPacker->new($tree, $db_tree);
   
   $self->_info_line('Parser', 'Child objects attached');
 
@@ -680,19 +657,14 @@ sub _parse {
   
   # Loop for each species exported from SiteDefs
   # grab the contents of the ini file AND
-  # IF  the DB/DAS packed files exist expand them
-  # o/w attach the species databases/parse the DAS registry, 
-  # load the data and store the DB/DAS packed files
+  # IF  the DB packed files exist expand them
+  # o/w attach the species databases
+  # load the data and store the packed files
   foreach my $species (@$SiteDefs::ENSEMBL_DATASETS, 'MULTI') {
     $config_packer->species($species);
     
-    $self->process_ini_files($species, 'db', $config_packer, $defaults);
+    $self->process_ini_files($species, $config_packer, $defaults);
     $self->_merge_db_tree($tree, $db_tree, $species);
-    
-    if ($species ne 'MULTI') {
-      $self->process_ini_files($species, 'das', $config_packer, $defaults);
-      $self->_merge_db_tree($tree, $das_tree, $species);
-    }
   }
   
   $self->_info_log('Parser', 'Post processing ini files');
@@ -708,9 +680,9 @@ sub _parse {
 }
 
 sub process_ini_files {
-  my ($self, $species, $type, $config_packer, $defaults) = @_;
+  my ($self, $species, $config_packer, $defaults) = @_;
   
-  my $msg  = "$species " . ($type eq 'das' ? 'DAS sources' : 'database');
+  my $msg  = "$species database";
   my $file = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', "$species.$type.packed");
   my $full_tree = $config_packer->full_tree;
   my $tree_type = "_${type}_tree";
@@ -728,7 +700,7 @@ sub process_ini_files {
     $config_packer->{$tree_type}->{$species} = lock_retrieve($file);
     $self->_info_line('Retrieve', $species eq 'MULTI' ? 'MULTI ini file' : $msg);
   } else {
-    $config_packer->munge($type eq 'db' ? 'databases' : 'das');
+    $config_packer->munge('databases');
     $self->_info_line(sprintf('** %s **', uc $type), $msg);
     
     lock_nstore($config_packer->{$tree_type}->{$species} || {}, $file);
@@ -1039,10 +1011,6 @@ sub _is_available_artefact {
     return $self->get_config($def_species, $test[1]) ? $success : $fail;
   } elsif ($test[0] eq 'species') {
      return $fail if Bio::EnsEMBL::Registry->get_alias($def_species, 'no throw') ne Bio::EnsEMBL::Registry->get_alias($test[1], 'no throw');
-  } elsif ($test[0] eq 'das_source') { ## Is the given DAS source specified?
-    my $source = $self->ENSEMBL_INTERNAL_DAS_CONFIGS || {};
-    
-    return $source->{$test[1]} ? $success : $fail;
   }
 
   return $success; ## Test not found - pass anyway to prevent borkage!

@@ -45,7 +45,6 @@ use EnsEMBL::Web::Registry;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 
-use EnsEMBL::Web::Apache::DasHandler;
 use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
 
@@ -453,7 +452,7 @@ sub handler {
   }
   
   if (!$species) {
-    if (grep /$raw_path[0]/, qw(Multi das common default)) {
+    if (grep /$raw_path[0]/, qw(Multi common default)) {
       $species = $raw_path[0];
       shift @path_segments;
     } elsif ($path_segments[0] eq 'Gene' && $querystring) {
@@ -492,13 +491,7 @@ sub handler {
     $file         =~ s|/$||;
   }
   
-  if ($raw_path[0] eq 'das') {
-    my ($das_species) = split /\./, $path_segments[0];
-    
-    $return = EnsEMBL::Web::Apache::DasHandler::handler_das($r, $cookies, $species_map{lc $das_species}, \@path_segments, $querystring);
-    
-    $ENSEMBL_WEB_REGISTRY->timer_push('Handler for DAS scripts finished', undef, 'Apache');
-  } elsif ($species && $species_name) { # species script
+  if ($species && $species_name) { # species script
     $return = EnsEMBL::Web::Apache::SpeciesHandler::handler_species($r, $cookies, $species_name, \@path_segments, $querystring, $file, $species_name eq $species);
     
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler for species scripts finished', undef, 'Apache');

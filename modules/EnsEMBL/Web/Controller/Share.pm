@@ -133,15 +133,14 @@ sub create {
     my ($image_config_settings, %shared_data);
     
     if ($view_config->image_config) {
-      my $allow_das = $view_config->image_config_das ne 'nodas';
       my ($image_config, @user_data) = $self->image_config_data($view_config->image_config, @species);
       
       if (scalar @user_data) {
         if ($custom_data eq 'none') {
           $image_config_settings = $image_config->share;
         } elsif ($custom_data) {
-          ($image_config_settings, %shared_data) = $self->get_shared_data($image_config, $allow_das, $custom_data);
-        } elsif ($self->get_custom_tracks($allow_das, \%species_check, \@user_data)) {
+          ($image_config_settings, %shared_data) = $self->get_shared_data($image_config, $custom_data);
+        } elsif ($self->get_custom_tracks(\%species_check, \@user_data)) {
           return;
         }
       }
@@ -183,7 +182,7 @@ sub create {
 }
 
 sub get_custom_tracks {
-  my ($self, $allow_das, $species_check, $user_data) = @_;
+  my ($self, $species_check, $user_data) = @_;
   my $hub        = $self->hub;
   my $session    = $hub->session;
   my $user       = $hub->user;
@@ -201,12 +200,6 @@ sub get_custom_tracks {
     push @custom_tracks, [ $_->{'name'}, $_->{'record_id'} ? join '-', $_->{'record_id'}, md5_hex($_->{'code'}) : $_->{'code'} ] unless scalar @track_ids == scalar grep $off_tracks{$_}, @track_ids; 
   }
   
-  if ($allow_das) {
-    foreach (grep $species_check->{$_->{'coords'}[0]{'species'}}, $session->get_data(type => 'das'), $user ? $user->get_records('dases') : ()) {
-      push @custom_tracks, [ "$_->{'label'} (DAS)", join ' ', uri_escape("das:$_->{'url'}/$_->{'dsn'}"), $_->{'dsn'}, $_->{'label'} ] unless $off_tracks{"das_$_->{'dsn'}"};
-    }
-  }
-  
   if (scalar @custom_tracks) {
     print $self->jsonify({ share => \@custom_tracks });
     return 1;
@@ -214,40 +207,29 @@ sub get_custom_tracks {
 }
 
 sub get_shared_data {
-  my ($self, $image_config, $allow_das, $custom_data) = @_;
+  my ($self, $image_config, $custom_data) = @_;
   my $hub     = $self->hub;
   my $session = $hub->session;
   my $user    = $hub->user;
   my $tree    = $image_config->tree;
-  my (@shared_data, @shared_das, @das, @allowed);
+  my @allowed;
   
-  foreach (split ',', $custom_data) {
-    if (/^das:(.+)/) {
-      my @d = split ' ', $1, 3;
-      push @shared_das, \@d;
-      push @das, $d[1];
-    } else {
-      push @shared_data, $_;
-    }
-  }
+  my @shared_data = split ',', $custom_data;
   
   @shared_data = EnsEMBL::Web::Command::UserData::CheckShare->new({ hub => $hub, object => $self->new_object('UserData', {}, { _hub => $hub }) })->process(@shared_data) if scalar @shared_data;
   
   # Sharing an uploaded file will change the track ids used in the image_config, so re-apply the configuration record
   $session->apply_to_image_config($image_config);
   
-  my %shared = map { $_ => 1 } @shared_data, @das;
+  my %shared = map { $_ => 1 } @shared_data;
   
   foreach (grep $shared{$_->{'user_record_id'} || $_->{'code'}}, map { $session->get_data(type => $_), $user ? $user->get_records($_ . 's') : () } qw(upload url)) {
-    push @allowed, uc $_->{'format'} eq 'DATAHUB' ? $tree->clean_id($_->{'name'}) : split ', ', $_->{'analyses'} || "$_->{'type'}_$_->{'code'}";
+    push @allowed, uc $_->{'format'} eq 'TRACKHUB' ? $tree->clean_id($_->{'name'}) : split ', ', $_->{'analyses'} || "$_->{'type'}_$_->{'code'}";
   }
-  
-  push @allowed, map { $shared{$_->{'dsn'}} ? "das_$_->{'dsn'}" : () } $session->get_data(type => 'das'), $user ? $user->get_records('dases') : () if $allow_das;
   
   return (
     $image_config->share(map { $_ => 1 } @allowed),
     scalar @shared_data ? (shared_data => \@shared_data) : (),
-    scalar @shared_das  ? (shared_das  => \@shared_das)  : (),
   );
 }
 
@@ -278,7 +260,6 @@ sub accept {
   my $session      = $hub->session;
   my $user         = $hub->user;
   my %custom_data  = map { $_->{'code'} => 1 } map { $session->get_data(type => $_), $user ? $user->get_records($_ . 's') : () } qw(upload url);
-  my %custom_das   = map { $_->{'dsn'}  => 1 } $session->get_data(type => 'das'), $user ? $user->get_records('dases') : ();
      $data         = from_json($data);
   my @view_configs = $configuration ? map { $hub->get_viewconfig(@$_) || () } @{$configuration->new_for_components($hub, split '/', $action, 2)} : $hub->get_viewconfig(keys %$data);
   my (@revert, $manage,%saveds);
@@ -309,28 +290,6 @@ sub accept {
     my $ic_type      = $view_config->image_config;
     my $image_config = $ic_type ? $hub->get_imageconfig($ic_type) : undef;
 
-
-    if ($config->{'shared_das'}) {
-      my @das_sources;
-      
-      foreach (grep !$custom_das{$_}, @{$config->{'shared_das'}}) {
-        my ($source, $id, $label) = @$_;
-        
-        push @das_sources, $label if $session->add_das_from_string($source, $ic_type, {
-          display => $config->{'image_config'}{$id}{'display'} || [ map { $config->{'image_config'}{$_}{$id}{'display'} || () } keys %{$config->{'image_config'}} ]->[0]
-        });
-      }
-      
-      if (scalar @das_sources) {
-        $session->add_data(
-          type     => 'message',
-          function => '_info',
-          code     => 'das:' . md5_hex(join ',', @das_sources),
-          message  => sprintf('The following DAS sources have been attached:<ul><li>%s</li></ul>', join '</li><li>', @das_sources)
-        );
-      }
-    }
-  
     $self->clean_hash($config->{'image_config'});
     
     $view_config->reset($image_config);
