@@ -38,13 +38,12 @@ sub content {
   my $click_data = $self->click_data;
   
   return unless $click_data;
+  $click_data->{'display'} = 'text';
 
   my @coords = map { $hub->param("fake_click_$_") } qw(chr start end);
 
   my $type     = $click_data->{'my_config'}->data->{'glyphset'};
   my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
-
-  $click_data->{'my_config'}->set('display', 'text');
 
   if ($self->dynamic_use($glyphset)) {
     $glyphset = $glyphset->new($click_data);
