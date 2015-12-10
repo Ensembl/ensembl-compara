@@ -85,7 +85,6 @@ sub init {
   
   # Add in additional tracks
   $self->load_tracks;
-  $self->load_configured_das;
   $self->image_resize = 1;
 
   $self->add_tracks('sequence', 

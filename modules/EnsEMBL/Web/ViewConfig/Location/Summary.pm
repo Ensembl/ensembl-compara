@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::ViewConfig);
 sub init {
   my $self = shift;
   
-  $self->add_image_config('chromosome', 'nodas');
+  $self->add_image_config('chromosome');
   $self->title = 'Chromosome Image';
 }
 

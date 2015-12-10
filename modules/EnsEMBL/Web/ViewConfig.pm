@@ -50,7 +50,6 @@ sub new {
     value_labels     => {},
     has_images       => 0,
     image_config     => undef,
-    image_config_das => undef,
     title            => undef,
     form             => undef,
     form_id          => sprintf('%s_%s_configuration', lc $type, lc $component),
@@ -68,7 +67,6 @@ sub new {
 sub hub              :lvalue { $_[0]->{'hub'};              }
 sub title            :lvalue { $_[0]->{'title'};            }
 sub image_config     :lvalue { $_[0]->{'image_config'};     }
-sub image_config_das :lvalue { $_[0]->{'image_config_das'}; }
 sub has_images       :lvalue { $_[0]->{'has_images'};       }
 sub altered          :lvalue { $_[0]->{'altered'};          } # Set to one if the configuration has been updated
 sub code             :lvalue { $_[0]->{'code'};             }
@@ -165,11 +163,9 @@ sub reset {
   }
 }
 
-# Value indidates that the track can be configured for DAS (das) or not (nodas)
 sub add_image_config {
-  my ($self, $image_config, $das) = @_;  
+  my ($self, $image_config) = @_;  
   $self->image_config     = $image_config;
-  $self->image_config_das = $das || 'das';
   $self->has_images       = 1 unless $image_config =~ /^V/;
 }
 
@@ -222,7 +218,6 @@ sub update_from_url {
   my $input        = $hub->input;
   my $species      = $hub->species;
   my $config       = $input->param('config');
-  my @das          = $input->param('das');
   my $image_config = $self->image_config;
   my $params_removed;
   
@@ -254,33 +249,6 @@ sub update_from_url {
     }
   }
   
-  if (scalar @das) {
-    my $action = $hub->action;
-    
-    $hub->action = 'ExternalData'; # Change action so that the source will be added to the ExternalData view config
-    
-    foreach (@das) {
-      my $source     = uri_unescape($_);
-      my $logic_name = $session->add_das_from_string($source);
-      
-      if ($logic_name) {
-        $session->add_data(
-          type     => 'message',
-          function => '_info',
-          code     => 'das:' . md5_hex($source),
-          message  => sprintf('You have attached a DAS source with DSN: %s%s.', encode_entities($source), $self->get($logic_name) ? ', and it has been added to the External Data menu' : '')
-        );
-      }
-    }
-    
-    $hub->action = $action; # Reset the action
-    
-    if ($delete_params) {
-      $input->delete('das');
-      $params_removed = 1;
-    }
-  }
-
   # plus_signal turns on some regulation tracks in a complex algorithm
   # on both regulation and location views. It can be specified in a URL
   # and is currently used in some zmenus. Annoyingly there seems to

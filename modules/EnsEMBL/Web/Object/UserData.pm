@@ -49,10 +49,8 @@ use Bio::EnsEMBL::Variation::Utils::VEP qw(
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::StructuralVariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw($GENOMIC_REGEX);
 
 use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Text::Feature::VEP_OUTPUT;
@@ -323,22 +321,13 @@ sub delete_remote {
     my $record = $user->get_record($id);
     
     if ($record) {
-      my $check = $record->data->{$source eq 'das' ? 'logic_name' : 'code'};
+      my $check = $record->data->{'code'};
       
       if ($checksum eq md5_hex($check)) {
         $track_name = "${source}_$check";
-        $code       = $check unless $source eq 'das';
+        $code       = $check;
         $record->delete;
       }
-    }
-  } elsif ($source eq 'das') {
-    my $temp_das = $session->get_all_das;
-    my $das      = $temp_das ? $temp_das->{$code} : undef;
-    
-    if ($das) {
-      $track_name = "das_$code";
-      $das->mark_deleted;
-      $session->save_das;
     }
   } else {
     $track_name = "url_$code";
@@ -1090,131 +1079,6 @@ sub consequence_table {
   }
   
   return EnsEMBL::Web::Document::Table->new($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { data_table => '1' });
-}
-
-#---------------------------------- DAS functionality ----------------------------------
-
-sub get_das_servers {
-### Returns a hash ref of pre-configured DAS servers
-  my $self = shift;
-
-  return map {'caption' => $_, 'value' => $_}, @{$self->species_defs->get_config('MULTI', 'ENSEMBL_DAS_SERVERS')};
-}
-
-# Returns an arrayref of DAS sources for the selected server and species
-sub get_das_sources {
-  #warn "!!! ATTEMPTING TO GET DAS SOURCES";
-  my ($self, $server, @logic_names) = @_;
-  my $clearCache = 0;
-  
-  my $species = $self->species;
-  if ($species eq 'common') {
-    $species = $self->species_defs->ENSEMBL_PRIMARY_SPECIES;
-  }
-
-  my @name  = grep { $_ } $self->param('das_name_filter');
-  my $source_info = [];
-
-  $clearCache = $self->param('das_clear_cache');
-
-  ## First check for cached sources
-  my $MEMD = EnsEMBL::Web::Cache->new;
-
-  my $cache_key;
-  if ($MEMD) {
-    $cache_key = $server . '::SPECIES[' . $species . ']';
-
-    if ($clearCache) {
-      $MEMD->delete($cache_key);
-    }
-    my $unfiltered = $MEMD->get($cache_key) || [];
-    #warn "FOUND SOURCES IN MEMORY" if scalar @$unfiltered;
-
-    foreach my $source (@{ $unfiltered }) {
-      push @$source_info, EnsEMBL::Web::DASConfig->new_from_hashref( $source );
-    }
-  }
-
-  unless (scalar @$source_info) {
-    #warn ">>> NO CACHED SOURCES, SO TRYING PARSER";
-    ## If unavailable, parse the sources
-    my $sources = [];
- 
-    try {
-      my $parser = $self->hub->session->das_parser;
-
-      # Fetch ALL sources and filter later in this method (better for caching)
-      $sources = $parser->fetch_Sources(
-        -location   => $server,
-        -species    => $species || undef,
-# DON'T DO IN PARSER       -name       => scalar @name  ? \@name  : undef, # label or DSN
-# DON'T DO IN PARSER       -logic_name => scalar @logic_names ? \@logic_names : undef, # the URI
-      ) || [];
-    
-      if (!scalar @{ $sources }) {
-        my $filters = @name ? ' named ' . join ' or ', @name : '';
-        $source_info = "No $species DAS sources$filters found for $server";
-      }
-    
-    } catch {
-      #warn $_;
-      if ($_ =~ /MSG:/) {
-        ($source_info) = $_ =~ m/MSG: (.*)$/m;
-      } else {
-        $source_info = $_;
-      }
-    };
-
-    my $csa =  Bio::EnsEMBL::Registry->get_adaptor($species, "core", "CoordSystem");
-
-    # Cache simple caches, not objects
-    my $cached = [];
-    foreach my $source (@{ $sources }) {
-      my $no_mapping = 0;
-      my %copy = %{ $source };
-      my @coords = map { my %cs = %{ $_ }; \%cs } @{ $source->coord_systems || [] };
-
-      # checking if we support mapping. Excluding sources for which we don't support mapping before filtering the results.
-      # $cs - coordinate systems returned from DAS server, tmpfrom - returned by converter.
-      foreach my $cs (@coords) {
-        if ($cs->{name} =~ m/$GENOMIC_REGEX/i || $cs->{name} eq 'toplevel' ) {
-
-          my $tmpfrom = $csa->fetch_by_name( $cs->{name}, $cs->{version} ) || $csa->fetch_by_name( $cs->{name} );
-          if ( !$tmpfrom || ($tmpfrom->version && $tmpfrom->version ne $cs->{version})){
-            $no_mapping = 1;
-            last;
-          }
-        }
-      }
-      if (!$no_mapping) {
-        $copy{'coords'} = \@coords;
-        push @$cached, \%copy;
-        push @$source_info, EnsEMBL::Web::DASConfig->new_from_hashref( $source );
-      }
-    }
-    ## Cache them for later use
-    # Only cache if more than 10 sources, so we don't confuse people in the process of setting
-    # up small personal servers (by caching their results half way through their setup).
-    if (scalar(@$cached) > 10) {
-      $MEMD->set($cache_key, $cached, 1800, 'DSN_INFO', $species) if $MEMD;
-    }
-  }
-
-  # Do filtering here rather than in das_parser so only have to cache one complete set of sources for server
-  
-  if (scalar(@logic_names)) {
-    #print STDERR "logic_names = |" . join('|',@logic_names) . "|\n";
-    @$source_info = grep { my $source = $_; grep { $source->logic_name eq $_ } @logic_names  } @$source_info;
-  }
-  if (scalar(@name)) {
-    @$source_info = grep { my $source = $_; grep { $source->label =~ /$_/i || 
-                                                   $source->logic_name =~ /$_/i || 
-                                                   $source->description =~ /$_/msi || 
-                                                   $source->caption =~ /$_/i } @name  } @$source_info;
-  }
-
-  #warn '>>> RETURNING '.@$source_info.' SOURCES';
-  return $source_info;
 }
 
 # render a sift or polyphen prediction with colours

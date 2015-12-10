@@ -35,7 +35,7 @@ sub init {
   }
   
   $self->set_defaults($defaults);
-  $self->add_image_config('ldview', 'nodas');
+  $self->add_image_config('ldview');
   $self->title = 'Linkage Disequilibrium'; 
 }
 

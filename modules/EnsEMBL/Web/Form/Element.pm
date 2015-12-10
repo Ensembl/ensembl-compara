@@ -90,7 +90,6 @@ sub configure {
   ##  - max             Allowed maximum value in case of integers
   ##  - default         Default value that gets added by JS if the user leaves this element empty (in case of String input - See String element)
   ##  - checked         Checked attribute (only for Checkbox or DASCheckBox) - (For Checklist - see 'value' key)
-  ##  - das             DAS object (only for DASCheckBox)
   warn "Web::Form::Element::configure needs to be overridden in the child class";
 }
 
@@ -111,7 +110,6 @@ sub map_element_class {
     'form-element-button'           => 'EnsEMBL::Web::Form::Element::Button',
     'form-element-checkbox'         => 'EnsEMBL::Web::Form::Element::Checkbox',
     'form-element-checklist'        => 'EnsEMBL::Web::Form::Element::Checklist',
-    'form-element-dascheckbox'      => 'EnsEMBL::Web::Form::Element::DASCheckBox',
     'form-element-div'              => 'EnsEMBL::Web::Form::Element::Div',
     'form-element-dropdown'         => 'EnsEMBL::Web::Form::Element::Dropdown',
     'form-element-email'            => 'EnsEMBL::Web::Form::Element::Email',

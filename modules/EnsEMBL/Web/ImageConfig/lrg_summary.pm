@@ -72,7 +72,6 @@ sub init {
   );
 
   $self->load_tracks;
-  $self->load_configured_das;
 
   $self->add_tracks('lrg',
     [ 'lrg_transcript', 'LRG transcripts', '_transcript', {

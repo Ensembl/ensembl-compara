@@ -73,7 +73,6 @@ sub init {
   );
 
   $self->load_tracks;
-  $self->load_configured_das;
 
   $self->modify_configs(
     [ 'fg_regulatory_features_funcgen', 'transcript', 'prediction', 'variation' ],

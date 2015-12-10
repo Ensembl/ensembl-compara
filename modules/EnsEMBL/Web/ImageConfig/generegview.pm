@@ -90,8 +90,6 @@ sub init {
     [ 'regulatory_regions_funcgen_feature_set' ],
     { depth => 25, height => 6 }
   );
-  
-  $self->load_configured_das('functional');
 }
 
 1;

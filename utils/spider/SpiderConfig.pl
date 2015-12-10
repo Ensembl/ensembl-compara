@@ -86,13 +86,13 @@ sub test_url {
                colourmap          geneseqalignview    jump_to_contig  populate_zmenu          tagloview
                contigview         geneseqview         karyoview       primerview              textview
                cytoview           genesnpview         ldtableview     protview                transcriptsnpdataview
-               das                genespliceview      ldview          psychic                 transcriptsnpview
-               dasconfview        genetreeview        mapview         r                       transview
+                                  genespliceview      ldview          psychic                 transcriptsnpview
+                                  genetreeview        mapview         r                       transview
                domainview         geneview            markerview      unisearch               dotterview
                glossaryview       martlink            search          urlsource
                exonview           goview              miscsetview     searchview
 
-               Account Alignment ArchiveStableId Blast DAS Feature Gene Interface Location Marker MultipleLocation
+               Account Alignment ArchiveStableId Blast Feature Gene Interface Location Marker MultipleLocation
                Search Sequence Server SNP Transcript Translation UniSearch UserData Variation Oct2008 Help/http);
 
   foreach my $ban (@ban) {

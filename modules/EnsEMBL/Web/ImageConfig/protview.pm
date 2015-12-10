@@ -44,7 +44,6 @@ sub init {
   ));
   
   $self->load_tracks;
-  $self->load_configured_das;
   
   $self->modify_configs(
     [ 'variation', 'somatic' ],

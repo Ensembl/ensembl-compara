@@ -29,7 +29,7 @@ sub init {
     show_bottom_panel => 'yes'
   });
   
-  $self->add_image_config('MultiBottom', 'nodas');
+  $self->add_image_config('MultiBottom');
   $self->title = 'Comparison Image';
   
   $self->set_defaults({

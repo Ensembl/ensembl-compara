@@ -693,11 +693,6 @@ sub USERDATA_MESSAGES {
       'title'   => 'Database error',
       'message' => 'Unable to save uploaded file contents to your account',
     },
-    save_das => {
-      'type'    => 'error', 
-      'title'   => 'Database error',
-      'message' => 'Unable to save DAS details to your account'
-    },
     save_url => {
       'type'    => 'error', 
       'title'   => 'Database error',

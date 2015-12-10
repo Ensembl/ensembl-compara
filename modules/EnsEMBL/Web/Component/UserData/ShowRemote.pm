@@ -39,14 +39,7 @@ sub content {
   my $form     = $self->modal_form('show_remote', $hub->species_path($hub->data_species). '/UserData/ModifyData/save_remote', { wizard => 1 });
   my $fieldset = $form->add_fieldset;
   my $has_data = 0;
-  my $das      = $session->get_all_das;
   
-  if ($das && keys %$das) {
-    $has_data = 1;
-    $fieldset->add_notes('Choose the DAS sources you wish to save to your account')->set_attribute('class', 'spaced');
-    $fieldset->add_element({'type' => 'DASCheckBox', 'das'  => $_}) for sort { lc $a->label cmp lc $b->label } values %$das;
-  }
-
   my @urls = $session->get_data(type => 'url');
   
   if (@urls) {

@@ -170,7 +170,7 @@ sub _has_data {
   my $hub     = $self->hub;
   my $session = $hub->session;
 
-  return !!grep $session->get_data(type => $_), qw(upload url das);
+  return !!grep $session->get_data(type => $_), qw(upload url);
 }
 
 1;

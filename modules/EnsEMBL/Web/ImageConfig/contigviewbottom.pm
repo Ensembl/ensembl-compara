@@ -135,30 +135,8 @@ sub init {
     }
   }
   
-  # show versions of clones from other sites
-  if ($self->species_defs->das_VEGACLONES) {
-    $self->add_track('misc_feature', 'v_clones', 'Vega clones', 'alternative_clones', {
-      display     => 'off', 
-      strand      => 'f', 
-      description => 'Vega clones', 
-      colourset   => 'alternative_clones', 
-      das_source  => 'das_VEGACLONES'
-    });
-  }
-  
-  if ($self->species_defs->das_ENSEMBLCLONES) {
-    $self->add_track('misc_feature', 'e_clones', 'Ensembl clones', 'alternative_clones', {
-      display     => 'off', 
-      strand      => 'f', 
-      description => 'Ensembl clones', 
-      colourset   => 'alternative_clones', 
-      das_source  => 'das_ENSEMBLCLONES'
-    });
-  }
-  
   # Add in additional tracks
   $self->load_tracks;
-  $self->load_configured_das;
   $self->load_configured_trackhubs;
   $self->load_configured_bigwig;
   $self->load_configured_bigbed;

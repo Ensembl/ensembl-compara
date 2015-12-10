@@ -699,34 +699,6 @@ sub glossary_lookup {
   return $self->{'_glossary_lookup'};
 }
 
-# This method gets all configured DAS sources for the current species.
-# Source configurations are retrieved first from SpeciesDefs, then additions and
-# modifications are added from the User and Session.
-# Returns a hashref, indexed by logic_name.
-sub get_all_das {
-  my $self     = shift;
-  my $species  = shift || $self->species;
-  $species     = '' if $species eq 'common';
-  my @spec_das = $self->species_defs->get_all_das($species);
-  my @sess_das = $self->session->get_all_das($species);
-  my @user_das = $self->user ? $self->user->get_all_das($species) : ({}, {});
-
-  # TODO: group data??
-
-  # First hash is keyed by logic_name, second is keyed by full_url
-  my %by_name = ( %{$spec_das[0]},       %{$user_das[0]},       %{$sess_das[0]}       );
-  my %by_url  = ( %{$spec_das[1] || {}}, %{$user_das[1] || {}}, %{$sess_das[1] || {}} );
-  
-  return wantarray ? (\%by_name, \%by_url) : \%by_name;
-}
-
-# This method gets a single named DAS source for the current species.
-# The source's configuration is an amalgam of species, user and session data.
-sub get_das_by_logic_name {
-  my ($self, $name) = @_;
-  return $self->get_all_das->{$name};
-}
-
 # VIEW / IMAGE CONFIGS
 
 sub get_viewconfig {
@@ -780,7 +752,6 @@ sub get_imageconfig {
   if ($image_config) {
     $session->apply_to_image_config($image_config, $cache_code);
     $image_config->initialize;
-    $image_config->attach_das if $image_config->has_das;
   } else {
     $self->dynamic_use_failure($module_name);
   }

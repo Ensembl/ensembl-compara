@@ -27,7 +27,7 @@ sub init {
   
   $self->SUPER::init;
   
-  $self->add_image_config('alignsliceviewbottom', 'nodas');
+  $self->add_image_config('alignsliceviewbottom');
   
   $self->title            = 'Alignments Image';
   $self->{'species_only'} = 1;

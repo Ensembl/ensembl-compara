@@ -56,7 +56,6 @@ sub init {
   ));
   
   $self->load_tracks;
-  $self->load_configured_das('functional');
   $self->image_resize = 1;
   
   my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';

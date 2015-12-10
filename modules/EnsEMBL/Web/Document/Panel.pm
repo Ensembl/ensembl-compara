@@ -367,7 +367,6 @@ sub component_content {
   my $hub     = $self->hub;
   
   return $html unless $builder;
-  return $self->das_content if $self->{'components'}->{'das_features'};
   return $html unless scalar keys %{$self->{'components'}};
   
   my $modal        = $self->renderer->{'_modal_dialog_'};
@@ -470,37 +469,6 @@ sub component_content {
   $html .= sprintf '<div class="more"><a href="%s">more about %s ...</a></div>', $self->{'link'}, encode_entities($self->parse($self->{'caption'})) if $self->{'link'};
   
   return $html;
-}
-
-sub das_content {
-  my $self    = shift;
-  my $builder = $self->{'builder'};
-  my $xml;
-  
-  foreach my $function_name (@{$self->{'components'}->{'das_features'}}) {
-     my ($module_name, $func) = split /::(\w+)$/, $function_name;
-    
-    if ($self->dynamic_use($module_name)) {
-      eval {
-        $xml = $module_name->new($self->hub, $builder)->$func;
-      };
-      
-      $self->component_failure($@, 'das_features', $function_name) if $@;
-    } else {
-      warn "Component $function_name (compile failure)";
-      
-      $xml .= $self->_error(
-        qq{Compile error in component "<strong>das_features</strong>"},
-        qq{<p>Function <strong>$function_name</strong> not executed as unable to use module <strong>$module_name</strong> due to syntax error.</p>} . $self->_format_error($self->dynamic_use_failure($module_name))
-      );
-    }
-    
-    last if $xml;
-  }
-  
-  delete $self->{'components'}->{'das_features'};
-  
-  return $xml;
 }
 
 sub component_failure {
