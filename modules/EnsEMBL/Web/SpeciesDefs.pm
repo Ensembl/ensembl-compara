@@ -681,6 +681,7 @@ sub _parse {
 
 sub process_ini_files {
   my ($self, $species, $config_packer, $defaults) = @_;
+  my $type = 'db';
   
   my $msg  = "$species database";
   my $file = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', "$species.$type.packed");
