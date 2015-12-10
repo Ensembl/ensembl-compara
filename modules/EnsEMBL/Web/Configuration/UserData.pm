@@ -44,10 +44,8 @@ sub populate_tree {
   $data_menu->append($self->create_node('SelectShare',    '',              [qw(select_share EnsEMBL::Web::Component::UserData::SelectShare)], { filters => [ 'Shareable' ] }));
   $data_menu->append($self->create_node('ShareURL',       '',              [qw(share_url    EnsEMBL::Web::Component::UserData::ShareURL)]));
   
-  #$data_menu->append($self->create_node('UploadFile',   '', [], { command => 'EnsEMBL::Web::Command::UserData::UploadFile'   }));
   $data_menu->append($self->create_node('AddFile',   '', [], { command => 'EnsEMBL::Web::Command::UserData::AddFile'   }));
   $data_menu->append($self->create_node('RefreshUpload',   '', [], { command => 'EnsEMBL::Web::Command::UserData::RefreshUpload'   }));
-  #$data_menu->append($self->create_node('AttachRemote', '', [], { command => 'EnsEMBL::Web::Command::UserData::AttachRemote' }));
   $data_menu->append($self->create_node('CheckShare',   '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckShare'   }));
   ## Data management
   $data_menu->append($self->create_node('ManageData',            'Manage Data', [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)]));
@@ -65,8 +63,6 @@ sub populate_tree {
   $data_menu->append($self->create_node('ConfigureBigWig', '', [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureBigWig)]));
   
   $data_menu->append($self->create_node('SaveExtraConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::SaveExtraConfig' }));
-  $data_menu->append($self->create_node('IDConversion',          '',            [qw(idmapper      EnsEMBL::Web::Component::UserData::IDmapper)]));
-  $data_menu->append($self->create_node('ConsequenceCalculator', '',            [qw(consequence   EnsEMBL::Web::Component::UserData::ConsequenceTool)])); 
   
   $data_menu->append($self->create_node('ModifyData',  '', [], { command => 'EnsEMBL::Web::Command::UserData::ModifyData' }));
   $data_menu->append($self->create_node('ShareRecord', '', [], { command => 'EnsEMBL::Web::Command::ShareRecord'          }));
@@ -85,7 +81,8 @@ sub populate_tree {
   $config_menu->append($self->create_node('ManageConfigSets/Update', '',                             [qw(manage_sets   EnsEMBL::Web::Component::UserData::ManageConfigSets/update)]));
   
   $config_menu->append($self->create_node('ModifyConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::ModifyConfig' }));
-  
+ 
+############### OLD TOOLS - DUE TO BE PHASED OUT ############################################## 
   ## Data conversion - show the old tools interface only if new ones are not available
   unless ($sd->ENSEMBL_VEP_ENABLED && $sd->ENSEMBL_AC_ENABLED && $sd->ENSEMBL_IDM_ENABLED) {
     my $tools_menu = $self->create_submenu('Conversion', 'Online Tools');
@@ -111,6 +108,9 @@ sub populate_tree {
     $tools_menu->append($self->create_node('MapIDs',          '', [], { command => 'EnsEMBL::Web::Command::UserData::MapIDs'          }));
     $tools_menu->append($self->create_node('DropUpload',      '', [], { command => 'EnsEMBL::Web::Command::UserData::DropUpload'      }));
   }
+  $data_menu->append($self->create_node('IDConversion',          '',            [qw(idmapper      EnsEMBL::Web::Component::UserData::IDmapper)]));
+  $data_menu->append($self->create_node('ConsequenceCalculator', '',            [qw(consequence   EnsEMBL::Web::Component::UserData::ConsequenceTool)])); 
+###############################################################
 }
 
 1;
