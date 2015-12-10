@@ -57,6 +57,8 @@ sub features {
   }
 
   my $file  = EnsEMBL::Web::File::User->new(%args);
+  return [] unless $file->exists;
+  
   my $iow   = EnsEMBL::Web::IOWrapper::open($file, 
                                             'hub'         => $hub, 
                                             'config_type' => $self->{'config'}{'type'},
