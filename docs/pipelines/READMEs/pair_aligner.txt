@@ -39,7 +39,7 @@ EnsEMBL and BioPerl software:
 
 Compiled binaries:
   lastz => /software/ensembl/compara/bin/lastz (Set in Lastz_conf.pm or Lastz_primate_conf.pm)
-  blat => /usr/local/ensembl/bin/blat-32 (Set in TBlat_conf.pm)
+  blat => /software/ensembl/compara/bin/blat (Set in TBlat_conf.pm)
 
   Jim Kent's programs: (Set in PairAligner_conf.pm)
   faToNib  => /software/ensembl/compara/bin/faToNib

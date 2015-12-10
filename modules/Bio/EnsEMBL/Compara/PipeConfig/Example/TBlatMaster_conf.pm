@@ -86,7 +86,7 @@ sub default_options {
    			    },
 
 	    #Location of executables
-	    'pair_aligner_exe' => '/usr/local/ensembl/bin/blat-32',
+	    'pair_aligner_exe' => '/software/ensembl/compara/bin/blat',
 
 	    #
 	    #Default pair_aligner
