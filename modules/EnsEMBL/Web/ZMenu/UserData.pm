@@ -44,6 +44,8 @@ sub content {
   my $type     = $click_data->{'my_config'}->data->{'glyphset'};
   my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
 
+  $click_data->{'my_config'}->set('display', 'text');
+
   if ($self->dynamic_use($glyphset)) {
     $glyphset = $glyphset->new($click_data);
 
@@ -120,6 +122,13 @@ sub feature_content {
       $self->add_entry({'type' => 'Score', 'label' => $_->{'score'}});
     }
 
+    if ($_->{'extra'}) {
+      foreach my $extra (@{$_->{'extra'}||[]}) {
+        next unless $extra->{'value'};
+        $self->add_entry({'type' => $extra->{'name'}, 'label' => $extra->{'value'}});
+      }
+    }
+
     my $url = $_->{'url'};
     if ($url) {
       if ($id) {
@@ -134,26 +143,6 @@ sub feature_content {
 
 =pod  
   
-# This is a hack, we really need an order to be supplied by the glyphset
-sub sorted_extra_keys {
-  my ($self,$extra,$order) = @_;
-
-  if($order) {
-    return grep { !/^_type/ and !/^item_colour/ } @$order;
-  } else {
-    my %sort;
-    foreach my $k (keys %$extra) {
-      next if $k =~ /^_type/ or $k =~ /^item_colour/;
-      my $v = $k;
-      $v = "A $v" if /start$/;
-      $v = "B $v" if /end$/;
-      $sort{$k} = $v;
-    }
-
-    return sort { $sort{$a} <=> $sort{$b} } keys %sort;
-  }
-}
-
 sub feature_content {
   my ($self, $feature, $i) = @_;
   my %extra  = ref $feature ne 'HASH' && $feature->can('extra_data') && ref $feature->extra_data eq 'HASH' ? %{$feature->extra_data} : ();
