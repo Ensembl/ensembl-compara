@@ -62,12 +62,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    return {
-        'mapping_exe'       => '/usr/local/ensembl/bin/exonerate-1.0.0',
-        'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
-    }
-}
 
 sub pre_cleanup {
 	my ($self) = @_;
@@ -79,7 +73,7 @@ sub fetch_input {
         $self->dbc->disconnect_if_idle();
         # FIXME : we only need a DBConnection here, not a Compara DBAdaptor
         my $anchor_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('compara_anchor_db') );
-	my $genome_db_file = $self->param('genome_db_file');
+	my $genome_db_file = $self->param_required('genome_db_file');
 	my $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id BETWEEN  ? AND ?");
         my $min_anc_id = $self->param('min_anchor_id');
         my $max_anc_id = $self->param('max_anchor_id');
@@ -102,7 +96,7 @@ sub run {
 	my $query_file = $self->param_required('query_file');
 	my $target_file = $self->param_required('genome_db_file');
 	my $option_st;
-	while( my ($opt, $opt_value) = each %{ $self->param('mapping_params') } ) {
+	while( my ($opt, $opt_value) = each %{ $self->param_required('mapping_params') } ) {
 		$option_st .= " --" . $opt . " " . $opt_value; 
 	}
 	my $command = join(" ", $program, $option_st, $query_file, $target_file); 

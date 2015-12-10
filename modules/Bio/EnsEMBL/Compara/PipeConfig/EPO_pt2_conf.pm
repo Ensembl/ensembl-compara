@@ -73,6 +73,8 @@ sub default_options {
 
         'pipeline_name' => $self->o('species_set_name').'_epo_anchor_mapping_'.$self->o('rel_with_suffix'),
 
+        'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
+
     	'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
     	# 'epo_mlss_id' => 825, # epo mlss from master
         'mapping_method_link_id' => 10000, # dummy value - should not need to change
@@ -280,6 +282,7 @@ sub pipeline_analyses {
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors',
 		-parameters => {
 			'mapping_exe' => $self->o('mapping_exe'),
+	                'mapping_params' => $self->o('mapping_params'),
 		},
                 -flow_into => {
                     -1 => 'map_anchors_himem',
