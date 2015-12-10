@@ -38,19 +38,28 @@ sub create_hash {
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
+  my $seqname       = $self->parser->get_seqname;
+  return if $seqname ne $slice->seq_region_name;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
   my $start         = $feature_start - $slice->start;
   my $end           = $feature_end - $slice->start;
   return if $end < 0 || $start > $slice->length;
 
-  my $seqname       = $self->parser->get_seqname;
   my $strand        = $self->parser->get_strand || 0;
-  my $score         = $self->parser->get_score;
 
   $metadata ||= {};
-  $metadata->{'strands'}{$strand}++;
+  
+  if ($metadata->{'drawn_strand'} && $metadata->{'default_strand'}) {
+    return unless (
+                ## This feature is on the strand we're drawing
+                ($strand && $strand == $metadata->{'drawn_strand'})
+                ## It's unstranded and we're on the default strand 
+                || ($strand == 0 && $metadata->{'drawn_strand'} == $metadata->{'default_strand'}) 
+                );
+  }
 
+  my $score = $self->parser->get_score;
   my $colour_params  = {
                         'metadata'  => $metadata, 
                         'strand'    => $strand, 
@@ -78,12 +87,22 @@ sub create_hash {
     'score'         => $score,
     'label'         => $self->parser->get_name,
     'colour'        => $colour,
-    'join_colour'   => $metadata->{'join_colour'} || $colour,
-    'label_colour'  => $metadata->{'label_colour'} || $colour,
-    'structure'     => $self->create_structure($feature_start, $slice->start),
     'href'          => $href,
   };
-  #use Data::Dumper; warn Dumper($feature);
+  if ($metadata->{'display'} eq 'text') {
+    $feature->{'extra'} = [
+                            {'name' => 'Block count', 'value' => $self->parser->get_blockCount},
+                            {'name' => 'Block sizes', 'value' => join(', ', @{$self->parser->get_blockSizes||[]})},
+                            {'name' => 'Block starts', 'value' => join(', ', @{$self->parser->get_blockStarts||[]})},
+                            {'name' => 'Thick start', 'value' => $self->parser->get_thickStart},
+                            {'name' => 'Thick end', 'value' => $self->parser->get_thickEnd},
+                          ];
+  }
+  else {
+    $feature->{'structure'}     = $self->create_structure($feature_start, $slice->start);
+    $feature->{'join_colour'}   = $metadata->{'join_colour'} || $colour;
+    $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
+  }
   return $feature;
 }
 
