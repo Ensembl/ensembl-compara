@@ -64,8 +64,14 @@ sub features {
                                             );
 
   if ($iow) {
+    my $extra_config = {
+                        'drawn_strand'    => $self->strand,
+                        'default_strand'  => 1,
+                        'display'         => $self->{'display'},
+                        };
+
     ## Parse the file, filtering on the current slice
-    $data = $iow->create_tracks($container);
+    $data = $iow->create_tracks($container, $extra_config);
 
     ## Override colourset based on format here, because we only want to have to do this in one place
     my $colourset   = $iow->colourset || 'userdata';

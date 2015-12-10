@@ -36,8 +36,6 @@ sub can_json { return 1; }
 
 sub init {
   my $self = shift;
-  $self->{'my_config'}->set('default_strand', 1);
-  $self->{'my_config'}->set('drawn_strand', $self->strand);
 
   ## We only need wiggle roles, as alignment rendering has a non-standard name
   Role::Tiny->apply_roles_to_object($self, 'EnsEMBL::Draw::Role::Wiggle');

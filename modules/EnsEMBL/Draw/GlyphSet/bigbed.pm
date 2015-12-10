@@ -36,9 +36,7 @@ sub features {
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_config('url');
   my $container = $self->{'container'};
-  my $args      = {'options' => {'hub' => $hub}};
-  $self->{'my_config'}->set('default_strand', 1);
-  $self->{'my_config'}->set('drawn_strand', $self->strand);
+  my $args      = {'options' => {'hub' => $hub}, 'default_strand' => 1, 'drawn_strand' => $self->strand};
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigBed', $args);
   my $data;

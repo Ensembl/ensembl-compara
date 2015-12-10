@@ -69,9 +69,6 @@ sub draw_features {
   ## Defaults
   $self->{'my_config'}->set('slice_length', $self->{'container'}->length);
   $self->{'my_config'}->set('bumped', 1) unless defined($self->{'my_config'}->get('bumped'));
-  $self->{'my_config'}->set('drawn_strand', $self->strand);
-  ## Draw unstranded data on forward strand
-  $self->{'my_config'}->set('default_strand', 1);
   unless ($self->{'my_config'}->get('height')) {
     $self->{'my_config'}->set('height', 8);
   }
@@ -93,7 +90,8 @@ sub draw_features {
   foreach (@$subtracks) {
     my $features  = $_->{'features'};
     my $metadata  = $_->{'metadata'} || {};
-    next if $self->skip_strand($metadata->{'strands'});
+    next unless scalar @{$features||[]};
+    #next if $self->skip_strand($metadata->{'strands'});
     $skipped = 0;
 
     ## Set alternative colour (used by some styles)
@@ -196,6 +194,7 @@ sub _bg_href {
   return $bg_href;
 }
 
+=pod
 sub skip_strand {
   my ($self, $strand_info) = @_;
   my $skip = 0;
@@ -221,6 +220,7 @@ sub skip_strand {
 
   return $skip;
 }
+=cut
 
 sub render_as_transcript_nolabel {
   my $self = shift;
