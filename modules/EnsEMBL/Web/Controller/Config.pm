@@ -63,17 +63,7 @@ sub update_configuration {
     if ($r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
       my $json = {};
       
-      if ($hub->action =~ /^(ExternalData|TextDAS)$/) {
-        my $function = $view_config->altered == 1 ? undef : $view_config->altered;
-        
-        $json = {
-          redirect => $hub->url({ 
-            action   => 'ExternalData', 
-            function => $function, 
-            %{$hub->referer->{'params'}}
-          })
-        };
-      } elsif ($updated || $hub->param('reload')) {
+      if ($updated || $hub->param('reload')) {
         $json = $updated if ref $updated eq 'HASH';
         $json->{'updated'}  = 1;
       }
