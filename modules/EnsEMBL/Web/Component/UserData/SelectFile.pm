@@ -46,7 +46,7 @@ sub content {
     my @data = map $hub->session->get_data('type' => $_), qw(upload url nonpositional);
     return if scalar @data;
     if ($hub->user) {
-      @data = map $hub->user->get_records($_), qw(uploads urls dases);
+      @data = map $hub->user->get_records($_), qw(uploads urls);
       return if scalar @data;
     }
   }

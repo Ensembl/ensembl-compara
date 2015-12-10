@@ -90,17 +90,5 @@ sub add_auto_format_dropdown {
     });
 }
 
-sub output_das_text {
-  my ($self, $form, @sources) = @_;
-  
-  foreach (@sources) {
-    $form->add_element(
-      type    => 'Information',
-      classes => [ 'no-bold' ],
-      value   => sprintf('<strong>%s</strong><br />%s<br /><a href="%s">%3$s</a>', $_->label, $_->description, $_->homepage)
-    );
-  }
-}
-
 1;
 

@@ -206,7 +206,7 @@ sub populate_tree {
     { 'availability' => 'gene has_structural_variation core not_patch' }
   ));
 
-  # External Data tree, including non-positional DAS sources
+  # External Data tree
   my $external = $self->create_node('ExternalData', 'External data',
     [qw( external EnsEMBL::Web::Component::Gene::ExternalData )],
     { 'availability' => 'gene' }

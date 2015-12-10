@@ -18,8 +18,6 @@ limitations under the License.
 
 package EnsEMBL::Web::ViewConfig::ExternalData;
 
-## Possibly obsolete now we don't support DAS
-
 use strict;
 
 use base qw(EnsEMBL::Web::ViewConfig);

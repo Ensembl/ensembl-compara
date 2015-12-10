@@ -140,7 +140,7 @@ sub populate_tree {
     { 'availability' => 'either database:variation has_variations', 'concise' => 'Variants' }
   ));
   
-  # External Data tree, including non-positional DAS sources
+  # External Data tree
   my $external = $self->create_node('ExternalData', 'External data',
     [qw( external EnsEMBL::Web::Component::Transcript::ExternalData )],
     { 'availability' => 'transcript' }

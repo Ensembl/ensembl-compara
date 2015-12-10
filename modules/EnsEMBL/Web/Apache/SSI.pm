@@ -34,9 +34,6 @@ sub handler {
   my $i = 0;
   ## First of all check that we should be doing something with the page...
   
-  ## Pick up DAS entry points requests and
-  ## uncompress them dynamically
-  
   if (-e $r->filename && -r $r->filename && ($r->filename =~ /\/Doxygen\/(?!index.html)/ || $r->filename =~ /\/edoc\/index.html/)) {
     return EnsEMBL::Web::Controller::Doxygen->new($r, $cookies)->status;
   }

@@ -117,7 +117,6 @@ sub populate_tree {
     { 'availability' => 'variation has_ldpops has_samples not_somatic', 'no_menu_entry' => 1 }
   );
 
-  # External Data tree, including non-positional DAS sources
   my $external = $self->create_node('ExternalData', 'External Data',
     [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
     { 'availability' => 'variation' }

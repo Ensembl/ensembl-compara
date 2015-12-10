@@ -395,11 +395,6 @@ sub add_element {
     });
   }
   
-  ## DASCheckBox
-  if ($params{'type'} eq 'DASCheckBox') {
-    return $self->add_element(\%params);
-  }
-  
   ## Element is now Field.
   my $field = $self->add_field(\%params);
 
