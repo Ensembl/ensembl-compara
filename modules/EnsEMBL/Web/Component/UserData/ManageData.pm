@@ -34,6 +34,8 @@ sub _init {
   $self->ajaxable(0);
 }
 
+our $has_db_content = 0;
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -108,7 +110,15 @@ sub content {
       
       push @rows, $row;
     }
-    $html = $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+
+    ## TEMPORARY NOTICE
+    if ($has_db_content) {
+      $html .= $self->warning_panel('Notice',
+       "To improve our support for uploaded data, we are retiring our current system for saving uploads in Release 85 (early summer 2016). Please delete any uploads with a grey 'save' icon next to them and re-upload your data if you wish to continue to use it."
+      );
+    }
+
+    $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
     if ($old_assemblies) {
       my $plural = $old_assemblies > 1 ? '' : 's';
       $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
@@ -202,6 +212,7 @@ sub table_row {
   }
   
   if ($user_record) {
+    $has_db_content = 1 if $file->data->{'type'} eq 'upload';
     $assembly = $file->assembly || 'Unknown';
     $url_params{'id'} = join '-', $file->id, md5_hex($file->code);
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
