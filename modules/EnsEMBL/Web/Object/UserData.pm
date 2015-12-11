@@ -123,7 +123,6 @@ sub save_upload {
 
   if ($user) {
     my ($old_path, $new_path) = $self->_move_to_user('upload');
-    warn ">>> COPYING FROM $old_path TO $new_path";
     ## Now move file
     if ($old_path && $new_path) {
       ## Create path to new destination
