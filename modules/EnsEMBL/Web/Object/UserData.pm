@@ -123,15 +123,20 @@ sub save_upload {
   my $user = $hub->user;
 
   if ($user) {
-    my ($file_path, $destination) = $self->_move_to_user('upload');
-    ## Now move saved file
-    if ($file_path && $destination) {
+    my $rel_path  = $self->_move_to_user('upload');
+    ## Work out where we're going to copy the file to
+    my $file      = EnsEMBL::Web::File::User->new(hub => $hub, file => $rel_path);
+    my $full_path  = $file->absolute_write_path;
+    my $user_id   = $user->id;
+    (my $destination = $full_path) =~ s/session_[0-9]+/user_$user_id/;
+    ## Now move file
+    if ($full_path && $destination) {
       ## Create path to new destination
       my @path_elements = split('/', $destination);
       pop @path_elements;
       my $dir = join ('/', @path_elements);
       create_path($dir, {'no_exception' => 1});
-      copy_files({$file_path => $destination}, {'no_exception' => 1});
+      copy_files({$full_path => $destination}, {'no_exception' => 1});
     }
   }
   else {
@@ -160,11 +165,17 @@ sub delete_upload {
   my $self = shift;
   my $hub  = $self->hub;
 
-  my $path_to_file = $self->_delete_record('upload');
-  warn ">>> PATH TO FILE $path_to_file";
-  if ($path_to_file) {
+  my $rel_path = $self->_delete_record('upload');
+  #warn ">>> PATH TO FILE $rel_path";
+  if ($rel_path) {
     ## Also remove file
-    my $result = delete_file($path_to_file, {'nice' => 1, 'no_exception' => 1});
+    ## We need to recreate file object from path stored in session
+    ## because we need the full path in order to delete it
+    my $file = EnsEMBL::Web::File::User->new( 
+                                              hub       => $hub, 
+                                              file      => $rel_path,
+                                            );
+    my $result = delete_file($file->absolute_write_path, {'nice' => 1, 'no_exception' => 1});
     if ($result->{'error'}) {
       warn "!!! ERROR ".@{$result->{'error'}};
     }
@@ -196,9 +207,9 @@ sub _move_to_user {
   $type     ||= 'url';
   my $hub     = $self->hub;
   my $user    = $hub->user;
+  return unless $user;
   my $session = $hub->session;
   my %args    = ('type' => $type, 'code' => $hub->param('code'));
-  my ($file_path, $destination);
 
   my $data = $session->get_data(%args);
 
@@ -213,12 +224,7 @@ sub _move_to_user {
   if ($record) {
     $session->purge_data(%args);
     if ($type eq 'upload') {
-      my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $record->data->{'file'});
-      $file_path = $file->absolute_write_path;
-      my $tmp_dir   = $hub->species_defs->ENSEMBL_TMP_DIR;
-      my $perm_dir  = $hub->species_defs->ENSEMBL_PERM_DIR || $hub->species_defs->ENSEMBL_TMP_DIR.'/persistent';
-      ($destination = $file_path) =~ s/^$tmp_dir/$perm_dir/;
-      return ($file_path, $destination);
+      return $record->data->{'file'}; 
     }
   }
   
@@ -236,7 +242,7 @@ sub _delete_record {
 
   my $session    = $hub->session;
   my $session_id = $session->session_id;
-  my ($file_path, $track_name);
+  my ($file, $track_name);
 
   if ($user && $id) {
     my $checksum;
@@ -248,7 +254,11 @@ sub _delete_record {
       my $check = $record->data->{'code'};
       
       if ($checksum eq md5_hex($check)) {
-        $file_path  = $record->data->{'file'};
+        ## Capture path to file so we can delete it
+        if ($type eq 'upload') {
+          $file = $record->data->{'file'};
+        }
+        ## Now delete record
         $track_name = "${source}_$check";
         $code       = $check;
         $record->delete;
@@ -259,8 +269,7 @@ sub _delete_record {
     my $temp_data = $session->get_data(type => $type, code => $code);
 
     if ($type eq 'upload') {
-      my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $temp_data->{'file'});
-      $file_path = $file->absolute_write_path;
+      $file = $temp_data->{'file'};
     }
 
     if ($temp_data->{'format'} eq 'TRACKHUB' && $self->hub->cache) {
@@ -277,7 +286,7 @@ sub _delete_record {
   
   $self->update_configs([ $track_name ]) if $track_name;
 
-  return $type eq 'url' ? undef : $file_path;
+  return $type eq 'url' ? undef : $file;
 }
     
 sub update_configs {
