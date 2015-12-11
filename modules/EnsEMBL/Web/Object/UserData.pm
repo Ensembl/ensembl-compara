@@ -122,17 +122,24 @@ sub save_upload {
   my $user = $hub->user;
 
   if ($user) {
-    my ($old_path, $new_path)  = $self->_move_to_user('upload');
+    my ($old_path, $new_path) = $self->_move_to_user('upload');
+    warn ">>> COPYING FROM $old_path TO $new_path";
     ## Now move file
     if ($old_path && $new_path) {
       ## Create path to new destination
+      my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
       my @path_elements = split('/', $new_path);
       pop @path_elements;
       my $dir = join ('/', @path_elements);
-      create_path($dir, {'no_exception' => 1});
+      create_path($tmp_dir.'/'.$dir, {'no_exception' => 1});
       ## Set full paths
-      my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
-      copy_files({$tmp_dir.'/'.$old_path => $tmp_dir.'/'.$new_path}, {'no_exception' => 1});
+      my $copied = copy_files({$tmp_dir.'/'.$old_path => $tmp_dir.'/'.$new_path}, {'no_exception' => 1});
+      if ($copied) {
+        my $result = delete_file($tmp_dir.'/'.$old_path, {'nice' => 1, 'no_exception' => 1});
+        if ($result->{'error'}) {
+          warn "!!! ERROR ".@{$result->{'error'}};
+        }
+      }
     }
   }
   else {
@@ -162,7 +169,6 @@ sub delete_upload {
   my $hub  = $self->hub;
 
   my $rel_path = $self->_delete_record('upload');
-  #warn ">>> PATH TO FILE $rel_path";
   if ($rel_path) {
     ## Also remove file
     my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
@@ -211,8 +217,8 @@ sub _move_to_user {
     ## in the new user record
     $old_path     = $data->{'file'};
     my $user_id   = $user->id;
-    (my $new_path = $old_path) =~ s/session_[0-9]+/user_$user_id/;
-    $data->{'file'} = $new_path;
+    ($new_path = $old_path) =~ s/session_(\d+)/user_$user_id/;
+    $data->{'file'} = $new_path if $new_path;
     $record = $user->add_to_uploads($data);
   }
   else {
