@@ -25,14 +25,14 @@ use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
 our @EXPORT_OK = qw(dynamic_require dynamic_require_fallback dynamic_use dynamic_use_fallback);
-my %FAILED_INC;
+my %_INC; # each key is module attempted to be required dynamically - value is 0 if required successfully, or error string otherwise
 
 sub dynamic_require {
   ## @function
   ## Dynamically requires a package (but does not call import)
   ## @param Class name to be required
   ## @param Flag if on, will not throw an exception, but will return false if failed to load the class
-  ## @return Class name if the loaded successfully, or 0 if no_exception flag is on.
+  ## @return Class name if loaded successfully, or 0 if failed but no_exception flag is on.
   ## @exception DynamicLoaderException if class not loaded successfully
   my ($classname, $no_exception) = @_;
 
@@ -58,7 +58,7 @@ sub dynamic_use {
   ## Dynamically requires a package and calls new package's import method
   ## @param Class name to be used
   ## @param Flag if on, will not throw an exception, but will return false if failed to load the class
-  ## @return Class name if the loaded successfully, or 0 if no_exception flag is on.
+  ## @return Class name if the loaded successfully, or 0 if failed but no_exception flag is on.
   ## @exception DynamicLoaderException if class not loaded successfully
   my $classname = dynamic_require(@_);
 
@@ -82,15 +82,17 @@ sub _dynamic_require {
 
   return 'Classname parameter missing' unless $classname;
 
-  unless (exists $FAILED_INC{$classname}) { # if not already failed
+  unless (exists $_INC{$classname}) { # if not already tried
     eval "require $classname";
     if ($@) {
-      $FAILED_INC{$classname} = "Module '$classname' could not be loaded: $@";
+      $_INC{$classname} = "Module '$classname' could not be loaded: $@";
       $@ = undef; # otherwise this will get printed to logs afterwards if we warn an empty string
+    } else {
+      $_INC{$classname} = 0;
     }
   }
 
-  return $FAILED_INC{$classname} if exists $FAILED_INC{$classname};
+  return $_INC{$classname};
 }
 
 1;
