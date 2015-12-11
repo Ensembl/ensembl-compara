@@ -27,6 +27,7 @@ my @OK_STYLES = qw(
   vertical-align position top left bottom right float
   margin margin-left margin-top margin-bottom margin-right
 );
+my @EXCLUDE_FILES = qw(this-mirror.png);
 my @OK_ATTRS = qw(onClick);
 
 sub kit_complete {
@@ -439,6 +440,9 @@ sub data_url_convert {
   return undef unless $url =~ m!^/!;
   my $file = find_file($sd,$url);
   return undef unless $file and -e $file;
+  for(@EXCLUDE_FILES) {
+    return undef if $file =~ m!/$_$!;
+  }
   my $tmp = "$file.tmp";
   if($file =~ /.png$/) {
     print LOG qx(pngcrush $file $tmp 2>&1);
