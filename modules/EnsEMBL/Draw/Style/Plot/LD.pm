@@ -88,6 +88,7 @@ sub draw_mark_line {
     height    => 0,
     colour    => $line_colour,
     absolutey => 1,
+    dotted    => 1
   });
 
   # Mark label
