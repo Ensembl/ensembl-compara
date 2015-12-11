@@ -53,13 +53,11 @@ use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::Table;
-use EnsEMBL::Web::Text::Feature::VEP_OUTPUT;
-use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::User;
+use EnsEMBL::Web::File::Utils::IO qw/delete_file/;
+use EnsEMBL::Web::File::Utils::FileSystem qw/create_path copy_files/;
 
 use base qw(EnsEMBL::Web::Object);
-
-my $DEFAULT_CS = 'DnaAlignFeature';
 
 sub data      :lvalue { $_[0]->{'_data'}; }
 sub data_type :lvalue {  my ($self, $p) = @_; if ($p) {$_[0]->{'_data_type'} = $p} return $_[0]->{'_data_type' }; }
@@ -88,232 +86,158 @@ sub availability {
   return $hash;
 }
 
-#---------------------------------- userdata DB functionality ----------------------------------
+############### CUSTOM DATA MANAGEMENT #########################
 
-sub save_to_db {
-  my ($self, $share, %args) = @_;
-  my $hub      = $self->hub;
-  my $session  = $hub->session;
-  my $user     = $hub->user;
-  my $tmpdata  = $session->get_data(%args);
-  my $assembly = $tmpdata->{'assembly'};
-  my $file     = EnsEMBL::Web::File::User->new(hub => $hub, file => $tmpdata->{'file'}); 
-  
-  return unless $file->exists;
-  my $result = $file->read;
+sub rename_session_record {
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $name = $hub->param('value');
 
-  my $data   = $result->{'content'} or die "Can't get data out of the file $tmpdata->{'filename'}";
-  my $format = $tmpdata->{'format'};
-  my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
-  my (@analyses, @messages, @errors);
-  
-  my $config = {
-    action             => 'new', # or append
-    species            => $tmpdata->{'species'},
-    assembly           => $tmpdata->{'assembly'},
-    default_track_name => $tmpdata->{'name'},
-    file_format        => $format
-  };
-  
-  if ($user && !$share) {
-    $config->{'id'}         = $user->id;
-    $config->{'track_type'} = 'user';
-  } else {
-    $config->{'id'}         = $session->session_id;
-    $config->{'track_type'} = 'session';
-  }
-  
-  $parser->parse($data, $format);
-  
-  my @tracks = $parser->get_all_tracks;
-  
-  push @errors, "Sorry, we couldn't parse your data." unless @tracks;
-  
-  foreach my $track (@tracks) {
-    push @errors, "Sorry, we couldn't parse your data." unless keys %$track;
-    
-    foreach my $key (keys %$track) {
-      my $track_report = $self->_store_user_track($config, $track->{$key});
-      
-      push @analyses, $track_report->{'logic_name'} if $track_report->{'logic_name'};
-      push @messages, $track_report->{'feedback'}   if $track_report->{'feedback'};
-      push @errors,   $track_report->{'error'}      if $track_report->{'error'};
+  $hub->session->set_data(type => $hub->param('source'), code => $hub->param('code'), name => $name) if $name;
+  return 1;
+}
+
+sub rename_user_record {
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $user  = $hub->user;
+  my $name  = $hub->param('value');
+
+  if ($name) {
+    my ($id, $checksum) = split '-', $hub->param('id');
+    my $record = $user->get_record($id);
+
+    if ($checksum eq md5_hex($record->code)) {
+      $record->name($name);
+      $record->save(user => $user->rose_object);
     }
   }
 
-  my $report = { browser_switches => $parser->{'browser_switches'} };
-  
-  $report->{'analyses'} = \@analyses if scalar @analyses;
-  $report->{'feedback'} = \@messages if scalar @messages;
-  $report->{'errors'}   = \@errors   if scalar @errors;
-  
-  return $report;
+  return 1;
 }
 
-sub move_to_user {
+sub save_upload {
+## Move an uploaded file to a persistent directory
   my $self = shift;
-  my %args = (
-    type => 'upload',
-    @_,
-  );
+  my $hub  = $self->hub;
+  my $user = $hub->user;
 
+  if ($user) {
+    my ($file_path, $destination) = $self->_move_to_user('upload');
+    ## Now move saved file
+    if ($file_path && $destination) {
+      ## Create path to new destination
+      my @path_elements = split('/', $destination);
+      pop @path_elements;
+      my $dir = join ('/', @path_elements);
+      create_path($dir, {'no_exception' => 1});
+      copy_files({$file_path => $destination}, {'no_exception' => 1});
+    }
+  }
+  else {
+    $self->_set_error_message('uploaded data');
+  }
+  return undef;
+}
+
+sub save_remote {
+## Move the session record for an attached file to the user record
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $user = $hub->user;
+
+  if ($user) {
+    $self->_move_to_user('url');
+  }
+  else {
+    $self->_set_error_message('information about your attached data');
+  }
+  return undef;
+}
+
+sub delete_upload {
+### Delete file and session/user record for an uploaded file
+  my $self = shift;
+  my $hub  = $self->hub;
+
+  my $path_to_file = $self->_delete_record('upload');
+  warn ">>> PATH TO FILE $path_to_file";
+  if ($path_to_file) {
+    ## Also remove file
+    my $result = delete_file($path_to_file, {'nice' => 1, 'no_exception' => 1});
+    if ($result->{'error'}) {
+      warn "!!! ERROR ".@{$result->{'error'}};
+    }
+  } 
+  return undef;
+}
+
+sub delete_remote {
+### Delete record for an attached file
+  my $self = shift;
+  $self->_delete_record('url');
+  return undef;
+}
+
+sub _set_error_message {
+## Add a message to session
+  my ($self, $text) = @_;
+  my $hub = $self->hub;
+  $hub->session->set_data(
+      type     => 'message',
+      code     => 'user_not_logged_in',
+      message  => "Please log in (or create a user account) if you wish to save this $text.",
+      function => '_error'
+  );
+}
+
+sub _move_to_user {
+  my ($self, $type) = @_;
+  $type     ||= 'url';
   my $hub     = $self->hub;
   my $user    = $hub->user;
   my $session = $hub->session;
+  my %args    = ('type' => $type, 'code' => $hub->param('code'));
+  my ($file_path, $destination);
 
   my $data = $session->get_data(%args);
+
   my $record;
+  if ($type eq 'upload') {
+    $record = $user->add_to_uploads($data);
+  }
+  else {
+    $record = $user->add_to_urls($data);
+  }
   
-  $record = $user->add_to_uploads($data)
-    if $args{'type'} eq 'upload';
-
-  $record = $user->add_to_urls($data)
-    if $args{'type'} eq 'url';
-
   if ($record) {
     $session->purge_data(%args);
-    return $record;
+    if ($type eq 'upload') {
+      my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $record->data->{'file'});
+      $file_path = $file->absolute_write_path;
+      my $tmp_dir   = $hub->species_defs->ENSEMBL_TMP_DIR;
+      my $perm_dir  = $hub->species_defs->ENSEMBL_PERM_DIR || $hub->species_defs->ENSEMBL_TMP_DIR.'/persistent';
+      ($destination = $file_path) =~ s/^$tmp_dir/$perm_dir/;
+      return ($file_path, $destination);
+    }
   }
   
   return undef;
 }
 
-sub store_data {
-  ## Parse file and save to genus_species_userdata
-  my $self     = shift;
-  my %args     = @_;
-  my $share    = delete $args{'share'};
-  my $hub      = $self->hub;
-  my $user     = $hub->user;
-  my $session  = $hub->session;
-  my $tmp_data = $session->get_data(%args);
-  
-  $tmp_data->{'name'} = $hub->param('name') if $hub->param('name');
-  
-  my $report = $tmp_data->{'analyses'} ? $tmp_data : $self->save_to_db($share, %args);
-  
-  if ($report->{'errors'}) {
-    warn Dumper($report->{'errors'});
-    return undef;
-  }
-
-  if ($tmp_data->{'filename'}) { ## Delete cached file
-    my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $tmp_data->{'file'});
-    $file->delete;
-  }
-  
-  ## logic names
-  my $analyses    = $report->{'analyses'};
-  my @logic_names = ref $analyses eq 'ARRAY' ? @$analyses : ($analyses);
-  my $session_id  = $session->session_id;    
-  
-  if ($user && !$share) {
-    my $upload = $user->add_to_uploads(
-      %$tmp_data,
-      type             => 'upload',
-      filename         => '',
-      analyses         => join(', ', @logic_names),
-      browser_switches => $report->{'browser_switches'} || {}
-    );
-    
-    if ($upload) {
-      $session->purge_data(%args);
-      
-      # uploaded track keys change when saved, so update configurations accordingly
-      $self->update_configs([ "upload_$args{'code'}" ], \@logic_names) if $args{'type'} eq 'upload';
-      
-      return $upload->id;
-    }
-    
-    warn 'ERROR: Can not save user record.';
-    
-    return undef;
-  } else {
-    $session->set_data(
-      %$tmp_data,
-      %args,
-      filename         => '',
-      analyses         => join(', ', @logic_names),
-      browser_switches => $report->{'browser_switches'} || {},
-    );
-    
-    $self->update_configs([ "upload_$args{'code'}" ], \@logic_names) if $args{'type'} eq 'upload';
-    
-    return $args{'code'};
-  }
-}
-  
-sub delete_upload {
-  my $self       = shift;
+sub _delete_record {
+  my ($self, $type) = @_;
   my $hub        = $self->hub;
-  my $code       = $hub->param('code');
-  my $id         = $hub->param('id');
-  my $user       = $hub->user;
-  my $session    = $hub->session;
-  my $session_id = $session->session_id;
-  my ($owner, @track_names);
-  
-  if ($user && $id) {
-    my $checksum;
-    ($id, $checksum) = split '-', $id;
-    
-    my $record = $user->get_record($id);
-    
-    if ($record) {
-      my $data = $record->data;
-         $code = $data->{'code'};
-      
-      if ($checksum eq md5_hex($code)) {
-        my @analyses = split ', ', $data->{'analyses'};
-        push @track_names, @analyses;
-        
-        $self->_delete_datasource($data->{'species'}, $_) for @analyses;
-        $record->delete;
-        
-        $owner = $code =~ /_$session_id$/;
-      }
-    }
-  } else {
-    my $upload = $session->get_data(type => 'upload', code => $code);
-    if ($code =~ /_$session_id$/) {
-      $owner = $session_id;
-    }
-    
-    if ($upload->{'file'}) {
-      push @track_names, "upload_$code";
-      if ($owner) {
-        my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $upload->{'file'});
-        $file->delete;
-      }
-    } else {
-      my @analyses = split ', ', $upload->{'analyses'};
-      push @track_names, @analyses;
-      
-      if ($owner) {
-        $self->_delete_datasource($upload->{'species'}, $_) for @analyses;
-      }
-    }
-    
-    $session->purge_data(type => 'upload', code => $code);
-  }
-  
-  # Remove all shared data with this code and source
-  EnsEMBL::Web::Data::Session->search(code => $code, type => 'upload')->delete_all if $owner;
-  
-  $self->update_configs(\@track_names) if scalar @track_names;
-}
 
-sub delete_remote {
-  my $self       = shift;
-  my $hub        = $self->hub;
   my $source     = $hub->param('source');
   my $code       = $hub->param('code');
   my $id         = $hub->param('id');
   my $user       = $hub->user;
+
   my $session    = $hub->session;
   my $session_id = $session->session_id;
-  my $track_name;
-  
+  my ($file_path, $track_name);
+
   if ($user && $id) {
     my $checksum;
     ($id, $checksum) = split '-', $id;
@@ -324,29 +248,38 @@ sub delete_remote {
       my $check = $record->data->{'code'};
       
       if ($checksum eq md5_hex($check)) {
+        $file_path  = $record->data->{'file'};
         $track_name = "${source}_$check";
         $code       = $check;
         $record->delete;
       }
     }
   } else {
-    $track_name = "url_$code";
-    my $temp_data = $session->get_data(type => 'url', code => $code);
+    $track_name = $type.'_'.$code;
+    my $temp_data = $session->get_data(type => $type, code => $code);
+
+    if ($type eq 'upload') {
+      my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $temp_data->{'file'});
+      $file_path = $file->absolute_write_path;
+    }
+
     if ($temp_data->{'format'} eq 'TRACKHUB' && $self->hub->cache) {
       # delete cached hub
       my $url = $temp_data->{'url'};
       my $key = 'trackhub_'.md5_hex($url);
       $self->hub->cache->delete($key);
     }
-    $session->purge_data(type => 'url', code => $code);
+    $session->purge_data(type => $type, code => $code);
   }
   
   # Remove all shared data with this code and source
-  EnsEMBL::Web::Data::Session->search(code => $code, type => 'url')->delete_all if $code =~ /_$session_id$/;
+  EnsEMBL::Web::Data::Session->search(code => $code, type => $type)->delete_all if $code =~ /_$session_id$/;
   
   $self->update_configs([ $track_name ]) if $track_name;
-}
 
+  return $type eq 'url' ? undef : $file_path;
+}
+    
 sub update_configs {
   my ($self, $old_tracks, $new_tracks) = @_;
   my $hub            = $self->hub;
@@ -416,282 +349,6 @@ sub update_configs {
   }
 }
 
-sub _store_user_track {
-  my ($self, $config, $track) = @_;
-  my $report;
-
-  if (my $current_species = $config->{'species'}) {
-    my $action = $config->{action} || 'error';
-    if( my $track_name = $track->{config}->{name} || $config->{default_track_name} || 'Default' ) {
-
-      my $logic_name = join '_', $config->{track_type}, $config->{id}, md5_hex($track_name);
-  
-      my $dbs         = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species );
-      my $dba         = $dbs->get_DBAdaptor('userdata');
-      unless($dba) {
-        $report->{'error'} = 'No user upload database for this species';
-        return $report;
-      }
-      my $ud_adaptor  = $dba->get_adaptor( 'Analysis' );
-
-      my $datasource = $ud_adaptor->fetch_by_logic_name($logic_name);
-
-## Populate the $config object.....
-      my %web_data = %{$track->{'config'}||{}};
-      delete $web_data{ 'description' };
-      delete $web_data{ 'name' };
-      $web_data{'styles'} = $track->{styles};
-      $config->{source_adaptor} = $ud_adaptor;
-      $config->{track_name}     = $logic_name;
-      $config->{track_label}    = $track_name;
-      $config->{description}    = $track->{'config'}{'description'};
-      $config->{web_data}       = \%web_data;
-      $config->{method}         = 'upload';
-      $config->{method_type}    = $config->{'file_format'};
-      if ($datasource) {
-        if ($action eq 'error') {
-          $report->{'error'} = "$track_name : This track already exists";
-        } elsif ($action eq 'overwrite') {
-          $self->_delete_datasource_features($datasource);
-          $self->_update_datasource($datasource, $config);
-        } elsif( $action eq 'new' ) {
-          my $extra = 0;
-          while( 1 ) {
-            $datasource = $ud_adaptor->fetch_by_logic_name(sprintf "%s_%06x", $logic_name, $extra );
-            last if ! $datasource; ## This one doesn't exist so we are going to create it!
-            $extra++; 
-            if( $extra > 1e4 ) { # Tried 10,000 times this guy is keen!
-              $report->{'error'} = "$track_name: Cannot create two many entries in analysis table with this user and name";
-              return $report;
-            }
-          }
-          $logic_name = sprintf "%s_%06x", $logic_name, $extra; 
-          $config->{track_name}     = $logic_name;
-          $datasource = $self->_create_datasource($config, $ud_adaptor);   
-          unless ($datasource) {
-            $report->{'error'} = "$track_name: Could not create datasource!";
-          }
-        } else { #action is append [default]....
-          if ($datasource->module_version ne $config->{assembly}) {
-            $report->{'error'} = sprintf "$track_name : Cannot add %s features to %s datasource",
-              $config->{assembly} , $datasource->module_version;
-          }
-        }
-      } else {
-        $datasource = $self->_create_datasource($config, $ud_adaptor);
-
-        unless ($datasource) {
-          $report->{'error'} = "$track_name: Could not create datasource!";
-        }
-      }
-
-      return $report unless $datasource;
-      if( $track->{config}->{coordinate_system} eq 'ProteinFeature' ) {
-        $self->_save_protein_features($datasource, $track->{features});
-      } else {
-        $self->_save_genomic_features($datasource, $track->{features});
-      }
-      ## Prepend track name to feedback parameter
-      $report->{'feedback'} = $track_name;
-      $report->{'logic_name'} = $datasource->logic_name;
-    } else {
-      $report->{'error_message'} = "Need a trackname!";
-    }
-  } else {
-    $report->{'error_message'} = "Need species name";
-  }
-  return $report;
-}
-
-sub _create_datasource {
-  my ($self, $config, $adaptor) = @_;
-
-  my $datasource = Bio::EnsEMBL::Analysis->new(
-    -logic_name     => $config->{track_name},
-    -description    => $config->{description},
-    -web_data       => $config->{web_data}||{},
-    -display_label  => $config->{track_label} || $config->{track_name},
-    -displayable    => 1,
-    -module         => $config->{coordinate_system} || $DEFAULT_CS,
-    -program        =>  $config->{'method'}||'upload',
-    -program_version => $config->{'method_type'},
-    -module_version => $config->{assembly},
-  );
-
-  $adaptor->store($datasource);
-  return $datasource;
-}
-
-sub _update_datasource {
-  my ($self, $datasource, $config) = @_;
-
-  my $adaptor = $datasource->adaptor;
-
-  $datasource->logic_name(      $config->{track_name}                          );
-  $datasource->display_label(   $config->{track_label}||$config->{track_name}  );
-  $datasource->description(     $config->{description}                         );
-  $datasource->module(          $config->{coordinate_system} || $DEFAULT_CS    );
-  $datasource->module_version(  $config->{assembly}                            );
-  $datasource->web_data(        $config->{web_data}||{}                        );
-
-  $adaptor->update($datasource);
-  return $datasource;
-}
-
-sub _delete_datasource {
-  my ($self, $species, $ds_name) = @_;
-
-  my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $species );
-  my $dba = $dbs->get_DBAdaptor('userdata');
-  my $ud_adaptor  = $dba->get_adaptor( 'Analysis' );
-  my $datasource = $ud_adaptor->fetch_by_logic_name($ds_name);
-  my $error;
-  if ($datasource && ref($datasource) =~ /Analysis/) {
-    $error = $self->_delete_datasource_features($datasource);
-    $ud_adaptor->remove($datasource); ## TODO: Check errors here as well?
-  }
-  return $error;
-}
-
-sub _delete_datasource_features {
-  my ($self, $datasource) = @_;
-
-  my $dba = $datasource->adaptor->db;
-  my $source_type = $datasource->module || $DEFAULT_CS;
-
-  if (my $feature_adaptor = $dba->get_adaptor($source_type)) { # 'DnaAlignFeature' or 'ProteinFeature'
-   $feature_adaptor->remove_by_analysis_id($datasource->dbID);
-   return undef;
-  }
-  else {
-   return "Could not get $source_type adaptor";
-  }
-}
-
-sub _save_protein_features {
-  my ($self, $datasource, $features) = @_;
-
-  my $uu_dba = $datasource->adaptor->db;
-  my $feature_adaptor = $uu_dba->get_adaptor('ProteinFeature');
-
-  my $current_species = $uu_dba->species;
-
-  my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species );
-  my $core_dba = $dbs->get_DBAdaptor('core');
-  my $translation_adaptor = $core_dba->get_adaptor( 'Translation' );
-
-  my $shash;
-  my @feat_array;
-  my ($report, $errors, $feedback);
-
-  foreach my $f (@$features) {
-    my $seqname = $f->seqname;
-    unless ($shash->{ $seqname }) {
-      if (my $object =  $translation_adaptor->fetch_by_stable_id( $seqname )) {
-        $shash->{ $seqname } = $object->dbID;
-      }
-    }
-    next unless $shash->{ $seqname };
-
-    if (my $object_id = $shash->{$seqname}) {
-      eval {
-          my($s,$e) = $f->rawstart<$f->rawend?($f->rawstart,$f->rawend):($f->rawend,$f->rawstart);
-    my $feat = Bio::EnsEMBL::ProteinFeature->new(
-              -translation_id => $object_id,
-              -start      => $s,
-              -end        => $e,
-              -strand     => $f->strand,
-              -hseqname   => ($f->id."" eq "") ? '-' : $f->id,
-              -hstart     => $f->hstart,
-              -hend       => $f->hend,
-              -hstrand    => $f->hstrand,
-              -score      => $f->score,
-              -analysis   => $datasource,
-              -extra_data => $f->extra_data,
-        );
-
-    push @feat_array, $feat;
-      };
-
-      if ($@) {
-    push @$errors, "Invalid feature: $@.";
-      }
-    }
-    else {
-      push @$errors, "Invalid segment: $seqname.";
-    }
-
-  }
-
-  $feature_adaptor->save(\@feat_array) if (@feat_array);
-  push @$feedback, scalar(@feat_array).' saved.';
-  if (my $fdiff = scalar(@$features) - scalar(@feat_array)) {
-    push @$feedback, "$fdiff features ignored.";
-  }
-
-  $report->{'errors'} = $errors;
-  $report->{'feedback'} = $feedback;
-  return $report;
-}
-
-sub _save_genomic_features {
-  my ($self, $datasource, $features) = @_;
-
-  my $uu_dba = $datasource->adaptor->db;
-  my $feature_adaptor = $uu_dba->get_adaptor('DnaAlignFeature');
-
-  my $current_species = $uu_dba->species;
-
-  my $dbs  = EnsEMBL::Web::DBSQL::DBConnection->new( $current_species );
-  my $core_dba = $dbs->get_DBAdaptor('core');
-  my $slice_adaptor = $core_dba->get_adaptor( 'Slice' );
-
-  my $assembly = $datasource->module_version;
-  my $shash;
-  my @feat_array;
-  my ($report, $errors, $feedback);
-
-  foreach my $f (@$features) {
-    my $seqname = $f->seqname;
-    $shash->{ $seqname } ||= $slice_adaptor->fetch_by_region( undef,$seqname, undef, undef, undef, $assembly );
-    if (my $slice = $shash->{$seqname}) {
-      eval {
-        my($s,$e) = $f->rawstart < $f->rawend ? ($f->rawstart,$f->rawend) : ($f->rawend,$f->rawstart);
-        my $feat = Bio::EnsEMBL::DnaDnaAlignFeature->new(
-                  -slice        => $slice,
-                  -start        => $s,
-                  -end          => $e,
-                  -strand       => $f->strand,
-                  -hseqname     => ($f->id."" eq "") ? '-' : $f->id,
-                  -hstart       => $f->hstart,
-                  -hend         => $f->hend,
-                  -hstrand      => $f->hstrand,
-                  -score        => $f->score,
-                  -analysis     => $datasource,
-                  -cigar_string => $f->cigar_string || ($e-$s+1).'M', #$f->{_attrs} || '1M',
-                  -extra_data   => $f->extra_data,
-        );
-        push @feat_array, $feat;
-
-      };
-      if ($@) {
-        push @$errors, "Invalid feature: $@.";
-      }
-    }
-    else {
-      push @$errors, "Invalid segment: $seqname.";
-    }
-  }
-  $feature_adaptor->save(\@feat_array) if (@feat_array);
-  push @$feedback, scalar(@feat_array).' saved.';
-  if (my $fdiff = scalar(@$features) - scalar(@feat_array)) {
-    push @$feedback, "$fdiff features ignored.";
-  }
-  $report->{'errors'} = $errors;
-  $report->{'feedback'} = $feedback;
-  return $report;
-}
-
 #---------------------------------- ID history functionality ---------------------------------
 
 sub get_stable_id_history_data {
@@ -742,7 +399,8 @@ sub calculate_consequence_data {
   
   # build a config hash - used by all the VEP methods
   my $vep_config = $self->configure_vep;
-  
+ 
+=pod 
   ## Convert the SNP features into VEP_OUTPUT features
   if (my $parser = $data->{'parser'}){ 
     foreach my $track ($parser->{'tracks'}) {
@@ -871,6 +529,7 @@ sub calculate_consequence_data {
     }
     $nearest = $parser->nearest;
   }
+=cut
   
   if ($file_count <= $size_limit){
     return (\%consequence_results, $nearest);
