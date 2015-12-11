@@ -53,7 +53,6 @@ use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::Table;
-use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::File::Utils::IO qw/delete_file/;
 use EnsEMBL::Web::File::Utils::FileSystem qw/create_path copy_files/;
 
@@ -123,20 +122,17 @@ sub save_upload {
   my $user = $hub->user;
 
   if ($user) {
-    my $rel_path  = $self->_move_to_user('upload');
-    ## Work out where we're going to copy the file to
-    my $file      = EnsEMBL::Web::File::User->new(hub => $hub, file => $rel_path);
-    my $full_path  = $file->absolute_write_path;
-    my $user_id   = $user->id;
-    (my $destination = $full_path) =~ s/session_[0-9]+/user_$user_id/;
+    my ($old_path, $new_path)  = $self->_move_to_user('upload');
     ## Now move file
-    if ($full_path && $destination) {
+    if ($old_path && $new_path) {
       ## Create path to new destination
-      my @path_elements = split('/', $destination);
+      my @path_elements = split('/', $new_path);
       pop @path_elements;
       my $dir = join ('/', @path_elements);
       create_path($dir, {'no_exception' => 1});
-      copy_files({$full_path => $destination}, {'no_exception' => 1});
+      ## Set full paths
+      my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
+      copy_files({$tmp_dir.'/'.$old_path => $tmp_dir.'/'.$new_path}, {'no_exception' => 1});
     }
   }
   else {
@@ -169,13 +165,8 @@ sub delete_upload {
   #warn ">>> PATH TO FILE $rel_path";
   if ($rel_path) {
     ## Also remove file
-    ## We need to recreate file object from path stored in session
-    ## because we need the full path in order to delete it
-    my $file = EnsEMBL::Web::File::User->new( 
-                                              hub       => $hub, 
-                                              file      => $rel_path,
-                                            );
-    my $result = delete_file($file->absolute_write_path, {'nice' => 1, 'no_exception' => 1});
+    my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR;
+    my $result = delete_file($tmp_dir.'/'.$rel_path, {'nice' => 1, 'no_exception' => 1});
     if ($result->{'error'}) {
       warn "!!! ERROR ".@{$result->{'error'}};
     }
@@ -212,9 +203,16 @@ sub _move_to_user {
   my %args    = ('type' => $type, 'code' => $hub->param('code'));
 
   my $data = $session->get_data(%args);
+  my ($old_path, $new_path);
 
   my $record;
   if ($type eq 'upload') {
+    ## Work out where we're going to copy the file to, because we need to save this
+    ## in the new user record
+    $old_path     = $data->{'file'};
+    my $user_id   = $user->id;
+    (my $new_path = $old_path) =~ s/session_[0-9]+/user_$user_id/;
+    $data->{'file'} = $new_path;
     $record = $user->add_to_uploads($data);
   }
   else {
@@ -224,7 +222,7 @@ sub _move_to_user {
   if ($record) {
     $session->purge_data(%args);
     if ($type eq 'upload') {
-      return $record->data->{'file'}; 
+      return ($old_path, $new_path); 
     }
   }
   
