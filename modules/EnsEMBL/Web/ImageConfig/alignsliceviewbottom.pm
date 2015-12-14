@@ -53,7 +53,7 @@ sub init {
     [ 'alignscalebar',     '',                  'alignscalebar',     { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'ruler',             '',                  'ruler',             { display => 'normal', strand => 'f', menu => 'no' }],
     [ 'draggable',         '',                  'draggable',         { display => 'normal', strand => 'b', menu => 'no' }], # TODO: get this working
-    [ 'variation_legend', 'Variation Legend','variation_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
+    [ 'variation_legend',  'Variant Legend',     'variation_legend', { display => 'normal', strand => 'r', accumulate => 'yes' }],
     [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r', accumulate => 'yes' }],
     [ 'gene_legend', 'Gene Legend','gene_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
   );

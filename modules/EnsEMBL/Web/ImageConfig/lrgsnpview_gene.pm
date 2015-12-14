@@ -80,7 +80,7 @@ sub init {
   
   $self->modify_configs(
     [ 'variation_feature_variation' ],
-    { display => 'normal', caption => 'Variations', strand => 'f' }
+    { display => 'normal', strand => 'f' }
   );
 }
 

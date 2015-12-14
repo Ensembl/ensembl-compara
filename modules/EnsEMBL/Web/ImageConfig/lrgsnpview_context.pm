@@ -59,7 +59,7 @@ sub init {
   
   $self->modify_configs(
     [ 'variation_feature_variation' ],
-    { display => 'normal', caption => 'Variations' }
+    { display => 'normal' }
   );
 }
 

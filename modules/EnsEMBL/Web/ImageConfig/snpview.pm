@@ -47,8 +47,8 @@ sub init {
   );
 
   $self->add_tracks('information',
-    [ 'variation_legend', '', 'variation_legend', { display => 'normal', strand => 'r', name => 'Variation Legend', caption => 'Variation legend' }],
-    [ 'structural_variation_legend', '', 'structural_variation_legend', { display => 'normal', strand => 'r', name => 'Structural Variation Legend', caption => 'Structural Variation legend' }],
+    [ 'variation_legend', '', 'variation_legend', { display => 'normal', strand => 'r', name => 'Variant Legend', caption => 'Variant Legend' }],
+    [ 'structural_variation_legend', '', 'structural_variation_legend', { display => 'normal', strand => 'r', name => 'Structural Variant Legend', caption => 'Structural Variant Legend' }],
   );
   
   my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';

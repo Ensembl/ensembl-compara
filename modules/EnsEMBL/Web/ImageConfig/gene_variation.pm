@@ -99,11 +99,11 @@ sub init_gene {
   
   $self->modify_configs(
     [ 'variation_feature_variation' ],
-    { display => 'compact', caption => 'Variations', strand => 'f' }
+    { display => 'compact', strand => 'f' }
   );
   $self->modify_configs(
     [ 'somatic_mutation_COSMIC' ],
-    { display => 'compact', caption => 'COSMIC', strand => 'f' }
+    { display => 'compact', strand => 'f' }
   );
 }
 
@@ -159,7 +159,7 @@ sub init_snps {
   
   $self->add_tracks('other',
     [ 'snp_fake',             '', 'snp_fake',             { display => 'on',  strand => 'f', colours => $self->get_parameter('colours')->{'variation'}, tag => 2                                    }],
-    [ 'variation_legend',     '', 'variation_legend',     { display => 'on',  strand => 'r', menu => 'no', caption => 'Variation legend'                                                            }],
+    [ 'variation_legend',     '', 'variation_legend',     { display => 'on',  strand => 'r', menu => 'no', caption => 'Variant Legend'                                                              }],
     [ 'snp_fake_haplotype',   '', 'snp_fake_haplotype',   { display => 'off', strand => 'r', colours => $self->get_parameter('colours')->{'haplotype'}                                              }],
     [ 'tsv_haplotype_legend', '', 'tsv_haplotype_legend', { display => 'off', strand => 'r', colours => $self->get_parameter('colours')->{'haplotype'}, caption => 'Haplotype legend', src => 'all' }],
   );
