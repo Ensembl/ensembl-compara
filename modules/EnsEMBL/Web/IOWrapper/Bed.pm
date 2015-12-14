@@ -46,21 +46,11 @@ sub create_hash {
   my $end           = $feature_end - $slice->start;
   return if $end < 0 || $start > $slice->length;
 
-  my $strand        = $self->parser->get_strand || 0;
 
-  $metadata ||= {};
-  
-  if ($metadata->{'drawn_strand'} && $metadata->{'default_strand'}) {
-    return unless (
-                ## This feature is on the strand we're drawing
-                ($strand && $strand == $metadata->{'drawn_strand'})
-                ## It's unstranded and we're on the default strand 
-                || ($strand == 0 && $metadata->{'drawn_strand'} == $metadata->{'default_strand'}) 
-                );
-  }
-
-  my $score = $self->parser->get_score;
-  my $colour_params  = {
+  $metadata         ||= {};
+  my $strand          = $self->parser->get_strand || 0;
+  my $score           = $self->parser->get_score;
+  my $colour_params   = {
                         'metadata'  => $metadata, 
                         'strand'    => $strand, 
                         'score'     => $score,
