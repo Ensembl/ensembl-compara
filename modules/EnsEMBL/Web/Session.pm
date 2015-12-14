@@ -382,7 +382,8 @@ sub configure_user_data {
             $_->set_user('ftype', $track->{'ftype'});
             $_->set_user('display', $track->{'style'} || EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'}));
           } else {
-            $_->set_user('display', $valid{'normal'} ? 'normal' : $renderers->[2]);
+            my $default_display = $_->get('default_display') || 'normal';
+            $_->set_user('display', $valid{$default_display} ? $default_display : $renderers->[2]);
           }
           $image_config->altered($_->data->{'name'} || $_->data->{'coption'});
         }

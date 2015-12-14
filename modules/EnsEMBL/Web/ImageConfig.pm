@@ -681,22 +681,23 @@ sub load_user_tracks {
         $self->_compare_assemblies($entry, $session);
       }
     } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
-      my ($strand, $renderers) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
+      my ($strand, $renderers, $default) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
       $strand = $entry->{'strand'} if $entry->{'strand'};
       
       $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
-        external    => 'user',
-        glyphset    => 'flat_file',
-        colourset   => 'userdata',
-        sub_type    => 'tmp',
-        file        => $entry->{'file'},
-        format      => $entry->{'format'},
-        style       => $entry->{'style'},
-        caption     => $entry->{'name'},
-        renderers   => $renderers,
-        description => 'Data that has been temporarily uploaded to the web server.',
-        display     => 'off',
-        strand      => $strand,
+        external        => 'user',
+        glyphset        => 'flat_file',
+        colourset       => 'userdata',
+        sub_type        => 'tmp',
+        file            => $entry->{'file'},
+        format          => $entry->{'format'},
+        style           => $entry->{'style'},
+        caption         => $entry->{'name'},
+        renderers       => $renderers,
+        description     => 'Data that has been temporarily uploaded to the web server.',
+        display         => 'off',
+        default_display => $default,
+        strand          => $strand,
       }));
     }
   }
@@ -780,7 +781,7 @@ sub load_user_tracks {
    
       $analysis->web_data->{'style'} ||= $upload_sources{$logic_name}{'style'};
      
-      my ($strand, $renderers) = $self->_user_track_settings($analysis->web_data->{'style'}, $analysis->program_version);
+      my ($strand, $renderers, $default) = $self->_user_track_settings($analysis->web_data->{'style'}, $analysis->program_version);
       my $source_name = encode_entities($upload_sources{$logic_name}{'source_name'});
       my $description = encode_entities($analysis->description) || "User data from dataset $source_name";
       my $caption     = encode_entities($analysis->display_label);
@@ -788,19 +789,20 @@ sub load_user_tracks {
          $strand      = $upload_sources{$logic_name}{'strand'} if $upload_sources{$logic_name}{'strand'};
       
       push @tracks, [ $logic_name, $caption, {
-        external    => 'user',
-        glyphset    => '_user_data',
-        colourset   => 'userdata',
-        sub_type    => $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp',
-        renderers   => $renderers,
-        source_name => $source_name,
-        logic_name  => $logic_name,
-        caption     => $caption,
-        data_type   => $analysis->module,
-        description => $description,
-        display     => 'off',
-        style       => $analysis->web_data,
-        format      => $analysis->program_version,
+        external        => 'user',
+        glyphset        => '_user_data',
+        colourset       => 'userdata',
+        sub_type        => $upload_sources{$logic_name}{'source_type'} eq 'user' ? 'user' : 'tmp',
+        renderers       => $renderers,
+        source_name     => $source_name,
+        logic_name      => $logic_name,
+        caption         => $caption,
+        data_type       => $analysis->module,
+        description     => $description,
+        display         => 'off',
+        default_display => $default,
+        style           => $analysis->web_data,
+        format          => $analysis->program_version,
         strand      => $strand,
       }];
     }
@@ -1119,21 +1121,22 @@ sub _load_url_feature {
   }
   return unless ($data && $format);
 
-  my ($strand, $renderers) = $self->_user_track_settings(undef, $format);
+  my ($strand, $renderers, $default) = $self->_user_track_settings(undef, $format);
   my $file_info = $self->hub->species_defs->multi_val('DATA_FORMAT_INFO');
 
   my $track = $self->create_track('custom_feature', 'Single feature', {
-        external    => 'user',
-        glyphset    => 'flat_file',
-        colourset   => 'classes',
-        sub_type    => 'single_feature',
-        format      => $format,
-        caption     => 'Single '.$file_info->{$format}{'label'}.' feature',
-        renderers   => $renderers,
-        description => 'A single feature that has been loaded via a hyperlink',
-        display     => 'off',
-        strand      => $strand,
-        data        => $data,
+        external        => 'user',
+        glyphset        => 'flat_file',
+        colourset       => 'classes',
+        sub_type        => 'single_feature',
+        format          => $format,
+        caption         => 'Single '.$file_info->{$format}{'label'}.' feature',
+        renderers       => $renderers,
+        description     => 'A single feature that has been loaded via a hyperlink',
+        display         => 'off',
+        default_display => $default,
+        strand          => $strand,
+        data            => $data,
   });
   $menu->append($track) if $track;
 }
@@ -1236,20 +1239,21 @@ sub _add_bigbed_track {
   my $renderers = $args{'source'}{'renderers'};
   my $strand    = 'b';
   unless ($renderers) {
-    ($strand, $renderers) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
+    ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
   }
  
   my $options = {
-    external      => 'external',
-    sub_type      => 'url',
-    colourset     => 'feature',
-    colorByStrand => $args{'source'}{'colorByStrand'},
-    spectrum      => $args{'source'}{'spectrum'},
-    strand        => $strand,
-    style         => $args{'source'}{'style'},
-    longLabel     => $args{'source'}{'longLabel'},
-    addhiddenbgd  => 1,
-    max_label_rows => 2,
+    external        => 'external',
+    sub_type        => 'url',
+    colourset       => 'feature',
+    colorByStrand   => $args{'source'}{'colorByStrand'},
+    spectrum        => $args{'source'}{'spectrum'},
+    strand          => $strand,
+    style           => $args{'source'}{'style'},
+    longLabel       => $args{'source'}{'longLabel'},
+    addhiddenbgd    => 1,
+    max_label_rows  => 2,
+    default_display => $default,
   };
   ## Override default renderer (mainly used by trackhubs)
   $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
@@ -1352,16 +1356,16 @@ sub _add_flat_file_track {
   my ($strand, $renderers, $default) = $self->_user_track_settings($options{'style'}, $options{'format'});
 
   my $track = $self->create_track($key, $name, {
-    display       => 'off',
-    strand        => $strand,
-    external      => 'external',
-    glyphset      => 'flat_file',
-    colourset     => 'userdata',
-    caption       => $name,
-    sub_type      => $sub_type,
-    renderers     => $renderers,
-    default_style => $default,
-    description   => $description,
+    display         => 'off',
+    strand          => $strand,
+    external        => 'external',
+    glyphset        => 'flat_file',
+    colourset       => 'userdata',
+    caption         => $name,
+    sub_type        => $sub_type,
+    renderers       => $renderers,
+    default_display => $default,
+    description     => $description,
     %options
   });
 
