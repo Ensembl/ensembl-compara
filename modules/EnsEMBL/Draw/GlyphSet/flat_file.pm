@@ -67,7 +67,6 @@ sub features {
 
   if ($iow) {
     my $extra_config = {
-                        'drawn_strand'    => $self->strand,
                         'default_strand'  => 1,
                         'display'         => $self->{'display'},
                         };
@@ -85,7 +84,7 @@ sub features {
   }
   #$self->{'config'}->add_to_legend($legend);
 
-  return $data;
+  return $data->{$self->strand};
 }
 
 1;
