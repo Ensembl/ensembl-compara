@@ -57,7 +57,7 @@ sub build_feature {
 
 sub post_process {
 ### Reassemble sub-features back into features
-  my ($self, $data) = @_;
+  my ($self, $data, $prioritise) = @_;
   #use Data::Dumper;
   #warn Dumper($data);
   
@@ -118,6 +118,8 @@ sub post_process {
   }
   #warn "###########################################################";
   #warn Dumper($data);
+  ## Finally, sort the tracks
+  $self::SUPER->post_process($data, $prioritise);
 }
 
 sub create_hash {
@@ -181,7 +183,8 @@ sub create_hash {
 
   ## For zmenus, build array of extra attributes
   if ($metadata->{'display'} eq 'text') {
-    push @$extra, {'name' => 'Source', 'value' => $self->parser->get_type};
+    push @$extra, {'name' => 'Source',        'value' => $self->parser->get_source};
+    push @$extra, {'name' => 'Feature type',  'value' => $self->parser->get_type};
     if ($attributes->{'gene_id'}) {
       push @$extra, {'name' => 'Gene ID', 'value' => $attributes->{'gene_id'}};
       delete $attributes->{'gene_id'};
@@ -220,7 +223,6 @@ sub create_hash {
     'label'         => $id,
     'href'          => $href,
     'extra'         => $extra,
-    %$attributes,
   };
 }
 
