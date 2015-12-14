@@ -1238,6 +1238,7 @@ sub _add_bigbed_track {
  
   my $renderers = $args{'source'}{'renderers'};
   my $strand    = 'b';
+  my $default;
   unless ($renderers) {
     ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
   }
