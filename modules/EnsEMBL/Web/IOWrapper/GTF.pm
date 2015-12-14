@@ -131,6 +131,8 @@ sub create_hash {
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
+  my $seqname       = $self->parser->get_seqname;
+  return if $seqname ne $slice->seq_region_name;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
   my $start         = $feature_start - $slice->start;
@@ -167,17 +169,57 @@ sub create_hash {
     }
   }
 
+  my $href = $self->href({
+                        'id'          => $id,
+                        'url'         => $metadata->{'url'},
+                        'seq_region'  => $seqname,
+                        'start'       => $feature_start,
+                        'end'         => $feature_end,
+                        });
+
+  my $extra = [];
+
+  ## For zmenus, build array of extra attributes
+  if ($metadata->{'display'} eq 'text') {
+    push @$extra, {'name' => 'Source', 'value' => $self->parser->get_type};
+    if ($attributes->{'gene_id'}) {
+      push @$extra, {'name' => 'Gene ID', 'value' => $attributes->{'gene_id'}};
+      delete $attributes->{'gene_id'};
+      if ($attributes->{'gene_name'}) {
+        push @$extra, {'name' => 'Gene name', 'value' => $attributes->{'gene_name'}};
+        delete $attributes->{'gene_name'};
+      }
+      if ($attributes->{'gene_biotype'}) {
+        push @$extra, {'name' => 'Gene biotype', 'value' => $attributes->{'gene_biotype'}};
+        delete $attributes->{'gene_biotype'};
+      }
+    }
+    if ($attributes->{'transcript_id'}) {
+      push @$extra, {'name' => 'Transcript ID', 'value' => $attributes->{'transcript_id'}};
+      delete $attributes->{'transcript_id'};
+      if ($attributes->{'transcript_name'}) {
+        push @$extra, {'name' => 'Transcript name', 'value' => $attributes->{'transcript_name'}};
+        delete $attributes->{'transcript_name'};
+      }
+    }
+    foreach (sort keys %$attributes) {
+      (my $name = $_) =~ s/_/ /;
+      push @$extra, {'name' => ucfirst($name), 'value' => $attributes->{$_}};
+    }
+  }
+
   return {
-    'type'          => $self->parser->get_type,
-    'start'         => $feature_start - $slice->start,
-    'end'           => $feature_end - $slice->start,
-    'seq_region'    => $self->parser->get_seqname,
+    'start'         => $start,
+    'end'           => $end,
+    'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,
     'colour'        => $colour, 
     'join_colour'   => $metadata->{'join_colour'} || $colour,
     'label_colour'  => $metadata->{'label_colour'} || $colour,
     'label'         => $id,
+    'href'          => $href,
+    'extra'         => $extra,
     %$attributes,
   };
 }
