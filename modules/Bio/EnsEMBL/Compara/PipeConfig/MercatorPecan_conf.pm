@@ -117,7 +117,7 @@ sub default_options {
     'jar_file'          => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
 
     #Gerp default parameters
-    'window_sizes'      => "[1,10,100,500]",
+    'window_sizes'      => [1,10,100,500],
     'gerp_version'      => 2.1,
 	    
     #Location of executables (or paths to executables)

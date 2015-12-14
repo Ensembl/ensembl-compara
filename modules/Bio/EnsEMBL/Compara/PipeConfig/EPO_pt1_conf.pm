@@ -323,7 +323,7 @@ return [
 { # find the most highly constrained regions from the aligned overlaps - this will create entries in the constrained element table
  -logic_name    => 'gerp_constrained_element',
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
- -parameters    => { 'window_sizes' => '[1,10,100,500]', 'gerp_exe_dir' => $self->o('gerp_exe_dir'), 
+ -parameters    => { 'window_sizes' => [1,10,100,500], 'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 	'program_version' => $self->o('gerp_program_version'), 'mlss_id' => '#pecan_mlssid#', },
  -hive_capacity => 100,
  -batch_size    => 10,
