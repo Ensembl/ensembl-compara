@@ -954,9 +954,9 @@ sub _add_trackhub_tracks {
   my $style_mappings = {
                         'bigbed' => {
                                       'full'    => 'as_transcript_label',
+                                      'dense'   => 'as_transcript_nolabel',
                                       'squish'  => 'half_height',
                                       'pack'    => 'stack',
-                                      'dense'   => 'ungrouped',
                                       },
                         'bigwig' => {
                                       'full'    => 'tiling',
