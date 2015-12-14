@@ -171,11 +171,12 @@ sub create_tracks {
 ### Orders tracks by priority value if it exists
 ### @param slice (optional) - Bio::EnsEMBL::Slice object
 ### @param extra_config (optional) Hashref - additional configuration e.g. default colours
-### @return arrayref of one or more hashes containing track information
+### @return hashref of two arrayrefs containing track information - one for the forward strand, 
+### one for the reverse strand
   my ($self, $slice, $extra_config) = @_;
   my $hub         = $self->hub;
   my $parser      = $self->parser;
-  my $tracks      = [];
+  my $strandable  = !!$self->parser->can('get_strand');
   my $data        = {};
   my $prioritise  = 0;
   my (@order, $bin_sizes, $bins);
@@ -227,49 +228,67 @@ sub create_tracks {
       ## Skip features that lie outside the current slice
       next if ($seqname ne $slice->seq_region_name
                 || ($end < $slice->start && $start > $slice->end));
-      $self->build_feature($data, $track_key, $slice);
+      $self->build_feature($data, $track_key, $slice, $strandable);
     }
     else {
       next unless $seqname;
+      my $feature_strand = $self->parser->get_strand if $strandable;
+      $feature_strand  ||= $metadata{'default_strand'};
       ## Add this feature to the appropriate density bin
       my $bin_size    = $bin_sizes->{$seqname};
       my $bin_number  = int($start / $bin_size) + 1;
-      $data->{$track_key}{'bins'}{$seqname}{$bin_number}++;
+      $data->{$feature_strand}{$track_key}{'bins'}{$seqname}{$bin_number}++;
     }
   }
 
   if ($slice) {
-    $self->post_process($data);
+    $self->post_process($data, $prioritise);
   }
   else {
     $self->munge_densities($data);
   }
 
-  if ($prioritise) {
-    @order = sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} 
-              keys %$data;
-  }
-
-  foreach (@order) {
-    push @$tracks, $data->{$_};
-  }
-
-  return $tracks;
+  return $data;
 }
 
 sub build_feature {
   my ($self, $data, $track_key, $slice) = @_;
   my $hash = $self->create_hash($slice, $data->{$track_key}{'metadata'});
   return unless keys %$hash;
+
+  my $feature_strand = $hash->{'strand'} || $data->{$track_key}{'metadata'}{'default_strand'};
+
   if ($data->{$track_key}{'features'}) {
-    push @{$data->{$track_key}{'features'}}, $hash; 
+    push @{$data->{$feature_strand}{$track_key}{'features'}}, $hash; 
   }
   else {
-    $data->{$track_key}{'features'} = [$hash];
+    $data->{$feature_strand}{$track_key}{'features'} = [$hash];
   }
 }
 
-sub post_process {} ## Stub
+sub post_process {
+  my ($self, $data, $prioritise) = @_;
+  return $data unless $prioritise;
+
+  my @order;
+  if (scalar @{$data->{1}}) {
+    @order = sort {$data->{1}{$a}{'metadata'}{'priority'} <=> $data->{1}{$b}{'metadata'}{'priority'}} 
+              keys %$data;
+  }
+  else {
+    @order = sort {$data->{-1}{$a}{'metadata'}{'priority'} <=> $data->{-1}{$b}{'metadata'}{'priority'}} 
+              keys %$data;
+  }
+
+  my $sorted_data;
+  foreach my $strand ('1', '-1') {
+    foreach (@order) {
+      next unless $data->{$strand}{$_};
+      push @{$sorted_data->{$strand}}, $data->{$strand}{$_};
+    }
+  }
+  return $sorted_data;
+}
 
 sub munge_densities {
 ### Work out per-track densities
