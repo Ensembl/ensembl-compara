@@ -39,6 +39,7 @@ sub init {
     external_data
     user_data
     other
+    information
   ));
 
   $self->add_tracks('other',

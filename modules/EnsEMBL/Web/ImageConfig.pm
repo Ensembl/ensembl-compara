@@ -3031,7 +3031,7 @@ sub add_sequence_variations {
     $self->add_sequence_variations_default($key, $hashref, $options);
   }
 
-  $self->add_track('information', 'variation_legend', 'Variation Legend', 'variation_legend', { strand => 'r' });
+  $self->add_track('information', 'variation_legend', 'Variant Legend', 'variation_legend', { strand => 'r' });
 }
 
 # adds variation tracks in structure defined in variation meta table
@@ -3375,7 +3375,7 @@ sub add_structural_variations {
     }
   }
 
-  $self->add_track('information', 'structural_variation_legend', 'Structural Variation Legend', 'structural_variation_legend', { strand => 'r' });
+  $self->add_track('information', 'structural_variation_legend', 'Structural Variant Legend', 'structural_variation_legend', { strand => 'r' });
 
   $sv_menu->append($structural_variants);
   $menu->append($sv_menu);
