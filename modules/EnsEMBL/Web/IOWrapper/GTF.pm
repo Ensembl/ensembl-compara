@@ -119,7 +119,7 @@ sub post_process {
   #warn "###########################################################";
   #warn Dumper($data);
   ## Finally, sort the tracks
-  $self::SUPER->post_process($data, $prioritise);
+  $self->SUPER::post_process($data, $prioritise);
 }
 
 sub create_hash {
