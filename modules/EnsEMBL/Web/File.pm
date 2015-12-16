@@ -225,7 +225,7 @@ sub init {
 
     ## Now determine where to write the file to
     my $category    = $args{'category'} || $self->set_category;
-    my $subcategory = $args{'subcategory'} || $self->get_category;
+    my $subcategory = $args{'subcategory'} || $self->get_subcategory;
     my $datestamp   = $args{'datestamp'} || $self->set_datestamp;
     my $user_id     = $args{'user_identifier'} || $self->set_user_identifier;
 
