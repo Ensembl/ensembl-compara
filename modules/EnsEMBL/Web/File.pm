@@ -36,10 +36,10 @@ use EnsEMBL::Web::File::Utils::Memcached qw/:all/;
 ### path pattern, as follows:
 ### base_dir/subcategory/datestamp/user_identifier/sub_dir/file_name.ext
 ###  - base_dir can be set in subclasses - this is the main temporary file location
-###    N.B. we store a key to the path_map and look up the absolute path only when
-###    needed, so as to avoid exposing URLs to the user
-###  - base_extra is an optional directory (or directories) - mainly included for
-###    backwards compatibility with the Tools code
+###    N.B. we store a key to the path_map and look up the actual path only when
+###    needed, so as to avoid exposing actual file locations to the user
+###  - category - e.g. is this temporary or "saved" data 
+###  - subcategory - optional (mostly used by tools)
 ###  - datestamp aids in cleaning up older files by date
 ###  - user_identifier is either session id or user id, and 
 ###    helps to ensure that users only see their own data
@@ -89,7 +89,8 @@ sub new {
               'absolute'        => $absolute,
               'source'          => $source,
               'base_dir'        => $args{'base_dir'} || 'user',
-              'base_extra'      => $args{'base_extra'},
+              'category'        => $args{'category'} || 'temporary',
+              'subcategory'     => $args{'subcategory'},
               'input_drivers'   => $args{'input_drivers'} || $input_drivers, 
               'output_drivers'  => $args{'output_drivers'} || ['IO'], 
               'error'           => undef,
@@ -223,13 +224,16 @@ sub init {
     $self->{'write_name'} .= '.'.$compression if $compression;
 
     ## Now determine where to write the file to
-    my $datestamp = $args{'datestamp'} || $self->set_datestamp;
-    my $user_id   = $args{'user_identifier'} || $self->set_user_identifier;
+    my $category    = $args{'category'} || $self->set_category;
+    my $subcategory = $args{'subcategory'} || $self->get_category;
+    my $datestamp   = $args{'datestamp'} || $self->set_datestamp;
+    my $user_id     = $args{'user_identifier'} || $self->set_user_identifier;
 
-    my @path_elements = ($datestamp, $user_id);
+    my @path_elements = ($category);
+    push @path_elements, $sub_category if $sub_category;
+    push @path_elements, ($datestamp, $user_id);
     push @path_elements, $sub_dir if $sub_dir;
     push @path_elements, $self->{'write_name'};
-    unshift @path_elements, $args{'base_extra'} if $args{'base_extra'};
 
     $self->{'write_location'} = join('/', @path_elements); 
   } 
@@ -323,8 +327,12 @@ sub base_read_path {
 ### a
 ### Full standard path to file, omitting file-specific subdirectory
   my $self = shift;
-  my $dir_key = $path_map{$self->{'base_dir'}}->[0];
-  return join('/', $self->hub->species_defs->$dir_key, $self->get_datestamp, $self->get_user_identifier);
+  my $dir_key     = $path_map{$self->{'base_dir'}}->[0];
+  my @path        = ($self->hub->species_defs->$dir_key, $self->get_category);
+  my $subcategory = $self->get_subcategory;
+  push @path, $subcategory if $subcategory;
+  push @path, ($self->get_datestamp, $self->get_user_identifier);
+  return join('/', @path); 
 }
 
 sub absolute_read_path {
@@ -419,6 +427,40 @@ sub get_format {
 ### a
   my $self = shift;
   return lc($self->{'format'});
+}
+
+sub set_category {
+### Set the category of file: typically either temporary or persistent
+  my ($self, $category) = @_;
+
+  unless ($category) {
+    $category = $self->hub->user ? 'persistent' : 'temporary';
+  }
+
+  $self->{'category'} = $category;
+  return $self->{'category'};
+}
+
+sub get_category {
+### Get the category of file: typically either temporary or persistent
+  my $self = shift;
+  my $category = $self->{'category'};
+  return $category;
+}
+
+sub set_subcategory {
+### Set the subcategory of file (optional)
+  my ($self, $subcategory) = @_;
+
+  $self->{'subcategory'} = $subcategory;
+  return $self->{'subcategory'};
+}
+
+sub get_subcategory {
+### Get the (optional) subcategory of file
+  my $self = shift;
+  my $subcategory = $self->{'subcategory'};
+  return $subcategory;
 }
 
 sub set_timestamp {
