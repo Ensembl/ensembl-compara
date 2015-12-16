@@ -28,7 +28,6 @@ use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
-
 sub can_json { return 1; }
 
 sub init {
@@ -49,6 +48,33 @@ sub init {
   }
 
   $self->{'features'} = $self->features;
+}
+
+sub features {
+  warn ">>> IMPORTANT - THIS METHOD MUST BE IMPLEMENTED IN CHILD MODULES!";
+=pod
+
+Because user files can contain multiple datasets, this method should return data 
+in the following format:
+
+$data = [
+         { #Track1
+          'metadata' => {},
+          'features' => {
+                           '1'  => [{}],
+                          '-1'  => [{}],
+                        },
+          },
+          { #Track2
+           ... etc...
+          },
+        ];
+
+The keys of the feature hashref refer to the strand on which we wish to draw the data
+(as distinct from the strand on which the feature is actually found, which may be different)
+- this should be determined in the file parser, based on settings passed to it
+
+=cut
 }
 
 sub draw_features {
