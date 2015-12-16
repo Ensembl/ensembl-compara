@@ -201,6 +201,7 @@ sub upload {
       }
       else {
         my $session = $hub->session;
+        my $user    = $hub->user;
         my $md5     = $self->md5($result->{'content'});
         my $code    = join '_', $md5, $session->session_id;
         my $format  = $self->get_format || $hub->param('format');
@@ -213,21 +214,29 @@ sub upload {
         ## Attach data species to session
         ## N.B. Use 'write' locations, since uploads are read from the
         ## system's CGI directory
-        my $data = $session->add_data(
-                                    type      => 'upload',
-                                    file      => $self->write_location,
-                                    url       => $url || '',
-                                    filesize  => length($result->{'content'}),
-                                    code      => $code,
-                                    md5       => $md5,
-                                    name      => $args{'name'},
-                                    species   => $species,
-                                    format    => $format,
-                                    no_attach => $no_attach,
-                                    timestamp => time,
-                                    assembly  => $hub->species_defs->get_config($species, 'ASSEMBLY_VERSION'),
-                                    %inputs
-                                    );
+        my $record = {
+                      type      => 'upload',
+                      file      => $self->write_location,
+                      url       => $url || '',
+                      filesize  => length($result->{'content'}),
+                      code      => $code,
+                      md5       => $md5,
+                      name      => $args{'name'},
+                      species   => $species,
+                      format    => $format,
+                      no_attach => $no_attach,
+                      timestamp => time,
+                      assembly  => $hub->species_defs->get_config($species, 'ASSEMBLY_VERSION'),
+                      %inputs
+                     };
+
+        my $data;
+        if ($user) {
+          $data = $user->add_to_uploads($record);
+        }
+        else {
+          $data = $session->add_data(%$record);
+        }
 
         $session->configure_user_data('upload', $data);
         ## Store the session code so we can access it later

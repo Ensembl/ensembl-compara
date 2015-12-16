@@ -32,7 +32,27 @@ sub _init {
 sub content {
   my $self   = shift;
   my $hub    = $self->hub;
-  my $upload = $hub->session->get_data(code => $hub->param('code'));
+  my $code   = $hub->param('code');
+
+  my $upload;
+  if ($hub->user) {
+    foreach ($hub->user->uploads) {
+      if ($_->code eq $code) {
+        $upload = {
+                  'name'    => $_->name,
+                  'format'  => $_->format,
+                  'species' => $_->species,
+                  };
+        last;
+      }
+    }
+  }
+
+  ## Can't find a user record - check session
+  unless ($upload) { 
+    $upload = $hub->session->get_data(code => $code);
+  }
+
   my $html;
 
   if ($upload) {
