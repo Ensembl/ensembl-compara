@@ -230,7 +230,7 @@ sub init {
     my $user_id     = $args{'user_identifier'} || $self->set_user_identifier;
 
     my @path_elements = ($category);
-    push @path_elements, $sub_category if $sub_category;
+    push @path_elements, $subcategory if $subcategory;
     push @path_elements, ($datestamp, $user_id);
     push @path_elements, $sub_dir if $sub_dir;
     push @path_elements, $self->{'write_name'};
