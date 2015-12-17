@@ -245,14 +245,9 @@ sub create_tracks {
     $self->munge_densities($data);
   }
 
-  if ($prioritise) {
-    @order = sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} 
-              keys %$data;
-  }
+  $self->post_process;
 
-  foreach (@order) {
-    push @$tracks, $data->{$_};
-  }
+  my $tracks = $self->sort_tracks($data, $prioritise); 
 
   return $tracks;
 }
@@ -272,7 +267,21 @@ sub build_feature {
   }
 }
 
-sub post_process {} ## Stub
+sub sort_tracks {
+ my ($self, $data, $prioritise) = @_;
+  return $data unless $prioritise;
+
+  my @order = sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} 
+              keys %$data;
+
+  my $sorted_data;
+  foreach (@order) {
+    push @{$sorted_data}, $data->{$_};
+  }
+  return $sorted_data;
+}
+
+sub post_process {} # Stub
 
 sub munge_densities {
 ### Work out per-track densities
