@@ -36,6 +36,7 @@ sub build_feature {
   my $attribs       = $self->parser->get_attributes;
   my $transcript_id = $attribs->{'transcript_id'};
   my $type          = $self->parser->get_type;
+  my $strand        = $self->parser->get_strand;
 
   if ($transcript_id) { ## Feature is part of a transcript!
     if ($data->{$track_key}{'transcripts'}{$transcript_id}) {
@@ -46,11 +47,11 @@ sub build_feature {
     }
   }
   else { ## Single feature - add to track as normal
-    if ($data->{$track_key}{'features'}) {
-      push @{$data->{$track_key}{'features'}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
+    if ($data->{$track_key}{'features'}{$strand}) {
+      push @{$data->{$track_key}{'features'}{$strand}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
     }
     else {
-      $data->{$track_key}{'features'} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
+      $data->{$track_key}{'features'}{$strand} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
     }
   }
 }
@@ -99,27 +100,24 @@ sub post_process {
       }
       #warn Dumper(\%transcript);
 
-      if ($data->{$track_key}{'features'}) {
+      if ($data->{$track_key}{'features'}{$transcript{'strand'}}) {
         push @{$data->{$track_key}{'features'}}, \%transcript; 
       }
       else {
-        $data->{$track_key}{'features'} = [\%transcript]; 
+        $data->{$track_key}{'features'}{$transcript{'strand'}} = [\%transcript]; 
       }
     }
     ## Transcripts will be out of order, owing to being stored in hash
     ## Sort by start coordinate, then reverse length (i.e. longest first)
-    my @sorted_features = sort {
-                                $a->{'seq_region'} cmp $b->{'seq_region'}
-                                || $a->{'start'} <=> $b->{'start'}
-                                || $b->{'end'} <=> $a->{'end'}
-                                } @{$data->{$track_key}{'features'}};
-    $data->{$track_key}{'features'} = \@sorted_features;
-    #delete $data->{$track_key}{'transcripts'};
+    foreach my $s ('1', '-1') {
+      my @sorted_features = sort {
+                                  $a->{'seq_region'} cmp $b->{'seq_region'}
+                                  || $a->{'start'} <=> $b->{'start'}
+                                  || $b->{'end'} <=> $a->{'end'}
+                                  } @{$data->{$track_key}{'features'}{$s}};
+      $data->{$track_key}{'features'}{$s} = \@sorted_features;
+    }
   }
-  #warn "###########################################################";
-  #warn Dumper($data);
-  ## Finally, sort the tracks
-  $self->SUPER::post_process($data, $prioritise);
 }
 
 sub create_hash {
@@ -147,7 +145,6 @@ sub create_hash {
   my $score   = $self->parser->get_score;
 
   $metadata ||= {};
-  $metadata->{'strands'}{$strand}++;
 
   my $colour_params  = {
                         'metadata'  => $metadata,
@@ -171,12 +168,14 @@ sub create_hash {
     }
   }
 
+  my $feature_strand = $strand || $metadata->{'default_strand'};
   my $href = $self->href({
                         'id'          => $id,
                         'url'         => $metadata->{'url'},
                         'seq_region'  => $seqname,
                         'start'       => $feature_start,
                         'end'         => $feature_end,
+                        'strand'      => $feature_strand,
                         });
 
   my $extra = [];
