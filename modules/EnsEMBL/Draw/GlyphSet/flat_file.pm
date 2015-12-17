@@ -30,11 +30,13 @@ use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 
 sub features {
+### Method to parse a data file and return information to be displayed
+### @return Arrayref - see parent
   my $self         = shift;
   my $container    = $self->{'container'};
   my $hub          = $self->{'config'}->hub;
   my $species_defs = $self->species_defs;
-  my $sub_type     = $self->my_config('sub_type');
+  my $type         = $self->my_config('type');
   my $format       = $self->my_config('format');
   my $data         = [];
   my $legend       = {};
@@ -45,15 +47,12 @@ sub features {
               'format'  => $format,
               );
 
-  if ($sub_type eq 'url') {
+  if ($type && $type eq 'url') {
     $args{'file'} = $self->my_config('url');
     $args{'input_drivers'} = ['URL'];
   }
   else {
     $args{'file'} = $self->my_config('file');
-    if ($args{'file'} !~ /\//) { ## TmpFile upload
-      $args{'prefix'} = 'user_upload';
-    }
   }
 
   my $file  = EnsEMBL::Web::File::User->new(%args);
@@ -83,8 +82,7 @@ sub features {
     warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
   }
   #$self->{'config'}->add_to_legend($legend);
-
-  return $data->{$self->strand};
+  return $data;
 }
 
 1;
