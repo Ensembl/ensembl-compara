@@ -331,8 +331,7 @@ sub pipeline_analyses_epo_anchor_mapping {
 	    {   -logic_name => 'trim_anchor_align',			
 		-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
 		-parameters => {
-				'input_method_link_species_set_id' => '#mapping_mlssid#',
-				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
+                                'method_link_species_set_id' => '#mapping_mlssid#',
                                 'ortheus_c_exe' => $self->o('ortheus_c_exe'),
 			},
                 -flow_into => {
@@ -345,8 +344,7 @@ sub pipeline_analyses_epo_anchor_mapping {
 	    {   -logic_name => 'trim_anchor_align_himem',
 		-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
 		-parameters => {
-				'input_method_link_species_set_id' => '#mapping_mlssid#',
-				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
+                                'method_link_species_set_id' => '#mapping_mlssid#',
                                 'ortheus_c_exe' => $self->o('ortheus_c_exe'),
 			},
         -flow_into => { -1 => 'ignore_huge_trim_anchor_align' },

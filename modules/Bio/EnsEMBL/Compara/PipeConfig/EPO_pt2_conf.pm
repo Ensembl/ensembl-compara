@@ -84,7 +84,6 @@ sub default_options {
         'mapping_method_link_id' => 10000, # dummy value - should not need to change
     	'mapping_method_link_name' => 'MAP_ANCHORS', 
     	'mapping_mlssid' => 10000, # dummy value - should not need to change
-    	'trimmed_mapping_mlssid' => 11000, # dummy value - should not need to change
     	
     	 # dont dump the MT sequence for mapping
     	'only_nuclear_genome' => 1,
@@ -125,7 +124,6 @@ sub pipeline_wide_parameters {
 		'mapping_method_link_id' => $self->o('mapping_method_link_id'),
         	'mapping_method_link_name' => $self->o('mapping_method_link_name'),
         	'mapping_mlssid' => $self->o('mapping_mlssid'),
-		'trimmed_mapping_mlssid' => $self->o('trimmed_mapping_mlssid'),
 		'seq_dump_loc' => $self->o('seq_dump_loc'),
 		'compara_anchor_db' => $self->o('compara_anchor_db'),
 		'master_db' => $self->o('master_db'),

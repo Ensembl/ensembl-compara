@@ -82,7 +82,7 @@ sub default_options {
 
         'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
 
-        'trimmed_mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
+        'mapping_mlssid' => 10000, # method_link_species_set_id of the final (2bp) mapped anchors
         # 'mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
         #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
@@ -142,7 +142,7 @@ sub pipeline_wide_parameters {
 		'enredo_mapping_file' => $self->o('enredo_mapping_file'),
 		'master_db' => $self->o('master_db'),
 		'compara_mapped_anchor_db' => $self->o('compara_mapped_anchor_db'),
- 		'trimmed_mapping_mlssid' => $self->o('trimmed_mapping_mlssid'),
+                'mapping_mlssid' => $self->o('mapping_mlssid'),
 		'mlss_id' => $self->o('mlss_id'),
 		'enredo_output_file' => $self->o('enredo_output_file'),
                 'run_gerp' => $self->o('run_gerp'),

@@ -84,7 +84,6 @@ sub default_options {
         'mapping_method_link_id' => 10000, # dummy value - should not need to change
         'mapping_method_link_name' => 'MAP_ANCHORS', 
         'mapping_mlssid' => 10000, # dummy value - should not need to change
-        'trimmed_mapping_mlssid' => 11000, # dummy value - should not need to change
         'ancestral_sequences_name' => 'ancestral_sequences',
 
         # Executable parameters
@@ -144,7 +143,6 @@ sub pipeline_wide_parameters {
         'mapping_method_link_id'    => $self->o('mapping_method_link_id'),
         'mapping_method_link_name'  => $self->o('mapping_method_link_name'),
         'mapping_mlssid'            => $self->o('mapping_mlssid'),
-        'trimmed_mapping_mlssid'    => $self->o('trimmed_mapping_mlssid'),
 
         # directories
         'work_dir'              => $self->o('work_dir'),

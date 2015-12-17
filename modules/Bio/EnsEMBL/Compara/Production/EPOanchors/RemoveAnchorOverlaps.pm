@@ -30,7 +30,7 @@ Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps
 =head1 SYNOPSIS
 
 parameters
-{input_analysis_id=> ?,method_link_species_set_id=> ?,input_method_link_species_set_id=> ?, genome_db_ids => [?],}
+{input_analysis_id=> ?,method_link_species_set_id=> ?,method_link_species_set_id=> ?, genome_db_ids => [?],}
 
 =cut
 

@@ -80,11 +80,11 @@ sub fetch_input {
    $self->param('anchor_aligns',[]);
   my $anchor_align_adaptor = $self->compara_dba()->get_AnchorAlignAdaptor();
   ## This method returns a hash at the moment, not the objects
-#   print "Fetching AnchorAligns for Anchor ", $self->param('anchor_id'), " and MLSS ", $self->{'input_method_link_species_set_id'}, "\n";
+#   print "Fetching AnchorAligns for Anchor ", $self->param('anchor_id'), " and MLSS ", $self->{'method_link_species_set_id'}, "\n";
   my $anchor_aligns = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id(
-      $self->param('anchor_id'), $self->param('input_method_link_species_set_id') );
+      $self->param('anchor_id'), $self->param('method_link_species_set_id') );
   die "Cannot find any anchor_align with anchor_id = ". $self->param('anchor_id').
-    " and method_link_species_set_id = ". $self->param('input_method_link_species_set_id')
+    " and method_link_species_set_id = ". $self->param('method_link_species_set_id')
       if (!$anchor_aligns and !scalar(@$anchor_aligns));
   $self->param('anchor_aligns', $anchor_aligns);
   # Preload all we need from the Compara DB
@@ -362,7 +362,6 @@ sub get_trimmed_anchor_aligns {
     delete($new_anchor_align->{'dbID'});
     $new_anchor_align->dnafrag_start($start);
     $new_anchor_align->dnafrag_end($end);
-    $new_anchor_align->method_link_species_set_id($self->param('output_method_link_species_set_id'));
     $new_anchor_align->untrimmed_anchor_align_id($this_anchor_align->dbID);
     push(@$trimmed_anchor_aligns, $new_anchor_align);
   }
