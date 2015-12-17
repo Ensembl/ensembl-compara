@@ -176,7 +176,6 @@ sub create_tracks {
   my $hub         = $self->hub;
   my $parser      = $self->parser;
   my $strandable  = !!$self->parser->can('get_strand');
-  my $tracks      = [];
   my $data        = {};
   my $prioritise  = 0;
   my (@order, $bin_sizes, $bins);
@@ -245,9 +244,10 @@ sub create_tracks {
     $self->munge_densities($data);
   }
 
-  $self->post_process;
+  $self->post_process($data);
 
-  my $tracks = $self->sort_tracks($data, $prioritise); 
+  ## Finally sort the completed tracks
+  my $tracks = $self->sort_tracks($data, \@order, $prioritise); 
 
   return $tracks;
 }
@@ -268,11 +268,10 @@ sub build_feature {
 }
 
 sub sort_tracks {
- my ($self, $data, $prioritise) = @_;
-  return $data unless $prioritise;
+  my ($self, $data, $default_order, $prioritise) = @_;
 
-  my @order = sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} 
-              keys %$data;
+  my @order = $prioritise ? sort {$data->{$a}{'metadata'}{'priority'} <=> $data->{$b}{'metadata'}{'priority'}} keys %$data
+                          : @$default_order;
 
   my $sorted_data;
   foreach (@order) {
