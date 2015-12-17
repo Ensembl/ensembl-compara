@@ -151,6 +151,7 @@ sub content {
       </div>
     };
 
+    $html .= $more.$tip;
   }
   else {
     $html = '<p class="space-below">You have no custom data.</p>';
@@ -159,8 +160,6 @@ sub content {
   return qq{
     <h2 class="legend">Your data</h2>
     $html
-    $more
-    $tip
   };
 
 }

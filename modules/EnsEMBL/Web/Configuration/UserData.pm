@@ -48,7 +48,10 @@ sub populate_tree {
   $data_menu->append($self->create_node('RefreshUpload',   '', [], { command => 'EnsEMBL::Web::Command::UserData::RefreshUpload'   }));
   $data_menu->append($self->create_node('CheckShare',   '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckShare'   }));
   ## Data management
-  $data_menu->append($self->create_node('ManageData',            'Manage Data', [qw(manage_remote EnsEMBL::Web::Component::UserData::ManageData)]));
+  $data_menu->append($self->create_node('ManageData',            'Manage Data', [qw(
+                    manage_remote EnsEMBL::Web::Component::UserData::ManageData
+                    select_file   EnsEMBL::Web::Component::UserData::SelectFile
+    )]));
 
   ## Trackhub attachment
   $data_menu->append($self->create_node('TrackHubRedirect',   '', [], { command => 'EnsEMBL::Web::Command::UserData::TrackHubRedirect'   }));
