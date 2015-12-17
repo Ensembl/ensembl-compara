@@ -58,7 +58,7 @@ sub build_feature {
 
 sub post_process {
 ### Reassemble sub-features back into features
-  my ($self, $data, $prioritise) = @_;
+  my ($self, $data) = @_;
   #use Data::Dumper;
   #warn Dumper($data);
   
@@ -98,13 +98,13 @@ sub post_process {
       foreach (@ordered_segments) {
         ($args, %transcript) = $self->add_to_transcript($_, $args, %transcript);
       }
-      #warn Dumper(\%transcript);
+      my $feature_strand = $transcript{'strand'};
 
-      if ($data->{$track_key}{'features'}{$transcript{'strand'}}) {
-        push @{$data->{$track_key}{'features'}}, \%transcript; 
+      if ($data->{$track_key}{'features'}{$feature_strand}) {
+        push @{$data->{$track_key}{'features'}{$feature_strand}}, \%transcript; 
       }
       else {
-        $data->{$track_key}{'features'}{$transcript{'strand'}} = [\%transcript]; 
+        $data->{$track_key}{'features'}{$feature_strand} = [\%transcript]; 
       }
     }
     ## Transcripts will be out of order, owing to being stored in hash
@@ -114,7 +114,7 @@ sub post_process {
                                   $a->{'seq_region'} cmp $b->{'seq_region'}
                                   || $a->{'start'} <=> $b->{'start'}
                                   || $b->{'end'} <=> $a->{'end'}
-                                  } @{$data->{$track_key}{'features'}{$s}};
+                                  } @{$data->{$track_key}{'features'}{$s}||[]};
       $data->{$track_key}{'features'}{$s} = \@sorted_features;
     }
   }
