@@ -65,6 +65,7 @@ sub feature_content {
   my $consequence   = $hub->param('consequence');
   my $ld_r2         = $hub->param('r2');
   my $ld_d_prime    = $hub->param('d_prime');
+  my $ld_pop_id     = $hub->param('pop_id');
   my $chr_start     = $feature->seq_region_start;
   my $chr_end       = $feature->seq_region_end;
   my $chr           = $feature->seq_region_name;
@@ -236,7 +237,21 @@ sub feature_content {
       last;
     }
   }
-  
+
+  # LD Manhattan plot
+  if ($ld_pop_id) {
+    $self->add_entry({
+      label_html => 'LD Manhattan plot',
+      link       => $hub->url({
+        type   => 'Variation',
+        action => 'LDPlot',
+        v      => $name,
+        vf     => $dbID,
+        pop1   => $ld_pop_id
+      })
+    });
+  }
+
   if (scalar @{$hub->database($db)->get_PhenotypeFeatureAdaptor->fetch_all_by_VariationFeature_list([ $feature ]) || []}) {
     $self->add_entry({
       label_html => 'Phenotype data',
