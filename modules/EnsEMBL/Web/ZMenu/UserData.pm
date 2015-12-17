@@ -41,6 +41,7 @@ sub content {
   $click_data->{'display'} = 'text';
 
   my @coords = map { $hub->param("fake_click_$_") } qw(chr start end);
+  my $strand = $hub->param('fake_click_strand') || 1;
 
   my $type     = $click_data->{'my_config'}->data->{'glyphset'};
   my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
@@ -56,7 +57,7 @@ sub content {
     if ($type eq 'flat_file') { 
       my $data = $glyphset->features;
       foreach my $track (@$data) {
-        foreach (@{$track->{'features'}||[]}) {
+        foreach (@{$track->{'features'}{$strand}||[]}) {
           if ($feature_id && $_->{'label'} eq $feature_id) {
             $_->{'track_name'} = $track->{'metadata'}{'name'};
             $_->{'url'}        = $track->{'metadata'}{'url'};

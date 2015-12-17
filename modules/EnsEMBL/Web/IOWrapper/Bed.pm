@@ -60,6 +60,7 @@ sub create_hash {
 
   my $id = $self->parser->can('get_id') ? $self->parser->get_id
             : $self->parser->can('get_name') ? $self->parser->get_name : undef;
+  my $feature_strand = $strand || $metadata->{'default_strand'};
 
   my $href = $self->href({
                         'id'          => $id,
@@ -67,6 +68,7 @@ sub create_hash {
                         'seq_region'  => $seqname,
                         'start'       => $feature_start,
                         'end'         => $feature_end,
+                        'strand'      => $feature_strand,
                         });
 
   my $feature = {
