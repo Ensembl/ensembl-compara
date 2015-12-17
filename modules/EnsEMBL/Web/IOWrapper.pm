@@ -264,7 +264,7 @@ sub build_feature {
 
   my $feature_strand = $hash->{'strand'} || $data->{$track_key}{'metadata'}{'default_strand'};
 
-  if ($data->{$track_key}{'features'}) {
+  if ($data->{$track_key}{'features'}{$feature_strand}) {
     push @{$data->{$track_key}{'features'}{$feature_strand}}, $hash; 
   }
   else {
@@ -279,9 +279,11 @@ sub munge_densities {
   my ($self, $data) = @_;
   while (my ($key, $info) = each (%$data)) {
     my $track_max = 0;
-    foreach my $chr (keys %{$info->{'bins'}}) {
-      my $chr_max = max(values %{$info->{'bins'}{$chr}});
-      $track_max = $chr_max if $chr_max > $track_max;
+    foreach my $strand (keys %{$info->{'bins'}}) {
+      foreach my $chr (keys %{$info->{'bins'}{$strand}}) {
+        my $chr_max = max(values %{$info->{'bins'}{$strand}{$chr}});
+        $track_max = $chr_max if $chr_max > $track_max;
+      }
     }
     $info->{'metadata'}{'max_value'} = $track_max;
   }
