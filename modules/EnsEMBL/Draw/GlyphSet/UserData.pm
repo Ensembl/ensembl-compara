@@ -84,7 +84,7 @@ sub draw_features {
   my $feature_count = 0;
 
   foreach (@$subtracks) {
-    $feature_count += scalar(@{$_->{'features'}||[]});
+    $feature_count += scalar(@{$_->{'features'}{$self->strand}||[]});
   }
 
   unless ($feature_count > 0) {
@@ -93,6 +93,7 @@ sub draw_features {
   }
 
   ## Defaults
+  $self->{'my_config'}->set('this_strand', $self->strand);
   $self->{'my_config'}->set('slice_length', $self->{'container'}->length);
   $self->{'my_config'}->set('bumped', 1) unless defined($self->{'my_config'}->get('bumped'));
   unless ($self->{'my_config'}->get('height')) {
@@ -114,10 +115,9 @@ sub draw_features {
   my $skipped     = 1;
 
   foreach (@$subtracks) {
-    my $features  = $_->{'features'};
+    my $features  = $_->{'features'}{$self->strand};
     my $metadata  = $_->{'metadata'} || {};
     next unless scalar @{$features||[]};
-    #next if $self->skip_strand($metadata->{'strands'});
     $skipped = 0;
 
     ## Set alternative colour (used by some styles)
@@ -219,34 +219,6 @@ sub _bg_href {
   }
   return $bg_href;
 }
-
-=pod
-sub skip_strand {
-  my ($self, $strand_info) = @_;
-  my $skip = 0;
-  my $drawable_strands = $self->{'my_config'}->get('strand') || '';
-  my $default_strand   = $self->{'my_config'}->get('default_strand') || -1;
-  my $current_strand   = $self->strand;
-
-  if ($drawable_strands eq 'f') {
-    $skip = 1 if $current_strand == -1;
-  }
-  elsif ($drawable_strands eq 'r') {
-    $skip = 1 if $current_strand == 1;
-  }
-  elsif (keys %{$strand_info||{}}) { 
-    ## We have unstranded data, but this isn't the default strand
-    if ($strand_info->{0} && $current_strand != $default_strand) {
-      $skip = 1;
-    }
-
-    ## Adjust if there's data actually on this strand
-    $skip = 0 if $strand_info->{$current_strand};
-  }
-
-  return $skip;
-}
-=cut
 
 sub render_as_transcript_nolabel {
   my $self = shift;
