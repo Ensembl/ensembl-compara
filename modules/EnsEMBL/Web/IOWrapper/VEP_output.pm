@@ -50,8 +50,6 @@ sub create_hash {
   return if $end < 0 || $start > $slice->length;
 
   $metadata ||= {};
-  ## VEP output has no strand
-  $metadata->{'strands'}{0}++;
 
   my $href = $self->href({
                         'seq_region'  => $seqname,

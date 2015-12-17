@@ -48,8 +48,6 @@ sub create_hash {
   my @feature_ids   = @{$self->parser->get_IDs};
 
   $metadata ||= {};
-  ## VCF has no strand
-  $metadata->{'strands'}{0}++;
 
   my $href = $self->href({
                         'seq_region'  => $seqname,

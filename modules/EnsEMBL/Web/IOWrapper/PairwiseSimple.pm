@@ -36,8 +36,6 @@ sub create_hash {
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
   $metadata ||= {};
-  ## Pairwise interactions have no strand
-  $metadata->{'strands'}{0}++
 
   ## Skip this feature if the interaction crosses chromosomes
   my ($seqname_2, $feature_2_start, $feature_2_end) = $self->parser->get_interacting_region;

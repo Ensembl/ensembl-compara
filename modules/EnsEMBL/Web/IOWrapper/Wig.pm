@@ -47,8 +47,6 @@ sub create_hash {
   return if $end < 0 || $start > $slice->length;
 
   $metadata ||= {};
-  ## WIG has no strand
-  $metadata->{'strands'}{0}++;
 
   my $colour_params  = {
                         'metadata'  => $metadata,
