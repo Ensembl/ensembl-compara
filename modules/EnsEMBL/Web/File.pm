@@ -73,7 +73,7 @@ sub new {
   my $input_drivers = ['IO'];
   my $absolute = 0;
   my $source = 'file';
-  if ($args{'file'} && $args{'file'} =~ /^[http|ftp]/) {
+  if ($args{'file'} && $args{'file'} =~ /^(http|ftp)/) {
     $absolute = 1;
     $source = 'url';
     $input_drivers = ['URL'];
@@ -91,7 +91,7 @@ sub new {
               'base_dir'        => $args{'base_dir'} || 'user',
               'category'        => $args{'category'} || 'temporary',
               'subcategory'     => $args{'subcategory'},
-              'input_drivers'   => $args{'input_drivers'} || $input_drivers, 
+              'input_drivers'   => scalar @{$args{'input_drivers'}||[]} ? $args{'input_drivers'} : $input_drivers, 
               'output_drivers'  => $args{'output_drivers'} || ['IO'], 
               'error'           => undef,
               };
@@ -110,7 +110,7 @@ sub init {
   my $bare_name;
 
   ## Override default input drivers if reading from URL
-  if ($read_path =~ /^[http|ftp]/) {
+  if ($read_path =~ /^(http|ftp)/) {
     $self->{'input_drivers'} = ['URL'];
   }
 
