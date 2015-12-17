@@ -113,7 +113,7 @@ sub _render {
   }
 
   foreach (@$tracks) {
-    next unless scalar(@{$_->{'features'}||[]});
+    next unless scalar(@{$_->{'features'}{$self->strand}||[]});
     ## Work out maximum and minimum scores
     my $track_min = $self->{'my_config'}->get('min_score');
     my $track_max = $self->{'my_config'}->get('max_score');
@@ -140,7 +140,7 @@ sub _render {
 sub _get_min_max {
 ### Get minimum and maximum scores for a set of features
   my ($self, $dataset) = @_;
-  my $features = $dataset->{'features'} || [];
+  my $features = $dataset->{'features'}{$self->strand} || [];
   return unless scalar @$features;
   my $metadata = $dataset->{'metadata'} || {};
   my ($min, $max) = (0, 0);
