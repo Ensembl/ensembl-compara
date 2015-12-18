@@ -50,8 +50,31 @@ sub content_ajax {
   my $hub     = $self->hub;
   my $session = $hub->session;
   my $type    = $hub->param('_type');
-  my $data    = $session->get_data(type => $type, code => $hub->param('code'));
-  
+  my $code    = $hub->param('code');
+  warn ">>> TYPE $type, CODE $code";
+
+  my ($data, $record);
+  if ($hub->user) {
+    my $plural = $type.'s';
+    foreach ($hub->user->$plural) {
+      if ($_->code eq $code) {
+        $record = $_;
+        $data   = {
+                  'code'    => $_->code,
+                  'name'    => $_->name,
+                  'format'  => $_->format,
+                  'species' => $_->species,
+                  };
+        last;
+      }
+    }
+  }
+
+  ## Can't find a user record - check session
+  unless ($data) {
+    $data = $hub->session->get_data(type => $type, code => $code);
+  }
+
   return unless $data;
   
   my $format  = $data->{'format'};
@@ -72,9 +95,15 @@ sub content_ajax {
         my $nearest = $hub->param('nearest');
         
         if ($nearest) {
-          $data->{'nearest'}   = $nearest;
-    
-          $session->set_data(%$data);
+
+          if ($hub->user) {
+            $record->nearest($nearest);
+            $record->save;
+          }
+          else {
+            $data->{'nearest'}   = $nearest;
+            $session->set_data(%$data);
+          }
    
           if ($hub->param('count')) { 
             $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $hub->param('count');
