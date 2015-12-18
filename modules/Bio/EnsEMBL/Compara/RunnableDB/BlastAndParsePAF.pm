@@ -59,8 +59,6 @@ use FileHandle;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Utils::SqlHelper;
-
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::MemberSet;
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;

@@ -47,7 +47,7 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
-use Bio::EnsEMBL::Utils::SqlHelper;
+
 use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Compara::CAFEGeneFamilyNode;
