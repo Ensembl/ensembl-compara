@@ -1390,15 +1390,19 @@ sub _add_file_format_track {
     $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_VERSION, $args{'source'}{'dir'}, $args{'source'}{'file'};
     $args{'options'}{'external'} = undef;
   } else {
-    $desc = sprintf(
-      'Data retrieved from %s %s file on an external webserver. %s <p>This data is attached to the %s, and comes from URL: <a href="%s">%s</a></p>',
-      $article,
-      $args{'format'},
-      $args{'description'},
-      encode_entities($args{'source'}{'source_type'}),
-      encode_entities($args{'source'}{'source_url'}),
-      encode_entities($args{'source'}{'source_url'})
-    );
+    if ($args{'source'}{'source_type'} =~ /^session|user$/i) {       
+      $desc = sprintf(
+        'Data retrieved from %s %s file on an external webserver. %s <p>This data is attached to the %s, and comes from URL: <a href="%s">%s</a></p>',
+        $article,
+        $args{'format'},
+        $args{'description'},
+        encode_entities($args{'source'}{'source_type'}),
+        encode_entities($args{'source'}{'source_url'}),
+        encode_entities($args{'source'}{'source_url'})
+      );
+    } else {
+      $desc = $args{'description'};
+    }
   }
  
   $self->generic_add($menu, undef, $args{'key'}, {}, {
