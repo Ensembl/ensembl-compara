@@ -57,7 +57,6 @@ use strict;
 use warnings;
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::ConservationScore;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
