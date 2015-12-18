@@ -65,7 +65,6 @@ use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;

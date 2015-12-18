@@ -45,8 +45,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::SqlHelper;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
@@ -95,8 +93,7 @@ sub _setInternalIds {
 
     # We really need a transaction to ensure we're not screwing the database
     my $dbc = $self->compara_dba->dbc;
-    my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dbc);
-    $helper->transaction( -CALLBACK => sub {
+    $self->call_within_transaction(sub {
             my ($min_ga, $min_gab) = $dbc->db_handle->selectrow_array($sql0, undef, $mlss_id);
             if (not defined $min_ga) {
                 $self->warning("Entries for mlss_id=$mlss_id are already in the correct range. Nothing to do");

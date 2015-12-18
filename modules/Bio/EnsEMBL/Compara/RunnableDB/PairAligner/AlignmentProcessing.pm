@@ -41,7 +41,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
