@@ -87,6 +87,7 @@ sub draw_feature {
     my %params = %defaults;
 
     my $start = $_->{'start'};
+    $start = 0 if $start < 0;
     my $end   = $_->{'end'};
     $params{'x'}      = $start;
     $params{'width'}  = $end - $start;
