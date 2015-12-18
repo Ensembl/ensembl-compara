@@ -87,6 +87,7 @@ sub param_defaults {
             'tree_string' => undef, #local parameter only
             'tree_file' => undef, #local parameter only
             'depth_threshold'=> undef,  #local parameter only
+            'constrained_element_method_link_type' => 'GERP_CONSTRAINED_ELEMENT',   # you shouldn't have to change this
     };
 }
 
@@ -482,14 +483,11 @@ sub _parse_cons_file {
 	$species_set = $self->param('species_set');
     }
 
-    #Hard code method_link_type for GERP_CONSTRAINED_ELEMENT
-    my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids('GERP_CONSTRAINED_ELEMENT', $species_set);
+    # Fetch the MLSS with the request method_link_type
+    my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->param('constrained_element_method_link_type'), $species_set);
     unless ($mlss) {
 	throw("Invalid method_link_species_set\n");
     }
-
-#    my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->param('constrained_element_method_link_type'), 
-#							       $self->param('species_set'));
 
     my $constrained_element_adaptor = $self->compara_dba->get_ConstrainedElementAdaptor;
     unless ($constrained_element_adaptor) {
