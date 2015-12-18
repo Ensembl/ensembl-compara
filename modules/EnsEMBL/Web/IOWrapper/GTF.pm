@@ -169,14 +169,18 @@ sub create_hash {
   }
 
   my $feature_strand = $strand || $metadata->{'default_strand'};
-  my $href = $self->href({
+  my $click_params = {
                         'id'          => $id,
                         'url'         => $metadata->{'url'},
                         'seq_region'  => $seqname,
                         'start'       => $feature_start,
                         'end'         => $feature_end,
                         'strand'      => $feature_strand,
-                        });
+                        };
+  if ($attributes->{'exon_number'}) {
+    $click_params->{'exon'} = $attributes->{'exon_number'};
+  }
+  my $href = $self->href($click_params);
 
   my $extra = [];
 
