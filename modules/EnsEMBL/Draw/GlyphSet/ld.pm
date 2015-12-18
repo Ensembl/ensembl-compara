@@ -88,6 +88,7 @@ sub _init {
         'width'     => 1,
         'absolutey' => 1,
         'colour'    => $colours->{$type}->{'default'},
+        'href'      => $self->href($snp->[1],$pop_id)
       })); 
     }
 
@@ -113,14 +114,14 @@ sub _init {
     }));
 
     # Print info line with population details
-    my $pop_obj     = $pop_adaptor->fetch_by_name($pop_name);
+    my $pop_obj = $pop_adaptor->fetch_by_name($pop_name);
     my $parents = $pop_obj->get_all_super_Populations;
-    my $name    = "LD($key): $pop_name";
+    my $name    = $self->my_config('caption').": $pop_name";
     $name   .= '   ('.(join ', ', map { ucfirst(lc($_->name)) } @{$parents} ).')' if @$parents;
     $name   .= "   $number_of_snps SNPs";
     $self->push($self->Text({
       'x'         => 0,
-      'y'         => $yoffset - $h - $TAG_LENGTH,
+      'y'         => $yoffset - $h - $TAG_LENGTH - 2,
       'height'    => $h,
       'halign'    => 'left',
       'font'      => $fontname,
@@ -201,5 +202,19 @@ sub intersect {
   return @points;
 }
 
+sub href {
+  my ($self, $f, $pop_id) = @_;
+
+  return $self->_url({
+    species  => $self->species,
+    type     => 'Variation',
+    v        => $f->variation_name,
+    vf       => $f->dbID,
+    vdb      => $self->my_config('db'),
+    snp_fake => 1,
+    config   => $self->{'config'}{'type'},
+    pop_id   => $pop_id,
+  });
+}
 
 1;
