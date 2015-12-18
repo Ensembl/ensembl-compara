@@ -83,7 +83,6 @@ sub default_options {
       	'chunk_size' => 100000000,
       	# max block size for pecan to align
       	'pecan_block_size' => 1000000,
-      	'pecan_mlid' => 10, # dummy value (change if necessary)
       	'pecan_mlssid' => 10, # dummy value
 
       	'species_set_id' => 10000, # dummy value for reference and non-reference species
@@ -120,7 +119,6 @@ sub pipeline_wide_parameters {
 		'list_of_pairwise_mlss_ids' => $self->o('list_of_pairwise_mlss_ids'), 		
 		'main_core_dbs' => $self->o('main_core_dbs'),
                 'additional_core_db_urls' => $self->o('additional_core_db_urls'),
-        	'pecan_mlid' => $self->o('pecan_mlid'),
 	        'pecan_mlssid' => $self->o('pecan_mlssid'),
         	'overlaps_mlid' => $self->o('overlaps_mlid'),
         	'overlaps_method_link_name' => $self->o('overlaps_method_link_name'),
@@ -167,9 +165,8 @@ return [
       'INSERT INTO species_set (species_set_id, genome_db_id) SELECT #species_set_id#, genome_db_id FROM genome_db',
       # method_link (ml) and method_link_species_set (mlss) entries for the overlaps, pecan and gerp
       'REPLACE INTO method_link (method_link_id, type) VALUES(#overlaps_mlid#, "#overlaps_method_link_name#")',
-      'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, name, species_set_id) VALUES '
-      .'(#overlaps_mlssid#, #overlaps_mlid#, "get_overlaps", #species_set_id#),'
-      .'(#pecan_mlssid#, #pecan_mlid#, "pecan", #species_set_id#)',
+      'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, name, species_set_id) VALUES (#overlaps_mlssid#, #overlaps_mlid#, "get_overlaps", #species_set_id#)',
+      'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, name, species_set_id) SELECT #pecan_mlssid#, method_link_id, "pecan", #species_set_id# FROM method_link WHERE type = "PECAN"',
       ],
  },
  -flow_into => { 
