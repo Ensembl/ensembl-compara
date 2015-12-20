@@ -53,15 +53,16 @@ sub fetch_input {
 				$ref_dnafrag->name, @{ $self->param('dnafrag_chunks') });
 	$self->param('ref_slice_adaptor', $ref_slice_adaptor);
 	my (@multi_gab_overlaps, @mlss);
-	my @pairwise_mlss_ids = split(",", $self->param('list_of_pairwise_mlss_ids'));
-	foreach my $mlss_id(@pairwise_mlss_ids) {
-		my $mlss = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
-		my $non_ref_genome_db; 
-		foreach my $genome_db (@{ $mlss->species_set->genome_dbs() }){
-			if($genome_db->dbID != $ref_genome_db->dbID){
-				$non_ref_genome_db = $genome_db;
-			}
-		}
+        my $methods = $self->compara_dba->get_MethodAdaptor->fetch_all_by_class_pattern('GenomicAlignBlock.pairwise_alignment');
+        my $main_mlss = $method_link_species_set_adaptor->fetch_by_dbID($self->param_required('mlss_id'));
+        foreach my $non_ref_genome_db (@{$main_mlss->species_set->genome_dbs}) {
+                next if $non_ref_genome_db->dbID == $self->param('reference_genome_db_id');
+                my $species_set = $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( [$ref_genome_db, $non_ref_genome_db] )
+                    || die "Cannot find a SpeciesSet for the pair ".$ref_genome_db->toString." + ".$non_ref_genome_db->toString."\n";
+                my @pair_mlss = grep {defined $_} map {$method_link_species_set_adaptor->fetch_by_method_link_id_species_set_id($_->dbID, $species_set->dbID)} @$methods;
+                die "No pairwise alignment could be found for the pair ".$ref_genome_db->toString." + ".$non_ref_genome_db->toString."\n" unless @pair_mlss;
+                die "Several pairwise alignments available for the pair ".$ref_genome_db->toString." + ".$non_ref_genome_db->toString."\n" if scalar(@pair_mlss) > 1;
+                my $mlss = $pair_mlss[0];
 		my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $ref_slice);
 		foreach my $genomic_align_block( @{ $gabs } ){
 			my $restricted_gab = $genomic_align_block->restrict_between_reference_positions( @{ $self->param('dnafrag_chunks') } );
