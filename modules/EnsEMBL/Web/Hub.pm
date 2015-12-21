@@ -592,15 +592,32 @@ sub parse_referer {
 
 sub filename {
   my ($self, $object) = @_;
-  
-  my $name = sprintf('%s_%s_%s_%d',
+  my $type = $self->type;
+
+  my $name = sprintf('%s_%s_%s',
     $self->species,
-    $self->type,
+    $type,
     $self->action,
-    $self->species_defs->ENSEMBL_VERSION
   );
-  
-  $name .= '_' . $object->stable_id if $object && $object->can('stable_id');
+
+  my $identifier;
+  if ($type =~ /Variation/) {
+    $identifier = $self->param('v') || $self->param('sv');
+  }
+  elsif ($type eq 'Location') {
+    ($identifier = $self->param('r')) =~ s/:|-/_/;
+  }
+  elsif ($object) { 
+    if ($type eq 'Phenotype') {
+      $identifier = $object->get_phenotype_desc;
+    }
+    elsif ($object->can('stable_id')) {
+      $identifier = $object->stable_id;
+    }
+  }
+
+  $name .= '_' . $identifier;
+ 
   $name  =~ s/[^-\w\.]/_/g;
   
   return $name;
