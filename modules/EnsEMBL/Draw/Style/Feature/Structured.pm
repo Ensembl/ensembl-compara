@@ -91,6 +91,7 @@ sub draw_feature {
     my $end   = $_->{'end'};
     $params{'x'}      = $start;
     $params{'width'}  = $end - $start;
+    $params{'href'}   = $_->{'href'};
 
     ## Only draw blocks that appear on the image!
     if ($end < 0 || $start > $image_width) {
