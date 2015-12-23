@@ -35,11 +35,13 @@ sub content {
   my $hub   = $self->hub;
   my $email = $hub->species_defs->ENSEMBL_HELPDESK_EMAIL;
 
-  return $hub->param('result')
-    ? qq(<p>Thank you. Your message has been sent to our HelpDesk. You should receive a confirmation email shortly.</p>
-      <p>If you do not receive a confirmation, please email us directly at <a href="mailto:$email">$email</a>. Thank you.</p>)
-    : qq(<p>There was some problem sending your message. Please try again, or email us directly at <a href="mailto:$email">$email</a>. Thank you.</p>)
+  my $html = $hub->param('result')
+    ? qq(<p>Your message has been sent to our HelpDesk.</p>
+      <p>If you don't get a reply soon, please try again, <b>checking your email address carefully</b>.</p>)
+    : qq(<p>There was a problem sending your message. Please try again, or email us directly at <a href="mailto:$email">$email</a>.</p>)
   ;
+  $html .= '<p>Thank you.</p>';
+  return $html;
 }
 
 1;
