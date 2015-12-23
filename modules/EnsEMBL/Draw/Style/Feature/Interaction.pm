@@ -82,7 +82,7 @@ sub draw_feature {
   return unless $structure;
 
   ## Basic parameters for all parts of the feature
-  my $image_width   = $self->image_config->container_width; 
+  my $image_width         = $self->image_config->container_width; 
   my $feature_start = $feature->{'start'};
   my $current_x     = $feature_start;
   $current_x        = 0 if $current_x < 0;
@@ -102,12 +102,11 @@ sub draw_feature {
   ## Draw first block
   unless ($block_1->{'end'} < 0) { 
     my %params        = %defaults;
-    my $block_start   = $block_1->{'start'};
-    $block_start      = 0 if $block_start < 0;
-    my $block_end     = $block_1->{'end'};
-    $block_end        = $image_width if $block_end > $image_width;
+    ## Constrain blocks to viewport
+    my $block_start   = max($block_1->{'start'}, 0);
+    my $block_end     = min($block_1->{'end'}, $image_width);
     $params{'x'}      = $block_start;
-    $params{'width'}  = $block_end - $block_start;
+    $params{'width'}  = $block_end - $block_start + 1;
     $self->draw_block(%params);
   }
 
@@ -118,12 +117,11 @@ sub draw_feature {
   ## Draw second block
   unless ($block_2->{'start'} > $image_width) {
     my %params        = %defaults;
-    my $block_start   = $block_2->{'start'};
-    $block_start      = 0 if $block_start < 0;
-    my $block_end     = $block_2->{'end'};
-    $block_end        = $image_width if $block_end > $image_width;
+    ## Constrain blocks to viewport
+    my $block_start   = max($block_2->{'start'}, 0);
+    my $block_end     = min($block_2->{'end'}, $image_width);
     $params{'x'}      = $block_start;
-    $params{'width'}  = $block_end - $block_start;
+    $params{'width'}  = $block_end - $block_start + 1;
     $self->draw_block(%params);
   }
   return $max_arc;
@@ -146,25 +144,28 @@ sub draw_join {
   my $length      = $self->track_config->get('slice_length');
   my $pix_per_bp  = $self->image_config->transform->{'scalex'};
 
+  my ($arc_start, $arc_end);
+  my $direction       = $feature->{'direction'};
   ## Default behaviour is to draw arc from middles of features
   ## Of course for the arcs we have to use the real coordinates, 
   ## not the ones constrained to the viewport
-  my $arc_start       = $s1 == $e1 ? $s1 - 0.5
-                                : $s1 + ceil(($e1 - $s1) / 2);
-  my $arc_end         = $s2 == $e2 ? $s2 - 0.5
-                                : $s2 + floor(($e2 - $s2) / 2);
-
-  my $direction       = $feature->{'direction'};
   if ($direction) {
     if ($direction =~ /\+/) {
-       $arc_start  = $s1 == $e1 ? $s1 - 1 : $s1;
-       $arc_end    = $s2 == $e2 ? $s2 - 1 : $s2;
+      $arc_start  = $s1;
+      $arc_end    = $s2;
     }
     else {
-      $arc_start = $e1;
-      $arc_end   = $e2;
+      $arc_start = $e1 + 1;
+      $arc_end   = $e2 + 1;
     }
   }
+  else {
+    $arc_start  = $s1 == $e1 ? $s1 - 0.5
+                             : $s1 + ceil(($e1 - $s1) / 2);
+    $arc_end    = $s2 == $e2 ? $s2 - 0.5
+                             : $s2 + floor(($e2 - $s2) / 2);
+  }
+
 
   ## Flip start and end if necessary
   ($arc_start, $arc_end) = ($arc_end, $arc_start) if ($arc_start > $arc_end);
@@ -252,21 +253,21 @@ sub draw_join {
   }
 
   ## Convert horizontal dimensions back to coordinates
-  my $arc_width = ($arc_end - $arc_start) / $pix_per_bp;
-  $arc_start /= $pix_per_bp;
+  $arc_start    = int($arc_start / $pix_per_bp);
+  $arc_end      = int($arc_end / $pix_per_bp);
+  my $arc_width = $arc_end - $arc_start;
 
   ## Finally, we have the coordinates to draw 
   my $arc_params = {
-                    x             => $arc_start + ($major_axis / $pix_per_bp),
+                    x             => $arc_end,
                     y             => $b + $params{'height'},
-                    width         => $major_axis,
+                    width         => $arc_width,
                     height        => $minor_axis,
                     start_point   => $start_point,
                     end_point     => $end_point,
                     colour        => $params{'colour'},
                     filled        => 0,
                     thickness     => 2,
-                    absolutewidth => 1,
                   };
 
   push @{$self->glyphs}, $self->Arc($arc_params);
