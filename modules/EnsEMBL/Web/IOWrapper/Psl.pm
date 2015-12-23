@@ -44,11 +44,10 @@ sub create_hash {
 
   ## Only set colour if we have something in file, otherwise
   ## we will override the default colour in the drawing code
-  my $colour;
   my $strand  = $self->parser->get_strand || 0;
-  $metadata->{'strands'}{$strand}++;
+  
   ## Not sure if this is the right way to calculate score, but it seems reasonable!
-  my $score = ($self->parser->get_matches / $self->parser->get_misMatches) * 1000;
+  my $score = ($self->parser->get_matches / ($self->parser->get_misMatches || 1)) * 1000;
 
   my $colour_params  = {
                         'metadata'  => $metadata,
@@ -56,6 +55,18 @@ sub create_hash {
                         'score'     => $score,
                         };
   my $colour = $self->set_colour($colour_params);
+
+  my $label = $self->parser->get_qName;
+  my $feature_strand = $strand || $metadata->{'default_strand'};
+  my $href = $self->href({
+                        'id'          => $label,
+                        'url'         => $metadata->{'url'} || '',
+                        'seq_region'  => $seq_region,
+                        'start'       => $feature_start,
+                        'end'         => $feature_end,
+                        'strand'      => $feature_strand,
+                        });
+  warn ">>> HREF $href";
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
@@ -65,7 +76,8 @@ sub create_hash {
     'seq_region'    => $seq_region,
     'strand'        => $strand,
     'score'         => $score,
-    'label'         => $self->parser->get_qName,
+    'label'         => $label,
+    'href'          => $href,
     'colour'        => $colour, 
     'join_colour'   => $metadata->{'join_colour'} || $colour,
     'label_colour'  => $metadata->{'label_colour'} || $colour,
