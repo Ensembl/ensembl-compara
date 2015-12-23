@@ -40,13 +40,14 @@ sub create_glyphs {
   my $track_config    = $self->track_config;
   ## Set some track-wide variables
   my $default_colour  = $track_config->get('default_colour');
+  my $this_strand     = $track_config->get('this_strand') || 1;
   my $feature_height  = $track_config->get('height');
   my $slice_width     = $image_config->container_width;
   my $max_arc         = 0;
   my $current_max     = 0;
 
   foreach my $subtrack (@$data) {
-    foreach my $feature (@{$subtrack->{'features'}||[]}) {
+    foreach my $feature (@{$subtrack->{'features'}{$this_strand}||[]}) {
 
       ## Set default colour if there is one
       my $colour      = $feature->{'colour'} || $default_colour;
