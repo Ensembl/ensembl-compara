@@ -38,7 +38,6 @@ sub _init {
   
   return $self->render_text if $self->{'text_export'};
   
-  my $db;
   my $protein    = $self->{'container'};	
   my $pep_splice = $self->cache('image_splice');
 
@@ -61,13 +60,20 @@ sub _init {
            int($n_offset/3),$n_offset%3,
            int(($n_offset-1)/3),($n_offset-1)%3);           
 
+      my $location_link;
+      my $adaptor     = $protein->adaptor->db->get_TranscriptAdaptor;
+      my $transcript  = $adaptor->fetch_by_translation_stable_id($protein->stable_id);
+      if ($transcript) {
+        my $slice = $transcript->feature_Slice;
+        if ($slice) {
+          my $location    = sprintf('%s:%s-%s', $slice->seq_region_name, $slice->start, $slice->end);
+          my $url         = $self->{'config'}->hub->url({'type' => 'Location', 'action' => 'View', 'r' => $location});
+          $location_link  = sprintf('<a href="%s">%s</a>', $url, $location);
+        }
+      }
+
       my $full_aa = $aa_e - $aa_s;
       $full_aa-- if($p_s);
-
-      my @narrate;
-      push @narrate,sprintf("%dbp at start from previous codon",3-$p_s) if($p_s);
-      push @narrate,sprintf("%d full codons (%dbp)",$full_aa,$full_aa*3);
-      push @narrate,sprintf("%dbp at end in next codon",$p_e) if($p_e);
 
       my $length = sprintf("%dbp, %s aa",$n_offset-$o_offset,_trisect($n_offset-$o_offset));
 
@@ -77,12 +83,12 @@ sub _init {
         'width'    => $aa_e - $aa_s + 1,
         'height'   => $h,
         'colour'   => $colour,
-        'title'    => sprintf 'Exon: %s; First aa: %d %s; Last aa: %d %s; Start phase: %s; End phase: %s; Length: %s; Description: %s',
+        'title'    => sprintf 'Exon: %s; Location: %s; First aa: %d %s; Last aa: %d %s; Start phase: %s; End phase: %s; Length: %s',
 	                $exon_id,
+                  $location_link,
                   $aa_s+1,_obp($p_s,0),$aa_l+1,_obp($p_l,2),
                   $p_s,$p_l,
                   $length,
-                  join(" + ",@narrate),
       }));
       $flip        = 1-$flip;
       $o_offset = $n_offset;
