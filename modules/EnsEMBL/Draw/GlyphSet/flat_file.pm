@@ -72,6 +72,7 @@ sub features {
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $extra_config);
+    #use Data::Dumper; warn '>>> TRACKS '.Dumper($data);
 
     ## Override colourset based on format here, because we only want to have to do this in one place
     my $colourset   = $iow->colourset || 'userdata';
