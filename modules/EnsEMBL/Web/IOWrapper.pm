@@ -415,11 +415,28 @@ sub nearest_feature {
   }
 
   if ($nearest_region) {
+    ($nearest_start, $nearest_end) = $self->_adjust_coordinates($nearest_start, $nearest_end);
     return ($nearest_region, $nearest_start, $nearest_end, $count, 'nearest');
   }
   else {
+    ($first_start, $first_end) = $self->_adjust_coordinates($first_start, $first_end);
     return ($first_region, $first_start, $first_end, $count, 'first');
   }
+}
+
+sub _adjust_coordinates {
+  my ($self, $start, $end) = @_;
+
+  ## Flip if necessary, for easier calculations
+  ($end, $start) = ($start, $end) if $start > $end;
+  ## Expand coordinates so we don't end up on a one-base-pair slice with no visible data!
+  if (int($end - $start) < 100) {
+    my $centre = int($end - $start) / 2;
+    $start -= 50;
+    $start = 0 if $start < 0;
+    $end += 50;  
+  }
+  return ($start, $end);
 }
 
 1;
