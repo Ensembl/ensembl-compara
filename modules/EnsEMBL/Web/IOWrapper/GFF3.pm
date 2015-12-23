@@ -36,43 +36,57 @@ sub post_process {
 
   while (my ($track_key, $content) = each (%$data)) {
     ## Build a tree of features
-    my $tree = {};
-    foreach my $f (@{$content->{'features'}}) {
-      if (scalar @{$f->{'parents'}||[]}) {
-        $self->_add_to_parent($tree, $f, $_) for @{$f->{'parents'}};
-      }
-      else {
-        $tree->{$f->{'id'}} = $f;
+    my $tree = {1 => {}, -1 => {}};
+    foreach my $strand (keys %{$content->{'features'}}) {
+      foreach my $f (@{$content->{'features'}{$strand}}) {
+        if (scalar @{$f->{'parents'}||[]}) {
+          $self->_add_to_parent($tree->{$strand}, $f, $_) for @{$f->{'parents'}};
+        }
+        else {
+          $tree->{$strand}{$f->{'id'}} = $f;
+        }
       }
     }
     #warn Dumper($tree);
 
     ## Convert tree into structured features
-    my @ok_features;
-    while (my($id, $f) = each(%$tree)) {
-      ## Add to array (though we don't normally draw genes except in collapsed view)
-      push @ok_features, $self->_drawable_feature($f);
+    foreach my $strand (1, -1) {
+      my @ok_features;
+      while (my($id, $f) = each(%{$tree->{$strand}})) {
+        ## Add to array (though we don't normally draw genes except in collapsed view)
+        $f->{'href'} = $self->href($f->{'href_params'});
+        push @ok_features, $self->_drawable_feature($f);
 
-      foreach my $child_id (sort {$f->{'children'}{$a}{'start'} <=> $f->{'children'}{$b}{'start'}} keys %{$f->{'children'}||{}}) {
-        my $child = $f->{'children'}{$child_id};
-        if (scalar keys (%{$child->{'children'}||{}})) {
-          ## Object has grandchildren - probably a transcript
-          my $args = {'seen' => {}, 'no_separate_transcript' => 0};
-          ## Create a new transcript from the current feature
-          my %transcript = %$child;
-          $transcript{'type'} = 'transcript';
-          foreach my $sub_id (sort {$child->{'children'}{$a}{'start'} <=> $child->{'children'}{$b}{'start'}} keys %{$child->{'children'}||{}}) {
-            my $grandchild = $child->{'children'}{$sub_id};
-            ($args, %transcript) = $self->add_to_transcript($grandchild, $args, %transcript);  
+        foreach my $child_id (sort {$f->{'children'}{$a}{'start'} <=> $f->{'children'}{$b}{'start'}} keys %{$f->{'children'}||{}}) {
+          my $child = $f->{'children'}{$child_id};
+          ## Feature ID is inherited from parent
+          my $child_href_params       = $child->{'href_params'};
+          $child_href_params->{'id'}  = $f->{'id'};
+          $child->{'href'}            = $self->href($child_href_params);
+
+          if (scalar keys (%{$child->{'children'}||{}})) {
+            ## Object has grandchildren - probably a transcript
+            my $args = {'seen' => {}, 'no_separate_transcript' => 0};
+            ## Create a new transcript from the current feature
+            my %transcript = %$child;
+            $transcript{'type'} = 'transcript';
+            foreach my $sub_id (sort {$child->{'children'}{$a}{'start'} <=> $child->{'children'}{$b}{'start'}} keys %{$child->{'children'}||{}}) {
+              my $grandchild = $child->{'children'}{$sub_id};
+              ## Feature ID is inherited from parent
+              my $grandchild_href_params      = $grandchild->{'href_params'};
+              $grandchild_href_params->{'id'} = $child->{'id'};
+              $grandchild->{'href'}           = $self->href($grandchild_href_params);
+              ($args, %transcript)            = $self->add_to_transcript($grandchild, $args, %transcript);  
+            }
+            push @ok_features, $self->_drawable_feature(\%transcript);
           }
-          push @ok_features, $self->_drawable_feature(\%transcript);
-        }
-        else {
-          push @ok_features, $self->_drawable_feature($child);
+          else {
+            push @ok_features, $self->_drawable_feature($child);
+          }
         }
       }
+      $content->{'features'}{$strand} = \@ok_features;
     }
-    $content->{'features'} = \@ok_features;
   }
   #warn '################# PROCESSED DATA '.Dumper($data);
 }
@@ -136,19 +150,22 @@ sub create_hash {
   my $score         = $self->parser->get_score;
 
   $metadata ||= {};
-  $metadata->{'strands'}{$strand}++;
+  my $feature_strand = $strand || $metadata->{'default_strand'};
 
   my $id    = $self->parser->get_attribute_by_name('ID');
   my $label = $self->parser->get_attribute_by_name('Name') || $id; 
   my $alias = $self->parser->get_attribute_by_name('Alias');
   $label .= sprintf(' (%s)', $alias) if $alias; 
 
-  my $href = $self->href({
-                        'id'          => $id,
-                        'seq_region'  => $seqname,
-                        'start'       => $feature_start,
-                        'end'         => $feature_end,
-                        });
+  ## Don't turn these into a URL yet, as we need to manipulate them later
+  my $href_params = {
+                      'id'          => $label,
+                      'seq_region'  => $seqname,
+                      'start'       => $feature_start,
+                      'end'         => $feature_end,
+                      'strand'      => $feature_strand,
+                      };
+  #use Data::Dumper; warn ">>> HREF PARAMS ".Dumper($href_params);
 
   my @parents = split(',', $self->parser->get_attribute_by_name('Parent'));
 
@@ -165,7 +182,7 @@ sub create_hash {
     'join_colour'   => $metadata->{'join_colour'},
     'label_colour'  => $metadata->{'label_colour'},
     'label'         => $label,
-    'href'          => $href,
+    'href_params'   => $href_params,
   };
 }
 
