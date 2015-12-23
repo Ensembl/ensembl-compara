@@ -63,7 +63,7 @@ sub render {
       %sample_data = %{$species_defs->SAMPLE_DATA || {}};
       $sample_data{'GENE_TEXT'} = "$sample_data{'GENE_TEXT'}" if $sample_data{'GENE_TEXT'};
     }
-    @keys = qw(GENE_TEXT LOCATION_TEXT SEARCH_TEXT);
+    @keys = qw(GENE_TEXT LOCATION_TEXT VARIATION_TEXT SEARCH_TEXT);
   }
 
   if (keys %sample_data) {
