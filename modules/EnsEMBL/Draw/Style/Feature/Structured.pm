@@ -77,7 +77,8 @@ sub draw_feature {
         $width          = $image_width - $start;
         $last_element   = 1;
       }
-      $params{'width'}        = $width;
+      $params{'width'}  = $width;
+      $params{'href'}   = $_->{'href'};
 
       $self->draw_join(%params);      
     }
