@@ -59,7 +59,8 @@ sub create_hash {
   my $score = $self->parser->get_score;
   if ($score) {
     if ($score =~ /\d+,\d+,\d+/) {
-      $colour_params->{'itemRgb'} = $score;
+      $metadata->{'itemRgb'}  = 'On';
+      $colour_params->{'rgb'} = $score;
     }
     else {
       $metadata->{'useScore'}   = 1;
