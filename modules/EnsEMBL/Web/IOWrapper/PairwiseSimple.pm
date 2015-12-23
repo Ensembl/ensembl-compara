@@ -43,6 +43,8 @@ sub create_hash {
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
+  my $seqname         = $self->parser->get_seqname;
+  return if $seqname ne $slice->seq_region_name;
   my $slice_start     = $slice->start;
   my $feature_1_start = $self->parser->get_start - $slice_start;
   my $feature_1_end   = $self->parser->get_end - $slice_start;
@@ -53,7 +55,6 @@ sub create_hash {
   ## Set colour for feature
   my $colour_params  = {
                         'metadata'  => $metadata,
-                        'strand'    => $strand,
                         };
   my $score = $self->parser->get_score;
   if ($score) {
@@ -72,6 +73,14 @@ sub create_hash {
                   {'start' => $feature_2_start, 'end' => $feature_2_end},
                   ];
 
+  my $feature_strand = $metadata->{'default_strand'} || 1;
+  my $href = $self->href({
+                        'seq_region'  => $seqname,
+                        'start'       => $feature_1_start,
+                        'end'         => $feature_2_end,
+                        'strand'      => $feature_strand,
+                        });
+
   return {
     'start'         => $feature_1_start,
     'end'           => $feature_2_end,
@@ -79,8 +88,8 @@ sub create_hash {
     'direction'     => $self->parser->get_direction,
     'score'         => $score,
     'colour'        => $colour, 
+    'href'          => $href,
     'join_colour'   => $metadata->{'join_colour'} || $colour,
-    'label_colour'  => $metadata->{'label_colour'} || $colour,
     'structure'     => $structure,
   };
 }
