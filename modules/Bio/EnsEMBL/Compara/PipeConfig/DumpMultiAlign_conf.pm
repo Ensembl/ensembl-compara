@@ -50,6 +50,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 
@@ -120,6 +123,7 @@ sub pipeline_wide_parameters {
         'dump_program'      => $self->o('dump_program'),
         'emf2maf_program'   => $self->o('emf2maf_program'),
 
+        'dump_mode'     => $self->o('mode'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
 	'reg_conf' => $self->o('reg_conf'),
@@ -184,6 +188,10 @@ sub pipeline_analyses {
 			    split_mode => $self->o('split_mode'),
 			   },
             -flow_into => {
+                #'2->A' => WHEN( '#dump_mode# ne "file"' => [ 'createChrJobs' ] ),
+                #'3->A' => WHEN( '#dump_mode# ne "file"' => [ 'createSuperJobs' ] ),
+                #'4->A' => WHEN( '#dump_mode# ne "file"' => [ 'createOtherJobs' ] ),
+                #'5->A' => WHEN( '#dump_mode# eq "file"' => [ 'dumpMultiAlign' ] ),
                 $self->o('mode') eq 'file' ?
                 (
                     '5->A' => [ 'dumpMultiAlign' ],
@@ -235,7 +243,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => 50,
             -rc_name => 'crowd',
-            $self->o('mode') eq 'tar' ? () : ( -flow_into => [ 'compress' ] ),
+            -flow_into => WHEN( '#dump_mode# ne "tar"' => [ 'compress' ] ),
         },
         {   -logic_name     => 'copy_and_uncompress_emf_dir',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
@@ -288,13 +296,13 @@ sub pipeline_analyses {
         {   -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
             -parameters    => {
-                'mode'  => $self->o('mode'),
+                'mode'  => '#dump_mode#',
                 'readme_file' => '#output_dir#/README.#base_filename#',
             },
-            $self->o('mode') eq 'tar' ? ( -flow_into => [ 'tar' ] ) : (),
+            -flow_into     => WHEN( '#dump_mode# eq "tar"' => [ 'targz' ] ),
             -rc_name => 'default_with_reg_conf',
         },
-        {   -logic_name     => 'tar',
+        {   -logic_name     => 'targz',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'           => 'cd #export_dir#; tar czf #base_filename#.tar.gz #base_filename#',
