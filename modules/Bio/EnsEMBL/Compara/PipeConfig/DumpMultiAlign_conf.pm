@@ -171,22 +171,29 @@ sub pipeline_analyses {
                 },
             ],
             -flow_into      => {
-                '2' => [ 'initJobs' ],
+                '2' => [ 'initParams' ],
             },
             -rc_name => 'default_with_reg_conf',
         },
 
-        {  -logic_name => 'initJobs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
+        {  -logic_name  => 'initParams',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitInputID',
+            -parameters => {
+                'species'       => $self->o('species'),
+                'compara_db'    => $self->o('compara_db'),
+                'reg_conf'      => $self->o('reg_conf'),
+            },
+            -flow_into  => [ 'initJobs' ],
+            -rc_name    => 'default_with_reg_conf',
+        },
 
-            -parameters => {'species' => $self->o('species'),
-			    'dump_mlss_id' => $self->o('mlss_id'),
-			    'output_dir' => $self->o('output_dir'),
-			    'compara_db' => $self->o('compara_db'),
-			    'maf_output_dir' => $self->o('maf_output_dir'), #define if want to run emf2maf 
-			    'reg_conf' => $self->o('reg_conf'),
-			    split_mode => $self->o('split_mode'),
-			   },
+        {  -logic_name  => 'initJobs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
+            -parameters => {
+                'compara_db'    => $self->o('compara_db'),
+                'reg_conf'      => $self->o('reg_conf'),
+                'split_mode'    => $self->o('split_mode'),
+            },
             -flow_into => {
                 #'2->A' => WHEN( '#dump_mode# ne "file"' => [ 'createChrJobs' ] ),
                 #'3->A' => WHEN( '#dump_mode# ne "file"' => [ 'createSuperJobs' ] ),
