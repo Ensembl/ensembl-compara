@@ -95,11 +95,6 @@ sub write_output {
 
         #Set up other job
         $self->dataflow_output_id(undef, 4) unless $self->param('is_pairwise_aln');
-
-        # In case there is something connected there: a job to dump all the
-        # blocks in 1 file
-        $self->dataflow_output_id( {'region_name' => 'all', 'extra_args' => []}, 5);
-
     }
 }
 

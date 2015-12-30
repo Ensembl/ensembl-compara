@@ -186,10 +186,12 @@ sub pipeline_analyses {
                 'reg_conf'      => $self->o('reg_conf'),
             },
             -flow_into  => {
-                1 => WHEN(
-                    '#split_mode# eq "random"' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
-                    '#split_mode# eq "chromosome"' => [ 'initJobs' ],
+                '1->A' => WHEN(
+                    '(#dump_mode# ne "file") and (#split_mode# eq "random")' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
+                    '(#dump_mode# ne "file") and (#split_mode# eq "chromosome")' => [ 'initJobs' ],
+                    '#dump_mode# eq "file"' => { 'dumpMultiAlign' => {'region_name' => 'all', 'extra_args' => []} },    # a job to dump all the blocks in 1 file
                 ),
+                'A->1' => [ 'md5sum'],
             },
             -wait_for   => 'create_tracking_tables',
             -rc_name    => 'default_with_reg_conf',
@@ -202,20 +204,10 @@ sub pipeline_analyses {
                 'reg_conf'      => $self->o('reg_conf'),
             },
             -flow_into => {
-                #'2->A' => WHEN( '#dump_mode# ne "file"' => [ 'createChrJobs' ] ),
-                #'3->A' => WHEN( '#dump_mode# ne "file"' => [ 'createSuperJobs' ] ),
-                #'4->A' => WHEN( '#dump_mode# ne "file"' => [ 'createOtherJobs' ] ),
-                #'5->A' => WHEN( '#dump_mode# eq "file"' => [ 'dumpMultiAlign' ] ),
-                $self->o('mode') eq 'file' ?
-                (
-                    '5->A' => [ 'dumpMultiAlign' ],
-                ) : (
-                    '2->A' => [ 'createChrJobs' ],
-                    '3->A' => [ 'createSuperJobs' ],
-                    '4->A' => [ 'createOtherJobs' ],
-                ),
-                '6->A' => [ 'copy_and_uncompress_emf_dir' ],
-                'A->1' => [ 'md5sum'],
+                2 => [ 'createChrJobs' ],
+                3 => [ 'createSuperJobs' ],
+                4 => [ 'createOtherJobs' ],
+                6 => [ 'copy_and_uncompress_emf_dir' ],
             },
             -rc_name => 'default_with_reg_conf',
         },
