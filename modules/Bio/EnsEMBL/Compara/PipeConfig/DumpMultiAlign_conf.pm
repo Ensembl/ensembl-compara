@@ -89,6 +89,7 @@ sub default_options {
         # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
         'mode' => 'dir',
         # how the files will be split: either 'chromosome' or 'random'
+        # In "random" mode, we don't care about the chromsome names and coordinate systems, we let createOtherJobs bin the alignment blocks into chunks
         'split_mode' => 'chromosome',
 
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
@@ -124,6 +125,7 @@ sub pipeline_wide_parameters {
         'emf2maf_program'   => $self->o('emf2maf_program'),
 
         'dump_mode'     => $self->o('mode'),
+        'split_mode'    => $self->o('split_mode'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
 	'reg_conf' => $self->o('reg_conf'),
@@ -183,7 +185,13 @@ sub pipeline_analyses {
                 'compara_db'    => $self->o('compara_db'),
                 'reg_conf'      => $self->o('reg_conf'),
             },
-            -flow_into  => [ 'initJobs' ],
+            -flow_into  => {
+                1 => WHEN(
+                    '#split_mode# eq "random"' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
+                    '#split_mode# eq "chromosome"' => [ 'initJobs' ],
+                ),
+            },
+            -wait_for   => 'create_tracking_tables',
             -rc_name    => 'default_with_reg_conf',
         },
 
@@ -192,7 +200,6 @@ sub pipeline_analyses {
             -parameters => {
                 'compara_db'    => $self->o('compara_db'),
                 'reg_conf'      => $self->o('reg_conf'),
-                'split_mode'    => $self->o('split_mode'),
             },
             -flow_into => {
                 #'2->A' => WHEN( '#dump_mode# ne "file"' => [ 'createChrJobs' ] ),
@@ -211,7 +218,6 @@ sub pipeline_analyses {
                 'A->1' => [ 'md5sum'],
             },
             -rc_name => 'default_with_reg_conf',
-            -wait_for       => 'create_tracking_tables',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on chromosomes (1 job per chromosome)
         {  -logic_name    => 'createChrJobs',
@@ -232,9 +238,6 @@ sub pipeline_analyses {
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
-            -parameters => {
-                split_mode => $self->o('split_mode'),
-            },
             -rc_name => 'crowd',
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]

@@ -76,14 +76,7 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
 
-    if ($self->param_required('split_mode') eq 'random') {
-
-        # In this mode, we don't care about the chromsome names and
-        # coordinate systems, we let createOtherJobs bin the alignment
-        # blocks into chunks
-        $self->dataflow_output_id(undef, 4);
-
-    } elsif ($self->param_required('format') eq 'emf2maf') {
+    if ($self->param_required('format') eq 'emf2maf') {
 
         # Flow into the emf2maf branch
         $self->dataflow_output_id( {'format' => 'maf', 'output_dir' => '#export_dir#/#base_filename#_maf'}, 6);

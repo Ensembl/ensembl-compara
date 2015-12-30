@@ -99,13 +99,15 @@ sub write_output {
     my $extra_args;
     my $region_name;
 
-    if ($self->param('split_mode') eq 'chromosome') {
+    unless ($self->param('do_all_blocks')) {
+        # Here we select the blocks that don't contain $genome_db
         #Note this is using the database set in $self->param('compara_db').
         my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
         $gab_ids = $self->skip_genomic_align_block_ids();
         $extra_args = ['--skip_species', $genome_db->name];
         $region_name = 'other';
     } else {
+        # In this mode, we simply take all the blocks
         $gab_ids = $self->all_genomic_align_block_ids();
         $extra_args = [];
         $region_name = 'all';
