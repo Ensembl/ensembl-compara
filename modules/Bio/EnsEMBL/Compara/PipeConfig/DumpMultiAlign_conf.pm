@@ -130,6 +130,7 @@ sub pipeline_wide_parameters {
         'split_size'    => $self->o('split_size'),
 	'reg_conf' => $self->o('reg_conf'),
         'export_dir'    => $self->o('export_dir'),
+        'masked_seq'    => $self->o('masked_seq'),
     };
 }
 
@@ -239,7 +240,7 @@ sub pipeline_analyses {
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
             -parameters    => {
-                'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', $self->o('masked_seq'), '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_dir#/#base_filename#.#region_name#.#format#' ],
+                'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', '#masked_seq#', '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_dir#/#base_filename#.#region_name#.#format#' ],
                 'output_file_pattern' => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
                 'reg_conf'      => $self->o('reg_conf'),
             },

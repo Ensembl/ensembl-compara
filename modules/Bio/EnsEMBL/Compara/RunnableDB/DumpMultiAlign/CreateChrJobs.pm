@@ -91,7 +91,6 @@ sub write_output {
     }
 
     my $split_size = $self->param('split_size');
-    my $format = $self->param('format');
 
     while (my $row = $sth->fetchrow_arrayref) {
 
