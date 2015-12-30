@@ -76,13 +76,6 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
 
-    if ($self->param_required('format') eq 'emf2maf') {
-
-        # Flow into the emf2maf branch
-        $self->dataflow_output_id( {'format' => 'maf', 'output_dir' => '#export_dir#/#base_filename#_maf'}, 6);
-
-    } else {
-
         my @all_cs = @{$self->param('coord_systems')};
         #Set up chromosome job
         my $cs = shift @all_cs;
@@ -95,7 +88,6 @@ sub write_output {
 
         #Set up other job
         $self->dataflow_output_id(undef, 4) unless $self->param('is_pairwise_aln');
-    }
 }
 
 1;

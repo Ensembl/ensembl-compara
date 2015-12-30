@@ -114,6 +114,14 @@ sub write_output {
 
     make_path($output_dir);
 
+    if ($self->param('format') eq 'emf+maf') {
+        $output_ids->{format} = 'emf';
+        $output_ids->{run_emf2maf} = 1;
+        make_path($output_dir.'_maf');
+    } else {
+        $output_ids->{run_emf2maf} = 0;
+    }
+
     # Override autoflow and make sure the descendant jobs have all the
     # parameters
     $self->dataflow_output_id($output_ids, 1);

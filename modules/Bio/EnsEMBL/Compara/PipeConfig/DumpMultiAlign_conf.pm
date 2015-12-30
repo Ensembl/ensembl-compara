@@ -32,8 +32,7 @@ The pipeline can dump all the alignments it finds on a server, so you can do som
 Note that in this case, because the locator field is not set, you need to provide a registry file
 
 Format can be "emf", "maf", or anything BioPerl can provide (the pipeline will fail in the latter case, so
-come and talk to us). To mimic the old "emf+maf" output, you now have to run the pipeline twice: the first
-time with "emf", and the second with "emf2maf". it will then read the EMF files created by the first instance.
+come and talk to us). It also accepts "emf+maf" to generate both emf and maf files
 
 
 Release 65
@@ -82,7 +81,7 @@ sub default_options {
         #  2 for hard-masked sequence
         'masked_seq' => 1,
 
-        # Usually "maf", "emf", or "emf2maf". BioPerl alignment formats are
+        # Usually "maf", "emf", or "emf+maf". BioPerl alignment formats are
         # accepted in principle, but a healthcheck would have to be implemented
         'format' => 'emf',
 
@@ -212,7 +211,6 @@ sub pipeline_analyses {
                 2 => [ 'createChrJobs' ],
                 3 => [ 'createSuperJobs' ],
                 4 => [ 'createOtherJobs' ],
-                6 => [ 'copy_and_uncompress_emf_dir' ],
             },
             -rc_name => 'default_with_reg_conf',
         },
@@ -248,41 +246,18 @@ sub pipeline_analyses {
             },
             -hive_capacity => 50,
             -rc_name => 'crowd',
-            -flow_into => WHEN( '#dump_mode# ne "tar"' => [ 'compress' ] ),
-        },
-        {   -logic_name     => 'copy_and_uncompress_emf_dir',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'           => 'cp -a #export_dir#/#base_filename#/#base_filename#*.emf* #output_dir#; gunzip #output_dir#/*.gz',
-            },
-            -flow_into      => [ 'find_emf_files' ],
-        },
-        {   -logic_name     => 'find_emf_files',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters     => {
-                'inputcmd'      => 'grep -rc DATA #output_dir#/',
-                'delimiter'     => ":",
-                'column_names' => [ 'in_emf_file', 'num_blocks' ],
-            },
-            -flow_into => {
-                $self->o('mode') eq 'tar' ? (
-                    2 => [ 'emf2maf' ],     # will create a fan of jobs
-                ) : (
-                    '2->A' => [ 'emf2maf' ],     # will create a fan of jobs
-                    'A->1' => [ 'compress_maf_dir' ]
-                ),
-            },
+            -flow_into => [
+                WHEN( '#dump_mode# ne "tar"' => [ 'compress' ] ),
+                WHEN( '#run_emf2maf#' => [ 'emf2maf' ] ),
+            ],
         },
         {   -logic_name     => 'emf2maf',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
             -analysis_capacity  => 5,
             -rc_name        => 'crowd',
-        },
-        {   -logic_name     => 'compress_maf_dir',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'           => 'gzip -f -9 #output_dir#/*.maf',
-            },
+            -flow_into => [
+                WHEN( '#dump_mode# ne "tar"' => { 'compress' => { 'format' => 'maf'} } ),
+            ],
         },
         {   -logic_name     => 'compress',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
@@ -296,7 +271,17 @@ sub pipeline_analyses {
             -parameters     => {
                 'cmd'           => 'cd #output_dir#; md5sum *.#format#* > MD5SUM',
             },
-            -flow_into      => [ 'readme' ],
+            -flow_into      =>  [
+                WHEN( '#run_emf2maf#' => [ 'move_maf_files' ] ),
+                WHEN( ELSE 'readme' ),
+            ],
+        },
+        {   -logic_name     => 'move_maf_files',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'cmd'           => 'mv #output_dir#/*maf #output_dir#_maf/'
+            },
+            -flow_into      => { 1 => { 'md5sum' => { 'run_emf2maf' => 0, 'format' => 'maf', 'base_filename' => '#base_filename#_maf'} } },
         },
         {   -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',

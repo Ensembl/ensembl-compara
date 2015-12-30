@@ -35,7 +35,7 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 
 =head1 DESCRIPTION
 
-The RunnableDB module runs emf2maf jobs. It creates compression jobs
+The RunnableDB module runs emf2maf on a emf file
 
 =cut
 
@@ -63,7 +63,6 @@ sub run {
     # 
     $self->_healthcheck();
 
-    unlink($self->param('in_emf_file'));
 }
 
 #
