@@ -104,16 +104,11 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
 
-    #
-    #Pass on input_id and add on new parameters: multi-align mlss_id, filename
-    #
-
     my $output_dir = $self->param_required('export_dir').'/'.$self->param('filename');
     my $output_ids = {
         mlss_id         => $self->param('mlss_id'),
         genome_db_id    => $self->param('genome_db_id'),
         base_filename   => $self->param('filename'),
-        output_dir      => '#export_dir#/#base_filename#',
         is_pairwise_aln => $self->param('is_pairwise_alignment'),
     };
 

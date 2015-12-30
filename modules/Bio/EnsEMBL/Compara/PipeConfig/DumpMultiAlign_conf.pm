@@ -131,6 +131,10 @@ sub pipeline_wide_parameters {
 	'reg_conf' => $self->o('reg_conf'),
         'export_dir'    => $self->o('export_dir'),
         'masked_seq'    => $self->o('masked_seq'),
+
+        output_dir      => '#export_dir#/#base_filename#',
+        output_file_gen => '#output_dir#/#base_filename#.#region_name#.#format#',
+        output_file     => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
     };
 }
 
@@ -240,8 +244,6 @@ sub pipeline_analyses {
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
             -parameters    => {
-                'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', '#masked_seq#', '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_dir#/#base_filename#.#region_name#.#format#' ],
-                'output_file_pattern' => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
                 'reg_conf'      => $self->o('reg_conf'),
             },
             -hive_capacity => 50,
@@ -285,7 +287,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'compress',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'           => 'gzip -f -9 #output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
+                'cmd'           => 'gzip -f -9 #output_file#',
             },
             -analysis_capacity => 1,
         },

@@ -45,6 +45,13 @@ use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
+sub param_defaults {
+    return {
+        'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', '#masked_seq#', '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_file_gen#' ],
+    }
+}
+
+
 sub fetch_input {
     my $self = shift;
 
@@ -90,7 +97,7 @@ sub write_output {
 sub _healthcheck {
     my ($self) = @_;
     
-    my $output_file = $self->param('output_file_pattern');
+    my $output_file = $self->param('output_file');
 
     my $cmd;
     if ($self->param('format') eq "emf") {
@@ -111,7 +118,7 @@ sub _healthcheck {
 	#visual confirmation all is well
 	my $sql = "INSERT INTO healthcheck (filename, expected,dumped) VALUES (?,?,?)";
 	my $sth = $self->db->dbc->prepare($sql);
-	$sth->execute($self->param('output_file_pattern'), $self->param('num_blocks'), $num_blocks);
+	$sth->execute($self->param('output_file'), $self->param('num_blocks'), $num_blocks);
 	$sth->finish();
     }
 }
