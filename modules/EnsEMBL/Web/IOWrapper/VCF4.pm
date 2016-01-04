@@ -67,7 +67,12 @@ sub create_hash {
     'colour'        => $metadata->{'colour'},
     'label_colour'  => $metadata->{'label_colour'},
     'href'          => $href,
-    'extra'         => [{'name' => 'Alleles', 'value' => join('/', @alleles)}],
+    'extra'         => [
+                        {'name' => 'Alleles', 'value' => join('/', @alleles)},
+                        {'name' => 'Quality', 'value' => $self->parser->get_score},
+                        {'name' => 'Filter',  'value' => $self->parser->get_raw_filter_results},
+                        {'name' => 'Info',    'value' => $self->parser->get_raw_info},
+                        ],
   };
 }
 
