@@ -104,6 +104,7 @@ sub _drawable_feature {
           'label_colour'  => $f->{'label_colour'},
           'href'          => $f->{'href'},
           'structure'     => $f->{'structure'},
+          'extra'         => $f->{'extra'},
           };
 }
 
@@ -164,9 +165,10 @@ sub create_hash {
 
   my @parents = split(',', $self->parser->get_attribute_by_name('Parent'));
 
+  my $type = $self->parser->get_type;
   return {
     'id'            => $id,
-    'type'          => $self->parser->get_type,
+    'type'          => $type,
     'parents'       => \@parents,
     'start'         => $start,
     'end'           => $end,
@@ -178,6 +180,10 @@ sub create_hash {
     'label_colour'  => $metadata->{'label_colour'},
     'label'         => $label,
     'href_params'   => $href_params,
+    'extra'         => [
+                        {'name' => 'Source',  'value' => $self->parser->get_source },
+                        {'name' => 'Type',    'value' => $type },
+                        ],
   };
 }
 
