@@ -38,7 +38,6 @@ sub add_to_transcript {
   my $segment   = {
                    'start' => $feature->{'start'}, 
                    'end'   => $feature->{'end'},
-                   'href'  => $feature->{'href'},
                    'type'  => $type,
                   };
 
