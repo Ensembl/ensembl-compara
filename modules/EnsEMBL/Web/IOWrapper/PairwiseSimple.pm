@@ -46,7 +46,11 @@ sub create_hash {
   my $seqname         = $self->parser->get_seqname;
   return if $seqname ne $slice->seq_region_name;
   my $slice_start     = $slice->start;
-  my $feature_1_start = $self->parser->get_start - $slice_start;
+  ## Capture real start and end coordinates for use in zmenu link
+  my $click_start     = $self->parser->get_start;
+  my $click_end       = $feature_2_end;
+
+  my $feature_1_start = $click_start - $slice_start;
   my $feature_1_end   = $self->parser->get_end - $slice_start;
   $feature_2_start   -= $slice_start;
   $feature_2_end     -= $slice_start;
@@ -77,21 +81,23 @@ sub create_hash {
   my $feature_strand = $metadata->{'default_strand'} || 1;
   my $href = $self->href({
                         'seq_region'  => $seqname,
-                        'start'       => $feature_1_start,
-                        'end'         => $feature_2_end,
+                        'start'       => $click_start,
+                        'end'         => $click_end,
                         'strand'      => $feature_strand,
                         });
 
+  my $direction = $self->parser->get_direction;
   return {
     'start'         => $feature_1_start,
     'end'           => $feature_2_end,
     'seq_region'    => $self->parser->get_seqname,
-    'direction'     => $self->parser->get_direction,
+    'direction'     => $direction,
     'score'         => $score,
     'colour'        => $colour, 
     'href'          => $href,
     'join_colour'   => $metadata->{'join_colour'} || $colour,
     'structure'     => $structure,
+    'extra'         => [{'name' => 'Direction', 'value' => $direction}],
   };
 }
 
