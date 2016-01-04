@@ -61,7 +61,6 @@ sub post_process {
           my $child = $f->{'children'}{$child_id};
           ## Feature ID is inherited from parent
           my $child_href_params       = $child->{'href_params'};
-          $child_href_params->{'id'}  = $f->{'id'};
           $child->{'href'}            = $self->href($child_href_params);
 
           if (scalar keys (%{$child->{'children'}||{}})) {
@@ -71,12 +70,8 @@ sub post_process {
             my %transcript = %$child;
             $transcript{'type'} = 'transcript';
             foreach my $sub_id (sort {$child->{'children'}{$a}{'start'} <=> $child->{'children'}{$b}{'start'}} keys %{$child->{'children'}||{}}) {
-              my $grandchild = $child->{'children'}{$sub_id};
-              ## Feature ID is inherited from parent
-              my $grandchild_href_params      = $grandchild->{'href_params'};
-              $grandchild_href_params->{'id'} = $child->{'id'};
-              $grandchild->{'href'}           = $self->href($grandchild_href_params);
-              ($args, %transcript)            = $self->add_to_transcript($grandchild, $args, %transcript);  
+              my $grandchild        = $child->{'children'}{$sub_id};
+              ($args, %transcript)  = $self->add_to_transcript($grandchild, $args, %transcript);  
             }
             push @ok_features, $self->_drawable_feature(\%transcript);
           }
