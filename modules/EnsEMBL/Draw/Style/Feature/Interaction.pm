@@ -130,8 +130,6 @@ sub draw_feature {
 
 sub draw_block {
   my ($self, %params) = @_;
-  use Data::Dumper;
-  warn ">>> PARAMS: ".Dumper(\%params);
   push @{$self->glyphs}, $self->Rect(\%params);
 }
 
