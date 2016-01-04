@@ -70,7 +70,7 @@ sub create_hash {
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
-  return {
+  my $hash = {
     'start'         => $start,
     'end'           => $end,
     'seq_region'    => $seq_region,
@@ -81,8 +81,24 @@ sub create_hash {
     'colour'        => $colour, 
     'join_colour'   => $metadata->{'join_colour'} || $colour,
     'label_colour'  => $metadata->{'label_colour'} || $colour,
-    'structure'     => $self->create_structure($slice->start),
   };
+  if ($metadata->{'display'} eq 'text') {
+    $hash->{'extra'} = [
+                        {'name' => 'Hit end', 'value' => $self->parser->get_qEnd},
+                        {'name' => 'Matches', 'value' => $self->parser->get_matches},
+                        {'name' => 'Mismatches', 'value' => $self->parser->get_misMatches},
+                        {'name' => 'N Matches', 'value' => $self->parser->get_nCount},
+                        {'name' => 'Q base inserts', 'value' => $self->parser->get_qBaseInsert},
+                        {'name' => 'Q num inserts', 'value' => $self->parser->get_qNumInsert},
+                        {'name' => 'Query size', 'value' => $self->parser->get_qSize},
+                        {'name' => 'Repeat matches', 'value' => $self->parser->get_repMatches},
+                        {'name' => 'T num inserts', 'value' => $self->parser->get_tNumInsert},
+                        ];
+  }
+  else {
+    $hash->{'structure'} = $self->create_structure($slice->start);
+  }
+  return $hash;
 }
 
 sub create_structure {
