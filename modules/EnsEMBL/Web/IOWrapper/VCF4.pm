@@ -57,6 +57,8 @@ sub create_hash {
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
+  my @alleles = ($self->parser->get_reference);
+  push @alleles, @{$self->parser->get_alternatives};
   return {
     'start'         => $start,
     'end'           => $end,
@@ -65,6 +67,7 @@ sub create_hash {
     'colour'        => $metadata->{'colour'},
     'label_colour'  => $metadata->{'label_colour'},
     'href'          => $href,
+    'extra'         => [{'name' => 'Alleles', 'value' => join('/', @alleles)}],
   };
 }
 
