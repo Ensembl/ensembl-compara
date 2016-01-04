@@ -78,7 +78,7 @@ sub draw_feature {
         $last_element   = 1;
       }
       $params{'width'}  = $width;
-      $params{'href'}   = $_->{'href'};
+      $params{'href'}   = $feature->{'href'};
 
       $self->draw_join(%params);      
     }
@@ -92,7 +92,7 @@ sub draw_feature {
     my $end   = $_->{'end'};
     $params{'x'}      = $start;
     $params{'width'}  = $end - $start;
-    $params{'href'}   = $_->{'href'};
+    $params{'href'}   = $_->{'href'} || $feature->{'href'};
 
     ## Only draw blocks that appear on the image!
     if ($end < 0 || $start > $image_width) {
