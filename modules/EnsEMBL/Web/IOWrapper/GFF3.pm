@@ -149,9 +149,15 @@ sub create_hash {
   my $feature_strand = $strand || $metadata->{'default_strand'};
 
   my $id    = $self->parser->get_attribute_by_name('ID');
-  my $label = $self->parser->get_attribute_by_name('Name') || $id; 
+  my $name = $self->parser->get_attribute_by_name('Name'); 
   my $alias = $self->parser->get_attribute_by_name('Alias');
-  $label .= sprintf(' (%s)', $alias) if $alias; 
+  my $label;
+  if ($name && $alias) {
+    $label = sprintf('%s (%s)', $name, $alias);
+  }
+  else {
+    $label = $name || $alias || $id;
+  }
 
   ## Don't turn these into a URL yet, as we need to manipulate them later
   my $href_params = {
