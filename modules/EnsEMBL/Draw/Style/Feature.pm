@@ -225,6 +225,8 @@ sub add_label {
                 y         => $position->{'y'},
                 width     => $position->{'width'},
                 height    => $position->{'height'},
+                halign    => 'left',
+                valign    => 'center',
                 href      => $feature->{'href'},
                 title     => $feature->{'title'},
                 absolutey => 1,
