@@ -1429,7 +1429,7 @@ sub _user_track_settings {
   if (lc($format) eq 'pairwise') {
     @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
   }
-  elsif (lc($format) eq 'wig' || $style =~ /^(wiggle|WIG)$/) {
+  elsif (lc($format) eq 'bedgraph' || lc($format) eq 'wig' || $style =~ /^(wiggle|WIG)$/) {
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   }
   elsif (uc($format) =~ /BED|GFF|GTF/) {
