@@ -43,6 +43,18 @@ sub upload {
   my $file  = EnsEMBL::Web::File::User->new('hub' => $hub, 'empty' => 1);
   my $error = $file->upload('method' => $method, 'format' => $format);
 
+  ## Validate format
+  my $iow;
+  unless ($error) {
+    $iow  = EnsEMBL::Web::IOWrapper::open($file, 'hub' => $hub);
+    if ($iow) {
+      $error = $iow->validate;
+    }
+    else {
+      $error = 'Could not parse file';
+    }
+  }
+
   if ($error) {
     $params->{'restart'} = 1;
     $hub->session->add_data(
@@ -52,18 +64,13 @@ sub upload {
       function => '_error'
     );
   } else {
-
     ## Look for the nearest feature
-    my $iow   = EnsEMBL::Web::IOWrapper::open($file, 'hub' => $hub);
-
-    if ($iow) {
-      my ($chr, $start, $end, $count) = $iow->nearest_feature;
-      $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
-      $params->{'count'}   = $count;
-    }
+    my ($chr, $start, $end, $count) = $iow->nearest_feature;
+    $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+    $params->{'count'}   = $count;
 
     $params->{'species'}  = $hub->param('species') || $hub->species;
-    $params->{'format'}   = $file->get_format;
+    $params->{'format'}   = $iow->format;
     $params->{'code'}     = $file->code;
   } 
  
