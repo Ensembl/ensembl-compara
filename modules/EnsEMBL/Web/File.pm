@@ -82,7 +82,6 @@ sub new {
     $absolute = 1;
   }
 
-  ## Note that we always store format internally as lowercase
   my $self = {
               'hub'             => $args{'hub'},
               'format'          => $args{'format'},
