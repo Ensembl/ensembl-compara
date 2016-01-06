@@ -42,6 +42,8 @@ sub create_hash {
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
 
+  ## Start and end need to be relative to slice,
+  ## as that is how the API returns coordinates
   my $seqname       = $self->parser->get_seqname;
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
@@ -60,15 +62,29 @@ sub create_hash {
                         });
 
 
-  ## Start and end need to be relative to slice,
-  ## as that is how the API returns coordinates
+  my $allele  = $self->parser->get_allele;
+  my $cons    = $self->parser->get_consequence;
+  my $extra   = [];
+  if ($metadata->{'display'} eq 'text') {
+    my @extras = qw(IMPACT SYMBOL Gene Feature_type Feature BIOTYPE);
+    foreach (@extras) {
+      my $method = 'get_'.lc($_);
+      my $value  = $self->parser->$method;
+      if ($value) {
+        (my $name = $_) =~ s/_/ /;
+        push @$extra, {'name' => $name, 'value' => $value};
+      }
+    }
+  } 
+
   return {
     'start'         => $start,
     'end'           => $end,
     'seq_region'    => $seqname,
-    'allele'        => $self->parser->get_allele,
-    'consequence'   => $self->parser->get_consequence,
+    'allele'        => $allele,
+    'consequence'   => $cons,
     'href'          => $href,
+    'extra'         => $extra,
   };
 }
 
