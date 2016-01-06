@@ -164,7 +164,9 @@ my $all_current_gdbs = [grep {($_->is_current or not $_->has_been_released) and 
 my @new_collection_gdbs = ();
 
 my %preselection = ();
-$preselection{$_} = 1 for @{ slurp_to_array($file, 1) };
+if ($file) {
+  $preselection{$_} = 1 for @{ slurp_to_array($file, 1) };
+}
 
 if ($collection_ss) {
     ## Here we are in "update mode"
