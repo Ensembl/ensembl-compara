@@ -29,7 +29,7 @@ use EnsEMBL::Web::Tools::Sanitize qw(strict_clean);
 our %strand_text = (
                     '1'   => 'Forward',
                     '-1'  => 'Reverse',
-                    '0'   => '-',
+                    '0'   => 'None',
 );
 
 sub content {
