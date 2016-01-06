@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ sub default_options {
     'jar_file'          => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
 
     #Gerp default parameters
-    'window_sizes'      => "[1,10,100,500]",
+    'window_sizes'      => [1,10,100,500],
     'gerp_version'      => 2.1,
 	    
     #Location of executables (or paths to executables)

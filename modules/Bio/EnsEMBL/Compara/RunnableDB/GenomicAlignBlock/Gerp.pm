@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -562,7 +562,7 @@ sub _parse_cons_file {
 sub _parse_rates_file {
     my ($self, $rates_file, $version) = @_;
     my %win_cnt;
-    my $win_sizes = eval($self->param('window_sizes'));
+    my $win_sizes = $self->param('window_sizes');
 
     my $j;
     

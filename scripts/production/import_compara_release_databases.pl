@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ print $fh join("\n", map {join("\t", @$_)} @data), "\n";
 close($fh);
 
 # This is the location of myisamchk, which may not be in the user's PATH
-$ENV{PATH} = $ENV{PATH}.':/usr/local/ensembl/mysql/bin';
+$ENV{PATH} = $ENV{PATH}.':/software/ensembl/central/bin/';
 
 ## Run CopyDBoverServer.pl and remove the configuration file
 print STDERR ">> $copydboverserver -pass $ensadmin_psw -noflush $filename\n";

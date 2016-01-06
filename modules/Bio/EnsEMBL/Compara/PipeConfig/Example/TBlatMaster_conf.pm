@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ sub default_options {
    			    },
 
 	    #Location of executables
-	    'pair_aligner_exe' => '/usr/local/ensembl/bin/blat-32',
+	    'pair_aligner_exe' => '/software/ensembl/compara/bin/blat',
 
 	    #
 	    #Default pair_aligner

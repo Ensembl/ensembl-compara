@@ -93,19 +93,19 @@ mkdir -p test-genome-DBs/homo_sapiens/core test-genome-DBs/mus_musculus/core tes
 
 cd test-genome-DBs/homo_sapiens/core
 
-/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ homo_sapiens_core_test
+mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ homo_sapiens_core_test
 
 cd ../../mus_musculus/core
 
-/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ mus_musculus_core_test
+mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ mus_musculus_core_test
 
 cd ../../rattus_norvegicus/core
 
-/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ rattus_norvegicus_core_test
+mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ rattus_norvegicus_core_test
 
 cd test-genome-DBs/multi/compara
 
-/usr/local/ensembl/mysql/bin/mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ ensembl_compara_test
+mysqldump -hia64f -uensadmin -p${ENSADMIN_PSW} -P3306 --socket=/mysql/data_3306/mysql.sock -T ./ ensembl_compara_test
 
 cd ../../
 
