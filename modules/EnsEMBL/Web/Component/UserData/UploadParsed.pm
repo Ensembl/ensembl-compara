@@ -51,7 +51,6 @@ sub content_ajax {
   my $session = $hub->session;
   my $type    = $hub->param('_type');
   my $code    = $hub->param('code');
-  warn ">>> TYPE $type, CODE $code";
 
   my ($data, $record);
   if ($hub->user) {
