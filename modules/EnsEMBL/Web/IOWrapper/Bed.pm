@@ -82,13 +82,15 @@ sub create_hash {
     'href'          => $href,
   };
   if ($metadata->{'display'} eq 'text') {
-    $feature->{'extra'} = [
+    if ($self->parser->get_blockCount) {
+      $feature->{'extra'} = [
                             {'name' => 'Block count', 'value' => $self->parser->get_blockCount},
                             {'name' => 'Block sizes', 'value' => join(', ', @{$self->parser->get_blockSizes||[]})},
                             {'name' => 'Block starts', 'value' => join(', ', @{$self->parser->get_blockStarts||[]})},
                             {'name' => 'Thick start', 'value' => $self->parser->get_thickStart},
                             {'name' => 'Thick end', 'value' => $self->parser->get_thickEnd},
-                          ];
+                            ];
+    }
   }
   else {
     $feature->{'structure'}     = $self->create_structure($feature_start, $slice->start);
