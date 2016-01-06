@@ -84,6 +84,7 @@ sub draw_features {
   my $feature_count = 0;
 
   foreach (@$subtracks) {
+    next unless $_->{'features'} && ref $_->{'features'} eq 'HASH';
     $feature_count += scalar(@{$_->{'features'}{$self->strand}||[]});
   }
 
