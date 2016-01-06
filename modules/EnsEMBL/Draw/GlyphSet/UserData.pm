@@ -77,9 +77,14 @@ The keys of the feature hashref refer to the strand on which we wish to draw the
 =cut
 }
 
+sub my_empty_label {
+  my $self = shift;
+  return sprintf('No features from %s on this strand', $self->my_config('name'));
+}
+
 sub draw_features {
   my ($self, $subtracks) = @_;
-  $subtracks ||= $self->{'features'};
+  $subtracks ||= $self->{'features'}; ## cached track
   return unless $subtracks && ref $subtracks eq 'ARRAY';
   my $feature_count = 0;
 
@@ -88,9 +93,8 @@ sub draw_features {
     $feature_count += scalar(@{$_->{'features'}{$self->strand}||[]});
   }
 
-  unless ($feature_count > 0) {
-    ## Text for error message
-    return 'data';
+  if ($feature_count > 0) {
+    return $self->no_features;
   }
 
   ## Defaults
@@ -153,8 +157,9 @@ sub draw_features {
     $config{'subtitle'} = $description;
   }
 
-  ## Return nothing if we decided not to draw any subtracks
-  return if $skipped;
+  if ($skipped) {
+    return $self->no_features;
+  }
 
   $config{'bg_href'} = $self->_bg_href;
 
