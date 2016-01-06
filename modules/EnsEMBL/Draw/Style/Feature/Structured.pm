@@ -70,6 +70,7 @@ sub draw_feature {
       $params{'join_colour'}  = $join_colour;
 
       my $start         = $previous{'x'} + $previous{'width'};
+      $start            = 0 if $start < 0;
       $params{'x'}      = $start;
       my $end           = $_->{'start'};
       my $width         = $end - $start;
