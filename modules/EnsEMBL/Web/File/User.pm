@@ -205,7 +205,6 @@ sub upload {
         my $md5     = $self->md5($result->{'content'});
         my $code    = join '_', $md5, $session->session_id;
         my $format  = $self->get_format || $hub->param('format');
-        $format     = 'BED' if $format =~ /bedgraph/i;
         my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
 
         $inputs{'format'}    = $format if $format;
