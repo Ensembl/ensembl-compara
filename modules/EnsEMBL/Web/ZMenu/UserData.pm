@@ -53,10 +53,12 @@ sub content {
     my (@id_features, @other_features);
     my $feature_id  = $hub->param('feature_id') || $hub->param('id');
     my $slice       = $click_data->{'container'};
+    my $caption;
 
     if ($type eq 'flat_file') { 
       my $data = $glyphset->features;
       foreach my $track (@$data) {
+        $caption ||= $track->{'metadata'}{'zmenu_caption'};
         foreach (@{$track->{'features'}{$strand}||[]}) {
           if ($feature_id && $_->{'label'} eq $feature_id) {
             $_->{'track_name'} = $track->{'metadata'}{'name'};
@@ -88,9 +90,9 @@ sub content {
     my @features = scalar(@id_features) ? @id_features : @other_features;
 
     if (scalar @features > 5) {
-      $self->summary_content(\@features);
+      $self->summary_content(\@features, $caption);
     } else {
-      $self->feature_content(\@features, $slice);
+      $self->feature_content(\@features, $caption, $slice);
     }
   }
 }
@@ -99,13 +101,15 @@ sub summary_content {
 }
 
 sub feature_content {
-  my ($self, $features, $slice) = @_;
-  my $caption;
+  my ($self, $features, $caption, $slice) = @_;
 
   foreach (@$features) {
-    $caption = $_->{'track_name'};
     my $id = $_->{'label'};
-    $caption .= ': '.$id if scalar(@$features) == 1 && $id; 
+
+    unless ($caption) {
+      $caption = $_->{'track_name'};
+      $caption .= ': '.$id if scalar(@$features) == 1 && $id; 
+    }
 
     $self->add_entry({'type' => 'Location', 
                       'label' => sprintf('%s:%s-%s', 
