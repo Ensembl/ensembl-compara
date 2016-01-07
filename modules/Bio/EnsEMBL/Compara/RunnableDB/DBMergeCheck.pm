@@ -149,14 +149,18 @@ sub fetch_input {
         my @wildcards =  grep {$_ =~ /\%/} @{$ignored_tables->{$db}};
         $extra .= join("", map {" AND Name NOT LIKE '$_' "} @wildcards);
 
+        my $this_db_handle = $dbconnections->{$db}->db_handle;
         my $bad_tables = join(',', map {"'$_'"} @bad_tables_list);
-        my $sql = "SHOW TABLE STATUS WHERE Engine IS NOT NULL AND Name NOT IN ($bad_tables) AND Rows $extra";
-        my $list = $dbconnections->{$db}->db_handle->selectall_arrayref($sql, undef);
-        $table_size->{$db} = {map {$_->[0] => $_->[4]} @$list};
+        my $sql_table_status = "SHOW TABLE STATUS WHERE Engine IS NOT NULL AND Name NOT IN ($bad_tables) $extra";
+        my $table_list = $this_db_handle->selectcol_arrayref($sql_table_status, { Columns => [1] });
+        my $sql_size_table = 'SELECT COUNT(*) FROM ';
+        $table_size->{$db} = {};
+        foreach my $t (@$table_list) {
+            my ($s) = $this_db_handle->selectrow_array($sql_size_table.$t);
+            $table_size->{$db}->{$t} = $s if $s;
+        }
     }
     print Dumper($table_size) if $self->debug;
-    # WARNING: In InnoDB mode, table_rows is an approximation of the true number of rows
-    #          but we assume that the zeroness is correct
     $self->param('table_size', $table_size);
 }
 
