@@ -62,19 +62,18 @@ sub create_hash {
                         });
 
 
-  my $allele  = $self->parser->get_allele;
-  my $cons    = $self->parser->get_consequence;
-  my $extra   = [];
+  my $allele    = $self->parser->get_allele;
+  my $cons      = $self->parser->get_consequence;
+  my $extra     = [];
   if ($metadata->{'display'} eq 'text') {
-    my @extras = qw(IMPACT SYMBOL Gene Feature_type Feature BIOTYPE);
-    foreach (@extras) {
-      my $method = 'get_'.lc($_);
-      my $value  = $self->parser->$method;
-      if ($value) {
-        (my $name = $_) =~ s/_/ /;
-        push @$extra, {'name' => $name, 'value' => $value};
-      }
-    }
+    my @uploaded  = split(/_/, $self->parser->get_uploaded_variation);
+    (my $cons_text = $cons) =~ s/_/ /; 
+    $extra = [
+              {'name' => 'Alleles',         'value' => $uploaded[-1]},
+              {'name' => 'Variant allele',  'value' => $allele},
+              {'name' => 'Consequence',     'value' => $cons_text},
+              {'name' => 'IMPACT',          'value' => $self->parser->get_impact},
+              ];
   } 
 
   return {
@@ -100,6 +99,12 @@ sub post_process {
   while (my($key, $subtrack) = each (%$data)) {
     my $feature_strand = $subtrack->{'metadata'}{'default_strand'} || 1;
     next unless scalar(@{$subtrack->{'features'}{$feature_strand}||[]});
+
+    ## VEP output doesn't have real metadata, so fake some
+    $subtrack->{'metadata'} = {
+                                  'name'          => 'VEP consequence',
+                                  'zmenu_caption' => 'VEP consequence',
+                                };
 
     ## Group results into sets by start, end and allele; and then 
     ## merge them into a set of unique variants with multiple consequences 
@@ -135,8 +140,6 @@ sub post_process {
     }
 
     $data->{$key}{'features'}{$feature_strand} = \@unique_features;
-    ## VEP output doesn't have real metadata, so fake some
-    $data->{$key}{'metadata'} = {'name' => 'VEP consequence'};
   }
 }
 
