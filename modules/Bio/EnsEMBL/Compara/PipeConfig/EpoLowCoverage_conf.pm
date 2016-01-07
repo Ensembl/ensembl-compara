@@ -31,7 +31,6 @@ sub default_options {
 
 	'rel_suffix'	=> 80,
 	'prev_release'  => 78,
-        'pipeline_name' => 'EPO_low_'.$self->o('ensembl_release').$self->o('rel_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
 	'pairwise_exception_location' => { },

@@ -67,7 +67,6 @@ sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
-	    'pipeline_name'         => 'TBLAT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #Define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
 #           'reference' => {

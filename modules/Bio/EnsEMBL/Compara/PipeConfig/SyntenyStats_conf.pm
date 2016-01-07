@@ -42,7 +42,6 @@ sub default_options {
   return {
     %{$self->SUPER::default_options},
     
-    pipeline_name => 'synteny_stats_'.$self->o('ensembl_release'),
     division      => 'Multi',
     mlss_id       => undef,
   };

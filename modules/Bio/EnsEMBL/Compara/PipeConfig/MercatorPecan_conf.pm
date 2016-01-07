@@ -79,7 +79,6 @@ sub default_options {
         'species_set' => undef, 
 
     # dependent parameters:
-        'pipeline_name'         => 'PECAN_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
         'blastdb_dir'           => $self->o('work_dir') . '/blast_db',  
         'mercator_dir'          => $self->o('work_dir') . '/mercator',  
 
