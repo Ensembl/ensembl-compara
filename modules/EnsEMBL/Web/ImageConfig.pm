@@ -724,16 +724,38 @@ sub load_user_tracks {
     ## Uploads that have been saved to the userdata database
     foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('uploads'), map $user->get_group_records($_, 'uploads'), @groups) {
       my ($name, $assembly) = ($entry->name, $entry->assembly);
-      
-      foreach my $analysis (split /, /, $entry->analyses) {
-        $upload_sources{$analysis} = {
-          source_name => $name,
-          source_type => 'user',
-          assembly    => $assembly,
-          style       => $entry->style,
-        };
+     
+      if ($entry->analyses) {
+        ## Data saved to userdata db
+        ## TODO - remove in due course
+        foreach my $analysis (split /, /, $entry->analyses) {
+          $upload_sources{$analysis} = {
+            source_name => $name,
+            source_type => 'user',
+            assembly    => $assembly,
+            style       => $entry->style,
+          };
         
-        $self->_compare_assemblies($entry, $session);
+          $self->_compare_assemblies($entry, $session);
+        }
+      }
+      else {
+        ## New saved-to-permanent-location
+        my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
+        $menu->append($self->create_track("upload_$entry->code", $entry->name, {
+            external        => 'user',
+            glyphset        => 'flat_file',
+            colourset       => 'userdata',
+            sub_type        => 'tmp',
+            file            => $entry->file,
+            format          => $entry->format,
+            style           => $entry->style,
+            caption         => $entry->name,
+            renderers       => $renderers,
+            description     => 'Data that has been saved to the web server.',
+            display         => 'off',
+            default_display => $default,
+        }));
       }
     }
   }
