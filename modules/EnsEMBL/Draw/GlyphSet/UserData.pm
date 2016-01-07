@@ -93,7 +93,7 @@ sub draw_features {
     $feature_count += scalar(@{$_->{'features'}{$self->strand}||[]});
   }
 
-  if ($feature_count > 0) {
+  if ($feature_count < 1) {
     return $self->no_features;
   }
 
