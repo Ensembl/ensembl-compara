@@ -1347,6 +1347,63 @@ CREATE TABLE gene_tree_root_tag (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
+/**
+@table gene_tree_root_attr
+@desc  This table contains several gene tree attributes data attached to root_ids
+@colour   #1E90FF
+
+@column root_id                             External reference to root_id in the @link gene_tree_root table.
+@column aln_after_filter_length             Alignment length after filtering.
+@column aln_length                          Alignment length before filtering.
+@column aln_num_residues                    Total number of residues in the whole alignment.
+@column aln_percent_identity                Alignment identity.
+@column best_fit_model_family               Best Amino Acid replacement evolution model (WAG, JTT, etc).
+@column best_fit_model_parameter            Best paremeters used in the model (I, G, IG, IGF, etc).
+@column gene_count                          Number of sequences present in the alignment.
+@column k_score                             Tree distance metric.
+@column k_score_rank                        Rank of the tree in the comparison.
+@column mcoffee_scores_gene_align_id        Gene alignment ID, used to fetch the mcoffee scores used in the alignment.
+@column aln_n_removed_columns               Number of colunms that were removed by the alignment filtering process.
+@column aln_num_of_patterns                 Number of different patterns present in the alignment (used by ExaML).
+@column aln_shrinking_factor                Factor used to measure how much the alignments were filtered (factor: 0..1).
+@column spec_count                          Number of different species present in the cluster
+@column tree_max_branch                     Maximum branch length.
+@column tree_max_length                     Maximum tree length.
+@column tree_num_dup_nodes                  Number of duplication nodes.
+@column tree_num_leaves                     Number of leaves in a tree.
+@column tree_num_spec_nodes                 Number of speciation events.
+
+@see gene_tree_root
+@see gene_tree_root_tag
+*/
+
+CREATE TABLE `gene_tree_root_attr` (
+  root_id                           INT(10) UNSIGNED NOT NULL,
+  aln_after_filter_length           INT(10) UNSIGNED,
+  aln_length                        INT(10) UNSIGNED,
+  aln_num_residues                  INT(10) UNSIGNED,
+  aln_percent_identity              FLOAT(5,5),
+  best_fit_model_family             VARCHAR(10),
+  best_fit_model_parameter          VARCHAR(5),
+  gene_count                        INT(10) UNSIGNED,
+  k_score                           FLOAT(5,5),
+  k_score_rank                      INT(10) UNSIGNED,
+  mcoffee_scores_gene_align_id      INT(10) UNSIGNED,
+  aln_n_removed_columns             INT(10) UNSIGNED,
+  aln_num_of_patterns               INT(10) UNSIGNED,
+  aln_shrinking_factor              FLOAT(2,2),
+  spec_count                        INT(10) UNSIGNED,
+  tree_max_branch                   FLOAT(5,5),
+  tree_max_length                   FLOAT(5,5),
+  tree_num_dup_nodes                INT(10) UNSIGNED,
+  tree_num_leaves                   INT(10) UNSIGNED,
+  tree_num_spec_nodes               INT(10) UNSIGNED,
+
+  FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
+
+  PRIMARY KEY (root_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
 @table gene_tree_node_attr
