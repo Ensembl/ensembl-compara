@@ -416,7 +416,7 @@ if ($help) {
 # if all the previous fail.
 $reg->no_version_check(1);
 if ($reg_conf) {
-  $reg->load_all($reg_conf);
+  $reg->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 } else {
     #Bio::EnsEMBL::Registry->load_registry_from_url($db);
     #Allow multiple dbs to be input 

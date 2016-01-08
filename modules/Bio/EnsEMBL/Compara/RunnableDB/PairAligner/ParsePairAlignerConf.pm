@@ -82,7 +82,8 @@ sub fetch_input {
     if ($self->param('registry_dbs')) {
 	load_registry_dbs($self->param('registry_dbs'));
     } elsif ($self->param('reg_conf')) { 	    
-      Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'));
+      ## die if file cannot be loaded
+      Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'), $self->debug, 0, 0, "throw_if_missing");
     }
 }
 

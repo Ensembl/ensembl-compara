@@ -152,7 +152,7 @@ if ($compara =~ /mysql:\/\//) {
     ## ~/.ensembl_init if all the previous fail.
     ##
     require Bio::EnsEMBL::Registry;
-    Bio::EnsEMBL::Registry->load_all($reg_conf);
+    Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
     $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 }
 die "Cannot connect to database [$compara]" if (!$compara_dba);

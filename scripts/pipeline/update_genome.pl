@@ -182,7 +182,7 @@ if ($help or (!$species and !$file) or !$compara) {
 ## Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses
 ## ~/.ensembl_init if all the previous fail.
 ##
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $compara_dba;
 if ($compara =~ /mysql:\/\//) {

@@ -182,7 +182,7 @@ if ($help or (!$from_name and !$from_url) or (!$to_name and !$to_url) or !$mlss_
   exec("/usr/bin/env perldoc $0");
 }
 
-Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_name or $to_name);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if ($from_name or $to_name);
 my $from_dba = get_DBAdaptor($from_url, $from_name);
 my $to_dba = get_DBAdaptor($to_url, $to_name);
 

@@ -23,7 +23,7 @@ $output_file ||= 'filtered.tsv';
 die("Please provide species of interest (-s1 & -s2)") unless( defined($species1) && defined($species2) );
 
 my $registry = 'Bio::EnsEMBL::Registry';
-$registry->load_all($reg_conf);
+$registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $dnafrag_adaptor = $registry->get_adaptor("mice_merged", "compara", "DnaFrag");
 

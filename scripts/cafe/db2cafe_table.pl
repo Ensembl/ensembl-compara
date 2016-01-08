@@ -78,8 +78,7 @@ exit(0);
 }
 
 if ($registry_file) {
-  die unless (-e $registry_file);
-  $reg->load_all($registry_file);
+  $reg->load_all($registry_file, 0, 0, 0, "throw_if_missing");
 } elsif ($url) {
   $reg->load_registry_from_url($url);
 } elsif (!$compara_url) {

@@ -250,7 +250,7 @@ unless (lc($format) eq "wigfix" || lc($format) eq "bed") {
 #when submitting the jobs
 my $bsub_cmd;
 if ($reg_conf and $dbname) {
-    $reg->load_all($reg_conf);
+    $reg->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
     $bsub_cmd .= " --reg_conf $reg_conf --dbname $dbname";
 } elsif ($url) {
     if ($db_version) {

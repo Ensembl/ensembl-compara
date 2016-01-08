@@ -136,7 +136,7 @@ if ($help or !$reg_conf or !$compara) {
     pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();

@@ -80,7 +80,7 @@ Bio::EnsEMBL::Registry->no_version_check(1);
 
 my $compara_dba;
 if ($reg_conf) {
-    Bio::EnsEMBL::Registry->load_all($reg_conf);
+    Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 }
 
 if ($dbname =~ /mysql:\/\//) {

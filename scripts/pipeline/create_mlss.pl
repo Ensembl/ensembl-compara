@@ -208,7 +208,7 @@ if ($help) {
 
 #################################################
 ## Get the adaptors from the Registry
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $compara_dba;
 if ($compara =~ /mysql:\/\//) {

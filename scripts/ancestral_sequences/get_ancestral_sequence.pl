@@ -159,8 +159,7 @@ if ($help) {
 }
 
 if ($registry_file) {
-  die "Registry file '$registry_file' doesn't exist\n" if (!-e $registry_file);
-  $reg->load_all($registry_file, 1);
+  $reg->load_all($registry_file, "verbose", 0, 0, "throw_if_missing");
 } elsif ($url) {
   $reg->load_registry_from_url($url, 1);
 } else {

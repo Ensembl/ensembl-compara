@@ -135,7 +135,7 @@ if (not $reg_conf) {
 
 
 ## use the Registry to list the databases
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_all($reg_conf, undef, undef, undef, "throw_if_missing");
 
 sub find_dbc_for_reg_alias {
     my ($reg_name, $reg_type) = @_;

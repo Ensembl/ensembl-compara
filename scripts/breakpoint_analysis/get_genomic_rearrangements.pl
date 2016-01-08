@@ -52,7 +52,7 @@ die("Please provide species of interest (-species1 & -species2) and the minimum 
 my $kilobase = $base * 1000;
 
 my $registry = 'Bio::EnsEMBL::Registry';
-$registry->load_all($reg_conf);
+$registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 #my $mlss_adap  = $registry->get_adaptor( 'mice_merged', 'compara', 'MethodLinkSpeciesSet' );
 #my $gblock_adap = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomicAlignBlock' );

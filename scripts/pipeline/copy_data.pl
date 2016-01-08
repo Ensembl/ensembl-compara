@@ -219,7 +219,7 @@ if ($help or (!$from_reg_name and !$from_url) or (!$to_reg_name and !$to_url) or
   exec("/usr/bin/env perldoc $0");
 }
 
-Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_reg_name or $to_reg_name);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if ($from_reg_name or $to_reg_name);
 
 my $to_dba = get_DBAdaptor($to_url, $to_reg_name);
 my $from_dba = get_DBAdaptor($from_url, $from_reg_name);
