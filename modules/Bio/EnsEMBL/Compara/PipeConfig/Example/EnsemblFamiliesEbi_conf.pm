@@ -69,9 +69,10 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options },
 
-        #'mlss_id'         => 30047,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'host'          => 'compara2',                                          # where the pipeline database will be created
-        'host'          => 'mysql-treefam-prod:4401',                                          # where the pipeline database will be created
+        #'mlss_id'         => 30047,                    # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        #'host'          => 'compara2',                 # where the pipeline database will be created
+        'host'          => 'mysql-treefam-prod',        # where the pipeline database will be created
+        'port'          => '4401',                      # server port
 
         # HMM clustering
         #'hmm_clustering'      => 0,
