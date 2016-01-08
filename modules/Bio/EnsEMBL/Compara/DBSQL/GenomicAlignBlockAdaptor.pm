@@ -62,7 +62,7 @@ Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
       $method_link_species_set, $human_dnafrag);
 
   $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag(
-      $method_link_species_set, $human_dnafrag, $mouse_dnafrag);
+      $method_link_species_set, $human_dnafrag, undef, undef, $mouse_dnafrag, undef, undef);
 
   $genomic_align_block_ids = $genomic_align_block_adaptor->fetch_all_dbIDs_by_MethodLinkSpeciesSet_Dnafrag(
      $method_link_species_set, $human_dnafrag);
