@@ -330,7 +330,7 @@ sub pipeline_analyses {
             -parameters => {
                 'seq_loader_name'   => 'file', # {'pfetch' x 20} takes 1.3h; {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
             },
-            -analysis_capacity => 20,
+            -analysis_capacity => 5,
             -batch_size    => 100,
             -rc_name => '2GigMem',
         },
@@ -480,6 +480,7 @@ sub pipeline_analyses {
                              'only_canonical'      => 0,
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
+            -batch_size     => 2,
              -rc_name => 'LoMafft',
             },
 
