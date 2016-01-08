@@ -62,6 +62,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -158,6 +159,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mafft_root_dir'    => $self->o('mafft_root_dir'),
 
         'master_db'         => $self->o('master_db'),               # databases
+
+        'hmm_clustering'    => $self->o('hmm_clustering'),
     };
 }
 
@@ -342,7 +345,11 @@ sub pipeline_analyses {
                 'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql.gz',
             },
             -flow_into => {
-                1 => $self->o('hmm_clustering') ? 'HMMer_classifyCurated' : { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+                #$self->o('hmm_clustering')>1 => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } }, # do not need to include "take_time" because it is already "pipeline-wide"
+                1 => WHEN (
+                    '#hmm_clustering#' => 'HMMer_classifyCurated',
+                    ELSE { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+                )
             },
         },
         
@@ -610,7 +617,9 @@ sub pipeline_analyses {
             },
             -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
-                1 => [ 'insert_redundant_peptides' ],
+                1 => WHEN (
+                    '#hmm_clustering#' => 'insert_redundant_peptides',
+                )
             },
             -rc_name => 'urgent',
         },
