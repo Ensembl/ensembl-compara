@@ -195,7 +195,10 @@ sub pipeline_analyses {
                     '(#dump_mode# ne "file") and (#split_mode# eq "chromosome")' => [ 'initJobs' ],
                     '#dump_mode# eq "file"' => { 'dumpMultiAlign' => {'region_name' => 'all', 'extra_args' => []} },    # a job to dump all the blocks in 1 file
                 ),
-                'A->1' => [ 'md5sum'],
+                'A->1' => WHEN(
+                        '#run_emf2maf#' => [ 'move_maf_files' ],
+                        ELSE 'md5sum'
+                    ),
             },
             -wait_for   => 'create_tracking_tables',
             -rc_name    => 'default_with_reg_conf',
@@ -271,17 +274,14 @@ sub pipeline_analyses {
             -parameters     => {
                 'cmd'           => 'cd #output_dir#; md5sum *.#format#* > MD5SUM',
             },
-            -flow_into      =>  [
-                WHEN( '#run_emf2maf#' => [ 'move_maf_files' ] ),
-                WHEN( ELSE 'readme' ),
-            ],
+            -flow_into      =>  [ 'readme' ],
         },
         {   -logic_name     => 'move_maf_files',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'           => 'mv #output_dir#/*maf #output_dir#_maf/'
             },
-            -flow_into      => { 1 => { 'md5sum' => { 'run_emf2maf' => 0, 'format' => 'maf', 'base_filename' => '#base_filename#_maf'} } },
+            -flow_into      => { 1 => { 'md5sum' => [undef, { 'format' => 'maf', 'base_filename' => '#base_filename#_maf'} ] } },
         },
         {   -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
