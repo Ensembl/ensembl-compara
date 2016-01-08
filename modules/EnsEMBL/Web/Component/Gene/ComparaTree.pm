@@ -319,7 +319,7 @@ sub content {
   else {
     $gene_name = $tree_stable_id;
   }
-  $image->{'export_params'} = [['gene_name', $gene_name],['align', 'tree']];
+  $image->{'export_params'} = [['gene_name', $gene_name],['align', 'tree'],['cdb', $cdb]];
   $image->{'data_export'}   = 'GeneTree';
   $image->{'remove_reset'}  = 1;
 
