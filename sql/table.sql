@@ -1110,7 +1110,7 @@ CREATE TABLE family (
   stable_id                   varchar(40) NOT NULL, # unique stable id, e.g. 'ENSFM'.'0053'.'1234567890'
   version                     INT UNSIGNED NOT NULL,# version of the stable_id (changes only when members move to/from existing families)
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 varchar(255),
+  description                 varchar(755),
   description_score           double,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
