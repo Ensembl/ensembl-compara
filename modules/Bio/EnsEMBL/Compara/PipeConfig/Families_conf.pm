@@ -157,6 +157,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
         'mafft_root_dir'    => $self->o('mafft_root_dir'),
+        'mafft_threads'    => $self->o('mafft_threads'),
 
         'master_db'         => $self->o('master_db'),               # databases
 
@@ -592,6 +593,7 @@ sub pipeline_analyses {
             -hive_capacity      => $self->o('mafft_capacity'),
             -batch_size         => 10,
             -max_retry_count    => 6,
+            -mafft_threads      => 1,
             -flow_into => {
                 -1 => [ 'mafft_big' ],
             },
@@ -602,6 +604,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => 20,
             -batch_size    => 1,
+            -mafft_threads => 8,
             -rc_name => 'BigMafft',
         },
 
