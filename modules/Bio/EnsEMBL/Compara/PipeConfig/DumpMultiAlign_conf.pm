@@ -177,13 +177,13 @@ sub pipeline_analyses {
                 },
             ],
             -flow_into      => {
-                '2' => [ 'initParams' ],
+                '2' => [ 'choose_mode' ],
             },
             -rc_name => 'default_with_reg_conf',
         },
 
-        {  -logic_name  => 'initParams',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitInputID',
+        {  -logic_name  => 'choose_mode',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => WHEN(
                     '(#dump_mode# ne "file") and (#split_mode# eq "random")' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
