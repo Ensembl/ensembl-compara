@@ -127,7 +127,8 @@ sub pipeline_wide_parameters {
         'split_mode'    => $self->o('split_mode'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
-	'reg_conf' => $self->o('reg_conf'),
+        'reg_conf'      => $self->o('reg_conf'),
+        'compara_db'    => $self->o('compara_db'),
         'export_dir'    => $self->o('export_dir'),
         'masked_seq'    => $self->o('masked_seq'),
 
@@ -172,7 +173,6 @@ sub pipeline_analyses {
             },
             -input_ids     => [
                 {
-                    'compara_db'        => $self->o('compara_db'),
                     'mlss_id'           => $self->o('mlss_id'),
                 },
             ],
@@ -186,8 +186,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitInputID',
             -parameters => {
                 'species'       => $self->o('species'),
-                'compara_db'    => $self->o('compara_db'),
-                'reg_conf'      => $self->o('reg_conf'),
             },
             -flow_into  => {
                 '1->A' => WHEN(
@@ -206,10 +204,6 @@ sub pipeline_analyses {
 
         {  -logic_name  => 'initJobs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
-            -parameters => {
-                'compara_db'    => $self->o('compara_db'),
-                'reg_conf'      => $self->o('reg_conf'),
-            },
             -flow_into => {
                 2 => [ 'createChrJobs' ],
                 3 => [ 'createSuperJobs' ],
@@ -244,9 +238,6 @@ sub pipeline_analyses {
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
-            -parameters    => {
-                'reg_conf'      => $self->o('reg_conf'),
-            },
             -hive_capacity => 50,
             -rc_name => 'crowd',
             -flow_into => [
