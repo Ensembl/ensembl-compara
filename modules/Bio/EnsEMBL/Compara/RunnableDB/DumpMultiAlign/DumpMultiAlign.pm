@@ -46,7 +46,9 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub param_defaults {
+    my $self = shift;
     return {
+        %{ $self->SUPER::param_defaults() },
         'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', '#masked_seq#', '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_file_gen#' ],
     }
 }
