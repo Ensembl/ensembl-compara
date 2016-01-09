@@ -22,7 +22,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EGDumpMultiAlign_conf;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::Version 2.2;
+use Bio::EnsEMBL::Hive::Version 2.4;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf');
 
 sub default_options {
@@ -88,7 +88,7 @@ sub pipeline_analyses {
     my $super_analyses = $self->SUPER::pipeline_analyses;
     my ($mlss_factory) = grep {$_->{'-logic_name'} eq 'MLSSJobFactory'} @$super_analyses;
     $mlss_factory->{-flow_into} = {
-        '2->A' => [ 'initJobs' ],
+        '2->A' => [ 'choose_mode' ],
         'A->1' => 'createREADME',
     };
     return [
