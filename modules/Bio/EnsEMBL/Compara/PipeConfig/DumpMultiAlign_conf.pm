@@ -184,9 +184,6 @@ sub pipeline_analyses {
 
         {  -logic_name  => 'initParams',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitInputID',
-            -parameters => {
-                'species'       => $self->o('species'),
-            },
             -flow_into  => {
                 '1->A' => WHEN(
                     '(#dump_mode# ne "file") and (#split_mode# eq "random")' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
