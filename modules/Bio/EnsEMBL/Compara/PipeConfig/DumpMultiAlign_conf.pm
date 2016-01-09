@@ -235,7 +235,7 @@ sub pipeline_analyses {
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
-            -hive_capacity => 50,
+            -analysis_capacity => 50,
             -rc_name => 'crowd',
             -flow_into => [
                 WHEN( '#dump_mode# ne "tar"' => [ 'compress' ] ),
