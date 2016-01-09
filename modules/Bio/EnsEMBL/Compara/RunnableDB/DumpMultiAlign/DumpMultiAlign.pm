@@ -84,7 +84,7 @@ sub write_output {
     my $self = shift @_;
 
     #delete tmp file
-    unlink($self->param('tmp_file'));
+    unlink($self->param('tmp_file')) if $self->param('tmp_file');
 
     $self->SUPER::write_output();
 
