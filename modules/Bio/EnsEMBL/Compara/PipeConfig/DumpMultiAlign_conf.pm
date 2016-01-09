@@ -237,17 +237,17 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
             -analysis_capacity => 50,
             -rc_name => 'crowd',
-            -flow_into => [
-                WHEN( '#dump_mode# ne "tar"' => [ 'compress' ] ),
-                WHEN( '#run_emf2maf#' => [ 'emf2maf' ] ),
-            ],
+            -flow_into => [ WHEN(
+                '#run_emf2maf#' => [ 'emf2maf' ],
+                '!#run_emf2maf# && (#dump_mode# ne "tar")' => [ 'compress' ],
+            ) ],
         },
         {   -logic_name     => 'emf2maf',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
             -analysis_capacity  => 5,
             -rc_name        => 'crowd',
             -flow_into => [
-                WHEN( '#dump_mode# ne "tar"' => { 'compress' => { 'format' => 'maf'} } ),
+                WHEN( '#dump_mode# ne "tar"' => { 'compress' => [ undef, { 'format' => 'maf'} ] } ),
             ],
         },
         {   -logic_name     => 'compress',
