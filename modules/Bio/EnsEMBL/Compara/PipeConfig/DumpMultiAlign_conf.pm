@@ -267,7 +267,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'move_maf_files',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'           => 'mv #output_dir#/*maf #output_dir#_maf/'
+                'cmd'           => 'mv #output_dir#/*.maf* #output_dir#_maf/'
             },
             -flow_into      => { 1 => { 'md5sum' => [undef, { 'format' => 'maf', 'base_filename' => '#base_filename#_maf'} ] } },
         },

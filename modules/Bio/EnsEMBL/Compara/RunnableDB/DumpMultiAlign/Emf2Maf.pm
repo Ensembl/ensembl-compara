@@ -51,7 +51,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults() },
-        'cmd'   => ['#emf2maf_program#', '#in_emf_file#'],
+        'cmd'   => ['#emf2maf_program#', '#output_file#'],
     }
 }
 
@@ -73,7 +73,7 @@ sub run {
 sub _healthcheck {
     my ($self) = @_;
 
-    my $output_file = $self->param('in_emf_file');
+    my $output_file = $self->param('output_file');
     $output_file =~ s/\.emf$/.maf/;
     my $cmd = "grep -c ^a " . $output_file;
 
