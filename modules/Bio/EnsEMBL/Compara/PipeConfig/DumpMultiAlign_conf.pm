@@ -86,7 +86,8 @@ sub default_options {
         'format' => 'emf',
 
         # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
-        'mode' => 'dir',
+        'dump_mode' => 'dir',
+
         # how the files will be split: either 'chromosome' or 'random'
         # In "random" mode, we don't care about the chromsome names and coordinate systems, we let createOtherJobs bin the alignment blocks into chunks
         'split_mode' => 'chromosome',
@@ -123,7 +124,7 @@ sub pipeline_wide_parameters {
         'dump_program'      => $self->o('dump_program'),
         'emf2maf_program'   => $self->o('emf2maf_program'),
 
-        'dump_mode'     => $self->o('mode'),
+        'dump_mode'     => $self->o('dump_mode'),
         'split_mode'    => $self->o('split_mode'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
@@ -278,7 +279,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
             -parameters    => {
-                'mode'  => '#dump_mode#',
                 'readme_file' => '#output_dir#/README.#base_filename#',
             },
             -flow_into     => WHEN( '#dump_mode# eq "tar"' => [ 'targz' ] ),
