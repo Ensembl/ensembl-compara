@@ -88,9 +88,10 @@ sub default_options {
         # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
         'dump_mode' => 'dir',
 
-        # how the files will be split: either 'chromosome' or 'random'
-        # In "random" mode, we don't care about the chromsome names and coordinate systems, we let createOtherJobs bin the alignment blocks into chunks
-        'split_mode' => 'chromosome',
+        # If set to 1, the files are split by chromosome name and
+        # coordinate system. Otherwise, createOtherJobs randomly bins the
+        # alignment blocks into chunks
+        'split_by_chromosome'   => 1,
 
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
         'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
@@ -125,7 +126,7 @@ sub pipeline_wide_parameters {
         'emf2maf_program'   => $self->o('emf2maf_program'),
 
         'dump_mode'     => $self->o('dump_mode'),
-        'split_mode'    => $self->o('split_mode'),
+        'split_by_chromosome'   => $self->o('split_by_chromosome'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
         'reg_conf'      => $self->o('reg_conf'),
@@ -191,9 +192,9 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => WHEN(
-                    '(#dump_mode# ne "file") and (#split_mode# eq "random")' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
-                    '(#dump_mode# ne "file") and (#split_mode# eq "chromosome")' => [ 'initJobs' ],
-                    '#dump_mode# eq "file"' => { 'dumpMultiAlign' => {'region_name' => 'all', 'filename_suffix' => '*', 'extra_args' => [], 'num_blocks' => '#num_blocks#'} },    # a job to dump all the blocks in 1 file
+                    '#split_by_chromosome#' => [ 'initJobs' ],
+                    '!#split_by_chromosome# && #split_size#>0' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
+                    '!#split_by_chromosome# && #split_size#==0' => { 'dumpMultiAlign' => {'region_name' => 'all', 'filename_suffix' => '*', 'extra_args' => [], 'num_blocks' => '#num_blocks#'} },    # a job to dump all the blocks in 1 file
                 ),
                 'A->2' => WHEN(
                         '#run_emf2maf#' => [ 'move_maf_files' ],

@@ -365,7 +365,7 @@ sub _print_file_grouping_help {
     my $common_species_name = lc $self->_get_species_common_name($gdb_grouping);
 
     my @par = ();
-    if ($self->param('dump_mode') ne 'file') {
+    if ($self->param('split_by_chromosome')) {
         push @par, "Alignments are grouped by $common_species_name chromosome, and then by coordinate system.";
         push @par, "Alignments containing duplications in $common_species_name are dumped once per duplicated segment.";
         push @par, "The files named *.other*." . $self->param('format') . " contain alignments that do not include any $common_species_name region.";
