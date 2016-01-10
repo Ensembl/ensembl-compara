@@ -194,7 +194,7 @@ sub pipeline_analyses {
                 '2->A' => WHEN(
                     '#split_by_chromosome#' => [ 'initJobs' ],
                     '!#split_by_chromosome# && #split_size#>0' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
-                    '!#split_by_chromosome# && #split_size#==0' => { 'dumpMultiAlign' => {'region_name' => 'all', 'filename_suffix' => '*', 'extra_args' => [], 'num_blocks' => '#num_blocks#'} },    # a job to dump all the blocks in 1 file
+                    '!#split_by_chromosome# && #split_size#==0' => { 'dumpMultiAlign' => {'region_name' => 'all', 'filename_suffix' => '*', 'num_blocks' => '#num_blocks#'} },    # a job to dump all the blocks in 1 file
                 ),
                 'A->2' => WHEN(
                         '#run_emf2maf#' => [ 'move_maf_files' ],
