@@ -85,8 +85,10 @@ sub default_options {
         # accepted in principle, but a healthcheck would have to be implemented
         'format' => 'emf',
 
-        # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
-        'dump_mode' => 'dir',
+        # If set to 1, will make a compressed tar archive of a directory of
+        # uncompressed files. Otherwise, there will be a directory of
+        # compressed files
+        'make_tar_archive'  => 0,
 
         # If set to 1, the files are split by chromosome name and
         # coordinate system. Otherwise, createOtherJobs randomly bins the
@@ -125,7 +127,7 @@ sub pipeline_wide_parameters {
         'dump_program'      => $self->o('dump_program'),
         'emf2maf_program'   => $self->o('emf2maf_program'),
 
-        'dump_mode'     => $self->o('dump_mode'),
+        'make_tar_archive'      => $self->o('make_tar_archive'),
         'split_by_chromosome'   => $self->o('split_by_chromosome'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
@@ -245,7 +247,7 @@ sub pipeline_analyses {
             -rc_name => 'crowd',
             -flow_into => [ WHEN(
                 '#run_emf2maf#' => [ 'emf2maf' ],
-                '!#run_emf2maf# && (#dump_mode# ne "tar")' => [ 'compress' ],
+                '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress' ],
             ) ],
         },
         {   -logic_name     => 'emf2maf',
@@ -253,7 +255,7 @@ sub pipeline_analyses {
             -analysis_capacity  => 5,
             -rc_name        => 'crowd',
             -flow_into => [
-                WHEN( '#dump_mode# ne "tar"' => { 'compress' => [ undef, { 'format' => 'maf'} ] } ),
+                WHEN( '!#make_tar_archive#' => { 'compress' => [ undef, { 'format' => 'maf'} ] } ),
             ],
         },
         {   -logic_name     => 'compress',
@@ -282,7 +284,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'readme_file' => '#output_dir#/README.#base_filename#',
             },
-            -flow_into     => WHEN( '#dump_mode# eq "tar"' => [ 'targz' ] ),
+            -flow_into     => WHEN( '#make_tar_archive#' => [ 'targz' ] ),
             -rc_name => 'default_with_reg_conf',
         },
         {   -logic_name     => 'targz',
