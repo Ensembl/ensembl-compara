@@ -177,20 +177,24 @@ sub pipeline_analyses {
                 },
             ],
             -flow_into      => {
-                '2' => [ 'choose_mode' ],
+                '2' => [ 'count_blocks' ],
             },
             -rc_name => 'default_with_reg_conf',
         },
 
-        {  -logic_name  => 'choose_mode',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {  -logic_name  => 'count_blocks',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'db_conn'       => '#compara_db#',
+                'inputquery'    => 'SELECT COUNT(*) AS num_blocks FROM genomic_align_block WHERE method_link_species_set_id = #mlss_id#',
+            },
             -flow_into  => {
-                '1->A' => WHEN(
+                '2->A' => WHEN(
                     '(#dump_mode# ne "file") and (#split_mode# eq "random")' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
                     '(#dump_mode# ne "file") and (#split_mode# eq "chromosome")' => [ 'initJobs' ],
-                    '#dump_mode# eq "file"' => { 'dumpMultiAlign' => {'region_name' => 'all', 'extra_args' => []} },    # a job to dump all the blocks in 1 file
+                    '#dump_mode# eq "file"' => { 'dumpMultiAlign' => {'region_name' => 'all', 'filename_suffix' => '*', 'extra_args' => [], 'num_blocks' => '#num_blocks#'} },    # a job to dump all the blocks in 1 file
                 ),
-                'A->1' => WHEN(
+                'A->2' => WHEN(
                         '#run_emf2maf#' => [ 'move_maf_files' ],
                         ELSE 'md5sum'
                     ),
