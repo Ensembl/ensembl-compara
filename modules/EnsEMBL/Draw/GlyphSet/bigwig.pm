@@ -34,7 +34,13 @@ sub features {
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_config('url');
   my $container = $self->{'container'};
-  my $args      = {'options' => {'hub' => $hub}, 'default_strand' => 1, 'drawn_strand' => $self->strand};
+  my $args      = { 'options' => {
+                                  'hub'         => $hub,
+                                  'config_type' => $self->{'config'}{'type'},
+                                  'track'       => $self->{'my_config'}{'id'},
+                                  },
+                    'default_strand' => 1,
+                    'drawn_strand' => $self->strand};
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigWig', $args);
   my $data;
@@ -44,21 +50,21 @@ sub features {
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour');
     my $metadata = {
-                    'name'          => $self->{'my_config'}->get('name'),
-                    'colour'        => $colour,
-                    'join_colour'   => $colour,
-                    'label_colour'  => $colour,
+                    'name'            => $self->{'my_config'}->get('name'),
+                    'colour'          => $colour,
+                    'join_colour'     => $colour,
+                    'label_colour'    => $colour,
+                    'display'         => $self->{'display'},
+                    'default_strand'  => 1,
                     };
     ## No colour defined in ImageConfig, so fall back to defaults
     unless ($colour) {
-      my $colourset_key = $self->{'my_config'}->get('colourset') || 'userdata';
-      my $colourset     = $hub->species_defs->colour($colourset_key);
-      my $colours       = $colourset->{'url'} || $colourset->{'default'};
-      $metadata         = {
-                            'colour'        => $colours->{'default'},
-                            'join_colour'   => $colours->{'join'} || $colours->{'default'},
-                            'label_colour'  => $colours->{'text'} || $colours->{'default'},
-                          };
+      my $colourset_key           = $self->{'my_config'}->get('colourset') || 'userdata';
+      my $colourset               = $hub->species_defs->colour($colourset_key);
+      my $colours                 = $colourset->{'url'} || $colourset->{'default'};
+      $metadata->{'colour'}       = $colours->{'default'};
+      $metadata->{'join_colour'}  = $colours->{'join'} || $colours->{'default'};
+      $metadata->{'label_colour'} = $colours->{'text'} || $colours->{'default'};
     }
 
     ## Tell the parser to get aggregate data if necessary
