@@ -56,9 +56,11 @@ sub features {
       my $colourset     = $hub->species_defs->colour($colourset_key);
       my $colours       = $colourset->{'url'} || $colourset->{'default'};
       $metadata         = {
-                            'colour'        => $colours->{'default'},
-                            'join_colour'   => $colours->{'join'} || $colours->{'default'},
-                            'label_colour'  => $colours->{'text'} || $colours->{'default'},
+                            'colour'          => $colours->{'default'},
+                            'join_colour'     => $colours->{'join'} || $colours->{'default'},
+                            'label_colour'    => $colours->{'text'} || $colours->{'default'},
+                            'display'         => $self->{'display'},
+                            'default_strand'  => 1,
                           };
     }
 
