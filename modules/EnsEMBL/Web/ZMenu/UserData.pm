@@ -55,38 +55,27 @@ sub content {
     my $slice       = $click_data->{'container'};
     my $caption;
 
-    if ($type eq 'flat_file') { 
-      my $data = $glyphset->features;
-      foreach my $track (@$data) {
-        $caption ||= $track->{'metadata'}{'zmenu_caption'};
-        foreach (@{$track->{'features'}{$strand}||[]}) {
-          if ($feature_id && $_->{'label'} eq $feature_id) {
-            $_->{'track_name'} = $track->{'metadata'}{'name'};
-            $_->{'url'}        = $track->{'metadata'}{'url'};
-            delete($_->{'href'});
-            push @id_features, $_;
-          }
-          elsif ($_->{'seq_region'} eq $coords[0]
-                      && $_->{'start'} >= 0
-                      && $_->{'end'} <= $slice->length) {
-            $_->{'track_name'} = $track->{'metadata'}{'name'};
-            $_->{'url'}        = $track->{'metadata'}{'url'};
-            delete($_->{'href'});
-            push @other_features, $_;
-          }
-        } 
-      }
+    my $data = $glyphset->features;
+    use Data::Dumper; warn Dumper($data);
+    foreach my $track (@$data) {
+      $caption ||= $track->{'metadata'}{'zmenu_caption'};
+      foreach (@{$track->{'features'}{$strand}||[]}) {
+        if ($feature_id && $_->{'label'} eq $feature_id) {
+          $_->{'track_name'} = $track->{'metadata'}{'name'};
+          $_->{'url'}        = $track->{'metadata'}{'url'};
+          delete($_->{'href'});
+          push @id_features, $_;
+        }
+        elsif ($_->{'seq_region'} eq $coords[0]
+                    && $_->{'start'} >= 0
+                    && $_->{'end'} <= $slice->length) {
+          $_->{'track_name'} = $track->{'metadata'}{'name'};
+          $_->{'url'}        = $track->{'metadata'}{'url'};
+          delete($_->{'href'});
+          push @other_features, $_;
+        }
+      } 
     }
-=pod
-    elsif ($type eq 'bigbed') {
-      my %feats    = $glyphset->features; # bigbed returns a stupid data structure
-
-      @features = map { ref $_->[0] eq 'ARRAY' ? @{$_->[0]} : @$_ } values %feats;
-    } 
-    else {
-      @features = @{$glyphset->features};
-    }
-=cut
     my @features = scalar(@id_features) ? @id_features : @other_features;
 
     if (scalar @features > 5) {
