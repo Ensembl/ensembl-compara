@@ -25,7 +25,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory;
 use strict;
 use warnings;
 
-use File::Path qw(make_path);
+use File::Path qw(make_path remove_tree);
 
 use Bio::EnsEMBL::Registry;
 
@@ -107,11 +107,13 @@ sub _test_mlss {
         is_pairwise_aln => ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment' ? 1 : 0),
     };
 
+    remove_tree($output_dir);
     make_path($output_dir);
 
     if ($self->param('format') eq 'emf+maf') {
         $output_id->{format} = 'emf';
         $output_id->{run_emf2maf} = 1;
+        remove_tree($output_dir.'_maf');
         make_path($output_dir.'_maf');
     } else {
         $output_id->{run_emf2maf} = 0;
