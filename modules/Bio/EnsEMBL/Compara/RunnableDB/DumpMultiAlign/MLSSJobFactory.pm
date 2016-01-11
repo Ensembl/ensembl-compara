@@ -113,8 +113,8 @@ sub _test_mlss {
     if ($self->param('format') eq 'emf+maf') {
         $output_id->{format} = 'emf';
         $output_id->{run_emf2maf} = 1;
-        remove_tree($output_dir.'_maf');
-        make_path($output_dir.'_maf');
+        remove_tree($output_dir.'.maf');
+        make_path($output_dir.'.maf');
     } else {
         $output_id->{run_emf2maf} = 0;
     }
