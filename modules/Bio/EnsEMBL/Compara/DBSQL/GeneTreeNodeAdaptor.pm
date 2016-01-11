@@ -399,7 +399,7 @@ sub init_instance_from_rowhash {
 ###############################################################################
 
 {
-    no strict 'refs';
+    no strict 'refs';   ## no critic
     foreach my $func_name (qw(
                                  fetch_all_children_for_node fetch_parent_for_node fetch_all_leaves_indexed
                                  fetch_subtree_under_node fetch_root_by_node
