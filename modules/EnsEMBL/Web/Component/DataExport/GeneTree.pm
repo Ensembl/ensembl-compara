@@ -55,7 +55,7 @@ sub content {
   } 
 
 
-  $settings->{'Hidden'} = ['align', 'node', 'cdb'];
+  $settings->{'Hidden'} = ['align', 'node'];
   $settings->{'nhx_mode'}     = {
                               'type'    => 'DropDown',
                               'label'   => 'Mode for NHX tree dumping',
