@@ -26,8 +26,8 @@ Dumps are created in a sub-directory of --export_dir, which defaults to scratch1
 
 The pipeline can dump all the alignments it finds on a server, so you can do something like:
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db mysql://ensro@ens-staging1/ensembl_compara_80 --reg_conf path/to/production_reg_conf.pl
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_prev --reg_conf path/to/production_reg_conf.pl --format maf --method_link_types EPO
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db mysql://ensro@ens-staging1/ensembl_compara_80 --registry path/to/production_reg_conf.pl
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_prev --registry path/to/production_reg_conf.pl --format maf --method_link_types EPO
 
 Note that in this case, because the locator field is not set, you need to provide a registry file
 
@@ -63,9 +63,9 @@ sub default_options {
         # By default, the pipeline will follow the "locator" of each
         # genome_db. You only have to set reg_conf if the locators
         # are missing.
-        'reg_conf' => '',
+        'registry' => '',
 
-        # Compara reference to dump. Can be the "species" name (if loading the Registry via reg_conf)
+        # Compara reference to dump. Can be the "species" name (if loading the Registry via registry)
         # or the url of the database itself
         # Intentionally left empty
         #'compara_db' => 'Multi',
@@ -131,7 +131,7 @@ sub pipeline_wide_parameters {
         'split_by_chromosome'   => $self->o('split_by_chromosome'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
-        'reg_conf'      => $self->o('reg_conf'),
+        'registry'      => $self->o('registry'),
         'compara_db'    => $self->o('compara_db'),
         'export_dir'    => $self->o('export_dir'),
         'masked_seq'    => $self->o('masked_seq'),
@@ -148,8 +148,8 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-        'default_with_reg_conf' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
-        'crowd_with_reg_conf' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
+        'default_with_registry' => { 'LSF' => ['', '--reg_conf '.$self->o('registry')], 'LOCAL' => ['', '--reg_conf '.$self->o('registry')] },
+        'crowd_with_registry' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', '--reg_conf '.$self->o('registry')], 'LOCAL' => ['', '--reg_conf '.$self->o('registry')] },
     };
 }
 
@@ -183,7 +183,7 @@ sub pipeline_analyses {
             -flow_into      => {
                 '2' => [ 'count_blocks' ],
             },
-            -rc_name => 'default_with_reg_conf',
+            -rc_name => 'default_with_registry',
         },
 
         {  -logic_name  => 'count_blocks',
@@ -204,7 +204,7 @@ sub pipeline_analyses {
                     ),
             },
             -wait_for   => 'create_tracking_tables',
-            -rc_name    => 'default_with_reg_conf',
+            -rc_name    => 'default_with_registry',
         },
 
         {  -logic_name  => 'initJobs',
@@ -214,7 +214,7 @@ sub pipeline_analyses {
                 3 => [ 'createSuperJobs' ],
                 4 => [ 'createOtherJobs' ],
             },
-            -rc_name => 'default_with_reg_conf',
+            -rc_name => 'default_with_registry',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on chromosomes (1 job per chromosome)
         {  -logic_name    => 'createChrJobs',
@@ -222,7 +222,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'default_with_reg_conf',
+            -rc_name => 'default_with_registry',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on supercontigs (1 job per coordinate-system)
         {  -logic_name    => 'createSuperJobs',
@@ -230,7 +230,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'default_with_reg_conf',
+            -rc_name => 'default_with_registry',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
@@ -239,7 +239,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'crowd_with_reg_conf',
+            -rc_name => 'crowd_with_registry',
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
@@ -285,7 +285,7 @@ sub pipeline_analyses {
                 'readme_file' => '#output_dir#/README.#base_filename#',
             },
             -flow_into     => WHEN( '#make_tar_archive#' => [ 'targz' ] ),
-            -rc_name => 'default_with_reg_conf',
+            -rc_name => 'default_with_registry',
         },
         {   -logic_name     => 'targz',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',

@@ -77,8 +77,8 @@ sub fetch_input {
 	push @$cmd, '--dbname', $self->param('compara_db');
     }
 
-    if ($self->param('reg_conf')) {
-	push @$cmd, '--reg_conf', $self->param('reg_conf');
+    if ($self->param('registry')) {
+	push @$cmd, '--reg_conf', $self->param('registry');
     }
 }
 
