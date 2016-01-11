@@ -26,14 +26,13 @@ Dumps are created in a sub-directory of --export_dir, which defaults to scratch1
 
 The pipeline can dump all the alignments it finds on a server, so you can do something like:
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db mysql://ensro@ens-staging1/ensembl_compara_80 --reg_conf path/to/production_reg_conf.pl
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_prev --reg_conf path/to/production_reg_conf.pl --format maf --method_link_types EPO
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db mysql://ensro@ens-staging1/ensembl_compara_80 --registry path/to/production_reg_conf.pl
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_prev --registry path/to/production_reg_conf.pl --format maf --method_link_types EPO
 
 Note that in this case, because the locator field is not set, you need to provide a registry file
 
 Format can be "emf", "maf", or anything BioPerl can provide (the pipeline will fail in the latter case, so
-come and talk to us). To mimic the old "emf+maf" output, you now have to run the pipeline twice: the first
-time with "emf", and the second with "emf2maf". it will then read the EMF files created by the first instance.
+come and talk to us). It also accepts "emf+maf" to generate both emf and maf files
 
 
 Release 65
@@ -50,6 +49,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 
@@ -61,9 +63,9 @@ sub default_options {
         # By default, the pipeline will follow the "locator" of each
         # genome_db. You only have to set reg_conf if the locators
         # are missing.
-        'reg_conf' => '',
+        'registry' => '',
 
-        # Compara reference to dump. Can be the "species" name (if loading the Registry via reg_conf)
+        # Compara reference to dump. Can be the "species" name (if loading the Registry via registry)
         # or the url of the database itself
         # Intentionally left empty
         #'compara_db' => 'Multi',
@@ -79,14 +81,19 @@ sub default_options {
         #  2 for hard-masked sequence
         'masked_seq' => 1,
 
-        # Usually "maf", "emf", or "emf2maf". BioPerl alignment formats are
+        # Usually "maf", "emf", or "emf+maf". BioPerl alignment formats are
         # accepted in principle, but a healthcheck would have to be implemented
         'format' => 'emf',
 
-        # one of 'dir' (directory of compressed files), 'tar' (compressed tar archive of a directory of uncompressed files), or 'file' (single compressed file)
-        'mode' => 'dir',
-        # how the files will be split: either 'chromosome' or 'random'
-        'split_mode' => 'chromosome',
+        # If set to 1, will make a compressed tar archive of a directory of
+        # uncompressed files. Otherwise, there will be a directory of
+        # compressed files
+        'make_tar_archive'  => 0,
+
+        # If set to 1, the files are split by chromosome name and
+        # coordinate system. Otherwise, createOtherJobs randomly bins the
+        # alignment blocks into chunks
+        'split_by_chromosome'   => 1,
 
         'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
         'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
@@ -120,10 +127,18 @@ sub pipeline_wide_parameters {
         'dump_program'      => $self->o('dump_program'),
         'emf2maf_program'   => $self->o('emf2maf_program'),
 
+        'make_tar_archive'      => $self->o('make_tar_archive'),
+        'split_by_chromosome'   => $self->o('split_by_chromosome'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
-	'reg_conf' => $self->o('reg_conf'),
+        'registry'      => $self->o('registry'),
+        'compara_db'    => $self->o('compara_db'),
         'export_dir'    => $self->o('export_dir'),
+        'masked_seq'    => $self->o('masked_seq'),
+
+        output_dir      => '#export_dir#/#base_filename#',
+        output_file_gen => '#output_dir#/#base_filename#.#region_name#.#format#',
+        output_file     => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
     };
 }
 
@@ -133,8 +148,8 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-        'default_with_reg_conf' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
-        'crowd_with_reg_conf' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
+        'default_with_registry' => { 'LSF' => ['', '--reg_conf '.$self->o('registry')], 'LOCAL' => ['', '--reg_conf '.$self->o('registry')] },
+        'crowd_with_registry' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', '--reg_conf '.$self->o('registry')], 'LOCAL' => ['', '--reg_conf '.$self->o('registry')] },
     };
 }
 
@@ -162,41 +177,44 @@ sub pipeline_analyses {
             },
             -input_ids     => [
                 {
-                    'compara_db'        => $self->o('compara_db'),
                     'mlss_id'           => $self->o('mlss_id'),
                 },
             ],
             -flow_into      => {
-                '2' => [ 'initJobs' ],
+                '2' => [ 'count_blocks' ],
             },
-            -rc_name => 'default_with_reg_conf',
+            -rc_name => 'default_with_registry',
         },
 
-        {  -logic_name => 'initJobs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
-
-            -parameters => {'species' => $self->o('species'),
-			    'dump_mlss_id' => $self->o('mlss_id'),
-			    'output_dir' => $self->o('output_dir'),
-			    'compara_db' => $self->o('compara_db'),
-			    'maf_output_dir' => $self->o('maf_output_dir'), #define if want to run emf2maf 
-			    'reg_conf' => $self->o('reg_conf'),
-			    split_mode => $self->o('split_mode'),
-			   },
-            -flow_into => {
-                $self->o('mode') eq 'file' ?
-                (
-                    '5->A' => [ 'dumpMultiAlign' ],
-                ) : (
-                    '2->A' => [ 'createChrJobs' ],
-                    '3->A' => [ 'createSuperJobs' ],
-                    '4->A' => [ 'createOtherJobs' ],
-                ),
-                '6->A' => [ 'copy_and_uncompress_emf_dir' ],
-                'A->1' => [ 'md5sum'],
+        {  -logic_name  => 'count_blocks',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'db_conn'       => '#compara_db#',
+                'inputquery'    => 'SELECT COUNT(*) AS num_blocks FROM genomic_align_block WHERE method_link_species_set_id = #mlss_id#',
             },
-            -rc_name => 'default_with_reg_conf',
-            -wait_for       => 'create_tracking_tables',
+            -flow_into  => {
+                '2->A' => WHEN(
+                    '#split_by_chromosome#' => [ 'initJobs' ],
+                    '!#split_by_chromosome# && #split_size#>0' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
+                    '!#split_by_chromosome# && #split_size#==0' => { 'dumpMultiAlign' => {'region_name' => 'all', 'filename_suffix' => '*', 'num_blocks' => '#num_blocks#'} },    # a job to dump all the blocks in 1 file
+                ),
+                'A->2' => WHEN(
+                        '#run_emf2maf#' => [ 'move_maf_files' ],
+                        ELSE 'md5sum'
+                    ),
+            },
+            -wait_for   => 'create_tracking_tables',
+            -rc_name    => 'default_with_registry',
+        },
+
+        {  -logic_name  => 'initJobs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
+            -flow_into => {
+                2 => [ 'createChrJobs' ],
+                3 => [ 'createSuperJobs' ],
+                4 => [ 'createOtherJobs' ],
+            },
+            -rc_name => 'default_with_registry',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on chromosomes (1 job per chromosome)
         {  -logic_name    => 'createChrJobs',
@@ -204,7 +222,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'default_with_reg_conf',
+            -rc_name => 'default_with_registry',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on supercontigs (1 job per coordinate-system)
         {  -logic_name    => 'createSuperJobs',
@@ -212,69 +230,38 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'default_with_reg_conf',
+            -rc_name => 'default_with_registry',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
-            -parameters => {
-                split_mode => $self->o('split_mode'),
-            },
             -rc_name => 'crowd',
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'crowd_with_reg_conf',
+            -rc_name => 'crowd_with_registry',
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
-            -parameters    => {
-                'cmd' => [ 'perl', '#dump_program#', '--species', '#species#', '--mlss_id', '#mlss_id#', '--masked_seq', $self->o('masked_seq'), '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_dir#/#base_filename#.#region_name#.#format#' ],
-                'output_file_pattern' => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
-                'reg_conf'      => $self->o('reg_conf'),
-            },
-            -hive_capacity => 50,
+            -analysis_capacity => 50,
             -rc_name => 'crowd',
-            $self->o('mode') eq 'tar' ? () : ( -flow_into => [ 'compress' ] ),
-        },
-        {   -logic_name     => 'copy_and_uncompress_emf_dir',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'           => 'cp -a #export_dir#/#base_filename#/#base_filename#*.emf* #output_dir#; gunzip #output_dir#/*.gz',
-            },
-            -flow_into      => [ 'find_emf_files' ],
-        },
-        {   -logic_name     => 'find_emf_files',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters     => {
-                'inputcmd'      => 'grep -rc DATA #output_dir#/',
-                'delimiter'     => ":",
-                'column_names' => [ 'in_emf_file', 'num_blocks' ],
-            },
-            -flow_into => {
-                $self->o('mode') eq 'tar' ? (
-                    2 => [ 'emf2maf' ],     # will create a fan of jobs
-                ) : (
-                    '2->A' => [ 'emf2maf' ],     # will create a fan of jobs
-                    'A->1' => [ 'compress_maf_dir' ]
-                ),
-            },
+            -flow_into => [ WHEN(
+                '#run_emf2maf#' => [ 'emf2maf' ],
+                '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress' ],
+            ) ],
         },
         {   -logic_name     => 'emf2maf',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
             -analysis_capacity  => 5,
             -rc_name        => 'crowd',
-        },
-        {   -logic_name     => 'compress_maf_dir',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'           => 'gzip -f -9 #output_dir#/*.maf',
-            },
+            -flow_into => [
+                WHEN( '!#make_tar_archive#' => { 'compress' => [ undef, { 'format' => 'maf'} ] } ),
+            ],
         },
         {   -logic_name     => 'compress',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'           => 'gzip -f -9 #output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
+                'cmd'           => 'gzip -f -9 #output_file#',
             },
             -analysis_capacity => 1,
         },
@@ -283,18 +270,24 @@ sub pipeline_analyses {
             -parameters     => {
                 'cmd'           => 'cd #output_dir#; md5sum *.#format#* > MD5SUM',
             },
-            -flow_into      => [ 'readme' ],
+            -flow_into      =>  [ 'readme' ],
+        },
+        {   -logic_name     => 'move_maf_files',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'cmd'           => 'mv #output_dir#/*.maf* #output_dir#.maf/'
+            },
+            -flow_into      => { 1 => { 'md5sum' => [undef, { 'format' => 'maf', 'base_filename' => '#base_filename#.maf'} ] } },
         },
         {   -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
             -parameters    => {
-                'mode'  => $self->o('mode'),
                 'readme_file' => '#output_dir#/README.#base_filename#',
             },
-            $self->o('mode') eq 'tar' ? ( -flow_into => [ 'tar' ] ) : (),
-            -rc_name => 'default_with_reg_conf',
+            -flow_into     => WHEN( '#make_tar_archive#' => [ 'targz' ] ),
+            -rc_name => 'default_with_registry',
         },
-        {   -logic_name     => 'tar',
+        {   -logic_name     => 'targz',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'           => 'cd #export_dir#; tar czf #base_filename#.tar.gz #base_filename#',

@@ -25,6 +25,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory;
 use strict;
 use warnings;
 
+use File::Path qw(make_path remove_tree);
+
+use Bio::EnsEMBL::Registry;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -33,13 +37,12 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
         'species_priority'  => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes' ],
+        'filename_prefix'   => 'Compara',
     }
 }
 
-sub fetch_input {
+sub run {
     my ($self) = @_;
-
-    $self->param('good_mlsss', []);
 
     # Get MethodLinkSpeciesSet adaptor:
     my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -47,7 +50,7 @@ sub fetch_input {
     if ($self->param('mlss_id')) {
         my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id')) ||
             die $self->param('mlss_id')." does not exist in the database !\n";
-        $self->_test_and_add_mlss($mlss);
+        $self->_test_mlss($mlss);
         return;
     }
 
@@ -55,12 +58,12 @@ sub fetch_input {
         # Get MethodLinkSpeciesSet Objects for required method_link_type
         my $mlss_listref = $mlssa->fetch_all_by_method_link_type($ml_typ);
         foreach my $mlss (@$mlss_listref) {
-            $self->_test_and_add_mlss($mlss);
+            $self->_test_mlss($mlss);
         }
     }
 }
 
-sub _test_and_add_mlss {
+sub _test_mlss {
     my ($self, $mlss) = @_;
 
     my $mlss_id     = $mlss->dbID();
@@ -78,16 +81,47 @@ sub _test_and_add_mlss {
         $mlss->add_tag('reference_species', $ref_species_in[0]);
     }
 
-    push @{$self->param('good_mlsss')}, $mlss;
-}
+    #Note this is using the database set in $self->param('compara_db') rather than the underlying eHive database.
+    my $compara_dba       = $self->compara_dba;
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
+    my $species_name      = $mlss->get_value_for_tag('reference_species');
+    my $genome_db         = $genome_db_adaptor->fetch_by_name_assembly($species_name)
+                             || $genome_db_adaptor->fetch_by_registry_name($species_name);
+    $genome_db->db_adaptor || die "I don't know where the '$species_name' core database is. Have you defined the Registry ?\n";
 
-
-sub write_output {
-    my ($self)  = @_;
-
-    foreach my $mlss (@{$self->param('good_mlsss')}) {
-        $self->dataflow_output_id({'mlss_id' => $mlss->dbID, 'species' => $mlss->get_value_for_tag('reference_species')}, 2);
+    if ($mlss->method->type eq "GERP_CONSERVATION_SCORE") {
+        $mlss = $mlss->adaptor->fetch_by_dbID($mlss->get_value_for_tag('msa_mlss_id'));
     }
+
+    my $filename = $mlss->name;
+    $filename =~ s/[\W\s]+/_/g;
+    $filename =~ s/_$//;
+    $filename = $self->param_required('filename_prefix'). "." . $filename;
+
+    my $output_dir = $self->param_required('export_dir').'/'.$filename;
+    my $output_id = {
+        mlss_id         => $mlss->dbID,
+        species         => $species_name,
+        genome_db_id    => $genome_db->dbID,
+        base_filename   => $filename,
+        is_pairwise_aln => ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment' ? 1 : 0),
+    };
+
+    remove_tree($output_dir);
+    make_path($output_dir);
+
+    if ($self->param('format') eq 'emf+maf') {
+        $output_id->{format} = 'emf';
+        $output_id->{run_emf2maf} = 1;
+        remove_tree($output_dir.'.maf');
+        make_path($output_dir.'.maf');
+    } else {
+        $output_id->{run_emf2maf} = 0;
+    }
+
+    # Override autoflow and make sure the descendant jobs have all the
+    # parameters
+    $self->dataflow_output_id($output_id, 2);
 }
 
 1;

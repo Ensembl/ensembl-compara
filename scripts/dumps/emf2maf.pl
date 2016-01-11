@@ -39,10 +39,11 @@ if (!@ARGV) {
   MAF files will be named file1.maf, file2.maf...
 
 ";
+  exit 1;
 }
 
 foreach my $emf_file (@ARGV) {
-  print "Parsing file $emf_file...\n";
+  print STDERR "Parsing file $emf_file...\n";
   my $maf_file = $emf_file;
   $maf_file =~ s/(\.emf)?$//;
   $maf_file .= ".maf";
