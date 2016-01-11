@@ -91,7 +91,7 @@ sub run
     $self->param('output_dir', $output_dir);
   }
   if (! -e $self->param('output_dir')) {
-    mkdir($self->param('output_dir'), 0777);
+    mkdir($self->param('output_dir'));
   }
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Mercator
     (-input_dir => $self->param('input_dir'),

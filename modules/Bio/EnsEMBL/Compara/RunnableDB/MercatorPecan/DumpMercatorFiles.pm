@@ -95,7 +95,7 @@ sub dumpMercatorFiles {
     $self->param('input_dir', $input_dir);
   }
   if (! -e $self->param('input_dir')) {
-    mkdir($self->param('input_dir'), 0777);
+    mkdir($self->param('input_dir'));
   }
 
   my $dfa = $self->compara_dba->get_DnaFragAdaptor;
