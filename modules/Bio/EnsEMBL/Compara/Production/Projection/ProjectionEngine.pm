@@ -236,7 +236,7 @@ my $imported_log4p = 0;
 sub _log_builder {
   my ($self) = @_;
   if(! $imported_log4p) {
-    eval "require Log::Log4perl";
+    eval {require Log::Log4perl};
     if($@) {
       throw('Cannot build a logger because Log::Log4perl is not available. Detected error: '.$@);
     }

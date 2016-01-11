@@ -621,7 +621,10 @@ sub toString {
 sub sync_with_registry {
   my $self = shift;
 
-  return unless(eval "require Bio::EnsEMBL::Registry");
+  eval {
+      require Bio::EnsEMBL::Registry;
+  };
+  return if $@;
 
   #print("Registry eval TRUE\n");
 
