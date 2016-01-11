@@ -746,7 +746,7 @@ sub load_user_tracks {
             external        => 'user',
             glyphset        => 'flat_file',
             colourset       => 'userdata',
-            sub_type        => 'tmp',
+            sub_type        => 'user',
             file            => $entry->file,
             format          => $entry->format,
             style           => $entry->style,
