@@ -56,7 +56,6 @@ sub content {
     my $caption;
 
     my $data = $glyphset->features;
-    use Data::Dumper; warn Dumper($data);
     foreach my $track (@$data) {
       $caption ||= $track->{'metadata'}{'zmenu_caption'};
       foreach (@{$track->{'features'}{$strand}||[]}) {
