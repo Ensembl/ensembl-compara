@@ -70,55 +70,55 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30047,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'host'            => 'compara2',    # where the pipeline database will be created
+        #'mlss_id'         => 30047,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        #'host'            => 'compara2',    # where the pipeline database will be created
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
-            # HMM clustering
-        'hmm_clustering'  => 0,
-        'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-        'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        # HMM clustering
+        #'hmm_clustering'  => 0,
+        #'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
+        #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
+        #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
-            # code directories:
-        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
-        'mcl_bin_dir'     => '/software/ensembl/compara/mcl-14-137/bin',
-        'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.221',
-            
-            # data directories:
-        'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
-        'warehouse_dir'   => '/warehouse/ensembl05/lg4/families/',      # ToDo: move to a Compara-wide warehouse location
+        # code directories:
+        #'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
+        #'mcl_bin_dir'     => '/software/ensembl/compara/mcl-14-137/bin',
+        #'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.221',
+
+        # data directories:
+        #'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
+        #'warehouse_dir'   => '/warehouse/ensembl05/lg4/families/',      # ToDo: move to a Compara-wide warehouse location
         'uniprot_dir'     => $self->o('work_dir').'/uniprot',
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => $self->o('file_basename').'.pep',
 
-        'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
+        #'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
 
-        'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
+        #'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
-        'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
+        #'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
 
-            # resource requirements:
-        'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
-        'blast_gigs'      =>  4,
-        'blast_hm_gigs'   =>  6,
-        'mcl_gigs'        => 72,
-        'mcl_threads'     => 12,
-        'lomafft_gigs'    =>  4,
-        'himafft_gigs'    => 14,
-        'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
-        'blast_capacity'  => 5000,                                  # work both as hive_capacity and resource-level throttle
-        'mafft_capacity'  =>  400,
-        'cons_capacity'   =>  100,
-        'HMMer_classify_capacity' => 100,
+        # resource requirements:
+        #'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
+        #'blast_gigs'      =>  4,
+        #'blast_hm_gigs'   =>  6,
+        #'mcl_gigs'        => 72,
+        #'mcl_threads'     => 12,
+        #'lomafft_gigs'    =>  4,
+        #'himafft_gigs'    => 14,
+        #'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
+        #'blast_capacity'  => 5000,                                  # work both as hive_capacity and resource-level throttle
+        #'mafft_capacity'  =>  400,
+        #'cons_capacity'   =>  100,
+        #'HMMer_classify_capacity' => 100,
 
-            # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #release# - 1)expr#',
+        # used by the StableIdMapper as the reference:
+        #'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #release# - 1)expr#',
 
-            # used by the StableIdMapper as the location of the master 'mapping_session' table:
-        'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mm14_ensembl_compara_master',
+        # used by the StableIdMapper as the location of the master 'mapping_session' table:
+        #'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mm14_ensembl_compara_master',
     };
 }
 
@@ -165,7 +165,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     };
 }
 
-
+=head2 RESOURCE CLASSES
 sub resource_classes {
     my ($self) = @_;
     return {
@@ -181,6 +181,7 @@ sub resource_classes {
         '2GigMem'      => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
+=cut
 
 sub hive_meta_table {
     my ($self) = @_;
@@ -669,7 +670,7 @@ sub pipeline_analyses {
             },
             -rc_name => 'BigMafft',    # NB: make sure you give it enough memory or it will crash
         },
-        
+
         {   -logic_name     => 'write_member_counts',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
