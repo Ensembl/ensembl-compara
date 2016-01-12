@@ -363,7 +363,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
-            -rc_name => 'BigMafft',    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
+            -rc_name => '16GigMem',    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
         },
 
         {   -logic_name => 'make_blastdb',
@@ -607,7 +607,7 @@ sub pipeline_analyses {
             -hive_capacity => 20,
             -batch_size    => 1,
             -mafft_threads => 8,
-            -rc_name => 'BigMafft',
+            -rc_name => 'BigMafft_multi_core',
         },
 
         {   -logic_name => 'find_update_singleton_cigars',      # example of an SQL-session within a job (temporary table created, used and discarded)
@@ -668,7 +668,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'write_member_counts' ],
             },
-            -rc_name => 'BigMafft',    # NB: make sure you give it enough memory or it will crash
+            -rc_name => '16GigMem',    # NB: make sure you give it enough memory or it will crash
         },
 
         {   -logic_name     => 'write_member_counts',
