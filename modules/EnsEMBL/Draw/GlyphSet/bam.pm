@@ -106,8 +106,9 @@ sub _render_coverage {
   }
 
   ## Munge into a format suitable for the Style module
+  my $default_strand = $self->{'my_config'}->get('default_strand');
   my $name = $self->{'my_config'}->get('short_name') || $self->{'my_config'}->get('name');
-  my $data = {'features' => [], 'metadata' => {
+  my $data = {'features' => {$default_strand => []}, 'metadata' => {
                                                 'name'      => $name,
                                                 'colour'    => $default_colour,
                                                 'max_score' => $max, 
@@ -143,7 +144,7 @@ sub _render_coverage {
                 'colour'  => $colour,
                 };
     
-    push @{$data->{'features'}}, $hash;
+    push @{$data->{'features'}{$default_strand}}, $hash;
   }
   #use Data::Dumper; warn Dumper($data);
 
@@ -178,7 +179,9 @@ sub _render_reads {
   my $read_colour = $self->my_colour('read');
   $self->{'my_config'}->set('insert_colour', $self->my_colour('read_insert'));
 
-  my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$self->features} ];
+  my $all_features    = $self->features;
+  my $default_strand  = $self->{'my_config'}->get('default_strand');
+  my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$all_features->{$default_strand}} ];
 
   my $features = pre_filter_depth($fs, $max_depth, $pix_per_bp, $slice->start, $slice->end);
   $features = [reverse @$features] if $slice->strand == -1;
@@ -199,7 +202,7 @@ sub _render_reads {
 
   my $total_count = scalar @$fs;
   my $drawn_count = scalar @$features;
-  my $data = {'features' => [], 'metadata' => {'not_drawn' => $total_count - $drawn_count}};
+  my $data = {'features' => {'1' => [], '-1' => []}, 'metadata' => {'not_drawn' => $total_count - $drawn_count}};
 
   foreach my $f (@$features) {
     my $fstart = $f->start;
@@ -255,7 +258,7 @@ sub _render_reads {
       }
     }
 
-    push @{$data->{'features'}}, $fhash;
+    push @{$data->{'features'}{$default_strand}}, $fhash;
   }
 
   ## Draw read track
@@ -274,6 +277,8 @@ sub _render {
 ### Wrapper around the individual subtrack renderers, with lots of
 ### error/timeout handling to cope with the large size of BAM files
   my ($self, $options) = @_;
+  my $default_strand = $options->{'default_strand'} || 1;
+  $self->{'my_config'}->set('default_strand', $default_strand);
 
   ## check threshold
   my $slice = $self->{'container'};
@@ -292,7 +297,8 @@ sub _render {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
-    if (!scalar(@{$self->features})) {
+    my $features = $self->features;
+    if (!scalar(@{$features->{$default_strand}})) {
       $self->no_features;
     } else {
       #warn "Rendering coverage";
@@ -329,9 +335,9 @@ sub features {
 
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{features})) {
-    $self->{_cache}->{features} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end) || [];
+    my $default_strand = $self->{'my_config'}->get('default_strand');
+    $self->{_cache}->{features}{$default_strand} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end) || [];
   }
-
   return $self->{_cache}->{features};
 } 
 
@@ -347,7 +353,6 @@ sub consensus_features {
     #use Data::Dumper; warn ">>> CONSENSUS ".Dumper($consensus);
     $self->{_cache}->{consensus_features} = $cons_lookup;
   }
-
   return $self->{_cache}->{consensus_features}; 
 }
 
@@ -603,7 +608,9 @@ sub calc_coverage {
 ## calculate the coverage
   my ($self) = @_;
 
-  my $features = $self->features;
+  my $all_features    = $self->features;
+  my $default_strand  = $self->{'my_config'}->get('default_strand');
+  my $features        = $all_features->{$default_strand};
 
   my $slice       = $self->{'container'};
   my $START       = $slice->start;
