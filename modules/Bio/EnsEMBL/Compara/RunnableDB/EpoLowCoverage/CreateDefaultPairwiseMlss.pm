@@ -124,18 +124,17 @@ sub create_default_mlss {
 	}
     }
 
-    my $default_mlss = "(";
+    my $default_mlss = [];
     foreach my $genome_db_id (keys %$pairwise_mlsss) {
 	if (defined $pairwise_mlsss->{$genome_db_id}) {
 	    my $name = $pairwise_genome_db_adaptor->fetch_by_dbID($genome_db_id)->name;
 	    print "mlss $name $genome_db_id ". $pairwise_mlsss->{$genome_db_id}->dbID . "\n" if ($self->debug);
 	    my $mlss_id = $pairwise_mlsss->{$genome_db_id}->dbID;
-	    $default_mlss .= $mlss_id . ",";
+	    push @$default_mlss, $mlss_id;
 	} else {
 	    print "Unable to find mlss for $genome_db_id\n" if ($self->debug);
 	}
     }
-    $default_mlss .= ")";
 
     #Store in meta table
     $self->dataflow_output_id({'param_name' => 'pairwise_default_mlss',

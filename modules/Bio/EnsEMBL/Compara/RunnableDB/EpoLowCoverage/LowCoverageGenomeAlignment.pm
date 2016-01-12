@@ -1308,7 +1308,7 @@ sub _construct_pairwise_locations {
     my $pairwise_location;
 
     #list of mlss to be found in the default location (usually previous compara database)
-    my @mlsss = eval($self->param('pairwise_default_mlss'));
+    my @mlsss = @{ $self->param('pairwise_default_mlss') };
 
     #Add exceptions
     $pairwise_location = $self->param('pairwise_exception_location');
