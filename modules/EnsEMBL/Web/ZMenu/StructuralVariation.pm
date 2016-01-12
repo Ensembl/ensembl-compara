@@ -120,7 +120,7 @@ sub feature_content {
     });
   }
   else {
-    my $source = $feature->source;
+    my $source = $feature->source_name;
     if ($source eq 'LOVD') {
       # http://varcache.lovd.nl/redirect/hg19.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
       my $tmp_end = ($start>$end) ? $start+1 : $end;

@@ -408,14 +408,16 @@ sub alleles {
 
   my $extra_allele_info = '';
   if ($ancestor || $ambiguity || $maf) {
-    $extra_allele_info .= $self->text_separator;
-    $extra_allele_info .= qq{<span>$ancestor</span>} if ($ancestor);
+    if ($ancestor) {
+      $extra_allele_info .= $self->text_separator;
+      $extra_allele_info .= qq{<span>$ancestor</span>};
+    }
     if ($ambiguity) {
-      $extra_allele_info .= $self->text_separator if ($extra_allele_info ne '');
+      $extra_allele_info .= $self->text_separator;
       $extra_allele_info .= qq{<span>$ambiguity</span>};
     }
     if ($maf) {
-      $extra_allele_info .= $self->text_separator if ($extra_allele_info ne '');
+      $extra_allele_info .= $self->text_separator;
       $extra_allele_info .= qq{<span>$maf</span>};
     }
   }
@@ -459,7 +461,7 @@ sub alleles {
   # Check somatic mutation base matches reference
   if ($feature_slice) {
     my $sequence = $feature_slice->seq;
-    my ($allele) = split /\//, $object->alleles;
+    my $allele   = $l_alleles[0];
     
     if ($allele =~ /^[ACGTN]+$/) {
       my $seq   = length $sequence == 1 ? 'base': 'sequence';
@@ -571,8 +573,8 @@ sub evidence_status {
     $html .= qq{<a href="$url">$img_evidence</a>};
   }
 
-  my $src = $self->img_url.'/16/info.png';
-  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the evidence status descriptions"/>}; 
+  my $src = $self->img_url.'/16/info12.png';
+  my $img = qq{<img src="$src" class="_ht" style="vertical-align:bottom;margin-bottom:2px;" title="Click to see all the evidence status descriptions"/>}; 
   my $info_link = qq{<a href="/info/genome/variation/data_description.html#evidence_status" target="_blank">$img</a>};
 
   return [ "Evidence status $info_link" , $html ];
@@ -587,8 +589,8 @@ sub clinical_significance {
 
   return unless (scalar(@$clin_sign));
   
-  my $src = $self->img_url.'/16/info.png';
-  my $img = qq{<img src="$src" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the clinical significances"/>};
+  my $src = $self->img_url.'/16/info12.png';
+  my $img = qq{<img src="$src" class="_ht" style="vertical-align:bottom;margin-bottom:2px;" title="Click to see all the clinical significances"/>};
   my $info_link = qq{<a href="/info/genome/variation/data_description.html#clin_significance" target="_blank">$img</a>};
 
   my %clin_sign_icon;
