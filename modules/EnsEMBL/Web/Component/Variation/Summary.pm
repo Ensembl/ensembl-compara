@@ -408,14 +408,16 @@ sub alleles {
 
   my $extra_allele_info = '';
   if ($ancestor || $ambiguity || $maf) {
-    $extra_allele_info .= $self->text_separator;
-    $extra_allele_info .= qq{<span>$ancestor</span>} if ($ancestor);
+    if ($ancestor) {
+      $extra_allele_info .= $self->text_separator;
+      $extra_allele_info .= qq{<span>$ancestor</span>};
+    }
     if ($ambiguity) {
-      $extra_allele_info .= $self->text_separator if ($extra_allele_info ne '');
+      $extra_allele_info .= $self->text_separator;
       $extra_allele_info .= qq{<span>$ambiguity</span>};
     }
     if ($maf) {
-      $extra_allele_info .= $self->text_separator if ($extra_allele_info ne '');
+      $extra_allele_info .= $self->text_separator;
       $extra_allele_info .= qq{<span>$maf</span>};
     }
   }
@@ -459,7 +461,7 @@ sub alleles {
   # Check somatic mutation base matches reference
   if ($feature_slice) {
     my $sequence = $feature_slice->seq;
-    my ($allele) = split /\//, $object->alleles;
+    my $allele   = $l_alleles[0];
     
     if ($allele =~ /^[ACGTN]+$/) {
       my $seq   = length $sequence == 1 ? 'base': 'sequence';
