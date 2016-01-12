@@ -4,7 +4,7 @@ severity  = 5
 [Subroutines::ProhibitExplicitReturnUndef]
 severity=4
 
-# We can solve these ones
+# We can solve these ones but it may take time and some "## no critic" pragmas
 [InputOutput::ProhibitBarewordFileHandles]
 severity=4
 [InputOutput::ProhibitTwoArgOpen]

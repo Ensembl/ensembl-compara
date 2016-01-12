@@ -2,6 +2,7 @@
 
 export PERL5LIB=$PWD/bioperl-live:$PWD/ensembl-test/modules:$PWD/ensembl/modules:$PWD/modules:$PWD/ensembl-hive/modules
 export ENSEMBL_CVS_ROOT_DIR=$PWD
+export TEST_AUTHOR=$USER
 
 echo "Running ensembl-compara test suite using $PERL5LIB"
 if [ "$COVERALLS" = 'true' ]; then
