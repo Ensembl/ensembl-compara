@@ -255,7 +255,6 @@ our $APACHE_DIR           = "$ENSEMBL_SERVERROOT/apache2";
 our $APACHE_BIN           = "$APACHE_DIR/bin/httpd";
 our $SAMTOOLS_DIR         = "$ENSEMBL_SERVERROOT/samtools";
 our $BIOPERL_DIR          = "$ENSEMBL_SERVERROOT/bioperl-live";
-our $MINI_BIOPERL_161_DIR = "$ENSEMBL_SERVERROOT/mini-bioperl-161";
 
 # See Memoize.pm for meaning of these
 our $MEMOIZE_ENABLED      = 1;
@@ -428,7 +427,6 @@ sub update_conf {
   
   push @ENSEMBL_LIB_DIRS, (
     "$ENSEMBL_WEBROOT/modules",
-    $MINI_BIOPERL_161_DIR,
     $BIOPERL_DIR,
     "$ENSEMBL_SERVERROOT/biomart-perl/lib",
     "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
