@@ -442,14 +442,6 @@ sub alignment_string {
 }
 
 
-
-sub alignment_string_bounded {  ## DEPRECATED
-    my $self = shift;
-    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e84. Please use SeqMember::alignment_string("exon_bounded") instead');
-    return $self->alignment_string('exon_bounded');
-}
-
-
 sub cdna_alignment_string { ## DEPRECATED
     my $self = shift;
     deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e84. Please use SeqMember::alignment_string("cds") instead');

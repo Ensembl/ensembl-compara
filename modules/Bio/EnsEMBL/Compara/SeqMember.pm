@@ -220,13 +220,6 @@ sub new_from_Transcript {
 }
 
 
-sub member_id { ## DEPRECATED
-  my $self = shift;
-  deprecate('SeqMember::member_id() is deprecated and will be removed in e84. Please use seq_member_id() instead');
-  return $self->dbID(@_);
-}
-
-
 =head2 seq_member_id
 
   Arg [1]    : (opt) integer
@@ -278,28 +271,6 @@ sub sequence {
   }
 
   return $self->{'_sequence'};
-}
-
-
-sub sequence_exon_cased {  ## DEPRECATED
-    my $self = shift;
-
-    deprecate('SeqMember::sequence_exon_cased() is deprecated and will be removed in e84. Use SeqMember::other_sequence("exon_cased") instead');
-    return $self->other_sequence('exon_cased');
-}
-
-sub sequence_exon_bounded { ## DEPRECATED
-    my $self = shift;
-
-    deprecate('SeqMember::sequence_exon_bounded() is deprecated and will be removed in e84. Use SeqMember::other_sequence("exon_bounded") instead');
-    return $self->other_sequence('exon_bounded');
-}
-
-sub sequence_cds {  ## DEPRECATED
-    my $self = shift;
-
-    deprecate('SeqMember::sequence_cds() is deprecated and will be removed in e84. Use SeqMember::other_sequence("cds") instead');
-    return $self->other_sequence('cds');
 }
 
 
@@ -625,23 +596,6 @@ sub get_Translation {
     my $transcript = $self->get_Transcript;
     return undef unless $transcript;
     return $transcript->translation();
-}
-
-
-
-### Deprecated methods
-
-sub get_exon_bounded_sequence {  # DEPRECATED
-    my $self = shift;
-    deprecate('get_exon_bounded_sequence() is deprecated and will be removed in e84. Use other_sequence("exon_bounded") instead.');
-    return $self->other_sequence('exon_bounded');
-}
-
-sub get_other_sequence {  # DEPRECATED
-    my $self = shift;
-    my $seq_type = shift;
-    deprecate('get_other_sequence() is deprecated and will be removed in e84. Use other_sequence($seq_type) instead.');
-    return $self->other_sequence($seq_type);
 }
 
 

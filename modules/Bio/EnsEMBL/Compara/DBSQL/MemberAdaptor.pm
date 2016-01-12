@@ -137,21 +137,6 @@ sub fetch_all_by_stable_id_list {
 }
 
 
-=head2 fetch_all_by_source_stable_ids
-
-  Description: DEPRECATED: fetch_all_by_source_stable_ids() is deprecated and will be removed in e84. Use fetch_all_by_stable_id_list() instead
-
-=cut
-
-sub fetch_all_by_source_stable_ids {  ## DEPRECATED
-    my ($self, $source_name, $stable_ids) = @_;
-    deprecate('MemberAdaptor::fetch_all_by_source_stable_ids() is deprecated and will be removed in e84. Use fetch_all_by_stable_id_list() instead');
-    my $members = $self->fetch_all_by_stable_id_list($stable_ids);
-    die "In fetch_all_by_source_stable_ids(), some of the members do not have the required source_name" if $source_name and grep {$_->source_name ne $source_name} @$stable_ids;
-    return $members;
-}
-
-
 
 =head2 fetch_all
 
@@ -274,19 +259,6 @@ sub fetch_all_by_source_taxon {
     $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
     $self->bind_param_generic_fetch($taxon_id, SQL_INTEGER);
     return $self->generic_fetch('m.source_name = ? AND m.taxon_id = ?');
-}
-
-
-=head2 fetch_all_by_source_genome_db_id
-
-  Description: DEPRECATED: fetch_all_by_source_genome_db_id() is deprecated and will be removed in e84. Use fetch_all_by_GenomeDB() instead
-
-=cut
-
-sub fetch_all_by_source_genome_db_id {  ## DEPRECATED
-    my ($self, $source_name, $genome_db_id) = @_;
-    deprecate('fetch_all_by_source_genome_db_id() is deprecated and will be removed in e84. Use fetch_all_by_GenomeDB() instead');
-    return $self->fetch_all_by_GenomeDB($genome_db_id, $source_name);
 }
 
 
