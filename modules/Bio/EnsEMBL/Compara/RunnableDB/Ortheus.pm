@@ -70,13 +70,6 @@ Options used to run java eg: '-server -Xmx1000M'
 =item * tree_file
 
 FIXME
-
-=item * tree_analysis_data_id (int)
-
-FIXME
-
-=item * pairwise_analysis_data_id (int)
-
 Optional. A list of database locations and method_link_species_set_id pairs for the 2X geonome LASTZ_NET alignments. The database locations should be identified using the url format.ie mysql://user:pass\@host:port/db_name.
 
 =item * reference_species 
