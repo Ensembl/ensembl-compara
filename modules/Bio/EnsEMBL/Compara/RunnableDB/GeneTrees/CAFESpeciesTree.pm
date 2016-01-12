@@ -438,13 +438,9 @@ sub check_tree {
       die "The tree is NOT ultrametric\n";
   }
 
-  eval (is_binary($tree));
-  if ($@) {
-    die $@;
-  } else {
-      if ($self->debug()) {
-          print STDERR "The tree is binary\n";
-      }
+  is_binary($tree);
+  if ($self->debug()) {
+    print STDERR "The tree is binary\n";
   }
 }
 
