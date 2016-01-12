@@ -1,0 +1,16 @@
+severity  = 5
+
+# This one has to stay
+[Subroutines::ProhibitExplicitReturnUndef]
+severity=4
+
+# We can solve these ones
+[InputOutput::ProhibitBarewordFileHandles]
+severity=4
+[InputOutput::ProhibitTwoArgOpen]
+severity=4
+[BuiltinFunctions::ProhibitStringyEval]
+severity=4
+[ControlStructures::ProhibitMutatingListFunctions]
+severity=4
+
