@@ -54,6 +54,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
 
@@ -157,16 +158,6 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'test_dump_for_uniprot',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters => {
-                'condition' => '"#member_type#" eq "protein"',
-            },
-            -flow_into => {
-                2 => [ 'dump_for_uniprot' ],
-            },
-        },
-
           { -logic_name => 'dump_for_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
@@ -234,14 +225,16 @@ sub pipeline_analyses {
             -flow_into => {
                 'A->1' => 'generate_collations',
                 '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
-                1 => {
-                    'test_dump_for_uniprot' => undef,
-                    'dump_all_trees' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
-                    'dump_all_homologies' => [
-                        {'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
-                        {'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'strict_orthologies' => 1},
-                    ],
-                },
+                1 => [
+                    WHEN('#member_type# eq "protein"' => 'dump_for_uniprot'),
+                    {
+                        'dump_all_trees' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
+                        'dump_all_homologies' => [
+                            {'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
+                            {'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'strict_orthologies' => 1},
+                        ],
+                    }
+                ],
             },
         },
 
