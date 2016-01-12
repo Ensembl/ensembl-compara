@@ -17,31 +17,44 @@ limitations under the License.
 =cut
 
 
-=pod 
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf
 
 =head1 SYNOPSIS
 
     #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
+    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf \
+        -password <your_password> -mlss_id <your_current_PT_mlss_id> \
+        -division <eg_division> -eg_release <egrelease>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
-The PipeConfig example file for WormBase group's version of ProteinTrees pipeline
+    The PipeConfig example file for the WormBase  group's version of
+    ProteinTrees pipeline. This file is inherited from & customised further
+    within the Ensembl Genomes infrastructure but this file serves as
+    an example of the type of configuration we perform.
 
 =head1 CONTACT
 
-Please contact Compara or WormBase with questions/suggestions
+  Please contact WormBase with questions/suggestions
 
 =cut
 
@@ -49,44 +62,59 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf');
+use Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf;
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf');
 
 
 sub default_options {
     my ($self) = @_;
+
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # parameters that are likely to change from execution to another:
-        # It is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'mlss_id'               => 10,
+        # parameters that are likely to change from execution to another:
 
-        'rel_suffix'            => 'WS' . $self->o('ENV', 'WORMBASE_RELEASE'),    # this WormBase Build
-        'work_dir'              => '/lustre/scratch101/ensembl/wormpipe/tmp/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
-        'outgroups'             => [ ],   # affects 'hcluster_dump_input_per_genome'
-        'taxlevels'             => [ 'Nematoda' ],
-        'filter_high_coverage'  => 0,   # affects 'group_genomes_under_taxa'
+        #'do_not_reuse_list' => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
+        'division' => 'worms',
+        
+        # custom pipeline name, in case you don't like the default one
+        'dbowner' => 'worm',       # Used to prefix the database name (in HiveGeneric_conf)
+        'pipeline_name' => 'compara_homology_WS' . $self->o('ws_release'),
 
-    # connection parameters to various databases:
+        # dependent parameters: updating 'work_dir' should be enough
+        'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/wormbase/'.$self->o('ENV', 'USER').'/compara',
+        'work_dir'              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
 
-        # The production database
-        'host'          => 'farmdb1',
-        'user'          => 'wormadmin',
-        'dbowner'       => 'worm',
-        'pipeline_name' => 'compara_homology_'.$self->o('rel_with_suffix'),
+        # blast parameters:
+        
+        # clustering parameters:
+        
+        # tree building parameters:
+        'species_tree_input_file'   =>  $self->o('ensembl_cvs_root_dir') . "/compara-conf/compara_guide_tree.wormbase.nh",
+        
+        # homology_dnds parameters:
+        'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
 
-        # the master database for synchronization of various ids
-        'master_db'     => 'mysql://ensro@farmdb1:3306/worm_compara_master',
+        'use_quick_tree_break'      => 0,
 
-    # switch off the reuse:
-        'reuse_core_sources_locs'   => [ ],
-        'reuse_db'                  => undef,
 
-    # switch off CAFE:
-        'initialise_cafe_pipeline'  => 0,
+        # the master database for synchronization of various ids (use undef if you don't have a master database)
+        'master_db' => '',
+        
+        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
+        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
+        'curr_core_sources_locs' => 0,
+        
+        # Add the database entries for the core databases of the previous release
+        'prev_core_sources_locs'   => 0,
+        
+        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        'prev_rel_db' => 0,
 
     };
 }
 
-1;
 
+
+1;
