@@ -86,7 +86,7 @@ sub default_options {
 
         # data directories:
         'work_dir'      => '/lustre/scratch110/ensembl/' . $self->o( 'ENV', 'USER' ) . '/' . $self->o('pipeline_name'),
-        'warehouse_dir' => '/warehouse/ensembl05/lg4/families/',            # ToDo: move to a Compara-wide warehouse location
+        'warehouse_dir' => '/warehouse/ensembl05/' . $self->o( 'ENV', 'USER' ) . '/families/',            # ToDo: move to a Compara-wide warehouse location
 
         'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
 
@@ -132,12 +132,15 @@ sub resource_classes {
         'BigMcl'     => {
                       'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -n ' . $self->o('mcl_threads') . ' -q hugemem -R"select[ncpus>=' . $self->o('mcl_threads') . ' && mem>' .
                         $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000] span[hosts=1]"' },
-        'BigMafft' => { 'LSF' => '-C0 -M' . $self->o('himafft_gigs') . '000 ' . $self->o('mafft_threads') . ' -q long -R"select[' . $self->o('dbresource') . '<' . $self->o('mafft_capacity') . ' && mem>' .
+        'BigMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('himafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -q long -R"select[' . $self->o('dbresource') . '<' . $self->o('mafft_capacity') . ' && mem>' .
                           $self->o('himafft_gigs') . '000] rusage[' . $self->o('dbresource') . '=10:duration=10:decay=1, mem=' . $self->o('himafft_gigs') . '000]"' },
         'LoMafft' => {
                'LSF' => '-C0 -M' . $self->o('lomafft_gigs') . '000 -R"select[' . $self->o('dbresource') . '<' . $self->o('mafft_capacity') . ' && mem>' . $self->o('lomafft_gigs') .
                  '000] rusage[' . $self->o('dbresource') . '=10:duration=10:decay=1, mem=' . $self->o('lomafft_gigs') . '000]"' },
-        '2GigMem' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' }, };
+        '2GigMem' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
+        '8GigMem' => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
+        '16GigMem' => { 'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+    };
 }
 
 1;
