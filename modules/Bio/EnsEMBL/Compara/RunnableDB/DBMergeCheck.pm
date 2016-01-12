@@ -157,7 +157,7 @@ sub fetch_input {
         $table_size->{$db} = {};
         foreach my $t (@$table_list) {
             my ($s) = $this_db_handle->selectrow_array($sql_size_table.$t);
-            $table_size->{$db}->{$t} = $s if $s;
+            $table_size->{$db}->{$t} = $s if defined $s;
         }
     }
     print Dumper($table_size) if $self->debug;
