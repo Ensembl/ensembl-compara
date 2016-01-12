@@ -1087,14 +1087,10 @@ sub _load_GenomicAligns {
 =head2 _load_2XGenomes
 
   Arg [1]    : int genomic_align_block_id
-  Arg [2]    : int analysis_data_id
   Description: Creates a fake assembly for each 2X genome by stitching
                together the LASTZ_NET alignments found on this synteny_region
-               between the reference species and each 2X genome. The list of
-               the pairwise database locations and  
-               Bio::EnsEMBL::Compara::MethodLinkSpeciesSet ids are obtained
-               from the analysis_data_id. Creates a listref of genomic_align 
-               fragments
+               between the reference species and each 2X genome.
+               Creates a listref of genomic_align fragments.
   Returntype : 
   Exception  : 
   Warning    :
