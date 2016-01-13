@@ -59,9 +59,9 @@ sub features {
   my $bigbed_file = $rs->dbfile_path;
   
   # Substitute path, if necessary. TODO: use DataFileAdaptor  
-  my @parts = split m!/!, $bigbed_file;
-  
-  $bigbed_file = join '/', $config->hub->species_defs->DATAFILE_BASE_PATH, @parts[-5..-1];
+
+  my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
+  $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
   
   return $self->SUPER::features({
     style   => 'colouredscore',
