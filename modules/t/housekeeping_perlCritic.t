@@ -42,7 +42,7 @@ my $original_dir = cwd();
 chdir($file_dir);
 my $cur_dir = cwd();
 chdir($original_dir);
-my $root = $cur_dir; #File::Spec->catdir($cur_dir, File::Spec->updir(),File::Spec->updir());
+my $root = File::Spec->catdir($cur_dir, File::Spec->updir(),File::Spec->updir());
 
 # Configure critic
 Test::Perl::Critic->import(-profile => File::Spec->catfile($root, 'perlcriticrc'), -severity => 5, -verbose => 8);
