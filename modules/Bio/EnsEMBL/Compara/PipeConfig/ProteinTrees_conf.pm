@@ -60,12 +60,13 @@ package Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.3;
+use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf;
 
 use Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -1758,24 +1759,20 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'filter_decision',
 
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters => {
-                'branches'  => {
-                    2 => '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)',
-                    4 => '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)',
-                },
-                'else_branch'   => 3,
-
                 'threshold_n_genes'      => $self->o('threshold_n_genes'),
                 'threshold_aln_len'      => $self->o('threshold_aln_len'),
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
             -flow_into  => {
-                2 => [ 'aln_filtering_tagging' ],
-                3 => [ 'noisy' ],
-                4 => [ 'noisy_large' ],
-                5 => [ 'trimal' ], # Not actually used
+                1 => WHEN ( 
+                    '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)' => 'aln_filtering_tagging',
+                    '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)' => 'noisy_large',
+                    ELSE 'noisy' ,
+                    #ELSE 'trimal', # Not actually used
+                )
             },
             %decision_analysis_params,
         },
@@ -1882,20 +1879,17 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[tree building with treebest]-------------------------------------------------------------
 
         {   -logic_name => 'treebest_decision',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters => {
-                'branches'  => {
-                    2 => '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)',
-                    4 => '(#tree_gene_count# >= #treebest_threshold_n_genes#)',
-                },
-                'else_branch'   => 3,
-                'treebest_threshold_n_residues'      => $self->o('treebest_threshold_n_residues'),
-                'treebest_threshold_n_genes'      => $self->o('treebest_threshold_n_genes'),
+                'treebest_threshold_n_residues'     => $self->o('treebest_threshold_n_residues'),
+                'treebest_threshold_n_genes'        => $self->o('treebest_threshold_n_genes'),
             },
             -flow_into  => {
-                2 => [ 'treebest_short' ],
-                3 => [ 'treebest' ],
-                4 => [ 'treebest_long_himem' ],
+                1 => WHEN ( 
+                    '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)'  => 'treebest_short',
+                    '(#tree_gene_count# >= #treebest_threshold_n_genes#)'          => 'treebest_long_himem',
+                    ELSE 'treebest',
+                )
             },
             %decision_analysis_params,
         },
