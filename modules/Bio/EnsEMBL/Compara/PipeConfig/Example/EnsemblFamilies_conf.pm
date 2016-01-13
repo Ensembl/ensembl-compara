@@ -74,8 +74,9 @@ sub default_options {
         'file_basename' => 'metazoa_families_' . $self->o('rel_with_suffix'),
 
         # HMM clustering
-        'hmm_clustering'      => 0,
-        'hmm_library_basedir' => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
+        #'hmm_clustering'      => 0,
+        'hmm_clustering'      => 1,
+        'hmm_library_basedir' => '/lustre/scratch110/ensembl/mp14/multi_division_hmm_lib',
         'pantherScore_path'   => '/software/ensembl/compara/pantherScore1.03',
         'hmmer2_home'         => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
