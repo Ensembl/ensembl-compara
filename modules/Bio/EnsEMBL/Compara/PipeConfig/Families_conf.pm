@@ -462,7 +462,7 @@ sub pipeline_analyses {
             -parameters => {
                 'only_canonical'    => 0,
             },
-            -rc_name       => '2GigMem',
+            -rc_name       => '8GigMem',
             -flow_into => {
                 '2->A'  => [ 'HMMer_classifyPantherScore' ],
                 'A->1'  => [ 'HMM_clusterize' ],
