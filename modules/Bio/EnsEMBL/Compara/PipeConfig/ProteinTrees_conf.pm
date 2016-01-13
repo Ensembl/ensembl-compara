@@ -462,7 +462,11 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'dnafrag_reuse_factory' ],
-                'A->1'  => [ $self->o('clustering_mode') eq 'blastp' ? 'test_should_blast_be_skipped' : 'backbone_fire_clustering' ],
+                'A->1' => WHEN (
+                    '#clustering_mode# eq "blastp"' => 'test_should_blast_be_skipped',
+                    ELSE 'backbone_fire_clustering',
+                )
+                #'A->1'  => [ $self->o('clustering_mode') eq 'blastp' ? 'test_should_blast_be_skipped' : 'backbone_fire_clustering' ],
             },
         },
 
@@ -507,7 +511,11 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'test_whether_can_copy_clusters' ],
-                'A->1'  => [ $self->o('clustering_mode') eq 'topup' ? 'backbone_update_trees' : 'backbone_fire_tree_building' ],
+                'A->1' => WHEN (
+                    '#clustering_mode# eq "topup"' => 'backbone_update_trees',
+                    ELSE 'backbone_fire_tree_building',
+                )
+                #'A->1'  => [ $self->o('clustering_mode') eq 'topup' ? 'backbone_update_trees' : 'backbone_fire_tree_building' ],
             },
         },
 
