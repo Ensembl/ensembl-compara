@@ -41,8 +41,10 @@ sub draw_wiggle {
     my $href    = $f->{'href'};
     my $height  = int(($score - $c->{'line_score'}) * $c->{'pix_per_score'});
     $height     = $c->{'cutoff'} if $c->{'cutoff'} && $height > $c->{'cutoff'};
-    my $title   = $c->{'score_format'} ? sprintf($c->{'score_format'}, $score) : $score;
-
+    my $title   = $f->{'title'};
+    unless ($title) {
+      $title = $c->{'score_format'} ? sprintf($c->{'score_format'}, $score) : $score;
+    }
     my $x     = $start - 1;
     my $y     = $c->{'line_px'} - max($height, 0);
     my $width = $end - $start + 1;

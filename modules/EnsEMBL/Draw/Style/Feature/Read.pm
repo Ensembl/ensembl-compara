@@ -36,7 +36,8 @@ sub draw_feature {
   my $height      = $position->{'height'};
   my $composite   = $self->Composite({
                                     'height'  => $height,
-                                    'title'   =>  $feature->{'label'},
+                                    'title'   => $feature->{'title'},
+                                    'href'    => $feature->{'href'},
                                     });
 
   ## First the simple feature block
@@ -48,7 +49,6 @@ sub draw_feature {
                   y          => $y,
                   width      => $position->{'width'},
                   height     => $height,
-                  href       => $feature->{'href'},
                 };
   $params->{'colour'}       = $feature->{'colour'} if $feature->{'colour'};
   $params->{'bordercolour'} = $feature->{'bordercolour'} if $feature->{'bordercolour'};
