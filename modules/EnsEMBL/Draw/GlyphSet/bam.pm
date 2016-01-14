@@ -29,7 +29,7 @@ package EnsEMBL::Draw::GlyphSet::bam;
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
-use Bio::EnsEMBL::IO::Adaptor::BAMAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::HTSAdaptor;
 
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
@@ -364,7 +364,6 @@ sub consensus_features {
     foreach (@$consensus) {
       $cons_lookup->{$_->{'x'}} = $_->{'bp'};
     }
-    #use Data::Dumper; warn ">>> CONSENSUS ".Dumper($consensus);
     $self->{_cache}->{consensus_features} = $cons_lookup;
   }
   return $self->{_cache}->{consensus_features}; 
@@ -503,7 +502,7 @@ sub bam_adaptor {
       my $region = $self->{'container'}->seq_region_name;
       $url =~ s/\#\#\#CHR\#\#\#/$region/g;
     }
-    $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::BAMAdaptor->new($url);
+    $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::HTSAdaptor->new($url);
   }
   else { ## Local bam file
     my $config    = $self->{'config'};
@@ -535,13 +534,13 @@ BEGIN {
   mkdir $cbuild_dir unless -e $cbuild_dir;
 };
 
-use Inline C => Config => INC => "-I$SiteDefs::SAMTOOLS_DIR",
-                          LIBS => "-L$SiteDefs::SAMTOOLS_DIR -lbam",
+use Inline C => Config => INC => "-I$SiteDefs::HTSLIB_DIR/htslib",
+                          LIBS => "-L$SiteDefs::HTSLIB_DIR -lhts",
                           DIRECTORY => $cbuild_dir;
 
 use Inline C => <<'END_OF_C_CODE';
 
-#include "bam.h"
+#include "sam.h"
 
 AV * pre_filter_depth (SV* features_ref, int depth, double ppbp, int slicestart, int sliceend) {
   AV* filtered = newAV();
@@ -608,7 +607,7 @@ AV * pre_filter_depth (SV* features_ref, int depth, double ppbp, int slicestart,
         int end;
         int bumpend;
         int width;
-        int fend = bam_calend(&f->core,bam1_cigar(f));
+        int fend = bam_endpos(f);
 
         end = fend - slicestart;
         if (end < 0) end = 0;
@@ -674,7 +673,7 @@ sub calc_coverage {
 
 use Inline C => <<'END_OF_CALC_COV_C_CODE';
 
-#include "bam.h"
+#include "sam.h"
 AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int START) {
   AV *ret_cov = newAV();
   int *coverage = calloc(lbin+1,sizeof(int));
@@ -690,8 +689,6 @@ AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int ST
 
   //fprintf(stderr,"calc coverage for %d features, lbin = %d\n",av_len(features)+1,lbin);
   //fflush(stderr);
-
-
 
    for (i=0; i<=av_len(features); i++) {
     SV** elem = av_fetch(features, i, 0);
@@ -709,7 +706,7 @@ AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int ST
     f = (bam1_t *)SvIV(SvRV(*elem));
 
     fstart = f->core.pos+1;
-    fend = bam_calend(&f->core,bam1_cigar(f));
+    fend = bam_endpos(f);
 
     sbin = (int)((fstart - START) / sample_size);
     ebin = (int)((fend - START) / sample_size);
