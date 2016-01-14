@@ -44,54 +44,38 @@ sub content {
   my $strand = $hub->param('fake_click_strand') || 1;
   my ($caption, @features);
 
-  my %mini_menu = map {$_ => $hub->param($_)} grep(/^zmenu_/, $hub->param); 
-  if (keys %mini_menu) {
-    $caption = delete $mini_menu{'zmenu_caption'};
-    my $f = {
-              'seq_region'  => $hub->param('fake_click_chr'),
-              'start'       => $hub->param('fake_click_start'),
-              'end'         => $hub->param('fake_click_end'),
-            };
-    while (my ($k, $v) = each (%mini_menu)) {
-      (my $name = $k) =~ s/zmenu_//;
-      $f->{$name} = $v;
+  my $type     = $click_data->{'my_config'}->data->{'glyphset'};
+  my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
+  my $slice    = $click_data->{'container'};
+
+  if ($self->dynamic_use($glyphset)) {
+    $glyphset = $glyphset->new($click_data);
+
+    my $i = 0;
+    my (@id_features, @other_features);
+    my $feature_id  = $hub->param('feature_id') || $hub->param('id');
+
+    my $data = $glyphset->features;
+    foreach my $track (@$data) {
+      $caption ||= $track->{'metadata'}{'zmenu_caption'};
+      foreach (@{$track->{'features'}{$strand}||[]}) {
+        if ($feature_id && $_->{'label'} eq $feature_id) {
+          $_->{'track_name'} = $track->{'metadata'}{'name'};
+          $_->{'url'}        = $track->{'metadata'}{'url'};
+          delete($_->{'href'});
+          push @id_features, $_;
+        }
+        elsif ($_->{'seq_region'} eq $coords[0]
+                  && $_->{'start'} >= 0
+                  && $_->{'end'} <= $slice->length) {
+          $_->{'track_name'} = $track->{'metadata'}{'name'};
+          $_->{'url'}        = $track->{'metadata'}{'url'};
+          delete($_->{'href'});
+          push @other_features, $_;
+        }
+      } 
     }
-    push @features, $f;
-  }
-  else {
-    my $type     = $click_data->{'my_config'}->data->{'glyphset'};
-    my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
-    my $slice    = $click_data->{'container'};
-
-    if ($self->dynamic_use($glyphset)) {
-      $glyphset = $glyphset->new($click_data);
-
-      my $i = 0;
-      my (@id_features, @other_features);
-      my $feature_id  = $hub->param('feature_id') || $hub->param('id');
-
-      my $data = $glyphset->features;
-      foreach my $track (@$data) {
-        $caption ||= $track->{'metadata'}{'zmenu_caption'};
-        foreach (@{$track->{'features'}{$strand}||[]}) {
-          if ($feature_id && $_->{'label'} eq $feature_id) {
-            $_->{'track_name'} = $track->{'metadata'}{'name'};
-            $_->{'url'}        = $track->{'metadata'}{'url'};
-            delete($_->{'href'});
-            push @id_features, $_;
-          }
-          elsif ($_->{'seq_region'} eq $coords[0]
-                    && $_->{'start'} >= 0
-                    && $_->{'end'} <= $slice->length) {
-            $_->{'track_name'} = $track->{'metadata'}{'name'};
-            $_->{'url'}        = $track->{'metadata'}{'url'};
-            delete($_->{'href'});
-            push @other_features, $_;
-          }
-        } 
-      }
-      @features = scalar(@id_features) ? @id_features : @other_features;
-    }
+    @features = scalar(@id_features) ? @id_features : @other_features;
   }
 
   if (scalar @features > 5) {
