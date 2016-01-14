@@ -125,6 +125,15 @@ sub _render_coverage {
   $config{'line_score'}     = 0;
   $config{'cutoff'}         = $smax;
 
+  my %href_params           = (
+                              'action'  => 'UserData',
+                              'config'  => $self->{'config'}{'type'},
+                              'track'   => $self->{'my_config'}{'id'},
+                              'format'  => 'BAM',
+                              'zmenu_caption' => 'Coverage',
+                              );
+
+
   foreach my $i (0..$#coverage) {
     my $cvrg = $coverage[$i];
     my $cons = $consensus->{$slice_start + $i};
@@ -139,12 +148,22 @@ sub _render_coverage {
 
     my $start = $i + 1;
 
+    my $href = $self->{'config'}->hub->url('ZMenu', {
+                                        'fake_click_chr'    => $slice->seq_region_name,
+                                        'fake_click_start'  => $start,
+                                        'fake_click_end'    => $start,
+                                        'fake_click_strand' => $default_strand,
+                                        'zmenu_score'       => $cvrg,
+                                          %href_params
+                                });
+
     my $hash = {
                 'start'   => $start,
                 'end'     => $start,
                 'score'   => $cvrg,
                 'label'   => $label,
                 'colour'  => $colour,
+                'href'    => $href,
                 };
     
     push @{$data->{'features'}{$default_strand}}, $hash;
