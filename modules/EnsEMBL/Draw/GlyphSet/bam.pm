@@ -97,6 +97,10 @@ sub _render_coverage {
     $self->{'my_config'}->set('label_overlay', 1);
     $self->{'my_config'}->set('hide_subtitle', 1);
   }
+  elsif ($pix_per_bp < 1) {
+    ## Graph won't draw without this. Because reasons.
+    $self->{'my_config'}->set('absolutex', 1);
+  }
 
   my ($min_score,$max_score);
   my $viewLimits = $self->my_config('viewLimits');
@@ -118,7 +122,6 @@ sub _render_coverage {
 
   my %config                = %{$self->track_style_config};
   $config{'pix_per_score'}  = $smax / ($scale * $max); 
-  $config{'absolutex'}     = $pix_per_bp < 1 ? 1 : 0;
   $config{'line_score'}     = 0;
   $config{'cutoff'}         = $smax;
 
@@ -167,6 +170,8 @@ sub _render_coverage {
 sub _render_reads {
 ### Draw the reads subtrack, using Style modules
   my $self = shift;
+  return 0;
+  warn '!!! RENDERING READS';
 
   ## Establish defaults
   my $max_depth   = $self->my_config('max_depth') || 50;
