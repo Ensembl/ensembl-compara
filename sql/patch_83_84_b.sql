@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_83_84.sql
+# patch_83_84_b.sql
 #
 # Title: Add new table to store gene tree attributes
 #
@@ -104,3 +104,7 @@ UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_num_
 UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_num_spec_nodes = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_num_spec_nodes';
 
 DELETE FROM gene_tree_root_tag WHERE tag IN ( 'after_filter_length','aln_length','aln_num_residues','aln_percent_identity','best_fit_model_family','best_fit_model_parameter','gene_count','k_score','k_score_rank','mcoffee_scores','n_removed_columns','num_of_patterns','shrinking_factor','spec_count','tree_max_branch','tree_max_length','tree_num_dup_nodes','tree_num_leaves','tree_num_spec_nodes')
+
+# Patch identifier
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_83_84_b.sql|gene_tree_attributes_table');
