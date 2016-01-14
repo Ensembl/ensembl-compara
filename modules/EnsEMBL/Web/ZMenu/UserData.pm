@@ -42,46 +42,63 @@ sub content {
 
   my @coords = map { $hub->param("fake_click_$_") } qw(chr start end);
   my $strand = $hub->param('fake_click_strand') || 1;
+  my ($caption, @features);
 
-  my $type     = $click_data->{'my_config'}->data->{'glyphset'};
-  my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
+  my %mini_menu = map {$_ => $hub->param($_)} grep(/^zmenu_/, $hub->param); 
+  if (keys %mini_menu) {
+    $caption = delete $mini_menu{'zmenu_caption'};
+    my $f = {
+              'seq_region'  => $hub->param('fake_click_chr'),
+              'start'       => $hub->param('fake_click_start'),
+              'end'         => $hub->param('fake_click_end'),
+            };
+    while (my ($k, $v) = each (%mini_menu)) {
+      (my $name = $k) =~ s/zmenu_//;
+      $f->{$name} = $v;
+    }
+    push @features, $f;
+  }
+  else {
+    my $type     = $click_data->{'my_config'}->data->{'glyphset'};
+    my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
+    my $slice    = $click_data->{'container'};
 
-  if ($self->dynamic_use($glyphset)) {
-    $glyphset = $glyphset->new($click_data);
+    if ($self->dynamic_use($glyphset)) {
+      $glyphset = $glyphset->new($click_data);
 
-    my $i = 0;
-    my (@id_features, @other_features);
-    my $feature_id  = $hub->param('feature_id') || $hub->param('id');
-    my $slice       = $click_data->{'container'};
-    my $caption;
+      my $i = 0;
+      my (@id_features, @other_features);
+      my $feature_id  = $hub->param('feature_id') || $hub->param('id');
 
-    my $data = $glyphset->features;
-    foreach my $track (@$data) {
-      $caption ||= $track->{'metadata'}{'zmenu_caption'};
-      foreach (@{$track->{'features'}{$strand}||[]}) {
-        if ($feature_id && $_->{'label'} eq $feature_id) {
-          $_->{'track_name'} = $track->{'metadata'}{'name'};
-          $_->{'url'}        = $track->{'metadata'}{'url'};
-          delete($_->{'href'});
-          push @id_features, $_;
-        }
-        elsif ($_->{'seq_region'} eq $coords[0]
+      my $data = $glyphset->features;
+      foreach my $track (@$data) {
+        $caption ||= $track->{'metadata'}{'zmenu_caption'};
+        foreach (@{$track->{'features'}{$strand}||[]}) {
+          if ($feature_id && $_->{'label'} eq $feature_id) {
+            $_->{'track_name'} = $track->{'metadata'}{'name'};
+            $_->{'url'}        = $track->{'metadata'}{'url'};
+            delete($_->{'href'});
+            push @id_features, $_;
+          }
+          elsif ($_->{'seq_region'} eq $coords[0]
                     && $_->{'start'} >= 0
                     && $_->{'end'} <= $slice->length) {
-          $_->{'track_name'} = $track->{'metadata'}{'name'};
-          $_->{'url'}        = $track->{'metadata'}{'url'};
-          delete($_->{'href'});
-          push @other_features, $_;
-        }
-      } 
+            $_->{'track_name'} = $track->{'metadata'}{'name'};
+            $_->{'url'}        = $track->{'metadata'}{'url'};
+            delete($_->{'href'});
+            push @other_features, $_;
+          }
+        } 
+      }
+      @features = scalar(@id_features) ? @id_features : @other_features;
     }
-    my @features = scalar(@id_features) ? @id_features : @other_features;
+  }
 
-    if (scalar @features > 5) {
-      $self->summary_content(\@features, $caption);
-    } else {
-      $self->feature_content(\@features, $caption, $slice);
-    }
+  if (scalar @features > 5) {
+    $self->summary_content(\@features, $caption);
+  } else {
+    my @coords = split(/[:-]/, $hub->param('r'));
+    $self->feature_content(\@features, $caption, $coords[1]);
   }
 }
 
@@ -89,7 +106,7 @@ sub summary_content {
 }
 
 sub feature_content {
-  my ($self, $features, $caption, $slice) = @_;
+  my ($self, $features, $caption, $slice_start) = @_;
 
   foreach (@$features) {
     my $id = $_->{'label'};
@@ -102,8 +119,8 @@ sub feature_content {
     $self->add_entry({'type' => 'Location', 
                       'label' => sprintf('%s:%s-%s', 
                                             $_->{'seq_region'}, 
-                                            $_->{'start'} + $slice->start, 
-                                            $_->{'end'} + $slice->start)
+                                            $_->{'start'} + $slice_start, 
+                                            $_->{'end'} + $slice_start)
                       });
 
     if (defined($_->{'strand'})) {
