@@ -226,6 +226,13 @@ sub _render_reads {
   my $drawn_count = scalar @$features;
   my $data = {'features' => {'1' => [], '-1' => []}, 'metadata' => {'not_drawn' => $total_count - $drawn_count}};
 
+  my %href_params           = (
+                              'action'  => 'UserData',
+                              'config'  => $self->{'config'}{'type'},
+                              'track'   => $self->{'my_config'}{'id'},
+                              'format'  => 'BAM',
+                              );
+
   foreach my $f (@$features) {
     my $fstart = $f->start;
     my $fend = $f->end;
@@ -236,11 +243,20 @@ sub _render_reads {
     my $start = $slicestrand == -1 ? $sliceend - $fend   + 1 : $fstart - $slicestart;
     my $end   = $slicestrand == -1 ? $sliceend - $fstart + 1 : $fend   - $slicestart;
 
+    my $href = $self->{'config'}->hub->url('ZMenu', {
+                                        'fake_click_chr'    => $slice->seq_region_name,
+                                        'fake_click_start'  => $start,
+                                        'fake_click_end'    => $end,
+                                        'fake_click_strand' => $default_strand,
+                                          %href_params
+                                            });
+
     ## Build the feature hash  
     my $fhash = {
                 'start'     => $start,
                 'end'       => $end + 1,
                 'colour'    => $read_colour,
+                'href'      => $href,
                 'arrow'     => {},
                 'inserts'   => [],
                 'consensus' => [],
