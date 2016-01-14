@@ -141,13 +141,10 @@ sub fetch_input {
         # We don't care about tables that are exclusive to another db
         push @bad_tables_list, (grep {$exclusive_tables->{$_} ne $db} (keys %$exclusive_tables));
 
-        # We want all the tables on the release database to detect production tables
-        my $extra = $db eq 'curr_rel_db' ? " IS NOT NULL " : " ";
-
         # We may want to ignore some more tables
         push @bad_tables_list, @{$ignored_tables->{$db}} if exists $ignored_tables->{$db};
         my @wildcards =  grep {$_ =~ /\%/} @{$ignored_tables->{$db}};
-        $extra .= join("", map {" AND Name NOT LIKE '$_' "} @wildcards);
+        my $extra = join("", map {" AND Name NOT LIKE '$_' "} @wildcards);
 
         my $this_db_handle = $dbconnections->{$db}->db_handle;
         my $bad_tables = join(',', map {"'$_'"} @bad_tables_list);
@@ -157,7 +154,9 @@ sub fetch_input {
         $table_size->{$db} = {};
         foreach my $t (@$table_list) {
             my ($s) = $this_db_handle->selectrow_array($sql_size_table.$t);
-            $table_size->{$db}->{$t} = $s if defined $s;
+            # We want all the tables on the release database in order to detect production tables
+            # but we only need the non-empty tables of the other databases
+            $table_size->{$db}->{$t} = $s if ($db eq 'curr_rel_db') or $s;
         }
     }
     print Dumper($table_size) if $self->debug;
