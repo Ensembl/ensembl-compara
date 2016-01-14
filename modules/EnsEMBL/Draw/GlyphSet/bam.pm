@@ -125,15 +125,6 @@ sub _render_coverage {
   $config{'line_score'}     = 0;
   $config{'cutoff'}         = $smax;
 
-  my %href_params           = (
-                              'action'  => 'UserData',
-                              'config'  => $self->{'config'}{'type'},
-                              'track'   => $self->{'my_config'}{'id'},
-                              'format'  => 'BAM',
-                              'zmenu_caption' => 'Coverage',
-                              );
-
-
   foreach my $i (0..$#coverage) {
     my $cvrg = $coverage[$i];
     my $cons = $consensus->{$slice_start + $i};
@@ -148,14 +139,11 @@ sub _render_coverage {
 
     my $start = $i + 1;
 
-    my $href = $self->{'config'}->hub->url('ZMenu', {
-                                        'fake_click_chr'    => $slice->seq_region_name,
-                                        'fake_click_start'  => $start,
-                                        'fake_click_end'    => $start,
-                                        'fake_click_strand' => $default_strand,
-                                        'zmenu_score'       => $cvrg,
-                                          %href_params
-                                });
+    my $title = 'Coverage' .
+              "; Location: ".sprintf('%s:%s-%s',  $slice->seq_region_name, 
+                                                  $start + $slice_start, 
+                                                  $start + $slice_start) .
+              "; Score: $cvrg";
 
     my $hash = {
                 'start'   => $start,
@@ -163,7 +151,7 @@ sub _render_coverage {
                 'score'   => $cvrg,
                 'label'   => $label,
                 'colour'  => $colour,
-                'href'    => $href,
+                'title'   => $title,
                 };
     
     push @{$data->{'features'}{$default_strand}}, $hash;
@@ -201,7 +189,7 @@ sub _render_reads {
   my $read_colour = $self->my_colour('read');
   $self->{'my_config'}->set('insert_colour', $self->my_colour('read_insert'));
 
-  my $all_features    = $self->features;
+  my $all_features    = $self->features->[0]{'features'};
   my $default_strand  = $self->{'my_config'}->get('default_strand');
   my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$all_features->{$default_strand}} ];
 
@@ -226,13 +214,6 @@ sub _render_reads {
   my $drawn_count = scalar @$features;
   my $data = {'features' => {'1' => [], '-1' => []}, 'metadata' => {'not_drawn' => $total_count - $drawn_count}};
 
-  my %href_params           = (
-                              'action'  => 'UserData',
-                              'config'  => $self->{'config'}{'type'},
-                              'track'   => $self->{'my_config'}{'id'},
-                              'format'  => 'BAM',
-                              );
-
   foreach my $f (@$features) {
     my $fstart = $f->start;
     my $fend = $f->end;
@@ -243,20 +224,12 @@ sub _render_reads {
     my $start = $slicestrand == -1 ? $sliceend - $fend   + 1 : $fstart - $slicestart;
     my $end   = $slicestrand == -1 ? $sliceend - $fstart + 1 : $fend   - $slicestart;
 
-    my $href = $self->{'config'}->hub->url('ZMenu', {
-                                        'fake_click_chr'    => $slice->seq_region_name,
-                                        'fake_click_start'  => $start,
-                                        'fake_click_end'    => $end,
-                                        'fake_click_strand' => $default_strand,
-                                          %href_params
-                                            });
-
     ## Build the feature hash  
     my $fhash = {
                 'start'     => $start,
                 'end'       => $end + 1,
                 'colour'    => $read_colour,
-                'href'      => $href,
+                'title'     => $self->_feature_title($f),
                 'arrow'     => {},
                 'inserts'   => [],
                 'consensus' => [],
@@ -335,7 +308,7 @@ sub _render {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
-    my $features = $self->features;
+    my $features = $self->features->[0]{'features'};
     if (!scalar(@{$features->{$default_strand}})) {
       $self->no_features;
     } else {
@@ -373,10 +346,13 @@ sub features {
 
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{features})) {
-    my $default_strand = $self->{'my_config'}->get('default_strand');
-    $self->{_cache}->{features}{$default_strand} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end) || [];
+    $self->{_cache}->{features} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end) || [];
   }
-  return $self->{_cache}->{features};
+  my $default_strand = $self->{'my_config'}->get('default_strand');
+  ## Return data in standard format expected by other modules
+  return [{'features' => {$default_strand => $self->{_cache}->{features}},
+            'metadata' => {'zmenu_caption' => 'Aligned reads'},
+          }];
 } 
 
 sub consensus_features {
@@ -494,6 +470,28 @@ sub _get_sequence {
   return ($seq, \@inserts);
 }
 
+sub _feature_title {
+  ## generate zmenu info for the feature
+  my ($self, $f) = @_;
+  my $slice  = $self->{'container'};
+  my $seq_id = $slice->seq_region_name();
+
+  my $title = $f->qname .
+              "; Score: ".       $f->qual .
+              "; Cigar: ".       $f->cigar_str .
+              "; Location: ".    $seq_id . ":" . $f->start . "-" . $f->end .
+              "; Strand: ".      ($f->reversed ? 'Reverse' : 'Forward') .
+              "; Length: ".      ($f->end - $f->start +1) .
+             # "; Type: ".        $self->get_atype($f) . ###### $f->atype .
+              "; Insert size: ". abs($f->isize) .
+              "; Paired: ".       ($f->paired ? 'Yes' : 'No');
+
+  if ($f->paired) {
+    $title .= "; Mate: " . (($f->flag & 0x80) ? 'Second' : ($f->flag & 0x40) ? 'First' : 'Unknown');
+  }
+
+  return $title;
+}
 
 sub bam_adaptor {
 ## get a bam adaptor
@@ -646,7 +644,7 @@ sub calc_coverage {
 ## calculate the coverage
   my ($self) = @_;
 
-  my $all_features    = $self->features;
+  my $all_features    = $self->features->[0]{'features'};
   my $default_strand  = $self->{'my_config'}->get('default_strand');
   my $features        = $all_features->{$default_strand};
 
