@@ -170,8 +170,6 @@ sub _render_coverage {
 sub _render_reads {
 ### Draw the reads subtrack, using Style modules
   my $self = shift;
-  return 0;
-  warn '!!! RENDERING READS';
 
   ## Establish defaults
   my $max_depth   = $self->my_config('max_depth') || 50;
