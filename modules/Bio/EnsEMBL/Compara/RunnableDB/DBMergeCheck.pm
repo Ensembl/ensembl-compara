@@ -93,6 +93,10 @@ sub param_defaults {
         'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection)],
         'hive_tables'       => [qw(accu hive_meta analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message pipeline_wide_parameters role worker_resource_usage)],
 
+        # Do we want to be very picky and die if a table hasn't been listed
+        # above / isn't in the target database ?
+        'die_if_unknown_table'      => 1,
+
         # How to compare overlapping data. Primary keys are read from the schema unless overriden here
         'primary_keys'      => {
             'gene_tree_root_tag'    => 'root_id',
@@ -240,7 +244,12 @@ sub run {
     foreach my $table (keys %$all_tables) {
 
         unless (exists $table_size->{'curr_rel_db'}->{$table} or exists $exclusive_tables->{$table}) {
-            die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n";
+            if ($self->param('die_if_unknown_table')) {
+                die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n";
+            } else {
+                $self->warning("The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n");
+                next;
+            }
         }
 
         if (not $table_size->{'curr_rel_db'}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {

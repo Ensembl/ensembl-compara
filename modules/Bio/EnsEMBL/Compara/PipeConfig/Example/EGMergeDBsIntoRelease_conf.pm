@@ -61,6 +61,9 @@ sub default_options {
   # Also used to differentiate submitted processes
   'pipeline_name' => 'pipeline_dbmerge_'.$self->o('rel_with_suffix'),
 
+  # Don't shout about unknown tables
+  'die_if_unknown_table'    => 0,
+
   # Registry file only works with Hive version 2.4, which is currently not a stable release
   'reg_conf' => undef,
 
