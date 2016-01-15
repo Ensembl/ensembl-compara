@@ -282,14 +282,38 @@ sub resource_classes {
          '48Gb_job'     => {'LSF' => '-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
+         '16Gb_8c_job' => {'LSF' => '-n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_8c_job' => {'LSF' => '-n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+
          '16Gb_16c_job' => {'LSF' => '-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_16c_job' => {'LSF' => '-n 16 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
          '64Gb_16c_job' => {'LSF' => '-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"' },
 
-         '4Gb_64c_mpi'  => {'LSF' => '-q parallel -n 64 -a openmpi -M4000  -R"select[mem>4000]  rusage[mem=4000]  same[model] span[ptile=4]"' },
-         '16Gb_64c_mpi' => {'LSF' => '-q parallel -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
+         '16Gb_32c_job' => {'LSF' => '-n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_32c_job' => {'LSF' => '-n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+
+         '16Gb_64c_job' => {'LSF' => '-n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_64c_job' => {'LSF' => '-n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+
+         '8Gb_8c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8] span[hosts=1]"' },
+         '8Gb_16c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16] span[hosts=1]"' },
+         '8Gb_24c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
+         '8Gb_32c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+
+         '16Gb_64c_mpi' => {'LSF' => '-q parallel -a openmpi -n 64 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
+
+         '32Gb_8c_mpi' => {'LSF' => '-q parallel -a openmpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"' },
+         '32Gb_16c_mpi' => {'LSF' => '-q parallel -a openmpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '32Gb_24c_mpi' => {'LSF' => '-q parallel -a openmpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
+         '32Gb_32c_mpi' => {'LSF' => '-q parallel -a openmpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
          '8Gb_long_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -q long' },
          '32Gb_urgent_job'   => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
+
+         '8Gb_64c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 64 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '32Gb_64c_mpi' => {'LSF' => '-q parallel -a openmpi -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+
+         '4Gb_job_gpfs'      => {'LSF' => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000] select[gpfs]"' },
     };
 }
 
