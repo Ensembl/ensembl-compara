@@ -131,7 +131,6 @@ sub default_options {
     # tree building parameters:
         'use_raxml'                 => 0,
         'use_notung'                => 0,
-        'use_raxml_epa_on_treebest' => 0,
         'use_quick_tree_break'      => 1,
 
         'treebreak_gene_count'      => 400,
@@ -375,7 +374,6 @@ sub pipeline_create_commands {
     die "Mapping of stable_id is only possible with a master database" if $self->o('do_stable_id_mapping') and not $self->o('master_db');
     die "Species reuse is only possible with a master database" if $self->o('prev_rel_db') and not $self->o('master_db');
     die "Species reuse is only possible with some previous core databases" if $self->o('prev_rel_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
-    die "Cannot refine TreeBest's trees with RAxML EPA in RAxML mode (because TreeBest is only run on small trees, and cannot produce long branches)" if $self->o('use_raxml') and $self->o('use_raxml_epa_on_treebest') and not ($self->o('use_raxml') =~ /^#:subst/);
 
     # Without a master database, we must provide other parameters
     die if not $self->o('master_db') and not $self->o('ncbi_db');
@@ -1907,7 +1905,6 @@ sub core_pipeline_analyses {
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_raxml_epa_on_treebest') ? 'treebest' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '500Mb_job',
@@ -1915,7 +1912,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 -1 => 'treebest',
                 -2 => 'treebest_long_himem',
-                1 => [ $self->o('use_raxml_epa_on_treebest') ? ('raxml_epa_longbranches') : ($self->o('use_notung') ? 'notung' : 'hc_post_tree') ],
+                1 => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
             }
         },
 
@@ -1926,14 +1923,13 @@ sub core_pipeline_analyses {
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_raxml_epa_on_treebest') ? 'treebest' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into  => {
                 -1 => 'treebest_long_himem',
                 -2 => 'treebest_long_himem',
-                1 => [ $self->o('use_raxml_epa_on_treebest') ? ('raxml_epa_longbranches') : ($self->o('use_notung') ? 'notung' : 'hc_post_tree') ],
+                1 => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
             }
         },
         {   -logic_name => 'treebest_long_himem',
@@ -1943,91 +1939,10 @@ sub core_pipeline_analyses {
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_raxml_epa_on_treebest') ? 'treebest' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '8Gb_job',
-            -flow_into  => [ $self->o('use_raxml_epa_on_treebest') ? ('raxml_epa_longbranches_himem') : ($self->o('use_notung') ? 'notung_himem' : 'hc_post_tree') ],
-        },
-
-        {   -logic_name => 'raxml_epa_longbranches',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_EPA_lb',
-            -parameters => {
-                'raxml_exe'                 => $self->o('raxml_exe'),
-                'treebest_exe'              => $self->o('treebest_exe'),
-                'input_clusterset_id'       => 'treebest',
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_bl' : 'default',
-            },
-            -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '4Gb_job',
-            -flow_into  => {
-                1 => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
-                2 => [ 'promote_treebest_tree' ],
-                4 => [ 'raxml_bl_unfiltered' ],
-                -1 => [ 'raxml_epa_longbranches_himem' ],
-            },
-        },
-
-        {   -logic_name => 'raxml_epa_longbranches_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_EPA_lb',
-            -parameters => {
-                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
-                'treebest_exe'              => $self->o('treebest_exe'),
-                'input_clusterset_id'       => 'treebest',
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_bl' : 'default',
-                'extra_raxml_args'          => '-T '.$self->o('raxml_cores'),
-            },
-            -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '16Gb_job',
-            -flow_into  => {
-                1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
-                2 => [ 'promote_treebest_tree' ],
-                4 => [ 'raxml_bl_unfiltered_himem' ],
-            },
-        },
-
-        {   -logic_name => 'raxml_bl_unfiltered',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
-            -parameters => {
-                'raxml_exe'             => $self->o('raxml_exe'),
-                'treebest_exe'          => $self->o('treebest_exe'),
-                'input_clusterset_id'   => 'treebest',
-                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml_bl' : 'default',
-                'remove_columns'        => 0,
-            },
-            -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name => '4Gb_job',
-            -flow_into  => {
-                1 => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
-                2 => [ 'promote_treebest_tree' ],
-                -1 => [ 'raxml_bl_unfiltered_himem' ],
-             },
-        },
-
-        {   -logic_name => 'raxml_bl_unfiltered_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
-            -parameters => {
-                'raxml_exe'             => $self->o('raxml_exe'),
-                'treebest_exe'          => $self->o('treebest_exe'),
-                'input_clusterset_id'   => 'treebest',
-                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml_bl' : 'default',
-                'remove_columns'        => 0,
-            },
-            -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name => '16Gb_job',
             -flow_into  => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
-        },
-
-        {   -logic_name => 'promote_treebest_tree',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
-            -parameters => {
-                'treebest_exe'          => $self->o('treebest_exe'),
-                'input_clusterset_id'   => 'treebest',
-                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml_bl' : 'default',
-            },
-            -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name => '8Gb_job',
-            -flow_into  => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
         },
 
 # ---------------------------------------------[tree building with raxml]-------------------------------------------------------------
