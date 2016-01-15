@@ -1435,6 +1435,31 @@ CREATE TABLE gene_tree_node_attr (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
+
+/**
+@table gene_tree_object_store
+@desc  This table contains arbitrary data related to gene-trees. Commonly used for precomputed tracks / layers
+@colour   #1E90FF
+
+@column root_id                External reference to root_id in the @link gene_tree_root table
+@column data_label             A label that uniquely identifies the data (for a given root_id)
+@column compressed_data        The data, compressed with ZLib. Can be uncompressed with MySQL's UNCOMPRESS
+
+@see gene_tree_root
+*/
+
+CREATE TABLE `gene_tree_object_store` (
+  root_id             INT(10) UNSIGNED NOT NULL,
+  data_label          VARCHAR(255) NOT NULL,
+  compressed_data     MEDIUMBLOB NOT NULL,
+
+  FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
+
+  PRIMARY KEY (root_id, data_label)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
 /**
 @table hmm_profile
 @desc  This table stores different HMM-based profiles used and produced by gene trees
@@ -1876,5 +1901,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_83_84_c.sql|change_description_size');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_83_84_d.sql|insert_orth_quality_homology_table');
-
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_83_84_e.sql|gene_tree_object_store');
 
