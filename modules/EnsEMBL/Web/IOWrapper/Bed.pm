@@ -91,6 +91,21 @@ sub create_hash {
                             {'name' => 'Thick end', 'value' => $self->parser->get_thickEnd},
                             ];
     }
+    ## Extra fields from BigBed
+    my $column_map = $self->parser->{'column_map'};
+    if ($column_map) {
+      my %lookup = reverse %$column_map;
+      my $last   = scalar(keys %lookup) - 1;
+      for (12..$last) {
+        my $field = $lookup{$_};
+        my $method = "get_$field";
+        ## Don't try to parse camelcase names - it's just a minefield!
+        push @{$feature->{'extra'}}, {
+                                      'name'  => $field,
+                                      'value' => $self->parser->$method, 
+                                      };
+      }
+    }
   }
   else {
     $feature->{'structure'}     = $self->create_structure($feature_start, $slice->start);
