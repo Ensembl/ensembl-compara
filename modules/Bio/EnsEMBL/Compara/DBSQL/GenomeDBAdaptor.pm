@@ -559,8 +559,10 @@ sub compute_keys {
                 is_polyploid => $genome_db->is_polyploid,           ## UNUSED
             ) : (),
 
-            # All the species
-            name => lc $genome_db->name,
+            # All the species (excluding their components
+            $genome_db->genome_component ? () : (
+                name => lc $genome_db->name,
+            ),
 
             %{$self->SUPER::compute_keys($genome_db)},
            }
