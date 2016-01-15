@@ -29,8 +29,8 @@ sub _menus {
     misc_feature
     prediction
     variation
-    ld_population
     somatic
+    ld_population
     other
     information
   ));
@@ -48,7 +48,6 @@ sub init {
   $self->create_menus($self->_menus);
   
   $self->load_tracks;
- 
  
   $self->add_tracks('other',
     [ 'scalebar', '', 'scalebar', { display => 'normal', strand => 'r', name => 'Scale bar', description => 'Shows the scalebar'                             }],
@@ -72,7 +71,7 @@ sub init {
  
   $self->modify_configs(
     [ 'variation_feature_variation' ],
-    { display => 'normal', caption => 'Variations', strand => 'r' }
+    { display => 'normal',  strand => 'r' }
   );
 }
 
@@ -84,17 +83,7 @@ sub init_slice {
     _userdatatype_ID   => 30,
     _transcript_names_ => 'yes'
   });
-
-  
- 
-#  $self->{'_ld_population'} = [];
- 
-  #$self->get_node('ld_population')->remove;
-  #$self->get_node('ld_r2')->remove if ($self->get_node('ld_r2'));
-  #$self->get_node('ld_d_prime')->remove if ($self->get_node('ld_d_prime'));
-  #$self->get_node('variation')->remove;
 }
-
 
 sub add_populations {
   my ($self, $pops) = @_;
@@ -104,6 +93,9 @@ sub add_populations {
   my $colours = $self->get_parameter('colours');
   my $var_name = ($self->hub->param('v')) ? 'variant '.$self->hub->param('v') : 'focus variant';
 
+  my $r2_html = 'r&sup2;';
+  my $r2_tag  = 'r<sup>2</sup>'; # Use tag for the track description because of wrong interpretation of the $r2_html
+  my $height  = 100;
 
   my $display_options = qq{You can change the region size by clicking on the link "Display options" in the "Configure this page/image" popup.};
   my $desc = 'Linkage disequilibrium data (%s score) for the %s in the %s population. %s';
@@ -112,12 +104,32 @@ sub add_populations {
     my $pop = $pop_name;
        $pop =~ s/ /_/g;
 
-    my $r2_desc = sprintf($desc, 'r2', $var_name, $pop_name, $display_options); 
+    # r2
+    my $r2_desc = sprintf($desc, $r2_tag, $var_name, $pop_name, $display_options);
+    push @pop_tracks, [ "ld_r2_$pop", '', 'ld_manplot', {
+      display     => 'compact',
+      strand      => 'r',
+      caption     => "LD ($r2_html) - $pop_name",
+      name        => "LD ($r2_tag) - $pop_name",
+      key         => 'r2',
+      description => $r2_desc,
+      pop_name    => $pop_name,
+      colours     => $colours,
+      height      => $height
+    }];
+    # D prime
     my $d_prime_desc = sprintf($desc, 'D prime', $var_name, $pop_name, $display_options);
-
-    push @pop_tracks, [ "ld_r2_$pop", '', 'ld_manplot', { display => 'compact', strand => 'r', caption => "LD (r2) - $pop_name", name => "LD (r2) - $pop_name", key => 'r2', description => $r2_desc, pop_name => $pop_name, colours => $colours, height => 100 } ];
-    push @pop_tracks, [ "ld_d_prime_$pop", '', 'ld_manplot', { display => 'compact', strand => 'r', caption => "LD (D') - $pop_name", name => "LD (D') - $pop_name", key => 'd_prime', description => $d_prime_desc, pop_name => $pop_name, colours => $colours, height => 100 } ];
-  
+    push @pop_tracks, [ "ld_d_prime_$pop", '', 'ld_manplot', {
+      display     => 'compact',
+      strand      => 'r',
+      caption     => "LD (D') - $pop_name",
+      name        => "LD (D') - $pop_name",
+      key         => 'd_prime',
+      description => $d_prime_desc,
+      pop_name    => $pop_name,
+      colours     => $colours,
+      height      => $height
+    }];
   }
 
   $self->add_tracks('ld_population', @pop_tracks);

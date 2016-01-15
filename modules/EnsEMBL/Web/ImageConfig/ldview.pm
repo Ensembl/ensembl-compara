@@ -47,12 +47,15 @@ sub init {
   $self->create_menus($self->_menus);
   
   $self->load_tracks;
-  
+
+  my $r2_html = 'r&sup2;';
+  my $r2_tag  = 'r<sup>2</sup>';
+
   $self->add_tracks('ld_population',
-    [ 'text',       '', 'text',       { display => 'normal', strand => 'r', menu    => 'no'                                                                                       }],
-    [ 'tagged_snp', '', 'tagged_snp', { display => 'normal', strand => 'r', colours => $colours, caption => 'Tagged SNPs',  name => 'Tagged SNPs', depth => 10000, style => 'box' }],
-    [ 'ld_r2',      '', 'ld',         { display => 'normal', strand => 'r', colours => $colours, caption => 'LD (r2)',      name => 'LD (r2)', key => 'r2',                       }],
-    [ 'ld_d_prime', '', 'ld',         { display => 'normal', strand => 'r', colours => $colours, caption => 'LD (d_prime)', name => "LD (d')", key => 'd_prime'                   }],
+    [ 'text',       '', 'text',       { display => 'normal', strand => 'r', menu    => 'no'                                                                                         }],
+    [ 'tagged_snp', '', 'tagged_snp', { display => 'normal', strand => 'r', colours => $colours, caption => 'Tagged SNPs',   name => 'Tagged SNPs',  depth => 10000, style => 'box' }],
+    [ 'ld_r2',      '', 'ld',         { display => 'normal', strand => 'r', colours => $colours, caption => "LD ($r2_html)", name => "LD ($r2_tag)", key => 'r2',                   }],
+    [ 'ld_d_prime', '', 'ld',         { display => 'normal', strand => 'r', colours => $colours, caption => "LD (D')",       name => "LD (D')",      key => 'd_prime'               }],
   );
   
   $self->add_tracks('other',
