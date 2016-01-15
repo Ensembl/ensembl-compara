@@ -82,7 +82,36 @@ sub create_hash {
     'href'          => $href,
   };
   if ($metadata->{'display'} eq 'text') {
-    if ($self->parser->get_blockCount) {
+    ## This needs to deal with BigBed AutoSQL fields, so it's a bit complex
+    my $column_map  = $self->parser->{'column_map'};
+    if ($column_map) {
+      $feature->{'extra'} = [];
+      ## Skip standard columns used in zmenus
+      my %skipped = (
+                    'chrom'       => 1,
+                    'chromStart'  => 1,
+                    'chromEnd'    => 1,
+                    'score'       => 1,
+                    );
+      my %lookup = reverse %$column_map;
+      for (sort {$a <=> $b} keys %lookup) {
+        my $field   = $lookup{$_};
+        next if $skipped{$field};
+        my $method  = "get_$field";
+        my $value   = $self->parser->$method;
+        ## Prettify common array values
+        if ($method eq 'get_blockSizes' || $method eq 'get_blockStarts' || $method eq 'chromStarts') {
+          $value = join(', ', @$value);
+        }
+        ## N.B. don't try to parse camelcase names - it's just a minefield!
+        push @{$feature->{'extra'}}, {
+                                      'name'  => ucfirst($field),
+                                      'value' => $value, 
+                                      };
+      }
+
+    }
+    elsif ($self->parser->get_blockCount) {
       $feature->{'extra'} = [
                             {'name' => 'Block count', 'value' => $self->parser->get_blockCount},
                             {'name' => 'Block sizes', 'value' => join(', ', @{$self->parser->get_blockSizes||[]})},
@@ -90,21 +119,6 @@ sub create_hash {
                             {'name' => 'Thick start', 'value' => $self->parser->get_thickStart},
                             {'name' => 'Thick end', 'value' => $self->parser->get_thickEnd},
                             ];
-    }
-    ## Extra fields from BigBed
-    my $column_map = $self->parser->{'column_map'};
-    if ($column_map) {
-      my %lookup = reverse %$column_map;
-      my $last   = scalar(keys %lookup) - 1;
-      for (12..$last) {
-        my $field = $lookup{$_};
-        my $method = "get_$field";
-        ## Don't try to parse camelcase names - it's just a minefield!
-        push @{$feature->{'extra'}}, {
-                                      'name'  => $field,
-                                      'value' => $self->parser->$method, 
-                                      };
-      }
     }
   }
   else {
