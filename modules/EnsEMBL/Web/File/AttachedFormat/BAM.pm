@@ -54,11 +54,8 @@ sub check_data {
       # and should also cause the index file to be downloaded and cached in /tmp/ 
       my ($hts, $hts_file, $index);
       eval {
-        # Note the reason this uses Bio::DB::Sam->new rather than Bio::DB::Bam->open is to allow set up
-        # of default cache dir (which happens in Bio::DB:Sam->new)
         $hts = Bio::DB::HTS->new( -bam => $url);
-        #$bam = Bio::DB::Bam->open($url);
-        $hts = $hts->hts_file;
+        $hts_file = $hts->hts_file;
         $index = Bio::DB::HTSfile->index($hts);
         my $header = $hts->header;
         my $region = $header->target_name->[0];
