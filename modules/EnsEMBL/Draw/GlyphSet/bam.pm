@@ -112,12 +112,13 @@ sub _render_coverage {
   ## Munge into a format suitable for the Style module
   my $default_strand = $self->{'my_config'}->get('default_strand');
   my $name = $self->{'my_config'}->get('short_name') || $self->{'my_config'}->get('name');
-  my $data = {'features' => {$default_strand => []}, 'metadata' => {
-                                                'name'      => $name,
-                                                'colour'    => $default_colour,
-                                                'max_score' => $max, 
-                                                'min_score' => $min_score || 0
-                                              }
+  my $data = {'features' => [], 
+              'metadata' => {
+                             'name'      => $name,
+                             'colour'    => $default_colour,
+                             'max_score' => $max, 
+                             'min_score' => $min_score || 0
+                             }
               };
 
   my %config                = %{$self->track_style_config};
@@ -154,7 +155,7 @@ sub _render_coverage {
                 'title'   => $title,
                 };
     
-    push @{$data->{'features'}{$default_strand}}, $hash;
+    push @{$data->{'features'}}, $hash;
   }
   #use Data::Dumper; warn Dumper($data);
 
@@ -212,7 +213,7 @@ sub _render_reads {
 
   my $total_count = scalar @$fs;
   my $drawn_count = scalar @$features;
-  my $data = {'features' => {'1' => [], '-1' => []}, 'metadata' => {'not_drawn' => $total_count - $drawn_count}};
+  my $data = {'features' => [], 'metadata' => {'not_drawn' => $total_count - $drawn_count}};
 
   foreach my $f (@$features) {
     my $fstart = $f->start;
@@ -269,7 +270,7 @@ sub _render_reads {
       }
     }
 
-    push @{$data->{'features'}{$default_strand}}, $fhash;
+    push @{$data->{'features'}}, $fhash;
   }
 
   ## Draw read track
