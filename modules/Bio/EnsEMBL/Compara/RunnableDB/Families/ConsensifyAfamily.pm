@@ -184,7 +184,7 @@ sub consensify {
   }
 
   # all same desc:
-  my %desc = undef;
+  my %desc = ();
   foreach my $desc (@$original_descriptions) {
     $desc{$desc}++;     
   }
@@ -203,8 +203,8 @@ sub consensify {
   }
   # this should speed things up a bit as well 
   
-  my %lcshash = undef;
-  my %lcnext  = undef;
+  my %lcshash = ();
+  my %lcnext  = ();
   my @array   = @$original_descriptions;
   while (@array) {
     # do an all-against-all LCS (longest commong substring) of the
