@@ -3093,6 +3093,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'paralogy_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
+            -parameters => {
+                'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
+            },
             -hive_capacity => 10,
         },
 

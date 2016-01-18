@@ -72,6 +72,13 @@ FROM (
 our $sql_paralogies_taxon = $sql_paralogies;
 $sql_paralogies_taxon =~ s/description/description, species_tree_node_id/g;
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults },
+        'species_tree_label'    => 'default',   # The label of the species-tree the gene-trees are reconciled to
+    }
+}
 
 sub fetch_input {
     my $self = shift @_;
@@ -80,7 +87,7 @@ sub fetch_input {
     my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     my $genome_dbs   = $mlss->species_set_obj->genome_dbs;
 
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), 'default');
+    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), $self->param('species_tree_label'));
     my %hash_stn_id  = map {$_->dbID => $_} @{$species_tree->root->get_all_nodes()};
 
     my $data1 = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_paralogies, undef, $mlss_id);
