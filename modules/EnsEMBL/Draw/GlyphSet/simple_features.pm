@@ -71,7 +71,7 @@ sub render_normal {
   $self->{'my_config'}->set('bumped', 1);
 
   my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Feature->new($config, $features);
+  my $style  = EnsEMBL::Draw::Style::Feature->new($config, [{'features' => $features}]);
   $self->push($style->create_glyphs);
 }
 
