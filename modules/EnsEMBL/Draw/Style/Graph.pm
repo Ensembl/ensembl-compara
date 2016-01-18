@@ -59,7 +59,6 @@ sub create_glyphs {
 
   my $data            = $self->data;
   my $track_config    = $self->track_config;
-  my $this_strand     = $track_config->get('this_strand') || 1;
 
   foreach my $subtrack (@$data) {
     my $metadata = $subtrack->{'metadata'} || {};
@@ -67,7 +66,7 @@ sub create_glyphs {
     ## Draw any axes, track labels, etc
     my $graph_conf = $self->draw_graph_base($metadata);
 
-    my $features = $subtrack->{'features'}{$this_strand};
+    my $features = $subtrack->{'features'};
 
     ## Single line? Build into singleton set.
     $features = [ $features ] if ref $features ne 'ARRAY';
