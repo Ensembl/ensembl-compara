@@ -303,6 +303,22 @@ sub track_style_config {
           };
 }
 
+sub data_for_strand {
+### Munge the data so we only have what's needed for drawing
+### on this strand, ready to pass into E::D::Style modules
+  my ($self, $all_data) = @_;
+  my $strand = $self->strand;
+  my $data   = [];
+  foreach my $subtrack (@$all_data) {
+    push @$data, {
+                  'metadata'  => $subtrack->{'metadata'} || {},
+                  'features'  => $subtrack->{'features'}{$strand} || [],
+                  };
+  }
+
+  return $data;
+}
+
 sub features_as_json {
 ### Fetch normal feature hash, then convert to JSON  
   my $self = shift;
@@ -1324,8 +1340,6 @@ sub join_tag {
     };
   }
 }
-
-sub commify { CORE::shift; local $_ = reverse $_[0]; s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g; return scalar reverse $_; }
 
 sub check {
   my $self   = CORE::shift;
