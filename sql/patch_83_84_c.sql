@@ -22,7 +22,10 @@
 -- MySQL should 'die' on warnings, ensuring data is not truncated
 SET session sql_mode='TRADITIONAL';
 
-ALTER TABLE family MODIFY description VARCHAR(755);
+ALTER TABLE family
+	DROP INDEX description,
+	MODIFY description TEXT,
+	ADD INDEX (description(255));
 
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_83_84_c.sql|change_description_size');
