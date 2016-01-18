@@ -382,7 +382,7 @@ sub assemble_consensus {
   s/\s+$//;
   s/^\s+//;
 
-  if (/^BG:.*$/ || /^EG:.*$/ || length($_) <= 2 || /^\w{1}\s\d+\w*$/) {
+  if (/^BG:.*$/ || /^EG:.*$/ || length($_) <= 2 || /^\w{1}\s\d+\w*$/ || ! /\w{3}/) {
     $_='UNKNOWN';
     $score = 0;
   }
