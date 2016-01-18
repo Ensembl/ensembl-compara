@@ -46,7 +46,7 @@ sub fetch_input {
       GROUP BY fm.family_id, m2.seq_member_id
     };
 
-    my $sth = $self->compara_dba->dbc->prepare( $sql );
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute( $start_family_id, $end_family_id );
 
         # initialize it to ensure all family_ids are mentioned:
