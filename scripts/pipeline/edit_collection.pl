@@ -201,7 +201,7 @@ if ($collection_ss) {
     # Let's compute a summary of the differences
     print "\nSummary\n";
     my %new_collection_species_by_name = (map {$_->name => $_} @new_collection_gdbs);
-    foreach my $name (keys %collection_species_by_name) {
+    foreach my $name (sort keys %collection_species_by_name) {
         if ($new_collection_species_by_name{$name}) {
             if ($collection_species_by_name{$name}->assembly ne $new_collection_species_by_name{$name}->assembly) {
                 print "Updated: $name: ", $collection_species_by_name{$name}->assembly, " -> ", $new_collection_species_by_name{$name}->assembly, "\n";
@@ -210,7 +210,7 @@ if ($collection_ss) {
             print "Removed: $name (", $collection_species_by_name{$name}->assembly, ")\n";
         }
     }
-    foreach my $name (keys %new_collection_species_by_name) {
+    foreach my $name (sort keys %new_collection_species_by_name) {
         unless ($collection_species_by_name{$name}) {
             print "Added: $name (", $new_collection_species_by_name{$name}->assembly, ")\n";
         }
