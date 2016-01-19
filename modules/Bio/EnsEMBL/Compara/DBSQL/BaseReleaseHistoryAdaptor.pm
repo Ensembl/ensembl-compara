@@ -112,12 +112,9 @@ sub fetch_all_by_release {
 
 sub update_first_last_release {
     my ($self, $object) = @_;
-    my %table = (
-        'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet' => ['method_link_species_set', 'method_link_species_set_id'],
-        'Bio::EnsEMBL::Compara::GenomeDB' => ['genome_db', 'genome_db_id'],
-        'Bio::EnsEMBL::Compara::SpeciesSet' => ['species_set_header', 'species_set_id'],
-    );
-    my $sql = sprintf('UPDATE %s SET first_release = ?, last_release = ? WHERE %s = ?', @{$table{ref($object)}});
+    my $table= join(" ", @{($self->_tables)[0]});
+    my $column = ($self->_columns)[0];
+    my $sql = sprintf('UPDATE %s SET first_release = ?, last_release = ? WHERE %s = ?', $table, $column);
     $self->dbc->do($sql, undef, $object->first_release, $object->last_release, $object->dbID);
     $self->_id_cache->put($object->dbID, $object);
 }
