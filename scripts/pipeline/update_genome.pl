@@ -231,6 +231,7 @@ sub process_species {
 
     $helper->transaction( -CALLBACK => sub {
         my $genome_db = update_genome_db($species_db, $compara_dba, $force);
+        print "GenomeDB after update: ", $genome_db->toString, "\n\n";
         update_dnafrags($compara_dba, $genome_db, $species_db);
         my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_dba);
         foreach my $component_gdb (@$component_genome_dbs) {
@@ -290,8 +291,6 @@ sub update_genome_db {
     # And store it back in Compara
     $genome_db_adaptor->update($genome_db);
 
-    print "GenomeDB after update: ", $genome_db->toString, "\n\n";
-
   }
   ## New genome or new assembly!!
   else {
@@ -320,7 +319,7 @@ sub update_genome_db {
     }
 
     $genome_db_adaptor->store($genome_db);
-    print " -> Successfully stored with genome_db_id=".$genome_db->dbID."\n\n";
+
     my $common_name = $species_dba->get_MetaContainer->get_common_name();
     printf("You can add a new 'ensembl alias name' entry in scripts/taxonomy/ensembl_aliases.sql to map the taxon_id %d to '%s'\n", $genome_db->taxon_id, $common_name) if $common_name;
 
