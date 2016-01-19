@@ -195,10 +195,12 @@ sub draw_aggregate {
 
   my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
+  my $data = $self->data_for_strand($subtracks);
+
   foreach (@{$drawing_style||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
     if ($self->dynamic_use($style_class)) {
-      my $style = $style_class->new(\%config, $subtracks);
+      my $style = $style_class->new(\%config, $data);
       $self->push($style->create_glyphs);
     }
   }
