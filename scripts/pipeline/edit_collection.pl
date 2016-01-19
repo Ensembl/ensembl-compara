@@ -190,7 +190,9 @@ if ($collection_ss) {
     # Species to potentially remove
     my %confirmed_names = map {$_->name => 1} @new_collection_gdbs;
     my @unconfirmed_species= grep {not exists $confirmed_names{$_->name}} @gdbs_in_current_collection;
-    if ($ask_to_remove_species) {
+    if ($file or $ask_to_remove_species) {
+        my %new_preselection = map {$_->name => 1} grep {!$preselection{$_->name}} @unconfirmed_species;
+        %preselection = %new_preselection;
         my @to_delete_species = ask_for_genome_dbs('Select the species to remove', \@unconfirmed_species);
         my %deleted_names = map {$_->name => 1} @to_delete_species;
         push @new_collection_gdbs, grep {not exists $deleted_names{$_->name}} @unconfirmed_species;
