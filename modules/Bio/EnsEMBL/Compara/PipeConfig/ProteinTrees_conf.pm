@@ -1752,10 +1752,16 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into => [ $self->o('use_quick_tree_break') ? 'test_very_large_clusters_go_to_qtb' : 'split_genes' ],
+            -flow_into => [ 'exon_boundaries_prep' ],
             %hc_analysis_params,
         },
 
+        {   -logic_name     => 'exon_boundaries_prep',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
+            -flow_into      => [ $self->o('use_quick_tree_break') ? 'test_very_large_clusters_go_to_qtb' : 'split_genes' ],
+            -hive_capacity  => $self->o('split_genes_capacity'),
+            -batch_size     => 20,
+        },
 
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
 
