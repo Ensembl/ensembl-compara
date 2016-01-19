@@ -264,8 +264,7 @@ sub ask_for_genome_dbs {
         }
 
         if ($dont_ask) {
-            print "Nothing to edit. Press enter\n";
-            <>;
+            print "Nothing to edit.\n";
             last;
         }
 
