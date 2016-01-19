@@ -170,6 +170,7 @@ if ($file) {
 
 if ($collection_ss) {
     ## Here we are in "update mode"
+    warn "Found a collection named '$collection_name': species_set_id=".($collection_ss->dbID)."\n";
 
     my @gdbs_in_current_collection = @{$collection_ss->genome_dbs};
     my %collection_species_by_name = (map {$_->name => $_} @gdbs_in_current_collection);
