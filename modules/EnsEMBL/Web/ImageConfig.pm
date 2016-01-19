@@ -997,7 +997,7 @@ sub _add_trackhub_tracks {
                                       'pack'    => 'stack',
                                       },
                         'bigwig' => {
-                                      'full'    => 'tiling',
+                                      'full'    => 'signal',
                                       'default' => 'compact',
                                     },
                         'vcf' =>    {
@@ -1312,7 +1312,7 @@ sub _add_bigwig_track {
 
   my $renderers = $args{'source'}{'renderers'} || [
     'off',     'Off',
-    'tiling',  'Wiggle plot',
+    'signal',  'Wiggle plot',
     'compact', 'Compact',
   ];
 
@@ -1463,7 +1463,7 @@ sub _user_track_settings {
     @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
   }
   elsif (lc($format) eq 'bedgraph' || lc($format) eq 'wig' || $style =~ /^(wiggle|WIG)$/) {
-    @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
+    @user_renderers = ('off', 'Off', 'signal', 'Wiggle plot');
   }
   elsif (uc($format) =~ /BED|GFF|GTF/) {
     @user_renderers = @{$self->{'alignment_renderers'}};
