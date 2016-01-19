@@ -257,9 +257,9 @@ sub ask_for_genome_dbs {
             my $assembly = $this_genome_db->assembly;
             my $state = $genome_dbs_in->{$this_genome_db->dbID} ? ' [SELECTED]' : '';
             if ($this_genome_db->is_current) {
-                printf " %3d.$state $name $assembly\n", $dbID;
+                printf " %5d.$state $name $assembly\n", $dbID;
             } else {
-                printf " %3d.$state ($name $assembly)\n", $dbID;
+                printf " %5d.$state ($name $assembly)\n", $dbID;
             }
         }
 
