@@ -270,7 +270,7 @@ sub update_genome_db {
         " [$this_assembly] is already in the compara DB [$compara]\n".
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
     }
-  } elsif ($force) {
+  } elsif ($force and $genome_db_name) {
     print "GenomeDB with this name [$genome_db_name] and the correct assembly".
         " is not in the compara DB [$compara]\n".
         "You don't need the --force option!!";
