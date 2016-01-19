@@ -198,6 +198,24 @@ if ($collection_ss) {
         push @new_collection_gdbs, @unconfirmed_species;
     }
 
+    # Let's compute a summary of the differences
+    print "\nSummary\n";
+    my %new_collection_species_by_name = (map {$_->name => $_} @new_collection_gdbs);
+    foreach my $name (keys %collection_species_by_name) {
+        if ($new_collection_species_by_name{$name}) {
+            if ($collection_species_by_name{$name}->assembly ne $new_collection_species_by_name{$name}->assembly) {
+                print "Updated: $name: ", $collection_species_by_name{$name}->assembly, " -> ", $new_collection_species_by_name{$name}->assembly, "\n";
+            }
+        } else {
+            print "Removed: $name (", $collection_species_by_name{$name}->assembly, ")\n";
+        }
+    }
+    foreach my $name (keys %new_collection_species_by_name) {
+        unless ($collection_species_by_name{$name}) {
+            print "Added: $name (", $new_collection_species_by_name{$name}->assembly, ")\n";
+        }
+    }
+
 } else {
     ## Here we create a new collection from scratch
     push @new_collection_gdbs, ask_for_genome_dbs('select the species in the collection', $all_current_gdbs);
