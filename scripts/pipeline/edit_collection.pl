@@ -44,7 +44,6 @@ first_release and last_release will be updated accordingly
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_url
     --collection collection_name
-    [--ask_to_remove_species]
 
 =head1 OPTIONS
 
@@ -89,11 +88,6 @@ will still ask the uer to confirm the selection.
 
 =over
 
-=item B<[--ask_to_remove_species]>
-
-The script will prompt for species to remove from the collection if this option is
-activated. Otherwise, the user will only have the choice to add and update genomes.
-
 =item B<[--[no]dry-run]>
 
 In dry-run mode (the default), the script does not write into the master
@@ -119,7 +113,6 @@ my $help;
 my $reg_conf;
 my $compara;
 my $collection_name;
-my $ask_to_remove_species;
 my $dry_run = 1;
 my $file;
 
@@ -128,7 +121,6 @@ GetOptions(
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     'collection=s'  => \$collection_name,
-    'ask_to_remove_species' => \$ask_to_remove_species,
     "dry_run|dry-run!" => \$dry_run,
     'file_of_production_names=s' => \$file,
   );
@@ -190,15 +182,13 @@ if ($collection_ss) {
     # Species to potentially remove
     my %confirmed_names = map {$_->name => 1} @new_collection_gdbs;
     my @unconfirmed_species= grep {not exists $confirmed_names{$_->name}} @gdbs_in_current_collection;
-    if ($file or $ask_to_remove_species) {
+    if ($file) {
         my %new_preselection = map {$_->name => 1} grep {!$preselection{$_->name}} @unconfirmed_species;
         %preselection = %new_preselection;
-        my @to_delete_species = ask_for_genome_dbs('Select the species to remove', \@unconfirmed_species);
-        my %deleted_names = map {$_->name => 1} @to_delete_species;
-        push @new_collection_gdbs, grep {not exists $deleted_names{$_->name}} @unconfirmed_species;
-    } else {
-        push @new_collection_gdbs, @unconfirmed_species;
     }
+    my @to_delete_species = ask_for_genome_dbs('Select the species to remove', \@unconfirmed_species);
+    my %deleted_names = map {$_->name => 1} @to_delete_species;
+    push @new_collection_gdbs, grep {not exists $deleted_names{$_->name}} @unconfirmed_species;
 
     # Let's compute a summary of the differences
     print "\nSummary\n";
