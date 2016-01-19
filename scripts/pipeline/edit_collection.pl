@@ -239,12 +239,14 @@ exit(0);
 sub ask_for_genome_dbs {
     my $title = shift;
     my $all_genome_dbs = shift;
-    my $dont_ask = shift;
+    my $should_select_all = shift;
     return () unless scalar(@$all_genome_dbs);
 
     my $genome_dbs_hash = {map {$_->dbID => $_} @{$all_genome_dbs}};
     my $genome_dbs_in = {map {$_->dbID => $_} grep {$preselection{$_->name}} @{$all_genome_dbs}};
-    $genome_dbs_in = $genome_dbs_hash if $dont_ask;
+    $genome_dbs_in = $genome_dbs_hash if $should_select_all and !$file;
+    my $dont_ask = ($file or $should_select_all);
+
     while (1) {
         print "$title\n";
 
