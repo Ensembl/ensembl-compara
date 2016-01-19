@@ -240,7 +240,7 @@ sub ask_for_genome_dbs {
     my $dont_ask = ($file or $should_select_all);
 
     while (1) {
-        print "$title\n";
+        print "Selection of species:\n";
 
         foreach my $this_genome_db (sort {
             ($a->is_current <=> $b->is_current)
@@ -262,7 +262,7 @@ sub ask_for_genome_dbs {
             last;
         }
 
-        print 'Add or remove a GenomeDB by typing its dbID. Type "all" to select all, or "none" to clear the selection. Press enter to finish.   ';;
+        print "$title\nAdd or remove a GenomeDB by typing its dbID. Type 'all' to select all, or 'none' to clear the selection. Press enter to finish.   ";
         my $answer;
         chomp ($answer = <>);
         if ($answer) {
