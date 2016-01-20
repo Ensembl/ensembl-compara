@@ -23,6 +23,8 @@ package EnsEMBL::Draw::GlyphSet::bigwig;
 
 use strict;
 
+use List::Util qw(min max);
+
 use EnsEMBL::Web::IOWrapper::Indexed;
 
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
@@ -30,7 +32,7 @@ use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 sub can_json { return 1; }
 
 sub features {
-  my $self      = shift;
+  my ($self, $bins, $cache_key) = @_;
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_config('url');
   my $container = $self->{'container'};
@@ -49,11 +51,13 @@ sub features {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour');
+    $bins   ||= $self->bins;
     my $metadata = {
                     'name'            => $self->{'my_config'}->get('name'),
                     'colour'          => $colour,
                     'join_colour'     => $colour,
                     'label_colour'    => $colour,
+                    'bins'            => $bins,
                     'display'         => $self->{'display'},
                     'default_strand'  => 1,
                     };
@@ -72,6 +76,7 @@ sub features {
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
+    #use Data::Dumper; warn Dumper($data);
 
   } else {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
@@ -80,6 +85,18 @@ sub features {
   #$self->{'config'}->add_to_legend($legend);
 
   return $data;
+}
+
+sub bins {
+### Set number of bins for summary - will typically be around 1000
+### @return Integer
+  my $self = shift;
+
+  if(!$self->{'_bins'}) {
+    my $slice = $self->{'container'};
+    $self->{'_bins'} = min($self->{'config'}->image_width, $slice->length);
+  }
+  return $self->{'_bins'};
 }
 
 sub render_text {
