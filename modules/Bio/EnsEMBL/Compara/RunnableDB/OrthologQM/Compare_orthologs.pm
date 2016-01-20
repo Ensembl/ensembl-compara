@@ -40,17 +40,17 @@ sub param_defaults {
 	my $self = shift;
 	return {
             %{ $self->SUPER::param_defaults() },
-	    'mlss_ID'=>'100021',
+#	    'mlss_ID'=>'100021',
 #       'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
-		'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
-		'ref_species_dbid' =>155,
-        'non_ref_species_dbid' => 31,
-        'left1' => 14803,
-        'right1' => 46043,
-        'query' =>14469,
+#		'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
+#		'ref_species_dbid' =>155,
+#        'non_ref_species_dbid' => 31,
+#        'left1' => 14803,
+#        'right1' => 46043,
+#        'query' =>14469,
 #       'left2' =>  14803,
 #        'right2' => 46043,
-        'ref_chr_dnafragID' =>14026395
+#        'ref_chr_dnafragID' =>14026395
 	};
 }
 
