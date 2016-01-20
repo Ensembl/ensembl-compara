@@ -89,9 +89,7 @@ sub _render_aggregate {
   return 1;
 }
 
-=pod
 sub _render {
-### NOT CURRENTLY USED!
   my $self = shift;
 
   ## Check to see if we draw anything because of size!
@@ -142,7 +140,6 @@ sub _render {
 
   return 1;
 }
-=cut
 
 sub _get_min_max {
 ### Get minimum and maximum scores for a set of features
