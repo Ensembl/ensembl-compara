@@ -489,17 +489,6 @@ sub core_pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'backbone_update_trees',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-            -parameters => {
-                'output_file'   => '#dump_dir#/snapshot_6_before_updating_pipeline.sql.gz',
-            },
-            -flow_into  => {
-                '1->A'  => [ 'update_job_factory' ],
-                'A->1'  => [ 'backbone_fire_dnds' ],
-            },
-        },
-
         {   -logic_name => 'backbone_fire_allvsallblast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
@@ -520,7 +509,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'test_whether_can_copy_clusters' ],
-                'A->1'  => [ $self->o('clustering_mode') eq 'topup' ? 'backbone_update_trees' : 'backbone_fire_tree_building' ],
+                'A->1'  => [ 'backbone_fire_tree_building' ],
             },
         },
 
@@ -532,7 +521,10 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_4_before_tree_building.sql.gz',
             },
             -flow_into  => {
-                '1->A'  => [ 'cluster_factory' ],
+                '1->A'  => WHEN(
+                    '#clustering_mode# eq "topup"' => 'update_job_factory',
+                    ELSE 'cluster_factory',
+                ),
                 'A->1'  => [ 'backbone_fire_dnds' ],
             },
         },
