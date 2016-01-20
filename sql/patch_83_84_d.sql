@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_83_84.sql
+# patch_83_84_d.sql
 #
 # Title: Add new a new goc_score column to the homology table.
 #
@@ -25,7 +25,7 @@ SET session sql_mode='TRADITIONAL';
 @goc_score                     Gene Order conservation (goc) score in %.
 */
 
-ALTER TABLE homology ADD goc_score int(10) unsigned;
+ALTER TABLE homology ADD COLUMN goc_score int(10) unsigned;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
