@@ -59,7 +59,6 @@ sub create_tracks {
            }];
   }
   elsif ($slice->length > 1000) {
-    warn ">>> FETCHING SUMMARY DATA";
     $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, $bins);
     $self->SUPER::create_tracks($slice, $metadata);
   }
