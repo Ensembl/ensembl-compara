@@ -156,7 +156,7 @@ sub draw_features {
     ## Also put it into config, for subtitles
     $config{'subtitle'} = $description;
 
-    ## Could also be done using $self->data_on_strand, but this avoids another loop
+    ## Could also be done using $self->data_for_strand, but this avoids another loop
     push @$data, {'metadata' => $metadata, 'features' => $features};
   }
 
