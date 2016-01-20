@@ -38,8 +38,8 @@ sub param_defaults {
     my $self = shift;
     return {
             %{ $self->SUPER::param_defaults() },
-		'mlss_id'	=>	'100021',
-		'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
+#		'mlss_id'	=>	'100021',
+#		'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
 #		'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
     };
 }
@@ -54,7 +54,8 @@ sub fetch_input {
 	my $self = shift;
 
 #	my $mlss_id = $self->param_required('mlss_id');
-#	print "yayayayayaya  ", $mlss_id, " hahahahahah \n\n";
+	print "yayayayayaya  ", $self->param_required('mlss_id'), " hahahahahah \n\n" if ( $self->debug );
+	print Dumper($self->compara_dba) if ( $self->debug );
 #	my $registry = 'Bio::EnsEMBL::Registry';
 	#$registry->load_registry_from_url( 'mysql://ensro@ens-livemirror/80', 0 );
 	#my $homolog_adaptor = $registry->get_adaptor( 'Multi', 'compara', 'Homology' );
@@ -63,7 +64,6 @@ sub fetch_input {
 	$self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
 	$self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
 	$self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
-
 	my $species1_dbid;
 	my $species2_dbid;
 	my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($self->param_required('mlss_id'));
@@ -94,6 +94,7 @@ sub run {
 	my $ref_ortholog_info_hashref;
 	my $non_ref_ortholog_info_hashref;
 	my $c = 0;
+	
 #	print scalar @{ $self->param('ortholog_objects') };
 #	print "\nHHHHHHHHHHHHHHHHHHHH\n\n";
 #	print $self->param('ref_species_dbid'), "\n\n", $self->param('non_ref_species_dbid'), "\n\n";
@@ -111,11 +112,12 @@ sub run {
 			$non_ref_ortholog_info_hashref->{$non_ref_gene_member->dnafrag_id()}{$ortholog->dbID()} = $non_ref_gene_member->dnafrag_start();
 			$c++;
 		}
-
-#		last if $c >= 200;
+		
+#		last if $c >= 20;
 	}
-#	print $self->param('ref_species_dbid'), "  -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Orthologs \n\n\n\n";
-#	print Dumper($ref_ortholog_info_hashref);
+
+	print $self->param('ref_species_dbid'), "  -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Orthologs \n\n\n" if ( $self->debug );
+	print Dumper($ref_ortholog_info_hashref) if ( $self->debug );
 
 #	print $self->param('non_ref_species_dbid'), "  -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Orthologs \n\n\n\n";
 #	print Dumper($non_ref_ortholog_info_hashref);
