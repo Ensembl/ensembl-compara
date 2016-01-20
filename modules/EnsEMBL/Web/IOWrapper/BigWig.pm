@@ -38,9 +38,10 @@ sub create_tracks {
   my ($self, $slice, $metadata) = @_;
 
   ## Limit file seek to current slice
-  my $parser = $self->parser;
+  my $parser  = $self->parser;
+  my $bins    = $metadata->{'bins'};
   if ($metadata->{'aggregate'}) {
-    my $values = $parser->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, 1000);
+    my $values = $parser->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
     my @gradient = $self->create_gradient(['white', $metadata->{'colour'}]);
     ## For speed, our track consists of an array of values, not an array of feature hashes
     return [{'metadata' => {
@@ -58,7 +59,8 @@ sub create_tracks {
            }];
   }
   elsif ($slice->length > 1000) {
-    $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, 1000);
+    warn ">>> FETCHING SUMMARY DATA";
+    $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, $bins);
     $self->SUPER::create_tracks($slice, $metadata);
   }
   else {
