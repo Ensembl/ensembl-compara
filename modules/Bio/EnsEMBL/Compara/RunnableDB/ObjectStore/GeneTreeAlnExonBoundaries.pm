@@ -104,7 +104,7 @@ sub run {
     }
 
     # Serialize in JSON
-    my $jf = JSON->new()->indent(0);
+    my $jf = JSON->new()->pretty(0);
     my $exon_boundaries_json = $jf->encode($exon_boundaries_struct);
     $self->param('exon_boundaries_json', $exon_boundaries_json);
 }
