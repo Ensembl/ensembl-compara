@@ -81,8 +81,8 @@ sub default_options {
     return {
             %{ $self->SUPER::default_options() },
 
-        'mlss_id'     => '100021',
-        'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'
+#        'mlss_id'     => '100021',
+ #       'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
     };
 }
@@ -114,7 +114,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
             -input_ids => [ { } ],
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
-#            -analysis_capacity  =>  10,  # use per-analysis limiter
+            -analysis_capacity  =>  200,  # use per-analysis limiter
             -flow_into => {
                 '2->A' => [ 'create_ordered_chr_based_job_arrays' ],
                 'A->1' => [ 'get_max_orth_percent' ],       
@@ -132,7 +132,7 @@ sub pipeline_analyses {
 
         {	-logic_name	=>	'create_ordered_chr_based_job_arrays',
         	-module		=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
-#        	-analysis_capacity  =>  10,
+        	-analysis_capacity  =>  200,
 			-flow_into	=>	{
 				2	=>	['create_comparison_job_arrays'],
 			},
@@ -141,7 +141,7 @@ sub pipeline_analyses {
         {
         	-logic_name	=>	'create_comparison_job_arrays',
         	-module		=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays',
-#            -analysis_capacity  =>  10,
+            -analysis_capacity  =>  200,
         	-flow_into	=>	{
         		2 	=>	['check_ortholog_neighbors'],
         	},
@@ -152,7 +152,7 @@ sub pipeline_analyses {
         	-module	=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
 #            -input_ids => [ {'species1' => $self->o('species1')} ],
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
-            -analysis_capacity  =>  50,
+            -analysis_capacity  =>  100,
         	-flow_into	=> {
         		2 => [ ':////ortholog_quality_metric' ],
         	},
