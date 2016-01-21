@@ -543,10 +543,7 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_4_before_tree_building.sql.gz',
             },
             -flow_into  => {
-                '1->A'  => WHEN(
-                    '#clustering_mode# eq "topup"' => 'update_job_factory',
-                    ELSE 'cluster_factory',
-                ),
+                '1->A'  => [ 'cluster_factory' ],
                 'A->1'  => [ 'backbone_fire_dnds' ],
             },
         },
@@ -1594,21 +1591,12 @@ sub core_pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                 '2->A' => [ 'alignment_entry_point' ],
-                 'A->1' => [ 'hc_global_tree_set' ],
+                '2->A'  => WHEN(
+                    '#clustering_mode# eq "topup"' => 'copy_trees_from_previous_release',
+                    ELSE 'alignment_entry_point',
+                ),
+                'A->1' => [ 'hc_global_tree_set' ],
             },
-        },
-
-        {   -logic_name => 'update_job_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
-                'fan_branch_code'   => 2,
-            },
-            -flow_into  => {
-                 2 => [ 'copy_trees_from_previous_release' ],
-            },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'alignment_entry_point',
