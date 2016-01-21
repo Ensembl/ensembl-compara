@@ -437,6 +437,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
         'use_notung'   => $self->o('use_notung'),
         'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
+        'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
+        'do_treefam_xref'   => $self->o('do_treefam_xref'),
     };
 }
 
@@ -481,7 +483,10 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'dnafrag_reuse_factory' ],
-                'A->1'  => [ $self->o('clustering_mode') eq 'blastp' ? 'test_should_blast_be_skipped' : 'backbone_fire_clustering' ],
+                'A->1'  => WHEN(
+                    '#clustering_mode# eq "blastp"' => 'test_should_blast_be_skipped',
+                    ELSE 'backbone_fire_clustering',
+                ),
             },
         },
 
@@ -989,7 +994,10 @@ sub core_pipeline_analyses {
                 'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
             },
             -flow_into => {
-                2 => [ $self->o('master_db') ? 'copy_dnafrags_from_master' : 'load_fresh_members_from_db' ],
+                2 => WHEN(
+                    '#master_db#' => 'copy_dnafrags_from_master',
+                    ELSE 'load_fresh_members_from_db',
+                ),
                 3 => [ 'load_fresh_members_from_file' ],
             },
         },
@@ -1000,7 +1008,9 @@ sub core_pipeline_analyses {
                 'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
             },
             -flow_into => {
-                2 => [ $self->o('master_db') ? ('copy_polyploid_dnafrags_from_master') : () ],
+                2 => WHEN(
+                    '#master_db#' => 'copy_polyploid_dnafrags_from_master',
+                ),
                 3 => [ 'component_dnafrags_duplicate_factory' ],
             },
         },
@@ -1092,7 +1102,9 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'members_globally',
             },
-            -flow_into => [ $self->o('master_db') ? 'register_mlss' : () ],
+            -flow_into => WHEN(
+                '#master_db#' => 'register_mlss',
+            ),
             %hc_analysis_params,
         },
 
@@ -1653,8 +1665,8 @@ sub core_pipeline_analyses {
             },
             -flow_into  => [
                 'write_stn_tags',
-                $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
-                $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
+                WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
+                WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
                 'write_member_counts',
                 WHEN('#initialise_cafe_pipeline#' => 'CAFE_table'),
             ],
