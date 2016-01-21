@@ -615,6 +615,7 @@ sub _columns {
              h.method_link_species_set_id
              h.description
              h.is_tree_compliant
+             h.goc_score
              h.dn
              h.ds
              h.n
@@ -628,11 +629,11 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($homology_id, $description, $is_tree_compliant, $dn, $ds, $n, $s, $lnl,
+  my ($homology_id, $description, $is_tree_compliant, $goc_score, $dn, $ds, $n, $s, $lnl,
       $method_link_species_set_id, $species_tree_node_id, $gene_tree_node_id, $gene_tree_root_id);
 
   $sth->bind_columns(\$homology_id, \$method_link_species_set_id,
-                     \$description, \$is_tree_compliant, \$dn, \$ds,
+                     \$description, \$is_tree_compliant, \$goc_score, \$dn, \$ds,
                      \$n, \$s, \$lnl, \$species_tree_node_id, \$gene_tree_node_id, \$gene_tree_root_id);
 
   my @homologies = ();
@@ -653,6 +654,7 @@ sub _objs_from_sth {
             '_species_tree_node_id'         => $species_tree_node_id,
             '_gene_tree_node_id'            => $gene_tree_node_id,
             '_gene_tree_root_id'            => $gene_tree_root_id,
+            '_goc_score'                    => $goc_score,
        });
   }
   
@@ -743,6 +745,25 @@ sub update_genetic_distance {
   return $self;
 }
 
+sub update_goc_score {
+  my $self = shift;
+  my $hom = shift;
 
+  assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology');
+
+  throw("homology object must have dbID")
+  unless ($hom->dbID);
+
+  unless defined $hom->goc_score {
+    warn("homology needs valid goc_score values to store");
+    return $self;
+  }
+  my $sql = 'UPDATE homology SET goc_score=? where homology_id = ?';
+  my $sth = $self->prepare($sql);
+  $sth->execute($hom->goc_score, $hom->dbID);
+  $sth->finish();
+
+  return $self;
+}
 
 1;
