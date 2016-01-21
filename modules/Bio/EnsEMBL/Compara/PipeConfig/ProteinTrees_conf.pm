@@ -1788,7 +1788,7 @@ sub core_pipeline_analyses {
             -batch_size     => 20,
             -flow_into      => {
                 '2->A' => 'split_genes_per_species',
-                'A->1' => ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision'),
+                'A->1' => 'tree_building_entry_point',
                 -1  => 'split_genes_himem',
             },
         },
@@ -1803,8 +1803,23 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
-            -flow_into      => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest_decision' ],
+            -flow_into      => [ 'tree_building_entry_point' ],
         },
+
+        {   -logic_name => 'tree_building_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => WHEN(
+                    '#use_raxml#' => 'filter_decision',
+                    ELSE 'treebest_decision',
+                ),
+                'A->1' => WHEN(
+                    '#use_notung#' => 'notung',
+                    ELSE 'hc_post_tree',
+                ),
+            },
+        },
+
 
 # ---------------------------------------------[alignment filtering]-------------------------------------------------------------
 
@@ -1966,7 +1981,6 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 -1 => 'treebest',
                 -2 => 'treebest_long_himem',
-                1 => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
             }
         },
 
@@ -1983,7 +1997,6 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 -1 => 'treebest_long_himem',
                 -2 => 'treebest_long_himem',
-                1 => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
             }
         },
         {   -logic_name => 'treebest_long_himem',
@@ -1996,7 +2009,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '8Gb_job',
-            -flow_into  => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
         },
 
 # ---------------------------------------------[tree building with raxml]-------------------------------------------------------------
@@ -2209,9 +2221,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '32Gb_32c_job',
-            -flow_into      => {
-                1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
-            }
         },
 
         {   -logic_name => 'raxml_decision',
@@ -2269,7 +2278,6 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_8c_mpi',
             -max_retry_count => 0,
             -flow_into => {
-                1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
                -1 => [ 'examl_8_cores_himem' ],  # MEMLIMIT
                -2 => [ 'examl_16_cores' ],       # RUNTIME 
             }
@@ -2286,7 +2294,6 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_8c_mpi',
             -max_retry_count => 0,
-            -flow_into  => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
         },
 
         {   -logic_name => 'examl_16_cores',
@@ -2301,7 +2308,6 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_16c_mpi',
             -max_retry_count => 0,
             -flow_into => {
-                1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
                -1 => [ 'examl_16_cores_himem' ],  # MEMLIMIT
                -2 => [ 'examl_32_cores' ],  	  # RUNTIME
             }
@@ -2318,7 +2324,6 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_16c_mpi',
             -max_retry_count => 0,
-            -flow_into  => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
         },
 
         {   -logic_name => 'examl_32_cores',
@@ -2333,7 +2338,6 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_32c_mpi',
             -max_retry_count => 0,
             -flow_into => {
-                1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
                -1 => [ 'examl_32_cores_himem' ],  # MEMLIMIT
                -2 => [ 'examl_64_cores' ],  	  # RUNTIME
             }
@@ -2350,7 +2354,6 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_32c_mpi',
             -max_retry_count => 0,
-            -flow_into  => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
         },
 
         {   -logic_name => 'examl_64_cores',
@@ -2366,7 +2369,6 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_64c_mpi',
             -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge. 
             -flow_into => {
-                1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
                -1 => [ 'examl_64_cores_himem' ],  # MEMLIMIT
                -2 => [ 'fasttree' ],  # RUNLIMIT
             }
@@ -2385,7 +2387,6 @@ sub core_pipeline_analyses {
             -rc_name => '32Gb_64c_mpi',
             -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
             -flow_into => {
-                1 => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
                -2 => [ 'fasttree' ],  # RUNLIMIT
             }
         },
@@ -2398,7 +2399,6 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '1Gb_job',
             -flow_into  => {
-                1  => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
                 -1 => [ 'raxml_8_cores_himem' ],
                 -2 => [ 'raxml_8_cores' ],
             }
@@ -2413,7 +2413,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_update_capacity'),
             -rc_name    => '8Gb_job',
-            -flow_into  => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
         },
 
         {   -logic_name => 'treebest_small_families',
@@ -2427,7 +2426,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '1Gb_job',
-            -flow_into  => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
         },
 
         {   -logic_name => 'raxml_8_cores',
@@ -2439,7 +2437,6 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '16Gb_8c_job',
             -flow_into  => {
-                1 => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
                 -1 => [ 'raxml_8_cores_himem' ],
                 -2 => [ 'examl_16_cores' ],
             }
@@ -2453,7 +2450,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '32Gb_8c_job',
-            -flow_into  => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
         },
         {   -logic_name => 'raxml_16_cores',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
@@ -2464,7 +2460,6 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '16Gb_16c_job',
             -flow_into  => {
-                1 => [ $self->o('use_notung') ? 'notung' : 'hc_post_tree' ],
                 -1 => [ 'raxml_16_cores_himem' ],
                 -2 => [ 'examl_32_cores' ],
             }
@@ -2478,7 +2473,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '32Gb_16c_job',
-            -flow_into  => [ $self->o('use_notung') ? 'notung_himem' : 'hc_post_tree' ],
         },
 
 
