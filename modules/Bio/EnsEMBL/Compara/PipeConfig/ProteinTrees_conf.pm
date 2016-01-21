@@ -1698,7 +1698,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into => {
-                1 => [ 'hc_alignment' ],
+                1 => [ 'exon_boundaries_prep' ],
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
             },
@@ -1713,7 +1713,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into => {
-                1 => [ 'hc_alignment' ],
+                1 => [ 'exon_boundaries_prep' ],
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
         },
@@ -1739,7 +1739,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '8Gb_job',
             -flow_into => {
-                1 => [ 'hc_alignment' ],
+                1 => [ 'exon_boundaries_prep' ],
                -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
             },
@@ -1753,17 +1753,8 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '8Gb_job',
             -flow_into => {
-                1 => [ 'hc_alignment' ],
+                1 => [ 'exon_boundaries_prep' ],
             },
-        },
-
-        {   -logic_name         => 'hc_alignment',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'alignment',
-            },
-            -flow_into => [ 'exon_boundaries_prep' ],
-            %hc_analysis_params,
         },
 
         {   -logic_name     => 'exon_boundaries_prep',
