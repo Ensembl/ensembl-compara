@@ -1590,7 +1590,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+                'inputquery'        => 'SELECT root_id AS gene_tree_id, COUNT(seq_member_id) AS tree_num_genes FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" AND clusterset_id="default" GROUP BY root_id',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
@@ -1634,18 +1634,6 @@ sub core_pipeline_analyses {
                 'A->1' => [ 'exon_boundaries_prep' ],
             },
             %decision_analysis_params,
-        },
-
-        {   -logic_name => 'test_very_large_clusters_go_to_qtb',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
-            -parameters => {
-                'condition'             => '#tree_gene_count# > #treebreak_gene_count#',
-                'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
-            },
-            -flow_into  => {
-                2  => [ 'quick_tree_break' ],
-                3  => [ 'split_genes' ],
-            },
         },
 
         {   -logic_name         => 'hc_global_tree_set',
@@ -1754,8 +1742,11 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'exon_boundaries_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
+            -parameters => {
+                'treebreak_gene_count'      => $self->o('treebreak_gene_count'),
+            },
             -flow_into      => WHEN(
-                '#use_quick_tree_break#' => 'test_very_large_clusters_go_to_qtb',
+                '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                 ELSE 'split_genes',
             ),
             -hive_capacity  => $self->o('split_genes_capacity'),
