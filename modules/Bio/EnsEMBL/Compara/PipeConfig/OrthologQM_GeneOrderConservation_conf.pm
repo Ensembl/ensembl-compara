@@ -46,6 +46,7 @@ sub pipeline_create_commands {
 
 	#PRIMARY KEY (genomic_align_block_id))'
 
+=pod
 	return [
 		@{ $self->SUPER::pipeline_create_commands },
 		$self->db_cmd( 'CREATE TABLE ortholog_quality_metric ( 
@@ -73,7 +74,7 @@ sub pipeline_create_commands {
 }
       
 
-
+=cut
 
 
 sub default_options {
@@ -102,7 +103,7 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'default'      => {'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' },
         '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-        '20Gb_job'      => {'LSF' => '-C0 -M20000  -R"select[mem>20000]  rusage[mem=20000]"' },
+        '16Gb_job'      => {'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
     };
 }
 
@@ -154,7 +155,7 @@ sub pipeline_analyses {
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
             -analysis_capacity  =>  100,
         	-flow_into	=> {
-        		2 => [ ':////ortholog_quality_metric' ],
+        		2 => [ ':////ortholog_goc_metric' ],
         	},
 
  #           -rc_name => '2Gb_job',
@@ -163,10 +164,10 @@ sub pipeline_analyses {
         {
             -logic_name => 'get_max_orth_percent',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
-            -flow_into => {
-                2 => [ ':////ortholog_metric' ],
+#            -flow_into => {
+#                2 => [ ':////ortholog_metric' ],
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '16Gb_job',
         },
     ];
 }
