@@ -429,6 +429,14 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
 
         'do_transactions'   => $self->o('do_transactions'),
+
+        'clustering_mode'   => $self->o('clustering_mode'),
+
+        'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
+
+        'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
+        'use_notung'   => $self->o('use_notung'),
+        'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
     };
 }
 
@@ -558,7 +566,10 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'copy_ncbi_table'  ],
-                'A->1' => [ $self->o('master_db') ? 'populate_method_links_from_db' : 'populate_method_links_from_file' ],
+                'A->1' => WHEN(
+                    '#master_db#' => 'populate_method_links_from_db',
+                    ELSE 'populate_method_links_from_file',
+                ),
             },
         },
 
@@ -698,7 +709,11 @@ sub core_pipeline_analyses {
                 binary          => 0,
                 n_missing_species_in_tree   => 0,
             },
-            -flow_into  => [ $self->o('use_notung') ? ( $self->o('binary_species_tree_input_file') ? 'load_binary_species_tree' : 'make_binary_species_tree' ) : ($self->o('initialise_cafe_pipeline') ? 'CAFE_species_tree' : ()) ],
+            -flow_into  => WHEN(
+                '#use_notung# and  #binary_species_tree_input_file#' => 'load_binary_species_tree',
+                '#use_notung# and !#binary_species_tree_input_file#' => 'make_binary_species_tree',
+                '!#use_notung# and #initialise_cafe_pipeline#' => 'CAFE_species_tree',
+            ),
             %hc_analysis_params,
         },
 
@@ -706,7 +721,7 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
                                'label' => 'binary',
-                               'species_tree_input_file' => $self->o('binary_species_tree_input_file'),
+                               'species_tree_input_file' => '#binary_species_tree_input_file#',
             },
             -flow_into     => {
                 2 => [ 'hc_binary_species_tree' ],
@@ -733,7 +748,9 @@ sub core_pipeline_analyses {
                 n_missing_species_in_tree   => 0,
             },
             %hc_analysis_params,
-            -flow_into  => [ $self->o('initialise_cafe_pipeline') ? 'CAFE_species_tree' : () ],
+            -flow_into  => WHEN(
+                '#initialise_cafe_pipeline#' => 'CAFE_species_tree',
+            ),
         },
 
         {   -logic_name => 'copy_trees_from_previous_release',
@@ -1248,9 +1265,10 @@ sub core_pipeline_analyses {
                  'extra_tags_file'  => $self->o('extra_model_tags_file'),
              },
              -rc_name => '8Gb_job',
-             -flow_into => [ $self->o('clustering_mode') eq 'hybrid' ? ('dump_unannotated_members') : (
-                $self->o('clustering_mode') eq 'topup' ? ('flag_update_clusters') : ()
-                ) ],
+             -flow_into => WHEN(
+                 '#clustering_mode# eq "hybrid"' => 'dump_unannotated_members',
+                 '#clustering_mode# eq "topup"' => 'flag_update_clusters',
+             ),
             },
 
         {
@@ -1417,17 +1435,15 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
                 'condition'     => '#are_all_species_reused#',
+                'library_exists'    => '#expr((-d #hmm_library_basedir#."/books") and (-d #hmm_library_basedir#."/globals") and (-s #hmm_library_basedir#."/globals/con.Fasta"))expr#',
             },
             -flow_into => {
                 '2->A' => [ 'copy_clusters' ],
-                '3->A' => [
-                    $self->o('clustering_mode') eq 'blastp'
-                    ? 'hcluster_dump_factory'
-                    : ( ((-d $self->o('hmm_library_basedir')."/books") and (-d $self->o('hmm_library_basedir')."/globals") and (-s $self->o('hmm_library_basedir')."/globals/con.Fasta"))
-                        ? 'load_InterproAnnotation'
-                        : 'panther_databases_factory'
-                      )
-                    ],
+                '3->A' => WHEN(
+                    '#clustering_mode# eq "blastp"' => 'hcluster_dump_factory',
+                    '(#clustering_mode# ne "blastp") and #library_exists#' => 'load_InterproAnnotation',
+                    '(#clustering_mode# ne "blastp") and !#library_exists#' => 'panther_databases_factory',
+                ),
                 'A->1' => [ 'remove_blacklisted_genes' ],
             },
         },
@@ -1640,7 +1656,7 @@ sub core_pipeline_analyses {
                 $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
                 $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
                 'write_member_counts',
-                $self->o('initialise_cafe_pipeline') ? 'CAFE_table' : (),
+                WHEN('#initialise_cafe_pipeline#' => 'CAFE_table'),
             ],
             %hc_analysis_params,
         },
@@ -1751,7 +1767,10 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'exon_boundaries_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
-            -flow_into      => [ $self->o('use_quick_tree_break') ? 'test_very_large_clusters_go_to_qtb' : 'split_genes' ],
+            -flow_into      => WHEN(
+                '#use_quick_tree_break#' => 'test_very_large_clusters_go_to_qtb',
+                ELSE 'split_genes',
+            ),
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
         },
@@ -2889,6 +2908,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 2 => [ 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
+                99 => [ 'build_HMM_aa_v2' ],    # unused branch
             },
         },
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
@@ -3020,10 +3040,8 @@ sub core_pipeline_analyses {
             -hive_capacity => 10,
         },
 
-        $self->o('initialise_cafe_pipeline') ? (
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self) },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self) },
-        ) : (),
 
         $self->o('initialise_orthologQM_pipeline') ? (
             @{ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf::pipeline_analyses($self) },
@@ -3042,63 +3060,7 @@ sub pipeline_analyses {
     my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
     $self->tweak_analyses(\%analyses_by_name);
 
-    $all_analyses = $self->filter_analyses($all_analyses, 'backbone_fire_db_prepare');
     return $all_analyses;
-}
-
-# Method to find all the analyses that can be reached from $start_logic_name
-# It also discards all the branches named 99[0-9]
-sub filter_analyses {
-    my ($self, $all_analyses, $start_logic_name) = @_;
-
-    my @to_process = ($start_logic_name);
-    my %to_keep = ();
-    my %to_remove = map {$_ => 1} @{$self->analyses_to_remove};
-
-    while (@to_process) {
-        my $logic_name = shift @to_process;
-        next if $to_keep{$logic_name};
-        $to_keep{$logic_name} = 1;
-
-        my $a = (grep {$_->{-logic_name} eq $logic_name} @$all_analyses)[0];
-        next unless exists $a->{-flow_into};
-        if (ref($a->{-flow_into})) {
-            if (ref($a->{-flow_into}) eq 'ARRAY') {
-                $a->{-flow_into} = [grep {not $to_remove{$_}} @{$a->{-flow_into}}];
-                push @to_process, @{$a->{-flow_into}};
-            } else {
-                my @bns = keys %{$a->{-flow_into}};
-                foreach my $branch_number (@bns) {
-                    if ($branch_number =~ /99[0-9]/) {
-                        warn sprintf("Deleting %s -> #%s\n", $logic_name, $branch_number);
-                        delete $a->{-flow_into}->{$branch_number};
-                        next;
-                    }
-                    my $target = $a->{-flow_into}->{$branch_number};
-                    if (ref($target)) {
-                        if (ref($target) eq 'ARRAY') {
-                            $a->{-flow_into}->{$branch_number} = [grep {not $to_remove{$_}} @$target];
-                            push @to_process, @{$a->{-flow_into}->{$branch_number}};
-                        } else {
-                            my %new_hash = map {$_ => $target->{$_}} (grep {not $to_remove{$_}} keys %$target);
-                            $a->{-flow_into}->{$branch_number} = \%new_hash;
-                            push @to_process, keys %new_hash;
-                        }
-                    } elsif ($to_remove{$target}) {
-                        delete $a->{-flow_into}->{$branch_number};
-                    } else {
-                        push @to_process, $target;
-                    }
-                }
-            }
-        } elsif ($to_remove{$a->{-flow_into}}) {
-            delete $a->{-flow_into};
-        } else {
-            push @to_process, $a->{-flow_into};
-        }
-    }
-
-    return [grep {$to_keep{$_->{-logic_name}}} @$all_analyses];
 }
 
 
