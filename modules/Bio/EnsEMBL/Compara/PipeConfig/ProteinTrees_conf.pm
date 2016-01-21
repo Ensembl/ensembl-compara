@@ -480,25 +480,14 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'output_file'   => '#dump_dir#/snapshot_1_before_genome_load.sql.gz',
+                'quick_reuse'   => $self->o('quick_reuse'),
             },
             -flow_into  => {
                 '1->A'  => [ 'dnafrag_reuse_factory' ],
                 'A->1'  => WHEN(
-                    '#clustering_mode# eq "blastp"' => 'test_should_blast_be_skipped',
+                    '(#clustering_mode# eq "blastp") and !(#are_all_species_reused# and #quick_reuse#)' => 'backbone_fire_allvsallblast',
                     ELSE 'backbone_fire_clustering',
                 ),
-            },
-        },
-
-        {   -logic_name => 'test_should_blast_be_skipped',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters    => {
-                'quick_reuse'   => $self->o('quick_reuse'),
-                'condition'     => '(#are_all_species_reused# and #quick_reuse#)',
-            },
-            -flow_into => {
-                2 => [ 'backbone_fire_clustering' ],
-                3 => [ 'backbone_fire_allvsallblast' ],
             },
         },
 
@@ -969,7 +958,11 @@ sub core_pipeline_analyses {
                 'extra_parameters'  => [ 'locator' ],
             },
             -flow_into => {
-                '2->A' => [ 'test_is_genome_in_core_db' ],
+                '2->A' => WHEN(
+                    '(#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/) and  #master_db#' => 'copy_dnafrags_from_master',
+                    '(#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/) and !#master_db#' => 'load_fresh_members_from_db',
+                    ELSE 'load_fresh_members_from_file',
+                ),
                 'A->1' => [ 'polyploid_genome_load_fresh_factory' ],
             },
         },
@@ -983,35 +976,12 @@ sub core_pipeline_analyses {
                 'extra_parameters'  => [ 'locator' ],
             },
             -flow_into => {
-                '2->A' => [ 'test_is_polyploid_in_core_db' ],
+                '2->A' => WHEN(
+                    # Not all the cases are covered
+                    '(#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/) and #master_db#' => 'copy_polyploid_dnafrags_from_master',
+                    '!(#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/)' => 'component_dnafrags_duplicate_factory',
+                ),
                 'A->1' => [ 'hc_members_globally' ],
-            },
-        },
-
-        {   -logic_name => 'test_is_genome_in_core_db',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters    => {
-                'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
-            },
-            -flow_into => {
-                2 => WHEN(
-                    '#master_db#' => 'copy_dnafrags_from_master',
-                    ELSE 'load_fresh_members_from_db',
-                ),
-                3 => [ 'load_fresh_members_from_file' ],
-            },
-        },
-
-        {   -logic_name => 'test_is_polyploid_in_core_db',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters    => {
-                'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
-            },
-            -flow_into => {
-                2 => WHEN(
-                    '#master_db#' => 'copy_polyploid_dnafrags_from_master',
-                ),
-                3 => [ 'component_dnafrags_duplicate_factory' ],
             },
         },
 
@@ -1444,17 +1414,16 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
 
         {   -logic_name => 'test_whether_can_copy_clusters',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters    => {
-                'condition'     => '#are_all_species_reused#',
                 'library_exists'    => '#expr((-d #hmm_library_basedir#."/books") and (-d #hmm_library_basedir#."/globals") and (-s #hmm_library_basedir#."/globals/con.Fasta"))expr#',
             },
             -flow_into => {
-                '2->A' => [ 'copy_clusters' ],
-                '3->A' => WHEN(
-                    '#clustering_mode# eq "blastp"' => 'hcluster_dump_factory',
-                    '(#clustering_mode# ne "blastp") and #library_exists#' => 'load_InterproAnnotation',
-                    '(#clustering_mode# ne "blastp") and !#library_exists#' => 'panther_databases_factory',
+                '1->A' => WHEN(
+                    '#are_all_species_reused#' => 'copy_clusters',
+                    '!#are_all_species_reused# and (#clustering_mode# eq "blastp")' => 'hcluster_dump_factory',
+                    '!#are_all_species_reused# and (#clustering_mode# ne "blastp") and #library_exists#' => 'load_InterproAnnotation',
+                    '!#are_all_species_reused# and (#clustering_mode# ne "blastp") and !#library_exists#' => 'panther_databases_factory',
                 ),
                 'A->1' => [ 'remove_blacklisted_genes' ],
             },
