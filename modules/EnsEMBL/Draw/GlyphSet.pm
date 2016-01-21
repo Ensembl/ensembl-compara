@@ -119,6 +119,18 @@ sub tag                { return ();                                             
 sub label_overlay      { return undef;                                                                                                                           }
 sub get_colour         { my $self = shift; return $self->my_colour($self->colour_key(shift), @_);                                                                }
 sub _url               { my $self = shift; return $self->{'config'}->hub->url('ZMenu', { %{$_[0]}, config => $self->{'config'}{'type'}, track => $self->type }); }
+sub _quick_url         {
+  my ($self,$params) = @_;
+
+  $params = { %$params, config => $self->{'config'}{'type'},
+              track => $self->type };
+  my $out = '#:@:';
+  foreach my $k (sort keys %$params) {
+    my $v = $params->{$k}||'';
+    $out .= sprintf("%d-%s-%d-%s-",length($k),$k,length($v),$v);
+  }
+  return $out;
+}
 
 sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width;                                               }
 sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');                                                }

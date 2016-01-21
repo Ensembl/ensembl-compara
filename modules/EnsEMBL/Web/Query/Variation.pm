@@ -12,7 +12,7 @@ sub type_variation {
     end =>   [["end","slice"]],
     config => "config",
  
-    href => "href",
+    href => "zmenu",
     tag => "tags",
     class => "class"
   };
@@ -29,7 +29,7 @@ sub href {
     type     => 'Variation',
     v        => $f->variation_name,
     vf       => $f->dbID,
-    vdb      => $args->{'var_db'},
+    vdb      => $args->{'var_db'} || 'variation',
     snp_fake => 1,
     config   => $args->{'config_type'},
     track    => $args->{'type'},
@@ -43,6 +43,7 @@ sub post_process_tags {
     foreach my $t (@{$f->{$key}}) {
       if($t->{'style'} eq 'insertion') {
         $t->{'colour'} = $glyphset->my_colour($t->{'colour'});
+        $t->{'href'} = $glyphset->_url($t->{'href'});
       } elsif($t->{'style'} eq 'label') {
         $t->{'colour'} = $glyphset->my_colour($t->{'colour'}, 'tag') ||
                          $glyphset->my_colour($t->{'colour'});
@@ -89,7 +90,7 @@ sub tag {
       };
     }
 
-    push @tags, { style => 'insertion', colour => $colour_key, start => $f->start, end => $f->start } if $f->start > $f->end;
+    push @tags, { style => 'insertion', colour => $colour_key, start => $f->start, end => $f->start, href => $self->href($f,$args) } if $f->start > $f->end;
   }
 
   return @tags;

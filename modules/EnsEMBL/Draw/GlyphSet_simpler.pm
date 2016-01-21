@@ -288,7 +288,6 @@ sub _init {
     }
     
     if ($navigation) {
-      local $Data::Dumper::Maxdepth = 2;
       foreach my $k (qw(title href class)) {
         $composite->{$k} = $f->{$k} if exists $f->{$k};
       }

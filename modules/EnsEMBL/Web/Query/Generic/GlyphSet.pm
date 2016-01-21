@@ -16,10 +16,18 @@ sub slice2sr {
 }
 
 sub post_process_href {
-  my ($self,$glyphset,$key,$ff) = @_; 
+  my ($self,$gs,$key,$ff) = @_;
 
   foreach my $f (@$ff) {
-    $f->{$key} = $glyphset->_url($f->{$key}) if $f->{$key};
+    $f->{$key} = $gs->_url($f->{$key}) if $f->{$key};
+  }
+}
+
+sub post_process_zmenu {
+  my ($self,$gs,$key,$ff) = @_;
+
+  foreach my $f (@$ff) {
+    $f->{$key} = $gs->_quick_url($f->{$key}) if $f->{$key};
   }
 }
 

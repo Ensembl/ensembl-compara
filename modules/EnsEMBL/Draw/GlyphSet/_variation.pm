@@ -118,7 +118,7 @@ sub render_tag {
       absolutey => 1,
       width     => $width,
       height    => $height + 2,
-      href      => $self->href($tag->{'feature'})
+      href      => $tag->{'href'}
     }));
   } elsif ($start <= $tag->{'start'}) {
     my $box_width = 8 / $pix_per_bp;
