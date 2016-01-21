@@ -25,7 +25,7 @@ This module expects data in the following format:
 
   $data = [
           {'metadata' => {},
-           'features'  => { 1 => [
+           'features'  => [
               {
               'start'         => 123456,
               'end'           => 123789,
@@ -37,7 +37,6 @@ This module expects data in the following format:
               'title'         => 'Some text goes here',             # optional  
               },
             ],
-                            -1 => []},
           ];
 
 Note that in order to support multiple subtracks within a glyphset (whether multi-wiggle or separate), we must pass an array of hashes with optional metadata for each subtrack 
@@ -73,16 +72,14 @@ sub create_glyphs {
 
     ## Draw them! 
     my $plot_conf = {
-      line_score      => $graph_conf->{'line_score'},
-      line_px         => $graph_conf->{'line_px'},
-      pix_per_score   => $graph_conf->{'pix_per_score'},
-      max_score       => $graph_conf->{'max_score'},
+      height          => $track_config->get('height'),
+      default_strand  => $track_config->get('default_strand'),
       unit            => $subtrack->{'metadata'}{'unit'},
       graph_type      => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
-      default_strand  => $track_config->get('default_strand'),
       colour          => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
       colours         => $subtrack->{'metadata'}{'gradient'},
       alt_colour      => $subtrack->{'metadata'}{'altColor'},
+      %$graph_conf,
     };
 
     ## Determine absolute positioning for graph
