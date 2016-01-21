@@ -214,7 +214,10 @@ sub write_output {
         }
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
+}
 
+sub post_healthcheck {
+    my $self = shift;
     $self->call_hcs_all_trees() if $self->param('do_hcs');
 }
 
