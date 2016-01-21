@@ -90,6 +90,7 @@ sub create_glyphs {
     }
 
     $self->draw_wiggle($plot_conf, $features);
+    $self->render_hidden_bg($track_config->get('height'));
   }
 
   return @{$self->glyphs||[]};
