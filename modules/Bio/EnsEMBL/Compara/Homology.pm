@@ -133,6 +133,25 @@ sub is_tree_compliant {
   return $self->{'_is_tree_compliant'};
 }
 
+##gene order conservation based orthologQC
+
+=head2 goc_score
+
+  Arg [1]    : float $goc_score (optional)
+  Example    : $goc_score = $homology->goc_score();
+               $homology->goc_score(3);
+  Description: getter/setter of number of nonsynonymous positions for the homology.
+  Returntype : float
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub goc_score {
+  my $self = shift;
+  $self->{'_goc_score'} = shift if(@_);
+  return $self->{'_goc_score'};
+}
 
 
 ## dN/dS methods
@@ -469,6 +488,31 @@ sub node_id {  ## DEPRECATED
   deprecate('$self->node_id() is deprecated and will be removed in e84. Use $self->gene_tree_node()->node_id() instead.');
   $self->{'_gene_tree_node_id'} = shift if(@_);
   return $self->{'_gene_tree_node_id'};
+}
+
+sub ancestor_node_id { ## DEPRECATED
+  my $self = shift;
+  deprecate('$self->ancestor_tree_node_id() is deprecated and will be removed in e84. Use $self->gene_tree_node()->node_id() instead.');
+  $self->{'_gene_tree_node_id'} = shift if(@_);
+  return $self->{'_gene_tree_node_id'};
+}
+
+sub tree_node_id { ## DEPRECATED
+  my $self = shift;
+  deprecate('$self->tree_node_id() is deprecated and will be removed in e84. Use $self->gene_tree()->dbID() instead.');
+  return $self->gene_tree()->dbID();
+}
+
+sub subtype {  ## DEPRECATED
+    my $self = shift;
+    deprecate("Homology::subtype() is deprecated and will be removed in e84. Use taxonomy_level() instead.");
+    return $self->taxonomy_level();
+}
+
+sub taxonomy_alias {  ## DEPRECATED
+    my $self = shift;
+    deprecate("Homology::taxonomy_alias() is deprecated and will be removed in e84. Use species_tree_node()->taxon()->ensembl_alias_name() instead.");
+    return $self->species_tree_node()->taxon()->ensembl_alias_name();
 }
 
 
