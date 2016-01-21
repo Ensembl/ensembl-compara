@@ -163,6 +163,7 @@ our $ENSEMBL_MINIFIED_FILES_PATH = '/minified'; # path for saving the minified f
 our $ENSEMBL_DEBUG_JS            = 0; # change these to 1 to prevent js minification
 our $ENSEMBL_DEBUG_CSS           = 0; # change these to 1 to prevent css minification
 our $ENSEMBL_DEBUG_IMAGES        = 0; # change these to 1 to prevent css minification
+our $ENSEMBL_DEBUG_NOCACHE       = 0; # disable even in-run caches
 our $ENSEMBL_SKIP_RSS            = 0; # set to 1 in sandboxes to avoid overloading blog
 
 our $ENSEMBL_EXTERNAL_SEARCHABLE = 0; # No external bots allowed by default

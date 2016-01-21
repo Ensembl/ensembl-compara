@@ -50,6 +50,11 @@ use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
 
+use EnsEMBL::Web::QueryStore;
+use EnsEMBL::Web::QueryStore::Cache::Memcached;
+use EnsEMBL::Web::QueryStore::Cache::None;
+use EnsEMBL::Web::QueryStore::Source::Adaptors;
+
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
@@ -93,7 +98,8 @@ sub new {
   };
 
   bless $self, $class;
-  
+
+  $self->query_store_setup;  
   $self->init_session($args->{'session_cookie'});
   $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer if $ENSEMBL_WEB_REGISTRY;
   
@@ -931,5 +937,26 @@ sub ie_version {
   return 0 unless $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
   return $1;
 }
+
+# Query Store stuff
+
+sub query_store_setup {
+  my ($self) = @_;
+
+  my $cache;
+  if($SiteDefs::ENSEMBL_MEMCACHED) {
+     # and EnsEMBL::Web::Cache->can("stats_reset")) { # Hack to detect plugin
+    $cache = EnsEMBL::Web::QueryStore::Cache::Memcached->new(
+      $SiteDefs::ENSEMBL_MEMCACHED
+    );
+  } else {
+    $cache = EnsEMBL::Web::QueryStore::Cache::None->new();
+  }
+  $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
+    Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self)
+  },$cache,$SiteDefs::ENSEMBL_COHORT);
+}
+
+sub get_query { return $_[0]->{'_query_store'}->get($_[1]); }
 
 1;

@@ -27,7 +27,7 @@ use List::Util qw(min);
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 
-use base qw(EnsEMBL::Draw::GlyphSet_simple);
+use base qw(EnsEMBL::Draw::GlyphSet_simpler);
 
 sub depth {
   my $self   = shift;
@@ -63,16 +63,52 @@ sub my_label {
   return $label; 
 }
 
+sub _plainify {
+  my ($self,$f) = @_;
+
+  return {
+    strand => $f->strand,
+    start => $f->start,
+    end => $f->end,
+    colour_key => $self->colour_key($f),
+    tag => [$self->tag($f)],
+    feature_label => $self->feature_label($f),
+    variation_name => $f->variation_name,
+    href => $self->href($f),
+    class => $self->class($f),
+    title => $self->title($f),
+    dbID => $f->dbID, # used in ZMenu, yuk!
+  };
+}
+
 sub features {
   my $self         = shift;
   my $max_length   = $self->my_config('threshold') || 1000;
   my $slice_length = $self->{'container'}->length;
+
+  my $hub = $self->{'config'}{'hub'};  
+
+  #$self->{'legend'}{'variation_legend'}{$_->display_consequence} ||= $self->get_colours($_)->{'feature'} for @$snps;
   
   if ($slice_length > $max_length * 1010) {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
     return [];
   } else {
-    my $features_list = $self->fetch_features;
+    my $features_list = $hub->get_query('Variation')->go_variation($self,{
+      species => $hub->species,
+      slice => $self->{'container'},
+      id => $self->{'my_config'}->id,
+      filter => $self->my_config('filter'),
+      source => $self->my_config('source'),
+      sources => $self->my_config('sources'),
+      sets => $self->my_config('sets'),
+      set_name => $self->my_config('set_name'),
+      style => $self->my_config('style') || '',
+      no_label => $self->my_config('no_label'),
+      var_db => $self->my_config('db') || 'variation',
+      config_type => $self->{'config'}{'type'},
+      type => $self->type,
+    });
     if (!scalar(@$features_list)) {
       my $track_name = $self->my_config('name'); 
       $self->errorTrack("No $track_name data for this region");
@@ -191,8 +227,8 @@ sub title {
 
 sub href {
   my ($self, $f)  = @_;
-  
-  return $self->_url({
+ 
+  my $out = $self->_url({
     species  => $self->species,
     type     => 'Variation',
     v        => $f->variation_name,
@@ -202,6 +238,7 @@ sub href {
     config   => $self->{'config'}{'type'},
     track    => $self->type
   });
+  return $out;
 }
 
 sub tag {
@@ -352,14 +389,14 @@ sub highlight {
   }
 
   # Are we going to highlight self item
-  my $id = $f->variation_name;  
+  my $id = $f->{'variation_name'};  
      $id =~ s/^rs//;
  
   return unless $self->{'config'}->get_option('opt_highlight_feature') != 0 && ($highlights{$id} || $highlights{"rs$id"});
   
   $composite->z(20);
   
-  my $z = $f->start > $f->end ? 0 : 18;
+  my $z = $f->{'start'} > $f->{'end'} ? 0 : 18;
   
   foreach (@{$composite->{'composite'}}) {
     $self->unshift($self->Rect({
