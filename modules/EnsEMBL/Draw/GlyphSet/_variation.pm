@@ -40,10 +40,7 @@ sub depth {
   return $self->SUPER::depth;
 }
 
-sub colour_key    { return lc $_[1]->display_consequence; }
-sub feature_label { my $label = $_[1]->ambig_code; return $label unless $label eq '-'; }
 sub label_overlay { return 1; }
-sub class         { my $depth = $_[0]->depth; return 'group' if defined $depth && $depth <= 1; }
 
 sub render_labels {
   my ($self, $labels) = @_;
@@ -63,24 +60,6 @@ sub my_label {
   return $label; 
 }
 
-sub _plainify {
-  my ($self,$f) = @_;
-
-  return {
-    strand => $f->strand,
-    start => $f->start,
-    end => $f->end,
-    colour_key => $self->colour_key($f),
-    tag => [$self->tag($f)],
-    feature_label => $self->feature_label($f),
-    variation_name => $f->variation_name,
-    href => $self->href($f),
-    class => $self->class($f),
-    title => $self->title($f),
-    dbID => $f->dbID, # used in ZMenu, yuk!
-  };
-}
-
 sub features {
   my $self         = shift;
   my $max_length   = $self->my_config('threshold') || 1000;
@@ -98,13 +77,7 @@ sub features {
       species => $hub->species,
       slice => $self->{'container'},
       id => $self->{'my_config'}->id,
-      filter => $self->my_config('filter'),
-      source => $self->my_config('source'),
-      sources => $self->my_config('sources'),
-      sets => $self->my_config('sets'),
-      set_name => $self->my_config('set_name'),
-      style => $self->my_config('style') || '',
-      no_label => $self->my_config('no_label'),
+      config => [qw(filter source sources sets set_name style no_label)],
       var_db => $self->my_config('db') || 'variation',
       config_type => $self->{'config'}{'type'},
       type => $self->type,
@@ -118,166 +91,6 @@ sub features {
       return $features_list;
     }
   }
-}
-
-sub check_set {
-  my ($self, $f, $sets) = @_; 
-  
-  foreach (@{$f->get_all_VariationSets}) {
-    return 1 if $sets->{$_->short_name};
-  }
-  
-  return 0;
-}
-
-sub check_source {
-  my ($self, $f, $sources) = @_;
-  
-  foreach (@{$f->get_all_sources}) { 
-    return 1 if $sources->{$_};
-  }
-  
-  return 0;
-}
-
-sub fetch_features {
-  my $self   = shift;
-  my $config = $self->{'config'};
-  my $slice  = $self->{'container'};
-  my $id     = $self->{'my_config'}->id;
-  my $var_db = $self->my_config('db') || 'variation';
-  
-  if (!$self->cache($id)) {
-    my $variation_db_adaptor = $config->hub->database($var_db, $self->species);
-    my $orig_failed_flag     = $variation_db_adaptor->include_failed_variations;
-    
-    $variation_db_adaptor->include_failed_variations(0); # Disable the display of failed variations by default
-  
-    # different retrieval method for somatic mutations
-    if ($id =~ /somatic/) {
-      my @somatic_mutations;
-      
-      if ($self->my_config('filter')) { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_with_phenotype(undef, undef, $self->my_config('filter'), $var_db) || []};
-      } elsif ($self->my_config('source')) {
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_by_source($self->my_config('source'), undef, $var_db) || []};
-      } else { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures(undef, undef, undef, $var_db) || []};
-      }
-
-      $self->cache($id, \@somatic_mutations);
-
-    } else { # get standard variations
-      my $sources = $self->my_config('sources'); 
-         $sources = { map { $_ => 1 } @$sources } if $sources; 
-      my $sets    = $self->my_config('sets');
-         $sets    = { map { $_ => 1 } @$sets } if $sets;
-      my %ct      = map { $_->SO_term => $_->rank } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-      my @vari_features;
-      
-      if ($id =~ /set/) {
-        my $short_name = ($self->my_config('sets'))->[0];
-        my $track_set  = $self->my_config('set_name');
-        my $set_object = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_short_name($short_name);
-    
-        # Enable the display of failed variations in order to display the failed variation track
-        $variation_db_adaptor->include_failed_variations(1) if $track_set =~ /failed/i;
-        
-        @vari_features = @{$slice->get_all_VariationFeatures_by_VariationSet($set_object, $var_db) || []};
-        
-        # Reset the flag for displaying of failed variations to its original state
-        $variation_db_adaptor->include_failed_variations($orig_failed_flag);
-      } else {
-        my @temp_variations = @{$slice->get_all_VariationFeatures(undef, undef, undef, $var_db) || []}; 
-        
-        ## Add a filtering step here
-        @vari_features =
-          map  { $_->[1] }                                                ## Quick indexing schwartzian transform
-          sort { $a->[0] <=> $b->[0] }                                    ## to make sure that "most functional" snps appear first
-          map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
-          grep { $sources ? $self->check_source($_, $sources) : 1 }       ## If sources filter by source
-          grep { $sets ? $self->check_set($_, $sets) : 1 }                ## If sets filter by set
-          @temp_variations;
-      }
-
-      # Reset the flag for displaying of failed variations to its original state
-      $variation_db_adaptor->include_failed_variations($orig_failed_flag);
-
-      $self->cache($id, \@vari_features);
-    }
-  }
-
-  my $snps = $self->cache($id) || [];
-
-  $self->{'legend'}{'variation_legend'}{$_->display_consequence} ||= $self->get_colours($_)->{'feature'} for @$snps;
-  
-  return $snps;
-}
-
-sub title {
-  my ($self, $f) = @_;
-  my $vid     = $f->variation_name;
-  my $type    = $f->display_consequence;
-  my $dbid    = $f->dbID;
-  my ($s, $e) = $self->slice2sr($f->start, $f->end);
-  my $loc     = $s == $e ? $s : $s <  $e ? "$s-$e" : "Between $s and $e";
-  
-  return "Variation: $vid; Location: $loc; Consequence: $type; Ambiguity code: ". $f->ambig_code;
-}
-
-sub href {
-  my ($self, $f)  = @_;
- 
-  my $out = $self->_url({
-    species  => $self->species,
-    type     => 'Variation',
-    v        => $f->variation_name,
-    vf       => $f->dbID,
-    vdb      => $self->my_config('db'),
-    snp_fake => 1,
-    config   => $self->{'config'}{'type'},
-    track    => $self->type
-  });
-  return $out;
-}
-
-sub tag {
-  my ($self, $f) = @_;
-  my $colour_key = $self->colour_key($f);
-  my $colour     = $self->my_colour($colour_key);
-  my $label      = $f->ambig_code;
-     $label      = '' if $label eq '-';
-  my @tags;
-  
-  if ($self->my_config('style') eq 'box') {
-    my $style        = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : 'box';
-    my $label_colour = $self->my_colour($colour_key, 'label');
-    
-    push @tags, {
-      style        => $style,
-      colour       => $colour,
-      letter       => $style eq 'box' ? $label : '',
-      label_colour => $label_colour && $label_colour ne $colour ? $label_colour : 'black',
-      start        => $f->start
-    };
-  } else {
-    if (!$self->my_config('no_label')) {
-      my $label = ' ' . $f->variation_name; # Space at the front provides a gap between the feature and the label
-      my (undef, undef, $text_width) = $self->get_text_width(0, $label, '', $self->get_font_details($self->my_config('font') || 'innertext', 1));
-      
-      push @tags, {
-        style  => 'label',
-        label  => $label,
-        colour => $self->my_colour($colour_key, 'tag') || $colour,
-        start  => $f->end,
-        end    => $f->end + 1 + $text_width / $self->scalex,
-      };
-    }
-    
-    push @tags, { style => 'insertion', colour => $colour, feature => $f } if $f->start > $f->end;
-  }
-  
-  return @tags;
 }
 
 sub render_tag {

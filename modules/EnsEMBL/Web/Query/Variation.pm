@@ -10,7 +10,8 @@ sub type_variation {
     slice => ["slice",["ourslice",20000]],
     start => [["start","slice"]],
     end =>   [["end","slice"]],
-    
+    config => "config",
+ 
     href => "href",
     tag => "tags",
     class => "class"
@@ -21,7 +22,7 @@ sub colour_key    { return lc $_[1]->display_consequence; }
 sub feature_label { my $label = $_[1]->ambig_code; return $label unless $label and $label eq '-'; }
 
 sub href {
-  my ($self, $f,$args)  = @_;
+  my ($self,$f,$args) = @_;
  
   return {
     species  => $args->{'species'},
@@ -46,7 +47,7 @@ sub post_process_tags {
         $t->{'colour'} = $glyphset->my_colour($t->{'colour'}, 'tag') ||
                          $glyphset->my_colour($t->{'colour'});
         my (undef, undef, $text_width) = $glyphset->get_text_width(0, $t->{'label'}, '', $glyphset->get_font_details($glyphset->my_config('font') || 'innertext', 1));
-        $t->{'end'} += $text_width/$self->scalex;
+        $t->{'end'} += $text_width/$glyphset->scalex;
       } else {
         my $colour = $glyphset->my_colour($t->{'colour'});
         $t->{'colour'} = $colour;
@@ -68,7 +69,7 @@ sub tag {
      $label      = '' if $label && $label eq '-';
   my @tags;
 
-  if ($args->{'style'} eq 'box') {
+  if (($args->{'config'}{'style'}||'') eq 'box') {
     my $style        = $f->start > $f->end ? 'left-snp' : $f->var_class eq 'in-del' ? 'delta' : 'box';
     push @tags, {
       style        => $style,
@@ -77,7 +78,7 @@ sub tag {
       start        => $f->start
     };
   } else {
-    if (!$args->{'no_label'}) {
+    if (!$args->{'config'}{'no_label'}) {
       my $label = ' ' . $f->variation_name; # Space at the front provides a gap between the feature and the label
       push @tags, {
         style  => 'label',
@@ -158,11 +159,11 @@ sub fetch_features {
 
   my $species = $args->{'species'};
   my $id = $args->{'id'};
-  my $filter = $args->{'filter'};
-  my $source = $args->{'source'};
-  my $sources = $args->{'sources'};
-  my $sets = $args->{'sets'};
-  my $set_name = $args->{'set_name'};
+  my $filter = $args->{'config'}{'filter'};
+  my $source = $args->{'config'}{'source'};
+  my $sources = $args->{'config'}{'sources'};
+  my $sets = $args->{'config'}{'sets'};
+  my $set_name = $args->{'config'}{'set_name'};
   my $var_db = $args->{'var_db'};
   my $slice = $args->{'slice'}; 
  
@@ -190,7 +191,7 @@ sub fetch_features {
     my @vari_features;
           
     if ($id =~ /set/) {
-      my $short_name = ($args->{'sets'})->[0];
+      my $short_name = ($args->{'config'}{'sets'})->[0];
       my $track_set  = $set_name;
       my $set_object = $vdb->get_VariationSetAdaptor->fetch_by_short_name($short_name);
        

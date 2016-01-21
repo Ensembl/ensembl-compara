@@ -121,4 +121,14 @@ sub blockify_ourslice {
   @$ff = @out;
 }
 
+sub pre_process_config {
+  my ($self,$glyphset,$key,$ff) = @_;
+
+  my %config;
+  foreach my $k (@{$ff->{$key}}) {
+    $config{$k} = $glyphset->my_config($k);
+  }
+  $ff->{$key} = \%config;
+}
+
 1;
