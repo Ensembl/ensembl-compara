@@ -109,7 +109,7 @@ sub run {
 		$result{'left2'} = undef;
 		$result{'right1'} = undef;
 		$result{'right2'} = undef;
-        $result{'percent_conserved_score'} = 0;
+        $result{'goc_score'} = 0;
 		$result{'homology_id'} = $self->param('query');
 		my $ref_gene_member = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'))->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
         $result{'dnafrag_id'} = $ref_gene_member->dnafrag_id();
@@ -187,7 +187,7 @@ sub run {
 
 		my $percent = $self->param('result')->{'left1'} + $self->param('result')->{'left2'} + $self->param('result')->{'right1'} + $self->param('result')->{'right2'};
 		my $percentage = $percent * 25;
-        $self->param('result')->{'percent_conserved_score'} =$percentage;
+        $self->param('result')->{'goc_score'} =$percentage;
 		my $ref_gene_member = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'))->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
         $self->param('result')->{'dnafrag_id'} = $ref_gene_member->dnafrag_id();
         $self->param('result')->{'gene_member_id'} = $ref_gene_member->dbID();
