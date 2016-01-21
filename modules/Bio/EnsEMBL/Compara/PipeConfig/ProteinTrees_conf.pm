@@ -1631,7 +1631,10 @@ sub core_pipeline_analyses {
             },
             -flow_into  => [
                 'write_stn_tags',
-                WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
+                WHEN(
+                    '#do_stable_id_mapping#' => 'stable_id_mapping',
+                    ELSE 'build_HMM_factory',
+                ),
                 WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
                 'write_member_counts',
                 WHEN('#initialise_cafe_pipeline#' => 'CAFE_table'),
