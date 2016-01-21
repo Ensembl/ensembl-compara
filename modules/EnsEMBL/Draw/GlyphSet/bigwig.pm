@@ -35,7 +35,7 @@ sub features {
   my ($self, $bins, $cache_key) = @_;
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_config('url');
-  my $container = $self->{'container'};
+  my $slice     = $self->{'container'};
   my $args      = { 'options' => {
                                   'hub'         => $hub,
                                   'config_type' => $self->{'config'}{'type'},
@@ -57,6 +57,9 @@ sub features {
                     'colour'          => $colour,
                     'join_colour'     => $colour,
                     'label_colour'    => $colour,
+                    'graphType'       => 'bar',
+                    'unit'            => $slice->length / $bins,
+                    'length'          => $slice->length,
                     'bins'            => $bins,
                     'display'         => $self->{'display'},
                     'default_strand'  => 1,
@@ -75,7 +78,7 @@ sub features {
     $metadata->{'aggregate'} = 1 if $self->{'my_config'}->get('display') eq 'compact';
 
     ## Parse the file, filtering on the current slice
-    $data = $iow->create_tracks($container, $metadata);
+    $data = $iow->create_tracks($slice, $metadata);
     #use Data::Dumper; warn Dumper($data);
 
   } else {
