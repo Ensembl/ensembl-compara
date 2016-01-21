@@ -557,17 +557,7 @@ sub parse_filtered_align {
 # NB: this will be testing $self->param('gene_tree_id')
 sub call_one_hc {
     my ($self, $test_name) = @_;
-    print "Calling the HC '$test_name'\n" if ($self->debug);
-    $self->param('tests', $Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::config->{$test_name}->{tests});
-    $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_validate_tests();
-    my $failures = 0;
-    foreach my $test (@{ $self->param('tests') }) {
-        if (not $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_run_test($test)) {
-            $failures++;
-            $self->warning(sprintf("The following test has failed: %s\n   > %s\n", $test->{description}, $test->{subst_query}));
-        }
-    }
-    die "$failures HCs failed.\n" if $failures;
+    Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_embedded_call($self, $test_name);
 }
 
 sub call_hcs_all_trees {

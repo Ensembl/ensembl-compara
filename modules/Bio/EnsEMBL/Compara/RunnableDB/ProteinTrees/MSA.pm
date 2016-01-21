@@ -187,16 +187,7 @@ sub write_output {
 # NB: this will be testing $self->param('gene_tree_id')
 sub post_healthcheck {
     my $self = shift;
-    $self->param('tests', $Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::config->{'alignment'}->{tests});
-    $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_validate_tests();
-    my $failures = 0;
-    foreach my $test (@{ $self->param('tests') }) {
-        if (not $self->Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_run_test($test)) {
-            $failures++;
-            $self->warning(sprintf("The following test has failed: %s\n   > %s\n", $test->{description}, $test->{subst_query}));
-        }
-    }
-    die "$failures HCs failed.\n" if $failures;
+    Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_embedded_call($self, 'alignment');
 }
 
 
