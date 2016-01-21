@@ -35,37 +35,27 @@ sub create_hash { return EnsEMBL::Web::IOWrapper::Wig::create_hash(@_); }
 sub create_structure { return EnsEMBL::Web::IOWrapper::Wig::create_structure(@_); }
 
 sub create_tracks {
-  my ($self, $slice, $metadata) = @_;
+  my ($self, $slice, $extra_config) = @_;
+  my $data = [];
 
-  ## Limit file seek to current slice
-  my $parser  = $self->parser;
-  my $bins    = $metadata->{'bins'};
-  if ($metadata->{'aggregate'}) {
-    my $values = $parser->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
-    my @gradient = $self->create_gradient(['white', $metadata->{'colour'}]);
-    ## For speed, our track consists of an array of values, not an array of feature hashes
-    return [{'metadata' => {
-                            'name'        => $metadata->{'name'},
-                            'unit'        => $slice->length / 1000,
-                            'graph_type'  => 'bar',
-                            'length'      => $slice->length,
-                            'strand'      => $slice->strand,
-                            'colour'      => $metadata->{'colour'},
-                            'gradient'    => \@gradient,
-                            'max_score'   => max(@$values),
-                            'min_store'   => min(@$values), 
-                            },
-            'features' => $values,
-           }];
-  }
-  elsif ($slice->length > 1000) {
-    $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, $bins);
-    $self->SUPER::create_tracks($slice, $metadata);
+  ## For speed, our track consists of an array of values, not an array of feature hashes
+  my $parser = $self->parser;
+  my $bins   = $extra_config->{'bins'};
+  my $values = $parser->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
+  my $metadata = {
+                  'max_score'   => max(@$values),
+                  'min_store'   => min(@$values), 
+                  %$extra_config,
+                  };
+  if ($extra_config->{'display'} eq 'compact') {
+    my @gradient = $self->create_gradient(['white', $extra_config->{'colour'}]);
+    $metadata->{'gradient'} = \@gradient;
   }
   else {
-    $parser->seek($slice->seq_region_name, $slice->start, $slice->end);
-    $self->SUPER::create_tracks($slice, $metadata);
+    $metadata->{'gradient'} = [$metadata->{'colour'}];
   }
+  my $strand = $extra_config->{'default_strand'} || 1;
+  return [{'metadata' => $metadata, 'features' => {$strand => $values}}];
 }
 
 1;
