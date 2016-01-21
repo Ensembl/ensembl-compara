@@ -2055,7 +2055,7 @@ sub core_pipeline_analyses {
             #-------------------------------------------------------------------------------
 
             -flow_into  => {
-                1 => WHEN ( 
+                '1->A' => WHEN (
                     '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# <= 500)'                                        => 'raxml_parsimony',
                     '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# > 500)'                                         => 'raxml_parsimony',
                     '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# <= 500)'     => 'raxml_parsimony_8_cores',
@@ -2071,6 +2071,7 @@ sub core_pipeline_analyses {
                     '(#tree_num_of_patterns# > 32000)'                                                                     => 'raxml_parsimony_64_cores',
                     ELSE 'raxml_parsimony_8_cores',
                 ),
+                'A->1' => 'raxml_decision',
             },
         },
 
@@ -2083,7 +2084,6 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name        => '1Gb_job',
             -flow_into      => {
-                1  => [ 'raxml_decision' ],
                 -1 => [ 'raxml_parsimony_himem' ],
             }
         },
@@ -2095,9 +2095,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name        => '4Gb_job',
-            -flow_into      => {
-                1  => [ 'raxml_decision' ],
-            }
         },
 
         {   -logic_name => 'raxml_parsimony_8_cores',
@@ -2110,7 +2107,6 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name 		=> '16Gb_8c_job',
             -flow_into      => {
-                1  => [ 'raxml_decision' ],
                 -1 => [ 'raxml_parsimony_8_cores_himem' ],
             }
         },
@@ -2123,9 +2119,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name 		=> '32Gb_8c_job',
-            -flow_into      => {
-                1  => [ 'raxml_decision' ],
-            }
         },
 
         {   -logic_name => 'raxml_parsimony_16_cores',
@@ -2138,7 +2131,6 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name 		=> '16Gb_16c_job',
             -flow_into      => {
-                1  => [ 'raxml_decision' ],
                 -1 => [ 'raxml_parsimony_16_cores_himem' ],
             }
         },
@@ -2151,9 +2143,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name 		=> '32Gb_16c_job',
-            -flow_into      => {
-                1  => [ 'raxml_decision' ],
-            }
         },
 
         {   -logic_name => 'raxml_parsimony_32_cores',
@@ -2166,7 +2155,6 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name 		=> '16Gb_32c_job',
             -flow_into      => {
-                1  => [ 'raxml_decision' ],
                 -1 => [ 'raxml_parsimony_32_cores_himem' ],
             }
         },
@@ -2179,9 +2167,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name 		=> '32Gb_32c_job',
-            -flow_into      => {
-                1  => [ 'raxml_decision' ],
-            }
         },
 
         {   -logic_name => 'raxml_parsimony_64_cores',
@@ -2195,7 +2180,6 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name 		=> '16Gb_64c_job',
             -flow_into      => {
-                1  => [ 'raxml_decision' ],
                 -1 => [ 'raxml_parsimony_64_cores_himem' ],
                 -2 => [ 'fasttree' ],
             }
@@ -2211,7 +2195,6 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name 		=> '32Gb_64c_job',
             -flow_into      => {
-                1  => [ 'raxml_decision' ],
                 -2 => [ 'fasttree' ],
             }
         },
