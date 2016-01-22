@@ -24,8 +24,6 @@ use List::Util qw(min max);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
-use EnsEMBL::Web::Tools::Sanitize qw(strict_clean);
-
 our %strand_text = (
                     '1'   => 'Forward',
                     '-1'  => 'Reverse',
@@ -52,30 +50,25 @@ sub content {
     $glyphset = $glyphset->new($click_data);
 
     my $i = 0;
-    my (@id_features, @other_features);
     my $feature_id  = $hub->param('feature_id') || $hub->param('id');
 
     my $data = $glyphset->features;
     foreach my $track (@$data) {
       $caption ||= $track->{'metadata'}{'zmenu_caption'};
-      foreach (@{$track->{'features'}{$strand}||[]}) {
-        if ($feature_id && $_->{'label'} eq $feature_id) {
-          $_->{'track_name'} = $track->{'metadata'}{'name'};
-          $_->{'url'}        = $track->{'metadata'}{'url'};
-          delete($_->{'href'});
-          push @id_features, $_;
+      if ($feature_id) {
+        foreach (@{$track->{'features'}{$strand}||[]}) {
+          if ($_->{'label'} eq $feature_id) {
+            $_->{'track_name'} = $track->{'metadata'}{'name'};
+            $_->{'url'}        = $track->{'metadata'}{'url'};
+            delete($_->{'href'});
+            push @features, $_;
+          }
         }
-        elsif ($_->{'seq_region'} eq $coords[0]
-                  && $_->{'start'} >= 0
-                  && $_->{'end'} <= $slice->length) {
-          $_->{'track_name'} = $track->{'metadata'}{'name'};
-          $_->{'url'}        = $track->{'metadata'}{'url'};
-          delete($_->{'href'});
-          push @other_features, $_;
-        }
-      } 
+      }
+      else {
+        @features = @{$track->{'features'}{$strand}||[]};
+      }
     }
-    @features = scalar(@id_features) ? @id_features : @other_features;
   }
 
   if (scalar @features > 5) {
@@ -84,9 +77,6 @@ sub content {
     my @coords = split(/[:-]/, $hub->param('r'));
     $self->feature_content(\@features, $caption, $coords[1]);
   }
-}
-
-sub summary_content {
 }
 
 sub feature_content {
@@ -132,71 +122,6 @@ sub feature_content {
   }
 
   $self->caption($caption);
-}
-
-=pod  
-  
-sub feature_content {
-  my ($self, $feature, $i) = @_;
-  my %extra  = ref $feature ne 'HASH' && $feature->can('extra_data') && ref $feature->extra_data eq 'HASH' ? %{$feature->extra_data} : ();
-  my $extra_order;
-  $extra_order = $feature->extra_data_order if ref $feature ne 'HASH' && $feature->can('extra_data_order');
-
-  my $start  = $feature->{'start'} + $self->hub->param('click_start') - 1;
-  my $end    = $feature->{'end'} + $self->hub->param('click_start') - 1;
-  my $single = $start == $end;
-  my $type;
-  my $click_data = $self->click_data;
-  my $type = $click_data->{'my_config'}->data->{'glyphset'} if $click_data;
-  
-  $self->new_feature;
-
-  my $caption = '';
-  if(ref($feature) eq 'HASH' or !$feature->id) {
-    if($single) { $caption = $start; } else { $caption = "$start-$end"; }
-  } else {
-    $caption = $feature->id;
-  }
-  if(!$caption and $single) { # last attempt!
-    $caption = $start;
-  }
-  $self->caption($caption);
-  
-  my @entries = (
-    $single ? (
-      { type => 'Position', label => $start }
-    ) : (
-      { type => 'Start', label => $start },
-      { type => 'End',   label => $end   },
-    ),
-    { type => 'Strand',     label => ('-', 'Forward', 'Reverse')[$feature->{'strand'}] }, # remember, [-1] = at end
-    { type => 'Hit start',  label => $feature->{'hstart'}  },
-    { type => 'Hit end',    label => $feature->{'hend'}    },
-    { type => 'Hit strand', label => $feature->{'hstrand'} },
-    { type => 'Score',      label => $feature->{'score'}, name => 'score' },
-  );
-
-  if(ref $feature ne 'HASH' && $feature->can('id') && $feature->id ne $caption) {
-    push @entries, { type => 'Name', label => $feature->id, name => 'name' };
-  }
-
-  # Replace fields with name in autosql (only score for now)
-  if(ref $feature ne 'HASH' && $feature->can('real_name')) {
-    foreach my $e (@entries) {
-      next unless $e->{'name'};
-      my $name = $feature->real_name($e->{'name'});
-      $e->{'type'} = $self->format_type(undef,$name) unless $name eq $e->{'name'};
-    }
-  }
-
-  for($self->sorted_extra_keys(\%extra,$extra_order)) {
-    push @entries, {
-      type => $self->format_type($feature,$_),
-      label_html => join(', ', map { strict_clean ($_) } @{$extra{$_}})
-    };
-  }
-  
-  $self->add_entry($_) for grep { $_->{'label'} or $_->{'label_html'} } @entries;
 }
 
 sub summary_content {
