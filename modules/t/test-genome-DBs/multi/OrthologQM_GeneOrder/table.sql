@@ -91,7 +91,7 @@ CREATE TABLE `family` (
   PRIMARY KEY (`family_id`),
   UNIQUE KEY `stable_id` (`stable_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`),
-  KEY `description` (`description`)
+  KEY `description` (`description`(255))
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `family_member` (
