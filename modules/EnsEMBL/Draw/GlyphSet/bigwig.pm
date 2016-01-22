@@ -32,7 +32,69 @@ use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 sub can_json { return 1; }
 
 sub features {
-  my ($self, $bins, $cache_key) = @_;
+  my ($self, $bins) = @_;
+
+  my $data = $self->_fetch_data($bins);
+  #use Data::Dumper; warn Dumper($data); 
+
+  if ($data) {
+    ## Adjust max and min according to track settings
+    my $viewLimits = $self->my_config('viewLimits');
+    foreach (@$data) {
+      my ($min_score, $max_score);
+
+      ## Constrain to configured range, if any
+      my $signal_range = $self->my_config('signal_range');
+      if (defined $signal_range) {
+        $min_score = $signal_range->[0];
+        $max_score = $signal_range->[1];
+      }
+
+      ## Otherwise constrain to configured view limits 
+      unless(defined $min_score) {
+        if (defined $viewLimits) {
+          $min_score = [ split ':', $viewLimits ]->[0];
+        } else {
+          $min_score = $_->{'metadata'}{'min_score'};
+        }
+      }
+      unless(defined $max_score) {
+        if (defined $viewLimits) {
+          $max_score = [ split ':', $viewLimits ]->[1];
+        } else {
+          $max_score = $_->{'metadata'}{'max_score'};
+        }
+      }
+
+      ## Finally constrain to gang range if configured 
+      my $gang = $self->gang();
+      if ($gang and $gang->{'max'}) {
+        $max_score = $gang->{'max'};
+      }
+      if ($gang and $gang->{'min'}) {
+        $min_score = $gang->{'min'};
+      }
+
+      $_->{'metadata'}{'max_score'} = $max_score;
+      $_->{'metadata'}{'min_score'} = $min_score;
+    }
+
+  } else {
+    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
+    warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
+  }
+  #$self->{'config'}->add_to_legend($legend);
+
+  return $data;
+}
+
+sub _fetch_data {
+### Get the data and cache it
+  my ($self, $bins) = @_;
+  $bins ||= $self->bins;
+
+  return $self->{'_cache'}{'features'} if $self->{'_cache'}{'features'};
+ 
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_config('url');
   my $slice     = $self->{'container'};
@@ -62,6 +124,7 @@ sub features {
                     'length'          => $slice->length,
                     'bins'            => $bins,
                     'display'         => $self->{'display'},
+                    'no_titles'       => $self->my_config('no_titles'),
                     'default_strand'  => 1,
                     };
     ## No colour defined in ImageConfig, so fall back to defaults
@@ -74,20 +137,12 @@ sub features {
       $metadata->{'label_colour'} = $colours->{'text'} || $colours->{'default'};
     }
 
-    ## Tell the parser to get aggregate data if necessary
-    $metadata->{'aggregate'} = 1 if $self->{'my_config'}->get('display') eq 'compact';
-
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($slice, $metadata);
-    #use Data::Dumper; warn Dumper($data);
-
-  } else {
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
   }
-  #$self->{'config'}->add_to_legend($legend);
 
-  return $data;
+  $self->{'_cache'}{'features'} = $data;
+  return $self->{'_cache'}{'features'};
 }
 
 sub bins {
@@ -100,6 +155,17 @@ sub bins {
     $self->{'_bins'} = min($self->{'config'}->image_width, $slice->length);
   }
   return $self->{'_bins'};
+}
+
+sub gang_prepare {
+  my ($self, $gang) = @_;
+
+  my $data = $self->_fetch_data;
+
+  foreach (@$data) {
+    my $max = $_->{'metadata'}{'max_score'};
+    $gang->{'max'} = max($gang->{'max'}||0, $max);
+  }
 }
 
 sub render_text {
