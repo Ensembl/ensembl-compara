@@ -19,13 +19,13 @@ sub new {
 sub set {
   my ($self,$k,$v) = @_;
 
-  $self->{'cache'}->set($k,$v);
+  $self->{'cache'}->set($self->_key($k),$v);
 }
 
 sub get {
   my ($self,$k) = @_;
 
-  return $self->{'cache'}->get($k);
+  return $self->{'cache'}->get($self->_key($k));
 }
 
 1;

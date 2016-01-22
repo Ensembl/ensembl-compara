@@ -52,6 +52,7 @@ use EnsEMBL::Web::ViewConfig;
 
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::Memcached;
+use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
 use EnsEMBL::Web::QueryStore::Cache::None;
 use EnsEMBL::Web::QueryStore::Source::Adaptors;
 
@@ -952,11 +953,17 @@ sub query_store_setup {
   } else {
     $cache = EnsEMBL::Web::QueryStore::Cache::None->new();
   }
+  $cache = EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl->new({
+    dir => "/tmp/book-of-ensembl",
+  });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
     Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self)
   },$cache,$SiteDefs::ENSEMBL_COHORT);
 }
 
-sub get_query { return $_[0]->{'_query_store'}->get($_[1]); }
+sub get_query {return $_[0]->{'_query_store'}->get($_[1]); }
+
+sub qstore_open { return $_[0]->{'_query_store'}->open; }
+sub qstore_close { return $_[0]->{'_query_store'}->close; }
 
 1;

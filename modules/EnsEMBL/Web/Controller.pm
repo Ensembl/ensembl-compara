@@ -104,8 +104,9 @@ sub new {
     $self->set_cache_params;
   }
   
+  $hub->qstore_open;
   $self->init;
-  
+  $hub->qstore_close;
   return $self;
 }
 
