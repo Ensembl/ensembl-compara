@@ -59,8 +59,10 @@ use EnsEMBL::Draw::Utils::Text;
 use EnsEMBL::Draw::Utils::LocalCache;
 
 use EnsEMBL::Draw::Glyph::Arc;
+use EnsEMBL::Draw::Glyph::Barcode;
 use EnsEMBL::Draw::Glyph::Circle;
 use EnsEMBL::Draw::Glyph::Composite;
+use EnsEMBL::Draw::Glyph::Histogram;
 use EnsEMBL::Draw::Glyph::Intron;
 use EnsEMBL::Draw::Glyph::Line;
 use EnsEMBL::Draw::Glyph::Poly;
@@ -75,6 +77,7 @@ sub Arc        { my $self = shift; return EnsEMBL::Draw::Glyph::Arc->new(@_);   
 sub Barcode    { my $self = shift; return EnsEMBL::Draw::Glyph::Barcode->new(@_);    }
 sub Circle     { my $self = shift; return EnsEMBL::Draw::Glyph::Circle->new(@_);     }
 sub Composite  { my $self = shift; return EnsEMBL::Draw::Glyph::Composite->new(@_);  }
+sub Histogram  { my $self = shift; return EnsEMBL::Draw::Glyph::Histogram->new(@_);    }
 sub Intron     { my $self = shift; return EnsEMBL::Draw::Glyph::Intron->new(@_);     }
 sub Line       { my $self = shift; return EnsEMBL::Draw::Glyph::Line->new(@_);       }
 sub Poly       { my $self = shift; return EnsEMBL::Draw::Glyph::Poly->new(@_);       }
