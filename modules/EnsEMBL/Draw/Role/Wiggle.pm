@@ -77,7 +77,8 @@ sub _render_aggregate {
   }
 
   $self->{'my_config'}->set('bumped', 0);
-  $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
+  $self->{'my_config'}->set('axis_colour', $self->my_colour('axis')) 
+    unless $self->{'my_config'}->get('axis_colour');
 
   ## Now we try and draw the features
   my $error = $self->draw_aggregate($self->{'features'});
