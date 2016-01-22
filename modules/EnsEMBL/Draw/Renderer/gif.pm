@@ -345,7 +345,38 @@ sub render_Line {
   }
 }
 
+sub render_Histogram {
+### Render a track as a series of rectangles of the same width but
+### varying heights
+### N.B. this is much faster than drawing individual rectangles
+  my ($self, $glyph) = @_;
+
+  my $canvas         = $self->{'canvas'};
+  my $colour         = $self->colour($glyph->{'colour'});
+
+  my $points = $glyph->{'pixelpoints'};
+  return unless defined $points;
+
+  my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
+  my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
+  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+
+  my $max = $glyph->{'max'} || 1000;
+  my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+
+  my $mul = ($y2-$y1) / $max;
+  foreach my $p (@$points) {
+    my $yb = $y2 - max($p,0) * $mul;
+    $canvas->filledRectangle($x1,$yb,$x2,$y2,$colour);
+    $x1 += $step;
+    $x2 += $step;
+  }
+}
+
 sub render_Barcode {
+### Render a track as a series of equal-sized rectangles
+### with value indicated by a colour gradient
   my ($self, $glyph) = @_;
 
   my $canvas         = $self->{'canvas'};
@@ -364,6 +395,7 @@ sub render_Barcode {
   my $step = $glyph->{'pixelunit'} * $self->{'sf'};
 
   if($glyph->{'wiggle'} eq 'bar') {
+    ## TODO Remove once no longer needed - has been superceded by render_Histogram
     my $mul = ($y2-$y1) / $max;
     foreach my $p (@$points) {
       my $yb = $y2 - max($p,0) * $mul;

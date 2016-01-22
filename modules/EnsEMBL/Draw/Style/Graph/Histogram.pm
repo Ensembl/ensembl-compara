@@ -16,6 +16,10 @@ limitations under the License.
 
 =cut
 
+### Render binned data as a continuous series of same-width rectangles
+### Note that this is more efficient than drawing each rectangle 
+### individually
+
 package EnsEMBL::Draw::Style::Graph::Histogram;
 
 use List::Util qw(min max);
@@ -24,70 +28,20 @@ use parent qw(EnsEMBL::Draw::Style::Graph);
 
 sub draw_wiggle {
   my ($self, $c, $features) = @_;
-  return unless scalar(@$features);
 
-  my $use_points  = $c->{'graph_type'} && $c->{'graph_type'} eq 'points';
+  my $height = $c->{'height'} || 8;
 
-  ## How wide is each bar, in pixels? (needed for label overlay)
-  my $bar_width   = $self->image_config->container_width * $self->{'pix_per_bp'} / scalar(@$features);
-
-  use Data::Dumper;
-
-  foreach my $f (@$features) {
-
-    my $start   = $f->{'start'};
-    my $end     = $f->{'end'};
-    my $score   = $f->{'score'};
-    my $href    = $f->{'href'};
-    my $height  = int(($score - $c->{'line_score'}) * $c->{'pix_per_score'});
-    $height     = $c->{'cutoff'} if $c->{'cutoff'} && $height > $c->{'cutoff'};
-    my $title   = $f->{'title'};
-    unless ($title) {
-      $title = $c->{'score_format'} ? sprintf($c->{'score_format'}, $score) : $score;
-    }
-    my $x     = $start - 1;
-    my $y     = $c->{'line_px'} - max($height, 0);
-    my $width = $end - $start + 1;
-
-    my $params = {
-                  x         => $x,
-                  y         => $y, 
-                  width     => $width,
-                  height    => $use_points ? 0 : abs $height,
-                  colour    => $self->set_colour($c, $f) || $c->{'colour'},
-                  alpha     => $self->track_config->get('use_alpha') ? 0.5 : 0,
-                  title     => $self->track_config->get('no_titles') ? undef : $title,
-                  href      => $href,
-                  %{$c->{'absolute_xy'}},
-                };
-    #warn Dumper($params);
-    push @{$self->glyphs}, $self->Rect($params);
-
-    ## Superimposed label - mainly for sequence
-    if ($self->track_config->get('label_overlay') && $f->{'label'}) {
-
-      ## Do we have space to draw the label?
-      my $text_info   = $self->get_text_info($feature->{'label'});
-
-      if ($text_info->{'width'} < $bar_width) {
-        ## Centre the text at the base of the bar
-        $x += (($bar_width - $text_info->{'width'}) / $self->{'pix_per_bp'}) / 2;
-        $y = $c->{'line_px'} - $self->{'font_size'} - 2;
-        my $text_params = {
-                            x         => $x,
-                            y         => $y,
-                            height    => $self->{'font_size'},
-                            text      => $f->{'label'},
-                            font      => $self->{'font_name'},
-                            ptsize    => $self->{'font_size'},
-                            colour    => $f->{'label_colour'} || 'black', 
-                            %{$c->{'absolute_xy'}},
-                          };
-        #warn ">>> TEXT PARAMS ".Dumper($text_params);
-        push @{$self->glyphs}, $self->Text($text_params);
-      }
-    }
-  }
+  my $params = {
+    values    => $features,
+    x         => 1,
+    y         => $c->{'y_offset'} || 0,
+    height    => $height,
+    unit      => $c->{'unit'},
+    max       => $c->{'max_score'},
+    colour    => $c->{'colour'},
+  };
+  push @{$self->glyphs}, $self->Histogram($params);
+  $self->add_hidden_bgd($height);
 }
 
 1;
