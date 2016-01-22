@@ -81,6 +81,11 @@ sub render_Circle {
 
 sub render_Barcode {
   my ($self, $glyph) = @_;
+  $self->render_Histogram($glyph);
+}
+
+sub render_Histogram {
+  my ($self, $glyph) = @_;
 
   my $attrs = $self->get_attributes($glyph);
   return unless $attrs;
