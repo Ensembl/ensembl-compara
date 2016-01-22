@@ -40,7 +40,7 @@ sub hive_meta_table {
 
 sub pipeline_create_commands {
 	my $self = shift;
-
+}
 	#!!! NOTE: replace column names with desired col names for report.
 	#          must be a param name!
 
@@ -166,22 +166,10 @@ sub pipeline_analyses {
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
 #            -flow_into => {
 #                2 => [ ':////ortholog_metric' ],
-            },
+#            },
             -rc_name => '16Gb_job',
         },
     ];
 }
 
 1;
-
-
-
-
-
-
-
-
-
-
-
-
