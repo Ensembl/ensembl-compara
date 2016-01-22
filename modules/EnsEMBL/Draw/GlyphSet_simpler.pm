@@ -99,6 +99,10 @@ sub _init {
   $self->_init_bump(undef, $depth);
   
   foreach my $f (@$features) {
+
+    use Data::Dumper;
+    warn Dumper($f) if ref($f) eq 'HASH';
+
     my $fstrand = $f->{'strand'} || -1;
     
     next if $strand_flag eq 'b' && $strand != $fstrand;

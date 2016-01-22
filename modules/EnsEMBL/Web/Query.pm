@@ -6,6 +6,9 @@ use warnings;
 use Digest::MD5 qw(md5_base64);
 use JSON;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
+use Time::HiRes qw(time);
+
+my $DEBUG = 1;
 
 sub _new {
   my ($proto,$store,$impl) = @_;
@@ -53,11 +56,13 @@ sub _run_phase {
 sub _get {
   my ($self,$type,$context,$sub,$args) = @_;
 
+  my $A = time();
   die "args must be a HASH" unless ref($args) eq 'HASH';
   my @args = ($args);
   $self->_run_phase(\@args,$type,$context,'blockify');
   $args = [$args] unless ref($args) eq 'ARRAY';
   my $out = [];
+  my $C = time();
   foreach my $a (@args) { 
     $self->_run_phase($a,$type,$context,'pre_process');
     $self->_check_unblessed($a);
@@ -72,7 +77,14 @@ sub _get {
     }
     push @$out,@$part;
   }
+  my $D = time();
+  warn "block gets took ".($D-$C)."s\n" if $DEBUG;
   $self->_run_phase($out,$type,$context,'post_process');
+  my $E = time();
+  warn "post took ".($E-$D)."s\n" if $DEBUG;
+  my $B = time();
+  warn "get took ".($B-$A)."s\n" if $DEBUG;
+  warn "post-process ".scalar(@$out)." features\n";
   return $out;
 }
 

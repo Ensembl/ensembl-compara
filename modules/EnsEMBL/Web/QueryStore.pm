@@ -9,7 +9,7 @@ use Digest::MD5 qw(md5_base64);
 use EnsEMBL::Web::Query;
 
 my $DEBUG = 1;
-my $DISABLE = 0;
+my $DISABLE = 1;
 
 sub new {
   my ($proto,$sources,$cache,$cohort) = @_;
