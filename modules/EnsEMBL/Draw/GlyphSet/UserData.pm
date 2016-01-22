@@ -35,7 +35,7 @@ sub init {
   my @roles;
   my $style = $self->my_config('style') || $self->my_config('display') || '';
 
-  if ($style eq 'wiggle' || $style =~ /tiling/) {
+  if ($style eq 'wiggle' || $style =~ /signal/) {
     push @roles, 'EnsEMBL::Draw::Role::Wiggle';
   }
   else {
