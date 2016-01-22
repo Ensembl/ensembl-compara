@@ -45,7 +45,7 @@ sub render_normal {
   my $logic_name     = $logic_names[0];
   ## Fetch all markers if this isn't a subset, e.g. SATMap
   $logic_name        = undef if $logic_name eq 'marker';
-  my $features       = $self->features($logic_name);
+  my $features       = [{ 'features' => $self->features($logic_name) }];
 
   my $config = $self->track_style_config;
   my $style  = EnsEMBL::Draw::Style::Feature->new($config, $features);
