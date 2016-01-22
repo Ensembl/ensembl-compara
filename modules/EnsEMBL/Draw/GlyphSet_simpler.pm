@@ -122,7 +122,8 @@ sub _init {
     my ($tag_start, $tag_end) = ($start, $end);
     my $label_start  = $start;
     my $bp_textwidth = $text_width / $pix_per_bp;
-    my @tags         = grep ref $_ eq 'HASH', $f->{'tag'};
+
+    my @tags         = grep { ref $_ eq 'HASH' } @{$f->{'tag'}};
     my $row          = 0;
     
     if ($label && !$label_overlay) {
@@ -228,7 +229,7 @@ sub _init {
         absolutey   => 1,
       }));
     }
-    
+   
     push @tag_glyphs, $self->render_tags(\@tags, $composite, $slice_length, $height, $start, $end, $img_start, $img_end,$pattern,$patterncolour) unless $notags;
     
     if ($label) {
@@ -311,7 +312,7 @@ sub render_tags {
   my $tags = shift;
   my ($composite,$slice_length,$height,$_x1,$_x2,$_x3,$_x4,$pattern,$patterncolour) = @_;
   my @glyphs;
-  
+ 
   foreach my $tag (@$tags) {
     if ($tag->{'style'} eq 'rect') {
       next if $tag->{'start'} > $slice_length || $tag->{'end'} < 0;

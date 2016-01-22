@@ -34,8 +34,10 @@ sub post_process_zmenu {
 sub post_process_colour {
   my ($self,$glyphset,$key,$ff,$default) = @_;
 
+  my $hub = $glyphset->{'config'}{'hub'};
+  my $colourmap = $hub->colourmap;
   foreach my $f (@$ff) {
-    $f->{$key} = $glyphset->my_colour($f->{$key}) || $default;
+    $f->{$key} = $colourmap->hex_by_name($glyphset->my_colour($f->{$key}) || $default);
   }
 }
 
@@ -84,14 +86,31 @@ sub post_generate_end {
 sub pre_process_slice {
   my ($self,$glyphset,$key,$ff) = @_;
 
-  $ff->{$key} = $ff->{$key}->name;
+  $ff->{$key} = $ff->{$key}->name if $ff->{$key};
 }
 
 sub pre_generate_slice {
   my ($self,$glyphset,$key,$ff) = @_;
 
   my $hub = $glyphset->{'config'}{'hub'};
-  $ff->{$key} = $self->source('Adaptors')->slice_by_name($hub->species,$ff->{$key});
+  $ff->{$key} = $self->source('Adaptors')->slice_by_name($hub->species,$ff->{$key}) if $ff->{$key};
+}
+
+sub post_generate_slice {
+  my ($self,$glyphset,$key,$ff,$params) = @_;
+
+  foreach my $f (@$ff) {
+    $f->{$key} = $f->{$key}->name if $f->{$key};
+  }
+}
+
+sub post_process_slice {
+  my ($self,$glyphset,$key,$ff) = @_;
+
+  my $hub = $glyphset->{'config'}{'hub'};
+  foreach my $f (@$ff) {
+    $f->{$key} = $self->source('Adaptors')->slice_by_name($hub->species,$f->{$key}) if $f->{$key};
+  }
 }
 
 sub _split_slice {
