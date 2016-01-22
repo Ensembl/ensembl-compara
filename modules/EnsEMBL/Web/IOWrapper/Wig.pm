@@ -54,6 +54,14 @@ sub create_hash {
                         };
 
   my $colour = $self->set_colour($colour_params);
+  my $feature_strand = $metadata->{'default_strand'} || 1;
+
+  my $href = $self->href({
+                        'seq_region'  => $seqname,
+                        'start'       => $feature_start,
+                        'end'         => $feature_end,
+                        'strand'      => $feature_strand,
+                        });
 
   return {
     'start'         => $start,
@@ -61,6 +69,7 @@ sub create_hash {
     'seq_region'    => $seqname,
     'score'         => $score,
     'colour'        => $colour,
+    'href'          => $href,
     'join_colour'   => $metadata->{'join_colour'} || $colour,
     'label_colour'  => $metadata->{'label_colour'} || $colour,
   };

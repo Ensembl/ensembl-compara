@@ -62,7 +62,6 @@ sub create_glyphs {
   my $track_config    = $self->track_config;
   ## Set some track-wide variables
   my $slice_width     = $image_config->container_width;
-  my $this_strand     = $track_config->get('this_strand') || 1;
   my $bumped          = $track_config->get('bumped');
   my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
   ## In case the file contains multiple tracks, start each subtrack below the previous one
@@ -72,9 +71,8 @@ sub create_glyphs {
   my $total_height    = 0;
 
   ## Strand settings
-
   foreach my $subtrack (@$data) {
-    foreach my $feature (@{$subtrack->{'features'}{$this_strand}||[]}) {
+    foreach my $feature (@{$subtrack->{'features'}||[]}) {
 
       ## Are we drawing transcripts or just genes?
       next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};

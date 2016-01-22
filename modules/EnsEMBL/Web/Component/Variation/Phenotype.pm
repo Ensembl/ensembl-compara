@@ -82,7 +82,7 @@ sub add_table_columns {
     { key => 'source',  title => 'Source(s)',               align => 'left', sort => 'html' },
   );
   if ($column_flags->{'s_evidence'}) {
-    $table->add_columns({ key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' });
+    $table->add_columns({ key => 's_evidence', title => 'Supporting evidence', align => 'left', sort => 'html' });
   }
   
   $table->add_columns({ key => 'study', title => $study, align => 'left', sort => 'html' });

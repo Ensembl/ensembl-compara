@@ -18,7 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::Style::Graph::Barcode;
 
-### Draws a dataset as a one-dimensional "heat map"
+### Uses the Barcode glyph to render histogram-type data
+### as a continuous run of equal-sized rectangles 
 
 use parent qw(EnsEMBL::Draw::Style::Graph);
 
@@ -27,7 +28,7 @@ sub draw_wiggle {
 
   my $height = $c->{'height'} || 8;
   
-  push @{$self->glyphs}, $self->Barcode({
+  my $params = {
     values    => $features,
     x         => 1,
     y         => $c->{'y_offset'} || 0,
@@ -35,8 +36,8 @@ sub draw_wiggle {
     unit      => $c->{'unit'},
     max       => $c->{'max_score'},
     colours   => $c->{'colours'},
-    wiggle    => $c->{'graph_type'},
-  });
+  };
+  push @{$self->glyphs}, $self->Barcode($params);
   $self->add_hidden_bgd($height);
 }
 

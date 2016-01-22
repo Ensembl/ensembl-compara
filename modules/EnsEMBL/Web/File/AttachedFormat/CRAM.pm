@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::File::AttachedFormat::BAM;
+package EnsEMBL::Web::File::AttachedFormat::CRAM;
 
 use strict;
 use warnings;
@@ -41,57 +41,59 @@ sub check_data {
 
   if (ref($url) eq 'HASH') {
     $error = $url->{'error'}[0];
-    warn "!!! ERROR ATTACHING BAM: $error";
+    warn "!!! ERROR ATTACHING CRAM: $error";
   }
   else {
     if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_BAM) {
-      $error = "The bam file could not be added - FTP is not supported, please use HTTP.";
-    } 
+      $error = "The cram file could not be added - FTP is not supported, please use HTTP.";
+    }
     else {
       $self->_check_cached_index;
-      # try to open and use the bam file and its index -
-      # this checks that the bam and index files are present and correct, 
-      # and should also cause the index file to be downloaded and cached in /tmp/ 
+      # try to open and use the cram file and its index -
+      # this checks that the cram and index files are present and correct,
+      # and should also cause the index file to be downloaded and cached in /tmp/
       my ($hts, $hts_file, $index);
-      eval {
-        $hts = Bio::DB::HTS->new( -bam => $url);
+      eval
+      {
+        # Note the reason this uses Bio::DB::HTS->new rather than Bio::DB::Bam->open is to allow set up
+        # of default cache dir (which happens in Bio::DB:HTS->new) -
+        $hts = Bio::DB::HTS->new(-bam => $url);
         $hts_file = $hts->hts_file;
-        $index = Bio::DB::HTSfile->index($hts);
+        $index = Bio::DB::HTSfile->index($hts) ;
         my $header = $hts->header;
         my $region = $header->target_name->[0];
         my $callback = sub {return 1};
         $index->fetch($hts_file, $header->parse_region("$region:1-10"), $callback);
       };
       warn $@ if $@;
-      warn "Failed to open BAM " . $url unless $hts_file;
-      warn "Failed to open BAM index for " . $url unless $index;
+      warn "Failed to open CRAM " . $url unless $hts_file;
+      warn "Failed to open CRAM index for " . $url unless $index;
 
       if ($@ or !$hts_file or !$index) {
-        $error = "Unable to open/index remote BAM file: $url<br>Ensembl can only display sorted, indexed BAM files.<br>Please ensure that your web server is accessible to the Ensembl site and both your BAM and index files are present and publicly readable.<br>Your BAM and index files must have the same name, with a .bam extension for the BAM file, and a .bam.bai extension for the index file.";
+        $error = "Unable to open/index remote CRAM file: $url<br>Ensembl can only display sorted, indexed CRAM files.<br>Please ensure that your web server is accessible to the Ensembl site and both your CRAM and index files are present and publicly readable.<br>Your CRAM and index files must have the same name, with a .cram extension for the CRAM file, and a .cram.crai extension for the index file.";
       }
     }
   }
   return ($url, $error);
 }
 
-# Ensure there is no out-of-date cached BAM index by deleting the local 
+# Ensure there is no out-of-date cached CRAM index by deleting the local
 # version if it exists and is older than the remote version. Samtools will
 # then fetch a fresh copy of the index if needed.
 sub _check_cached_index {
   my ($self) = @_;
-  my $index_url = $self->{url} . '.bai';
+  my $index_url = $self->{url} . '.crai';
   my $tmp_file  = File::Spec->tmpdir . '/' . fileparse($index_url);
-  
+
   if (-f $tmp_file) {
-    my $local_time  = int stat($tmp_file)->[9];   
+    my $local_time  = int stat($tmp_file)->[9];
     my $remote_time = int eval { LWP::UserAgent->new->head($index_url)->last_modified };
-    
+
     if ($local_time <= $remote_time) {
-      warn "Cached BAM index is older than remote - deleting $tmp_file";
+      warn "Cached CRAM index is older than remote - deleting $tmp_file";
       unlink $tmp_file;
-    } 
-  } 
+    }
+  }
 }
 
 1;
-

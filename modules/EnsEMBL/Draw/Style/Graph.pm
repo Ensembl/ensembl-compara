@@ -25,7 +25,7 @@ This module expects data in the following format:
 
   $data = [
           {'metadata' => {},
-           'features'  => { 1 => [
+           'features'  => [
               {
               'start'         => 123456,
               'end'           => 123789,
@@ -37,7 +37,6 @@ This module expects data in the following format:
               'title'         => 'Some text goes here',             # optional  
               },
             ],
-                            -1 => []},
           ];
 
 Note that in order to support multiple subtracks within a glyphset (whether multi-wiggle or separate), we must pass an array of hashes with optional metadata for each subtrack 
@@ -59,7 +58,6 @@ sub create_glyphs {
 
   my $data            = $self->data;
   my $track_config    = $self->track_config;
-  my $this_strand     = $track_config->get('this_strand') || 1;
 
   foreach my $subtrack (@$data) {
     my $metadata = $subtrack->{'metadata'} || {};
@@ -67,23 +65,21 @@ sub create_glyphs {
     ## Draw any axes, track labels, etc
     my $graph_conf = $self->draw_graph_base($metadata);
 
-    my $features = $subtrack->{'features'}{$this_strand};
+    my $features = $subtrack->{'features'};
 
     ## Single line? Build into singleton set.
     $features = [ $features ] if ref $features ne 'ARRAY';
 
     ## Draw them! 
     my $plot_conf = {
-      line_score      => $graph_conf->{'line_score'},
-      line_px         => $graph_conf->{'line_px'},
-      pix_per_score   => $graph_conf->{'pix_per_score'},
-      max_score       => $graph_conf->{'max_score'},
+      height          => $track_config->get('height'),
+      default_strand  => $track_config->get('default_strand'),
       unit            => $subtrack->{'metadata'}{'unit'},
       graph_type      => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
-      default_strand  => $track_config->get('default_strand'),
       colour          => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
       colours         => $subtrack->{'metadata'}{'gradient'},
       alt_colour      => $subtrack->{'metadata'}{'altColor'},
+      %$graph_conf,
     };
 
     ## Determine absolute positioning for graph
@@ -94,6 +90,7 @@ sub create_glyphs {
     }
 
     $self->draw_wiggle($plot_conf, $features);
+    $self->render_hidden_bg($track_config->get('height'));
   }
 
   return @{$self->glyphs||[]};

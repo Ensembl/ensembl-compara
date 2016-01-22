@@ -255,6 +255,7 @@ our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl
 our $APACHE_DIR           = "$ENSEMBL_SERVERROOT/apache2";
 our $APACHE_BIN           = "$APACHE_DIR/bin/httpd";
 our $SAMTOOLS_DIR         = "$ENSEMBL_SERVERROOT/samtools";
+our $HTSLIB_DIR           = "$ENSEMBL_SERVERROOT/htslib";
 our $BIOPERL_DIR          = "$ENSEMBL_SERVERROOT/bioperl-live";
 
 # See Memoize.pm for meaning of these

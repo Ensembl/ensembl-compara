@@ -28,23 +28,28 @@ sub render_compact {
   my $self = shift;
   my $graph_class = $self->_select_graph_type;
   $self->{'my_config'}->set('drawing_style', ['Graph::Barcode']);
+  $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('no_axis', 1);
   $self->_render_aggregate;
 }
 
-sub render_tiling { 
+sub render_signal { 
   my $self = shift;
   my $graph_class = $self->_select_graph_type;
-  $self->{'my_config'}->set('drawing_style', [$graph_class]);
-  $self->_render; 
+  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate; 
 }
 
-sub render_tiling_feature { 
+=pod
+sub render_feature_with_signal { 
+## TODO - not used by userdata formats, so needs testing!
   my $self = shift;
   my $graph_class = $self->_select_graph_type;
   $self->{'my_config'}->set('drawing_style', [$graph_class, 'Feature']);
   $self->_render; 
 }
+=cut
 
 sub _select_graph_type {
   my $self = shift;
@@ -71,8 +76,8 @@ sub _render_aggregate {
     return 1;
   }
 
-  $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('bumped', 0);
+  $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
 
   ## Now we try and draw the features
   my $error = $self->draw_aggregate($self->{'features'});
@@ -99,6 +104,7 @@ sub _render {
   }
 
   $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
+  $self->{'my_config'}->set('absolutex', 1);
   $self->{'my_config'}->set('bumped', 0);
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
 

@@ -59,8 +59,10 @@ use EnsEMBL::Draw::Utils::Text;
 use EnsEMBL::Draw::Utils::LocalCache;
 
 use EnsEMBL::Draw::Glyph::Arc;
+use EnsEMBL::Draw::Glyph::Barcode;
 use EnsEMBL::Draw::Glyph::Circle;
 use EnsEMBL::Draw::Glyph::Composite;
+use EnsEMBL::Draw::Glyph::Histogram;
 use EnsEMBL::Draw::Glyph::Intron;
 use EnsEMBL::Draw::Glyph::Line;
 use EnsEMBL::Draw::Glyph::Poly;
@@ -75,6 +77,7 @@ sub Arc        { my $self = shift; return EnsEMBL::Draw::Glyph::Arc->new(@_);   
 sub Barcode    { my $self = shift; return EnsEMBL::Draw::Glyph::Barcode->new(@_);    }
 sub Circle     { my $self = shift; return EnsEMBL::Draw::Glyph::Circle->new(@_);     }
 sub Composite  { my $self = shift; return EnsEMBL::Draw::Glyph::Composite->new(@_);  }
+sub Histogram  { my $self = shift; return EnsEMBL::Draw::Glyph::Histogram->new(@_);    }
 sub Intron     { my $self = shift; return EnsEMBL::Draw::Glyph::Intron->new(@_);     }
 sub Line       { my $self = shift; return EnsEMBL::Draw::Glyph::Line->new(@_);       }
 sub Poly       { my $self = shift; return EnsEMBL::Draw::Glyph::Poly->new(@_);       }
@@ -118,6 +121,34 @@ sub create_glyphs {
 ### Stub - must be implemented in child modules
   my $self = shift;
   warn "!!! MANDATORY METHOD ".ref($self).'::create_glyphs HAS NOT BEEN IMPLEMENTED!';
+}
+
+sub render_hidden_bg {
+  my ($self, $h) = @_;
+  return unless $self->can('href_bgd');
+
+  # Needs to be first to capture clicks
+  # Useful to keep zmenus working on blank regions
+  # only useful in nobump or strandbump modes
+  my %off = ( 0 => 0 );
+
+  if ($self->my_config('strandbump')) {
+    $off{0}  = -1;
+    $off{$h} = 1;
+  }
+
+  foreach my $y (keys %off) {
+    # no colour key, ie transparent
+    push @{$self->glyphs}, $self->Rect({
+                                        x         => 0,
+                                        y         => $y,
+                                        width     => $self->{'container'}->length,
+                                        height    => $h,
+                                        absolutey => 1,
+                                        href      => $self->href_bgd($off{$y}),
+                                        class     => 'group',
+                                        });
+  }
 }
 
 sub draw_graph_base {

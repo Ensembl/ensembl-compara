@@ -177,9 +177,11 @@ sub create_tracks {
   my $parser      = $self->parser;
   my $strandable  = !!$self->parser->can('get_strand');
   my $data        = {};
+  my $order       = [];
   my $prioritise  = 0;
-  my (@order, $bin_sizes, $bins);
+  my ($bin_sizes, $bins);
 
+=pod
   if (!$slice) {
     ## Sort out chromosome info
     my $drawn_chrs  = $hub->species_defs->get_config($hub->data_species, 'ENSEMBL_CHROMOSOMES');
@@ -190,61 +192,69 @@ sub create_tracks {
       $bin_sizes->{$chr} = $slice->length / $bins; 
     }
   }
+=cut
 
-  while ($parser->next) {
-    my $track_key = $parser->get_metadata_value('name') if $parser->can('get_metadata_value');
-    $track_key ||= 'data';
+  ## We already fetched the data in the child module in one fell swoop!
+  if ($parser->can('cache') && $parser->cache->{'summary'}) {
+    my $track_key = $self->build_metadata($parser, $data, $extra_config, $order);
+    my $metadata  = $data->{$track_key}{'metadata'};
+    $prioritise   = 1 if $metadata->{'priority'};
 
-    unless ($data->{$track_key}) {
-      ## Default track order is how they come out of the file
-      push @order, $track_key;
+    my $raw_features  = $parser->cache->{'summary'} || [];
+    my $strand        = $metadata->{'default_strand'} || 1;
+    my $features      = [];
+
+    foreach my $f (@$raw_features) {
+      my ($seqname, $start, $end, $score) = @$f;
+      push @$features, {
+                        'seq_region' => $seqname,
+                        'start'      => $start,
+                        'end'        => $end,
+                        'score'      => $score,
+                        'colour'     => $metadata->{'colour'},
+                        };
+    }
+
+    $data->{$track_key}{'features'}{$strand} = $features;
+  }
+  else {
+    while ($parser->next) {
+      my $track_key = $self->build_metadata($parser, $data, $extra_config, $order);
+      my %metadata  = $data->{$track_key}{'metadata'};
+      $prioritise   = 1 if $metadata{'priority'};
+
       ## Set up density bins if needed
       if (!$slice) {
         foreach my $chr (keys %$bin_sizes) {
           $data->{$track_key}{'bins'}{$chr}{$_} = 0 for 1..$bins;
         }
       }
-    }
 
-    ## If we haven't done so already, grab all the metadata for this track
-    my %metadata;
-    if (!keys %{$data->{$track_key}{'metadata'}||{}}) {
-      if ($parser->can('get_all_metadata')) {
-        %metadata = %{$parser->get_all_metadata};
-        $prioritise = 1 if $metadata{'priority'};
+      my ($seqname, $start, $end) = $self->coords;
+      if ($slice) {
+        ## Skip features that lie outside the current slice
+        next if ($seqname ne $slice->seq_region_name
+                  || $end < $slice->start || $start > $slice->end);
+        $self->build_feature($data, $track_key, $slice, $strandable);
       }
- 
-      ## Add in any extra configuration provided by caller, which takes precedence over metadata
-      if (keys %{$extra_config||{}}) {
-        @metadata{keys %{$extra_config||{}}} = values %{$extra_config||{}};
+      else {
+        next unless $seqname;
+        my $feature_strand = $self->parser->get_strand if $strandable;
+        $feature_strand  ||= $metadata{'default_strand'};
+        ## Add this feature to the appropriate density bin
+        my $bin_size    = $bin_sizes->{$seqname};
+        my $bin_number  = int($start / $bin_size) + 1;
+        $data->{$track_key}{'bins'}{$feature_strand}{$seqname}{$bin_number}++;
       }
-      $metadata{'name'} ||= $track_key; ## Default name
-      $data->{$track_key}{'metadata'} = \%metadata;
-    }
-
-    my ($seqname, $start, $end) = $self->coords;
-    if ($slice) {
-      ## Skip features that lie outside the current slice
-      next if ($seqname ne $slice->seq_region_name
-                || $end < $slice->start || $start > $slice->end);
-      $self->build_feature($data, $track_key, $slice, $strandable);
-    }
-    else {
-      next unless $seqname;
-      my $feature_strand = $self->parser->get_strand if $strandable;
-      $feature_strand  ||= $metadata{'default_strand'};
-      ## Add this feature to the appropriate density bin
-      my $bin_size    = $bin_sizes->{$seqname};
-      my $bin_number  = int($start / $bin_size) + 1;
-      $data->{$track_key}{'bins'}{$feature_strand}{$seqname}{$bin_number}++;
     }
   }
+#use Data::Dumper; warn '>>> CREATED TRACKS '.Dumper($data);
 
   ## Indexed formats cache their data, so the above loop won't produce a track
   ## at all if there are no features in this region. In order to draw an
   ## 'empty track' glyphset we need to manually create the empty track
   if (!keys $data) {
-    @order  = ('data');
+    $order  = ['data'];
     $data   = {'data' => {'metadata' => $extra_config || {},
                           'features' => {
                                           '1' => [],
@@ -260,9 +270,38 @@ sub create_tracks {
   $self->post_process($data);
 
   ## Finally sort the completed tracks
-  my $tracks = $self->sort_tracks($data, \@order, $prioritise); 
+  my $tracks = $self->sort_tracks($data, $order, $prioritise); 
 
   return $tracks;
+}
+
+sub build_metadata {
+  my ($self, $parser, $data, $extra_config, $order) = @_;
+
+  my $track_key = $parser->get_metadata_value('name') if $parser->can('get_metadata_value');
+  $track_key ||= 'data';
+
+  unless ($data->{$track_key}) {
+    ## Default track order is how they come out of the file
+    push @$order, $track_key;
+  }
+  
+  ## If we haven't done so already, grab all the metadata for this track
+  my %metadata;
+  if (!keys %{$data->{$track_key}{'metadata'}||{}}) {
+    if ($parser->can('get_all_metadata')) {
+      %metadata = %{$parser->get_all_metadata};
+    }
+
+    ## Add in any extra configuration provided by caller, which takes precedence over metadata
+    if (keys %{$extra_config||{}}) {
+      @metadata{keys %{$extra_config||{}}} = values %{$extra_config||{}};
+    }
+    $metadata{'name'} ||= $track_key; ## Default name
+    $data->{$track_key}{'metadata'} = \%metadata;
+  }
+
+  return $track_key;
 }
 
 sub build_feature {

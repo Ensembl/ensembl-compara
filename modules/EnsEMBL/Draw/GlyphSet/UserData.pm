@@ -98,7 +98,6 @@ sub draw_features {
   }
 
   ## Defaults
-  $self->{'my_config'}->set('this_strand', $self->strand);
   $self->{'my_config'}->set('slice_length', $self->{'container'}->length);
   $self->{'my_config'}->set('bumped', 1) unless defined($self->{'my_config'}->get('bumped'));
   unless ($self->{'my_config'}->get('height')) {
@@ -114,6 +113,7 @@ sub draw_features {
 
   my %config    = %{$self->track_style_config};
 
+  my $data        = [];
   my $key         = $self->{'hover_label_class'};
   my $hover_label = $self->{'config'}->{'hover_labels'}{$key};
   my $mod_header  = $hover_label->{'header'};
@@ -155,6 +155,9 @@ sub draw_features {
     }
     ## Also put it into config, for subtitles
     $config{'subtitle'} = $description;
+
+    ## Could also be done using $self->data_for_strand, but this avoids another loop
+    push @$data, {'metadata' => $metadata, 'features' => $features};
   }
 
   if ($skipped) {
@@ -168,7 +171,7 @@ sub draw_features {
   foreach (@{$drawing_style||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
     if ($self->dynamic_use($style_class)) {
-      my $style = $style_class->new(\%config, $subtracks);
+      my $style = $style_class->new(\%config, $data);
       $self->push($style->create_glyphs);
     }
   }
@@ -192,10 +195,12 @@ sub draw_aggregate {
 
   my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
+  my $data = $self->data_for_strand($subtracks);
+
   foreach (@{$drawing_style||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
     if ($self->dynamic_use($style_class)) {
-      my $style = $style_class->new(\%config, $subtracks);
+      my $style = $style_class->new(\%config, $data);
       $self->push($style->create_glyphs);
     }
   }

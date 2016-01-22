@@ -997,7 +997,7 @@ sub _add_trackhub_tracks {
                                       'pack'    => 'stack',
                                       },
                         'bigwig' => {
-                                      'full'    => 'tiling',
+                                      'full'    => 'signal',
                                       'default' => 'compact',
                                     },
                         'vcf' =>    {
@@ -1226,6 +1226,17 @@ sub load_file_format {
 
 sub _add_bam_track {
   my ($self, %args) = @_;
+  $self->_add_htslib_track('bam', %args);
+}
+
+sub _add_cram_track {
+  my ($self, %args) = @_;
+  $self->_add_htslib_track('cram', %args);
+}
+
+
+sub _add_htslib_track {
+  my ($self, $hts_format, %args) = @_;
   my $desc = '
     The read end bars indicate the direction of the read and the colour indicates the type of read pair:
     Green = both mates are part of a proper pair; Blue = either this read is not paired, or its mate was not mapped; Red = this read is not properly paired.
@@ -1248,7 +1259,7 @@ sub _add_bam_track {
     colourset   => 'BAM',
     options => {
       external => 'external',
-      sub_type => 'bam',
+      sub_type => $hts_format,
       %options,
     },
     %args,
@@ -1301,7 +1312,7 @@ sub _add_bigwig_track {
 
   my $renderers = $args{'source'}{'renderers'} || [
     'off',     'Off',
-    'tiling',  'Wiggle plot',
+    'signal',  'Wiggle plot',
     'compact', 'Compact',
   ];
 
@@ -1452,7 +1463,7 @@ sub _user_track_settings {
     @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
   }
   elsif (lc($format) eq 'bedgraph' || lc($format) eq 'wig' || $style =~ /^(wiggle|WIG)$/) {
-    @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
+    @user_renderers = ('off', 'Off', 'signal', 'Wiggle plot');
   }
   elsif (uc($format) =~ /BED|GFF|GTF/) {
     @user_renderers = @{$self->{'alignment_renderers'}};

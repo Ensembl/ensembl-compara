@@ -36,35 +36,41 @@ sub create_structure { return EnsEMBL::Web::IOWrapper::Wig::create_structure(@_)
 
 sub create_tracks {
   my ($self, $slice, $metadata) = @_;
+  my $data = [];
 
-  ## Limit file seek to current slice
-  my $parser = $self->parser;
-  if ($metadata->{'aggregate'}) {
-    my $values = $parser->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, 1000);
-    my @gradient = $self->create_gradient(['white', $metadata->{'colour'}]);
-    ## For speed, our track consists of an array of values, not an array of feature hashes
-    return [{'metadata' => {
-                            'name'        => $metadata->{'name'},
-                            'unit'        => $slice->length / 1000,
-                            'graph_type'  => 'bar',
-                            'length'      => $slice->length,
-                            'strand'      => $slice->strand,
-                            'colour'      => $metadata->{'colour'},
-                            'gradient'    => \@gradient,
-                            'max_score'   => max(@$values),
-                            'min_store'   => min(@$values), 
-                            },
-            'features' => $values,
-           }];
-  }
-  elsif ($slice->length > 1000) {
-    $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, 1000);
-    $self->SUPER::create_tracks($slice, $metadata);
+  ## For speed, our track consists of an array of values, not an array of feature hashes
+  my $parser    = $self->parser;
+  my $bins      = $metadata->{'bins'};
+  my $strand    = $metadata->{'default_strand'} || 1;
+  my $features  = {};
+  my $values    = [];
+
+  if ($metadata->{'display'} eq 'text') {
+    my $arrays = $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, $bins);
+    my $hashes = [];
+    foreach (@$arrays) {
+      push @$hashes, {
+                      'seq_region' => $_->[0],
+                      'start'      => $_->[1],
+                      'end'        => $_->[2],
+                      'score'      => $_->[3], 
+                      };
+      push @$values, $_->[3];
+    }
+    $features = {$strand => $hashes};
   }
   else {
-    $parser->seek($slice->seq_region_name, $slice->start, $slice->end);
-    $self->SUPER::create_tracks($slice, $metadata);
+    $values = $parser->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
+    $features = {$strand => $values};
+    if ($metadata->{'display'} eq 'compact') {
+      my @gradient = $self->create_gradient(['white', $metadata->{'colour'}]);
+      $metadata->{'gradient'} = \@gradient;
+    }
   }
+
+  $metadata->{'max_score'} = max(@$values);
+  $metadata->{'min_score'} = min(@$values);
+  return [{'metadata' => $metadata, 'features' => $features}];
 }
 
 1;

@@ -29,7 +29,7 @@ package EnsEMBL::Draw::GlyphSet::bam;
 use strict;
 
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
-use Bio::EnsEMBL::IO::Adaptor::BAMAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::HTSAdaptor;
 
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
@@ -97,6 +97,10 @@ sub _render_coverage {
     $self->{'my_config'}->set('label_overlay', 1);
     $self->{'my_config'}->set('hide_subtitle', 1);
   }
+  elsif ($pix_per_bp < 1) {
+    ## Graph won't draw without this. Because reasons.
+    $self->{'my_config'}->set('absolutex', 1);
+  }
 
   my ($min_score,$max_score);
   my $viewLimits = $self->my_config('viewLimits');
@@ -106,18 +110,19 @@ sub _render_coverage {
   }
 
   ## Munge into a format suitable for the Style module
+  my $default_strand = $self->{'my_config'}->get('default_strand');
   my $name = $self->{'my_config'}->get('short_name') || $self->{'my_config'}->get('name');
-  my $data = {'features' => [], 'metadata' => {
-                                                'name'      => $name,
-                                                'colour'    => $default_colour,
-                                                'max_score' => $max, 
-                                                'min_score' => $min_score || 0
-                                              }
+  my $data = {'features' => [], 
+              'metadata' => {
+                             'name'      => $name,
+                             'colour'    => $default_colour,
+                             'max_score' => $max, 
+                             'min_score' => $min_score || 0
+                             }
               };
 
   my %config                = %{$self->track_style_config};
   $config{'pix_per_score'}  = $smax / ($scale * $max); 
-  $config{'absolutex'}     = $pix_per_bp < 1 ? 1 : 0;
   $config{'line_score'}     = 0;
   $config{'cutoff'}         = $smax;
 
@@ -135,12 +140,19 @@ sub _render_coverage {
 
     my $start = $i + 1;
 
+    my $title = 'Coverage' .
+              "; Location: ".sprintf('%s:%s-%s',  $slice->seq_region_name, 
+                                                  $start + $slice_start, 
+                                                  $start + $slice_start) .
+              "; Score: $cvrg";
+
     my $hash = {
                 'start'   => $start,
                 'end'     => $start,
                 'score'   => $cvrg,
                 'label'   => $label,
                 'colour'  => $colour,
+                'title'   => $title,
                 };
     
     push @{$data->{'features'}}, $hash;
@@ -178,7 +190,9 @@ sub _render_reads {
   my $read_colour = $self->my_colour('read');
   $self->{'my_config'}->set('insert_colour', $self->my_colour('read_insert'));
 
-  my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$self->features} ];
+  my $all_features    = $self->features->[0]{'features'};
+  my $default_strand  = $self->{'my_config'}->get('default_strand');
+  my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$all_features->{$default_strand}} ];
 
   my $features = pre_filter_depth($fs, $max_depth, $pix_per_bp, $slice->start, $slice->end);
   $features = [reverse @$features] if $slice->strand == -1;
@@ -216,6 +230,7 @@ sub _render_reads {
                 'start'     => $start,
                 'end'       => $end + 1,
                 'colour'    => $read_colour,
+                'title'     => $self->_feature_title($f),
                 'arrow'     => {},
                 'inserts'   => [],
                 'consensus' => [],
@@ -274,6 +289,8 @@ sub _render {
 ### Wrapper around the individual subtrack renderers, with lots of
 ### error/timeout handling to cope with the large size of BAM files
   my ($self, $options) = @_;
+  my $default_strand = $options->{'default_strand'} || 1;
+  $self->{'my_config'}->set('default_strand', $default_strand);
 
   ## check threshold
   my $slice = $self->{'container'};
@@ -292,7 +309,8 @@ sub _render {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
-    if (!scalar(@{$self->features})) {
+    my $features = $self->features->[0]{'features'};
+    if (!scalar(@{$features->{$default_strand}})) {
       $self->no_features;
     } else {
       #warn "Rendering coverage";
@@ -331,8 +349,11 @@ sub features {
   if (!exists($self->{_cache}->{features})) {
     $self->{_cache}->{features} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end) || [];
   }
-
-  return $self->{_cache}->{features};
+  my $default_strand = $self->{'my_config'}->get('default_strand');
+  ## Return data in standard format expected by other modules
+  return [{'features' => {$default_strand => $self->{_cache}->{features}},
+            'metadata' => {'zmenu_caption' => 'Aligned reads'},
+          }];
 } 
 
 sub consensus_features {
@@ -344,10 +365,8 @@ sub consensus_features {
     foreach (@$consensus) {
       $cons_lookup->{$_->{'x'}} = $_->{'bp'};
     }
-    #use Data::Dumper; warn ">>> CONSENSUS ".Dumper($consensus);
     $self->{_cache}->{consensus_features} = $cons_lookup;
   }
-
   return $self->{_cache}->{consensus_features}; 
 }
 
@@ -451,6 +470,28 @@ sub _get_sequence {
   return ($seq, \@inserts);
 }
 
+sub _feature_title {
+  ## generate zmenu info for the feature
+  my ($self, $f) = @_;
+  my $slice  = $self->{'container'};
+  my $seq_id = $slice->seq_region_name();
+
+  my $title = $f->qname .
+              "; Score: ".       $f->qual .
+              "; Cigar: ".       $f->cigar_str .
+              "; Location: ".    $seq_id . ":" . $f->start . "-" . $f->end .
+              "; Strand: ".      ($f->reversed ? 'Reverse' : 'Forward') .
+              "; Length: ".      ($f->end - $f->start +1) .
+             # "; Type: ".        $self->get_atype($f) . ###### $f->atype .
+              "; Insert size: ". abs($f->isize) .
+              "; Paired: ".       ($f->paired ? 'Yes' : 'No');
+
+  if ($f->paired) {
+    $title .= "; Mate: " . (($f->flag & 0x80) ? 'Second' : ($f->flag & 0x40) ? 'First' : 'Unknown');
+  }
+
+  return $title;
+}
 
 sub bam_adaptor {
 ## get a bam adaptor
@@ -462,7 +503,7 @@ sub bam_adaptor {
       my $region = $self->{'container'}->seq_region_name;
       $url =~ s/\#\#\#CHR\#\#\#/$region/g;
     }
-    $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::BAMAdaptor->new($url);
+    $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::HTSAdaptor->new($url);
   }
   else { ## Local bam file
     my $config    = $self->{'config'};
@@ -494,13 +535,13 @@ BEGIN {
   mkdir $cbuild_dir unless -e $cbuild_dir;
 };
 
-use Inline C => Config => INC => "-I$SiteDefs::SAMTOOLS_DIR",
-                          LIBS => "-L$SiteDefs::SAMTOOLS_DIR -lbam",
+use Inline C => Config => INC => "-I$SiteDefs::HTSLIB_DIR/htslib",
+                          LIBS => "-L$SiteDefs::HTSLIB_DIR -lhts",
                           DIRECTORY => $cbuild_dir;
 
 use Inline C => <<'END_OF_C_CODE';
 
-#include "bam.h"
+#include "sam.h"
 
 AV * pre_filter_depth (SV* features_ref, int depth, double ppbp, int slicestart, int sliceend) {
   AV* filtered = newAV();
@@ -567,7 +608,7 @@ AV * pre_filter_depth (SV* features_ref, int depth, double ppbp, int slicestart,
         int end;
         int bumpend;
         int width;
-        int fend = bam_calend(&f->core,bam1_cigar(f));
+        int fend = bam_endpos(f);
 
         end = fend - slicestart;
         if (end < 0) end = 0;
@@ -603,7 +644,9 @@ sub calc_coverage {
 ## calculate the coverage
   my ($self) = @_;
 
-  my $features = $self->features;
+  my $all_features    = $self->features->[0]{'features'};
+  my $default_strand  = $self->{'my_config'}->get('default_strand');
+  my $features        = $all_features->{$default_strand};
 
   my $slice       = $self->{'container'};
   my $START       = $slice->start;
@@ -631,7 +674,7 @@ sub calc_coverage {
 
 use Inline C => <<'END_OF_CALC_COV_C_CODE';
 
-#include "bam.h"
+#include "sam.h"
 AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int START) {
   AV *ret_cov = newAV();
   int *coverage = calloc(lbin+1,sizeof(int));
@@ -647,8 +690,6 @@ AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int ST
 
   //fprintf(stderr,"calc coverage for %d features, lbin = %d\n",av_len(features)+1,lbin);
   //fflush(stderr);
-
-
 
    for (i=0; i<=av_len(features); i++) {
     SV** elem = av_fetch(features, i, 0);
@@ -666,7 +707,7 @@ AV * c_coverage(SV *self, SV *features_ref, double sample_size, int lbin, int ST
     f = (bam1_t *)SvIV(SvRV(*elem));
 
     fstart = f->core.pos+1;
-    fend = bam_calend(&f->core,bam1_cigar(f));
+    fend = bam_endpos(f);
 
     sbin = (int)((fstart - START) / sample_size);
     ebin = (int)((fend - START) / sample_size);

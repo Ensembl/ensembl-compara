@@ -80,7 +80,12 @@ sub content {
     my $values     = '';
     my $short_name = $self->get_short_name($pop_name);
     my $pop_desc   = $pop_freq->{$pop_name}{'desc'};
-    
+    if (!$pop_desc || $pop_desc eq '') {
+      $pop_desc = $short_name;
+      $pop_desc =~ s/_/ /g;
+    }
+    $pop_desc = $self->strip_HTML($pop_desc);
+
     # Constructs the array for the pie charts: [allele,frequency]
     foreach my $al (@alleles) {
       foreach my $ssid (keys %{$pop_freq->{$pop_name}{'freq'}}) {
@@ -99,8 +104,6 @@ sub content {
         last;
       }
     }
-
-    $pop_desc = $self->strip_HTML($pop_desc);
 
     push @inputs, qq{<input type="hidden" class="graph_data" value="[$values]" />};
 
