@@ -97,6 +97,21 @@ sub _fetch_data {
  
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_config('url');
+
+  if (!$url) { ## Internally configured bigwig file?
+    my $dba       = $hub->database($self->my_config('type'), $self->species);
+
+    if ($dba) {
+      my $dfa = $dba->get_DataFileAdaptor();
+      $dfa->global_base_path($hub->species_defs->DATAFILE_BASE_PATH);
+      my ($logic_name) = @{$self->my_config('logic_names')||[]};
+      my ($df) = @{$dfa->fetch_all_by_logic_name($logic_name)||[]};
+      my $paths = $df->get_all_paths;
+      $url = $paths->[-1];
+    }
+  }
+  return unless $url;
+
   my $slice     = $self->{'container'};
   my $args      = { 'options' => {
                                   'hub'         => $hub,
