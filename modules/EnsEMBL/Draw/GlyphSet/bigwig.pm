@@ -128,6 +128,7 @@ sub _fetch_data {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour') || 'slategray';
+    $self->{'my_config'}->set('axis_colour', $colour);
     $bins   ||= $self->bins;
     my $metadata = {
                     'name'            => $self->{'my_config'}->get('name'),
