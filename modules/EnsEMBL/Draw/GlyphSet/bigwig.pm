@@ -127,7 +127,7 @@ sub _fetch_data {
   if ($iow) {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
     ## most files won't have explicit colour settings
-    my $colour = $self->my_config('colour');
+    my $colour = $self->my_config('colour') || 'slategray';
     $bins   ||= $self->bins;
     my $metadata = {
                     'name'            => $self->{'my_config'}->get('name'),
