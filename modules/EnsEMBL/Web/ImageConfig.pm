@@ -2133,7 +2133,7 @@ sub add_data_files {
     if ($glyphset eq 'bamcov') {
       $renderers = [
                     'off',       'Off',
-                    'tiling',    'Coverage (BigWig)',
+                    'signal',    'Coverage (BigWig)',
                     'normal',    'Normal',
                     'unlimited', 'Unlimited',
                     ];
