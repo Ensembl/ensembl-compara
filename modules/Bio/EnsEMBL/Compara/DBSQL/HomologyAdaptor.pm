@@ -754,7 +754,7 @@ sub update_goc_score {
   throw("homology object must have dbID")
   unless ($hom->dbID);
 
-  unless defined $hom->goc_score {
+  unless (defined $hom->goc_score) {
     warn("homology needs valid goc_score values to store");
     return $self;
   }
