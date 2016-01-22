@@ -13,7 +13,7 @@ sub type_variation {
     config => "config",
  
     href => "zmenu",
-    tag => "tags",
+    tag => [["tags","slice"]],
     class => "class"
   };
 }
@@ -36,23 +36,37 @@ sub href {
   };   
 }
 
-sub post_process_tags {
-  my ($self,$glyphset,$key,$ff) = @_;
+sub post_generate_tags {
+  my ($self,$gs,$key,$ff,$params,$slice) = @_;
 
   foreach my $f (@$ff) {
     foreach my $t (@{$f->{$key}}) {
+      $t->{'start'} += $params->{$slice}->start+1;
+      $t->{'end'} += $params->{$slice}->start+1;
+    }
+  }
+}
+
+sub post_process_tags {
+  my ($self,$gs,$key,$ff) = @_;
+
+  foreach my $f (@$ff) {
+    foreach my $t (@{$f->{$key}}) {
+      $t->{'start'} -= $gs->{'container'}->start+1;
+      $t->{'end'} -= $gs->{'container'}->start+1;
+      #
       if($t->{'style'} eq 'insertion') {
-        $t->{'colour'} = $glyphset->my_colour($t->{'colour'});
-        $t->{'href'} = $glyphset->_url($t->{'href'});
+        $t->{'colour'} = $gs->my_colour($t->{'colour'});
+        $t->{'href'} = $gs->_url($t->{'href'});
       } elsif($t->{'style'} eq 'label') {
-        $t->{'colour'} = $glyphset->my_colour($t->{'colour'}, 'tag') ||
-                         $glyphset->my_colour($t->{'colour'});
-        my (undef, undef, $text_width) = $glyphset->get_text_width(0, $t->{'label'}, '', $glyphset->get_font_details($glyphset->my_config('font') || 'innertext', 1));
-        $t->{'end'} += $text_width/$glyphset->scalex;
+        $t->{'colour'} = $gs->my_colour($t->{'colour'}, 'tag') ||
+                         $gs->my_colour($t->{'colour'});
+        my (undef, undef, $text_width) = $gs->get_text_width(0, $t->{'label'}, '', $gs->get_font_details($gs->my_config('font') || 'innertext', 1));
+        $t->{'end'} += $text_width/$gs->scalex;
       } else {
-        my $colour = $glyphset->my_colour($t->{'colour'});
+        my $colour = $gs->my_colour($t->{'colour'});
         $t->{'colour'} = $colour;
-        my $label_colour = $glyphset->my_colour($t->{'colour'},'label');
+        my $label_colour = $gs->my_colour($t->{'colour'},'label');
         if($label_colour and $label_colour ne $colour) {
           $t->{'label_colour'} = $label_colour;
         } else {
@@ -90,7 +104,7 @@ sub tag {
       };
     }
 
-    push @tags, { style => 'insertion', colour => $colour_key, start => $f->start, end => $f->start, href => $self->href($f,$args) } if $f->start > $f->end;
+    push @tags, { style => 'insertion', colour => $colour_key, start => $f->start, end => $f->end, href => $self->href($f,$args) } if $f->start > $f->end;
   }
 
   return @tags;

@@ -58,7 +58,7 @@ sub post_generate_start {
   my ($self,$glyphset,$key,$ff,$params,$slice) = @_;
 
   foreach my $f (@$ff) {
-    $f->{$key} += $params->{$slice}->start-1;
+    $f->{$key} += $params->{$slice}->start+1;
   }
 }
 
@@ -79,7 +79,7 @@ sub post_generate_end {
   my ($self,$glyphset,$key,$ff,$params,$slice) = @_;
 
   foreach my $f (@$ff) {
-    $f->{$key} += $params->{$slice}->start-1;
+    $f->{$key} += $params->{$slice}->start+1;
   }
 }
 
