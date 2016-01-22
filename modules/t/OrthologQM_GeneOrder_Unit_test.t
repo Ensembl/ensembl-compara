@@ -238,7 +238,7 @@ standaloneJob(
           		'left2' => undef,
           		'homology_id' => 14469,
           		'method_link_species_set_id' => '100021',
-          		'percent_conserved_score' => 25,
+          		'goc_score' => 25,
           		'right2' => undef
         	},
         	2
@@ -250,62 +250,18 @@ use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score');
 standaloneJob(
   'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
   {
-    "db_conn" => $dbc->url,
+    'compara_db' => $dbc->url,
     'mlss_ID' => '100021',
-  },
-
-  [
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 14469,
-        'percent_conserved_score' => 50,
-      },
-      2
-    ],
-
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 14646,
-        'percent_conserved_score' => 25,
-      },
-      2
-    ],
-
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 14803,
-        'percent_conserved_score' => 0,
-      },
-      2
-    ],
-
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 46043,
-        'percent_conserved_score' => 25,
-      },
-      2
-    ],
-
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 46120,
-        'percent_conserved_score' => 25,
-      },
-      2
-    ],
-  ],
+  },  
 );
 
-done_testing();
+my $results = $dbc->db_handle->selectall_arrayref('SELECT homology_id, goc_score from homology', {});
+#print Dumper($results);
+my %expected_results_hash = ('14469' => 50, '14646' => 25, '14803' => 0, '46043' => 25, '46120' => 25);
 
+foreach my $result (@{$results}) {
+  is($expected_results_hash{$result->[0]}, $result->[1], "$result->[0] goc score verified ");
+}
+
+
+done_testing();
