@@ -36,7 +36,7 @@ sub render_compact {
 sub render_signal { 
   my $self = shift;
   my $graph_class = $self->_select_graph_type;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Barcode']);
+  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
   $self->{'my_config'}->set('height', 60);
   $self->_render_aggregate; 
 }
