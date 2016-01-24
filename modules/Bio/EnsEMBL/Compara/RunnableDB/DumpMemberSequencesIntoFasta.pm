@@ -62,7 +62,7 @@ sub run {
 
     print("writing fasta to file '$fasta_name'\n");
 
-    my $sth = $self->compara_dba()->dbc->prepare( $sql );
+    my $sth = $self->compara_dba()->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
 
     my ($sequence_id, $stable_id, $description, $sequence);
