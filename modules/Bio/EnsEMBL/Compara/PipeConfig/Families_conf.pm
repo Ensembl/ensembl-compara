@@ -594,7 +594,6 @@ sub pipeline_analyses {
             -hive_capacity      => $self->o('mafft_capacity'),
             -batch_size         => 10,
             -max_retry_count    => 6,
-            -mafft_threads      => 1,
             -flow_into => {
                 -1 => [ 'mafft_big' ],
             },
@@ -603,9 +602,10 @@ sub pipeline_analyses {
 
         {   -logic_name    => 'mafft_big',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
-            -hive_capacity => 20,
-            -batch_size    => 1,
-            -mafft_threads => 8,
+            -hive_capacity => $self->o('mafft_capacity'),
+            -parameters    => {
+                'mafft_threads'     => 8,
+            },
             -rc_name => 'BigMafft_multi_core',
         },
 
