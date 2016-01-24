@@ -603,6 +603,15 @@ sub pipeline_analyses {
         {   -logic_name    => 'mafft_big',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => $self->o('mafft_capacity'),
+            -rc_name       => 'BigMafft',
+            -flow_into     => {
+                -1 => [ 'mafft_huge' ],
+            },
+        },
+
+        {   -logic_name    => 'mafft_huge',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
+            -hive_capacity => $self->o('mafft_capacity'),
             -parameters    => {
                 'mafft_threads'     => 8,
             },
