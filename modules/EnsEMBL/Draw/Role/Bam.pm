@@ -158,7 +158,7 @@ sub _render_coverage {
   #use Data::Dumper; warn Dumper($data);
 
   ## Draw coverage track
-  my $style_class = 'EnsEMBL::Draw::Style::Graph::Histogram';
+  my $style_class = 'EnsEMBL::Draw::Style::Graph::Bar';
   if ($self->dynamic_use($style_class)) {
     my $style = $style_class->new(\%config, [$data]);
     $self->push($style->create_glyphs);
