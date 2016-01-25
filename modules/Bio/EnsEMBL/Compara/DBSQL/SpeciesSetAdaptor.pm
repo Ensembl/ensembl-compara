@@ -69,7 +69,7 @@ sub _ids_string {
 
     my @sorted_ids = sort {$a <=> $b} @genome_db_ids;
     my $string_ids = join ',', @sorted_ids;
-    return $string_ids;
+    return $string_ids || '';
 }
 
 
