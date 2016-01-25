@@ -1251,10 +1251,10 @@ sub _add_htslib_track {
     format      => 'BAM',
     description => $desc,
     renderers   => [
-                    'off',       'Off',
-                    'normal',    'Normal',
-                    'unlimited', 'Unlimited',
-                    'histogram', 'Coverage only'
+                    'off',                  'Off',
+                    'coverage_with_reads',  'Normal',
+                    'unlimited',            'Unlimited',
+                    'histogram',            'Coverage only'
                     ],
     colourset   => 'BAM',
     options => {
@@ -2132,10 +2132,10 @@ sub add_data_files {
     my $renderers;
     if ($glyphset eq 'bamcov') {
       $renderers = [
-                    'off',       'Off',
-                    'signal',    'Coverage (BigWig)',
-                    'normal',    'Normal',
-                    'unlimited', 'Unlimited',
+                    'off',                  'Off',
+                    'signal',               'Coverage (BigWig)',
+                    'coverage_with_reads',  'Normal',
+                    'unlimited',            'Unlimited',
                     ];
     }
     else {
