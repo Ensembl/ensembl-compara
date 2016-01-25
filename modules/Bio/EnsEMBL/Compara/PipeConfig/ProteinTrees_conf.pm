@@ -117,7 +117,19 @@ sub default_options {
         'protein_members_range'     => 100000000,
 
     # blast parameters:
-        'blast_params'              => '-seg no -max_hsps 1 -use_sw_tback -num_threads 1',
+        'blast_params'       => '-seg no -max_hsps 1 -use_sw_tback -num_threads 1',
+        'blast_level_ranges' => { # define sequence lengths that define different granularity of parameters
+            1 => [ 0,   35  ],
+            2 => [ 35,  50  ],
+            3 => [ 50,  100 ],
+            4 => [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
+        },
+        'all_blast_params' => { # params, evalues to use for each level of length granularity
+            1 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2",    '2e-10000' ],
+            2 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2",    '1e-10000' ],
+            3 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2", '1e-1000'  ],
+            4 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3", '1e-10'    ],
+        },
 
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
@@ -1341,6 +1353,10 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'members_against_allspecies_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
+            -parameters => {
+                'chunk_by_size'      => 1,
+                'blast_level_ranges' => $self->o('blast_level_ranges'),
+            },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
@@ -1353,6 +1369,8 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
             -parameters => {
                 'species_set_id'    => '#nonreuse_ss_id#',
+                'chunk_by_size'      => 1,
+                'blast_level_ranges' => $self->o('blast_level_ranges'),
             },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
@@ -1365,9 +1383,10 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
-                'blast_params'              => $self->o('blast_params'),
+                #'blast_params'              => $self->o('blast_params'),
+                'blast_params'              => "#expr( #all_blast_params#->{#param_index#}->[0])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => 1e-10,
+                'evalue_limit'              => "#expr( #all_blast_params#->{#param_index#}->[1])expr#",
                 'allow_same_species_hits'   => 1,
             },
             -batch_size    => 10,
