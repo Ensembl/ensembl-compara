@@ -426,8 +426,6 @@ sub preload {
         } else {
             $cache_stns{$stn_id} = $node->species_tree_node;
         }
-        $node->add_tag('taxon_id', $node->species_tree_node->taxon_id);
-        $node->add_tag('taxon_name', $node->species_tree_node->node_name);
     }
 
     # Loads all the gene members in one go

@@ -454,36 +454,5 @@ sub keep_nodes_by_taxon_ids {
 }
 
 
-# Legacy
-
-=head2 get_tagvalue
-
-  Description: returns the value(s) of the tag, or $default (undef
-               if not provided) if the tag doesn't exist.
-  Arg [1]    : <string> tag
-  Arg [2]    : (optional) <scalar> default
-  Example    : $ns_node->get_tagvalue('scientific name');
-  Returntype : Scalar or ArrayRef
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_tagvalue {
-    my $self = shift;
-    my $tag = shift;
-    my $default = shift;
-
-    if (($tag eq 'taxon_id') or ($tag eq 'taxon_name')) {
-        deprecate("The $tag tag has been deprecated, support will end with e84. Please use species_tree_node() from the gene-tree node to get taxon information");
-        if (not $self->has_tag($tag) and $self->has_tag('species_tree_node_id')) {
-            $self->add_tag('taxon_id', $self->species_tree_node->taxon_id);
-            $self->add_tag('taxon_name', $self->species_tree_node->node_name);
-        }
-    }
-    return $self->SUPER::get_tagvalue($tag, $default);
-}
-
-
 1;
 

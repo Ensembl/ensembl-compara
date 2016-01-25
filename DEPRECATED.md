@@ -5,11 +5,6 @@
 ### Obsolete since the redesign of member sequences
 * `AlignedMember::cdna_alignment_string()`
 
-### Obsolete since the redesign of the species-tree reconciliation
-* `GeneTreeNode::get_value_for_tag('taxon_id')`
-* `GeneTreeNode::get_value_for_tag('taxon_name')`
-* `Homology::node_id()`
-
 ### Obsolete since the redesign of member objects
 * `MemberAdaptor::fetch_by_source_stable_id()`
 * `FamilyAdaptor::fetch_all_by_Member()`

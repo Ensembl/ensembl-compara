@@ -503,7 +503,7 @@ sub get_all_sorted_nodes {
 
   Arg 1       : tag_name
   Arg 2       : tag_value (optional)
-  Example     : my $all_nodes = $root->get_all_nodes_by_tagvalue('taxon_name'=>'Mamalia');
+  Example     : my $all_nodes = $root->get_all_nodes_by_tagvalue('tree_support'=>'nj_dn');
   Description : Returns all underlying nodes that have a tag of the given name, and optionally a value of the given value.
   ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
   Exceptions  : none

@@ -391,6 +391,24 @@ sub homology_key {
 }
 
 
+=head2 _gene_tree_node_id
+
+  Example     : my $_gene_tree_node_id = $homology->_gene_tree_node_id();
+  Example     : $homology->_gene_tree_node_id($_gene_tree_node_id);
+  Description : Getter/Setter for the dbID of the gene-tree node this homology comes from
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _gene_tree_node_id {
+    my $self = shift;
+    $self->{'_gene_tree_node_id'} = shift if @_;
+    return $self->{'_gene_tree_node_id'};
+}
+
 =head2 gene_tree_node
 
   Arg [1]    : GeneTreeNode $node (optional)
@@ -415,6 +433,25 @@ sub gene_tree_node {
         $self->{_gene_tree} = $self->{_gene_tree_node}->tree;
     }
     return $self->{_gene_tree_node};
+}
+
+
+=head2 _gene_tree_root_id
+
+  Example     : my $_gene_tree_root_id = $homology->_gene_tree_root_id();
+  Example     : $homology->_gene_tree_root_id($_gene_tree_root_id);
+  Description : Getter/Setter for the gene-tree root dBID this homology refers to.
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _gene_tree_root_id {
+    my $self = shift;
+    $self->{'_gene_tree_root_id'} = shift if @_;
+    return $self->{'_gene_tree_root_id'};
 }
 
 
@@ -478,41 +515,6 @@ sub species_tree_node {
 sub taxonomy_level {
     my $self = shift;
     return $self->species_tree_node() ? $self->species_tree_node()->node_name() : undef;
-}
-
-
-
-
-sub node_id {  ## DEPRECATED
-  my $self = shift;
-  deprecate('$self->node_id() is deprecated and will be removed in e84. Use $self->gene_tree_node()->node_id() instead.');
-  $self->{'_gene_tree_node_id'} = shift if(@_);
-  return $self->{'_gene_tree_node_id'};
-}
-
-sub ancestor_node_id { ## DEPRECATED
-  my $self = shift;
-  deprecate('$self->ancestor_tree_node_id() is deprecated and will be removed in e84. Use $self->gene_tree_node()->node_id() instead.');
-  $self->{'_gene_tree_node_id'} = shift if(@_);
-  return $self->{'_gene_tree_node_id'};
-}
-
-sub tree_node_id { ## DEPRECATED
-  my $self = shift;
-  deprecate('$self->tree_node_id() is deprecated and will be removed in e84. Use $self->gene_tree()->dbID() instead.');
-  return $self->gene_tree()->dbID();
-}
-
-sub subtype {  ## DEPRECATED
-    my $self = shift;
-    deprecate("Homology::subtype() is deprecated and will be removed in e84. Use taxonomy_level() instead.");
-    return $self->taxonomy_level();
-}
-
-sub taxonomy_alias {  ## DEPRECATED
-    my $self = shift;
-    deprecate("Homology::taxonomy_alias() is deprecated and will be removed in e84. Use species_tree_node()->taxon()->ensembl_alias_name() instead.");
-    return $self->species_tree_node()->taxon()->ensembl_alias_name();
 }
 
 
