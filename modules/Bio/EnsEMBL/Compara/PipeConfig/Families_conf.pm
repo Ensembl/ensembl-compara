@@ -98,8 +98,6 @@ sub default_options {
 
         #'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
-        #'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
-
         # resource requirements:
         #'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
         #'blast_gigs'      =>  4,
@@ -541,9 +539,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'fire_family_building',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters => {
-                'first_n_big_families'  => $self->o('first_n_big_families'),
-            },
             -flow_into => {
                 1 => {
                     'consensifier_factory'  => [
@@ -551,12 +546,7 @@ sub pipeline_analyses {
                         { 'step' => 100, 'inputquery' => 'SELECT family_id FROM family WHERE family_id>200',},
                     ],
                 },
-                '1->A' => {
-                    'mafft_factory' => [
-                        { 'fan_branch_code' => 2, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id<=#first_n_big_families# GROUP BY family_id HAVING count(*)>1', },
-                        { 'fan_branch_code' => 3, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id >#first_n_big_families# GROUP BY family_id HAVING count(*)>1', },
-                    ],
-                },
+                '1->A' => [ 'mafft_factory' ],
                 'A->1' => {
                     'find_update_singleton_cigars' => { },
                 }
@@ -580,11 +570,17 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'randomize'             => 1,
+                'inputquery'            => 'SELECT family_id, COUNT(*) AS fam_gene_count FROM family_member GROUP BY family_id HAVING count(*)>1',
+                'max_genes_lowmem_mafft'        => $self->o('max_genes_lowmem_mafft'),
+                'max_genes_singlethread_mafft'  => $self->o('max_genes_singlethread_mafft'),
             },
             -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
-                2 => [ 'mafft_big'  ],
-                3 => [ 'mafft_main' ],
+                2 => WHEN(
+                    '#fam_gene_count# <= #max_genes_lowmem_mafft#' => 'mafft_main',
+                    '#fam_gene_count# > #max_genes_singlethread_mafft#' => 'mafft_huge',
+                    ELSE 'mafft_big',
+                ),
             },
             -rc_name => 'LoMafft',
         },

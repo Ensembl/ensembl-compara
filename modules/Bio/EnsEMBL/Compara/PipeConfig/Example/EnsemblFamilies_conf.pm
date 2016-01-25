@@ -93,7 +93,9 @@ sub default_options {
 
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
 
-        'first_n_big_families' => 2,    # these are known to be big, so no point trying in small memory
+        # Thresholds for Mafft resource-classes
+        'max_genes_lowmem_mafft'        =>  8000,
+        'max_genes_singlethread_mafft'  => 50000,
 
         # resource requirements:
         'blast_minibatch_size'    => 25,                         # we want to reach the 1hr average runtime per minibatch
