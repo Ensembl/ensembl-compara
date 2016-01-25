@@ -237,7 +237,7 @@ sub _render_reads {
     ## Work out details of arrow, if any
     if (($f->reversed and $fstart >= $slicestart) or (!$f->reversed and $fend <= $sliceend)) {
       $fhash->{'arrow'}{'colour'}     = $self->my_colour('type_' . $self->_read_type($f));
-      $fhash->{'arrow'}{'position'}   = ($f->reversed ^ $slicestrand == -1) ? 'start' : 'end';
+      $fhash->{'arrow'}{'position'}   = $f->reversed ^ ($slicestrand == -1) ? 'start' : 'end';
     }
 
     ## Are we at a high enough scale to show text?
