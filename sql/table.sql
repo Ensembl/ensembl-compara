@@ -1382,19 +1382,19 @@ CREATE TABLE `gene_tree_root_attr` (
   aln_after_filter_length           INT(10) UNSIGNED,
   aln_length                        INT(10) UNSIGNED,
   aln_num_residues                  INT(10) UNSIGNED,
-  aln_percent_identity              FLOAT(5,5),
+  aln_percent_identity              FLOAT(5),
   best_fit_model_family             VARCHAR(10),
   best_fit_model_parameter          VARCHAR(5),
   gene_count                        INT(10) UNSIGNED,
-  k_score                           FLOAT(5,5),
-  k_score_rank                      INT(10) UNSIGNED,
-  mcoffee_scores_gene_align_id      INT(10) UNSIGNED,
+  k_score                           FLOAT(5),
+  k_score_rank                      INT(10) UNSIGNED, 
+  mcoffee_scores_gene_align_id      INT(10) UNSIGNED,      
   aln_n_removed_columns             INT(10) UNSIGNED,
-  aln_num_of_patterns               INT(10) UNSIGNED,
-  aln_shrinking_factor              FLOAT(2,2),
+  aln_num_of_patterns               INT(10) UNSIGNED, 
+  aln_shrinking_factor              FLOAT(2),
   spec_count                        INT(10) UNSIGNED,
-  tree_max_branch                   FLOAT(5,5),
-  tree_max_length                   FLOAT(5,5),
+  tree_max_branch                   DEC(8,2),
+  tree_max_length                   FLOAT(5),
   tree_num_dup_nodes                INT(10) UNSIGNED,
   tree_num_leaves                   INT(10) UNSIGNED,
   tree_num_spec_nodes               INT(10) UNSIGNED,
@@ -1872,6 +1872,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_83_84_c.sql|change_description_size');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_d.sql|insert_goc_column_homology_table');
+  VALUES (NULL, 'patch', 'patch_83_84_d.sql|insert_orth_quality_homology_table');
 
 

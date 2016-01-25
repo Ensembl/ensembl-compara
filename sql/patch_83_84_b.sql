@@ -57,19 +57,19 @@ CREATE TABLE `gene_tree_root_attr` (
   aln_after_filter_length           INT(10) UNSIGNED,
   aln_length                        INT(10) UNSIGNED,
   aln_num_residues                  INT(10) UNSIGNED,
-  aln_percent_identity              FLOAT(5,5),
+  aln_percent_identity              FLOAT(5),
   best_fit_model_family             VARCHAR(10),
   best_fit_model_parameter          VARCHAR(5),
   gene_count                        INT(10) UNSIGNED,
-  k_score                           FLOAT(5,5),
+  k_score                           FLOAT(5),
   k_score_rank                      INT(10) UNSIGNED, 
   mcoffee_scores_gene_align_id      INT(10) UNSIGNED,      
   aln_n_removed_columns             INT(10) UNSIGNED,
   aln_num_of_patterns               INT(10) UNSIGNED, 
-  aln_shrinking_factor              FLOAT(2,2),
+  aln_shrinking_factor              FLOAT(2),
   spec_count                        INT(10) UNSIGNED,
-  tree_max_branch                   FLOAT(5,5),
-  tree_max_length                   FLOAT(5,5),
+  tree_max_branch                   DEC(8,2),
+  tree_max_length                   FLOAT(5),
   tree_num_dup_nodes                INT(10) UNSIGNED,
   tree_num_leaves                   INT(10) UNSIGNED,
   tree_num_spec_nodes               INT(10) UNSIGNED,
@@ -83,25 +83,25 @@ CREATE TABLE `gene_tree_root_attr` (
 # Populate the new table with NULLs
 INSERT INTO gene_tree_root_attr (root_id) SELECT distinct(root_id) FROM gene_tree_root_tag;
 
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_after_filter_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'after_filter_length';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'aln_length';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_num_residues = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'aln_num_residues';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_percent_identity = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'aln_percent_identity';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.best_fit_model_family = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'best_fit_model_family';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.best_fit_model_parameter = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'best_fit_model_parameter';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.gene_count = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'gene_count';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.k_score = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'k_score';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.k_score_rank = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'k_score_rank';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.mcoffee_scores_gene_align_id = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'mcoffee_scores';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_n_removed_columns = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'n_removed_columns';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_num_of_patterns = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'num_of_patterns';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_shrinking_factor = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'shrinking_factor';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.spec_count = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'spec_count';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_max_branch = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_max_branch';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_max_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_max_length';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_num_dup_nodes = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_num_dup_nodes';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_num_leaves = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_num_leaves';
-UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_num_spec_nodes = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_num_spec_nodes';
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_after_filter_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'after_filter_length' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'aln_length' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_num_residues = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'aln_num_residues' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_percent_identity = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'aln_percent_identity' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.best_fit_model_family = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'best_fit_model_family' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.best_fit_model_parameter = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'best_fit_model_parameter' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.gene_count = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'gene_count' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.k_score = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'k_score' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.k_score_rank = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'k_score_rank' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.mcoffee_scores_gene_align_id = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'mcoffee_scores' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_n_removed_columns = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'n_removed_columns' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_num_of_patterns = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'num_of_patterns' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_shrinking_factor = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'shrinking_factor' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.spec_count = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'spec_count' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_max_branch = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_max_branch' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_max_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_max_length' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_num_dup_nodes = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_num_dup_nodes' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_num_leaves = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_num_leaves' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.tree_num_spec_nodes = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'tree_num_spec_nodes' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
 
 DELETE FROM gene_tree_root_tag WHERE tag IN ( 'after_filter_length','aln_length','aln_num_residues','aln_percent_identity','best_fit_model_family','best_fit_model_parameter','gene_count','k_score','k_score_rank','mcoffee_scores','n_removed_columns','num_of_patterns','shrinking_factor','spec_count','tree_max_branch','tree_max_length','tree_num_dup_nodes','tree_num_leaves','tree_num_spec_nodes');
 
