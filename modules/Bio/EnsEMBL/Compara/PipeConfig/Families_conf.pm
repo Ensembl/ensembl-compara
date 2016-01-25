@@ -363,7 +363,6 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
-            -rc_name => '16GigMem',    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
         },
 
         {   -logic_name => 'make_blastdb',
@@ -595,7 +594,6 @@ sub pipeline_analyses {
             -hive_capacity      => $self->o('mafft_capacity'),
             -batch_size         => 10,
             -max_retry_count    => 6,
-            -mafft_threads      => 1,
             -flow_into => {
                 -1 => [ 'mafft_big' ],
             },
@@ -604,9 +602,19 @@ sub pipeline_analyses {
 
         {   -logic_name    => 'mafft_big',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
-            -hive_capacity => 20,
-            -batch_size    => 1,
-            -mafft_threads => 8,
+            -hive_capacity => $self->o('mafft_capacity'),
+            -rc_name       => 'BigMafft',
+            -flow_into     => {
+                -1 => [ 'mafft_huge' ],
+            },
+        },
+
+        {   -logic_name    => 'mafft_huge',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
+            -hive_capacity => $self->o('mafft_capacity'),
+            -parameters    => {
+                'mafft_threads'     => 8,
+            },
             -rc_name => 'BigMafft_multi_core',
         },
 

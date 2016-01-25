@@ -31,6 +31,7 @@ sub param_defaults {
             # --thread 1 is supposed to prevent forking
         'mafft_cmdline_args'    => '--anysymbol --thread #mafft_threads#',
         'mafft_exec'            => '#mafft_root_dir#/bin/mafft',
+        'mafft_threads'         => 1,
     };
 }
 
