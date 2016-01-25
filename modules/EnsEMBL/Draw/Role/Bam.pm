@@ -664,11 +664,8 @@ sub calc_coverage {
 
   #warn "sample_size = $sample_size";
 
-  #warn "@@@ GLYPHSET $self";
-  #warn ">>> RUNNING C CODE FOR COVERAGE with $features, $sample_size, $lbin, $START";
   my $coverage = $self->c_coverage($features, $sample_size, $lbin, $START);
      $coverage = [reverse @$coverage] if $slice->strand == -1;
-  #warn "... DONE WITH C";
 
   return $coverage;
 }
