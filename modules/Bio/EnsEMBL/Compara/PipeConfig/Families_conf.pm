@@ -487,10 +487,7 @@ sub pipeline_analyses {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize',
              -rc_name => 'LoMafft',
-             -flow_into  => {
-                '1->A'  => [ 'fire_family_building' ],
-                'A->1'  => [ 'warehouse_working_directory' ],
-             },
+             -flow_into  => 'fire_family_building',
             },
 
 
@@ -515,10 +512,9 @@ sub pipeline_analyses {
                 'cmd' => "#mcl_bin_dir#/mcl #work_dir#/#file_basename#.tcx -I 2.1 -t 4 -tf 'gq(50)' -scheme 6 -use-tab #work_dir#/#file_basename#.itab -o #work_dir#/#file_basename#.mcl",
             },
             -flow_into => {
-                '1->A' => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#file_basename#.tcx #work_dir#/#file_basename#.itab' },
+                1 => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#file_basename#.tcx #work_dir#/#file_basename#.itab' },
                             'parse_mcl'          => { 'mcl_name' => '#work_dir#/#file_basename#.mcl' },
                 },
-                'A->1'  => [ 'stable_id_map' ],
             },
             -rc_name => 'BigMcl',
         },
@@ -619,7 +615,8 @@ sub pipeline_analyses {
             -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
                 1 => WHEN (
-                    '#hmm_clustering#' => 'insert_redundant_peptides',
+                    '#hmm_clustering#' => 'write_member_counts',
+                    ELSE 'insert_redundant_peptides',
                 )
             },
             -rc_name => 'urgent',
@@ -631,6 +628,7 @@ sub pipeline_analyses {
                 'sql' => "INSERT INTO family_member SELECT family_id, m2.seq_member_id, cigar_line FROM family_member fm, seq_member m1, seq_member m2 WHERE fm.seq_member_id=m1.seq_member_id AND m1.sequence_id=m2.sequence_id AND m1.seq_member_id<>m2.seq_member_id",
             },
             -hive_capacity => 20, # to enable parallel branches
+            -flow_into  => 'stable_id_map',
             -rc_name => 'urgent',
         },
 
