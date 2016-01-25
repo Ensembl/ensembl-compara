@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::Marker;
 
 use strict;
 
-use EnsEMBL::Draw::GlyphSet::_marker;
+use EnsEMBL::Draw::GlyphSet::marker;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
