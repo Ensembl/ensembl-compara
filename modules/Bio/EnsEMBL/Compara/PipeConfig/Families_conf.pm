@@ -538,20 +538,25 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'fire_family_building',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'randomize'             => 1,
+                'inputquery'            => 'SELECT family_id, COUNT(*) AS fam_gene_count FROM family_member GROUP BY family_id HAVING count(*)>1',
+                'max_genes_lowmem_mafft'        => $self->o('max_genes_lowmem_mafft'),
+                'max_genes_singlethread_mafft'  => $self->o('max_genes_singlethread_mafft'),
+            },
+            -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
-                1 => {
-                    'consensifier_factory'  => [
-                        { 'step' => 1,   'inputquery' => 'SELECT family_id FROM family WHERE family_id<=200',},
-                        { 'step' => 100, 'inputquery' => 'SELECT family_id FROM family WHERE family_id>200',},
-                    ],
-                },
-                '1->A' => [ 'mafft_factory' ],
+                '2->A' => WHEN(
+                    '#fam_gene_count# <= #max_genes_lowmem_mafft#' => 'mafft_main',
+                    '#fam_gene_count# > #max_genes_singlethread_mafft#' => 'mafft_huge',
+                    ELSE 'mafft_big',
+                ),
                 'A->1' => {
                     'find_update_singleton_cigars' => { },
-                }
+                },
             },
-            -rc_name => 'urgent',
+            -rc_name => 'LoMafft',
         },
 
 # <Archiving flow-in sub-branch>
@@ -566,24 +571,6 @@ sub pipeline_analyses {
 # </Archiving flow-in sub-branch>
 
 # <Mafft sub-branch>
-        {   -logic_name => 'mafft_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'randomize'             => 1,
-                'inputquery'            => 'SELECT family_id, COUNT(*) AS fam_gene_count FROM family_member GROUP BY family_id HAVING count(*)>1',
-                'max_genes_lowmem_mafft'        => $self->o('max_genes_lowmem_mafft'),
-                'max_genes_singlethread_mafft'  => $self->o('max_genes_singlethread_mafft'),
-            },
-            -hive_capacity => 20, # to enable parallel branches
-            -flow_into => {
-                2 => WHEN(
-                    '#fam_gene_count# <= #max_genes_lowmem_mafft#' => 'mafft_main',
-                    '#fam_gene_count# > #max_genes_singlethread_mafft#' => 'mafft_huge',
-                    ELSE 'mafft_big',
-                ),
-            },
-            -rc_name => 'LoMafft',
-        },
 
         {   -logic_name         => 'mafft_main',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
@@ -591,6 +578,7 @@ sub pipeline_analyses {
             -batch_size         => 10,
             -max_retry_count    => 6,
             -flow_into => {
+                1  => [ 'consensifier' ],
                 -1 => [ 'mafft_big' ],
             },
             -rc_name => '2GigMem',
@@ -601,6 +589,7 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('mafft_capacity'),
             -rc_name       => 'BigMafft',
             -flow_into     => {
+                1  => [ 'consensifier_himem' ],
                 -1 => [ 'mafft_huge' ],
             },
         },
@@ -610,6 +599,9 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('mafft_capacity'),
             -parameters    => {
                 'mafft_threads'     => 8,
+            },
+            -flow_into     => {
+                1  => [ 'consensifier_himem' ],
             },
             -rc_name => 'BigMafft_multi_core',
         },
@@ -645,19 +637,19 @@ sub pipeline_analyses {
 # </Mafft sub-branch>
 
 # <Consensifier sub-branch>
-        {   -logic_name => 'consensifier_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => { },
-            -hive_capacity => 20, # run the two in parallel and enable parallel branches
-            -flow_into => {
-                2 => { 'consensifier' => { 'family_id' => '#_start_family_id#', 'minibatch' => '#_range_count#'} },
-            },
-            -rc_name => '2GigMem',
-        },
-
         {   -logic_name    => 'consensifier',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily',
             -hive_capacity => $self->o('cons_capacity'),
+            -batch_size    => 20,
+            -flow_into     => {
+                -1 => 'consensifier_himem',
+            },
+        },
+
+        {   -logic_name    => 'consensifier_himem',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily',
+            -hive_capacity => $self->o('cons_capacity'),
+            -rc_name       => '2GigMem',
         },
 # </Consensifier sub-branch>
 
