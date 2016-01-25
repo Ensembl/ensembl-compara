@@ -185,6 +185,11 @@ sub _tables {
     return ( ['species_set_header', 'sh'], ['species_set', 'ss'] );
 }
 
+sub _left_join {
+    return (
+        ['species_set', 'sh.species_set_id = ss.species_set_id'],
+    );
+}
 
 sub _columns {
     # warning _objs_from_sth implementation depends on ordering
@@ -197,10 +202,6 @@ sub _columns {
     );
 }
 
-sub _default_where_clause {
-    return 'sh.species_set_id = ss.species_set_id';
-}
-
 sub _objs_from_sth {
     my ($self, $sth) = @_;
 
@@ -211,8 +212,11 @@ sub _objs_from_sth {
 
     while ( my ($species_set_id, $name, $first_release, $last_release, $genome_db_id) = $sth->fetchrow() ) {
 
-            # gdb objects are already cached on the $gdb_adaptor level, so no point in re-caching them here
-        if( my $gdb = $gdb_cache->get($genome_db_id) ) {
+        if (!$genome_db_id) {
+            # This is the NULL row added by the LEFT JOIN
+            # It means that the set is empty
+            $ss_content_hash{$species_set_id} = [];
+        } elsif( my $gdb = $gdb_cache->get($genome_db_id) ) { # gdb objects are already cached on the $gdb_adaptor level, so no point in re-caching them here
             push @{$ss_content_hash{$species_set_id}}, $gdb;
         } else {
             warning("Species set with dbID=$species_set_id is missing genome_db entry with dbID=$genome_db_id, so it will not be fetched");
