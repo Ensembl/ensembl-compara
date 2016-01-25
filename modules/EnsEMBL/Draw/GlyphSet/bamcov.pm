@@ -23,12 +23,31 @@ package EnsEMBL::Draw::GlyphSet::bamcov;
 ### guarantee there is a BigWig file)
 
 use strict;
-use base qw(EnsEMBL::Draw::GlyphSet::bigwig EnsEMBL::Draw::GlyphSet::bam);
 
-sub render_unlimited {
-## Make sure we use the method in bam glyphset, not the one inherited by bigwig
-  return EnsEMBL::Draw::GlyphSet::bam::render_unlimited(@_);
+use Role::Tiny;
+
+use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
+
+sub can_json { return 1; }
+
+sub init {
+  my $self = shift;
+  my @roles;
+  my $style = $self->my_config('style') || $self->my_config('display') || '';
+
+  if ($style eq 'wiggle' || $style =~ /signal/) {
+    push @roles, 'EnsEMBL::Draw::Role::Wiggle';
+  }
+  else {
+    push @roles, 'EnsEMBL::Draw::Role::Bam';
+  }
+
+  ## Don't try to apply non-existent roles, or Role::Tiny will complain
+  if (scalar @roles) {
+    Role::Tiny->apply_roles_to_object($self, @roles);
+  }
+
+  $self->{'features'} = $self->features;
 }
-
 
 1;
