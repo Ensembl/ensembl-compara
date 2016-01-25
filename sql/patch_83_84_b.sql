@@ -83,6 +83,8 @@ CREATE TABLE `gene_tree_root_attr` (
 # Populate the new table with NULLs
 INSERT IGNORE INTO gene_tree_root_attr (root_id) SELECT root_id FROM gene_tree_root_tag WHERE tag IN ("after_filter_length","aln_length","aln_num_residues","aln_percent_identity","best_fit_model_family","best_fit_model_parameter","gene_count","k_score","k_score_rank","mcoffee_scores","n_removed_columns","num_of_patterns","shrinking_factor","spec_count","tree_max_branch","tree_max_length","tree_num_dup_nodes","tree_num_leaves","tree_num_spec_nodes");
 
+ALTER TABLE gene_tree_root_tag ADD KEY (tag);
+
 UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_after_filter_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'after_filter_length';
 UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_length = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'aln_length';
 UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.aln_num_residues = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'aln_num_residues';

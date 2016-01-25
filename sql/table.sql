@@ -1343,7 +1343,8 @@ CREATE TABLE gene_tree_root_tag (
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
 
   KEY root_id_tag (root_id, tag),
-  KEY (root_id)
+  KEY (root_id),
+  KEY tag (tag)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
