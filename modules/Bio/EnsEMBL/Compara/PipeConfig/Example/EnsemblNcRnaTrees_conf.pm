@@ -139,17 +139,18 @@ sub default_options {
 
             # the production database itself (will be created)
             # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            'host' => 'compara5',
+            'host' => 'compara3',
+
 
             'reg1' => {
-                        -host => 'ensembldb.ensembl.org',
-                        -port   => 3306,
-                        -user   => 'anonymous',
-                         -pass   => '',
+                       -host   => 'ens-staging',
+                       -port   => 3306,
+                       -user   => 'ensro',
+                       -pass   => '',
                       },
 
-            'reg2' => {
-                        -host   => 'ens-livemirror',
+             'reg2' => {
+                        -host   => 'ens-staging2',
                         -port   => 3306,
                         -user   => 'ensro',
                         -pass   => '',
