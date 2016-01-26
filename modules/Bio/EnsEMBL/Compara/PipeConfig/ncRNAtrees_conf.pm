@@ -528,8 +528,22 @@ sub pipeline_analyses {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
                                },
-                -flow_into     => [ 'quick_tree_break' ],
+                -flow_into     => {
+                    1 => ['quick_tree_break' ],
+                    -1 => [ 'aligner_for_tree_break_himem' ],
+                },
                 -rc_name => '2Gb_job',
+            },
+
+            {   -logic_name    => 'aligner_for_tree_break_himem',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal',
+                -analysis_capacity => $self->o('aligner_for_tree_break_capacity'),
+                -parameters => {
+                                'cmbuild_exe' => $self->o('cmbuild_exe'),
+                                'cmalign_exe' => $self->o('cmalign_exe'),
+                               },
+                -flow_into     => [ 'quick_tree_break' ],
+                -rc_name => '4Gb_job',
             },
 
             {   -logic_name => 'quick_tree_break',
@@ -575,10 +589,25 @@ sub pipeline_analyses {
                                    'cmalign_exe' => $self->o('cmalign_exe'),
                                   },
                 -flow_into     => {
+                                  -1 => [ 'infernal_himem' ],
                                    1 => ['pre_sec_struct_tree'],
                                    3 => $self->o('create_ss_pics') ? ['create_ss_picts'] : [],
                                   },
                 -rc_name       => '1Gb_job',
+            },
+
+            {   -logic_name    => 'infernal_himem',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal',
+                -analysis_capacity => $self->o('infernal_capacity'),
+                -parameters    => {
+                                   'cmbuild_exe' => $self->o('cmbuild_exe'),
+                                   'cmalign_exe' => $self->o('cmalign_exe'),
+                                  },
+                -flow_into     => {
+                                   1 => ['pre_sec_struct_tree'],
+                                   3 => $self->o('create_ss_pics') ? ['create_ss_picts'] : [],
+                                  },
+                -rc_name       => '2Gb_job',
             },
 
             {   -logic_name    => 'tree_backup',
