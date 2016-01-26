@@ -85,6 +85,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 sub param_defaults {
     return {
             'method'      => 'Infernal',
+            'cmalign_threads'   => 1,
            };
 }
 
@@ -263,6 +264,7 @@ sub run_infernal {
   $cmd .= " -o " . $stk_output;
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $self->param('input_fasta');
+  $cmd .= " --cpu " . $self->param_required('cmalign_threads');
 
 #  $DB::single=1;1;
   my $command = $self->run_command($cmd);
