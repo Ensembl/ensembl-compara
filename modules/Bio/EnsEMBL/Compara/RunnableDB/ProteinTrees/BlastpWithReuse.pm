@@ -65,7 +65,7 @@ sub get_queries {
 
     if ( $member_id_list ){
       my $member_id_string = '(' . join( ',', @{ $member_id_list } ) . ')';
-      return $self->compara_dba->get_SeqMemberAdaptor->generic_fetch("mg.genome_db_id=$genome_db_id AND m.seq_member_id IN $member_id_string", [[['gene_member', 'mg'], 'mg.canonical_member_id = m.seq_member_id']]);
+      return $self->compara_dba->get_SeqMemberAdaptor->generic_fetch("m.genome_db_id=$genome_db_id AND m.seq_member_id IN $member_id_string");
     }
     else {
       my $start_member_id = $self->param_required('start_member_id');
