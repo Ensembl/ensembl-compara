@@ -61,9 +61,9 @@ sub run {
 
 sub write_output {
     my $self = shift;
-    $self->param('gene_tree')->store_tag( 'n_removed_columns',   $self->param('n_removed_columns') );
-    $self->param('gene_tree')->store_tag( 'shrinking_factor',    $self->param('shrinking_factor') );
-    $self->param('gene_tree')->store_tag( 'after_filter_length', $self->param('after_filter_length') );
+    $self->param('gene_tree')->store_tag( 'aln_n_removed_columns',   $self->param('n_removed_columns') );
+    $self->param('gene_tree')->store_tag( 'aln_shrinking_factor',    $self->param('shrinking_factor') );
+    $self->param('gene_tree')->store_tag( 'aln_after_filter_length', $self->param('after_filter_length') );
     $self->param('gene_tree')->store_tag( 'gene_count',          $self->param('gene_count') );
 }
 

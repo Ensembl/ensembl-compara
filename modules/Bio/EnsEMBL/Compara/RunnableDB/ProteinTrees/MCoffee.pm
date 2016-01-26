@@ -127,7 +127,7 @@ sub parse_and_store_alignment_into_proteintree {
         $member->cigar_line($score_string);
     }
     $self->compara_dba->get_GeneAlignAdaptor->store($aln_score);
-    $self->param('protein_tree')->store_tag('mcoffee_scores', $aln_score->gene_align_id);
+    $self->param('protein_tree')->store_tag('mcoffee_scores_gene_align_id', $aln_score->gene_align_id);
     $aln_score->root->release_tree;
     $aln_score->clear;
     return 1;
