@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 =pod
 
 =head1 DESCRIPTION
@@ -21,9 +23,6 @@
 
 =cut
 
-
-#!/usr/bin/env perl
-$| = 1;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Registry;
@@ -44,6 +43,7 @@ GetOptionsFromArray(
 
 );
 
+$| = 1;
 
 
 $reg_conf ||= '/nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror.conf';

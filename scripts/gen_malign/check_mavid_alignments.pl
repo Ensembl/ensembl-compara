@@ -14,22 +14,6 @@
 # limitations under the License.
 
 
-my $description = q{
-###############################################################################
-##
-##  PROGRAM check_mavid_alignments.pl
-##
-##  AUTHOR Javier Herrero
-##
-##    This software is part of the EnsEMBL project.
-##
-##  DESCRIPTION: This program reads all MAVID alignment files in a directory
-##    and compare them to the data in the database.
-##
-###############################################################################
-
-};
-
 =head1 NAME
 
 check_mavid_alignment.pl
@@ -71,7 +55,10 @@ TODO
 
 use strict;
 use warnings;
+
 use Getopt::Long;
+use Pod::Usage;
+
 use Bio::Perl;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::GenomicAlign;
@@ -121,8 +108,7 @@ GetOptions(
     );
 
 if ($help) {
-  print $description, $usage;
-  exit(0);
+  pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
 if (defined $reg_conf) {

@@ -15,7 +15,6 @@
 
 
 
-$|=1;
 ###############################################Rewrite for Bz output.
 
 use strict;
@@ -26,6 +25,7 @@ use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Getopt::Long;
 
+$|=1;
 
 my $usage="
 $0 [-help]
