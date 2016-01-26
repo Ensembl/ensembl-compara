@@ -1385,7 +1385,7 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
-                #'blast_params'              => $self->o('blast_params'),
+                'all_blast_params'          => $self->o('all_blast_params'),
                 'blast_params'              => "#expr( #all_blast_params#->{#param_index#}->[0])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
                 'evalue_limit'              => "#expr( #all_blast_params#->{#param_index#}->[1])expr#",
