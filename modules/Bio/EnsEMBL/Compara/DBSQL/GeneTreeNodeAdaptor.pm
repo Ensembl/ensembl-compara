@@ -263,6 +263,7 @@ sub delete_node {
 
   # The node is actually a root. We have to clear the entry in gene_tree_root
   if ($node_id == $node->tree->root->node_id) {
+    $self->dbc->do("DELETE FROM gene_tree_root_attr WHERE root_id = $node_id");
     $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $node_id");
     $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $node_id");
   }

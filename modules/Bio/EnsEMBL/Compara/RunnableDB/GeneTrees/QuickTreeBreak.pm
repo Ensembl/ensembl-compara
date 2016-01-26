@@ -208,6 +208,7 @@ sub write_output {
     foreach my $node (@{$self->param('nodes_to_delete')}) {
         if ($node->node_id == $node->{_root_id}) {
             my $root_id = $node->{_root_id};
+            $dbc->do("DELETE FROM gene_tree_root_attr WHERE root_id = $root_id");
             $dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $root_id");
             $dbc->do("DELETE FROM gene_tree_root     WHERE root_id = $root_id");
         }
