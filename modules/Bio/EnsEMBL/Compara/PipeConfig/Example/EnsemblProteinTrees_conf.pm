@@ -157,20 +157,17 @@ sub default_options {
         'alignment_filtering_capacity'  => 400,
         'prottest_capacity'         => 400,
         'treebest_capacity'         => 400,
-        'raxml_capacity'            => 400,
-        'examl_capacity'            => 400,
+        'raxml_capacity'            => 500,
+        'examl_capacity'            => 800,
         'notung_capacity'           => 400,
         'ortho_tree_capacity'       => 200,
-        'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'merge_supertrees_capacity' => 100,
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
-        'qc_capacity'               =>   4,
-        'hc_capacity'               =>   4,
-        'decision_capacity'         =>   4,
+        'hc_capacity'               => 150,
+        'decision_capacity'         => 150,
         'hc_post_tree_capacity'     => 100,
         'HMMer_classify_capacity'   => 100,
         'loadmembers_capacity'      =>  30,
@@ -179,6 +176,7 @@ sub default_options {
         'copy_alignments_capacity'  => 50,
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
+        'ortho_stats_capacity'      => 10,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -316,6 +314,7 @@ sub resource_classes {
          '4Gb_job_gpfs'      => {'LSF' => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000] select[gpfs]"' },
     };
 }
+
 
 sub tweak_analyses {
     my $self = shift;

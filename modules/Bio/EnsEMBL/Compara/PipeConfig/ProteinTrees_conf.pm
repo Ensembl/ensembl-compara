@@ -249,10 +249,8 @@ sub default_options {
         #'quick_tree_break_capacity' => 100,
         #'build_hmm_capacity'        => 200,
         #'ktreedist_capacity'        => 150,
-        #'merge_supertrees_capacity' => 100,
         #'other_paralogs_capacity'   => 100,
         #'homology_dNdS_capacity'    => 200,
-        #'qc_capacity'               =>   4,
         #'hc_capacity'               =>   4,
         #'decision_capacity'         =>   4,
         #'hc_post_tree_capacity'     => 100,
@@ -263,6 +261,7 @@ sub default_options {
         #'copy_alignments_capacity'  => 50,
         #'mafft_update_capacity'     => 50,
         #'raxml_update_capacity'     => 50,
+        #'ortho_stats_capacity'      => 10,
 
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
@@ -361,11 +360,38 @@ sub resource_classes {
          '48Gb_job'     => {'LSF' => '-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         '16Gb_16c_job' => {'LSF' => '-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '64Gb_16c_job' => {'LSF' => '-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"' },
-         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '16Gb_8c_job' => {'LSF' => '-n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_8c_job' => {'LSF' => '-n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
 
+         '16Gb_16c_job' => {'LSF' => '-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_16c_job' => {'LSF' => '-n 16 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '64Gb_16c_job' => {'LSF' => '-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"' },
+
+         '16Gb_32c_job' => {'LSF' => '-n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_32c_job' => {'LSF' => '-n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+
+         '16Gb_64c_job' => {'LSF' => '-n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_64c_job' => {'LSF' => '-n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+
+         '8Gb_8c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
+         '8Gb_16c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '8Gb_24c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
+         '8Gb_32c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+
+         '16Gb_64c_mpi' => {'LSF' => '-q parallel -a openmpi -n 64 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
+
+         '32Gb_8c_mpi' => {'LSF' => '-q parallel -a openmpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"' },
+         '32Gb_16c_mpi' => {'LSF' => '-q parallel -a openmpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+         '32Gb_24c_mpi' => {'LSF' => '-q parallel -a openmpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
+         '32Gb_32c_mpi' => {'LSF' => '-q parallel -a openmpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+
+         '8Gb_long_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -q long' },
+         '32Gb_urgent_job'   => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
+
+         '8Gb_64c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 64 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '32Gb_64c_mpi' => {'LSF' => '-q parallel -a openmpi -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+
+         '4Gb_job_gpfs'      => {'LSF' => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000] select[gpfs]"' },
     };
 }
 
@@ -643,7 +669,8 @@ sub core_pipeline_analyses {
             },
             -rc_name => '4Gb_job',
             -flow_into  => [ 'check_reusability' ],
-            -analysis_capacity => 5,
+            -batch_size => 10,
+            -hive_capacity => 30,
         },
 
         {   -logic_name     => 'populate_method_links_from_file',
@@ -674,7 +701,8 @@ sub core_pipeline_analyses {
                 'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
-            -hive_capacity => 50,
+            -batch_size => 5,
+            -hive_capacity => 30,
             -rc_name => '1Gb_job',
             -flow_into => {
                 2 => { ':////accu?reused_gdb_ids=[]' => { 'reused_gdb_ids' => '#genome_db_id#'} },
@@ -1561,7 +1589,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'reuse_db'  => '#mapping_db#',
             },
-            -hive_capacity  => $self->o('qc_capacity'),
+            -hive_capacity  => $self->o('reuse_capacity'),
             -rc_name    => '2Gb_job',
         },
 
@@ -1570,7 +1598,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'reuse_db'  => '#mapping_db#',
             },
-            -hive_capacity => $self->o('qc_capacity'),
+            -hive_capacity => $self->o('reuse_capacity'),
             -rc_name    => '4Gb_job',
         },
 
@@ -1866,8 +1894,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'condition'             => '#tree_gene_count# < 4',
             },
-            -batch_size           => 50,
-            -analysis_capacity 	  => 80,
             -flow_into  => {
                 2  => [ 'treebest_small_families' ],
                 3  => [ 'prottest' ],
@@ -2019,8 +2045,7 @@ sub core_pipeline_analyses {
                 #'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 #'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             #},
-            -hive_capacity  => 80,
-            -batch_size    	=> 50,
+            %decision_analysis_params,
 
             #-------------------------------------------------------------------------------
             # This boundaries are based on RAxML and ExaML manuals.
@@ -2199,8 +2224,7 @@ sub core_pipeline_analyses {
                 #'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 #'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             #},
-            -hive_capacity  => 80,
-            -batch_size     => 50,
+            %decision_analysis_params,
 
             #-------------------------------------------------------------------------------
             # This boundaries are based on RAxML and ExaML manuals.
@@ -2457,7 +2481,6 @@ sub core_pipeline_analyses {
                 'notung_memory'             => 1500,
             },
             -hive_capacity                  => $self->o('notung_capacity'),
-            -analysis_capacity              => $self->o('notung_capacity'),
             -batch_size    => 2,
             -rc_name        => '2Gb_job',
             -flow_into      => {
@@ -2707,7 +2730,6 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
             },
-            -analysis_capacity => 1,
             -flow_into      => [ 'alignment_entry_point' ],
         },
 
@@ -2873,7 +2895,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'orthology_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
-            -hive_capacity => 10,
+            -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
         {   -logic_name => 'paralogy_stats',
@@ -2881,7 +2903,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
-            -hive_capacity => 10,
+            -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self) },

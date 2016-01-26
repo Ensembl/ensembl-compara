@@ -85,7 +85,6 @@ sub default_options {
             'quick_tree_break_capacity'       => 100,
             'msa_chooser_capacity'            => 200,
             'other_paralogs_capacity'         => 200,
-            'merge_supertrees_capacity'       => 200,
             'aligner_for_tree_break_capacity' => 200,
             'infernal_capacity'               => 200,
             'orthotree_capacity'              => 200,
