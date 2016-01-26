@@ -1358,7 +1358,7 @@ sub core_pipeline_analyses {
                 'step'               => 15,
                 'blast_level_ranges' => $self->o('blast_level_ranges'),
             },
-            -rc_name       => '250Mb_job',
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp' ],
@@ -1374,7 +1374,7 @@ sub core_pipeline_analyses {
                 'step'               => 15,
                 'blast_level_ranges' => $self->o('blast_level_ranges'),
             },
-            -rc_name       => '250Mb_job',
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp' ],
