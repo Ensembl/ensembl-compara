@@ -108,8 +108,7 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
 
-    #my $step = $self->param('step');
-    my $step = 15;
+    my $step = $self->param('step');
 
     my @member_id_list = (map {$_->dbID} @{$self->param('query_members')});
     #my @member_id_list = sort {$a <=> $b} (map {$_->dbID} @{$self->param('query_members')});

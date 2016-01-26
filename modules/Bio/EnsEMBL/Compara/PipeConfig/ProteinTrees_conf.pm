@@ -1355,6 +1355,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastFactory',
             -parameters => {
                 'chunk_by_size'      => 1,
+                'step'               => 15,
                 'blast_level_ranges' => $self->o('blast_level_ranges'),
             },
             -rc_name       => '250Mb_job',
@@ -1370,6 +1371,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'species_set_id'    => '#nonreuse_ss_id#',
                 'chunk_by_size'      => 1,
+                'step'               => 15,
                 'blast_level_ranges' => $self->o('blast_level_ranges'),
             },
             -rc_name       => '250Mb_job',
