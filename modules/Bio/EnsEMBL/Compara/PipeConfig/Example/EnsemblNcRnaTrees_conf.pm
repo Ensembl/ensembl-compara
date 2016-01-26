@@ -103,11 +103,8 @@ sub default_options {
             'hc_batch_size'                   => 10,
 
             # executable locations:
-#            'cmalign_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
             'cmalign_exe'           => '/software/ensembl/compara/infernal-1.1.1/src/cmalign',
-#            'cmbuild_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
             'cmbuild_exe'           => '/software/ensembl/compara/infernal-1.1.1/src/cmbuild',
-#            'cmsearch_exe'          => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch',
             'cmsearch_exe'          => '/software/ensembl/compara/infernal-1.1.1/src/cmsearch',
             'mafft_exe'             => '/software/ensembl/compara/mafft-7.221/bin/mafft',
             'raxml_exe'             => '/software/ensembl/compara/raxml/standard-RAxML/raxmlHPC-PTHREADS-SSE3',

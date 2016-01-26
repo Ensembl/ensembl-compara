@@ -369,7 +369,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[load RFAM models]---------------------------------------------------------------------
 
         {   -logic_name    => 'load_rfam_models',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MultiHMMLoadModels',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadInfernalHMMModels',
             -parameters    => {
                                'url'               => $self->o('rfam_ftp_url'),
                                'remote_file'       => $self->o('rfam_remote_file'),
