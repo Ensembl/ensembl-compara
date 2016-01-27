@@ -36,17 +36,17 @@ use Bio::EnsEMBL::IO::Adaptor::HTSAdaptor;
 ############# RENDERING ########################
 
 sub render_coverage_with_reads {
-### 'External' rendering style
-### Coverage and reads
+### Standard rendering style 
   my $self = shift;
   $self->_render({'coverage' => 1, 'reads' => 1});
 }
 
 sub render_unlimited {
 ### 'External' rendering style
-  my $self = shift; 
-  $self->{'my_config'}->set('max_depth', 500);
+### Coverage and reads
+  my $self = shift;
   $self->_render({'coverage' => 1, 'reads' => 1});
+  $self->{'my_config'}->set('max_depth', 500);
 }
 
 sub render_histogram {
@@ -139,18 +139,18 @@ sub _render_coverage {
     my $start = $i + 1;
 
     my $title = 'Coverage' .
-              "; Location: ".sprintf('%s:%s-%s',  $slice->seq_region_name, 
-                                                  $start + $slice_start, 
-                                                  $start + $slice_start) .
-              "; Score: $cvrg";
+                  "; Location: ".sprintf('%s:%s-%s',  $slice->seq_region_name, 
+                                                      $start + $slice_start, 
+                                                      $start + $slice_start) .
+                  "; Score: $cvrg";
 
     my $hash = {
-                'start'   => $start,
-                'end'     => $start,
-                'score'   => $cvrg,
-                'label'   => $label,
-                'colour'  => $colour,
-                'title'   => $title,
+                  'start'   => $start,
+                  'end'     => $start,
+                  'score'   => $cvrg,
+                  'label'   => $label,
+                  'colour'  => $colour,
+                  'title'   => $title,
                 };
     
     push @{$data->{'features'}}, $hash;
