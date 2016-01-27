@@ -13,4 +13,6 @@ severity=4
 severity=4
 [ControlStructures::ProhibitMutatingListFunctions]
 severity=4
+[ClassHierarchies::ProhibitOneArgBless]
+severity=4
 
