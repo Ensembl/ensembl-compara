@@ -38,7 +38,8 @@ sub init {
   my $self = shift;
 
   ## We only need wiggle roles, as alignment rendering has a non-standard name
-  Role::Tiny->apply_roles_to_object($self, 'EnsEMBL::Draw::Role::Wiggle');
+  my @roles = qw(EnsEMBL::Draw::Role::Wiggle); 
+  Role::Tiny->apply_roles_to_object($self, @roles);
 
   ## Cache raw VCF features
   $self->{'features'} = $self->features;
@@ -48,11 +49,11 @@ sub init {
 
 sub render_histogram {
   my $self = shift;
-  return scalar @{$self->features} > 200 ? $self->render_density_bar : $self->render_normal;
+  my $features = $self->features->[0]{'features'}[1];
+  return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_normal;
 }
 
-sub render_normal {
-### NB. Takes precendence of method in Role::Wiggle
+sub render_simple {
   my $self = shift;
   if (scalar @{$self->features} > 200) {
     $self->too_many_features;
@@ -60,8 +61,10 @@ sub render_normal {
   }
   else {
     ## Convert raw features into correct data format 
-    $self->{'features'} = [{'features' => $self->consensus_features}];
+    $self->{'my_config'}->set('height', 12);
+    $self->{'my_config'}->set('default_strand', 1);
     $self->{'my_config'}->set('drawing_style', ['Feature']);
+    $self->{'features'}[0]{'features'}{'1'} = $self->consensus_features;
     $self->draw_features;
   }
 }
@@ -72,8 +75,8 @@ sub render_density_bar {
   $self->{'my_config'}->set('no_guidelines', 1);
   $self->{'my_config'}->set('integer_score', 1);
   ## Convert raw features into correct data format 
-  $self->{'features'} = [{'features' => $self->density_features}];
-  $self->render_tiling;
+  $self->{'features'}[0]{'features'}{'1'} = $self->density_features;
+  $self->render_signal;
 }
 
 ############# DATA ACCESS & PROCESSING ########################
@@ -81,6 +84,8 @@ sub render_density_bar {
 sub features {
 ### Fetch and cache raw features - we'll process them later as needed
   my $self = shift;
+  $self->{'my_config'}->set('default_strand', 1);
+  $self->{'my_config'}->set('show_subtitle', 1);
 
   unless ($self->{'features'} && scalar @{$self->{'features'}}) {
     my $slice       = $self->{'container'};
@@ -93,7 +98,15 @@ sub features {
       $self->{'features'} = [];
     }
     else {
-      $self->{'features'} = $consensus;
+      my $colours = $self->species_defs->colour('variation');
+      my $colour  = $colours->{'default'}->{'default'}; 
+      
+      $self->{'features'} = [{'metadata' => {
+                                            'name'    => $self->{'my_config'}->get('name'),
+                                            'colour'  => $colour,
+                                            }, 
+                              'features' => {'1' => $consensus}
+                              }];
     }
   }
   return $self->{'features'};
@@ -103,7 +116,7 @@ sub consensus_features {
 ### Turn raw features into consensus features for drawing
 ### @return Arrayref of hashes
   my $self = shift;
-  my $raw_features  = $self->{'features'};
+  my $raw_features  = $self->{'features'}[0]{'features'}{'1'};
   my $config        = $self->{'config'};
   my $slice         = $self->{'container'};
   my $start         = $slice->start;
