@@ -243,16 +243,8 @@ sub draw_graph_base {
   }
 
   ## Draw title over track
-  if ($metadata->{'name'} && !$track_config->get('hide_subtitle')) {
-    my $subtitle_colour = $metadata->{'colour'} || $metadata->{'color'};
-    my $subtitle_y      = $top;
-    $subtitle_y        += defined($track_config->get('subtitle_y')) ? $track_config->get('subtitle_y') : 8;
-    my $subtitle = {
-                    'text'    => $metadata->{'name'},
-                    'colour'  => $self->make_readable($subtitle_colour),
-                    'y'       => $subtitle_y,
-                    };
-    $self->draw_subtitle($subtitle);
+  if (!$track_config->get('hide_subtitle')) {
+    $self->draw_subtitle($metadata, $top);
   }
 
   return {
@@ -274,17 +266,22 @@ sub get_text_info {
 }
 
 sub draw_subtitle {
-  my ($self, $subtitle) = @_;
-  return unless $subtitle && $subtitle->{'text'};
+  my ($self, $metadata, $top) = @_;
+  $metadata ||= {};
+  return unless $metadata->{'name'};
+
+  my $subtitle_colour = $metadata->{'colour'} || $metadata->{'color'};
+  my $subtitle_y      = $top || $self->track_config->get('initial_offset') || 0;
+  $subtitle_y        += defined($self->track_config->get('subtitle_y')) ? $self->track_config->get('subtitle_y') : 8;
   push @{$self->glyphs}, 
     $self->Text({
                   font      => 'Arial',
-                  text      => $subtitle->{'text'},
+                  text      => $metadata->{'name'}, 
                   ptsize    => 8,
                   height    => 8,
-                  colour    => $subtitle->{'colour'} || 'black',
+                  colour    => $subtitle_colour || 'black',
                   x         => 4,
-                  y         => $subtitle->{'y'} || 8,
+                  y         => $subtitle_y,
                   halign    => 'left',
                   absolutex => 1,
                 });
