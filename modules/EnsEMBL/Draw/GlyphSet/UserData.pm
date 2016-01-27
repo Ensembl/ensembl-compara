@@ -51,7 +51,8 @@ sub init {
 }
 
 sub features {
-  warn ">>> IMPORTANT - THIS METHOD MUST BE IMPLEMENTED IN CHILD MODULES!";
+  my $self = shift;
+  warn ">>> IMPORTANT - THIS METHOD MUST BE IMPLEMENTED IN MODULE $self!";
 =pod
 
 Because user files can contain multiple datasets, this method should return data 
