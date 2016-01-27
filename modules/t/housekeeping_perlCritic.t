@@ -48,7 +48,7 @@ my $root = File::Spec->catdir($cur_dir, File::Spec->updir(),File::Spec->updir())
 Test::Perl::Critic->import(-profile => File::Spec->catfile($root, 'perlcriticrc'), -severity => 5, -verbose => 8);
 
 #Find all files & run
-my @perl_files = Perl::Critic::Utils::all_perl_files($root);
+my @perl_files = map {Perl::Critic::Utils::all_perl_files(File::Spec->catfile($root, $_))} qw(modules scripts sql docs);
 foreach my $perl (@perl_files) {
   critic_ok($perl);
 }
