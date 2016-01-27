@@ -186,7 +186,8 @@ sub _check_job_array_lengths {
 
     # find point at which seqs become too long for range
     my ($i, $j);
-    foreach $i ( 0..( scalar( @{$job_array} )-1 ) ){
+    my $ja_len = scalar( @{$job_array} )-1;
+    foreach $i ( 0..$ja_len ){
         if ( $self->_get_length_by_member_id( $job_array[$i] ) >= $range[1] ){
             $j = $i;
             last;
