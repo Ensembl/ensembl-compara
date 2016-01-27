@@ -2140,10 +2140,10 @@ sub add_data_files {
     }
     else {
       $renderers = [
-                    'off',       'Off',
-                    'normal',    'Normal',
-                    'unlimited', 'Unlimited',
-                    'histogram', 'Coverage only'
+                    'off',                  'Off',
+                    'coverage_with_reads',  'Normal',
+                    'unlimited',            'Unlimited',
+                    'histogram',            'Coverage only'
                     ];
     }
 
