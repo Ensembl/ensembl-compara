@@ -72,6 +72,12 @@ sub create_glyphs {
 
   ## Strand settings
   foreach my $subtrack (@$data) {
+
+    ## Draw title over track
+    if ($track_config->get('show_subtitle')) {
+      $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
+    }
+
     foreach my $feature (@{$subtrack->{'features'}||[]}) {
 
       ## Are we drawing transcripts or just genes?
