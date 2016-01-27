@@ -29,26 +29,24 @@ sub get {
 sub _source { return $_[0]->{'sources'}{$_[1]}; }
 
 sub _try_get_cache {
-  my ($self,$class,$sub,$args) = @_;
+  my ($self,$class,$args) = @_;
 
   return undef unless $self->{'open'};
   return undef if $DISABLE;
   my $out = $self->{'cache'}->get({
     class => $class,
-    sub => $sub,
     args => $args
   });
-  if($DEBUG) { warn (($out?"hit ":"miss ")."${class}::$sub\n"); }
+  if($DEBUG) { warn (($out?"hit ":"miss ")."${class}\n"); }
   return $out;
 }
 
 sub _set_cache {
-  my ($self,$class,$sub,$args,$value) = @_;
+  my ($self,$class,$args,$value) = @_;
 
   return unless $self->{'open'};
   $self->{'cache'}->set({
     class => $class,
-    sub => $sub,
     args => $args
   },$value);
 }

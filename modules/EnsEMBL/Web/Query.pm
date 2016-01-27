@@ -46,19 +46,19 @@ sub _run_phase {
 }
 
 sub run_miss {
-  my ($self,$args,$sub) = @_;
+  my ($self,$args) = @_;
       
   my %a_gen = %$args;
   $self->_run_phase(\%a_gen,undef,'pre_generate');
-  my $part = $self->{'impl'}->$sub(\%a_gen);
+  my $part = $self->{'impl'}->get(\%a_gen);
   $self->_run_phase($part,undef,'post_generate',[\%a_gen]);
   $self->_check_unblessed($part);
-  $self->{'store'}->_set_cache(ref($self),$sub,$args,$part);
+  $self->{'store'}->_set_cache(ref($self),$args,$part);
   return $part;
 }
 
-sub _get {
-  my ($self,$context,$sub,$args) = @_;
+sub go {
+  my ($self,$context,$args) = @_;
 
   my $orig_args = {%$args};
   $args = {%$args};
@@ -75,9 +75,9 @@ sub _get {
   foreach my $a (@args) { 
     warn Dumper('args',$a);
     $self->_check_unblessed($a);
-    my $part = $self->{'store'}->_try_get_cache(ref($self),$sub,$a);
+    my $part = $self->{'store'}->_try_get_cache(ref($self),$a);
     unless(defined $part) {
-      $part = $self->run_miss($a,$sub);
+      $part = $self->run_miss($a);
     }
     push @$out,@$part;
   }
@@ -99,11 +99,10 @@ sub source {
 }
 
 sub precache {
-  my ($self,$sub,$kind) = @_;
+  my ($self,$kind) = @_;
 
-  my $fn = "precache_$sub";
-  my $conf = $self->{'impl'}->$fn()->{$kind};
-  $fn = "loop_$conf->{'loop'}";
+  my $conf = $self->{'impl'}->precache()->{$kind};
+  my $fn = "loop_$conf->{'loop'}";
   my $parts = $self->{'impl'}->$fn($conf->{'args'});
   $self->{'store'}->open();
   my $start = time();
@@ -111,31 +110,17 @@ sub precache {
     my @args = ($args);
     $self->_run_phase(\@args,undef,'split');
     foreach my $a (@args) {
-      next if defined $self->{'store'}->_try_get_cache(ref($self),"get_$sub",$a);
+      next if defined $self->{'store'}->_try_get_cache(ref($self),$a);
       warn "  -> ".$a->{'__name'}."\n";
       if(time()-$start > 60) {
         $self->{'store'}->close();
         $self->{'store'}->open();
         $start = time();
       }
-      $self->run_miss($a,"get_$sub");
+      $self->run_miss($a);
     }
   }
   $self->{'store'}->close();      
-}
-
-sub AUTOLOAD {
-  our $AUTOLOAD;
-  my $sub = $AUTOLOAD;
-  return if $sub =~ /::DESTROY$/;
-  if($sub =~ s/^.*::go(_(\w+))?$/get$1/) {
-    my ($self,$context,$args) = @_;
-    unless($self->{'impl'}->can($sub)) {
-      die "$sub doesn't exist in $self->{'impl'}\n";
-    }
-    return $self->_get($context,$sub,$args);
-  }
-  die "Unknown method $sub\n";
 }
 
 1;

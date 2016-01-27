@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Query::Marker;
+package EnsEMBL::Web::Query::GlyphSet::Marker;
 
 use strict;
 use warnings;
@@ -30,7 +30,7 @@ sub fixup {
   $self->SUPER::fixup();
 }
 
-sub get_marker {
+sub get {
   my ($self,$args) = @_;
 
   my $slice = $args->{'slice'};

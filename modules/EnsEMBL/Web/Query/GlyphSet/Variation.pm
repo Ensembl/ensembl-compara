@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Query::Variation;
+package EnsEMBL::Web::Query::GlyphSet::Variation;
 
 use strict;
 use warnings;
@@ -32,7 +32,7 @@ sub fixup {
   $self->SUPER::fixup();
 }
 
-sub precache_variation {
+sub precache {
   return {
     '1kgindels' => {
       loop => 'genome',
@@ -252,7 +252,7 @@ sub fetch_features {
   return $snps||[];
 }
 
-sub get_variation {
+sub get {
   my ($self,$args) = @_;
 
   my $slice = $args->{'slice'};

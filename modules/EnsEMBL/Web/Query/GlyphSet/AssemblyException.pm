@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Query::AssemblyException;
+package EnsEMBL::Web::Query::GlyphSet::AssemblyException;
 
 use strict;
 use warnings;
@@ -144,7 +144,7 @@ sub _plainify {
   };
 }
 
-sub get_assembly_exception {
+sub get {
   my ($self,$args) = @_;
 
   my $all_features = $args->{'slice'}->get_all_AssemblyExceptionFeatures;

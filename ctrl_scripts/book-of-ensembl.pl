@@ -34,8 +34,8 @@ my $qs = EnsEMBL::Web::QueryStore->new({
   Adaptors => $ad
 },$cache,$SiteDefs::ENSEMBL_COHORT);
 
-my $q = $qs->get('Variation');
-#my $pc = $q->precache('variation','ph-short');
-my $pc = $q->precache('variation','1kgindels');
+my $q = $qs->get('GlyphSet::Variation');
+#my $pc = $q->precache('ph-short');
+my $pc = $q->precache('1kgindels');
 
 1;

@@ -61,7 +61,7 @@ sub features {
   my ($self, $logic_name) = @_;
 
   my $hub = $self->{'config'}{'hub'}; 
-  return $hub->get_query('Marker')->go_marker($self,{
+  return $hub->get_query('GlyphSet::Marker')->go($self,{
     slice => $self->{'container'},
     species => $hub->species,
     logic_name => $logic_name,

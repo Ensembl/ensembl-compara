@@ -41,7 +41,7 @@ sub features {
   my $self = shift;
 
   my $hub = $self->{'config'}{'hub'};
-  return $hub->get_query('AssemblyException')->go_assembly_exception($self,{
+  return $hub->get_query('GlyphSet::AssemblyException')->go($self,{
     slice => $self->{'container'},
     species => $hub->species,
   });
