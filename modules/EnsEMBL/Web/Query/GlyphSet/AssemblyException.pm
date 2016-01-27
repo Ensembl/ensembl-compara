@@ -5,6 +5,17 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
+sub precache {
+  return {
+    assemblyexceptions => {
+      loop => "genome",
+      args => {
+        species => "Homo_sapiens",
+      }
+    }
+  };
+}
+
 sub fixup {
   my ($self) = @_;
 
@@ -149,7 +160,7 @@ sub get {
 
   my $all_features = $args->{'slice'}->get_all_AssemblyExceptionFeatures;
   
-  if($self->{'display'} eq 'normal') {
+  if($self->{'display'}||'' eq 'normal') {
     return [map { $self->_plainify($_,$args) } @$all_features];
   }
   

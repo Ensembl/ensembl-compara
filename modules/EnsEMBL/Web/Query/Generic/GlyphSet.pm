@@ -192,7 +192,7 @@ sub _split_slice {
 
   return [undef] unless defined $slice;
   my @out;
-  my $rstart = int($slice->start/$rsize)*$rsize;
+  my $rstart = int($slice->start/$rsize)*$rsize+1;
   while($rstart <= $slice->end) {
     push @out,Bio::EnsEMBL::Slice->new(
       -coord_system => $slice->coord_system,
@@ -211,11 +211,7 @@ sub fixup_config {
   my ($self,$key) = @_;
 
   if($self->phase eq 'pre_process') {
-    use Carp qw(cluck);
-    warn "FIXUP_CONFIG ".$self->phase."\n";
     my $args = $self->data;
-    use Data::Dumper;
-    warn Dumper($args);
     my %config;
     foreach my $k (@{$args->{$key}}) {
       $config{$k} = $self->context->my_config($k);

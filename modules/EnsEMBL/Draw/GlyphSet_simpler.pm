@@ -100,9 +100,6 @@ sub _init {
   
   foreach my $f (@$features) {
 
-    use Data::Dumper;
-    warn Dumper($f) if ref($f) eq 'HASH';
-
     my $fstrand = $f->{'strand'} || -1;
     
     next if $strand_flag eq 'b' && $strand != $fstrand;
@@ -307,8 +304,6 @@ sub _init {
     $self->push($composite, @tag_glyphs);
     $self->highlight($f, $composite, $pix_per_bp, $height, 'highlight1', @tag_glyphs);
   }
-  my $C = time();
-  warn sprintf("TIME: %f+%f=%f\n",$C-$B,$B-$A,$C-$A);
 }
 
 sub render_tags {

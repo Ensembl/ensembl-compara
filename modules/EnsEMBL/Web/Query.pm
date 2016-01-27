@@ -62,8 +62,6 @@ sub go {
 
   my $orig_args = {%$args};
   $args = {%$args};
-  use Data::Dumper;
-  local $Data::Dumper::Maxdepth = 3;
   my $A = time();
   die "args must be a HASH" unless ref($args) eq 'HASH';
   $self->_run_phase($args,$context,'pre_process');
@@ -72,23 +70,33 @@ sub go {
   $args = [$args] unless ref($args) eq 'ARRAY';
   my $out = [];
   my $C = time();
+  my ($hits,$misses) = (0,0);
   foreach my $a (@args) { 
-    warn Dumper('args',$a);
     $self->_check_unblessed($a);
     my $part = $self->{'store'}->_try_get_cache(ref($self),$a);
-    unless(defined $part) {
+    if(defined $part) {
+      $hits++;
+      warn "\n\n -- HIT  -- \n ".ref($self->{'impl'})." ".JSON->new->encode($a)."\n\n" if($DEBUG>1);
+    } else {
       $part = $self->run_miss($a);
+      warn "\n\n -- MISS -- \n ".ref($self->{'impl'})." ".JSON->new->encode($a)."\n\n" if($DEBUG>1);
+      $misses++;
     }
     push @$out,@$part;
   }
   my $D = time();
-  warn "block gets took ".($D-$C)."s\n" if $DEBUG;
   $self->_run_phase($out,$context,'post_process',[$orig_args]);
   my $E = time();
-  warn "post took ".($E-$D)."s\n" if $DEBUG;
   my $B = time();
-  warn "get took ".($B-$A)."s\n" if $DEBUG;
-  warn "post-process ".scalar(@$out)." features\n";
+  if($DEBUG>1) {
+    warn "\n\n ".ref($self->{'impl'})." ".JSON->new->encode($args)."\n\n";
+  }
+  if($DEBUG) {
+    my $name = ref($self->{'impl'});
+    $name =~ s/^.*:://;
+    warn sprintf("%25s: hits=%d misses=%d get+post=total %.3f+%.3f=%.3f\n",
+                 $name,$hits,$misses,$D-$C,$E-$D,$B-$A);
+  }
   return $out;
 }
 
@@ -111,7 +119,7 @@ sub precache {
     $self->_run_phase(\@args,undef,'split');
     foreach my $a (@args) {
       next if defined $self->{'store'}->_try_get_cache(ref($self),$a);
-      warn "  -> ".$a->{'__name'}."\n";
+      warn "  -> $kind ".$a->{'__name'}."\n";
       if(time()-$start > 60) {
         $self->{'store'}->close();
         $self->{'store'}->open();

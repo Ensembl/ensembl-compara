@@ -32,6 +32,7 @@ use base qw(EnsEMBL::Root);
 
 use JSON qw(to_json);
 use List::Util qw(min);
+use Time::HiRes qw(time);
 
 # These colours from www.ColorBrewer.org -- 12 colour divergent
 # by Cynthia A. Brewer, Geography, Pennsylvania State University.
@@ -262,18 +263,16 @@ sub new {
       $self->timer_push('GlyphSet list prepared for config ' . ref($config), 1);
 
       my $next_section_col = 0;
-      my $C = time();
       foreach my $glyphset (@glyphsets) {
         ## load everything from the database
         my $name         = $glyphset->{'my_config'}->id;
         my $ref_glyphset = ref $glyphset;
         # NB: we guarantee render will always be called before the
         #       subititle_* methods.
-        use Time::HiRes qw(time);
         my $A = time();
         $glyphset->render;
         my $B = time();
-        warn "$glyphset: ".($B-$A)."\n" if $B-$A>0.1;
+        #warn "$glyphset: ".($B-$A)."\n" if $B-$A>0.1;
         next if scalar @{$glyphset->{'glyphs'}} == 0;
         my $new_section = $glyphset->section;
         my $section_zmenu = $glyphset->section_zmenu;
@@ -450,8 +449,6 @@ sub new {
         $self->timer_push('track finished', 3);
         $self->timer_push(sprintf("INIT: [X] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
       }
-      my $D = time();
-      warn "total: ".($D-$C)."\n";
     
       $self->timer_push('End of creating glyphs for ' . ref($config), 1);
     

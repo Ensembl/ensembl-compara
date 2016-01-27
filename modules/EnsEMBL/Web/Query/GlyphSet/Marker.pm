@@ -17,6 +17,20 @@ sub href {
 
 sub colour_key { return lc $_[1]->marker->type; }
 
+sub precache {
+  return {
+    markers => {
+      loop => 'genome',
+      args => {
+        priority => undef,
+        marker_id => undef,
+        logic_name => undef,
+        species => "Homo_sapiens"
+      }
+    }
+  }
+}
+
 sub fixup {
   my ($self) = @_;
 

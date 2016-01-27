@@ -3,6 +3,7 @@ package EnsEMBL::Web::QueryStore;
 use strict;
 use warnings;
 
+use Carp qw(cluck);
 use JSON;
 use Digest::MD5 qw(md5_base64);
 
@@ -28,14 +29,25 @@ sub get {
 
 sub _source { return $_[0]->{'sources'}{$_[1]}; }
 
+sub _clean_args {
+  my ($self,$args) = @_;
+
+  my %out = %$args;
+  delete $out{'__name'};
+  return \%out;
+}
+
 sub _try_get_cache {
   my ($self,$class,$args) = @_;
 
+  if(!$self->{'open'} && $DEBUG) {
+    cluck("get on closed cache");
+  }
   return undef unless $self->{'open'};
   return undef if $DISABLE;
   my $out = $self->{'cache'}->get({
     class => $class,
-    args => $args
+    args => $self->_clean_args($args),
   });
   if($DEBUG) { warn (($out?"hit ":"miss ")."${class}\n"); }
   return $out;
@@ -47,7 +59,7 @@ sub _set_cache {
   return unless $self->{'open'};
   $self->{'cache'}->set({
     class => $class,
-    args => $args
+    args => $self->_clean_args($args)
   },$value);
 }
 
