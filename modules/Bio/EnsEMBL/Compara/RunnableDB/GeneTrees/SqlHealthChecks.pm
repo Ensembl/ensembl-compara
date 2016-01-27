@@ -258,6 +258,11 @@ our $config = {
                 query => 'SELECT * FROM gene_tree_root WHERE root_id = #gene_tree_id# AND gene_align_id IS NULL',
             },
             {
+                description => 'Checks that the alignment exists',
+                query => 'SELECT * FROM gene_tree_root JOIN gene_align USING (gene_align_id) WHERE root_id = #gene_tree_id#',
+                expected_size => '=1',
+            },
+            {
                 description => 'Checks that the alignment has defined CIGAR lines',
                 query => 'SELECT * FROM gene_tree_root JOIN gene_align_member USING (gene_align_id) WHERE root_id = #gene_tree_id# AND (cigar_line IS NULL OR LENGTH(cigar_line) = 0)',
             },
@@ -271,6 +276,38 @@ our $config = {
             },
         ],
     },
+
+    unpaired_alignment => {
+        params => [ 'gene_tree_id', 'gene_align_id' ],
+        tests => [
+            {
+                description => 'Checks that the tree has not lost any genes since the backup',
+                query => 'SELECT gtb.seq_member_id FROM gene_tree_backup gtb LEFT JOIN gene_tree_node gtn USING (root_id, seq_member_id) WHERE gtb.root_id = #gene_tree_id# AND gtn.seq_member_id IS NULL AND is_removed = 0',
+            },
+            {
+                description => 'Checks that the tree has not gained any genes since the backup',
+                query => 'SELECT gene_tree_node.seq_member_id FROM gene_tree_node LEFT JOIN gene_tree_backup USING (root_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NOT NULL AND gene_tree_backup.seq_member_id IS NULL',
+            },
+            {
+                description => 'Checks that the alignment exists',
+                query => 'SELECT * FROM gene_align WHERE gene_align_id = #gene_align_id#',
+                expected_size => '=1',
+            },
+            {
+                description => 'Checks that the alignment has defined CIGAR lines',
+                query => 'SELECT * FROM gene_align_member WHERE gene_align_id = #gene_align_id# AND (cigar_line IS NULL OR LENGTH(cigar_line) = 0)',
+            },
+            {
+                description => 'Checks that the alignment has not lost any genes since the backup',
+                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup LEFT JOIN gene_align_member USING (seq_member_id) WHERE gene_align_id = #gene_align_id# AND root_id = #gene_tree_id# AND gene_align_member.seq_member_id IS NULL AND is_removed = 0',
+            },
+            {
+                description => 'Checks that the alignment has not gained any genes since the backup',
+                query => 'SELECT gene_align_member.seq_member_id FROM gene_tree_backup RIGHT JOIN gene_align_member USING (seq_member_id) WHERE gene_align_id = #gene_align_id# AND root_id = #gene_tree_id# AND gene_tree_backup.seq_member_id IS NULL',
+            },
+        ],
+    },
+
 
 
 
