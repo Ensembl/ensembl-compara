@@ -32,10 +32,11 @@ sub can_json { return 1; }
 
 sub init {
   my $self = shift;
-  my @roles;
   my $style = $self->my_config('style') || $self->my_config('display') || '';
+  my @roles;
 
   if ($style eq 'wiggle' || $style =~ /signal/) {
+    push @roles, 'EnsEMBL::Draw::Role::BigWig';
     push @roles, 'EnsEMBL::Draw::Role::Wiggle';
   }
   else {
