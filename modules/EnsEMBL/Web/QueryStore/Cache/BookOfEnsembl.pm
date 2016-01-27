@@ -10,6 +10,7 @@ use Fcntl qw(SEEK_SET SEEK_END :flock);
 use Sys::Hostname;
 use DB_File;
 use File::Copy;
+use Compress::Zlib;
 
 use bytes;
 
@@ -19,8 +20,8 @@ sub new {
   my $class = ref($proto) || $proto;
 
   my $rnd = EnsEMBL::Web::QueryStore::Cache->_key({ pid => $$, now => localtime, host => hostname });
-  my $widxfile = $conf->{'dir'}."/raw.$rnd";
-  my $wdatfile = $conf->{'dir'}."/dat.$rnd";
+  my $widxfile = $conf->{'dir'}."/$rnd.raw";
+  my $wdatfile = $conf->{'dir'}."/$rnd.dat";
   my $ridxfile = $conf->{'dir'}."/boe.idx";
   my $rdatfile = $conf->{'dir'}."/boe.dat";
   my $lockfile = $conf->{'dir'}."/boe.lok";
@@ -73,7 +74,6 @@ sub get {
   my ($self,$k) = @_;
 
   my $json = $self->{'ridx'}{$self->_key($k)};
-  warn "CACHE $json\n";
   return undef unless $json;
   my $d = JSON->new->decode($json);
   seek $self->{'rdat'},$d->[0],SEEK_SET;
@@ -95,9 +95,9 @@ sub _consolidate {
   open(OUTDAT,">>:raw",$newdat) or die;
   opendir(DIR,$self->{'dir'}) or die;
   foreach my $f (readdir(DIR)) {
-    next unless $f =~ /^ready\./;
+    next unless $f =~ /\.ready$/;
     my $idx = "$self->{'dir'}/$f";
-    (my $dat = $f) =~ s/^ready/dat/;
+    (my $dat = $f) =~ s/ready$/dat/;
     $dat = "$self->{'dir'}/$dat";
     tie(my %in,'DB_File',$idx,O_RDONLY) or die;
     open(INDAT,$dat) or die;
@@ -133,7 +133,7 @@ sub cache_close {
   close $self->{'wdat'};
   untie %{$self->{'widx'}};
   if($self->{'any'}) {
-    (my $ready = $self->{'widxfile'}) =~ s/raw\./ready\./;
+    (my $ready = $self->{'widxfile'}) =~ s/\.raw$/\.ready/;
     rename $self->{'widxfile'},$ready;
     $self->_consolidate;
   } else {

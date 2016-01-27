@@ -42,7 +42,8 @@ sub features {
 
   my $hub = $self->{'config'}{'hub'};
   return $hub->get_query('AssemblyException')->go_assembly_exception($self,{
-    slice => $self->{'container'}
+    slice => $self->{'container'},
+    species => $hub->species,
   });
 }
 

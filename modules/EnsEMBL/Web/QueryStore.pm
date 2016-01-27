@@ -8,7 +8,7 @@ use Digest::MD5 qw(md5_base64);
 
 use EnsEMBL::Web::Query;
 
-my $DEBUG = 1;
+my $DEBUG = 0;
 my $DISABLE = 0;
 
 sub new {
@@ -64,6 +64,7 @@ sub close {
   my ($self) = @_;
 
   $self->{'cache'}->cache_close();
+  $self->{'open'} = 0;
 }
 
 1;

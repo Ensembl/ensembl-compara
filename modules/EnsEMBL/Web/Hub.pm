@@ -957,7 +957,7 @@ sub query_store_setup {
     dir => "/tmp/book-of-ensembl",
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
-    Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self)
+    Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self->species_defs)
   },$cache,$SiteDefs::ENSEMBL_COHORT);
 }
 

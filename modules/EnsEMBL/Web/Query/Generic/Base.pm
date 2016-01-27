@@ -21,12 +21,20 @@ sub source {
   return $self->{'store'}->_source($source);
 }
 
-sub post_process_unique {
-  my ($self,$glyphset,$key,$ff) = @_;
+sub fixup_unique {
+  my ($self,$key) = @_;
 
-  my %features;
-  $features{$_->{$key}} = $_ for(@$ff);
-  @$ff = values %features;
+  if($self->phase eq 'post_process') {
+    my %features;
+    $features{$_->{$key}} = $_ for(@{$self->data});
+    @{$self->data} = values %features;
+  }
 }
+
+sub phase { return $_[0]->{'_phase'}; }
+sub data { return $_[0]->{'_data'}; }
+sub context { return $_[0]->{'_context'}; }
+sub args { return $_[0]->{'_args'}; }
+sub fixup {}
 
 1;

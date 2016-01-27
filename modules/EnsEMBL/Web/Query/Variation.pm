@@ -7,14 +7,76 @@ use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
 sub type_variation {
   return {
-    slice => ["slice",["ourslice",20000]],
-    start => [["start","slice"]],
-    end =>   [["end","slice"]],
-    config => "config",
- 
-    href => "zmenu",
-    tag => [["tags","slice"]],
-    class => "class"
+  };
+}
+
+sub fixup {
+  my ($self) = @_;
+
+  $self->fixup_config('config');
+  $self->fixup_href('href',1);
+  $self->fixup_location('start','slice',0);
+  $self->fixup_location('end','slice',1);
+  $self->fixup_slice('slice','species',20000);
+  $self->fixup_location('tag/*/start','slice',0);
+  $self->fixup_location('tag/*/end','slice',1);
+  $self->fixup_colour('tag/*/colour',undef,undef,'colour_type');
+  $self->fixup_colour('tag/*/label_colour','black',['label'],undef,1);
+  $self->fixup_href('tag/*/href');
+  $self->fixup_label_width('tag/*/label','end');
+
+  # Fix class key (depends on depth)
+  if($self->phase eq 'post_process') {
+    my $depth = $self->context->depth;
+    my $data = $self->data;
+    foreach my $f (@$data) {
+      $f->{'class'} = 'group' if defined $depth && $depth <= 1;
+    }
+  }
+
+  $self->SUPER::fixup();
+}
+
+sub precache_variation {
+  return {
+    '1kgindels' => {
+      loop => 'genome',
+      args => {
+        species => 'Homo_sapiens',
+        id => 'variation_set_1kg_3',
+        config => {
+          no_label => 1,
+          source => undef,
+          sets => ['1kg_3'],
+          sources => undef,
+          filter => undef,
+          style => undef,
+          set_name => '1000 Genomes - All - short variants (SNPs and indels)',
+        },
+        var_db => 'variation',
+        config_type => 'contigviewbottom',
+        type => 'variation_set_1kg_3',
+      }
+    },
+    'ph-short' => {
+      loop => 'genome',
+      args => {
+        'species' => 'Homo_sapiens',
+        'id' => 'variation_set_ph_variants',
+        'config' => {
+          'no_label' => 1,
+          'source' => undef,
+          'sets' => ['ph_variants'],
+          'sources' => undef,
+          'filter' => undef,
+          'style' => undef,
+          'set_name' => 'All phenotype-associated - short variants (SNPs and indels)'
+        },
+        'var_db' => 'variation',
+        'config_type' => 'contigviewbottom',
+        'type' => 'variation_set_ph_variants',
+      }
+    }
   };
 }
 
@@ -34,47 +96,6 @@ sub href {
     config   => $args->{'config_type'},
     track    => $args->{'type'},
   };   
-}
-
-sub post_generate_tags {
-  my ($self,$gs,$key,$ff,$params,$slice) = @_;
-
-  foreach my $f (@$ff) {
-    foreach my $t (@{$f->{$key}}) {
-      $t->{'start'} += $params->{$slice}->start+1;
-      $t->{'end'} += $params->{$slice}->start+1;
-    }
-  }
-}
-
-sub post_process_tags {
-  my ($self,$gs,$key,$ff) = @_;
-
-  foreach my $f (@$ff) {
-    foreach my $t (@{$f->{$key}}) {
-      $t->{'start'} -= $gs->{'container'}->start+1;
-      $t->{'end'} -= $gs->{'container'}->start+1;
-      #
-      if($t->{'style'} eq 'insertion') {
-        $t->{'colour'} = $gs->my_colour($t->{'colour'});
-        $t->{'href'} = $gs->_url($t->{'href'});
-      } elsif($t->{'style'} eq 'label') {
-        $t->{'colour'} = $gs->my_colour($t->{'colour'}, 'tag') ||
-                         $gs->my_colour($t->{'colour'});
-        my (undef, undef, $text_width) = $gs->get_text_width(0, $t->{'label'}, '', $gs->get_font_details($gs->my_config('font') || 'innertext', 1));
-        $t->{'end'} += $text_width/$gs->scalex;
-      } else {
-        my $colour = $gs->my_colour($t->{'colour'});
-        $t->{'colour'} = $colour;
-        my $label_colour = $gs->my_colour($t->{'colour'},'label');
-        if($label_colour and $label_colour ne $colour) {
-          $t->{'label_colour'} = $label_colour;
-        } else {
-          $t->{'label_colour'} = 'black';
-        }
-      }
-    }
-  }
 }
 
 sub tag {
@@ -99,24 +120,23 @@ sub tag {
         style  => 'label',
         label  => $label,
         colour => $colour_key,
+        colour_type => ['tag',undef],
         start  => $f->end,
         end    => $f->end + 1,
       };
     }
-
-    push @tags, { style => 'insertion', colour => $colour_key, start => $f->start, end => $f->end, href => $self->href($f,$args) } if $f->start > $f->end;
+    if($f->start > $f->end) {
+      push @tags, {
+        style => 'insertion',
+        colour => $colour_key,
+        start => $f->start,
+        end => $f->end,
+        href => $self->href($f,$args)
+      };
+    }
   }
 
   return @tags;
-}
-
-sub post_process_class {
-  my ($self,$glyphset,$key,$ff) = @_;
-
-  my $depth = $glyphset->depth;
-  foreach my $f (@$ff) {
-    $f->{$key} = 'group' if defined $depth && $depth <= 1;
-  }
 }
 
 sub title {

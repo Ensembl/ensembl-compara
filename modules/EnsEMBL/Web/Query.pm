@@ -51,35 +51,52 @@ sub _run_phase {
       }
     }
   }
+  $self->{'impl'}{'_phase'} = $phase;
+  $self->{'impl'}{'_data'} = $out;
+  $self->{'impl'}{'_context'} = $context;
+  $self->{'impl'}{'_args'} = $extra->[0];
+  $self->{'impl'}->fixup();
+}
+
+sub run_miss {
+  my ($self,$args,$type,$sub) = @_;
+      
+  my %a_gen = %$args;
+  $self->_run_phase(\%a_gen,$type,undef,'pre_generate');
+  my $part = $self->{'impl'}->$sub(\%a_gen);
+  $self->_run_phase($part,$type,undef,'post_generate',[\%a_gen]);
+  $self->_check_unblessed($part);
+  $self->{'store'}->_set_cache(ref($self),$sub,$args,$part);
+  return $part;
 }
 
 sub _get {
   my ($self,$type,$context,$sub,$args) = @_;
 
+  my $orig_args = {%$args};
+  $args = {%$args};
+  use Data::Dumper;
+  local $Data::Dumper::Maxdepth = 3;
   my $A = time();
   die "args must be a HASH" unless ref($args) eq 'HASH';
+  $self->_run_phase($args,$type,$context,'pre_process');
   my @args = ($args);
-  $self->_run_phase(\@args,$type,$context,'blockify');
+  $self->_run_phase(\@args,$type,$context,'split');
   $args = [$args] unless ref($args) eq 'ARRAY';
   my $out = [];
   my $C = time();
   foreach my $a (@args) { 
-    $self->_run_phase($a,$type,$context,'pre_process');
+    warn Dumper('args',$a);
     $self->_check_unblessed($a);
     my $part = $self->{'store'}->_try_get_cache(ref($self),$sub,$a);
     unless(defined $part) {
-      my %a_gen = %$a;
-      $self->_run_phase(\%a_gen,$type,$context,'pre_generate');
-      $part = $self->{'impl'}->$sub(\%a_gen);
-      $self->_run_phase($part,$type,$context,'post_generate',[\%a_gen]);
-      $self->_check_unblessed($part);
-      $self->{'store'}->_set_cache(ref($self),$sub,$a,$part);
+      $part = $self->run_miss($a,$type,$sub);
     }
     push @$out,@$part;
   }
   my $D = time();
   warn "block gets took ".($D-$C)."s\n" if $DEBUG;
-  $self->_run_phase($out,$type,$context,'post_process');
+  $self->_run_phase($out,$type,$context,'post_process',[$orig_args]);
   my $E = time();
   warn "post took ".($E-$D)."s\n" if $DEBUG;
   my $B = time();
@@ -94,19 +111,54 @@ sub source {
   return $self->{'store'}->_source($source);
 }
 
+sub type {
+  my ($self,$sub) = @_;
+
+  (my $type_sub = $sub) =~ s/^get/type/;
+  my $type = {};
+  if($self->{'impl'}->can($type_sub)) {
+    $type = $self->{'impl'}->$type_sub();
+  }
+  return $type;  
+}
+
+sub precache {
+  my ($self,$sub,$kind) = @_;
+
+  my $fn = "precache_$sub";
+  my $conf = $self->{'impl'}->$fn()->{$kind};
+  $fn = "loop_$conf->{'loop'}";
+  my $parts = $self->{'impl'}->$fn($conf->{'args'});
+  my $type = $self->type("get_$sub");
+  $self->{'store'}->open();
+  my $start = time();
+  foreach my $args (@$parts) {
+    my @args = ($args);
+    $self->_run_phase(\@args,$type,undef,'split');
+    foreach my $a (@args) {
+      next if defined $self->{'store'}->_try_get_cache(ref($self),"get_$sub",$a);
+      warn "  -> ".$a->{'__name'}."\n";
+      if(time()-$start > 60) {
+        $self->{'store'}->close();
+        $self->{'store'}->open();
+        $start = time();
+      }
+      $self->run_miss($a,$type,"get_$sub");
+    }
+  }
+  $self->{'store'}->close();      
+}
+
 sub AUTOLOAD {
   our $AUTOLOAD;
   my $sub = $AUTOLOAD;
+  return if $sub =~ /::DESTROY$/;
   if($sub =~ s/^.*::go(_(\w+))?$/get$1/) {
     my ($self,$context,$args) = @_;
     unless($self->{'impl'}->can($sub)) {
       die "$sub doesn't exist in $self->{'impl'}\n";
     }
-    (my $type_sub = $sub) =~ s/^get/type/;
-    my $type = {};
-    if($self->{'impl'}->can($type_sub)) {
-      $type = $self->{'impl'}->$type_sub();
-    }
+    my $type = $self->type($sub);
     return $self->_get($type,$context,$sub,$args);
   }
   die "Unknown method $sub\n";

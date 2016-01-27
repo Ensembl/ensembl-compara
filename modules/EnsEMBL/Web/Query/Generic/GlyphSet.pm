@@ -15,101 +15,175 @@ sub slice2sr {
     ($slice->start + $s - 1, $slice->start + $e - 1);
 }
 
-sub post_process_href {
-  my ($self,$gs,$key,$ff) = @_;
+sub _route {
+  my ($self,$route,$data) = @_;
 
-  foreach my $f (@$ff) {
-    $f->{$key} = $gs->_url($f->{$key}) if $f->{$key};
+  my $out = $data;
+  foreach my $r (@$route) {
+    if($r eq '*') {
+      my @new;
+      push @new,@{$_||[]} for(@$out);
+      $out = \@new;
+    } else {
+      $out = [ map { $_->{$r} } @$out ];
+    }
+  }
+  return $out;
+}
+
+sub _remove_duds_int {
+  my ($self,$route,$data) = @_;
+
+  return $data if !@$route;
+  my @rest = @$route;
+  my $here = shift @rest;
+  if($here eq '*') {
+    my @new;
+    foreach my $e (@{$data||[]}) {
+      next if ref($e) eq 'HASH' and $e->{'__dud'};
+      push @new,$self->_remove_duds_int(\@rest,$e);
+    }
+    return \@new;
+  } else {
+    $data->{$here} = $self->_remove_duds_int(\@rest,$data->{$here});
+    return $data;
   }
 }
 
-sub post_process_zmenu {
-  my ($self,$gs,$key,$ff) = @_;
+sub _remove_duds {
+  my ($self,$route,$data) = @_;
 
-  foreach my $f (@$ff) {
-    $f->{$key} = $gs->_quick_url($f->{$key}) if $f->{$key};
+  return $self->_remove_duds_int(['*',@$route],$data);
+}
+
+sub fixup_href {
+  my ($self,$key,$quick) = @_;
+
+  if($self->phase eq 'post_process') {
+    my $data = $self->data;
+    foreach my $f (@$data) {
+      next unless $f->{$key};
+      if($quick) {
+        $f->{$key} = $self->context->_quick_url($f->{$key});
+      } else {
+        $f->{$key} = $self->context->_url($f->{$key});
+      }
+    }
   }
 }
 
-sub post_process_colour {
-  my ($self,$glyphset,$key,$ff,$default) = @_;
+sub fixup_colour {
+  my ($self,$key,$default,$types,$type_key,$differs) = @_;
 
-  my $hub = $glyphset->{'config'}{'hub'};
-  my $colourmap = $hub->colourmap;
-  foreach my $f (@$ff) {
-    $f->{$key} = $colourmap->hex_by_name($glyphset->my_colour($f->{$key}) || $default);
+  $types = [$types] unless ref($types) eq 'ARRAY';
+  if($self->phase eq 'post_process') {
+    my $data = $self->data;
+    my $gs = $self->context;
+    my $cm = $gs->{'config'}{'hub'}->colourmap;
+    my @route = split('/',$key);
+    $key = pop @route;
+    foreach my $f (@{$self->_route(\@route,$data)}) {
+      next unless $f->{$key};
+      $types = $f->{$type_key}||[undef] if $type_key;
+      my $base_colour = $gs->my_colour($f->{$key});
+      my $colour;
+      foreach my $type (@$types) {
+        my $c = $gs->my_colour($f->{$key},$type);
+        if($c ne $base_colour or !$differs) {
+          $colour = $c;
+          last;
+        }
+      }
+      $f->{$key} = $cm->hex_by_name($colour || $default);
+    }
   }
 }
 
-sub post_process_start {
-  my ($self,$glyphset,$key,$ff) = @_;
+sub fixup_label_width {
+  my ($self,$key,$end_key) = @_;
 
-  my @out;
-  foreach my $f (@$ff) {
-    $f->{$key} -= $glyphset->{'container'}->start+1;
-    next if $f->{$key} > $glyphset->{'container'}->length;
-    $f->{$key} = max($f->{$key},0);
-    push @out,$f;
-  }
-  @$ff = @out;
-}
-
-sub post_generate_start {
-  my ($self,$glyphset,$key,$ff,$params,$slice) = @_;
-
-  foreach my $f (@$ff) {
-    $f->{$key} += $params->{$slice}->start+1;
+  if($self->phase eq 'post_process') {
+    my $data = $self->data;
+    my @route = split('/',$key);
+    $key = pop @route;
+    foreach my $f (@{$self->_route(\@route,$data)}) {
+      next unless $f->{$key};
+      my $gs = $self->context;
+      my $fd = $gs->get_font_details($gs->my_config('font')||'innertext',1);
+      my @size = $gs->get_text_width(0,$f->{$key},'',$fd);
+      $f->{$end_key} += $size[2]/$gs->scalex;
+    }
   }
 }
 
-sub post_process_end {
-  my ($self,$glyphset,$key,$ff) = @_;
+sub fixup_location {
+  my ($self,$key,$slice_key,$end) = @_;
 
-  my @out;
-  foreach my $f (@$ff) {
-    $f->{$key} -= $glyphset->{'container'}->start+1;
-    next if $f->{$key} < 0;
-    $f->{$key} = min($glyphset->{'container'}->length,$f->{$key});
-    push @out,$f;
-  }
-  @$ff = @out;
-}
-
-sub post_generate_end {
-  my ($self,$glyphset,$key,$ff,$params,$slice) = @_;
-
-  foreach my $f (@$ff) {
-    $f->{$key} += $params->{$slice}->start+1;
-  }
-}
-
-sub pre_process_slice {
-  my ($self,$glyphset,$key,$ff) = @_;
-
-  $ff->{$key} = $ff->{$key}->name if $ff->{$key};
-}
-
-sub pre_generate_slice {
-  my ($self,$glyphset,$key,$ff) = @_;
-
-  my $hub = $glyphset->{'config'}{'hub'};
-  $ff->{$key} = $self->source('Adaptors')->slice_by_name($hub->species,$ff->{$key}) if $ff->{$key};
-}
-
-sub post_generate_slice {
-  my ($self,$glyphset,$key,$ff,$params) = @_;
-
-  foreach my $f (@$ff) {
-    $f->{$key} = $f->{$key}->name if $f->{$key};
+  my @route = split('/',$key);
+  $key = pop @route;
+  if($self->phase eq 'post_process') {
+    my $data = $self->data;
+    my $container = $self->context->{'container'};
+    foreach my $f (@{$self->_route(\@route,$data)}) {
+      $f->{$key} -= $container->start+1;
+      if($end) {
+        $f->{'__dud'} = 1 if $f->{$key} < 0;
+        $f->{$key} = min($container->length,$f->{$key});
+      } else {
+        $f->{'__dud'} = 1 if $f->{$key} > $container->length;
+        $f->{$key} = max($f->{$key},0);
+      }
+    }
+    @$data = @{$self->_remove_duds(\@route,$data)};
+  } elsif($self->phase eq 'post_generate') {
+    my $data = $self->data;
+    foreach my $f (@{$self->_route(\@route,$data)}) {
+      $f->{$key} += $self->args->{$slice_key}->start+1;
+    } 
   }
 }
 
-sub post_process_slice {
-  my ($self,$glyphset,$key,$ff) = @_;
+sub fixup_slice {
+  my ($self,$key,$sk,$chunk) = @_;
 
-  my $hub = $glyphset->{'config'}{'hub'};
-  foreach my $f (@$ff) {
-    $f->{$key} = $self->source('Adaptors')->slice_by_name($hub->species,$f->{$key}) if $f->{$key};
+  if($self->phase eq 'pre_process') {
+    my $data = $self->data;
+    $data->{$key} = $data->{$key}->name if $data->{$key};
+  } elsif($self->phase eq 'pre_generate') {
+    my $data = $self->data;
+    my $ad = $self->source('Adaptors');
+    if($data->{$key}) {
+      $data->{$key} = $ad->slice_by_name($data->{$sk},$data->{$key});
+    }
+  } elsif($self->phase eq 'post_generate') {
+    my $data = $self->data;
+    my $ad = $self->source('Adaptors');
+    foreach my $f (@$data) {
+      next unless $f->{$key};
+      $f->{$key} = $ad->name;
+    }
+  } elsif($self->phase eq 'post_process') {
+    my $data = $self->data;
+    my $ad = $self->source('Adaptors');
+    my $sp = $self->args->{$sk};
+    foreach my $f (@$data) {
+      next unless $f->{$key};
+      $f->{$key} = $ad->slice_by_name($sp,$f->{$key});
+    }
+  } elsif($self->phase eq 'split' and defined $chunk) {
+    my @out;
+    my $data = $self->data;
+    foreach my $r (@$data) {
+      my $ad = $self->source('Adaptors');
+      my $all = $ad->slice_by_name($r->{$sk},$r->{$key});
+      foreach my $slice (@{$self->_split_slice($all,$chunk||10_000)}) {
+        my %new_r = %$r;
+        $new_r{$key} = $slice->name;
+        $new_r{'__name'} = $slice->name;
+        push @out,\%new_r;
+      }
+    }
+    @{$self->data} = @out;
   }
 }
 
@@ -133,29 +207,36 @@ sub _split_slice {
   return \@out;
 }
 
+sub fixup_config {
+  my ($self,$key) = @_;
 
-sub blockify_ourslice {
-  my ($self,$glyphset,$key,$ff,$rsize) = @_;
-
-  my @out;
-  foreach my $r (@$ff) {
-    foreach my $slice (@{$self->_split_slice($r->{$key},$rsize||10_000)}) {
-      my %new_r = %$r;
-      $new_r{$key} = $slice;
-      push @out,\%new_r;
+  if($self->phase eq 'pre_process') {
+    use Carp qw(cluck);
+    warn "FIXUP_CONFIG ".$self->phase."\n";
+    my $args = $self->data;
+    use Data::Dumper;
+    warn Dumper($args);
+    my %config;
+    foreach my $k (@{$args->{$key}}) {
+      $config{$k} = $self->context->my_config($k);
     }
+    $args->{$key} = \%config;
   }
-  @$ff = @out;
 }
 
-sub pre_process_config {
-  my ($self,$glyphset,$key,$ff) = @_;
+sub loop_genome {
+  my ($self,$args) = @_;
 
-  my %config;
-  foreach my $k (@{$ff->{$key}}) {
-    $config{$k} = $glyphset->my_config($k);
-  }
-  $ff->{$key} = \%config;
+  my $top = $self->source('Adaptors')->
+              slice_adaptor($args->{'species'})->fetch_all('toplevel');
+  my @out;
+  foreach my $c (@$top) {
+    my %out = %$args;
+    $out{'slice'} = $c->name;
+    $out{'__name'} = $c->name;
+    push @out,\%out;
+  } 
+  return \@out;
 }
 
 1;

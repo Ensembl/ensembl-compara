@@ -7,17 +7,35 @@ use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
 sub type_assembly_exception {
   return {
-    slice => ["slice",["ourslice",100000000]],
-    start => [["start","slice"]],
-    end =>   [["end","slice"]],
-
-    alternate_slice => "slice",
-
-    tag => "tag",
-    title => "title",
-    href => "href",
-    colour => "colour"
   };
+}
+
+sub fixup {
+  my ($self) = @_;
+
+  $self->fixup_location('start','slice',0);
+  $self->fixup_location('end','slice',1);
+  $self->fixup_slice('slice','species',1000000000);
+  $self->fixup_slice('alternate_slice','species');
+  $self->fixup_href('href');
+  $self->fixup_colour('colour');
+  $self->fixup_colour('tag/*/colour',undef,'join');
+
+  # Fix titles (They have text which depend on my_colour!)
+  if($self->phase eq 'post_process') {
+    my $data = $self->data;
+    my $gs = $self->context;
+    foreach my $f (@$data) {
+      my $in = $self->{'title'};
+      my $title = '';
+      foreach my $e (@$in) {
+        $title .= sprintf('%s; %s',$gs->my_colour($e->[0],'text'),$e->[1]);
+      }
+      $f->{'title'} = $title;
+    }
+  }
+
+  $self->SUPER::fixup();
 }
 
 sub colour_key {
@@ -30,15 +48,15 @@ sub colour_key {
   return $key;
 }
 
-sub post_process_tag {
-  my ($self,$gs,$key,$ff) = @_;
-
-  foreach my $f (@$ff) {
-    foreach my $t (@{$f->{$key}}) {
-      $t->{'colour'} = $gs->my_colour($t->{'colour'},'join');
-    }
-  }
-}
+#sub post_process_tag {
+#  my ($self,$gs,$key,$ff) = @_;
+#
+#  foreach my $f (@$ff) {
+#    foreach my $t (@{$f->{$key}}) {
+#      $t->{'colour'} = $gs->my_colour($t->{'colour'},'join');
+#    }
+#  }
+#}
 
 sub tag {
   my ($self, $f) = @_; 
@@ -70,18 +88,18 @@ sub get_single_feature {
   return $feature;
 }
 
-sub post_process_title {
-  my ($self,$gs,$key,$ff) = @_;
-
-  foreach my $f (@$ff) {
-    my $in = $self->{$key};
-    my $title = '';
-    foreach my $e (@$in) {
-      $title .= sprintf('%s; %s',$gs->my_colour($e->[0],'text'),$e->[1]);
-    }
-    $f->{$key} = $title;
-  }
-}
+#sub post_process_title {
+#  my ($self,$gs,$key,$ff) = @_;
+#
+#  foreach my $f (@$ff) {
+#    my $in = $self->{$key};
+#    my $title = '';
+#    foreach my $e (@$in) {
+#      $title .= sprintf('%s; %s',$gs->my_colour($e->[0],'text'),$e->[1]);
+#    }
+#    $f->{$key} = $title;
+#  }
+#}
 
 sub href {
   my ($self, $f, $args) = @_;

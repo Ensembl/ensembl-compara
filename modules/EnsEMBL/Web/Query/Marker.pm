@@ -17,17 +17,24 @@ sub href {
 
 sub colour_key { return lc $_[1]->marker->type; }
 
+sub fixup {
+  my ($self) = @_;
+
+  $self->fixup_slice('slice','species',100000);
+  $self->fixup_location('start','slice',0);
+  $self->fixup_location('end','slice',1);
+  $self->fixup_unique('_unique');
+  $self->fixup_href('href');
+  $self->fixup_colour('colour','magenta');
+  $self->fixup_colour('label_colour','magenta');
+  $self->SUPER::fixup();
+}
+
 sub type_marker {
   return {
-    slice => ["slice",["ourslice",100000]],
-    start => [["start","slice"]],
-    end =>   [["end","slice"]],
-    
-    _unique => "unique",
-
-    href => "href",
-    colour => [["colour","magenta"]],
-    label_colour => [["colour","magenta"]],
+#    href => "href",
+#    colour => [["colour","magenta"]],
+#    label_colour => [["colour","magenta"]],
   };
 }
 
