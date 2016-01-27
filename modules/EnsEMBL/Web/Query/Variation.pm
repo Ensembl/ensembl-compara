@@ -5,11 +5,6 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
-sub type_variation {
-  return {
-  };
-}
-
 sub fixup {
   my ($self) = @_;
 

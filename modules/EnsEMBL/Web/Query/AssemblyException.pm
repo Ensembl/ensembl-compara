@@ -5,11 +5,6 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
-sub type_assembly_exception {
-  return {
-  };
-}
-
 sub fixup {
   my ($self) = @_;
 
@@ -47,16 +42,6 @@ sub colour_key {
   (my $key = lc $f->{'type'}) =~ s/ /_/g;
   return $key;
 }
-
-#sub post_process_tag {
-#  my ($self,$gs,$key,$ff) = @_;
-#
-#  foreach my $f (@$ff) {
-#    foreach my $t (@{$f->{$key}}) {
-#      $t->{'colour'} = $gs->my_colour($t->{'colour'},'join');
-#    }
-#  }
-#}
 
 sub tag {
   my ($self, $f) = @_; 

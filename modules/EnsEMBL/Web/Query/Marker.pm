@@ -30,14 +30,6 @@ sub fixup {
   $self->SUPER::fixup();
 }
 
-sub type_marker {
-  return {
-#    href => "href",
-#    colour => [["colour","magenta"]],
-#    label_colour => [["colour","magenta"]],
-  };
-}
-
 sub get_marker {
   my ($self,$args) = @_;
 
