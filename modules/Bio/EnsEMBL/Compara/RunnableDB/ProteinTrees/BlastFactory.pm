@@ -108,14 +108,12 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
 
-    my $step = $self->param('step');
+    #my $step = $self->param('step');
+    my $step = 15;
 
     my @member_id_list = (map {$_->dbID} @{$self->param('query_members')});
     #my @member_id_list = sort {$a <=> $b} (map {$_->dbID} @{$self->param('query_members')});
     my @target_genome_db_ids = sort {$a <=> $b} (map {$_->dbID} @{$self->param('target_genome_dbs')});
-
-    my $member_length = {map {$_->dbID => $_->seq_length} @{$self->param('query_members')}};
-    $self->param('seq_length', $member_length);
 
     #my $c = 0;
     while (@member_id_list) {
@@ -123,7 +121,7 @@ sub write_output {
         
         my ( $param_index, $new_job_array, $leftover_members );
         if ( $self->param('chunk_by_size') ){
-            # sort job_array by seq_length from high to low
+            # sort job_array by seq_lens from high to low
             #( $blast_params, $evalue, $new_job_array, $leftover_members ) = $self->_check_job_array_lengths( \@job_array );
             ( $param_index, $new_job_array, $leftover_members ) = $self->_check_job_array_lengths( \@job_array );
             @job_array = @{ $new_job_array };
@@ -185,9 +183,9 @@ sub _check_job_array_lengths {
     }
 
     # find point at which seqs become too long for range
-    my ($i, $j);
+    my $j;
     my $ja_len = scalar( @{$job_array} )-1;
-    foreach $i ( 0..$ja_len ){
+    foreach my $i ( 0..$ja_len ){
         if ( $self->_get_length_by_member_id( $job_array[$i] ) >= $range[1] ){
             $j = $i;
             last;
@@ -208,7 +206,8 @@ sub _check_job_array_lengths {
 sub _get_length_by_member_id {
     my ( $self, $member_id ) = @_;
 
-    return $self->param('seq_length')->{$member_id};
+    my $seq_mem = $self->compara_dba->get_SeqMemberAdaptor->fetch_by_dbID( $member_id );
+    return $seq_mem->seq_length;
 }
 
 1;
