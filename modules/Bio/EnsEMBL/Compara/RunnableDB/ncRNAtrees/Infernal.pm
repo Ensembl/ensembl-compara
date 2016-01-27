@@ -262,9 +262,9 @@ sub run_infernal {
 
   $cmd .= " --mxsize 4000 " if($self->input_job->retry_count >= 1); # large alignments FIXME separate Infernal_huge
   $cmd .= " -o " . $stk_output;
+  $cmd .= " --cpu " . $self->param_required('cmalign_threads');
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $self->param('input_fasta');
-  $cmd .= " --cpu " . $self->param_required('cmalign_threads');
 
 #  $DB::single=1;1;
   my $command = $self->run_command($cmd);
