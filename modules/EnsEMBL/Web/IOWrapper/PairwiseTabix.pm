@@ -60,11 +60,11 @@ sub create_hash {
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
-  my $slice_start     = $slice->start;
-  my $feature_1_start = $self->parser->get_start - $slice_start;
-  my $feature_1_end   = $self->parser->get_end - $slice_start;
-  $feature_2_start   -= $slice_start;
-  $feature_2_end     -= $slice_start;
+  my $offset = $slice->start - 1;
+  my $feature_1_start = $self->parser->get_start - $offset;
+  my $feature_1_end   = $self->parser->get_end - $offset;
+  $feature_2_start   -= $offset;
+  $feature_2_end     -= $offset;
 
   ## Set colour for feature
   my $colour_params  = {
