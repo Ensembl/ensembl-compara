@@ -32,7 +32,7 @@ use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 sub can_json { return 1; }
 
-sub features {
+sub get_data {
   my $self      = shift;
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_config('url');
@@ -47,33 +47,32 @@ sub features {
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour');
     my $metadata = {
-                    'colour'        => $colour,
-                    'join_colour'   => $colour,
-                    'label_colour'  => $colour,
-                    };
+                    'colour'          => $colour,
+                    'join_colour'     => $colour,
+                    'default_strand'  => 1,
+                  };
 
     ## No colour defined in ImageConfig, so fall back to defaults
     unless ($colour) {
       my $colourset_key = $self->{'my_config'}->get('colourset') || 'userdata';
       my $colourset     = $hub->species_defs->colour($colourset_key);
       my $colours       = $colourset->{'url'} || $colourset->{'default'};
-      $metadata         = {
-                            'colour'        => $colours->{'default'},
-                            'join_colour'   => $colours->{'join'} || $colours->{'default'},
-                            'label_colour'  => $colours->{'text'} || $colours->{'default'},
-                          };
+      $metadata->{'colour'}       = $colours->{'default'};
+      $metadata->{'join_colour'}  = $colours->{'join'} || $colours->{'default'};
     }
 
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
+    $self->{'data'} = $data;
   } else {
+    $self->{'data'} = [];
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! ERROR CREATING PARSER FOR PAIRWISE FORMAT";
   }
   #$self->{'config'}->add_to_legend($legend);
 
-  return $data;
+  return $self->{'data'};
 }
              
 
