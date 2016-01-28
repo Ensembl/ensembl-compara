@@ -77,6 +77,7 @@ sub new {
     bumped     => undef,
     error      => undef,
     features   => [],
+    data       => [], ## New name for 'features'
     highlights => $data->{'highlights'},
     strand     => $data->{'strand'},
     container  => $data->{'container'},
@@ -257,6 +258,12 @@ sub _init {
 }
 
 sub init { return []; } ## New method used by refactored glyphsets
+
+sub features {
+  my $self = shift;
+  warn ">>>> DEPRECATED METHOD 'features' CALLED BY $self - please use 'get_data' instead.";
+  return $self->get_data(@_);
+}
 
 sub bumped {
   my ($self, $val) = @_;

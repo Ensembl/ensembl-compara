@@ -47,10 +47,10 @@ sub init {
     Role::Tiny->apply_roles_to_object($self, @roles);
   }
 
-  $self->{'features'} = $self->features;
+  $self->{'data'} = $self->get_data;
 }
 
-sub features {
+sub get_data {
   my $self = shift;
   warn ">>> IMPORTANT - THIS METHOD MUST BE IMPLEMENTED IN MODULE $self!";
 =pod
@@ -85,7 +85,7 @@ sub my_empty_label {
 
 sub draw_features {
   my ($self, $subtracks) = @_;
-  $subtracks ||= $self->{'features'}; ## cached track
+  $subtracks ||= $self->{'data'}; ## cached track
   return unless $subtracks && ref $subtracks eq 'ARRAY';
   my $feature_count = 0;
 
@@ -187,7 +187,7 @@ sub draw_features {
 
 sub draw_aggregate {
   my ($self, $subtracks) = @_;
-  $subtracks ||= $self->{'features'};
+  $subtracks ||= $self->{'data'};
   return unless $subtracks && ref $subtracks eq 'ARRAY';
 
   my %config = %{$self->track_style_config};

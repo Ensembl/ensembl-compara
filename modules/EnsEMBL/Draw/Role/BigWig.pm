@@ -28,7 +28,7 @@ use List::Util qw(min max);
 
 use EnsEMBL::Web::IOWrapper::Indexed;
 
-sub features {
+sub get_data {
   my ($self, $bins) = @_;
 
   my $data = $self->_fetch_data($bins);
@@ -90,7 +90,7 @@ sub _fetch_data {
   my ($self, $bins) = @_;
   $bins ||= $self->bins;
 
-  return $self->{'_cache'}{'features'} if $self->{'_cache'}{'features'};
+  return $self->{'_cache'}{'data'} if $self->{'_cache'}{'data'};
  
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_config('url');
@@ -154,8 +154,8 @@ sub _fetch_data {
     $data = $iow->create_tracks($slice, $metadata);
   }
 
-  $self->{'_cache'}{'features'} = $data;
-  return $self->{'_cache'}{'features'};
+  $self->{'_cache'}{'data'} = $data;
+  return $self->{'_cache'}{'data'};
 }
 
 sub bins {

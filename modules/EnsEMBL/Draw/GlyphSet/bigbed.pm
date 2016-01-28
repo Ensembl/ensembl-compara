@@ -31,7 +31,7 @@ use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 sub can_json { return 1; }
 
-sub features {
+sub get_data {
   my $self      = shift;
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_config('url');

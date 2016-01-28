@@ -29,7 +29,7 @@ use EnsEMBL::Web::IOWrapper;
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 
-sub features {
+sub get_data {
 ### Method to parse a data file and return information to be displayed
 ### @return Arrayref - see parent
   my $self         = shift;

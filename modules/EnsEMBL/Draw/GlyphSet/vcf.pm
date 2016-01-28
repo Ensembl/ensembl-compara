@@ -42,20 +42,20 @@ sub init {
   Role::Tiny->apply_roles_to_object($self, @roles);
 
   ## Cache raw VCF features
-  $self->{'features'} = $self->features;
+  $self->{'data'} = $self->get_data;
 }
 
 ############# RENDERING ########################
 
 sub render_histogram {
   my $self = shift;
-  my $features = $self->features->[0]{'features'}[1];
+  my $features = $self->data->[0]{'features'}[1];
   return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_normal;
 }
 
 sub render_simple {
   my $self = shift;
-  if (scalar @{$self->features} > 200) {
+  if (scalar @{$self->data->[0]{'features'}[1]} > 200) {
     $self->too_many_features;
     return undef;
   }
@@ -64,7 +64,7 @@ sub render_simple {
     $self->{'my_config'}->set('height', 12);
     $self->{'my_config'}->set('default_strand', 1);
     $self->{'my_config'}->set('drawing_style', ['Feature']);
-    $self->{'features'}[0]{'features'}{'1'} = $self->consensus_features;
+    $self->{'data'}[0]{'features'}{'1'} = $self->consensus_features;
     $self->draw_features;
   }
 }
@@ -75,19 +75,19 @@ sub render_density_bar {
   $self->{'my_config'}->set('no_guidelines', 1);
   $self->{'my_config'}->set('integer_score', 1);
   ## Convert raw features into correct data format 
-  $self->{'features'}[0]{'features'}{'1'} = $self->density_features;
+  $self->{'data'}[0]{'features'}{'1'} = $self->density_features;
   $self->render_signal;
 }
 
 ############# DATA ACCESS & PROCESSING ########################
 
-sub features {
+sub get_data {
 ### Fetch and cache raw features - we'll process them later as needed
   my $self = shift;
   $self->{'my_config'}->set('default_strand', 1);
   $self->{'my_config'}->set('show_subtitle', 1);
 
-  unless ($self->{'features'} && scalar @{$self->{'features'}}) {
+  unless ($self->{'data'} && scalar @{$self->{'data'}}) {
     my $slice       = $self->{'container'};
     my $start       = $slice->start;
 
@@ -95,28 +95,28 @@ sub features {
     ## Don't assume the adaptor can find and open the file!
     my $consensus   = eval { $vcf_adaptor->fetch_variations($slice->seq_region_name, $slice->start, $slice->end); };
     if ($@) {
-      $self->{'features'} = [];
+      $self->{'data'} = [];
     }
     else {
       my $colours = $self->species_defs->colour('variation');
       my $colour  = $colours->{'default'}->{'default'}; 
       
-      $self->{'features'} = [{'metadata' => {
-                                            'name'    => $self->{'my_config'}->get('name'),
-                                            'colour'  => $colour,
-                                            }, 
-                              'features' => {'1' => $consensus}
+      $self->{'data'} = [{'metadata' => {
+                                          'name'    => $self->{'my_config'}->get('name'),
+                                          'colour'  => $colour,
+                                         }, 
+                          'features' => {'1' => $consensus}
                               }];
     }
   }
-  return $self->{'features'};
+  return $self->{'data'};
 }
 
 sub consensus_features {
 ### Turn raw features into consensus features for drawing
 ### @return Arrayref of hashes
   my $self = shift;
-  my $raw_features  = $self->{'features'}[0]{'features'}{'1'};
+  my $raw_features  = $self->{'data'}[0]{'features'}{'1'};
   my $config        = $self->{'config'};
   my $slice         = $self->{'container'};
   my $start         = $slice->start;
@@ -226,7 +226,7 @@ sub density_features {
   my $divlen   = $vclen / $divs;
   $divlen      = 10 if $divlen < 10; # Increase the number of points for short sequences
   my $density  = {};
-  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->features};
+  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->get_data};
 
   my $colours = $self->species_defs->colour('variation');
   my $colour  = $colours->{'default'}->{'default'};

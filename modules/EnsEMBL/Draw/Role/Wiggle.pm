@@ -81,7 +81,7 @@ sub _render_aggregate {
     unless $self->{'my_config'}->get('axis_colour');
 
   ## Now we try and draw the features
-  my $error = $self->draw_aggregate($self->{'features'});
+  my $error = $self->draw_aggregate($self->{'data'});
   return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
 
   my $here = $self->my_config('strand') eq 'b' ? 'on this strand' : 'in this region';
@@ -109,7 +109,7 @@ sub _render {
   $self->{'my_config'}->set('bumped', 0);
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
 
-  my $tracks = $self->{'features'};
+  my $tracks = $self->{'data'};
   return unless ref $tracks eq 'ARRAY';
 
   # Make sure subtitles will be correctly coloured

@@ -188,7 +188,7 @@ sub _render_reads {
   my $read_colour = $self->my_colour('read');
   $self->{'my_config'}->set('insert_colour', $self->my_colour('read_insert'));
 
-  my $all_features    = $self->features->[0]{'features'};
+  my $all_features    = $self->get_data->[0]{'features'};
   my $default_strand  = $self->{'my_config'}->get('default_strand');
   my $fs = [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$all_features->{$default_strand}} ];
 
@@ -307,7 +307,7 @@ sub _render {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
-    my $features = $self->features->[0]{'features'};
+    my $features = $self->get_data->[0]{'features'};
     if (!scalar(@{$features->{$default_strand}})) {
       $self->no_features;
     } else {
@@ -339,17 +339,17 @@ sub reset {
 
 ############# DATA ACCESS & PROCESSING ########################
 
-sub features {
+sub get_data {
 ## get the alignment features
   my $self = shift;
 
   my $slice = $self->{'container'};
-  if (!exists($self->{_cache}->{features})) {
-    $self->{_cache}->{features} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end) || [];
+  if (!exists($self->{_cache}->{data})) {
+    $self->{_cache}->{data} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end) || [];
   }
   my $default_strand = $self->{'my_config'}->get('default_strand') || 1;
   ## Return data in standard format expected by other modules
-  return [{'features' => {$default_strand => $self->{_cache}->{features}},
+  return [{'features' => {$default_strand => $self->{_cache}->{data}},
             'metadata' => {'zmenu_caption' => 'Aligned reads'},
           }];
 } 
@@ -642,7 +642,7 @@ sub calc_coverage {
 ## calculate the coverage
   my ($self) = @_;
 
-  my $all_features    = $self->features->[0]{'features'};
+  my $all_features    = $self->get_data->[0]{'features'};
   my $default_strand  = $self->{'my_config'}->get('default_strand');
   my $features        = $all_features->{$default_strand};
 
