@@ -220,7 +220,7 @@ sub create_tracks {
   else {
     while ($parser->next) {
       my $track_key = $self->build_metadata($parser, $data, $extra_config, $order);
-      my %metadata  = $data->{$track_key}{'metadata'};
+      my %metadata  = %{$data->{$track_key}{'metadata'}||{}};
       $prioritise   = 1 if $metadata{'priority'};
 
       ## Set up density bins if needed
