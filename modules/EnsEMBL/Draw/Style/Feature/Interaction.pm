@@ -61,7 +61,6 @@ sub create_glyphs {
 
       $current_max = $self->draw_feature($feature, %defaults);
       $max_arc = $current_max if $current_max > $max_arc;
-
     }
   }
 
@@ -156,8 +155,8 @@ sub draw_join {
       $arc_end    = $s2;
     }
     else {
-      $arc_start = $e1 + 1;
-      $arc_end   = $e2 + 1;
+      $arc_start = $e1;
+      $arc_end   = $e2;
     }
   }
   else {
@@ -180,8 +179,8 @@ sub draw_join {
   ## Somewhat confusingly, the drawing code uses coordinates for horizontal dimensions
   ## but pixels for vertical ones, which makes the following maths hideous!
   ## Convert horizontal dimensions to pixels to make things sane:
-  $arc_start = ceil($arc_start * $pix_per_bp);
-  $arc_end   = ceil($arc_end * $pix_per_bp);
+  my $pixel_start = ceil($arc_start * $pix_per_bp);
+  my $pixel_end   = ceil($arc_end * $pix_per_bp);
 
   ## Set some sensible limits
   my $width     = $image_width;
@@ -192,7 +191,7 @@ sub draw_join {
   ## Start with a basic circular arc, then constrain to above limits
   my $start_point   = 0; ## righthand end of arc
   my $end_point     = 180; ### lefthand end of arc
-  my $major_axis    = $arc_end - $arc_start;
+  my $major_axis    = $pixel_end - $pixel_start;
   my $minor_axis    = $major_axis;
   $major_axis       = $max_width if $major_axis > $max_width;
   $minor_axis       = $max_depth if $minor_axis > $max_depth;
@@ -200,14 +199,14 @@ sub draw_join {
   my $b             = $minor_axis / 2;
 
   ## Measurements needed for drawing partial arcs
-  my $centre        = $arc_start + $a;
+  my $centre        = $pixel_start + $a;
   my $left_height   = $minor_axis; ## height of curve at left of image
   my $right_height  = $minor_axis; ## height of curve at right of image
 
   ## Cut curve off at edge of track if ends lie outside the current window
   ## Note that we have to calculate the angle theta as if we were drawing a
   ## circle, as there's something funky going on in GD!
-  if ($arc_start < 0) {
+  if ($pixel_start < 0) {
     my $x = abs($centre);
     $x = $a if $x > $a;
     $left_height = $self->ellipse_y($x, $a, $b);
@@ -252,17 +251,14 @@ sub draw_join {
   else {
     $max_arc = $minor_axis if $minor_axis > $max_arc;
   }
-
-  ## Convert horizontal dimensions back to coordinates
-  $arc_start    = int($arc_start / $pix_per_bp);
-  $arc_end      = int($arc_end / $pix_per_bp);
-  my $arc_width = $arc_end - $arc_start;
+  my $pixel_width = $pixel_end - $pixel_start;
 
   ## Finally, we have the coordinates to draw 
   my $arc_params = {
                     x             => $arc_end,
                     y             => $b + $params{'height'},
-                    width         => $arc_width,
+                    width         => $pixel_width,
+                    absolutewidth => 1,
                     height        => $minor_axis,
                     start_point   => $start_point,
                     end_point     => $end_point,
@@ -270,7 +266,6 @@ sub draw_join {
                     filled        => 0,
                     thickness     => 2,
                   };
-
   push @{$self->glyphs}, $self->Arc($arc_params);
   return $max_arc;
 }
