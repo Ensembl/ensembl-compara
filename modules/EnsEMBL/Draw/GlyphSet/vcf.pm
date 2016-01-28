@@ -49,13 +49,13 @@ sub init {
 
 sub render_histogram {
   my $self = shift;
-  my $features = $self->data->[0]{'features'}[1];
+  my $features = $self->get_data->[0]{'features'}{'1'};
   return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_normal;
 }
 
 sub render_simple {
   my $self = shift;
-  if (scalar @{$self->data->[0]{'features'}[1]} > 200) {
+  if (scalar @{$self->get_data->[0]{'features'}{'1'}} > 200) {
     $self->too_many_features;
     return undef;
   }
