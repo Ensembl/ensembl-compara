@@ -135,8 +135,9 @@ sub consensus_features {
     my $unknown_type = 1;
     my $vs           = $f->{'POS'} - $start + 1;
     my $ve           = $vs;
+    my $sv           = $f->{'INFO'}{'SVTYPE'};
 
-    if (my $sv = $f->{'INFO'}{'SVTYPE'}) {
+    if ($sv) {
       $unknown_type = 0;
 
       if ($sv eq 'DEL') {
@@ -162,14 +163,32 @@ sub consensus_features {
       elsif ($altlen > 1) {
         $ve = $vs - 1;
       }
+      $sv = 'OTHER';
     }
 
     my $allele_string = join '/', $f->{'REF'}, @{$f->{'ALT'} || []};
     my $vf_name       = $f->{'ID'} eq '.' ? "$f->{'CHROM'}_$f->{'POS'}_$allele_string" : $f->{'ID'};
 
+    ## Flip for drawing
     if ($slice->strand == -1) {
       my $flip = $slice->length + 1;
       ($vs, $ve) = ($flip - $ve, $flip - $vs);
+    }
+
+    ## Zmenu
+    my %lookup = (
+                  'INS'   => 'Insertion',
+                  'DEL'   => 'Deletion',
+                  'TDUP'  => 'Duplication',
+                  'OTHER' => 'Small variant',
+                  );
+    my $location = sprintf('%s:%s', $slice->seq_region_name, $vs + $slice->start);
+    $location   .= '-'.($ve + $slice->start) if ($ve && $ve != $vs);
+
+    my $title = "$vf_name; Location: $location; Type: ".$lookup{$sv}."; Allele: $allele_string";
+    my @fields = qw(AC AN DB DP NS);
+    foreach (@fields) {
+      $title .= sprintf('; %s: %s', $_, $f->{'INFO'}{$_} || '');
     }
 
     ## Set colour by consequence if defined in file
@@ -187,6 +206,7 @@ sub consensus_features {
                   strand  => 1,
                   colour  => $colour,       
                   label   => $vf_name, 
+                  title   => $title,
                 };
 
     push @$features, $fhash;
