@@ -1369,7 +1369,6 @@ sub _add_pairwise_track {
     renderers => [
       'off',                'Off', 
       'interaction',        'Pairwise interaction',
-      'interaction_label',  'Pairwise interaction with labels'
     ],
     options => {
       external   => 'external',
