@@ -52,7 +52,7 @@ sub content {
     my $i = 0;
     my $feature_id  = $hub->param('feature_id') || $hub->param('id');
 
-    my $data = $glyphset->features;
+    my $data = $glyphset->get_data;
     foreach my $track (@$data) {
       $caption ||= $track->{'metadata'}{'zmenu_caption'};
       if ($feature_id) {
