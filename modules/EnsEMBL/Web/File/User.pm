@@ -20,8 +20,10 @@ package EnsEMBL::Web::File::User;
 
 use strict;
 
-use EnsEMBL::Web::IOWrapper;
 use Archive::Tar;
+
+use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::IOWrapper;
 
 use parent qw(EnsEMBL::Web::File);
 
@@ -209,6 +211,21 @@ sub upload {
 
         $inputs{'format'}    = $format if $format;
         my $species = $hub->param('species') || $hub->species;
+
+        ## Extra renderers for fancy formats
+        my $attach = $hub->param('attach') || $hub->param('contigviewbottom');
+        if ($attach) {
+          my @split = split('=', $attach);
+          my $custom = $attach =~ /^contig/ ? $split[2] : $split[1]; 
+          if ($custom) {
+            $inputs{'display'} = $custom;
+            my $lookup = EnsEMBL::Web::Constants::RENDERERS;
+            my $renderers = $lookup->{$custom} || [];
+            if (scalar @$renderers) {
+              $inputs{'renderers'} = ['off', 'Off', @$renderers];
+            }
+          }
+        }
 
         ## Attach data species to session
         ## N.B. Use 'write' locations, since uploads are read from the
