@@ -263,11 +263,16 @@ sub update_from_url {
     }
   }
 
-  my @values = split /,/, $input->param($image_config);
+  ## Now that DAS is gone, we only attach userdata to contigviewbottom
+  my $attach_param = '';
+  if ($image_config eq 'contigviewbottom') {
+     $attach_param = $input->param('attach') || $input->param('contigviewbottom'); 
+  }
+  my @values = split /,/, $attach_param;
   
   ## Hack to use a more user-friendly URL for trackhub attachment
-  if ($input->param('trackhub') && $image_config eq 'contigviewbottom') {
-    push @values, 'url:'.$input->param('trackhub');
+  if ($input->param('trackhub')) {
+    push @values, $input->param('trackhub');
     $input->param('format', 'TRACKHUB');
     $input->delete('trackhub'); 
   }
@@ -282,7 +287,7 @@ sub update_from_url {
   $session->store;
   
   if (@values) {
-    $input->delete($image_config, 'format', 'menu'); 
+    $input->delete($image_config, 'attach', 'format', 'menu'); 
     $params_removed = 1;
   }
   

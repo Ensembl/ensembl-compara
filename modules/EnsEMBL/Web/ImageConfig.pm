@@ -1545,106 +1545,103 @@ sub update_from_url {
   
   foreach my $v (@values) {
     my $format = $hub->param('format');
-    my ($key, $renderer);
+    my ($key, $renderer, $attach);
     
     if (uc $format eq 'TRACKHUB') {
       $key = $v;
+      $attach = 1;
     } else {
-      my @split = split /=/, $v;
-      
-      if (scalar @split > 1) {
-        $renderer = pop @split;
-        $key      = join '=', @split;
-      } else {
-        $key      = $split[0];
-        $renderer = 'normal';
+      ## Now we no longer support DAS, we can throw away any "type" param
+      if ($v =~ /^url/) {
+        $v =~ s/^url://;
+        $attach = 1;
       }
+      ($key, $renderer) = split /=/, $v;
     }
    
-    if ($key =~ /^(\w+)[\.:](.*)$/) {
-      my ($type, $p) = ($1, $2);
-      
-      if ($type eq 'url') {
-        my $menu_name   = $hub->param('menu');
-        my $all_formats = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
-        
+    if ($attach || $hub->param('attach')) {
+      ## Backwards compatibility with 'contigviewbottom=url:http...'-type parameters
+      ## as well as new 'attach=http...' parameter
+      my $p = uri_unescape($key);
+
+      my $menu_name   = $hub->param('menu');
+      my $all_formats = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
+       
+      if (!$format) {
+        my @path = split(/\./, $p);
+        my $ext  = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
+          
+        while (my ($name, $info) = each %$all_formats) {
+          if ($ext =~ /^$name$/i) {
+            $format = $name;
+            last;
+          }  
+        }
         if (!$format) {
-          $p = uri_unescape($p);
-          
-          my @path = split(/\./, $p);
-          my $ext  = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
-          
+          # Didn't match format name - now try checking format extensions
           while (my ($name, $info) = each %$all_formats) {
-            if ($ext =~ /^$name$/i) {
+            if ($ext eq $info->{'ext'}) {
               $format = $name;
               last;
             }  
           }
-          if (!$format) {
-            # Didn't match format name - now try checking format extensions
-            while (my ($name, $info) = each %$all_formats) {
-              if ($ext eq $info->{'ext'}) {
-                $format = $name;
-                last;
-              }  
-            }
-          }
         }
+      }
 
-        my $style = $all_formats->{lc $format}{'display'} eq 'graph' ? 'wiggle' : $format;
-        my $code  = join '_', md5_hex("$species:$p"), $session->session_id;
-        my $n;
+      my $style = $all_formats->{lc $format}{'display'} eq 'graph' ? 'wiggle' : $format;
+      my $code  = join '_', md5_hex("$species:$p"), $session->session_id;
+      my $n;
         
-        if ($menu_name) {
-          $n = $menu_name;
-        } else {
-          $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
-        }
+      if ($menu_name) {
+        $n = $menu_name;
+      } else {
+        $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
+      }
         
-        # Don't add if the URL or menu are the same as an existing track
-        if ($session->get_data(type => 'url', code => $code)) {
-          $session->add_data(
+      # Don't add if the URL or menu are the same as an existing track
+      if ($session->get_data(type => 'url', code => $code)) {
+        $session->add_data(
             type     => 'message',
             function => '_warning',
             code     => "duplicate_url_track_$code",
             message  => "You have already attached the URL $p. No changes have been made for this data source.",
-          );
+        );
           
-          next;
-        } elsif (grep $_->{'name'} eq $n, $session->get_data(type => 'url')) {
-          $session->add_data(
+        next;
+      } elsif (grep $_->{'name'} eq $n, $session->get_data(type => 'url')) {
+        $session->add_data(
             type     => 'message',
             function => '_error',
             code     => "duplicate_url_track_$n",
             message  => qq{Sorry, the menu "$n" is already in use. Please change the value of "menu" in your URL and try again.},
-          );
+        );
           
-          next;
-        }
+        next;
+      }
 
-        # We then have to create a node in the user_config
-        my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+      # We then have to create a node in the user_config
+      my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
-        if (uc $format eq 'TRACKHUB') {
-          my $info;
-          ($n, $info) = $self->_add_trackhub($n, $p);
-          if ($info->{'error'}) {
-            my @errors = @{$info->{'error'}||[]};
-            $session->add_data(
+      if (uc $format eq 'TRACKHUB') {
+        my $info;
+        ($n, $info) = $self->_add_trackhub($n, $p);
+        if ($info->{'error'}) {
+          my @errors = @{$info->{'error'}||[]};
+          $session->add_data(
               type     => 'message',
               function => '_warning',
               code     => 'trackhub:' . md5_hex($p),
               message  => "There was a problem attaching trackhub $n: @errors",
-            );
-          }
-          else {
-            my $assemblies = $info->{'genomes'}
+          );
+        }
+        else {
+          my $assemblies = $info->{'genomes'}
                         || {$hub->species => $hub->species_defs->get_config($hub->species, 'ASSEMBLY_VERSION')};
 
-            foreach (keys %$assemblies) {
-              my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
-              if ($assembly) {
-                my $data = $session->add_data(
+          foreach (keys %$assemblies) {
+            my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
+            if ($assembly) {
+              my $data = $session->add_data(
                   type        => 'url',
                   url         => $p,
                   species     => $data_species,
@@ -1653,26 +1650,26 @@ sub update_from_url {
                   format      => $format,
                   style       => $style,
                   assembly    => $assembly,
-                );
-              }
+              );
             }
           }
-        } else {
-          $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-            sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href=">%s">%s</a>', encode_entities($n), encode_entities($p), encode_entities($p)),
+        }
+      } else {
+        $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
+          sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href=">%s">%s</a>', encode_entities($n), encode_entities($p), encode_entities($p)),
             url   => $p,
             style => $style
-          );
+        );
 
-          ## Assume the data is for the current assembly
-          my $assembly;
-          while (my($a, $info) = each (%ensembl_assemblies)) {
-            $assembly = $info->[1] if $info->[0] eq $species;
-            last if $assembly;
-          }
+        ## Assume the data is for the current assembly
+        my $assembly;
+        while (my($a, $info) = each (%ensembl_assemblies)) {
+          $assembly = $info->[1] if $info->[0] eq $species;
+          last if $assembly;
+        }
  
-          $self->update_track_renderer("url_$code", $renderer);
-          $session->set_data(
+        $self->update_track_renderer("url_$code", $renderer);
+        $session->set_data(
             type      => 'url',
             url       => $p,
             species   => $species,
@@ -1681,20 +1678,19 @@ sub update_from_url {
             format    => $format,
             style     => $style,
             assembly  => $assembly,
-          );
-        }
-        # We have to create a URL upload entry in the session
-        my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
-        if (uc $format eq 'TRACKHUB') {
+        );
+      }
+      # We have to create a URL upload entry in the session
+      my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
+      if (uc $format eq 'TRACKHUB') {
           $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
-        }
-        $session->add_data(
+      }
+      $session->add_data(
           type     => 'message',
           function => '_info',
           code     => 'url_data:' . md5_hex($p),
           message  => $message,
-        );
-      }
+      );
     } else {
       $self->update_track_renderer($key, $renderer, $hub->param('toggle_tracks'));
     }
