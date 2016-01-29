@@ -23,6 +23,7 @@ package EnsEMBL::Draw::GlyphSet::UserData;
 use strict;
 
 use Role::Tiny;
+use List::Util qw(min max);
 
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
@@ -188,6 +189,7 @@ sub draw_features {
 sub draw_aggregate {
   my ($self, $subtracks) = @_;
   $subtracks ||= $self->{'data'};
+  #use Data::Dumper; warn Dumper($subtracks);
   return unless $subtracks && ref $subtracks eq 'ARRAY';
 
   my %config = %{$self->track_style_config};
@@ -197,6 +199,18 @@ sub draw_aggregate {
   my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
 
   my $data = $self->data_for_strand($subtracks);
+
+  ## Recalculate colours if using the pvalue renderer
+  if ($self->{'my_config'}->get('use_pvalue')) {
+    my $params = {
+                    min_score      => 0,
+                    max_score      => 1,
+                    key_labels     => [ 0, 0.05, 1 ],
+                    transform      => 'log2',
+                    decimal_places => 5,
+                  };
+    $self->convert_to_pvalues($data, $params);
+  }
 
   foreach (@{$drawing_style||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
@@ -212,6 +226,54 @@ sub draw_aggregate {
 
   ## Everything went OK, so no error to return
   return 0;
+}
+
+sub convert_to_pvalues {
+  my ($self, $data, $params) = @_;
+
+  ## pre-defined transform functions
+  my %transforms = (
+    default => sub { return $_[0] },
+    log2 => sub {
+      my $score = shift;
+      $score = 0 if $score < 0;
+      return 1 if $score == 0;
+      return 0 if $score == 1;   
+      return ( log(1 / $score) / log(2) ) / 10;
+    }
+  );
+
+  ## Set parameters
+  my $max_score        = $params->{max_score} || 1000;
+  my $min_score        = $params->{min_score} || 0;
+  my @gradient_colours = @{ $params->{gradient_colours} || [qw(white red)] };
+  my $transform        = $transforms{ $params->{transform} || 'default' };
+  my $key_labels       = $params->{key_labels} || [$min_score, $max_score];
+  my $decimal_places   = $params->{decimal_places} || 2;
+
+  my $colour_grades       = 20;
+  my @gradient            = $self->{config}->colourmap->build_linear_gradient($colour_grades, \@gradient_colours);
+  my $transform_min_score = min($transform->($min_score), $transform->($max_score));
+  my $transform_max_score = max($transform->($min_score), $transform->($max_score));
+  my $score_per_grade     = ($transform_max_score - $transform_min_score) / $colour_grades;
+  
+  ## Predefined method to select new colour based on score
+  my $grade_from_score = sub {
+    my $score = shift;
+    my $gradient_score = min( max( $transform->($score), $transform_min_score ), $transform_max_score );
+    my $grade = $gradient_score >= $transform_max_score ? $colour_grades - 1 : int(($gradient_score - $transform_min_score) / $score_per_grade);    
+    return $grade
+  };
+
+  ## Finally we get to actually set the feature colours!
+  foreach (@$data) {
+    foreach my $f (@{$_->{'features'}||[]}) {
+      warn ">>> COLOUR WAS ".$f->{'colour'};
+      my $colour = $gradient[ $grade_from_score->($f->{'score'}) ];
+      warn "... COLOUR NOW $colour";
+      $f->{'colour'} = $colour;
+    }
+  }
 }
 
 sub _bg_href {
