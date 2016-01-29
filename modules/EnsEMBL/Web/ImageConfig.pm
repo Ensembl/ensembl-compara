@@ -27,6 +27,7 @@ use URI::Escape qw(uri_unescape);
 
 use EnsEMBL::Draw::Utils::TextHelper;
 use EnsEMBL::Web::File::Utils::TrackHub;
+use EnsEMBL::Web::Command::UserData::AddFile;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Tree;
 
@@ -660,6 +661,7 @@ sub load_user_tracks {
       format      => $entry->{'format'},
       style       => $entry->{'style'},
       colour      => $entry->{'colour'},
+      renderers   => $entry->{'renderers'},
       display     => $entry->{'display'},
       timestamp   => $entry->{'timestamp'} || time,
     };
@@ -716,6 +718,7 @@ sub load_user_tracks {
         format      => $entry->format,
         style       => $entry->style,
         colour      => $entry->colour,
+        renderers   => $entry->renderers,
         display     => 'off',
         timestamp   => $entry->timestamp,
       };
@@ -784,6 +787,7 @@ sub load_user_tracks {
         url      => $url_sources{$code}{'source_url'},
         format   => $url_sources{$code}{'format'},
         style    => $url_sources{$code}{'style'},
+        renderers => $url_sources{$code}{'renderers'},
         external => 'user',
       );
     }
@@ -1403,6 +1407,7 @@ sub _add_flat_file_track {
   });
 
   $menu->append($track) if $track;
+  return $renderers;
 }
 
 sub _add_file_format_track {
@@ -1655,30 +1660,11 @@ sub update_from_url {
           }
         }
       } else {
-        $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-          sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href=">%s">%s</a>', encode_entities($n), encode_entities($p), encode_entities($p)),
-            url   => $p,
-            style => $style
-        );
-
-        ## Assume the data is for the current assembly
-        my $assembly;
-        while (my($a, $info) = each (%ensembl_assemblies)) {
-          $assembly = $info->[1] if $info->[0] eq $species;
-          last if $assembly;
-        }
- 
-        $self->update_track_renderer("url_$code", $renderer);
-        $session->set_data(
-            type      => 'url',
-            url       => $p,
-            species   => $species,
-            code      => $code,
-            name      => $n,
-            format    => $format,
-            style     => $style,
-            assembly  => $assembly,
-        );
+        ## Either upload or attach the file, as appropriate
+        my $command = EnsEMBL::Web::Command::UserData::AddFile->new({'hub' => $hub});
+        $hub->param('text', $p);
+        $hub->param('format', $format);
+        $command->upload_or_attach;
       }
       # We have to create a URL upload entry in the session
       my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
