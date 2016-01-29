@@ -34,7 +34,16 @@ sub process {
   my $hub  = $self->hub;
   
   return $self->set_format if $hub->function eq 'set_format';
+
+  my $url_params = $self->upload_or_attach;
+  
+  return $self->ajax_redirect($self->hub->url($url_params));
+}
  
+sub upload_or_attach {
+  my $self = shift;
+  my $hub  = $self->hub;
+
   my ($method)    = first { $hub->param($_) } qw(file text);
   my $format_name = $hub->param('format');
   my $url_params  = {};
@@ -107,7 +116,7 @@ sub process {
     $url_params->{'action'} = 'SelectFile';
   }
 
-  return $self->ajax_redirect($self->hub->url($url_params));
+  return $url_params;
 }
 
 sub check_for_index {
