@@ -132,8 +132,6 @@ sub content {
   $final_fieldset->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Download', 'class' => 'download');
 
   my $wrapped_form = $self->dom->create_element('div', {
-    'id'        => 'ImageExport',
-    'class'     => 'js_panel',
     'children'  => [ {'node_name' => 'input', 'class' => 'subpanel_type', 'value' => 'ImageExport', 'type' => 'hidden' }, $form ]
   });
 
