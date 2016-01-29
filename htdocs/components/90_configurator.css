@@ -158,6 +158,7 @@ div.config_wrapper .config_menu .as_transcript_nolabel   { background-image: url
 div.config_wrapper .config_menu .compact,
 div.config_wrapper .config_menu .ungrouped,
 div.config_wrapper .config_menu .simple                  { background-image: url(/i/render/compact.gif); }
+div.config_wrapper .config_menu .pvalue                  { background-image: url(/i/render/gradient.gif); }
 div.config_wrapper .config_menu .signal_feature,
 div.config_wrapper .config_menu .wiggle_feature,
 div.config_wrapper .config_menu .tiling_feature          { background-image: url(/i/render/wiggle_feature.gif); }
