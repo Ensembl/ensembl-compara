@@ -5,6 +5,8 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
+our $VERSION = 8;
+
 sub fixup {
   my ($self) = @_;
 
@@ -41,11 +43,7 @@ sub precache {
         id => 'variation_set_1kg_3',
         config => {
           no_label => 1,
-          source => undef,
           sets => ['1kg_3'],
-          sources => undef,
-          filter => undef,
-          style => undef,
           set_name => '1000 Genomes - All - short variants (SNPs and indels)',
         },
         var_db => 'variation',
@@ -60,11 +58,7 @@ sub precache {
         'id' => 'variation_set_ph_variants',
         'config' => {
           'no_label' => 1,
-          'source' => undef,
           'sets' => ['ph_variants'],
-          'sources' => undef,
-          'filter' => undef,
-          'style' => undef,
           'set_name' => 'All phenotype-associated - short variants (SNPs and indels)'
         },
         'var_db' => 'variation',

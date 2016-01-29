@@ -37,6 +37,13 @@ sub _clean_args {
   return \%out;
 }
 
+sub version {
+  no strict;
+  my ($self,$class) = @_;
+
+  return ${"${class}::VERSION"}||0;
+}
+
 sub _try_get_cache {
   my ($self,$class,$args) = @_;
 
@@ -45,7 +52,7 @@ sub _try_get_cache {
   }
   return undef unless $self->{'open'};
   return undef if $DISABLE;
-  my $out = $self->{'cache'}->get({
+  my $out = $self->{'cache'}->get($class,$self->version($class),{
     class => $class,
     args => $self->_clean_args($args),
   });
@@ -57,7 +64,7 @@ sub _set_cache {
   my ($self,$class,$args,$value) = @_;
 
   return unless $self->{'open'};
-  $self->{'cache'}->set({
+  $self->{'cache'}->set($class,$self->version($class),{
     class => $class,
     args => $self->_clean_args($args)
   },$value);

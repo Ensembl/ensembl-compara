@@ -5,6 +5,8 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
+our $VERSION = 14;
+
 sub href {
   my ($self,$f,$args) = @_;
 
@@ -22,9 +24,6 @@ sub precache {
     markers => {
       loop => 'genome',
       args => {
-        priority => undef,
-        marker_id => undef,
-        logic_name => undef,
         species => "Homo_sapiens"
       }
     }

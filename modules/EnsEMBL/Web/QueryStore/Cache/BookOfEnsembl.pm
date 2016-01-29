@@ -11,6 +11,9 @@ use Sys::Hostname;
 use DB_File;
 use File::Copy;
 use Compress::Zlib;
+use List::Util qw(min max);
+
+use EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile;
 
 use bytes;
 
@@ -19,19 +22,24 @@ sub new {
 
   my $class = ref($proto) || $proto;
 
-  my $rnd = EnsEMBL::Web::QueryStore::Cache->_key({ pid => $$, now => localtime, host => hostname });
-  my $widxfile = $conf->{'dir'}."/$rnd.raw";
-  my $wdatfile = $conf->{'dir'}."/$rnd.dat";
-  my $ridxfile = $conf->{'dir'}."/boe.idx";
-  my $rdatfile = $conf->{'dir'}."/boe.dat";
-  my $lockfile = $conf->{'dir'}."/boe.lok";
+  my $rnd = EnsEMBL::Web::QueryStore::Cache->_key({ pid => $$, now => localtime, host => hostname },undef);
+  my $lockfile = $conf->{'dir'}."/lockfile";
+
+  my $master;
+  if($conf->{'part'}) {
+    $master = EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile->new(
+      $conf->{'dir'}."/".$conf->{'part'},'part'
+    );
+  } else {
+    $master = EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile->new(
+      $conf->{'dir'}."/boe",'finished'
+    );
+  }
 
   my $self = {
     dir => $conf->{'dir'},
-    wdatfile => $wdatfile,
-    widxfile => $widxfile,
-    ridxfile => $ridxfile,
-    rdatfile => $rdatfile,
+    wfile => EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile->new($conf->{'dir'}."/$rnd",'raw'),
+    rfile => $master,
     lockfile => $lockfile,
     any => 0,
   };
@@ -39,106 +47,199 @@ sub new {
   return $self;
 }
 
+sub compile {
+  my ($self) = @_;
+
+  my $lockfile = $self->{'dir'}."/lockfile";
+  my $master = EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile->new(
+    $self->{'dir'}."/boe",'finished'
+  );
+
+  warn "COMPILING\n";
+  my $compiler = {
+    dir => $self->{'dir'},
+    lockfile => $lockfile,
+    rfile => $master,
+    
+    any => 1,
+  };
+  bless $compiler,ref($self);
+  my @parts = grep { $_->mode eq 'part' } @{[$compiler->_list_files()]->[0]};
+  $compiler->_consolidate(\@parts); 
+}
+
 sub cache_open {
   my ($self) = @_;
 
-  my %widx;
-  tie %widx,'DB_File',$self->{'widxfile'},O_CREAT|O_RDWR,0600,$DB_HASH
-    or die "Cannot write $self->{'widxfile'}";
-  $self->{'widx'} = \%widx;
-  open($self->{'wdat'},'>:raw',$self->{'wdatfile'}) or die "Cannot write";
-  my %ridx;
-  tie %ridx,'DB_File',$self->{'ridxfile'},O_CREAT|O_RDONLY,0600,$DB_HASH
-    or die "Cannot read $self->{'ridxfile'}";
-  $self->{'ridx'} = \%ridx;
-  unless(-e $self->{'rdatfile'}) {
-    open(TMP,">>",$self->{'rdatfile'});
-    close TMP; 
-  }
-  open($self->{'rdat'},'<:raw',$self->{'rdatfile'}) or die "Cannot read";
+  $self->{'rfile'}->open_read();
+  $self->{'wfile'}->open_write();
 }
 
 sub set {
-  my ($self,$args,$v) = @_;
+  my ($self,$class,$ver,$args,$value) = @_;
 
-  my $key = $self->_key($args);
-  my $value = Compress::Zlib::memGzip(JSON->new->encode($v));
+  my $key = $self->_key($args,$class);
   $self->{'any'} = 1;
-  my $start = tell $self->{'wdat'};
-  $self->{'wdat'}->print($value);
-  my $end = tell $self->{'wdat'};
-  $self->{'widx'}{$key} = JSON->new->encode([$start,$end-$start]);
+  $self->{'wfile'}->set($key,$value);
+  $self->{'wfile'}->set_version($class,$ver);
 }
 
 sub get {
-  my ($self,$k) = @_;
+  my ($self,$class,$ver,$k) = @_;
 
-  my $json = $self->{'ridx'}{$self->_key($k)};
-  return undef unless $json;
-  my $d = JSON->new->decode($json);
-  seek $self->{'rdat'},$d->[0],SEEK_SET;
-  my $out;
-  read($self->{'rdat'},$out,$d->[1]);
-  return JSON->new->decode(Compress::Zlib::memGunzip($out));
+  my $rver = $self->{'rfile'}->get_version($class);
+  if($rver and $ver!=$rver) {
+    warn "VERSION MISMATCH. CONSOLIDATING\n";
+    # Force consolidation
+    $self->{'any'} = 1;
+    $self->cache_close();
+    $self->cache_open();
+    return undef;
+  }
+  return $self->{'rfile'}->get($self->_key($k,$class));
+}
+  
+sub _into {
+  my ($self,$in,$stage,$full) = @_;
+
+  $in->open_read();
+  my $in_vers = $in->get_versions;
+  my %good_vers;
+  foreach my $k (keys %$in_vers) {
+    $stage->check_dated($k,$in_vers->{$k});
+  }
+  foreach my $k (keys %$in_vers) {
+    next unless $stage->test_wanted($k,$in_vers->{$k});
+    $good_vers{$self->_class_key($k)} = 1;
+  }
+  my ($hit,$miss,$all,$new) = (0,0,0,0);
+  while(1) {
+    my ($k,$v) = $in->each();
+    last unless defined $k;
+    $all++;
+    next if $stage->has($k);
+    $new++;
+    my $vk = $k;
+    $vk =~ s/^.*\.//;
+    if($good_vers{$vk}) {
+      $hit++;
+      my $data = $in->get($k);
+      $stage->set($k,$data);
+    } else {
+      $miss++;
+    }
+  }
+  warn "new=$new all=$all current=$hit aged=$miss\n";
+  $in->close();
+  if($in->mode eq 'ready' and !$stage->test_dated()) {
+    $in->delete();
+  }
 }
 
-sub _consolidate {
+my @long_modes = qw(ready finished part);
+sub _list_files {
   my ($self) = @_;
 
-  open(LOCK,">>",$self->{'lockfile'}) or die;
-  flock(LOCK,LOCK_EX) or die;
-  (my $newidx = $self->{'ridxfile'}) =~ s/$/.tmp/;
-  (my $newdat = $self->{'rdatfile'}) =~ s/$/.tmp/;
-  copy($self->{'ridxfile'},$newidx) or die;
-  copy($self->{'rdatfile'},$newdat) or die;
-  tie(my %out,'DB_File',$newidx,O_RDWR) or die;
-  open(OUTDAT,">>:raw",$newdat) or die;
   opendir(DIR,$self->{'dir'}) or die;
+  my (%found,%files);
   foreach my $f (readdir(DIR)) {
-    next unless $f =~ /\.ready$/;
-    my $idx = "$self->{'dir'}/$f";
-    (my $dat = $f) =~ s/ready$/dat/;
-    $dat = "$self->{'dir'}/$dat";
-    tie(my %in,'DB_File',$idx,O_RDONLY) or die;
-    open(INDAT,$dat) or die;
-    while(my ($k,$v) = each %in) {
-      next if $out{$k};
-      my $d = JSON->new->decode($v);
-      my $data;
-      seek INDAT,$d->[0],SEEK_SET or die;
-      read INDAT,$data,$d->[1];
-      seek OUTDAT,0,SEEK_END;
-      my $start = tell OUTDAT;
-      print OUTDAT $data;
-      my $end = tell OUTDAT;
-      $out{$k} = JSON->new->encode([$start,$end-$start]); 
-    }
-    close INDAT;
-    untie %in;
-    unlink $idx;
-    unlink $dat;
+    my $full = "$self->{'dir'}/$f";
+    next unless -f $full;
+    $files{$full} = 1;
+    next unless $f =~ s/\.([^\.]+)$//;
+    my $ext = $1;
+    if($ext eq 'dat') { $found{$f} |= 2; }
+    if($ext eq 'idx') { $found{$f} |= 1; }
   }
-  closedir DIR;  
-  close OUTDAT;
-  untie %out;
-  rename($newdat,$self->{'rdatfile'});
-  rename($newidx,$self->{'ridxfile'});
-  flock(LOCK,LOCK_UN);
-  close(LOCK); 
+  closedir DIR; 
+  my (@out,@tmp);
+  foreach my $k (keys %found) {
+    next unless $found{$k} == 3;
+    next unless $k =~ s/\.([^\.]+)$//;
+    my $mode = $1;
+    my $f = EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile->new(
+      "$self->{'dir'}/$k",$mode
+    );
+    push @out,$f;
+    if(grep { $f->mode eq $_ } @long_modes) {
+      delete $files{$f->fn('idx')};
+      delete $files{$f->fn('dat')};
+      delete $files{$f->fn('idx').".tmp"};
+      delete $files{$f->fn('dat').".tmp"};
+    }
+  }
+  delete $files{$self->{'dir'}."/lockfile"};
+  return (\@out,[keys %files]);
+}
+
+sub _suitable_files {
+  my ($self,$full) = @_;
+
+  my @out;
+  my ($readies,$tmps) = $self->_list_files();
+  my @f = grep { $_->mode eq 'ready' } @$readies;
+  push @f,$self->{'rfile'}->fn('idx') if $full;
+  my $now = time();
+  foreach my $t (@$tmps) {
+    my @stat = stat($t);
+    next unless $stat[9];
+    my $age = $now-$stat[9];
+    unlink $t if $age > 10*60;
+  }
+  return \@f;
+}
+
+sub _lock {
+  my ($self) = @_;
+
+  open($self->{'lock'},">>",$self->{'lockfile'}) or die;
+  flock($self->{'lock'},LOCK_EX) or die;
+}
+
+sub _unlock {
+  my ($self) = @_;
+  
+  flock($self->{'lock'},LOCK_UN);
+  close($self->{'lock'});
+}
+
+
+sub _consolidate {
+  my ($self,$files,$full) = @_;
+
+  $self->_lock();
+  my $stage;
+  if($full) {
+    warn "FULL CONSOLIDATE DUE TO DATED CACHE\n";
+    $stage = $self->{'rfile'}->stage_new();
+    $stage->set_version($_,$full->{$_}) for keys %$full;
+  } else {
+    $stage = $self->{'rfile'}->stage_copy();
+  }
+  foreach my $f (@$files) {
+    $self->_into($f,$stage,$full);
+  }
+  $stage->close();
+  $stage->stage_release();
+  $self->_unlock();
+  if($stage->test_dated()) {
+    $self->_consolidate($files,$stage->target());
+  }
 }
 
 sub cache_close {
   my ($self) = @_;
 
-  close $self->{'wdat'};
-  untie %{$self->{'widx'}};
+  $self->{'rfile'}->close();
+  $self->{'wfile'}->close();
   if($self->{'any'}) {
-    (my $ready = $self->{'widxfile'}) =~ s/\.raw$/\.ready/;
-    rename $self->{'widxfile'},$ready;
-    $self->_consolidate;
+    $self->{'wfile'}->remode('ready');
+    my $inputs = $self->_suitable_files();
+    $self->_consolidate($inputs);
+    $self->{'wfile'}->remode('raw');
   } else {
-    unlink $self->{'widxfile'};
-    unlink $self->{'wdatfile'};
+    unlink $self->{'wfile'}->fn('idx');
+    unlink $self->{'wfile'}->fn('dat');
   }
 }
 

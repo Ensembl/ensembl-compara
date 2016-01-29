@@ -32,6 +32,7 @@ sub run1 {
 
   my $cache = EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl->new({
     dir => "/tmp/book-of-ensembl",
+    part => $kind,
   });
 
   my $ad = EnsEMBL::Web::QueryStore::Source::Adaptors->new($SD);
@@ -50,12 +51,14 @@ my $forker = Parallel::Forker->new(
 $SIG{CHLD} = sub { Parallel::Forker::sig_child($forker); };
 $SIG{TERM} = sub { $forker->kill_tree_all('TERM') if $forker && $forker->in_parent; die "Quitting...\n"; };
 
-$forker->schedule( run_on_start => sub {
-  run1('GlyphSet::Variation','1kgindels');
-})->run();
-$forker->schedule( run_on_start => sub {
-  run1('GlyphSet::Variation','ph-short');
-})->run();
+foreach my $i (0..3) {
+  $forker->schedule( run_on_start => sub {
+    run1('GlyphSet::Variation','1kgindels');
+  })->run();
+  $forker->schedule( run_on_start => sub {
+    run1('GlyphSet::Variation','ph-short');
+  })->run();
+}
 $forker->schedule( run_on_start => sub {
   run1('GlyphSet::Marker','markers');
 })->run();
@@ -64,5 +67,5 @@ $forker->schedule( run_on_start => sub {
 })->run();
 
 $forker->wait_all();
-
+  
 1;

@@ -5,6 +5,8 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
+our $VERSION = 4;
+
 sub precache {
   return {
     assemblyexceptions => {

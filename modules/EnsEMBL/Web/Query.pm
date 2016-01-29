@@ -7,6 +7,7 @@ use Digest::MD5 qw(md5_base64);
 use JSON;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 use Time::HiRes qw(time);
+use List::Util qw(shuffle);
 
 my $DEBUG = 1;
 
@@ -53,7 +54,7 @@ sub run_miss {
   my $part = $self->{'impl'}->get(\%a_gen);
   $self->_run_phase($part,undef,'post_generate',[\%a_gen]);
   $self->_check_unblessed($part);
-  $self->{'store'}->_set_cache(ref($self),$args,$part);
+  $self->{'store'}->_set_cache(ref($self->{'impl'}),$args,$part);
   return $part;
 }
 
@@ -73,7 +74,7 @@ sub go {
   my ($hits,$misses) = (0,0);
   foreach my $a (@args) { 
     $self->_check_unblessed($a);
-    my $part = $self->{'store'}->_try_get_cache(ref($self),$a);
+    my $part = $self->{'store'}->_try_get_cache(ref($self->{'impl'}),$a);
     if(defined $part) {
       $hits++;
       warn "\n\n -- HIT  -- \n ".ref($self->{'impl'})." ".JSON->new->encode($a)."\n\n" if($DEBUG>1);
@@ -111,14 +112,14 @@ sub precache {
 
   my $conf = $self->{'impl'}->precache()->{$kind};
   my $fn = "loop_$conf->{'loop'}";
-  my $parts = $self->{'impl'}->$fn($conf->{'args'});
+  my $parts = [ shuffle @{$self->{'impl'}->$fn($conf->{'args'})} ];
   $self->{'store'}->open();
   my $start = time();
   foreach my $args (@$parts) {
     my @args = ($args);
     $self->_run_phase(\@args,undef,'split');
     foreach my $a (@args) {
-      next if defined $self->{'store'}->_try_get_cache(ref($self),$a);
+      next if defined $self->{'store'}->_try_get_cache(ref($self->{'impl'}),$a);
       warn "  -> $kind ".$a->{'__name'}."\n";
       if(time()-$start > 60) {
         $self->{'store'}->close();

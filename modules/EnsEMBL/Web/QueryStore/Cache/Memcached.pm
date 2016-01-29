@@ -17,15 +17,15 @@ sub new {
 }
 
 sub set {
-  my ($self,$k,$v) = @_;
+  my ($self,$class,$ver,$k,$v) = @_;
 
-  $self->{'cache'}->set($self->_key($k),$v);
+  $self->{'cache'}->set($self->_key($k,$class,$ver),$v);
 }
 
 sub get {
-  my ($self,$k) = @_;
+  my ($self,$class,$ver,$k) = @_;
 
-  return $self->{'cache'}->get($self->_key($k));
+  return $self->{'cache'}->get($self->_key($k,$class,$ver));
 }
 
 1;
