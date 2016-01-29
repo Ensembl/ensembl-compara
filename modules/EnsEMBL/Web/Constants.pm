@@ -30,6 +30,14 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+sub RENDERERS {
+### Master set of renderers for all formats
+  return {
+    'pvalue' => ['signal', 'Wiggle plot', 'pvalue', 'P-value'],
+  }
+
+}
+
 sub ICON_MAPPINGS {
 ### Metadata for the icons that appear on the configuration bar
 ### attached to images
