@@ -180,6 +180,9 @@ sub genebuild_text {
   my $sample_data  = $species_defs->SAMPLE_DATA;
   my $ftp          = $self->ftp_url;
   my $vega         = $species_defs->SUBTYPE !~ /Archive|Pre/ && $species_defs->get_config('MULTI', 'ENSEMBL_VEGA') || {};
+  my $idm_link     = $species_defs->ENSEMBL_IDM_ENABLED
+    ? sprintf('<p><a href="%s" class="nodeco" rel="modal_user_data">%sUpdate your old Ensembl IDs</a></p>', $hub->url({ type => 'Tools', action => 'IDMapper', __clear => 1 }), sprintf($self->{'icon'}, 'tool'))
+    : '';
 
   return sprintf('
     <div class="homepage-icon">
@@ -190,7 +193,7 @@ sub genebuild_text {
     <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>
     <p><a href="%s" class="nodeco">%sMore about this genebuild</a>%s</p>
     %s
-    <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sUpdate your old Ensembl IDs</a></p>
+    %s
     %s
     %s',
     
@@ -215,7 +218,7 @@ sub genebuild_text {
       $ftp, lc $species, sprintf($self->{'icon'}, 'download')
     ) : '',
     
-    $hub->url({ type => 'UserData', action => 'UploadStableIDs', __clear => 1 }), sprintf($self->{'icon'}, 'tool'),
+    $idm_link,
     
     $vega->{$species} ? qq(
       <a href="http://vega.sanger.ac.uk/$species/" class="nodeco">
