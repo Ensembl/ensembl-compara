@@ -58,23 +58,20 @@ CREATE TEMPORARY TABLE tmp_stats_per_root
 SELECT
 	species_tree_node_id,
 	COUNT(*) AS nb_trees,
-	SUM(gtrt1.value+0) AS tot_nb_genes,
-	MIN(gtrt1.value+0) AS min_nb_genes,
-	MAX(gtrt1.value+0) AS max_nb_genes,
-	AVG(gtrt1.value+0) AS avg_nb_genes,
-	AVG(gtrt2.value+0) AS avg_nb_spec,
-	MIN(gtrt2.value+0) AS min_nb_spec,
-	MAX(gtrt2.value+0) AS max_nb_spec,
-	AVG((gtrt1.value+0)/(gtrt2.value+0)) AS avg_nb_genes_per_spec
+	SUM(gene_count) AS tot_nb_genes,
+	MIN(gene_count) AS min_nb_genes,
+	MAX(gene_count) AS max_nb_genes,
+	AVG(gene_count) AS avg_nb_genes,
+	AVG(spec_count) AS avg_nb_spec,
+	MIN(spec_count) AS min_nb_spec,
+	MAX(spec_count) AS max_nb_spec,
+	AVG((gene_count)/(spec_count)) AS avg_nb_genes_per_spec
 FROM
 	gene_tree_root
-	JOIN gene_tree_root_tag gtrt1 USING (root_id)
-	JOIN gene_tree_root_tag gtrt2 USING (root_id)
-	JOIN gene_tree_node_attr ON node_id = gtrt1.root_id
+	JOIN gene_tree_root_attr gtra USING (root_id)
+	JOIN gene_tree_node_attr ON node_id = root_id
 WHERE
 	clusterset_id = "default"
-	AND gtrt1.tag = "gene_count"
-	AND gtrt2.tag = "spec_count"
 GROUP BY
 	species_tree_node_id
 ;
