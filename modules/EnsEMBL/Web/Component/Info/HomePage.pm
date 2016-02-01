@@ -181,7 +181,7 @@ sub genebuild_text {
   my $ftp          = $self->ftp_url;
   my $vega         = $species_defs->SUBTYPE !~ /Archive|Pre/ && $species_defs->get_config('MULTI', 'ENSEMBL_VEGA') || {};
   my $idm_link     = $species_defs->ENSEMBL_IDM_ENABLED
-    ? sprintf('<p><a href="%s" class="nodeco" rel="modal_user_data">%sUpdate your old Ensembl IDs</a></p>', $hub->url({ type => 'Tools', action => 'IDMapper', __clear => 1 }), sprintf($self->{'icon'}, 'tool'))
+    ? sprintf('<p><a href="%s" class="nodeco">%sUpdate your old Ensembl IDs</a></p>', $hub->url({ type => 'Tools', action => 'IDMapper', __clear => 1 }), sprintf($self->{'icon'}, 'tool'))
     : '';
 
   return sprintf('
