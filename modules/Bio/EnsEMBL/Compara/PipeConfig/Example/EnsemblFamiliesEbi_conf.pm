@@ -74,6 +74,8 @@ sub default_options {
         'host'          => 'mysql-treefam-prod',        # where the pipeline database will be created
         'port'          => '4401',                      # server port
 
+        'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
+
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,

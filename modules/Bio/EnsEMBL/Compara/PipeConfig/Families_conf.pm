@@ -74,8 +74,6 @@ sub default_options {
         #'host'            => 'compara2',    # where the pipeline database will be created
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
 
-        'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
-
         # HMM clustering
         #'hmm_clustering'  => 0,
         #'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',

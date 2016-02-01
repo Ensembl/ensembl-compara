@@ -73,6 +73,8 @@ sub default_options {
         'host'          => 'compara2',                                          # where the pipeline database will be created
         'file_basename' => 'metazoa_families_' . $self->o('rel_with_suffix'),
 
+        'email'           => $self->o('ENV', 'USER').'@sanger.ac.uk',
+
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
