@@ -93,22 +93,21 @@ sub summary_table {
 
   # Building population tree
   my %pop_data;
+  my $pop_adaptor = $variation->adaptor->db->get_PopulationAdaptor();
   foreach my $pop (@pops) {
     my $pop_id = $pop->dbID;
     my $name   = $pop->name;
     $pop_data{$pop_id} = $pop;
-    if ($available_pops->{$name}) {
-      if ($available_pops->{$name}{'super'}) {
-        my $super_data = $available_pops->{$name}{'super'};
-        foreach my $super (keys(%{$super_data})) {
-          my $super_name = $super_data->{$super}{'Name'};
-          $tree{$super}{'children'}{$pop_id} = $name;
-          $tree{$super}{'name'} = $super_name;
-          # Get the Population object of the super-pop
-          $pop_data{$super} = $variation->adaptor->db->get_PopulationAdaptor->fetch_by_dbID($super) if (!$pop_data{$super});
-        }
-        next;
+    if ($available_pops->{$name} && $available_pops->{$name}{'super'}) {
+      my $super_data = $available_pops->{$name}{'super'};
+      foreach my $super (keys(%{$super_data})) {
+        my $super_name = $super_data->{$super}{'Name'};
+        $tree{$super}{'children'}{$pop_id} = $name;
+        $tree{$super}{'name'} = $super_name;
+        # Get the Population object of the super-pop
+        $pop_data{$super} = $pop_adaptor->fetch_by_dbID($super) if (!$pop_data{$super});
       }
+      next;
     }
     $tree{$pop_id}{'name'} = $name;
   }
@@ -218,11 +217,14 @@ sub summary_table {
     } else {
       if ($tree{$pop_id}{'children'} && $pop_name =~ /^1000GENOMES/) {
         $row->{'name'} = $row->{'desc'};
-        $row->{'desc'} = '-';
+        $row->{'desc'} = '';
       }
-      $row->{'manplot'} = '-';
-      $row->{'plot'}    = '-';
-      $row->{'table'}   = '-';
+
+      $row->{'tags'}    = '';
+      $row->{'tagged'}  = '';
+      $row->{'manplot'} = '';
+      $row->{'plot'}    = '';
+      $row->{'table'}   = '';
       
       $table_with_no_rows = 1 if (!$tree{$pop_id}{'children'});
     }
