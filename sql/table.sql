@@ -1565,6 +1565,8 @@ CREATE TABLE homology (
   species_tree_node_id        int(10) unsigned,
   gene_tree_node_id           int(10) unsigned,
   gene_tree_root_id           int(10) unsigned,
+  goc_score                   int(10) unsigned,
+  wga_coverage                DEC(5,2),
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
   FOREIGN KEY (species_tree_node_id) REFERENCES species_tree_node(node_id),

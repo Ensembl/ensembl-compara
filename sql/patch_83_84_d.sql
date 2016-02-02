@@ -14,7 +14,7 @@
 
 # patch_83_84_d.sql
 #
-# Title: Add new a new goc_score column to the homology table.
+# Title: Add new a new goc_score and wga_coverage columns to the homology table.
 #
 # Description:
 #   Adding a column to hold the gene order conservation (goc) score. These values are in percentage
@@ -26,7 +26,8 @@ SET session sql_mode='TRADITIONAL';
 */
 
 ALTER TABLE homology ADD COLUMN goc_score int(10) unsigned;
+ALTER TABLE homology ADD COLUMN wga_coverage DEC(5,2);
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_83_84_d.sql|insert_goc_column_homology_table');
+  VALUES (NULL, 'patch', 'patch_83_84_d.sql|insert_orth_quality_homology_table');
