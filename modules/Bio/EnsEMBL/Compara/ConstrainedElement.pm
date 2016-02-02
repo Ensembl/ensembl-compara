@@ -714,8 +714,8 @@ sub get_all_overlapping_regulatory_motifs {
  } else {
   throw("need to supply a reference species genome_db or the constrained element must be derived from a slice");
  }
- foreach my $dba( @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors() } ){
-  if($dba->isa("Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor") and $species eq $dba->species){
+ my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species, 'funcgen');
+ return [] unless $dba;
    my $regfeat_a = $dba->get_RegulatoryFeature;
    my $dnafrag_a = $self->adaptor->db->get_DnaFrag;
    foreach my $ce_region(@ce_coords){
@@ -727,8 +727,6 @@ sub get_all_overlapping_regulatory_motifs {
      }
     }
    }
-  }
- }
  return \@reg_motif;
 } 
 
