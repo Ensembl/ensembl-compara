@@ -477,9 +477,25 @@ sub pipeline_analyses {
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
             -batch_size     => 2,
-             -rc_name => 'LoMafft',
+             -rc_name => '500MegMem',
+             -flow_into => {
+                 -1 => 'HMMer_classifyPantherScore_himem',
+             },
             },
 
+            {
+             -logic_name => 'HMMer_classifyPantherScore_himem',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyPantherScore',
+             -parameters => {
+                             'blast_bin_dir'       => $self->o('blast_bin_dir'),
+                             'pantherScore_path'   => $self->o('pantherScore_path'),
+                             'hmmer_path'          => $self->o('hmmer2_home'),
+                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'only_canonical'      => 0,
+                            },
+             -hive_capacity => $self->o('HMMer_classify_capacity'),
+             -rc_name => '4GigMem',
+            },
 
             {
              -logic_name => 'HMM_clusterize',
@@ -575,7 +591,7 @@ sub pipeline_analyses {
                 1  => [ 'consensifier' ],
                 -1 => [ 'mafft_big' ],
             },
-            -rc_name => '2GigMem',
+            -rc_name => 'LoMafft',
         },
 
         {   -logic_name    => 'mafft_big',
@@ -597,7 +613,7 @@ sub pipeline_analyses {
             -flow_into     => {
                 1  => [ 'consensifier_himem' ],
             },
-            -rc_name => 'BigMafft_multi_core',
+            -rc_name => 'HugeMafft_multi_core',
         },
 
         {   -logic_name => 'find_update_singleton_cigars',      # example of an SQL-session within a job (temporary table created, used and discarded)
@@ -645,7 +661,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'consensifier_himem',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily',
             -hive_capacity => $self->o('cons_capacity'),
-            -rc_name       => '2GigMem',
+            -rc_name       => '500MegMem',
         },
 # </Consensifier sub-branch>
 

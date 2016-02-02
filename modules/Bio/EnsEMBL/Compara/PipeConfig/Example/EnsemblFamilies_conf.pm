@@ -108,6 +108,7 @@ sub default_options {
         'mafft_threads'           => 8,
         'lomafft_gigs'            => 4,
         'himafft_gigs'            => 14,
+        'humafft_gigs'            => 96,
         'dbresource'              => 'my' . $self->o('host'),    # will work for compara1..compara5, but will have to be set manually otherwise
         'blast_capacity'          => 5000,                       # work both as hive_capacity and resource-level throttle
         'mafft_capacity'          => 400,
@@ -138,12 +139,16 @@ sub resource_classes {
                       'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -n ' . $self->o('mcl_threads') . ' -q hugemem -R"select[ncpus>=' . $self->o('mcl_threads') . ' && mem>' .
                         $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000] span[hosts=1]"' },
         'BigMafft'   => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
-        'BigMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('himafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -q long -R"select[' . $self->o('dbresource') . '<' . $self->o('mafft_capacity') . ' && mem>' .
-                          $self->o('himafft_gigs') . '000] rusage[' . $self->o('dbresource') . '=10:duration=10:decay=1, mem=' . $self->o('himafft_gigs') . '000]"' },
+        'HugeMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('humafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -q long -R"select[' . $self->o('dbresource') . '<' . $self->o('mafft_capacity') . ' && mem>' .
+                          $self->o('humafft_gigs') . '000] rusage[' . $self->o('dbresource') . '=10:duration=10:decay=1, mem=' . $self->o('humafft_gigs') . '000]"' },
         'LoMafft' => {
                'LSF' => '-C0 -M' . $self->o('lomafft_gigs') . '000 -R"select[' . $self->o('dbresource') . '<' . $self->o('mafft_capacity') . ' && mem>' . $self->o('lomafft_gigs') .
                  '000] rusage[' . $self->o('dbresource') . '=10:duration=10:decay=1, mem=' . $self->o('lomafft_gigs') . '000]"' },
+
+        '500MegMem' => { 'LSF' => '-C0 -M500 -R"select[mem>500] rusage[mem=500]"' },
+        '1GigMem' => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
         '2GigMem' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
+        '4GigMem' => { 'LSF' => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"' },
         '8GigMem' => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
         '16GigMem' => { 'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
     };
