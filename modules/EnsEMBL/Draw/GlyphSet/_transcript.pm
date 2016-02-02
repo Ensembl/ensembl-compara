@@ -25,7 +25,7 @@ use strict;
 
 use List::Util qw(min max);
 
-use base qw(EnsEMBL::Draw::GlyphSet_transcript);
+use base qw(EnsEMBL::Draw::GlyphSet_transcript_new);
 
 sub _get_all_genes {
   my ($self,$slice,$analysis,$alias) = @_;
