@@ -74,7 +74,7 @@ sub use_legend {
 }
 
 sub draw_collapsed_exon {
-  my ($self,$composite2,$colour,$length,$exon) = @_;
+  my ($self,$composite2,$length,$gene,$exon) = @_;
 
   my $s = max($exon->{'start'},1);
   my $e = min($exon->{'end'},$length);
@@ -84,13 +84,13 @@ sub draw_collapsed_exon {
     y         => 0,
     width     => $e - $s + 1,
     height    => 8,
-    colour    => $colour,
+    colour    => $gene->{'colour'},
     absolutey => 1
   }));
 }
 
-sub draw_collapsed_gene {
-  my ($self,$composite2,$colour,$length,$gene) = @_;    
+sub draw_collapsed_gene_base {
+  my ($self,$composite2,$length,$gene) = @_;    
 
   my $start = $gene->{'start'} < 1 ? 1 : $gene->{'start'};
   my $end   = $gene->{'end'} > $length ? $length : $gene->{'end'};
@@ -100,9 +100,51 @@ sub draw_collapsed_gene {
     y         => 4,
     width     => $end - $start + 1,
     height    => 0.4, 
-    colour    => $colour, 
+    colour    => $gene->{'colour'}, 
     absolutey => 1
   }));
+}
+    
+sub draw_collapsed_genes {
+  my ($self,$length,$labels,$strand,$genes) = @_;
+
+  my $strand_flag      = $self->my_config('strand');
+  return unless @$genes;
+  my %used_colours;
+  foreach my $g (@$genes) {
+    $self->use_legend(\%used_colours,$g->{'colour_key'});
+    my $composite = $self->Composite({
+      y      => 0,
+      height => 8,
+      title  => $g->{'title'},
+      href   => $g->{'href'},
+    });
+      
+    $self->draw_collapsed_gene_base($composite,$length,$g);
+    foreach my $e (@{$g->{'exons'}}) {
+      $self->draw_collapsed_exon($composite,$length,$g,$e);
+    }
+    foreach my $j (@{$g->{'joins'}}) {
+      $self->draw_join($composite,$j);
+    }
+  
+    # shift the composite container by however much we're bumped
+    my $bump_height  = 10;
+    $bump_height += $self->add_label_new($composite,$g) if $labels;
+
+    # bump
+    $composite->y($composite->y - $strand * $bump_height * $g->{'_bump'});
+    $composite->colour($g->{'highlights'}) if $g->{'highlights'};
+    $self->push($composite);
+  }
+  my $type = $self->my_config('name');
+  my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'} || []};
+  $used_colours{$_} = $legend_old{$_} for keys %legend_old;
+  my @legend = %used_colours;
+  $self->{'legend'}{'gene_legend'}{$type} = {
+    priority => $self->_pos,
+    legend   => \@legend
+  };
 }
 
 sub calculate_joins {
@@ -156,11 +198,12 @@ sub calculate_joins {
 }
   
 sub draw_join {
-  my ($self,$composite2,$key,$colour,$text) = @_;
+  my ($self,$target,$j) = @_;
         
-  $self->join_tag($composite2,$key, 0.5, 0.5, $colour, 'line',1000);
+  $self->join_tag($target,$j->{'key'},0.5,0.5,$j->{'colour'},'line',1000);
   $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
-  $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$text} = $colour;
+  $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$j->{'legend'}} =
+    $j->{'colour'};
 }
 
 sub render_collapsed {
@@ -171,38 +214,24 @@ sub render_collapsed {
   my $config           = $self->{'config'};
   my $container        = $self->{'container'}{'ref'} || $self->{'container'};
   my $length           = $container->length;
-  my $pix_per_bp       = $self->scalex;
   my $strand           = $self->strand;
   my $selected_db      = $self->core('db');
   my $selected_gene    = $self->my_config('g') || $self->core('g');
-  my $strand_flag      = $self->my_config('strand');
   my $db               = $self->my_config('db');
   my $show_labels      = $self->my_config('show_labels');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $alt_alleles_col  = $self->my_colour('alt_alleles_join');
   my $y                = 0;
   my $h                = 8;
-  my $transcript_drawn = 0;
   my %used_colours;
   
-  $self->_init_bump;
-  
   my ($genes, $highlights, $transcripts, $exons) = $self->features;
-  my $on_other_strand = 0;
  
   my @ggdraw;
  
   foreach my $gene (@$genes) {
     my (@edraw);
     my $gene_stable_id = $gene->stable_id;
-    my $gene_strand    = $gene->strand;
-    
-    if ($gene_strand != $strand && $strand_flag eq 'b') { # skip features on wrong strand
-      $on_other_strand = 1;
-      next;
-    }
-    
-    $transcript_drawn = 1;
     
     my @exons      = map { $_->start > $length || $_->end < 1 ? () : $_ } @{$exons->{$gene_stable_id}}; # Get all the exons which overlap the region for this gene
     my $colour_key = $self->colour_key($gene);
@@ -225,56 +254,17 @@ sub render_collapsed {
       label => $self->feature_label($gene),
       highlights => $highlights->{$gene_stable_id},
       colour => $colour,
+      colour_key => $self->colour_key($gene),
       exons => \@edraw,
-      joins => $joins
+      joins => $joins,
+      strand => $gene->strand,
     };   
   }
-  foreach my $g (@ggdraw) {
-    my $composite = $self->Composite({
-      y      => $y,
-      height => $h,
-      title  => $g->{'title'},
-      href   => $g->{'href'},
-    });
-    
-    my $composite2 = $self->Composite({ y => $y, height => $h });
-    $self->draw_collapsed_gene($composite2,$g->{'colour'},$length,$g);
-    foreach my $e (@{$g->{'exons'}}) {
-      $self->draw_collapsed_exon($composite2,$g->{'colour'},$length,$e);
-    }
-    foreach my $j (@{$g->{'joins'}}) {
-      $self->draw_join($composite2,$j->{'key'},$j->{'colour'},$j->{'legend'});
-    }
- 
-    $composite->push($composite2);
-    
-    # bump
-    my $bump_start = int($composite->x * $pix_per_bp);
-    my $bump_end = $bump_start + int($composite->width * $pix_per_bp) + 1;
-    
-    my $row = $self->bump_row($bump_start, $bump_end);
-    
-    # shift the composite container by however much we're bumped
-    my $bump_height  = $h + 2;
-       $bump_height += $self->add_label_f($composite, $g->{'colour'}, $g->{'label'}) if $labels && $show_labels ne 'off';
-    $composite->y($composite->y - $strand * $bump_height * $row);
-    $composite->colour($g->{'highlights'}) if $g->{'highlights'};
-    $self->push($composite);
-  }
+  my $draw_labels = ($labels and $show_labels ne 'off');
+  $self->mr_bump(\@ggdraw,$draw_labels,$length);
+  $self->draw_collapsed_genes($length,$draw_labels,$strand,\@ggdraw);
 
-  if ($transcript_drawn) {
-    my $type = $self->my_config('name');
-    my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'} || []};
-    
-    $used_colours{$_} = $legend_old{$_} for keys %legend_old;
-    
-    my @legend = %used_colours;
-    
-    $self->{'legend'}{'gene_legend'}{$type} = {
-      priority => $self->_pos,
-      legend   => \@legend
-    };
-  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$on_other_strand) {
+  if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
     $self->no_track_on_strand;
   }
 }
@@ -1425,7 +1415,6 @@ sub add_label {
 sub add_label_f {
   my ($self, $composite, $colour, $label) = @_;
 
-
   return unless $label;
   
   my @lines        = split "\n", $label;
@@ -1458,6 +1447,30 @@ sub add_label_f {
   $composite->push(@text);
   
   return $text_details->{'height'} * scalar @text;
+}
+
+sub add_label_new {
+  my ($self,$composite,$g) = @_;
+
+  return unless $g->{'label'};
+  
+  my $text_details = $self->text_details;
+  my $y            = $composite->y + $composite->height;
+
+  foreach my $line (split("\n",$g->{'label'})) {
+    $composite->push($self->Text({
+      x         => $g->{'_bstart'},
+      y         => $y,
+      halign    => 'left',
+      colour    => $g->{'colour'},
+      text      => $line,
+      absolutey => 1,
+      %$text_details
+    }));
+    $y += $text_details->{'height'};
+  }
+ 
+  return $g->{'_lheight'};
 }
 
 sub colour_key {

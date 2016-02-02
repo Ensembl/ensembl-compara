@@ -1285,6 +1285,91 @@ sub bump_sorted_row {
   return 1e9; # If we get to this point we can't draw the feature so return a very large number!
 }
 
+sub text_bounds {
+  my ($self,$text) = @_;
+
+  my ($w,$h) = (0,0);
+  foreach my $line (split("\n",$text)) {
+    my $info;
+    if($self->can('get_text_info')) {
+      $info = $self->get_text_info($line);
+    } else {
+      my @props = $self->get_text_width(0,"$line ",'',%{$self->text_details});
+      $info = { width  => $props[2],
+                height => $props[3]+4 };
+    }
+    $w = max($w,$info->{'width'});
+    $h += $info->{'height'};
+  }
+  return ($w,$h);
+}
+
+# Fast bumping for new drawing code. This method just sets _bstart and
+# _bend (the start and end co-ordinates for the purposes of bumping)
+# according to the feature start and end and any label start and end.
+# It then delegates to bumping to do_bump. If you want to set these
+# keys yourself, to customise the bumping (ag GlpyhSet_simpler does)
+# then feel free, and just call do_bump. For a description of the new
+# bumping algorithm see do_bump.
+sub mr_bump {
+  my ($self,$features,$show_label,$max) = @_;
+
+  my $pixperbp = $self->{'pix_per_bp'} || $self->scalex;
+  foreach my $f (@$features) {
+    my $start = $f->{'start'};
+    my $end = $f->{'end'};
+    if($show_label && $f->{'label'}) {
+      my ($width,$height) = $self->text_bounds($f->{'label'});
+      $end = max($end,ceil($start+$width/$pixperbp));
+      my $overlap = $end-$max+1;
+      if($overlap>0) {
+        $start -= $overlap;
+        $end -= $overlap;
+      }
+      $f->{'_lheight'} = $height;
+    }
+    $f->{'_bstart'} = max(0,$start);
+    $f->{'_bend'} = min($end,$max);
+  }
+  return $self->do_bump($features);
+}
+
+# Bump features according to their [_bstart,_bend], and set the row to a
+# new key _bump in that method. On large regions (in bp terms) this can
+# be orders of magnitude faster than the old algorithm.
+#
+# We can do this efficiently now, without tricks and big data structures
+# because we have all features in-hand, and so can choose the order of
+# applying them. Bumping amounts to an algorithm which attempts to add a
+# range to a list of existing ranges (rows), adding it to the first with
+# which there is no overlap. We sort the additions by start coordinate.
+# For each row, we store the largest end co-ord on that row to-date.
+# We add to the first row where our start is less than that row's end
+# (and then set it to our end).
+# If a row has an end greater than our start as we know it must have
+# been set by a feature with a start less than ours (because of the
+# order of addition), we know there is an overlap, and so this row is
+# not available to us. Conversely, if our start is greater than the
+# current end, we know that all features must be strictly to our left
+# (also because of the order) and so we guarantee no overlap. Therefore
+# this guarantees the minimum correct row.
+sub do_bump {
+  my ($self,$features) = @_;
+
+  use Data::Dumper;
+  warn Dumper(@$features);
+  warn "DO_BUMP\n";
+  my (@bumps,@rows);
+  foreach my $f (sort { $a->{'_bstart'} <=> $b->{'_bstart'} } @$features) {
+    my $row = 0;
+    while(($rows[$row]||=-1)>=$f->{'_bstart'}) { $row++; }
+    $rows[$row] = $f->{'_bend'};
+    $f->{'_bump'} = $row;
+  }
+  warn "/DO_BUMP\n";
+  return \@bumps;
+} 
+
 sub max_label_rows {
   my $out = $_[0]->my_config('max_label_rows');
   return $out if $out;
