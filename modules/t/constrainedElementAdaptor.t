@@ -112,10 +112,10 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor->fetch_by_
   done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor->fetch_all_by_dbID method", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor->fetch_all_by_dbID_list method", sub {
 
     #try having a list of ce_ids...
-    my $all_ces = $constrained_element_adaptor->fetch_all_by_dbID([$constrained_element_id]);
+    my $all_ces = $constrained_element_adaptor->fetch_all_by_dbID_list([$constrained_element_id]);
 
     foreach my $ce (@$all_ces) {
         isa_ok($ce, "Bio::EnsEMBL::Compara::ConstrainedElement", "check object");

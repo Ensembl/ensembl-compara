@@ -339,10 +339,10 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 	}
 }	
 
-=head2 fetch_all_by_dbID
+=head2 fetch_all_by_dbID_list
 
   Arg  1     : listref of constrained_element_ids
-  Example    : my $listref_of_constrained_elements = $constrained_element_adaptor->fetch_all_by_dbID($list_ref_of_constrained_element_ids);
+  Example    : my $listref_of_constrained_elements = $constrained_element_adaptor->fetch_all_by_dbID_list($list_ref_of_constrained_element_ids);
   Description: Retrieve the corresponding constrained_elements from a given list of constrained_element_ids 
   Returntype : listref of Bio::EnsEMBL::Compara::ConstrainedElement constrained_elements 
   Exceptions : throw if Arg-1 is not a listref
@@ -350,7 +350,7 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 
 =cut
 
-sub fetch_all_by_dbID {
+sub fetch_all_by_dbID_list {
 	my ($self, $constrained_element_ids) = @_;
 	if(defined($constrained_element_ids)) {
 		throw("Arg-1 needs to be a listref of dbIDs") unless (
@@ -363,6 +363,12 @@ sub fetch_all_by_dbID {
 	};
 	$self->_fetch_all_ConstrainedElements_by_dbID($sql, \@constrained_elements, $constrained_element_ids);
 	return \@constrained_elements;
+}
+
+sub fetch_all_by_dbID {     ## DEPRECATED
+    my $self = shift;
+    deprecate('ConstrainedElementAdaptor::fetch_all_by_dbID() is deprecated and will be removed in e86. Use fetch_all_by_dbID_list() instead.');
+    return $self->fetch_all_by_dbID_list(@_);
 }
 
 =head2 fetch_by_dbID
@@ -379,7 +385,7 @@ sub fetch_all_by_dbID {
 
 sub fetch_by_dbID {
   my ($self, $constrained_element_id) = @_;
-  return ($self->fetch_all_by_dbID([$constrained_element_id]))->[0];
+  return ($self->fetch_all_by_dbID_list([$constrained_element_id]))->[0];
 }
 
 sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained elements by constrained_element_id

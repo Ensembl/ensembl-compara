@@ -20,6 +20,7 @@
 * `Homology::print_homology()`
 * `HomologyAdaptor::fetch_all_by_Member_paired_species()`
 * `HomologyAdaptor::fetch_all_by_genome_pair()`
+* `ConstrainedElementAdaptor::fetch_all_by_dbID()`
 
 # Deprecated methods not yet scheduled for deletion
 
