@@ -25,7 +25,7 @@ sub new {
   my $rnd = EnsEMBL::Web::QueryStore::Cache->_key({ pid => $$, now => localtime, host => hostname },undef);
   my $lockfile = $conf->{'dir'}."/lockfile";
 
-  my $master;
+  my ($master,$local);
   if($conf->{'part'}) {
     $master = EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile->new(
       $conf->{'dir'}."/".$conf->{'part'},'part'
@@ -35,37 +35,32 @@ sub new {
       $conf->{'dir'}."/boe",'finished'
     );
   }
+  if($conf->{'replace'}) {
+    $local = $master->stage_new;
+  } else {
+    $local = EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile->new($conf->{'dir'}."/$rnd",'raw');
+  }
 
   my $self = {
     dir => $conf->{'dir'},
-    wfile => EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile->new($conf->{'dir'}."/$rnd",'raw'),
+    wfile => $local,
     rfile => $master,
     lockfile => $lockfile,
+    replace => $conf->{'replace'},
     any => 0,
   };
   bless $self,$class;
   return $self;
 }
 
-sub compile {
+sub merge {
   my ($self) = @_;
 
-  my $lockfile = $self->{'dir'}."/lockfile";
-  my $master = EnsEMBL::Web::QueryStore::Cache::BookOfEnsemblFile->new(
-    $self->{'dir'}."/boe",'finished'
-  );
-
-  warn "COMPILING\n";
-  my $compiler = {
-    dir => $self->{'dir'},
-    lockfile => $lockfile,
-    rfile => $master,
-    
-    any => 1,
-  };
-  bless $compiler,ref($self);
-  my @parts = grep { $_->mode eq 'part' } @{[$compiler->_list_files()]->[0]};
-  $compiler->_consolidate(\@parts); 
+  my @parts = grep { $_->mode eq 'part' } @{[$self->_list_files()]->[0]};
+  foreach my $p (@parts) {
+    $self->{'wfile'}->merge($p);
+  }
+  $self->{'wfile'}->stage_release if $self->{'replace'};
 }
 
 sub cache_open {

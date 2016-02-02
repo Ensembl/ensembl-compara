@@ -27,6 +27,7 @@ use EnsEMBL::Web::QueryStore;
 
 EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl->new({
   dir => "/tmp/book-of-ensembl",
-})->compile;
+  replace => 1,
+})->merge;
 
 1;

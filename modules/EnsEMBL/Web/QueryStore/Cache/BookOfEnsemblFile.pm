@@ -60,6 +60,47 @@ sub stage_copy {
   return $out;
 }
 
+my $FILESIZE = 1_000_000;
+sub _cat {
+  my ($self,$target,$src) = @_;
+
+  warn "$src -> $target\n";
+  open(IN,'<:raw',$src) or die;
+  open(OUT,'>>:raw',$target) or die;
+  my $offset = tell OUT;
+  while(1) {
+    my $data;
+    my $r = read(IN,$data,$FILESIZE);
+    last if $r==0;
+    print OUT $data;
+  }
+  close OUT;
+  close IN;
+  return $offset;
+}
+
+sub merge {
+  my ($self,$part) = @_;
+
+  my $offset = $self->_cat($self->fn('dat'),$part->fn('dat'));
+  $part->open_read();
+  $self->open_write();
+  my $in_ver = $part->get_versions;
+  my $out_ver = $self->get_versions;
+  foreach my $k (keys %$in_ver) {
+    next unless exists $out_ver->{$k};
+    next if $out_ver->{$k} == $in_ver->{$k};
+    die "Incompatible versions for $k";
+  }
+  while(my ($k,$v) = each %{$part->{'idx'}}) {
+    next if defined($k) and $k =~ /^\./;
+    my $d = JSON->new->decode($v);
+    $self->{'idx'}{$k} = JSON->new->encode([$d->[0]+$offset,$d->[1]]); 
+  }
+  $self->close();
+  $part->close();
+}
+
 sub delete {
   my ($self) = @_;
 
