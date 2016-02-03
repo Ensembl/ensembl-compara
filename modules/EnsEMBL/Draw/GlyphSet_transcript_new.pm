@@ -167,7 +167,7 @@ sub draw_expanded_transcript {
 }
 
 sub draw_expanded_transcripts {
-  my ($self,$tdraw,$length,$strand,$draw_labels) = @_;
+  my ($self,$tdraw,$length,$strand,$draw_labels,$target) = @_;
 
   return unless @$tdraw;
   my $target = $self->get_parameter('single_Transcript');
@@ -193,6 +193,12 @@ sub draw_expanded_transcripts {
     $composite->y($composite->y - $strand * $bump_height * $td->{'_bump'});
 
     $composite->colour($td->{'highlight'}) if $td->{'highlight'};
+    if ($target) {
+      # check the strand of one of the transcript's exons
+      my $estrand = ((($td->{'exons'}||[])->[0])||{})->{'strand'};
+      my $colour = $td->{'colour'};
+      $self->draw_grey_arrow($estrand,$length,$h,$colour);
+    }
     $self->push($composite);
   }
   my $type = $self->type;
@@ -289,8 +295,9 @@ sub draw_introns {
 
 # Probably not used anywhere any more?
 sub draw_grey_arrow {
-  my ($self,$strand,$length,$h,$colour,$pix_per_bp) = @_;
+  my ($self,$strand,$length,$h,$colour) = @_;
 
+  my $pix_per_bp = $self->scalex;
   my ($ay,$ao,$am); 
   if ($strand) {
     ($ay,$ao,$am) = (-4,$length,-1);
@@ -399,12 +406,14 @@ sub calculate_expanded_joins {
         push @{$tjoins{$peptide_id}},{
           key => "$h->[0]:$peptide_id",
           colour => $h->[1],
+          legend => $h->[2],
         };
       }
       foreach my $h (@$homologue_genes) {
         push @{$tjoins{$peptide_id}},{
           key => "$gene_stable_id:$h->[0]",
           colour => $h->[1],
+          legend => $h->[2],
         };
       }
     }
@@ -416,11 +425,6 @@ sub calculate_expanded_joins {
         colour => $alt_alleles_col,
         legend => 'Alternative alleles'
       };
-    }
- 
-    for (@$homologues) {
-      $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
-      $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
     }
   }
   
@@ -449,11 +453,6 @@ sub calculate_expanded_joins {
         colour => $alt_alleles_col,
         legend => 'Alternative alleles'
       };
-    }
- 
-    for (@$homologues) {
-      $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
-      $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$_->[2]} = $_->[1];
     }
   }
   $tjoins{$tsid} = \@joins;
@@ -635,22 +634,10 @@ sub render_alignslice_transcript {
   my $container         = $self->{'container'}{'ref'} || $self->{'container'};
   my $length            = $container->length;
   my $selected_db       = $self->core('db');
-  my $selected_gene     = $self->core('g');
-  my $selected_trans    = $self->core('t');
-  my $pix_per_bp        = $self->scalex;
   my $strand            = $self->strand;
-  my $strand_flag       = $self->my_config('strand');
-  my $db                = $self->my_config('db');
   my $show_labels       = $self->my_config('show_labels');
   my $target            = $self->get_parameter('single_Transcript');
   my $target_gene       = $self->get_parameter('single_Gene');
-  my $y                 = 0;
-  my $h                 = $self->my_config('height') || ($target ? 30 : 8); # Single transcript mode - set height to 30 - width to 8
-  my $mcolour           = 'green'; # Colour to use to display missing exons
-  my $transcript_drawn  = 0;
-  my %used_colours;
-  
-  $self->_init_bump;
   
   my ($genes, $highlights, $transcripts) = $self->features;
 
@@ -659,48 +646,19 @@ sub render_alignslice_transcript {
     my $gene_strand    = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
     
-    next if $gene_strand != $strand && $strand_flag eq 'b'; # skip features on wrong strand
     next if $target_gene && $gene_stable_id ne $target_gene;
     
     my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$transcripts->{$gene_stable_id}};
     
     foreach my $transcript (@sorted_transcripts) {
       next if $transcript->start > $length || $transcript->end < 1;
+      next if $target && $transcript->stable_id ne $target;
       
       my @raw_exons = $self->map_AlignSlice_Exons($transcript, $length);
       
       next if scalar @raw_exons == 0;
       
-      # For exon_structure diagram only given transcript
-      next if $target && $transcript->stable_id ne $target;
-      
-      $transcript_drawn = 1;
-      
       my $transcript_stable_id = $transcript->stable_id;
-      
-      my $colour_key = $self->colour_key($gene, $transcript);    
-      my $colour     = $self->my_colour($colour_key);
-      my $label      = $self->my_colour($colour_key, 'text');
-
-      $self->use_legend(\%used_colours,$colour?$colour_key:undef);
-
-      my $coding_start = defined $transcript->coding_region_start ? $transcript->coding_region_start :  -1e6;
-      my $coding_end   = defined $transcript->coding_region_end   ? $transcript->coding_region_end   :  -1e6;
-
-      # XXX Remedial work done in subclasses for non align-slices
-      my @exons;
-      for(my $i=0;$i<@raw_exons;$i++) {
-        my $e = $raw_exons[$i];
-        my $e_coding_start = max($coding_start,$e->start);
-        my $e_coding_end = min($coding_end,$e->end);
-        if($e->{'exon'}->{'etype'} eq 'M') {
-          push @exons,[$e,$i,'missing'];
-        } else {
-          push @exons,[$e,$i,'border'] if $e->start < $e_coding_start || $e->end > $e_coding_end;
-          push @exons,[$e,$i,'fill',$e_coding_start-$e->start,$e->end-$e_coding_end] if $e_coding_start <= $e_coding_end; 
-        }
-      }
-      # Now, as elsewhere 
       my $td = {
         colour_key => $self->colour_key($gene, $transcript),
         exon_stageleft => 0,
@@ -711,74 +669,50 @@ sub render_alignslice_transcript {
         label => $self->feature_label($gene,$transcript),
         start => $transcript->start,
         end => $transcript->end,
+        strand => $transcript->strand,
         exons => [],
+        joins => [],
       };
-      $td->{'colour'} = $self->my_colour($td->{'colour_key'});
-      for(my $i=0;$i<@exons;$i++) {
-        next unless defined $exons[$i][0]; # genscan weirdness
-        if($exons[$i][0]->end <= 0) { $td->{'exon_stageleft'} = 1; next; }
-        if($exons[$i][0]->start > $length) { $td->{'exon_stageright'} = 1; next; }
-        my $target = {
-          start => $exons[$i][0]->start,
-          end => $exons[$i][0]->end,
-          strand => $exons[$i][0]->strand,
+      
+      my $colour_key = $self->colour_key($gene, $transcript);    
+      my $colour     = $self->my_colour($colour_key);
+      my $label      = $self->my_colour($colour_key, 'text');
+
+      my $coding_start = defined $transcript->coding_region_start ? $transcript->coding_region_start :  -1e6;
+      my $coding_end   = defined $transcript->coding_region_end   ? $transcript->coding_region_end   :  -1e6;
+
+      for(my $i=0;$i<@raw_exons;$i++) {
+        my $e = $raw_exons[$i];
+        my $e_coding_start = max($coding_start,$e->start);
+        my $e_coding_end = min($coding_end,$e->end);
+        my $exon = {
+          start => $e->start,
+          end => $e->end,
+          strand => $e->strand,
           types => [],
         };
-        if($i and $exons[$i][1] eq $exons[$i-1][1]) {
-          $target = $td->{'exons'}[$i-1];
+        if($e->{'exon'}->{'etype'} eq 'M') {
+          push @{$exon->{'types'}},'missing';
         } else {
-          push @{$td->{'exons'}},$target;
+          if($e->start < $e_coding_start || $e->end > $e_coding_end) {
+            push @{$exon->{'types'}},'border';
+          }
+          if($e_coding_start <= $e_coding_end) {
+            push @{$exon->{'types'}},'full';
+            $exon->{'coding_start'} = $e_coding_start-$e->start;
+            $exon->{'coding_end'} = $e->end-$e_coding_end;
+          }
         }
-        push @{$target->{'types'}},$exons[$i][2];
-        if($exons[$i][2] eq 'fill') {
-          $target->{'coding_start'} = $exons[$i][3];
-          $target->{'coding_end'} = $exons[$i][4];
-        }
+        push @{$td->{'exons'}},$exon;
       }
+      $td->{'colour'} = $self->my_colour($td->{'colour_key'});
       push @tdraw,$td;
     }
   }
   my $draw_labels = ($labels and $show_labels ne 'off');
   $self->mr_bump(\@tdraw,$draw_labels,$length);
-  foreach my $td (@tdraw) {
-    my $composite = $self->Composite({ 
-      y      => $y, 
-      height => $h,
-      title  => $td->{'title'},
-      href   => $td->{'href'},
-    });
-    foreach my $e (@{$td->{'exons'}}) {
-      $self->draw_expanded_exon($composite,$td,$h,$e,$length);
-    }
-    $self->draw_introns($composite,$td,$h,$length,$strand);
-
-    my $bump_height  = 1.5 * $h;
-    $bump_height += $self->add_label_new($composite,$td) if $draw_labels;
-    $composite->y($composite->y - $strand * $bump_height * $td->{'_bump'});
-    $composite->colour($td->{'highlight'}) if $config->get_option('opt_highlight_feature') != 0 && $td->{'highlight'} && !defined $target;
-    $self->push($composite);
-  
-    my $colour = $td->{'colour'};
-    if ($target) {
-      # check the strand of one of the transcript's exons
-      my $estrand = ((($td->{'exons'}||[])->[0])||{})->{'strand'};
-      $self->draw_grey_arrow($estrand,$length,$h,$colour,$pix_per_bp);
-    }
-  }
-
-  if ($transcript_drawn) {
-    my $type = $self->my_config('name');
-    my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
-    
-    $used_colours{$_} = $legend_old{$_} for keys %legend_old;
-    
-    my @legend = %used_colours;
-    
-    $self->{'legend'}{'gene_legend'}{$type} = {
-      priority => $self->_pos,
-      legend   => \@legend
-    };
-  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+  $self->draw_expanded_transcripts(\@tdraw,$length,$strand,$draw_labels,$target);
+  if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
     $self->no_track_on_strand;
   }
 }
