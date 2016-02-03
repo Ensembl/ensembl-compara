@@ -120,7 +120,7 @@ sub content_sub_slice {
   } elsif ($start && $end) {
     $config->{'html_template'} = sprintf '<pre class="text_sequence" style="margin:0">%s%%s</pre>', $start == 1 ? '&gt;' . $hub->param('name') . "\n" : '';
   } else {
-    $config->{'html_template'} = '<pre class="text_sequence">&gt;' . $slice->name . "\n%s</pre>";
+    $config->{'html_template'} = '<pre class="text_sequence"><span class="_seq">&gt;' . $slice->name . "\n</span>%s</pre>";
   }
   
   $config->{'html_template'} .= '<p class="invisible">.</p>';
