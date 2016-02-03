@@ -124,6 +124,16 @@ sub draw_expanded_exon {
           absolutey => 1,
         }));
       }
+    } elsif($type eq 'missing') {
+      $composite2->push($self->Line({
+        x         => $box_start - 1,
+        y         => int($h/2),
+        width     => $box_end-$box_start + 1,
+        height    => 0,
+        absolutey => 1,
+        colour    => 'green',
+        dotted    => 1
+      }));
     }
   }
 }
@@ -164,11 +174,8 @@ sub draw_expanded_transcripts {
   my $h = $self->my_config('height') || ($target ? 30 : 8);
   my $strand_flag = $self->my_config('strand');
   my %used_colours;
-  warn "WED A\n";
   foreach my $td (@$tdraw) { 
-    warn "WED B $strand / $td->{'strand'} flag= $strand_flag  \n";
     next if $strand != $td->{'strand'} and $strand_flag eq 'b';
-    warn "WED C\n";
     my $composite = $self->Composite({
       y      => 0,
       height => $h,
@@ -183,8 +190,6 @@ sub draw_expanded_transcripts {
     
     my $bump_height  = 1.6 * $h;
     $bump_height += $self->add_label_new($composite,$td) if $draw_labels;
-
-    # bump
     $composite->y($composite->y - $strand * $bump_height * $td->{'_bump'});
 
     $composite->colour($td->{'highlight'}) if $td->{'highlight'};
@@ -280,6 +285,35 @@ sub draw_introns {
       }));
     }
   }
+}
+
+# Probably not used anywhere any more?
+sub draw_grey_arrow {
+  my ($self,$strand,$length,$h,$colour,$pix_per_bp) = @_;
+
+  my ($ay,$ao,$am); 
+  if ($strand) {
+    ($ay,$ao,$am) = (-4,$length,-1);
+  } else {
+    ($ay,$ao,$am) = ($h+4,0,1);
+  }
+  $self->push($self->Line({
+    x         => 0,
+    y         => $ay,
+    width     => $length,
+    height    => 0,
+    absolutey => 1,
+    colour    => $colour
+  }));
+  $self->push($self->Poly({
+    absolutey => 1,
+    colour    => $colour,
+    points    => [ 
+      $ao+$am*4/$pix_per_bp, $ay-2*$am,
+      $ao, $ay,
+      $ao+$am*4/$pix_per_bp, $ay+2*$am,
+    ]
+  }));
 }
 
 sub calculate_collapsed_joins {
@@ -562,7 +596,7 @@ sub render_transcripts {
       next if $exons[0][0]->strand != $gene_strand && $self->{'do_not_strand'} != 1; # If stranded diagram skip if on wrong strand
     
       for(my $i=0;$i<@exons;$i++) {
-        next unless defined $exons[$i][0]; # Skip this exon if it is not defined (can happen w/ genscans)
+        next unless defined $exons[$i][0]; # genscan weirdness
         if($exons[$i][0]->end <= 0) { $td->{'exon_stageleft'} = 1; next; }
         if($exons[$i][0]->start > $length) { $td->{'exon_stageright'} = 1; next; }
         my $target = {
@@ -619,7 +653,8 @@ sub render_alignslice_transcript {
   $self->_init_bump;
   
   my ($genes, $highlights, $transcripts) = $self->features;
-  
+
+  my @tdraw;
   foreach my $gene (@$genes) {
     my $gene_strand    = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
@@ -632,21 +667,14 @@ sub render_alignslice_transcript {
     foreach my $transcript (@sorted_transcripts) {
       next if $transcript->start > $length || $transcript->end < 1;
       
-      my @exons = $self->map_AlignSlice_Exons($transcript, $length);
+      my @raw_exons = $self->map_AlignSlice_Exons($transcript, $length);
       
-      next if scalar @exons == 0;
+      next if scalar @raw_exons == 0;
       
       # For exon_structure diagram only given transcript
       next if $target && $transcript->stable_id ne $target;
       
       $transcript_drawn = 1;
-      
-      my $composite = $self->Composite({ 
-        y      => $y, 
-        height => $h,
-        title  => $self->title($transcript, $gene),
-        href   => $self->href($gene, $transcript)
-      });
       
       my $transcript_stable_id = $transcript->stable_id;
       
@@ -659,173 +687,82 @@ sub render_alignslice_transcript {
       my $coding_start = defined $transcript->coding_region_start ? $transcript->coding_region_start :  -1e6;
       my $coding_end   = defined $transcript->coding_region_end   ? $transcript->coding_region_end   :  -1e6;
 
-      my $composite2 = $self->Composite({ y => $y, height => $h });
-      
-      # now draw exons
-      for (my $i = 0; $i < scalar @exons; $i++) {
-        my $exon = @exons[$i];
-        
-        next unless defined $exon; # Skip this exon if it is not defined (can happen w/ genscans) 
-        last if $exon->start > $length; # We are finished if this exon starts outside the slice
-        
-        my ($box_start, $box_end);
-        
-        # only draw this exon if is inside the slice
-        if ($exon->end > 0) { # calculate exon region within boundaries of slice
-          $box_start = $exon->start;
-          $box_start = 1 if $box_start < 1 ;
-          $box_end = $exon->end;
-          $box_end = $length if $box_end > $length;
-          
-          # The start of the transcript is before the start of the coding
-          # region OR the end of the transcript is after the end of the
-          # coding regions.  Non coding portions of exons, are drawn as
-          # non-filled rectangles
-          # Draw a non-filled rectangle around the entire exon
-          if ($box_start < $coding_start || $box_end > $coding_end) {
-            $composite2->push($self->Rect({
-              x            => $box_start - 1,
-              y            => $y + $h/8,
-              width        => $box_end - $box_start + 1,
-              height       => 3 * $h/4,
-              bordercolour => $colour,
-              absolutey    => 1,
-            }));
-          }
-          
-          # Calculate and draw the coding region of the exon
-          my $filled_start = $box_start < $coding_start ? $coding_start : $box_start;
-          my $filled_end   = $box_end > $coding_end     ? $coding_end   : $box_end;
-          # only draw the coding region if there is such a region
-          
-          # Draw a filled rectangle in the coding region of the exon
-          if ($filled_start <= $filled_end) {
-            $composite2->push($self->Rect({
-              x         => $filled_start - 1,
-              y         => $y,
-              width     => $filled_end - $filled_start + 1,
-              height    => $h,
-              colour    => $colour,
-              absolutey => 1,
-            }));
-          }
-        } 
-        
-        my $next_exon = $i < $#exons ? @exons[$i+1] : undef;
-        
-        last unless defined $next_exon; # we are finished if there is no other exon defined
-
-        my $intron_start = $exon->end + 1; # calculate the start and end of this intron
-        my $intron_end = $next_exon->start - 1;
-        
-        next if $intron_end < 0;         # grab the next exon if this intron is before the slice
-        last if $intron_start > $length; # we are done if this intron is after the slice
-          
-        # calculate intron region within slice boundaries
-        $box_start = $intron_start < 1 ? 1 : $intron_start;
-        $box_end   = $intron_end > $length ? $length : $intron_end;
-        
-        my $intron;
-        
-        # Usual stuff if it is not missing exon
-        if ($exon->{'exon'}->{'etype'} ne 'M') {
-          if ($box_start == $intron_start && $box_end == $intron_end) {
-            # draw an wholly in slice intron
-            $composite2->push($self->Intron({
-              x         => $box_start - 1,
-              y         => $y,
-              width     => $box_end - $box_start + 1,
-              height    => $h,
-              colour    => $colour,
-              absolutey => 1,
-              strand    => $strand
-            }));
-          } else {
-            # else draw a "not in slice" intron
-            $composite2->push($self->Line({
-              x         => $box_start - 1,
-              y         => $y + int($h/2),
-              width     => $box_end-$box_start + 1,
-              height    => 0,
-              absolutey => 1,
-              colour    => $colour,
-              dotted    => 1
-            }));
-          }
+      # XXX Remedial work done in subclasses for non align-slices
+      my @exons;
+      for(my $i=0;$i<@raw_exons;$i++) {
+        my $e = $raw_exons[$i];
+        my $e_coding_start = max($coding_start,$e->start);
+        my $e_coding_end = min($coding_end,$e->end);
+        if($e->{'exon'}->{'etype'} eq 'M') {
+          push @exons,[$e,$i,'missing'];
         } else {
-          # Missing exon - draw a dotted line
-          $composite2->push($self->Line({
-            x         => $box_start - 1,
-            y         => $y + int($h/2),
-            width     => $box_end-$box_start + 1,
-            height    => 0,
-            absolutey => 1,
-            colour    => $mcolour,
-            dotted    => 1
-          }));
+          push @exons,[$e,$i,'border'] if $e->start < $e_coding_start || $e->end > $e_coding_end;
+          push @exons,[$e,$i,'fill',$e_coding_start-$e->start,$e->end-$e_coding_end] if $e_coding_start <= $e_coding_end; 
         }
       }
-      
-      $composite->push($composite2);
-      
-      my $bump_height  = 1.5 * $h;
-         $bump_height += $self->add_label($composite, $colour, $gene, $transcript) if $labels && $show_labels ne 'off';
-      
-      # bump
-      my $bump_start = int($composite->x * $pix_per_bp);
-      my $bump_end = $bump_start + int($composite->width * $pix_per_bp) + 1;
-      
-      my $row = $self->bump_row($bump_start, $bump_end);
-      
-      # shift the composite container by however much we've bumped
-      $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($highlights->{$transcript_stable_id}) if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !defined $target;
-      $self->push($composite);
-      
-      if ($target) {
-        # check the strand of one of the transcript's exons
-        my ($trans_exon) = @{$transcript->get_all_Exons};
-        
-        if ($trans_exon->strand == 1) {
-          $self->push($self->Line({
-            x         => 0,
-            y         => -4,
-            width     => $length,
-            height    => 0,
-            absolutey => 1,
-            colour    => $colour
-          }));
-          
-          $self->push($self->Poly({
-            absolutey => 1,
-            colour    => $colour,
-            points    => [
-             $length - 4/$pix_per_bp, -2,
-             $length, -4,
-             $length - 4/$pix_per_bp, -6
-            ]
-          }));
+      # Now, as elsewhere 
+      my $td = {
+        colour_key => $self->colour_key($gene, $transcript),
+        exon_stageleft => 0,
+        exon_stageright => 0,
+        title  => $self->title($transcript, $gene),
+        href   => $self->href($gene, $transcript),
+        highlight => $highlights->{$transcript_stable_id},
+        label => $self->feature_label($gene,$transcript),
+        start => $transcript->start,
+        end => $transcript->end,
+        exons => [],
+      };
+      $td->{'colour'} = $self->my_colour($td->{'colour_key'});
+      for(my $i=0;$i<@exons;$i++) {
+        next unless defined $exons[$i][0]; # genscan weirdness
+        if($exons[$i][0]->end <= 0) { $td->{'exon_stageleft'} = 1; next; }
+        if($exons[$i][0]->start > $length) { $td->{'exon_stageright'} = 1; next; }
+        my $target = {
+          start => $exons[$i][0]->start,
+          end => $exons[$i][0]->end,
+          strand => $exons[$i][0]->strand,
+          types => [],
+        };
+        if($i and $exons[$i][1] eq $exons[$i-1][1]) {
+          $target = $td->{'exons'}[$i-1];
         } else {
-          $self->push($self->Line({
-            x         => 0,
-            y         => $h + 4,
-            width     => $length,
-            height    => 0,
-            absolutey => 1,
-            colour    => $colour
-          }));
-            
-          $self->push($self->Poly({
-            absolutey => 1,
-            colour    => $colour,
-            points    => [ 
-              4/$pix_per_bp, $h + 6,
-              0, $h + 4,
-              4/$pix_per_bp, $h + 2
-            ]
-          }));
+          push @{$td->{'exons'}},$target;
         }
-      }  
+        push @{$target->{'types'}},$exons[$i][2];
+        if($exons[$i][2] eq 'fill') {
+          $target->{'coding_start'} = $exons[$i][3];
+          $target->{'coding_end'} = $exons[$i][4];
+        }
+      }
+      push @tdraw,$td;
+    }
+  }
+  my $draw_labels = ($labels and $show_labels ne 'off');
+  $self->mr_bump(\@tdraw,$draw_labels,$length);
+  foreach my $td (@tdraw) {
+    my $composite = $self->Composite({ 
+      y      => $y, 
+      height => $h,
+      title  => $td->{'title'},
+      href   => $td->{'href'},
+    });
+    foreach my $e (@{$td->{'exons'}}) {
+      $self->draw_expanded_exon($composite,$td,$h,$e,$length);
+    }
+    $self->draw_introns($composite,$td,$h,$length,$strand);
+
+    my $bump_height  = 1.5 * $h;
+    $bump_height += $self->add_label_new($composite,$td) if $draw_labels;
+    $composite->y($composite->y - $strand * $bump_height * $td->{'_bump'});
+    $composite->colour($td->{'highlight'}) if $config->get_option('opt_highlight_feature') != 0 && $td->{'highlight'} && !defined $target;
+    $self->push($composite);
+  
+    my $colour = $td->{'colour'};
+    if ($target) {
+      # check the strand of one of the transcript's exons
+      my $estrand = ((($td->{'exons'}||[])->[0])||{})->{'strand'};
+      $self->draw_grey_arrow($estrand,$length,$h,$colour,$pix_per_bp);
     }
   }
 
