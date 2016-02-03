@@ -293,7 +293,9 @@ sub method_link_species_set_id {
   Arg [1]    : listref $alignment_segments [ [ $dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], .. ]
   Example    : my $alignment_segments = $constrained_element->alignment_segments();
                $constrained_element->alignment_segments($alignment_segments);
-  Description: Getter/Setter for the attribute alignment_segments 
+  Description: Getter/Setter for the attribute alignment_segments. It represents the alignments segments of this
+               constrained element in all the species.
+               Note: this is lazy-loaded
   Returntype : listref  
   Exceptions : returns undef if no ref.alignment_segments
   Caller     : general
@@ -307,6 +309,9 @@ sub alignment_segments {
     $self->{'alignment_segments'} = $alignment_segments;
   } 
 
+  unless ($self->{'alignment_segments'}) {
+    $self->{'alignment_segments'} = $self->adaptor->fetch_by_dbID($self->dbID)->{'alignment_segments'};
+  }
   return $self->{'alignment_segments'};
 }
 
@@ -574,25 +579,6 @@ sub summary_as_hash {
   return $summary_ref;
 }
 
-=head2 add_alignment_segments
-
- Example       : my $CEs = $constrained_element_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
-                 foreach my $constrained_element( @{ $CE }) {
-                  $constrained_element->add_alignment_segments;
-                 }
- Description   : Add the alignments segments to constrained element objects retrieved by coordinate-based 'fetch_all'
-                 methods such as fetch_all_by_MethodLinkSpeciesSet_Slice and fetch_all_by_MethodLinkSpeciesSet_DnaFrag
- Returns       : Nothing
-
-=cut
-
-sub add_alignment_segments {
- my $self = shift;
- unless( $self->alignment_segments ){
-  $self->alignment_segments( $self->adaptor->fetch_by_dbID($self->dbID)->{'alignment_segments'} );
- }
-}
-
 
 =head2 get_all_overlapping_exons
 
@@ -628,8 +614,6 @@ sub get_all_overlapping_exons {
   
  my $dnafrag_a = $self->adaptor->db->get_DnaFrag;
  my $genome_db_a = $self->adaptor->db->get_GenomeDB;
-
- $self->add_alignment_segments;
 
  if(@params){
   foreach my $param(@params){
