@@ -93,8 +93,10 @@ sub draw_collapsed_exon {
 }
 
 sub draw_expanded_exon {
-  my ($self,$composite2,$t,$e,$length) = @_;
-      
+  my ($self,$composite2,$t,$h,$e,$length) = @_;
+  
+  my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
+  my $non_coding_start  = ($h - $non_coding_height) / 2;
   my $colour    = $self->my_colour($t->{'colour_key'});
   my $box_start = max($e->{'start'}, 1);
   my $box_end   = min($e->{'end'}, $length);
@@ -102,9 +104,9 @@ sub draw_expanded_exon {
     if ($type eq 'border') {
       $composite2->push($self->Rect({
         x            => $box_start - 1 ,
-        y            => $t->{'non_coding_start'},
+        y            => $non_coding_start,
         width        => $box_end - $box_start + 1,
-        height       => $t->{'non_coding_height'},
+        height       => $non_coding_height,
         bordercolour => $colour,
         absolutey    => 1,
       }));
@@ -117,7 +119,7 @@ sub draw_expanded_exon {
           x         => $fill_start - 1,
           y         => 0,
           width     => $fill_end - $fill_start + 1,
-          height    => $t->{'height'},
+          height    => $h,
           colour    => $colour,
           absolutey => 1,
         }));
@@ -143,17 +145,60 @@ sub draw_collapsed_gene_base {
 }
 
 sub draw_expanded_transcript {
-  my ($self,$composite2,$t,$length,$strand) = @_;
+  my ($self,$composite2,$t,$h,$length,$strand) = @_;
 
   foreach my $j (@{$t->{'joins'}||[]}) {
     $self->draw_join($composite2,$j);
   }
   foreach my $e (@{$t->{'exons'}||[]}) {
-    $self->draw_expanded_exon($composite2,$t,$e,$length);
+    $self->draw_expanded_exon($composite2,$t,$h,$e,$length);
   }
-  $self->draw_introns($composite2,$t,$length,$strand);
+  $self->draw_introns($composite2,$t,$h,$length,$strand);
 }
 
+sub draw_expanded_transcripts {
+  my ($self,$tdraw,$length,$strand,$draw_labels) = @_;
+
+  return unless @$tdraw;
+  my $target = $self->get_parameter('single_Transcript');
+  my $h = $self->my_config('height') || ($target ? 30 : 8);
+  my $strand_flag = $self->my_config('strand');
+  my %used_colours;
+  warn "WED A\n";
+  foreach my $td (@$tdraw) { 
+    warn "WED B $strand / $td->{'strand'} flag= $strand_flag  \n";
+    next if $strand != $td->{'strand'} and $strand_flag eq 'b';
+    warn "WED C\n";
+    my $composite = $self->Composite({
+      y      => 0,
+      height => $h,
+      title  => $td->{'title'},
+      href   => $td->{'href'},
+      class  => 'group',
+    });
+
+    $self->use_legend(\%used_colours,$td->{'colour_key'});
+    
+    $self->draw_expanded_transcript($composite,$td,$h,$length,$strand);
+    
+    my $bump_height  = 1.6 * $h;
+    $bump_height += $self->add_label_new($composite,$td) if $draw_labels;
+
+    # bump
+    $composite->y($composite->y - $strand * $bump_height * $td->{'_bump'});
+
+    $composite->colour($td->{'highlight'}) if $td->{'highlight'};
+    $self->push($composite);
+  }
+  my $type = $self->type;
+  my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
+  $used_colours{$_} = $legend_old{$_} for keys %legend_old;
+  my @legend = %used_colours;
+  $self->{'legend'}{'gene_legend'}->{$type} = {
+    priority => $self->_pos,
+    legend   => \@legend
+  };
+}
     
 sub draw_collapsed_genes {
   my ($self,$length,$labels,$strand,$genes) = @_;
@@ -199,7 +244,7 @@ sub draw_collapsed_genes {
 }
       
 sub draw_introns {
-  my ($self,$composite2,$t,$length,$strand) = @_;
+  my ($self,$composite2,$t,$h,$length,$strand) = @_;
 
   my $colour = $self->my_colour($t->{'colour_key'});
   my @introns = @{$t->{'exons'}};
@@ -215,7 +260,7 @@ sub draw_introns {
     if($dotted) {
       $composite2->push($self->Line({
         x         => $intron_start - 1,
-        y         => int($t->{'height'}/2),
+        y         => int($h/2),
         width     => $intron_end - $intron_start + 1,
         height    => 0,
         colour    => $colour,
@@ -228,7 +273,7 @@ sub draw_introns {
         x         => $intron_start - 1,
         y         => 0,
         width     => $intron_end - $intron_start + 1,
-        height    => $t->{'height'},
+        height    => $h,
         colour    => $colour,
         absolutey => 1,
         strand    => $strand,
@@ -462,48 +507,28 @@ sub render_transcripts {
   my $config            = $self->{'config'};
   my $container         = $self->{'container'}{'ref'} || $self->{'container'};
   my $length            = $container->length;
-  my $pix_per_bp        = $self->scalex;
   my $strand            = $self->strand;
-  my $selected_db       = $self->core('db');
-  my $selected_trans    = $self->core('t') || $self->core('pt') ;
-  my $selected_gene     = $self->my_config('g') || $self->core('g');
-  my $strand_flag       = $self->my_config('strand');
-  my $db                = $self->my_config('db');
   my $show_labels       = $self->my_config('show_labels');
   my $link              = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $target            = $self->get_parameter('single_Transcript');
   my $target_gene       = $self->get_parameter('single_Gene');
-  my $alt_alleles_col   = $self->my_colour('alt_alleles_join');
-  my $y                 = 0;
-  my $h                 = $self->my_config('height') || ($target ? 30 : 8); # Single transcript mode - set height to 30 - width to 8
-  my $join_z            = 1000;
-  my $transcript_drawn  = 0;
-  my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
-  my $non_coding_start  = ($h - $non_coding_height) / 2;
   my %used_colours;
   
-  $self->_init_bump;
-  
   my ($genes, $highlights, $transcripts, $exons) = $self->features;
-  my $on_other_strand = 0;
   
+  my @tdraw;
   foreach my $gene (@$genes) {
-    my $gene_strand    = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
-    
-    if ($gene_strand != $strand && $strand_flag eq 'b') { # skip features on wrong strand
-      $on_other_strand = 1;
-      next;
-    }
     next if $target_gene && $gene_stable_id ne $target_gene;
     
     my $tjoins;
     if ($link && $gene_stable_id) {
       $tjoins = $self->calculate_expanded_joins($gene,$gene_stable_id);
     }
- 
+
+    my $gene_strand = $gene->strand; 
     my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$transcripts->{$gene_stable_id}};
-    
+   
     foreach my $transcript (@sorted_transcripts) {
       my $transcript_stable_id = $transcript->stable_id;
       
@@ -520,14 +545,18 @@ sub render_transcripts {
 
       my $td = {
         joins => \@joins,
-        height => $h,
         title  => $self->title($transcript, $gene),
         href   => $self->href($gene, $transcript),
         colour_key => $self->colour_key($gene, $transcript),
-        non_coding_start => $non_coding_start,
-        non_coding_height => $non_coding_height,
+        start => max(0,$transcript->start),
+        end => min($length,$transcript->end),
+        label => $self->feature_label($gene,$transcript),
         exons => [],
+        strand => $gene->strand,
       };
+      $td->{'colour'} = $self->my_colour($td->{'colour_key'});
+      $td->{'highlight'} = $highlights->{$transcript_stable_id} if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !defined $target;
+  
       my @exons = @{$exons->{$transcript_stable_id}};
       
       next if $exons[0][0]->strand != $gene_strand && $self->{'do_not_strand'} != 1; # If stranded diagram skip if on wrong strand
@@ -551,47 +580,14 @@ sub render_transcripts {
           $target->{'coding_start'} = $exons[$i][2];
           $target->{'coding_end'} = $exons[$i][3];
         }
-      } 
-  
-      $transcript_drawn = 1;        
-
-      my $composite = $self->Composite({
-        y      => $y,
-        height => $h,
-        title  => $td->{'title'},
-        href   => $td->{'href'},
-        class  => 'group',
-      });
-
-      $self->use_legend(\%used_colours,$td->{'colour_key'});
-      
-      $self->draw_expanded_transcript($composite,$td,$length,$strand);
-      
-      my $colour     = $self->my_colour($td->{'colour_key'});
-      my $bump_height  = 1.5 * $h;
-         $bump_height += $self->add_label($composite, $colour, $gene, $transcript) if $labels && $show_labels ne 'off';
-
-      # bump
-      my $bump_start = int($composite->x * $pix_per_bp);
-      my $bump_end = $bump_start + int($composite->width * $pix_per_bp) + 1;
-      my $row = $self->bump_row($bump_start, $bump_end);
-      
-      # shift the composite container by however much we're bumped
-      $composite->y($composite->y - $strand * $bump_height * $row);
-      $composite->colour($highlights->{$transcript_stable_id}) if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !defined $target;
-      $self->push($composite);
+      }
+      push @tdraw,$td; 
     }
   }
-  if ($transcript_drawn) {
-    my $type = $self->type;
-    my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
-    $used_colours{$_} = $legend_old{$_} for keys %legend_old;
-    my @legend = %used_colours;
-    $self->{'legend'}{'gene_legend'}->{$type} = {
-      priority => $self->_pos,
-      legend   => \@legend
-    };
-  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$on_other_strand) {
+  my $draw_labels = ($labels and $show_labels ne 'off');
+  $self->mr_bump(\@tdraw,$draw_labels,$length);
+  $self->draw_expanded_transcripts(\@tdraw,$length,$strand,$draw_labels);
+  if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
     $self->no_track_on_strand;
   }
 }
@@ -1485,6 +1481,7 @@ sub add_label_new {
   
   my $text_details = $self->text_details;
   my $y            = $composite->y + $composite->height;
+  my $yo = $y;
 
   foreach my $line (split("\n",$g->{'label'})) {
     $composite->push($self->Text({
@@ -1499,7 +1496,7 @@ sub add_label_new {
     $y += $text_details->{'height'};
   }
  
-  return $g->{'_lheight'};
+  return $y-$yo;
 }
 
 sub colour_key {
