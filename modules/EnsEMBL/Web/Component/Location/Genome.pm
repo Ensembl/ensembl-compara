@@ -50,7 +50,6 @@ sub content {
       $features = $object->convert_to_drawing_parameters;
     }
   }
-
   my $html = $self->_render_features($id, $features, $config);
   return $html;
 }
@@ -147,7 +146,7 @@ sub _render_features {
           $title .= ' of ';
           my ($data_type, $assoc_name);
           my $ftype = $hub->param('ftype');
-          if (grep (/$ftype/, keys %$features)) {
+          if (grep (/$ftype/, keys %$features) && !$hub->param('id')) {
             $data_type = $ftype;
           }
           else {
