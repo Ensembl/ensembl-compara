@@ -79,8 +79,11 @@ sub fetch_input {
 
     # To pre-load all the tree nodes
     $cafe_tree->root->get_all_nodes;
-
     $self->param('cafe_tree', $cafe_tree);
+
+    my $copy = $cafe_adaptor->fetch_by_GeneTree($gene_tree);
+    $copy->root->get_all_nodes;
+    $self->param('cafe_tree_copy', $copy);
 }
 
 ## Compute the LCA-pruned tree and convert both to JSON
@@ -90,12 +93,12 @@ sub run {
     $self->dbc and $self->dbc->disconnect_if_idle();
 
     my $cafe_tree = $self->param('cafe_tree');
-
     $cafe_tree->multifurcate_tree();
-
     my $cafe_hash = Bio::EnsEMBL::Compara::Utils::CAFETreeHash->convert($cafe_tree);
 
+    $cafe_tree = $self->param('cafe_tree_copy');
     $cafe_tree->root($cafe_tree->root->lca_reroot($cafe_tree->lca_id));
+    $cafe_tree->multifurcate_tree();
 
     my $lca_cafe_hash = Bio::EnsEMBL::Compara::Utils::CAFETreeHash->convert($cafe_tree);
 
