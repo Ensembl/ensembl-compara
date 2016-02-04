@@ -461,7 +461,7 @@ sub calculate_expanded_joins {
   
 sub draw_join {
   my ($self,$target,$j) = @_;
-        
+  
   $self->join_tag($target,$j->{'key'},0.5,0.5,$j->{'colour'},'line',1000);
   $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
   if($j->{'legend'}) {
@@ -734,10 +734,6 @@ sub render_alignslice_collapsed {
   my $show_labels       = $self->my_config('show_labels');
   my $y                 = 0;
   my $h                 = 8;
-  my $transcript_drawn  = 0;
-  my %used_colours;
-  
-  $self->_init_bump;
   
   my ($genes, $highlights) = $self->features;
  
@@ -746,13 +742,9 @@ sub render_alignslice_collapsed {
     my $gene_strand    = $gene->strand;
     my $gene_stable_id = $gene->stable_id;
     
-    next if $gene_strand != $strand && $strand_flag eq 'b';
-    
     my $colour_key = $self->colour_key($gene);    
     my $colour     = $self->my_colour($colour_key);
     my $label      = $self->my_colour($colour_key, 'text');
-    
-    $self->use_legend(\%used_colours,$colour?$colour_key:undef);
     
     my @exons;
     
@@ -763,7 +755,6 @@ sub render_alignslice_collapsed {
     }
     
     next unless @exons;
-    
     
     # All exons in the gene will be connected by a simple line which starts from a first exon if it within the viewed region, otherwise from the first pixel. 
     # The line ends with last exon of the gene or the end of the image
@@ -780,7 +771,6 @@ sub render_alignslice_collapsed {
     # Draw exons
     my @edraw;
     foreach my $exon (@exons_in_view) {
-      $transcript_drawn = 1;
       push @edraw,{ start => $exon->start, end => $exon->end };
     }
 
@@ -901,7 +891,7 @@ sub render_genes {
     if ($link) {
       my $joins = $self->calculate_collapsed_joins($gene,$gene_stable_id);
       foreach my $j (@$joins) {
-        $self->draw_join($rect,$j->{'key'},$j->{'colour'},$j->{'legend'});
+        $self->draw_join($rect,$j);
       }
     }
     
