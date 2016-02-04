@@ -194,6 +194,7 @@ sub create_tracks {
   }
 =cut
 
+  my $max_seen = -1;
   ## We already fetched the data in the child module in one fell swoop!
   if ($parser->can('cache') && $parser->cache->{'summary'}) {
     my $track_key = $self->build_metadata($parser, $data, $extra_config, $order);
@@ -231,6 +232,13 @@ sub create_tracks {
       }
 
       my ($seqname, $start, $end) = $self->coords;
+      if($extra_config->{'pix_per_bp'}) {
+        ## Skip if already have something on this pixel
+        my $here = int($start*$extra_config->{'pix_per_bp'});
+        next if $max_seen >= $here;
+        $max_seen = $here;
+      }
+
       if ($slice) {
         ## Skip features that lie outside the current slice
         next if ($seqname ne $slice->seq_region_name

@@ -31,17 +31,20 @@ use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 sub can_json { return 1; }
 
+# Overridden in some regulation tracks, as it's not always this simple
+sub my_url { return $_[0]->my_config('url'); }
+
 sub get_data {
   my $self      = shift;
   my $hub       = $self->{'config'}->hub;
-  my $url       = $self->my_config('url');
+  my $url       = $self->my_url;
   my $container = $self->{'container'};
   my $args      = { 'options' => {
                                   'hub'         => $hub,
                                   'config_type' => $self->{'config'}{'type'},
                                   'track'       => $self->{'my_config'}{'id'},
                                   }, 
-                    'default_strand' => 1, 
+                    'default_strand' => 1,
                     'drawn_strand' => $self->strand};
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigBed', $args);
@@ -57,6 +60,7 @@ sub get_data {
                     'label_colour'    => $colour,
                     'display'         => $self->{'display'},
                     'default_strand'  => 1,
+                    pix_per_bp => $self->scalex,
                     };
     ## No colour defined in ImageConfig, so fall back to defaults
     unless ($colour) {
