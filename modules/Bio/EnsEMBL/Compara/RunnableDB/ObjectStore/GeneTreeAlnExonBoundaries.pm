@@ -64,6 +64,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
+    $self->dbc and $self->dbc->disconnect_if_idle();
+
     my $gene_tree_id    = $self->param_required('gene_tree_id');
     my $tree_adaptor    = $self->compara_dba->get_GeneTreeAdaptor;
     my $gene_tree       = $tree_adaptor->fetch_by_dbID( $gene_tree_id ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
@@ -79,6 +81,8 @@ sub fetch_input {
 ## Compute the alignment strings and exon lengths, and stringify the result
 sub run {
     my $self = shift @_;
+
+    $self->dbc and $self->dbc->disconnect_if_idle();
 
     my $alignment = $self->param('alignment');
     my $exon_boundaries_struct = {};
@@ -112,6 +116,8 @@ sub run {
 ## Store the data in the database
 sub write_output {
     my $self = shift @_;
+
+    $self->dbc and $self->dbc->disconnect_if_idle();
 
     $self->compara_dba->get_GeneTreeObjectStoreAdaptor->store($self->param('gene_tree_id'), 'exon_boundaries', $self->param('exon_boundaries_json'))
         || die "Nothing was stored in the database for gene_tree_id=".$self->param('gene_tree_id');
