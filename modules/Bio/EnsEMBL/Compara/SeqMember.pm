@@ -363,11 +363,21 @@ sub _prepare_exon_sequences {
 
         my $sequence = $self->sequence;
         my $transcript = $self->get_Transcript;
-        my @exons = @{$transcript->get_all_translateable_Exons};
-        # @exons probably doesn't match the protein if there are such edits
-        my @seq_edits = @{$transcript->translation->get_all_SeqEdits('amino_acid_sub')};
+
+        my @exons;
+        my @seq_edits;
+        my $scale_factor;
+        if ($transcript->translation) {
+            @exons = @{$transcript->get_all_translateable_Exons};
+            @seq_edits = @{$transcript->translation->get_all_SeqEdits('amino_acid_sub')};
+            $scale_factor = 3;
+        } else {
+            @exons = @{$transcript->get_all_Exons};
+            $scale_factor = 1;
+        }
         push @seq_edits, @{$transcript->get_all_SeqEdits('_rna_edit')};
 
+        # @exons probably don't match the sequence if there are such edits
         if (((scalar @exons) <= 1) or (scalar(@seq_edits) > 0)) {
             $self->{_sequence_exon_cased} = $sequence;
             $self->{_sequence_exon_bounded} = $sequence;
@@ -380,9 +390,9 @@ sub _prepare_exon_sequences {
         my @this_seq = ();
         my @exon_sequences = ();
         foreach my $exon (@exons) {
-            my $exon_pep_len = POSIX::ceil(($exon->length - $left_over) / 3);
+            my $exon_pep_len = POSIX::ceil(($exon->length - $left_over) / $scale_factor);
             my $exon_seq = substr($sequence, 0, $exon_pep_len, '');
-            $left_over += 3*$exon_pep_len - $exon->length;
+            $left_over += $scale_factor*$exon_pep_len - $exon->length;
             #printf("%s: exon of len %d -> phase %d: %s\n", $transcript->stable_id, $exon_pep_len, $left_over, $exon_seq);
             push @this_seq, $exon_seq;
             push @this_seq, $boundary_chars{$left_over};
