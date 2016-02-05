@@ -38,8 +38,9 @@ sub content {
   my $vf_id  = $hub->param('vf'); 
 
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
-  my $width         = $hub->param('context') || 30000; 
- 
+  my $width         = $hub->param('context') || 50000;
+  my $default_track = 'r2';
+
   return unless $vf_id;
   return unless (grep {$_ =~ /^pop(\d+|name)$/} $hub->param); # e.g pop1, pop2, popname
 
@@ -59,9 +60,6 @@ sub content {
   ## set path information for LD calculations
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $hub->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH    = $hub->species_defs->ENSEMBL_TMP_TMP;
-  
-#  my $image_config = $hub->get_imageconfig('ldview2');
-
 
   my $seq_region = $v->{'Chr'};
   my $seq_type   = $v->{'type'};
@@ -80,6 +78,7 @@ sub content {
   my $parameters   = { 
     image_width     => $self->image_width || 800, 
     container_width => $slice->length,
+    ld_type         => $hub->param('ld_type') || $default_track,
     r2_mark         => $hub->param('r2_mark') || 0.8,
     d_prime_mark    => $hub->param('d_prime_mark') || 0.8,
     vf              => $vf_id
