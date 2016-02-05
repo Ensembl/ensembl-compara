@@ -73,29 +73,10 @@ use DBI qw(:sql_types);
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 
-=head2 fetch_all_by_Member
-
- Description: DEPRECATED (will be removed in e84). Please use fetch_all_by_GeneMember() or fetch_by_SeqMember() instead
-
-=cut
-
-sub fetch_all_by_Member { ## DEPRECATED
-  my ($self, $member) = @_;
-
-  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-  deprecate('FamilyAdaptor::fetch_all_by_Member() is deprecated and will be removed in e84. Please use fetch_all_by_GeneMember() or fetch_by_SeqMember() instead');
-  if (check_ref($member, 'Bio::EnsEMBL::Compara::SeqMember')) {
-      my $f = $self->fetch_by_SeqMember($member);
-      return $f ? [$f] : [];
-  }
-  return $self->fetch_all_by_GeneMember($member);
-}
-
-
 =head2 fetch_all_by_GeneMember
 
  Arg [1]    : Bio::EnsEMBL::Compara::GeneMember $member
- Example    : $families = $FamilyAdaptor->fetch_all_by_Member($member);
+ Example    : $families = $FamilyAdaptor->fetch_all_by_GeneMember($member);
  Description: find the families to which the given member belongs to
  Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
  Exceptions : when missing arguments

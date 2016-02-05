@@ -7,7 +7,6 @@
 
 ### Obsolete since the redesign of member objects
 * `MemberAdaptor::fetch_by_source_stable_id()`
-* `FamilyAdaptor::fetch_all_by_Member()`
 * `FamilyAdaptor::fetch_by_Member_source_stable_id()`
 
 ### Others

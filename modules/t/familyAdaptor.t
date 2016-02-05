@@ -62,12 +62,10 @@ subtest "Test fetch methods", sub {
 
     ok($member);
 
-    my $families = $fa->fetch_all_by_Member($member);
+    my $families = $fa->fetch_all_by_GeneMember($member);
 
     ok($families);
     ok (scalar @{$families} == 1);
-    
-    $families = $fa->fetch_all_by_Member_method_link_type($member,"FAMILY");
     
     $families = $fa->fetch_by_Member_source_stable_id($source,$stable_id);
     
