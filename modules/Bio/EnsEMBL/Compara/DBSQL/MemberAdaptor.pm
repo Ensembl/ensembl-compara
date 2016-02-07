@@ -100,22 +100,6 @@ sub fetch_by_stable_id {
 }
 
 
-=head2 fetch_by_source_stable_id
-
-  Description: DEPRECATED: fetch_by_source_stable_id() is deprecated and will be removed in e84. Use fetch_by_stable_id() instead
-
-=cut
-
-sub fetch_by_source_stable_id {  ## DEPRECATED
-    my ($self, $source_name, $stable_id) = @_;
-    deprecate('MemberAdaptor::fetch_by_source_stable_id() is deprecated and will be removed in e84. Use fetch_by_stable_id() instead');
-    my $member = $self->fetch_by_stable_id($stable_id);
-    return undef unless $member;
-    die "The member '$stable_id' has a different source_name than '$source_name': ".$member->source_name if $source_name and $source_name ne $member->source_name;
-    return $member;
-}
-
-
 =head2 fetch_all_by_stable_id_list
 
   Arg [1]    : arrayref of string $stable_id

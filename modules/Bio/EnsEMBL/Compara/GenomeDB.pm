@@ -279,18 +279,6 @@ sub get_short_name {
   return $name;
 }
 
-=head2 short_name
-
-  Description: DEPRECATED. GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e84
-
-=cut
-
-sub short_name {
-  my $self = shift;
-  deprecate('GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e84');
-  return $self->get_short_name;
-}
-
 
 =head2 assembly
 
@@ -310,19 +298,6 @@ sub assembly {
   return $self->{'assembly'};
 }
 
-=head2 assembly_default
-
-  Description: DEPRECATED. GenomeDB::assembly_default() is deprecated in favour of is_current(), and will be removed in e84. NOTE: it is not a setter any more
-
-=cut
-
-sub assembly_default {
-  my $self = shift;
-  my $boolean = shift;
-
-  deprecate('GenomeDB::assembly_default() is deprecated in favour of is_current(), and will be removed in e84. NOTE: it is not a setter any more');
-  return $self->is_current;
-}
 
 =head2 genebuild
 

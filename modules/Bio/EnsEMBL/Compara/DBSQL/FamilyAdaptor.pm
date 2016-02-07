@@ -161,19 +161,6 @@ sub fetch_by_Translation {
 }
 
 
-sub fetch_by_Member_source_stable_id { ## DEPRECATED
-  my ($self, $source_name, $member_stable_id) = @_;
-
-  deprecate('FamilyAdaptor::fetch_by_Member_source_stable_id() is deprecated and will be removed in e84. Please use fetch_all_by_GeneMember() or fetch_by_SeqMember() instead');
-  my $m = $self->db->get_GeneMemberAdaptor->fetch_by_source_stable_id($source_name, $member_stable_id);
-  return $self->fetch_all_by_GeneMember($m) if $m;
-
-  $m = $self->db->get_SeqMemberAdaptor->fetch_by_source_stable_id($source_name, $member_stable_id);
-  my $f = $self->fetch_by_SeqMember($m);
-  return $f ? [$f] : [];
-}
-
-
 =head2 fetch_by_stable_id
 
   Arg [1]    : string $stable_id

@@ -442,13 +442,6 @@ sub alignment_string {
 }
 
 
-sub cdna_alignment_string { ## DEPRECATED
-    my $self = shift;
-    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e84. Please use SeqMember::alignment_string("cds") instead');
-    return $self->alignment_string('cds');
-}
-
-
 =head2 _compose_sequence_with_cigar
 
   Arg [1]    : String $sequence

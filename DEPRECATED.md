@@ -1,19 +1,5 @@
 # Deprecated methods scheduled for deletion
 
-## In Ensembl 84
-
-### Obsolete since the redesign of member sequences
-* `AlignedMember::cdna_alignment_string()`
-
-### Obsolete since the redesign of member objects
-* `MemberAdaptor::fetch_by_source_stable_id()`
-* `FamilyAdaptor::fetch_by_Member_source_stable_id()`
-
-### Others
-* `GenomeDB::short_name()`
-* `GenomeDB::assembly_default()`
-
-
 ## In Ensembl 86
 * `Member::print_member()`
 * `Homology::print_homology()`
