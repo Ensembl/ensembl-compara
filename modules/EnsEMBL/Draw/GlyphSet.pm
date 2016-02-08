@@ -1142,7 +1142,9 @@ sub no_features {
     $label = $self->my_empty_label;
   }
   $label ||= $self->my_label;
-  $self->errorTrack($label) if $label && $self->{'config'}->get_option('opt_empty_tracks') == 1;
+  $self->errorTrack($label) if $label && 
+    ($self->{'config'}->get_option('opt_empty_tracks') == 1
+      || $self->{'my_config'}->get('show_empty_track') == 1 );
 }
 
 sub too_many_features {
