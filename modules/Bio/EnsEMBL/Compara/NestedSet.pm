@@ -992,9 +992,9 @@ my $nhx2 = ':T=%{-x}%{C(species_tree_node,taxon_id)-}';
 
 my %nhx_ryo_modes_1 = (
     'member_id_taxon_id' => '%{-m}%{o-}_%{-x}%{C(species_tree_node,taxon_id)-}:%{d}',
-    'protein_id' => '%{-n}'.$nhx0,
-    'transcript_id' => '%{-r}'.$nhx0,
-    'gene_id' => '%{-i}'.$nhx0,
+    'protein_id' => '%{-n}:%{d}',
+    'transcript_id' => '%{-r}:%{d}',
+    'gene_id' => '%{-i}:%{d}',
     'full' => $nhx0,
     'full_web' => $nhx0,
     'display_label' => '%{-l,|i}%{"_"-s}'.$nhx0,
