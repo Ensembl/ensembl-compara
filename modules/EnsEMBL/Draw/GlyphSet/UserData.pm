@@ -38,7 +38,7 @@ sub init {
   $self->{'my_config'}->set('show_empty_track', 1);
   my $style = $self->my_config('style') || $self->my_config('display') || '';
 
-  if ($style eq 'wiggle' || $style =~ /signal/ || $style eq 'pvalue') {
+  if ($style eq 'wiggle' || $style =~ /signal/ || $style eq 'gradient') {
     push @roles, 'EnsEMBL::Draw::Role::Wiggle';
   }
   else {

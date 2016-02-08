@@ -32,7 +32,8 @@ sub render_compact {
   $self->_render_aggregate;
 }
 
-sub render_pvalue {
+sub render_gradient {
+### Features coloured on a gradient by score, e.g. pvalues
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Graph::Heatmap']);
   $self->{'my_config'}->set('height', 8);
