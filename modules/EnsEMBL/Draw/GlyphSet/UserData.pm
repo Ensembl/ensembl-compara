@@ -279,9 +279,7 @@ sub convert_to_pvalues {
   ## Finally we get to actually set the feature colours!
   foreach (@$data) {
     foreach my $f (@{$_->{'features'}||[]}) {
-      warn ">>> COLOUR WAS ".$f->{'colour'};
       my $colour = $gradient[ $grade_from_score->($f->{'score'}) ];
-      warn "... COLOUR NOW $colour";
       $f->{'colour'} = $colour;
     }
   }
