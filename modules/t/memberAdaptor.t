@@ -39,7 +39,7 @@ is($ref_species, 'homo_sapiens');
 
 =pod
 
-my $ma = $compara_dba->get_MemberAdaptor;
+my $ma = $compara_dba->get_GeneMemberAdaptor;
 
 my ($member_id, $stable_id, $version, $source_name, $taxon_id, $genome_db_id, $sequence_id,
     $gene_member_id, $description, $chr_name, $chr_start, $chr_end, $chr_strand) =
@@ -50,7 +50,7 @@ subtest "Test fetch methods", sub {
     ok(1);
 
 
-    my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE", $stable_id);
+    my $member = $ma->fetch_by_stable_id($stable_id);
     
     ok($member);
     ok( $member->dbID,  $member_id);
@@ -71,7 +71,8 @@ subtest "Test fetch methods", sub {
      $gene_member_id, $description, $chr_name, $chr_start, $chr_end, $chr_strand) =
        $compara_dba->dbc->db_handle->selectrow_array("SELECT * FROM member WHERE source_name = 'ENSEMBLPEP' LIMIT 1");
     
-    $member = $ma->fetch_by_source_stable_id("ENSEMBLPEP", $stable_id);
+    # FIXME should be using SeqMemberAdaptor
+    $member = $ma->fetch_by_stable_id($stable_id);
     
     ok($member);
     ok( $member->dbID,  $member_id);
