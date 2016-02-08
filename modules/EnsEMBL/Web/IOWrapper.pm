@@ -421,6 +421,9 @@ sub set_colour {
   if ($score && ($metadata->{'useScore'} || $metadata->{'spectrum'})) {
     $colour = $self->convert_to_gradient($score, $metadata->{'color'});
   }
+  elsif ($params->{'itemRgb'}) { ## BigBed?
+    $colour = $self->rgb_to_hex($params->{'itemRgb'});
+  }
   elsif ($rgb && $metadata->{'itemRgb'} eq 'On') {
     $colour = $self->rgb_to_hex($rgb);
   }
