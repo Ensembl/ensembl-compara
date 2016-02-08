@@ -137,6 +137,8 @@ sub convert_to_gradient {
   my ($self, $score, $colour) = @_;
   ## Default to black
   $score = 1000 unless defined($score);
+  $score = 1000 if $score eq 'INF';
+  $score = 0    if $score eq '-INF';
 
   my @gradient = $colour ? $self->create_gradient(['white', $colour]) : @{$self->{'greyscale'}||[]};
 

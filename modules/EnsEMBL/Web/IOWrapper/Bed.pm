@@ -50,6 +50,9 @@ sub create_hash {
   $metadata         ||= {};
   my $strand          = $self->parser->get_strand || 0;
   my $score           = $self->parser->get_score;
+  if ($score =~ /inf/i) {
+    $score = uc($score);
+  }
   my $colour_params   = {
                         'metadata'  => $metadata, 
                         'strand'    => $strand, 
