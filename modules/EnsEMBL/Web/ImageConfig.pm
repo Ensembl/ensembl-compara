@@ -1273,13 +1273,9 @@ sub _add_htslib_track {
 
 sub _add_bigbed_track {
   my ($self, %args) = @_;
- 
-  my $renderers = $args{'source'}{'renderers'};
-  my $strand    = 'b';
-  my $default;
-  unless ($renderers) {
-    ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
-  }
+
+  ## Get default settings for this format 
+  my ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
  
   my $options = {
     external        => 'external',
@@ -1287,12 +1283,12 @@ sub _add_bigbed_track {
     colourset       => 'feature',
     colorByStrand   => $args{'source'}{'colorByStrand'},
     spectrum        => $args{'source'}{'spectrum'},
-    strand          => $strand,
+    strand          => $args{'source'}{'strand'} || $strand,
     style           => $args{'source'}{'style'},
     longLabel       => $args{'source'}{'longLabel'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
-    default_display => $default,
+    default_display => $args{'source'}{'default'} || $default,
   };
   ## Override default renderer (mainly used by trackhubs)
   $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
@@ -1306,7 +1302,7 @@ sub _add_bigbed_track {
   $self->_add_file_format_track(
     format      => 'BigBed',
     description => 'Bigbed file',
-    renderers   => $renderers,
+    renderers   => $args{'source'}{'renderers'} || $renderers,
     options     => $options,
     %args,
   );
