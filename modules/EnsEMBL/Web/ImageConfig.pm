@@ -684,10 +684,8 @@ sub load_user_tracks {
       }
     } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
       my ($strand, $renderers, $default) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
-      warn "@@@ RENDERERS @$renderers";
       $strand     = $entry->{'strand'} if $entry->{'strand'};
       $renderers  = $entry->{'renderers'} if $entry->{'renderers'};
-      warn "... RENDERERS @$renderers";
       
       $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external        => 'user',
