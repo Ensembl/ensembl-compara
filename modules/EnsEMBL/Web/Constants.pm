@@ -33,7 +33,8 @@ no warnings 'uninitialized';
 sub RENDERERS {
 ### Master set of renderers for all formats
   return {
-    'pvalue' => ['signal', 'Wiggle plot', 'gradient', 'P-value'],
+    'pvalue' => {'renderers' => ['signal', 'Wiggle plot', 'gradient', 'P-value'],
+                  'default'  => 'gradient'},
   }
 
 }
