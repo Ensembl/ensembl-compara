@@ -34,7 +34,7 @@ sub render_compact {
 
 sub render_pvalue {
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Bar']);
+  $self->{'my_config'}->set('drawing_style', ['Graph::Heatmap']);
   $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('no_axis', 1);
   $self->{'my_config'}->set('use_pvalue', 1);
