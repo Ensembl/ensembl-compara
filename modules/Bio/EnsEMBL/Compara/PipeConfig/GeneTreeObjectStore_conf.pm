@@ -21,22 +21,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::GeneTreeObjectStore_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -member_type protein
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -member_type ncrna
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneTreeObjectStore_conf -gene_tree_db mysql://...
 
 =head1 DESCRIPTION  
 
-    A pipeline to dump either protein_trees or ncrna_trees.
-
-    In rel.60 protein_trees took 2h20m to dump.
-
-    In rel.63 protein_trees took 51m to dump.
-    In rel.63 ncrna_trees   took 06m to dump.
+    A simple pipeline to populate all the gene-tree related JSONs
 
 =head1 CONTACT
 
