@@ -698,8 +698,8 @@ sub load_user_tracks {
         caption         => $entry->{'name'},
         renderers       => $renderers,
         description     => 'Data that has been temporarily uploaded to the web server.',
-        display         => 'off',
-        default_display => $default,
+        display         => $entry->{'display'} || 'off',
+        default_display => $entry->{'display'} || $default,
         strand          => $strand,
       }));
     }

@@ -220,9 +220,10 @@ sub upload {
           if ($custom) {
             $inputs{'display'} = $custom;
             my $lookup = EnsEMBL::Web::Constants::RENDERERS;
-            my $renderers = $lookup->{$custom} || [];
+            my $renderers = $lookup->{$custom}{'renderers'} || [];
             if (scalar @$renderers) {
-              $inputs{'renderers'} = ['off', 'Off', @$renderers];
+              $inputs{'renderers'}  = ['off', 'Off', @$renderers];
+              $inputs{'display'}    = $lookup->{$custom}{'default'};
             }
           }
         }
