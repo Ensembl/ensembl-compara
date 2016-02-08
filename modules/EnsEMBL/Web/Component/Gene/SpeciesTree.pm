@@ -61,7 +61,6 @@ sub content {
   my $stable_id   = $hub->param('g');
 
   my $is_speciestree = $object->isa('EnsEMBL::Web::Object::SpeciesTree') ? 1 : 0;
-  my $show_exons     = $hub->param('exons') eq 'on' ? 1 : 0; 
     
   my ($gene, $member, $tree, $node, $html);
  
