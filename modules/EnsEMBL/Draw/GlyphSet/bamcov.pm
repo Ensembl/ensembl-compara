@@ -48,7 +48,7 @@ sub init {
     Role::Tiny->apply_roles_to_object($self, @roles);
   }
 
-  $self->{'features'} = $self->features;
+  $self->{'data'} = $self->get_data;
 }
 
 1;
