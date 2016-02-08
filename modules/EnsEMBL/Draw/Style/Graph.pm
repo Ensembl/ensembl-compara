@@ -113,9 +113,19 @@ sub draw_wiggle {
 
     my ($current_x,$current_score);
     $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
-    $current_score = $f->{'score'};
-    my $current_y  = $c->{'line_px'}-($current_score-$c->{'line_score'}) * $c->{'pix_per_score'};
     next unless $current_x <= $slice_length;
+
+    $current_score = $f->{'score'};
+    my ($colour, $ok_score);
+    if ($current_score =~ /INF/) {
+      $colour   = 'black';
+      $ok_score = $current_score eq '-INF' ? $c->{'min_score'} : $c->{'max_score'};
+    }
+    else {
+      $colour   = $self->set_colour($c, $f);
+      $ok_score = $current_score;
+    }
+    my $current_y = $c->{'line_px'} - ($ok_score - $c->{'line_score'}) * $c->{'pix_per_score'};
 
     if(defined $previous_x) {
       push @{$self->glyphs}, $self->Line({
@@ -123,7 +133,7 @@ sub draw_wiggle {
                                             y         => $current_y,
                                             width     => $previous_x - $current_x,
                                             height    => $previous_y - $current_y,
-                                            colour    => $self->set_colour($c, $f),
+                                            colour    => $colour,
                                             absolutey => 1,
                                           });
     }
