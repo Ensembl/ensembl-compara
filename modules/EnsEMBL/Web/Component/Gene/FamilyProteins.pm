@@ -118,7 +118,6 @@ sub content_ensembl {
   
   my $species_defs  = $hub->species_defs;
   my $sitename      = $species_defs->ENSEMBL_SITETYPE;
-  my $current_taxon = $hub->database('core')->get_MetaContainer->get_taxonomy_id;
   my @genomedbs     = @{$family->get_all_GenomeDBs_by_member_source_name('ENSEMBLPEP')}; ## Ensembl proteins
   my $count         = 0;
   my %data;
