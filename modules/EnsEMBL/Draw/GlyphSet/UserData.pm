@@ -34,6 +34,8 @@ sub can_json { return 1; }
 sub init {
   my $self = shift;
   my @roles;
+  ## Always show user tracks, regardless of overall configuration
+  $self->{'my_config'}->set('show_empty_track', 1);
   my $style = $self->my_config('style') || $self->my_config('display') || '';
 
   if ($style eq 'wiggle' || $style =~ /signal/ || $style eq 'pvalue') {
@@ -189,8 +191,17 @@ sub draw_features {
 sub draw_aggregate {
   my ($self, $subtracks) = @_;
   $subtracks ||= $self->{'data'};
-  #use Data::Dumper; warn Dumper($subtracks);
   return unless $subtracks && ref $subtracks eq 'ARRAY';
+  my $feature_count = 0;
+
+  foreach (@$subtracks) {
+    next unless $_->{'features'} && ref $_->{'features'} eq 'HASH';
+    $feature_count += scalar(@{$_->{'features'}{$self->strand}||[]});
+  }
+
+  if ($feature_count < 1) {
+    return $self->no_features;
+  }
 
   my %config = %{$self->track_style_config};
 
