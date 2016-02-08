@@ -39,12 +39,13 @@ sub get_data {
   my $hub       = $self->{'config'}->hub;
   my $url       = $self->my_url;
   my $container = $self->{'container'};
+  my $default_strand = $self->{'my_config'}->get('strand') eq 'r' ? -1 : 1;
   my $args      = { 'options' => {
                                   'hub'         => $hub,
                                   'config_type' => $self->{'config'}{'type'},
                                   'track'       => $self->{'my_config'}{'id'},
                                   }, 
-                    'default_strand' => 1,
+                    'default_strand' => $default_strand,
                     'drawn_strand' => $self->strand};
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigBed', $args);
@@ -59,7 +60,7 @@ sub get_data {
                     'join_colour'     => $colour,
                     'label_colour'    => $colour,
                     'display'         => $self->{'display'},
-                    'default_strand'  => 1,
+                    'default_strand'  => $default_strand,
                     pix_per_bp => $self->scalex,
                     };
     ## No colour defined in ImageConfig, so fall back to defaults
@@ -75,6 +76,7 @@ sub get_data {
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
+    #use Data::Dumper; warn Dumper($data);
   } else {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
