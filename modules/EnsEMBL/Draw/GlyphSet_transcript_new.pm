@@ -49,33 +49,6 @@ sub render_as_transcript_nolabel   { $_[0]->render_alignslice_transcript(0); }
 sub render_as_collapsed_label      { $_[0]->render_alignslice_collapsed(1);  }
 sub render_as_collapsed_nolabel    { $_[0]->render_alignslice_collapsed(0);  }
 
-sub use_legend {
-  my ($self,$used_colours,$colour_key) = @_;
-
-  my $colour = 'orange';
-  my $label = 'Other';
-  my $section = 'none';
-  if($colour_key) {
-    $colour     = $self->my_colour($colour_key);
-    if($colour) {
-      $label      = $self->my_colour($colour_key, 'text');
-      $section    = $self->my_colour($colour_key,'section') || 'none';
-    }
-  }
-  my $section_name = $self->my_colour("section_$section",'text') ||
-                      $self->my_colour("section_none",'text');
-  my $section_prio = $self->my_colour("section_$section",'prio') ||
-                      $self->my_colour("section_none",'prio');
-  if($section) {
-    $section = {
-      key => $section,
-      name => $section_name,
-      priority => $section_prio,
-    };
-  }
-  $used_colours->{$label} = [$colour,$section];
-}
-
 sub calculate_collapsed_joins {
   my ($self,$gene,$gene_stable_id) = @_;
   
@@ -241,7 +214,6 @@ sub render_collapsed {
     my @exons      = map { $_->start > $length || $_->end < 1 ? () : $_ } @{$exons->{$gene_stable_id}}; # Get all the exons which overlap the region for this gene
     my $colour_key = $self->colour_key($gene);
     my $colour     = $self->my_colour($colour_key);
-    $self->use_legend(\%used_colours,$colour_key);
     
     foreach my $exon (@exons) {
       push @edraw,{ start => $exon->start, end => $exon->end };
@@ -257,8 +229,7 @@ sub render_collapsed {
       title => $self->gene_title($gene),
       href => $self->href($gene),
       label => $self->feature_label($gene),
-      highlights => $highlights->{$gene_stable_id},
-      colour => $colour,
+      highlight => $highlights->{$gene_stable_id},
       colour_key => $self->colour_key($gene),
       exons => \@edraw,
       joins => $joins,
@@ -440,7 +411,7 @@ sub render_alignslice_transcript {
             push @{$exon->{'types'}},'border';
           }
           if($e_coding_start <= $e_coding_end) {
-            push @{$exon->{'types'}},'full';
+            push @{$exon->{'types'}},'fill';
             $exon->{'coding_start'} = $e_coding_start-$e->start;
             $exon->{'coding_end'} = $e->end-$e_coding_end;
           }
@@ -485,7 +456,6 @@ sub render_alignslice_collapsed {
     my $gene_stable_id = $gene->stable_id;
     
     my $colour_key = $self->colour_key($gene);    
-    my $colour     = $self->my_colour($colour_key);
     my $label      = $self->my_colour($colour_key, 'text');
     
     my @exons;
@@ -521,7 +491,7 @@ sub render_alignslice_collapsed {
       end => $end,
       title  => $self->gene_title($gene),
       href   => $self->href($gene),
-      colour => $colour,
+      colour_key => $colour_key,
       exons => \@edraw,
       label => $self->feature_label($gene),
       strand => $gene->strand,
@@ -560,11 +530,6 @@ sub render_genes {
     my $start          = $gene->start;
     my $end            = $gene->end;
     
-    next if $end < 1 || $start > $length;
-    
-    $start = 1 if $start < 1;
-    $end   = $length if $end > $length;
- 
     my ($href,$title,$highlight,$joins);
     $title = sprintf("Gene: %s; Location: %s:%s-%s",
                      $gene_stable_id,$gene->seq_region_name,
@@ -579,11 +544,10 @@ sub render_genes {
     push @ggdraw,{
       start => $start,
       end => $end,
-      colour => $self->my_colour($colour_key),
       href => $href,
       title => $title,
       label => $self->feature_label($gene),
-      colkey => $colour_key,
+      colour_key => $colour_key,
       highlight => $highlight,
       type => $self->my_colour($colour_key,'text'),
       joins => $joins,
@@ -888,31 +852,6 @@ sub text_details {
   }
   
   return $self->{'text_details'};
-}
-
-sub add_label_new {
-  my ($self,$composite,$g) = @_;
-
-  return unless $g->{'label'};
-  
-  my $text_details = $self->text_details;
-  my $y            = $composite->height;
-  my $yo = $y;
-
-  foreach my $line (split("\n",$g->{'label'})) {
-    $composite->push($self->Text({
-      x         => $g->{'_bstart'},
-      y         => $y,
-      halign    => 'left',
-      colour    => $g->{'colour'},
-      text      => $line,
-      absolutey => 1,
-      %$text_details
-    }));
-    $y += $text_details->{'height'};
-  }
- 
-  return $y-$yo;
 }
 
 sub colour_key {
