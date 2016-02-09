@@ -417,10 +417,6 @@ sub alignment_string {
 
     my $key = 'alignment_string';
     if ($seq_type) {
-        if ("$seq_type" eq '1') {
-            $seq_type = 'exon_cased';
-            deprecate('AlignedMember::alignment_string(1) is deprecated, its support will end with e84. Please use AlignedMember::alignment_string("exon_cased") instead');
-        }
         $key .= "_$seq_type";
 
     } else {
