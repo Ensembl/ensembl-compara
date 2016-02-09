@@ -351,6 +351,26 @@ sub can_json {
   return 0;
 }
 
+sub bg_href {
+  my ($self, $height) = @_;
+  return {} unless $self->can('bg_link');
+
+  ## Background link - needed for zmenus
+  ## Needs to be first to capture clicks
+  ## Useful to keep zmenus working on blank regions
+  ## only useful in nobump or strandbump modes
+  my $link    = $self->bg_link;
+  my $bg_href = { 0 => $link };
+  $height   ||= $self->{'my_config'}->get('height');
+
+  if ($self->{'my_config'}->get('strandbump')) {
+    $bg_href->{0}        = $link;
+    $bg_href->{$height}  = $link;
+  }
+  return $bg_href;
+}
+
+
 ############### GENERIC RENDERING ####################
 
 sub render {
