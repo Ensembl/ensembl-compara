@@ -80,6 +80,9 @@ sub get_data {
       $metadata->{'label_colour'} = $colours->{'text'} || $colours->{'default'};
     }
 
+    ## Omit individual feature links if this glyphset has a clickable background
+    $metadata->{'omit_feature_links'} = 1 if $self->can('bg_link');
+
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
     #use Data::Dumper; warn Dumper($data);
