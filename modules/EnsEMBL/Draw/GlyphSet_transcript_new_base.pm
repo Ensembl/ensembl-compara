@@ -18,9 +18,6 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet_transcript_new_base;
 
-### Parent module for various glyphsets that draw transcripts
-### (styles include exons as blocks, joined by angled lines across introns)
-
 use strict;
 
 use List::Util qw(min max);
@@ -28,7 +25,56 @@ use List::MoreUtils qw(natatime);
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
-sub draw_collapsed_exon {
+# In "collapsed" style, a single bead-string is drawn. This is fat
+# wherever any consituent transcript has an exon at that position.
+# It is used by render_collapsed and render_alignslice_collapsed.
+# It is accessed via draw_collapsed_genes.
+#
+# In "expanded" style, each transcript is simply drawn separately,
+# with full exon structure and labels for each. It is used by
+# render_transcripts and render_alignslice_transcripts. It is accessed
+# via draw_expanded_transcripts.
+#
+# In "rect" style, the region occupied by a gene is simply drawn as a
+# rectangle. It is used in render_genes. It is accessed via
+# draw_rect_genes.
+
+##########################################################
+# JOINING GENES. USED IN ALL STYLES                      #
+##########################################################
+
+sub _draw_join {
+  my ($self,$target,$j) = @_;
+  
+  $self->join_tag($target,$j->{'key'},0.5,0.5,$j->{'colour'},'line',1000);
+  $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
+  if($j->{'legend'}) {
+    $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$j->{'legend'}} =
+      $j->{'colour'};
+  }
+}
+
+#############################################################
+# USED IN "COLLAPSED" STYLE                                 #
+#############################################################
+
+sub _draw_collapsed_gene_base {
+  my ($self,$composite2,$length,$gene) = @_;    
+
+  my $start = $gene->{'start'} < 1 ? 1 : $gene->{'start'};
+  my $end   = $gene->{'end'} > $length ? $length : $gene->{'end'};
+  
+  $composite2->push($self->Rect({
+    x         => $start, 
+    y         => 4,
+    width     => $end - $start + 1,
+    height    => 0.4, 
+    colour    => $gene->{'colour'}, 
+    absolutey => 1
+  }));
+}
+
+sub _draw_collapsed_exon {
   my ($self,$composite2,$length,$gene,$exon) = @_;
 
   my $s = max($exon->{'start'},1);
@@ -44,7 +90,54 @@ sub draw_collapsed_exon {
   }));
 }
 
-sub draw_expanded_exon {
+sub draw_collapsed_genes {
+  my ($self,$length,$labels,$strand,$genes) = @_;
+
+  my $strand_flag      = $self->my_config('strand');
+  return unless @$genes;
+  my %used_colours;
+  foreach my $g (@$genes) {
+    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
+    $self->use_legend(\%used_colours,$g->{'colour_key'});
+    my $composite = $self->Composite({
+      y      => 0,
+      height => 8,
+      title  => $g->{'title'},
+      href   => $g->{'href'},
+    });
+      
+    $self->_draw_collapsed_gene_base($composite,$length,$g);
+    foreach my $e (@{$g->{'exons'}}) {
+      $self->_draw_collapsed_exon($composite,$length,$g,$e);
+    }
+    foreach my $j (@{$g->{'joins'}}) {
+      $self->_draw_join($composite,$j);
+    }
+  
+    # shift the composite container by however much we're bumped
+    my $bump_height  = 10;
+    $bump_height += $self->add_label_new($composite,$g) if $labels;
+
+    # bump
+    $composite->y($composite->y - $strand * $bump_height * $g->{'_bump'});
+    $composite->colour($g->{'highlights'}) if $g->{'highlights'};
+    $self->push($composite);
+  }
+  my $type = $self->my_config('name');
+  my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'} || []};
+  $used_colours{$_} = $legend_old{$_} for keys %legend_old;
+  my @legend = %used_colours;
+  $self->{'legend'}{'gene_legend'}{$type} = {
+    priority => $self->_pos,
+    legend   => \@legend
+  };
+}
+
+#########################################################
+# USED IN EXPANDED STYLE                                #
+#########################################################
+
+sub _draw_expanded_exon {
   my ($self,$composite2,$t,$h,$e,$length) = @_;
   
   my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
@@ -90,152 +183,7 @@ sub draw_expanded_exon {
   }
 }
 
-sub draw_collapsed_gene_base {
-  my ($self,$composite2,$length,$gene) = @_;    
-
-  my $start = $gene->{'start'} < 1 ? 1 : $gene->{'start'};
-  my $end   = $gene->{'end'} > $length ? $length : $gene->{'end'};
-  
-  $composite2->push($self->Rect({
-    x         => $start, 
-    y         => 4,
-    width     => $end - $start + 1,
-    height    => 0.4, 
-    colour    => $gene->{'colour'}, 
-    absolutey => 1
-  }));
-}
-
-sub draw_expanded_transcript {
-  my ($self,$composite2,$t,$h,$length,$strand) = @_;
-
-  foreach my $j (@{$t->{'joins'}||[]}) {
-    $self->draw_join($composite2,$j);
-  }
-  foreach my $e (@{$t->{'exons'}||[]}) {
-    $self->draw_expanded_exon($composite2,$t,$h,$e,$length);
-  }
-  $self->draw_introns($composite2,$t,$h,$length,$strand);
-}
-
-sub draw_expanded_transcripts {
-  my ($self,$tdraw,$length,$strand,$draw_labels,$target) = @_;
-
-  return unless @$tdraw;
-  my $target = $self->get_parameter('single_Transcript');
-  my $h = $self->my_config('height') || ($target ? 30 : 8);
-  my $strand_flag = $self->my_config('strand');
-  my %used_colours;
-  foreach my $td (@$tdraw) { 
-    next if $strand != $td->{'strand'} and $strand_flag eq 'b';
-    my $composite = $self->Composite({
-      y      => 0,
-      height => $h,
-      title  => $td->{'title'},
-      href   => $td->{'href'},
-      class  => 'group',
-    });
-
-    $self->use_legend(\%used_colours,$td->{'colour_key'});
-    
-    $self->draw_expanded_transcript($composite,$td,$h,$length,$strand);
-    
-    my $bump_height  = 1.6 * $h;
-    $bump_height += $self->add_label_new($composite,$td) if $draw_labels;
-    $composite->y($composite->y - $strand * $bump_height * $td->{'_bump'});
-
-    $composite->colour($td->{'highlight'}) if $td->{'highlight'};
-    if ($target) {
-      # check the strand of one of the transcript's exons
-      my $estrand = ((($td->{'exons'}||[])->[0])||{})->{'strand'};
-      my $colour = $td->{'colour'};
-      $self->draw_grey_arrow($estrand,$length,$h,$colour);
-    }
-    $self->push($composite);
-  }
-  my $type = $self->type;
-  my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
-  $used_colours{$_} = $legend_old{$_} for keys %legend_old;
-  my @legend = %used_colours;
-  $self->{'legend'}{'gene_legend'}->{$type} = {
-    priority => $self->_pos,
-    legend   => \@legend
-  };
-}
-    
-sub draw_collapsed_genes {
-  my ($self,$length,$labels,$strand,$genes) = @_;
-
-  my $strand_flag      = $self->my_config('strand');
-  return unless @$genes;
-  my %used_colours;
-  foreach my $g (@$genes) {
-    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
-    $self->use_legend(\%used_colours,$g->{'colour_key'});
-    my $composite = $self->Composite({
-      y      => 0,
-      height => 8,
-      title  => $g->{'title'},
-      href   => $g->{'href'},
-    });
-      
-    $self->draw_collapsed_gene_base($composite,$length,$g);
-    foreach my $e (@{$g->{'exons'}}) {
-      $self->draw_collapsed_exon($composite,$length,$g,$e);
-    }
-    foreach my $j (@{$g->{'joins'}}) {
-      $self->draw_join($composite,$j);
-    }
-  
-    # shift the composite container by however much we're bumped
-    my $bump_height  = 10;
-    $bump_height += $self->add_label_new($composite,$g) if $labels;
-
-    # bump
-    $composite->y($composite->y - $strand * $bump_height * $g->{'_bump'});
-    $composite->colour($g->{'highlights'}) if $g->{'highlights'};
-    $self->push($composite);
-  }
-  my $type = $self->my_config('name');
-  my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'} || []};
-  $used_colours{$_} = $legend_old{$_} for keys %legend_old;
-  my @legend = %used_colours;
-  $self->{'legend'}{'gene_legend'}{$type} = {
-    priority => $self->_pos,
-    legend   => \@legend
-  };
-}
-    
-sub draw_rect_gene {
-  my ($self,$g) = @_;
-
-  my $pix_per_bp = $self->scalex;
-  my $rect = $self->Rect({
-    x => $g->{'start'}-1,
-    y => 0,
-    width => $g->{'end'}-$g->{'start'}+1,
-    height => 4,
-    colour => $g->{'colour'},
-    absolutey => 1,
-    href => $g->{'href'},
-    title => $g->{'title'},
-  });
-  $self->push($rect);
-  if($g->{'highlight'}) {
-    $self->unshift($self->Rect({
-      x         => ($g->{'start'}-1) - 1/$pix_per_bp,
-      y         => -1,
-      width     => ($g->{'end'}-$g->{'start'}+1) + 2/$pix_per_bp,
-      height    => 6,
-      colour    => $g->{'highlight'},
-      absolutey => 1
-    }));
-  }
-  $self->draw_join($rect,$_) for(@{$g->{'joins'}});
-  return $rect;
-}
-      
-sub draw_introns {
+sub _draw_introns {
   my ($self,$composite2,$t,$h,$length,$strand) = @_;
 
   my $colour = $self->my_colour($t->{'colour_key'});
@@ -274,8 +222,20 @@ sub draw_introns {
   }
 }
 
+sub _draw_expanded_transcript {
+  my ($self,$composite2,$t,$h,$length,$strand) = @_;
+
+  foreach my $j (@{$t->{'joins'}||[]}) {
+    $self->_draw_join($composite2,$j);
+  }
+  foreach my $e (@{$t->{'exons'}||[]}) {
+    $self->_draw_expanded_exon($composite2,$t,$h,$e,$length);
+  }
+  $self->_draw_introns($composite2,$t,$h,$length,$strand);
+}
+
 # Probably not used anywhere any more?
-sub draw_grey_arrow {
+sub _draw_grey_arrow {
   my ($self,$strand,$length,$h,$colour) = @_;
 
   my $pix_per_bp = $self->scalex;
@@ -303,64 +263,86 @@ sub draw_grey_arrow {
     ]
   }));
 }
-  
-sub draw_rect_genes {
-  my ($self,$ggdraw,$length,$draw_labels,$strand) = @_;
 
+sub draw_expanded_transcripts {
+  my ($self,$tdraw,$length,$strand,$draw_labels,$target) = @_;
+
+  return unless @$tdraw;
+  my $target = $self->get_parameter('single_Transcript');
+  my $h = $self->my_config('height') || ($target ? 30 : 8);
   my $strand_flag = $self->my_config('strand');
-  my $pix_per_bp = $self->scalex;
-  my $rects_rows = $self->mr_bump($ggdraw,0,$length);
-  foreach my $g (@$ggdraw) {
-    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
-    my $rect = $self->draw_rect_gene($g);
-    $rect->y($rect->y + (6*$g->{'_bump'}));
-  } 
-  if($draw_labels) {
-    $_->{'_lwidth'} += 8/$pix_per_bp for(@$ggdraw);
-    $self->mr_bump($ggdraw,2,$length); # Try again
-
-    foreach my $g (@$ggdraw) {
-      next if $strand != $g->{'strand'} and $strand_flag eq 'b';
-      my $composite = $self->Composite({
-        y => 0,
-        x => $g->{'_bstart'},
-        width => $g->{'_lwidth'},
-        absolutey => 1,
-        colour => $g->{'highlight'},
-      });
-      $self->add_label_new($composite,$g);
-      $composite->x($composite->x+8/$pix_per_bp);
-      $self->draw_bookend($composite,$g);
-      $composite->y($g->{'_lheight'}*$g->{'_bump'}+($rects_rows*6));
-      $self->push($composite);
-    }
-  }
-  my %legend_old = @{$self->{'legend'}{'gene_legend'}{$self->type}{'legend'}||[]};
   my %used_colours;
+  foreach my $td (@$tdraw) { 
+    next if $strand != $td->{'strand'} and $strand_flag eq 'b';
+    my $composite = $self->Composite({
+      y      => 0,
+      height => $h,
+      title  => $td->{'title'},
+      href   => $td->{'href'},
+      class  => 'group',
+    });
+
+    $self->use_legend(\%used_colours,$td->{'colour_key'});
+    
+    $self->_draw_expanded_transcript($composite,$td,$h,$length,$strand);
+    
+    my $bump_height  = 1.6 * $h;
+    $bump_height += $self->add_label_new($composite,$td) if $draw_labels;
+    $composite->y($composite->y - $strand * $bump_height * $td->{'_bump'});
+
+    $composite->colour($td->{'highlight'}) if $td->{'highlight'};
+    if ($target) {
+      # check the strand of one of the transcript's exons
+      my $estrand = ((($td->{'exons'}||[])->[0])||{})->{'strand'};
+      my $colour = $td->{'colour'};
+      $self->_draw_grey_arrow($estrand,$length,$h,$colour);
+    }
+    $self->push($composite);
+  }
+  my $type = $self->type;
+  my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
   $used_colours{$_} = $legend_old{$_} for keys %legend_old;
-
-  $self->use_legend(\%used_colours,$_->{'colkey'}) for @$ggdraw;
-
   my @legend = %used_colours;
-  
-  $self->{'legend'}{'gene_legend'}{$self->type} = {
+  $self->{'legend'}{'gene_legend'}->{$type} = {
     priority => $self->_pos,
     legend   => \@legend
   };
 }
 
-sub draw_join {
-  my ($self,$target,$j) = @_;
-  
-  $self->join_tag($target,$j->{'key'},0.5,0.5,$j->{'colour'},'line',1000);
-  $self->{'legend'}{'gene_legend'}{'joins'}{'priority'} ||= 1000;
-  if($j->{'legend'}) {
-    $self->{'legend'}{'gene_legend'}{'joins'}{'legend'}{$j->{'legend'}} =
-      $j->{'colour'};
+########################################################
+# USED IN "rect" STYLE                                 #
+########################################################
+    
+sub _draw_rect_gene {
+  my ($self,$g) = @_;
+
+  my $pix_per_bp = $self->scalex;
+  my $rect = $self->Rect({
+    x => $g->{'start'}-1,
+    y => 0,
+    width => $g->{'end'}-$g->{'start'}+1,
+    height => 4,
+    colour => $g->{'colour'},
+    absolutey => 1,
+    href => $g->{'href'},
+    title => $g->{'title'},
+  });
+  $self->push($rect);
+  if($g->{'highlight'}) {
+    $self->unshift($self->Rect({
+      x         => ($g->{'start'}-1) - 1/$pix_per_bp,
+      y         => -1,
+      width     => ($g->{'end'}-$g->{'start'}+1) + 2/$pix_per_bp,
+      height    => 6,
+      colour    => $g->{'highlight'},
+      absolutey => 1
+    }));
   }
+  $self->_draw_join($rect,$_) for(@{$g->{'joins'}});
+  return $rect;
 }
 
-sub draw_bookend {
+sub _draw_bookend {
   my ($self,$composite,$g) = @_;
 
   my $pix_per_bp = $self->scalex;
@@ -382,6 +364,51 @@ sub draw_bookend {
       absolutey => 1
     })
   );
+}
+
+sub draw_rect_genes {
+  my ($self,$ggdraw,$length,$draw_labels,$strand) = @_;
+
+  my $strand_flag = $self->my_config('strand');
+  my $pix_per_bp = $self->scalex;
+  my $rects_rows = $self->mr_bump($ggdraw,0,$length);
+  foreach my $g (@$ggdraw) {
+    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
+    my $rect = $self->_draw_rect_gene($g);
+    $rect->y($rect->y + (6*$g->{'_bump'}));
+  } 
+  if($draw_labels) {
+    $_->{'_lwidth'} += 8/$pix_per_bp for(@$ggdraw);
+    $self->mr_bump($ggdraw,2,$length); # Try again
+
+    foreach my $g (@$ggdraw) {
+      next if $strand != $g->{'strand'} and $strand_flag eq 'b';
+      my $composite = $self->Composite({
+        y => 0,
+        x => $g->{'_bstart'},
+        width => $g->{'_lwidth'},
+        absolutey => 1,
+        colour => $g->{'highlight'},
+      });
+      $self->add_label_new($composite,$g);
+      $composite->x($composite->x+8/$pix_per_bp);
+      $self->_draw_bookend($composite,$g);
+      $composite->y($g->{'_lheight'}*$g->{'_bump'}+($rects_rows*6));
+      $self->push($composite);
+    }
+  }
+  my %legend_old = @{$self->{'legend'}{'gene_legend'}{$self->type}{'legend'}||[]};
+  my %used_colours;
+  $used_colours{$_} = $legend_old{$_} for keys %legend_old;
+
+  $self->use_legend(\%used_colours,$_->{'colkey'}) for @$ggdraw;
+
+  my @legend = %used_colours;
+  
+  $self->{'legend'}{'gene_legend'}{$self->type} = {
+    priority => $self->_pos,
+    legend   => \@legend
+  };
 }
 
 1;
