@@ -359,14 +359,19 @@ sub bg_href {
   ## Needs to be first to capture clicks
   ## Useful to keep zmenus working on blank regions
   ## only useful in nobump or strandbump modes
-  my $link    = $self->bg_link;
-  my $bg_href = { 0 => $link };
-  $height   ||= $self->{'my_config'}->get('height');
+  my %off   = ( 0 => 0 );
+  $height ||= $self->{'my_config'}->get('height');
 
-  if ($self->{'my_config'}->get('strandbump')) {
-    $bg_href->{0}        = $link;
-    $bg_href->{$height}  = $link;
+  if ($self->my_config('strandbump')) {
+    $off{0}       = -1;
+    $off{$height} = 1;
   }
+
+  my $bg_href = {};
+  foreach my $y (keys %off) {
+    $bg_href->{$y} = $self->bg_link($off{$y});
+  }
+
   return $bg_href;
 }
 
