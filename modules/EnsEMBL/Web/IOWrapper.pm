@@ -134,20 +134,45 @@ sub track {
 sub convert_to_gradient {
 ### Convert a 0-1000 score to a value on a colour gradient
 ### Default is greyscale
-  my ($self, $score, $colour) = @_;
+  my ($self, $score, $colour, $steps, $min, $max) = @_;
+  $steps ||= 10;
+
   ## Default to black
   $score = 1000 unless defined($score);
   $score = 1000 if $score eq 'INF';
   $score = 0    if $score eq '-INF';
 
-  my @gradient = $colour ? $self->create_gradient(['white', $colour]) : @{$self->{'greyscale'}||[]};
+  my @gradient = @{$self->{'gradient'}||[]};
+
+  unless (scalar @gradient) {
+    if ($colour) {
+      if (ref $colour eq 'ARRAY') {
+        @gradient = $self->create_gradient($colour, $steps);
+      }
+      else {
+        @gradient = $self->create_gradient(['white', $colour], $steps);
+      }
+    }
+    else {
+      @gradient = @{$self->{'greyscale'}||[]};
+    }
+    $self->{'gradient'} = \@gradient;
+  }
 
   my $value;
-  if ($score <= 166) {
+
+  my $interval = 1000 / $steps;
+  $min ||= $interval;
+  $max ||= 1000 - $interval;
+
+  if ($score <= $min) {
     $value = $gradient[0];
   }
+  elsif ($score >= $max) {
+    $value = $gradient[-1];
+  }
   else {
-    my $step = int(($score - 166) / 110) + 1;
+    my $step = $score / $interval;
     $value = $gradient[$step];
   }
   return $value; 
@@ -417,9 +442,11 @@ sub set_colour {
   my $strand    = $params->{'strand'};
   my $score     = $params->{'score'};
   my $rgb       = $params->{'rgb'};
+  my $key       = $params->{'key'};
 
-  if ($score && ($metadata->{'useScore'} || $metadata->{'spectrum'})) {
-    $colour = $self->convert_to_gradient($score, $metadata->{'color'});
+  if ($score && $metadata->{'spectrum'} eq 'on') {
+    $self->{'gradient'} ||= $metadata->{'default_gradient'};
+    $colour = $self->convert_to_gradient($score, $metadata->{'color'}, $metadata->{'steps'}, $metadata->{'scoreMax'}, $metadata->{'scoreMin'});
   }
   elsif ($params->{'itemRgb'}) { ## BigBed?
     $colour = $self->rgb_to_hex($params->{'itemRgb'});
