@@ -3,9 +3,10 @@
 ## In Ensembl 84
 
 ### Obsolete since the redesign of member sequences
-* `AlignedMember::alignment_string()`
+* `AlignedMember::alignment_string(1)`
 * `AlignedMember::alignment_string_bounded()`
 * `AlignedMember::cdna_alignment_string()`
+* `AlignedMemberSet::get_SimpleAlign(-CDNA => )`
 * `MemberSet::print_sequences_to_fasta()`
 * `SeqMember::get_exon_bounded_sequence()`
 * `SeqMember::get_other_sequence()`
