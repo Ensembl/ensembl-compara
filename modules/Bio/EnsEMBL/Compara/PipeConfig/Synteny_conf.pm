@@ -147,7 +147,7 @@ sub pipeline_analyses {
                     pairwise_mlss_id    => $self->o('pairwise_mlss_id'),
                 },
             ],
-            -wait_for   => [ 'copy_tables_from_master_db' ],
+            -wait_for   => [ 'copy_table', 'copy_table_factory' ],
             -flow_into  => {
                 2 => 'register_mlss',
             },
