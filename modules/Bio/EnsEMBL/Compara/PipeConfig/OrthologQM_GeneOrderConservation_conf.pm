@@ -38,9 +38,6 @@ sub hive_meta_table {
 
 =cut
 
-sub pipeline_create_commands {
-	my $self = shift;
-}
 	#!!! NOTE: replace column names with desired col names for report.
 	#          must be a param name!
 
