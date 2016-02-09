@@ -47,6 +47,10 @@ package Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 sub default_options {
@@ -75,6 +79,9 @@ sub default_options {
             'minSize2' => undef,
 
             'orient' => 'false', # "false" is only needed for human/mouse, human/rat and mouse/rat NOT for elegans/briggsae (it can be ommitted). 
+
+            #Final filtering on the genome coverage (to remove too sparse syntenies)
+            'min_genome_coverage' => 0.01,  # minimum coverage. This parameter must be between 0 and 1
 
             #executable locations
             'DumpGFFAlignmentsForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl",
@@ -110,6 +117,8 @@ sub pipeline_wide_parameters {
 
         'level'     => $self->o('level'),
         'include_non_karyotype' => $self->o('include_non_karyotype'),
+
+        'min_genome_coverage'   => $self->o('min_genome_coverage'),
     };
 }
 
@@ -245,9 +254,17 @@ sub pipeline_analyses {
               -parameters      => {
                                    mlss_id  => '#synteny_mlss_id#',
                                   },
+              -flow_into => {
+                              2 => WHEN( '#avg_genomic_coverage# < #min_genome_coverage#' => 'delete_synteny' ),
+                            },
               -max_retry_count => 0,
               -rc_name => '3.6Gb',
             },
+
+        {   -logic_name => 'delete_synteny',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::DeleteSynteny',
+        },
+
    ];
 }
 

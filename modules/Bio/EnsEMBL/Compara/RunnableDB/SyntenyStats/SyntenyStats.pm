@@ -194,6 +194,10 @@ sub calculate_stats {
     $self->warning("store_tag($mlss_id, $tag, ".$tags{$tag}.")");
     $mlss->store_tag($tag, $tags{$tag});
   }
+
+  my $avg_genomic_coverage = ($tags{'ref_genome_coverage'}/$tags{'ref_genome_length'}+$tags{'non_ref_genome_coverage'}/$tags{'non_ref_genome_length'}) / 2;
+  $self->dataflow_output_id( {'avg_genomic_coverage' => $avg_genomic_coverage}, 2);
+
 }
 
 # Given two start-stop coordinates, $v and $w, as arrayrefs, work out if they
