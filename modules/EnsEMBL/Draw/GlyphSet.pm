@@ -1311,22 +1311,29 @@ sub text_bounds {
 # keys yourself, to customise the bumping (ag GlpyhSet_simpler does)
 # then feel free, and just call do_bump. For a description of the new
 # bumping algorithm see do_bump.
+# We deliberately compute label widths even if not displaying them.
+# This helps when, eg, we will later bump labels elsewhere, eg in the
+# gene renderer.
 sub mr_bump {
   my ($self,$features,$show_label,$max) = @_;
 
   my $pixperbp = $self->{'pix_per_bp'} || $self->scalex;
   foreach my $f (@$features) {
-    my $start = $f->{'start'};
-    my $end = $f->{'end'};
-    if($show_label && $f->{'label'}) {
+    my ($start,$end) = ($f->{'start'},$f->{'start'});
+    $start = $f->{'start'};
+    if($f->{'label'} && !$f->{'_lwidth'}) {
       my ($width,$height) = $self->text_bounds($f->{'label'});
-      $end = max($end,ceil($start+$width/$pixperbp));
+      $f->{'_lheight'} = $height;
+      $f->{'_lwidth'} = $width/$pixperbp;
+    }
+    if($show_label<2) { $end = $f->{'end'}; }
+    if($show_label && $f->{'label'}) {
+      $end = max($end,ceil($start+$f->{'_lwidth'}));
       my $overlap = $end-$max+1;
       if($overlap>0) {
         $start -= $overlap;
         $end -= $overlap;
       }
-      $f->{'_lheight'} = $height;
     }
     $f->{'_bstart'} = max(0,$start);
     $f->{'_bend'} = min($end,$max);
@@ -1356,9 +1363,6 @@ sub mr_bump {
 sub do_bump {
   my ($self,$features) = @_;
 
-  use Data::Dumper;
-  warn Dumper(@$features);
-  warn "DO_BUMP\n";
   my (@bumps,@rows);
   foreach my $f (sort { $a->{'_bstart'} <=> $b->{'_bstart'} } @$features) {
     my $row = 0;
@@ -1366,8 +1370,7 @@ sub do_bump {
     $rows[$row] = $f->{'_bend'};
     $f->{'_bump'} = $row;
   }
-  warn "/DO_BUMP\n";
-  return \@bumps;
+  return scalar @rows;
 } 
 
 sub max_label_rows {

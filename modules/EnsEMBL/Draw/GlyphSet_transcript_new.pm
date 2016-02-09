@@ -253,6 +253,35 @@ sub draw_collapsed_genes {
     legend   => \@legend
   };
 }
+    
+sub draw_rect_gene {
+  my ($self,$g) = @_;
+
+  my $pix_per_bp = $self->scalex;
+  my $rect = $self->Rect({
+    x => $g->{'start'}-1,
+    y => 0,
+    width => $g->{'end'}-$g->{'start'}+1,
+    height => 4,
+    colour => $g->{'colour'},
+    absolutey => 1,
+    href => $g->{'href'},
+    title => $g->{'title'},
+  });
+  $self->push($rect);
+  if($g->{'highlight'}) {
+    $self->unshift($self->Rect({
+      x         => ($g->{'start'}-1) - 1/$pix_per_bp,
+      y         => -1,
+      width     => ($g->{'end'}-$g->{'start'}+1) + 2/$pix_per_bp,
+      height    => 6,
+      colour    => $g->{'highlight'},
+      absolutey => 1
+    }));
+  }
+  $self->draw_join($rect,$_) for(@{$g->{'joins'}});
+  return $rect;
+}
       
 sub draw_introns {
   my ($self,$composite2,$t,$h,$length,$strand) = @_;
@@ -321,6 +350,51 @@ sub draw_grey_arrow {
       $ao+$am*4/$pix_per_bp, $ay+2*$am,
     ]
   }));
+}
+  
+sub draw_rect_genes {
+  my ($self,$ggdraw,$length,$draw_labels,$strand) = @_;
+
+  my $strand_flag = $self->my_config('strand');
+  my $pix_per_bp = $self->scalex;
+  my $rects_rows = $self->mr_bump($ggdraw,0,$length);
+  foreach my $g (@$ggdraw) {
+    next if $strand != $g->{'strand'} and $strand_flag eq 'b';
+    my $rect = $self->draw_rect_gene($g);
+    $rect->y($rect->y + (6*$g->{'_bump'}));
+  } 
+  if($draw_labels) {
+    $_->{'_lwidth'} += 8/$pix_per_bp for(@$ggdraw);
+    $self->mr_bump($ggdraw,2,$length); # Try again
+
+    foreach my $g (@$ggdraw) {
+      next if $strand != $g->{'strand'} and $strand_flag eq 'b';
+      my $composite = $self->Composite({
+        y => 0,
+        x => $g->{'_bstart'},
+        width => $g->{'_lwidth'},
+        absolutey => 1,
+        colour => $g->{'highlight'},
+      });
+      $self->add_label_new($composite,$g);
+      $composite->x($composite->x+8/$pix_per_bp);
+      $self->draw_bookend($composite,$g);
+      $composite->y($g->{'_lheight'}*$g->{'_bump'}+($rects_rows*6));
+      $self->push($composite);
+    }
+  }
+  my %legend_old = @{$self->{'legend'}{'gene_legend'}{$self->type}{'legend'}||[]};
+  my %used_colours;
+  $used_colours{$_} = $legend_old{$_} for keys %legend_old;
+
+  $self->use_legend(\%used_colours,$_->{'colkey'}) for @$ggdraw;
+
+  my @legend = %used_colours;
+  
+  $self->{'legend'}{'gene_legend'}{$self->type} = {
+    priority => $self->_pos,
+    legend   => \@legend
+  };
 }
 
 sub calculate_collapsed_joins {
@@ -794,6 +868,30 @@ sub render_alignslice_collapsed {
   }
 }
 
+sub draw_bookend {
+  my ($self,$composite,$g) = @_;
+
+  my $pix_per_bp = $self->scalex;
+  $composite->push(
+    $self->Rect({
+      x         => $g->{'_bstart'}+8,
+      y         => 4,
+      width     => 0,
+      height    => 4,
+      colour    => $g->{'colour'},
+      absolutey => 1
+    }),
+    $self->Rect({
+      x         => $g->{'_bstart'}+8,
+      y         => 8,
+      width     => 3/$pix_per_bp,
+      height    => 0,
+      colour    => $g->{'colour'},
+      absolutey => 1
+    })
+  );
+}
+
 sub render_genes {
   my $self = shift;
 
@@ -805,204 +903,61 @@ sub render_genes {
   my $pix_per_bp       = $self->scalex;
   my $strand           = $self->strand;
   my $selected_gene    = $self->my_config('g') || $self->core('g');
-  my $strand_flag      = $self->my_config('strand');
-  my $database         = $self->my_config('db');
-  my $max_length       = $self->my_config('threshold') || 1e6;
-  my $max_length_nav   = $self->my_config('navigation_threshold') || 50e3;
   my $label_threshold  = $self->my_config('label_threshold') || 50e3;
   my $navigation       = $self->my_config('navigation') || 'on';
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
-  my $alt_alleles_col  = $self->my_colour('alt_alleles_join');
-  my $join_z           = 1000;
-  
-  my %font_details = $self->get_font_details('outertext', 1);
-  my $h = ($self->get_text_width(0, 'X_y', '', %font_details))[3];
-  
-  $self->_init_bump;
-  
-  if ($length > $max_length * 1001) {
-    $self->errorTrack("Genes only displayed for less than $max_length Kb.");
-    return;
-  }
-  
-  my $show_navigation = $navigation eq 'on';
-  my $flag = 0;
-  my @genes_to_label;
   
   my ($genes, $highlights) = $self->features;
-  my $on_other_strand = 0;
-  
+
+  my (@ggdraw); 
   foreach my $gene (@$genes) {
-    my $gene_strand = $gene->strand;
-    
-    if ($gene_strand != $strand && $strand_flag eq 'b') { # skip features on wrong strand
-      $on_other_strand = 1;
-      next;
-    }
-    
     my $colour_key     = $self->colour_key($gene);
-    my $gene_col       = $self->my_colour($colour_key);
-    my $gene_type      = $self->my_colour($colour_key, 'text');
-    my $label          = $self->feature_label($gene);
     my $gene_stable_id = $gene->stable_id;
     my $start          = $gene->start;
     my $end            = $gene->end;
-    
-    my ($chr_start, $chr_end) = $self->slice2sr($start, $end);
     
     next if $end < 1 || $start > $length;
     
     $start = 1 if $start < 1;
     $end   = $length if $end > $length;
-    
-    my $rect = $self->Rect({
-      x         => $start - 1,
-      y         => 0,
-      width     => $end - $start + 1,
-      height    => $h,
-      colour    => $gene_col,
-      absolutey => 1,
-      href      => $show_navigation ? $self->href($gene) : undef,
-      title     => ($gene->external_name ? $gene->external_name . '; ' : '') .
-                   "Gene: $gene_stable_id; Location: " .
-                   $gene->seq_region_name . ':' . $gene->seq_region_start . '-' . $gene->seq_region_end
-    });
-    
-    push @genes_to_label, {
-      start     => $start,
-      label     => $label,
-      end       => $end,
-      href      => $rect->{'href'},
-      title     => $rect->{'title'},
-      gene      => $gene,
-      col       => $gene_col,
-      colkey    => $colour_key,
-      highlight => $config->get_option('opt_highlight_feature') != 0 ? $highlights->{$gene_stable_id} : undef,
-      type      => $gene_type
+ 
+    my ($href,$title,$highlight,$joins);
+    $title = sprintf("Gene: %s; Location: %s:%s-%s",
+                     $gene_stable_id,$gene->seq_region_name,
+                     $gene->seq_region_start,$gene->seq_region_end);
+    $title = $gene->external_name.'; ' if $gene->external_name;
+    if($config->get_option('opt_highlight_feature') != 0) {
+      $highlight = $highlights->{$gene_stable_id};
+    }
+    if($link) {
+      $joins = $self->calculate_collapsed_joins($gene,$gene_stable_id);
+    }
+    push @ggdraw,{
+      start => $start,
+      end => $end,
+      colour => $self->my_colour($colour_key),
+      href => $href,
+      title => $title,
+      label => $self->feature_label($gene),
+      colkey => $colour_key,
+      highlight => $highlight,
+      type => $self->my_colour($colour_key,'text'),
+      joins => $joins,
+      strand => $gene->strand,
     };
-    
-    my $bump_start = int($rect->x * $pix_per_bp);
-    my $bump_end = $bump_start + int($rect->width * $pix_per_bp) + 1;
-    my $row = $self->bump_row($bump_start, $bump_end);
-    
-    $rect->y($rect->y + (6 * $row));
-    $rect->height(4);
-
-    if ($link) {
-      my $joins = $self->calculate_collapsed_joins($gene,$gene_stable_id);
-      foreach my $j (@$joins) {
-        $self->draw_join($rect,$j);
-      }
-    }
-    
-    $self->push($rect);
-    
-    if ($config->get_option('opt_highlight_feature') != 0 && $highlights->{$gene_stable_id}) {
-      $self->unshift($self->Rect({
-        x         => ($start - 1) - 1/$pix_per_bp,
-        y         => $rect->y - 1,
-        width     => ($end - $start + 1) + 2/$pix_per_bp,
-        height    => $rect->height + 2,
-        colour    => $highlights->{$gene_stable_id},
-        absolutey => 1
-      }));
-    }
-    
-    $flag = 1;
   }
-  
-  # Now we need to add the label track, followed by the legend
-  if ($flag) {
-    my $gl_flag = $self->get_parameter('opt_gene_labels');
-       $gl_flag = 1 unless defined $gl_flag;
-       $gl_flag = shift if @_;
-       $gl_flag = 0 if $label_threshold * 1001 < $length;
-    
-    if ($gl_flag) {
-      my $start_row = $self->_max_bump_row + 1;
-      my $image_end = $self->get_parameter('image_end');
-      
-      $self->_init_bump;
+   
+  my $show_navigation = $navigation eq 'on';
+  delete $_->{'href'} unless $show_navigation;
+ 
+  my $draw_labels = $self->get_parameter('opt_gene_labels');
+  $draw_labels = 1 unless defined $draw_labels;
+  $draw_labels = shift if @_;
+  $draw_labels = 0 if $label_threshold * 1001 < $length;
 
-      foreach my $gr (@genes_to_label) {
-        my $x         = $gr->{'start'} - 1;
-        my $tag_width = (4 / $pix_per_bp) - 1;
-        my $w         = ($self->get_text_width(0, $gr->{'label'}, '', %font_details))[2] / $pix_per_bp;
-        my $label_x   = $x + $tag_width;
-        my $right_align;
-        
-        if ($label_x + $w > $image_end) {
-          $label_x     = $x - $w - $tag_width;
-          $right_align = 1;
-        }
-        
-        my $label = $self->Text({
-          x         => $label_x,
-          y         => 0,
-          height    => $h,
-          width     => $w,
-          halign    => 'left',
-          colour    => $gr->{'col'},
-          text      => $gr->{'label'},
-          title     => $gr->{'title'},
-          href      => $gr->{'href'},
-          absolutey => 1,
-          %font_details
-        });
-        
-        my $bump_start = int($label_x * $pix_per_bp) - 4;
-        my $bump_end   = $bump_start + int($label->width * $pix_per_bp) + 1;
-        my $row        = $self->bump_row($bump_start, $bump_end);
-        
-        $label->y($row * (2 + $h) + ($start_row - 1) * 6);
-        
-        # Draw little taggy bit to indicate start of gene
-        $self->push(
-          $label,
-          $self->Rect({
-            x         => $x,
-            y         => $label->y + 2,
-            width     => 0,
-            height    => 4,
-            colour    => $gr->{'col'},
-            absolutey => 1
-          }),
-          $self->Rect({
-            x         => $right_align ? $x - (3 / $pix_per_bp) : $x,
-            y         => $label->y + 6,
-            width     => 3 / $pix_per_bp,
-            height    => 0,
-            colour    => $gr->{'col'},
-            absolutey => 1
-          })
-        );
-        
-        if ($config->get_option('opt_highlight_feature') != 0 && $gr->{'highlight'}) {
-          $self->unshift($self->Rect({
-            x         => $gr->{'start'} - 1 - (1 / $pix_per_bp),
-            y         => $label->y + 1,
-            width     => $label->width + 1 + (2 / $pix_per_bp),
-            height    => $label->height + 2,
-            colour    => $gr->{'highlight'},
-            absolutey => 1
-          }));
-        }
-      }
-    }
+  $self->draw_rect_genes(\@ggdraw,$length,$draw_labels,$strand);
 
-    my %legend_old = @{$self->{'legend'}{'gene_legend'}{$self->type}{'legend'}||[]};
-    my %used_colours;
-    $used_colours{$_} = $legend_old{$_} for keys %legend_old;
-
-    $self->use_legend(\%used_colours,$_->{'colkey'}) for @genes_to_label;
-
-    my @legend = %used_colours;
-    
-    $self->{'legend'}{'gene_legend'}{$self->type} = {
-      priority => $self->_pos,
-      legend   => \@legend
-    };
-  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$on_other_strand) {
+  if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
     $self->no_track_on_strand;
   }
 }
@@ -1341,7 +1296,7 @@ sub add_label_new {
   return unless $g->{'label'};
   
   my $text_details = $self->text_details;
-  my $y            = $composite->y + $composite->height;
+  my $y            = $composite->height;
   my $yo = $y;
 
   foreach my $line (split("\n",$g->{'label'})) {
