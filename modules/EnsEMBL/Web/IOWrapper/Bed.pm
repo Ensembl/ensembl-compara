@@ -72,7 +72,7 @@ sub create_hash {
                         'start'       => $feature_start,
                         'end'         => $feature_end,
                         'strand'      => $feature_strand,
-                        });
+                        }) unless $metadata->{'omit_feature_links'};
 
   my $feature = {
     'start'         => $start,
