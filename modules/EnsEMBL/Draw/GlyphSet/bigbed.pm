@@ -108,7 +108,7 @@ sub render_as_alignment_label {
 sub render_compact {
   my $self = shift;
   $self->{'my_config'}->set('depth', 0);
-  $self->{'my_config'}->set('renderer_no_join', 1);
+  $self->{'my_config'}->set('no_join', 1);
   $self->draw_features;
 }
 
