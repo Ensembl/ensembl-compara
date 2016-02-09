@@ -74,6 +74,7 @@ sub fetch_input {
 		$species1_dbid = $speciesSet->[0]->dbID();
 		$species2_dbid = $speciesSet->[1]->dbID();
 	}
+    $self->dbc and $self->dbc->disconnect_if_idle();
 	my $homologs = $self->param('homolog_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
 	$self->param('ref_species_dbid', $species1_dbid);
 	$self->param('non_ref_species_dbid', $species2_dbid);
@@ -90,6 +91,8 @@ sub fetch_input {
 =cut
 sub run {
 	my $self = shift;
+
+    $self->dbc and $self->dbc->disconnect_if_idle();
 
 	my $ref_ortholog_info_hashref;
 	my $non_ref_ortholog_info_hashref;

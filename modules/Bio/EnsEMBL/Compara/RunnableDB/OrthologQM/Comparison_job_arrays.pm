@@ -70,6 +70,7 @@ sub fetch_input {
 sub run {
 	my $self = shift;
 	my $chr_orth_hashref = $self->param('chr_job');
+	$self->dbc and $self->dbc->disconnect_if_idle();
 #	print " -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n\n";
 #	print Dumper($chr_orth_hashref);
 	while (my ($ref_chr_dnafragID, $ordered_orth_arrayref) = each(%$chr_orth_hashref) ) {
