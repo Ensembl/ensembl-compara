@@ -35,18 +35,19 @@ sub can_json { return 1; }
 sub my_url { return $_[0]->my_config('url'); }
 
 sub get_data {
-  my $self      = shift;
-  my $hub       = $self->{'config'}->hub;
-  my $url       = $self->my_url;
-  my $container = $self->{'container'};
-  my $default_strand = $self->{'my_config'}->get('strand') eq 'r' ? -1 : 1;
-  my $args      = { 'options' => {
+  my ($self, $url)    = @_;
+  my $hub             = $self->{'config'}->hub;
+  $url              ||= $self->my_url;
+  my $container       = $self->{'container'};
+  my $default_strand  = $self->{'my_config'}->get('strand') eq 'r' ? -1 : 1;
+  my $args            = { 'options' => {
                                   'hub'         => $hub,
                                   'config_type' => $self->{'config'}{'type'},
                                   'track'       => $self->{'my_config'}{'id'},
                                   }, 
-                    'default_strand' => $default_strand,
-                    'drawn_strand' => $self->strand};
+                        'default_strand' => $default_strand,
+                        'drawn_strand' => $self->strand};
+                        
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigBed', $args);
   my $data;
@@ -61,8 +62,14 @@ sub get_data {
                     'label_colour'    => $colour,
                     'display'         => $self->{'display'},
                     'default_strand'  => $default_strand,
-                    pix_per_bp => $self->scalex,
+                    'pix_per_bp'      => $self->scalex,
+                    'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     };
+
+    ## Also set a default gradient in case we need it
+    my @gradient = $iow->create_gradient([qw(yellow green blue)]);
+    $metadata->{'default_gradient'} = \@gradient;
+
     ## No colour defined in ImageConfig, so fall back to defaults
     unless ($colour) {
       my $colourset_key           = $self->{'my_config'}->get('colourset') || 'userdata';
@@ -72,7 +79,6 @@ sub get_data {
       $metadata->{'join_colour'}  = $colours->{'join'} || $colours->{'default'};
       $metadata->{'label_colour'} = $colours->{'text'} || $colours->{'default'};
     }
-
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
