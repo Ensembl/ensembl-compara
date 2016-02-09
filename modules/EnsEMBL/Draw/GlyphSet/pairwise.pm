@@ -28,7 +28,7 @@ use List::Util qw(min max);
 
 use EnsEMBL::Web::IOWrapper::Indexed;
 
-use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
+use parent qw(EnsEMBL::Draw::GlyphSet::Generic);
 
 sub can_json { return 1; }
 

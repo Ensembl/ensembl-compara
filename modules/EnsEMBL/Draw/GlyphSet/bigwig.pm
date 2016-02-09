@@ -23,7 +23,7 @@ package EnsEMBL::Draw::GlyphSet::bigwig;
 
 use strict;
 
-use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
+use parent qw(EnsEMBL::Draw::GlyphSet::Generic);
 
 sub can_json { return 1; }
 

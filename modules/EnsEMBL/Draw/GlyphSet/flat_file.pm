@@ -26,7 +26,7 @@ use strict;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 
-use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
+use parent qw(EnsEMBL::Draw::GlyphSet::Generic);
 
 
 sub get_data {

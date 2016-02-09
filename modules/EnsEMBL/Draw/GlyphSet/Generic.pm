@@ -16,9 +16,9 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::UserData;
+package EnsEMBL::Draw::GlyphSet::Generic;
 
-### Parent for glyphsets that display a user's custom tracks
+### Parent for new-style glyphsets
 
 use strict;
 
