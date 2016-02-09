@@ -123,29 +123,17 @@ sub create_glyphs {
   warn "!!! MANDATORY METHOD ".ref($self).'::create_glyphs HAS NOT BEEN IMPLEMENTED!';
 }
 
-sub render_hidden_bg {
-  my ($self, $h) = @_;
-  return unless $self->can('href_bgd');
+sub draw_hidden_bgd {
+  my ($self, $height) = @_;
 
-  # Needs to be first to capture clicks
-  # Useful to keep zmenus working on blank regions
-  # only useful in nobump or strandbump modes
-  my %off = ( 0 => 0 );
-
-  if ($self->my_config('strandbump')) {
-    $off{0}  = -1;
-    $off{$h} = 1;
-  }
-
-  foreach my $y (keys %off) {
-    # no colour key, ie transparent
+  while (my($y, $link) = each (%{$self->{'bg_href'}||{}})) {
     push @{$self->glyphs}, $self->Rect({
                                         x         => 0,
                                         y         => $y,
-                                        width     => $self->{'container'}->length,
-                                        height    => $h,
+                                        width     => $self->image_config->container_width,
+                                        height    => $height,
                                         absolutey => 1,
-                                        href      => $self->href_bgd($off{$y}),
+                                        href      => $link,
                                         class     => 'group',
                                         });
   }
@@ -349,23 +337,6 @@ sub add_messages {
                 y         => $y,
     });
     $y += $self->{'font_size'} + 2;
-  }
-}
-
-sub add_hidden_bgd {
-  my ($self, $height) = @_;
-
-  while (my($y, $link) = each (%{$self->{'bg_href'}||{}})) {
-    # no colour key, ie transparent
-    push @{$self->glyphs}, $self->Rect({
-                                        x         => 0,
-                                        y         => $y,
-                                        width     => $self->image_config->container_width,
-                                        height    => $height,
-                                        absolutey => 1,
-                                        href      => $link,
-                                        class     => 'group',
-                                        });
   }
 }
 

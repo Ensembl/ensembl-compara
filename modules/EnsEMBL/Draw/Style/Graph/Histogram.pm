@@ -41,7 +41,7 @@ sub draw_wiggle {
     colour    => $c->{'colour'},
   };
   push @{$self->glyphs}, $self->Histogram($params);
-  $self->add_hidden_bgd($height);
+  $self->draw_hidden_bgd($height);
 }
 
 1;

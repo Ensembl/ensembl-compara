@@ -164,7 +164,7 @@ sub create_glyphs {
     $total_height += $label_height if $show_label;
     $self->add_messages($subtrack->{'metadata'}, $total_height);
   }
-
+  $self->draw_hidden_bgd($total_height);
 
   $track_config->set('y_start', $y_start + $total_height);
   return @{$self->glyphs||[]};

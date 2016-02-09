@@ -38,7 +38,7 @@ sub draw_wiggle {
     colours   => $c->{'colours'},
   };
   push @{$self->glyphs}, $self->Barcode($params);
-  $self->add_hidden_bgd($height);
+  $self->draw_hidden_bgd($height);
 }
 
 1;
