@@ -1246,50 +1246,6 @@ sub text_details {
   return $self->{'text_details'};
 }
 
-sub add_label {
-  my ($self, $composite, $colour, $gene, $transcript) = @_;
-  my $label = $self->feature_label($gene, $transcript);
-  
-  return $self->add_label_f($composite,$colour,$label);
-}
-
-sub add_label_f {
-  my ($self, $composite, $colour, $label) = @_;
-
-  return unless $label;
-  
-  my @lines        = split "\n", $label;
-  my $text_details = $self->text_details;
-  my $pix_per_bp   = $self->scalex;
-  my $image_end    = $self->get_parameter('image_end');
-  my $x            = $composite->x;
-  my $y            = $composite->y + $composite->height;
-  my @text;
-  
-  for (my $i = 0; $i < @lines; $i++) {
-    my $line = "$lines[$i] ";
-   
-    my $w    = ($self->get_text_width(0, $line, '', %$text_details))[2] / $pix_per_bp;
-       $x    = $image_end - $w if $x + $w > $image_end;
-    
-    push @text, $self->Text({
-      y         => $y + $i * $text_details->{'height'},
-      width     => $w,
-      halign    => 'left',
-      colour    => $colour,
-      text      => $line,
-      absolutey => 1,
-      %$text_details
-    });
-  }
-  
-  $_->x($x) for @text;
-  
-  $composite->push(@text);
-  
-  return $text_details->{'height'} * scalar @text;
-}
-
 sub add_label_new {
   my ($self,$composite,$g) = @_;
 
