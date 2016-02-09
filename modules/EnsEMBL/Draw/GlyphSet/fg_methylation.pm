@@ -77,7 +77,7 @@ sub render_compact {
 
 sub href           { return undef; } # tie to background
 
-sub href_bgd {
+sub bg_link {
   my ($self, $strand) = @_;
   
   return $self->_url({
