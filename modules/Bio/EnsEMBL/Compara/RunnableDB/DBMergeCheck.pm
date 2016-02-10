@@ -341,6 +341,7 @@ sub write_output {
     # If in write_output, it means that there are no ID conflict. We can safely dataflow the copy / merge operations.
 
     while ( my ($table, $db) = each(%{$self->param('copy')}) ) {
+        warn "ACTION: copy '$table' from '$db'\n" if $self->debug;
         $self->dataflow_output_id( {'src_db_conn' => "#$db#", 'table' => $table}, 2);
     }
 
@@ -351,6 +352,7 @@ sub write_output {
             push @inputlist, [ "#$db#" ];
             $n_total_rows += $table_size->{$db}->{$table};
         }
+        warn "ACTION: merge '$table' from ".join(", ", map {"'$_'"} @$dbs)."\n" if $self->debug;
         $self->dataflow_output_id( {'table' => $table, 'inputlist' => \@inputlist, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 3);
     }
 
