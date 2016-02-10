@@ -130,7 +130,7 @@ sub create_glyphs {
 
       my $labels_height   = $label_row * $label_height;
       my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
-      my $y               = ($y_start + ($feature_row + 1) * ($feature_height + $vspacing)) + $add_labels;
+      my $y               = $y_start + ($feature_row * ($feature_height + $vspacing)) + $add_labels;
       my $position  = {
                       'y'           => $y,
                       'width'       => $feature_width,
