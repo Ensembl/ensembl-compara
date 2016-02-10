@@ -309,19 +309,15 @@ sub render_transcripts {
     
       for(my $i=0;$i<@exons;$i++) {
         next unless defined $exons[$i][0]; # genscan weirdness
-        if($exons[$i][0]->end <= 0) { $td->{'exon_stageleft'} = 1; next; }
-        if($exons[$i][0]->start > $length) { $td->{'exon_stageright'} = 1; next; }
         my $target = {
           start => $exons[$i][0]->start,
           end => $exons[$i][0]->end,
-          types => [],
         };
         if($i and $exons[$i][0]->dbID eq $exons[$i-1][0]->dbID) {
           $target = $td->{'exons'}[$i-1];
         } else {
           push @{$td->{'exons'}},$target;
         }
-        push @{$target->{'types'}},$exons[$i][1];
         if($exons[$i][1] eq 'fill') {
           $target->{'coding_start'} = $exons[$i][2];
           $target->{'coding_end'} = $exons[$i][3];
@@ -374,8 +370,6 @@ sub render_alignslice_transcript {
       my $transcript_stable_id = $transcript->stable_id;
       my $td = {
         colour_key => $self->colour_key($gene, $transcript),
-        exon_stageleft => 0,
-        exon_stageright => 0,
         title  => $self->title($transcript, $gene),
         href   => $self->href($gene, $transcript),
         highlight => $highlights->{$transcript_stable_id},
@@ -402,16 +396,13 @@ sub render_alignslice_transcript {
           start => $e->start,
           end => $e->end,
           strand => $e->strand,
-          types => [],
         };
         if($e->{'exon'}->{'etype'} eq 'M') {
-          push @{$exon->{'types'}},'missing';
+          $exon->{'missing'} = 1;
         } else {
           if($e->start < $e_coding_start || $e->end > $e_coding_end) {
-            push @{$exon->{'types'}},'border';
           }
           if($e_coding_start <= $e_coding_end) {
-            push @{$exon->{'types'}},'fill';
             $exon->{'coding_start'} = $e_coding_start-$e->start;
             $exon->{'coding_end'} = $e->end-$e_coding_end;
           }

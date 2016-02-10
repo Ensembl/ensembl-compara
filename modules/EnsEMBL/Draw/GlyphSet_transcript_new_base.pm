@@ -51,8 +51,16 @@ use base qw(EnsEMBL::Draw::GlyphSet);
 #   title, href => for the respective composites, if applicable
 #   label =>       text of label
 #   highlight =>   a colour in which to highlight object, if needed
-#   exons, joins => XXX
-#   exon_stageleft, exon_stageright => XXX
+#   joins => [{    join lines used to join homologous genes, etc
+#     colour => colour of join
+#     key =>    tag key
+#     legend => text for legend
+#   }]
+#   exons => [{    draw internal exons
+#     start,end =>               locations of exon
+#     strand =>                  strand of exon (needed for alignslice)
+#     coding_start,coding_end => internal offset to coding part of exon
+#   }]
 
 ##########################################################
 # UTILITIES USED IN ALL STYLES                           #
@@ -225,17 +233,26 @@ sub _draw_expanded_exon {
   my $colour    = $self->my_colour($t->{'colour_key'});
   my $box_start = max($e->{'start'}, 1);
   my $box_end   = min($e->{'end'}, $length);
-  foreach my $type (@{$e->{'types'}}) {
-    if ($type eq 'border') {
-      $composite2->push($self->Rect({
-        x            => $box_start - 1 ,
-        y            => $non_coding_start,
-        width        => $box_end - $box_start + 1,
-        height       => $non_coding_height,
-        bordercolour => $colour,
-        absolutey    => 1,
-      }));
-    } elsif ($type eq 'fill') {
+  if($e->{'missing'}) {
+    $composite2->push($self->Line({
+      x         => $box_start - 1,
+      y         => int($h/2),
+      width     => $box_end-$box_start + 1,
+      height    => 0,
+      absolutey => 1,
+      colour    => 'green',
+      dotted    => 1
+    }));
+  } else {
+    $composite2->push($self->Rect({
+      x            => $box_start - 1 ,
+      y            => $non_coding_start,
+      width        => $box_end - $box_start + 1,
+      height       => $non_coding_height,
+      bordercolour => $colour,
+      absolutey    => 1,
+    }));
+    if(exists $e->{'coding_start'}) {
       my $fill_start = max($e->{'start'} + $e->{'coding_start'}, 1);
       my $fill_end   = min($e->{'end'}   - $e->{'coding_end'}, $length);
       
@@ -249,16 +266,6 @@ sub _draw_expanded_exon {
           absolutey => 1,
         }));
       }
-    } elsif($type eq 'missing') {
-      $composite2->push($self->Line({
-        x         => $box_start - 1,
-        y         => int($h/2),
-        width     => $box_end-$box_start + 1,
-        height    => 0,
-        absolutey => 1,
-        colour    => 'green',
-        dotted    => 1
-      }));
     }
   }
 }
@@ -267,10 +274,16 @@ sub _draw_introns {
   my ($self,$composite2,$t,$h,$length,$strand) = @_;
 
   my $colour = $self->my_colour($t->{'colour_key'});
-  my @introns = @{$t->{'exons'}};
+  my ($exon_stageleft,$exon_stageright) = (0,0);
+  my @introns;
+  foreach my $e (@{$t->{'exons'}}) {
+    if($e->{'start'} > $length) { $exon_stageright = 1; }
+    elsif($e->{'end'} <= 0) { $exon_stageleft = 1; }
+    else { push @introns,$e; }
+  }
   # add off-screen endpoints, duplicate, pair up
-  unshift @introns,{end => 0,dotted => 1} if $t->{'exon_stageleft'};
-  push @introns,{start => $length, dotted => 1} if $t->{'exon_stageright'};
+  unshift @introns,{end => 0,dotted => 1} if $exon_stageleft;
+  push @introns,{start => $length, dotted => 1} if $exon_stageright;
   @introns = map { ($_,$_) } @introns;
   my $in_it = natatime(2,@introns[1..$#introns-1]);
   while(my @pair = $in_it->()) {
@@ -309,6 +322,7 @@ sub _draw_expanded_transcript {
     $self->_draw_join($composite2,$j);
   }
   foreach my $e (@{$t->{'exons'}||[]}) {
+    next if $e->{'start'} > $length or $e->{'end'} <= 0;
     $self->_draw_expanded_exon($composite2,$t,$h,$e,$length);
   }
   $self->_draw_introns($composite2,$t,$h,$length,$strand);
