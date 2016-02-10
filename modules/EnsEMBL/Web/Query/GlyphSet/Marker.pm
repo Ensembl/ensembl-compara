@@ -5,7 +5,7 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
-our $VERSION = 14;
+our $VERSION = 15;
 
 sub href {
   my ($self,$f,$args) = @_;
@@ -33,7 +33,7 @@ sub precache {
 sub fixup {
   my ($self) = @_;
 
-  $self->fixup_slice('slice','species',100000);
+  $self->fixup_slice('slice','species',1000000);
   $self->fixup_location('start','slice',0);
   $self->fixup_location('end','slice',1);
   $self->fixup_unique('_unique');
