@@ -353,7 +353,7 @@ sub can_json {
 
 sub bg_href {
   my ($self, $height) = @_;
-  return {} unless $self->can('bg_link');
+  return {} unless $self->{'my_config'}->get('link_on_bgd') && $self->can('bg_link');
 
   ## Background link - needed for zmenus
   ## Needs to be first to capture clicks
