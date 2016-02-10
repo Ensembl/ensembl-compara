@@ -115,6 +115,8 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    $self->dbc->disconnect_if_idle();
+
     my $src_db_aliases = $self->param_required('src_db_aliases');
     my $exclusive_tables = $self->param_required('exclusive_tables');
     my $ignored_tables = $self->param_required('ignored_tables');
@@ -198,6 +200,8 @@ sub _find_primary_key {
 
 sub run {
     my $self = shift @_;
+
+    $self->dbc->disconnect_if_idle();
 
     my $table_size = $self->param('table_size');
     my $exclusive_tables = $self->param('exclusive_tables');
