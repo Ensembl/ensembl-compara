@@ -285,6 +285,26 @@ sub convert_to_pvalues {
   }
 }
 
+sub configure_strand {
+  my $self = shift;
+
+  my ($default_strand, $force_strand);
+
+  ## What do we do with unstranded data?
+  $default_strand = $self->{'my_config'}->get('default_strand') || 1;
+
+  ## Do we want to push all data onto one strand only?
+  my $configured_strand = $self->{'my_config'}->get('strand');
+  if ($configured_strand eq 'f') {
+    $force_strand = '1';
+  }
+  elsif ($configured_strand eq 'r') {
+    $force_strand = '-1';
+  }
+
+  return ($default_strand, $force_strand);
+}
+
 sub render_as_transcript_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
