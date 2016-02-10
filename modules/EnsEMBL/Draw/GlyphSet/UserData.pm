@@ -27,4 +27,37 @@ sub bg_link {
   return $self->_url({ action => 'UserData' }); 
 }
 
+### Renderers
+
+sub render_compact {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Barcode']);
+  $self->{'my_config'}->set('height', 8);
+  $self->{'my_config'}->set('no_axis', 1);
+  $self->_render_aggregate;
+}
+
+sub render_gradient {
+### Features coloured on a gradient by score, e.g. pvalues
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Heatmap']);
+  $self->{'my_config'}->set('height', 8);
+  $self->{'my_config'}->set('no_axis', 1);
+  $self->{'my_config'}->set('use_pvalue', 1);
+  $self->_render_aggregate;
+}
+
+sub render_signal {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
+}
+
+sub render_tiling {
+  ## For backwards compatibility - because 'tiling' is a meaningless name!
+  my $self = shift;
+  $self->render_signal;
+}
+
 1;
