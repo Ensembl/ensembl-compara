@@ -23,23 +23,22 @@ package EnsEMBL::Draw::GlyphSet::fg_multi_wiggle;
 
 use strict;
 
-use base qw(EnsEMBL::Draw::GlyphSet::bigwig);
+use parent qw(EnsEMBL::Draw::GlyphSet::bigwig);
 
-sub new {
+sub init {
   my $self = shift;
-  my $ret = $self->SUPER::new(@_);
-  return $ret;
+
+  ## Preload data
+  my $config      = $self->{'config'};
+  my $cell_line   = $self->my_config('cell_line');
+  $self->{'data'} = $self->data_by_cell_line($config)->{$cell_line};
+  use Data::Dumper; warn ">>> DATA ".Dumper($self->{'data'});
+
+  $self->SUPER::init(@_);
 }
 
-sub label { return undef; }
-sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
-
-## Override bigwig.pm with method from GlyphSet_wiggle_and_block, 
-## so that we can draw blocks!
-sub render_compact        { return $_[0]->_render; }
-
-# Lazy evaluation
 sub data_by_cell_line {
+### Lazy evaluation
   my ($self,$config) = @_;
 
   my $data = $config->{'data_by_cell_line'};
@@ -48,19 +47,49 @@ sub data_by_cell_line {
   return $data||{};
 }
 
-sub draw_features {
-  my ($self, $wiggle) = @_;
+sub draw_aggregate {
+  my $self = shift;
+  warn "!!! DRAWING FG MULTIWIGGLE AGGREGATE";
 
-  my $config           = $self->{'config'};
-  my $display          = $self->{'display'};  
-  my $cell_line        = $self->my_config('cell_line'); 
-  my $set              = $self->my_config('set');
-  my $label            = $self->my_config('label');
-  my $reg_view         = $config->hub->type eq 'Regulation';
-  my $data             = $self->data_by_cell_line($config)->{$cell_line};
-  my $colours          = $config->{'fg_multi_wiggle_colours'} ||= $self->get_colours;
-  my ($peaks, $wiggle) = $display eq 'tiling_feature' ? (1, 1) : $display eq 'compact' ? (1, 0) : (0, 1);
+  ## Draw the track(s)
+  my $set = $self->my_config('set');
 
+  my $args = {
+              'label'     => $display_label, 
+              'colours'   => $colours, 
+              'is_multi'  => !!$cell_line eq 'MultiCell',
+              'strand'    => -1,
+              };
+
+  foreach (@{$drawing_style||[]}) {
+    my $style_class = 'EnsEMBL::Draw::Style::'.$_;
+    my $any_on = scalar keys %{$dataset}{'on'}};
+    if ($self->dynamic_use($style_class)) {
+      my $subset;
+      if ($_ =~ /Feature/) {
+        if ($data->{$set}{'block_features'}) {
+          ## Only add the extra zmenu stuff if we're not drawing a wiggle
+          $subset = $self->get_blocks($data->{$set}, $args);
+        }
+        else {
+          self->display_error_message($cell_line, $set, 'peaks') if $any_on;
+        }
+      }
+      else {
+        if ($data->{$set}{'wiggle_features'}) {
+          $subset = $self->get_wiggle($data->{$set}, $args);
+        }
+        else {
+          self->display_error_message($cell_line, $set, 'wiggle') if $any_on;
+        }
+      }
+      my $style = $style_class->new(\%config, $subset);
+      $self->push($style->create_glyphs);
+    }
+  }
+
+=pod
+  ## Add extra zmenu in label column
   my $hub = $self->{'config'}->hub;
   my $cell_type_url = $hub->url('Component', {
     action   => 'Web',
@@ -81,206 +110,104 @@ sub draw_features {
       text => 'Select evidence to show',
       href => $evidence_url,
       class => 'modal_link',
-    }, 
+    },
   );
- 
+
   my $zmenu_extra_content = [ map {
       qq(<a href="$_->{'href'}" class="$_->{'class'}">$_->{'text'}</a>)
   } @zmenu_links ];
 
-  $self->{'will_draw_wiggle'} = $wiggle;
+  $self->_add_sublegend(undef, "More","Links", $zmenu_extra_content, $self->_offset+2);
+=cut
 
-  # First draw block features
-  my $any_on = scalar keys %{$data->{$set}{'on'}};
-  if ($peaks) {
-    if ($data->{$set}{'block_features'}) {   
-      $self->draw_blocks($data->{$set}{'block_features'}, $label, undef, $colours, $data->{$set}{'on'} ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) : '',!$wiggle?$zmenu_extra_content:undef,$cell_line eq 'MultiCell');
-    } else {
-      $self->display_error_message($cell_line, $set, 'peaks') if $any_on;
-    }
-  }
-  
-  # Then draw wiggle features
-  if ($wiggle) {
-    if ($data->{$set}{'wiggle_features'}) {   
-      $self->process_wiggle_data($data->{$set}{'wiggle_features'}, $colours, $label, $cell_line, $set, $reg_view,$zmenu_extra_content);
-    } else {
-      $self->display_error_message($cell_line, $set, 'wiggle') if $any_on; 
-    }
-  }
-  
+  ## This is clunky, but it's the only way we can make the new code
+  ## work in a nice backwards-compatible way right now!
+  ## Get label position, which is set in Style::Graph
+  $self->{'label_y_offset'} = $self->{'my_config'}->get('label_y_offset');
+
+  ## Everything went OK, so no error to return
   return 0;
 }
 
-sub draw_blocks { 
-  my ($self, $fs_data, $display_label, $bg_colour, $colours, $tracks_on, $zmenu_extra_content,$is_multi) = @_;
-  
-  $self->draw_track_name($display_label, 'black', -118, undef);
-  if ($tracks_on) {
-     $self->draw_track_name($tracks_on, 'grey40', -118, 0);
-  } else {  
-    $self->draw_space_glyph;
-  }
+sub get_blocks {
+  my ($self, $dataset, $args) = @_;
 
-  foreach my $f_set (sort { $a cmp $b } keys %$fs_data) { 
-    my @temp         = split /:/, $f_set;
+  my $tracks_on = $dataset->{'on'} 
+                    ? sprintf '%s/%s features turned on', map scalar keys %{$dataset->{$_} || {}}, qw(on available) 
+                    : '';
+
+  my $strand = $args->{'strand'};
+  my $data = {'metadata' => {},
+              'features' => {$strand => []},
+              };
+
+  foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
+    my @temp          = split /:/, $f_set;
     pop @temp;
-    my $feature_name = pop @temp;
-    my $cell_line = join(':',@temp);
-    my $colour       = $colours->{$feature_name};  
-    my $features     = $fs_data->{$f_set}; 
+    my $feature_name  = pop @temp;
+    my $cell_line     = join(':',@temp);
+    my $colour        = $args>{'colours'}{$feature_name};
+    my $features      = $dataset->{$f_set};
 
     my $label = $feature_name;
     $label = "$feature_name $cell_line" if $is_multi;
-    $self->draw_track_name($label, $colour, -108, 0, 'no_offset');
-    $self->draw_block_features ($features, $colour, $f_set, 1, 1);
-  }
-  if(defined $zmenu_extra_content) {
-    $self->_add_sublegend(undef,"More","Links",$zmenu_extra_content,
-                          $self->_offset+2);
-  }
 
-  $self->draw_space_glyph;
-}
 
-sub draw_wiggle {
-  my ($self, $features, $min_score, $max_score, $colours, $labels,
-      $zmenu_extra_content) = @_;
-  
-  $self->draw_wiggle_plot(
-    $features, # Features array
-    { min_score => $min_score, max_score => $max_score, graph_type => 'line', axis_colour => 'black', zmenu_extra_content => $zmenu_extra_content, zmenu_click_text => 'Legend & More' },
-    $colours,
-    $labels
-  );
-}
+    my $length     = $self->{'container'}->length;
 
-sub process_wiggle_data {
-  my ($self, $wiggle_data, $colour_keys, $label, $cell_line, $set, $reg_view,$zmenu_extra_content) = @_; 
-  my $config   = $self->{'config'};
-  my $max_bins = $self->image_width;
-  my @labels   = ($label);
-  my ($min_score, $max_score, $data_flag) = (0, 0, 0);
-  my (@all_features, $legend, @colours);
-  
-  foreach my $evidence_type (keys %$wiggle_data) {
-    my $bigwig_file = $self->data_by_cell_line($config)->{'wiggle_data'}{$evidence_type}; 
-
-    $self->{_cache}->{_bigwig_adaptor} = Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor->new($bigwig_file);
-    my $features = $self->features(undef, $evidence_type);
-    
-    next unless scalar @$features > 0;
-    $data_flag = 1;
-  
-    foreach (@$features) {
-      $min_score = $_->{'score'} if $_->{'score'} <= $min_score;
-      $max_score = $_->{'score'} if $_->{'score'} >= $max_score;
-    } 
- 
-    my @temp         = split /:/, $evidence_type;
-    my $feature_name = $temp[-2];
-    my $colour       = $colour_keys->{$feature_name}; 
-    
-    push @labels, $feature_name;
-    push @all_features, $features;
-    push @colours, $colour;
-    
-    $legend->{$feature_name} = $colour; 
+    foreach my $f (@$features) {
+      my $hash = {
+                  start   => $f->start,
+                  end     => $f->end,
+                  colour  => $colour,
+                  label   => $label,
+                  };
+      push @{$data->{'features'}{$strand}}, $hash; 
   }
 
-  if ($data_flag == 1) {
-    $max_score = 1 if $reg_view && $max_score <= 1;
-    $self->draw_wiggle(\@all_features, $min_score, $max_score, \@colours, \@labels,$zmenu_extra_content);
-    
-    # Add colours to legend
-    my $legend_colours       = $self->{'legend'}{'fg_multi_wiggle_legend'}{'colours'} || {};
-       $legend_colours->{$_} = $legend->{$_} for keys %$legend;
-    
-    $self->{'legend'}{'fg_multi_wiggle_legend'} = { priority => 1030, legend => [], colours => $legend_colours };
-  } else {
-    $self->display_error_message($cell_line, $set, 'wiggle');
-  }    
+  return $data;
 }
 
-sub block_features_zmenu {
-  my ($self, $f,$evidence) = @_;
-  my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
-  
-  return $self->_url({
-    action => 'FeatureEvidence',
-    fdb    => 'funcgen',
-    pos    => sprintf('%s:%s-%s', $f->slice->seq_region_name, $offset + $f->start, $f->end + $offset),
-    fs     => $f->feature_set->name,
-    ps     => $f->summit || 'undetermined',
-    act    => $self->{'config'}->hub->action,
-    evidence => !$self->{'will_draw_wiggle'},
-  });
+sub get_wiggle {
+  my ($self, $dataset) = @_;
+
 }
 
-sub get_colours {
-  my $self      = shift;
-  my $config    = $self->{'config'};
-  my $colourmap = $config->colourmap;
-  my %ratio     = ( 1 => 0.6, 2 => 0.4, 3 => 0.2, 4 => 0 );
-  my $count     = 0;
-  my %feature_colours;
+sub _add_sublegend {
 
-  # First generate pool of colours we can draw from
-  if (!exists $config->{'pool'}) {
-    my $colours = $self->my_config('colours');
-    
-    $config->{'pool'} = [];
-    
-    if ($colours) {
-      $config->{'pool'}[$_] = $self->my_colour($_) for sort { $a <=> $b } keys %$colours;
-    } else {
-      $config->{'pool'} = [qw(red blue green purple yellow orange brown black)]
-    }
-  }
-  
-  # Assign each feature set a colour, and set the intensity based on methalation state
-  foreach my $name (sort keys %{$self->data_by_cell_line($config)->{'colours'}}) {
-    my $histone_pattern = $name;
-    
-    if (!exists $feature_colours{$name}) {
-      my $c = $config->{'pool'}[$count++];
-      
-      $count = 0 if $count >= 55;
-      
-      if ($histone_pattern =~ s/^H\d+//) {
-        # First assign a colour for most basic pattern - i.e. no methyalation state information
-        my $histone_number = substr $name, 0, 2;
-
-        s/me\d+// for $histone_pattern, $name;
-        
-        $feature_colours{$name} = $colourmap->mix($c, 'white', $ratio{4});
-
-        # Now add each possible methyalation state of this type with the appropriate intensity
-        for (my $i = 1; $i <= 4; $i++) {
-          $histone_pattern  = $histone_number . $histone_pattern unless $histone_pattern =~ /^H\d/;
-          $histone_pattern .= $histone_pattern =~ s/me\d+/me$i/ ? '' : "me$i";
-          
-          $feature_colours{$histone_pattern} = $colourmap->mix($c, 'white', $ratio{$i});
-        }
-      } else {
-        $feature_colours{$name} = $colourmap->mix($c, 'white', $ratio{4});
-      }
-    }
-  }
-
-  return \%feature_colours;
 }
 
-sub display_error_message {
-  my ($self, $cell_line, $set, $type) = @_;
-  my $config = $self->{'config'}; 
-  
-  return unless $config->get_option('opt_empty_tracks') == 1; 
-  
-  $self->draw_track_name(join(' ', $config->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info($set)->{'label'}), 'black', -118,  2, 1);
-  $self->display_no_data_error('No evidence of those types in this cell line. Select more evidence?',1);
-  
-  return 1;
+## Custom render methods
+
+sub render_compact {
+  my $self = shift;
+  warn ">>> RENDERING PEAKS";
+  $self->{'my_config'}->set('drawing_style', ['Feature::Peaks']);
+  $self->{'my_config'}->set('height', 8);
+  $self->_render_aggregate;
 }
+
+sub render_signal {
+  my $self = shift;
+  warn ">>> RENDERING SIGNAL";
+  $self->{'my_config'}->set('drawing_style', ['Graph']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
+}
+
+sub render_signal_feature {
+  my $self = shift;
+  warn ">>> RENDERING PEAKS WITH SIGNAL";
+  $self->{'my_config'}->set('drawing_style', ['Feature::Peaks', 'Graph']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
+}
+
+sub render_text {
+  my ($self, $wiggle) = @_;
+  warn 'No text render implemented for bigwig';
+  return '';
+}
+
 
 1;
