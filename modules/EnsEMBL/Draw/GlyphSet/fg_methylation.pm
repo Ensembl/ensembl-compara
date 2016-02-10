@@ -72,6 +72,7 @@ sub get_data {
 sub render_compact {
   my $self = shift;
   $self->{'legend'}{'fg_methylation_legend'} = 1; # instruct to draw legend
+  $self->{'my_config'}->set('link_on_bgd', 1);
   $self->SUPER::render_compact;  
 }
 
