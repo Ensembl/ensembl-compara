@@ -50,6 +50,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         # When to create jobs
+        recompute_failed_syntenies      => 0,   # boolean
         recompute_existing_syntenies    => 0,   # boolean
         create_missing_synteny_mlsss    => 1,   # boolean
 
@@ -117,6 +118,12 @@ sub _check_pairwise {
     my $master_mlss = $self->param('master_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss->dbID);
     if (($master_mlss->name ne $mlss->name) or ($master_mlss->method->type ne $mlss->method->type) or ($master_mlss->species_set_obj->dbID != $mlss->species_set_obj->dbID)) {
         die sprintf("Mismatch between master database (%s) and pairwise database (%s) for MLSS object dbID=%d\n", $self->param('master_db'), $self->param('pairwise_db_url'), $mlss->dbID);
+    }
+
+    # Have we tried (and failed) before ?
+    if ($mlss->has_tag('low_synteny_coverage')) {
+        $self->warning(sprintf("The alignment mlss_id=%d has already been tried but lead to a low synteny-coverage (%f)", $mlss->dbID, $mlss->get_value_for_tag('low_synteny_coverage')));
+        return unless $self->param('recompute_failed_syntenies');
     }
 
     # Do the species have karyotypes ?

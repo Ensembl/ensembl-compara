@@ -46,7 +46,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift;
 
-    my $synteny_mlss_id = $self->param_required('synteny_mlss_id');
+    $self->param_required('synteny_mlss_id');
+    $self->param_required('pairwise_mlss_id');
+    $self->param_required('avg_genomic_coverage');
     $self->param('master_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('master_db')));
     # Trick to elevate the privileges on this session only
     $self->elevate_privileges($self->param('master_dba')->dbc);
@@ -56,11 +58,16 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
+    # Delete data from this database
     $self->compara_dba->dbc->db_handle->do('DELETE dnafrag_region FROM dnafrag_region JOIN synteny_region USING (synteny_region_id) WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     $self->compara_dba->dbc->db_handle->do('DELETE FROM synteny_region WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     $self->compara_dba->dbc->db_handle->do('DELETE FROM method_link_species_set_tag WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     $self->compara_dba->dbc->db_handle->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
+
+    # And the mlss entry in the master database
     $self->param('master_dba')->dbc->db_handle->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
+    # But also register in the master database that this pair of species is a lost cause
+    $self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "low_synteny_coverage", ?)', undef, $self->param('synteny_mlss_id'), $self->param('avg_genomic_coverage'));
 
 }
 
