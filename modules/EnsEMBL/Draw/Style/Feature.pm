@@ -131,6 +131,9 @@ sub create_glyphs {
       my $labels_height   = $label_row * $label_height;
       my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
       my $y               = $y_start + ($feature_row * ($feature_height + $vspacing)) + $add_labels;
+      $total_height       = $feature_height + $vspacing + $add_labels;
+      $total_height       = $y if $y > $total_height; 
+
       my $position  = {
                       'y'           => $y,
                       'width'       => $feature_width,
@@ -139,7 +142,6 @@ sub create_glyphs {
                       };
 
       $self->draw_feature($feature, $position);
-      $total_height = $y if $y > $total_height;
   
       ## Optional label
       if ($show_label) {
