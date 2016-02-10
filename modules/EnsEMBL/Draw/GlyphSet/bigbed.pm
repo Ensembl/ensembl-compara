@@ -39,14 +39,16 @@ sub get_data {
   my $hub             = $self->{'config'}->hub;
   $url              ||= $self->my_url;
   my $container       = $self->{'container'};
-  my $default_strand  = $self->{'my_config'}->get('strand') eq 'r' ? -1 : 1;
+  my ($default_strand, $force_strand) = $self->configure_strand; 
+
   my $args            = { 'options' => {
                                   'hub'         => $hub,
                                   'config_type' => $self->{'config'}{'type'},
                                   'track'       => $self->{'my_config'}{'id'},
                                   }, 
-                        'default_strand' => $default_strand,
-                        'drawn_strand' => $self->strand};
+                        'default_strand'  => $default_strand,
+                        'drawn_strand'    => $self->strand
+                        };
                         
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigBed', $args);
@@ -62,6 +64,7 @@ sub get_data {
                     'label_colour'    => $colour,
                     'display'         => $self->{'display'},
                     'default_strand'  => $default_strand,
+                    'force_strand'    => $force_strand, 
                     'pix_per_bp'      => $self->scalex,
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     };

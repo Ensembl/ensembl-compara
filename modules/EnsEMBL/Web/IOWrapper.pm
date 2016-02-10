@@ -344,7 +344,9 @@ sub build_feature {
   my $hash = $self->create_hash($slice, $data->{$track_key}{'metadata'});
   return unless keys %$hash;
 
-  my $feature_strand = $hash->{'strand'} || $data->{$track_key}{'metadata'}{'default_strand'};
+  my $feature_strand = $data->{$track_key}{'metadata'}{'force_strand'} 
+                          || $hash->{'strand'} 
+                          || $data->{$track_key}{'metadata'}{'default_strand'};
 
   if ($data->{$track_key}{'features'}{$feature_strand}) {
     push @{$data->{$track_key}{'features'}{$feature_strand}}, $hash; 
