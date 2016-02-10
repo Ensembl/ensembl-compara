@@ -2958,8 +2958,8 @@ sub add_regulation_builds {
       renderers => [
         'off',            'Off', 
         'compact',        'Peaks', 
-        'tiling',         'Signal', 
-        'tiling_feature', 'Both' 
+        'signal',         'Signal', 
+        'signal_feature', 'Both', 
       ],
     );
     
