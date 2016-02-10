@@ -64,6 +64,10 @@ sub assembly_name {
     return undef unless $core_dba;
     return undef unless $core_dba->group eq 'core';
 
+    ## We could alternatively do
+    #return $core_dba->get_CoordSystemAdaptor->get_default_version;
+    #return $core_dba->get_GenomeContainer->get_version;
+
     my ($cs) = @{$core_dba->get_CoordSystemAdaptor->fetch_all()};
 
     return $cs ? $cs->version : '';
