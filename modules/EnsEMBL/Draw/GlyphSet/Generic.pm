@@ -285,11 +285,6 @@ sub convert_to_pvalues {
   }
 }
 
-sub bg_link {
-  my $self = shift;
-  return $self->_url({ action => 'UserData' }); 
-}
-
 sub render_as_transcript_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
