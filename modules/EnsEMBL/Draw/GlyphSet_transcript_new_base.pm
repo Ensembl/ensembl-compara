@@ -205,7 +205,7 @@ sub draw_collapsed_genes {
     foreach my $e (@{$g->{'exons'}}) {
       $self->_draw_collapsed_exon($composite,$length,$g,$e);
     }
-    foreach my $j (@{$g->{'joins'}}) {
+    foreach my $j (@{$g->{'joins'}||[]}) {
       $self->_draw_join($composite,$j);
     }
   
@@ -428,7 +428,7 @@ sub _draw_rect_gene {
       absolutey => 1
     }));
   }
-  $self->_draw_join($rect,$_) for(@{$g->{'joins'}});
+  $self->_draw_join($rect,$_) for(@{$g->{'joins'}||[]});
   return $rect;
 }
 

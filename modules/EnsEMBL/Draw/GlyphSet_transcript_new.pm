@@ -50,8 +50,13 @@ sub render_as_collapsed_label      { $_[0]->render_alignslice_collapsed(1);  }
 sub render_as_collapsed_nolabel    { $_[0]->render_alignslice_collapsed(0);  }
 
 sub calculate_collapsed_joins {
-  my ($self,$gene,$gene_stable_id) = @_;
-  
+  my ($self,$gene_stable_id) = @_;
+ 
+  my $hub = $self->{'config'}->hub;
+  my $ga = $hub->get_adaptor('get_GeneAdaptor',
+                             $self->my_config('db'),$self->species);
+  my $gene = $ga->fetch_by_stable_id($gene_stable_id);
+ 
   my $previous_species = $self->my_config('previous_species');
   my $next_species     = $self->my_config('next_species');
   my $previous_target  = $self->my_config('previous_target');
@@ -221,7 +226,7 @@ sub render_collapsed {
 
     my $joins = []; 
     if ($link and $gene_stable_id) {
-      $joins = $self->calculate_collapsed_joins($gene,$gene_stable_id);
+      $joins = $self->calculate_collapsed_joins($gene_stable_id);
     }
     push @ggdraw,{
       start => $gene->start,
@@ -511,41 +516,28 @@ sub render_genes {
   my $label_threshold  = $self->my_config('label_threshold') || 50e3;
   my $navigation       = $self->my_config('navigation') || 'on';
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my $this_db          = ($self->core('db') eq $self->my_config('db'));
   
-  my ($genes, $highlights) = $self->features;
-
-  my (@ggdraw); 
-  foreach my $gene (@$genes) {
-    my $colour_key     = $self->colour_key($gene);
-    my $gene_stable_id = $gene->stable_id;
-    my $start          = $gene->start;
-    my $end            = $gene->end;
-    
-    my ($href,$title,$highlight,$joins);
-    $title = sprintf("Gene: %s; Location: %s:%s-%s",
-                     $gene_stable_id,$gene->seq_region_name,
-                     $gene->seq_region_start,$gene->seq_region_end);
-    $title = $gene->external_name.'; ' if $gene->external_name;
-    if($config->get_option('opt_highlight_feature') != 0) {
-      $highlight = $highlights->{$gene_stable_id};
+  my $hub = $self->{'config'}->hub;
+  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
+    species => $self->species,
+    pattern => $self->my_config('colour_key'),
+    shortlabels => $self->get_parameter('opt_shortlabels'),
+    label_key => $self->my_config('label_key'),
+    slice => $self->{'container'},
+    logic_names => $self->my_config('logic_names'),
+    db => $self->my_config('db'),
+  });
+  foreach my $g (@$ggdraw) {
+    my $gene_stable_id = $g->{'stable_id'};
+    if($this_db and $gene_stable_id eq $selected_gene) {
+      $g->{'highlight'} = 'highlight2';
     }
     if($link) {
-      $joins = $self->calculate_collapsed_joins($gene,$gene_stable_id);
+      $g->{'joins'} = $self->calculate_collapsed_joins($gene_stable_id);
     }
-    push @ggdraw,{
-      start => $start,
-      end => $end,
-      href => $href,
-      title => $title,
-      label => $self->feature_label($gene),
-      colour_key => $colour_key,
-      highlight => $highlight,
-      type => $self->my_colour($colour_key,'text'),
-      joins => $joins,
-      strand => $gene->strand,
-    };
   }
-   
+
   my $show_navigation = $navigation eq 'on';
   delete $_->{'href'} unless $show_navigation;
  
@@ -554,9 +546,9 @@ sub render_genes {
   $draw_labels = shift if @_;
   $draw_labels = 0 if $label_threshold * 1001 < $length;
 
-  $self->draw_rect_genes(\@ggdraw,$length,$draw_labels,$strand);
+  $self->draw_rect_genes($ggdraw,$length,$draw_labels,$strand);
 
-  if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
+  if($config->get_option('opt_empty_tracks') != 0 && !@$ggdraw) {
     $self->no_track_on_strand;
   }
 }
