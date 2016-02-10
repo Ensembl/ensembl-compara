@@ -89,7 +89,7 @@ sub pipeline_analyses {
     my $super_analyses = $self->SUPER::pipeline_analyses;
     my ($mlss_factory) = grep {$_->{'-logic_name'} eq 'MLSSJobFactory'} @$super_analyses;
     $mlss_factory->{-flow_into} = {
-        '2->A' => [ 'choose_mode' ],
+        '2->A' => [ 'count_blocks' ],
         'A->1' => 'createREADME',
     };
     return [
