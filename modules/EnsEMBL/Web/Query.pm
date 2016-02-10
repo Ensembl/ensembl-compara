@@ -108,19 +108,24 @@ sub source {
 }
 
 sub precache {
-  my ($self,$kind) = @_;
+  my ($self,$kind,$i,$n) = @_;
 
   my $conf = $self->{'impl'}->precache()->{$kind};
   my $fn = "loop_$conf->{'loop'}";
-  my $parts = [ shuffle @{$self->{'impl'}->$fn($conf->{'args'})} ];
+  my $all_parts = $self->{'impl'}->$fn($conf->{'args'});
+  my @parts;
+  for(my $k=0;$k<@$all_parts;$k++) {
+    next unless ($k % $n) == $i;
+    push @parts,$all_parts->[$k];
+  }
   $self->{'store'}->open();
   my $start = time();
-  foreach my $args (@$parts) {
+  foreach my $args (@parts) {
     my @args = ($args);
     $self->_run_phase(\@args,undef,'split');
     foreach my $a (@args) {
       next if defined $self->{'store'}->_try_get_cache(ref($self->{'impl'}),$a);
-      warn "  -> $kind ".$a->{'__name'}."\n";
+      warn "  -> $kind ".$a->{'__name'}." [$i]\n";
       if(time()-$start > 60) {
         $self->{'store'}->close();
         $self->{'store'}->open();

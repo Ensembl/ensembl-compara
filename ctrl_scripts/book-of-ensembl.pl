@@ -26,7 +26,10 @@ use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore;
 
 sub run1 {
-  my ($query,$kind) = @_;
+  my ($query,$kind,$i,$n) = @_;
+
+  $i ||= 0;
+  $n ||= 1;
 
   my $SD = EnsEMBL::Web::SpeciesDefs->new();
 
@@ -41,7 +44,7 @@ sub run1 {
   },$cache,$SiteDefs::ENSEMBL_COHORT);
 
   my $q = $qs->get($query);
-  my $pc = $q->precache($kind);
+  my $pc = $q->precache($kind,$i,$n);
 }
 
 my $forker = Parallel::Forker->new(
@@ -51,12 +54,13 @@ my $forker = Parallel::Forker->new(
 $SIG{CHLD} = sub { Parallel::Forker::sig_child($forker); };
 $SIG{TERM} = sub { $forker->kill_tree_all('TERM') if $forker && $forker->in_parent; die "Quitting...\n"; };
 
-foreach my $i (0..3) {
+my $n = 4;
+foreach my $i (0..($n-1)) {
   $forker->schedule( run_on_start => sub {
-    run1('GlyphSet::Variation','1kgindels');
+    run1('GlyphSet::Variation','1kgindels',$i,$n);
   })->run();
   $forker->schedule( run_on_start => sub {
-    run1('GlyphSet::Variation','ph-short');
+    run1('GlyphSet::Variation','ph-short',$i,$n);
   })->run();
 }
 $forker->schedule( run_on_start => sub {
