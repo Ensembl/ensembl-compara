@@ -204,48 +204,39 @@ sub render_collapsed {
   my $db               = $self->my_config('db');
   my $show_labels      = $self->my_config('show_labels');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
-  my $alt_alleles_col  = $self->my_colour('alt_alleles_join');
-  my $y                = 0;
-  my $h                = 8;
-  my %used_colours;
+  my $this_db          = ($self->core('db') eq $self->my_config('db'));
   
-  my ($genes, $highlights, $transcripts, $exons) = $self->features;
- 
-  my @ggdraw;
-  foreach my $gene (@$genes) {
-    my (@edraw);
-    my $gene_stable_id = $gene->stable_id;
-    
-    my @exons      = map { $_->start > $length || $_->end < 1 ? () : $_ } @{$exons->{$gene_stable_id}}; # Get all the exons which overlap the region for this gene
-    my $colour_key = $self->colour_key($gene);
-    my $colour     = $self->my_colour($colour_key);
-    
-    foreach my $exon (@exons) {
-      push @edraw,{ start => $exon->start, end => $exon->end };
+  my $hub = $self->{'config'}->hub;
+  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
+    species => $self->species,
+    pattern => $self->my_config('colour_key'),
+    shortlabels => $self->get_parameter('opt_shortlabels'),
+    label_key => $self->my_config('label_key'),
+    slice => $self->{'container'},
+    logic_names => $self->my_config('logic_names'),
+    db => $self->my_config('db'),
+  });
+  foreach my $g (@$ggdraw) {
+    my @exons;
+    foreach my $t (@{$g->{'transcripts'}||[]}) {
+      push @exons,@{$t->{'exons'}||[]};
     }
-
-    my $joins = []; 
-    if ($link and $gene_stable_id) {
-      $joins = $self->calculate_collapsed_joins($gene_stable_id);
+    $g->{'exons'} = \@exons;
+    delete $g->{'transcripts'};
+    my $gene_stable_id = $g->{'stable_id'};
+    if($this_db and $gene_stable_id eq $selected_gene) {
+      $g->{'highlight'} = 'highlight2';
     }
-    push @ggdraw,{
-      start => $gene->start,
-      end => $gene->end,
-      title => $self->gene_title($gene),
-      href => $self->href($gene),
-      label => $self->feature_label($gene),
-      highlight => $highlights->{$gene_stable_id},
-      colour_key => $self->colour_key($gene),
-      exons => \@edraw,
-      joins => $joins,
-      strand => $gene->strand,
-    };   
+    if($link and $gene_stable_id) {
+      $g->{'joins'} = $self->calculate_collapsed_joins($gene_stable_id);
+    }
   }
+ 
   my $draw_labels = ($labels and $show_labels ne 'off');
-  $self->mr_bump(\@ggdraw,$draw_labels,$length);
-  $self->draw_collapsed_genes($length,$draw_labels,$strand,\@ggdraw);
+  $self->mr_bump($ggdraw,$draw_labels,$length);
+  $self->draw_collapsed_genes($length,$draw_labels,$strand,$ggdraw);
 
-  if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
+  if($config->get_option('opt_empty_tracks') != 0 && !@$ggdraw) {
     $self->no_track_on_strand;
   }
 }

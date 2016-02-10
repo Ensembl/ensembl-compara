@@ -33,6 +33,12 @@ sub fixup {
   $self->fixup_slice('slice','species',100_000);
   $self->fixup_location('start','slice',0);
   $self->fixup_location('end','slice',1);
+  $self->fixup_location('transcripts/*/start','slice',0);
+  $self->fixup_location('transcripts/*/end','slice',1);
+  $self->fixup_location('transcripts/*/exons/*/start','slice',0);
+  $self->fixup_location('transcripts/*/exons/*/end','slice',1);
+  $self->fixup_location('transcripts/*/exons/*/coding_start','slice',0);
+  $self->fixup_location('transcripts/*/exons/*/coding_end','slice',1);
   $self->fixup_unique('_unique');
   $self->_fixup_label();
   $self->_fixup_href();
@@ -154,6 +160,44 @@ sub _href {
   return $params;
 }
 
+sub _get_exons {
+  my ($self,$args,$t) = @_;
+
+  my @eff;
+  my $t_coding_start = $t->coding_region_start // -1e6;
+  my $t_coding_end = $t->coding_region_end // -1e6;
+  foreach my $e (sort { $a->start <=> $b->start } @{$t->get_all_Exons}) {
+    next unless defined $e;
+    my $ef = {
+      start => $e->start,
+      end => $e->end,
+      strand => $e->strand,
+    };
+    my $coding_start = max($t_coding_start,$e->start);
+    my $coding_end = min($t_coding_end,$e->end);
+    if($coding_start <= $coding_end) {
+      $ef->{'coding_start'} = $coding_start;
+      $ef->{'coding_end'} = $coding_end;
+    }
+    push @eff,$ef;
+  }
+  return \@eff;
+}
+
+sub _get_transcripts {
+  my ($self,$args,$g) = @_;
+
+  my @tff;
+  my @trans = @{$g->get_all_Transcripts};
+  foreach my $t (@trans) {
+    my $tf = {
+    };
+    $tf->{'exons'} = $self->_get_exons($args,$t);
+    push @tff,$tf;
+  }
+  return \@tff;
+}
+
 sub get {
   my ($self,$args) = @_;
 
@@ -165,7 +209,7 @@ sub get {
                         $g->seq_region_start,$g->seq_region_end);
     $title = $g->external_name.'; ' if $g->external_name;
 
-    push @out,{
+    my $gf = {
       _unique => $g->dbID,
       start => $g->start,
       end => $g->end,
@@ -176,6 +220,8 @@ sub get {
       strand => $g->strand,
       stable_id => $g->stable_id,
     };
+    $gf->{'transcripts'} = $self->_get_transcripts($args,$g);
+    push @out,$gf;
   }
   return \@out;
 }
