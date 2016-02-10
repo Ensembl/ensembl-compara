@@ -233,7 +233,7 @@ my %methods_to_skip = map {$_=>1} qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSE
 
 #################################################
 ## Get the DBAdaptors from the Registry
-Bio::EnsEMBL::Registry->load_all($reg_conf, "verbose", 0, 0, "throw_if_missing");
+Bio::EnsEMBL::Registry->load_all($reg_conf, "verbose", 0, 0, "throw_if_missing") if $reg_conf;
 
 my $master_dba;
 if ($master =~ /mysql:\/\//) {
