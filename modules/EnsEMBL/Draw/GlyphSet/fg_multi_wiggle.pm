@@ -72,6 +72,11 @@ sub data_by_cell_line {
 sub draw_aggregate {
   my $self = shift;
 
+  ## Set some defaults for all displays
+  $self->{'my_config'}->set('display_structure', 1);
+  $self->{'my_config'}->set('display_summit', 1);
+  $self->{'my_config'}->set('slice_start', $self->{'container'}->start);
+
   ## Draw the track(s)
   my $cell_line = $self->my_config('cell_line');
   my $label     = $self->my_config('label');
@@ -87,7 +92,6 @@ sub draw_aggregate {
   my $set     = $self->my_config('set');
   my %config  = %{$self->track_style_config};
 
-  ## Now draw the actual track(s)
   foreach (@{$self->{'my_config'}->get('drawing_style')||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
     my $any_on = scalar keys %{$data->{'on'}};
@@ -185,11 +189,24 @@ sub get_blocks {
 
     my $features      = $dataset->{$f_set};
     foreach my $f (@$features) {
+
+      ## Create motif features
+      my $structure = [];
+      my @loci = @{$f->get_underlying_structure};
+      my $end  = pop @loci;
+      my ($start, @mf_loci) = @loci;
+
+      while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
+        push @$structure, {'start' => $mf_start, 'end' => $mf_end};
+      }
+
       my $hash = {
-                  start   => $f->start,
-                  end     => $f->end,
-                  colour  => $colour,
-                  label   => $label,
+                  start     => $f->start,
+                  end       => $f->end,
+                  midpoint  => $f->summit,
+                  structure => $structure, 
+                  colour    => $colour,
+                  label     => $label,
                   };
       push @{$data->{'features'}}, $hash; 
     }
