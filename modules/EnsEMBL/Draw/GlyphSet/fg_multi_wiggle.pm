@@ -27,6 +27,8 @@ use EnsEMBL::Draw::Style::Extra::Header;
 
 use parent qw(EnsEMBL::Draw::GlyphSet::bigwig);
 
+sub label { return undef; }
+
 sub render_compact {
   my $self = shift;
   warn ">>> RENDERING PEAKS";
@@ -100,7 +102,6 @@ sub draw_aggregate {
                     : '';
 
           my $style = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
-          $style->_offset(6);
           $style->draw_margin_subhead($label, $tracks_on);
           $self->push(@{$style->glyphs||[]});
   
