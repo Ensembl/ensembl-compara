@@ -54,7 +54,7 @@ use parent qw(EnsEMBL::Draw::Style);
 
 sub create_glyphs {
 ### Create all the glyphs required by this style
-### @return ArrayRef of EnsEMBL::Web::Glyph objects
+### @return Array of EnsEMBL::Web::Glyph objects
   my $self = shift;
 
   my $data            = $self->data;
@@ -224,7 +224,6 @@ sub add_label {
   my $label = {
                 font      => $self->{'font_name'},
                 colour    => $colour,
-                height    => $self->{'font_size'},
                 ptsize    => $self->{'font_size'},
                 text      => $feature->{'label'},
                 x         => $x,
@@ -240,5 +239,6 @@ sub add_label {
 
   push @{$self->glyphs}, $self->Text($label);
 }
+
 
 1;
