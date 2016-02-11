@@ -23,6 +23,8 @@ package EnsEMBL::Draw::Style::Extra::Header;
 use strict;
 use warnings;
 
+use EnsEMBL::Draw::Utils::Text;
+
 use parent qw(EnsEMBL::Draw::Style);
 
 sub create_glyphs { 
@@ -51,11 +53,14 @@ sub _draw_track_name {
   my $y  = $self->_offset;
   $y    += $y_offset if $y_offset;
 
+  ## Use smaller text than usual
+  my %font_details = EnsEMBL::Draw::Utils::Text::get_font_details($self->image_config, 'innertext', 1);
+
   ## Truncate name if it's wider than our offset
-  my %res_analysis;
+  my @res_analysis;
   while ($name) {
-    %res_analysis = %{$self->get_text_info($name)};
-    last if ($res_analysis{'width'} < -$x_offset);
+    @res_analysis = EnsEMBL::Draw::Utils::Text::get_text_width($self->cache, $self->image_config, 0, $name, '', %font_details);
+    last if ($res_analysis[2] < -$x_offset);
     $name = substr($name, 0, -1);
   }
 
@@ -69,18 +74,18 @@ sub _draw_track_name {
   push @{$self->glyphs}, $self->Text({
                                       x         => $x,
                                       y         => $y,
-                                      text      => $name,
+                                      height    => $res_analysis[3],
+                                      width     => $res_analysis[2],
                                       halign    => 'left',
                                       valign    => 'bottom',
+                                      text      => $name,
                                       colour    => $colour,
-                                      font      => $self->{'font_name'},
-                                      ptsize    => $self->{'font_size'},
                                       absolutey => 1,
                                       absolutex => 1,
-                                      %res_analysis
+                                      %font_details,
                                     });
 
-  $self->_offset($res_analysis{'height'}) unless $no_offset;
+  $self->_offset($res_analysis[3]) unless $no_offset;
 
   return 1;
 }
