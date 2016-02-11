@@ -88,6 +88,7 @@ sub fetch_input{
         $self->param('orthology_mlss', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$self->param('ref_species_dbid'),$self->param('non_ref_species_dbid')]) );
 #   print $self->param('gmember_adaptor');
 #   print $self->param('homolog_adaptor');
+        $self->param('orthology_mlss_id', $self->param('orthology_mlss')->dbID);
 #    $self->param('mlss_ID', $self->param_required('mlss_ID'));
 }
 
@@ -275,58 +276,19 @@ sub _compute_ortholog_score {
 
 #get all the gene members of in a chromosome coordinate range, filter only the ones that are from a 'ENSEMBLPEP' source and order them based on their dnafrag start positions
 sub _get_non_ref_gmembers {
-    my $self = shift;
-#   print " This is the _get_non_ref_members subbbbbbbbbbbbb \n\n";
-    my ($dnafragID, $st, $ed)= @_;
-#   print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n";
-    my $non_ref_members = $self->param('gmember_adaptor')->fetch_all_by_dnafrag_id_start_end($dnafragID, $st, $ed); #returns a list of gene member spanning the given coordinates
-
-        my %member_id_2_object = map {$_->dbID() => $_} @$non_ref_members;
-    my $non_ref_member_cleaned = {};
-#   my $non_ref_member_refhash ={};
-    my $size = @$non_ref_members;
-#   print $size," non_ref genome_members over given range \n\n";
-#    print "NON REF MEMBERSSSSSV &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n\n";
-#   print Dumper($non_ref_members);
-    #grab only the gene members that the source is 'ENSEMBLPEP'
-    foreach my $GMember (@$non_ref_members) {
-#       print $GMember->dbID(),"\n";
-#       if ($GMember->dbID() eq '9275331'){
-#           print "found the qqqqqqquery ggggggene member\n\n\n";
-#       }
-        if ($GMember->get_canonical_SeqMember()->source_name() eq 'ENSEMBLPEP') {
-            $non_ref_member_cleaned->{$GMember->dbID()} = $GMember->dnafrag_start();
-#           $non_ref_member_refhash->{$GMember->dbID()} = $GMember; #to be able to store the actual objects. must be done this way
-        }
-    }
-
-    my @orth_sorted; # will contain the gene members ordered by the dnafrag start position
-            #sorting the gene members by dnafrag start position
-    my @orth_final;
-    foreach my $name (sort { $non_ref_member_cleaned->{$a} <=> $non_ref_member_cleaned->{$b} } keys %$non_ref_member_cleaned ) {
-
-#               printf "%-8s %s \n", $name, $orth_hashref->{$name};
-        push @orth_sorted, $name;
-
-    }
-
- #   print "ORTH SORTED £££££££££££££££££££££££££££££££\n\n";
-#    print Dumper(\@orth_sorted);
-#    my $orth_sorted = @orth_sorted;
-#    print $orth_sorted, " orth_sorted size \n\n\n";
-#    print "TTTTTTTTTRRRRRRRIIIIIIIIIAAAAAAAAAAAAALlLLLLLLLLLLLLLLLLLLLLLL\n";
-#   check to ensure that the non ref member has an ortholog in the ref species
-    foreach my $mem (@orth_sorted) {
-#       print $mem , "\nyayaya", $member_id_2_object{$mem}, "\n\n\n";
-        my @homos = @{$self->param('homolog_adaptor')->fetch_all_by_Member( $member_id_2_object{$mem}, -METHOD_LINK_SPECIES_SET => $self->param('orthology_mlss'))};
-        if (@homos) {
-            push @orth_final, $mem;
-        }
-    }
-#   print Dumper(\@orth_final);
-#   my $orth_final = @orth_final;
-#   print $orth_final , " orth_final sizeeeee\n\n";
-    return \@orth_final;
+	my $self = shift;
+#	print " This is the _get_non_ref_members subbbbbbbbbbbbb \n\n";
+	my ($dnafragID, $st, $ed)= @_;
+#	print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n";
+        # The query could do GROUP BY and ORDER BY, but the MySQL server would have to buffer the data, make temporary tables, etc
+        # It is faster to have a straightforward query and do some processing in Perl
+        my $sql = q{SELECT m.gene_member_id, m.dnafrag_start FROM gene_member m JOIN homology_member USING (gene_member_id) JOIN homology USING (homology_id) JOIN seq_member s USING (seq_member_id)
+        WHERE method_link_species_set_id = ? AND (m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?) AND s.source_name = "ENSEMBLPEP"};
+        # Returns the rows hashed by 'gene_member_id', i.e. it is a Perl DBI way of doing GROUP BY / getting 1 entry per gene_member_id
+        my $unsorted_mem = $self->compara_dba->dbc->db_handle->selectall_hashref($sql, 'gene_member_id', undef, $self->param('orthology_mlss_id'), $dnafragID, $st, $ed, $st, $ed);
+        # print 'non-ref gene-members: [{gene_member_id => dnafrag_start}] ', Dumper($unsorted_mem);
+        # And now we simply sort the genes by their coordinates
+        return [sort {$unsorted_mem->{$a}->{dnafrag_start} <=> $unsorted_mem->{$b}->{dnafrag_start}} keys %$unsorted_mem];
 }
 
 #check that the order of the non ref gmembers that we get from the orthologs match the order of the gene member that we get from the the method '_get_non_ref_members'
