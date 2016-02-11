@@ -50,13 +50,9 @@ sub draw_feature {
                   colour      => $feature->{'colour'},
                   absolutey   => 1,
                 };
+  use Data::Dumper; warn Dumper($params);
 
   push @{$self->glyphs}, $self->Rect($params);
-}
-
-
-sub draw_label {
-### This style of track is labelled in the sidebar, not in the body of the image
 }
 
 1;
