@@ -22,7 +22,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs');
 
 use Bio::EnsEMBL::Registry;
 
@@ -49,32 +49,16 @@ sub param_defaults {
 }
 
 
-=head2 fetch_input
-
-    Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
-    Here I need to retrieve the ordered chromosome ortholog hash that was data flowed here by Prepare_Per_Chr_Jobs.pm 
-
-=cut
-
-sub fetch_input {
-#	my $self = shift;
-#	$self->param('mlss_ID', $self->param_required('mlss_ID'));
-#	my $chr_job = $self->param_required('ortholog_info_hashref');
-#	print "##############################\n\n";
-#	print Dumper($chr_job);
-#	print "##############################\n\n";
-#	$self->param('chr_job')
-}
-
-
 sub run {
 	my $self = shift;
 	my $chr_orth_hashref = $self->param('chr_job');
 	$self->dbc and $self->dbc->disconnect_if_idle();
+	my @big_result;
 #	print " -------------------------------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n\n";
 #	print Dumper($chr_orth_hashref);
 	while (my ($ref_chr_dnafragID, $ordered_orth_arrayref) = each(%$chr_orth_hashref) ) {
 		my @ordered_orth_array = @$ordered_orth_arrayref;
+                $self->param('ref_chr_dnafragID', $ref_chr_dnafragID);
 #		print $#ordered_orth_array , "\n\n";
 		foreach my $index (0 .. $#ordered_orth_array ) {
 			my $comparion_arrayref = {};
@@ -100,18 +84,16 @@ sub run {
 #			$ref_chr_dnafragID = $ref_chr_dnafragID;
 #			print $left1, " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" ;
 #			$self->param('comparison', {'comparison' => $comparion_arrayref});
-			$self->dataflow_output_id( {'left1' => $left1,
-										'left2' => $left2,
-										'query' => $query,
-										'right1' => $right1,
-										'right2' => $right2,
-										'ref_chr_dnafragID' => $ref_chr_dnafragID,
-										'ref_species_dbid' => $self->param('ref_species_dbid'),
-										'non_ref_species_dbid' => $self->param('non_ref_species_dbid'),
-										'mlss_ID' => $self->param('mlss_ID')}, 2 );
-
+                        $self->param('left1', $left1);
+                        $self->param('left2', $left2);
+                        $self->param('right1', $right1);
+                        $self->param('right2', $right2);
+                        $self->param('query', $query);
+                        $self->SUPER::run();
+                        push @big_result, $self->param('result');
 		}
 	}
+        $self->param('result', \@big_result);
 }
 
 1;

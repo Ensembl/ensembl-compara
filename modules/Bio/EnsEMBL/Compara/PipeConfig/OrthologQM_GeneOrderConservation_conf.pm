@@ -140,22 +140,10 @@ sub pipeline_analyses {
         	-logic_name	=>	'create_comparison_job_arrays',
         	-module		=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays',
             -analysis_capacity  =>  200,
-        	-flow_into	=>	{
-        		2 	=>	['check_ortholog_neighbors'],
-        	},
 #        	-rc_name => '2Gb_job',
-        },
-        {
-        	-logic_name	=>	'check_ortholog_neighbors',
-        	-module	=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
-#            -input_ids => [ {'species1' => $self->o('species1')} ],
-#            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
-            -analysis_capacity  =>  100,
         	-flow_into	=> {
         		2 => [ ':////ortholog_goc_metric' ],
         	},
-
- #           -rc_name => '2Gb_job',
         },
 
         {
