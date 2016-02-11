@@ -70,9 +70,6 @@ sub data_by_cell_line {
 sub draw_aggregate {
   my $self = shift;
 
-  ## Always show labels, but in margin
-  $self->{'my_config'}->set('margin_labels', 1);
-
   ## Draw the track(s)
   my $cell_line = $self->my_config('cell_line');
   my $label     = $self->my_config('label');
@@ -88,16 +85,6 @@ sub draw_aggregate {
   my $set     = $self->my_config('set');
   my %config  = %{$self->track_style_config};
 
-  ## Add a summary title in the lefthand margin
-  my $label     = $self->my_config('label');
-  my $tracks_on = $data->{$set}{'on'} 
-                    ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) 
-                    : '';
-
-  my $style = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
-  $style->draw_margin_subhead($label, $tracks_on);
-  $self->push(@{$style->glyphs||[]});
-  
   ## Now draw the actual track(s)
   foreach (@{$self->{'my_config'}->get('drawing_style')||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
@@ -106,6 +93,17 @@ sub draw_aggregate {
       my $subset;
       if ($_ =~ /Feature/) {
         if ($data->{$set}{'block_features'}) {
+          ## Add a summary title in the lefthand margin
+          my $label     = $self->my_config('label');
+          my $tracks_on = $data->{$set}{'on'} 
+                    ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) 
+                    : '';
+
+          my $style = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
+          $style->_offset(6);
+          $style->draw_margin_subhead($label, $tracks_on);
+          $self->push(@{$style->glyphs||[]});
+  
           ## Only add the extra zmenu stuff if we're not drawing a wiggle
           $subset = $self->get_blocks($data->{$set}{'block_features'}, $args);
         }
