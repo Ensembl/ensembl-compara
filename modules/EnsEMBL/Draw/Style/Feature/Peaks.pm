@@ -50,9 +50,49 @@ sub draw_feature {
                   colour      => $feature->{'colour'},
                   absolutey   => 1,
                 };
-  use Data::Dumper; warn Dumper($params);
+  #use Data::Dumper; warn Dumper($params);
 
   push @{$self->glyphs}, $self->Rect($params);
+
+  ## Draw internal structure, e.g. motif features
+  if ($feature->{'structure'} && $self->track_config->get('display_structure')) {
+    foreach my $element (@{$feature->{'structure'}}) {
+      push @{$self->glyphs}, $self->Rect({
+          x         => $element->{'start'} - 1,
+          y         => $position->{'y'},
+          height    => $position->{'height'},
+          width     => $element->{'end'} - $element->{'start'} + 1,
+          absolutey => 1,
+          colour    => 'black',
+        });
+    }
+  }
+
+  my $length    = $self->image_config->container_width;
+  my $midpoint  = $feature->{'midpoint'};
+  if ($length <= 20000 && $midpoint && $self->track_config->get('display_summit')) {
+      $midpoint -= $self->track_config->get('slice_start');
+      my $h = $position->{'height'};
+      my $y = $position->{'y'};
+
+      if ($midpoint > 0 && $midpoint < $length) {
+        push @{$self->glyphs}, $self->Triangle({ # Upward pointing triangle
+          width     => 4 / $self->{'pix_per_bp'},
+          height    => 4,
+          direction => 'up',
+          mid_point => [ $midpoint, $h + $y ],
+          colour    => 'black',
+          absolutey => 1,
+        }), $self->Triangle({ # Downward pointing triangle
+          width     => 4 / $self->{'pix_per_bp'},
+          height    => 4,
+          direction => 'down',
+          mid_point => [ $midpoint, $h + $y - 9 ],
+          colour    => 'black',
+          absolutey => 1,
+        });
+      }
+    }
 }
 
 1;
