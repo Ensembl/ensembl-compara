@@ -15,22 +15,6 @@ sub slice2sr {
     ($slice->start + $s - 1, $slice->start + $e - 1);
 }
 
-sub _route {
-  my ($self,$route,$data) = @_;
-
-  my $out = $data;
-  foreach my $r (@$route) {
-    if($r eq '*') {
-      my @new;
-      push @new,@{$_||[]} for(@$out);
-      $out = \@new;
-    } else {
-      $out = [ map { $_->{$r} } @$out ];
-    }
-  }
-  return $out;
-}
-
 sub _remove_duds_int {
   my ($self,$route,$data) = @_;
 

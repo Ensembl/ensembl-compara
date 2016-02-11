@@ -23,7 +23,7 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
-our $VERSION = 5;
+our $VERSION = 11;
 
 use List::Util qw(min max);
 
@@ -37,11 +37,13 @@ sub fixup {
   $self->fixup_location('transcripts/*/end','slice',1);
   $self->fixup_location('transcripts/*/exons/*/start','slice',0);
   $self->fixup_location('transcripts/*/exons/*/end','slice',1);
-  $self->fixup_location('transcripts/*/exons/*/coding_start','slice',0);
-  $self->fixup_location('transcripts/*/exons/*/coding_end','slice',1);
   $self->fixup_unique('_unique');
-  $self->_fixup_label();
-  $self->_fixup_href();
+  $self->fixup_unique('transcripts/*/_unique');
+  $self->fixup_unique('transcripts/*/exons/*/_unique');
+  $self->_fixup_label('label');
+  $self->_fixup_label('transcripts/*/label');
+  $self->_fixup_href('href');
+  $self->_fixup_href('transcripts/*/href');
 }
 
 sub _colour_key {
@@ -62,11 +64,14 @@ sub _colour_key {
 }
 
 sub _fixup_label {
-  my ($self) = @_;
+  my ($self,$key) = @_;
 
   if($self->phase eq 'post_process') {
     my $gs = $self->context;
-    foreach my $f (@{$self->data}) {
+    my @route = split('/',$key);
+    $key = pop @route;
+    my $route = $self->_route(\@route,$self->data);
+    foreach my $f (@$route) {
       my $ini_entry = $gs->my_colour($f->{'colour_key'},'text');
       $f->{'label'} =~ s/\[text_label\]/$ini_entry/g;
     }
@@ -122,7 +127,7 @@ sub _get_genes {
 }
 
 sub _fixup_href {
-  my ($self) = @_; 
+  my ($self,$key) = @_; 
 
   if($self->phase eq 'post_process') {
     my $gs = $self->context;
@@ -131,7 +136,10 @@ sub _fixup_href {
     my $multi_params = $hub->multi_params;
     my $action = $gs->my_config('zmenu') // $hub->action;
     my $r = $hub->param('r');
-    foreach my $f (@{$self->data}) {
+    my @route = split('/',$key);
+    $key = pop @route;
+    my $route = $self->_route(\@route,$self->data);
+    foreach my $f (@$route) {
       my $p = {
         %$multi_params,
         %{$f->{'href'}},
@@ -169,6 +177,7 @@ sub _get_exons {
   foreach my $e (sort { $a->start <=> $b->start } @{$t->get_all_Exons}) {
     next unless defined $e;
     my $ef = {
+      _unique => $e->dbID,
       start => $e->start,
       end => $e->end,
       strand => $e->strand,
@@ -176,23 +185,46 @@ sub _get_exons {
     my $coding_start = max($t_coding_start,$e->start);
     my $coding_end = min($t_coding_end,$e->end);
     if($coding_start <= $coding_end) {
-      $ef->{'coding_start'} = $coding_start;
-      $ef->{'coding_end'} = $coding_end;
+      $ef->{'coding_start'} = $coding_start - $e->start;
+      $ef->{'coding_end'} = $e->end - $coding_end;
     }
     push @eff,$ef;
   }
   return \@eff;
 }
 
+sub _title {
+  my ($self,$t,$g) = @_; 
+  
+  my $title = 'Transcript: ' . $t->stable_id;
+  $title .= '; Gene: ' . $g->stable_id if $g->stable_id;
+  $title .= '; Location: ' . $t->seq_region_name . ':' . $t->seq_region_start . '-' . $t->seq_region_end;
+  
+  return $title
+}
+
 sub _get_transcripts {
   my ($self,$args,$g) = @_;
 
   my @tff;
-  my @trans = @{$g->get_all_Transcripts};
+  my @trans = sort { $b->start <=> $a->start } @{$g->get_all_Transcripts};
+  @trans = reverse @trans if $g->strand; 
   foreach my $t (@trans) {
     my $tf = {
+      _unique => $t->dbID,
+      start => $t->start,
+      end => $t->end,
+      strand => $g->strand,
+      colour_key => $self->_colour_key($args,$g,$t),
+      href => $self->_href($args,$g,$t),
+      label => $self->_feature_label($args,$g,$t),
+      title => $self->_title($t,$g),
+      exons => $self->_get_exons($args,$t),
+      stable_id => $t->stable_id,
     };
-    $tf->{'exons'} = $self->_get_exons($args,$t);
+    if($t->translation) {
+      $tf->{'translation_stable_id'} = $t->translation->stable_id;
+    }
     push @tff,$tf;
   }
   return \@tff;
@@ -219,8 +251,8 @@ sub get {
       colour_key => $self->_colour_key($args,$g),
       strand => $g->strand,
       stable_id => $g->stable_id,
+      transcripts => $self->_get_transcripts($args,$g),
     };
-    $gf->{'transcripts'} = $self->_get_transcripts($args,$g);
     push @out,$gf;
   }
   return \@out;

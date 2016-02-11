@@ -15,6 +15,22 @@ sub _new {
   return $self;
 }
 
+sub _route {
+  my ($self,$route,$data) = @_;
+
+  my $out = $data;
+  foreach my $r (@$route) {
+    if($r eq '*') {
+      my @new;
+      push @new,@{$_||[]} for(@$out);
+      $out = \@new;
+    } else {
+      $out = [ map { $_->{$r} } @$out ];
+    }
+  }
+  return $out;
+}
+
 sub source {
   my ($self,$source) = @_;
 
@@ -25,9 +41,15 @@ sub fixup_unique {
   my ($self,$key) = @_;
 
   if($self->phase eq 'post_process') {
+    my @route = split('/',$key);
+    $key = pop @route;
     my %features;
-    $features{$_->{$key}} = $_ for(@{$self->data});
-    @{$self->data} = values %features;
+    my $route = $self->_route(\@route,$self->data);
+    foreach my $f (@$route) {
+      next unless $f->{$key};
+      $features{$f->{$key}} = $f;
+    }
+    @$route = values %features;
   }
 }
 

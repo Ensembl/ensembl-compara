@@ -365,9 +365,9 @@ sub draw_expanded_transcripts {
   my $target = $self->get_parameter('single_Transcript');
   my $h = $self->my_config('height') || ($target ? 30 : 8);
   my $strand_flag = $self->my_config('strand');
-  my %used_colours;
   foreach my $td (@$tdraw) { 
     next if $strand != $td->{'strand'} and $strand_flag eq 'b';
+    next if $td->{'start'} > $length or $td->{'end'} < 1;
     my $composite = $self->Composite({
       y      => 0,
       height => $h,
@@ -391,7 +391,6 @@ sub draw_expanded_transcripts {
     }
     $self->push($composite);
   }
-  my %used_colours;
   $self->_make_legend($tdraw,$self->type);
 }
 

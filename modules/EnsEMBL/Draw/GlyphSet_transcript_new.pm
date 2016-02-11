@@ -105,7 +105,12 @@ sub calculate_collapsed_joins {
 }
 
 sub calculate_expanded_joins {
-  my ($self,$gene,$gene_stable_id) = @_;
+  my ($self,$gene_stable_id) = @_;
+
+  my $hub = $self->{'config'}->hub;
+  my $ga = $hub->get_adaptor('get_GeneAdaptor',
+                             $self->my_config('db'),$self->species);
+  my $gene = $ga->fetch_by_stable_id($gene_stable_id);
 
   my $previous_species = $self->my_config('previous_species');
   my $next_species     = $self->my_config('next_species');
@@ -254,77 +259,57 @@ sub render_transcripts {
   my $link              = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $target            = $self->get_parameter('single_Transcript');
   my $target_gene       = $self->get_parameter('single_Gene');
-  my %used_colours;
+  my $selected_gene    = $self->my_config('g') || $self->core('g');
+  my $selected_trans    = $self->my_config('t') || $self->core('pt');
+  my $this_db           = ($self->core('db') eq $self->my_config('db'));
   
   my ($genes, $highlights, $transcripts, $exons) = $self->features;
-  
-  my @tdraw;
-  foreach my $gene (@$genes) {
-    my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
-    next if $target_gene && $gene_stable_id ne $target_gene;
-    
-    my $tjoins;
-    if ($link && $gene_stable_id) {
-      $tjoins = $self->calculate_expanded_joins($gene,$gene_stable_id);
-    }
-
-    my $gene_strand = $gene->strand; 
-    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$transcripts->{$gene_stable_id}};
-   
-    foreach my $transcript (@sorted_transcripts) {
-      my $transcript_stable_id = $transcript->stable_id;
-      
-      next if $transcript->start > $length || $transcript->end < 1;
-      next if $target && $transcript_stable_id ne $target; # For exon_structure diagram only given transcript
-      next unless $exons->{$transcript_stable_id};          # Skip if no exons for this transcript
-     
-      my @ids = ($transcript->stable_id);
-      push @ids,$transcript->translation->stable_id if $transcript->translation;
-      my @joins = @{$tjoins->{$transcript->stable_id}||[]};
-      if($transcript->translation) {
-        push @joins,@{$tjoins->{$transcript->translation->stable_id}||[]};
-      }
-
-      my $td = {
-        joins => \@joins,
-        title  => $self->title($transcript, $gene),
-        href   => $self->href($gene, $transcript),
-        colour_key => $self->colour_key($gene, $transcript),
-        start => max(0,$transcript->start),
-        end => min($length,$transcript->end),
-        label => $self->feature_label($gene,$transcript),
-        exons => [],
-        strand => $gene->strand,
-      };
-      $td->{'colour'} = $self->my_colour($td->{'colour_key'});
-      $td->{'highlight'} = $highlights->{$transcript_stable_id} if $config->get_option('opt_highlight_feature') != 0 && $highlights->{$transcript_stable_id} && !defined $target;
-  
-      my @exons = @{$exons->{$transcript_stable_id}};
-      
-      next if $exons[0][0]->strand != $gene_strand && $self->{'do_not_strand'} != 1; # If stranded diagram skip if on wrong strand
-    
-      for(my $i=0;$i<@exons;$i++) {
-        next unless defined $exons[$i][0]; # genscan weirdness
-        my $target = {
-          start => $exons[$i][0]->start,
-          end => $exons[$i][0]->end,
-        };
-        if($i and $exons[$i][0]->dbID eq $exons[$i-1][0]->dbID) {
-          $target = $td->{'exons'}[$i-1];
-        } else {
-          push @{$td->{'exons'}},$target;
+  my $hub = $self->{'config'}->hub;
+  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
+    species => $self->species,
+    pattern => $self->my_config('colour_key'),
+    shortlabels => $self->get_parameter('opt_shortlabels'),
+    label_key => $self->my_config('label_key'),
+    slice => $self->{'container'},
+    logic_names => $self->my_config('logic_names'),
+    db => $self->my_config('db'),
+  });
+  if($link) {
+    foreach my $g (@$ggdraw) {
+      next unless $g->{'stable_id'};
+      my $tjoins = $self->calculate_expanded_joins($g->{'stable_id'});
+      foreach my $t (@{$g->{'transcripts'}}) {
+        next unless $tjoins->{$t->{'stable_id'}};
+        my @joins = @{$tjoins->{$t->{'stable_id'}}};
+        if($t->{'translation_stable_id'}) {
+          push @joins,@{$tjoins->{$t->{'translation_stable_id'}}||[]};
         }
-        if($exons[$i][1] eq 'fill') {
-          $target->{'coding_start'} = $exons[$i][2];
-          $target->{'coding_end'} = $exons[$i][3];
-        }
+        $t->{'joins'} = \@joins;
       }
-      push @tdraw,$td; 
     }
   }
+  foreach my $g (@$ggdraw) {
+    foreach my $t (@{$g->{'transcripts'}}) {
+      if(!defined $target and $this_db) {
+        if($t->{'stable_id'} eq $selected_trans) {
+          $t->{'highlight'} = 'highlight2';
+        } elsif($g->{'stable_id'} eq $selected_gene) {
+          $t->{'highlight'} = 'highlight1';
+        }
+      }
+    }
+  }
+  my @ttdraw;
+  foreach my $g (@$ggdraw) {
+    foreach my $t (@{$g->{'transcripts'}}) {
+      next if $target and $t->{'stable_id'} ne $target;
+      next unless @{$t->{'exons'}};
+      push @ttdraw,$t;
+    } 
+  }
   my $draw_labels = ($labels and $show_labels ne 'off');
-  $self->mr_bump(\@tdraw,$draw_labels,$length);
-  $self->draw_expanded_transcripts(\@tdraw,$length,$strand,$draw_labels);
+  $self->mr_bump(\@ttdraw,$draw_labels,$length);
+  $self->draw_expanded_transcripts(\@ttdraw,$length,$strand,$draw_labels);
   if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
     $self->no_track_on_strand;
   }
