@@ -67,6 +67,7 @@ sub fetch_input{
 	$self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
 	$self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
 	$self->param('gmember_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
+        $self->param('orthology_mlss', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$self->param('ref_species_dbid'),$self->param('non_ref_species_dbid')]) );
 #	print $self->param('gmember_adaptor');
 #	print $self->param('homolog_adaptor');
 #    $self->param('mlss_ID', $self->param_required('mlss_ID'));
@@ -99,6 +100,7 @@ sub run {
 #    print "available positions hahahahahahahhaaahhaah \n";
 #    print Dumper(\@defined_positions);
 
+    my $homology = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'));
     if (@defined_positions) {
         $self->param('defined_positions' , \@defined_positions);
     }
@@ -111,7 +113,7 @@ sub run {
 		$result{'right2'} = undef;
         $result{'goc_score'} = 0;
 		$result{'homology_id'} = $self->param('query');
-		my $ref_gene_member = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'))->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
+		my $ref_gene_member = $homology->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
         $result{'dnafrag_id'} = $ref_gene_member->dnafrag_id();
         $result{'gene_member_id'} = $ref_gene_member->dbID();
         $result{'method_link_species_set_id'} = $self->param('mlss_ID');
@@ -122,9 +124,9 @@ sub run {
 		my $non_ref_gmembers_list={};
 		
 		
-        my $query_ref_gmem_obj = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'))->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
+        my $query_ref_gmem_obj = $homology->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
 #        print $query_ref_gmem_obj ,"  not just queryyyyyyyyyyyyyyyyyy \n\n ", $self->param('ref_species_dbid') , " yayayay \n" ;
-        my $query_non_ref_gmem_obj = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'))->get_all_GeneMembers($self->param('non_ref_species_dbid'))->[0];
+        my $query_non_ref_gmem_obj = $homology->get_all_GeneMembers($self->param('non_ref_species_dbid'))->[0];
     #   
         $non_ref_gmembers_list->{'query'} = $query_non_ref_gmem_obj->dbID;
         my $start = $query_non_ref_gmem_obj->dnafrag_start;
@@ -188,7 +190,7 @@ sub run {
 		my $percent = $self->param('result')->{'left1'} + $self->param('result')->{'left2'} + $self->param('result')->{'right1'} + $self->param('result')->{'right2'};
 		my $percentage = $percent * 25;
         $self->param('result')->{'goc_score'} =$percentage;
-		my $ref_gene_member = $self->param('homolog_adaptor')->fetch_by_dbID($self->param('query'))->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
+		my $ref_gene_member = $homology->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
         $self->param('result')->{'dnafrag_id'} = $ref_gene_member->dnafrag_id();
         $self->param('result')->{'gene_member_id'} = $ref_gene_member->dbID();
         $self->param('result')->{'homology_id'} = $self->param('query');
@@ -213,6 +215,8 @@ sub _get_non_ref_gmembers {
 	my ($dnafragID, $st, $ed)= @_;
 #	print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n";
 	my $non_ref_members = $self->param('gmember_adaptor')->fetch_all_by_dnafrag_id_start_end($dnafragID, $st, $ed); #returns a list of gene member spanning the given coordinates
+
+        my %member_id_2_object = map {$_->dbID() => $_} @$non_ref_members;
 	my $non_ref_member_cleaned = {};
 #	my $non_ref_member_refhash ={};
 	my $size = @$non_ref_members;
@@ -234,7 +238,7 @@ sub _get_non_ref_gmembers {
 	my @orth_sorted; # will contain the gene members ordered by the dnafrag start position
     		#sorting the gene members by dnafrag start position
     my @orth_final;
-    foreach my $name (sort { int($non_ref_member_cleaned->{$a}) <=> int($non_ref_member_cleaned->{$b}) or $a cmp $b } keys %$non_ref_member_cleaned ) {
+    foreach my $name (sort { $non_ref_member_cleaned->{$a} <=> $non_ref_member_cleaned->{$b} } keys %$non_ref_member_cleaned ) {
     
 #            	printf "%-8s %s \n", $name, $orth_hashref->{$name};
         push @orth_sorted, $name;
@@ -248,8 +252,8 @@ sub _get_non_ref_gmembers {
 #    print "TTTTTTTTTRRRRRRRIIIIIIIIIAAAAAAAAAAAAALlLLLLLLLLLLLLLLLLLLLLLL\n";
 #   check to ensure that the non ref member has an ortholog in the ref species 
     foreach my $mem (@orth_sorted) {
-#    	print $mem , "\nyayaya", $self->param('gmember_adaptor')->fetch_by_dbID($mem), "\n\n\n";
-    	my @homos = @{$self->param('homolog_adaptor')->fetch_all_by_Member($self->param('gmember_adaptor')->fetch_by_dbID($mem), -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES', -TARGET_SPECIES => [$self->param('gdb_adaptor')->fetch_by_dbID($self->param('ref_species_dbid'))->name])};
+#    	print $mem , "\nyayaya", $member_id_2_object{$mem}, "\n\n\n";
+    	my @homos = @{$self->param('homolog_adaptor')->fetch_all_by_Member( $member_id_2_object{$mem}, -METHOD_LINK_SPECIES_SET => $self->param('orthology_mlss'))};
     	if (@homos) {
 	    	push @orth_final, $mem;
 		}
