@@ -107,40 +107,11 @@ sub fetch_input {
   ################################################################
   print "mlss: ",$self->param('input_method_link')," ",$qy_gdb->dbID," ",$tg_gdb->dbID,"\n";
 
-  my $mlss;
-  if (defined $self->param('input_mlss_id')) { 
-      #new pipeline
-      $mlss = $mlssa->fetch_by_dbID($self->param('input_mlss_id'));
-  } else {
-      #old pipeline
-      if ($qy_gdb->dbID == $tg_gdb->dbID) {
-	  $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('input_method_link'),
-							      [$qy_gdb]);
-      } else {
-	  $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('input_method_link'),
-							      [$qy_gdb,
-							       $tg_gdb]);
-      }
-  }
-  throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'))
-      if not $mlss;
+  my $mlss = $mlssa->fetch_by_dbID($self->param_required('input_mlss_id'))
+              || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'));
 
-  my $out_mlss;
-  if (defined $self->param('output_mlss_id')) {
-      $out_mlss = $mlssa->fetch_by_dbID($self->param('output_mlss_id'));
-  } else {
-      #old pipeline
-      if ($qy_gdb->dbID == $tg_gdb->dbID) {
-	  $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'),
-							      [$qy_gdb]);
-      } else {
-	  $out_mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($self->param('output_method_link'),
-							      [$qy_gdb,
-							       $tg_gdb]);
-      }
-  }
-  throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'))
-      if not $out_mlss;
+  my $out_mlss = $mlssa->fetch_by_dbID($self->param_required('output_mlss_id'))
+              || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'));
 
   ######## needed for output####################
   $self->param('output_MethodLinkSpeciesSet', $out_mlss);
