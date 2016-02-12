@@ -116,20 +116,6 @@ sub fetch_input {
   ######## needed for output####################
   $self->param('output_MethodLinkSpeciesSet', $out_mlss);
 
-  my $query_slice;
-  my $target_slice;
-
-  # Let's keep the number of connections / disconnections to the minimum
-  $qy_gdb->db_adaptor->dbc->prevent_disconnect( sub {
-    $query_slice = $self->param('query_dnafrag')->slice;
-    $query_slice->seq;  # To load the sequence
-  } );
-
-  $tg_gdb->db_adaptor->dbc->prevent_disconnect( sub {
-    $target_slice = $self->param('target_dnafrag')->slice;
-    $target_slice->seq;  # To load the sequence
-  } );
-
   print STDERR "Fetching all DnaDnaAlignFeatures by query and target...\n";
   print STDERR "start fetching at time: ",scalar(localtime),"\n";
 
@@ -175,27 +161,35 @@ sub fetch_input {
   print STDERR scalar @{$features}," features at time: ",scalar(localtime),"\n";
 
   my %parameters = (-analysis             => $fake_analysis,
-                    -query_slice          => $query_slice,
-                    -target_slices        => {$self->param('target_dnafrag')->name => $target_slice},
-                    -query_nib_dir        => undef,
-                    -target_nib_dir       => undef,
                     -features             => $features,
                     -workdir              => $self->worker_temp_directory,
 		    -linear_gap           => $self->param('linear_gap'));
   
-  my $query_nib_dir = $self->param('query_nib_dir');
-  if ($self->param('query_nib_dir') and
-      -d $query_nib_dir and
-      -e $query_nib_dir . "/" . $query_slice->seq_region_name . ".nib") {
-    $parameters{-query_nib_dir} = $query_nib_dir;
-  }
+  $self->compara_dba->dbc->disconnect_if_idle();
+  # Let's keep the number of connections / disconnections to the minimum
+  $qy_gdb->db_adaptor->dbc->prevent_disconnect( sub {
+      my $query_slice = $self->param('query_dnafrag')->slice;
+      my $query_nib_dir = $self->param('query_nib_dir');
+      $parameters{'-query_slice'} = $query_slice;
+      # If there is no .nib file, preload the sequence
+      if ($query_nib_dir and (-d $query_nib_dir) and (-e $query_nib_dir . "/" . $query_slice->seq_region_name . ".nib")) {
+          $parameters{'-query_nib_dir'} = $query_nib_dir;
+      } else {
+          $query_slice->seq;
+      }
+  } );
 
-  my $target_nib_dir = $self->param('target_nib_dir');
-  if ($target_nib_dir and
-      -d $target_nib_dir and
-      -e $target_nib_dir . "/" . $target_slice->seq_region_name . ".nib") {
-    $parameters{-target_nib_dir} = $target_nib_dir;
-  }
+  $tg_gdb->db_adaptor->dbc->prevent_disconnect( sub {
+      my $target_slice = $self->param('target_dnafrag')->slice;
+      my $target_nib_dir = $self->param('target_nib_dir');
+      $parameters{'-target_slices'} = {$self->param('target_dnafrag')->name => $target_slice};
+      # If there is no .nib file, preload the sequence
+      if ($target_nib_dir and (-d $target_nib_dir) and (-e $target_nib_dir . "/" . $target_slice->seq_region_name . ".nib")) {
+          $parameters{'-target_nib_dir'} = $target_nib_dir;
+      } else {
+          $target_slice->seq;
+      }
+  } );
 
   foreach my $program (qw(faToNib lavToAxt axtChain)) {
     #$parameters{'-' . $program} = $self->BIN_DIR . "/" . $program;
