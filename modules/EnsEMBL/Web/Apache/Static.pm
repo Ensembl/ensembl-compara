@@ -101,13 +101,8 @@ sub handler {
       $r->headers_out->set('Expires'        => HTTP::Date::time2str(time + 60*60*24*30));
       $r->content_type(mime_type($uri));
       return $r->sendfile($file) if -s $file > 2*1024*1024;
-      
-      {
-        local $/ = undef;
-        open FILE, $file or die "Couldn't open file: $!";
-        $content = <FILE>;
-        close FILE;
-      }
+
+      $content = get_file_content($file, $r);
 
       $MEMD->set("$SiteDefs::ENSEMBL_STATIC_BASE_URL$uri", $content, undef, 'STATIC') if $MEMD;
       static_cache_hook($uri,$content);
@@ -125,6 +120,15 @@ sub handler {
   return DECLINED;
 
 } # end of handler
+
+sub get_file_content {
+  my ($file, $r) = @_;
+  local $/ = undef;
+  open FILE, $file or die "Couldn't open file: $!";
+  my $content = <FILE>;
+  close FILE;
+  return $content;
+}
 
 sub mime_type {
   my $file    = shift;
