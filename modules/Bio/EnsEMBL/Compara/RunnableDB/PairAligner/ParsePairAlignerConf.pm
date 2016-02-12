@@ -51,6 +51,7 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw verbose);
 use Bio::EnsEMBL::Hive::Utils 'stringify';
@@ -1272,24 +1273,25 @@ sub populate_database_from_core_db {
     my ($self, $species) = @_;
 
     my $genome_db;
+    my $species_dba;
     #Load from SPECIES tag in conf_file
     if ($species->{dbname}) {
 	my $port = $species->{port} || 3306;
-	my $species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(
+	$species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(
 							     -host => $species->{host},
 							     -user => $species->{user},
 							     -port => $port,
 							     -species => $species->{species},
 							     -dbname => $species->{dbname});
 	$genome_db = update_genome_db($species_dba, $self->compara_dba, $species->{genome_db_id});
-	update_dnafrags($self->compara_dba, $genome_db, $species_dba);
 
     } elsif ($species->{-dbname}) {
 	#Load form curr_core_dbs_locs in default_options file
-	my $species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(%$species);
+	$species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(%$species);
 	$genome_db = update_genome_db($species_dba, $self->compara_dba);
-	update_dnafrags($self->compara_dba, $genome_db, $species_dba);	
     }
+
+    Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($self->compara_dba, $genome_db, $species_dba);
 
     return ($genome_db);
 }
@@ -1350,74 +1352,5 @@ sub update_genome_db {
     return $genome_db;
 }
 
-=head2 update_dnafrags
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Arg[3]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
-  Description : This method fetches all the dnafrag in the compara DB
-                corresponding to the $genome_db. It also gets the list
-                of top_level seq_regions from the species core DB and
-                updates the list of dnafrags in the compara DB.
-  Returns     : -none-
-  Exceptions  :
-
-=cut
-
-sub update_dnafrags {
-  my ($compara_dba, $genome_db, $species_dba) = @_;
-
-  my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");
-  my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db);
-  my $old_dnafrags_by_id;
-  foreach my $old_dnafrag (@$old_dnafrags) {
-    $old_dnafrags_by_id->{$old_dnafrag->dbID} = $old_dnafrag;
-  }
-
-  my $sql1 = qq{
-      SELECT
-        cs.name,
-        sr.name,
-        sr.length
-      FROM
-        coord_system cs,
-        seq_region sr,
-        seq_region_attrib sra,
-        attrib_type at
-      WHERE
-        sra.attrib_type_id = at.attrib_type_id
-        AND at.code = 'toplevel'
-        AND sr.seq_region_id = sra.seq_region_id
-        AND sr.coord_system_id = cs.coord_system_id
-        AND cs.species_id =?
-    };
-  my $sth1 = $species_dba->dbc->prepare($sql1);
-  $sth1->execute($species_dba->species_id());
-  my $current_verbose = verbose();
-  verbose('EXCEPTION');
-  while (my ($coordinate_system_name, $name, $length) = $sth1->fetchrow_array) {
-
-    #Find out if region is_reference or not
-    my $slice = $species_dba->get_SliceAdaptor->fetch_by_region($coordinate_system_name,$name);
-    my $is_reference = $slice->is_reference;
-
-    my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
-            -genome_db => $genome_db,
-            -coord_system_name => $coordinate_system_name,
-            -name => $name,
-            -length => $length,
-            -is_reference => $is_reference
-        );
-    my $dnafrag_id = $dnafrag_adaptor->update($new_dnafrag);
-    delete($old_dnafrags_by_id->{$dnafrag_id});
-    throw() if ($old_dnafrags_by_id->{$dnafrag_id});
-  }
-  verbose($current_verbose);
-  print "Deleting ", scalar(keys %$old_dnafrags_by_id), " former DnaFrags...";
-  foreach my $deprecated_dnafrag_id (keys %$old_dnafrags_by_id) {
-    $compara_dba->dbc->do("DELETE FROM dnafrag WHERE dnafrag_id = ".$deprecated_dnafrag_id) ;
-  }
-  print "  ok!\n\n";
-}
 
 1;
