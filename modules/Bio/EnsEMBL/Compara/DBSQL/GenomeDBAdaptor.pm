@@ -318,7 +318,9 @@ sub fetch_all_by_low_coverage {  ## UNUSED
 sub fetch_by_core_DBAdaptor {
     my ($self, $core_dba) = @_;
     my $species_name = $core_dba->get_MetaContainer->get_production_name();
+    return undef unless $species_name;
     my $species_assembly = $core_dba->assembly_name();
+    $core_dba->disconnect_if_idle();
     return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
@@ -428,16 +430,7 @@ sub _find_missing_DBAdaptors {
     foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
 
         next if $already_known_dbas{$db_adaptor};
-
-        # Get the production name and assembly to compare to our GenomeDBs
-        my $mc = $db_adaptor->get_MetaContainer();
-        my $that_species = $mc->get_production_name();
-        my $that_assembly = $db_adaptor->assembly_name();
-        $db_adaptor->dbc->disconnect_if_idle();
-
-        next unless $that_species;
-
-        my $that_gdb = $self->fetch_by_name_assembly($that_species, $that_assembly);
+        my $that_gdb = $self->fetch_by_core_DBAdaptor($db_adaptor);
         $that_gdb->db_adaptor($db_adaptor) if $that_gdb and not $that_gdb->{_db_adaptor};
     }
 
