@@ -40,7 +40,7 @@ sub param_defaults {
             %{ $self->SUPER::param_defaults() },
 #		'mlss_id'	=>	'100021',
 #		'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
-#		'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
+#		'compara_db' => 'mysql://ensro@compara4/wa2_protein_trees_84'
     };
 }
 
