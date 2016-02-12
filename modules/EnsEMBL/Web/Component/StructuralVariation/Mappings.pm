@@ -340,36 +340,22 @@ sub _coverage_glyph {
   my $scale = 100 / ($f_e - $f_s + 1);
   my ($bp, $pc);
   
-  $html .= '<div style="float: left; width:'.$width.'px; height: 10px; border: 1px solid black;">';
-  
-  # left part
-  if($v_s > $f_s) {
-    my $w = sprintf("%.0f", ($v_s - $f_s) * $scale);
-    $html .= '<div style="width:'.$w.'px; height: 10px; float: left;"></div>';
-  }
-  
-  # middle part
-  if($v_s <= $f_e && $v_e >= $f_s) {
+  if ($v_s <= $f_e && $v_e >= $f_s) {
     my $s = (sort {$a <=> $b} ($v_s, $f_s))[-1];
     my $e = (sort {$a <=> $b} ($v_e, $f_e))[0];
     
     $bp = ($e - $s) + 1;
     $pc = sprintf("%.2f", 100 * ($bp / ($f->feature_Slice->length)));
-    
-    my $w = sprintf("%.0f", $bp * $scale);
-    $html .= '<div style="width:'.$w.'px; height: 10px; background-color: '.$self->object->get_class_colour($v->class_SO_term).'; float: left;"></div>';
   }
   
-  $html .= '</div>';
-  
-  # container for glyph and direction indicator
-  $html = '<div style="width:'.($width + 12).'px; height: 10px;">'.$html.'</div>';
+  my $glyph = $self->render_var_coverage($f_s, $f_e, $v_s, $v_e, $self->object->get_class_colour($v->class_SO_term));
+  $html .= $glyph if ($glyph);
   
   return
-    '<div style="width:'.($width + 12).'px">'.
-      $html.
-      sprintf("<span class='small' style='float:right'>%ibp, %s\%</span>", $bp, $pc).
-    '</div>';;
+   '<div style="width:'.($width + 12).'px">'.
+     '<div style="float:left">'.$html.'</div>'.
+     sprintf("<span class='small' style='float:right'>%ibp, %s\%</span>", $bp, $pc).
+   '</div>';
 }
 
 sub _sort_start_end {
