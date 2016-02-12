@@ -19,9 +19,9 @@ use Text::Wrap;
 
 $Text::Wrap::columns = 75;
 
-our $ENSEMBL_VERSION           = 83;
-our $ARCHIVE_VERSION           = 'Dec2015';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'December 2015';
+our $ENSEMBL_VERSION           = 84;
+our $ARCHIVE_VERSION           = 'Mar2016';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'March 2016';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
