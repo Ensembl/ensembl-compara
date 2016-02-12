@@ -146,9 +146,9 @@ standaloneJob(
 );
 
 
-use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays');
+use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs');
 standaloneJob(
-	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays',
+  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
 	{
 		'mlss_ID'=>'100021',
 		'ref_species_dbid' =>155,
@@ -165,15 +165,15 @@ standaloneJob(
 		[
 			'DATAFLOW',
 			{
-				'query' => 14803,
-				'left1' => undef,
-				'left2' => undef,
-				'right1' => 14469,
-				'right2' => 46043,
-				'ref_chr_dnafragID' => 14026395,
-				'ref_species_dbid' => 155,
-				'non_ref_species_dbid' => 31,
-				'mlss_ID' => 100021
+				"dnafrag_id" => 14026395,
+				"gene_member_id" => 9122574,
+				"goc_score" => 0,
+				"homology_id" => 14803,
+				"left1" => undef,
+				"left2" => undef,
+				"method_link_species_set_id" => 100021,
+				'right2' => 0,
+				"right2" => 0
 			},
 			2
 		],
@@ -181,15 +181,15 @@ standaloneJob(
 		[
 			'DATAFLOW',
 			{
-				'query' => 14469,
-				'right1' => 46043,
-				'right2' => undef,
-				'left1' => 14803,
-				'left2' => undef,
-				'ref_chr_dnafragID' => 14026395,
-				'ref_species_dbid' => 155,
-				'non_ref_species_dbid' => 31,
-				'mlss_ID' => 100021
+          'right1' => 1,
+          'gene_member_id' => '9122578',
+          'dnafrag_id' => '14026395',
+          'left1' => 0,
+          'left2' => undef,
+          'homology_id' => '14469',
+          'method_link_species_set_id' => '100021',
+          'right2' => undef,
+          'goc_score' => 25
 			},
 			2
 		],
@@ -197,54 +197,21 @@ standaloneJob(
 		[
 			'DATAFLOW',
 			{
-				'query' => 46043,
-				'left2' => 14803,
-				'left1' => 14469,
 				'right1' => undef,
-				'right2' => undef,
-				'ref_chr_dnafragID' => 14026395,
-				'ref_species_dbid' => 155,
-				'non_ref_species_dbid' => 31,
-				'mlss_ID' => 100021
+          'gene_member_id' => '9122579',
+          'dnafrag_id' => '14026395',
+          'left1' => 1,
+          'left2' => 0,
+          'homology_id' => '46043',
+          'method_link_species_set_id' => '100021',
+          'right2' => undef,
+          'goc_score' => 25
 			},
 			2
 		],
 	],
 );
 
-
-use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs');
-standaloneJob(
-	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
-	{
-		'compara_db' => $dbc->url,
-		'mlss_ID'=>'100021',
-		'ref_species_dbid' =>155,
-        'non_ref_species_dbid' => 31,
-        'ref_chr_dnafragID' =>14026395,
-        'query' =>14469,
-        'left1' => 14803,
-        'right1' => 46043,
-    },
-
-    [
-		[
-			'DATAFLOW',
-			{
-          		'right1' => 1,
-          		'gene_member_id' => '9122578',
-          		'dnafrag_id' => '14026395',
-          		'left1' => 0,
-          		'left2' => undef,
-          		'homology_id' => 14469,
-          		'method_link_species_set_id' => '100021',
-          		'goc_score' => 25,
-          		'right2' => undef
-        	},
-        	2
-        ],
-    ],
-);
 
 use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score');
 standaloneJob(
