@@ -59,25 +59,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
-  my( $self) = @_;
+    my ($self) = @_;
 
-  if ($self->param('dna_collection_name')) {
-      $self->param('collection_name', $self->param('dna_collection_name'));
-  }
-
-  die("Missing dna_collection_name") unless($self->param('collection_name'));
-  die("Must specifiy dump_min_size") unless ($self->param('dump_min_size'));
-
-  return 1;
-}
-
-
-
-sub run
-{
-  my $self = shift;
-
-   return 1;
+    $self->param_required('dump_min_size');
 }
 
 
