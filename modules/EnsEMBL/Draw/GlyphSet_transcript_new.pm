@@ -421,6 +421,19 @@ sub render_alignslice_collapsed {
   my $h                 = 8;
   
   my ($genes, $highlights) = $self->features;
+
+  my $hub = $self->{'config'}->hub;
+  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
+    species => $self->species,
+    pattern => $self->my_config('colour_key'),
+    shortlabels => $self->get_parameter('opt_shortlabels'),
+    label_key => $self->my_config('label_key'),
+    slice => $self->{'container'},
+    logic_names => $self->my_config('logic_names'),
+    db => $self->my_config('db'),
+  });
+  use Data::Dumper;
+  warn Dumper(436,$ggdraw);
  
   my @ggdraw; 
   foreach my $gene (@$genes) {
@@ -735,9 +748,10 @@ sub map_AlignSlice_Exons {
       }
     }
       
+    warn "751: $ex->{'exon'}->{'etype'} ".$transcript->stable_id."\n";
     push @exons, $ex;
   }
-    
+   
   return reverse @exons;
 }
 

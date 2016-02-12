@@ -25,6 +25,7 @@ use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
 our $VERSION = 11;
 
+use JSON;
 use List::Util qw(min max);
 
 sub fixup {
@@ -168,7 +169,17 @@ sub _href {
   return $params;
 }
 
-sub _get_exons {
+sub _unique {
+  my ($self,$args,$obj) = @_;
+
+  if(ref($args->{'slice'}) eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice') {
+    return $obj->stable_id."::".JSON->new->encode($args->{'__orig_slice'});
+  }
+
+  return $obj->dbID;
+}
+
+sub _get_regular_exons {
   my ($self,$args,$t) = @_;
 
   my @eff;
@@ -177,7 +188,7 @@ sub _get_exons {
   foreach my $e (sort { $a->start <=> $b->start } @{$t->get_all_Exons}) {
     next unless defined $e;
     my $ef = {
-      _unique => $e->dbID,
+      _unique => $self->_unique($args,$e),
       start => $e->start,
       end => $e->end,
       strand => $e->strand,
@@ -191,6 +202,27 @@ sub _get_exons {
     push @eff,$ef;
   }
   return \@eff;
+}
+
+sub _get_alignslice_exons {
+  my ($self,$args,$t) = @_;
+
+  my @exons = @{$t->get_all_Exons};
+  my @ef;
+  foreach my $e (@exons) {
+    push @ef,{ start => $e->start, end => $e->end };
+  }
+  return \@ef;
+}
+
+sub _get_exons {
+  my ($self,$args,$t) = @_;
+
+  if(ref($args->{'slice'}) eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice') {
+    return $self->_get_alignslice_exons($args,$t);
+  } else {
+    return $self->_get_regular_exons($args,$t);
+  }
 }
 
 sub _title {
@@ -211,7 +243,7 @@ sub _get_transcripts {
   @trans = reverse @trans if $g->strand; 
   foreach my $t (@trans) {
     my $tf = {
-      _unique => $t->dbID,
+      _unique => $self->_unique($args,$t),
       start => $t->start,
       end => $t->end,
       strand => $g->strand,
@@ -242,7 +274,7 @@ sub get {
     $title = $g->external_name.'; ' if $g->external_name;
 
     my $gf = {
-      _unique => $g->dbID,
+      _unique => $self->_unique($args,$g),
       start => $g->start,
       end => $g->end,
       href => $self->_href($args,$g),

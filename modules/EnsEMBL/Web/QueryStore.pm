@@ -33,7 +33,9 @@ sub _clean_args {
   my ($self,$args) = @_;
 
   my %out = %$args;
-  delete $out{'__name'};
+  foreach my $k (keys %out) {
+    delete $out{$k} if $k =~ /^__/;
+  }
   return \%out;
 }
 

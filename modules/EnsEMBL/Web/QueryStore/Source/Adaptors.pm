@@ -49,4 +49,10 @@ sub variation_db_adaptor {
   return $self->_database($species,$var_db);
 }
 
+sub compara_db_adaptor {
+  my ($self) = @_;
+
+  return $self->_database(undef,'compara');
+}
+
 1;

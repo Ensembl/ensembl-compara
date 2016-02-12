@@ -127,14 +127,73 @@ sub fixup_location {
   }
 }
 
+sub fixup_alignslice {
+  my ($self,$key,$sk,$chunk) = @_;
+
+  if($self->phase eq 'pre_process') {
+    my $data = $self->data;
+    my $ass = $data->{$key};
+    my $as = $ass->{'_align_slice'}; # Yuk! Checked with compara: no accessor.
+    if($as) {
+      $data->{$key} = {
+        ref => $as->reference_Slice()->name,
+        refsp => $self->context->{'config'}->hub->species,
+        mlss => $as->get_MethodLinkSpeciesSet->dbID(),
+        name => $ass->name,
+      };
+    }
+  } elsif($self->phase eq 'pre_generate') {
+    my $data = $self->data;
+    $data->{"__orig_$key"} = $data->{$key};
+    if($data->{$key}) {
+      my $ad = $self->source('Adaptors');
+      my $cad = $ad->compara_db_adaptor;
+      my $asa = $cad->get_AlignSliceAdaptor();
+      my $mlssa = $cad->get_MethodLinkSpeciesSetAdaptor();
+      my $as = $asa->fetch_by_Slice_MethodLinkSpeciesSet(
+        $ad->slice_by_name($data->{$key}{'refsp'},$data->{$key}{'ref'}),
+        $mlssa->fetch_by_dbID($data->{$key}{'mlss'}),
+        'expanded','restrict'
+      );
+      foreach my $sl (@{$as->get_all_Slices}) {
+        if($sl->name eq $data->{$key}{'name'}) {
+          $data->{$key} = $sl;
+          return;
+        }
+      }
+      die "AlignSlice::Slice not found";
+    }
+  }
+}
+
+sub _is_align_slice {
+  my ($self,$key,$sk,$chunk) = @_;
+
+  my $data = $self->data;
+  my $target;
+  if($self->phase eq 'split') {
+    return ref($data->[0]{'slice'}) eq 'HASH' and
+      exists $data->[0]{'slice'}{'mlss'};
+  } elsif($self->phase eq 'pre_process') {
+    return ref($data->{$key}) eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice';
+  } elsif($self->phase eq 'pre_generate') {
+    return ref($data->{$key}) eq 'HASH' and exists $data->{$key}{'mlss'};
+  }
+}
+
 sub fixup_slice {
   my ($self,$key,$sk,$chunk) = @_;
 
+  if($self->_is_align_slice($key,$sk,$chunk)) {
+    $self->fixup_alignslice($key,$sk,$chunk);
+    return;
+  }
   if($self->phase eq 'pre_process') {
     my $data = $self->data;
     $data->{$key} = $data->{$key}->name if $data->{$key};
   } elsif($self->phase eq 'pre_generate') {
     my $data = $self->data;
+    $data->{"__orig_$key"} = $data->{$key};
     my $ad = $self->source('Adaptors');
     if($data->{$key}) {
       $data->{$key} = $ad->slice_by_name($data->{$sk},$data->{$key});
