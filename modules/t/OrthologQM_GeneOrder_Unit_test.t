@@ -150,6 +150,7 @@ use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs');
 standaloneJob(
   'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
 	{
+    'compara_db' => $dbc->url,
 		'mlss_ID'=>'100021',
 		'ref_species_dbid' =>155,
         'non_ref_species_dbid' => 31,
@@ -172,7 +173,7 @@ standaloneJob(
 				"left1" => undef,
 				"left2" => undef,
 				"method_link_species_set_id" => 100021,
-				'right2' => 0,
+				'right1' => 0,
 				"right2" => 0
 			},
 			2
