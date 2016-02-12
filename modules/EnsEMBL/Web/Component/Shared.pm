@@ -1408,6 +1408,47 @@ sub render_p_value {
   return $render;
 }
 
+# Rectangular glyph displaying the location and coverage of the variant
+# on a given feature (transcript, protein, regulatory element, ...)
+sub render_var_coverage {
+  my $self = shift;
+  my ($f_s, $f_e, $v_s, $v_e, $color) = @_;
+
+  my $render;
+
+  $color ||= 'red';
+
+  my $total_width = 100;
+  my $left_width  = 0;
+
+  my $scale = $total_width / ($f_e - $f_s + 1);
+
+  # left part
+  if($v_s > $f_s) {
+    $left_width = sprintf("%.0f", ($v_s - $f_s) * $scale);
+    $left_width-- if ($left_width == $total_width);
+    $render .= '<div class="var_trans_pos_sub" style="width:'.$left_width.'px"></div>';
+  }
+
+  # middle part
+  if ($v_s <= $f_e && $v_e >= $f_s) {
+    my $s = (sort {$a <=> $b} ($v_s, $f_s))[-1];
+    my $e = (sort {$a <=> $b} ($v_e, $f_e))[0];
+
+    my $bp = ($e - $s) + 1;
+
+    my $right_width = sprintf("%.0f", $bp * $scale);
+       $right_width = 1 if ($right_width < 1 || $left_width == ($total_width - 1));
+    $render .= sprintf(qq{<div class="var_trans_pos_sub" style="width:%ipx;background-color:%s"></div>}, $right_width, $color);
+  }
+
+  if ($render) {
+    $render = qq{<div class="var_trans_pos">$render</div>};
+  }
+
+  return $render;
+}
+
 sub button_portal {
   my ($self, $buttons, $class) = @_;
   $class ||= '';
