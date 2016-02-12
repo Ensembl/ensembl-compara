@@ -132,19 +132,11 @@ sub pipeline_analyses {
         	-module		=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
         	-analysis_capacity  =>  200,
 			-flow_into	=>	{
-				2	=>	['create_comparison_job_arrays'],
+				2	=>	['check_ortholog_neighbors'],
 			},
 			-rc_name => '2Gb_job',
         },
-        {
-        	-logic_name	=>	'create_comparison_job_arrays',
-        	-module		=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays',
-            -analysis_capacity  =>  200,
-        	-flow_into	=>	{
-        		2 	=>	['check_ortholog_neighbors'],
-        	},
-#        	-rc_name => '2Gb_job',
-        },
+
         {
         	-logic_name	=>	'check_ortholog_neighbors',
         	-module	=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
