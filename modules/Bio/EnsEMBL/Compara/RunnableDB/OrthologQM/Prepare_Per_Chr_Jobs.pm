@@ -35,20 +35,18 @@ use Bio::EnsEMBL::Registry;
 
 sub param_defaults {
 	return {
-	'mlss_ID'=>'100021',
-        'ref_species_dbid' => 155,
-        'non_ref_species_dbid' => 31,
-		'ortholog_info_hashref'	=>	{ '14026395' => {
-                          '46043' => '28081004',
-                          '14469' => '28074953',
-                          '14803' => '28043758'
-                        },
-          '14026797' => {
-                          '14646' => '57068',
-                          '46120' => '51014'
-                        }
-                        
-                    },
+        %{ $self->SUPER::param_defaults() },
+#	'mlss_ID'=>'100021',
+#        'ref_species_dbid' => 155,
+#        'non_ref_species_dbid' => 31,
+#		'ortholog_info_hashref'	=>	{ '1045569' => {
+#                         '46043' => '83505425',
+#                         '14469' => '83531457',
+#                         '14803' => '83531457',
+#                         '14646' => '83531457',
+#                         '46120' => '83505425'
+#                       }
+#                       },
 
 	};
 }
@@ -86,7 +84,7 @@ sub run {
 
         my $chr_job = {};
         $chr_job->{$ref_dnafragID} = \@orth_sorted;
-#        print Dumper($chr_job);
+        print Dumper($chr_job);
 #        $self->param( 'chr_job', {'chr_job' => $chr_job} );
         $self->dataflow_output_id( {'chr_job' => $chr_job, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid'), 'mlss_ID' => $self->param('mlss_ID')}, 2 );
 
