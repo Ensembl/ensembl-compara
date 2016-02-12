@@ -1550,6 +1550,7 @@ sub update_from_url {
     my ($key, $renderer, $attach);
     
     if (uc $format eq 'TRACKHUB') {
+      $v =~ s/^url://;
       $key = $v;
       $attach = 1;
     } else {
