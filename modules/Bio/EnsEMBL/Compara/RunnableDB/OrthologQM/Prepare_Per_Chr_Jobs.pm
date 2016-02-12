@@ -34,6 +34,7 @@ use Bio::EnsEMBL::Registry;
 =cut
 
 sub param_defaults {
+    my $self = shift @_;
 	return {
         %{ $self->SUPER::param_defaults() },
 #	'mlss_ID'=>'100021',
