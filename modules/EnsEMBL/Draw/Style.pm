@@ -236,6 +236,7 @@ sub draw_graph_base {
   }
 
   return {
+          'min_score'       => $min_score,
           'max_score'       => $max_score,
           'line_score'      => $line_score,
           'line_px'         => $line_px,

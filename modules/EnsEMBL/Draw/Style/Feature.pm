@@ -72,7 +72,7 @@ sub create_glyphs {
 
   ## Strand settings
   foreach my $subtrack (@$data) {
-
+    my $subtrack_offset = $subtrack->{'metadata'}{'y'} || 0;
     ## Draw title over track
     if ($track_config->get('show_subtitle')) {
       $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
@@ -95,8 +95,8 @@ sub create_glyphs {
       ## but doesn't need to have both. However we do set join and label colours,
       ## because other configuration options determine whether they are used
       if (!$feature->{'bordercolour'}) {
-        $feature->{'colour'} ||= $track_config->get('default_colour') || 'black';
-      } 
+        $feature->{'colour'} ||= $track_config->get('default_colour') || $subtrack->{'metadata'}{'colour'} || 'black';
+      }
       $feature->{'join_colour'}   ||= $feature->{'colour'} || $feature->{'bordercolour'};
       $feature->{'label_colour'}  ||= $feature->{'colour'} || $feature->{'bordercolour'};
 
@@ -130,8 +130,8 @@ sub create_glyphs {
 
       my $labels_height   = $label_row * $label_height;
       my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
-      my $y               = $y_start + ($feature_row * ($feature_height + $vspacing)) + $add_labels;
-      $total_height       = $feature_height + $vspacing + $add_labels;
+      my $y               = $y_start + ($feature_row * ($feature_height + $vspacing)) + $add_labels + $subtrack_offset;
+      $total_height       = $feature_height + $vspacing + $add_labels + $subtrack_offset;
       $total_height       = $y if $y > $total_height; 
 
       my $position  = {

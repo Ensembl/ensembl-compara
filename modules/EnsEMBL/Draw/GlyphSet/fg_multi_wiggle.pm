@@ -105,12 +105,13 @@ sub draw_aggregate {
                     ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) 
                     : '';
 
-          my $style = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
-          $style->draw_margin_subhead($label, $tracks_on);
-          $self->push(@{$style->glyphs||[]});
-  
+          my $label_style = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
+ 
           ## Only add the extra zmenu stuff if we're not drawing a wiggle
           $subset = $self->get_blocks($data->{$set}{'block_features'}, $args);
+          $label_style->draw_margin_subhead($label, $tracks_on);
+          $label_style->draw_margin_sublabels($subset);
+          $self->push(@{$label_style->glyphs||[]});
         }
         else {
           $self->display_error_message($cell_line, $set, 'peaks') if $any_on;
@@ -173,11 +174,11 @@ sub draw_aggregate {
 sub get_blocks {
   my ($self, $dataset, $args) = @_;
 
-  my $data = {'metadata' => {},
-              'features' => [],
-              };
-
+  my @data;
   foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
+    my $data = {'metadata' => {},
+                'features' => [],
+                };
     my @temp          = split /:/, $f_set;
     pop @temp;
     my $feature_name  = pop @temp;
@@ -189,7 +190,6 @@ sub get_blocks {
 
     my $features      = $dataset->{$f_set};
     foreach my $f (@$features) {
-
       ## Create motif features
       my $structure = [];
       my @loci = @{$f->get_underlying_structure};
@@ -205,19 +205,46 @@ sub get_blocks {
                   end       => $f->end,
                   midpoint  => $f->summit,
                   structure => $structure, 
-                  colour    => $colour,
                   label     => $label,
                   };
       push @{$data->{'features'}}, $hash; 
     }
+    $data->{'metadata'}{'sublabel'} = $label;
+    $data->{'metadata'}{'colour'} = $colour;
+    push @data,$data;
   }
 
-  return [$data];
+  return \@data;
 }
 
 sub get_wiggle {
   my ($self, $dataset) = @_;
 
+  my $data = {'metadata' => {},
+              'features' => [],
+              };
+  foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
+    my @temp          = split /:/, $f_set;
+    pop @temp;
+    my $feature_name  = pop @temp;
+    my $cell_line     = join(':',@temp);
+#    my $colour        = $args->{'colours'}{$feature_name};
+
+    my $label         = $feature_name;
+#    $label            = "$feature_name $cell_line" if $args->{'is_multi'};
+
+    my $features      = $dataset->{$f_set};
+#    foreach my $f (@$features) {
+#      my $hash = {
+#                  start     => $f->start,
+#                  end       => $f->end,
+#                  score     => $f->score,
+#                  colour    => $colour,
+#                  };
+#      push @{$data->{'features'}}, $hash; 
+#    }
+  }
+  return [$data];
 }
 
 sub get_colours {

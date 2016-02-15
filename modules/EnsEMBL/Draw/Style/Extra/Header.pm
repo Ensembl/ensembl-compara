@@ -43,6 +43,15 @@ sub draw_margin_subhead {
   }
 }
 
+sub draw_margin_sublabels {
+  my ($self,$track) = @_;
+
+  foreach my $s (@$track) {
+    $s->{'metadata'}{'y'} = $self->_offset;
+    $self->_draw_track_name($s->{'metadata'}{'sublabel'}||'',$s->{'metadata'}{'colour'},-118,0);
+  }
+}
+
 sub _draw_track_name {
   ### Draws the name of the predicted features track
   ### @param arrayref of Feature objects
