@@ -171,6 +171,22 @@ sub draw_aggregate {
   return 0;
 }
 
+sub _block_zmenu {
+  my ($self,$f) = @_;
+
+  my $offset = $self->{'container'}->strand>0 ? $self->{'container'}->start - 1 : $self->{'container'}->end + 1;
+
+  return $self->_url({
+    action => 'FeatureEvidence',
+    fdb    => 'funcgen',
+    pos    => sprintf('%s:%s-%s', $f->slice->seq_region_name, $offset + $f->start, $f->end + $offset),
+    fs     => $f->feature_set->name,
+    ps     => $f->summit || 'undetermined',
+    act    => $self->{'config'}->hub->action,
+    evidence => !$self->{'will_draw_wiggle'},
+  });
+}
+
 sub get_blocks {
   my ($self, $dataset, $args) = @_;
 
@@ -206,6 +222,7 @@ sub get_blocks {
                   midpoint  => $f->summit,
                   structure => $structure, 
                   label     => $label,
+                  href      => $self->_block_zmenu($f),
                   };
       push @{$data->{'features'}}, $hash; 
     }
