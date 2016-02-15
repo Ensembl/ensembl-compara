@@ -43,11 +43,22 @@ sub content {
 
   return [] unless keys %mappings;
 
+  my $var_styles  = $hub->species_defs->colour('variation');
+  my $colourmap   = $hub->colourmap;
+
   my $source      = $object->source;
   my $name        = $object->name;
   my $show_scores = $hub->param('show_scores');
   my $vf          = $hub->param('vf');
-  my $html        = qq{<a id="$self->{'id'}_top"></a>};
+  my $html        = qq{<a id="}.$self->{'id'}.qq{_top"></a>};
+
+  # get variation feature object
+  my ($vf_obj)  = grep {$_->dbID eq $vf} @{$self->object->get_variation_features};
+  my ($var_start,$var_end);
+  if ($vf_obj) {
+    $var_start = $vf_obj->seq_region_start <= $vf_obj->seq_region_end ? $vf_obj->seq_region_start : $vf_obj->seq_region_end;
+    $var_end   = $vf_obj->seq_region_start <= $vf_obj->seq_region_end ? $vf_obj->seq_region_end : $vf_obj->seq_region_start;
+  }
 
   if ($object->Obj->failed_description =~ /match.+reference\ allele/) {
     my ($feature_slice) = map $_->dbID == $vf ? $_->feature_Slice : (), @{$object->Obj->get_all_VariationFeatures};
@@ -97,7 +108,6 @@ sub content {
   my @columns = $self->table_columns;
   
   my $table         = $self->new_table(\@columns, [], { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'], class => 'cellwrap_inside' });
-  my $gene_adaptor  = $hub->get_adaptor('get_GeneAdaptor');
   my $trans_adaptor = $hub->get_adaptor('get_TranscriptAdaptor');
   my $max_length    = 20;
   my $flag;
@@ -109,6 +119,7 @@ sub content {
     { key => 'ftype',    title => 'Feature type',           sort => 'string'                           },
     { key => 'allele',   title => 'Allele',                 sort => 'string'                           },
     { key => 'type',     title => 'Consequence type',       sort => 'position_html'                    },
+    { key => 'coverage', title => 'Variant position',       sort => 'string',                          },
   );
   my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside', data_table_config => {iDisplayLength => 10} } );
   my @motif_columns = (
@@ -125,15 +136,24 @@ sub content {
 
   
   foreach my $varif_id (grep $_ eq $hub->param('vf'), keys %mappings) {
+
+    # get variation feature object
+    my ($vf_obj) = grep {$_->dbID eq $varif_id} @{$self->object->get_variation_features};
+
     foreach my $transcript_data (@{$mappings{$varif_id}{'transcript_vari'}}) {
-      my $gene       = $gene_adaptor->fetch_by_transcript_stable_id($transcript_data->{'transcriptname'}); 
-      my $gene_name  = $gene ? $gene->stable_id : '';
+      # Transcript
       my $trans_name = $transcript_data->{'transcriptname'};
       my $trans      = $trans_adaptor->fetch_by_stable_id($trans_name);
+      my $trans_type = '<b>biotype: </b>' . $trans->biotype;
       my $tva        = $transcript_data->{'tva'};
-      my $trans_type = '<b>biotype: </b>' . $tva->transcript->biotype;
+      my @tva_cons   = sort {$a->rank <=> $b->rank} (values %{{map {$_->label => $_} @{$tva->get_all_OverlapConsequences || []}}});
+      my $tva_colour = (scalar @tva_cons > 0) ? $colourmap->hex_by_name($var_styles->{lc $tva_cons[0]->SO_term}->{'default'}) : undef; 
+      # Gene
+      my $gene       = $trans->get_Gene();
+      my $gene_name  = $gene ? $gene->stable_id : '';
       my @entries    = grep $_->database eq 'HGNC', @{$gene->get_all_DBEntries};
       my $gene_hgnc  = scalar @entries ? '<b>HGNC: </b>' . $entries[0]->display_id : '';
+
       my ($gene_url, $transcript_url);
       
       # Create links to non-LRG genes and transcripts
@@ -227,15 +247,35 @@ sub content {
           return "(".substr($_,0,20)."...)";
         })."</small>";
       }
+
+      # Variant position
+      my $trans_length = $trans->length;
+
+      my $cds_length = 0;
+      foreach my $cds (@{$trans->get_all_CDS}){
+        $cds_length += $cds->length;
+      }
+
+      my $pr_length = 0;
+      my $translation = $trans->translation;
+      $pr_length = $translation->length if ($translation);
       
+      my $cdna_overlap = $self->_overlap_glyph(1, $trans_length, $transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans, 'Transcript', 1, $tva_colour);
+      my $cds_overlap  = $self->_overlap_glyph(1, $cds_length, $transcript_data->{'cds_start'}, $transcript_data->{'cds_end'}, $trans, 'CDS', 1, $tva_colour);
+      my $pr_overlap   = $self->_overlap_glyph(1, $pr_length, $transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $trans, 'Protein', 1, $tva_colour);
+
+      my $trans_length_label = $self->_overlap_glyph_label($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans_length);
+      my $cds_length_label   = $self->_overlap_glyph_label($transcript_data->{'cds_start'},  $transcript_data->{'cds_end'}, $cds_length);
+      my $pr_length_label    = $self->_overlap_glyph_label($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $pr_length);
+
       my $row = {
         allele    => $allele,
         gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
         trans     => qq{<a href="$transcript_url" class="mobile-nolink">$trans_name</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
         type      => $type,
-        trans_pos => $self->_sort_start_end($transcript_data->{'cdna_start'},        $transcript_data->{'cdna_end'}),
-        cds_pos   => $self->_sort_start_end($transcript_data->{'cds_start'},         $transcript_data->{'cds_end'}),
-        prot_pos  => $self->_sort_start_end($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}),
+        trans_pos => $trans_length_label . $cdna_overlap,
+        cds_pos   => $cds_length_label . $cds_overlap,
+        prot_pos  => $pr_length_label . $pr_overlap,
         aa        => $transcript_data->{'pepallele'} || '-',
         codon     => $codon,
         sift      => $sift,
@@ -248,13 +288,10 @@ sub content {
     }
     
     
-    # reg feats
-    # get variation feature object
-    my ($vf_obj) = grep {$_->dbID eq $varif_id} @{$self->object->get_variation_features};
-    
+    ## Reg feats ##
     # reset allele string if recalculating for HGMD
     $vf_obj->allele_string('A/C/G/T') if $hub->param('recalculate');
-    
+
     my $rfa = $hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
     
     for my $rfv (@{ $vf_obj->get_all_RegulatoryFeatureVariations }) {
@@ -268,28 +305,40 @@ sub content {
         rf     => $rfv->regulatory_feature->stable_id,
         fdb    => 'funcgen',
       });
-      
       $url .= ';regulation_view=variation_feature_variation=normal';
-        for my $rf (@$rfs) { 
-          for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
-            my $type = $self->render_consequence_type($rfva);
+
+      my $rfv_cons   = $rfv->most_severe_OverlapConsequence;
+      my $rfv_colour = ($rfv_cons) ? $colourmap->hex_by_name($var_styles->{lc $rfv_cons->SO_term}->{'default'}) : undef;
+
+      for my $rf (@$rfs) {
+        my $regulation_overlap = $self->_overlap_glyph($rf->seq_region_start, $rf->seq_region_end, $vf_obj->seq_region_start, $vf_obj->seq_region_end , $rf, 'Regulatory feature', 1, $rfv_colour);
+        my $var_pos_start = $var_start - $rf->seq_region_start + 1;
+        my $var_pos_end   = $var_end - $rf->seq_region_start + 1;
+        my $reg_length = $rf->seq_region_end - $rf->seq_region_start + 1;
+ 
+        my $reg_length_label = $self->_overlap_glyph_label($var_pos_start, $var_pos_end, $reg_length);
+
+        for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
+          my $type = $self->render_consequence_type($rfva);
+
+          my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
+
+          my $row = {
+            rf        => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
+            cell_type => $rf->cell_type->name,
+            ftype     => $rf->feature_type->so_name,
+            allele    => $r_allele,
+            type      => $type || '-',
+            coverage  => $reg_length_label.$regulation_overlap
+          };
             
-            my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
-            
-            my $row = {
-              rf       => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
-              cell_type => $rf->cell_type->name,
-              ftype    => $rf->feature_type->so_name,
-              allele   => $r_allele,
-              type     => $type || '-',
-            };
-            
-            $reg_table->add_row($row);
-            $flag = 1;
-          } # end rfva loop
+          $reg_table->add_row($row);
+          $flag = 1;
+        } # end rfva loop
       } # end rf loop
     } # end rfv loop
     
+    ## Motif feats ##
     for my $mfv (@{ $vf_obj->get_all_MotifFeatureVariations }) {
       my $mf = $mfv->motif_feature;
      
@@ -312,21 +361,29 @@ sub content {
         rf     => $rf->stable_id,
         fdb    => 'funcgen',
       });
-      
       $url .= ';regulation_view=variation_feature_variation=normal';
-      
+
+      my $mfv_cons   = $mfv->most_severe_OverlapConsequence;
+      my $mfv_colour = ($mfv_cons) ? $colourmap->hex_by_name($var_styles->{lc $mfv_cons->SO_term}->{'default'}) : undef;
+
+      my $motif_length  = $mf->length;
+
       for my $mfva (@{ $mfv->get_all_alternate_MotifFeatureVariationAlleles }) {
         my $type = $self->render_consequence_type($mfva);
         
         my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$rf->stable_id,25);
         
+        my $motif_overlap = $self->_overlap_glyph(1, $motif_length, $mfva->motif_start, $mfva->motif_end, $mf, 'Motif feature', 1, $mfv_colour);
+
+        my $motif_length_label = $self->_overlap_glyph_label($mfva->motif_start, $mfva->motif_end, $motif_length);
+
         my $row = {
           rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
           ftype    => $mfva->feature->feature_type->so_name,#'Motif feature',
           allele   => $m_allele,
           type     => $type,
           matrix   => $matrix_url,
-          pos      => $mfva->motif_start,
+          pos      => $motif_length_label.$motif_overlap,
           high_inf => $mfva->in_informative_position ? 'Yes' : 'No',
           score    => defined($mfva->motif_score_delta) ? $self->render_motif_score($mfva->motif_score_delta) : '-',
         };
@@ -356,9 +413,9 @@ sub table_columns {
     { key => 'trans',     title => 'Transcript (strand)',              sort => 'html'                        },
     { key => 'allele',    title => 'Allele (transcript allele)',       sort => 'string',   width => '7%'     },
     { key => 'type',      title => 'Consequence Type',                 sort => 'position_html'               },
-    { key => 'trans_pos', title => 'Position in transcript',           sort => 'position', align => 'center' },
-    { key => 'cds_pos',   title => 'Position in CDS',                  sort => 'position', align => 'center' },
-    { key => 'prot_pos',  title => 'Position in protein',              sort => 'position', align => 'center' },
+    { key => 'trans_pos', title => 'Position in transcript',           sort => 'position', align => 'left'   },
+    { key => 'cds_pos',   title => 'Position in CDS',                  sort => 'position', align => 'left'   },
+    { key => 'prot_pos',  title => 'Position in protein',              sort => 'position', align => 'left'   },
     { key => 'aa',        title => 'Amino acid',                       sort => 'string'                      },
     { key => 'codon',     title => 'Codons',                           sort => 'string'                      },
   );  
@@ -905,6 +962,51 @@ sub context_image {
   $image->set_button('drag', 'title' => 'Drag to select region');
 
   return $image->render;
+}
+
+
+sub _overlap_glyph {
+  my $self = shift;
+  my ($f_s, $f_e, $v_s, $v_e, $f, $f_label, $strand, $colour) = @_;
+
+  my $html  = '';
+  my $width = 100;
+
+  $strand ||= $f->strand;
+
+  # flip if on reverse strand
+  if($strand == -1) {
+    $f_e -= $f_s;
+    $_ = $f_e - ($_ - $f_s) for ($v_s, $v_e);
+    ($v_s, $v_e) = ($v_e, $v_s);
+    $f_s = 0;
+  }
+
+  return '' unless $v_s <= $f_e && $v_e >= $f_s;
+
+  my $f_length = ($f_e > $f_s) ? $f_e - $f_s + 1 : $f_s - $f_e + 1;
+  my $var_pos  = ($v_s == $v_e) ? $v_s : "$v_s-$v_e";
+
+  my $glyph = $self->render_var_coverage($f_s, $f_e, $v_s, $v_e, $colour);
+  $html .= $glyph if ($glyph);
+
+  my $desc = "Variant position: $var_pos | $f_label length: $f_length";
+
+  # container for glyph and direction indicator
+  my $html_box = '<div class="_ht" style="width:'.$width.'px" title="'.$desc.'">';
+
+  return sprintf(qq{%s%s</div>}, $html_box, $html);
+}
+
+sub _overlap_glyph_label {
+  my $self = shift;
+  my ($start,$end,$length) = @_;
+
+  my $pos   = $self->_sort_start_end($start, $end);
+  my $range = ($pos ne '-') ? qq{<span class="small"> (out of $length)</span>} : '';
+     $range = "<br />$range" if (length($pos) > 6);
+
+  return "$pos$range";
 }
 
 
