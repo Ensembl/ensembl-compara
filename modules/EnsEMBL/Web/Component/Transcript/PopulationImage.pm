@@ -178,7 +178,7 @@ sub content {
 sub sample_configs {
   my ($self, $transcript_slice, $sub_slices, $fake_length) = @_;
   my $hub       = $self->hub;
-  my $object    = $self->object;
+  my $object    = $self->object || $self->hub->core_object('transcript');
   my $stable_id = $object->stable_id;
   my $extent    = $object->extent;
   my @containers_and_configs; ## array of containers and configs
