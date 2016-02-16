@@ -34,6 +34,7 @@ sub render_compact {
   warn ">>> RENDERING PEAKS";
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks']);
   $self->{'my_config'}->set('height', 8);
+  $self->{'my_config'}->set('hide_subtitle',1);
   $self->_render_aggregate;
 }
 
@@ -42,6 +43,7 @@ sub render_signal {
   warn ">>> RENDERING SIGNAL";
   $self->{'my_config'}->set('drawing_style', ['Graph']);
   $self->{'my_config'}->set('height', 60);
+  $self->{'my_config'}->set('hide_subtitle',1);
   $self->_render_aggregate;
 }
 
@@ -50,6 +52,7 @@ sub render_signal_feature {
   warn ">>> RENDERING PEAKS WITH SIGNAL";
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks', 'Graph']);
   $self->{'my_config'}->set('height', 60);
+  $self->{'my_config'}->set('hide_subtitle',1);
   $self->_render_aggregate;
 }
 
