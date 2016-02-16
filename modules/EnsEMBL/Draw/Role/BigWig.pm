@@ -29,10 +29,9 @@ use List::Util qw(min max);
 use EnsEMBL::Web::IOWrapper::Indexed;
 
 sub get_data {
-  my ($self, $bins) = @_;
+  my ($self, $bins, $url) = @_;
 
-  my $data = $self->_fetch_data($bins);
-  #use Data::Dumper; warn Dumper($data); 
+  my $data = $self->_fetch_data($bins,$url);
 
   if ($data) {
     ## Adjust max and min according to track settings
@@ -87,13 +86,13 @@ sub get_data {
 
 sub _fetch_data {
 ### Get the data and cache it
-  my ($self, $bins) = @_;
+  my ($self, $bins, $url) = @_;
   $bins ||= $self->bins;
 
   return $self->{'_cache'}{'data'} if $self->{'_cache'}{'data'};
  
   my $hub       = $self->{'config'}->hub;
-  my $url       = $self->my_config('url');
+  $url          ||= $self->my_config('url');
 
   if (!$url) { ## Internally configured bigwig file?
     my $dba       = $hub->database($self->my_config('type'), $self->species);
@@ -154,8 +153,8 @@ sub _fetch_data {
     $data = $iow->create_tracks($slice, $metadata);
   }
 
-  $self->{'_cache'}{'data'} = $data;
-  return $self->{'_cache'}{'data'};
+  # Don't cache here, it's not properly managed. Rely on main cache layer.
+  return $data;
 }
 
 sub bins {

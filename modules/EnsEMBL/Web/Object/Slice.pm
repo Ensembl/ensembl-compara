@@ -409,8 +409,9 @@ sub get_data {
       my $display_style = $data->{$cell_line}{$focus_flag}{'renderer'};
 
       $feature_sets_on{$feature_type_name} = 1;
-      
-      if ($display_style  eq 'compact' || $display_style eq 'tiling_feature') {
+     
+      if(grep { $display_style eq $_ }
+          qw(compact tiling_feature signal_feature)) {
         my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
         
         if ($reg_object && scalar @block_features) {

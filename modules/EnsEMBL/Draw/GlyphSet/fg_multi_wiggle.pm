@@ -92,6 +92,7 @@ sub draw_aggregate {
   my $set     = $self->my_config('set');
   my %config  = %{$self->track_style_config};
 
+  my $top = 0;
   foreach (@{$self->{'my_config'}->get('drawing_style')||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
     my $any_on = scalar keys %{$data->{'on'}};
@@ -111,6 +112,7 @@ sub draw_aggregate {
           $subset = $self->get_blocks($data->{$set}{'block_features'}, $args);
           $label_style->draw_margin_subhead($label, $tracks_on);
           $label_style->draw_margin_sublabels($subset);
+          $top = $subset->[-1]{'metadata'}{'y'} + $subset->[-1]{'metadata'}{'height'} if @$subset;
           $self->push(@{$label_style->glyphs||[]});
         }
         else {
@@ -120,6 +122,7 @@ sub draw_aggregate {
       else {
         if ($data->{$set}{'wiggle_features'}) {
           $subset = $self->get_wiggle($data->{$set}{'wiggle_features'}, $args);
+          $_->{'metadata'}{'y'} = $top for @$subset;
         }
         else {
           $self->display_error_message($cell_line, $set, 'wiggle') if $any_on;
@@ -228,6 +231,7 @@ sub get_blocks {
     }
     $data->{'metadata'}{'sublabel'} = $label;
     $data->{'metadata'}{'colour'} = $colour;
+    $data->{'metadata'}{'feature_height'} = 8;
     push @data,$data;
   }
 
@@ -237,31 +241,14 @@ sub get_blocks {
 sub get_wiggle {
   my ($self, $dataset) = @_;
 
-  my $data = {'metadata' => {},
-              'features' => [],
-              };
+  my $bins = $self->bins;
+  my @data;
   foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
-    my @temp          = split /:/, $f_set;
-    pop @temp;
-    my $feature_name  = pop @temp;
-    my $cell_line     = join(':',@temp);
-#    my $colour        = $args->{'colours'}{$feature_name};
-
-    my $label         = $feature_name;
-#    $label            = "$feature_name $cell_line" if $args->{'is_multi'};
-
-    my $features      = $dataset->{$f_set};
-#    foreach my $f (@$features) {
-#      my $hash = {
-#                  start     => $f->start,
-#                  end       => $f->end,
-#                  score     => $f->score,
-#                  colour    => $colour,
-#                  };
-#      push @{$data->{'features'}}, $hash; 
-#    }
+    my $url = $dataset->{$f_set};
+    my $data = $self->get_data($bins,$url);
+    push @data,$data->[0];
   }
-  return [$data];
+  return \@data;
 }
 
 sub get_colours {

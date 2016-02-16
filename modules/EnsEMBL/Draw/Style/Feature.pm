@@ -109,7 +109,7 @@ sub create_glyphs {
       next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
       ## Work out where to place the feature
-      my $feature_height  = $track_config->get('height') || $text_info->{'height'};
+      my $feature_height  = $subtrack->{'metadata'}{'feature_height'} || $track_config->get('height') || $text_info->{'height'};
       $label_height    = $show_label ? $text_info->{'height'} : 0;
 
       my $feature_width   = $feature->{'end'} - $feature->{'start'};

@@ -102,15 +102,26 @@ sub create_glyphs {
 
 sub draw_wiggle {
   my ($self, $c, $features) = @_;
-  return unless $features && $features->[0];
 
-  my $slice_length  = $self->{'container'}->length;
-  $features         = [ sort { $a->{'start'} <=> $b->{'start'} } @$features ];
+  return unless $features && @$features;
+
+  my $slice_length  = $self->image_config->container_width;
+  if(ref($features->[0]) eq 'HASH') {
+    $features = [ sort { $a->{'start'} <=> $b->{'start'} } @$features ];
+  }
   my ($previous_x,$previous_y);
-
+  my $plain_x = 0;
   for (my $i = 0; $i < @$features; $i++) {
     my $f = $features->[$i];
-
+    unless(ref($f) eq 'HASH') {
+      # Plain old value
+      $f = {
+        start => $plain_x,
+        end => $plain_x+$c->{'unit'},
+        score => $f,
+      };
+      $plain_x += $c->{'unit'};
+    }
     my ($current_x,$current_score);
     $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
     next unless $current_x <= $slice_length;
