@@ -239,14 +239,22 @@ sub get_blocks {
 }
 
 sub get_wiggle {
-  my ($self, $dataset) = @_;
+  my ($self,$dataset,$args) = @_;
 
   my $bins = $self->bins;
   my @data;
   foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
     my $url = $dataset->{$f_set};
     my $data = $self->get_data($bins,$url);
-    push @data,$data->[0];
+    push @data,{
+      metadata => $data->[0]{'metadata'},
+      features => $data->[0]{'features'}{1},
+    };
+    my @temp          = split /:/, $f_set;
+    pop @temp;
+    my $feature_name  = pop @temp;
+    my $colour        = $args->{'colours'}{$feature_name};
+    $data[-1]->{'metadata'}{'colour'} = $colour;
   }
   return \@data;
 }

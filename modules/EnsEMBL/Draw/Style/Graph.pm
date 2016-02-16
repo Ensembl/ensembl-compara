@@ -59,11 +59,23 @@ sub create_glyphs {
   my $data            = $self->data;
   my $track_config    = $self->track_config;
 
+  # Merge metadata of subtracks
+  # dan -> anne : presumably, sometimes merging is wrong and we want
+  # multiple graphs, so this will need a conditional revert when we've
+  # worked out the right conditional. This is the correct behaviour for
+  # regulation, though, which is the most prominent exmaple of multiple
+  # wiggles.
+  my $metadata = $data->[0]{'metadata'};
+  $metadata->{'max_score'} =
+    max(map { $_->{'metadata'}{'max_score'} } @$data);
+  $metadata->{'min_score'} =
+    min(map { $_->{'metadata'}{'min_score'} } @$data);
+
+  my $graph_conf = $self->draw_graph_base($metadata);
   foreach my $subtrack (@$data) {
     my $metadata = $subtrack->{'metadata'} || {};
 
     ## Draw any axes, track labels, etc
-    my $graph_conf = $self->draw_graph_base($metadata);
 
     my $features = $subtrack->{'features'};
 
@@ -189,6 +201,7 @@ sub set_colour {
   my $cutoff = $c->{'alt_colour_cutoff'} || 0;
   my $colour = ($c->{'alt_colour'} && $f->{'score'} < $cutoff)
                   ? $c->{'alt_colour'} : $f->{'colour'};
+  $colour ||= $c->{'colour'};
   $colour ||= 'black';
   return $colour;
 }
