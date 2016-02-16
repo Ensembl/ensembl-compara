@@ -119,7 +119,7 @@ sub get_text_width {
     @res = ('', 'none', 0, 0);
   }
 
-  $cache->{$key} = \@res; # Update the cache
+  $cache->set($key,\@res); # Update the cache
 
   return @res;
 }
