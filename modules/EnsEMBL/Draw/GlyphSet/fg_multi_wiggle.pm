@@ -72,6 +72,17 @@ sub data_by_cell_line {
   return $cell_line ? ($data->{$cell_line}||{}) : $data;
 }
 
+sub _colour_legend {
+  my ($self,$data) = @_;
+
+  my %out;
+  foreach my $s (@$data) {
+    next unless $s->{'metadata'}{'sublabel'};
+    $out{$s->{'metadata'}{'sublabel'}} = $s->{'metadata'}{'colour'};
+  }
+  return \%out;
+}
+
 sub draw_aggregate {
   my $self = shift;
 
@@ -115,6 +126,34 @@ sub draw_aggregate {
           $subset = $self->get_blocks($data->{$set}{'block_features'}, $args);
           $label_style->draw_margin_subhead($label, $tracks_on);
           $label_style->draw_margin_sublabels($subset);
+          my $colour_legend = $self->_colour_legend($subset);
+          my $hub = $self->{'config'}->hub;
+          my $cell_type_url = $hub->url('Component', {
+            action   => 'Web',
+            function    => 'CellTypeSelector/ajax',
+            image_config => $self->{'config'}->type,
+          });
+          my $evidence_url = $hub->url('Component', {
+            action => 'Web',
+            function => 'EvidenceSelector/ajax',
+            image_config => $self->{'config'}->type,
+          });
+          $label_style->draw_sublegend({
+            label => "Legend & more",
+            title => $label,
+            colour_legend => $colour_legend,
+            sublegend_links => [
+              {
+                text => 'Select other cell types',
+                href => $cell_type_url,
+                class => 'modal_link',
+              },{
+                text => 'Select evidence to show',
+                href => $evidence_url,
+                class => 'modal_link',
+              },
+            ],
+          });
           $top = $subset->[-1]{'metadata'}{'y'} + $subset->[-1]{'metadata'}{'height'} if @$subset;
           $self->push(@{$label_style->glyphs||[]});
         }
@@ -135,38 +174,6 @@ sub draw_aggregate {
       $self->push($style->create_glyphs);
     }
   }
-
-=pod
-  ## Add extra zmenu in label column
-  my $hub = $self->{'config'}->hub;
-  my $cell_type_url = $hub->url('Component', {
-    action   => 'Web',
-    function    => 'CellTypeSelector/ajax',
-    image_config => $self->{'config'}->type,
-  });
-  my $evidence_url = $hub->url('Component', {
-    action => 'Web',
-    function => 'EvidenceSelector/ajax',
-    image_config => $self->{'config'}->type,
-  });
-  my @zmenu_links = (
-    {
-      text => 'Select other cell types',
-      href => $cell_type_url,
-      class => 'modal_link',
-    },{
-      text => 'Select evidence to show',
-      href => $evidence_url,
-      class => 'modal_link',
-    },
-  );
-
-  my $zmenu_extra_content = [ map {
-      qq(<a href="$_->{'href'}" class="$_->{'class'}">$_->{'text'}</a>)
-  } @zmenu_links ];
-
-  $self->_add_sublegend(undef, "More","Links", $zmenu_extra_content, $self->_offset+2);
-=cut
 
   ## This is clunky, but it's the only way we can make the new code
   ## work in a nice backwards-compatible way right now!

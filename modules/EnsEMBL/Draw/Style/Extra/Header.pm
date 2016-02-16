@@ -120,6 +120,80 @@ sub _draw_space_glyph {
   $self->_offset($space);
 }
 
+sub _sublegend_zmenu_text {
+  my ($self,$args) = @_;
+
+  my @out;
+  foreach my $label (keys %{$args->{'colour_legend'}||{}}) {
+    push @out,"$label:$args->{'colour_legend'}{$label}";
+  }
+  return join(',',@out);
+}
+
+## Contents of the ZMenu of the special box found on reg. multi-wiggles
+sub _sublegend_zmenu {
+  my ($self,$args) = @_;
+
+  my $legend_alt_text = $self->_sublegend_zmenu_text($args);
+  my $title = $args->{'title'} || 'Info';
+  $title =~ s/&/and/g; # amps problematic; not just a matter of encoding
+  my @extra;
+  foreach my $link (@{$args->{'sublegend_links'}||[]}) {
+    push @extra,qq(<a href="$link->{'href'}" class="$link->{'class'}">$link->{'text'}</a>);
+  }
+  return [$title,"[ $legend_alt_text ]",@extra];
+}
+
+sub _draw_sublegend_box {
+  my ($self,$args,$zmenu) = @_;
+
+  my $offset = $self->_offset;
+  my $click_text = $args->{'label'} || 'Details';
+
+  my %font_details = EnsEMBL::Draw::Utils::Text::get_font_details($self->image_config,'innertext', 1); 
+  my @text = EnsEMBL::Draw::Utils::Text::get_text_width($self->cache, $self->image_config, 0, $click_text, '', %font_details);
+  my ($width,$height) = @text[2,3];
+  push @{$self->glyphs}, $self->Rect({
+    width         => $width + 15,
+    absolutewidth => $width + 15,
+    height        => $height + 2,
+    y             => $offset+13,
+    x             => -117,
+    absolutey     => 1,
+    absolutex     => 1,
+    title         => join('; ',@$zmenu),
+    class         => 'coloured',
+    bordercolour  => '#336699',
+    colour        => 'white',
+  }), $self->Text({
+    text      => $click_text,
+    height    => $height,
+    halign    => 'left',
+    valign    => 'bottom',
+    colour    => '#336699',
+    y         => $offset+13,
+    x         => -116,
+    absolutey => 1,
+    absolutex => 1,
+    %font_details,
+  }), $self->Triangle({
+    width     => 6,
+    height    => 5,
+    direction => 'down',
+    mid_point => [ -123 + $width + 10, $offset+23 ],
+    colour    => '#336699',
+    absolutex => 1,
+    absolutey => 1,
+  });
+  return $height;
+}
+
+sub draw_sublegend {
+  my ($self,$args) = @_;
+
+  my $zmenu = $self->_sublegend_zmenu($args);
+  $self->_draw_sublegend_box($args,$zmenu);
+}
 
 sub _offset {
   ### Getter/setter for offset
