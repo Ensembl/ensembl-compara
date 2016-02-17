@@ -618,7 +618,7 @@ sub get_all_species_sets_with_tags {
 
   my $these_species_sets = $species_set_adaptor->fetch_all_current();
   foreach my $this_species_set (@{$these_species_sets}) {
-    next if (!$this_species_set->get_all_tags);
+    next if (!$this_species_set->get_all_tags and !($this_species_set->name =~ /^collection-/));
     my $all_included = 1;
     foreach my $this_included_genome_db (@{$this_species_set->genome_dbs}) {
       if (!defined($these_genome_dbs->{$this_included_genome_db->dbID})) {
