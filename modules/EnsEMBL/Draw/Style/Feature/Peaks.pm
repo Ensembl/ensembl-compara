@@ -36,6 +36,7 @@ sub draw_feature {
   my ($self, $feature, $position) = @_;
 
   return unless ($feature->{'colour'});
+  my $total_height = $position->{'height'};
 
   ## Set parameters
   my $x = $feature->{'start'};
@@ -71,28 +72,31 @@ sub draw_feature {
   my $length    = $self->image_config->container_width;
   my $midpoint  = $feature->{'midpoint'};
   if ($length <= 20000 && $midpoint && $self->track_config->get('display_summit')) {
-      $midpoint -= $self->track_config->get('slice_start');
-      my $h = $position->{'height'};
-      my $y = $position->{'y'};
+    $midpoint -= $self->track_config->get('slice_start');
+    my $h   = $position->{'height'};
+    my $y   = $position->{'y'};
+    my $th  = 4;
 
-      if ($midpoint > 0 && $midpoint < $length) {
-        push @{$self->glyphs}, $self->Triangle({ # Upward pointing triangle
+    if ($midpoint > 0 && $midpoint < $length) {
+      push @{$self->glyphs}, $self->Triangle({ # Upward pointing triangle
           width     => 4 / $self->{'pix_per_bp'},
-          height    => 4,
+          height    => $th,
           direction => 'up',
           mid_point => [ $midpoint, $h + $y ],
           colour    => 'black',
           absolutey => 1,
-        }), $self->Triangle({ # Downward pointing triangle
+      }), $self->Triangle({ # Downward pointing triangle
           width     => 4 / $self->{'pix_per_bp'},
-          height    => 4,
+          height    => $th,
           direction => 'down',
           mid_point => [ $midpoint, $h + $y - 9 ],
           colour    => 'black',
           absolutey => 1,
-        });
-      }
+      });
+      $total_height += ($th * 2);
     }
+  }
+  return $total_height;
 }
 
 1;
