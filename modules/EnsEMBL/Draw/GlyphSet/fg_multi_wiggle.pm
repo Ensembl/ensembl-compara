@@ -159,7 +159,7 @@ sub draw_aggregate {
         }
 
         ## Finally add the popup menu
-        if (!$more) {
+        if ($more) {
           my $colour_legend = ($_ =~ /Graph/) ? $self->_colour_legend($subset) : {};
           $header->draw_sublegend({
                                     label           => $more,
