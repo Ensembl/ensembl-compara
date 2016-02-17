@@ -70,6 +70,12 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
+            $self->o('collection') ?
+                ('curr_core_dbs_locs'=>undef,
+                    'curr_core_sources_locs'=> undef) :
+                ('curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
+                    'curr_core_sources_locs'=> ''),
+
 	    'default_chunks' => {
 			     #human. Use soft-masking when aligning with other primates
 			     'reference'   => {'chunk_size' => 30000000,
