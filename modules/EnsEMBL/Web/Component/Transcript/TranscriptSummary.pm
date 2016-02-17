@@ -52,7 +52,7 @@ sub content {
       $incomplete->{$attrib_type}=1;
     }
   }
-  my $html         = "<strong>Exons:</strong> $exons <strong>Coding exons:</strong> $coding_exons <strong>Transcript length:</strong> $basepairs bps";
+  my $html         = "<strong>Exons:</strong> $exons, <strong>Coding exons:</strong> $coding_exons, <strong>Transcript length:</strong> $basepairs bps,";
   $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
 
   $table->add_row('Statistics', $html);
@@ -146,7 +146,7 @@ sub content {
   my $trans_spliced_transcript_info = $object->get_trans_spliced_transcript_info;
   $table->add_row('Trans-spliced' , sprintf('This is a %s transcript', $self->helptip('trans-spliced', $trans_spliced_transcript_info->description))) if $trans_spliced_transcript_info;
 
-  
+
   ## add stop gained/lost variation info
   my @attrib_codes = qw(StopLost StopGained);
   my $codons;
@@ -172,7 +172,7 @@ sub content {
         v       => $id,
       });
 
-      my $id_link = qq{<a href="$link">$id</a>}; 
+      my $id_link = qq{<a href="$link">$id</a>};
 
       if ($code eq 'StopLost') {
         $description = "This transcript has a variant, $id_link, that causes a stop codon to be lost in at least 10% of HapMap or 1000 Genome population(s) $population_string.";
@@ -216,4 +216,3 @@ sub content {
 }
 
 1;
-
