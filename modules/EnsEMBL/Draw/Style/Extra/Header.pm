@@ -35,9 +35,9 @@ sub draw_margin_subhead {
 ### Draws a subheader in the lefthand margin, e.g. regulatory features
   my ($self, $text, $tracks_on) = @_;
 
-  my $height = $self->_draw_track_name($text, 'black', -118, undef);
+  my $height = $self->_draw_name($text, 'black', -118, undef);
   if ($tracks_on) {
-    $height += $self->_draw_track_name($tracks_on, 'grey40', -118, 0);
+    $height += $self->_draw_name($tracks_on, 'grey40', -118, 0);
   } else {
     $height += $self->_draw_space_glyph;
   }
@@ -46,11 +46,9 @@ sub draw_margin_subhead {
 
 sub draw_margin_sublabels {
   my ($self, $track) = @_;
-  my $track_height = $self->track_config->get('label_y_offset');
 
   foreach my $s (@$track) {
-    my $offset = $self->_offset($track_height);
-    $self->_draw_track_name($s->{'metadata'}{'sublabel'}, $s->{'metadata'}{'colour'}, -118, $offset);
+    $self->_draw_name($s->{'metadata'}{'sublabel'}, $s->{'metadata'}{'colour'}, -118);
   }
 }
 
@@ -61,7 +59,7 @@ sub draw_sublegend {
   $self->_draw_sublegend_box($args,$zmenu);
 }
 
-sub _draw_track_name {
+sub _draw_name {
   ### Draws the name of the predicted features track
   ### @param arrayref of Feature objects
   ### @param colour of the track
@@ -84,7 +82,9 @@ sub _draw_track_name {
     last if ($res_analysis[2] < -$x_offset);
     $name = substr($name, 0, -1);
   }
-
+  my $text_height  = $res_analysis[3];
+  
+  ## Fix colour
   if ($colour) {
     $colour = $self->make_readable($colour);
   }
@@ -95,10 +95,10 @@ sub _draw_track_name {
   push @{$self->glyphs}, $self->Text({
                                       x         => $x,
                                       y         => $y,
-                                      height    => $res_analysis[3],
+                                      height    => $text_height,
                                       width     => $res_analysis[2],
                                       halign    => 'left',
-                                      valign    => 'bottom',
+                                      valign    => 'middle',
                                       text      => $name,
                                       colour    => $colour,
                                       absolutey => 1,
@@ -106,9 +106,12 @@ sub _draw_track_name {
                                       %font_details,
                                     });
 
-  $self->_offset($res_analysis[3]) unless $no_offset;
+  ## Make sure this label is the same overall height as the feature
+  my $feature_height = $self->track_config->get('real_feature_height') || 0;
+  my $offset = $feature_height > $text_height ? $feature_height : $text_height;
+  $self->_offset($offset) unless $no_offset;
 
-  return $res_analysis[3] + 4;
+  return $offset;
 }
 
 sub _draw_space_glyph {
