@@ -77,7 +77,7 @@ sub get_data {
 
   } else {
     #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
+    warn "!!! $self: ERROR FETCHING DATA FOR FILE ".$self->my_config('caption')." (BIGWIG FORMAT)";
   }
   #$self->{'config'}->add_to_legend($legend);
 
@@ -89,7 +89,7 @@ sub _fetch_data {
   my ($self, $bins, $url) = @_;
   $bins ||= $self->bins;
 
-  return $self->{'_cache'}{'data'} if $self->{'_cache'}{'data'};
+  #return $self->{'_cache'}{'data'} if $self->{'_cache'}{'data'};
  
   my $hub       = $self->{'config'}->hub;
   $url          ||= $self->my_config('url');
@@ -106,7 +106,7 @@ sub _fetch_data {
       $url = $paths->[-1];
     }
   }
-  return unless $url;
+  return [] unless $url;
 
   my $slice     = $self->{'container'};
   my $args      = { 'options' => {
