@@ -145,8 +145,8 @@ sub create_glyphs {
       $real_height     += $vspacing + $add_labels;
       ## Add this feature to the total height of the subtrack
       $subtrack_height += $real_height;
-      #warn ">>> REAL HEIGHT $real_height";
-      #warn "... SUBTRACK HEIGHT $subtrack_height";
+      ## Set the height of the track, in case we want anything in the lefthand margin
+      $track_config->set('real_feature_height', $real_height);
   
       ## Optional label
       if ($show_label) {
@@ -165,16 +165,12 @@ sub create_glyphs {
                     };
         $self->add_label($feature, $position);
         $real_height += $text_info->{'height'};
-        ## Set the height of the track, in case we want anything in the lefthand margin
-        #$track_config->set('label_y_offset', $real_height);
       }
     }
     $self->add_messages($subtrack->{'metadata'}, $subtrack_height);
 
-    #warn "@@@ Y OFFSET $subtrack_start"; 
     $subtrack_start += $subtrack_height;
     $total_height   += $subtrack_height;
-    #warn "... Y OFFSET $subtrack_start"; 
   }
   $self->draw_hidden_bgd($total_height);
 
