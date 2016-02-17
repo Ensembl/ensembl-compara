@@ -116,7 +116,6 @@ sub draw_aggregate {
       my ($data_method, $feature_type, $count_header, $sublabels, $more, $message_text);
 
       if ($_ =~ /Feature/) {
-        $data_method    = 'get_blocks';
         $feature_type   = 'block_features';
         $more           = 'More';
         $message_text   = 'peaks';
@@ -124,7 +123,6 @@ sub draw_aggregate {
         $sublabels      = 1;
       }
       else {
-        $data_method    = 'get_wiggle';
         $feature_type   = 'wiggle_features';
         $more           = 'Legend & More';
         $message_text   = 'wiggle';
@@ -132,7 +130,8 @@ sub draw_aggregate {
       
       if ($data->{$set}{$feature_type}) {
 
-        my $subset  = $self->$data_method($data->{$set}{$feature_type}, $args);
+        $args->{'feature_type'} = $feature_type;
+        my $subset  = $self->get_features($data->{$set}{$feature_type}, $args);
 
         ## Prepare to draw any headers/labels in lefthand column
         my $header = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
@@ -160,7 +159,7 @@ sub draw_aggregate {
 
         ## Finally add the popup menu
         if ($more) {
-          my $colour_legend = ($_ =~ /Graph/) ? $self->_colour_legend($subset) : {};
+          my $colour_legend = $feature_type eq 'wiggle_features' ? $self->_colour_legend($subset) : {};
           $header->draw_sublegend({
                                     label           => $more,
                                     title           => $label,
@@ -201,73 +200,67 @@ sub _block_zmenu {
   });
 }
 
-sub get_blocks {
+sub get_features {
   my ($self, $dataset, $args) = @_;
 
-  my @data;
+  my $data = [];
+
   foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
-    my $data = {'metadata' => {},
-                'features' => [],
-                };
+    my $subtrack = {'metadata' => {},
+                    'features' => [],
+                    };
+
     my @temp          = split /:/, $f_set;
     pop @temp;
     my $feature_name  = pop @temp;
+
+    my $colour        = $args->{'colours'}{$feature_name};
+    $subtrack->{'metadata'}{'colour'} = $colour;
+
+    my $label         = $feature_name;
     my $cell_line     = join(':',@temp);
-    my $colour        = $args->{'colours'}{$feature_name};
+    $label           .= ' '.$cell_line if $args->{'is_multi'};
+    $subtrack->{'metadata'}{'sublabel'} = $label;
 
-    my $label = $feature_name;
-    $label   .= ' '.$cell_line if $args->{'is_multi'};
+    if ($args->{'feature_type'} eq 'block_features') {
+      $subtrack->{'metadata'}{'feature_height'} = 8;
+      my $features      = $dataset->{$f_set};
+      foreach my $f (@$features) {
+        ## Create motif features
+        my $structure = [];
+        my @loci = @{$f->get_underlying_structure};
+        my $end  = pop @loci;
+        my ($start, @mf_loci) = @loci;
 
-    my $features      = $dataset->{$f_set};
-    foreach my $f (@$features) {
-      ## Create motif features
-      my $structure = [];
-      my @loci = @{$f->get_underlying_structure};
-      my $end  = pop @loci;
-      my ($start, @mf_loci) = @loci;
+        while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
+          push @$structure, {'start' => $mf_start, 'end' => $mf_end};
+        }
 
-      while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
-        push @$structure, {'start' => $mf_start, 'end' => $mf_end};
+        my $hash = {
+                    start     => $f->start,
+                    end       => $f->end,
+                    midpoint  => $f->summit,
+                    structure => $structure, 
+                    label     => $label,
+                    href      => $self->_block_zmenu($f),
+                    };
+        push @{$subtrack->{'features'}}, $hash; 
       }
-
-      my $hash = {
-                  start     => $f->start,
-                  end       => $f->end,
-                  midpoint  => $f->summit,
-                  structure => $structure, 
-                  label     => $label,
-                  href      => $self->_block_zmenu($f),
-                  };
-      push @{$data->{'features'}}, $hash; 
     }
-    $data->{'metadata'}{'sublabel'} = $label;
-    $data->{'metadata'}{'colour'} = $colour;
-    $data->{'metadata'}{'feature_height'} = 8;
-    push @data,$data;
+    elsif ($args->{'feature_type'} eq 'wiggle_features') {
+      my $bins                    = $self->bins;
+      my $url                     = $dataset->{$f_set};
+      my $wiggle                  = $self->get_data($bins, $url);
+      $subtrack->{'features'}     = $wiggle->[0]{'features'}{1};
+
+      my %metadata                = %{$subtrack->{'metadata'}};
+      my %from_file               = %{$wiggle->[0]{'metadata'}||{}};
+      @metadata{keys %from_file}  = values %from_file; 
+      $subtrack->{'metadata'}     = \%metadata;
+    }
+    push @$data, $subtrack;
   }
-
-  return \@data;
-}
-
-sub get_wiggle {
-  my ($self,$dataset,$args) = @_;
-
-  my $bins = $self->bins;
-  my @data;
-  foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
-    my $url = $dataset->{$f_set};
-    my $data = $self->get_data($bins,$url);
-    push @data,{
-      metadata => $data->[0]{'metadata'},
-      features => $data->[0]{'features'}{1},
-    };
-    my @temp          = split /:/, $f_set;
-    pop @temp;
-    my $feature_name  = pop @temp;
-    my $colour        = $args->{'colours'}{$feature_name};
-    $data[-1]->{'metadata'}{'colour'} = $colour;
-  }
-  return \@data;
+  return $data; 
 }
 
 sub get_colours {
