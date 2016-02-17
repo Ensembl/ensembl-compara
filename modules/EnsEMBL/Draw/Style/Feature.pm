@@ -66,20 +66,21 @@ sub create_glyphs {
   my $vspacing        = defined($track_config->get('vspacing')) ? $track_config->get('vspacing') : 4;
   ## In case the file contains multiple tracks, start each subtrack below the previous one
   my $y_start         = $track_config->get('y_start') || 0;
+  my $subtrack_start  = $y_start;
   my $show_label      = 0;
   my $label_height    = 0;
   my $total_height    = 0;
 
   ## Strand settings
   foreach my $subtrack (@$data) {
-    my $subtrack_offset = $subtrack->{'metadata'}{'y'} || 0;
+    my $subtrack_height = 0;
+
     ## Draw title over track
     if ($track_config->get('show_subtitle')) {
       $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
     }
 
     foreach my $feature (@{$subtrack->{'features'}||[]}) {
-
       ## Are we drawing transcripts or just genes?
       next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
       next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
@@ -109,8 +110,8 @@ sub create_glyphs {
       next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
       ## Work out where to place the feature
-      my $feature_height  = $subtrack->{'metadata'}{'feature_height'} || $track_config->get('height') || $text_info->{'height'};
-      $label_height    = $show_label ? $text_info->{'height'} : 0;
+      my $feature_height  = $track_config->get('height') || $text_info->{'height'};
+      $label_height       = $show_label ? $text_info->{'height'} : 0;
 
       my $feature_width   = $feature->{'end'} - $feature->{'start'};
 
@@ -130,9 +131,7 @@ sub create_glyphs {
 
       my $labels_height   = $label_row * $label_height;
       my $add_labels      = (!$bumped || $bumped eq 'labels_only') ? 0 : $labels_height;
-      my $y               = $y_start + ($feature_row * ($feature_height + $vspacing)) + $add_labels + $subtrack_offset;
-      $total_height       = $feature_height + $vspacing + $add_labels + $subtrack_offset;
-      $total_height       = $y if $y > $total_height; 
+      my $y               = $subtrack_start + ($feature_row * ($feature_height + $vspacing)) + $add_labels;
 
       my $position  = {
                       'y'           => $y,
@@ -140,8 +139,14 @@ sub create_glyphs {
                       'height'      => $feature_height,
                       'image_width' => $slice_width,
                       };
-
-      $self->draw_feature($feature, $position);
+      
+      ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
+      my $real_height   = $self->draw_feature($feature, $position) || $feature_height;
+      $real_height     += $vspacing + $add_labels;
+      ## Add this feature to the total height of the subtrack
+      $subtrack_height += $real_height;
+      #warn ">>> REAL HEIGHT $real_height";
+      #warn "... SUBTRACK HEIGHT $subtrack_height";
   
       ## Optional label
       if ($show_label) {
@@ -149,7 +154,7 @@ sub create_glyphs {
           $new_y = $position->{'y'};
         }
         else {
-          $new_y = $position->{'y'} + $feature_height;
+          $new_y = $position->{'y'} + $real_height;
           $new_y += $labels_height if ($bumped eq 'labels_only');
         }
         $position = {
@@ -159,12 +164,17 @@ sub create_glyphs {
                       'image_width' => $slice_width,
                     };
         $self->add_label($feature, $position);
-        $total_height = $new_y if $new_y > $total_height;
+        $real_height += $text_info->{'height'};
+        ## Set the height of the track, in case we want anything in the lefthand margin
+        #$track_config->set('label_y_offset', $real_height);
       }
     }
-    ## Add label height if last feature had a label
-    $total_height += $label_height if $show_label;
-    $self->add_messages($subtrack->{'metadata'}, $total_height);
+    $self->add_messages($subtrack->{'metadata'}, $subtrack_height);
+
+    #warn "@@@ Y OFFSET $subtrack_start"; 
+    $subtrack_start += $subtrack_height;
+    $total_height   += $subtrack_height;
+    #warn "... Y OFFSET $subtrack_start"; 
   }
   $self->draw_hidden_bgd($total_height);
 
