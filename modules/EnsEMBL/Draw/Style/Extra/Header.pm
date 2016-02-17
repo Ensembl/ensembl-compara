@@ -35,22 +35,30 @@ sub draw_margin_subhead {
 ### Draws a subheader in the lefthand margin, e.g. regulatory features
   my ($self, $text, $tracks_on) = @_;
 
-  $self->_draw_track_name($text, 'black', -118, undef);
+  my $height = $self->_draw_track_name($text, 'black', -118, undef);
   if ($tracks_on) {
-    $self->_draw_track_name($tracks_on, 'grey40', -118, 0);
+    $height += $self->_draw_track_name($tracks_on, 'grey40', -118, 0);
   } else {
-    $self->_draw_space_glyph;
+    $height += $self->_draw_space_glyph;
   }
+  return $height;
 }
 
 sub draw_margin_sublabels {
-  my ($self,$track) = @_;
+  my ($self, $track) = @_;
+  my $track_height = $self->track_config->get('label_y_offset');
 
   foreach my $s (@$track) {
-    $s->{'metadata'}{'y'} = $self->_offset;
-    $self->_draw_track_name($s->{'metadata'}{'sublabel'}||'',$s->{'metadata'}{'colour'},-118,0);
-    $s->{'metadata'}{'height'} = $self->_offset - $s->{'metadata'}{'y'};
+    my $offset = $self->_offset($track_height);
+    $self->_draw_track_name($s->{'metadata'}{'sublabel'}, $s->{'metadata'}{'colour'}, -118, $offset);
   }
+}
+
+sub draw_sublegend {
+  my ($self,$args) = @_;
+
+  my $zmenu = $self->_sublegend_zmenu($args);
+  $self->_draw_sublegend_box($args,$zmenu);
 }
 
 sub _draw_track_name {
@@ -59,6 +67,9 @@ sub _draw_track_name {
   ### @param colour of the track
   ### @return 1
   my ($self, $name, $colour, $x_offset, $y_offset, $no_offset) = @_;
+  $name ||= '';
+  $colour ||= 'black';
+
   my $x  = $x_offset || 1;
   my $y  = $self->_offset;
   $y    += $y_offset if $y_offset;
@@ -97,7 +108,7 @@ sub _draw_track_name {
 
   $self->_offset($res_analysis[3]) unless $no_offset;
 
-  return 1;
+  return $res_analysis[3] + 4;
 }
 
 sub _draw_space_glyph {
@@ -118,6 +129,7 @@ sub _draw_space_glyph {
                                       });
 
   $self->_offset($space);
+  return $space;
 }
 
 sub _sublegend_zmenu_text {
@@ -186,13 +198,6 @@ sub _draw_sublegend_box {
     absolutey => 1,
   });
   return $height;
-}
-
-sub draw_sublegend {
-  my ($self,$args) = @_;
-
-  my $zmenu = $self->_sublegend_zmenu($args);
-  $self->_draw_sublegend_box($args,$zmenu);
 }
 
 sub _offset {
