@@ -34,6 +34,7 @@ sub render_compact {
   warn ">>> RENDERING PEAKS";
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks']);
   $self->{'my_config'}->set('height', 8);
+  $self->{'my_config'}->set('vspacing', 0);
   $self->{'my_config'}->set('hide_subtitle',1);
   $self->_render_aggregate;
 }
@@ -52,6 +53,7 @@ sub render_signal_feature {
   warn ">>> RENDERING PEAKS WITH SIGNAL";
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks', 'Graph']);
   $self->{'my_config'}->set('height', 60);
+  $self->{'my_config'}->set('vspacing', 0);
   $self->{'my_config'}->set('hide_subtitle',1);
   $self->_render_aggregate;
 }
@@ -99,7 +101,7 @@ sub draw_aggregate {
   my $args = {
               'label'     => $label, 
               'colours'   => $colours, 
-              'is_multi'  => !!$cell_line eq 'MultiCell',
+              'is_multi'  => $cell_line eq 'MultiCell' ? 1 : 0,
               };
 
   my $data    = $self->data_by_cell_line($cell_line);
@@ -111,67 +113,66 @@ sub draw_aggregate {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
     my $any_on = scalar keys %{$data->{'on'}};
     if ($self->dynamic_use($style_class)) {
-      my $subset;
+      my ($data_method, $feature_type, $count_header, $sublabels, $more, $message_text);
+
       if ($_ =~ /Feature/) {
-        if ($data->{$set}{'block_features'}) {
+        $data_method    = 'get_blocks';
+        $feature_type   = 'block_features';
+        $more           = 'More';
+        $message_text   = 'peaks';
+        $count_header   = 1;
+        $sublabels      = 1;
+      }
+      else {
+        $data_method    = 'get_wiggle';
+        $feature_type   = 'wiggle_features';
+        $more           = 'Legend & More';
+        $message_text   = 'wiggle';
+      }
+      
+      if ($data->{$set}{$feature_type}) {
+
+        my $subset  = $self->$data_method($data->{$set}{$feature_type}, $args);
+
+        ## Prepare to draw any headers/labels in lefthand column
+        my $header = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
+
+        if ($count_header) {
           ## Add a summary title in the lefthand margin
           my $label     = $self->my_config('label');
           my $tracks_on = $data->{$set}{'on'} 
                     ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) 
                     : '';
+          my $subhead_height  = $header->draw_margin_subhead($label, $tracks_on);
+          ## Push features down a bit, so their labels don't overlap this header
+          my $y_start = $self->{'my_config'}->get('y_start');
+          $self->{'my_config'}->set('y_start', $y_start + $subhead_height);
+        }
+        
+        ## Draw the features next, so we know where to put the labels in the margin
+        my $style   = $style_class->new(\%config, $subset);
+        $self->push($style->create_glyphs);
 
-          my $label_style = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
- 
-          ## Only add the extra zmenu stuff if we're not drawing a wiggle
-          $subset = $self->get_blocks($data->{$set}{'block_features'}, $args);
-          $label_style->draw_margin_subhead($label, $tracks_on);
-          $label_style->draw_margin_sublabels($subset);
-          my $colour_legend = $self->_colour_legend($subset);
-          my $hub = $self->{'config'}->hub;
-          my $cell_type_url = $hub->url('Component', {
-            action   => 'Web',
-            function    => 'CellTypeSelector/ajax',
-            image_config => $self->{'config'}->type,
-          });
-          my $evidence_url = $hub->url('Component', {
-            action => 'Web',
-            function => 'EvidenceSelector/ajax',
-            image_config => $self->{'config'}->type,
-          });
-          $label_style->draw_sublegend({
-            label => "Legend & more",
-            title => $label,
-            colour_legend => $colour_legend,
-            sublegend_links => [
-              {
-                text => 'Select other cell types',
-                href => $cell_type_url,
-                class => 'modal_link',
-              },{
-                text => 'Select evidence to show',
-                href => $evidence_url,
-                class => 'modal_link',
-              },
-            ],
-          });
-          $top = $subset->[-1]{'metadata'}{'y'} + $subset->[-1]{'metadata'}{'height'} if @$subset;
-          $self->push(@{$label_style->glyphs||[]});
+        if ($sublabels) {
+          ## Label each subtrack in the margin
+          $header->draw_margin_sublabels($subset);
         }
-        else {
-          $self->display_error_message($cell_line, $set, 'peaks') if $any_on;
-        }
+
+        ## Finally add the popup menu
+        if (!$more) {
+          my $colour_legend = ($_ =~ /Graph/) ? $self->_colour_legend($subset) : {};
+          $header->draw_sublegend({
+                                    label           => $more,
+                                    title           => $label,
+                                    colour_legend   => $colour_legend,
+                                    sublegend_links => $self->_sublegend_links,
+                                  });
+        } 
+        $self->push(@{$header->glyphs||[]});
       }
       else {
-        if ($data->{$set}{'wiggle_features'}) {
-          $subset = $self->get_wiggle($data->{$set}{'wiggle_features'}, $args);
-          $_->{'metadata'}{'y'} = $top for @$subset;
-        }
-        else {
-          $self->display_error_message($cell_line, $set, 'wiggle') if $any_on;
-        }
+        $self->display_error_message($cell_line, $set, $message_text) if $any_on;
       }
-      my $style = $style_class->new(\%config, $subset);
-      $self->push($style->create_glyphs);
     }
   }
 
@@ -214,8 +215,8 @@ sub get_blocks {
     my $cell_line     = join(':',@temp);
     my $colour        = $args->{'colours'}{$feature_name};
 
-    my $label         = $feature_name;
-    $label            = "$feature_name $cell_line" if $args->{'is_multi'};
+    my $label = $feature_name;
+    $label   .= ' '.$cell_line if $args->{'is_multi'};
 
     my $features      = $dataset->{$f_set};
     foreach my $f (@$features) {
@@ -323,8 +324,32 @@ sub get_colours {
   return \%feature_colours;
 }
 
-sub _add_sublegend {
+sub _sublegend_links {
+  my $self = shift;
+ 
+  my $hub = $self->{'config'}->hub;
+  my $cell_type_url = $hub->url('Component', {
+            action   => 'Web',
+            function    => 'CellTypeSelector/ajax',
+            image_config => $self->{'config'}->type,
+  });
+  my $evidence_url = $hub->url('Component', {
+            action => 'Web',
+            function => 'EvidenceSelector/ajax',
+            image_config => $self->{'config'}->type,
+  });
 
+  return [
+          {
+            text => 'Select other cell types',
+            href => $cell_type_url,
+            class => 'modal_link',
+          },{
+            text => 'Select evidence to show',
+            href => $evidence_url,
+            class => 'modal_link',
+          },
+        ];
 }
 
 ## Custom render methods
