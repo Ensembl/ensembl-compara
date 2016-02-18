@@ -298,6 +298,10 @@ if ($pairwise) {
     push @new_input_genome_db_ids, [$gdb_id]
   }
 } else {
+  if (!@input_genome_db_ids) {
+    my @genome_dbs = ask_for_genome_dbs($compara_dba);
+    @input_genome_db_ids = map {$_->dbID} @genome_dbs;
+  }
   push @new_input_genome_db_ids, \@input_genome_db_ids;
 }
 
@@ -308,11 +312,6 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     $species_set_name = undef;
   }
 
-  if (!@$genome_db_ids) {
-    my @genome_dbs = ask_for_genome_dbs($compara_dba);
-    $genome_db_ids = [ map {$_->dbID} @genome_dbs ];
-  }
-  
   my $auto_species_set_name = "";
   foreach my $this_genome_db_id (@{$genome_db_ids}) {
     my $gdb = $gdba->fetch_by_dbID($this_genome_db_id) || die( "Cannot fetch_by_dbID genome_db $this_genome_db_id" );
