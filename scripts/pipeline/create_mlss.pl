@@ -237,7 +237,7 @@ if (!$method_link_type) {
 my $method = $ma->fetch_by_type($method_link_type);
 if (not $method) {
     if (not $method_link_class) {
-        die "The method '$method_link_type' could not be found in the database, and --class was mmitted. I don't know how to create the new method !\n";
+        die "The method '$method_link_type' could not be found in the database, and --class was ommitted. I don't know how to create the new method !\n";
     }
     $method = Bio::EnsEMBL::Compara::Method->new( -TYPE => $method_link_type, -CLASS => $method_link_class );
 }
