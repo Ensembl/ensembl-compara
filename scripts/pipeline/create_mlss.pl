@@ -274,8 +274,8 @@ if (!$source) {
   }
 }
 
-my @new_input_genome_db_ids;
 if ($pairwise) {
+
   # Only makes sense for GenomicAlignBlock.pairwise_alignment,
   # SyntenyRegion.synteny and Homology.homology
   my $this_class = $method->class;
@@ -284,10 +284,12 @@ if ($pairwise) {
 
   while (my $gdb_id1 = shift @input_genome_db_ids) {
     foreach my $gdb_id2 (@input_genome_db_ids) {
-      push @new_input_genome_db_ids, [$gdb_id1, $gdb_id2]
+      create_mlss( [$gdb_id1, $gdb_id2] );
     }
   }
+
 } elsif ($singleton) {
+
   # Only makes sense for GenomicAlignBlock.pairwise_alignment,
   # SyntenyRegion.synteny and Homology.homology
   my $this_class = $method->class;
@@ -295,79 +297,40 @@ if ($pairwise) {
   die "The --sg option only makes sense for these method_link_classes, not for $this_class.\n" unless $valid_classes{$this_class};
 
   foreach my $gdb_id (@input_genome_db_ids) {
-    push @new_input_genome_db_ids, [$gdb_id]
+    create_mlss( [$gdb_id] );
   }
+
 } else {
+
   if (!@input_genome_db_ids) {
     my @genome_dbs = ask_for_genome_dbs($compara_dba);
     @input_genome_db_ids = map {$_->dbID} @genome_dbs;
   }
-  push @new_input_genome_db_ids, \@input_genome_db_ids;
+
+  create_mlss( \@input_genome_db_ids, $name, $species_set_name || $collection );
 }
 
-foreach my $genome_db_ids (@new_input_genome_db_ids) {
 
-  if ($pairwise || $singleton) {
-    $name = undef;
-    $species_set_name = undef;
-  }
+sub create_mlss {
+  my ($genome_db_ids, $desired_mlss_name, $desired_ss_name) = @_;
 
-  my $auto_species_set_name = "";
+  ## Get the Bio::EnsEMBL::Compara::GenomeDB
+  my $all_genome_dbs;
   foreach my $this_genome_db_id (@{$genome_db_ids}) {
-    my $gdb = $gdba->fetch_by_dbID($this_genome_db_id) || die( "Cannot fetch_by_dbID genome_db $this_genome_db_id" );
-    my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
-    $species_name =~ s/\b(\w)/\U$1/g;
-    $species_name =~ s/(\S)\S+\_/$1\./;
-    $species_name = substr($species_name, 0, 5);
-    $auto_species_set_name .= $species_name."-";
-  }
-  $auto_species_set_name =~ s/\-$//;
-
-  if (!$name) {
-    if ($method_link_type eq "FAMILY") {
-      $name = "families";
-    } elsif ($method_link_type eq "MLAGAN") {
-      $name = scalar(@{$genome_db_ids})." species MLAGAN";
-    } else {
-      if($use_genomedb_ids) {
-        $name = join('-',@{$genome_db_ids});
-      }
-      else {
-        $name = $auto_species_set_name;
-      }
-      $name =~ s/\-$//;
-      $name .= " $ml_type";
-      if ($method_link_type eq "BLASTZ_NET" || $method_link_type eq "LASTZ_NET") {
-        if ($name =~ /H\.sap/) {
-          $name .= " (on H.sap)";
-        } elsif ($name =~ /M\.mus/) {
-          $name .= " (on M.mus)";
-        }
-      }
+    my $this_genome_db = $gdba->fetch_by_dbID($this_genome_db_id);
+    if (!UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB")) {
+      throw("Cannot get any Bio::EnsEMBL::Compara::GenomeDB using dbID #$this_genome_db_id");
     }
-    unless ($force) {
-      $name = prompt("Set the name for this MethodLinkSpeciesSet", $name);
-    }
+    push(@$all_genome_dbs, $this_genome_db);
   }
 
-  if (!defined $species_set_name) {
-      unless ($force) {
-          $species_set_name = prompt("Set the value for this species_set name []");
-      }
-      if (not $species_set_name) {
-        if (scalar(@{$genome_db_ids}) >= 3) {
-          $species_set_name = "collection-$collection" if $collection;
-          die "A species-set name must be given if the set contains 3 or more species.\n" unless $species_set_name;
-        } else {
-          $species_set_name = $auto_species_set_name;
-        }
-      }
+  # Simple check to allow running create_mlss for homoeologues on the whole
+  # collection
+  if (($method_link_type eq 'ENSEMBL_HOMOEOLOGUES') and (grep {not $_->is_polyploid} @$all_genome_dbs)) {
+    print "Skipping this MLSS because ENSEMBL_HOMOEOLOGUES only applies to polyploid species\n";
+    return;
   }
 
-  ##
-  #################################################
-  
-  #################################################
   ## Check if the MethodLinkSpeciesSet already exists
   my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($method_link_type, $genome_db_ids, 1);
   if ($mlss) {
@@ -378,38 +341,65 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     print "  URL: ", $mlss->url, "\n";
     print "  SpeciesSet name: ".($mlss->species_set_obj->name)."\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
-    $name = undef if ($pairwise || $singleton);
-    next;
-#    exit(0);
+    return;
   }
-  ##
-  #################################################
-  
-  #################################################
-  ## Get the Bio::EnsEMBL::Compara::GenomeDB
-  my $all_genome_dbs;
-  foreach my $this_genome_db_id (@{$genome_db_ids}) {
-    my $this_genome_db = $gdba->fetch_by_dbID($this_genome_db_id);
-    if (!UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB")) {
-      throw("Cannot get any Bio::EnsEMBL::Compara::GenomeDB using dbID #$this_genome_db_id");
+
+  ## Check if the SpeciesSet already exists
+  my $species_set = $ssa->fetch_by_GenomeDBs($all_genome_dbs);
+  if (!$species_set) {
+    my $ss_name = $desired_ss_name;
+    if (!$ss_name) {
+      my @individual_names;
+      if ($use_genomedb_ids) {
+        @individual_names = @{$genome_db_ids};
+      } else {
+        foreach my $this_genome_db_id (@{$genome_db_ids}) {
+          my $gdb = $gdba->fetch_by_dbID($this_genome_db_id) || die( "Cannot fetch_by_dbID genome_db $this_genome_db_id" );
+          my $species_name = $gdb->name;
+          $species_name =~ s/\b(\w)/\U$1/g;
+          $species_name =~ s/(\S)\S+\_/$1\./;
+          $species_name = substr($species_name, 0, 5);
+          push @individual_names, $species_name;
+        }
+      }
+      $ss_name = join('-', @individual_names);
     }
-    push(@$all_genome_dbs, $this_genome_db);
+    unless ($force) {
+      $ss_name = prompt("Set the value for this species_set name []", $ss_name);
+      die "Species-sets must have a name.\n" unless $ss_name;
+    }
+    $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
+        -GENOME_DBS => $all_genome_dbs
+        -NAME => $ss_name,
+    );
   }
-  ##
-  #################################################
-  # Simple check to allow running create_mlss for homoeologues on the whole
-  # collection
-  if (($method_link_type eq 'ENSEMBL_HOMOEOLOGUES') and (not $all_genome_dbs->[0]->is_polyploid)) {
-    print "Skipping this MLSS because ENSEMBL_HOMOEOLOGUES only applies to polyploid species\n";
-    next;
+
+  ## Name the new MLSS
+  my $mlss_name = $desired_mlss_name;
+  if (!$mlss_name) {
+      $mlss_name = $species_set->name." $ml_type";
+      if ($method_link_type eq "BLASTZ_NET" || $method_link_type eq "LASTZ_NET") {
+        if ($mlss_name =~ /H\.sap/) {
+          $mlss_name .= " (on H.sap)";
+        } elsif ($mlss_name =~ /M\.mus/) {
+          $mlss_name .= " (on M.mus)";
+        } elsif ($mlss_name =~ /G\.gal/) {
+          $mlss_name .= " (on G.gal)";
+        } elsif ($mlss_name =~ /D\.rer/) {
+          $mlss_name .= " (on D.rer)";
+        }
+      }
+      unless ($force) {
+        $mlss_name = prompt("Set the name for this MethodLinkSpeciesSet", $mlss_name);
+      }
   }
 
   print "You are about to store the following MethodLinkSpeciesSet\n  $method_link_type: ",
     join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n";
-  print "  Name: $name\n";
+  print "  Name: $mlss_name\n";
   print "  Source: $source\n";
   print "  URL: $url\n";
-  print "  SpeciesSet name: $species_set_name\n";
+  print "  SpeciesSet name: ".($species_set->name)."\n";
   unless ($force) {
     print "\nDo you want to continue? [y/N]? ";
     
@@ -420,12 +410,10 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     }
   }
   
-  my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -name => $species_set_name, -genome_dbs => $all_genome_dbs );
-
   my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
                                                                  -method => $method,
                                                                  -species_set_obj => $species_set,
-                                                                 -name => $name,
+                                                                 -name => $mlss_name,
                                                                  -source => $source,
                                                                  -url => $url);
 
