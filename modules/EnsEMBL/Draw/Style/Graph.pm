@@ -71,12 +71,11 @@ sub create_glyphs {
   $metadata->{'min_score'} =
     min(map { $_->{'metadata'}{'min_score'} } @$data);
 
+  ## Draw any axes, track labels, etc
   my $graph_conf = $self->draw_graph_base($metadata);
+
   foreach my $subtrack (@$data) {
     my $metadata = $subtrack->{'metadata'} || {};
-
-    ## Draw any axes, track labels, etc
-
     my $features = $subtrack->{'features'};
 
     ## Single line? Build into singleton set.
