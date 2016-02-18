@@ -240,6 +240,10 @@ if (not $method) {
     }
     $method = Bio::EnsEMBL::Compara::Method->new( -TYPE => $method_link_type, -CLASS => $method_link_class );
 }
+my $ml_type = lc($method_link_type);
+$ml_type =~ s/ensembl_//;
+$ml_type =~ s/_/\-/g;
+$ml_type = 'families' if $ml_type eq 'family';
 
 if ($collection) {
   my $ss = $ssa->fetch_collection_by_name($collection);
@@ -312,10 +316,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
         $name = $auto_species_set_name;
       }
       $name =~ s/\-$//;
-      my $type = lc($method_link_type);
-      $type =~ s/ensembl_//;
-      $type =~ s/_/\-/g;
-      $name .= " $type";
+      $name .= " $ml_type";
       if ($method_link_type eq "BLASTZ_NET" || $method_link_type eq "LASTZ_NET") {
         if ($name =~ /H\.sap/) {
           $name .= " (on H.sap)";
