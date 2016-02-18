@@ -103,6 +103,8 @@ sub draw_aggregate {
   my $show_wiggle = grep(/Graph/, @{$self->{'my_config'}->get('drawing_style')||[]});
 
   my $top = 0;
+  my $h   = 4;
+
   foreach (@{$self->{'my_config'}->get('drawing_style')||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
     my $any_on = scalar keys %{$data->{'on'}};
@@ -110,7 +112,7 @@ sub draw_aggregate {
       my ($data_method, $feature_type, $count_header, $sublabels, $more, $message_text);
 
       if ($_ =~ /Feature/) {
-        $self->{'my_config'}->set('height', 8);
+        $self->{'my_config'}->set('height', $h * 2);
         $feature_type   = 'block_features';
         $more           = 'More';
         $message_text   = 'peaks';
@@ -118,8 +120,8 @@ sub draw_aggregate {
         $sublabels      = 1;
       }
       else {
-        $self->{'my_config'}->set('height', 60);
-        $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + 4);
+        $self->{'my_config'}->set('height', $h * 15);
+        $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + $h * 3);
         $feature_type   = 'wiggle_features';
         $more           = 'Legend & More';
         $message_text   = 'wiggle';
@@ -133,17 +135,18 @@ sub draw_aggregate {
         ## Prepare to draw any headers/labels in lefthand column
         my $header = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
 
+        ## Add a summary title in the lefthand margin
+        my $label     = $self->my_config('label');
+        my $tracks_on;
         if ($count_header) {
-          ## Add a summary title in the lefthand margin
-          my $label     = $self->my_config('label');
-          my $tracks_on = $data->{$set}{'on'} 
+          $tracks_on = $data->{$set}{'on'} 
                     ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) 
                     : '';
-          my $subhead_height  = $header->draw_margin_subhead($label, $tracks_on);
-          ## Push features down a bit, so their labels don't overlap this header
-          my $y_start = $self->{'my_config'}->get('y_start');
-          $self->{'my_config'}->set('y_start', $y_start + $subhead_height);
         }
+        my $subhead_height  = $header->draw_margin_subhead($label, $tracks_on);
+        ## Push features down a bit, so their labels don't overlap this header
+        my $y_start = $self->{'my_config'}->get('y_start');
+        $self->{'my_config'}->set('y_start', $y_start + $subhead_height);
         
         ## Draw the features next, so we know where to put the labels in the margin
         my $style   = $style_class->new(\%config, $subset);
@@ -166,7 +169,7 @@ sub draw_aggregate {
                           sublegend_links => $self->_sublegend_links,
                           };
             if ($show_blocks && $show_wiggle) {
-              $params->{'initial_offset'} = $self->{'my_config'}->get('initial_offset');
+              $params->{'y_offset'} = $h * 6;
             }
             $header->draw_sublegend($params);
           }
