@@ -6,10 +6,19 @@
 
 =head1 SYNOPSIS
 
+	For two species, find a method_link_species_set_id for an alignment between them
+	Try for an EPO alignment first, LASTZ if not, fail if neither are available
+
 =head1 DESCRIPTION
 
-For two species, find a method link species set ID for an alignment between them
-Try for an EPO alignment first, LASTZ if not, fail if neither are available
+	Inputs:
+	species1_id		genome_db_id from first species
+	species2_id		genome_db_id from second species
+	species_set_id 	id of species set which both species are members of (optional)
+	aln_mlss_id		over-ride runnable entirely by manually defining ID
+
+	Outputs:
+	Dataflow = {species1_id => ID, species2_id => ID, aln_mlss_id => ID}
 
 =cut
 

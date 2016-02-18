@@ -6,7 +6,12 @@
 
 =head1 SYNOPSIS
 
+	Write the threshold for "high quality" orthologs for each mlss_id to method_link_species_set_tag
+
 =head1 DESCRIPTION
+
+	Right now, we're using a static cutoff of 50. This may change.
+	Takes only 'mlss' as an input id
 
 =cut
 
@@ -23,7 +28,7 @@ use Bio::EnsEMBL::Registry;
 
 =head2 write_output
 
-	Description: write avg score to homology table & threshold to mlss_tag
+	Description: write threshold to mlss_tag
 
 =cut
 

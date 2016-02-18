@@ -6,9 +6,17 @@
 
 =head1 SYNOPSIS
 
-	Find and format exon ranges for a given homology_id
+	Find and format the start/end positions for the exons for each member of a given homology_id
 
 =head1 DESCRIPTION
+
+    Input(s):
+    orth_id         homology dbID
+    orth_ranges     formatted hash of start/end positions of homologs (just for passthrough)
+    orth_dnafrags   list of dnafrags included in homologs (just for passthrough)
+
+    Outputs:
+    hash combining all given ortholog info + exon boundaries
 
 =cut
 
@@ -39,9 +47,6 @@ sub write_output {
 		orth_dnafrags => $self->param('orth_dnafrags'),
 		orth_exons    => $self->param('orth_exons'),
     };
-
-    print "dataflow: ";
-    print Dumper $dataflow;
 
     $self->dataflow_output_id( $dataflow, 1 );
 }

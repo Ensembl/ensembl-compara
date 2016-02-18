@@ -6,9 +6,20 @@
 
 =head1 SYNOPSIS
 
+	For a given species set, pair up members and fan out
+
 =head1 DESCRIPTION
 
-For a given species set, pair up members and fan out
+	Inputs:
+	compara_db 		URL to database containing data
+	ref_species		pairs not containing this reference species will be omitted (optional)
+	either:
+		species1 & species2 : names of species of interest
+		collection : name of species_set/collection
+		species_set_id : dbID of species set of interest (usually used where collection name is ambiguous)
+	
+	Output:
+		pairs of genome_db_ids e.g. {species1_id => 150, species2_id => 125} 
 
 =cut
 

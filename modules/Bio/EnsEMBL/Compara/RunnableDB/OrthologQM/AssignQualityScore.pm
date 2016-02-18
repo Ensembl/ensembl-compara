@@ -10,6 +10,13 @@
 
 =head1 DESCRIPTION
 
+	Inputs:
+	{homology_id => score}
+
+	Outputs:
+	No data is dataflowed from this runnable
+	Score is written to homology table of compara_db option
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore;

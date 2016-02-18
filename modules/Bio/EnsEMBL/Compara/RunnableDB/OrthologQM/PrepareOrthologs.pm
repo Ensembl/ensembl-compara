@@ -6,8 +6,21 @@
 
 =head1 SYNOPSIS
 
+	Given two genome_db IDs, fetch and fan out all orthologs that they share.
+	If a previous release database is supplied, only the new/updated orthologs will be dataflown
+
 =head1 DESCRIPTION
 
+	standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs -input_ids "{ species1_id => 150, species2_id => 125 }"
+
+	Inputs:
+		species1_id		genome_db_id
+		species2_id		another genome_db_id
+		alt_homology_db	for use as part of a pipeline - specify an alternate location to read homologies from
+		previous_rel_db		database URL for previous release - when defined, the runnable will only dataflow homologies that have changed since previous release
+
+	Outputs:
+		dataflows homology dbID and start/end positions in a fan
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs;
@@ -33,7 +46,7 @@ sub fetch_input {
 	my $species2_id = $self->param_required('species2_id');
 
 	my $dba;
-	if ( $self->param('alt_aln_db') ) { 
+	if ( $self->param('alt_homology_db') ) { 
 		$dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_homology_db')); 
 	}
 	else { $dba = $self->compara_dba }
@@ -141,6 +154,12 @@ sub _updated_orthologs {
 
 	return \@new_homologs;
 }
+
+=head2 _hash_homologs
+
+	Reformat homology data
+
+=cut
 
 sub _hash_homologs {
 	my ( $self, $hlist ) = @_;

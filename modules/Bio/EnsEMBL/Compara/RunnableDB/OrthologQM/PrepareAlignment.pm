@@ -6,7 +6,29 @@
 
 =head1 SYNOPSIS
 
+	Fetch alignment blocks that connect the species of interest, format and dataflow
+
 =head1 DESCRIPTION
+
+	Inputs:
+	orth_dnafrags	list of dnafrag_ids that cover each member of the homology
+	orth_ranges		(only required for passthrough)
+	orth_id			(only required for passthrough)
+	orth_exons		(only required for passthrough)
+	aln_mlss_id		method_link_species_set_id for the alignment between these spedies
+	alt_aln_db		by default, alignments are fetched from the compara_db parameter.
+					to use a different source, define alt_aln_db with a URL to a DB containing alignments
+	species1_id		genome_db_id of first species  |
+	species2_id		genome_db_id of second species |-> these are only used to limit multiple alignment blocks
+
+	Outputs:
+	Dataflow fan: { 
+			gblock_id => dbID, 
+			gblock_range => [start,end],
+			orth_ranges  => $self->param('orth_ranges'),
+			orth_id      => $self->param('orth_id'),
+			orth_exons   => $self->param('orth_exons'),
+		}
 
 =cut
 
@@ -65,6 +87,7 @@ sub fetch_input {
     foreach my $gblock ( @{$gblocks} ) {
     	foreach my $ga ( @{ $gblock->get_all_GenomicAligns } ) {
 	        my $current_gdb = $ga->genome_db->dbID;
+	        # limit multiple alignment blocks to only the species of interest
 	        next unless ( $current_gdb == $self->param_required( 'species1_id' ) || $current_gdb == $self->param_required( 'species2_id' ) );
 	        $aln_ranges{$gblock->dbID}->{$current_gdb} = [ $ga->dnafrag_start, $ga->dnafrag_end];
 	    }

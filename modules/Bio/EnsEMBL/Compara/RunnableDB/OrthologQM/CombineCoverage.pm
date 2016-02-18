@@ -9,7 +9,21 @@
 	Calculate % alignment coverage over both exons and introns in the homologs
 
 =head1 DESCRIPTION
+	
+	Inputs:
+	orth_ranges		should be hash ref with genome_db_id as key and value of array ref [start, end] positions
+	orth_id			dbID of homology object in question
+	aln_ranges		hash ref defining range of all gblocks hitting the homolog e.g. { gblock1 => { gdb1 => [1,100], gdb2 => [401,450] }, gblock2 => { gdb1 => [801,900], gdb2 => [451,500] } }
+	orth_exons		hash ref defining start/end of all exonic regions e.g. { 123 => [[1,1000]], 150 => [[1,500], [800,900]] }
 
+	From these inputs, the coverage for both members of the homology (exon & intron cov) will be calculated
+	A score combining this information will also be computed
+
+	Outputs:
+	2 dataflows come from this runnable:
+	#1: summary of exon and intron coverage & lens for each member of the homology
+	#2: homology ID and final (averaged) score to write to homology table
+	
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CombineCoverage;
