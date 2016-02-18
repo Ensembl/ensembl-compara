@@ -57,7 +57,7 @@ sub fetch_features {
   }
   
   my $config        = $self->{'config'};
-  my ($feature_set) = grep $_->cell_type->name =~ /$cell_line/, @{$fsa->fetch_all_displayable_by_type('regulatory')};
+  my ($feature_set) = grep $_->cell_type->name =~ /\Q$cell_line\E/, @{$fsa->fetch_all_displayable_by_type('regulatory')};
   my $reg_feats     = $feature_set ? $feature_set->get_Features_by_Slice($self->{'container'}) : [];
   my $rf_url        = $config->hub->param('rf');
   my $counter       = 0;
