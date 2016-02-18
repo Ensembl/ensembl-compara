@@ -57,7 +57,7 @@ sub content {
   ## Hidden fields needed for redirection to image output
   my @extra_params = qw(data_type component g1 anc collapse);
   foreach (@extra_params) {  
-   $fieldset->add_hidden({'name' => $_, 'value' => $hub->param($_)});
+   $fieldset->add_hidden({'name' => $_, 'value' => $hub->param($_) || ''});
   }
 
   foreach my $p ($hub->param) {
