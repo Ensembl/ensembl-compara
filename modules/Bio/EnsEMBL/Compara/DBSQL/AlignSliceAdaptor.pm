@@ -85,6 +85,7 @@ package Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
