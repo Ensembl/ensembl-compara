@@ -31,30 +31,19 @@ sub label { return undef; }
 
 sub render_compact {
   my $self = shift;
-  warn ">>> RENDERING PEAKS";
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks']);
-  $self->{'my_config'}->set('height', 8);
-  $self->{'my_config'}->set('vspacing', 0);
-  $self->{'my_config'}->set('hide_subtitle',1);
   $self->_render_aggregate;
 }
 
 sub render_signal {
   my $self = shift;
-  warn ">>> RENDERING SIGNAL";
   $self->{'my_config'}->set('drawing_style', ['Graph']);
-  $self->{'my_config'}->set('height', 60);
-  $self->{'my_config'}->set('hide_subtitle',1);
   $self->_render_aggregate;
 }
 
 sub render_signal_feature {
   my $self = shift;
-  warn ">>> RENDERING PEAKS WITH SIGNAL";
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks', 'Graph']);
-  $self->{'my_config'}->set('height', 60);
-  $self->{'my_config'}->set('vspacing', 0);
-  $self->{'my_config'}->set('hide_subtitle',1);
   $self->_render_aggregate;
 }
 
@@ -89,6 +78,8 @@ sub draw_aggregate {
   my $self = shift;
 
   ## Set some defaults for all displays
+  $self->{'my_config'}->set('vspacing', 0);
+  $self->{'my_config'}->set('hide_subtitle',1);
   $self->{'my_config'}->set('display_structure', 1);
   $self->{'my_config'}->set('display_summit', 1);
   $self->{'my_config'}->set('slice_start', $self->{'container'}->start);
@@ -108,6 +99,9 @@ sub draw_aggregate {
   my $set     = $self->my_config('set');
   my %config  = %{$self->track_style_config};
 
+  my $show_blocks = grep(/Feature/, @{$self->{'my_config'}->get('drawing_style')||[]});
+  my $show_wiggle = grep(/Graph/, @{$self->{'my_config'}->get('drawing_style')||[]});
+
   my $top = 0;
   foreach (@{$self->{'my_config'}->get('drawing_style')||[]}) {
     my $style_class = 'EnsEMBL::Draw::Style::'.$_;
@@ -116,6 +110,7 @@ sub draw_aggregate {
       my ($data_method, $feature_type, $count_header, $sublabels, $more, $message_text);
 
       if ($_ =~ /Feature/) {
+        $self->{'my_config'}->set('height', 8);
         $feature_type   = 'block_features';
         $more           = 'More';
         $message_text   = 'peaks';
@@ -123,6 +118,8 @@ sub draw_aggregate {
         $sublabels      = 1;
       }
       else {
+        $self->{'my_config'}->set('height', 60);
+        $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + 4);
         $feature_type   = 'wiggle_features';
         $more           = 'Legend & More';
         $message_text   = 'wiggle';
@@ -159,13 +156,20 @@ sub draw_aggregate {
 
         ## Finally add the popup menu
         if ($more) {
-          my $colour_legend = $feature_type eq 'wiggle_features' ? $self->_colour_legend($subset) : {};
-          $header->draw_sublegend({
-                                    label           => $more,
-                                    title           => $label,
-                                    colour_legend   => $colour_legend,
-                                    sublegend_links => $self->_sublegend_links,
-                                  });
+          ## But not twice!
+          unless ($show_blocks && $show_wiggle && $_ =~ /Feature/) {
+            my $colour_legend = $feature_type eq 'wiggle_features' ? $self->_colour_legend($subset) : {};
+            my $params = {
+                          label           => $more,
+                          title           => $label,
+                          colour_legend   => $colour_legend,
+                          sublegend_links => $self->_sublegend_links,
+                          };
+            if ($show_blocks && $show_wiggle) {
+              $params->{'initial_offset'} = $self->{'my_config'}->get('initial_offset');
+            }
+            $header->draw_sublegend($params);
+          }
         } 
         $self->push(@{$header->glyphs||[]});
       }

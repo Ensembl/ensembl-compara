@@ -180,7 +180,7 @@ sub draw_graph_base {
   ## line_score: value to draw "to" up/down, in score units (usu. 0)
   ## line_px: value to draw "to" up/down, in pixel units (usu. 0)
   ## bottom: bottom of graph in pixel units (usu. approx. pixel height)
-  my $top = ($track_config->get('initial_offset') || 0) + $metadata->{'y'};
+  my $top = $track_config->get('initial_offset') || 0;
   ## Reset offset for subsequent tracks
   unless ($track_config->get('multiwiggle')) {
     $track_config->set('initial_offset', $top + $row_height + 20);

@@ -163,6 +163,8 @@ sub _draw_sublegend_box {
   my ($self,$args,$zmenu) = @_;
 
   my $offset = $self->_offset;
+  $offset   += $args->{'initial_offset'} || 0;
+ 
   my $click_text = $args->{'label'} || 'Details';
 
   my %font_details = EnsEMBL::Draw::Utils::Text::get_font_details($self->image_config,'innertext', 1); 
