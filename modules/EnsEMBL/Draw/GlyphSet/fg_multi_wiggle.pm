@@ -253,10 +253,10 @@ sub get_features {
       my $wiggle                  = $self->get_data($bins, $url);
       $subtrack->{'features'}     = $wiggle->[0]{'features'}{1};
 
-      my %metadata                = %{$subtrack->{'metadata'}};
-      my %from_file               = %{$wiggle->[0]{'metadata'}||{}};
-      @metadata{keys %from_file}  = values %from_file; 
-      $subtrack->{'metadata'}     = \%metadata;
+      ## Don't override values that we've already set!
+      while (my($k, $v) = each (%{$wiggle->[0]{'metadata'}||{}})) {
+        $subtrack->{'metadata'}{$k} ||= $v;
+      }
     }
     push @$data, $subtrack;
   }
