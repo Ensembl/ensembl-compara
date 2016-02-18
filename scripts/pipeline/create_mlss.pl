@@ -247,6 +247,9 @@ $ml_type = 'families' if $ml_type eq 'family';
 
 if ($collection) {
   my $ss = $ssa->fetch_collection_by_name($collection);
+  if (not $ss) {
+      die "The collection '$collection' could not be found in the database.\n";
+  }
   # For ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES we need to exclude the
   # component genome_dbs because they are only temporary for production
   my $gdbs = ($pairwise or $singleton) ? [grep {not $_->genome_component}  @{$ss->genome_dbs}] : $ss->genome_dbs;
