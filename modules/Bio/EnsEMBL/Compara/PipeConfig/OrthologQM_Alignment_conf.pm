@@ -31,13 +31,31 @@ limitations under the License.
 	
 	Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf;
 
-=head1 DESCRIPTION
-
-	http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
-
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
+
+    To run on a collection:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -collection <species_set_name>
+        or
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species_set_id <species_set dbID>
+
+    To run on a pair of species:
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species1 homo_sapiens -species2 gallus_gallus
+
+=head1 DESCRIPTION
+
+    This pipeline uses whole genome alignments to calculate the coverage of homologous pairs.
+    The coverage is calculated on both exonic and intronic regions seperately and summarised using a quality_score calculation
+    The average quality_score between both members of the homology will be written to the homology table (in compara_db option)
+
+    http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
+
+    Additional options:
+    -compara_db         database containing relevant data. NOTE: this is where final scores will be written
+    -alt_aln_db         take alignment objects from a different source
+    -alt_homology_db    take homology objects from a different source
+
 
 =head1 CONTACT
 
@@ -62,6 +80,23 @@ sub hive_meta_table {
         %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
 
         'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    };
+}
+
+sub default_options {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::default_options},   # inherit the generic ones
+        'compara_db'      => "mysql://ensadmin:$ENV{EHIVE_PASS}\@compara5/cc21_ensembl_compara_84",
+        'species1'        => undef,
+        'species2'        => undef,
+        'collection'      => undef,
+        'species_set_id'  => undef,
+        'ref_species'     => undef,
+        'reg_conf'        => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/scripts/pipeline/production_reg_conf.pl",
+        'alt_aln_db'      => undef,
+        'alt_homology_db' => undef,
+        'user'            => 'ensadmin',        
     };
 }
 
@@ -125,6 +160,17 @@ sub pipeline_analyses {
             -flow_into  => {
                 2 => [ 'select_mlss' ],
             },
+            -input_ids => [{
+                'collection'      => $self->o('collection'),
+                'species_set_id'  => $self->o('species_set_id'),
+                'ref_species'     => $self->o('ref_species'),
+                'compara_db'      => $self->o('compara_db'),
+                'species1'        => $self->o('species1'),
+                'species2'        => $self->o('species2'),
+                'compara_db'      => $self->o('compara_db'),
+                'alt_aln_db'      => $self->o('alt_aln_db'),
+                'alt_homology_db' => $self->o('alt_homology_db'),
+            }],
         },
 
         {   -logic_name => 'select_mlss',
@@ -143,8 +189,7 @@ sub pipeline_analyses {
                 #'A->1' => [ 'assign_quality'  ],
             },
             -rc_name => '2Gb_job',
-            #-parameters => { 'compara_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_82' },
-            #-input_ids => [{}],
+            #-input_ids => {},
         },
 
         {   -logic_name        => 'prepare_exons',
@@ -153,7 +198,8 @@ sub pipeline_analyses {
             -flow_into         => {
                 1 => [ 'prepare_pairwise_aln' ],
             },
-            -rc_name => 'default_with_reg_conf'
+            -rc_name => 'default_with_reg_conf',
+            #-input_ids => {}
         },
 
         {   -logic_name => 'prepare_pairwise_aln',
@@ -163,6 +209,7 @@ sub pipeline_analyses {
                 1 => [ 'combine_coverage'  ],
             },
             -rc_name => '2Gb_job',
+            #-input_ids => {},
         },
 
         {   -logic_name => 'combine_coverage',
