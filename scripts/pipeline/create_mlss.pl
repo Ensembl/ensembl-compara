@@ -256,6 +256,24 @@ if ($collection) {
   @input_genome_db_ids = map {$_->dbID} @$gdbs;
 }
 
+# All the pairwise / singleton will share the same URL. Set it once here
+if (!defined $url) {
+  if ($force) {
+    $url = "";
+  } else {
+    $url = prompt("Set the url for this MethodLinkSpeciesSet", "");
+  }
+}
+
+# All the pairwise / singleton will share the same source. Set it once here
+if (!$source) {
+  if ($force) {
+    $source = "ensembl";
+  } else {
+    $source = prompt("Set the source for this MethodLinkSpeciesSet", "ensembl");
+  }
+}
+
 my @new_input_genome_db_ids;
 if ($pairwise) {
   # Only makes sense for GenomicAlignBlock.pairwise_alignment,
@@ -330,22 +348,6 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     }
     unless ($force) {
       $name = prompt("Set the name for this MethodLinkSpeciesSet", $name);
-    }
-  }
-  
-  if (!$source) {
-    if ($force) {
-      $source = "ensembl";
-    } else {
-      $source = prompt("Set the source for this MethodLinkSpeciesSet", "ensembl");
-    }
-  }
-  
-  if (!defined $url) {
-    if ($force) {
-      $url = "";
-    } else {
-      $url = prompt("Set the url for this MethodLinkSpeciesSet", "");
     }
   }
 
