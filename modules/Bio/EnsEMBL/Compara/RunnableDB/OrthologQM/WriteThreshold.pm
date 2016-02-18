@@ -2,17 +2,15 @@
 
 =head1 NAME
 	
-	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore
+	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::WriteThreshold
 
 =head1 SYNOPSIS
-
-	Writes final score for the homology into homology.wga_coverage
 
 =head1 DESCRIPTION
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore;
+package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::WriteThreshold;
 
 use strict;
 use warnings;
@@ -31,13 +29,12 @@ use Bio::EnsEMBL::Registry;
 
 sub write_output {
 	my $self = shift;
-
-	my $homology_adaptor = $self->compara_dba->get_HomologyAdaptor;
-	$homology_adaptor->update_wga_coverage($self->param_required('homology_id'), $self->param_required('wga_coverage') );
+	my $mlss_id = $self->param('mlss');
 
 	# write threshold to mlss_tag
-	
-	
+	my $mlss_adap = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	my $mlss = $mlss_adap->fetch_by_dbID( $mlss_id );
+	$mlss->store_tag( 'ortholog_quality_threshold', $self->_calculate_threshold );
 }
 
 sub _calculate_threshold {

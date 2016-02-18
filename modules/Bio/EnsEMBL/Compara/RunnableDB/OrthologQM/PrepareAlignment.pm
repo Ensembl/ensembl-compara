@@ -34,10 +34,16 @@ sub fetch_input {
 	# my %dnafrag_coords = %{ $self->param_required('dnafrag_coords') };
 	my $aln_mlss_id = $self->param_required( 'aln_mlss_id' );
 
+	my ( $mlss_adap, $gblock_adap, $dnafrag_adaptor, $dba );
 
-	my $mlss_adap       = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-	my $gblock_adap     = $self->compara_dba->get_GenomicAlignBlockAdaptor;
-	my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
+	if ( $self->param('alt_aln_db') ) { $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_aln_db')); }
+	else { $dba = $self->compara_dba }
+	
+	my $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
+	my $gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;
+	my $dnafrag_adaptor = $dba->get_DnaFragAdaptor;
+
+	$self->db->dbc->disconnect_if_idle;
 
 	my $mlss = $mlss_adap->fetch_by_dbID( $aln_mlss_id );
 	
@@ -45,7 +51,7 @@ sub fetch_input {
 	my $s2_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags[1]->{id} );
 
 	my ($dnafrag_start, $dnafrag_end) = ( $orth_dnafrags[0]->{start}, $orth_dnafrags[0]->{end} );
-	#print "gblock_adap->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag( " . $mlss->dbID . ', ' . $s1_dnafrag->dbID . ", $dnafrag_start, $dnafrag_end, " . $s2_dnafrag->dbID . " );\n";
+	print "\n\ngblock_adap->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag( " . $mlss->dbID . ', ' . $s1_dnafrag->dbID . ", $dnafrag_start, $dnafrag_end, " . $s2_dnafrag->dbID . " );\n";
 	my $gblocks = $gblock_adap->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag( $mlss, $s1_dnafrag, $dnafrag_start, $dnafrag_end, $s2_dnafrag );
 
 	#print "FETCH_INPUT: found " . scalar( @{ $gblocks } ) . " GenomicAlignBlocks!!\n";
@@ -95,6 +101,7 @@ sub run {
 			gblock_range => $aln_ranges{$gblock->dbID},
 			orth_ranges  => $self->param('orth_ranges'),
 			orth_id      => $self->param('orth_id'),
+			orth_exons   => $self->param('orth_exons'),
 		} );
 	}
 
@@ -114,6 +121,7 @@ sub write_output {
 		aln_ranges  => $self->param('aln_ranges'),
 		orth_ranges => $self->param('orth_ranges'),
 		orth_id     => $self->param('orth_id'),
+		orth_exons  => $self->param('orth_exons'),
 	};
 
 	$self->dataflow_output_id( $self->param('fan'), 2 ); # to orth_v_aln 

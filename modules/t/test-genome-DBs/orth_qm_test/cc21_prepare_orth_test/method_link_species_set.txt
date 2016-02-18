@@ -1,0 +1,1 @@
+50976	201	35673	H.sap-M.mus orthologues	ensembl		76	\N

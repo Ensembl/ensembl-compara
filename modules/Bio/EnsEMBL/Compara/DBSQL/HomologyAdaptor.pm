@@ -616,6 +616,7 @@ sub _columns {
              h.description
              h.is_tree_compliant
              h.goc_score
+             h.wga_coverage
              h.dn
              h.ds
              h.n
@@ -629,11 +630,11 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($homology_id, $description, $is_tree_compliant, $goc_score, $dn, $ds, $n, $s, $lnl,
+  my ($homology_id, $description, $is_tree_compliant, $goc_score, $wga_coverage, $dn, $ds, $n, $s, $lnl,
       $method_link_species_set_id, $species_tree_node_id, $gene_tree_node_id, $gene_tree_root_id);
 
   $sth->bind_columns(\$homology_id, \$method_link_species_set_id,
-                     \$description, \$is_tree_compliant, \$goc_score, \$dn, \$ds,
+                     \$description, \$is_tree_compliant, \$goc_score, \$wga_coverage, \$dn, \$ds,
                      \$n, \$s, \$lnl, \$species_tree_node_id, \$gene_tree_node_id, \$gene_tree_root_id);
 
   my @homologies = ();
@@ -655,6 +656,7 @@ sub _objs_from_sth {
             '_gene_tree_node_id'            => $gene_tree_node_id,
             '_gene_tree_root_id'            => $gene_tree_root_id,
             '_goc_score'                    => $goc_score,
+            '_wga_coverage'                 => $wga_coverage,
        });
   }
   
@@ -746,21 +748,35 @@ sub update_genetic_distance {
 }
 
 sub update_goc_score {
-  my $self = shift;
-  my $hom = shift;
+    my ($self, $homol_id, $score) = @_;
 
-  assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology');
 
-  throw("homology object must have dbID")
-  unless ($hom->dbID);
+  throw("homology dbID is required") unless ($homol_id);
 
-  unless (defined $hom->goc_score) {
-    warn("homology needs valid goc_score values to store");
+  unless (defined $score) {
+    warn("homology needs valid goc_score value to store");
     return $self;
   }
   my $sql = 'UPDATE homology SET goc_score=? where homology_id = ?';
   my $sth = $self->prepare($sql);
-  $sth->execute($hom->goc_score, $hom->dbID);
+  $sth->execute($score, $homol_id);
+  $sth->finish();
+
+  return $self;
+}
+
+sub update_wga_coverage {
+  my ($self, $homol_id, $coverage) = @_;
+
+  throw("homology dbID is required") unless ($homol_id);
+
+  unless (defined $coverage) {
+    warn("homology needs valid wga_coverage value to store");
+    return $self;
+  }
+  my $sql = 'UPDATE homology SET wga_coverage=? where homology_id = ?';
+  my $sth = $self->prepare($sql);
+  $sth->execute($coverage, $homol_id);
   $sth->finish();
 
   return $self;

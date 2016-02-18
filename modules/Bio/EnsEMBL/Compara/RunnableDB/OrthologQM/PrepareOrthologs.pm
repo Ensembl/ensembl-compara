@@ -32,10 +32,16 @@ sub fetch_input {
 	my $species1_id = $self->param_required('species1_id');
 	my $species2_id = $self->param_required('species2_id');
 
-	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	my $dba;
+	if ( $self->param('alt_aln_db') ) { 
+		$dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_homology_db')); 
+	}
+	else { $dba = $self->compara_dba }
+
+	my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor;
 	my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$species1_id, $species2_id]);
 
-	my $current_homo_adaptor = $self->compara_dba->get_HomologyAdaptor;
+	my $current_homo_adaptor = $dba->get_HomologyAdaptor;
 	my $current_homologs     = $current_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
 
 	my $previous_db = $self->param('previous_rel_db');
@@ -54,7 +60,7 @@ sub fetch_input {
 		# 	print $uo->dbID . "\n";
 		# }
 
-		my $exons = $self->_find_exons( $updated_orthologs );
+		#my $exons = $self->_find_exons( $updated_orthologs );
 
 		$self->param( 'orth_objects', $updated_orthologs );
 	}
@@ -106,11 +112,8 @@ sub run {
 sub write_output {
 	my $self = shift;
 
-	print "Flowing to prepare_alns:\n";
-	print Dumper $self->param( 'orth_info' );
-
 	# $self->dataflow_output_id( { aln_mlss_id => $self->param('aln_mlss_id') }, 1 ); # to assign_quality
-	$self->dataflow_output_id( $self->param('orth_info'), 2 ); # to prepare_alns
+	$self->dataflow_output_id( $self->param('orth_info'), 2 ); # to prepare_exons
 }
 
 =head2 _updated_orth
