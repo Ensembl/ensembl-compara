@@ -184,6 +184,18 @@
     return out;
   }
 
+  function set_status($outer,state) {
+    var $initial = $outer.closest('.initial_panel');
+    var $loading = $outer.parents('.js_panel').find('.ad-markup-loading');
+    var $loaded = $outer.parents('.js_panel').find('.ad-markup-loaded');
+    var num = $initial.data('number');
+    if(!num) { num=0; }
+    num += state;
+    $initial.data('number',num);
+    if(num) { $loaded.hide(); $loading.show(); }
+    else    { $loaded.show(); $loading.hide(); }
+  }
+
   function add_legend($outer,legend,loading) {
     var $key = $outer.parents('.js_panel').find('._adornment_key');
     // Add new legend to data
@@ -250,9 +262,12 @@
       });
     }
     var html = '';
+    key += '<dt>Markup</dt><dd><ul><li><span class="ad-markup-loading ad-loading">loading</span><span class="ad-markup-loaded" style="display: none">loaded</span></li></ul></dd>';
+    var $key = $outer.parents('.js_panel').find('._adornment_key');
     if(key) { html += '<dl>' + key +'</dl>'; }
     if(messages) { html += '<ul class="alignment-key">' + messages + '</ul>'; }
     $key.html(html).toggle(!!html).find('span[title]').helptip();
+    set_status($outer,0);
   }
 
   function _do_adorn(outer,fixups,data) {
@@ -335,13 +350,16 @@
             for(var i=0;i<adornments.length;i++) {
               _do_adorn(adornments[i],fixups,$.parseJSON($(datas[i]).text()));
             }
+            set_status($outer,-1);
           });
+          set_status($outer,1);
         }
       });
     } else {
       d = fire(d,function() {
         $outer.addClass('adornment-done');
         $outer.removeClass('adornment-running');
+        $outer.closest('.initial_panel').find('.markup-loading').html("Finished");
       });
     }
     d = d.then(function() { fixups(outer); });
