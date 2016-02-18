@@ -168,7 +168,9 @@ sub createObjects {
     # 3) Reading the paramters listed in the else block below
     if ($identifier = $self->param('r') || $self->param('l')) {
       $identifier =~ s/\s|,//g;
-      ($seq_region, $start, $end, $strand) = $identifier =~ /^([^:]+):(-?\w+\.?\w*)[-|..]?(-?\w+\.?\w*)?(?::(-?\d))?$/;
+
+      #using core API module to validate the location values, see core documentation for this method
+      ($seq_region, $start, $end, $strand) = $self->_slice_adaptor->parse_location_to_values($identifier); 
       
       $start = $self->evaluate_bp($start);
       $end   = $self->evaluate_bp($end) || $start;
