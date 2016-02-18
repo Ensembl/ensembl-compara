@@ -376,8 +376,8 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
         join(" - ", map {$_->name."(".$_->assembly.")"} @{$mlss->species_set_obj->genome_dbs}), "\n";
     print "  Name: ", $mlss->name, "\n";
     print "  Source: ", $mlss->source, "\n";
-    print "  URL: $url\n";
-    print "  SpeciesSet name: $species_set_name\n";
+    print "  URL: ", $mlss->url, "\n";
+    print "  SpeciesSet name: ".($mlss->species_set_obj->name)."\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     $name = undef if ($pairwise || $singleton);
     next;
