@@ -313,8 +313,9 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   /*
    * Updates the url and does a page refresh (possible via ajax)
    */
-    var r = params.r.match(/^([^:]+):([0-9]+)-([0-9]+)$/);
-    if (!r || r.length !== 4 || r[3] - r[2] < 0) {
+    var r = params.r.match(/^([^:]+):([0-9]+)(-|_|\.\.)([0-9]+)$/);
+
+    if (!r || r.length !== 5 || r[4] - r[2] < 0) {
       alert('Invalid location: ' + params.r);
       return;
     }
@@ -324,7 +325,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         g: params.g,
         db: params.db
       }));
-      Ensembl.updateLocation(params.r);
+      Ensembl.updateLocation(params.r.replace(/(_|\.\.)/, '-'));
     } else {
       Ensembl.redirect(this.newHref([], params));
     }
