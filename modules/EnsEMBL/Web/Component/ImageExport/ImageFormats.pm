@@ -55,15 +55,9 @@ sub content {
   my $fieldset = $form->add_fieldset({'legend' => 'Select Format'});
 
   ## Hidden fields needed for redirection to image output
-  my @extra_params = qw(data_type component g1 anc collapse);
-  foreach (@extra_params) {  
-   $fieldset->add_hidden({'name' => $_, 'value' => $hub->param($_) || ''});
-  }
-
+  ## Just pass everything, on the assumption that the button only passes useful params
   foreach my $p ($hub->param) {
-    if ($p =~ /group/) {
-      $fieldset->add_hidden({'name' => $p, 'value' => $hub->param($p)});
-    }
+    $fieldset->add_hidden({'name' => $p, 'value' => $hub->param($p)});
   }
   
 
