@@ -50,6 +50,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use List::Util qw(max);
+
 use parent qw(EnsEMBL::Draw::Style);
 
 sub create_glyphs {
@@ -73,15 +75,17 @@ sub create_glyphs {
 
   ## Strand settings
   foreach my $subtrack (@$data) {
-    my $subtrack_height = 0;
-    my $max_feature_height = 0;
+    ## Keep track of all the feature heights so we can calculate a correct total height
+    my $heights = {};
 
     ## Draw title over track
     if ($track_config->get('show_subtitle')) {
       $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
     }
 
-    foreach my $feature (@{$subtrack->{'features'}||[]}) {
+    my @features = @{$subtrack->{'features'}||[]}; 
+
+    foreach my $feature (@features) {
       ## Are we drawing transcripts or just genes?
       next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
       next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
@@ -144,8 +148,8 @@ sub create_glyphs {
       ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
       my $real_height   = $self->draw_feature($feature, $position) || $feature_height;
       $real_height     += $vspacing + $add_labels;
-      $max_feature_height = $real_height if $real_height > $max_feature_height;
-
+      push @{$heights->{$feature_row}}, $real_height;
+    
       ## Optional label
       if ($show_label) {
         if ($track_config->get('label_overlay')) {
@@ -164,15 +168,19 @@ sub create_glyphs {
         $self->add_label($feature, $position);
         $real_height += $text_info->{'height'};
       }
+
     }
-    $self->add_messages($subtrack->{'metadata'}, $subtrack_height);
 
     ## Set the height of the track, in case we want anything in the lefthand margin
-    $track_config->set('real_feature_height', $max_feature_height);
-  
-    $subtrack_height = $max_feature_height;
+    my $subtrack_height = 0;
+    while (my($row, $values) = each(%$heights)) {
+      my $max = max(@$values);
+      $subtrack_height += $max;
+    }
     $subtrack_start += $subtrack_height;
     $total_height   += $subtrack_height;
+    $track_config->set('real_feature_height', $subtrack_height);
+    $self->add_messages($subtrack->{'metadata'}, $subtrack_height);
   }
   $self->draw_hidden_bgd($total_height);
 
