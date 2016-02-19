@@ -36,7 +36,7 @@ sub content {
   
   foreach (@{$hub->database('funcgen')->get_RegulatoryFeatureAdaptor->fetch_all_by_stable_ID($rf)}) {
     if ($cell_line) {
-      $reg_feature = $_ if $_->feature_set->cell_type->name =~ /$cell_line/i;
+      $reg_feature = $_ if $_->feature_set->cell_type->name =~ /\Q$cell_line\E/i;
     } elsif ($_->feature_set->cell_type->name =~ /multi/i) {
       $reg_feature = $_;
     }
