@@ -74,6 +74,7 @@ sub content {
   foreach (@$slices) {
     my $species      = $_->{'name'} eq 'Ancestral_sequences' ? 'Multi' : $_->{'name'}; # Cheating: set species to Multi to stop errors due to invalid species.
     my $image_config = $hub->get_imageconfig('alignsliceviewbottom', "alignsliceviewbottom_$i", $species);
+    warn ">>> SPECIES $species, IMAGE CONFIG $image_config";
     
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,
@@ -106,12 +107,16 @@ sub content {
   }
   
   my $image = $self->new_image(\@images);
-  
+  my $align = $hub->param('align');
+  $image->{'export_params'} = ['align', $align];
+  foreach ($hub->param) {
+    push @{$image->{'export_params'}}, [$_, $hub->param($_)] if $_ =~ /^species_$align/;
+  }
+
   return if $self->_export_image($image);
   
   $image->{'panel_number'}  = 'bottom';
   $image->{'data_export'}   = 'Alignments';
-  $image->{'export_params'}   = ['align'];
   $image->imagemap = 'yes';
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   
