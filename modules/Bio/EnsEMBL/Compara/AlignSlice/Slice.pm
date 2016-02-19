@@ -58,6 +58,8 @@ package Bio::EnsEMBL::Compara::AlignSlice::Slice;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
+
 use Bio::EnsEMBL::Slice;
 use Bio::EnsEMBL::CoordSystem;
 use Bio::EnsEMBL::Compara::AlignSlice::Translation;
