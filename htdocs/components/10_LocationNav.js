@@ -325,7 +325,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         g: params.g,
         db: params.db
       }));
-      Ensembl.updateLocation(params.r.replace(/(_|\.\.)/, '-'));
+      Ensembl.updateLocation(params.r.replace(/(_|\.\.)/, '-').replace(/(chr)/,''));
     } else {
       Ensembl.redirect(this.newHref([], params));
     }
