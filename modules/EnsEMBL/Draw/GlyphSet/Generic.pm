@@ -207,7 +207,7 @@ sub draw_aggregate {
 
   $config{'bg_href'} = $self->bg_href;
 
-  my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Feature::Structured'];
+  my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Graph'];
 
   my $data = $self->data_for_strand($subtracks);
 
