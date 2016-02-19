@@ -27,9 +27,16 @@ no warnings 'uninitialized';
 
 use EnsEMBL::Web::IOWrapper::Indexed;
 
-use parent qw(EnsEMBL::Draw::GlyphSet::Generic);
+use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 sub can_json { return 1; }
+
+sub render_signal {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Bar']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
+}
 
 # Overridden in some regulation tracks, as it's not always this simple
 sub my_url { return $_[0]->my_config('url'); }

@@ -161,6 +161,7 @@ sub draw_graph_base {
                           ? $metadata->{'max_score'} : $track_config->get('max_score');
   my $baseline_zero = defined($metadata->{'baseline_zero'})
                           ? $metadata->{'baseline_zero'} : $track_config->get('baseline_zero');
+  
   my $range = $max_score - $min_score;
   if ($range < 0.01) {
     ## Oh dear, data all has pretty much same value ...
@@ -173,8 +174,10 @@ sub draw_graph_base {
     }
   }
   $min_score = 0 if $min_score >= 0 && $baseline_zero;
+ 
   $range = $max_score - $min_score;
   my $pix_per_score = $row_height/$range;
+  $self->track_config->set('pix_per_score', $pix_per_score);
 
   ## top: top of graph in pixel units, offset from track top (usu. 0)
   ## line_score: value to draw "to" up/down, in score units (usu. 0)

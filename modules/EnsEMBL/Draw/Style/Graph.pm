@@ -84,6 +84,7 @@ sub create_glyphs {
     ## Draw them! 
     my $plot_conf = {
       height          => $track_config->get('height'),
+      pix_per_score   => $track_config->get('pix_per_score'),
       default_strand  => $track_config->get('default_strand'),
       unit            => $subtrack->{'metadata'}{'unit'},
       graph_type      => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
