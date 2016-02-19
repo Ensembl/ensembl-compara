@@ -74,7 +74,6 @@ sub content {
   foreach (@$slices) {
     my $species      = $_->{'name'} eq 'Ancestral_sequences' ? 'Multi' : $_->{'name'}; # Cheating: set species to Multi to stop errors due to invalid species.
     my $image_config = $hub->get_imageconfig('alignsliceviewbottom', "alignsliceviewbottom_$i", $species);
-    warn ">>> SPECIES $species, IMAGE CONFIG $image_config";
     
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,
