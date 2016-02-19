@@ -231,6 +231,8 @@ sub create_tracks {
     my $raw_features  = $parser->cache->{'summary'} || [];
     my $strand        = $metadata->{'default_strand'} || 1;
     my $features      = [];
+    my $max_score     = 0;
+    my $min_score     = 0;
 
     foreach my $f (@$raw_features) {
       my ($seqname, $start, $end, $score) = @$f;
@@ -241,7 +243,11 @@ sub create_tracks {
                         'score'      => $score,
                         'colour'     => $metadata->{'colour'},
                         };
+      $max_score = $score if $score >= $max_score; 
+      $min_score = $score if $score <= $min_score; 
     }
+    $data->{$track_key}{'metadata'}{'max_score'} = $max_score;
+    $data->{$track_key}{'metadata'}{'min_score'} = $min_score;
 
     $data->{$track_key}{'features'}{$strand} = $features;
   }
@@ -341,8 +347,15 @@ sub build_metadata {
 
 sub build_feature {
   my ($self, $data, $track_key, $slice) = @_;
+  my $metadata = $data->{$track_key}{'metadata'};
+
   my $hash = $self->create_hash($slice, $data->{$track_key}{'metadata'});
   return unless keys %$hash;
+
+  if ($hash->{'score'}) {
+    $metadata->{'max_score'} = $hash->{'score'} if $hash->{'score'} >= $metadata->{'max_score'};
+    $metadata->{'min_score'} = $hash->{'score'} if $hash->{'score'} <= $metadata->{'min_score'};
+  }
 
   my $feature_strand = $data->{$track_key}{'metadata'}{'force_strand'} 
                           || $hash->{'strand'} 
