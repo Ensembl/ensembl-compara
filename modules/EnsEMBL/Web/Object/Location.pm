@@ -1610,8 +1610,18 @@ sub can_export {
 sub multi_locations {
   my $self = shift;
   
-  my $locations = $self->{'data'}{'_multi_locations'} || [];
-  
+  my $locations = [];
+
+  if ($self->hub->param('export')) {
+    ## Force creation of the data, if coming from an export form
+    my $factory = $self->hub->builder->create_factory('MultipleLocation');
+    my $location = $factory->DataObjects->{'Location'}[0];
+    $locations  = $location->{'data'}{'_multi_locations'} || [];
+  }
+  else {
+    $locations = $self->{'data'}{'_multi_locations'} || [];
+  }
+
   if (!scalar @$locations) {
     my $slice = $self->slice;
     
