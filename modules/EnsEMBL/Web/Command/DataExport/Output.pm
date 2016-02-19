@@ -636,7 +636,7 @@ sub _writexml{
 sub write_line { 
   my ($self, $string) = @_;
   my $file = $self->{'__file'};
-  return $file->write_line("$string\r\n");
+  return $file->write_line($string);
 }
 
 1;
