@@ -74,6 +74,7 @@ sub create_glyphs {
   ## Strand settings
   foreach my $subtrack (@$data) {
     my $subtrack_height = 0;
+    my $max_feature_height = 0;
 
     ## Draw title over track
     if ($track_config->get('show_subtitle')) {
@@ -143,11 +144,8 @@ sub create_glyphs {
       ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
       my $real_height   = $self->draw_feature($feature, $position) || $feature_height;
       $real_height     += $vspacing + $add_labels;
-      ## Add this feature to the total height of the subtrack
-      $subtrack_height += $real_height;
-      ## Set the height of the track, in case we want anything in the lefthand margin
-      $track_config->set('real_feature_height', $real_height);
-  
+      $max_feature_height = $real_height if $real_height > $max_feature_height;
+
       ## Optional label
       if ($show_label) {
         if ($track_config->get('label_overlay')) {
@@ -169,6 +167,10 @@ sub create_glyphs {
     }
     $self->add_messages($subtrack->{'metadata'}, $subtrack_height);
 
+    ## Set the height of the track, in case we want anything in the lefthand margin
+    $track_config->set('real_feature_height', $max_feature_height);
+  
+    $subtrack_height = $max_feature_height;
     $subtrack_start += $subtrack_height;
     $total_height   += $subtrack_height;
   }
