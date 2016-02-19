@@ -54,13 +54,6 @@ sub content {
 
   my $fieldset = $form->add_fieldset({'legend' => 'Select Format'});
 
-  ## Hidden fields needed for redirection to image output
-  ## Just pass everything, on the assumption that the button only passes useful params
-  foreach my $p ($hub->param) {
-    $fieldset->add_hidden({'name' => $p, 'value' => $hub->param($p)});
-  }
-  
-
   my $radio_info  = EnsEMBL::Web::Constants::IMAGE_EXPORT_PRESETS;
   my $formats     = [];
 
@@ -120,18 +113,12 @@ sub content {
   ## Place submit button at end of form
   my $final_fieldset = $form->add_fieldset();
 
-  ## Don't forget the core params!
-  my @core_params = keys %{$hub->core_object('parameters')};
-  push @core_params, qw(extra align pop1);
-  foreach (@core_params) {
-    $final_fieldset->add_hidden([
-      {
-        'name'    => $_,
-        'value'   => $hub->param($_) || '',
-      },
-    ]);
+  ## Hidden fields needed for redirection to image output
+  ## Just pass everything, on the assumption that the button only passes useful params
+  foreach my $p ($hub->param) {
+    $final_fieldset->add_hidden({'name' => $p, 'value' => $hub->param($p)});
   }
-
+  
   $final_fieldset->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Download', 'class' => 'download');
 
   my $wrapped_form = $self->dom->create_element('div', {
