@@ -48,7 +48,6 @@ in production phase and update it in several steps:
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_alias
     --species new_species_db_name_or_alias
-    [--genome_db_name "Species name"]
     [--taxon_id 1234]
     [--[no]force]
     [--offset 1000]
@@ -98,11 +97,6 @@ any of the aliases given in the registry_configuration_file
 
 =over
 
-=item B<[--genome_db_name "Species name"]>
-
-Set up the GenomeDB name. This is needed when the core database
-misses this information
-
 =item B<[--taxon_id 1234]>
 
 Set up the NCBI taxon ID. This is needed when the core database
@@ -128,7 +122,7 @@ offset+1
 
 File that contains the production names of all the species to import.
 Mainly used by Ensembl Genomes, this allows a bulk import of many species.
-In this mode, --species, --genome_db_name and --taxon_id are ignored.
+In this mode, --species and --taxon_id are ignored.
 
 =back
 
@@ -151,7 +145,6 @@ my $help;
 my $reg_conf;
 my $compara;
 my $species = "";
-my $genome_db_name;
 my $taxon_id;
 my $force = 0;
 my $offset = 0;
@@ -162,7 +155,6 @@ GetOptions(
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     "species=s" => \$species,
-    "genome_db_name=s" => \$genome_db_name,
     "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
     'offset=i' => \$offset,
@@ -272,8 +264,8 @@ sub update_genome_db {
         " [$this_assembly] is already in the compara DB [$compara]\n".
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
     }
-  } elsif ($force and $genome_db_name) {
-    print "GenomeDB with this name [$genome_db_name] and the correct assembly".
+  } elsif ($force and $species) {
+    print "GenomeDB with this name [$species] and the correct assembly".
         " is not in the compara DB [$compara]\n".
         "You don't need the --force option!!";
     print "Press [Enter] to continue or Ctrl+C to cancel...";
@@ -300,11 +292,13 @@ sub update_genome_db {
         -DB_ADAPTOR => $species_dba,
 
         -TAXON_ID   => $taxon_id,
-        -NAME       => $genome_db_name,
     );
 
+    if (!defined($genome_db->name)) {
+      throw "Cannot find species.production_name in meta table for $species.\n";
+    }
     if (!defined($genome_db->taxon_id)) {
-      throw "Cannot find species.taxonomy_id in meta table for $genome_db_name.\n".
+      throw "Cannot find species.taxonomy_id in meta table for $species.\n".
           "   You can use the --taxon_id option";
     }
     print "New GenomeDB for Compara: ", $genome_db->toString, "\n";
