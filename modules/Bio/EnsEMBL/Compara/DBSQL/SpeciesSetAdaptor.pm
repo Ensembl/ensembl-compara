@@ -372,7 +372,7 @@ sub fetch_all_by_GenomeDB {
   Example     : my $collection = $species_set_adaptor->fetch_collection_by_name('ensembl');
   Description : Fetches the "collection" SpeciesSet object with that name
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
-  Exceptions  : thrown if $genome_name_or_id is missing
+  Exceptions  : thrown if $collection is missing
   Caller      : general
 
 =cut
