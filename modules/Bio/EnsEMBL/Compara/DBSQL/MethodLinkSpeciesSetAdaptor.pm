@@ -595,6 +595,32 @@ sub fetch_by_method_link_type_species_set_name {
 }
 
 
+######################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor #
+######################################################################
+
+=head2 make_object_current
+
+  Arg[1]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Example     : $mlss_adaptor->make_object_current($mlss);
+  Description : Mark the MethodLinkSpeciesSet as current, i.e. with a defined first_release and an undefined last_release
+                Also mark all the contained SpeciesSets as current
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_object_current {
+    my ($self, $mlss) = @_;
+    # Update the fields in the table
+    $self->SUPER::make_object_current($mlss);
+    # Also update the linked SpeciesSet
+    $self->db->get_SpeciesSetAdaptor->make_object_current($mlss->species_set_obj);
+}
+
+
 ###################################
 #
 # tagging 

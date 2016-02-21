@@ -451,6 +451,36 @@ sub _find_missing_DBAdaptors {
         join(", ", map {sprintf('%s/%s', $_->name, $_->assembly)} @missing)."\n");
 }
 
+
+######################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor #
+######################################################################
+
+=head2 retire_object
+
+  Arg[1]      : Bio::EnsEMBL::Compara::GenomeDB
+  Example     : $genome_db_adaptor->retire_object($gdb);
+  Description : Mark the GenomeDB as retired, i.e. with a last_release older than the current version
+                Also mark all the related SpeciesSets as retired
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub retire_object {
+    my ($self, $gdb) = @_;
+    # Update the fields in the table
+    $self->SUPER::retire_object($gdb);
+    # Also update the linked SpeciesSets
+    my $ss_adaptor = $self->db->get_SpeciesSetAdaptor;
+    foreach my $ss (@{$ss_adaptor->fetch_all_by_GenomeDB($gdb)}) {
+        $ss_adaptor->retire_object($ss);
+    }
+}
+
+
 ########################################################
 # Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
 ########################################################

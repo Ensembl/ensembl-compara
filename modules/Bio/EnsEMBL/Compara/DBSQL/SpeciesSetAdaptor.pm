@@ -418,7 +418,7 @@ sub update_collection {
         # The new species-set already exists in the database
         if ($species_set->name) {
             if ($species_set->name ne "collection-$collection_name") {
-                die sprintf("The species-set for the new '%s' collection content already exists and has a name ('%s'). Cannot store the collection\n", $collection_name, $species_set->name);
+                die sprintf("The species-set for the new '%s' collection content already exists and but has the name '%s' instead of 'collection-%s'. Cannot store the collection\n", $collection_name, $species_set->name, $collection_name);
             }
         } else {
             $species_set->name("collection-$collection_name");
@@ -431,7 +431,7 @@ sub update_collection {
 
     # At this stage, $species_set is stored with the correct name
 
-    # This is probably redundant with line 462
+    # Enable the collection and all its GenomeDB
     $self->make_object_current($species_set);
 
     if ($old_ss and ($old_ss->dbID != $species_set->dbID)) {
@@ -441,17 +441,7 @@ sub update_collection {
             # ... that are not in the new set
             next if $curr_gdb_ids{$gdb->dbID};
             warn "Retiring ", $gdb->toString, "\n" if $gdb->is_current;
-            $gdb_a->retire_object($gdb);
-            # and the SpeciesSets they're in
-            foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
-                $self->retire_object($ss);
-                # And now the MLSSs that use the species-set
-                foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
-                    next if not $mlss->is_current;
-                    warn "Retiring mlss_id ", $mlss->dbID, " ", $mlss->name, "\n";
-                    $mlss_a->retire_object($mlss);
-                }
-            }
+            $gdb_a->retire_object($gdb);    # Recursively retires all the SpeciesSet and MethodLinkSpeciesSet objects
         }
         if (not $old_ss->has_been_released) {
             # $old_ss is not used, so we could delete it
@@ -461,31 +451,60 @@ sub update_collection {
         }
     }
 
-    # Enable all the GenomeDBs of the collection
-    my @released_gdbs;
-    foreach my $gdb (@{$species_set->genome_dbs}) {
-        next if $gdb->is_current;
-        push @released_gdbs, $gdb;
-        warn "Releasing ", $gdb->toString, "\n";
-        $gdb_a->make_object_current($gdb);
-    }
-
-    # And the SpeciesSets they are part of ...
-    foreach my $gdb (@released_gdbs) {
-        foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
-            # ... if all the species in the set are enabled
-            next if grep {not $_->is_current} @{$ss->genome_dbs};
-            $self->make_object_current($ss);
-            # And now the MLSSs that use the species-set
-            foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
-                next if $mlss->is_current;
-                warn "Releasing mlss_id ", $mlss->dbID, " ", $mlss->name, "\n";
-                $mlss_a->make_object_current($mlss);
-            }
-        }
-    }
-
     return $species_set;
+}
+
+######################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor #
+######################################################################
+
+=head2 retire_object
+
+  Arg[1]      : Bio::EnsEMBL::Compara::SpeciesSet
+  Example     : $species_set_adaptor->retire_object($ss);
+  Description : Mark the SpeciesSet as retired, i.e. with a last_release older than the current version
+                Also mark all the related MethodLinkSpeciesSets as retired
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub retire_object {
+    my ($self, $ss) = @_;
+    # Update the fields in the table
+    $self->SUPER::retire_object($ss);
+    # Also update the linked MethodLinkSpeciesSets
+    my $mlss_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
+    foreach my $mlss (@{$mlss_adaptor->fetch_all_by_species_set_id($ss->dbID)}) {
+        $mlss_adaptor->retire_object($mlss);
+    }
+}
+
+
+=head2 make_object_current
+
+  Arg[1]      : Bio::EnsEMBL::Compara::SpeciesSet
+  Example     : $species_set_adaptor->make_object_current($ss);
+  Description : Mark the SpeciesSet as current, i.e. with a defined first_release and an undefined last_release
+                Also mark all the contained GenomeDBs as current
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_object_current {
+    my ($self, $ss) = @_;
+    # Update the fields in the table
+    $self->SUPER::make_object_current($ss);
+    # Also update the linked GenomeDBs
+    my $gdb_adaptor = $self->db->get_GenomeDBAdaptor;
+    foreach my $gdb (@{$ss->genome_dbs}) {
+        $gdb_adaptor->make_object_current($gdb);
+    }
 }
 
 
