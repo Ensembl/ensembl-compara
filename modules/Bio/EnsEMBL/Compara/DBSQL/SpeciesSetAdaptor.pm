@@ -435,6 +435,8 @@ sub update_collection {
     $self->make_object_current($species_set);
 
     if ($old_ss and ($old_ss->dbID != $species_set->dbID)) {
+        # Disable the old collection
+        $self->retire_object($old_ss);  # This is not really needed since disabling one of its GenomeDB will disable the SpeciesSet too
         my %curr_gdb_ids = map {$_->dbID => 1} @{$species_set->genome_dbs};
         # Retire all the GenomeDBs ...
         foreach my $gdb (@{$old_ss->genome_dbs}) {

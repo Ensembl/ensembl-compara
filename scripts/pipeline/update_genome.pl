@@ -194,12 +194,13 @@ throw ("Cannot connect to database [$compara]") if (!$compara_dba);
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 
 if ($species) {
+    die "--species and --file_of_production_names cannot be given at the same time.\n" if $file;
     process_species($species);
 } else {
     $taxon_id = undef;
     $genome_db_name = undef;
     $species = undef;
-    my $names = slurp_to_array($file, 1);
+    my $names = slurp_to_array($file, "chomp");
     foreach my $species (@$names) {
         process_species($species);
     }

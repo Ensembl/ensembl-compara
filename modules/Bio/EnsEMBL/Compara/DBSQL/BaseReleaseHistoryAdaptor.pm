@@ -162,7 +162,7 @@ sub retire_object {
 sub make_object_current {
     my ($self, $object) = @_;
     return if $object->is_current;
-    $object->first_release(software_version()) unless $object->has_been_released;
+    $object->first_release(software_version()) unless $object->first_release;   # The object may already be current
     $object->last_release(undef);
     return $self->update_first_last_release($object);
 }
