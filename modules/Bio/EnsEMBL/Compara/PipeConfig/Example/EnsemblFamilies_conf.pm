@@ -140,7 +140,7 @@ sub resource_classes {
                         $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000] span[hosts=1]"' },
         'BigMafft'   => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
         'HugeMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('humafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -q long -R"select[' . $self->o('dbresource') . '<' . $self->o('mafft_capacity') . ' && mem>' .
-                          $self->o('humafft_gigs') . '000] rusage[' . $self->o('dbresource') . '=10:duration=10:decay=1, mem=' . $self->o('humafft_gigs') . '000]"' },
+                          $self->o('humafft_gigs') . '000] rusage[' . $self->o('dbresource') . '=10:duration=10:decay=1, mem=' . $self->o('humafft_gigs') . '000] span[hosts=1]"' },
         'LoMafft' => {
                'LSF' => '-C0 -M' . $self->o('lomafft_gigs') . '000 -R"select[' . $self->o('dbresource') . '<' . $self->o('mafft_capacity') . ' && mem>' . $self->o('lomafft_gigs') .
                  '000] rusage[' . $self->o('dbresource') . '=10:duration=10:decay=1, mem=' . $self->o('lomafft_gigs') . '000]"' },
