@@ -30,7 +30,7 @@ use Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
-use parent qw(EnsEMBL::Draw::GlyphSet::Generic);
+use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 sub can_json { return 1; }
 
