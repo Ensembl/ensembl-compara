@@ -269,7 +269,7 @@ sub set_variations {
     }
       
     eval {
-      map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
+      map { $u_snps->{$_->variation_name} = $_ } @{$vf_adaptor->fetch_all_by_Slice($u_slice)};
     };
   }
 
