@@ -97,8 +97,8 @@ sub get_data {
     $data = $iow->create_tracks($container, $metadata);
     #use Data::Dumper; warn Dumper($data);
   } else {
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
+    $self->{'data'} = [];
+    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
   #$self->{'config'}->add_to_legend($legend);
 

@@ -151,6 +151,9 @@ sub _fetch_data {
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($slice, $metadata);
+  } else {
+    $self->{'data'} = [];
+    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
 
   # Don't cache here, it's not properly managed. Rely on main cache layer.

@@ -79,8 +79,8 @@ sub get_data {
     $self->{'my_config'}->set('colours', $hub->species_defs->colour($colourset));
     $self->{'my_config'}->set('default_colour', $self->my_colour('default'));
   } else {
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
+    $self->{'data'} = [];
+    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
   #$self->{'config'}->add_to_legend($legend);
   return $data;

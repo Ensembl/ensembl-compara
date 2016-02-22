@@ -67,8 +67,7 @@ sub get_data {
     $self->{'data'} = $data;
   } else {
     $self->{'data'} = [];
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR PAIRWISE FORMAT";
+    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
   #$self->{'config'}->add_to_legend($legend);
 
