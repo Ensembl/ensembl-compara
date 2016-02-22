@@ -27,7 +27,7 @@ use parent qw(EnsEMBL::Web::File::Dynamic);
 ### Replacement for EnsEMBL::Web::TmpFile::Image
 ### Data can be written to disk or, if enabled and appropriate, memcached
 
-### Path structure: /base_dir/YYYY-MM-DD/user_identifier/XXXXXXXXXXXXXXX.png
+### Path structure: /base_dir/YYYY-MM-DD/XXXXXXXXXXXXXXX.png
 
 sub new {
 ### @constructor

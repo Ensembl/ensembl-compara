@@ -28,7 +28,7 @@ use parent qw(EnsEMBL::Web::File);
 
 ### Data can be written to disk or, if enabled and appropriate, memcached
 
-### Path structure: /base_dir/YYYY-MM-DD/user_identifier/XXXXXXXX/filename.ext
+### Path structure: /base_dir/YYYY-MM-DD/XXXXXXXX/filename.ext
 
 sub new {
 ### @constructor
@@ -37,6 +37,12 @@ sub new {
   $args{'output_drivers'} ||= [qw(Memcached IO)];
   $args{'base_dir'} = 'image'; 
   return $class->SUPER::new(%args);
+}
+
+sub set_user_identifier {
+  ### Don't set user id, otherwise caching is pointless and also
+  ### we can't serve images to external browser-less services
+  return undef;
 }
 
 sub read_url {
