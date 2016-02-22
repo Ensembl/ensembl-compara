@@ -197,7 +197,6 @@ if ($species) {
     process_species($species);
 } else {
     $taxon_id = undef;
-    $genome_db_name = undef;
     $species = undef;
     my $names = slurp_to_array($file, "chomp");
     foreach my $species (@$names) {
