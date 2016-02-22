@@ -221,6 +221,8 @@ print "Press Enter to continue\n";
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 $helper->transaction( -CALLBACK => sub {
     my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
+    # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
+    $compara_dba->get_SpeciesSetAdaptor->make_object_current($new_collection_ss);
     print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $collection_ss;
     die "Dry-run mode required. Now aborting the transaction. Review the above-mentionned changes and re-run with the --nodry-run option\n" if $dry_run;
 } );

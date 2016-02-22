@@ -414,6 +414,7 @@ sub update_collection {
 
     my $species_set = $self->fetch_by_GenomeDBs($new_genome_dbs);
 
+    # Make or update $species_set, with the correct name
     if ($species_set) {
         # The new species-set already exists in the database
         if ($species_set->name) {
@@ -428,11 +429,6 @@ sub update_collection {
         $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -GENOME_DBS => $new_genome_dbs, -NAME => "collection-$collection_name" );
         $self->store($species_set);
     }
-
-    # At this stage, $species_set is stored with the correct name
-
-    # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
-    $self->make_object_current($species_set);
 
     if ($old_ss and ($old_ss->dbID != $species_set->dbID)) {
         if (not $old_ss->has_been_released) {
