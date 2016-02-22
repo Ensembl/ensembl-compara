@@ -481,6 +481,36 @@ sub retire_object {
 }
 
 
+=head2 make_object_current
+
+  Arg[1]      : Bio::EnsEMBL::Compara::GenomeDB
+  Example     : $genome_db_adaptor->make_object_current($gdb);
+  Description : Mark the GenomeDB as current, i.e. with a defined first_release and an undefined last_release
+                Also retire all the other GenomeDBs that have the same name
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_object_current {
+    my ($self, $gdb) = @_;
+    # Update the fields in the table
+    $self->SUPER::make_object_current($gdb);
+    # Also update the GenomeDBs with the same name
+    foreach my $other_gdb (@{ $self->_id_cache->get_all_by_additional_lookup('name', lc $gdb->name) }) {
+        # But of course not the given one
+        next if $other_gdb->dbID == $gdb->dbID;
+        # Be careful about polyploid genomes and their components
+        # Let's not retire a component of $gdb, or vice-versa
+        next if $gdb->is_polyploid and $other_gdb->genome_component and ($other_gdb->principal_genome_db->dbID == $gdb->dbID);
+        next if $other_gdb->is_polyploid and $gdb->genome_component and ($gdb->principal_genome_db->dbID == $other_gdb->dbID);
+        $self->retire_object($other_gdb);
+    }
+}
+
+
 ########################################################
 # Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
 ########################################################

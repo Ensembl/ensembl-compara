@@ -431,20 +431,10 @@ sub update_collection {
 
     # At this stage, $species_set is stored with the correct name
 
-    # Enable the collection and all its GenomeDB
+    # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
     $self->make_object_current($species_set);
 
     if ($old_ss and ($old_ss->dbID != $species_set->dbID)) {
-        # Disable the old collection
-        $self->retire_object($old_ss);  # This is not really needed since disabling one of its GenomeDB will disable the SpeciesSet too
-        my %curr_gdb_ids = map {$_->dbID => 1} @{$species_set->genome_dbs};
-        # Retire all the GenomeDBs ...
-        foreach my $gdb (@{$old_ss->genome_dbs}) {
-            # ... that are not in the new set
-            next if $curr_gdb_ids{$gdb->dbID};
-            warn "Retiring ", $gdb->toString, "\n" if $gdb->is_current;
-            $gdb_a->retire_object($gdb);    # Recursively retires all the SpeciesSet and MethodLinkSpeciesSet objects
-        }
         if (not $old_ss->has_been_released) {
             # $old_ss is not used, so we could delete it
             # Let's change its name instead
