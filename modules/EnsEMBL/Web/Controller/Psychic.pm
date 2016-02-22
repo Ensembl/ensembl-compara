@@ -161,7 +161,7 @@ sub psychic {
     }
  
     ## match any of the following:
-    if ($jump_query =~ /^\s*([-\.\w]+)[: ]/i ) {
+    if ($jump_query =~ /^\s*([-\.\w]+)[:]/i ) {
     #using core api to return location value (see perl documentation for core to see the available combination)
       my ($seq_region_name, $start, $end, $strand) = $slice_adaptor->parse_location_to_values($jump_query);
 

@@ -114,6 +114,7 @@ sub script      :lvalue { $_[0]{'_script'};      }
 sub type        :lvalue { $_[0]{'_type'};        }
 sub action      :lvalue { $_[0]{'_action'};      }
 sub function    :lvalue { $_[0]{'_function'};    }
+sub builder     :lvalue { $_[0]{'_builder'};     }
 sub factorytype :lvalue { $_[0]{'_factorytype'}; }
 sub session     :lvalue { $_[0]{'_session'};     }
 sub cache       :lvalue { $_[0]{'_cache'};       }

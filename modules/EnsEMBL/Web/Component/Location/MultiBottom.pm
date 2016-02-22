@@ -142,6 +142,10 @@ sub content {
   }
   
   my $image = $self->new_image(\@images);
+  $image->{'export_params'} = [];
+  foreach ($hub->param) {
+    push @{$image->{'export_params'}}, [$_, $hub->param($_)] if ($_ =~ /^(r|s)\d/ || $_ =~ /^opt/);
+  } 
   
   return if $self->_export_image($image);
   
