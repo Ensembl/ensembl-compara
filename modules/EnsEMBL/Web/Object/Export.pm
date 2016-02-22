@@ -551,7 +551,7 @@ sub features {
   if ($params->{'variation'}) {
     my $vdb = $self->database('variation'); 
     my $vf_adaptor = $vdb->get_VariationFeatureAdaptor;     
-    foreach (@{$vfa->fetch_all_by_Slice($slice)}) {
+    foreach (@{$vf_adaptor->fetch_all_by_Slice($slice)}) {
       $self->feature('variation', $_, { variation_name => $_->variation_name });	    
     }
   }
