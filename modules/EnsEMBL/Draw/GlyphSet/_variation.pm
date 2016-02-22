@@ -113,6 +113,8 @@ sub fetch_features {
   
   if (!$self->cache($id)) {
     my $variation_db_adaptor = $config->hub->database($var_db, $self->species);
+    my $vf_adaptor = $variation_db_adaptor->get_VariationFeatureAdaptor;
+    my $src_adaptor = $variation_db_adaptor->get_SourceAdaptor;
     my $orig_failed_flag     = $variation_db_adaptor->include_failed_variations;
     
     $variation_db_adaptor->include_failed_variations(0); # Disable the display of failed variations by default
@@ -122,11 +124,12 @@ sub fetch_features {
       my @somatic_mutations;
       
       if ($self->my_config('filter')) { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_with_phenotype(undef, undef, $self->my_config('filter'), $var_db) || []};
+        @somatic_mutations = @{$vf_adaptor->fetch_all_somatic_with_phenotype_by_Slice($slice, undef, undef, $self->my_config('filter')) || []};
       } elsif ($self->my_config('source')) {
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_by_source($self->my_config('source'), undef, $var_db) || []};
+        my $source = $src_adaptor->fetch_by_name($self->my_config('source'));
+        @somatic_mutations = @{$vf_adaptor->fetch_all_somatic_by_Slice_Source($slice, $source) || []};
       } else { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures(undef, undef, undef, $var_db) || []};
+        @somatic_mutations = @{$vf_adaptor->fetch_all_somatic_by_Slice($slice) || []};
       }
 
       $self->cache($id, \@somatic_mutations);
