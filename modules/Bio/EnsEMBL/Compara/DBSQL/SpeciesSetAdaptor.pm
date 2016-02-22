@@ -396,7 +396,7 @@ sub fetch_collection_by_name {
   Arg[1]      : string $collection_name
   Arg[2]      : Bio::EnsEMBL::Compara::SpeciesSet $old_ss: The old "collection" species-set
   Arg[3]      : arrayref of Bio::EnsEMBL::Compara::GenomeDB $new_genome_dbs: The list of GenomeDBs the new collection should contain
-  Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, [@{$collection_ensembl->genome_dbs}, $new_genome_db]);
+  Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, $old_collection_object, $new_genome_db]);
   Description : Creates a new collection species-set that contains the new list of GenomeDBs
                 The method assumes that all the species names in $new_genome_dbs are different
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
@@ -455,7 +455,7 @@ sub update_collection {
         }
         if (not $old_ss->has_been_released) {
             # $old_ss is not used, so we could delete it
-            # Let's retire it instead
+            # Let's change its name instead
             $old_ss->name('tmp'.$old_ss->name);
             $self->update_header($old_ss);
         }
