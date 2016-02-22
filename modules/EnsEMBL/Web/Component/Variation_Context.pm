@@ -39,6 +39,7 @@ sub content {
   
   my $hub                = $self->hub;
   my $slice_adaptor      = $hub->get_adaptor('get_SliceAdaptor');
+  my $svf_adaptor        = $hub->database('variation')->get_StructuralVariationFeatureAdaptor;
   my $width              = $hub->param('context') || 30000;
   my $max_display_length = 1000000;
   my %mappings           = %{$object->variation_feature_mapping};  # first determine correct SNP location 
@@ -142,7 +143,7 @@ sub content {
   }
   
   
-  my $sv_count = scalar(@{$slice->get_all_StructuralVariationFeatures});
+  my $sv_count = scalar(@{$svf_adaptor->fetch_all_by_Slice($slice)});
     
   $html .= $self->_warning(
     "Structural variants display",
@@ -180,8 +181,8 @@ sub content {
     $html     .= "<h2>Features overlapping $vname:</h2>";
   }
   
-  $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['get_all_StructuralVariationFeatures','get_all_somatic_StructuralVariationFeatures'], 1);
-  $html .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['get_all_CopyNumberVariantProbeFeatures']);
+  $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['fetch_all_by_Slice','fetch_all_somatic_by_Slice'], 1);
+  $html .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['fetch_all_cnv_probe_by_Slice']);
   $html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config) if $hub->species_defs->databases->{'DATABASE_FUNCGEN'};
   $html .= $self->constrained_element_table($var_slice, $vname);
   
