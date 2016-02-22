@@ -43,7 +43,7 @@ sub get_data {
     } else {
       $config->{'_sent_ch3_error_track'} = 1;
       $self->{'no_empty_track_message'}  = 1;
-      return $self->errorTrack('Methylation data is only viewable on images  200kb in size');
+      return $self->errorTrack('Methylation data is only viewable on images less than 200kb in size');
     }
   }
  
@@ -65,6 +65,8 @@ sub get_data {
 
   my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
+  ## Clean up any whitespace
+  $bigbed_file =~ s/\s//g;
   
   return $self->SUPER::get_data($bigbed_file);
 }
