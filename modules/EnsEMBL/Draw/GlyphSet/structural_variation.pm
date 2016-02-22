@@ -78,7 +78,6 @@ sub features {
     }
     else {
       my $source_name = $self->my_config('source');
-      my $source_ = $src_adaptor->fetch_by_name($source_name);
       my $min_size = $self->my_config('min_size');
       my $max_size = $self->my_config('max_size');
       my $start    = $slice->start;
@@ -86,7 +85,8 @@ sub features {
       my @display_features;
       
       # By source
-      if ($source) {
+      if ($source_name) {
+        my $source = $src_adaptor->fetch_by_name($source_name);
         my $func  = $self->somatic ? 'fetch_all_somatic_by_Slice_Source' : 'fetch_all_by_Slice_Source';
         $features = $svf_adaptor->$func($slice, $source, undef);
       }
