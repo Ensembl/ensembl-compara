@@ -85,12 +85,14 @@ sub open {
       $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
     }
 
-    $wrapper = $class->new({
-                            'parser' => $parser, 
-                            'file'   => $file, 
-                            'format' => $format,
-                            %args,
-                            });  
+    if ($parser) {
+      $wrapper = $class->new({
+                              'parser' => $parser, 
+                              'file'   => $file, 
+                              'format' => $format,
+                              %args,
+                              });
+    }  
   }
   return $wrapper;
 }
