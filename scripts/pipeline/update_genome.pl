@@ -124,6 +124,11 @@ File that contains the production names of all the species to import.
 Mainly used by Ensembl Genomes, this allows a bulk import of many species.
 In this mode, --species and --taxon_id are ignored.
 
+=item B<[--release]>
+
+Mark all the GenomeDBs that are created (and the collection if --collection
+is given) as "current", i.e. with a first_release and an undefined last_release
+
 =back
 
 =head1 INTERNAL METHODS
@@ -149,6 +154,7 @@ my $taxon_id;
 my $force = 0;
 my $offset = 0;
 my $file;
+my $release;
 
 GetOptions(
     "help" => \$help,
@@ -159,6 +165,7 @@ GetOptions(
     "force!" => \$force,
     'offset=i' => \$offset,
     'file_of_production_names=s' => \$file,
+    'release' => \$release,
   );
 
 $| = 0;
@@ -319,6 +326,7 @@ sub update_genome_db {
     printf("You can add a new 'ensembl alias name' entry in scripts/taxonomy/ensembl_aliases.sql to map the taxon_id %d to '%s'\n", $genome_db->taxon_id, $common_name) if $common_name;
 
   }
+  $genome_db_adaptor->make_object_current($genome_db) if $release;
   return $genome_db;
 }
 

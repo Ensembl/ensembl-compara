@@ -136,6 +136,10 @@ perl create_mlss.pl --method_link_type BLASTZ_NET --genome_db_id 1,2
 
 perl create_mlss.pl --method_link_type PECAN --genome_db_id 1,2,3,4 --name "4 species PECAN" --source "ensembl" --url "" --species_set_name "mammals"
 
+=item B<[--release]>
+
+Mark all the objects that are created / used (GenomeDB, SpeciesSet, MethodLinkSpeciesSet)
+as "current", i.e. with a first_release and an undefined last_release
 
 =back
 
@@ -168,6 +172,7 @@ my $use_genomedb_ids = 0;
 my $species_set_name;
 my $collection;
 my $method_link_class;
+my $release;
 
 GetOptions(
     "help" => \$help,
@@ -185,6 +190,7 @@ GetOptions(
     "use_genomedb_ids" => \$use_genomedb_ids,
     "species_set_name|species_set_tag=s" => \$species_set_name,
     "collection=s" => \$collection,
+    'release' => \$release,
   );
 
 if ($pairwise && $singleton) {
@@ -419,6 +425,7 @@ sub create_mlss {
 
   $helper->transaction( -CALLBACK => sub {
     $mlssa->store($new_mlss);
+    $mlssa->make_object_current($new_mlss) if $release;
   } );
 
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
