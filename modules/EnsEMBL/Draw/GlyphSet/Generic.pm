@@ -328,4 +328,26 @@ sub render_interaction {
   $self->{'maxy'} = $max_height if $max_height;
 }
 
+sub render_compact {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Barcode']);
+  $self->{'my_config'}->set('height', 8);
+  $self->{'my_config'}->set('no_axis', 1);
+  $self->_render_aggregate;
+}
+
+sub render_signal {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
+}
+
+sub render_tiling {
+  ## For backwards compatibility - because 'tiling' is a meaningless name!
+  my $self = shift;
+  $self->render_signal;
+}
+
+
 1;
