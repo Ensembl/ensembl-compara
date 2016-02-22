@@ -26,7 +26,7 @@ use strict;
 
 use Role::Tiny;
 
-use parent qw(EnsEMBL::Draw::GlyphSet::Generic);
+use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 sub can_json { return 1; }
 
