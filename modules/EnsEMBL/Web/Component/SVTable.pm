@@ -35,8 +35,8 @@ sub content {
   my $hub     = $self->hub;
   my $object  = $self->object;  
   my $slice   = $object->slice;
-  my $html    = $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['get_all_StructuralVariationFeatures','get_all_somatic_StructuralVariationFeatures'], 1);
-     $html   .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['get_all_CopyNumberVariantProbeFeatures']);
+  my $html    = $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['fetch_all_by_Slice','fetch_all_somatic_by_Slice'], 1);
+     $html   .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['fetch_all_cnv_probe_by_Slice']);
   
   return $html;
 }
