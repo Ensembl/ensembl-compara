@@ -31,13 +31,15 @@ sub features {
   my $self   = shift; 
   my $slice  = $self->{'container'};
   my $source = $self->my_config('source');
+  my $var_db = $self->my_config('db') || 'variation';
+  my $svf_adaptor = $self->{'config'}->hub->get_adaptor('get_StructuralVariationFeatureAdaptor', $var_db);
 
   my $var_features;
   
   if ($source =~ /^\w/) {
-    $var_features = $slice->get_all_CopyNumberVariantProbeFeatures($source);
+    $var_features = $svf_adaptor->fetch_all_cnv_probe_by_Slice($slice, $source);
   } else {
-    $var_features = $slice->get_all_CopyNumberVariantProbeFeatures;
+    $var_features = $svf_adaptor->fetch_all_cnv_probe_by_Slice($slice);
   }
   
   return $var_features;  
