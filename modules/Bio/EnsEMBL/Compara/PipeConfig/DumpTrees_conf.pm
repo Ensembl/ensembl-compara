@@ -186,7 +186,7 @@ sub pipeline_analyses {
             },
           },
 
-        {   -logic_name => 'dump_all_homologies',
+        {   -logic_name => 'dump_all_homologies_orthoxml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologiesOrthoXML',
             -parameters => {
                 'compara_db'            => '#rel_db#',
@@ -201,7 +201,7 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'dump_all_trees',
+        {   -logic_name => 'dump_all_trees_orthoxml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllTreesOrthoXML',
             -parameters => {
                 'compara_db'            => '#rel_db#',
@@ -214,6 +214,38 @@ sub pipeline_analyses {
                     }
             },
         },
+
+          { -logic_name => 'dump_all_homologies_tsv',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+            -parameters => {
+                'db_conn'       => '#rel_db#',
+                'output_file'   => sprintf('#target_dir#/Compara.homologies.e%s.tsv', $self->o('ensembl_release')),
+                'append'        => [qw(-q)],
+                'min_hom_id'    => '#expr(#member_type# eq "protein" ? 0 : 100000000)expr#',
+                'max_hom_id'    => '#expr(#min_hom_id# + 99999999)expr#',
+                'input_query'   => sprintf q|
+                    SELECT
+                        gm1.stable_id AS gene_stable_id,
+                        sm1.stable_id AS protein_stable_id,
+                        gdb1.name AS species,
+                        h.description AS homology_type,
+                        hm1.perc_id AS identity,
+                        gm2.stable_id AS homology_gene_stable_id,
+                        sm2.stable_id AS homology_protein_stable_id,
+                        gdb2.name AS homology_species,
+                        hm2.perc_id AS homology_identity
+                    FROM
+                        homology h
+                        JOIN (homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) JOIN genome_db gdb1 USING (genome_db_id) JOIN seq_member sm1 USING (seq_member_id)) USING (homology_id)
+                        JOIN (homology_member hm2 JOIN gene_member gm2 USING (gene_member_id) JOIN genome_db gdb2 USING (genome_db_id) JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id)
+                    WHERE
+                        homology_id BETWEEN #min_hom_id# AND #max_hom_id#
+                |,
+            },
+            -flow_into => {
+                1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
+            },
+          },
 
         {   -logic_name => 'create_dump_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -228,8 +260,9 @@ sub pipeline_analyses {
                 1 => [
                     WHEN('#member_type# eq "protein"' => 'dump_for_uniprot'),
                     {
-                        'dump_all_trees' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
-                        'dump_all_homologies' => [
+                        'dump_all_homologies_tsv' => undef,
+                        'dump_all_trees_orthoxml' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
+                        'dump_all_homologies_orthoxml' => [
                             {'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
                             {'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'strict_orthologies' => 1},
                         ],
