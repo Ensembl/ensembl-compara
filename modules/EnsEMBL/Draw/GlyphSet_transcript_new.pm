@@ -194,6 +194,21 @@ sub calculate_expanded_joins {
   $tjoins{$tsid} = \@joins;
   return \%tjoins;
 }
+
+sub _get_data {
+  my ($self) = @_;
+
+  my $hub = $self->{'config'}->hub;
+  return $hub->get_query('GlyphSet::Transcript')->go($self,{
+    species => $self->species,
+    pattern => $self->my_config('colour_key'),
+    shortlabels => $self->get_parameter('opt_shortlabels'),
+    label_key => $self->my_config('label_key'),
+    slice => $self->{'container'},
+    logic_names => $self->my_config('logic_names'),
+    db => $self->my_config('db'),
+  });
+}
   
 sub render_collapsed {
   my ($self, $labels) = @_;
@@ -210,17 +225,8 @@ sub render_collapsed {
   my $show_labels      = $self->my_config('show_labels');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $this_db          = ($self->core('db') eq $self->my_config('db'));
-  
-  my $hub = $self->{'config'}->hub;
-  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
-    species => $self->species,
-    pattern => $self->my_config('colour_key'),
-    shortlabels => $self->get_parameter('opt_shortlabels'),
-    label_key => $self->my_config('label_key'),
-    slice => $self->{'container'},
-    logic_names => $self->my_config('logic_names'),
-    db => $self->my_config('db'),
-  });
+ 
+  my $ggdraw = $self->_get_data;
   foreach my $g (@$ggdraw) {
     my @exons;
     foreach my $t (@{$g->{'transcripts'}||[]}) {
@@ -264,16 +270,7 @@ sub render_transcripts {
   my $this_db           = ($self->core('db') eq $self->my_config('db'));
   
   my ($genes, $highlights, $transcripts, $exons) = $self->features;
-  my $hub = $self->{'config'}->hub;
-  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
-    species => $self->species,
-    pattern => $self->my_config('colour_key'),
-    shortlabels => $self->get_parameter('opt_shortlabels'),
-    label_key => $self->my_config('label_key'),
-    slice => $self->{'container'},
-    logic_names => $self->my_config('logic_names'),
-    db => $self->my_config('db'),
-  });
+  my $ggdraw = $self->_get_data;
   if($link) {
     foreach my $g (@$ggdraw) {
       next unless $g->{'stable_id'};
@@ -330,16 +327,7 @@ sub render_alignslice_transcript {
   my $target_gene       = $self->get_parameter('single_Gene');
   
   my ($genes, $highlights, $transcripts) = $self->features;
-  my $hub = $self->{'config'}->hub;
-  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
-    species => $self->species,
-    pattern => $self->my_config('colour_key'),
-    shortlabels => $self->get_parameter('opt_shortlabels'),
-    label_key => $self->my_config('label_key'),
-    slice => $self->{'container'},
-    logic_names => $self->my_config('logic_names'),
-    db => $self->my_config('db'),
-  });
+  my $ggdraw = $self->_get_data;
   my @ttdraw;
   foreach my $g (@$ggdraw) {
     foreach my $t (@{$g->{'transcripts'}}) {
@@ -378,17 +366,7 @@ sub render_alignslice_collapsed {
   my $h                 = 8;
   
   my ($genes, $highlights) = $self->features;
-
-  my $hub = $self->{'config'}->hub;
-  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
-    species => $self->species,
-    pattern => $self->my_config('colour_key'),
-    shortlabels => $self->get_parameter('opt_shortlabels'),
-    label_key => $self->my_config('label_key'),
-    slice => $self->{'container'},
-    logic_names => $self->my_config('logic_names'),
-    db => $self->my_config('db'),
-  });
+  my $ggdraw = $self->_get_data;
 
   foreach my $g (@$ggdraw) {
     my @exons;
@@ -425,17 +403,8 @@ sub render_genes {
   my $navigation       = $self->my_config('navigation') || 'on';
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $this_db          = ($self->core('db') eq $self->my_config('db'));
-  
-  my $hub = $self->{'config'}->hub;
-  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
-    species => $self->species,
-    pattern => $self->my_config('colour_key'),
-    shortlabels => $self->get_parameter('opt_shortlabels'),
-    label_key => $self->my_config('label_key'),
-    slice => $self->{'container'},
-    logic_names => $self->my_config('logic_names'),
-    db => $self->my_config('db'),
-  });
+ 
+  my $ggdraw = $self->_get_data; 
   foreach my $g (@$ggdraw) {
     my $gene_stable_id = $g->{'stable_id'};
     if($this_db and $gene_stable_id eq $selected_gene) {
@@ -464,74 +433,6 @@ sub render_genes {
 # render_text will need to be reimplemented in the manner of the above
 # renderers when we restore it. The old support methods have gone. Use
 # history to recover it.
-
-sub render_text {
-  my $self = shift;
-  my ($feature_type, $collapsed) = @_;
-  
-  my $container   = $self->{'container'}{'ref'} || $self->{'container'};
-  my $length      = $container->length;
-  my $strand      = $self->strand;
-  my $strand_flag = $self->my_config('strand') || 'b';
-  my $target      = $self->get_parameter('single_Transcript');
-  my $target_gene = $self->get_parameter('single_Gene');
-  my ($genes)     = $self->features;
-  my $export;
-  
-  foreach my $gene (@$genes) {
-    my $gene_id = $gene->can('stable_id') ? $gene->stable_id : undef;
-    
-    next if $target_gene && $gene_id ne $target_gene;
-    
-    my $gene_type   = $gene->status . '_' . $gene->biotype;
-    my $gene_name   = $gene->can('display_xref') && $gene->display_xref ? $gene->display_xref->display_id : undef;
-    my $gene_source = $gene->source;
-    
-    if ($feature_type eq 'gene') {
-      $export .= $self->_render_text($gene, 'Gene', { 
-        headers => [ 'gene_id', 'gene_name', 'gene_type' ],
-        values  => [ $gene_id, $gene_name, $gene_type ]
-      });
-    } else {
-      my $exons = {};
-      
-      foreach my $transcript (@{$gene->get_all_Transcripts}) {
-        next if $transcript->start > $length || $transcript->end < 1;
-        
-        my $transcript_id = $transcript->stable_id;
-        
-        next if $target && ($transcript_id ne $target); # For exon_structure diagram only given transcript
-        
-        my $transcript_name = 
-          $transcript->can('display_xref') && $transcript->display_xref ? $transcript->display_xref->display_id : 
-          $transcript->can('analysis') && $transcript->analysis ? $transcript->analysis->logic_name : 
-          undef;
-        
-        foreach (sort { $a->start <=> $b->start } @{$transcript->get_all_Exons}) {
-          next if $_->start > $length || $_->end < 1;
-          
-          if ($collapsed) {
-            my $stable_id = $_->stable_id;
-            
-            next if $exons->{$stable_id};
-            
-            $exons->{$stable_id} = 1;
-          }
-           
-          $export .= $self->export_feature($_, $transcript_id, $transcript_name, $gene_id, $gene_name, $gene_type, $gene_source);
-        }
-      }
-    }
-  }
-  
-  return $export;
-}
-
-#============================================================================#
-#
-# The following three subroutines are designed to get homologous peptide ids
-# 
-#============================================================================#
 
 # Get homologous gene ids for given gene
 sub get_gene_joins {
@@ -608,84 +509,6 @@ sub filter_by_target {
 # 
 #============================================================================#
 
-sub map_AlignSlice_Exons {
-  my ($self, $transcript, $length) = @_;
-  
-  my @as_exons;
-  my @exons;
-  my $m_flag = 0; # Indicates that if an exons start is undefined it is missing exon
-  my $exon_type = 'B';
-  my $fstart = 0; # Start value for B exons
-  
-  # get_all_Exons returns all exons of AlignSlice including missing exons 
-  # (they are located in primary species but not in secondary - we still get them for secondary species but
-  #  without coordinates)
-  # Here we mark all exons in following way for future display  
-  # B - exons that are located in front of viewed region
-  # A - exons that are located behind the viewed region
-  # N - normal exons
-  # M - exons that are between normal exons
-  
-  # First we preceeding, normal and missing exons (these will include A exons)
-  foreach my $ex (@{$transcript->get_all_Exons}) {
-    if ($ex->start) {
-      $m_flag = 1;
-      $exon_type = 'N';
-      $fstart = $ex->end;
-    } elsif ($m_flag) {
-      $exon_type = 'M';
-    }
-    
-    $ex->{'exon'}->{'etype'} = $exon_type;
-    $ex->{'exon'}->{'fstart'} = $fstart if $exon_type eq 'M';
-    
-    push @as_exons, $ex;
-  }
-  
-  # Now mark A exons
-  $exon_type = 'A';
-  $m_flag = 0; # Reset missing exon flag
-  
-  $fstart = $length + 2; # Start value for A exons (+2 to get it outside visible area)
-  
-  foreach my $ex (reverse @as_exons) {
-    if ($ex->start) {
-      $m_flag = 1;
-      $fstart = $ex->start;
-    } else {
-      if (!$m_flag) {
-        $ex->{'exon'}->{'etype'} = $exon_type;
-        $ex->start($fstart);
-        $ex->end($fstart);
-      } else {
-        $ex->start($ex->{'exon'}->{'fstart'} + 1);
-        $ex->end($ex->{'exon'}->{'fstart'} + 1);
-        
-        if ($ex->{'exon'}->{'etype'} eq 'B') {
-          $fstart = -1;
-          $ex->start($fstart);
-          $ex->end($fstart);
-        } elsif ($ex->{'exon'}->{'etype'} eq 'M') {
-          $ex->{'exon'}->{'fend'} = $fstart;
-        }
-      }
-    }
-    push @exons, $ex;
-  }
-   
-  return reverse @exons;
-}
-
-sub is_coding_gene {
-  my ($self, $gene) = @_;
-	
-  foreach (@{$gene->get_all_Transcripts}) {
-    return 1 if $_->translation;
-  }
-  
-  return 0;
-}
-
 # Generate title tag which will be used to render z-menu
 sub title {
   my ($self, $transcript, $gene) = @_;
@@ -695,73 +518,6 @@ sub title {
   $title .= '; Location: ' . $transcript->seq_region_name . ':' . $transcript->seq_region_start . '-' . $transcript->seq_region_end;
   
   return $title
-}
-
-# Generate title tag for gene which will be used to render z-menu
-sub gene_title {
-  my ($self, $gene) = @_;
-  
-  my $title = 'Gene: ' . $gene->stable_id;
-  $title .= '; Location: ' . $gene->seq_region_name . ':' . $gene->seq_region_start . '-' . $gene->seq_region_end;
-  
-  return $title;
-}
-
-sub feature_label {
-  my $self       = shift;
-  my $gene       = shift;
-  my $transcript = shift || $gene;
-  my $id         = $transcript->external_name || $transcript->stable_id;
-     $id         = $transcript->strand == 1 ? "$id >" : "< $id";
-  
-  return $id if $self->get_parameter('opt_shortlabels') || $transcript == $gene;
-  
-  my $label = $self->my_config('label_key') || '[text_label] [display_label]';
-  
-  return $id if $label eq '-';
-  
-  my $ini_entry = $self->my_colour($self->colour_key($gene, $transcript), 'text');
-  
-  if ($label =~ /[biotype]/) {
-    my $biotype = $transcript->biotype;
-       $biotype =~ s/_/ /g;
-       $label   =~ s/\[biotype\]/$biotype/g;
-  }
-  
-  $label =~ s/\[text_label\]/$ini_entry/g;
-  $label =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
-  $label =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $transcript->analysis->$1 : $transcript->$1/eg;
-  
-  $id .= "\n$label" unless $label eq '-';
-  
-  return $id;
-}
-
-sub text_details {
-  my $self = shift;
-  
-  if (!$self->{'text_details'}) {
-    my %font_details = $self->get_font_details('outertext', 1);
-    $self->{'text_details'} = { %font_details, height => [ $self->get_text_width(0, 'Xg', 'Xg', %font_details) ]->[3] + 1 };
-  }
-  
-  return $self->{'text_details'};
-}
-
-sub colour_key {
-  my $self       = shift;
-  my $gene       = shift;
-  my $transcript = shift || $gene;
-  my $pattern    = $self->my_config('colour_key') || '[biotype]';
-  
-  # hate having to put ths hack here, needed because any logic_name specific web_data entries
-  # get lost when the track is merged - needs rewrite of imageconfig merging code
-  return 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
-  
-  $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
-  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $transcript->$1/eg;
-  
-  return lc $pattern;
 }
 
 sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }

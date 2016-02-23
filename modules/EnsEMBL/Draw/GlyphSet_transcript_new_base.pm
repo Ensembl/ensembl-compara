@@ -124,6 +124,17 @@ sub _make_legend {
 
 # labels
 
+sub text_details {
+  my $self = shift;
+  
+  if (!$self->{'text_details'}) {
+    my %font_details = $self->get_font_details('outertext', 1);
+    $self->{'text_details'} = { %font_details, height => [ $self->get_text_width(0, 'Xg', 'Xg', %font_details) ]->[3] + 1 };
+  }
+  
+  return $self->{'text_details'};
+}
+
 sub _add_label {
   my ($self,$composite,$g) = @_;
 
