@@ -55,6 +55,7 @@ use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::File::Utils::IO qw/delete_file/;
 use EnsEMBL::Web::File::Utils::FileSystem qw/create_path copy_files/;
+use EnsEMBL::Web::Utils::Encryption qw/encrypt_value/;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -215,7 +216,7 @@ sub _move_to_user {
     ## Work out where we're going to copy the file to, because we need to save this
     ## in the new user record
     $old_path     = $data->{'file'};
-    my $user_id   = $user->id;
+    my $user_id   = encrypt_value($user->id);
     ($new_path = $old_path) =~ s/session_(\d+)/user_$user_id/;
     $new_path =~ s/temporary/persistent/;
     $data->{'file'} = $new_path if $new_path;

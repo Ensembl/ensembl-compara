@@ -27,6 +27,7 @@ use EnsEMBL::Web::File::Utils qw/sanitise_filename get_extension get_compression
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
 use EnsEMBL::Web::File::Utils::URL qw/:all/;
 use EnsEMBL::Web::File::Utils::Memcached qw/:all/;
+use EnsEMBL::Web::Utils::Encryption qw/encrypt_value/;
 
 ### Replacement for EnsEMBL::Web::TmpFile, using the file-handling
 ### functionality in EnsEMBL::Web::File::Utils 
@@ -504,7 +505,7 @@ sub set_user_identifier {
   my $hub = $self->hub;
  
   if ($hub->user) {
-    $self->{'user_identifier'} = 'user_'.$hub->user->id;
+    $self->{'user_identifier'} = 'user_'.encrypt_value($hub->user->id);
   }
   else {
     $self->{'user_identifier'} = 'session_'.$hub->session->session_id;
