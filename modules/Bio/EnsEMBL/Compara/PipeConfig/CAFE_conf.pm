@@ -236,9 +236,17 @@ sub pipeline_analyses_cafe {
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
              -rc_name => '1Gb_job',
+             -flow_into => 'CAFE_json',
              -meadow_type => 'LSF',
              -priority => 10,
             },
+
+        {   -logic_name    => 'CAFE_json',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeCAFE',
+            -hive_capacity => 50,
+            -batch_size    => 20,
+            -rc_name       => '1Gb_job',
+        },
 
         {   -logic_name         => 'hc_cafe_results',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',

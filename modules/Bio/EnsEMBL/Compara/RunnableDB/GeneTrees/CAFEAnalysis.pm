@@ -330,7 +330,10 @@ sub parse_cafe_output {
             }
 
         }
-        $cafeTree_Adaptor->store($cafeGeneFamily) if $n_nonzero_internal_nodes > 1;
+        if ($n_nonzero_internal_nodes > 1) {
+            $cafeTree_Adaptor->store($cafeGeneFamily);
+            $self->dataflow_output_id( { 'gene_tree_id' => $gene_tree_root_id }, 2);
+        }
     }
     return
 }
