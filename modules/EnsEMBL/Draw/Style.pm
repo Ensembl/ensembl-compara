@@ -260,7 +260,8 @@ sub get_text_info {
 sub draw_subtitle {
   my ($self, $metadata, $top) = @_;
   $metadata ||= {};
-  return unless $metadata->{'name'};
+  my $subtitle = $metadata->{'subtitle'} || $metadata->{'name'};
+  return unless $subtitle;
 
   my $subtitle_colour = $metadata->{'colour'} || $metadata->{'color'};
   my $subtitle_y      = $top || $self->track_config->get('initial_offset') || 0;
@@ -268,7 +269,7 @@ sub draw_subtitle {
   push @{$self->glyphs}, 
     $self->Text({
                   font      => 'Arial',
-                  text      => $metadata->{'name'}, 
+                  text      => $subtitle, 
                   ptsize    => 8,
                   height    => 8,
                   colour    => $subtitle_colour || 'black',
