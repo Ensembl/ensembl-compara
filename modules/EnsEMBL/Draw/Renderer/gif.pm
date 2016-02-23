@@ -367,8 +367,19 @@ sub render_Histogram {
 
   my $mul = ($y2-$y1) / $max;
   foreach my $p (@$points) {
+    my $truncated = 0;
+    if ($p > $max) {
+      ## Truncate values that lie outside the range we want to draw
+      $p = $max;
+      $truncated = 1 if $glyph->{'truncate_colour'};
+    }
     my $yb = $y2 - max($p,0) * $mul;
     $canvas->filledRectangle($x1,$yb,$x2,$y2,$colour);
+    ## Mark truncation with a contrasting line at the top of the bar
+    if ($truncated) {
+      my $yc = $yb + 1;
+      $canvas->filledRectangle($x1,$yb,$x2,$yc,$self->colour($glyph->{'truncate_colour'}));
+    }
     $x1 += $step;
     $x2 += $step;
   }
