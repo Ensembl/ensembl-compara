@@ -209,24 +209,13 @@ sub _get_data {
     db => $self->my_config('db'),
   });
 }
-  
-sub render_collapsed {
-  my ($self, $labels) = @_;
 
-  return $self->render_text('transcript', 'collapsed') if $self->{'text_export'};
-  
-  my $config           = $self->{'config'};
-  my $container        = $self->{'container'}{'ref'} || $self->{'container'};
-  my $length           = $container->length;
-  my $strand           = $self->strand;
-  my $selected_db      = $self->core('db');
-  my $selected_gene    = $self->my_config('g') || $self->core('g');
-  my $db               = $self->my_config('db');
-  my $show_labels      = $self->my_config('show_labels');
-  my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
-  my $this_db          = ($self->core('db') eq $self->my_config('db'));
- 
-  my $ggdraw = $self->_get_data;
+sub _prepare_collapsed {
+  my ($self,$ggdraw) = @_;
+
+  my $link = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my $this_db = ($self->core('db') eq $self->my_config('db'));
+  my $selected_gene = $self->my_config('g') || $self->core('g');
   foreach my $g (@$ggdraw) {
     my @exons;
     foreach my $t (@{$g->{'transcripts'}||[]}) {
@@ -242,8 +231,59 @@ sub render_collapsed {
       $g->{'joins'} = $self->calculate_collapsed_joins($gene_stable_id);
     }
   }
- 
-  my $draw_labels = ($labels and $show_labels ne 'off');
+}
+  
+sub _prepare_expanded {
+  my ($self,$ggdraw) = @_;
+  
+  my $this_db = ($self->core('db') eq $self->my_config('db'));
+  my $target = $self->get_parameter('single_Transcript');
+  my $selected_gene = $self->my_config('g') || $self->core('g');
+  my $selected_trans = $self->core('t') || $self->core('pt');
+  my $link = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my @ttdraw;
+  foreach my $g (@$ggdraw) {
+    my $tjoins;
+    if($link and $g->{'stable_id'}) {
+      $tjoins = $self->calculate_expanded_joins($g->{'stable_id'});
+    }
+    foreach my $t (@{$g->{'transcripts'}}) {
+      # skip scraps
+      next if $target and $t->{'stable_id'} ne $target;
+      next unless @{$t->{'exons'}};
+      # set highlights
+      if(!defined $target and $this_db) {
+        if($t->{'stable_id'} eq $selected_trans) {
+          $t->{'highlight'} = 'highlight2';
+        } elsif($g->{'stable_id'} eq $selected_gene) {
+          $t->{'highlight'} = 'highlight1';
+        }
+      }
+      # do joins
+      $t->{'joins'} = [];
+      if($tjoins and $tjoins->{$t->{'stable_id'}}) {
+        my @joins = @{$tjoins->{$t->{'stable_id'}}};
+        if($t->{'translation_stable_id'}) {
+          push @joins,@{$tjoins->{$t->{'translation_stable_id'}}||[]};
+        }
+        $t->{'joins'} = \@joins;
+      }
+      push @ttdraw,$t;
+    } 
+  }
+  return \@ttdraw;
+}
+
+sub _draw_collapsed {
+  my ($self,$ggdraw,$labels) = @_;
+  
+  my $config            = $self->{'config'};
+  my $container         = $self->{'container'}{'ref'} || $self->{'container'};
+  my $length            = $container->length;
+  my $strand            = $self->strand;
+  my $show_labels       = $self->my_config('show_labels');
+  
+  my $draw_labels = ($labels && $show_labels ne 'off');
   $self->mr_bump($ggdraw,$draw_labels,$length);
   $self->draw_collapsed_genes($length,$draw_labels,$strand,$ggdraw);
 
@@ -252,64 +292,41 @@ sub render_collapsed {
   }
 }
 
-sub render_transcripts {
-  my ($self, $labels) = @_;
+sub _draw_expanded {
+  my ($self,$ggdraw,$labels) = @_;
 
-  return $self->render_text('transcript') if $self->{'text_export'};
-  
   my $config            = $self->{'config'};
   my $container         = $self->{'container'}{'ref'} || $self->{'container'};
   my $length            = $container->length;
   my $strand            = $self->strand;
   my $show_labels       = $self->my_config('show_labels');
-  my $link              = $self->get_parameter('compara') ? $self->my_config('join') : 0;
-  my $target            = $self->get_parameter('single_Transcript');
-  my $target_gene       = $self->get_parameter('single_Gene');
-  my $selected_gene    = $self->my_config('g') || $self->core('g');
-  my $selected_trans    = $self->my_config('t') || $self->core('pt');
-  my $this_db           = ($self->core('db') eq $self->my_config('db'));
   
-  my ($genes, $highlights, $transcripts, $exons) = $self->features;
-  my $ggdraw = $self->_get_data;
-  if($link) {
-    foreach my $g (@$ggdraw) {
-      next unless $g->{'stable_id'};
-      my $tjoins = $self->calculate_expanded_joins($g->{'stable_id'});
-      foreach my $t (@{$g->{'transcripts'}}) {
-        next unless $tjoins->{$t->{'stable_id'}};
-        my @joins = @{$tjoins->{$t->{'stable_id'}}};
-        if($t->{'translation_stable_id'}) {
-          push @joins,@{$tjoins->{$t->{'translation_stable_id'}}||[]};
-        }
-        $t->{'joins'} = \@joins;
-      }
-    }
-  }
-  foreach my $g (@$ggdraw) {
-    foreach my $t (@{$g->{'transcripts'}}) {
-      if(!defined $target and $this_db) {
-        if($t->{'stable_id'} eq $selected_trans) {
-          $t->{'highlight'} = 'highlight2';
-        } elsif($g->{'stable_id'} eq $selected_gene) {
-          $t->{'highlight'} = 'highlight1';
-        }
-      }
-    }
-  }
-  my @ttdraw;
-  foreach my $g (@$ggdraw) {
-    foreach my $t (@{$g->{'transcripts'}}) {
-      next if $target and $t->{'stable_id'} ne $target;
-      next unless @{$t->{'exons'}};
-      push @ttdraw,$t;
-    } 
-  }
-  my $draw_labels = ($labels and $show_labels ne 'off');
-  $self->mr_bump(\@ttdraw,$draw_labels,$length);
-  $self->draw_expanded_transcripts(\@ttdraw,$length,$strand,$draw_labels);
-  if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
+  my $draw_labels = ($labels && $show_labels ne 'off');
+  $self->mr_bump($ggdraw,$draw_labels,$length);
+  $self->draw_expanded_transcripts($length,$draw_labels,$strand,$ggdraw);
+  if($config->get_option('opt_empty_tracks') != 0 && !@$ggdraw) {
     $self->no_track_on_strand;
   }
+}
+  
+sub render_collapsed {
+  my ($self, $labels) = @_;
+
+  return $self->render_text('transcript', 'collapsed') if $self->{'text_export'};
+  
+  my $ggdraw = $self->_get_data;
+  $self->_prepare_collapsed($ggdraw);
+  $self->_draw_collapsed($ggdraw,$labels);
+}
+
+sub render_transcripts {
+  my ($self, $labels) = @_;
+
+  return $self->render_text('transcript') if $self->{'text_export'};
+  
+  my $ggdraw = $self->_get_data;
+  my $ttdraw = $self->_prepare_expanded($ggdraw);
+  $self->_draw_expanded($ttdraw,$labels);
 }
 
 sub render_alignslice_transcript {
@@ -317,75 +334,26 @@ sub render_alignslice_transcript {
 
   return $self->render_text('transcript') if $self->{'text_export'};
 
-  my $config            = $self->{'config'};
-  my $container         = $self->{'container'}{'ref'} || $self->{'container'};
-  my $length            = $container->length;
-  my $selected_db       = $self->core('db');
-  my $strand            = $self->strand;
-  my $show_labels       = $self->my_config('show_labels');
-  my $target            = $self->get_parameter('single_Transcript');
-  my $target_gene       = $self->get_parameter('single_Gene');
-  
-  my ($genes, $highlights, $transcripts) = $self->features;
   my $ggdraw = $self->_get_data;
-  my @ttdraw;
-  foreach my $g (@$ggdraw) {
-    foreach my $t (@{$g->{'transcripts'}}) {
-      next if $target and $t->{'stable_id'} ne $target;
-      next unless @{$t->{'exons'}};
-      $t->{'start'} = min(grep {$_} map { $_->{'start'} } @{$t->{'exons'}});
-      $t->{'end'} = max(grep {$_} map { $_->{'end'} } @{$t->{'exons'}});
-      push @ttdraw,$t;
-    } 
+  my $ttdraw = $self->_prepare_expanded($ggdraw);
+  foreach my $t (@$ttdraw) {
+    $t->{'start'} = min(grep {$_} map { $_->{'start'} } @{$t->{'exons'}});
+    $t->{'end'} = max(grep {$_} map { $_->{'end'} } @{$t->{'exons'}});
   }
-  
-  my $draw_labels = ($labels and $show_labels ne 'off');
-  $self->mr_bump(\@ttdraw,$draw_labels,$length);
-  $self->draw_expanded_transcripts(\@ttdraw,$length,$strand,$draw_labels,$target);
-  if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
-    $self->no_track_on_strand;
-  }
+  $self->_draw_expanded($ttdraw,$labels); 
 }
 
 sub render_alignslice_collapsed {
   my ($self, $labels) = @_;
   
   return $self->render_text('transcript') if $self->{'text_export'};
-
-  my $config            = $self->{'config'};
-  my $container         = $self->{'container'}{'ref'} || $self->{'container'};
-  my $length            = $container->length;
-  my $selected_db       = $self->core('db');
-  my $selected_gene     = $self->core('g');
-  my $pix_per_bp        = $self->scalex;
-  my $strand            = $self->strand;
-  my $strand_flag       = $self->my_config('strand');
-  my $db                = $self->my_config('db');
-  my $show_labels       = $self->my_config('show_labels');
-  my $y                 = 0;
-  my $h                 = 8;
-  
-  my ($genes, $highlights) = $self->features;
   my $ggdraw = $self->_get_data;
-
+  $self->_prepare_collapsed($ggdraw);
   foreach my $g (@$ggdraw) {
-    my @exons;
-    # Collapse exons
-    foreach my $t (@{$g->{'transcripts'}||[]}) {
-      push @exons,@{$t->{'exons'}||[]};
-    }
-    $g->{'exons'} = \@exons;
-    $g->{'start'} = min(grep { $_ } map { $_->{'start'} } @exons);
-    $g->{'end'} = max(grep { $_ } map { $_->{'end'} } @exons);
+    $g->{'start'} = min(grep { $_ } map { $_->{'start'} } @{$g->{'exons'}});
+    $g->{'end'} = max(grep { $_ } map { $_->{'end'} } @{$g->{'exons'}});
   }
-
-  my $draw_labels = ($labels && $show_labels ne 'off');
-  $self->mr_bump($ggdraw,$draw_labels,$length);
-  $self->draw_collapsed_genes($length,$draw_labels,$strand,$ggdraw);
-
-  if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
-    $self->no_track_on_strand;
-  }
+  $self->_draw_collapsed($ggdraw,$labels);
 }
 
 sub render_genes {

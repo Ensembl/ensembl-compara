@@ -211,18 +211,18 @@ sub _get_alignslice_exons {
   my @eff;
   my $t_coding_start = $t->coding_region_start // -1e6;
   my $t_coding_end = $t->coding_region_end // -1e6;
-  foreach my $e (sort { $a->start <=> $b->start } @exons) {
+  foreach my $e (sort { ($a->start||0) <=> ($b->start||0) } @exons) {
     my $ef = {
       _unique => $self->_unique($args,$e),
-      start => $e->start,
-      end => $e->end,
+      start => $e->start||0,
+      end => $e->end||0,
       strand => $e->strand,
     };
-    my $coding_start = max($t_coding_start,$e->start);
-    my $coding_end = min($t_coding_end,$e->end);
+    my $coding_start = max($t_coding_start,$ef->{'start'});
+    my $coding_end = min($t_coding_end,$ef->{'end'});
     if($coding_start <= $coding_end) {
-      $ef->{'coding_start'} = $coding_start - $e->start;
-      $ef->{'coding_end'} = $e->end - $coding_end;
+      $ef->{'coding_start'} = $coding_start - $ef->{'start'};
+      $ef->{'coding_end'} = $ef->{'end'} - $coding_end;
     }
     push @eff,$ef;
   }

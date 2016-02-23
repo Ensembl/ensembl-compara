@@ -372,7 +372,7 @@ sub _draw_grey_arrow {
 }
 
 sub draw_expanded_transcripts {
-  my ($self,$tdraw,$length,$strand,$draw_labels,$target) = @_;
+  my ($self,$length,$draw_labels,$strand,$tdraw) = @_;
 
   return unless @$tdraw;
   my $target = $self->get_parameter('single_Transcript');
