@@ -216,8 +216,11 @@ sub _prepare_collapsed {
   my $link = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $this_db = ($self->core('db') eq $self->my_config('db'));
   my $selected_gene = $self->my_config('g') || $self->core('g');
+  my $navigation = $self->my_config('navigation') || 'on';
+  
   foreach my $g (@$ggdraw) {
     my @exons;
+    delete $g->{'href'} unless $navigation eq 'on';
     foreach my $t (@{$g->{'transcripts'}||[]}) {
       push @exons,@{$t->{'exons'}||[]};
     }
@@ -272,6 +275,21 @@ sub _prepare_expanded {
     } 
   }
   return \@ttdraw;
+}
+  
+sub _draw_gene {
+  my ($self,$ggdraw,$labels) = @_;
+
+  my $config = $self->{'config'};
+  my $container = $self->{'container'}{'ref'} || $self->{'container'};
+  my $length = $container->length;
+  my $label_threshold = $self->my_config('label_threshold') || 50e3;
+  my $strand = $self->strand;
+  $labels = 0 if $label_threshold * 1001 < $length;
+  $self->draw_rect_genes($ggdraw,$length,$labels,$strand);
+  if($config->get_option('opt_empty_tracks') != 0 && !@$ggdraw) {
+    $self->no_track_on_strand;
+  }
 }
 
 sub _draw_collapsed {
@@ -357,45 +375,13 @@ sub render_alignslice_collapsed {
 }
 
 sub render_genes {
-  my $self = shift;
+  my ($self,$labels) = @_;
 
   return $self->render_text('gene') if $self->{'text_export'};
   
-  my $config           = $self->{'config'};
-  my $container        = $self->{'container'}{'ref'} || $self->{'container'};
-  my $length           = $container->length;
-  my $pix_per_bp       = $self->scalex;
-  my $strand           = $self->strand;
-  my $selected_gene    = $self->my_config('g') || $self->core('g');
-  my $label_threshold  = $self->my_config('label_threshold') || 50e3;
-  my $navigation       = $self->my_config('navigation') || 'on';
-  my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
-  my $this_db          = ($self->core('db') eq $self->my_config('db'));
- 
-  my $ggdraw = $self->_get_data; 
-  foreach my $g (@$ggdraw) {
-    my $gene_stable_id = $g->{'stable_id'};
-    if($this_db and $gene_stable_id eq $selected_gene) {
-      $g->{'highlight'} = 'highlight2';
-    }
-    if($link) {
-      $g->{'joins'} = $self->calculate_collapsed_joins($gene_stable_id);
-    }
-  }
-
-  my $show_navigation = $navigation eq 'on';
-  delete $_->{'href'} unless $show_navigation;
- 
-  my $draw_labels = $self->get_parameter('opt_gene_labels');
-  $draw_labels = 1 unless defined $draw_labels;
-  $draw_labels = shift if @_;
-  $draw_labels = 0 if $label_threshold * 1001 < $length;
-
-  $self->draw_rect_genes($ggdraw,$length,$draw_labels,$strand);
-
-  if($config->get_option('opt_empty_tracks') != 0 && !@$ggdraw) {
-    $self->no_track_on_strand;
-  }
+  my $ggdraw = $self->_get_data;
+  $self->_prepare_collapsed($ggdraw); # For highlights & joins
+  $self->_draw_gene($ggdraw,$labels);
 }
 
 # render_text will need to be reimplemented in the manner of the above
