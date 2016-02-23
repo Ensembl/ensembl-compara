@@ -47,10 +47,12 @@ sub content {
     ## Has user clicked on an exon (or exons)? If yes find out the exon rank to display in zmenu
     foreach (@all_exons) {
       my ($s, $e) = ($_->start, $_->end);
-      
+   
       if (
-        ($s <= $click[1] && $e >= $click[2]) || # click is completely inside exon
-        ($s >= $click[1] && $e <= $click[2])    # click completely contains exon
+        ($s <= $click[1] && $e >= $click[2]) ||   # click is completely inside exon
+        ($s >= $click[1] && $e <= $click[2]) ||   # click completely contains exon
+        ($click[1] <= $s && $click[2] >= $s) ||   # start of exon is part of click
+        ($click[1] <= $e && $click[2] >= $e)      # click is end of exon
       ) {      
         push @exons, $_->rank($transcript);
       }
