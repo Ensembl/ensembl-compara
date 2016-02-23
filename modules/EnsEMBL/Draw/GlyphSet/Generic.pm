@@ -158,7 +158,9 @@ sub draw_features {
       $hover_label->{'extra_desc'} .= $description;
     }
     ## Also put it into config, for subtitles
-    $config{'subtitle'} = $description;
+    $metadata->{'subtitle'} ||= $self->{'my_config'}->get('longLabel') 
+                                  || $description 
+                                  || $self->{'my_config'}->get('caption');
 
     ## Could also be done using $self->data_for_strand, but this avoids another loop
     push @$data, {'metadata' => $metadata, 'features' => $features};
@@ -197,6 +199,8 @@ sub draw_aggregate {
   foreach (@$subtracks) {
     next unless $_->{'features'} && ref $_->{'features'} eq 'HASH';
     $feature_count += scalar(@{$_->{'features'}{$self->strand}||[]});
+    $_->{'metadata'}{'subtitle'} ||= $self->{'my_config'}->get('longLabel') 
+                                      || $self->{'my_config'}->get('caption');
   }
 
   if ($feature_count < 1) {
