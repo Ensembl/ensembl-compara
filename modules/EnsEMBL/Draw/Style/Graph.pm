@@ -81,6 +81,10 @@ sub create_glyphs {
     ## Single line? Build into singleton set.
     $features = [ $features ] if ref $features ne 'ARRAY';
 
+    ## Select a colour to indicate truncated values
+    my $truncate_colour = ($subtrack->{'metadata'}{'colour'} eq 'black' || $subtrack->{'metadata'}{'colour'} eq '0,0,0') 
+                          ? 'red' : 'black';
+
     ## Draw them! 
     my $plot_conf = {
       height          => $track_config->get('height'),
@@ -91,6 +95,7 @@ sub create_glyphs {
       colour          => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
       colours         => $subtrack->{'metadata'}{'gradient'},
       alt_colour      => $subtrack->{'metadata'}{'altColor'},
+      truncate_colour => $truncate_colour,
       %$graph_conf,
     };
 
@@ -158,7 +163,7 @@ sub draw_wiggle {
                                             height    => $previous_y - $current_y,
                                             colour    => $colour,
                                             absolutey => 1,
-                                          });
+                                        });
     }
 
     $previous_x = $current_x;
