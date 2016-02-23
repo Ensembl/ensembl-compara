@@ -225,8 +225,8 @@ sub draw_collapsed_genes {
     $bump_height += $self->_add_label($composite,$g) if $labels;
 
     # bump
-    $composite->y($composite->y - $strand * $bump_height * $g->{'_bump'});
     $composite->colour($g->{'highlight'}) if $g->{'highlight'};
+    $composite->y($composite->y - $strand * $bump_height * $g->{'_bump'});
     $self->push($composite);
   }
   $self->_make_legend($genes,$self->my_config('name'));
@@ -419,6 +419,7 @@ sub _draw_rect_gene {
   my $start = max($g->{'start'},1);
   my $end = min($g->{'end'},$length);
 
+  my @rects;
   my $rect = $self->Rect({
     x => $start-1,
     y => 0,
@@ -429,19 +430,22 @@ sub _draw_rect_gene {
     href => $g->{'href'},
     title => $g->{'title'},
   });
+  push @rects,$rect;
   $self->push($rect);
   if($g->{'highlight'}) {
-    $self->unshift($self->Rect({
+    my $halo = $self->Rect({
       x         => ($start-1) - 1/$pix_per_bp,
       y         => -1,
       width     => ($end-$start+1) + 2/$pix_per_bp,
       height    => 6,
       colour    => $g->{'highlight'},
       absolutey => 1
-    }));
+    });
+    $self->unshift($halo);
+    push @rects,$halo;
   }
   $self->_draw_join($rect,$_) for(@{$g->{'joins'}||[]});
-  return $rect;
+  return \@rects;
 }
 
 sub _draw_bookend {
@@ -476,8 +480,8 @@ sub draw_rect_genes {
   my $rects_rows = $self->mr_bump($ggdraw,0,$length);
   foreach my $g (@$ggdraw) {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
-    my $rect = $self->_draw_rect_gene($g,$length);
-    $rect->y($rect->y + (6*$g->{'_bump'}));
+    my $rects = $self->_draw_rect_gene($g,$length);
+    $_->y($_->y + (6*$g->{'_bump'})) for @$rects;
   } 
   if($draw_labels) {
     $_->{'_lwidth'} += 8/$pix_per_bp for(@$ggdraw);
