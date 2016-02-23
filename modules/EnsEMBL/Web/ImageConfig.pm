@@ -671,23 +671,11 @@ sub load_user_tracks {
   foreach my $entry ($session->get_data(type => 'upload')) {
     next unless $entry->{'species'} eq $self->{'species'};
    
-    if ($entry->{'analyses'}) {
-      foreach my $analysis (split /, /, $entry->{'analyses'}) {
-        $upload_sources{$analysis} = {
-          source_name => $entry->{'name'},
-          source_type => 'session',
-          assembly    => $entry->{'assembly'},
-          style       => $entry->{'style'},
-        };
-        
-        $self->_compare_assemblies($entry, $session);
-      }
-    } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
-      my ($strand, $renderers, $default) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
-      $strand     = $entry->{'strand'} if $entry->{'strand'};
-      $renderers  = $entry->{'renderers'} if $entry->{'renderers'};
+    my ($strand, $renderers, $default) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
+    $strand     = $entry->{'strand'} if $entry->{'strand'};
+    $renderers  = $entry->{'renderers'} if $entry->{'renderers'};
       
-      $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
+    $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external        => 'user',
         glyphset        => 'flat_file',
         colourset       => 'userdata',
@@ -701,8 +689,7 @@ sub load_user_tracks {
         display         => $entry->{'display'} || 'off',
         default_display => $entry->{'display'} || $default,
         strand          => $strand,
-      }));
-    }
+    }));
   }
 
   ## Data saved by the user  
@@ -746,7 +733,9 @@ sub load_user_tracks {
       else {
         ## New saved-to-permanent-location
         my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
-        $menu->append($self->create_track("upload_$entry->code", $entry->name, {
+        $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
+        $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
+        $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
             external        => 'user',
             glyphset        => 'flat_file',
             colourset       => 'userdata',
@@ -757,8 +746,8 @@ sub load_user_tracks {
             caption         => $entry->name,
             renderers       => $renderers,
             description     => 'Data that has been saved to the web server.',
-            display         => 'off',
-            default_display => $default,
+            display         => $entry->display || 'off',
+            default_display => $entry->display || $default,
         }));
       }
     }
@@ -795,6 +784,7 @@ sub load_user_tracks {
   }
   
   ## And finally any saved uploads
+  ## TODO - remove once we have removed the userdata databases
   if (keys %upload_sources) {
     my $dbs        = EnsEMBL::Web::DBSQL::DBConnection->new($self->{'species'});
     my $dba        = $dbs->get_DBAdaptor('userdata');
