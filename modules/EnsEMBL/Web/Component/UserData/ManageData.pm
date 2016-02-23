@@ -137,6 +137,8 @@ sub content {
       $html = $more.$html;
     }
 
+    $html .= $more if scalar(@rows);
+
     ## Hints
     my $group_sharing_info = scalar @temp_data && $user && $user->find_admin_groups ? '<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>' : '';
  
@@ -151,7 +153,7 @@ sub content {
       </div>
     };
 
-    $html .= $more.$tip;
+    $html .= $tip;
   }
   else {
     $html = '<p class="space-below">You have no custom data.</p>';
