@@ -36,9 +36,7 @@ sub render {
   my $html;
 
   if ($species) {
-    my %sample_data = %{$species_defs->get_config($species, 'SAMPLE_DATA') || {}};
-    my $r   = $hub->param('r') || $sample_data{'LOCATION_PARAM'};
-    my $url = $hub->url({'species' => $species, 'type' => 'Location', 'action' => 'View', 'r' => $r});
+    my $url = $hub->url({'species' => $species, 'type' => 'UserData', 'action' => 'TrackHubSearch'});
     my $common_name = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
 
     $html = qq(<p>To search for Track Hubs from within Ensembl, go to
