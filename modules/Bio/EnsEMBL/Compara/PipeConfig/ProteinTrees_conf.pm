@@ -400,6 +400,7 @@ sub pipeline_create_commands {
 
         'mkdir -p '.$self->o('cluster_dir'),
         'mkdir -p '.$self->o('dump_dir'),
+        'mkdir -p '.$self->o('dump_dir').'/pafs',
         'mkdir -p '.$self->o('examl_dir'),
         'mkdir -p '.$self->o('fasta_dir'),
         'mkdir -p '.$self->o('hmm_library_basedir'),
@@ -512,6 +513,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_clustering',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
+                'table_list'    => 'peptide_align_feature_%',
+                'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_3_before_clustering.sql.gz',
             },
             -flow_into  => {
@@ -1401,7 +1404,18 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'peptide_align_features',
             },
+            -flow_into => 'backup_paf',
             %hc_analysis_params,
+        },
+
+        {   -logic_name => 'backup_paf',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'table_list'    => 'peptide_align_feature_#genome_db_id#',
+                'output_file'   => '#dump_dir#/pafs/peptide_align_feature_#genome_db_id#.sql.gz',
+                'exclude_ehive' => 1,
+            },
+            -analysis_capacity => $self->o('reuse_capacity'),
         },
 
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
