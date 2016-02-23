@@ -67,13 +67,12 @@ sub get_data {
     my $colour = $self->my_config('colour');
     my $metadata = {
                     'colour'          => $colour,
-                    'join_colour'     => $colour,
-                    'label_colour'    => $colour,
                     'display'         => $self->{'display'},
                     'default_strand'  => $default_strand,
                     'force_strand'    => $force_strand, 
                     'pix_per_bp'      => $self->scalex,
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
+                    'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
                     };
 
     ## Also set a default gradient in case we need it
@@ -95,6 +94,11 @@ sub get_data {
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
+
+    ## Final fallback, in case we didn't set these in the individual parser
+    $metadata->{'label_colour'} ||= $colour;
+    $metadata->{'join_colour'} ||= $colour;
+
     #use Data::Dumper; warn Dumper($data);
   } else {
     $self->{'data'} = [];
