@@ -330,73 +330,30 @@ sub render_alignslice_transcript {
   my $target_gene       = $self->get_parameter('single_Gene');
   
   my ($genes, $highlights, $transcripts) = $self->features;
-
-  my @tdraw;
-  foreach my $gene (@$genes) {
-    my $gene_strand    = $gene->strand;
-    my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
-    
-    next if $target_gene && $gene_stable_id ne $target_gene;
-    
-    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$transcripts->{$gene_stable_id}};
-    
-    foreach my $transcript (@sorted_transcripts) {
-      next if $transcript->start > $length || $transcript->end < 1;
-      next if $target && $transcript->stable_id ne $target;
-      
-      my @raw_exons = $self->map_AlignSlice_Exons($transcript, $length);
-      
-      next if scalar @raw_exons == 0;
-      
-      my $transcript_stable_id = $transcript->stable_id;
-      my $td = {
-        colour_key => $self->colour_key($gene, $transcript),
-        title  => $self->title($transcript, $gene),
-        href   => $self->href($gene, $transcript),
-        highlight => $highlights->{$transcript_stable_id},
-        label => $self->feature_label($gene,$transcript),
-        start => $transcript->start,
-        end => $transcript->end,
-        strand => $transcript->strand,
-        exons => [],
-        joins => [],
-      };
-      
-      my $colour_key = $self->colour_key($gene, $transcript);    
-      my $colour     = $self->my_colour($colour_key);
-      my $label      = $self->my_colour($colour_key, 'text');
-
-      my $coding_start = defined $transcript->coding_region_start ? $transcript->coding_region_start :  -1e6;
-      my $coding_end   = defined $transcript->coding_region_end   ? $transcript->coding_region_end   :  -1e6;
-
-      for(my $i=0;$i<@raw_exons;$i++) {
-        my $e = $raw_exons[$i];
-        my $e_coding_start = max($coding_start,$e->start);
-        my $e_coding_end = min($coding_end,$e->end);
-        my $exon = {
-          start => $e->start,
-          end => $e->end,
-          strand => $e->strand,
-        };
-        if($e->{'exon'}->{'etype'} eq 'M') {
-          $exon->{'missing'} = 1;
-        } else {
-          if($e->start < $e_coding_start || $e->end > $e_coding_end) {
-          }
-          if($e_coding_start <= $e_coding_end) {
-            $exon->{'coding_start'} = $e_coding_start-$e->start;
-            $exon->{'coding_end'} = $e->end-$e_coding_end;
-          }
-        }
-        push @{$td->{'exons'}},$exon;
-      }
-      $td->{'colour'} = $self->my_colour($td->{'colour_key'});
-      push @tdraw,$td;
-    }
+  my $hub = $self->{'config'}->hub;
+  my $ggdraw = $hub->get_query('GlyphSet::Transcript')->go($self,{
+    species => $self->species,
+    pattern => $self->my_config('colour_key'),
+    shortlabels => $self->get_parameter('opt_shortlabels'),
+    label_key => $self->my_config('label_key'),
+    slice => $self->{'container'},
+    logic_names => $self->my_config('logic_names'),
+    db => $self->my_config('db'),
+  });
+  my @ttdraw;
+  foreach my $g (@$ggdraw) {
+    foreach my $t (@{$g->{'transcripts'}}) {
+      next if $target and $t->{'stable_id'} ne $target;
+      next unless @{$t->{'exons'}};
+      $t->{'start'} = min(grep {$_} map { $_->{'start'} } @{$t->{'exons'}});
+      $t->{'end'} = max(grep {$_} map { $_->{'end'} } @{$t->{'exons'}});
+      push @ttdraw,$t;
+    } 
   }
+  
   my $draw_labels = ($labels and $show_labels ne 'off');
-  $self->mr_bump(\@tdraw,$draw_labels,$length);
-  $self->draw_expanded_transcripts(\@tdraw,$length,$strand,$draw_labels,$target);
+  $self->mr_bump(\@ttdraw,$draw_labels,$length);
+  $self->draw_expanded_transcripts(\@ttdraw,$length,$strand,$draw_labels,$target);
   if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
     $self->no_track_on_strand;
   }
@@ -432,59 +389,21 @@ sub render_alignslice_collapsed {
     logic_names => $self->my_config('logic_names'),
     db => $self->my_config('db'),
   });
-  use Data::Dumper;
-  warn Dumper(436,$ggdraw);
- 
-  my @ggdraw; 
-  foreach my $gene (@$genes) {
-    my $gene_strand    = $gene->strand;
-    my $gene_stable_id = $gene->stable_id;
-    
-    my $colour_key = $self->colour_key($gene);    
-    my $label      = $self->my_colour($colour_key, 'text');
-    
-    my @exons;
-    
-    # In compact mode we 'collapse' exons showing just the gene structure, i.e overlapping exons/transcripts will be merged
-    foreach my $transcript (@{$gene->get_all_Transcripts}) {
-      next if $transcript->start > $length || $transcript->end < 1;
-      push @exons, $self->map_AlignSlice_Exons($transcript, $length);
-    }
-    
-    next unless @exons;
-    
-    # All exons in the gene will be connected by a simple line which starts from a first exon if it within the viewed region, otherwise from the first pixel. 
-    # The line ends with last exon of the gene or the end of the image
-    my $start = $exons[0]->{'exon'}->{'etype'} eq 'B' ? 1 : 0;       # Start line from 1 if there are preceeding exons    
-    my $end  = $exons[-1]->{'exon'}->{'etype'} eq 'A' ? $length : 0; # End line at the end of the image if there are further exons beyond the region end
-    
-    # Get only exons in view
-    my @exons_in_view = sort { $a->start <=> $b->start } grep { $_->{'exon'}->{'etype'} =~ /[NM]/} @exons;
-    
-    # Set start and end of the connecting line if they are not set yet
-    $start ||= $exons_in_view[0]->start;
-    $end   ||= $exons_in_view[-1]->end;
-    
-    # Draw exons
-    my @edraw;
-    foreach my $exon (@exons_in_view) {
-      push @edraw,{ start => $exon->start, end => $exon->end };
-    }
 
-    push @ggdraw,{
-      start => $start,
-      end => $end,
-      title  => $self->gene_title($gene),
-      href   => $self->href($gene),
-      colour_key => $colour_key,
-      exons => \@edraw,
-      label => $self->feature_label($gene),
-      strand => $gene->strand,
-    };
+  foreach my $g (@$ggdraw) {
+    my @exons;
+    # Collapse exons
+    foreach my $t (@{$g->{'transcripts'}||[]}) {
+      push @exons,@{$t->{'exons'}||[]};
+    }
+    $g->{'exons'} = \@exons;
+    $g->{'start'} = min(grep { $_ } map { $_->{'start'} } @exons);
+    $g->{'end'} = max(grep { $_ } map { $_->{'end'} } @exons);
   }
+
   my $draw_labels = ($labels && $show_labels ne 'off');
-  $self->mr_bump(\@ggdraw,$draw_labels,$length);
-  $self->draw_collapsed_genes($length,$draw_labels,$strand,\@ggdraw);
+  $self->mr_bump($ggdraw,$draw_labels,$length);
+  $self->draw_collapsed_genes($length,$draw_labels,$strand,$ggdraw);
 
   if($config->get_option('opt_empty_tracks') != 0 && !@$genes) {
     $self->no_track_on_strand;
@@ -541,6 +460,10 @@ sub render_genes {
     $self->no_track_on_strand;
   }
 }
+
+# render_text will need to be reimplemented in the manner of the above
+# renderers when we restore it. The old support methods have gone. Use
+# history to recover it.
 
 sub render_text {
   my $self = shift;
@@ -747,8 +670,6 @@ sub map_AlignSlice_Exons {
         }
       }
     }
-      
-    warn "751: $ex->{'exon'}->{'etype'} ".$transcript->stable_id."\n";
     push @exons, $ex;
   }
    
