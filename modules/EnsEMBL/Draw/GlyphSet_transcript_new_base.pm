@@ -202,6 +202,7 @@ sub draw_collapsed_genes {
 
   my $strand_flag      = $self->my_config('strand');
   return unless @$genes;
+  $self->mr_bump($genes,$labels,$length);
   my %used_colours;
   foreach my $g (@$genes) {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
@@ -375,6 +376,7 @@ sub draw_expanded_transcripts {
   my ($self,$length,$draw_labels,$strand,$tdraw) = @_;
 
   return unless @$tdraw;
+  $self->mr_bump($tdraw,$draw_labels,$length);
   my $target = $self->get_parameter('single_Transcript');
   my $h = $self->my_config('height') || ($target ? 30 : 8);
   my $strand_flag = $self->my_config('strand');

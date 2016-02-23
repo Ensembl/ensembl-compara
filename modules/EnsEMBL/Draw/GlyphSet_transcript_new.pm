@@ -28,7 +28,9 @@ use List::MoreUtils qw(natatime);
 
 use base qw(EnsEMBL::Draw::GlyphSet_transcript_new_base);
 
-sub features { return []; }
+#####################################################
+# GLYPHSET API                                      #
+#####################################################
 
 ## Let us define all the renderers here...
 ## ... these are just all wrappers - the parameter is 1 to draw labels
@@ -48,6 +50,246 @@ sub render_as_transcript_label     { $_[0]->render_alignslice_transcript(1); }
 sub render_as_transcript_nolabel   { $_[0]->render_alignslice_transcript(0); }
 sub render_as_collapsed_label      { $_[0]->render_alignslice_collapsed(1);  }
 sub render_as_collapsed_nolabel    { $_[0]->render_alignslice_collapsed(0);  }
+
+sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }
+
+#######################################################
+# MAIN METHODS                                        #
+#######################################################
+
+sub _get_data {
+  my ($self) = @_;
+
+  my $hub = $self->{'config'}->hub;
+  return $hub->get_query('GlyphSet::Transcript')->go($self,{
+    species => $self->species,
+    pattern => $self->my_config('colour_key'),
+    shortlabels => $self->get_parameter('opt_shortlabels'),
+    label_key => $self->my_config('label_key'),
+    slice => $self->{'container'},
+    logic_names => $self->my_config('logic_names'),
+    db => $self->my_config('db'),
+  });
+}
+
+sub _prepare_collapsed {
+  my ($self,$ggdraw) = @_;
+
+  my $link = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my $this_db = ($self->core('db') eq $self->my_config('db'));
+  my $selected_gene = $self->my_config('g') || $self->core('g');
+  my $navigation = $self->my_config('navigation') || 'on';
+  
+  foreach my $g (@$ggdraw) {
+    my @exons;
+    delete $g->{'href'} unless $navigation eq 'on';
+    foreach my $t (@{$g->{'transcripts'}||[]}) {
+      push @exons,@{$t->{'exons'}||[]};
+    }
+    $g->{'exons'} = \@exons;
+    delete $g->{'transcripts'};
+    my $gene_stable_id = $g->{'stable_id'};
+    if($this_db and $gene_stable_id eq $selected_gene) {
+      $g->{'highlight'} = 'highlight2';
+    }
+    if($link and $gene_stable_id) {
+      $g->{'joins'} = $self->calculate_collapsed_joins($gene_stable_id);
+    }
+  }
+}
+  
+sub _prepare_expanded {
+  my ($self,$ggdraw) = @_;
+  
+  my $this_db = ($self->core('db') eq $self->my_config('db'));
+  my $target = $self->get_parameter('single_Transcript');
+  my $selected_gene = $self->my_config('g') || $self->core('g');
+  my $selected_trans = $self->core('t') || $self->core('pt');
+  my $link = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my @ttdraw;
+  foreach my $g (@$ggdraw) {
+    my $tjoins;
+    if($link and $g->{'stable_id'}) {
+      $tjoins = $self->calculate_expanded_joins($g->{'stable_id'});
+    }
+    foreach my $t (@{$g->{'transcripts'}}) {
+      # skip scraps
+      next if $target and $t->{'stable_id'} ne $target;
+      next unless @{$t->{'exons'}};
+      # set highlights
+      if(!defined $target and $this_db) {
+        if($t->{'stable_id'} eq $selected_trans) {
+          $t->{'highlight'} = 'highlight2';
+        } elsif($g->{'stable_id'} eq $selected_gene) {
+          $t->{'highlight'} = 'highlight1';
+        }
+      }
+      # do joins
+      $t->{'joins'} = [];
+      if($tjoins and $tjoins->{$t->{'stable_id'}}) {
+        my @joins = @{$tjoins->{$t->{'stable_id'}}};
+        if($t->{'translation_stable_id'}) {
+          push @joins,@{$tjoins->{$t->{'translation_stable_id'}}||[]};
+        }
+        $t->{'joins'} = \@joins;
+      }
+      push @ttdraw,$t;
+    } 
+  }
+  return \@ttdraw;
+}
+
+sub _draw_prepare {
+  my ($self,$ggdraw,$labels) = @_;
+
+  if($self->{'config'}->get_option('opt_empty_tracks') != 0 && !@$ggdraw) {
+    $self->no_track_on_strand;
+  }
+  my $container = $self->{'container'}{'ref'} || $self->{'container'};
+  my $draw_labels = ($labels && $self->my_config('show_labels') ne 'off');
+  return ($container->length,$draw_labels,$self->strand);
+}
+  
+sub render_collapsed {
+  my ($self, $labels) = @_;
+
+  return $self->render_text('transcript', 'collapsed') if $self->{'text_export'};
+  
+  my $ggdraw = $self->_get_data;
+  $self->_prepare_collapsed($ggdraw);
+  my ($length,$draw_labels,$strand) = $self->_draw_prepare($ggdraw,$labels);
+  $self->draw_collapsed_genes($length,$draw_labels,$strand,$ggdraw);
+}
+
+sub render_transcripts {
+  my ($self, $labels) = @_;
+
+  return $self->render_text('transcript') if $self->{'text_export'};
+  
+  my $ggdraw = $self->_get_data;
+  my $ttdraw = $self->_prepare_expanded($ggdraw);
+  my ($length,$draw_labels,$strand) = $self->_draw_prepare($ttdraw,$labels);
+  $self->draw_expanded_transcripts($length,$draw_labels,$strand,$ttdraw);
+}
+
+sub render_alignslice_transcript {
+  my ($self, $labels) = @_;
+
+  return $self->render_text('transcript') if $self->{'text_export'};
+
+  my $ggdraw = $self->_get_data;
+  my $ttdraw = $self->_prepare_expanded($ggdraw);
+  foreach my $t (@$ttdraw) {
+    $t->{'start'} = min(grep {$_} map { $_->{'start'} } @{$t->{'exons'}});
+    $t->{'end'} = max(grep {$_} map { $_->{'end'} } @{$t->{'exons'}});
+  }
+  my ($length,$draw_labels,$strand) = $self->_draw_prepare($ggdraw,$labels);
+  $self->draw_expanded_transcripts($length,$draw_labels,$strand,$ggdraw);
+}
+
+sub render_alignslice_collapsed {
+  my ($self, $labels) = @_;
+  
+  return $self->render_text('transcript') if $self->{'text_export'};
+  my $ggdraw = $self->_get_data;
+  $self->_prepare_collapsed($ggdraw);
+  foreach my $g (@$ggdraw) {
+    $g->{'start'} = min(grep { $_ } map { $_->{'start'} } @{$g->{'exons'}});
+    $g->{'end'} = max(grep { $_ } map { $_->{'end'} } @{$g->{'exons'}});
+  }
+  my ($length,$draw_labels,$strand) = $self->_draw_prepare($ggdraw,$labels);
+  $self->draw_collapsed_genes($length,$draw_labels,$strand,$ggdraw);
+}
+
+sub render_genes {
+  my ($self,$labels) = @_;
+
+  return $self->render_text('gene') if $self->{'text_export'};
+  
+  my $ggdraw = $self->_get_data;
+  $self->_prepare_collapsed($ggdraw); # For highlights & joins
+  my $label_threshold = $self->my_config('label_threshold') || 50e3;
+  my ($length,$draw_labels,$strand) = $self->_draw_prepare($ggdraw,$labels);
+  $draw_labels = 0 if $label_threshold * 1001 < $length;
+  $self->draw_rect_genes($ggdraw,$length,$labels,$strand);
+}
+
+# render_text will need to be reimplemented in the manner of the above
+# renderers when we restore it. The old support methods have gone. Use
+# history to recover it.
+
+######################################################
+# JOINING GENES                                      #
+######################################################
+
+# Get homologous gene ids for given gene
+sub get_gene_joins {
+  my ($self, $gene, $species, $join_types, $source) = @_;
+  
+  my $config     = $self->{'config'};
+  my $compara_db = $config->hub->database('compara');
+  return unless $compara_db;
+  
+  my $ma = $compara_db->get_GeneMemberAdaptor;
+  return unless $ma;
+  
+  my $qy_member = $ma->fetch_by_stable_id($gene->stable_id);
+  return unless defined $qy_member;
+  
+  my $method = $config->get_parameter('force_homologue') || $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
+  my $func   = $source ? 'get_homologous_peptide_ids_from_gene' : 'get_homologous_gene_ids';
+  
+  return $self->$func($species, $join_types, $compara_db->get_HomologyAdaptor, $qy_member, $method ? [ $method ] : undef);
+}
+  
+sub get_homologous_gene_ids {
+  my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
+  my @homologues;
+  
+  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member($qy_member, -TARGET_SPECIES => [$species], -METHOD_LINK_TYPE => $method)}) {
+    my $colour_key = $join_types->{$homology->description};
+    
+    next if $colour_key eq 'hidden';
+    
+    my $colour = $self->my_colour($colour_key . '_join');
+    my $label  = $self->my_colour($colour_key . '_join', 'text');
+    
+    my $tg_member = $homology->get_all_Members()->[1];
+    push @homologues, [ $tg_member->gene_member->stable_id, $colour, $label ];
+  }
+  
+  return @homologues;
+}
+
+# Get homologous protein ids for given gene
+sub get_homologous_peptide_ids_from_gene {
+  my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
+  my ($stable_id, @homologues, @homologue_genes);
+  
+  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member($qy_member, -TARGET_SPECIES => [$species], -METHOD_LINK_TYPE => $method)}) {
+    my $colour_key = $join_types->{$homology->description};
+    
+    next if $colour_key eq 'hidden';
+    
+    my $colour = $self->my_colour($colour_key . '_join');
+    my $label  = $self->my_colour($colour_key . '_join', 'text');
+    
+    $stable_id    = $homology->get_all_Members()->[0]->stable_id;
+    my $tg_member = $homology->get_all_Members()->[1];
+    push @homologues,      [ $tg_member->stable_id,              $colour, $label ];
+    push @homologue_genes, [ $tg_member->gene_member->stable_id, $colour         ];
+  }
+  
+  return ($stable_id, \@homologues, \@homologue_genes);
+}
+
+sub filter_by_target {
+  my ($self, $alt_alleles, $target) = @_;
+  
+  $alt_alleles = [ grep $_->slice->seq_region_name eq $target, @$alt_alleles ] if $target;
+  
+  return $alt_alleles;
+}
 
 sub calculate_collapsed_joins {
   my ($self,$gene_stable_id) = @_;
@@ -194,286 +436,5 @@ sub calculate_expanded_joins {
   $tjoins{$tsid} = \@joins;
   return \%tjoins;
 }
-
-sub _get_data {
-  my ($self) = @_;
-
-  my $hub = $self->{'config'}->hub;
-  return $hub->get_query('GlyphSet::Transcript')->go($self,{
-    species => $self->species,
-    pattern => $self->my_config('colour_key'),
-    shortlabels => $self->get_parameter('opt_shortlabels'),
-    label_key => $self->my_config('label_key'),
-    slice => $self->{'container'},
-    logic_names => $self->my_config('logic_names'),
-    db => $self->my_config('db'),
-  });
-}
-
-sub _prepare_collapsed {
-  my ($self,$ggdraw) = @_;
-
-  my $link = $self->get_parameter('compara') ? $self->my_config('join') : 0;
-  my $this_db = ($self->core('db') eq $self->my_config('db'));
-  my $selected_gene = $self->my_config('g') || $self->core('g');
-  my $navigation = $self->my_config('navigation') || 'on';
-  
-  foreach my $g (@$ggdraw) {
-    my @exons;
-    delete $g->{'href'} unless $navigation eq 'on';
-    foreach my $t (@{$g->{'transcripts'}||[]}) {
-      push @exons,@{$t->{'exons'}||[]};
-    }
-    $g->{'exons'} = \@exons;
-    delete $g->{'transcripts'};
-    my $gene_stable_id = $g->{'stable_id'};
-    if($this_db and $gene_stable_id eq $selected_gene) {
-      $g->{'highlight'} = 'highlight2';
-    }
-    if($link and $gene_stable_id) {
-      $g->{'joins'} = $self->calculate_collapsed_joins($gene_stable_id);
-    }
-  }
-}
-  
-sub _prepare_expanded {
-  my ($self,$ggdraw) = @_;
-  
-  my $this_db = ($self->core('db') eq $self->my_config('db'));
-  my $target = $self->get_parameter('single_Transcript');
-  my $selected_gene = $self->my_config('g') || $self->core('g');
-  my $selected_trans = $self->core('t') || $self->core('pt');
-  my $link = $self->get_parameter('compara') ? $self->my_config('join') : 0;
-  my @ttdraw;
-  foreach my $g (@$ggdraw) {
-    my $tjoins;
-    if($link and $g->{'stable_id'}) {
-      $tjoins = $self->calculate_expanded_joins($g->{'stable_id'});
-    }
-    foreach my $t (@{$g->{'transcripts'}}) {
-      # skip scraps
-      next if $target and $t->{'stable_id'} ne $target;
-      next unless @{$t->{'exons'}};
-      # set highlights
-      if(!defined $target and $this_db) {
-        if($t->{'stable_id'} eq $selected_trans) {
-          $t->{'highlight'} = 'highlight2';
-        } elsif($g->{'stable_id'} eq $selected_gene) {
-          $t->{'highlight'} = 'highlight1';
-        }
-      }
-      # do joins
-      $t->{'joins'} = [];
-      if($tjoins and $tjoins->{$t->{'stable_id'}}) {
-        my @joins = @{$tjoins->{$t->{'stable_id'}}};
-        if($t->{'translation_stable_id'}) {
-          push @joins,@{$tjoins->{$t->{'translation_stable_id'}}||[]};
-        }
-        $t->{'joins'} = \@joins;
-      }
-      push @ttdraw,$t;
-    } 
-  }
-  return \@ttdraw;
-}
-  
-sub _draw_gene {
-  my ($self,$ggdraw,$labels) = @_;
-
-  my $config = $self->{'config'};
-  my $container = $self->{'container'}{'ref'} || $self->{'container'};
-  my $length = $container->length;
-  my $label_threshold = $self->my_config('label_threshold') || 50e3;
-  my $strand = $self->strand;
-  $labels = 0 if $label_threshold * 1001 < $length;
-  $self->draw_rect_genes($ggdraw,$length,$labels,$strand);
-  if($config->get_option('opt_empty_tracks') != 0 && !@$ggdraw) {
-    $self->no_track_on_strand;
-  }
-}
-
-sub _draw_collapsed {
-  my ($self,$ggdraw,$labels) = @_;
-  
-  my $config            = $self->{'config'};
-  my $container         = $self->{'container'}{'ref'} || $self->{'container'};
-  my $length            = $container->length;
-  my $strand            = $self->strand;
-  my $show_labels       = $self->my_config('show_labels');
-  
-  my $draw_labels = ($labels && $show_labels ne 'off');
-  $self->mr_bump($ggdraw,$draw_labels,$length);
-  $self->draw_collapsed_genes($length,$draw_labels,$strand,$ggdraw);
-
-  if($config->get_option('opt_empty_tracks') != 0 && !@$ggdraw) {
-    $self->no_track_on_strand;
-  }
-}
-
-sub _draw_expanded {
-  my ($self,$ggdraw,$labels) = @_;
-
-  my $config            = $self->{'config'};
-  my $container         = $self->{'container'}{'ref'} || $self->{'container'};
-  my $length            = $container->length;
-  my $strand            = $self->strand;
-  my $show_labels       = $self->my_config('show_labels');
-  
-  my $draw_labels = ($labels && $show_labels ne 'off');
-  $self->mr_bump($ggdraw,$draw_labels,$length);
-  $self->draw_expanded_transcripts($length,$draw_labels,$strand,$ggdraw);
-  if($config->get_option('opt_empty_tracks') != 0 && !@$ggdraw) {
-    $self->no_track_on_strand;
-  }
-}
-  
-sub render_collapsed {
-  my ($self, $labels) = @_;
-
-  return $self->render_text('transcript', 'collapsed') if $self->{'text_export'};
-  
-  my $ggdraw = $self->_get_data;
-  $self->_prepare_collapsed($ggdraw);
-  $self->_draw_collapsed($ggdraw,$labels);
-}
-
-sub render_transcripts {
-  my ($self, $labels) = @_;
-
-  return $self->render_text('transcript') if $self->{'text_export'};
-  
-  my $ggdraw = $self->_get_data;
-  my $ttdraw = $self->_prepare_expanded($ggdraw);
-  $self->_draw_expanded($ttdraw,$labels);
-}
-
-sub render_alignslice_transcript {
-  my ($self, $labels) = @_;
-
-  return $self->render_text('transcript') if $self->{'text_export'};
-
-  my $ggdraw = $self->_get_data;
-  my $ttdraw = $self->_prepare_expanded($ggdraw);
-  foreach my $t (@$ttdraw) {
-    $t->{'start'} = min(grep {$_} map { $_->{'start'} } @{$t->{'exons'}});
-    $t->{'end'} = max(grep {$_} map { $_->{'end'} } @{$t->{'exons'}});
-  }
-  $self->_draw_expanded($ttdraw,$labels); 
-}
-
-sub render_alignslice_collapsed {
-  my ($self, $labels) = @_;
-  
-  return $self->render_text('transcript') if $self->{'text_export'};
-  my $ggdraw = $self->_get_data;
-  $self->_prepare_collapsed($ggdraw);
-  foreach my $g (@$ggdraw) {
-    $g->{'start'} = min(grep { $_ } map { $_->{'start'} } @{$g->{'exons'}});
-    $g->{'end'} = max(grep { $_ } map { $_->{'end'} } @{$g->{'exons'}});
-  }
-  $self->_draw_collapsed($ggdraw,$labels);
-}
-
-sub render_genes {
-  my ($self,$labels) = @_;
-
-  return $self->render_text('gene') if $self->{'text_export'};
-  
-  my $ggdraw = $self->_get_data;
-  $self->_prepare_collapsed($ggdraw); # For highlights & joins
-  $self->_draw_gene($ggdraw,$labels);
-}
-
-# render_text will need to be reimplemented in the manner of the above
-# renderers when we restore it. The old support methods have gone. Use
-# history to recover it.
-
-# Get homologous gene ids for given gene
-sub get_gene_joins {
-  my ($self, $gene, $species, $join_types, $source) = @_;
-  
-  my $config     = $self->{'config'};
-  my $compara_db = $config->hub->database('compara');
-  return unless $compara_db;
-  
-  my $ma = $compara_db->get_GeneMemberAdaptor;
-  return unless $ma;
-  
-  my $qy_member = $ma->fetch_by_stable_id($gene->stable_id);
-  return unless defined $qy_member;
-  
-  my $method = $config->get_parameter('force_homologue') || $species eq $config->{'species'} ? $config->get_parameter('homologue') : undef;
-  my $func   = $source ? 'get_homologous_peptide_ids_from_gene' : 'get_homologous_gene_ids';
-  
-  return $self->$func($species, $join_types, $compara_db->get_HomologyAdaptor, $qy_member, $method ? [ $method ] : undef);
-}
-  
-sub get_homologous_gene_ids {
-  my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
-  my @homologues;
-  
-  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member($qy_member, -TARGET_SPECIES => [$species], -METHOD_LINK_TYPE => $method)}) {
-    my $colour_key = $join_types->{$homology->description};
-    
-    next if $colour_key eq 'hidden';
-    
-    my $colour = $self->my_colour($colour_key . '_join');
-    my $label  = $self->my_colour($colour_key . '_join', 'text');
-    
-    my $tg_member = $homology->get_all_Members()->[1];
-    push @homologues, [ $tg_member->gene_member->stable_id, $colour, $label ];
-  }
-  
-  return @homologues;
-}
-
-# Get homologous protein ids for given gene
-sub get_homologous_peptide_ids_from_gene {
-  my ($self, $species, $join_types, $homology_adaptor, $qy_member, $method) = @_;
-  my ($stable_id, @homologues, @homologue_genes);
-  
-  foreach my $homology (@{$homology_adaptor->fetch_all_by_Member($qy_member, -TARGET_SPECIES => [$species], -METHOD_LINK_TYPE => $method)}) {
-    my $colour_key = $join_types->{$homology->description};
-    
-    next if $colour_key eq 'hidden';
-    
-    my $colour = $self->my_colour($colour_key . '_join');
-    my $label  = $self->my_colour($colour_key . '_join', 'text');
-    
-    $stable_id    = $homology->get_all_Members()->[0]->stable_id;
-    my $tg_member = $homology->get_all_Members()->[1];
-    push @homologues,      [ $tg_member->stable_id,              $colour, $label ];
-    push @homologue_genes, [ $tg_member->gene_member->stable_id, $colour         ];
-  }
-  
-  return ($stable_id, \@homologues, \@homologue_genes);
-}
-
-sub filter_by_target {
-  my ($self, $alt_alleles, $target) = @_;
-  
-  $alt_alleles = [ grep $_->slice->seq_region_name eq $target, @$alt_alleles ] if $target;
-  
-  return $alt_alleles;
-}
-
-#============================================================================#
-#
-# Helper functions....
-# 
-#============================================================================#
-
-# Generate title tag which will be used to render z-menu
-sub title {
-  my ($self, $transcript, $gene) = @_;
-  
-  my $title = 'Transcript: ' . $transcript->stable_id;
-  $title .= '; Gene: ' . $gene->stable_id if $gene->stable_id;
-  $title .= '; Location: ' . $transcript->seq_region_name . ':' . $transcript->seq_region_start . '-' . $transcript->seq_region_end;
-  
-  return $title
-}
-
-sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }
 
 1;
