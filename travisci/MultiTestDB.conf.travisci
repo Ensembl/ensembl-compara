@@ -12,10 +12,10 @@
       'OrthologQM_GeneOrder'   => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     },
     'orth_qm_test' => {
-      'cc21_pair_species_test' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
-      'cc21_prepare_orth_test' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+      'cc21_pair_species' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+      'cc21_prepare_orth' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
         'cc21_prev_orth_test' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
-      'cc21_select_mlss_test'  => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+      'cc21_select_mlss'  => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     },
     'homo_sapiens' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
     'mus_musculus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
