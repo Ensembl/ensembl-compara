@@ -33,6 +33,24 @@ sub _init {
   $self->ajaxable(1);
 }
 
+sub buttons {
+### Custom export button, because this view displays sequence using JavaScript
+  my $self = shift;
+  my $hub = $self->hub;
+
+  my $url = sprintf '%s/transcript_haplotypes/%s/%s?content-type=application/json;sequence=1', 
+                      $hub->species_defs->ENSEMBL_REST_URL, 
+                      lc($hub->species), 
+                      $hub->param('t');
+
+  return {
+      'url'       => $url,
+      'caption'   => 'Download sequence as JSON',
+      'class'     => 'export',
+    };
+
+}
+
 sub content {
   my $self = shift;
   my $object = $self->object;
