@@ -488,27 +488,27 @@ sub about_feature {
     
     push @str_array, sprintf('%s %s', 
                         $avail->{has_transcripts}, 
-                        $avail->{has_transcripts} eq "1" ? "transcript (<a href='$splice_url'>splice variant</a>)" : "transcripts (<a href='$splice_url'>splice variants)</a>"
+                        $avail->{has_transcripts} eq "1" ? "transcript (<a href='$splice_url' class='dynamic-link'>splice variant</a>)" : "transcripts (<a class='dynamic-link' href='$splice_url'>splice variants)</a>"
                     ) if($avail->{has_transcripts});
     push @str_array, sprintf('%s gene %s', 
                         $avail->{has_alt_alleles}, 
                         $avail->{has_alt_alleles} eq "1" ? "allele" : "alleles"
                     ) if($avail->{has_alt_alleles});
-    push @str_array, sprintf('<a href="%s">%s %s</a>', 
+    push @str_array, sprintf('<a class="dynamic-link" href="%s">%s %s</a>', 
                         $ortholog_url, 
                         $avail->{has_orthologs}, 
                         $avail->{has_orthologs} eq "1" ? "orthologue" : "orthologues"
                     ) if($avail->{has_orthologs});
-    push @str_array, sprintf('<a href="%s">%s %s</a>',
+    push @str_array, sprintf('<a class="dynamic-link" href="%s">%s %s</a>',
                         $paralog_url, 
                         $avail->{has_paralogs}, 
                         $avail->{has_paralogs} eq "1" ? "paralogue" : "paralogues"
                     ) if($avail->{has_paralogs});    
-    push @str_array, sprintf('is a member of <a href="%s">%s Ensembl protein %s</a>', $protein_url, 
+    push @str_array, sprintf('is a member of <a class="dynamic-link" href="%s">%s Ensembl protein %s</a>', $protein_url, 
                         $avail->{family_count}, 
                         $avail->{family_count} eq "1" ? "family" : "families"
                     ) if($avail->{family_count});
-    push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+    push @str_array, sprintf('is associated with <a class="dynamic-link" href="%s">%s %s</a>', 
                         $phenotype_url, 
                         $avail->{has_phenotypes}, 
                         $avail->{has_phenotypes} eq "1" ? "phenotype" : "phenotypes"
@@ -548,23 +548,23 @@ sub about_feature {
       g      => $gene->stable_id
     });     
    
-    push @str_array, sprintf('<a href="%s">%s %s</a>', 
+    push @str_array, sprintf('<a class="dynamic-link" href="%s">%s %s</a>', 
                         $exon_url, $avail->{has_exons}, 
                         $avail->{has_exons} eq "1" ? "exon" : "exons"
                       ) if($avail->{has_exons});
                       
-    push @str_array, sprintf('is annotated with <a href="%s">%s %s</a>', 
+    push @str_array, sprintf('is annotated with <a class="dynamic-link" href="%s">%s %s</a>', 
                         $domain_url, $avail->{has_domains}, 
                         $avail->{has_domains} eq "1" ? "domain and feature" : "domains and features"
                       ) if($avail->{has_domains});
 
-    push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+    push @str_array, sprintf('is associated with <a class="dynamic-link"href="%s">%s %s</a>', 
                         $variation_url, 
                         $avail->{has_variations}, 
                         $avail->{has_variations} eq "1" ? "variation" : "variations",
                       ) if($avail->{has_variations});    
     
-    push @str_array, sprintf('maps to <a href="%s">%s oligo %s</a>',    
+    push @str_array, sprintf('maps to <a class="dynamic-link" href="%s">%s oligo %s</a>',    
                         $oligo_url,
                         $avail->{has_oligos}, 
                         $avail->{has_oligos} eq "1" ? "probe" : "probes"

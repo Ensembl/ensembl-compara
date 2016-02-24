@@ -79,28 +79,28 @@ sub feature_summary {
  
   my @str_array;
   
-  push @str_array, sprintf('overlaps <a href="%s">%s %s</a>', 
+  push @str_array, sprintf('overlaps <a class="dynamic-link" href="%s">%s %s</a>', 
                       $transcript_url, 
                       $avail->{has_transcripts}, 
                       $avail->{has_transcripts} eq "1" ? "transcript" : "transcripts"
                   ) if($avail->{has_transcripts});
-  push @str_array, sprintf('%s<a href="%s">%s %s</a>',
+  push @str_array, sprintf('%s<a class="dynamic-link" href="%s">%s %s</a>',
                       $avail->{has_transcripts} ? '' : 'overlaps ',
                       $transcript_url,
                       $avail->{has_regfeats},
                       $avail->{has_regfeats} eq "1" ? "regulatory feature" : "regulatory features"
                   ) if($avail->{has_regfeats});
-  push @str_array, sprintf('has <a href="%s">%s sample %s</a>', 
+  push @str_array, sprintf('has <a class="dynamic-link" href="%s">%s sample %s</a>', 
                       $genotype_url, 
                       $avail->{has_samples}, 
                       $avail->{has_samples} eq "1" ? "genotype" : "genotypes" 
                   )if($avail->{has_samples});
-  push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+  push @str_array, sprintf('is associated with <a class="dynamic-link" href="%s">%s %s</a>', 
                       $phenotype_url, 
                       $avail->{has_ega}, 
                       $avail->{has_ega} eq "1" ? "phenotype" : "phenotypes"
                   ) if($avail->{has_ega});  
-  push @str_array, sprintf('is mentioned in <a href="%s">%s %s</a>', 
+  push @str_array, sprintf('is mentioned in <a class="dynamic-link" href="%s">%s %s</a>', 
                       $citation_url, 
                       $avail->{has_citation}, 
                       $avail->{has_citation} eq "1" ? "citation" : "citations" 
