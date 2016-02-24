@@ -53,7 +53,21 @@ use Exporter qw(import);
 our @EXPORT_OK = qw(register_cleaner);
 
 my $reg = 'Bio::EnsEMBL::Registry';
-my %CLEANERS;
+
+my %CLEANERS = (
+                'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor' => [
+sub {
+  my ($vdb,$sd) = @_;
+
+  my $c = $sd->ENSEMBL_VCF_COLLECTIONS;
+  if($c && $vdb->can('use_vcf')) {
+    $vdb->vcf_config_file($c->{'CONFIG'});
+    $vdb->vcf_root_dir($sd->DATAFILE_BASE_PATH);
+    $vdb->use_vcf($c->{'ENABLED'});
+  }
+},
+]
+                );
 
 sub new {
   my( $class, $species, $species_defs ) = @_;
