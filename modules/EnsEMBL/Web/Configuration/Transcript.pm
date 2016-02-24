@@ -111,7 +111,16 @@ sub populate_tree {
     [qw( snps EnsEMBL::Web::Component::Transcript::PopulationImage )],
     { 'availability' => 'strains database:variation core' }
   ));
-  
+
+  ## Not available for most species, so don't even show it disabled
+  if ($self->hub->species_defs->TRANSCRIPT_HAPLOTYPES) { 
+    $var_menu->append($self->create_node('Haplotypes', 'Haplotypes',
+        ['haplo'    => 'EnsEMBL::Web::Component::Transcript::Haplotypes',],
+        { 'availability' => 'database:variation translation ref_slice', 'concise' => 'Haplotypes' }
+      )
+    );
+  }
+
   my $prot_menu = $self->create_submenu('Protein', 'Protein Information');
   
   $prot_menu->append($self->create_node('ProteinSummary', 'Protein summary',

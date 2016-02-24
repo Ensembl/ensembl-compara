@@ -74,6 +74,7 @@ sub availability {
       $availability->{'has_variations'}  = $counts->{'prot_variations'};
       $availability->{'has_domains'}     = $counts->{'prot_domains'};
       $availability->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos);
+      $availability->{ref_slice}       //= $self->Obj->slice->is_reference();
     }
   
     $self->{'_availability'} = $availability;
