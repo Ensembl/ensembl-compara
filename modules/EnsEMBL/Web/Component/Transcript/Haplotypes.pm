@@ -37,13 +37,14 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   
+  my $c = $object->get_haplotypes;
+  return unless $c;
+  
   my $html = '';
   
   # tell JS what panel type this is
   $html .= '<input type="hidden" class="panel_type" value="TranscriptHaplotypes" />';
 
-  my $c = $self->get_haplotypes;
-  
   my $table = $self->new_table(
     [], [], {
       data_table => 1,
@@ -147,29 +148,6 @@ sub content {
   return $html;
 }
 
-sub get_haplotypes {
-  my $self = shift;
-  
-  my $tr = $self->object->Obj;
-  
-  my $vdb = $tr->adaptor->db->get_db_adaptor('variation');
-  
-  # find VCF config
-  my $sd = $self->object->species_defs;
-
-  my $c = $sd->ENSEMBL_VCF_COLLECTIONS;
-
-  if($c && $vdb->can('use_vcf')) {
-    $vdb->vcf_config_file($c->{'CONFIG'});
-    $vdb->vcf_root_dir($sd->DATAFILE_BASE_PATH);
-    $vdb->use_vcf($c->{'ENABLED'});
-  }
-  
-  my $thca = $vdb->get_TranscriptHaplotypeAdaptor();
-
-  return $thca->get_TranscriptHaplotypeContainer_by_Transcript($tr);
-}
-
 sub short_population_name {
   my $self = shift;
   my $name = shift;
@@ -199,30 +177,20 @@ sub population_structure {
   return $self->{_population_structure};
 }
 
-sub population_objects {
-  my $self = shift;
-  my $total_counts = shift;
-  
-  if(!exists($self->{_population_objects})) {
-    # generate population structure
-    my $pop_adaptor = $self->object->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
-    my @pop_objs = grep {defined($_)} map {$pop_adaptor->fetch_by_name($_)} keys %$total_counts;
-    
-    $self->{_population_objects} = \@pop_objs;
-  }
-  
-  return $self->{_population_objects};
-}
-
 sub render_haplotype_row {
   my $self = shift;
   my $ht = shift;
   
-  my $pop_objs = $self->population_objects();
-  my $pop_struct = $self->population_structure;
-  my %pop_descs = map {$_->name => $_->description} @$pop_objs;
+  my $pop_objs    = $self->object->population_objects;
+  my $pop_struct  = $self->object->population_structure($pop_objs);
+  my %pop_descs   = map {$_->name => $_->description} @$pop_objs;
 
-  my @flags = $ht->can('get_all_flags') ? @{$ht->get_all_flags()} : ();
+  my $flags;
+  if ($ht->can('get_all_flags')) {
+    $flags = eval { $ht->get_all_flags(); };
+  }
+  return {} if ($@ || !scalar(@{$flags||[]}));
+  
   my $flags_html;
 
   my $score = 0;
@@ -231,12 +199,12 @@ sub render_haplotype_row {
     'indel' => 3,
     'stop_change' => 4,
   );
-  $score += $scores{$_} || 1 for @flags;
+  $score += $scores{$_} || 1 for @$flags;
 
   $flags_html = sprintf(
     '<span class="hidden">%i</span><div style="width: 6em">%s</div>',
     $score,
-    join(" ", map {$self->render_flag($_)} sort {($scores{$b} || 1) <=> ($scores{$a} || 1)} @flags)
+    join(" ", map {$self->render_flag($_)} sort {($scores{$b} || 1) <=> ($scores{$a} || 1)} @$flags)
   );
   
   # create base row

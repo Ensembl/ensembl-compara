@@ -1547,6 +1547,63 @@ sub transcript_variation_to_variation_feature {
   return $tv->variation_feature;
 }
 
+sub get_haplotypes {
+  my $self = shift;
+
+  my $vdb = $self->Obj->adaptor->db->get_db_adaptor('variation');
+
+  # find VCF config
+  my $sd = $self->species_defs;
+
+  my $c = $sd->ENSEMBL_VCF_COLLECTIONS;
+
+  if($c && $vdb->can('use_vcf')) {
+    $vdb->vcf_config_file($c->{'CONFIG'});
+    $vdb->vcf_root_dir($sd->DATAFILE_BASE_PATH);
+    $vdb->use_vcf($c->{'ENABLED'});
+  }
+
+  my $thca = $vdb->get_TranscriptHaplotypeAdaptor();
+  my $haplotypes = eval { $thca->get_TranscriptHaplotypeContainer_by_Transcript($self->Obj); };
+  return $haplotypes;
+}
+
+sub population_objects {
+  my $self = shift;
+  my $total_counts = shift;
+
+  if(!exists($self->{_population_objects})) {
+    # generate population structure
+    my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+    my @pop_objs = grep {defined($_)} map {$pop_adaptor->fetch_by_name($_)} keys %$total_counts;
+
+    $self->{_population_objects} = \@pop_objs;
+  }
+
+  return $self->{_population_objects};
+}
+
+sub population_structure {
+  my $self = shift;
+  my $pop_objs = shift;
+
+  if(!exists($self->{_population_structure})) {
+    my %pop_struct;
+    foreach my $pop(@$pop_objs) {
+      next if $pop->name =~ /:ALL$/;
+      my $subs = $pop->get_all_sub_Populations();
+      next unless $subs && scalar @$subs;
+      @{$pop_struct{$pop->name}} = map {$_->name} @$subs;
+    }
+   
+    $self->{_population_structure} = \%pop_struct;
+  }
+
+  return $self->{_population_structure};
+}
+
+
+
 sub variation_data {
   my ($self, $slice, $include_utr, $strand) = @_;
   
