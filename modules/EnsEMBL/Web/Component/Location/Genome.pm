@@ -502,7 +502,12 @@ sub add_extras {
   my ($self, $row, $feature, $extras) = @_;
   foreach my $col (@$extras) {
     my $key = $col->{'key'};
-    $row->{$key} = {'value' => $feature->{'extra'}{$key} || $feature->{$key}};
+    if (defined $feature->{'extra'}{$key}) {
+      $row->{$key} = {'value' => $feature->{'extra'}{$key}};
+    }
+    else {
+      $row->{$key} = {'value' => $feature->{$key}};
+    }
   }
 }
 
