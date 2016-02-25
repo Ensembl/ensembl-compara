@@ -64,6 +64,9 @@ our %pretty_method = (
   LASTZ_NET           => 'LastZ',
   TRANSLATED_BLAT_NET => 'Translated Blat',
   SYNTENY             => 'Synteny',
+  PECAN               => 'Pecan',
+  EPO                 => 'EPO',
+  EPO_LOW_COVERAGE    => 'EPO-Low-coverage',
 );
 
 our $references = {
@@ -72,6 +75,14 @@ our $references = {
   'BlastZ'          => qq{
     <a href="http://www.genome.org/cgi/content/abstract/13/1/103">Schwartz S et al., Genome Res.;13(1):103-7</a>, 
     <a href="http://www.pnas.org/cgi/content/full/100/20/11484">Kent WJ et al., Proc Natl Acad Sci U S A., 2003;100(20):11484-9</a>
+  },
+  'EPO'             => qq{
+    <a href="http://genome.cshlp.org/content/18/11/1814">Paten B et al., Genome Res,;18(11):1814-28</a>
+    <a href="http://genome.cshlp.org/content/18/11/1829">Paten B et al., Genome Res.;18(11):1829-43</a>
+  },
+  'EPO-Low-coverage'=> qq{
+    <a href="http://genome.cshlp.org/content/18/11/1814">Paten B et al., Genome Res,;18(11):1814-28</a>
+    <a href="http://genome.cshlp.org/content/18/11/1829">Paten B et al., Genome Res.;18(11):1829-43</a>
   }
 };
 
@@ -114,6 +125,8 @@ sub render {
     return $self->render_pairwise($mlss);
   } elsif ($mlss->method->class eq 'SyntenyRegion.synteny') {
     return $self->render_pairwise($mlss);
+  } elsif ($mlss->method->class =~ /^GenomicAlign/) {
+    return $self->print_wga_stats($mlss);
   } else {
     return $self->error_message('No statistics', sprintf('There are no statistics available for the analysis "%s".', $mlss->name), 'warning');
   }

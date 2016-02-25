@@ -56,17 +56,33 @@ sub get_genome_db {
 ## Output a list of whole-genome alignments for a given method, and their species
 sub format_wga_list {
   my ($self, $method) = @_;
-  my $html;
+  my $html = '<ul>';
 
   my $list = $self->list_mlss_by_method($method);
-    foreach (@$list) {
-      my ($species_order, $info) = $self->mlss_species_info($_);
+  foreach my $mlss (@$list) {
+      my $url = '/info/genome/compara/mlss.html?mlss='.$mlss->dbID;
+      $html .= sprintf '<li><a href="%s">%s</a></li>', $url, $mlss->name;
+  }
+  $html .= '</ul>';
+  return $html;
+}
+
+sub print_wga_stats {
+  my ($self, $mlss) = @_;
+  my $hub     = $self->hub;
+  my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $html;
+      my ($species_order, $info) = $self->mlss_species_info($mlss);
 
       if ($species_order && scalar(@{$species_order||[]})) {
+        my $rel = $mlss->get_value_for_tag('ensembl_release');
+        my $nblocks = $self->thousandify($mlss->get_value_for_tag('num_blocks'));
+        my $max_align = $self->thousandify($mlss->max_alignment_length);
         my $count = scalar(@$species_order);
-        $html .= sprintf '<h3>%s</h3>
-              <p><b>(method_link_type="%s" : species_set_name="%s")</b></p>',
-              $_->name, $method, $_->species_set_obj->name;
+        $html .= sprintf('<h1>%s</h1>', $mlss->name);
+        $html .= qq{<p>This alignment has been generated in $site release $rel and is composed of $nblocks blocks (up to $max_align&nbsp;bp long).</p>};
+        $html .= $self->error_message('API access', sprintf(
+              '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set_obj->name), 'info');
 
         my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '22%', align => 'left', sort => 'string' },
@@ -77,7 +93,7 @@ sub format_wga_list {
           { key => 'el',      title => 'Coding exon length (bp)', width => '12%', align => 'center', sort => 'string' },
           { key => 'ec',      title => 'Coding exon coverage (bp)', width => '12%', align => 'center', sort => 'string' },
           { key => 'ecp',     title => 'Coding exon coverage (%)', width => '10%', align => 'center', sort => 'numeric' },
-        ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $method, $_->species_set_obj->get_value_for_tag('name')), sorting => ['species asc']});
+        ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set_obj->name), sorting => ['species asc']});
         my @colors = qw(#402 #a22 #fc0 #8a2);
         foreach my $sp (@$species_order) {
           my $gc = sprintf('%.2f', $info->{$sp}{'genome_coverage'} / $info->{$sp}{'genome_length'} * 100);
@@ -97,7 +113,6 @@ sub format_wga_list {
         }
         $html .= $table->render;
       }
-    }
 
   return $html;
 }
