@@ -161,16 +161,8 @@ sub fetch_other_sequences_by_member_ids_type {
 sub store {
     my ($self, $sequence) = @_;
 
-    return 0 unless($sequence);
-
-    my $md5sum = md5_hex($sequence);
-
-    my $sth = $self->prepare("INSERT INTO sequence (sequence, length, md5sum) VALUES (?,?,?)");
-    $sth->execute($sequence, length($sequence), $md5sum);
-    my $seqID = $self->dbc->db_handle->last_insert_id(undef, undef, 'sequence', 'sequence_id');
-    $sth->finish;
-
-    return $seqID;
+    # Since there is a UNIQUE key in the table, sequences are always non-redundant
+    return $self->store_no_redundancy($sequence);
 }
 
 sub store_no_redundancy {
@@ -180,20 +172,16 @@ sub store_no_redundancy {
 
     my $md5sum = md5_hex($sequence);
 
-    # We insert no matter what
-    $self->dbc->do('INSERT INTO sequence (sequence, length, md5sum) VALUES (?,?,?)', undef, $sequence, length($sequence), $md5sum);
+    my $rows = $self->dbc->do('INSERT IGNORE INTO sequence (sequence, length, md5sum) VALUES (?,?,?)', undef, $sequence, length($sequence), $md5sum);
 
-    # And we delete the duplicates (the smallest sequence_id is the reference, i.e first come first served)
-    my $matching_ids = $self->dbc->db_handle->selectcol_arrayref('SELECT sequence_id FROM sequence WHERE md5sum = ? AND sequence = ? ORDER BY sequence_id', undef, $md5sum, $sequence);
-    die "The sequence disappeared !\n" unless scalar(@$matching_ids);
-    my $seqID = shift @$matching_ids;
-
-    if (scalar(@$matching_ids)) {
-        my $other_ids = join(",", @$matching_ids);
-        $self->dbc->do("DELETE FROM sequence WHERE sequence_id IN ($other_ids)");
+    if ($rows > 0) {
+        return $self->dbc->db_handle->last_insert_id(undef, undef, 'sequence', 'sequence_id');
+    } else {
+        # No rows inserted because of the IGNORE modifier
+        my $matching_ids = $self->dbc->db_handle->selectcol_arrayref('SELECT sequence_id FROM sequence WHERE md5sum = ?', undef, $md5sum);
+        die "The sequence disappeared !\n" unless scalar(@$matching_ids);
+        return $matching_ids->[0];
     }
-
-    return $seqID;
 }
 
 sub store_other_sequence {

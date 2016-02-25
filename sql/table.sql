@@ -923,7 +923,7 @@ CREATE TABLE sequence (
   sequence                    longtext NOT NULL,
 
   PRIMARY KEY (sequence_id),
-  KEY md5sum (md5sum)
+  UNIQUE KEY md5sum (md5sum)
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
