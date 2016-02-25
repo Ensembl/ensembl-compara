@@ -45,7 +45,7 @@ sub buttons {
 
   return {
       'url'       => $url,
-      'caption'   => 'Download sequence as JSON',
+      'caption'   => 'Export data as JSON',
       'class'     => 'export',
     };
 
