@@ -151,9 +151,11 @@ sub render_pairwise {
   my $type            = $pretty_method{$pair_aligner_config->{'method_link_type'}};
 
   ## HEADER AND INTRO
-  $html .= sprintf('<h1>%s vs %s %s Results</h1>',
-                        $ref_common, $nonref_common, $type,
-            );
+  if ($ref_common eq $nonref_common) {
+      $html .= sprintf('<h1>%s self-%s results</h1>', $ref_common, $type);
+  } else {
+      $html .= sprintf('<h1>%s vs %s %s results</h1>', $ref_common, $nonref_common, $type,);
+  }
 
   if ($pair_aligner_config->{'download_url'}) {
     my $ucsc = $pair_aligner_config->{'download_url'};
@@ -167,13 +169,21 @@ alignments were downloaded from <a href="$ucsc">UCSC</a> in $site release $relea
     In the second phase, the groups that are in synteny are linked provided that no more than 2 non-syntenic groups are found between them and they are less than 3Mbp apart.</p>',
               $ref_common, $ref_sp, $ref_assembly, $nonref_common, $nonref_sp, $nonref_assembly,
               $site, $release;
-  } else {
+  } elsif ($ref_sp ne $nonref_sp) {
     $html .= sprintf '<p>%s (<i>%s</i>, %s) and %s (<i>%s</i>, %s) were aligned using the %s alignment algorithm (%s)
 in %s release %s. %s was used as the reference species. After running %s, the raw %s alignment blocks
-are chained according to their location in both genomes. During the final netting process, the best
-sub-chain is chosen in each region on the reference species.</p>',
+were chained according to their location in both genomes. During the final netting process, the best
+sub-chain was chosen in each region on the reference species.</p>',
               $ref_common, $ref_sp, $ref_assembly, $nonref_common, $nonref_sp, $nonref_assembly,
               $type, $references->{$type}, $site, $release, $ref_common, $type, $type;
+  } else {
+    $html .= sprintf '<p>%s (<i>%s</i>, %s) was aligned to itself using the %s alignment algorithm (%s)
+in %s release %s. After running %s, alignments between the same locations were removed and the remaining raw %s alignment blocks
+were chained according to their location in both genomes. During the final netting process, the best
+sub-chain was chosen in each region on the reference species.</p><p>Self-alignments reveal duplicated regions:
+some being recent and almost identical, others being much older and indicators of ancient whole-genome duplications.</p>',
+              $ref_common, $ref_sp, $ref_assembly,
+              $type, $references->{$type}, $site, $release, $type, $type;
   }
 
   $html .= '<h2>Configuration parameters</h2>';
@@ -211,6 +221,10 @@ sub-chain is chosen in each region on the reference species.</p>',
       { key => 'value_ref',    title => $ref_common    },
       { key => 'value_nonref', title => $nonref_common },
     );
+    if ($ref_common eq $nonref_common) {
+        $columns[1]->{title} .= ' (reference)';
+        $columns[2]->{title} .= ' (non-reference)';
+    }
 
     my @params = qw(chunk_size overlap group_set_size masking_options);
 
@@ -261,7 +275,7 @@ sub-chain is chosen in each region on the reference species.</p>',
       $graph_defaults
   };
 
-  foreach my $sp ($ref_sp, $nonref_sp) {
+  foreach my $sp ($ref_sp, (($nonref_sp eq $ref_sp) ? () : ($nonref_sp))) {
     my $results = $i ? $non_ref_results : $ref_results; 
     my $sp_type = $i ? 'non_ref' : 'ref';
 
@@ -295,7 +309,7 @@ sub-chain is chosen in each region on the reference species.</p>',
       $graph_defaults
   };
 
-  foreach my $sp ($ref_sp, $nonref_sp) {
+  foreach my $sp ($ref_sp, (($nonref_sp eq $ref_sp) ? () : ($nonref_sp))) {
     my $results = $i ? $non_ref_results : $ref_results; 
     my $sp_type = $i ? 'non_ref' : 'ref';
 
@@ -354,6 +368,36 @@ sub-chain is chosen in each region on the reference species.</p>',
 
   ## Draw table
   my $graph_style = 'width:300px;height:160px;margin:0 auto';
+  if ($ref_common eq $nonref_common) {
+
+  $html .= sprintf(
+    '<table style="width:100%">
+      <tr>
+        <th></th>
+        <th style="text-align:center">Genome coverage (bp)</th>
+        <th style="text-align:center">Coding exon coverage (bp)</th>
+      </tr>
+      <tr>
+        <th style="vertical-align:middle">%s</th>
+        <td style="text-align:center;padding:12px">
+          <div id="graphHolder0" style="%s"></div>%s
+        </td>
+        <td style="text-align:center;padding:12px">
+          <div id="graphHolder1" style="%s"></div>%s
+        </td>
+      </tr>
+    </table>',
+    $ref_common,
+    $graph_style, $key->{'ref'}{'genome'},
+    $graph_style, $key->{'ref'}{'exon'},
+  );
+
+  $html .= '</div>';
+
+  return $html;
+
+
+  }
   $html .= sprintf(
     '<table style="width:100%">
       <tr>
