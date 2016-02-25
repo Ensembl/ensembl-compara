@@ -395,8 +395,8 @@ sub fetch_pairwise_input {
     my $ref_species                   = $mlss->get_value_for_tag('reference_species');
     my $non_ref_species               = $mlss->get_value_for_tag('non_reference_species');
     my $pairwise_params               = $mlss->get_value_for_tag('param');
-    my $ref_genome_db                 = $genome_db_adaptor->fetch_by_name_assembly($ref_species);
-    my $non_ref_genome_db             = $genome_db_adaptor->fetch_by_name_assembly($non_ref_species);
+    my $ref_genome_db                 = $genome_db_adaptor->fetch_by_name_assembly($ref_species) || die "Could not find the GenomeDB '$ref_species' for mlss $mlss_id";
+    my $non_ref_genome_db             = $genome_db_adaptor->fetch_by_name_assembly($non_ref_species) || die "Could not find the GenomeDB '$non_ref_species' for mlss $mlss_id";
       
     ## hack for double-quotes
     my $string_ref_dna_collection_config  = $mlss->get_value_for_tag("ref_dna_collection");
