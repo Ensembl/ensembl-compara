@@ -919,7 +919,7 @@ CREATE TABLE constrained_element (
 CREATE TABLE sequence (
   sequence_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   length                      int(10) NOT NULL,
-  md5sum                      BINARY(16) NOT NULL,
+  md5sum                      CHAR(32) NOT NULL,
   sequence                    longtext NOT NULL,
 
   PRIMARY KEY (sequence_id),

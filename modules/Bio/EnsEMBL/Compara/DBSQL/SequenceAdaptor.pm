@@ -21,7 +21,7 @@ package Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use strict;
 use warnings;
 
-use Digest::MD5 qw(md5);
+use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -163,7 +163,7 @@ sub store {
 
     return 0 unless($sequence);
 
-    my $md5sum = md5($sequence);
+    my $md5sum = md5_hex($sequence);
 
     my $sth = $self->prepare("INSERT INTO sequence (sequence, length, md5sum) VALUES (?,?,?)");
     $sth->execute($sequence, length($sequence), $md5sum);
@@ -178,7 +178,7 @@ sub store_no_redundancy {
 
     return 0 unless($sequence);
 
-    my $md5sum = md5($sequence);
+    my $md5sum = md5_hex($sequence);
 
     # We insert no matter what
     $self->dbc->do('INSERT INTO sequence (sequence, length, md5sum) VALUES (?,?,?)', undef, $sequence, length($sequence), $md5sum);
