@@ -433,13 +433,9 @@ sub get_format {
 }
 
 sub set_category {
-### Set the category of file: typically either temporary or persistent
+### Set the category of file: defaults to temporary 
   my ($self, $category) = @_;
-
-  unless ($category) {
-    $category = $self->hub->user ? 'persistent' : 'temporary';
-  }
-
+  $category ||= 'temporary';
   $self->{'category'} = $category;
   return $self->{'category'};
 }

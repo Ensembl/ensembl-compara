@@ -41,6 +41,18 @@ sub new {
   return $class->SUPER::new(%args);
 }
 
+sub set_category {
+### Set the category of file: typically either temporary or persistent
+  my ($self, $category) = @_;
+
+  unless ($category) {
+    $category = $self->hub->user ? 'persistent' : 'temporary';
+  }
+
+  $self->{'category'} = $category;
+  return $self->{'category'};
+}
+
 ### Wrappers around E::W::File::Utils::IO methods
 
 sub preview {
