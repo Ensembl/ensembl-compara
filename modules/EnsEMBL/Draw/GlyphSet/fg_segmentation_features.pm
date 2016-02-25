@@ -23,11 +23,11 @@ package EnsEMBL::Draw::GlyphSet::fg_segmentation_features;
 
 use strict;
 
-use base qw(EnsEMBL::Draw::GlyphSet_simple);
+use base qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
-sub squish { return 1; }
+#sub squish { return 1; }
 
-sub features {
+sub get_data {
   my $self    = shift;
   my $slice   = $self->{'container'};    
   my $db_type = $self->my_config('db_type') || 'funcgen';
@@ -41,11 +41,13 @@ sub features {
       return [];
     }
   }
-  
-  return $self->fetch_features($fg_db);
+
+  my $f = $self->fetch_features_from_file($fg_db);
+  return $f if defined $f;
+  return $self->fetch_features_from_db($fg_db);
 }
 
-sub fetch_features {
+sub fetch_features_from_db {
   my ($self, $db) = @_;
   my $slice     = $self->{'container'};
   my $cell_line = $self->my_config('cell_line');  
@@ -65,6 +67,26 @@ sub fetch_features {
   $self->{'legend'}{'fg_regulatory_features_legend'} ||= { priority => 1020, legend => [] };  
   
   return $fsets->[0]->get_Features_by_Slice($slice);
+}
+
+sub fetch_features_from_file {
+  my ($self,$fgh) = @_;
+
+  my $cell_line = $self->my_config('cell_line');
+  my $cta = $fgh->get_CellTypeAdaptor;
+  my $ct = $cta->fetch_by_name($cell_line);
+  my $rsa = $fgh->get_ResultSetAdaptor;
+  my $rsets = $rsa->fetch_all_by_CellType($ct);
+  my @segs = grep { $_->feature_class eq 'segmentation' } @$rsets;
+  return undef unless @segs;
+  my $bigbed_file = $segs[0]->dbfile_path;
+  my $file_path = join('/',$self->species_defs->DATAFILE_BASE_PATH,
+                           lc $self->species,
+                           $self->species_defs->ASSEMBLY_VERSION);
+  $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
+  $bigbed_file =~ s/\s//g;
+
+  return $self->SUPER::get_data($bigbed_file);
 }
 
 sub href {
@@ -105,5 +127,7 @@ sub colour_key {
   }
   return lc $type;
 }
+
+sub render { $_[0]->render_compact; }
 
 1;
