@@ -701,6 +701,8 @@ sub _export_image {
       ## Output image by itself, e.g. for external services
       (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
       my $filename = sprintf '%s_%s_%s.%s', $comp, $hub->filename($self->object), $scale, $formats{$format}{'extn'};
+      ## Remove any hyphens, because they break the download
+      $filename =~ s/[-]//g;
       $hub->param('filename', $filename);
       my $path = $image->render($format, ['IO']);
       $hub->param('file', $path);
