@@ -18,7 +18,7 @@ my $exp_dataflow;
 
 # Load test DB #
 my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('orth_qm_test');
-my $dba = $multi_db->get_DBAdaptor('cc21_prepare_orth_test');
+my $dba = $multi_db->get_DBAdaptor('cc21_prepare_orth');
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 my $compara_db = $dbc->url;
 

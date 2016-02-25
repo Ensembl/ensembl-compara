@@ -34,7 +34,7 @@ sub fetch_input {
 	my $query = "SELECT homology_id, goc_score, method_link_species_set_id FROM ortholog_goc_metric where method_link_species_set_id = $mlss_ID ORDER BY homology_id";
 	my $quality_data = $self->compara_dba->dbc->db_handle->selectall_arrayref($query, {});
 	$self->param('quality_data', $quality_data);
-#	print Dumper($quality_data);
+	#print Dumper($quality_data);
 }
 
 sub run {
@@ -55,10 +55,12 @@ sub run {
 
 			print "Updating homology table goc score\n" if ( $self->debug );
 
-			my $homology = $homology_adaptor->fetch_by_dbID($result->[0]);
-			$homology->goc_score($orth_results->{$result->[0]});
-#			print $homology->goc_score , "\n", $homology->dbID, "\n\n";
-			$homology_adaptor->update_goc_score($homology);
+			# my $homology = $homology_adaptor->fetch_by_dbID($result->[0]);
+			# $homology->goc_score($orth_results->{$result->[0]});
+			# print $homology->goc_score , "\n", $homology->dbID, "\n\n";
+			# $homology_adaptor->update_goc_score($homology);
+
+			$homology_adaptor->update_goc_score( $result->[0], $orth_results->{$result->[0]} );
 
 		} else {
 			$orth_results->{$result->[0]} = $result->[1];
