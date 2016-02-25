@@ -85,7 +85,7 @@ sub format_wga_list {
           my $cgc = $colors[int($gc/25)];
           my $cec = $colors[int($ec/25)];
           $table->add_row({
-            'species' => sprintf('%s (%s)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
+            'species' => sprintf('%s (<em>%s</em>)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
             'asm'     => $info->{$sp}{'assembly'},
             'gl'      => $self->thousandify($info->{$sp}{'genome_length'}),
             'gc'      => $self->thousandify($info->{$sp}{'genome_coverage'}),
