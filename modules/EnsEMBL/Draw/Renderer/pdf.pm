@@ -140,8 +140,7 @@ sub render_Histogram {
   my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
   my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
   my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
-  my @colours = @{$self->{'colours'}||[]};
-  my $colour  = $self->colour($glyph->{'colour'}) || $colours[0];
+  my $colour  = $self->colour($glyph->{'colour'});
 
   my $max = $glyph->{'max'} || 1000;
   my $top = $self->{'canvas'}{'im_height'};
