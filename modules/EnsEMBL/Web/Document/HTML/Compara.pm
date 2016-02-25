@@ -70,12 +70,13 @@ sub format_wga_list {
 
         my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '22%', align => 'left', sort => 'string' },
-          { key => 'gl',      title => 'Genome length (bp)', width => '13%', align => 'center', sort => 'string' },
-          { key => 'gc',      title => 'Genome coverage (bp)', width => '13%', align => 'center', sort => 'string' },
-          { key => 'gcp',     title => 'Genome coverage (%)', width => '13%', align => 'center', sort => 'numeric' },
-          { key => 'el',      title => 'Coding exon length (bp)', width => '13%', align => 'center', sort => 'string' },
-          { key => 'ec',      title => 'Coding exon coverage (bp)', width => '13%', align => 'center', sort => 'string' },
-          { key => 'ecp',     title => 'Coding exon coverage (%)', width => '13%', align => 'center', sort => 'numeric' },
+          { key => 'asm',     title => 'Assembly',        width => '10%', align => 'left', sort => 'string' },
+          { key => 'gl',      title => 'Genome length (bp)', width => '12%', align => 'center', sort => 'string' },
+          { key => 'gc',      title => 'Genome coverage (bp)', width => '12%', align => 'center', sort => 'string' },
+          { key => 'gcp',     title => 'Genome coverage (%)', width => '10%', align => 'center', sort => 'numeric' },
+          { key => 'el',      title => 'Coding exon length (bp)', width => '12%', align => 'center', sort => 'string' },
+          { key => 'ec',      title => 'Coding exon coverage (bp)', width => '12%', align => 'center', sort => 'string' },
+          { key => 'ecp',     title => 'Coding exon coverage (%)', width => '10%', align => 'center', sort => 'numeric' },
         ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $method, $_->species_set_obj->get_value_for_tag('name')), sorting => ['species asc']});
         my @colors = qw(#402 #a22 #fc0 #8a2);
         foreach my $sp (@$species_order) {
@@ -85,6 +86,7 @@ sub format_wga_list {
           my $cec = $colors[int($ec/25)];
           $table->add_row({
             'species' => sprintf('%s (%s)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
+            'asm'     => $info->{$sp}{'assembly'},
             'gl'      => $self->thousandify($info->{$sp}{'genome_length'}),
             'gc'      => $self->thousandify($info->{$sp}{'genome_coverage'}),
             'gcp'     => sprintf(q{<span style="color: %s">%s</span}, $cgc, $gc),
@@ -209,12 +211,12 @@ sub get_species_info {
     }
   }
 
-  ## Lookup table from species name to genome_db_id
+  ## Lookup table from species name to genome_db
   my $genome_db_name_hash = {};
   if ($mlss) {
     foreach my $genome_db (@{$mlss->species_set_obj->genome_dbs}) {
       my $species_tree_name = $genome_db->name;
-      $genome_db_name_hash->{$species_tree_name} = $genome_db->dbID;
+      $genome_db_name_hash->{$species_tree_name} = $genome_db;
     }
   }
   ## Now munge information for selected species
@@ -229,8 +231,10 @@ sub get_species_info {
     $info->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
 
     if ($mlss) {
+      my $gdb = $genome_db_name_hash->{lc($sp)};
+      $info->{$sp}{'assembly'} = $gdb->assembly;
       ## Add coverage stats
-      my $id = $genome_db_name_hash->{lc($sp)};
+      my $id = $gdb->dbID;
       my @stats = qw(genome_coverage genome_length coding_exon_coverage coding_exon_length);
       foreach (@stats) {
         $info->{$sp}{$_} = $mlss->get_value_for_tag($_.'_'.$id);
