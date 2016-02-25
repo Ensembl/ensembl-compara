@@ -39,7 +39,7 @@ sub render {
     my $url = $hub->url({'species' => $species, 'type' => 'UserData', 'action' => 'TrackHubSearch'});
     my $common_name = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
 
-    $html = qq(<p>To search for Track Hubs from within Ensembl, go to
+    $html = qq(<p>Alternatively to search for track hubs from within Ensembl, go to
 Region in Detail, click on 'Add your data' and select
 '<b>Track Hub Registry Search</b>' from the lefthand menu.
 </p>
