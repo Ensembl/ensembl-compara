@@ -123,6 +123,7 @@ sub create_hash {
                             {'name' => 'Thick end', 'value' => $self->parser->get_thickEnd},
                             ];
     }
+    ## TODO Put RNAcentral link here
   }
   else {
     $feature->{'structure'}     = $self->create_structure($feature_start, $slice->start);
