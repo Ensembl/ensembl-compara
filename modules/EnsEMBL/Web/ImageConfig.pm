@@ -833,7 +833,10 @@ sub load_user_tracks {
 sub _add_trackhub {
   my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $force_hide) = @_;
 
-  return ($menu_name, {}) if $self->{'_attached_trackhubs'}{$url};
+  ## Check if this trackhub is already attached - now that we can attach hubs via
+  ## URL, they may not be saved in the imageconfig
+  my $already_attached = $self->get_node($menu_name); 
+  return ($menu_name, {}) if ($already_attached || $self->{'_attached_trackhubs'}{$url});
 
   my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
   my $hub_info = $trackhub->get_hub({'assembly_lookup' => $self->species_defs->assembly_lookup, 
