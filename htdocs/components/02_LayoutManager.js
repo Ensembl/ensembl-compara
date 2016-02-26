@@ -149,7 +149,7 @@ Ensembl.LayoutManager.extend({
 
     this.showMobileMessage();
     this.showCookieMessage();
-    this.handleMirrorRedirect();
+    this.showMirrorMessage();
   },
   
   reloadPage: function (args, url) {
@@ -256,49 +256,32 @@ Ensembl.LayoutManager.extend({
     $('.navbar, div.info, div.hint, div.warning, div.error').not('.fixed_width').not(function () { return modal.find(this).length; }).width(Ensembl.width);
     modal = null;
   },
-  
-  handleMirrorRedirect: function() {
-    
-    var redirectCode  = unescape(Ensembl.cookie.get('redirect_mirror'));
-    var redirectURI   = unescape(Ensembl.cookie.get('redirect_mirror_url'));
 
-    Ensembl.cookie.set('redirect_mirror_url');
+  showMirrorMessage: function() {
+    var redirectedFrom = decodeURIComponent(Ensembl.cookie.get('redirected_from_url'));
 
-    var noRedirectURI = function(uri) {
-      uri = uri.replace(/(\&|\;)?redirect=[^\&\;]+/, '').replace(/(\&|\;)?debugip=[^\&\;]+/, '').replace(/\?[\;\&]+/, '?').replace(/\?$/, '');
-      uri = uri + (uri.match(/\?/) ? ';redirect=no' : '?redirect=no');
-      return uri;
-    };
+    if (redirectedFrom) {
+      Ensembl.cookie.set('redirected_from_url', '');
 
-    if (redirectCode && redirectCode !== 'no') {
-      redirectCode      = redirectCode.split(/\|/);
-      if (redirectCode.length >= 2) {
-        var currentURI    = noRedirectURI(window.location.href);
-        var mirrorName    = redirectCode.shift();
-        var remainingTime = parseInt(redirectCode.shift());
-        var mirrorURI     = (redirectURI ? noRedirectURI($('<a>').attr('href', redirectURI).prop('href')) : currentURI).replace(window.location.host, mirrorName);
-        var messageDiv    = $([
-          '<div class="redirect-message hidden">',
-          ' <p>You are being redirected to <b><a href="' + mirrorURI + '">', mirrorName, '</a></b> <span class="_redirect_countdown">in ', remainingTime, ' seconds</span>. Click <a class="_redirect_no" href="#">here</a> if you don\'t wish to be redirected.</p>',
-          '</div>'
-        ].join('')).appendTo($('body').prepend($('<div class="redirect-message-padding hidden"></div>').slideDown())).slideDown().find('a._redirect_no').on('click', function (e) {
+      var paddingDiv,
+          messageDiv,
+          redirectBackLink = $('<a>').attr('href', redirectedFrom + (redirectedFrom.match(/\?/) ? ';redirect=no' : '?redirect=no'));
+
+      if (redirectBackLink.prop('hostname') != window.location.hostname) { // this will filter any invalid urls
+
+        redirectBackLink.html('Click here to go back to <b>' + redirectBackLink.prop('hostname') + '</b>');
+
+        var paddingDiv = $('<div class="redirect-message-padding hidden"></div>');
+        var messageDiv = $('<div class="redirect-message hidden"><p>You have been redirected to your nearest mirror. <span></span> <button>Close</button></p></div>')
+                            .find('span').append(redirectBackLink).end()
+                            .appendTo($('body').prepend(paddingDiv.slideDown())).slideDown();
+
+        messageDiv.find('button').on('click', { divs: paddingDiv.add(messageDiv) }, function(e) {
           e.preventDefault();
-          Ensembl.cookie.set('redirect_mirror', 'no');
-          clearInterval(messageDiv.data('countdown'));
-          window.location.replace(messageDiv.data('currentURI'));
-        }).end().data({
-          remainingTime : remainingTime,
-          mirrorURI     : mirrorURI,
-          currentURI    : currentURI,
-          countdown     : setInterval(function() {
-            var time  = messageDiv.data('remainingTime') - 1;
-            messageDiv.data('remainingTime', time).find('._redirect_countdown').html(time > 0 ? time > 1 ? 'in ' + time + ' seconds' : 'in 1 second' : 'now');
-            if (time <= 0) {
-              clearInterval(messageDiv.data('countdown'));
-              window.location.href = messageDiv.data('mirrorURI');
-            }
-          }, 1000)
+          e.data.divs.slideUp();
         });
+
+        paddingDiv = messageDiv = redirectBackLink = null;
       }
     }
   },

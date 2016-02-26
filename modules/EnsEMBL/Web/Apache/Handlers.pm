@@ -95,9 +95,46 @@ sub childInitHandler {
 }
 
 sub redirect_to_mobile {}
+
+sub handle_mirror_redirect {
+  my $r = shift;
+
+  for (qw(redirected_from_nearest_mirror redirect_to_nearest_mirror)) {
+    my $return = __PACKAGE__->can($_)->($r);
+    return $return unless $return eq DECLINED;
+  }
+
+  return DECLINED;
+}
+
+sub redirected_from_nearest_mirror {
+  # This handler handles the redirect request from nearest mirror by parsing redirectsrc param from path
+  my $r = shift;
+
+  if (keys %{ $species_defs->ENSEMBL_MIRRORS || {} }) {
+
+    my $uri = $r->unparsed_uri;
+
+    if ($uri =~ s/([\;\?\&])redirectsrc=([^\;\&]+)(.*)$//) {
+
+      # save a cookie for JS
+      EnsEMBL::Web::Cookie->bake($r, {'name' => 'redirected_from_url', 'value' => $2, 'err_headers' => 1});
+
+      $uri .= $1.($3 =~ s/^[\;\&]*//r);
+      $uri  =~ s/[\;\&]*$//;
+
+      $r->headers_out->add('Location' => $uri);
+      $r->child_terminate;
+
+      return HTTP_MOVED_TEMPORARILY;
+    }
+  }
+
+  return DECLINED;
+}
+
 sub redirect_to_nearest_mirror {
-## Redirects requests based on IP address - only used if the ENSEMBL_MIRRORS site parameter is configured
-## This does not do an actual HTTP redirect, but sets a cookie that tells the JavaScript to perform a client side redirect after specified time interval
+  ## Redirects requests based on IP address - only used if the ENSEMBL_MIRRORS site parameter is configured
   my $r           = shift;
   my $server_name = $species_defs->ENSEMBL_SERVERNAME;
 
@@ -111,28 +148,25 @@ sub redirect_to_nearest_mirror {
     # If the user clicked on a link that's explicitly supposed to take him to
     # another mirror, it should have an extra param 'redirect=no' in it. We save
     # the 'redirect' cookie with value 'no' in that case to avoid redirecting
-    # any further requests. If there's a param in the url that says redirect=force,
-    # we always give precedence to that one. If debug ip param is set, ignore
-    # we any existing cookie, deal it as a forced redirect.
-    # IMPORTANT: To make debug ip work, make sure there's no cookie set with redirect address
+    # any further requests. If there's a param in the url that says redirect=force, or
+    # we have a debug ip value, we ignore the existing 'redirect=no' cookie and deal
+    # with it as a new request.
     if ($redirect_flag eq 'force' || $debug_ip) {
 
-      # If the cookie has already been set with its value as the nearest mirror,
-      # no further action is required, otherwise if cookie is 'no', clear it's value (don't remove it)
-      return DECLINED if $redirect_cookie->value && $redirect_cookie->value ne 'no';
+      # remove any existing cookie
       $redirect_cookie->value('');
       $redirect_cookie->bake;
 
-    } else {
-      if ($redirect_flag eq 'no') {
+    }
+
+    # If the flag says don't redirect, or we have already decided in some previous request not to redirect and have set a cookie for that - don't redirect then
+    if ($redirect_flag eq 'no' || $redirect_cookie->value && $redirect_cookie->value eq 'no') {
+      if (!$redirect_cookie->value) { # if not already set, set it for 24 hours
         $redirect_cookie->value('no');
+        $redirect_cookie->expires('+24h');
         $redirect_cookie->bake;
       }
-
-      # Now if the redirect_cookie has some value, it is either 'no' or the url path
-      # to which the JavaScript should redirect the browser (set later in this subroutine)
-      # Either ways, we don't need any further action.
-      return DECLINED if $redirect_cookie->value;
+      return DECLINED;
     }
 
     # Getting the correct remote IP address isn't straight forward. We check all the possible
@@ -143,7 +177,7 @@ sub redirect_to_nearest_mirror {
     } $debug_ip ? $debug_ip : (split(/\s*\,\s*/, $r->headers_in->{'X-Forwarded-For'}), $r->connection->remote_ip);
 
     # If there is no IP address, don't do any redirect (there's a possibility this is Amazon's loadbalancer trying to do some healthcheck ping)
-    return DECLINED unless $remote_ip;
+    return DECLINED if !$remote_ip || $remote_ip eq '127.0.0.1';
 
     # Just leave another warning if the GEOCITY file is missing
     my $geocity_file = $species_defs->GEOCITY_DAT || '';
@@ -174,14 +208,15 @@ sub redirect_to_nearest_mirror {
     # to avoid doing these checks for further requests from the same machine
     if ($destination eq $server_name) {
       $redirect_cookie->value('no');
+      $redirect_cookie->expires('+24h');
       $redirect_cookie->bake;
       return DECLINED;
     }
 
     # Redirect if the destination mirror is up
     if (grep { $_ eq $destination } @SiteDefs::ENSEMBL_MIRRORS_UP) { # ENSEMBL_MIRRORS_UP contains a list of mirrors that are currently up
-      $redirect_cookie->value(sprintf '%s|%s', $destination, $species_defs->ENSEMBL_MIRRORS_REDIRECT_TIME || 9);
-      $redirect_cookie->bake;
+      $r->headers_out->add('Location' => sprintf('//%s%s%sredirectsrc=//%s', $destination, $unparsed_uri, $unparsed_uri =~ /\?/ ? ';' : '?', uri_escape($server_name.$unparsed_uri)));
+      return HTTP_MOVED_TEMPORARILY;
     }
   }
 

@@ -25,8 +25,6 @@ use strict;
 
 use URI::Escape qw(uri_unescape);
 
-use EnsEMBL::Web::Cookie;
-
 use base qw(EnsEMBL::Web::Controller);
 
 sub request   { return 'page'; }
@@ -91,11 +89,6 @@ sub update_configuration_from_url {
   $new_url += $hub->get_viewconfig(@{$components[$_]})->update_from_url($r, $_ == $#components) for 0..$#components; # This should push a message onto the message queue
   
   if ($new_url) {
-    if (keys %{$hub->species_defs->ENSEMBL_MIRRORS || {}}) {
-      my $redirect_cookie = EnsEMBL::Web::Cookie->new($r, {'name' => 'redirect_mirror_url'});
-      $redirect_cookie->value($r->unparsed_uri);
-      $redirect_cookie->bake;
-    }
     $input->param('time', time); # Add time to cache-bust the browser
     $input->redirect(join '?', $r->uri, uri_unescape($input->query_string)); # If something has changed then we redirect to the new page  
     return 1;
