@@ -33,7 +33,52 @@ sub content {
   my $pos = int(($s+$e)/2);
   my $chr = $r;
   $chr =~ s/:.*$//;
+  my $hub     = $self->hub;
+  if($hub->param('celldbid')) {
+    $self->content_from_file($hub,$chr,$pos);
+  } else {
+    $self->content_from_db($hub,$chr,$pos);
+  }
+}
+
+sub content_from_db {
+  my ($self,$hub,$chr,$pos) = @_;
+
+  my $object            = $self->object;
+  my $dbid              = $hub->param('dbid');
+
   my $fgh = $hub->database('funcgen');
+  my $fsa = $fgh->get_FeatureSetAdaptor();
+  my $cta = $fgh->get_CellTypeAdaptor;
+  my $sa = $hub->database('core')->get_SliceAdaptor();
+  return unless $fsa and $cta and $sa;
+  my $slice = $sa->fetch_by_region('toplevel',$chr,$pos,$pos+1);
+  my $cell_line = $hub->param('cl');
+  my $fs = $fsa->fetch_by_dbID($dbid);
+  my $features = $fs->get_Features_by_Slice($slice);
+  return undef unless $features and @$features;
+  my $seg_feat = $features->[0];
+  my $cell_line         = $hub->param('cl');
+  $self->caption('Regulatory Segment - ' . $cell_line);
+  my $type = $seg_feat->feature_type->name;
+  $self->add_entry ({ type   => 'Type', label  => $type });
+  $self->add_entry({
+    type       => 'Location',
+    label_html => sprintf("%s:%d",$chr,$pos),
+    link       => $hub->url({
+      type   => 'Location',
+      action => 'View',
+      r      => sprintf("%s:%d-%d",$chr,$pos-1000,$pos+1000)
+    })
+  });
+}
+
+sub content_from_file {
+  my ($self,$hub,$chr,$pos) = @_;
+
+  my $fgh = $hub->database('funcgen');
+  my $cta = $fgh->get_CellTypeAdaptor;
+  my $ct = $cta->fetch_by_dbID($hub->param('celldbid'));
   my $rsa = $fgh->get_ResultSetAdaptor;
   my $rs = $rsa->fetch_by_dbID($hub->param('dbid'));
   return unless $rs;
@@ -61,7 +106,6 @@ sub content {
     $type = $colours->{$col}{'text'};
   }
   my $cta = $fgh->get_CellTypeAdaptor;
-  my $ct = $cta->fetch_by_dbID($hub->param('celldbid'));
   my $cell_line = '';
   $cell_line = $ct->name if $ct;
   $self->caption('Regulatory Segment - ' . $cell_line);
