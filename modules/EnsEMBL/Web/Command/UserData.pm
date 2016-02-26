@@ -111,7 +111,7 @@ sub check_attachment {
     foreach (@attachments) {
       if ($_->{'url'} eq $url) {
         $already_attached = 'user';
-        $menu             = $_->{'name'};
+        ($menu = $_->{'name'}) =~ s/ /_/;
         last;
       }
     }
