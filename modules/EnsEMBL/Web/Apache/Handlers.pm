@@ -163,6 +163,7 @@ sub redirect_to_nearest_mirror {
     if ($redirect_flag eq 'no' || $redirect_cookie->value && $redirect_cookie->value eq 'no') {
       if (!$redirect_cookie->value) { # if not already set, set it for 24 hours
         $redirect_cookie->value('no');
+        $redirect_cookie->expires('+24h');
         $redirect_cookie->bake;
       }
       return DECLINED;
@@ -207,6 +208,7 @@ sub redirect_to_nearest_mirror {
     # to avoid doing these checks for further requests from the same machine
     if ($destination eq $server_name) {
       $redirect_cookie->value('no');
+      $redirect_cookie->expires('+24h');
       $redirect_cookie->bake;
       return DECLINED;
     }
