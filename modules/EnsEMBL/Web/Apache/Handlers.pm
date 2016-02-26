@@ -96,6 +96,43 @@ sub childInitHandler {
 
 sub redirect_to_mobile {}
 
+sub handle_mirror_redirect {
+  my $r = shift;
+
+  for (qw(redirected_from_nearest_mirror redirect_to_nearest_mirror)) {
+    my $return = __PACKAGE__->can($_)->($r);
+    return $return unless $return eq DECLINED;
+  }
+
+  return DECLINED;
+}
+
+sub redirected_from_nearest_mirror {
+  # This handler handles the redirect request from nearest mirror by parsing redirectsrc param from path
+  my $r = shift;
+
+  if (keys %{ $species_defs->ENSEMBL_MIRRORS || {} }) {
+
+    my $uri = $r->unparsed_uri;
+
+    if ($uri =~ s/([\;\?\&])redirectsrc=([^\;\&]+)(.*)$//) {
+
+      # save a cookie for JS
+      EnsEMBL::Web::Cookie->bake($r, {'name' => 'redirected_from_url', 'value' => $2, 'err_headers' => 1});
+
+      $uri .= $1.($3 =~ s/^[\;\&]*//r);
+      $uri  =~ s/[\;\&]*$//;
+
+      $r->headers_out->add('Location' => $uri);
+      $r->child_terminate;
+
+      return HTTP_MOVED_TEMPORARILY;
+    }
+  }
+
+  return DECLINED;
+}
+
 sub redirect_to_nearest_mirror {
   ## Redirects requests based on IP address - only used if the ENSEMBL_MIRRORS site parameter is configured
   my $r           = shift;
