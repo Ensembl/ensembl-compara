@@ -690,6 +690,38 @@ sub _summarise_funcgen_db {
     }
   }
 
+  ## Segmentations are stored differently, now they are in flat-files
+  foreach my $a (values %$analysis) {
+    next unless $a->{'logic_name'} =~ /(Segway|ChromHMM)/;
+    my $type = $1;
+    next unless $a->{'name'};
+    my $res_cell = $dbh->selectall_arrayref(qq(
+      select result_set_id,cell_type_id,display_label
+        from result_set
+        join cell_type using (cell_type_id)
+        join analysis using (analysis_id)
+       where logic_name = ?),undef,$a->{'logic_name'});
+    foreach my $C (@$res_cell) {
+      my $key = $C->[2];
+      $key =~ s/\(.*?\)//g;
+      $key =~ s/[^A-Za-z0-9+-]//g;
+      my $value = {
+        name => qq($C->[2] Regulatory Segmentation ($type)),
+        desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">$type</a> segmentation state analysis"),
+        disp => $a->{'displayable'},
+        'web' => {
+          celltype => $C->[1],
+          'colourset' => 'fg_segmentation_features',
+          'display' => 'off',
+          'key' => "seg_$key",
+          'type' => 'fg_segmentation_features'
+        },
+        count => 1,
+      };
+      $self->db_details($db_name)->{'tables'}{'segmentation'}{"$key$a->{'logic_name'}"} = $value;
+    }
+  }  
+
 ###
 ### Store the external feature sets available for each species
 ###

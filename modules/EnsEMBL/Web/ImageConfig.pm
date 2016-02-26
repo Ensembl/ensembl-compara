@@ -2890,6 +2890,28 @@ sub add_regulation_builds {
  
   $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
 
+  my $segs = $hashref->{'segmentation'};
+  foreach my $key (keys %$segs) {
+    my $name = $segs->{$key}{'name'};
+    my $cell_line = $key;
+    $prev_track = $reg_segs->append($self->create_track("seg_$key", "Reg. Segs: $name", {
+      db          => $key,
+      glyphset    => 'fg_segmentation_features',
+      sources     => 'undef',
+      strand      => 'r',
+      labels      => 'on',
+      depth       => 0,
+      colourset   => 'fg_segmentation_features',
+      display     => 'off',
+      description => $segs->{$key}{'desc'},
+      renderers   => [qw(off Off normal On)],
+      celltype    => $segs->{$key}{'web'}{'celltype'},
+      caption     => "Reg. Segments",
+      section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
+      section     => $cell_line,
+      height      => 4,
+    }));
+  }
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
@@ -2916,27 +2938,6 @@ sub add_regulation_builds {
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       caption     => "Regulatory Features",
     }));
-    
-    if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
-      $prev_track = $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
-        db          => $key,
-        glyphset    => 'fg_segmentation_features',
-        sources     => 'undef',
-        strand      => 'r',
-        labels      => 'on',
-        depth       => 0,
-        colourset   => 'fg_segmentation_features',
-        display     => 'off',
-        description => $fg_data{"seg_$cell_line"}{'description'},
-        renderers   => \@renderers,
-        cell_line   => $cell_line,
-        caption     => "Reg. Segments",
-        section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
-        section     => $cell_line,
-        height      => 4,
-      }));
-    }
-   
     my %column_data = (
       db        => $key,
       glyphset  => 'fg_multi_wiggle',

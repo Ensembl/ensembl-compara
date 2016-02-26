@@ -72,9 +72,10 @@ sub fetch_features_from_db {
 sub fetch_features_from_file {
   my ($self,$fgh) = @_;
 
-  my $cell_line = $self->my_config('cell_line');
+  my $cell_line = $self->my_config('celltype');
+  return undef unless $cell_line;
   my $cta = $fgh->get_CellTypeAdaptor;
-  my $ct = $cta->fetch_by_name($cell_line);
+  my $ct = $cta->fetch_by_dbID($cell_line);
   my $rsa = $fgh->get_ResultSetAdaptor;
   my $rsets = $rsa->fetch_all_by_CellType($ct);
   my @segs = grep { $_->feature_class eq 'segmentation' } @$rsets;
@@ -85,7 +86,6 @@ sub fetch_features_from_file {
                            $self->species_defs->ASSEMBLY_VERSION);
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
   $bigbed_file =~ s/\s//g;
-
   return $self->SUPER::get_data($bigbed_file);
 }
 
