@@ -58,9 +58,13 @@ sub process {
       ($new_action, $params)  = $self->check_attachment($url);
 
       if ($new_action) {
-        ## Hub is already attached, so just go there
+        ## Hub is already attached, so just go there but warn the user
         $redirect = sprintf('/%s/Location/View', $species);
         $anchor   = 'modal_config_viewbottom';
+        if ($params->{'menu'}) {
+          $anchor .= '-'.$params->{'menu'};
+          delete $params->{'menu'};
+        }
       }
       else {
         ## Check if we have any supported assemblies
