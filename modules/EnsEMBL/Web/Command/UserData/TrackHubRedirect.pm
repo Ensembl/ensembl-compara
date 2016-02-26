@@ -58,7 +58,7 @@ sub process {
       ($new_action, $params)  = $self->check_attachment($url);
 
       if ($new_action) {
-        ## Hub is already attached, so just go there but warn the user
+        ## Hub is already attached, so just go there
         $redirect = sprintf('/%s/Location/View', $species);
         $anchor   = 'modal_config_viewbottom';
         if ($params->{'menu'}) {
