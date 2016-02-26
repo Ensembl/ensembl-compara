@@ -113,14 +113,13 @@ sub getFakeMungedVariationFeatures {
   ### scalar - number of SNPs filtered out by the context filter
 
   my ($self, $subslices, $gene, $so_terms) = @_;
-  
+  my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   if ($so_terms) {
-    my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
     $vfa->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
   }
-  my $all_snps = [ @{$self->Obj->get_all_VariationFeatures($so_terms)} ];
+  my $all_snps = [ @{$vfa->fetch_all_by_Slice_SO_terms($self->Obj, $so_terms)} ];
   my $ngot =  scalar(@$all_snps);
-  push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures()};
+  push @$all_snps, @{$vfa->fetch_all_somatic_by_Slice_SO_terms($self->Obj)};
 
   my @on_slice_snps = 
     map  { $_->[1] ? [ $_->[0]->start + $_->[1], $_->[0]->end + $_->[1], $_->[0] ] : () } # [ fake_s, fake_e, SNP ] Filter out any SNPs not on munged slice

@@ -1138,6 +1138,7 @@ sub remove_redundant_xrefs {
 sub structural_variation_table {
   my ($self, $slice, $title, $table_id, $functions, $open) = @_;
   my $hub = $self->hub;
+  my $svf_adaptor = $hub->database('variation')->get_StructuralVariationFeatureAdaptor;
   my $rows;
   
   my $columns = [
@@ -1151,7 +1152,7 @@ sub structural_variation_table {
   
   my $svfs;
   foreach my $func (@{$functions}) {
-    push(@$svfs,@{$slice->$func});
+    push(@$svfs, @{$svf_adaptor->$func($slice)});
   }
   
   foreach my $svf (@{$svfs}) {

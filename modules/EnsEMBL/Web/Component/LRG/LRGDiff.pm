@@ -44,6 +44,7 @@ sub content {
   my $lrg  = $self->object->Obj;
   my $lrg_feature_slice = $lrg->feature_Slice;
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
+  my $vf_adaptor = $hub->database('variation')->get_VariationAdaptor; 
   my $html;
   
   my $columns = [
@@ -96,7 +97,7 @@ sub content {
       $seq_end   = $ref_end;
     }
 
-    my $vfs = ($diff_slice) ? $diff_slice->get_all_VariationFeatures : [];
+    my $vfs = ($diff_slice) ? $vf_adaptor->fetch_all_by_Slice($diff_slice) : [];
     
     foreach my $vf (@$vfs) {
       if ($vf->seq_region_start == $seq_start && $vf->seq_region_end == $seq_end) {

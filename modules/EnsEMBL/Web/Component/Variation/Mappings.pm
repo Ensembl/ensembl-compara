@@ -504,6 +504,7 @@ sub detail_panel {
   my $self     = shift;
   my $object   = $self->object;
   my $hub      = $self->hub;
+  my $vf_adaptor = $hub->database('variation')->get_VariationAdaptor;
   my $allele   = $hub->param('allele');
   my $tr_id    = $hub->param('t');
   my $vf_id    = $hub->param('vf');
@@ -632,7 +633,7 @@ sub detail_panel {
       # find vars in same AA
       my @same_aa;
       
-      foreach my $other_vf(@{$vf->feature_Slice->expand(3, 3)->get_all_VariationFeatures}) {
+      foreach my $other_vf(@{$vf_adaptor->fetch_all_by_Slice($vf->feature_Slice->expand(3, 3))}) {
         next if $other_vf->dbID == $vf->dbID;
         
         foreach my $other_tv(@{$other_vf->get_all_TranscriptVariations([$tv->transcript])}) {
