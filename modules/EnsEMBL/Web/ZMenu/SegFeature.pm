@@ -23,40 +23,58 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu::RegulationBase);
 
 sub content {
-  my $self              = shift;
-  my $hub               = $self->hub; 
-  my $object            = $self->object;  
-  my $cell_line         = $hub->param('cl');
-  my $dbid              = $hub->param('dbid');
-     
-  my $funcgen_db          = $hub->database('funcgen');
-  my $seg_feature_adaptor = $funcgen_db->get_SegmentationFeatureAdaptor; 
-  my $seg_feat            = $seg_feature_adaptor->fetch_by_dbID($dbid);  
-  my $location            = $seg_feat->slice->seq_region_name . ':' . $seg_feat->start . '-' . $seg_feat->end;
-  
-  $self->caption('Regulatory Segment - ' . $cell_line);
+  my ($self) = @_;
 
-  $self->add_entry ({
-    type   => 'Type',
-    label  => $seg_feat->feature_type->name,
+  my $hub     = $self->hub;
+  my $r       = $hub->param('r');
+  my $s       = $hub->param('click_start');
+  my $e       = $hub->param('click_end');
+
+  my $pos = int(($s+$e)/2);
+  my $chr = $r;
+  $chr =~ s/:.*$//;
+  my $fgh = $hub->database('funcgen');
+  my $rsa = $fgh->get_ResultSetAdaptor;
+  my $rs = $rsa->fetch_by_dbID($hub->param('dbid'));
+  return unless $rs;
+  my $bigbed_file = $rs->dbfile_path;
+  my @parts = split(m!/!, $bigbed_file);
+  my $path  = join("/", $self->hub->species_defs->DATAFILE_BASE_PATH,
+                          @parts[-6..-1]);
+  # Yuk! There has to be a better way than use colours
+  my $rgb;
+  my $bba = $self->{'_cache'}->{'bigbed_parser'}->{$path}
+              ||= Bio::EnsEMBL::IO::Parser::open_as('bigbed', $path);
+  $bba->fetch_rows($chr,$pos,$pos+1,sub {
+    my @row = @_;
+    my @col = split(',',$row[8]);
+    $rgb = sprintf("#%02x%02x%02x",@col);
   });
-  
+  return undef unless $rgb;
+  my $colours = $self->hub->species_defs->all_colours('fg_regulatory_features');
+  my $colourmap = new EnsEMBL::Draw::Utils::ColourMap;
+  my $type = "Unclassified";
+  foreach my $col (keys %$colours) {
+    my $raw_col = $colours->{$col}{'default'};
+    my $hexcol = lc $colourmap->hex_by_name($raw_col);
+    next unless $hexcol eq $rgb;
+    $type = $colours->{$col}{'text'};
+  }
+  my $cta = $fgh->get_CellTypeAdaptor;
+  my $ct = $cta->fetch_by_dbID($hub->param('celldbid'));
+  my $cell_line = '';
+  $cell_line = $ct->name if $ct;
+  $self->caption('Regulatory Segment - ' . $cell_line);
+  $self->add_entry ({ type   => 'Type', label  => $type });
   $self->add_entry({
     type       => 'Location',
-    label_html => $location,
+    label_html => sprintf("%s:%d",$chr,$pos),
     link       => $hub->url({
       type   => 'Location',
       action => 'View',
-      r      => $location
+      r      => sprintf("%s:%d-%d",$chr,$pos-1000,$pos+1000)
     })
   });
-  
-  $self->add_entry ({
-    type        => 'Analysis',
-    label_html  => $seg_feat->analysis->description,
-  });
-
-  $self->_add_nav_entries;      
 }
 
 1;

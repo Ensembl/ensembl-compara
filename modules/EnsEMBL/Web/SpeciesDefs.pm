@@ -249,6 +249,11 @@ sub colour {
   return defined $key ? $self->{'_storage'}{'MULTI'}{'COLOURSETS'}{$set}{$key}{$part} : $self->{'_storage'}{'MULTI'}{'COLOURSETS'}{$set};
 }
 
+sub all_colours {
+  my ($self,$set) = @_;
+  return $self->{'_storage'}{'MULTI'}{'COLOURSETS'}{$set};
+}
+
 sub get_config {
   ## Returns the config value for a given species and a given config key
   ### Arguments: species name(string), parameter name (string)

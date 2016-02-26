@@ -29,7 +29,7 @@ use base qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
 sub get_data {
   my $self    = shift;
-  my $slice   = $self->{'container'};    
+  my $slice   = $self->{'container'};
   my $db_type = $self->my_config('db_type') || 'funcgen';
   my $fg_db;  
   
@@ -69,9 +69,14 @@ sub fetch_features_from_db {
   return $fsets->[0]->get_Features_by_Slice($slice);
 }
 
-sub fetch_features_from_file {
+sub _result_set {
   my ($self,$fgh) = @_;
 
+  my $slice   = $self->{'container'};
+  my $db_type = $self->my_config('db_type') || 'funcgen';
+  return undef if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
+  my $fgh = $slice->adaptor->db->get_db_adaptor($db_type);
+  return undef unless $fgh;
   my $cell_line = $self->my_config('celltype');
   return undef unless $cell_line;
   my $cta = $fgh->get_CellTypeAdaptor;
@@ -80,7 +85,15 @@ sub fetch_features_from_file {
   my $rsets = $rsa->fetch_all_by_CellType($ct);
   my @segs = grep { $_->feature_class eq 'segmentation' } @$rsets;
   return undef unless @segs;
-  my $bigbed_file = $segs[0]->dbfile_path;
+  return $segs[0];
+}
+
+sub fetch_features_from_file {
+  my ($self,$fgh) = @_;
+
+  my $rs = $self->_result_set($fgh);
+  return undef unless $rs;
+  my $bigbed_file = $rs->dbfile_path;
   my $file_path = join('/',$self->species_defs->DATAFILE_BASE_PATH,
                            lc $self->species,
                            $self->species_defs->ASSEMBLY_VERSION);
@@ -89,16 +102,19 @@ sub fetch_features_from_file {
   return $self->SUPER::get_data($bigbed_file);
 }
 
-sub href {
-  my ($self, $f) = @_;
+sub href { return undef; }
+sub bg_link {
+  my ($self, $strand) = @_;
   
   return $self->_url({
     action   => 'SegFeature',
     ftype    => 'Regulation',
-    dbid     => $f->dbID,
+    dbid     => $self->_result_set()->dbID,
     species  => $self->species,
     fdb      => 'funcgen',
-    cl       => $self->my_config('cell_line'),
+    scalex   => $self->scalex,
+    width    => $self->{'container'}->length,
+    celldbid => $self->my_config('celltype'),
   });
 }
 
@@ -128,6 +144,11 @@ sub colour_key {
   return lc $type;
 }
 
-sub render { $_[0]->render_compact; }
+sub render {
+  my ($self) = @_;
+
+  $self->{'my_config'}->set('link_on_bgd', 1);
+  $self->render_compact;
+}
 
 1;
