@@ -84,7 +84,10 @@ sub populate_tree {
   ); 
   
   $self->create_node('HighLD', 'Linkage disequilibrium',
-    [qw( highld EnsEMBL::Web::Component::Variation::HighLD )],
+    [qw( 
+      pairwiseld EnsEMBL::Web::Component::Variation::PairwiseLD
+      highld EnsEMBL::Web::Component::Variation::HighLD
+    )],
     { 'availability' => 'variation has_ldpops variation has_samples not_somatic', 'concise' => 'Linkage disequilibrium', 'no_menu_entry' => $somatic }
   );
     
