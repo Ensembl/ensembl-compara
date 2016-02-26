@@ -149,6 +149,7 @@ Ensembl.LayoutManager.extend({
 
     this.showMobileMessage();
     this.showCookieMessage();
+    this.showMirrorMessage();
   },
   
   reloadPage: function (args, url) {
@@ -254,6 +255,35 @@ Ensembl.LayoutManager.extend({
     var modal = $('#modal_panel');
     $('.navbar, div.info, div.hint, div.warning, div.error').not('.fixed_width').not(function () { return modal.find(this).length; }).width(Ensembl.width);
     modal = null;
+  },
+
+  showMirrorMessage: function() {
+    var redirectedFrom = decodeURIComponent(Ensembl.cookie.get('redirected_from_url'));
+
+    if (redirectedFrom) {
+      Ensembl.cookie.set('redirected_from_url', '');
+
+      var paddingDiv,
+          messageDiv,
+          redirectBackLink = $('<a>').attr('href', redirectedFrom + (redirectedFrom.match(/\?/) ? ';redirect=no' : '?redirect=no'));
+
+      if (redirectBackLink.prop('hostname') != window.location.hostname) { // this will filter any invalid urls
+
+        redirectBackLink.html('Click here to go back to <b>' + redirectBackLink.prop('hostname') + '</b>');
+
+        var paddingDiv = $('<div class="redirect-message-padding hidden"></div>');
+        var messageDiv = $('<div class="redirect-message hidden"><p>You have been redirected to your nearest mirror. <span></span> <button>Close</button></p></div>')
+                            .find('span').append(redirectBackLink).end()
+                            .appendTo($('body').prepend(paddingDiv.slideDown())).slideDown();
+
+        messageDiv.find('button').on('click', { divs: paddingDiv.add(messageDiv) }, function(e) {
+          e.preventDefault();
+          e.data.divs.slideUp();
+        });
+
+        paddingDiv = messageDiv = redirectBackLink = null;
+      }
+    }
   },
 
   showCookieMessage: function() {
