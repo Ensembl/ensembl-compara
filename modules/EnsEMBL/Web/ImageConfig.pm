@@ -2906,9 +2906,9 @@ sub add_regulation_builds {
       description => $segs->{$key}{'desc'},
       renderers   => [qw(off Off normal On)],
       celltype    => $segs->{$key}{'web'}{'celltype'},
-      caption     => "Reg. Segments",
+      caption     => "Reg. Segs. ($segs->{$key}{'web'}{'anntype'})",
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
-      section     => $cell_line,
+      section     => $segs->{$key}{'web'}{'celltypename'},
       height      => 4,
     }));
   }

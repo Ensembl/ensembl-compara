@@ -711,6 +711,8 @@ sub _summarise_funcgen_db {
         disp => $a->{'displayable'},
         'web' => {
           celltype => $C->[1],
+          celltypename => $C->[2],
+          anntype => $type,
           'colourset' => 'fg_segmentation_features',
           'display' => 'off',
           'key' => "seg_$key",
