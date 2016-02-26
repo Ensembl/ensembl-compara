@@ -56,27 +56,44 @@ sub get_genome_db {
 ## Output a list of whole-genome alignments for a given method, and their species
 sub format_wga_list {
   my ($self, $method) = @_;
-  my $html;
+  my $html = '<ul>';
 
   my $list = $self->list_mlss_by_method($method);
-    foreach (@$list) {
-      my ($species_order, $info) = $self->mlss_species_info($_);
+  foreach my $mlss (@$list) {
+      my $url = '/info/genome/compara/mlss.html?mlss='.$mlss->dbID;
+      $html .= sprintf '<li><a href="%s">%s</a></li>', $url, $mlss->name;
+  }
+  $html .= '</ul>';
+  return $html;
+}
+
+sub print_wga_stats {
+  my ($self, $mlss) = @_;
+  my $hub     = $self->hub;
+  my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $html;
+      my ($species_order, $info) = $self->mlss_species_info($mlss);
 
       if ($species_order && scalar(@{$species_order||[]})) {
+        my $rel = $mlss->get_value_for_tag('ensembl_release');
+        my $nblocks = $self->thousandify($mlss->get_value_for_tag('num_blocks'));
+        my $max_align = $self->thousandify($mlss->max_alignment_length);
         my $count = scalar(@$species_order);
-        $html .= sprintf '<h3>%s</h3>
-              <p><b>(method_link_type="%s" : species_set_name="%s")</b></p>',
-              $_->name, $method, $_->species_set_obj->name;
+        $html .= sprintf('<h1>%s</h1>', $mlss->name);
+        $html .= qq{<p>This alignment has been generated in $site release $rel and is composed of $nblocks blocks (up to $max_align&nbsp;bp long).</p>};
+        $html .= $self->error_message('API access', sprintf(
+              '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set_obj->name), 'info');
 
         my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '22%', align => 'left', sort => 'string' },
-          { key => 'gl',      title => 'Genome length (bp)', width => '13%', align => 'center', sort => 'string' },
-          { key => 'gc',      title => 'Genome coverage (bp)', width => '13%', align => 'center', sort => 'string' },
-          { key => 'gcp',     title => 'Genome coverage (%)', width => '13%', align => 'center', sort => 'numeric' },
-          { key => 'el',      title => 'Coding exon length (bp)', width => '13%', align => 'center', sort => 'string' },
-          { key => 'ec',      title => 'Coding exon coverage (bp)', width => '13%', align => 'center', sort => 'string' },
-          { key => 'ecp',     title => 'Coding exon coverage (%)', width => '13%', align => 'center', sort => 'numeric' },
-        ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $method, $_->species_set_obj->get_value_for_tag('name')), sorting => ['species asc']});
+          { key => 'asm',     title => 'Assembly',        width => '10%', align => 'left', sort => 'string' },
+          { key => 'gl',      title => 'Genome length (bp)', width => '12%', align => 'center', sort => 'string' },
+          { key => 'gc',      title => 'Genome coverage (bp)', width => '12%', align => 'center', sort => 'string' },
+          { key => 'gcp',     title => 'Genome coverage (%)', width => '10%', align => 'center', sort => 'numeric' },
+          { key => 'el',      title => 'Coding exon length (bp)', width => '12%', align => 'center', sort => 'string' },
+          { key => 'ec',      title => 'Coding exon coverage (bp)', width => '12%', align => 'center', sort => 'string' },
+          { key => 'ecp',     title => 'Coding exon coverage (%)', width => '10%', align => 'center', sort => 'numeric' },
+        ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set_obj->name), sorting => ['species asc']});
         my @colors = qw(#402 #a22 #fc0 #8a2);
         foreach my $sp (@$species_order) {
           my $gc = sprintf('%.2f', $info->{$sp}{'genome_coverage'} / $info->{$sp}{'genome_length'} * 100);
@@ -84,7 +101,8 @@ sub format_wga_list {
           my $cgc = $colors[int($gc/25)];
           my $cec = $colors[int($ec/25)];
           $table->add_row({
-            'species' => sprintf('%s (%s)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
+            'species' => sprintf('%s (<em>%s</em>)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
+            'asm'     => $info->{$sp}{'assembly'},
             'gl'      => $self->thousandify($info->{$sp}{'genome_length'}),
             'gc'      => $self->thousandify($info->{$sp}{'genome_coverage'}),
             'gcp'     => sprintf(q{<span style="color: %s">%s</span}, $cgc, $gc),
@@ -95,7 +113,6 @@ sub format_wga_list {
         }
         $html .= $table->render;
       }
-    }
 
   return $html;
 }
@@ -209,12 +226,12 @@ sub get_species_info {
     }
   }
 
-  ## Lookup table from species name to genome_db_id
+  ## Lookup table from species name to genome_db
   my $genome_db_name_hash = {};
   if ($mlss) {
     foreach my $genome_db (@{$mlss->species_set_obj->genome_dbs}) {
       my $species_tree_name = $genome_db->name;
-      $genome_db_name_hash->{$species_tree_name} = $genome_db->dbID;
+      $genome_db_name_hash->{$species_tree_name} = $genome_db;
     }
   }
   ## Now munge information for selected species
@@ -229,8 +246,10 @@ sub get_species_info {
     $info->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
 
     if ($mlss) {
+      my $gdb = $genome_db_name_hash->{lc($sp)};
+      $info->{$sp}{'assembly'} = $gdb->assembly;
       ## Add coverage stats
-      my $id = $genome_db_name_hash->{lc($sp)};
+      my $id = $gdb->dbID;
       my @stats = qw(genome_coverage genome_length coding_exon_coverage coding_exon_length);
       foreach (@stats) {
         $info->{$sp}{$_} = $mlss->get_value_for_tag($_.'_'.$id);

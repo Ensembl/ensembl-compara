@@ -31,6 +31,7 @@ sub render {
   ## Get all the data 
   my $methods = ['BLASTZ_NET', 'LASTZ_NET'];
   my ($species_list, $data) = $self->mlss_data($methods);
+  my ($synt_spec, $data_synt) = $self->mlss_data( ['SYNTENY'] );
 
   ## Do some munging
   my ($species_order, $info) = $self->get_species_info($species_list, 1);
@@ -47,7 +48,14 @@ sub render {
       if ($values->[2]) {
           my $mlss_id = $values->[1];
           my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
-          $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
+          my $txt = sprintf '<a href="%s">%s (<em>%s</em>)</a>', $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
+          if ($sp eq $other) {
+              $txt .= ' [self-alignment]';
+          } elsif ($data_synt->{$sp}{$other} and $data_synt->{$sp}{$other}->[2]) {
+              my $url_synt = '/info/genome/compara/mlss.html?mlss='.$data_synt->{$sp}{$other}->[1];
+              $txt .= sprintf ' with <a href="%s">synteny analysis</a>', $url_synt;
+          }
+          $html .= '<li>'.$txt.'</li>';
       } else {
           $html .= sprintf('<li>%s (%s)</li>', $info->{$other}{'common_name'}, $info->{$other}{'long_name'});
       }
