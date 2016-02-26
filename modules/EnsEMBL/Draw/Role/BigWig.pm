@@ -138,6 +138,7 @@ sub _fetch_data {
                     'display'         => $self->{'display'},
                     'no_titles'       => $self->my_config('no_titles'),
                     'default_strand'  => 1,
+                    'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                     };
     ## No colour defined in ImageConfig, so fall back to defaults
     unless ($colour) {
