@@ -1463,10 +1463,10 @@ sub get_genetic_variations {
   my $hub        = $self->hub;
   my $tsv_extent = $hub->param('context') eq 'FULL' ? 5000 : $hub->param('context');
   my $snp_data   = {};
-
+  my $strain_slice_adaptor = $hub->database('variation')->get_StrainSliceAdaptor;
   foreach my $sample (@samples) {
     my $munged_transcript = $self->get_munged_slice('tsv_transcript', $tsv_extent, 1);    
-    my $sample_slice      = $munged_transcript->[1]->get_by_strain($sample);
+    my $sample_slice      = $strain_slice_adaptor->get_by_strain_Slice($sample, $munged_transcript->[1]);
     my ($allele_info, $consequences) = $self->getAllelesConsequencesOnSlice($sample, 'tsv_transcript', $sample_slice);
     
     next unless @$consequences && @$allele_info;

@@ -183,13 +183,15 @@ sub sample_configs {
   my $extent    = $object->extent;
   my @containers_and_configs; ## array of containers and configs
   my @haplotype;
+  my $strain_slice_adaptor = $hub->database('variation')->get_StrainSliceAdaptor;
   
   # THIS IS A HACK. IT ASSUMES ALL COVERAGE DATA IN DB IS FROM SANGER fc1
   # Only display coverage data if source Sanger is on 
   my $display_coverage = $hub->param('opt_sanger') eq 'off' ? 0 : 1;
   
   foreach my $sample ($object->get_samples) {
-    my $sample_slice = $transcript_slice->get_by_strain($sample); 
+    my $sample_slice = $strain_slice_adaptor->get_by_strain_Slice($sample, $transcript_slice); 
+
     next unless $sample_slice; 
     
     ## Initialize content
