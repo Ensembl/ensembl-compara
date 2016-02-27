@@ -229,7 +229,8 @@ sub pipeline_analyses {
              -input_ids     => [ {} ],
 	     -hive_capacity => 10,
 	     -flow_into => {
-			    1 => ['load_genomedb_factory' ,'load_ancestral_genomedb'],
+			    '1->A' => ['load_genomedb_factory' , 'load_ancestral_genomedb'],
+                            'A->1' => ['chunked_jobs_factory'], #backbone
 			   },
 	     -rc_name => '100Mb',
 	    },
@@ -241,8 +242,7 @@ sub pipeline_analyses {
                                 'extra_parameters'      => [ 'locator' ],
 			       },
 		-flow_into => {
-                               '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-			       'A->1' => [ 'load_genomedb_funnel' ],    # backbone
+                               2 => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
 			      },
 		-rc_name => '100Mb',
 	    },
@@ -257,13 +257,6 @@ sub pipeline_analyses {
 		-rc_name => '100Mb',
 	    },
 
-	    {   -logic_name => 'load_genomedb_funnel',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-		-rc_name => '100Mb',
-                -flow_into => {
-                               '1' => [ 'chunked_jobs_factory' ],
-                               },
-            },
 
             {   -logic_name => 'load_ancestral_genomedb',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAncestralGenomeDB',
