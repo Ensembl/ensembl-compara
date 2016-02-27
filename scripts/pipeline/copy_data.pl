@@ -170,7 +170,6 @@ my $from_reg_name = undef;
 my $from_url = undef;
 my $to_reg_name = undef;
 my $to_url = undef;
-my $ancestral_dbID= 63;
 my @method_link_types = ();
 my @mlss_id = ();
 
@@ -211,7 +210,6 @@ GetOptions(
            'trust_ce!'                      => \$trust_ce,
            'merge!'                         => \$merge,
            'patch_merge!'                   => \$patch_merge,
-    'ancestral_dbID=i'                        => \$ancestral_dbID,
 );
 
 # Print Help and exit if help is requested
@@ -227,6 +225,10 @@ my $from_ga_adaptor = $from_dba->get_GenomicAlignAdaptor();
 my $from_cs_adaptor = $from_dba->get_ConservationScoreAdaptor();
 my $from_ce_adaptor = $from_dba->get_ConstrainedElementAdaptor();
 my $from_sr_adaptor = $from_dba->get_SyntenyRegionAdaptor();
+
+my $ancestral_dbID;
+my $ancestor_genome_db = $from_dba->get_GenomeDBAdaptor()->fetch_by_name_assembly("ancestral_sequences");
+$ancestral_dbID = $ancestor_genome_db->dbID if $ancestor_genome_db;
 
 print "\n\n";   # to clear from possible warnings
 
