@@ -78,12 +78,8 @@ sub content {
   if($hub->is_new_regulation_pipeline and $cell_type ne 'MultiCell') {
     my $status = "Unknown";
     my $has_evidence = $object->has_evidence;
-    if($has_evidence) {
-      $status = "Active";
-    } elsif(defined $has_evidence) {
-      $status = "Inactive";
-    }
-
+    $status = ['Inactive','Active','N/A','Poised','Repressed']->[$has_evidence];
+    warn "has_evidence=$has_evidence\n";
     $self->add_entry({
       type => 'Status',
       label => $status

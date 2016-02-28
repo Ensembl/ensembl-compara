@@ -120,6 +120,18 @@ sub colour_key {
     } else  {
       $type = 'Unclassified';
     }
+    if($f->can('has_evidence')) {
+      my $activity = $f->has_evidence;
+      # case 0: handled by pattern code
+      # case 1: correct
+      if($activity == 2) {
+        $type = 'na';
+      } elsif($activity == 3) {
+        $type = 'poised';
+      } elsif($activity == 4) {
+        $type = 'repressed';
+      }
+    }
   } else {
     if ($type =~ /Promoter/) {
       $type = 'Promoter_associated';
@@ -275,7 +287,10 @@ sub pattern {
   my ($self,$f) = @_;
 
   return undef unless $self->{'config'}->hub->is_new_regulation_pipeline;
-  return ['hatch_really_thick','grey90',0] if $f->can('has_evidence') and !$f->has_evidence;
+  return undef unless $f->can('has_evidence');
+  my $ev = $f->has_evidence;
+  return ['hatch_really_thick','grey90',0] if $ev==0;
+  return ['hatch_really_thick','white',0] if $ev==2;
   return undef;
 }
 
@@ -283,8 +298,11 @@ sub feature_label {
   my ($self,$f) = @_;
 
   return undef unless $self->{'config'}->hub->is_new_regulation_pipeline;
-  return undef if $f->can('has_evidence') and $f->has_evidence;
-  return "{grey30}inactive in this cell line";
+  return undef unless $f->can('has_evidence');
+  my $ev = $f->has_evidence;
+  return "{grey30}inactive in this cell line" if $ev==0;
+  return "{grey30}N/A" if $ev==2;
+  return undef;
 }
 
 sub label_overlay { return 1; }
