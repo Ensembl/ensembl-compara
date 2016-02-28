@@ -62,7 +62,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.3;
 
-use Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 
 use Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
@@ -3054,8 +3054,8 @@ sub core_pipeline_analyses {
         },
 
         $self->o('initialise_cafe_pipeline') ? (
-            @{ Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_species_tree($self) },
-            @{ Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_cafe($self) },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_species_tree($self) },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self) },
         ) : (),
 
         $self->o('initialise_orthologQM_pipeline') ? (

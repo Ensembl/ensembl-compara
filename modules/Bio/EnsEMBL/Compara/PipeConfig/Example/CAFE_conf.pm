@@ -108,18 +108,19 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Example::CAFE_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
     return {
             %{$self->SUPER::default_options},
-
-            # You need to specify -pipeline_name, -host and -password on command line (if they are not already set as an environmental variable)
 
             # Data needed for CAFE
             'cafe_lambdas'             => '',  # For now, we don't supply lambdas
@@ -128,135 +129,29 @@ sub default_options {
             'full_species_tree_label'  => 'full_species_tree',
 #            'badiRate_exe'            => '/software/ensembl/compara/badirate-1.35/BadiRate.pl',
 
-            'pipeline_db'   => {
-                                -driver => 'mysql',
-                                -host   => $self->o('host'),
-                                -port   => 3306,
-                                -user   => 'ensadmin',
-                                -pass   => $self->o('password'),
-                                -dbname => $self->o('pipeline_name'),  # redefined (defined also in HiveGeneric_conf.pm) to allow toping up in other user's pipelines
-                               },
            };
 }
+
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+
+         '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+    };
+}
+
 
 sub pipeline_analyses {
     my ($self) = @_;
     # Get the two parts
-    my $analyses_species_tree = $self->pipeline_analyses_species_tree();
-    my $analyses_cafe = $self->pipeline_analyses_cafe();
+    my $analyses_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_species_tree($self);
+    my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self);;
     # And connect them
     $analyses_species_tree->[0]->{-input_ids} = [ {} ],
-    $analyses_species_tree->[0]->{-wait_for}  = [ $self->o('wait_for') ];
-    $analyses_species_tree->[1]->{-flow_into} = [ 'CAFE_table' ];
+    $analyses_species_tree->[0]->{-wait_for}  = [ $self->o('wait_for') ] if $self->o('wait_for');
+    $analyses_species_tree->[-1]->{-flow_into} = [ $analyses_cafe->[0]->{-logic_name} ];
     return [@$analyses_species_tree, @$analyses_cafe];
-}
-
-sub pipeline_analyses_species_tree {
-    my ($self) = @_;
-    return [
-            {
-             -logic_name => 'make_full_species_tree',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
-             -parameters => {
-                             'label'    => $self->o('full_species_tree_label'),
-                            },
-             -flow_into  => {
-                             # 3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
-                             2 => [ 'hc_full_species_tree' ],
-                            },
-            },
-
-        {   -logic_name         => 'hc_full_species_tree',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'species_tree',
-                binary          => 0,
-                n_missing_species_in_tree   => 0,
-            },
-            -flow_into          => [ 'CAFE_species_tree' ],
-        },
-
-            {
-             -logic_name => 'CAFE_species_tree',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
-             -parameters => {
-                             'cafe_species' => $self->o('cafe_species'),
-                             'label'        => $self->o('full_species_tree_label')
-                            },
-             -flow_into     => {
-                 2 => [ 'hc_cafe_species_tree' ],
-             }
-            },
-
-        {   -logic_name         => 'hc_cafe_species_tree',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'species_tree',
-                binary          => 1,
-            },
-        },
-    ];
-}
-
-sub pipeline_analyses_cafe {
-    my ($self) = @_;
-    return [
-#            {
-#             -logic_name => 'BadiRate',
-#             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::BadiRate',
-#             -parameters => {
-#                             'species_tree_meta_key' => $self->o('species_tree_meta_key'),
-#                             'badiRate_exe'          => $self->o('badiRate_exe'),
-#                            }
-#            },
-
-            {
-             -logic_name => 'CAFE_table',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable',
-             -parameters => {
-                             'cafe_species' => $self->o('cafe_species'),
-                             'perFamTable'  => $self->o('per_family_table'),
-                             'cafe_shell'   => $self->o('cafe_shell'),
-                            },
-             -rc_name => '1Gb_job',
-             -meadow_type => 'LSF',
-             -flow_into => {
-                 '2->A' => [ 'CAFE_analysis' ],
-                 'A->1' => [ 'hc_cafe_results' ],
-             },
-            },
-
-            {
-             -logic_name => 'CAFE_analysis',
-             -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis',
-             -parameters => {
-#                             'cafe_lambdas'         => $self->o('cafe_lambdas'),
-#                             'cafe_struct_taxons'  => $self->o('cafe_'),
-                             'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
-                             'cafe_shell'           => $self->o('cafe_shell'),
-                            },
-             -rc_name => '1Gb_job',
-             -flow_into => 'CAFE_json',
-             -meadow_type => 'LSF',
-             -priority => 10,
-            },
-
-        {   -logic_name    => 'CAFE_json',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeCAFE',
-            -hive_capacity => 50,
-            -batch_size    => 20,
-            -rc_name       => '1Gb_job',
-        },
-
-        {   -logic_name         => 'hc_cafe_results',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'cafe',
-                cafe_tree_label => 'cafe',
-            },
-        },
-
-           ]
 }
 
 1;
