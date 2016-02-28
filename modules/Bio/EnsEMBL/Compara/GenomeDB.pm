@@ -276,6 +276,7 @@ sub get_short_name {
       }
     }
   }
+  $name .= ".".(uc $self->genome_component) if $self->genome_component;
   return $name;
 }
 
