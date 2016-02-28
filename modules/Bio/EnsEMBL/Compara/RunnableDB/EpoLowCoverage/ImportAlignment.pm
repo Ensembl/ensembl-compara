@@ -118,10 +118,8 @@ sub importAlignment {
 	#open the most recent compara database
 	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
     }
-    my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name("import_alignment");
     
     my $dbname = $self->param('from_comparaDBA')->dbc->dbname;
-    my $analysis_id = $analysis->dbID;
     my $mlss_id = $self->param('method_link_species_set_id');
 
     my $step = $self->param('step');
@@ -363,10 +361,8 @@ sub importAlignment_quick {
 	#open the most recent compara database
 	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
     }
-    my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name("import_alignment");
     
     my $dbname = $self->param('from_comparaDBA')->dbc->dbname;
-    my $analysis_id = $analysis->dbID;
     my $mlss_id = $self->param('method_link_species_set_id');
 
     #my $sql = "INSERT INTO genomic_align_block SELECT * FROM ?.genomic_align_block WHERE method_link_species_set_id = ?\n";
