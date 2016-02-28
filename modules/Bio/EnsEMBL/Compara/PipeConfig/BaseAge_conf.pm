@@ -196,9 +196,10 @@ sub pipeline_analyses {
 	    -rc_name => '100Mb',
         },
         {   -logic_name => 'load_ancestral_genomedb',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAncestralGenomeDB',
             -parameters => {
-                            'sql' => [ 'INSERT INTO genome_db (genome_db_id, name, locator) VALUE (63, "ancestral_sequences", "Bio::EnsEMBL::DBSQL::DBAdaptor/host=' . $self->o('anc_host') .';port=3306;user=ensro;pass=;dbname=' . $self->o('anc_dbname') . ';species=' . $self->o('anc_name') . ';species_id=1;disconnect_when_inactive=1")' ],
+                'anc_host'      => $self->o('anc_host'),
+                'anc_dbname'    => $self->o('anc_dbname'),
                            },
             #                -input_ids => [ { } ],
             -rc_name => '100Mb',
