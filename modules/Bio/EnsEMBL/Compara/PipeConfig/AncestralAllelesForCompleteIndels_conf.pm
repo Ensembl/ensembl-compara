@@ -266,14 +266,14 @@ sub pipeline_analyses {
             },
 
             {   -logic_name => 'load_ancestral_genomedb',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAncestralGenomeDB',
 		-parameters => {
-                                'user' => $self->o('ancestor_user'),
-                                'host' => $self->o('ancestor_host'),
-                                'port' => $self->o('ancestor_port'),
-                                'dbname' => $self->o('ancestor_dbname'),
-                                'species_name' => $self->o('ancestor_species_name'),
-                                'sql' => [ 'INSERT INTO genome_db (genome_db_id, name, locator) VALUE (63, "ancestral_sequences", "Bio::EnsEMBL::DBSQL::DBAdaptor/host=#host#;port=#port#;user=#user#;pass=;dbname=#dbname#;species=#species_name#;species_id=1;disconnect_when_inactive=1")' ],
+                                'master_db' => $self->o('master_db'),
+                                'anc_user' => $self->o('ancestor_user'),
+                                'anc_host' => $self->o('ancestor_host'),
+                                'anc_port' => $self->o('ancestor_port'),
+                                'anc_dbname' => $self->o('ancestor_dbname'),
+                                'anc_name' => $self->o('ancestor_species_name'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
 		-rc_name => '100Mb',

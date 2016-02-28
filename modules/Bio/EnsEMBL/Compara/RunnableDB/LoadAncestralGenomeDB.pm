@@ -55,6 +55,8 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
 
         'anc_name'  => 'ancestral_sequences',
+        'anc_user'  => 'ensro',
+        'anc_port'  => 3306,
     }
 }
 
@@ -64,8 +66,8 @@ sub fetch_input {
 
     $self->param('master_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') ) );
     $self->param('genome_db', $self->param('master_dba')->get_GenomeDBAdaptor->fetch_by_name_assembly($self->param_required('anc_name')));
-    $self->param('ancestral_locator', sprintf('Bio::EnsEMBL::DBSQL::DBAdaptor/host=%s;port=3306;user=ensro;pass=;dbname=%s;species=%s;species_id=1;disconnect_when_inactive=1',
-            $self->param_required('anc_host'), $self->param_required('anc_dbname'), $self->param_required('anc_name')));
+    $self->param('ancestral_locator', sprintf('Bio::EnsEMBL::DBSQL::DBAdaptor/host=%s;port=%s;user=%s;pass=;dbname=%s;species=%s;species_id=1;disconnect_when_inactive=1',
+            $self->param_required('anc_host'), $self->param_required('anc_port'), $self->param_required('anc_user'), $self->param_required('anc_dbname'), $self->param_required('anc_name')));
 }
 
 sub run {
