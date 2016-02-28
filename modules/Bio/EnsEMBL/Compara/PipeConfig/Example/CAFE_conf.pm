@@ -98,6 +98,9 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40100 -work_dir scratch/109/cafe_nctrees_79 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara3/mm14_compara_nctrees_79b -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']" -hive_no_init 1
   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40099 -work_dir scratch/109/cafe_proteintrees_79 -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_url mysql://ensadmin:ensembl@compara1/mm14_protein_trees_79 -cafe_species [] -hive_no_init 1
 
+  NOTE e85: It seems to be difficult to pass an array-ref on the command-line of init_pipeline. -cafe_species can now be a list of species names separated by a comma, e.g.
+             "danio.rerio,taeniopygia.guttata,callithrix.jacchus,pan.troglodytes,homo.sapiens,mus.musculus"
+
 =head1 CONTACT
 
 Please email comments or questions to the public Ensembl
