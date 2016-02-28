@@ -105,7 +105,6 @@ sub pipeline_analyses_cafe {
              -logic_name => 'CAFE_table',
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable',
              -parameters => {
-                             'cafe_species' => $self->o('cafe_species'),
                              'perFamTable'  => $self->o('per_family_table'),
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },

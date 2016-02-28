@@ -152,15 +152,8 @@ sub write_output {
 sub get_full_cafe_table_from_db {
     my ($self) = @_;
     my $cafe_tree = $self->param('cafe_tree');
-    my $species   = $self->param('cafe_species');
 
-    unless (ref $species eq "ARRAY" and scalar @$species) { ## if we don't have an arrayref or have an arrayref that is empty
-        my @sps;
-        for my $sp (@{$cafe_tree->get_all_leaves()}) {
-            push @sps, $sp->name();
-        }
-        $species = [@sps];
-    }
+    my $species = [map {$_->name} @{$cafe_tree->get_all_leaves()}];
 
     my $table = "FAMILY_DESC\tFAMILY\t" . join("\t", @$species);
     $table .= "\n";
