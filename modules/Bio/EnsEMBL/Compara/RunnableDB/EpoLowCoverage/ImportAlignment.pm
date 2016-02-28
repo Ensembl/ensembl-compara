@@ -122,6 +122,9 @@ sub importAlignment {
     my $dbname = $self->param('from_comparaDBA')->dbc->dbname;
     my $mlss_id = $self->param('method_link_species_set_id');
 
+    my $ancestor_genome_db = $self->param('from_comparaDBA')->get_GenomeDBAdaptor()->fetch_by_name_assembly("ancestral_sequences");
+    my $ancestral_dbID_constraint = $ancestor_genome_db ? ' AND genome_db_id != '.$ancestor_genome_db->dbID : '';
+
     my $step = $self->param('step');
 
     ##Find min and max of the relevant internal IDs in the FROM database
@@ -203,7 +206,7 @@ sub importAlignment {
 		  "SELECT gat.*".
 		  " FROM genomic_align ga".
 		  " JOIN dnafrag USING (dnafrag_id)".
-		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id AND genome_db_id != 63", $step);
+		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id $ancestral_dbID_constraint", $step);
     }
     #copy genomic_align table
     if ($dnafrag_id) {
@@ -231,7 +234,7 @@ sub importAlignment {
 		  $min_ga, $max_ga,
 		  "SELECT genomic_align.*".
 		  " FROM genomic_align JOIN dnafrag USING (dnafrag_id)".
-		  " WHERE method_link_species_set_id = $mlss_id AND genome_db_id != 63", $step);
+		  " WHERE method_link_species_set_id = $mlss_id $ancestral_dbID_constraint", $step);
     }
 }
 
