@@ -898,7 +898,7 @@ sub get_all_ConstrainedElements {
   $method_link_type ||= "GERP_CONSTRAINED_ELEMENT";
   my $key_cache = "_constrained_elements_".$method_link_type;
   if ($species_set) {
-    $key_cache .= "::" . join("-", sort map {s/\W/_/g} map {$_->name} @$species_set);
+    $key_cache .= "::" . join("-", sort map {my $s = $_; $s =~ s/\W/_/g; $s} map {$_->name} @$species_set);
   } else {
     $species_set = $self->{_method_link_species_set}->species_set_obj->genome_dbs;
   }

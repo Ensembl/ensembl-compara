@@ -124,7 +124,8 @@ sub write_output {
  my $command = $self->param('phylofit_exe'). " --tree \"$species_tree_file\" --subst-mod HKY85 --out-root $gab_file " . $msa_fasta_file;
  system($command); 
  open(TREE, "/tmp/$block_id.mod") or throw("cant open /tmp/$block_id.mod");
- my ($newick_tree_string) = map {if($_=~s/TREE: //){$_}} grep {/^TREE:/} <TREE>;
+ my ($newick_tree_string) = grep {/^TREE: /} <TREE>;
+ $newick_tree_string =~s/TREE: //;
 # store the tree
  my $species_tree_ad = $self->compara_dba->get_SpeciesTreeAdaptor;
  my $tree = $species_tree_ad->new_from_newick($newick_tree_string, "$block_id.pf", 'name'); 
