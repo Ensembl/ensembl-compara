@@ -434,7 +434,7 @@ sub check_table {
   my $sth = $from_dba->dbc->prepare($sql);
   $sth->execute();
   while (my $row = $sth->fetchrow_arrayref) {
-    my $key = join("..", @$row);
+    my $key = join("..", map {defined $_ ? $_ : '<NULL>'} @$row);
     $from_entries->{$key} = 1;
   }
   $sth->finish;
@@ -443,7 +443,7 @@ sub check_table {
   $sth = $to_dba->dbc->prepare($sql);
   $sth->execute();
   while (my $row = $sth->fetchrow_arrayref) {
-    my $key = join("..", @$row);
+    my $key = join("..", map {defined $_ ? $_ : '<NULL>'} @$row);
     $from_entries->{$key} -= 1;
   }
   $sth->finish;
