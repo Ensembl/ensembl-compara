@@ -1093,10 +1093,6 @@ sub _add_trackhub_extras_options {
   
   if (exists $args{'menu'}{'maxHeightPixels'} || exists $args{'source'}{'maxHeightPixels'}) {
     $args{'options'}{'maxHeightPixels'} = $args{'menu'}{'maxHeightPixels'} || $args{'source'}{'maxHeightPixels'};
-
-    (my $default_height = $args{'options'}{'maxHeightPixels'}) =~ s/^.*:([0-9]*):.*$/$1/;
-    
-    $args{'options'}{'height'} = $default_height if $default_height > 0;
   }
   
   # Alternative rendering order for genome segmentation and similar
