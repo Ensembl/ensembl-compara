@@ -124,11 +124,11 @@ sub colour_key {
       my $activity = $f->has_evidence;
       # case 0: handled by pattern code
       # case 1: correct
-      if($activity == 2) {
+      if($activity == 4) {
         $type = 'na';
-      } elsif($activity == 3) {
+      } elsif($activity == 2) {
         $type = 'poised';
-      } elsif($activity == 4) {
+      } elsif($activity == 3) {
         $type = 'repressed';
       }
     }
@@ -290,7 +290,7 @@ sub pattern {
   return undef unless $f->can('has_evidence');
   my $ev = $f->has_evidence;
   return ['hatch_really_thick','grey90',0] if $ev==0;
-  return ['hatch_really_thick','white',0] if $ev==2;
+  return ['hatch_really_thick','white',0] if $ev==4;
   return undef;
 }
 
@@ -301,7 +301,7 @@ sub feature_label {
   return undef unless $f->can('has_evidence');
   my $ev = $f->has_evidence;
   return "{grey30}inactive in this cell line" if $ev==0;
-  return "{grey30}N/A" if $ev==2;
+  return "{grey30}N/A" if $ev==4;
   return undef;
 }
 
