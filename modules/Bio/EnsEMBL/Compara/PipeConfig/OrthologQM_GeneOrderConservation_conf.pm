@@ -144,7 +144,8 @@ sub pipeline_analyses {
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
             -analysis_capacity  =>  100,
         	-flow_into	=> {
-        		2 => [ ':////ortholog_goc_metric' ],
+                2 => [ $self->o('compara_db').'/ortholog_goc_metric' ],
+#        		2 => [ ':////ortholog_goc_metric' ],
         	},
 
  #           -rc_name => '2Gb_job',
