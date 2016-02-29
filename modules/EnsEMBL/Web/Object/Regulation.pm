@@ -91,7 +91,6 @@ sub has_evidence {
   my ($self) = @_;
 
   # Can be simple accessor for 76, but avoid breaking master
-  return 1 unless $self->hub->is_new_regulation_pipeline;
   return $self->Obj->has_evidence if $self->Obj->can('has_evidence');
   return undef;
 }

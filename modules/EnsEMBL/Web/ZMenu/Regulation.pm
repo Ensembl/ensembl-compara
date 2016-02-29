@@ -75,7 +75,7 @@ sub content {
     });
   }
 
-  if($hub->is_new_regulation_pipeline and $cell_type ne 'MultiCell') {
+  if($cell_type ne 'MultiCell') {
     my $status = "Unknown";
     my $has_evidence = $object->has_evidence;
     $status = ['Inactive','Active','Poised','Repressed','N/A']->[$has_evidence];
