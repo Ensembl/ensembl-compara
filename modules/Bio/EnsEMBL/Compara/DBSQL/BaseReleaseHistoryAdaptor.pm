@@ -67,8 +67,8 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 =head2 fetch_all_current
 
   Example     : $object_name->fetch_all_current();
-  Description : 
-  Returntype  : 
+  Description : Returns all the objects that are in the current release
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::StorableWithReleaseHistory
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -83,9 +83,10 @@ sub fetch_all_current {
 
 =head2 fetch_all_by_release
 
-  Example     : $object_name->fetch_all_by_release();
-  Description : 
-  Returntype  : 
+  Arg[0]      : integer $release_number
+  Example     : $object_name->fetch_all_by_release(76);
+  Description : Returns all the objects present in this release of Ensembl
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::StorableWithReleaseHistory
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -102,7 +103,7 @@ sub fetch_all_by_release {
 =head2 update_first_last_release
 
   Example     : $mlss_adaptor->update_first_last_release($mlss);
-  Description : Generic method to update first/last_release in the database
+  Description : Generic method to update first/last_release in the database given the current values of the object
   Returntype  : none
   Exceptions  : none
   Caller      : general
