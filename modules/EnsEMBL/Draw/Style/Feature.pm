@@ -225,14 +225,8 @@ sub add_label {
     $colour = 'black';
   }
 
-  ## Stop labels from overlapping edge of image
   my $x = $feature->{'start'};
   $x = 0 if $x < 0;
-  my $image_width_in_pixels = $position->{'image_width'} * $self->{'pix_per_bp'};
-  my $x_in_pixels           = $x * $self->{'pix_per_bp'}; 
-  if (($x_in_pixels + $position->{'width'}) > $image_width_in_pixels) {
-    $x = $position->{'image_width'} - ($position->{'width'} / $self->{'pix_per_bp'});
-  }
 
   my $label = {
                 font      => $self->{'font_name'},
