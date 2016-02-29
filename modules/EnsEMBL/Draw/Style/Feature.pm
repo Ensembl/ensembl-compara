@@ -147,8 +147,7 @@ sub create_glyphs {
       
       ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
       my $real_height   = $self->draw_feature($feature, $position) || $feature_height;
-      $real_height     += $vspacing + $add_labels;
-      push @{$heights->{$feature_row}}, $real_height;
+      push @{$heights->{$feature_row}}, ($real_height + $vspacing + $add_labels);
     
       ## Optional label
       if ($show_label) {
@@ -166,9 +165,7 @@ sub create_glyphs {
                       'image_width' => $slice_width,
                     };
         $self->add_label($feature, $position);
-        $real_height += $text_info->{'height'};
       }
-
     }
 
     ## Set the height of the track, in case we want anything in the lefthand margin
