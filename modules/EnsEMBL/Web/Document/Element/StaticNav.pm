@@ -44,9 +44,9 @@ sub content {
   my $this_tree   = $dir eq 'info/' ? $tree : $self->walk_tree($tree, $dir, \@path, 1);    ## Recurse into tree until you find current location
   my @pages       = map { ref $this_tree->{$_} eq 'HASH' ? $_ : () } keys %$this_tree;
   my @page_order  = sort {
-    $this_tree->{$a}{'_order'} <=> $this_tree->{$b}{'_order'} ||
-    $this_tree->{$a}{'_title'} cmp $this_tree->{$b}{'_title'} ||
-    $this_tree->{$a}           cmp $this_tree->{$b}
+    $this_tree->{$a}{'_order'}      <=> $this_tree->{$b}{'_order'} ||
+    (lc $this_tree->{$a}{'_title'}) cmp (lc $this_tree->{$b}{'_title'}) ||
+    (lc $this_tree->{$a})           cmp (lc $this_tree->{$b})
   } @pages;
   
   my $last_page = $page_order[-1];
@@ -66,9 +66,9 @@ sub content {
     my $image       = "${img_url}leaf.gif";
     my @children    = grep !/^_/, keys %$page_tree;
     my @child_order = sort {
-      $page_tree->{$a}{'_order'} <=> $page_tree->{$b}{'_order'} ||
-      $page_tree->{$a}{'_title'} cmp $page_tree->{$b}{'_title'} ||
-      $page_tree->{$a}           cmp $page_tree->{$b}
+      $page_tree->{$a}{'_order'}      <=> $page_tree->{$b}{'_order'} ||
+      (lc $page_tree->{$a}{'_title'}) cmp (lc $page_tree->{$b}{'_title'}) ||
+      (lc $page_tree->{$a})           cmp (lc $page_tree->{$b})
     } @children;
     
     my $submenu;
