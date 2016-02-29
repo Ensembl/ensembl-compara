@@ -484,5 +484,113 @@ sub find_multifurcations {
     return $multifurcations;
 }
 
+
+=head2 binarize_flat_tree_with_species_tree
+
+  Arg [1]     : Species Tree object
+  Arg [1]     : multifurcation hash from (find_multifurcations)
+  Example     : $multifurcated_tree_root->binarize_flat_tree_with_species_tree($species_tree, $multifurcations);
+  Description : Tries to binarize the genetree using the Species Tree to resolve the multifurcations.
+  Returntype  : None
+  Exceptions  :
+  Caller      :
+
+=cut
+
+sub binarize_flat_tree_with_species_tree {
+    my $self            = shift;
+    my $species_tree    = shift;
+    my $multifurcations = shift;
+
+    #fetch specie tree objects for the multifurcated nodes
+    my %species_tree_leaves_in_multifurcation;
+    foreach my $multi (keys %$multifurcations){
+        foreach my $child (@{$multifurcations->{$multi}}){
+            my ($name_id, $species_tree_node_id) = split(/\_/,$child->name);
+            my $species_tree_node = $species_tree->root->find_leaf_by_node_id($species_tree_node_id);
+            push(@{$species_tree_leaves_in_multifurcation{$multi}}, $species_tree_node);
+        }
+    }
+
+    foreach my $multi (keys %$multifurcations) {
+        #get mrca sub-tree
+        my $mrca = $species_tree->root->find_first_shared_ancestor_from_leaves( [@{$species_tree_leaves_in_multifurcation{$multi}}] );
+
+        #get gene_tree mrca sub-tree
+        my $mrcaGeneTree = $self->find_first_shared_ancestor_from_leaves( [@{$multifurcations->{$multi}}] );
+
+        #get mrca leaves
+        my @leaves_mrca= @{ $mrca->get_all_leaves() };
+
+        #get taxon_ids for the mrca sub-tree
+        my @taxonIdsMrca;
+        foreach my $leaf (@leaves_mrca){
+            push(@taxonIdsMrca,$leaf->dbID);
+            #print $leaf->dbID."\n";
+        }
+
+        #get taxon_ids for the leaves in the multifurcations
+        my @taxonIdsMultifurcation;
+        foreach my $leaf (@{$species_tree_leaves_in_multifurcation{$multi}}){
+            push(@taxonIdsMultifurcation,$leaf->dbID);
+            #print $leaf->dbID."\n";
+        }
+
+        my @nodesToDisavow;
+        my %count;
+        foreach my $e (@taxonIdsMrca, @taxonIdsMultifurcation) { $count{$e}++ }
+        foreach my $e (keys %count) {
+            if ($count{$e} != 2) {
+                push @nodesToDisavow, $e;
+            }
+        }
+
+        #prune mrca sub-tree
+        #   disavow these nodes from the mrca sub-tree
+        foreach my $nodeName (@nodesToDisavow) {
+            my $node = $species_tree->root->find_leaf_by_node_id($nodeName);
+            #since nodes are leaves at this point, we can delete them directly.
+            #print "disavowing: |" . $node->name() . "|\n";
+            $node->disavow_parent();
+            $species_tree = $species_tree->minimize_tree;
+        }
+
+        my $castedMrca = $mrca->cast('Bio::EnsEMBL::Compara::GeneTreeNode');
+
+        #list of all the leaves mapped by taxon_id
+        my %leaves_list;
+        my %branch_length_list;
+        foreach my $leaf (@{$mrcaGeneTree->get_all_leaves}) {
+            my ($member_id, $taxon_id) = split(/\_/,$leaf->name);
+            push(@{$leaves_list{$taxon_id}},$member_id);
+
+            #get the leaves branch lengths
+            my $bl = $leaf->distance_to_parent;
+            $branch_length_list{$member_id} = $bl;
+        }
+
+        #Renaming nodes
+        foreach my $leaf (@{$castedMrca->get_all_leaves}) {
+           my $taxon_id = $leaf->dbID;
+           foreach my $member (@{$leaves_list{$taxon_id}}) {
+               my $new_name = $member."_".$taxon_id;
+               #new name
+               $leaf->name($new_name);
+               #keep same bl from before, since they are leaves
+               $leaf->distance_to_parent($branch_length_list{$member});
+           }
+        }
+
+        my $parentMrca = $mrcaGeneTree->parent();
+        my $bl = $mrcaGeneTree->distance_to_parent;
+        $mrcaGeneTree->disavow_parent();
+
+        #adding new binary branch
+        #We need to add from the casted MRCA tree
+        #$parentMrca->add_child($mrcaGeneTree,$bl);
+        $parentMrca->add_child($castedMrca,$bl);
+    }
+}
+
 1;
 
