@@ -203,7 +203,7 @@ sub render_haplotype_row {
   my $pop_struct  = $self->object->population_structure($pop_objs);
   my %pop_descs   = map {$_->name => $_->description} @$pop_objs;
 
-  my $flags = $ht->can('get_all_flags')) ? $flags = $ht->get_all_flags() : [];
+  my $flags = $ht->can('get_all_flags') ? $ht->get_all_flags() : [];
   
   my $flags_html;
 
