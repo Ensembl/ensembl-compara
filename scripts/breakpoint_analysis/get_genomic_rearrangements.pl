@@ -54,14 +54,14 @@ my $kilobase = $base * 1000;
 my $registry = 'Bio::EnsEMBL::Registry';
 $registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
-#my $mlss_adap  = $registry->get_adaptor( 'mice_merged', 'compara', 'MethodLinkSpeciesSet' );
-#my $gblock_adap = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomicAlignBlock' );
-#my $GDB_adaptor = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomeDB' );
-my $mlss_adap  = $registry->get_adaptor( 'Multi', 'compara', 'MethodLinkSpeciesSet' );
-my $gblock_adap = $registry->get_adaptor( 'Multi', 'compara', 'GenomicAlignBlock' );
-my $GDB_adaptor = $registry->get_adaptor( 'Multi', 'compara', 'GenomeDB' );
+my $mlss_adap  = $registry->get_adaptor( 'mice_merged', 'compara', 'MethodLinkSpeciesSet' );
+my $gblock_adap = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomicAlignBlock' );
+my $GDB_adaptor = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomeDB' );
+#my $mlss_adap  = $registry->get_adaptor( 'Multi', 'compara', 'MethodLinkSpeciesSet' );
+#my $gblock_adap = $registry->get_adaptor( 'Multi', 'compara', 'GenomicAlignBlock' );
+#my $GDB_adaptor = $registry->get_adaptor( 'Multi', 'compara', 'GenomeDB' );
 my $mlss = $mlss_adap->fetch_by_method_link_type_registry_aliases( "LASTZ_NET", [ $ref, $non_ref ] );
-
+#print STDOUT "Starting part 22222222222222222222222222222 \n";
 #print $mlss, " mlssssssssssssssssss\n";
 my @gblocks = @{ $gblock_adap->fetch_all_by_MethodLinkSpeciesSet( $mlss ) };
 
@@ -84,10 +84,11 @@ while ( my $gblock = shift @gblocks ) {
     $whole_gblocks_hash_ref->{$gblock}=$gblock;
     $count ++;
 #	if ($count == 40){
+#        print STDOUT "Starting part 22222222222222222222222222222 \n";
 #		print Dumper(\%gblocks_hash);
 #		last;
 #	}
-
+#die;
 }
 
 #print STDOUT "Starting part 22222222222222222222222222222 \n";
@@ -196,7 +197,7 @@ while (my $key = shift (@keys)) {
                 $length += $ref_gns3->length();
 
             }
-
+            #find the extreme start and extreme end of the the blocks.
             if ($length > $kilobase) { 
 
                 my $start=2000000000000000000000; 
