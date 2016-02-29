@@ -55,13 +55,13 @@ package Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::ApiVersion;
-
-use Bio::EnsEMBL::Utils::Exception;
 use DBI qw(:sql_types);
+use List::Util qw(max);
+
+use Bio::EnsEMBL::ApiVersion;
+use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
-
 
 
 =head2 fetch_all_current
@@ -167,6 +167,40 @@ sub make_object_current {
     return $self->update_first_last_release($object);
 }
 
+=head2 _find_most_recent
+
+  Example     : my $latest_gdb = $self->_find_most_recent($many_human_gdbs);
+  Description : Sorts all the given objects according to their age (current and most recent first), and returns the most revent one
+  Returntype  : StorableWithReleaseHistory
+  Exceptions  : If there are ties
+  Caller      : subclasses of BaseReleaseHistoryAdaptor
+  Status      : Stable
+
+=cut
+
+sub _find_most_recent {
+    my ($self, $object) = @_;
+
+    my $score = sub {
+        my $g = shift;
+        # Sort criteria
+        #  1. is_current
+        #  2. highest last_release
+        #  3. highest first_release
+        # NOTE: this formula works as long as the release number is < 10000
+        my $unit = 10000;
+        return ((($g->is_current ? 1 : 0) * $unit + ($g->last_release || 0)) * $unit + ($g->first_release || 0));
+    };
+
+    my $best_score = max map {$score->($_)} @$object;
+    my @ties = grep {$score->($_) == $best_score} @$object;
+
+    if (scalar(@ties) == 1) {
+        return $ties[0];
+    }
+    # NOTE: Assume the objects have a "name" attribute, which is not defined in StorableWithReleaseHistory
+    throw(sprintf("Could not find the best %s named '%s'. There are several objects equally recent: %s\n", ref($ties[0]), $ties[0]->name, join(",", map {$_->dbID} @ties)));
+}
 
 
 package Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory;

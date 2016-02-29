@@ -383,11 +383,7 @@ sub fetch_collection_by_name {
     throw('$collection is required') unless $collection;
 
     my $all_ss = $self->fetch_all_by_name("collection-$collection");
-    my @all_current_ss = grep {$_->is_current} @$all_ss;
-    return $all_current_ss[0] if @all_current_ss;
-
-    my @sorted_ss = sort {$b->last_release <=> $a->last_release} grep {$_->has_been_released} @$all_ss;
-    return $sorted_ss[0];
+    return $self->_find_most_recent($all_ss);
 }
 
 

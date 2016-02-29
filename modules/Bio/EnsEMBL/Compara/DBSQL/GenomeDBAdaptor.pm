@@ -111,19 +111,9 @@ sub fetch_by_name_assembly {
     return undef unless scalar(@$all_matching_names);
 
     # Otherwise, we need to find the best match
-    my $score = sub {
-        my $g = shift;
-        #1. is_current
-        #2. recent_released
-        return ($g->is_current ? 10000 : 0) + ($g->first_release || 0);
-    };
-    my $best_score = max map {$score->($_)} @$all_matching_names;
-    my @ties = grep {$score->($_) == $best_score} @$all_matching_names;
-    if (scalar(@ties) == 1) {
-        push @{$self->_id_cache->_additional_lookup()->{name_default_assembly}->{lc $name}}, $ties[0]->dbID;
-        return $ties[0];
-    }
-    throw("There is no default for $name ! Several GenomeDBs are equally best-matches:\n" . join("\n", map {$_->toString} @ties). "\n");
+    my $best = $self->_find_most_recent($all_matching_names);
+    push @{$self->_id_cache->_additional_lookup()->{name_default_assembly}->{lc $name}}, $best->dbID;   # Cached for the next call
+    return $best;
 }
 
 
