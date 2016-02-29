@@ -303,8 +303,10 @@ sub set_bump_row {
   my $row = 0;
 
   ## Set bumping based on longest of feature and label
+  ## FIXME Hack adds 20% to text width, because GD seems to be
+  ## consistently underestimating the true width of the label
   my $text_end  = $show_label ?
-                        ceil($start + $text_info->{'width'} / $self->{'pix_per_bp'})
+                        ceil($start + $text_info->{'width'} * 1.2 / $self->{'pix_per_bp'})
                         : 0;
   $end          = $text_end if $text_end > $end;
 
