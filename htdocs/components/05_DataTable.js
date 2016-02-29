@@ -299,7 +299,6 @@ Ensembl.DataTable = {
       var settings = table.dataTable().fnSettings();
       var form     = $(settings.nTableWrapper).siblings('form.data_table_export');
       var data;
-      
       if (e.target.className === 'all') {
         if (!table.data('exportAll')) {
           data = [[]];
@@ -310,27 +309,25 @@ Ensembl.DataTable = {
           table.data('exportAll', data);
           form.find('input.data').val(JSON.stringify(data));
         }
-      } else {
+      } else {        
         if (!table.data('export')) {
-          data = [];
-          
-          $('tr', table).each(function (i) {
-            data[i] = [];
-            
+          var tableClone = table.clone();
+          data = [];          
+
+          $('tr', tableClone).each(function (i) {
+            data[i] = [];            
             $(this.cells).each(function () {
               var hidden = $('.hidden:not(.export)', this);
-              
               if (hidden.length) {
-                data[i].push($.trim($(this).clone().find(hidden).remove().end().html()));
+                data[i].push($.trim($(this).find(hidden).remove().end().html()));
               } else {
                 data[i].push($(this).html());
               }
-              
               hidden = null;
             });
           });
-          
-          table.data('export', data);
+
+          tableClone.data('export', data);
           form.find('input.data').val(JSON.stringify(data));
         }
       }
