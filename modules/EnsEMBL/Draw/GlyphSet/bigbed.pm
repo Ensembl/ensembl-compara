@@ -132,6 +132,7 @@ sub render_compact {
 sub render_as_transcript_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
+  $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('depth', 20);
   $self->draw_features;
 }
@@ -139,6 +140,7 @@ sub render_as_transcript_nolabel {
 sub render_as_transcript_label {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
+  $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('depth', 20);
   $self->{'my_config'}->set('show_labels', 1);
   $self->draw_features;
