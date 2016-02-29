@@ -72,11 +72,16 @@ sub run {
 
     foreach my $family_id (sort {$a<=>$b} keys %$famid2srcname2descs) {
 
-        my ($cons_description, $cons_score) = scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'}})
-            ? consensify($famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'})
-            : scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'}})
-                ? consensify($famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'})
-                : ();
+        my ($cons_description, $cons_score);
+
+        #This style is more readable
+        if (scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'}})){
+            ($cons_description, $cons_score) = consensify($famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'})
+        }elsif(scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'}})){
+            ($cons_description, $cons_score) = consensify($famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'})
+        }else{
+            ($cons_description, $cons_score) = ();
+        }
 
         ($description{$family_id}, $score{$family_id}) = assemble_consensus($cons_description, int($cons_score));
     }
