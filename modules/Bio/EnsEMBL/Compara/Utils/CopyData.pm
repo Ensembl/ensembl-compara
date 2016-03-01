@@ -228,6 +228,7 @@ sub clear_copy_data_cache {
   Arg[9]      : (opt) boolean $disable_keys (default: true)
   Arg[10]     : (opt) boolean $reenable_keys (default: true)
   Arg[11]     : (opt) boolean $holes_possible (default: false)
+  Arg[12]     : (opt) boolean $replace (default: false) [only used when the underlying data is text-only]
 
   Description : Copy data in this table. The main optional arguments are:
                  - ($index_name,$min_id,$max_id) to restrict to a range
@@ -236,7 +237,7 @@ sub clear_copy_data_cache {
 =cut
 
 sub copy_data {
-    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $disable_keys, $reenable_keys, $holes_possible) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $disable_keys, $reenable_keys, $holes_possible, $replace) = @_;
 
     print "Copying data in table $table_name\n";
 
@@ -262,7 +263,7 @@ sub copy_data {
     if ($binary_mode) {
         copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step);
     } else {
-        copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible);
+        copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace);
     }
     if ($reenable_keys // 1) {
         $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
@@ -278,7 +279,7 @@ sub copy_data {
 =cut
 
 sub copy_data_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace) = @_;
 
     my $user = $to_dbc->username;
     my $pass = $to_dbc->password;
@@ -302,11 +303,13 @@ sub copy_data_in_text_mode {
     # $use_limit also tells whether $start and $end are counters or values comparable to $index_name
 
     while (1) {
+        #my $start_time = time();
         my $end = $start + $step - 1;
         my $sth;
         my $sth_attribs = { 'mysql_use_result' => 1 };
 
         #print "start $start end $end\n";
+        #print "query $query\n";
         if ($use_limit) {
             $sth = $from_dbc->prepare( $query." LIMIT $start, $step", $sth_attribs );
         } else {
@@ -338,7 +341,7 @@ sub copy_data_in_text_mode {
         #print "start $start end $end $max_id rows $nrows\n";
         #print "FILE $filename\n";
         #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
-        system('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', '--ignore', $dbname, $filename);
+        system('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', $replace ? '--replace' : '--ignore', $dbname, $filename);
 
         unlink($filename);
     }
