@@ -342,7 +342,7 @@ sub render_compact {
 
 sub render_signal {
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+  $self->{'my_config'}->set('drawing_style', ['Graph::Bar']);
   $self->{'my_config'}->set('height', 60);
   $self->_render_aggregate;
 }
