@@ -251,9 +251,9 @@ sub pattern {
   my ($self,$f) = @_;
 
   return undef unless $f->can('activity');
-  my $ev = $f->activity;
-  return ['hatch_really_thick','grey90',0] if $ev==0;
-  return ['hatch_really_thick','white',0] if $ev==4;
+  my $act = $f->activity;
+  return ['hatch_really_thick','grey90',0] if $act==0;
+  return ['hatch_really_thick','white',0] if $act==4;
   return undef;
 }
 
@@ -261,9 +261,9 @@ sub feature_label {
   my ($self,$f) = @_;
 
   return undef unless $f->can('activity');
-  my $ev = $f->activity;
-  return "{grey30}inactive in this cell line" if $ev==0;
-  return "{grey30}N/A" if $ev==4;
+  my $act = $f->activity;
+  return "{grey30}inactive in this cell line" if $act==0;
+  return "{grey30}N/A" if $act==4;
   return undef;
 }
 
