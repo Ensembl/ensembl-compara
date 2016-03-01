@@ -63,13 +63,13 @@ sub _try_get_cache {
 }
 
 sub _set_cache {
-  my ($self,$class,$args,$value) = @_;
+  my ($self,$class,$args,$value,$build) = @_;
 
   return unless $self->{'open'};
   $self->{'cache'}->set($class,$self->version($class),{
     class => $class,
     args => $self->_clean_args($args)
-  },$value);
+  },$value,$build);
 }
 
 sub open {

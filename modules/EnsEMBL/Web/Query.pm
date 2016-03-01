@@ -47,14 +47,14 @@ sub _run_phase {
 }
 
 sub run_miss {
-  my ($self,$args) = @_;
+  my ($self,$args,$build) = @_;
       
   my %a_gen = %$args;
   $self->_run_phase(\%a_gen,undef,'pre_generate');
   my $part = $self->{'impl'}->get(\%a_gen);
   $self->_run_phase($part,undef,'post_generate',[\%a_gen]);
   $self->_check_unblessed($part);
-  $self->{'store'}->_set_cache(ref($self->{'impl'}),$args,$part);
+  $self->{'store'}->_set_cache(ref($self->{'impl'}),$args,$part,$build);
   return $part;
 }
 
@@ -79,7 +79,7 @@ sub go {
       $hits++;
       warn "\n\n -- HIT  -- \n ".ref($self->{'impl'})." ".JSON->new->encode($a)."\n\n" if($DEBUG>1);
     } else {
-      $part = $self->run_miss($a);
+      $part = $self->run_miss($a,0);
       warn "\n\n -- MISS -- \n ".ref($self->{'impl'})." ".JSON->new->encode($a)."\n\n" if($DEBUG>1);
       $misses++;
     }
@@ -131,7 +131,7 @@ sub precache {
         $self->{'store'}->open();
         $start = time();
       }
-      $self->run_miss($a);
+      $self->run_miss($a,1);
     }
   }
   $self->{'store'}->close();      

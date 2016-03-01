@@ -72,8 +72,9 @@ sub cache_open {
 }
 
 sub set {
-  my ($self,$class,$ver,$args,$value) = @_;
+  my ($self,$class,$ver,$args,$value,$build) = @_;
 
+  return unless $build;
   my $key = $self->_key($args,$class);
   $self->{'any'} = 1;
   $self->{'wfile'}->set($key,$value);
