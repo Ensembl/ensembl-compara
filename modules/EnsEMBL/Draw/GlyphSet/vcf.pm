@@ -50,7 +50,7 @@ sub init {
 sub render_histogram {
   my $self = shift;
   my $features = $self->get_data->[0]{'features'}{'1'};
-  return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_normal;
+  return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_simple;
 }
 
 sub render_simple {
