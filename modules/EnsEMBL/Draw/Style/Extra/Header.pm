@@ -25,11 +25,7 @@ use warnings;
 
 use EnsEMBL::Draw::Utils::Text;
 
-use parent qw(EnsEMBL::Draw::Style);
-
-sub create_glyphs { 
-## Stub - there are no default glyphs, so you need to call your chosen method explicitly
-}
+use parent qw(EnsEMBL::Draw::Style::Extra);
 
 sub draw_margin_subhead {
 ### Draws a subheader in the lefthand margin, e.g. regulatory features
@@ -166,10 +162,9 @@ sub _draw_sublegend_box {
   $offset   += $args->{'y_offset'} || 0;
  
   my $click_text = $args->{'label'} || 'Details';
+  my %font_details = EnsEMBL::Draw::Utils::Text::get_font_details($self->image_config,'innertext', 1);
+  my ($width,$height) = $self->get_text_dimensions($click_text, \%font_details);
 
-  my %font_details = EnsEMBL::Draw::Utils::Text::get_font_details($self->image_config,'innertext', 1); 
-  my @text = EnsEMBL::Draw::Utils::Text::get_text_width($self->cache, $self->image_config, 0, $click_text, '', %font_details);
-  my ($width,$height) = @text[2,3];
   push @{$self->glyphs}, $self->Rect({
     width         => $width + 15,
     absolutewidth => $width + 15,
