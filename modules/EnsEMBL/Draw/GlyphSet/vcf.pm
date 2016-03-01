@@ -136,6 +136,8 @@ sub consensus_features {
     my $vs           = $f->{'POS'} - $start + 1;
     my $ve           = $vs;
     my $sv           = $f->{'INFO'}{'SVTYPE'};
+    my $info;
+    $info .= ";  $_: $a->{'INFO'}{$_}" for sort keys %{$a->{'INFO'} || {}};
 
     if ($sv) {
       $unknown_type = 0;
@@ -191,13 +193,36 @@ sub consensus_features {
       $title .= sprintf('; %s: %s', $_, $f->{'INFO'}{$_} || '');
     }
 
-    ## Set colour by consequence if defined in file
-    my $colour  = $colours->{'default'}->{'default'};
+    ## Get consequence type
+    my $consequence;
     if (defined($f->{'INFO'}->{'VE'})) {
-      my $cons = (split /\|/, $f->{'INFO'}->{'VE'})[0];
-      if (defined($overlap_cons{$cons})) {
-        $colour = $colours->{lc $cons}->{'default'};
-      }
+      $consequence = (split /\|/, $f->{'INFO'}->{'VE'})[0];
+    }
+    else {
+      ## Not defined in file, so look up in database
+      my $snp = {
+        start            => $vs, 
+        end              => $ve, 
+        strand           => 1, 
+        slice            => $slice,
+        allele_string    => $allele_string,
+        variation_name   => $vf_name,
+        map_weight       => 1, 
+        adaptor          => $vfa, 
+        seqname          => $info ? "; INFO: --------------------------$info" : '',
+        consequence_type => $unknown_type ? ['INTERGENIC'] : ['COMPLEX_INDEL']
+      };
+      bless $snp, 'Bio::EnsEMBL::Variation::VariationFeature';
+
+      $snp->get_all_TranscriptVariations;
+
+      $consequence = $snp->display_consequence;
+    }
+      
+    ## Set colour by consequence
+    my $colour  = $colours->{'default'}->{'default'};
+    if ($consequence && defined($overlap_cons{$consequence})) {
+      $colour = $colours->{lc $consequence}->{'default'};
     }
 
     my $fhash = {
