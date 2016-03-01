@@ -1536,25 +1536,18 @@ sub update_from_url {
   
   foreach my $v (@values) {
     my $format = $hub->param('format');
-    my ($key, $renderer, $attach);
+    my ($url, $renderer, $attach);
     
-    if (uc $format eq 'TRACKHUB') {
+    if ($v =~ /^url/) {
       $v =~ s/^url://;
-      $key = $v;
       $attach = 1;
-    } else {
-      ## Now we no longer support DAS, we can throw away any "type" param
-      if ($v =~ /^url/) {
-        $v =~ s/^url://;
-        $attach = 1;
-      }
-      ($key, $renderer) = split /=/, $v;
+      ($url, $renderer) = split /=/, $v;
     }
    
     if ($attach || $hub->param('attach')) {
       ## Backwards compatibility with 'contigviewbottom=url:http...'-type parameters
       ## as well as new 'attach=http...' parameter
-      my $p = uri_unescape($key);
+      my $p = uri_unescape($url);
 
       my $menu_name   = $hub->param('menu');
       my $all_formats = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
@@ -1651,7 +1644,7 @@ sub update_from_url {
         my $command = EnsEMBL::Web::Command::UserData::AddFile->new({'hub' => $hub});
         $hub->param('text', $p);
         $hub->param('format', $format);
-        $command->upload_or_attach;
+        $command->upload_or_attach($renderer);
       }
       # We have to create a URL upload entry in the session
       my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
@@ -1665,7 +1658,7 @@ sub update_from_url {
           message  => $message,
       );
     } else {
-      $self->update_track_renderer($key, $renderer, $hub->param('toggle_tracks'));
+      $self->update_track_renderer($url, $renderer, $hub->param('toggle_tracks'));
     }
   }
   

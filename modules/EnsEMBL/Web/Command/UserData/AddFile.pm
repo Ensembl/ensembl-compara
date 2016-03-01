@@ -41,7 +41,7 @@ sub process {
 }
  
 sub upload_or_attach {
-  my $self = shift;
+  my ($self, $renderer) = @_;
   my $hub  = $self->hub;
 
   my ($method)    = first { $hub->param($_) } qw(file text);
@@ -98,7 +98,7 @@ sub upload_or_attach {
           $attachable = EnsEMBL::Web::File::AttachedFormat->new(%args);
         }
         my $filename  = [split '/', $url]->[-1];
-        ($new_action, $url_params) = $self->attach($attachable, $filename);
+        ($new_action, $url_params) = $self->attach($attachable, $filename, $renderer);
         $url_params->{'action'} = $new_action;
       }
     }
@@ -106,7 +106,7 @@ sub upload_or_attach {
   }
   else {
     ## Upload the data
-    $url_params = $self->upload($method, $format_name);
+    $url_params = $self->upload($method, $format_name, $renderer);
     $url_params->{ __clear}       = 1;
     $url_params->{'action'}       = 'UploadFeedback';
     $url_params->{'record_type'}  = 'upload';
