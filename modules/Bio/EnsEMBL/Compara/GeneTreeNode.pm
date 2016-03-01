@@ -460,10 +460,10 @@ sub keep_nodes_by_taxon_ids {
   Description : List of multifurcations given a tree.
                 In order to avoid changing parts of the tree that are not in the multifurcations, we have local MRCAs.
                 e.g.:
-                multifurcations{0} = (child_1,child2,child3)
-                multifurcations{1} = (child_7,child8,child9)
+                multifurcations[0] = (child_1,child2,child3)
+                multifurcations[1] = (child_7,child8,child9)
 
-  Returntype  : hash of arrays
+  Returntype  : array reference
   Exceptions  :
   Caller      :
 
@@ -472,12 +472,12 @@ sub keep_nodes_by_taxon_ids {
 sub find_multifurcations {
     my $self = shift;
 
-    my $multifurcations = {};
+    my $multifurcations = [];
     my $multifurcation_index = 0;
     foreach my $node (@{$self->get_all_nodes}) {
         next if $node->is_leaf;
         if (scalar(@{$node->children}) > 2) {
-            push(@{$multifurcations->{$multifurcation_index}},@{$node->children}) if scalar(@{$node->children}) > 2;
+            push(@{$multifurcations->[$multifurcation_index]},@{$node->children}) if scalar(@{$node->children}) > 2;
             $multifurcation_index++;
         }
     }
@@ -504,20 +504,20 @@ sub binarize_flat_tree_with_species_tree {
 
     #fetch specie tree objects for the multifurcated nodes
     my %species_tree_leaves_in_multifurcation;
-    foreach my $multi (keys %$multifurcations){
-        foreach my $child (@{$multifurcations->{$multi}}){
+    foreach my $multi (@$multifurcations){
+        foreach my $child (@{$multi}){
             my ($name_id, $species_tree_node_id) = split(/\_/,$child->name);
             my $species_tree_node = $species_tree->root->find_leaf_by_node_id($species_tree_node_id);
             push(@{$species_tree_leaves_in_multifurcation{$multi}}, $species_tree_node);
         }
     }
 
-    foreach my $multi (keys %$multifurcations) {
+    foreach my $multi (@$multifurcations) {
         #get mrca sub-tree
         my $mrca = $species_tree->root->find_first_shared_ancestor_from_leaves( [@{$species_tree_leaves_in_multifurcation{$multi}}] );
 
         #get gene_tree mrca sub-tree
-        my $mrcaGeneTree = $self->find_first_shared_ancestor_from_leaves( [@{$multifurcations->{$multi}}] );
+        my $mrcaGeneTree = $self->find_first_shared_ancestor_from_leaves( [@{$multi}] );
 
         #get mrca leaves
         my @leaves_mrca= @{ $mrca->get_all_leaves() };
