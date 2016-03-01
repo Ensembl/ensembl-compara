@@ -295,6 +295,8 @@ sub content {
     my $rfa = $hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
     
     for my $rfv (@{ $vf_obj->get_all_RegulatoryFeatureVariations }) {
+      next unless $rfv->regulatory_feature;
+
       my $rf_stable_id = $rfv->regulatory_feature->stable_id;
       my $rfs = $rfa->fetch_all_by_stable_ID($rf_stable_id);
        
