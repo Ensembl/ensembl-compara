@@ -73,9 +73,9 @@ sub _set_cache {
 }
 
 sub open {
-  my ($self) = @_;
+  my ($self,$r) = @_;
 
-  $self->{'cache'}->cache_open();
+  $self->{'cache'}->cache_open($r);
   $self->{'open'} = 1;
 }
 

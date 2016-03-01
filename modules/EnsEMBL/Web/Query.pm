@@ -108,7 +108,7 @@ sub source {
 }
 
 sub precache {
-  my ($self,$kind,$i,$n) = @_;
+  my ($self,$kind,$i,$n,$r) = @_;
 
   my $conf = $self->{'impl'}->precache()->{$kind};
   my $fn = "loop_$conf->{'loop'}";
@@ -118,7 +118,7 @@ sub precache {
     next unless ($k % $n) == $i;
     push @parts,$all_parts->[$k];
   }
-  $self->{'store'}->open();
+  $self->{'store'}->open($r);
   my $start = time();
   foreach my $args (@parts) {
     my @args = ($args);

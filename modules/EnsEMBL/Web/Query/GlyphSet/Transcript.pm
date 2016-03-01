@@ -28,6 +28,39 @@ our $VERSION = 11;
 use JSON;
 use List::Util qw(min max);
 
+sub precache {
+  return {
+    ccds => {
+      loop => "genome",
+      args => {
+        db => "otherfeatures",
+        species => "Homo_sapiens",
+        pattern => "[logic_name]",
+        label_key => "[biotype]",
+        logic_names => ["ccds_import"],
+      }
+    },
+    transcript => {
+      loop => "genome",
+      args => {
+        db => "core",
+        logic_names => [qw(
+          assembly_patch_ensembl ensembl                ensembl_havana_gene
+          ensembl_havana_ig_gene ensembl_havana_lincrna ensembl_lincrna 
+          havana                 havana_ig_gene         mt_genbank_import
+          ncrna                  proj_ensembl
+          proj_ensembl_havana_gene        proj_ensembl_havana_ig_gene
+          proj_ensembl_havana_lincrna     proj_havana 
+          proj_havana_ig_gene             proj_ncrna
+        )],
+        label_key => '[biotype]',
+        species => "Homo_sapiens",
+        pattern => '[biotype]',
+      }
+    },
+  };
+}
+
 sub fixup {
   my ($self) = @_;
 

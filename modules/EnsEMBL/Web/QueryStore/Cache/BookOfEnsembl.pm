@@ -64,8 +64,9 @@ sub merge {
 }
 
 sub cache_open {
-  my ($self) = @_;
+  my ($self,$r) = @_;
 
+  $self->{'rfile'}->delete() if $r;
   $self->{'rfile'}->open_read();
   $self->{'wfile'}->open_write();
 }

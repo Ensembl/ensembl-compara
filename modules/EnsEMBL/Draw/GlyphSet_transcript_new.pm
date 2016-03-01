@@ -67,7 +67,7 @@ sub _get_data {
     shortlabels => $self->get_parameter('opt_shortlabels'),
     label_key => $self->my_config('label_key'),
     slice => $self->{'container'},
-    logic_names => $self->my_config('logic_names'),
+    logic_names => [sort @{$self->my_config('logic_names')}],
     db => $self->my_config('db'),
   });
 }
