@@ -54,7 +54,8 @@ sub _render_aggregate {
     return 1;
   }
 
-  (my $default_height = $self->{'my_config'}->get('maxHeightPixels')) =~ s/^.*:([0-9]*):.*$/$1/;
+  my $maxHeightPixels = $self->{'my_config'}->get('maxHeightPixels');
+  (my $default_height = $maxHeightPixels) =~ s/^.*:([0-9]*):.*$/$1/;
   if ($default_height) {  
     $self->{'my_config'}->set('height', $default_height);
   }
