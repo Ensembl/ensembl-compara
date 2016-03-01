@@ -28,6 +28,13 @@ use List::Util qw(min max);
 
 use EnsEMBL::Web::IOWrapper::Indexed;
 
+sub render_signal {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
+}
+
 sub get_data {
   my ($self, $bins, $url) = @_;
 
