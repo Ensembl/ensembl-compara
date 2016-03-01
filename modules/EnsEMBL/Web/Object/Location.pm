@@ -1462,7 +1462,9 @@ sub get_ld_values {
         next;
       }
 
-      my @snp_list = sort { $a->[1]->start <=> $b->[1]->start } map  {[ $_ => $data->{'variationFeatures'}{$_} ]} keys %{$data->{'variationFeatures'}};
+
+      my $pos2vf = $data->_pos2vf();
+      my @snp_list = map { [ $_, $pos2vf->{$_} ] } sort {$a <=> $b} keys %$pos2vf;
 
       unless (scalar @snp_list) {
         $ld_values{$ld_type}{$pop_name}{'text'} = $no_data;

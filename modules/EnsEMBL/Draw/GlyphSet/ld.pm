@@ -64,9 +64,9 @@ sub _init {
     next unless $pop_obj;
     my $pop_id =  $pop_obj->dbID;
     my $data = $self->{'container'}->get_all_LD_values($pop_obj); 
-    my @snps  = sort { $a->[1]->start <=> $b->[1]->start }
-      map  { [ $_ => $data->{'variationFeatures'}{$_} ] }
-      keys %{ $data->{'variationFeatures'} };
+
+    my $pos2vf = $data->_pos2vf();
+    my @snps = map { [ $_, $pos2vf->{$_} ] } sort {$a <=> $b} keys %$pos2vf;
 
     my $number_of_snps = scalar(@snps);
     unless( $number_of_snps > 1 ) {
@@ -154,8 +154,8 @@ sub _init {
         my $flag_triangle = $y-$d2;  # top box is a triangle
         my $value = $data->{'ldContainer'}{$snp_m->[0].'-'.$snp_n->[0]}{ $pop_id }{$key};
         my $colour = defined($value) ? $colour_gradient[POSIX::floor(40 * $value)] : "white";
-        my $snp_names = $data->{'variationFeatures'}{$snp_m->[0]}->variation_name;
-        $snp_names.= "-".$data->{'variationFeatures'}{$snp_n->[0]}->variation_name;
+        my $snp_names = $snp_m->[1]->variation_name;
+        $snp_names.= "-".$snp_n->[1]->variation_name;
         $self->push($self->Poly({
           'title'  => "$snp_names: ". ($value || "n/a"),
           'alt'  => "$snp_names: ". ($value || "n/a"),
