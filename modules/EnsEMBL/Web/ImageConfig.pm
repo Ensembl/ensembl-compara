@@ -1642,9 +1642,13 @@ sub update_from_url {
       } else {
         ## Either upload or attach the file, as appropriate
         my $command = EnsEMBL::Web::Command::UserData::AddFile->new({'hub' => $hub});
+        ## Fake the params that are passed by the upload form
         $hub->param('text', $p);
         $hub->param('format', $format);
         $command->upload_or_attach($renderer);
+        ## Discard URL param, as we don't need it once we've uploaded the file,
+        ## and it only messes up the page URL later
+        $hub->input->delete('url');
       }
       # We have to create a URL upload entry in the session
       my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
