@@ -1701,6 +1701,51 @@ sub _binarize {
     }
 }
 
+=head2 random_binarize_node
+
+ Title   : random_binarize_node
+ Usage   : $node->random_binarize_node;
+ Function: Forces the resolution of multifurcations on a given node. It resolves them randomly.
+ Example :
+ Returns : none
+ Args    : none
+
+=cut
+
+sub random_binarize_node {
+    my ($node) = @_;
+    while (scalar(@{$node->children}) > 2) {
+        my @children = @{$node->children};
+        #----------------------------------------
+        #Very simple algorithm (no need to recursivity):
+        #   N = root of multifurcated node
+        #   I = new internal node
+        #   A = child 1
+        #   B = child 2
+        #
+        # Select 2 children
+        # Create new internal node attached to N
+        # Attach A & B to I
+        # Add new node back to the main node
+        #----------------------------------------
+
+        # Select 2 children
+        my $child_A = $children[0];
+        my $child_B = $children[1];
+
+        # Create new internal node attached to N
+        my $newNode = $child_A->new();
+
+        # Attach A & B to I
+        # A & B will be automatically removed from previous parent
+        $newNode->add_child($child_A);
+        $newNode->add_child($child_B);
+
+        # Add new node back to the main node
+        $node->add_child($newNode)
+    }
+}
+
 =head2 max_distance
 
  Title   : max_distance
