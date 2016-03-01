@@ -30,7 +30,6 @@ use parent qw(EnsEMBL::Draw::Style::Extra);
 sub draw_gradient_key {
 ## Used by e.g. pvalue renderers, as gradient may vary from track to track
   my ($self, $gradient, $labels) = @_;
-  warn ">>> GRADIENT @$gradient";
   my $track_config = $self->track_config;
 
   my $x_offset    = -10;
@@ -38,10 +37,8 @@ sub draw_gradient_key {
   my $width       = 95;
   my $blocks      = scalar(@$gradient);
   my $block_size  = int( $width / $blocks );
-  #use Data::Dumper;
-  #warn ">>> LABELS ".Dumper($labels);
 
-  foreach my $i (1..($blocks-1)) {
+  foreach my $i (1..$blocks) {
         
     my $x = $x_offset - $width + ($block_size * ($i-1));
 
@@ -57,10 +54,10 @@ sub draw_gradient_key {
     };
     push @{$self->glyphs}, $self->Rect($params);
 
-    if (defined $labels->{$i}) {
+    if (defined $labels->{$i-1}) {
         
-      my $label         = $labels->{$i};
-      $label            = sprintf '%.2f', $labels->{$i} if $label > int($label);
+      my $label         = $labels->{$i-1};
+      $label            = sprintf '%.2f', $labels->{$i-1} if $label > int($label);
       my %font_details  = EnsEMBL::Draw::Utils::Text::get_font_details($self->image_config,'innertext', 1);
       my ($width,$height) = $self->get_text_dimensions($label, \%font_details);
 
