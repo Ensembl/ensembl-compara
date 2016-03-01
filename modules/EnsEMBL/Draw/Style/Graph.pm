@@ -81,9 +81,13 @@ sub create_glyphs {
     ## Single line? Build into singleton set.
     $features = [ $features ] if ref $features ne 'ARRAY';
 
+    ## Work out a default colour
+    my $colour = $subtrack->{'metadata'}{'color'}
+                  || $subtrack->{'metadata'}{'colour'}
+                  || $track_config->get('colour');
+
     ## Select a colour to indicate truncated values
-    my $truncate_colour = ($subtrack->{'metadata'}{'colour'} eq 'black' || $subtrack->{'metadata'}{'colour'} eq '0,0,0') 
-                          ? 'red' : 'black';
+    my $truncate_colour = ($colour eq 'black' || $colour eq '0,0,0') ? 'red' : 'black';
 
     ## Draw them! 
     my $plot_conf = {
@@ -92,10 +96,10 @@ sub create_glyphs {
       default_strand  => $track_config->get('default_strand'),
       unit            => $subtrack->{'metadata'}{'unit'},
       graph_type      => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
-      colour          => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
+      colour          => $colour,
+      truncate_colour => $truncate_colour,
       colours         => $subtrack->{'metadata'}{'gradient'},
       alt_colour      => $subtrack->{'metadata'}{'altColor'},
-      truncate_colour => $truncate_colour,
       %$graph_conf,
     };
 

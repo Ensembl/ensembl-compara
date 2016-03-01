@@ -77,7 +77,7 @@ sub get_data {
     ## Override colourset based on format here, because we only want to have to do this in one place
     my $colourset   = $iow->colourset || 'userdata';
     $self->{'my_config'}->set('colours', $hub->species_defs->colour($colourset));
-    $self->{'my_config'}->set('default_colour', $self->my_colour('default'));
+    $self->{'my_config'}->set('colour', $self->my_colour('default'));
   } else {
     $self->{'data'} = [];
     return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
