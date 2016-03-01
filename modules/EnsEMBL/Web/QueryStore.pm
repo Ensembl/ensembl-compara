@@ -54,7 +54,9 @@ sub _try_get_cache {
   }
   return undef unless $self->{'open'};
   return undef if $DISABLE;
-  my $out = $self->{'cache'}->get($class,$self->version($class),{
+  my $ver = $self->version($class);
+  return undef if $ver < 1;
+  my $out = $self->{'cache'}->get($class,$ver,{
     class => $class,
     args => $self->_clean_args($args),
   });
