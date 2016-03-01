@@ -311,9 +311,6 @@ sub run_generic_command {
     if ($self->param('binarize')){
         print "Binarizing tree is active\n" if($self->debug);
 
-        #We always assume that the tree is binary, unless we find multifurcations.
-        my $is_tree_binary = 1;
-
         # 1 - parse_newick into genetree-structure
         my $newick_multifurcated = $self->_slurp($self->param('output_file'));
         my $multifurcated_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_multifurcated, "Bio::EnsEMBL::Compara::GeneTreeNode");
@@ -326,6 +323,11 @@ sub run_generic_command {
         #------------------------------------------------
         my $multifurcations = $multifurcated_tree_root->find_multifurcations;
 
+        #IMPORTANT:
+        #----------------------------------------------------------------------------------------------------------------------------
+        # Binarization methods have not been tested with nested multifurcations. At this point we only have "leaves" multifurcations.
+        #----------------------------------------------------------------------------------------------------------------------------
+
         #If there are no multifurcations in this array it means that the tree is already binary
         #So no need to keep going
         if (scalar(@{$multifurcations}) > 0) {
@@ -336,44 +338,38 @@ sub run_generic_command {
             #------------------
             # MRCA binarization
             #------------------
-            print "multifurcated_tree_root after MRCA binarization:\n" if ($self->debug);
+            print "multifurcated_tree_root before MRCA binarization:\n" if ($self->debug);
             $multifurcated_tree_root->print_tree(10) if ($self->debug);
-            #print "\nmulti:\n" . $multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}') . "\n\n";
 
             # 2 - binarize (MRCA) that structure
             $multifurcated_tree_root->binarize_flat_tree_with_species_tree($species_tree, $multifurcations);
             $multifurcated_tree_root->minimize_tree();
 
-            #print "\nbin:\n" . $multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}') . "\n\n";
             print "multifurcated_tree_root after MRCA binarization:\n" if ($self->debug);
             $multifurcated_tree_root->print_tree(10) if ($self->debug);
 
             #After trying to do a MRCA binarization we check again for any left multifurcations to be resolved randomly.
             foreach my $node (@{$multifurcated_tree_root->get_all_nodes}) {
                 next if $node->is_leaf;
-                $is_tree_binary = 0 if (scalar(@{$node->children}) > 2);
-            }
 
-            #--------------------
-            # Random binarization
-            #--------------------
-            #Check again if tree is still multifurcated
-            if (!$is_tree_binary){
-                print "Tree is not binary\n" if($self->debug);
+                #-------------------------------
+                # Random binarization, per node.
+                #-------------------------------
+                if (scalar(@{$node->children}) > 2) {
+                    print "Tree is still not binary\n" if($self->debug);
 
-                # 3 - binarize (random) that structure
-                my $binTree_root = $multifurcated_tree_root->random_binarize();
+                    # 3 - binarize (random) 
+                    print "Performing random binarization on node: $node\n";
+                    $node->random_binarize_node();
 
-                #Note the different ryo.
-                #At this point there is no information on taxon_id. If we try -x it will fail
-                print "MULTI:".$multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}')."\n" if($self->debug > 1);
-                print "BIN:".$binTree_root->newick_format('ryo', '%{-n}:%{d}')."\n" if($self->debug > 1);
+                    #Note the different ryo.
+                    #At this point there is no information on taxon_id. If we try -x it will fail
+                    #print "MULTI:".$multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}')."\n" if($self->debug > 1);
+                    #print "BIN:".$binTree_root->newick_format('ryo', '%{-n}:%{d}')."\n" if($self->debug > 1);
 
-                $binTree_root->minimize_tree();
-                $binTree_root->print_tree(10) if($self->debug);
-
-                #just copying over to avoid having two writing functions (4).
-                $multifurcated_tree_root = $binTree_root;
+                    $multifurcated_tree_root->minimize_tree();
+                    $multifurcated_tree_root->print_tree(10) if($self->debug);
+                }
             }
         }
 
