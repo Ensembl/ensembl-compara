@@ -80,7 +80,9 @@ sub create_glyphs {
 
     ## Draw title over track
     if ($track_config->get('show_subtitle')) {
-      $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
+      $self->track_config->set('subtitle_y', 0);
+      my $subtitle_height = $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
+      $subtrack_start .= $subtitle_height + 2;
     }
 
     my @features = @{$subtrack->{'features'}||[]}; 
