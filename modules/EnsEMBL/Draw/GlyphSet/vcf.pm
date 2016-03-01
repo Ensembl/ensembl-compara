@@ -136,8 +136,8 @@ sub consensus_features {
     my $vs           = $f->{'POS'} - $start + 1;
     my $ve           = $vs;
     my $sv           = $f->{'INFO'}{'SVTYPE'};
-    my $info;
-    $info .= ";  $_: $a->{'INFO'}{$_}" for sort keys %{$a->{'INFO'} || {}};
+    my $info_string;
+    $info_string .= ";  $_: $a->{'INFO'}{$_}" for sort keys %{$a->{'INFO'} || {}};
 
     if ($sv) {
       $unknown_type = 0;
@@ -182,15 +182,17 @@ sub consensus_features {
                   'INS'   => 'Insertion',
                   'DEL'   => 'Deletion',
                   'TDUP'  => 'Duplication',
-                  'OTHER' => 'Small variant',
                   );
     my $location = sprintf('%s:%s', $slice->seq_region_name, $vs + $slice->start);
     $location   .= '-'.($ve + $slice->start) if ($ve && $ve != $vs);
 
-    my $title = "$vf_name; Location: $location; Type: ".$lookup{$sv}."; Allele: $allele_string";
-    my @fields = qw(AC AN DB DP NS);
-    foreach (@fields) {
-      $title .= sprintf('; %s: %s', $_, $f->{'INFO'}{$_} || '');
+    my $title = "$vf_name; Location: $location; Allele: $allele_string";
+    $title .= 'Type: '.$lookup{$sv}.'; ' if $lookup{$sv};
+    if (keys %{$f->{'INFO'}||{}}) {
+      $title .= '; INFO: --------------------------';
+      foreach (sort keys %{$f->{'INFO'}}) {
+        $title .= sprintf('; %s: %s', $_, $f->{'INFO'}{$_} || '');
+      }
     }
 
     ## Get consequence type
@@ -209,7 +211,7 @@ sub consensus_features {
         variation_name   => $vf_name,
         map_weight       => 1, 
         adaptor          => $vfa, 
-        seqname          => $info ? "; INFO: --------------------------$info" : '',
+        seqname          => $info_string ? "; INFO: --------------------------$info_string" : '',
         consequence_type => $unknown_type ? ['INTERGENIC'] : ['COMPLEX_INDEL']
       };
       bless $snp, 'Bio::EnsEMBL::Variation::VariationFeature';
