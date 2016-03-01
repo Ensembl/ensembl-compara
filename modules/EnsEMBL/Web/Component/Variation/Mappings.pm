@@ -504,7 +504,7 @@ sub detail_panel {
   my $self     = shift;
   my $object   = $self->object;
   my $hub      = $self->hub;
-  my $vf_adaptor = $hub->database('variation')->get_VariationAdaptor;
+  my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
   my $allele   = $hub->param('allele');
   my $tr_id    = $hub->param('t');
   my $vf_id    = $hub->param('vf');
