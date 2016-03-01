@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -85,12 +85,14 @@ sub open {
       $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
     }
 
-    $wrapper = $class->new({
-                            'parser' => $parser, 
-                            'file'   => $file, 
-                            'format' => $format,
-                            %args,
-                            });  
+    if ($parser) {
+      $wrapper = $class->new({
+                              'parser' => $parser, 
+                              'file'   => $file, 
+                              'format' => $format,
+                              %args,
+                              });
+    }  
   }
   return $wrapper;
 }
@@ -134,18 +136,45 @@ sub track {
 sub convert_to_gradient {
 ### Convert a 0-1000 score to a value on a colour gradient
 ### Default is greyscale
-  my ($self, $score, $colour) = @_;
+  my ($self, $score, $colour, $steps, $min, $max) = @_;
+  $steps ||= 10;
+
   ## Default to black
   $score = 1000 unless defined($score);
+  $score = 1000 if $score eq 'INF';
+  $score = 0    if $score eq '-INF';
 
-  my @gradient = $colour ? $self->create_gradient(['white', $colour]) : @{$self->{'greyscale'}||[]};
+  my @gradient = @{$self->{'gradient'}||[]};
+
+  unless (scalar @gradient) {
+    if ($colour) {
+      if (ref $colour eq 'ARRAY') {
+        @gradient = $self->create_gradient($colour, $steps);
+      }
+      else {
+        @gradient = $self->create_gradient(['white', $colour], $steps);
+      }
+    }
+    else {
+      @gradient = @{$self->{'greyscale'}||[]};
+    }
+    $self->{'gradient'} = \@gradient;
+  }
 
   my $value;
-  if ($score <= 166) {
+
+  my $interval = 1000 / $steps;
+  $min ||= $interval;
+  $max ||= 1000 - $interval;
+
+  if ($score <= $min) {
     $value = $gradient[0];
   }
+  elsif ($score >= $max) {
+    $value = $gradient[-1];
+  }
   else {
-    my $step = int(($score - 166) / 110) + 1;
+    my $step = $score / $interval;
     $value = $gradient[$step];
   }
   return $value; 
@@ -194,6 +223,7 @@ sub create_tracks {
   }
 =cut
 
+  my $max_seen = -1;
   ## We already fetched the data in the child module in one fell swoop!
   if ($parser->can('cache') && $parser->cache->{'summary'}) {
     my $track_key = $self->build_metadata($parser, $data, $extra_config, $order);
@@ -203,6 +233,8 @@ sub create_tracks {
     my $raw_features  = $parser->cache->{'summary'} || [];
     my $strand        = $metadata->{'default_strand'} || 1;
     my $features      = [];
+    my $max_score     = 0;
+    my $min_score     = 0;
 
     foreach my $f (@$raw_features) {
       my ($seqname, $start, $end, $score) = @$f;
@@ -213,14 +245,18 @@ sub create_tracks {
                         'score'      => $score,
                         'colour'     => $metadata->{'colour'},
                         };
+      $max_score = $score if $score >= $max_score; 
+      $min_score = $score if $score <= $min_score; 
     }
+    $data->{$track_key}{'metadata'}{'max_score'} = $max_score;
+    $data->{$track_key}{'metadata'}{'min_score'} = $min_score;
 
     $data->{$track_key}{'features'}{$strand} = $features;
   }
   else {
     while ($parser->next) {
       my $track_key = $self->build_metadata($parser, $data, $extra_config, $order);
-      my %metadata  = $data->{$track_key}{'metadata'};
+      my %metadata  = %{$data->{$track_key}{'metadata'}||{}};
       $prioritise   = 1 if $metadata{'priority'};
 
       ## Set up density bins if needed
@@ -231,6 +267,13 @@ sub create_tracks {
       }
 
       my ($seqname, $start, $end) = $self->coords;
+      if($extra_config->{'pix_per_bp'}) {
+        ## Skip if already have something on this pixel
+        my $here = int($start*$extra_config->{'pix_per_bp'});
+        next if $max_seen >= $here;
+        $max_seen = $here;
+      }
+
       if ($slice) {
         ## Skip features that lie outside the current slice
         next if ($seqname ne $slice->seq_region_name
@@ -306,10 +349,19 @@ sub build_metadata {
 
 sub build_feature {
   my ($self, $data, $track_key, $slice) = @_;
+  my $metadata = $data->{$track_key}{'metadata'};
+
   my $hash = $self->create_hash($slice, $data->{$track_key}{'metadata'});
   return unless keys %$hash;
 
-  my $feature_strand = $hash->{'strand'} || $data->{$track_key}{'metadata'}{'default_strand'};
+  if ($hash->{'score'}) {
+    $metadata->{'max_score'} = $hash->{'score'} if $hash->{'score'} >= $metadata->{'max_score'};
+    $metadata->{'min_score'} = $hash->{'score'} if $hash->{'score'} <= $metadata->{'min_score'};
+  }
+
+  my $feature_strand = $data->{$track_key}{'metadata'}{'force_strand'} 
+                          || $hash->{'strand'} 
+                          || $data->{$track_key}{'metadata'}{'default_strand'};
 
   if ($data->{$track_key}{'features'}{$feature_strand}) {
     push @{$data->{$track_key}{'features'}{$feature_strand}}, $hash; 
@@ -407,9 +459,14 @@ sub set_colour {
   my $strand    = $params->{'strand'};
   my $score     = $params->{'score'};
   my $rgb       = $params->{'rgb'};
+  my $key       = $params->{'key'};
 
-  if ($score && ($metadata->{'useScore'} || $metadata->{'spectrum'})) {
-    $colour = $self->convert_to_gradient($score, $metadata->{'color'});
+  if ($score && $metadata->{'spectrum'} eq 'on') {
+    $self->{'gradient'} ||= $metadata->{'default_gradient'};
+    $colour = $self->convert_to_gradient($score, $metadata->{'color'}, $metadata->{'steps'}, $metadata->{'scoreMax'}, $metadata->{'scoreMin'});
+  }
+  elsif ($params->{'itemRgb'}) { ## BigBed?
+    $colour = $self->rgb_to_hex($params->{'itemRgb'});
   }
   elsif ($rgb && $metadata->{'itemRgb'} eq 'On') {
     $colour = $self->rgb_to_hex($rgb);

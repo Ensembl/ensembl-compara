@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -247,6 +247,11 @@ sub colour {
   $part ||= 'default';
   
   return defined $key ? $self->{'_storage'}{'MULTI'}{'COLOURSETS'}{$set}{$key}{$part} : $self->{'_storage'}{'MULTI'}{'COLOURSETS'}{$set};
+}
+
+sub all_colours {
+  my ($self,$set) = @_;
+  return $self->{'_storage'}{'MULTI'}{'COLOURSETS'}{$set};
 }
 
 sub get_config {

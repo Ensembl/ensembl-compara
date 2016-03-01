@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,83 +23,23 @@ package EnsEMBL::Draw::GlyphSet::bigwig;
 
 use strict;
 
-use List::Util qw(min max);
-
-use EnsEMBL::Web::IOWrapper::Indexed;
-
-use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
+use parent qw(EnsEMBL::Draw::GlyphSet::Generic);
 
 sub can_json { return 1; }
 
-sub features {
-  my ($self, $bins, $cache_key) = @_;
-  my $hub       = $self->{'config'}->hub;
-  my $url       = $self->my_config('url');
-  my $slice     = $self->{'container'};
-  my $args      = { 'options' => {
-                                  'hub'         => $hub,
-                                  'config_type' => $self->{'config'}{'type'},
-                                  'track'       => $self->{'my_config'}{'id'},
-                                  },
-                    'default_strand' => 1,
-                    'drawn_strand' => $self->strand};
-
-  my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigWig', $args);
-  my $data;
-
-  if ($iow) {
-    ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
-    ## most files won't have explicit colour settings
-    my $colour = $self->my_config('colour');
-    $bins   ||= $self->bins;
-    my $metadata = {
-                    'name'            => $self->{'my_config'}->get('name'),
-                    'colour'          => $colour,
-                    'join_colour'     => $colour,
-                    'label_colour'    => $colour,
-                    'graphType'       => 'bar',
-                    'unit'            => $slice->length / $bins,
-                    'length'          => $slice->length,
-                    'bins'            => $bins,
-                    'display'         => $self->{'display'},
-                    'default_strand'  => 1,
-                    };
-    ## No colour defined in ImageConfig, so fall back to defaults
-    unless ($colour) {
-      my $colourset_key           = $self->{'my_config'}->get('colourset') || 'userdata';
-      my $colourset               = $hub->species_defs->colour($colourset_key);
-      my $colours                 = $colourset->{'url'} || $colourset->{'default'};
-      $metadata->{'colour'}       = $colours->{'default'};
-      $metadata->{'join_colour'}  = $colours->{'join'} || $colours->{'default'};
-      $metadata->{'label_colour'} = $colours->{'text'} || $colours->{'default'};
-    }
-
-    ## Tell the parser to get aggregate data if necessary
-    $metadata->{'aggregate'} = 1 if $self->{'my_config'}->get('display') eq 'compact';
-
-    ## Parse the file, filtering on the current slice
-    $data = $iow->create_tracks($slice, $metadata);
-    #use Data::Dumper; warn Dumper($data);
-
-  } else {
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
-  }
-  #$self->{'config'}->add_to_legend($legend);
-
-  return $data;
+sub init {
+  my $self = shift;
+  my @roles = ('EnsEMBL::Draw::Role::BigWig', 'EnsEMBL::Draw::Role::Wiggle');
+  Role::Tiny->apply_roles_to_object($self, @roles);
+  $self->{'data'} = $self->get_data;
 }
 
-sub bins {
-### Set number of bins for summary - will typically be around 1000
-### @return Integer
+sub render_normal {
   my $self = shift;
-
-  if(!$self->{'_bins'}) {
-    my $slice = $self->{'container'};
-    $self->{'_bins'} = min($self->{'config'}->image_width, $slice->length);
-  }
-  return $self->{'_bins'};
+  warn ">>> RENDERING SIGNAL";
+  $self->{'my_config'}->set('drawing_style', ['Graph']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
 }
 
 sub render_text {

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,6 +61,10 @@ sub process {
         ## Hub is already attached, so just go there
         $redirect = sprintf('/%s/Location/View', $species);
         $anchor   = 'modal_config_viewbottom';
+        if ($params->{'menu'}) {
+          $anchor .= '-'.$params->{'menu'};
+          delete $params->{'menu'};
+        }
       }
       else {
         ## Check if we have any supported assemblies

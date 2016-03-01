@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -91,8 +91,7 @@ sub has_evidence {
   my ($self) = @_;
 
   # Can be simple accessor for 76, but avoid breaking master
-  return 1 unless $self->hub->is_new_regulation_pipeline;
-  return !!$self->Obj->has_evidence if $self->Obj->can('has_evidence');
+  return $self->Obj->has_evidence if $self->Obj->can('has_evidence');
   return undef;
 }
 sub cell_type_count {

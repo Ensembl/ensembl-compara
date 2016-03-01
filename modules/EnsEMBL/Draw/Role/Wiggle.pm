@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,34 +22,12 @@ package EnsEMBL::Draw::Role::Wiggle;
 
 use Role::Tiny;
 
-### Renderers
-
-sub render_compact { 
-  my $self = shift;
-  my $graph_class = $self->_select_graph_type;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Barcode']);
-  $self->{'my_config'}->set('height', 8);
-  $self->{'my_config'}->set('no_axis', 1);
-  $self->_render_aggregate;
-}
-
-sub render_signal { 
-  my $self = shift;
-  my $graph_class = $self->_select_graph_type;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
-  $self->{'my_config'}->set('height', 60);
-  $self->_render_aggregate; 
-}
-
-=pod
 sub render_feature_with_signal { 
-## TODO - not used by userdata formats, so needs testing!
   my $self = shift;
   my $graph_class = $self->_select_graph_type;
   $self->{'my_config'}->set('drawing_style', [$graph_class, 'Feature']);
   $self->_render; 
 }
-=cut
 
 sub _select_graph_type {
   my $self = shift;
@@ -76,11 +54,21 @@ sub _render_aggregate {
     return 1;
   }
 
+  my $maxHeightPixels = $self->{'my_config'}->get('maxHeightPixels') || '';
+  (my $default_height = $maxHeightPixels) =~ s/^.*:([0-9]*):.*$/$1/;
+  if ($default_height) {  
+    $self->{'my_config'}->set('height', $default_height);
+  }
+  else {
+   $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
+  }
+
   $self->{'my_config'}->set('bumped', 0);
-  $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
+  $self->{'my_config'}->set('axis_colour', $self->my_colour('axis')) 
+    unless $self->{'my_config'}->get('axis_colour');
 
   ## Now we try and draw the features
-  my $error = $self->draw_aggregate($self->{'features'});
+  my $error = $self->draw_aggregate($self->{'data'});
   return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
 
   my $here = $self->my_config('strand') eq 'b' ? 'on this strand' : 'in this region';
@@ -103,12 +91,19 @@ sub _render {
     return 1;
   }
 
-  $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
+  (my $default_height = $self->{'my_config'}->get('maxHeightPixels')) =~ s/^.*:([0-9]*):.*$/$1/;
+  if ($default_height) {  
+    $self->{'my_config'}->set('height', $default_height);
+  }
+  else {
+   $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
+  }
+
   $self->{'my_config'}->set('absolutex', 1);
   $self->{'my_config'}->set('bumped', 0);
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));
 
-  my $tracks = $self->{'features'};
+  my $tracks = $self->{'data'};
   return unless ref $tracks eq 'ARRAY';
 
   # Make sure subtitles will be correctly coloured

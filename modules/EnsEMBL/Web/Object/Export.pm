@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -549,7 +549,9 @@ sub features {
   }
   
   if ($params->{'variation'}) {
-    foreach (@{$slice->get_all_VariationFeatures}) {
+    my $vdb = $self->database('variation'); 
+    my $vf_adaptor = $vdb->get_VariationFeatureAdaptor;     
+    foreach (@{$vf_adaptor->fetch_all_by_Slice($slice)}) {
       $self->feature('variation', $_, { variation_name => $_->variation_name });	    
     }
   }

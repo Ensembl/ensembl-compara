@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1025,7 +1025,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     if (area.a.klass.nav) {
-      Ensembl.redirect(area.a.attrs.href);
+      this.navClick(area, e);
       return;
     }
 
@@ -1065,6 +1065,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.zMenus[id] = 1;
     return id;
+  },
+
+  navClick: function(area, e) {
+    Ensembl.redirect(area.a.attrs.href);
   },
 
   removeZMenus: function() {

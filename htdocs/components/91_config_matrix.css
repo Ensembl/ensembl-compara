@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,12 @@ div.config div.config_matrix_wrapper.wide                           { border: 1p
 div.config div.config_matrix_wrapper.short                          { padding-bottom: 300px; }
 div.config div.config_matrix_scroller                               { height: 16px; width: 100%; overflow-x: auto; overflow-y: hidden; }
 div.config div.config_matrix_scroller div                           { height: 16px; }
+
+/* For displaying scrollbars (overriding mac's autohide)*/
+div.config div.config_matrix_scroller::-webkit-scrollbar { -webkit-appearance: none; }
+div.config div.config_matrix_scroller::-webkit-scrollbar:vertical { width: 11px; }
+div.config div.config_matrix_scroller::-webkit-scrollbar:horizontal { height: 11px;}
+div.config div.config_matrix_scroller::-webkit-scrollbar-thumb { border-radius: 8px; border: 2px solid white; /* should match background, can't be transparent */ background-color: rgba(0, 0, 0, .5); }
 
 div.config div.config_matrix h1                                     { display: block; border: 0; }
 div.config div.config_matrix h2                                     { margin: 0 8px 0 0; border: 0; float: left; font-size: 15px; }

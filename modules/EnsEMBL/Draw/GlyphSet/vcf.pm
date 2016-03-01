@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,30 +38,33 @@ sub init {
   my $self = shift;
 
   ## We only need wiggle roles, as alignment rendering has a non-standard name
-  Role::Tiny->apply_roles_to_object($self, 'EnsEMBL::Draw::Role::Wiggle');
+  my @roles = qw(EnsEMBL::Draw::Role::Wiggle); 
+  Role::Tiny->apply_roles_to_object($self, @roles);
 
   ## Cache raw VCF features
-  $self->{'features'} = $self->features;
+  $self->{'data'} = $self->get_data;
 }
 
 ############# RENDERING ########################
 
 sub render_histogram {
   my $self = shift;
-  return scalar @{$self->features} > 200 ? $self->render_density_bar : $self->render_normal;
+  my $features = $self->get_data->[0]{'features'}{'1'};
+  return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_normal;
 }
 
-sub render_normal {
-### NB. Takes precendence of method in Role::Wiggle
+sub render_simple {
   my $self = shift;
-  if (scalar @{$self->features} > 200) {
+  if (scalar @{$self->get_data->[0]{'features'}{'1'}} > 200) {
     $self->too_many_features;
     return undef;
   }
   else {
     ## Convert raw features into correct data format 
-    $self->{'features'} = [{'features' => $self->consensus_features}];
+    $self->{'my_config'}->set('height', 12);
+    $self->{'my_config'}->set('default_strand', 1);
     $self->{'my_config'}->set('drawing_style', ['Feature']);
+    $self->{'data'}[0]{'features'}{'1'} = $self->consensus_features;
     $self->draw_features;
   }
 }
@@ -72,17 +75,19 @@ sub render_density_bar {
   $self->{'my_config'}->set('no_guidelines', 1);
   $self->{'my_config'}->set('integer_score', 1);
   ## Convert raw features into correct data format 
-  $self->{'features'} = [{'features' => $self->density_features}];
-  $self->render_tiling;
+  $self->{'data'}[0]{'features'}{'1'} = $self->density_features;
+  $self->render_signal;
 }
 
 ############# DATA ACCESS & PROCESSING ########################
 
-sub features {
+sub get_data {
 ### Fetch and cache raw features - we'll process them later as needed
   my $self = shift;
+  $self->{'my_config'}->set('default_strand', 1);
+  $self->{'my_config'}->set('show_subtitle', 1);
 
-  unless ($self->{'features'} && scalar @{$self->{'features'}}) {
+  unless ($self->{'data'} && scalar @{$self->{'data'}}) {
     my $slice       = $self->{'container'};
     my $start       = $slice->start;
 
@@ -90,20 +95,28 @@ sub features {
     ## Don't assume the adaptor can find and open the file!
     my $consensus   = eval { $vcf_adaptor->fetch_variations($slice->seq_region_name, $slice->start, $slice->end); };
     if ($@) {
-      $self->{'features'} = [];
+      $self->{'data'} = [];
     }
     else {
-      $self->{'features'} = $consensus;
+      my $colours = $self->species_defs->colour('variation');
+      my $colour  = $colours->{'default'}->{'default'}; 
+      
+      $self->{'data'} = [{'metadata' => {
+                                          'name'    => $self->{'my_config'}->get('name'),
+                                          'colour'  => $colour,
+                                         }, 
+                          'features' => {'1' => $consensus}
+                              }];
     }
   }
-  return $self->{'features'};
+  return $self->{'data'};
 }
 
 sub consensus_features {
 ### Turn raw features into consensus features for drawing
 ### @return Arrayref of hashes
   my $self = shift;
-  my $raw_features  = $self->{'features'};
+  my $raw_features  = $self->{'data'}[0]{'features'}{'1'};
   my $config        = $self->{'config'};
   my $slice         = $self->{'container'};
   my $start         = $slice->start;
@@ -122,8 +135,9 @@ sub consensus_features {
     my $unknown_type = 1;
     my $vs           = $f->{'POS'} - $start + 1;
     my $ve           = $vs;
+    my $sv           = $f->{'INFO'}{'SVTYPE'};
 
-    if (my $sv = $f->{'INFO'}{'SVTYPE'}) {
+    if ($sv) {
       $unknown_type = 0;
 
       if ($sv eq 'DEL') {
@@ -149,14 +163,32 @@ sub consensus_features {
       elsif ($altlen > 1) {
         $ve = $vs - 1;
       }
+      $sv = 'OTHER';
     }
 
     my $allele_string = join '/', $f->{'REF'}, @{$f->{'ALT'} || []};
     my $vf_name       = $f->{'ID'} eq '.' ? "$f->{'CHROM'}_$f->{'POS'}_$allele_string" : $f->{'ID'};
 
+    ## Flip for drawing
     if ($slice->strand == -1) {
       my $flip = $slice->length + 1;
       ($vs, $ve) = ($flip - $ve, $flip - $vs);
+    }
+
+    ## Zmenu
+    my %lookup = (
+                  'INS'   => 'Insertion',
+                  'DEL'   => 'Deletion',
+                  'TDUP'  => 'Duplication',
+                  'OTHER' => 'Small variant',
+                  );
+    my $location = sprintf('%s:%s', $slice->seq_region_name, $vs + $slice->start);
+    $location   .= '-'.($ve + $slice->start) if ($ve && $ve != $vs);
+
+    my $title = "$vf_name; Location: $location; Type: ".$lookup{$sv}."; Allele: $allele_string";
+    my @fields = qw(AC AN DB DP NS);
+    foreach (@fields) {
+      $title .= sprintf('; %s: %s', $_, $f->{'INFO'}{$_} || '');
     }
 
     ## Set colour by consequence if defined in file
@@ -174,6 +206,7 @@ sub consensus_features {
                   strand  => 1,
                   colour  => $colour,       
                   label   => $vf_name, 
+                  title   => $title,
                 };
 
     push @$features, $fhash;
@@ -193,7 +226,7 @@ sub density_features {
   my $divlen   = $vclen / $divs;
   $divlen      = 10 if $divlen < 10; # Increase the number of points for short sequences
   my $density  = {};
-  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->features};
+  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->get_data};
 
   my $colours = $self->species_defs->colour('variation');
   my $colour  = $colours->{'default'}->{'default'};

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,8 +45,15 @@ sub create_tracks {
   my $features  = {};
   my $values    = [];
 
+  ## Allow for checking multiple region names
+  my $seq_region_names = [$slice->seq_region_name];
+  if ($metadata->{'use_synonyms'}) {
+    ## Look for synonyms here!
+  }
+
   if ($metadata->{'display'} eq 'text') {
-    my $arrays = $parser->fetch_summary_data($slice->seq_region_name, $slice->start, $slice->end, $bins);
+  ## TODO Loop through seq region names here
+    my $arrays = $parser->fetch_summary_data($seq_region_names->[0], $slice->start, $slice->end, $bins);
     my $hashes = [];
     foreach (@$arrays) {
       push @$hashes, {
@@ -60,7 +67,8 @@ sub create_tracks {
     $features = {$strand => $hashes};
   }
   else {
-    $values = $parser->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
+  ## TODO Loop through seq region names here
+    $values = $parser->fetch_summary_array($seq_region_names->[0], $slice->start, $slice->end, $bins);
     $features = {$strand => $values};
     if ($metadata->{'display'} eq 'compact') {
       my @gradient = $self->create_gradient(['white', $metadata->{'colour'}]);

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -103,32 +103,37 @@ sub add_populations {
   foreach my $pop_name (sort { $a cmp $b } @$pops) {
     my $pop = $pop_name;
        $pop =~ s/ /_/g;
+    my $pop_caption = $pop_name;
+       $pop_caption =~ s/1000GENOMES:phase_3:/1KG - /;
 
     # r2
     my $r2_desc = sprintf($desc, $r2_tag, $var_name, $pop_name, $display_options);
     push @pop_tracks, [ "ld_r2_$pop", '', 'ld_manplot', {
-      display     => 'compact',
-      strand      => 'r',
-      caption     => "LD ($r2_html) - $pop_name",
-      name        => "LD ($r2_tag) - $pop_name",
-      key         => 'r2',
-      description => $r2_desc,
-      pop_name    => $pop_name,
-      colours     => $colours,
-      height      => $height
+      display      => 'compact',
+      strand       => 'r',
+      labelcaption => "LD ($r2_html) - $pop_caption",
+      caption      => "LD ($r2_html) - $pop_name",
+      name         => "LD ($r2_tag) - $pop_name",
+      key          => 'r2',
+      description  => $r2_desc,
+      pop_name     => $pop_name,
+      colours      => $colours,
+      height       => $height
     }];
     # D prime
-    my $d_prime_desc = sprintf($desc, 'D prime', $var_name, $pop_name, $display_options);
+    my $d_prime_desc   = sprintf($desc, 'D prime', $var_name, $pop_name, $display_options);
+    my $d_prime_prefix = "LD (D') - ";
     push @pop_tracks, [ "ld_d_prime_$pop", '', 'ld_manplot', {
-      display     => 'compact',
-      strand      => 'r',
-      caption     => "LD (D') - $pop_name",
-      name        => "LD (D') - $pop_name",
-      key         => 'd_prime',
-      description => $d_prime_desc,
-      pop_name    => $pop_name,
-      colours     => $colours,
-      height      => $height
+      display      => 'compact',
+      strand       => 'r',
+      labelcaption => "$d_prime_prefix$pop_caption",
+      caption      => "$d_prime_prefix$pop_name",
+      name         => "$d_prime_prefix$pop_name",
+      key          => 'd_prime',
+      description  => $d_prime_desc,
+      pop_name     => $pop_name,
+      colours      => $colours,
+      height       => $height
     }];
   }
 

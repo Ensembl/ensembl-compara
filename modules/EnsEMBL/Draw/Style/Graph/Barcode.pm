@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ sub draw_wiggle {
     colours   => $c->{'colours'},
   };
   push @{$self->glyphs}, $self->Barcode($params);
-  $self->add_hidden_bgd($height);
+  $self->draw_hidden_bgd($height);
 }
 
 1;

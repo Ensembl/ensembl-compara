@@ -21,7 +21,7 @@ Module to initiate and store database connections for web api
 
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,7 +53,21 @@ use Exporter qw(import);
 our @EXPORT_OK = qw(register_cleaner);
 
 my $reg = 'Bio::EnsEMBL::Registry';
-my %CLEANERS;
+
+my %CLEANERS = (
+                'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor' => [
+sub {
+  my ($vdb,$sd) = @_;
+
+  my $c = $sd->ENSEMBL_VCF_COLLECTIONS;
+  if($c && $vdb->can('use_vcf')) {
+    $vdb->vcf_config_file($c->{'CONFIG'});
+    $vdb->vcf_root_dir($sd->DATAFILE_BASE_PATH);
+    $vdb->use_vcf($c->{'ENABLED'});
+  }
+},
+]
+                );
 
 sub new {
   my( $class, $species, $species_defs ) = @_;

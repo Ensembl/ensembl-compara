@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1137,6 +1137,32 @@ sub get_SpeciesTree {
     $self->{$cache_key} = $cafeTree;
   }
   
+  return $self->{$cache_key};
+}
+
+# Function to call compara API to get the species Tree precomputed in JSON
+sub get_SpeciesTreeJSON {
+  my $self       = shift;
+  my $compara_db = shift || 'compara';
+
+  my $hub            = $self->hub;
+  my $collapsability = $hub->param('collapsability');
+  my $cache_key      = "_json_species_tree_".$collapsability."_".$compara_db;
+  my $database       = $self->database($compara_db);
+
+  if (!$self->{$cache_key}) {
+    my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();
+    my $gtos_Adaptor     = $database->get_GeneTreeObjectStoreAdaptor();
+
+    my $json_label = $collapsability eq 'part' ? 'cafe_lca' : 'cafe';
+
+    my $member   = $self->get_compara_Member($compara_db)           || return;
+    my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member) || return;
+    my $cafeTree = $gtos_Adaptor->fetch_by_GeneTree_and_label($geneTree, $json_label) || return;
+
+    $self->{$cache_key} = $cafeTree;
+  }
+
   return $self->{$cache_key};
 }
 

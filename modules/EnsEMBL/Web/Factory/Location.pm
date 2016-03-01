@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -168,7 +168,9 @@ sub createObjects {
     # 3) Reading the paramters listed in the else block below
     if ($identifier = $self->param('r') || $self->param('l')) {
       $identifier =~ s/\s|,//g;
-      ($seq_region, $start, $end, $strand) = $identifier =~ /^([^:]+):(-?\w+\.?\w*)[-|..]?(-?\w+\.?\w*)?(?::(-?\d))?$/;
+
+      #using core API module to validate the location values, see core documentation for this method
+      ($seq_region, $start, $end, $strand) = $self->_slice_adaptor->parse_location_to_values($identifier); 
       
       $start = $self->evaluate_bp($start);
       $end   = $self->evaluate_bp($end) || $start;

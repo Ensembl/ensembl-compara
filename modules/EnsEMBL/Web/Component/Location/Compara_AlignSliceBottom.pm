@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -106,12 +106,16 @@ sub content {
   }
   
   my $image = $self->new_image(\@images);
-  
+  my $align = $hub->param('align');
+  $image->{'export_params'} = ['align', $align];
+  foreach ($hub->param) {
+    push @{$image->{'export_params'}}, [$_, $hub->param($_)] if $_ =~ /^species_$align/;
+  }
+
   return if $self->_export_image($image);
   
   $image->{'panel_number'}  = 'bottom';
   $image->{'data_export'}   = 'Alignments';
-  $image->{'export_params'}   = ['align'];
   $image->imagemap = 'yes';
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   

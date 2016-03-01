@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -122,16 +122,14 @@ sub gene_phenotypes {
         my $phen    = $pf->phenotype->description;
         my $source  = $pf->source_name;
         my $ext_id  = $pf->external_id;
-        if ($source =~ /^ZFIN$/i) {
-          $ext_id = $phen;
-          $ext_id =~ s/,//g;
-          $ext_id =~ s/ /+/g;
-        }
+
         my $attribs = $pf->get_all_attributes;
 
         my $source_uc = uc $source;
            $source_uc =~ s/\s/_/g;
-           $source_uc .= "_SEARCH" if ($source_uc =~ /^RGD|ZFIN$/);
+           $source_uc .= "_SEARCH" if ($source_uc =~ /^RGD$/);
+           $source_uc .= "_ID"     if ($source_uc =~ /^ZFIN$/);
+
         my $source_url = "";
         if ($ext_id) {
           if ($source_uc =~ /GOA/) {

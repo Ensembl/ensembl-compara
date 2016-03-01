@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ use URI::Escape qw(uri_unescape);
 
 use EnsEMBL::Draw::Utils::TextHelper;
 use EnsEMBL::Web::File::Utils::TrackHub;
+use EnsEMBL::Web::Command::UserData::AddFile;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Tree;
 
@@ -660,6 +661,7 @@ sub load_user_tracks {
       format      => $entry->{'format'},
       style       => $entry->{'style'},
       colour      => $entry->{'colour'},
+      renderers   => $entry->{'renderers'},
       display     => $entry->{'display'},
       timestamp   => $entry->{'timestamp'} || time,
     };
@@ -669,22 +671,11 @@ sub load_user_tracks {
   foreach my $entry ($session->get_data(type => 'upload')) {
     next unless $entry->{'species'} eq $self->{'species'};
    
-    if ($entry->{'analyses'}) {
-      foreach my $analysis (split /, /, $entry->{'analyses'}) {
-        $upload_sources{$analysis} = {
-          source_name => $entry->{'name'},
-          source_type => 'session',
-          assembly    => $entry->{'assembly'},
-          style       => $entry->{'style'},
-        };
-        
-        $self->_compare_assemblies($entry, $session);
-      }
-    } elsif ($entry->{'species'} eq $self->{'species'} && !$entry->{'nonpositional'}) {
-      my ($strand, $renderers, $default) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
-      $strand = $entry->{'strand'} if $entry->{'strand'};
+    my ($strand, $renderers, $default) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
+    $strand     = $entry->{'strand'} if $entry->{'strand'};
+    $renderers  = $entry->{'renderers'} if $entry->{'renderers'};
       
-      $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
+    $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external        => 'user',
         glyphset        => 'flat_file',
         colourset       => 'userdata',
@@ -695,11 +686,10 @@ sub load_user_tracks {
         caption         => $entry->{'name'},
         renderers       => $renderers,
         description     => 'Data that has been temporarily uploaded to the web server.',
-        display         => 'off',
-        default_display => $default,
+        display         => $entry->{'display'} || 'off',
+        default_display => $entry->{'display'} || $default,
         strand          => $strand,
-      }));
-    }
+    }));
   }
 
   ## Data saved by the user  
@@ -716,6 +706,7 @@ sub load_user_tracks {
         format      => $entry->format,
         style       => $entry->style,
         colour      => $entry->colour,
+        renderers   => $entry->renderers,
         display     => 'off',
         timestamp   => $entry->timestamp,
       };
@@ -742,7 +733,9 @@ sub load_user_tracks {
       else {
         ## New saved-to-permanent-location
         my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
-        $menu->append($self->create_track("upload_$entry->code", $entry->name, {
+        $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
+        $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
+        $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
             external        => 'user',
             glyphset        => 'flat_file',
             colourset       => 'userdata',
@@ -753,8 +746,8 @@ sub load_user_tracks {
             caption         => $entry->name,
             renderers       => $renderers,
             description     => 'Data that has been saved to the web server.',
-            display         => 'off',
-            default_display => $default,
+            display         => $entry->display || 'off',
+            default_display => $entry->display || $default,
         }));
       }
     }
@@ -784,12 +777,14 @@ sub load_user_tracks {
         url      => $url_sources{$code}{'source_url'},
         format   => $url_sources{$code}{'format'},
         style    => $url_sources{$code}{'style'},
+        renderers => $url_sources{$code}{'renderers'},
         external => 'user',
       );
     }
   }
   
   ## And finally any saved uploads
+  ## TODO - remove once we have removed the userdata databases
   if (keys %upload_sources) {
     my $dbs        = EnsEMBL::Web::DBSQL::DBConnection->new($self->{'species'});
     my $dba        = $dbs->get_DBAdaptor('userdata');
@@ -838,7 +833,10 @@ sub load_user_tracks {
 sub _add_trackhub {
   my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $force_hide) = @_;
 
-  return ($menu_name, {}) if $self->{'_attached_trackhubs'}{$url};
+  ## Check if this trackhub is already attached - now that we can attach hubs via
+  ## URL, they may not be saved in the imageconfig
+  my $already_attached = $self->get_node($menu_name); 
+  return ($menu_name, {}) if ($already_attached || $self->{'_attached_trackhubs'}{$url});
 
   my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
   my $hub_info = $trackhub->get_hub({'assembly_lookup' => $self->species_defs->assembly_lookup, 
@@ -1095,10 +1093,6 @@ sub _add_trackhub_extras_options {
   
   if (exists $args{'menu'}{'maxHeightPixels'} || exists $args{'source'}{'maxHeightPixels'}) {
     $args{'options'}{'maxHeightPixels'} = $args{'menu'}{'maxHeightPixels'} || $args{'source'}{'maxHeightPixels'};
-
-    (my $default_height = $args{'options'}{'maxHeightPixels'}) =~ s/^.*:([0-9]*):.*$/$1/;
-    
-    $args{'options'}{'height'} = $default_height if $default_height > 0;
   }
   
   # Alternative rendering order for genome segmentation and similar
@@ -1251,10 +1245,10 @@ sub _add_htslib_track {
     format      => 'BAM',
     description => $desc,
     renderers   => [
-                    'off',       'Off',
-                    'normal',    'Normal',
-                    'unlimited', 'Unlimited',
-                    'histogram', 'Coverage only'
+                    'off',                  'Off',
+                    'coverage_with_reads',  'Normal',
+                    'unlimited',            'Unlimited',
+                    'histogram',            'Coverage only'
                     ],
     colourset   => 'BAM',
     options => {
@@ -1268,13 +1262,9 @@ sub _add_htslib_track {
 
 sub _add_bigbed_track {
   my ($self, %args) = @_;
- 
-  my $renderers = $args{'source'}{'renderers'};
-  my $strand    = 'b';
-  my $default;
-  unless ($renderers) {
-    ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
-  }
+
+  ## Get default settings for this format 
+  my ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
  
   my $options = {
     external        => 'external',
@@ -1282,12 +1272,12 @@ sub _add_bigbed_track {
     colourset       => 'feature',
     colorByStrand   => $args{'source'}{'colorByStrand'},
     spectrum        => $args{'source'}{'spectrum'},
-    strand          => $strand,
+    strand          => $args{'source'}{'strand'} || $strand,
     style           => $args{'source'}{'style'},
     longLabel       => $args{'source'}{'longLabel'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
-    default_display => $default,
+    default_display => $args{'source'}{'default'} || $default,
   };
   ## Override default renderer (mainly used by trackhubs)
   $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
@@ -1295,13 +1285,13 @@ sub _add_bigbed_track {
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
     $options->{'join'} = 'off';  
   } else {
-    push @$renderers, ('tiling', 'Wiggle plot');
+    push @$renderers, ('signal', 'Wiggle plot');
   }
   
   $self->_add_file_format_track(
     format      => 'BigBed',
     description => 'Bigbed file',
-    renderers   => $renderers,
+    renderers   => $args{'source'}{'renderers'} || $renderers,
     options     => $options,
     %args,
   );
@@ -1349,7 +1339,7 @@ sub _add_vcf_track {
     renderers => [
       'off',       'Off',
       'histogram', 'Histogram',
-      'normal',    'Compact'
+      'simple',    'Compact'
     ],
     options => {
       external   => 'external',
@@ -1369,7 +1359,6 @@ sub _add_pairwise_track {
     renderers => [
       'off',                'Off', 
       'interaction',        'Pairwise interaction',
-      'interaction_label',  'Pairwise interaction with labels'
     ],
     options => {
       external   => 'external',
@@ -1404,6 +1393,7 @@ sub _add_flat_file_track {
   });
 
   $menu->append($track) if $track;
+  return $renderers;
 }
 
 sub _add_file_format_track {
@@ -1546,106 +1536,97 @@ sub update_from_url {
   
   foreach my $v (@values) {
     my $format = $hub->param('format');
-    my ($key, $renderer);
+    my ($url, $renderer, $attach);
     
-    if (uc $format eq 'TRACKHUB') {
-      $key = $v;
-    } else {
-      my @split = split /=/, $v;
-      
-      if (scalar @split > 1) {
-        $renderer = pop @split;
-        $key      = join '=', @split;
-      } else {
-        $key      = $split[0];
-        $renderer = 'normal';
-      }
+    if ($v =~ /^url/) {
+      $v =~ s/^url://;
+      $attach = 1;
+      ($url, $renderer) = split /=/, $v;
     }
    
-    if ($key =~ /^(\w+)[\.:](.*)$/) {
-      my ($type, $p) = ($1, $2);
-      
-      if ($type eq 'url') {
-        my $menu_name   = $hub->param('menu');
-        my $all_formats = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
-        
+    if ($attach || $hub->param('attach')) {
+      ## Backwards compatibility with 'contigviewbottom=url:http...'-type parameters
+      ## as well as new 'attach=http...' parameter
+      my $p = uri_unescape($url);
+
+      my $menu_name   = $hub->param('menu');
+      my $all_formats = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
+       
+      if (!$format) {
+        my @path = split(/\./, $p);
+        my $ext  = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
+          
+        while (my ($name, $info) = each %$all_formats) {
+          if ($ext =~ /^$name$/i) {
+            $format = $name;
+            last;
+          }  
+        }
         if (!$format) {
-          $p = uri_unescape($p);
-          
-          my @path = split(/\./, $p);
-          my $ext  = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
-          
+          # Didn't match format name - now try checking format extensions
           while (my ($name, $info) = each %$all_formats) {
-            if ($ext =~ /^$name$/i) {
+            if ($ext eq $info->{'ext'}) {
               $format = $name;
               last;
             }  
           }
-          if (!$format) {
-            # Didn't match format name - now try checking format extensions
-            while (my ($name, $info) = each %$all_formats) {
-              if ($ext eq $info->{'ext'}) {
-                $format = $name;
-                last;
-              }  
-            }
-          }
         }
+      }
 
-        my $style = $all_formats->{lc $format}{'display'} eq 'graph' ? 'wiggle' : $format;
-        my $code  = join '_', md5_hex("$species:$p"), $session->session_id;
-        my $n;
+      my $style = $all_formats->{lc $format}{'display'} eq 'graph' ? 'wiggle' : $format;
+      my $code  = join '_', md5_hex("$species:$p"), $session->session_id;
+      my $n;
         
-        if ($menu_name) {
-          $n = $menu_name;
-        } else {
-          $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
-        }
+      if ($menu_name) {
+        $n = $menu_name;
+      } else {
+        $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
+      }
         
-        # Don't add if the URL or menu are the same as an existing track
-        if ($session->get_data(type => 'url', code => $code)) {
-          $session->add_data(
+      # Don't add if the URL or menu are the same as an existing track
+      if ($session->get_data(type => 'url', code => $code)) {
+        $session->add_data(
             type     => 'message',
             function => '_warning',
             code     => "duplicate_url_track_$code",
             message  => "You have already attached the URL $p. No changes have been made for this data source.",
-          );
+        );
           
-          next;
-        } elsif (grep $_->{'name'} eq $n, $session->get_data(type => 'url')) {
-          $session->add_data(
+        next;
+      } elsif (grep $_->{'name'} eq $n, $session->get_data(type => 'url')) {
+        $session->add_data(
             type     => 'message',
             function => '_error',
             code     => "duplicate_url_track_$n",
             message  => qq{Sorry, the menu "$n" is already in use. Please change the value of "menu" in your URL and try again.},
-          );
+        );
           
-          next;
-        }
+        next;
+      }
 
-        # We then have to create a node in the user_config
-        my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+      # We then have to create a node in the user_config
+      my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
-        if (uc $format eq 'TRACKHUB') {
-          my $info;
-          ($n, $info) = $self->_add_trackhub($n, $p);
-          if ($info->{'error'}) {
-            my @errors = @{$info->{'error'}||[]};
-            $session->add_data(
+      if (uc $format eq 'TRACKHUB') {
+        my $info;
+        ($n, $info) = $self->_add_trackhub($n, $p);
+        if ($info->{'error'}) {
+          my @errors = @{$info->{'error'}||[]};
+          $session->add_data(
               type     => 'message',
               function => '_warning',
               code     => 'trackhub:' . md5_hex($p),
               message  => "There was a problem attaching trackhub $n: @errors",
-            );
-          }
-          else {
-            my $assemblies = $info->{'genomes'}
+          );
+        }
+        else {
+          my $assemblies = $info->{'genomes'}
                         || {$hub->species => $hub->species_defs->get_config($hub->species, 'ASSEMBLY_VERSION')};
 
-            foreach (keys %$assemblies) {
-              my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
-              if ($assembly) {
-                my $data = $session->add_data(
+          foreach (keys %$assemblies) {
+            my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
+            if ($assembly) {
+              my $data = $session->add_data(
                   type        => 'url',
                   url         => $p,
                   species     => $data_species,
@@ -1654,50 +1635,34 @@ sub update_from_url {
                   format      => $format,
                   style       => $style,
                   assembly    => $assembly,
-                );
-              }
+              );
             }
           }
-        } else {
-          $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-            sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: <a href=">%s">%s</a>', encode_entities($n), encode_entities($p), encode_entities($p)),
-            url   => $p,
-            style => $style
-          );
-
-          ## Assume the data is for the current assembly
-          my $assembly;
-          while (my($a, $info) = each (%ensembl_assemblies)) {
-            $assembly = $info->[1] if $info->[0] eq $species;
-            last if $assembly;
-          }
- 
-          $self->update_track_renderer("url_$code", $renderer);
-          $session->set_data(
-            type      => 'url',
-            url       => $p,
-            species   => $species,
-            code      => $code,
-            name      => $n,
-            format    => $format,
-            style     => $style,
-            assembly  => $assembly,
-          );
         }
-        # We have to create a URL upload entry in the session
-        my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
-        if (uc $format eq 'TRACKHUB') {
+      } else {
+        ## Either upload or attach the file, as appropriate
+        my $command = EnsEMBL::Web::Command::UserData::AddFile->new({'hub' => $hub});
+        ## Fake the params that are passed by the upload form
+        $hub->param('text', $p);
+        $hub->param('format', $format);
+        $command->upload_or_attach($renderer);
+        ## Discard URL param, as we don't need it once we've uploaded the file,
+        ## and it only messes up the page URL later
+        $hub->input->delete('url');
+      }
+      # We have to create a URL upload entry in the session
+      my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
+      if (uc $format eq 'TRACKHUB') {
           $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
-        }
-        $session->add_data(
+      }
+      $session->add_data(
           type     => 'message',
           function => '_info',
           code     => 'url_data:' . md5_hex($p),
           message  => $message,
-        );
-      }
+      );
     } else {
-      $self->update_track_renderer($key, $renderer, $hub->param('toggle_tracks'));
+      $self->update_track_renderer($url, $renderer, $hub->param('toggle_tracks'));
     }
   }
   
@@ -2132,18 +2097,18 @@ sub add_data_files {
     my $renderers;
     if ($glyphset eq 'bamcov') {
       $renderers = [
-                    'off',       'Off',
-                    'tiling',    'Coverage (BigWig)',
-                    'normal',    'Normal',
-                    'unlimited', 'Unlimited',
+                    'off',                  'Off',
+                    'signal',               'Coverage (BigWig)',
+                    'coverage_with_reads',  'Normal',
+                    'unlimited',            'Unlimited',
                     ];
     }
     else {
       $renderers = [
-                    'off',       'Off',
-                    'normal',    'Normal',
-                    'unlimited', 'Unlimited',
-                    'histogram', 'Coverage only'
+                    'off',                  'Off',
+                    'coverage_with_reads',  'Normal',
+                    'unlimited',            'Unlimited',
+                    'histogram',            'Coverage only'
                     ];
     }
 
@@ -2573,7 +2538,7 @@ sub add_decorations {
       glyphset      => 'annotation_status',
       height        => 2,
       display       => 'normal',
-      strand        => 'x',
+      strand        => 'f',
       label_strand  => 'r',
       short_labels  => 0,
       depth         => 0,
@@ -2921,6 +2886,29 @@ sub add_regulation_builds {
  
   $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
 
+  # New file-based segmentation tracks
+  my $segs = $hashref->{'segmentation'};
+  foreach my $key (keys %$segs) {
+    my $name = $segs->{$key}{'name'};
+    my $cell_line = $key;
+    $prev_track = $reg_segs->append($self->create_track("seg_$key", "Reg. Segs: $name", {
+      db          => $key,
+      glyphset    => 'fg_segmentation_features',
+      sources     => 'undef',
+      strand      => 'r',
+      labels      => 'on',
+      depth       => 0,
+      colourset   => 'fg_segmentation_features',
+      display     => 'off',
+      description => $segs->{$key}{'desc'},
+      renderers   => [qw(off Off normal On)],
+      celltype    => $segs->{$key}{'web'}{'celltype'},
+      caption     => "Reg. Segs. ($segs->{$key}{'web'}{'anntype'})",
+      section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
+      section     => $segs->{$key}{'web'}{'celltypename'},
+      height      => 4,
+    }));
+  }
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
@@ -2947,7 +2935,8 @@ sub add_regulation_builds {
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       caption     => "Regulatory Features",
     }));
-    
+
+    # Old database-based segementation tracks
     if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
       $prev_track = $reg_segs->append($self->create_track("seg_$cell_line", "Reg. Segs: $cell_line", {
         db          => $key,
@@ -2967,7 +2956,7 @@ sub add_regulation_builds {
         height      => 4,
       }));
     }
-   
+
     my %column_data = (
       db        => $key,
       glyphset  => 'fg_multi_wiggle',
@@ -2980,8 +2969,8 @@ sub add_regulation_builds {
       renderers => [
         'off',            'Off', 
         'compact',        'Peaks', 
-        'tiling',         'Signal', 
-        'tiling_feature', 'Both' 
+        'signal',         'Signal', 
+        'signal_feature', 'Both', 
       ],
     );
     

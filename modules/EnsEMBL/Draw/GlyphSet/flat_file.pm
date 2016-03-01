@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ use EnsEMBL::Web::IOWrapper;
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 
-sub features {
+sub get_data {
 ### Method to parse a data file and return information to be displayed
 ### @return Arrayref - see parent
   my $self         = shift;
@@ -77,10 +77,10 @@ sub features {
     ## Override colourset based on format here, because we only want to have to do this in one place
     my $colourset   = $iow->colourset || 'userdata';
     $self->{'my_config'}->set('colours', $hub->species_defs->colour($colourset));
-    $self->{'my_config'}->set('default_colour', $self->my_colour('default'));
+    $self->{'my_config'}->set('colour', $self->my_colour('default'));
   } else {
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
+    $self->{'data'} = [];
+    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
   #$self->{'config'}->add_to_legend($legend);
   return $data;

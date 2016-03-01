@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -256,6 +256,7 @@ sub set_cache_params {
   my %tags = (
     url       => $self->{'url_tag'},
     page_type => $self->page_type,
+    mobile => "m".$ENV{'MOBILE_DEVICE'},
   );
   
   $tags{'session'} = "SESSION[$self->{'session_id'}]" if $self->{'session_id'};
@@ -264,7 +265,7 @@ sub set_cache_params {
   $tags{'ie'}      = "IE$1"                           if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
   $tags{'bot'}     = 'BOT'                            if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
   
-  $ENV{'CACHE_KEY'}  = join '::', map $tags{$_} || (), qw(url page_type session user mac ie bot ajax);
+  $ENV{'CACHE_KEY'}  = join '::', map $tags{$_} || (), qw(url page_type session user mac ie bot ajax mobile);
   $ENV{'CACHE_KEY'} .= join '::', '', map $_->name =~ /^toggle_/ ? sprintf '%s[%s]', $_->name, $_->value : (), grep $_, values %{$hub->cookies};
   
   if ($self->request !~ /^(page|ssi)$/) {

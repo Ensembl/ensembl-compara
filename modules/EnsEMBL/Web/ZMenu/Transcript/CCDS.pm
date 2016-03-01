@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ sub content {
     position => 1,
   });
   
-  $self->delete_entry_by_type($_) for ('Transcript', 'Protein', 'Gene type', 'Gene');
+  $self->delete_entry_by_type($_) for ('Transcript', 'Protein', 'Gene type', 'Gene', 'Exon');
   $self->delete_entry_by_value('cDNA Sequence');
   $self->delete_entry_by_value('Exons');
   $self->delete_entry_by_value('Protein Variations');

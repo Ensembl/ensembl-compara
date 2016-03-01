@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,7 +71,6 @@ sub init {
     dropdown => 1
   });
   
-  $self->init_history($hub, $builder) if $hub->user;
   $self->init_species_list($hub);
   
   foreach (@{$builder->ordered_objects}) {
@@ -115,6 +114,7 @@ sub init_species_list {
 
 sub content {
   my $self  = shift;
+  my $hub   = $self->hub;
   my $count = scalar @{$self->entries};
   
   return '' unless $count;
@@ -123,7 +123,9 @@ sub content {
   my $static  = $self->isa('EnsEMBL::Web::Document::Element::StaticTabs');
   my @style   = $count > 4 && !$static ? () : (' style="display:none"', ' style="display:block"');
   my $history = 0;
-  
+
+  $self->init_history($hub) if $hub->user;
+
   foreach my $entry (@{$self->entries}) {
     $entry->{'url'} ||= '#';
     

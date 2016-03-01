@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -84,9 +84,8 @@ sub biomart_link {
   
   my (@species)   = split /_/, $self->object->species;
   my $attr_prefix = lc(substr($species[0], 0, 1) . $species[scalar(@species)-1] . "_gene_ensembl"); 
-  $SiteDefs::ENSEMBL_SERVERNAME = "www.ensembl.org"; ## TO REMOVE...
   my $link        = "http://".$SiteDefs::ENSEMBL_SERVERNAME."/biomart/martview?VIRTUALSCHEMANAME=default&ATTRIBUTES=$attr_prefix.default.feature_page.ensembl_gene_id|$attr_prefix.default.feature_page.ensembl_transcript_id|$attr_prefix.default.feature_page.external_gene_name|$attr_prefix.default.feature_page.description|$attr_prefix.default.feature_page.chromosome_name|$attr_prefix.default.feature_page.start_position|$attr_prefix.default.feature_page.end_position&FILTERS=$attr_prefix.default.filters.go_parent_term.$go"; 
-  my $url         = qq{<a rel="notexternal" href="$link">Search Biomart</a>};#$self->hub->species_defs->ENSEMBL_MART_ENABLED ? qq{<a href="$link">Search Biomart</a>} : ""; # TO UNCOMMENT....
+  my $url         = $self->hub->species_defs->ENSEMBL_MART_ENABLED ? qq{<a href="$link">Search BioMart</a>} : ""; 
   
   return $url;
 }
@@ -102,7 +101,7 @@ sub process_data {
     my $hash        = $data->{$go} || {};
     my $go_link     = $hub->get_ExtURL_link($go, $extdb, $go);
     my $mart_link   = $self->biomart_link($go) ? "<li>".$self->biomart_link($go)."</li>": "";
-    my $loc_link    = '<li><a rel="notexternal" href="'.$hub->url({type  => 'Location', action => 'Genome', ftype => 'Gene', id  => $go}).'">View on karyotype</a></li>';
+    my $loc_link    = scalar @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES} ? '<li><a rel="notexternal" href="'.$hub->url({type  => 'Location', action => 'Genome', ftype => 'Gene', id  => $go, gotype => $extdb}).'">View on karyotype</a></li>' : "";
 
     my $goslim      = $hash->{'goslim'} || {};
     my $row         = {};

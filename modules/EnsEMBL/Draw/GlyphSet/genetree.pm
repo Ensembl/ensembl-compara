@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ sub _init {
     ($f->{x}) = sort{$b<=>$a} int($f->{_x_offset} * $nodes_scale), $min_x;
     
     if ($f->{_cigar_line}){
-      push @alignments, [ $f->{y} , $f->{_cigar_line}, $f->{_collapsed}, $f->{_aligned_exon_lengths}] ;
+      push @alignments, [ $f->{y} , $f->{_cigar_line}, $f->{_collapsed}, $f->{_aligned_exon_coords}] ;
     }
 
     # Node glyph, coloured for for duplication/speciation
@@ -446,12 +446,10 @@ sub _init {
   #      "WIDTH: $alignment_width, MIN: $min_length");    
   foreach my $a (@alignments) {
     if(@$a) {        
-      my ($yc, $al, $collapsed, $exon_lengths) = @$a;
+      my ($yc, $al, $collapsed, $exon_coords) = @$a;
   
       # Draw the exon splits under the boxes
-      my $exon_end = 0;
-      foreach my $exon_length (@$exon_lengths) {
-        $exon_end += $exon_length;
+      foreach my $exon_end (@$exon_coords) {
         my $e = $self->Line({
           'x'         => $alignment_start + $exon_end * $alignment_scale,
           'y'         => $yc - 3 - $EXON_TICK_SIZE,
@@ -789,13 +787,18 @@ sub features {
       $f->{'_cigar_line'} = $tree->cigar_line;
       
       if ($show_exons) {
-        eval {
-          my $aligned_sequences_bounded_by_exon = $tree->alignment_string('exon_bounded');
-          my (@bounded_exons) = split ' ', $aligned_sequences_bounded_by_exon;
-          pop @bounded_exons;
-          
-          $f->{'_aligned_exon_lengths'} = [ map length($_), @bounded_exons ];
-        };
+        my $ref_genetree = $tree->tree;
+        $ref_genetree = $ref_genetree->alternative_trees->{default} if $ref_genetree->clusterset_id ne 'default';
+        unless ($ref_genetree->{_exon_boundaries_hash}) {
+          my $gtos_adaptor = $tree->adaptor->db->get_GeneTreeObjectStoreAdaptor;
+          my $json_string = $gtos_adaptor->fetch_by_GeneTree_and_label($ref_genetree, 'exon_boundaries');
+          if ($json_string) {
+              $ref_genetree->{_exon_boundaries_hash} = JSON->new->decode($json_string);
+          } else {
+              $ref_genetree->{_exon_boundaries_hash} = {};
+          }
+        }
+        $f->{'_aligned_exon_coords'} = $ref_genetree->{_exon_boundaries_hash}->{$tree->seq_member_id}->{positions};
       }
       
       if (my $display_label = $member->display_label) {

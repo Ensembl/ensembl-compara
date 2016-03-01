@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ sub script      :lvalue { $_[0]{'_script'};      }
 sub type        :lvalue { $_[0]{'_type'};        }
 sub action      :lvalue { $_[0]{'_action'};      }
 sub function    :lvalue { $_[0]{'_function'};    }
+sub builder     :lvalue { $_[0]{'_builder'};     }
 sub factorytype :lvalue { $_[0]{'_factorytype'}; }
 sub session     :lvalue { $_[0]{'_session'};     }
 sub cache       :lvalue { $_[0]{'_cache'};       }
@@ -472,7 +473,7 @@ sub url {
     next unless defined $pars{$p};
     
     # Don't escape colon or space
-    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_ .!~*'():\/") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
+    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_ .!~*'():\/") for ref $pars{$p} eq "ARRAY" ? @{$pars{$p}} : $pars{$p};
   }
 
   $url =~ s/;$//;
@@ -882,25 +883,6 @@ sub req_cache_get {
   my ($self,$key) = @_;
 
   return $self->{'_req_cache'}{$key};
-}
-
-sub is_new_regulation_pipeline { # Regulation rewrote their pipeline
-  my ($self,$species) = @_;
-
-  $species ||= $self->species;
-  my $new = ($self->{'is_new_pipeline'}||={})->{$species};
-  return $new if defined $new;
-  my $fg = $self->databases_species($species,'funcgen')->{'funcgen'};
-  $new = 0;
-  if($fg) {
-    my $mca = $fg->get_MetaContainer;
-    my $date = $mca->single_value_by_key('regbuild.last_annotation_update');
-    my ($year,$month) = split('-',$date);
-    $new = 1;
-    $new = 0 if $year < 2014 or $year == 2014 and $month < 6;
-  }
-  $self->{'is_new_pipeline'}{$species} = $new;
-  return $new;
 }
 
 sub _source_url {

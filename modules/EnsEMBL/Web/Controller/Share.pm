@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -190,9 +190,6 @@ sub get_custom_tracks {
   my @custom_tracks;
   
   foreach (grep $species_check->{$_->{'species'}}, map { $session->get_data(type => $_), $user ? $user->get_records($_ . 's') : () } qw(upload url)) {
-
-    ## Hack to prevent sharing of uploaded pairwise data, as it's badly broken
-    next if ($_->{'type'} eq 'upload' && $_->{'format'} =~ /pairwise/i);
 
     my @track_ids = split ', ', $_->{'analyses'} || "$_->{'type'}_$_->{'code'}";
     

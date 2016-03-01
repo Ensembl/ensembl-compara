@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ package EnsEMBL::Web::File::User;
 
 use strict;
 
-use EnsEMBL::Web::IOWrapper;
 use Archive::Tar;
+
+use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::IOWrapper;
 
 use parent qw(EnsEMBL::Web::File);
 
@@ -37,6 +39,18 @@ sub new {
 
   $args{'output_drivers'} = ['IO']; ## Always write to disk
   return $class->SUPER::new(%args);
+}
+
+sub set_category {
+### Set the category of file: typically either temporary or persistent
+  my ($self, $category) = @_;
+
+  unless ($category) {
+    $category = $self->hub->user ? 'persistent' : 'temporary';
+  }
+
+  $self->{'category'} = $category;
+  return $self->{'category'};
 }
 
 ### Wrappers around E::W::File::Utils::IO methods
@@ -209,6 +223,17 @@ sub upload {
 
         $inputs{'format'}    = $format if $format;
         my $species = $hub->param('species') || $hub->species;
+
+        ## Extra renderers for fancy formats
+        my $custom = $args{'renderer'}; 
+        if ($custom) {
+          my $lookup = EnsEMBL::Web::Constants::RENDERERS;
+          my $renderers = $lookup->{$custom}{'renderers'} || [];
+          if (scalar @$renderers) {
+            $inputs{'renderers'}  = ['off', 'Off', @$renderers];
+            $inputs{'display'}    = $lookup->{$custom}{'default'};
+          }
+        }
 
         ## Attach data species to session
         ## N.B. Use 'write' locations, since uploads are read from the

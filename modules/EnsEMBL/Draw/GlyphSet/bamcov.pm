@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,12 +23,32 @@ package EnsEMBL::Draw::GlyphSet::bamcov;
 ### guarantee there is a BigWig file)
 
 use strict;
-use base qw(EnsEMBL::Draw::GlyphSet::bigwig EnsEMBL::Draw::GlyphSet::bam);
 
-sub render_unlimited {
-## Make sure we use the method in bam glyphset, not the one inherited by bigwig
-  return EnsEMBL::Draw::GlyphSet::bam::render_unlimited(@_);
+use Role::Tiny;
+
+use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
+
+sub can_json { return 1; }
+
+sub init {
+  my $self = shift;
+  my $style = $self->my_config('style') || $self->my_config('display') || '';
+  my @roles;
+
+  if ($style eq 'wiggle' || $style =~ /signal/) {
+    push @roles, 'EnsEMBL::Draw::Role::BigWig';
+    push @roles, 'EnsEMBL::Draw::Role::Wiggle';
+  }
+  else {
+    push @roles, 'EnsEMBL::Draw::Role::Bam';
+  }
+
+  ## Don't try to apply non-existent roles, or Role::Tiny will complain
+  if (scalar @roles) {
+    Role::Tiny->apply_roles_to_object($self, @roles);
+  }
+
+  $self->{'data'} = $self->get_data;
 }
-
 
 1;

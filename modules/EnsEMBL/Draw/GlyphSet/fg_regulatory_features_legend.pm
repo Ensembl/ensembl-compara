@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,15 +23,6 @@ package EnsEMBL::Draw::GlyphSet::fg_regulatory_features_legend;
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);
-
-sub _check_build_type {
-  my ($self) = @_;
-
-  unless(defined $self->{'new_reg_build'}) {
-    $self->{'new_reg_build'} =
-      $self->{'config'}->hub->is_new_regulation_pipeline;
-  }
-}
 
 sub _init {
   my $self = shift;
@@ -62,19 +53,11 @@ sub _init {
  
   my $empty = 1;
 
-  $self->_check_build_type;
- 
   foreach (@features) {
     my $legend = $self->my_colour($_, 'text'); 
     
     next if $legend =~ /unknown/i; 
   
-    if($self->{'new_reg_build'}) {
-      next if /^old_/;
-    } else {
-      next unless /^old_/;
-    }
- 
     $self->add_to_legend({
       legend => $legend,
       colour => $self->my_colour($_),
@@ -82,7 +65,7 @@ sub _init {
     
     $empty = 0;
   }
-  unless($empty or !$self->{'new_reg_build'}) {
+  unless($empty) {
     $self->add_to_legend({
       legend => '... but inactive in this cell line',
       colour => 'black',

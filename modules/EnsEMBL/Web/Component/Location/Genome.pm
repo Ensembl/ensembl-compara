@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ sub content {
       $features = $object->convert_to_drawing_parameters;
     }
   }
-
   my $html = $self->_render_features($id, $features, $config);
   return $html;
 }
@@ -145,18 +144,27 @@ sub _render_features {
           $title = 'Location';
           $title .= 's' if $mapped_features > 1;
           $title .= ' of ';
-          my ($data_type, $assoc_name);
+          my ($data_type, $assoc_name, $go_link);
           my $ftype = $hub->param('ftype');
-          if (grep (/$ftype/, keys %$features)) {
-            $data_type = $ftype;
+          my $go    = $hub->param('gotype');
+
+          #add extra description only for GO (gene ontologies) which is determined by param gotype in url
+          if($go) {
+            my $adaptor = $hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+            my $go_hash = $adaptor->fetch_by_accession($id);
+            my $go_name = $go_hash->{name};
+            $go_link    = $hub->get_ExtURL_link($id, $go, $id)." ".$go_name; #get_ExtURL_link will return a text if $go is not valid
           }
-          else {
+          
+          if (grep (/$ftype/, keys %$features) && !$id) {
+            $data_type = $ftype;
+          } else {
             my @A = sort keys %$features;
             $data_type = $A[0];
             $assoc_name = $hub->param('name');
             unless ($assoc_name) {
               $assoc_name = $xref_type.' ';
-              $assoc_name .= $id;
+              $assoc_name .= $go_link ? $go_link : $id;
               $assoc_name .= " ($xref_name)" if $xref_name;
             }
           }
@@ -494,7 +502,12 @@ sub add_extras {
   my ($self, $row, $feature, $extras) = @_;
   foreach my $col (@$extras) {
     my $key = $col->{'key'};
-    $row->{$key} = {'value' => $feature->{'extra'}{$key} || $feature->{$key}};
+    if (defined $feature->{'extra'}{$key}) {
+      $row->{$key} = {'value' => $feature->{'extra'}{$key}};
+    }
+    else {
+      $row->{$key} = {'value' => $feature->{$key}};
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,6 +50,9 @@ sub create_hash {
   $metadata         ||= {};
   my $strand          = $self->parser->get_strand || 0;
   my $score           = $self->parser->get_score;
+  if ($score =~ /inf/i) {
+    $score = uc($score);
+  }
   my $colour_params   = {
                         'metadata'  => $metadata, 
                         'strand'    => $strand, 
@@ -69,7 +72,7 @@ sub create_hash {
                         'start'       => $feature_start,
                         'end'         => $feature_end,
                         'strand'      => $feature_strand,
-                        });
+                        }) unless $metadata->{'omit_feature_links'};
 
   my $feature = {
     'start'         => $start,
@@ -120,6 +123,7 @@ sub create_hash {
                             {'name' => 'Thick end', 'value' => $self->parser->get_thickEnd},
                             ];
     }
+    ## TODO Put RNAcentral link here
   }
   else {
     $feature->{'structure'}     = $self->create_structure($feature_start, $slice->start);

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,15 @@ package EnsEMBL::Web::Constants;
 use strict;
 use warnings;
 no warnings 'uninitialized';
+
+sub RENDERERS {
+### Master set of renderers for all formats
+  return {
+    'pvalue' => {'renderers' => ['signal', 'Wiggle plot', 'gradient', 'P-value'],
+                  'default'  => 'gradient'},
+  }
+
+}
 
 sub ICON_MAPPINGS {
 ### Metadata for the icons that appear on the configuration bar

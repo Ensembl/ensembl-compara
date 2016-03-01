@@ -20,6 +20,11 @@ In addiition, the following repositories are required for our Tools interface:
 * ensembl-hive
 * ensembl-tools
 
-Further documentation on how to install and configure an Ensembl-powered website can be found at http://www.ensembl.org/info/docs/webcode/index.html
+Further documentation on how to install and configure an Ensembl-powered website
+can be found at http://www.ensembl.org/info/docs/webcode/index.html
+
+# Contributions
+
+If you would like to contibute to the Ensembl webcode please see [our contribution guide](https://github.com/Ensembl/ensembl/blob/master/CONTRIBUTING.md).
 
 

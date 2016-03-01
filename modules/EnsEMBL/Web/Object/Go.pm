@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,8 +61,8 @@ sub load_genes {
       my $gene_obj = $ga->fetch_by_dbID($gene);
       push (@$subarray_ref, $gene_obj);
       if($self->param('display')) {
-        my $fam_obj = $fa->fetch_by_Member_source_stable_id( 'ENSEMBLGENE', $gene_obj->stable_id ); 
-        if( $fam_obj ) {
+        my $fam_obj = $fa->fetch_all_by_Gene($gene_obj);
+        if( @$fam_obj ) {
           push (@$subarray_ref, $fam_obj->[0]);
         } else {
           warn "NO FAMILY OBJ ", $gene_obj->stable_id ;

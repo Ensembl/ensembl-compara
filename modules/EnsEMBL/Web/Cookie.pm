@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,10 +24,9 @@ package EnsEMBL::Web::Cookie;
 use strict;
 use warnings;
 
-use Digest::MD5;
-
 use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::Attributes;
+use EnsEMBL::Web::Utils::Encryption qw(encrypt_value decrypt_value);
 
 use base qw(CGI::Cookie);
 
@@ -77,7 +76,7 @@ sub value {
 
   if (@_) {
     my $value = $self->{'_ens_value'} = shift;
-    $self->SUPER::value($self->encrypted ? _encrypt_value($value) : $value);
+    $self->SUPER::value($self->encrypted ? encrypt_value($value) : $value);
     if (my $env = $self->env) {
       $self->apache_handle->subprocess_env->{$env} = $value;
       $ENV{$env} = $value;
@@ -168,7 +167,7 @@ sub retrieve {
     if ($cookie) {
       $cookie->_init($apache_handle, $_, 1) if keys %$_;
       if ($cookie->encrypted) {
-        my ($value, $flag) = _decrypt_value($cookie->value);
+        my ($value, $flag) = decrypt_value($cookie->value);
         $cookie->value($value);
         $cookie->clear if $flag eq 'expired';  ## Remove the cookie
         $cookie->bake  if $flag eq 'refresh';  ## Refresh the cookie
@@ -220,43 +219,6 @@ sub _init {
   $self->domain($params->{'domain'} || $SiteDefs::ENSEMBL_COOKIEHOST);
   $self->path($params->{'path'}     || '/');
   $self->apache_handle($apache_handle);
-}
-
-sub _encrypt_value {
-  ## @private
-  ## @function
-  my $value     = shift;
-
-  my $rand1     = 0x8000000 + 0x7ffffff * rand();
-  my $rand2     = ( $rand1 ^ ($value + $SiteDefs::ENSEMBL_ENCRYPT_0 ) ) & 0x0fffffff;
-  my $time      = time() + 86400 * $SiteDefs::ENSEMBL_ENCRYPT_EXPIRY;
-  my $encrypted = crypt(sprintf("%08x", $rand1), $SiteDefs::ENSEMBL_ENCRYPT_1).
-                  crypt(sprintf("%08x", $time ), $SiteDefs::ENSEMBL_ENCRYPT_2).
-                  crypt(sprintf("%08x", $rand2), $SiteDefs::ENSEMBL_ENCRYPT_3);
-  my $md5d      = Digest::MD5->new->add($encrypted)->hexdigest;
-  return sprintf("%s%08x%08x%08x%s", substr($md5d, 0, 16), $rand1, $time, $rand2, substr($md5d, 16, 16));
-}
-
-sub _decrypt_value {
-  ## @private
-  ## @function
-  my $string          = shift;
-
-  my $rand1           = substr($string, 16, 8);
-  my $time            = substr($string, 24, 8);
-
-  return (0, 'expired') if hex($time) < time();
-
-  my $rand2           = substr($string, 32, 8);
-  my $value           = ( ( hex( $rand1 ) ^ hex( $rand2 ) ) - $SiteDefs::ENSEMBL_ENCRYPT_0 ) & 0x0fffffff;
-  my $encrypted       = crypt($rand1, $SiteDefs::ENSEMBL_ENCRYPT_1).
-                        crypt($time,  $SiteDefs::ENSEMBL_ENCRYPT_2).
-                        crypt($rand2, $SiteDefs::ENSEMBL_ENCRYPT_3);
-  my $md5d            = Digest::MD5->new->add($encrypted)->hexdigest;
-  return (
-    (substr($md5d, 0, 16).$rand1.$time.$rand2.substr($md5d, 16, 16)) eq $string ? $value    : 0,
-    hex($time) < time() - $SiteDefs::ENSEMBL_ENCRYPT_REFRESH * 86400            ? 'refresh' : 'ok'
-  );
 }
 
 1;

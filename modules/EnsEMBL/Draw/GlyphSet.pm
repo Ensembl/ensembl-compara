@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ sub new {
     bumped     => undef,
     error      => undef,
     features   => [],
+    data       => [], ## New name for 'features'
     highlights => $data->{'highlights'},
     strand     => $data->{'strand'},
     container  => $data->{'container'},
@@ -270,6 +271,12 @@ sub _init {
 
 sub init { return []; } ## New method used by refactored glyphsets
 
+sub features {
+  my $self = shift;
+  warn ">>>> DEPRECATED METHOD 'features' CALLED BY $self - please use 'get_data' instead.";
+  return $self->get_data(@_);
+}
+
 sub bumped {
   my ($self, $val) = @_;
   $self->{'bumped'} = $val if(defined $val);
@@ -355,6 +362,31 @@ sub can_json {
 ### Should be set to 1 in modules that support it
   return 0;
 }
+
+sub bg_href {
+  my ($self, $height) = @_;
+  return {} unless $self->{'my_config'}->get('link_on_bgd') && $self->can('bg_link');
+
+  ## Background link - needed for zmenus
+  ## Needs to be first to capture clicks
+  ## Useful to keep zmenus working on blank regions
+  ## only useful in nobump or strandbump modes
+  my %off   = ( 0 => 0 );
+  $height ||= $self->{'my_config'}->get('height');
+
+  if ($self->my_config('strandbump')) {
+    $off{0}       = -1;
+    $off{$height} = 1;
+  }
+
+  my $bg_href = {};
+  foreach my $y (keys %off) {
+    $bg_href->{$y} = $self->bg_link($off{$y});
+  }
+
+  return $bg_href;
+}
+
 
 ############### GENERIC RENDERING ####################
 
@@ -1147,7 +1179,9 @@ sub no_features {
     $label = $self->my_empty_label;
   }
   $label ||= $self->my_label;
-  $self->errorTrack($label) if $label && $self->{'config'}->get_option('opt_empty_tracks') == 1;
+  $self->errorTrack($label) if $label && 
+    ($self->{'config'}->get_option('opt_empty_tracks') == 1
+      || $self->{'my_config'}->get('show_empty_track') == 1 );
 }
 
 sub too_many_features {

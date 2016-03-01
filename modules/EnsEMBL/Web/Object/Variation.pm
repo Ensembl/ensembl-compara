@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -503,6 +503,14 @@ sub alleles {
 
   my $self = shift;
 
+  # A selected variation feature
+  if ($self->hub->param('vf')) {
+    my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor();
+    my $vf_object  = $vf_adaptor->fetch_by_dbID($self->hub->param('vf'));
+    return $vf_object->allele_string if $vf_object;
+  }
+
+  # A unique variation feature
   my  @vari_mappings = @{ $self->unique_variation_feature };
   return $vari_mappings[0]->allele_string if @vari_mappings;
 

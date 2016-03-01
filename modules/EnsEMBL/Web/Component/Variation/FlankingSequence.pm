@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ sub content {
 
   # check if the flanking sequences match the reference sequence
   if (defined $align_quality && $align_quality < 1) {
-    my $source_link = $hub->get_ExtURL_link('here', uc $variation->source, "$config->{'v'}#submission");
+    my $source_link = $hub->get_ExtURL_link('here', uc $variation->source_name, "$config->{'v'}#submission");
        $source_link =~ s/%23/#/;
        
     $html .= $self->_warning('Alignment quality', "

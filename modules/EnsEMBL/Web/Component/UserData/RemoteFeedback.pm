@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,12 +48,12 @@ sub content {
     $message = $self->get_message($hub->param('species_flag'), $hub->param('assembly_flag'));
   }
   else {
-    $message = qq(Thank you - your remote data was successfully attached. Close this Control Panel to view your data);
+    $message = qq(<p>Thank you - your remote data was successfully attached. Close this Control Panel to view your data</p>);
   }
 
   $form->add_element(
       type  => 'Information',
-      value => '<p>'.$message.'</p>', 
+      value => $message, 
     );
   $form->add_element( 'type' => 'ForceReload' );
 
@@ -88,6 +88,13 @@ sub get_message {
   }
   elsif ($reattach) {
     $message = $messages{'hub_'.$reattach}{'message'};
+    ## Internally configured hub
+    if ($reattach = 'preconfig') {
+      $trackhub_ok = 0;
+      my $link = $hub->url({'type' => 'Config', 'action' => 'Location', 'function' => 'ViewBottom'});
+      $message .= sprintf(' Tracks can be found in the <a class="modal_link" href="%s">Region in Detail configuration options</a>', $link);
+      $message = $self->info_panel('Note', $message);
+    }
   }
   else {
     $message = $messages{'hub_ok'}{'message'};

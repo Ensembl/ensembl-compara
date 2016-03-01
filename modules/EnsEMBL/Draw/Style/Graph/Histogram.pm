@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,16 +32,17 @@ sub draw_wiggle {
   my $height = $c->{'height'} || 8;
 
   my $params = {
-    values    => $features,
-    x         => 1,
-    y         => $c->{'y_offset'} || 0,
-    height    => $height,
-    unit      => $c->{'unit'},
-    max       => $c->{'max_score'},
-    colour    => $c->{'colour'},
+    values          => $features,
+    x               => 1,
+    y               => $c->{'y_offset'} || 0,
+    height          => $height,
+    unit            => $c->{'unit'},
+    max             => $c->{'max_score'},
+    colour          => $c->{'colour'},
+    truncate_colour => $c->{'truncate_colour'},
   };
   push @{$self->glyphs}, $self->Histogram($params);
-  $self->add_hidden_bgd($height);
+  $self->draw_hidden_bgd($height);
 }
 
 1;
