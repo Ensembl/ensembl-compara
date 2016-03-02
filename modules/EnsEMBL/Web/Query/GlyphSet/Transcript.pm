@@ -300,6 +300,7 @@ sub _get_transcripts {
       title => $self->_title($t,$g),
       exons => $self->_get_exons($args,$t),
       stable_id => $t->stable_id,
+      coding => !!$t->translation,
     };
     if($t->translation) {
       $tf->{'translation_stable_id'} = $t->translation->stable_id;
@@ -307,6 +308,16 @@ sub _get_transcripts {
     push @tff,$tf;
   }
   return \@tff;
+}
+
+sub _is_coding_gene {
+  my ($self, $gene) = @_;
+
+  foreach (@{$gene->get_all_Transcripts}) {
+    return 1 if $_->translation;
+  }
+
+  return 0;
 }
 
 sub get {
@@ -331,7 +342,7 @@ sub get {
       strand => $g->strand,
       stable_id => $g->stable_id,
       transcripts => $self->_get_transcripts($args,$g),
-      coding => 
+      coding => $self->_is_coding_gene($g),
     };
     push @out,$gf;
   }

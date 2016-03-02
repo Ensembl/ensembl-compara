@@ -72,6 +72,16 @@ sub _get_data {
   });
 }
 
+sub features { # For genoverse
+  my ($self,$display) = @_;
+  
+  my $out = $_[0]->_get_data;
+  if(grep { $_ eq $display } qw(gene_label gene_nolabel collapsed_label collapsed_nolabel)) {
+    $self->_prepare_collapsed($out);
+  }
+  return $out;
+}
+
 sub _prepare_collapsed {
   my ($self,$ggdraw) = @_;
 
