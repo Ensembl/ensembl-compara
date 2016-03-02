@@ -65,12 +65,12 @@ sub merge {
 }
 
 sub cache_open {
-  my ($self,$r) = @_;
+  my ($self,$rebuild) = @_;
 
   return if $self->{'open'};
-  $self->{'rfile'}->delete() if $r;
+  $self->{'rfile'}->delete() if $rebuild;
   $self->{'rfile'}->open_read() or return;
-  $self->{'wfile'}->open_write();
+  $self->{'wfile'}->open_write() if defined $rebuild;
   $self->{'open'} = 1;
 }
 

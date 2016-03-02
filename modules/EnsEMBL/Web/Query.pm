@@ -118,7 +118,7 @@ sub precache {
     next unless ($k % $n) == $i;
     push @parts,$all_parts->[$k];
   }
-  $self->{'store'}->open($r);
+  $self->{'store'}->open($r||0);
   my $start = time();
   foreach my $args (@parts) {
     my @args = ($args);
