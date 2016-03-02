@@ -91,7 +91,7 @@ sub has_evidence {
   my ($self) = @_;
 
   # Can be simple accessor for 76, but avoid breaking master
-  return $self->Obj->has_evidence if $self->Obj->can('has_evidence');
+  return $self->Obj->activity if $self->Obj->can('activity');
   return undef;
 }
 sub cell_type_count {
