@@ -36,6 +36,7 @@ sub content {
     r            => $hub->referer->{'params'}->{'r'}[0],
     code         => $hub->param('code'),
     nearest      => $hub->param('nearest'),
+    description  => $hub->param('description'),
     count        => $hub->param('count'),
     _type        => $hub->param('type') || 'upload',
     update_panel => 1,
@@ -92,16 +93,19 @@ sub content_ajax {
       } 
       else {
         my $error;
-        my $nearest = $hub->param('nearest');
+        my $nearest     = $hub->param('nearest');
+        my $description = $hub->param('description');
         
         if ($nearest) {
 
           if ($hub->user) {
             $record->nearest($nearest);
+            $record->description($description) if $description;
             $record->save;
           }
           else {
-            $data->{'nearest'}   = $nearest;
+            $data->{'nearest'}      = $nearest;
+            $data->{'description'}  = $description if $description;
             $session->set_data(%$data);
           }
    
