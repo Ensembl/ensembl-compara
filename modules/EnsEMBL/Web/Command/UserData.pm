@@ -73,6 +73,9 @@ sub upload {
     $params->{'species'}  = $hub->param('species') || $hub->species;
     $params->{'format'}   = $iow->format;
     $params->{'code'}     = $file->code;
+
+    ## Get description from file
+    $params->{'description'} = $iow->get_metadata_value('description');
   } 
  
   return $params;
