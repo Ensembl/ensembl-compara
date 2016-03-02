@@ -25,6 +25,7 @@ use strict;
 no warnings 'uninitialized';
 
 use Role::Tiny;
+use List::Util qw(max);
 
 use Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
@@ -37,7 +38,6 @@ sub can_json { return 1; }
 sub init {
   my $self = shift;
 
-  ## We only need wiggle roles, as alignment rendering has a non-standard name
   my @roles = qw(EnsEMBL::Draw::Role::Wiggle); 
   Role::Tiny->apply_roles_to_object($self, @roles);
 
@@ -74,9 +74,16 @@ sub render_density_bar {
   $self->{'my_config'}->set('height', 20);
   $self->{'my_config'}->set('no_guidelines', 1);
   $self->{'my_config'}->set('integer_score', 1);
+  my $colours = $self->species_defs->colour('variation');
+  $self->{'my_config'}->set('colour', $colours->{'default'}->{'default'});
+  #$self->{'data'}[0]{'metadata'}{'colour'} = $colour;
+
   ## Convert raw features into correct data format 
-  $self->{'data'}[0]{'features'}{'1'} = $self->density_features;
-  $self->render_signal;
+  my $density_features = $self->density_features;
+  $self->{'data'}[0]{'features'}{'1'} = $density_features;
+  $self->{'my_config'}->set('max_score', max(@$density_features));
+  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+  $self->_render_aggregate;
 }
 
 ############# DATA ACCESS & PROCESSING ########################
@@ -247,25 +254,17 @@ sub density_features {
   my $self     = shift;
   my $slice    = $self->{'container'};
   my $start    = $slice->start - 1;
-  my $vclen    = $slice->length;
+  my $length   = $slice->length;
   my $im_width = $self->{'config'}->image_width;
-  my $divs     = $im_width;
-  my $divlen   = $vclen / $divs;
+  my $divlen   = $length / $im_width;
   $divlen      = 10 if $divlen < 10; # Increase the number of points for short sequences
+  $self->{'data'}[0]{'metadata'}{'unit'} = $divlen;
   my $density  = {};
-  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->get_data};
-
-  my $colours = $self->species_defs->colour('variation');
-  my $colour  = $colours->{'default'}->{'default'};
+  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->{'data'}[0]{'features'}{1}};
 
   my $density_features = [];
-  foreach (sort {$density->{$a} <=> $density->{$b}} keys %$density) {
-    push @$density_features, {
-                              'start'   => $_, 
-                              'end'     => $_ + $divlen,
-                              'colour'  => $colour,
-                              'score'   => $density->{$_}
-                              };
+  foreach (sort {$a <=> $b} keys %$density) {
+    push @$density_features, $density->{$_};
   }
   return $density_features;
 }
