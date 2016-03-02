@@ -169,7 +169,7 @@ sub draw_aggregate {
                           sublegend_links => $self->_sublegend_links,
                           };
             if ($show_blocks && $show_wiggle) {
-              $params->{'y_offset'} = $h * 6;
+              $params->{'y_offset'} = $self->{'my_config'}->get('total_height');
             }
             $header->draw_sublegend($params);
           }

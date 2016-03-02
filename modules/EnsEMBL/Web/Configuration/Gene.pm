@@ -206,24 +206,11 @@ sub populate_tree {
     { 'availability' => 'gene has_structural_variation core not_patch' }
   ));
 
-  # External Data tree
-  my $external = $self->create_node('ExternalData', 'External data',
-    [qw( external EnsEMBL::Web::Component::Gene::ExternalData )],
-    { 'availability' => 'gene' }
-  );
-
-  $external->append($self->create_subnode('ExpressionAtlas', 'Gene expression',
+  my $ext_menu = $self->create_submenu('ExternalData', 'External data');
+  $ext_menu->append($self->create_subnode('ExpressionAtlas', 'Gene expression',
     [qw( atlas EnsEMBL::Web::Component::Gene::ExpressionAtlas )],
     { 'availability'  => 'gene has_gxa' }
   ));
-
-  
-  if ($hub->users_available) {
-    $external->append($self->create_node('UserAnnotation', 'Personal annotation',
-      [qw( manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation )],
-      { 'availability' => 'logged_in gene' }
-    ));
-  }
   
   my $history_menu = $self->create_submenu('History', 'ID History');
   

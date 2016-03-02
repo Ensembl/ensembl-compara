@@ -260,24 +260,31 @@ sub get_text_info {
 sub draw_subtitle {
   my ($self, $metadata, $top) = @_;
   $metadata ||= {};
-  my $subtitle = $metadata->{'subtitle'} || $metadata->{'name'};
+  ## Track name actually gets precedence, which is a bit illogical but whatever...
+  my $subtitle = $metadata->{'name'} || $metadata->{'subtitle'};
   return unless $subtitle;
 
-  my $subtitle_colour = $metadata->{'colour'} || $metadata->{'color'};
-  my $subtitle_y      = $top || $self->track_config->get('initial_offset') || 0;
+  my $subtitle_colour = $metadata->{'colour'} 
+                          || $metadata->{'color'} 
+                          || $self->track_config->get('colour') 
+                          || 'black';
+  my $subtitle_y      = defined($top) ? $top : $self->track_config->get('initial_offset') || 0;
   $subtitle_y        += defined($self->track_config->get('subtitle_y')) ? $self->track_config->get('subtitle_y') : 8;
+  my $height = 8;
+
   push @{$self->glyphs}, 
     $self->Text({
                   font      => 'Arial',
                   text      => $subtitle, 
                   ptsize    => 8,
-                  height    => 8,
-                  colour    => $subtitle_colour || 'black',
+                  height    => $height,
+                  colour    => $subtitle_colour,
                   x         => 4,
                   y         => $subtitle_y,
                   halign    => 'left',
                   absolutex => 1,
                 });
+  return $height;
 }
 
 sub make_readable {

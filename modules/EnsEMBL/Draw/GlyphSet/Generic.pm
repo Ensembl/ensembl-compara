@@ -27,6 +27,8 @@ use List::Util qw(min max);
 
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
+use EnsEMBL::Draw::Style::Extra::Legend;
+
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
 sub can_json { return 1; }
@@ -224,7 +226,11 @@ sub draw_aggregate {
                     transform      => 'log2',
                     decimal_places => 5,
                   };
-    $self->convert_to_pvalues($data, $params);
+    my ($gradient, $labels) = $self->convert_to_pvalues($data, $params);
+    ## Also draw key in lefthand margin
+    my $legend = EnsEMBL::Draw::Style::Extra::Legend->new(\%config);
+    $legend->draw_gradient_key($gradient, $labels);
+    $self->push(@{$legend->glyphs||[]});
   }
 
   foreach (@{$drawing_style||[]}) {
@@ -263,7 +269,6 @@ sub convert_to_pvalues {
   my $min_score        = $params->{min_score} || 0;
   my @gradient_colours = @{ $params->{gradient_colours} || [qw(white red)] };
   my $transform        = $transforms{ $params->{transform} || 'default' };
-  my $key_labels       = $params->{key_labels} || [$min_score, $max_score];
   my $decimal_places   = $params->{decimal_places} || 2;
 
   my $colour_grades       = 20;
@@ -280,6 +285,13 @@ sub convert_to_pvalues {
     return $grade
   };
 
+  ## Create a key to these colours
+  my $key         = {};
+  my $key_labels  = $params->{key_labels} || [$min_score, $max_score];
+  foreach (@$key_labels) {
+    $key->{$grade_from_score->($_)} = $_;
+  }
+
   ## Finally we get to actually set the feature colours!
   foreach (@$data) {
     foreach my $f (@{$_->{'features'}||[]}) {
@@ -287,6 +299,7 @@ sub convert_to_pvalues {
       $f->{'colour'} = $colour;
     }
   }
+  return (\@gradient, $key);
 }
 
 sub configure_strand {

@@ -295,6 +295,8 @@ sub content {
     my $rfa = $hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
     
     for my $rfv (@{ $vf_obj->get_all_RegulatoryFeatureVariations }) {
+      next unless $rfv->regulatory_feature;
+
       my $rf_stable_id = $rfv->regulatory_feature->stable_id;
       my $rfs = $rfa->fetch_all_by_stable_ID($rf_stable_id);
        
@@ -504,7 +506,7 @@ sub detail_panel {
   my $self     = shift;
   my $object   = $self->object;
   my $hub      = $self->hub;
-  my $vf_adaptor = $hub->database('variation')->get_VariationAdaptor;
+  my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
   my $allele   = $hub->param('allele');
   my $tr_id    = $hub->param('t');
   my $vf_id    = $hub->param('vf');

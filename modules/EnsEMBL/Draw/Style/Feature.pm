@@ -80,7 +80,9 @@ sub create_glyphs {
 
     ## Draw title over track
     if ($track_config->get('show_subtitle')) {
-      $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
+      $self->track_config->set('subtitle_y', 0);
+      my $subtitle_height = $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
+      $subtrack_start .= $subtitle_height + 2;
     }
 
     my @features = @{$subtrack->{'features'}||[]}; 
@@ -180,6 +182,8 @@ sub create_glyphs {
     $self->add_messages($subtrack->{'metadata'}, $subtrack_height);
   }
   $self->draw_hidden_bgd($total_height);
+  my $track_height = $track_config->get('total_height') || 0;
+  $track_config->set('total_height', $track_height + $total_height);
 
   $track_config->set('y_start', $y_start + $total_height);
   return @{$self->glyphs||[]};
