@@ -125,14 +125,17 @@ sub _make_legend {
 # labels
 
 sub text_details {
-  my $self = shift;
+  my ($self,$text) = @_;
   
-  if (!$self->{'text_details'}) {
-    my %font_details = $self->get_font_details('outertext', 1);
-    $self->{'text_details'} = { %font_details, height => [ $self->get_text_width(0, 'Xg', 'Xg', %font_details) ]->[3] + 1 };
-  }
-  
-  return $self->{'text_details'};
+  my $pix_per_bp = $self->scalex;
+  $text ||= 'Xg';
+  my %font_details = $self->get_font_details('outertext', 1);
+  my @details = $self->get_text_width(0,$text,$text,%font_details);
+  return {
+    %font_details,
+    height => $details[3] + 1,
+    width => $details[2]/$pix_per_bp
+  };
 }
 
 sub _add_label {
@@ -140,11 +143,11 @@ sub _add_label {
 
   return unless $g->{'label'};
   
-  my $text_details = $self->text_details;
   my $y            = $composite->height;
   my $yo = $y;
 
   foreach my $line (split("\n",$g->{'label'})) {
+    my $text_details = $self->text_details($line);
     $composite->push($self->Text({
       x         => $g->{'_bstart'},
       y         => $y,
