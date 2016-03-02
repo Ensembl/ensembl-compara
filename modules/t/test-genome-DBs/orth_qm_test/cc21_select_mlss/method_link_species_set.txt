@@ -1,0 +1,2 @@
+647	13	35399	4 sauropsids EPO	ensembl		74	\N
+719	16	35714	H.sap-G.gal lastz-net (on H.sap)	ensembl		76	\N

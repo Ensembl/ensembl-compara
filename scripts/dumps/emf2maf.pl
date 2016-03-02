@@ -67,13 +67,11 @@ foreach my $emf_file (@ARGV) {
     } elsif ($_ =~ /^SEQ (.+)/) {
       my $info = $1;
       my ($species, $chromosome, $start, $end, $strand) =  $info =~ /(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)/;
-      my ($extra) = $info =~ /\(([^\)]+)\)/;
-      $extra =~ s/=/=>/g;
-      $extra = eval("{$extra}");
+      my ($chr_length) = $info =~ /chr_length=(\d+)/;
       $pattern .= " ?(\\S)";
       push(@$data, {type => "SEQ", species => $species, seq_region => $chromosome,
           start => $start, end => $end, strand => $strand, seq => "",
-	  chr_length => $extra->{chr_length}});
+	  chr_length => $chr_length});
     } elsif ($_ =~ /^SCORE/) {
       $pattern .= " (\-?[\\d\.]+)";
       push(@$data, {type => "SCORE", values => []});

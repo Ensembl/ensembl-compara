@@ -67,7 +67,8 @@ sub run {
 #			print $homology->goc_score , "\n", $homology->dbID, "\n\n";
 			$homology_adaptor->update_goc_score($result->[0], $orth_results->{$result->[0]});
 			}
-		} else {
+		} 
+		else {
 			$orth_results->{$result->[0]} = $result->[1];
 		}
 	} 

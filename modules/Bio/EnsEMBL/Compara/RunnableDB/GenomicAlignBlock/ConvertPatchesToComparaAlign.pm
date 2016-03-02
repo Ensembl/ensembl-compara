@@ -49,6 +49,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::ConvertPatchesToCo
 use strict;
 use warnings;
 
+use List::Util qw(sum);
+
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -231,9 +234,8 @@ foreach my $ref_name(keys %aligned_patch){
                 our $arr;
                 *arr = \$aligned_patch{$ref_name}{$patch_name};
 		foreach my $gab(@{ $arr }){
-			my $align_len=$gab->{ref_aln_bases};
-			$align_len =~s/[MD]/+/g;
-			$align_len = eval $align_len . 0;
+                        my @num = split(/[MD]/, $gab->{ref_aln_bases});
+                        my $align_len = sum0(@num);
 			$gab->{ref_aln_bases}=~s/M1D/MD/g;
 			$gab->{patch_aln_bases}=~s/M1D/MD/g;
 			$gab->{ref_aln_bases}=~s/M0D/M/g; # just in case (should never be used)

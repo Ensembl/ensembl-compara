@@ -47,10 +47,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    return {};
-}
-
 sub fetch_input {
     my $self = shift @_;
 
@@ -61,8 +57,8 @@ sub fetch_input {
         $self->param( 'compara_dba',       $self->compara_dba );
     }
     else {
-        $self->warning("reuse_db hash has not been set, so cannot reuse");
         $self->param( 'reuse_this', 0 );
+        $self->complete_early("reuse_db hash has not been set, so cannot reuse");
         return;
     }
 }
@@ -79,7 +75,7 @@ sub run {
     #---------------------------------------------------------------------------------
     #deleted, updated & added arent used by the logic.
     #It is just here in case we need to test which genes are different in each case.
-    #flag is tha hash used my the module.
+    #flag is that hash used my the module.
     #---------------------------------------------------------------------------------
     my ( %flag, %deleted, %updated, %added );
     print "flagging members\n" if ( $self->debug );
@@ -113,6 +109,7 @@ sub run {
         my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
         $self->throw("no input gene_tree") unless $gene_tree;
 
+        $gene_tree->preload();
         my @members = @{ $gene_tree->get_all_Members };
 
         foreach my $member (@members) {
@@ -132,6 +129,8 @@ sub run {
                 $root_ids_2_add{$gene_tree_id}{ $member->stable_id } = 1;
             }
         }
+        #releasing tree from memory
+        $gene_tree->release_tree;
 
     } ## end foreach my $gene_tree_id ( ...)
 } ## end sub run

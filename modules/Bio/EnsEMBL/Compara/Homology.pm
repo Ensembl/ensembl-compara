@@ -59,6 +59,10 @@ Reconciliation with the gene tree:
  - species_tree_node()
  - taxonomy_level() (alias to species_tree_node()->node_name())
 
+ Ortholog quality scores
+ - goc_score
+ - wga_coverage
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
@@ -151,6 +155,26 @@ sub goc_score {
   my $self = shift;
   $self->{'_goc_score'} = shift if(@_);
   return $self->{'_goc_score'};
+}
+
+## ortholog score based on whole genome alignments
+
+=head2 wga_coverage
+
+  Arg [1]    : float $wga_coverage (optional)
+  Example    : $wga_coverage = $homology->wga_coverage();
+               $homology->wga_coverage(39.7);
+  Description: getter/setter of wga coverage for the homology.
+  Returntype : float
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub wga_coverage {
+  my $self = shift;
+  $self->{'_wga_coverage'} = shift if(@_);
+  return $self->{'_wga_coverage'};
 }
 
 

@@ -4,13 +4,4 @@
   'user'   => 'travis',
   'pass'   => '',
   'host'   => '127.0.0.1',
-
-#add a line with the dbname and module
- 'databases' => {
-    'multi' => { 'compara'    => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'OrthologQM_GeneOrder' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor' },
-    'homo_sapiens' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
-    'mus_musculus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
-    'felis_catus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
-    'pan_troglodytes' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
- }
 }

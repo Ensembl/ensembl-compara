@@ -321,7 +321,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'create_low_coverage_genome_jobs',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
-				'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id') . ' AND genome_db_id <> 63 GROUP BY genomic_align_block_id',
+				'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id') . ' AND coord_system_name != "ancestralsegment" GROUP BY genomic_align_block_id',
 				'fan_branch_code' => 2,
 			       },
 		-flow_into => {

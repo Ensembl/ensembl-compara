@@ -56,7 +56,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.3;
 
-use Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -136,8 +136,8 @@ sub pipeline_analyses {
                            -meadow_type       => 'LOCAL',
                           );
 
-    my $analyses_species_tree = Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_species_tree($self);
-    my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_cafe($self);
+    my $analyses_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_species_tree($self);
+    my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self);
 
     return [
 

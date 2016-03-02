@@ -335,6 +335,7 @@ CREATE TABLE `homology` (
   `gene_tree_node_id` int(10) unsigned DEFAULT NULL,
   `gene_tree_root_id` int(10) unsigned DEFAULT NULL,
   `goc_score` int(10) unsigned DEFAULT NULL,
+  `wga_coverage` DEC(5,2) DEFAULT NULL,
   PRIMARY KEY (`homology_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`),
   KEY `species_tree_node_id` (`species_tree_node_id`),

@@ -67,8 +67,8 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 =head2 fetch_all_current
 
   Example     : $object_name->fetch_all_current();
-  Description : 
-  Returntype  : 
+  Description : Returns all the objects that are in the current release
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::StorableWithReleaseHistory
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -83,9 +83,10 @@ sub fetch_all_current {
 
 =head2 fetch_all_by_release
 
-  Example     : $object_name->fetch_all_by_release();
-  Description : 
-  Returntype  : 
+  Arg[0]      : integer $release_number
+  Example     : $object_name->fetch_all_by_release(76);
+  Description : Returns all the objects present in this release of Ensembl
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::StorableWithReleaseHistory
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -101,8 +102,9 @@ sub fetch_all_by_release {
 
 =head2 update_first_last_release
 
+  Arg[1]      : Bio::EnsEMBL::Compara::StorableWithReleaseHistory
   Example     : $mlss_adaptor->update_first_last_release($mlss);
-  Description : Generic method to update first/last_release in the database
+  Description : Generic method to update first/last_release in the database given the current values of the object
   Returntype  : none
   Exceptions  : none
   Caller      : general
@@ -122,7 +124,8 @@ sub update_first_last_release {
 
 =head2 retire_object
 
-  Example     : $genome_db_adaptor->retire_object();
+  Arg[1]      : Bio::EnsEMBL::Compara::StorableWithReleaseHistory
+  Example     : $genome_db_adaptor->retire_object($mlss);
   Description : Mark the object as retired, i.e. with a last_release older than the current version
   Returntype  : none
   Exceptions  : none
@@ -146,7 +149,8 @@ sub retire_object {
 
 =head2 make_object_current
 
-  Example     : $genome_db_adaptor->make_object_current();
+  Arg[1]      : Bio::EnsEMBL::Compara::StorableWithReleaseHistory
+  Example     : $genome_db_adaptor->make_object_current($mlss);
   Description : Mark the object as current, i.e. with a defined first_release and an undefined last_release
   Returntype  : none
   Exceptions  : none

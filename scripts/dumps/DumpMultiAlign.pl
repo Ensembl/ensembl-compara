@@ -583,6 +583,7 @@ while(1) {
 	} else {
 	    $gab = $genomic_align_set_adaptor->fetch_by_dbID($_);
 	}
+	die "Cannot find the block with dbID=$_" unless $gab;
 	push @$genomic_align_blocks, $gab;
     }
     close(FILE);

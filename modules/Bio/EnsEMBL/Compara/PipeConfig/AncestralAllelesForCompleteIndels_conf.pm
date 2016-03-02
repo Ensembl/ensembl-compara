@@ -229,7 +229,8 @@ sub pipeline_analyses {
              -input_ids     => [ {} ],
 	     -hive_capacity => 10,
 	     -flow_into => {
-			    1 => ['load_genomedb_factory' ,'load_ancestral_genomedb'],
+			    '1->A' => ['load_genomedb_factory' , 'load_ancestral_genomedb'],
+                            'A->1' => ['chunked_jobs_factory'], #backbone
 			   },
 	     -rc_name => '100Mb',
 	    },
@@ -241,8 +242,7 @@ sub pipeline_analyses {
                                 'extra_parameters'      => [ 'locator' ],
 			       },
 		-flow_into => {
-                               '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-			       'A->1' => [ 'load_genomedb_funnel' ],    # backbone
+                               2 => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
 			      },
 		-rc_name => '100Mb',
 	    },
@@ -257,23 +257,16 @@ sub pipeline_analyses {
 		-rc_name => '100Mb',
 	    },
 
-	    {   -logic_name => 'load_genomedb_funnel',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-		-rc_name => '100Mb',
-                -flow_into => {
-                               '1' => [ 'chunked_jobs_factory' ],
-                               },
-            },
 
             {   -logic_name => 'load_ancestral_genomedb',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAncestralGenomeDB',
 		-parameters => {
-                                'user' => $self->o('ancestor_user'),
-                                'host' => $self->o('ancestor_host'),
-                                'port' => $self->o('ancestor_port'),
-                                'dbname' => $self->o('ancestor_dbname'),
-                                'species_name' => $self->o('ancestor_species_name'),
-                                'sql' => [ 'INSERT INTO genome_db (genome_db_id, name, locator) VALUE (63, "ancestral_sequences", "Bio::EnsEMBL::DBSQL::DBAdaptor/host=#host#;port=#port#;user=#user#;pass=;dbname=#dbname#;species=#species_name#;species_id=1;disconnect_when_inactive=1")' ],
+                                'master_db' => $self->o('master_db'),
+                                'anc_user' => $self->o('ancestor_user'),
+                                'anc_host' => $self->o('ancestor_host'),
+                                'anc_port' => $self->o('ancestor_port'),
+                                'anc_dbname' => $self->o('ancestor_dbname'),
+                                'anc_name' => $self->o('ancestor_species_name'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
 		-rc_name => '100Mb',

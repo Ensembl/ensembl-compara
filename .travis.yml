@@ -35,10 +35,12 @@ before_install:
     - git clone --branch master --depth 1 https://github.com/samtools/htslib.git
     - cd htslib
     - make
+    - export HTSLIB_DIR=$(pwd -P)
     - cd ../
-    - git clone --branch master --depth 1 https://github.com/Ensembl/faidx_xs.git
-    - cd faidx_xs
-    - (perl Makefile.PL && make && cp lib/Faidx.pm .. && cp blib/arch/auto/Faidx/Faidx.so ..) || echo "skip faidx_xs"
+    - git clone --branch master --depth 1 https://github.com/Ensembl/Bio-HTS
+    - cd Bio-HTS
+    - perl Build.PL --htslib $HTSLIB_DIR
+    - ./Build
     - cd ../
 
 

@@ -242,8 +242,8 @@ sub run_command {
     print STDERR "COMMAND: $cmd\n" if ($self->debug);
     print STDERR "TIMEOUT: $timeout\n" if ($timeout and $self->debug);
     my $runCmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new($cmd, $timeout);
-    $self->dbc->disconnect_if_idle();
-    $self->compara_dba->dbc->disconnect_if_idle();
+    $self->dbc->disconnect_if_idle() if ($self->dbc);
+    $self->compara_dba->dbc->disconnect_if_idle() if ($self->compara_dba);
     $runCmd->run();
     print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($self->debug);
     print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($self->debug);
