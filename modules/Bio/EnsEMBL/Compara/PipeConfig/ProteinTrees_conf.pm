@@ -60,12 +60,13 @@ package Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.3;
+use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 
 use Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -2019,58 +2020,45 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'raxml_parsimony_decision',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
-            -parameters => {
-                'branches'  => {
-					#-------------------------------------------------------------------------------	
-					# This boundaries are based on RAxML and ExaML manuals.
-					# Which suggest the following number of cores:
-					#
-					#	ExaML:	DNA: 3.5K patterns/core
-					# 			AAs: 1K   patterns/core
-					#
-					#	RAxML:	DNA: 500 patterns/core
-					#			AAs: 150 patterns/core
-					#
-					#-------------------------------------------------------------------------------	
-
-					2 => '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# <= 500)',
-					3 => '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# > 500)',
-					4 => '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# <= 500)',
-					5 => '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# > 500)',
-					6 => '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# <= 500)',
-					7 => '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# > 500)',
-					8 => '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# <= 500)',
-					9 => '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# > 500)',
-					10 => '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# <= 500)',
-					11 => '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# > 500)',
-					12 => '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# <= 500)',
-					13 => '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# > 500)',
-					14 => '(#tree_num_of_patterns# > 32000)',
-
-                },
-                'else_branch'   => 5,
-                'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
-                'raxml_threshold_aln_len'      => $self->o('raxml_threshold_aln_len'),
-                'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
-                'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
-            },
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            #-parameters => {
+                #'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
+                #'raxml_threshold_aln_len'      => $self->o('raxml_threshold_aln_len'),
+                #'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
+                #'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
+            #},
             -hive_capacity  => 80,
             -batch_size    	=> 50,
+
+            #-------------------------------------------------------------------------------
+            # This boundaries are based on RAxML and ExaML manuals.
+            # Which suggest the following number of cores:
+            #
+            #   ExaML:  DNA: 3.5K patterns/core
+            #           AAs: 1K   patterns/core
+            #
+            #   RAxML:  DNA: 500 patterns/core
+            #           AAs: 150 patterns/core
+            #
+            #-------------------------------------------------------------------------------
+
             -flow_into  => {
-                2  => [ 'raxml_parsimony' ],
-                3  => [ 'raxml_parsimony' ],
-                4  => [ 'raxml_parsimony_8_cores' ],
-                5  => [ 'raxml_parsimony_8_cores' ],
-                6  => [ 'raxml_parsimony_8_cores' ],
-                7  => [ 'raxml_parsimony_16_cores' ],
-                8  => [ 'raxml_parsimony_16_cores' ],
-                9  => [ 'raxml_parsimony_16_cores' ],
-                10 => [ 'raxml_parsimony_32_cores' ],
-                11 => [ 'raxml_parsimony_32_cores' ],
-                12 => [ 'raxml_parsimony_32_cores' ],
-                13 => [ 'raxml_parsimony_64_cores' ],
-                14 => [ 'raxml_parsimony_64_cores' ],
+                1 => WHEN ( 
+                    '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# <= 500)'                                        => 'raxml_parsimony',
+                    '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# > 500)'                                         => 'raxml_parsimony',
+                    '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# <= 500)'     => 'raxml_parsimony_8_cores',
+                    '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# > 500)'      => 'raxml_parsimony_8_cores',
+                    '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# <= 500)'    => 'raxml_parsimony_8_cores',
+                    '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# > 500)'     => 'raxml_parsimony_16_cores',
+                    '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# <= 500)'    => 'raxml_parsimony_16_cores',
+                    '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# > 500)'     => 'raxml_parsimony_16_cores',
+                    '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# <= 500)'   => 'raxml_parsimony_32_cores',
+                    '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# > 500)'    => 'raxml_parsimony_32_cores',
+                    '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# <= 500)'  => 'raxml_parsimony_32_cores',
+                    '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# > 500)'   => 'raxml_parsimony_64_cores',
+                    '(#tree_num_of_patterns# > 32000)'                                                                     => 'raxml_parsimony_64_cores',
+                    ELSE 'raxml_parsimony_8_cores',
+                ),
             },
         },
 
@@ -2262,58 +2250,45 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'raxml_decision',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
-            -parameters => {
-                'branches'  => {
-					#-------------------------------------------------------------------------------	
-					# This boundaries are based on RAxML and ExaML manuals.
-					# Which suggest the following number of cores:
-					#
-					#	ExaML:	DNA: 3.5K patterns/core
-					# 			AAs: 1K   patterns/core
-					#
-					#	RAxML:	DNA: 500 patterns/core
-					#			AAs: 150 patterns/core
-					#
-					#-------------------------------------------------------------------------------	
-
-					2 => '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# <= 500)',
-					3 => '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# > 500)',
-					4 => '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# <= 500)',
-					5 => '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# > 500)',
-					6 => '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# <= 500)',
-					7 => '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# > 500)',
-					8 => '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# <= 500)',
-					9 => '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# > 500)',
-					10 => '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# <= 500)',
-					11 => '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# > 500)',
-					12 => '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# <= 500)',
-					13 => '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# > 500)',
-					14 => '(#tree_num_of_patterns# > 32000)',
-
-                },
-                'else_branch'   => 5,
-                'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
-                'raxml_threshold_aln_len'      => $self->o('raxml_threshold_aln_len'),
-                'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
-                'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
-            },
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            #-parameters => {
+                #'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
+                #'raxml_threshold_aln_len'      => $self->o('raxml_threshold_aln_len'),
+                #'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
+                #'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
+            #},
             -hive_capacity  => 80,
             -batch_size     => 50,
+
+            #-------------------------------------------------------------------------------
+            # This boundaries are based on RAxML and ExaML manuals.
+            # Which suggest the following number of cores:
+            #
+            #   ExaML:  DNA: 3.5K patterns/core
+            #           AAs: 1K   patterns/core
+            #
+            #   RAxML:  DNA: 500 patterns/core
+            #           AAs: 150 patterns/core
+            #
+            #-------------------------------------------------------------------------------
+
             -flow_into  => {
-                2  => [ 'raxml' ],
-                3  => [ 'raxml_8_cores' ],
-                4  => [ 'raxml_8_cores' ],
-                5  => [ 'raxml_16_cores' ],
-                6  => [ 'raxml_16_cores' ],
-                7  => [ 'examl_8_cores' ],
-                8  => [ 'examl_8_cores' ],
-                9  => [ 'examl_16_cores' ],
-                10 => [ 'examl_16_cores' ],
-                11 => [ 'examl_32_cores' ],
-                12 => [ 'examl_32_cores' ],
-                13 => [ 'examl_64_cores' ],
-                14 => [ 'examl_64_cores' ],
+                1 => WHEN (
+                    '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# <= 500)'                                        => 'raxml',
+                    '(#tree_num_of_patterns# <= 150) && (#tree_gene_count# > 500)'                                         => 'raxml_8_cores',
+                    '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# <= 500)'     => 'raxml_8_cores',
+                    '(#tree_num_of_patterns# > 150) && (#tree_num_of_patterns# <= 1200) && (#tree_gene_count# > 500)'      => 'raxml_16_cores',
+                    '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# <= 500)'    => 'raxml_16_cores',
+                    '(#tree_num_of_patterns# > 1200) && (#tree_num_of_patterns# <= 2400) && (#tree_gene_count# > 500)'     => 'examl_8_cores',
+                    '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# <= 500)'    => 'examl_8_cores',
+                    '(#tree_num_of_patterns# > 2400) && (#tree_num_of_patterns# <= 8000) && (#tree_gene_count# > 500)'     => 'examl_16_cores',
+                    '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# <= 500)'   => 'examl_16_cores',
+                    '(#tree_num_of_patterns# > 8000) && (#tree_num_of_patterns# <= 16000) && (#tree_gene_count# > 500)'    => 'examl_32_cores',
+                    '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# <= 500)'  => 'examl_32_cores',
+                    '(#tree_num_of_patterns# > 16000) && (#tree_num_of_patterns# <= 32000) && (#tree_gene_count# > 500)'   => 'examl_64_cores',
+                    '(#tree_num_of_patterns# > 32000)'                                                                     => 'examl_64_cores',
+                    ELSE 'raxml_16_cores',
+                ),
             },
         },
 
