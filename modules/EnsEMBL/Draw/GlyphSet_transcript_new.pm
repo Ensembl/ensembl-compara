@@ -39,7 +39,7 @@ use base qw(EnsEMBL::Draw::GlyphSet_transcript_new_base);
 sub render_normal                  { $_[0]->render_transcripts(1);           }
 sub render_transcript              { $_[0]->render_transcripts(1);           }
 sub render_transcript_label        { $_[0]->render_transcripts(1);           }
-sub render_transcript_label_coding { $_[0]->render_transcripts(1);           }
+sub render_transcript_label_coding { $_[0]->render_transcripts(1,1);         }
 sub render_transcript_gencode_basic{ $_[0]->render_transcripts(1);           }
 sub render_transcript_nolabel      { $_[0]->render_transcripts(0);           }
 sub render_collapsed_label         { $_[0]->render_collapsed(1);             }
@@ -109,7 +109,7 @@ sub _prepare_collapsed {
 }
   
 sub _prepare_expanded {
-  my ($self,$ggdraw) = @_;
+  my ($self,$ggdraw,$coding) = @_;
   
   my $this_db = ($self->core('db') eq $self->my_config('db'));
   my $target = $self->get_parameter('single_Transcript');
@@ -123,6 +123,7 @@ sub _prepare_expanded {
       $tjoins = $self->calculate_expanded_joins($g->{'stable_id'});
     }
     foreach my $t (@{$g->{'transcripts'}}) {
+      next if $coding and $g->{'coding'} and !$t->{'coding'};
       # skip scraps
       next if $target and $t->{'stable_id'} ne $target;
       next unless @{$t->{'exons'}};
@@ -172,12 +173,12 @@ sub render_collapsed {
 }
 
 sub render_transcripts {
-  my ($self, $labels) = @_;
+  my ($self, $labels,$coding) = @_;
 
   return $self->render_text('transcript') if $self->{'text_export'};
   
   my $ggdraw = $self->_get_data;
-  my $ttdraw = $self->_prepare_expanded($ggdraw);
+  my $ttdraw = $self->_prepare_expanded($ggdraw,$coding);
   my ($length,$draw_labels,$strand) = $self->_draw_prepare($ttdraw,$labels);
   $self->draw_expanded_transcripts($length,$draw_labels,$strand,$ttdraw);
 }
