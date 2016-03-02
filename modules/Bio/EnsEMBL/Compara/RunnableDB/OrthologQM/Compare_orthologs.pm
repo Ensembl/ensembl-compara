@@ -41,27 +41,29 @@ sub param_defaults {
     return {
         %{ $self->SUPER::param_defaults() },
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db',
-        'compara_db' => 'mysql://ensro@compara4/wa2_protein_trees_84',
-        'mlss_ID'=>'100021',
-        'ref_species_dbid' =>155,
-        'non_ref_species_dbid' => 31,
-        'chr_job'   =>  { '14026392' => [
-                          '59199',
-                          '59709',
-                          '55905',
-                          '59127',
-                          '59660'
+#        'compara_db' => 'mysql://ensro@compara4/wa2_protein_trees_84',
+#        'mlss_ID'=>'100021',
+#        'ref_species_dbid' =>155,
+#        'non_ref_species_dbid' => 31,
+#        'chr_job'   =>  { '14026395' => [
+#                          '14803',
+#                          '14469',
+#                          '46043'
+#                            ]
+
+#'14026392' => [
+#                          '59199',
+#                          '59709',
+#                          '55905',
+#                          '59127',
+#                          '59660'
 #                          '55998',
 #                          '59227',
  #                         '59734',
  #                         '56021'
-                        ]
-#                        '14026395' => [
- #                         '14803',
-  #                        '14469',
-   #                       '46043'
-    #                        ]
-                        },
+#                        ]
+
+#                        },
 
     };
 }
@@ -126,12 +128,6 @@ sub run {
 }
 
 
-
-
-
-
-
-
 sub _compute_ortholog_score {
     my $self = shift;
     my ($left1, $left2, $query, $right1, $right2, $ref_chr_dnafragID ) = @_;
@@ -146,7 +142,7 @@ sub _compute_ortholog_score {
     for my $pos (($left1, $left2, $query, $right1, $right2)) {
         if (defined $pos) {
             my $gtn_id = $self->param('homolog_adaptor')->fetch_by_dbID($pos)->_gene_tree_node_id();
-            print $pos , "-------------------------", $gtn_id , "-----\n\n" if ( $self->debug );
+#            print $pos , "-------------------------", $gtn_id , "-----\n\n" if ( $self->debug );
             if ( not defined($homology_gtn_id_href->{$gtn_id})) {
                 $homology_gtn_id_href->{$gtn_id} = [$pos];
             }
@@ -156,9 +152,10 @@ sub _compute_ortholog_score {
         }
     }
     $self->param('homology_gtn_id_href', $homology_gtn_id_href);
-    print " getting homolog gene tree node id-------------------------END \n" if ( $self->debug );
     print Dumper($self->param('homology_gtn_id_href')) if ( $self->debug );
-    print " --------------------------------------------------------\n" if ( $self->debug );
+    print " getting homolog gene tree node id-------------------------END \n" if ( $self->debug );
+
+#    print " --------------------------------------------------------\n" if ( $self->debug );
 
     my @defined_positions;
     if (defined($left1)) {
@@ -255,9 +252,9 @@ sub _compute_ortholog_score {
 
 #get all the gene members of in a chromosome coordinate range, filter only the ones that are from a 'ENSEMBLPEP' source and order them based on their dnafrag start positions
 sub _get_non_ref_gmembers {
-	my $self = shift;
-	print "This is the _get_non_ref_members subroutine -----------------------------------------------START\n\n\n" if ( $self->debug );
-	my ($dnafragID, $st, $ed)= @_;
+    my $self = shift;
+    print "This is the _get_non_ref_members subroutine -----------------------------------------------START\n\n\n" if ( $self->debug );
+    my ($dnafragID, $st, $ed)= @_;
 #	print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n";
 
         # The query could do GROUP BY and ORDER BY, but the MySQL server would have to buffer the data, make temporary tables, etc
@@ -286,7 +283,7 @@ sub _get_non_ref_gmembers {
     foreach my $mem (@sorted_mem) {
         push (@nr_gmem_sorted, $mem->{gene_member_id});
     }
-
+    print "This is the _get_non_ref_members subroutine ----------------------------------------END\n\n\n" if ( $self->debug );
     return \@nr_gmem_sorted;
 }
 
@@ -294,7 +291,7 @@ sub _get_non_ref_gmembers {
 #this will loop through the list of raw non ref gene members and flag tandem repeats. which will then be remove from the rest of the analyses
 sub _collapse_tandem_repeats {
     my $self = shift;
-    print " THis is the _collapse_tandem_repeats-----------------------------------------------START\n\n" if ( $self->debug );
+#    print " THis is the _collapse_tandem_repeats-----------------------------------------------START\n\n" if ( $self->debug );
     my ($local_unsorted_mem) = @_;
 
     #check if the gene member is a tandem duplication by looking for it comparing gene tree node its of it homology_id
@@ -311,6 +308,8 @@ sub _compare {
     my $self = shift;
     print " THis is the _compare subroutine -----------------------------------------------START\n\n" if ( $self->debug );
     my ($orth_non_ref_gmembers_hashref, $ordered_non_ref_gmembers_arrayref,$strand1)= @_;
+    print Dumper($orth_non_ref_gmembers_hashref) if ( $self->debug );
+    print Dumper($ordered_non_ref_gmembers_arrayref) if ( $self->debug );
     my $non_ref_query_gmember = $orth_non_ref_gmembers_hashref->{'query'};
     my $query_index = firstidx { $_ eq $non_ref_query_gmember } @$ordered_non_ref_gmembers_arrayref;
 
@@ -386,6 +385,7 @@ sub _compare {
                      ) ? 1 : 0;
         }
     }
+    print " THis is the _compare subroutine -----------------------------------------END\n\n" if ( $self->debug );
     return {'left1' => $left1_result, 'right1' => $right1_result, 'left2' => $left2_result, 'right2' => $right2_result};
 }
 
