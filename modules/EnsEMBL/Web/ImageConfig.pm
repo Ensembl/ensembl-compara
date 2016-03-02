@@ -26,6 +26,7 @@ use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
 
 use EnsEMBL::Draw::Utils::TextHelper;
+use EnsEMBL::Web::Utils::FormatText qw(add_links);
 use EnsEMBL::Web::File::Utils::TrackHub;
 use EnsEMBL::Web::Command::UserData::AddFile;
 use EnsEMBL::Web::DBSQL::DBConnection;
@@ -674,6 +675,8 @@ sub load_user_tracks {
     my ($strand, $renderers, $default) = $self->_user_track_settings($entry->{'style'}, $entry->{'format'});
     $strand     = $entry->{'strand'} if $entry->{'strand'};
     $renderers  = $entry->{'renderers'} if $entry->{'renderers'};
+    my $description = 'Data that has been temporarily uploaded to the web server.';
+    $description   .= add_links($entry->{'description'}) if $entry->{'description'};
       
     $menu->append($self->create_track("upload_$entry->{'code'}", $entry->{'name'}, {
         external        => 'user',
@@ -685,7 +688,7 @@ sub load_user_tracks {
         style           => $entry->{'style'},
         caption         => $entry->{'name'},
         renderers       => $renderers,
-        description     => 'Data that has been temporarily uploaded to the web server.',
+        description     => $description,
         display         => $entry->{'display'} || 'off',
         default_display => $entry->{'display'} || $default,
         strand          => $strand,
