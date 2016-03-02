@@ -34,6 +34,7 @@ sub fetch_input {
 	my $query = "SELECT homology_id, goc_score, method_link_species_set_id FROM ortholog_goc_metric where method_link_species_set_id = $mlss_ID";
 	my $quality_data = $self->compara_dba->dbc->db_handle->selectall_arrayref($query, {});
 	$self->param('quality_data', $quality_data);
+#	print "1111111111111111111111111111\n\n";
 #	print Dumper($quality_data);
 }
 
