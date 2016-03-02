@@ -57,8 +57,8 @@ sub fetch_input {
         $self->param( 'compara_dba',       $self->compara_dba );
     }
     else {
-        $self->warning("reuse_db hash has not been set, so cannot reuse");
         $self->param( 'reuse_this', 0 );
+        $self->complete_early("reuse_db hash has not been set, so cannot reuse");
         return;
     }
 }
@@ -75,7 +75,7 @@ sub run {
     #---------------------------------------------------------------------------------
     #deleted, updated & added arent used by the logic.
     #It is just here in case we need to test which genes are different in each case.
-    #flag is tha hash used my the module.
+    #flag is that hash used my the module.
     #---------------------------------------------------------------------------------
     my ( %flag, %deleted, %updated, %added );
     print "flagging members\n" if ( $self->debug );
