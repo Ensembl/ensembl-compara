@@ -49,6 +49,7 @@ sub new {
     replace => $conf->{'replace'},
     any => 0,
     open => 0,
+    wopen => 0,
   };
   bless $self,$class;
   return $self;
@@ -72,6 +73,7 @@ sub cache_open {
   $self->{'rfile'}->open_read() or return;
   $self->{'wfile'}->open_write() if defined $rebuild;
   $self->{'open'} = 1;
+  $self->{'wopen'} = (defined $rebuild)+0;
 }
 
 sub set {
@@ -235,7 +237,7 @@ sub cache_close {
   return unless $self->{'open'};
   $self->{'open'} = 0;
   $self->{'rfile'}->close();
-  $self->{'wfile'}->close();
+  $self->{'wfile'}->close() if $self->{'wopen'};
   if($self->{'any'}) {
     $self->{'wfile'}->remode('ready');
     my $inputs = $self->_suitable_files();
