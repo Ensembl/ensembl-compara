@@ -200,14 +200,23 @@ sub _draw_collapsed_exon {
   }));
 }
 
+sub _label_height {
+  my ($self,$obj) = @_;
+
+  return 0 unless $obj->{'label'};
+  my $rows = (scalar split("\n",$obj->{'label'},-1));
+  return $rows * $self->text_details('X_g')->{'height'};
+}
+
 sub draw_collapsed_genes {
   my ($self,$length,$labels,$strand,$genes) = @_;
 
   my $strand_flag = $self->my_config('strand');
   return unless @$genes;
   my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
-  $self->mr_bump($genes,$labels,undef,$bstrand);
+  $self->mr_bump($genes,$labels,$length,$bstrand);
   my %used_colours;
+  my $bump_height = 10 + max(map { $self->_label_height($_) } @$genes);
   foreach my $g (@$genes) {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
     my $composite = $self->Composite({
@@ -226,8 +235,7 @@ sub draw_collapsed_genes {
     }
   
     # shift the composite container by however much we're bumped
-    my $bump_height  = 10;
-    $bump_height += $self->_add_label($composite,$g) if $labels;
+    $self->_add_label($composite,$g) if $labels;
 
     # bump
     $composite->colour($g->{'highlight'}) if $g->{'highlight'};
@@ -385,6 +393,7 @@ sub draw_expanded_transcripts {
   $self->mr_bump($tdraw,$draw_labels,$length,$bstrand);
   my $target = $self->get_parameter('single_Transcript');
   my $h = $self->my_config('height') || ($target ? 30 : 8);
+  my $bump_height = 10 + max(map { $self->_label_height($_) } @$tdraw);
   foreach my $td (@$tdraw) { 
     next if $strand != $td->{'strand'} and $strand_flag eq 'b';
     next if $td->{'start'} > $length or $td->{'end'} < 1;
@@ -398,8 +407,7 @@ sub draw_expanded_transcripts {
 
     $self->_draw_expanded_transcript($composite,$td,$h,$length,$strand);
     
-    my $bump_height  = 1.6 * $h;
-    $bump_height += $self->_add_label($composite,$td) if $draw_labels;
+    $self->_add_label($composite,$td) if $draw_labels;
     $composite->y($composite->y - $strand * $bump_height * $td->{'_bump'});
 
     $composite->colour($td->{'highlight'}) if $td->{'highlight'};
