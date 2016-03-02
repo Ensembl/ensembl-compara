@@ -48,6 +48,7 @@ sub new {
     lockfile => $lockfile,
     replace => $conf->{'replace'},
     any => 0,
+    open => 0,
   };
   bless $self,$class;
   return $self;
@@ -66,14 +67,17 @@ sub merge {
 sub cache_open {
   my ($self,$r) = @_;
 
+  return if $self->{'open'};
   $self->{'rfile'}->delete() if $r;
-  $self->{'rfile'}->open_read();
+  $self->{'rfile'}->open_read() or return;
   $self->{'wfile'}->open_write();
+  $self->{'open'} = 1;
 }
 
 sub set {
   my ($self,$class,$ver,$args,$value,$build) = @_;
 
+  return unless $self->{'open'};
   return unless $build;
   my $key = $self->_key($args,$class);
   $self->{'any'} = 1;
@@ -84,6 +88,7 @@ sub set {
 sub get {
   my ($self,$class,$ver,$k) = @_;
 
+  return undef unless $self->{'open'};
   my $rver = $self->{'rfile'}->get_version($class);
   if($rver and $ver!=$rver) {
     warn "VERSION MISMATCH. CONSOLIDATING\n";
@@ -99,7 +104,7 @@ sub get {
 sub _into {
   my ($self,$in,$stage,$full) = @_;
 
-  $in->open_read();
+  $in->open_read() or die "Open failed";
   my $in_vers = $in->get_versions;
   my %good_vers;
   foreach my $k (keys %$in_vers) {
@@ -227,6 +232,8 @@ sub _consolidate {
 sub cache_close {
   my ($self) = @_;
 
+  return unless $self->{'open'};
+  $self->{'open'} = 0;
   $self->{'rfile'}->close();
   $self->{'wfile'}->close();
   if($self->{'any'}) {

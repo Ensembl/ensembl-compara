@@ -83,7 +83,7 @@ sub merge {
   my ($self,$part) = @_;
 
   my $offset = $self->_cat($self->fn('dat'),$part->fn('dat'));
-  $part->open_read();
+  $part->open_read() or die "Cannot open ".$self->fn('dat')."\n";
   $self->open_write();
   my $in_ver = $part->get_versions;
   my $out_ver = $self->get_versions;
@@ -127,15 +127,21 @@ sub open_read {
   my ($self) = @_;
 
   my %idx;
-  tie(%idx,'DB_File',$self->fn("idx"),O_CREAT|O_RDONLY,0600,$DB_HASH)
-    or die "Cannot open '".$self->fn('idx')." for reading: $!\n";
+  unless(tie(%idx,'DB_File',$self->fn("idx"),
+             O_CREAT|O_RDONLY,0600,$DB_HASH)) {
+    warn "Cannot open '".$self->fn('idx')." for reading: $!\n";
+    return 0;
+  }
   $self->{'idx'} = \%idx;
   unless(-e $self->fn('dat')) {
     open(TMP,">>",$self->fn('dat'));
     close TMP;
   }
-  open($self->{'dat'},'<:raw',$self->fn('dat'))
-    or die "Cannot open '".$self->fn('dat')."' for reading: $!\n";
+  unless(open($self->{'dat'},'<:raw',$self->fn('dat'))) {
+    warn "Cannot open '".$self->fn('dat')."' for reading: $!\n";
+    return 0;
+  }
+  return 1;
 }
 
 sub open_write {

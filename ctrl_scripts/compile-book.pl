@@ -26,7 +26,7 @@ use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use EnsEMBL::Web::QueryStore;
 
 EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl->new({
-  dir => "/tmp/book-of-ensembl",
+  dir => $SiteDefs::ENSEMBL_BOOK_DIR,
   replace => 1,
 })->merge;
 
