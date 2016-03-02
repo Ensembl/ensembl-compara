@@ -109,6 +109,7 @@ sub run {
         my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
         $self->throw("no input gene_tree") unless $gene_tree;
 
+        $gene_tree->preload();
         my @members = @{ $gene_tree->get_all_Members };
 
         foreach my $member (@members) {
@@ -128,6 +129,8 @@ sub run {
                 $root_ids_2_add{$gene_tree_id}{ $member->stable_id } = 1;
             }
         }
+        #releasing tree from memory
+        $gene_tree->release_tree;
 
     } ## end foreach my $gene_tree_id ( ...)
 } ## end sub run
