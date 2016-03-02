@@ -403,7 +403,7 @@ sub linked_var_table {
         '<a href="%s">%s</a>',
         $hub->url({
           type   => 'Gene',
-          action => 'Variation_Gene',
+          action => 'Summary',
           db     => 'core',
           r      => undef,
           g      => $_->stable_id,
