@@ -181,7 +181,8 @@ sub _fixup_href {
         calling_sp => $calling_sp,
         real_r => $r,
       };
-      if($gs->{'container'} and
+      if($gs->{'container'} and $gs->{'container'}{'web_species'} and
+         $gs->species and
          $gs->{'container'}{'web_species'} ne $gs->species) {
         $p->{'r'} = undef;
       }
