@@ -331,6 +331,7 @@ sub get {
       strand => $g->strand,
       stable_id => $g->stable_id,
       transcripts => $self->_get_transcripts($args,$g),
+      coding => 
     };
     push @out,$gf;
   }

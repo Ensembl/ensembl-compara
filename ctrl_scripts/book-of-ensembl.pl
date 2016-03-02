@@ -41,7 +41,7 @@ sub run1 {
   my $SD = EnsEMBL::Web::SpeciesDefs->new();
 
   my $cache = EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl->new({
-    dir => "/tmp/book-of-ensembl",
+    dir => $SiteDefs::ENSEMBL_BOOK_DIR,
     part => $kind,
   });
 
