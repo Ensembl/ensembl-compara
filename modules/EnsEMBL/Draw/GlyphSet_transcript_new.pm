@@ -135,6 +135,10 @@ sub _prepare_expanded {
           $t->{'highlight'} = 'highlight1';
         }
       }
+      if(!$t->{'highlight'} and $t->{'ccds'} and
+          $self->{'colours'}{'ccds_hi'}) {
+        $t->{'highlight'} = $self->my_colour('ccds_hi');
+      }
       # do joins
       $t->{'joins'} = [];
       if($tjoins and $tjoins->{$t->{'stable_id'}}) {

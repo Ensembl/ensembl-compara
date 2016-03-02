@@ -301,6 +301,7 @@ sub _get_transcripts {
       exons => $self->_get_exons($args,$t),
       stable_id => $t->stable_id,
       coding => !!$t->translation,
+      ccds => scalar @{$t->get_all_Attributes('ccds')||[]},
     };
     if($t->translation) {
       $tf->{'translation_stable_id'} = $t->translation->stable_id;
