@@ -96,8 +96,6 @@ sub _init {
      $height            = 4 if $depth > 0 && $self->get_parameter('squishable_features') eq 'yes' && $self->my_config('squish');
      $height            = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   
-  $self->_init_bump(undef, $depth);
-  
   foreach my $f (@$features) {
 
     my $fstrand = $f->{'strand'} || -1;
@@ -160,17 +158,44 @@ sub _init {
       $img_start = $tag_start if $tag_start < $img_start;
       $img_end   = $tag_end   if $tag_end   > $img_end;
     }
+    $f->{'_bstart'} = $img_start;
+    $f->{'_bend'} = $img_end;
+    $f->{'label'} = $label;
+    $f->{'label_start'} = $label_start;
+  }
+  $self->do_bump($features) if $depth > 0;
+  my ($prev_start,$prev_tag);
+  foreach my $f (@$features) {
+    my $row = $f->{'_bump'}||0;
+    my $label = $f->{'label'};
+    my $img_start = $f->{'_bstart'};
+    my $img_end = $f->{'_bend'};
+    my $label_start = $f->{'label_start'};
+    my $fstrand = $f->{'strand'} || -1;
+
+    next if $strand_flag eq 'b' && $strand != $fstrand;
     
-    ## This is the bit we compute the width
-    if ($depth > 0) { # bump
-      $img_start = int($img_start * $pix_per_bp);
-      $img_end   = $bump_width + int($img_end * $pix_per_bp);
-      $img_end   = $img_start if $img_end < $img_start;
-      $row       = $self->bump_row($img_start, $img_end);
-      
-      next if $row > $depth;
+    my $start = $f->{'start'};
+    my $end   = $f->{'end'};
+
+    my @tags         = grep { ref $_ eq 'HASH' } @{$f->{'tag'}};
+    if($depth <=1 and (defined $prev_start) and
+       int($prev_start*$pix_per_bp) == int($start*$pix_per_bp) and
+       (!@tags or $prev_tag==$start)) {
+      next;
     }
+    $prev_start = $start;
+    $prev_tag = $start if @tags;
+
+    next if $start > $slice_length || $end < 1; ## Skip if totally outside slice
     
+    $start = 1             if $start < 1;
+    $end   = $slice_length if $end > $slice_length;
+    my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $font, ptsize => $fontsize);
+    my $bp_textwidth = $text_width / $pix_per_bp;
+
+    next if $depth > 0 and $row > $depth;
+
     my ($pattern,$patterncolour,$notags);
     $pattern = $f->{'pattern'};
     ($pattern,$patterncolour,$notags) = @$pattern if ref($pattern);
