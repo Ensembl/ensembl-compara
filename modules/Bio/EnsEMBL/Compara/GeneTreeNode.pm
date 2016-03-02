@@ -475,6 +475,7 @@ sub find_multifurcations {
     my $multifurcations = [];
     foreach my $node (@{$self->get_all_nodes}) {
         next if $node->is_leaf;
+        next if (!$node->has_parent);
         if (scalar(@{$node->children}) > 2) {
             push(@{$multifurcations},[@{$node->children}]) if scalar(@{$node->children}) > 2;
         }
