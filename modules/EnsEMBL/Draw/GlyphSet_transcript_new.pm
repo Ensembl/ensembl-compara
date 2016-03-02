@@ -78,6 +78,8 @@ sub features { # For genoverse
   my $out = $_[0]->_get_data;
   if(grep { $_ eq $display } qw(gene_label gene_nolabel collapsed_label collapsed_nolabel)) {
     $self->_prepare_collapsed($out);
+  } else {
+    $self->_prepare_expanded($out);
   }
   return $out;
 }
