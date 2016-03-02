@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::RunnableDB::LoadAncestralGenomeDB
 =head1 SYNOPSIS
 
     standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::LoadAncestralGenomeDB \
-        -compara_db mysql://ensadmin:ensembl@compara3/mm14_homo_sapiens_base_age_84 \
+        -compara_db mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_homo_sapiens_base_age_84 \
         -master_db mysql://ensro@compara1/mm14_ensembl_compara_master \
         -anc_host compara4 -anc_name ancestral_sequences -anc_dbname mp14_epo_17mammals_ancestral_core_80
 
