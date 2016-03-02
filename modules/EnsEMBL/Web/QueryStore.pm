@@ -10,7 +10,6 @@ use Digest::MD5 qw(md5_base64);
 use EnsEMBL::Web::Query;
 
 my $DEBUG = 0;
-my $DISABLE = 0;
 
 sub new {
   my ($proto,$sources,$cache,$cohort) = @_;
@@ -53,7 +52,7 @@ sub _try_get_cache {
     cluck("get on closed cache");
   }
   return undef unless $self->{'open'};
-  return undef if $DISABLE;
+  return undef if $SiteDefs::ENSEMBL_BOOK_DISABLE;
   my $ver = $self->version($class);
   return undef if $ver < 1;
   my $out = $self->{'cache'}->get($class,$ver,{
