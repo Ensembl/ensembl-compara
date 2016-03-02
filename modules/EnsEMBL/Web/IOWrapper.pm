@@ -495,6 +495,14 @@ sub rgb_to_hex {
   return sprintf("%02x%02x%02x", @rgb);
 }
 
+sub get_metadata_value {
+  my ($self, $key) = @_;
+  return unless $key;
+
+  my %metadata = %{$self->parser->get_all_metadata};
+  return $metadata{$key};
+}
+
 sub nearest_feature {
 ### Try to find the nearest feature to the browser's current location
   my $self = shift;
