@@ -78,7 +78,7 @@ sub default_options {
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #mlss_id => 40043,
         # names of species we don't want to reuse this time
-        #'do_not_reuse_list' => ['guillardia_theta'],
+        'do_not_reuse_list' => [],
 
     # custom pipeline name, in case you don't like the default one
         # Used to prefix the database name (in HiveGeneric_conf)
@@ -101,14 +101,13 @@ sub default_options {
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'tree_dir'                  =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
-        'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
+        'species_tree_input_file'   =>  undef,
         # you can define your own species_tree for 'notung'. It *has* to be binary
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
-        'taxlevels'                 => $self->o('division') eq 'plants' ? ['Liliopsida', 'eudicotyledons', 'Chlorophyta'] : ['cellular organisms'],
+        'taxlevels'                 => [],
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
@@ -221,8 +220,8 @@ sub default_options {
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ $self->o('staging_1') ],
 
-        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
+        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        'prev_rel_db' => undef,
 
     # Configuration of the pipeline worklow
 
