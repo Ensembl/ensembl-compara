@@ -43,7 +43,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 use strict;
 use warnings;
 
-sub pipeline_analyses_species_tree {
+sub pipeline_analyses_full_species_tree {
     my ($self) = @_;
     return [
             {
@@ -66,7 +66,13 @@ sub pipeline_analyses_species_tree {
             },
             -flow_into          => [ 'CAFE_species_tree' ],
         },
+    ]
+}
 
+
+sub pipeline_analyses_binary_species_tree {
+    my ($self) = @_;
+    return [
             {
              -logic_name => 'CAFE_species_tree',
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',

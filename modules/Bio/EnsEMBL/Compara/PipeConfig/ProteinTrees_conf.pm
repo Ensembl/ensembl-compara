@@ -3021,7 +3021,7 @@ sub core_pipeline_analyses {
         },
 
         $self->o('initialise_cafe_pipeline') ? (
-            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_species_tree($self) },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self) },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self) },
         ) : (),
 

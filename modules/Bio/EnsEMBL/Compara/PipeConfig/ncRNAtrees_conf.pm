@@ -136,7 +136,8 @@ sub pipeline_analyses {
                            -meadow_type       => 'LOCAL',
                           );
 
-    my $analyses_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_species_tree($self);
+    my $analyses_full_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_full_species_tree($self);
+    my $analyses_binary_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self);
     my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self);
 
     return [
@@ -783,7 +784,8 @@ sub pipeline_analyses {
             %hc_params,
         },
 
-        @$analyses_species_tree,
+        @$analyses_full_species_tree,
+        @$analyses_binary_species_tree,
         @$analyses_cafe,
     ];
 }
