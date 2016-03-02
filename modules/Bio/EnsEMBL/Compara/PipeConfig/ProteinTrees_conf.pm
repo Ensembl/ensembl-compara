@@ -1627,10 +1627,11 @@ sub core_pipeline_analyses {
                 'mafft_runtime'             => $self->o('mafft_runtime'),
             },
             -flow_into  => {
-                2 => [ 'mcoffee' ],
-                3 => [ 'mcoffee_himem' ],
-                4 => [ 'mafft' ],
-                5 => [ 'mafft_himem' ],
+                '2->A' => [ 'mcoffee' ],
+                '3->A' => [ 'mcoffee_himem' ],
+                '4->A' => [ 'mafft' ],
+                '5->A' => [ 'mafft_himem' ],
+                'A->1' => [ 'exon_boundaries_prep' ],
             },
             %decision_analysis_params,
         },
@@ -1698,7 +1699,6 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into => {
-                1 => [ 'exon_boundaries_prep' ],
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
             },
@@ -1713,7 +1713,6 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into => {
-                1 => [ 'exon_boundaries_prep' ],
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
         },
@@ -1739,7 +1738,6 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '8Gb_job',
             -flow_into => {
-                1 => [ 'exon_boundaries_prep' ],
                -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
             },
@@ -1752,9 +1750,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '8Gb_job',
-            -flow_into => {
-                1 => [ 'exon_boundaries_prep' ],
-            },
         },
 
         {   -logic_name     => 'exon_boundaries_prep',
