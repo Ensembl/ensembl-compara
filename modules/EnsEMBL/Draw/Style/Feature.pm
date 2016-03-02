@@ -86,17 +86,15 @@ sub create_glyphs {
     }
 
     my @features = @{$subtrack->{'features'}||[]}; 
+    my $label_height;
 
     foreach my $feature (@features) {
       ## Are we drawing transcripts or just genes?
       next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
       next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
 
-      $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
       my $text_info   = $self->get_text_info($feature->{'label'});
-      my $feature_row = 0;
-      my $label_row   = 0;
-      my $new_y;
+      $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
 
       ## Default colours, if none set in feature
       ## Note that a feature must have either a border colour or a fill colour,
@@ -107,10 +105,21 @@ sub create_glyphs {
       }
       $feature->{'join_colour'}   ||= $feature->{'colour'} || $feature->{'bordercolour'};
       $feature->{'label_colour'}  ||= $feature->{'colour'} || $feature->{'bordercolour'};
-
+      $feature->{'_bstart'} = $feature->{'start'};
+      $feature->{'_bend'} = $feature->{'end'};
+      if($show_label) {
+        $label_height = max($label_height,$text_info->{'height'});
+      }
+    }
+    EnsEMBL::Draw::GlyphSet::do_bump($self,\@features);
+    foreach my $feature (@features) {
+      my $new_y;
+      my $feature_row = 0;
+      my $label_row   = 0;
+      my $text_info   = $self->get_text_info($feature->{'label'});
       ## Work out if we're bumping the whole feature or just the label
       if ($bumped) {
-        my $bump = $self->set_bump_row($feature->{'start'}, $feature->{'end'}, $show_label, $text_info);
+        my $bump = $feature->{'_bump'};
         $label_row   = $bump;
         $feature_row = $bump unless $bumped eq 'labels_only';       
       }
@@ -118,8 +127,6 @@ sub create_glyphs {
 
       ## Work out where to place the feature
       my $feature_height  = $track_config->get('height') || $text_info->{'height'};
-      $label_height       = $show_label ? $text_info->{'height'} : 0;
-
       my $feature_width   = $feature->{'end'} - $feature->{'start'};
 
       if ($feature_width == 0) {
