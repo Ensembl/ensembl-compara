@@ -1349,7 +1349,7 @@ sub text_bounds {
 # This helps when, eg, we will later bump labels elsewhere, eg in the
 # gene renderer.
 sub mr_bump {
-  my ($self,$features,$show_label,$max) = @_;
+  my ($self,$features,$show_label,$max,$strand) = @_;
 
   my $pixperbp = $self->{'pix_per_bp'} || $self->scalex;
   foreach my $f (@$features) {
@@ -1371,6 +1371,9 @@ sub mr_bump {
     }
     $f->{'_bstart'} = max(0,$start);
     $f->{'_bend'} = min($end,$max);
+    if($strand and $f->{'strand'} and $strand != $f->{'strand'}) {
+      $f->{'_bskip'} = 1;
+    }
   }
   return $self->do_bump($features);
 }
@@ -1399,6 +1402,7 @@ sub do_bump {
 
   my (@bumps,@rows);
   foreach my $f (sort { $a->{'_bstart'} <=> $b->{'_bstart'} } @$features) {
+    next if $f->{'_bskip'};
     my $row = 0;
     while(($rows[$row]||=-1)>=$f->{'_bstart'}) { $row++; }
     $rows[$row] = $f->{'_bend'};

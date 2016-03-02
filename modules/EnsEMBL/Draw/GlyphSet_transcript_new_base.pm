@@ -200,9 +200,10 @@ sub _draw_collapsed_exon {
 sub draw_collapsed_genes {
   my ($self,$length,$labels,$strand,$genes) = @_;
 
-  my $strand_flag      = $self->my_config('strand');
+  my $strand_flag = $self->my_config('strand');
   return unless @$genes;
-  $self->mr_bump($genes,$labels,$length);
+  my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
+  $self->mr_bump($genes,$labels,undef,$bstrand);
   my %used_colours;
   foreach my $g (@$genes) {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
@@ -376,10 +377,11 @@ sub draw_expanded_transcripts {
   my ($self,$length,$draw_labels,$strand,$tdraw) = @_;
 
   return unless @$tdraw;
-  $self->mr_bump($tdraw,$draw_labels,$length);
+  my $strand_flag = $self->my_config('strand');
+  my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
+  $self->mr_bump($tdraw,$draw_labels,$length,$bstrand);
   my $target = $self->get_parameter('single_Transcript');
   my $h = $self->my_config('height') || ($target ? 30 : 8);
-  my $strand_flag = $self->my_config('strand');
   foreach my $td (@$tdraw) { 
     next if $strand != $td->{'strand'} and $strand_flag eq 'b';
     next if $td->{'start'} > $length or $td->{'end'} < 1;
@@ -479,7 +481,8 @@ sub draw_rect_genes {
 
   my $strand_flag = $self->my_config('strand');
   my $pix_per_bp = $self->scalex;
-  my $rects_rows = $self->mr_bump($ggdraw,0,$length);
+  my $bstrand = ($length,$strand_flag eq 'b')?$strand:undef;
+  my $rects_rows = $self->mr_bump($ggdraw,0,$length,$bstrand);
   foreach my $g (@$ggdraw) {
     next if $strand != $g->{'strand'} and $strand_flag eq 'b';
     my $rects = $self->_draw_rect_gene($g,$length);
@@ -487,7 +490,7 @@ sub draw_rect_genes {
   } 
   if($draw_labels) {
     $_->{'_lwidth'} += 8/$pix_per_bp for(@$ggdraw);
-    $self->mr_bump($ggdraw,2,$length); # Try again
+    $self->mr_bump($ggdraw,2,$length,$bstrand); # Try again
 
     foreach my $g (@$ggdraw) {
       next if $strand != $g->{'strand'} and $strand_flag eq 'b';
