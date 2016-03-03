@@ -106,7 +106,7 @@ sub _colour_key {
   # hate having to put ths hack here, needed because any logic_name
   # specific web_data entries get lost when the track is merged - needs
   # rewrite of imageconfig merging code
-  return 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
+  return 'merged' if $transcript->analysis and $transcript->analysis->logic_name =~ /ensembl_havana/;
 
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $transcript->$1/eg;
@@ -154,6 +154,30 @@ sub _feature_label {
   $id .= "\n$label" unless $label eq '-';
   
   return $id;
+}
+
+sub _fake_gene {
+  my ($self, $transcript) = @_;
+  my $gene = Bio::EnsEMBL::Gene->new;
+
+  $gene->add_Transcript($transcript);
+  $gene->stable_id($transcript->stable_id); # fake a stable id so that the data structures returned by features are correct.
+
+  return $gene;
+}
+
+sub _get_prediction_transcripts {
+  my ($self,$args) = @_;
+
+  my $slice = $args->{'slice'};
+  my $db_alias = $args->{'db'};
+  my @out;
+  foreach my $an (@{$args->{'logic_names'}}) {
+    my @t = @{$slice->get_all_PredictionTranscripts($an,$db_alias)};
+    my @g = map { $self->_fake_gene($_) } @t;
+    push @out,@g;
+  }
+  return \@out;
 }
 
 sub _get_genes {
@@ -217,7 +241,12 @@ sub _href {
     db         => $args->{'db'},
   };  
 
-  $params->{'t'} = $transcript->stable_id if $transcript;
+  if($args->{'prediction'}) {
+    $params->{'pt'} = $transcript->stable_id if $transcript;
+    $params->{'g'} = undef;
+  } else {
+    $params->{'t'} = $transcript->stable_id if $transcript;
+  }
   return $params;
 }
 
@@ -228,7 +257,7 @@ sub _unique {
     return $obj->stable_id."::".JSON->new->encode($args->{'__orig_slice'});
   }
 
-  return $obj->dbID;
+  return $obj->dbID || $obj->stable_id;
 }
 
 sub _get_regular_exons {
@@ -346,8 +375,12 @@ sub _is_coding_gene {
 sub get {
   my ($self,$args) = @_;
 
-  my @out;
-  my $genes = $self->_get_genes($args);
+  my (@out,$genes);
+  if($args->{'prediction'}) {
+    $genes = $self->_get_prediction_transcripts($args);
+  } else {
+    $genes = $self->_get_genes($args);
+  }
   foreach my $g (@$genes) {
     my $title = sprintf("Gene: %s; Location: %s:%s-%s",
                         $g->stable_id,$g->seq_region_name,

@@ -70,6 +70,7 @@ sub _get_data {
     logic_names => [sort @{$self->my_config('logic_names')}],
     db => $self->my_config('db'),
     only_attrib => $self->only_attrib,
+    prediction => $self->prediction,
   });
 }
 
@@ -456,5 +457,6 @@ sub calculate_expanded_joins {
 }
 
 sub only_attrib { return undef; }
+sub prediction { return 0; }
 
 1;
