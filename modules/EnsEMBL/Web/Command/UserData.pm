@@ -69,9 +69,11 @@ sub upload {
     my $description = $iow->get_metadata_value('description');
     if ($description) {
       if ($hub->user) {
-        my $record = grep {$_->code eq $file->code} $hub->user->get_records('uploads');
-        $record->description($description);
-        $record->save;
+        my ($record) = grep {$_->code eq $file->code} $hub->user->get_records('uploads');
+        if ($record) {
+          $record->description($description);
+          $record->save;
+        }
       }
       else {
         my $data = $hub->session->get_data('type' => 'upload', 'code' => $file->code);

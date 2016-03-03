@@ -738,6 +738,8 @@ sub load_user_tracks {
         my ($strand, $renderers, $default) = $self->_user_track_settings($entry->style, $entry->format);
         $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
         $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
+        my $description = 'Data that has been saved to the web server. ';
+        $description   .= add_links($entry->description) if $entry->description;
         $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
             external        => 'user',
             glyphset        => 'flat_file',
@@ -748,7 +750,7 @@ sub load_user_tracks {
             style           => $entry->style,
             caption         => $entry->name,
             renderers       => $renderers,
-            description     => 'Data that has been saved to the web server.',
+            description     => $description, 
             display         => $entry->display || 'off',
             default_display => $entry->display || $default,
         }));
