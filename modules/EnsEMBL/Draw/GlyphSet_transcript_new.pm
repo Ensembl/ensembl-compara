@@ -457,6 +457,6 @@ sub calculate_expanded_joins {
 }
 
 sub only_attrib { return undef; }
-sub prediction { return 0; }
+sub prediction { return undef; }
 
 1;
