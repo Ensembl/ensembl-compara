@@ -112,6 +112,7 @@ sub draw_feature {
   }
 
   push @{$self->glyphs}, $composite; 
+  return $height;
 }
 
 1;
