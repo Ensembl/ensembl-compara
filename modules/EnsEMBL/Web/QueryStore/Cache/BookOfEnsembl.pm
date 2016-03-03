@@ -68,7 +68,7 @@ sub merge {
 sub cache_open {
   my ($self,$rebuild) = @_;
 
-  $rebuild = $self->{'rebuild'} if $rebuild == -1;
+  $rebuild = $self->{'rebuild'} if defined $rebuild and $rebuild == -1;
   $self->{'rebuild'} = (defined $rebuild)?0:undef;
   return if $self->{'open'};
   $self->{'rfile'}->delete() if $rebuild;
