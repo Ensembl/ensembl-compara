@@ -28,6 +28,8 @@ our $VERSION = 11;
 use JSON;
 use List::Util qw(min max);
 
+use Bio::EnsEMBL::Gene;
+
 sub precache {
   return {
     ccds => {
