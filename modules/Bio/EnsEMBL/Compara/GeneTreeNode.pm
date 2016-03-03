@@ -544,17 +544,19 @@ sub binarize_flat_tree_with_species_tree {
             }
         }
 
-        #prune mrca sub-tree
-        #   disavow these nodes from the mrca sub-tree
+        my $castedMrca = $mrca->cast('Bio::EnsEMBL::Compara::GeneTreeNode');
+
+        #prune castedMrca sub-tree
+        #e.g. when the taxonomic sub-tree has more species that the ones in the gene-tree, in those cases we need to remove the extra leaves.
+
+        #disavow these nodes from the castedMrca sub-tree
         foreach my $nodeName (@nodesToDisavow) {
-            my $node = $species_tree->root->find_leaf_by_node_id($nodeName);
+            my $node = $castedMrca->find_leaf_by_node_id($nodeName);
             #since nodes are leaves at this point, we can delete them directly.
             #print "disavowing: |" . $node->name() . "|\n";
             $node->disavow_parent();
-            $species_tree = $species_tree->minimize_tree;
+            $castedMrca = $castedMrca->minimize_tree;
         }
-
-        my $castedMrca = $mrca->cast('Bio::EnsEMBL::Compara::GeneTreeNode');
 
         #list of all the leaves mapped by taxon_id
         my %leaves_list;
