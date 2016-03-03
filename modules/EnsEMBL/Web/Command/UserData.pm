@@ -65,6 +65,23 @@ sub upload {
       function => '_error'
     );
   } else {
+    ## Get description from file and save to session
+    my $description = $iow->get_metadata_value('description');
+    if ($description) {
+      if ($hub->user) {
+        my ($record) = grep {$_->code eq $file->code} $hub->user->get_records('uploads');
+        if ($record) {
+          $record->description($description);
+          $record->save;
+        }
+      }
+      else {
+        my $data = $hub->session->get_data('type' => 'upload', 'code' => $file->code);
+        $data->{'description'} = $description;
+        $hub->session->set_data(%$data);
+      }
+    }
+
     ## Look for the nearest feature
     my ($chr, $start, $end, $count) = $iow->nearest_feature;
     $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
@@ -74,8 +91,6 @@ sub upload {
     $params->{'format'}   = $iow->format;
     $params->{'code'}     = $file->code;
 
-    ## Get description from file
-    $params->{'description'} = $iow->get_metadata_value('description');
   } 
  
   return $params;
