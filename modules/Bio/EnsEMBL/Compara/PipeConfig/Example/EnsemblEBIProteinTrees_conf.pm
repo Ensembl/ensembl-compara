@@ -135,6 +135,7 @@ sub default_options {
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
         'alignment_filtering_capacity'  => 200,
+        'loadtags_capacity'         => 200,
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 400,
         'raxml_capacity'            => 200,
