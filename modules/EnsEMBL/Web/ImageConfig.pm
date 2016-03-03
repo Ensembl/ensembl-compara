@@ -1655,9 +1655,6 @@ sub update_from_url {
       }
       # We have to create a URL upload entry in the session
       my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
-      if (uc $format eq 'TRACKHUB') {
-          $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
-      }
       $session->add_data(
           type     => 'message',
           function => '_info',
