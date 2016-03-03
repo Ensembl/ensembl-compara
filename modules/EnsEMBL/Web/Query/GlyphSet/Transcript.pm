@@ -291,6 +291,9 @@ sub _get_transcripts {
   my @trans = sort { $b->start <=> $a->start } @{$g->get_all_Transcripts};
   @trans = reverse @trans if $g->strand; 
   foreach my $t (@trans) {
+    if($args->{'only_attrib'}) {
+      next unless @{$t->get_all_Attributes($args->{'only_attrib'})};
+    }
     my $tf = {
       _unique => $self->_unique($args,$t),
       start => $t->start,

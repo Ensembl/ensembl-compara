@@ -69,6 +69,7 @@ sub _get_data {
     slice => $self->{'container'},
     logic_names => [sort @{$self->my_config('logic_names')}],
     db => $self->my_config('db'),
+    only_attrib => $self->only_attrib,
   });
 }
 
@@ -453,5 +454,7 @@ sub calculate_expanded_joins {
   $tjoins{$tsid} = \@joins;
   return \%tjoins;
 }
+
+sub only_attrib { return undef; }
 
 1;
