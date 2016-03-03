@@ -77,6 +77,17 @@ sub precache {
         only_attrib => "gencode_basic"
       }
     },
+    genscan => {
+      loop => "genome",
+      args => {
+        db => "core",
+        logic_names => ['genscan'],
+        label_key => "[display_label]",
+        species => "Homo_sapiens",
+        pattern => "genscan",
+        prediction => 1
+      }
+    },
   };
 }
 
