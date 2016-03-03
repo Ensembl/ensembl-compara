@@ -316,7 +316,7 @@ sub track_style_config {
   return {
           'image_config' => $self->{'config'},
           'track_config' => $self->{'my_config'},
-          'pix_per_bp'   => $self->{'config'}->image_width / $self->{'container'}->length, 
+          'pix_per_bp'   => $self->scalex,
           'font_name'    => $fontname,
           'font_size'    => $fontsize,
           };

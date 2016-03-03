@@ -108,6 +108,9 @@ sub create_glyphs {
       $feature->{'_bstart'} = $feature->{'start'};
       $feature->{'_bend'} = $feature->{'end'};
       if($show_label) {
+        my $lwidth_bp = $text_info->{'width'}/$self->{'pix_per_bp'};
+        $feature->{'_bend'} =
+          max($feature->{'_bend'},$feature->{'_bstart'}+$lwidth_bp);
         $label_height = max($label_height,$text_info->{'height'});
       }
     }
