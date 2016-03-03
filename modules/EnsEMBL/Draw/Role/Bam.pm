@@ -45,8 +45,8 @@ sub render_unlimited {
 ### 'External' rendering style
 ### Coverage and reads
   my $self = shift;
+  $self->{'my_config'}->set('depth', 500);
   $self->_render({'coverage' => 1, 'reads' => 1});
-  $self->{'my_config'}->set('max_depth', 500);
 }
 
 sub render_histogram {
@@ -178,7 +178,7 @@ sub _render_reads {
   my $self = shift;
 
   ## Establish defaults
-  my $max_depth   = $self->my_config('max_depth') || 50;
+  my $max_depth   = $self->my_config('depth') || 50;
   my $pix_per_bp  = $self->scalex; # pixels per base pair
   my $slice       = $self->{'container'};
   my $slicestart  = $slice->start;
