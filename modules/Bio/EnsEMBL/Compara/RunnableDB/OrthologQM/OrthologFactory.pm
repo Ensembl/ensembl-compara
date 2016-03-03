@@ -116,7 +116,7 @@ sub run {
 			$c++;
 		}
 		
-#		last if $c >= 60;
+#		last if $c >= 10;
 	}
 	print " \n remove chromosome or scaffolds with only 1 gene--------------------------START\n\n" if ( $self->debug );
 	for my $dnaf_id (keys %$ref_ortholog_info_hashref) {
