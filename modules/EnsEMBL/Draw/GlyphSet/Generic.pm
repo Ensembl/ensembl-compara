@@ -219,6 +219,7 @@ sub draw_aggregate {
 
   ## Recalculate colours if using the pvalue renderer
   if ($self->{'my_config'}->get('use_pvalue')) {
+    $self->{'my_config'}->set('subtitle_y', $self->{'my_config'}->get('height') + 4);
     my $params = {
                     min_score      => 0,
                     max_score      => 1,
