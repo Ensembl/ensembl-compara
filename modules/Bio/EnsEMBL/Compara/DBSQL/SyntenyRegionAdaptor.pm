@@ -117,6 +117,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::SyntenyRegion;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
@@ -180,9 +181,7 @@ sub fetch_by_dbID {
 sub store {
    my ($self,$sr) = @_;
 
-   if( !ref $sr || !$sr->isa("Bio::EnsEMBL::Compara::SyntenyRegion") ) {
-       throw("$sr is not a SyntenyRegion object");
-   }
+   assert_ref($sr, 'Bio::EnsEMBL::Compara::SyntenyRegion', 'sr');
 
    if ($sr->dbID) {
     my $sth = $self->prepare("INSERT INTO synteny_region (synteny_region_id,method_link_species_set_id) VALUES (?,?)");
@@ -228,9 +227,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   ## method_link_species_set will be checked in the fetch_all_by_MethodLinkSpeciesSet_DnaFrag method
 
   ## Check original_slice
-  unless(UNIVERSAL::isa($reference_slice, 'Bio::EnsEMBL::Slice')) {
-    throw("[$reference_slice] should be a Bio::EnsEMBL::Slice object\n");
-  }
+  assert_ref($reference_slice, 'Bio::EnsEMBL::Slice', 'reference_slice');
 
   my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
 
@@ -277,12 +274,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my ($self, $mlss, $dnafrag, $start, $end) = @_;
 
-  if (!UNIVERSAL::isa($mlss, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")) {
-    throw("[$mlss] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
-  }
-  if (!UNIVERSAL::isa($dnafrag, "Bio::EnsEMBL::Compara::DnaFrag")) {
-    throw("[$dnafrag] is not a Bio::EnsEMBL::Compara::DnaFrag object");
-  }
+  assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
+  assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
 
   my $sql = "select sr.synteny_region_id from synteny_region sr, dnafrag_region dfr where sr.method_link_species_set_id = ? and sr.synteny_region_id=dfr.synteny_region_id and dfr.dnafrag_id = ?";
   
@@ -335,9 +328,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 sub fetch_all_by_MethodLinkSpeciesSet {
   my ($self, $mlss) = @_;
 
-  if (!UNIVERSAL::isa($mlss, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")) {
-    throw("[$mlss] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
-  }
+  assert_ref($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
 
   my $sql = "select sr.synteny_region_id from synteny_region sr where sr.method_link_species_set_id = ?";
 

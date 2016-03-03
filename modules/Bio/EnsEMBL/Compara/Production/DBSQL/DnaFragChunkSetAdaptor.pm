@@ -38,6 +38,8 @@ use warnings;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
+
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -61,11 +63,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub store {
   my ($self,$chunkSet) = @_;
 
-  unless($chunkSet->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-    $self->throw(
-      "set arg must be a [Bio::EnsEMBL::Compara::Production::DnaFragChunkSet] "
-    . "not a $chunkSet");
-  }
+  assert_ref($chunkSet, 'Bio::EnsEMBL::Compara::Production::DnaFragChunkSet', 'chunkSet');
   my $description = $chunkSet->description or undef;
 
   my $insertCount=0;

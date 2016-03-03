@@ -42,6 +42,7 @@ use warnings;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::Seq;
 use Bio::SeqIO;
 
@@ -258,8 +259,7 @@ sub dnafrag {
   my ($self,$dnafrag) = @_;
 
   if (defined($dnafrag)) {
-    throw("arg must be a [Bio::EnsEMBL::Compara::DnaFrag] not a [$dnafrag]")
-        unless($dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag'));
+    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
     $self->{'_dnafrag'} = $dnafrag;
     $self->dnafrag_id($dnafrag->dbID);
   }

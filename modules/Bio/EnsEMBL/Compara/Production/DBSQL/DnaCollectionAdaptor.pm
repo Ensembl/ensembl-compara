@@ -54,6 +54,7 @@ use Bio::EnsEMBL::Hive::Utils 'stringify';
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -77,10 +78,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub store {
     my ($self, $collection) = @_;
     
-    unless($collection->isa('Bio::EnsEMBL::Compara::Production::DnaCollection')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::Production::DnaCollection] "
-              . "not a $collection");
-    }
+    assert_ref($collection, 'Bio::EnsEMBL::Compara::Production::DnaCollection', 'collection');
     my $description = $collection->description;
     my $dump_loc = $collection->dump_loc;
     my $masking_options;

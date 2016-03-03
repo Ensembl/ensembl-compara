@@ -47,6 +47,7 @@ use warnings;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
@@ -144,13 +145,7 @@ sub dna_collection_id {
 sub add_DnaFragChunk {
   my ($self, $chunk) = @_;
 
-  unless(defined($chunk) and
-         $chunk->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'))
-  {
-    $self->throw(
-      "chunk arg must be a [Bio::EnsEMBL::Compara::Production::DnaFragChunk] ".
-      "not a [$chunk]");
-  }
+  assert_ref($chunk, 'Bio::EnsEMBL::Compara::Production::DnaFragChunk', 'chunk');
 
   $self->{'_cached_chunk_list'} = []
     unless(defined($self->{'_cached_chunk_list'}));

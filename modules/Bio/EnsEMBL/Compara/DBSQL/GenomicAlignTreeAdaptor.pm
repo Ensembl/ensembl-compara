@@ -49,6 +49,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Feature;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
@@ -78,9 +79,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 sub fetch_all_by_MethodLinkSpeciesSet {
   my ($self, $method_link_species_set, $limit_number, $limit_index_start) = @_;
 
-  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-      unless ($method_link_species_set and ref $method_link_species_set and
-          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
   my $method_link_species_set_id = $method_link_species_set->dbID;
   throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 
@@ -394,9 +393,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 sub fetch_by_GenomicAlignBlock {
   my ($self, $genomic_align_block) = @_;
 
-  throw("[$genomic_align_block] is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
-      unless ($genomic_align_block and ref $genomic_align_block and
-          $genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
+  assert_ref($genomic_align_block, 'Bio::EnsEMBL::Compara::GenomicAlignBlock', 'genomic_align_block');
 
   my $genomic_align_block_id = $genomic_align_block->dbID;
 
@@ -587,9 +584,7 @@ sub _fetch_by_genomic_align_block {
 sub store {
   my ($self, $node, $skip_left_right_indexes) = @_;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::GenomicAlignTree] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::GenomicAlignTree', 'node');
 
   ## Check the tree
    foreach my $this_node (@{$node->get_all_nodes}) {
@@ -722,9 +717,7 @@ sub store_group {
 sub store_node {
   my ($self, $node) = @_;
 
-  unless($node->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
-    throw("set arg must be a [Bio::EnsEMBL::Compara::GenomicAlignTree] not a $node");
-  }
+  assert_ref($node, 'Bio::EnsEMBL::Compara::GenomicAlignTree', 'node');
 
   my $parent_id = 0;
   my $root_id = 0;

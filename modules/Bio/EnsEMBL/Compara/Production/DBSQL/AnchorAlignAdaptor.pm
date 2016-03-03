@@ -43,6 +43,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -68,8 +69,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub store {
   my ($self, $anchor_align)  = @_;
 
-  throw() unless($anchor_align);
-  throw() unless(UNIVERSAL::isa($anchor_align, 'Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign'));
+  assert_ref($anchor_align, 'Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign', 'anchor_align');
 
   my $query = qq{
   INSERT INTO anchor_align
@@ -444,9 +444,7 @@ sub fetch_by_dbID {
 sub fetch_all_by_MethodLinkSpeciesSet {
   my ($self, $method_link_species_set) = @_;
 
-  unless (UNIVERSAL::isa($method_link_species_set, "Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")) {
-    throw("[$method_link_species_set] must be a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
-  }
+  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
 
   my @tabs = $self->_tables;
 

@@ -77,6 +77,7 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -143,9 +144,7 @@ sub fetch_all_by_synteny_region_id {
 sub store {
    my ($self,$dfr) = @_;
 
-   if( !ref $dfr || !$dfr->isa("Bio::EnsEMBL::Compara::DnaFragRegion") ) {
-       throw("$dfr is not a DnaFragRegion object");
-   }
+   assert_ref($dfr, 'Bio::EnsEMBL::Compara::DnaFragRegion', 'dfr');
 
    my $sth = $self->prepare("insert into dnafrag_region (synteny_region_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand) VALUES (?,?,?,?,?)");
    
