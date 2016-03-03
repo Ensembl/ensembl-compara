@@ -116,11 +116,11 @@ sub run {
 			$c++;
 		}
 		
-#		last if $c >= 10;
+		last if $c >= 20;
 	}
 	print " \n remove chromosome or scaffolds with only 1 gene--------------------------START\n\n" if ( $self->debug );
 	for my $dnaf_id (keys %$ref_ortholog_info_hashref) {
-		if (scalar (keys $ref_ortholog_info_hashref->{$dnaf_id}) == 1) {
+		if (scalar keys %{$ref_ortholog_info_hashref->{$dnaf_id}} == 1) {
 #			print Dumper($ref_ortholog_info_hashref->{$dnaf_id});
 #			print "\n", $dnaf_id, "\n\n";
 			delete $ref_ortholog_info_hashref->{$dnaf_id};
@@ -128,7 +128,7 @@ sub run {
 	}
 
 	for my $nr_dnaf_id (keys %$non_ref_ortholog_info_hashref) {
-		if (scalar (keys $non_ref_ortholog_info_hashref->{$nr_dnaf_id}) == 1) {
+		if (scalar keys %{$non_ref_ortholog_info_hashref->{$nr_dnaf_id}} == 1) {
 #			print Dumper($non_ref_ortholog_info_hashref->{$nr_dnaf_id});
 #			print "\n", $nr_dnaf_id, "\n\n";
 			delete $non_ref_ortholog_info_hashref->{$nr_dnaf_id};
