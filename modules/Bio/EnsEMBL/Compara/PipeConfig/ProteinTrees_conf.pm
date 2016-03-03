@@ -2019,7 +2019,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 -1 => [ 'get_num_of_patterns_himem' ],
                 2 => [ 'treebest_small_families' ],
-                1 => [ 'raxml_parsimony_decision' ],
+                1 => [ 'LoadTags_raxml_parsimony' ],
             }
         },
 
@@ -2032,6 +2032,21 @@ sub core_pipeline_analyses {
             -batch_size    				=> 100,
             -rc_name    				=> '16Gb_job',
             -max_retry_count			=> 1,
+            -flow_into  => {
+                1 => [ 'LoadTags_raxml_parsimony' ],
+            }
+        },
+
+        {   -logic_name => 'LoadTags_raxml_parsimony',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    'aln_num_of_patterns' => 200,
+                },
+            },
+            -hive_capacity              => $self->o('loadtags_capacity'),
+            -batch_size                 => 100,
+            -max_retry_count            => 1,
             -flow_into  => {
                 1 => [ 'raxml_parsimony_decision' ],
             }
@@ -2076,7 +2091,7 @@ sub core_pipeline_analyses {
                     '(#tree_num_of_patterns# > 32000)'                                                                     => 'raxml_parsimony_64_cores',
                     ELSE 'raxml_parsimony_8_cores',
                 ),
-                'A->1' => 'raxml_decision',
+                'A->1' => 'LoadTags_raxml',
             },
         },
 
@@ -2214,6 +2229,21 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '32Gb_32c_job',
+        },
+
+        {   -logic_name => 'LoadTags_raxml',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    'aln_num_of_patterns' => 200,
+                },
+            },
+            -hive_capacity              => $self->o('loadtags_capacity'),
+            -batch_size                 => 100,
+            -max_retry_count            => 1,
+            -flow_into  => {
+                1 => [ 'raxml_decision' ],
+            }
         },
 
         {   -logic_name => 'raxml_decision',
