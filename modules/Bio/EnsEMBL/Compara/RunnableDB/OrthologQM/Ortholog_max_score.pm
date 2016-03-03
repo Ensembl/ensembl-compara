@@ -34,8 +34,8 @@ sub fetch_input {
 	my $query = "SELECT homology_id, goc_score, method_link_species_set_id FROM ortholog_goc_metric where method_link_species_set_id = $mlss_ID";
 	my $quality_data = $self->compara_dba->dbc->db_handle->selectall_arrayref($query, {});
 	$self->param('quality_data', $quality_data);
-#	print "1111111111111111111111111111\n\n";
-#	print Dumper($quality_data);
+	print "11111111111111111111111111111111111111111111111111111111111\n\n" if ( $self->debug );
+	print Dumper($quality_data) if ( $self->debug );
 }
 
 sub run {
@@ -43,30 +43,29 @@ sub run {
 	my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
 	my $orth_results = {};
 	while (my $result =shift @{ $self->param('quality_data')}) {
-#		print $result->[0], "  ", $result->[1], "\n";
 
 		if (exists($orth_results->{$result->[0]})) {
-
 			#grab the one with the higher percent score
 
 			#this if is for the scaffolds that only contain one gene, hence the result is null
-			if (not defined($orth_results->{$result->[0]}) && not defined($result->[1])) {
-				$self->dataflow_output_id( {'method_link_species_set_id' => $self->param_required('mlss_ID'), 'homology_id' => $result->[0], 'goc_score' => undef }, 2);
-				$homology_adaptor->update_goc_score($result->[0], undef);
-			} else {
+			#this is no longer neeeded since we are throwing out scaffolds that contain only a single gene from the very start.
+#			print $orth_results->{$result->[0]} , "   ", $result->[1], "\n\n"; 
+#			if (!defined($orth_results->{$result->[0]}) &&  !defined($result->[1])) {
+#				$self->dataflow_output_id( {'method_link_species_set_id' => $self->param_required('mlss_ID'), 'homology_id' => $result->[0], 'goc_score' => undef }, 2);
+#				$homology_adaptor->update_goc_score($result->[0], undef);
+#			} 
+#			else {
 			$orth_results->{$result->[0]} = $orth_results->{$result->[0]} >= $result->[1] ? $orth_results->{$result->[0]} : $result->[1] ; 
 
 			# ***** ONLY DATAFLOWING FOR THE TESTING PURPOSES!!!
-#			print "method_link_species_set_id ", $self->param_required('mlss_ID'), ' homology_id ' , $result->[0], ' percent_conserved_score ' , $orth_results->{$result->[0]}, " \n\n";
+			print "method_link_species_set_id ", $self->param_required('mlss_ID'), ' homology_id ' , $result->[0], ' percent_conserved_score ' , $orth_results->{$result->[0]}, " \n\n";
 			$self->dataflow_output_id( {'method_link_species_set_id' => $self->param_required('mlss_ID'), 'homology_id' => $result->[0], 'goc_score' => $orth_results->{$result->[0]} }, 2 );
 
 			print "Updating homology table goc score\n" if ( $self->debug );
 
-	#		my $homology = $homology_adaptor->fetch_by_dbID($result->[0]);
-	#		$homology->goc_score($orth_results->{$result->[0]});
-#			print $homology->goc_score , "\n", $homology->dbID, "\n\n";
+			print $orth_results->{$result->[0]}, "  GOC score \n Homology id   ", $result->[0], "\n\n" if ( $self->debug );
 			$homology_adaptor->update_goc_score($result->[0], $orth_results->{$result->[0]});
-			}
+#			}
 		} 
 		else {
 			$orth_results->{$result->[0]} = $result->[1];
