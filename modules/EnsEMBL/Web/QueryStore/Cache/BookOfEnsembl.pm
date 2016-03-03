@@ -68,6 +68,8 @@ sub merge {
 sub cache_open {
   my ($self,$rebuild) = @_;
 
+  $rebuild = $self->{'rebuild'} if $rebuild == -1;
+  $self->{'rebuild'} = (defined $rebuild)?0:undef;
   return if $self->{'open'};
   $self->{'rfile'}->delete() if $rebuild;
   $self->{'rfile'}->open_read() or return;
@@ -97,7 +99,7 @@ sub get {
     # Force consolidation
     $self->{'any'} = 1;
     $self->cache_close();
-    $self->cache_open();
+    $self->cache_open(-1);
     return undef;
   }
   return $self->{'rfile'}->get($self->_key($k,$class));

@@ -77,7 +77,7 @@ sub go {
     my $part = $self->{'store'}->_try_get_cache(ref($self->{'impl'}),$a);
     if(defined $part) {
       $hits++;
-      warn "\n\n -- HIT  -- \n ".ref($self->{'impl'})." ".JSON->new->encode($a)."\n\n" if($DEBUG>1);
+      warn "\n\n -- HIT  -- \n ".ref($self->{'impl'})." ".JSON->new->encode($a)."\n\n" if($DEBUG>2);
     } else {
       $part = $self->run_miss($a,0);
       warn "\n\n -- MISS -- \n ".ref($self->{'impl'})." ".JSON->new->encode($a)."\n\n" if($DEBUG>1);
@@ -89,7 +89,7 @@ sub go {
   $self->_run_phase($out,$context,'post_process',[$orig_args]);
   my $E = time();
   my $B = time();
-  if($DEBUG>1) {
+  if($DEBUG>2) {
     warn "\n\n ".ref($self->{'impl'})." ".JSON->new->encode($args)."\n\n";
   }
   if($DEBUG) {
@@ -128,7 +128,7 @@ sub precache {
       warn "  -> $kind ".$a->{'__name'}." [$i]\n";
       if(time()-$start > 60) {
         $self->{'store'}->close();
-        $self->{'store'}->open();
+        $self->{'store'}->open(-1);
         $start = time();
       }
       $self->run_miss($a,1);
