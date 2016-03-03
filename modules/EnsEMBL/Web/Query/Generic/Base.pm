@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Attribute::Handlers;
-use Data::Dumper;
 
 sub _new {
   my ($proto,$store) = @_;

@@ -231,7 +231,6 @@ sub check_dated {
   my $my_ver = $self->get_version($class);
   return if !$my_ver;            # Not dated because never heard of it
   return if $my_ver >= $new_ver; # Our version still current
-  warn "DATED $class\n";
   $self->{'dated'}{$class} = max($self->{'dated'}{$class}||0,$new_ver);
 }
 

@@ -101,7 +101,6 @@ foreach my $p (@precache) {
   my $module = $p;
   $module =~ s/::$//;
   my $pkg = "EnsEMBL::Web::Query::$module";
-  warn "pkg=$pkg\n";
   next unless $pkg->can('precache');
   my $r = $pkg->precache;
   foreach my $type (keys %$r) {

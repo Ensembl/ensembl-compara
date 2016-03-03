@@ -95,7 +95,6 @@ sub get {
   return undef unless $self->{'open'};
   my $rver = $self->{'rfile'}->get_version($class);
   if($rver and $ver!=$rver) {
-    warn "VERSION MISMATCH. CONSOLIDATING\n";
     # Force consolidation
     $self->{'any'} = 1;
     $self->cache_close();
