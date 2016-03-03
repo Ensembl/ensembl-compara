@@ -33,6 +33,10 @@ use Role::Tiny;
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Bio::EnsEMBL::IO::Adaptor::HTSAdaptor;
 
+sub my_empty_label {
+  return 'No data found for this region';
+}
+
 ############# RENDERING ########################
 
 sub render_coverage_with_reads {
@@ -307,8 +311,8 @@ sub _render {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
-    my $features = $self->get_data->[0]{'features'};
-    if (!scalar(@{$features->{$default_strand}})) {
+    my $features = $self->get_data->[0]{'features'}{$default_strand};
+    if (!scalar(@$features)) {
       $self->no_features;
     } else {
       #warn "Rendering coverage";
