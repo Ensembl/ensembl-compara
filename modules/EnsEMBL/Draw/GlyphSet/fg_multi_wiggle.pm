@@ -32,6 +32,7 @@ sub label { return undef; }
 sub render_compact {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks']);
+  $self->{'my_config'}->set('extra_height',12);
   $self->_render_aggregate;
 }
 
@@ -44,6 +45,7 @@ sub render_signal {
 sub render_signal_feature {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks', 'Graph']);
+  $self->{'my_config'}->set('extra_height',12);
   $self->_render_aggregate;
 }
 

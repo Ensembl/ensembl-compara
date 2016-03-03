@@ -158,8 +158,10 @@ sub create_glyphs {
                       };
       
       ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
-      my $real_height   = $self->draw_feature($feature, $position) || $feature_height;
-      push @{$heights->{$feature_row}}, ($real_height + $vspacing + $add_labels);
+      $self->draw_feature($feature, $position);
+      my $extra = $self->track_config->get('extra_height') || 0;
+      my $approx_height = $feature_height + $extra;
+      push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $add_labels);
     
       ## Optional label
       if ($show_label) {
@@ -167,7 +169,7 @@ sub create_glyphs {
           $new_y = $position->{'y'};
         }
         else {
-          $new_y = $position->{'y'} + $real_height;
+          $new_y = $position->{'y'} + $approx_height;
           $new_y += $labels_height if ($bumped eq 'labels_only');
         }
         $position = {
