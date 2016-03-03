@@ -267,7 +267,8 @@ sub convert_to_pvalues {
   ## Set parameters
   my $max_score        = $params->{max_score} || 1000;
   my $min_score        = $params->{min_score} || 0;
-  my @gradient_colours = @{ $params->{gradient_colours} || [qw(white red)] };
+  my $default_colour   = $self->{my_config}->get('colour') || 'red';
+  my @gradient_colours = @{ $params->{gradient_colours} || ['white', $default_colour] };
   my $transform        = $transforms{ $params->{transform} || 'default' };
   my $decimal_places   = $params->{decimal_places} || 2;
 
