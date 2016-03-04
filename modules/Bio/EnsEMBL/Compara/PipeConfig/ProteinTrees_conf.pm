@@ -1628,26 +1628,28 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'alignment_entry_point',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
+
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
-                'defaults'  => { 'tree_reuse_aln_runtime' => 0 },
-                'branches'  => {
-                    2 => '(#tree_gene_count# <  #mcoffee_himem_gene_count#)                                                 and (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)',
-                    3 => '(#tree_gene_count# >= #mcoffee_himem_gene_count# and #tree_gene_count# < #mafft_gene_count#)      and (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)',
-                    4 => '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#) or (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)',
-                    5 => '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                    or (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#) ',
+                'tags'  => {
+                    'gene_count'          => 0,
+                    'reuse_aln_runtime'   => 0,
                 },
+
                 'mcoffee_himem_gene_count'  => $self->o('mcoffee_himem_gene_count'),
                 'mafft_gene_count'          => $self->o('mafft_gene_count'),
                 'mafft_himem_gene_count'    => $self->o('mafft_himem_gene_count'),
                 'mafft_runtime'             => $self->o('mafft_runtime'),
             },
+
             -flow_into  => {
-                '2->A' => [ 'mcoffee' ],
-                '3->A' => [ 'mcoffee_himem' ],
-                '4->A' => [ 'mafft' ],
-                '5->A' => [ 'mafft_himem' ],
-                'A->1' => [ 'exon_boundaries_prep' ],
+                '1->A' => WHEN (
+                    '(#tree_gene_count# <  #mcoffee_himem_gene_count#)                                                      and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee',
+                    '(#tree_gene_count# >= #mcoffee_himem_gene_count# and #tree_gene_count# < #mafft_gene_count#)           and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee_himem',
+                    '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#)     or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft',
+                    '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                        or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft_himem',
+                ),
+                'A->1' => 'exon_boundaries_prep',
             },
             %decision_analysis_params,
         },
