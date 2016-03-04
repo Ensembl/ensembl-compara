@@ -19,7 +19,7 @@
 
 ## Test basic views for all species
 #perl run_tests.pl --config=selenium.conf --tests=basic.conf --species=human_only.conf
-perl run_tests.pl --config=selenium.conf --tests=basic.conf
+perl run_tests.pl --config=selenium.conf --tests=basic.conf --species=release_84_species.conf
 
 ## Intensive test of human
 #perl run_tests.pl --config=selenium.conf --tests=detailed.conf --species=human_only.conf
