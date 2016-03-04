@@ -1453,13 +1453,15 @@ sub _add_file_format_track {
 
 sub _user_track_settings {
   my ($self, $style, $format) = @_;
-  my ($strand, @user_renderers, $default);
+  my (@user_renderers, $default);
+  my $strand = 'b';
 
   if (lc($format) eq 'pairwise') {
     @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
   }
   elsif (lc($format) eq 'bedgraph' || lc($format) eq 'wig' || $style =~ /^(wiggle|WIG)$/) {
     @user_renderers = ('off', 'Off', 'signal', 'Wiggle plot');
+    $strand = 'f';
   }
   elsif (uc($format) =~ /BED|GFF|GTF/) {
     @user_renderers = @{$self->{'alignment_renderers'}};
@@ -1470,7 +1472,7 @@ sub _user_track_settings {
     @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
   }
 
-  return ('b', \@user_renderers, $default);
+  return ($strand, \@user_renderers, $default);
 }
 
 sub _compare_assemblies {
