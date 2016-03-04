@@ -112,9 +112,10 @@ sub content {
     }
 
     ## TEMPORARY NOTICE
+    ## TODO - Remove in release 86 
     if ($has_db_content) {
       $html .= $self->warning_panel('Notice',
-       "To improve our support for uploaded data, we are retiring our current system for saving uploads in Release 85 (early summer 2016). Please delete any uploads with a grey 'save' icon next to them and re-upload your data if you wish to continue to use it."
+       "In Release 84 we have a new, improved system for saving your uploaded data, and the old system will be retired in Release 85. If you wish to continue to use uploads saved before Release 84, please delete them and re-upload your data."
       );
     }
 
@@ -213,7 +214,7 @@ sub table_row {
   }
   
   if ($user_record) {
-    $has_db_content = 1 if $file->data->{'type'} eq 'upload';
+    $has_db_content = 1 if $file->data->{'analyses'};
     $assembly = $file->assembly || 'Unknown';
     $url_params{'id'} = join '-', $file->id, md5_hex($file->code);
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
