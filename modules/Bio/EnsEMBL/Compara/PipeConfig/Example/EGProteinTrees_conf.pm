@@ -61,6 +61,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
@@ -107,7 +108,8 @@ sub default_options {
     # homology_dnds parameters:
         # used by 'homology_dNdS'
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
-        'taxlevels'                 => [],
+        'taxlevels'                 => [],  # this is the default default
+        'taxlevels_plants'          => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],     # and the plants default
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
@@ -294,6 +296,14 @@ sub tweak_analyses {
         $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'ktreedist'}->{'-rc_name'} = '4Gb_job';
+    }
+
+    # Leave this untouched: it is an extremely-hacky way of setting # "taxlevels" to
+    # a division-default only if it hasn't been redefined on the command line
+    if (($self->o('division') !~ /^#:subst/) and (my $tl = $self->default_options()->{'taxlevels_'.$self->o('division')})) {
+        if (stringify($self->default_options()->{'taxlevels'}) eq stringify($self->o('taxlevels'))) {
+            $analyses_by_name->{'group_genomes_under_taxa'}->{'-parameters'}->{'taxlevels'} = $tl;
+        }
     }
 }
 
