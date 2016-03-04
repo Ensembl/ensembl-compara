@@ -1890,13 +1890,17 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[small trees decision]-------------------------------------------------------------
 
         {   -logic_name => 'small_trees_go_to_treebest',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
-                'condition'             => '#tree_gene_count# < 4',
+                'tags'  => {
+                    'gene_count'                    => 0,
+                },
             },
             -flow_into  => {
-                2  => [ 'treebest_small_families' ],
-                3  => [ 'prottest' ],
+                1 => WHEN (
+                    '#tree_gene_count# < 4'   => 'treebest_small_families',
+                    ELSE 'prottest',
+                ),
             },
             %decision_analysis_params,
         },
