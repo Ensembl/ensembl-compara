@@ -66,8 +66,6 @@ sub initialize_db_adaptors {
   if ($division) {
       if( $self->param("registry") ){
           Bio::EnsEMBL::Registry->load_all($self->param("registry"), $self->debug, 0, 0, "throw_if_missing");
-      } elsif($self->param("store_in_pipeline_db") ){
-          my $pipe_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %{ $self->param('pipeline_db') });
       }
       $self->param('compara_db', Bio::EnsEMBL::Registry->get_adaptor($division, 'compara'));
       $self->param('ref_species', undef);

@@ -49,8 +49,6 @@ sub write_output {
   my $reg = 'Bio::EnsEMBL::Registry';
   if( $self->param("registry") ){
    $reg->load_all( $self->param("registry"), $self->debug, 0, 0, "throw_if_missing" );
-  } elsif ( $self->param("store_in_pipeline_db") ){
-   my $pipe_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %{ $self->param('pipeline_db') });
   }
   my $mlssa = $reg->get_adaptor($division, 'compara', 'MethodLinkSpeciesSet');
   my @mlss = @{$mlssa->fetch_all_by_method_link_type("SYNTENY")};
