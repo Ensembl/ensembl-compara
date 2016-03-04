@@ -696,15 +696,13 @@ sub _summarise_funcgen_db {
     my $type = $1;
     next unless $a->{'name'};
     my $res_cell = $dbh->selectall_arrayref(qq(
-      select result_set_id,cell_type_id,display_label
+      select result_set_id,cell_type_id,display_label,cell_type.name
         from result_set
         join cell_type using (cell_type_id)
         join analysis using (analysis_id)
        where logic_name = ?),undef,$a->{'logic_name'});
     foreach my $C (@$res_cell) {
-      my $key = $C->[2];
-      $key =~ s/\(.*?\)//g;
-      $key =~ s/[^A-Za-z0-9+-]//g;
+      my $key = $a->{'logic_name'}.':'.$C->[3];
       my $value = {
         name => qq($C->[2] Regulatory Segmentation ($type)),
         desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">$type</a> segmentation state analysis"),
