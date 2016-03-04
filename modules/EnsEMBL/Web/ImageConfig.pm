@@ -1503,7 +1503,7 @@ sub update_from_input {
     my $track_reorder = 0;
     
     $diff = from_json($diff);
-    $self->update_track_renderer($_, $diff->{$_}->{'renderer'}) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
+    $self->update_track_renderer($_, $diff->{$_}->{'renderer'}, undef, 1) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
     
     $reload        = $self->is_altered;
     $track_reorder = $self->update_track_order($diff) if $diff->{'track_order'};
@@ -1685,7 +1685,7 @@ sub update_from_url {
 }
 
 sub update_track_renderer {
-  my ($self, $key, $renderer, $on_off) = @_;
+  my ($self, $key, $renderer, $on_off, $force) = @_;
   my $node = $self->get_node($key);
   
   return unless $node;
@@ -1701,7 +1701,7 @@ sub update_track_renderer {
   $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
 
   # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
-  $flag += $node->set_user('display', $renderer) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
+  $flag += $node->set_user('display', $renderer, $force) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
   my $text = $node->data->{'name'} || $node->data->{'coption'};
 
   $self->altered($text) if $flag;
