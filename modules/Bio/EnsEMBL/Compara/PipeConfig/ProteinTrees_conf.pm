@@ -2043,6 +2043,7 @@ sub core_pipeline_analyses {
                 'tags'  => {
                     #The default value matches the default dataflow we want: _8_cores analysis.
                     'aln_num_of_patterns' => 200,
+                    'gene_count'          => 0,
                 },
             },
             %decision_analysis_params,
@@ -2222,6 +2223,7 @@ sub core_pipeline_analyses {
                 'tags'  => {
                     #The default value matches the default dataflow we want: _8_cores analysis.
                     'aln_num_of_patterns' => 200,
+                    'gene_count'          => 0,
                 },
             },
             %decision_analysis_params,
