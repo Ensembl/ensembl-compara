@@ -72,7 +72,7 @@ sub upload {
         my ($record) = grep {$_->code eq $file->code} $hub->user->get_records('uploads');
         if ($record) {
           $record->{'__rose_object'}->description($description);
-          $record->save('user' => $hub->user);
+          $record->save;
         }
       }
       else {
