@@ -226,7 +226,9 @@ sub save_config {
   } else {
     delete $args{'data'};
   }
-  
+
+  $data = __clean_hacks($data);
+
   if ($data) {
     $saved = $config_key ? $self->set_data($config_key, $data) : $self->new_config(%args, data => $data);
   } elsif ($config_key) {
@@ -234,6 +236,23 @@ sub save_config {
   }
   
   return ($saved, $deleted);
+}
+
+sub __clean_hacks {
+  # clean data for hacks
+  my $_data = shift;
+
+  return $_data if !defined $_data || !ref $_data;
+
+  if (ref $_data eq 'ARRAY') {
+    my $clean_data = [ map { __clean_hacks($_) || () } @$_data ];
+    return scalar @$clean_data ? $clean_data : undef;
+  }
+
+  return undef if $_data->{'hack'};
+
+  my $clean_data = { map { my $v = __clean_hacks($_data->{$_}); defined $v ? ($_ => $v) : () } keys %$_data };
+  return scalar keys %$clean_data ? $clean_data : undef;
 }
 
 sub new_config {

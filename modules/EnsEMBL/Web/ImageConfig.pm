@@ -1947,13 +1947,13 @@ sub generic_add {
     %$options
   };
   
-  $self->add_matrix($data, $menu) if $data->{'matrix'};
+  $self->add_matrix($data, $menu, $name) if $data->{'matrix'};
   
   return $menu->append($self->create_track($name, $data->{'name'}, $data));
 }
 
 sub add_matrix {
-  my ($self, $data, $menu) = @_;
+  my ($self, $data, $menu, $name) = @_;
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
   my $caption      = $data->{'caption'};
@@ -2014,8 +2014,10 @@ sub add_matrix {
       group => $_->{'group'},
     });
     ## Hack to get trackhub matrix visibility to work
-    if ($display eq 'on') {
-      $node->{'user_data'}{$option_key} = {'display' => 'on'};
+    if ($display eq 'on' && $name) { # $name is only present for trackhubs
+      my $renderer = $data->{'display'} || $data->{'renderers'}[2] || 'normal';
+      $node->{'user_data'}{$option_key} ||= {'display' => 'on',       'hack' => 1}; # do not overwrite - user may have changed it himself if it's present already
+      $node->{'user_data'}{$name}       ||= {'display' => $renderer,  'hack' => 1}; # change individual track renderer along with the cell display
     }
     $column_track->append($node);
     
