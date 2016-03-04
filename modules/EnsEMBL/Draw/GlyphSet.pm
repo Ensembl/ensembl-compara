@@ -1402,7 +1402,7 @@ sub do_bump {
 
   my (@bumps,@rows);
   foreach my $f (sort { $a->{'_bstart'} <=> $b->{'_bstart'} } @$features) {
-    next if $f->{'_bskip'};
+    next if $f->{'_bskip'} or $f->{'_bstart'}<0;
     my $row = 0;
     while(($rows[$row]||=-1)>=$f->{'_bstart'}) { $row++; }
     $rows[$row] = $f->{'_bend'};
