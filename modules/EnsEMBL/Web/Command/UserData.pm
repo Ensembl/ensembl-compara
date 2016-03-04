@@ -71,8 +71,8 @@ sub upload {
       if ($hub->user) {
         my ($record) = grep {$_->code eq $file->code} $hub->user->get_records('uploads');
         if ($record) {
-          $record->description($description);
-          $record->save;
+          $record->{'__rose_object'}->description($description);
+          $record->save('user' => $hub->user);
         }
       }
       else {
