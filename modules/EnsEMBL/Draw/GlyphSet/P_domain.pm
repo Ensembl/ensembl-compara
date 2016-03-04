@@ -52,7 +52,7 @@ sub _init {
     push @{$hash{$_->hseqname}}, $_ for @{$prot_features||[]};
     
     foreach my $key (keys %hash) {
-      my (@rect, $prsave, $minx, $maxx);
+      my (@rect, $prsave, $minx, $maxx, $t_id);
       
       foreach my $pr (@{$hash{$key}}) {
         my $x    = $pr->start;
@@ -60,6 +60,7 @@ sub _init {
         my $w    = $pr->end - $x;
            $maxx = $pr->end if $pr->end > $maxx || !defined $maxx;
         my $id   = $pr->hseqname;
+        $t_id    = $pr->seqname;
         
         push @rect, $self->Rect({
           x      => $x,
@@ -80,7 +81,7 @@ sub _init {
       my $composite = $self->Composite({
         x     => $minx,
         y     => 0,
-        href  => $self->_url({ type => 'Transcript', action => 'ProteinSummary', pf_id => $dbID }),
+        href  => $self->_url({ type => 'Transcript', action => 'ProteinSummary', pf_id => $dbID, translation_id => $t_id }),
         title => $title
       });
       
