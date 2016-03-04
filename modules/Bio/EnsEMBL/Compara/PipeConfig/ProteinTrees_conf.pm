@@ -1821,25 +1821,24 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[alignment filtering]-------------------------------------------------------------
 
         {   -logic_name => 'filter_decision',
-
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
-                'branches'  => {
-                    2 => '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)',
-                    4 => '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)',
+                'tags'  => {
+                    'gene_count' => 0,
+                    'aln_length' => 0,
                 },
-                'else_branch'   => 3,
-
                 'threshold_n_genes'      => $self->o('threshold_n_genes'),
                 'threshold_aln_len'      => $self->o('threshold_aln_len'),
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
             -flow_into  => {
-                2 => [ 'aln_filtering_tagging' ],
-                3 => [ 'noisy' ],
-                4 => [ 'noisy_large' ],
-                5 => [ 'trimal' ], # Not actually used
+                1 => WHEN(
+                     '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)' => 'aln_filtering_tagging',
+                     '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)' => 'noisy_large',
+                     #'' => 'trimal', # Not actually used
+                     ELSE 'noisy',
+                ),
             },
             %decision_analysis_params,
         },
