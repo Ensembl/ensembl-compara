@@ -750,6 +750,7 @@ sub load_user_tracks {
             format          => $entry->format,
             style           => $entry->style,
             caption         => $entry->name,
+            strand          => $strand,
             renderers       => $renderers,
             description     => $description, 
             display         => $entry->display || 'off',
@@ -1458,6 +1459,7 @@ sub _user_track_settings {
 
   if (lc($format) eq 'pairwise') {
     @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
+    $strand = 'f';
   }
   elsif (lc($format) eq 'bedgraph' || lc($format) eq 'wig' || $style =~ /^(wiggle|WIG)$/) {
     @user_renderers = ('off', 'Off', 'signal', 'Wiggle plot');
