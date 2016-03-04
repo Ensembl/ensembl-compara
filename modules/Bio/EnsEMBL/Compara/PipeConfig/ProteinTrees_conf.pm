@@ -2019,7 +2019,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 -1 => [ 'get_num_of_patterns_himem' ],
                 2 => [ 'treebest_small_families' ],
-                1 => [ 'LoadTags_raxml_parsimony' ],
+                1 => [ 'raxml_parsimony_decision' ],
             }
         },
 
@@ -2033,33 +2033,18 @@ sub core_pipeline_analyses {
             -rc_name    				=> '16Gb_job',
             -max_retry_count			=> 1,
             -flow_into  => {
-                1 => [ 'LoadTags_raxml_parsimony' ],
-            }
-        },
-
-        {   -logic_name => 'LoadTags_raxml_parsimony',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
-            -parameters => {
-                'tags'  => {
-                    'aln_num_of_patterns' => 200,
-                },
-            },
-            -hive_capacity              => $self->o('loadtags_capacity'),
-            -batch_size                 => 100,
-            -max_retry_count            => 1,
-            -flow_into  => {
                 1 => [ 'raxml_parsimony_decision' ],
             }
         },
 
         {   -logic_name => 'raxml_parsimony_decision',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            #-parameters => {
-                #'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
-                #'raxml_threshold_aln_len'      => $self->o('raxml_threshold_aln_len'),
-                #'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
-                #'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
-            #},
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    #The default value matches the default dataflow we want: _8_cores analysis.
+                    'aln_num_of_patterns' => 200,
+                },
+            },
             %decision_analysis_params,
 
             #-------------------------------------------------------------------------------
@@ -2091,7 +2076,7 @@ sub core_pipeline_analyses {
                     '(#tree_num_of_patterns# > 32000)'                                                                     => 'raxml_parsimony_64_cores',
                     ELSE 'raxml_parsimony_8_cores',
                 ),
-                'A->1' => 'LoadTags_raxml',
+                'A->1' => 'raxml_decision',
             },
         },
 
@@ -2231,29 +2216,14 @@ sub core_pipeline_analyses {
             -rc_name 		=> '32Gb_32c_job',
         },
 
-        {   -logic_name => 'LoadTags_raxml',
+        {   -logic_name => 'raxml_decision',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
                 'tags'  => {
+                    #The default value matches the default dataflow we want: _8_cores analysis.
                     'aln_num_of_patterns' => 200,
                 },
             },
-            -hive_capacity              => $self->o('loadtags_capacity'),
-            -batch_size                 => 100,
-            -max_retry_count            => 1,
-            -flow_into  => {
-                1 => [ 'raxml_decision' ],
-            }
-        },
-
-        {   -logic_name => 'raxml_decision',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            #-parameters => {
-                #'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
-                #'raxml_threshold_aln_len'      => $self->o('raxml_threshold_aln_len'),
-                #'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
-                #'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
-            #},
             %decision_analysis_params,
 
             #-------------------------------------------------------------------------------
