@@ -79,7 +79,7 @@ use warnings;
 use Data::Dumper;
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'stringify');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -259,6 +259,7 @@ sub run {
         if (not $table_size->{'curr_rel_db'}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
 
             my $db = $all_tables->{$table}->[0];
+            $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
 
             # Single source -> copy
             print "$table is copied over from $db\n" if $self->debug;
@@ -280,6 +281,10 @@ sub run {
             map { $table_size->{$_}->{$table} = $min_max->{$_}->[2] } @dbs;
             # and re-filter the list of databases
             @dbs = grep {$table_size->{$_}->{$table}} @dbs;
+
+            foreach my $db (@dbs) {
+                $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
+            }
 
             my $sql_overlap = "SELECT COUNT(*) FROM $table WHERE $key BETWEEN ? AND ?";
 
@@ -361,6 +366,21 @@ sub write_output {
     }
 
 }
+
+sub _assert_same_table_schema {
+    my ($self, $src_dbc, $dest_dbc, $table) = @_;
+
+    my $src_sth = $src_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $src_schema = $src_sth->fetchall_arrayref;
+    $src_sth->finish();
+
+    my $dest_sth = $dest_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $dest_schema = $dest_sth->fetchall_arrayref;
+    $dest_sth->finish();
+
+    die "'$table' has a different schema in the two databases." if stringify($src_schema) ne stringify($dest_schema);
+}
+
 
 1;
 
