@@ -2828,11 +2828,12 @@ sub add_regulation_builds {
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info;
 
-  my @cell_lines;
+  my (@cell_lines,%cell_names);
 
   foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
     (my $name = $_) =~ s/:\w+$//;
     push @cell_lines, $name;
+    $cell_names{$name} = $db_tables->{'cell_type'}{'names'}{$_}||$name;
   }
   @cell_lines = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } @cell_lines; # Put MultiCell first
  
@@ -2929,18 +2930,18 @@ sub add_regulation_builds {
       $label = ": $cell_line";
     }
     
-    $prev_track = $reg_feats->append($self->create_track($track_key, "$fg_data{$key_2}{'name'}$label", {
+    $prev_track = $reg_feats->append($self->create_track($track_key, "Reg. Feats. $cell_names{$cell_line}", {
       db          => $key,
       glyphset    => $type,
       sources     => 'undef',
       strand      => 'r',
       depth       => $fg_data{$key_2}{'depth'}     || 0.5,
       colourset   => $fg_data{$key_2}{'colourset'} || $type,
-      description => $fg_data{$key_2}{'description'}{'reg_feats'},
+      description => "Reg. Feats. $cell_names{$cell_line}",
       display     => $display,
       renderers   => \@renderers,
       cell_line   => $cell_line,
-      section     => $cell_line,
+      section     => $cell_names{$cell_line},
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       caption     => "Regulatory Features",
     }));

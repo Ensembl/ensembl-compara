@@ -794,7 +794,7 @@ sub _summarise_funcgen_db {
   }
 
   my $c_aref =  $dbh->selectall_arrayref(
-    'select  ct.name, ct.cell_type_id 
+    'select  ct.name, ct.cell_type_id, ct.display_label
        from  cell_type ct, feature_set fs  
        where  fs.type="regulatory" and ct.cell_type_id=fs.cell_type_id 
     group by  ct.name order by ct.name'
@@ -802,6 +802,7 @@ sub _summarise_funcgen_db {
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 2;
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
   }
 
   foreach my $row (@{$dbh->selectall_arrayref(qq(
