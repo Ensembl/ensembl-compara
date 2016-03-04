@@ -2897,7 +2897,7 @@ sub add_regulation_builds {
 
   # New file-based segmentation tracks
   my $segs = $hashref->{'segmentation'};
-  foreach my $key (keys %$segs) {
+  foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
     $prev_track = $reg_segs->append($self->create_track("seg_$key", "Reg. Segs: $name", {
