@@ -1628,7 +1628,6 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'alignment_entry_point',
-
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
                 'tags'  => {
@@ -1945,20 +1944,22 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[tree building with treebest]-------------------------------------------------------------
 
         {   -logic_name => 'treebest_decision',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
-                'branches'  => {
-                    2 => '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)',
-                    4 => '(#tree_gene_count# >= #treebest_threshold_n_genes#)',
+                'tags'  => {
+                    'aln_num_residues'              => 200,
+                    'gene_count'                    => 0,
                 },
-                'else_branch'   => 3,
-                'treebest_threshold_n_residues'      => $self->o('treebest_threshold_n_residues'),
-                'treebest_threshold_n_genes'      => $self->o('treebest_threshold_n_genes'),
+                'treebest_threshold_n_residues'     => $self->o('treebest_threshold_n_residues'),
+                'treebest_threshold_n_genes'        => $self->o('treebest_threshold_n_genes'),
             },
             -flow_into  => {
-                2 => [ 'treebest_short' ],
-                3 => [ 'treebest' ],
-                4 => [ 'treebest_long_himem' ],
+                1 => WHEN (
+                    '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)'   => 'treebest_short',
+                    '(#tree_gene_count# >= #treebest_threshold_n_genes#)'           => 'treebest_long_himem',
+                    ELSE 'treebest',
+                ),
+
             },
             %decision_analysis_params,
         },
