@@ -122,7 +122,7 @@ sub _check_pairwise {
 
     # Have we tried (and failed) before ?
     if ($mlss->has_tag('low_synteny_coverage')) {
-        $self->warning(sprintf("The alignment mlss_id=%d has already been tried but lead to a low synteny-coverage (%f)", $mlss->dbID, $mlss->get_value_for_tag('low_synteny_coverage')));
+        $self->warning(sprintf("The alignment mlss_id=%d has already been tried but lead to a low synteny-coverage (%s)", $mlss->dbID, $mlss->get_value_for_tag('low_synteny_coverage')));
         return unless $self->param('recompute_failed_syntenies');
     }
 
