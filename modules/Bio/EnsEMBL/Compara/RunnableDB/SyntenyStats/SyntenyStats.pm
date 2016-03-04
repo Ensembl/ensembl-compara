@@ -31,7 +31,7 @@ Calculate overall and coding coverage statistics for synteny.
 
 =head1 SYNOPSIS
 
- $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats -division compara_curr -mlss_id 10104 -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl
+ $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats -division compara_curr -mlss_id 10104 -registry ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl
  $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats -mlss_id 10104 -pairwise_db_url mysql://ensro@compara3/database_with_the_matching_species
 
 =head1 Author
@@ -64,8 +64,8 @@ sub initialize_db_adaptors {
 
   my $division = $self->param('division');
   if ($division) {
-      if( $self->param("reg_conf") ){
-          Bio::EnsEMBL::Registry->load_all($self->param("reg_conf"), $self->debug, 0, 0, "throw_if_missing");
+      if( $self->param("registry") ){
+          Bio::EnsEMBL::Registry->load_all($self->param("registry"), $self->debug, 0, 0, "throw_if_missing");
       } elsif($self->param("store_in_pipeline_db") ){
           my $pipe_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %{ $self->param('pipeline_db') });
       }

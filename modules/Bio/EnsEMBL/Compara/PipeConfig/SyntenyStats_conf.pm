@@ -26,7 +26,7 @@ Calculate synteny coverage statistics.
 
 =head1 SYNOPSIS
 
- $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -host compara1 -division compara_prev
+ $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf -registry ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -host compara1 -division compara_prev
 
 =cut
 
@@ -52,7 +52,7 @@ sub pipeline_wide_parameters {
   return {
     %{ $self->SUPER::pipeline_wide_parameters() },
     division => $self->o('division'),
-    reg_conf => $self->o('reg_conf'),
+    registry => $self->o('registry'),
   };
 }
 

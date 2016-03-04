@@ -47,8 +47,8 @@ sub write_output {
   my $division = $self->param_required('division');
   my $mlss_id  = $self->param('mlss_id');
   my $reg = 'Bio::EnsEMBL::Registry';
-  if( $self->param("reg_conf") ){
-   $reg->load_all( $self->param("reg_conf"), $self->debug, 0, 0, "throw_if_missing" );
+  if( $self->param("registry") ){
+   $reg->load_all( $self->param("registry"), $self->debug, 0, 0, "throw_if_missing" );
   } elsif ( $self->param("store_in_pipeline_db") ){
    my $pipe_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %{ $self->param('pipeline_db') });
   }
