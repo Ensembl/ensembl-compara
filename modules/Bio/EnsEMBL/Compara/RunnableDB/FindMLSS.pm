@@ -69,41 +69,38 @@ sub fetch_input {
 
     # And preload everything
     $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all();  # this recursively loads the GenomeDBs, SpeciesSets and Methods
+}
 
-    my $species_set_id = $self->param('species_set_id');
+sub _find_all_matching_species_sets {
+    my $self = shift;
+    my $master_dba = $self->param('master_dba');
 
-    if ($species_set_id) {
+    if (my $species_set_id = $self->param('species_set_id')) {
         my $species_set = $master_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id)
             or die "Could not find the species-set dbID=$species_set_id in the master database\n";
+        return [$species_set];
     }
 
-    # FIXME: there can be multiple species sets with the same name !
-    if (not $species_set_id and (my $species_set_name = $self->param('species_set_name'))) {
-        my $ss = (grep {$_->is_current} @{$master_dba->get_SpeciesSetAdaptor->fetch_all_by_name($species_set_name)})[0]
-            or die "Could not find the collection named '$species_set_name' in the master database\n";
-        $species_set_id = $ss->dbID;
+    if (my $species_set_name = $self->param('species_set_name')) {
+        my $sss = $master_dba->get_SpeciesSetAdaptor->fetch_all_by_name($species_set_name);
+        scalar(@$sss) or die "Could not find a species-set named '$species_set_name' in the master database\n";
+        return $sss;
     }
 
-    if (not $species_set_id and (my $mlss_id = $self->param('mlss_id'))) {
+    if (my $mlss_id = $self->param('mlss_id')) {
         my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id)
             or die "Could not find the MLSS dbID=$mlss_id in the master database\n";
-        $species_set_id = $mlss->species_set_obj->dbID;
+        return [$mlss->species_set_obj];
     }
 
-    if ($species_set_id) {
-        warn "Found the species-set dbID=$species_set_id\n" if $self->debug;
-    } else {
-        die "It was not possible to identify a species-set. Tried 'species_set_id', 'mlss_id', and 'species_set_name'\n";
-    }
-
-    $self->param('species_set_id', $species_set_id);
+    die "It was not possible to identify a species-set. Tried 'species_set_id', 'mlss_id', and 'species_set_name'\n";
 }
 
 sub run {
     my $self = shift @_;
 
     my $method_links = $self->param_required('method_links');
-    my $species_set_id = $self->param('species_set_id');
+    my $species_sets = $self->_find_all_matching_species_sets();
     my $master_dba = $self->param('master_dba');
     my $content_method = { 'url' => 'url', 'mlss_id' => 'dbID', 'dbid' => 'dbID' }->{lc $self->param_required('content')};
 
@@ -112,8 +109,14 @@ sub run {
 
         my $ml = $master_dba->get_MethodAdaptor->fetch_by_type($ml_type)
             or die "Could not find the method '$ml_type' in the master database\n";
-        my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($ml->dbID, $species_set_id)
-            or die "Could not find a MLSS with the method '$ml_type' and the species_set dbID=$species_set_id\n";
+
+        my @mlsss;
+        foreach my $ss (@$species_sets) {
+            my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($ml->dbID, $ss->dbID);
+            push @mlsss, $mlss if $mlss;
+        }
+        scalar(@mlsss) or die "Could not find a MLSS with the method '$ml_type' and a matching species_set (tried ".scalar(@$species_sets)." of these)\n";
+        my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->_find_most_recent(\@mlsss);
 
         my $variable = $method_links->{$ml_type};
         my $content = $mlss->$content_method();
