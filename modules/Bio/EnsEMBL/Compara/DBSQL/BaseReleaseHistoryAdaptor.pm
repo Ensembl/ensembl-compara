@@ -181,6 +181,8 @@ sub make_object_current {
 sub _find_most_recent {
     my ($self, $object) = @_;
 
+    return undef unless scalar(@$object);
+
     my $score = sub {
         my $g = shift;
         # Sort criteria
