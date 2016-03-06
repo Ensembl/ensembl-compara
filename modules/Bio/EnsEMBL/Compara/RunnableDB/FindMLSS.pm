@@ -63,8 +63,12 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    # Connect to the master database
     my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
     $self->param('master_dba', $master_dba);
+
+    # And preload everything
+    $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all();  # this recursively loads the GenomeDBs, SpeciesSets and Methods
 
     my $species_set_id = $self->param('species_set_id');
 
@@ -98,7 +102,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $method_links = $self->param('method_links');
+    my $method_links = $self->param_required('method_links');
     my $species_set_id = $self->param('species_set_id');
     my $master_dba = $self->param('master_dba');
     my $content_method = { 'url' => 'url', 'mlss_id' => 'dbID', 'dbid' => 'dbID' }->{lc $self->param_required('content')};
