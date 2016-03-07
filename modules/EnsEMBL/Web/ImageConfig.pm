@@ -739,7 +739,7 @@ sub load_user_tracks {
         $strand     = $entry->strand if $entry->can('strand') && $entry->strand;
         $renderers  = $entry->renderers if $entry->can('renderers') && $entry->renderers;
         my $description = 'Data that has been saved to the web server. ';
-        my $extra_desc  = $entry->data->{'description'};
+        my $extra_desc  = $entry->description;
         $description   .= add_links($extra_desc) if $extra_desc;
         $menu->append($self->create_track("upload_".$entry->code, $entry->name, {
             external        => 'user',
