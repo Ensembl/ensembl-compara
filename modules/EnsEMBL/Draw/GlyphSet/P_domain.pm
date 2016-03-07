@@ -50,11 +50,12 @@ sub _init {
     $count += scalar(@{$prot_features||[]});
     
     push @{$hash{$_->hseqname}}, $_ for @{$prot_features||[]};
-    
     foreach my $key (keys %hash) {
       my (@rect, $prsave, $minx, $maxx, $t_id);
-      
+      my $i = 0;
+
       foreach my $pr (@{$hash{$key}}) {
+        $i++;
         my $x    = $pr->start;
            $minx = $x if $x < $minx || !defined $minx;
         my $w    = $pr->end - $x;
@@ -64,12 +65,11 @@ sub _init {
         
         push @rect, $self->Rect({
           x      => $x,
-          y      => 0,
+          y      => 2,
           width  => $w,
           height => $h,
           colour => $colour ||= $self->get_colour($pr),
         });
-        
         $prsave ||= $pr;
       }
       
@@ -77,7 +77,7 @@ sub _init {
          $title .= '; Interpro: ' . $prsave->interpro_ac if $prsave->interpro_ac;
          $title .= '; '. $prsave->idesc                  if $prsave->idesc;
       my $dbID   = $prsave->dbID;
-      
+
       my $composite = $self->Composite({
         x     => $minx,
         y     => 0,
@@ -88,7 +88,7 @@ sub _init {
       $composite->push(@rect,
         $self->Rect({
           x         => $minx,
-          y         => $h / 2,
+          y         => $h / 2 + 2,
           width     => $maxx - $minx,
           height    => 0,
           colour    => $colour,
@@ -106,22 +106,22 @@ sub _init {
         halign    => 'left',
         text      => $desc,
         x         => $composite->x,
-        y         => $h,
+        y         => $h + 2,
         height    => $font_details->{'height'},
         width     => $res[2] / $pix_per_bp,
         colour    => $colour,
         absolutey => 1
       }));
-      
+
       if ($depth > 0) {
         my $bump_start = int($composite->x * $pix_per_bp);
         my $bump_end   = $bump_start + int($composite->width * $pix_per_bp);
         my $row        = $self->bump_row($bump_start, $bump_end);
         
-        $composite->y($composite->y + ($row * (4 + $h + $font_details->{'height'}))) if $row;
+        $composite->y($composite->y + ($row * (8 + $h + $font_details->{'height'}))) if $row;
       }
-      
       $self->push($composite);
+      $self->draw_space_glyph(20) if($i < 2); #adding an empty glyph to create a space in between the tracks
     }
   }
   $self->no_features unless $count;
@@ -149,6 +149,39 @@ sub render_text {
   }
   
   return $export;
+}
+
+sub draw_space_glyph {
+  ### Draws a an empty glyph as a spacer
+  ### Arg1 : (optional) integer for space height,
+  ### Returns 1
+
+  my ($self, $space) = @_;
+  $space ||= 9;
+
+  $self->push($self->Space({
+    height    => $space,
+    width     => 1,
+    y         => $self->_offset,
+    x         => 0,
+    absolutey => 1,  # puts in pix rather than bp
+    absolutex => 1,
+  }));
+
+  $self->_offset($space);
+
+  return 1;
+}
+
+sub _offset {
+  ### Arg1 : (optional) number to add to offset
+  ### Description: Getter/setter for offset
+  ### Returns : integer
+
+  my ($self, $offset) = @_;
+  $self->{'offset'} = $offset if $offset;
+
+  return $self->{'offset'} || 0;
 }
 
 1;
