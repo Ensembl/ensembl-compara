@@ -152,8 +152,7 @@ sub _check_pairwise {
     if (not $master_synt_mlss) {
         die "Could not find the $synt_method MLSS in the master database that matches the pairwise alignment\n" unless $self->param('create_missing_synteny_mlsss');
         my $synt_name = $mlss->name;
-        $synt_name =~ s/ .*//;
-        $synt_name .= ' synteny';
+        $synt_name =~ s/ .*/ synteny/;
         $master_synt_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
             -METHOD             => $synt_method,
             -SPECIES_SET_OBJ    => $mlss->species_set_obj,
