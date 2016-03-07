@@ -997,13 +997,14 @@ sub _add_trackhub_tracks {
   my $style_mappings = {
                         'bigbed' => {
                                       'full'    => 'as_transcript_label',
-                                      'dense'   => 'as_transcript_nolabel',
+                                      'pack'    => 'as_transcript_label',
                                       'squish'  => 'half_height',
-                                      'pack'    => 'stack',
+                                      'dense'   => 'as_alignment_nolabel',
                                       },
                         'bigwig' => {
                                       'full'    => 'signal',
                                       'default' => 'compact',
+                                      'dense'   => 'compact',
                                     },
                         'vcf' =>    {
                                       'full'    => 'histogram',
