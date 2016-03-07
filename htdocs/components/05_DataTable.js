@@ -75,8 +75,6 @@ Ensembl.DataTable = {
   getOptions: function (table, noToggle, exportable) {
     var length     = $('tbody tr', table).length;
     var noSort     = table.hasClass('no_sort');
-    var lengthChange = false; // Drop down for selecting number of columns to View
-    var pagination = false; // For pagination
     var menu       = [[], []];
     var options    = {
       sPaginationType: 'full_numbers',
@@ -168,7 +166,7 @@ Ensembl.DataTable = {
     }).toArray();
 
     if (length > 10) {
-      options.sDom = '<"dataTables_top"' + (lengthChange ? 'l' : '') + (noToggle ? '' : '<"col_toggle">') + (exportable ? '<"dataTables_export">' : '') + 'f<"invisible">>t<"dataTables_bottom"i' + (pagination ? 'p' : '') + '<"invisible">>';
+      options.sDom = '<"dataTables_top"l' + (noToggle ? '' : '<"col_toggle">') + (exportable ? '<"dataTables_export">' : '') + 'f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
       
       $.each([ 10, 25, 50, 100 ], function () {
         if (this < length) {
