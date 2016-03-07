@@ -25,6 +25,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::REST;
+use EnsEMBL::Web::Command::UserData;
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -82,17 +83,49 @@ sub content {
     if ($count > 0) {
       foreach (@{$result->{'items'}}) {
         (my $species = $_->{'species'}{'scientific_name'}) =~ s/ /_/;
-        my $attachment_url = sprintf('/%s/UserData/AddFile?format=TRACKHUB;species=%s;text=%s', 
-                                      $species, $species, $_->{'hub'}{'url'});
+
+        ## Is this hub already attached?
+        my ($ignore, $params) = EnsEMBL::Web::Command::UserData::check_attachment($self, $_->{'hub'}{'url'});
+        my $button;
+        if ($params->{'reattach'}) {
+          my $label;
+          if ($params->{'reattach'} eq 'preconfig') {
+            $label = 'Hub attached by default';
+          }
+          else {
+            $label = 'Hub already attached';
+          }
+          my $species       = $hub->species;
+          my $location      = $hub->param('r');
+          unless ($location) {
+            my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA');
+            $location       = $sample_data->{'LOCATION_PARAM'};
+          }
+          my $config_url = $hub->url({'species' => $species, 
+                                      'type'    => 'Location',
+                                      'action'  => 'View',
+                                      'r'       => $location,
+                                      });
+          my $anchor   = 'modal_config_viewbottom';
+          if ($params->{'menu'}) {
+            $anchor .= '-'.$params->{'menu'};
+          }
+          $button = qq(<p class="warn button float-right"><a href="$config_url#$anchor">$label</a></p>);
+        }
+        else {
+          my $attachment_url = sprintf('/%s/UserData/AddFile?format=TRACKHUB;species=%s;text=%s', $species, $species, $_->{'hub'}{'url'});
+        $button = qq(<p class="button float-right"><a href="$attachment_url" class="modal_link">Attach this hub</a></p>);
+        }
+
         $html .= sprintf('<div class="plain-box">
                             <h3>%s</h3>
-                            <p class="button float-right"><a href="%s" class="modal_link">Attach this hub</a></p>
+                            %s
                             <p><b>Description</b>: %s</p>
                             <p><b>Data type</b>: %s</p>
                             <p><b>Number of tracks</b>: %s</p>
                           </div>',
                           $_->{'hub'}{'shortLabel'}, 
-                          $attachment_url,
+                          $button,
                           $_->{'hub'}{'longLabel'},
                           $_->{'type'},
                           $_->{'status'}{'tracks'}{'total'},
