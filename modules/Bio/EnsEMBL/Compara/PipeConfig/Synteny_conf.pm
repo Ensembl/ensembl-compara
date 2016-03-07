@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
 This pipeline is using eHive's parameter-stack mechanism, i.e. the jobs
 inherit the parameters of their parents.
 The pipeline should be configured exclusively from the command line, with the
--pairwise_db_url and possibly -pairwise_mlss_id parameters. If the latter is
+--alignment_db and possibly -pairwise_mlss_id parameters. If the latter is
 skipped, the pipeline will use all the pairwise alignments found on the server.
 The pipeline automatically finds the alignments that are missing syntenies and
 compute these (incl. the stats)
@@ -63,8 +63,11 @@ sub default_options {
 	    'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
             'work_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
 
-            # Connections to the pairwise database must be given
-            #'pairwise_db_url' => undef, #pairwise database to calculate the syntenies from
+            # Connection to the alignment database must be given
+            #'alignment_db' => undef, #alignment database to calculate the syntenies from
+            'registry' => undef,    # needed if the alignment_db doesn't have locator, or if it is a registry name (a division name, for instance)
+
+            # Used to restrict the pipeline to 1 mlss_id
             'pairwise_mlss_id'  => undef,   # if undef, will use all the pairwise alignments found in it
 
             #DumpGFFAlignmentsForSynteny parameters
@@ -152,8 +155,9 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::FetchSyntenyParameters',
             -input_ids  => [
                 {
-                    pairwise_db_url     => $self->o('pairwise_db_url'),
+                    'alignment_db'      => $self->o('alignment_db'),
                     pairwise_mlss_id    => $self->o('pairwise_mlss_id'),
+                    'registry'          => $self->o('registry'),
                 },
             ],
             -wait_for   => [ 'copy_table', 'copy_table_factory' ],
@@ -175,13 +179,22 @@ sub pipeline_analyses {
             -parameters => {
                 'cmd'   => 'mkdir -p #synteny_dir#',
             },
-            -flow_into  => [ 'chr_name_factory' ],
+            -flow_into  => [ 'copy_dnafrags_from_master' ],
         },
+            { -logic_name => 'copy_dnafrags_from_master',
+              -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+              -parameters    => {
+                                 'src_db_conn'   => '#master_db#',
+                                 'mode'          => 'insertignore',
+                                 'table'         => 'dnafrag',
+                                 'where'         => 'is_reference = 1 AND genome_db_id IN (#genome_db_ids#)'
+                                },
+              -flow_into => [ 'chr_name_factory' ],
+            },
             #dump chr names
             {   -logic_name => 'chr_name_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::ListChromosomes',
                 -parameters => {
-                                'compara_db'            => '#pairwise_db_url#',
                                 'species_name'          => '#ref_species#',
                                },
                 -flow_into => {
@@ -195,7 +208,8 @@ sub pipeline_analyses {
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
               -parameters => {
                               'program'    => $self->o('DumpGFFAlignmentsForSynteny_exe'),
-                              'cmd' => "#program# --dbname #pairwise_db_url# --qy #ref_species# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region_name# --force #include_non_karyotype# --level #level# --output_dir #synteny_dir#",
+                              'reg_conf_optional'   => '#expr( #registry# ? " --reg_conf ".#registry# : "" )expr#',
+                              'cmd' => "#program# --dbname #alignment_db# --qy #ref_species# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region_name# --force #include_non_karyotype# --level #level# --output_dir #synteny_dir# #reg_conf_optional#",
                               },
                 -flow_into => {
                                '1' => [ 'build_synteny' ],
@@ -222,24 +236,12 @@ sub pipeline_analyses {
                               'cmd' => 'cat #synteny_dir#/*.BuildSynteny.out | grep cluster > #output_file#',
                              },
              -flow_into => { 
-                              '1' => [ 'copy_dnafrags_from_master' ],
+                              '1' => [ 'load_dnafrag_regions' ],
                            },
               
             },
             @{$self->init_basic_tables_analyses('#master_db#', undef, 1, 0, 0, [{}])},
 
-            { -logic_name => 'copy_dnafrags_from_master',
-              -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-              -parameters    => {
-                                 'src_db_conn'   => '#master_db#',
-                                 'mode'          => 'insertignore',
-                                 'table'         => 'dnafrag',
-                                 'where'         => 'is_reference = 1 AND genome_db_id IN (#genome_db_ids#)'
-                                },
-              -flow_into => {
-                              1 => [ 'load_dnafrag_regions' ],
-                            },
-            },
             { -logic_name => 'load_dnafrag_regions',
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::LoadDnafragRegions',
               -parameters => { 

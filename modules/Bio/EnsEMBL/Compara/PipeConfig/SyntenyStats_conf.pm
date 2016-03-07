@@ -42,6 +42,7 @@ sub default_options {
   return {
     %{$self->SUPER::default_options},
     
+    registry      => undef,
     division      => 'Multi',
     mlss_id       => undef,
   };
@@ -51,7 +52,7 @@ sub pipeline_wide_parameters {
   my ($self) = @_;
   return {
     %{ $self->SUPER::pipeline_wide_parameters() },
-    division => $self->o('division'),
+    compara_db => $self->o('division'),
     registry => $self->o('registry'),
   };
 }

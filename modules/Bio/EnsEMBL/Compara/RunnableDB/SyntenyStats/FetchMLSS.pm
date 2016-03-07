@@ -38,18 +38,15 @@ package Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS;
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-use Bio::EnsEMBL::Registry;
 
 sub write_output {
   my ($self) = @_;
   
-  my $division = $self->param_required('division');
   my $mlss_id  = $self->param('mlss_id');
-  my $reg = 'Bio::EnsEMBL::Registry';
   if( $self->param("registry") ){
    $self->load_registry($self->param("registry"));
   }
-  my $mlssa = $reg->get_adaptor($division, 'compara', 'MethodLinkSpeciesSet');
+  my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my @mlss = @{$mlssa->fetch_all_by_method_link_type("SYNTENY")};
   
   if (defined $mlss_id) {
@@ -58,7 +55,7 @@ sub write_output {
       print "Output mlss_id = $mlss_id\n";
       $self->dataflow_output_id({'mlss_id' => $mlss_id}, 1);
     } else {
-      $self->throw("The MLSS id parameter $mlss_id does not exist for $division.");
+      $self->throw("The MLSS id parameter $mlss_id does not exist in the database: ".$self->compara_dba->dbc->dbname);
     }
   } else {
     foreach my $mlss (@mlss) {
