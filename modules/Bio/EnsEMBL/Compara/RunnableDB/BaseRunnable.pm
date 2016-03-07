@@ -48,6 +48,7 @@ use warnings;
 
 use Carp;
 
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;    # to use go_figure_compara_dba() and other things
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
@@ -92,6 +93,45 @@ sub compara_dba {
     return $self->{'_cached_compara_dba'};
 }
 
+
+=head2 load_registry
+
+  Example     : $self->load_registry();
+  Description : Simple wrapper around Registry's load_all() method that takes care of 1) not loading the same
+                registry file again and again, and 2) keeping $self->compara_dba valid
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_registry {
+    my ($self, $registry_conf_file) = @_;
+
+    # First we assume that nothing else could have tampered the registry,
+    # so if the config file has been loaded it is still valid
+    return if $self->{'_last_registry_file'} and ($self->{'_last_registry_file'} eq $registry_conf_file);
+
+    # We can load the config file
+    Bio::EnsEMBL::Registry->load_all($registry_conf_file, $self->debug, 0, 0, "throw_if_missing");
+    $self->{'_last_registry_file'} = $registry_conf_file;
+
+    # There are two consequences to not using "no_clear" in the above load_all()
+    # 1) All the DBConnections have been closed at the db_handle level.
+    #    We now need to let the API know
+    if ($self->{'_cached_compara_dba'}) {
+        $self->{'_cached_compara_dba'}->dbc->connected(0);
+    }
+    # 2) $self->{'_cached_compara_dba'} has been removed from the registry.
+    #    The best is to un-cache it, so that it will be correctly recreated
+    #    later.
+    delete $self->{'_cached_compara_db_signature'};
+    delete $self->{'_cached_compara_dba'};
+    # Note that doing 1) is only needed when the Compara dba is using the
+    # same DBConnection as eHive. Otherwise, eHive will fail with a "MySQL
+    # server has gone away"
+}
 
 
 =head2 get_species_tree_file
