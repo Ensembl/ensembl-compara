@@ -84,7 +84,7 @@ sub default_options {
             'orient' => 'false', # "false" is only needed for human/mouse, human/rat and mouse/rat NOT for elegans/briggsae (it can be ommitted). 
 
             #Final filtering on the genome coverage (to remove too sparse syntenies)
-            'min_genome_coverage' => 0.01,  # minimum coverage. This parameter must be between 0 and 1
+            'min_genome_coverage' => 0.05,  # minimum coverage. This parameter must be between 0 and 1
 
             #executable locations
             'DumpGFFAlignmentsForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl",
