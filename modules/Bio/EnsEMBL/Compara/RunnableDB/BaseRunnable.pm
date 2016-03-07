@@ -81,15 +81,21 @@ sub param_defaults {
 sub compara_dba {
     my $self = shift @_;
 
+    use Data::Dumper;
+    #print STDERR Dumper("compara_dba", { 'args' => \@_, 'cached_sig' => $self->{'_cached_compara_db_signature'}, 'cached_dba' => $self->{'_cached_compara_dba'} });
     my $given_compara_db = shift @_ || ($self->param_is_defined('compara_db') ? $self->param('compara_db') : $self);
     my $given_ref = ref( $given_compara_db );
     my $given_signature  = ($given_ref eq 'ARRAY' or $given_ref eq 'HASH') ? stringify ( $given_compara_db ) : "$given_compara_db";
 
     if( !$self->{'_cached_compara_db_signature'} or ($self->{'_cached_compara_db_signature'} ne $given_signature) ) {
+        print STDERR "create new compara DBA\n";
         $self->{'_cached_compara_db_signature'} = $given_signature;
         $self->{'_cached_compara_dba'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $given_compara_db );
+    } else {
+        print STDERR "reuse DBA\n";
     }
 
+    #print STDERR Dumper("sig", $self->{'_cached_compara_db_signature'}, "cached dba", $self->{'_cached_compara_dba'});
     return $self->{'_cached_compara_dba'};
 }
 
@@ -113,24 +119,29 @@ sub load_registry {
     # so if the config file has been loaded it is still valid
     return if $self->{'_last_registry_file'} and ($self->{'_last_registry_file'} eq $registry_conf_file);
 
+    # There are two consequences to not using "no_clear" in load_all():
+    # 1) All the DBConnections have been closed at the db_handle level.
+    # 2) $self->{'_cached_compara_dba'} has been removed from the registry.
+
+    # eHive may fail with a "MySQL server has gone away" if its
+    # DBConnection gets closed by load_all(). Let's check whether the
+    # DBConnection is actually used by the Registry
+    my $dbas_for_this_dbc = Bio::EnsEMBL::Registry->get_all_DBAdaptors_by_connection($self->dbc);
+
     # We can load the config file
+    print STDERR "load registry\n";
     Bio::EnsEMBL::Registry->load_all($registry_conf_file, $self->debug, 0, 0, "throw_if_missing");
     $self->{'_last_registry_file'} = $registry_conf_file;
 
-    # There are two consequences to not using "no_clear" in the above load_all()
-    # 1) All the DBConnections have been closed at the db_handle level.
-    #    We now need to let the API know
-    if ($self->{'_cached_compara_dba'}) {
-        $self->{'_cached_compara_dba'}->dbc->connected(0);
+    # And let the API know that the db_handle is closed. eHive will survive !
+    if (@$dbas_for_this_dbc) {
+        $self->dbc->connected(0);
     }
-    # 2) $self->{'_cached_compara_dba'} has been removed from the registry.
-    #    The best is to un-cache it, so that it will be correctly recreated
-    #    later.
+
+    # Finally, the best is to un-cache the Compara DBAdaptor so that it
+    # will be correctly recreated later.
     delete $self->{'_cached_compara_db_signature'};
     delete $self->{'_cached_compara_dba'};
-    # Note that doing 1) is only needed when the Compara dba is using the
-    # same DBConnection as eHive. Otherwise, eHive will fail with a "MySQL
-    # server has gone away"
 }
 
 
