@@ -80,6 +80,10 @@ sub content {
     my $count   = $result->{'total_entries'};
     my $plural  = $count == 1 ? '' : 's';
     $html .= sprintf('<p>Found %s track hub%s</p>', $count, $plural);
+
+    my $link = $hub->url({'type' => 'UserData', 'action' => 'SelectFile'});
+    $html .= $self->info_panel('Tip', qq(If you don't see the hub you are interested in listed here, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.));
+
     if ($count > 0) {
       foreach (@{$result->{'items'}}) {
         (my $species = $_->{'species'}{'scientific_name'}) =~ s/ /_/;
