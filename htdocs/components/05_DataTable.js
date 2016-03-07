@@ -75,6 +75,8 @@ Ensembl.DataTable = {
   getOptions: function (table, noToggle, exportable) {
     var length     = $('tbody tr', table).length;
     var noSort     = table.hasClass('no_sort');
+    var lengthChange = false; // Drop down for selecting number of columns to View
+    var pagination = false; // For pagination
     var menu       = [[], []];
     var options    = {
       sPaginationType: 'full_numbers',
@@ -164,9 +166,9 @@ Ensembl.DataTable = {
       
       return rtn;
     }).toArray();
-    
+
     if (length > 10) {
-      options.sDom = '<"dataTables_top"l' + (noToggle ? '' : '<"col_toggle">') + (exportable ? '<"dataTables_export">' : '') + 'f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
+      options.sDom = '<"dataTables_top"' + (lengthChange ? 'l' : '') + (noToggle ? '' : '<"col_toggle">') + (exportable ? '<"dataTables_export">' : '') + 'f<"invisible">>t<"dataTables_bottom"i' + (pagination ? 'p' : '') + '<"invisible">>';
       
       $.each([ 10, 25, 50, 100 ], function () {
         if (this < length) {
@@ -299,12 +301,30 @@ Ensembl.DataTable = {
       var settings = table.dataTable().fnSettings();
       var form     = $(settings.nTableWrapper).siblings('form.data_table_export');
       var data;
+      
       if (e.target.className === 'all') {
         if (!table.data('exportAll')) {
           data = [[]];
           
+          // For column heading
           $.each(settings.aoColumns, function (i, col) { data[0].push(col.sTitle); });
-          $.each(settings.aoData,    function (i, row) { data.push(row._aData);    });
+          // For column data
+          $.each(settings.aoData,    function (i, row) { 
+            var t_arr = [];
+            $(row._aData).each(function (j, cellVal) {
+              // Putting inside a div so that the jquery selector works for all
+              //  "hidden" elements inside the div
+              var div = $( "<div/>" );
+              div.append($(cellVal));
+              var hidden = $('.hidden:not(.export)', $(div));
+              if (hidden.length) {
+                t_arr.push($.trim($(div).find(hidden).remove().end().html()));
+              } else {
+                t_arr.push(cellVal);
+              }
+            });
+            data.push(t_arr);
+          });
 
           table.data('exportAll', data);
           form.find('input.data').val(JSON.stringify(data));
@@ -312,8 +332,8 @@ Ensembl.DataTable = {
       } else {        
         if (!table.data('export')) {
           var tableClone = table.clone();
-          data = [];          
-
+          data = [];
+          // Traversing through each row displayed for downloading what you see 
           $('tr', tableClone).each(function (i) {
             data[i] = [];            
             $(this.cells).each(function () {
@@ -323,15 +343,14 @@ Ensembl.DataTable = {
               } else {
                 data[i].push($(this).html());
               }
-              hidden = null;
             });
           });
 
-          tableClone.data('export', data);
+          table.data('export', data);
           form.find('input.data').val(JSON.stringify(data));
         }
       }
-      
+
       form.trigger('submit');
       
       table = form = null;
