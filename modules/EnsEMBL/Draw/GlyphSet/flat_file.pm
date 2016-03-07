@@ -68,6 +68,7 @@ sub get_data {
     my $extra_config = {
                         'default_strand'  => 1,
                         'display'         => $self->{'display'},
+                        'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                         };
 
     ## Parse the file, filtering on the current slice

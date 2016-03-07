@@ -98,23 +98,29 @@ sub get_data {
     my $slice       = $self->{'container'};
     my $start       = $slice->start;
 
+    ## Allow for seq region synonyms
+    my $seq_region_names = [$slice->seq_region_name];
+    if ($self->{'config'}->hub->species_defs->USE_SEQREGION_SYNONYMS) {
+      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+    }
+
     my $vcf_adaptor = $self->vcf_adaptor;
-    ## Don't assume the adaptor can find and open the file!
-    my $consensus   = eval { $vcf_adaptor->fetch_variations($slice->seq_region_name, $slice->start, $slice->end); };
-    if ($@) {
-      $self->{'data'} = [];
-    }
-    else {
-      my $colours = $self->species_defs->colour('variation');
-      my $colour  = $colours->{'default'}->{'default'}; 
+    my $consensus;
+    foreach my $seq_region_name (@$seq_region_names) {
+      $consensus = eval { $self->vcf_adaptor->fetch_variations($seq_region_name, $slice->start, $slice->end); };
+      return [] if $@;
+      last if $consensus and @$consensus;
+    } 
+
+    my $colours = $self->species_defs->colour('variation');
+    my $colour  = $colours->{'default'}->{'default'}; 
       
-      $self->{'data'} = [{'metadata' => {
-                                          'name'    => $self->{'my_config'}->get('name'),
-                                          'colour'  => $colour,
-                                         }, 
-                          'features' => {'1' => $consensus}
-                              }];
-    }
+    $self->{'data'} = [{'metadata' => {
+                                        'name'    => $self->{'my_config'}->get('name'),
+                                        'colour'  => $colour,
+                                       }, 
+                        'features' => {'1' => $consensus}
+                            }];
   }
   return $self->{'data'};
 }

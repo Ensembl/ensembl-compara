@@ -73,6 +73,7 @@ sub get_data {
                     'pix_per_bp'      => $self->scalex,
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
+                    'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                     };
 
     ## Also set a default gradient in case we need it
