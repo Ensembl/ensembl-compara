@@ -25,6 +25,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use List::Util qw(first);
+
 use parent qw(EnsEMBL::Web::IOWrapper);
 
 sub create_hash {
@@ -39,7 +41,15 @@ sub create_hash {
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
   my $seqname       = $self->parser->get_seqname;
-  return if $seqname ne $slice->seq_region_name;
+
+  ## Allow for seq region synonyms
+  my $seq_region_names = [$slice->seq_region_name];
+  if ($metadata->{'use_synonyms'}) {
+    push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+  }
+
+  return unless first {$seqname eq $_} @$seq_region_names;
+
   my $feature_start = $self->parser->get_start;
   my $feature_end   = $self->parser->get_end;
   my $start         = $feature_start - $slice->start;

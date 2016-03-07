@@ -349,7 +349,20 @@ sub get_data {
 
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{data})) {
-    $self->{_cache}->{data} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end) || [];
+    
+    ## Allow for seq region synonyms
+    my $seq_region_names = [$slice->seq_region_name];
+    if ($self->{'config'}->hub->species_defs->USE_SEQREGION_SYNONYMS) {
+      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+    }
+
+    my $data;
+    foreach my $seq_region_name (@$seq_region_names) {
+      $data = $self->bam_adaptor->fetch_alignments_filtered($seq_region_name, $slice->start, $slice->end) || [];
+      last if @$data;
+    } 
+
+    $self->{_cache}->{data} = $data;
   }
   my $default_strand = $self->{'my_config'}->get('default_strand') || 1;
   ## Return data in standard format expected by other modules
@@ -362,7 +375,19 @@ sub consensus_features {
   my $self = shift;
   unless ($self->{_cache}->{consensus_features}) {
     my $slice = $self->{'container'};
-    my $consensus = $self->bam_adaptor->fetch_consensus($slice->seq_region_name, $slice->start, $slice->end);
+    
+    ## Allow for seq region synonyms
+    my $seq_region_names = [$slice->seq_region_name];
+    if ($self->{'config'}->hub->species_defs->USE_SEQREGION_SYNONYMS) {
+      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+    }
+
+    my $consensus;
+    foreach my $seq_region_name (@$seq_region_names) {
+      $consensus = $self->bam_adaptor->fetch_consensus($seq_region_name, $slice->start, $slice->end) || [];
+      last if @$consensus;
+    }    
+
     my $cons_lookup = {};
     foreach (@$consensus) {
       $cons_lookup->{$_->{'x'}} = $_->{'bp'};

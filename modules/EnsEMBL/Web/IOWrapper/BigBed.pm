@@ -35,9 +35,17 @@ sub create_structure { return EnsEMBL::Web::IOWrapper::Bed::create_structure(@_)
 sub create_tracks {
   my ($self, $slice, $metadata) = @_;
 
+  ## Allow for seq region synonyms
+  my $seq_region_names = [$slice->seq_region_name];
+  if ($metadata->{'use_synonyms'}) {
+    push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+  }
+
   ## Limit file seek to current slice
   my $parser = $self->parser;
-  $parser->seek($slice->seq_region_name, $slice->start, $slice->end);
+  foreach my $seq_region_name (@$seq_region_names) {
+    last if $parser->seek($seq_region_name, $slice->start, $slice->end);
+  }
 
   $self->SUPER::create_tracks($slice, $metadata);
 }

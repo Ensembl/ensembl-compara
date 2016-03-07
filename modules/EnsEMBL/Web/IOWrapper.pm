@@ -25,7 +25,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use List::Util qw(max);
+use List::Util qw(max first);
 
 use Bio::EnsEMBL::IO::Parser;
 use Bio::EnsEMBL::IO::Utils;
@@ -254,6 +254,12 @@ sub create_tracks {
     $data->{$track_key}{'features'}{$strand} = $features;
   }
   else {
+    ## Allow for seq region synonyms
+    my $seq_region_names = [$slice->seq_region_name];
+    if ($extra_config->{'use_synonyms'}) {
+      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+    }
+
     while ($parser->next) {
       my $track_key = $self->build_metadata($parser, $data, $extra_config, $order);
       my %metadata  = %{$data->{$track_key}{'metadata'}||{}};
@@ -276,7 +282,7 @@ sub create_tracks {
 
       if ($slice) {
         ## Skip features that lie outside the current slice
-        next if ($seqname ne $slice->seq_region_name
+        next if ( !(first {$seqname eq $_} @$seq_region_names)
                   || $end < $slice->start || $start > $slice->end);
         $self->build_feature($data, $track_key, $slice, $strandable);
       }
