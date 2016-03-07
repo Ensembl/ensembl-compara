@@ -34,10 +34,10 @@ sub content {
   my $hub  = $self->hub;
   my $url  = $self->ajax_url('ajax', {
     r            => $hub->referer->{'params'}->{'r'}[0],
-    code         => $hub->param('code'),
-    nearest      => $hub->param('nearest'),
-    description  => $hub->param('description'),
-    count        => $hub->param('count'),
+    code         => $hub->param('code') || '',
+    nearest      => $hub->param('nearest') || '',
+    description  => $hub->param('description') || '',
+    count        => $hub->param('count') || 0,
     _type        => $hub->param('type') || 'upload',
     update_panel => 1,
     __clear      => 1
