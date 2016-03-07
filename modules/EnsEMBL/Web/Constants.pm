@@ -746,7 +746,7 @@ sub USERDATA_MESSAGES {
     hub_preconfig => {
       'type'    => 'info', 
       'title'   => 'Hub already attached',
-      'message' => 'This is a preconfigured hub, so you cannot reattach it.',
+      'message' => 'This hub is attached by default.',
     },
     hub_user => {
       'type'    => 'info', 
