@@ -45,7 +45,9 @@ sub process {
     $current_node = pop @steps;
     $url .= "/$current_node";
   } else {
+    my $base = quotemeta $hub->species_defs->ENSEMBL_BASE_URL;
     $url = $hub->param('wizard_next');
+    $url = $url =~ /^\// || $url =~ /^$base\// ? $url : "/$url";
   }
   
   # Pass the "normal" parameters but munge the wizard ones
