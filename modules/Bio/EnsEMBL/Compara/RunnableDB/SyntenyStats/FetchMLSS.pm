@@ -37,9 +37,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Hive::Process');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 sub write_output {
   my ($self) = @_;
@@ -48,7 +47,7 @@ sub write_output {
   my $mlss_id  = $self->param('mlss_id');
   my $reg = 'Bio::EnsEMBL::Registry';
   if( $self->param("registry") ){
-   $reg->load_all( $self->param("registry"), $self->debug, 0, 0, "throw_if_missing" );
+   $self->load_registry($self->param("registry"));
   }
   my $mlssa = $reg->get_adaptor($division, 'compara', 'MethodLinkSpeciesSet');
   my @mlss = @{$mlssa->fetch_all_by_method_link_type("SYNTENY")};
