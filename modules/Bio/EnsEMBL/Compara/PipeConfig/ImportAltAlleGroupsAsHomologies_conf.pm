@@ -81,7 +81,7 @@ sub pipeline_analyses {
         {   -logic_name => 'find_other_mlss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
             -parameters => {
-                master_db    => $self->o('master_db'),
+                compara_db    => $self->o('master_db'),
                 method_links => {
                     FAMILY => 'family_db',
                     NC_TREES => 'ncrnatrees_db',

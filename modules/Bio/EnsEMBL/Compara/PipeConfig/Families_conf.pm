@@ -195,6 +195,7 @@ sub pipeline_analyses {
         {   -logic_name => 'find_protein_trees_db',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
             -parameters => {
+                compara_db   => '#master_db#',
                 method_links => {
                     PROTEIN_TREES => 'protein_trees_db',
                 },

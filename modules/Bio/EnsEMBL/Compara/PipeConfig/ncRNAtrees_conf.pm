@@ -334,6 +334,7 @@ sub pipeline_analyses {
         {   -logic_name => 'find_epo_database',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
             -parameters => {
+                compara_db   => '#master_db#',
                 method_links => {
                     EPO_LOW_COVERAGE => 'epo_db',
                 },
