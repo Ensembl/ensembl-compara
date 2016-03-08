@@ -540,10 +540,10 @@ sub _embedded_call {
     my $self = shift;
     my $test_name = shift;
     $self->param('tests', $config->{$test_name}->{tests});
-    _validate_tests($self);
+    $self->_validate_tests;
     my $failures = 0;
     foreach my $test (@{ $self->param('tests') }) {
-        if (not _run_test($self, $test)) {
+        if (not $self->_run_test($test)) {
             $failures++;
             $self->warning(sprintf("The following test has failed: %s\n   > %s\n", $test->{description}, $test->{subst_query}));
         }
