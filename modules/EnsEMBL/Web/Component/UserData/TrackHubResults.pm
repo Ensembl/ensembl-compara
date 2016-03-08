@@ -79,7 +79,13 @@ sub content {
   else {
     my $count   = $result->{'total_entries'};
     my $plural  = $count == 1 ? '' : 's';
-    $html .= sprintf('<p>Found %s track hub%s - <a href="%s" class="modal_link">Search again</a></p>', $count, $plural, $hub->url({'type' => 'UserData', 'action' => 'TrackHubSearch'}));
+    my $search_url = $hub->url({
+                                'type'      => 'UserData', 
+                                'action'    => 'TrackHubSearch',
+                                'datatype'  => $hub->param('datatype'),
+                                'query'     => $hub->param('query'),
+                                });
+    $html .= sprintf('<p>Found %s track hub%s - <a href="%s" class="modal_link">Search again</a></p>', $count, $plural, $search_url);
 
     my $link = $hub->url({'type' => 'UserData', 'action' => 'SelectFile'});
     $html .= $self->info_panel('Tip', qq(If you don't see the hub you are interested in listed here, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.));
