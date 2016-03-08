@@ -221,14 +221,14 @@ sub default_options {
             -port => 4157,
             -user => 'ensro',
 			#-verbose => 1,
-			-db_version => 79, 
+			-db_version => 83,
    },
     ensembl_mirror => {
             -host => 'mysql-ensembl-mirror.ebi.ac.uk',
             -user => 'anonymous',
             -port => '4240',
 			#-verbose => 1,
-			-db_version => 79
+			-db_version => 83,
     },
 	master_db=> {
             -host => 'mysql-treefam-prod',
@@ -250,7 +250,7 @@ sub default_options {
             -port => 4238,
             -user => 'ensro',
 			#-verbose => 1,
-			-db_version => 79,
+			-db_version => 30,
    },
 
     #ncbi_eg=> {
