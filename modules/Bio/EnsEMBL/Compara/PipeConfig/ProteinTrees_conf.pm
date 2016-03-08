@@ -2095,6 +2095,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 %raxml_parsimony_parameters,
                 'escape_branch'             => -1,
+                'extra_raxml_args'          => '-T 2',
             },
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name        => '1Gb_job',
@@ -2397,6 +2398,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
             -parameters => {
                 %raxml_parameters,
+                'extra_raxml_args'          => '-T 2',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '1Gb_job',
