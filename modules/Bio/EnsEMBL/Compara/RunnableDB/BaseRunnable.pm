@@ -82,20 +82,15 @@ sub compara_dba {
     my $self = shift @_;
 
     use Data::Dumper;
-    #print STDERR Dumper("compara_dba", { 'args' => \@_, 'cached_sig' => $self->{'_cached_compara_db_signature'}, 'cached_dba' => $self->{'_cached_compara_dba'} });
     my $given_compara_db = shift @_ || ($self->param_is_defined('compara_db') ? $self->param('compara_db') : $self);
     my $given_ref = ref( $given_compara_db );
     my $given_signature  = ($given_ref eq 'ARRAY' or $given_ref eq 'HASH') ? stringify ( $given_compara_db ) : "$given_compara_db";
 
     if( !$self->{'_cached_compara_db_signature'} or ($self->{'_cached_compara_db_signature'} ne $given_signature) ) {
-        print STDERR "create new compara DBA\n";
         $self->{'_cached_compara_db_signature'} = $given_signature;
         $self->{'_cached_compara_dba'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $given_compara_db );
-    } else {
-        print STDERR "reuse DBA\n";
     }
 
-    #print STDERR Dumper("sig", $self->{'_cached_compara_db_signature'}, "cached dba", $self->{'_cached_compara_dba'});
     return $self->{'_cached_compara_dba'};
 }
 
@@ -129,7 +124,6 @@ sub load_registry {
     my $dbas_for_this_dbc = Bio::EnsEMBL::Registry->get_all_DBAdaptors_by_connection($self->dbc);
 
     # We can load the config file
-    print STDERR "load registry\n";
     Bio::EnsEMBL::Registry->load_all($registry_conf_file, $self->debug, 0, 0, "throw_if_missing");
     $self->{'_last_registry_file'} = $registry_conf_file;
 
