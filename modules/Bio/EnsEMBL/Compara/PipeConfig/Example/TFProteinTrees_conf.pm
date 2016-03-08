@@ -134,16 +134,18 @@ sub default_options {
         'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
 		'examl_out_dir'				=> '/nfs/panda/ensembl/production/mateus/compara/TreeFam10/examl',
         'getPatterns_exe'           => '/nfs/production/xfam/treefam/software/RAxML/number_of_patterns/getPatterns',
+        'fasttree_mp_exe'           => '/nfs/production/xfam/treefam/software/FastTree/FastTreeMP',
         'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
         'cafe_shell'                => 'UNDEF',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'
-       'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/muffato/mateus/TF10",
+       #'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/muffato/mateus/TF10",
+       'hmm_library_basedir'     => '/nfs/panda/ensembl/production/mateus/compara/multi_division_hmm_lib/',
 
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
-       'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/mateus/TF10",
+       #'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/mateus/TF10",
 
        # List of MultiHMM files to load (and their names)
        #'multihmm_files'          => [ ["/lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt", "PFAM"] ],
