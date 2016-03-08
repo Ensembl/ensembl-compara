@@ -54,6 +54,7 @@ sub content {
 
     my $data = $glyphset->get_data;
     foreach my $track (@$data) {
+      next unless $track->{'features'};
       $caption ||= $track->{'metadata'}{'zmenu_caption'};
       if ($feature_id) {
         foreach (@{$track->{'features'}{$strand}||[]}) {
@@ -66,7 +67,7 @@ sub content {
         }
       }
       else {
-        @features = @{$track->{'features'}{$strand}||[]};
+        push @features, @{$track->{'features'}{$strand}||[]};
       }
     }
   }
@@ -82,11 +83,14 @@ sub content {
 sub feature_content {
   my ($self, $features, $caption, $slice_start) = @_;
 
+  my $default_caption = 'Feature';
+  $default_caption   .= 's' if scalar @$features > 1;
+
   foreach (@$features) {
     my $id = $_->{'label'};
 
     unless ($caption) {
-      $caption = $_->{'track_name'};
+      $caption = $_->{'track_name'} || $default_caption;
       $caption .= ': '.$id if scalar(@$features) == 1 && $id; 
     }
 
