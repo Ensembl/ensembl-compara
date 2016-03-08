@@ -35,7 +35,6 @@ sub create_hash { return EnsEMBL::Web::IOWrapper::Wig::create_hash(@_); }
 sub create_structure { return EnsEMBL::Web::IOWrapper::Wig::create_structure(@_); }
 
 sub create_tracks {
-  warn "BW create tracks";
   my ($self, $slice, $metadata) = @_;
   my $data = [];
 
