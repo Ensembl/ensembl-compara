@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats
+Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats
 
 =cut
 
@@ -31,8 +31,8 @@ Calculate overall and coding coverage statistics for synteny.
 
 =head1 SYNOPSIS
 
- $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats -compara_db compara_curr -mlss_id 10104 -registry ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl
- $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats -mlss_id 10104 -compara_db mysql://ensro@compara3/database_with_genomedb_locators
+ $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats -compara_db compara_curr -mlss_id 10104 -registry ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl
+ $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats -mlss_id 10104 -compara_db mysql://ensro@compara3/database_with_genomedb_locators
 
 =head1 Author
 
@@ -40,7 +40,7 @@ James Allen
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats;
+package Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats;
 
 use strict;
 use warnings;

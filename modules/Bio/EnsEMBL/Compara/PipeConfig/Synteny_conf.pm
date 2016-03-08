@@ -252,7 +252,7 @@ sub pipeline_analyses {
     
             {   
               -logic_name      => 'SyntenyStats',
-              -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats',
+              -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats',
               -parameters      => {
                                    mlss_id  => '#synteny_mlss_id#',
                                   },

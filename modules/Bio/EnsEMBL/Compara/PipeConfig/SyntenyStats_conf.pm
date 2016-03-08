@@ -75,7 +75,7 @@ sub pipeline_analyses {
     
     {
       -logic_name      => 'SyntenyStats',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats',
       -max_retry_count => 0,
     },
     
