@@ -314,8 +314,8 @@ sub default_options {
         'initialise_cafe_pipeline'  => undef,
 
         #Use Timetree divergence times for the GeneTree internal nodes
-        'use_timetree_times'        => 1,
-        #'use_timetree_times'        => 0,
+        #'use_timetree_times'        => 1,
+        'use_timetree_times'        => 0,
     };
 }
 
