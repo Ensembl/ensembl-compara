@@ -42,27 +42,16 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub write_output {
   my ($self) = @_;
   
-  my $mlss_id  = $self->param('mlss_id');
   if( $self->param("registry") ){
    $self->load_registry($self->param("registry"));
   }
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my @mlss = @{$mlssa->fetch_all_by_method_link_type("SYNTENY")};
   
-  if (defined $mlss_id) {
-    my %mlss = map {$_->dbID() => 1} @mlss;
-    if (exists $mlss{$mlss_id}) {
-      print "Output mlss_id = $mlss_id\n";
-      $self->dataflow_output_id({'mlss_id' => $mlss_id}, 1);
-    } else {
-      $self->throw("The MLSS id parameter $mlss_id does not exist in the database: ".$self->compara_dba->dbc->dbname);
-    }
-  } else {
     foreach my $mlss (@mlss) {
       print "Output mlss_id = ".$mlss->dbID()."\n";
       $self->dataflow_output_id({'mlss_id' => $mlss->dbID()}, 1);
     }
-  }
 }
 
 1;

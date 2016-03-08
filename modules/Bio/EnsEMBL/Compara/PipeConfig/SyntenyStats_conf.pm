@@ -44,7 +44,6 @@ sub default_options {
     
     registry      => undef,
     division      => 'Multi',
-    mlss_id       => undef,
   };
 }
 
@@ -65,9 +64,6 @@ sub pipeline_analyses {
       -logic_name      => 'FetchMLSS',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS',
       -max_retry_count => 0,
-      -parameters      => {
-                            mlss_id  => $self->o('mlss_id'),
-                          },
       -input_ids       => [ {} ],
       -flow_into       => ['SyntenyStats'],
     },
