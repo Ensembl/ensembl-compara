@@ -54,6 +54,7 @@ use warnings;
 use IO::File;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 
 sub param_defaults {
