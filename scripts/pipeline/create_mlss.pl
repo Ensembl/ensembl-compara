@@ -378,7 +378,7 @@ sub create_mlss {
       die "Species-sets must have a name.\n" unless $ss_name;
     }
     $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
-        -GENOME_DBS => $all_genome_dbs
+        -GENOME_DBS => $all_genome_dbs,
         -NAME => $ss_name,
     );
   }
