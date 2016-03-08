@@ -673,6 +673,7 @@ sub core_pipeline_analyses {
             -flow_into  => [ 'check_reusability' ],
             -batch_size => 10,
             -hive_capacity => 30,
+            -max_retry_count => 2,
         },
 
         {   -logic_name     => 'populate_method_links_from_file',
@@ -1127,6 +1128,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name         => 'register_mlss',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
+            -rc_name            => '2Gb_job',
         },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
