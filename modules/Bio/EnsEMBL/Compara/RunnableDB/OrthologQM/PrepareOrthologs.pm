@@ -95,7 +95,7 @@ sub run {
 	my @orth_info;
 	my $c = 0;
 
-	my @orth_objects = @{ $self->param('orth_objects') };
+	my @orth_objects = sort {$a->dbID <=> $b->dbID} @{ $self->param('orth_objects') };
 	while ( my $orth = shift( @orth_objects ) ) {
 		my @gene_members = @{ $orth->get_all_GeneMembers() };
 		my (%orth_ranges, @orth_dnafrags);
@@ -107,7 +107,7 @@ sub run {
 		push( @orth_info, { 
 			orth_id       => $orth->dbID, 
 			orth_ranges   => \%orth_ranges, 
-			orth_dnafrags => \@orth_dnafrags 
+			orth_dnafrags => [sort {$a->{id} <=> $b->{id}} @orth_dnafrags],
 		} );
 		# $c++;
 		# last if $c >= 1000;
