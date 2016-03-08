@@ -72,7 +72,7 @@ sub cache_open {
   $self->{'rebuild'} = (defined $rebuild)?0:undef;
   return if $self->{'open'};
   $self->{'rfile'}->delete() if $rebuild;
-  $self->{'rfile'}->open_read() or return;
+  $self->{'rfile'}->open_read(1) or return;
   $self->{'wfile'}->open_write() if defined $rebuild;
   $self->{'open'} = 1;
   $self->{'wopen'} = (defined $rebuild)+0;

@@ -124,12 +124,12 @@ sub fn {
 }
 
 sub open_read {
-  my ($self) = @_;
+  my ($self,$maybe) = @_;
 
   my %idx;
   unless(tie(%idx,'DB_File',$self->fn("idx"),
              O_CREAT|O_RDONLY,0600,$DB_HASH)) {
-    warn "Cannot open '".$self->fn('idx')." for reading: $!\n";
+    warn "Cannot open '".$self->fn('idx')." for reading: $!\n" unless $maybe;
     return 0;
   }
   $self->{'idx'} = \%idx;
