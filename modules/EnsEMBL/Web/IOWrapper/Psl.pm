@@ -42,7 +42,7 @@ sub create_hash {
   my $end           = $feature_end - $slice->start;
   return if $end < 0 || $start > $slice->length;
 
-  ## Only set colour if we have something in file, otherwise
+  ## Only set colour from strand if we have something in file, otherwise
   ## we will override the default colour in the drawing code
   my $strand  = $self->parser->get_strand || 0;
   
@@ -113,13 +113,11 @@ sub create_structure {
 
   my @block_starts  = @{$self->parser->get_tStarts};
   my @block_lengths = @{$self->parser->get_blockSizes};
-  my $seq_length    = $self->parser->get_tSize;
 
   foreach(0..($self->parser->get_blockCount - 1)) {
     my $start   = shift @block_starts;
-    ## Starts are given relative to sequence length, not in coordinates
-    ## Also need to adjust to be relative to slice
-    $start      = $seq_length - $start - $slice_start;
+    ## Need to adjust to be relative to slice
+    $start     -= $slice_start;
     my $length  = shift @block_lengths;
     my $end     = $start + $length;
 
