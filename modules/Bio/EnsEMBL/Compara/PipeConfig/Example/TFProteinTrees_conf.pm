@@ -236,7 +236,8 @@ sub default_options {
             -port => '4401',
 			-pass => $self->o('password'),
             #-verbose => 1,
-      		-dbname => 'treefam_master10',
+            #-dbname => 'treefam_master10',
+            -dbname => 'treefam_master',
 	  		-driver => 'mysql',
 			#-db_version => 75
     },
