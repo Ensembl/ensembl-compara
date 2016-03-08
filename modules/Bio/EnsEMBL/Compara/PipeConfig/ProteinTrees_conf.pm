@@ -157,7 +157,6 @@ sub default_options {
         'mafft_runtime'             => 7200,
         'raxml_threshold_n_genes' => 500,
         'raxml_threshold_aln_len' => 150,
-        'raxml_cores'             => 16,
         'examl_cores'             => 64,
         'examl_ptiles'            => 16,
         'treebest_threshold_n_residues' => 10000,
