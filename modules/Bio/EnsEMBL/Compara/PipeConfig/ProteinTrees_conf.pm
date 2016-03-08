@@ -118,6 +118,8 @@ sub default_options {
         'protein_members_range'     => 100000000,
 
     # blast parameters:
+    # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
+
         'blast_params'       => '-seg no -max_hsps 1 -use_sw_tback -num_threads 1',
         'blast_level_ranges' => { # define sequence lengths that define different granularity of parameters
             1 => [ 0,   35  ],
