@@ -55,7 +55,7 @@ sub run {
     my $shrinking_factor = $self->get_shrinking_factor();
     $self->param( 'shrinking_factor', $shrinking_factor );
 
-    my $gene_count = scalar( @{ $self->get_gene_count() } );
+    my $gene_count = $self->get_gene_count();
     $self->param( 'gene_count', $gene_count );
 }
 
@@ -74,15 +74,15 @@ sub write_output {
 ##########################################
 sub get_gene_count {
     my $self       = shift;
-    my $gene_count = $self->param('gene_tree')->get_all_Members();
-    return $gene_count;
+    my $gene_count = $self->param('gene_tree')->get_all_Members() || die "Could not get_all_Members for genetree: " . $self->param_required('gene_tree_id');
+    return scalar(@{$gene_count});
 }
 
 sub get_removed_columns {
     my $self = shift;
     if ( $self->param('gene_tree')->has_tag('removed_columns') ) {
-        my $removed_columns = $self->param('gene_tree')->get_value_for_tag('removed_columns');
-        my @removed_columns = eval($removed_columns);
+        my $removed_columns_str = $self->param('gene_tree')->get_value_for_tag('removed_columns') || die "Could not get tag removed_columns for genetree: " .$self->param_required('gene_tree_id');
+        my @removed_columns = eval($removed_columns_str);
         my $removed_aa;
 
         foreach my $pos (@removed_columns) {
