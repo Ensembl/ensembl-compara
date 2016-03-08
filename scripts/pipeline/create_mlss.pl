@@ -347,6 +347,9 @@ sub create_mlss {
     print "  URL: ", $mlss->url, "\n";
     print "  SpeciesSet name: ".($mlss->species_set_obj->name)."\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
+    if ($release and !$mlss->is_current) {
+      $helper->transaction( -CALLBACK => sub { $mlssa->make_object_current($mlss) } );
+    }
     return;
   }
 
