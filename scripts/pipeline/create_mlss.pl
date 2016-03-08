@@ -184,7 +184,7 @@ GetOptions(
     "name=s" => \$name,
     "source=s" => \$source,
     "url=s" => \$url,
-    "f" => \$force,
+    "force|f" => \$force,
     "pw" => \$pairwise,
     "sg" => \$singleton,
     "use_genomedb_ids" => \$use_genomedb_ids,
