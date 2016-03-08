@@ -202,7 +202,9 @@ sub include_distance_to_parent {
             my $taxon_id = $node->taxon_id();
             my $ncbiTaxon = $NCBItaxon_Adaptor->fetch_node_by_taxon_id($taxon_id);
             my $mya = $ncbiTaxon->get_tagvalue('ensembl timetree mya');
-            die "No 'ensembl timetree mya' tag for taxon_id=$taxon_id\n" unless $mya;
+            if (!$mya && $self->param('use_timetree_times')) {
+                die "No 'ensembl timetree mya' tag for taxon_id=$taxon_id\n";
+            }
             for my $child (@{$node->children}) {
                 $child->distance_to_parent(int($mya));
             }
