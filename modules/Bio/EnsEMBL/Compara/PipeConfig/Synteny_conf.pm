@@ -64,8 +64,8 @@ sub default_options {
             'work_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
 
             # Connection to the alignment database must be given
-            #'alignment_db' => undef, #alignment database to calculate the syntenies from
-            'registry' => undef,    # needed if the alignment_db doesn't have locator, or if it is a registry name (a division name, for instance)
+            #'alignment_db' => undef,    # alignment database to calculate the syntenies from
+            #'registry' => undef,        # needed to find the core databases (and also if "alignment_db" is a registry name (a division name, for instance))
 
             # Used to restrict the pipeline to 1 mlss_id
             'pairwise_mlss_id'  => undef,   # if undef, will use all the pairwise alignments found in it

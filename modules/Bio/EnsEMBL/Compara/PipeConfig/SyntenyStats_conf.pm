@@ -22,7 +22,7 @@ Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf
 
 =head1 DESCRIPTION  
 
-Calculate synteny coverage statistics.
+Calculate synteny coverage statistics across a whole division (or any Registry alias)
 
 =head1 SYNOPSIS
 
@@ -36,16 +36,6 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
-
-sub default_options {
-  my ($self) = @_;
-  return {
-    %{$self->SUPER::default_options},
-    
-    registry      => undef,
-    division      => 'Multi',
-  };
-}
 
 sub pipeline_wide_parameters {
   my ($self) = @_;
