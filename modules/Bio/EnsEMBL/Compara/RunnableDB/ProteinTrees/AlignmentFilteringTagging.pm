@@ -100,7 +100,7 @@ sub get_shrinking_factor {
     my $self = shift;
 
     my $aln_length = $self->param('gene_tree')->get_value_for_tag('aln_length') || die "Could not fetch tag aln_length for root_id=" . $self->param_required('gene_tree_id');
-    if ( $self->param('gene_tree')->has_tag('removed_columns') ) {
+    if ( $self->param('gene_tree')->has_tag('aln_n_removed_columns') ) {
         my $n_removed_columns = $self->param('n_removed_columns');
 
         my $after_filter_length = $aln_length - $n_removed_columns;
