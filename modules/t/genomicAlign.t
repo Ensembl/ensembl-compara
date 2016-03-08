@@ -42,12 +42,14 @@ my $species = [
 
 ## Connect to core DB specified in the MultiTestDB.conf file
 my $genome_dbs;
+my @test_dbs;
 foreach my $this_species (@$species) {
     my $species_db = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
     my $species_db_adaptor = $species_db->get_DBAdaptor('core');
     my $species_gdb = $genome_db_adaptor->fetch_by_registry_name($this_species);
     $species_gdb->db_adaptor($species_db_adaptor);
     $genome_dbs->{$this_species} = $species_gdb;
+    push @test_dbs, $species_db;
 }
 
 ##

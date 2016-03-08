@@ -44,6 +44,7 @@ my $species = [
 my $genome_dbs;
 my $species_db_adaptor;
 my $species_gdb;
+my @test_dbs;
 
 foreach my $this_species (@$species) {
     my $species_db = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
@@ -51,6 +52,7 @@ foreach my $this_species (@$species) {
     my $species_gdb = $genome_db_adaptor->fetch_by_registry_name($this_species);
     $species_gdb->db_adaptor($species_db_adaptor->{$this_species});
     $genome_dbs->{$this_species} = $species_gdb;
+    push @test_dbs, $species_db;
 }
 
 my ($constrained_element_id, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $method_link_species_set_id, $p_value,
