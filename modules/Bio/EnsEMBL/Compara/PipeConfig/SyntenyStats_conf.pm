@@ -62,7 +62,12 @@ sub pipeline_analyses {
   return [
     {
       -logic_name      => 'FetchMLSS',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+      -parameters      => {
+          'methods' => {
+              'SYNTENY' => 1,
+          },
+      },
       -max_retry_count => 0,
       -input_ids       => [ {} ],
       -flow_into       => ['SyntenyStats'],

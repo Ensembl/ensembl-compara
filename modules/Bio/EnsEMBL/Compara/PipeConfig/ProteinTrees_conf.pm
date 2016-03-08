@@ -2823,7 +2823,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'mlss_factory' ],
-                'A->1' => [ 'mlss_stats_factory' ],
+                'A->1' => [ 'homology_stats_factory' ],
             },
         },
 
@@ -2867,26 +2867,8 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('homology_dNdS_capacity'),
         },
 
-        {   -logic_name => 'mlss_stats_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A'  => [ 'genome_db_lister' ],
-                'A->1'  => [ 'homology_stats_factory' ],
-            },
-        },
-
-        {   -logic_name => 'genome_db_lister',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'component_genomes' => 0,
-            },
-            -flow_into  => {
-                '2' => { ':////accu?genome_db_ids=[]' => { 'genome_db_ids' => '#genome_db_id#'} },
-            },
-        },
-
         {   -logic_name => 'homology_stats_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
             -parameters => {
                 'methods'   => {
                     'ENSEMBL_ORTHOLOGUES'   => 2,
@@ -2894,11 +2876,13 @@ sub core_pipeline_analyses {
                 },
             },
             -flow_into => {
-                2 => { 'orthology_stats' => undef,
-                        $self->o('initialise_orthologQM_pipeline') ? ('get_orthologs' => {'mlss_id' => '#homo_mlss_id#'}) : (),
-                    },
-                3 => [ 'paralogy_stats' ],
-
+                2 => {
+                    'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
+                    $self->o('initialise_orthologQM_pipeline') ? ('get_orthologs' => undef) : (),
+                },
+                3 => {
+                    'paralogy_stats' => { 'homo_mlss_id' => '#mlss_id#' },
+                },
             },
         },
 
