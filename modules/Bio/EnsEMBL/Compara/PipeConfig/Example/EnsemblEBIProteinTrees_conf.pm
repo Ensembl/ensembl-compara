@@ -228,6 +228,8 @@ sub default_options {
 
         # Do we want to initialise the CAFE part now ?
 
+        #Use Timetree divergence times for the GeneTree internal nodes
+        'use_timetree_times'        => 1,
     };
 }
 
