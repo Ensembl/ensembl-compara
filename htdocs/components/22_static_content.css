@@ -179,3 +179,11 @@ div.help-contact p   { padding: 0; }
 floating archive box on help page
 -------------------------------------------------------------------------*/
 .archive-box { min-width: 400px; }
+
+/*-----------------------------------------------------------------------
+gallery page
+-------------------------------------------------------------------------*/
+div.gallery_preview { display:inline-block; width:300px; margin:0 12px 1em 12px; vertical-align:top; }
+div.gallery_preview img { width:300px; height:200px; border: 1px solid [[PANEL_BORDER]]; }
+div.preview_caption { display:inline-block; margin: 8px 0; }
+
