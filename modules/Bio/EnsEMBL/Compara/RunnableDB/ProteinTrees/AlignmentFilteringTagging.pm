@@ -81,18 +81,25 @@ sub get_gene_count {
 sub get_removed_columns {
     my $self = shift;
     if ( $self->param('gene_tree')->has_tag('removed_columns') ) {
-        my $removed_columns_str = $self->param('gene_tree')->get_value_for_tag('removed_columns') || die "Could not get tag removed_columns for genetree: " .$self->param_required('gene_tree_id');
-        my @removed_columns = eval($removed_columns_str);
-        my $removed_aa;
+        my $removed_columns_str = $self->param('gene_tree')->get_value_for_tag('removed_columns');
+        #In some cases, alignment filter is ran, but no columns are removed, hence the removed_columns tag is empty.
+        #So we should check it and return 0 for those cases.
+        if ($removed_columns_str) {
+            my @removed_columns = eval($removed_columns_str);
+            my $removed_aa;
 
-        foreach my $pos (@removed_columns) {
-            my $removed_seq = $pos->[1] - $pos->[0];
-            $removed_aa += $removed_seq;
+            foreach my $pos (@removed_columns) {
+                my $removed_seq = $pos->[1] - $pos->[0];
+                $removed_aa += $removed_seq;
+            }
+            return $removed_aa;
         }
-        return $removed_aa;
+        else {
+            return 0;
+        }
     }
     else {
-        return 0;
+          return 0;
     }
 }
 
