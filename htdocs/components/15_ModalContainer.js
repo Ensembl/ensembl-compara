@@ -198,8 +198,12 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     contentEl.html('<div class="spinner">Loading Content</div>').show();
     
+    var params = Ensembl.prepareRequestParams(url);
+
     this.xhr = $.ajax({
-      url: Ensembl.replaceTimestamp(url),
+      url: params.requestURL,
+      type: params.requestType,
+      data: params.requestData,
       dataType: 'json',
       context: this,
       success: function (json) {
