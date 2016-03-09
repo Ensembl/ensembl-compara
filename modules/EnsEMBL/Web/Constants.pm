@@ -66,7 +66,6 @@ sub USERDATA_FORMATS {
     'bigbed'      => {'ext' => 'bb',      'label' => 'BigBed',    'display' => 'graph',   'limit' => 'remote'},
     'bigwig'      => {'ext' => 'bw',      'label' => 'BigWig',    'display' => 'graph',   'limit' => 'remote'},
     'cram'        => {'ext' => 'cram',    'label' => 'CRAM',      'display' => 'graph',   'limit' => 'remote'},
-    'gene_list'   => {'ext' => 'txt',     'label' => 'Gene or feature list', 'display' => 'feature'},
     'gff3'        => {'ext' => 'gff3',    'label' => 'GFF3',      'display' => 'feature'},
     'gtf'         => {'ext' => 'gff|gtf', 'label' => 'GFF2/GTF',  'display' => 'feature'},
     'pairwise'    => {'ext' => 'txt',     'label' => 'Pairwise interactions', 'display' => 'feature'},
