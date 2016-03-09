@@ -164,7 +164,7 @@ Ensembl.DataTable = {
       
       return rtn;
     }).toArray();
-    
+
     if (length > 10) {
       options.sDom = '<"dataTables_top"l' + (noToggle ? '' : '<"col_toggle">') + (exportable ? '<"dataTables_export">' : '') + 'f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
       
@@ -304,37 +304,51 @@ Ensembl.DataTable = {
         if (!table.data('exportAll')) {
           data = [[]];
           
+          // For column heading
           $.each(settings.aoColumns, function (i, col) { data[0].push(col.sTitle); });
-          $.each(settings.aoData,    function (i, row) { data.push(row._aData);    });
+          // For column data
+          $.each(settings.aoData,    function (i, row) { 
+            var t_arr = [];
+            $(row._aData).each(function (j, cellVal) {
+              // Putting inside a div so that the jquery selector works for all
+              //  "hidden" elements inside the div
+              var div = $( "<div/>" );
+              div.append($(cellVal));
+              var hidden = $('.hidden:not(.export)', $(div));
+              if (hidden.length) {
+                t_arr.push($.trim($(div).find(hidden).remove().end().html()));
+              } else {
+                t_arr.push(cellVal);
+              }
+            });
+            data.push(t_arr);
+          });
 
           table.data('exportAll', data);
           form.find('input.data').val(JSON.stringify(data));
         }
-      } else {
+      } else {        
         if (!table.data('export')) {
+          var tableClone = table.clone();
           data = [];
-          
-          $('tr', table).each(function (i) {
-            data[i] = [];
-            
+          // Traversing through each row displayed for downloading what you see 
+          $('tr', tableClone).each(function (i) {
+            data[i] = [];            
             $(this.cells).each(function () {
               var hidden = $('.hidden:not(.export)', this);
-              
               if (hidden.length) {
-                data[i].push($.trim($(this).clone().find(hidden).remove().end().html()));
+                data[i].push($.trim($(this).find(hidden).remove().end().html()));
               } else {
                 data[i].push($(this).html());
               }
-              
-              hidden = null;
             });
           });
-          
+
           table.data('export', data);
           form.find('input.data').val(JSON.stringify(data));
         }
       }
-      
+
       form.trigger('submit');
       
       table = form = null;
