@@ -55,6 +55,7 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GenericRunnable');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 sub param_defaults {
     my $self = shift;
