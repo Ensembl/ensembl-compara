@@ -33,7 +33,6 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML');
-use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 sub param_defaults {
     my $self = shift;

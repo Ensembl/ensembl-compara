@@ -62,7 +62,6 @@ use Data::Dumper;
 use File::Glob;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
-use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 
 sub param_defaults {
