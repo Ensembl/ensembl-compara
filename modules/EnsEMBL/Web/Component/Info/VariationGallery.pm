@@ -260,7 +260,7 @@ sub _get_pages {
                                                       'action'  => 'Sequence',
                                                       'v'       => $v,
                                                       'g'       => $g,
-                                                      'snp_display' => 'yes',
+                                                      'snp_display' => 'on',
                                                       },
                                   'img'       => 'variation_gene_seq',
                                   'caption'   => 'Sequence of the gene overlapping your variant',
