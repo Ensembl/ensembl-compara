@@ -238,14 +238,13 @@ Ensembl.DataTable = {
     
     var columns    = settings.aoColumns;
     var toggleList = $('<ul class="floating_popup"></ul>');
-
     var toggle     = $('<div class="toggle">'+panel.buttonText(settings)+'</div>').append(toggleList).on('click', function (e) { if (e.target === this) { toggleList.toggle(); if(toggleList.is(':hidden')) { toggle.remove(); panel.columnToggle(settings); }  } });
-    
+
     $.each(columns, function (col) {
       var th = $(this.nTh);
-      
+      var column_heading = $(th).clone().find('.hidden').remove().end().html();
       $('<li>', {
-        html: '<input data-role="none" type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>',
+        html: '<input data-role="none" type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + column_heading + '</span>',
         click: function () {
           var input  = $('input', this);
           var tables, visibility, index, textCheck;
