@@ -1871,16 +1871,16 @@ sub core_pipeline_analyses {
         },
 
 
-        {   -logic_name     => 'trimal',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::TrimAl',
-            -parameters => {
-                'trimal_exe'    => $self->o('trimal_exe'),
-            },
-            -hive_capacity  => $self->o('alignment_filtering_capacity'),
-            -rc_name        => '500Mb_job',
-            -batch_size     => 5,
-            -flow_into      => [ 'aln_filtering_tagging' ],
-        },
+        #{   -logic_name     => 'trimal',
+            #-module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::TrimAl',
+            #-parameters => {
+                #'trimal_exe'    => $self->o('trimal_exe'),
+            #},
+            #-hive_capacity  => $self->o('alignment_filtering_capacity'),
+            #-rc_name        => '500Mb_job',
+            #-batch_size     => 5,
+            #-flow_into      => [ 'aln_filtering_tagging' ],
+        #},
 
         {   -logic_name     => 'aln_filtering_tagging',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTagging',
