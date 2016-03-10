@@ -158,6 +158,7 @@ sub format_gallery {
 
           my $multi_form  = $self->new_form({'action' => $form_url, 'method' => 'post', 'class' => 'freeform'});
           while (my($k, $v) = each (%{$hub->core_params})) {
+            $v ||= $link_to->{$k};
             if ($v) {
               $multi_form->add_hidden({'name' => $k, 'value' => $v});
             }
