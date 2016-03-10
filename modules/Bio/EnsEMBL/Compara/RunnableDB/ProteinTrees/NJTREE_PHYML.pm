@@ -148,7 +148,7 @@ sub write_output {
     }
 
     if ($self->param('store_intermediate_trees')) {
-        delete $self->param('gene_tree')->{'_member_array'};   # To make sure we use teh freshest data
+        delete $self->param('gene_tree')->{'_member_array'};   # To make sure we use the freshest data
         foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
             $filename =~ /\.([^\.]*)\.nhx$/;
             my $clusterset_id = $1;
