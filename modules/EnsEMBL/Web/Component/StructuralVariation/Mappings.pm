@@ -353,7 +353,7 @@ sub _coverage_glyph {
   
   return
    '<div style="width:'.($width + 12).'px">'.
-     '<div style="float:left">'.$html.'</div>'.
+     '<div style="float:left;margin-bottom:2px">'.$html.'</div>'.
      sprintf("<span class='small' style='float:right'>%ibp, %s\%</span>", $bp, $pc).
    '</div>';
 }
