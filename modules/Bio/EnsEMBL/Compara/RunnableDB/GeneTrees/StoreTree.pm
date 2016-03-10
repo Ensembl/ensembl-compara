@@ -563,8 +563,6 @@ sub call_one_hc {
 sub call_hcs_all_trees {
     my $self = shift;
 
-    $self->call_one_hc('alignment');
-
     my $ini_gene_tree_id;
     if ($self->param('ref_gene_tree_id')){
         $ini_gene_tree_id = $self->param('ref_gene_tree_id');
@@ -577,6 +575,7 @@ sub call_hcs_all_trees {
         $self->param('gene_tree_id', $root_id);
         if ($root_id == $ini_gene_tree_id) {
             if ($self->param('output_clusterset_id') and ($self->param('output_clusterset_id') ne 'default')) {
+                $self->call_one_hc('alignment');
                 next;  # we're storing an alternative tree, so the default tree is probably still flat at this stage
             } elsif ($self->param('read_tags')) {
                 next;  # similarly: in read_tags mode, the default tree is probably still flat
