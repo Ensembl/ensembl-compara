@@ -103,6 +103,7 @@ our $header_info = {
 sub format_gallery {
   my ($self, $type, $layout, $all_pages) = @_; 
   my ($html, @toc);
+  my $hub = $self->hub;
 
   return unless $all_pages;
 
@@ -151,7 +152,17 @@ sub format_gallery {
           $html .= $image;
           my $data_param  = $page->{'multi'}{'param'};
           $html .= sprintf('<div class="preview_caption">%s<br /><br />This %s maps to multiple %s</div><br />', $page->{'caption'}, $data_type->{$type}{'term'}, lc($multi_type).'s');
-          my $multi_form  = $self->new_form({'action' => $url, 'method' => 'post', 'class' => 'freeform'});
+
+          my $link_to = $page->{'link_to'};
+          my $form_url  = sprintf('/%s/%s/%s', $self->hub->species, $link_to->{'type'}, $link_to->{'action'});
+
+          my $multi_form  = $self->new_form({'action' => $form_url, 'method' => 'post', 'class' => 'freeform'});
+          while (my($k, $v) = each (%{$hub->core_params})) {
+            if ($v) {
+              $multi_form->add_hidden({'name' => $k, 'value' => $v});
+            }
+          }
+
           my $field          = $multi_form->add_field({
                                         'type'    => 'Dropdown',
                                         'name'    => $data_param,
