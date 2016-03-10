@@ -61,7 +61,7 @@ sub initialize {
 
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
   if($adorn ne 'none') {
-    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
+    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'} ne 'off';
   }
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'} ne 'off';
   
