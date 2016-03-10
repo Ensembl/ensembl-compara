@@ -219,7 +219,8 @@ sub _get_pages {
     else {
       $no_phenotype = 1;
     }
-
+    my $no_gene_or_phen = 1 if ($no_gene && $no_phenotype);
+    my $has_strains = $hub->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'};
 
     return {'Region in Detail' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -399,12 +400,12 @@ sub _get_pages {
           'Gene Phenotype' => {
                                   'link_to'     => {'type'    => 'Gene',
                                                     'action'  => 'Phenotype',
-                                                    'v'      => $v,
+                                                    'v'       => $v,
+                                                    'g'       => $g,
                                                     },
                                   'img'     => 'variation_gen_phen',
                                   'caption' => 'Phenotypes associated with a gene which overlaps your variant',
-                                  'multi'     => $multi_phenotype,  
-                                  'disabled'  => $no_phenotype,  
+                                  'disabled'  => $no_gene_or_phen,  
                                 },
           'Phenotype Karyotype' => {
                                   'link_to'     => {'type'    => 'Phenotype',
@@ -476,7 +477,7 @@ sub _get_pages {
                                   'img'       => 'variation_resequencing',
                                   'caption'   => 'Variants in resequenced samples',
                                   'multi'     => $multi_location,  
-                                  'disabled'  => $no_location,  
+                                  'disabled'  => !$has_strains,  
                                 },
     };
   }
