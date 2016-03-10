@@ -53,7 +53,7 @@ sub content {
   my $endpoint = 'api/search';
 
   my $post_content = {};
-  my @query_params = qw(assembly datatype query);
+  my @query_params = qw(assembly type query);
   foreach (@query_params) {
     $post_content->{$_} = $hub->param($_) if $hub->param($_);
   }
