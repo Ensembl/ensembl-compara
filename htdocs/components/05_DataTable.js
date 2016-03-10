@@ -299,13 +299,22 @@ Ensembl.DataTable = {
       var settings = table.dataTable().fnSettings();
       var form     = $(settings.nTableWrapper).siblings('form.data_table_export');
       var data;
-      
+
       if (e.target.className === 'all') {
         if (!table.data('exportAll')) {
           data = [[]];
-          
+          var col_index_for_no_export = [];
           // For column heading
-          $.each(settings.aoColumns, function (i, col) { data[0].push(col.sTitle); });
+          $.each(settings.aoColumns, function (i, col) { 
+            var no_export = $(col.nTh).hasClass('no-export');
+            if (!no_export) {
+              data[0].push(col.sTitle);
+            }
+            else {
+              // Storing column indexes to handle no-export
+              col_index_for_no_export.push(i)
+            }
+          });
           // For column data
           $.each(settings.aoData,    function (i, row) { 
             var t_arr = [];
@@ -314,11 +323,13 @@ Ensembl.DataTable = {
               //  "hidden" elements inside the div
               var div = $( "<div/>" );
               div.append($(cellVal));
-              var hidden = $('.hidden:not(.export)', $(div));
-              if (hidden.length) {
-                t_arr.push($.trim($(div).find(hidden).remove().end().html()));
-              } else {
-                t_arr.push(cellVal);
+              if ($.inArray(j, col_index_for_no_export) == -1) {
+                var hidden = $('.hidden:not(.export), .no-export', $(div));
+                if (hidden.length) {
+                  t_arr.push($.trim($(div).find(hidden).remove().end().html()));
+                } else {
+                  t_arr.push(cellVal);
+                }
               }
             });
             data.push(t_arr);
@@ -331,16 +342,13 @@ Ensembl.DataTable = {
         if (!table.data('export')) {
           var tableClone = table.clone();
           data = [];
-          // Traversing through each row displayed for downloading what you see 
+          // Remove all hidden and no-export classes from the clone.
+          $(tableClone).find('.hidden:not(.export), .no-export').remove();
+          // Traversing through each displayed row for downloading what you see 
           $('tr', tableClone).each(function (i) {
             data[i] = [];            
             $(this.cells).each(function () {
-              var hidden = $('.hidden:not(.export)', this);
-              if (hidden.length) {
-                data[i].push($.trim($(this).find(hidden).remove().end().html()));
-              } else {
-                data[i].push($(this).html());
-              }
+              data[i].push($(this).html());
             });
           });
 
