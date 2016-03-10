@@ -237,7 +237,7 @@ sub set_variations {
   my $snps   = [];
   my $u_snps = {};
   my $adaptor;
-  my $vf_adaptor = $hub->database('variation')->get_VariationAdaptor;
+  my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
   if ($focus_snp_only) {
     push @$snps, $focus_snp_only;
   } else {
