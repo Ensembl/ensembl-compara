@@ -463,6 +463,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
         'use_notung'   => $self->o('use_notung'),
+        'use_raxml'    => $self->o('use_raxml'),
         'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
