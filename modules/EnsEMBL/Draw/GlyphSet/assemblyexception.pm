@@ -43,7 +43,7 @@ sub features {
   my $hub = $self->{'config'}{'hub'};
   return $hub->get_query('GlyphSet::AssemblyException')->go($self,{
     slice => $self->{'container'},
-    species => $hub->species,
+    species => $self->{'config'}{'species'},
   });
 }
 
