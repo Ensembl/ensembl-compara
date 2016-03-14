@@ -161,13 +161,16 @@ sub redirect_to_nearest_mirror {
 
     # If the flag says don't redirect, or we have already decided in some previous request not to redirect and have set a cookie for that - don't redirect then
     if ($redirect_flag eq 'no' || $redirect_cookie->value && $redirect_cookie->value eq 'no') {
-      if (!$redirect_cookie->value) { # if not already set, set it for 24 hours
+      if (!$redirect_cookie->value || $redirect_cookie->value ne 'no') { # if not already set, set it for 24 hours
         $redirect_cookie->value('no');
         $redirect_cookie->expires('+24h');
         $redirect_cookie->bake;
       }
       return DECLINED;
     }
+
+    $redirect_cookie->value('');
+    $redirect_cookie->bake;
 
     # Getting the correct remote IP address isn't straight forward. We check all the possible
     # ip addresses to get the correct one that is valid and isn't an internal address.
