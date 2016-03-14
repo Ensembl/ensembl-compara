@@ -74,7 +74,7 @@ sub features {
     return [];
   } else {
     my $features_list = $hub->get_query('GlyphSet::Variation')->go($self,{
-      species => $hub->species,
+      species => $self->{'config'}{'species'},
       slice => $self->{'container'},
       id => $self->{'my_config'}->id,
       config => [qw(filter source sources sets set_name style no_label)],
