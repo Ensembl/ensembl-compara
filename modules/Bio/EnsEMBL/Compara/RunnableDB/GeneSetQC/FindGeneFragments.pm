@@ -40,7 +40,7 @@ when the average has been computed against enough species) are reported.
 
 =head1 SYNOPSIS
 
-standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::get_gene_fragment_stat -longer <1/0>  -genome_db_id <genome_db_id>
+standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::get_gene_fragment_stat -longer <1/0>  -genome_db_id <genome_db_id> -coverage_threshold <> -species_threshold <>
 
 =head1 AUTHORSHIP
 
@@ -72,9 +72,9 @@ sub param_defaults {
     my $self = shift;
     return {
     %{ $self->SUPER::param_defaults() },
-  'genome_db_id' => 126,
-  'coverage_threshold'    => 50,  # Genes with a coverage below this are reported
-  'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
+#  'genome_db_id' => 126,
+#  'coverage_threshold'    => 50,  # Genes with a coverage below this are reported
+#  'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
   
     };
 }
@@ -108,8 +108,14 @@ sub run {
   # Basically, we run this query and we filter on the Perl-side
     # Note: we could filter "avg_cov" and "n_species" in SQL
 
-    my $sql = ($self->param_required('longer')) ? 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm2.perc_cov) AS avg_cov FROM homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) JOIN (homology_member hm2 JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id) WHERE gm1.genome_db_id = ? AND hm1.gene_member_id != hm2.gene_member_id AND sm2.genome_db_id != gm1.genome_db_id GROUP BY hm1.gene_member_id'
-              : 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm1.perc_cov) AS avg_cov FROM homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) JOIN (homology_member hm2 JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id) WHERE gm1.genome_db_id = ? AND hm1.gene_member_id != hm2.gene_member_id AND sm2.genome_db_id != gm1.genome_db_id GROUP BY hm1.gene_member_id';
+    my $sql = ($self->param_required('longer')) ? 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm1.perc_cov) AS avg_cov 
+                    FROM homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) 
+                    JOIN (homology_member hm2 JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id) 
+                    WHERE gm1.genome_db_id = ? AND hm1.gene_member_id != hm2.gene_member_id AND sm2.genome_db_id != gm1.genome_db_id GROUP BY hm1.gene_member_id'
+              : 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm2.perc_cov) AS avg_cov 
+                  FROM homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) 
+                  JOIN (homology_member hm2 JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id) 
+                  WHERE gm1.genome_db_id = ? AND hm1.gene_member_id != hm2.gene_member_id AND sm2.genome_db_id != gm1.genome_db_id GROUP BY hm1.gene_member_id';
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($genome_db_id);
     while (my $row = $sth->fetchrow_hashref()) {
