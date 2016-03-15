@@ -259,7 +259,6 @@ sub pipeline_analyses {
             {   -logic_name => 'reset_anchor_status',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
                 -parameters => {
-                    'db_conn'    => '#reuse_db#',
                     'sql' => 'UPDATE anchor_align SET anchor_status = NULL',
                 },
             },
