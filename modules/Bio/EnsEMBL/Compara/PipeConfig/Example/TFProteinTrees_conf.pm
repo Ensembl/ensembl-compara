@@ -170,6 +170,7 @@ sub default_options {
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 200,
         'raxml_capacity'            => 200,
+        'copy_tree_capacity'        => 100,
         'examl_capacity'            => 400,
         'notung_capacity'           => 100,
         'ortho_tree_capacity'       => 200,
