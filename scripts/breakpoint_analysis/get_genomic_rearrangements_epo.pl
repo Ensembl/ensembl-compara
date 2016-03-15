@@ -101,10 +101,10 @@ while ( my $gblock = shift @gblocks ) {
     $gblocks_hash{$dnafrag_id}{$non_ref_gns->dnafrag()->name()}{$gblock} = $ref_gns->dnafrag_start();
     $whole_gblocks_hash_ref->{$gblock}=$gblock;
     $count ++;
-	if ($count == 40){
-		print Dumper(\%gblocks_hash);
-		last;
-	}
+#	if ($count == 40){
+#		print Dumper(\%gblocks_hash);
+#		last;
+#	}
 
 }
 
