@@ -30,9 +30,7 @@ $exonate_anchors->write_output(); writes to database
 =head1 DESCRIPTION
 
 Given a database with anchor sequences and a target genome. This modules exonerates 
-the anchors against the target genome. The required information (anchor batch size,
-target genome file, exonerate parameters are provided by the analysis, analysis_job 
-and analysis_data tables  
+the anchors against the target genome.
 
 =head1 AUTHOR
 

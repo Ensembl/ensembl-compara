@@ -31,9 +31,7 @@ $exonate_anchors->write_output(); writes to database
 =head1 DESCRIPTION
 
 Given a database with anchor sequences and a target genome. This modules exonerates 
-the anchors against the target genome. The required information (anchor batch size,
-target genome file, exonerate parameters are provided by the analysis, analysis_job 
-and analysis_data tables  
+the anchors against the target genome.
 
 =head1 AUTHOR
 
@@ -71,9 +69,8 @@ sub fetch_input {
 
 	my $genomic_align_block_adaptor = $self->compara_dba->get_GenomicAlignBlockAdaptor();
 	my $align_slice_adaptor = $self->compara_dba->get_AlignSliceAdaptor();
-	my $analysis_data_adaptor = $self->db->get_AnalysisDataAdaptor();
 
-	my $target_genome_files = eval $analysis_data_adaptor->fetch_by_dbID($self->param('analysis_data_id') );
+	my $target_genome_files = $self->param('target_genome_files');
 	$self->param('target_file', $target_genome_files->{target_genomes}->{ $self->param('target_genome_db_id') } );
 	my $genomic_align_block_id = $self->param('genomic_align_block_id');
 	my $genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($genomic_align_block_id);
