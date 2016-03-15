@@ -92,8 +92,6 @@ sub default_options {
         'work_dir'      => '/nfs/panda/ensembl/production/mateus/compara/' . $self->o( 'ENV', 'USER' ) . '/' . $self->o('pipeline_name'),
         'warehouse_dir' => '/panfs/nobackup/production/ensembl/mateus/families/',            # ToDo: move to a Compara-wide warehouse location
 
-        'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
-
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
 
         'first_n_big_families' => 2,    # these are known to be big, so no point trying in small memory

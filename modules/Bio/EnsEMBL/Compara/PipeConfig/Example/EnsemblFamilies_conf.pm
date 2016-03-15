@@ -91,8 +91,6 @@ sub default_options {
         'work_dir'      => '/lustre/scratch110/ensembl/' . $self->o( 'ENV', 'USER' ) . '/' . $self->o('pipeline_name'),
         'warehouse_dir' => '/warehouse/ensembl05/' . $self->o( 'ENV', 'USER' ) . '/families/',            # ToDo: move to a Compara-wide warehouse location
 
-        'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
-
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
 
         # Thresholds for Mafft resource-classes

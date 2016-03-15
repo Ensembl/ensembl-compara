@@ -92,7 +92,7 @@ sub default_options {
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => $self->o('file_basename').'.pep',
 
-        #'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
+        'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
 
         #'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
