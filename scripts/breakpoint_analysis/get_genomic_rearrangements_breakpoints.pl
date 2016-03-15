@@ -5,7 +5,8 @@
 =head1 DESCRIPTION
  
  This script finds the number of collinear genomic blocks in an alignment. Information about the blocks are written to the given output file (this files tend to be 20mb and upwards in size).
- The threshold is used to determined the acceptable distance between two genomic align blocks before we check if they are colinear. Also only merged blocks/block longer than the given threshold are reported.
+ The threshold is used to determined 1: if a block is a non colinear block is big enough to be a valid breakpoint in the the genome and 2: if a block or colinear blocks should be printed to the output file.
+ Also inversion bigger than the threshold are reported as breakpoints.
  To run this script, you need to give it the following
 
     -reg_conf  -> The registry configuration file which contains infomation on where to find and how to connect to the alignment database
@@ -17,8 +18,8 @@
     -kb   -> the size of the threshold in kilobase
 
     -output     -> output file  format : -> ref_chr_id,ref_start,ref_end,nonref_chr_id,non_ref_start,nonref_end, genomic_block_ids
-
-    example run : perl get_genomic_rearrangements.pl -species1 mus_caroli -species2 mus_pahari -kb 10 -output trial_b -reg_conf /nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror.conf
+    -debug      -> if you want the debug statements printed to the screen
+    example run : perl get_genomic_rearrangements_breakpoints.pl -species1 mus_caroli -species2 mus_pahari -kb 10 -output trial_b -reg_conf /nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror.conf
 
 
 =cut
@@ -32,14 +33,15 @@ use Data::Dumper;
 use POSIX qw[ _exit ];
 my $start_run = time();
 # OPTIONS
-my ( $reg_conf, $ref, $non_ref, $base, $output1_file);
+my ( $reg_conf, $ref, $non_ref, $base, $output1_file, $debug);
 GetOptionsFromArray(
     \@ARGV,
-    'reg_conf=s'   => \$reg_conf,
-    'species1=s'         => \$ref,
-    'species2=s'         => \$non_ref,
-    'kb=i'            => \$base,
-    'output=s'   => \$output1_file
+    'reg_conf=s'    => \$reg_conf,
+    'species1=s'    => \$ref,
+    'species2=s'    => \$non_ref,
+    'kb=i'          => \$base,
+    'output=s'      => \$output1_file,
+    'debug=i'       => \$debug
 
 );
 
@@ -63,7 +65,7 @@ my $GDB_adaptor = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomeDB' )
 my $mlss = $mlss_adap->fetch_by_method_link_type_registry_aliases( "LASTZ_NET", [ $ref, $non_ref ] );
 #print $mlss, " mlssssssssssssssssss\n";
 
-print STDOUT "\n getting all genomic blocks for the given pair of species \n";
+#print STDOUT "\n getting all genomic blocks for the given pair of species \n";
 my @gblocks = @{ $gblock_adap->fetch_all_by_MethodLinkSpeciesSet( $mlss ) };
 
 my %gblocks_hash; #will contain the rat chr number as keys mapping to an hash table of all of the genomic aln block of that chr as values. 
@@ -74,7 +76,7 @@ my $ref_gdbID = $GDB_adaptor->fetch_by_name_assembly($ref)->dbID();
 my $non_ref_gdbID = $GDB_adaptor->fetch_by_name_assembly($non_ref)->dbID();
 #print "ref gbid ", $ref_gdbID , "   non ref gb id ", $non_ref_gdbID , "\n\n";
 
-print STDOUT "\n partition genomic blocks into an hash based on the reference species chromosomes \n";
+#print STDOUT "\n partition genomic blocks into an hash based on the reference species chromosomes \n";
 my $count = 0;
 while ( my $gblock = shift @gblocks ) { 
     my $ref_gns= $gblock->get_all_GenomicAligns([$ref_gdbID])->[0];
@@ -83,14 +85,13 @@ while ( my $gblock = shift @gblocks ) {
     $gblocks_hash{$dnafrag_id}{$gblock} = $ref_gns->dnafrag_start();
     $whole_gblocks_hash_ref->{$gblock}=$gblock;
     $count ++;
-	if ($count == 20){
-        print STDOUT "Starting part 22222222222222222222222222222 \n";
-		print Dumper(\%gblocks_hash);
-		last;
-	}
+#	if ($count == 50){
+#        print STDOUT "Starting part 22222222222222222222222222222 \n";
+#		print Dumper(\%gblocks_hash);
+#		last;
+#	}
 
 }
-print STDOUT "\n ordered the partitioned genomic blocks by the genomic alignments start positions \n";
 #loop through each chr hash table and determine if there are collinear alignment block that can be merged.
 #if there collinear blocks , merge them, create a new hash table for the chr with the reformatted alignment blocks i.e. grouping merged blocks together. 
 #my $merged_hash_ref={};
@@ -102,11 +103,12 @@ my $counter;
 open my $OUT1, '>>', $output1_file or die "Could not open file '$output1_file' $!";
 #print STDOUT scalar @keys, "\n\n\n";
 while (my $ref_chr = shift (@ref_chrs)) {
+    print " The start of the mainnnnnnnnnnnnn while loop \n" if ($debug) ;
 #    print STDOUT $counter--, "\n\n";
-    print $ref_chr, "hhhhhhhhhhhh\n\n";
+#    print $ref_chr, "hhhhhhhhhhhh\n\n";
     my $gbs_hash_ref = $gblocks_hash{$ref_chr};
-    print STDOUT "Starting part 22222222222222222222222222222 \n";
-    print Dumper($gbs_hash_ref);
+#    print STDOUT "Starting part 22222222222222222222222222222 \n";
+#    print Dumper($gbs_hash_ref);
     # if the chr contains only one genomic alns block then there is not need to sort it, hence it can be added directly to the $merged_hash_ref
     my @gbs = keys %$gbs_hash_ref;
     if (scalar @gbs ==1){
@@ -125,102 +127,124 @@ while (my $ref_chr = shift (@ref_chrs)) {
         push @chr_gblocks_sorted, $name;
 
     }
-    print STDOUT "Starting part 22222222222222222222222222222 \n";
-    print Dumper(@chr_gblocks_sorted);
-    my (@merged, $default_non_ref_strand, $defualt_non_ref_gns_chrom);
-    for (my $pos =0; $pos <= scalar @chr_gblocks_sorted; $pos++) {
-        my $current_non_ref_gns0 = $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$pos]}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
-        my $current_ref_gns0 = $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$pos]}->get_all_GenomicAligns([$ref_gdbID])->[0];
+#    print STDOUT "Starting part 22222222222222222222222222222 \n";
+#    print Dumper(@chr_gblocks_sorted);
+    my (@merged, %already_merged, $default_non_ref_strand, $default_non_ref_gns_chrom);
+    my $left2do_index=0;
+    my $left_to_do = 1;
 
-        if (not @merged) {
-            push @merged, @chr_gblocks_sorted[$pos];
-            $default_non_ref_strand = $current_non_ref_gns0->dnafrag_strand();
-            print STDOUT "\n first 11111111111111111111111111111   ",$non_ref_strand  , "  \n";
-            $default_non_ref_gns_chrom = $current_non_ref_gns0->dnafrag()->name();
-            print STDOUT "\n first 11111111111111111111111111111   ",  $non_ref_gns_chrom, "  \n";
-        } 
-        else {
+    while ($left_to_do) {
+        print "\n       back to the start of the while loop,  this is the value of left2do_index  ---   $left2do_index  \n" if ($debug) ;
+        $left_to_do = 0;
+        for (my $pos = $left2do_index; $pos < scalar @chr_gblocks_sorted; $pos++) {
+            print "\n   back in for loooooooooooop             $pos    \n  this is merged!!!" if ($debug) ;
+            print Dumper(@merged) if ($debug) ;
+            my $current_non_ref_gns0 = $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$pos]}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
+            my $current_ref_gns0 = $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$pos]}->get_all_GenomicAligns([$ref_gdbID])->[0];
 
-            if (($dafault_non_ref_gns_chrom ne $current_non_ref_gns0->dnafrag()->name()) 
-            	|| ($default_non_ref_strand !=$current_non_ref_gns0->dnafrag_strand())) {
-
-            	if ($current_non_ref_gns0->dnafrag()->length < $threshold) {
-            		my $child_size;
-            		$child_size = $current_non_ref_gns0->dnafrag()->length;
-					$child_non_ref_gns_chrom = $current_non_ref_gns0->dnafrag()->name();
-					$child_non_ref_strand = $current_non_ref_gns0->dnafrag_strand();
-
-                	for (my $child_pos = $pos +1; $child_pos <= scalar @chr_gblocks_sorted; $child_pos++ ) {
-                		if (($child_non_ref_gns_chrom eq $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$child_pos]}->dnafrag()->name()) 
-                			&& ($child_non_ref_strand == $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$child_pos]}->dnafrag_strand())) {
-
-                			$child_size += $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$child_pos]}->dnafrag()->length;
-                		}
-                		else {
-
-                			if ($whole_gblocks_hash_ref->{$chr_gblocks_sorted[$child_pos]}->dnafrag()->length < $threshold) {
-
-                			}
-                		}
-                	
+            if (@merged) {
+                if (($default_non_ref_gns_chrom ne $current_non_ref_gns0->dnafrag()->name()) 
+                   || ($default_non_ref_strand !=$current_non_ref_gns0->dnafrag_strand())) {
+                    print "possible break pointttttttttttt \n" if ($debug) ;
+                    #smaller than the threshold
+                    if ($whole_gblocks_hash_ref->{$chr_gblocks_sorted[$pos]}->length < $kilobase) {
+                        print "smallerrrrr than threshold $kilobase       ", $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$pos]}->length, "   \n" if ($debug) ;
+                        #if not already merged with another block and is the earliest one we have found, we want to start from here on the next iteration of the while loop
+                        if ( (!$already_merged{$chr_gblocks_sorted[$pos]} ) && (!$left_to_do) ) {
+                            $left_to_do = 1;
+                            $left2do_index = $pos;
+                        }
+                    }
+                    #bigger than the threshold
+                    else {
+                        print "bigger than threshold $kilobase so we print the block    ", $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$pos]}->length, "   \n" if ($debug) ;
+                        print_result($whole_gblocks_hash_ref, \@merged, $ref_chr, $OUT1);
+                        #not already merged with another block, continue the for loop. with the new merged block starting from here
+                        if (!$already_merged{$chr_gblocks_sorted[$pos]}) {
+                            @merged = $chr_gblocks_sorted[$pos];
+                            $default_non_ref_strand = $current_non_ref_gns0->dnafrag_strand();
+                            $default_non_ref_gns_chrom = $current_non_ref_gns0->dnafrag()->name();
+                        }
+                        #skipping the block because it has already been merged
+                        else{
+                            undef @merged;
+                            next;
+                        }
+                    }
+                }
+                #merging the block 
+                else{
+                    push @merged, $chr_gblocks_sorted[$pos];
+                    $already_merged{$chr_gblocks_sorted[$pos]} = 1;
+                }
+            } 
+            else {
+                #if this is the first time we are running through the loop OR we just jump an already merged block
+                if ($already_merged{$chr_gblocks_sorted[$pos]}) {
+                        next;
                 }
                 else {
-                	print_result($whole_gblocks_hash_ref, \@merged, $ref_chr,$OUT1);
-                	$counter ++;
-                	undef @merged;
-                	undef $non_ref_strand;
-                	undef $non_ref_gns_chrom ;
-            } else{
-                push @merged, $q_gb;
-            }
-        } 
+                push @merged, $chr_gblocks_sorted[$pos];
+                $already_merged{$chr_gblocks_sorted[$pos]} = 1;
+                $default_non_ref_strand = $current_non_ref_gns0->dnafrag_strand();
+                print STDOUT "\n first 11111111111111111111111111111 default_non_ref_strand ,    $default_non_ref_strand  ,  \n" if ($debug) ;
+                $default_non_ref_gns_chrom = $current_non_ref_gns0->dnafrag()->name();
+                print STDOUT "\n first 11111111111111111111111111111 default_non_ref_gns_chrom  , $default_non_ref_gns_chrom ,  \n" if ($debug) ;
+                }
+            } 
+        }
+        print_result($whole_gblocks_hash_ref, \@merged, $ref_chr, $OUT1); 
+        undef @merged; 
     }
-    print_result($whole_gblocks_hash_ref, \@merged, $ref_chr, $OUT1); 
-    $counter ++;  
 }
+
+print "this is the number of breaks we had  , $counter ,   \n" if ($debug) ;
 close $OUT1;
- #   print Dumper($result_inner_hash_ref);
+
 
 sub print_result {
+    print "\n       we are in the print resultssssssssssssss     ", $kilobase, "   \n" if ($debug) ;
     my ($local_whole_gblocks_hash_ref, $local_merged_array_ref, $local_ref_chr, $fh) = @_;
     my @local_merged = @$local_merged_array_ref;
     my $length = 0;
     if (scalar @local_merged == 1) {
         my $non_ref_gns2 = $local_whole_gblocks_hash_ref->{$local_merged[0]}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
         my $ref_gns2 = $local_whole_gblocks_hash_ref->{$local_merged[0]}->get_all_GenomicAligns([$ref_gdbID])->[0];
-        my $length = $ref_gns2->length();
-        if ($length > $kilobase) {
+        my $length = $local_whole_gblocks_hash_ref->{$local_merged[0]}->length();
+        if ($length >= $kilobase) {
+            print "this is the length of the merged blocks,   $length  , it is bigger than threshold     PRINTING IT TO FILE NOW   \n" if ($debug) ;
             my $start = $ref_gns2->dnafrag_start();
             my $end = $ref_gns2->dnafrag_end();
             my $non_ref_start = $non_ref_gns2->dnafrag_start();
             my $non_ref_end = $non_ref_gns2->dnafrag_end();
             my $non_ref_chr = $non_ref_gns2->dnafrag_id();
             print $fh $local_ref_chr, "\t\t", $start ,"\t\t", $end, "\t\t", $non_ref_chr, "\t\t", $non_ref_start, "\t\t", $non_ref_end, "\n", $local_whole_gblocks_hash_ref->{$local_merged[0]}->dbID(),"\n\n//\n";
-#           $result_inner_hash_ref->{$key}{$counter}=[$length,$gbs[0]];
+            $counter ++;
+
         }
-    }else{
+    }
+    else{
+
         #find the total length of the merged blocks
-#       print "this is the merged \n";
-#       print Dumper(\@merged);
-#       print "NOW going to get the total length of merged  ", scalar @merged, "\n\n\n";
         my $galigns;
         foreach my $gbk (@local_merged ) {
-            my $non_ref_gns3 = $local_whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
-            my $ref_gns3 = $local_whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns([$ref_gdbID])->[0];
-#           print $ref_gns3->length() , " JJJJJJj\n";
-            $length += $ref_gns3->length();
+#            my $non_ref_gns3 = $local_whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
+#            my $ref_gns3 = $local_whole_gblocks_hash_ref->{$gbk}->get_all_GenomicAligns([$ref_gdbID])->[0];
+            $length += $local_whole_gblocks_hash_ref->{$gbk}->length();
 
         }
+        print "this is the length of the merged blocksssss     ", $length, "        \n\n" if ($debug) ;
+        
         #find the extreme start and extreme end of the the blocks.
-        if ($length > $kilobase) { 
-
+        if ($length >= $kilobase) { 
+            print "555555555555555555555555555555555555555 merged block it is bigger than threshold... PRINTING IT TO FILE NOW \n" if ($debug) ;
             my $start=2000000000000000000000; 
             my $end=0;
             my $non_ref_start= 2000000000000000000000;
             my $non_ref_end=0;
-            my $non_ref_chr=$local_whole_gblocks_hash_ref->{$local_merged[0]}->get_all_GenomicAligns([$non_ref_gdbID])->[0]->dnafrag()->name();;
+            my $non_ref_chr=$local_whole_gblocks_hash_ref->{$local_merged[0]}->get_all_GenomicAligns([$non_ref_gdbID])->[0]->dnafrag()->name();
             my $block_ids;
-#           print $temp[0] ,"ggggggggggggg\n";
+
 # ******* if the lenght of @merged is greater than threshold, then i will loop through @merged twice. STILL HAVE TO THINK OF A WAY TO LOOP THROUGH IT Only ONCE.
             foreach my $gbk (@local_merged) {
 #               print $gbk , "kkkkkkkkkk\n";
@@ -244,11 +268,11 @@ sub print_result {
                     $non_ref_end = $non_ref_gns4->dnafrag_end();
                 }
             }
-#           print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
+
             print $fh $local_ref_chr, "\t\t", $start ,"\t\t", $end, ,"\t\t",$non_ref_chr,"\t\t",$non_ref_start ,"\t\t",$non_ref_end,"\n",$block_ids,"\n\n//\n";
-        }                    
+            $counter ++;
+        } 
     }
 }
 
-#print Dumper($result_inner_hash_ref);
 POSIX::_exit(0);
