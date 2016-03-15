@@ -49,11 +49,6 @@ Ortheus also generates a set of aligned ancestral sequences. This module stores 
 
 =head1 PARAMETERS
 
-The fetch_input method reads the parameters of the analysis (analysis.parameters) first and then
-the input_id of the analysis job (analysis_job.input_id). Both are expected to be string
-representing hash references like {key1 => "value1", key2 => "value2"}. Values defined in the
-analysis_job.input_id column will overwrite values in the analysis.parameters.
-
 =over 5
 
 =item * synteny_region_id (int)

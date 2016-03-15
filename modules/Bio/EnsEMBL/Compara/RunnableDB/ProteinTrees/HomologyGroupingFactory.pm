@@ -43,8 +43,7 @@ $rdb->run;
 =head1 DESCRIPTION
 
 This is a homology compara specific runnableDB, that based on an input
-of arrayrefs of genome_db_ids, creates Homology_dNdS jobs in the hive 
-analysis_job table.
+of arrayrefs of genome_db_ids, flows Homology_dNdS jobs.
 
 =cut
 
