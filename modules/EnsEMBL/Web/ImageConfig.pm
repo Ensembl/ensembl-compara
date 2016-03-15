@@ -995,21 +995,29 @@ sub _add_trackhub_tracks {
   my $count_visible = 0;
 
   my $style_mappings = {
-                        'bigbed' => {
+                        'bam'     => {
+                                      'default' => 'coverage_with_reads',
+                                      },
+                        'cram'    => {
+                                      'default' => 'coverage_with_reads',
+                                      },
+                        'bigbed'  => {
                                       'full'    => 'as_transcript_label',
                                       'pack'    => 'as_transcript_label',
                                       'squish'  => 'half_height',
                                       'dense'   => 'as_alignment_nolabel',
+                                      'default' => 'as_transcript_label',
                                       },
-                        'bigwig' => {
+                        'bigwig'  => {
                                       'full'    => 'signal',
-                                      'default' => 'compact',
                                       'dense'   => 'compact',
-                                    },
-                        'vcf' =>    {
+                                      'default' => 'compact',
+                                      },
+                        'vcf'     =>  {
                                       'full'    => 'histogram',
                                       'dense'   => 'compact',
-                                    },
+                                      'default' => 'compact',
+                                      },
                       };
  
   foreach (@{$children||[]}) {
