@@ -34,7 +34,7 @@ Bio::EnsEMBL::Compara:Pipeconfig::GeneSetQC_conf;
 	Automate quality assessment of gene set quality 
 
 Example run
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneSetQC_conf -pipeline_name <GConserve_trial> -host <host_server> -species_threshold <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneSetQC_conf -pipeline_name <GeneSetQC_trial> -host <host_server> -species_threshold <20> -coverage_threshold <50>
 
 =cut
 
@@ -101,7 +101,7 @@ sub default_options {
     return {
             %{ $self->SUPER::default_options() },
         'mlss_id'     => '40101',
-        'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'
+        'compara_db' => 'mysql://ensro@compara4/wa2_protein_trees_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
     };
 }
@@ -111,8 +111,9 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
         'mlss_id' => $self->o('mlss_id'),
-        'compara_db' => $self->o('compara_db'),
+    #    'compara_db' => $self->o('compara_db'),
         'species_threshold' => $self->o('species_threshold'),
+        'coverage_threshold' => $self->o('coverage_threshold'),
     };
 }
 
@@ -130,25 +131,37 @@ sub resource_classes {
 sub pipeline_analyses {
     my ($self) = @_;
     return  [
-        {   -logic_name => 'copy_genome_db',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+# ---------------------------------------------[copy tables from compara_db]-----------------------------------------------------------------
+        {   -logic_name => 'copy_tables_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'src_db_conn'   => '#compara_db#',
-                'table'         => 'genome_db',
-                'mode'          => 'overwrite',
+                'inputlist'    => [ 'genome_db', 'species_tree_node', 'species_tree_root', 'species_tree_node_tag', 
+                                    'method_link_species_set', 'method_link_species_set_tag', 'species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+                'column_names' => [ 'table' ],
+                'fan_branch_code' => 2,
             },
-            -input_ids  => [ {} ],
-            -flow_into  => {
-                1 => [ 'get_species_set' ],
+            -input_ids  => [ { } ],
+            -flow_into => {
+                '2->A'  =>  ['copy_table'],
+                'A->1'  =>  [ 'get_species_set' ],
             },
             -rc_name => 'urgent',
         },
 
+        {   -logic_name    => 'copy_table',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'   => $self->o('compara_db'),
+                'mode'          => 'overwrite',
+            },
+        },
+# ---------------------------------------------[start the geneSetQC analyses]-----------------------------------------------------------------
         {   -logic_name => 'get_species_set',
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -input_id   =>  [{}],
+            -parameters =>  {'compara_db'   => $self->o('compara_db')},
             -flow_into  =>  {
-                2       => ['get_split_genes'],
+                '2->A'       => ['get_split_genes'],
+                'A->2'   =>  ['store_tags'],
             },
             -rc_name => '2Gb_job',
         },
@@ -165,7 +178,7 @@ sub pipeline_analyses {
         {
             -logic_name =>  'get_short_orth_genes',
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
-            -parameters =>  {'longer' => 0},
+            -parameters =>  {'longer' => 0, 'compara_db'   => $self->o('compara_db')},
             -flow_into  => {
                 2   => [':////short_orth_genes'],
             }
@@ -174,10 +187,16 @@ sub pipeline_analyses {
         {
             -logic_name     =>  'get_long_orth_genes',
             -module         =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
-            -parameters     =>  { 'longer' => 1 },
+            -parameters     =>  { 'longer' => 1 , 'compara_db'   => $self->o('compara_db')},
             -flow_into      =>  {
                 2   => [':////long_orth_genes'],
             }
+        },
+
+        {
+            -logic_name => 'store_tags',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::StoreStatsAsTags',
+
         },
     ];
 }
