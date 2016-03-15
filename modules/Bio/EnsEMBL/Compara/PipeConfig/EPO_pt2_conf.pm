@@ -239,7 +239,7 @@ sub pipeline_analyses {
                 },
                 -flow_into => {
                     '2->A' => [ 'reuse_anchor_align' ],
-                    'A->1' => [ 'dump_genome_sequence_factory' ],
+                    'A->1' => [ 'reset_anchor_status' ],
                 },
             },
 
@@ -252,7 +252,6 @@ sub pipeline_analyses {
                 },
                 -flow_into => {
                     2 => [ ':////anchor_align' ],
-                    1 => [ 'reset_anchor_status' ],
                 },
             },
 
@@ -261,6 +260,7 @@ sub pipeline_analyses {
                 -parameters => {
                     'sql' => 'UPDATE anchor_align SET anchor_status = NULL',
                 },
+                -flow_into  => [ 'dump_genome_sequence_factory' ],
             },
 
             {   -logic_name     => 'dump_genome_sequence_factory',
