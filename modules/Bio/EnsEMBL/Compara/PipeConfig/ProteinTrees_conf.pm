@@ -245,6 +245,7 @@ sub default_options {
         #'treebest_capacity'         => 400,
         #'raxml_capacity'            => 400,
         #'examl_capacity'            => 400,
+        #'copy_tree_capacity'        => 100,
         #'notung_capacity'           => 400,
         #'ortho_tree_capacity'       => 200,
         #'quick_tree_break_capacity' => 100,
@@ -2527,7 +2528,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '8Gb_job',
             -flow_into  => {
-                1  => [ 'hc_post_tree' ],
+                1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
                 -1 => [ 'raxml_bl_himem' ],
                 2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
             }
@@ -2544,10 +2545,12 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '16Gb_job',
             -flow_into  => {
-                1  => [ 'hc_post_tree' ],
+                1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
             }
         },
 
+        # At this point, we are currently storing the treebest trees as raxml and raxml_bl.
+        # if we need to reduce the storage footprint we may skip this, and copy direct to default.
         {   -logic_name => 'copy_treebest_tree_2_raxml_bl_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
             -parameters => {
@@ -2555,18 +2558,27 @@ sub core_pipeline_analyses {
                 'input_clusterset_id'   => 'raxml',
                 'output_clusterset_id'  => 'raxml_bl',
             },
-            -hive_capacity        => $self->o('raxml_capacity'),
+            -hive_capacity        => $self->o('copy_tree_capacity'),
             -rc_name => '2Gb_job',
             -flow_into  => {
-                1  => [ 'hc_post_tree' ],
+                1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
             }
+        },
+
+        {   -logic_name                 => 'copy_raxml_bl_tree_2_default_tree',
+            -module                     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
+            -parameters => {
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'input_clusterset_id'   => 'raxml_bl',
+                'output_clusterset_id'  => 'default',
+            },
+            -hive_capacity              => $self->o('copy_tree_capacity'),
+            -rc_name                    => '2Gb_job',
+            -flow_into                  => [ 'hc_post_tree' ],
         },
 
 # ---------------------------------------------[orthologies]-------------------------------------------------------------
 
-        # FIXME: at this stage, if $self->o('use_notung') is set, the
-        # default tree is still flat. we should put an analysis to copy the
-        # most recent clusterset to default
         {   -logic_name => 'hc_post_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
             -flow_into  => [ 'ortho_tree' ],
