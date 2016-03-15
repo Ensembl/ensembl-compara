@@ -65,12 +65,14 @@ sub get_data {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour');
+    ## Don't try and scale if we're just doing a zmenu!
+    my $pix_per_bp = $self->{'display'} eq 'text' ? '' : $self->scalex;
     my $metadata = {
                     'colour'          => $colour,
                     'display'         => $self->{'display'},
                     'default_strand'  => $default_strand,
                     'force_strand'    => $force_strand, 
-                    'pix_per_bp'      => $self->scalex,
+                    'pix_per_bp'      => $pix_per_bp,
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
                     'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
@@ -91,10 +93,11 @@ sub get_data {
     }
 
     ## Omit individual feature links if this glyphset has a clickable background
-    $metadata->{'omit_feature_links'} = 1 if $self->can('bg_link');
+    #$metadata->{'omit_feature_links'} = 1 if $self->can('bg_link');
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
+    #use Data::Dumper; warn Dumper($data);
 
     ## Final fallback, in case we didn't set these in the individual parser
     $metadata->{'label_colour'} ||= $colour;
