@@ -346,7 +346,7 @@ sub content {
     ## Motif feats ##
     for my $mfv (@{ $vf_obj->get_all_MotifFeatureVariations }) {
       my $mf = $mfv->motif_feature;
-     
+      next unless $mf;       
       # check that the motif has a binding matrix, if not there's not 
       # much we can do so don't return anything
       next unless defined $mf->binding_matrix;
