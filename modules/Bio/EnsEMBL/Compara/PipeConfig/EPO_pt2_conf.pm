@@ -239,7 +239,7 @@ sub pipeline_analyses {
                 },
                 -flow_into => {
                     '2->A' => [ 'reuse_anchor_align' ],
-                    'A->1' => [ 'dump_genome_sequence_factory' ],
+                    'A->1' => [ 'reset_anchor_status' ],
                 },
             },
 
@@ -252,16 +252,15 @@ sub pipeline_analyses {
                 },
                 -flow_into => {
                     2 => [ ':////anchor_align' ],
-                    1 => [ 'reset_anchor_status' ],
                 },
             },
 
             {   -logic_name => 'reset_anchor_status',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
                 -parameters => {
-                    'db_conn'    => '#reuse_db#',
                     'sql' => 'UPDATE anchor_align SET anchor_status = NULL',
                 },
+                -flow_into  => [ 'dump_genome_sequence_factory' ],
             },
 
             {   -logic_name     => 'dump_genome_sequence_factory',
