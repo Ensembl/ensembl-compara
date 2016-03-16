@@ -238,7 +238,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     var path = window.location.pathname.split("/");
     path.splice(1,2,path[1],"ZMenu",kvp['type']||type);
-    var params = window.location.search.replace(/^\?/,'').split(/&;/);
+    var params = window.location.search.replace(/^\?/,'').split(/&|;/);
     var nparams = [];
     for(var i=0;i<params.length;i++) {
       var split = params[i].split('=');
