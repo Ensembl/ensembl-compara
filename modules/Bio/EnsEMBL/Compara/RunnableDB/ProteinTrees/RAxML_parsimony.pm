@@ -42,7 +42,6 @@ sub param_defaults {
              'cmd'                        => '#raxml_exe# #extra_raxml_args# -y -m #best_fit_model# -p 99123746531 -s #alignment_file# -n #gene_tree_id#',
              'runtime_tree_tag'           => 'raxml_parsimony',
              'output_file'                => 'RAxML_parsimonyTree.#gene_tree_id#',
-             'binarize'                   => 1,
     };
 }
 
