@@ -63,6 +63,7 @@ sub {
   if($c && $vdb->can('use_vcf')) {
     $vdb->vcf_config_file($c->{'CONFIG'});
     $vdb->vcf_root_dir($sd->DATAFILE_BASE_PATH);
+    $vdb->vcf_tmp_dir($sd->ENSEMBL_TMP_DIR);
     $vdb->use_vcf($c->{'ENABLED'});
   }
 },
