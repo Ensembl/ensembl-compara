@@ -83,7 +83,6 @@ sub get_data {
     }
 
   } else {
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
     warn "!!! $self: ERROR FETCHING DATA FOR FILE ".$self->my_config('caption')." (BIGWIG FORMAT)";
   }
   #$self->{'config'}->add_to_legend($legend);
@@ -125,7 +124,7 @@ sub _fetch_data {
                     'drawn_strand' => $self->strand};
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigWig', $args);
-  my $data;
+  my $data = [];
 
   if ($iow) {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
@@ -159,9 +158,6 @@ sub _fetch_data {
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($slice, $metadata);
-  } else {
-    $self->{'data'} = [];
-    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
 
   # Don't cache here, it's not properly managed. Rely on main cache layer.

@@ -67,8 +67,6 @@ sub features {
 
   my $hub = $self->{'config'}{'hub'};  
 
-  #$self->{'legend'}{'variation_legend'}{$_->display_consequence} ||= $self->get_colours($_)->{'feature'} for @$snps;
-  
   if ($slice_length > $max_length * 1010) {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
     return [];
@@ -88,6 +86,7 @@ sub features {
       return [];
     }
     else {
+      $self->{'legend'}{'variation_legend'}{$_->{'colour_key'}} ||= $self->get_colours($_)->{'feature'} for @$features_list;
       return $features_list;
     }
   }
