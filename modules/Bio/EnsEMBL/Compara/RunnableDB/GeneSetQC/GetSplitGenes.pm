@@ -83,11 +83,16 @@ sub fetch_input {
 
 sub run {
 	my $self = shift @_;
+  my $count = 0;
   my @sg_keys = @{$self->param('split_genes_hash')};
   
   for my $smid (@sg_keys) {
 #    print " $smid->[0]    %%%%%%%%%% $smid->[1]   %%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
     $self->dataflow_output_id( {'genome_db_id' => $self->param_required('genome_db_id'), 'seq_member_id' => $smid->[0], 'gene_member_id' => $smid->[1] }, 2 );
+    $count +=1;
+#    if ($count == 10){
+ #     last;
+  #  }
   }
 
 }

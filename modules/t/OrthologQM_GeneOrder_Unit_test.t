@@ -168,12 +168,12 @@ standaloneJob(
 			{
 				"dnafrag_id" => 14026395,
 				"gene_member_id" => 9122574,
-				"goc_score" => 0,
+				"goc_score" => 25,
 				"homology_id" => 14803,
 				"left1" => undef,
 				"left2" => undef,
 				"method_link_species_set_id" => 100021,
-				'right1' => 0,
+				'right1' => 1,
 				"right2" => 0
 			},
 			2
@@ -185,12 +185,12 @@ standaloneJob(
           'right1' => 1,
           'gene_member_id' => '9122578',
           'dnafrag_id' => '14026395',
-          'left1' => 0,
+          'left1' => 1,
           'left2' => undef,
           'homology_id' => '14469',
           'method_link_species_set_id' => '100021',
           'right2' => undef,
-          'goc_score' => 25
+          'goc_score' => 50
 			},
 			2
 		],
@@ -202,11 +202,11 @@ standaloneJob(
           'gene_member_id' => '9122579',
           'dnafrag_id' => '14026395',
           'left1' => 1,
-          'left2' => 0,
+          'left2' => 1,
           'homology_id' => '46043',
           'method_link_species_set_id' => '100021',
           'right2' => undef,
-          'goc_score' => 25
+          'goc_score' => 50
 			},
 			2
 		],
@@ -231,5 +231,13 @@ foreach my $result (@{$results}) {
   is($result->[1], $expected_results_hash{$result->[0]}, "$result->[0] goc score verified ");
 }
 
+use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags');
+standaloneJob(
+  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags',
+  {
+    'compara_db' => $dbc->url,
+    'mlss_id'=>'100021',
+  },
+);
 
 done_testing();
