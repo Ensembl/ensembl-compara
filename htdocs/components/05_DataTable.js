@@ -315,13 +315,13 @@ Ensembl.DataTable = {
             }
           });
           // For column data
-          $.each(settings.aoData,    function (i, row) { 
+          $.each(settings.aoData, function (i, row) { 
             var t_arr = [];
             $(row._aData).each(function (j, cellVal) {
               // Putting inside a div so that the jquery selector works for all
               //  "hidden" elements inside the div
               var div = $( "<div/>" );
-              div.append($(cellVal));
+              div.append(cellVal);
               if ($.inArray(j, col_index_for_no_export) == -1) {
                 var hidden = $('.hidden:not(.export), ._no_export', $(div));
                 if (hidden.length) {
