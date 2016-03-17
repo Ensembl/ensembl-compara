@@ -78,7 +78,7 @@ sub content_results {
     { key => 'LocationVariant2', title => 'Variant 2 Location', sort => 'string' },
     { key => 'r2', title => 'r<sup>2</sup>', sort => 'numeric', align => 'center', help => $glossary->{'r2'} },
     { key => 'd_prime', title => q{D'}, sort => 'numeric', align => 'center',  help => $glossary->{"D'"} },
-  ], [], { data_table => 1, download_table => 1, sorting => [ 'd_prime dec' ] } );
+  ], [], { data_table => 1, download_table => 1, sorting => [ 'd_prime desc' ] } );
 
   my @colour_gradient = ('ffffff', $hub->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
 
