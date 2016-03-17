@@ -305,12 +305,12 @@ Ensembl.DataTable = {
           var col_index_for_no_export = [];
           // For column heading
           $.each(settings.aoColumns, function (i, col) { 
-            var no_export = $(col.nTh).hasClass('no-export');
+            var no_export = $(col.nTh).hasClass('_no_export');
             if (!no_export) {
               data[0].push(col.sTitle);
             }
             else {
-              // Storing column indexes to handle no-export
+              // Storing column indexes to handle _no_export
               col_index_for_no_export.push(i)
             }
           });
@@ -323,7 +323,7 @@ Ensembl.DataTable = {
               var div = $( "<div/>" );
               div.append($(cellVal));
               if ($.inArray(j, col_index_for_no_export) == -1) {
-                var hidden = $('.hidden:not(.export), .no-export', $(div));
+                var hidden = $('.hidden:not(.export), ._no_export', $(div));
                 if (hidden.length) {
                   t_arr.push($.trim($(div).find(hidden).remove().end().html()));
                 } else {
@@ -341,8 +341,8 @@ Ensembl.DataTable = {
         if (!table.data('export')) {
           var tableClone = table.clone();
           data = [];
-          // Remove all hidden and no-export classes from the clone.
-          $(tableClone).find('.hidden:not(.export), .no-export').remove();
+          // Remove all hidden and _no_export classes from the clone.
+          $(tableClone).find('.hidden:not(.export), ._no_export').remove();
           // Traversing through each displayed row for downloading what you see 
           $('tr', tableClone).each(function (i) {
             data[i] = [];            
