@@ -186,7 +186,7 @@ sub format_table {
 
   $table->add_columns(
     { key => 'count',       title => 'Number of genotypes', width => '15%', sort => 'numeric', align => 'right'                        },
-    { key => 'view',        title => '',                    width => '5%',  sort => 'none',    align => 'center', class => 'no-export' },
+    { key => 'view',        title => '',                    width => '5%',  sort => 'none',    align => 'center', class => '_no_export' },
     { key => 'Population',  title => 'Population',          width => '25%', sort => 'html'                                             },
     { key => 'Description', title => 'Description',         width => '55%', sort => 'html'                                             },
   );
@@ -223,7 +223,7 @@ sub format_table {
       $composed_name[$#composed_name] = '<b>'.$composed_name[$#composed_name].'</b>';
       if ($pop_name =~ /(1000\s*genomes|hapmap)/i) {
         $pop_name  = qq{<span class="hidden export">;$pop_name</span>};
-        $pop_name .= qq{<span class="no-export">$composed_name[$#composed_name]</span>};
+        $pop_name .= qq{<span class="_no_export">$composed_name[$#composed_name]</span>};
       }
       else {
         $pop_name = join(':',@composed_name);
@@ -237,7 +237,7 @@ sub format_table {
         my $extra_desc =  substr($description, (pos $description));
            $extra_desc =~ s/,/ /g;
            $extra_desc = $self->strip_HTML($extra_desc);
-        $description = qq{<span class="hidden export">$full_desc</span> <span class="no-export">} . substr($description, 0, (pos $description) - 1) . qq{... </span> <span class="_ht ht no-export" title="... $extra_desc">(more)</span>};
+        $description = qq{<span class="hidden export">$full_desc</span> <span class="_no_export">} . substr($description, 0, (pos $description) - 1) . qq{... </span> <span class="_ht ht _no_export" title="... $extra_desc">(more)</span>};
         last;
       }
     }
@@ -248,7 +248,7 @@ sub format_table {
       count       => $row_count,
       view        => { 
         value => $self->ajax_add($self->ajax_url(undef, { pop => $pop_id, update_panel => 1 }), $pop_id),
-        class => 'no-export'
+        class => '_no_export'
       }
     });
   }    
