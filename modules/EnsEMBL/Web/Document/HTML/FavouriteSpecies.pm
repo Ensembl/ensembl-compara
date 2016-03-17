@@ -45,7 +45,7 @@ sub render {
 sub render_species_list {
   my ($self, $fragment) = @_;
   my $hub           = $self->hub;
-  my $logins        = $hub->users_available;
+  my $logins        = $hub->users_plugin_available;
   my $user          = $hub->user;
   my $species_info  = $hub->get_species_info;
   
