@@ -738,7 +738,7 @@ sub ajax_add {
   my ($self, $url, $rel, $open) = @_;
   
   return sprintf('
-    <a href="%s" class="ajax_add toggle %s" rel="%s_table">
+    <a href="%s" class="ajax_add toggle _no_export %s" rel="%s_table">
       <span class="closed">Show</span><span class="open">Hide</span>
       <input type="hidden" class="url" value="%s" />
     </a>', $url, $open ? 'open' : 'closed', $rel, $url
