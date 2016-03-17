@@ -68,7 +68,7 @@ sub _init {
     my $Composite3 = $self->Composite({
       'y'         => 0,
       'height'    => $h,
-      'href'  => $self->_url({ 'type' => 'Transcript', 'action' => 'ProteinSummary', 'pf_id' => $domain->dbID }),
+      'href'  => $self->_url({ 'type' => 'Transcript', 'action' => 'ProteinSummary', 'pf_id' => $domain->dbID, 'translation_id' => $domain->seqname }),
     });
     while( my($S,$E) = splice( @pairs,0,2 ) ) {  
       $Composite3->push( $self->Rect({
