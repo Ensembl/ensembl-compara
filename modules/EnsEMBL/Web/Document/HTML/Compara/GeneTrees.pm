@@ -193,14 +193,14 @@ sub get_html_for_gene_tree_coverage {
       { key => 'nb_orphan_genes',                 width => '9%',  align => 'center', sort => 'numeric', style => 'color: #a22', title => '# Orphaned genes', },
       { key => 'nb_genes_in_tree_single_species', width => '10%', align => 'center', sort => 'numeric', style => 'color: #25a', title => "# Genes in a single-species tree", },
       { key => 'nb_genes_in_tree_multi_species',  width => '10%', align => 'center', sort => 'numeric', style => 'color: #8a2', title => '# Genes in a multi-species tree', },
-      { key => 'piechart_cov',                    width => '4%',  align => 'center', sort => 'none',    title => 'Coverage', },
+      { key => 'piechart_cov',                    width => '4%',  align => 'center', sort => 'none',    title => 'Coverage', class => '_no_export'},
       { key => 'nb_dup_nodes',                    width => '10%', align => 'center', sort => 'numeric', style => 'color:#909', title => '# species-specific duplications', },
     ], [], {data_table => 1, id => sprintf('gene_tree_coverage_%s', $name), sorting => ['species asc']});
   $table->add_columns(
     { key => 'nb_gene_splits',                  width => '9%', align => 'center', sort => 'numeric', style => 'color:#69f', title => '# Gene splits', },
   ) if $method eq 'PROTEIN_TREES';
   $table->add_columns(
-    { key => 'piechart_dup',                      width => '5%',  align => 'center', sort => 'none',    title => 'Gene events', },
+    { key => 'piechart_dup',                      width => '5%',  align => 'center', sort => 'none',    title => 'Gene events', class => '_no_export'},
   );
 
   my $common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
@@ -209,8 +209,14 @@ sub get_html_for_gene_tree_coverage {
     my $piecharts = $self->get_piecharts_for_species($sp, $counter_raphael_holders);
     $table->add_row({
         'species' => $common_names->{$sp->taxon_id} ? sprintf('%s (<i>%s</i>)', $common_names->{$sp->taxon_id}, $sp->node_name) : $sp->node_name,
-        'piechart_cov' => $piecharts->[1],
-        'piechart_dup' => $sp->get_value_for_tag('nb_genes_in_tree') ? $piecharts->[0] : '',
+        'piechart_cov' => {
+          value => $piecharts->[1],
+          class => '_no_export'
+        },
+        'piechart_dup' => {
+          value => $sp->get_value_for_tag('nb_genes_in_tree') ? $piecharts->[0] : '',
+          class => '_no_export'
+        },
         map {($_ => $sp->get_value_for_tag($_) || 0)} (qw(nb_genes nb_seq nb_orphan_genes nb_genes_in_tree nb_genes_in_tree_single_species nb_genes_in_tree_multi_species nb_gene_splits nb_dup_nodes)),
       });
   }
