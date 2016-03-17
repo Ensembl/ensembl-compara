@@ -97,7 +97,7 @@ sub _dbh_user {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  return unless $hub->users_available;
+  return unless $hub->users_plugin_available;
 
   my $db = $hub->species_defs->accounts_db;
 
