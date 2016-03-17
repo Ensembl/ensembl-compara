@@ -157,6 +157,23 @@ sub new {
 }
 
 
+=head2 align_slice
+
+  Example     : my $align_slice = $slice->align_slice();
+  Description : Returns the original AlignSlice. Note that the reference
+                has been weakened in the constructor, so this getter may
+                return undef in some occasions.
+  Returntype  : Bio::EnsEMBL::Compara::AlignSlice
+  Exceptions  : none
+
+=cut
+
+sub align_slice {
+    my $self = shift;
+    return $self->{'_align_slice'};
+}
+
+
 =head2 genome_db
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $genome_db
