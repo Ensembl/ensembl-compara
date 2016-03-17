@@ -27,8 +27,8 @@ sub content {
   my $hub         = $self->hub;
   my $db          = $hub->param('db') || 'core';
   my $pfa         = $hub->database(lc $db)->get_ProteinFeatureAdaptor;
-  my @prot_feats  = @{ $pfa->fetch_all_by_translation_id($hub->param('translation_id')) };
   my $pf          = $pfa->fetch_by_dbID($hub->param('pf_id'));
+  my @prot_feats  = @{ $pfa->fetch_all_by_translation_id($hub->param('translation_id')) } if($hub->param('translation_id'));
 
   my $hit_db      = $pf->analysis->db;
   my $hit_name    = $pf->display_id;
@@ -38,10 +38,12 @@ sub content {
   $self->caption("$hit_name ($hit_db)");
 
   # get the very begining/start of the protein track (see ENSWEB-2286)
-  foreach (@prot_feats) {
-    if ($_->{hseqname} eq $hit_name) {
-      next if($_->{start} > $start);
-      $start = $_->{start};
+  if(@prot_feats) {
+    foreach (@prot_feats) {
+      if ($_->{hseqname} eq $hit_name) {
+        next if($_->{start} > $start);
+        $start = $_->{start};
+      }
     }
   }
   
@@ -69,7 +71,7 @@ sub content {
   $self->add_entry({
     type  => 'Position',
     label => $start . '-' . $pf->end . ' aa'
-  });
+  }) if($hub->param('translation_id'));
 }
 
 1;
