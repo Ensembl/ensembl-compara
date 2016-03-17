@@ -35,6 +35,7 @@ sub content {
   my $object             = $self->object;
   my $variation          = $object->Obj;
   my $vf                 = $hub->param('vf');
+  my $rs_id              = $hub->param('v');
   my $variation_features = $variation->get_all_VariationFeatures;
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
   my $avail              = $object->availability;  
@@ -58,7 +59,8 @@ sub content {
     $self->synonyms,
     $self->hgvs,
     $self->sets,
-    @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : ()
+    @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
+    $rs_id && $self->snpedia($rs_id)
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
@@ -743,6 +745,51 @@ sub text_separator {
   my $tclass = ($no_left_padding) ? 'text-right_separator' : 'text_separator';
 
   return qq{<span class="$tclass">|</span>};
+}
+
+sub snpedia {
+  my ($self, $rs_id) = @_;
+  my $object = $self->object;
+  my $hub = $self->hub;
+  
+  my $snpedia_wiki_results = $object->get_snpedia_data($rs_id);
+  if (!$snpedia_wiki_results->{'pageid'}) {
+    return ();
+  }
+
+  if ($#{$snpedia_wiki_results->{desc}} < 0) {
+    $snpedia_wiki_results->{desc}[0] = 'Description not available';
+  }
+  
+  my $snpedia_search_link = $hub->get_ExtURL_link('[SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $rs_id });
+  my $count = scalar @{$snpedia_wiki_results->{desc}}; 
+
+  # Adding SNPedia external link
+  $snpedia_wiki_results->{desc}[$#{$snpedia_wiki_results->{desc}}] .= ' - ' . $snpedia_search_link;
+
+  if ($count > 1) {
+    my $show = 'false';
+    return [
+      'Description from SNPedia',
+      sprintf( '%s...
+                <a title="Click to show synonyms" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
+                <div class="toggleable snpedia_more_desc style="%s">
+                  %s
+                </div>
+              ',
+        shift $snpedia_wiki_results->{desc},
+        $show ? 'open' : 'closed',        
+        $show ? 'Hide' : 'Show',
+        $show ? '' : 'display:none',
+        join('', map "<p>$_</p>", @{$snpedia_wiki_results->{desc}}),
+      )
+    ];
+  }
+  else {
+    return $count ? 
+      [ 'Description from SNPedia', $snpedia_wiki_results->{'desc'}[0] ]
+      : ();
+  }
 }
 
 1;

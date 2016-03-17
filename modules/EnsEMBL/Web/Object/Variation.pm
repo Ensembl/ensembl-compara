@@ -41,7 +41,7 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Cache;
 use HTML::Entities qw(encode_entities);
-
+use EnsEMBL::Web::REST;
 use base qw(EnsEMBL::Web::Object);
 
 our $MEMD = EnsEMBL::Web::Cache->new;
@@ -1748,4 +1748,76 @@ sub get_allele_genotype_colours {
                 );
   return \%colours;
 }
+
+# Get SNPedia description from snpedia.com
+sub get_snpedia_data {
+  my ($self, $rs_id) = @_;
+  my $hub = $self->hub;
+  my $snpedia_url = $hub->get_ExtURL('SNPEDIA');
+  my $rest = EnsEMBL::Web::REST->new($hub, $snpedia_url);
+  my $args= {
+    'url_params' => {
+      'action' => 'query',
+      'prop' => 'revisions',
+      'titles' => $rs_id,
+      'rvprop' => 'content',
+      'maxlag' => '5',
+      'format' => 'json',
+      '_delimiter' => '&'
+    }
+  };
+
+  my $ref = $rest->fetch('api.php', $args);
+
+  # get the page id and the page hashref with title and revisions
+  my ($pageid, $pageref) = each %{ $ref->{query}->{pages} };
+  # get the first revision
+  my $rev = @{ $pageref->{revisions } }[0];
+  # delete the revision from the hashref
+  delete($pageref->{revisions});
+  # if the page is missing then return the pageref
+  return $pageref if ( defined $pageref->{missing} );
+
+  # Parse description from the result by applying some heuristics
+  # Tested working for most cases
+  
+  # Convert all newlines to *** to remove newline characters
+  $rev->{'*'} =~s/\n+/***/g;
+
+  # Remove PMID and Title
+  $rev->{'*'} =~s/((\*{3})+\{\{PMID\|(\d+).*?\}\}.*(\.)?\*{3})//g;
+
+  # Remove PMID Auto and Title
+  # $rev->{'*'} =~s/(\{\{PMID Auto(.*)?\|PMID=(\d+).*?\}\}.*(\.)?)//g;
+  $rev->{'*'} =~s/\{\{PMID Auto\*+?.*\}\}//g;
+  $rev->{'*'} =~s/\{\{PMID Auto.*?\}\}//g;
+
+  # Remove all content inside {{ }} except 'PMIDs inside a paragraph'
+  $rev->{'*'} =~s/(\{\{(?!PMID).*?\}\})//g;
+
+  # Link all PMIDs to PUBMED
+  $rev->{'*'} =~s/\{\{PMID\|(\d+)?.*?\}\}/"[" . $hub->get_ExtURL_link("PMID$1", 'PUBMED', { 'ID' => $1 }) . "]"/ge;
+  $rev->{'*'} =~s/PMID\s(\d+)/$hub->get_ExtURL_link("PMID$1", 'PUBMED', { 'ID' => $1 })/ge;
+
+  # Remove starting newline characters
+  $rev->{'*'} =~s/^(\*{3})+//g;
+
+  # Convert '''text''' s to <b>text</b>
+  $rev->{'*'} =~s/'''(.*)'''/<b>$1<\/b>/g;
+  
+  # Link content inside [[ ]] to snpedia
+  # $rev->{'*'} =~s/\[\[(.*?)\]\]/($1 ne $rs_id) ? "[<a href=\"$snpedia_url\/index.php\/$1\">$1<\/a>]" : "$1"/ge;
+
+  $rev->{'*'} =~s/\[\[(.*?)\]\]/($1 ne $rs_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => $1 }) : "<b>$1<\/b>"/ge;
+
+  # Create html links for content like [url linktext]
+  $rev->{'*'} =~s/\[(http:\/\/.*?)\s(.*?)\]/<a href="$1">$2<\/a>/g;
+
+  # Display only the first paragraph
+  my @desc_arr = split(/\*\*\*+/, $rev->{'*'});
+
+  # combine the pageid, the latest revision and the page title into one hash
+  return { 'pageid'=>$pageid, %{ $rev }, 'desc'=>\@desc_arr, %{ $pageref } };
+}
+
 1;
