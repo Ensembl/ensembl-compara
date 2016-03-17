@@ -1352,7 +1352,7 @@ sub get_variation_features {
    my $self = shift;
    my $slice = $self->slice_cache;
    return unless $slice;
-   my $vf_adaptor = $self->hub->database('variation')->get_VariationAdaptor;
+   my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor;
    return $vf_adaptor->fetch_all_by_Slice($slice) || [];
 }
 
