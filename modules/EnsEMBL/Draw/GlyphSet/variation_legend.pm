@@ -37,7 +37,7 @@ sub _init {
   $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   return unless $features;
 
-  my %labels = map { $_->SO_term => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+  my %labels = map { lc($_->SO_term) => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   
   $self->init_legend();
 
