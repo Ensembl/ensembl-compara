@@ -121,25 +121,24 @@ sub news_header {
 }
 
 sub read_rss_file {
-  my ($self, $hub, $rss, $limit) = @_;
-  if (!$hub || !$rss) {
+  my ($self, $hub, $rss_path, $rss_url, $limit) = @_;
+  if (!$hub || !$rss_path) {
     return [];
   }
 
   my $items = [];
   my $args = {'no_exception' => 1};
 
-  if (file_exists($rss, $args)) {
-    my $content = read_file($rss, $args);
+  if (file_exists($rss_path, $args)) {
+    my $content = read_file($rss_path, $args);
     if ($content) {
       ## Does this feed work best with XML::Atom or XML:RSS? 
-      my $rss_type = $rss =~ /atom/ ? 'atom' : 'rss';
+      my $rss_type = $rss_path =~ /atom/ ? 'atom' : 'rss';
       $items = $self->_process_xml($rss_type, $content, $limit);
     }
   }
   else {
     ## Fall back to fetching feed if no file cached
-    my $rss_url = $hub->species_defs->ENSEMBL_BLOG_RSS;
     $items = $self->get_rss_feed($hub, $rss_url, $limit);
   }
   return $items;
