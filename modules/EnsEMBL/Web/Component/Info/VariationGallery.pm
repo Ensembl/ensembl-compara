@@ -65,7 +65,7 @@ sub content {
                   },
                   {
                     'title' => 'Populations &amp; Individuals',
-                    'pages' => ['Population Image', 'Population Table', 'Genotypes Table', 'LD Image', 'LD Table', 'Resequencing', 'Citations'],
+                    'pages' => ['Population Image', 'Population Table', 'Genotypes Table', 'Transcript Haplotypes', 'LD Image', 'LD Table', 'LD Manhattan Plot', 'Resequencing', 'Citations'],
                     'icon'  => 'var_sample_information.png',
                   },
                 ];
@@ -451,6 +451,16 @@ sub _get_pages {
                                   'img'     => 'variation_sample',
                                   'caption' => 'Genotypes for samples within a population',
                                 },
+          'Transcript Haplotypes' => {
+                                  'link_to'     => {'type'    => 'Transcript',
+                                                    'action'  => 'Haplotypes',
+                                                    'v'      => $v,
+                                                    },
+                                  'img'     => 'variation_transcript_haplotypes',
+                                  'caption' => 'Table of protein or CDS haplotypes in different populations',
+                                  'multi'     => $multi_transcript,  
+                                  'disabled'  => $no_gene,  
+                                },
           'LD Image' => {
                                   'link_to'       => {'type'    => 'Location',
                                                       'action'  => 'LD',
@@ -468,6 +478,14 @@ sub _get_pages {
                                                     },
                                   'img'     => 'variation_ld_table',
                                   'caption' => 'Linkage disequilibrium with your variant',
+                                },
+          'LD Manhattan Plot' => {
+                                  'link_to'     => {'type'    => 'Variation',
+                                                    'action'  => 'LDPlot',
+                                                    'v'      => $v,
+                                                    },
+                                  'img'     => 'variation_ld_manhattan',
+                                  'caption' => 'Linkage disequilibrium Manhattan plot around a chosen variant',
                                 },
           'Resequencing' => {
                                   'link_to'       => {'type'    => 'Location',
