@@ -92,7 +92,7 @@ sub content {
       
       $table->add_row({
         type     => $db,
-        desc     => $domain->idesc || '-',
+        desc     => $domain->hdescription || $domain->idesc || '-',
         acc      => $hub->get_ExtURL_link($id, uc $db, $id),
         start    => $domain->start,
         end      => $domain->end,
