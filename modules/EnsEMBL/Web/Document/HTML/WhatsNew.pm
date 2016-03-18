@@ -134,7 +134,8 @@ sub _include_blog {
   my ($self, $hub) = @_;
 
   my $rss_path = $hub->species_defs->DATAFILE_BASE_PATH.'/web/blog/rss.xml';
-  my $items = $self->read_rss_file($hub, $rss_path, 3); 
+  my $rss_url  = $hub->species_defs->ENSEMBL_BLOG_RSS;
+  my $items = $self->read_rss_file($hub, $rss_path, $rss_url, 3); 
   my $html;
 
   if (scalar(@$items)) {
