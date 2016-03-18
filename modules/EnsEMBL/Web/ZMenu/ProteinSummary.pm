@@ -34,6 +34,7 @@ sub content {
   my $hit_name    = $pf->display_id;
   my $interpro_ac = $pf->interpro_ac;
   my $start       = $pf->start;
+  my $end         = $pf->end;
   
   $self->caption("$hit_name ($hit_db)");
 
@@ -41,8 +42,8 @@ sub content {
   if(@prot_feats) {
     foreach (@prot_feats) {
       if ($_->{hseqname} eq $hit_name) {
-        next if($_->{start} > $start);
-        $start = $_->{start};
+        $start = $_->{start} if($_->{start} < $start);
+        $end   = $_->{end} if($_->{end} > $end);
       }
     }
   }
@@ -70,8 +71,8 @@ sub content {
   
   $self->add_entry({
     type  => 'Position',
-    label => $start . '-' . $pf->end . ' aa'
-  }) if($hub->param('translation_id'));
+    label => $start . '-' . $end . ' aa'
+  })if($hub->param('translation_id'));
 }
 
 1;
