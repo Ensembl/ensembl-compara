@@ -22,24 +22,38 @@
 (function($) {
 
   $.keepOnPage = function (el, options) {
-    /* options - object with following keys or a string 'trigger' to externally trigger the outcome of window scroll on the keepOnPage instance
+    /* options - object with following keys
      *  marginTop: Margin to be kept on top when fixing the element to the top
      *  onfix: Function to be called when element is fixed on top
      *  onreset: Function to be called when element's position is reverted back to original
+     * Or alternatively, options can be one of the following strings
+     * 'trigger' To externally trigger the outcome of window scroll on the keepOnPage instance
+     * 'destroy' To remove the keepOnPage feature from an element
      */
 
     el = $(el);
 
+    var eventId;
+
     if (el.data('keepOnPage')) {
 
+      eventId = el.data('keepOnPage').eventId;
+
       if (options === 'trigger') {
-        $(window).triggerHandler('scroll.keepOnPage', true);
+        $(window).triggerHandler('scroll.keepOnPage_' + eventId, true);
+
+      } else if (options === 'destroy') {
+        $(window).off('.keepOnPage_' + eventId);
+        el.removeData('keepOnPage');
       }
-    } else {
 
-      el.data('keepOnPage', {active: false});
+    } else if (options !== 'destroy') {
 
-      $(window).on('load.keepOnPage scroll.keepOnPage',
+      var eventId = Math.random().toString().split('.')[1];
+
+      el.data('keepOnPage', {active: false, eventId: eventId});
+
+      $(window).on('load.keepOnPage_' + eventId + ' scroll.keepOnPage_' + eventId,
         $.extend({
           el      : el,
           options : options
@@ -70,7 +84,7 @@
           }
 
           // save status
-          e.data.el.data('keepOnPage', {active: !!displacement});
+          e.data.el.data('keepOnPage').active = !!displacement;
 
           // replace the actual element with the clone if a 'static' positioned element is not being 'fixed'
           if (e.data.clone) {
