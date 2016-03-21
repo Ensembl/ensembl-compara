@@ -101,7 +101,7 @@ sub fixup_label_width {
 }
 
 sub fixup_location {
-  my ($self,$key,$slice_key,$end) = @_;
+  my ($self,$key,$slice_key,$end,$duds) = @_;
 
   my @route = split('/',$key);
   $key = pop @route;
@@ -111,10 +111,10 @@ sub fixup_location {
     foreach my $f (@{$self->_route(\@route,$data)}) {
       $f->{$key} -= $container->start+1;
       if($end) {
-        $f->{'__dud'} = 1 if $f->{$key} < 0;
+        $f->{'__dud'} = 1 if $f->{$key} < 0 and not $duds;
         $f->{$key} = min($container->length,$f->{$key});
       } else {
-        $f->{'__dud'} = 1 if $f->{$key} > $container->length;
+        $f->{'__dud'} = 1 if $f->{$key} > $container->length and not $duds;
         $f->{$key} = max($f->{$key},0);
       }
     }
