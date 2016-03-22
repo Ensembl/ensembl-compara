@@ -106,7 +106,7 @@ sub default_options {
             %{ $self->SUPER::default_options() },
 
 #        'mlss_id'     => '100021',
- #       'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'
+#        'compara_db' => 'mysql://ensadmin:ensembl@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
     };
 }
@@ -115,7 +115,7 @@ sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-        'mlss_id' => $self->o('mlss_id'),
+#        'mlss_id' => $self->o('mlss_id'),
         'compara_db' => $self->o('compara_db'),
     };
 }
@@ -136,7 +136,7 @@ sub pipeline_analyses {
     return [
         {   -logic_name => 'get_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
-            -input_ids => [ { } ],
+#            -input_ids => [ { } ],
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
             -analysis_capacity  =>  200,  # use per-analysis limiter
             -flow_into => {
@@ -168,7 +168,7 @@ sub pipeline_analyses {
         	-module	=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
 #            -input_ids => [ {'species1' => $self->o('species1')} ],
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
-            -analysis_capacity  =>  100,
+            -analysis_capacity  =>  250,
         	-flow_into	=> {
                 2 => [ $self->o('compara_db').'/ortholog_goc_metric' ],
 #        		2 => [ ':////ortholog_goc_metric' ],
@@ -189,7 +189,7 @@ sub pipeline_analyses {
         {
             -logic_name => 'store_goc_dist_asTags',
             -module 	=> 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags',
-            -parameters =>	{'compara_db' => $self->o('compara_db') },
+#            -parameters =>	{'compara_db' => $self->o('compara_db') },
         },
     ];
 }
