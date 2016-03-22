@@ -19,7 +19,7 @@
 
     -output     -> output file  format : -> ref_chr_id,ref_start,ref_end,nonref_chr_id,non_ref_start,nonref_end, genomic_block_ids
     -debug      -> if you want the debug statements printed to the screen
-    example run : perl get_genomic_rearrangements_breakpoints.pl -species1 mus_caroli -species2 mus_pahari -kb 10 -output trial_b -reg_conf /nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror.conf
+    example run : perl get_genomic_rearrangements_breakpoints.pl -species1 mus_caroli -species2 mus_pahari -kb 10 -output trial_b -reg_conf /nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror_03_16.conf
 
 
 =cut
@@ -48,10 +48,10 @@ GetOptionsFromArray(
 $| = 1;
 
 
-$reg_conf ||= '/nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror.conf';
+$reg_conf ||= '/nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror_03_16.conf';
 die("Please provide species of interest (-species1 & -species2) and the minimum alignment block size (-base) and output files (-o1) ") unless( defined($ref) && defined($non_ref)&& defined($base)&& defined($output1_file) );
 die("\nThe given output file already exists\n") if -e $output1_file;
-my $kilobase = $base * 1000;
+my $kilobase = $base * 1000; #megabase
 
 my $registry = 'Bio::EnsEMBL::Registry';
 $registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
@@ -63,7 +63,7 @@ my $GDB_adaptor = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomeDB' )
 #my $gblock_adap = $registry->get_adaptor( 'Multi', 'compara', 'GenomicAlignBlock' );
 #my $GDB_adaptor = $registry->get_adaptor( 'Multi', 'compara', 'GenomeDB' );
 my $mlss = $mlss_adap->fetch_by_method_link_type_registry_aliases( "LASTZ_NET", [ $ref, $non_ref ] );
-#print $mlss, " mlssssssssssssssssss\n";
+print $mlss->dbID(), " mlssssssssssssssssss idddddddddddd \n" if ($debug) ;
 
 #print STDOUT "\n getting all genomic blocks for the given pair of species \n";
 my @gblocks = @{ $gblock_adap->fetch_all_by_MethodLinkSpeciesSet( $mlss ) };
@@ -74,9 +74,9 @@ my $whole_gblocks_hash_ref ={}; # so that i will be able to use the string form 
 #print $GDB_adaptor, "   the adaptor \n the genome   ", $GDB_adaptor->fetch_by_name_assembly($ref), "\n";
 my $ref_gdbID = $GDB_adaptor->fetch_by_name_assembly($ref)->dbID();
 my $non_ref_gdbID = $GDB_adaptor->fetch_by_name_assembly($non_ref)->dbID();
-#print "ref gbid ", $ref_gdbID , "   non ref gb id ", $non_ref_gdbID , "\n\n";
+print "ref gbid ", $ref_gdbID , "   non ref gb id ", $non_ref_gdbID , "\n\n"  if ($debug) ;
 
-#print STDOUT "\n partition genomic blocks into an hash based on the reference species chromosomes \n";
+print STDOUT "\n partition genomic blocks into an hash based on the reference species chromosomes \n" if ($debug) ;
 my $count = 0;
 while ( my $gblock = shift @gblocks ) { 
     my $ref_gns= $gblock->get_all_GenomicAligns([$ref_gdbID])->[0];
@@ -99,9 +99,11 @@ while ( my $gblock = shift @gblocks ) {
 #my $result_inner_hash_ref = {};
 
 my @ref_chrs = keys %gblocks_hash;
+print "  2222222222222222222222222222    number of gblocks:   $count \n";
 my $counter;
-open my $OUT1, '>>', $output1_file or die "Could not open file '$output1_file' $!";
+open my $OUT1, '>', $output1_file or die "Could not open file '$output1_file' $!";
 #print STDOUT scalar @keys, "\n\n\n";
+my $invert = 0;
 while (my $ref_chr = shift (@ref_chrs)) {
     print " The start of the mainnnnnnnnnnnnn while loop \n" if ($debug) ;
 #    print STDOUT $counter--, "\n\n";
@@ -158,7 +160,11 @@ while (my $ref_chr = shift (@ref_chrs)) {
                     #bigger than the threshold
                     else {
                         print "bigger than threshold $kilobase so we print the block    ", $whole_gblocks_hash_ref->{$chr_gblocks_sorted[$pos]}->length, "   \n" if ($debug) ;
-                        print_result($whole_gblocks_hash_ref, \@merged, $ref_chr, $OUT1);
+                        if ($default_non_ref_strand !=$current_non_ref_gns0->dnafrag_strand()) {
+                        	$invert=1;
+                        }
+                        print_result($whole_gblocks_hash_ref, \@merged, $ref_chr, $OUT1, $invert);
+                        $invert = 0;
                         #not already merged with another block, continue the for loop. with the new merged block starting from here
                         if (!$already_merged{$chr_gblocks_sorted[$pos]}) {
                             @merged = $chr_gblocks_sorted[$pos];
@@ -193,7 +199,7 @@ while (my $ref_chr = shift (@ref_chrs)) {
                 }
             } 
         }
-        print_result($whole_gblocks_hash_ref, \@merged, $ref_chr, $OUT1); 
+        print_result($whole_gblocks_hash_ref, \@merged, $ref_chr, $OUT1, $invert); 
         undef @merged; 
     }
 }
@@ -204,7 +210,7 @@ close $OUT1;
 
 sub print_result {
     print "\n       we are in the print resultssssssssssssss     ", $kilobase, "   \n" if ($debug) ;
-    my ($local_whole_gblocks_hash_ref, $local_merged_array_ref, $local_ref_chr, $fh) = @_;
+    my ($local_whole_gblocks_hash_ref, $local_merged_array_ref, $local_ref_chr, $fh, $inverted) = @_;
     my @local_merged = @$local_merged_array_ref;
     my $length = 0;
     if (scalar @local_merged == 1) {
@@ -218,9 +224,14 @@ sub print_result {
             my $non_ref_start = $non_ref_gns2->dnafrag_start();
             my $non_ref_end = $non_ref_gns2->dnafrag_end();
             my $non_ref_chr = $non_ref_gns2->dnafrag_id();
-            print $fh $local_ref_chr, "\t\t", $start ,"\t\t", $end, "\t\t", $non_ref_chr, "\t\t", $non_ref_start, "\t\t", $non_ref_end, "\n", $local_whole_gblocks_hash_ref->{$local_merged[0]}->dbID(),"\n\n//\n";
-            $counter ++;
-
+            if ($inverted){
+            	print $fh $local_ref_chr, "\t\t", $start ,"\t\t", $end, "\t\t", $non_ref_chr, "\t\t", $non_ref_start, "\t\t", $non_ref_end, "\n", $local_whole_gblocks_hash_ref->{$local_merged[0]}->dbID(),"\n/--/\n";
+            	$counter ++;
+            }
+            else{
+            	print $fh $local_ref_chr, "\t\t", $start ,"\t\t", $end, "\t\t", $non_ref_chr, "\t\t", $non_ref_start, "\t\t", $non_ref_end, "\n", $local_whole_gblocks_hash_ref->{$local_merged[0]}->dbID(),"\n//\n";
+            	$counter ++;
+            }
         }
     }
     else{
@@ -268,9 +279,14 @@ sub print_result {
                     $non_ref_end = $non_ref_gns4->dnafrag_end();
                 }
             }
-
-            print $fh $local_ref_chr, "\t\t", $start ,"\t\t", $end, ,"\t\t",$non_ref_chr,"\t\t",$non_ref_start ,"\t\t",$non_ref_end,"\n",$block_ids,"\n\n//\n";
-            $counter ++;
+            if ($inverted){
+	            print $fh $local_ref_chr, "\t\t", $start ,"\t\t", $end, ,"\t\t",$non_ref_chr,"\t\t",$non_ref_start ,"\t\t",$non_ref_end,"\n",$block_ids,"\n/--/\n";
+    	        $counter ++;
+    	    }
+    	    else{
+    	    	print $fh $local_ref_chr, "\t\t", $start ,"\t\t", $end, ,"\t\t",$non_ref_chr,"\t\t",$non_ref_start ,"\t\t",$non_ref_end,"\n",$block_ids,"\n//\n";
+    	        $counter ++;
+    	    }
         } 
     }
 }
