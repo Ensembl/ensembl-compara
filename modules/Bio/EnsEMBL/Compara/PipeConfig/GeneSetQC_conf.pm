@@ -33,8 +33,11 @@ Bio::EnsEMBL::Compara:Pipeconfig::GeneSetQC_conf;
 =head1 DESCRIPTION
 	Automate quality assessment of gene set quality 
 
+    -species_threshold : minimum number of species... for all of ensembl species we have decided on a minimum species threshold of 15
+    -coverage_threshold : minimum avg percentage coverage.
+
 Example run
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneSetQC_conf -pipeline_name <GeneSetQC_trial> -host <host_server> -species_threshold <20> -coverage_threshold <50>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneSetQC_conf -pipeline_name <GeneSetQC_trial> -host <host_server> -species_threshold <15> -coverage_threshold <50>
 
 =cut
 
@@ -101,7 +104,7 @@ sub default_options {
     return {
             %{ $self->SUPER::default_options() },
         'mlss_id'     => '40101',
-        'compara_db' => 'mysql://ensro@compara4/wa2_protein_trees_84'
+        'compara_db' => 'mysql://ensro@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
     };
 }
