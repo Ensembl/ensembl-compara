@@ -117,6 +117,12 @@ Ensembl.PanelManager.extend({
         container.html(html);
         
         id = id || this.generateId(container[0]);
+        // Highlight recently updated userdata track
+        $(container).find('._highlight_userdata')
+                    .stop()
+                    .animate({opacity: 0.8}, 200)
+                    .animate({opacity: 0.8}, 1000)
+                    .animate({opacity: 1}, 2000);
       }
       
       if (id) {
@@ -142,7 +148,7 @@ Ensembl.PanelManager.extend({
     } else {
       this.panels[id] = new Ensembl.Panel(id, params);
     }
-    
+
     this.panels[id].panelNumber = this.panelNumber++;
     this.panels[id].panelType   = type;
     this.panels[id].init();

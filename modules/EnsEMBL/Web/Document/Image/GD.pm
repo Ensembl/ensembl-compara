@@ -385,15 +385,12 @@ sub track_boundaries {
   my %track_ids       = map  { $_->id => 1 } @sortable_tracks;
   my %strand_map      = ( f => 1, r => -1 );
   my @boundaries;
- 
   my $prev_section; 
   foreach my $glyphset (@{$container->{'glyphsets'}}) {
     next unless scalar @{$glyphset->{'glyphs'}};
-
     my $height = $glyphset->height + $spacing;
     my $type   = $glyphset->type;
     my $node;  
-    
     my $collapse = 0;
       
     if ($track_ids{$type}) {
@@ -428,14 +425,23 @@ sub moveable_tracks {
   my $url     = $image->read_url;
   my ($top, $html);
   
+  # Get latest uploaded user data to add highlight class
+  my $last_uploaded_user_data_code = $self->hub->session->get_data(type => 'userdata_upload_code') ? 
+    $self->hub->session->get_data(type => 'userdata_upload_code')->{upload_code} : '';
+
+  # Purge this data so that it doesn't highlight second time.
+  $self->hub->session->purge_data(type => 'userdata_upload_code');
+  
   foreach (@{$self->track_boundaries}) {
     my ($t, $h, $type, $strand) = @$_;
+    my $highlight = ($last_uploaded_user_data_code && $type =~m/$last_uploaded_user_data_code/) ? 1 : 0;
 
     $html .= sprintf(
-      '<li class="%s%s" style="height:%spx;background:url(%s) 0 %spx%s">
+      '<li class="%s %s %s" style="height:%spx;background:url(%s) 0 %spx%s">
         <div class="handle" style="height:%spx"%s><p></p></div>
       </li>',
-      $type, $strand ? " $strand" : '',
+      $type, $strand ? "$strand" : '',
+      $highlight ? '_highlight_userdata' : '',
       $h, $url, 3 - $t,
       $h == 0 ? ';display:none' : '',
       $h - 1,
