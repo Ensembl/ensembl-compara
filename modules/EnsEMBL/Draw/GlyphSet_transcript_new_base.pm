@@ -25,6 +25,8 @@ use List::MoreUtils qw(natatime);
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
+sub minmax { return max(min($_[0],$_[2]),$_[1]); }
+
 # In "collapsed" style, a single bead-string is drawn. This is fat
 # wherever any consituent transcript has an exon at that position.
 # It is used by render_collapsed and render_alignslice_collapsed.
@@ -171,9 +173,10 @@ sub _add_label {
 sub _draw_collapsed_gene_base {
   my ($self,$composite2,$length,$gene) = @_;    
 
-  my $start = max($gene->{'start'},1);
-  my $end   = min($gene->{'end'},$length);
-  
+  my $start = minmax($gene->{'start'},1,$length);
+  my $end   = minmax($gene->{'end'},1,$length);
+  return if $end < 1 or $start > $length;
+
   $composite2->push($self->Rect({
     x         => $start, 
     y         => 4,
@@ -187,9 +190,10 @@ sub _draw_collapsed_gene_base {
 sub _draw_collapsed_exon {
   my ($self,$composite2,$length,$gene,$exon) = @_;
 
-  my $s = max($exon->{'start'},1);
-  my $e = min($exon->{'end'},$length);
-  
+  my $s = minmax($exon->{'start'},1,$length);
+  my $e = minmax($exon->{'end'},1,$length);
+  return if $e < 1 or $s > $length;
+
   $composite2->push($self->Rect({
     x         => $s - 1,
     y         => 0,
@@ -256,8 +260,9 @@ sub _draw_expanded_exon {
   my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
   my $non_coding_start  = ($h - $non_coding_height) / 2;
   my $colour    = $self->my_colour($t->{'colour_key'});
-  my $box_start = max($e->{'start'}, 1);
-  my $box_end   = min($e->{'end'}, $length);
+  my $box_start = minmax($e->{'start'},1,$length);
+  my $box_end   = minmax($e->{'end'},1,$length);
+  return if $box_end < 1 or $box_start > $length;
   $composite2->push($self->Rect({
     x            => $box_start - 1 ,
     y            => $non_coding_start,
@@ -267,18 +272,19 @@ sub _draw_expanded_exon {
     absolutey    => 1,
   }));
   if(exists $e->{'coding_start'}) {
-    my $fill_start = max($e->{'start'} + $e->{'coding_start'}, 1);
-    my $fill_end   = min($e->{'end'}   - $e->{'coding_end'}, $length);
-
-    if ($fill_end >= $fill_start) {
-      $composite2->push($self->Rect({
-        x         => $fill_start - 1,
-        y         => 0,
-        width     => $fill_end - $fill_start + 1,
-        height    => $h,
-        colour    => $colour,
-        absolutey => 1,
-      }));
+    my $fill_start = minmax($e->{'start'} + $e->{'coding_start'},1,$length);
+    my $fill_end   = minmax($e->{'end'} - $e->{'coding_end'},1,$length);
+    unless($fill_end < 1 or $fill_start > $length) {
+      if ($fill_end >= $fill_start) {
+        $composite2->push($self->Rect({
+          x         => $fill_start - 1,
+          y         => 0,
+          width     => $fill_end - $fill_start + 1,
+          height    => $h,
+          colour    => $colour,
+          absolutey => 1,
+        }));
+      }
     }
   }
 }
@@ -301,8 +307,9 @@ sub _draw_introns {
   @introns = map { ($_,$_) } @introns;
   my $in_it = natatime(2,@introns[1..$#introns-1]);
   while(my @pair = $in_it->()) {
-    my $intron_start = max($pair[0]->{'end'}+1,0);
-    my $intron_end = min($pair[1]->{'start'}-1,$length);
+    my $intron_start = minmax($pair[0]->{'end'}+1,0,$length);
+    my $intron_end = minmax($pair[1]->{'start'}-1,0,$length);
+    next if $intron_end < 1 or $intron_start > $length;
     my $dotted = ($pair[0]->{'dotted'} || $pair[1]->{'dotted'});
     if($dotted) {
       $composite2->push($self->Line({
@@ -419,8 +426,9 @@ sub _draw_rect_gene {
 
   my $pix_per_bp = $self->scalex;
 
-  my $start = max($g->{'start'},1);
-  my $end = min($g->{'end'},$length);
+  my $start = minmax($g->{'start'},1,$length);
+  my $end = minmax($g->{'end'},1,$length);
+  return if $end < 1 or $start > $length;
 
   my @rects;
   my $rect = $self->Rect({
