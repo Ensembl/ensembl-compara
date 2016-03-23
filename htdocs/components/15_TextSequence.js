@@ -36,7 +36,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
         var $outer = $(outer);
         panel.initPopups($outer);
         panel.updateKey($outer);
-        panel.fixKey($outer);
+        panel.fixKey();
       });
     });
 
@@ -44,8 +44,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     this.el.on('mousedown', '.info_popup', function () {
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     });
-
-    this.elLk.keyBox = this.el.find('._adornment_key').first();
   },
   
   updateKey: function(el) {
@@ -71,7 +69,10 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     $key.data('url',url);
   },
 
-  fixKey: function(el) {
+  fixKey: function() {
+    if (!this.elLk.keyBox) {
+      this.elLk.keyBox = this.el.find('._adornment_key').first();
+    }
     this.elLk.keyBox.keepOnPage({marginTop: 10}).keepOnPage('trigger');
   },
 
@@ -84,7 +85,9 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     attrs = attrs || {};
     attrs.paced = true;
 
-    this.elLk.keyBox.keepOnPage('destroy');
+    if (this.elLk.keyBox) {
+      this.elLk.keyBox.keepOnPage('destroy');
+    }
 
     this.base(url, el, params, newContent, attrs);
   }
