@@ -489,6 +489,23 @@ sub set_species_aliases {
   $ENSEMBL_SECONDARY_SPECIES = shift @temp_species if $ENSEMBL_SECONDARY_SPECIES eq $ENSEMBL_PRIMARY_SPECIES;
 }
 
+sub verbose_params {
+
+  my $params = {};
+
+  no strict qw(refs);
+
+  for (sort keys %{'SiteDefs::'}) {
+
+    my $sym_name  = "SiteDefs::$_";
+    my $sym       = *$sym_name;
+
+    next unless ref(\$sym) eq 'GLOB';
+
+    warn sprintf "%50s: %s\n", $_, ref *{$sym}{'CODE'} ? 'SUBROUTINE' : ref $$sym || $$sym // 'undef';
+  }
+}
+
 sub error {
   my $message = join "\n", @_;
      $message =~ s/\s+$//sm;
