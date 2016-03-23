@@ -258,39 +258,27 @@ sub _draw_expanded_exon {
   my $colour    = $self->my_colour($t->{'colour_key'});
   my $box_start = max($e->{'start'}, 1);
   my $box_end   = min($e->{'end'}, $length);
-  if($e->{'start'}==0) {
-    $composite2->push($self->Line({
-      x         => $box_start - 1,
-      y         => int($h/2),
-      width     => $box_end-$box_start + 1,
-      height    => 0,
-      absolutey => 1,
-      colour    => 'green',
-      dotted    => 1
-    }));
-  } else {
-    $composite2->push($self->Rect({
-      x            => $box_start - 1 ,
-      y            => $non_coding_start,
-      width        => $box_end - $box_start + 1,
-      height       => $non_coding_height,
-      bordercolour => $colour,
-      absolutey    => 1,
-    }));
-    if(exists $e->{'coding_start'}) {
-      my $fill_start = max($e->{'start'} + $e->{'coding_start'}, 1);
-      my $fill_end   = min($e->{'end'}   - $e->{'coding_end'}, $length);
-      
-      if ($fill_end >= $fill_start) {
-        $composite2->push($self->Rect({
-          x         => $fill_start - 1,
-          y         => 0,
-          width     => $fill_end - $fill_start + 1,
-          height    => $h,
-          colour    => $colour,
-          absolutey => 1,
-        }));
-      }
+  $composite2->push($self->Rect({
+    x            => $box_start - 1 ,
+    y            => $non_coding_start,
+    width        => $box_end - $box_start + 1,
+    height       => $non_coding_height,
+    bordercolour => $colour,
+    absolutey    => 1,
+  }));
+  if(exists $e->{'coding_start'}) {
+    my $fill_start = max($e->{'start'} + $e->{'coding_start'}, 1);
+    my $fill_end   = min($e->{'end'}   - $e->{'coding_end'}, $length);
+
+    if ($fill_end >= $fill_start) {
+      $composite2->push($self->Rect({
+        x         => $fill_start - 1,
+        y         => 0,
+        width     => $fill_end - $fill_start + 1,
+        height    => $h,
+        colour    => $colour,
+        absolutey => 1,
+      }));
     }
   }
 }
