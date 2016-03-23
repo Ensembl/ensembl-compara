@@ -37,11 +37,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
         panel.initPopups($outer);
         panel.updateKey($outer);
         panel.fixKey($outer);
-        if(!$('.ajax_pending',this.el).length &&
-            !$('.ajax_load',this.el).length &&
-            !$('.sequence_key img',this.el).length) {
-//            panel.requestKey($this);
-        }
       });
     });
 
@@ -78,12 +73,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
 
   fixKey: function(el) {
     this.elLk.keyBox.keepOnPage({marginTop: 10}).keepOnPage('trigger');
-  },
-
-  requestKey: function(el) {
-    var $key = el.parents('.js_panel').find('.sequence_key');
-    if(!$key.length) { return; }
-    this.getContent($key.data('url'),$key);
   },
 
   initPopups: function (el) {
