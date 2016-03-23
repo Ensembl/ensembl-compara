@@ -25,6 +25,7 @@ use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::File::Utils::IO qw/file_exists read_file/;
 use LWP::UserAgent;
+use Encode qw(encode_utf8 decode_utf8);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -182,10 +183,10 @@ sub _process_xml {
         my ($link) = grep { $_->rel eq 'alternate' } $entry->link;
         my $date  = $self->pretty_date(substr($entry->published, 0, 10), 'daymon');
         my $item = {
-                'title'   => $entry->title,
-                'content' => $entry->content,
-                'link'    => $link->href,
-                'date'    => $date,
+                'title'   => encode_utf8($entry->title),
+                'content' => encode_utf8($entry->content),
+                'link'    => encode_utf8($link->href),
+                'date'    => encode_utf8($date),
         };
         push @$items, $item;
         $count++;
@@ -198,10 +199,10 @@ sub _process_xml {
       foreach my $entry (@{$rss->{'items'}}) {
         my $date = substr($entry->{'pubDate'}, 5, 11);
         my $item = {
-            'title'   => $entry->{'title'},
-            'content' => $entry->{'http://purl.org/rss/1.0/modules/content/'}{'encoded'},
-            'link'    => $entry->{'link'},
-            'date'    => $date,
+            'title'   => encode_utf8($entry->{'title'}),
+            'content' => encode_utf8($entry->{'http://purl.org/rss/1.0/modules/content/'}{'encoded'}),
+            'link'    => encode_utf8($entry->{'link'}),
+            'date'    => encode_utf8($date),
         };
         push @$items, $item;
         $count++;

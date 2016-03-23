@@ -30,7 +30,7 @@ BEGIN {
 
 my $web_root = $SiteDefs::ENSEMBL_WEBROOT;
 
-my ($help, $rmconfig, $delay, $single, $tail, $flush, $species, @defines);
+my ($help, $rmconfig, $delay, $single, $tail, $flush, $verbose, $species, @defines);
 
 &GetOptions(
   "sp=s"        => \$species,
@@ -40,6 +40,7 @@ my ($help, $rmconfig, $delay, $single, $tail, $flush, $species, @defines);
   # start_server args
   "r|rmconfig"  => \$rmconfig,
   "f|flush"     => \$flush,
+  "v|verbose"   => \$verbose,
   "D|define=s"  => \@defines,
 
   # stop_server args
@@ -88,7 +89,7 @@ if ($species) {
 
 my $defines     = join(" ",map { "-D $_ " } @defines);
 my $stop_args   = $delay ? "-d $delay" : '';
-my $start_args  = join ' ', $rmconfig ? '-r' : '', $flush ? '-f' : '', $defines;
+my $start_args  = join ' ', $rmconfig ? '-r' : '', $flush ? '-f' : '', $verbose ? '-v' : '', $defines;
 my $argv        = join ' ', @ARGV;
 
 my ($before_restart, $after_restart) = before_after_hooks('restart');
