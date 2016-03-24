@@ -260,7 +260,8 @@ sub advanced_button {
   my @components = @{$hub->components};
 
   my $view_config;
-  $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
+  $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components;
+  return unless $view_config;
   my $url     = $self->hub->url('Config', {
     type      => $view_config->type,
     action    => $view_config->component,
