@@ -49,13 +49,13 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $n_removed_columns = $self->get_removed_columns();
+    my $n_removed_columns = $self->_get_removed_columns();
     $self->param( 'n_removed_columns', $n_removed_columns );
 
-    my $shrinking_factor = $self->get_shrinking_factor();
+    my $shrinking_factor = $self->_get_shrinking_factor();
     $self->param( 'shrinking_factor', $shrinking_factor );
 
-    my $gene_count = $self->get_gene_count();
+    my $gene_count = $self->_get_gene_count();
     $self->param( 'gene_count', $gene_count );
 }
 
@@ -72,13 +72,13 @@ sub write_output {
 # internal methods
 #
 ##########################################
-sub get_gene_count {
+sub _get_gene_count {
     my $self       = shift;
     my $gene_count = $self->param('gene_tree')->get_all_Members() || die "Could not get_all_Members for genetree: " . $self->param_required('gene_tree_id');
     return scalar(@{$gene_count});
 }
 
-sub get_removed_columns {
+sub _get_removed_columns {
     my $self = shift;
     if ( $self->param('gene_tree')->has_tag('removed_columns') ) {
         my $removed_columns_str = $self->param('gene_tree')->get_value_for_tag('removed_columns');
@@ -103,7 +103,7 @@ sub get_removed_columns {
     }
 }
 
-sub get_shrinking_factor {
+sub _get_shrinking_factor {
     my $self = shift;
 
     my $aln_length = $self->param('gene_tree')->get_value_for_tag('aln_length') || die "Could not fetch tag aln_length for root_id=" . $self->param_required('gene_tree_id');
