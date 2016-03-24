@@ -38,7 +38,6 @@ sub content {
   return unless $click_data;
   $click_data->{'display'} = 'text';
 
-  my @coords = map { $hub->param("fake_click_$_") } qw(chr start end);
   my $strand = $hub->param('fake_click_strand') || 1;
   my ($caption, @features);
 
@@ -75,13 +74,12 @@ sub content {
   if (scalar @features > 5) {
     $self->summary_content(\@features, $caption);
   } else {
-    my @coords = split(/[:-]/, $hub->param('r'));
-    $self->feature_content(\@features, $caption, $coords[1]);
+    $self->feature_content(\@features, $caption);
   }
 }
 
 sub feature_content {
-  my ($self, $features, $caption, $slice_start) = @_;
+  my ($self, $features, $caption) = @_;
 
   my $default_caption = 'Feature';
   $default_caption   .= 's' if scalar @$features > 1;
@@ -97,8 +95,8 @@ sub feature_content {
     $self->add_entry({'type' => 'Location', 
                       'label' => sprintf('%s:%s-%s', 
                                             $_->{'seq_region'}, 
-                                            $_->{'start'} + $slice_start, 
-                                            $_->{'end'} + $slice_start)
+                                            $_->{'start'}, 
+                                            $_->{'end'})
                       });
 
     if (defined($_->{'strand'})) {

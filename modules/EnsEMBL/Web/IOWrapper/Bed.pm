@@ -84,9 +84,9 @@ sub create_hash {
                         'strand'      => $feature_strand,
                         }) unless $metadata->{'omit_feature_links'};
 
+  ## Don't set start and end yet, as drawing code and zmenu want
+  ## different values
   my $feature = {
-    'start'         => $start,
-    'end'           => $end,
     'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,
@@ -94,9 +94,13 @@ sub create_hash {
     'colour'        => $colour,
     'href'          => $href,
   };
+
   if ($metadata->{'display'} eq 'text') {
+    ## Want the real coordinates, not relative to the slice
+    $feature->{'start'} = $feature_start;
+    $feature->{'end'}   = $feature_end;
     ## This needs to deal with BigBed AutoSQL fields, so it's a bit complex
-    my $column_map  = $self->parser->{'column_map'};
+    my $column_map      = $self->parser->{'column_map'};
     if ($column_map) {
       $feature->{'extra'} = [];
       ## Skip standard columns used in zmenus
@@ -136,6 +140,8 @@ sub create_hash {
     ## TODO Put RNAcentral link here
   }
   else {
+    $feature->{'start'}         = $start;
+    $feature->{'end'}           = $end;
     $feature->{'structure'}     = $self->create_structure($feature_start, $slice->start);
     $feature->{'join_colour'}   = $metadata->{'join_colour'} || $colour;
     $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
