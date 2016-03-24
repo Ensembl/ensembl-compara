@@ -130,7 +130,7 @@ sub create_glyphs {
 
       ## Work out where to place the feature
       my $feature_height  = $track_config->get('height') || $text_info->{'height'};
-      my $feature_width   = $feature->{'end'} - $feature->{'start'};
+      my $feature_width   = $feature->{'end'} - $feature->{'start'} + 1;
 
       if ($feature_width == 0) {
         ## Fix for single base-pair features
@@ -143,7 +143,7 @@ sub create_glyphs {
                                         : ($feature->{'end'}, $feature->{'start'});
         $drawn_start        = 0 if $drawn_start < 0;
         $drawn_end          = $slice_width if $drawn_end > $slice_width;
-        $feature_width      = $drawn_end - $drawn_start; 
+        $feature_width      = $drawn_end - $drawn_start + 1; 
       }
 
       my $labels_height   = $label_row * $label_height;
