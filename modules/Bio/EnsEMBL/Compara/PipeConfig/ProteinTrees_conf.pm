@@ -241,6 +241,7 @@ sub default_options {
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
         #'alignment_filtering_capacity'  => 400,
+        #'cluster_tagging_capacity'  => 200,
         #'prottest_capacity'         => 400,
         #'treebest_capacity'         => 400,
         #'raxml_capacity'            => 400,
@@ -1535,7 +1536,17 @@ sub core_pipeline_analyses {
             -parameters => {
                 'division'                  => $self->o('division'),
             },
+            -flow_into => {
+                1 => [ 'cluster_tagging' ],
+            }
             -rc_name => '250Mb_job',
+        },
+
+        {   -logic_name     => 'cluster_tagging',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ClusterTagging',
+            -hive_capacity  => $self->o('cluster_tagging_capacity'),
+            -rc_name    	=> '4Gb_job',
+            -batch_size     => 50,
         },
 
         {   -logic_name => 'copy_clusters',
