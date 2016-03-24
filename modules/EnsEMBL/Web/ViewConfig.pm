@@ -675,7 +675,7 @@ sub build_imageconfig_menus {
       $desc .= "<h1>Trackhub description: $data->{'description'}</h1>" if $data->{'description'} && $desc_url;
       $desc .= qq(<div class="_dyna_load"><a class="hidden" href="$desc_url">No description found for this composite track.</a>Loading&#133;</div>) if $desc_url;
     } else {
-      $desc .= $desc_url ? qq(<div class="_dyna_load"><a class="hidden" href="$desc_url">$data->{'description'}</a>Loading&#133;</div>) : $data->{'description'};
+      $desc .= $desc_url ? sprintf(q(<div class="_dyna_load"><a class="hidden" href="%s">%s</a>Loading&#133;</div>), $desc_url, encode_entities($data->{'description'})) : $data->{'description'};
     }
 
     if ($desc) {
