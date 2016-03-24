@@ -66,13 +66,10 @@ sub create_hash {
                         'end'         => $feature_end,
                         'strand'      => $feature_strand,
                         });
-  warn ">>> HREF $href";
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
   my $hash = {
-    'start'         => $start,
-    'end'           => $end,
     'seq_region'    => $seq_region,
     'strand'        => $strand,
     'score'         => $score,
@@ -83,6 +80,8 @@ sub create_hash {
     'label_colour'  => $metadata->{'label_colour'} || $colour,
   };
   if ($metadata->{'display'} eq 'text') {
+    $hash->{'start'}      = $feature_start;
+    $hash->{'end'}        = $feature_end;
     $hash->{'extra'} = [
                         {'name' => 'Hit end', 'value' => $self->parser->get_qEnd},
                         {'name' => 'Matches', 'value' => $self->parser->get_matches},
@@ -96,7 +95,9 @@ sub create_hash {
                         ];
   }
   else {
-    $hash->{'structure'} = $self->create_structure($slice->start);
+    $hash->{'start'}      = $start;
+    $hash->{'end'}        = $end;
+    $hash->{'structure'}  = $self->create_structure($slice->start);
   }
   return $hash;
 }

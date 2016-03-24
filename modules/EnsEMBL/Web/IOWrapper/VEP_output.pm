@@ -62,31 +62,35 @@ sub create_hash {
                         });
 
 
-  my $allele    = $self->parser->get_allele;
-  my $cons      = $self->parser->get_consequence;
-  my $extra     = [];
+
+  my $feature = {
+                  'seq_region'    => $seqname,
+                  'allele'        => $allele,
+                  'consequence'   => $cons,
+                  'href'          => $href,
+                };
+
   if ($metadata->{'display'} eq 'text') {
+    $feature->{'start'} = $feature_start;
+    $feature->{'end'}   = $feature_end;
     my @uploaded  = split(/_/, $self->parser->get_uploaded_variation);
+    my $allele    = $self->parser->get_allele;
+    my $cons      = $self->parser->get_consequence;
     (my $cons_text = $cons) =~ s/_/ /; 
-    $extra = [
-              {'name' => 'Alleles',         'value' => $uploaded[-1]},
-              {'name' => 'Variant allele',  'value' => $allele},
-              {'name' => 'Consequence',     'value' => $cons_text},
-              {'name' => 'IMPACT',          'value' => $self->parser->get_impact},
-              ];
+    $feature->{'extra'} = [
+                            {'name' => 'Alleles',         'value' => $uploaded[-1]},
+                            {'name' => 'Variant allele',  'value' => $allele},
+                            {'name' => 'Consequence',     'value' => $cons_text},
+                            {'name' => 'IMPACT',          'value' => $self->parser->get_impact},
+                            ];
   } 
-
-  return {
-    'start'         => $start,
-    'end'           => $end,
-    'seq_region'    => $seqname,
-    'allele'        => $allele,
-    'consequence'   => $cons,
-    'href'          => $href,
-    'extra'         => $extra,
-  };
+  else {
+    $feature->{'start'} = $start;
+    $feature->{'end'}   = $end;
+  }
+  return $feature;
 }
-
+  
 sub post_process {
 ### Collapse data down into unique features
 ### and assign consequence colours

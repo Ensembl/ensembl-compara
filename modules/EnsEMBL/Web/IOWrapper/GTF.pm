@@ -169,23 +169,24 @@ sub create_hash {
   }
 
   my $feature_strand = $strand || $metadata->{'default_strand'};
-  my $click_params = {
-                        'id'          => $id,
-                        'url'         => $metadata->{'url'},
-                        'seq_region'  => $seqname,
-                        'start'       => $feature_start,
-                        'end'         => $feature_end,
-                        'strand'      => $feature_strand,
-                        };
-  if ($attributes->{'exon_number'}) {
-    $click_params->{'exon'} = $attributes->{'exon_number'};
-  }
-  my $href = $self->href($click_params);
 
-  my $extra = [];
+  my $feature = {
+                  'seq_region'    => $seqname,
+                  'strand'        => $strand,
+                  'score'         => $score,
+                  'colour'        => $colour, 
+                  'join_colour'   => $metadata->{'join_colour'} || $colour,
+                  'label_colour'  => $metadata->{'label_colour'} || $colour,
+                  'label'         => $id,
+                };
 
-  ## For zmenus, build array of extra attributes
+
   if ($metadata->{'display'} eq 'text') {
+    $feature->{'start'} = $feature_start;
+    $feature->{'end'}   = $feature_end;
+
+    ## For zmenus, build array of extra attributes
+    my $extra = [];
     push @$extra, {'name' => 'Source',        'value' => $self->parser->get_source};
     push @$extra, {'name' => 'Feature type',  'value' => $self->parser->get_type};
     if ($attributes->{'gene_id'}) {
@@ -212,21 +213,26 @@ sub create_hash {
       (my $name = $_) =~ s/_/ /;
       push @$extra, {'name' => ucfirst($name), 'value' => $attributes->{$_}};
     }
+    $feature->{'extra'} = $extra;
+  }
+  else {
+    $feature->{'start'} = $start;
+    $feature->{'end'}   = $end;
+    my $click_params = {
+                        'id'          => $id,
+                        'url'         => $metadata->{'url'},
+                        'seq_region'  => $seqname,
+                        'start'       => $feature_start,
+                        'end'         => $feature_end,
+                        'strand'      => $feature_strand,
+                        };
+    if ($attributes->{'exon_number'}) {
+      $click_params->{'exon'} = $attributes->{'exon_number'};
+    }
+    $feature->{'href'} = $self->href($click_params);
   }
 
-  return {
-    'start'         => $start,
-    'end'           => $end,
-    'seq_region'    => $seqname,
-    'strand'        => $strand,
-    'score'         => $score,
-    'colour'        => $colour, 
-    'join_colour'   => $metadata->{'join_colour'} || $colour,
-    'label_colour'  => $metadata->{'label_colour'} || $colour,
-    'label'         => $id,
-    'href'          => $href,
-    'extra'         => $extra,
-  };
+  return $feature;
 }
 
 1;

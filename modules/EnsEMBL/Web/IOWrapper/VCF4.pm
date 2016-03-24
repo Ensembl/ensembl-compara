@@ -59,21 +59,28 @@ sub create_hash {
   ## as that is how the API returns coordinates
   my @alleles = ($self->parser->get_reference);
   push @alleles, @{$self->parser->get_alternatives};
-  return {
-    'start'         => $start,
-    'end'           => $end,
+  my $feature = {
     'seq_region'    => $seqname,
     'label'         => join(',', @feature_ids),
     'colour'        => $metadata->{'colour'},
     'label_colour'  => $metadata->{'label_colour'},
-    'href'          => $href,
-    'extra'         => [
+    };
+  if ($metadata->{'display'} eq 'text') {
+    $feature->{'start'} = $feature_start;
+    $feature->{'end'}   = $feature_end;
+    $feature->{'extra'} = [
                         {'name' => 'Alleles', 'value' => join('/', @alleles)},
                         {'name' => 'Quality', 'value' => $self->parser->get_score},
                         {'name' => 'Filter',  'value' => $self->parser->get_raw_filter_results},
                         {'name' => 'Info',    'value' => $self->parser->get_raw_info},
-                        ],
-  };
+                        ];
+  }
+  else {
+    $feature->{'start'} = $start;
+    $feature->{'end'}   = $end;
+    $feature->{'href'}  = $href;
+  }
+  return $feature;
 }
 
 1;
