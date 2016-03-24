@@ -254,7 +254,7 @@ sub minify {
         print LOG qx($cmd 2>&1);
       }
       if($type eq 'png') {
-        print LOG qx(pngcrush -rem time $tmp $tmp2 2>&1);
+        print LOG qx(pngcrush -force -rem time $tmp $tmp2 2>&1);
       } else {
         rename $tmp,$tmp2;
       }
