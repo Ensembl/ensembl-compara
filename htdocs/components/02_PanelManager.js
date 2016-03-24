@@ -107,6 +107,8 @@ Ensembl.PanelManager.extend({
    * Adds a panel's html to the page, or triggers an event and brings the panel to the front if it already exists
    */
   addPanel: function (id, type, html, container, params, event) {
+    var highlighted = false;
+        
     if (this.panels[id] && event) {
       Ensembl.EventManager.triggerSpecific(event, id, params);
       this.panelToFront(id);
@@ -117,12 +119,18 @@ Ensembl.PanelManager.extend({
         container.html(html);
         
         id = id || this.generateId(container[0]);
-        // Highlight recently updated userdata track
-        $(container).find('._highlight_userdata')
-                    .stop()
-                    .animate({opacity: 0.8}, 200)
-                    .animate({opacity: 0.8}, 1000)
-                    .animate({opacity: 1}, 2000);
+
+        // Highlight recently updated userdata track if the track is in viewport
+        $('._highlight_userdata').inViewport(function(px){
+          if(px && !highlighted) {
+            highlighted = true;
+            $(container).find('._highlight_userdata')
+                        .stop()
+                        .animate({opacity: 0.8}, 200)
+                        .animate({opacity: 0.8}, 1000)
+                        .animate({opacity: 1}, 2000);
+          }
+        });
       }
       
       if (id) {
@@ -200,3 +208,17 @@ Ensembl.PanelManager.extend({
     }
   }
 });
+
+// Check viewport and 
+;(function($, win) {
+  $.fn.inViewport = function(cb) {
+     return this.each(function(i,el){
+       function visPx(){
+         var H = $(this).height(),
+             r = el.getBoundingClientRect(), t=r.top, b=r.bottom;
+         return cb.call(el, Math.max(0, t>0? H-t : (b<H?b:H)));  
+       } visPx();
+       $(win).on("resize scroll", visPx);
+     });
+  };
+}(jQuery, window));
