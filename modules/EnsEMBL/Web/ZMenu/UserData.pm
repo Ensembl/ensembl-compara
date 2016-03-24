@@ -109,7 +109,7 @@ sub feature_content {
 
     if ($_->{'extra'}) {
       foreach my $extra (@{$_->{'extra'}||[]}) {
-        next unless $extra->{'value'};
+        next unless $extra->{'name'};
         $self->add_entry({'type' => $extra->{'name'}, 'label' => $extra->{'value'}});
       }
     }
