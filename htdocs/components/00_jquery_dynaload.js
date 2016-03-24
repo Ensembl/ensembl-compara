@@ -28,7 +28,7 @@
       }
 
       options.url             = options.url             || data.url             || el.find('a').first().attr('href');
-      options.fallBack        = options.fallBack        || data.fallBack        || el.find('a').first().html() || 'Request failed';
+      options.fallBack        = options.fallBack        || data.fallBack        || el.find('a').first().text() || 'Request failed';
       options.responseFilter  = options.responseFilter  || data.responseFilter  || function (response) { return response; };
       options.complete        = options.complete        || data.complete        || $.noop;
       options.loaded          = true;
