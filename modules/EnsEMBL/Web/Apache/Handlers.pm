@@ -400,10 +400,11 @@ sub handler {
  
   ## Check for stable id URL (/id/ENSG000000nnnnnn) 
   ## and malformed Gene/Summary URLs from external users
-  if (($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ )) {
-    my ($stable_id, $object_type, $db_type, $retired, $uri);
+  if (($raw_path[0] && $raw_path[0] =~ /^(id|loc)$/i && $raw_path[1]) || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ )) {
+    my ($loc, $stable_id, $object_type, $db_type, $retired, $uri);
     
-    if ($raw_path[0] =~ /^id$/i) {
+    if ($raw_path[0] =~ /^(id|loc)$/i) {
+      $loc = $1 eq 'loc';
       $stable_id = $raw_path[1];
     } else {
       $querystring =~ /g=(\w+)/;
@@ -438,20 +439,27 @@ sub handler {
     }
     
     if ($object_type) {
-      $uri = $species ? "/$species/" : '/Multi/';
-      
-      if ($object_type eq 'Gene') {
-        $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
-      } elsif ($object_type eq 'Transcript') {
-        $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
-      } elsif ($object_type eq 'Translation') {
-        $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
-      } elsif ($object_type eq 'GeneTree') {
-        $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
-      } elsif ($object_type eq 'Family') {
-        $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
+
+      if ($loc && $species && !$retired && $object_type =~ /^(Gene|Transcript|Translation)$/) {
+        $uri = sprintf '/%s/Location/View?%s=%s', $species, $object_type eq 'Gene' ? 'g' : 't', $stable_id;
+
       } else {
-        $uri .= "psychic?q=$stable_id";
+
+        $uri = $species ? "/$species/" : '/Multi/';
+
+        if ($object_type eq 'Gene') {
+          $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
+        } elsif ($object_type eq 'Transcript') {
+          $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
+        } elsif ($object_type eq 'Translation') {
+          $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
+        } elsif ($object_type eq 'GeneTree') {
+          $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
+        } elsif ($object_type eq 'Family') {
+          $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
+        } else {
+          $uri .= "psychic?q=$stable_id";
+        }
       }
     }
 
