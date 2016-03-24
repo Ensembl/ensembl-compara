@@ -236,7 +236,7 @@ sub run_ktreedist {
     $ref_label = $self->param('ref_tree_clusterset');
   }else{
     $reference_string = $self->param('gene_tree')->newick_format('member_id_taxon_id');
-    $ref_label = 'treebest';
+    $ref_label = 'default';
   }
   
   $self->throw("error with newick tree") unless (defined($reference_string));
