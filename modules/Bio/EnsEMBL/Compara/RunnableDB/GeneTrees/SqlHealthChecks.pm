@@ -328,8 +328,8 @@ our $config = {
             },
 
             {
-                description => 'Checks that the "gene_count" tags agree with the actual number of members in the tree',
-                query => 'SELECT root_id, COUNT(seq_member_id) AS real_count, gene_count FROM gene_tree_node JOIN gene_tree_root_attr USING (root_id) WHERE root_id = #gene_tree_id# GROUP BY root_id HAVING real_count != gene_count',
+                description => 'Checks that the "tree_num_leaves" tags agree with the actual number of members in the tree',
+                query => 'SELECT root_id, COUNT(seq_member_id) AS real_count, tree_num_leaves FROM gene_tree_node JOIN gene_tree_root_attr USING (root_id) WHERE root_id = #gene_tree_id# GROUP BY root_id HAVING real_count != tree_num_leaves',
             },
         ],
     },
