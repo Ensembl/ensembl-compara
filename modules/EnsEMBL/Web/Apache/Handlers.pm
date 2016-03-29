@@ -118,7 +118,7 @@ sub redirected_from_nearest_mirror {
     if ($uri =~ s/([\;\?\&])redirectsrc=([^\;\&]+)(.*)$//) {
 
       # save a cookie for JS
-      EnsEMBL::Web::Cookie->bake($r, {'name' => 'redirected_from_url', 'value' => $2, 'err_headers' => 1});
+      EnsEMBL::Web::Cookie->bake($r, {'name' => 'redirected_from_url', 'value' => $2});
 
       $uri .= $1.($3 =~ s/^[\;\&]*//r);
       $uri  =~ s/[\;\&]*$//;
