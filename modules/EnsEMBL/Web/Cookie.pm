@@ -44,7 +44,6 @@ sub new {
   ##  - httponly
   ##  - env
   ##  - encrypted
-  ##  - err_headers
   ## Overrides the CGI::Cookie constructor to make it mandatory to pass apache handle in arguments to the constructor
   my ($class, $apache_handle, $params) = @_;
 
@@ -105,14 +104,6 @@ sub expires {
   return $self->SUPER::expires;
 }
 
-sub err_headers {
-  ## @accessor
-  ## Flag if on will set the header with 'err_headers_out' instead of 'headers_out'
-  my $self = shift;
-  $self->{'_ens_err_headers'} = shift if @_;
-  return $self->{'_ens_err_headers'} ? 1 : 0;
-}
-
 sub env {
   ## @accessor
   my $self = shift;
@@ -129,11 +120,15 @@ sub bake {
   ## @param  (Optional - required only if calling on the class) Hashref as required by the constructor
   ## @param  (Optional - required only if value being changed) New value for the cookie
   ## @return this cookie object itself
-  my $self    = ref $_[0] ? shift : shift->new(splice @_, 0, 2);
-  my $method  = $self->err_headers ? 'err_headers_out' : 'headers_out';
+  my $self = ref $_[0] ? shift : shift->new(splice @_, 0, 2);
 
   $self->value(shift) if @_;
-  $self->apache_handle->$method->add('Set-cookie' => $self->as_string);
+
+  my $r   = $self->apache_handle;
+  my $str = $self->as_string;
+
+  $r->headers_out->add('Set-cookie' => $str);
+  $r->err_headers_out->add('Set-cookie' => $str);
 
   return $self;
 }
@@ -212,7 +207,6 @@ sub _init {
   ## @private
   my ($self, $apache_handle, $params, $retrieving) = @_;
   $self->httponly(1)                    if $params->{'httponly'} || $params->{'encrypted'};
-  $self->err_headers(1)                 if $params->{'err_headers'};
   $self->encrypted(1)                   if $params->{'encrypted'};
   $self->env($params->{'env'})          if $params->{'env'};
   $self->expires($params->{'expires'})  unless $retrieving;
