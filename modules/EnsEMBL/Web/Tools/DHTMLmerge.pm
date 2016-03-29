@@ -60,7 +60,7 @@ sub merge_all {
 
   try {
     foreach my $type (qw(js css ie7css image)) {
-      push @{$configs->{$type}}, map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type);
+      push @{$configs->{$type}}, grep { !$_->empty } map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type);
     }
     for (@{$configs->{'image'}}) {
       delete $_->{'files'};
@@ -161,6 +161,11 @@ sub new {
   $self->{'minified_url_path'} = $self->_merge_files($species_defs, $type, $self->{'files'});
 
   return $self;
+}
+
+sub empty {
+  warn (scalar @{$_[0]->{'files'}});
+  return !(scalar @{shift->{'files'}});
 }
 
 sub name {
