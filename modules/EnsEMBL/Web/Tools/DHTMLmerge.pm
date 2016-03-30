@@ -164,7 +164,6 @@ sub new {
 }
 
 sub empty {
-  warn (scalar @{$_[0]->{'files'}});
   return !(scalar @{shift->{'files'}});
 }
 
