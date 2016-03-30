@@ -41,9 +41,11 @@ sub fetch_input {
     my $gene_tree_id = $self->param_required('gene_tree_id');
     $self->param( 'tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
     my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label( $self->param('mlss_id'), 'default' ) || die "Could not fetch species tree";
 
     #print Dumper $gene_tree;
     $self->param( 'gene_tree', $gene_tree );
+    $self->param( 'species_tree', $species_tree);
 }
 
 sub run {
@@ -78,7 +80,24 @@ sub write_output {
 #Get the latest
 sub _get_lca {
     my $self = shift;
-    my $lca;
+    my $genomes_list;
+
+    my $leaves = $self->param('gene_tree')->get_all_Members() || die "Could not get_all_Members for genetree: " . $self->param_required('gene_tree_id');
+
+    #get all the genomes in the tree, store in a hash to avoid duplications.
+    foreach my $leaf (@{$leaves}) {
+        my $genomeDbId = $leaf->genome_db_id();
+        $genomes_list->{$genomeDbId} = 1;
+    }
+
+    #store the list of species_tree nodes, in order to get the mrca.
+    my @species_tree_node_list;
+    foreach my $genomeDbId (keys %{$genomes_list}) {
+        my $species_tree_node = $self->param('species_tree')->root->find_leaves_by_field( 'genome_db_id', $genomeDbId )->[0];
+        push( @species_tree_node_list, $species_tree_node);
+    }
+
+    my $lca = $$self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
 
     return $lca;
 }
