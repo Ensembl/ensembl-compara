@@ -47,19 +47,31 @@ Ensembl.PanelManager.extend({
   },
   
   init: function (panels) {
-    panels.each(function () {
-      var panelType   = $('input.panel_type', this).val();
-      var parentPanel = {};
-      
-      Ensembl.PanelManager.generateId(this);
-      
-      $(this).parents('.js_panel').each(function () {
-        parentPanel[Ensembl.PanelManager.panels[this.id].panelType] = 1;
-      });
-      
-      if (!parentPanel[panelType]) {
-        Ensembl.PanelManager.createPanel(this.id, panelType);
-      }
+    /* Give priority to panels with AJAX, so that they can send the
+       requests off while we setup tables, etc */
+    var priopanels = [[],[]];
+    panels.each(function() {
+      priopanels[0+!!$(this).find('.ajax').length].push(this);
+    });
+    panels = priopanels[1].concat(priopanels[0]);
+
+    $.each(panels,function () {
+      (function(panel) {
+        setTimeout(function () {
+          var panelType   = $('input.panel_type',panel).val();
+          var parentPanel = {};
+
+          Ensembl.PanelManager.generateId(panel);
+
+          $(panel).parents('.js_panel').each(function () {
+            parentPanel[Ensembl.PanelManager.panels[this.id].panelType] = 1;
+          });
+
+          if (!parentPanel[panelType]) {
+            Ensembl.PanelManager.createPanel(panel.id, panelType);
+          }
+        },0);
+      })(this);
     });
   },
   
