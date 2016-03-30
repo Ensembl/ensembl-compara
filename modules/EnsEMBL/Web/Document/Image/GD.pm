@@ -31,6 +31,8 @@ use EnsEMBL::Draw::VDrawableContainer;
 
 use EnsEMBL::Web::File::Dynamic::Image;
 
+use EnsEMBL::Web::Exceptions;
+
 use parent qw(EnsEMBL::Web::Document::Image);
 
 sub new {
@@ -475,7 +477,11 @@ sub render {
   }
   my $content = $self->drawable_container->render($format, from_json($self->hub->param('extra') || "{}"));
 
-  $image->write($content);
+  my $result = $image->write($content);
+
+  if (!$result->{'success'}) {
+    throw exception('WebException', $result->{'error'} && $result->{'error'}[0] || 'Unable to write image file');
+  }
 
   if ($filename || ($hub->param('submit') && $hub->param('submit') eq 'Download' && !$filename)) {
     ## User export, so we need to know where the file was written to
