@@ -43,12 +43,12 @@ Ensembl.EventManager = {
       this.registry[eventName].ref[id]      = {};  
       this.registry[eventName].ref[id].func = callFunc;
       this.registry[eventName].ref[id].obj  = callObj;
-    }
 
-    // if anything was defer-triggered, trigger it now
-    if (this.deferred[eventName]) {
-      for (var i = 0; i < this.deferred[eventName].length; i++) {
-        this.trigger.apply(this, this.deferred[eventName][i]);
+      // if anything was defer-triggered, trigger it now for the new function
+      if (this.deferred[eventName]) {
+        for (var i = 0; i < this.deferred[eventName].length; i++) {
+          this.triggerSpecific.apply(this, [eventName, id].concat(this.deferred[eventName][i]));
+        }
       }
     }
   },
@@ -155,13 +155,14 @@ Ensembl.EventManager = {
    * Triggers the specified event if it's already registered, otherwise triggers it as soon as it gets registered
    */
   deferTrigger: function (eventName) {
+    var args = [].slice.call(arguments, 1); // Make a copy of arguments, removing eventName
 
     if (!this.deferred[eventName]) {
       this.deferred[eventName] = [];
     }
 
     // save it in the deferred list for future event registrations
-    this.deferred[eventName].push(arguments);
+    this.deferred[eventName].push(args);
 
     if (this.registry[eventName]) {
       return this.trigger.apply(this, arguments);
