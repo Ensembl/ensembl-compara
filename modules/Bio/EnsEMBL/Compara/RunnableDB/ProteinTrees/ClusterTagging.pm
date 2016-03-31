@@ -97,22 +97,32 @@ sub _get_lca {
         push( @species_tree_node_list, $species_tree_node);
     }
 
-    my $lca = $$self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
+    my $lca = $self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
 
     return $lca;
 }
 
 sub _get_taxonomic_coverage {
     my $self = shift;
-    my $taxonomic_coverage;
+
+    #get all genomes
+    my $genomes_list = scalar($self->param('genomes_list'));
+
+    #get all leaves from MRCA
+    my @leaves_ancestral = @{ $self->param('lca')->get_all_leaves() };
+    $self->param('leaves_ancestral',\@leaves_ancestral);
+
+    my $taxonomic_coverage = sprintf( "%.5f", ( keys(%{$genomes_list})/scalar(@leaves_ancestral) ) );
 
     return $taxonomic_coverage;
 }
 
-sub _get_ratio_gene_species {
-    my $ratio_gene_species;
+sub _get_ratio_species_genes {
+    my $self = shift;
 
-    return $ratio_gene_species;
+    my $ratio_species_genes = sprintf( "%.5f", scalar(@{$self->param('leaves_ancestral')})/scalar(@{$self->param('gene_tree_leaves')}) );
+
+    return $ratio_species_genes;
 }
 
 1;
