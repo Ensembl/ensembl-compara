@@ -66,7 +66,7 @@ sub run {
 
 sub write_output {
     my $self = shift;
-    $self->param('gene_tree')->store_tag( 'lca',                $self->param('lca') );
+    $self->param('gene_tree')->store_tag( 'lca',                $self->param('lca')->dbID );
     $self->param('gene_tree')->store_tag( 'taxonomic_coverage', $self->param('taxonomic_coverage') );
     $self->param('gene_tree')->store_tag( 'ratio_species_genes', $self->param('ratio_species_genes') );
 }
