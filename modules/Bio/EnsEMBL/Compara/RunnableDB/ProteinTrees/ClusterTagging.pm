@@ -59,16 +59,16 @@ sub run {
     my $taxonomic_coverage = $self->_get_taxonomic_coverage();
     $self->param( 'taxonomic_coverage', $taxonomic_coverage );
 
-    #get ratio #genes/#species
-    my $ratio_gene_species = $self->_get_ratio_gene_species();
-    $self->param( 'ratio_gene_species', $ratio_gene_species );
+    #get ratio #species/#genes
+    my $ratio_species_genes = $self->_get_ratio_species_genes();
+    $self->param( 'ratio_species_genes', $ratio_species_genes );
 }
 
 sub write_output {
     my $self = shift;
     $self->param('gene_tree')->store_tag( 'lca',                $self->param('lca') );
     $self->param('gene_tree')->store_tag( 'taxonomic_coverage', $self->param('taxonomic_coverage') );
-    $self->param('gene_tree')->store_tag( 'ratio_gene_species', $self->param('ratio_gene_species') );
+    $self->param('gene_tree')->store_tag( 'ratio_species_genes', $self->param('ratio_species_genes') );
 }
 
 ##########################################
