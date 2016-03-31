@@ -82,10 +82,10 @@ sub _get_lca {
     my $self = shift;
     my $genomes_list;
 
-    my $leaves = $self->param('gene_tree')->get_all_Members() || die "Could not get_all_Members for genetree: " . $self->param_required('gene_tree_id');
+    my $gene_tree_leaves = $self->param('gene_tree')->get_all_Members() || die "Could not get_all_Members for genetree: " . $self->param_required('gene_tree_id');
 
     #get all the genomes in the tree, store in a hash to avoid duplications.
-    foreach my $leaf (@{$leaves}) {
+    foreach my $leaf (@{$gene_tree_leaves}) {
         my $genomeDbId = $leaf->genome_db_id();
         $genomes_list->{$genomeDbId} = 1;
     }
