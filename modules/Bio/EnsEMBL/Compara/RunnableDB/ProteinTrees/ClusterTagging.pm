@@ -90,6 +90,10 @@ sub _get_lca {
         $genomes_list->{$genomeDbId} = 1;
     }
 
+    #storing refences in order to avoid multiple calls of the same functions.
+    $self->param('genomes_list',$genomes_list);
+    $self->param('gene_tree_leaves',$gene_tree_leaves);
+
     #store the list of species_tree nodes, in order to get the mrca.
     my @species_tree_node_list;
     foreach my $genomeDbId (keys %{$genomes_list}) {
