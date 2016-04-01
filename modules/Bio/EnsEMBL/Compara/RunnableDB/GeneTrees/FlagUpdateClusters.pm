@@ -68,9 +68,9 @@ sub run {
 
     #Get list of genes:
     print "getting prev_hash\n" if ( $self->debug );
-    my $prev_hash = hash_all_sequences_from_db( $self->param('reuse_compara_dba') );
+    my $prev_hash = _hash_all_sequences_from_db( $self->param('reuse_compara_dba') );
     print "getting curr_hash\n" if ( $self->debug );
-    my $curr_hash = hash_all_sequences_from_db( $self->param('compara_dba') );
+    my $curr_hash = _hash_all_sequences_from_db( $self->param('compara_dba') );
 
     #---------------------------------------------------------------------------------
     #deleted, updated & added arent used by the logic.
@@ -79,7 +79,7 @@ sub run {
     #---------------------------------------------------------------------------------
     my ( %flag, %deleted, %updated, %added );
     print "flagging members\n" if ( $self->debug );
-    check_hash_equals( $prev_hash, $curr_hash, \%flag, \%deleted, \%updated, \%added );
+    _check_hash_equals( $prev_hash, $curr_hash, \%flag, \%deleted, \%updated, \%added );
     print "DELETED:|" . keys(%deleted) . "|\tUPDATED:|" . keys(%updated) . "|\tADDED:|" . keys(%added) . "|\n" if ( $self->debug );
 
     print "undef prev_hash\n" if ( $self->debug );
@@ -176,9 +176,13 @@ sub write_output {
 
 } ## end sub write_output
 
-# ------------------------- non-interface subroutines -----------------------------------
+##########################################
+#
+# internal methods
+#
+##########################################
 
-sub check_hash_equals {
+sub _check_hash_equals {
     my ( $prev_hash, $curr_hash, $flag, $deleted, $updated, $added ) = @_;
 
     foreach my $stable_id ( keys %$curr_hash ) {
@@ -199,7 +203,7 @@ sub check_hash_equals {
     }
 }
 
-sub hash_all_sequences_from_db {
+sub _hash_all_sequences_from_db {
     my $compara_dba = shift;
 
     my %sequence_set;
