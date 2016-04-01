@@ -414,13 +414,15 @@ sub dump_tree_as_text {
 
   my $format  = 'fasta';
   my $align   = $tree->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
+  $align->set_displayname_flat;
+
   my $aio     = Bio::AlignIO->new(-format => $format, -fh => IO::String->new($var));
   
   $aio->write_aln($align); # Write the fasta alignment using BioPerl
   
   $file_fa->write($var);
-  $file_nh->write($tree->newick_format('full_web'));
-  
+  $file_nh->write($tree->newick_format('ryo', '%{n-}%{-n|p}%{"_"-s}%{":"d}'));
+   
   return ($file_fa->read_url, $file_nh->read_url);
 }
 
