@@ -1,0 +1,43 @@
+<!DOCTYPE html> 
+<html>
+<head>
+	<meta charset="UTF-8" />
+  <script type="text/javascript" src="/wasabi/wasabi.js"></script>
+  <link rel="stylesheet" type="text/css" media="screen" href="/wasabi/wasabi.css" />
+  <title>Wasabi Tree</title>
+  <script>
+    window.onload = function() {
+      var dataset = [];
+      getUrlVars()['file'] && dataset.push(getUrlVars()['file']);
+      getUrlVars()['tree_file'] && dataset.push(getUrlVars()['tree_file']);
+      var x = new Wasabi(dataset.length > 1 ? dataset : dataset[0],'#wasabi_ensembl',{'disable':'logo', 'allanim': false});
+    }
+    // Read a page's GET URL variables and return them as an associative array.
+    function getUrlVars()
+    {
+        var vars = [], hash;
+        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+        for(var i = 0; i < hashes.length; i++)
+        {
+            hash = hashes[i].split('=');
+            vars.push(hash[0]);
+            vars[hash[0]] = hash[1];
+        }
+        return vars;
+    }
+  </script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    #wasabi_ensembl {
+      height: 99vh;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="wasabi_ensembl"></div>
+</body>
+</html>

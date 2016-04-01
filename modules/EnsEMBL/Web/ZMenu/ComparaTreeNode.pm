@@ -380,21 +380,17 @@ sub content {
       order       => 14,
     }); 
 
-    # Jalview
+    # Wasabi Tree View
     my ($url_align, $url_tree) = $self->dump_tree_as_text($node);
-    $self->add_entry({
-      type       => 'View sub-tree',
-      label      => 'Expand for Jalview',
-      link_class => 'expand',
-      order      => 16,
-      link       => $hub->url({
-        type     => 'ZMenu',
-        action   => 'Gene',
-        function => 'Jalview',
-        file     => uri_escape($url_align),
-        treeFile => uri_escape($url_tree)
-      })
-    });
+    if ($url_tree || $url_align) {
+      $self->add_entry({
+        type       => 'View sub-tree',
+        label      => 'View in Wasabi',
+        link_class => 'popup',
+        order      => 16,
+        link       => qq {/wasabi/wasabi.htm?file=$url_align&tree_file=$url_tree}
+      });
+    }
   }
 }
 
