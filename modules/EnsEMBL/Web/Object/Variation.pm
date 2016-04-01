@@ -1804,11 +1804,10 @@ sub get_snpedia_data {
 
   # Convert '''text''' s to <b>text</b>
   $rev->{'*'} =~s/'''(.*)'''/<b>$1<\/b>/g;
-  
-  # Link content inside [[ ]] to snpedia
-  # $rev->{'*'} =~s/\[\[(.*?)\]\]/($1 ne $rs_id) ? "[<a href=\"$snpedia_url\/index.php\/$1\">$1<\/a>]" : "$1"/ge;
 
-  $rev->{'*'} =~s/\[\[(.*?)\]\]/($1 ne $rs_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => $1 }) : "<b>$1<\/b>"/ge;
+  # Link content inside [[ rs id ]] back to e!
+  $rev->{'*'} =~s/\[\[(rs\d+?)\]\]/($1 ne $rs_id) ? "<a href=\"" . $hub->url({ v => $1 }) . "\">$1<\/a>" : "<b>$1<\/b>"/ge;
+  $rev->{'*'} =~s/\[\[(?!rs\d+)(.*?)\]\]/($1 ne $rs_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => $1 }) : "<b>$1<\/b>"/ge;
 
   # Create html links for content like [url linktext]
   $rev->{'*'} =~s/\[(http:\/\/.*?)\s(.*?)\]/<a href="$1">$2<\/a>/g;

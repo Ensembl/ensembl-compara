@@ -60,7 +60,7 @@ sub content {
     $self->hgvs,
     $self->sets,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
-    $rs_id && $self->snpedia($rs_id)
+    $hub->species eq 'Homo_sapiens' ? $rs_id && $self->snpedia($rs_id) : ()
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
@@ -747,6 +747,7 @@ sub text_separator {
   return qq{<span class="$tclass">|</span>};
 }
 
+# Fetch SNPedia information from snpedia.com
 sub snpedia {
   my ($self, $rs_id) = @_;
   my $object = $self->object;
@@ -761,11 +762,8 @@ sub snpedia {
     $snpedia_wiki_results->{desc}[0] = 'Description not available';
   }
   
-  my $snpedia_search_link = $hub->get_ExtURL_link('[SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $rs_id });
+  my $snpedia_search_link = $hub->get_ExtURL_link('[More information from SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $rs_id });
   my $count = scalar @{$snpedia_wiki_results->{desc}}; 
-
-  # Adding SNPedia external link
-  $snpedia_wiki_results->{desc}[$#{$snpedia_wiki_results->{desc}}] .= ' - ' . $snpedia_search_link;
 
   if ($count > 1) {
     my $show = 'false';
@@ -775,6 +773,7 @@ sub snpedia {
                 <a title="Click to show synonyms" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
                 <div class="toggleable snpedia_more_desc style="%s">
                   %s
+                  %s
                 </div>
               ',
         shift $snpedia_wiki_results->{desc},
@@ -782,6 +781,7 @@ sub snpedia {
         $show ? 'Hide' : 'Show',
         $show ? '' : 'display:none',
         join('', map "<p>$_</p>", @{$snpedia_wiki_results->{desc}}),
+        $snpedia_search_link
       )
     ];
   }
