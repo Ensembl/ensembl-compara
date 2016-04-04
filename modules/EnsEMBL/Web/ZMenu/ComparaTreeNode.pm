@@ -23,7 +23,6 @@ use strict;
 use URI::Escape qw(uri_escape);
 use IO::String;
 use Bio::AlignIO;
-use EnsEMBL::Web::File::Dynamic;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -380,50 +379,35 @@ sub content {
       order       => 14,
     }); 
 
-    # Wasabi Tree View
-    my ($url_align, $url_tree) = $self->dump_tree_as_text($node);
-    if ($url_tree || $url_align) {
-      $self->add_entry({
-        type       => 'View sub-tree',
-        label      => 'View in Wasabi',
-        link_class => 'popup',
-        order      => 16,
-        link       => qq {/wasabi/wasabi.htm?file=$url_align&tree_file=$url_tree}
-      });
+    # Get wasabi files if found in session store
+    my $gt_id               = $node->tree->stable_id;
+    my $wasabi_session_key  = $gt_id . "_" . $node_id;
+    my $wasabi_session_data = $hub->session->get_data(type=>'tree_files', code => 'wasabi');
+
+    my ($alignment_file, $tree_file, $link);
+    if ($wasabi_session_data->{$wasabi_session_key}) {
+      $tree_file      = $wasabi_session_data->{$wasabi_session_key}->{tree};
+      $alignment_file = $wasabi_session_data->{$wasabi_session_key}->{alignment};
+      $link = sprintf (
+                        '/wasabi/wasabi.htm?tree=%s&alignment=%s', uri_escape($tree_file), uri_escape($alignment_file)
+                      );
     }
+    else {
+      $link = sprintf (
+                        '/wasabi/wasabi.htm?url=%s', uri_escape($hub->url('Json', {type => 'GeneTree', action => 'fetch_wasabi', node => $node_id, gt => $gt_id}))
+                      );
+
+    }
+
+    # Wasabi Tree Link
+    $self->add_entry({
+      type       => 'View sub-tree',
+      label      => 'View in Wasabi',
+      link_class => 'popup',
+      order      => 16,
+      link       => $link
+    });
   }
-}
-
-# Takes a compara tree and dumps the alignment and tree as text files.
-# Returns the urls of the files that contain the trees
-sub dump_tree_as_text {
-  my $self = shift;
-  my $tree = shift || die 'Need a ProteinTree object';
-  
-  my $var;
-
-  my %args = (
-                'hub'             => $self->hub,
-                'sub_dir'         => 'gene_tree',
-                'input_drivers'   => ['IO'],
-                'output_drivers'  => ['IO'],
-              );
-
-  my $file_fa = EnsEMBL::Web::File::Dynamic->new(extension => 'fa', %args);
-  my $file_nh = EnsEMBL::Web::File::Dynamic->new(extension => 'nh', %args);
-
-  my $format  = 'fasta';
-  my $align   = $tree->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
-  $align->set_displayname_flat;
-
-  my $aio     = Bio::AlignIO->new(-format => $format, -fh => IO::String->new($var));
-  
-  $aio->write_aln($align); # Write the fasta alignment using BioPerl
-  
-  $file_fa->write($var);
-  $file_nh->write($tree->newick_format('ryo', '%{n-}%{-n|p}%{"_"-s}%{":"d}'));
-   
-  return ($file_fa->read_url, $file_nh->read_url);
 }
 
 1;
