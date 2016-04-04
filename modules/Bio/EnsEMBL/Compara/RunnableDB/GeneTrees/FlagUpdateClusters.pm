@@ -97,8 +97,7 @@ sub run {
 
     my %root_ids_2_update;
     $self->param( 'root_ids_2_update', \%root_ids_2_update );
-    #my %root_ids_2_delete;
-    #$self->param( 'root_ids_2_delete', \%root_ids_2_delete );
+
     my %root_ids_2_add;
     $self->param( 'root_ids_2_add', \%root_ids_2_add );
 
@@ -122,16 +121,11 @@ sub run {
                 $root_ids_2_update{$gene_tree_id}{ $member->stable_id } = 1;
             }
 
-            #deleted
-            #if ( exists( $deleted{ $member->stable_id } ) ) {
-                #$root_ids_2_delete{$gene_tree_id}{ $member->stable_id } = 1;
-            #}
-
             #added
             if ( exists( $added{ $member->stable_id } ) ) {
                 $root_ids_2_add{$gene_tree_id}{ $member->stable_id } = 1;
             }
-        } ## end foreach my $member (@members)
+        }
 
         #releasing tree from memory
         $gene_tree->release_tree;
@@ -157,15 +151,6 @@ sub write_output {
             $flagged{$gene_tree_id} = 1;
         }
 
-        #root_ids_2_delete
-        #if ( $self->param('root_ids_2_delete') ) {
-            #if ( !$flagged{$gene_tree_id} ) {
-                #$gene_tree->store_tag( 'needs_update', 1 );
-            #}
-            #$gene_tree->store_tag( 'deleted_genes_list', join( ",", keys( ${ $self->param('root_ids_2_delete') }{$gene_tree_id} ) ) );
-            #$flagged{$gene_tree_id} = 1;
-        #}
-
         #root_ids_2_add
         if ( $self->param('root_ids_2_add')->{$gene_tree_id} ) {
             if ( !$flagged{$gene_tree_id} ) {
@@ -174,7 +159,7 @@ sub write_output {
             $gene_tree->store_tag( 'added_genes_list', join( ",", keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) );
             $flagged{$gene_tree_id} = 1;
         }
-    } ## end foreach my $gene_tree_id ( ...)
+    }
 } ## end sub write_output
 
 ##########################################
@@ -196,12 +181,6 @@ sub _check_hash_equals {
             }
         }
     }
-
-    #foreach my $stable_id ( keys %$prev_hash ) {
-        #if ( !exists( $curr_hash->{$stable_id} ) ) {
-            #$deleted->{$stable_id} = 1;
-        #}
-    #}
 }
 
 sub _hash_all_sequences_from_db {
