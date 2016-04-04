@@ -3140,6 +3140,21 @@ sub add_sequence_variations_meta {
         description  => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$source_name},
       });
 
+      # Study tracks
+    } elsif ($menu_item->{'type'} eq 'study') {
+      my $study_name    = $menu_item->{'long_name'};
+      my $caption       = $menu_item->{'long_name'};
+      my $label_caption = $menu_item->{'short_name'};
+      my $description   = $hashref->{'study'}{'descriptions'}{$study_name};
+
+      $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
+        %$options,
+        caption      => $caption,
+        labelcaption => $label_caption,
+        study_name   => $study_name,
+        description  => ($description) ? $description : $study_name,
+      });
+
     } elsif ($menu_item->{'type'} eq 'set') { # set type
       if ($menu_item->{'long_name'} =~ /\svariants$/i) {
         $menu_item->{'long_name'} =~ s/\svariants$/$suffix_caption/;
@@ -3303,7 +3318,7 @@ sub add_phenotypes {
     caption => 'Phenotypes',
     type => undef,
     description => $track_desc.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
-  }));
+  })); 
   $p_menu->append($pf_menu);
 }
 

@@ -422,6 +422,11 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'source'}{'somatic'} = \%$temp_somatic;
   $self->db_details($db_name)->{'tables'}{'source'}{'type'} = \%$temp_type;
 
+#---------- Add in information about the studies from the study table
+my $study_aref = $dbh->selectall_arrayref( 'select distinct st.name, st.description from phenotype_feature pf, study st where pf.study_id=st.study_id AND st.name is not NULL' );
+my $temp_study_description = {map {$_->[0],$_->[1]} @$study_aref};
+$self->db_details($db_name)->{'tables'}{'study'}{'descriptions'} = $temp_study_description;
+
 #---------- Store dbSNP version 
  my $s_aref = $dbh->selectall_arrayref( 'select version from source where name = "dbSNP"' );
  foreach (@$s_aref){
@@ -509,11 +514,8 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'somatic'}{'descriptions'} = \%somatic_sv_descriptions;  
 #--------- Add in structural variation study information
   my $study_sv_aref = $dbh->selectall_arrayref("select distinct st.name, st.description from structural_variation sv, study st where sv.study_id=st.study_id");
-  my %study_sv_descriptions;
-  foreach (@$study_sv_aref) {    
-   $study_sv_descriptions{$_->[0]} = $_->[1];
-  }
-  $self->db_details($db_name)->{'tables'}{'structural_variation'}{'study'}{'descriptions'} = \%study_sv_descriptions;    
+  my $study_sv_descriptions = {map {$_->[0],$_->[1]} @$study_sv_aref};
+  $self->db_details($db_name)->{'tables'}{'structural_variation'}{'study'}{'descriptions'} = $study_sv_descriptions;
 #--------- Add in Variation set information
   # First get all toplevel sets
   my (%super_sets, %sub_sets, %set_descriptions);
