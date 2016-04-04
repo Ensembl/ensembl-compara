@@ -117,14 +117,14 @@ sub content {
                             'name'          => 'type',
                             'label'         => 'Data type',
                             'values'        => $values,
-                            'value'         => $hub->param('type'),
+                            'value'         => $hub->param('type') || '',
       });
    
       $fieldset->add_field({
                             'type'          => 'String',
                             'name'          => 'query',
                             'label'         => 'Text search',
-                            'value'         => $hub->param('query'),
+                            'value'         => $hub->param('query') || '',
       });
  
       $fieldset->add_button({
