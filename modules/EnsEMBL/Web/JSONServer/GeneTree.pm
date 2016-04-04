@@ -18,8 +18,6 @@ limitations under the License.
 
 package EnsEMBL::Web::JSONServer::GeneTree;
 
-## Abstract parent class for all pages that return JSON
-
 use strict;
 use warnings;
 use EnsEMBL::Web::File::Dynamic;
@@ -29,19 +27,19 @@ use parent qw(EnsEMBL::Web::JSONServer);
 sub object_type {
   my $self = shift;
   return 'GeneTree' if ($self->hub->param('gt'));
-  return 'Gene' if ($self->hub->param('g'));
+  return 'Gene'     if ($self->hub->param('g'));
 }
 
 sub json_fetch_wasabi {
-  my $self = shift;
-  my $hub = $self->hub;
-  my $object = $self->object;
-  my $cdb    = shift || 'compara';
-  my $gt_id = $hub->param('gt');
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $object  = $self->object;
+  my $cdb     = shift || 'compara';
+  my $gt_id   = $hub->param('gt');
   my $node_id = $hub->param('node');
 
   # Wasabi key for session
-  my $wasabi_session_key = $gt_id . "_" . $node_id;
+  my $wasabi_session_key  = $gt_id . "_" . $node_id;
   my $wasabi_session_data = $hub->session->get_data(type => 'tree_files', code => 'wasabi') ;
 
   # Return data if found in session store
@@ -51,7 +49,7 @@ sub json_fetch_wasabi {
 
   #  If not create files for wasabi
 
-  my $tree   = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->get_GeneTree($cdb);
+  my $tree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->get_GeneTree($cdb);
   my $node = $tree->find_node_by_node_id($node_id);
 
   # Create tree and alingment file for wasabi and return its url paths
@@ -98,7 +96,7 @@ sub create_files_for_wasabi {
   
   return {
     alignment => $file_fa->read_url, 
-    tree => $file_nh->read_url
+    tree      => $file_nh->read_url
   };
 }
 

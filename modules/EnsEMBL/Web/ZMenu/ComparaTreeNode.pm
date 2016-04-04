@@ -356,20 +356,18 @@ sub content {
   
     ## Build URL for data export 
     my $gene_name;
-    my $gene = $self->object->Obj;
-    my $dxr    = $gene->can('display_xref') ? $gene->display_xref : undef;
-
+    my $gene      = $self->object->Obj;
+    my $dxr       = $gene->can('display_xref') ? $gene->display_xref : undef;
     my $gene_name = $hub->species eq 'Multi' ? $hub->param('gt') : $dxr ? $dxr->display_id : $gene->stable_id;
-    
-    my $params = {
-                'type'      => 'DataExport',
-                'action'    => 'GeneTree',
-                'data_type' => 'Gene',
-                'component' => 'ComparaTree',
-                'gene_name' => $gene_name,
-                'align'     => 'tree',
-                'node'      => $node_id,
-                };
+    my $params    = {
+                      'type'      => 'DataExport',
+                      'action'    => 'GeneTree',
+                      'data_type' => 'Gene',
+                      'component' => 'ComparaTree',
+                      'gene_name' => $gene_name,
+                      'align'     => 'tree',
+                      'node'      => $node_id,
+                    };
 
     $self->add_entry({
       type        => 'Export sub-tree',
