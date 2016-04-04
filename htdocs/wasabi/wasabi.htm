@@ -2,6 +2,7 @@
 <html>
 <head>
 	<meta charset="UTF-8" />
+  <link rel="stylesheet" type="text/css" media="screen" href="/components/00_general.css" />
   <script type="text/javascript" src="/wasabi/wasabi.js"></script>
   <link rel="stylesheet" type="text/css" media="screen" href="/wasabi/wasabi.css" />
   <title>Wasabi Tree</title>
@@ -9,10 +10,34 @@
     window.onload = function() {
       var dataset = [];
       var url_vars = getUrlVars();
-      url_vars['file'] && dataset.push(url_vars['file']);
-      url_vars['tree_file'] && dataset.push(url_vars['tree_file']);
-      var x = new Wasabi(dataset.length > 1 ? dataset : dataset[0],'#wasabi_ensembl',{'disable':'logo', 'allanim': false});
+      var url = url_vars['url'];
+      var tree = url_vars['tree'];
+      var alignment = url_vars['alignment'];
+
+      if (url) {
+        $.get(url, function(data) {
+          var path = JSON.parse(data);
+          path.tree && dataset.push(path.tree);
+          path.alignment && dataset.push(path.alignment);
+          initTree(dataset);
+        });
+      }
+      else if (tree || alignment) {
+        tree && dataset.push(tree);
+        alignment && dataset.push(alignment);
+        initTree(dataset);
+      }
     }
+
+    function initTree(dataset) {
+      if (dataset) {
+        var w = new Wasabi(dataset.length > 1 ? dataset : dataset[0],'#wasabi_ensembl',{'disable':'logo', 'allanim': false});
+      }
+      else {
+        $('#wasabi_ensembl').html("<h2>Couldn't load. Please try again later.</h2>")
+      }
+    }
+
     // Read a page's GET URL variables and return them as an associative array.
     function getUrlVars()
     {
@@ -21,10 +46,11 @@
         for(var i = 0; i < hashes.length; i++)
         {
             hash = hashes[i].split('=');
-            vars[hash[0]] = hash[1];
+            vars[hash[0]] = unescape(hash[1]);
         }
         return vars;
     }
+
   </script>
   <style>
     body {
@@ -38,6 +64,6 @@
 </head>
 
 <body>
-  <div id="wasabi_ensembl"></div>
+  <div id="wasabi_ensembl"><div class="loading"><p class="spinner"></p></div></div>
 </body>
 </html>
