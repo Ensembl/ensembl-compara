@@ -91,7 +91,7 @@ Ensembl.extend({
     this.PanelManager.initialize();
     
     if (modalOpen) {
-      this.EventManager.trigger('modalOpen', { className: 'force', rel: modalOpen[1] });
+      this.EventManager.deferTrigger('modalOpen', { className: 'force', rel: modalOpen[1] });
       window.location.hash = '';
     }
     
