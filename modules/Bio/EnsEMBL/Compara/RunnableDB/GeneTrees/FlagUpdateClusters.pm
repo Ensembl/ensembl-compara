@@ -149,11 +149,11 @@ sub write_output {
         my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
 
         #root_ids_2_update
-        if ( $self->param('root_ids_2_update') ) {
+        if ( $self->param('root_ids_2_update')->{$gene_tree_id} ) {
             if ( !$flagged{$gene_tree_id} ) {
                 $gene_tree->store_tag( 'needs_update', 1 );
             }
-            $gene_tree->store_tag( 'updated_genes_list', join( ",", keys( ${ $self->param('root_ids_2_update') }{$gene_tree_id} ) ) );
+            $gene_tree->store_tag( 'updated_genes_list', join( ",", keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) );
             $flagged{$gene_tree_id} = 1;
         }
 
@@ -167,11 +167,11 @@ sub write_output {
         #}
 
         #root_ids_2_add
-        if ( $self->param('root_ids_2_add') ) {
+        if ( $self->param('root_ids_2_add')->{$gene_tree_id} ) {
             if ( !$flagged{$gene_tree_id} ) {
                 $gene_tree->store_tag( 'needs_update', 1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
             }
-            $gene_tree->store_tag( 'added_genes_list', join( ",", keys( ${ $self->param('root_ids_2_add') }{$gene_tree_id} ) ) );
+            $gene_tree->store_tag( 'added_genes_list', join( ",", keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) );
             $flagged{$gene_tree_id} = 1;
         }
     } ## end foreach my $gene_tree_id ( ...)
