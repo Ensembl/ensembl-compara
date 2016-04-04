@@ -24,6 +24,7 @@ use warnings;
 use Apache2::RequestUtil;
 use JSON qw(to_json);
 
+use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Exceptions;
 
@@ -79,7 +80,7 @@ sub new {
       };
     }
 
-    $json = $json_page && ($json_page = $json_page->new($hub)) && $json_page->can($method) ? $json_page->$method($on_update) : {'header' => {'status' => '404'}};
+    $json = $json_page && ($json_page = $json_page->new($hub, $self)) && $json_page->can($method) ? $json_page->$method($on_update) : {'header' => {'status' => '404'}};
     $json->{'header'}{'status'} ||= 200;
 
   } catch {
@@ -90,6 +91,15 @@ sub new {
   print sprintf $chunked ? '</head><body>%s</body></html>' : '%s', to_json($json);
 
   return $self;
+}
+
+sub builder {
+  my $self = shift;
+
+  return $self->{'builder'} ||= EnsEMBL::Web::Builder->new({
+    hub               => $self->hub,
+    object_params     => $self->OBJECT_PARAMS
+  });
 }
 
 1;

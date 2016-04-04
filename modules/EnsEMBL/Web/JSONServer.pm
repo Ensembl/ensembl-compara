@@ -29,13 +29,18 @@ use EnsEMBL::Web::Exceptions;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $hub) = @_;
-  return bless {'_hub' => $hub}, $class;
+  my ($class, $hub, $controller) = @_;
+  return bless {'_hub' => $hub, '_controller' => $controller}, $class;
 }
 
 sub object {
-  my $self = shift;
-  return $self->new_object($self->object_type, {}, {'_hub' => $self->hub});
+  my $self    = shift;
+  my $builder = $self->controller->builder;
+  my $type    = $self->object_type;
+  if (!$builder->all_objects->{$type}) {
+    $builder->create_objects($type);
+  }
+  return $builder->all_objects->{$type};
 }
 
 sub object_type :Abstract {
@@ -44,6 +49,10 @@ sub object_type :Abstract {
 
 sub hub {
   return shift->{'_hub'};
+}
+
+sub controller {
+  return shift->{'_controller'};
 }
 
 sub redirect {
