@@ -239,7 +239,6 @@ sub write_output {
 
         $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "copy over: Could not get reuse_gene_tree for stable_id:\t" . $self->param('stable_id');
         $self->param('reuse_gene_tree')->preload();
-        $self->param( 'reuse_gene_tree_id', $self->param('reuse_gene_tree')->root_id );
 
         #Copy tree to the DB
         my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
