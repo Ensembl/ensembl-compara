@@ -181,7 +181,7 @@ sub write_output {
         #------------------------------------------------------------------------------------
         if ( scalar( keys %members_2_b_updated ) >= scalar( @{$all_leaves} ) ) {
             my $scrap_newick = "(";
-            foreach my $this_leaf ( @{ $self->param('reuse_gene_tree')->get_all_leaves } ) {
+            foreach my $this_leaf ( @{ $all_leaves } ) {
                 $scrap_newick .= $this_leaf->dbID . "_" . $this_leaf->taxon_id . ":0,";
             }
             my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor;
