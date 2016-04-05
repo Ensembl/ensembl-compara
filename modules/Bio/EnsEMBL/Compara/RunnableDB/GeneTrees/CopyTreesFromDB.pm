@@ -72,10 +72,10 @@ sub fetch_input {
         #print Dumper $self->param('reuse_compara_dba') if ( $self->debug );
 
         #get reuse tree adaptor
-        $self->param( 'reuse_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor );
+        $self->param( 'reuse_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor ) || die "Could not get GeneTreeAdaptor for: reuse_tree_adaptor";
 
         #get current tree adaptor
-        $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor );
+        $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor ) || die "Could not get GeneTreeAdaptor for: current_tree_adaptor";
 
         #----------------------------------------------------------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ sub fetch_input {
         #----------------------------------------------------------------------------------------------------------------------------
         $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) || die "update: Could not get current_gene_tree for stable_id\t" . $self->param('stable_id');
         $self->param('current_gene_tree')->preload();
-        $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') );
+        $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') ) || die "Could not get value_for_tag: model_name";
 
         #----------------------------------------------------------------------------------------------------------------------------
 
@@ -109,9 +109,9 @@ sub write_output {
     if ( ( $self->param('current_gene_tree')->has_tag('needs_update') ) && ( $self->param('current_gene_tree')->get_value_for_tag('needs_update') == 1 ) ) {
 
         #Get list of updated genes
-        my %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') );
-        my %members_2_b_added   = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('added_genes_list') );
-        my %members_2_b_deleted = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('deleted_genes_list') );
+        my %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') ) || die "Could not get value_for_tag: updated_genes_list";
+        my %members_2_b_added   = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('added_genes_list') ) || die "Could not get value_for_tag: added_genes_list";
+        #my %members_2_b_deleted = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('deleted_genes_list') );
 
         #Get previous tree
 
@@ -131,8 +131,8 @@ sub write_output {
         #Preparing to disavow members that are tagged to be deleted.
         #Memebers that are new (added), will not be treated here, they will instead just be added by mafft/raxml
         #my $count_number_of_members = scalar( @{ $self->param('reuse_gene_tree')->get_all_leaves } );
-        my $all_leaves              = $self->param('reuse_gene_tree')->get_all_leaves;
-        my $all_leaves_current_tree = $self->param('current_gene_tree')->get_all_leaves;
+        my $all_leaves              = $self->param('reuse_gene_tree')->get_all_leaves || die "Could not get_all_leaves for: reuse_gene_tree";
+        my $all_leaves_current_tree = $self->param('current_gene_tree')->get_all_leaves || die "Could not get_all_leaves for: current_gene_tree";
 
         #We need to map the leaves in the new trees and remove the sequences from the species that are not included in the species set.
         #For that we use the piece of logic bellow:
@@ -184,7 +184,7 @@ sub write_output {
             foreach my $this_leaf ( @{ $all_leaves } ) {
                 $scrap_newick .= $this_leaf->dbID . "_" . $this_leaf->taxon_id . ":0,";
             }
-            my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor;
+            my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor || die "Could not get SeqMemberAdaptor";
             my @add;
             foreach my $add ( keys(%members_2_b_added) ) {
                 my $seq_member = $seq_member_adaptor->fetch_by_stable_id($add);
