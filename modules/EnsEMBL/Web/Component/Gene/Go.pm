@@ -142,7 +142,7 @@ sub process_data {
       $row->{'description'}      = $hash->{'term'};
       $row->{'evidence'}         = join ', ', map $self->helptip($_, $description_hash->{$_} // 'No description available'), @$go_evidence;
       $row->{'desc'}             = join ', ', grep $_, ($desc, $hash->{'source'});
-      $row->{'transcript_id'}    = %all_trans ? join("<br>", map { qq{<a href="$all_trans{$_}">$_</a>} } keys %all_trans) : '<a href="'.$hub->url({type => 'Transcript', action => 'Summary',t => $_,}).'">'.$hash->{transcript_id}.'</a>';
+      $row->{'transcript_id'}    = %all_trans ? join("<br>", map { qq{<a href="$all_trans{$_}">$_</a>} } keys %all_trans) : '<a href="'.$hub->url({type => 'Transcript', action => 'Summary',t => $hash->{transcript_id},}).'">'.$hash->{transcript_id}.'</a>';
       $row->{'extra_link'}       = $mart_link || $loc_link ? qq{<ul class="compact">$mart_link$loc_link</ul>} : "";
       
       $table->add_row($row);
