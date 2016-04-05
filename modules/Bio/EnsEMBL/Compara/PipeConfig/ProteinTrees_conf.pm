@@ -708,7 +708,7 @@ sub core_pipeline_analyses {
             },
             -batch_size => 5,
             -hive_capacity => 30,
-            -rc_name => '1Gb_job',
+            -rc_name => '8Gb_job',
             -flow_into => {
                 2 => { ':////accu?reused_gdb_ids=[]' => { 'reused_gdb_ids' => '#genome_db_id#'} },
                 3 => { ':////accu?nonreused_gdb_ids=[]' => { 'nonreused_gdb_ids' => '#genome_db_id#'} },
