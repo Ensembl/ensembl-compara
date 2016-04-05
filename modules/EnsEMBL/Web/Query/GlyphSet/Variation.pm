@@ -222,7 +222,7 @@ sub fetch_features {
       # Enable the display of failed variations in order to display the failed variation track
       $vdb->include_failed_variations(1) if $track_set =~ /failed/i;
         
-      @vari_features = @{$slice->get_all_VariationFeatures_by_VariationSet($set_object, $var_db) || []}; 
+      @vari_features = @{$slice->fetch_all_by_Slice_VariationSet($set_object, $var_db) || []}; 
         
       # Reset the flag for displaying of failed variations to its original state
       $vdb->include_failed_variations($orig_failed_flag);
