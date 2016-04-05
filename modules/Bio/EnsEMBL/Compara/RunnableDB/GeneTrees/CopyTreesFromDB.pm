@@ -109,8 +109,18 @@ sub write_output {
     if ( ( $self->param('current_gene_tree')->has_tag('needs_update') ) && ( $self->param('current_gene_tree')->get_value_for_tag('needs_update') == 1 ) ) {
 
         #Get list of updated genes
-        my %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') ) || die "Could not get value_for_tag: updated_genes_list";
-        my %members_2_b_added   = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('added_genes_list') ) || die "Could not get value_for_tag: added_genes_list";
+        my %members_2_b_updated;
+        my %members_2_b_added;
+        if ($self->param('current_gene_tree')->has_tag('updated_genes_list')) {
+            my $added_genes_list = $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') || die "Could not get value_for_tag: updated_genes_list";
+            %members_2_b_updated = map { $_ => 1 } split( /,/, $added_genes_list);
+        }
+
+        if ($self->param('current_gene_tree')->has_tag('added_genes_list')) {
+            my $added_genes_list = $self->param('current_gene_tree')->get_value_for_tag('added_genes_list') || die "Could not get value_for_tag: added_genes_list";
+            %members_2_b_added   = map { $_ => 1 } split( /,/, $added_genes_list);
+        }
+
         #my %members_2_b_deleted = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('deleted_genes_list') );
 
         #Get previous tree
