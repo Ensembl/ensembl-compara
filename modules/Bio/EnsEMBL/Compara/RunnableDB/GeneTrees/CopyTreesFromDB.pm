@@ -108,6 +108,8 @@ sub write_output {
     #Checks if tree needs to be updated:
     if ( ( $self->param('current_gene_tree')->has_tag('needs_update') ) && ( $self->param('current_gene_tree')->get_value_for_tag('needs_update') == 1 ) ) {
 
+        print "Tree: ".$self->param('stable_id').":".$self->param('gene_tree_id')." needs to be updated.\n" if ( $self->debug );
+
         #Get list of updated genes
         my %members_2_b_updated;
         my %members_2_b_added;
@@ -187,9 +189,10 @@ sub write_output {
         #------------------------------------------------------------------------------------
         #If all leaves are deleted we need to:
         #	Construct newick with leftovers (new members that will be added)
-        #		It must follow the patther seq_member_id _ taxon_id
+        #		It must follow the pattern seq_member_id _ taxon_id
         #------------------------------------------------------------------------------------
         if ( scalar( keys %members_2_b_updated ) >= scalar( @{$all_leaves} ) ) {
+            print "All leaves were deleted we need to construct newick with leftovers (with new members that will be added).\n" if ( $self->debug );
             my $scrap_newick = "(";
             foreach my $this_leaf ( @{ $all_leaves } ) {
                 $scrap_newick .= $this_leaf->dbID . "_" . $this_leaf->taxon_id . ":0,";
@@ -212,6 +215,7 @@ sub write_output {
             $self->complete_early("This tree is brand new, it didnt exist before. So it needs to go to the cluster_factory.");
         }
         else {
+            print "Deletion of members was OK, now storing the tree.\n" if ( $self->debug );
 
             #Copy tree to the DB
             my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
