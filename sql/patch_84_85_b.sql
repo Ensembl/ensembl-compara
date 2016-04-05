@@ -18,15 +18,30 @@
 #
 # Description:
 #   New attributes to be included in this release.
+#   And moving model_name and division from tag to attributes.
 
+-- MySQL should 'die' on warnings, ensuring data is not truncated
+SET session sql_mode='TRADITIONAL';
 
--- the genome_db table
+-- Alter the gene_tree_root_attr table
 ALTER TABLE gene_tree_root_attr 
-    ADD COLUMN lca int(10) unsigned NOT NULL,
-    ADD COLUMN taxonomic_coverage FLOAT(5) NOT NULL, 
-    ADD COLUMN ratio_species_genes FLOAT(5) NOT NULL;
+    ADD COLUMN lca                  INT(10) UNSIGNED,
+    ADD COLUMN taxonomic_coverage   FLOAT(5),
+    ADD COLUMN ratio_species_genes  FLOAT(5),
+    ADD COLUMN model_name           VARCHAR(10),
+    ADD COLUMN division             VARCHAR(10);
+
+
+-- Need to switch off SQL strict mode to avoid the error: "Data too long for column 'model_name' at row 1"
+SET SESSION sql_mode = '';
+
+-- Insert values from the gene_tree_root_tag table into gene_tree_root_attr table
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.model_name = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'model_name' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.division = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'division' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
+
+-- Delete old values
+DELETE FROM gene_tree_root_tag WHERE tag IN ( 'model_name','division');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_84_85_b.sql|add_attributes');
-
