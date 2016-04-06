@@ -51,7 +51,10 @@ sub create_component {
   my $hub  = $self->hub;
   my ($component, $error);
 
-  my $class = 'EnsEMBL::Web::Component::'.$hub->param('data_type').'::'.$hub->param('component');
+  my $class = 'EnsEMBL::Web::Component::'.$hub->param('data_type');
+  $class   .= '::'.$hub->param('data_action') if $hub->param('data_type') eq 'Tools';
+  $class   .= '::'.$hub->param('component');
+
   if ($self->dynamic_use($class)) {
     my $builder = EnsEMBL::Web::Builder->new({
                       hub           => $hub,
