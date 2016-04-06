@@ -1678,6 +1678,8 @@ sub update_from_url {
           message  => $message,
       );
     } else {
+      ($url, $renderer) = split /=/, $v;
+      $renderer ||= 'normal';
       $self->update_track_renderer($url, $renderer, $hub->param('toggle_tracks'));
     }
   }
