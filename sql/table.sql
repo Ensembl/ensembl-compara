@@ -1373,7 +1373,7 @@ CREATE TABLE gene_tree_root_tag (
 @column tree_num_dup_nodes                  Number of duplication nodes.
 @column tree_num_leaves                     Number of leaves in a tree.
 @column tree_num_spec_nodes                 Number of speciation events.
-@column lca                                 Lowest common ancestor (species_tree node_id).
+@column lca_node_id                         Lowest common ancestor (species_tree node_id).
 @column taxonomic_coverage                  Taxonomic coverage of the species present in the gene tree over all the species for that particular node on the species tree.
 @column ratio_species_genes                 Ration of the number of species over the number of genes in a tree.
 @column model_name                          HMM model name (cluster table_id).
@@ -1404,13 +1404,14 @@ CREATE TABLE `gene_tree_root_attr` (
   tree_num_dup_nodes                INT(10) UNSIGNED,
   tree_num_leaves                   INT(10) UNSIGNED,
   tree_num_spec_nodes               INT(10) UNSIGNED,
-  lca                               INT(10) UNSIGNED,
+  lca_node_id                       INT(10) UNSIGNED,
   taxonomic_coverage                FLOAT(5),
   ratio_species_genes               FLOAT(5),
   model_name                        VARCHAR(10),
   division                          VARCHAR(10),
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
+  FOREIGN KEY (lca_node_id) REFERENCES species_tree_node(node_id),
 
   PRIMARY KEY (root_id)
 
