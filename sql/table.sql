@@ -1407,7 +1407,7 @@ CREATE TABLE `gene_tree_root_attr` (
   lca_node_id                       INT(10) UNSIGNED,
   taxonomic_coverage                FLOAT(5),
   ratio_species_genes               FLOAT(5),
-  model_name                        VARCHAR(10),
+  model_name                        VARCHAR(40),
   division                          VARCHAR(10),
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
