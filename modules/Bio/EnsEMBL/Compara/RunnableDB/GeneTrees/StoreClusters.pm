@@ -32,10 +32,10 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters
 =head1 DESCRIPTION
 
 This is a base RunnableDB to stores a set of clusters in the database.
-ProteinTrees::HclusterParseOutput and ncRNAtrees::RFAMClassify both
+ProteinTrees::HclusterParseOutput, ncRNAtrees::RFAMClassify and ComparaHMM::HMMClusterize
 inherit from it. The easiest way to use this class is by creating an
 array of arrays of seq_member_id, and give it to store_clusterset.
-This would create the c;usterset and create the subsequent jobs.
+This would create the clusterset and create the subsequent jobs.
 
 =head1 AUTHORSHIP
 
