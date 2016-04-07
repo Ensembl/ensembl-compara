@@ -231,16 +231,6 @@ sub features {
     }
   }
   
-  if ($self->species_defs->ENSEMBL_DEBUG_FLAGS & $self->species_defs->ENSEMBL_DEBUG_DRAWING_CODE) {
-    warn "[DAS:@logic_names]\n";
-    
-    if (@urls) {
-      warn join "\n", map( { "  $_" } @urls ), '';
-    } else {
-      warn "  NO DAS feature requests made for this source....\n";
-    }
-  }
-  
   push @errors, sprintf 'No %s on this strand', $self->label->text if $c_f == 0 && $self->{'config'}->get_option('opt_empty_tracks') == 1;
   
   return {

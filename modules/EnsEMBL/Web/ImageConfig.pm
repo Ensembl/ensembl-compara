@@ -63,8 +63,8 @@ sub new {
     _parameters      => { # Default parameters
       storable     => 1,      
       has_das      => 1,
-      trackhubs     => 0,
-      image_width  => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
+      trackhubs    => 0,
+      image_width  => $hub->image_width,
       image_resize => 0,      
       margin       => 5,
       spacing      => 2,
