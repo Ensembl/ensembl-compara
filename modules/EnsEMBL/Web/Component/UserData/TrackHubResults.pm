@@ -44,10 +44,11 @@ sub content {
   my $self            = shift;
   my $hub             = $self->hub;
   my $sd              = $hub->species_defs;
+  my $registry        = $sd->TRACKHUB_REGISTRY_URL;
   my $html;
 
   ## REST call
-  my $rest = EnsEMBL::Web::REST->new($hub, $sd->TRACKHUB_REGISTRY_URL);
+  my $rest = EnsEMBL::Web::REST->new($hub, $registry);
   return unless $rest;
 
   my $endpoint = 'api/search';
@@ -65,7 +66,10 @@ sub content {
 
   ## Filter on current assembly
   if ($post_content->{'species'} && !$post_content->{'assembly'}) {
-    $post_content->{'assembly'} = $sd->get_config($hub->param('species'), 'ASSEMBLY_VERSION');
+    ## Give preference to the GCA accession id, as it is unique
+    my $assembly = $sd->get_config($hub->param('species'), 'ASSEMBLY_ACCESSION') 
+                    || $sd->get_config($hub->param('species'), 'ASSEMBLY_NAME');
+    $post_content->{'assembly'} = $sd->get_config($assembly);
   }
 
   my $args = {'method' => 'post', 'content' => $post_content};
@@ -83,12 +87,13 @@ sub content {
                                 'type'      => 'UserData', 
                                 'action'    => 'TrackHubSearch',
                                 'datatype'  => $hub->param('datatype'),
-                                'query'     => $hub->param('query'),
+                                'query'     => $hub->param('query') || '',
                                 });
-    $html .= sprintf('<p>Found %s track hub%s - <a href="%s" class="modal_link">Search again</a></p>', $count, $plural, $search_url);
+    $html .= sprintf('<p>Found %s track hub%s for this assembly - <a href="%s" class="modal_link">Search again</a></p>', $count, $plural, $search_url);
+    my $registry = 
 
     my $link = $hub->url({'type' => 'UserData', 'action' => 'SelectFile'});
-    $html .= $self->info_panel('Tip', qq(If you don't see the hub you are interested in listed here, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.));
+    $html .= $self->info_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
 
     if ($count > 0) {
       foreach (@{$result->{'items'}}) {
