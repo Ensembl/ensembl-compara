@@ -248,7 +248,7 @@ sub write_output {      # store the genome_db and dataflow
 
 sub comes_from_core_database {
     my $genome_db = shift;
-    return ($genome_db->locator and ($genome_db->locator =~ /^Bio::EnsEMBL::Compara::GenomeMF/) ? 0 : 1);
+    return (($genome_db->locator and ($genome_db->locator =~ /^Bio::EnsEMBL::Compara::GenomeMF/)) ? 0 : 1);
 }
 
 
