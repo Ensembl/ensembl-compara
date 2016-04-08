@@ -47,6 +47,7 @@ sub filename      :Getter('filename');
 sub type          :Getter('type');
 sub action        :Getter('action');
 sub function      :Getter('function');
+sub sub_function  :Getter('sub_function');
 
 sub new {
   ## @constructor
@@ -56,7 +57,7 @@ sub new {
   ##  - species       : Species name (string)
   ##  - path_segments : Arrayref of path segments
   ##  - query         : Query part of the url (string)
-  ##  - filename      : Name of the file to be served
+  ##  - filename      : Name of the file to be served (for static file request)
   my ($class, $r, $species_defs, $params) = @_;
 
   my $self = bless {
@@ -71,10 +72,11 @@ sub new {
     'type'          => '',
     'action'        => '',
     'function'      => '',
+    'sub_function'  => '',
     'errors'        => []
   }, $class;
 
-  $self->parse_path_segments; # populate type, action and function
+  $self->parse_path_segments; # populate type, action, function and sub_function
 
   $self->{'hub'} = EnsEMBL::Web::Hub->new($self);
 
@@ -119,7 +121,7 @@ sub parse_path_segments {
   ## Parses path segments to identify type, action and function
   my $self = shift;
 
-  ($self->{'type'}, $self->{'action'}, $self->{'function'}) = (@{$self->path_segments || []}, '', '', '');
+  ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@{$self->path_segments || []}, '', '', '');
 }
 
 sub upload_size_limit {
