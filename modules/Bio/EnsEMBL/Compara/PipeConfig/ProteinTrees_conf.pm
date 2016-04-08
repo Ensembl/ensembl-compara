@@ -1301,10 +1301,13 @@ sub core_pipeline_analyses {
                  'extra_tags_file'  => $self->o('extra_model_tags_file'),
              },
              -rc_name => '8Gb_job',
-             -flow_into => WHEN(
-                 '#clustering_mode# eq "hybrid"' => 'dump_unannotated_members',
-                 '#clustering_mode# eq "topup"' => 'flag_update_clusters',
-             ),
+             -flow_into => {
+                    1 => WHEN(
+                        '#clustering_mode# eq "hybrid"' => 'dump_unannotated_members',
+                        '#clustering_mode# eq "topup"' => 'flag_update_clusters',
+                    ),
+                    2 => [ 'cluster_tagging' ],
+                }
             },
 
         {
@@ -1540,20 +1543,9 @@ sub core_pipeline_analyses {
                 'division'                  => $self->o('division'),
             },
             -flow_into => {
-                1 => [ 'tagging_factory' ],
-            },
-            -rc_name => '250Mb_job',
-        },
-
-        {   -logic_name => 'tagging_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'        => 'SELECT root_id AS gene_tree_id, COUNT(seq_member_id) AS tree_num_genes FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" AND clusterset_id="default" GROUP BY root_id',
-                'fan_branch_code'   => 2,
-            },
-            -flow_into  => {
                 2 => [ 'cluster_tagging' ],
             },
+            -rc_name => '250Mb_job',
         },
 
         {   -logic_name     => 'cluster_tagging',
