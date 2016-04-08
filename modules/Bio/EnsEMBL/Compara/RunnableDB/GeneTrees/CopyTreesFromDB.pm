@@ -215,13 +215,25 @@ sub write_output {
             $self->complete_early("All the previous leaves were removed, the tree is now treated as brand new. So it needs to go to the cluster_factory.");
         }
         else {
-            print "Deletion of members was OK, now storing the tree.\n" if ( $self->debug );
+            #If the number of new genes plus the added genes is >= 10% of the total number of leaves in the reused tree.
+            # we should compute the whole alignment/tree again.
+            if ( (scalar( keys %members_2_b_updated ) / scalar( @{$all_leaves} ) ) >= $self->param('update_threshold_trees') ) {
+                $self->dataflow_output_id( $self->input_id, $self->param('branch_for_update_threshold_trees') );
+                $self->input_job->autoflow(0);
+                $self->complete_early("The number of new genes plus the added genes is >= 10% of the total number of leaves in the reused tree. So it needs to go to the cluster_factory.");
+            }
+            else{
+                print "Deletion of members was OK, now storing the tree.\n" if ( $self->debug );
 
-            #Copy tree to the DB
-            my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
-                                                             $self->param('output_clusterset_id'),
-                                                             $self->param('current_gene_tree'),
-                                                             undef, 1 );
+                #Copy tree to the DB
+                print ">>>".$self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' )."<<<\n";
+                print ">>>".$self->param('output_clusterset_id')."<<<\n";
+                print ">>>".$self->param('gene_tree_id')."<<<\n";
+                my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
+                                                                 $self->param('output_clusterset_id'),
+                                                                 $self->param('current_gene_tree'),
+                                                                 undef, 1 );
+            }
         }
 
     } ## end if ( ( $self->param('current_gene_tree'...)))
