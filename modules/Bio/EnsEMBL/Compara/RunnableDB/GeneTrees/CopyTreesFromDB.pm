@@ -131,7 +131,7 @@ sub write_output {
         if ( !$self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) {
             $self->dataflow_output_id( $self->input_id, $self->param('branch_for_new_tree') );
             $self->input_job->autoflow(0);
-            $self->complete_early("This tree is brand new, it didnt exist before. So it needs to go to the cluster_factory.");
+            $self->complete_early("Tree needs_update but coudln't fetch_by_stable_id, hence the tree didnt exist before. So it needs to go to the cluster_factory.");
         }
 
         $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
@@ -212,7 +212,7 @@ sub write_output {
 
             $self->dataflow_output_id( $self->input_id, $self->param('branch_for_wiped_out_trees') );
             $self->input_job->autoflow(0);
-            $self->complete_early("This tree is brand new, it didnt exist before. So it needs to go to the cluster_factory.");
+            $self->complete_early("All the previous leaves were removed, the tree is now treated as brand new. So it needs to go to the cluster_factory.");
         }
         else {
             print "Deletion of members was OK, now storing the tree.\n" if ( $self->debug );
@@ -234,7 +234,7 @@ sub write_output {
         if ( !$self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) {
             $self->dataflow_output_id( $self->input_id, $self->param('branch_for_new_tree') );
             $self->input_job->autoflow(0);
-            $self->complete_early("This tree is brand new, it didnt exist before. So it needs to go to the cluster_factory.");
+            $self->complete_early("Tree doesn't have tag needs_update so it is brand new, it didnt exist before. It needs to go to the cluster_factory.");
         }
 
         $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "copy over: Could not get reuse_gene_tree for stable_id:\t" . $self->param('stable_id');
