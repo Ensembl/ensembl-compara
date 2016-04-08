@@ -377,11 +377,12 @@ sub insdc_accession {
 sub count_go {
   my ($self, $goid) = @_;
 
-  my $key      = sprintf '::COUNTS::GENE::%s::%s::%s::GO::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g'), $goid;
-  my $counts   = $MEMD && $MEMD->get($key) ? $MEMD->get($key) : "";
   my $go_name;
-
-  if (!$counts) {
+  my $key      = sprintf '::COUNTS::GENE::%s::%s::%s::GO::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g'), $goid;
+  my $counts;
+  $counts = $MEMD->get($key) if $MEMD;
+  $counts = 0 if $counts==-1; # Can't to store 0 in memcached!
+  if (!defined $counts) {
     foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
       my $transcript = $trans_obj->Obj;   
 
@@ -424,8 +425,9 @@ sub count_go {
     
     foreach (@{$sth->fetchall_arrayref}) {    
       $counts = $_->[1] if($_->[0] eq "$goid");
-      $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     }
+    $counts ||= -1;
+    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
   
   return $counts;
