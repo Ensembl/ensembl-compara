@@ -729,7 +729,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
                 'db_conn'       => '#reuse_db#',
-                'description'   => 'The pipeline can only reuse the "other_member_sequence" table if it is in MyISAM',
+                'description'   => q{The pipeline can only reuse the "other_member_sequence" table if it is in MyISAM. So please run the following MySQL commands on the #reuse_db#: SET FOREIGN_KEY_CHECKS = 0; ALTER TABLE other_member_sequence DROP FOREIGN KEY other_member_sequence_ibfk_1; ALTER TABLE other_member_sequence ENGINE=MyISAM; },
                 'query'         => 'SHOW TABLE STATUS WHERE Name = "other_member_sequence" AND Engine NOT LIKE "MyISAM" -- limit',      # -- limit is a trick to ask SqlHealthcheck not to add "LIMIT 1" at the end of the query
             },
         },
