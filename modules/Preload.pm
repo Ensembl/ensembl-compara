@@ -1783,4 +1783,9 @@ load("Tabix",1);
 load("TabixIterator",1);
 load("Tie::StdHash",1);
 
+use EnsEMBL::Web::DBSQL::DBConnection;
+
+my $ad = EnsEMBL::Web::DBSQL::DBConnection->new('Homo_sapiens');
+my $x = $ad->get_DBAdaptor('core', 'Homo_sapiens')->get_AssemblyExceptionFeatureAdaptor->fetch_all;
+
 1;
