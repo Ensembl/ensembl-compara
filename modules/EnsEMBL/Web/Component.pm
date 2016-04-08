@@ -476,7 +476,7 @@ sub hint_panel {
 }
 
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
-sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
+sub image_width { return shift->hub->image_width; }
 sub caption     { return undef; }
 sub _init       { return; }
 

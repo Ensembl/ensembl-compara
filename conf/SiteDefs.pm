@@ -322,6 +322,8 @@ our $OBJECT_TO_SCRIPT = {
   Export              => 'Export',
   DataExport          => 'DataExport',
   ImageExport         => 'ImageExport',
+  Download            => 'Download',
+  Json                => 'Json',
 
   Gene                => 'Page',
   Transcript          => 'Page',
@@ -345,6 +347,21 @@ our $OBJECT_TO_SCRIPT = {
 
   CSS                 => 'CSS',
 };
+our $ALLOWED_URL_CONTROLLERS = [qw(Component ComponentAjax ZMenu Config Json Download)];
+our $OBJECT_PARAMS = [
+  [ 'Phenotype'           => 'ph'  ],
+  [ 'Location'            => 'r'   ],
+  [ 'Gene'                => 'g'   ],
+  [ 'Transcript'          => 't'   ],
+  [ 'Variation'           => 'v'   ],
+  [ 'StructuralVariation' => 'sv'  ],
+  [ 'Regulation'          => 'rf'  ],
+  [ 'Experiment'          => 'ex'  ],
+  [ 'Marker'              => 'm'   ],
+  [ 'LRG'                 => 'lrg' ],
+  [ 'GeneTree'            => 'gt'  ],
+  [ 'Family'              => 'fm'  ],
+];
 
 ## Set log directory and files
 our $ENSEMBL_LOGDIR    = defer { "$ENSEMBL_SERVERROOT/logs" };

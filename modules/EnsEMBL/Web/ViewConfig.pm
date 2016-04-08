@@ -225,9 +225,9 @@ sub update_from_url {
     foreach my $v (split /,/, $config) {
       my ($k, $t) = split /=/, $v, 2;
       
-      if ($k =~ /^(cookie|image)_width$/ && $t != $ENV{'ENSEMBL_IMAGE_WIDTH'}) {
+      if ($k =~ /^(cookie|image)_width$/) {
         # Set width
-        $hub->set_cookie('ENSEMBL_WIDTH', $t);
+        $hub->image_width($t);
         $self->altered = 1;
       }
       
@@ -367,7 +367,9 @@ sub add_form_element {
 
 sub build_form {
   my ($self, $object, $image_config) = @_;
-  
+
+  my $hub = $self->hub;
+
   $self->build_imageconfig_form($image_config) if $image_config;
   
   $self->form($object);
@@ -378,7 +380,7 @@ sub build_form {
     $fieldset->add_field({
       type   => 'DropDown',
       name   => 'image_width',
-      value  => $ENV{'ENSEMBL_DYNAMIC_WIDTH'} ? 'bestfit' : $ENV{'ENSEMBL_IMAGE_WIDTH'},
+      value  => $hub->is_dynamic_image_width ? 'bestfit' : $hub->image_width,
       label  => 'Width of image',
       values => [
         { value => 'bestfit', caption => 'best fit' },

@@ -22,15 +22,17 @@ use strict;
 use warnings;
 
 use List::Util qw(first);
-use EnsEMBL::Web::Hub;
 
-sub new {
-  my $hub           = EnsEMBL::Web::Hub->new;
-  my $species_defs  = $hub->species_defs;
-  my $filename      = $ENV{'QUERY_STRING'} || '';
+use parent qw(EnsEMBL::Web::Controller);
+
+sub process {
+  my $self          = shift;
+  my $species_defs  = $self->species_defs;
+  my $filename      = $self->query;
   my $file          = $filename ? first { $filename eq $_->url_path } map { @{$_->files} } @{$species_defs->ENSEMBL_JSCSS_FILES->{'css'} || []} : undef;
 
-  $_[1]->content_type('text/css');
+  $self->r->content_type('text/css');
+
   print $filename ? $file ? $file->get_contents($species_defs, 'css') : "/* ERROR: file $filename is not present in the document root */\n" : "/* ERROR: No file name provided */\n";
 }
 

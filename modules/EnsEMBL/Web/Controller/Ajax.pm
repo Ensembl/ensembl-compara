@@ -20,36 +20,15 @@ package EnsEMBL::Web::Controller::Ajax;
 
 use strict;
 
-use Apache2::RequestUtil;
 use HTML::Entities  qw(decode_entities);
 use JSON            qw(from_json);
 use URI::Escape     qw(uri_unescape);
 
 use EnsEMBL::Web::ViewConfig::Regulation::Page;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::File::Utils::URL;
 
 use base qw(EnsEMBL::Web::Controller);
-
-sub new {
-  my $class = shift;
-  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args  = shift || {};
-  my $self  = bless {
-    'hub' => EnsEMBL::Web::Hub->new({
-      apache_handle  => $r,
-      session_cookie => $args->{'session_cookie'},
-      user_cookie    => $args->{'user_cookie'},
-    })
-  }, $class;
-
-  $self->{'hub'}->qstore_open;
-  $self->process;
-  $self->{'hub'}->qstore_close;
-
-  return $self;
-}
 
 sub process {
   my $self  = shift;

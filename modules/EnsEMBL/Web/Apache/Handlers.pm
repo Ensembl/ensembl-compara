@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,11 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Web::Apache::Handlers;
 
-### Uses mod_perl to replace the normal Apache server functionality,
-### initialising and cleaning up child processes
-### Handles URL routing, cookies, errors, mirror redirects 
+### This handler handles all dynamic page request including .html requests
 
 use strict;
+use warnings;
 
 use Apache2::Const qw(:common :http :methods);
 use Apache2::SizeLimit;
@@ -33,67 +32,380 @@ use Config;
 use Fcntl ':flock';
 use Sys::Hostname;
 use Time::HiRes qw(time);
-use URI::Escape qw(uri_escape);
+use POSIX qw(strftime);
 
-use SiteDefs;# qw(:APACHE);
+use SiteDefs;
 
 use Bio::EnsEMBL::Registry;
 
-use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::Cookie;
-use EnsEMBL::Web::Registry;
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 
+use EnsEMBL::Web::Apache::DasHandler;
 use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
 
 use Preload;
 
 our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
-our $MEMD         = EnsEMBL::Web::Cache->new;
 
-our $LOAD_COMMAND;
-
-BEGIN {
-  $LOAD_COMMAND = $Config{'osname'} eq 'dec_osf' ? \&_load_command_alpha :
-                  $Config{'osname'} eq 'linux'   ? \&_load_command_linux :
-                                                   \&_load_command_null;
-};
-
-#======================================================================#
-# Perl apache handlers in order they get executed                      #
-#======================================================================#
-
-sub child_init_hook {}
-
-sub childInitHandler {
-## Initiates an Apache child process, sets up the web registry object,
-## and initializes the timer
-  my $r = shift;
- 
-  child_init_hook($r);
- 
-  my @X             = localtime;
-  my $temp_hostname = hostname;
-  my $temp_proc_id  = '' . reverse $$;
-  my $temp_seed     = ($temp_proc_id + $temp_proc_id << 15) & 0xffffffff
-  ;
-  
-  while ($temp_hostname =~ s/(.{1,4})//) {
-    $temp_seed = $temp_seed ^ unpack("%32L*", $1);
-  }
-  
-  srand(time ^ $temp_seed);
-  
-  # Create the Registry
-  $ENSEMBL_WEB_REGISTRY = EnsEMBL::Web::Registry->new;
-  $ENSEMBL_WEB_REGISTRY->timer->set_process_child_count(0);
-  $ENSEMBL_WEB_REGISTRY->timer->set_process_start_time(time);
-  
-  warn sprintf "Child initialised: %7d %04d-%02d-%02d %02d:%02d:%02d\n", $$, $X[5]+1900, $X[4]+1, $X[3], $X[2], $X[1], $X[0] if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+sub get_rewritten_uri {
+  ## Recieves the current URI and returns a new URI in case it has to be rewritten
+  ## The same request itself is handled according to the rewritten URI instead of making an external redirect request
+  ## @param URI string
+  ## @return URI string if modified, undef otherwise
+  ## In a plugin, use this function with PREV to add plugin specific rules
 }
 
+sub get_redirect_uri {
+  ## Recieves the current URI and returns a new URI in case an external HTTP redirect has to be performed on that
+  ## @param URI string
+  ## @return URI string if redirection required, undef otherwise
+  ## In a plugin, use this function with PREV to add plugin specific rules
+  my $uri = shift;
+
+  ## Redirect to contact form
+  if ($uri =~ m|^/contact\?$|) {
+    return '/Help/Contact';
+  }
+
+  ## Fix URL for V/SV Explore pages
+  if ($uri =~ m|^/Variation/Summary/|) {
+    return $uri =~ s/Summary/Explore/r;
+  }
+
+  ## Trackhub short URL
+  if ($uri =~ m|^/trackhub\?|i) {
+    return $uri = s/trackhub/UserData\/TrackHubRedirect/r;
+  }
+
+  ## For stable id URL (eg. /id/ENSG000000nnnnnn) or malformed Gene URL with g param
+  if ($uri =~ m|^/id/(.+)|i || ($uri =~ m|^/Gene\W| && $uri =~ /[\&\;\?]{1}g=([^\&\;]+)/)) {
+    return stable_id_redirect_uri($1);
+  }
+
+  return undef;
+}
+
+sub stable_id_redirect_uri {
+  ## Constructs complete URI according to a given stable id
+  ## @param Stable ID string
+  my $stable_id = shift;
+
+  my ($species, $object_type, $db_type, $retired, $uri);
+
+  my $unstripped_stable_id = $stable_id;
+
+  $stable_id =~ s/\.[0-9]+$// if $stable_id =~ /^ENS/; # Remove versioning for Ensembl ids
+
+  ## Try to register stable_id adaptor so we can use that db (faster lookup)
+  my %db = %{$species_defs->multidb->{'DATABASE_STABLE_IDS'} || {}};
+
+  if (keys %db) {
+    my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+      -species => 'multi',
+      -group   => 'stable_ids',
+      -host    => $db{'HOST'},
+      -port    => $db{'PORT'},
+      -user    => $db{'USER'},
+      -pass    => $db{'PASS'},
+      -dbname  => $db{'NAME'}
+    );
+  }
+
+  ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id, undef, undef, undef, undef, 1);
+
+  if (!$species || !$object_type) {
+    ## Maybe that wasn't versioning after all!
+    ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($unstripped_stable_id, undef, undef, undef, undef, 1);
+    $stable_id = $unstripped_stable_id if $species && $object_type;
+  }
+
+  if ($object_type) {
+
+    $uri = sprintf '/%s/', $species ? ($species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP') || {})->{lc $species} || $species : 'Multi';
+
+    if ($object_type eq 'Gene') {
+      $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
+    } elsif ($object_type eq 'Transcript') {
+      $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
+    } elsif ($object_type eq 'Translation') {
+      $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
+    } elsif ($object_type eq 'GeneTree') {
+      $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
+    } elsif ($object_type eq 'Family') {
+      $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
+    } else {
+      $uri .= "psychic?q=$stable_id";
+    }
+  }
+
+  return $uri || "/Multi/psychic?q=$stable_id";
+}
+
+sub parse_ensembl_uri {
+  ## Parses and saves uri components in subprocess_env if not already parsed
+  ## @param Apache2::RequestRec request object
+  ## @return undef if parsed successfully or a URL string if a redirect is needed after cleaning the species name
+  my $r = shift;
+
+  # return if already parsed
+  return if $r->subprocess_env('ENSEMBL_PATH');
+
+  my $parsed_uri  = $r->parsed_uri;
+  my $uri_path    = $parsed_uri->path // '';
+  my $uri_query   = $parsed_uri->query // '';
+
+  # if there's nothing to parse, it's a homepage request - redirect to index.html in that case
+  return join '?', '/index.html', $uri_query || () if $uri_path eq '/';
+
+  my $species_alias_map = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP') || {};
+  my %valid_species_map = map { $_ => 1 } $species_defs->valid_species;
+
+  # filter species alias map to remove any species that are not present in a list returned by $species_defs->valid_species
+  $valid_species_map{$species_alias_map->{$_}} or delete $species_alias_map->{$_} for keys %$species_alias_map;
+
+  # extract the species name from the raw path segments, and leave the remainders as our final path segments
+  my ($species, $species_alias);
+  my @path_segments = grep { $_ ne '' && ($species || !($species = $species_alias_map->{lc $_} and $species_alias = $_)) } split '/', $uri_path;
+
+  # if species name provided in the url is not the formal species url name, it's time to redirect the request to the correct species url
+  return '/'.join('?', join('/', $species, @path_segments), $uri_query eq '' ? () : $uri_query) if $species && $species ne $species_alias;
+
+  $r->subprocess_env('ENSEMBL_SPECIES', $species) if $species;
+  $r->subprocess_env('ENSEMBL_PATH',  '/'.join('/', @path_segments));
+  $r->subprocess_env('ENSEMBL_QUERY', $uri_query);
+
+  return undef;
+}
+
+sub get_sub_handler {
+  ## Finds out the sub handler that should handle this request
+  ## @param Apache2::RequestRec request object
+  ## @param Species name (string)
+  ## @param Arrayref of path segments
+  ## @return List containing handler (possibly undef if no sub handler maps to this requests), species (possibly modified) and arrayref of path segments (possibly modified)
+  my ($r, $species, $path_seg) = @_;
+
+  my $handler;
+
+  # Try DasHandler if first segment of path is 'das'
+  if (!$species && $path_seg->[0] eq 'das') {
+
+    shift @$path_seg; # remove 'das'
+
+    ($species)  = split '.', $path_seg->[0] // '';
+    $handler    = 'EnsEMBL::Web::Apache::DasHandler';
+
+  # Try SpeciesHandler in all other cases if species is present or the file path is not an explicit .html path
+  } elsif ($species || $path_seg->[-1] !~ /\.html$/) {
+
+    $species  ||= 'Multi';
+    $species    = 'Multi' if $species eq 'common';
+    $handler    = 'EnsEMBL::Web::Apache::SpeciesHandler';
+
+  # Finally try the SSI handler
+  } else {
+    $handler    = 'EnsEMBL::Web::Apache::SSI';
+  }
+
+  return ($handler, $species, $path_seg);
+}
+
+sub http_redirect {
+  ## Perform an http redirect
+  ## @param Apache2::RequestRec request object
+  ## @param URI string to redirect to
+  ## @return HTTP_MOVED_PERMANENTLY
+  my ($r, $redirect_uri) = @_;
+  $r->uri($redirect_uri);
+  $r->headers_out->add('Location' => $r->uri);
+  $r->child_terminate; # TODO really needed?
+
+  return HTTP_MOVED_PERMANENTLY;
+}
+
+sub time_str {
+  ## @return Printable time string
+  return strftime("%a %b %d %H:%M:%S %Y", shift || localtime);
+}
+
+sub request_start_hook {
+  ## Subroutine hook to be called when the request handling starts
+  ## @param Apache2::RequestRec request object
+  ## In a plugin, use this function with PREV to plugin some code to be run before the request is handled
+}
+
+sub request_end_hook {
+  ## Subroutine hook to be called when the request handling finishes
+  ## @param Apache2::RequestRec request object
+  ## In a plugin, use this function with PREV to plugin some code to be run after the request is served
+}
+
+#########################################
+###         mod_perl handlers         ###
+#########################################
+
+sub childInitHandler {
+  ## This handler gets called by Apache when initialising an Apache child process
+  ## @param APR::Pool object
+  ## @param Apache2::ServerRec server object
+  ## This handler only adds an entry to the logs
+  warn sprintf "[%s] Child initialised: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+
+  return OK;
+}
+
+sub postReadRequestHandler {
+  ## This handler gets called immediately after the request has been read and HTTP headers were parsed
+  ## @param Apache2::RequestRec request object
+  my $r = shift;
+
+  return OK if $r->unparsed_uri eq '*';
+
+  # VOID request to populate %ENV
+  $r->subprocess_env;
+
+  # save request start time for logs
+  $r->subprocess_env('LOG_REQUEST_START', sprintf('%0.6f', time));
+
+  # run any plugged-in code
+  request_start_hook($r);
+
+  return OK;
+}
+
+sub transHandler {
+  ## This handler gets called to perform the manipulation of a request's URI
+  ## @param Apache2::RequestRec request object
+  my $r   = shift;
+  my $uri = $r->unparsed_uri;
+
+  return DECLINED if $uri eq '*';
+
+  # apply any uri rewrite rules
+  if (my $modified = get_rewritten_uri($uri)) {
+    $r->parse_uri($modified);
+  }
+
+  # save raw uri for logs
+  $r->subprocess_env('LOG_REQUEST_URI', $r->unparsed_uri);
+
+  return DECLINED;
+}
+
+sub handler {
+  ## This is the main handler that gets called to generate a response for the given request
+  ## @param Apache2::RequestRec request object
+  ## @return One of the Apache2::Const common/http codes
+  my $r   = shift;
+  my $uri = $r->unparsed_uri;
+
+  # handle any redirects
+  if (my $redirect = get_redirect_uri($uri)) {
+    return http_redirect($r, $redirect);
+  }
+
+  # populate subprocess_env with species, path and query or perform a redirect to a rectified url
+  if (my $redirect = parse_ensembl_uri($r)) {
+    return http_redirect($r, $redirect);
+  }
+
+  my $species   = $r->subprocess_env('ENSEMBL_SPECIES');
+  my $path      = $r->subprocess_env('ENSEMBL_PATH');
+  my $query     = $r->subprocess_env('ENSEMBL_QUERY');
+  my $path_seg  = [ grep { $_ ne '' } split '/', $path ];
+
+  # other species-like path segments
+  if (!$species && grep /$path_seg->[0]/, qw(Multi common)) {
+    $species = shift @$path_seg;
+  }
+
+  # find the appropriate handler according to species and path
+  (my $handler, $species, $path_seg) = get_sub_handler($r, $species, $path_seg);
+
+  # there is a possibility ENSEMBL_SPECIES and ENSEMBL_PATH need to be updated
+  $r->subprocess_env('ENSEMBL_SPECIES', $species);
+  $r->subprocess_env('ENSEMBL_PATH',    '/'.join('/', @$path_seg));
+
+  # delegate request to the required handler and get the response status code
+  my $response_code = $handler ? $handler->can('handler')->($r, $species_defs) : undef;
+
+  # check for any redirects requested by the code
+  if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT')) {
+    return http_redirect($r, $redirect);
+  }
+
+  # give up if no response code was set by any of the handlers
+  return DECLINED unless defined $response_code;
+
+  # kill off the process when it grows too large
+  $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler) if $response_code == OK;
+
+  return $response_code;
+}
+
+sub logHandler {
+  ## This handler gets called once the response is genetated, irrespective of the return type of the previous handler.
+  ## @param Apache2::RequestRec request object
+  my $r = shift;
+  my $t = time;
+
+  return DECLINED if $r->unparsed_uri eq '*';
+
+  # more vars for logs
+  $r->subprocess_env('LOG_REQUEST_END',   sprintf('%0.6f', $t));
+  $r->subprocess_env('LOG_REQUEST_TIME',  sprintf('%0.6f', $t - $r->subprocess_env('LOG_REQUEST_START')));
+
+  return DECLINED;
+}
+
+sub cleanupHandler {
+  ## This handler gets called immediately after the request has been served (the client went away) and before the request object is destroyed.
+  ## Any time consuming logging process should be done in this handler since the request connection has actually been closed by now.
+  ## @param Apache2::RequestRec request object
+  my $r = shift;
+
+  return OK if $r->unparsed_uri eq '*';
+
+  # run any plugged-in code
+  request_end_hook($r);
+
+  my $start_time = $r->subprocess_env('LOG_REQUEST_START');
+  my $time_taken = $r->subprocess_env('LOG_REQUEST_TIME');
+
+  if ($time_taken >= $SiteDefs::ENSEMBL_LONGPROCESS_MINTIME) {
+
+    my $uri    = $r->subprocess_env('LOG_REQUEST_URI');
+    my ($size) = $Apache2::SizeLimit::HOW_BIG_IS_IT ? $Apache2::SizeLimit::HOW_BIG_IS_IT->() : Apache2::SizeLimit->_check_size;
+
+    if ($SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS) {
+      my @X = localtime($start_time);
+
+      warn sprintf(
+        "LONG PROCESS: %12s DT:  %04d-%02d-%02d %02d:%02d:%02d Time: %10s Size: %10s\nLONG PROCESS: %12s REQ: %s\nLONG PROCESS: %12s IP:  %s  UA: %s\n",
+        $$, $X[5]+1900, $X[4]+1, $X[3], $X[2], $X[1], $X[0], $time_taken, $size,
+        $$, $uri,
+        $$, $r->subprocess_env('HTTP_X_FORWARDED_FOR'), $r->headers_in->{'User-Agent'}
+      );
+    }
+  }
+
+  return OK;
+}
+
+sub childExitHandler {
+  ## This handler gets called when the Apache child process finally exits
+  ## @param APR::Pool object
+  ## @param Apache2::ServerRec server object
+  ## This handler only adds an entry to the logs
+  my ($p, $s) = @_;
+
+  warn sprintf "[%s] Child exited: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+
+  return OK;
+}
+
+#### Temporarily adding them here - will be moved to plugins later
 sub redirect_to_mobile {}
 
 sub handle_mirror_redirect {
@@ -224,552 +536,6 @@ sub redirect_to_nearest_mirror {
   }
 
   return DECLINED;
-}
-
-sub request_start_hook {}
-sub postReadRequestHandler {
-  my $r = shift; # Get the connection handler
-
-  request_start_hook($r);
-
-  # Nullify tags
-  $ENV{'CACHE_TAGS'} = {};
-  
-  # Manipulate the Registry
-  $ENSEMBL_WEB_REGISTRY->timer->new_child;
-  $ENSEMBL_WEB_REGISTRY->timer->clear_times;
-  $ENSEMBL_WEB_REGISTRY->timer_push('Handling script', undef, 'Apache');
-  
-  ## Ajax cookie
-  my $cookies = EnsEMBL::Web::Cookie->fetch($r);
-  my $width   = $cookies->{'ENSEMBL_WIDTH'} && $cookies->{'ENSEMBL_WIDTH'}->value ? $cookies->{'ENSEMBL_WIDTH'}->value : 0;  
-  my $window_width = $cookies->{'WINDOW_WIDTH'} && $cookies->{'WINDOW_WIDTH'}->value ? $cookies->{'WINDOW_WIDTH'}->value : 0;
-  
-#warn ">>$window_width";
-  $r->subprocess_env->{'WINDOW_WIDTH'}          = $window_width; # use for mobile website to determine device windows size
-  $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'}   = $width || $SiteDefs::ENSEMBL_IMAGE_WIDTH || 800;
-  $r->subprocess_env->{'ENSEMBL_DYNAMIC_WIDTH'} = $cookies->{'DYNAMIC_WIDTH'} && $cookies->{'DYNAMIC_WIDTH'}->value ? 1 : $width ? 0 : 1;
-
-  $ENSEMBL_WEB_REGISTRY->timer_push('Post read request handler completed', undef, 'Apache');
-  
-  # Ensembl DEBUG cookie
-  $r->headers_out->add('X-MACHINE' => $SiteDefs::ENSEMBL_SERVER) if $cookies->{'ENSEMBL_DEBUG'};
-
-  return;
-}
-
-sub cleanURI {
-  my $r = shift;
-  
-  # Void call to populate ENV
-  $r->subprocess_env;
-  
-  # Clean out the uri
-  my $uri = $ENV{'REQUEST_URI'};
-  
-  if ($uri =~ s/[;&]?time=\d+\.\d+//g + $uri =~ s!([^:])/{2,}!$1/!g) {
-    $r->parse_uri($uri);
-    $r->subprocess_env->{'REQUEST_URI'} = $uri;
-  }
-
-  # Clean out the referrer
-  my $referer = $ENV{'HTTP_REFERER'};
-  
-  if ($referer =~ s/[;&]?time=\d+\.\d+//g + $referer =~ s!([^:])/{2,}!$1/!g) {
-    $r->subprocess_env->{'HTTP_REFERER'} = $referer;
-  }
-  
-  return DECLINED;
-}
-
-sub redirect_species_page {
-  my ($species_name)  = @_;
-
-  return $species_name eq 'common' ? 'index.html' : "/$species_name/Info/Index";
-}
-
-sub handler {
-  my $r = shift; # Get the connection handler
-  
-  $ENSEMBL_WEB_REGISTRY->timer->set_name('REQUEST ' . $r->uri);
-  
-  my $u                   = $r->parsed_uri;
-  my $file                = $u->path;
-  my $querystring         = $u->query;
-  my $session_cookie_host = $SiteDefs::ENSEMBL_SESSION_COOKIEHOST;
-  my $user_cookie_host    = $SiteDefs::ENSEMBL_USER_COOKIEHOST;
-  my ($actual_host)       = split /\s*\,\s*/, ($r->headers_in->{'X-Forwarded-Host'} || $r->headers_in->{'Host'});
-     $session_cookie_host = '' if $session_cookie_host && $actual_host !~ /$session_cookie_host$/; # only use ENSEMBL_SESSION_COOKIEHOST if it's same or a subdomain of the actual domain
-     $user_cookie_host    = '' if $user_cookie_host    && $actual_host !~ /$user_cookie_host$/;    # only use ENSEMBL_USER_COOKIEHOST if it's same or a subdomain of the actual domain
-
-  my @web_cookies = ({
-    'name'            => $SiteDefs::ENSEMBL_SESSION_COOKIE,
-    'encrypted'       => 1,
-    'domain'          => $session_cookie_host,
-  }, {
-    'name'            => $SiteDefs::ENSEMBL_USER_COOKIE,
-    'encrypted'       => 1,
-    'domain'          => $user_cookie_host,
-  });
-
-  my @existing_cookies = EnsEMBL::Web::Cookie->retrieve($r, @web_cookies);
-
-  my $cookies = {
-    'session_cookie'  => $existing_cookies[0] || EnsEMBL::Web::Cookie->new($r, $web_cookies[0]),
-    'user_cookie'     => $existing_cookies[1] || EnsEMBL::Web::Cookie->new($r, $web_cookies[1]),
-  };
-
-  my @raw_path = split '/', $file;
-  shift @raw_path; # Always empty
-
-  my $redirect = 0;
-  ## Redirect to contact form
-  if (scalar(@raw_path) == 1 && $raw_path[0] =~ /^contact$/i) {
-    $r->uri('/Help/Contact');
-    $redirect = 1;
-  }  
-
-  ## Fix URL for V/SV Explore pages
-  if ($raw_path[1] =~ /Variation/ && $raw_path[2] eq 'Summary') {
-    $file =~ s/Summary/Explore/;
-    $file .= '?'.$querystring if $querystring;
-    $r->uri($file);
-    $redirect = 1;
-  }  
-
-  ## Redirect to blog from /jobs
-  if ($raw_path[0] eq 'jobs') {
-    $r->uri('http://www.ensembl.info/blog/category/jobs/');
-    $redirect = 1;
-  }
-
-  ## Fix for moved eHive documentation
-  if ($file =~ /info\/docs\/eHive\//) {
-    $r->uri('/info/docs/eHive.html');
-    $redirect = 1;
-  }
-
-  ## Trackhub short URL
-  if ($raw_path[0] =~ /^trackhub$/i) {
-    $file = '/UserData/TrackHubRedirect?'.$querystring;
-    $r->uri($file);
-    $redirect = 1;
-  }
-
-  ## Simple redirect to VEP
-
-  if ($SiteDefs::ENSEMBL_SUBTYPE eq 'Pre' && $file =~ /\/vep/i) { ## Pre has no VEP, so redirect to tools page
-    $r->uri('/info/docs/tools/index.html');
-    $redirect = 1;
-  } elsif ($file =~ /\/info\/docs\/variation\/vep\/vep_script.html/) {
-    $r->uri('/info/docs/tools/vep/script/index.html');
-    $redirect = 1;
-  } elsif (($raw_path[0] && $raw_path[0] =~ /^VEP$/i) || $file =~ /\/info\/docs\/variation\/vep\//) {
-    $r->uri('/info/docs/tools/vep/index.html');
-    $redirect = 1;
-  }
-
- if ($file =~ /\/info\/docs\/(variation|funcgen|compara|genebuild|microarray)/) {
-   $file =~ s/docs/genome/;
-   $r->uri($file);
-   $redirect = 1;
- }
-
-  if ($redirect) {
-    $r->headers_out->add('Location' => $r->uri);
-    $r->child_terminate;
-      
-    $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
-    
-    return HTTP_MOVED_PERMANENTLY;
-  }
-
-  my $aliases = $species_defs->multi_val('SPECIES_ALIASES') || {};
-  my %species_map = (
-    %$aliases,
-    common => 'common',
-    multi  => 'Multi',
-    perl   => $SiteDefs::ENSEMBL_PRIMARY_SPECIES,
-    map { lc($_) => $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} } keys %$SiteDefs::ENSEMBL_SPECIES_ALIASES
-  );
-  
-  $species_map{lc $_} = $_ for values %species_map; # Self-mapping
-  
-  ## Identify the species element, if any
-  my ($species, @path_segments);
- 
-  ## Check for stable id URL (/id/ENSG000000nnnnnn) 
-  ## and malformed Gene/Summary URLs from external users
-  if (($raw_path[0] && $raw_path[0] =~ /^(id|loc)$/i && $raw_path[1]) || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ )) {
-    my ($loc, $stable_id, $object_type, $db_type, $retired, $uri);
-    
-    if ($raw_path[0] =~ /^(id|loc)$/i) {
-      $loc = $1 eq 'loc';
-      $stable_id = $raw_path[1];
-    } else {
-      $querystring =~ /g=(\w+)/;
-      $stable_id = $1;
-    }
-    
-    my $unstripped_stable_id = $stable_id;
-    
-    $stable_id =~ s/\.[0-9]+$// if $stable_id =~ /^ENS/; ## Remove versioning for Ensembl ids
-
-    ## Try to register stable_id adaptor so we can use that db (faster lookup)
-    my %db = %{$species_defs->multidb->{'DATABASE_STABLE_IDS'} || {}};
-    
-    if (keys %db) {
-      my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-        -species => 'multi',
-        -group   => 'stable_ids',
-        -host    => $db{'HOST'},
-        -port    => $db{'PORT'},
-        -user    => $db{'USER'},
-        -pass    => $db{'PASS'},
-        -dbname  => $db{'NAME'}
-      );
-    }
-
-    ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id, undef, undef, undef, undef, 1);
-    
-    if (!$species || !$object_type) {
-      ## Maybe that wasn't versioning after all!
-      ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($unstripped_stable_id, undef, undef, undef, undef, 1);
-      $stable_id = $unstripped_stable_id if($species && $object_type);
-    }
-    
-    if ($object_type) {
-
-      if ($loc && $species && !$retired && $object_type =~ /^(Gene|Transcript|Translation)$/) {
-        $uri = sprintf '/%s/Location/View?%s=%s', $species, $object_type eq 'Gene' ? 'g' : 't', $stable_id;
-
-      } else {
-
-        $uri = $species ? "/$species/" : '/Multi/';
-
-        if ($object_type eq 'Gene') {
-          $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
-        } elsif ($object_type eq 'Transcript') {
-          $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
-        } elsif ($object_type eq 'Translation') {
-          $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
-        } elsif ($object_type eq 'GeneTree') {
-          $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
-        } elsif ($object_type eq 'Family') {
-          $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
-        } else {
-          $uri .= "psychic?q=$stable_id";
-        }
-      }
-    }
-
-    $uri ||= "/Multi/psychic?q=$stable_id";
-
-    $r->uri($uri);
-    $r->headers_out->add('Location' => $r->uri);
-    $r->child_terminate;
-
-    $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
-
-    return HTTP_MOVED_PERMANENTLY;
-  }
-
-  my %lookup = map { $_ => 1 } $species_defs->valid_species;
-  my $lookup_args = {
-    sd     => $species_defs,
-    map    => \%species_map,
-    lookup => \%lookup,
-    uri    => $r->unparsed_uri,
-  };
-  
-  foreach (@raw_path) {
-    $lookup_args->{'dir'} = $_;
-    
-    my $check = _check_species($lookup_args);
-    
-    if ($check && $check =~ /^http/) {
-      $r->headers_out->set( Location => $check );
-      return REDIRECT;
-    } elsif ($check && !$species) {
-      $species = $_;
-    } else {
-      push @path_segments, $_;
-    }
-  }
-  
-  if (!$species) {
-    if (grep /$raw_path[0]/, qw(Multi common default)) {
-      $species = $raw_path[0];
-      shift @path_segments;
-    } elsif ($path_segments[0] eq 'Gene' && $querystring) {
-      my %param = split ';|=', $querystring;
-      
-      if (my $gene_stable_id = $param{'g'}) {
-        my ($id_species) = Bio::EnsEMBL::Registry->get_species_and_object_type($gene_stable_id);
-            $species     = $id_species if $id_species;
-      }  
-    }
-  }
-  
-  @path_segments = @raw_path unless $species;
-  
-  # Some memcached tags (mainly for statistics)
-  my $prefix = '';
-  my @tags   = map { $prefix = join '/', $prefix, $_; $prefix; } @path_segments;
-  
-  if ($species) {
-    @tags = map {( "/$species$_", $_ )} @tags;
-    push @tags, "/$species";
-  }
-  
-  $ENV{'CACHE_TAGS'}{$_} = $_ for @tags;
-  
-  my $Tspecies  = $species;
-  my $script    = undef;
-  my $path_info = undef;
-  my $species_name = $species_map{lc $species};
-  my $return;
-  
-  if (!$species && $raw_path[-1] !~ /\./) {
-    $species      = 'common';
-    $species_name = 'common';
-    $file         = "/common$file";
-    $file         =~ s|/$||;
-  }
-  
-  if ($species && $species_name) { # species script
-    $return = EnsEMBL::Web::Apache::SpeciesHandler::handler_species($r, $cookies, $species_name, \@path_segments, $querystring, $file, $species_name eq $species);
-    
-    $ENSEMBL_WEB_REGISTRY->timer_push('Handler for species scripts finished', undef, 'Apache');
-    
-    shift @path_segments;
-    shift @path_segments;
-  }
-  
-  if (defined $return) {
-    if ($return == OK) {
-      push_script_line($r) if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
-      
-      $r->push_handlers(PerlCleanupHandler => \&cleanupHandler_script);
-      $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler);
-    }
-    
-    return $return;
-  }
-  
-  $species = $Tspecies;
-  $script = join '/', @path_segments;
-
-  # Permanent redirect for old species home pages:
-  # e.g. /Homo_sapiens or Homo_sapiens/index.html -> /Homo_sapiens/Info/Index  
-  if ($species && $species_name && (!$script || $script eq 'index.html')) {      
-    my $species_uri = redirect_species_page($species_name); #move to separate function so that it can be overwritten in mobile plugin
-
-    $r->uri($species_uri);
-    $r->headers_out->add('Location' => $r->uri);
-    $r->child_terminate;
-    $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
-    
-    return HTTP_MOVED_PERMANENTLY;  
-  }
-  
-  #commenting this line out because we do want biomart to redirect. If this is causing problem put it back.
-  #return DECLINED if $species eq 'biomart' && $script =~ /^mart(service|results|view)/;
-
-  my $path = join '/', $species || (), $script || (), $path_info || ();
-  
-  $r->uri("/$path");
-
-  my $filename = get_static_file_for_path($r, $path);
-
-  if ($filename =~ /^! (.*)$/) {
-    $r->uri($r->uri . ($r->uri      =~ /\/$/ ? '' : '/') . 'index.html');
-    $r->filename($1 . ($r->filename =~ /\/$/ ? '' : '/') . 'index.html');
-    $r->headers_out->add('Location' => $r->uri);
-    $r->child_terminate;
-    $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
-    
-    return HTTP_MOVED_TEMPORARILY;
-  } elsif ($filename) {
-    $r->filename($filename);
-    $r->content_type('text/html');
-    $ENSEMBL_WEB_REGISTRY->timer_push('Handler "OK"', undef, 'Apache');
-    
-    EnsEMBL::Web::Apache::SSI::handler($r, $cookies);
-    
-    return OK;
-  }
-  
-  # Give up
-  $ENSEMBL_WEB_REGISTRY->timer_push('Handler "DECLINED"', undef, 'Apache');
-  
-  return DECLINED;
-}
-
-sub _check_species {
-## Do this in a private function so it's more easily pluggable, e.g. on Pre!
-## This default version just checks if this is a valid species for the site
-  my $args = shift;
-  return $args->{'lookup'}{$args->{'map'}{lc $args->{'dir'}}};
-}
-
-sub logHandler {
-  my $r = shift;
-  my $T = time;
-  
-  $r->subprocess_env->{'ENSEMBL_CHILD_COUNT'}  = $ENSEMBL_WEB_REGISTRY->timer->get_process_child_count;
-  $r->subprocess_env->{'ENSEMBL_SCRIPT_START'} = sprintf '%0.6f', $T;
-  $r->subprocess_env->{'ENSEMBL_SCRIPT_END'}   = sprintf '%0.6f', $ENSEMBL_WEB_REGISTRY->timer->get_script_start_time;
-  $r->subprocess_env->{'ENSEMBL_SCRIPT_TIME'}  = sprintf '%0.6f', $T - $ENSEMBL_WEB_REGISTRY->timer->get_script_start_time;
-  
-  return DECLINED;
-}
-
-sub request_end_hook {}
-sub cleanupHandler {
-  my $r = shift;  # Get the connection handler
-  
-  request_end_hook($r);
-  return if $r->subprocess_env->{'ENSEMBL_ENDTIME'};
-  
-  my $end_time   = time;
-  my $start_time = $ENSEMBL_WEB_REGISTRY->timer->get_script_start_time;
-  my $length     = $end_time - $start_time;
-  
-  if ($length >= $SiteDefs::ENSEMBL_LONGPROCESS_MINTIME) {
-    my $u      = $r->parsed_uri;
-    my $file   = $u->path;
-    my $query  = $u->query . $r->subprocess_env->{'ENSEMBL_REQUEST'};
-    my $size;
-    
-    if ($Apache2::SizeLimit::HOW_BIG_IS_IT) {
-      $size = &$Apache2::SizeLimit::HOW_BIG_IS_IT();
-    } else {
-      ($size) = Apache2::SizeLimit->_check_size;
-    }
-    
-    $r->subprocess_env->{'ENSEMBL_ENDTIME'} = $end_time;
-    
-    if ($SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS) {
-      my @X = localtime($start_time);
-      
-      warn sprintf(
-        "LONG PROCESS: %12s DT:  %04d-%02d-%02d %02d:%02d:%02d Time: %10s Size: %10s\nLONG PROCESS: %12s REQ: %s\nLONG PROCESS: %12s IP:  %s  UA: %s\n", 
-        $$, $X[5]+1900, $X[4]+1, $X[3], $X[2], $X[1], $X[0], $length, $size, 
-        $$, "$file?$query", 
-        $$, $r->subprocess_env->{'HTTP_X_FORWARDED_FOR'}, $r->headers_in->{'User-Agent'}
-      );
-    }
-  }
-
-  # Now we check if the die file has been touched...
-  my $die_file = $SiteDefs::ENSEMBL_SERVERROOT . '/logs/ensembl.die';
-  
-  if (-e $die_file) {
-    my @temp = stat $die_file;
-    my $file_mod_time = $temp[9];
-    if ($file_mod_time >= $ENSEMBL_WEB_REGISTRY->timer->get_process_start_time) {
-      warn sprintf "KILLING CHILD %10s\n", $$;
-      
-      if ($Apache2::SizeLimit::IS_WIN32 || $Apache2::SizeLimit::WIN32) {
-        CORE::exit(-2);
-      } else {
-        $r->child_terminate;
-      }
-    }
-    
-    return DECLINED;
-  }
-}
-
-sub cleanupHandler_script {
-  my $r = shift;
-  
-  $ENSEMBL_WEB_REGISTRY->timer_push('Cleaned up', undef, 'Cleanup');
-  
-  warn $ENSEMBL_WEB_REGISTRY->timer->render if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_PERL_PROFILER;
-  
-  push_script_line($r, 'ENDSCR', sprintf '%10.3f', time - $r->subprocess_env->{'LOG_TIME'}) if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
-}
-
-sub childExitHandler {
-  my $r = shift;
-  
-  if ($SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS) {
-    my $size;
-    
-    if ($Apache2::SizeLimit::HOW_BIG_IS_IT) {
-      $size = &$Apache2::SizeLimit::HOW_BIG_IS_IT();
-    } else {
-      ($size) = Apache2::SizeLimit->_check_size;
-    }
-    
-    warn sprintf "Child %9d: - reaped at      %30s;  Time: %11.6f;  Req:  %4d;  Size: %8dK\n",
-      $$, '' . gmtime, time-$ENSEMBL_WEB_REGISTRY->timer->get_process_start_time,
-      $ENSEMBL_WEB_REGISTRY->timer->get_process_child_count,
-      $size
-  }
-}
-
-sub push_script_line {
-  my $r      = shift;
-  my $prefix = shift || 'SCRIPT';
-  my $extra  = shift;
-  my @X      = localtime;
-
-  return if $r->subprocess_env->{'REQUEST_URI'} =~ /^\/CSS\?/;
-
-  warn sprintf(
-    "%s: %s%9d %04d-%02d-%02d %02d:%02d:%02d %s %s\n",
-    $prefix, hostname, $$,
-    $X[5] + 1900, $X[4] + 1, $X[3], $X[2], $X[1], $X[0],
-    $r->subprocess_env->{'REQUEST_URI'}, $extra
-  );
-  
-  $r->subprocess_env->{'LOG_TIME'} = time;
-}
-
-sub get_static_file_for_path {
-  my ($r, $path) = @_;
-
-  my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
-  
-  # Search the htdocs dirs for a file to return
-  # Exclude static files (and no, html is not a static file in ensembl)
-  if ($path !~ /\.(\w{2,3})$/) {
-    if (!$filename) {
-      foreach my $dir (grep { -d $_ && -r $_ } @SiteDefs::ENSEMBL_HTDOCS_DIRS) {
-        my $f = "$dir/$path";
-        
-        if (-d $f || -r $f) {
-          $filename = -d $f ? '! ' . $f : $f;
-          $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
-          
-          last;
-        }
-      }
-    }
-  }
-
-  return $filename;
-}
-
-sub  _load_command_null {
-  return 1;
-}
-
-sub _load_command_alpha {
-  my $command = shift;
-  my $VAL = `ps -A | grep $command | wc -l`;
-  
-  return $VAL - 1;
-}
-
-sub _load_command_linux {
-  my $command = shift;
-  my $VAL = `ps --no-heading -C $command  | wc -l`;
-  
-  return $VAL + 0;
 }
 
 1;

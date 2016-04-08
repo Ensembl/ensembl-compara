@@ -23,14 +23,16 @@ package EnsEMBL::Web::Document::HTML::DidYouKnow;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Hub;
+use LWP::UserAgent;
+use Encode qw(encode_utf8);
 
-use base qw(EnsEMBL::Web::Document::HTML);
+use parent qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self           = shift;
-  my $hub            = EnsEMBL::Web::Hub->new;
+  my $hub            = $self->hub;
   my $sd             = $hub->species_defs;
+  my $cache          = $hub->cache;
   my $static_server  = $sd->ENSEMBL_STATIC_SERVER;
   my $img_url        = $sd->img_url;
   my $sitename       = $sd->ENSEMBL_SITETYPE;
@@ -41,6 +43,8 @@ sub render {
   my $rss_path = $hub->species_defs->DATAFILE_BASE_PATH.'/web/blog/minifeed';
   my $rss_url = $sd->ENSEMBL_TIPS_RSS;
 
+  my $tips = $cache && $cache->get('::TIPS') || {};
+  
   my %categories = (
                     'new' => 'New!',
                     'did-you-know' => 'Did you know...?', 
@@ -56,6 +60,12 @@ sub render {
 
     $tips->{$cat} = $self->read_rss_file($hub, $cat_path, $cat_url);
     $got += @{$tips->{$cat}} if $tips->{$cat};
+
+    $cache->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $cache;
+  }
+  if(!$got) { # No tips, probably failed
+    warn "MARKING RSS AS FAILED\n";
+    $MEMD->set('::TIPS-FAILED',1,3600,qw(STATIC TIPS)) if $MEMD;
   }
 
   if ($got) { 
