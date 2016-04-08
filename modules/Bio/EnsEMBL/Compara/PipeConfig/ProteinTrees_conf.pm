@@ -161,6 +161,7 @@ sub default_options {
         'examl_ptiles'            => 16,
         'treebest_threshold_n_residues' => 10000,
         'treebest_threshold_n_genes'    => 400,
+        'update_threshold_trees'    => 0.1,
 
     # alignment filtering options
         'threshold_n_genes'       => 20,
@@ -804,6 +805,8 @@ sub core_pipeline_analyses {
                 'output_clusterset_id'  => 'copy',
                 'branch_for_new_tree'  => '3',
                 'branch_for_wiped_out_trees'  => '4',
+                'branch_for_update_threshold_trees'  => '5',
+                'update_threshold_trees' => $self->o('update_threshold_trees'),
             },
             -flow_into  => {
                  1 => [ 'copy_alignments_from_previous_release' ],
