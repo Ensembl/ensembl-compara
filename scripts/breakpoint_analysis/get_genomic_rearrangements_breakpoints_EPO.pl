@@ -48,8 +48,8 @@ GetOptionsFromArray(
 $| = 1;
 
 
-$reg_conf ||= '/nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror.conf';
-die("Please provide species of interest (-species1 & -species2) and the minimum alignment block size (-base) and output files (-o1) ") unless( defined($ref) && defined($non_ref)&& defined($base)&& defined($output1_file) );
+$reg_conf ||= '/nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror_03_16.conf';
+die("Please provide species of interest (-species1 & -species2) and the minimum alignment block size (-base) and output files (-output) ") unless( defined($ref) && defined($non_ref)&& defined($base)&& defined($output1_file) );
 die("\nThe given output file already exists\n") if -e $output1_file;
 my $kilobase = $base * 1000;
 
@@ -64,8 +64,9 @@ my $dnafrag_adaptor = $registry->get_adaptor( 'mice_merged', 'compara', 'DnaFrag
 #my $mlss_adap  = $registry->get_adaptor( 'Multi', 'compara', 'MethodLinkSpeciesSet' );
 #my $gblock_adap = $registry->get_adaptor( 'Multi', 'compara', 'GenomicAlignBlock' );
 #my $GDB_adaptor = $registry->get_adaptor( 'Multi', 'compara', 'GenomeDB' );
-my $mlss =  $mlss_adap->fetch_by_method_link_type_species_set_name( 'EPO', 'collection-mammals' );
-#print $mlss, " mlssssssssssssssssss\n";
+#my $dnafrag_adaptor = $registry->get_adaptor( 'Multi', 'compara', 'DnaFrag' );
+my $mlss =  $mlss_adap->fetch_by_method_link_type_species_set_name( 'EPO', 'collection-mammals_with_mouse' );
+print $mlss->dbID(), " mlssssssssssssssssss idddddddddddd \n" if ($debug) ;
 my $ref_gdb = $GDB_adaptor->fetch_by_name_assembly($ref);
 my $non_ref_gdb = $GDB_adaptor->fetch_by_name_assembly($non_ref);
 my @dnafrags_sp1 = @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region( $ref_gdb, 'chromosome' ) };
@@ -77,7 +78,7 @@ my $whole_gblocks_hash_ref ={}; # so that i will be able to use the string form 
 my $ref_gdbID = $ref_gdb->dbID();
 my $non_ref_gdbID = $non_ref_gdb->dbID();
 
-print "ref gbid ", $ref_gdbID , "   non ref gb id ", $non_ref_gdbID , "\n\n";
+print "ref gbid ", $ref_gdbID , "   non ref gb id ", $non_ref_gdbID , "\n\n" if ($debug) ;
 
 #pull the gblock using the dnafrag and epo mlss
 my @gblocks;
@@ -88,7 +89,7 @@ foreach my $sp1_dnafrag ( @dnafrags_sp1 ) {
     }
 }
 
-print STDOUT "\n partition genomic blocks into an hash based on the reference species chromosomes \n";
+print STDOUT "\n partition genomic blocks into an hash based on the reference species chromosomes \n" if ($debug) ;
 
 my $count = 0;
 while ( my $gblock = shift @gblocks ) { 
@@ -98,11 +99,11 @@ while ( my $gblock = shift @gblocks ) {
     $gblocks_hash{$dnafrag_id}{$gblock} = $ref_gns->dnafrag_start();
     $whole_gblocks_hash_ref->{$gblock}=$gblock;
     $count ++;
-	if ($count == 50){
+#	if ($count == 50){
 #        print STDOUT "Starting part 22222222222222222222222222222 \n";
-		print Dumper(\%gblocks_hash);
-		last;
-	}
+#		print Dumper(\%gblocks_hash);
+#		last;
+#	}
 
 }
 #loop through each chr hash table and determine if there are collinear alignment block that can be merged.
@@ -112,6 +113,7 @@ while ( my $gblock = shift @gblocks ) {
 #my $result_inner_hash_ref = {};
 
 my @ref_chrs = keys %gblocks_hash;
+print "  2222222222222222222222222222    number of gblocks:   $count \n";
 my $counter;
 open my $OUT1, '>>', $output1_file or die "Could not open file '$output1_file' $!";
 #print STDOUT scalar @keys, "\n\n\n";
