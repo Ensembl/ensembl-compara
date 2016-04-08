@@ -52,8 +52,8 @@ sub run {
     my $self = shift @_;
 
     #get LCA (lowest common ancestor)
-    my $lca = $self->_get_lca();
-    $self->param( 'lca', $lca );
+    my $lca_node_id = $self->_get_lca_node_id();
+    $self->param( 'lca_node_id', $lca_node_id );
 
     #get taxonomic coverage
     my $taxonomic_coverage = $self->_get_taxonomic_coverage();
@@ -66,8 +66,8 @@ sub run {
 
 sub write_output {
     my $self = shift;
-    $self->param('gene_tree')->store_tag( 'lca',                $self->param('lca')->dbID );
     $self->param('gene_tree')->store_tag( 'taxonomic_coverage', $self->param('taxonomic_coverage') );
+    $self->param('gene_tree')->store_tag( 'lca_node_id',         $self->param('lca_node_id')->dbID );
     $self->param('gene_tree')->store_tag( 'ratio_species_genes', $self->param('ratio_species_genes') );
 }
 
@@ -78,7 +78,7 @@ sub write_output {
 ##########################################
 
 #Get the latest
-sub _get_lca {
+sub _get_lca_node_id {
     my $self = shift;
     my $genomes_list;
 
@@ -101,10 +101,10 @@ sub _get_lca {
         push( @species_tree_node_list, $species_tree_node);
     }
 
-    my $lca = $self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
+    my $lca_node_id = $self->param('species_tree')->Bio::EnsEMBL::Compara::NestedSet::find_first_shared_ancestor_from_leaves( [@species_tree_node_list] );
 
-    return $lca;
-}
+    return $lca_node_id;
+} ## end sub _get_lca_node_id
 
 sub _get_taxonomic_coverage {
     my $self = shift;
@@ -113,8 +113,8 @@ sub _get_taxonomic_coverage {
     my $genomes_list = scalar($self->param('genomes_list'));
 
     #get all leaves from MRCA
-    my @leaves_ancestral = @{ $self->param('lca')->get_all_leaves() };
     $self->param('leaves_ancestral',\@leaves_ancestral);
+    my @leaves_ancestral = @{ $self->param('lca_node_id')->get_all_leaves() };
 
     my $taxonomic_coverage = sprintf( "%.5f", ( keys(%{$genomes_list})/scalar(@leaves_ancestral) ) );
 
