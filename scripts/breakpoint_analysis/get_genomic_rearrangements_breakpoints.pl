@@ -49,7 +49,7 @@ $| = 1;
 
 
 $reg_conf ||= '/nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror_03_16.conf';
-die("Please provide species of interest (-species1 & -species2) and the minimum alignment block size (-base) and output files (-o1) ") unless( defined($ref) && defined($non_ref)&& defined($base)&& defined($output1_file) );
+die("Please provide species of interest (-species1 & -species2) and the minimum alignment block size (-base) and output files (-output) ") unless( defined($ref) && defined($non_ref)&& defined($base)&& defined($output1_file) );
 die("\nThe given output file already exists\n") if -e $output1_file;
 my $kilobase = $base * 1000; #megabase
 
