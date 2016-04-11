@@ -158,7 +158,7 @@ sub _check_node {
       throw exception('DataStructureException', 'Attempt to insert duplicate node in the linked list.');
     }
     return $self->new($node) if ref $node eq 'HASH';
-    return $node if UNIVERSAL::isa($node, $class);
+    return $node if $node->isa($class);
   }
 
   throw exception('DataStructureException', 'Node can only be a HASH or an object of type '.$class);
