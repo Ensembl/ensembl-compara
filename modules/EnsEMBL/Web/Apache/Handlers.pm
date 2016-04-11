@@ -40,7 +40,6 @@ use Bio::EnsEMBL::Registry;
 
 use EnsEMBL::Web::SpeciesDefs;
 
-use EnsEMBL::Web::Apache::DasHandler;
 use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
 
@@ -79,17 +78,18 @@ sub get_redirect_uri {
   }
 
   ## For stable id URL (eg. /id/ENSG000000nnnnnn) or malformed Gene URL with g param
-  if ($uri =~ m|^/id/(.+)|i || ($uri =~ m|^/Gene\W| && $uri =~ /[\&\;\?]{1}g=([^\&\;]+)/)) {
-    return stable_id_redirect_uri($1);
+  if ($uri =~ m/^\/(id|loc)\/(.+)/i || ($uri =~ m|^/Gene\W| && $uri =~ /[\&\;\?]{1}(g)=([^\&\;]+)/)) {
+    return stable_id_redirect_uri($1 eq 'loc' ? 'loc' : 'id', $2);
   }
 
   return undef;
 }
 
-sub stable_id_redirect_uri {
+sub stable_id_redirect_uri{
   ## Constructs complete URI according to a given stable id
+  ## @param Type of short url - id or loc
   ## @param Stable ID string
-  my $stable_id = shift;
+  my ($url_type, $stable_id) = @_;
 
   my ($species, $object_type, $db_type, $retired, $uri);
 
@@ -122,20 +122,29 @@ sub stable_id_redirect_uri {
 
   if ($object_type) {
 
-    $uri = sprintf '/%s/', $species ? ($species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP') || {})->{lc $species} || $species : 'Multi';
+    # get the correct url name for species if species present
+    $species &&= ($species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP') || {})->{lc $species} || $species;
 
-    if ($object_type eq 'Gene') {
-      $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
-    } elsif ($object_type eq 'Transcript') {
-      $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
-    } elsif ($object_type eq 'Translation') {
-      $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
-    } elsif ($object_type eq 'GeneTree') {
-      $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
-    } elsif ($object_type eq 'Family') {
-      $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
+    if ($url_type eq 'loc' && $species && !$retired && $object_type =~ /^(Gene|Transcript|Translation)$/) {
+      $uri = sprintf '/%s/Location/View?%s=%s', $species, $object_type eq 'Gene' ? 'g' : 't', $stable_id;
+
     } else {
-      $uri .= "psychic?q=$stable_id";
+
+      $uri = sprintf '/%s/', $species || 'Multi';
+
+      if ($object_type eq 'Gene') {
+        $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
+      } elsif ($object_type eq 'Transcript') {
+        $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
+      } elsif ($object_type eq 'Translation') {
+        $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
+      } elsif ($object_type eq 'GeneTree') {
+        $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
+      } elsif ($object_type eq 'Family') {
+        $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
+      } else {
+        $uri .= "psychic?q=$stable_id";
+      }
     }
   }
 
