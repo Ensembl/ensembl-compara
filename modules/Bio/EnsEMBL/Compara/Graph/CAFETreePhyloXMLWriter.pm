@@ -180,15 +180,13 @@ sub _node_body {
 
   my $n_members = $node->n_members;
   my $pvalue = $node->pvalue;
-  my $taxon_id = $node->taxon_id;
-  my $taxon = $node->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
 
   my $w = $self->_writer();
 
   $w->dataElement('confidence', $pvalue, 'type' => 'pvalue') if defined $pvalue;
 
   #Taxon
-  $self->_write_taxonomy($taxon_id, $taxon->name);
+  $self->_write_species_tree_node($node);
 
   $w->startTag('binary_characters', 'present_count' => $n_members);
   # $w->dataElement('present_count', $n_members);
