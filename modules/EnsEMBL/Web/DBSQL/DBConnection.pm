@@ -135,7 +135,7 @@ sub get_DBAdaptor {
   # Funcgen Database Files Overwrite
   if ($database eq 'funcgen' && $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'}{'NAME'}) {
     my $file_path = join '/', $self->{'species_defs'}->DATAFILE_BASE_PATH, lc $species, $self->{'species_defs'}->ASSEMBLY_VERSION;
-    $dba->get_ResultSetAdaptor->dbfile_data_root($file_path) if -e $file_path && -d $file_path;
+    $dba->get_ResultSetAdaptor->dbfile_data_root($file_path) if ($dba && -e $file_path && -d $file_path);
   }  
   
   $self->{'_dbs'}{$species}{$database} = $dba;

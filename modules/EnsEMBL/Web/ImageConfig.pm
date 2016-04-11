@@ -1026,7 +1026,10 @@ sub _add_trackhub_tracks {
 
     my $on_off = $config->{'on_off'} || $track->{'on_off'};
     ## Turn track on if there's no higher setting turning it off
-    if (!$config->{'on_off'} && !$track->{'on_off'}) {
+    if ($track->{'visibility'}  eq 'hide') {
+      $on_off = 'off';
+    }
+    elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
       $on_off = 'on';
     }
 
