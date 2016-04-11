@@ -266,8 +266,12 @@ sub _write_species_tree_node {
   my ($self, $stn) = @_;
   my $w = $self->_writer();
   $w->startTag('taxonomy');
-  $w->dataElement('id', $stn->taxon_id) if $stn->taxon_id;
   $w->dataElement('scientific_name', $stn->node_name);
+  if ($stn->taxon_id and (my $taxon = $stn->taxon)) {
+    $w->dataElement('id', $stn->taxon_id);
+    my $common_name = $taxon->ensembl_alias_name || $taxon->common_name;
+    $w->dataElement('common_name', $common_name) if $common_name;
+  }
   $w->endTag();
   return;
 }
