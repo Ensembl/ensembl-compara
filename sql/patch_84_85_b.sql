@@ -28,12 +28,8 @@ ALTER TABLE gene_tree_root_attr
     ADD COLUMN lca                  INT(10) UNSIGNED,
     ADD COLUMN taxonomic_coverage   FLOAT(5),
     ADD COLUMN ratio_species_genes  FLOAT(5),
-    ADD COLUMN model_name           VARCHAR(10),
+    ADD COLUMN model_name           VARCHAR(40),
     ADD COLUMN division             VARCHAR(10);
-
-
--- Need to switch off SQL strict mode to avoid the error: "Data too long for column 'model_name' at row 1"
-SET SESSION sql_mode = '';
 
 -- Insert values from the gene_tree_root_tag table into gene_tree_root_attr table
 UPDATE gene_tree_root_attr, gene_tree_root_tag SET gene_tree_root_attr.model_name = gene_tree_root_tag.value WHERE gene_tree_root_tag.tag = 'model_name' AND gene_tree_root_attr.root_id = gene_tree_root_tag.root_id;
