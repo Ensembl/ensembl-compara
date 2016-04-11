@@ -192,6 +192,7 @@ sub fetch_features {
   my $slice = $args->{'slice'}; 
  
   my $vdb = $adaptors->variation_db_adaptor($var_db,$species);
+  return [] unless $vdb;
   my $orig_failed_flag = $vdb->include_failed_variations;
   $vdb->include_failed_variations(0);
  

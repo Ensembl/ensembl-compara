@@ -66,15 +66,21 @@ sub features {
     my $set_name   = $self->my_config('set_name');
     my $study_name = $self->my_config('study_name');
     my $var_db     = $self->my_config('db') || 'variation';
+    unless ($var_db) {
+      $self->errorTrack("Could not connect to variation database");
+      return [];
+    }
     my $svf_adaptor = $self->{'config'}->hub->get_adaptor('get_StructuralVariationFeatureAdaptor', $var_db);
     my $src_adaptor = $self->{'config'}->hub->get_adaptor('get_SourceAdaptor', $var_db);
 
-    my ($features, %colours);
+    my ($features, $adaptor, %colours);
     
     if ($set_name) {
-      $features = $svf_adaptor->fetch_all_by_Slice_VariationSet($slice, $self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', $var_db)->fetch_by_name($set_name));
+      $adaptor  = $self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', $var_db);
+      $features = $svf_adaptor->fetch_all_by_Slice_VariationSet($slice, $adaptor->fetch_by_name($set_name)) if $adaptor;
     } elsif ($study_name) {
-      $features = $svf_adaptor->fetch_all_by_Slice_Study($slice, $self->{'config'}->hub->get_adaptor('get_StudyAdaptor', $var_db)->fetch_by_name($study_name), undef);
+      $adaptor  = $self->{'config'}->hub->get_adaptor('get_StudyAdaptor', $var_db);
+      $features = $svf_adaptor->fetch_all_by_Slice_Study($slice, $adaptor->fetch_by_name($study_name), undef) if $adaptor;
     }
     else {
       my $source_name = $self->my_config('source');
