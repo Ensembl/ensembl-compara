@@ -37,6 +37,7 @@ use POSIX qw(strftime);
 use SiteDefs;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 use EnsEMBL::Web::SpeciesDefs;
 
@@ -197,16 +198,8 @@ sub get_sub_handler {
 
   my $handler;
 
-  # Try DasHandler if first segment of path is 'das'
-  if (!$species && $path_seg->[0] eq 'das') {
-
-    shift @$path_seg; # remove 'das'
-
-    ($species)  = split '.', $path_seg->[0] // '';
-    $handler    = 'EnsEMBL::Web::Apache::DasHandler';
-
-  # Try SpeciesHandler in all other cases if species is present or the file path is not an explicit .html path
-  } elsif ($species || $path_seg->[-1] !~ /\.html$/) {
+  # Try SpeciesHandler in all cases if species is present or the file path is not an explicit .html path
+  if ($species || $path_seg->[-1] !~ /\.html$/) {
 
     $species  ||= 'Multi';
     $species    = 'Multi' if $species eq 'common';
@@ -319,6 +312,7 @@ sub handler {
     return http_redirect($r, $redirect);
   }
 
+  # get these values as recently saved by parse_ensembl_uri subroutine
   my $species   = $r->subprocess_env('ENSEMBL_SPECIES');
   my $path      = $r->subprocess_env('ENSEMBL_PATH');
   my $query     = $r->subprocess_env('ENSEMBL_QUERY');
@@ -334,7 +328,7 @@ sub handler {
 
   # there is a possibility ENSEMBL_SPECIES and ENSEMBL_PATH need to be updated
   $r->subprocess_env('ENSEMBL_SPECIES', $species);
-  $r->subprocess_env('ENSEMBL_PATH',    '/'.join('/', @$path_seg));
+  $r->subprocess_env('ENSEMBL_PATH', '/'.join('/', @$path_seg));
 
   # delegate request to the required handler and get the response status code
   my $response_code = $handler ? $handler->can('handler')->($r, $species_defs) : undef;
@@ -415,6 +409,9 @@ sub childExitHandler {
 }
 
 #### Temporarily adding them here - will be moved to plugins later
+
+use EnsEMBL::Web::Cookie;
+
 sub redirect_to_mobile {}
 
 sub handle_mirror_redirect {
