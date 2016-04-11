@@ -251,11 +251,13 @@ sub _process {
 }
 
 sub _write_taxonomy {
-  my ($self, $id, $name) = @_;
+  my ($self, $taxon) = @_;
   my $w = $self->_writer();
   $w->startTag('taxonomy');
-  $w->dataElement('id', $id);
-  $w->dataElement('scientific_name', $name);
+  $w->dataElement('id', $taxon->dbID);
+  $w->dataElement('scientific_name', $taxon->name);
+  my $common_name = $taxon->ensembl_alias_name || $taxon->common_name;
+  $w->dataElement('common_name', $common_name) if $common_name;
   $w->endTag();
   return;
 }
@@ -284,7 +286,7 @@ sub _write_seq_member {
   $w->dataElement('name', $gene->stable_id());
 
   #Taxon
-  $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
+  $self->_write_taxonomy($taxon);
 
   #Dealing with Sequence
   $w->startTag('sequence');

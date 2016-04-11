@@ -200,7 +200,7 @@ sub _genomicaligntree_body {
     if ($all_genomic_aligns->[0]->genome_db->name ne "ancestral_sequences") {
       my $taxon = $all_genomic_aligns->[0]->genome_db->taxon();
       #Taxon
-      $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
+      $self->_write_taxonomy($taxon);
     }
 
     if ($compact_alignments) {
