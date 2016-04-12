@@ -307,7 +307,6 @@ sub create_tracks {
       }
     }
   }
-  use Data::Dumper; $Data::Dumper::Sortkeys = 1; warn Dumper($data);
 
   ## Indexed formats cache their data, so the above loop won't produce a track
   ## at all if there are no features in this region. In order to draw an
