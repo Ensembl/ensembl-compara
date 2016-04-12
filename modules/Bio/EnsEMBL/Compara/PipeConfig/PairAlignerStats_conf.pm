@@ -84,17 +84,17 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
             
         #Store CodingExon coverage statistics
-        'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . ' -e "CREATE TABLE IF NOT EXISTS statistics (
+        $self->db_cmd('CREATE TABLE IF NOT EXISTS statistics (
         method_link_species_set_id  int(10) unsigned NOT NULL,
-        species_name                varchar(40) NOT NULL DEFAULT \'\',
-        seq_region                  varchar(40) NOT NULL DEFAULT \'\',
+        species_name                varchar(40) NOT NULL DEFAULT "",
+        seq_region                  varchar(40) NOT NULL DEFAULT "",
         matches                     INT(10) DEFAULT 0,
         mis_matches                 INT(10) DEFAULT 0,
         ref_insertions              INT(10) DEFAULT 0,
         non_ref_insertions          INT(10) DEFAULT 0,
         uncovered                   INT(10) DEFAULT 0,
         coding_exon_length          INT(10) DEFAULT 0
-        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;"',
+        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
        'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
        'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
