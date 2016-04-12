@@ -106,7 +106,7 @@ sub default_options {
             %{ $self->SUPER::default_options() },
 
 #        'mlss_id'     => '100021',
-#        'compara_db' => 'mysql://ensadmin:ensembl@compara2/wa2_protein_trees_snapshot_84'
+#        'compara_db' => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
     };
 }
