@@ -88,21 +88,16 @@ sub _render_features {
   }
 
   ## Add in userdata tracks
-  my $user_features = $image_config ? $image_config->create_user_features : {};
-  while (my ($key, $data) = each (%$user_features)) {
-    while (my ($analysis, $track) = each (%$data)) {
-      foreach my $feature (@{$track->{'features'}}) {
-        $has_userdata++;
-        if ($chromosome{$feature->{'chr'}}) {
-          $mapped_features++;
-        }
-        else {
-          $unmapped_features++;
-        }
-        $total_features++;
-      }
+  my $user_features = $image_config ? $image_config->load_user_track_data : {};
+  #use Data::Dumper; $Data::Dumper::Sortkeys = 1; warn Dumper($user_features);
+  while (my ($key, $track) = each (%$user_features)) {
+    if ($track->{'metadata'}) {
+      $mapped_features    += $track->{'metadata'}{'mapped'};
+      $unmapped_features  += $track->{'metadata'}{'unmapped'};
+      $total_features     += $track->{'metadata'}{'mapped'} + $track->{'metadata'}{'unmapped'};
     }
   }
+  #warn ">>> TOTAL FEATURES $total_features";
 
   ## Attach the colorizing key before making the image
   my $chr_colour_key = $self->chr_colour_key;
