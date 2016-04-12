@@ -98,7 +98,7 @@ sub load_user_track_data {
   my $bin_size     = int($self->container_width / $bins);
   my $track_width  = $self->get_parameter('width') || 80;
   my @colours      = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
-  my ($feature_adaptor, $slice_adaptor, %data, $max_value, $max_mean);
+  my ($feature_adaptor, $slice_adaptor, %data, $max_value, $max_mean, $mapped, $unmapped);
   
   foreach my $track ($self->get_node('user_data')->nodes) {
     my $display = $track->get('display');
@@ -148,7 +148,7 @@ sub load_user_track_data {
                                              'config_type' => $self->type,
                                              'track'       => $track->id,
                                              );
-        ( $data{$track->id}, $max1) = $self->get_parsed_features($iow, $bins, $colour);
+        ( $data{$track->id}, $max1, $mapped, $unmapped) = $self->get_parsed_features($iow, $bins, $colour);
       }
     }
     
@@ -170,7 +170,7 @@ sub load_user_track_data {
   $self->set_parameter('max_value', $max_value);
   $self->set_parameter('max_mean',  $max_mean);
   
-  return \%data;
+  return (\%data, $mapped, $unmapped);
 }
 
 sub get_dna_align_features {
@@ -213,7 +213,7 @@ sub get_parsed_features {
   
   my $tracks = $wrapper->create_tracks(undef, {'bins' => $bins}); 
   my $sort       = 0;
-  my (%data, $max);
+  my (%data, $max, $mapped, $unmapped);
   
   foreach my $track (@$tracks) {
     my $count;
@@ -227,15 +227,17 @@ sub get_parsed_features {
       };
     }
     
-    if ($track->{'metadata'} && defined($track->{'metadata'}{'max_value'})) {
-      $max = $track->{'metadata'}{'max_value'} if $max < $track->{'metadata'}{'max_value'};
+    if ($track->{'metadata'}) {
+      $max = $track->{'metadata'}{'max_value'} if (defined($track->{'metadata'}{'max_value'}) && $max < $track->{'metadata'}{'max_value'});
+      $mapped += $track->{'metadata'}{'mapped'};
+      $unmapped += $track->{'metadata'}{'unmapped'};
     }
 
     $count++ unless $track->{'config'}{'color'};
     $sort++;
   }
   
-  return (\%data, $max);
+  return (\%data, $max, $mapped, $unmapped);
 }
 
 sub get_bigwig_features {
