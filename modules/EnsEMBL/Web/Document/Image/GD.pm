@@ -148,7 +148,7 @@ sub add_pointers {
   my ($self, $hub, $extra) = @_;
 
   my $config_name = $extra->{'config_name'};
-  my @data        = @{$extra->{'features'}};
+  my @data        = @{$extra->{'features'}||[]};
   my $species     = $hub->species;
   my $style       = lc($extra->{'style'} || $hub->param('style')) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
