@@ -788,20 +788,14 @@ sub fetch_userdata_by_id {
   my ($self, $record_id) = @_;
   
   return unless $record_id;
-  
-  my ($type, $code) = split '_', $record_id, 2;
+ 
+  my ($type, $code, $user_id) = split '_', $record_id;
   my $data = {};
   
   if ($type eq 'user') {
     my $user    = $self->user;
-    my $user_id = [ split '_', $record_id ]->[1];
-    
     return unless $user && $user->id == $user_id;
-  } else {
-    $data = $self->get_data_from_session($type, $code);
-  }
   
-  if (!scalar keys %$data) {
     my $fa       = $self->get_adaptor('get_DnaAlignFeatureAdaptor', 'userdata');
     my $aa       = $self->get_adaptor('get_AnalysisAdaptor',        'userdata');
     my $features = $fa->fetch_all_by_logic_name($record_id);
@@ -814,8 +808,10 @@ sub fetch_userdata_by_id {
     
       $data->{$record_id} = { features => $features, config => $config };
     }
-  }
   
+  } else {
+    $data = $self->get_data_from_session($type, $code);
+  }
   return $data;
 }
 
@@ -842,21 +838,7 @@ sub get_data_from_session {
   }
 
   my $file = EnsEMBL::Web::File::User->new(%file_params);
-  my $result = $file->read;
-  if ($result->{'error'}) {
-    ## TODO - do something useful with the error!
-    warn ">>> ERROR READING FILE: ".$result->{'error'};
-    return {};
-  }
-  else {
-=pod
-    my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
-
-    $parser->parse($result->{'content'}, $tempdata->{'format'});
-
-    return { parser => $parser, name => $name };
-=cut
-  }
+  return $file;
 }
 
 sub get_favourite_species {
