@@ -88,16 +88,10 @@ sub _render_features {
   }
 
   ## Add in userdata tracks
-  my $user_features = $image_config ? $image_config->load_user_track_data : {};
-  #use Data::Dumper; $Data::Dumper::Sortkeys = 1; warn Dumper($user_features);
-  while (my ($key, $track) = each (%$user_features)) {
-    if ($track->{'metadata'}) {
-      $mapped_features    += $track->{'metadata'}{'mapped'};
-      $unmapped_features  += $track->{'metadata'}{'unmapped'};
-      $total_features     += $track->{'metadata'}{'mapped'} + $track->{'metadata'}{'unmapped'};
-    }
-  }
-  #warn ">>> TOTAL FEATURES $total_features";
+  my ($user_features, $mapped, $unmapped) = $image_config ? $image_config->load_user_track_data : ({}, 0, 0);
+  $mapped_features    += $mapped;
+  $unmapped_features  += $unmapped;
+  $total_features     += $mapped + $unmapped;
 
   ## Attach the colorizing key before making the image
   my $chr_colour_key = $self->chr_colour_key;
@@ -207,8 +201,6 @@ sub _render_features {
       }
 
       ## Create pointers for userdata
-      #my @A = keys %$user_features;
-      #warn ".... CREATING POINTERS";
       if (keys %$user_features) {
         push @$pointers, $self->create_user_pointers($image, $user_features);
       } 
