@@ -64,12 +64,10 @@ sub open {
   my ($file, %args) = @_;
 
   my %format_to_class = Bio::EnsEMBL::IO::Utils::format_to_class;
-  my $subclass = $format_to_class{$file->get_format};
+  my $format          = $file->get_format;
+  my $subclass = $format_to_class{$format};
   return undef unless $subclass;
   my $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
-
-  my $format = $file->get_format;
-  return undef unless $format;
 
   my $wrapper;
   if (dynamic_use($class, 1)) {
@@ -210,18 +208,29 @@ sub create_tracks {
   my $prioritise  = 0;
   my ($bin_sizes, $bins);
 
-=pod
-  if (!$slice) {
+  my $seq_region_names = [];
+  my $drawn_chrs  = $hub->species_defs->get_config($hub->data_species, 'ENSEMBL_CHROMOSOMES');
+  if ($slice) {
+    $seq_region_names = [$slice->seq_region_name];
+    ## Allow for seq region synonyms
+    if ($extra_config->{'use_synonyms'}) {
+      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+    }
+  }
+  else {
     ## Sort out chromosome info
-    my $drawn_chrs  = $hub->species_defs->get_config($hub->data_species, 'ENSEMBL_CHROMOSOMES');
     $bins           = $extra_config->{'bins'} || 150;
     my $adaptor     = $hub->get_adaptor('get_SliceAdaptor');
     foreach my $chr (@$drawn_chrs) {
+      push @$seq_region_names, $chr;
       my $slice = $adaptor->fetch_by_region('chromosome', $chr);
       $bin_sizes->{$chr} = $slice->length / $bins; 
+      ## Allow for seq region synonyms
+      if ($extra_config->{'use_synonyms'}) {
+        push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+      }
     }
   }
-=cut
 
   my $max_seen = -1;
   ## We already fetched the data in the child module in one fell swoop!
@@ -238,6 +247,9 @@ sub create_tracks {
 
     foreach my $f (@$raw_features) {
       my ($seqname, $start, $end, $score) = @$f;
+      ## Skip features that lie outside the current slice
+      next if ( !(first {$seqname eq $_} @$seq_region_names)
+                || $end < $slice->start || $start > $slice->end);
       push @$features, {
                         'seq_region' => $seqname,
                         'start'      => $start,
@@ -254,26 +266,20 @@ sub create_tracks {
     $data->{$track_key}{'features'}{$strand} = $features;
   }
   else {
-    ## Allow for seq region synonyms
-    my $seq_region_names = [$slice->seq_region_name];
-    if ($extra_config->{'use_synonyms'}) {
-      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
-    }
-
     while ($parser->next) {
       my $track_key = $self->build_metadata($parser, $data, $extra_config, $order);
       my %metadata  = %{$data->{$track_key}{'metadata'}||{}};
       $prioritise   = 1 if $metadata{'priority'};
 
       ## Set up density bins if needed
-      if (!$slice) {
+      if (!$slice && !keys %{$data->{$track_key}{'bins'}}) {
         foreach my $chr (keys %$bin_sizes) {
           $data->{$track_key}{'bins'}{$chr}{$_} = 0 for 1..$bins;
         }
       }
 
       my ($seqname, $start, $end) = $self->coords;
-      if($extra_config->{'pix_per_bp'}) {
+      if ($slice && $extra_config->{'pix_per_bp'}) {
         ## Skip if already have something on this pixel
         my $here = int($start*$extra_config->{'pix_per_bp'});
         next if $max_seen >= $here;
@@ -287,29 +293,34 @@ sub create_tracks {
         $self->build_feature($data, $track_key, $slice, $strandable);
       }
       else {
-        next unless $seqname;
-        my $feature_strand = $self->parser->get_strand if $strandable;
-        $feature_strand  ||= $metadata{'default_strand'};
-        ## Add this feature to the appropriate density bin
-        my $bin_size    = $bin_sizes->{$seqname};
-        my $bin_number  = int($start / $bin_size) + 1;
-        $data->{$track_key}{'bins'}{$feature_strand}{$seqname}{$bin_number}++;
+        next unless ($seqname && first {$seqname eq $_} @$seq_region_names);
+        if (grep(/$seqname/, @$drawn_chrs)) {
+          $data->{$track_key}{'metadata'}{'mapped'}++;
+          ## Add this feature to the appropriate density bin
+          my $bin_size    = $bin_sizes->{$seqname};
+          my $bin_number  = int($start / $bin_size) + 1;
+          $data->{$track_key}{'bins'}{$seqname}{$bin_number}++;
+        }
+        else {
+          $data->{$track_key}{'metadata'}{'unmapped'}++;
+        }
       }
     }
   }
-#use Data::Dumper; warn '>>> CREATED TRACKS '.Dumper($data);
+  use Data::Dumper; $Data::Dumper::Sortkeys = 1; warn Dumper($data);
 
   ## Indexed formats cache their data, so the above loop won't produce a track
   ## at all if there are no features in this region. In order to draw an
   ## 'empty track' glyphset we need to manually create the empty track
   if (!keys $data) {
     $order  = ['data'];
-    $data   = {'data' => {'metadata' => $extra_config || {},
-                          'features' => {
-                                          '1' => [],
-                                         '-1' => [],
-                                        }
-              }};
+    $data   = {'data' => {'metadata' => $extra_config || {}}};
+    if ($slice) {
+      $data->{'data'}{'features'} = {'1' => [], '-1' => []};
+    }
+    else {
+      $data->{'data'}{'bins'} = {};
+    }
   }
 
   if (!$slice) {
@@ -397,11 +408,9 @@ sub munge_densities {
   my ($self, $data) = @_;
   while (my ($key, $info) = each (%$data)) {
     my $track_max = 0;
-    foreach my $strand (keys %{$info->{'bins'}}) {
-      foreach my $chr (keys %{$info->{'bins'}{$strand}}) {
-        my $chr_max = max(values %{$info->{'bins'}{$strand}{$chr}});
-        $track_max = $chr_max if $chr_max > $track_max;
-      }
+    foreach my $chr (keys %{$info->{'bins'}}) {
+      my $chr_max = max(values %{$info->{'bins'}{$chr}});
+      $track_max = $chr_max if $chr_max > $track_max;
     }
     $info->{'metadata'}{'max_value'} = $track_max;
   }
