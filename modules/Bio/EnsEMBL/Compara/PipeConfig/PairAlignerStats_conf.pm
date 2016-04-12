@@ -129,8 +129,8 @@ sub pipeline_analyses {
 			     },
                 -input_ids => [{}],
               -flow_into => {
-                              1 => [ 'coding_exon_stats_summary' ],
-			      2 => [ 'coding_exon_stats' ],
+                              'A->1' => [ 'coding_exon_stats_summary' ],
+			      '2->A' => [ 'coding_exon_stats' ],
 			     },
 	      -rc_name => '1Gb',
 	    },
@@ -145,7 +145,6 @@ sub pipeline_analyses {
 				'mlss_id' => $self->o('mlss_id'),
 				},
                 -rc_name => '1Gb',
-                -wait_for =>  [ 'coding_exon_stats' ],
             },
 	   ];
 }
