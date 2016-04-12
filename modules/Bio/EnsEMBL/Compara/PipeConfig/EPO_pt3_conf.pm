@@ -179,6 +179,16 @@ sub pipeline_analyses {
 return 
 [
 
+            {
+                -logic_name => 'check_pythonpath',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+                -parameters => {
+                        'cmd' => q{python -c 'import ortheus'},
+                },
+                -input_ids => [{}],
+                -flow_into => [ 'copy_table_factory' ],
+            },
+
             {   -logic_name => 'copy_table_factory',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
@@ -186,7 +196,6 @@ return
                     'inputlist'    => [ 'method_link', 'genome_db', 'species_set', 'species_set_header', 'method_link_species_set', 'anchor_align', 'dnafrag', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
                     'column_names' => [ 'table' ],
                 },
-                -input_ids => [{}],
                 -flow_into => {
                     '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
                     '1->A' => [ 'create_ancestral_db', 'set_internal_ids' ],
