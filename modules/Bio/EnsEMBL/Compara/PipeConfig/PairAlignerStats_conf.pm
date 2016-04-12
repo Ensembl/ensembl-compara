@@ -107,10 +107,7 @@ sub resource_classes {
 
     return {
 	    %{$self->SUPER::resource_classes}, # inherit 'default' from the parent class
-	    '100Mb' => { 'LSF' => '-q production-rh6 -M100 -R"rusage[mem=100]"' },
-	    '1Gb'   => { 'LSF' => '-q production-rh6 -M1000 -R"rusage[mem=1000]"' },
-	    '1.8Gb' => { 'LSF' => '-q production-rh6 -M1800 -R"rusage[mem=1800]"' },
-	    '3.6Gb' => { 'LSF' => '-q production-rh6 -M3600 -R"rusage[mem=3600]"' },
+	    '1Gb'   => { 'LSF' => '-M1000 -R"rusage[mem=1000]"' },
 	   };
 }
 
