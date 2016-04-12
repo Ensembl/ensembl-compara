@@ -75,6 +75,11 @@ sub path {
     return $self->{'path'};
 }
 
+sub hal_filehandle {
+    my $self = shift;
+    return $self->{'hal_fd'};
+}
+
 # FIXME: this is really bad and not at *all* what goes on in other
 # get_adaptor methods. But I'm planning on rewriting all of this
 # (there isn't much to it!) after getting the hang of perl anyway.
@@ -123,7 +128,7 @@ sub genomes {
 # "ucscChrNames" metadata attribute is set to "true")
 sub hal_sequence_name {
     my ($self, $genome_name, $seq_name) = @_;
-    if ($self->genome_metadata($genome_name)->{'ucscChrNames'} eq "true") {
+    if ($self->genome_metadata($genome_name)->{'ucscChrNames'} && $self->genome_metadata($genome_name)->{'ucscChrNames'} eq "true") {
         # Try to see if there is a sequence named "chr___" first, if
         # not, try just "____" as usual
         my $chr_seq_name = "chr".$seq_name;
@@ -136,6 +141,7 @@ sub hal_sequence_name {
 
 sub _get_GenomeDB {
     my ($self, $genome_name) = @_;
+
     if ($self->{'use_hal_genomes'}) {
 
     } else {
@@ -149,8 +155,11 @@ sub _get_GenomeDB {
             warn("Could not find ensembl assembly name for genome with hal ".
                  "name $genome_name, and we are not using hal GenomeDBs.");
         }
-        my $gdba = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB");
-        return $gdba->fetch_by_name_assembly($species_name, $assembly_name);
+        #my $gdba = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB"); 
+        my $gdba = Bio::EnsEMBL::Registry->get_adaptor("mouse_master", "compara", "GenomeDB"); 
+        my $ass = $gdba->fetch_by_name_assembly($species_name, $assembly_name);
+        my $ass_name = defined $ass ? $ass->name : '';
+        return $ass;
     }
 }
 
