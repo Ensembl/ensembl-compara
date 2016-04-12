@@ -59,7 +59,7 @@ sub _render_features {
   my $hub          = $self->hub;
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
-  my ($html, $total_features, $mapped_features, $unmapped_features, $has_internal_data, $has_userdata);
+  my ($html, $total_features, $mapped_features, $unmapped_features, $has_internal_data);
   my $chromosomes  = $species_defs->ENSEMBL_CHROMOSOMES || [];
   my %chromosome = map {$_ => 1} @$chromosomes;
   while (my ($type, $set) = each (%$features)) {
@@ -88,18 +88,20 @@ sub _render_features {
   }
 
   ## Add in userdata tracks
-  my $user_features = $image_config ? $image_config->create_user_features : {};
-  while (my ($key, $data) = each (%$user_features)) {
-    while (my ($analysis, $track) = each (%$data)) {
-      foreach my $feature (@{$track->{'features'}}) {
-        $has_userdata++;
-        if ($chromosome{$feature->{'chr'}}) {
-          $mapped_features++;
+  my $user_features = {}; #$image_config ? $image_config->load_user_track_data : {};
+  while (my ($key, $track) = each (%$user_features)) {
+    #warn ">>> TRACK $key";
+    foreach my $chr (keys %{$track->{'bins'}}) {
+      foreach my $bin (keys %{$track->{'bins'}{$chr}}) {
+        if ($track->{'bins'}{$chr}{$bin} > 0) {
+          if ($chromosome{$chr}) {
+            $mapped_features++;
+          }
+          else {
+            $unmapped_features++;
+          }
+          $total_features++;
         }
-        else {
-          $unmapped_features++;
-        }
-        $total_features++;
       }
     }
   }
@@ -189,7 +191,7 @@ sub _render_features {
       }
       else {
         $title = 'Location of your feature';
-        $title .= 's' if $has_userdata > 1;
+        $title .= 's' if $total_features > 1;
       }
       $html .= "<h3>$title</h3>" if $title;        
      
@@ -212,6 +214,8 @@ sub _render_features {
       }
 
       ## Create pointers for userdata
+      #my @A = keys %$user_features;
+      #warn ".... CREATING POINTERS";
       if (keys %$user_features) {
         push @$pointers, $self->create_user_pointers($image, $user_features);
       } 
@@ -328,6 +332,7 @@ sub _render_features {
     $html .= $table->render;
 
     ## Table(s) of features
+=pod
     while (my ($k, $v) = each (%$user_features)) {
       while (my ($ftype, $data) = each (%$v)) {
         my $extra_columns = $ftype eq 'Gene' ?
@@ -342,7 +347,7 @@ sub _render_features {
         $html .= $self->_feature_table($ftype, [$data->{'features'}, $extra_columns], $default_column_info);
       }
     }
-
+=cut
   }
 
   unless (keys %$features || keys %$user_features ) {
