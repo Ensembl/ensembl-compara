@@ -102,11 +102,10 @@ sub load_user_track_data {
   
   foreach my $track ($self->get_node('user_data')->nodes) {
     my $display = $track->get('display');
-    my $ftype = $track->get('ftype');
-    
     next if $display eq 'off';
     ## Of the remote formats, only bigwig is currently supported on this scale
-    next if $track->get('url') && lc $track->get('format') ne 'bigwig';    
+    my $format = lc $track->get('format');
+    next if ($format eq 'bigwig' || $format eq 'bam' || $format eq 'cram');
 
     my $logic_name = $track->get('logic_name');
     my $colour     = \@colours;
@@ -149,7 +148,7 @@ sub load_user_track_data {
                                              'config_type' => $self->type,
                                              'track'       => $track->id,
                                              );
-        ( $data{$track->id}, $max1, $max2) = $self->get_parsed_features($track, $iow, $bins, $colour);
+        ( $data{$track->id}, $max1) = $self->get_parsed_features($iow, $bins, $colour);
       }
     }
     
@@ -208,7 +207,9 @@ sub get_dna_align_features {
 }
 
 sub get_parsed_features {
-  my ($self, $track, $wrapper, $bins, $colours) = @_;
+  ## Parse the file and then munge the results into the format 
+  ## needed by the vertical drawing code
+  my ($self, $wrapper, $bins, $colours) = @_;
   
   my $tracks = $wrapper->create_tracks(undef, {'bins' => $bins}); 
   my $sort       = 0;
@@ -219,16 +220,17 @@ sub get_parsed_features {
     my $name = $track->{'metadata'}{'name'};
     
     while (my ($chr, $results) = each %{$track->{'bins'}}) {
-      my @scores = sort {$results->{$a} <=> $results->{$b}} values %$results;
       $data{$chr}{$name} = {
-        scores => \@scores,
+        scores => [map $results->{$_}, 1..$bins],
         colour => $track->{'data'}{'config'}{'color'} || $colours->[$count],
         sort   => $sort
       };
     }
     
-    $max = $track->{'metadata'}{'max_value'} if $max < $track->{'metadata'}{'max_value'};
-    
+    if ($track->{'metadata'} && defined($track->{'metadata'}{'max_value'})) {
+      $max = $track->{'metadata'}{'max_value'} if $max < $track->{'metadata'}{'max_value'};
+    }
+
     $count++ unless $track->{'config'}{'color'};
     $sort++;
   }
@@ -253,40 +255,50 @@ sub get_bigwig_features {
 }
 
 sub create_user_features {
+## Deprecated - use load_user_track_data instead
   my $self   = shift;
   my $hub    = $self->hub;
   my $menu   = $self->get_node('user_data');
   my $tracks = {};
-  
+
   return $tracks unless $menu;
   
   foreach ($menu->nodes) {
     next if $_->get('display') =~ /density/;
     next unless $_->get('display') ne 'off';
     my $data   = $hub->fetch_userdata_by_id($_->id);
-    my $parser = $data->{'parser'};
 
-    if ($parser) {
-      while (my ($type, $track) = each %{$parser->get_all_tracks}) {
-        my @rows;
-        foreach my $feature (@{$track->{'features'}}) {
-          push @rows, {
-            chr     => $feature->seqname || $feature->slice->name,
-            start   => $feature->rawstart,
-            end     => $feature->rawend,
-            label   => $feature->id,
-            gene_id => $feature->id,
-            %{$feature->attribs},
-          };
+    if (ref($data) =~ /File/) {
+      
+      my $iow = EnsEMBL::Web::IOWrapper::open($data,
+                                              'hub'         => $hub,
+                                              'config_type' => $self->type,
+                                              'track'       => $_->id,
+                                              );
+
+      if ($iow) {
+        my $extra_config = {
+                            'default_strand'  => 1,
+                            'display'         => $_->get('display'),
+                            'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
+                            };
+
+        ## Parse the file, filtering on the current slice
+        $data = $iow->create_tracks(undef, $extra_config);
+
+        ## Munge parsed data into same format used by database content
+        ## TODO Make this consistent with horizontal drawing code
+        while (my($key, $track) = each (%$data)) {
+          my $features = $tracks->{$key}{'features'}{'1'} || [];
+          push @$features, @{$tracks->{$key}{'features'}{'-1'}||[]};
+
+          $tracks->{$key} = {'features' => $features,
+                              'config'  => {'track_name'  => $track->{'metadata'}{'name'},
+                                            'track_label' => $track->{'metadata'}{'name'},
+                                            },
+                            };
+      
         }
-        
-        $track->{'config'}{'name'} = $data->{'name'};
-        $track->{'config'}{'ftype'} = $_->get('ftype');
-        
-        $tracks->{$_->id}{$type} = {
-          features => \@rows,
-          config   => $track->{'config'}
-        };
       }
     } else {
       while (my ($analysis, $track) = each %$data) {
@@ -299,16 +311,16 @@ sub create_user_features {
           @{$track->{'features'}}
         ) {
           push @rows, {
-            chr     => $f->{'slice'}->seq_region_name,
-            start   => $f->{'start'},
-            end     => $f->{'end'},
-            length  => $f->{'length'},
-            label   => "$f->{'start'}-$f->{'end'}",
-            gene_id => $f->{'gene_id'},
+            seq_region  => $f->{'slice'}->seq_region_name,
+            start       => $f->{'start'},
+            end         => $f->{'end'},
+            length      => $f->{'length'},
+            label       => "$f->{'start'}-$f->{'end'}",
+            gene_id     => $f->{'gene_id'},
           };
         }
         
-        $tracks->{$_->id}{$analysis} = {
+        $tracks->{$_->id} = {
           features => \@rows,
           config   => $track->{'config'}
         };
