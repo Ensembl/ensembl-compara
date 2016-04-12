@@ -111,35 +111,36 @@ sub create_user_pointers {
   my %used_colour  = ();
   my @all_colours  = @{$hub->species_defs->TRACK_COLOUR_ARRAY||[]};
 
-  while (my ($key, $hash) = each %$data) {
-    my $display = $image_config->get_node($key)->get('display');
+  while (my ($key, $track) = each %$data) {
+    my $display = $track->{'metadata'} && $track->{'metadata'}{'style'} 
+                    ? $track->{'metadata'}{'style'} : $image_config->get_node($key)->get('display');
+    my ($render, $style) = split '_', $display;
+    $image_config->get_node($key)->set('display', $style);
     
-    while (my ($analysis, $track) = each %$hash) {
-      my ($render, $style) = split '_', $display;
-      my $colour = $self->_user_track_colour($track); 
-      if ($used_colour{$colour}) {
-        ## pick a unique colour instead
-        foreach (@all_colours) {
-          next if $used_colour{$_};
-          $colour = $_;
-          last;
-        }
-      }
-      $image_config->get_node($key)->set('colour', $colour);
-      $used_colour{$colour} = 1;
-      if ($render eq 'highlight') {
-        push @pointers, $image->add_pointers($hub, {
-          config_name => 'Vkaryotype',
-          features    => $track->{'features'},          
-          color       => $colour,
-          style       => $style,
-          zmenu       => 'VUserData',
-          track       => $key,
-        });
+    my $colour = $track->{'metadata'} && $track->{'metadata'}{'color'}
+                    ? $track->{'metadata'}{'color'} : $self->_user_track_colour($track); 
+    if ($used_colour{$colour}) {
+      ## pick a unique colour instead
+      foreach (@all_colours) {
+        next if $used_colour{$_};
+        $colour = $_;
+        last;
       }
     }
+    $image_config->get_node($key)->set('colour', $colour);
+    $used_colour{$colour} = 1;
+    if ($render eq 'highlight') {
+      push @pointers, $image->add_pointers($hub, {
+        config_name => 'Vkaryotype',
+        features    => $track->{'bins'},          
+        color       => $colour,
+        style       => $style,
+        zmenu       => 'VUserData',
+        track       => $key,
+      });
+    }
   }
-  
+ 
   return @pointers;
 }
 
@@ -148,6 +149,7 @@ sub configure_UserData_key {
   my $header       = 'Key to user tracks';
   my $column_order = [qw(colour track)];
   my (@rows, %labels);
+  return {};
 
   foreach (grep $_->get('display') ne 'off', $image_config->get_node('user_data')->nodes) {
     my $id;
