@@ -121,7 +121,7 @@ sub parse_path_segments {
   ## Parses path segments to identify type, action and function
   my $self = shift;
 
-  ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@{$self->path_segments || []}, '', '', '');
+  ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@{$self->path_segments || []}, '', '', '', '');
 }
 
 sub upload_size_limit {
