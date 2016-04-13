@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,39 +16,43 @@ limitations under the License.
 
 =cut
 
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <http://www.ensembl.org/Help/Contact>.
+
 =head1 NAME
 
- Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf
+Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf
+
+=head1 DESCRIPTION
+
+Pipeline that computes and stores statistics for a pairwise alignment.
+
+Note: This is usually embedded in all the pairwise-alignment pipelines, but
+is also available as a standalone pipeline in case the stats have to be
+rerun or the alignment has been imported
 
 =head1 SYNOPSIS
 
-    #0. This script is simply a pared-down version of Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
-        -- all the alignment steps have been removed but otherwise it is the same.
+This pipeline requires two arguments: a compara database (to read the alignment
+and store the stats) and a mlss_id.
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
+The first analysis ("pairaligner_stats") can be re-seeded with extra parameters to
+compute stats on other alignments.
 
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+=head1 AUTHORSHIP
 
-    #3. Make sure that all default_options are set correctly, especially:
-        release
-        pipeline_db (-host)
-        resource_classes 
-        ref_species (if not homo_sapiens)
-        bed_dir
+Ensembl Team. Individual contributions can be found in the GIT log.
 
-    #4. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf --dbname hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --bed_dir /nfs/ensembl/compara/dumps/bed/
+=head1 APPENDIX
 
-        Using a configuration file:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --password <your_password> --reg_conf reg.conf --conf_file input.conf --config_url mysql://user:pass\@host:port/db_name
-
-    #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
-
-
-=head1 DESCRIPTION  
-
-    You will probably need to provide a registry configuration file pointing to pore and compara databases (--reg_conf).
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -56,33 +60,31 @@ package Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
     return {
-	%{$self->SUPER::default_options},   # inherit the generic ones
+        %{$self->SUPER::default_options},   # inherit the generic ones
 
-	# executable locations:
-	'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-	'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-	'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
+        # Dump location
+        'dump_dir'      => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/pairalignerstats_'.$self->o('rel_with_suffix').'/',
+        'bed_dir'       => $self->o('dump_dir').'bed_dir',
+        'output_dir'    => $self->o('dump_dir').'output_dir',
 
-        #
-	#Default pairaligner config
-	#
-	'bed_dir' => '/nfs/production/panda/ensemblgenomes/production/'.$ENV{USER}.'/pairaligner_stats/coding-region-stats',
-	'output_dir' => '/nfs/production/panda/ensemblgenomes/production/'.$ENV{USER}.'/pairaligner_stats/coding-region-stats',
-            
+        # Executable locations
+        'dump_features_exe'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
+        'compare_beds_exe'              => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
+        'create_pair_aligner_page_exe'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
     };
 }
 
+
 sub pipeline_create_commands {
     my ($self) = @_;
-
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-            
         #Store CodingExon coverage statistics
         $self->db_cmd('CREATE TABLE IF NOT EXISTS statistics (
         method_link_species_set_id  int(10) unsigned NOT NULL,
@@ -104,49 +106,57 @@ sub pipeline_create_commands {
 
 sub resource_classes {
     my ($self) = @_;
-
     return {
-	    %{$self->SUPER::resource_classes}, # inherit 'default' from the parent class
-	    '1Gb'   => { 'LSF' => '-M1000 -R"rusage[mem=1000]"' },
-	   };
+        %{$self->SUPER::resource_classes}, # inherit 'default' from the parent class
+        '1Gb'   => { 'LSF' => '-M1000 -R"rusage[mem=1000]"' },
+    };
 }
+
+
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    }
+}
+
 
 sub pipeline_analyses {
     my ($self) = @_;
 
     return [
-	    { -logic_name => 'pairaligner_stats',
-	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
-	      -parameters => {
-			      'dump_features' => $self->o('dump_features_exe'),
-			      'compare_beds' => $self->o('compare_beds_exe'),
-			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
-			      'bed_dir' => $self->o('bed_dir'),
-			      'mlss_id'        => $self->o('mlss_id'),
-			      'ensembl_release' => $self->o('release'),
-			      'reg_conf' => $self->o('reg_conf'),
-			      'output_dir' => $self->o('output_dir'),
-			     },
-                -input_ids => [{}],
-              -flow_into => {
-                              'A->1' => [ 'coding_exon_stats_summary' ],
-			      '2->A' => [ 'coding_exon_stats' ],
-			     },
-	      -rc_name => '1Gb',
-	    },
-            {   -logic_name => 'coding_exon_stats',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
-                -hive_capacity => 10,
-                -rc_name => '1Gb',
+        {   -logic_name => 'pairaligner_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
+            -parameters => {
+                'dump_features'             => $self->o('dump_features_exe'),
+                'compare_beds'              => $self->o('compare_beds_exe'),
+                'create_pair_aligner_page'  => $self->o('create_pair_aligner_page_exe'),
+                'bed_dir'                   => $self->o('bed_dir'),
+                'ensembl_release'           => $self->o('release'),
+                'output_dir'                => $self->o('output_dir'),
             },
-            {   -logic_name => 'coding_exon_stats_summary',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
-		-parameters => {
-				'mlss_id' => $self->o('mlss_id'),
-				},
-                -rc_name => '1Gb',
+            -input_ids  => [
+                {
+                    'compara_db'    => $self->o('compara_db'),
+                    'mlss_id'       => $self->o('mlss_id'),
+                }
+            ],
+            -flow_into  => {
+                'A->1' => [ 'coding_exon_stats_summary' ],
+                '2->A' => [ 'coding_exon_stats' ],
             },
-	   ];
+            -rc_name    => '1Gb',
+        },
+        {   -logic_name => 'coding_exon_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
+            -rc_name    => '1Gb',
+        },
+        {   -logic_name => 'coding_exon_stats_summary',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
+            -rc_name    => '1Gb',
+        },
+    ];
 }
 
 1;
