@@ -228,7 +228,7 @@ sub http_redirect {
 
 sub time_str {
   ## @return Printable time string
-  return strftime("%a %b %d %H:%M:%S %Y", shift || localtime);
+  return strftime("%a %b %d %H:%M:%S %Y", @_ ? localtime(shift) : localtime);
 }
 
 sub request_start_hook {
@@ -368,29 +368,30 @@ sub cleanupHandler {
   ## @param Apache2::RequestRec request object
   my $r = shift;
 
-  return OK if $r->unparsed_uri eq '*';
+  return OK if $r->unparsed_uri eq '*' || $r->unparsed_uri =~ m|^/Crash|;
 
   # run any plugged-in code
   request_end_hook($r);
 
-  my $start_time = $r->subprocess_env('LOG_REQUEST_START');
-  my $time_taken = $r->subprocess_env('LOG_REQUEST_TIME');
+  # no need to go further if debug flag is off
+  return OK unless $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+
+  my $start_time  = $r->subprocess_env('LOG_REQUEST_START');
+  my $time_taken  = $r->subprocess_env('LOG_REQUEST_TIME');
+  my $uri         = $r->subprocess_env('LOG_REQUEST_URI');
 
   if ($time_taken >= $SiteDefs::ENSEMBL_LONGPROCESS_MINTIME) {
 
-    my $uri    = $r->subprocess_env('LOG_REQUEST_URI');
     my ($size) = $Apache2::SizeLimit::HOW_BIG_IS_IT ? $Apache2::SizeLimit::HOW_BIG_IS_IT->() : Apache2::SizeLimit->_check_size;
 
-    if ($SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS) {
-      my @X = localtime($start_time);
-
-      warn sprintf(
-        "LONG PROCESS: %12s DT:  %04d-%02d-%02d %02d:%02d:%02d Time: %10s Size: %10s\nLONG PROCESS: %12s REQ: %s\nLONG PROCESS: %12s IP:  %s  UA: %s\n",
-        $$, $X[5]+1900, $X[4]+1, $X[3], $X[2], $X[1], $X[0], $time_taken, $size,
-        $$, $uri,
-        $$, $r->subprocess_env('HTTP_X_FORWARDED_FOR'), $r->headers_in->{'User-Agent'}
-      );
-    }
+    warn sprintf(
+      "LONG PROCESS: %12s AT: %s  TIME: %s  SIZE: %s\nLONG PROCESS: %12s REQ: %s\nLONG PROCESS: %12s IP: %s  UA: %s\n",
+      $$, time_str($start_time), $time_taken, $size,
+      $$, $uri,
+      $$, $r->subprocess_env('HTTP_X_FORWARDED_FOR'), $r->headers_in->{'User-Agent'}
+    );
+  } else {
+    warn sprintf "REQUEST: [served at %s by %s in %ss] %s\n", time_str($start_time), $$, $time_taken, $uri;
   }
 
   return OK;
