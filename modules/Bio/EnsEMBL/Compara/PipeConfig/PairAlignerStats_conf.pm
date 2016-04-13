@@ -133,7 +133,7 @@ sub pipeline_analyses {
                 'compare_beds'              => $self->o('compare_beds_exe'),
                 'create_pair_aligner_page'  => $self->o('create_pair_aligner_page_exe'),
                 'bed_dir'                   => $self->o('bed_dir'),
-                'ensembl_release'           => $self->o('release'),
+                'ensembl_release'           => $self->o('ensembl_release'),
                 'output_dir'                => $self->o('output_dir'),
             },
             -input_ids  => [
