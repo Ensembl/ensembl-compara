@@ -151,6 +151,7 @@ sub pipeline_analyses {
         {   -logic_name => 'coding_exon_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
             -rc_name    => '1Gb',
+            -analysis_capacity  => 100,
         },
         {   -logic_name => 'coding_exon_stats_summary',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
