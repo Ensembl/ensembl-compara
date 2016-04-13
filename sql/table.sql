@@ -111,8 +111,8 @@ CREATE TABLE ncbi_taxa_node (
 
 CREATE TABLE ncbi_taxa_name (
   taxon_id                    int(10) unsigned NOT NULL,
-  name                        varchar(255),
-  name_class                  varchar(50),
+  name                        varchar(255) NOT NULL,
+  name_class                  varchar(50) NOT NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
@@ -240,7 +240,7 @@ CREATE TABLE species_set (
 CREATE TABLE species_set_tag (
   species_set_id              int(10) unsigned NOT NULL, # FK species_set.species_set_id
   tag                         varchar(50) NOT NULL,
-  value                       mediumtext,
+  value                       mediumtext NOT NULL,
 
   FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
 
@@ -331,7 +331,7 @@ CREATE TABLE method_link_species_set (
 CREATE TABLE method_link_species_set_tag (
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   tag                         varchar(50) NOT NULL,
-  value                       mediumtext,
+  value                       mediumtext NOT NULL,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
@@ -494,8 +494,8 @@ CREATE TABLE dnafrag (
   length                      int(11) DEFAULT 0 NOT NULL,
   name                        varchar(40) DEFAULT '' NOT NULL,
   genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
-  coord_system_name           varchar(40) DEFAULT NULL,
-  is_reference                tinyint(1) DEFAULT 1,
+  coord_system_name           varchar(40) DEFAULT '' NOT NULL,
+  is_reference                tinyint(1) DEFAULT 1 NOT NULL,
 
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
@@ -565,7 +565,7 @@ CREATE TABLE genomic_align_block (
   method_link_species_set_id  int(10) unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
   score                       double,
   perc_id                     tinyint(3) unsigned DEFAULT NULL,
-  length                      int(10),
+  length                      int(10) NOT NULL,
   group_id                    bigint unsigned DEFAULT NULL,
   level_id                    tinyint(2) unsigned DEFAULT 0 NOT NULL,
 
@@ -686,7 +686,7 @@ CREATE TABLE genomic_align (
   dnafrag_start               int(10) DEFAULT 0 NOT NULL,
   dnafrag_end                 int(10) DEFAULT 0 NOT NULL,
   dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
-  cigar_line                  mediumtext,
+  cigar_line                  mediumtext NOT NULL,
   visible                     tinyint(2) unsigned DEFAULT 1 NOT NULL,
   node_id                     bigint(20) unsigned DEFAULT NULL,
 
@@ -759,7 +759,7 @@ CREATE TABLE constrained_element (
   dnafrag_id bigint unsigned NOT NULL,
   dnafrag_start int(12) unsigned NOT NULL,
   dnafrag_end int(12) unsigned NOT NULL,
-  dnafrag_strand int(2),
+  dnafrag_strand int(2) not null,
   method_link_species_set_id int(10) unsigned NOT NULL,
   p_value double,
   score double NOT NULL default 0,
@@ -1064,13 +1064,13 @@ CREATE TABLE peptide_align_feature (
   hstart                      int(11) DEFAULT 0 NOT NULL,
   hend                        int(11) DEFAULT 0 NOT NULL,
   score                       double(16,4) DEFAULT 0.0000 NOT NULL,
-  evalue                      double,
-  align_length                int(10),
-  identical_matches           int(10),
-  perc_ident                  int(10),
-  positive_matches            int(10),
-  perc_pos                    int(10),
-  hit_rank                    int(10),
+  evalue                      double not null,
+  align_length                int(10) not null,
+  identical_matches           int(10) not null,
+  perc_ident                  int(10) not null,
+  positive_matches            int(10) not null,
+  perc_pos                    int(10) not null,
+  hit_rank                    int(10) not null,
   cigar_line                  mediumtext,
 
 #  FOREIGN KEY (qmember_id) REFERENCES seq_member(seq_member_id),
