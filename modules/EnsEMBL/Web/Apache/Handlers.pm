@@ -376,6 +376,9 @@ sub cleanupHandler {
   # no need to go further if debug flag is off
   return OK unless $SiteDefs::ENSEMBL_DEBUG_FLAGS && $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
+  # if LOG_REQUEST_IGNORE is set true by the code, don't log the request url
+  return OK if $r->subprocess_env('LOG_REQUEST_IGNORE');
+
   my $start_time  = $r->subprocess_env('LOG_REQUEST_START');
   my $time_taken  = $r->subprocess_env('LOG_REQUEST_TIME');
   my $uri         = $r->subprocess_env('LOG_REQUEST_URI');
