@@ -141,7 +141,7 @@ sub render {
   } elsif ($mlss->method->class eq 'SyntenyRegion.synteny') {
     return $self->render_pairwise($mlss);
   } elsif ($mlss->method->class =~ /^GenomicAlign/) {
-    return $self->print_wga_stats($mlss);
+    return $self->render_multiple($mlss);
   } else {
     return $self->error_message('No statistics', sprintf('There are no statistics available for the analysis "%s".', $mlss->name), 'warning');
   }
@@ -505,8 +505,57 @@ sub html_size_distribution_2 {
       $self->thousandify($alignment_results->{'num_blocks'}),
       $html_table_chains,
       );
+};
 
 
+sub render_multiple {
+  my $self    = shift;
+  my $mlss    = shift;
+
+  my ($alignment_results) = $self->fetch_multiple_input($mlss);
+  my $html = '';
+  $html .= $self->print_wga_stats($mlss);
+  $html .= '<br/>';
+  $html .= $self->html_size_distribution_1($alignment_results);
+  return $html;
+}
+
+sub html_size_distribution_1 {
+    my ($self, $alignment_results) = @_;
+    my $max_num_blocks = max(@{$alignment_results->{num_blocks}});
+    my $max_size_blocks = max(@{$alignment_results->{size_blocks}});
+    my $html_table_blocks = '';
+    foreach my $i (0..(scalar(@window_desc)-1)) {
+      next unless $alignment_results->{num_blocks}->[$i];
+      $html_table_blocks .= sprintf(
+        '<tr>
+          <td>%s</td>
+          <td><div style="background-color: #FFCC00; height: 25px; width: %s;" >%s</div></td>
+          <td><div style="background-color: #6699FF; height: 25px; width: %s;" >%s</div></td>
+        </tr>',
+        $window_desc[$i]->[1],
+        barchart_width($alignment_results->{num_blocks}->[$i], $max_num_blocks),
+        $self->thousandify($alignment_results->{num_blocks}->[$i]) || '',
+        barchart_width($alignment_results->{size_blocks}->[$i], $max_size_blocks),
+        add_unit($alignment_results->{size_blocks}->[$i]),
+      );
+    }
+    return sprintf(
+      '<h3>Block size distribution</h3>
+      <table style="width:50%%; margin: auto">
+        <tr>
+          <th rowspan="2" style="vertical-align:middle; width: 150px">Size range</th>
+          <th colspan="2" style="text-align:center; border-bottom: dotted">All %s alignment blocks</th>
+        </tr>
+        <tr>
+          <th style="width: 40%"># blocks</th>
+          <th style="width: 40%">Total size (incl. gaps)</th>
+        </tr>
+        %s
+      </table>',
+      $self->thousandify($alignment_results->{'tot_num_blocks'}),
+      $html_table_blocks,
+    );
 }
 
 ## HELPER METHODS ##################################
@@ -641,6 +690,17 @@ sub fetch_pairwise_input {
     }
   
   return ($results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
+}
+
+sub fetch_multiple_input {
+    my ($self, $mlss) = @_;
+
+    my $results;
+    $results->{'tot_num_blocks'}= $mlss->get_value_for_tag('num_blocks');
+    $results->{'num_blocks'}    = [map {$mlss->get_value_for_tag('num_blocks_'.($_->[0]), 0)} @window_desc];
+    $results->{'size_blocks'}   = [map {$mlss->get_value_for_tag('totlength_blocks_'.($_->[0]), 0)} @window_desc];
+
+    return ($results);
 }
 
 1;
