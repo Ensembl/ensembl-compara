@@ -401,7 +401,13 @@ sub content {
     }
     else {
       $link = sprintf (
-                        '/wasabi/wasabi.htm?url=%s', uri_escape($hub->url('Json', {type => 'GeneTree', action => 'fetch_wasabi', node => $node_id, gt => $gt_id}))
+                        '/wasabi/wasabi.htm?url=%s', uri_escape($hub->url('Json', {
+                          type => 'GeneTree',
+                          action => 'fetch_wasabi',
+                          node => $node_id,
+                          gt => $gt_id,
+                          treetype => 'phyloxml'
+                        }))
                       );
 
     }
