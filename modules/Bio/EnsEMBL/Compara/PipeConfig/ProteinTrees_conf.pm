@@ -2431,7 +2431,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'raxml_exe'                 => $self->o('raxml_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => 'default',
+                'output_clusterset_id'      => 'raxml_update',
             },
             -hive_capacity        => $self->o('raxml_update_capacity'),
             -rc_name    => '8Gb_job',
