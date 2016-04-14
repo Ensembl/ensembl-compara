@@ -120,7 +120,8 @@ sub fetch_input {
         }
 
         foreach my $current_member ( @{ $self->param('copy_gene_tree')->get_all_Members } ) {
-            if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) ) {
+            #copying the cigar lines to the new tree excluding the members that need update:
+            if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) && ( !defined( $members_2_b_updated{ $current_member->stable_id } ) ) ) {
                 $current_member->cigar_line( $cigar_lines_reuse_tree{ $current_member->stable_id } );
             }
         }
