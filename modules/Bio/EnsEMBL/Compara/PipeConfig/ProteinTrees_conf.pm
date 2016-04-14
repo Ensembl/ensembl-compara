@@ -161,7 +161,7 @@ sub default_options {
         'examl_ptiles'            => 16,
         'treebest_threshold_n_residues' => 10000,
         'treebest_threshold_n_genes'    => 400,
-        'update_threshold_trees'    => 0.1,
+        'update_threshold_trees'    => 0.2,
 
     # alignment filtering options
         'threshold_n_genes'       => 20,
