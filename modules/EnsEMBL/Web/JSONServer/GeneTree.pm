@@ -21,13 +21,14 @@ package EnsEMBL::Web::JSONServer::GeneTree;
 use strict;
 use warnings;
 use EnsEMBL::Web::File::Dynamic;
+use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter;
 
 use parent qw(EnsEMBL::Web::JSONServer);
 
 sub object_type {
   my $self = shift;
-  return 'GeneTree' if ($self->hub->param('gt'));
-  return 'Gene'     if ($self->hub->param('g'));
+  return 'GeneTree';
 }
 
 sub json_fetch_wasabi {
@@ -44,16 +45,28 @@ sub json_fetch_wasabi {
 
   # Return data if found in session store
   if ($wasabi_session_data && $wasabi_session_data->{$wasabi_session_key}) {
-    return $wasabi_session_data->{$wasabi_session_key};
+    # return $wasabi_session_data->{$wasabi_session_key};
   }
 
-  #  If not create files for wasabi
-
-  my $tree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->get_GeneTree($cdb);
+  #  If not in session then create files for wasabi
+  my $tree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->create_component($cdb);
   my $node = $tree->find_node_by_node_id($node_id);
 
+  my $filename = $gt_id . '_' . $node_id;
+  my $file = EnsEMBL::Web::File::User->new(hub => $hub, name => $filename, extension => 'xml');
+  my $files;
+
   # Create tree and alingment file for wasabi and return its url paths
-  my $files = create_files_for_wasabi($self, $node);
+  if($hub->param('treetype') =~m/phyloxml/i) {
+    $files = create_phyloxml($self, $node, $file);
+  }
+  else {
+    $files = create_newick($self, $node);
+  }
+
+  $hub->session->purge_data(
+    type => 'tree_files',
+    code => 'wasabi');
 
   # Store new data into session
   $hub->session->add_data(
@@ -67,10 +80,45 @@ sub json_fetch_wasabi {
 
 # Takes a compara tree and dumps the alignment and tree as text files.
 # Returns the urls of the files that contain the trees
-sub create_files_for_wasabi {
+sub create_phyloxml {
   my $self = shift;
   my $tree = shift || die 'Need a ProteinTree object';
-  
+  my $file_handle = shift;
+  my $method_type = ref($tree) =~ /Node/ ? 'subtrees' : 'trees';     
+
+  my %args = (
+                'hub'             => $self->hub,
+                'sub_dir'         => 'gene_tree',
+                'input_drivers'   => ['IO'],
+                'output_drivers'  => ['IO'],
+              );
+
+  my $handle = IO::String->new();
+
+  my $w = Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter->new(
+      -SOURCE       => $SiteDefs::ENSEMBL_SITETYPE,
+      -ALIGNED      => 1,
+      -CDNA         => 1,
+      -NO_SEQUENCES => 0,
+      -HANDLE       => $handle,
+  );
+
+  my $method = 'write_trees'; #.$method_type;
+  $w->$method($tree);
+  $w->finish();
+
+  my $out = ${$handle->string_ref()};
+  $file_handle->write_line($out);
+  return {
+    tree => $file_handle->read_url
+  };
+}
+
+# Takes a gene tree and dumps the alignment and newick tree as text files.
+# Returns the urls of the files that contain the trees
+sub create_newick {
+  my $self = shift;
+  my $tree = shift || die 'Need a ProteinTree object';
   my $var;
 
   my %args = (
@@ -99,6 +147,5 @@ sub create_files_for_wasabi {
     tree      => $file_nh->read_url
   };
 }
-
 
 1;
