@@ -172,13 +172,19 @@ sub add_pointers {
   }
 
   foreach my $row (@data) {
-    my $chr         = $row->{'chr'} || $row->{'region'};
+    my $chr         = $row->{'chr'} || $row->{'seq_region'} || $row->{'region'};
     ## Stringify any RGB colour arrays
-    my $item_colour = ref($row->{'item_colour'}) eq 'ARRAY' 
+    my $item_colour = $row->{'colour'};
+    unless ($item_colour) {
+      $item_colour = ref($row->{'item_colour'}) eq 'ARRAY' 
                         ? join(',', @{$row->{'item_colour'}}) : $row->{'item_colour'};
-    my $grad_colour = $row->{'p_value'} > 10 
-                    ? $p_value_sorted->{$max}
-                    : $p_value_sorted->{sprintf("%.1f", $row->{'p_value'})};
+    }
+    my $grad_colour;
+    if (defined($row->{'p_value'})) {
+      $grad_colour = $row->{'p_value'} > 10 
+                      ? $p_value_sorted->{$max}
+                      : $p_value_sorted->{sprintf("%.1f", $row->{'p_value'})};
+    }
     my $href = $row->{'href'};
     if (!$href && $extra->{'zmenu'}) {
       $href = {'type' => 'ZMenu', 'action' => $extra->{'zmenu'},
@@ -187,12 +193,18 @@ sub add_pointers {
                         'fake_click_end' => $row->{'end'},
                         };
     }
+    if (ref($href) eq 'HASH') {
+      $href = $hub->url({$config_name ? ('config' => $config_name) : (), %$href});
+    }
+    elsif ($config_name && $href =~ /$config_name/) {
+      $href .= ';config='.$config_name;
+    }
     my $point = {
       start     => $row->{'start'},
       end       => $row->{'end'},
       id        => $row->{'label'},
       col       => $item_colour || $grad_colour || $default_colour,
-      href      => $href ? $hub->url({$config_name ? ('config' => $config_name) : (), %$href}) : '',
+      href      => $href || '', 
       html_id   => $row->{'html_id'} || '',
     };
 
