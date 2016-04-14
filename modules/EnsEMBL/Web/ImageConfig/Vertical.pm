@@ -99,9 +99,12 @@ sub load_user_track_data {
   my $track_width  = $self->get_parameter('width') || 80;
   my @colours      = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
   my ($feature_adaptor, $slice_adaptor, %data, $max_value, $max_mean, $mapped, $unmapped);
+  warn "!!! LOADING USER TRACK DATA";
   
   foreach my $track ($self->get_node('user_data')->nodes) {
     my $display = $track->get('display');
+    warn "... DISPLAY $display";
+    $display = 'highlight_bowtie';
     next if $display eq 'off';
     ## Of the remote formats, only bigwig is currently supported on this scale
     my $format = lc $track->get('format');
@@ -134,7 +137,6 @@ sub load_user_track_data {
         ($data{$track->id}, $max1, $max2) = $self->get_bigwig_features($iow->parser, $track_name, $chromosomes, $bins, $track_data->{'colour'});
       }
       else {
-
         ## Get the file contents
         my %args = (
                     'hub'     => $hub,
@@ -148,7 +150,8 @@ sub load_user_track_data {
                                              'config_type' => $self->type,
                                              'track'       => $track->id,
                                              );
-        ( $data{$track->id}, $max1, $mapped, $unmapped) = $self->get_parsed_features($iow, $bins, $colour);
+        $bins = 0 if $display !~ /^density/;
+        ($data{$track->id}, $max1, $mapped, $unmapped) = $self->get_parsed_features($iow, $bins, $colour);
       }
     }
     
@@ -211,33 +214,39 @@ sub get_parsed_features {
   ## needed by the vertical drawing code
   my ($self, $wrapper, $bins, $colours) = @_;
   
-  my $tracks = $wrapper->create_tracks(undef, {'bins' => $bins}); 
-  my $sort       = 0;
-  my (%data, $max, $mapped, $unmapped);
+  my $tracks  = $wrapper->create_tracks(undef, {'bins' => $bins}); 
+  my $data    = {};
+  my ($count, $sort, $max, $mapped, $unmapped) = (0,0,0,0,0);
   
   foreach my $track (@$tracks) {
-    my $count;
-    my $name = $track->{'metadata'}{'name'};
-    
-    while (my ($chr, $results) = each %{$track->{'bins'}}) {
-      $data{$chr}{$name} = {
-        scores => [map $results->{$_}, 1..$bins],
-        colour => $track->{'data'}{'config'}{'color'} || $colours->[$count],
-        sort   => $sort
-      };
-    }
+    my $name = 'Data_'.$count;
     
     if ($track->{'metadata'}) {
+      $name = $track->{'metadata'}{'name'};
       $max = $track->{'metadata'}{'max_value'} if (defined($track->{'metadata'}{'max_value'}) && $max < $track->{'metadata'}{'max_value'});
       $mapped += $track->{'metadata'}{'mapped'};
       $unmapped += $track->{'metadata'}{'unmapped'};
     }
 
+    if ($bins) {
+      while (my ($chr, $results) = each %{$track->{'bins'}}) {
+        $data->{$chr}{$name} = {
+          scores => [map $results->{$_}, 1..$bins],
+          colour => $track->{'data'}{'config'}{'color'} || $colours->[$count],
+          sort   => $sort
+        };
+      }
+    }
+    else {
+      $data = {'features' => $track->{'features'}{1} || []};
+      push @{$data->{'features'}}, @{$track->{'features'}{-1} || []}; 
+    }
+    
     $count++ unless $track->{'config'}{'color'};
     $sort++;
   }
   
-  return (\%data, $max, $mapped, $unmapped);
+  return ($data, $max, $mapped, $unmapped);
 }
 
 sub get_bigwig_features {
