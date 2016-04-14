@@ -40,6 +40,9 @@ sub build_tracks {
   ## Does data munging common to vertical density tracks
   ## and draws optional max/min lines, as they are needed only once per glyphset
   my ($self, $data) = @_;
+  ## Skip unless we are drawing density data
+  return unless $data || ($self->{'data'} && ref($self->{'data'}) eq 'HASH');
+
   my $chr = $self->{'chr'} || $self->{'container'}->{'chr'};
   my $image_config  = $self->{'config'};
   my $track_config  = $self->{'my_config'};
