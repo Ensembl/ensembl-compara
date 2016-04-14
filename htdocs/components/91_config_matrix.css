@@ -122,7 +122,7 @@ body.ie6  table.config_matrix tr.config_menu th.first ul.popup_menu { margin: -8
 
 /* popups for subtracks */
 
-div.config div.config_matrix div.subtracks                          { position: absolute; border: 1px solid black; background: #FFF; padding: 6px; margin: 12px 0 0 12px; white-space: nowrap; }
+div.config div.config_matrix div.subtracks                          { position: absolute; border: 1px solid black; background: #FFF; padding: 6px; margin: 12px 0 0 12px; max-width: 600px; white-space: normal; }
 div.config div.config_matrix div.subtracks ul.config_menu           { margin: 0; }
 div.config div.config_matrix div.subtracks ul li.default            { position: relative; }
 div.config div.config_matrix div.subtracks ul li.track div          { display: none; }
