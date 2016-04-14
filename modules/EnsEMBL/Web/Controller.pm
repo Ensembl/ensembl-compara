@@ -65,10 +65,10 @@ sub new {
     'species_defs'  => $species_defs,
     'page_type'     => 'Dynamic',
     'renderer_type' => 'String',
-    'species'       => $params->{'species'},
-    'path_segments' => $params->{'path_segments'},
-    'query'         => $params->{'query'},
-    'filename'      => $params->{'filename'},
+    'species'       => $params->{'species'}       || '',
+    'path_segments' => $params->{'path_segments'} || [],
+    'query'         => $params->{'query'}         || '',
+    'filename'      => $params->{'filename'}      || '',
     'type'          => '',
     'action'        => '',
     'function'      => '',
@@ -121,7 +121,7 @@ sub parse_path_segments {
   ## Parses path segments to identify type, action and function
   my $self = shift;
 
-  ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@{$self->path_segments || []}, '', '', '', '');
+  ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@{$self->path_segments}, '', '', '', '');
 }
 
 sub upload_size_limit {
