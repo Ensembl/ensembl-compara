@@ -810,6 +810,7 @@ sub core_pipeline_analyses {
                  1 => [ 'copy_alignments_from_previous_release' ],
                  3 => [ 'alignment_entry_point' ],
                  4 => [ 'alignment_entry_point' ],
+                 5 => [ 'alignment_entry_point' ],
             },
             -hive_capacity        => $self->o('copy_trees_capacity'),
             -rc_name => '8Gb_job',
@@ -965,7 +966,7 @@ sub core_pipeline_analyses {
                             'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '1Gb_job',
+            -rc_name => '4Gb_job',
             -flow_into => {
                 2 => [ ':////other_member_sequence' ],
                 1 => [ 'hmm_annot_table_reuse' ],
