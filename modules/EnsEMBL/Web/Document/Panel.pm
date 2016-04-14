@@ -376,14 +376,16 @@ sub component_content {
   my $is_html      = ($hub->param('_format') || 'HTML') eq 'HTML';
   my $table_count  = 0;
   
-  foreach my $entry (map @{$self->{'components'}->{$_} || []}, $self->components) {
-    my ($module_name, $content_function) = split /\//, $entry;
+  for (map [$_, $self->{'components'}{$_} || []], $self->components) {
+    my ($code, $entry) = @$_;
+    next unless @$entry;
+    my ($module_name, $content_function) = split /\//, $entry->[0];
     my $component;
     
     ### Attempt to require the Component module
     if ($self->dynamic_use($module_name)) {
       eval {
-        $component = $module_name->new($hub, $builder, $self->renderer);
+        $component = $module_name->new($hub, $builder, $self->renderer, $code);
       };
       
       if ($@) {

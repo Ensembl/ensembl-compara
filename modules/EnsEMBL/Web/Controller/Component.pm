@@ -18,57 +18,46 @@ limitations under the License.
 
 package EnsEMBL::Web::Controller::Component;
 
-### Prints the dynamically created components. Loaded either via AJAX (if available) or parallel HTTP requests.
+### Prints the dynamically created components. Loaded via AJAX
 
 use strict;
+use warnings;
 
 use base qw(EnsEMBL::Web::Controller);
 
 sub parse_path_segments {
-  ## @override
+  # Abstract method implementation
   my $self = shift;
+  my @path = @{$self->path_segments};
 
-  my $package_path;
-
-  ($self->{'type'}, $package_path, $self->{'action'}, $self->{'function'}) = (@{$self->path_segments}, '', '', '', '');
-
-  # Set action of component to be the same as the action of the referer page for view configs
-#  my $referer = $self->referer;
-
-#  $self->{'action'}     = $self->query_param('force_action')    || $referer->{'ENSEMBL_ACTION'};
-#  $self->{'function'}   = $self->query_param('force_function')  || $self->{'function'} || $referer->{'ENSEMBL_FUNCTION'};
-
-#  $self->{'component'} = join('::', grep $_, 'EnsEMBL', $package_path, 'Component', $self->{'type'}, $self->{'action'}, $self->{'function'}) =~ s/__/::/gr;
-  $self->{'component'} = join('::', grep $_, 'EnsEMBL', $package_path, 'Component', $self->{'type'}, $self->{'action'}) =~ s/__/::/gr;
+  $self->{'component_code'} = pop @path;
+  ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@path, '', '', '', '');
 }
 
-sub component { shift->{'component'}; }
-sub page_type { return 'Component';   }
-sub cacheable { return 1;             }
-sub request   { return $_[0]{'request'} ||= $_[0]->species_defs->OBJECT_TO_SCRIPT->{$_[0]->hub->type} eq 'Modal' ? 'modal' : undef; }
+sub component_code  { shift->{'component_code'};  }
+sub component       { shift->{'component'};       }
+sub page_type       { return 'Component';         }
+sub cacheable       { return 1;                   }
+sub request         { return $_[0]{'request'} ||= $_[0]->species_defs->OBJECT_TO_SCRIPT->{$_[0]->hub->type} eq 'Modal' ? 'modal' : ''; }
 
 sub init {
   my $self  = shift;
   my $hub   = $self->hub;
- 
+
   return if ($hub->function ne 'Export' && $self->get_cached_content('component')); # Page retrieved from cache
-  
+
   $self->builder->create_objects;
   $self->page->initialize; # Adds the components to be rendered to the page module
-  
-  my $object = $self->object;
-  
-  if ($object) {
-    $object->__data->{'_action'}   = $self->action;
-    $object->__data->{'_function'} = $self->function;
-  }
-  
+
   if ($hub->user) {
     my $hash_change = $hub->param('hash_change');
     $self->update_user_history($hash_change) if $hash_change;
   }
   
   $self->configure;
+
+  $self->{'component'} = { @{$self->node->{'data'}{'components'}} }->{$self->{'component_code'}};
+
   $self->render_page;
 }
 
