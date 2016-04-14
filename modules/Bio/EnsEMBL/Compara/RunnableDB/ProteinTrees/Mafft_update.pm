@@ -91,7 +91,7 @@ sub fetch_input {
         -ID_TYPE => 'SEQUENCE',
         -STOP2X => 1,
         -APPEND_SPECIES_TREE_NODE_ID => 0,
-		-UNIQ_SEQ => 1,
+        -UNIQ_SEQ => 0,
     );
     unless(-e $input_aln and -s $input_aln) {
         die "There are no alignments in '$input_aln', cannot continue";
