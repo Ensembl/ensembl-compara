@@ -221,7 +221,7 @@ sub referer {
       $referer->{'params'}    = _parse_query_form($query || '');
 
       # dynamic page
-      if ($species_defs->OBJECT_TO_SCRIPT->{$path[1]}) {
+      if ($species_defs->OBJECT_TO_CONTROLLER_MAP->{$path[1]}) {
         my ($species, $type, $action, $function) = @path;
         $referer->{'ENSEMBL_SPECIES'}  = $species   || '';
         $referer->{'ENSEMBL_TYPE'}     = $type      || '';

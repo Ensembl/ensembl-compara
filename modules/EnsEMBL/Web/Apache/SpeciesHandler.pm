@@ -38,8 +38,8 @@ sub get_controller {
   my %allowed     = map { $_ => 1} @{$SiteDefs::ALLOWED_URL_CONTROLLERS};
   my $controller  = @$path_segments && $allowed{$path_segments->[0]} ? shift @$path_segments : undef;
 
-  # if not, get controller from OBJECT_TO_SCRIPT
-  $controller ||= $SiteDefs::OBJECT_TO_SCRIPT->{$path_segments->[0]} if @$path_segments && $path_segments->[0];
+  # if not, get controller from OBJECT_TO_CONTROLLER_MAP
+  $controller ||= $SiteDefs::OBJECT_TO_CONTROLLER_MAP->{$path_segments->[0]} if @$path_segments && $path_segments->[0];
 
   return $controller && "EnsEMBL::Web::Controller::$controller";
 }

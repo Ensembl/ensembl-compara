@@ -34,11 +34,11 @@ sub parse_path_segments {
   ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@path, '', '', '', '');
 }
 
-sub component_code  { shift->{'component_code'};  }
-sub component       { shift->{'component'};       }
-sub page_type       { return 'Component';         }
-sub cacheable       { return 1;                   }
-sub request         { return $_[0]{'request'} ||= $_[0]->species_defs->OBJECT_TO_SCRIPT->{$_[0]->hub->type} eq 'Modal' ? 'modal' : ''; }
+sub component_code  { $_[0]{'component_code'};  }
+sub component       { $_[0]{'component'};       }
+sub page_type       { return 'Component';       }
+sub cacheable       { return 1;                 }
+sub request         { return $_[0]{'request'} ||= $_[0]->species_defs->OBJECT_TO_CONTROLLER_MAP->{$_[0]->hub->type} eq 'Modal' ? 'modal' : ''; }
 
 sub init {
   my $self  = shift;
