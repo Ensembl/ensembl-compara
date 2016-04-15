@@ -60,7 +60,7 @@ sub content {
     $self->hgvs,
     $self->sets,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
-    $hub->species eq 'Homo_sapiens' ? $rs_id && $self->snpedia($rs_id) : ()
+    ($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $rs_id && $self->snpedia($rs_id) : ()
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
