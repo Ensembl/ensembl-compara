@@ -99,7 +99,6 @@ sub load_user_track_data {
   my $track_width  = $self->get_parameter('width') || 80;
   my @colours      = qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey);
   my ($feature_adaptor, $slice_adaptor, %data, $max_value, $max_mean, $mapped, $unmapped);
-  warn "!!! LOADING USER TRACK DATA";
   
   foreach my $track ($self->get_node('user_data')->nodes) {
     my $display = $track->get('display');
