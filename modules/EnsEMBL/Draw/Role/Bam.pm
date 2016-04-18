@@ -325,7 +325,7 @@ sub _render {
     alarm 0;
   };
   if ($@) {
-    die unless $@ eq "alarm\n"; # propagate unexpected errors
+    #die unless $@ eq "alarm\n"; # propagate unexpected errors
     # timed-out
     $self->reset;
     return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout}sec)");
