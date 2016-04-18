@@ -542,21 +542,6 @@ sub vari_class{
 }
 
 
-
-sub moltype {
-
-  ### Variation_object_calls
-  ### a
-  ### Example    : $object->moltype;
-  ### Description: returns the molecular type of the variation
-  ### Returns String
-
-  my $self = shift;
-  return $self->vari->moltype;
-}
-
-
-
 sub ancestor {
 
   ### Variation_object_calls 
