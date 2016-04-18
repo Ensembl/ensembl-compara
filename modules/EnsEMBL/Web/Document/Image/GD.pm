@@ -196,8 +196,12 @@ sub add_pointers {
     if (ref($href) eq 'HASH') {
       $href = $hub->url({$config_name ? ('config' => $config_name) : (), %$href});
     }
-    elsif ($config_name && $href =~ /$config_name/) {
-      $href .= ';config='.$config_name;
+    else {
+      ## Hack to get correct zmenu
+      $href =~ s/\/UserData/\/VUserData/;
+      if ($config_name && $href =~ /$config_name/) {
+        $href .= ';config='.$config_name;
+      }
     }
     my $point = {
       start     => $row->{'start'},
