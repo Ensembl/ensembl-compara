@@ -206,12 +206,20 @@ sub create_tracks {
   my $data        = {};
   my $order       = [];
   my $prioritise  = 0;
-  my ($bin_sizes, $bins);
+  my $bins        = $extra_config->{'bins'};
+  my $slices      = {};
+  my $bin_sizes   = {};
 
   my $seq_region_names = [];
   my $drawn_chrs  = $hub->species_defs->get_config($hub->data_species, 'ENSEMBL_CHROMOSOMES');
+  my $adaptor     = $hub->get_adaptor('get_SliceAdaptor');
+
   if ($slice) {
-    $seq_region_names = [$slice->seq_region_name];
+    my $chr = $slice->seq_region_name;
+    $seq_region_names = [$chr];
+    if ($bins) {
+      $bin_sizes->{$chr} = $slice->length / $bins; 
+    }
     ## Allow for seq region synonyms
     if ($extra_config->{'use_synonyms'}) {
       push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
@@ -219,12 +227,14 @@ sub create_tracks {
   }
   else {
     ## Sort out chromosome info
-    $bins           = $extra_config->{'bins'} || 150;
-    my $adaptor     = $hub->get_adaptor('get_SliceAdaptor');
     foreach my $chr (@$drawn_chrs) {
       push @$seq_region_names, $chr;
       my $slice = $adaptor->fetch_by_region('chromosome', $chr);
-      $bin_sizes->{$chr} = $slice->length / $bins; 
+      ## Cache the slice temporarily, as we may need it later
+      $slices->{$chr} = $slice;
+      if ($bins) {
+        $bin_sizes->{$chr} = $slice->length / $bins; 
+      }
       ## Allow for seq region synonyms
       if ($extra_config->{'use_synonyms'}) {
         push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
@@ -272,7 +282,7 @@ sub create_tracks {
       $prioritise   = 1 if $metadata{'priority'};
 
       ## Set up density bins if needed
-      if (!$slice && !keys %{$data->{$track_key}{'bins'}}) {
+      if (!$bins && !keys %{$data->{$track_key}{'bins'}}) {
         foreach my $chr (keys %$bin_sizes) {
           $data->{$track_key}{'bins'}{$chr}{$_} = 0 for 1..$bins;
         }
@@ -296,10 +306,16 @@ sub create_tracks {
         next unless ($seqname && first {$seqname eq $_} @$seq_region_names);
         if (grep(/$seqname/, @$drawn_chrs)) {
           $data->{$track_key}{'metadata'}{'mapped'}++;
-          ## Add this feature to the appropriate density bin
-          my $bin_size    = $bin_sizes->{$seqname};
-          my $bin_number  = int($start / $bin_size) + 1;
-          $data->{$track_key}{'bins'}{$seqname}{$bin_number}++;
+          if ($bins) {
+            ## Add this feature to the appropriate density bin
+            my $bin_size    = $bin_sizes->{$seqname};
+            my $bin_number  = int($start / $bin_size) + 1;
+            $data->{$track_key}{'bins'}{$seqname}{$bin_number}++;
+          }
+          else {
+            my $slice = $slices->{$seqname} || $adaptor->fetch_by_region('chromosome', $seqname); 
+            $self->build_feature($data, $track_key, $slice, $strandable) if $slice;
+          }
         }
         else {
           $data->{$track_key}{'metadata'}{'unmapped'}++;

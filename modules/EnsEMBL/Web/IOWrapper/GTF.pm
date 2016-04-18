@@ -155,6 +155,7 @@ sub create_hash {
 
   ## Try to find an ID for this feature
   my $attributes = $self->parser->get_attributes;
+
   my $id = $attributes->{'transcript_name'} || $attributes->{'transcript_id'} 
             || $attributes->{'gene_name'} || $attributes->{'gene_id'};
 
@@ -167,6 +168,7 @@ sub create_hash {
       }
     }
   }
+  my $name = $attributes->{'extname'} || $id;
 
   my $feature_strand = $strand || $metadata->{'default_strand'};
 
@@ -177,7 +179,7 @@ sub create_hash {
                   'colour'        => $colour, 
                   'join_colour'   => $metadata->{'join_colour'} || $colour,
                   'label_colour'  => $metadata->{'label_colour'} || $colour,
-                  'label'         => $id,
+                  'label'         => $name,
                 };
 
 

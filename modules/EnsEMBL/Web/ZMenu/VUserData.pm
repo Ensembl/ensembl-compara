@@ -20,7 +20,8 @@ package EnsEMBL::Web::ZMenu::VUserData;
 
 use strict;
 
-use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::File::User;
+use EnsEMBL::Web::IOWrapper;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -32,40 +33,32 @@ sub content {
 
   return unless $click_data;
 
+  my $track_config  = $click_data->{'my_config'};
+  my $slice         = $click_data->{'container'};
+  return unless $slice;
+
+  ## Fetch the require features from this location
+  my $format = $track_config->get('format');
+  my %args = (
+              'hub'     => $hub,
+              'format'  => $format,
+              'file'    => $track_config->get('file'),
+              );
+
+  my $file  = EnsEMBL::Web::File::User->new(%args);
+  my $iow = EnsEMBL::Web::IOWrapper::open($file,
+                                             'hub'         => $hub,
+                                             'config_type' => $click_data->{'config'}->type,
+                                             'track'       => $track_config->get('id'),
+                                             );
+
+  my $tracks  = $iow->create_tracks($slice);
+  
   my @features;
 
-  my $track_config  = $click_data->{'my_config'};
-  my $parser        = EnsEMBL::Web::Text::FeatureParser->new($hub->species_defs);
-  my $container     = $click_data->{'container'};
-  $parser->filter($container->seq_region_name, $container->start, $container->end);
-
-  my $sub_type     = $track_config->get('sub_type');
-
-  my %args = ('hub' => $hub);
-
-  if ($sub_type eq 'url') {
-    $args{'file'} = $track_config->get('url');
-    $args{'input_drivers'} = ['URL'];
-  }
-  else {
-    $args{'file'} = $track_config->get('file');
-    if ($args{'file'} !~ /\//) { ## TmpFile upload
-      $args{'prefix'} = 'user_upload';
-    }
-  }
-
-  my $file = EnsEMBL::Web::File::User->new(%args);
-  my $format = $track_config->get('format');
-
-  my $response = $file->read;
-
-  if (my $data = $response->{'content'}) {
-    $parser->parse($data, $format);
-
-    while (my ($key, $T) = each (%{$parser->{'tracks'}})) {
-      $_->map($container) for @{$T->{'features'}};
-      push @features, @{$T->{'features'}};
-    }
+  foreach (@{$tracks||[]}) {
+    push @features, @{$_->{'features'}{1}||[]};
+    push @features, @{$_->{'features'}{-1}||[]};
   }
 
   $self->{'feature_count'} = scalar @features;
@@ -74,12 +67,10 @@ sub content {
     my $plural  = scalar @features > 1 ? 's' : '';
 
     foreach my $f (@features) {
-      $self->new_feature;
-
-      my $id      = $f->id || $format; 
+      my $id      = $f->{'label'} || $format; 
       $self->caption("Feature: $id");
 
-      my $r = $f->seqname.':'.$f->start.'-'.$f->end;
+      my $r = $f->{'seq_region'}.':'.$f->{'start'}.'-'.$f->{'end'};
       $self->add_entry({
         type  => "Location", 
         label => $r,
@@ -89,10 +80,10 @@ sub content {
                           'r'       => $r,
                         }),
       });
-      if ($f->score) {
+      if ($f->{'score'}) {
         $self->add_entry({
           type  => "Score", 
-          label => $f->score,
+          label => $f->{'score'},
         });
       }
     }

@@ -102,7 +102,7 @@ sub pointer_default {
   return $hash{$feature_type};
 }
 
-## Create a set of highlights from a userdate set
+## Create a set of highlights from a userdata set
 sub create_user_pointers {
   my ($self, $image, $data) = @_;
   my $hub          = $self->hub;
@@ -112,13 +112,11 @@ sub create_user_pointers {
   my @all_colours  = @{$hub->species_defs->TRACK_COLOUR_ARRAY||[]};
 
   while (my ($key, $track) = each %$data) {
-    my $display = $track->{'metadata'} && $track->{'metadata'}{'style'} 
-                    ? $track->{'metadata'}{'style'} : $image_config->get_node($key)->get('display');
+    my $display = $image_config->get_node($key)->get('display');
     my ($render, $style) = split '_', $display;
     $image_config->get_node($key)->set('display', $style);
     
-    my $colour = $track->{'metadata'} && $track->{'metadata'}{'color'}
-                    ? $track->{'metadata'}{'color'} : $self->_user_track_colour($track); 
+    my $colour = $self->_user_track_colour($track); 
     if ($used_colour{$colour}) {
       ## pick a unique colour instead
       foreach (@all_colours) {
@@ -132,7 +130,7 @@ sub create_user_pointers {
     if ($render eq 'highlight') {
       push @pointers, $image->add_pointers($hub, {
         config_name => 'Vkaryotype',
-        features    => $track->{'bins'},          
+        features    => $track->{'features'},          
         color       => $colour,
         style       => $style,
         zmenu       => 'VUserData',

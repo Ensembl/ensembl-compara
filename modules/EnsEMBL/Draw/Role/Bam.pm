@@ -325,10 +325,9 @@ sub _render {
     alarm 0;
   };
   if ($@) {
-    die unless $@ eq "alarm\n"; # propagate unexpected errors
-    # timed-out
+    warn "######## BAM ERROR: $@" unless $@ eq "alarm\n"; # propagate unexpected errors
     $self->reset;
-    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout}sec)");
+    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout} sec)");
   }
 }
 
