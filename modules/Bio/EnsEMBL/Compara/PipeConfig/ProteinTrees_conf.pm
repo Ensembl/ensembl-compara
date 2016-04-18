@@ -567,7 +567,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_tree_building',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => 'peptide_align_feature_%',
+                'table_list'    => 'peptide_align_feature%',
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_4_before_tree_building.sql.gz',
             },
