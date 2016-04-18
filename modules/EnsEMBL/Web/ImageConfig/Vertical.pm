@@ -102,7 +102,6 @@ sub load_user_track_data {
   
   foreach my $track ($self->get_node('user_data')->nodes) {
     my $display = $track->get('display');
-    #$display = 'highlight_bowtie';
     next if $display eq 'off';
     ## Of the remote formats, only bigwig is currently supported on this scale
     my $format = lc $track->get('format');
@@ -212,7 +211,7 @@ sub get_parsed_features {
   ## needed by the vertical drawing code
   my ($self, $wrapper, $bins, $colours) = @_;
   
-  my $tracks  = $wrapper->create_tracks(undef, {'bins' => $bins}); 
+  my $tracks  = $wrapper->create_tracks(undef, {'bins' => $bins, 'parse_all' => 1}); 
   my $data    = {};
   my ($count, $sort, $max, $mapped, $unmapped) = (0,0,0,0,0);
   

@@ -303,7 +303,8 @@ sub create_tracks {
         $self->build_feature($data, $track_key, $slice, $strandable);
       }
       else {
-        next unless ($seqname && first {$seqname eq $_} @$seq_region_names);
+        ## Skip non-chromosomal seq regions unless explicitly told to parse everything
+        next unless ($extra_config->{'parse_all'} || ($seqname && first {$seqname eq $_} @$seq_region_names));
         if (grep(/$seqname/, @$drawn_chrs)) {
           $data->{$track_key}{'metadata'}{'mapped'}++;
           if ($bins) {
