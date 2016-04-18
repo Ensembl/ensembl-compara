@@ -1312,9 +1312,9 @@ sub core_pipeline_analyses {
         {
             -logic_name     => 'flag_update_clusters',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FlagUpdateClusters',
-			#-parameters     => {
-			#    'reuse_db'   => '#reuse_db#',
-			#},
+			-parameters     => {
+                'update_threshold_trees' => $self->o('update_threshold_trees'),
+			},
             -rc_name => '16Gb_job',
         },
 
