@@ -87,12 +87,104 @@ sub fetch_input {
 
         #----------------------------------------------------------------------------------------------------------------------------
 
-        #Disavow members' parents
-        #----------------------------------------------------------------------------------------------------------------------------
-        #Get list of members to be updated
-        #my $members_2_b_updated = $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list');
+        #Is tree marked as 'new_build'? If so we need to dataflow it to alignment_entry_point. (Tree has changed too much)
+        if ( ( $self->param('current_gene_tree')->has_tag('new_build') ) && ( $self->param('current_gene_tree')->get_value_for_tag('new_build') == 1 ) ) {
+            $self->dataflow_output_id( $self->input_id, $self->param('branch_for_new_tree') );
+            $self->input_job->autoflow(0);
+            $self->complete_early("Tree is marked as new_build, hence it shoud go to the cluster_factory.");
+        }
 
-        print "Fetching tree for stable ID/root_id: " . $self->param('stable_id') . "/" . $self->param('gene_tree_id') . "\n" if ( $self->debug );
+        #Does tree need update?
+        #if ( ( $self->param('current_gene_tree')->has_tag('updated_genes_list') ) ||
+        #     ( $self->param('current_gene_tree')->has_tag('added_genes_list') ) ||
+        #     ( $self->param('current_gene_tree')->has_tag('deleted_genes_list') ) ) {
+
+        if ( ( $self->param('current_gene_tree')->has_tag('needs_update') ) && ( $self->param('current_gene_tree')->get_value_for_tag('needs_update') == 1 ) ) {
+
+            print "Tree: " . $self->param('stable_id') . ":" . $self->param('gene_tree_id') . " needs to be updated.\n" if ( $self->debug );
+
+            #If can't fetch previous tree:
+            #Escape branch to deal with the trees that brand new (New HMMs).
+            if ( !$self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) {
+                print ">>>" . $self->param('stable_id') . "<<<\n";
+                $self->dataflow_output_id( $self->input_id, $self->param('branch_for_new_tree') );
+                $self->input_job->autoflow(0);
+                $self->complete_early("HMM model is brand new so tree is brand new, it didnt exist before. It needs to go to the cluster_factory.");
+            }
+
+            #Get previous tree
+            $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) ||
+              die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
+            $self->param('reuse_gene_tree')->preload();
+            $self->param( 'all_leaves', $self->param('reuse_gene_tree')->get_all_leaves ) || die "Could not get_all_leaves for: reuse_gene_tree";
+
+            print "Fetching reuse tree: " . $self->param('stable_id') . "/" . $self->param('reuse_gene_tree')->root_id . "\n" if ( $self->debug );
+
+            #Fetch all leaves from the current tree
+            $self->param( 'all_leaves_current_tree', $self->param('current_gene_tree')->get_all_leaves ) || die "Could not get_all_leaves for: current_gene_tree";
+
+            my %updated_and_added_members_count;
+            $self->param( 'updated_and_added_members_count', \%updated_and_added_members_count );
+
+            #Get list of updated genes
+
+            my $updated_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'updated_genes_list', '' );
+            my %members_2_b_updated = map { $_ => 1 } split( /,/, $updated_genes_list );
+            %updated_and_added_members_count = map { $_ => 1 } split( /,/, $updated_genes_list );
+
+            #Get list of genes to add
+            my $added_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'added_genes_list', '' );
+            my %members_2_b_added = map { $_ => 1 } split( /,/, $added_genes_list );
+            $self->param( 'members_2_b_added', \%members_2_b_added );
+            %updated_and_added_members_count = map { $_ => 1 } split( /,/, $added_genes_list );
+
+            #Get list of genes to remove
+            my %members_2_b_removed = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag( 'deleted_genes_list', '' ) );
+
+            #Load changed members into count
+            %updated_and_added_members_count = map { $_ => 1 } split( /,/, $updated_genes_list );
+            %updated_and_added_members_count = map { $_ => 1 } split( /,/, $added_genes_list );
+
+            #We need to map the leaves in the new trees and remove the sequences from the species that are not included in the species set.
+            #For that we use the piece of logic bellow:
+            my @a;
+            my @b;
+            foreach my $this_leaf ( @{ $self->param('all_leaves') } ) {
+                push( @a, $this_leaf->name );
+            }
+            foreach my $this_leaf ( @{ $self->param('all_leaves_current_tree') } ) {
+                push( @b, $this_leaf->name );
+            }
+
+            my %remaining_leaves = map { ( $_, 1 ) } @b;
+            my @deleted = grep { !$remaining_leaves{$_} } @a;
+
+            #List of members that were either added, updated or removed
+            my %members_2_b_changed;
+            $self->param( 'members_2_b_changed', \%members_2_b_changed );
+
+            #List of members that were added or updated
+            my %members_2_b_added_updated;
+            $self->param( 'members_2_b_added_updated', \%members_2_b_added_updated );
+
+            foreach my $deleted_member (@deleted) {
+                $members_2_b_changed{$deleted_member} = 1;
+            }
+            foreach my $added_member ( keys(%members_2_b_added) ) {
+                $members_2_b_changed{$added_member}       = 1;
+                $members_2_b_added_updated{$added_member} = 1;
+            }
+            foreach my $updated_member ( keys(%members_2_b_updated) ) {
+                $members_2_b_changed{$updated_member}       = 1;
+                $members_2_b_added_updated{$updated_member} = 1;
+            }
+
+            #print "DELETED:" . @deleted . "\n";
+            #print join( ", ", @deleted ) . "\n";
+            #print "ADD:" . keys(%members_2_b_added) . "\n";
+            #print "UPDATED:" . keys(%members_2_b_updated) . "\n";
+            #print "2BCH:" . keys(%members_2_b_changed) . "\n";
+        } ## end if ( ( $self->param('current_gene_tree'...)))
 
     } ## end if ( $self->param('reuse_db'...))
     else {
@@ -108,105 +200,30 @@ sub write_output {
     #Checks if tree needs to be updated:
     if ( ( $self->param('current_gene_tree')->has_tag('needs_update') ) && ( $self->param('current_gene_tree')->get_value_for_tag('needs_update') == 1 ) ) {
 
-        print "Tree: ".$self->param('stable_id').":".$self->param('gene_tree_id')." needs to be updated.\n" if ( $self->debug );
-
-        #Get list of updated genes
-        my %members_2_b_updated;
-        my %members_2_b_added;
-        if ($self->param('current_gene_tree')->has_tag('updated_genes_list')) {
-            my $added_genes_list = $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') || die "Could not get value_for_tag: updated_genes_list";
-            %members_2_b_updated = map { $_ => 1 } split( /,/, $added_genes_list);
-        }
-
-        if ($self->param('current_gene_tree')->has_tag('added_genes_list')) {
-            my $added_genes_list = $self->param('current_gene_tree')->get_value_for_tag('added_genes_list') || die "Could not get value_for_tag: added_genes_list";
-            %members_2_b_added   = map { $_ => 1 } split( /,/, $added_genes_list);
-        }
-
-        #my %members_2_b_deleted = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('deleted_genes_list') );
-
-        #Get previous tree
-
-        #Escape branch to deal with the trees that brand new.
-        if ( !$self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) {
-            $self->dataflow_output_id( $self->input_id, $self->param('branch_for_new_tree') );
-            $self->input_job->autoflow(0);
-            $self->complete_early("Tree needs_update but coudln't fetch_by_stable_id, hence the tree didnt exist before. So it needs to go to the cluster_factory.");
-        }
-
-        $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
-        $self->param('reuse_gene_tree')->preload();
-        $self->param( 'reuse_gene_tree_id', $self->param('reuse_gene_tree')->root_id );
-
-        print "Fetching reuse tree: " . $self->param('stable_id') . "/" . $self->param('reuse_gene_tree_id') . "\n" if ( $self->debug );
-
-        #Preparing to disavow members that are tagged to be deleted.
-        #Memebers that are new (added), will not be treated here, they will instead just be added by mafft/raxml
-        #my $count_number_of_members = scalar( @{ $self->param('reuse_gene_tree')->get_all_leaves } );
-        my $all_leaves              = $self->param('reuse_gene_tree')->get_all_leaves || die "Could not get_all_leaves for: reuse_gene_tree";
-        my $all_leaves_current_tree = $self->param('current_gene_tree')->get_all_leaves || die "Could not get_all_leaves for: current_gene_tree";
-
-        #We need to map the leaves in the new trees and remove the sequences from the species that are not included in the species set.
-        #For that we use the piece of logic bellow:
-        my @a;
-        my @b;
-        foreach my $this_leaf (@$all_leaves) {
-            push( @a, $this_leaf->name );
-        }
-        foreach my $this_leaf (@$all_leaves_current_tree) {
-            push( @b, $this_leaf->name );
-        }
-
-        my %remaining_leaves = map { ( $_, 1 ) } @b;
-        my @deleted = grep { !$remaining_leaves{$_} } @a;
-        my %del = map { ( $_, 1 ) } @deleted;
-
-        @members_2_b_updated{ keys %del }               = values %del;
-        @members_2_b_updated{ keys %members_2_b_added } = values %members_2_b_added;
-
-        print "Removing: " . scalar( keys %members_2_b_updated ) . " out of: " . scalar( @{$all_leaves} ) . "\n" if ( $self->debug );
-
-        #deleted
-        #We need to add the leaves to be deleted here, they are not sequences that were removed from the database, hence they are not flaged by FlagUpdateClusters.
-        # These are the leaves that need to be disavowed since the current tree has a different species set, potentially producing trees that have fewer leaves.
-        $self->param( 'leaves_2_delete', \%del );
-        $self->param('current_gene_tree')->store_tag( 'deleted_leaves_list', join( ",", keys( %{ $self->param('leaves_2_delete') } ) ) );
-
-        #Disavow members' parents
-        #loop through the list of members, if any found in the 2_b_deleted list, then need to disavow, if not, just copy over
-        foreach my $this_leaf (@$all_leaves) {
-            my $seq_id = $this_leaf->name;
-            if ( $members_2_b_updated{$seq_id} ) {
-                $this_leaf->disavow_parent;
-
-                my $new_root_node = $self->param('reuse_gene_tree')->root->minimize_tree;
-                $self->param('reuse_gene_tree')->{'_root'} = $new_root_node;
-
-                #$self->param('reuse_gene_tree')->print_tree(10);
-            }
-        }
+        print "disavow 1\n" if ( $self->debug );
+        $self->_disavow_unused_members( $self->param('members_2_b_changed') );
 
         #------------------------------------------------------------------------------------
         #If all leaves are deleted we need to:
         #	Construct newick with leftovers (new members that will be added)
         #		It must follow the pattern seq_member_id _ taxon_id
         #------------------------------------------------------------------------------------
-        if ( scalar( keys %members_2_b_updated ) >= scalar( @{$all_leaves} ) ) {
+        if ( scalar( keys %{ $self->param('members_2_b_added_updated') } ) >= scalar( @{ $self->param('all_leaves_current_tree') } ) ) {
             print "All leaves were deleted we need to construct newick with leftovers (with new members that will be added).\n" if ( $self->debug );
             my $scrap_newick = "(";
-            foreach my $this_leaf ( @{ $all_leaves } ) {
+            foreach my $this_leaf ( @{ $self->param('all_leaves_current_tree') } ) {
                 $scrap_newick .= $this_leaf->dbID . "_" . $this_leaf->taxon_id . ":0,";
             }
             my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor || die "Could not get SeqMemberAdaptor";
             my @add;
-            foreach my $add ( keys(%members_2_b_added) ) {
+            foreach my $add ( keys( %{ $self->param('members_2_b_added') } ) ) {
                 my $seq_member = $seq_member_adaptor->fetch_by_stable_id($add);
                 push( @add, $seq_member->dbID . "_" . $seq_member->taxon_id . ":0" );
             }
             my $addstr = join( ',', @add );
             $scrap_newick .= $addstr . ");";
 
-            print $scrap_newick."\n" if ( $self->debug );
+            print $scrap_newick. "\n" if ( $self->debug );
 
             my $target_tree = $self->store_alternative_tree( $scrap_newick, $self->param('output_clusterset_id'), $self->param('current_gene_tree'), undef, 1 );
 
@@ -215,49 +232,85 @@ sub write_output {
             $self->complete_early("All the previous leaves were removed, the tree is now treated as brand new. So it needs to go to the cluster_factory.");
         }
         else {
+
             #If the number of new genes plus the added genes is >= 10% of the total number of leaves in the reused tree.
             # we should compute the whole alignment/tree again.
-            if ( (scalar( keys %members_2_b_updated ) / scalar( @{$all_leaves} ) ) >= $self->param('update_threshold_trees') ) {
+            if ( ( scalar( keys %{ $self->param('updated_and_added_members_count') } )/scalar( @{ $self->param('all_leaves_current_tree') } ) ) >=
+                 $self->param('update_threshold_trees') ) {
+                my $percentage =
+                  scalar( keys %{ $self->param('updated_and_added_members_count') } ) . " / " .
+                  scalar( @{ $self->param('all_leaves_current_tree') } ) . " = " .
+                  scalar( keys %{ $self->param('updated_and_added_members_count') } )/scalar( @{ $self->param('all_leaves_current_tree') } );
                 $self->dataflow_output_id( $self->input_id, $self->param('branch_for_update_threshold_trees') );
                 $self->input_job->autoflow(0);
-                $self->complete_early("The number of new genes plus the added genes is >= 10% of the total number of leaves in the reused tree. So it needs to go to the cluster_factory.");
+                $self->complete_early(
+"The number of new genes plus the added genes is >= 10% ($percentage) of the total number of leaves in the reused tree. So it needs to go to the cluster_factory." );
             }
-            else{
+            else {
+                my $percentage =
+                  scalar( keys %{ $self->param('updated_and_added_members_count') } ) . " / " .
+                  scalar( @{ $self->param('all_leaves_current_tree') } ) . " = " .
+                  scalar( keys %{ $self->param('updated_and_added_members_count') } )/scalar( @{ $self->param('all_leaves_current_tree') } );
                 print "Deletion of members was OK, now storing the tree.\n" if ( $self->debug );
 
                 #Copy tree to the DB
-                print ">>>".$self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' )."<<<\n";
-                print ">>>".$self->param('output_clusterset_id')."<<<\n";
-                print ">>>".$self->param('gene_tree_id')."<<<\n";
+                print ">>>" . $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ) . "<<<\n";
+                print ">>>" . $self->param('output_clusterset_id') . "<<<\n";
+                print ">>>" . $self->param('gene_tree_id') . "<<<\n";
                 my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
                                                                  $self->param('output_clusterset_id'),
                                                                  $self->param('current_gene_tree'),
                                                                  undef, 1 );
             }
-        }
+        } ## end else [ if ( scalar( keys %{ $self...}))]
 
     } ## end if ( ( $self->param('current_gene_tree'...)))
     else {
+        if ( $self->param('current_gene_tree')->get_value_for_tag( 'identical_copy', '' ) ) {
+            print "Tree has not changed at all. Just copy over.\n" if ( $self->debug );
 
-        #Get previous tree
-        print "Just copy over trees\n" if ( $self->debug );
+            $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
+            $self->param('reuse_gene_tree')->preload();
 
-        #Escape branch to deal with the trees that brand new.
-        if ( !$self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) {
-            $self->dataflow_output_id( $self->input_id, $self->param('branch_for_new_tree') );
-            $self->input_job->autoflow(0);
-            $self->complete_early("Tree doesn't have tag needs_update so it is brand new, it didnt exist before. It needs to go to the cluster_factory.");
+            #Copy tree to the DB
+            my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
+                                                             $self->param('output_clusterset_id'),
+                                                             $self->param('current_gene_tree'),
+                                                             undef, 1 );
         }
-
-        $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "copy over: Could not get reuse_gene_tree for stable_id:\t" . $self->param('stable_id');
-        $self->param('reuse_gene_tree')->preload();
-
-        #Copy tree to the DB
-        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
-                                                         $self->param('output_clusterset_id'),
-                                                         $self->param('current_gene_tree'),
-                                                         undef, 1 );
-    }
+        else {
+            die "Logic error in identical_copy tree. Tree only have the deleted_genes_list tag and FlagUpdateClusters should have stored the tag needs_update=1.";
+        } 
+    } ## end else [ if ( ( $self->param('current_gene_tree'...)))]
 } ## end sub write_output
 
+##########################################
+#
+# internal methods
+#
+##########################################
+sub _disavow_unused_members {
+
+    my ( $self, $members_2_b_changed ) = @_;
+
+    if ( !%{$members_2_b_changed} ) {
+        $self->complete_early("An empty hash has been passed to _disavow_unused_members.");
+    }
+
+    print "Removing: " . scalar( keys %{$members_2_b_changed} ) . " out of: " . scalar( @{ $self->param('all_leaves') } ) . "\n" if ( $self->debug );
+
+    #Disavow members' parents
+    #loop through the list of members, if any found in the 2_b_deleted list, then need to disavow, if not, just copy over
+    foreach my $this_leaf ( @{ $self->param('all_leaves') } ) {
+        my $seq_id = $this_leaf->name;
+        my $xxx    = $this_leaf->dbID;
+        if ( $members_2_b_changed->{$seq_id} ) {
+            print "DELETING:$seq_id\n" if ( $self->debug );
+            $this_leaf->disavow_parent;
+
+            my $new_root_node = $self->param('reuse_gene_tree')->root->minimize_tree;
+            $self->param('reuse_gene_tree')->{'_root'} = $new_root_node;
+        }
+    }
+} ## end sub _disavow_unused_members
 1;
