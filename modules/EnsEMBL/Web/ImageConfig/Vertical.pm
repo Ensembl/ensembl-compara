@@ -235,11 +235,12 @@ sub get_parsed_features {
       }
     }
     else {
-      $data = {'features' => $track->{'features'}{1} || []};
-      push @{$data->{'features'}}, @{$track->{'features'}{-1} || []}; 
+      $data->{$name} = {'features' => $track->{'features'}{1} || [], 
+                        'metadata' => $track->{'metadata'} || {}};
+      push @{$data->{$name}{'features'}}, @{$track->{'features'}{-1} || []}; 
     }
     
-    $count++ unless $track->{'config'}{'color'};
+    $count++ unless ($track->{'metadata'}{'color'} || $track->{'metadata'}{'colour'});
     $sort++;
   }
   
