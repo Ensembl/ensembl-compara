@@ -400,15 +400,24 @@ sub content {
                       );
     }
     else {
+      my $rest_url = uri_escape($hub->species_defs->ENSEMBL_REST_URL
+                  .'/genetree/id/'
+                  .$gt_id
+                  .'?content-type=application/json');
+
       $link = sprintf (
-                        '/wasabi/wasabi.htm?url=%s', uri_escape($hub->url('Json', {
-                          type => 'GeneTree',
-                          action => 'fetch_wasabi',
-                          node => $node_id,
-                          gt => $gt_id,
-                          treetype => 'phyloxml'
-                        }))
+                        '/wasabi/wasabi.htm?rest_url=%s', $rest_url
                       );
+
+      # $link = sprintf (
+      #                   '/wasabi/wasabi.htm?url=%s', uri_escape($hub->url('Json', {
+      #                     type => 'GeneTree',
+      #                     action => 'fetch_wasabi',
+      #                     node => $node_id,
+      #                     gt => $gt_id,
+      #                     treetype => 'phyloxml'
+      #                   }))
+      #                 );
 
     }
 
