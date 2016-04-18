@@ -1288,6 +1288,7 @@
 .wasabi #page div.tooltip.bulletmenu ul{ margin: 0 5px; }
 
 .wasabi #page div.tooltip ul li{
+	list-style-image: none;
 	list-style-type:none;
 	margin: 0;
 	padding: 2px;

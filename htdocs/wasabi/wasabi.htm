@@ -11,10 +11,20 @@
       var dataset   = [];
       var url_vars  = getUrlVars();
       var url       = url_vars['url'];
+      var rest_url  = url_vars['rest_url'];
       var tree      = url_vars['tree'];
       var alignment = url_vars['alignment'];
 
-      if (url) {
+      if (rest_url) {
+        dataset.push(rest_url);
+        initTree(dataset);
+      }
+      else if (tree || alignment) {
+        tree && dataset.push(tree);
+        alignment && dataset.push(alignment);
+        initTree(dataset);
+      }
+      else if (url) {
         $.get(url, function(data) {
           var path = JSON.parse(data);
           path.tree && dataset.push(path.tree);
@@ -22,16 +32,17 @@
           initTree(dataset);
         });
       }
-      else if (tree || alignment) {
-        tree && dataset.push(tree);
-        alignment && dataset.push(alignment);
-        initTree(dataset);
-      }
     }
 
     function initTree(dataset) {
       if (dataset) {
-        var w = new Wasabi(dataset.length > 1 ? dataset : dataset[0],'#wasabi_ensembl',{'disable':'logo', 'allanim': false});
+        var options = {
+            'allanim': false, 
+            'colorScheme': 'Zappo',
+            'translate': 'codons',
+            'sharelinks': true
+        };
+        var w = new Wasabi(dataset.length > 1 ? dataset : dataset[0], '#wasabi_ensembl', options);
       }
       else {
         $('#wasabi_ensembl').html("<h2>Couldn't load. Please try again later.</h2>")
