@@ -1544,20 +1544,10 @@ alignments will throw an exception.
 #####################################################################
 
 
-=head2 get_old_consensus_genomic_align [FOR BACKWARDS COMPATIBILITY ONLY]
-
-  Arg [1]    : none
-  Example    : $old_consensus_genomic_aligns = $genomic_align_group->get_old_consensus_genomic_align();
-  Description: get the Bio::EnsEMBL::Compara::GenomicAlign object following the convention for backwards
-               compatibility
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
-  Exceptions : 
-  Caller     : general
-
-=cut
-
-sub get_old_consensus_genomic_align {
+sub get_old_consensus_genomic_align {   ## DEPRECATED
   my ($self) = @_;
+
+  deprecate('$genomic_align_block->get_old_consensus_genomic_align() will be removed in e87. Contact the Compara team if you need it.');
 
   my $genomic_aligns = $self->get_all_GenomicAligns;
   if (!@$genomic_aligns) {
@@ -1611,20 +1601,10 @@ sub get_old_consensus_genomic_align {
 }
 
 
-=head2 get_old_query_genomic_align [FOR BACKWARDS COMPATIBILITY ONLY]
-
-  Arg [1]    : none
-  Example    : $old_query_genomic_aligns = $genomic_align_group->get_old_query_genomic_align();
-  Description: get the Bio::EnsEMBL::Compara::GenomicAlign object following the convention for backwards
-               compatibility
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
-  Exceptions : 
-  Caller     : general
-
-=cut
-
-sub get_old_query_genomic_align {
+sub get_old_query_genomic_align {   ## DEPRECATED
   my ($self) = @_;
+
+  deprecate('$genomic_align_block->get_old_query_genomic_align() will be removed in e87. Contact the Compara team if you need it.');
 
   my $genomic_aligns = $self->get_all_GenomicAligns;
   if (!@$genomic_aligns) {
