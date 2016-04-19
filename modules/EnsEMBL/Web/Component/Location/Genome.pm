@@ -18,7 +18,7 @@ limitations under the License.
 
 package EnsEMBL::Web::Component::Location::Genome;
 
-### Module to replace Karyoview
+### Main component for displaying a karyotype and associated data (e.g. table of features) 
 
 use strict;
 
