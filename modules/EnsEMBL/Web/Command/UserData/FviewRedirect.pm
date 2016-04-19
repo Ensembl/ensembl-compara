@@ -43,6 +43,8 @@ sub process {
   ## Write out features as GFF file
   while (my ($type, $feat) = each %$features) {
     foreach my $f (@{$feat->[0] || []}) {
+      ## Skip features (genes) on LRGs
+      next if $f->{'region'} =~ /^LRG/;
       my $strand = $f->{'strand'} == 1 ? '+' : '-';
       my @attribs;
       
