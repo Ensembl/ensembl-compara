@@ -211,7 +211,7 @@ sub get_parsed_features {
   ## needed by the vertical drawing code
   my ($self, $wrapper, $bins, $colours) = @_;
   
-  my $tracks  = $wrapper->create_tracks(undef, {'bins' => $bins, 'parse_all' => 1}); 
+  my $tracks  = $wrapper->create_tracks(undef, {'bins' => $bins, 'include_attribs' => 1}); 
   my $data    = {};
   my ($count, $sort, $max, $mapped, $unmapped) = (0,0,0,0,0);
   
