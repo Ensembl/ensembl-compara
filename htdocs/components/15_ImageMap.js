@@ -685,14 +685,26 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       update: function (e, ui) {
         panel.sortUpdate(e, ui);
       }
-    }).css('visibility', 'visible').find('div.handle').on({
-      mousedown: function() {
-        $(this.parentNode).stop().animate({opacity: 0.8}, 200);
+    }).css('visibility', 'visible').find('li').on({
+      mouseover: function() {
+        $(this).clearQueue().delay(200).addClass('track_highlight', 200, 'linear');
       },
-      mouseup: function() {
-        $(this.parentNode).stop().animate({opacity: 1}, 200);
+      mouseout: function() {
+        $(this).clearQueue().removeClass('track_highlight', 100, 'linear');
       }
-    });
+    }).find('div.handle').on({
+      mouseover: function(e) {
+        // Dont highlight track on hover
+        $(this.parentNode).removeClass('track_highlight').finish();
+        e.stopPropagation();
+      },
+       mousedown: function() {
+        $(this.parentNode).addClass('track_highlight', 200, 'linear');
+       },
+       mouseup: function() {
+        $(this.parentNode).removeClass('track_highlight', 100, 'linear');
+       }
+     });
 
     // split img into two image to show top and bottom of the image separately
     this.elLk.img2 = this.elLk.img.wrap('<div>').parent().css({overflow: 'hidden', height: wrapperTop}).clone().insertAfter(this.elLk.img.parent()).css({height: 'auto'}).find('img').css({marginTop: -wrapperTop});
@@ -756,7 +768,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   sortStop: function (e, ui) {
-    ui.item.stop().animate({opacity: 1}, 200);
     $(document.body).removeClass('track-reordering');
     this.dragging = false;
   },
