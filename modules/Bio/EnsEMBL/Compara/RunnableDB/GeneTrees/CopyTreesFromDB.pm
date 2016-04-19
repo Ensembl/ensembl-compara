@@ -81,7 +81,8 @@ sub fetch_input {
 
         #Get gene_tree
         #----------------------------------------------------------------------------------------------------------------------------
-        $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) || die "update: Could not get current_gene_tree for stable_id\t" . $self->param('stable_id');
+        $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) ||
+          die "update: Could not get current_gene_tree for stable_id\t" . $self->param('stable_id');
         $self->param('current_gene_tree')->preload();
         $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') ) || die "Could not get value_for_tag: model_name";
 
