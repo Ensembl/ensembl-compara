@@ -31,10 +31,7 @@ Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
 
 =head1 DESCRIPTION
 
-Base adaptor for Member objects that cannot be instantiated directly
-
-The methods are still available for compatibility until release 74 (included),
-but the Member object should not be explicitely used.
+Base adaptor for Member objects.  This adaptor cannot be used directly.
 
 =head1 INHERITANCE TREE
 

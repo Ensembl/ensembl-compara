@@ -34,8 +34,7 @@ Bio::EnsEMBL::Compara::Member
 Abstract class to represent a biological (gene-related) object used
 as part of other Compara structures (gene trees, gene families, homologies).
 The (inherited) objects actually used are SeqMember and GeneMember, and Member
-should not be directly used. Some methods are still available for compatibility
-until release 75 (included).
+should not be directly used.
 
 A Member is a specialized Locus that deals with genes / gene products.
 
