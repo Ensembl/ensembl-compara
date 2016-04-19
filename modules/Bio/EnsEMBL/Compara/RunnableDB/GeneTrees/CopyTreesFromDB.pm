@@ -95,10 +95,6 @@ sub fetch_input {
         }
 
         #Does tree need update?
-        #if ( ( $self->param('current_gene_tree')->has_tag('updated_genes_list') ) ||
-        #     ( $self->param('current_gene_tree')->has_tag('added_genes_list') ) ||
-        #     ( $self->param('current_gene_tree')->has_tag('deleted_genes_list') ) ) {
-
         if ( ( $self->param('current_gene_tree')->has_tag('needs_update') ) && ( $self->param('current_gene_tree')->get_value_for_tag('needs_update') == 1 ) ) {
 
             print "Tree: " . $self->param('stable_id') . ":" . $self->param('gene_tree_id') . " needs to be updated.\n" if ( $self->debug );
@@ -179,11 +175,6 @@ sub fetch_input {
                 $members_2_b_added_updated{$updated_member} = 1;
             }
 
-            #print "DELETED:" . @deleted . "\n";
-            #print join( ", ", @deleted ) . "\n";
-            #print "ADD:" . keys(%members_2_b_added) . "\n";
-            #print "UPDATED:" . keys(%members_2_b_updated) . "\n";
-            #print "2BCH:" . keys(%members_2_b_changed) . "\n";
         } ## end if ( ( $self->param('current_gene_tree'...)))
 
     } ## end if ( $self->param('reuse_db'...))
@@ -233,7 +224,7 @@ sub write_output {
         }
         else {
 
-            #If the number of new genes plus the added genes is >= 10% of the total number of leaves in the reused tree.
+            #If the number of new genes plus the added genes is >= 20% of the total number of leaves in the reused tree.
             # we should compute the whole alignment/tree again.
             if ( ( scalar( keys %{ $self->param('updated_and_added_members_count') } )/scalar( @{ $self->param('all_leaves_current_tree') } ) ) >=
                  $self->param('update_threshold_trees') ) {
@@ -303,7 +294,6 @@ sub _disavow_unused_members {
     #loop through the list of members, if any found in the 2_b_deleted list, then need to disavow, if not, just copy over
     foreach my $this_leaf ( @{ $self->param('all_leaves') } ) {
         my $seq_id = $this_leaf->name;
-        my $xxx    = $this_leaf->dbID;
         if ( $members_2_b_changed->{$seq_id} ) {
             print "DELETING:$seq_id\n" if ( $self->debug );
             $this_leaf->disavow_parent;
@@ -312,5 +302,5 @@ sub _disavow_unused_members {
             $self->param('reuse_gene_tree')->{'_root'} = $new_root_node;
         }
     }
-} ## end sub _disavow_unused_members
+}
 1;
