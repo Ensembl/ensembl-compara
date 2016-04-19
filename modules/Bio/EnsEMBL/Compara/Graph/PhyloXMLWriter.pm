@@ -240,11 +240,9 @@ sub _process {
   $self->_writer()->startTag($tag, %{$attributes});
   $self->dispatch_body($node);
 
-  if($node->get_child_count()) {
     foreach my $child (@{$node->children()}) {
       $self->_process($child);
     }
-  }
 
   $self->_writer()->endTag($tag);
   return;
