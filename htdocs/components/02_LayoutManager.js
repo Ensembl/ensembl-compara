@@ -55,8 +55,7 @@ Ensembl.LayoutManager.extend({
       if (window.name.match(/^popup_/)) {
         return true;
       }
-      
-      window.open(this.href, 'popup_' + window.name, 'width=950,height=500,resizable,scrollbars');
+      window.open(this.href, '_blank', 'width=950,height=500,resizable,scrollbars');
       return false;
     }).on('click', 'a[rel="external"]', function () { 
       this.target = '_blank';

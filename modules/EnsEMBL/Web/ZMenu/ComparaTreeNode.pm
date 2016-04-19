@@ -403,7 +403,7 @@ sub content {
       my $rest_url = uri_escape($hub->species_defs->ENSEMBL_REST_URL
                   .'/genetree/id/'
                   .$gt_id
-                  .'?content-type=application/json');
+                  .'?content-type=application/json&aligned=1');
 
       $link = sprintf (
                         '/wasabi/wasabi.htm?rest_url=%s', $rest_url
