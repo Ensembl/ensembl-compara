@@ -368,7 +368,7 @@ sub cleanupHandler {
   ## @param Apache2::RequestRec request object
   my $r = shift;
 
-  return OK if $r->unparsed_uri eq '*' || $r->unparsed_uri =~ m|^/Crash|;
+  return OK if $r->unparsed_uri =~ m/^(\*|\/Crash|\/Error)/;
 
   # run any plugged-in code
   request_end_hook($r);
