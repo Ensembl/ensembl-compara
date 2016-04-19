@@ -150,6 +150,7 @@ sub write_output {
 	#If the current tree is not an update tree, we should not flow to mafft_update.
 	#But it must be done after copying the alignment!
     if ( !$self->param('current_gene_tree')->has_tag('needs_update') ){
+        $self->warning("Current tree is not an update tree, we should not flow to mafft_update");
         $self->input_job->autoflow(0);
 	}
 }
