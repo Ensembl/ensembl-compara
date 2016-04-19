@@ -501,7 +501,8 @@ return
             {   -logic_name => 'stats_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -flow_into  => {
-                                2 => [ 'multiplealigner_stats' ],
+                    '2->A' => [ 'multiplealigner_stats' ],
+                    '1->A' => [ 'block_size_distribution' ],
                                },
             },
 
@@ -520,6 +521,13 @@ return
               -hive_capacity => 100,
             },
 
+
+        {   -logic_name => 'block_size_distribution',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
+            -parameters => {
+                'mlss_id'   => $self->o('epo_mlss_id'),
+            },
+        },
 
 ];
 }

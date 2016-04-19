@@ -123,7 +123,8 @@ sub pipeline_analyses {
                 }
             ],
             -flow_into  => {
-                2 => [ 'multiplealigner_stats' ],
+                '2->A' => [ 'multiplealigner_stats' ],
+                '1->A' => [ 'block_size_distribution' ],
             },
         },
 
@@ -137,6 +138,10 @@ sub pipeline_analyses {
                 'output_dir'        => $self->o('feature_dumps'),
             },
             -rc_name => 'mem3500',
+        },
+
+        {   -logic_name => 'block_size_distribution',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
         },
     ];
 }
