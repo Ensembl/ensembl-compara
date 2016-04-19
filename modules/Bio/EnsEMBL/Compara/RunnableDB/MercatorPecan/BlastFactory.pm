@@ -57,14 +57,6 @@ sub param_defaults {
 }
 
 
-sub fetch_input {
-    my $self = shift @_;
-
-    my $genome_db_id = $self->param('genome_db_id') || $self->param('genome_db_id', $self->param('gdb'))        # for compatibility
-        or die "'genome_db_id' is an obligatory parameter";
-}
-
-
 sub write_output {
     my $self = shift @_;
 
@@ -72,7 +64,7 @@ sub write_output {
     #Fetch members for genome_db_id
     my $sql = 'SELECT seq_member_id FROM seq_member WHERE genome_db_id = ? ORDER BY seq_member_id';
     my $sth = $self->compara_dba->dbc->prepare( $sql );
-    $sth->execute($self->param('genome_db_id'));
+    $sth->execute($self->param_required('genome_db_id'));
     
     my $seq_member_id_list;
     while( my ($seq_member_id) = $sth->fetchrow() ) {
