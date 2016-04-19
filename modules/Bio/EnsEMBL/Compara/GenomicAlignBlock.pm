@@ -1422,15 +1422,8 @@ sub get_GenomicAlignTree {
         #Get SpeciesTree from database.
         my $species_tree_adaptor = $self->adaptor->db->get_SpeciesTreeAdaptor;
         my $label = "default";
-
-        eval {
-            #Read tree from SpeciesTreeNode table
-            $species_tree_string = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set->dbID, $label)->species_tree();
-        };
-        if ($@) {
-            #backwards compatibility to e73
-            $species_tree_string = $self->method_link_species_set->get_value_for_tag("species_tree");
-        }
+        #Read tree from SpeciesTreeNode table
+        $species_tree_string = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set->dbID, $label)->species_tree();
     }
     #print "string $species_tree_string\n";
 
