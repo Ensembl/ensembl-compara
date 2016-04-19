@@ -55,10 +55,10 @@ sub param_defaults {
     }
 }
 
-sub run {
+sub write_output {
     my $self = shift;
 
-    $self->SUPER::run();
+    $self->SUPER::write_output();
 
     #
     #Check number of genomic_align_blocks written is correct
