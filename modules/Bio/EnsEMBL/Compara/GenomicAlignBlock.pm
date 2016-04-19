@@ -159,7 +159,7 @@ use warnings;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose deprecate);
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
@@ -1469,20 +1469,11 @@ sub get_GenomicAlignTree {
     return $genomic_align_tree;
 }
 
-=head2 _print
 
-  Arg [1]    : none
-  Example    : $genomic_align->_print
-  Description: print attributes of the object to the STDOUT. Used for debuging purposes.
-  Returntype : none
-  Exceptions : 
-  Caller     : object::methodname
-  Status     : At risk
-
-=cut
-
-sub _print {
+sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
+
+  deprecate('$genomic_align_block->_print() is deprecated and will be removed in e87. Use $genomic_align_block->toString() instead.');
 
   $FILEH ||= \*STDOUT;
   print $FILEH
@@ -1506,6 +1497,33 @@ sub _print {
     }
   }
 
+}
+
+
+=head2 toString
+
+  Example    : print $genomic_align_block->toString();
+  Description: used for debugging, returns a string with the key descriptive
+               elements of this alignment block
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    my $str = 'GenomicAlignBlock';
+    if ($self->original_dbID) {
+        $str .= sprintf(' restricted from dbID=%s', $self->original_dbID);
+    } else {
+        $str .= sprintf(' dbID=%s', $self->dbID);
+    }
+    $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
+    $str .= ' score='.$self->score if defined $self->score;
+    $str .= ' length='.$self->length if defined $self->length;
+    $str .= ' with ' . scalar(@{$self->genomic_align_array}) . ' GenomicAligns';
+    return $str;
 }
 
 

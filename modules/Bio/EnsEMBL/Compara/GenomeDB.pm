@@ -564,19 +564,13 @@ sub component_genome_dbs {
 
 sub toString {
     my $self = shift;
-
-    return ref($self).": dbID=".($self->dbID || '?')
-        .", name='".$self->name
-        ."', assembly='".$self->assembly
-        ."', genebuild='".$self->genebuild
-        ."', taxon_id='".$self->taxon_id
-        ."', karyotype='".$self->has_karyotype
-        ."', high_coverage='".$self->is_high_coverage
-        .($self->genome_component ? "', genome_component='".$self->genome_component : '')
-        ."', locator='".($self->locator || '')
-        ."', first_release='".($self->first_release || 'NULL')
-        ."', last_release='".($self->last_release || 'NULL')
-        ."'";
+    my $txt = sprintf('GenomeDB dbID=%d %s (%s)', ($self->dbID || '?'), ($self->genome_component ? ($self->name . ' component ' . $self->genome_component) : $self->name), $self->assembly);
+    $txt .= ' taxon_id='.$self->taxon_id if $self->taxon_id;
+    $txt .= sprintf(' genebuild="%s"', $self->genebuild);
+    $txt .= ', ' . ($self->is_high_coverage ? 'high' : 'low') . ' coverage';
+    $txt .= ', ' . ($self->has_karyotype ? 'with' : 'without') . ' karyotype';
+    $txt .= ' ' . $self->SUPER::toString();
+    return $txt;
 }
 
 

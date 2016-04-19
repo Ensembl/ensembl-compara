@@ -1021,21 +1021,10 @@ sub _get_fake_aligned_sequence_from_cigar_line {
 }
 
 
-=head2 _print
-
-  Arg [1]    : ref to a FILEHANDLE
-  Example    : $genomic_align->_print
-  Description: print attributes of the object to the STDOUT or to the FILEHANDLE.
-               Used for debuging purposes.
-  Returntype : none
-  Exceptions : 
-  Caller     : object->methodname
-  Status     : At risk
-
-=cut
-
-sub _print {
+sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
+
+  deprecate('$genomic_align->_print() is deprecated and will be removed in e87. Use $genomic_align->toString() instead.');
 
   my $verbose = verbose;
   verbose(0);
@@ -1064,6 +1053,32 @@ sub _print {
   verbose($verbose);
 
 }
+
+
+=head2 toString
+
+  Example    : print $genomic_align->toString();
+  Description: used for debugging, returns a string with the key descriptive
+               elements of this alignment line
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    my $str = 'GenomicAlign';
+    if ($self->original_dbID) {
+        $str .= sprintf(' restricted from dbID=%s (block_id=%s)', $self->original_dbID, $self->genomic_align_block->original_dbID);
+    } else {
+        $str .= sprintf(' dbID=%s (block_id=%d)', $self->dbID, $self->genomic_align_block_id);
+    }
+    $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
+    $str .= sprintf(' %s %s:%d-%d%s', $self->dnafrag->genome_db->name, $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end, ($self->dnafrag_strand < 0 ? '(-1)' : '')) if $self->dnafrag_id;
+    return $str;
+}
+
 
 =head2 display_id
 

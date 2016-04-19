@@ -86,7 +86,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(warning throw);
+use Bio::EnsEMBL::Utils::Exception qw(warning throw deprecate);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -616,19 +616,11 @@ sub _reverse_score {
     return $rev_str;
 }
 
-=head2 _print
 
-  Example    : $conservation_score->_print;
-  Description: print the contents of the ConservationScore object
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-  Status     : At risk
-
-=cut
-
-sub _print {
+sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
+
+  deprecate('$conservation_score->_print() is deprecated and will be removed in e87. Use $conservation_score->toString() instead.');
 
 #  my $verbose = verbose;
 #  verbose(0);
@@ -651,5 +643,24 @@ sub _print {
   expected_score = $exp_score \n";
 
 }
+
+
+=head2 toString
+
+  Example    : print $conservation_score->toString();
+  Description: used for debugging, returns a string with the key descriptive
+               elements of this conservation score
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    my $str = sprintf('ConservationScore %f (vs %f) at position %d of genomic_align_block_id=%d', $self->observed_score, $self->expected_score, $self->position, $self->genomic_align_block_id);
+    return $str;
+}
+
 
 1;

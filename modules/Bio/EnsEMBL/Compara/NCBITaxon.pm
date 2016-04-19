@@ -39,6 +39,7 @@ Only for species level and below
   - subspecies()
 
 Others:
+  - toString()
   - classification()
 
 =head1 CONTACT
@@ -431,6 +432,26 @@ sub get_short_name {
   $name =~  s/(\S)\S+\s(\S{3})\S+/$1$2/;
   $name =~ s/\ //g;
   return $name;
+}
+
+
+=head2 toString
+
+  Example    : print $taxon->toString();
+  Description: used for debugging, returns a string with the key descriptive
+               elements of this taxon
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    my $type = ref($self);
+    $type =~ s/^.*:://;
+    my $str = sprintf('NCBITaxon taxon_id=%s %s (%s)', $self->dbID || '?', $self->name, $self->rank);
+    return $str;
 }
 
 

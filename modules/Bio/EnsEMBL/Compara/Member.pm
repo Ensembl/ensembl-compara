@@ -358,8 +358,16 @@ sub genome_db {
 
 sub toString {
     my $self = shift;
-    my $str = sprintf("   %s %s(%d)", $self->source_name, $self->stable_id, $self->dbID || -1);
-    $str .= sprintf("\t%s : %d-%d", $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end) if $self->dnafrag_id;
+    my $type = ref($self);
+    $type =~ s/^.*:://;
+    my $str = sprintf('%s dbID=%s %s', $type, $self->dbID || '?', $self->stable_id);
+    $str .= sprintf(' (%s)', $self->display_label) if $self->display_label;
+    if ($self->genome_db_id) {
+        $str .= ' ' . $self->genome_db->name;
+    } elsif ($self->taxon_id) {
+        $str .= ' taxon_id=' . $self->taxon_id;
+    }
+    $str .= sprintf(' %s:%d-%d%s', $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end, ($self->dnafrag_strand < 0 ? '(-1)' : '')) if $self->dnafrag_id;
     return $str;
 }
 
