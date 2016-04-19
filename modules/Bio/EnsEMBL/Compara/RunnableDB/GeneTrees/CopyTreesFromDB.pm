@@ -165,7 +165,22 @@ sub fetch_input {
             }
 
         } ## end if ( ( $self->param('current_gene_tree'...)))
+        elsif ( ( $self->param('current_gene_tree')->has_tag('only_needs_deleting') ) && ( $self->param('current_gene_tree')->get_value_for_tag('only_needs_deleting') == 1 ) ) {
 
+            #List of members that were either added, updated or removed
+            my %members_2_b_changed;
+            $self->param( 'members_2_b_changed', \%members_2_b_changed );
+
+            #Get list of genes to remove
+            my $deleted_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'deleted_genes_list', '' );
+            my %members_2_b_deleted = map { $_ => 1 } split( /,/, $deleted_genes_list );
+            $self->param( 'members_2_b_deleted', \%members_2_b_deleted );
+
+            foreach my $deleted_member ( keys(%members_2_b_deleted) ) {
+                $members_2_b_changed{$deleted_member} = 1;
+            }
+
+        }
     } ## end if ( $self->param('reuse_db'...))
     else {
         $self->warning("reuse_db hash has not been set, so cannot reuse");
@@ -245,18 +260,17 @@ sub write_output {
         } ## end else [ if ( scalar( keys %{ $self...}))]
 
     } ## end if ( ( $self->param('current_gene_tree'...)))
-    else {
-        if ( $self->param('current_gene_tree')->get_value_for_tag( 'identical_copy', '' ) ) {
-            print "Tree has not changed at all. Just copy over.\n" if ( $self->debug );
 
-            $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
-            $self->param('reuse_gene_tree')->preload();
+    #all trees from this point on, there is no need for alignment/tree inference
+    else{
+        $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
+        $self->param('reuse_gene_tree')->preload();
+        $self->param( 'all_leaves', $self->param('reuse_gene_tree')->get_all_leaves ) || die "Could not get_all_leaves for: reuse_gene_tree";
 
-            #Copy tree to the DB
-            my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
-                                                             $self->param('output_clusterset_id'),
-                                                             $self->param('current_gene_tree'),
-                                                             undef, 1 );
+        if ( $self->param('current_gene_tree')->get_value_for_tag( 'only_needs_deleting' ) ) {
+            print "Tree only needs prunning (only_needs_deleting).\n" if ( $self->debug );
+            print "disavow 2\n" if ( $self->debug );
+            $self->_disavow_unused_members( $self->param('members_2_b_changed') );
         }
         else{
             print "Tree has not changed at all. Just copy over.\n" if ( $self->debug );
