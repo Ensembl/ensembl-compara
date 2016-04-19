@@ -799,12 +799,12 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_trees_from_previous_release',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB',
             -parameters => {
-                'input_clusterset_id'   => 'default',
-                'output_clusterset_id'  => 'copy',
-                'branch_for_new_tree'  => '3',
-                'branch_for_wiped_out_trees'  => '4',
-                'branch_for_update_threshold_trees'  => '5',
-                'update_threshold_trees' => $self->o('update_threshold_trees'),
+                'input_clusterset_id'               => 'default',
+                'output_clusterset_id'              => 'copy',
+                'branch_for_new_tree'               => '3',
+                'branch_for_wiped_out_trees'        => '4',
+                'branch_for_update_threshold_trees' => '5',
+                'update_threshold_trees'            => $self->o('update_threshold_trees'),
             },
             -flow_into  => {
                  1 => [ 'copy_alignments_from_previous_release' ],
