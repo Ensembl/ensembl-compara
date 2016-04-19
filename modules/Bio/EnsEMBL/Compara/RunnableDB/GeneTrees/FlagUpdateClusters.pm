@@ -189,6 +189,7 @@ sub write_output {
         if ( keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) {
             if ( !$flagged{$gene_tree_id} ) {
                 $gene_tree->store_tag( 'needs_update', 1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
+                $gene_tree->store_tag( 'only_needs_deleting', 0 ) || die "Could not store_tag 'only_needs_deleting' for $gene_tree_id";
             }
             $gene_tree->store_tag( 'updated_genes_list', join( ",", keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) )  || die "Could not store_tag 'updated_genes_list' for $gene_tree_id";
             $flagged{$gene_tree_id} = 1;
