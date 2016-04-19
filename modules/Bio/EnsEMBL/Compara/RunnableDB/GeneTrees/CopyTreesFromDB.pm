@@ -135,25 +135,13 @@ sub fetch_input {
             %updated_and_added_members_count = map { $_ => 1 } split( /,/, $added_genes_list );
 
             #Get list of genes to remove
-            my %members_2_b_removed = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag( 'deleted_genes_list', '' ) );
+            my $deleted_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'deleted_genes_list', '' );
+            my %members_2_b_deleted = map { $_ => 1 } split( /,/, $deleted_genes_list );
+            $self->param( 'members_2_b_deleted', \%members_2_b_deleted );
 
             #Load changed members into count
             %updated_and_added_members_count = map { $_ => 1 } split( /,/, $updated_genes_list );
             %updated_and_added_members_count = map { $_ => 1 } split( /,/, $added_genes_list );
-
-            #We need to map the leaves in the new trees and remove the sequences from the species that are not included in the species set.
-            #For that we use the piece of logic bellow:
-            my @a;
-            my @b;
-            foreach my $this_leaf ( @{ $self->param('all_leaves') } ) {
-                push( @a, $this_leaf->name );
-            }
-            foreach my $this_leaf ( @{ $self->param('all_leaves_current_tree') } ) {
-                push( @b, $this_leaf->name );
-            }
-
-            my %remaining_leaves = map { ( $_, 1 ) } @b;
-            my @deleted = grep { !$remaining_leaves{$_} } @a;
 
             #List of members that were either added, updated or removed
             my %members_2_b_changed;
@@ -163,7 +151,7 @@ sub fetch_input {
             my %members_2_b_added_updated;
             $self->param( 'members_2_b_added_updated', \%members_2_b_added_updated );
 
-            foreach my $deleted_member (@deleted) {
+            foreach my $deleted_member ( keys(%members_2_b_deleted) ) {
                 $members_2_b_changed{$deleted_member} = 1;
             }
             foreach my $added_member ( keys(%members_2_b_added) ) {
