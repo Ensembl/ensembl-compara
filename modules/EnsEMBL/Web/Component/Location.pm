@@ -174,7 +174,6 @@ sub configure_UserData_key {
           elsif ($track->{'metadata'}{'color'}) {
             my $colour = $track->{'metadata'}{'color'};
             foreach my $f (@{$track->{'features'}}) {
-              use Data::Dumper; warn ">>> F ".Dumper($f);
               push @{$colour_key{$colour}}, $f->{'label'} if $f->{'label'};
             }
           }
