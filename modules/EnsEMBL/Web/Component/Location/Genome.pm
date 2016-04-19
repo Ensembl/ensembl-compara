@@ -317,7 +317,6 @@ sub _render_features {
     $html .= $table->render;
 
     ## Table(s) of features
-=pod
     while (my ($k, $v) = each (%$user_features)) {
       while (my ($ftype, $data) = each (%$v)) {
         my $extra_columns = $ftype eq 'Gene' ?
@@ -332,7 +331,6 @@ sub _render_features {
         $html .= $self->_feature_table($ftype, [$data->{'features'}, $extra_columns], $default_column_info);
       }
     }
-=cut
   }
 
   unless (keys %$features || keys %$user_features ) {
@@ -354,13 +352,17 @@ sub _feature_table {
     my $columns = [];
     my $col;
 
+    my %seen; ## Check for duplicate columns
     foreach $col (@{$table_info->{'column_order'}||[]}) {
+      next if $seen{$col};
       push @$columns, { 'key' => $col, %{$column_info->{$col}} };
+      $seen{$col} = 1;
     }
 
     ## Add "extra" columns (unique to particular table types)
     my $extras = $feature_set->[1];
     foreach $col (@$extras) {
+      next if $seen{$col->{'key'}};
       my %column_extra = %{$column_info->{$col->{'key'}}||{}};
       push @$columns, {
                   'key'   => $col->{'key'}, 
@@ -368,6 +370,7 @@ sub _feature_table {
                   'sort'  => $col->{'sort'},
                   %column_extra,
                   }; 
+      $seen{$col->{'key'}} = 1;
     }
       
     my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1, id => "${feat_type}_table", %{$table_info->{'table_style'} || {}} });
@@ -395,9 +398,9 @@ sub _configure_Gene_table {
   my $column_order = [qw(names loc extname)];
 
   my ($data, $extras) = @$feature_set;
+  push @$extras, {'key' => 'extname'};
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
-              'extname' => {'value' => $feature->{'extname'}},
               'names'   => {'value' => $self->_names_link($feature, $feature_type)},
               'loc'     => {'value' => $self->_location_link($feature)},
               };
@@ -490,6 +493,16 @@ sub _configure_ProteinAlignFeature_table {
 
 sub add_extras {
   my ($self, $row, $feature, $extras) = @_;
+
+  ## Do a bit of tidying up where necessary, to make the data easier to access
+  if ($feature->{'extra'} && ref($feature->{'extra'}) eq 'ARRAY') {
+    my $hash = {};
+    foreach (@{$feature->{'extra'}||[]}) {
+      $hash->{lc($_->{'name'})} = $_->{'value'} || '';
+    }
+    $feature->{'extra'} = $hash;
+  }
+
   foreach my $col (@$extras) {
     my $key = $col->{'key'};
     if (defined $feature->{'extra'}{$key}) {
@@ -514,7 +527,7 @@ sub _sort_features_by_coords {
 
 sub _location_link {
   my ($self, $f) = @_;
-  my $region = $f->{'region'} || $f->{'chr'};
+  my $region = $f->{'seq_region'} || $f->{'region'} || $f->{'chr'};
   return 'Unmapped' unless $region;
   my $coords = $region.':'.$f->{'start'}.'-'.$f->{'end'};
   my $link = sprintf(
@@ -535,19 +548,20 @@ sub _location_link {
 
 sub _names_link {
   my ($self, $f, $type) = @_;
-  my $region = $f->{'region'} || $f->{'chr'};
+  my $region = $f->{'seq_region'} || $f->{'region'} || $f->{'chr'};
   my $coords    = $region.':'.$f->{'start'}.'-'.$f->{'end'};
   my $obj_param = $type eq 'Transcript' ? 't' : 'g';
+  my $name = $f->{'id'} || $f->{'label'};
   my $params = {
     'type'      => $type, 
     'action'    => 'Summary',
-    $obj_param  => $f->{'label'},
+    $obj_param  => $name,
     'r'         => $coords, 
     'ph'        => $self->hub->param('ph'),
     __clear     => 1
   };
 
-  my $names = sprintf('<a href="%s">%s</a>', $self->hub->url($params), $f->{'label'});
+  my $names = sprintf('<a href="%s">%s</a>', $self->hub->url($params), $name);
   return $names;
 }
 
