@@ -158,13 +158,13 @@ sub run {
         }
         else{
             #print "Could not fetch reused tree with with stable_id=$current_stable_id. Tree will be build from scratch\n" if ($self->debug);
-            $current_gene_tree->store_tag( 'new_build', 1 );
+            $current_gene_tree->store_tag( 'new_build', 1 ) || die "Could not store_tag 'new_build'";
         }
 
         my $members_2_change = scalar( keys( %{ $root_ids_2_add{$gene_tree_id} } ) ) + scalar( keys( %{ $root_ids_2_update{$gene_tree_id} } ) );
         #print "Memebers to change (add+update): $members_2_change | members to delete: " . scalar( keys( %{ $root_ids_2_delete{$gene_tree_id} } ) ) . "\n" if ($self->debug);
         if ( ( $members_2_change/scalar(@current_members) ) >= $self->param('update_threshold_trees') ) {
-            $current_gene_tree->store_tag( 'new_build', 1 );
+            $current_gene_tree->store_tag( 'new_build', 1 ) || die "Could not store_tag 'new_build'";
         }
 
         #releasing tree from memory
@@ -188,9 +188,9 @@ sub write_output {
         #root_ids_2_update
         if ( keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) {
             if ( !$flagged{$gene_tree_id} ) {
-                $gene_tree->store_tag( 'needs_update', 1 );
+                $gene_tree->store_tag( 'needs_update', 1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
             }
-            $gene_tree->store_tag( 'updated_genes_list', join( ",", keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) );
+            $gene_tree->store_tag( 'updated_genes_list', join( ",", keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) )  || die "Could not store_tag 'updated_genes_list' for $gene_tree_id";
             $flagged{$gene_tree_id} = 1;
         }
 
@@ -198,19 +198,22 @@ sub write_output {
         if ( keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) {
             if ( !$flagged{$gene_tree_id} ) {
                 $gene_tree->store_tag( 'needs_update', 1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
+                $gene_tree->store_tag( 'only_needs_deleting', 0 ) || die "Could not store_tag 'only_needs_deleting' for $gene_tree_id";
             }
-            $gene_tree->store_tag( 'added_genes_list', join( ",", keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) );
+            $gene_tree->store_tag( 'added_genes_list', join( ",", keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) ) || die "Could not store_tag 'added_genes_list' for $gene_tree_id";
             $flagged{$gene_tree_id} = 1;
         }
 
         #root_ids_2_delete
         if ( keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) {
-            $gene_tree->store_tag( 'needs_update', 1 );
-            $gene_tree->store_tag( 'deleted_genes_list', join( ",", keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) );
+            if ( (!$gene_tree->has_tag('only_needs_deleting')) && (!$gene_tree->has_tag('needs_update')) ) {
+                $gene_tree->store_tag( 'only_needs_deleting', 1 ) || die "Could not store_tag 'only_needs_deleting' for $gene_tree_id";
+            }
+            $gene_tree->store_tag( 'deleted_genes_list', join( ",", keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) ) || die "Could not store_tag 'deleted_genes_list' for $gene_tree_id";
         }
 
         if ( ( !keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) && ( !keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) && ( !keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) ) {
-            $gene_tree->store_tag( 'identical_copy', 1 );
+            $gene_tree->store_tag( 'identical_copy', 1 ) || die "Could not store_tag 'identical_copy' for $gene_tree_id";
         }
 
     }
