@@ -188,34 +188,7 @@ sub create_hash {
     $feature->{'end'}   = $feature_end;
 
     ## For zmenus, build array of extra attributes
-    my $extra = [];
-    push @$extra, {'name' => 'Source',        'value' => $self->parser->get_source};
-    push @$extra, {'name' => 'Feature type',  'value' => $self->parser->get_type};
-    if ($attributes->{'gene_id'}) {
-      push @$extra, {'name' => 'Gene ID', 'value' => $attributes->{'gene_id'}};
-      delete $attributes->{'gene_id'};
-      if ($attributes->{'gene_name'}) {
-        push @$extra, {'name' => 'Gene name', 'value' => $attributes->{'gene_name'}};
-        delete $attributes->{'gene_name'};
-      }
-      if ($attributes->{'gene_biotype'}) {
-        push @$extra, {'name' => 'Gene biotype', 'value' => $attributes->{'gene_biotype'}};
-        delete $attributes->{'gene_biotype'};
-      }
-    }
-    if ($attributes->{'transcript_id'}) {
-      push @$extra, {'name' => 'Transcript ID', 'value' => $attributes->{'transcript_id'}};
-      delete $attributes->{'transcript_id'};
-      if ($attributes->{'transcript_name'}) {
-        push @$extra, {'name' => 'Transcript name', 'value' => $attributes->{'transcript_name'}};
-        delete $attributes->{'transcript_name'};
-      }
-    }
-    foreach (sort keys %$attributes) {
-      (my $name = $_) =~ s/_/ /;
-      push @$extra, {'name' => ucfirst($name), 'value' => $attributes->{$_}};
-    }
-    $feature->{'extra'} = $extra;
+    $feature->{'extra'} = $self->_build_extras($attributes);
   }
   else {
     $feature->{'start'} = $start;
@@ -232,9 +205,48 @@ sub create_hash {
       $click_params->{'exon'} = $attributes->{'exon_number'};
     }
     $feature->{'href'} = $self->href($click_params);
+
+    ## Needed by Location/Genome, for image+table from one parser pass
+    if ($metadata->{'include_attribs'}) {
+      $feature->{'extra'} = $self->_build_extras($attributes);
+    }
   }
 
   return $feature;
+}
+
+sub _build_extras {
+  my ($self, $attributes, $as_hash) = @_;
+
+  my $extra = [];
+  push @$extra, {'name' => 'Source',        'value' => $self->parser->get_source};
+  push @$extra, {'name' => 'Feature type',  'value' => $self->parser->get_type};
+  if ($attributes->{'gene_id'}) {
+    push @$extra, {'name' => 'Gene ID', 'value' => $attributes->{'gene_id'}};
+    delete $attributes->{'gene_id'};
+    if ($attributes->{'gene_name'}) {
+      push @$extra, {'name' => 'Gene name', 'value' => $attributes->{'gene_name'}};
+      delete $attributes->{'gene_name'};
+    }
+    if ($attributes->{'gene_biotype'}) {
+      push @$extra, {'name' => 'Gene biotype', 'value' => $attributes->{'gene_biotype'}};
+      delete $attributes->{'gene_biotype'};
+    }
+  }
+  if ($attributes->{'transcript_id'}) {
+    push @$extra, {'name' => 'Transcript ID', 'value' => $attributes->{'transcript_id'}};
+    delete $attributes->{'transcript_id'};
+    if ($attributes->{'transcript_name'}) {
+      push @$extra, {'name' => 'Transcript name', 'value' => $attributes->{'transcript_name'}};
+      delete $attributes->{'transcript_name'};
+    }
+  }
+  foreach (sort keys %$attributes) {
+    (my $name = $_) =~ s/_/ /;
+    push @$extra, {'name' => ucfirst($name), 'value' => $attributes->{$_}};
+  }
+
+  return $extra;
 }
 
 1;
