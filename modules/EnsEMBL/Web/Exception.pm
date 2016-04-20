@@ -18,9 +18,6 @@ limitations under the License.
 
 package EnsEMBL::Web::Exception;
 
-### Name: EnsEMBL::Web::Exception
-
-### Description:
 ### Exception object with type, message, stack trace and some optional extra data saved inside the blessed hash
 ### If used as a string, returns all information about the Exception object in formatted string
 ### Use this along with EnsEMBL::Web::Exceptions module to throw and catch exceptions using try catch syntax
@@ -30,7 +27,6 @@ package EnsEMBL::Web::Exception;
 ### Every exceptions thrown should have a message and at least one type tag specified
 ### Type should literally tell about the type of the exception eg. DOMException is a type of exception thrown in EnsEMBL::Web::DOM code
 ### Message should be informative message that can either be displayed on user screen, or saved in logs (depending upon how it's handled in catch statement)
-
 
 use strict;
 use warnings;
@@ -87,7 +83,7 @@ sub isa {
   ## @param Type (or class) to be checked against
   ## @return True if the exception object contains the given type in its type string or if it is inherited from the given class, false otherwise
   my ($self, $type) = @_;
-  return 1 if sprintf('::%s::', $self->type) =~ /::$type::/;
+  return 1 if $self->type eq $type;
   return $self->SUPER::isa($type);
 }
 
@@ -121,7 +117,13 @@ sub stack_trace {
 sub to_string {
   ## Converts the Exception object into a human-readable string
   my $self = shift;
-  return sprintf("Uncaught exception '%s' with message '%s'\n  %s", $self->{'_type'}, $self->{'_message'}, $self->stack_trace);
+
+  return sprintf("Uncaught exception '%s' with %smessage%s\n  %s",
+    $self->{'_type'},
+    $self->{'_message'} ? '' : 'no ',
+    $self->{'_message'} ? sprintf(" '%s'", $self->{'_message'}) : '',
+    $self->stack_trace
+  );
 }
 
 1;
