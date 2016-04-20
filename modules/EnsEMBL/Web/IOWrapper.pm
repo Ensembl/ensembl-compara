@@ -539,9 +539,9 @@ sub nearest_feature {
   my $self = shift;
 
   my $location = $self->hub->param('r') || $self->hub->referer->{'params'}->{'r'}[0];
-  return undef unless $location;
 
-  my ($browser_region, $browser_start, $browser_end) = split(':|-', $location);
+  my ($browser_region, $browser_start, $browser_end) = $location ? split(':|-', $location) 
+                                                                  : (0,0,0);
   my ($nearest_region, $nearest_start, $nearest_end, $first_region, $first_start, $first_end);
   my $nearest_distance;
   my $first_done = 0;
