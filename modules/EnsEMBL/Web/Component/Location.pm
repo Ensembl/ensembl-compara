@@ -167,7 +167,9 @@ sub configure_UserData_key {
 
           if ($track->{'metadata'}{'itemRgb'} =~ /on/i) {
             foreach my $f (@{$track->{'features'}}) {
-              my $colour = join(',', @{$f->{'colour'}});
+              my $colour = $f->{'colour'} && ref($f->{'colour'}) eq 'ARRAY' 
+                              ? join(',', @{$f->{'colour'}})
+                              : $f->{'colour'};
               push @{$colour_key{$colour}}, $f->{'label'} if $f->{'label'};
             }
           }
