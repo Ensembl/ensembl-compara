@@ -949,10 +949,11 @@ sub _add_trackhub_tracks {
   my %tracks;
 
   my %options = (
-    menu_key     => $name,
-    menu_name    => $name,
-    submenu_key  => $self->tree->clean_id("${name}_$data->{'track'}", '\W'),
-    submenu_name => $data->{'shortLabel'},
+    menu_key      => $name,
+    menu_name     => $name,
+    submenu_key   => $self->tree->clean_id("${name}_$data->{'track'}", '\W'),
+    submenu_name  => $data->{'shortLabel'},
+    submenu_desc  => $data->{'longLabel'},
     trackhub      => 1,
   );
 
@@ -976,7 +977,8 @@ sub _add_trackhub_tracks {
   }
   
   my $submenu = $self->create_submenu($options{'submenu_key'}, $options{'submenu_name'}, {
-    external => 1,
+    external    => 1,
+    description => $options{'submenu_desc'},
     ($matrix ? (
       menu   => 'matrix',
       url    => $options{'matrix_url'},
