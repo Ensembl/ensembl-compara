@@ -85,6 +85,7 @@ use POSIX qw(floor);
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::ConservationScore;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
 use Config;
 
 #global variables
@@ -438,9 +439,7 @@ sub fetch_all_by_GenomicAlignBlock {
     #print "fetch_all_by_GenomicAlignBlock start $start end $end $display_size\n";
 
     #Check have either a GenomicAlignBlock or GenomicAlignTree object
-    unless ($genomic_align_block && ref $genomic_align_block && 
-            ($genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock") || 
-             $genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignTree"))) {
+    unless (check_ref($genomic_align_block, 'Bio::EnsEMBL::Compara::GenomicAlignBlock') || check_ref($genomic_align_block, 'Bio::EnsEMBL::Compara::GenomicAlignTree')) {
         throw("genomic_align_block must be a Bio::EnsEMBL::Compara::GenomicAlignBlock or a Bio::EnsEMBL::Compara::GenomicAlignTree\n")
     }
 
@@ -613,10 +612,7 @@ sub fetch_all_by_GenomicAlignBlock {
 sub store {
   my ($self,$cs) = @_;
 
-  unless(defined $cs && ref $cs && 
-	 $cs->isa('Bio::EnsEMBL::Compara::ConservationScore') ) {
-      $self->throw("Must have conservation score arg [$cs]");
-  }
+  assert_ref($cs, 'Bio::EnsEMBL::Compara::ConservationScore', 'cs');
 
   my $genomic_align_block = $cs->genomic_align_block;
   my $window_size = $cs->window_size;
@@ -628,9 +624,7 @@ sub store {
   }
 
   #check if genomic_align_block is valid
-  if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
-    throw("[$genomic_align_block] is not a Bio::EnsEMBL::Compara::GenomicAlignBlock");
-  }
+  assert_ref($genomic_align_block, 'Bio::EnsEMBL::Compara::GenomicAlignBlock', 'genomic_align_block');
   my $genomic_align_block_id = $genomic_align_block->dbID;
 
   #pack the diff and expected scores if not already packed

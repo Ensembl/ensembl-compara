@@ -35,7 +35,7 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 
 =head1 DESCRIPTION
 
-The RunnableDB module runs emf2maf jobs. It creates compression jobs
+The RunnableDB module runs emf2maf on a emf file
 
 =cut
 
@@ -48,22 +48,23 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub param_defaults {
+    my $self = shift;
     return {
-        'cmd'   => ['#emf2maf_program#', '#in_emf_file#'],
+        %{ $self->SUPER::param_defaults() },
+        'cmd'   => ['#emf2maf_program#', '#output_file#'],
     }
 }
 
-sub run {
+sub write_output {
     my $self = shift;
 
-    $self->SUPER::run();
+    $self->SUPER::write_output();
 
     #
     #Check number of genomic_align_blocks written is correct
     # 
     $self->_healthcheck();
 
-    unlink($self->param('in_emf_file'));
 }
 
 #
@@ -72,7 +73,7 @@ sub run {
 sub _healthcheck {
     my ($self) = @_;
 
-    my $output_file = $self->param('in_emf_file');
+    my $output_file = $self->param('output_file');
     $output_file =~ s/\.emf$/.maf/;
     my $cmd = "grep -c ^a " . $output_file;
 

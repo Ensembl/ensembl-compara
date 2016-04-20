@@ -52,15 +52,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'load_certain_genomedb',
-
-        'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara2',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
-            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
-        },
+        'host' => 'compara2',
 
         'reg1' => {
             -host   => 'ens-staging',

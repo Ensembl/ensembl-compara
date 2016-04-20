@@ -14,22 +14,6 @@
 # limitations under the License.
 
 
-my $description = q{
-###############################################################################
-##
-##  PROGRAM store_multiz_alignment.pl
-##
-##  AUTHOR Javier Herrero
-##
-##    This software is part of the EnsEMBL project.
-##
-##  DESCRIPTION: This program reads a multiz file and stores all the
-##    alignments into the selected database.
-##
-###############################################################################
-
-};
-
 =head1 NAME
 
 store_multiz_alignment.pl
@@ -111,6 +95,10 @@ hard-coded and thus will get out-to-date at some stage.
 
 use strict;
 use warnings;
+
+use Getopt::Long;
+use Pod::Usage;
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw( throw warning info );
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -120,7 +108,6 @@ use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Mapper;
 use Bio::EnsEMBL::Compara::DnaFrag;
-use Getopt::Long;
 
 verbose("OFF");
 
@@ -202,8 +189,7 @@ GetOptions(
   );
 
 if ($help) {
-  print $description, $usage;
-  exit(0);
+  pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
 Bio::EnsEMBL::Registry->load_all($reg_conf);

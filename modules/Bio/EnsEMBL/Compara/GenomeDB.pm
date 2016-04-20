@@ -280,18 +280,6 @@ sub get_short_name {
   return $name;
 }
 
-=head2 short_name
-
-  Description: DEPRECATED. GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e84
-
-=cut
-
-sub short_name {
-  my $self = shift;
-  deprecate('GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e84');
-  return $self->get_short_name;
-}
-
 
 =head2 _get_unique_name
 
@@ -329,19 +317,6 @@ sub assembly {
   return $self->{'assembly'};
 }
 
-=head2 assembly_default
-
-  Description: DEPRECATED. GenomeDB::assembly_default() is deprecated in favour of is_current(), and will be removed in e84. NOTE: it is not a setter any more
-
-=cut
-
-sub assembly_default {
-  my $self = shift;
-  my $boolean = shift;
-
-  deprecate('GenomeDB::assembly_default() is deprecated in favour of is_current(), and will be removed in e84. NOTE: it is not a setter any more');
-  return $self->is_current;
-}
 
 =head2 genebuild
 
@@ -608,19 +583,13 @@ sub component_genome_dbs {
 
 sub toString {
     my $self = shift;
-
-    return ref($self).": dbID=".($self->dbID || '?')
-        .", name='".$self->name
-        ."', assembly='".$self->assembly
-        ."', genebuild='".$self->genebuild
-        ."', taxon_id='".$self->taxon_id
-        ."', karyotype='".$self->has_karyotype
-        ."', high_coverage='".$self->is_high_coverage
-        .($self->genome_component ? "', genome_component='".$self->genome_component : '')
-        ."', locator='".($self->locator || '')
-        ."', first_release='".($self->first_release || 'NULL')
-        ."', last_release='".($self->last_release || 'NULL')
-        ."'";
+    my $txt = sprintf('GenomeDB dbID=%d %s (%s)', ($self->dbID || '?'), ($self->genome_component ? ($self->name . ' component ' . $self->genome_component) : $self->name), $self->assembly);
+    $txt .= ' taxon_id='.$self->taxon_id if $self->taxon_id;
+    $txt .= sprintf(' genebuild="%s"', $self->genebuild);
+    $txt .= ', ' . ($self->is_high_coverage ? 'high' : 'low') . ' coverage';
+    $txt .= ', ' . ($self->has_karyotype ? 'with' : 'without') . ' karyotype';
+    $txt .= ' ' . $self->SUPER::toString();
+    return $txt;
 }
 
 
@@ -640,7 +609,10 @@ sub toString {
 sub sync_with_registry {
   my $self = shift;
 
-  return unless(eval "require Bio::EnsEMBL::Registry");
+  eval {
+      require Bio::EnsEMBL::Registry;
+  };
+  return if $@;
 
   #print("Registry eval TRUE\n");
 

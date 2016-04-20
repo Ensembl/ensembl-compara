@@ -61,7 +61,7 @@ Bio::EnsEMBL::Registry->add_alias("homo_sapiens", "human");
 
 my $human_genome_db_id = $compara_db_adaptor->dbc->db_handle->selectrow_array("SELECT genome_db_id FROM genome_db WHERE name = 'homo_sapiens'");
 
-my $core_dba = Bio::EnsEMBL::Test::MultiTestDB->new($name)->get_DBAdaptor("core");
+my $core_dba = $species_db_adaptor->{$name};
 
 #my $core_dba = $genome_db->db_adaptor;
 my $slice = $core_dba->get_SliceAdaptor()->fetch_by_region('toplevel', $seq_region);
@@ -153,8 +153,7 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_core_DBAdaptor", sub {
 
 #Store new genome_db
 subtest "Test Bio::EnsEMBL::Compara::GenomeDB::store", sub {
-    my $human = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
-    my $hs_dba = $human->get_DBAdaptor('core');
+    my $hs_dba = $species_db_adaptor->{'homo_sapiens'};
 
     $multi->hide('compara', 'genome_db');
 

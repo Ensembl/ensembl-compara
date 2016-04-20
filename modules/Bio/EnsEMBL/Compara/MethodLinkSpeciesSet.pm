@@ -351,12 +351,12 @@ sub max_alignment_length {
 sub toString {
     my $self = shift;
 
-    return ref($self).": dbID=".($self->dbID || '?').
-                      ", name='".$self->name.
-                      "', source='".$self->source.
-                      "', url='".$self->url.
-                      "', max_alignment_length=".($self->max_alignment_length || '?').
-                      ", {".$self->method->toString."} x {".$self->species_set_obj->toString."}";
+    my $txt = sprintf('MethodLinkSpeciesSet dbID=%s', $self->dbID || '?');
+    $txt .= ' ' . ($self->name ? sprintf('"%s"', $self->name) : '(unnamed)');
+    $txt .= sprintf(' {method "%s"} x {species-set "%s"}', $self->method->type, $self->species_set_obj->name || $self->species_set_obj->dbID);
+    $txt .= ', found in '.$self->url if $self->url;
+    $txt .= ' ' . $self->SUPER::toString();
+    return $txt;
 }
 
 

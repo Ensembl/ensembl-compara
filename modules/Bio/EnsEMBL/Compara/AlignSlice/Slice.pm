@@ -58,6 +58,8 @@ package Bio::EnsEMBL::Compara::AlignSlice::Slice;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
+
 use Bio::EnsEMBL::Slice;
 use Bio::EnsEMBL::CoordSystem;
 use Bio::EnsEMBL::Compara::AlignSlice::Translation;
@@ -152,6 +154,23 @@ sub new {
   }
 
   return $self;
+}
+
+
+=head2 align_slice
+
+  Example     : my $align_slice = $slice->align_slice();
+  Description : Returns the original AlignSlice. Note that the reference
+                has been weakened in the constructor, so this getter may
+                return undef in some occasions.
+  Returntype  : Bio::EnsEMBL::Compara::AlignSlice
+  Exceptions  : none
+
+=cut
+
+sub align_slice {
+    my $self = shift;
+    return $self->{'_align_slice'};
 }
 
 

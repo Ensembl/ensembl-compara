@@ -26,6 +26,7 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::ConstrainedElement;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Data::Dumper;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -53,12 +54,8 @@ sub new {
 
 sub store {
     my ( $self, $mlss_obj, $constrained_elements ) = @_;
-    if (defined($mlss_obj)) {
-	throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")	
-	  unless ($mlss_obj->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-    } else {
-	throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
-    }
+
+    assert_ref($mlss_obj, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss_obj');
     
     my $mlssid = $mlss_obj->dbID;
     
@@ -90,8 +87,7 @@ sub store {
 	}
 
 	foreach my $constrained_element (@{$constrained_element_group}) {
-	    throw("$constrained_element is not a Bio::EnsEMBL::Compara::ConstrainedElement object")
-	      unless ($constrained_element->isa("Bio::EnsEMBL::Compara::ConstrainedElement"));
+            assert_ref($constrained_element, 'Bio::EnsEMBL::Compara::ConstrainedElement');
 	    $constrained_element_sth->execute(
 					      $constrained_element_id,
 					      $constrained_element->reference_dnafrag_id,
@@ -120,12 +116,7 @@ sub store {
 sub delete_by_MethodLinkSpeciesSet {
   my ($self, $mlss_obj) = @_;
 
-  if (defined($mlss_obj)) {
-    throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")      
-      unless ($mlss_obj->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-  } else {
-    throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
-  }
+  assert_ref($mlss_obj, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss_obj');
 
   my $cons_ele_sql =
         qq{DELETE FROM constrained_element WHERE method_link_species_set_id = ?};
@@ -182,18 +173,8 @@ sub delete_by_dbID {
 
 sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	my ($self, $mlss_obj, $slice_obj) = @_;
-	if (defined($mlss_obj)) {
-		throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")	
-		unless ($mlss_obj->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-	} else {
-		throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
-	}
-	if (defined($slice_obj)) {
-		throw("$slice_obj is not a Bio::EnsEMBL::Slice object")	
-		unless ($slice_obj->isa("Bio::EnsEMBL::Slice"));
-	} else {
-		throw("undefined Bio::EnsEMBL::Slice object");
-	}
+        assert_ref($mlss_obj, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss_obj');
+        assert_ref($slice_obj, 'Bio::EnsEMBL::Slice', 'slice_obj');
 
         my $filter_projections = 1;
         my $projection_segments = $slice_obj->adaptor->fetch_normalized_slice_projection($slice_obj, $filter_projections);
@@ -257,18 +238,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
 sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 	my ($self, $mlss_obj, $dnafrag_obj, $dnafrag_start, $dnafrag_end) = @_;
-	if (defined($mlss_obj)) {
-		throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")	
-		unless ($mlss_obj->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-	} else {
-		throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
-	} 
-	if(defined($dnafrag_obj)) {
-		throw("$dnafrag_obj is not a Bio::EnsEMBL::Compara::DnaFrag object")
-		unless ($dnafrag_obj->isa("Bio::EnsEMBL::Compara::DnaFrag"));
-	} else {
-		throw("undefined Bio::EnsEMBL::Compara::DnaFrag object");
-	}
+        assert_ref($mlss_obj, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss_obj');
+        assert_ref($dnafrag_obj, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag_obj');
 
 	my (@constrained_elements, $lower_bound);
 	my $sql = qq{
@@ -339,10 +310,10 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 	}
 }	
 
-=head2 fetch_all_by_dbID
+=head2 fetch_all_by_dbID_list
 
   Arg  1     : listref of constrained_element_ids
-  Example    : my $listref_of_constrained_elements = $constrained_element_adaptor->fetch_all_by_dbID($list_ref_of_constrained_element_ids);
+  Example    : my $listref_of_constrained_elements = $constrained_element_adaptor->fetch_all_by_dbID_list($list_ref_of_constrained_element_ids);
   Description: Retrieve the corresponding constrained_elements from a given list of constrained_element_ids 
   Returntype : listref of Bio::EnsEMBL::Compara::ConstrainedElement constrained_elements 
   Exceptions : throw if Arg-1 is not a listref
@@ -350,7 +321,7 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 
 =cut
 
-sub fetch_all_by_dbID {
+sub fetch_all_by_dbID_list {
 	my ($self, $constrained_element_ids) = @_;
 	if(defined($constrained_element_ids)) {
 		throw("Arg-1 needs to be a listref of dbIDs") unless (
@@ -363,6 +334,12 @@ sub fetch_all_by_dbID {
 	};
 	$self->_fetch_all_ConstrainedElements_by_dbID($sql, \@constrained_elements, $constrained_element_ids);
 	return \@constrained_elements;
+}
+
+sub fetch_all_by_dbID {     ## DEPRECATED
+    my $self = shift;
+    deprecate('ConstrainedElementAdaptor::fetch_all_by_dbID() is deprecated and will be removed in e86. Use fetch_all_by_dbID_list() instead.');
+    return $self->fetch_all_by_dbID_list(@_);
 }
 
 =head2 fetch_by_dbID
@@ -379,7 +356,7 @@ sub fetch_all_by_dbID {
 
 sub fetch_by_dbID {
   my ($self, $constrained_element_id) = @_;
-  return ($self->fetch_all_by_dbID([$constrained_element_id]))->[0];
+  return ($self->fetch_all_by_dbID_list([$constrained_element_id]))->[0];
 }
 
 sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained elements by constrained_element_id

@@ -50,6 +50,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         # When to create jobs
+        recompute_failed_syntenies      => 0,   # boolean
         recompute_existing_syntenies    => 0,   # boolean
         create_missing_synteny_mlsss    => 1,   # boolean
 
@@ -71,8 +72,12 @@ sub fetch_input {
         die "At least one of 'recompute_existing_syntenies' / 'create_missing_synteny_mlsss' must be set.\n"
     }
 
+    if ($self->param("registry")) {
+        $self->load_registry($self->param("registry"));
+    }
+
     $self->param('master_dba',   Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('master_db')));
-    $self->param('pairwise_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('pairwise_db_url')));
+    $self->param('alignment_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('alignment_db')));
 
     $self->param('mlsss_ok', []);
 }
@@ -81,12 +86,12 @@ sub run {
     my $self= shift;
 
     if ($self->param('pairwise_mlss_id')) {
-        my $mlss = $self->param('pairwise_dba')->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($self->param('pairwise_mlss_id'));
-        die sprintf("MLSS %d could not be found in %s\n", $self->param('pairwise_mlss_id'), $self->param('pairwise_db_url')) unless $mlss;
+        my $mlss = $self->param('alignment_dba')->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($self->param('pairwise_mlss_id'));
+        die sprintf("MLSS %d could not be found in %s\n", $self->param('pairwise_mlss_id'), $self->param('alignment_db')) unless $mlss;
         $self->_check_pairwise($mlss);
     } else {
         foreach my $ml (@{$self->param_required('pairwise_method_link_types')}) {
-            foreach my $mlss (@{$self->param('pairwise_dba')->get_MethodLinkSpeciesSetAdaptor()->fetch_all_by_method_link_type($ml)}) {
+            foreach my $mlss (@{$self->param('alignment_dba')->get_MethodLinkSpeciesSetAdaptor()->fetch_all_by_method_link_type($ml)}) {
                 $self->_check_pairwise($mlss);
             }
         }
@@ -116,7 +121,13 @@ sub _check_pairwise {
     # Check consistency with master for the pairwise MLSS
     my $master_mlss = $self->param('master_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss->dbID);
     if (($master_mlss->name ne $mlss->name) or ($master_mlss->method->type ne $mlss->method->type) or ($master_mlss->species_set_obj->dbID != $mlss->species_set_obj->dbID)) {
-        die sprintf("Mismatch between master database (%s) and pairwise database (%s) for MLSS object dbID=%d\n", $self->param('master_db'), $self->param('pairwise_db_url'), $mlss->dbID);
+        die sprintf("Mismatch between master database (%s) and pairwise database (%s) for MLSS object dbID=%d\n", $self->param('master_db'), $self->param('alignment_db'), $mlss->dbID);
+    }
+
+    # Have we tried (and failed) before ?
+    if ($mlss->has_tag('low_synteny_coverage')) {
+        $self->warning(sprintf("The alignment mlss_id=%d has already been tried but lead to a low synteny-coverage (%s)", $mlss->dbID, $mlss->get_value_for_tag('low_synteny_coverage')));
+        return unless $self->param('recompute_failed_syntenies');
     }
 
     # Do the species have karyotypes ?
@@ -130,7 +141,7 @@ sub _check_pairwise {
 
     # reference_species tag
     my $ref_species = $mlss->get_value_for_tag('reference_species')
-        or die sprintf("The MLSS dbID=%s has no 'reference_species' tag in %s", $mlss->dbID, $self->param('pairwise_db_url'));
+        or die sprintf("The MLSS dbID=%s has no 'reference_species' tag in %s", $mlss->dbID, $self->param('alignment_db'));
 
     # synteny MLSS
     my $synt_method = $self->param('master_dba')->get_MethodAdaptor->fetch_by_type($self->param_required('synteny_method_link_type'))
@@ -141,8 +152,7 @@ sub _check_pairwise {
     if (not $master_synt_mlss) {
         die "Could not find the $synt_method MLSS in the master database that matches the pairwise alignment\n" unless $self->param('create_missing_synteny_mlsss');
         my $synt_name = $mlss->name;
-        $synt_name =~ s/ .*//;
-        $synt_name .= ' synteny';
+        $synt_name =~ s/ .*/ synteny/;
         $master_synt_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
             -METHOD             => $synt_method,
             -SPECIES_SET_OBJ    => $mlss->species_set_obj,

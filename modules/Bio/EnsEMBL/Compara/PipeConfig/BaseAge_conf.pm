@@ -196,9 +196,10 @@ sub pipeline_analyses {
 	    -rc_name => '100Mb',
         },
         {   -logic_name => 'load_ancestral_genomedb',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAncestralGenomeDB',
             -parameters => {
-                            'sql' => [ 'INSERT INTO genome_db (genome_db_id, name, locator) VALUE (63, "ancestral_sequences", "Bio::EnsEMBL::DBSQL::DBAdaptor/host=' . $self->o('anc_host') .';port=3306;user=ensro;pass=;dbname=' . $self->o('anc_dbname') . ';species=' . $self->o('anc_name') . ';species_id=1;disconnect_when_inactive=1")' ],
+                'anc_host'      => $self->o('anc_host'),
+                'anc_dbname'    => $self->o('anc_dbname'),
                            },
             #                -input_ids => [ { } ],
             -rc_name => '100Mb',
@@ -207,11 +208,13 @@ sub pipeline_analyses {
                           },
         },
             { -logic_name => 'chrom_sizes',
-              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
               -parameters => {
                               'bed_dir' => $self->o('bed_dir'),
+                              'append'  => [qw(-N -q)],
+                              'input_query' => "SELECT concat('chr',dnafrag.name), length FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1 AND coord_system_name = 'chromosome'",
                               'chr_sizes_file' => $self->o('chr_sizes_file'),
-                              'cmd' => $self->db_cmd() . " --append -N -sql \"SELECT concat('chr',dnafrag.name), length FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1 AND coord_system_name = 'chromosome'\" >#bed_dir#/#chr_sizes_file#",
+                              'output_file' => "#bed_dir#/#chr_sizes_file#",
                              },
               -flow_into => {
                              '1' => [ 'base_age_factory' ],

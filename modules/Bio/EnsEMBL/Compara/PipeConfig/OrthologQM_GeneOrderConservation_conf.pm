@@ -1,4 +1,30 @@
 =pod
+=head1 LICENSE
+
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 	
@@ -38,14 +64,12 @@ sub hive_meta_table {
 
 =cut
 
-sub pipeline_create_commands {
-	my $self = shift;
-
 	#!!! NOTE: replace column names with desired col names for report.
 	#          must be a param name!
 
 	#PRIMARY KEY (genomic_align_block_id))'
 
+=pod
 	return [
 		@{ $self->SUPER::pipeline_create_commands },
 		$self->db_cmd( 'CREATE TABLE ortholog_quality_metric ( 
@@ -73,7 +97,7 @@ sub pipeline_create_commands {
 }
       
 
-
+=cut
 
 
 sub default_options {
@@ -81,8 +105,8 @@ sub default_options {
     return {
             %{ $self->SUPER::default_options() },
 
-        'mlss_id'     => '100021',
-        'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'
+#        'mlss_id'     => '100021',
+#        'compara_db' => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
     };
 }
@@ -91,7 +115,7 @@ sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-        'mlss_id' => $self->o('mlss_id'),
+#        'mlss_id' => $self->o('mlss_id'),
         'compara_db' => $self->o('compara_db'),
     };
 }
@@ -102,7 +126,7 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'default'      => {'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' },
         '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-        '20Gb_job'      => {'LSF' => '-C0 -M20000  -R"select[mem>20000]  rusage[mem=20000]"' },
+        '16Gb_job'      => {'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
     };
 }
 
@@ -112,9 +136,9 @@ sub pipeline_analyses {
     return [
         {   -logic_name => 'get_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
-            -input_ids => [ { } ],
+#            -input_ids => [ { } ],
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
-#            -analysis_capacity  =>  10,  # use per-analysis limiter
+            -analysis_capacity  =>  200,  # use per-analysis limiter
             -flow_into => {
                 '2->A' => [ 'create_ordered_chr_based_job_arrays' ],
                 'A->1' => [ 'get_max_orth_percent' ],       
@@ -132,29 +156,22 @@ sub pipeline_analyses {
 
         {	-logic_name	=>	'create_ordered_chr_based_job_arrays',
         	-module		=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs',
-#        	-analysis_capacity  =>  10,
+        	-analysis_capacity  =>  200,
 			-flow_into	=>	{
-				2	=>	['create_comparison_job_arrays'],
+				2	=>	['check_ortholog_neighbors'],
 			},
 			-rc_name => '2Gb_job',
         },
-        {
-        	-logic_name	=>	'create_comparison_job_arrays',
-        	-module		=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays',
-#            -analysis_capacity  =>  10,
-        	-flow_into	=>	{
-        		2 	=>	['check_ortholog_neighbors'],
-        	},
-#        	-rc_name => '2Gb_job',
-        },
+
         {
         	-logic_name	=>	'check_ortholog_neighbors',
         	-module	=>	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
 #            -input_ids => [ {'species1' => $self->o('species1')} ],
 #            -parameters     => {'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82'},
-            -analysis_capacity  =>  50,
+            -analysis_capacity  =>  250,
         	-flow_into	=> {
-        		2 => [ ':////ortholog_quality_metric' ],
+                2 => [ $self->o('compara_db').'/ortholog_goc_metric' ],
+#        		2 => [ ':////ortholog_goc_metric' ],
         	},
 
  #           -rc_name => '2Gb_job',
@@ -164,23 +181,17 @@ sub pipeline_analyses {
             -logic_name => 'get_max_orth_percent',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
             -flow_into => {
-                2 => [ ':////ortholog_metric' ],
+                1 => [ 'store_goc_dist_asTags' ],
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '16Gb_job',
+        },
+
+        {
+            -logic_name => 'store_goc_dist_asTags',
+            -module 	=> 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags',
+#            -parameters =>	{'compara_db' => $self->o('compara_db') },
         },
     ];
 }
 
 1;
-
-
-
-
-
-
-
-
-
-
-
-

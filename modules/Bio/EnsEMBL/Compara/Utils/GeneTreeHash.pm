@@ -26,7 +26,9 @@ use Bio::EnsEMBL::Utils::Scalar qw(check_ref);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 sub convert {
-  my ($self, $tree, @args) = @_;
+  my ($caller, $tree, @args) = @_;
+
+  my $self = bless {}, $caller;
 
   my ($no_sequences, $aligned, $cdna, $species_common_name, $exon_boundaries, $gaps, $full_tax_info, $cigar_line) =
     rearrange([qw(NO_SEQUENCES ALIGNED CDNA SPECIES_COMMON_NAME EXON_BOUNDARIES GAPS FULL_TAX_INFO CIGAR_LINE)], @args);

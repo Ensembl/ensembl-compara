@@ -24,8 +24,7 @@ before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - ln -s . ensembl-compara
-    - wget https://github.com/bioperl/bioperl-live/archive/bioperl-release-1-2-3.zip
-    - unzip bioperl-release-1-2-3.zip
+    - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - git clone --branch master --depth 1 https://github.com/samtools/tabix.git
     - cd tabix
     - make
@@ -36,10 +35,12 @@ before_install:
     - git clone --branch master --depth 1 https://github.com/samtools/htslib.git
     - cd htslib
     - make
+    - export HTSLIB_DIR=$(pwd -P)
     - cd ../
-    - git clone --branch master --depth 1 https://github.com/Ensembl/faidx_xs.git
-    - cd faidx_xs
-    - (perl Makefile.PL && make && cp lib/Faidx.pm .. && cp blib/arch/auto/Faidx/Faidx.so ..) || echo "skip faidx_xs"
+    - git clone --branch master --depth 1 https://github.com/Ensembl/Bio-HTS
+    - cd Bio-HTS
+    - perl Build.PL --htslib $HTSLIB_DIR
+    - ./Build
     - cd ../
 
 

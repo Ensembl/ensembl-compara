@@ -135,8 +135,8 @@ You will also need to install the following executables and set their locations:
  bl2seq (from NCBI) - set in the 'bl2seq' 
  gerpcol and gerpelem (http://mendel.stanford.edu/SidowLab/downloads/gerp/) - set in 'gerp_exe_dir'
  pecan (http://hgwdev.cse.ucsc.edu/~benedict/code/Pecan.html) - set in 'jar_file'
- enredo (http://www.ebi.ac.uk/~jherrero/downloads/enredo/) - set in 'enredo_bin_dir'
- ortheus (https://github.com/benedictpaten/ortheus)
+ enredo (https://github.com/jherrero/enredo) - set in 'enredo_bin_dir'
+ ortheus (http://hgwdev.cse.ucsc.edu/~benedict/code/Ortheus.html)
 
 3. Configuration of the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

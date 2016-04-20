@@ -40,8 +40,9 @@ sub pipeline_create_commands {
     my $self            = shift @_;
 
     my $pipeline_url    = $self->pipeline_url();
-    my $parsed_url      = Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
-    my $driver          = $parsed_url ? $parsed_url->{'driver'} : '';
+    my $second_pass     = $pipeline_url!~ /^#:subst/;
+    my $parsed_url      = $second_pass && Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
+    my $driver          = $second_pass ? $parsed_url->{'driver'} : '';
 
     # sqlite: no concept of MyISAM/InnoDB
     return $self->SUPER::pipeline_create_commands if( $driver eq 'sqlite' );

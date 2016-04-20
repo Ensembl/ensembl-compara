@@ -47,6 +47,7 @@ sub param_defaults {
              'minimum_genes'              => 4,
 			 'output_clusterset_id'       => 'raxml',
              'input_clusterset_id'        => 'default',
+             'binarize'                   => 1,
     };
 }
 

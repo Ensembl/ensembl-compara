@@ -84,9 +84,11 @@ sub store_families {
     my ($self, $allclusters) = @_;
 
     my $compara_dba     = $self->compara_dba();
+    my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
         # make sure we have the correct $mlss:
     my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+        -adaptor            => $method_link_species_set_adaptor,
         -method             => Bio::EnsEMBL::Compara::Method->new( -type => 'FAMILY'),
         -species_set_obj    => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $compara_dba->get_GenomeDBAdaptor->fetch_all ),
     );

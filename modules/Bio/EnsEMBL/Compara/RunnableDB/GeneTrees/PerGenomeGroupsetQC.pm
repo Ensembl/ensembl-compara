@@ -84,18 +84,21 @@ sub fetch_input {
     $self->param('total_orphans_num', $total_orphans_num);
     $self->param('total_num_genes',   $total_num_genes);
 
-    my $reused_species_set = $self->param('reuse_ss_id') ? $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id')) : undef;
-    $self->param('reuse_this', $reused_species_set ? scalar(grep {$_->dbID == $genome_db_id} @{$reused_species_set->genome_dbs}) : 0);
-    return unless $self->param('reuse_this');
+    my $reuse_this = 0;
+    if ($self->param('reuse_ss_id')) {
+        my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'));
+        if (grep {$_->dbID == $genome_db_id} @{$reuse_ss->genome_dbs}) {
+            $reuse_this = 1;
+        }
+    }
+    $self->param('reuse_this', $reuse_this);
+    return unless $reuse_this;
 
     my $reuse_db                = $self->param_required('reuse_db');
     my $reuse_compara_dba       = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reuse_db);    # may die if bad parameters
-    my $old_genome_db           = $reuse_compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($this_genome_db->name);
-    return if not $old_genome_db;
+    my $old_genome_db           = $reuse_compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);        # since the species has been reused, the genome_db_id *must* be present
 
-    $self->param('reuse_this', 1);
-
-    my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $old_genome_db->dbID);
+    my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id);
     my %common_orphans = ();
     my %new_orphans = ();
     foreach my $this_orphan_id (keys %$this_orphans) {

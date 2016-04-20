@@ -62,6 +62,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -69,55 +70,52 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30047,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'host'            => 'compara2',    # where the pipeline database will be created
+        #'mlss_id'         => 30047,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        #'host'            => 'compara2',    # where the pipeline database will be created
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
 
-        'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
+        # HMM clustering
+        #'hmm_clustering'  => 0,
+        #'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
+        #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
+        #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
-            # HMM clustering
-        'hmm_clustering'  => 0,
-        'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-        'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        # code directories:
+        #'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
+        #'mcl_bin_dir'     => '/software/ensembl/compara/mcl-14-137/bin',
+        #'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.221',
 
-            # code directories:
-        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
-        'mcl_bin_dir'     => '/software/ensembl/compara/mcl-14-137/bin',
-        'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.221',
-            
-            # data directories:
-        'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
-        'warehouse_dir'   => '/warehouse/ensembl05/lg4/families/',      # ToDo: move to a Compara-wide warehouse location
+        # data directories:
+        #'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
+        #'warehouse_dir'   => '/warehouse/ensembl05/lg4/families/',      # ToDo: move to a Compara-wide warehouse location
         'uniprot_dir'     => $self->o('work_dir').'/uniprot',
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => $self->o('file_basename').'.pep',
 
+        'uniprot_rel_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
         'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
 
-        'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
+        #'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
-        'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
+        # resource requirements:
+        #'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
+        #'blast_gigs'      =>  4,
+        #'blast_hm_gigs'   =>  6,
+        #'mcl_gigs'        => 72,
+        #'mcl_threads'     => 12,
+        #'lomafft_gigs'    =>  4,
+        #'himafft_gigs'    => 14,
+        #'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
+        #'blast_capacity'  => 5000,                                  # work both as hive_capacity and resource-level throttle
+        #'mafft_capacity'  =>  400,
+        #'cons_capacity'   =>  100,
+        #'HMMer_classify_capacity' => 100,
 
-            # resource requirements:
-        'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
-        'blast_gigs'      =>  4,
-        'blast_hm_gigs'   =>  6,
-        'mcl_gigs'        => 72,
-        'mcl_threads'     => 12,
-        'lomafft_gigs'    =>  4,
-        'himafft_gigs'    => 14,
-        'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
-        'blast_capacity'  => 5000,                                  # work both as hive_capacity and resource-level throttle
-        'mafft_capacity'  =>  400,
-        'cons_capacity'   =>  100,
-        'HMMer_classify_capacity' => 100,
+        # used by the StableIdMapper as the reference:
+        #'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #release# - 1)expr#',
 
-            # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_#expr( #release# - 1)expr#',
-
-            # used by the StableIdMapper as the location of the master 'mapping_session' table:
-        'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mm14_ensembl_compara_master',
+        # used by the StableIdMapper as the location of the master 'mapping_session' table:
+        #'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/mm14_ensembl_compara_master',
     };
 }
 
@@ -156,12 +154,15 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
         'mafft_root_dir'    => $self->o('mafft_root_dir'),
+        'mafft_threads'    => $self->o('mafft_threads'),
 
         'master_db'         => $self->o('master_db'),               # databases
+
+        'hmm_clustering'    => $self->o('hmm_clustering'),
     };
 }
 
-
+=head2 RESOURCE CLASSES
 sub resource_classes {
     my ($self) = @_;
     return {
@@ -177,6 +178,7 @@ sub resource_classes {
         '2GigMem'      => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
+=cut
 
 sub hive_meta_table {
     my ($self) = @_;
@@ -194,6 +196,7 @@ sub pipeline_analyses {
         {   -logic_name => 'find_protein_trees_db',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
             -parameters => {
+                compara_db   => '#master_db#',
                 method_links => {
                     PROTEIN_TREES => 'protein_trees_db',
                 },
@@ -280,6 +283,14 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'nonref_members',
             },
+            -flow_into  => [ 'save_uniprot_release_date' ],
+        },
+
+        {   -logic_name => 'save_uniprot_release_date',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtReleaseVersion',
+            -parameters => {
+                'uniprot_rel_url'   => $self->o('uniprot_rel_url'),
+            },
             -flow_into  => [ 'download_uniprot_factory' ],
         },
 
@@ -326,7 +337,7 @@ sub pipeline_analyses {
             -parameters => {
                 'seq_loader_name'   => 'file', # {'pfetch' x 20} takes 1.3h; {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
             },
-            -analysis_capacity => 20,
+            -analysis_capacity => 5,
             -batch_size    => 100,
             -rc_name => '2GigMem',
         },
@@ -342,7 +353,11 @@ sub pipeline_analyses {
                 'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql.gz',
             },
             -flow_into => {
-                1 => $self->o('hmm_clustering') ? 'HMMer_classifyCurated' : { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+                #$self->o('hmm_clustering')>1 => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } }, # do not need to include "take_time" because it is already "pipeline-wide"
+                1 => WHEN (
+                    '#hmm_clustering#' => 'HMMer_classifyCurated',
+                    ELSE { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+                )
             },
         },
         
@@ -354,7 +369,6 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
-            -rc_name => 'BigMafft',    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
         },
 
         {   -logic_name => 'make_blastdb',
@@ -453,7 +467,7 @@ sub pipeline_analyses {
             -parameters => {
                 'only_canonical'    => 0,
             },
-            -rc_name       => '2GigMem',
+            -rc_name       => '8GigMem',
             -flow_into => {
                 '2->A'  => [ 'HMMer_classifyPantherScore' ],
                 'A->1'  => [ 'HMM_clusterize' ],
@@ -472,18 +486,32 @@ sub pipeline_analyses {
                              'only_canonical'      => 0,
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
-             -rc_name => 'LoMafft',
+            -batch_size     => 2,
+             -rc_name => '500MegMem',
+             -flow_into => {
+                 -1 => 'HMMer_classifyPantherScore_himem',
+             },
             },
 
+            {
+             -logic_name => 'HMMer_classifyPantherScore_himem',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyPantherScore',
+             -parameters => {
+                             'blast_bin_dir'       => $self->o('blast_bin_dir'),
+                             'pantherScore_path'   => $self->o('pantherScore_path'),
+                             'hmmer_path'          => $self->o('hmmer2_home'),
+                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'only_canonical'      => 0,
+                            },
+             -hive_capacity => $self->o('HMMer_classify_capacity'),
+             -rc_name => '4GigMem',
+            },
 
             {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize',
              -rc_name => 'LoMafft',
-             -flow_into  => {
-                '1->A'  => [ 'fire_family_building' ],
-                'A->1'  => [ 'warehouse_working_directory' ],
-             },
+             -flow_into  => 'fire_family_building',
             },
 
 
@@ -508,10 +536,9 @@ sub pipeline_analyses {
                 'cmd' => "#mcl_bin_dir#/mcl #work_dir#/#file_basename#.tcx -I 2.1 -t 4 -tf 'gq(50)' -scheme 6 -use-tab #work_dir#/#file_basename#.itab -o #work_dir#/#file_basename#.mcl",
             },
             -flow_into => {
-                '1->A' => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#file_basename#.tcx #work_dir#/#file_basename#.itab' },
+                1 => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#file_basename#.tcx #work_dir#/#file_basename#.itab' },
                             'parse_mcl'          => { 'mcl_name' => '#work_dir#/#file_basename#.mcl' },
                 },
-                'A->1'  => [ 'stable_id_map' ],
             },
             -rc_name => 'BigMcl',
         },
@@ -531,28 +558,25 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'fire_family_building',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'first_n_big_families'  => $self->o('first_n_big_families'),
+                'randomize'             => 1,
+                'inputquery'            => 'SELECT family_id, COUNT(*) AS fam_gene_count FROM family_member GROUP BY family_id HAVING count(*)>1',
+                'max_genes_lowmem_mafft'        => $self->o('max_genes_lowmem_mafft'),
+                'max_genes_singlethread_mafft'  => $self->o('max_genes_singlethread_mafft'),
             },
+            -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
-                1 => {
-                    'consensifier_factory'  => [
-                        { 'step' => 1,   'inputquery' => 'SELECT family_id FROM family WHERE family_id<=200',},
-                        { 'step' => 100, 'inputquery' => 'SELECT family_id FROM family WHERE family_id>200',},
-                    ],
-                },
-                '1->A' => {
-                    'mafft_factory' => [
-                        { 'fan_branch_code' => 2, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id<=#first_n_big_families# GROUP BY family_id HAVING count(*)>1', },
-                        { 'fan_branch_code' => 3, 'inputquery' => 'SELECT family_id FROM family_member WHERE family_id >#first_n_big_families# GROUP BY family_id HAVING count(*)>1', },
-                    ],
-                },
+                '2->A' => WHEN(
+                    '#fam_gene_count# <= #max_genes_lowmem_mafft#' => 'mafft_main',
+                    '#fam_gene_count# > #max_genes_singlethread_mafft#' => 'mafft_huge',
+                    ELSE 'mafft_big',
+                ),
                 'A->1' => {
                     'find_update_singleton_cigars' => { },
-                }
+                },
             },
-            -rc_name => 'urgent',
+            -rc_name => 'LoMafft',
         },
 
 # <Archiving flow-in sub-branch>
@@ -567,18 +591,6 @@ sub pipeline_analyses {
 # </Archiving flow-in sub-branch>
 
 # <Mafft sub-branch>
-        {   -logic_name => 'mafft_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'randomize'             => 1,
-            },
-            -hive_capacity => 20, # to enable parallel branches
-            -flow_into => {
-                2 => [ 'mafft_big'  ],
-                3 => [ 'mafft_main' ],
-            },
-            -rc_name => 'LoMafft',
-        },
 
         {   -logic_name         => 'mafft_main',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
@@ -586,16 +598,32 @@ sub pipeline_analyses {
             -batch_size         => 10,
             -max_retry_count    => 6,
             -flow_into => {
+                1  => [ 'consensifier' ],
                 -1 => [ 'mafft_big' ],
             },
-            -rc_name => '2GigMem',
+            -rc_name => 'LoMafft',
         },
 
         {   -logic_name    => 'mafft_big',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
-            -hive_capacity => 20,
-            -batch_size    => 1,
-            -rc_name => 'BigMafft',
+            -hive_capacity => $self->o('mafft_capacity'),
+            -rc_name       => 'BigMafft',
+            -flow_into     => {
+                1  => [ 'consensifier_himem' ],
+                -1 => [ 'mafft_huge' ],
+            },
+        },
+
+        {   -logic_name    => 'mafft_huge',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
+            -hive_capacity => $self->o('mafft_capacity'),
+            -parameters    => {
+                'mafft_threads'     => 8,
+            },
+            -flow_into     => {
+                1  => [ 'consensifier_himem' ],
+            },
+            -rc_name => 'HugeMafft_multi_core',
         },
 
         {   -logic_name => 'find_update_singleton_cigars',      # example of an SQL-session within a job (temporary table created, used and discarded)
@@ -610,7 +638,10 @@ sub pipeline_analyses {
             },
             -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
-                1 => [ 'insert_redundant_peptides' ],
+                1 => WHEN (
+                    '#hmm_clustering#' => 'write_member_counts',
+                    ELSE 'insert_redundant_peptides',
+                )
             },
             -rc_name => 'urgent',
         },
@@ -621,25 +652,26 @@ sub pipeline_analyses {
                 'sql' => "INSERT INTO family_member SELECT family_id, m2.seq_member_id, cigar_line FROM family_member fm, seq_member m1, seq_member m2 WHERE fm.seq_member_id=m1.seq_member_id AND m1.sequence_id=m2.sequence_id AND m1.seq_member_id<>m2.seq_member_id",
             },
             -hive_capacity => 20, # to enable parallel branches
+            -flow_into  => 'stable_id_map',
             -rc_name => 'urgent',
         },
 
 # </Mafft sub-branch>
 
 # <Consensifier sub-branch>
-        {   -logic_name => 'consensifier_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => { },
-            -hive_capacity => 20, # run the two in parallel and enable parallel branches
-            -flow_into => {
-                2 => { 'consensifier' => { 'family_id' => '#_start_family_id#', 'minibatch' => '#_range_count#'} },
-            },
-            -rc_name => '2GigMem',
-        },
-
         {   -logic_name    => 'consensifier',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily',
             -hive_capacity => $self->o('cons_capacity'),
+            -batch_size    => 20,
+            -flow_into     => {
+                -1 => 'consensifier_himem',
+            },
+        },
+
+        {   -logic_name    => 'consensifier_himem',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily',
+            -hive_capacity => $self->o('cons_capacity'),
+            -rc_name       => '500MegMem',
         },
 # </Consensifier sub-branch>
 
@@ -654,9 +686,9 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'write_member_counts' ],
             },
-            -rc_name => 'BigMafft',    # NB: make sure you give it enough memory or it will crash
+            -rc_name => '16GigMem',    # NB: make sure you give it enough memory or it will crash
         },
-        
+
         {   -logic_name     => 'write_member_counts',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {

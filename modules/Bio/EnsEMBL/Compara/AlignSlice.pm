@@ -896,17 +896,15 @@ sub get_all_ConstrainedElements {
   my $all_constrained_elements = [];
 
   $method_link_type ||= "GERP_CONSTRAINED_ELEMENT";
-  my $key_cache = "_constrained_elements_".$method_link_type;
-  if ($species_set) {
-    $key_cache .= "::" . join("-", sort map {s/\W/_/g} map {$_->name} @$species_set);
-  } else {
-    $species_set = $self->{_method_link_species_set}->species_set_obj->genome_dbs;
-  }
+  $species_set      ||= $self->get_MethodLinkSpeciesSet->species_set_obj->genome_dbs;
+
+  my $key_cache = "_constrained_elements_".$method_link_type."::"
+                    . join("-", sort map {my $s = $_; $s =~ s/\W/_/g; $s} map {$_->name} @$species_set);
 
   if (!defined($self->{$key_cache})) {
     my $method_link_species_set_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor();
     my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
-        $method_link_type, $self->{_method_link_species_set}->species_set_obj->genome_dbs);
+        $method_link_type, $species_set);
 
     if ($method_link_species_set) {
       my $constrained_element_adaptor = $self->adaptor->db->get_ConstrainedElementAdaptor();

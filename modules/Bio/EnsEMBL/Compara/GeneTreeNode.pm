@@ -453,37 +453,145 @@ sub keep_nodes_by_taxon_ids {
 
 }
 
+=head2 find_multifurcations
 
-# Legacy
+  Arg [1]     : none
+  Example     : my $multifurcations = $multifurcated_tree_root->find_multifurcations;
+  Description : List of multifurcations given a tree.
+                In order to avoid changing parts of the tree that are not in the multifurcations, we have local MRCAs.
+                e.g.:
+                multifurcations[0] = (child_1,child2,child3)
+                multifurcations[1] = (child_7,child8,child9)
 
-=head2 get_tagvalue
-
-  Description: returns the value(s) of the tag, or $default (undef
-               if not provided) if the tag doesn't exist.
-  Arg [1]    : <string> tag
-  Arg [2]    : (optional) <scalar> default
-  Example    : $ns_node->get_tagvalue('scientific name');
-  Returntype : Scalar or ArrayRef
-  Exceptions : none
-  Caller     : general
+  Returntype  : array reference
+  Exceptions  :
+  Caller      :
 
 =cut
 
-sub get_tagvalue {
+sub find_multifurcations {
     my $self = shift;
-    my $tag = shift;
-    my $default = shift;
 
-    if (($tag eq 'taxon_id') or ($tag eq 'taxon_name')) {
-        deprecate("The $tag tag has been deprecated, support will end with e84. Please use species_tree_node() from the gene-tree node to get taxon information");
-        if (not $self->has_tag($tag) and $self->has_tag('species_tree_node_id')) {
-            $self->add_tag('taxon_id', $self->species_tree_node->taxon_id);
-            $self->add_tag('taxon_name', $self->species_tree_node->node_name);
+    my $multifurcations = [];
+    foreach my $node (@{$self->get_all_nodes}) {
+        next if $node->is_leaf;
+        next if (!$node->has_parent);
+        if (scalar(@{$node->children}) > 2) {
+            push(@{$multifurcations},[@{$node->children}]) if scalar(@{$node->children}) > 2;
         }
     }
-    return $self->SUPER::get_tagvalue($tag, $default);
+    return $multifurcations;
 }
 
+
+=head2 binarize_flat_tree_with_species_tree
+
+  Arg [1]     : Species Tree object
+  Arg [1]     : multifurcation hash from (find_multifurcations)
+  Example     : $multifurcated_tree_root->binarize_flat_tree_with_species_tree($species_tree, $multifurcations);
+  Description : Tries to binarize the genetree using the Species Tree to resolve the multifurcations.
+  Returntype  : None
+  Exceptions  :
+  Caller      :
+
+=cut
+
+sub binarize_flat_tree_with_species_tree {
+    my $self            = shift;
+    my $species_tree    = shift;
+    my $multifurcations = shift;
+
+    #fetch specie tree objects for the multifurcated nodes
+    my %species_tree_leaves_in_multifurcation;
+    foreach my $multi (@$multifurcations){
+        foreach my $child (@{$multi}){
+            my ($name_id, $species_tree_node_id) = split(/\_/,$child->name);
+            my $species_tree_node = $species_tree->root->find_leaf_by_node_id($species_tree_node_id);
+            push(@{$species_tree_leaves_in_multifurcation{$multi}}, $species_tree_node);
+        }
+    }
+
+    foreach my $multi (@$multifurcations) {
+        #get mrca sub-tree
+        my $mrca = $species_tree->root->find_first_shared_ancestor_from_leaves( [@{$species_tree_leaves_in_multifurcation{$multi}}] );
+
+        #get gene_tree mrca sub-tree
+        my $mrcaGeneTree = $self->find_first_shared_ancestor_from_leaves( [@{$multi}] );
+
+        #get mrca leaves
+        my @leaves_mrca= @{ $mrca->get_all_leaves() };
+
+        #get taxon_ids for the mrca sub-tree
+        my @taxonIdsMrca;
+        foreach my $leaf (@leaves_mrca){
+            push(@taxonIdsMrca,$leaf->dbID);
+            #print $leaf->dbID."\n";
+        }
+
+        #get taxon_ids for the leaves in the multifurcations
+        my @taxonIdsMultifurcation;
+        foreach my $leaf (@{$species_tree_leaves_in_multifurcation{$multi}}){
+            push(@taxonIdsMultifurcation,$leaf->dbID);
+            #print $leaf->dbID."\n";
+        }
+
+        my @nodesToDisavow;
+        my %count;
+        foreach my $e (@taxonIdsMrca, @taxonIdsMultifurcation) { $count{$e}++ }
+        foreach my $e (keys %count) {
+            if ($count{$e} != 2) {
+                push @nodesToDisavow, $e;
+            }
+        }
+
+        my $castedMrca = $mrca->cast('Bio::EnsEMBL::Compara::GeneTreeNode');
+
+        #prune castedMrca sub-tree
+        #e.g. when the taxonomic sub-tree has more species that the ones in the gene-tree, in those cases we need to remove the extra leaves.
+
+        #disavow these nodes from the castedMrca sub-tree
+        foreach my $nodeName (@nodesToDisavow) {
+            my $node = $castedMrca->find_leaf_by_node_id($nodeName);
+            #since nodes are leaves at this point, we can delete them directly.
+            #print "disavowing: |" . $node->name() . "|\n";
+            $node->disavow_parent();
+            $castedMrca = $castedMrca->minimize_tree;
+        }
+
+        #list of all the leaves mapped by taxon_id
+        my %leaves_list;
+        my %branch_length_list;
+        foreach my $leaf (@{$mrcaGeneTree->get_all_leaves}) {
+            my ($member_id, $taxon_id) = split(/\_/,$leaf->name);
+            push(@{$leaves_list{$taxon_id}},$member_id);
+
+            #get the leaves branch lengths
+            my $bl = $leaf->distance_to_parent;
+            $branch_length_list{$member_id} = $bl;
+        }
+
+        #Renaming nodes
+        foreach my $leaf (@{$castedMrca->get_all_leaves}) {
+           my $taxon_id = $leaf->dbID;
+           foreach my $member (@{$leaves_list{$taxon_id}}) {
+               my $new_name = $member."_".$taxon_id;
+               #new name
+               $leaf->name($new_name);
+               #keep same bl from before, since they are leaves
+               $leaf->distance_to_parent($branch_length_list{$member});
+           }
+        }
+
+        my $parentMrca = $mrcaGeneTree->parent();
+        my $bl = $mrcaGeneTree->distance_to_parent;
+        $mrcaGeneTree->disavow_parent();
+
+        #adding new binary branch
+        #We need to add from the casted MRCA tree
+        #$parentMrca->add_child($mrcaGeneTree,$bl);
+        $parentMrca->add_child($castedMrca,$bl);
+    }
+}
 
 1;
 

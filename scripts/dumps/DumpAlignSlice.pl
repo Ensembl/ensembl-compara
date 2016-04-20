@@ -14,23 +14,6 @@
 # limitations under the License.
 
 
-my $description = q{
-###########################################################################
-##
-## PROGRAM DumpAlignSlice.pl
-##
-## DESCRIPTION
-##    This script dumps genomic alignments from an EnsEMBL Compara
-##    database using the AlignSlice framework. It can work in both
-##    collapsed (preserving the original sequence) and expanded mode
-##    (expanding the original sequence in order to accommodate the
-##    gaps defined by the genomic alignment).
-##
-###########################################################################
-
-};
-
-
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
@@ -195,6 +178,9 @@ standard output
 
 =cut
 
+use strict;
+use warnings;
+
 my $usage = qq{
 perl DumpAlignSlice.pl
   Getting help:
@@ -257,8 +243,6 @@ perl DumpAlignSlice.pl
         standard output
 };
 
-use strict;
-use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
@@ -268,6 +252,7 @@ use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Getopt::Long;
+use Pod::Usage;
 #chr7:73549956-73613012
 my $reg_conf;
 my $dbname = "compara";
@@ -315,8 +300,7 @@ GetOptions(
 
 # Print Help and exit
 if ($help) {
-  print $description, $usage;
-  exit(0);
+  pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
 if ($output_file) {

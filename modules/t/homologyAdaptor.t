@@ -58,7 +58,7 @@ subtest "Test fetch methods", sub {
 
     ok(1);
 
-    my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","$member_stable_id");
+    my $member = $ma->fetch_by_stable_id($member_stable_id);
 
     ok($member);
     

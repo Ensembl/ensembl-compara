@@ -62,6 +62,8 @@ sub run {
         $self->run_mafft;
         # We put the alignment into the db
         $self->store_fasta_alignment('mafft_output');
+        $self->param('gene_align_id', $self->param('alignment_id'));
+        $self->call_one_hc('unpaired_alignment');
 
         $self->dataflow_output_id (
                                    {
@@ -103,7 +105,8 @@ sub run {
 sub write_output {
     my ($self) = @_;
     $self->store_fasta_alignment("prank_output");
-    $self->call_one_hc('alignment');
+    $self->param('gene_align_id', $self->param('alignment_id'));
+    $self->call_one_hc('unpaired_alignment');
     for my $method (qw/phyml nj/) {
         $self->dataflow_output_id (
                                    {

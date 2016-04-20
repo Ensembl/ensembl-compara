@@ -29,8 +29,9 @@ sub param_defaults {
     return {
             # --anysymbol helps when Uniprot sequence contains 'U' or other funny aminoacid codes
             # --thread 1 is supposed to prevent forking
-        'mafft_cmdline_args'    => '--anysymbol --thread 1',
+        'mafft_cmdline_args'    => '--anysymbol --thread #mafft_threads#',
         'mafft_exec'            => '#mafft_root_dir#/bin/mafft',
+        'mafft_threads'         => 1,
     };
 }
 

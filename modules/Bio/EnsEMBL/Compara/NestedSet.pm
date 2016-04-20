@@ -503,7 +503,7 @@ sub get_all_sorted_nodes {
 
   Arg 1       : tag_name
   Arg 2       : tag_value (optional)
-  Example     : my $all_nodes = $root->get_all_nodes_by_tagvalue('taxon_name'=>'Mamalia');
+  Example     : my $all_nodes = $root->get_all_nodes_by_tagvalue('tree_support'=>'nj_dn');
   Description : Returns all underlying nodes that have a tag of the given name, and optionally a value of the given value.
   ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
   Exceptions  : none
@@ -992,9 +992,9 @@ my $nhx2 = ':T=%{-x}%{C(species_tree_node,taxon_id)-}';
 
 my %nhx_ryo_modes_1 = (
     'member_id_taxon_id' => '%{-m}%{o-}_%{-x}%{C(species_tree_node,taxon_id)-}:%{d}',
-    'protein_id' => '%{-n}'.$nhx0,
-    'transcript_id' => '%{-r}'.$nhx0,
-    'gene_id' => '%{-i}'.$nhx0,
+    'protein_id' => '%{-n}:%{d}',
+    'transcript_id' => '%{-r}:%{d}',
+    'gene_id' => '%{-i}:%{d}',
     'full' => $nhx0,
     'full_web' => $nhx0,
     'display_label' => '%{-l,|i}%{"_"-s}'.$nhx0,
@@ -1657,6 +1657,94 @@ sub _recursive_get_all_leaves {
   }
 }
 
+=head2 random_binarize
+
+ Title   : random_binarize
+ Usage   : $tree->random_binarize;
+ Function: Forces the resolution of multifurcations on a given tree. It resolves the nodes randomly.
+ Example :
+ Returns : none
+ Args    : none
+
+=cut
+
+sub random_binarize {
+    my ($orig_tree) = @_;
+    my $newTree = $orig_tree->new();
+    $newTree->name('root');
+    $newTree->node_id('0');
+    _binarize($orig_tree, $newTree, {});
+    return $newTree;
+}
+
+sub _binarize {
+    my ($origTree, $binTree) = @_;
+    my $children = $origTree->children();
+    for my $child (@$children) {
+        my $newNode = $child->new();
+        $newNode->node_id($child->node_id());
+        $newNode->dbID($child->dbID());
+        $newNode->name($child->name());
+        $newNode->distance_to_parent($child->distance_to_parent()); # no parent!!
+        if (scalar @{$binTree->children()} > 1) {
+            #print "disavowing: |" . $child->name() . "|\n";
+            $child->disavow_parent();
+            my $newBranch = $child->new();
+            for my $c (@{$binTree->children()}) {
+                $c->distance_to_parent(0);
+                $newBranch->add_child($c);
+            }
+            $binTree->add_child($newBranch);
+        }
+        $binTree->add_child($newNode);
+        _binarize($child, $newNode);
+    }
+}
+
+=head2 random_binarize_node
+
+ Title   : random_binarize_node
+ Usage   : $node->random_binarize_node;
+ Function: Forces the resolution of multifurcations on a given node. It resolves them randomly.
+ Example :
+ Returns : none
+ Args    : none
+
+=cut
+
+sub random_binarize_node {
+    my ($node) = @_;
+    while (scalar(@{$node->children}) > 2) {
+        my @children = @{$node->children};
+        #----------------------------------------
+        #Very simple algorithm (no need to recursivity):
+        #   N = root of multifurcated node
+        #   I = new internal node
+        #   A = child 1
+        #   B = child 2
+        #
+        # Select 2 children
+        # Create new internal node attached to N
+        # Attach A & B to I
+        # Add new node back to the main node
+        #----------------------------------------
+
+        # Select 2 children
+        my $child_A = $children[0];
+        my $child_B = $children[1];
+
+        # Create new internal node attached to N
+        my $newNode = $child_A->new();
+
+        # Attach A & B to I
+        # A & B will be automatically removed from previous parent
+        $newNode->add_child($child_A);
+        $newNode->add_child($child_B);
+
+        # Add new node back to the main node
+        $node->add_child($newNode)
+    }
+}
 
 =head2 max_distance
 

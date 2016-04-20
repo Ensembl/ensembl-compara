@@ -142,7 +142,7 @@ sub class {
 sub toString {
     my $self = shift;
 
-    return ref($self).": dbID=".($self->dbID || '?').", type='".$self->type."', class='".$self->class."'";
+    return "Method dbID=".($self->dbID || '?')." '".$self->type."', class='".$self->class."'";
 }
 
 1;

@@ -111,12 +111,12 @@ sub fetch_input {
         #                           unannotated.fasta.00.pog
         #                           unannotated.fasta.01.pog
         my $fastafile = $self->param('blast_db');
-        my @phr = <$fastafile*.phr>;
-        my @pin = <$fastafile*.pin>;
-        my @pog = <$fastafile*.pog>;
-        my @psd = <$fastafile*.psd>;
-        my @psi = <$fastafile*.psi>;
-        my @psq = <$fastafile*.psq>;
+        my @phr = glob("$fastafile*.phr");
+        my @pin = glob("$fastafile*.pin");
+        my @pog = glob("$fastafile*.pog");
+        my @psd = glob("$fastafile*.psd");
+        my @psi = glob("$fastafile*.psi");
+        my @psq = glob("$fastafile*.psq");
 
         my %db_files = ( 'phr' => \@phr, 'pin' => \@pin, 'pog' => \@pog, 'psd' => \@psd, 'psi' => \@psi, 'psq' => \@psq );
 

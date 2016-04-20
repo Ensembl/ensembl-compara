@@ -168,7 +168,7 @@ sub get_profiles {
     my $cm_directory = $self->param_required('cm_file_or_directory');
     print STDERR "CM_DIRECTORY = " . $cm_directory . "\n";
     $self->initialize_fasta_index;
-    while (my $famPath = <$cm_directory/books/*>) {
+    while (my $famPath = glob("$cm_directory/books/*")) {
         my $fam = basename($famPath);
         my $cons_seq = $self->get_consensus_from_index($fam);
         print STDERR "Storing family $famPath($fam) => $famPath/hmmer.hmm\n" if ($self->debug());
@@ -177,7 +177,7 @@ sub get_profiles {
         next unless $self->param('include_subfamilies');
 
 	## For subfamilies
-        while (my $subfamPath = <$famPath/*>) {
+        while (my $subfamPath = glob("$famPath/*")) {
             my $subfamBasename = basename($subfamPath);
             print $subfamPath, "\n";
             next unless -d $subfamPath;

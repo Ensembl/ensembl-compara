@@ -45,39 +45,17 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {
-  my( $self) = @_;
-
-  if (!defined $self->param('mlss_id')) {
-      die "'mlss_id' is an obligatory parameter";
-  }
-
-  return 1;
-}
-
-sub run
-{
-  my $self = shift;
-}
 
 sub write_output {
-  my ($self) = @_;
+    my ($self) = @_;
 
-  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($self->param('mlss_id'));
-  my $gdbs = $mlss->species_set_obj->genome_dbs;
-  my @genome_db_ids;
-  foreach my $gdb (@$gdbs) {
-      push @genome_db_ids, $gdb->dbID;
-  }
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($self->param_required('mlss_id'));
+    my @genome_db_ids = map {$_->dbID} @{$mlss->species_set_obj->genome_dbs};
 
-  while (my $gdb_id1 = shift @genome_db_ids) {
-
-      my $list_gdbs = "[" . (join ",", @genome_db_ids) . "]";
-      my $output_id = "{genome_db_id => " . $gdb_id1 . ", genome_db_ids => ' $list_gdbs " . "'}";
-      $self->dataflow_output_id($output_id, 2);
-  }
-
-  return 1;
+    while (my $gdb_id1 = shift @genome_db_ids) {
+        my $output_id = { 'genome_db_id' => $gdb_id1, 'genome_db_ids' => [@genome_db_ids] };
+        $self->dataflow_output_id($output_id, 2);
+    }
 }
 
 1;

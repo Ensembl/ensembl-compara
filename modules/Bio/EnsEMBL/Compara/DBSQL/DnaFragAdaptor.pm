@@ -71,6 +71,7 @@ use warnings;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use Bio::EnsEMBL::DBSQL::Support::LruIdCache;
 
@@ -164,11 +165,7 @@ sub fetch_by_GenomeDB_and_name {
 sub fetch_all_by_GenomeDB_region {
   my ($self, $genome_db, $coord_system_name, $name, $is_reference) = @_;
 
-  unless($genome_db && ref $genome_db && 
-	 $genome_db->isa('Bio::EnsEMBL::Compara::GenomeDB')) {
-    $self->throw("genome_db arg must be Bio::EnsEMBL::Compara::GenomeDB".
-		 " not [$genome_db]\n")
-  }
+  assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
 
   my $gdb_id = $genome_db->dbID;
 
@@ -374,9 +371,7 @@ sub store {
        throw("Must store $dnafrag object");
    }
 
-   if( !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
-       throw("Must have dnafrag arg [$dnafrag]");
-   }
+   assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
 
    if (defined $dnafrag->adaptor() && $dnafrag->adaptor() == $self) {
      return $dnafrag->dbID();
@@ -384,9 +379,7 @@ sub store {
 
    my $gdb = $dnafrag->genome_db();
 
-   if( !defined $gdb || !ref $gdb || !$gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
-       $self->throw("Must have genomedb attached to the dnafrag to store the dnafrag [$gdb]");
-   }
+   assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB', 'gdb');
 
    if( !defined $gdb->dbID ) {
        throw("genomedb must be stored (no dbID). Store genomedb first");
@@ -452,9 +445,7 @@ sub is_already_stored {
        $self->throw("Must have dnafrag object");
    }
 
-   if( !ref $dnafrag || !$dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag') ) {
-       $self->throw("Must have dnafrag arg [$dnafrag]");
-   }
+   assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
 
    if (defined $dnafrag->adaptor() && $dnafrag->adaptor() == $self) {
      return $dnafrag->dbID();
@@ -462,10 +453,7 @@ sub is_already_stored {
    
    my $gdb = $dnafrag->genome_db();
 
-   if( !defined $gdb || !ref $gdb || !$gdb->isa('Bio::EnsEMBL::Compara::GenomeDB') ) {
-       $self->throw("Must have genomedb attached to the dnafrag to store the dnafrag [$gdb]");
-   }
-
+   assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB', 'gdb');
 
    if( !defined $gdb->dbID ) {
        $self->throw("genomedb must be stored (no dbID). Store genomedb first");

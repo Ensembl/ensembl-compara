@@ -56,6 +56,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerSta
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use File::stat;
 
@@ -263,7 +265,9 @@ sub calc_stats {
     my $species = $genome_db->name;
     my $assembly_name = $genome_db->assembly;
 
-    my $compara_url = $self->compara_dba->dbc->url;
+    # Always construct a eHive DBConnection object because
+    # $self->compara_dba may be a Core DBConnection (which lacks ->url())
+    my $compara_url = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc)->url;
 
     #dump alignment_bed
     my $feature = "mlss_" . $self->param('mlss_id');

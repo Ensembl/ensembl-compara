@@ -68,10 +68,10 @@ sub fetch_input {
         print Dumper $self->param('reuse_compara_dba') if ( $self->debug );
 
         #get reuse tree adaptor
-        $self->param( 'reuse_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor );
+        $self->param( 'reuse_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor ) || die "Could not get GeneTreeAdaptor for reuse_tree_adaptor";
 
         #get current tree adaptor
-        $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor );
+        $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor ) || die "Could not get GeneTreeAdaptor for current_tree_adaptor";
 
         #----------------------------------------------------------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ sub fetch_input {
         #----------------------------------------------------------------------------------------------------------------------------
         $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) );
         $self->param('current_gene_tree')->preload();
-        $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') );
+        $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') ) || die "Could not get value_for_tag: model_name";
 
         #Get copy tree
         #----------------------------------------------------------------------------------------------------------------------------
@@ -94,7 +94,14 @@ sub fetch_input {
 
         print "Fetching tree for stable ID/root_id: " . $self->param('stable_id') . "/" . $self->param('gene_tree_id') . "\n" if ( $self->debug );
 
-        my %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') );
+        my %members_2_b_updated;
+        if ( ( $self->param('current_gene_tree')->has_tag('needs_update') ) && ( $self->param('current_gene_tree')->get_value_for_tag('needs_update') == 1 ) ) {
+            my $updated_genes_list;
+            if ( $self->param('current_gene_tree')->has_tag('updated_genes_list') ) {
+                $updated_genes_list = $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') || die "Could not get value_for_tag: updated_genes_list";
+                %members_2_b_updated = map { $_ => 1 } split( /,/, $updated_genes_list );
+            }
+        }
 
         #Get previous tree
         $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) );
@@ -113,7 +120,8 @@ sub fetch_input {
         }
 
         foreach my $current_member ( @{ $self->param('copy_gene_tree')->get_all_Members } ) {
-            if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) ) {
+            #copying the cigar lines to the new tree excluding the members that need update:
+            if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) && ( !defined( $members_2_b_updated{ $current_member->stable_id } ) ) ) {
                 $current_member->cigar_line( $cigar_lines_reuse_tree{ $current_member->stable_id } );
             }
         }
@@ -137,11 +145,12 @@ sub write_output {
     $self->param('copy_gene_tree')->aln_length($reuse_aln->aln_length);
     $self->param('copy_gene_tree')->aln_method($reuse_aln->aln_method);
 
-    $self->compara_dba->get_GeneAlignAdaptor->store( $self->param('copy_gene_tree') );
+    $self->compara_dba->get_GeneAlignAdaptor->store( $self->param('copy_gene_tree') ) || die "Could not store alignment for: copy_gene_tree";
 
 	#If the current tree is not an update tree, we should not flow to mafft_update.
 	#But it must be done after copying the alignment!
     if ( !$self->param('current_gene_tree')->has_tag('needs_update') ){
+        $self->warning("Current tree is not an update tree, we should not flow to mafft_update");
         $self->input_job->autoflow(0);
 	}
 }

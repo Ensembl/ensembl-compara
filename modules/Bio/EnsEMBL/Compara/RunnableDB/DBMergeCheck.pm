@@ -79,7 +79,7 @@ use warnings;
 use Data::Dumper;
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'stringify');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -90,8 +90,12 @@ sub param_defaults {
         # Static list of the main tables that must be ignored
         'master_tables'     => [qw(meta genome_db species_set species_set_header method_link method_link_species_set ncbi_taxa_node ncbi_taxa_name dnafrag)],
         # Static list of production tables that must be ignored
-        'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection)],
-        'hive_tables'       => [qw(accu hive_meta analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message pipeline_wide_parameters role worker_resource_usage)],
+        'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection anchor_sequence anchor_align)],
+        'hive_tables'       => [qw(accu hive_meta analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message pipeline_wide_parameters role worker_resource_usage dataflow_target)],
+
+        # Do we want to be very picky and die if a table hasn't been listed
+        # above / isn't in the target database ?
+        'die_if_unknown_table'      => 1,
 
         # How to compare overlapping data. Primary keys are read from the schema unless overriden here
         'primary_keys'      => {
@@ -110,6 +114,8 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift @_;
+
+    $self->dbc->disconnect_if_idle();
 
     my $src_db_aliases = $self->param_required('src_db_aliases');
     my $exclusive_tables = $self->param_required('exclusive_tables');
@@ -141,22 +147,25 @@ sub fetch_input {
         # We don't care about tables that are exclusive to another db
         push @bad_tables_list, (grep {$exclusive_tables->{$_} ne $db} (keys %$exclusive_tables));
 
-        # We want all the tables on the release database to detect production tables
-        my $extra = $db eq 'curr_rel_db' ? " IS NOT NULL " : " ";
-
         # We may want to ignore some more tables
         push @bad_tables_list, @{$ignored_tables->{$db}} if exists $ignored_tables->{$db};
         my @wildcards =  grep {$_ =~ /\%/} @{$ignored_tables->{$db}};
-        $extra .= join("", map {" AND Name NOT LIKE '$_' "} @wildcards);
+        my $extra = join("", map {" AND Name NOT LIKE '$_' "} @wildcards);
 
+        my $this_db_handle = $dbconnections->{$db}->db_handle;
         my $bad_tables = join(',', map {"'$_'"} @bad_tables_list);
-        my $sql = "SHOW TABLE STATUS WHERE Engine IS NOT NULL AND Name NOT IN ($bad_tables) AND Rows $extra";
-        my $list = $dbconnections->{$db}->db_handle->selectall_arrayref($sql, undef);
-        $table_size->{$db} = {map {$_->[0] => $_->[4]} @$list};
+        my $sql_table_status = "SHOW TABLE STATUS WHERE Engine IS NOT NULL AND Name NOT IN ($bad_tables) $extra";
+        my $table_list = $this_db_handle->selectcol_arrayref($sql_table_status, { Columns => [1] });
+        my $sql_size_table = 'SELECT COUNT(*) FROM ';
+        $table_size->{$db} = {};
+        foreach my $t (@$table_list) {
+            my ($s) = $this_db_handle->selectrow_array($sql_size_table.$t);
+            # We want all the tables on the release database in order to detect production tables
+            # but we only need the non-empty tables of the other databases
+            $table_size->{$db}->{$t} = $s if ($db eq 'curr_rel_db') or $s;
+        }
     }
     print Dumper($table_size) if $self->debug;
-    # WARNING: In InnoDB mode, table_rows is an approximation of the true number of rows
-    #          but we assume that the zeroness is correct
     $self->param('table_size', $table_size);
 }
 
@@ -191,6 +200,8 @@ sub _find_primary_key {
 
 sub run {
     my $self = shift @_;
+
+    $self->dbc->disconnect_if_idle();
 
     my $table_size = $self->param('table_size');
     my $exclusive_tables = $self->param('exclusive_tables');
@@ -237,12 +248,18 @@ sub run {
     foreach my $table (keys %$all_tables) {
 
         unless (exists $table_size->{'curr_rel_db'}->{$table} or exists $exclusive_tables->{$table}) {
-            die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n";
+            if ($self->param('die_if_unknown_table')) {
+                die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n";
+            } else {
+                $self->warning("The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n");
+                next;
+            }
         }
 
         if (not $table_size->{'curr_rel_db'}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
 
             my $db = $all_tables->{$table}->[0];
+            $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
 
             # Single source -> copy
             print "$table is copied over from $db\n" if $self->debug;
@@ -264,6 +281,10 @@ sub run {
             map { $table_size->{$_}->{$table} = $min_max->{$_}->[2] } @dbs;
             # and re-filter the list of databases
             @dbs = grep {$table_size->{$_}->{$table}} @dbs;
+
+            foreach my $db (@dbs) {
+                $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
+            }
 
             my $sql_overlap = "SELECT COUNT(*) FROM $table WHERE $key BETWEEN ? AND ?";
 
@@ -329,6 +350,7 @@ sub write_output {
     # If in write_output, it means that there are no ID conflict. We can safely dataflow the copy / merge operations.
 
     while ( my ($table, $db) = each(%{$self->param('copy')}) ) {
+        warn "ACTION: copy '$table' from '$db'\n" if $self->debug;
         $self->dataflow_output_id( {'src_db_conn' => "#$db#", 'table' => $table}, 2);
     }
 
@@ -339,10 +361,26 @@ sub write_output {
             push @inputlist, [ "#$db#" ];
             $n_total_rows += $table_size->{$db}->{$table};
         }
+        warn "ACTION: merge '$table' from ".join(", ", map {"'$_'"} @$dbs)."\n" if $self->debug;
         $self->dataflow_output_id( {'table' => $table, 'inputlist' => \@inputlist, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 3);
     }
 
 }
+
+sub _assert_same_table_schema {
+    my ($self, $src_dbc, $dest_dbc, $table) = @_;
+
+    my $src_sth = $src_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $src_schema = $src_sth->fetchall_arrayref;
+    $src_sth->finish();
+
+    my $dest_sth = $dest_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $dest_schema = $dest_sth->fetchall_arrayref;
+    $dest_sth->finish();
+
+    die "'$table' has a different schema in the two databases." if stringify($src_schema) ne stringify($dest_schema);
+}
+
 
 1;
 

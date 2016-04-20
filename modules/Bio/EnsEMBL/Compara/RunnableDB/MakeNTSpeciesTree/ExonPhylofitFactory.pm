@@ -33,6 +33,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::ExonPhylofitFactor
 
 use strict;
 use warnings;
+
+use List::Util qw(sum0);
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception ('throw');
@@ -88,8 +91,8 @@ sub fetch_input {
     my $species_name = $ga->dnafrag->genome_db->name;
     if(exists $exon_aligns{ $exon->dbID }{ $species_name } ){
      my $stored_cigar = $exon_aligns{ $exon->dbID }{ $species_name }{ 'cigar' };
-     my $stored_total = eval join "+", $stored_cigar=~/(\d+)M/g; # sum up all the matches in the cigar
-     my $new_total = eval join "+", $ga->cigar_line=~/(\d+)M/g;
+     my $stored_total = sum0 $stored_cigar=~/(\d+)M/g; # sum up all the matches in the cigar
+     my $new_total = sum0 $ga->cigar_line=~/(\d+)M/g;
      next if ($new_total < $stored_total); # for a species with more than one seq in the alignment choose the one with the most matches
     }
     $species_names{ $species_name }++;

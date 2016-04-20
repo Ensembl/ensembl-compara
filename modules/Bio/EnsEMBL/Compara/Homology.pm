@@ -59,6 +59,10 @@ Reconciliation with the gene tree:
  - species_tree_node()
  - taxonomy_level() (alias to species_tree_node()->node_name())
 
+ Ortholog quality scores
+ - goc_score
+ - wga_coverage
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
@@ -133,6 +137,45 @@ sub is_tree_compliant {
   return $self->{'_is_tree_compliant'};
 }
 
+##gene order conservation based orthologQC
+
+=head2 goc_score
+
+  Arg [1]    : float $goc_score (optional)
+  Example    : $goc_score = $homology->goc_score();
+               $homology->goc_score(3);
+  Description: getter/setter of number of nonsynonymous positions for the homology.
+  Returntype : float
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub goc_score {
+  my $self = shift;
+  $self->{'_goc_score'} = shift if(@_);
+  return $self->{'_goc_score'};
+}
+
+## ortholog score based on whole genome alignments
+
+=head2 wga_coverage
+
+  Arg [1]    : float $wga_coverage (optional)
+  Example    : $wga_coverage = $homology->wga_coverage();
+               $homology->wga_coverage(39.7);
+  Description: getter/setter of wga coverage for the homology.
+  Returntype : float
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub wga_coverage {
+  my $self = shift;
+  $self->{'_wga_coverage'} = shift if(@_);
+  return $self->{'_wga_coverage'};
+}
 
 
 ## dN/dS methods
@@ -372,6 +415,24 @@ sub homology_key {
 }
 
 
+=head2 _gene_tree_node_id
+
+  Example     : my $_gene_tree_node_id = $homology->_gene_tree_node_id();
+  Example     : $homology->_gene_tree_node_id($_gene_tree_node_id);
+  Description : Getter/Setter for the dbID of the gene-tree node this homology comes from
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _gene_tree_node_id {
+    my $self = shift;
+    $self->{'_gene_tree_node_id'} = shift if @_;
+    return $self->{'_gene_tree_node_id'};
+}
+
 =head2 gene_tree_node
 
   Arg [1]    : GeneTreeNode $node (optional)
@@ -396,6 +457,25 @@ sub gene_tree_node {
         $self->{_gene_tree} = $self->{_gene_tree_node}->tree;
     }
     return $self->{_gene_tree_node};
+}
+
+
+=head2 _gene_tree_root_id
+
+  Example     : my $_gene_tree_root_id = $homology->_gene_tree_root_id();
+  Example     : $homology->_gene_tree_root_id($_gene_tree_root_id);
+  Description : Getter/Setter for the gene-tree root dBID this homology refers to.
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _gene_tree_root_id {
+    my $self = shift;
+    $self->{'_gene_tree_root_id'} = shift if @_;
+    return $self->{'_gene_tree_root_id'};
 }
 
 
@@ -459,41 +539,6 @@ sub species_tree_node {
 sub taxonomy_level {
     my $self = shift;
     return $self->species_tree_node() ? $self->species_tree_node()->node_name() : undef;
-}
-
-
-
-
-sub node_id {  ## DEPRECATED
-  my $self = shift;
-  deprecate('$self->node_id() is deprecated and will be removed in e84. Use $self->gene_tree_node()->node_id() instead.');
-  $self->{'_gene_tree_node_id'} = shift if(@_);
-  return $self->{'_gene_tree_node_id'};
-}
-
-sub ancestor_node_id { ## DEPRECATED
-  my $self = shift;
-  deprecate('$self->ancestor_tree_node_id() is deprecated and will be removed in e84. Use $self->gene_tree_node()->node_id() instead.');
-  $self->{'_gene_tree_node_id'} = shift if(@_);
-  return $self->{'_gene_tree_node_id'};
-}
-
-sub tree_node_id { ## DEPRECATED
-  my $self = shift;
-  deprecate('$self->tree_node_id() is deprecated and will be removed in e84. Use $self->gene_tree()->dbID() instead.');
-  return $self->gene_tree()->dbID();
-}
-
-sub subtype {  ## DEPRECATED
-    my $self = shift;
-    deprecate("Homology::subtype() is deprecated and will be removed in e84. Use taxonomy_level() instead.");
-    return $self->taxonomy_level();
-}
-
-sub taxonomy_alias {  ## DEPRECATED
-    my $self = shift;
-    deprecate("Homology::taxonomy_alias() is deprecated and will be removed in e84. Use species_tree_node()->taxon()->ensembl_alias_name() instead.");
-    return $self->species_tree_node()->taxon()->ensembl_alias_name();
 }
 
 

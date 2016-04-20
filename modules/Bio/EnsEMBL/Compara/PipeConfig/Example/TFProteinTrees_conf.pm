@@ -123,7 +123,7 @@ sub default_options {
         'hmmer3_home'               => '/nfs/panda/ensemblgenomes/external/hmmer-3/bin/',
         'codeml_exe'                => $self->o('exe_dir').'/codeml',
         'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
-        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2.3.0+/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
         'trimal_exe'                => '/nfs/production/xfam/treefam/software/trimal/source/trimal',
         'noisy_exe'                 => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
@@ -134,16 +134,18 @@ sub default_options {
         'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
 		'examl_out_dir'				=> '/nfs/panda/ensembl/production/mateus/compara/TreeFam10/examl',
         'getPatterns_exe'           => '/nfs/production/xfam/treefam/software/RAxML/number_of_patterns/getPatterns',
+        'fasttree_mp_exe'           => '/nfs/production/xfam/treefam/software/FastTree/FastTreeMP',
         'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
         'cafe_shell'                => 'UNDEF',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'
-       'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/muffato/mateus/TF10",
+       #'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/muffato/mateus/TF10",
+       'hmm_library_basedir'     => '/nfs/panda/ensembl/production/mateus/compara/multi_division_hmm_lib/',
 
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
-       'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/mateus/TF10",
+       #'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/mateus/TF10",
 
        # List of MultiHMM files to load (and their names)
        #'multihmm_files'          => [ ["/lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt", "PFAM"] ],
@@ -157,27 +159,27 @@ sub default_options {
         'extra_model_tags_file'     => undef,
 
     # hive_capacity values for some analyses:
-        'reuse_capacity'            =>   3,
+        'reuse_capacity'            =>  10,
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 200,
         'blastpu_capacity'          => 150,
         'mcoffee_capacity'          => 200,
-        'split_genes_capacity'      => 150,
+        'split_genes_capacity'      => 400,
         'alignment_filtering_capacity'  => 200,
+        'cluster_tagging_capacity'  => 200,
+        'loadtags_capacity'         => 200,
         'prottest_capacity'         => 200,
-        'treebest_capacity'         => 200,
+        'treebest_capacity'         => 500,
         'raxml_capacity'            => 200,
+        'copy_tree_capacity'        => 100,
         'examl_capacity'            => 400,
         'notung_capacity'           => 100,
         'ortho_tree_capacity'       => 200,
-        'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 100,
         'ktreedist_capacity'        => 150,
-        'merge_supertrees_capacity' => 100,
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
-        'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
         'decision_capacity'         =>   4,
         'hc_post_tree_capacity'     => 100,
@@ -188,6 +190,7 @@ sub default_options {
         'copy_alignments_capacity'  => 50,
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
+        'ortho_stats_capacity'      => 10,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -220,14 +223,14 @@ sub default_options {
             -port => 4157,
             -user => 'ensro',
 			#-verbose => 1,
-			-db_version => 79, 
+			-db_version => 83,
    },
     ensembl_mirror => {
             -host => 'mysql-ensembl-mirror.ebi.ac.uk',
             -user => 'anonymous',
             -port => '4240',
 			#-verbose => 1,
-			-db_version => 79
+			-db_version => 83,
     },
 	master_db=> {
             -host => 'mysql-treefam-prod',
@@ -235,7 +238,8 @@ sub default_options {
             -port => '4401',
 			-pass => $self->o('password'),
             #-verbose => 1,
-      		-dbname => 'treefam_master10',
+            #-dbname => 'treefam_master10',
+            -dbname => 'treefam_master',
 	  		-driver => 'mysql',
 			#-db_version => 75
     },
@@ -249,7 +253,7 @@ sub default_options {
             -port => 4238,
             -user => 'ensro',
 			#-verbose => 1,
-			-db_version => 79,
+			-db_version => 30,
    },
 
     #ncbi_eg=> {
@@ -311,6 +315,9 @@ sub default_options {
         # Do we want to initialise the CAFE part now ?
         'initialise_cafe_pipeline'  => undef,
 
+        #Use Timetree divergence times for the GeneTree internal nodes
+        #'use_timetree_times'        => 1,
+        'use_timetree_times'        => 0,
     };
 }
 
@@ -331,16 +338,16 @@ sub resource_classes {
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         '16Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '32Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '32Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>32000] rusage[mem=32000]"' },
-         '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+         '16Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_8c_job' => {'LSF' => '-q production-rh6 -n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"' },
 
-         '16Gb_32c_job' => {'LSF' => '-q production-rh6 -n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '32Gb_32c_job' => {'LSF' => '-q production-rh6 -n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         '16Gb_64c_job' => {'LSF' => '-q production-rh6 -n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '32Gb_64c_job' => {'LSF' => '-q production-rh6 -n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '16Gb_32c_job' => {'LSF' => '-q production-rh6 -n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_32c_job' => {'LSF' => '-q production-rh6 -n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '16Gb_64c_job' => {'LSF' => '-q production-rh6 -n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
+         '32Gb_64c_job' => {'LSF' => '-q production-rh6 -n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
 
 
          '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },

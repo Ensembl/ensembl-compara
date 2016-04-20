@@ -66,7 +66,7 @@ print STDERR "Looking for $ortholog_type between $qy_species and $tg_species.\n"
 # Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
 # if no reg_conf file is given.
 Bio::EnsEMBL::Registry->no_version_check(1);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $gdba = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
 my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');

@@ -14,23 +14,6 @@
 # limitations under the License.
 
 
-my $description = q{
-###########################################################################
-##
-## PROGRAM LoadUcscNetData.pl
-##
-## AUTHORS
-##    Abel Ureta-Vidal
-##    Javier Herrero
-##
-## DESCRIPTION
-##    This script read BLASTz alignments from a UCSC database and store
-##    them in an EnsEMBL Compara database
-##
-###########################################################################
-
-};
-
 =head1 NAME
 
 LoadUcscNetData.pl

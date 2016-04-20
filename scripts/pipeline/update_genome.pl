@@ -48,7 +48,6 @@ in production phase and update it in several steps:
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_alias
     --species new_species_db_name_or_alias
-    [--genome_db_name "Species name"]
     [--taxon_id 1234]
     [--[no]force]
     [--offset 1000]
@@ -98,11 +97,6 @@ any of the aliases given in the registry_configuration_file
 
 =over
 
-=item B<[--genome_db_name "Species name"]>
-
-Set up the GenomeDB name. This is needed when the core database
-misses this information
-
 =item B<[--taxon_id 1234]>
 
 Set up the NCBI taxon ID. This is needed when the core database
@@ -128,7 +122,19 @@ offset+1
 
 File that contains the production names of all the species to import.
 Mainly used by Ensembl Genomes, this allows a bulk import of many species.
-In this mode, --species, --genome_db_name and --taxon_id are ignored.
+In this mode, --species and --taxon_id are ignored.
+
+=item B<[--collection collection_name]>
+
+When --file_of_production_names is given, a collection species-set can be
+created with all the species listed in the file.
+When --file_of_production_names is not given, the species will be added to
+the collection.
+
+=item B<[--release]>
+
+Mark all the GenomeDBs that are created (and the collection if --collection
+is given) as "current", i.e. with a first_release and an undefined last_release
 
 =back
 
@@ -152,22 +158,24 @@ my $help;
 my $reg_conf;
 my $compara;
 my $species = "";
-my $genome_db_name;
 my $taxon_id;
 my $force = 0;
 my $offset = 0;
 my $file;
+my $collection;
+my $release;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     "species=s" => \$species,
-    "genome_db_name=s" => \$genome_db_name,
     "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
     'offset=i' => \$offset,
     'file_of_production_names=s' => \$file,
+    'collection=s' => \$collection,
+    'release' => \$release,
   );
 
 $| = 0;
@@ -183,7 +191,7 @@ if ($help or (!$species and !$file) or !$compara) {
 ## Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses
 ## ~/.ensembl_init if all the previous fail.
 ##
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $compara_dba;
 if ($compara =~ /mysql:\/\//) {
@@ -194,16 +202,37 @@ if ($compara =~ /mysql:\/\//) {
 throw ("Cannot connect to database [$compara]") if (!$compara_dba);
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 
+my $new_genome_dbs = [];
+
 if ($species) {
-    process_species($species);
+    die "--species and --file_of_production_names cannot be given at the same time.\n" if $file;
+    push @$new_genome_dbs, @{ process_species($species) };
 } else {
     $taxon_id = undef;
-    $genome_db_name = undef;
     $species = undef;
-    my $names = slurp_to_array($file, 1);
+    my $names = slurp_to_array($file, "chomp");
     foreach my $species (@$names) {
-        process_species($species);
+        push @$new_genome_dbs, @{ process_species($species) };
     }
+}
+
+if ($collection) {
+    my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
+    my $ini_coll_ss = $ss_adaptor->fetch_collection_by_name($collection);
+    if ($ini_coll_ss) {
+        if ($species) {
+            $species = $new_genome_dbs->[0]->name;  # In case the name given on the command line is not a production name
+            # In "species" mode, update the species but keep the other ones
+            push @$new_genome_dbs, grep {$_->name ne $species} @{$ini_coll_ss->genome_dbs};
+        }
+    } else {
+        print "*** The collection '$collection' does not exist in the database. It will now be created.\n";
+    }
+    $helper->transaction( -CALLBACK => sub {
+        my $new_collection_ss = $ss_adaptor->update_collection($collection, $ini_coll_ss, $new_genome_dbs);
+        # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
+        $ss_adaptor->make_object_current($new_collection_ss) if $release;
+    });
 }
 
 exit(0);
@@ -213,7 +242,7 @@ exit(0);
 
   Arg[1]      : string $string
   Description : Does everything for this species: create / update the GenomeDB entry, and load the DnaFrags
-  Returntype  : none
+  Returntype  : arrayref of Bio::EnsEMBL::Compara::GenomeDB
   Exceptions  : none
 
 =cut
@@ -230,16 +259,19 @@ sub process_species {
     }
     throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
 
-    $helper->transaction( -CALLBACK => sub {
+    my $gdbs = $helper->transaction( -CALLBACK => sub {
         my $genome_db = update_genome_db($species_db, $compara_dba, $force);
+        print "GenomeDB after update: ", $genome_db->toString, "\n\n";
         Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $genome_db, $species_db);
         my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_dba);
         foreach my $component_gdb (@$component_genome_dbs) {
             Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $component_gdb, $species_db);
         }
         print_method_link_species_sets_to_update($compara_dba, $genome_db);
+        return [$genome_db, @$component_genome_dbs];
     } );
     $species_db->dbc()->disconnect_if_idle();
+    return $gdbs;
 }
 
 
@@ -271,8 +303,8 @@ sub update_genome_db {
         " [$this_assembly] is already in the compara DB [$compara]\n".
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
     }
-  } elsif ($force) {
-    print "GenomeDB with this name [$genome_db_name] and the correct assembly".
+  } elsif ($force and $species) {
+    print "GenomeDB with this name [$species] and the correct assembly".
         " is not in the compara DB [$compara]\n".
         "You don't need the --force option!!";
     print "Press [Enter] to continue or Ctrl+C to cancel...";
@@ -291,8 +323,6 @@ sub update_genome_db {
     # And store it back in Compara
     $genome_db_adaptor->update($genome_db);
 
-    print "GenomeDB after update: ", $genome_db->toString, "\n\n";
-
   }
   ## New genome or new assembly!!
   else {
@@ -301,11 +331,13 @@ sub update_genome_db {
         -DB_ADAPTOR => $species_dba,
 
         -TAXON_ID   => $taxon_id,
-        -NAME       => $genome_db_name,
     );
 
+    if (!defined($genome_db->name)) {
+      throw "Cannot find species.production_name in meta table for $species.\n";
+    }
     if (!defined($genome_db->taxon_id)) {
-      throw "Cannot find species.taxonomy_id in meta table for $genome_db_name.\n".
+      throw "Cannot find species.taxonomy_id in meta table for $species.\n".
           "   You can use the --taxon_id option";
     }
     print "New GenomeDB for Compara: ", $genome_db->toString, "\n";
@@ -321,10 +353,12 @@ sub update_genome_db {
     }
 
     $genome_db_adaptor->store($genome_db);
-    print " -> Successfully stored with genome_db_id=".$genome_db->dbID."\n\n";
-    printf("You can add a new 'ensembl alias name' entry in scripts/taxonomy/ensembl_aliases.sql to map the taxon_id %d to '%s'\n", $genome_db->taxon_id, $species_dba->get_MetaContainer->get_common_name());
+
+    my $common_name = $species_dba->get_MetaContainer->get_common_name();
+    printf("You can add a new 'ensembl alias name' entry in scripts/taxonomy/ensembl_aliases.sql to map the taxon_id %d to '%s'\n", $genome_db->taxon_id, $common_name) if $common_name;
 
   }
+  $genome_db_adaptor->make_object_current($genome_db) if $release;
   return $genome_db;
 }
 

@@ -46,7 +46,7 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF');
 
 
-sub get_queries {
+sub get_queries_old {
     my $self = shift @_;
 
     my $start_member_id = $self->param_required('start_member_id');
@@ -55,6 +55,24 @@ sub get_queries {
 
     #Get list of members and sequences
     return $self->compara_dba->get_SeqMemberAdaptor->generic_fetch("mg.genome_db_id=$genome_db_id AND m.seq_member_id BETWEEN $start_member_id AND $end_member_id", [[['gene_member', 'mg'], 'mg.canonical_member_id = m.seq_member_id']]);
+}
+
+sub get_queries {
+    my $self = shift;
+
+    my $member_id_list = $self->param('member_id_list');
+    my $genome_db_id   = $self->param_required('genome_db_id');
+
+    if ( $member_id_list ){
+      my $member_id_string = '(' . join( ',', @{ $member_id_list } ) . ')';
+      return $self->compara_dba->get_SeqMemberAdaptor->generic_fetch("m.genome_db_id=$genome_db_id AND m.seq_member_id IN $member_id_string");
+    }
+    else {
+      my $start_member_id = $self->param_required('start_member_id');
+      my $end_member_id   = $self->param_required('end_member_id');
+
+      return $self->compara_dba->get_SeqMemberAdaptor->generic_fetch("mg.genome_db_id=$genome_db_id AND m.seq_member_id BETWEEN $start_member_id AND $end_member_id", [[['gene_member', 'mg'], 'mg.canonical_member_id = m.seq_member_id']]);
+    }
 }
 
 

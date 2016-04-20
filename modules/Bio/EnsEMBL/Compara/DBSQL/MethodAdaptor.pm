@@ -186,6 +186,7 @@ sub store {
     }
     if (my $other_method = $self->_synchronise($method)) {
 
+        #if ( ($other_method->class ne $method->class) && ($method->class ne "") ) {
         if ($other_method->class ne $method->class) {
             my $sql = 'UPDATE method_link SET class = ? WHERE method_link_id = ?';
             my $sth = $self->prepare( $sql ) or die "Could not prepare $sql\n";

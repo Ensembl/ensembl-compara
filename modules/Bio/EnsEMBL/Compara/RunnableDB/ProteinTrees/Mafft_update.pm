@@ -91,7 +91,7 @@ sub fetch_input {
         -ID_TYPE => 'SEQUENCE',
         -STOP2X => 1,
         -APPEND_SPECIES_TREE_NODE_ID => 0,
-		-UNIQ_SEQ => 1,
+        -UNIQ_SEQ => 0,
     );
     unless(-e $input_aln and -s $input_aln) {
         die "There are no alignments in '$input_aln', cannot continue";
@@ -115,8 +115,16 @@ sub get_msa_command_line {
     my $new_seq_file = $self->worker_temp_directory . "/" . $self->param_required('gene_tree_id') . "_new_seq.fasta";
 
     my $new_seq = Bio::SeqIO->new( -file => ">" . $new_seq_file, -format => 'fasta' );
-    my %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') );
-    my %members_2_b_added = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('added_genes_list') );
+
+    my %members_2_b_updated;
+    my %members_2_b_added;
+    if ( $self->param('current_gene_tree')->has_tag('updated_genes_list') ) {
+        %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') );
+    }
+
+    if ( $self->param('current_gene_tree')->has_tag('added_genes_list') ) {
+        %members_2_b_added = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('added_genes_list') );
+    }
 
 	@members_2_b_updated{keys %members_2_b_added} = values %members_2_b_added;
 

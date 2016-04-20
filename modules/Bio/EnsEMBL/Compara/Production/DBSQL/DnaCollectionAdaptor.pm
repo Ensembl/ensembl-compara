@@ -53,7 +53,7 @@ use Bio::EnsEMBL::Hive::Utils 'stringify';
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use DBI qw(:sql_types);
 
@@ -78,7 +78,7 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 sub store {
     my ($self, $collection) = @_;
     
-    assert_ref($collection, 'Bio::EnsEMBL::Compara::Production::DnaCollection');
+    assert_ref($collection, 'Bio::EnsEMBL::Compara::Production::DnaCollection', 'collection');
     my $description = $collection->description;
     my $dump_loc = $collection->dump_loc;
     my $masking_options;

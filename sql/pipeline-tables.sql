@@ -262,4 +262,20 @@ CREATE TABLE IF NOT EXISTS panther_annot (
 	PRIMARY KEY (ensembl_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for tables 'ortholog_goc_metric'
+-- overview: This table contains the full breakdown of what is used to calculate the goc score.
 
+CREATE TABLE IF NOT EXISTS ortholog_goc_metric ( 
+  method_link_species_set_id INT NOT NULL,
+  homology_id INT NOT NULL,
+  gene_member_id INT NOT NULL,
+  dnafrag_id INT NOT NULL,
+  goc_score INT NOT NULL, 
+  left1 INT,
+  left2 INT,
+  right1 INT,
+  right2 INT
+            
+)  ENGINE=InnoDB DEFAULT CHARSET=latin1;

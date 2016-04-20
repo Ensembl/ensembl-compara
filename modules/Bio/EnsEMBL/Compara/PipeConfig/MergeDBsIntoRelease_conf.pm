@@ -56,6 +56,9 @@ sub default_options {
         # Do we want to backup the target merge table before-hand ?
         'backup_tables'     => 1,
 
+        # Do we want to be very picky and die if a table hasn't been listed above / isn't in the target database ?
+        'die_if_unknown_table'      => 1,
+
         # A registry file to avoid having to use only URLs
         #'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
 
@@ -166,6 +169,7 @@ sub pipeline_analyses {
                 'exclusive_tables'  => $self->o('exclusive_tables'),
                 'only_tables'       => $self->o('only_tables'),
                 'src_db_aliases'    => [ref($self->o('src_db_aliases')) ? keys %{$self->o('src_db_aliases')} : ()],
+                'die_if_unknown_table'  => $self->o('die_if_unknown_table'),
             },
             -flow_into  => {
                 2      => [ 'copy_table'  ],

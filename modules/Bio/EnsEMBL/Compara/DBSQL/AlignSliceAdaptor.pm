@@ -85,9 +85,11 @@ package Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::AlignSlice;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -123,13 +125,9 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 sub fetch_by_Slice_MethodLinkSpeciesSet {
   my ($self, $reference_slice, $method_link_species_set, $expanded, $solve_overlapping, $target_slice) = @_;
-  throw("[$reference_slice] is not a Bio::EnsEMBL::Slice")
-      unless ($reference_slice and ref($reference_slice) and
-          $reference_slice->isa("Bio::EnsEMBL::Slice"));
-  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet")
-      unless ($method_link_species_set and ref($method_link_species_set) and
-          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
 
+  assert_ref($reference_slice, 'Bio::EnsEMBL::Slice', 'reference_slice');
+  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
 
   # Use cache whenever possible
   my $solve_overlapping_detail;
@@ -144,9 +142,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
       ":".$solve_overlapping_detail;
 
   if (defined($target_slice)) {
-    throw("[$target_slice] is not a Bio::EnsEMBL::Slice")
-        unless ($target_slice and ref($target_slice) and
-            $target_slice->isa("Bio::EnsEMBL::Slice"));
+    assert_ref($target_slice, 'Bio::EnsEMBL::Slice', 'target_slice');
     $key .= ":".$target_slice->name();
   }
   return $self->{'_cache'}->{$key} if (defined($self->{'_cache'}->{$key}));
@@ -281,8 +277,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 sub fetch_by_GenomicAlignBlock {
   my ($self, $genomic_align_block, $expanded, $solve_overlapping) = @_;
 
-  throw("[$genomic_align_block] is not a Bio::EnsEMBL::Compara::GenomicAlignBlock")
-      unless (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignBlock"));
+  assert_ref($genomic_align_block, 'Bio::EnsEMBL::Compara::GenomicAlignBlock', 'genomic_align_block');
   my $method_link_species_set = $genomic_align_block->method_link_species_set();
   throw("GenomicAlignBlock [$genomic_align_block] has no MethodLinkSpeciesSet")
       unless ($method_link_species_set);

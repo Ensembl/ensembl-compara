@@ -47,22 +47,19 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    return {};
-}
-
 sub fetch_input {
     my $self = shift @_;
 
     if ( $self->param('reuse_db') ) {
 
         #get compara_dba adaptor
-        $self->param( 'reuse_compara_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('reuse_db') ) );
+        my $reuse_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('reuse_db') ) || die "Could not get reuse_db: " . $self->param('reuse_db');
+        $self->param( 'reuse_compara_dba', $reuse_db );
         $self->param( 'compara_dba',       $self->compara_dba );
     }
     else {
-        $self->warning("reuse_db hash has not been set, so cannot reuse");
         $self->param( 'reuse_this', 0 );
+        $self->complete_early("reuse_db hash has not been set, so cannot reuse");
         return;
     }
 }
@@ -72,18 +69,19 @@ sub run {
 
     #Get list of genes:
     print "getting prev_hash\n" if ( $self->debug );
-    my $prev_hash = hash_all_sequences_from_db( $self->param('reuse_compara_dba') );
+    my $prev_hash = _hash_all_sequences_from_db( $self->param('reuse_compara_dba') );
     print "getting curr_hash\n" if ( $self->debug );
-    my $curr_hash = hash_all_sequences_from_db( $self->param('compara_dba') );
+    my $curr_hash = _hash_all_sequences_from_db( $self->param('compara_dba') );
 
     #---------------------------------------------------------------------------------
-    #deleted, updated & added arent used by the logic.
+    #deleted (members that existed in the previous mlss_id but dont exist in the current mlss_id), updated & added arent used by the logic.
+    #deleted: is not used at all, but lets keep it here for debugging purpouse.
     #It is just here in case we need to test which genes are different in each case.
-    #flag is tha hash used my the module.
+    #flag is that hash used my the module.
     #---------------------------------------------------------------------------------
     my ( %flag, %deleted, %updated, %added );
     print "flagging members\n" if ( $self->debug );
-    check_hash_equals( $prev_hash, $curr_hash, \%flag, \%deleted, \%updated, \%added );
+    _check_hash_equals( $prev_hash, $curr_hash, \%flag, \%deleted, \%updated, \%added );
     print "DELETED:|" . keys(%deleted) . "|\tUPDATED:|" . keys(%updated) . "|\tADDED:|" . keys(%added) . "|\n" if ( $self->debug );
 
     print "undef prev_hash\n" if ( $self->debug );
@@ -92,46 +90,85 @@ sub run {
     print "undef curr_hash\n" if ( $self->debug );
     undef %$curr_hash;
 
-    #Get list of root_ids:
+    #Get list of current_stable_ids:
     print "getting list of roots\n" if ( $self->debug );
-    my $root_ids = get_root_id_list( $self->param('compara_dba') );
+    my ($current_stable_ids,$reused_stable_ids) = $self->_get_stable_id_root_id_list( $self->param('compara_dba'), $self->param('reuse_compara_dba') );
+    $self->param( 'current_stable_ids', $current_stable_ids );
+    $self->param( 'reused_stable_ids', $reused_stable_ids);
 
     my %root_ids_2_update;
     $self->param( 'root_ids_2_update', \%root_ids_2_update );
-    my %root_ids_2_delete;
-    $self->param( 'root_ids_2_delete', \%root_ids_2_delete );
+
     my %root_ids_2_add;
     $self->param( 'root_ids_2_add', \%root_ids_2_add );
 
-    #get tree adaptor
-    $self->param( 'tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor ) || die "Could not get GeneTreeAdaptor";
+    my %root_ids_2_delete;
+    $self->param( 'root_ids_2_delete', \%root_ids_2_delete );
 
-    print "looping root_ids\n" if ( $self->debug );
-    foreach my $gene_tree_id ( keys %$root_ids ) {
+    #get current tree adaptor
+    $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor ) || die "Could not get current GeneTreeAdaptor";
 
-        #get gene_tree
-        my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
-        $self->throw("no input gene_tree") unless $gene_tree;
+    #get reused tree adaptor
+    $self->param( 'reused_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor ) || die "Could not get reused GeneTreeAdaptor";
 
-        my @members = @{ $gene_tree->get_all_Members };
+    print "looping current_stable_ids\n" if ( $self->debug );
+    foreach my $current_stable_id ( keys %{$current_stable_ids} ) {
 
-        foreach my $member (@members) {
+        my $gene_tree_id = $current_stable_ids->{$current_stable_id};
+
+        #get current_gene_tree
+        my $current_gene_tree = $self->param('current_tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch current_gene_tree with gene_tree_id='$gene_tree_id'";
+        $self->throw("no input current_gene_tree") unless $current_gene_tree;
+        $current_gene_tree->preload();
+        my @current_members = @{ $current_gene_tree->get_all_Members };
+        my $num_of_members = scalar(@current_members);
+
+        foreach my $member (@current_members) {
 
             #updated:
             if ( exists( $updated{ $member->stable_id } ) ) {
                 $root_ids_2_update{$gene_tree_id}{ $member->stable_id } = 1;
-            }
-
-            #deleted
-            if ( exists( $deleted{ $member->stable_id } ) ) {
-                $root_ids_2_delete{$gene_tree_id}{ $member->stable_id } = 1;
+                #print "\t$gene_tree_id:UPD:".$member->stable_id."\n";
             }
 
             #added
             if ( exists( $added{ $member->stable_id } ) ) {
                 $root_ids_2_add{$gene_tree_id}{ $member->stable_id } = 1;
+                #print "\t$gene_tree_id:ADD:".$member->stable_id."\n";
             }
         }
+
+        #get reused_gene_tree
+        my $reused_gene_tree = $self->param('reused_tree_adaptor')->fetch_by_stable_id($current_stable_id);
+
+        if ($reused_gene_tree) {
+            $self->throw("no input reused_gene_tree") unless $reused_gene_tree;
+            $reused_gene_tree->preload();
+            my @reused_members = @{ $reused_gene_tree->get_all_Members };
+
+            foreach my $reused_member (@reused_members) {
+
+                #deleted
+                if ( exists( $deleted{ $reused_member->stable_id } ) ) {
+                    $root_ids_2_delete{$gene_tree_id}{ $reused_member->stable_id } = 1;
+                    #print "\t$gene_tree_id:DEL:" . $reused_member->stable_id . "\n";
+                }
+            }
+            $reused_gene_tree->release_tree;
+        }
+        else{
+            #print "Could not fetch reused tree with with stable_id=$current_stable_id. Tree will be build from scratch\n" if ($self->debug);
+            $current_gene_tree->store_tag( 'new_build', 1 ) || die "Could not store_tag 'new_build'";
+        }
+
+        my $members_2_change = scalar( keys( %{ $root_ids_2_add{$gene_tree_id} } ) ) + scalar( keys( %{ $root_ids_2_update{$gene_tree_id} } ) );
+        #print "Memebers to change (add+update): $members_2_change | members to delete: " . scalar( keys( %{ $root_ids_2_delete{$gene_tree_id} } ) ) . "\n" if ($self->debug);
+        if ( ( $members_2_change/scalar(@current_members) ) >= $self->param('update_threshold_trees') ) {
+            $current_gene_tree->store_tag( 'new_build', 1 ) || die "Could not store_tag 'new_build'";
+        }
+
+        #releasing tree from memory
+        $current_gene_tree->release_tree;
 
     } ## end foreach my $gene_tree_id ( ...)
 } ## end sub run
@@ -142,44 +179,54 @@ sub write_output {
     print "writing outs\n" if ( $self->debug );
 
     my %flagged;
-    if ( $self->param('root_ids_2_update') ) {
-        foreach my $gene_tree_id ( keys %{ $self->param('root_ids_2_update') } ) {
-            my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
-            if ( !$flagged{$gene_tree_id} ) {
-                $gene_tree->store_tag( 'needs_update', 1 );
-            }
-            $gene_tree->store_tag( 'updated_genes_list', join( ",", keys( ${ $self->param('root_ids_2_update') }{$gene_tree_id} ) ) );
-            $flagged{$gene_tree_id} = 1;
-        }
-    }
+    foreach my $current_stable_id ( keys %{ $self->param('current_stable_ids') } ) {
 
-    if ( $self->param('root_ids_2_delete') ) {
-        foreach my $gene_tree_id ( keys %{ $self->param('root_ids_2_delete') } ) {
-            my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
-            if ( !$flagged{$gene_tree_id} ) {
-                $gene_tree->store_tag( 'needs_update', 1 );
-            }
-            $gene_tree->store_tag( 'deleted_genes_list', join( ",", keys( ${ $self->param('root_ids_2_delete') }{$gene_tree_id} ) ) );
-            $flagged{$gene_tree_id} = 1;
-        }
-    }
+        my $gene_tree_id = $self->param('current_stable_ids')->{$current_stable_id};
 
-    if ( $self->param('root_ids_2_add') ) {
-        foreach my $gene_tree_id ( keys %{ $self->param('root_ids_2_add') } ) {
-            my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+        my $gene_tree = $self->param('current_tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+
+        #root_ids_2_update
+        if ( keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) {
             if ( !$flagged{$gene_tree_id} ) {
                 $gene_tree->store_tag( 'needs_update', 1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
+                $gene_tree->store_tag( 'only_needs_deleting', 0 ) || die "Could not store_tag 'only_needs_deleting' for $gene_tree_id";
             }
-            $gene_tree->store_tag( 'added_genes_list', join( ",", keys( ${ $self->param('root_ids_2_add') }{$gene_tree_id} ) ) );
+            $gene_tree->store_tag( 'updated_genes_list', join( ",", keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) )  || die "Could not store_tag 'updated_genes_list' for $gene_tree_id";
             $flagged{$gene_tree_id} = 1;
         }
-    }
 
+        #root_ids_2_add
+        if ( keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) {
+            if ( !$flagged{$gene_tree_id} ) {
+                $gene_tree->store_tag( 'needs_update', 1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
+                $gene_tree->store_tag( 'only_needs_deleting', 0 ) || die "Could not store_tag 'only_needs_deleting' for $gene_tree_id";
+            }
+            $gene_tree->store_tag( 'added_genes_list', join( ",", keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) ) || die "Could not store_tag 'added_genes_list' for $gene_tree_id";
+            $flagged{$gene_tree_id} = 1;
+        }
+
+        #root_ids_2_delete
+        if ( keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) {
+            if ( (!$gene_tree->has_tag('only_needs_deleting')) && (!$gene_tree->has_tag('needs_update')) ) {
+                $gene_tree->store_tag( 'only_needs_deleting', 1 ) || die "Could not store_tag 'only_needs_deleting' for $gene_tree_id";
+            }
+            $gene_tree->store_tag( 'deleted_genes_list', join( ",", keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) ) || die "Could not store_tag 'deleted_genes_list' for $gene_tree_id";
+        }
+
+        if ( ( !keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) && ( !keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) && ( !keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) ) {
+            $gene_tree->store_tag( 'identical_copy', 1 ) || die "Could not store_tag 'identical_copy' for $gene_tree_id";
+        }
+
+    }
 } ## end sub write_output
 
-# ------------------------- non-interface subroutines -----------------------------------
+##########################################
+#
+# internal methods
+#
+##########################################
 
-sub check_hash_equals {
+sub _check_hash_equals {
     my ( $prev_hash, $curr_hash, $flag, $deleted, $updated, $added ) = @_;
 
     foreach my $stable_id ( keys %$curr_hash ) {
@@ -193,14 +240,14 @@ sub check_hash_equals {
         }
     }
 
-    foreach my $stable_id ( keys %$prev_hash ) {
+    foreach my $stable_id ( keys %$prev_hash) {
         if ( !exists( $curr_hash->{$stable_id} ) ) {
             $deleted->{$stable_id} = 1;
         }
     }
 }
 
-sub hash_all_sequences_from_db {
+sub _hash_all_sequences_from_db {
     my $compara_dba = shift;
 
     my %sequence_set;
@@ -217,22 +264,33 @@ sub hash_all_sequences_from_db {
     return \%sequence_set;
 }
 
-sub get_root_id_list {
-    my $compara_dba = shift;
+sub _get_stable_id_root_id_list {
+    my ($self, $compara_dba, $reuse_compara_dba) = @_;
 
-    my %root_ids;
+    my %current_stable_ids;
+    my %reused_stable_ids;
 
-    my $sql = "SELECT root_id FROM gene_tree_root WHERE tree_type = \"tree\" AND clusterset_id=\"default\"";
-    my $sth = $compara_dba->dbc->prepare($sql);
-    $sth->execute() || die "Could not execute ($sql)";
+    #current root_ids and stable_ids
+    my $sql_current = "SELECT root_id, stable_id FROM gene_tree_root WHERE tree_type = \"tree\" AND clusterset_id=\"default\"";
+    my $sth_current = $compara_dba->dbc->prepare($sql_current) || die "Could not prepare query.";
+    $sth_current->execute() || die "Could not execute ($sql_current)";
 
-    #while ( my ( $root_id, $stable_id ) = $sth->fetchrow() ) {
-    while ( my $root_id = $sth->fetchrow() ) {
-        $root_ids{$root_id} = 1;
+    while ( my ($root_id,$current_stable_id) = $sth_current->fetchrow() ) {
+        $current_stable_ids{$current_stable_id} = $root_id;
     }
-    $sth->finish();
+    $sth_current->finish();
 
-    return \%root_ids;
+    #previous root_ids and stable_ids
+    my $sql_reused = "SELECT root_id, stable_id FROM gene_tree_root WHERE tree_type = \"tree\" AND clusterset_id=\"default\" AND stable_id IS NOT NULL";
+    my $sth_reused = $reuse_compara_dba->dbc->prepare($sql_reused) || die "Could not prepare query.";
+    $sth_reused->execute() || die "Could not execute ($sql_reused)";
+
+    while ( my ($root_id, $reused_stable_id) = $sth_reused->fetchrow() ) {
+        $reused_stable_ids{$reused_stable_id} = $root_id;
+    }
+    $sth_reused->finish();
+
+    return (\%current_stable_ids,\%reused_stable_ids);
 }
 
 1;

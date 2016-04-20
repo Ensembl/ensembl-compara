@@ -79,4 +79,29 @@ sub consensus {
 }
 
 
+# Composite methods
+####################
+
+
+=head2 toString
+
+  Example    : print $hmm_profile->toString();
+  Description: used for debugging, returns a string with the key descriptive
+               elements of this HMM profile
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    my $str = 'HMMProfile ' . $self->model_id;
+    $str .= sprintf(' (%s)', $self->name) if $self->name ne $self->model_id;
+    $str .= sprintf(' of type "%s"', $self->type);
+    return $str;
+}
+
+
+
 1;

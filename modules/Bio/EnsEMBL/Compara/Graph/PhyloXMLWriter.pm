@@ -240,22 +240,22 @@ sub _process {
   $self->_writer()->startTag($tag, %{$attributes});
   $self->dispatch_body($node);
 
-  if($node->get_child_count()) {
     foreach my $child (@{$node->children()}) {
       $self->_process($child);
     }
-  }
 
   $self->_writer()->endTag($tag);
   return;
 }
 
 sub _write_taxonomy {
-  my ($self, $id, $name) = @_;
+  my ($self, $taxon) = @_;
   my $w = $self->_writer();
   $w->startTag('taxonomy');
-  $w->dataElement('id', $id);
-  $w->dataElement('scientific_name', $name);
+  $w->dataElement('id', $taxon->dbID);
+  $w->dataElement('scientific_name', $taxon->name);
+  my $common_name = $taxon->ensembl_alias_name || $taxon->common_name;
+  $w->dataElement('common_name', $common_name) if $common_name;
   $w->endTag();
   return;
 }
@@ -264,8 +264,12 @@ sub _write_species_tree_node {
   my ($self, $stn) = @_;
   my $w = $self->_writer();
   $w->startTag('taxonomy');
-  $w->dataElement('id', $stn->taxon_id) if $stn->taxon_id;
   $w->dataElement('scientific_name', $stn->node_name);
+  if ($stn->taxon_id and (my $taxon = $stn->taxon)) {
+    $w->dataElement('id', $stn->taxon_id);
+    my $common_name = $taxon->ensembl_alias_name || $taxon->common_name;
+    $w->dataElement('common_name', $common_name) if $common_name;
+  }
   $w->endTag();
   return;
 }
@@ -284,7 +288,7 @@ sub _write_seq_member {
   $w->dataElement('name', $gene->stable_id());
 
   #Taxon
-  $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
+  $self->_write_taxonomy($taxon);
 
   #Dealing with Sequence
   $w->startTag('sequence');

@@ -6,8 +6,21 @@
 
 =head1 SYNOPSIS
 
+	Given two genome_db IDs, fetch and fan out all orthologs that they share.
+	If a previous release database is supplied, only the new/updated orthologs will be dataflown
+
 =head1 DESCRIPTION
 
+	standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs -input_ids "{ species1_id => 150, species2_id => 125 }"
+
+	Inputs:
+		species1_id		genome_db_id
+		species2_id		another genome_db_id
+		alt_homology_db	for use as part of a pipeline - specify an alternate location to read homologies from
+		previous_rel_db		database URL for previous release - when defined, the runnable will only dataflow homologies that have changed since previous release
+
+	Outputs:
+		dataflows homology dbID and start/end positions in a fan
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs;
@@ -32,10 +45,16 @@ sub fetch_input {
 	my $species1_id = $self->param_required('species1_id');
 	my $species2_id = $self->param_required('species2_id');
 
-	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	my $dba;
+	if ( $self->param('alt_homology_db') ) { 
+		$dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('alt_homology_db')); 
+	}
+	else { $dba = $self->compara_dba }
+
+	my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor;
 	my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$species1_id, $species2_id]);
 
-	my $current_homo_adaptor = $self->compara_dba->get_HomologyAdaptor;
+	my $current_homo_adaptor = $dba->get_HomologyAdaptor;
 	my $current_homologs     = $current_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
 
 	my $previous_db = $self->param('previous_rel_db');
@@ -54,7 +73,7 @@ sub fetch_input {
 		# 	print $uo->dbID . "\n";
 		# }
 
-		my $exons = $self->_find_exons( $updated_orthologs );
+		#my $exons = $self->_find_exons( $updated_orthologs );
 
 		$self->param( 'orth_objects', $updated_orthologs );
 	}
@@ -76,7 +95,7 @@ sub run {
 	my @orth_info;
 	my $c = 0;
 
-	my @orth_objects = @{ $self->param('orth_objects') };
+	my @orth_objects = sort {$a->dbID <=> $b->dbID} @{ $self->param('orth_objects') };
 	while ( my $orth = shift( @orth_objects ) ) {
 		my @gene_members = @{ $orth->get_all_GeneMembers() };
 		my (%orth_ranges, @orth_dnafrags);
@@ -88,7 +107,7 @@ sub run {
 		push( @orth_info, { 
 			orth_id       => $orth->dbID, 
 			orth_ranges   => \%orth_ranges, 
-			orth_dnafrags => \@orth_dnafrags 
+			orth_dnafrags => [sort {$a->{id} <=> $b->{id}} @orth_dnafrags],
 		} );
 		# $c++;
 		# last if $c >= 1000;
@@ -106,11 +125,8 @@ sub run {
 sub write_output {
 	my $self = shift;
 
-	print "Flowing to prepare_alns:\n";
-	print Dumper $self->param( 'orth_info' );
-
 	# $self->dataflow_output_id( { aln_mlss_id => $self->param('aln_mlss_id') }, 1 ); # to assign_quality
-	$self->dataflow_output_id( $self->param('orth_info'), 2 ); # to prepare_alns
+	$self->dataflow_output_id( $self->param('orth_info'), 2 ); # to prepare_exons
 }
 
 =head2 _updated_orth
@@ -138,6 +154,12 @@ sub _updated_orthologs {
 
 	return \@new_homologs;
 }
+
+=head2 _hash_homologs
+
+	Reformat homology data
+
+=cut
 
 sub _hash_homologs {
 	my ( $self, $hlist ) = @_;

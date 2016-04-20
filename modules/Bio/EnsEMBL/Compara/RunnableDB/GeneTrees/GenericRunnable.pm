@@ -214,7 +214,10 @@ sub write_output {
         }
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
+}
 
+sub post_healthcheck {
+    my $self = shift;
     $self->call_hcs_all_trees() if $self->param('do_hcs');
 }
 
@@ -307,6 +310,78 @@ sub run_generic_command {
     $self->param('cmd_out',      $run_cmd->out);
 
     $self->param('output_file', $self->worker_temp_directory.'/'.$self->param('output_file')) if $self->param('output_file');
+
+    if ($self->param('binarize')){
+        print "Binarizing tree is active\n" if($self->debug);
+
+        # 1 - parse_newick into genetree-structure
+        my $newick_multifurcated = $self->_slurp($self->param('output_file'));
+        my $multifurcated_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_multifurcated, "Bio::EnsEMBL::Compara::GeneTreeNode");
+
+        #List of multifurcations given a tree.
+        #In order to avoid changing parts of the tree that are not in the multifurcations, we have local MRCAs.
+        #e.g.:
+        #   multifurcations[0] = (child_1,child2,child3)
+        #   multifurcations[1] = (child_7,child8,child9)
+        #------------------------------------------------
+        my $multifurcations = $multifurcated_tree_root->find_multifurcations;
+
+        #IMPORTANT:
+        #----------------------------------------------------------------------------------------------------------------------------
+        # Binarization methods have not been tested with nested multifurcations. At this point we only have "leaves" multifurcations.
+        #----------------------------------------------------------------------------------------------------------------------------
+
+        #If there are no multifurcations in this array it means that the tree is already binary
+        #So no need to keep going
+        if (scalar(@{$multifurcations}) > 0) {
+
+            #fetch species tree
+            my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label( $self->param('mlss_id'), 'default' ) || die "Could not fetch species tree";
+
+            #------------------
+            # MRCA binarization
+            #------------------
+            print "multifurcated_tree_root before MRCA binarization:\n" if ($self->debug);
+            $multifurcated_tree_root->print_tree(10) if ($self->debug);
+
+            # 2 - binarize (MRCA) that structure
+            $multifurcated_tree_root->binarize_flat_tree_with_species_tree($species_tree, $multifurcations);
+            $multifurcated_tree_root->minimize_tree();
+
+            print "multifurcated_tree_root after MRCA binarization:\n" if ($self->debug);
+            $multifurcated_tree_root->print_tree(10) if ($self->debug);
+
+            #After trying to do a MRCA binarization we check again for any left multifurcations to be resolved randomly.
+            foreach my $node (@{$multifurcated_tree_root->get_all_nodes}) {
+                next if $node->is_leaf;
+
+                #-------------------------------
+                # Random binarization, per node.
+                #-------------------------------
+                if (scalar(@{$node->children}) > 2) {
+                    print "Tree is still not binary\n" if($self->debug);
+
+                    # 3 - binarize (random) 
+                    print "Performing random binarization on node: $node\n";
+                    $node->random_binarize_node();
+
+                    #Note the different ryo.
+                    #At this point there is no information on taxon_id. If we try -x it will fail
+                    #print "MULTI:".$multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}')."\n" if($self->debug > 1);
+                    #print "BIN:".$binTree_root->newick_format('ryo', '%{-n}:%{d}')."\n" if($self->debug > 1);
+
+                    $multifurcated_tree_root->minimize_tree();
+                    $multifurcated_tree_root->print_tree(10) if($self->debug);
+                }
+            }
+        }
+
+        # 4 - print structure to input_file
+        # ovewrite the output_file with the binirized tree
+        open( my $genetree, '>', $self->param('output_file')) or die "Could not open '$self->param('tree_file')' for writing : $!";
+        my $newick = $multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}');
+        print $genetree $newick;
+    }
 
     unless ($self->param('read_tags')) {
         my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;

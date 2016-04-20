@@ -118,7 +118,7 @@ sub usage {
   print " --gdb1 <int>            : genome_db_id of first genome\n";
   print " --gdb2 <int>            : genome_db_id of second genome\n";
   print " --conf <str>            : path to configuration file. An example is given\n";
-  print "                           ensembl-compara/scripts/compare/homology_diff.conf.pl\n";
+  print "                           ensembl-compara/scripts/compare/homology_diff.conf\n";
   print " --best                  : will print out numbers on the basis of gene counts,\n";
   print "                           not only homologies (or gene pairs)";
   print "\n";

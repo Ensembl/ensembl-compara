@@ -31,10 +31,7 @@ Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
 
 =head1 DESCRIPTION
 
-Base adaptor for Member objects that cannot be instantiated directly
-
-The methods are still available for compatibility until release 74 (included),
-but the Member object should not be explicitely used.
+Base adaptor for Member objects.  This adaptor cannot be used directly.
 
 =head1 INHERITANCE TREE
 
@@ -100,22 +97,6 @@ sub fetch_by_stable_id {
 }
 
 
-=head2 fetch_by_source_stable_id
-
-  Description: DEPRECATED: fetch_by_source_stable_id() is deprecated and will be removed in e84. Use fetch_by_stable_id() instead
-
-=cut
-
-sub fetch_by_source_stable_id {  ## DEPRECATED
-    my ($self, $source_name, $stable_id) = @_;
-    deprecate('MemberAdaptor::fetch_by_source_stable_id() is deprecated and will be removed in e84. Use fetch_by_stable_id() instead');
-    my $member = $self->fetch_by_stable_id($stable_id);
-    return undef unless $member;
-    die "The member '$stable_id' has a different source_name than '$source_name': ".$member->source_name if $source_name and $source_name ne $member->source_name;
-    return $member;
-}
-
-
 =head2 fetch_all_by_stable_id_list
 
   Arg [1]    : arrayref of string $stable_id
@@ -134,21 +115,6 @@ sub fetch_all_by_stable_id_list {
     return [] if (!$stable_ids or !@$stable_ids);
     my $constraint = sprintf('m.stable_id IN ("%s")', join(q{","}, @$stable_ids));
     return $self->generic_fetch($constraint);
-}
-
-
-=head2 fetch_all_by_source_stable_ids
-
-  Description: DEPRECATED: fetch_all_by_source_stable_ids() is deprecated and will be removed in e84. Use fetch_all_by_stable_id_list() instead
-
-=cut
-
-sub fetch_all_by_source_stable_ids {  ## DEPRECATED
-    my ($self, $source_name, $stable_ids) = @_;
-    deprecate('MemberAdaptor::fetch_all_by_source_stable_ids() is deprecated and will be removed in e84. Use fetch_all_by_stable_id_list() instead');
-    my $members = $self->fetch_all_by_stable_id_list($stable_ids);
-    die "In fetch_all_by_source_stable_ids(), some of the members do not have the required source_name" if $source_name and grep {$_->source_name ne $source_name} @$stable_ids;
-    return $members;
 }
 
 
@@ -274,19 +240,6 @@ sub fetch_all_by_source_taxon {
     $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
     $self->bind_param_generic_fetch($taxon_id, SQL_INTEGER);
     return $self->generic_fetch('m.source_name = ? AND m.taxon_id = ?');
-}
-
-
-=head2 fetch_all_by_source_genome_db_id
-
-  Description: DEPRECATED: fetch_all_by_source_genome_db_id() is deprecated and will be removed in e84. Use fetch_all_by_GenomeDB() instead
-
-=cut
-
-sub fetch_all_by_source_genome_db_id {  ## DEPRECATED
-    my ($self, $source_name, $genome_db_id) = @_;
-    deprecate('fetch_all_by_source_genome_db_id() is deprecated and will be removed in e84. Use fetch_all_by_GenomeDB() instead');
-    return $self->fetch_all_by_GenomeDB($genome_db_id, $source_name);
 }
 
 

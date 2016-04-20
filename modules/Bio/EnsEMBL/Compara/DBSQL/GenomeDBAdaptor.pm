@@ -111,19 +111,9 @@ sub fetch_by_name_assembly {
     return undef unless scalar(@$all_matching_names);
 
     # Otherwise, we need to find the best match
-    my $score = sub {
-        my $g = shift;
-        #1. is_current
-        #2. recent_released
-        return ($g->is_current ? 10000 : 0) + ($g->first_release || 0);
-    };
-    my $best_score = max map {$score->($_)} @$all_matching_names;
-    my @ties = grep {$score->($_) == $best_score} @$all_matching_names;
-    if (scalar(@ties) == 1) {
-        push @{$self->_id_cache->_additional_lookup()->{name_default_assembly}->{lc $name}}, $ties[0]->dbID;
-        return $ties[0];
-    }
-    throw("There is no default for $name ! Several GenomeDBs are equally best-matches:\n" . join("\n", map {$_->toString} @ties). "\n");
+    my $best = $self->_find_most_recent($all_matching_names);
+    push @{$self->_id_cache->_additional_lookup()->{name_default_assembly}->{lc $name}}, $best->dbID;   # Cached for the next call
+    return $best;
 }
 
 
@@ -444,6 +434,66 @@ sub _find_missing_DBAdaptors {
         join(", ", map {sprintf('%s/%s', $_->name, $_->assembly)} @missing)."\n");
 }
 
+
+######################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor #
+######################################################################
+
+=head2 retire_object
+
+  Arg[1]      : Bio::EnsEMBL::Compara::GenomeDB
+  Example     : $genome_db_adaptor->retire_object($gdb);
+  Description : Mark the GenomeDB as retired, i.e. with a last_release older than the current version
+                Also mark all the related SpeciesSets as retired
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub retire_object {
+    my ($self, $gdb) = @_;
+    # Update the fields in the table
+    $self->SUPER::retire_object($gdb);
+    # Also update the linked SpeciesSets
+    my $ss_adaptor = $self->db->get_SpeciesSetAdaptor;
+    foreach my $ss (@{$ss_adaptor->fetch_all_by_GenomeDB($gdb)}) {
+        $ss_adaptor->retire_object($ss);
+    }
+}
+
+
+=head2 make_object_current
+
+  Arg[1]      : Bio::EnsEMBL::Compara::GenomeDB
+  Example     : $genome_db_adaptor->make_object_current($gdb);
+  Description : Mark the GenomeDB as current, i.e. with a defined first_release and an undefined last_release
+                Also retire all the other GenomeDBs that have the same name
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_object_current {
+    my ($self, $gdb) = @_;
+    # Update the fields in the table
+    $self->SUPER::make_object_current($gdb);
+    # Also update the GenomeDBs with the same name
+    foreach my $other_gdb (@{ $self->_id_cache->get_all_by_additional_lookup('name', lc $gdb->name) }) {
+        # But of course not the given one
+        next if $other_gdb->dbID == $gdb->dbID;
+        # Be careful about polyploid genomes and their components
+        # Let's not retire a component of $gdb, or vice-versa
+        next if $gdb->is_polyploid and $other_gdb->genome_component and ($other_gdb->principal_genome_db->dbID == $gdb->dbID);
+        next if $other_gdb->is_polyploid and $gdb->genome_component and ($gdb->principal_genome_db->dbID == $other_gdb->dbID);
+        $self->retire_object($other_gdb);
+    }
+}
+
+
 ########################################################
 # Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
 ########################################################
@@ -552,8 +602,10 @@ sub compute_keys {
                 is_polyploid => $genome_db->is_polyploid,           ## UNUSED
             ) : (),
 
-            # All the species
-            name => lc $genome_db->name,
+            # All the species (excluding their components
+            $genome_db->genome_component ? () : (
+                name => lc $genome_db->name,
+            ),
 
             %{$self->SUPER::compute_keys($genome_db)},
            }

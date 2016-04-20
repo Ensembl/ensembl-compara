@@ -63,7 +63,7 @@ sub get_tags {
     }
 
     print "num_of_patterns: $num_of_patterns\n" if $self->debug;
-    return { 'num_of_patterns' => $num_of_patterns };
+    return { 'aln_num_of_patterns' => $num_of_patterns };
 }
 
 1;

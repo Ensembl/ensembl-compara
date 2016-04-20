@@ -69,103 +69,104 @@ sub default_options {
     my ($self) = @_;
 
     return {
-        %{$self->SUPER::default_options},   # inherit the EnsemblGenomes ones (especially all the paths and capacities)
+      %{$self->SUPER::default_options},   # inherit the EnsemblGenomes ones (especially all the paths and capacities)
 
-    # parameters that are likely to change from execution to another:
-        #mlss_id => 40043,
-        #'do_not_reuse_list' => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
+      # parameters that are likely to change from execution to another:
+      #mlss_id => 40043,
+      #'do_not_reuse_list' => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
 
-    # custom pipeline name, in case you don't like the default one
-        'dbowner' => 'ensembl_compara',       # Used to prefix the database name (in HiveGeneric_conf)
-        'pipeline_name' => $self->o('division').'_hom_'.$self->o('ps_release').'_'.$self->o('ensembl_release'),
-        'division'  => 'wbparasite',
+      # custom pipeline name, in case you don't like the default one
+      'dbowner' => 'ensembl_compara',       # Used to prefix the database name (in HiveGeneric_conf)
+      'division'  => 'wbparasite',
+      'pipeline_name' => 'wbparasite_hom_'.$self->o('ps_release').'_'.$self->o('ensembl_release'),
 
-    # dependent parameters: updating 'work_dir' should be enough
-        'base_dir'              =>  '/nfs/nobackup2/ensemblgenomes/wormbase/parasite/'.$self->o('ENV', 'USER').'/compara',
-        # work_dir and exe_dir are defined in the base class
 
-    # "Member" parameters:
+      # dependent parameters: updating 'work_dir' should be enough
+      'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/wormbase/parasite/production/compara/',
+      # work_dir and exe_dir are defined in the base class
 
-    # blast parameters:
+      # "Member" parameters:
+      
+      # blast parameters:
+      
+      # clustering parameters:
+      
+      # tree building parameters:
+      'species_tree_input_file'   =>  '/nfs/panda/ensemblgenomes/wormbase/parasite/config/compara_guide_tree.wbparasite.tre',
 
-    # clustering parameters:
-
-    # tree building parameters:
-        'species_tree_input_file'   =>  '/nfs/panda/ensemblgenomes/wormbase/parasite/config/compara_guide_tree.wbparasite.tre',
+      'use_quick_tree_break'      => 0,
 
     # alignment filtering options
 
-    # species tree reconciliation
+      # species tree reconciliation
+      
+      # homology_dnds parameters:
+      
+      # mapping parameters:
+      
+      # executable locations:
+      
+      # HMM specific parameters (set to 0 or undef if not in use)
+      
+      # hive_capacity values for some analyses:
+      
+      # hive priority for non-LOCAL health_check analysis:
+      
+      # connection parameters to various databases:
+      
+      # the production database itself (will be created)
+      # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+      
+      # the master database for synchronization of various ids (use undef if you don't have a master database)
+      'master_db' => '',
+      'master_db_is_missing_dnafrags' => 0,      
 
-    # homology_dnds parameters:
+      ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
+      ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
+      prod_1 => {
+        -host   => 'mysql-ps-prod-1.ebi.ac.uk',
+        -port   => 4450,
+        -user   => 'ensro',
+        -db_version => $self->o('ensembl_release')
+      },
+            
+      staging_1 => {
+        -host   => 'mysql-ps-staging-1.ebi.ac.uk',
+        -port   => 4451,
+        -user   => 'ensro',
+        -db_version => $self->o('ensembl_release')
+      },
 
-    # mapping parameters:
-
-    # executable locations:
-
-    # HMM specific parameters (set to 0 or undef if not in use)
-
-    # hive_capacity values for some analyses:
-
-    # hive priority for non-LOCAL health_check analysis:
-
-    # connection parameters to various databases:
-
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-
-        # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master_parasite',
-
-    ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
-    ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
-
-    prod_1 => {
-      -host   => 'mysql-ps-prod-1.ebi.ac.uk',
-      -port   => 4450,
-      -user   => 'ensro',
-      -db_version => $self->o('ensembl_release')
-    },
-
-    staging_1 => {
-      -host   => 'mysql-ps-staging-1.ebi.ac.uk',
-      -port   => 4451,
-      -user   => 'ensro',
-      -db_version => $self->o('ensembl_release')
-    },
+      staging_2 => {
+        -host   => 'mysql-ps-staging-2.ebi.ac.uk',
+        -port   => 4467,
+        -user   => 'ensro',
+        -db_version => $self->o('ensembl_release')
+      },
 
 
-    # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
-    # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-    'curr_core_sources_locs' => [ $self->o('prod_1') ],
+      # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
+      # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
+
+      'curr_core_sources_locs' => [$self->o('prod_1'), $self->o('staging_1')],
     
-    # Add the database entries for the core databases of the previous release
-    'prev_core_sources_locs'   => [ ],
-          
+      # Add the database entries for the core databases of the previous release
+      'prev_core_sources_locs'   => 0,
+
+      'mapping_db' => 'mysql://ensro@mysql-ps-staging-2.ebi.ac.uk:4467/ensembl_compara_wbparasite_X_X',
+     
     };
 }
 
 
-
-sub resource_classes {
-  my ($self) = @_;
-  return {
-         # Many classes are already defined there
-         %{$self->SUPER::resource_classes},
-         # But we could add some more here
-  };
+sub tweak_analyses {
+  my $self = shift;
+  my $analyses_by_name = shift;
+  
+  $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '1Gb_job';
 }
 
-sub pipeline_analyses {
-    my $self = shift;
-    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
 
-    ## Extend this section to redefine the resource names of some analysis
-    # e.g. $analyses_by_name{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';
-
-    return $all_analyses;
-}
 
 
 1;

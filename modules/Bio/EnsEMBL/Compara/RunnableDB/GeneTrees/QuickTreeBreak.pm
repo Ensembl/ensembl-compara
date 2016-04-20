@@ -80,6 +80,8 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 
+use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 sub param_defaults {
@@ -208,6 +210,7 @@ sub write_output {
     foreach my $node (@{$self->param('nodes_to_delete')}) {
         if ($node->node_id == $node->{_root_id}) {
             my $root_id = $node->{_root_id};
+            $dbc->do("DELETE FROM gene_tree_root_attr WHERE root_id = $root_id");
             $dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $root_id");
             $dbc->do("DELETE FROM gene_tree_root     WHERE root_id = $root_id");
         }
@@ -215,6 +218,14 @@ sub write_output {
     }
 
     $self->rec_update_tags($self->param('gene_tree')->root);
+}
+
+
+# Wrapper around Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks
+# NB: this will be testing $self->param('gene_tree_id')
+sub post_healthcheck {
+    my $self = shift;
+    Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_embedded_call($self, 'supertrees');
 }
 
 

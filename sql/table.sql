@@ -111,8 +111,8 @@ CREATE TABLE ncbi_taxa_node (
 
 CREATE TABLE ncbi_taxa_name (
   taxon_id                    int(10) unsigned NOT NULL,
-  name                        varchar(255),
-  name_class                  varchar(50),
+  name                        varchar(255) NOT NULL,
+  name_class                  varchar(50) NOT NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
@@ -240,7 +240,7 @@ CREATE TABLE species_set (
 CREATE TABLE species_set_tag (
   species_set_id              int(10) unsigned NOT NULL, # FK species_set.species_set_id
   tag                         varchar(50) NOT NULL,
-  value                       mediumtext,
+  value                       mediumtext NOT NULL,
 
   FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
 
@@ -331,7 +331,7 @@ CREATE TABLE method_link_species_set (
 CREATE TABLE method_link_species_set_tag (
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   tag                         varchar(50) NOT NULL,
-  value                       mediumtext,
+  value                       mediumtext NOT NULL,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
@@ -494,8 +494,8 @@ CREATE TABLE dnafrag (
   length                      int(11) DEFAULT 0 NOT NULL,
   name                        varchar(40) DEFAULT '' NOT NULL,
   genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
-  coord_system_name           varchar(40) DEFAULT NULL,
-  is_reference                tinyint(1) DEFAULT 1,
+  coord_system_name           varchar(40) DEFAULT '' NOT NULL,
+  is_reference                tinyint(1) DEFAULT 1 NOT NULL,
 
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
@@ -565,7 +565,7 @@ CREATE TABLE genomic_align_block (
   method_link_species_set_id  int(10) unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
   score                       double,
   perc_id                     tinyint(3) unsigned DEFAULT NULL,
-  length                      int(10),
+  length                      int(10) NOT NULL,
   group_id                    bigint unsigned DEFAULT NULL,
   level_id                    tinyint(2) unsigned DEFAULT 0 NOT NULL,
 
@@ -686,7 +686,7 @@ CREATE TABLE genomic_align (
   dnafrag_start               int(10) DEFAULT 0 NOT NULL,
   dnafrag_end                 int(10) DEFAULT 0 NOT NULL,
   dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
-  cigar_line                  mediumtext,
+  cigar_line                  mediumtext NOT NULL,
   visible                     tinyint(2) unsigned DEFAULT 1 NOT NULL,
   node_id                     bigint(20) unsigned DEFAULT NULL,
 
@@ -759,7 +759,7 @@ CREATE TABLE constrained_element (
   dnafrag_id bigint unsigned NOT NULL,
   dnafrag_start int(12) unsigned NOT NULL,
   dnafrag_end int(12) unsigned NOT NULL,
-  dnafrag_strand int(2),
+  dnafrag_strand int(2) not null,
   method_link_species_set_id int(10) unsigned NOT NULL,
   p_value double,
   score double NOT NULL default 0,
@@ -1064,13 +1064,13 @@ CREATE TABLE peptide_align_feature (
   hstart                      int(11) DEFAULT 0 NOT NULL,
   hend                        int(11) DEFAULT 0 NOT NULL,
   score                       double(16,4) DEFAULT 0.0000 NOT NULL,
-  evalue                      double,
-  align_length                int(10),
-  identical_matches           int(10),
-  perc_ident                  int(10),
-  positive_matches            int(10),
-  perc_pos                    int(10),
-  hit_rank                    int(10),
+  evalue                      double not null,
+  align_length                int(10) not null,
+  identical_matches           int(10) not null,
+  perc_ident                  int(10) not null,
+  positive_matches            int(10) not null,
+  perc_pos                    int(10) not null,
+  hit_rank                    int(10) not null,
   cigar_line                  mediumtext,
 
 #  FOREIGN KEY (qmember_id) REFERENCES seq_member(seq_member_id),
@@ -1110,7 +1110,7 @@ CREATE TABLE family (
   stable_id                   varchar(40) NOT NULL, # unique stable id, e.g. 'ENSFM'.'0053'.'1234567890'
   version                     INT UNSIGNED NOT NULL,# version of the stable_id (changes only when members move to/from existing families)
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 varchar(255),
+  description                 TEXT,
   description_score           double,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -1118,7 +1118,7 @@ CREATE TABLE family (
   PRIMARY KEY (family_id),
   UNIQUE (stable_id),
   KEY (method_link_species_set_id),
-  KEY (description)
+  KEY (description(255))
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1343,10 +1343,79 @@ CREATE TABLE gene_tree_root_tag (
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
 
   KEY root_id_tag (root_id, tag),
-  KEY (root_id)
+  KEY (root_id),
+  KEY tag (tag)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
+/**
+@table gene_tree_root_attr
+@desc  This table contains several gene tree attributes data attached to root_ids
+@colour   #1E90FF
+
+@column root_id                             External reference to root_id in the @link gene_tree_root table.
+@column aln_after_filter_length             Alignment length after filtering.
+@column aln_length                          Alignment length before filtering.
+@column aln_num_residues                    Total number of residues in the whole alignment.
+@column aln_percent_identity                Alignment identity.
+@column best_fit_model_family               Best Amino Acid replacement evolution model (WAG, JTT, etc).
+@column best_fit_model_parameter            Best paremeters used in the model (I, G, IG, IGF, etc).
+@column gene_count                          Number of sequences present in the alignment.
+@column k_score                             Tree distance metric.
+@column k_score_rank                        Rank of the tree in the comparison.
+@column mcoffee_scores_gene_align_id        Gene alignment ID, used to fetch the mcoffee scores used in the alignment.
+@column aln_n_removed_columns               Number of colunms that were removed by the alignment filtering process.
+@column aln_num_of_patterns                 Number of different patterns present in the alignment (used by ExaML).
+@column aln_shrinking_factor                Factor used to measure how much the alignments were filtered (factor: 0..1).
+@column spec_count                          Number of different species present in the cluster
+@column tree_max_branch                     Maximum branch length.
+@column tree_max_length                     Maximum tree length.
+@column tree_num_dup_nodes                  Number of duplication nodes.
+@column tree_num_leaves                     Number of leaves in a tree.
+@column tree_num_spec_nodes                 Number of speciation events.
+@column lca_node_id                         Lowest common ancestor (species_tree node_id).
+@column taxonomic_coverage                  Taxonomic coverage of the species present in the gene tree over all the species for that particular node on the species tree.
+@column ratio_species_genes                 Ration of the number of species over the number of genes in a tree.
+@column model_name                          HMM model name (cluster table_id).
+@column division                            Division name (e.g.: treefam, ensembl).
+
+@see gene_tree_root
+@see gene_tree_root_tag
+*/
+
+CREATE TABLE `gene_tree_root_attr` (
+  root_id                           INT(10) UNSIGNED NOT NULL,
+  aln_after_filter_length           INT(10) UNSIGNED,
+  aln_length                        INT(10) UNSIGNED,
+  aln_num_residues                  INT(10) UNSIGNED,
+  aln_percent_identity              FLOAT(5),
+  best_fit_model_family             VARCHAR(10),
+  best_fit_model_parameter          VARCHAR(5),
+  gene_count                        INT(10) UNSIGNED,
+  k_score                           FLOAT(5),
+  k_score_rank                      INT(10) UNSIGNED, 
+  mcoffee_scores_gene_align_id      INT(10) UNSIGNED,      
+  aln_n_removed_columns             INT(10) UNSIGNED,
+  aln_num_of_patterns               INT(10) UNSIGNED, 
+  aln_shrinking_factor              FLOAT(2),
+  spec_count                        INT(10) UNSIGNED,
+  tree_max_branch                   DEC(8,2),
+  tree_max_length                   FLOAT(5),
+  tree_num_dup_nodes                INT(10) UNSIGNED,
+  tree_num_leaves                   INT(10) UNSIGNED,
+  tree_num_spec_nodes               INT(10) UNSIGNED,
+  lca_node_id                       INT(10) UNSIGNED,
+  taxonomic_coverage                FLOAT(5),
+  ratio_species_genes               FLOAT(5),
+  model_name                        VARCHAR(40),
+  division                          VARCHAR(10),
+
+  FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
+  FOREIGN KEY (lca_node_id) REFERENCES species_tree_node(node_id),
+
+  PRIMARY KEY (root_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
 @table gene_tree_node_attr
@@ -1376,6 +1445,31 @@ CREATE TABLE gene_tree_node_attr (
   PRIMARY KEY (node_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table gene_tree_object_store
+@desc  This table contains arbitrary data related to gene-trees. Commonly used for precomputed tracks / layers
+@colour   #1E90FF
+
+@column root_id                External reference to root_id in the @link gene_tree_root table
+@column data_label             A label that uniquely identifies the data (for a given root_id)
+@column compressed_data        The data, compressed with ZLib. Can be uncompressed with MySQL's UNCOMPRESS
+
+@see gene_tree_root
+*/
+
+CREATE TABLE `gene_tree_object_store` (
+  root_id             INT(10) UNSIGNED NOT NULL,
+  data_label          VARCHAR(255) NOT NULL,
+  compressed_data     MEDIUMBLOB NOT NULL,
+
+  FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
+
+  PRIMARY KEY (root_id, data_label)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
 
 /**
 @table hmm_profile
@@ -1507,6 +1601,8 @@ CREATE TABLE homology (
   species_tree_node_id        int(10) unsigned,
   gene_tree_node_id           int(10) unsigned,
   gene_tree_root_id           int(10) unsigned,
+  goc_score                   int(10) unsigned,
+  wga_coverage                DEC(5,2),
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
   FOREIGN KEY (species_tree_node_id) REFERENCES species_tree_node(node_id),
@@ -1802,13 +1898,20 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '83');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '84');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_82_83_a.sql|schema_version');
-
+  VALUES (NULL, 'patch', 'patch_83_84_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_83_84_b.sql|gene_tree_attributes_table');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_83_84_c.sql|change_description_size');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_83_84_d.sql|insert_orth_quality_homology_table');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_83_84_e.sql|gene_tree_object_store');
 

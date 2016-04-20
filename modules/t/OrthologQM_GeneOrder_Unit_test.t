@@ -146,10 +146,11 @@ standaloneJob(
 );
 
 
-use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays');
+use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs');
 standaloneJob(
-	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays',
+  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
 	{
+    'compara_db' => $dbc->url,
 		'mlss_ID'=>'100021',
 		'ref_species_dbid' =>155,
         'non_ref_species_dbid' => 31,
@@ -165,15 +166,15 @@ standaloneJob(
 		[
 			'DATAFLOW',
 			{
-				'query' => 14803,
-				'left1' => undef,
-				'left2' => undef,
-				'right1' => 14469,
-				'right2' => 46043,
-				'ref_chr_dnafragID' => 14026395,
-				'ref_species_dbid' => 155,
-				'non_ref_species_dbid' => 31,
-				'mlss_ID' => 100021
+				"dnafrag_id" => 14026395,
+				"gene_member_id" => 9122574,
+				"goc_score" => 25,
+				"homology_id" => 14803,
+				"left1" => undef,
+				"left2" => undef,
+				"method_link_species_set_id" => 100021,
+				'right1' => 1,
+				"right2" => 0
 			},
 			2
 		],
@@ -181,15 +182,15 @@ standaloneJob(
 		[
 			'DATAFLOW',
 			{
-				'query' => 14469,
-				'right1' => 46043,
-				'right2' => undef,
-				'left1' => 14803,
-				'left2' => undef,
-				'ref_chr_dnafragID' => 14026395,
-				'ref_species_dbid' => 155,
-				'non_ref_species_dbid' => 31,
-				'mlss_ID' => 100021
+          'right1' => 1,
+          'gene_member_id' => '9122578',
+          'dnafrag_id' => '14026395',
+          'left1' => 1,
+          'left2' => undef,
+          'homology_id' => '14469',
+          'method_link_species_set_id' => '100021',
+          'right2' => undef,
+          'goc_score' => 50
 			},
 			2
 		],
@@ -197,15 +198,15 @@ standaloneJob(
 		[
 			'DATAFLOW',
 			{
-				'query' => 46043,
-				'left2' => 14803,
-				'left1' => 14469,
 				'right1' => undef,
-				'right2' => undef,
-				'ref_chr_dnafragID' => 14026395,
-				'ref_species_dbid' => 155,
-				'non_ref_species_dbid' => 31,
-				'mlss_ID' => 100021
+          'gene_member_id' => '9122579',
+          'dnafrag_id' => '14026395',
+          'left1' => 1,
+          'left2' => 1,
+          'homology_id' => '46043',
+          'method_link_species_set_id' => '100021',
+          'right2' => undef,
+          'goc_score' => 50
 			},
 			2
 		],
@@ -213,99 +214,30 @@ standaloneJob(
 );
 
 
-use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs');
-standaloneJob(
-	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs',
-	{
-		'compara_db' => $dbc->url,
-		'mlss_ID'=>'100021',
-		'ref_species_dbid' =>155,
-        'non_ref_species_dbid' => 31,
-        'ref_chr_dnafragID' =>14026395,
-        'query' =>14469,
-        'left1' => 14803,
-        'right1' => 46043,
-    },
-
-    [
-		[
-			'DATAFLOW',
-			{
-          		'right1' => 1,
-          		'gene_member_id' => '9122578',
-          		'dnafrag_id' => '14026395',
-          		'left1' => 0,
-          		'left2' => undef,
-          		'homology_id' => 14469,
-          		'method_link_species_set_id' => '100021',
-          		'percent_conserved_score' => 25,
-          		'right2' => undef
-        	},
-        	2
-        ],
-    ],
-);
-
 use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score');
 standaloneJob(
   'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score',
   {
-    "db_conn" => $dbc->url,
+    'compara_db' => $dbc->url,
     'mlss_ID' => '100021',
+  },  
+);
+
+my $results = $dbc->db_handle->selectall_arrayref('SELECT homology_id, goc_score from homology', {});
+#print Dumper($results);
+my %expected_results_hash = ('14469' => 50, '14646' => 25, '14803' => 0, '46043' => 25, '46120' => 25);
+
+foreach my $result (@{$results}) {
+  is($result->[1], $expected_results_hash{$result->[0]}, "$result->[0] goc score verified ");
+}
+
+use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags');
+standaloneJob(
+  'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocDistAsMlssTags',
+  {
+    'compara_db' => $dbc->url,
+    'mlss_id'=>'100021',
   },
-
-  [
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 14469,
-        'percent_conserved_score' => 50,
-      },
-      2
-    ],
-
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 14646,
-        'percent_conserved_score' => 25,
-      },
-      2
-    ],
-
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 14803,
-        'percent_conserved_score' => 0,
-      },
-      2
-    ],
-
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 46043,
-        'percent_conserved_score' => 25,
-      },
-      2
-    ],
-
-    [
-      'DATAFLOW',
-      {
-        'method_link_species_set_id' => 100021,
-        'homology_id' => 46120,
-        'percent_conserved_score' => 25,
-      },
-      2
-    ],
-  ],
 );
 
 done_testing();
-

@@ -99,7 +99,7 @@ sub fetch_input {
     } elsif ($self->param('split_genes_gene_count') and scalar(@good_leaves) > $self->param('split_genes_gene_count')) {
         my %gdb_ids = ();
         $gdb_ids{$_->genome_db_id} = 1 for @good_leaves;
-        $self->dataflow_output_id( { gene_tree_id => $gene_tree_id, genome_db_id => $_ } ) for keys %gdb_ids;
+        $self->dataflow_output_id( { gene_tree_id => $gene_tree_id, genome_db_id => $_ }, 2 ) for keys %gdb_ids;
         $self->complete_early("Too many genes, will check the split-genes 1 species at a time");
     }
 

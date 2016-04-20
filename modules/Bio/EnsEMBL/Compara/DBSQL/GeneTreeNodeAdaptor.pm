@@ -263,6 +263,7 @@ sub delete_node {
 
   # The node is actually a root. We have to clear the entry in gene_tree_root
   if ($node_id == $node->tree->root->node_id) {
+    $self->dbc->do("DELETE FROM gene_tree_root_attr WHERE root_id = $node_id");
     $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $node_id");
     $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $node_id");
   }
@@ -399,7 +400,7 @@ sub init_instance_from_rowhash {
 ###############################################################################
 
 {
-    no strict 'refs';
+    no strict 'refs';   ## no critic
     foreach my $func_name (qw(
                                  fetch_all_children_for_node fetch_parent_for_node fetch_all_leaves_indexed
                                  fetch_subtree_under_node fetch_root_by_node

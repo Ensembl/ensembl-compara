@@ -263,7 +263,7 @@ sub dnafrag {
   my ($self,$dnafrag) = @_;
 
   if (defined($dnafrag)) {
-    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag');
+    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
     $self->{'_dnafrag'} = $dnafrag;
     $self->dnafrag_id($dnafrag->dbID);
   }

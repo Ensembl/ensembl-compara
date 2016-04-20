@@ -51,7 +51,7 @@ if ($help) {
 }
 
 Bio::EnsEMBL::Registry->no_version_check(1);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname, 'compara');
 my $dbc = $dba->dbc();

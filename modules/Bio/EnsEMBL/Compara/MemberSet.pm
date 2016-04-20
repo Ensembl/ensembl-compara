@@ -462,13 +462,6 @@ sub gene_list {  # DEPRECATED ?
 }
 
 
-sub print_sequences_to_fasta {  ## DEPRECATED
-    my ($self, $pep_file) = @_;
-    deprecate('print_sequences_to_fasta() is deprecated and will be removed in e84. Please use print_sequences_to_file(-file => $pep_file, -format => "fasta", -id_type => "MEMBER") instead');
-    return $self->print_sequences_to_file(-file => $pep_file, -format => 'fasta', -id_type => 'MEMBER');
-}
-
-
 =head2 print_sequences_to_file
 
   Arg [1]     : scalar (string or file handle) - output file

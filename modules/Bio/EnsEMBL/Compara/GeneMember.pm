@@ -127,14 +127,6 @@ sub new_from_Gene {
 }
 
 
-sub member_id { ## DEPRECATED
-  my $self = shift;
-  deprecate('GeneMember::member_id() is deprecated and will be removed in e84. Please use gene_member_id() instead');
-  return $self->dbID(@_);
-}
-
-
-
 =head2 gene_member_id
 
   Arg [1]    : (opt) integer
@@ -313,33 +305,5 @@ sub number_of_homoeologues {
   }
   return $self->{'_num_homoeologues'};
 }
-
-
-### Deprecated methods
-
-sub get_all_peptide_Members {  # DEPRECATED
-    my $self = shift;
-    deprecate('get_all_peptide_Members() is deprecated and will be removed in e84. Use get_all_SeqMembers() instead.');
-    return $self->get_all_SeqMembers();
-}
-
-sub get_canonical_Member {  # DEPRECATED
-    my $self = shift;
-    deprecate('get_canonical_Member() is deprecated and will be removed in e84. Use get_canonical_SeqMember() instead.');
-    return $self->get_canonical_SeqMember();
-}
-
-sub get_canonical_peptide_Member {  # DEPRECATED
-    my $self = shift;
-    deprecate('get_canonical_peptide_Member() is deprecated and will be removed in e84. Use get_canonical_SeqMember() instead.');
-    return $self->get_canonical_SeqMember();
-}
-
-sub get_canonical_transcript_Member {  # DEPRECATED
-    my $self = shift;
-    deprecate('get_canonical_transcript_Member() is deprecated and will be removed in e84. Use get_canonical_SeqMember() instead.');
-    return $self->get_canonical_transcript_Member();
-}
-
 
 1;

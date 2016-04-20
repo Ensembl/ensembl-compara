@@ -34,8 +34,7 @@ Bio::EnsEMBL::Compara::Member
 Abstract class to represent a biological (gene-related) object used
 as part of other Compara structures (gene trees, gene families, homologies).
 The (inherited) objects actually used are SeqMember and GeneMember, and Member
-should not be directly used. Some methods are still available for compatibility
-until release 75 (included).
+should not be directly used.
 
 A Member is a specialized Locus that deals with genes / gene products.
 
@@ -260,61 +259,6 @@ sub source_name {
 }
 
 
-
-=head2 chr_name
-
-               DEPRECATED (will be removed in e84). Get the chromosome name with dnafrag()->name() instead.
-               Define the chromosome with dnafrag() or dnafrag_id().
-
-=cut
-
-sub chr_name {  # DEPRECATED
-  my $self = shift;
-  deprecate('chr_name() is deprecated and will be removed in e84. Use dnafrag()->name() instead.');
-  return undef unless $self->dnafrag_id();
-  return $self->dnafrag()->name();
-}
-
-
-=head2 chr_start
-
-  Description: DEPRECATED (will be removed in e84): Alias for dnafrag_start()
-
-=cut
-
-sub chr_start { ## DEPRECATED
-  my $self = shift;
-  deprecate('chr_start() is deprecated and will be removed in e84. Use dnafrag_start() instead.');
-  return $self->dnafrag_start(@_);
-}
-
-
-=head2 chr_end
-
-  Description: DEPRECATED (will be removed in e84): Alias for dnafrag_end()
-
-=cut
-
-sub chr_end { ## DEPRECATED
-  my $self = shift;
-  deprecate('chr_end() is deprecated and will be removed in e84. Use dnafrag_end() instead.');
-  return $self->dnafrag_end(@_);
-}
-
-
-=head2 chr_strand
-
-  Description: DEPRECATED (will be removed in e84): Alias for dnafrag_strand().
-
-=cut
-
-sub chr_strand { ## DEPRECATED
-  my $self = shift;
-  deprecate('chr_strand() is deprecated and will be removed in e84. Use dnafrag_strand() instead.');
-  return $self->dnafrag_strand(@_);
-}
-
-
 =head2 taxon_id
 
   Arg [1]    : (opt) integer
@@ -414,8 +358,16 @@ sub genome_db {
 
 sub toString {
     my $self = shift;
-    my $str = sprintf("   %s %s(%d)", $self->source_name, $self->stable_id, $self->dbID || -1);
-    $str .= sprintf("\t%s : %d-%d", $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end) if $self->dnafrag_id;
+    my $type = ref($self);
+    $type =~ s/^.*:://;
+    my $str = sprintf('%s dbID=%s %s', $type, $self->dbID || '?', $self->stable_id);
+    $str .= sprintf(' (%s)', $self->display_label) if $self->display_label;
+    if ($self->genome_db_id) {
+        $str .= ' ' . $self->genome_db->name;
+    } elsif ($self->taxon_id) {
+        $str .= ' taxon_id=' . $self->taxon_id;
+    }
+    $str .= sprintf(' %s:%d-%d%s', $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end, ($self->dnafrag_strand < 0 ? '(-1)' : '')) if $self->dnafrag_id;
     return $str;
 }
 

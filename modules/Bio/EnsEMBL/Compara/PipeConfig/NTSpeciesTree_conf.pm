@@ -36,7 +36,7 @@ sub default_options {
   'previous_release_version' => '74',
   'core_db_version' => 74,
 # list of method_link_species_set_id(s) for the multiple sequence alignments to generate the trees from 
-  'msa_mlssid_csv_string' => join(',', qw(651 664 667 660)), 
+  'msa_mlssid_csv_string' => '651,664,667,660',
   'phylofit_exe' => '/software/ensembl/compara/phast/phyloFit', 
   'species_tree_bl' => '~/src/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
 # dummy mlss and mlss_id value for the stored species_tree_blength.nh
@@ -147,7 +147,7 @@ sub pipeline_analyses {
    { 
     -logic_name => 'mlss_factory',
     -parameters => { 
-     'inputlist'  => '#expr([ eval #msa_mlssid_csv_string#])expr#',
+     'inputlist'  => '#expr([ split(",", #msa_mlssid_csv_string#) ])expr#',
      'column_names' => [ 'msa_mlssid' ],
     },
     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',

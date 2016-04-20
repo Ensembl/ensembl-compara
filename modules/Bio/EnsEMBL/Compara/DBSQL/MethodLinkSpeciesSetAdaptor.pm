@@ -252,8 +252,8 @@ sub _objs_from_sth {
     $sth->bind_columns(\$dbID, \$method_link_id, \$species_set_id, \$name, \$source, \$url, \$first_release, \$last_release);
     while ($sth->fetch()) {
 
-            my $method          = $method_hash->get($method_link_id) or warning "Could not fetch Method with dbID=$method_link_id for MLSS with dbID=$dbID";
-            my $species_set_obj = $species_set_hash->get($species_set_id) or warning "Could not fetch SpeciesSet with dbID=$species_set_id for MLSS with dbID=$dbID";
+            my $method          = $method_hash->get($method_link_id);
+            my $species_set_obj = $species_set_hash->get($species_set_id);
 
             if($method and $species_set_obj) {
                 my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new_fast( {
@@ -322,12 +322,9 @@ sub _unique_attributes {
 =cut
 
 sub fetch_all_by_species_set_id {
-    my ($self, $species_set_id, $no_warning) = @_;
+    my ($self, $species_set_id) = @_;
 
     my $mlss = $self->_id_cache->get_all_by_additional_lookup('species_set_id', $species_set_id);
-    if (not $mlss and not $no_warning) {
-        warning("Unable to find method_link_species_set with species_set='$species_set_id'");
-    }
     return $mlss;
 }
 
@@ -348,13 +345,9 @@ sub fetch_all_by_species_set_id {
 =cut
 
 sub fetch_by_method_link_id_species_set_id {
-    my ($self, $method_link_id, $species_set_id, $no_warning) = @_;
+    my ($self, $method_link_id, $species_set_id) = @_;
 
     my $mlss = $self->_id_cache->get_by_additional_lookup('method_species_set', sprintf('%d_%d', $method_link_id, $species_set_id));
-
-    if (not $mlss and not $no_warning) {
-        warning("Unable to find method_link_species_set with method_link_id='$method_link_id' and species_set_id='$species_set_id'");
-    }
     return $mlss;
 }
 
@@ -373,12 +366,11 @@ sub fetch_by_method_link_id_species_set_id {
 =cut
 
 sub fetch_all_by_method_link_type {
-    my ($self, $method_link_type, $no_warning) = @_;
+    my ($self, $method_link_type) = @_;
 
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
 
     unless ($method) {
-        warning("Unable to find any method_link_species_sets with method_link_type='$method_link_type, returning an empty list'") unless ($no_warning);
         my $empty_mlsss = [];
         return $empty_mlsss;
     }
@@ -442,7 +434,6 @@ sub fetch_all_by_method_link_type_GenomeDB {
 
   Arg 1      : string $method_link_type
   Arg 2      : listref of Bio::EnsEMBL::Compara::GenomeDB objects
-  Arg 3      : (optional) bool $no_warning
   Example    : my $method_link_species_set =
                    $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES',
                        [$human_genome_db,
@@ -452,14 +443,13 @@ sub fetch_all_by_method_link_type_GenomeDB {
                Bio::EnsEMBL::Compara::GenomeDB objects
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-               object is found. It also send a warning message unless the
-               $no_warning option is on
+               object is found
   Caller     :
 
 =cut
 
 sub fetch_by_method_link_type_GenomeDBs {
-    my ($self, $method_link_type, $genome_dbs, $no_warning) = @_;
+    my ($self, $method_link_type, $genome_dbs) = @_;
 
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
     if (not defined $method) {
@@ -470,16 +460,11 @@ sub fetch_by_method_link_type_GenomeDBs {
     my $method_link_id = $method->dbID;
     my $species_set = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_dbs );
     unless ($species_set) {
-        warning("No Bio::EnsEMBL::Compara::SpeciesSet found for: ".join(", ", map {$_->name."(".$_->assembly.")"} @$genome_dbs)) unless $no_warning;
         return undef;
     }
 
-    my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set->dbID, $no_warning);
-    if (not $method_link_species_set and not $no_warning) {
-        my $warning = "No Bio::EnsEMBL::Compara::MethodLinkSpeciesSet found for\n".
-            "  <$method_link_type> and ".  join(", ", map {$_->name."(".$_->assembly.")"} @$genome_dbs);
-        warning($warning);
-    }
+    my $method_link_species_set = $self->fetch_by_method_link_id_species_set_id($method_link_id, $species_set->dbID);
+    
     return $method_link_species_set;
 }
 
@@ -590,8 +575,33 @@ sub fetch_by_method_link_type_species_set_name {
             return $mlss if $mlss;
         }
     }
-    warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_name value of $species_set_name\n");
-    return undef
+    return undef;
+}
+
+
+######################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor #
+######################################################################
+
+=head2 make_object_current
+
+  Arg[1]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Example     : $mlss_adaptor->make_object_current($mlss);
+  Description : Mark the MethodLinkSpeciesSet as current, i.e. with a defined first_release and an undefined last_release
+                Also mark all the contained SpeciesSets as current
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_object_current {
+    my ($self, $mlss) = @_;
+    # Update the fields in the table
+    $self->SUPER::make_object_current($mlss);
+    # Also update the linked SpeciesSet
+    $self->db->get_SpeciesSetAdaptor->make_object_current($mlss->species_set_obj);
 }
 
 

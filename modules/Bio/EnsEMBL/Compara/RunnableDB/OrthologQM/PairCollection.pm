@@ -6,9 +6,20 @@
 
 =head1 SYNOPSIS
 
+	For a given species set, pair up members and fan out
+
 =head1 DESCRIPTION
 
-For a given species set, pair up members and fan out
+	Inputs:
+	compara_db 		URL to database containing data
+	ref_species		pairs not containing this reference species will be omitted (optional)
+	either:
+		species1 & species2 : names of species of interest
+		collection : name of species_set/collection
+		species_set_id : dbID of species set of interest (usually used where collection name is ambiguous)
+	
+	Output:
+		pairs of genome_db_ids e.g. {species1_id => 150, species2_id => 125} 
 
 =cut
 
@@ -25,6 +36,7 @@ sub fetch_input {
 
 	# import params to variables
 	my $species_set_name = $self->param( 'collection' );
+	my $species_set_id   = $self->param( 'species_set_id' );
 	my $ref_species      = $self->param( 'ref_species' );
 	my $compara_db = $self->param( 'compara_db' );
 	my $species1 = $self->param( 'species1' );
@@ -46,7 +58,7 @@ sub fetch_input {
 	}
 
 	# find genome_dbs for species1 and species2 if not running on a collection
-	if ( !defined $species_set_name ){
+	if ( !defined $species_set_name && !defined $species_set_id ){
 		die "Please provide a collection name OR individual species" unless ( $species1 && $species2 );
 		
 		# find GenomeDBs for each species
@@ -62,9 +74,21 @@ sub fetch_input {
 	}
 
 	# if running on a collection, add all members gdb_ids to the species list
-	my @ss_list = @{ $ss_adaptor->fetch_all_by_name( $species_set_name ) };
-	my $ss = $ss_list[0];
-	die "Cannot find collection '$species_set_name' in db ($compara_db)" unless ( defined $ss );
+	my $ss; 
+	if ( $species_set_name ){
+		my @ss_list = @{ $ss_adaptor->fetch_all_by_name( $species_set_name ) };
+		if ( scalar( @ss_list ) > 1 ){
+			my @id_list = map { $_->dbID } @ss_list;
+			die "More than one species set exists for '$species_set_name':\n" . join("\n", @id_list) . "\nPlease specify the ID of the set of interest (species_set_id)\n";
+		}
+		$ss = $ss_list[0];
+		die "Cannot find collection '$species_set_name' in db ($compara_db)" unless ( defined $ss );
+		$self->param( 'species_set_id', $ss->dbID );
+	}
+	elsif ( $species_set_id ){
+		$ss = $ss_adaptor->fetch_by_dbID($species_set_id);
+		die "Cannot find species_set with id '$species_set_id' in db ($compara_db)" unless ( defined $ss );
+	}
 
 	my $gdb_list = $ss->genome_dbs;
 	my @species_list;
@@ -79,12 +103,15 @@ sub run {
 
 	my @species_list = @{ $self->param( 'genome_db_list' ) };
 	my $ref_gdb_id   = $self->param('ref_gdb_id');
+	my $ss_id        = $self->param('species_set_id');
 
 	my @pairs;
 	if ( $ref_gdb_id ) { # ref vs all
 		foreach my $s ( @species_list ){
 			next if $s == $ref_gdb_id;
-			push( @pairs, {'species1_id' => $ref_gdb_id, 'species2_id' => $s} );
+			my $this_pair = {'species1_id' => $ref_gdb_id, 'species2_id' => $s};
+			$this_pair->{species_set_id} = $ss_id if ( $ss_id );
+			push( @pairs, $this_pair );
 		}
 	}
 	else { # all vs all
@@ -92,7 +119,9 @@ sub run {
 		while( my $r = shift @ref_list ){
 			my @nonref_list = @ref_list;
 			foreach my $nr ( @nonref_list ){
-				push( @pairs, {'species1_id' =>$r, 'species2_id' => $nr} );
+				my $this_pair = {'species1_id' =>$r, 'species2_id' => $nr};
+				$this_pair->{species_set_id} = $ss_id if ( $ss_id );
+				push( @pairs, $this_pair );
 			}
 		}
 	}
@@ -102,7 +131,6 @@ sub run {
 sub write_output {
 	my $self = shift;
 
-	# $self->dataflow_output_id( { email_text => 'Hi, your pipeline is done' }, 1 );
 	$self->dataflow_output_id( $self->param('genome_db_pairs'), 2 );
 }
 

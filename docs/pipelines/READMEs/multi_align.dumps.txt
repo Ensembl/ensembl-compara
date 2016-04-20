@@ -18,15 +18,14 @@ are done on the command line.
 Options most likely to need chaging are:
 compara_db  => Where the alignments are. Either a URL or a name found in the Registry
 reg_conf    => Registry configuration file
-format      => Many formats are accepted. "emf" (default), "maf", and "emf2maf" are the most common
+format      => Many formats are accepted. "emf" (default), "maf", and "emf+maf" are the most common
 export_dir  => Where to dump files. The pipeline will create 1 directory per alignment there
 
 Other options are:
 split_size  => Maximum number of blocks per file (default: 200)
 masked_seq  => As in DumpMultiAlign.pl (0 for unmasked, 1 for soft-masked (default), 2 for hard-masked)
-mode        => Either 'dir' (directory of compressed files -this is the default-),
-               'tar' (compressed tar archive of a directory of uncompressed files),
-               or 'file' (single compressed file)
+split_by_chromosome => If set to 1, the files are split by chromosome name and coordinate system. Otherwise, createOtherJobs randomly bins the alignment blocks into chunks
+make_tar_archive => If set to 1, will make a compressed tar archive of a directory of uncompressed files. Otherwise, there will be a directory of compressed files
 method_link_types => In case you only want to dump a particular kind of alignments
 
 

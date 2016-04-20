@@ -61,6 +61,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
@@ -78,7 +79,7 @@ sub default_options {
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #mlss_id => 40043,
         # names of species we don't want to reuse this time
-        #'do_not_reuse_list' => ['guillardia_theta'],
+        'do_not_reuse_list' => [],
 
     # custom pipeline name, in case you don't like the default one
         # Used to prefix the database name (in HiveGeneric_conf)
@@ -101,14 +102,18 @@ sub default_options {
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'tree_dir'                  =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
-        'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
+        'species_tree_input_file'   =>  undef,
         # you can define your own species_tree for 'notung'. It *has* to be binary
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
-        'taxlevels'                 => $self->o('division') eq 'plants' ? ['Liliopsida', 'eudicotyledons', 'Chlorophyta'] : ['cellular organisms'],
+        'taxlevels'                 => [],  # this is the default default
+        'taxlevels_fungi'           => ['Botryosphaeriales', 'Calosphaeriales', 'Capnodiales', 'Chaetothyriales', 'Dothideales', 'Erysiphales', 'Eurotiales', 'Glomerellales', 'Helotiales', 'Hypocreales', 'Microascales', 'Onygenales', 'Ophiostomatales', 'Orbiliales', 'Pleosporales', 'Pneumocystidales', 'Saccharomycetales', 'Sordariales', 'Verrucariales', 'Xylariales', 'Venturiales', 'Agaricales', 'Atheliales', 'Boletales', 'Cantharellales', 'Corticiales', 'Dacrymycetales', 'Geastrales', 'Georgefischeriales', 'Gloeophyllales', 'Jaapiales', 'Malasseziales', 'Mixiales', 'Polyporales', 'Russulales', 'Sebacinales', 'Sporidiobolales', 'Tremellales', 'Ustilaginales', 'Wallemiales', 'Cryptomycota', 'Glomerales ', 'Rhizophydiales'],
+        'taxlevels_metazoa'         => ['Drosophila' ,'Hymenoptera', 'Nematoda'],
+        'taxlevels_plants'          => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],
+        'taxlevels_protists'        => ['Alveolata', 'Amoebozoa', 'Choanoflagellida', 'Cryptophyta', 'Fornicata', 'Haptophyceae', 'Kinetoplastida', 'Rhizaria', 'Rhodophyta', 'Stramenopiles'],
+        'taxlevels_vb'              => ['Calyptratae', 'Culicidae'],
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
@@ -160,14 +165,11 @@ sub default_options {
         'examl_capacity'            => 400,
         'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 200,
-        'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'merge_supertrees_capacity' => 100,
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,
-        'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
         'decision_capacity'         =>   4,
         'hc_post_tree_capacity'     => 100,
@@ -178,6 +180,7 @@ sub default_options {
         'copy_alignments_capacity'  => 50,
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
+        'ortho_stats_capacity'      => 10,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -221,8 +224,8 @@ sub default_options {
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ $self->o('staging_1') ],
 
-        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
+        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        'prev_rel_db' => undef,
 
     # Configuration of the pipeline worklow
 
@@ -264,8 +267,8 @@ sub resource_classes {
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]" span[hosts=1]' },
+         '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]" span[hosts=1]' },
 
          '4Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M4000  -R"select[mem>4000]  rusage[mem=4000]  same[model] span[ptile=4]"' },
          '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
@@ -295,6 +298,14 @@ sub tweak_analyses {
         $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'ktreedist'}->{'-rc_name'} = '4Gb_job';
+    }
+
+    # Leave this untouched: it is an extremely-hacky way of setting # "taxlevels" to
+    # a division-default only if it hasn't been redefined on the command line
+    if (($self->o('division') !~ /^#:subst/) and (my $tl = $self->default_options()->{'taxlevels_'.$self->o('division')})) {
+        if (stringify($self->default_options()->{'taxlevels'}) eq stringify($self->o('taxlevels'))) {
+            $analyses_by_name->{'group_genomes_under_taxa'}->{'-parameters'}->{'taxlevels'} = $tl;
+        }
     }
 }
 

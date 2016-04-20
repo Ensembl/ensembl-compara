@@ -97,12 +97,14 @@ use Bio::EnsEMBL::Registry;
 
 
 ## Command-line options
-my ($reg_conf, $copydboverserver, $ensadmin_psw, $help);
+my ($reg_conf, $copydboverserver, $ensadmin_psw, $help, $compara_db_name, $ancestral_db_name);
 
 GetOptions(
         'reg_conf=s'            => \$reg_conf,
         'c|copydboverserver=s'  => \$copydboverserver,
         'p|ensadmin_psw=s'      => \$ensadmin_psw,
+        'a|ancestral_db_name=s' => \$ancestral_db_name,
+        'd|compara_db_name=s'   => \$compara_db_name,
 
         'h|help'                => \$help,
 );
@@ -133,9 +135,11 @@ if (not $reg_conf) {
     $reg_conf = $ENV{ENSEMBL_CVS_ROOT_DIR}.'/ensembl-compara/scripts/pipeline/production_reg_conf.pl';
 }
 
+$compara_db_name ||= 'compara_curr';
+$ancestral_db_name ||= 'ancestral_curr';
 
 ## use the Registry to list the databases
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+Bio::EnsEMBL::Registry->load_all($reg_conf, undef, undef, undef, "throw_if_missing");
 
 sub find_dbc_for_reg_alias {
     my ($reg_name, $reg_type) = @_;
@@ -145,8 +149,8 @@ sub find_dbc_for_reg_alias {
 }
 
 ## Connections to the release databases
-my $compara_curr_dbc = find_dbc_for_reg_alias('compara_curr', 'compara');
-my $compara_anc_dbc = find_dbc_for_reg_alias('ancestral_curr', 'core');
+my $compara_curr_dbc = find_dbc_for_reg_alias($compara_db_name, 'compara');
+my $compara_anc_dbc = find_dbc_for_reg_alias($ancestral_db_name, 'core');
 
 ## Write the configufation file for CopyDBoverServer.pl
 my ($fh, $filename) = tempfile();

@@ -59,7 +59,7 @@ sub fetch_input {
 
 my %branch_lengths;
 
- my @mlssid_list = eval $self->param('msa_mlssid_csv_string');
+ my @mlssid_list = split ",", $self->param('msa_mlssid_csv_string');
  foreach my $mlss_id( @mlssid_list ){
   my $pfit_species_trees = $species_tree_adapt->fetch_all_by_method_link_species_set_id_label_pattern($mlss_id, "phylo_exe:"); 
   my %Phylo_tree_branch_lengths;

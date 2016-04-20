@@ -38,7 +38,7 @@ Supported keys:
         The id of the query genome 
 
      'genome_db_ids' => < list_of_genome_db_ids >
-        eg genome_db_ids => ' [61,108,111,112,38,60,101,43,31] '
+        eg genome_db_ids => [61,108,111,112,38,60,101,43,31]
         List of genome ids to match against
 
      'all_hits' => <0|1>
@@ -67,11 +67,6 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {
-  my( $self) = @_;
-
-  return 1;
-}
 
 sub run
 {
@@ -79,10 +74,6 @@ sub run
   $self->dumpMercatorFiles;
 }
 
-sub write_output {
-  my ($self) = @_;
-  return 1;
-}
 
 sub dumpMercatorFiles {
   my $self = shift;
@@ -94,7 +85,7 @@ sub dumpMercatorFiles {
     $self->param('input_dir', $input_dir);
   }
   if (! -e $self->param('input_dir')) {
-    mkdir($self->param('input_dir'), 0777);
+    mkdir($self->param('input_dir'));
   }
 
   my $dfa = $self->compara_dba->get_DnaFragAdaptor;
@@ -160,7 +151,7 @@ sub dumpMercatorFiles {
   }
   close F;
 
-  my $genome_db_ids = eval $self->param('genome_db_ids');
+  my $genome_db_ids = $self->param('genome_db_ids');
 
   my $gdb_id1 = $self->param('genome_db_id');
 

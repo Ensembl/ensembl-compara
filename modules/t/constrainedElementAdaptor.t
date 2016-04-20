@@ -27,7 +27,7 @@ use Bio::EnsEMBL::Compara::ConstrainedElement;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use File::Find;
 use FindBin qw/$Bin/;
-use File::Spec::Functions qw/updir catfile catdir/;
+use File::Spec::Functions qw/updir catfile/;
 
 my $ref_species = "homo_sapiens";
 my $species = [
@@ -55,13 +55,6 @@ foreach my $this_species (@$species) {
 my $constrained_element_adaptor = $compara_dba->get_ConstrainedElementAdaptor();
 my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
-
-#####################################################################
-##
-
-# Get patch location and relevant set of patches
-my $project_dir = $ENV{ENSEMBL_CVS_ROOT_DIR};
-my $sql_dir = catdir($project_dir, 'ensembl-compara','sql');
 
 #####################################################################
 ##  DATA USED TO TEST API
@@ -112,10 +105,10 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor->fetch_by_
   done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor->fetch_all_by_dbID method", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor->fetch_all_by_dbID_list method", sub {
 
     #try having a list of ce_ids...
-    my $all_ces = $constrained_element_adaptor->fetch_all_by_dbID([$constrained_element_id]);
+    my $all_ces = $constrained_element_adaptor->fetch_all_by_dbID_list([$constrained_element_id]);
 
     foreach my $ce (@$all_ces) {
         isa_ok($ce, "Bio::EnsEMBL::Compara::ConstrainedElement", "check object");

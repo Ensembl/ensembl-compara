@@ -215,6 +215,10 @@ sub create_genome_db {
     }
     $genome_db->locator( $locator );
 
+    unless ($genome_db->assembly =~ /^[a-zA-Z0-9\+_\.\-]*$/) {
+        die "Found forbidden characters in the assembly name '".$genome_db->assembly."'\n";
+    }
+
     return $genome_db;
 }
 
@@ -244,7 +248,7 @@ sub iterate_through_registered_species {
 
     if ($registry_conf_file) {
 
-        Bio::EnsEMBL::Registry->load_all( $registry_conf_file, undef, "no_clear" );
+        $self->load_registry($registry_conf_file);
         my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('species_name'), 'core');
 
         push @core_dba_list, $this_core_dba if ($this_core_dba);

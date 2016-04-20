@@ -44,6 +44,7 @@ use vars qw(@ISA);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Cache; #CPAN LRU cache
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
 use Bio::EnsEMBL::Utils::Exception;
@@ -219,10 +220,7 @@ sub fetch_all_by_Slice {
   my ($self, $orig_slice, $qy_species, $qy_assembly, $alignment_type,
       $limit, $limit_index_start, $restrict) = @_;
 
-  unless($orig_slice && ref $orig_slice &&
-         $orig_slice->isa('Bio::EnsEMBL::Slice')) {
-    throw("Invalid slice argument [$orig_slice]\n");
-  }
+  assert_ref($orig_slice, 'Bio::EnsEMBL::Slice', 'orig_slice');
 
   unless($qy_species) {
     throw("Query species argument is required");

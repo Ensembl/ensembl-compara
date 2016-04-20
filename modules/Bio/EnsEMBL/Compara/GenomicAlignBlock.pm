@@ -159,7 +159,7 @@ use warnings;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose deprecate);
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
@@ -1422,15 +1422,8 @@ sub get_GenomicAlignTree {
         #Get SpeciesTree from database.
         my $species_tree_adaptor = $self->adaptor->db->get_SpeciesTreeAdaptor;
         my $label = "default";
-
-        eval {
-            #Read tree from SpeciesTreeNode table
-            $species_tree_string = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set->dbID, $label)->species_tree();
-        };
-        if ($@) {
-            #backwards compatibility to e73
-            $species_tree_string = $self->method_link_species_set->get_value_for_tag("species_tree");
-        }
+        #Read tree from SpeciesTreeNode table
+        $species_tree_string = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set->dbID, $label)->species_tree();
     }
     #print "string $species_tree_string\n";
 
@@ -1476,20 +1469,11 @@ sub get_GenomicAlignTree {
     return $genomic_align_tree;
 }
 
-=head2 _print
 
-  Arg [1]    : none
-  Example    : $genomic_align->_print
-  Description: print attributes of the object to the STDOUT. Used for debuging purposes.
-  Returntype : none
-  Exceptions : 
-  Caller     : object::methodname
-  Status     : At risk
-
-=cut
-
-sub _print {
+sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
+
+  deprecate('$genomic_align_block->_print() is deprecated and will be removed in e87. Use $genomic_align_block->toString() instead.');
 
   $FILEH ||= \*STDOUT;
   print $FILEH
@@ -1516,6 +1500,33 @@ sub _print {
 }
 
 
+=head2 toString
+
+  Example    : print $genomic_align_block->toString();
+  Description: used for debugging, returns a string with the key descriptive
+               elements of this alignment block
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    my $str = 'GenomicAlignBlock';
+    if ($self->original_dbID) {
+        $str .= sprintf(' restricted from dbID=%s', $self->original_dbID);
+    } else {
+        $str .= sprintf(' dbID=%s', $self->dbID);
+    }
+    $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
+    $str .= ' score='.$self->score if defined $self->score;
+    $str .= ' length='.$self->length if defined $self->length;
+    $str .= ' with ' . scalar(@{$self->genomic_align_array}) . ' GenomicAligns';
+    return $str;
+}
+
+
 #####################################################################
 #####################################################################
 
@@ -1533,20 +1544,10 @@ alignments will throw an exception.
 #####################################################################
 
 
-=head2 get_old_consensus_genomic_align [FOR BACKWARDS COMPATIBILITY ONLY]
-
-  Arg [1]    : none
-  Example    : $old_consensus_genomic_aligns = $genomic_align_group->get_old_consensus_genomic_align();
-  Description: get the Bio::EnsEMBL::Compara::GenomicAlign object following the convention for backwards
-               compatibility
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
-  Exceptions : 
-  Caller     : general
-
-=cut
-
-sub get_old_consensus_genomic_align {
+sub get_old_consensus_genomic_align {   ## DEPRECATED
   my ($self) = @_;
+
+  deprecate('$genomic_align_block->get_old_consensus_genomic_align() will be removed in e87. Contact the Compara team if you need it.');
 
   my $genomic_aligns = $self->get_all_GenomicAligns;
   if (!@$genomic_aligns) {
@@ -1600,20 +1601,10 @@ sub get_old_consensus_genomic_align {
 }
 
 
-=head2 get_old_query_genomic_align [FOR BACKWARDS COMPATIBILITY ONLY]
-
-  Arg [1]    : none
-  Example    : $old_query_genomic_aligns = $genomic_align_group->get_old_query_genomic_align();
-  Description: get the Bio::EnsEMBL::Compara::GenomicAlign object following the convention for backwards
-               compatibility
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
-  Exceptions : 
-  Caller     : general
-
-=cut
-
-sub get_old_query_genomic_align {
+sub get_old_query_genomic_align {   ## DEPRECATED
   my ($self) = @_;
+
+  deprecate('$genomic_align_block->get_old_query_genomic_align() will be removed in e87. Contact the Compara team if you need it.');
 
   my $genomic_aligns = $self->get_all_GenomicAligns;
   if (!@$genomic_aligns) {

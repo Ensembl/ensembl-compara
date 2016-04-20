@@ -170,7 +170,6 @@ my $from_reg_name = undef;
 my $from_url = undef;
 my $to_reg_name = undef;
 my $to_url = undef;
-my $ancestral_dbID= 63;
 my @method_link_types = ();
 my @mlss_id = ();
 
@@ -211,7 +210,6 @@ GetOptions(
            'trust_ce!'                      => \$trust_ce,
            'merge!'                         => \$merge,
            'patch_merge!'                   => \$patch_merge,
-    'ancestral_dbID=i'                        => \$ancestral_dbID,
 );
 
 # Print Help and exit if help is requested
@@ -219,7 +217,7 @@ if ($help or (!$from_reg_name and !$from_url) or (!$to_reg_name and !$to_url) or
   exec("/usr/bin/env perldoc $0");
 }
 
-Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_reg_name or $to_reg_name);
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if ($from_reg_name or $to_reg_name);
 
 my $to_dba = get_DBAdaptor($to_url, $to_reg_name);
 my $from_dba = get_DBAdaptor($from_url, $from_reg_name);
@@ -227,6 +225,10 @@ my $from_ga_adaptor = $from_dba->get_GenomicAlignAdaptor();
 my $from_cs_adaptor = $from_dba->get_ConservationScoreAdaptor();
 my $from_ce_adaptor = $from_dba->get_ConstrainedElementAdaptor();
 my $from_sr_adaptor = $from_dba->get_SyntenyRegionAdaptor();
+
+my $ancestral_dbID;
+my $ancestor_genome_db = $from_dba->get_GenomeDBAdaptor()->fetch_by_name_assembly("ancestral_sequences");
+$ancestral_dbID = $ancestor_genome_db->dbID if $ancestor_genome_db;
 
 print "\n\n";   # to clear from possible warnings
 
@@ -432,7 +434,7 @@ sub check_table {
   my $sth = $from_dba->dbc->prepare($sql);
   $sth->execute();
   while (my $row = $sth->fetchrow_arrayref) {
-    my $key = join("..", @$row);
+    my $key = join("..", map {defined $_ ? $_ : '<NULL>'} @$row);
     $from_entries->{$key} = 1;
   }
   $sth->finish;
@@ -441,7 +443,7 @@ sub check_table {
   $sth = $to_dba->dbc->prepare($sql);
   $sth->execute();
   while (my $row = $sth->fetchrow_arrayref) {
-    my $key = join("..", @$row);
+    my $key = join("..", map {defined $_ ? $_ : '<NULL>'} @$row);
     $from_entries->{$key} -= 1;
   }
   $sth->finish;

@@ -34,12 +34,10 @@ use warnings;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::HMMProfile;
+use Bio::EnsEMBL::Compara::Utils::Compress;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning); ## All needed?
-
-use Bio::EnsEMBL::Utils::IO qw/:slurp/;
-
-use Compress::Zlib;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use DBI qw(:sql_types);
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
@@ -141,7 +139,7 @@ sub fetch_all_by_column_names {
     my ($self, $columns_ref, $type) = @_;
 
     throw ("columns is undefined") unless (defined $columns_ref);
-    throw ("columns have to be passed as an array ref") unless (ref $columns_ref eq "ARRAY");
+    assert_ref($columns_ref, 'ARRAY', 'columns_ref');
 
     my $columns = join ",", @$columns_ref;
 
@@ -205,7 +203,7 @@ sub init_instance_from_rowhash {
     $obj->type($rowhash->{type});
     # MySQL-style compression -UNCOMPRESS()-
     # The first 4 bytes are the length of the text in little-endian
-    $obj->profile( Compress::Zlib::uncompress( substr($rowhash->{compressed_profile},4) ) );
+    $obj->profile( Bio::EnsEMBL::Compara::Utils::Compress::uncompress_from_mysql($rowhash->{compressed_profile}) );
     $obj->consensus($rowhash->{consensus});
 
     return $obj;
@@ -214,15 +212,9 @@ sub init_instance_from_rowhash {
 sub store {
     my ($self, $obj) = @_;
 
-    unless(UNIVERSAL::isa($obj, 'Bio::EnsEMBL::Compara::HMMProfile')) {
-        throw("set arg must be a [Bio::EnsEMBL::Compara::HMMProfile] not a $obj");
-    }
+    assert_ref($obj, 'Bio::EnsEMBL::Compara::HMMProfile', 'obj');
 
-
-
-    # MySQL-style compression -COMPRESS()-
-    # The first 4 bytes are the length of the text in little-endian
-    my $compressed_profile = pack('V', length($obj->profile())).Compress::Zlib::compress($obj->profile(), Z_BEST_COMPRESSION);
+    my $compressed_profile = Bio::EnsEMBL::Compara::Utils::Compress::compress_to_mysql($obj->profile());
 
     my $sql = "REPLACE INTO hmm_profile(model_id, name, type, compressed_profile, consensus) VALUES (?,?,?,?,?)";
     my $sth = $self->prepare($sql);

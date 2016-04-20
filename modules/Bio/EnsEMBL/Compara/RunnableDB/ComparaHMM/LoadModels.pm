@@ -181,7 +181,65 @@ sub store_hmmprofile {
     }
 }
 
+=head2 store_infernalhmmprofile
 
+    Parameters:
+        cm_file_or_directory : HMM file
+        type : value of the "type" field in the hmm_profile table
+        skip_consensus : [Optional] -- If we should skip building the consensus sequence of the HMM
+
+    Description:
+        Reads an  HMM file and loads all the infernal HMMs it contains
+
+=cut
+
+sub store_infernalhmmprofile {
+    my ($self, $multicm_file, $hmm_model_id, $hmm_name, $consensus) = @_;
+
+    $multicm_file ||= $self->param('cm_file_or_directory');
+    print STDERR "Opening file $multicm_file\n" if ($self->debug());
+    open MULTICM, $multicm_file or die "$!\n";
+    my ($name, $model_id) = ($hmm_name, $hmm_model_id);
+    my $profile_content;
+
+    print STDERR "SKIP_CONSENSUS:", $self->param('skip_consensus'), "\n";
+    if ((!$consensus) && (!$self->param('skip_consensus'))) {
+        $consensus = $self->get_consensus_from_HMMs($multicm_file);
+    }
+
+    while(my $line = <MULTICM>) {
+        if (   (($line =~ /INFERNAL/) && defined($model_id)) || (eof)) {
+                # End of profile, let's store it
+
+            $self->throw("Error loading profile [$hmm_name, $name, $model_id]\n") unless (defined($model_id) && defined ($profile_content));
+
+                # We create a new HMMProfile object and store it
+            my $hmm_profile = Bio::EnsEMBL::Compara::HMMProfile->new();
+            $hmm_profile->model_id($model_id);
+            $hmm_profile->name($name);
+            $hmm_profile->type($self->param('type'));
+            $hmm_profile->profile($profile_content);
+            $hmm_profile->consensus($consensus->{$name});
+
+            warn "Storing a new model: $model_id / $name".($hmm_profile->consensus ? " with a consensus sequence\n" : "\n");
+            $self->compara_dba->get_HMMProfileAdaptor()->store($hmm_profile);
+
+            $model_id = undef;
+            $profile_content = undef;
+#            unless (eof) {
+#                $profile_content .= $line;
+#            }
+        } elsif ($line =~ /NAME/) {
+            my ($tag, $this_name) = split(/\s+/,$line);
+            $name = defined $hmm_name ? $hmm_name : $this_name;
+        } elsif ($line =~ /^ACC/) {
+            
+            my ($tag, $accession) = split(/\s+/,$line);
+            $model_id = defined $hmm_model_id ? $hmm_model_id : $accession;
+        } 
+        $profile_content .= $line;
+    }
+}
 =head2 get_consensus_from_HMMs
 
     Parameters:

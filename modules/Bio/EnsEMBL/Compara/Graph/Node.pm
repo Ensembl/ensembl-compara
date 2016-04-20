@@ -399,8 +399,7 @@ sub is_leaf {
 sub equals {
   my $self = shift;
   my $other = shift;
-  #throw("arg must be a [Bio::EnsEMBL::Compara::Graph::Node] not a [$other]")
-  #      unless($other and $other->isa('Bio::EnsEMBL::Compara::Graph::Node'));
+  #assert_ref($other, 'Bio::EnsEMBL::Compara::Graph::Node', 'other');
   return 1 if($self eq $other);
   return 0;
 }

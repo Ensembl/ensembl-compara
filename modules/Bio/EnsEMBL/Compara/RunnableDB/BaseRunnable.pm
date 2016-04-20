@@ -48,6 +48,7 @@ use warnings;
 
 use Carp;
 
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;    # to use go_figure_compara_dba() and other things
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
@@ -80,6 +81,7 @@ sub param_defaults {
 sub compara_dba {
     my $self = shift @_;
 
+    use Data::Dumper;
     my $given_compara_db = shift @_ || ($self->param_is_defined('compara_db') ? $self->param('compara_db') : $self);
     my $given_ref = ref( $given_compara_db );
     my $given_signature  = ($given_ref eq 'ARRAY' or $given_ref eq 'HASH') ? stringify ( $given_compara_db ) : "$given_compara_db";
@@ -92,6 +94,49 @@ sub compara_dba {
     return $self->{'_cached_compara_dba'};
 }
 
+
+=head2 load_registry
+
+  Example     : $self->load_registry();
+  Description : Simple wrapper around Registry's load_all() method that takes care of 1) not loading the same
+                registry file again and again, and 2) keeping $self->compara_dba valid
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_registry {
+    my ($self, $registry_conf_file) = @_;
+
+    # First we assume that nothing else could have tampered the registry,
+    # so if the config file has been loaded it is still valid
+    return if $self->{'_last_registry_file'} and ($self->{'_last_registry_file'} eq $registry_conf_file);
+
+    # There are two consequences to not using "no_clear" in load_all():
+    # 1) All the DBConnections have been closed at the db_handle level.
+    # 2) $self->{'_cached_compara_dba'} has been removed from the registry.
+
+    # eHive may fail with a "MySQL server has gone away" if its
+    # DBConnection gets closed by load_all(). Let's check whether the
+    # DBConnection is actually used by the Registry
+    my $dbas_for_this_dbc = Bio::EnsEMBL::Registry->get_all_DBAdaptors_by_connection($self->dbc);
+
+    # We can load the config file
+    Bio::EnsEMBL::Registry->load_all($registry_conf_file, $self->debug, 0, 0, "throw_if_missing");
+    $self->{'_last_registry_file'} = $registry_conf_file;
+
+    # And let the API know that the db_handle is closed. eHive will survive !
+    if (@$dbas_for_this_dbc) {
+        $self->dbc->connected(0);
+    }
+
+    # Finally, the best is to un-cache the Compara DBAdaptor so that it
+    # will be correctly recreated later.
+    delete $self->{'_cached_compara_db_signature'};
+    delete $self->{'_cached_compara_dba'};
+}
 
 
 =head2 get_species_tree_file
@@ -123,9 +168,9 @@ sub get_species_tree_file {
             # store the string in a local file:
         my $file_basename = shift || 'spec_tax.nh';
         my $species_tree_file = $self->worker_temp_directory . $file_basename;
-        open SPECIESTREE, ">$species_tree_file" or die "Could not open '$species_tree_file' for writing : $!";
-        print SPECIESTREE $species_tree_string;
-        close SPECIESTREE;
+        open(my $fh, '>', $species_tree_file) or die "Could not open '$species_tree_file' for writing : $!";
+        print $fh $species_tree_string;
+        close $fh;
         $self->param('species_tree_file', $species_tree_file);
     }
     return $self->param('species_tree_file');
@@ -242,7 +287,8 @@ sub run_command {
     print STDERR "COMMAND: $cmd\n" if ($self->debug);
     print STDERR "TIMEOUT: $timeout\n" if ($timeout and $self->debug);
     my $runCmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new($cmd, $timeout);
-    $self->compara_dba->dbc->disconnect_if_idle();
+    $self->dbc->disconnect_if_idle() if ($self->dbc);
+    $self->compara_dba->dbc->disconnect_if_idle() if ($self->compara_dba);
     $runCmd->run();
     print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($self->debug);
     print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($self->debug);

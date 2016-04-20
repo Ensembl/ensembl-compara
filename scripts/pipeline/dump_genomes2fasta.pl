@@ -20,7 +20,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 sub print_out {
-	die  "argv[0] => db_url, argv[1] => \'[ genome_db_id list ref ]\', argv[2] => dump_dir, argv[3] => 1:undef\neg. perl dump_genomes2fasta.pl mysql://ensro\@compara3:3306/sf5_compara12way_63 [3] /data/blastdb/Ensembl/compara12way63 1\n";
+	die  "argv[0] => db_url, argv[1] => \'genome_db_id1,genome_db_id2,...\', argv[2] => dump_dir, argv[3] => 1:undef\neg. perl dump_genomes2fasta.pl mysql://ensro\@compara3:3306/sf5_compara12way_63 [3] /data/blastdb/Ensembl/compara12way63 1\n";
 
 	
 }
@@ -29,9 +29,7 @@ print_out unless ($ARGV[0] and $ARGV[1] and $ARGV[2]);
 
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $ARGV[0] );
 
-my $genome_db_id_list = eval $ARGV[1];
-
-print_out  unless ref($genome_db_id_list) eq "ARRAY";
+my $genome_db_id_list = [split(',', $ARGV[1])];
 
 my $genome_db_adaptor = $compara_dba->get_genomeDBAdaptor;
 my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;

@@ -62,7 +62,7 @@ Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
       $method_link_species_set, $human_dnafrag);
 
   $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag(
-      $method_link_species_set, $human_dnafrag, $mouse_dnafrag);
+      $method_link_species_set, $human_dnafrag, undef, undef, $mouse_dnafrag, undef, undef);
 
   $genomic_align_block_ids = $genomic_align_block_adaptor->fetch_all_dbIDs_by_MethodLinkSpeciesSet_Dnafrag(
      $method_link_species_set, $human_dnafrag);
@@ -127,6 +127,7 @@ use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Feature;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -193,10 +194,7 @@ sub store {
   my @values;
   
   ## CHECKING
-  if (!defined($genomic_align_block) or
-      !$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
-    throw("[$genomic_align_block] is not a Bio::EnsEMBL::Compara::GenomicAlignBlock");
-  }
+  assert_ref($genomic_align_block, 'Bio::EnsEMBL::Compara::GenomicAlignBlock', 'genomic_align_block');
   if (!defined($genomic_align_block->method_link_species_set)) {
     throw("There is no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object attached to this".
         " Bio::EnsEMBL::Compara::GenomicAlignBlock object [$self]");
@@ -380,17 +378,12 @@ sub fetch_all_dbIDs_by_MethodLinkSpeciesSet_Dnafrag {
 
   my $genomic_align_block_ids = []; # returned object
 
-  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-      unless ($method_link_species_set and ref $method_link_species_set and
-          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
   my $method_link_species_set_id = $method_link_species_set->dbID;
   throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 
   ## Check the dnafrag obj
-  unless($dnafrag && ref $dnafrag && 
-         $dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag')) {
-    throw("[$dnafrag] should be a Bio::EnsEMBL::Compara::DnaFrag object\n");
-  }
+  assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
 
   my $dnafrag_id = $dnafrag->dbID;
 
@@ -444,9 +437,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
   my $genomic_align_blocks = []; # returned object
 
-  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-      unless ($method_link_species_set and ref $method_link_species_set and
-          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
   my $method_link_species_set_id = $method_link_species_set->dbID;
   throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 
@@ -523,10 +514,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   ## method_link_species_set will be checked in the fetch_all_by_MethodLinkSpeciesSet_DnaFrag method
 
   ## Check original_slice
-  unless($reference_slice && ref $reference_slice && 
-         $reference_slice->isa('Bio::EnsEMBL::Slice')) {
-    throw("[$reference_slice] should be a Bio::EnsEMBL::Slice object\n");
-  }
+  assert_ref($reference_slice, 'Bio::EnsEMBL::Slice', 'reference_slice');
 
   $limit_number = 0 if (!defined($limit_number));
   $limit_index_start = 0 if (!defined($limit_index_start));
@@ -677,14 +665,11 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 
   my $genomic_align_blocks = []; # returned object
 
-  throw("[$dnafrag] is not a Bio::EnsEMBL::Compara::DnaFrag object")
-      unless ($dnafrag and ref $dnafrag and $dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
+  assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
   my $query_dnafrag_id = $dnafrag->dbID;
   throw("[$dnafrag] has no dbID") if (!$query_dnafrag_id);
 
-  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-      unless ($method_link_species_set and ref $method_link_species_set and
-          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
   my $query_method_link_species_set_id = $method_link_species_set->dbID;
   throw("[$method_link_species_set] has no dbID") if (!$query_method_link_species_set_id);
 
@@ -922,19 +907,12 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
 
   my $genomic_align_blocks = []; # returned object
 
-  throw("[$dnafrag1] is not a Bio::EnsEMBL::Compara::DnaFrag object")
-      unless ($dnafrag1 and ref $dnafrag1 and $dnafrag1->isa("Bio::EnsEMBL::Compara::DnaFrag"));
+  assert_ref($dnafrag1, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag1');
+  assert_ref($dnafrag2, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag2');
+  assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
+
   my $dnafrag_id1 = $dnafrag1->dbID;
-  throw("[$dnafrag1] has no dbID") if (!$dnafrag_id1);
-
-  throw("[$dnafrag2] is not a Bio::EnsEMBL::Compara::DnaFrag object")
-      unless ($dnafrag2 and ref $dnafrag2 and $dnafrag2->isa("Bio::EnsEMBL::Compara::DnaFrag"));
   my $dnafrag_id2 = $dnafrag2->dbID;
-  throw("[$dnafrag2] has no dbID") if (!$dnafrag_id2);
-
-  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
-      unless ($method_link_species_set and ref $method_link_species_set and
-          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
   my $method_link_species_set_id = $method_link_species_set->dbID;
   throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 

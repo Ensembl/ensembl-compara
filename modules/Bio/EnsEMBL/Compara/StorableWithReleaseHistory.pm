@@ -198,4 +198,26 @@ sub is_current {
 }
 
 
+=head2 toString
+
+  Args       : (none)
+  Example    : print $species_set->toString()."\n";
+  Description: returns a stringified representation of the object
+  Returntype : string
+
+=cut
+
+sub toString {
+    my $self = shift;
+
+    if ($self->is_current) {
+        return '[current]';
+    } elsif ($self->has_been_released) {
+        return '[retired]';
+    } else {
+        return '[unreleased]';
+    }
+}
+
+
 1;

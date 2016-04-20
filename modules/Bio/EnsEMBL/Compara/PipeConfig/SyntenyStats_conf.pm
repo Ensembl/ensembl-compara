@@ -22,11 +22,11 @@ Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf
 
 =head1 DESCRIPTION  
 
-Calculate synteny coverage statistics.
+Calculate synteny coverage statistics across a whole division (or any Registry alias)
 
 =head1 SYNOPSIS
 
- $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -host compara1 -division compara_prev
+ $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf -registry ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -host compara1 -division compara_prev
 
 =cut
 
@@ -37,23 +37,12 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
-sub default_options {
-  my ($self) = @_;
-  return {
-    %{$self->SUPER::default_options},
-    
-    pipeline_name => 'synteny_stats_'.$self->o('ensembl_release'),
-    division      => 'Multi',
-    mlss_id       => undef,
-  };
-}
-
 sub pipeline_wide_parameters {
   my ($self) = @_;
   return {
     %{ $self->SUPER::pipeline_wide_parameters() },
-    division => $self->o('division'),
-    reg_conf => $self->o('reg_conf'),
+    compara_db => $self->o('division'),
+    registry => $self->o('registry'),
   };
 }
 
@@ -63,18 +52,20 @@ sub pipeline_analyses {
   return [
     {
       -logic_name      => 'FetchMLSS',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS',
-      -max_retry_count => 0,
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
       -parameters      => {
-                            mlss_id  => $self->o('mlss_id'),
-                          },
+          'methods' => {
+              'SYNTENY' => 1,
+          },
+      },
+      -max_retry_count => 0,
       -input_ids       => [ {} ],
       -flow_into       => ['SyntenyStats'],
     },
     
     {
       -logic_name      => 'SyntenyStats',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats',
       -max_retry_count => 0,
     },
     

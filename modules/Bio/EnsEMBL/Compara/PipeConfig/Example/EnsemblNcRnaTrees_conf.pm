@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Examples::EnsemblNcRnaTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblNcRnaTrees_conf
 
 =head1 SYNOPSIS
 
@@ -85,7 +85,6 @@ sub default_options {
             'quick_tree_break_capacity'       => 100,
             'msa_chooser_capacity'            => 200,
             'other_paralogs_capacity'         => 200,
-            'merge_supertrees_capacity'       => 200,
             'aligner_for_tree_break_capacity' => 200,
             'infernal_capacity'               => 200,
             'orthotree_capacity'              => 200,
@@ -103,9 +102,9 @@ sub default_options {
             'hc_batch_size'                   => 10,
 
             # executable locations:
-            'cmalign_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
-            'cmbuild_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmbuild',
-            'cmsearch_exe'          => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch',
+            'cmalign_exe'           => '/software/ensembl/compara/infernal-1.1.1/src/cmalign',
+            'cmbuild_exe'           => '/software/ensembl/compara/infernal-1.1.1/src/cmbuild',
+            'cmsearch_exe'          => '/software/ensembl/compara/infernal-1.1.1/src/cmsearch',
             'mafft_exe'             => '/software/ensembl/compara/mafft-7.221/bin/mafft',
             'raxml_exe'             => '/software/ensembl/compara/raxml/standard-RAxML/raxmlHPC-PTHREADS-SSE3',
             'prank_exe'             => '/software/ensembl/compara/prank/090707/src/prank',
@@ -119,7 +118,7 @@ sub default_options {
             'cafe_shell'            => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
             # RFAM parameters
-            'rfam_ftp_url'           => 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/11.0/',
+            'rfam_ftp_url'           => 'ftp://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/',
             'rfam_remote_file'       => 'Rfam.cm.gz',
             'rfam_expanded_basename' => 'Rfam.cm',
             'rfam_expander'          => 'gunzip ',
@@ -153,6 +152,21 @@ sub default_options {
                         -pass   => '',
                        },
 
+
+#            'reg1' => {
+#                      -host   => 'ens-staging',
+#                       -port   => 3306,
+ #                      -user   => 'ensro',
+  #                     -pass   => '',
+   #                   },
+
+#             'reg2' => {
+#                        -host   => 'ens-staging2',
+#                        -port   => 3306,
+#                        -user   => 'ensro',
+#                        -pass   => '',
+ #                      },
+
             'master_db' => {
                             -host   => 'compara1',
                             -port   => 3306,
@@ -174,6 +188,8 @@ sub resource_classes {
             '2Gb_job'                 => { 'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
             '4Gb_job'                 => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
             '8Gb_job'                 => { 'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+            '8Gb_long_job'                 => { 'LSF' => '-C0 -q long -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+            '16Gb_job'                 => { 'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
 
             '2Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
             '8Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },

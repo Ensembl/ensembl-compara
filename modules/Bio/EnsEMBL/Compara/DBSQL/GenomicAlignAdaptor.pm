@@ -112,6 +112,7 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -340,8 +341,7 @@ sub fetch_all_by_GenomicAlignBlock {
   my ($self, $genomic_align_block) = @_;
   my $genomic_aligns = [];
 
-  throw("$genomic_align_block is not a Bio::EnsEMBL::Compara::GenomicAlignBlock object")
-      if (!$genomic_align_block->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock"));
+  assert_ref($genomic_align_block, 'Bio::EnsEMBL::Compara::GenomicAlignBlock', 'genomic_align_block');
   my $genomic_align_block_id = $genomic_align_block->dbID;
 
   return $self->fetch_all_by_genomic_align_block_id($genomic_align_block_id);

@@ -58,6 +58,7 @@ use File::Path;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;
+use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -181,6 +182,14 @@ sub write_output {
     $self->_store_aln_tags($self->param('protein_tree'));
 
 }
+
+# Wrapper around Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks
+# NB: this will be testing $self->param('gene_tree_id')
+sub post_healthcheck {
+    my $self = shift;
+    Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_embedded_call($self, 'alignment');
+}
+
 
 sub post_cleanup {
     my $self = shift;

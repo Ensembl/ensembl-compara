@@ -97,17 +97,18 @@ sub fetch_input {
     my $full_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), $self->param('label'));
     $self->param('full_species_tree', $full_species_tree); ## This is the full tree, not the string
 
-    my $cafe_species = $self->param('cafe_species');
-    if (defined $cafe_species and not ref($cafe_species)) {
-        # Probably a string that we need to eval()
-        $cafe_species = eval $self->param('cafe_species');
+    my $cafe_species = $self->param('cafe_species') || [];
+    if (not ref($cafe_species)) {
+        my $cafe_species_str = $self->param('cafe_species');
+        $cafe_species_str =~ s/["'\[\] ]//g;
+        $cafe_species = [split(',', $cafe_species_str)];
     }
-    $self->param('cafe_species', $cafe_species);
-    if ((not defined $cafe_species) or ($cafe_species eq '') or (scalar(@{$cafe_species}) == 0)) {  # No species for the tree. Make a full tree
+    if (scalar(@{$cafe_species}) == 0) {  # No species for the tree. Make a full tree
         print STDERR "No species provided for the CAFE tree. I will take them all\n" if ($self->debug());
         $self->param('cafe_species', undef);
         $self->param('n_missing_species_in_tree', 0);
     } else {
+        $self->param('cafe_species', $cafe_species);
         $self->param('n_missing_species_in_tree', scalar(@{$genomeDB_Adaptor->fetch_all()})-scalar(@{$cafe_species}));
     }
 
@@ -201,7 +202,9 @@ sub include_distance_to_parent {
             my $taxon_id = $node->taxon_id();
             my $ncbiTaxon = $NCBItaxon_Adaptor->fetch_node_by_taxon_id($taxon_id);
             my $mya = $ncbiTaxon->get_tagvalue('ensembl timetree mya');
-            die "No 'ensembl timetree mya' tag for taxon_id=$taxon_id\n" unless $mya;
+            if (!$mya && $self->param('use_timetree_times')) {
+                die "No 'ensembl timetree mya' tag for taxon_id=$taxon_id\n";
+            }
             for my $child (@{$node->children}) {
                 $child->distance_to_parent(int($mya));
             }
@@ -390,6 +393,7 @@ sub prune_tree {
         $species_to_remove{$name} = 1;
     }
     for my $sp (@$species_to_keep) {
+        die "$sp is not in the full species-tree, cannot remove it." unless exists $species_to_remove{$sp};
         delete $species_to_remove{$sp};
     }
     my $newTree = remove_nodes($tree, [keys %species_to_remove]);
@@ -438,13 +442,9 @@ sub check_tree {
       die "The tree is NOT ultrametric\n";
   }
 
-  eval (is_binary($tree));
-  if ($@) {
-    die $@;
-  } else {
-      if ($self->debug()) {
-          print STDERR "The tree is binary\n";
-      }
+  is_binary($tree);
+  if ($self->debug()) {
+    print STDERR "The tree is binary\n";
   }
 }
 

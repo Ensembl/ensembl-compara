@@ -236,7 +236,7 @@ sub run_ktreedist {
     $ref_label = $self->param('ref_tree_clusterset');
   }else{
     $reference_string = $self->param('gene_tree')->newick_format('member_id_taxon_id');
-    $ref_label = 'treebest';
+    $ref_label = 'default';
   }
   
   $self->throw("error with newick tree") unless (defined($reference_string));
@@ -247,6 +247,10 @@ sub run_ktreedist {
   my $cmd = "$ktreedist_exe -a -rt $referencefilename -ct $comparisonfilename";
   my $runCmd = $self->run_command($cmd);
   if ($runCmd->exit_code) {
+      if ($runCmd->err =~ /Substitution loop at.*ktreedist line 1777/) {
+          # The tree is too big for ktreedist
+          $self->complete_early('Ktreedist is not able to compute distances');
+      }
       $self->throw("Error exit status running Ktreedist: " .$runCmd->err . "\n");
   }
   my @output = split/\n/, $runCmd->out;

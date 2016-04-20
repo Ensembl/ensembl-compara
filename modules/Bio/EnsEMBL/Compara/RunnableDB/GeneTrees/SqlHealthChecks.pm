@@ -258,6 +258,11 @@ our $config = {
                 query => 'SELECT * FROM gene_tree_root WHERE root_id = #gene_tree_id# AND gene_align_id IS NULL',
             },
             {
+                description => 'Checks that the alignment exists',
+                query => 'SELECT * FROM gene_tree_root JOIN gene_align USING (gene_align_id) WHERE root_id = #gene_tree_id#',
+                expected_size => '=1',
+            },
+            {
                 description => 'Checks that the alignment has defined CIGAR lines',
                 query => 'SELECT * FROM gene_tree_root JOIN gene_align_member USING (gene_align_id) WHERE root_id = #gene_tree_id# AND (cigar_line IS NULL OR LENGTH(cigar_line) = 0)',
             },
@@ -271,6 +276,38 @@ our $config = {
             },
         ],
     },
+
+    unpaired_alignment => {
+        params => [ 'gene_tree_id', 'gene_align_id' ],
+        tests => [
+            {
+                description => 'Checks that the tree has not lost any genes since the backup',
+                query => 'SELECT gtb.seq_member_id FROM gene_tree_backup gtb LEFT JOIN gene_tree_node gtn USING (root_id, seq_member_id) WHERE gtb.root_id = #gene_tree_id# AND gtn.seq_member_id IS NULL AND is_removed = 0',
+            },
+            {
+                description => 'Checks that the tree has not gained any genes since the backup',
+                query => 'SELECT gene_tree_node.seq_member_id FROM gene_tree_node LEFT JOIN gene_tree_backup USING (root_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NOT NULL AND gene_tree_backup.seq_member_id IS NULL',
+            },
+            {
+                description => 'Checks that the alignment exists',
+                query => 'SELECT * FROM gene_align WHERE gene_align_id = #gene_align_id#',
+                expected_size => '=1',
+            },
+            {
+                description => 'Checks that the alignment has defined CIGAR lines',
+                query => 'SELECT * FROM gene_align_member WHERE gene_align_id = #gene_align_id# AND (cigar_line IS NULL OR LENGTH(cigar_line) = 0)',
+            },
+            {
+                description => 'Checks that the alignment has not lost any genes since the backup',
+                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup LEFT JOIN gene_align_member USING (seq_member_id) WHERE gene_align_id = #gene_align_id# AND root_id = #gene_tree_id# AND gene_align_member.seq_member_id IS NULL AND is_removed = 0',
+            },
+            {
+                description => 'Checks that the alignment has not gained any genes since the backup',
+                query => 'SELECT gene_align_member.seq_member_id FROM gene_tree_backup RIGHT JOIN gene_align_member USING (seq_member_id) WHERE gene_align_id = #gene_align_id# AND root_id = #gene_tree_id# AND gene_tree_backup.seq_member_id IS NULL',
+            },
+        ],
+    },
+
 
 
 
@@ -291,8 +328,8 @@ our $config = {
             },
 
             {
-                description => 'Checks that the "gene_count" tags agree with the actual number of members in the tree',
-                query => 'SELECT root_id, COUNT(seq_member_id) AS count, value FROM gene_tree_node JOIN gene_tree_root_tag USING (root_id) WHERE root_id = #gene_tree_id# AND tag = "gene_count" GROUP BY root_id HAVING count != value',
+                description => 'Checks that the "tree_num_leaves" tags agree with the actual number of members in the tree',
+                query => 'SELECT root_id, COUNT(seq_member_id) AS real_count, tree_num_leaves FROM gene_tree_node JOIN gene_tree_root_attr USING (root_id) WHERE root_id = #gene_tree_id# GROUP BY root_id HAVING real_count != tree_num_leaves',
             },
         ],
     },
@@ -333,7 +370,7 @@ our $config = {
         tests => [
             {
                 description => 'The "gene_count" tags must sum-up to the super-tree\'s',
-                query => 'SELECT COUNT(*), gtrt1.value, SUM(gtrt2.value) FROM (gene_tree_node gtn1 JOIN gene_tree_root_tag gtrt1 ON gtrt1.root_id=gtn1.root_id AND tag = "gene_count")  JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_tag gtrt2 ON gtrt2.root_id=gtn2.root_id AND gtrt2.tag="gene_count" WHERE gtn1.root_id = #gene_tree_id# HAVING gtrt1.value != SUM(gtrt2.value)',
+                query => 'SELECT COUNT(*), gtra1.gene_count, SUM(gtra2.gene_count) FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr gtra1 USING (root_id))  JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE gtn1.root_id = #gene_tree_id# HAVING gtra1.gene_count != SUM(gtra2.gene_count)',
             },
         ],
     },
@@ -402,7 +439,7 @@ our $config = {
 
             {
                 description => 'The "gene_count" tags of sub-trees must sum-up to their super-tree\'s gene count',
-                query => 'SELECT gtr1.root_id, COUNT(*), gtrt1.value, SUM(gtrt2.value) FROM (gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_root_tag gtrt1 ON gtrt1.root_id=gtr1.root_id AND tag = "gene_count")  JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_tag gtrt2 ON gtrt2.root_id=gtn2.root_id AND gtrt2.tag="gene_count" WHERE tree_type = "supertree" AND clusterset_id = "default" GROUP BY gtr1.root_id HAVING gtrt1.value != SUM(gtrt2.value)',
+                query => 'SELECT gtr1.root_id, COUNT(*), gtra1.gene_count, SUM(gtra2.gene_count) FROM (gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_root_attr gtra1 USING (root_id)) JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE tree_type = "supertree" AND clusterset_id = "default" GROUP BY gtr1.root_id HAVING gtra1.gene_count != SUM(gtra2.gene_count)',
             },
         ],
     },
@@ -496,6 +533,22 @@ sub fetch_input {
     }
     $self->param('tests', $this_config->{tests});
     $self->_validate_tests;
+}
+
+
+sub _embedded_call {
+    my $self = shift;
+    my $test_name = shift;
+    $self->param('tests', $config->{$test_name}->{tests});
+    Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck::_validate_tests($self);
+    my $failures = 0;
+    foreach my $test (@{ $self->param('tests') }) {
+        if (not Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck::_run_test($self, $test)) {
+            $failures++;
+            $self->warning(sprintf("The following test has failed: %s\n   > %s\n", $test->{description}, $test->{subst_query}));
+        }
+    }
+    die "$failures HCs failed.\n" if $failures;
 }
 
 

@@ -373,7 +373,6 @@ sub get_SimpleAlign {
 
     my $id_type = 0;
     my $unique_seqs = 0;
-    my $cdna = undef ;
     my $stop2x = 0;
     my $append_taxon_id = 0;
     my $append_sp_short_name = 0;
@@ -385,14 +384,8 @@ sub get_SimpleAlign {
     my $removed_members = undef;
     my $map_long_seq_names = undef;
     if (scalar @args) {
-        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $cdna, $removed_members, $map_long_seq_names) =
-            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS CDNA REMOVED_MEMBERS MAP_LONG_SEQ_NAMES)], @args);
-    }
-
-    if (defined $cdna) {
-        warn "-CDNA => 0/1 in AlignedMemberSet::get_SimpleAlign is deprecated and will be removed in e82. Please use -SEQ_TYPE => 'cds' instead\n";
-        die "-CDNA and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $seq_type;
-        $seq_type = 'cds' if $cdna;
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $removed_members, $map_long_seq_names) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS REMOVED_MEMBERS MAP_LONG_SEQ_NAMES)], @args);
     }
 
     die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;

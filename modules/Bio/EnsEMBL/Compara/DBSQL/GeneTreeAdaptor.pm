@@ -441,7 +441,7 @@ sub delete_tree {
 ###################################
 
 sub _tag_capabilities {
-    return ('gene_tree_root_tag', undef, 'root_id', 'root_id');
+    return ('gene_tree_root_tag', 'gene_tree_root_attr', 'root_id', 'root_id');
 }
 
 

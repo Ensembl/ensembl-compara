@@ -119,36 +119,6 @@ sub fetch_all_by_GeneMember {
 }
 
 
-
-=head2 fetch_all_by_gene_member_id
-
-  Description: DEPRECATED: fetch_all_by_gene_member_id() is deprecated and will be removed in e84. Please use fetch_all_by_GeneMember() instead
-
-=cut
-
-sub fetch_all_by_gene_member_id {  ## DEPRECATED
-    my ($self, $gene_member_id) = @_;
-    deprecate('fetch_all_by_gene_member_id() is deprecated and will be removed in e84. Please use fetch_all_by_GeneMember() instead');
-    return $self->fetch_all_by_GeneMember($gene_member_id);
-}
-
-
-
-
-=head2 fetch_all_canonical_by_source_genome_db_id
-
-  Description: DEPRECATED: fetch_all_canonical_by_source_genome_db_id() is deprecated and will be removed in e84. Please use fetch_all_canonical_by_GenomeDB() instead
-
-=cut
-
-sub fetch_all_canonical_by_source_genome_db_id {  ## DEPRECATED
-    my ($self, $source_name, $genome_db_id) = @_;
-
-    deprecate('fetch_all_canonical_by_source_genome_db_id() is deprecated and will be removed in e84. Please use fetch_all_canonical_by_GenomeDB() instead');
-    return $self->fetch_all_canonical_by_GenomeDB($genome_db_id, $source_name);
-}
-
-
 =head2 fetch_all_canonical_by_GenomeDB
 
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB or its dbID
@@ -203,13 +173,6 @@ sub fetch_canonical_for_gene_member_id {
 
     $self->bind_param_generic_fetch($gene_member_id, SQL_INTEGER);
     return $self->generic_fetch_one($constraint, $join);
-}
-
-
-sub fetch_canonical_member_for_gene_member_id { ## DEPRECATED
-  my $self = shift;
-  deprecate('SeqMemberAdaptor::fetch_canonical_member_for_gene_member_id() is deprecated and will be removed in e84. Please use fetch_canonical_for_gene_member_id() instead');
-  return $self->fetch_canonical_for_gene_member_id(@_);
 }
 
 

@@ -47,8 +47,7 @@ my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member($member, -TARGET_S
 
 my $aligned_member = $member->get_canonical_SeqMember;
 
-sub print_transcript ($$)
-{
+sub print_transcript {
   my ($transcript, $cdna_simple_align) = @_;
 
     # The Ensembl phase convention can be thought of as

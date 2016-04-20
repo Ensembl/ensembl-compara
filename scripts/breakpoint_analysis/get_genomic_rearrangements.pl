@@ -1,8 +1,11 @@
+#!/usr/bin/env perl
+
 =pod
 
 =head1 DESCRIPTION
  
  This script finds the number of collinear genomic blocks in an alignment. Information about the blocks are written to the given output file (this files tend to be 20mb and upwards in size).
+ The threshold is used to determined the acceptable distance between two genomic align blocks before we check if they are colinear. Also only merged blocks/block longer than the given threshold are reported.
  To run this script, you need to give it the following
 
     -reg_conf  -> The registry configuration file which contains infomation on where to find and how to connect to the alignment database
@@ -13,16 +16,13 @@
 
     -kb   -> the size of the threshold in kilobase
 
-    -output     -> output file  
+    -output     -> output file  format : -> ref_chr_id,ref_start,ref_end,nonref_chr_id,non_ref_start,nonref_end, genomic_block_ids
 
-    example run : perl get_genomic_rearrangements.pl -species1 mus_caroli -species2 mus_pahari -kb 10 -output trial_b -reg_conf /nfs/users/nfs_w/wa2/mouse_reg_livemirror.conf
+    example run : perl get_genomic_rearrangements.pl -species1 mus_caroli -species2 mus_pahari -kb 10 -output trial_b -reg_conf /nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror.conf
 
 
 =cut
 
-
-#!/usr/bin/env perl
-$| = 1;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Registry;
@@ -43,20 +43,25 @@ GetOptionsFromArray(
 
 );
 
+$| = 1;
 
 
-$reg_conf ||= '/nfs/users/nfs_w/wa2/mouse_reg_livemirror.conf';
+$reg_conf ||= '/nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror.conf';
 die("Please provide species of interest (-species1 & -species2) and the minimum alignment block size (-base) and output files (-o1) ") unless( defined($ref) && defined($non_ref)&& defined($base)&& defined($output1_file) );
 
 my $kilobase = $base * 1000;
 
 my $registry = 'Bio::EnsEMBL::Registry';
-$registry->load_all($reg_conf);
+$registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $mlss_adap  = $registry->get_adaptor( 'mice_merged', 'compara', 'MethodLinkSpeciesSet' );
 my $gblock_adap = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomicAlignBlock' );
 my $GDB_adaptor = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomeDB' );
+#my $mlss_adap  = $registry->get_adaptor( 'Multi', 'compara', 'MethodLinkSpeciesSet' );
+#my $gblock_adap = $registry->get_adaptor( 'Multi', 'compara', 'GenomicAlignBlock' );
+#my $GDB_adaptor = $registry->get_adaptor( 'Multi', 'compara', 'GenomeDB' );
 my $mlss = $mlss_adap->fetch_by_method_link_type_registry_aliases( "LASTZ_NET", [ $ref, $non_ref ] );
+#print STDOUT "Starting part 22222222222222222222222222222 \n";
 #print $mlss, " mlssssssssssssssssss\n";
 my @gblocks = @{ $gblock_adap->fetch_all_by_MethodLinkSpeciesSet( $mlss ) };
 
@@ -79,10 +84,11 @@ while ( my $gblock = shift @gblocks ) {
     $whole_gblocks_hash_ref->{$gblock}=$gblock;
     $count ++;
 #	if ($count == 40){
+#        print STDOUT "Starting part 22222222222222222222222222222 \n";
 #		print Dumper(\%gblocks_hash);
 #		last;
 #	}
-
+#die;
 }
 
 #print STDOUT "Starting part 22222222222222222222222222222 \n";
@@ -121,7 +127,10 @@ while (my $key = shift (@keys)) {
                 my $start = $ref_gns1->dnafrag_start();
                 my $end = $ref_gns1->dnafrag_end();
                 my $chr = $ref_gns1->dnafrag()->name();
-                print OUT1 $chr, "\t\t",$length, "\t\t", $start ,"\t\t", $end, "\t\t", $whole_gblocks_hash_ref->{$gbs[0]}->dbID(),"\n\n";
+                my $non_ref_start = $non_ref_gns1->dnafrag_start();
+                my $non_ref_end = $non_ref_gns1->dnafrag_end();
+                my $non_ref_chr = $non_ref_gns1->dnafrag_id();
+                print OUT1 $chr, "\t\t", $start ,"\t\t", $end, "\t\t", $non_ref_chr, "\t\t", $non_ref_start, "\t\t", $non_ref_end, "\n", $whole_gblocks_hash_ref->{$gbs[0]}->dbID(),"\n\n//\n";
                 $no_of_col_blocks ++;
 #                $result_inner_hash_ref->{$key}{$counter}=[$length,$gbs[0]];
                 $counter ++;
@@ -141,12 +150,8 @@ while (my $key = shift (@keys)) {
         my $remove_ref={};
         while (my $q_gb = shift @chr_gblocks_sorted) {
 
-            if( exists $remove_ref->{$q_gb}) {
-#                print " 111111 yAlreadyyyyyy in remove so skipping ", $q_gb, "\n";
-                next;
-            }
-#            print "FIRST while looooooooop  ", scalar @chr_gblocks_sorted," \n\n";
-#            print $q_gb, "  ????????????????\n\n";
+            next if ( exists $remove_ref->{$q_gb}); 
+
             my $non_ref_gns0 = $whole_gblocks_hash_ref->{$q_gb}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
             my $ref_gns0 = $whole_gblocks_hash_ref->{$q_gb}->get_all_GenomicAligns([$ref_gdbID])->[0];
         
@@ -155,14 +160,10 @@ while (my $key = shift (@keys)) {
             my @merged;
             push @merged, $q_gb;
             $remove_ref->{$q_gb} = 1;
-
+            #loop through the rest of the list to extend the merged block
             foreach my $t_gb (@chr_gblocks_sorted) {
 
-                if( exists $remove_ref->{$t_gb}) {
-#                    print " 22222222 yAlreadyyyyyy in remove so skipping ", $t_gb, "\n";
-                    next;
-                }
-#                print "FOREACH  looooooooop ", scalar @chr_gblocks_sorted, " \n\n";
+                next if ( exists $remove_ref->{$t_gb}); 
 
                 my $non_ref_gns2 = $whole_gblocks_hash_ref->{$t_gb}->get_all_GenomicAligns([$non_ref_gdbID])->[0];
                 my $ref_gns2 = $whole_gblocks_hash_ref->{$t_gb}->get_all_GenomicAligns([$ref_gdbID])->[0];
@@ -196,12 +197,15 @@ while (my $key = shift (@keys)) {
                 $length += $ref_gns3->length();
 
             }
-
+            #find the extreme start and extreme end of the the blocks.
             if ($length > $kilobase) { 
 
                 my $start=2000000000000000000000; 
                 my $end=0;
                 my $chr;
+                my $non_ref_start= 2000000000000000000000;
+                my $non_ref_end=0;
+                my $non_ref_chr;
                 my $block_ids;
 #           print $temp[0] ,"ggggggggggggg\n";
                 foreach my $gbk (@merged) {
@@ -219,9 +223,19 @@ while (my $key = shift (@keys)) {
                     if ($end < $ref_gns4->dnafrag_end()){
                         $end = $ref_gns4->dnafrag_end();
                     }
+
+                    $non_ref_chr = $non_ref_gns4->dnafrag()->name();
+                    if ($non_ref_start > $non_ref_gns4->dnafrag_start()){
+                        $non_ref_start = $non_ref_gns4->dnafrag_start();
+                    }
+
+                    if ($non_ref_end < $non_ref_gns4->dnafrag_end()){
+                        $non_ref_end = $non_ref_gns4->dnafrag_end();
+                    }
+
                 }
 #                print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n";
-                print OUT1 $chr, "\t\t",$length, "\t\t", $start ,"\t\t", $end, $block_ids,"\n\n";
+                print OUT1 $chr, "\t\t", $start ,"\t\t", $end, ,"\t\t",$non_ref_chr,"\t\t",$non_ref_start ,"\t\t",$non_ref_end,"\n",$block_ids,"\n\n//\n";
                 $no_of_col_blocks ++;
 #                unshift @merged, $length;
 

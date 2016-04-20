@@ -47,13 +47,14 @@ while the BED file contains the phylogenetic tree associated with each region.
 perl get_ancestral_sequence.pl --help
 
 perl get_ancestral_sequence.pl
-    [--url main_ensembl_url]
-    [--conf|--registry registry_file]
-    [--compara_url url_of_compara_database]
-    [--species name_of_query_species]
-    [--alignment_set name_of_species_set]
-    [--mlss_id mlss_id]
-    [--dir directory_name]
+    [--alignment_db   url/registry alias for EPO alignments ]
+    [--ancestral_db   url/registry alias for ancestral core ]
+    [--reg_conf       registry config file                  ]
+    [--species        name of query species                 ]
+    [--alignment_set  name of species set                   ]
+    [--mlss_id        mlss id                               ]
+    [--dir            directory name for output             ]
+    [--debug          run in debug mode                     ]
 
 =head1 OPTIONS
 
@@ -71,20 +72,18 @@ perl get_ancestral_sequence.pl
 
 =over
 
-=item B<[--url main_ensembl_url]>
+=item B<[--alignment_db url_or_reg_alias_for_epo]>
 
-URL of Ensembl databases, e.g. mysql://anonymous@ensembldb.ensembl.org/
+URL of EPO database, e.g. mysql://anonymous@ensembldb.ensembl.org/
+or registry_alias
+
+=item B<[--ancestral_db url_or_reg_alias_for_ancestral_core]>
+
+The core ancestral database. May be a URL or a registry alias
 
 =item B<[--conf|--registry registry_configuration_file]>
 
-The Bio::EnsEMBL::Registry configuration file. If none given,
-the one set in ENSEMBL_REGISTRY will be used if defined, if not
-~/.ensembl_init will be used.
-
-=item B<[--compara_url url_of_compara_database]>
-
-The compara database that contains the EPO alignment. If none given,
-the script will try to connect to the "Multi" database
+The Bio::EnsEMBL::Registry configuration file
 
 =back
 
@@ -117,6 +116,11 @@ The name of the species set of the alignment (default: "primates")
 
 Where to dump all the files. Defaults to "${species_production_name}_ancestor_${species_assembly}_e${ensembl_version}"
 
+=item B<[--debug]>
+
+Run script in debug mode. Script halts after verification that all databases can be
+seen. Extra verbose. No output files created.
+
 =back
 
 =head2 Examples
@@ -130,27 +134,30 @@ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/ancestral_sequences/get_ances
 
 use Bio::EnsEMBL::Registry;
 use Getopt::Long;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Data::Dumper;
+
+no warnings 'uninitialized';
 
 my $reg = "Bio::EnsEMBL::Registry";
 
-my $help;
-my $registry_file;
-my $url;
-my $compara_url;
-my $species_name = "Homo sapiens";
+my $species_name = "homo_sapiens";
 my $alignment_set = "primates";
-my $mlss_id;
 my $dir = '';
+my $debug = 0;
+my ( $default_aln_alias, $default_anc_alias ) = ( 'Multi', 'ancestral_curr' );
+my ( $help, $mlss_id, $alignment_db, $ancestral_db, $registry_file );
 
 GetOptions(
   "help" => \$help,
-  "url=s" => \$url,
-  "compara_url=s" => \$compara_url,
-  "conf|registry=s" => \$registry_file,
+  "alignment_db=s" => \$alignment_db,
+  "ancestral_db=s" => \$ancestral_db,
+  "conf|reg_conf=s" => \$registry_file,
   "species=s" => \$species_name,
   "alignment_set=s" => \$alignment_set,
   "mlss_id=i" => \$mlss_id,
   "dir=s" => \$dir,
+  "debug" => \$debug,
 );
 
 # Print Help and exit if help is requested
@@ -158,29 +165,59 @@ if ($help) {
   exec("/usr/bin/env perldoc $0");
 }
 
-if ($registry_file) {
-  die "Registry file '$registry_file' doesn't exist\n" if (!-e $registry_file);
-  $reg->load_all($registry_file, 1);
-} elsif ($url) {
-  $reg->load_registry_from_url($url, 1);
-} else {
-  $reg->load_all();
-}
+my ( $aln_url, $anc_url, $aln_alias, $anc_alias, $compara_dba );
 
-my $compara_dba;
-if ($compara_url) {
-  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-  $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara_url);
-} else {
-  $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
-}
+# check if alignment and ancestral dbs are URLs or registry aliases
+if ( defined $alignment_db && $alignment_db =~ m/^mysql:\/\// ) { $aln_url = $alignment_db; }
+else { $aln_alias = $alignment_db; }
+if ( defined $ancestral_db && $ancestral_db =~ m/^mysql:\/\// ) { $anc_url = $ancestral_db; }
+else { $anc_alias = $ancestral_db; }
 
-# Check that the "ancestral_sequences" species is available
-if (not $reg->get_DBAdaptor('ancestral_sequences', 'core')) {
-  if ($reg->get_DBAdaptor('ancestral_curr', 'core')) {
-    # 'ancestral_curr' is the name of the database in the production_reg_conf.pl
-    $reg->add_alias('ancestral_curr', 'ancestral_sequences');
-  }
+print "aln_url: $aln_url\taln_alias : $aln_alias\nanc_url : $anc_url\tanc_alias : $anc_alias\n" if ( $debug );
+
+# if only aliases are defined, a reg_conf is compulsory
+die ( "ERROR: aliases detected ('$aln_alias' & '$anc_alias'), but no registry file was given" ) if ( (defined $aln_alias || defined $anc_alias) && ! defined $registry_file );
+
+# load DBs passed as URLs
+if ( defined $aln_url || defined $anc_url ) {
+    if ( defined $aln_url ) {
+        print "Using $aln_url as compara DBA\n" if ( $debug );
+        $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$aln_url);
+
+        # make sure locators are present in genome_db when no ancestral DB is specified
+        if ( ! defined $anc_url ) {
+            my $gdb_adaptor = $compara_dba->get_GenomeDBAdaptor();
+            my $gdb         = $gdb_adaptor->fetch_by_name_assembly( $species_name );
+            die ( "ERROR: $aln_url is missing genome_db locators for $species_name" ) unless ( $gdb->locator );
+        }
+
+    }
+    if ( defined $anc_url ){
+        $anc_url .= "?group=core&species=$species_name";
+        print "Loading $anc_url into registry\n" if ( $debug );
+        $reg->load_registry_from_url( $anc_url );
+    }
+}
+elsif ( $registry_file ) {
+    print ( "Loading $registry_file into registry\n" ) if ( $debug );
+    $reg->load_all($registry_file, "verbose", 0, 0, "throw_if_missing");
+    
+    $anc_alias ||= $default_anc_alias;
+    $aln_alias ||= $default_aln_alias;
+
+    print "Using following aliases:\n\tancestral : $anc_alias\n\talignment : $aln_alias\n" if ( $debug );
+
+    $compara_dba = $reg->get_DBAdaptor($aln_alias, "compara");
+    $reg->add_alias($anc_alias, 'ancestral_sequences') if ( ! $reg->get_DBAdaptor('ancestral_sequences', 'core') && $reg->get_DBAdaptor($anc_alias, 'core') );
+} 
+else {
+    print "Loading live (ensembldb.ensembl.org) DB into registry\n" if ( $debug );
+    $reg->load_registry_from_db(
+      -host=>'ensembldb.ensembl.org',
+      -user=>'anonymous',
+      -db_version => 83
+    );
+    $compara_dba = $reg->get_DBAdaptor( $default_aln_alias, 'compara' );
 }
 
 my $species_scientific_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_scientific_name();
@@ -188,11 +225,7 @@ my $species_production_name = $reg->get_adaptor($species_name, "core", "MetaCont
 my $species_assembly = $reg->get_adaptor($species_name, "core", "CoordSystem")->fetch_all->[0]->version();
 my $ensembl_version = $reg->get_adaptor($species_name, "core", "MetaContainer")->list_value_by_key('schema_version')->[0];
 
-if (!$dir) {
-  $dir = "${species_production_name}_ancestor_${species_assembly}_e${ensembl_version}";
-}
 
-system("mkdir -p $dir");
 
 my $slice_adaptor = $reg->get_adaptor($species_name, "core", "Slice");
 
@@ -213,6 +246,17 @@ if (!$mlss) {
 }
 die "Couldn't find a MLSS for the EPO $alignment_set alignment\n" unless $mlss;
 warn sprintf("Found MLSS mlss_id=%d name='%s'\n", $mlss->dbID, $mlss->name);
+
+if ( $debug ) {
+    print "\nRan in debug mode. No files created. Configuration appears good.\n\n";
+    exit(0);
+}
+
+if (!$dir) {
+    $dir = "${species_production_name}_ancestor_${species_assembly}_e${ensembl_version}";
+}
+
+system("mkdir -p $dir");
 
 my $compara_dbc = $compara_dba->dbc;
 

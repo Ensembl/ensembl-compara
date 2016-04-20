@@ -23,9 +23,9 @@ $output_file ||= 'breakpoints.tsv';
 die("Please provide species of interest (-s1 & -s2)") unless( defined($species1) && defined($species2) );
 
 my $registry = 'Bio::EnsEMBL::Registry';
-$registry->load_all($reg_conf);
-#$registry->load_registry_from_url( 'mysql://ensadmin:ensembl@compara1:3306/cc21_ensembl_compara_master' );
-#$registry->load_registry_from_url( 'mysql://ensadmin:ensembl@compara4/wa2_Pahari_EiJ_core_80' );
+$registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
+#$registry->load_registry_from_url( "mysql://ensadmin:$ENV{ENSADMIN_PSW}@compara1:3306/cc21_ensembl_compara_master" );
+#$registry->load_registry_from_url( "mysql://ensadmin:$ENV{ENSADMIN_PSW}@compara4/wa2_Pahari_EiJ_core_80" );
 
 my $mlss_adap       = $registry->get_adaptor( 'mice_merged', 'compara', 'MethodLinkSpeciesSet' );
 my $gblock_adap     = $registry->get_adaptor( 'mice_merged', 'compara', 'GenomicAlignBlock' );

@@ -233,7 +233,7 @@ my %methods_to_skip = map {$_=>1} qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSE
 
 #################################################
 ## Get the DBAdaptors from the Registry
-Bio::EnsEMBL::Registry->load_all($reg_conf, 1);
+Bio::EnsEMBL::Registry->load_all($reg_conf, "verbose", 0, 0, "throw_if_missing") if $reg_conf;
 
 my $master_dba;
 if ($master =~ /mysql:\/\//) {
@@ -272,6 +272,9 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 
 #Allow method_link_species_sets to be specified as either --mlss mlss1 --mlss mlss2 --mlss mlss3 or --mlss mlss1,mlss2,mlss3
 @$mlsss = split(/,/, join(',', @$mlsss));
+
+# If neither --collection nor --mlss is given, only take current species
+my $filter_current = ($collection or scalar(@$mlsss)) ? 0 : 1;
 
 ## Get all the genome_dbs with a default assembly
 my $all_default_genome_dbs = get_all_default_genome_dbs($master_dba, $species, $mlsss, $collection);
@@ -569,7 +572,7 @@ sub get_all_method_link_species_sets {
     my $these_method_link_species_sets =
         $method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db);
     foreach my $this_method_link_species_set (@{$these_method_link_species_sets}) {
-      next unless $this_method_link_species_set->is_current;    # this relies on last_release
+      next if $filter_current and !$this_method_link_species_set->is_current;
       my $all_included = 1;
       foreach my $this_included_genome_db (@{$this_method_link_species_set->species_set_obj->genome_dbs()}) {
         if (!defined($these_genome_dbs->{$this_included_genome_db->dbID})) {
@@ -616,9 +619,9 @@ sub get_all_species_sets_with_tags {
     $these_genome_dbs->{$this_genome_db->dbID} = $this_genome_db;
   }
 
-  my $these_species_sets = $species_set_adaptor->fetch_all_current();
+  my $these_species_sets = $filter_current ? $species_set_adaptor->fetch_all_current() : $species_set_adaptor->fetch_all();
   foreach my $this_species_set (@{$these_species_sets}) {
-    next if (!$this_species_set->get_all_tags);
+    next if (!$this_species_set->get_all_tags and !($this_species_set->name =~ /^collection-/));
     my $all_included = 1;
     foreach my $this_included_genome_db (@{$this_species_set->genome_dbs}) {
       if (!defined($these_genome_dbs->{$this_included_genome_db->dbID})) {

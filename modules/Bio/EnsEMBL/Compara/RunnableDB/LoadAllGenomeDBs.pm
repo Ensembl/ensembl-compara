@@ -75,7 +75,7 @@ sub get_all_core_dbas {
     my @core_dba_list = ();
 
     if ($registry_conf_file) {
-        Bio::EnsEMBL::Registry->load_all( $registry_conf_file );
+        $self->load_registry($registry_conf_file);
         push @core_dba_list, @{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')};
     }
 

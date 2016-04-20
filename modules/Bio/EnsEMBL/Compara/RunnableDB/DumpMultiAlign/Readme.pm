@@ -330,7 +330,7 @@ sub _print_enredo_help {
     $self->_print_paragraph("Enredo is a graph-based method. The initial graph is built from a mapping of
 a set of anchors on every genome. Note that each anchor can map several times
 on a single genome. Enredo uses this information to define co-linear regions.
-Read more about Enredo: http://www.ebi.ac.uk/~jherrero/downloads/enredo/");
+Read more about Enredo: https://github.com/jherrero/enredo");
 }
 
 sub _print_pecan_help {
@@ -341,7 +341,7 @@ sequences of practically arbitrary length. As input it takes a set of
 sequences and a phylogenetic tree. The parameters and heuristics it employs
 are highly user configurable, it is written entirely in Java and also
 requires the installation of Exonerate.
-Read more about Pecan: http://github.com/benedictpaten/pecan");
+Read more about Pecan: http://hgwdev.cse.ucsc.edu/~benedict/code/Pecan.html");
 }
 
 sub _print_ortheus_help {
@@ -349,7 +349,7 @@ sub _print_ortheus_help {
     $self->_print_paragraph("Ortheus is a probabilistic method for the inference of ancestor (a.k.a tree)
 alignments. The main contribution of Ortheus is the use of a phylogenetic
 model incorporating gaps to infer insertion and deletion events.
-Read more about Ortheus: http://github.com/benedictpaten/ortheus");
+Read more about Ortheus: http://hgwdev.cse.ucsc.edu/~benedict/code/Ortheus.html");
 }
 
 sub _print_gerp_help {
@@ -365,8 +365,8 @@ sub _print_file_grouping_help {
     my $common_species_name = lc $self->_get_species_common_name($gdb_grouping);
 
     my @par = ();
-    if ($self->param('mode') ne 'file') {
-        push @par, "Alignments are grouped by $common_species_name chromosome.";
+    if ($self->param('split_by_chromosome')) {
+        push @par, "Alignments are grouped by $common_species_name chromosome, and then by coordinate system.";
         push @par, "Alignments containing duplications in $common_species_name are dumped once per duplicated segment.";
         push @par, "The files named *.other*." . $self->param('format') . " contain alignments that do not include any $common_species_name region.";
     }

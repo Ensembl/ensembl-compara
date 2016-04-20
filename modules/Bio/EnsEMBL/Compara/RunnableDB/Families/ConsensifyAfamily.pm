@@ -46,7 +46,7 @@ sub fetch_input {
       GROUP BY fm.family_id, m2.seq_member_id
     };
 
-    my $sth = $self->compara_dba->dbc->prepare( $sql );
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute( $start_family_id, $end_family_id );
 
         # initialize it to ensure all family_ids are mentioned:
@@ -72,11 +72,16 @@ sub run {
 
     foreach my $family_id (sort {$a<=>$b} keys %$famid2srcname2descs) {
 
-        my ($cons_description, $cons_score) = scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'}})
-            ? consensify($famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'})
-            : scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'}})
-                ? consensify($famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'})
-                : ();
+        my ($cons_description, $cons_score);
+
+        #This style is more readable
+        if (scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'}})){
+            ($cons_description, $cons_score) = consensify($famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'})
+        }elsif(scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'}})){
+            ($cons_description, $cons_score) = consensify($famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'})
+        }else{
+            ($cons_description, $cons_score) = ();
+        }
 
         ($description{$family_id}, $score{$family_id}) = assemble_consensus($cons_description, int($cons_score));
     }
@@ -184,7 +189,7 @@ sub consensify {
   }
 
   # all same desc:
-  my %desc = undef;
+  my %desc = ();
   foreach my $desc (@$original_descriptions) {
     $desc{$desc}++;     
   }
@@ -203,8 +208,8 @@ sub consensify {
   }
   # this should speed things up a bit as well 
   
-  my %lcshash = undef;
-  my %lcnext  = undef;
+  my %lcshash = ();
+  my %lcnext  = ();
   my @array   = @$original_descriptions;
   while (@array) {
     # do an all-against-all LCS (longest commong substring) of the
@@ -382,7 +387,7 @@ sub assemble_consensus {
   s/\s+$//;
   s/^\s+//;
 
-  if (/^BG:.*$/ || /^EG:.*$/ || length($_) <= 2 || /^\w{1}\s\d+\w*$/) {
+  if (/^BG:.*$/ || /^EG:.*$/ || length($_) <= 2 || /^\w{1}\s\d+\w*$/ || ! /\w{3}/) {
     $_='UNKNOWN';
     $score = 0;
   }

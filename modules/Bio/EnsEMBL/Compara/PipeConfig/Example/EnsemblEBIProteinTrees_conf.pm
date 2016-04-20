@@ -135,22 +135,21 @@ sub default_options {
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
         'alignment_filtering_capacity'  => 200,
+        'loadtags_capacity'         => 200,
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 400,
         'raxml_capacity'            => 200,
         'examl_capacity'            => 400,
         'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 250,
-        'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'merge_supertrees_capacity' => 100,
         'other_paralogs_capacity'   => 150,
         'homology_dNdS_capacity'    => 300,
-        'qc_capacity'               =>   4,
-        'hc_capacity'               =>   4,
-        'decision_capacity'         =>   4,
+        'hc_capacity'               => 150,
+        'decision_capacity'         => 150,
+        'hc_post_tree_capacity'     => 100,
         'HMMer_classify_capacity'   => 400,
         'loadmembers_capacity'      =>  30,
         'HMMer_classifyPantherScore_capacity'   => 1000,
@@ -158,6 +157,7 @@ sub default_options {
         'copy_alignments_capacity'  => 50,
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
+        'ortho_stats_capacity'      => 10,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -228,6 +228,8 @@ sub default_options {
 
         # Do we want to initialise the CAFE part now ?
 
+        #Use Timetree divergence times for the GeneTree internal nodes
+        'use_timetree_times'        => 1,
     };
 }
 
@@ -243,9 +245,9 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-C0 -q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-C0 -q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'      => {'LSF' => '-C0 -q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '4Gb_8c_job'   => {'LSF' => '-C0 -q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"  -n 8' },
+         '4Gb_8c_job'   => {'LSF' => '-C0 -q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"  -n 8 span[hosts=1]' },
          '8Gb_job'      => {'LSF' => '-C0 -q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '8Gb_8c_job'   => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
+         '8Gb_8c_job'   => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8 span[hosts=1]' },
          '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },

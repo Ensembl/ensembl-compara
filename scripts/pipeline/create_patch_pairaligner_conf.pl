@@ -121,14 +121,8 @@ GetOptions(
  );
 
 #Load all the dbs via the registry
-my $compara_dba;
-if ($reg_conf) {
-    -e $reg_conf || die "'$reg_conf' does not exist ...\n";
-    Bio::EnsEMBL::Registry->load_all($reg_conf);
-    $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara_master, "compara") || die "Cannot find '$compara_master' in the Registry.\n";
-} else {
-    die "A registry file or a compara master database url must be defined";
-}
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
+my $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara_master, "compara") || die "Cannot find '$compara_master' in the Registry.\n";
 
 die "Patches must be given with --patches.\n" unless $patches;
 

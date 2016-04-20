@@ -241,11 +241,9 @@ sub _write_output {
       my $group;
 
       ## Hard trim condition (testing, this is intended for one single GAB only)
-      #$gab->_print(\*STDERR);
       if ($self->param('trim')) {
         $gab = $self->_hard_trim_gab($gab);
       }
-      #$gab->_print(\*STDERR);
       
       # Split block if it is too long and store as groups
       # Remove any blocks which contain only 1 genomic align and trim the 2

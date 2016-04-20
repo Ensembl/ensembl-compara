@@ -69,7 +69,7 @@ sub _ids_string {
 
     my @sorted_ids = sort {$a <=> $b} @genome_db_ids;
     my $string_ids = join ',', @sorted_ids;
-    return $string_ids;
+    return $string_ids || '';
 }
 
 
@@ -185,6 +185,11 @@ sub _tables {
     return ( ['species_set_header', 'sh'], ['species_set', 'ss'] );
 }
 
+sub _left_join {
+    return (
+        ['species_set', 'sh.species_set_id = ss.species_set_id'],
+    );
+}
 
 sub _columns {
     # warning _objs_from_sth implementation depends on ordering
@@ -197,10 +202,6 @@ sub _columns {
     );
 }
 
-sub _default_where_clause {
-    return 'sh.species_set_id = ss.species_set_id';
-}
-
 sub _objs_from_sth {
     my ($self, $sth) = @_;
 
@@ -211,8 +212,11 @@ sub _objs_from_sth {
 
     while ( my ($species_set_id, $name, $first_release, $last_release, $genome_db_id) = $sth->fetchrow() ) {
 
-            # gdb objects are already cached on the $gdb_adaptor level, so no point in re-caching them here
-        if( my $gdb = $gdb_cache->get($genome_db_id) ) {
+        if (!$genome_db_id) {
+            # This is the NULL row added by the LEFT JOIN
+            # It means that the set is empty
+            $ss_content_hash{$species_set_id} = [];
+        } elsif( my $gdb = $gdb_cache->get($genome_db_id) ) { # gdb objects are already cached on the $gdb_adaptor level, so no point in re-caching them here
             push @{$ss_content_hash{$species_set_id}}, $gdb;
         } else {
             warning("Species set with dbID=$species_set_id is missing genome_db entry with dbID=$genome_db_id, so it will not be fetched");
@@ -368,7 +372,7 @@ sub fetch_all_by_GenomeDB {
   Example     : my $collection = $species_set_adaptor->fetch_collection_by_name('ensembl');
   Description : Fetches the "collection" SpeciesSet object with that name
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
-  Exceptions  : thrown if $genome_name_or_id is missing
+  Exceptions  : thrown if $collection is missing
   Caller      : general
 
 =cut
@@ -379,11 +383,7 @@ sub fetch_collection_by_name {
     throw('$collection is required') unless $collection;
 
     my $all_ss = $self->fetch_all_by_name("collection-$collection");
-    my @all_current_ss = grep {$_->is_current} @$all_ss;
-    return $all_current_ss[0] if @all_current_ss;
-
-    my @sorted_ss = sort {$b->last_release <=> $a->last_release} grep {$_->has_been_released and not $_->is_current} @$all_ss;
-    return $sorted_ss[0];
+    return $self->_find_most_recent($all_ss);
 }
 
 
@@ -392,7 +392,7 @@ sub fetch_collection_by_name {
   Arg[1]      : string $collection_name
   Arg[2]      : Bio::EnsEMBL::Compara::SpeciesSet $old_ss: The old "collection" species-set
   Arg[3]      : arrayref of Bio::EnsEMBL::Compara::GenomeDB $new_genome_dbs: The list of GenomeDBs the new collection should contain
-  Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, [@{$collection_ensembl->genome_dbs}, $new_genome_db]);
+  Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, $old_collection_object, $new_genome_db]);
   Description : Creates a new collection species-set that contains the new list of GenomeDBs
                 The method assumes that all the species names in $new_genome_dbs are different
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
@@ -410,11 +410,12 @@ sub update_collection {
 
     my $species_set = $self->fetch_by_GenomeDBs($new_genome_dbs);
 
+    # Make or update $species_set, with the correct name
     if ($species_set) {
         # The new species-set already exists in the database
         if ($species_set->name) {
             if ($species_set->name ne "collection-$collection_name") {
-                die sprintf("The species-set for the new '%s' collection content already exists and has a name ('%s'). Cannot store the collection\n", $collection_name, $species_set->name);
+                die sprintf("The species-set for the new '%s' collection content already exists and but has the name '%s' instead of 'collection-%s'. Cannot store the collection\n", $collection_name, $species_set->name, $collection_name);
             }
         } else {
             $species_set->name("collection-$collection_name");
@@ -425,63 +426,69 @@ sub update_collection {
         $self->store($species_set);
     }
 
-    # At this stage, $species_set is stored with the correct name
-
-    # This is probably redundant with line 462
-    $self->make_object_current($species_set);
-
     if ($old_ss and ($old_ss->dbID != $species_set->dbID)) {
-        my %curr_gdb_ids = map {$_->dbID => 1} @{$species_set->genome_dbs};
-        # Retire all the GenomeDBs ...
-        foreach my $gdb (@{$old_ss->genome_dbs}) {
-            # ... that are not in the new set
-            next if $curr_gdb_ids{$gdb->dbID};
-            warn "Retiring ", $gdb->toString, "\n" if $gdb->is_current;
-            $gdb_a->retire_object($gdb);
-            # and the SpeciesSets they're in
-            foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
-                $self->retire_object($ss);
-                # And now the MLSSs that use the species-set
-                foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
-                    next if not $mlss->is_current;
-                    warn "Retiring mlss_id ", $mlss->dbID, " ", $mlss->name, "\n";
-                    $mlss_a->retire_object($mlss);
-                }
-            }
-        }
         if (not $old_ss->has_been_released) {
             # $old_ss is not used, so we could delete it
-            # Let's retire it instead
+            # Let's change its name instead
             $old_ss->name('tmp'.$old_ss->name);
             $self->update_header($old_ss);
         }
     }
 
-    # Enable all the GenomeDBs of the collection
-    my @released_gdbs;
-    foreach my $gdb (@{$species_set->genome_dbs}) {
-        next if $gdb->is_current;
-        push @released_gdbs, $gdb;
-        warn "Releasing ", $gdb->toString, "\n";
-        $gdb_a->make_object_current($gdb);
-    }
-
-    # And the SpeciesSets they are part of ...
-    foreach my $gdb (@released_gdbs) {
-        foreach my $ss (@{$self->fetch_all_by_GenomeDB($gdb)}) {
-            # ... if all the species in the set are enabled
-            next if grep {not $_->is_current} @{$ss->genome_dbs};
-            $self->make_object_current($ss);
-            # And now the MLSSs that use the species-set
-            foreach my $mlss (@{$mlss_a->fetch_all_by_species_set_id($ss->dbID)}) {
-                next if $mlss->is_current;
-                warn "Releasing mlss_id ", $mlss->dbID, " ", $mlss->name, "\n";
-                $mlss_a->make_object_current($mlss);
-            }
-        }
-    }
-
     return $species_set;
+}
+
+######################################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor #
+######################################################################
+
+=head2 retire_object
+
+  Arg[1]      : Bio::EnsEMBL::Compara::SpeciesSet
+  Example     : $species_set_adaptor->retire_object($ss);
+  Description : Mark the SpeciesSet as retired, i.e. with a last_release older than the current version
+                Also mark all the related MethodLinkSpeciesSets as retired
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub retire_object {
+    my ($self, $ss) = @_;
+    # Update the fields in the table
+    $self->SUPER::retire_object($ss);
+    # Also update the linked MethodLinkSpeciesSets
+    my $mlss_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor;
+    foreach my $mlss (@{$mlss_adaptor->fetch_all_by_species_set_id($ss->dbID)}) {
+        $mlss_adaptor->retire_object($mlss);
+    }
+}
+
+
+=head2 make_object_current
+
+  Arg[1]      : Bio::EnsEMBL::Compara::SpeciesSet
+  Example     : $species_set_adaptor->make_object_current($ss);
+  Description : Mark the SpeciesSet as current, i.e. with a defined first_release and an undefined last_release
+                Also mark all the contained GenomeDBs as current
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_object_current {
+    my ($self, $ss) = @_;
+    # Update the fields in the table
+    $self->SUPER::make_object_current($ss);
+    # Also update the linked GenomeDBs
+    my $gdb_adaptor = $self->db->get_GenomeDBAdaptor;
+    foreach my $gdb (@{$ss->genome_dbs}) {
+        $gdb_adaptor->make_object_current($gdb);
+    }
 }
 
 

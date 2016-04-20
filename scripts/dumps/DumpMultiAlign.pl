@@ -14,23 +14,6 @@
 # limitations under the License.
 
 
-my $description = q{
-###########################################################################
-##
-## PROGRAM DumpMultiAlign.pl
-##
-## AUTHORS
-##    Abel Ureta-Vidal
-##    Javier Herrero
-##
-## DESCRIPTION
-##    This script dumps (pairwise or multiple) genomic alignments from
-##    an EnsEMBL Compara Database.
-##
-###########################################################################
-
-};
-
 =head1 NAME
 
 DumpMultiAlign.pl
@@ -258,6 +241,9 @@ perl DumpMultiAlign.pl --species "human" \
 
 =cut
 
+use strict;
+use warnings;
+
 my $usage = qq{
 perl DumpMultiAlign.pl
   Getting help:
@@ -341,9 +327,6 @@ perl DumpMultiAlign.pl
   SEE THE PERLDOC FOR MORE HELP!
 };
 
-use strict;
-use warnings;
-
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::SimpleAlign;
@@ -351,6 +334,7 @@ use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Getopt::Long;
+use Pod::Usage;
 
 my $reg = "Bio::EnsEMBL::Registry";
 my $reg_conf;
@@ -408,15 +392,14 @@ GetOptions(
 
 # Print Help and exit
 if ($help) {
-  print $description, $usage;
-  exit(0);
+  pod2usage({-exitvalue => 0, -verbose => 2});
 }
 # Configure the Bio::EnsEMBL::Registry
 # Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
 # if all the previous fail.
 $reg->no_version_check(1);
 if ($reg_conf) {
-  $reg->load_all($reg_conf);
+  $reg->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 } else {
     #Bio::EnsEMBL::Registry->load_registry_from_url($db);
     #Allow multiple dbs to be input 
@@ -460,8 +443,7 @@ if ($method_link_species_set_id) {
 }
 
 unless ($method_link_species_set) {
-  print $description, $usage;
-  exit(1);
+  pod2usage({-exitvalue => 1, -verbose => 2});
 }
 
 my $conservation_score_mlss;
@@ -601,6 +583,7 @@ while(1) {
 	} else {
 	    $gab = $genomic_align_set_adaptor->fetch_by_dbID($_);
 	}
+	die "Cannot find the block with dbID=$_" unless $gab;
 	push @$genomic_align_blocks, $gab;
     }
     close(FILE);

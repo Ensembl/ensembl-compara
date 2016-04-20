@@ -1,0 +1,41 @@
+647	coding_exon_coverage_111	16114797
+647	coding_exon_coverage_112	20700887
+647	coding_exon_coverage_142	23761981
+647	coding_exon_coverage_87	19638105
+647	coding_exon_length_111	29512185
+647	coding_exon_length_112	22798877
+647	coding_exon_length_142	25934237
+647	coding_exon_length_87	23643636
+647	ensembl_release	74
+647	genome_coverage_111	933866240
+647	genome_coverage_112	968012687
+647	genome_coverage_142	969389724
+647	genome_coverage_87	988572641
+647	genome_length_111	1799143587
+647	genome_length_112	1061998909
+647	genome_length_142	1046932099
+647	genome_length_87	1233186341
+647	max_align	957318
+647	num_blocks	23990
+719	ensembl_release	76
+719	max_align	17175
+719	non_reference_species	gallus_gallus
+719	non_ref_coding_exon_length	25934237
+719	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+719	non_ref_genome_coverage	66421503
+719	non_ref_genome_length	1046932099
+719	non_ref_insertions	240824
+719	non_ref_matches	16177107
+719	non_ref_mis_matches	5265658
+719	non_ref_uncovered	4250648
+719	num_blocks	309354
+719	param	T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac
+719	reference_species	homo_sapiens
+719	ref_coding_exon_length	35228305
+719	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 1,"masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0}
+719	ref_genome_coverage	81899388
+719	ref_genome_length	3096649726
+719	ref_insertions	357644
+719	ref_matches	19293670
+719	ref_mis_matches	6545663
+719	ref_uncovered	9031328

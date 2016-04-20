@@ -13,34 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-my $description = q{
-
-###########################################################################
-##
-## PROGRAM DumpConservationScores.pl
-##
-## DESCRIPTION
-##
-##   This script dumps conservation scores from an EnsEMBL Compara
-##   database. It writes the GERP score for each alignment position in a
-##   chromosome for a given species. If automatic_bsub is set, each toplevel 
-##   region can be submitted as a separate job to LSF.
-##   It currently only writes in wigFix (http://genome.ucsc.edu/goldenPath/help/wiggle.html)
-##   or BED (http://genome.ucsc.edu/FAQ/FAQformat.html) formats
-##
-##
-## CONTACT
-##
-##  Please email comments or questions to the public Ensembl
-##  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-##
-##  Questions may also be sent to the Ensembl help desk at
-##  <http://www.ensembl.org/Help/Contact>.
-##
-###########################################################################
-};
-
-
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
@@ -91,6 +63,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Getopt::Long;
+use Pod::Usage;
 
 my $reg = "Bio::EnsEMBL::Registry";
 my $species = "Homo sapiens";
@@ -236,8 +209,7 @@ perl dump_conservationScores_in_wigfix.pl
 
 #Print description and usage statements if request help
 if ($help || $num_args == 0) {
-    print $description, $usage;
-    exit(0);
+    pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
 #Check the format is valid
@@ -250,7 +222,7 @@ unless (lc($format) eq "wigfix" || lc($format) eq "bed") {
 #when submitting the jobs
 my $bsub_cmd;
 if ($reg_conf and $dbname) {
-    $reg->load_all($reg_conf);
+    $reg->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
     $bsub_cmd .= " --reg_conf $reg_conf --dbname $dbname";
 } elsif ($url) {
     if ($db_version) {

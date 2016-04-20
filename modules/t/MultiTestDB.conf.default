@@ -1,0 +1,44 @@
+# This provides a default set of configurations which is merged with your
+# provided MultiTestDB.conf.
+#
+# You should provide a MultiTestDB.conf which defines the databases
+
+{ 
+ 'databases' => { 
+    'multi' => { 
+    	'compara'                => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+    	'OrthologQM_GeneOrder'   => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+    },
+    'orth_qm_test' => {
+    	'cc21_pair_species' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+    	'cc21_prepare_orth' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+        'cc21_prev_orth_test' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+    	'cc21_select_mlss'  => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+    },
+    'homo_sapiens' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'mus_musculus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'felis_catus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'pan_troglodytes' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+ }
+
+#uncomment to use preloaded databases (useful when doing lots of testing)
+,'preloaded' => { 
+#    'multi' => { 'compara'    => 'kb3_ensembl_compara_test_dup' },
+#    'homo_sapiens' => { 'core' => 'kb3_homo_sapiens_core_test' },
+#    'mus_musculus' => { 'core' => 'kb3_mus_musculus_core_test' },
+#    'rattus_norvegicus' => { 'core' => 'kb3_rattus_norvegicus_core_test' },
+#    'equus_caballus' => { 'core' => 'kb3_equus_caballus_core_test' },
+#    'felis_catus' => { 'core' => 'kb3_felis_catus_core_test' },
+#    'canis_familiaris' => { 'core' => 'kb3_canis_familiaris_core_test' },
+#    'gorilla_gorilla' => { 'core' => 'kb3_gorilla_gorilla_core_test' },
+#    'loxodonta_africana' => { 'core' => 'kb3_loxodonta_africana_core_test' },
+#    'oryctolagus_cuniculus' => { 'core' => 'kb3_oryctolagus_cuniculus_core_test' },
+#    'pan_troglodytes' => { 'core' => 'kb3_pan_troglodytes_core_test' },
+#    'sus_scrofa' => { 'core' => 'kb3_sus_scrofa_core_test' },
+#    'tarsius_syrichta' => { 'core' => 'kb3_tarsius_syrichta_core_test' },
+#    'macaca_mulatta' => { 'core' => 'kb3_macaca_mulatta_core_test' },
+#    'pongo_abelii' => { 'core' => 'kb3_pongo_abelii_core_test' },
+#    'callithrix_jacchus' => { 'core' => 'kb3_callithrix_jacchus_core_test' },
+#    'bos_taurus' => { 'core' => 'kb3_bos_taurus_core_test' },
+ } 
+}

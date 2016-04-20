@@ -65,7 +65,7 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 sub store {
   my ($self,$chunkSet) = @_;
 
-  assert_ref($chunkSet, 'Bio::EnsEMBL::Compara::Production::DnaFragChunkSet');
+  assert_ref($chunkSet, 'Bio::EnsEMBL::Compara::Production::DnaFragChunkSet', 'chunkSet');
 
   my $description = $chunkSet->description or undef;
 

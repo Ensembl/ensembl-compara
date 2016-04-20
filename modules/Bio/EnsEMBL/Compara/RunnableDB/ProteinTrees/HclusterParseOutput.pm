@@ -68,7 +68,7 @@ sub param_defaults {
     return {
             'sort_clusters'         => 1,
             'member_type'           => 'protein',
-            'immediate_dataflow'    => 0,
+            'immediate_dataflow'    => 1,
     };
 }
 

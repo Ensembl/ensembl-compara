@@ -31,7 +31,6 @@ sub default_options {
 
 	'rel_suffix'	=> 80,
 	'prev_release'  => 78,
-        'pipeline_name' => 'EPO_low_'.$self->o('ensembl_release').$self->o('rel_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
 	'pairwise_exception_location' => { },
@@ -322,7 +321,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'create_low_coverage_genome_jobs',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
-				'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id') . ' AND genome_db_id <> 63 GROUP BY genomic_align_block_id',
+				'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id') . ' AND coord_system_name != "ancestralsegment" GROUP BY genomic_align_block_id',
 				'fan_branch_code' => 2,
 			       },
 		-flow_into => {
@@ -454,7 +453,8 @@ sub pipeline_analyses {
             {   -logic_name => 'stats_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -flow_into  => {
-                                2 => [ 'multiplealigner_stats' ],
+                    '2->A' => [ 'multiplealigner_stats' ],
+                    '1->A' => [ 'block_size_distribution' ],
                                },
             },
             
@@ -472,6 +472,13 @@ sub pipeline_analyses {
 	      -rc_name => '3.6Gb',             
               -hive_capacity => 100,  
             },
+
+        {   -logic_name => 'block_size_distribution',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
+            -parameters => {
+                'mlss_id'   => $self->o('low_epo_mlss_id'),
+            },
+        },
 
      ];
 }

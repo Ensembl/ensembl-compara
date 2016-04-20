@@ -55,20 +55,20 @@ package Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::ApiVersion;
-
-use Bio::EnsEMBL::Utils::Exception;
 use DBI qw(:sql_types);
+use List::Util qw(max);
+
+use Bio::EnsEMBL::ApiVersion;
+use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
-
 
 
 =head2 fetch_all_current
 
   Example     : $object_name->fetch_all_current();
-  Description : 
-  Returntype  : 
+  Description : Returns all the objects that are in the current release
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::StorableWithReleaseHistory
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -83,9 +83,10 @@ sub fetch_all_current {
 
 =head2 fetch_all_by_release
 
-  Example     : $object_name->fetch_all_by_release();
-  Description : 
-  Returntype  : 
+  Arg[0]      : integer $release_number
+  Example     : $object_name->fetch_all_by_release(76);
+  Description : Returns all the objects present in this release of Ensembl
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::StorableWithReleaseHistory
   Exceptions  : none
   Caller      : general
   Status      : Stable
@@ -101,8 +102,9 @@ sub fetch_all_by_release {
 
 =head2 update_first_last_release
 
+  Arg[1]      : Bio::EnsEMBL::Compara::StorableWithReleaseHistory
   Example     : $mlss_adaptor->update_first_last_release($mlss);
-  Description : Generic method to update first/last_release in the database
+  Description : Generic method to update first/last_release in the database given the current values of the object
   Returntype  : none
   Exceptions  : none
   Caller      : general
@@ -112,12 +114,9 @@ sub fetch_all_by_release {
 
 sub update_first_last_release {
     my ($self, $object) = @_;
-    my %table = (
-        'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet' => ['method_link_species_set', 'method_link_species_set_id'],
-        'Bio::EnsEMBL::Compara::GenomeDB' => ['genome_db', 'genome_db_id'],
-        'Bio::EnsEMBL::Compara::SpeciesSet' => ['species_set_header', 'species_set_id'],
-    );
-    my $sql = sprintf('UPDATE %s SET first_release = ?, last_release = ? WHERE %s = ?', @{$table{ref($object)}});
+    my $table= join(" ", @{($self->_tables)[0]});
+    my $column = ($self->_columns)[0];
+    my $sql = sprintf('UPDATE %s SET first_release = ?, last_release = ? WHERE %s = ?', $table, $column);
     $self->dbc->do($sql, undef, $object->first_release, $object->last_release, $object->dbID);
     $self->_id_cache->put($object->dbID, $object);
 }
@@ -125,7 +124,8 @@ sub update_first_last_release {
 
 =head2 retire_object
 
-  Example     : $genome_db_adaptor->retire_object();
+  Arg[1]      : Bio::EnsEMBL::Compara::StorableWithReleaseHistory
+  Example     : $genome_db_adaptor->retire_object($mlss);
   Description : Mark the object as retired, i.e. with a last_release older than the current version
   Returntype  : none
   Exceptions  : none
@@ -139,7 +139,7 @@ sub retire_object {
     return if not $object->is_current;
     if ($object->first_release >= software_version()) {
         # The object was scheduled for release but is now cancelled
-        $self->first_release(undef);
+        $object->first_release(undef);
     } else {
         $object->last_release(software_version() - 1);
     }
@@ -149,7 +149,8 @@ sub retire_object {
 
 =head2 make_object_current
 
-  Example     : $genome_db_adaptor->make_object_current();
+  Arg[1]      : Bio::EnsEMBL::Compara::StorableWithReleaseHistory
+  Example     : $genome_db_adaptor->make_object_current($mlss);
   Description : Mark the object as current, i.e. with a defined first_release and an undefined last_release
   Returntype  : none
   Exceptions  : none
@@ -161,11 +162,47 @@ sub retire_object {
 sub make_object_current {
     my ($self, $object) = @_;
     return if $object->is_current;
-    $object->first_release(software_version()) unless $object->has_been_released;
+    $object->first_release(software_version()) unless $object->first_release;   # The object may already be current
     $object->last_release(undef);
     return $self->update_first_last_release($object);
 }
 
+=head2 _find_most_recent
+
+  Example     : my $latest_gdb = $self->_find_most_recent($many_human_gdbs);
+  Description : Sorts all the given objects according to their age (current and most recent first), and returns the most revent one
+  Returntype  : StorableWithReleaseHistory
+  Exceptions  : If there are ties
+  Caller      : subclasses of BaseReleaseHistoryAdaptor
+  Status      : Stable
+
+=cut
+
+sub _find_most_recent {
+    my ($self, $object) = @_;
+
+    return undef unless scalar(@$object);
+
+    my $score = sub {
+        my $g = shift;
+        # Sort criteria
+        #  1. is_current
+        #  2. highest last_release
+        #  3. highest first_release
+        # NOTE: this formula works as long as the release number is < 10000
+        my $unit = 10000;
+        return ((($g->is_current ? 1 : 0) * $unit + ($g->last_release || 0)) * $unit + ($g->first_release || 0));
+    };
+
+    my $best_score = max map {$score->($_)} @$object;
+    my @ties = grep {$score->($_) == $best_score} @$object;
+
+    if (scalar(@ties) == 1) {
+        return $ties[0];
+    }
+    # NOTE: Assume the objects have a "name" attribute, which is not defined in StorableWithReleaseHistory
+    throw(sprintf("Could not find the best %s named '%s'. There are several objects equally recent: %s\n", ref($ties[0]), $ties[0]->name, join(",", map {$_->dbID} @ties)));
+}
 
 
 package Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory;

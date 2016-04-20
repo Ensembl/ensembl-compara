@@ -183,6 +183,7 @@ sub get_available_adaptors {
         'CAFEGeneFamilyNode'    => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor',
         'HMMProfile'            => 'Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor',
         'HMMAnnot'              => 'Bio::EnsEMBL::Compara::DBSQL::HMMAnnotAdaptor',
+        'GeneTreeObjectStore'   => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeObjectStoreAdaptor',
 
     );
 

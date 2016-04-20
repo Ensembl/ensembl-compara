@@ -183,7 +183,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_by_Slice", sub
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::is_already_stored", sub {
 
     throws_ok { $dnafrag_adaptor->is_already_stored() } qr/Must have dnafrag object/, 'no argument passed';
-    throws_ok { $dnafrag_adaptor->is_already_stored($dnafrag_id) } qr/Must have dnafrag arg \[.+\]/, 'invalid dnafrag object';
+    throws_ok { $dnafrag_adaptor->is_already_stored($dnafrag_id) } qr/the attribute dnafrag produced no type.*Expected 'Bio::EnsEMBL::Compara::DnaFrag'/, 'invalid dnafrag object';
 
     my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
     my $stored_dnafrag_id = $dnafrag_adaptor->is_already_stored($dnafrag);

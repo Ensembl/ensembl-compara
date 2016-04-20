@@ -85,13 +85,9 @@ sub write_output {
     my ($name, $total_blocks);
     $sth->bind_columns(\$name,\$total_blocks);
 
-    my $tag;
-    if ($self->param('coord_system_name') eq "chromosome") {
-	$tag = "chr";
-    }
+    my $tag = $self->param('coord_system_name') eq 'chromosome' ? 'chr' : '';
 
     my $split_size = $self->param('split_size');
-    my $format = $self->param('format');
 
     while (my $row = $sth->fetchrow_arrayref) {
 

@@ -181,7 +181,7 @@ sub close {
 sub _csv_writer {
   my ($self, $_csv_writer) = @_;
   if(! defined $self->{_csv_writer}) {
-    eval 'require Text::CSV';
+    eval {require Text::CSV};
     throw('Cannot bring in Text::CSV : '.$@) if $@;
     my $csv = Text::CSV->new() or throw('Cannot use CSV: '.Text::CSV->error_diag());
     $self->{_csv_writer} = $csv;

@@ -1,8 +1,12 @@
 #!/bin/bash
 
-export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3:$PWD/ensembl-test/modules:$PWD/ensembl/modules:$PWD/modules:$PWD/ensembl-hive/modules
-export ENSEMBL_CVS_ROOT_DIR=$PWD
+export PERL5LIB=$PWD/bioperl-live:$PWD/ensembl-test/modules:$PWD/ensembl/modules:$PWD/modules:$PWD/ensembl-hive/modules:$PWD/Bio-HTS/lib:$PWD/Bio-HTS/blib/arch/auto/Bio/DB/HTS/Faidx:$PWD/Bio-HTS/blib/arch/auto/Bio/DB/HTS
 
+export ENSEMBL_CVS_ROOT_DIR=$PWD
+export TEST_AUTHOR=$USER
+echo "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK"
+perl -c $PWD/ensembl-compara/modules/Bio/EnsEMBL/Compara/RunnableDB/OrthologQM/OrthologFactory.pm
+echo "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK"
 echo "Running ensembl-compara test suite using $PERL5LIB"
 if [ "$COVERALLS" = 'true' ]; then
   PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test' perl $PWD/ensembl-test/scripts/runtests.pl -verbose $PWD/modules/t
