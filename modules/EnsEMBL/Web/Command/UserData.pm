@@ -84,7 +84,9 @@ sub upload {
 
     ## Look for the nearest feature
     my ($chr, $start, $end, $count) = $iow->nearest_feature;
-    $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+    if ($chr && $start) {
+      $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+    }
     $params->{'count'}   = $count;
 
     $params->{'species'}  = $hub->param('species') || $hub->species;

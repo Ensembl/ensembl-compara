@@ -94,6 +94,7 @@ sub content_ajax {
       else {
         my $error;
         my $nearest     = $hub->param('nearest');
+        my $count       = $hub->param('count');
         my $description = $hub->param('description');
         
         if ($nearest) {
@@ -110,7 +111,7 @@ sub content_ajax {
           }
    
           if ($hub->param('count')) { 
-            $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $hub->param('count');
+            $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
           }
 
           $html .= sprintf('
@@ -128,6 +129,10 @@ sub content_ajax {
                 join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'}),
                 $nearest
               );
+        }
+        elsif ($count) {
+          ## Maybe the user uploaded the data on a non-location page?
+          $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
         }
         else {
         
