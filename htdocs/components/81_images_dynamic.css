@@ -53,10 +53,68 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .drag_select .selector .right-border:hover{ background-color: rgba(255, 0, 0, 0.4); border: none; width: 5px; }
 .drag_select div.image_spinner            { position: absolute; opacity: 0.7; border: none; background-position: center center; background-color: #fff; width: 100%; height: 100%; top: 0; bottom: 0; }
 
+li.usertrack_highlight {
+	/*opacity: 0.8;*/
+	/*border: 1px solid red;*/
+	/*display: inline-block;*/
+	position: relative;
+}
+
+li.usertrack_highlight::after {
+  content: "Your uploaded data";
+	position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px solid black;
+  opacity: 0.25;
+  background: yellow;
+  z-index: 2;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  margin: auto;
+  font-size: 1.5em;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+@-webkit-keyframes fadeIn { from { opacity:0; } to { opacity:0.15; } }
+@-moz-keyframes fadeIn { from { opacity:0; } to { opacity:0.15; } }
+@keyframes fadeIn { from { opacity:0; } to { opacity:0.15; } }
+
 /* Track highlight on hover */
 .track_highlight:hover {
-       opacity: 0.8;
+  /*opacity: 0.8;*/
+  position: relative;
 }
+.track_highlight::before {
+  content: "";
+	position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.15;
+  border-top: 1px solid black;
+  border-bottom: 1px solid black;
+  background: yellow;
+  -webkit-animation:fadeIn ease-in 1;  /* call our keyframe named fadeIn, use animattion ease-in and repeat it only 1 time */
+  -moz-animation:fadeIn ease-in 1;
+  animation:fadeIn ease-in 1;
+	-webkit-animation-fill-mode:forwards;  /* this makes sure that after animation is done we remain at the last keyframe value (opacity: 1)*/
+	-moz-animation-fill-mode:forwards;
+	animation-fill-mode:forwards;
+	-webkit-animation-duration:.100s;
+	-moz-animation-duration:.100s;
+	animation-duration:.100s;
+}
+
+
 
 /* Hover menus */
 

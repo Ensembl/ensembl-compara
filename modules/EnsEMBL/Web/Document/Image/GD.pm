@@ -441,7 +441,7 @@ sub moveable_tracks {
         <div class="handle" style="height:%spx"%s><p></p></div>
       </li>',
       $type, $strand ? "$strand" : '',
-      $highlight ? '_highlight_userdata' : '',
+      $highlight ? '_new_userdata usertrack_highlight' : '',
       $h, $url, 3 - $t,
       $h == 0 ? ';display:none' : '',
       $h - 1,

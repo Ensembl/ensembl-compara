@@ -120,15 +120,10 @@ Ensembl.PanelManager.extend({
         
         id = id || this.generateId(container[0]);
 
-        // Highlight recently updated userdata track if the track is in viewport
-        $('._highlight_userdata').inViewport(function(px){
-          if(px && !highlighted) {
-            highlighted = true;
-            $(container).find('._highlight_userdata')
-                        .stop()
-                        .animate({opacity: 0.8}, 200)
-                        .animate({opacity: 0.8}, 1000)
-                        .animate({opacity: 1}, 2000);
+        // Remove highlight on hover
+        $(container).find('._new_userdata').on({
+          mouseover: function() {
+            $(this).removeClass('usertrack_highlight _new_userdata', 300, 'linear').finish().clearQueue();
           }
         });
       }
@@ -208,17 +203,3 @@ Ensembl.PanelManager.extend({
     }
   }
 });
-
-// Check viewport and 
-;(function($, win) {
-  $.fn.inViewport = function(cb) {
-     return this.each(function(i,el){
-       function visPx(){
-         var H = $(this).height(),
-             r = el.getBoundingClientRect(), t=r.top, b=r.bottom;
-         return cb.call(el, Math.max(0, t>0? H-t : (b<H?b:H)));  
-       } visPx();
-       $(win).on("resize scroll", visPx);
-     });
-  };
-}(jQuery, window));

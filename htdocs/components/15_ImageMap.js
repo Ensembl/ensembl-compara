@@ -687,10 +687,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     }).css('visibility', 'visible').find('li').on({
       mouseover: function() {
-        $(this).clearQueue().delay(200).addClass('track_highlight', 200, 'linear');
+        $(this).delay(200).addClass('track_highlight', 200, 'linear');
       },
       mouseout: function() {
-        $(this).clearQueue().removeClass('track_highlight', 100, 'linear');
+        $(this).removeClass('track_highlight', 100, 'linear');
       }
     }).find('div.handle').on({
       mouseover: function(e) {
@@ -702,6 +702,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $(this.parentNode).addClass('track_highlight', 200, 'linear');
        },
        mouseup: function() {
+        $(this.parentNode).removeClass('track_highlight', 100, 'linear');
+       },
+       mousemove: function() {
         $(this.parentNode).removeClass('track_highlight', 100, 'linear');
        }
      });
@@ -748,7 +751,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   sortStart: function (e, ui) {
-
     // make the placeholder similar to the actual track but slightly faded so the saturated background colour beneath gives it a highlighted effect
     ui.placeholder.css({
       backgroundImage:     ui.item.css('backgroundImage'),
@@ -756,7 +758,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       backgroundPositionY: ui.item.css('backgroundPositionY'), // IE (Chrome works with either)
       height:              ui.item.height(),
       opacity:             0.8
-    }).html(ui.item.html()).addClass(ui.item.prop('className'));
+    }).html(ui.item.html());
 
     // add some transparency to the helper (already a clone of actual track) that moves with the mouse
     ui.helper.stop().css({opacity: 0.8}).addClass('helper');
