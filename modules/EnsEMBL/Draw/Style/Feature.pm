@@ -80,21 +80,21 @@ sub create_glyphs {
 
     ## Draw title over track
     if ($track_config->get('show_subtitle')) {
-      $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
+      $self->track_config->set('subtitle_y', 0);
+      my $subtitle_height = $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
+      $subtrack_start .= $subtitle_height + 2;
     }
 
     my @features = @{$subtrack->{'features'}||[]}; 
+    my $label_height;
 
     foreach my $feature (@features) {
       ## Are we drawing transcripts or just genes?
       next if $feature->{'type'} && $feature->{'type'} eq 'gene'        && !$track_config->{'hide_transcripts'};
       next if $feature->{'type'} && $feature->{'type'} eq 'transcript'  && $track_config->{'hide_transcripts'};
 
-      $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
       my $text_info   = $self->get_text_info($feature->{'label'});
-      my $feature_row = 0;
-      my $label_row   = 0;
-      my $new_y;
+      $show_label     = $track_config->get('show_labels') && $feature->{'label'} ? 1 : 0;
 
       ## Default colours, if none set in feature
       ## Note that a feature must have either a border colour or a fill colour,
@@ -105,10 +105,24 @@ sub create_glyphs {
       }
       $feature->{'join_colour'}   ||= $feature->{'colour'} || $feature->{'bordercolour'};
       $feature->{'label_colour'}  ||= $feature->{'colour'} || $feature->{'bordercolour'};
-
+      $feature->{'_bstart'} = $feature->{'start'};
+      $feature->{'_bend'} = $feature->{'end'};
+      if($show_label) {
+        my $lwidth_bp = $text_info->{'width'}/$self->{'pix_per_bp'};
+        $feature->{'_bend'} =
+          max($feature->{'_bend'},$feature->{'_bstart'}+$lwidth_bp);
+        $label_height = max($label_height,$text_info->{'height'});
+      }
+    }
+    EnsEMBL::Draw::GlyphSet::do_bump($self,\@features);
+    foreach my $feature (@features) {
+      my $new_y;
+      my $feature_row = 0;
+      my $label_row   = 0;
+      my $text_info   = $self->get_text_info($feature->{'label'});
       ## Work out if we're bumping the whole feature or just the label
       if ($bumped) {
-        my $bump = $self->set_bump_row($feature->{'start'}, $feature->{'end'}, $show_label, $text_info);
+        my $bump = $feature->{'_bump'};
         $label_row   = $bump;
         $feature_row = $bump unless $bumped eq 'labels_only';       
       }
@@ -116,9 +130,7 @@ sub create_glyphs {
 
       ## Work out where to place the feature
       my $feature_height  = $track_config->get('height') || $text_info->{'height'};
-      $label_height       = $show_label ? $text_info->{'height'} : 0;
-
-      my $feature_width   = $feature->{'end'} - $feature->{'start'};
+      my $feature_width   = $feature->{'end'} - $feature->{'start'} + 1;
 
       if ($feature_width == 0) {
         ## Fix for single base-pair features
@@ -131,7 +143,7 @@ sub create_glyphs {
                                         : ($feature->{'end'}, $feature->{'start'});
         $drawn_start        = 0 if $drawn_start < 0;
         $drawn_end          = $slice_width if $drawn_end > $slice_width;
-        $feature_width      = $drawn_end - $drawn_start; 
+        $feature_width      = $drawn_end - $drawn_start + 1; 
       }
 
       my $labels_height   = $label_row * $label_height;
@@ -146,9 +158,10 @@ sub create_glyphs {
                       };
       
       ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
-      my $real_height   = $self->draw_feature($feature, $position) || $feature_height;
-      $real_height     += $vspacing + $add_labels;
-      push @{$heights->{$feature_row}}, $real_height;
+      $self->draw_feature($feature, $position);
+      my $extra = $self->track_config->get('extra_height') || 0;
+      my $approx_height = $feature_height + $extra;
+      push @{$heights->{$feature_row}}, ($approx_height + $vspacing + $add_labels);
     
       ## Optional label
       if ($show_label) {
@@ -156,7 +169,7 @@ sub create_glyphs {
           $new_y = $position->{'y'};
         }
         else {
-          $new_y = $position->{'y'} + $real_height;
+          $new_y = $position->{'y'} + $approx_height;
           $new_y += $labels_height if ($bumped eq 'labels_only');
         }
         $position = {
@@ -166,9 +179,7 @@ sub create_glyphs {
                       'image_width' => $slice_width,
                     };
         $self->add_label($feature, $position);
-        $real_height += $text_info->{'height'};
       }
-
     }
 
     ## Set the height of the track, in case we want anything in the lefthand margin
@@ -183,6 +194,8 @@ sub create_glyphs {
     $self->add_messages($subtrack->{'metadata'}, $subtrack_height);
   }
   $self->draw_hidden_bgd($total_height);
+  my $track_height = $track_config->get('total_height') || 0;
+  $track_config->set('total_height', $track_height + $total_height);
 
   $track_config->set('y_start', $y_start + $total_height);
   return @{$self->glyphs||[]};
@@ -228,14 +241,8 @@ sub add_label {
     $colour = 'black';
   }
 
-  ## Stop labels from overlapping edge of image
   my $x = $feature->{'start'};
   $x = 0 if $x < 0;
-  my $image_width_in_pixels = $position->{'image_width'} * $self->{'pix_per_bp'};
-  my $x_in_pixels           = $x * $self->{'pix_per_bp'}; 
-  if (($x_in_pixels + $position->{'width'}) > $image_width_in_pixels) {
-    $x = $position->{'image_width'} - ($position->{'width'} / $self->{'pix_per_bp'});
-  }
 
   my $label = {
                 font      => $self->{'font_name'},

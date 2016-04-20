@@ -36,7 +36,6 @@ sub init {
 
 sub render_normal {
   my $self = shift;
-  warn ">>> RENDERING SIGNAL";
   $self->{'my_config'}->set('drawing_style', ['Graph']);
   $self->{'my_config'}->set('height', 60);
   $self->_render_aggregate;

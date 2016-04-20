@@ -172,12 +172,10 @@ sub create_hash {
   my @parents = split(',', $self->parser->get_attribute_by_name('Parent'));
 
   my $type = $self->parser->get_type;
-  return {
+  my $feature = {
     'id'            => $id,
     'type'          => $type,
     'parents'       => \@parents,
-    'start'         => $start,
-    'end'           => $end,
     'seq_region'    => $seqname,
     'strand'        => $strand,
     'score'         => $score,
@@ -186,11 +184,21 @@ sub create_hash {
     'label_colour'  => $metadata->{'label_colour'},
     'label'         => $label,
     'href_params'   => $href_params,
-    'extra'         => [
+  };
+
+  if ($metadata->{'display'} eq 'text') {
+    $feature->{'start'} = $feature_start;
+    $feature->{'end'}   = $feature_end;
+    $feature->{'extra'} = [
                         {'name' => 'Source',  'value' => $self->parser->get_source },
                         {'name' => 'Type',    'value' => $type },
-                        ],
-  };
+                        ];
+  }
+  else {
+    $feature->{'start'} = $start;
+    $feature->{'end'}   = $end;
+  }
+  return $feature;
 }
 
 

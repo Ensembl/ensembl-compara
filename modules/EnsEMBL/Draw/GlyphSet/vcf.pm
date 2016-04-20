@@ -25,6 +25,7 @@ use strict;
 no warnings 'uninitialized';
 
 use Role::Tiny;
+use List::Util qw(max);
 
 use Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
@@ -37,7 +38,6 @@ sub can_json { return 1; }
 sub init {
   my $self = shift;
 
-  ## We only need wiggle roles, as alignment rendering has a non-standard name
   my @roles = qw(EnsEMBL::Draw::Role::Wiggle); 
   Role::Tiny->apply_roles_to_object($self, @roles);
 
@@ -50,7 +50,7 @@ sub init {
 sub render_histogram {
   my $self = shift;
   my $features = $self->get_data->[0]{'features'}{'1'};
-  return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_normal;
+  return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_simple;
 }
 
 sub render_simple {
@@ -74,9 +74,16 @@ sub render_density_bar {
   $self->{'my_config'}->set('height', 20);
   $self->{'my_config'}->set('no_guidelines', 1);
   $self->{'my_config'}->set('integer_score', 1);
+  my $colours = $self->species_defs->colour('variation');
+  $self->{'my_config'}->set('colour', $colours->{'default'}->{'default'});
+  #$self->{'data'}[0]{'metadata'}{'colour'} = $colour;
+
   ## Convert raw features into correct data format 
-  $self->{'data'}[0]{'features'}{'1'} = $self->density_features;
-  $self->render_signal;
+  my $density_features = $self->density_features;
+  $self->{'data'}[0]{'features'}{'1'} = $density_features;
+  $self->{'my_config'}->set('max_score', max(@$density_features));
+  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+  $self->_render_aggregate;
 }
 
 ############# DATA ACCESS & PROCESSING ########################
@@ -91,23 +98,29 @@ sub get_data {
     my $slice       = $self->{'container'};
     my $start       = $slice->start;
 
+    ## Allow for seq region synonyms
+    my $seq_region_names = [$slice->seq_region_name];
+    if ($self->{'config'}->hub->species_defs->USE_SEQREGION_SYNONYMS) {
+      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+    }
+
     my $vcf_adaptor = $self->vcf_adaptor;
-    ## Don't assume the adaptor can find and open the file!
-    my $consensus   = eval { $vcf_adaptor->fetch_variations($slice->seq_region_name, $slice->start, $slice->end); };
-    if ($@) {
-      $self->{'data'} = [];
-    }
-    else {
-      my $colours = $self->species_defs->colour('variation');
-      my $colour  = $colours->{'default'}->{'default'}; 
+    my $consensus;
+    foreach my $seq_region_name (@$seq_region_names) {
+      $consensus = eval { $self->vcf_adaptor->fetch_variations($seq_region_name, $slice->start, $slice->end); };
+      return [] if $@;
+      last if $consensus and @$consensus;
+    } 
+
+    my $colours = $self->species_defs->colour('variation');
+    my $colour  = $colours->{'default'}->{'default'}; 
       
-      $self->{'data'} = [{'metadata' => {
-                                          'name'    => $self->{'my_config'}->get('name'),
-                                          'colour'  => $colour,
-                                         }, 
-                          'features' => {'1' => $consensus}
-                              }];
-    }
+    $self->{'data'} = [{'metadata' => {
+                                        'name'    => $self->{'my_config'}->get('name'),
+                                        'colour'  => $colour,
+                                       }, 
+                        'features' => {'1' => $consensus}
+                            }];
   }
   return $self->{'data'};
 }
@@ -136,6 +149,8 @@ sub consensus_features {
     my $vs           = $f->{'POS'} - $start + 1;
     my $ve           = $vs;
     my $sv           = $f->{'INFO'}{'SVTYPE'};
+    my $info_string;
+    $info_string .= ";  $_: $a->{'INFO'}{$_}" for sort keys %{$a->{'INFO'} || {}};
 
     if ($sv) {
       $unknown_type = 0;
@@ -180,24 +195,49 @@ sub consensus_features {
                   'INS'   => 'Insertion',
                   'DEL'   => 'Deletion',
                   'TDUP'  => 'Duplication',
-                  'OTHER' => 'Small variant',
                   );
     my $location = sprintf('%s:%s', $slice->seq_region_name, $vs + $slice->start);
     $location   .= '-'.($ve + $slice->start) if ($ve && $ve != $vs);
 
-    my $title = "$vf_name; Location: $location; Type: ".$lookup{$sv}."; Allele: $allele_string";
-    my @fields = qw(AC AN DB DP NS);
-    foreach (@fields) {
-      $title .= sprintf('; %s: %s', $_, $f->{'INFO'}{$_} || '');
+    my $title = "$vf_name; Location: $location; Allele: $allele_string";
+    $title .= 'Type: '.$lookup{$sv}.'; ' if $lookup{$sv};
+    if (keys %{$f->{'INFO'}||{}}) {
+      $title .= '; INFO: --------------------------';
+      foreach (sort keys %{$f->{'INFO'}}) {
+        $title .= sprintf('; %s: %s', $_, $f->{'INFO'}{$_} || '');
+      }
     }
 
-    ## Set colour by consequence if defined in file
-    my $colour  = $colours->{'default'}->{'default'};
+    ## Get consequence type
+    my $consequence;
     if (defined($f->{'INFO'}->{'VE'})) {
-      my $cons = (split /\|/, $f->{'INFO'}->{'VE'})[0];
-      if (defined($overlap_cons{$cons})) {
-        $colour = $colours->{lc $cons}->{'default'};
-      }
+      $consequence = (split /\|/, $f->{'INFO'}->{'VE'})[0];
+    }
+    else {
+      ## Not defined in file, so look up in database
+      my $snp = {
+        start            => $vs, 
+        end              => $ve, 
+        strand           => 1, 
+        slice            => $slice,
+        allele_string    => $allele_string,
+        variation_name   => $vf_name,
+        map_weight       => 1, 
+        adaptor          => $vfa, 
+        seqname          => $info_string ? "; INFO: --------------------------$info_string" : '',
+        consequence_type => $unknown_type ? ['INTERGENIC'] : ['COMPLEX_INDEL']
+      };
+      bless $snp, 'Bio::EnsEMBL::Variation::VariationFeature';
+
+      $snp->get_all_TranscriptVariations;
+
+      $consequence = $snp->display_consequence;
+    }
+      
+    ## Set colour by consequence
+    my $colour  = $colours->{'default'}->{'default'};
+    if ($consequence && defined($overlap_cons{$consequence})) {
+      $colour = $colours->{lc $consequence}->{'default'};
     }
 
     my $fhash = {
@@ -220,25 +260,17 @@ sub density_features {
   my $self     = shift;
   my $slice    = $self->{'container'};
   my $start    = $slice->start - 1;
-  my $vclen    = $slice->length;
+  my $length   = $slice->length;
   my $im_width = $self->{'config'}->image_width;
-  my $divs     = $im_width;
-  my $divlen   = $vclen / $divs;
+  my $divlen   = $length / $im_width;
   $divlen      = 10 if $divlen < 10; # Increase the number of points for short sequences
+  $self->{'data'}[0]{'metadata'}{'unit'} = $divlen;
   my $density  = {};
-  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->get_data};
-
-  my $colours = $self->species_defs->colour('variation');
-  my $colour  = $colours->{'default'}->{'default'};
+  $density->{int(($_->{'POS'} - $start) / $divlen)}++ for @{$self->{'data'}[0]{'features'}{1}};
 
   my $density_features = [];
-  foreach (sort {$density->{$a} <=> $density->{$b}} keys %$density) {
-    push @$density_features, {
-                              'start'   => $_, 
-                              'end'     => $_ + $divlen,
-                              'colour'  => $colour,
-                              'score'   => $density->{$_}
-                              };
+  foreach (sort {$a <=> $b} keys %$density) {
+    push @$density_features, $density->{$_};
   }
   return $density_features;
 }

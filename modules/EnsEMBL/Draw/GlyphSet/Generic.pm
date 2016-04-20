@@ -27,6 +27,8 @@ use List::Util qw(min max);
 
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 
+use EnsEMBL::Draw::Style::Extra::Legend;
+
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
 sub can_json { return 1; }
@@ -217,6 +219,7 @@ sub draw_aggregate {
 
   ## Recalculate colours if using the pvalue renderer
   if ($self->{'my_config'}->get('use_pvalue')) {
+    $self->{'my_config'}->set('subtitle_y', $self->{'my_config'}->get('height') + 4);
     my $params = {
                     min_score      => 0,
                     max_score      => 1,
@@ -224,7 +227,11 @@ sub draw_aggregate {
                     transform      => 'log2',
                     decimal_places => 5,
                   };
-    $self->convert_to_pvalues($data, $params);
+    my ($gradient, $labels) = $self->convert_to_pvalues($data, $params);
+    ## Also draw key in lefthand margin
+    my $legend = EnsEMBL::Draw::Style::Extra::Legend->new(\%config);
+    $legend->draw_gradient_key($gradient, $labels);
+    $self->push(@{$legend->glyphs||[]});
   }
 
   foreach (@{$drawing_style||[]}) {
@@ -261,9 +268,9 @@ sub convert_to_pvalues {
   ## Set parameters
   my $max_score        = $params->{max_score} || 1000;
   my $min_score        = $params->{min_score} || 0;
-  my @gradient_colours = @{ $params->{gradient_colours} || [qw(white red)] };
+  my $default_colour   = $self->{my_config}->get('colour') || 'red';
+  my @gradient_colours = @{ $params->{gradient_colours} || ['white', $default_colour] };
   my $transform        = $transforms{ $params->{transform} || 'default' };
-  my $key_labels       = $params->{key_labels} || [$min_score, $max_score];
   my $decimal_places   = $params->{decimal_places} || 2;
 
   my $colour_grades       = 20;
@@ -280,6 +287,13 @@ sub convert_to_pvalues {
     return $grade
   };
 
+  ## Create a key to these colours
+  my $key         = {};
+  my $key_labels  = $params->{key_labels} || [$min_score, $max_score];
+  foreach (@$key_labels) {
+    $key->{$grade_from_score->($_)} = $_;
+  }
+
   ## Finally we get to actually set the feature colours!
   foreach (@$data) {
     foreach my $f (@{$_->{'features'}||[]}) {
@@ -287,6 +301,7 @@ sub convert_to_pvalues {
       $f->{'colour'} = $colour;
     }
   }
+  return (\@gradient, $key);
 }
 
 sub configure_strand {
@@ -342,7 +357,7 @@ sub render_compact {
 
 sub render_signal {
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+  $self->{'my_config'}->set('drawing_style', ['Graph::Bar']);
   $self->{'my_config'}->set('height', 60);
   $self->_render_aggregate;
 }

@@ -191,6 +191,9 @@ sub _menu_setup {
   my $path  = join("/", $self->hub->species_defs->DATAFILE_BASE_PATH,
                           @parts[-5..-1]);
 
+  ## Clean up any whitespace
+  $path =~ s/\s//g;
+
   my $bba = $self->{'_cache'}->{'bigbed_parser'}->{$path} 
               ||= Bio::EnsEMBL::IO::Parser::open_as('bigbed', $path);
 

@@ -45,7 +45,12 @@ sub render {
   my $q                   = $hub->param('q');
 
   # form
-  my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'skip_validation' => 1, 'class' => [ $is_home_page ? 'homepage-search-form' : (), 'search-form', 'clear' ]});
+  my @class = ('search-form','clear');
+  push @class,'homepage-search-form' if $is_home_page;
+  push @class,'no-ac' if $is_help;
+  push @class,'no-sel' if $is_home_page or $is_help;
+
+  my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'skip_validation' => 1, 'class' => \@class});
   $form->add_hidden({'name' => 'site', 'value' => $default_search_code});
 
   # examples

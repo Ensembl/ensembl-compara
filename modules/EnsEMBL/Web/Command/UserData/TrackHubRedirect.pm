@@ -89,6 +89,10 @@ sub process {
           ## Override standard redirect with sample location
           $redirect     = sprintf('/%s/Location/View', $species);
           $anchor       = 'modal_config_viewbottom';
+          my $menu      = $params->{'menu'} || $params->{'name'};
+          $anchor      .= '-'.$menu if $menu;
+          delete($params->{'menu'});
+          delete($params->{'name'});
 
           my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
           my $p         = $params->{'reattach'} || $params->{'species_flag'} 

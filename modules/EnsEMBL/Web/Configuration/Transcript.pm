@@ -148,20 +148,7 @@ sub populate_tree {
     [qw( protvars EnsEMBL::Web::Component::Transcript::ProteinVariations )],
     { 'availability' => 'either database:variation has_variations', 'concise' => 'Variants' }
   ));
-  
-  # External Data tree
-  my $external = $self->create_node('ExternalData', 'External data',
-    [qw( external EnsEMBL::Web::Component::Transcript::ExternalData )],
-    { 'availability' => 'transcript' }
-  );
-  
-  if ($self->hub->users_available) {
-    $external->append($self->create_node('UserAnnotation', 'Personal annotation',
-      [qw( manual_annotation EnsEMBL::Web::Component::Transcript::UserAnnotation )],
-      { 'availability' => 'logged_in transcript' }
-    ));
-  }
-  
+
   my $history_menu = $self->create_submenu('History', 'ID History');
   
   $history_menu->append($self->create_node('Idhistory', 'Transcript history',

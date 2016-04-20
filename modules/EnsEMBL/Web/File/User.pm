@@ -225,18 +225,13 @@ sub upload {
         my $species = $hub->param('species') || $hub->species;
 
         ## Extra renderers for fancy formats
-        my $attach = $hub->param('attach') || $hub->param('contigviewbottom');
-        if ($attach) {
-          my @split = split('=', $attach);
-          my $custom = $attach =~ /^contig/ ? $split[2] : $split[1]; 
-          if ($custom) {
-            $inputs{'display'} = $custom;
-            my $lookup = EnsEMBL::Web::Constants::RENDERERS;
-            my $renderers = $lookup->{$custom}{'renderers'} || [];
-            if (scalar @$renderers) {
-              $inputs{'renderers'}  = ['off', 'Off', @$renderers];
-              $inputs{'display'}    = $lookup->{$custom}{'default'};
-            }
+        my $custom = $args{'renderer'}; 
+        if ($custom) {
+          my $lookup = EnsEMBL::Web::Constants::RENDERERS;
+          my $renderers = $lookup->{$custom}{'renderers'} || [];
+          if (scalar @$renderers) {
+            $inputs{'renderers'}  = ['off', 'Off', @$renderers];
+            $inputs{'display'}    = $lookup->{$custom}{'default'};
           }
         }
 

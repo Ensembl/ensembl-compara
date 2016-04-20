@@ -787,7 +787,7 @@ sub get_homology_matches {
           gene_tree_node_id   => $gene_tree_node_id,
           dbID                => $homology_id,
           order               => $order,
-          location            => sprintf('%s:%s-%s:%s', map $homologue->$_, qw(chr_name chr_start chr_end chr_strand))
+          location            => sprintf('%s:%s-%s:%s', $homologue->dnafrag()->name, map $homologue->$_, qw(dnafrag_start dnafrag_end dnafrag_strand))
         };
 
         $order++;

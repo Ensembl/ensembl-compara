@@ -44,7 +44,9 @@ sub new {
     })
   }, $class;
 
+  $self->{'hub'}->qstore_open;
   $self->process;
+  $self->{'hub'}->qstore_close;
 
   return $self;
 }

@@ -40,7 +40,7 @@ sub get_sequence {
 
   # make the request
   my $rest      = EnsEMBL::Web::REST->new($self->hub);
-  my $endpoint  = sprintf('sequence/id/%s', $params->{'id'});
+  my $endpoint  = sprintf('sequence/id/%s?content-type=application/json', $params->{'id'});
   my $content   = $rest->fetch($endpoint);
 
   # REST API returned error or error parsing response

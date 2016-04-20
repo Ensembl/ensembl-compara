@@ -45,15 +45,18 @@ sub create_tracks {
   my $features  = {};
   my $values    = [];
 
-  ## Allow for checking multiple region names
+  ## Allow for seq region synonyms
   my $seq_region_names = [$slice->seq_region_name];
   if ($metadata->{'use_synonyms'}) {
-    ## Look for synonyms here!
+    push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
   }
 
   if ($metadata->{'display'} eq 'text') {
-  ## TODO Loop through seq region names here
-    my $arrays = $parser->fetch_summary_data($seq_region_names->[0], $slice->start, $slice->end, $bins);
+    my $arrays;
+    foreach my $seq_region_name (@$seq_region_names) {
+      $arrays = $parser->fetch_summary_data($seq_region_name, $slice->start, $slice->end, $bins) || [];
+      last if @$arrays;
+    }
     my $hashes = [];
     foreach (@$arrays) {
       push @$hashes, {
@@ -67,8 +70,10 @@ sub create_tracks {
     $features = {$strand => $hashes};
   }
   else {
-  ## TODO Loop through seq region names here
-    $values = $parser->fetch_summary_array($seq_region_names->[0], $slice->start, $slice->end, $bins);
+    foreach my $seq_region_name (@$seq_region_names) {
+      $values = $parser->fetch_summary_array($seq_region_name, $slice->start, $slice->end, $bins) || [];
+      last if @$values;
+    }
     $features = {$strand => $values};
     if ($metadata->{'display'} eq 'compact') {
       my @gradient = $self->create_gradient(['white', $metadata->{'colour'}]);

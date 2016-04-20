@@ -33,6 +33,10 @@ use Role::Tiny;
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Bio::EnsEMBL::IO::Adaptor::HTSAdaptor;
 
+sub my_empty_label {
+  return 'No data found for this region';
+}
+
 ############# RENDERING ########################
 
 sub render_coverage_with_reads {
@@ -45,8 +49,8 @@ sub render_unlimited {
 ### 'External' rendering style
 ### Coverage and reads
   my $self = shift;
+  $self->{'my_config'}->set('depth', 500);
   $self->_render({'coverage' => 1, 'reads' => 1});
-  $self->{'my_config'}->set('max_depth', 500);
 }
 
 sub render_histogram {
@@ -178,7 +182,7 @@ sub _render_reads {
   my $self = shift;
 
   ## Establish defaults
-  my $max_depth   = $self->my_config('max_depth') || 50;
+  my $max_depth   = $self->my_config('depth') || 50;
   my $pix_per_bp  = $self->scalex; # pixels per base pair
   my $slice       = $self->{'container'};
   my $slicestart  = $slice->start;
@@ -307,8 +311,8 @@ sub _render {
     local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
     alarm $timeout;
     # render
-    my $features = $self->get_data->[0]{'features'};
-    if (!scalar(@{$features->{$default_strand}})) {
+    my $features = $self->get_data->[0]{'features'}{$default_strand};
+    if (!scalar(@$features)) {
       $self->no_features;
     } else {
       #warn "Rendering coverage";
@@ -321,10 +325,9 @@ sub _render {
     alarm 0;
   };
   if ($@) {
-    die unless $@ eq "alarm\n"; # propagate unexpected errors
-    # timed-out
+    warn "######## BAM ERROR: $@" unless $@ eq "alarm\n"; # propagate unexpected errors
     $self->reset;
-    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout}sec)");
+    return $self->errorTrack($self->error_track_name . " could not be rendered within the specified time limit (${timeout} sec)");
   }
 }
 
@@ -345,7 +348,20 @@ sub get_data {
 
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{data})) {
-    $self->{_cache}->{data} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end) || [];
+    
+    ## Allow for seq region synonyms
+    my $seq_region_names = [$slice->seq_region_name];
+    if ($self->{'config'}->hub->species_defs->USE_SEQREGION_SYNONYMS) {
+      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+    }
+
+    my $data;
+    foreach my $seq_region_name (@$seq_region_names) {
+      $data = $self->bam_adaptor->fetch_alignments_filtered($seq_region_name, $slice->start, $slice->end) || [];
+      last if @$data;
+    } 
+
+    $self->{_cache}->{data} = $data;
   }
   my $default_strand = $self->{'my_config'}->get('default_strand') || 1;
   ## Return data in standard format expected by other modules
@@ -358,7 +374,19 @@ sub consensus_features {
   my $self = shift;
   unless ($self->{_cache}->{consensus_features}) {
     my $slice = $self->{'container'};
-    my $consensus = $self->bam_adaptor->fetch_consensus($slice->seq_region_name, $slice->start, $slice->end);
+    
+    ## Allow for seq region synonyms
+    my $seq_region_names = [$slice->seq_region_name];
+    if ($self->{'config'}->hub->species_defs->USE_SEQREGION_SYNONYMS) {
+      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+    }
+
+    my $consensus;
+    foreach my $seq_region_name (@$seq_region_names) {
+      $consensus = $self->bam_adaptor->fetch_consensus($seq_region_name, $slice->start, $slice->end) || [];
+      last if @$consensus;
+    }    
+
     my $cons_lookup = {};
     foreach (@$consensus) {
       $cons_lookup->{$_->{'x'}} = $_->{'bp'};

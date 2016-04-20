@@ -32,7 +32,7 @@ sub can_json { return 1; }
 
 sub init {
   my $self = shift;
-  my $style = $self->my_config('style') || $self->my_config('display') || '';
+  my $style = $self->{'display'} || $self->my_config('display') || '';
   my @roles;
 
   if ($style eq 'wiggle' || $style =~ /signal/) {

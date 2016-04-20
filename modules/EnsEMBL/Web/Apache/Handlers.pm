@@ -118,7 +118,7 @@ sub redirected_from_nearest_mirror {
     if ($uri =~ s/([\;\?\&])redirectsrc=([^\;\&]+)(.*)$//) {
 
       # save a cookie for JS
-      EnsEMBL::Web::Cookie->bake($r, {'name' => 'redirected_from_url', 'value' => $2, 'err_headers' => 1});
+      EnsEMBL::Web::Cookie->bake($r, {'name' => 'redirected_from_url', 'value' => $2});
 
       $uri .= $1.($3 =~ s/^[\;\&]*//r);
       $uri  =~ s/[\;\&]*$//;
@@ -161,13 +161,16 @@ sub redirect_to_nearest_mirror {
 
     # If the flag says don't redirect, or we have already decided in some previous request not to redirect and have set a cookie for that - don't redirect then
     if ($redirect_flag eq 'no' || $redirect_cookie->value && $redirect_cookie->value eq 'no') {
-      if (!$redirect_cookie->value) { # if not already set, set it for 24 hours
+      if (!$redirect_cookie->value || $redirect_cookie->value ne 'no') { # if not already set, set it for 24 hours
         $redirect_cookie->value('no');
         $redirect_cookie->expires('+24h');
         $redirect_cookie->bake;
       }
       return DECLINED;
     }
+
+    $redirect_cookie->value('');
+    $redirect_cookie->bake;
 
     # Getting the correct remote IP address isn't straight forward. We check all the possible
     # ip addresses to get the correct one that is valid and isn't an internal address.
@@ -397,10 +400,11 @@ sub handler {
  
   ## Check for stable id URL (/id/ENSG000000nnnnnn) 
   ## and malformed Gene/Summary URLs from external users
-  if (($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ )) {
-    my ($stable_id, $object_type, $db_type, $retired, $uri);
+  if (($raw_path[0] && $raw_path[0] =~ /^(id|loc)$/i && $raw_path[1]) || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ )) {
+    my ($loc, $stable_id, $object_type, $db_type, $retired, $uri);
     
-    if ($raw_path[0] =~ /^id$/i) {
+    if ($raw_path[0] =~ /^(id|loc)$/i) {
+      $loc = $1 eq 'loc';
       $stable_id = $raw_path[1];
     } else {
       $querystring =~ /g=(\w+)/;
@@ -435,20 +439,27 @@ sub handler {
     }
     
     if ($object_type) {
-      $uri = $species ? "/$species/" : '/Multi/';
-      
-      if ($object_type eq 'Gene') {
-        $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
-      } elsif ($object_type eq 'Transcript') {
-        $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
-      } elsif ($object_type eq 'Translation') {
-        $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
-      } elsif ($object_type eq 'GeneTree') {
-        $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
-      } elsif ($object_type eq 'Family') {
-        $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
+
+      if ($loc && $species && !$retired && $object_type =~ /^(Gene|Transcript|Translation)$/) {
+        $uri = sprintf '/%s/Location/View?%s=%s', $species, $object_type eq 'Gene' ? 'g' : 't', $stable_id;
+
       } else {
-        $uri .= "psychic?q=$stable_id";
+
+        $uri = $species ? "/$species/" : '/Multi/';
+
+        if ($object_type eq 'Gene') {
+          $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
+        } elsif ($object_type eq 'Transcript') {
+          $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
+        } elsif ($object_type eq 'Translation') {
+          $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
+        } elsif ($object_type eq 'GeneTree') {
+          $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
+        } elsif ($object_type eq 'Family') {
+          $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
+        } else {
+          $uri .= "psychic?q=$stable_id";
+        }
       }
     }
 

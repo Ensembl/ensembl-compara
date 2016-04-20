@@ -34,9 +34,10 @@ sub content {
   my $hub  = $self->hub;
   my $url  = $self->ajax_url('ajax', {
     r            => $hub->referer->{'params'}->{'r'}[0],
-    code         => $hub->param('code'),
-    nearest      => $hub->param('nearest'),
-    count        => $hub->param('count'),
+    code         => $hub->param('code') || '',
+    nearest      => $hub->param('nearest') || '',
+    description  => $hub->param('description') || '',
+    count        => $hub->param('count') || 0,
     _type        => $hub->param('type') || 'upload',
     update_panel => 1,
     __clear      => 1
@@ -92,21 +93,25 @@ sub content_ajax {
       } 
       else {
         my $error;
-        my $nearest = $hub->param('nearest');
+        my $nearest     = $hub->param('nearest');
+        my $count       = $hub->param('count');
+        my $description = $hub->param('description');
         
         if ($nearest) {
 
           if ($hub->user) {
             $record->nearest($nearest);
+            $record->description($description) if $description;
             $record->save;
           }
           else {
-            $data->{'nearest'}   = $nearest;
+            $data->{'nearest'}      = $nearest;
+            $data->{'description'}  = $description if $description;
             $session->set_data(%$data);
           }
    
           if ($hub->param('count')) { 
-            $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $hub->param('count');
+            $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
           }
 
           $html .= sprintf('
@@ -124,6 +129,10 @@ sub content_ajax {
                 join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'}),
                 $nearest
               );
+        }
+        elsif ($count) {
+          ## Maybe the user uploaded the data on a non-location page?
+          $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
         }
         else {
         

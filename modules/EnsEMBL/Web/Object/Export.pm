@@ -805,6 +805,8 @@ sub feature {
   }   
   if($format eq 'bed'){
     @mapping_result = qw(seqid start end name score strand);
+    # move coords into zero-based start
+    $vals{'start'} = $vals{'start'} - 1 if defined $vals{'start'};
     $vals{'name'} = $feature->display_id;
   }
   else {

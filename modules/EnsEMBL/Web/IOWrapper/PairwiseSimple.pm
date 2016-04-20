@@ -87,18 +87,25 @@ sub create_hash {
                         });
 
   my $direction = $self->parser->get_direction;
-  return {
-    'start'         => $feature_1_start,
-    'end'           => $feature_2_end,
+  my $feature = {
     'seq_region'    => $self->parser->get_seqname,
     'direction'     => $direction,
     'score'         => $score,
     'colour'        => $colour, 
-    'href'          => $href,
     'join_colour'   => $metadata->{'join_colour'} || $colour,
     'structure'     => $structure,
     'extra'         => [{'name' => 'Direction', 'value' => $direction}],
   };
+  if ($metadata->{'display'} eq 'text') {
+    $feature->{'start'} = $click_start;
+    $feature->{'end'}   = $click_end;
+  }
+  else {
+    $feature->{'start'} = $feature_1_start;
+    $feature->{'end'}   = $feature_2_end;
+    $feature->{'href'}  = $href;
+  }
+  return $feature;
 }
 
 1;

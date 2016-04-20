@@ -73,6 +73,8 @@ sub fetch {
   my $format = delete $args->{'format'} || 'json';
 
   my $hub   = $self->hub;
+  $args->{'hub'} = $hub;
+  
   my $url   = sprintf('%s/%s', $self->server, $endpoint);
   my $type  = $content_type{lc($format)};
   $args->{'headers'}{'Content-Type'} ||= $type;

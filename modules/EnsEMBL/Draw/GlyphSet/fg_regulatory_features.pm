@@ -89,62 +89,36 @@ sub fetch_features {
   return $reg_feats;
 }
 
-sub _check_build_type {
-  my ($self) = @_;
-
-  my $species = $self->{'config'}{'species'};
-  unless(defined $self->{'new_reg_build'}) {
-    $self->{'new_reg_build'} =
-      $self->{'config'}->hub->is_new_regulation_pipeline($species);
-  }
-}
-
 sub colour_key {
   my ($self, $f) = @_;
   my $type = $f->feature_type->name;
 
-  $self->_check_build_type;
-  if($self->{'new_reg_build'}) {
-    if($type =~ /CTCF/i) {
-      $type = 'ctcf';
-    } elsif($type =~ /Enhancer/i) {
-      $type = 'enhancer';
-    } elsif($type =~ /Open chromatin/i) {
-      $type = 'open_chromatin';
-    } elsif($type =~ /TF binding site/i) {
-      $type = 'tf_binding_site';
-    } elsif($type =~ /Promoter Flanking Region/i) {
-      $type = 'promoter_flanking';
-    } elsif($type =~ /Promoter/i) {
-      $type = 'promoter';
-    } else  {
-      $type = 'Unclassified';
+  if($type =~ /CTCF/i) {
+    $type = 'ctcf';
+  } elsif($type =~ /Enhancer/i) {
+    $type = 'enhancer';
+  } elsif($type =~ /Open chromatin/i) {
+    $type = 'open_chromatin';
+  } elsif($type =~ /TF binding site/i) {
+    $type = 'tf_binding_site';
+  } elsif($type =~ /Promoter Flanking Region/i) {
+    $type = 'promoter_flanking';
+  } elsif($type =~ /Promoter/i) {
+    $type = 'promoter';
+  } else  {
+    $type = 'Unclassified';
+  }
+  if($f->can('activity')) {
+    my $activity = $f->activity;
+    # case 0: handled by pattern code
+    # case 1: correct
+    if($activity == 4) {
+      $type = 'na';
+    } elsif($activity == 2) {
+      $type = 'poised';
+    } elsif($activity == 3) {
+      $type = 'repressed';
     }
-    if($f->can('has_evidence')) {
-      my $activity = $f->has_evidence;
-      # case 0: handled by pattern code
-      # case 1: correct
-      if($activity == 2) {
-        $type = 'na';
-      } elsif($activity == 3) {
-        $type = 'poised';
-      } elsif($activity == 4) {
-        $type = 'repressed';
-      }
-    }
-  } else {
-    if ($type =~ /Promoter/) {
-      $type = 'Promoter_associated';
-    } elsif ($type =~ /Non/) {
-      $type = 'Non-genic';
-    } elsif ($type =~ /Gene/) {
-      $type = 'Genic';
-    } elsif ($type =~ /Pol/) {
-      $type = 'poliii_associated';
-    } else {
-      $type = 'Unclassified';
-    }
-    $type = 'old_'.$type;
   }
   return lc $type;
 }
@@ -163,29 +137,19 @@ sub tag {
   my ($bound_start, $start, @mf_loci) = @loci;
   my @result;
  
-  $self->_check_build_type; 
   if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
-    if($self->{'new_reg_build'}) {
-      push @result, {
-        style  => 'rect',
-        colour => $flank_colour,
-        start  => $bound_start,
-        end    => $start
-      },{
-        style  => 'rect',
-        colour => $flank_colour,
-        start  => $end,
-        end    => $bound_end
-      };
-    } else {
-      push @result,{
-        style => 'fg_ends',
-        colour => $colour,
-        start => $bound_start,
-        end => $bound_end
-      };
-    }
+    push @result, {
+      style  => 'rect',
+      colour => $flank_colour,
+      start  => $bound_start,
+      end    => $start
+    },{
+      style  => 'rect',
+      colour => $flank_colour,
+      start  => $end,
+      end    => $bound_end
+    };
   }
   
   # Motif features
@@ -286,22 +250,20 @@ sub export_feature {
 sub pattern {
   my ($self,$f) = @_;
 
-  return undef unless $self->{'config'}->hub->is_new_regulation_pipeline;
-  return undef unless $f->can('has_evidence');
-  my $ev = $f->has_evidence;
-  return ['hatch_really_thick','grey90',0] if $ev==0;
-  return ['hatch_really_thick','white',0] if $ev==2;
+  return undef unless $f->can('activity');
+  my $act = $f->activity;
+  return ['hatch_really_thick','grey90',0] if $act==0;
+  return ['hatch_really_thick','white',0] if $act==4;
   return undef;
 }
 
 sub feature_label {
   my ($self,$f) = @_;
 
-  return undef unless $self->{'config'}->hub->is_new_regulation_pipeline;
-  return undef unless $f->can('has_evidence');
-  my $ev = $f->has_evidence;
-  return "{grey30}inactive in this cell line" if $ev==0;
-  return "{grey30}N/A" if $ev==2;
+  return undef unless $f->can('activity');
+  my $act = $f->activity;
+  return "{grey30}inactive in this cell line" if $act==0;
+  return "{grey30}N/A" if $act==4;
   return undef;
 }
 

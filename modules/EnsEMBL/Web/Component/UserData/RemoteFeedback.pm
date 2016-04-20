@@ -92,7 +92,8 @@ sub get_message {
     if ($reattach = 'preconfig') {
       $trackhub_ok = 0;
       my $link = $hub->url({'type' => 'Config', 'action' => 'Location', 'function' => 'ViewBottom'});
-      $message .= sprintf(' Tracks can be found in the <a class="modal_link" href="%s">Region in Detail configuration options</a>', $link);
+      my $menu = $hub->param('menu') || '';
+      $message .= sprintf(' Tracks can be found in the <a class="modal_link" rel="modal_config_viewbottom%s%s" href="%s">Region in Detail configuration options</a>', $menu ? '-' : '', $menu, $link);
       $message = $self->info_panel('Note', $message);
     }
   }

@@ -38,12 +38,13 @@ my $apache_dir    = $SiteDefs::APACHE_DIR;
 my $apache_bin    = $SiteDefs::APACHE_BIN;
 my $apache_conf   = $SiteDefs::ENSEMBL_HTTPD_CONFIG_FILE;
 
-my ($help, $rmconfig, $flush, @defines);
+my ($help, $rmconfig, $flush, $verbose, @defines);
 
 # parse command line options
 &GetOptions(
   "r|rmconfig"  => \$rmconfig,
   "f|flush"     => \$flush,
+  "v|verbose"   => \$verbose,
   "h|help"      => \$help,
   "D|define=s"  => \@defines
 );
@@ -56,6 +57,7 @@ if ($help) {
   Options:
     -r, --rmconfig  : remove $conf_file before restarting the server and flush memcached
     -f, --flush     : flush memcached storage!
+    -v, --verbose   : verbose the SiteDefs params value
     -D, --define    : list of arguments to be passed to apache httpd process
     -h, --help      : print this help message
 );
@@ -119,3 +121,5 @@ my $cmd = sprintf '%s -d %s -f %s %s', $apache_bin || "$apache_dir/bin/httpd", $
 require $_ for @$before_start;
 system($cmd) and die_string("Could not start server: $!.\n[FATAL] Server start failed.");
 require $_ for @$after_start;
+
+SiteDefs::verbose_params() if $verbose;

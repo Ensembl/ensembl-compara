@@ -65,14 +65,17 @@ sub get_data {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour');
+    ## Don't try and scale if we're just doing a zmenu!
+    my $pix_per_bp = $self->{'display'} eq 'text' ? '' : $self->scalex;
     my $metadata = {
                     'colour'          => $colour,
                     'display'         => $self->{'display'},
                     'default_strand'  => $default_strand,
                     'force_strand'    => $force_strand, 
-                    'pix_per_bp'      => $self->scalex,
+                    'pix_per_bp'      => $pix_per_bp,
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
+                    'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                     };
 
     ## Also set a default gradient in case we need it
@@ -90,10 +93,11 @@ sub get_data {
     }
 
     ## Omit individual feature links if this glyphset has a clickable background
-    $metadata->{'omit_feature_links'} = 1 if $self->can('bg_link');
+    #$metadata->{'omit_feature_links'} = 1 if $self->can('bg_link');
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
+    #use Data::Dumper; warn Dumper($data);
 
     ## Final fallback, in case we didn't set these in the individual parser
     $metadata->{'label_colour'} ||= $colour;
@@ -132,6 +136,7 @@ sub render_compact {
 sub render_as_transcript_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
+  $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('depth', 20);
   $self->draw_features;
 }
@@ -139,6 +144,7 @@ sub render_as_transcript_nolabel {
 sub render_as_transcript_label {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
+  $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('depth', 20);
   $self->{'my_config'}->set('show_labels', 1);
   $self->draw_features;

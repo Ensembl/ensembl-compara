@@ -25,11 +25,7 @@ use warnings;
 
 use EnsEMBL::Draw::Utils::Text;
 
-use parent qw(EnsEMBL::Draw::Style);
-
-sub create_glyphs { 
-## Stub - there are no default glyphs, so you need to call your chosen method explicitly
-}
+use parent qw(EnsEMBL::Draw::Style::Extra);
 
 sub draw_margin_subhead {
 ### Draws a subheader in the lefthand margin, e.g. regulatory features
@@ -162,19 +158,18 @@ sub _sublegend_zmenu {
 sub _draw_sublegend_box {
   my ($self,$args,$zmenu) = @_;
 
-  my $offset = $self->_offset;
+  my $offset = $self->_offset + 10;
   $offset   += $args->{'y_offset'} || 0;
  
   my $click_text = $args->{'label'} || 'Details';
+  my %font_details = EnsEMBL::Draw::Utils::Text::get_font_details($self->image_config,'innertext', 1);
+  my ($width,$height) = $self->get_text_dimensions($click_text, \%font_details);
 
-  my %font_details = EnsEMBL::Draw::Utils::Text::get_font_details($self->image_config,'innertext', 1); 
-  my @text = EnsEMBL::Draw::Utils::Text::get_text_width($self->cache, $self->image_config, 0, $click_text, '', %font_details);
-  my ($width,$height) = @text[2,3];
   push @{$self->glyphs}, $self->Rect({
     width         => $width + 15,
     absolutewidth => $width + 15,
     height        => $height + 2,
-    y             => $offset+13,
+    y             => $offset + 13,
     x             => -117,
     absolutey     => 1,
     absolutex     => 1,
@@ -188,7 +183,7 @@ sub _draw_sublegend_box {
     halign    => 'left',
     valign    => 'bottom',
     colour    => '#336699',
-    y         => $offset+13,
+    y         => $offset + 10,
     x         => -116,
     absolutey => 1,
     absolutex => 1,
@@ -197,7 +192,7 @@ sub _draw_sublegend_box {
     width     => 6,
     height    => 5,
     direction => 'down',
-    mid_point => [ -123 + $width + 10, $offset+23 ],
+    mid_point => [ -123 + $width + 10, $offset + 23 ],
     colour    => '#336699',
     absolutex => 1,
     absolutey => 1,

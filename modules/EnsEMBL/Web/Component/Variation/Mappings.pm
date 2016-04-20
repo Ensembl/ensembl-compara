@@ -69,10 +69,13 @@ sub content {
       '50%'
     );
   }
-  
-  # HGMD (SNPs only)
-  if($source eq 'HGMD-PUBLIC' and $name =~ /^CM/) {
-    
+
+  # HGMD & COSMIC (SNPs only)
+  if (($source eq 'HGMD-PUBLIC' && $name =~ /^CM/) || ($source eq 'COSMIC' && $var_start && $var_start == $var_end)) {
+
+    my %source_labels = ( 'HGMD-PUBLIC' => 'public HGMD',
+                          'COSMIC'      => 'COSMIC' );
+
     if($hub->param('recalculate')) {
       
       my $url = $hub->url({
@@ -82,10 +85,10 @@ sub content {
       });
       
       my $link = "<a href='$url'>Revert to original display</a>";
-      
+
       $html .= $self->_info(
         'Information',
-        "<p>This display shows consequence predictions in the 'Type' column for all possible alleles (A/C/G/T) at this position. Ensembl has permission to display only the public HGMD dataset which does not include alleles.<br/><br/>$link</p>",
+        sprintf("<p>This display shows consequence predictions in the 'Type' column for all possible alleles (A/C/G/T) at this position. Ensembl has permission to display only the %s dataset which does not include alleles.<br/><br/>%s</p>", $source_labels{$source}, $link),
         '50%',
       ); 
     }
@@ -99,7 +102,7 @@ sub content {
       
       $html .= $self->_info(
         'Information',
-        "Ensembl has permission to display only the public HGMD dataset which does not include alleles.<br /><a href='$url'>Show consequence predictions</a> (e.g. amino acid changes) for all possible alleles based only on the variant location.",
+        sprintf("Ensembl has permission to display only the %s dataset which does not include alleles.<br /><a href='%s'>Show consequence predictions</a> (e.g. amino acid changes) for all possible alleles based only on the variant location.", $source_labels{$source}, $url),
         '50%',
       );      
     }
@@ -295,6 +298,8 @@ sub content {
     my $rfa = $hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
     
     for my $rfv (@{ $vf_obj->get_all_RegulatoryFeatureVariations }) {
+      next unless $rfv->regulatory_feature;
+
       my $rf_stable_id = $rfv->regulatory_feature->stable_id;
       my $rfs = $rfa->fetch_all_by_stable_ID($rf_stable_id);
        
@@ -341,7 +346,7 @@ sub content {
     ## Motif feats ##
     for my $mfv (@{ $vf_obj->get_all_MotifFeatureVariations }) {
       my $mf = $mfv->motif_feature;
-     
+      next unless $mf;       
       # check that the motif has a binding matrix, if not there's not 
       # much we can do so don't return anything
       next unless defined $mf->binding_matrix;
@@ -504,7 +509,7 @@ sub detail_panel {
   my $self     = shift;
   my $object   = $self->object;
   my $hub      = $self->hub;
-  my $vf_adaptor = $hub->database('variation')->get_VariationAdaptor;
+  my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
   my $allele   = $hub->param('allele');
   my $tr_id    = $hub->param('t');
   my $vf_id    = $hub->param('vf');
@@ -1002,6 +1007,11 @@ sub _overlap_glyph {
 sub _overlap_glyph_label {
   my $self = shift;
   my ($start,$end,$length) = @_;
+
+  if ($start || $end) {
+    $start = 1 if (!$start);
+    $end   = 1 if (!$end);
+  }
 
   my $pos   = $self->_sort_start_end($start, $end);
   my $range = ($pos ne '-') ? qq{<span class="small"> (out of $length)</span>} : '';

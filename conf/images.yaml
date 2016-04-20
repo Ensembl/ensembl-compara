@@ -69,6 +69,12 @@ properties:
       name: rare
 
   - patterns:
+      - .*/biomart/.*
+      - .*/martview/.*
+    page:
+      name: biomart
+
+  - patterns:
       - .*/i/loading_bg.png
       - .*/i/dev-ensembl_print.gif
       - .*/dev-ensembl.gif

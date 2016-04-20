@@ -43,24 +43,26 @@ sub process {
   ## Write out features as GFF file
   while (my ($type, $feat) = each %$features) {
     foreach my $f (@{$feat->[0] || []}) {
+      ## Skip features (genes) on LRGs
+      next if $f->{'region'} =~ /^LRG/;
       my $strand = $f->{'strand'} == 1 ? '+' : '-';
       my @attribs;
       
       if ($ftype eq 'Gene') {
         @attribs = (
-          'ID='          . $f->{'gene_id'}[0],
-          'extname='     . $f->{'extname'}, 
-          'description=' . uri_escape($f->{'extra'}{'description'})
+          'ID '          . $f->{'gene_id'}[0],
+          'extname '     . $f->{'extname'}, 
+          'description ' . uri_escape($f->{'extra'}{'description'})
         );
       }  else {
         @attribs = (
-          'length='  . $f->{'length'},
-          'label='   . uri_escape($f->{'label'}),
-          'align='   . $f->{'extra'}{'align'},
-          'ori='     . $f->{'extra'}{'ori'},
-          'id='      . $f->{'extra'}{'id'},
-          'score='   . $f->{'extra'}{'score'},
-          'p-value=' . $f->{'extra'}{'p-value'},
+          'length '  . $f->{'length'},
+          'label '   . uri_escape($f->{'label'}),
+          'align '   . $f->{'extra'}{'align'},
+          'ori '     . $f->{'extra'}{'ori'},
+          'id '      . $f->{'extra'}{'id'},
+          'score '   . $f->{'extra'}{'score'},
+          'p-value ' . $f->{'extra'}{'p-value'},
         );
       }
       
@@ -70,7 +72,7 @@ sub process {
   }
   
   $hub->param('text',   $content);
-  $hub->param('format', 'GFF');
+  $hub->param('format', 'GTF');
   $hub->param('name',   $desc);
   
   my $upload = $self->upload('text'); ## Upload munged data

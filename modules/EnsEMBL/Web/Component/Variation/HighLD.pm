@@ -403,7 +403,7 @@ sub linked_var_table {
         '<a href="%s">%s</a>',
         $hub->url({
           type   => 'Gene',
-          action => 'Variation_Gene',
+          action => 'Summary',
           db     => 'core',
           r      => undef,
           g      => $_->stable_id,
@@ -463,7 +463,7 @@ sub linked_var_table {
   }
   
   return $table->has_rows ?
-    $self->toggleable_table("Variants linked to $v in $pop_name", $pop_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>}) :
+    $self->toggleable_table("Variants linked to $v in $pop_name", $pop_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}">[back to top]</a></span>}) :
     '<h3>No variants found</h3><br /><br />';
 }
 

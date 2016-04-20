@@ -73,6 +73,7 @@ sub create_glyphs {
 
   ## Draw any axes, track labels, etc
   my $graph_conf = $self->draw_graph_base($metadata);
+  my $height   = $track_config->get('height');
 
   foreach my $subtrack (@$data) {
     my $metadata = $subtrack->{'metadata'} || {};
@@ -81,21 +82,25 @@ sub create_glyphs {
     ## Single line? Build into singleton set.
     $features = [ $features ] if ref $features ne 'ARRAY';
 
+    ## Work out a default colour
+    my $colour = $subtrack->{'metadata'}{'color'}
+                  || $subtrack->{'metadata'}{'colour'}
+                  || $track_config->get('colour');
+
     ## Select a colour to indicate truncated values
-    my $truncate_colour = ($subtrack->{'metadata'}{'colour'} eq 'black' || $subtrack->{'metadata'}{'colour'} eq '0,0,0') 
-                          ? 'red' : 'black';
+    my $truncate_colour = ($colour eq 'black' || $colour eq '0,0,0') ? 'red' : 'black';
 
     ## Draw them! 
     my $plot_conf = {
-      height          => $track_config->get('height'),
+      height          => $height,
       pix_per_score   => $track_config->get('pix_per_score'),
       default_strand  => $track_config->get('default_strand'),
       unit            => $subtrack->{'metadata'}{'unit'},
       graph_type      => $subtrack->{'metadata'}{'graphType'} || $track_config->get('graph_type'),
-      colour          => $subtrack->{'metadata'}{'color'} || $subtrack->{'metadata'}{'colour'},
+      colour          => $colour,
+      truncate_colour => $truncate_colour,
       colours         => $subtrack->{'metadata'}{'gradient'},
       alt_colour      => $subtrack->{'metadata'}{'altColor'},
-      truncate_colour => $truncate_colour,
       %$graph_conf,
     };
 
@@ -107,8 +112,11 @@ sub create_glyphs {
     }
 
     $self->draw_wiggle($plot_conf, $features);
-    $self->draw_hidden_bgd($track_config->get('height'));
+    $self->draw_hidden_bgd($height);
   }
+  ## Only add height once, as we superimpose subtracks on a graph
+  my $total_height = $track_config->get('total_height') || 0;
+  $track_config->set('total_height', $total_height + $height);
 
   return @{$self->glyphs||[]};
 }

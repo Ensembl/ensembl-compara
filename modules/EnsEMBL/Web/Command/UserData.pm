@@ -37,12 +37,12 @@ sub ajax_redirect {
 
 sub upload {
 ### Simple wrapper around File::User 
-  my ($self, $method, $format) = @_;
+  my ($self, $method, $format, $renderer) = @_;
   my $hub       = $self->hub;
   my $params    = {};
 
   my $file  = EnsEMBL::Web::File::User->new('hub' => $hub, 'empty' => 1);
-  my $error = $file->upload('method' => $method, 'format' => $format);
+  my $error = $file->upload('method' => $method, 'format' => $format, 'renderer' => $renderer);
 
   ## Validate format
   my $iow;
@@ -65,9 +65,28 @@ sub upload {
       function => '_error'
     );
   } else {
+    ## Get description from file and save to session
+    my $description = $iow->get_metadata_value('description');
+    if ($description) {
+      if ($hub->user) {
+        my ($record) = grep {$_->code eq $file->code} $hub->user->get_records('uploads');
+        if ($record) {
+          $record->data->{'description'} = $description;
+          $record->save('user' => $hub->user);
+        }
+      }
+      else {
+        my $data = $hub->session->get_data('type' => 'upload', 'code' => $file->code);
+        $data->{'description'} = $description;
+        $hub->session->set_data(%$data);
+      }
+    }
+
     ## Look for the nearest feature
     my ($chr, $start, $end, $count) = $iow->nearest_feature;
-    $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+    if ($chr && $start) {
+      $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+    }
     $params->{'count'}   = $count;
 
     $params->{'species'}  = $hub->param('species') || $hub->species;

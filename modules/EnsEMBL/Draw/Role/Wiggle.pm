@@ -54,6 +54,15 @@ sub _render_aggregate {
     return 1;
   }
 
+  my $maxHeightPixels = $self->{'my_config'}->get('maxHeightPixels') || '';
+  (my $default_height = $maxHeightPixels) =~ s/^.*:([0-9]*):.*$/$1/;
+  if ($default_height) {  
+    $self->{'my_config'}->set('height', $default_height);
+  }
+  else {
+   $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
+  }
+
   $self->{'my_config'}->set('bumped', 0);
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis')) 
     unless $self->{'my_config'}->get('axis_colour');
@@ -82,7 +91,14 @@ sub _render {
     return 1;
   }
 
-  $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
+  (my $default_height = $self->{'my_config'}->get('maxHeightPixels')) =~ s/^.*:([0-9]*):.*$/$1/;
+  if ($default_height) {  
+    $self->{'my_config'}->set('height', $default_height);
+  }
+  else {
+   $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
+  }
+
   $self->{'my_config'}->set('absolutex', 1);
   $self->{'my_config'}->set('bumped', 0);
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));

@@ -62,10 +62,12 @@ sub content {
       my ($st, $en) = ($_->start, $_->end);
       
       if (
-        ($st <= $click[1] && $en >= $click[2]) || # click is completely inside exon
-        ($st >= $click[1] && $en <= $click[2])    # click completely contains exon
+        ($st <= $click[1] && $en >= $click[2]) || # click is completely on an intron
+        ($st >= $click[1] && $en <= $click[2]) || # click completely contains intron
+        ($click[1] <= $st && $click[2] >= $st) || # start of intron is part of click
+        ($click[1] <= $en && $click[2] >= $en)    # click is end of intron
       ) {      
-        #push @introns, $_->rank($transcript);   #TO uncomment once core added the rank call for intron      
+        push @introns, $_->rank($transcript);   #TO uncomment once core added the rank call for intron      
       }
     }    
   }
@@ -108,6 +110,7 @@ sub content {
     });
   }
 
+  @introns = () if(scalar @exons && scalar @introns); #when click is on both exon and intron, exon takes precedence
   $self->add_entry({
     type  => 'Exon',
     label => $exons[0]." of ". scalar(@all_exons)

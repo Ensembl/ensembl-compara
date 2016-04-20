@@ -560,23 +560,29 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
 
     var config  = link.rel;
-    var update  = link.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
+    var href    = link.href.split(';');
+    var update  = href.pop().split('='); // update = [ trackId, renderer ]
+
     var fav     = '';
+    var imgConf = {};
 
     if ($link.hasClass('favourite')) {
       fav = $link.hasClass('selected') ? 'off' : 'on';
+      href.push(update[0] + '=' + update[1] + fav);
       Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
     } else {
       $link.parents('._label_layer').addClass('hover_label_spinner');
+      imgConf[update[0]] = {'renderer' : update[1]};
+      href.push('image_config=' + encodeURIComponent(JSON.stringify(imgConf)));
     }
 
     $.ajax({
-      url: link.href + fav,
+      url: href.join(';'),
       dataType: 'json',
-      context: this,
+      context: { panel: this, track: update[0], update: update[1] },
       success: function (json) {
         if (json.updated) {
-          this.changeConfiguration(config, update[0], update[1]);
+          this.panel.changeConfiguration(config, this.track, this.update);
         }
       }
     });

@@ -91,7 +91,7 @@ Ensembl.extend({
     this.PanelManager.initialize();
     
     if (modalOpen) {
-      this.EventManager.trigger('modalOpen', { className: 'force', rel: modalOpen[1] });
+      this.EventManager.deferTrigger('modalOpen', { className: 'force', rel: modalOpen[1] });
       window.location.hash = '';
     }
     
@@ -226,6 +226,33 @@ Ensembl.extend({
     url += (url.match(/\?/) ? ';' : '?') + 'time=' + time;
     
     return url;
+  },
+
+  prepareRequestParams: function (url) {
+    var data = {};
+    var type;
+
+    if(url.length > 1500){
+      $.each((url.split(/\?/)[1] || '').split(/&|;/), function(i, param) {
+        param = param.split('=');
+         if (typeof param[0] !== 'undefined' && !(param[0] in data)) {
+           data[param[0]] = param[1];
+         }
+      });
+      url  = url.split(/\?/)[0];
+      type = 'POST';
+    }
+    else {
+      url  = this.replaceTimestamp(url);
+      type = 'GET';
+    }
+
+    return {
+        requestURL: url,
+        requestType: type,
+        requestData: data
+      };
+
   },
   
   redirect: function (url) {

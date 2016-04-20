@@ -378,6 +378,7 @@ sub collapsed_nodes {
   my $action                 = shift;
   my $highlight_genome_db_id = shift;
   my $highlight_gene         = shift;
+  return unless $node;
   
   die "Need a GeneTreeNode, not a $tree" unless $tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode');
   die "Need an GeneTreeMember, not a $node" if $node && !$node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');

@@ -36,12 +36,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
         var $outer = $(outer);
         panel.initPopups($outer);
         panel.updateKey($outer);
-        panel.fixKey($outer);
-        if(!$('.ajax_pending',this.el).length &&
-            !$('.ajax_load',this.el).length &&
-            !$('.sequence_key img',this.el).length) {
-//            panel.requestKey($this);
-        }
+        panel.fixKey();
       });
     });
 
@@ -74,14 +69,11 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     $key.data('url',url);
   },
 
-  fixKey: function(el) {
-    el.parents('.js_panel').find('._adornment_key').first().keepOnPage({marginTop: 10}).keepOnPage('trigger');
-  },
-
-  requestKey: function(el) {
-    var $key = el.parents('.js_panel').find('.sequence_key');
-    if(!$key.length) { return; }
-    this.getContent($key.data('url'),$key);
+  fixKey: function() {
+    if (!this.elLk.keyBox) {
+      this.elLk.keyBox = this.el.find('._adornment_key').first();
+    }
+    this.elLk.keyBox.keepOnPage({marginTop: 10}).keepOnPage('trigger');
   },
 
   initPopups: function (el) {
@@ -92,6 +84,10 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   getContent: function (url, el, params, newContent, attrs) {
     attrs = attrs || {};
     attrs.paced = true;
+
+    if (this.elLk.keyBox) {
+      this.elLk.keyBox.keepOnPage('destroy');
+    }
 
     this.base(url, el, params, newContent, attrs);
   }

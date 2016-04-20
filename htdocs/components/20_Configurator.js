@@ -50,16 +50,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var track, type, group, i, j;
     
     this.base();
-    
-    if (this.params.hash) {
-      var new_active = this.elLk.links.children('.' + this.params.hash);
-      if(new_active.length) {
-        this.elLk.links.removeClass('active');
-        new_active.parent().addClass('active');
-      }
-      delete this.params.hash;
-    }
-    
+
     this.elLk.form              = $('form.configuration', this.el);
     this.elLk.headers           = $('h1', this.el);
     this.elLk.search            = $('.configuration_search_text', this.el);
@@ -283,7 +274,18 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.getContent();
     this.el.externalLinks();
   },
-  
+
+  initFromHash: function() {
+    if (this.params.hash) {
+      var newActive = this.elLk.links.children('.' + this.params.hash);
+      if(newActive.length) {
+        this.elLk.links.removeClass('active');
+        newActive.parent().addClass('active');
+      }
+      delete this.params.hash;
+    }
+  },
+
   showConfigMenu: function (e) {
     if (e.target.nodeName === 'A') {
       return true;

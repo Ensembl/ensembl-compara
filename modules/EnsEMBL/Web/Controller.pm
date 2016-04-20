@@ -32,6 +32,10 @@ use EnsEMBL::Web::Document::Panel;
 
 use base qw(EnsEMBL::Web::Root);
 
+use Time::HiRes qw(time);
+
+my $DEBUG_TIME = 0;
+
 my @HANDLES_TO_DISCONNECT;
 
 sub OBJECT_PARAMS {
@@ -104,8 +108,14 @@ sub new {
     $self->set_cache_params;
   }
   
+  my $time_a = time if $DEBUG_TIME;
+  $hub->qstore_open;
   $self->init;
-  
+  $hub->qstore_close;
+  if($DEBUG_TIME) {
+    my $time_b = time;
+    warn sprintf("%s : %dms\n",$self->{'hub'}->apache_handle->unparsed_uri,($time_b-$time_a)*1000);
+  }
   return $self;
 }
 

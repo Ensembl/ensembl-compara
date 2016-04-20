@@ -4,6 +4,7 @@
 /conf/started
 /conf/Plugins.pm
 /conf/packed
+/conf/book
 /conf/config.packed
 /htdocs/das/*
 !/htdocs/das/das.xsl

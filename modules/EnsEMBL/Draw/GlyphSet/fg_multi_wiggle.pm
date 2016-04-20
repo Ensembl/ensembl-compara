@@ -32,6 +32,7 @@ sub label { return undef; }
 sub render_compact {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks']);
+  $self->{'my_config'}->set('extra_height',12);
   $self->_render_aggregate;
 }
 
@@ -44,6 +45,7 @@ sub render_signal {
 sub render_signal_feature {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Peaks', 'Graph']);
+  $self->{'my_config'}->set('extra_height',12);
   $self->_render_aggregate;
 }
 
@@ -169,7 +171,7 @@ sub draw_aggregate {
                           sublegend_links => $self->_sublegend_links,
                           };
             if ($show_blocks && $show_wiggle) {
-              $params->{'y_offset'} = $h * 6;
+              $params->{'y_offset'} = $self->{'my_config'}->get('total_height');
             }
             $header->draw_sublegend($params);
           }

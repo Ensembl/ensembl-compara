@@ -35,7 +35,11 @@ sub content {
   
   if ($click_data) {
     @features = @{EnsEMBL::Draw::GlyphSet::_variation->new($click_data)->features};
-    @features = () unless grep $_->dbID eq $vf, @features;
+    @features = () unless grep $_->{'dbID'} eq $vf, @features;
+    my $adaptor         = $hub->database($db)->get_VariationFeatureAdaptor;
+    @features = map { $adaptor->fetch_by_dbID($_->{'dbID'}) } @features;
+    
+
   } elsif (!$vf) {
     my $adaptor         = $hub->database($db)->get_VariationAdaptor;
     my @variation_names = split ',', $hub->param('v');

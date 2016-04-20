@@ -277,11 +277,13 @@ sub add_image_export_icon {
 ### @return Hashref of icon parameters
   my $self = shift;
   my $hub  = $self->hub;
+
   my $params = {
                 'type' => 'ImageExport',
                 'action' => 'ImageFormats',
                 'data_type' => $hub->type,
                 'component' => $self->component,
+                'pre_action'  => $hub->action,
                 };
 
   foreach (@{$self->{'export_params'}||[]}) {

@@ -41,7 +41,6 @@ sub new {
     my @chromosomes = ($container->{'chr'});
     my @configs     = $config->get_tracks;
     my $scalex      = $config->get_parameter('image_height') / $config->get_parameter('container_width');
-    my $user_data   = $config->get_node('user_data');
     my $pos         = 100000;
     my $tmp         = {};
     my $flag        = 0;
@@ -57,8 +56,6 @@ sub new {
     $config->{'transform'}->{'scalex'}         = $scalex;
     $config->{'transform'}->{'absolutescalex'} = 1;
     $config->{'transform'}->{'translatex'}    += $config->get_parameter('top_margin');
-    
-    $self->{'storage'} = { %{$self->{'storage'} || {}}, %{$config->load_user_track_data(\@chromosomes)} } if $user_data; ## Parse and cache data for use on subsequent chromosomes
     
     foreach my $chr (@chromosomes) {
       $container->{'chr'} = $chr;
