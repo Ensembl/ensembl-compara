@@ -217,13 +217,14 @@ sub http_redirect {
   ## Perform an http redirect
   ## @param Apache2::RequestRec request object
   ## @param URI string to redirect to
-  ## @return HTTP_MOVED_PERMANENTLY
-  my ($r, $redirect_uri) = @_;
+  ## @param Flag kept on for permanent redirects
+  ## @return HTTP_MOVED_TEMPORARILY or HTTP_MOVED_PERMANENTLY
+  my ($r, $redirect_uri, $permanent) = @_;
   $r->uri($redirect_uri);
   $r->headers_out->add('Location' => $r->uri);
   $r->child_terminate; # TODO really needed?
 
-  return HTTP_MOVED_PERMANENTLY;
+  return $permanent ? HTTP_MOVED_PERMANENTLY : HTTP_MOVED_TEMPORARILY;
 }
 
 sub time_str {
@@ -304,12 +305,12 @@ sub handler {
 
   # handle any redirects
   if (my $redirect = get_redirect_uri($uri)) {
-    return http_redirect($r, $redirect);
+    return http_redirect($r, $redirect, 1);
   }
 
   # populate subprocess_env with species, path and query or perform a redirect to a rectified url
   if (my $redirect = parse_ensembl_uri($r)) {
-    return http_redirect($r, $redirect);
+    return http_redirect($r, $redirect, 1);
   }
 
   # get these values as recently saved by parse_ensembl_uri subroutine
@@ -333,8 +334,13 @@ sub handler {
   # delegate request to the required handler and get the response status code
   my $response_code = $handler ? $handler->can('handler')->($r, $species_defs) : undef;
 
-  # check for any redirects requested by the code
-  if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT')) {
+  # check for any permanent redirects requested by the code
+  if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT_PERMANENT')) {
+    return http_redirect($r, $redirect, 1);
+  }
+
+  # check for any temporary redirects requested by the code
+  if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT_TEMPORARY')) {
     return http_redirect($r, $redirect);
   }
 
