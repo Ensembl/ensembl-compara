@@ -19,16 +19,19 @@ limitations under the License.
 package EnsEMBL::Web::Controller;
 
 use strict;
+use warnings;
 
-use Apache2::RequestUtil;
-use CGI;
+use URI;
+use URI::Escape qw(uri_unescape);
 use Class::DBI;
 
 use Bio::EnsEMBL::Registry;
 
+use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::Document::Panel;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -38,127 +41,125 @@ my $DEBUG_TIME = 0;
 
 my @HANDLES_TO_DISCONNECT;
 
-sub OBJECT_PARAMS {
-  [
-    [ 'Phenotype'           => 'ph'  ],
-    [ 'Location'            => 'r'   ],
-    [ 'Gene'                => 'g'   ],
-    [ 'Transcript'          => 't'   ],
-    [ 'Variation'           => 'v'   ],
-    [ 'StructuralVariation' => 'sv'  ],
-    [ 'Regulation'          => 'rf'  ],
-    [ 'Experiment'          => 'ex'  ],
-    [ 'Marker'              => 'm'   ],
-    [ 'LRG'                 => 'lrg' ],
-    [ 'GeneTree'            => 'gt'  ],
-    [ 'Family'              => 'fm'  ],
-  ];
-}
+sub r             :Getter('r');
+sub hub           :Getter('hub');
+sub species_defs  :Getter('species_defs');
+sub species       :Getter('species');
+sub path_segments :Getter('path_segments');
+sub query         :Getter('query');
+sub filename      :Getter('filename');
+sub type          :Getter('type');
+sub action        :Getter('action');
+sub function      :Getter('function');
+sub sub_function  :Getter('sub_function');
 
 sub new {
-  my $class         = shift;
-  my $r             = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args          = shift || {};
-  my $input         = CGI->new;
+  ## @constructor
+  ## @param Apache2::RequestRec object
+  ## @param SpeciesDefs object
+  ## @param Hashref with following keys (as required by the sub classes being instantiated)
+  ##  - species       : Species name (string)
+  ##  - path_segments : Arrayref of path segments
+  ##  - query         : Query part of the url (string)
+  ##  - filename      : Name of the file to be served (for static file request)
+  my ($class, $r, $species_defs, $params) = @_;
 
-  my $object_params = $class->OBJECT_PARAMS;
-  my $object_types  = { map { $_->[0] => $_->[1] } @$object_params };
-
-  my $hub           = EnsEMBL::Web::Hub->new({
-    apache_handle     => $r,
-    input             => $input,
-    object_types      => $object_types,
-    session_cookie    => $args->{'session_cookie'},
-    user_cookie       => $args->{'user_cookie'},
-  });
-  
-  my $builder       = EnsEMBL::Web::Builder->new({
-    hub               => $hub,
-    object_params     => $object_params
-  });
-  
-  my $self          = bless {
-    r                 => $r,
-    input             => $input,
-    hub               => $hub,
-    builder           => $builder,
-    cache             => $hub->cache,
-    type              => $hub->type,
-    action            => $hub->action,
-    function          => $hub->function,
-    command           => undef,
-    filters           => undef,
-    errors            => [],
-    page_type         => 'Dynamic',
-    renderer_type     => 'String',
-    %$args
+  my $self = bless {
+    'r'             => $r,
+    'species_defs'  => $species_defs,
+    'page_type'     => 'Dynamic',
+    'renderer_type' => 'String',
+    'species'       => $params->{'species'}       || '',
+    'path_segments' => $params->{'path_segments'} || [],
+    'query'         => $params->{'query'}         || '',
+    'filename'      => $params->{'filename'}      || '',
+    'type'          => '',
+    'action'        => '',
+    'function'      => '',
+    'sub_function'  => '',
+    'errors'        => []
   }, $class;
-  
-  my $species_defs  = $hub->species_defs;
-  
-  $CGI::POST_MAX    = $self->upload_size_limit; # Set max upload size
-  
-  if ($self->cache && $self->request ne 'modal') {
-    # Add parameters useful for caching functions
-    $self->{'session_id'}  = $hub->session->session_id;
-    $self->{'user_id'}     = $hub->user;
-    $self->{'url_tag'}     = $hub->url({ update_panel => undef }, undef, 1);
-    $self->{'cache_debug'} = $species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_MEMCACHED;
-    
-    $self->set_cache_params;
-  }
-  
-  my $time_a = time if $DEBUG_TIME;
-  $hub->qstore_open;
-  $self->init;
-  $hub->qstore_close;
-  if($DEBUG_TIME) {
-    my $time_b = time;
-    warn sprintf("%s : %dms\n",$self->{'hub'}->apache_handle->unparsed_uri,($time_b-$time_a)*1000);
-  }
+
+  $self->parse_path_segments; # populate type, action, function and sub_function
+
+  $self->{'hub'} = EnsEMBL::Web::Hub->new($self);
+
   return $self;
 }
 
-sub upload_size_limit {
-  return shift->hub->species_defs->CGI_POST_MAX;
+sub process {
+  ## Generates the response
+  my $self = shift;
+
+  my $time_a = time if $DEBUG_TIME;
+
+  $self->init_cache;
+  $self->hub->qstore_open;
+  $self->init;
+  $self->hub->qstore_close;
+
+  if ($DEBUG_TIME) {
+    my $time_b = time;
+    warn sprintf("%s : %dms\n",$self->{'hub'}->apache_handle->unparsed_uri,($time_b-$time_a)*1000);
+  }
 }
 
-sub init {}
+sub query_form {
+  ## Parse the query string in a hash
+  ## @return Hashref extracted from URL GET params
+  my $self = shift;
 
-sub update_user_history {} # stub for users plugin
+  return $self->{'query_form'} ||= _parse_query_form($self->query);
+}
 
-sub r             { return $_[0]->{'r'};              }
-sub input         { return $_[0]->{'input'};          }
-sub hub           { return $_[0]->{'hub'};            }
-sub builder       { return $_[0]->{'builder'};        }
-sub cache         { return $_[0]->{'cache'};          }
-sub errors        { return $_[0]->{'errors'};         }
-sub type          { return $_[0]->hub->type;          }
-sub action        { return $_[0]->hub->action;        }
-sub function      { return $_[0]->hub->function;      }
-sub species_defs  { return $_[0]->hub->species_defs;  }
-sub object        { return $_[0]->builder->object;    }
-sub page_type     { return $_[0]->{'page_type'};      }
-sub renderer_type { return $_[0]->{'renderer_type'};  }
-sub request       { return undef;                     }
-sub cacheable     { return 0;                         }
-sub node          :lvalue { $_[0]->{'node'};          }
-sub command       :lvalue { $_[0]->{'command'};       }
-sub filters       :lvalue { $_[0]->{'filters'};       }
+sub query_param {
+  ## Gets the value(s) of a GET parameter
+  ## @return List of all values in list context, only first value in scalar context
+  my ($self, $key)  = @_;
+  my $query_form    = $self->query_form;
+  my $all_values    = $query_form->{$key} || [];
+
+  return wantarray ? @$all_values : $all_values->[0];
+}
+
+sub object_params {
+  ## @return The OBJECT_PARAMS from species defs
+  my $self = shift;
+  $self->{'object_params'} ||= $SiteDefs::OBJECT_PARAMS;
+}
+
+sub parse_path_segments {
+  ## Parses path segments to identify type, action and function
+  my $self = shift;
+
+  ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@{$self->path_segments}, '', '', '', '');
+}
+
+sub upload_size_limit {
+  ## Upload size limit for post requests
+  return shift->species_defs->CGI_POST_MAX;
+}
+
+sub builder {
+  ## Returns a cached or new builder instance
+  ## @return EnsEMBL::Web::Builder instance
+  my $self = shift;
+
+  return $self->{'builder'} ||= EnsEMBL::Web::Builder->new({
+    hub           => $self->hub,
+    object_params => $self->object_params
+  });
+}
 
 sub renderer {
+  ## Returns required renderer instance according to the renderer type
+  ## @return Instance of subclass of EnsEMBL::Web::Document::Renderer
   my $self = shift;
-  
-  if (!$self->{'renderer'}) {
-    my $renderer_module = 'EnsEMBL::Web::Document::Renderer::' . $self->renderer_type;
-    
-    ($self->{'renderer'}) = $self->_use($renderer_module, (
-      r     => $self->r,
-      cache => $self->cache
-    ));
-  }
-  
-  return $self->{'renderer'};
+
+  return $self->{'renderer'} ||= dynamic_require('EnsEMBL::Web::Document::Renderer::'.$self->renderer_type)->new(
+    r     => $self->r,
+    cache => $self->hub->cache
+  );
 }
 
 sub page {
@@ -179,6 +180,103 @@ sub page {
   
   return $self->{'page'};
 }
+
+sub init_cache {
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
+
+  if ($self->hub->cache && $self->request ne 'modal') {
+    # Add parameters useful for caching functions
+    $self->{'session_id'}  = $hub->session->session_id;
+    $self->{'user_id'}     = $hub->user;
+    $self->{'url_tag'}     = $hub->url({ update_panel => undef }, undef, 1);
+    $self->{'cache_debug'} = $species_defs->ENSEMBL_DEBUG_FLAGS && $species_defs->ENSEMBL_DEBUG_MEMCACHED;
+
+    $self->set_cache_params;
+  }
+}
+
+sub referer {
+  ## Gets the referer for the current request
+  ## @param Flag if on will return referer string without parsing it
+  ## @return Referer object (parsed) or referer string (unparsed)
+  my ($self, $unparsed) = @_;
+
+  $self->{'referer_string'} ||= $self->r->headers_in->{'Referer'};
+  return $self->{'referer_string'} if $unparsed;
+
+  return {} unless $self->{'referer_string'};
+
+  unless (exists $self->{'referer'}) {
+
+    my $referer       = {'absolute_url' => $self->{'referer_string'}};
+    my $species_defs  = $self->species_defs;
+    my $servername    = $species_defs->ENSEMBL_SERVERNAME;
+    my $server        = $species_defs->ENSEMBL_SERVER;
+    my $uri           = URI->new($self->{'referer_string'});
+
+    my $path  = $uri->path;
+    my $query = $uri->query;
+    my $host  = $uri->authority;
+    my @path  = grep $_, split '/', $path;
+
+    if ($host !~ /$servername/i && $host !~ /$server/ && $path !~ m!/Tools/!) {## Why Tools?
+      $referer->{'external'} = 1;
+
+    } else {
+      unshift @path, 'Multi' unless $path[0] eq 'Multi' || $species_defs->valid_species($path[0]);
+
+      $referer->{'external'}  = 0;
+      $referer->{'uri'}       = join '?', $path, $query || ();
+      $referer->{'params'}    = _parse_query_form($query || '');
+
+      # dynamic page
+      if ($species_defs->OBJECT_TO_CONTROLLER_MAP->{$path[1]}) {
+        my ($species, $type, $action, $function) = @path;
+        $referer->{'ENSEMBL_SPECIES'}  = $species   || '';
+        $referer->{'ENSEMBL_TYPE'}     = $type      || '';
+        $referer->{'ENSEMBL_ACTION'}   = $action    || '';
+        $referer->{'ENSEMBL_FUNCTION'} = $function  || '';
+      }
+    }
+
+    $self->{'referer'} = $referer;
+  }
+
+  return $self->{'referer'};
+}
+
+sub _parse_query_form {
+  ## @private
+  my $query = shift;
+
+  my $q = {};
+  my @p = URI->new(sprintf '?%s', $query)->query_form;
+
+  while (my ($key, $val) = splice @p, 0, 2) {
+    next if $key eq 'time';
+    push @{$q->{$key}}, $val;
+  }
+
+  return $q;
+}
+
+sub init {}
+
+sub update_user_history {} # stub for users plugin
+
+sub OBJECT_PARAMS { return $_[0]->object_params;      }
+sub input         { return $_[0]->hub->input;         }
+sub errors        { return $_[0]->{'errors'};         }
+sub object        { return $_[0]->builder->object;    }
+sub page_type     { return $_[0]->{'page_type'};      }
+sub renderer_type { return $_[0]->{'renderer_type'};  }
+sub request       { return undef;                     }
+sub cacheable     { return 0;                         }
+sub node          :lvalue { $_[0]->{'node'};          }
+sub command       :lvalue { $_[0]->{'command'};       }
+sub filters       :lvalue { $_[0]->{'filters'};       }
 
 sub configuration {
   my $self = shift;
@@ -228,7 +326,7 @@ sub configure {
   if ($hub->object_types->{$hub->type}) {
     $hub->components = $configuration->get_configurable_components($node);
   } elsif ($self->request eq 'modal') {
-    my $referer     = $hub->referer;
+    my $referer     = $self->referer;
     my $module_name = "EnsEMBL::Web::Configuration::$referer->{'ENSEMBL_TYPE'}";
     
     $hub->components = $module_name->new_for_components($hub, $referer->{'ENSEMBL_ACTION'}, $referer->{'ENSEMBL_FUNCTION'}) if $self->dynamic_use($module_name);
@@ -278,7 +376,7 @@ sub set_cache_params {
   $ENV{'CACHE_KEY'} .= join '::', '', map $_->name =~ /^toggle_/ ? sprintf '%s[%s]', $_->name, $_->value : (), grep $_, values %{$hub->cookies};
   
   if ($self->request !~ /^(page|ssi)$/) {
-    my $referer = $hub->referer;
+    my $referer = $self->referer;
     (my $tag    = $referer->{'uri'}) =~ s/\?.+/?/;
     my @params;
     
@@ -299,7 +397,7 @@ sub get_cached_content {
   
   my ($self, $type) = @_;
   
-  my $cache = $self->cache;
+  my $cache = $self->hub->cache;
   my $r     = $self->r;
   
   return unless $cache;
@@ -327,7 +425,7 @@ sub set_cached_content {
   
   my ($self, $content) = @_;
   
-  my $cache = $self->cache;
+  my $cache = $self->hub->cache;
   
   return unless $cache && $self->cacheable;
   return unless $ENV{'CACHE_KEY'};
@@ -343,7 +441,7 @@ sub clear_cached_content {
   ### Removes content from Memcached based on the request's URL and the user's session id.
   
   my $self  = shift;
-  my $cache = $self->cache;
+  my $cache = $self->hub->cache;
   my $r     = $self->r;
   
   if ($cache && $r->headers_in->{'Cache-Control'} =~ /(max-age=0|no-cache)/ && $r->method ne 'POST') {

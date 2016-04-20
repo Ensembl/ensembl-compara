@@ -62,9 +62,9 @@ sub new {
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
       storable     => 1,      
-      trackhubs     => 0,
-      image_width  => $ENV{'ENSEMBL_IMAGE_WIDTH'} || 800,
-      image_resize => 0,      
+      trackhubs    => 0,
+      image_width  => $hub->image_width,
+      image_resize => 0,
       margin       => 5,
       spacing      => 2,
       label_width  => 113,

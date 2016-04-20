@@ -260,7 +260,7 @@ sub ajax_content {
   my $controller = shift;
   my $panel      = $self->new_panel('Ajax', $controller, code => 'ajax_panel');
  
-  $panel->add_component('component', $ENV{'ENSEMBL_COMPONENT'});
+  $panel->add_component($controller->component_code, $controller->component);
   
   $controller->r->headers_in->{'X-Requested-With'} = 'XMLHttpRequest';
   $self->add_panel($panel);

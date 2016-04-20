@@ -32,11 +32,12 @@ use strict;
 
 use Carp;
 use CGI;
-use URI::Escape qw(uri_escape uri_unescape);
+use URI::Escape qw(uri_escape);
 use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Draw::Utils::ColourMap;
 
+use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::DBSQL::DBConnection;
@@ -59,34 +60,39 @@ use EnsEMBL::Web::QueryStore::Source::Adaptors;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $args) = @_;
+  my ($class, $controller) = @_;
 
-  my $type         = $args->{'type'}         || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL: Gene, UserData, etc
-  my $species      = $args->{'species'}      || $ENV{'ENSEMBL_SPECIES'};
-  my $input        = $args->{'input'}        || CGI->new;
-  my $species_defs = $args->{'species_defs'} || EnsEMBL::Web::SpeciesDefs->new;
-  my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
-  my $cookies      = $args->{'apache_handle'} ? EnsEMBL::Web::Cookie->fetch($args->{'apache_handle'}) : {};
+  my $args          = {};
+  my $r             = $controller->r;
+  my $species       = $controller->species;
+  my $species_defs  = $controller->species_defs;
+  my $cookies       = EnsEMBL::Web::Cookie->fetch($r);
+  my $object_params = $controller->object_params;
+  my $object_types  = { map { $_->[0] => $_->[1] } @{$object_params || []} };
 
-  $species_defs->{'timer'} = $args->{'timer'};
-  
+  my $type      = $ENV{'ENSEMBL_TYPE'}      = $controller->type;
+  my $action    = $ENV{'ENSEMBL_ACTION'}    = $controller->action;
+  my $function  = $ENV{'ENSEMBL_FUNCTION'}  = $controller->function;
+  my $script    = $ENV{'ENSEMBL_SCRIPT'}    = [ split '::', ref($controller) ]->[-1];
+
+  $cookies->{'session_cookie'}  = EnsEMBL::Web::Cookie->retrieve($r, {'name' => $SiteDefs::ENSEMBL_SESSION_COOKIE, 'encrypted' => 1})
+    || EnsEMBL::Web::Cookie->new($r, {'name' => $SiteDefs::ENSEMBL_SESSION_COOKIE, 'encrypted' => 1});
+
   my $self = {
-    _input         => $input,
-    _species       => $species,    
-    _species_defs  => $species_defs, 
-    _factorytype   => $factorytype,
+    _species       => $species,
+    _species_defs  => $species_defs,
     _type          => $type,
-    _action        => $args->{'action'}        || $ENV{'ENSEMBL_ACTION'},   # View, Summary etc
-    _function      => $args->{'function'}      || $ENV{'ENSEMBL_FUNCTION'}, # Extra path info
+    _action        => $action,
+    _function      => $function,
     _script        => $args->{'script'}        || $ENV{'ENSEMBL_SCRIPT'},   # Page, Component, Config etc
     _cache         => $args->{'cache'}         || EnsEMBL::Web::Cache->new(enable_compress => 1, compress_threshold => 10000),
     _ext_url       => $args->{'ext_url'}       || EnsEMBL::Web::ExtURL->new($species, $species_defs),
     _problem       => $args->{'problem'}       || {},
     _user_details  => $args->{'user_details'}  || 1,
-    _object_types  => $args->{'object_types'}  || {},
-    _apache_handle => $args->{'apache_handle'} || undef,
+    _object_types  => $object_types,
+    _apache_handle => $r,
     _user          => $args->{'user'}          || undef,
-    _timer         => $args->{'timer'}         || undef,
+    _timer         => EnsEMBL::Web::Timer->new,
     _databases     => EnsEMBL::Web::DBSQL::DBConnection->new($species, $species_defs),
     _cookies       => $cookies,
     _ext_indexers  => {},
@@ -100,19 +106,29 @@ sub new {
 
   bless $self, $class;
 
-  $self->query_store_setup;  
-  $self->init_session($args->{'session_cookie'});
-  $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer if $ENSEMBL_WEB_REGISTRY;
-  
+  $CGI::POST_MAX    = $controller->upload_size_limit; # Set max upload size
+  my $input         = CGI->new;
+  my $factorytype   = $type eq 'Location' && $action =~ /^Multi(Ideogram.*|Top|Bottom)?$/ ? 'MultipleLocation' : undef;
+     $factorytype ||= $input && $input->param('factorytype') || $type;
+
+  $self->{'_input'}       = $input;
+  $self->{'_factorytype'} = $factorytype;
+  $self->{'_controller'}  = $controller;
+
+  $species_defs->{'timer'} = $self->timer;
+
+  $self->query_store_setup;
+  $self->init_session($cookies->{'session_cookie'});
+
   $self->set_core_params;
-  
+
   return $self;
 }
 
 sub init_session {
   my ($self, $cookie) = @_;
 
-  $self->session = EnsEMBL::Web::Session->new($self, $cookie);
+  $self->{'_session'} = EnsEMBL::Web::Session->new($self, $cookie);
 }
 
 # Accessor functionality
@@ -130,6 +146,7 @@ sub timer       :lvalue { $_[0]{'_timer'};       }
 sub components  :lvalue { $_[0]{'_components'};  }
 sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
 
+sub controller     { return $_[0]{'_controller'};     }
 sub input          { return $_[0]{'_input'};          }
 sub cookies        { return $_[0]{'_cookies'};        }
 sub databases      { return $_[0]{'_databases'};      }
@@ -142,7 +159,7 @@ sub species_defs   { return $_[0]{'_species_defs'};   }
 sub config_adaptor { return $_[0]{'_config_adaptor'} ||= EnsEMBL::Web::DBSQL::ConfigAdaptor->new($_[0]); }
 
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
-sub referer           { return $_[0]{'referer'}   ||= $_[0]->parse_referer;                                  }
+sub referer           { return shift->controller->referer; }
 sub colourmap         { return $_[0]{'colourmap'} ||= EnsEMBL::Draw::Utils::ColourMap->new($_[0]->species_defs);      }
 sub is_ajax_request   { return $_[0]{'is_ajax'}   //= $_[0]{'_apache_handle'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
 
@@ -164,6 +181,23 @@ sub clear_problems     { $_[0]{'_problem'} = {}; }
 
 sub is_mobile_request  { }; #this is implemented in the mobile plugin
 
+sub image_width {
+  ## Gets image width or sets it for subsequent requests by setting a cookie
+  ## @param Width in pixels (if setting)
+  ## @return Width in pixels
+  my ($self, $width) = @_;
+
+  if ($width) {
+    $self->{'_image_width'} = $width;
+    $self->set_cookie('ENSEMBL_WIDTH', $width);
+  }
+
+  return $self->{'_image_width'} ||= $self->param('image_width') || $self->get_cookie_value('ENSEMBL_WIDTH') || $self->species_defs->ENSEMBL_IMAGE_WIDTH;
+}
+
+sub is_dynamic_image_width {
+  return shift->get_cookie_value('DYNAMIC_WIDTH') ? 1 : 0;
+}
 
 ## Cookie methods
 sub get_cookie_value {
@@ -525,77 +559,6 @@ sub multi_params {
     map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
 
   return \%params;
-}
-
-sub parse_referer {
-  my $self         = shift;
-  my $species_defs = $self->species_defs;
-  my $servername   = $species_defs->ENSEMBL_SERVERNAME;
-  my $server       = $species_defs->ENSEMBL_SERVER;
-  my $uri          = $ENV{'HTTP_REFERER'};
-     $uri          =~ s/^(https?:\/\/.*?)?\///i;
-     $uri          =~ s/[;&]$//;
-     
-  my ($url, $query_string) = split /\?/, $uri;
-
-  my $info = { absolute_url => $ENV{'HTTP_REFERER'} };
-  my @path = split /\//, $url;
-  
-  unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
-
-  if ($ENV{'HTTP_REFERER'} !~ /$servername/i && $ENV{'HTTP_REFERER'} !~ /$server/ && $ENV{'HTTP_REFERER'} !~ /$SiteDefs::MOBILE_URL/ && $ENV{'HTTP_REFERER'} !~ m!/Tools/!) {
-    $info->{'external'} = 1;
-  } else {
-    $info->{'external'} = 0;
-    $info->{'uri'}      = "/$uri";
-  }
-
-  my @pairs  = split /[&;]/, $query_string;
-  my $params = {};
-
-  foreach (@pairs) {
-    my ($param, $value) = split '=', $_, 2;
-
-    next unless defined $param;
-
-    $value = '' unless defined $value;
-    $param = uri_unescape($param);
-    $value = uri_unescape($value);
-
-    push @{$params->{$param}}, $value unless $param eq 'time'; # don't copy time
-  }
-  $info->{'params'} = $params;
-
-  ## Local dynamic page
-  if ($species_defs->OBJECT_TO_SCRIPT->{$path[1]} && !$info->{'external'}) {
-    my ($species, $type, $action, $function) = @path;
-    $info->{'ENSEMBL_SPECIES'}  = $species;
-    $info->{'ENSEMBL_TYPE'}     = $type;
-    $info->{'ENSEMBL_ACTION'}   = $action;
-    $info->{'ENSEMBL_FUNCTION'} = $function;
-  }
-
-  if ($species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_REFERER) {
-    warn "\n";
-    warn "------------------------------------------------------------------------------\n";
-    warn "\n";
-    warn "  SPECIES:  $info->{'species'}\n";
-    warn "  TYPE:     $info->{'type'}\n";
-    warn "  ACTION:   $info->{'action'}\n";
-    warn "  FUNCTION: $info->{'function'}\n";
-    warn "  QS:       $query_string\n";
-
-    foreach my $param (sort keys %$params) {
-      warn sprintf '%20s = %s\n', $param, $_ for sort @{$params->{$param}};
-    }
-
-    warn "\n";
-    warn "  URI:      $uri\n";
-    warn "\n";
-    warn "------------------------------------------------------------------------------\n";
-  }
- 
-  return $info;
 }
 
 sub filename {

@@ -52,14 +52,12 @@ use EnsEMBL::Web::Form::ModalForm;
 use EnsEMBL::Web::RegObj;
 
 sub new {
-  my $class = shift;
-  my $hub   = shift;
-  my $id    = [split /::/, $class]->[-1];
-  
+  my ($class, $hub, $builder, $renderer, $id) = @_;
+
   my $self = {
     hub           => $hub,
-    builder       => shift,
-    renderer      => shift,
+    builder       => $builder,
+    renderer      => $renderer,
     id            => $id,
     object        => undef,
     cacheable     => 0,
@@ -476,7 +474,7 @@ sub hint_panel {
 }
 
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
-sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
+sub image_width { return shift->hub->image_width; }
 sub caption     { return undef; }
 sub _init       { return; }
 
@@ -538,15 +536,14 @@ sub config_msg {
 }
 
 sub ajax_url {
-  my $self     = shift;
-  my $function = shift;
-  my $params   = shift || {};
-  my $extra    = shift || 'Component';
-  my (undef, $plugin, undef, $type, @module) = split '::', ref $self;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $function    = shift;
+     $function    = join "/", grep $_, $hub->function, $function && $self->can("content_$function") ? $function : '', $self->id;
+  my $params      = shift || {};
+  my $controller  = shift || 'Component';
 
-  my $module   = sprintf '%s%s', join('__', @module), $function && $self->can("content_$function") ? "/$function" : '';
-
-  return $self->hub->url($extra, { type => $type, action => $plugin, function => $module, %$params }, undef, !$params->{'__clear'});
+  return $self->hub->url($controller, { function => $function, %$params }, undef, !$params->{'__clear'});
 }
 
 sub EC_URL {
