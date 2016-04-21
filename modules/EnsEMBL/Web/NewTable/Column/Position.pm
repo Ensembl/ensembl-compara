@@ -72,7 +72,7 @@ sub match {
       return 0 unless $value<=$range->{'max'};
     }
   } else {
-    if($range->{'nulls'}) { return $range->{'nulls'}; }
+    if($range->{'no_nulls'}) { return $range->{'no_nulls'}; }
   }
   return 1;
 }
