@@ -20,6 +20,7 @@ package EnsEMBL::Web::Component::Gene::RnaSecondaryStructure;
 
 use strict;
 
+use EnsEMBL::Web::Utils::FormatText qw(date_format);
 use EnsEMBL::Web::Document::Image::R2R;
 
 use base qw(EnsEMBL::Web::Component::Gene);
@@ -29,6 +30,31 @@ sub _init {
   $self->cacheable(0);
   $self->ajaxable(1);
 }
+
+sub buttons {
+### Custom export button, because this image is SVG, not PNG 
+  my $self = shift;
+  my $hub = $self->hub;
+  my $object       = $self->object;
+  my ($display_name) = $object->display_xref;
+
+  my $filename  = $display_name.'.svg'; 
+  my $date      = date_format(time(), '%y_%m_%d');
+  my $file      = sprintf 'temporary/%s/r2r_%s/%s', $date, $hub->species, $filename;
+
+  my $url = sprintf '/%s/Download/ImageExport?format=svg;filename=%s;file=%s',
+                      lc($hub->species),
+                      $filename, 
+                      $file;
+
+  return {
+      'url'       => $url,
+      'caption'   => 'Download SVG',
+      'class'     => 'iexport',
+    };
+
+}
+
 
 sub content {
   my $self         = shift;
@@ -43,9 +69,10 @@ sub content {
 
   my $image = EnsEMBL::Web::Document::Image::R2R->new($self->hub, $self, {});
   my $svg_path = $image->render($display_name);
+  warn ">>> SVG PATH $svg_path";
 
   if ($svg_path) {
-    $html .= qq(<h4><a href="$svg_path">Download image</a></h4><object data="$svg_path" type="image/svg+xml"></object>);
+    $html .= qq(<object data="$svg_path" type="image/svg+xml"></object>);
   }
 
   return $html;

@@ -51,7 +51,7 @@ sub draw_wiggle {
                   y         => $y, 
                   width     => $width,
                   height    => $height,
-                  colour    => $c->{'colour'} || $self->set_colour($c, $f),
+                  colour    => $self->set_colour($c, $f),
                   alpha     => $self->track_config->get('use_alpha') ? 0.5 : 0,
                   title     => $self->track_config->get('no_titles') ? undef : $title,
                   href      => $href,

@@ -63,19 +63,7 @@ sub process {
       my $data = $session->get_data(type => 'upload', code => $_);
       
       if ($data) {
-        if ($data->{'analyses'}) {
-          push @shares, $_;
-        } else {
-          my $ref = $object->store_data(share => 1, type => $data->{'type'}, code => $_);
-          
-          if ($ref) {
-            push @shares, $ref;
-            $url_params->{'reload'} = 1;
-          } else {
-            $url_params->{'filter_module'} = 'Data';
-            $url_params->{'filter_code'}   = 'no_save';
-          }
-        }
+        push @shares, $_;
       } elsif ($session->get_data(type => 'url', code => $_)) {
         push @shares, $_;
       }

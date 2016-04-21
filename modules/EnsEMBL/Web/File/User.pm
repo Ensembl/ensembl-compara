@@ -41,6 +41,18 @@ sub new {
   return $class->SUPER::new(%args);
 }
 
+sub set_category {
+### Set the category of file: typically either temporary or persistent
+  my ($self, $category) = @_;
+
+  unless ($category) {
+    $category = $self->hub->user ? 'persistent' : 'temporary';
+  }
+
+  $self->{'category'} = $category;
+  return $self->{'category'};
+}
+
 ### Wrappers around E::W::File::Utils::IO methods
 
 sub preview {
@@ -213,18 +225,13 @@ sub upload {
         my $species = $hub->param('species') || $hub->species;
 
         ## Extra renderers for fancy formats
-        my $attach = $hub->param('attach') || $hub->param('contigviewbottom');
-        if ($attach) {
-          my @split = split('=', $attach);
-          my $custom = $attach =~ /^contig/ ? $split[2] : $split[1]; 
-          if ($custom) {
-            $inputs{'display'} = $custom;
-            my $lookup = EnsEMBL::Web::Constants::RENDERERS;
-            my $renderers = $lookup->{$custom}{'renderers'} || [];
-            if (scalar @$renderers) {
-              $inputs{'renderers'}  = ['off', 'Off', @$renderers];
-              $inputs{'display'}    = $lookup->{$custom}{'default'};
-            }
+        my $custom = $args{'renderer'}; 
+        if ($custom) {
+          my $lookup = EnsEMBL::Web::Constants::RENDERERS;
+          my $renderers = $lookup->{$custom}{'renderers'} || [];
+          if (scalar @$renderers) {
+            $inputs{'renderers'}  = ['off', 'Off', @$renderers];
+            $inputs{'display'}    = $lookup->{$custom}{'default'};
           }
         }
 

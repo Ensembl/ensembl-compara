@@ -70,6 +70,9 @@ sub content {
   return '<p><b>There is no history for '. $name .' stored in the database.</b></p>' if scalar @{$historytree->get_release_display_names} < 2;
 
   my $tree = $self->_create_idhistory_tree($archive, $historytree);
+
+  return unless $tree; # it's an export image request
+
   my $html = $historytree->is_incomplete ? '<p>Too many related stable IDs found to draw complete tree - tree shown is only partial.</p>' : '';
 
   return $html . $tree->render;

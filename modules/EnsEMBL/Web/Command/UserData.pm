@@ -25,6 +25,7 @@ use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
+use EnsEMBL::Web::ImageConfig;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -36,12 +37,12 @@ sub ajax_redirect {
 
 sub upload {
 ### Simple wrapper around File::User 
-  my ($self, $method, $format) = @_;
+  my ($self, $method, $format, $renderer) = @_;
   my $hub       = $self->hub;
   my $params    = {};
 
   my $file  = EnsEMBL::Web::File::User->new('hub' => $hub, 'empty' => 1);
-  my $error = $file->upload('method' => $method, 'format' => $format);
+  my $error = $file->upload('method' => $method, 'format' => $format, 'renderer' => $renderer);
 
   ## Validate format
   my $iow;
@@ -64,14 +65,34 @@ sub upload {
       function => '_error'
     );
   } else {
+    ## Get description from file and save to session
+    my $description = $iow->get_metadata_value('description');
+    if ($description) {
+      if ($hub->user) {
+        my ($record) = grep {$_->code eq $file->code} $hub->user->get_records('uploads');
+        if ($record) {
+          $record->data->{'description'} = $description;
+          $record->save('user' => $hub->user);
+        }
+      }
+      else {
+        my $data = $hub->session->get_data('type' => 'upload', 'code' => $file->code);
+        $data->{'description'} = $description;
+        $hub->session->set_data(%$data);
+      }
+    }
+
     ## Look for the nearest feature
     my ($chr, $start, $end, $count) = $iow->nearest_feature;
-    $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+    if ($chr && $start) {
+      $params->{'nearest'} = sprintf('%s:%s-%s', $chr, $start, $end);
+    }
     $params->{'count'}   = $count;
 
     $params->{'species'}  = $hub->param('species') || $hub->species;
     $params->{'format'}   = $iow->format;
     $params->{'code'}     = $file->code;
+
   } 
  
   return $params;
@@ -83,7 +104,7 @@ sub check_attachment {
   my $species_defs = $hub->species_defs;
 
   my $already_attached = 0;
-  my ($redirect, $params);
+  my ($redirect, $params, $menu);
 
   ## Check for pre-configured hubs
   my %preconfigured = %{$species_defs->ENSEMBL_INTERNAL_TRACKHUB_SOURCES||{}};
@@ -91,6 +112,15 @@ sub check_attachment {
     my $hub_info = $species_defs->get_config($hub->species, $k);
     if ($hub_info->{'url'} eq $url) {
       $already_attached = 'preconfig';
+      ## Probably a submenu, so get full id
+      my $menu_tree = EnsEMBL::Web::ImageConfig::menus({});
+      my $menu_settings = $menu_tree->{$v};
+      if (ref($menu_settings) eq 'ARRAY') {
+        $menu = $menu_settings->[1].'-'.$v;
+      }
+      else {
+        $menu = $v;
+      }
       last;
     }
   }
@@ -101,6 +131,7 @@ sub check_attachment {
     foreach (@attachments) {
       if ($_->{'url'} eq $url) {
         $already_attached = 'user';
+        ($menu = $_->{'name'}) =~ s/ /_/;
         last;
       }
     }
@@ -109,6 +140,7 @@ sub check_attachment {
   if ($already_attached) {
     $redirect = 'RemoteFeedback';
     $params = {'format' => 'TRACKHUB', 'reattach' => $already_attached};
+    $params->{'menu'} = $menu if $menu;
   }
 
   return ($redirect, $params);

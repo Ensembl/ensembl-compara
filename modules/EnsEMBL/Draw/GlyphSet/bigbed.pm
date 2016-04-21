@@ -31,22 +31,32 @@ use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
 sub can_json { return 1; }
 
+sub render_signal {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Bar']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
+}
+
 # Overridden in some regulation tracks, as it's not always this simple
 sub my_url { return $_[0]->my_config('url'); }
 
 sub get_data {
-  my $self      = shift;
-  my $hub       = $self->{'config'}->hub;
-  my $url       = $self->my_url;
-  my $container = $self->{'container'};
-  my $default_strand = $self->{'my_config'}->get('strand') eq 'r' ? -1 : 1;
-  my $args      = { 'options' => {
+  my ($self, $url)    = @_;
+  my $hub             = $self->{'config'}->hub;
+  $url              ||= $self->my_url;
+  my $container       = $self->{'container'};
+  my ($default_strand, $force_strand) = $self->configure_strand; 
+
+  my $args            = { 'options' => {
                                   'hub'         => $hub,
                                   'config_type' => $self->{'config'}{'type'},
                                   'track'       => $self->{'my_config'}{'id'},
                                   }, 
-                    'default_strand' => $default_strand,
-                    'drawn_strand' => $self->strand};
+                        'default_strand'  => $default_strand,
+                        'drawn_strand'    => $self->strand
+                        };
+                        
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigBed', $args);
   my $data;
@@ -55,14 +65,23 @@ sub get_data {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour');
+    ## Don't try and scale if we're just doing a zmenu!
+    my $pix_per_bp = $self->{'display'} eq 'text' ? '' : $self->scalex;
     my $metadata = {
                     'colour'          => $colour,
-                    'join_colour'     => $colour,
-                    'label_colour'    => $colour,
                     'display'         => $self->{'display'},
                     'default_strand'  => $default_strand,
-                    pix_per_bp => $self->scalex,
+                    'force_strand'    => $force_strand, 
+                    'pix_per_bp'      => $pix_per_bp,
+                    'spectrum'        => $self->{'my_config'}->get('spectrum'),
+                    'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
+                    'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                     };
+
+    ## Also set a default gradient in case we need it
+    my @gradient = $iow->create_gradient([qw(yellow green blue)]);
+    $metadata->{'default_gradient'} = \@gradient;
+
     ## No colour defined in ImageConfig, so fall back to defaults
     unless ($colour) {
       my $colourset_key           = $self->{'my_config'}->get('colourset') || 'userdata';
@@ -73,13 +92,21 @@ sub get_data {
       $metadata->{'label_colour'} = $colours->{'text'} || $colours->{'default'};
     }
 
+    ## Omit individual feature links if this glyphset has a clickable background
+    #$metadata->{'omit_feature_links'} = 1 if $self->can('bg_link');
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $metadata);
     #use Data::Dumper; warn Dumper($data);
+
+    ## Final fallback, in case we didn't set these in the individual parser
+    $metadata->{'label_colour'} ||= $colour;
+    $metadata->{'join_colour'} ||= $colour;
+
+    #use Data::Dumper; warn Dumper($data);
   } else {
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
+    $self->{'data'} = [];
+    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
   #$self->{'config'}->add_to_legend($legend);
 
@@ -102,13 +129,14 @@ sub render_as_alignment_label {
 sub render_compact {
   my $self = shift;
   $self->{'my_config'}->set('depth', 0);
-  $self->{'my_config'}->set('renderer_no_join', 1);
+  $self->{'my_config'}->set('no_join', 1);
   $self->draw_features;
 }
 
 sub render_as_transcript_nolabel {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
+  $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('depth', 20);
   $self->draw_features;
 }
@@ -116,6 +144,7 @@ sub render_as_transcript_nolabel {
 sub render_as_transcript_label {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Feature::Transcript']);
+  $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('depth', 20);
   $self->{'my_config'}->set('show_labels', 1);
   $self->draw_features;

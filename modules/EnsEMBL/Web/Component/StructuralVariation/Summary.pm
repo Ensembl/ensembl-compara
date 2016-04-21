@@ -44,19 +44,19 @@ sub content {
   my $phenotype_url   = $hub->url({ action => "StructuralVariation", action => "Phenotype",   sv => $object->name });  
  
   my @str_array;
-  push @str_array, sprintf('overlaps <a href="%s">%s %s</a>', 
+  push @str_array, sprintf('overlaps <a class="dynamic-link" href="%s">%s %s</a>', 
                       $transcript_url, 
                       $avail->{has_transcripts}, 
                       $avail->{has_transcripts} eq "1" ? "transcript" : "transcripts"
                   ) if($avail->{has_transcripts});
                   
-  push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+  push @str_array, sprintf('is associated with <a class="dynamic-link" href="%s">%s %s</a>', 
                       $phenotype_url, 
                       $avail->{has_phenotypes}, 
                       $avail->{has_phenotypes} eq "1" ? "phenotype" : "phenotypes"
                   ) if($avail->{has_phenotypes});
 
-  push @str_array, sprintf('is supported by <a href="%s">%s %s of evidence</a>',
+  push @str_array, sprintf('is supported by <a class="dynamic-link" href="%s">%s %s of evidence</a>',
                       $evidence_url, 
                       $avail->{has_supporting_structural_variation}, 
                       $avail->{has_supporting_structural_variation} eq "1" ? "piece" : "pieces" 

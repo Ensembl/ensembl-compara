@@ -63,21 +63,16 @@ sub content {
   my $all_objs = $object->fetch_all_objs;
   foreach my $reg_object (sort { $a->feature_set->cell_type->name cmp $b->feature_set->cell_type->name } @$all_objs ) {
     next if $reg_object->feature_set->cell_type->name =~/MultiCell/;
-    $active{$reg_object->feature_set->cell_type->name} = 1 if $reg_object->can('has_evidence') and $reg_object->has_evidence;
+    $active{$reg_object->feature_set->cell_type->name} = 1 if $reg_object->can('has_evidence') and $reg_object->has_evidence == 1;
   }
   my $num_active = scalar(grep { $_->feature_set->cell_type->name !~ /MultiCell/ } @$all_objs);
 
   my @class = ($object->feature_type->name);
-  if(!$self->hub->is_new_regulation_pipeline) {
-    @class = grep { !/Unclassified/ } map { $_->feature_type->name } @$all_objs;
-  }
 
   $summary->add_row('Classification',join(', ',@class));
   $summary->add_row('Location', $location_html);
   $summary->add_row('Bound region', $bound_html) if $location_html ne $bound_html;
-  if($self->hub->is_new_regulation_pipeline) {
-    $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
-  }
+  $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
 
   my $nav_buttons = $self->nav_buttons;
   return $nav_buttons.$summary->render;

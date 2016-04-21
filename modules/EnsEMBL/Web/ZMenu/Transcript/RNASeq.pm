@@ -60,6 +60,7 @@ sub content {
   }
 
   $self->delete_entry_by_type('Protein');
+  $self->delete_entry_by_type('Exon');
   $self->delete_entry_by_value($object->gene->stable_id);
   my $loc = sprintf(
     '%s: %s-%s',

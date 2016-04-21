@@ -102,7 +102,7 @@ sub pointer_default {
   return $hash{$feature_type};
 }
 
-## Create a set of highlights from a userdate set
+## Create a set of highlights from a userdata set
 sub create_user_pointers {
   my ($self, $image, $data) = @_;
   my $hub          = $self->hub;
@@ -111,11 +111,12 @@ sub create_user_pointers {
   my %used_colour  = ();
   my @all_colours  = @{$hub->species_defs->TRACK_COLOUR_ARRAY||[]};
 
-  while (my ($key, $hash) = each %$data) {
+  while (my ($key, $tracks) = each (%$data)) {
     my $display = $image_config->get_node($key)->get('display');
-    
-    while (my ($analysis, $track) = each %$hash) {
-      my ($render, $style) = split '_', $display;
+    my ($render, $style) = split '_', $display;
+    $image_config->get_node($key)->set('display', $style);
+
+    while (my ($name, $track) = each (%$tracks)) {    
       my $colour = $self->_user_track_colour($track); 
       if ($used_colour{$colour}) {
         ## pick a unique colour instead
@@ -134,12 +135,12 @@ sub create_user_pointers {
           color       => $colour,
           style       => $style,
           zmenu       => 'VUserData',
-          track       => $key,
+          track       => $key.'_'.$name,
         });
       }
     }
   }
-  
+ 
   return @pointers;
 }
 
@@ -162,18 +163,20 @@ sub configure_UserData_key {
       my $data = $features->{$id};
       while (my($name, $track) = each (%$data)) {
         my %colour_key;
-        if ($track->{'config'}) { 
+        if ($track->{'metadata'}) { 
 
-          if ($track->{'config'}{'itemRgb'} =~ /on/i) {
+          if ($track->{'metadata'}{'itemRgb'} =~ /on/i) {
             foreach my $f (@{$track->{'features'}}) {
-              my $colour = join(',', @{$f->{'item_colour'}});
-              push @{$colour_key{$colour}}, $f->{'label'};
+              my $colour = $f->{'colour'} && ref($f->{'colour'}) eq 'ARRAY' 
+                              ? join(',', @{$f->{'colour'}})
+                              : $f->{'colour'};
+              push @{$colour_key{$colour}}, $f->{'label'} if $f->{'label'};
             }
           }
-          elsif ($track->{'config'}{'color'}) {
-            my $colour = $track->{'config'}{'color'};
+          elsif ($track->{'metadata'}{'color'}) {
+            my $colour = $track->{'metadata'}{'color'};
             foreach my $f (@{$track->{'features'}}) {
-              push @{$colour_key{$colour}}, $f->{'label'};
+              push @{$colour_key{$colour}}, $f->{'label'} if $f->{'label'};
             }
           }
 

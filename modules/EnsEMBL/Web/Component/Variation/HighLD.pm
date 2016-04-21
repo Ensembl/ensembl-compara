@@ -59,21 +59,22 @@ sub summary_table {
   my $available_pops     = $self->ld_populations;
   my @pops               = @{$variation->adaptor->db->get_PopulationAdaptor->fetch_all_LD_Populations};
   my $table_with_no_rows = 0;
-  my %mappings        = %{$object->variation_feature_mapping};
+  my %mappings           = %{$object->variation_feature_mapping};
+  my %tree;
 
   my $manplot_help = "Manhattan plot of population specific LD values for variants linked to the variant $v";
   my $linked_help  = "Links to tables showing the variants having a significant LD value (>0.8 by default) with the variant $v";
   my $plot_help    = "LD values of the variants within the 20kb surrounding the variant $v";
  
   my $table              = $self->new_table([
-    { key => 'name',     title => 'Population',          sort => 'html',   align => 'left'   },
-    { key => 'desc',     title => 'Description',         sort => 'string', align => 'left'   },
-    { key => 'tags',     title => 'Tags',                sort => 'string', align => 'right'  },
-    { key => 'tagged',   title => 'Tagged by',           sort => 'string', align => 'right'  },
-    { key => 'manplot',  title => 'LD Manhattan plot',   sort => 'none',   align => 'center', help => $manplot_help },
-    { key => 'table',    title => 'Variants in high LD', sort => 'none',   align => 'center', help => $linked_help  },
-    { key => 'plot',     title => 'LD plot',             sort => 'none',   align => 'center', help => $plot_help    },
-  ], [], { data_table => 1, sorting => [ 'name asc' ] });
+    { key => 'name',     title => 'Population',          sort => 'none', align => 'left'   },
+    { key => 'desc',     title => 'Description',         sort => 'none', align => 'left'   },
+    { key => 'tags',     title => 'Tags',                sort => 'none', align => 'right'  },
+    { key => 'tagged',   title => 'Tagged by',           sort => 'none', align => 'right'  },
+    { key => 'manplot',  title => 'LD Manhattan plot',   sort => 'none', align => 'center', help => $manplot_help },
+    { key => 'table',    title => 'Variants in high LD', sort => 'none', align => 'center', help => $linked_help  },
+    { key => 'plot',     title => 'LD plot',             sort => 'none', align => 'center', help => $plot_help    },
+  ], [], { data_table => 1 });
   
   my ($loc, $vf);
   if (keys %mappings == 1) {
@@ -89,8 +90,42 @@ sub summary_table {
       last;
     }
   }
-   
+
+  # Building population tree
+  my %pop_data;
+  my $pop_adaptor = $variation->adaptor->db->get_PopulationAdaptor();
   foreach my $pop (@pops) {
+    my $pop_id = $pop->dbID;
+    my $name   = $pop->name;
+    $pop_data{$pop_id} = $pop;
+    if ($available_pops->{$name} && $available_pops->{$name}{'super'}) {
+      my $super_data = $available_pops->{$name}{'super'};
+      foreach my $super (keys(%{$super_data})) {
+        my $super_name = $super_data->{$super}{'Name'};
+        $tree{$super}{'children'}{$pop_id} = $name;
+        $tree{$super}{'name'} = $super_name;
+        # Get the Population object of the super-pop
+        $pop_data{$super} = $pop_adaptor->fetch_by_dbID($super) if (!$pop_data{$super});
+      }
+      next;
+    }
+    $tree{$pop_id}{'name'} = $name;
+  }
+
+  # Order populations by name
+  my @ids;
+  my @super_order = sort {$tree{$a}{'name'} cmp $tree{$b}{'name'}} keys (%tree);
+  foreach my $super (@super_order) {
+    push @ids, $super;
+    my $children = $tree{$super}{'children'} || {};
+    push @ids, sort {$children->{$a} cmp $children->{$b}} keys (%$children);
+  }
+
+  ## Now build table rows
+  foreach my $pop_id (@ids) {
+
+    my $pop = $pop_data{$pop_id};
+
     my $description = $pop->description;
        $description ||= '-';
     
@@ -109,6 +144,7 @@ sub summary_table {
     my $pop_name  = $pop->name;    
     my $pop_dbSNP = $pop->get_all_synonyms('dbSNP');
 
+    # Population label
     my $pop_label = $pop_name;
     if ($pop_label =~ /^.+\:.+$/ and $pop_label !~ /(http|https):/) {
       my @composed_name = split(':', $pop_label);
@@ -131,7 +167,11 @@ sub summary_table {
       tags    => $tagged,
       tagged  => $tagged_by,
     };
-    
+
+    if ($tree{$pop_id}{'children'}) {
+      $row->{'options'}{'class'} = 'subgroup';
+    }
+
     if ($available_pops->{$pop->name}) {
       my $id  = $pop->dbID;      
 
@@ -159,7 +199,7 @@ sub summary_table {
       
       $row->{'plot'} = qq{<a class="ld_plot_link space-right" href="$url">View plot</a>};
       
-      $row->{'table'} = $self->ajax_add($self->ajax_url(undef, { pop_id => $id, update_panel => 1 }), $id);
+      $row->{'table'} = $self->ajax_add($self->ajax_url(undef, { pop_id => $id, update_panel => 1 }).' table', $id);
       
       # export table
       $url = $hub->url({
@@ -175,15 +215,23 @@ sub summary_table {
       
       $row->{'plot'} .= qq{<a href="$url">View table</a>};
     } else {
-      $row->{'plot'}   = '-';
-      $row->{'table'}  = '-';
+      if ($tree{$pop_id}{'children'} && $pop_name =~ /^1000GENOMES/) {
+        $row->{'name'} = $row->{'desc'};
+        $row->{'desc'} = '';
+      }
+
+      $row->{'tags'}    = '';
+      $row->{'tagged'}  = '';
+      $row->{'manplot'} = '';
+      $row->{'plot'}    = '';
+      $row->{'table'}   = '';
       
-      $table_with_no_rows = 1;
+      $table_with_no_rows = 1 if (!$tree{$pop_id}{'children'});
     }
-    
+
     $table->add_row($row);
   }
-  
+
   my $html = '<h2>Links to linkage disequilibrium data by population</h2>';
   
   if ($table_with_no_rows) {
@@ -251,16 +299,16 @@ sub linked_var_table {
   my $glossary            = $hub->glossary_lookup;
   my $tables_with_no_rows = 0;
   my $table               = $self->new_table([
-    { key => 'variation',   title => 'Variant',               align => 'left', sort => 'html'                 },
-    { key => 'location',    title => 'Location',                align => 'left', sort => 'position_html'        },
-    { key => 'distance',    title => 'Distance (bp)',           align => 'left', sort => 'numeric'              },
-    { key => 'r2',          title => 'r<sup>2</sup>',           align => 'left', sort => 'numeric', help => $glossary->{'r2'} },
-    { key => 'd_prime',     title => q{D'},                     align => 'left', sort => 'numeric', help => $glossary->{"D'"} },
-    { key => 'tags',        title => 'Tags',                    align => 'right',  sort => 'string'               },
-    { key => 'tagged',      title => 'Tagged by',               align => 'right',  sort => 'string'               },
-    { key => 'pfs',         title => 'Associated phenotype(s)', align => 'left', sort => 'html', width => '20%' },
-    { key => 'genes',       title => 'Located in gene(s)',      align => 'left', sort => 'html'                 },
-    { key => 'pgene',       title => 'Gene phenotype(s)',       align => 'left', sort => 'html', width => '20%' },
+    { key => 'variation', title => 'Variant',                 align => 'left',  sort => 'html'                               },
+    { key => 'location',  title => 'Location',                align => 'left',  sort => 'position_html'                      },
+    { key => 'distance',  title => 'Distance (bp)',           align => 'left',  sort => 'numeric'                            },
+    { key => 'r2',        title => 'r<sup>2</sup>',           align => 'left',  sort => 'numeric', help => $glossary->{'r2'} },
+    { key => 'd_prime',   title => q{D'},                     align => 'left',  sort => 'numeric', help => $glossary->{"D'"} },
+    { key => 'tags',      title => 'Tags',                    align => 'right', sort => 'string'                             },
+    { key => 'tagged',    title => 'Tagged by',               align => 'right', sort => 'string'                             },
+    { key => 'pfs',       title => 'Associated phenotype(s)', align => 'left',  sort => 'html'                               },
+    { key => 'genes',     title => 'Located in gene(s)',      align => 'left',  sort => 'html'                               },
+    { key => 'pgene',     title => 'Gene phenotype(s)',       align => 'left',  sort => 'html'                               },
   ], [], { data_table => 1 });
   
   # do some filtering
@@ -271,8 +319,8 @@ sub linked_var_table {
   foreach my $ld (@old_values) {
     next unless $ld->{'variation1'}->dbID == $vf_dbID || $ld->{'variation2'}->dbID == $vf_dbID;
     next unless $ld->{'population_id'} == $pop_id;
-    next unless $ld->{'r2'}        >= $min_r2;
-    next unless $ld->{'d_prime'}   >= $min_d_prime;
+    next unless $ld->{'r2'}      >= $min_r2;
+    next unless $ld->{'d_prime'} >= $min_d_prime;
     
     my $other_vf = $ld->{'variation1'}->dbID == $vf_dbID ? $ld->{'variation2'} : $ld->{'variation1'};
     
@@ -329,7 +377,7 @@ sub linked_var_table {
             vf             => $ld_vf_dbID,
           });
           
-          $pf_string .= sprintf '<tr><td style="padding:0;margin:0"><a href="%s">%s</a></td><td style="padding:0;margin:;">', $pf_url, $pf->phenotype->name || $phenotype_description;
+          $pf_string .= sprintf '<tr><td style="padding:0;margin:0"><a href="%s">%s</a></td><td style="padding:0;margin:0;">', $pf_url, $pf->phenotype->name || $phenotype_description;
           
           # p value part
           if (defined $p_value) {
@@ -355,7 +403,7 @@ sub linked_var_table {
         '<a href="%s">%s</a>',
         $hub->url({
           type   => 'Gene',
-          action => 'Variation_Gene',
+          action => 'Summary',
           db     => 'core',
           r      => undef,
           g      => $_->stable_id,
@@ -366,7 +414,7 @@ sub linked_var_table {
       ), @{$gene_objs};
       
       # gene phenotypes
-      my $pgene = join(', ',
+      my $pgene = join(', <br />',
         map {
           sprintf(
             '<a href="%s">%s</a>',
@@ -415,7 +463,7 @@ sub linked_var_table {
   }
   
   return $table->has_rows ?
-    $self->toggleable_table("Variants linked to $v in $pop_name", $pop_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>}) :
+    $self->toggleable_table("Variants linked to $v in $pop_name", $pop_id, $table, 1, qq{<span style="float:right"><a href="#$self->{'id'}">[back to top]</a></span>}) :
     '<h3>No variants found</h3><br /><br />';
 }
 
@@ -434,8 +482,11 @@ sub ld_populations {
   my %pops;
   
   foreach (@$pop_ids) {    
-    my $pop_obj = $object->pop_obj_from_id($_);
-    $pops{$pop_obj->{$_}{'Name'}} = 1;
+    my $pop_obj   = $object->pop_obj_from_id($_);
+    my $name      = $pop_obj->{$_}{'Name'};
+    my $super_pop = $object->extra_pop($pop_obj->{$_}{PopObject},"super");
+    $pops{$name}{'id'} = $_;
+    $pops{$name}{'super'} = $super_pop if ($super_pop);
   }
   
   return \%pops;

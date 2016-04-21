@@ -113,14 +113,13 @@ sub getFakeMungedVariationFeatures {
   ### scalar - number of SNPs filtered out by the context filter
 
   my ($self, $subslices, $gene, $so_terms) = @_;
-  
+  my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   if ($so_terms) {
-    my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
     $vfa->{_ontology_adaptor} ||= $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
   }
-  my $all_snps = [ @{$self->Obj->get_all_VariationFeatures($so_terms)} ];
+  my $all_snps = [ @{$vfa->fetch_all_by_Slice_SO_terms($self->Obj, $so_terms)} ];
   my $ngot =  scalar(@$all_snps);
-  push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures()};
+  push @$all_snps, @{$vfa->fetch_all_somatic_by_Slice_SO_terms($self->Obj)};
 
   my @on_slice_snps = 
     map  { $_->[1] ? [ $_->[0]->start + $_->[1], $_->[0]->end + $_->[1], $_->[0] ] : () } # [ fake_s, fake_e, SNP ] Filter out any SNPs not on munged slice
@@ -389,7 +388,7 @@ sub get_data {
   my %feature_sets_on;
 
   return $data unless scalar keys %$data;
-  
+
   foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_feature_class('regulatory')}) {
     my $regf_data_set = $dataset_adaptor->fetch_by_product_FeatureSet($regf_fset);
     my $cell_line     = $regf_data_set->cell_type->name;
@@ -407,10 +406,11 @@ sub get_data {
       next unless $data->{$cell_line}{$focus_flag}{'on'}{$feature_type_name};
       
       my $display_style = $data->{$cell_line}{$focus_flag}{'renderer'};
-      
+
       $feature_sets_on{$feature_type_name} = 1;
-      
-      if ($display_style  eq 'compact' || $display_style eq 'tiling_feature') {
+     
+      if(grep { $display_style eq $_ }
+          qw(compact tiling_feature signal_feature)) {
         my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
         
         if ($reg_object && scalar @block_features) {
@@ -420,8 +420,8 @@ sub get_data {
        
         $data->{$cell_line}{$focus_flag}{'block_features'}{$key} = \@block_features if scalar @block_features;
       }
-      
-      if ($display_style eq 'tiling' || $display_style eq 'tiling_feature') {
+      if(grep { $display_style eq $_ }
+            qw(tiling tiling_feature signal signal_feature)) {
         my $reg_attr_dset = $dataset_adaptor->fetch_by_product_FeatureSet($reg_attr_fset); 
         my $sset          = $reg_attr_dset->get_displayable_supporting_sets('result');
         
@@ -429,25 +429,17 @@ sub get_data {
           # There should only be one
           throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
         
+          my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
+          my $path = $sset->[0]->dbfile_path;
+          $path = "$file_path/$path" unless $path =~ /^$file_path/;
           push @result_sets, $sset->[0];
-          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = 1;  
+          $data->{$cell_line}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id . ':' . $sset->[0]->dbID} = $path;
         }
       }
     }
   }
 
-  foreach (@result_sets) { 
-    my $unique_feature_set_id = join ':', $_->cell_type->name, 
-                                          $_->feature_type->name, 
-                                          $_->dbID;
-    my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
-    my $path = $_->dbfile_path;
-    $path = "$file_path/$path" unless $path =~ /^$file_path/;
-    $data->{'wiggle_data'}{$unique_feature_set_id} = $path;
-  }
-    
   $data->{'colours'} = \%feature_sets_on;
-  
   return $data;
 }
 

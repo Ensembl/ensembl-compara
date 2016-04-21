@@ -130,6 +130,47 @@ sub render_Rect {
   }
 }
 
+sub render_Histogram {
+  my ($self, $glyph) = @_;
+
+  my $points = $glyph->{'pixelpoints'};
+  return unless defined $points;
+
+  my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
+  my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
+  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+  my $colour  = $self->colour($glyph->{'colour'});
+
+  my $max = $glyph->{'max'} || 1000;
+  my $top = $self->{'canvas'}{'im_height'};
+  my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+
+  my $mul = ($y2-$y1) / $max;
+  foreach my $p (@$points) {
+    my $truncated = 0;
+    if ($p > $max) {
+      ## Truncate values that lie outside the range we want to draw
+      $p = $max;
+      $truncated = 1 if $glyph->{'truncate_colour'};
+    }
+    my $yb = $y1 + max($p,0) * $mul;
+    $self->strokecolor($colour);
+    $self->fillcolor($colour);
+    $self->rect($x1,$top-$y2,$x2-$x1,$yb-$y1,$colour);
+    $self->fill();
+    ## Mark truncation with a contrasting line at the top of the bar
+    if ($truncated) {
+      $self->strokecolor($glyph->{'truncate_colour'});
+      $self->fillcolor($glyph->{'truncate_colour'});
+      $self->rect($x1,$top-$y1,$x2-$x1,1,$glyph->{'truncate_colour'});
+      $self->fill();
+    }
+    $x1 += $step;
+    $x2 += $step;
+  }
+}
+
 sub render_Barcode {
   my ($self, $glyph) = @_;
 
@@ -149,6 +190,7 @@ sub render_Barcode {
   my $step = $glyph->{'pixelunit'} * $self->{'sf'};
 
   if($glyph->{'wiggle'} eq 'bar') {
+  ## TODO Remove once no longer needed - has been superceded by render_Histogram
     my $mul = ($y2-$y1) / $max;
     foreach my $p (@$points) {
       my $yb = $y1 + max($p,0) * $mul;

@@ -22,48 +22,12 @@ package EnsEMBL::Draw::Role::Wiggle;
 
 use Role::Tiny;
 
-### Renderers
-
-sub render_compact { 
-  my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Barcode']);
-  $self->{'my_config'}->set('height', 8);
-  $self->{'my_config'}->set('no_axis', 1);
-  $self->_render_aggregate;
-}
-
-sub render_gradient {
-### Features coloured on a gradient by score, e.g. pvalues
-  my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Heatmap']);
-  $self->{'my_config'}->set('height', 8);
-  $self->{'my_config'}->set('no_axis', 1);
-  $self->{'my_config'}->set('use_pvalue', 1);
-  $self->_render_aggregate;
-}
-
-sub render_signal { 
-  my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
-  $self->{'my_config'}->set('height', 60);
-  $self->_render_aggregate; 
-}
-
-sub render_tiling {
-  ## For backwards compatibility - because 'tiling' is a meaningless name!
-  my $self = shift;
-  $self->render_signal;
-}
-
-=pod
 sub render_feature_with_signal { 
-## TODO - not used by userdata formats, so needs testing!
   my $self = shift;
   my $graph_class = $self->_select_graph_type;
   $self->{'my_config'}->set('drawing_style', [$graph_class, 'Feature']);
   $self->_render; 
 }
-=cut
 
 sub _select_graph_type {
   my $self = shift;
@@ -88,6 +52,15 @@ sub _render_aggregate {
     my $height = $self->errorTrack("$wiggle_name only displayed for less than $max_length Kb");
     $self->_offset($height + 4);
     return 1;
+  }
+
+  my $maxHeightPixels = $self->{'my_config'}->get('maxHeightPixels') || '';
+  (my $default_height = $maxHeightPixels) =~ s/^.*:([0-9]*):.*$/$1/;
+  if ($default_height) {  
+    $self->{'my_config'}->set('height', $default_height);
+  }
+  else {
+   $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
   }
 
   $self->{'my_config'}->set('bumped', 0);
@@ -118,7 +91,14 @@ sub _render {
     return 1;
   }
 
-  $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
+  (my $default_height = $self->{'my_config'}->get('maxHeightPixels')) =~ s/^.*:([0-9]*):.*$/$1/;
+  if ($default_height) {  
+    $self->{'my_config'}->set('height', $default_height);
+  }
+  else {
+   $self->{'my_config'}->set('height', 60) unless $self->{'my_config'}->get('height');
+  }
+
   $self->{'my_config'}->set('absolutex', 1);
   $self->{'my_config'}->set('bumped', 0);
   $self->{'my_config'}->set('axis_colour', $self->my_colour('axis'));

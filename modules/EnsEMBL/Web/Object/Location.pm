@@ -1352,7 +1352,8 @@ sub get_variation_features {
    my $self = shift;
    my $slice = $self->slice_cache;
    return unless $slice;
-   return $slice->get_all_VariationFeatures || [];
+   my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor;
+   return $vf_adaptor->fetch_all_by_Slice($slice) || [];
 }
 
 sub slice_cache {
@@ -1461,7 +1462,9 @@ sub get_ld_values {
         next;
       }
 
-      my @snp_list = sort { $a->[1]->start <=> $b->[1]->start } map  {[ $_ => $data->{'variationFeatures'}{$_} ]} keys %{$data->{'variationFeatures'}};
+
+      my $pos2vf = $data->_pos2vf();
+      my @snp_list = map { [ $_, $pos2vf->{$_} ] } sort {$a <=> $b} keys %$pos2vf;
 
       unless (scalar @snp_list) {
         $ld_values{$ld_type}{$pop_name}{'text'} = $no_data;
@@ -1610,8 +1613,18 @@ sub can_export {
 sub multi_locations {
   my $self = shift;
   
-  my $locations = $self->{'data'}{'_multi_locations'} || [];
-  
+  my $locations = [];
+
+  if ($self->hub->param('export')) {
+    ## Force creation of the data, if coming from an export form
+    my $factory = $self->hub->builder->create_factory('MultipleLocation');
+    my $location = $factory->DataObjects->{'Location'}[0];
+    $locations  = $location->{'data'}{'_multi_locations'} || [];
+  }
+  else {
+    $locations = $self->{'data'}{'_multi_locations'} || [];
+  }
+
   if (!scalar @$locations) {
     my $slice = $self->slice;
     

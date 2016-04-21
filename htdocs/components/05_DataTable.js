@@ -164,7 +164,7 @@ Ensembl.DataTable = {
       
       return rtn;
     }).toArray();
-    
+
     if (length > 10) {
       options.sDom = '<"dataTables_top"l' + (noToggle ? '' : '<"col_toggle">') + (exportable ? '<"dataTables_export">' : '') + 'f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
       
@@ -238,14 +238,13 @@ Ensembl.DataTable = {
     
     var columns    = settings.aoColumns;
     var toggleList = $('<ul class="floating_popup"></ul>');
-
     var toggle     = $('<div class="toggle">'+panel.buttonText(settings)+'</div>').append(toggleList).on('click', function (e) { if (e.target === this) { toggleList.toggle(); if(toggleList.is(':hidden')) { toggle.remove(); panel.columnToggle(settings); }  } });
-    
+
     $.each(columns, function (col) {
       var th = $(this.nTh);
-      
+      var column_heading = $(th).clone().find('.hidden').remove().end().html();
       $('<li>', {
-        html: '<input data-role="none" type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>',
+        html: '<input data-role="none" type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + column_heading + '</span>',
         click: function () {
           var input  = $('input', this);
           var tables, visibility, index, textCheck;
@@ -299,42 +298,64 @@ Ensembl.DataTable = {
       var settings = table.dataTable().fnSettings();
       var form     = $(settings.nTableWrapper).siblings('form.data_table_export');
       var data;
-      
+
       if (e.target.className === 'all') {
         if (!table.data('exportAll')) {
           data = [[]];
-          
-          $.each(settings.aoColumns, function (i, col) { data[0].push(col.sTitle); });
-          $.each(settings.aoData,    function (i, row) { data.push(row._aData);    });
+          var col_index_for_no_export = [];
+          // For column heading
+          $.each(settings.aoColumns, function (i, col) { 
+            var no_export = $(col.nTh).hasClass('_no_export');
+            if (!no_export) {
+              data[0].push(col.sTitle);
+            }
+            else {
+              // Storing column indexes to handle _no_export
+              col_index_for_no_export.push(i)
+            }
+          });
+          // For column data
+          $.each(settings.aoData, function (i, row) { 
+            var t_arr = [];
+            $(row._aData).each(function (j, cellVal) {
+              // Putting inside a div so that the jquery selector works for all
+              //  "hidden" elements inside the div
+              var div = $( "<div/>" );
+              div.append(cellVal);
+              if ($.inArray(j, col_index_for_no_export) == -1) {
+                var hidden = $('.hidden:not(.export), ._no_export', $(div));
+                if (hidden.length) {
+                  t_arr.push($.trim($(div).find(hidden).remove().end().html()));
+                } else {
+                  t_arr.push(cellVal);
+                }
+              }
+            });
+            data.push(t_arr);
+          });
 
           table.data('exportAll', data);
           form.find('input.data').val(JSON.stringify(data));
         }
-      } else {
+      } else {        
         if (!table.data('export')) {
+          var tableClone = table.clone();
           data = [];
-          
-          $('tr', table).each(function (i) {
-            data[i] = [];
-            
+          // Remove all hidden and _no_export classes from the clone.
+          $(tableClone).find('.hidden:not(.export), ._no_export').remove();
+          // Traversing through each displayed row for downloading what you see 
+          $('tr', tableClone).each(function (i) {
+            data[i] = [];            
             $(this.cells).each(function () {
-              var hidden = $('.hidden:not(.export)', this);
-              
-              if (hidden.length) {
-                data[i].push($.trim($(this).clone().find(hidden).remove().end().html()));
-              } else {
-                data[i].push($(this).html());
-              }
-              
-              hidden = null;
+              data[i].push($(this).html());
             });
           });
-          
+
           table.data('export', data);
           form.find('input.data').val(JSON.stringify(data));
         }
       }
-      
+
       form.trigger('submit');
       
       table = form = null;

@@ -25,7 +25,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use List::Util qw(max);
+use List::Util qw(max first);
 
 use Bio::EnsEMBL::IO::Parser;
 use Bio::EnsEMBL::IO::Utils;
@@ -64,12 +64,10 @@ sub open {
   my ($file, %args) = @_;
 
   my %format_to_class = Bio::EnsEMBL::IO::Utils::format_to_class;
-  my $subclass = $format_to_class{$file->get_format};
+  my $format          = $file->get_format;
+  my $subclass = $format_to_class{$format};
   return undef unless $subclass;
   my $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
-
-  my $format = $file->get_format;
-  return undef unless $format;
 
   my $wrapper;
   if (dynamic_use($class, 1)) {
@@ -85,12 +83,14 @@ sub open {
       $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
     }
 
-    $wrapper = $class->new({
-                            'parser' => $parser, 
-                            'file'   => $file, 
-                            'format' => $format,
-                            %args,
-                            });  
+    if ($parser) {
+      $wrapper = $class->new({
+                              'parser' => $parser, 
+                              'file'   => $file, 
+                              'format' => $format,
+                              %args,
+                              });
+    }  
   }
   return $wrapper;
 }
@@ -134,20 +134,45 @@ sub track {
 sub convert_to_gradient {
 ### Convert a 0-1000 score to a value on a colour gradient
 ### Default is greyscale
-  my ($self, $score, $colour) = @_;
+  my ($self, $score, $colour, $steps, $min, $max) = @_;
+  $steps ||= 10;
+
   ## Default to black
   $score = 1000 unless defined($score);
   $score = 1000 if $score eq 'INF';
   $score = 0    if $score eq '-INF';
 
-  my @gradient = $colour ? $self->create_gradient(['white', $colour]) : @{$self->{'greyscale'}||[]};
+  my @gradient = @{$self->{'gradient'}||[]};
+
+  unless (scalar @gradient) {
+    if ($colour) {
+      if (ref $colour eq 'ARRAY') {
+        @gradient = $self->create_gradient($colour, $steps);
+      }
+      else {
+        @gradient = $self->create_gradient(['white', $colour], $steps);
+      }
+    }
+    else {
+      @gradient = @{$self->{'greyscale'}||[]};
+    }
+    $self->{'gradient'} = \@gradient;
+  }
 
   my $value;
-  if ($score <= 166) {
+
+  my $interval = 1000 / $steps;
+  $min ||= $interval;
+  $max ||= 1000 - $interval;
+
+  if ($score <= $min) {
     $value = $gradient[0];
   }
+  elsif ($score >= $max) {
+    $value = $gradient[-1];
+  }
   else {
-    my $step = int(($score - 166) / 110) + 1;
+    my $step = $score / $interval;
     $value = $gradient[$step];
   }
   return $value; 
@@ -181,20 +206,41 @@ sub create_tracks {
   my $data        = {};
   my $order       = [];
   my $prioritise  = 0;
-  my ($bin_sizes, $bins);
+  my $bins        = $extra_config->{'bins'};
+  my $slices      = {};
+  my $bin_sizes   = {};
 
-=pod
-  if (!$slice) {
-    ## Sort out chromosome info
-    my $drawn_chrs  = $hub->species_defs->get_config($hub->data_species, 'ENSEMBL_CHROMOSOMES');
-    $bins           = $extra_config->{'bins'} || 150;
-    my $adaptor     = $hub->get_adaptor('get_SliceAdaptor');
-    foreach my $chr (@$drawn_chrs) {
-      my $slice = $adaptor->fetch_by_region('chromosome', $chr);
+  my $seq_region_names = [];
+  my $drawn_chrs  = $hub->species_defs->get_config($hub->data_species, 'ENSEMBL_CHROMOSOMES');
+  my $adaptor     = $hub->get_adaptor('get_SliceAdaptor');
+
+  if ($slice) {
+    my $chr = $slice->seq_region_name;
+    $seq_region_names = [$chr];
+    if ($bins) {
       $bin_sizes->{$chr} = $slice->length / $bins; 
     }
+    ## Allow for seq region synonyms
+    if ($extra_config->{'use_synonyms'}) {
+      push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+    }
   }
-=cut
+  else {
+    ## Sort out chromosome info
+    foreach my $chr (@$drawn_chrs) {
+      push @$seq_region_names, $chr;
+      my $slice = $adaptor->fetch_by_region('chromosome', $chr);
+      ## Cache the slice temporarily, as we may need it later
+      $slices->{$chr} = $slice;
+      if ($bins) {
+        $bin_sizes->{$chr} = $slice->length / $bins; 
+      }
+      ## Allow for seq region synonyms
+      if ($extra_config->{'use_synonyms'}) {
+        push @$seq_region_names, map {$_->name} @{ $slice->get_all_synonyms };
+      }
+    }
+  }
 
   my $max_seen = -1;
   ## We already fetched the data in the child module in one fell swoop!
@@ -206,9 +252,14 @@ sub create_tracks {
     my $raw_features  = $parser->cache->{'summary'} || [];
     my $strand        = $metadata->{'default_strand'} || 1;
     my $features      = [];
+    my $max_score     = 0;
+    my $min_score     = 0;
 
     foreach my $f (@$raw_features) {
       my ($seqname, $start, $end, $score) = @$f;
+      ## Skip features that lie outside the current slice
+      next if ( !(first {$seqname eq $_} @$seq_region_names)
+                || $end < $slice->start || $start > $slice->end);
       push @$features, {
                         'seq_region' => $seqname,
                         'start'      => $start,
@@ -216,7 +267,11 @@ sub create_tracks {
                         'score'      => $score,
                         'colour'     => $metadata->{'colour'},
                         };
+      $max_score = $score if $score >= $max_score; 
+      $min_score = $score if $score <= $min_score; 
     }
+    $data->{$track_key}{'metadata'}{'max_score'} = $max_score;
+    $data->{$track_key}{'metadata'}{'min_score'} = $min_score;
 
     $data->{$track_key}{'features'}{$strand} = $features;
   }
@@ -227,14 +282,14 @@ sub create_tracks {
       $prioritise   = 1 if $metadata{'priority'};
 
       ## Set up density bins if needed
-      if (!$slice) {
+      if (!$bins && !keys %{$data->{$track_key}{'bins'}}) {
         foreach my $chr (keys %$bin_sizes) {
           $data->{$track_key}{'bins'}{$chr}{$_} = 0 for 1..$bins;
         }
       }
 
       my ($seqname, $start, $end) = $self->coords;
-      if($extra_config->{'pix_per_bp'}) {
+      if ($slice && $extra_config->{'pix_per_bp'}) {
         ## Skip if already have something on this pixel
         my $here = int($start*$extra_config->{'pix_per_bp'});
         next if $max_seen >= $here;
@@ -243,34 +298,45 @@ sub create_tracks {
 
       if ($slice) {
         ## Skip features that lie outside the current slice
-        next if ($seqname ne $slice->seq_region_name
+        next if ( !(first {$seqname eq $_} @$seq_region_names)
                   || $end < $slice->start || $start > $slice->end);
         $self->build_feature($data, $track_key, $slice, $strandable);
       }
       else {
-        next unless $seqname;
-        my $feature_strand = $self->parser->get_strand if $strandable;
-        $feature_strand  ||= $metadata{'default_strand'};
-        ## Add this feature to the appropriate density bin
-        my $bin_size    = $bin_sizes->{$seqname};
-        my $bin_number  = int($start / $bin_size) + 1;
-        $data->{$track_key}{'bins'}{$feature_strand}{$seqname}{$bin_number}++;
+        ## Skip non-chromosomal seq regions unless explicitly told to parse everything
+        next unless ($seqname && first {$seqname eq $_} @$seq_region_names);
+        if (grep(/$seqname/, @$drawn_chrs)) {
+          $data->{$track_key}{'metadata'}{'mapped'}++;
+          if ($bins) {
+            ## Add this feature to the appropriate density bin
+            my $bin_size    = $bin_sizes->{$seqname};
+            my $bin_number  = int($start / $bin_size) + 1;
+            $data->{$track_key}{'bins'}{$seqname}{$bin_number}++;
+          }
+          else {
+            my $slice = $slices->{$seqname} || $adaptor->fetch_by_region('chromosome', $seqname); 
+            $self->build_feature($data, $track_key, $slice, $strandable) if $slice;
+          }
+        }
+        else {
+          $data->{$track_key}{'metadata'}{'unmapped'}++;
+        }
       }
     }
   }
-#use Data::Dumper; warn '>>> CREATED TRACKS '.Dumper($data);
 
   ## Indexed formats cache their data, so the above loop won't produce a track
   ## at all if there are no features in this region. In order to draw an
   ## 'empty track' glyphset we need to manually create the empty track
   if (!keys $data) {
     $order  = ['data'];
-    $data   = {'data' => {'metadata' => $extra_config || {},
-                          'features' => {
-                                          '1' => [],
-                                         '-1' => [],
-                                        }
-              }};
+    $data   = {'data' => {'metadata' => $extra_config || {}}};
+    if ($slice) {
+      $data->{'data'}{'features'} = {'1' => [], '-1' => []};
+    }
+    else {
+      $data->{'data'}{'bins'} = {};
+    }
   }
 
   if (!$slice) {
@@ -316,10 +382,19 @@ sub build_metadata {
 
 sub build_feature {
   my ($self, $data, $track_key, $slice) = @_;
+  my $metadata = $data->{$track_key}{'metadata'};
+
   my $hash = $self->create_hash($slice, $data->{$track_key}{'metadata'});
   return unless keys %$hash;
 
-  my $feature_strand = $hash->{'strand'} || $data->{$track_key}{'metadata'}{'default_strand'};
+  if ($hash->{'score'}) {
+    $metadata->{'max_score'} = $hash->{'score'} if $hash->{'score'} >= $metadata->{'max_score'};
+    $metadata->{'min_score'} = $hash->{'score'} if $hash->{'score'} <= $metadata->{'min_score'};
+  }
+
+  my $feature_strand = $data->{$track_key}{'metadata'}{'force_strand'} 
+                          || $hash->{'strand'} 
+                          || $data->{$track_key}{'metadata'}{'default_strand'};
 
   if ($data->{$track_key}{'features'}{$feature_strand}) {
     push @{$data->{$track_key}{'features'}{$feature_strand}}, $hash; 
@@ -349,11 +424,9 @@ sub munge_densities {
   my ($self, $data) = @_;
   while (my ($key, $info) = each (%$data)) {
     my $track_max = 0;
-    foreach my $strand (keys %{$info->{'bins'}}) {
-      foreach my $chr (keys %{$info->{'bins'}{$strand}}) {
-        my $chr_max = max(values %{$info->{'bins'}{$strand}{$chr}});
-        $track_max = $chr_max if $chr_max > $track_max;
-      }
+    foreach my $chr (keys %{$info->{'bins'}}) {
+      my $chr_max = max(values %{$info->{'bins'}{$chr}});
+      $track_max = $chr_max if $chr_max > $track_max;
     }
     $info->{'metadata'}{'max_value'} = $track_max;
   }
@@ -417,9 +490,11 @@ sub set_colour {
   my $strand    = $params->{'strand'};
   my $score     = $params->{'score'};
   my $rgb       = $params->{'rgb'};
+  my $key       = $params->{'key'};
 
-  if ($score && ($metadata->{'useScore'} || $metadata->{'spectrum'})) {
-    $colour = $self->convert_to_gradient($score, $metadata->{'color'});
+  if ($score && $metadata->{'spectrum'} eq 'on') {
+    $self->{'gradient'} ||= $metadata->{'default_gradient'};
+    $colour = $self->convert_to_gradient($score, $metadata->{'color'}, $metadata->{'steps'}, $metadata->{'scoreMax'}, $metadata->{'scoreMin'});
   }
   elsif ($params->{'itemRgb'}) { ## BigBed?
     $colour = $self->rgb_to_hex($params->{'itemRgb'});
@@ -451,14 +526,22 @@ sub rgb_to_hex {
   return sprintf("%02x%02x%02x", @rgb);
 }
 
+sub get_metadata_value {
+  my ($self, $key) = @_;
+  return unless $key;
+
+  my %metadata = %{$self->parser->get_all_metadata};
+  return $metadata{$key};
+}
+
 sub nearest_feature {
 ### Try to find the nearest feature to the browser's current location
   my $self = shift;
 
   my $location = $self->hub->param('r') || $self->hub->referer->{'params'}->{'r'}[0];
-  return undef unless $location;
 
-  my ($browser_region, $browser_start, $browser_end) = split(':|-', $location);
+  my ($browser_region, $browser_start, $browser_end) = $location ? split(':|-', $location) 
+                                                                  : (0,0,0);
   my ($nearest_region, $nearest_start, $nearest_end, $first_region, $first_start, $first_end);
   my $nearest_distance;
   my $first_done = 0;

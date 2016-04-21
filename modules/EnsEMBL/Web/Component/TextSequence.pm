@@ -237,7 +237,7 @@ sub set_variations {
   my $snps   = [];
   my $u_snps = {};
   my $adaptor;
-
+  my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
   if ($focus_snp_only) {
     push @$snps, $focus_snp_only;
   } else {
@@ -245,15 +245,15 @@ sub set_variations {
       # NOTE: currently we can't filter by both population and consequence type, since the API doesn't support it.
       # This isn't a problem, however, since filtering by population is disabled for now anyway.
       if ($config->{'population'}) {
-         $snps = $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'});
+        $snps = $vf_adaptor->fetch_all_by_Slice_Population($slice_data->{'slice'}, $config->{'population'}, $config->{'min_frequency'});
       }
       elsif ($config->{'hide_rare_snps'} && $config->{'hide_rare_snps'} ne 'off') {
         my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor','variation');
         $snps = $vfa->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0);
       }
       else {
-        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},
-                         @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)});
+        my @snps_list = (@{$vf_adaptor->fetch_all_by_Slice_SO_terms($slice_data->{'slice'}, $config->{'consequence_filter'}, 1)},
+                         @{$vf_adaptor->fetch_all_somatic_by_Slice_SO_terms($slice_data->{'slice'}, $config->{'consequence_filter'}, 1)});
         $snps = \@snps_list;
       }
     };
@@ -269,7 +269,7 @@ sub set_variations {
     }
       
     eval {
-      map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
+      map { $u_snps->{$_->variation_name} = $_ } @{$vf_adaptor->fetch_all_by_Slice($u_slice)};
     };
   }
 

@@ -42,6 +42,7 @@
 .tool_buttons .config       { background-image: url(/i/16/rev/setting.png);       }
 .tool_buttons .data         { background-image: url(/i/16/rev/page-user.png);     }
 .tool_buttons .export       { background-image: url(/i/16/rev/download.png);      }
+.tool_buttons .iexport      { background-image: url(/i/16/rev/picture.png);      }
 .tool_buttons .view         { background-image: url(/i/16/rev/eye.png);           }
 .tool_buttons .csv          { background-image: url(/i/16/rev/page-csv.png);      }
 .tool_buttons .bookmark     { background-image: url(/i/16/rev/bookmark.png);      }

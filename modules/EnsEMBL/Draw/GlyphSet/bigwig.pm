@@ -23,7 +23,7 @@ package EnsEMBL::Draw::GlyphSet::bigwig;
 
 use strict;
 
-use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
+use parent qw(EnsEMBL::Draw::GlyphSet::Generic);
 
 sub can_json { return 1; }
 
@@ -31,8 +31,15 @@ sub init {
   my $self = shift;
   my @roles = ('EnsEMBL::Draw::Role::BigWig', 'EnsEMBL::Draw::Role::Wiggle');
   Role::Tiny->apply_roles_to_object($self, @roles);
+  $self->{'data'} = $self->get_data;
 }
 
+sub render_normal {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
+}
 
 sub render_text {
   my ($self, $wiggle) = @_;

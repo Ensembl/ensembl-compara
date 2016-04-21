@@ -127,8 +127,6 @@ sub get_formats {
 sub make_temp_files {
   my $self   = shift;  
   my $output = $self->hub->param('output');
-  
-  my $species_defs = $self->hub->species_defs;
 
   my $seq_file = EnsEMBL::Web::TmpFile::Text->new(
     extension    => 'fa',
@@ -150,7 +148,6 @@ sub make_temp_files {
   $anno_file->save;
   
   my $tar_file = EnsEMBL::Web::TmpFile::Tar->new(
-    URL_root        => $species_defs->ENSEMBL_STATIC_SERVER . $species_defs->ENSEMBL_TMP_URL_IMG,
     filename        => $seq_file->filename,
     prefix          => '',
     use_short_names => 1

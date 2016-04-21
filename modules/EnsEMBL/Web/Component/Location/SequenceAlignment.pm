@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Location::SequenceAlignment;
 use strict;
 
 use Bio::EnsEMBL::MappedSliceContainer;
-use Bio::EnsEMBL::DBSQL::StrainSliceAdaptor;
+use Bio::EnsEMBL::Variation::DBSQL::StrainSliceAdaptor;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Location);
 
@@ -114,7 +114,7 @@ sub content {
 sub get_slices {
   my ($self, $ref_slice_obj, $samples, $config) = @_;
   my $hub = $self->hub;
-  
+  my $vdb = $hub->database('variation');
   # Chunked request
   if (!defined $samples) {
     my $var_db = $hub->species_defs->databases->{'DATABASE_VARIATION'};
@@ -128,7 +128,8 @@ sub get_slices {
   
   my $msc = Bio::EnsEMBL::MappedSliceContainer->new(-SLICE => $ref_slice_obj, -EXPANDED => 1);
   
-  $msc->set_StrainSliceAdaptor(Bio::EnsEMBL::DBSQL::StrainSliceAdaptor->new($ref_slice_obj->adaptor->db));
+  $msc->set_StrainSliceAdaptor(Bio::EnsEMBL::Variation::DBSQL::StrainSliceAdaptor->new($vdb));
+
   $msc->attach_StrainSlice($_) for @$samples;
   
   my @slices = ({ 

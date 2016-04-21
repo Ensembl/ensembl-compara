@@ -27,6 +27,7 @@ use EnsEMBL::Web::File::Utils qw/sanitise_filename get_extension get_compression
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
 use EnsEMBL::Web::File::Utils::URL qw/:all/;
 use EnsEMBL::Web::File::Utils::Memcached qw/:all/;
+use EnsEMBL::Web::Utils::Encryption qw/encrypt_value/;
 
 ### Replacement for EnsEMBL::Web::TmpFile, using the file-handling
 ### functionality in EnsEMBL::Web::File::Utils 
@@ -41,7 +42,7 @@ use EnsEMBL::Web::File::Utils::Memcached qw/:all/;
 ###  - category - e.g. is this temporary or "saved" data 
 ###  - subcategory - optional (mostly used by tools)
 ###  - datestamp aids in cleaning up older files by date
-###  - user_identifier is either session id or user id, and 
+###  - user_identifier (optional) is either session id or user id, and 
 ###    helps to ensure that users only see their own data
 ###  - sub_dir is optional - it's used by a few pages to separate content further
 ###  - file_name may be auto-generated, or set by the user
@@ -230,7 +231,8 @@ sub init {
 
     my @path_elements = ($category);
     push @path_elements, $subcategory if $subcategory;
-    push @path_elements, ($datestamp, $user_id);
+    push @path_elements, $datestamp;
+    push @path_elements, $user_id if $user_id;
     push @path_elements, $sub_dir if $sub_dir;
     push @path_elements, $self->{'write_name'};
 
@@ -329,8 +331,10 @@ sub base_read_path {
   my $dir_key     = $path_map{$self->{'base_dir'}}->[0];
   my @path        = ($self->hub->species_defs->$dir_key, $self->get_category);
   my $subcategory = $self->get_subcategory;
+  my $user_id     = $self->get_user_identifier;
   push @path, $subcategory if $subcategory;
-  push @path, ($self->get_datestamp, $self->get_user_identifier);
+  push @path, $self->get_datestamp;
+  push @path, $user_id if $user_id;
   return join('/', @path); 
 }
 
@@ -429,13 +433,9 @@ sub get_format {
 }
 
 sub set_category {
-### Set the category of file: typically either temporary or persistent
+### Set the category of file: defaults to temporary 
   my ($self, $category) = @_;
-
-  unless ($category) {
-    $category = $self->hub->user ? 'persistent' : 'temporary';
-  }
-
+  $category ||= 'temporary';
   $self->{'category'} = $category;
   return $self->{'category'};
 }
@@ -501,7 +501,7 @@ sub set_user_identifier {
   my $hub = $self->hub;
  
   if ($hub->user) {
-    $self->{'user_identifier'} = 'user_'.$hub->user->id;
+    $self->{'user_identifier'} = 'user_'.encrypt_value($hub->user->id);
   }
   else {
     $self->{'user_identifier'} = 'session_'.$hub->session->session_id;

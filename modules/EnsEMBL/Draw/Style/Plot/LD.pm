@@ -47,8 +47,11 @@ sub create_glyphs {
   ## Set some track-wide variables
   my $height        = $track_config->get('height') || 40;
   my $focus_variant = $track_config->get('focus_variant');
-  my $plot_diameter = $track_config->get('plot_diameter') || 6; 
-  
+  my $plot_diameter = $track_config->get('plot_diameter') || 6;
+
+  # Adjusts the height of the basal horizontal line because the values in pixels can't render the data with a high accuracy
+  my $adjusted_height = $height - 1;
+
   # Horizontal mark line
   if ($track_config->get('h_mark')) {
     $self->draw_mark_line($track_config->get('h_mark'), $height);
@@ -56,17 +59,18 @@ sub create_glyphs {
 
   # Horizontal baseline
   if ($track_config->get('baseline_zero')) {
-    $self->draw_baseline($height);
+    $self->draw_h_line(0);       # Top line
+    $self->draw_h_line($adjusted_height); # Baseline
   }
 
   # Left-hand side menu
   my $max_score = 1;
   my $min_score = 0;
   $self->_draw_score(0, $max_score); # Max
-  $self->_draw_score($height, $min_score); # Min
+  $self->_draw_score($adjusted_height, $min_score); # Min
 
   # Draw plots
-  $self->draw_plots($height, $data, $focus_variant, $plot_diameter);
+  $self->draw_plots($height, $adjusted_height, $data, $focus_variant, $plot_diameter);
 
 }
 
@@ -118,7 +122,7 @@ sub draw_mark_line {
 }
 
 
-sub draw_baseline {
+sub draw_h_line {
   my ($self, $height) = @_;
 
   my $vclen = $self->image_config->container_width;  
@@ -128,19 +132,21 @@ sub draw_baseline {
     y         => $height,
     width     => $vclen,
     height    => 0,
-    colour    => '#CCCCCC',
+    colour    => '#4c4cff',
     absolutey => 1,
+    dotted    => 1
   });
 }
 
+
 sub draw_plots {
-  my ($self, $height, $features, $focus_variant, $diam) = @_;
+  my ($self, $height, $adjusted_height, $features, $focus_variant, $diam) = @_;
 
   foreach my $feature (@$features) {
 
     # Selected variant
     if ($focus_variant && $feature->{'label'} eq $focus_variant) {
-      $self->draw_focus_variant($height, $feature);
+      $self->draw_focus_variant($adjusted_height, $feature);
     }
     else {
       $self->draw_plot($height, $feature, $diam);
@@ -158,24 +164,43 @@ sub draw_focus_variant {
   my $end   = $feature->{'end'};
 
   my $width = $end - $start + 1;
+
+  my $t_width  = 6 / $pix_per_bp;
+  my $t_height = 8;
+
+  # Vertical line
   push @{$self->glyphs}, $self->Rect({
     x      => $start - $width/2,
-    y      => 0,
+    y      => -$t_height,
     width  => $width,
-    height => $height,
+    height => $height + $t_height,
     colour => 'black',
+    z      => 10,
     href   => $feature->{'href'}
   });
-  
+
+  # Triangle mark
+  push @{$self->glyphs}, $self->Triangle({
+    mid_point  => [ $start, -($t_height/2) ],
+    colour     => 'black',
+    absolutey  => 1,
+    width      => $t_width,
+    height     => $t_height,
+    z          => 12,
+    direction  => 'down',
+    href       => $feature->{'href'}
+  });
+
   my $label        = $feature->{'label'};
   my $label_info   = $self->get_text_info($label);
   my $label_width  = $label_info->{'width'};
   my $label_height = $label_info->{'height'};
   my $lwidth       = $label_width / $pix_per_bp;
 
+  # Variant text lable
   push @{$self->glyphs}, $self->Text({
-    x         => $start + $width + 4/$pix_per_bp,
-    y         => ($height - $label_height) / 2,
+    x         => $start + $t_width + $width,
+    y         => 0 - $label_height - 4,
     width     => $lwidth,
     textwidth => $label_width,
     height    => $label_height,

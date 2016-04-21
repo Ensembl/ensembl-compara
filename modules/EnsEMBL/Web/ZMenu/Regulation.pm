@@ -36,7 +36,7 @@ sub content {
   
   foreach (@{$hub->database('funcgen')->get_RegulatoryFeatureAdaptor->fetch_all_by_stable_ID($rf)}) {
     if ($cell_line) {
-      $reg_feature = $_ if $_->feature_set->cell_type->name =~ /$cell_line/i;
+      $reg_feature = $_ if $_->feature_set->cell_type->name =~ /\Q$cell_line\E/i;
     } elsif ($_->feature_set->cell_type->name =~ /multi/i) {
       $reg_feature = $_;
     }
@@ -75,15 +75,11 @@ sub content {
     });
   }
 
-  if($hub->is_new_regulation_pipeline and $cell_type ne 'MultiCell') {
+  if($cell_type ne 'MultiCell') {
     my $status = "Unknown";
     my $has_evidence = $object->has_evidence;
-    if($has_evidence) {
-      $status = "Active";
-    } elsif(defined $has_evidence) {
-      $status = "Inactive";
-    }
-
+    $status = ['Inactive','Active','Poised','Repressed','N/A']->[$has_evidence];
+    warn "has_evidence=$has_evidence\n";
     $self->add_entry({
       type => 'Status',
       label => $status

@@ -42,7 +42,7 @@ sub create_hash {
   my $end           = $feature_end - $slice->start;
   return if $end < 0 || $start > $slice->length;
 
-  ## Only set colour if we have something in file, otherwise
+  ## Only set colour from strand if we have something in file, otherwise
   ## we will override the default colour in the drawing code
   my $strand  = $self->parser->get_strand || 0;
   
@@ -66,13 +66,10 @@ sub create_hash {
                         'end'         => $feature_end,
                         'strand'      => $feature_strand,
                         });
-  warn ">>> HREF $href";
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
   my $hash = {
-    'start'         => $start,
-    'end'           => $end,
     'seq_region'    => $seq_region,
     'strand'        => $strand,
     'score'         => $score,
@@ -83,6 +80,8 @@ sub create_hash {
     'label_colour'  => $metadata->{'label_colour'} || $colour,
   };
   if ($metadata->{'display'} eq 'text') {
+    $hash->{'start'}      = $feature_start;
+    $hash->{'end'}        = $feature_end;
     $hash->{'extra'} = [
                         {'name' => 'Hit end', 'value' => $self->parser->get_qEnd},
                         {'name' => 'Matches', 'value' => $self->parser->get_matches},
@@ -96,7 +95,9 @@ sub create_hash {
                         ];
   }
   else {
-    $hash->{'structure'} = $self->create_structure($slice->start);
+    $hash->{'start'}      = $start;
+    $hash->{'end'}        = $end;
+    $hash->{'structure'}  = $self->create_structure($slice->start);
   }
   return $hash;
 }
@@ -113,13 +114,11 @@ sub create_structure {
 
   my @block_starts  = @{$self->parser->get_tStarts};
   my @block_lengths = @{$self->parser->get_blockSizes};
-  my $seq_length    = $self->parser->get_tSize;
 
   foreach(0..($self->parser->get_blockCount - 1)) {
     my $start   = shift @block_starts;
-    ## Starts are given relative to sequence length, not in coordinates
-    ## Also need to adjust to be relative to slice
-    $start      = $seq_length - $start - $slice_start;
+    ## Need to adjust to be relative to slice
+    $start     -= $slice_start;
     my $length  = shift @block_lengths;
     my $end     = $start + $length;
 

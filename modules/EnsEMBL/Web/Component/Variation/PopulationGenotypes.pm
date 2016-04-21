@@ -260,7 +260,7 @@ sub format_table {
     elsif ($tree->{$pop_id}{'children'}) {
       $row_class = 'subgroup';
     }
-    elsif (scalar keys %$tree) {
+    elsif (scalar keys %$tree > 1) {
       $group_member = 1;
     }
 
@@ -360,7 +360,18 @@ sub format_number {
   ### Returns "unknown" if null or formats the number to 3 decimal places
 
   my ($self, $number) = @_;
-  return defined $number ? sprintf '%.3f', $number : 'unknown';
+
+  if (defined($number)) {
+    my $rounded_number = sprintf '%.3f', $number;
+    if (($rounded_number eq '0.000' && $number != 0) ||
+        ($rounded_number eq '1.000' && $number != 1)) {
+      $rounded_number = $number;
+    }
+    return $rounded_number;
+  }
+  else {
+    return 'unknown';
+  }
 }
 
 sub sort_extra_pops {

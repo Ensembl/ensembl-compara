@@ -67,7 +67,7 @@ sub create_glyphs {
   ## Limit track height to that of biggest arc plus some padding
   my $max_height = $max_arc/2 + 10;
   $track_config->set('max_height', $max_height);
-  $self->add_hidden_bgd($max_height);
+  $self->draw_hidden_bgd($max_height);
 
   return @{$self->glyphs||[]};
 }

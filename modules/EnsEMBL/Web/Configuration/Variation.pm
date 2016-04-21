@@ -84,7 +84,10 @@ sub populate_tree {
   ); 
   
   $self->create_node('HighLD', 'Linkage disequilibrium',
-    [qw( highld EnsEMBL::Web::Component::Variation::HighLD )],
+    [qw( 
+      pairwiseld EnsEMBL::Web::Component::Variation::PairwiseLD
+      highld EnsEMBL::Web::Component::Variation::HighLD
+    )],
     { 'availability' => 'variation has_ldpops variation has_samples not_somatic', 'concise' => 'Linkage disequilibrium', 'no_menu_entry' => $somatic }
   );
     
@@ -117,11 +120,6 @@ sub populate_tree {
     { 'availability' => 'variation has_ldpops has_samples not_somatic', 'no_menu_entry' => 1 }
   );
 
-  my $external = $self->create_node('ExternalData', 'External Data',
-    [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
-    { 'availability' => 'variation' }
-  );
-  
   $self->create_subnode(
     'Output', 'Export Variation Data',
     [qw( export EnsEMBL::Web::Component::Export::Output )],

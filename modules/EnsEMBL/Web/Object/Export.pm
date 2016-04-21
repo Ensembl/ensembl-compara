@@ -549,7 +549,9 @@ sub features {
   }
   
   if ($params->{'variation'}) {
-    foreach (@{$slice->get_all_VariationFeatures}) {
+    my $vdb = $self->database('variation'); 
+    my $vf_adaptor = $vdb->get_VariationFeatureAdaptor;     
+    foreach (@{$vf_adaptor->fetch_all_by_Slice($slice)}) {
       $self->feature('variation', $_, { variation_name => $_->variation_name });	    
     }
   }
@@ -803,6 +805,8 @@ sub feature {
   }   
   if($format eq 'bed'){
     @mapping_result = qw(seqid start end name score strand);
+    # move coords into zero-based start
+    $vals{'start'} = $vals{'start'} - 1 if defined $vals{'start'};
     $vals{'name'} = $feature->display_id;
   }
   else {

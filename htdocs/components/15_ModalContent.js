@@ -59,6 +59,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     });
     
     this.initialize();
+    this.initFromHash();
   },
   
   initialize: function () {
@@ -82,12 +83,22 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     this.el.find('._stt').selectToToggle({}, this.el);
     this.el.find('._sdd').speciesDropdown();
   },
-  
+
+  initFromHash: function() {
+    if (this.params.hash) {
+      this.elLk.links.filter(':has(a.' + this.params.hash + ')').trigger('click');
+    }
+  },
+
   getContent: function (link, url) {
     this.elLk.content.html('<div class="panel"><div class="spinner">Loading Content</div></div>');
+
+    var params = Ensembl.prepareRequestParams(url);
     
     $.ajax({
-      url: Ensembl.replaceTimestamp(url),
+      url: params.requestURL,
+      type: params.requestType,
+      data: params.requestData,
       dataType: 'json',
       context: this,
       success: function (json) {

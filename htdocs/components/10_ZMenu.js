@@ -172,7 +172,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.populateDas();
     } else if (!this.href) {
       this.populate();
-    } else if (this.href.match(/#/)) {
+    } else if (this.href.match(/#/) && !this.href.match(/#:@:/)) {
       this.populate(true);
     } else {
       this.populateAjax();
@@ -211,11 +211,53 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.populateNoAjax(true); // Always parse the title tag
     this.populateAjax(url);
   },
-  
+
+  // the server spends way too long creating URLs which will never be
+  // clicked on. Pass through as quickly as possible and leave to client
+  // side to calculate it, if needed.
+  convertQuickUrl: function(url) {
+    if(!url.match(/^#:@:/)) { return url; }
+    url = url.replace(/^#:@:/,'');
+    var parts = [];
+    while(true) {
+      var m = /^(\d+)-/.exec(url);
+      if(!m) { break; }
+      var len = parseInt(m[1]);
+      parts.push(url.substr(m[0].length,len));
+      url = url.substr(m[0].length+len+1);
+    }
+    var kvp = [];
+    var kvv = {};
+    var type;
+    while(parts.length>1) {
+      var k = parts.shift();
+      var v = parts.shift();
+      kvp.push(k);
+      kvv[k] = encodeURIComponent(k)+"="+encodeURIComponent(v);
+      if(k=='type') { type = v; }
+    }
+    var path = window.location.pathname.split("/");
+    path.splice(1,2,path[1],"ZMenu",kvp['type']||type);
+    var params = window.location.search.replace(/^\?/,'').split(/&|;/);
+    var nparams = [];
+    for(var i=0;i<params.length;i++) {
+      var split = params[i].split('=');
+      if(kvv[decodeURIComponent(split[0])]===undefined) {
+        nparams.push(params[i]);
+      }
+    }
+    for(var i=0;i<kvp.length;i++) {
+      nparams.push(kvv[kvp[i]]);
+    }
+    var uri = path.join("/")+"?"+nparams.join(";");
+    return uri;
+  },
+
   populateAjax: function (url, expand) {
     var timeout = this.timeout;
         url     = url || this.href;
-    
+
+    url = this.convertQuickUrl(url);
     if (url && url.match('/ZMenu/')) {
       $.extend($.ajax({
         url:      url,

@@ -39,9 +39,9 @@ sub content_other {
   my $object  = $self->object;
   my $species = $hub->species;
   my $family  = $object->create_family($hub->param('family'), $cdb);
-  
+
   return '' unless $family;
-  
+
   ## External protein IDs
   my %sources                = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
   my $count                  = 0;
@@ -52,18 +52,18 @@ sub content_other {
   foreach my $key (sort keys %sources) {
     my @peptides = map { $_->stable_id } @{$family->get_Member_by_source($sources{$key}{'key'})};
     my $row_count;
-    
+
     if (@peptides) {
       $count += @peptides;
-      
+
       if ($hub->param("opt_$key") ne'yes') {
         push @member_skipped_species, $sources{$key}{'name'};
         $member_skipped_count += @peptides;
         next;
       }
-      
+
       my $pep_table = $self->new_table([], [], { margin => '1em 0px', header => 'no' });
-      
+
       $pep_table->add_columns(
         { key => '', title => '', align => 'center' },
         { key => '', title => '', align => 'center' },
@@ -72,29 +72,36 @@ sub content_other {
         { key => '', title => '', align => 'center' },
         { key => '', title => '', align => 'center' }
       );
-      
+
       my @table_data;
-      
+      my $number_of_columns = 6;
+
+      # For creating  6 columns table data
       foreach (sort @peptides) {
         push @table_data, $hub->get_ExtURL_link($_, uc $sources{$key}{'key'}, $_);
-        
-        next unless @table_data == 6;
-        
+
+        next unless @table_data == $number_of_columns;
+
         $pep_table->add_row([@table_data]);
         $row_count++;
         @table_data = ();
       }
 
+      # Adding blank all for missing columns #ENSWEB-2120
       if (@table_data) {
-        $pep_table->add_row([@table_data]);
-        $row_count++;
+        for (my $i = 0; $i < $number_of_columns; $i++) {
+          push @table_data, "" unless ($table_data[$i]);
+        }
       }
+
+      $pep_table->add_row([@table_data]);
+      $row_count++;
 
       # don't render table unless we actually put something in it
       $html .= "<h3>$sources{$key}{'name'} proteins in this family</h3>" . $pep_table->render if $row_count;
     }
   }
-  
+
   $html .= sprintf '<p>No other proteins from this family were found in the following sources:%s</p>', join(', ', map $sources{$_}{'name'}, sort keys %sources) unless $count;
 
   if ($member_skipped_count) {
@@ -113,9 +120,9 @@ sub content_ensembl {
   my $cdb     = shift || $hub->param('cdb') || 'compara';
   my $species = $hub->species;
   my $family  = $self->object->create_family($hub->param('family'), $cdb);
-  
+
   return '' unless $family;
-  
+
   my $species_defs  = $hub->species_defs;
   my $sitename      = $species_defs->ENSEMBL_SITETYPE;
   my @genomedbs     = @{$family->get_all_GenomeDBs_by_member_source_name('ENSEMBLPEP')}; ## Ensembl proteins
@@ -123,9 +130,9 @@ sub content_ensembl {
   my %data;
   my $html;
 
-  foreach my $genomedb (@genomedbs) { 
+  foreach my $genomedb (@genomedbs) {
     my @peptides  = map $_->stable_id, @{$family->get_Member_by_source_GenomeDB('ENSEMBLPEP', $genomedb) || []};
-    $data{$genomedb->dbID} = \@peptides; 
+    $data{$genomedb->dbID} = \@peptides;
     $count       += scalar(@peptides);
   }
 
@@ -138,20 +145,20 @@ sub content_ensembl {
   $table->add_row("$sitename Family ID",   $stable_id);
   $table->add_row('Description'        , $desc);
   $html .= $table->render;
-  
+
   if ($count > 0) {
     ## No point in exporting alignment if only one peptide!
     $html .= $self->content_buttons if $count > 1;
 
     my $ens_table = $self->new_table([], [], { margin  => '1em 0px' });
-    
+
     $ens_table->add_columns(
       { key => 'species',  title => 'Species',  width => '20%', align => 'left' },
       { key => 'peptides', title => 'Proteins', width => '80%', align => 'left' },
     );
-    
+
     foreach my $genomedb (sort { $a->name cmp $b->name } @genomedbs) {
-      my $species_key = $genomedb->name; 
+      my $species_key = $genomedb->name;
 
       if ($hub->param('species_' . lc $species_key) ne 'yes') {
         push @member_skipped_species, $species_defs->species_label($species_key);
@@ -160,20 +167,20 @@ sub content_ensembl {
       }
 
       next unless $data{$genomedb->dbID};
-      
+
       my $row = {
         species  => $species_defs->species_label($species_key),
         peptides => '<dl class="long_id_list">'
       };
-      
+
       foreach (sort @{$data{$genomedb->dbID}}) {
         $row->{'peptides'} .= sprintf qq(<dt><a href="/%s/Transcript/ProteinSummary?peptide=%s">%s</a> [<a href="/%s/Location/View?peptide=%s">location</a>]</dt>), $species_key, $_, $_, $species_key, $_;
       }
-      
+
       $row->{'peptides'} .= '</dl>';
       $ens_table->add_row($row);
     }
-    
+
     $html .= $ens_table->render;
   } else {
     $html .= "<p>No proteins from this family were found in any other $sitename species</p>";

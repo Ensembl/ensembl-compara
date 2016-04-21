@@ -34,7 +34,8 @@ sub init {
     $defaults->{lc $_} = $hash{$_}[0] for keys %hash;
   }
 
-  $defaults->{'context'} = 30000; 
+  $defaults->{'context'} = 50000;
+  $defaults->{'ld_type'} = 'r2';
   $defaults->{'r2_mark'} = 0.8;
   $defaults->{'d_prime_mark'} = 0.8;
  
@@ -79,12 +80,25 @@ sub form {
     ]
   });
 
+  # Track display
+  $self->add_form_element({
+    type   => 'DropDown',
+    select => 'select',
+    name   => 'ld_type',
+    label  => 'LD track type(s)',
+    values => [
+      { value => 'r2',      caption => 'r&sup2;'             },
+      { value => 'd_prime', caption => "D'"                  },
+      { value => 'both'   , caption => "both r&sup2; and D'" },
+    ]
+  });
+
   # r2 threshold
   $self->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'r2_mark',
-    label  => 'r2 horizontal mark',
+    label  => 'r&sup2; horizontal mark',
     values => [
       { value => 0,   caption => 0   },
       { value => 0.1, caption => 0.1 },

@@ -25,8 +25,6 @@ use strict;
 
 use URI::Escape qw(uri_unescape);
 
-use EnsEMBL::Web::Cookie;
-
 use base qw(EnsEMBL::Web::Controller);
 
 sub request   { return 'page'; }
@@ -91,11 +89,6 @@ sub update_configuration_from_url {
   $new_url += $hub->get_viewconfig(@{$components[$_]})->update_from_url($r, $_ == $#components) for 0..$#components; # This should push a message onto the message queue
   
   if ($new_url) {
-    if (keys %{$hub->species_defs->ENSEMBL_MIRRORS || {}}) {
-      my $redirect_cookie = EnsEMBL::Web::Cookie->new($r, {'name' => 'redirect_mirror_url'});
-      $redirect_cookie->value($r->unparsed_uri);
-      $redirect_cookie->bake;
-    }
     $input->param('time', time); # Add time to cache-bust the browser
     $input->redirect(join '?', $r->uri, uri_unescape($input->query_string)); # If something has changed then we redirect to the new page  
     return 1;
@@ -110,60 +103,23 @@ sub process_command {
   my $command = $self->command;
   my $action  = $self->action;
   
-  return unless $command || $action eq 'Wizard';
-  
   my $object  = $self->object;
   my $page    = $self->page;
   my $builder = $self->builder;
   my $hub     = $self->hub;
   my $node    = $self->node;
   
-  if ($command eq 'db_frontend') {
-    my $type     = $self->type;
-    my $function = $self->function || 'Display';
-
-    # Look for all possible modules for this URL, in order of specificity and likelihood
-    my @classes = (
-      "EnsEMBL::Web::Component::${type}::${action}::$function",
-      "EnsEMBL::Web::Command::${type}::${action}::$function",
-      "EnsEMBL::Web::Component::DbFrontend::$function",
-      "EnsEMBL::Web::Command::DbFrontend::$function"
-    );
-
-    foreach my $class (@classes) {
-      if ($self->dynamic_use($class)) {
-        if ($class =~ /Command/) {
-          my $command_module = $class->new({
-            object => $object,
-            hub    => $hub,
-            page   => $page,
-            node   => $node
-          });
-          
-          my $rtn = $command_module->process;
-          
-          return defined $rtn ? $rtn : 1;
-        } else {
-          $self->SUPER::render_page;
-        }
-      }
-    }
-  } else {
-    # Normal command module
-    my $class = $action eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $command;
+  if ($command && $self->dynamic_use($command)) {
+    my $command_module = $command->new({
+      object => $object,
+      hub    => $hub,
+      page   => $page,
+      node   => $node
+    });
     
-    if ($class && $self->dynamic_use($class)) {
-      my $command_module = $class->new({
-        object => $object,
-        hub    => $hub,
-        page   => $page,
-        node   => $node
-      });
-      
-      my $rtn = $command_module->process;
-      
-      return defined $rtn ? $rtn : 1;
-    }
+    my $rtn = $command_module->process;
+     
+    return defined $rtn ? $rtn : 1;
   }
 }
 

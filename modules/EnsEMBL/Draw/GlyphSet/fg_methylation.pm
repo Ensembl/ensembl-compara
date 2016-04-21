@@ -28,7 +28,7 @@ use base qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
 sub supports_subtitles { 0; }
 
-sub features {
+sub get_data {
   my $self    = shift;
   my $slice   = $self->{'container'}; 
   my $config  = $self->{'config'};
@@ -43,10 +43,13 @@ sub features {
     } else {
       $config->{'_sent_ch3_error_track'} = 1;
       $self->{'no_empty_track_message'}  = 1;
-      return $self->errorTrack('Methylation data is only viewable on images  200kb in size');
+      return $self->errorTrack('Methylation data is only viewable on images less than 200kb in size');
     }
   }
-  
+ 
+  ## Use the score to create a colour gradient
+  $self->{'my_config'}->set('spectrum', 'on');
+ 
   my $fgh = $slice->adaptor->db->get_db_adaptor('funcgen');
   
   return if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice'); # XXX Seems not to have adaptors?
@@ -62,24 +65,22 @@ sub features {
 
   my $file_path = join '/', $self->species_defs->DATAFILE_BASE_PATH, lc $self->species, $self->species_defs->ASSEMBLY_VERSION;
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
+  ## Clean up any whitespace
+  $bigbed_file =~ s/\s//g;
   
-  return $self->SUPER::features({
-    style   => 'colouredscore',
-    adaptor => $slice->{'_cache'}{'bigbed_adaptor'}{$bigbed_file} ||= $self->bigbed_adaptor(Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor->new($bigbed_file)),
-  });
+  return $self->SUPER::get_data($bigbed_file);
 }
 
-sub render_normal {
+sub render_compact {
   my $self = shift;
-  $self->{'renderer_no_join'}                = 1;
   $self->{'legend'}{'fg_methylation_legend'} = 1; # instruct to draw legend
-  $self->SUPER::render_normal(8, 0);  
+  $self->{'my_config'}->set('link_on_bgd', 1);
+  $self->SUPER::render_compact;  
 }
 
-sub render_compact { shift->render_normal(@_); }
 sub href           { return undef; } # tie to background
 
-sub href_bgd {
+sub bg_link {
   my ($self, $strand) = @_;
   
   return $self->_url({

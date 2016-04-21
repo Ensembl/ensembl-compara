@@ -66,15 +66,24 @@ sub features {
     my $set_name   = $self->my_config('set_name');
     my $study_name = $self->my_config('study_name');
     my $var_db     = $self->my_config('db') || 'variation';
-    my ($features, %colours);
+    unless ($var_db) {
+      $self->errorTrack("Could not connect to variation database");
+      return [];
+    }
+    my $svf_adaptor = $self->{'config'}->hub->get_adaptor('get_StructuralVariationFeatureAdaptor', $var_db);
+    my $src_adaptor = $self->{'config'}->hub->get_adaptor('get_SourceAdaptor', $var_db);
+
+    my ($features, $adaptor, %colours);
     
     if ($set_name) {
-      $features = $slice->get_all_StructuralVariationFeatures_by_VariationSet($self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', $var_db)->fetch_by_name($set_name), $var_db);
+      $adaptor  = $self->{'config'}->hub->get_adaptor('get_VariationSetAdaptor', $var_db);
+      $features = $svf_adaptor->fetch_all_by_Slice_VariationSet($slice, $adaptor->fetch_by_name($set_name)) if $adaptor;
     } elsif ($study_name) {
-      $features = $slice->get_all_StructuralVariationFeatures_by_Study($self->{'config'}->hub->get_adaptor('get_StudyAdaptor', $var_db)->fetch_by_name($study_name), undef, $var_db);
+      $adaptor  = $self->{'config'}->hub->get_adaptor('get_StudyAdaptor', $var_db);
+      $features = $svf_adaptor->fetch_all_by_Slice_Study($slice, $adaptor->fetch_by_name($study_name), undef) if $adaptor;
     }
     else {
-      my $source     = $self->my_config('source');
+      my $source_name = $self->my_config('source');
       my $min_size = $self->my_config('min_size');
       my $max_size = $self->my_config('max_size');
       my $start    = $slice->start;
@@ -82,13 +91,14 @@ sub features {
       my @display_features;
       
       # By source
-      if ($source) {
-        my $func  = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures_by_source' : 'get_all_StructuralVariationFeatures_by_source';
-        $features = $slice->$func($source, undef, $var_db);
+      if ($source_name) {
+        my $source = $src_adaptor->fetch_by_name($source_name);
+        my $func  = $self->somatic ? 'fetch_all_somatic_by_Slice_Source' : 'fetch_all_by_Slice_Source';
+        $features = $svf_adaptor->$func($slice, $source, undef);
       }
       else {
-        my $func  = $self->somatic ? 'get_all_somatic_StructuralVariationFeatures' : 'get_all_StructuralVariationFeatures';
-        $features = $slice->$func(undef, $var_db);
+        my $func  = $self->somatic ? 'fetch_all_somatic_by_Slice' : 'fetch_all_by_Slice';
+        $features = $svf_adaptor->$func($slice);
       }
       
       if ($min_size || $max_size) {

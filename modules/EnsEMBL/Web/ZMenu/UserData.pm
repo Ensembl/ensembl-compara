@@ -38,7 +38,6 @@ sub content {
   return unless $click_data;
   $click_data->{'display'} = 'text';
 
-  my @coords = map { $hub->param("fake_click_$_") } qw(chr start end);
   my $strand = $hub->param('fake_click_strand') || 1;
   my ($caption, @features);
 
@@ -54,6 +53,7 @@ sub content {
 
     my $data = $glyphset->get_data;
     foreach my $track (@$data) {
+      next unless $track->{'features'};
       $caption ||= $track->{'metadata'}{'zmenu_caption'};
       if ($feature_id) {
         foreach (@{$track->{'features'}{$strand}||[]}) {
@@ -66,7 +66,7 @@ sub content {
         }
       }
       else {
-        @features = @{$track->{'features'}{$strand}||[]};
+        push @features, @{$track->{'features'}{$strand}||[]};
       }
     }
   }
@@ -74,27 +74,29 @@ sub content {
   if (scalar @features > 5) {
     $self->summary_content(\@features, $caption);
   } else {
-    my @coords = split(/[:-]/, $hub->param('r'));
-    $self->feature_content(\@features, $caption, $coords[1]);
+    $self->feature_content(\@features, $caption);
   }
 }
 
 sub feature_content {
-  my ($self, $features, $caption, $slice_start) = @_;
+  my ($self, $features, $caption) = @_;
+
+  my $default_caption = 'Feature';
+  $default_caption   .= 's' if scalar @$features > 1;
 
   foreach (@$features) {
     my $id = $_->{'label'};
 
     unless ($caption) {
-      $caption = $_->{'track_name'};
+      $caption = $_->{'track_name'} || $default_caption;
       $caption .= ': '.$id if scalar(@$features) == 1 && $id; 
     }
 
     $self->add_entry({'type' => 'Location', 
                       'label' => sprintf('%s:%s-%s', 
                                             $_->{'seq_region'}, 
-                                            $_->{'start'} + $slice_start, 
-                                            $_->{'end'} + $slice_start)
+                                            $_->{'start'}, 
+                                            $_->{'end'})
                       });
 
     if (defined($_->{'strand'})) {
@@ -107,7 +109,7 @@ sub feature_content {
 
     if ($_->{'extra'}) {
       foreach my $extra (@{$_->{'extra'}||[]}) {
-        next unless $extra->{'value'};
+        next unless $extra->{'name'};
         $self->add_entry({'type' => $extra->{'name'}, 'label' => $extra->{'value'}});
       }
     }

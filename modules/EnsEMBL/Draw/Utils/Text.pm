@@ -25,7 +25,7 @@ use strict;
 use GD::Simple;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(get_text_info);
+our @EXPORT_OK = qw(get_text_info get_text_width get_font_details);
 
 sub get_text_info {
   my ($cache, $image_config, $width, $text, $short_text, %parameters) = @_;
@@ -67,6 +67,59 @@ sub get_text_info {
   }
 
   $cache->set($key, \@res); # Update the cache
+
+  return @res;
+}
+
+sub get_font_details {
+  my ($config, $type, $hash) = @_;
+  my $style  = $config->species_defs->ENSEMBL_STYLE;
+  my $font   = $type =~ /fixed/i ? $style->{'GRAPHIC_FONT_FIXED'} : $style->{'GRAPHIC_FONT'};
+  my $ptsize = $style->{'GRAPHIC_FONTSIZE'} * ($style->{'GRAPHIC_' . uc $type} || 1);
+
+  return $hash ? (font => $font, ptsize => $ptsize) : ($font, $ptsize);
+}
+
+sub get_text_width {
+  my ($cache, $image_config, $width, $text, $short_text, %parameters) = @_;
+     $text = 'X' if length $text == 1 && $parameters{'font'} =~ /Cour/i;               # Adjust the text for courier fonts
+  my $key  = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}"; # Look in the cache for a previous entry 
+
+  return @{$cache->{$key}} if exists $cache->{$key};
+
+  my $gd = &_get_gd($cache, $image_config, $parameters{'font'}, $parameters{'ptsize'});
+
+  return unless $gd;
+
+  # Use the text object to determine height/width of the given text;
+  $width ||= 1e6; # Make initial width very big by default
+
+  my ($w, $h) = $gd->stringBounds($text);
+  my @res;
+
+  if ($w < $width) {
+    @res = ($text, 'full', $w, $h);
+  } elsif ($short_text) {
+    ($w, $h) = $gd->stringBounds($text);
+    @res = $w < $width ? ($short_text, 'short', $w, $h) : ('', 'none', 0, 0);
+  } elsif ($parameters{'ellipsis'}) {
+    my $string = $text;
+
+    while ($string) {
+      chop $string;
+
+      ($w, $h) = $gd->stringBounds("$string...");
+
+      if ($w < $width) {
+        @res = ("$string...", 'truncated', $w, $h);
+        last;
+      }
+    }
+  } else {
+    @res = ('', 'none', 0, 0);
+  }
+
+  $cache->set($key,\@res); # Update the cache
 
   return @res;
 }

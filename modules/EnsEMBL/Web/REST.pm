@@ -74,6 +74,8 @@ sub fetch {
   my $delimiter = $args->{url_params}->{_delimiter} || ';';
   delete $args->{'url_params'}->{'_delimiter'};
   my $hub   = $self->hub;
+  $args->{'hub'} = $hub;
+  
   my $url   = sprintf('%s/%s', $self->server, $endpoint);
   my $type  = $content_type{lc($format)};
   $args->{'headers'}{'Content-Type'} ||= $type;

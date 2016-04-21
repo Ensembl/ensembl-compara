@@ -27,7 +27,7 @@ use List::Util qw(min);
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use Bio::EnsEMBL::Variation::VariationFeature;
 
-use base qw(EnsEMBL::Draw::GlyphSet_simple);
+use base qw(EnsEMBL::Draw::GlyphSet_simpler);
 
 sub depth {
   my $self   = shift;
@@ -40,10 +40,7 @@ sub depth {
   return $self->SUPER::depth;
 }
 
-sub colour_key    { return lc $_[1]->display_consequence; }
-sub feature_label { my $label = $_[1]->ambig_code; return $label unless $label eq '-'; }
 sub label_overlay { return 1; }
-sub class         { my $depth = $_[0]->depth; return 'group' if defined $depth && $depth <= 1; }
 
 sub render_labels {
   my ($self, $labels) = @_;
@@ -67,18 +64,29 @@ sub features {
   my $self         = shift;
   my $max_length   = $self->my_config('threshold') || 1000;
   my $slice_length = $self->{'container'}->length;
-  
+
+  my $hub = $self->{'config'}{'hub'};  
+
   if ($slice_length > $max_length * 1010) {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
     return [];
   } else {
-    my $features_list = $self->fetch_features;
+    my $features_list = $hub->get_query('GlyphSet::Variation')->go($self,{
+      species => $self->{'config'}{'species'},
+      slice => $self->{'container'},
+      id => $self->{'my_config'}->id,
+      config => [qw(filter source sources sets set_name style no_label)],
+      var_db => $self->my_config('db') || 'variation',
+      config_type => $self->{'config'}{'type'},
+      type => $self->type,
+    });
     if (!scalar(@$features_list)) {
       my $track_name = $self->my_config('name'); 
       $self->errorTrack("No $track_name data for this region");
       return [];
     }
     else {
+      $self->{'legend'}{'variation_legend'}{$_->{'colour_key'}} ||= $self->get_colours($_)->{'feature'} for @$features_list;
       return $features_list;
     }
   }
@@ -113,6 +121,8 @@ sub fetch_features {
   
   if (!$self->cache($id)) {
     my $variation_db_adaptor = $config->hub->database($var_db, $self->species);
+    my $vf_adaptor = $variation_db_adaptor->get_VariationFeatureAdaptor;
+    my $src_adaptor = $variation_db_adaptor->get_SourceAdaptor;
     my $orig_failed_flag     = $variation_db_adaptor->include_failed_variations;
     
     $variation_db_adaptor->include_failed_variations(0); # Disable the display of failed variations by default
@@ -122,11 +132,12 @@ sub fetch_features {
       my @somatic_mutations;
       
       if ($self->my_config('filter')) { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_with_phenotype(undef, undef, $self->my_config('filter'), $var_db) || []};
+        @somatic_mutations = @{$vf_adaptor->fetch_all_somatic_with_phenotype_by_Slice($slice, undef, undef, $self->my_config('filter')) || []};
       } elsif ($self->my_config('source')) {
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_by_source($self->my_config('source'), undef, $var_db) || []};
+        my $source = $src_adaptor->fetch_by_name($self->my_config('source'));
+        @somatic_mutations = @{$vf_adaptor->fetch_all_somatic_by_Slice_Source($slice, $source) || []};
       } else { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures(undef, undef, undef, $var_db) || []};
+        @somatic_mutations = @{$vf_adaptor->fetch_all_somatic_by_Slice($slice) || []};
       }
 
       $self->cache($id, \@somatic_mutations);
@@ -146,13 +157,14 @@ sub fetch_features {
     
         # Enable the display of failed variations in order to display the failed variation track
         $variation_db_adaptor->include_failed_variations(1) if $track_set =~ /failed/i;
-        
-        @vari_features = @{$slice->get_all_VariationFeatures_by_VariationSet($set_object, $var_db) || []};
+        my $vf_adaptor = $variation_db_adaptor->get_VariationFeatureAdaptor;
+        @vari_features = @{$vf_adaptor->fetch_all_by_Slice_VariationSet($slice, $set_object) || []};
         
         # Reset the flag for displaying of failed variations to its original state
         $variation_db_adaptor->include_failed_variations($orig_failed_flag);
       } else {
-        my @temp_variations = @{$slice->get_all_VariationFeatures(undef, undef, undef, $var_db) || []}; 
+        my $vf_adaptor = $variation_db_adaptor->get_VariationFeatureAdaptor;
+        my @temp_variations = @{$vf_adaptor->fetch_all_by_Slice($slice) || []}; 
         
         ## Add a filtering step here
         @vari_features =
@@ -268,7 +280,7 @@ sub render_tag {
       absolutey => 1,
       width     => $width,
       height    => $height + 2,
-      href      => $self->href($tag->{'feature'})
+      href      => $tag->{'href'}
     }));
   } elsif ($start <= $tag->{'start'}) {
     my $box_width = 8 / $pix_per_bp;
@@ -352,14 +364,14 @@ sub highlight {
   }
 
   # Are we going to highlight self item
-  my $id = $f->variation_name;  
+  my $id = $f->{'variation_name'};  
      $id =~ s/^rs//;
  
   return unless $self->{'config'}->get_option('opt_highlight_feature') != 0 && ($highlights{$id} || $highlights{"rs$id"});
   
   $composite->z(20);
   
-  my $z = $f->start > $f->end ? 0 : 18;
+  my $z = $f->{'start'} > $f->{'end'} ? 0 : 18;
   
   foreach (@{$composite->{'composite'}}) {
     $self->unshift($self->Rect({

@@ -20,6 +20,12 @@ div.config div.config_matrix_wrapper.short                          { padding-bo
 div.config div.config_matrix_scroller                               { height: 16px; width: 100%; overflow-x: auto; overflow-y: hidden; }
 div.config div.config_matrix_scroller div                           { height: 16px; }
 
+/* For displaying scrollbars (overriding mac's autohide)*/
+div.config div.config_matrix_scroller::-webkit-scrollbar { -webkit-appearance: none; }
+div.config div.config_matrix_scroller::-webkit-scrollbar:vertical { width: 11px; }
+div.config div.config_matrix_scroller::-webkit-scrollbar:horizontal { height: 11px;}
+div.config div.config_matrix_scroller::-webkit-scrollbar-thumb { border-radius: 8px; border: 2px solid white; /* should match background, can't be transparent */ background-color: rgba(0, 0, 0, .5); }
+
 div.config div.config_matrix h1                                     { display: block; border: 0; }
 div.config div.config_matrix h2                                     { margin: 0 8px 0 0; border: 0; float: left; font-size: 15px; }
 div.config div.config_matrix div.header_wrapper                     { min-height: 18px; margin: 3px 0 10px 0; clear: both; }
@@ -116,7 +122,7 @@ body.ie6  table.config_matrix tr.config_menu th.first ul.popup_menu { margin: -8
 
 /* popups for subtracks */
 
-div.config div.config_matrix div.subtracks                          { position: absolute; border: 1px solid black; background: #FFF; padding: 6px; margin: 12px 0 0 12px; white-space: nowrap; }
+div.config div.config_matrix div.subtracks                          { position: absolute; border: 1px solid black; background: #FFF; padding: 6px; margin: 12px 0 0 12px; max-width: 600px; white-space: normal; }
 div.config div.config_matrix div.subtracks ul.config_menu           { margin: 0; }
 div.config div.config_matrix div.subtracks ul li.default            { position: relative; }
 div.config div.config_matrix div.subtracks ul li.track div          { display: none; }

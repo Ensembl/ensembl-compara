@@ -385,7 +385,7 @@ sub transcript_table {
     
     $transc_table = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
-      data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
+      data_table_config => { bPaginate => 'false', asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
       toggleable        => 1,
       class             => 'fixed_width' . ($show ? '' : ' hide'),
       id                => 'transcripts_table',
@@ -488,27 +488,27 @@ sub about_feature {
     
     push @str_array, sprintf('%s %s', 
                         $avail->{has_transcripts}, 
-                        $avail->{has_transcripts} eq "1" ? "transcript (<a href='$splice_url'>splice variant</a>)" : "transcripts (<a href='$splice_url'>splice variants)</a>"
+                        $avail->{has_transcripts} eq "1" ? "transcript (<a href='$splice_url' class='dynamic-link'>splice variant</a>)" : "transcripts (<a class='dynamic-link' href='$splice_url'>splice variants)</a>"
                     ) if($avail->{has_transcripts});
     push @str_array, sprintf('%s gene %s', 
                         $avail->{has_alt_alleles}, 
                         $avail->{has_alt_alleles} eq "1" ? "allele" : "alleles"
                     ) if($avail->{has_alt_alleles});
-    push @str_array, sprintf('<a href="%s">%s %s</a>', 
+    push @str_array, sprintf('<a class="dynamic-link" href="%s">%s %s</a>', 
                         $ortholog_url, 
                         $avail->{has_orthologs}, 
                         $avail->{has_orthologs} eq "1" ? "orthologue" : "orthologues"
                     ) if($avail->{has_orthologs});
-    push @str_array, sprintf('<a href="%s">%s %s</a>',
+    push @str_array, sprintf('<a class="dynamic-link" href="%s">%s %s</a>',
                         $paralog_url, 
                         $avail->{has_paralogs}, 
                         $avail->{has_paralogs} eq "1" ? "paralogue" : "paralogues"
                     ) if($avail->{has_paralogs});    
-    push @str_array, sprintf('is a member of <a href="%s">%s Ensembl protein %s</a>', $protein_url, 
+    push @str_array, sprintf('is a member of <a class="dynamic-link" href="%s">%s Ensembl protein %s</a>', $protein_url, 
                         $avail->{family_count}, 
                         $avail->{family_count} eq "1" ? "family" : "families"
                     ) if($avail->{family_count});
-    push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+    push @str_array, sprintf('is associated with <a class="dynamic-link" href="%s">%s %s</a>', 
                         $phenotype_url, 
                         $avail->{has_phenotypes}, 
                         $avail->{has_phenotypes} eq "1" ? "phenotype" : "phenotypes"
@@ -548,23 +548,23 @@ sub about_feature {
       g      => $gene->stable_id
     });     
    
-    push @str_array, sprintf('<a href="%s">%s %s</a>', 
+    push @str_array, sprintf('<a class="dynamic-link" href="%s">%s %s</a>', 
                         $exon_url, $avail->{has_exons}, 
                         $avail->{has_exons} eq "1" ? "exon" : "exons"
                       ) if($avail->{has_exons});
                       
-    push @str_array, sprintf('is annotated with <a href="%s">%s %s</a>', 
+    push @str_array, sprintf('is annotated with <a class="dynamic-link" href="%s">%s %s</a>', 
                         $domain_url, $avail->{has_domains}, 
                         $avail->{has_domains} eq "1" ? "domain and feature" : "domains and features"
                       ) if($avail->{has_domains});
 
-    push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+    push @str_array, sprintf('is associated with <a class="dynamic-link"href="%s">%s %s</a>', 
                         $variation_url, 
                         $avail->{has_variations}, 
                         $avail->{has_variations} eq "1" ? "variation" : "variations",
                       ) if($avail->{has_variations});    
     
-    push @str_array, sprintf('maps to <a href="%s">%s oligo %s</a>',    
+    push @str_array, sprintf('maps to <a class="dynamic-link" href="%s">%s oligo %s</a>',    
                         $oligo_url,
                         $avail->{has_oligos}, 
                         $avail->{has_oligos} eq "1" ? "probe" : "probes"
@@ -1138,6 +1138,7 @@ sub remove_redundant_xrefs {
 sub structural_variation_table {
   my ($self, $slice, $title, $table_id, $functions, $open) = @_;
   my $hub = $self->hub;
+  my $svf_adaptor = $hub->database('variation')->get_StructuralVariationFeatureAdaptor;
   my $rows;
   
   my $columns = [
@@ -1151,7 +1152,7 @@ sub structural_variation_table {
   
   my $svfs;
   foreach my $func (@{$functions}) {
-    push(@$svfs,@{$slice->$func});
+    push(@$svfs, @{$svf_adaptor->$func($slice)});
   }
   
   foreach my $svf (@{$svfs}) {
@@ -1405,6 +1406,47 @@ sub render_p_value {
 
     $render = $val.'e'.$exp;
   }
+  return $render;
+}
+
+# Rectangular glyph displaying the location and coverage of the variant
+# on a given feature (transcript, protein, regulatory element, ...)
+sub render_var_coverage {
+  my $self = shift;
+  my ($f_s, $f_e, $v_s, $v_e, $color) = @_;
+
+  my $render;
+
+  $color ||= 'red';
+
+  my $total_width = 100;
+  my $left_width  = 0;
+
+  my $scale = $total_width / ($f_e - $f_s + 1);
+
+  # left part
+  if($v_s > $f_s) {
+    $left_width = sprintf("%.0f", ($v_s - $f_s) * $scale);
+    $left_width-- if ($left_width == $total_width);
+    $render .= '<div class="var_trans_pos_sub" style="width:'.$left_width.'px"></div>';
+  }
+
+  # middle part
+  if ($v_s <= $f_e && $v_e >= $f_s) {
+    my $s = (sort {$a <=> $b} ($v_s, $f_s))[-1];
+    my $e = (sort {$a <=> $b} ($v_e, $f_e))[0];
+
+    my $bp = ($e - $s) + 1;
+
+    my $right_width = sprintf("%.0f", $bp * $scale);
+       $right_width = 1 if ($right_width < 1 || $left_width == ($total_width - 1));
+    $render .= sprintf(qq{<div class="var_trans_pos_sub" style="width:%ipx;background-color:%s"></div>}, $right_width, $color);
+  }
+
+  if ($render) {
+    $render = qq{<div class="var_trans_pos">$render</div>};
+  }
+
   return $render;
 }
 

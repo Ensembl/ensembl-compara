@@ -167,18 +167,22 @@ sub set_user {
   my $self  = shift;
   my $key   = shift;
   my $value = shift;
+  my $force = shift;
   my $id    = $self->id;
   
   # If same as default value - flush node
-  if ($value eq $self->data->{$key}) {
+  if ($value eq $self->data->{$key} && !$force) {
     delete $self->user_data->{$id}->{$key};
     delete $self->user_data->{$id} unless scalar %{$self->user_data->{$id}};
     return 1;
   }
   
   # If not same as current value set and return true
-  if ($value ne $self->user_data->{$id}->{$key}) {
+  if ($value ne $self->user_data->{$id}->{$key} || $force) {
     $self->user_data->{$id}->{$key} = $value;
+    if ($force) {
+      $self->user_data->{$id} = {$key => $value};
+    }
     return 1; 
   }
   

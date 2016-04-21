@@ -32,16 +32,17 @@ sub draw_wiggle {
   my $height = $c->{'height'} || 8;
 
   my $params = {
-    values    => $features,
-    x         => 1,
-    y         => $c->{'y_offset'} || 0,
-    height    => $height,
-    unit      => $c->{'unit'},
-    max       => $c->{'max_score'},
-    colour    => $c->{'colour'},
+    values          => $features,
+    x               => 1,
+    y               => $c->{'y_offset'} || 0,
+    height          => $height,
+    unit            => $c->{'unit'},
+    max             => $c->{'max_score'},
+    colour          => $c->{'colour'},
+    truncate_colour => $c->{'truncate_colour'},
   };
   push @{$self->glyphs}, $self->Histogram($params);
-  $self->add_hidden_bgd($height);
+  $self->draw_hidden_bgd($height);
 }
 
 1;

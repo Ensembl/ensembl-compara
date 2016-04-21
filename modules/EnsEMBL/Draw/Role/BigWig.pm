@@ -28,11 +28,17 @@ use List::Util qw(min max);
 
 use EnsEMBL::Web::IOWrapper::Indexed;
 
-sub get_data {
-  my ($self, $bins) = @_;
+sub render_signal {
+  my $self = shift;
+  $self->{'my_config'}->set('drawing_style', ['Graph::Histogram']);
+  $self->{'my_config'}->set('height', 60);
+  $self->_render_aggregate;
+}
 
-  my $data = $self->_fetch_data($bins);
-  #use Data::Dumper; warn Dumper($data); 
+sub get_data {
+  my ($self, $bins, $url) = @_;
+
+  my $data = $self->_fetch_data($bins,$url);
 
   if ($data) {
     ## Adjust max and min according to track settings
@@ -77,8 +83,7 @@ sub get_data {
     }
 
   } else {
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR BIGBED FORMAT";
+    warn "!!! $self: ERROR FETCHING DATA FOR FILE ".$self->my_config('caption')." (BIGWIG FORMAT)";
   }
   #$self->{'config'}->add_to_legend($legend);
 
@@ -87,13 +92,13 @@ sub get_data {
 
 sub _fetch_data {
 ### Get the data and cache it
-  my ($self, $bins) = @_;
+  my ($self, $bins, $url) = @_;
   $bins ||= $self->bins;
 
-  return $self->{'_cache'}{'data'} if $self->{'_cache'}{'data'};
+  #return $self->{'_cache'}{'data'} if $self->{'_cache'}{'data'};
  
   my $hub       = $self->{'config'}->hub;
-  my $url       = $self->my_config('url');
+  $url          ||= $self->my_config('url');
 
   if (!$url) { ## Internally configured bigwig file?
     my $dba       = $hub->database($self->my_config('type'), $self->species);
@@ -107,7 +112,7 @@ sub _fetch_data {
       $url = $paths->[-1];
     }
   }
-  return unless $url;
+  return [] unless $url;
 
   my $slice     = $self->{'container'};
   my $args      = { 'options' => {
@@ -119,7 +124,7 @@ sub _fetch_data {
                     'drawn_strand' => $self->strand};
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigWig', $args);
-  my $data;
+  my $data = [];
 
   if ($iow) {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
@@ -139,6 +144,7 @@ sub _fetch_data {
                     'display'         => $self->{'display'},
                     'no_titles'       => $self->my_config('no_titles'),
                     'default_strand'  => 1,
+                    'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                     };
     ## No colour defined in ImageConfig, so fall back to defaults
     unless ($colour) {
@@ -154,8 +160,8 @@ sub _fetch_data {
     $data = $iow->create_tracks($slice, $metadata);
   }
 
-  $self->{'_cache'}{'data'} = $data;
-  return $self->{'_cache'}{'data'};
+  # Don't cache here, it's not properly managed. Rely on main cache layer.
+  return $data;
 }
 
 sub bins {

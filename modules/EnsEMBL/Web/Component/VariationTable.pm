@@ -663,6 +663,7 @@ sub _get_variation_features {
   my $self = shift;
 
   if(!exists($self->{_variation_features})) {
+    my $vfa = $self->hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
 
     # get appropriate slice
     my $slice = $self->object->Obj->feature_Slice->expand(
@@ -670,7 +671,7 @@ sub _get_variation_features {
       $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
     );
 
-    $self->{_variation_features} = {map {$_->dbID => $_} (@{$slice->get_all_VariationFeatures},@{$slice->get_all_somatic_VariationFeatures})};
+    $self->{_variation_features} = { map {$_->dbID => $_} (@{ $vfa->fetch_all_by_Slice($slice) }, @{ $vfa->fetch_all_somatic_by_Slice($slice) })};
   }
 
   return $self->{_variation_features};

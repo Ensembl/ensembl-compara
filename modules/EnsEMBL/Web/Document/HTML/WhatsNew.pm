@@ -29,14 +29,9 @@ use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
-use EnsEMBL::Web::Cache;
+use EnsEMBL::Web::File::Utils::IO qw/file_exists read_file/;
 
 use base qw(EnsEMBL::Web::Document::HTML);
-
-our $MEMD = EnsEMBL::Web::Cache->new(
-  enable_compress    => 1,
-  compress_threshold => 10_000,
-);
 
 sub render {
   my $self         = shift;
@@ -138,39 +133,12 @@ sub show_headlines {
 sub _include_blog {
   my ($self, $hub) = @_;
 
-  my $rss_url = $hub->species_defs->ENSEMBL_BLOG_RSS;
+  my $rss_path  = $hub->species_defs->DATAFILE_BASE_PATH.'/web/blog/rss.xml';
+  my $rss_url   = $hub->species_defs->ENSEMBL_BLOG_RSS;
+  my $items     = $self->read_rss_file($hub, $rss_path, $rss_url, 3); 
+  my $html;
 
-  my $html = '<h3><img src="/i/wordpress.png"> Latest blog posts</h3>';
-
-  my $blog_url  = $hub->species_defs->ENSEMBL_BLOG_URL;
-  my $items = [];
-
-  if ($MEMD && $MEMD->get('::BLOG')) {
-    $items = $MEMD->get('::BLOG');
-  }
-  if($MEMD && $MEMD->get('::BLOG-FAILED')) {
-    return qq(<p>Sorry, no feed is available from our blog at the moment</p>);
-  }
-
-  unless ($items && @$items) {
-    $items = $self->get_rss_feed($hub, $rss_url, 3);
-
-    ## encode items before caching, in case Wordpress has inserted any weird characters
-    if ($items && @$items) {
-      foreach (@$items) {
-        while (my($k, $v) = each (%$_)) {
-          $_->{$k} = encode_utf8($v);
-        }
-      }
-      $MEMD->set('::BLOG', $items, 3600, qw(STATIC BLOG)) if $MEMD;
-    }
-    if(!@$items) { # No items, assume blog has failed
-      warn "MARKING BLOG AS FAILED\n";
-      $MEMD->set('::BLOG-FAILED',1,3600) if $MEMD; 
-    }
-  }
-
-   if (scalar(@$items)) {
+  if (scalar(@$items)) {
     $html .= "<ul>";
     foreach my $item (@$items) {
       my $title = $item->{'title'};
@@ -185,10 +153,10 @@ sub _include_blog {
     $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
   }
 
+  my $blog_url = $hub->species_defs->ENSEMBL_BLOG_URL;
   $html .= qq(<p style="text-align:right"><a href="$blog_url">Go to Ensembl blog</a></p>);
 
   return $html;
-
 }
 
 1;

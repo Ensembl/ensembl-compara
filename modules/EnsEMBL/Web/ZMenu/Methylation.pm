@@ -22,33 +22,26 @@ use strict;
 
 use List::Util qw(min max);
 
+use Bio::EnsEMBL::IO::Parser;
+
 use base qw(EnsEMBL::Web::ZMenu);
 
-use Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor;
-
 sub summary_zmenu {
-  # Way too many args, make OO.
-  my ($self,$id,$r,$s,$e,$strand,$scalex,$width,$called_from_single) = @_;
+  my ($self, $args) = @_;
 
-  # Widen to incldue a few pixels around
-  my $fudge = 8/$scalex;
-  $fudge = 0 if $fudge<1;
-  
+  my ($fudge, $slice, $rs, $ch3fa, $bba) = $self->_menu_setup($args); 
+
+  my $id  = $args->{'dbid'};
+  my $r   = $args->{'r'};
+  my $s   = $args->{'start'};
+  my $e   = $args->{'end'};
+ 
   # Round fudge to 1sf
   my $mult = "1"."0"x(length(int $fudge)-1);
   $fudge = int(($fudge/$mult)+0.5)*$mult;  
   my $mid = ($s+$e)/2;
   $s = int($mid - $fudge/2);
   $e = int($mid + $fudge/2);
-  
-  my $fgh = $self->hub->database('funcgen');
-  my $rsa = $fgh->get_ResultSetAdaptor;
-  my $rs = $rsa->fetch_by_dbID($id);
-  my $bba = $self->bigbed($fgh,$id);
-  my $ch3fa = $fgh->get_DNAMethylationFeatureAdaptor;
-
-  my $sa = $self->hub->database('core')->get_SliceAdaptor;
-  my $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
   
   # Summarize features
   my ($num,$num_this_strand,$tot_meth,$tot_read) = (0,0,0,0);
@@ -67,7 +60,7 @@ sub summary_zmenu {
     $tot_meth += $f->methylated_reads;
     $tot_read += $f->total_reads;    
     $label = $f->display_label;
-    my $right_strand = ($strand == $_[5]."1");
+    my $right_strand = ($args->{'strand'} == $_[5]."1");
     my ($tstart,$tstrand) = ($_[1]+1,$_[5]."1");
     push @rows,[$tstart,$tstrand] if @rows < $maxmult;
     $num++;
@@ -83,11 +76,16 @@ sub summary_zmenu {
     # 1. never do this if called from single (avoid infinite loop);
     # 2. if only one on this strand show single for this strand;
     # 3. if there's only a few and we're zoomed out, show stacked.
-  } elsif((($num<=$maxmult and $scalex<8) 
+  } elsif ((($num<=$maxmult and $args->{'scalex'} < 8) 
             or $num_this_strand==1) 
-          and not $called_from_single) {
+          and not $args->{'called_from_single'}) {
     # Multiple singles
-    $self->single_base_zmenu($id,$r,$_->[0],$_->[1],$width,$scalex) for(@rows);
+    foreach (@rows) {
+      my %params        = %$args;
+      $params{'start'}  = $_->[0];
+      $params{'end'}    = $_->[1];
+      $self->single_base_zmenu(\%params);
+    }
   } else {
     # Multiple features
     $self->caption("$label ${fudge}bp summary");
@@ -110,26 +108,20 @@ sub summary_zmenu {
 }
 
 sub single_base_zmenu {
-  my ($self,$id,$r,$s,$strand,$scalex,$width) = @_;
-  
-  # how far off can a user be due to scale? 8px or 1bp.
-  my $fudge = 8/$scalex;
-  $fudge = 0 if $fudge < 1;
-  
-  my $sa = $self->hub->database('core')->get_SliceAdaptor;
-  my $slice = $sa->fetch_by_toplevel_location($r);
+  my ($self, $args) = @_;
 
-  my $fgh = $self->hub->database('funcgen');
-  my $rsa = $fgh->get_ResultSetAdaptor;
-  my $rs = $rsa->fetch_by_dbID($id);
-  my $ch3fa = $fgh->get_DNAMethylationFeatureAdaptor;
+  my ($fudge, $slice, $rs, $ch3fa, $bba) = $self->_menu_setup($args); 
     
+  my $id  = $args->{'dbid'};
+  my $r   = $args->{'r'};
+  my $s   = $args->{'start'};
+  my $e   = $args->{'end'};
+ 
   # Find nearest feature
-  my $bba = $self->bigbed($fgh,$id);
   my @bigbedrow;
   my $closest = -1;
-  $bba->fetch_rows($slice->seq_region_name,$s-$fudge,$s+1+$fudge,sub {
-    my $dist = abs($_[1]+1-$s) + 0.5 * ($strand != $_[5]."1");
+  $bba->fetch_rows($slice->seq_region_name, $s-$fudge, $s+1+$fudge, sub {
+    my $dist = abs($_[1]+1-$s) + 0.5 * ($args->{'strand'} != $_[5]."1");
     if($closest == -1 or $dist < $closest) {
       @bigbedrow = @_;
       $closest = $dist;
@@ -137,12 +129,12 @@ sub single_base_zmenu {
   });
   unless(@bigbedrow) {
     # user must have clicked on blank area
-    $self->summary_zmenu($id,$r,$s,$s+1,$strand,$scalex,$width,1);
+    $args->{'called_from_single'} = 1;
+    $self->summary_zmenu($args);
     return;
   }
   my $s = $bigbedrow[1]+1;
   my $e = $s+1;
-  $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
 
   #warn "got ".join(' ',@bigbedrow)."\n";
   my $f = Bio::EnsEMBL::Funcgen::DNAMethylationFeature->new( 
@@ -172,48 +164,73 @@ sub single_base_zmenu {
   $self->add_entry({ type => "Strand", label => $f->strand>0?'+ve':'-ve'});
 }
 
-sub bigbed {
-  my ($self,$fgh,$id) = @_;
+sub _menu_setup {
+  my ($self, $args) = @_;
+
+  my $id  = $args->{'dbid'};
+  my $r   = $args->{'r'};
+  my $s   = $args->{'start'};
+  my $e   = $args->{'end'};
+ 
+  # Widen to incldue a few pixels around
+  my $fudge = 8/$args->{'scalex'};
+  $fudge = 0 if $fudge < 1;
   
+  my $sa = $self->hub->database('core')->get_SliceAdaptor;
+  my $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
+  
+  my $fgh = $self->hub->database('funcgen');
   my $rsa = $fgh->get_ResultSetAdaptor;
   my $rs = $rsa->fetch_by_dbID($id);
-  
+  my $ch3fa = $fgh->get_DNAMethylationFeatureAdaptor;
+
   my $bigbed_file = $rs->dbfile_path;
 
   # Substitute path, if necessary. TODO: use DataFileAdaptor  
-  my @parts = split(m!/!,$bigbed_file);
-  $bigbed_file = join("/",$self->hub->species_defs->DATAFILE_BASE_PATH,
+  my @parts = split(m!/!, $bigbed_file);
+  my $path  = join("/", $self->hub->species_defs->DATAFILE_BASE_PATH,
                           @parts[-5..-1]);
 
-  return ( $self->{'_cache'}->{'bigbed_adaptor'}->{$bigbed_file} ||=
-    Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor->new($bigbed_file)
-  );
+  ## Clean up any whitespace
+  $path =~ s/\s//g;
+
+  my $bba = $self->{'_cache'}->{'bigbed_parser'}->{$path} 
+              ||= Bio::EnsEMBL::IO::Parser::open_as('bigbed', $path);
+
+  return ($fudge, $slice, $rs, $ch3fa, $bba);
 }
 
 sub content {
   my ($self) = @_;
 
-  my $hub = $self->hub;
-  my $id     = $hub->param('dbid');
-  my $s      = $hub->param('click_start');
-  my $e      = $hub->param('click_end');
-  my $strand = $hub->param('strand');
-  my $r      = $hub->param('r');
-  my $scalex = $hub->param('scalex');
-  my $width  = $hub->param('width');
+  my $hub     = $self->hub;
+  my $r       = $hub->param('r');
+  my $s       = $hub->param('click_start');
+  my $e       = $hub->param('click_end');
+  my $scalex  = $hub->param('scalex');
 
   $r =~ s/:.*$/:$s-$e/;
   # We need to defeat js-added fuzz to see if it was an on-target click.
-  if($e-$s+1<2*$scalex && $s!=$e) { # range within 1px, assume click.
+  if($e - $s + 1 < 2 * $scalex && $s != $e) { # range within 1px, assume click.
     # fuzz added is symmetric
-    $s = ($s+$e-1)/2;
-    $e = $s+1;
+    $s = ($s + $e - 1) / 2;
+    $e = $s + 1;
   }
-  
-  if($e>$s+1) {
-    $self->summary_zmenu($id,$r,$s,$e,$strand,$scalex,$width,0);
+
+  my @params = qw(dbid r strand scalex width);
+  my %args;
+
+  foreach (@params) {
+    $args{$_} = $hub->param($_) if defined($hub->param($_));
+  }
+
+  $args{'start'}  = $s;
+  $args{'end'}    = $e;
+
+  if($e > $s + 1) {
+    $self->summary_zmenu(\%args);
   } else {
-    $self->single_base_zmenu($id,$r,$s,$strand,$scalex,$width);
+    $self->single_base_zmenu(\%args);
   }
 
 }

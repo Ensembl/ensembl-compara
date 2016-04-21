@@ -38,8 +38,15 @@ sub depth { return $_[0]{'display'} eq 'compact' ? 1 : $_[0]->SUPER::depth; }
 sub supports_subtitles { return 1; }
 
 sub _init {
-  my $self  = shift;
+  my $self = shift;
+  my $key  = $self->_key;
 
+  # LD track type display option
+  my $ld_type = $self->{'config'}->get_parameter('ld_type');
+  $self->{'display'} = 'off' unless ($ld_type && ($ld_type eq $key || $ld_type eq 'both'));
+  return if ($self->{'display'} eq 'off');
+
+  # Focus variant name
   my $var_name;
   if ($self->{'config'}->core_object('variation')) {
     $var_name = $self->{'config'}->core_object('variation')->name;
@@ -47,8 +54,8 @@ sub _init {
 
   # Track height
   my $height = $self->my_config('height') || 40;
-  
-  my $key  = $self->_key;
+
+  # Horinzontal line mark
   my $h_mark = $self->{'config'}->get_parameter($self->_key.'_mark') || 0.8;
 
   # Track configuration

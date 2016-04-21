@@ -50,6 +50,7 @@ sub draw_wiggle {
       $title = $c->{'score_format'} ? sprintf($c->{'score_format'}, $score) : $score;
     }
     my $x     = $start - 1;
+    $x        = 0 if $x < 0;
     my $y     = $c->{'line_px'} - max($height, 0);
     my $width = $end - $start + 1;
 

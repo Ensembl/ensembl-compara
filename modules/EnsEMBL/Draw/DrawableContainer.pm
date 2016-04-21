@@ -32,6 +32,7 @@ use base qw(EnsEMBL::Root);
 
 use JSON qw(to_json);
 use List::Util qw(min);
+use Time::HiRes qw(time);
 
 # These colours from www.ColorBrewer.org -- 12 colour divergent
 # by Cynthia A. Brewer, Geography, Pennsylvania State University.
@@ -268,7 +269,10 @@ sub new {
         my $ref_glyphset = ref $glyphset;
         # NB: we guarantee render will always be called before the
         #       subititle_* methods.
+        my $A = time();
         $glyphset->render;
+        my $B = time();
+        #warn "$glyphset: ".($B-$A)."\n" if $B-$A>0.1;
         next if scalar @{$glyphset->{'glyphs'}} == 0;
         my $new_section = $glyphset->section;
         my $section_zmenu = $glyphset->section_zmenu;

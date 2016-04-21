@@ -31,6 +31,8 @@ use EnsEMBL::Draw::VDrawableContainer;
 
 use EnsEMBL::Web::File::Dynamic::Image;
 
+use EnsEMBL::Web::Exceptions;
+
 use parent qw(EnsEMBL::Web::Document::Image);
 
 sub new {
@@ -148,7 +150,7 @@ sub add_pointers {
   my ($self, $hub, $extra) = @_;
 
   my $config_name = $extra->{'config_name'};
-  my @data        = @{$extra->{'features'}};
+  my @data        = @{$extra->{'features'}||[]};
   my $species     = $hub->species;
   my $style       = lc($extra->{'style'} || $hub->param('style')) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
@@ -172,13 +174,19 @@ sub add_pointers {
   }
 
   foreach my $row (@data) {
-    my $chr         = $row->{'chr'} || $row->{'region'};
+    my $chr         = $row->{'chr'} || $row->{'seq_region'} || $row->{'region'};
     ## Stringify any RGB colour arrays
-    my $item_colour = ref($row->{'item_colour'}) eq 'ARRAY' 
+    my $item_colour = $row->{'colour'};
+    unless ($item_colour) {
+      $item_colour = ref($row->{'item_colour'}) eq 'ARRAY' 
                         ? join(',', @{$row->{'item_colour'}}) : $row->{'item_colour'};
-    my $grad_colour = $row->{'p_value'} > 10 
-                    ? $p_value_sorted->{$max}
-                    : $p_value_sorted->{sprintf("%.1f", $row->{'p_value'})};
+    }
+    my $grad_colour;
+    if (defined($row->{'p_value'})) {
+      $grad_colour = $row->{'p_value'} > 10 
+                      ? $p_value_sorted->{$max}
+                      : $p_value_sorted->{sprintf("%.1f", $row->{'p_value'})};
+    }
     my $href = $row->{'href'};
     if (!$href && $extra->{'zmenu'}) {
       $href = {'type' => 'ZMenu', 'action' => $extra->{'zmenu'},
@@ -187,12 +195,22 @@ sub add_pointers {
                         'fake_click_end' => $row->{'end'},
                         };
     }
+    if (ref($href) eq 'HASH') {
+      $href = $hub->url({$config_name ? ('config' => $config_name) : (), %$href});
+    }
+    else {
+      ## Hack to get correct zmenu
+      $href =~ s/\/UserData/\/VUserData/;
+      if ($config_name && $href =~ /$config_name/) {
+        $href .= ';config='.$config_name;
+      }
+    }
     my $point = {
       start     => $row->{'start'},
       end       => $row->{'end'},
       id        => $row->{'label'},
       col       => $item_colour || $grad_colour || $default_colour,
-      href      => $href ? $hub->url({$config_name ? ('config' => $config_name) : (), %$href}) : '',
+      href      => $href || '', 
       html_id   => $row->{'html_id'} || '',
     };
 
@@ -475,7 +493,11 @@ sub render {
   }
   my $content = $self->drawable_container->render($format, from_json($self->hub->param('extra') || "{}"));
 
-  $image->write($content);
+  my $result = $image->write($content);
+
+  if (!$result->{'success'}) {
+    throw exception('WebException', $result->{'error'} && $result->{'error'}[0] || 'Unable to write image file');
+  }
 
   if ($filename || ($hub->param('submit') && $hub->param('submit') eq 'Download' && !$filename)) {
     ## User export, so we need to know where the file was written to

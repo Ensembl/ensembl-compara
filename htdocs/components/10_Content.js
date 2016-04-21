@@ -57,7 +57,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }
     
     Ensembl.EventManager.trigger('validateForms', this.el);
-    Ensembl.EventManager.trigger('relocateTools', $('.other_tool', this.el));
+    Ensembl.EventManager.deferTrigger('relocateTools', this.el.find('.other_tool'));
     
     // Links in a popup (help) window should make a new window in the main browser
     if (window.name.match(/^popup_/)) {

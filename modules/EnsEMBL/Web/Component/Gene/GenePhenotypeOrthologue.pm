@@ -104,12 +104,11 @@ sub content {
         my $source = $pf->source_name;
         my $source_uc = uc $source;
            $source_uc =~ s/\s/_/g;
-           $source_uc .= "_SEARCH" if ($source_uc =~ /^RGD|ZFIN$/);
-        my $ext_id  = $pf->external_id;
-        if ($source =~ /^ZFIN$/i) {
-          $ext_id = $phen_desc;
-          $ext_id =~ s/,//g;
-        }
+           $source_uc .= "_SEARCH" if ($source_uc =~ /^RGD$/);
+           $source_uc .= "_ID"     if ($source_uc =~ /^ZFIN$/);
+
+        my $ext_id = $pf->external_id;
+
         my $tax = $species_defs->get_config($species, 'TAXONOMY_ID');
       
         if($ext_id && $source) {

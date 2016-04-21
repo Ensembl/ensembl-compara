@@ -123,29 +123,17 @@ sub create_glyphs {
   warn "!!! MANDATORY METHOD ".ref($self).'::create_glyphs HAS NOT BEEN IMPLEMENTED!';
 }
 
-sub render_hidden_bg {
-  my ($self, $h) = @_;
-  return unless $self->can('href_bgd');
+sub draw_hidden_bgd {
+  my ($self, $height) = @_;
 
-  # Needs to be first to capture clicks
-  # Useful to keep zmenus working on blank regions
-  # only useful in nobump or strandbump modes
-  my %off = ( 0 => 0 );
-
-  if ($self->my_config('strandbump')) {
-    $off{0}  = -1;
-    $off{$h} = 1;
-  }
-
-  foreach my $y (keys %off) {
-    # no colour key, ie transparent
+  while (my($y, $link) = each (%{$self->{'bg_href'}||{}})) {
     push @{$self->glyphs}, $self->Rect({
                                         x         => 0,
                                         y         => $y,
-                                        width     => $self->{'container'}->length,
-                                        height    => $h,
+                                        width     => $self->image_config->container_width,
+                                        height    => $height,
                                         absolutey => 1,
-                                        href      => $self->href_bgd($off{$y}),
+                                        href      => $link,
                                         class     => 'group',
                                         });
   }
@@ -173,6 +161,7 @@ sub draw_graph_base {
                           ? $metadata->{'max_score'} : $track_config->get('max_score');
   my $baseline_zero = defined($metadata->{'baseline_zero'})
                           ? $metadata->{'baseline_zero'} : $track_config->get('baseline_zero');
+  
   my $range = $max_score - $min_score;
   if ($range < 0.01) {
     ## Oh dear, data all has pretty much same value ...
@@ -185,8 +174,10 @@ sub draw_graph_base {
     }
   }
   $min_score = 0 if $min_score >= 0 && $baseline_zero;
+ 
   $range = $max_score - $min_score;
   my $pix_per_score = $row_height/$range;
+  $self->track_config->set('pix_per_score', $pix_per_score);
 
   ## top: top of graph in pixel units, offset from track top (usu. 0)
   ## line_score: value to draw "to" up/down, in score units (usu. 0)
@@ -248,6 +239,7 @@ sub draw_graph_base {
   }
 
   return {
+          'min_score'       => $min_score,
           'max_score'       => $max_score,
           'line_score'      => $line_score,
           'line_px'         => $line_px,
@@ -268,23 +260,31 @@ sub get_text_info {
 sub draw_subtitle {
   my ($self, $metadata, $top) = @_;
   $metadata ||= {};
-  return unless $metadata->{'name'};
+  ## Track name actually gets precedence, which is a bit illogical but whatever...
+  my $subtitle = $metadata->{'name'} || $metadata->{'subtitle'};
+  return unless $subtitle;
 
-  my $subtitle_colour = $metadata->{'colour'} || $metadata->{'color'};
-  my $subtitle_y      = $top || $self->track_config->get('initial_offset') || 0;
+  my $subtitle_colour = $metadata->{'colour'} 
+                          || $metadata->{'color'} 
+                          || $self->track_config->get('colour') 
+                          || 'black';
+  my $subtitle_y      = defined($top) ? $top : $self->track_config->get('initial_offset') || 0;
   $subtitle_y        += defined($self->track_config->get('subtitle_y')) ? $self->track_config->get('subtitle_y') : 8;
+  my $height = 8;
+
   push @{$self->glyphs}, 
     $self->Text({
                   font      => 'Arial',
-                  text      => $metadata->{'name'}, 
+                  text      => $subtitle, 
                   ptsize    => 8,
-                  height    => 8,
-                  colour    => $subtitle_colour || 'black',
+                  height    => $height,
+                  colour    => $subtitle_colour,
                   x         => 4,
                   y         => $subtitle_y,
                   halign    => 'left',
                   absolutex => 1,
                 });
+  return $height;
 }
 
 sub make_readable {
@@ -310,8 +310,10 @@ sub set_bump_row {
   my $row = 0;
 
   ## Set bumping based on longest of feature and label
+  ## FIXME Hack adds 20% to text width, because GD seems to be
+  ## consistently underestimating the true width of the label
   my $text_end  = $show_label ?
-                        ceil($start + $text_info->{'width'} / $self->{'pix_per_bp'})
+                        ceil($start + $text_info->{'width'} * 1.2 / $self->{'pix_per_bp'})
                         : 0;
   $end          = $text_end if $text_end > $end;
 
@@ -349,23 +351,6 @@ sub add_messages {
                 y         => $y,
     });
     $y += $self->{'font_size'} + 2;
-  }
-}
-
-sub add_hidden_bgd {
-  my ($self, $height) = @_;
-
-  while (my($y, $link) = each (%{$self->{'bg_href'}||{}})) {
-    # no colour key, ie transparent
-    push @{$self->glyphs}, $self->Rect({
-                                        x         => 0,
-                                        y         => $y,
-                                        width     => $self->image_config->container_width,
-                                        height    => $height,
-                                        absolutey => 1,
-                                        href      => $link,
-                                        class     => 'group',
-                                        });
   }
 }
 

@@ -74,6 +74,7 @@ sub availability {
       $availability->{'has_variations'}  = $counts->{'prot_variations'};
       $availability->{'has_domains'}     = $counts->{'prot_domains'};
       $availability->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos);
+      $availability->{ref_slice}       //= $self->Obj->slice->is_reference();
     }
   
     $self->{'_availability'} = $availability;
@@ -1462,10 +1463,10 @@ sub get_genetic_variations {
   my $hub        = $self->hub;
   my $tsv_extent = $hub->param('context') eq 'FULL' ? 5000 : $hub->param('context');
   my $snp_data   = {};
-
+  my $strain_slice_adaptor = $hub->database('variation')->get_StrainSliceAdaptor;
   foreach my $sample (@samples) {
     my $munged_transcript = $self->get_munged_slice('tsv_transcript', $tsv_extent, 1);    
-    my $sample_slice      = $munged_transcript->[1]->get_by_strain($sample);
+    my $sample_slice      = $strain_slice_adaptor->get_by_strain_Slice($sample, $munged_transcript->[1]);
     my ($allele_info, $consequences) = $self->getAllelesConsequencesOnSlice($sample, 'tsv_transcript', $sample_slice);
     
     next unless @$consequences && @$allele_info;
@@ -1545,6 +1546,63 @@ sub transcript_variation_to_variation_feature {
   return $val if defined $val;
   return $tv->variation_feature;
 }
+
+sub get_haplotypes {
+  my $self = shift;
+
+  my $vdb = $self->Obj->adaptor->db->get_db_adaptor('variation');
+
+  # find VCF config
+  my $sd = $self->species_defs;
+
+  my $c = $sd->ENSEMBL_VCF_COLLECTIONS;
+
+  if($c && $vdb->can('use_vcf')) {
+    $vdb->vcf_config_file($c->{'CONFIG'});
+    $vdb->vcf_root_dir($sd->DATAFILE_BASE_PATH);
+    $vdb->use_vcf($c->{'ENABLED'});
+  }
+
+  my $thca = $vdb->get_TranscriptHaplotypeAdaptor();
+  my $haplotypes = eval { $thca->get_TranscriptHaplotypeContainer_by_Transcript($self->Obj); };
+  return $haplotypes;
+}
+
+sub population_objects {
+  my $self = shift;
+  my $total_counts = shift;
+
+  if(!exists($self->{_population_objects})) {
+    # generate population structure
+    my $pop_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_PopulationAdaptor;
+    my @pop_objs = grep {defined($_)} map {$pop_adaptor->fetch_by_name($_)} keys %$total_counts;
+
+    $self->{_population_objects} = \@pop_objs;
+  }
+
+  return $self->{_population_objects};
+}
+
+sub population_structure {
+  my $self = shift;
+  my $pop_objs = shift;
+
+  if(!exists($self->{_population_structure})) {
+    my %pop_struct;
+    foreach my $pop(@$pop_objs) {
+      next if $pop->name =~ /:ALL$/;
+      my $subs = $pop->get_all_sub_Populations();
+      next unless $subs && scalar @$subs;
+      @{$pop_struct{$pop->name}} = map {$_->name} @$subs;
+    }
+   
+    $self->{_population_structure} = \%pop_struct;
+  }
+
+  return $self->{_population_structure};
+}
+
+
 
 sub variation_data {
   my ($self, $slice, $include_utr, $strand) = @_;
@@ -1664,7 +1722,7 @@ sub peptide_splice_sites {
 sub can_export {
   my $self = shift;
 
-  return $self->action =~ /^(Export|Exons|Sequence_cDNA|Sequence_Protein)$/ ? 0 : $self->availability->{'transcript'};
+  return $self->action =~ /^(Export|Exons|Sequence_cDNA|Sequence_Protein|Haplotypes)$/ ? 0 : $self->availability->{'transcript'};
   
 }
 

@@ -40,15 +40,20 @@ sub open {
   return undef unless $subclass;
   my $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
 
+  my $wrapper;
   if (dynamic_use($class, 1)) {
     my $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $url);
 
-    $class->new({
-                'parser' => $parser, 
-                'format' => $format,
-                %{$args->{options}||{}}
-                });  
+    if ($parser) {
+
+      $wrapper = $class->new({
+                              'parser' => $parser, 
+                              'format' => $format,
+                              %{$args->{options}||{}}
+                            });
+    }  
   }
+  return $wrapper;
 }
 
 sub nearest_feature { return undef; }

@@ -68,6 +68,7 @@ sub get_data {
     my $extra_config = {
                         'default_strand'  => 1,
                         'display'         => $self->{'display'},
+                        'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                         };
 
     ## Parse the file, filtering on the current slice
@@ -77,10 +78,10 @@ sub get_data {
     ## Override colourset based on format here, because we only want to have to do this in one place
     my $colourset   = $iow->colourset || 'userdata';
     $self->{'my_config'}->set('colours', $hub->species_defs->colour($colourset));
-    $self->{'my_config'}->set('default_colour', $self->my_colour('default'));
+    $self->{'my_config'}->set('colour', $self->my_colour('default'));
   } else {
-    #return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
-    warn "!!! ERROR CREATING PARSER FOR $format FORMAT";
+    $self->{'data'} = [];
+    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
   #$self->{'config'}->add_to_legend($legend);
   return $data;

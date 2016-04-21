@@ -690,6 +690,38 @@ sub _summarise_funcgen_db {
     }
   }
 
+  ## Segmentations are stored differently, now they are in flat-files
+  foreach my $a (values %$analysis) {
+    next unless $a->{'logic_name'} =~ /(Segway|ChromHMM)/;
+    my $type = $1;
+    next unless $a->{'name'};
+    my $res_cell = $dbh->selectall_arrayref(qq(
+      select result_set_id,cell_type_id,display_label,cell_type.name
+        from result_set
+        join cell_type using (cell_type_id)
+        join analysis using (analysis_id)
+       where logic_name = ?),undef,$a->{'logic_name'});
+    foreach my $C (@$res_cell) {
+      my $key = $a->{'logic_name'}.':'.$C->[3];
+      my $value = {
+        name => qq($C->[2] Regulatory Segmentation ($type)),
+        desc => qq($C->[2] <a href="/info/genome/funcgen/regulatory_segmentation.html">$type</a> segmentation state analysis"),
+        disp => $a->{'displayable'},
+        'web' => {
+          celltype => $C->[1],
+          celltypename => $C->[2],
+          anntype => $type,
+          'colourset' => 'fg_segmentation_features',
+          'display' => 'off',
+          'key' => "seg_$key",
+          'type' => 'fg_segmentation_features'
+        },
+        count => 1,
+      };
+      $self->db_details($db_name)->{'tables'}{'segmentation'}{"$key$a->{'logic_name'}"} = $value;
+    }
+  }  
+
 ###
 ### Store the external feature sets available for each species
 ###
@@ -762,7 +794,7 @@ sub _summarise_funcgen_db {
   }
 
   my $c_aref =  $dbh->selectall_arrayref(
-    'select  ct.name, ct.cell_type_id 
+    'select  ct.name, ct.cell_type_id, ct.display_label
        from  cell_type ct, feature_set fs  
        where  fs.type="regulatory" and ct.cell_type_id=fs.cell_type_id 
     group by  ct.name order by ct.name'
@@ -770,22 +802,19 @@ sub _summarise_funcgen_db {
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 2;
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
   }
 
   foreach my $row (@{$dbh->selectall_arrayref(qq(
-    select rs.result_set_id, a.display_label, a.description, c.name, 
-           IF(min(g.is_project) = 0 or count(g.name)>1,null,min(g.name))
-      from result_set rs 
-      join analysis_description a using (analysis_id)
-      join cell_type c using (cell_type_id)
-      join result_set_input using (result_set_id)
-      join input_subset on input_subset_id = table_id
-      join experiment
-        on input_subset.experiment_id = experiment.experiment_id
-      join experimental_group g using (experimental_group_id) 
-     where feature_class = 'dna_methylation' 
-       and table_name = 'input_subset'
-  group by rs.result_set_id;
+      select rs.result_set_id, a.display_label, a.description, c.name, 
+             IF(min(g.is_project) = 0 or count(g.name)>1,null,min(g.name))
+        from result_set rs
+        join analysis_description a using (analysis_id)
+        join cell_type c using (cell_type_id)
+        join experiment using (cell_type_id)
+        join experimental_group g using (experimental_group_id)
+       where feature_class = 'dna_methylation'
+    group by rs.result_set_id;
   ))}) {
     my ($id,$a_name,$a_desc,$c_desc,$group) = @$row;
     

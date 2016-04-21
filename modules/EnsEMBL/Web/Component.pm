@@ -701,6 +701,8 @@ sub _export_image {
       ## Output image by itself, e.g. for external services
       (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
       my $filename = sprintf '%s_%s_%s.%s', $comp, $hub->filename($self->object), $scale, $formats{$format}{'extn'};
+      ## Remove any hyphens, because they break the download
+      $filename =~ s/[-]//g;
       $hub->param('filename', $filename);
       my $path = $image->render($format, ['IO']);
       $hub->param('file', $path);
@@ -736,7 +738,7 @@ sub ajax_add {
   my ($self, $url, $rel, $open) = @_;
   
   return sprintf('
-    <a href="%s" class="ajax_add toggle %s" rel="%s_table">
+    <a href="%s" class="ajax_add toggle _no_export %s" rel="%s_table">
       <span class="closed">Show</span><span class="open">Hide</span>
       <input type="hidden" class="url" value="%s" />
     </a>', $url, $open ? 'open' : 'closed', $rel, $url

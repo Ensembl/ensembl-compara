@@ -430,28 +430,29 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             panel.elLk.drag.triggerHandler(e.type, e);
           })
         );
-      } else if(this.a.klass.hoverzmenu) { // hover simulates click
+      } else if(this.a.klass.hoverzmenu && this.a.attrs.alt) { // hover simulates click
+
         var layer = $('<div class="label_layer">');
         layer.appendTo(panel.elLk.container).data({area: this});
         panel.elLk.labelLayers = panel.elLk.labelLayers.add(layer);
-        (function(layer,zmid,on) {
+
+        (function(layer) {
           layer.on('mouseenter',function(e) {
-            if(on) { return; }
-            on = true;
-            $('#'+zmid).removeClass('closed');
-            zmid = panel.makeZMenu(e,panel.getMapCoords(e),{'approx':2});
-            $('#'+zmid+' .close').hide();
-            $('#'+zmid).show();
+            if (!$(this).data('zmenu')) {
+              var zmid = panel.makeZMenu(e,panel.getMapCoords(e),{'approx':2});
+              $(this).data('zmenu', zmid);
+            }
+            $('#' + $(this).data('zmenu')).show().find('.close').remove();
           });
           layer.on('mouseleave',function(e) {
-            if(!on) { return; }
-            on = false;
-            $('#'+zmid).addClass('closed');
-            $('#'+zmid).hide();
+            $('#' + $(this).data('zmenu')).delay(200).hide(0).on('mouseenter', function() {
+              $(this).clearQueue();
+            }).on('mouseleave', function() {
+              $(this).hide();
+            });
           });
-        })(layer,undefined,false);
+        })(layer);
       }
-
       $a = null;
     });
 
@@ -559,23 +560,29 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
 
     var config  = link.rel;
-    var update  = link.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
+    var href    = link.href.split(';');
+    var update  = href.pop().split('='); // update = [ trackId, renderer ]
+
     var fav     = '';
+    var imgConf = {};
 
     if ($link.hasClass('favourite')) {
       fav = $link.hasClass('selected') ? 'off' : 'on';
+      href.push(update[0] + '=' + update[1] + fav);
       Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
     } else {
       $link.parents('._label_layer').addClass('hover_label_spinner');
+      imgConf[update[0]] = {'renderer' : update[1]};
+      href.push('image_config=' + encodeURIComponent(JSON.stringify(imgConf)));
     }
 
     $.ajax({
-      url: link.href + fav,
+      url: href.join(';'),
       dataType: 'json',
-      context: this,
+      context: { panel: this, track: update[0], update: update[1] },
       success: function (json) {
         if (json.updated) {
-          this.changeConfiguration(config, update[0], update[1]);
+          this.panel.changeConfiguration(config, this.track, this.update);
         }
       }
     });

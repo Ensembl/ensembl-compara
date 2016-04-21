@@ -61,6 +61,10 @@ sub process {
         ## Hub is already attached, so just go there
         $redirect = sprintf('/%s/Location/View', $species);
         $anchor   = 'modal_config_viewbottom';
+        if ($params->{'menu'}) {
+          $anchor .= '-'.$params->{'menu'};
+          delete $params->{'menu'};
+        }
       }
       else {
         ## Check if we have any supported assemblies
@@ -85,6 +89,10 @@ sub process {
           ## Override standard redirect with sample location
           $redirect     = sprintf('/%s/Location/View', $species);
           $anchor       = 'modal_config_viewbottom';
+          my $menu      = $params->{'menu'} || $params->{'name'};
+          $anchor      .= '-'.$menu if $menu;
+          delete($params->{'menu'});
+          delete($params->{'name'});
 
           my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
           my $p         = $params->{'reattach'} || $params->{'species_flag'} 

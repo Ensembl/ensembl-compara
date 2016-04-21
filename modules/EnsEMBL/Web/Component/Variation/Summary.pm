@@ -81,28 +81,28 @@ sub feature_summary {
  
   my @str_array;
   
-  push @str_array, sprintf('overlaps <a href="%s">%s %s</a>', 
+  push @str_array, sprintf('overlaps <a class="dynamic-link" href="%s">%s %s</a>', 
                       $transcript_url, 
                       $avail->{has_transcripts}, 
                       $avail->{has_transcripts} eq "1" ? "transcript" : "transcripts"
                   ) if($avail->{has_transcripts});
-  push @str_array, sprintf('%s<a href="%s">%s %s</a>',
+  push @str_array, sprintf('%s<a class="dynamic-link" href="%s">%s %s</a>',
                       $avail->{has_transcripts} ? '' : 'overlaps ',
                       $transcript_url,
                       $avail->{has_regfeats},
                       $avail->{has_regfeats} eq "1" ? "regulatory feature" : "regulatory features"
                   ) if($avail->{has_regfeats});
-  push @str_array, sprintf('has <a href="%s">%s sample %s</a>', 
+  push @str_array, sprintf('has <a class="dynamic-link" href="%s">%s sample %s</a>', 
                       $genotype_url, 
                       $avail->{has_samples}, 
                       $avail->{has_samples} eq "1" ? "genotype" : "genotypes" 
                   )if($avail->{has_samples});
-  push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+  push @str_array, sprintf('is associated with <a class="dynamic-link" href="%s">%s %s</a>', 
                       $phenotype_url, 
                       $avail->{has_ega}, 
                       $avail->{has_ega} eq "1" ? "phenotype" : "phenotypes"
                   ) if($avail->{has_ega});  
-  push @str_array, sprintf('is mentioned in <a href="%s">%s %s</a>', 
+  push @str_array, sprintf('is mentioned in <a class="dynamic-link" href="%s">%s %s</a>', 
                       $citation_url, 
                       $avail->{has_citation}, 
                       $avail->{has_citation} eq "1" ? "citation" : "citations" 
@@ -277,7 +277,7 @@ sub co_located {
 
       next unless $v_start == $feature_slice->start && $v_end == $feature_slice->end;
 
-      my $link      = $hub->url({ v => $v_name, vf => $_->dbID });
+      my $link      = $hub->url({ action => 'Explore', v => $v_name, vf => $_->dbID });
       my $alleles   = ' ('.$_->allele_string.')' if $_->allele_string =~ /\//;
       my $variation = qq{<a href="$link">$v_name</a>$alleles};
       $count ++;
@@ -313,52 +313,33 @@ sub synonyms {
     my @ids = @{$synonyms->{$db}};
     my @urls;
 
+    next if ($db =~ /Affy|Illumina|HGVbase|TSC/);
+
     if ($db =~ /dbsnp rs/i) { # Glovar stuff
-      @urls = map $hub->get_ExtURL_link($_, 'SNP', $_), @ids;
-    } elsif ($db =~ /dbsnp/i) {
+      @urls = map $hub->get_ExtURL_link($_, 'DBSNP', $_), @ids;
+    }
+    elsif ($db =~ /dbsnp/i) {
       foreach (@ids) {
         next if /^ss/; # don't display SSIDs - these are useless
-        
-        push @urls, $hub->get_ExtURL_link($_, 'SNP', $_);
+        push @urls, $hub->get_ExtURL_link($_, 'DBSNP', $_);
       }
-      
       next unless @urls;
-    } elsif ($db =~ /HGVbase|TSC/) {
-      next;
-    } elsif ($db =~ /Affy|Illumina/){ ##moving genotyping chip data to sets
-      next;
-    } elsif ($db =~ /Uniprot/) { 
-      push @urls, $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
-    } elsif ($db =~ /HGMD/) {
-      # HACK - should get its link properly somehow
-      my @pfs = grep $_->source_name =~ /HGMD/, @{$hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation')->fetch_all_by_Variation($object->Obj)};
-      
-      foreach my $id (@ids) {
-        push @urls, $hub->get_ExtURL_link($id, 'HGMD', { ID => $_->associated_gene, ACC => $id }) for @pfs;
-      }
     }
-     elsif ($db =~ /PhenCode/) {
-        push @urls, $hub->get_ExtURL_link($_, 'PHENCODE', $_) for @ids;
-     }
-     ## these are LSDBs who submit to dbSNP, so we use the submitter name as a synonym & link to the original site
-     elsif ($db =~ /OIVD|LMDD|KAT6BDB/) {
-        push @urls, $hub->get_ExtURL_link($_, $db, $_) for @ids;
-     }
-     elsif ($db =~ /HbVar/) {
-        push @urls, $hub->get_ExtURL_link($_, 'HBVAR', $_) for @ids;
-     }
-     elsif ($db =~ /PAHdb/) {
-        push @urls, $hub->get_ExtURL_link($_, 'PAHdb', $_) for @ids;
-     }
-     elsif ($db =~ /Infevers/) {
-        push @urls, $hub->get_ExtURL_link($_, 'INFEVERS', $_) for @ids;
-     }
-     elsif ($db =~ /LSDB/) {
-      push @urls , $hub->get_ExtURL_link($_, $db, $_) for @ids;
-    } else {
+    elsif ($db =~ /Uniprot/) {
+      push @urls, $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
+    }
+    elsif ($db =~ /PhenCode/) {
+      push @urls, $hub->get_ExtURL_link($_, 'PHENCODE', $_) for @ids;
+    }
+    ## these are LSDBs who submit to dbSNP, so we use the submitter name as a synonym & link to the original site
+    elsif ($db =~ /OIVD|LMDD|KAT6BDB|HbVar|PAHdb|Infevers|LSDB/) {
+      my $db_uc = uc($db);
+      push @urls, $hub->get_ExtURL_link($_, $db_uc, $_) for @ids;
+    }
+    else {
       @urls = @ids;
     }
-    
+
     $count += scalar @urls;
     
     push @synonyms_list, "<strong>$db</strong> " . (join ', ', @urls);

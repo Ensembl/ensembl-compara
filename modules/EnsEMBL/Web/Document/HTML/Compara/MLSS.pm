@@ -64,6 +64,9 @@ our %pretty_method = (
   LASTZ_NET           => 'LastZ',
   TRANSLATED_BLAT_NET => 'Translated Blat',
   SYNTENY             => 'Synteny',
+  PECAN               => 'Pecan',
+  EPO                 => 'EPO',
+  EPO_LOW_COVERAGE    => 'EPO-Low-coverage',
 );
 
 our $references = {
@@ -72,19 +75,71 @@ our $references = {
   'BlastZ'          => qq{
     <a href="http://www.genome.org/cgi/content/abstract/13/1/103">Schwartz S et al., Genome Res.;13(1):103-7</a>, 
     <a href="http://www.pnas.org/cgi/content/full/100/20/11484">Kent WJ et al., Proc Natl Acad Sci U S A., 2003;100(20):11484-9</a>
+  },
+  'EPO'             => qq{
+    <a href="http://genome.cshlp.org/content/18/11/1814">Paten B et al., Genome Res,;18(11):1814-28</a>
+    <a href="http://genome.cshlp.org/content/18/11/1829">Paten B et al., Genome Res.;18(11):1829-43</a>
+  },
+  'EPO-Low-coverage'=> qq{
+    <a href="http://genome.cshlp.org/content/18/11/1814">Paten B et al., Genome Res,;18(11):1814-28</a>
+    <a href="http://genome.cshlp.org/content/18/11/1829">Paten B et al., Genome Res.;18(11):1829-43</a>
   }
 };
 
 ## HTML OUTPUT ######################################
 
+sub error_message {
+  my ($self, $title, $message, $type) = @_;
+  $type ||= 'error';
+  $message .= '<p>Please email a report giving the URL and details on how to replicate the error (for example, how you got here), to helpdesk@ensembl.org</p>' if $type ne 'info';
+  return qq{
+      <div class="$type left-margin right-margin">
+        <h3>$title</h3>
+        <div class="message-pad">
+          $message
+        </div>
+      </div>
+  };
+}
+
 sub render { 
   my $self    = shift;
   my $hub     = $self->hub;
+
   my $mlss_id = $hub->param('mlss');
+  unless ($mlss_id) {
+    return $self->error_message('No <em>mlss_id</em>', '<p>You need a MethodLinkSpeciesSet dbID to access this page.</p>' );
+  }
+
+  my $compara_db = $hub->database('compara');
+  unless ($compara_db) {
+    return $self->error_message('No Compara databse', '<p>No Compara database is configured on this site.</p>' );
+  }
+
+  my $mlss = $compara_db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($mlss_id);
+  unless ($mlss) {
+    return $self->error_message('Unknown MLSS', qq{<p>The Compara MethodLinkSpeciesSet dbID '$mlss_id' cannot be found in the database. Check that it is correct and that this is the correct version of Ensembl.</p>} );
+  }
+
+  if ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') {
+    return $self->render_pairwise($mlss);
+  } elsif ($mlss->method->class eq 'SyntenyRegion.synteny') {
+    return $self->render_pairwise($mlss);
+  } elsif ($mlss->method->class =~ /^GenomicAlign/) {
+    return $self->print_wga_stats($mlss);
+  } else {
+    return $self->error_message('No statistics', sprintf('There are no statistics available for the analysis "%s".', $mlss->name), 'warning');
+  }
+}
+
+sub render_pairwise {
+  my $self    = shift;
+  my $mlss    = shift;
+  my $hub     = $self->hub;
   my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
   my $html;
 
-  my ($alignment_results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config) = $self->fetch_input($mlss_id);
+  my ($alignment_results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config) = $self->fetch_pairwise_input($mlss);
 
   my $ref_sp          = $ref_dna_collection_config->{'name'};
   my $ref_common      = $ref_dna_collection_config->{'common_name'};
@@ -96,9 +151,11 @@ sub render {
   my $type            = $pretty_method{$pair_aligner_config->{'method_link_type'}};
 
   ## HEADER AND INTRO
-  $html .= sprintf('<h1>%s vs %s %s Results</h1>',
-                        $ref_common, $nonref_common, $type,
-            );
+  if ($ref_common eq $nonref_common) {
+      $html .= sprintf('<h1>%s self-%s results</h1>', $ref_common, $type);
+  } else {
+      $html .= sprintf('<h1>%s vs %s %s results</h1>', $ref_common, $nonref_common, $type,);
+  }
 
   if ($pair_aligner_config->{'download_url'}) {
     my $ucsc = $pair_aligner_config->{'download_url'};
@@ -112,13 +169,21 @@ alignments were downloaded from <a href="$ucsc">UCSC</a> in $site release $relea
     In the second phase, the groups that are in synteny are linked provided that no more than 2 non-syntenic groups are found between them and they are less than 3Mbp apart.</p>',
               $ref_common, $ref_sp, $ref_assembly, $nonref_common, $nonref_sp, $nonref_assembly,
               $site, $release;
-  } else {
+  } elsif ($ref_sp ne $nonref_sp) {
     $html .= sprintf '<p>%s (<i>%s</i>, %s) and %s (<i>%s</i>, %s) were aligned using the %s alignment algorithm (%s)
 in %s release %s. %s was used as the reference species. After running %s, the raw %s alignment blocks
-are chained according to their location in both genomes. During the final netting process, the best
-sub-chain is chosen in each region on the reference species.</p>',
+were chained according to their location in both genomes. During the final netting process, the best
+sub-chain was chosen in each region on the reference species.</p>',
               $ref_common, $ref_sp, $ref_assembly, $nonref_common, $nonref_sp, $nonref_assembly,
               $type, $references->{$type}, $site, $release, $ref_common, $type, $type;
+  } else {
+    $html .= sprintf '<p>%s (<i>%s</i>, %s) was aligned to itself using the %s alignment algorithm (%s)
+in %s release %s. After running %s, alignments between the same locations were removed and the remaining raw %s alignment blocks
+were chained according to their location in both genomes. During the final netting process, the best
+sub-chain was chosen in each region on the reference species.</p><p>Self-alignments reveal duplicated regions:
+some being recent and almost identical, others being much older and indicators of ancient whole-genome duplications.</p>',
+              $ref_common, $ref_sp, $ref_assembly,
+              $type, $references->{$type}, $site, $release, $type, $type;
   }
 
   $html .= '<h2>Configuration parameters</h2>';
@@ -156,6 +221,10 @@ sub-chain is chosen in each region on the reference species.</p>',
       { key => 'value_ref',    title => $ref_common    },
       { key => 'value_nonref', title => $nonref_common },
     );
+    if ($ref_common eq $nonref_common) {
+        $columns[1]->{title} .= ' (reference)';
+        $columns[2]->{title} .= ' (non-reference)';
+    }
 
     my @params = qw(chunk_size overlap group_set_size masking_options);
 
@@ -206,7 +275,7 @@ sub-chain is chosen in each region on the reference species.</p>',
       $graph_defaults
   };
 
-  foreach my $sp ($ref_sp, $nonref_sp) {
+  foreach my $sp ($ref_sp, (($nonref_sp eq $ref_sp) ? () : ($nonref_sp))) {
     my $results = $i ? $non_ref_results : $ref_results; 
     my $sp_type = $i ? 'non_ref' : 'ref';
 
@@ -240,7 +309,7 @@ sub-chain is chosen in each region on the reference species.</p>',
       $graph_defaults
   };
 
-  foreach my $sp ($ref_sp, $nonref_sp) {
+  foreach my $sp ($ref_sp, (($nonref_sp eq $ref_sp) ? () : ($nonref_sp))) {
     my $results = $i ? $non_ref_results : $ref_results; 
     my $sp_type = $i ? 'non_ref' : 'ref';
 
@@ -299,6 +368,36 @@ sub-chain is chosen in each region on the reference species.</p>',
 
   ## Draw table
   my $graph_style = 'width:300px;height:160px;margin:0 auto';
+  if ($ref_common eq $nonref_common) {
+
+  $html .= sprintf(
+    '<table style="width:100%">
+      <tr>
+        <th></th>
+        <th style="text-align:center">Genome coverage (bp)</th>
+        <th style="text-align:center">Coding exon coverage (bp)</th>
+      </tr>
+      <tr>
+        <th style="vertical-align:middle">%s</th>
+        <td style="text-align:center;padding:12px">
+          <div id="graphHolder0" style="%s"></div>%s
+        </td>
+        <td style="text-align:center;padding:12px">
+          <div id="graphHolder1" style="%s"></div>%s
+        </td>
+      </tr>
+    </table>',
+    $ref_common,
+    $graph_style, $key->{'ref'}{'genome'},
+    $graph_style, $key->{'ref'}{'exon'},
+  );
+
+  $html .= '</div>';
+
+  return $html;
+
+
+  }
   $html .= sprintf(
     '<table style="width:100%">
       <tr>
@@ -340,24 +439,21 @@ sub-chain is chosen in each region on the reference species.</p>',
 
 ## HELPER METHODS ##################################
 
-sub fetch_input {
-  my ($self, $mlss_id) = @_;
-  
-  return unless $mlss_id;
+sub fetch_pairwise_input {
+  my ($self, $mlss) = @_;
   
   my $hub        = $self->hub;
   my $compara_db = $hub->database('compara');
   my ($results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
   
-  if ($compara_db) {
     my $genome_db_adaptor             = $compara_db->get_adaptor('GenomeDB');
-    my $mlss                          = $compara_db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($mlss_id);
+    my $mlss_id                       = $mlss->dbID;
     my $num_blocks                    = $mlss->get_value_for_tag('num_blocks');
     my $ref_species                   = $mlss->get_value_for_tag('reference_species');
     my $non_ref_species               = $mlss->get_value_for_tag('non_reference_species');
     my $pairwise_params               = $mlss->get_value_for_tag('param');
-    my $ref_genome_db                 = $genome_db_adaptor->fetch_by_name_assembly($ref_species);
-    my $non_ref_genome_db             = $genome_db_adaptor->fetch_by_name_assembly($non_ref_species);
+    my $ref_genome_db                 = $genome_db_adaptor->fetch_by_name_assembly($ref_species) || die "Could not find the GenomeDB '$ref_species' for mlss $mlss_id";
+    my $non_ref_genome_db             = $genome_db_adaptor->fetch_by_name_assembly($non_ref_species) || die "Could not find the GenomeDB '$non_ref_species' for mlss $mlss_id";
       
     ## hack for double-quotes
     my $string_ref_dna_collection_config  = $mlss->get_value_for_tag("ref_dna_collection");
@@ -447,7 +543,6 @@ sub fetch_input {
         $blastz_parameters->{'Q'} = $v;
       }
     }
-  }
   
   return ($results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
 }

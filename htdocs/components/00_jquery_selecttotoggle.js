@@ -15,7 +15,7 @@
  */
 
 /**
- * selectToToggle - Show/hide an HTML block(s) according to value selected in a <select>, or <input type="radio"> element
+ * selectToToggle - Show/hide an HTML block(s) according to value selected in a <select>, or <input type="radio|checkbox"> element
  * Reserved JS class prefix: _stt
  * Reserved CSS class prefix: none
  * Note: Be careful if there are more than one selectToToggle elements on a page with one or more options having same values (use className on the option tags in those cases)
@@ -26,8 +26,11 @@
       var data      = $(this).data('selectToToggle');
       var wrapper   = data.wrapper;
       var toggleMap = data.toggleMap;
+      var currValue = this.nodeName === 'INPUT' && this.type === 'checkbox' && !this.checked ? false : this.value; // if checkbox is not ticked, ignore it's value
+
+      // go through all the selectors in the toggleMap and hide them except the one that corresponds to current element's value
       for (var val in toggleMap) {
-        if (val != this.value) {
+        if (val !== currValue) {
           wrapper.find(toggleMap[val]).hide().removeAttr('checked').filter('option').each(function() { // if hiding an option element, also disable it to make it work in webkit
             var option = $(this);
 
@@ -38,9 +41,10 @@
         }
       }
 
-      wrapper.find(toggleMap[this.value]).show().filter('option').prop('disabled', function() {
+      // show the html block corresponsing to current element's value
+      wrapper.find(toggleMap[currValue]).show().filter('option').prop('disabled', function() {
         return $(this).data('sttDisabled');
-      }).filter('select option').parent().each(function() { //show the requried html block
+      }).filter('select option').parent().each(function() {
         var dropdown = $(this);
         if (!dropdown.find('option:selected:enabled').length) { //in case any selected option gets hidden in this, select the first visible option
           dropdown.find('option:enabled').first().prop('selected', true);

@@ -155,6 +155,7 @@ sub create_hash {
 
   ## Try to find an ID for this feature
   my $attributes = $self->parser->get_attributes;
+
   my $id = $attributes->{'transcript_name'} || $attributes->{'transcript_id'} 
             || $attributes->{'gene_name'} || $attributes->{'gene_id'};
 
@@ -167,9 +168,32 @@ sub create_hash {
       }
     }
   }
+  my $name = $attributes->{'extname'} || $id;
 
   my $feature_strand = $strand || $metadata->{'default_strand'};
-  my $click_params = {
+
+  my $feature = {
+                  'seq_region'    => $seqname,
+                  'strand'        => $strand,
+                  'score'         => $score,
+                  'colour'        => $colour, 
+                  'join_colour'   => $metadata->{'join_colour'} || $colour,
+                  'label_colour'  => $metadata->{'label_colour'} || $colour,
+                  'label'         => $name,
+                };
+
+
+  if ($metadata->{'display'} eq 'text') {
+    $feature->{'start'} = $feature_start;
+    $feature->{'end'}   = $feature_end;
+
+    ## For zmenus, build array of extra attributes
+    $feature->{'extra'} = $self->_build_extras($attributes);
+  }
+  else {
+    $feature->{'start'} = $start;
+    $feature->{'end'}   = $end;
+    my $click_params = {
                         'id'          => $id,
                         'url'         => $metadata->{'url'},
                         'seq_region'  => $seqname,
@@ -177,56 +201,52 @@ sub create_hash {
                         'end'         => $feature_end,
                         'strand'      => $feature_strand,
                         };
-  if ($attributes->{'exon_number'}) {
-    $click_params->{'exon'} = $attributes->{'exon_number'};
+    if ($attributes->{'exon_number'}) {
+      $click_params->{'exon'} = $attributes->{'exon_number'};
+    }
+    $feature->{'href'} = $self->href($click_params);
+
+    ## Needed by Location/Genome, for image+table from one parser pass
+    if ($metadata->{'include_attribs'}) {
+      $feature->{'extra'} = $self->_build_extras($attributes);
+    }
   }
-  my $href = $self->href($click_params);
+
+  return $feature;
+}
+
+sub _build_extras {
+  my ($self, $attributes, $as_hash) = @_;
 
   my $extra = [];
-
-  ## For zmenus, build array of extra attributes
-  if ($metadata->{'display'} eq 'text') {
-    push @$extra, {'name' => 'Source',        'value' => $self->parser->get_source};
-    push @$extra, {'name' => 'Feature type',  'value' => $self->parser->get_type};
-    if ($attributes->{'gene_id'}) {
-      push @$extra, {'name' => 'Gene ID', 'value' => $attributes->{'gene_id'}};
-      delete $attributes->{'gene_id'};
-      if ($attributes->{'gene_name'}) {
-        push @$extra, {'name' => 'Gene name', 'value' => $attributes->{'gene_name'}};
-        delete $attributes->{'gene_name'};
-      }
-      if ($attributes->{'gene_biotype'}) {
-        push @$extra, {'name' => 'Gene biotype', 'value' => $attributes->{'gene_biotype'}};
-        delete $attributes->{'gene_biotype'};
-      }
+  push @$extra, {'name' => 'Source',        'value' => $self->parser->get_source};
+  push @$extra, {'name' => 'Feature type',  'value' => $self->parser->get_type};
+  if ($attributes->{'gene_id'}) {
+    push @$extra, {'name' => 'Gene ID', 'value' => $attributes->{'gene_id'}};
+    delete $attributes->{'gene_id'};
+    if ($attributes->{'gene_name'}) {
+      push @$extra, {'name' => 'Gene name', 'value' => $attributes->{'gene_name'}};
+      delete $attributes->{'gene_name'};
     }
-    if ($attributes->{'transcript_id'}) {
-      push @$extra, {'name' => 'Transcript ID', 'value' => $attributes->{'transcript_id'}};
-      delete $attributes->{'transcript_id'};
-      if ($attributes->{'transcript_name'}) {
-        push @$extra, {'name' => 'Transcript name', 'value' => $attributes->{'transcript_name'}};
-        delete $attributes->{'transcript_name'};
-      }
-    }
-    foreach (sort keys %$attributes) {
-      (my $name = $_) =~ s/_/ /;
-      push @$extra, {'name' => ucfirst($name), 'value' => $attributes->{$_}};
+    if ($attributes->{'gene_biotype'}) {
+      push @$extra, {'name' => 'Gene biotype', 'value' => $attributes->{'gene_biotype'}};
+      delete $attributes->{'gene_biotype'};
     }
   }
+  if ($attributes->{'transcript_id'}) {
+    push @$extra, {'name' => 'Transcript ID', 'value' => $attributes->{'transcript_id'}};
+    delete $attributes->{'transcript_id'};
+    if ($attributes->{'transcript_name'}) {
+      push @$extra, {'name' => 'Transcript name', 'value' => $attributes->{'transcript_name'}};
+      delete $attributes->{'transcript_name'};
+    }
+  }
+  foreach (sort keys %$attributes) {
+    (my $name = $_) =~ s/_/ /;
+    push @$extra, {'name' => ucfirst($name), 'value' => $attributes->{$_}};
+  }
 
-  return {
-    'start'         => $start,
-    'end'           => $end,
-    'seq_region'    => $seqname,
-    'strand'        => $strand,
-    'score'         => $score,
-    'colour'        => $colour, 
-    'join_colour'   => $metadata->{'join_colour'} || $colour,
-    'label_colour'  => $metadata->{'label_colour'} || $colour,
-    'label'         => $id,
-    'href'          => $href,
-    'extra'         => $extra,
-  };
+  return $extra;
 }
 
 1;

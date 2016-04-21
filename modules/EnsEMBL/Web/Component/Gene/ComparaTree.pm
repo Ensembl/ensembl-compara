@@ -319,7 +319,18 @@ sub content {
   else {
     $gene_name = $tree_stable_id;
   }
+
+  ## Parameters to pass into export form
   $image->{'export_params'} = [['gene_name', $gene_name],['align', 'tree']];
+  my @extra_params = qw(g1 anc collapse);
+  foreach (@extra_params) {
+    push @{$image->{'export_params'}}, [$_, $hub->param($_)];
+  }
+  foreach ($hub->param) {
+    if (/^group/) {
+      push @{$image->{'export_params'}}, [$_, $hub->param($_)];
+    }
+  }
   $image->{'data_export'}   = 'GeneTree';
   $image->{'remove_reset'}  = 1;
 
@@ -367,6 +378,7 @@ sub collapsed_nodes {
   my $action                 = shift;
   my $highlight_genome_db_id = shift;
   my $highlight_gene         = shift;
+  return unless $node;
   
   die "Need a GeneTreeNode, not a $tree" unless $tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode');
   die "Need an GeneTreeMember, not a $node" if $node && !$node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');

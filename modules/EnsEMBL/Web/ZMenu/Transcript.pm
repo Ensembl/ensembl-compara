@@ -35,14 +35,45 @@ sub content {
   my $gene_desc   = $gene ? $object->gene_description =~ s/No description//r =~ s/\[.+\]\s*$//r : '';
   my @xref        = $object->display_xref;
   my @click       = $self->click_location;
+  my @all_exons   = @{$transcript->get_all_Exons};
+  my @all_introns = @{$transcript->get_all_Introns};
+  my (@exons, @introns); 
   
   $translation = undef if $transcript->isa('Bio::EnsEMBL::PredictionTranscript'); 
 
   $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$gene ? $stable_id : 'Novel transcript');
+    
+  if (scalar @click) {
+    ## Has user clicked on an exon (or exons)? If yes find out the exon rank to display in zmenu
+    foreach (@all_exons) {
+      my ($s, $e) = ($_->start, $_->end);
+   
+      if (
+        ($s <= $click[1] && $e >= $click[2]) ||   # click is completely inside exon
+        ($s >= $click[1] && $e <= $click[2]) ||   # click completely contains exon
+        ($click[1] <= $s && $click[2] >= $s) ||   # start of exon is part of click
+        ($click[1] <= $e && $click[2] >= $e)      # click is end of exon
+      ) {      
+        push @exons, $_->rank($transcript);
+      }
+    }
+    ## Has user clicked on an intron (or introns)? If yes find out the intron rank to display in zmenu
+    foreach (@all_introns) {
+      my ($st, $en) = ($_->start, $_->end);
+      
+      if (
+        ($st <= $click[1] && $en >= $click[2]) || # click is completely on an intron
+        ($st >= $click[1] && $en <= $click[2]) || # click completely contains intron
+        ($click[1] <= $st && $click[2] >= $st) || # start of intron is part of click
+        ($click[1] <= $en && $click[2] >= $en)    # click is end of intron
+      ) {      
+        push @introns, $_->rank($transcript);   #TO uncomment once core added the rank call for intron      
+      }
+    }    
+  }
   
   # Only if there is a gene (not Prediction transcripts)
-  if ($gene) {
-  
+  if ($gene) {  
     if($gene_desc) {
       $self->add_entry({
         type  => 'Gene',
@@ -78,6 +109,17 @@ sub content {
       })
     });
   }
+
+  @introns = () if(scalar @exons && scalar @introns); #when click is on both exon and intron, exon takes precedence
+  $self->add_entry({
+    type  => 'Exon',
+    label => $exons[0]." of ". scalar(@all_exons)
+  }) if(scalar @exons);
+  
+  $self->add_entry({
+    type  => 'Intron',
+    label => $introns[0]." of ". scalar(@all_introns)
+  }) if(scalar @introns);  
   
   $self->add_entry({
     type  => 'Transcript',

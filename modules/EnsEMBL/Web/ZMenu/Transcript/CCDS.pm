@@ -40,7 +40,7 @@ sub content {
     position => 1,
   });
   
-  $self->delete_entry_by_type($_) for ('Transcript', 'Protein', 'Gene type', 'Gene');
+  $self->delete_entry_by_type($_) for ('Transcript', 'Protein', 'Gene type', 'Gene', 'Exon');
   $self->delete_entry_by_value('cDNA Sequence');
   $self->delete_entry_by_value('Exons');
   $self->delete_entry_by_value('Protein Variations');
