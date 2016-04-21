@@ -70,11 +70,13 @@ sub write_output {
   #
   #Get all the chunks in this dnaFragChunkSet
   #
-  if (defined $self->param('dnaFragChunkSet')) {
-      my $chunkSet = $self->param('dnaFragChunkSet');
-      #Masking options are stored in the dna_collection
-      my $dna_collection = $chunkSet->dna_collection;
-      my $chunk_array = $chunkSet->get_all_DnaFragChunks;
+  my $chunkSet = $self->param('dnaFragChunkSet');
+  #Masking options are stored in the dna_collection
+  my $dna_collection = $chunkSet->dna_collection;
+  my $chunk_array = $chunkSet->get_all_DnaFragChunks;
+
+  my $core_dba = $chunk_array->[0]->dnafrag->genome_db->db_adaptor;
+  $core_dba->dbc->prevent_disconnect( sub {
       
       #Store sequence in Sequence table
       foreach my $chunk (@$chunk_array) {
@@ -84,7 +86,7 @@ sub write_output {
 	      $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
 	  }
       }
-  }
+  } );
 
   return 1;
 }
