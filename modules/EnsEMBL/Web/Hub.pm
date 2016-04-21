@@ -42,7 +42,7 @@ use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::DBSQL::ConfigAdaptor;
-use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Exceptions qw(RedirectionRequired);
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
@@ -62,14 +62,13 @@ use base qw(EnsEMBL::Web::Root);
 sub new {
   my ($class, $controller) = @_;
 
-  my $args          = {};
-  my $r             = $controller->r;
-  my $species       = $controller->species;
-  my $species_defs  = $controller->species_defs;
-  my $cookies       = EnsEMBL::Web::Cookie->fetch($r);
-  my $object_params = $controller->object_params;
-  my $object_types  = { map { $_->[0] => $_->[1] } @{$object_params || []} };
+  my $args            = {};
+  my $r               = $controller->r;
+  my $species_defs    = $controller->species_defs;
+  my $cookies         = EnsEMBL::Web::Cookie->fetch($r);
 
+  # TODO - get rid of %ENV usage
+  my $species   = $ENV{'ENSEMBL_SPECIES'}   = $controller->species;
   my $type      = $ENV{'ENSEMBL_TYPE'}      = $controller->type;
   my $action    = $ENV{'ENSEMBL_ACTION'}    = $controller->action;
   my $function  = $ENV{'ENSEMBL_FUNCTION'}  = $controller->function;
@@ -89,8 +88,7 @@ sub new {
     _ext_url       => $args->{'ext_url'}       || EnsEMBL::Web::ExtURL->new($species, $species_defs),
     _problem       => $args->{'problem'}       || {},
     _user_details  => $args->{'user_details'}  || 1,
-    _object_types  => $object_types,
-    _apache_handle => $r,
+    _r             => $r,
     _user          => $args->{'user'}          || undef,
     _timer         => EnsEMBL::Web::Timer->new,
     _databases     => EnsEMBL::Web::DBSQL::DBConnection->new($species, $species_defs),
@@ -146,13 +144,15 @@ sub timer       :lvalue { $_[0]{'_timer'};       }
 sub components  :lvalue { $_[0]{'_components'};  }
 sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
 
+sub r              { return $_[0]{'_r'}; }
 sub controller     { return $_[0]{'_controller'};     }
 sub input          { return $_[0]{'_input'};          }
 sub cookies        { return $_[0]{'_cookies'};        }
 sub databases      { return $_[0]{'_databases'};      }
-sub object_types   { return $_[0]{'_object_types'};   }
+sub object_types    { return $_[0]{'_object_types'} ||= { map { $_->[0] => $_->[1] } @{$_[0]->controller->object_params || []} }; }
+sub ordered_objects { return $_[0]{'_ordered_objs'} ||= [ map $_->[0], @{$_[0]->controller->object_params || []} ]; }
 sub core_params    { return $_[0]{'_core_params'};    }
-sub apache_handle  { return $_[0]{'_apache_handle'};  }
+sub apache_handle  { return $_[0]{'_r'};  }
 sub ExtURL         { return $_[0]{'_ext_url'};        }
 sub user_details   { return $_[0]{'_user_details'};   }
 sub species_defs   { return $_[0]{'_species_defs'};   }
@@ -161,7 +161,7 @@ sub config_adaptor { return $_[0]{'_config_adaptor'} ||= EnsEMBL::Web::DBSQL::Co
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
 sub referer           { return shift->controller->referer; }
 sub colourmap         { return $_[0]{'colourmap'} ||= EnsEMBL::Draw::Utils::ColourMap->new($_[0]->species_defs);      }
-sub is_ajax_request   { return $_[0]{'is_ajax'}   //= $_[0]{'_apache_handle'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
+sub is_ajax_request   { return $_[0]{'is_ajax'}   //= $_[0]{'_r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
 
 sub species_path      { return shift->species_defs->species_path(@_);       }
 sub table_info        { return shift->species_defs->table_info(@_);         }
@@ -424,11 +424,14 @@ sub order_species_by_clade {
   return \@final_sets;
 }
 
-# Does an ordinary redirect
 sub redirect {
-  my ($self, $url) = @_;
+  ## Does an http redirect
+  ## Since it actually throws an exception, code that follows this call will not get executed
+  my ($self, $url, $permanent) = @_;
+
   $url = $self->url($url) if $url && ref $url;
-  $self->input->redirect($url || $self->current_url);
+
+  throw RedirectionRequired({'url' => $url || $self->current_url, 'permanent' => $permanent});
 }
 
 sub current_url { return $_[0]->url(undef, undef, 1); }
