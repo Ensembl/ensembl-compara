@@ -369,8 +369,6 @@ sub create_dnafrag_chunks {
 
     #print "store chunk " . $chunk->dnafrag->name . " " . $chunk->seq_start . " " . $chunk->seq_end . " " . length($chunk->bioseq->seq) . "\n";
 
-    my $dnafrag_chunk_set_id = $self->param('current_chunkset')->dbID;
-
     # do grouping if requested but do not group MT chr
     if($self->param('group_set_size') and ($chunk->length < $self->param('group_set_size')) and !$chunk->dnafrag->dna_type) {
 
@@ -437,13 +435,12 @@ sub define_new_chunkset {
 sub store_chunk_in_chunkset {
     my ($self, $chunk) = @_;
 
-    my $dnafrag_chunk_set_id;
     # Store the chunkset if it hasn't been stored before
     unless ($self->param('current_chunkset')->dbID) {
-        $dnafrag_chunk_set_id = $self->compara_dba->get_DnaFragChunkSetAdaptor->store($self->param('current_chunkset'));
+        $self->compara_dba->get_DnaFragChunkSetAdaptor->store($self->param('current_chunkset'));
     }
     # Add the chunk to the chunkset and store it
-    $chunk->dnafrag_chunk_set_id($dnafrag_chunk_set_id);
+    $chunk->dnafrag_chunk_set_id($self->param('current_chunkset')->dbID);
     $self->param('current_chunkset')->add_DnaFragChunk($chunk);
     $self->compara_dba->get_DnaFragChunkAdaptor->store($chunk);
 }
