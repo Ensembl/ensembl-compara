@@ -104,7 +104,9 @@ sub convert_to_csv {
   my @headings;
   foreach my $key (@{$convert->series}) {
     my $col = $self->{'config'}->column($key);
-    push @headings,$col->get_label();
+    my $label = $col->get_label();
+    $label =~ s/[\000-\037]//g;
+    push @headings,$label;
   }
   $csv->combine(@headings);
   $out .= $csv->string()."\n";
