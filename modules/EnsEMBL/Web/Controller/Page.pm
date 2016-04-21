@@ -22,33 +22,36 @@ package EnsEMBL::Web::Controller::Page;
 ### Deals with Command modules if required.
 
 use strict;
+use warnings;
 
 use URI::Escape qw(uri_unescape);
 
-use base qw(EnsEMBL::Web::Controller);
+use parent qw(EnsEMBL::Web::Controller);
 
-sub request   { return 'page'; }
-sub cacheable { return 1;      }
+sub request {
+  return 'page';
+}
 
 sub init {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $request = $self->request;
-  
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  # Clear already existing cache if required
   $self->clear_cached_content;
-  
-  my $cached = $self->get_cached_content($request); # Page retrieved from cache
-  
+
+  # Try to retrieve content from cache
+  my $cached = $self->get_cached_content;
+
   if (!$cached) {
-    my $redirect = $self->builder->create_objects($hub->factorytype, $request) eq 'redirect'; # Build objects before checking configuration - they are needed by Configuration.pm
-    $self->configure;                                                                         # Set hub->components before checking configuration
-    return if $self->update_configuration_from_url || $redirect;                              # Redirect if a configuration has been updated or object parameters have changed
+    $self->builder->create_objects;
+    $self->configure;
+    $self->update_configuration_from_url;
   }
-  
+
   $self->update_user_history if $hub->user;
-  
+
   return if $cached;
-  
+
   $self->page->initialize; # Adds the components to be rendered to the page module
   $self->render_page;
 }
@@ -56,12 +59,6 @@ sub init {
 sub render_page {
   my $self = shift;
   my $hub  = $self->hub;
-  
-  # Set cookies for toggleable content, then delete the param so it doesn't appear on any links in the page
-  foreach (grep /^toggle_.+/, $hub->param) {
-    $hub->set_cookie($_, $hub->param($_));
-    $hub->delete_param($_);
-  }
   
   $self->SUPER::render_page if $self->access_ok && !$self->process_command;
 }
@@ -78,20 +75,19 @@ sub update_configuration_from_url {
   my $session    = $hub->session;
   my @share_ref  = $input->param('share_ref');
   my @components = @{$self->configuration->get_configurable_components};
-  my $new_url;
-  
+  my $change_url = 0;
+
   if (@share_ref) {
     $session->receive_shared_data(@share_ref); # This should push a message onto the message queue
     $input->delete('share_ref');
-    $new_url = 1;
+    $change_url = 1;
   }
   $hub->get_viewconfig(@{$components[$_]})->update_from_input($r, $_ == $#components) for 0..$#components;
-  $new_url += $hub->get_viewconfig(@{$components[$_]})->update_from_url($r, $_ == $#components) for 0..$#components; # This should push a message onto the message queue
+  $change_url += $hub->get_viewconfig(@{$components[$_]})->update_from_url($r, $_ == $#components) || 0 for 0..$#components; # This should push a message onto the message queue
   
-  if ($new_url) {
+  if ($change_url) {
     $input->param('time', time); # Add time to cache-bust the browser
-    $input->redirect(join '?', $r->uri, uri_unescape($input->query_string)); # If something has changed then we redirect to the new page  
-    return 1;
+    $hub->redirect(join('?', $r->uri, uri_unescape($input->query_string)));
   }
 }
 
