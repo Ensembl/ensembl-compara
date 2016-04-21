@@ -184,6 +184,9 @@ sub newtable_data_request {
   if($self->{'wire'}{'sort'} and @{$self->{'wire'}{'sort'}}) {
     $all_data = 1;
   }
+  if($self->{'wire'}{'format'} eq 'export') {
+    $all_data = 1;
+  }
  
   $self->preflight_extensions();
  
