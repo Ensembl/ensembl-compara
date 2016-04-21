@@ -463,7 +463,7 @@ sub html_template {
   $self->add_body_attr('class', 'static')                            if $self->isa('EnsEMBL::Web::Document::Page::Static');
   $self->add_body_attr('data-pace',$SiteDefs::PACED_MULTI||8);
   
-  my $species_path        = $self->species_defs->species_path;
+  my $species_path        = $self->hub->species_path;
   my $species_common_name = $self->species_defs->SPECIES_COMMON_NAME;
   my $max_region_length   = 1000100 * ($self->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $core_params         = $self->hub ? $self->hub->core_params : {};
