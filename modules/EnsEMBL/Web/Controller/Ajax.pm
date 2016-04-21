@@ -30,12 +30,17 @@ use EnsEMBL::Web::File::Utils::URL;
 
 use base qw(EnsEMBL::Web::Controller);
 
+sub parse_path_segments {
+  my $self = shift;
+
+  $self->{'function'} = sprintf 'ajax_%s', $self->path_segments->[0];
+}
+
 sub process {
   my $self  = shift;
-  my $hub   = $self->hub;
-  my $func  = 'ajax_'.$hub->action;
+  my $func  = $self->function;
 
-  $self->$func($hub) if $self->can($func);
+  $self->$func($self->hub) if $self->can($func);
 }
 
 sub ajax_autocomplete {
