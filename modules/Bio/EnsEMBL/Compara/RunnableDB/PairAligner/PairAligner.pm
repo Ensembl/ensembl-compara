@@ -123,10 +123,6 @@ sub fetch_input {
   map {$chunks_lookup{$_->dbID} = $_} @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
   $self->param('chunks_lookup', \%chunks_lookup);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with $self->db (Hive DBAdaptor)
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
   throw("Missing qyChunkSet") unless($query_DnaFragChunkSet);
   throw("Missing dbChunkSet") unless($db_DnaFragChunkSet);
   throw("Missing method_link_type") unless($self->param('method_link_type'));
@@ -160,7 +156,7 @@ sub run
 {
   my $self = shift;
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1);  
+  $self->compara_dba->dbc->disconnect_if_idle();
 
   my $starttime = time();
   my $work_dir = $self->worker_temp_directory;
@@ -171,7 +167,6 @@ sub run
 
   if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
 
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
   return 1;
 }
 
