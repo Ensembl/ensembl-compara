@@ -57,6 +57,7 @@ sub fetch_input {
 
     #Convert chunkSetID into DnaFragChunkSet object
     my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('chunkSetID'));
+    die "No ChunkSet with the id " . $self->param('chunkSetID') unless $chunkset;
     $self->param('dnaFragChunkSet', $chunkset);
     
     return 1;
