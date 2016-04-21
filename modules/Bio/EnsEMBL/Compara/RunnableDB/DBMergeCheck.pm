@@ -87,7 +87,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
 
-        # Static list of the main tables that must be ignored
+        # Static list of the main tables that must be ignored (their
+        # content exclusively comes from the master database)
         'master_tables'     => [qw(meta genome_db species_set species_set_header method_link method_link_species_set ncbi_taxa_node ncbi_taxa_name dnafrag)],
         # Static list of production tables that must be ignored
         'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection anchor_sequence anchor_align)],
