@@ -521,9 +521,14 @@ sub get_SimpleAlign {
 	}		
 
 	my $genomic_align_block_adaptor = $self->adaptor->db->get_GenomicAlignBlock;
-	$self->start(1) if $self->start <= 0;
+	# Slice::sub_Slice only allows coordinates that are inside the query slice
+	# We need to trim the coordinates here (which would get trimmed anyway by restrict_between_reference_positions())
+	my $start = $self->start;
+	$start = 1 if $start < 1;
+	my $end = $self->end;
+	$end = $self->slice->length if $end > $self->slice->length;
 	my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
-		$msa_mlss, $self->slice->sub_Slice($self->start, $self->end, $self->slice->strand));
+		$msa_mlss, $self->slice->sub_Slice($start, $end, $self->slice->strand));
 
 	my $sa = Bio::SimpleAlign->new();
 
@@ -537,8 +542,8 @@ sub get_SimpleAlign {
 	my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align();
 
 	my $restricted_gab = $this_genomic_align_block->restrict_between_reference_positions(
-		($self->slice->start + $self->start - 1),
-		($self->slice->start + $self->end - 1),
+		($self->slice->start + $start - 1),
+		($self->slice->start + $end - 1),
 		$reference_genomic_align,
 		$skip_empty_GenomicAligns);
 #        print "dbID: ", $this_genomic_align_block->dbID, ". ";
