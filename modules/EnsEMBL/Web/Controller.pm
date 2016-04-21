@@ -22,14 +22,13 @@ use strict;
 use warnings;
 
 use URI;
-use URI::Escape qw(uri_unescape);
-use Class::DBI;
 
 use Bio::EnsEMBL::Registry;
 
 use EnsEMBL::Web::Attributes;
-use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Builder;
+use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
@@ -67,6 +66,7 @@ sub new {
   my $self = bless {
     'r'             => $r,
     'species_defs'  => $species_defs,
+    'cache_debug'   => $species_defs->ENSEMBL_DEBUG_CACHE,
     'page_type'     => 'Dynamic',
     'renderer_type' => 'String',
     'species'       => $params->{'species'}       || '',
@@ -89,14 +89,19 @@ sub new {
 
 sub process {
   ## Generates the response
-  my $self = shift;
+  my $self  = shift;
+  my $hub   = $self->hub;
 
   my $time_a = time if $DEBUG_TIME;
 
-  $self->init_cache;
-  $self->hub->qstore_open;
-  $self->init;
-  $self->hub->qstore_close;
+  try {
+    $self->init_cache;
+    $hub->qstore_open;
+    $self->init;
+    $hub->qstore_close;
+  } catch {
+    $_->handle($hub);
+  };
 
   if ($DEBUG_TIME) {
     my $time_b = time;
@@ -135,6 +140,116 @@ sub parse_path_segments {
   ($self->{'type'}, $self->{'action'}, $self->{'function'}, $self->{'sub_function'}) = (@{$self->path_segments}, '', '', '', '');
 }
 
+sub cacheable {
+  ## Returns true if the current request can be retrieved from cache and should be cached for future requests
+  my $self  = shift;
+  my $r     = $self->r;
+
+  return $self->{'cacheable'} //= $r->method eq 'GET' ? 1 : 0;
+}
+
+sub init_cache {
+  ## Initalises the cache tags and cache key
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  return unless $hub->cache && $self->cacheable;
+
+  my $agent = $self->r->subprocess_env('HTTP_USER_AGENT');
+  my $query = $self->query_form;
+
+  $self->add_cache_tags({
+    'page'    => sprintf('PAGE_%s', $self->page_type),
+    'path'    => sprintf('PATH_%s', join('/', @{$self->path_segments})),
+    'query'   => sprintf('Q_%s', join(';', sort map sprintf('%s=%s', $_, join(',', sort @{$query->{$_}})), keys %$query) || ''), # stringify the url query hash
+    'session' => sprintf('SESSION_%s', $hub->session->session_id),
+    'mac'     => $agent =~ /Macintosh/ ? 'MAC' : '',
+    'ie'      => $agent =~ /MSIE (\d+)/ ? "IE_$1" : '',
+  });
+}
+
+sub cache_key {
+  ## Gets the cache keys for the current request
+  ## @return String
+  my $self = shift;
+  return join '::', @{$self->cache_tags};
+}
+
+sub cache_tags {
+  ## Returns list of cache tags for the current request
+  ## @return Arrayref
+  my $self = shift;
+
+  return [ sort grep $_, values %{$self->{'_cache_tags'} || {}} ];
+}
+
+sub add_cache_tags {
+  ## Adds given tags to the set of tags that are used to save/retrieve the request
+  ## @param Hashref of the tags (keys of the hash are just for reference but values are actually used as a list of cache tags)
+  my ($self, $tags) = @_;
+  $self->{'_cache_tags'} ||= {};
+
+  $self->{'_cache_tags'}{$_} = $tags->{$_} // '' for keys %$tags;
+}
+
+sub remove_cache_tags {
+  ## Removes given or all tags from the set of tags that are used to save/retrieve the request
+  ## @params List of tags to be removed (no argument will remove all tags)
+  my $self = shift;
+  $self->{'_cache_tags'} ||= {};
+
+  delete $self->{'_cache_tags'}{$_} for @_ ? @_ : keys %{$self->{'_cache_tags'}};
+}
+
+sub get_cached_content {
+  ## Attempts to retrieve content cached for a similar requests from Memcached
+  ## The already computed cache key is used to retrieve content
+  my $self      = shift;
+  my $cache     = $self->hub->cache;
+  my $cache_key = $self->cache_key;
+
+  return unless $cache && $cache_key && $self->cacheable;
+
+  my $content = $cache->get($cache_key, @{$self->cache_tags});
+
+  # leave an entry in log if required
+  warn sprintf 'CACHE %s %s', $content ? 'HIT:  ' : 'MISS: ', $cache_key if $self->{'cache_debug'};
+
+  return $content;
+}
+
+sub set_cached_content {
+  ## Adds content of the current request to Memcached against the already computed cache key
+  my ($self, $content) = @_;
+  my $cache     = $self->hub->cache;
+  my $cache_key = $self->cache_key;
+
+  return unless $cache && $cache_key && $self->cacheable;
+
+  $cache->set($cache_key, $content, 60 * 60 *24 * 7 * 12, @{$self->cache_tags});
+
+  # leave an entry in logs
+  warn sprintf 'CACHE SET:   %s', $cache_key if $self->{'cache_debug'};
+}
+
+sub clear_cached_content {
+  ## Flush the cache if the user has hit ^R or F5.
+  ## Removes content from Memcached based on the already computed cache key
+  my $self      = shift;
+  my $cache     = $self->hub->cache;
+  my $cache_key = $self->cache_key;
+
+  return unless $cache && $cache_key && $self->cacheable;
+
+  # delete cache if request by the user
+  if ($self->r->headers_in->{'Cache-Control'} =~ /(max-age=0|no-cache)/) {
+    $cache->delete_by_tags(@{$self->cache_tags});
+  }
+
+  # leave an entry in logs
+  warn sprintf 'CACHE CLEAR: %s', $cache_key if $self->{'cache_debug'};
+}
+
 sub upload_size_limit {
   ## Upload size limit for post requests
   return shift->species_defs->CGI_POST_MAX;
@@ -145,10 +260,7 @@ sub builder {
   ## @return EnsEMBL::Web::Builder instance
   my $self = shift;
 
-  return $self->{'builder'} ||= EnsEMBL::Web::Builder->new({
-    hub           => $self->hub,
-    object_params => $self->object_params
-  });
+  return $self->{'builder'} ||= EnsEMBL::Web::Builder->new($self->hub, $self->object_params);
 }
 
 sub renderer {
@@ -179,22 +291,6 @@ sub page {
   }
   
   return $self->{'page'};
-}
-
-sub init_cache {
-  my $self          = shift;
-  my $hub           = $self->hub;
-  my $species_defs  = $hub->species_defs;
-
-  if ($self->hub->cache && $self->request ne 'modal') {
-    # Add parameters useful for caching functions
-    $self->{'session_id'}  = $hub->session->session_id;
-    $self->{'user_id'}     = $hub->user;
-    $self->{'url_tag'}     = $hub->url({ update_panel => undef }, undef, 1);
-    $self->{'cache_debug'} = $species_defs->ENSEMBL_DEBUG_FLAGS && $species_defs->ENSEMBL_DEBUG_MEMCACHED;
-
-    $self->set_cache_params;
-  }
 }
 
 sub referer {
@@ -255,7 +351,7 @@ sub _parse_query_form {
   my @p = URI->new(sprintf '?%s', $query)->query_form;
 
   while (my ($key, $val) = splice @p, 0, 2) {
-    next if $key eq 'time';
+    next if $key eq 'time' || $key eq '_'; # ignore params added to clear browser cache by the frontend - they don't clear any backend cache
     push @{$q->{$key}}, $val;
   }
 
@@ -273,7 +369,6 @@ sub object        { return $_[0]->builder->object;    }
 sub page_type     { return $_[0]->{'page_type'};      }
 sub renderer_type { return $_[0]->{'renderer_type'};  }
 sub request       { return undef;                     }
-sub cacheable     { return 0;                         }
 sub node          :lvalue { $_[0]->{'node'};          }
 sub command       :lvalue { $_[0]->{'command'};       }
 sub filters       :lvalue { $_[0]->{'filters'};       }
@@ -355,108 +450,6 @@ sub render_page {
   my $page_content = $page->render($content);
   
   $self->set_cached_content($page_content) if $self->page_type =~ /^(Static|Dynamic)$/ && $page->{'format'} eq 'HTML' && !$self->hub->has_a_problem;
-}
-
-sub set_cache_params {
-  my $self = shift;
-  my $hub  = $self->hub;
-  my %tags = (
-    url       => $self->{'url_tag'},
-    page_type => $self->page_type,
-    mobile => "m".$ENV{'MOBILE_DEVICE'},
-  );
-  
-  $tags{'session'} = "SESSION[$self->{'session_id'}]" if $self->{'session_id'};
-  $tags{'user'}    = "USER[$self->{'user_id'}]"       if $self->{'user_id'};
-  $tags{'mac'}     = 'MAC'                            if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
-  $tags{'ie'}      = "IE$1"                           if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
-  $tags{'bot'}     = 'BOT'                            if $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/;
-  
-  $ENV{'CACHE_KEY'}  = join '::', map $tags{$_} || (), qw(url page_type session user mac ie bot ajax mobile);
-  $ENV{'CACHE_KEY'} .= join '::', '', map $_->name =~ /^toggle_/ ? sprintf '%s[%s]', $_->name, $_->value : (), grep $_, values %{$hub->cookies};
-  
-  if ($self->request !~ /^(page|ssi)$/) {
-    my $referer = $self->referer;
-    (my $tag    = $referer->{'uri'}) =~ s/\?.+/?/;
-    my @params;
-    
-    foreach my $p (sort keys %{$referer->{'params'}}) {
-      push @params, "$p=$_" for @{$referer->{'params'}{$p}};
-    }
-    
-    $tag .= join ';', @params;
-    $tags{'referer'} = $tag if $tag;
-  }
-  
-  
-  $ENV{'CACHE_TAGS'}{$_} = $tags{$_} for keys %tags;  
-}
-
-sub get_cached_content {
-  ### Attempt to retrieve page and component requests from Memcached
-  
-  my ($self, $type) = @_;
-  
-  my $cache = $self->hub->cache;
-  my $r     = $self->r;
-  
-  return unless $cache;
-  return if $r->method eq 'POST';
-  return unless $type eq 'page';
-  
-  my $content = $cache->get($ENV{'CACHE_KEY'}, values %{$ENV{'CACHE_TAGS'}});
-  
-  if ($content) {
-    $r->headers_out->set('X-MEMCACHED' => 'yes');     
-    $r->content_type('text/html');
-    
-    print $content;
-    
-    warn "CONTENT CACHE HIT:  $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
-  } else {
-    warn "CONTENT CACHE MISS: $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
-  }
-  
-  return !!$content;
-}
-
-sub set_cached_content {
-  ### Attempt to add page and component requests to Memcached
-  
-  my ($self, $content) = @_;
-  
-  my $cache = $self->hub->cache;
-  
-  return unless $cache && $self->cacheable;
-  return unless $ENV{'CACHE_KEY'};
-  return if $self->r->method eq 'POST';
-  
-  $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, values %{$ENV{'CACHE_TAGS'}});
-  
-  warn "CONTENT CACHE SET:  $ENV{'CACHE_KEY'}" if $self->{'cache_debug'};
-}
-
-sub clear_cached_content {
-  ### Flush the cache if the user has hit ^R or F5.
-  ### Removes content from Memcached based on the request's URL and the user's session id.
-  
-  my $self  = shift;
-  my $cache = $self->hub->cache;
-  my $r     = $self->r;
-  
-  if ($cache && $r->headers_in->{'Cache-Control'} =~ /(max-age=0|no-cache)/ && $r->method ne 'POST') {
-    my @tags = ($self->{'url_tag'});
-    
-    if ($self->request eq 'ssi') {
-      push @tags, "USER[$self->{'user_id'}]" if $self->{'user_id'};
-    } else {
-      push @tags, "SESSION[$self->{'session_id'}]" if $self->{'session_id'};
-    }
-    
-    $cache->delete_by_tags(@tags);
-    
-    warn 'CONTENT CACHE CLEAR: ' . (join ', ', @tags) if $self->{'cache_debug'};
-  }
 }
 
 sub add_error {
