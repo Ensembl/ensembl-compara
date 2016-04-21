@@ -194,11 +194,13 @@ sub create_chunks
   throw("couldn't get a DnaCollection for ChunkAndGroup analysis\n") unless($self->param('dna_collection'));
   
 
-  $genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
   my $SliceAdaptor = $genome_db->db_adaptor->get_SliceAdaptor;
   my $dnafragDBA = $self->compara_dba->get_DnaFragAdaptor;
 
   my $chromosomes = [];
+
+ $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+
   if($self->param('MT_only')){
       #This will correctly get MT if the name or synonym is MT
       push(@$chromosomes, $SliceAdaptor->fetch_by_region('toplevel', 'MT')); # Used when aligning only MT chromosomes
@@ -242,6 +244,7 @@ sub create_chunks
       #default for $include_non_reference = 0, $include_duplicates = 0
     $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef, $self->param('include_non_reference'), $self->param('include_duplicates'));
   }
+ } );
 
   print("number of seq_regions ".scalar @{$chromosomes}."\n");
 
