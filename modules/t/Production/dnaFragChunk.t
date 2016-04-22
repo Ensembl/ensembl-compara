@@ -21,6 +21,7 @@ use Test::More;
 use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
+use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Utils::IO qw (slurp);
 use File::Temp qw/tempfile/;

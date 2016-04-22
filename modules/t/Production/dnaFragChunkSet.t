@@ -22,6 +22,8 @@ use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
+use Bio::EnsEMBL::Compara::DnaFrag;
+use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
 # switch on the debug prints
 our $verbose = 1;
