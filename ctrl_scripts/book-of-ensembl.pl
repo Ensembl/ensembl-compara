@@ -27,6 +27,7 @@ use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
 use EnsEMBL::Web::QueryStore::Source::Adaptors;
+use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
 use EnsEMBL::Web::QueryStore;
 
 my $rebuild;
@@ -45,9 +46,9 @@ sub run1 {
     part => $kind,
   });
 
-  my $ad = EnsEMBL::Web::QueryStore::Source::Adaptors->new($SD);
   my $qs = EnsEMBL::Web::QueryStore->new({
-    Adaptors => $ad
+    Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($SD),
+    SpeciesDefs => EnsEMBL::Web::QueryStore::Source::SpeciesDefs->new($SD),
   },$cache,$SiteDefs::ENSEMBL_COHORT);
 
   my $q = $qs->get($query);

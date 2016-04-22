@@ -55,6 +55,7 @@ use EnsEMBL::Web::QueryStore::Cache::Memcached;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
 use EnsEMBL::Web::QueryStore::Cache::None;
 use EnsEMBL::Web::QueryStore::Source::Adaptors;
+use EnsEMBL::Web::QueryStore::Source::SpeciesDefs;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -922,7 +923,8 @@ sub query_store_setup {
     dir => $SiteDefs::ENSEMBL_BOOK_DIR
   });
   $self->{'_query_store'} = EnsEMBL::Web::QueryStore->new({
-    Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self->species_defs)
+    Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($self->species_defs),
+    SpeciesDefs => EnsEMBL::Web::QueryStore::Source::SpeciesDefs->new($self->species_defs),
   },$cache,$SiteDefs::ENSEMBL_COHORT);
 }
 
