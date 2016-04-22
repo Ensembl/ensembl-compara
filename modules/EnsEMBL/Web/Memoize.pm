@@ -8,6 +8,11 @@ use JSON;
 use Digest::MD5 qw(md5_hex);
 use File::Path qw(make_path remove_tree);
 
+my %SPECIAL_TYPES = (
+  'JSON::XS::Boolean' => sub { return 0+$_[0]; },
+  'JSON::PP::Boolean' => sub { return 0+$_[0]; },
+);
+
 sub _build_argument {
   my ($args) = @_;
 
@@ -18,8 +23,10 @@ sub _build_argument {
   } elsif(ref($args)) {
     if($args->can('memo_argument')) {
       return _build_argument($args->memo_argument);
+    } elsif($SPECIAL_TYPES{ref($args)}) {
+      return $SPECIAL_TYPES{ref($args)}->($args);
     } else {
-      die "Unknown blessed object, cannot memoize: $args\n";
+      die "Unknown blessed object, cannot memoize: $args [".ref($args)."]\n";
     }
   } else {
     return $args;
