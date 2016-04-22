@@ -189,7 +189,7 @@ sub default_options {
         'copy_trees_capacity'       => 50,
         'copy_alignments_capacity'  => 50,
         'mafft_update_capacity'     => 50,
-        'raxml_update_capacity'     => 50,
+        'raxml_update_capacity'     => 1000,
         'ortho_stats_capacity'      => 10,
 
     # hive priority for non-LOCAL health_check analysis:
