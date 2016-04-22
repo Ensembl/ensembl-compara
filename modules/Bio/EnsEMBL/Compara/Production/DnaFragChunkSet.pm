@@ -222,4 +222,75 @@ sub total_basepairs {
   return $self->{'_total_basepairs'};
 }
 
+
+=head2 load_all_sequences
+
+  Example     : $chunkset->load_all_sequences();
+  Description : Loads all the chunk sequences with 1 API call
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_all_sequences {
+    my $self = shift;
+
+    #Masking options are stored in the dna_collection
+    my $dna_collection = $self->dna_collection;
+
+    if ($self->count == 1) {
+
+        my $chunk = $self->get_all_DnaFragChunks()->[0];
+        unless($chunk->sequence) {
+            $chunk->masking_options($dna_collection->masking_options);
+            $chunk->cache_sequence;
+        }
+
+    } else {
+
+        my $sequences = $self->adaptor->db->get_SequenceAdaptor->fetch_all_by_chunk_set_id($self->dbID);
+
+        foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
+
+            if (my $this_seq_id = $chunk->sequence_id) {
+                $chunk->sequence($sequences->{$this_seq_id}); #this sets $chunk->sequence_id=0
+                $chunk->sequence_id($this_seq_id); #reset seq_id
+            } else {
+                $chunk->masking_options($dna_collection->masking_options);
+                # Will fetch the masked sequence from the core db and store it in the sequence table
+                $chunk->cache_sequence();
+            }
+        }
+    }
+}
+
+
+=head2 dump_to_fasta_file
+
+  Example     : $chunkset->dump_to_fasta_file();
+  Description : Use BioPerl to print all the sequences in a Fasta file
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub dump_to_fasta_file {
+    my ($self, $fastafile) = @_;
+
+    open(my $fh, '>', $fastafile)
+        or $self->throw("Error opening $fastafile for write");
+    my $output_seq = Bio::SeqIO->new( -fh => $fh, -format => 'Fasta');
+
+    foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
+        $output_seq->write_seq($chunk->bioseq);
+    }
+
+    close $fh;
+}
+
+
 1;

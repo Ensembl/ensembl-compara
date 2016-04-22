@@ -125,6 +125,9 @@ sub fetch_input {
   map {$chunks_lookup{$_->dbID} = $_} @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
   $self->param('chunks_lookup', \%chunks_lookup);
 
+  $db_DnaFragChunkSet->load_all_sequences();
+  $query_DnaFragChunkSet->load_all_sequences();
+
   throw("Missing method_link_type") unless($self->param('method_link_type'));
 
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
@@ -251,44 +254,10 @@ sub dumpChunkSetToWorkdir
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if(-e $fastafile);
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
-  my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
-  
-  #Masking options are stored in the dna_collection
-  my $dna_collection = $chunkSet->dna_collection;
-
-  my $chunk_array = $chunkSet->get_all_DnaFragChunks;
   if($self->debug){printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());}
 
-  #Load all sequences in a dnafrag_chunk_set and set masking options
-  my $sequence_ids;
-  foreach my $chunk (@$chunk_array) {
-    $chunk->masking_options($dna_collection->masking_options);
-  }
+  $chunkSet->dump_to_fasta_file($fastafile);
 
-  my $sequences = $self->compara_dba->get_SequenceAdaptor->fetch_all_by_chunk_set_id($chunkSet->dbID);
-
-  foreach my $chunk (@$chunk_array) {
-    #only have sequences for chunks with sequence_id > 0 - but this resets the sequence_id to 0. Why?
-
-    my $this_seq_id = $chunk->sequence_id; #save seq_id
-
-    $chunk->sequence($sequences->{$this_seq_id}) if ($chunk->sequence_id > 0); #this sets $chunk->sequence_id=0
-    $chunk->sequence_id($this_seq_id); #reset seq_id
-
-    #Retrieve sequences with sequence_id=0 (ie too big to store in the sequence table)
-    my $bioseq = $chunk->bioseq;
-
-    # This may not be necessary now as already have all the sequences in the sequence table
-    if($chunk->sequence_id==0) {
-      my $this_seq_id = $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
-    }
-
-    $output_seq->write_seq($bioseq);
-  }
-
-  close OUTSEQ;
   if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
   return $fastafile
 }
