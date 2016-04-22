@@ -123,31 +123,45 @@ sub run {
         my @current_members = @{ $current_gene_tree->get_all_Members };
         my $num_of_members = scalar(@current_members);
 
-        foreach my $member (@current_members) {
+        #get reused_gene_tree
+        my $reused_gene_tree = $self->param('reused_tree_adaptor')->fetch_by_stable_id($current_stable_id);
+        #There is no need for both array and hash structures here. Should change code to use only the hash!
+        my @reused_members;
+        my %reused_members_hash;
 
-            #updated:
-            if ( exists( $updated{ $member->stable_id } ) ) {
-                $root_ids_2_update{$gene_tree_id}{ $member->stable_id } = 1;
-                #print "\t$gene_tree_id:UPD:".$member->stable_id."\n";
-            }
+        if ($reused_gene_tree) {
+            $reused_gene_tree->preload();
+            @reused_members = @{ $reused_gene_tree->get_all_Members };
 
-            #added
-            if ( exists( $added{ $member->stable_id } ) ) {
-                $root_ids_2_add{$gene_tree_id}{ $member->stable_id } = 1;
-                #print "\t$gene_tree_id:ADD:".$member->stable_id."\n";
+            foreach my $member (@reused_members) {
+                my $reused_stable_id = $member->stable_id;
+                $reused_members_hash{$reused_stable_id} = 1;
             }
         }
 
-        #get reused_gene_tree
-        my $reused_gene_tree = $self->param('reused_tree_adaptor')->fetch_by_stable_id($current_stable_id);
+        foreach my $current_member (@current_members) {
+
+            #updated:
+            if ( exists( $updated{ $current_member->stable_id } ) ) {
+                $root_ids_2_update{$gene_tree_id}{ $current_member->stable_id } = 1;
+                #print "\t$gene_tree_id:UPD:".$current_member->stable_id."\n";
+            }
+
+            #added
+            if ( exists( $added{ $current_member->stable_id } ) ) {
+                $root_ids_2_add{$gene_tree_id}{ $current_member->stable_id } = 1;
+                #print "\t$gene_tree_id:ADD:".$current_member->stable_id."\n";
+            }
+
+            if ($reused_gene_tree) {
+                if ( !exists( $reused_members_hash{ $current_member->stable_id } ) && ( !exists( $added{ $current_member->stable_id } ) ) ) {
+                    $root_ids_2_add{$gene_tree_id}{ $current_member->stable_id } = 1;
+                }
+            }
+        }
 
         if ($reused_gene_tree) {
-            $self->throw("no input reused_gene_tree") unless $reused_gene_tree;
-            $reused_gene_tree->preload();
-            my @reused_members = @{ $reused_gene_tree->get_all_Members };
-
             foreach my $reused_member (@reused_members) {
-
                 #deleted
                 if ( exists( $deleted{ $reused_member->stable_id } ) ) {
                     $root_ids_2_delete{$gene_tree_id}{ $reused_member->stable_id } = 1;
