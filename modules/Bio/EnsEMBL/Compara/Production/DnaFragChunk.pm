@@ -238,12 +238,7 @@ sub bioseq {
 
   my $seq = undef;
   if(not defined($self->sequence())) {
-    my $starttime = time();
-
     $seq = $self->fetch_masked_sequence;
-    my $fetch_time = time()-$starttime;
-
-    $self->sequence($seq);
   }
   
   $seq = Bio::Seq->new(-seq        => $self->sequence(),
