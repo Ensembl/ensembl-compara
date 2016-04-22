@@ -78,61 +78,9 @@ sub default_action { return $_[0]->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ? '
 
 sub counts {
   my ($self, $member, $pan_member) = @_;
-  my $obj = $self->Obj;
 
-  return {} unless $obj->isa('Bio::EnsEMBL::Gene');
-  
-  my $key = sprintf '::COUNTS::GENE::%s::%s::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g');
-  my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
-  
-  if (!$counts) {
-    $counts = {
-      transcripts        => scalar @{$obj->get_all_Transcripts},
-      exons              => scalar @{$obj->get_all_Exons},
-#      similarity_matches => $self->count_xrefs
-      similarity_matches => $self->get_xref_available,
-      operons => 0,
-      alternative_alleles =>  scalar @{$self->get_alt_alleles},
-    };
-    if ($obj->feature_Slice->can('get_all_Operons')){
-      $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};
-    }
-    $counts->{structural_variation} = 0;
-
-    if ($self->database('variation')){ 
-      my $vdb = $self->species_defs->get_config($self->species,'databases')->{'DATABASE_VARIATION'};
-      $counts->{structural_variation} = $vdb->{'tables'}{'structural_variation'}{'rows'};
-      $counts->{phenotypes} = $self->get_phenotype;
-    }
-    if ($member) {
-      $counts->{'orthologs'}  = $member->number_of_orthologues;
-      $counts->{'paralogs'}   = $member->number_of_paralogues;
-      $counts->{'families'}   = $member->number_of_families;
-    }
-    my $alignments = $self->count_alignments;
-    $counts->{'alignments'} = $alignments->{'all'} if $self->get_db eq 'core';
-    $counts->{'pairwise_alignments'} = $alignments->{'pairwise'} + $alignments->{'patch'};
-
-    ## Add pan-compara if available 
-    if ($pan_member) {
-      my $compara_dbh = $self->database('compara_pan_ensembl')->dbc->db_handle;
-
-      $counts->{'orthologs_pan'}  = $pan_member->number_of_orthologues;
-      $counts->{'paralogs_pan'}   = $pan_member->number_of_paralogues;
-      $counts->{'families_pan'}   = $pan_member->number_of_families;
-
-      $counts->{'alignments_pan'} = $self->count_alignments('DATABASE_COMPARA_PAN_ENSEMBL')->{'all'} if $self->get_db eq 'core';
-    }    
-
-    ## Add counts from plugins
-    $counts = {%$counts, %{$self->_counts($member, $pan_member)}};
-
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
-    $self->{'_counts'} = $counts;
-  }
-  
-  return $counts;
+  return {} unless $self->Obj->isa('Bio::EnsEMBL::Gene');
+  return $self->availability->{'counts'};
 }
 
 =head2 get_go_list
