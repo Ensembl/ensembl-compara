@@ -32,10 +32,26 @@ sub multi {
   return $self->{'_sd'}->multi($type,$species);
 }
 
+sub multi_val {
+  my ($self,$type,$species) = @_;
+
+  return $self->{'_sd'}->multi_val($type,$species);
+}
+
 sub multiX {
   my ($self,$type) = @_;
 
   return $self->{'_sd'}->multiX($type);
+}
+
+sub list_databases {
+  my ($self,$species) = @_;
+
+  my @dbs = (keys %{$self->config($species,'databases')||{}},
+             @{$self->multi_val('compara_like_databases')||[]});
+  # Remove DATABASE_, convert rest to lc
+  @dbs = map { s/^DATABASE_//; $_ = lc $_; } @dbs;
+  return \@dbs;
 }
 
 1;

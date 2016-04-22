@@ -86,6 +86,17 @@ sub multiX {
   return $self->source('SpeciesDefs')->multiX($var);
 }
 
+sub super_availability {
+  my ($self,$args) = @_;
+
+  my $dbs =
+    $self->source('SpeciesDefs')->list_databases($args->{'species'});
+  my $hash = { map {; "database:$_" => 1 } @$dbs };
+
+  return $hash;
+}
+
+
 sub fixup_gene {
   my ($self,$key,$sk,$tk) = @_;
 

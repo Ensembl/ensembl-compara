@@ -215,7 +215,7 @@ sub get {
   my ($self,$args) = @_;
 
   my $ad = $self->source('Adaptors');
-  my $out = {};
+  my $out = $self->super_availability($args);
 
   my $member = $self->compara_member($args);
   my $panmember = $self->pancompara_member($args);
