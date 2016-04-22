@@ -124,7 +124,7 @@ sub fetch_input {
   map {$chunks_lookup{$_->dbID} = $_} @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
   $self->param('chunks_lookup', \%chunks_lookup);
 
-  $db_DnaFragChunkSet->load_all_sequences();
+  #$db_DnaFragChunkSet->load_all_sequences();
   $query_DnaFragChunkSet->load_all_sequences();
 
   throw("Missing method_link_type") unless($self->param('method_link_type'));
