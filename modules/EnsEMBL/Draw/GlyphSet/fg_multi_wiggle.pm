@@ -80,6 +80,7 @@ sub draw_aggregate {
   my $self = shift;
 
   ## Set some defaults for all displays
+  $self->{'my_config'}->set('multi', 1);
   $self->{'my_config'}->set('vspacing', 0);
   $self->{'my_config'}->set('hide_subtitle',1);
   $self->{'my_config'}->set('display_structure', 1);
