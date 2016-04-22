@@ -87,11 +87,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
 
-        # Static list of the main tables that must be ignored
+        # Static list of the main tables that must be ignored (their
+        # content exclusively comes from the master database)
         'master_tables'     => [qw(meta genome_db species_set species_set_header method_link method_link_species_set ncbi_taxa_node ncbi_taxa_name dnafrag)],
         # Static list of production tables that must be ignored
         'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection anchor_sequence anchor_align)],
-        'hive_tables'       => [qw(accu hive_meta analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message pipeline_wide_parameters role worker_resource_usage dataflow_target)],
 
         # Do we want to be very picky and die if a table hasn't been listed
         # above / isn't in the target database ?
@@ -142,7 +142,7 @@ sub fetch_input {
     foreach my $db (keys %$dbconnections) {
 
         # Production-only tables
-        my @bad_tables_list = (@{$self->param('hive_tables')}, @{$self->param('production_tables')}, @{$self->param('master_tables')});
+        my @bad_tables_list = (@{$self->db->hive_pipeline->list_all_hive_tables}, @{$self->db->hive_pipeline->list_all_hive_views}, @{$self->param('production_tables')}, @{$self->param('master_tables')});
 
         # We don't care about tables that are exclusive to another db
         push @bad_tables_list, (grep {$exclusive_tables->{$_} ne $db} (keys %$exclusive_tables));

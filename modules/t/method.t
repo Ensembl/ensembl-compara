@@ -36,7 +36,7 @@ subtest "Test Bio::EnsEMBL::Compara::Method::new(ALL) method", sub {
     my $method_id = 1;
     my $type = "LASTZ_NET";
     my $class = "GenomicAlignBlock.pairwise_alignment";
-    my $string = "Bio::EnsEMBL::Compara::Method: dbID=$method_id, type='$type', class='$class'";
+    my $string = "Method dbID=$method_id '$type', class='$class'";
 
     my $method = new Bio::EnsEMBL::Compara::Method(
                                                    -dbID => $method_id,
