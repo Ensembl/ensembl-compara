@@ -275,14 +275,8 @@ sub write_output {
             print "Tree has not changed at all. Just copy over.\n" if ( $self->debug );
         }
 
-        #Copy tree to the DB as default, since tree will not be re-infered
-        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
-                                                         'default',
-                                                         $self->param('current_gene_tree'),
-                                                         undef, 1 );
-
         #Also copy the tree under the copy clusterset_id, in order to keep track of things, and to make sure CopyAlignmentsFromDB.pm works OK.
-        $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
+        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
                                                       $self->param('output_clusterset_id'),
                                                       $self->param('current_gene_tree'),
                                                       undef, 1 );
