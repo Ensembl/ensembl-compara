@@ -79,7 +79,7 @@ sub fetch_input {
 
     $self->param( 'tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
     my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) or die "Could not fetch gene_tree with gene_tree_id='$self->param('gene_tree_id')'";
-    my $copy_tree = $self->param('current_gene_tree')->alternative_trees->{'copy'};
+    my $copy_tree = $self->param('current_gene_tree')->alternative_trees->{ $self->param('input_clusterset_id') };
 	$self->param( 'copy_gene_tree', $copy_tree);
 
     die sprintf( 'Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id') ) unless $copy_tree;
