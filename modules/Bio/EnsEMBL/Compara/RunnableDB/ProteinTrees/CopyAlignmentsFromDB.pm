@@ -94,13 +94,23 @@ sub fetch_input {
 
         print "Fetching tree for stable ID/root_id: " . $self->param('stable_id') . "/" . $self->param('gene_tree_id') . "\n" if ( $self->debug );
 
-        my %members_2_b_updated;
-        if ( ( $self->param('current_gene_tree')->has_tag('needs_update') ) && ( $self->param('current_gene_tree')->get_value_for_tag('needs_update') == 1 ) ) {
-            my $updated_genes_list;
-            if ( $self->param('current_gene_tree')->has_tag('updated_genes_list') ) {
-                $updated_genes_list = $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') || die "Could not get value_for_tag: updated_genes_list";
-                %members_2_b_updated = map { $_ => 1 } split( /,/, $updated_genes_list );
-            }
+        #Get list of genes to update
+        my $updated_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'updated_genes_list', '' );
+        my %members_2_b_updated = map { $_ => 1 } split( /,/, $updated_genes_list );
+
+        #Get list of genes to add
+        my $added_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'added_genes_list', '' );
+        my %members_2_b_added = map { $_ => 1 } split( /,/, $added_genes_list );
+
+        #List of members that were added or updated
+        my %members_2_b_added_updated;
+        $self->param( 'members_2_b_added_updated', \%members_2_b_added_updated );
+
+        foreach my $added_member ( keys(%members_2_b_added) ) {
+            $members_2_b_added_updated{$added_member} = 1;
+        }
+        foreach my $updated_member ( keys(%members_2_b_updated) ) {
+            $members_2_b_added_updated{$updated_member} = 1;
         }
 
         #Get previous tree
@@ -114,15 +124,18 @@ sub fetch_input {
         #$self->param('sa')->remove_seq( $self->param('sa')->each_seq_with_id( $member->seq_member_id ) );
         #}
 
+        #Get all the cigar lines for all members in the reused tree.
         my %cigar_lines_reuse_tree;
         foreach my $member ( @{ $self->param('reuse_gene_tree')->get_all_Members } ) {
             $cigar_lines_reuse_tree{ $member->stable_id } = $member->cigar_line;
+            print "reusing_cigar:".$member->stable_id."\n" if ($self->debug);
         }
 
+        #Copying the cigar lines to the new tree excluding the members that need update:
         foreach my $current_member ( @{ $self->param('copy_gene_tree')->get_all_Members } ) {
-            #copying the cigar lines to the new tree excluding the members that need update:
             if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) && ( !defined( $members_2_b_added_updated{ $current_member->stable_id } ) ) ) {
                 $current_member->cigar_line( $cigar_lines_reuse_tree{ $current_member->stable_id } );
+                print "copying_cigar:".$current_member->stable_id."\n" if ($self->debug);
             }
         }
 
