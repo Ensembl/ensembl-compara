@@ -63,8 +63,6 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-#my $DEFAULT_DUMP_MIN_SIZE = 11500000;
-my $DEFAULT_OUTPUT_METHOD_LINK = "LASTZ_CHAIN";
 
 sub fetch_input {
   my $self = shift;

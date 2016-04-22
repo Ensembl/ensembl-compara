@@ -53,7 +53,6 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 
 sub fetch_input {
   my $self = shift;
