@@ -238,8 +238,7 @@ sub write_output {
                   scalar( keys %{ $self->param('updated_and_added_members_count') } )/scalar( @{ $self->param('all_leaves_current_tree') } );
                 $self->dataflow_output_id( $self->input_id, $self->param('branch_for_update_threshold_trees') );
                 $self->input_job->autoflow(0);
-                $self->complete_early(
-"The number of new genes plus the added genes is >= 10% ($percentage) of the total number of leaves in the reused tree. So it needs to go to the cluster_factory." );
+                $self->complete_early( "The number of new genes plus the added genes is >= 10% ($percentage) of the total number of leaves in the reused tree. So it needs to go to the cluster_factory." );
             }
             else {
                 my $percentage =
