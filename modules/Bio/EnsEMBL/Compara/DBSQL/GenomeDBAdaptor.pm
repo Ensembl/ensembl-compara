@@ -310,7 +310,7 @@ sub fetch_by_core_DBAdaptor {
     my $species_name = $core_dba->get_MetaContainer->get_production_name();
     return undef unless $species_name;
     my $species_assembly = $core_dba->assembly_name();
-    $core_dba->disconnect_if_idle();
+    $core_dba->dbc->disconnect_if_idle();
     return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
