@@ -277,7 +277,7 @@ sub get {
       $out->{"has_$_"} = $counts->{$_};
     }
   }
-  return $out;
+  return [$out];
 }
 
 1;
