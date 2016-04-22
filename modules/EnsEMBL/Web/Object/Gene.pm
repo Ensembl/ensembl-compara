@@ -413,23 +413,24 @@ sub count_go {
           
       }    
     }
-    next unless $go_name;
-    $go_name =~ s/,$//g;
+    if($go_name) {
+      $go_name =~ s/,$//g;
 
-    my $goadaptor = $self->hub->get_databases('go')->{'go'}->dbc;
-    
-    my $go_sql = qq{SELECT o.ontology_id,COUNT(*) FROM term t1  JOIN closure ON (t1.term_id=closure.child_term_id)  JOIN term t2 ON (closure.parent_term_id=t2.term_id) JOIN ontology o ON (t1.ontology_id=o.ontology_id)  WHERE t1.accession IN ($go_name)  AND t2.is_root=1  AND t1.ontology_id=t2.ontology_id GROUP BY o.namespace};
-    
-    my $sth = $goadaptor->prepare($go_sql);
-    $sth->execute();
-    
-    foreach (@{$sth->fetchall_arrayref}) {    
-      $counts = $_->[1] if($_->[0] eq "$goid");
+      my $goadaptor = $self->hub->get_databases('go')->{'go'}->dbc;
+
+      my $go_sql = qq{SELECT o.ontology_id,COUNT(*) FROM term t1  JOIN closure ON (t1.term_id=closure.child_term_id)  JOIN term t2 ON (closure.parent_term_id=t2.term_id) JOIN ontology o ON (t1.ontology_id=o.ontology_id)  WHERE t1.accession IN ($go_name)  AND t2.is_root=1  AND t1.ontology_id=t2.ontology_id GROUP BY o.namespace};
+
+      my $sth = $goadaptor->prepare($go_sql);
+      $sth->execute();
+
+      foreach (@{$sth->fetchall_arrayref}) {
+        $counts = $_->[1] if($_->[0] eq "$goid");
+      }
     }
     $counts ||= -1;
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
-  
+  $counts = 0 if $counts == -1;
   return $counts;
 }
 
