@@ -163,7 +163,7 @@ sub run {
 
         my $members_2_change = scalar( keys( %{ $root_ids_2_add{$gene_tree_id} } ) ) + scalar( keys( %{ $root_ids_2_update{$gene_tree_id} } ) );
         #print "Memebers to change (add+update): $members_2_change | members to delete: " . scalar( keys( %{ $root_ids_2_delete{$gene_tree_id} } ) ) . "\n" if ($self->debug);
-        if ( ( $members_2_change/scalar(@current_members) ) >= $self->param('update_threshold_trees') ) {
+        if ( ( $members_2_change/scalar(@current_members) ) >= $self->param_required('update_threshold_trees') ) {
             $current_gene_tree->store_tag( 'new_build', 1 ) || die "Could not store_tag 'new_build'";
         }
 
