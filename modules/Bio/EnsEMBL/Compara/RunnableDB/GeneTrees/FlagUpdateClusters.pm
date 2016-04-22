@@ -80,7 +80,7 @@ sub run {
     #flag is that hash used my the module.
     #---------------------------------------------------------------------------------
     my ( %flag, %deleted, %updated, %added );
-    print "flagging members\n" if ( $self->debug );
+    print "flagging members on the sequence level\n" if ( $self->debug );
     _check_hash_equals( $prev_hash, $curr_hash, \%flag, \%deleted, \%updated, \%added );
     print "DELETED:|" . keys(%deleted) . "|\tUPDATED:|" . keys(%updated) . "|\tADDED:|" . keys(%added) . "|\n" if ( $self->debug );
 
@@ -226,6 +226,8 @@ sub write_output {
 #
 ##########################################
 
+#This function checks the differences between all the sequences loaded in the current database vs. the re-used database.
+#It will not catch more subtles cases where sequences are the same but the were not present in the re-used tree.
 sub _check_hash_equals {
     my ( $prev_hash, $curr_hash, $flag, $deleted, $updated, $added ) = @_;
 
