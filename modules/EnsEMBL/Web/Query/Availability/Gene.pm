@@ -244,13 +244,12 @@ sub get {
       }
     }
   }
-  $out->{'alt_allele'} =
-    0+!!($self->table_info($args,'alt_allele')->{'rows'});
+  $out->{'alt_allele'} = $self->table_info($args,'alt_allele')->{'rows'};
   if($self->regulation_db_adaptor($args)) {
     $out->{'regulation'} =
       0+!!($self->table_info($args,'feature_set','funcgen')->{'rows'});
   }
-  $out->{'regulation'} ||= 0;
+  $out->{'regulation'} ||= '';
   $out->{'has_species_tree'} = $member ? $member->has_GeneGainLossTree : 0;
   $out->{'family'} = !!$counts->{'families'};
   $out->{'family_count'} = $counts->{'families'};
