@@ -52,48 +52,14 @@ sub availability {
     if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
     } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
-      my %clusters    = $self->hub->species_defs->multiX('ONTOLOGIES');
-      
-      my $member      = $self->database('compara') ? $self->database('compara')->get_GeneMemberAdaptor->fetch_by_stable_id($obj->stable_id) : undef;
-      my $pan_member  = $self->database('compara_pan_ensembl') ? $self->database('compara_pan_ensembl')->get_GeneMemberAdaptor->fetch_by_stable_id($obj->stable_id) : undef;
-      my $counts      = $self->counts($member, $pan_member);
-      my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
-      my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
-
-      $availability->{'history'}              = !!$rows;
-      $availability->{'gene'}                 = 1;
-      $availability->{'core'}                 = $self->get_db eq 'core';
-      $availability->{'has_gene_tree'}        = $member ? $member->has_GeneTree : 0;
-      $availability->{'can_r2r'}              = $self->hub->species_defs->R2R_BIN;
-      if ($availability->{'can_r2r'}) {
-        my $tree = $availability->{'has_gene_tree'} ? $self->database('compara')->get_GeneTreeAdaptor->fetch_default_for_Member($member) : undef;
-        $availability->{'has_2ndary_cons'}    = $tree && $tree->get_tagvalue('ss_cons') ? 1 : 0;
-        $availability->{'has_2ndary'}         = ($availability->{'has_2ndary_cons'} || ($obj->canonical_transcript && scalar(@{$obj->canonical_transcript->get_all_Attributes('ncRNA')}))) ? 1 : 0;
-      }
-      $availability->{'has_gxa'}              = $self->gxa_check;
-
-      $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
-      $availability->{'regulation'}           = !!$funcgen_res; 
-      $availability->{'has_species_tree'}     = $member ? $member->has_GeneGainLossTree : 0;
-      $availability->{'family'}               = !!$counts->{families};
-      $availability->{'family_count'}         = $counts->{families};
-      $availability->{'not_rnaseq'}           = $self->get_db eq 'rnaseq' ? 0 : 1;
-      $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
-      $availability->{"has_go_$_"}            = $self->count_go($_) for (keys %clusters);
-      $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
-      $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
-      $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
-      $availability->{'not_human'}            = $self->species eq 'Homo_sapiens' ? 0 : 1;
-
-      if ($self->database('variation')) {
-        $availability->{'has_phenotypes'} = $self->get_phenotype; 
-      }
-      
-      if ($self->database('compara_pan_ensembl')) {
-        $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
-        $availability->{'has_gene_tree_pan'}  = !!($pan_member && $pan_member->has_GeneTree);
-        $availability->{"has_$_"}             = $counts->{$_} for qw(alignments_pan paralogs_pan orthologs_pan);
-      }
+      $availability =
+        $self->hub->get_query('Availability::Gene')->go($self,{
+          species => $self->hub->species,
+          type => $self->get_db,
+          gene => $self->Obj,
+        })->[0];
+      $availability->{'has_gxa'} = $self->gxa_check;
+      $availability->{'logged_in'} = $self->user;
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
     }
