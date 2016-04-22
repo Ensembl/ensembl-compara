@@ -145,6 +145,7 @@ sub fetch_input {
 		"  your system can cope with so many alignments.");
       }
   }
+  $self->compara_dba->dbc->disconnect_if_idle();
 
   #
   # execute subclass configure_runnable method
