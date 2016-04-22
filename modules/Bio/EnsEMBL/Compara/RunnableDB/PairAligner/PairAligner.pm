@@ -114,17 +114,17 @@ sub fetch_input {
 
   my $query_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('qyChunkSetID'));
   $self->param('query_DnaFragChunkSet',$query_DnaFragChunkSet);
+  throw("Missing qyChunkSet") unless($query_DnaFragChunkSet);
 
   my $db_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('dbChunkSetID'));
   $self->param('db_DnaFragChunkSet',$db_DnaFragChunkSet);
+  throw("Missing dbChunkSet") unless($db_DnaFragChunkSet);
 
   my %chunks_lookup;
   map {$chunks_lookup{$_->dbID} = $_} @{$db_DnaFragChunkSet->get_all_DnaFragChunks};
   map {$chunks_lookup{$_->dbID} = $_} @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
   $self->param('chunks_lookup', \%chunks_lookup);
 
-  throw("Missing qyChunkSet") unless($query_DnaFragChunkSet);
-  throw("Missing dbChunkSet") unless($db_DnaFragChunkSet);
   throw("Missing method_link_type") unless($self->param('method_link_type'));
 
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
