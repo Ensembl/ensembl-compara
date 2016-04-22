@@ -644,6 +644,7 @@ sub parse_defaults {
 	}
 	push @$collection, $pair;
     } else {
+        # Self-alignment
         my %pair = (
             'ref_genome_db'     => $genome_dbs->[0],
             'non_ref_genome_db' => $genome_dbs->[0],
