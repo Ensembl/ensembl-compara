@@ -202,8 +202,8 @@ sub render_alignslice_transcript {
     $t->{'start'} = min(grep {$_} map { $_->{'start'} } @{$t->{'exons'}});
     $t->{'end'} = max(grep {$_} map { $_->{'end'} } @{$t->{'exons'}});
   }
-  my ($length,$draw_labels,$strand) = $self->_draw_prepare($ggdraw,$labels);
-  $self->draw_expanded_transcripts($length,$draw_labels,$strand,$ggdraw);
+  my ($length,$draw_labels,$strand) = $self->_draw_prepare($ttdraw,$labels);
+  $self->draw_expanded_transcripts($length,$draw_labels,$strand,$ttdraw);
 }
 
 sub render_alignslice_collapsed {
