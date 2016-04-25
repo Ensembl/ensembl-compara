@@ -101,7 +101,7 @@ sub fixup_label_width {
 }
 
 sub fixup_location {
-  my ($self,$key,$slice_key,$end,$duds) = @_;
+  my ($self,$key,$slice_key,$end,$duds,$aux) = @_;
 
   my @route = split('/',$key);
   $key = pop @route;
@@ -116,10 +116,18 @@ sub fixup_location {
       }
       if($end) {
         $f->{'__dud'} = 1 if $f->{$key} < 0 and not $duds;
-        $f->{$key} = min($container->length,$f->{$key});
+        my $overhang = $f->{$key} - $container->length;
+        if($overhang>0) {
+          $f->{$key} -= $overhang;
+          $f->{$_} -= $overhang for(@{$aux||[]});
+        }
       } else {
         $f->{'__dud'} = 1 if $f->{$key} > $container->length and not $duds;
-        $f->{$key} = max($f->{$key},0);
+        my $underhang = -$f->{$key};
+        if($underhang>0) {
+          $f->{$key} += $underhang;
+          $f->{$_} -= $underhang for(@{$aux||[]});
+        }
       }
     }
     @$data = @{$self->_remove_duds(\@route,$data)};
