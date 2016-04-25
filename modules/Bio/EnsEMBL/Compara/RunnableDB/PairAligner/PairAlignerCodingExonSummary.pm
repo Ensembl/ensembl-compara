@@ -60,7 +60,7 @@ sub fetch_input {
   } else{
       if (defined $self->param('method_link_type') && $self->param('genome_db_ids')) {
 	  die ("No method_link_species_set") if (!$mlss_adaptor);
-	  $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), eval($self->param('genome_db_ids')));
+	  $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), $self->param('genome_db_ids'));
 	  $self->param('mlss_id', $mlss->dbID);
       } else {
 	  die("must define either mlss_id or method_link_type and genome_db_ids");

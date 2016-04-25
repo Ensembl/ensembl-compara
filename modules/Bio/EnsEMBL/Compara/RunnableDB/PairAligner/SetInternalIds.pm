@@ -111,7 +111,7 @@ sub setInternalIds {
 	$mlss_id = $self->param('method_link_species_set_id');
     } elsif ($self->param('method_link_type') && $self->param('genome_db_ids')) {
 	my $mlssa = $dba->get_MethodLinkSpeciesSetAdaptor;
-	my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), eval($self->param('genome_db_ids')));
+	my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), $self->param('genome_db_ids'));
 	if (!defined $mlss) {
 	    print "Unable to find method_link_species_set object of " . $self->param('method_link_type') . " for genome_dbs " . $self->param('genome_db_ids') . ". Unable to set internal ids.\n";
 	    return;

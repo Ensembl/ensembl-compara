@@ -350,7 +350,7 @@ sub _run_pairwise_gabs_test {
 
   my $method_link_species_set_id = $self->param('mlss_id') || $self->param('method_link_species_set_id');
   my $method_link_type = $self->param('method_link_type');
-  my $genome_db_ids = eval($self->param('genome_db_ids') || '');
+  my $genome_db_ids = $self->param('genome_db_ids');
 
   $self->test_table("genomic_align_block");
   $self->test_table("genomic_align");
@@ -445,8 +445,7 @@ sub _run_compare_to_previous_db_test {
   my $previous_db = $self->param_required('previous_db');
 
   my $method_link_type = $self->param('method_link_type');
-  my $current_genome_db_ids;
-  $current_genome_db_ids = eval($self->param('current_genome_db_ids'));
+  my $current_genome_db_ids = $self->param_required('current_genome_db_ids');
   $max_percent_diff = $self->param('max_percentage_diff') if (defined($self->param('max_percentage_diff')));
 
   my $ensembl_release = $self->param('ensembl_release');

@@ -95,7 +95,7 @@ Ensembl release if not the same as contained in the pair aligner compara databas
 
 =over
 
-=item {'ref_species' => 'danio_rerio', 'method_link_type'=>'TRANSLATED_BLAT_NET', 'genome_db_ids'=>'[65,110]', 'bed_dir' => '/lustre/scratch103/ensembl/kb3/scratch/tests/test_config/pipeline', 'config_url' => 'mysql://USER:PASS@compara1:3306/kb3_pair_aligner_config_test', 'config_file' => '/nfs/users/nfs_k/kb3/work/projects/tests/test_config/tblat.conf',}
+=item {'ref_species' => 'danio_rerio', 'method_link_type'=>'TRANSLATED_BLAT_NET', 'genome_db_ids'=>[65,110], 'bed_dir' => '/lustre/scratch103/ensembl/kb3/scratch/tests/test_config/pipeline', 'config_url' => 'mysql://USER:PASS@compara1:3306/kb3_pair_aligner_config_test', 'config_file' => '/nfs/users/nfs_k/kb3/work/projects/tests/test_config/tblat.conf',}
 
 =back
 
@@ -138,7 +138,7 @@ sub fetch_input {
   } else{
       if (defined $self->param('method_link_type') && $self->param('genome_db_ids')) {
 	  die ("No method_link_species_set") if (!$mlss_adaptor);
-	  $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), eval($self->param('genome_db_ids')));
+	  $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($self->param('method_link_type'), $self->param('genome_db_ids'));
 	  $self->param('mlss_id', $mlss->dbID);
       } else {
 	  die("must define either mlss_id or method_link_type and genome_db_ids");
