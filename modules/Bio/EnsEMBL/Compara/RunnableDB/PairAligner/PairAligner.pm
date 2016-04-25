@@ -331,7 +331,7 @@ sub store_featurePair_as_genomicAlignBlock
     print_simple_align($fp->get_SimpleAlign, 80);
 
     my $testChunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
-    $testChunk->dnafrag_id($qyChunk->dnafrag_id);
+    $testChunk->dnafrag($qyChunk->dnafrag);
     $testChunk->seq_start($qyChunk->seq_start+$fp->start-1);
     $testChunk->seq_end($qyChunk->seq_start+$fp->end-1);
     my $bioseq = $testChunk->bioseq;
@@ -341,7 +341,7 @@ sub store_featurePair_as_genomicAlignBlock
 
   my $genomic_align1 = new Bio::EnsEMBL::Compara::GenomicAlign;
   $genomic_align1->method_link_species_set($self->param('method_link_species_set'));
-  $genomic_align1->dnafrag_id($qyChunk->dnafrag_id);
+  $genomic_align1->dnafrag($qyChunk->dnafrag);
   $genomic_align1->dnafrag_start($qyChunk->seq_start + $fp->start -1);
   $genomic_align1->dnafrag_end($qyChunk->seq_start + $fp->end -1);
   $genomic_align1->dnafrag_strand($fp->strand);
