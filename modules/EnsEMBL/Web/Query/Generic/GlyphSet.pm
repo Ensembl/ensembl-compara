@@ -109,7 +109,11 @@ sub fixup_location {
     my $data = $self->data;
     my $container = $self->context->{'container'};
     foreach my $f (@{$self->_route(\@route,$data)}) {
-      $f->{$key} -= $container->start+1;
+      if($container->strand>0) {
+        $f->{$key} = $f->{$key} - $container->start + 1;
+      } else {
+        $f->{$key} = $container->end - $f->{$key} + 1;
+      }
       if($end) {
         $f->{'__dud'} = 1 if $f->{$key} < 0 and not $duds;
         $f->{$key} = min($container->length,$f->{$key});
@@ -122,7 +126,12 @@ sub fixup_location {
   } elsif($self->phase eq 'post_generate') {
     my $data = $self->data;
     foreach my $f (@{$self->_route(\@route,$data)}) {
-      $f->{$key} += $self->args->{$slice_key}->start+1;
+      my $slice = $self->args->{$slice_key};
+      if($slice->strand>0) {
+        $f->{$key} = $f->{$key} + $slice->start - 1;
+      } else {
+        $f->{$key} = $slice->end - $f->{$key} + 1;
+      }
     } 
   }
 }
