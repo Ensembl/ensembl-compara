@@ -536,20 +536,29 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           });
         }
       });
+
+      $(this).find('.hl-icon-highlight').on('click', function(e) {
+        panel.highlightTrack(this);
+      });
     })
 
     // init config tab, fav icon and close icon
     .find('a.config').off().on('click', function (e) {
       e.preventDefault();
-
       panel.handleConfigClick(this);
-
     }).end()
 
     // while url input is focused, don't hide the hover label
     .find('input._copy_url').off().on('click focus blur', function(e) {
       $(this).val(this.defaultValue).select().closest('._label_layer').toggleClass('focused', e.type !== 'blur');
     });
+  },
+
+  highlightTrack: function(element) {
+    var panel = this;
+    var highlight_class = 'li.'+$(element).data('highlightTrack');
+    $(element).toggleClass('selected');
+    $($(panel.elLk.boundaries).find(highlight_class)[0]).toggleClass('track_highlight _highlight_on');
   },
 
   handleConfigClick: function (link) {
@@ -693,25 +702,38 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     }).css('visibility', 'visible').find('li').on({
       mouseover: function() {
-        $(this).delay(200).addClass('track_highlight', 200, 'linear');
+        if(! $(this).hasClass('_highlight_on')) {
+          $(this).delay(200).addClass('track_highlight', 200, 'linear');
+        }
       },
       mouseout: function() {
-        $(this).removeClass('track_highlight', 100, 'linear');
+        if(! $(this).hasClass('_highlight_on')) {
+          $(this).removeClass('track_highlight', 100, 'linear');
+        }
       }
     }).find('div.handle').on({
       mouseover: function(e) {
         // Dont highlight track on hover
-        $(this.parentNode).removeClass('track_highlight').finish();
-        e.stopPropagation();
+        if(! $(this.parentNode).hasClass('_highlight_on')) {
+          console.log('ON')
+          $(this.parentNode).removeClass('track_highlight').finish();
+          e.stopPropagation();
+        }
       },
        mousedown: function() {
-        $(this.parentNode).addClass('track_highlight', 200, 'linear');
+        if(! $(this.parentNode).hasClass('_highlight_on')) {
+          $(this.parentNode).addClass('track_highlight', 200, 'linear');
+        }
        },
        mouseup: function() {
-        $(this.parentNode).removeClass('track_highlight', 100, 'linear');
+        if(! $(this.parentNode).hasClass('_highlight_on')) {
+          $(this.parentNode).removeClass('track_highlight', 100, 'linear');
+        }
        },
        mousemove: function() {
-        $(this.parentNode).removeClass('track_highlight', 100, 'linear');
+        if(! $(this.parentNode).hasClass('_highlight_on')) {
+          $(this.parentNode).removeClass('track_highlight', 100, 'linear');
+        }
        }
      });
 

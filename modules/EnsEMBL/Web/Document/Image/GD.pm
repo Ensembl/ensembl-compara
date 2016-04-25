@@ -346,6 +346,7 @@ sub hover_label_tabs {
      $desc   .= $label->{'extra_desc'};
   my $subset  = $label->{'subset'};
   my $renderers;
+  my $highlight = "true";
 
   foreach (@{$label->{'renderers'}}) {
 
@@ -388,6 +389,11 @@ sub hover_label_tabs {
   if ($label->{'off'}) {
     push @buttons, qq(<div class="_hl_icon hl-icon"><a href="$label->{'off'}" class="config closetrack" rel="$label->{'component'}"></a></div>);
     push @contents, qq(<div class="_hl_tab hl-tab"><p>Click on the cross to turn the track off</p></div>);
+  }
+
+  if ($highlight) {
+    push @buttons, qq(<div class="_hl_icon hl-icon"><a class="hl-icon-highlight" data-highlight-track="$label->{'highlight'}"></a></div>);
+    push @contents, qq(<div class="_hl_tab hl-tab"><p>Click to turn on/off track highlighting</p></div>);
   }
 
   return (\@buttons, \@contents);
