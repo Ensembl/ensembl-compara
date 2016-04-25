@@ -9,7 +9,7 @@ use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 use Time::HiRes qw(time);
 use List::Util qw(shuffle);
 
-my $DEBUG = 0;
+my $DEBUG = 1;
 
 sub _new {
   my ($proto,$store,$impl) = @_;
@@ -94,7 +94,7 @@ sub go {
   }
   if($DEBUG) {
     my $name = ref($self->{'impl'});
-    $name =~ s/^.*:://;
+    $name =~ s/^.*::(.+::.+)$/$1/;
     warn sprintf("%25s: hits=%d misses=%d get+post=total %.3f+%.3f=%.3f\n",
                  $name,$hits,$misses,$D-$C,$E-$D,$B-$A);
   }
