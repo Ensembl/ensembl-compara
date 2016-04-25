@@ -31,12 +31,6 @@ use Data::Dumper;
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-sub new {
-  my $class = shift;
-  my $self = $class->SUPER::new(@_);
-  $self->{_use_autoincrement} = 0;
-  return $self;
-}
 
 =head2 store
 

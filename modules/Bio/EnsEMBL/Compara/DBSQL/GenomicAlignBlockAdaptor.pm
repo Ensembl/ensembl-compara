@@ -74,8 +74,6 @@ $genomic_align_block = $genomic_align_block_adaptor->
 
 $genomic_align_block_adaptor->lazy_loading(1);
 
-$genomic_align_block_adaptor->use_autoincrement
-
 =head1 DESCRIPTION
 
 This module is intended to access data in the genomic_align_block table.
@@ -152,7 +150,6 @@ sub new {
   my $self = $class->SUPER::new(@_);
 
   $self->{_lazy_loading} = 0;
-  $self->{_use_autoincrement} = 1;
 
   return $self;
 }
@@ -212,27 +209,6 @@ sub store {
     }
   }
   
-  my $lock_tables = 0;
-  if (!$genomic_align_block->dbID and !$self->use_autoincrement()) {
-    ## Lock tables
-    $lock_tables = 1;
-    $self->dbc->do(qq{ LOCK TABLES genomic_align_block WRITE });
-
-    ## Get max genomic_align_block_id for the corresponding range of ids
-    my $sql = 
-            "SELECT MAX(genomic_align_block_id) FROM genomic_align_block WHERE".
-            " genomic_align_block_id > ".$genomic_align_block->method_link_species_set->dbID.
-            "0000000000 AND genomic_align_block_id < ".
-            ($genomic_align_block->method_link_species_set->dbID + 1)."0000000000";
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    my $genomic_align_block_id = ($sth->fetchrow_array() or
-        ($genomic_align_block->method_link_species_set->dbID * 10000000000));
-
-    ## Set the genomic_align_block_id
-    $genomic_align_block->dbID($genomic_align_block_id+1);
-  }
-
   ## Stores data, all of them with the same id
   my $sth = $self->prepare($genomic_align_block_sql);
   #print $align_block_id, "\n";
@@ -245,10 +221,6 @@ sub store {
                 $genomic_align_block->group_id,
 		($genomic_align_block->level_id or 1)
         );
-  if ($lock_tables) {
-    ## Unlock tables
-    $self->dbc->do("UNLOCK TABLES");
-  }
   if (!$genomic_align_block->dbID) {
     $genomic_align_block->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_block', 'genomic_align_block_id') );
   }
@@ -1114,34 +1086,6 @@ sub lazy_loading {
   return $self->{_lazy_loading};
 }
 
-
-=head2 use_autoincrement
-
-  [Arg  1]   : (optional)int value
-  Example    : $genomic_align_block_adaptor->use_autoincrement(0);
-  Description: Getter/setter for the _use_autoincrement flag. This flag
-               is used when storing new objects with no dbID in the
-               database. If the flag is ON (default), the adaptor will
-               let the DB set the dbID using the AUTO_INCREMENT ability.
-               If you unset the flag, then the adaptor will look for the
-               first available dbID after 10^10 times the
-               method_link_species_set_id.
-  Returntype : integer
-  Exceptions : 
-  Caller     : none
-  Status     : Stable
-
-=cut
-
-sub use_autoincrement {
-  my ($self, $value) = @_;
-
-  if (defined $value) {
-    $self->{_use_autoincrement} = $value;
-  }
-
-  return $self->{_use_autoincrement};
-}
 
 =head2 _create_GenomicAlign
 

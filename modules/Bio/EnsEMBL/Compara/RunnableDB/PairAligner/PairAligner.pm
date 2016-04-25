@@ -214,9 +214,6 @@ sub _write_output {
     my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
   my $starttime = time();
 
-  #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
-  #LOCK TABLES which does an implicit commit and prevent any rollback
-  $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
   foreach my $runnable (@{$self->param('runnable')}) {
       foreach my $fp ( @{ $runnable->output() } ) {
           if($fp->isa('Bio::EnsEMBL::FeaturePair')) {

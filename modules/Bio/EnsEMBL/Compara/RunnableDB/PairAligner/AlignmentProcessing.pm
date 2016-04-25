@@ -120,9 +120,6 @@ sub write_output {
 sub _write_output {
     my ($self) = @_;
     
-    #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
-    #LOCK TABLES which does an implicit commit and prevent any rollback
-    $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
     foreach my $chain (@{ $self->param('chains') }) {
         my $group_id;
         

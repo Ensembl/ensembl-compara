@@ -199,10 +199,6 @@ sub _write_output {
   my $use_fresh_connection = 1;
   my $skip_left_right_index = 0;
 
-  #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
-  #LOCK TABLES which does an implicit commit and prevent any rollback
-  $self->compara_dba->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
-  
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id'));
   my $mlss_id = $mlss->dbID;
