@@ -430,7 +430,7 @@ sub pipeline_analyses {
 	       -hive_capacity => 10,
  	       -wait_for => [ 'store_sequence', 'store_sequence_again', 'chunk_and_group_dna', 'dump_dna_factory', 'dump_dna'  ],
 	       -flow_into => {
-			       1 => [ 'remove_inconsistencies_after_pairaligner' ],
+			       1 => [ 'check_no_partial_gabs' ],
 			       2 => [ $self->o('pair_aligner_logic_name')  ],
 			   },
 	       -rc_name => '1Gb',
@@ -458,14 +458,15 @@ sub pipeline_analyses {
 	       -can_be_empty  => 1,
 	       -rc_name => 'crowd_himem',
 	    },
-	    {  -logic_name => 'remove_inconsistencies_after_pairaligner',
-               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
-	       -parameters => { },
+            {   -logic_name => 'check_no_partial_gabs',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SqlHealthChecks',
+                -parameters => {
+                    'mode'          => 'gab_inconsistencies',
+                },
  	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
 	       -flow_into => {
 			      1 => [ 'check_not_too_many_blocks' ],
 			     },
-	       -rc_name => '1Gb',
 	    },
             {   -logic_name => 'check_not_too_many_blocks',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
