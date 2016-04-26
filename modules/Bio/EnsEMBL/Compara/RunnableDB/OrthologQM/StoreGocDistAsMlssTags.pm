@@ -88,12 +88,17 @@ sub fetch_input {
 }
 
 sub write_output {
-  my $self = shift @_;
+  	my $self = shift @_;
 
-  my $mlss = $self->param('mlss');
-  foreach my $dist (@{$self->param('goc_dist')}) {
-	  $mlss->store_tag("goc_$dist->[0]",               $dist->[1]);
+  	my $mlss = $self->param('mlss');
+  	foreach my $dist (@{$self->param('goc_dist')}) {
 
+  		if (!$dist->[0]) {
+  			$mlss->store_tag("n_goc_null",               $dist->[1]);
+  		}
+  		else {
+			$mlss->store_tag("n_goc_$dist->[0]",               $dist->[1]);
+		}
 	}
 }
 
