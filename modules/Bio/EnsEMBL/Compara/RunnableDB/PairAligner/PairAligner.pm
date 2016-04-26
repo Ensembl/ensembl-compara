@@ -77,7 +77,6 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
         'max_alignments'    => undef,
-        'do_transactions'   => 1,
     }
 }
 

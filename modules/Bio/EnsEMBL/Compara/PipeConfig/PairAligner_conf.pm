@@ -172,9 +172,6 @@ sub default_options {
    						'masking_options' => '{default_soft_masking => 1}'},
    			    },
 	    
-	#Use transactions in pair_aligner and chaining/netting modules (eg LastZ.pm, PairAligner.pm, AlignmentProcessing.pm)
-	'do_transactions' => 1,
-
         #
 	#Default filter_duplicates
 	#
@@ -276,14 +273,6 @@ sub pipeline_create_commands {
     ];
 }
 
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
-    my ($self) = @_;
-
-    return {
-            %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-	    'do_transactions' => $self->o('do_transactions'),
-    };
-}
 
 sub resource_classes {
     my ($self) = @_;

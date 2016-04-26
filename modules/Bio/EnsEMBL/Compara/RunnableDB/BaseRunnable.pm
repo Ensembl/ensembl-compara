@@ -60,7 +60,6 @@ use base ('Bio::EnsEMBL::Hive::Process');
 # Make sure the sub-classes import this with $self->SUPER::param_defaults() !
 sub param_defaults {
     return {
-        'do_transactions'       => undef,
         'species_tree_file'     => undef,
         'species_tree_string'   => undef,
         'master_password'       => undef,   # Will default to $ENSADMIN_PSW
@@ -259,25 +258,19 @@ sub require_executable {
 
 =head2 call_within_transaction {
 
-Calls a method within a transaction (if "do_transactions" is set).
-Otherwise, calls it directly.
+Calls a method within a transaction.
 
 =cut
 
 sub call_within_transaction {
     my ($self, $callback, $retry, $pause) = @_;
 
-    # Make sure the same commands are inside and outside of the transaction
-    if ($self->param('do_transactions')) {
         my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
         return $helper->transaction(
             -RETRY => $retry,
             -PAUSE => $pause,
             -CALLBACK => $callback,
         );
-    } else {
-        return $callback->();
-    }
 }
 
 

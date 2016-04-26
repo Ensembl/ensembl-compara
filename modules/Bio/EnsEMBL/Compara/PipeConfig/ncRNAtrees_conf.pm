@@ -83,9 +83,6 @@ sub default_options {
             # ambiguity codes
             'allow_ambiguity_codes'    => 0,
 
-            # We use transactions to ensure that the data is still consistent in case of failures / interruptions
-            'do_transactions'           => 1,
-
             # Do we want to initialise the CAFE part now ?
             'initialise_cafe_pipeline'  => undef,
             # Data needed for CAFE
@@ -117,8 +114,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
-
-        'do_transactions'   => $self->o('do_transactions'),
     }
 }
 

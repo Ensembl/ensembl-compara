@@ -72,9 +72,6 @@ Supported keys:
        the region for DnaFrag 2046355 from position 126902742 only and 
        the region for DnaFrag 1045566 to position 139208434 only
 
-    'do_transactions' => <0|1>
-       Use transactions. Default is yes.
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. 
@@ -98,7 +95,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'do_transactions' => 1, #set default to do transactions
             'trim' => undef,
             'species_order' => undef, #local
             'species_tree' => undef, #local

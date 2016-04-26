@@ -103,7 +103,6 @@ sub param_defaults {
         'remove_columns'    => 0,
         'check_split_genes' => 1,
         'read_tags'         => 0,
-        'do_transactions'   => 1,
         'ryo_species_tree'  => '%{o}',
         'ryo_gene_tree'     => '%{-m}%{"_"-x}:%{d}',
 

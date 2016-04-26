@@ -48,16 +48,6 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{ $self->SUPER::param_defaults() },
-
-        # Force BaseRunnable::call_within_transaction() to use transactions to delete the rows
-        'do_transactions'   => 1,
-    };
-}
-
 
 sub fetch_input {
     my ($self) = @_;

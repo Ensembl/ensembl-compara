@@ -187,9 +187,6 @@ sub default_options {
    						'masking_options' => '{default_soft_masking => 1}'},
    			    },
 	    
-	#Use transactions in pair_aligner and chaining/netting modules (eg LastZ.pm, PairAligner.pm, AlignmentProcessing.pm)
-	'do_transactions' => 1,
-
         #
 	#Default filter_duplicates
 	#

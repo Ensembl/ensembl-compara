@@ -81,7 +81,6 @@ $| = 1;
 sub param_defaults {
     return {
 	    'program_version' => 2.1,
-            'do_transactions' => 1, #set default to do transactions
             #flag as to whether to write out conservation scores to the conservation_score
             #table. Default is to write them out.
             'no_conservation_scores' => 0,

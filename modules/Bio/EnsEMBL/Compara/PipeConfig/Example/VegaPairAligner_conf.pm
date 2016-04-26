@@ -101,9 +101,6 @@ sub default_options {
 	#min length to dump dna as nib file
 #	'dump_min_size' => 11500000, 
 
-	#Use transactions in pair_aligner and chaining/netting modules (eg LastZ.pm, PairAligner.pm, AlignmentProcessing.pm)
-#	'do_transactions' => 1,
-
         #
 	#Default filter_duplicates
 	#

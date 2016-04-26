@@ -46,14 +46,6 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub param_defaults {
-    my $self = shift;
-    return {
-        %{$self->SUPER::param_defaults},
-        'do_transactions'   => 1,
-    }
-}
-
 sub fetch_input {
     my ($self) = @_;
     

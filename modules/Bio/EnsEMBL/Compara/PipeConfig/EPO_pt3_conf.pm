@@ -424,7 +424,6 @@ return
 #            'program_version' => $self->o('gerp_version'),
 #            'window_sizes' => $self->o('gerp_window_sizes'),
 #            'gerp_exe_dir' => $self->o('gerp_exe_dir'),
-#	    'do_transactions' => 0,
 #        },
 #	-max_retry_count => 3,
 #        -hive_capacity   => 50,

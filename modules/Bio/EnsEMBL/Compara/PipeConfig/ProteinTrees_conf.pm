@@ -277,8 +277,6 @@ sub default_options {
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
         #'host' => 'compara1',
-        # We use transactions to ensure that the data is still consistent in case of failures / interruptions
-        'do_transactions'           => 1,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
@@ -457,8 +455,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'examl_dir'     => $self->o('examl_dir'),
         'dump_dir'      => $self->o('dump_dir'),
         'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
-
-        'do_transactions'   => $self->o('do_transactions'),
 
         'clustering_mode'   => $self->o('clustering_mode'),
 
