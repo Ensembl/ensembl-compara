@@ -360,6 +360,12 @@ sub store_featurePair_as_genomicAlignBlock
   $genomic_align2->dnafrag_strand($fp->hstrand);
   $genomic_align2->visible(1);
 
+  # Don't store self-alignments
+  return undef if ($genomic_align1->dnafrag_id == $genomic_align2->dnafrag_id)
+                    && ($genomic_align1->dnafrag_start == $genomic_align2->dnafrag_start)
+                    && ($genomic_align1->dnafrag_end == $genomic_align2->dnafrag_end)
+                    && ($genomic_align1->dnafrag_strand == $genomic_align2->dnafrag_strand);
+
   my $cigar2 = $fp->cigar_string;
   $cigar2 =~ s/D/M/g;
   $cigar2 =~ s/I/D/g;
