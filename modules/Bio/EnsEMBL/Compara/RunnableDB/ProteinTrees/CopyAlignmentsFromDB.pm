@@ -83,13 +83,14 @@ sub fetch_input {
 
         #Get copy tree
         #----------------------------------------------------------------------------------------------------------------------------
-		#Need to get tree with ref_root_id and clusterset_id="copy"
-		my $sth = $self->param('current_gene_tree')->adaptor->db->dbc->prepare('SELECT root_id FROM gene_tree_root where clusterset_id="copy" and ref_root_id=?;');
-		$sth->execute($self->param('gene_tree_id'));
-		$self->param('copy_root_id', $sth->fetchrow_array());
-		$sth->finish;
+        #Need to get tree with ref_root_id and clusterset_id="copy"
+        my $sth = $self->param('current_gene_tree')->adaptor->db->dbc->prepare('SELECT root_id FROM gene_tree_root where clusterset_id="copy" and ref_root_id=?;');
+        $sth->execute( $self->param('gene_tree_id') );
+        $self->param( 'copy_root_id', $sth->fetchrow_array() );
+        $sth->finish;
         $self->param( 'copy_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('copy_root_id') ) );
-        $self->param( 'copy_gene_tree' )->preload();
+        $self->param('copy_gene_tree')->preload();
+
         #----------------------------------------------------------------------------------------------------------------------------
 
         print "Fetching tree for stable ID/root_id: " . $self->param('stable_id') . "/" . $self->param('gene_tree_id') . "\n" if ( $self->debug );
@@ -128,14 +129,14 @@ sub fetch_input {
         my %cigar_lines_reuse_tree;
         foreach my $member ( @{ $self->param('reuse_gene_tree')->get_all_Members } ) {
             $cigar_lines_reuse_tree{ $member->stable_id } = $member->cigar_line;
-            print "reusing_cigar:".$member->stable_id."\n" if ($self->debug);
+            print "reusing_cigar:" . $member->stable_id . "\n" if ( $self->debug );
         }
 
         #Copying the cigar lines to the new tree excluding the members that need update:
         foreach my $current_member ( @{ $self->param('copy_gene_tree')->get_all_Members } ) {
             if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) && ( !defined( $members_2_b_added_updated{ $current_member->stable_id } ) ) ) {
                 $current_member->cigar_line( $cigar_lines_reuse_tree{ $current_member->stable_id } );
-                print "copying_cigar:".$current_member->stable_id."\n" if ($self->debug);
+                print "copying_cigar:" . $current_member->stable_id . "\n" if ( $self->debug );
             }
         }
 
@@ -154,24 +155,36 @@ sub write_output {
         $self->_store_aln_tags();
     }
 
-	my $reuse_aln = $self->param('reuse_gene_tree')->alignment;
-    $self->param('copy_gene_tree')->aln_length($reuse_aln->aln_length);
-    $self->param('copy_gene_tree')->aln_method($reuse_aln->aln_method);
+    #In case the tree is an identical copy or only_needs_deleting, we would like to store the alignment for the default tree as well.
+    # Since it is used by build_HMM_cds_v3 and build_HMM_aa_v3
+    if ( ( $self->param('current_gene_tree')->has_tag('identical_copy') && ( $self->param('current_gene_tree')->get_value_for_tag('identical_copy') == 1 ) ) ||
+         ( $self->param('current_gene_tree')->has_tag('only_needs_deleting') && ( $self->param('current_gene_tree')->get_value_for_tag('only_needs_deleting') == 1 ) ) ) {
+        my $reuse_aln = $self->param('reuse_gene_tree')->alignment;
+        $self->param('current_gene_tree')->aln_length( $reuse_aln->aln_length );
+        $self->param('current_gene_tree')->aln_method( $reuse_aln->aln_method );
+
+        $self->compara_dba->get_GeneAlignAdaptor->store( $self->param('current_gene_tree') ) || die "Could not store alignment for: current_gene_tree";
+    }
+
+    #We always store the alignment for the copy trees.
+    my $reuse_aln = $self->param('reuse_gene_tree')->alignment;
+    $self->param('copy_gene_tree')->aln_length( $reuse_aln->aln_length );
+    $self->param('copy_gene_tree')->aln_method( $reuse_aln->aln_method );
 
     $self->compara_dba->get_GeneAlignAdaptor->store( $self->param('copy_gene_tree') ) || die "Could not store alignment for: copy_gene_tree";
 
-	#If the current tree is not an update tree, we should not flow to mafft_update.
-	#But it must be done after copying the alignment!
-    if ( !$self->param('current_gene_tree')->has_tag('needs_update') ){
+    #If the current tree is not an update tree, we should not flow to mafft_update.
+    #But it must be done after copying the alignment!
+    if ( !$self->param('current_gene_tree')->has_tag('needs_update') ) {
         $self->warning("Current tree is not an update tree, we should not flow to mafft_update");
         $self->input_job->autoflow(0);
-	}
-}
+    }
+} ## end sub write_output
 
 sub _store_aln_tags {
     my $self = shift;
 
-	print "storing_tags ...\n";
+    print "storing_tags ...\n";
     if ( $self->param('reuse_gene_tree')->has_tag('aln_runtime') ) {
         $self->param('copy_gene_tree')->store_tag( "aln_runtime", $self->param('reuse_gene_tree')->get_value_for_tag('aln_runtime') );
     }
