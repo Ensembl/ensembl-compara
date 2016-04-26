@@ -738,21 +738,21 @@ sub snpedia {
   if (!$snpedia_wiki_results->{'pageid'}) {
     return ();
   }
-
-  if ($#{$snpedia_wiki_results->{desc}} < 0) {
-    $snpedia_wiki_results->{desc}[0] = 'Description not available';
-  }
   
   my $snpedia_search_link = $hub->get_ExtURL_link('[More information from SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $rs_id });
-  my $count = scalar @{$snpedia_wiki_results->{desc}}; 
+  if ($#{$snpedia_wiki_results->{desc}} < 0) {
+    $snpedia_wiki_results->{desc}[0] = 'Description not available ' . $snpedia_search_link;
+  }
 
+  my $count = scalar @{$snpedia_wiki_results->{desc}}; 
   if ($count > 1) {
-    my $show = 'false';
+    my $show = 0;
+    
     return [
       'Description from SNPedia',
       sprintf( '%s...
                 <a title="Click to show synonyms" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
-                <div class="toggleable snpedia_more_desc style="%s">
+                <div class="toggleable snpedia_more_desc" style="%s">
                   %s
                   %s
                 </div>
