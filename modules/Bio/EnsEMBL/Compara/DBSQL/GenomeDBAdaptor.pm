@@ -276,18 +276,9 @@ sub fetch_all_by_ancestral_taxon_id {
 }
 
 
-=head2 fetch_all_by_low_coverage
-
-  Example    : $low_cov_gdbs = $gdba->fetch_all_by_low_coverage();
-  Description: Retrieves all the genome dbs that have low coverage
-  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub fetch_all_by_low_coverage {  ## UNUSED
+sub fetch_all_by_low_coverage {  ## DEPRECATED
     my ($self) = @_;
+    deprecate('GenomeDBAdaptor::fetch_all_by_low_coverage() will be removed in e86');
     return $self->_id_cache->get_all_by_additional_lookup('is_high_coverage', 0);
 }
 
@@ -605,7 +596,7 @@ sub compute_keys {
             # The species that are current and have a taxon_id (i.e. all but "ancestral_sequences")
             ($genome_db->taxon_id and $genome_db->is_current) ? (
                 taxon_id_default_assembly => $genome_db->taxon_id,  ## UNUSED
-                is_high_coverage => $genome_db->is_high_coverage,   ## UNUSED
+                is_high_coverage => $genome_db->is_high_coverage,   ## DEPRECATED
                 is_polyploid => $genome_db->is_polyploid,           ## UNUSED
             ) : (),
 

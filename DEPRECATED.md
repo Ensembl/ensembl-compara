@@ -10,6 +10,7 @@
 
 ## Miscellaneous, to be removed in Ensembl 86
 
+* `GenomeDBAdaptor::fetch_all_by_low_coverage()`
 * `HomologyAdaptor::fetch_all_by_Member_paired_species()`
 * `HomologyAdaptor::fetch_all_by_genome_pair()`
 * `ConstrainedElementAdaptor::fetch_all_by_dbID()`
