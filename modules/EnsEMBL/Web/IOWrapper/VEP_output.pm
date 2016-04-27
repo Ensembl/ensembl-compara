@@ -61,7 +61,8 @@ sub create_hash {
                         'strand'      => $feature_strand,
                         });
 
-
+  my $allele    = $self->parser->get_allele;
+  my $cons      = $self->parser->get_consequence;
 
   my $feature = {
                   'seq_region'    => $seqname,
@@ -74,15 +75,18 @@ sub create_hash {
     $feature->{'start'} = $feature_start;
     $feature->{'end'}   = $feature_end;
     my @uploaded  = split(/_/, $self->parser->get_uploaded_variation);
-    my $allele    = $self->parser->get_allele;
-    my $cons      = $self->parser->get_consequence;
     (my $cons_text = $cons) =~ s/_/ /; 
     $feature->{'extra'} = [
                             {'name' => 'Alleles',         'value' => $uploaded[-1]},
                             {'name' => 'Variant allele',  'value' => $allele},
                             {'name' => 'Consequence',     'value' => $cons_text},
-                            {'name' => 'IMPACT',          'value' => $self->parser->get_impact},
                             ];
+    ## Additional arbitrary fields (depend on plugins)
+    my %extras = %{$self->parser->get_extra};
+    foreach my $key (sort keys %extras) {
+      (my $name = $key) =~ s/_/ /;
+      push @{$feature->{'extra'}}, {'name' => $name, 'value' => $extras{$key}};
+    }
   } 
   else {
     $feature->{'start'} = $start;
