@@ -106,7 +106,6 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-#    $self->tag_assembly_coverage_depth;
     $self->load_mirbase_families;
     $self->run_rfamclassify;
 }
@@ -302,26 +301,5 @@ sub load_mirbase_families {
   printf("time for mirbase families fetch : %1.3f secs\n" , time()-$starttime);
 }
 
-sub tag_assembly_coverage_depth {
-  my $self = shift;
-
-  my @low_coverage  = ();
-  my @high_coverage = ();
-
-  foreach my $gdb (@{$self->param('cluster_mlss')->species_set_obj->genome_dbs()}) {
-    if ($gdb->is_high_coverage) {
-      push @high_coverage, $gdb;
-    } else {
-      push @low_coverage, $gdb;
-    }
-  }
-  return undef unless(scalar(@low_coverage));
-
-  my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
-
-  my $ss = new Bio::EnsEMBL::Compara::SpeciesSet(-name => 'low-coverage', -genome_dbs => \@low_coverage, -adaptor => $species_set_adaptor);
-  # Stores if necessary. Updates $ss->dbID anyway
-  $species_set_adaptor->store($ss);
-}
 
 1;

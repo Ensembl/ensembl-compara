@@ -121,19 +121,6 @@ sub fetch_input {
   foreach my $epo_gdb (@{$epo_ss->genome_dbs}) {
       $self->param('epo_gdb')->{$epo_gdb->dbID} = 1;
   }
-
-  # my ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_name('low-coverage-assembly') };
-  # unless($low_cov_ss) {
-  #   ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_name('low-coverage') };
-  # }
-  # unless($low_cov_ss) {
-  #   die "A SpeciesSet named either 'low-coverage-assembly' or 'low-coverage' must be present in the database to run this analysis\n";
-  # }
-  # $self->param('low_cov_gdbs', {});
-  # foreach my $gdb (@{$low_cov_ss->genome_dbs}) {
-  #   $self->param('low_cov_gdbs')->{$gdb->dbID} = 1;
-  # }
-
 }
 
 =head2 run
