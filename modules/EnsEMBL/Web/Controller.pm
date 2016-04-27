@@ -34,10 +34,6 @@ use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
 use base qw(EnsEMBL::Web::Root);
 
-use Time::HiRes qw(time);
-
-my $DEBUG_TIME = 0;
-
 my @HANDLES_TO_DISCONNECT;
 
 sub r             :Getter('r');
@@ -92,8 +88,6 @@ sub process {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $time_a = time if $DEBUG_TIME;
-
   try {
     $self->init_cache;
     $hub->qstore_open;
@@ -102,11 +96,6 @@ sub process {
   } catch {
     $_->handle($hub);
   };
-
-  if ($DEBUG_TIME) {
-    my $time_b = time;
-    warn sprintf("%s : %dms\n",$self->{'hub'}->apache_handle->unparsed_uri,($time_b-$time_a)*1000);
-  }
 }
 
 sub query_form {
