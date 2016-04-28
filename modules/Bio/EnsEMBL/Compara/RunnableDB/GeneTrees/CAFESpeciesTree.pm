@@ -281,6 +281,7 @@ sub include_names {
     my $genomeDB_Adaptor = $self->param('genomeDB_Adaptor');
     my $leaves = $tree->get_all_leaves();
     for my $leaf ( @$leaves ) {
+        next if $leaf->name;
         my $taxon_id = $leaf->taxon_id();
 #        $taxon_id =~ s/\*//g;
         my $genomeDB = $genomeDB_Adaptor->fetch_by_taxon_id($taxon_id);
