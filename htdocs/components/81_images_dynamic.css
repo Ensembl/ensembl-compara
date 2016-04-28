@@ -115,21 +115,22 @@ li.usertrack_highlight::after {
 /* Hover menus */
 
 .hover_layer                              { position: absolute; opacity: 0.1; cursor: pointer; }
-.hover_layer:hover                        { background-color: #333; }
+.hover_layer                              { background-color: #333; }
+.hover_label span.close               { position: absolute; right: 0; top: -10px; right: -10px; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; z-index: 201; }
 
 .label_layer,
-.label_layer .label_layer_bg              { position: absolute; margin-left: -5px; padding-right: 5px; padding-bottom: 2px; }
+.label_layer .label_layer_bg              { cursor: pointer; position: absolute; margin-left: -5px; padding-right: 5px; padding-bottom: 2px; }
 .label_layer .label_layer_bg              { width: inherit; height: inherit; margin: 0; background-color: #333; opacity: 0.1; display: none; }
 .hover_label                              { position: absolute; margin-left: 5px; padding: 0 0 4px; border: none; display: none; text-align: left; width: 450px; cursor: default; }
 .hover_label div.spinner                  { display: none; }
 .hover_label_spinner div                  { display: none; }
-.hover_label_spinner div.spinner          { display: block; }
+.hover_label_spinner div.spinner          { display: none; }
 .label_layer.focused .label_layer_bg,
 .label_layer.pinned .label_layer_bg,
-.label_layer:hover .label_layer_bg,
+.label_layer_bg,
 .label_layer.focused .hover_label,
 .label_layer.pinned .hover_label,
-.label_layer:hover .hover_label           { display: block; }
+/*.hover_label                              { display: none;}*/
 .hover_label.name_only                    { padding: 0; }
 .hover_label.name_only p.header           { margin: 0; }
 .hover_label a.favourite,

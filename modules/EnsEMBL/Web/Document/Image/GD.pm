@@ -326,6 +326,7 @@ sub hover_labels {
         <div class="hl-buttons">%s</div>
         <div class="hl-content">%s</div>
         <div class="spinner"></div>
+        <span class="close"></span>
       </div>),
       $label->{'class'},
       $label->{'header'},

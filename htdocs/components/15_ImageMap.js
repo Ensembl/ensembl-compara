@@ -274,7 +274,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var speciesNumber, c, r, start, end, scale;
 
       c = { a: this };
-      
       if (this.shape && this.shape.toLowerCase() !== 'rect') {
         c.c = [];
         $.each(this.coords, function () { c.c.push(parseInt(this, 10)); });
@@ -325,7 +324,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.elLk.drag.on({
       mousedown: function (e, e2) {
-
         e = e2 || e;
 
         if (!e.which || e.which === 1) { // Only draw the drag box for left clicks.
@@ -392,7 +390,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     });
   },
-  
+
   makeHoverLabels: function () {
     var panel = this;
 
@@ -410,12 +408,17 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             hoverLabel += k;
           }
         });
+
         hoverLabel = panel.elLk.hoverLabels.filter('.' + hoverLabel);
 
         if (hoverLabel.length) {
           // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
           panel.elLk.labelLayers = panel.elLk.labelLayers.add(
-            $('<div class="label_layer _label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(panel.elLk.container).data({area: this})
+            $('<div class="label_layer _label_layer">')
+            .append('<div class="label_layer_bg">')
+            .append(hoverLabel)
+            .appendTo(panel.elLk.container)
+            .data({area: this})
           );
         }
 
@@ -437,7 +440,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         panel.elLk.labelLayers = panel.elLk.labelLayers.add(layer);
 
         (function(layer) {
-          layer.on('mouseenter',function(e) {
+          layer.on('click',function(e) {
             if (!$(this).data('zmenu')) {
               var zmid = panel.makeZMenu(e,panel.getMapCoords(e),{'approx':2});
               $(this).data('zmenu', zmid);
@@ -457,8 +460,25 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
 
     // add dyna loading to label layers for track description
-    this.elLk.labelLayers.on('mouseenter', function () {
-      $(this).find('._dyna_load').removeClass('_dyna_load').dynaLoad();
+    this.elLk.labelLayers.on({
+      mouseenter: function () {
+        $(this).find('._dyna_load').removeClass('_dyna_load').dynaLoad();
+      },
+      click: function(e) {
+        // Hide all open menus on clicking new menu except the pinned ones.
+        $(panel.elLk.labelLayers).not('.pinned').find('.hover_label').hide();
+        // show label
+        $(this).find('.hover_label').show()
+               .find('.close').on({
+                click: function(e) {
+                  $(this).parent().hide();
+                  // Remove pinned class
+                  $(this).siblings('._hl_pin').removeClass('on')
+                         .closest('._label_layer').removeClass('pinned');
+                  e.stopPropagation();
+                }
+               });
+      },
     });
 
     // apply css positions to the hover layers
@@ -517,8 +537,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $(this).find('._hl_icon').removeClass('_hl_icon').tabs($(this).find('._hl_tab')).end()
 
       // init the header/pin icon that holds the hover label if clicked
-      .find('._hl_pin').off().on('click', function () {
+      .find('._hl_pin').off().on('click', function (e) {
         $(this).toggleClass('on').closest('._label_layer').toggleClass('pinned', $(this).hasClass('on'));
+        e.stopPropagation && e.stopPropagation();
       }).end()
 
       // init the extend icon to drag-change hover label's width
@@ -537,8 +558,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
       });
 
+      // On highlight icon click toggle highlight
       $(this).find('.hl-icon-highlight').on('click', function(e) {
-        panel.highlightTrack(this);
+        var track_classname = $(this).data('highlightTrack');
+        panel.toggleHighlight(track_classname);
+        $(this).toggleClass('selected');
       });
     })
 
@@ -554,11 +578,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
   },
 
-  highlightTrack: function(element) {
+  toggleHighlight: function(track_classname) {
     var panel = this;
-    var highlight_class = 'li.'+$(element).data('highlightTrack');
-    $(element).toggleClass('selected');
+    var highlight_class = 'li.' + track_classname;
     $($(panel.elLk.boundaries).find(highlight_class)[0]).toggleClass('track_highlight _highlight_on');
+  },
+
+  trackHighlighted: function(track_classname) {
+    var panel = this;
+    var highlight_class = 'li.' + track_classname;
+    if($($(panel.elLk.boundaries).find(highlight_class)[0]).hasClass('track_highlight _highlight_on')) {
+      return true;
+    }
+    return false;    
   },
 
   handleConfigClick: function (link) {
@@ -701,40 +733,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         panel.sortUpdate(e, ui);
       }
     }).css('visibility', 'visible').find('li').on({
-      mouseover: function() {
+      mouseenter: function(e) {
         if(! $(this).hasClass('_highlight_on')) {
           $(this).delay(200).addClass('track_highlight', 200, 'linear');
         }
       },
-      mouseout: function() {
+      mouseleave: function() {
         if(! $(this).hasClass('_highlight_on')) {
           $(this).removeClass('track_highlight', 100, 'linear');
         }
       }
     }).find('div.handle').on({
-      mouseover: function(e) {
-        // Dont highlight track on hover
-        if(! $(this.parentNode).hasClass('_highlight_on')) {
-          console.log('ON')
-          $(this.parentNode).removeClass('track_highlight').finish();
-          e.stopPropagation();
-        }
-      },
-       mousedown: function() {
-        if(! $(this.parentNode).hasClass('_highlight_on')) {
-          $(this.parentNode).addClass('track_highlight', 200, 'linear');
-        }
-       },
-       mouseup: function() {
-        if(! $(this.parentNode).hasClass('_highlight_on')) {
-          $(this.parentNode).removeClass('track_highlight', 100, 'linear');
-        }
-       },
-       mousemove: function() {
-        if(! $(this.parentNode).hasClass('_highlight_on')) {
-          $(this.parentNode).removeClass('track_highlight', 100, 'linear');
-        }
-       }
+
      });
 
     // split img into two image to show top and bottom of the image separately
