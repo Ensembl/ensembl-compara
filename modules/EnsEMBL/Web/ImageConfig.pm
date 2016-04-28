@@ -117,8 +117,7 @@ sub initialize {
   } else {
     # No cached defaults found, so initialize them and cache
     $self->init;
-    $self->modify;
-    
+
     if ($cache && $cache_key) {
       $self->tree->hide_user_data;
       
@@ -227,7 +226,6 @@ sub menus {
 }
 
 sub init   {}
-sub modify {} # For plugins
 
 sub storable     :lvalue { $_[0]{'_parameters'}{'storable'};     } # Set to 1 if configuration can be altered
 sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
