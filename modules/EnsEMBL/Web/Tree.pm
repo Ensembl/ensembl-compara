@@ -72,25 +72,6 @@ sub flush_user {
   return $return;
 }
 
-# Better than setting and resetting because it keeps the same reference
-# when revealed which other objects may have cached.
-sub hide_user_data {
-  my $self = shift;
-  foreach ($self,$self->nodes) {
-    $_->{'hidden_user_data'} = $_->{'user_data'} unless exists $_->{'hidden_user_data'};
-    $_->{'user_data'} = {};
-  }
-  return $self;
-}
-
-sub reveal_user_data {
-  my ($self,$src) = @_;
-  foreach ($self,$self->nodes) {
-    $_->{'user_data'} = $_->{'hidden_user_data'} || {};
-    delete $_->{'hidden_user_data'};
-  }
-}
-
 sub push_user_data_through_tree {
   my ($self,$data) = @_;
 

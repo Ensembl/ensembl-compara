@@ -117,19 +117,7 @@ sub initialize {
   } else {
     # No cached defaults found, so initialize them and cache
     $self->init;
-
-    if ($cache && $cache_key) {
-      $self->tree->hide_user_data;
-      
-      my $defaults = {
-        _tree       => $self->{'_tree'},
-        _parameters => $self->{'_parameters'},
-        extra_menus => $self->{'extra_menus'},
-      };
-      
-      $cache->set($cache_key, $defaults, undef, 'IMAGE_CONFIG', $species);
-      $self->tree->reveal_user_data;
-    }
+    $self->save_to_cache;
   }
   
   my $sortable = $self->get_parameter('sortable_tracks');
@@ -3642,6 +3630,42 @@ sub share {
   delete $user_settings->{'track_order'}{$_} for grep $_ ne $species, keys %{$user_settings->{'track_order'}};
 
   return $user_settings;
+}
+
+sub save_to_cache {
+  my $self      = shift;
+  my $cache     = $self->hub->cache;
+  my $cache_key = $self->cache_key;
+
+  if ($cache && $cache_key) {
+    $self->_hide_user_data;
+
+    my $defaults = {
+      _tree       => $self->{'_tree'},
+      _parameters => $self->{'_parameters'},
+      extra_menus => $self->{'extra_menus'},
+    };
+
+    $cache->set($cache_key, $defaults, undef, 'IMAGE_CONFIG', $self->species);
+    $self->_reveal_user_data;
+  }
+}
+
+# Better than setting and resetting because it keeps the same reference
+# when revealed which other objects may have cached.
+sub _hide_user_data {
+  my $tree = shift->tree;
+  foreach ($tree, $tree->nodes) {
+    $_->{'hidden_user_data'} = $_->{'user_data'} unless exists $_->{'hidden_user_data'};
+    $_->{'user_data'} = {};
+  }
+}
+
+sub _reveal_user_data {
+  my $tree = shift->tree;
+  foreach ($tree, $tree->nodes) {
+    $_->{'user_data'} = delete $_->{'hidden_user_data'} || {};
+  }
 }
 
 sub _clone_track {
