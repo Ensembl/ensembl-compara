@@ -31,6 +31,7 @@ use EnsEMBL::Web::File::Utils::TrackHub;
 use EnsEMBL::Web::Command::UserData::AddFile;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Tree;
+use EnsEMBL::Web::DataStructure::DoubleLinkedList;
 
 #########
 # 'user' settings are restored from cookie if available
@@ -299,8 +300,7 @@ sub glyphset_configs {
   if (!$self->{'ordered_tracks'}) {
     my @tracks      = $self->get_tracks;
     my $track_order = $self->track_order;
-
-    my ($pointer, $first_track, $last_pointer, $i, %lookup, @default_order, @ordered_tracks);
+    my @default_order;
 
     foreach my $track ($self->default_track_order(@tracks)) {
       my $strand = $track->get('strand');
@@ -324,55 +324,50 @@ sub glyphset_configs {
     
     if ($self->get_parameter('sortable_tracks')) {
 
+      my ($pointer, $first_track, $last_immovable_track, $i, %lookup, $ordered_tracks);
+
       # make a 'double linked list' to make it easy to apply user sorting on it
-      for (@default_order) {
-        $_->set('sortable', 1) unless $self->{'unsortable_menus'}->{$_->parent_key};
-        $lookup{ join('.', $_->id, $_->get('drawing_strand') || ()) } = $_;
-        $_->{'__prev'} = $last_pointer if $last_pointer;
-        $last_pointer->{'__next'} = $_ if $last_pointer;
-        $last_pointer = $_;
-      }
+      $first_track = EnsEMBL::Web::DataStructure::DoubleLinkedList->from_array(\@default_order);
 
-      # Apply user track sorting now
-      $pointer = $first_track = $default_order[0];
-      $pointer = $pointer->{'__next'} while $pointer && !$pointer->get('sortable'); # these tracks can't be moved from the beginning of the list
-      $pointer = $pointer->{'__prev'} || $default_order[-1]; # point to the last track among all the immovable tracks at beginning of the track list
-      for (@$track_order) {
-        my $track = $lookup{$_->[0]} or next;
-        my $prev  = $_->[1] && $lookup{$_->[1]} || $pointer; # pointer (and thus prev) could possibly be undef if there was no immovable track in the beginning
-        my $next  = $prev ? $prev->{'__next'} : undef;
+      # add all qualifying tracks to the lookup
+      $pointer = $first_track;
+      while ($pointer) {
+        my $node      = $pointer->node;
+        my $sortable  = $node->data->{'sortable'} || !$self->{'unsortable_menus'}{$node->parent_key};
 
-        # if $prev is undef, it means $track is supposed to moved to first position in the list, thus $next should be current first track
-        # First track in the list could possibly have changed in the last iteration of this loop, so rewind it before setting $next
-        if (!$prev) {
-          $first_track  = $first_track->{'__prev'} while $first_track->{'__prev'};
-          $next         = $first_track;
+        if ($sortable) {
+          $node->set('sortable', 1);
+          $lookup{ join('.', $node->id, $node->get('drawing_strand') || ()) } = $pointer;
+        } else {
+          if (!scalar keys %lookup) { # if we haven't found any sortable tracks yet, and the current one isn't sortable, then save the current pointer as last immovable track
+            $last_immovable_track = $pointer;
+          }
         }
 
-        $track->{'__prev'}{'__next'}  = $track->{'__next'} if $track->{'__prev'};
-        $track->{'__next'}{'__prev'}  = $track->{'__prev'} if $track->{'__next'};
-        $track->{'__prev'}            = $prev;
-        $track->{'__next'}            = $next;
-        $track->{'__prev'}{'__next'}  = $track if $track->{'__prev'};
-        $track->{'__next'}{'__prev'}  = $track if $track->{'__next'};
+        $pointer = $pointer->next;
       }
 
-      # Get the first track in the list after sorting and create a new ordered list starting from that track
-      $pointer = $pointer->{'__prev'} while $pointer->{'__prev'};
-      delete $pointer->{'__prev'};
-      $pointer->set('order', ++$i);
-      push @ordered_tracks, $pointer;
+      # go through the state changes made by the user, one by one, and reorder the tracks accordingly
+      for (@$track_order) {
+        my $track = $lookup{$_->[0]} or next;
+        my $prev  = $_->[1] && $lookup{$_->[1]} || $last_immovable_track; # if no prev track provided for the current track, move the track to just after the last immovable track
 
-      while ($pointer = $pointer->{'__next'}) {
-        delete $pointer->{'__prev'}{'__next'};
-        delete $pointer->{'__prev'};
-        $pointer->set('order', ++$i);
-        push @ordered_tracks, $pointer;
+        # if $prev is undef and we don't have any immovable tracks, it means $track is supposed to moved to first position in the list
+        if ($prev) {
+          $prev->after($track);
+        } else {
+          $first_track->before($track);
+          $first_track = $track;
+        }
       }
 
-      delete $pointer->{'__next'};
+      # break the linked list into an ordered array
+      $ordered_tracks = $first_track->to_array({'unlink' => 1});
 
-      $self->{'ordered_tracks'} = \@ordered_tracks;
+      # Set the 'order' key according to the final order
+      $_->set('order', ++$i) for @$ordered_tracks;
+
+      $self->{'ordered_tracks'} = $ordered_tracks;
 
     } else {
       $self->{'ordered_tracks'} = \@default_order;
