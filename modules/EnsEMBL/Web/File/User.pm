@@ -199,7 +199,9 @@ sub upload {
     $error = $result->{'error'}[0];
   }
   else {
-    my $response = $self->write($result->{'content'});
+    ## Append an extra newline to the content, because the parser expects
+    ## all lines to end in a newline character, including the last
+    my $response = $self->write($result->{'content'}."\n");
 
     if ($response->{'success'}) {
 
