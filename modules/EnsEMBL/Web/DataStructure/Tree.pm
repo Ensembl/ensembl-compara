@@ -22,6 +22,7 @@ package EnsEMBL::Web::DataStructure::Tree;
 
 use strict;
 use warnings;
+no warnings qw(recursion); # deep recursion expected
 
 use EnsEMBL::Web::Exceptions;
 

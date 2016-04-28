@@ -22,6 +22,7 @@ package EnsEMBL::Web::DataStructure::DoubleLinkedList;
 
 use strict;
 use warnings;
+no warnings qw(recursion); # deep recursion expected
 
 use EnsEMBL::Web::Exceptions;
 
@@ -53,16 +54,16 @@ sub from_array {
 sub to_array {
   my ($self, $options) = @_;
 
-  my @array = ($self);
+  my @array = ($self->node);
 
   my $node = $self;
   while ($node = $node->{'__ds_next'}) {
-    push @array, $node;
+    push @array, $node->node;
   }
 
   $node = $self;
   while ($node = $node->{'__ds_prev'}) {
-    unshift @array, $node;
+    unshift @array, $node->node;
   }
 
   $self->unlink if $options && $options->{'unlink'};
@@ -138,8 +139,8 @@ sub insert_before {
 sub unlink {
   my $self = shift;
 
-  my $previous  = delete $node->{'__ds_prev'};
-  my $next      = delete $node->{'__ds_next'};
+  my $previous  = delete $self->{'__ds_prev'};
+  my $next      = delete $self->{'__ds_next'};
 
   $previous->unlink if $previous;
   $next->unlink     if $next;
@@ -153,15 +154,14 @@ sub _check_node {
   my $class = ref $self || $self;
 
   if ($node && ref $node) {
-
     if (ref $self && $self eq $node) {
       throw exception('DataStructureException', 'Attempt to insert duplicate node in the linked list.');
     }
-    return $self->new($node) if ref $node eq 'HASH';
+    return $class->new($node) if ref $node eq 'HASH';
     return $node if $node->isa($class);
   }
 
-  throw exception('DataStructureException', 'Node can only be a HASH or an object of type '.$class);
+  return $class->new({'__ds_node' => $node});
 }
 
 sub _before {

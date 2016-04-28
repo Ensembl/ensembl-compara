@@ -24,7 +24,7 @@ use warnings;
 sub new {
   my ($class, $obj) = @_;
 
-  return $obj, ref $class || $class;
+  return bless $obj, ref $class || $class;
 }
 
 sub set {
@@ -39,6 +39,12 @@ sub get {
 
   return if $key =~ /^__ds_$/;
   return $self->{$key};
+}
+
+sub node {
+  my $self = shift;
+
+  return exists $self->{'__ds_node'} ? $self->{'__ds_node'} : $self;
 }
 
 1;
