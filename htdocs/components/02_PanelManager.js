@@ -131,13 +131,6 @@ Ensembl.PanelManager.extend({
         container.html(html);
         
         id = id || this.generateId(container[0]);
-
-        // Remove highlight on hover
-        $(container).find('._new_userdata').on({
-          mouseover: function() {
-            $(this).removeClass('usertrack_highlight _new_userdata', 300, 'linear').finish().clearQueue();
-          }
-        });
       }
       
       if (id) {

@@ -88,6 +88,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.initImageButtons();
     this.initImagePanning();
     this.initSelector();
+    this.highlightLastUploadedUserDataTrack();
     this.markLocation(Ensembl.markedLocation);
     
     if (!this.vertical) {
@@ -591,6 +592,48 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return true;
     }
     return false;    
+  },
+
+  highlightLastUploadedUserDataTrack: function() {
+    var panel = this;
+    var count = 0;
+    var adjacent_tracks = [];
+    this.elLk.boundaries.children().each(function (i) {
+      var li  = $(this);
+      if ($(this).hasClass('_new_userdata')) {
+        adjacent_tracks.push(li);
+        count++;
+      }
+      else {
+        if(count > 1 && adjacent_tracks.length > 1) {
+          $(adjacent_tracks).each(function(i, li_element) {
+            // Top track
+            if (i == 0) {
+              $(li_element).addClass('usertrack_highlight_border_top usertrack_highlight_border_left usertrack_highlight_border_right');
+            }
+            // Middle tracks
+            else if (i !== adjacent_tracks.length - 1 ) {
+              $(li_element).addClass('usertrack_highlight_border_left usertrack_highlight_border_right');
+            }
+            // Bottom track
+            else {
+              $(li_element).addClass('usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right');
+            }
+
+            $(li_element).on('mouseover', function() {
+              $(this).parent('ul').children('li').removeClass('usertrack_highlight _new_userdata usertrack_highlight_border_top usertrack_highlight_border_left usertrack_highlight_border_right usertrack_highlight_border_bottom', 2000, 'linear');
+            })
+          })
+          adjacent_tracks = [];
+        }
+        else {
+          adjacent_tracks.length == 1 &&
+            $(adjacent_tracks[0]).addClass('usertrack_highlight_border_top usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right');          
+        }
+        count = 0;
+      }
+    });
+
   },
 
   handleConfigClick: function (link) {

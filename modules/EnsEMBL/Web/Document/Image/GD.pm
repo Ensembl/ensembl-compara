@@ -451,16 +451,20 @@ sub moveable_tracks {
   my ($top, $html);
   
   # Get latest uploaded user data to add highlight class
-  my $last_uploaded_user_data_code = $self->hub->session->get_data(type => 'userdata_upload_code') ? 
-    $self->hub->session->get_data(type => 'userdata_upload_code')->{upload_code} : '';
+  my $last_uploaded_user_data_code = {};
+
+  if ($self->hub->session->get_data(type => 'userdata_upload_code')) {
+    foreach my $hash ($self->hub->session->get_data(type => 'userdata_upload_code')) {
+      $last_uploaded_user_data_code->{'upload_'.$hash->{upload_code}} = 1;
+    }
+  }
 
   # Purge this data so that it doesn't highlight second time.
   $self->hub->session->purge_data(type => 'userdata_upload_code');
   
   foreach (@{$self->track_boundaries}) {
     my ($t, $h, $type, $strand) = @$_;
-    my $highlight = ($last_uploaded_user_data_code && $type =~m/$last_uploaded_user_data_code/) ? 1 : 0;
-
+    my $highlight = $last_uploaded_user_data_code->{$type} || 0;
     $html .= sprintf(
       '<li class="%s %s %s" style="height:%spx;background:url(%s) 0 %spx%s">
         <div class="handle" style="height:%spx"%s><p></p></div>
