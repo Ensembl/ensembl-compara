@@ -35,7 +35,7 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .redbox2 img, .rubberband2 img, .rubberband img, .redbox img { height: 1px; width: 1px; }
 .rubberband  { background-image: url(/i/redants.gif); }
 .rubberband2 { background-image: url(/i/redants2.gif); }
-.redbox      { background-image: url(/i/red.gif); }
+.redbox      { background-image: url(/i/red.gif); pointer-events: none;}
 .redbox2     { background-color: red; }
 
 .drag_select                              { cursor: default; position: relative; }
@@ -57,7 +57,7 @@ li.usertrack_highlight {
 	position: relative;
 }
 
-li.usertrack_highlight::after {
+li.usertrack_highlight:after {
   content: "";
 	position: absolute;
   top: 0;
@@ -77,7 +77,6 @@ li.usertrack_highlight::after {
   align-items: center;
   overflow: hidden;
   padding: 2px;
-  animation: animatedBackground 3s linear infinite;
 }
 
 @keyframes animatedBackground {
@@ -103,10 +102,6 @@ li.usertrack_highlight::after {
   border-right: 2px solid [[TRACK_HIGHLIGHT_BORDER]];
 }
 
-@-webkit-keyframes fadeIn { from { opacity:0; } to { opacity:0.15; } }
-@-moz-keyframes fadeIn { from { opacity:0; } to { opacity:0.15; } }
-@keyframes fadeIn { from { opacity:0; } to { opacity:0.15; } }
-
 /* Track highlight on hover */
 .track_highlight {
   position: relative;
@@ -115,7 +110,7 @@ li.usertrack_highlight::after {
 /* ::before - so that sort track div handle is accessible */
 .track_highlight::before {
   content: "";
-	position: absolute;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -127,12 +122,12 @@ li.usertrack_highlight::after {
   -webkit-animation:fadeIn ease-in 1;  /* call our keyframe named fadeIn, use animattion ease-in and repeat it only 1 time */
   -moz-animation:fadeIn ease-in 1;
   animation:fadeIn ease-in 1;
-	-webkit-animation-fill-mode:forwards;  /* this makes sure that after animation is done we remain at the last keyframe value (opacity: 1)*/
-	-moz-animation-fill-mode:forwards;
-	animation-fill-mode:forwards;
-	-webkit-animation-duration:.100s;
-	-moz-animation-duration:.100s;
-	animation-duration:.100s;
+  -webkit-animation-fill-mode:forwards;  /* this makes sure that after animation is done we remain at the last keyframe value (opacity: 1)*/
+  -moz-animation-fill-mode:forwards;
+  animation-fill-mode:forwards;
+  -webkit-animation-duration:.100s;
+  -moz-animation-duration:.100s;
+  animation-duration:.100s;
 }
 
 /* Hover menus */
@@ -148,12 +143,13 @@ li.usertrack_highlight::after {
 .hover_label div.spinner                  { display: none; }
 .hover_label_spinner div                  { display: none; }
 .hover_label_spinner div.spinner          { display: none; }
-.label_layer.focused .label_layer_bg,
+/*.label_layer.focused .label_layer_bg,
 .label_layer.pinned .label_layer_bg,
 .label_layer_bg,
 .label_layer.focused .hover_label,
 .label_layer.pinned .hover_label,
-/*.hover_label                              { display: none;}*/
+.hover_label                              { display: none;}*/
+/*.label_layer { pointer-events: none; }*/
 .hover_label.name_only                    { padding: 0; }
 .hover_label.name_only p.header           { margin: 0; }
 .hover_label a.favourite,
@@ -204,6 +200,27 @@ body.ie67 .hover_label a.favourite  { position: relative; top: -2px; left: 3px; 
 div.boundaries_wrapper                         { position: absolute; width: 100%; }
 div.boundaries_wrapper ul                      { position: relative; width: 100%; list-style: none; margin: 0; padding: 0; visibility: hidden; background-color: #666; }
 div.boundaries_wrapper ul li                   { list-style-image: none; margin: 0; padding: 0; }
+
+div.boundaries_wrapper ul li:hover,
+div.boundaries_wrapper ul li.hover             {
+  position: relative;
+}
+
+div.boundaries_wrapper ul li:hover::before,
+div.boundaries_wrapper ul li.hover::before     {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.15;
+  border-top: 1px solid [[TRACK_HIGHLIGHT_BORDER]];
+  border-bottom: 1px solid [[TRACK_HIGHLIGHT_BORDER]];
+  background: [[TRACK_HIGHLIGHT_BG]];
+}
+
+
 div.boundaries_wrapper ul li.helper            { outline: [[PANEL_BORDER]] solid 1px; }
 div.boundaries_wrapper ul li div.handle        { width: 10px; cursor: n-resize; background-color: [[TINT_BG]]; }
 div.boundaries_wrapper ul li div.handle p      { height: 60%; position: relative; top: 20%; background-image: url(/i/track_grabber.png); }

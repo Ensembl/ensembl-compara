@@ -461,25 +461,38 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
 
     // add dyna loading to label layers for track description
-    this.elLk.labelLayers.on({
+    this.elLk.labelLayers.on ({
       mouseenter: function () {
         $(this).find('._dyna_load').removeClass('_dyna_load').dynaLoad();
+        var associated_li = panel.elLk.boundaries.find('.' + $(this).find('.hl-icon-highlight').data('highlightTrack'))
+        associated_li.addClass('hover');
+        if(associated_li.hasClass('_new_userdata')) {
+          panel.removeUserDataHighlight();
+        }
+      },
+      mouseleave: function () {
+        panel.elLk.boundaries.find('.' + $(this).find('.hl-icon-highlight').data('highlightTrack')).removeClass('hover');
       },
       click: function(e) {
         // Hide all open menus on clicking new menu except the pinned ones.
         $(panel.elLk.labelLayers).not('.pinned').find('.hover_label').hide();
         // show label
-        $(this).find('.hover_label').show()
-               .find('.close').on({
-                click: function(e) {
-                  $(this).parent().hide();
-                  // Remove pinned class
-                  $(this).siblings('._hl_pin').removeClass('on')
-                         .closest('._label_layer').removeClass('pinned');
-                  e.stopPropagation();
-                }
-               });
-      },
+        $(this).find('.hover_label').toggle();
+        e.stopPropagation && e.stopPropagation();
+      }
+    }).find('.close')
+      .on ({
+        click: function(e) {
+          $(this).parent().hide();
+          // Remove pinned class
+          $(this).siblings('._hl_pin').removeClass('on')
+                 .closest('._label_layer').removeClass('pinned');
+          e.stopPropagation && e.stopPropagation();
+        }
+      });
+
+    $(document).on('click', function(e) {
+      $(panel.elLk.labelLayers).not('.pinned').find('.hover_label').hide();
     });
 
     // apply css positions to the hover layers
@@ -605,6 +618,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         count++;
       }
       else {
+        // If there are more than one tracks adjacent to each other
         if(count > 1 && adjacent_tracks.length > 1) {
           $(adjacent_tracks).each(function(i, li_element) {
             // Top track
@@ -620,20 +634,29 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
               $(li_element).addClass('usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right');
             }
 
-            $(li_element).on('mouseover', function() {
-              $(this).parent('ul').children('li').removeClass('usertrack_highlight _new_userdata usertrack_highlight_border_top usertrack_highlight_border_left usertrack_highlight_border_right usertrack_highlight_border_bottom', 2000, 'linear');
+            $(li_element).on('mouseenter', function() {
+              panel.removeUserDataHighlight();
             })
           })
-          adjacent_tracks = [];
         }
         else {
+          // Single tracks
           adjacent_tracks.length == 1 &&
-            $(adjacent_tracks[0]).addClass('usertrack_highlight_border_top usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right');          
+            $(adjacent_tracks[0]).addClass('usertrack_highlight_border_top usertrack_highlight_border_bottom usertrack_highlight_border_left usertrack_highlight_border_right')
+                                 .on('mouseenter', function() {
+                                    panel.removeUserDataHighlight();
+                                 })
         }
+        // Reset array so that you get a new set of tracks
+        adjacent_tracks = [];
         count = 0;
       }
     });
 
+  },
+
+  removeUserDataHighlight: function() {
+    $(this.elLk.boundaries).find('._new_userdata').removeClass('usertrack_highlight _new_userdata usertrack_highlight_border_top usertrack_highlight_border_left usertrack_highlight_border_right usertrack_highlight_border_bottom');
   },
 
   handleConfigClick: function (link) {
@@ -775,20 +798,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       update: function (e, ui) {
         panel.sortUpdate(e, ui);
       }
-    }).css('visibility', 'visible').find('li').on({
-      mouseenter: function(e) {
-        if(! $(this).hasClass('_highlight_on')) {
-          $(this).delay(200).addClass('track_highlight', 200, 'linear');
-        }
-      },
-      mouseleave: function() {
-        if(! $(this).hasClass('_highlight_on')) {
-          $(this).removeClass('track_highlight', 100, 'linear');
-        }
-      }
-    }).find('div.handle').on({
-
-     });
+    }).css('visibility', 'visible');
 
     // split img into two image to show top and bottom of the image separately
     this.elLk.img2 = this.elLk.img.wrap('<div>').parent().css({overflow: 'hidden', height: wrapperTop}).clone().insertAfter(this.elLk.img.parent()).css({height: 'auto'}).find('img').css({marginTop: -wrapperTop});
