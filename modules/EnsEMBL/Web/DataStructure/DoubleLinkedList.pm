@@ -24,7 +24,7 @@ use strict;
 use warnings;
 no warnings qw(recursion); # deep recursion expected
 
-use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Exceptions qw(DataStructureException);
 
 use parent qw(EnsEMBL::Web::DataStructure::Node);
 
@@ -155,10 +155,10 @@ sub _check_node {
 
   if ($node && ref $node) {
     if (ref $self && $self eq $node) {
-      throw exception('DataStructureException', 'Attempt to insert duplicate node in the linked list.');
+      throw DataStructureException('Attempt to insert duplicate node in the linked list.');
     }
     return $class->new($node) if ref $node eq 'HASH';
-    return $node if $node->isa($class);
+    return $node if UNIVERSAL::isa($node, $class);
   }
 
   return $class->new({'__ds_node' => $node});

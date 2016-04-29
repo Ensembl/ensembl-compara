@@ -24,7 +24,7 @@ use strict;
 use warnings;
 no warnings qw(recursion); # deep recursion expected
 
-use EnsEMBL::Web::Exceptions;
+use EnsEMBL::Web::Exceptions qw(DataStructureException);
 
 use parent qw(EnsEMBL::Web::DataStructure::DoubleLinkedList);
 
@@ -160,7 +160,7 @@ sub _check_node_hierarchy {
   my ($node, $child) = @_;
 
   while ($node = $node->{'__ds_parent'}) {
-    throw exception('DataStructureException', 'Attempt to append ancestor node as a child node in the tree.') if $node eq $child;
+    throw DataStructureException('Attempt to append ancestor node as a child node in the tree.') if $node eq $child;
   }
 
   return $child;
