@@ -29,6 +29,26 @@ use List::Util qw(first);
 
 use parent qw(EnsEMBL::Web::IOWrapper);
 
+sub validate {
+  ### Wrapper around the parser's validation method
+  my $self = shift;
+  my ($format, $col_count) = $self->parser->validate;
+
+  if ($format) {
+    $self->{'format'} = $format;
+    ## Update session record accordingly
+    my $record = $self->hub->session->get_data('type' => 'upload', 'code' => $self->file->code);
+    if ($record) {
+      $record->{'format'}       = $format;
+      $record->{'column_count'} = $col_count;
+      $self->hub->session->set_data(%$record);
+    }
+  }
+
+  return $format ? undef : 'File did not validate as format '.$format;
+}
+
+
 sub create_hash {
 ### Create a hash of feature information in a format that
 ### can be used by the drawing code

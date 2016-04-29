@@ -458,18 +458,6 @@ sub validate {
   ### Wrapper around the parser's validation method
   my $self = shift;
   my $valid = $self->parser->validate;
-
-  if ($valid && $valid =~ /[a-z]+/) {
-    ## Something weird like bedgraph!
-    $self->{'format'} = $valid;
-    ## Update session record accordingly
-    my $record = $self->hub->session->get_data('type' => 'upload', 'code' => $self->file->code);
-    if ($record) {
-      $record->{'format'} = $valid;
-      $self->hub->session->set_data(%$record);
-    }
-  }
-
   return $valid ? undef : 'File did not validate as format '.$self->format;
 }
 
