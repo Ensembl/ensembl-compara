@@ -44,7 +44,7 @@ sub content {
   my $lrg  = $self->object->Obj;
   my $lrg_feature_slice = $lrg->feature_Slice;
   my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
-  my $vf_adaptor = $hub->database('variation')->get_VariationAdaptor; 
+  my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor; 
   my $html;
   
   my $columns = [
