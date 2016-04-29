@@ -293,10 +293,12 @@ sub maybe_generate_sprite {
   $attrs =~ s!/\s*$!!;
   my $num = 0;
   my %attrs;
+  my $outq = '"';
   while($num<20 and $attrs =~ s/\s*(\w+)=(['"])//) {
     my ($key,$quot) = ($1,$2);
     last unless $attrs =~ s/^([^$quot]*)$quot//;
     $attrs{$key} = $1;
+    $outq = $quot;
     $num++;
   }
   if($attrs =~ /\S/ or !$attrs{'src'}) {
@@ -326,8 +328,8 @@ sub maybe_generate_sprite {
   delete $attrs{'src'};
   my $text = "";
   my @more_attrs;
-  push @more_attrs, qq(alt="$attrs{'alt'}") if $attrs{'alt'};
-  push @more_attrs, qq(title="$attrs{'title'}") if $attrs{'title'};
+  push @more_attrs, qq(alt=$outq$attrs{'alt'}$outq) if $attrs{'alt'};
+  push @more_attrs, qq(title=$outq$attrs{'title'}$outq) if $attrs{'title'};
   delete $attrs{'alt'};
   delete $attrs{'title'};
   my $width = $attrs{'width'} || $valid->{$hash}[0];
@@ -362,7 +364,7 @@ sub maybe_generate_sprite {
   delete $attrs{'style'};
   foreach my $c (@OK_ATTRS) {
     if($attrs{$c}) {
-      push @more_attrs, qq($c="$attrs{$c}");
+      push @more_attrs, qq($c=$outq$attrs{$c}$outq);
       delete $attrs{$c};
       $styles{'cursor'} = 'pointer' if $c =~ /^on/;
     }
@@ -390,7 +392,7 @@ sub maybe_generate_sprite {
     );
   }
   my $style = '';
-  $style = 'style="'.join(';',map { "$_: $styles{$_}" } keys %styles).'"' if %styles;
+  $style = "style=$outq".join(';',map { "$_: $styles{$_}" } keys %styles).$outq if %styles;
   my $classes = '';
   $classes = join(' ',@classes) if @classes;
   my $more_attrs = '';
