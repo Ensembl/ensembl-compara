@@ -81,7 +81,6 @@ sub create_glyphs {
 
     unless ($multi_wiggle) {
       ## Draw any axes, track labels, etc
-      warn "... DRAWING AXES";
       $graph_conf = $self->draw_graph_base($metadata);
     }
 
