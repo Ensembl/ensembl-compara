@@ -141,6 +141,8 @@ sub register_orm_databases {
 
   if (dynamic_require('ORM::EnsEMBL::Rose::DbConnection', 1)) { # ignore if ensembl-orm doesn't exist
 
+    $self->ENSEMBL_ORM_DATABASES->{'session'} = $self->session_db; # add session db to ORM
+
     while (my ($key, $value) = each %{$self->ENSEMBL_ORM_DATABASES}) {
 
       my $params = $value;
@@ -169,12 +171,11 @@ sub session_db {
   my $db   = $self->multidb->{'DATABASE_SESSION'};
 
   return {
-    'NAME'    => $db->{'NAME'},
-    'HOST'    => $db->{'HOST'},
-    'PORT'    => $db->{'PORT'},
-    'DRIVER'  => $db->{'DRIVER'}  || 'mysql',
-    'USER'    => $db->{'USER'}    || $self->DATABASE_WRITE_USER,
-    'PASS'    => $db->{'PASS'}    || $self->DATABASE_WRITE_PASS
+    'database'  => $db->{'NAME'},
+    'host'      => $db->{'HOST'},
+    'port'      => $db->{'PORT'},
+    'username'  => $db->{'USER'} || $self->DATABASE_WRITE_USER,
+    'password'  => $db->{'PASS'} || $self->DATABASE_WRITE_PASS
   };
 }
 
