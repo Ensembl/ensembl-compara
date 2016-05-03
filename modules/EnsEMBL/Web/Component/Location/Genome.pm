@@ -385,14 +385,37 @@ sub _feature_table {
 sub _configure_Gene_table {
   my ($self, $feature_type, $feature_set) = @_;
   my $rows = [];
- 
+
   my $header = 'Gene Information';
+  my $count  = scalar @{$feature_set->[0]};
   if ($self->hub->param('ftype') eq 'Domain') {
     ## Override default header
     my $domain_id = $self->hub->param('id');
-    my $count     = scalar @{$feature_set->[0]};
     my $plural    = $count > 1 ? 'genes' : 'gene';
     $header       = "Domain $domain_id maps to $count $plural:";
+  } elsif ( !( scalar ($self->hub->species_defs->ENSEMBL_CHROMOSOMES || []) && $self->hub->species_defs->MAX_CHR_LENGTH ) ) {
+    ## No karyotype image
+    my ( $go_link );
+    my $id = $self->hub->param('id');
+    
+    #add extra description only for GO (gene ontologies) which is determined by param gotype in url
+    my $go = $self->hub->param('gotype');
+    if ( $go ) {
+      my $adaptor = $self->hub->get_databases('go')->{'go'}->get_OntologyTermAdaptor;
+      my $go_hash = $adaptor->fetch_by_accession($id);
+      my $go_name = $go_hash->{name};
+      $go_link    = $self->hub->get_ExtURL_link($id, $go, $id)." ".$go_name; #get_ExtURL_link will return a text if $go is not valid
+    }
+
+    my $assoc_name = $self->hub->param('name');
+    unless ( $assoc_name ) {
+      $assoc_name .= $go_link ? $go_link : $id;
+    }
+
+    if ( $assoc_name ) {
+      my $plural = $count > 1 ? 'Genes' : 'Gene';
+      $header = "$plural associated with $assoc_name";
+    }
   }
 
   my $column_order = [qw(names loc extname)];
