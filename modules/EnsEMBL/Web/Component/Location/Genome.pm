@@ -395,7 +395,7 @@ sub _configure_Gene_table {
     $header       = "Domain $domain_id maps to $count $plural:";
   } elsif ( !( scalar ($self->hub->species_defs->ENSEMBL_CHROMOSOMES || []) && $self->hub->species_defs->MAX_CHR_LENGTH ) ) {
     ## No karyotype image
-    my ( $go_link, $xref_type, $xref_name );
+    my ( $go_link );
     my $id = $self->hub->param('id');
     
     #add extra description only for GO (gene ontologies) which is determined by param gotype in url
@@ -407,19 +407,9 @@ sub _configure_Gene_table {
       $go_link    = $self->hub->get_ExtURL_link($id, $go, $id)." ".$go_name; #get_ExtURL_link will return a text if $go is not valid
     }
 
-    if ( $feature_type eq 'Xref' ) {
-      my $sample = $feature_set->[0];
-      $xref_type = $sample->{'label'};
-      $xref_name = $sample->{'extname'};
-      $xref_name =~ s/ \[#\]//;
-      $xref_name =~ s/^ //;
-    }
-    
     my $assoc_name = $self->hub->param('name');
     unless ( $assoc_name ) {
-      $assoc_name = $xref_type . ' ';
       $assoc_name .= $go_link ? $go_link : $id;
-      $assoc_name .= " ($xref_name)" if $xref_name;
     }
 
     if ( $assoc_name ) {
