@@ -28,8 +28,6 @@ use Role::Tiny;
 
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
-sub can_json { return 1; }
-
 sub init {
   my $self = shift;
   my $style = $self->{'display'} || $self->my_config('display') || '';
@@ -42,6 +40,7 @@ sub init {
   else {
     push @roles, 'EnsEMBL::Draw::Role::Bam';
   }
+  push @roles, 'EnsEMBL::Draw::Role::Default';
 
   ## Don't try to apply non-existent roles, or Role::Tiny will complain
   if (scalar @roles) {

@@ -24,8 +24,11 @@ package EnsEMBL::Draw::GlyphSet::vcf;
 use strict;
 no warnings 'uninitialized';
 
-use Role::Tiny;
 use List::Util qw(max);
+
+use Role::Tiny::With;
+with 'EnsEMBL::Draw::Role::Wiggle';
+with 'EnsEMBL::Draw::Role::Default';
 
 use Bio::EnsEMBL::IO::Adaptor::VCFAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
@@ -33,13 +36,8 @@ use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
-sub can_json { return 1; }
-
 sub init {
   my $self = shift;
-
-  my @roles = qw(EnsEMBL::Draw::Role::Wiggle); 
-  Role::Tiny->apply_roles_to_object($self, @roles);
 
   ## Cache raw VCF features
   $self->{'data'} = $self->get_data;
