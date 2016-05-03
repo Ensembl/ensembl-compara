@@ -35,8 +35,6 @@ sub draw_wiggle {
   ## How wide is each bar, in pixels? (needed for label overlay)
   my $bar_width   = $self->image_config->container_width * $self->{'pix_per_bp'} / scalar(@$features);
 
-  use Data::Dumper;
-
   foreach my $f (@$features) {
 
     my $start   = $f->{'start'};
