@@ -43,9 +43,9 @@ sub init {
   }
   push @roles, 'EnsEMBL::Draw::Role::Default';
 
-  ## Don't try to apply non-existent roles, or Role::Tiny will complain
-  if (scalar @roles) {
-    Role::Tiny->apply_roles_to_object($self, @roles);
+  ## Apply roles separately, to prevent namespace clashes 
+  foreach (@roles) { 
+    Role::Tiny->apply_roles_to_object($self, $_);
   }
 
   $self->{'data'} = $self->get_data;
