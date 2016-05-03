@@ -101,7 +101,7 @@ sub process_data {
     my $hash        = $data->{$go} || {};
     my $go_link     = $hub->get_ExtURL_link($go, $extdb, $go);
     my $mart_link   = $self->biomart_link($go) ? "<li>".$self->biomart_link($go)."</li>": "";
-    my $loc_link    = scalar @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES} ? '<li><a rel="notexternal" href="'.$hub->url({type  => 'Location', action => 'Genome', ftype => 'Gene', id  => $go, gotype => $extdb}).'">View on karyotype</a></li>' : "";
+    my $loc_link    = '<li><a rel="notexternal" href="' . $hub->url({type  => 'Location', action => 'Genome', ftype => 'Gene', id  => $go, gotype => $extdb}) . ( scalar @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES} ? '">View on karyotype</a></li>' : '">View associated genes</a></li>' );
 
     my $goslim      = $hash->{'goslim'} || {};
     my $row         = {};
