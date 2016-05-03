@@ -731,45 +731,74 @@ sub text_separator {
 # Fetch SNPedia information from snpedia.com
 sub snpedia {
   my ($self, $rs_id) = @_;
-  my $object = $self->object;
   my $hub = $self->hub;
-  
-  my $snpedia_wiki_results = $object->get_snpedia_data($rs_id);
-  if (!$snpedia_wiki_results->{'pageid'}) {
-    return ();
-  }
-  
-  my $snpedia_search_link = $hub->get_ExtURL_link('[More information from SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $rs_id });
-  if ($#{$snpedia_wiki_results->{desc}} < 0) {
-    $snpedia_wiki_results->{desc}[0] = 'Description not available ' . $snpedia_search_link;
+  my $cache = $hub->cache;
+  my $desc;
+  my $key = $rs_id . "_SNPEDIA_DESC";
+
+  if($cache) {
+    # Get from memcached
+    $desc = $cache->get($key);
   }
 
-  my $count = scalar @{$snpedia_wiki_results->{desc}}; 
-  if ($count > 1) {
-    my $show = 0;
+  if ($desc) {
+    if ($desc ne 'no_entry') {
+      return [
+        'Description from SNPedia',
+        $desc
+      ];
+    }
+    else {
+      return ();
+    }
+  }
+  else {
+    # Fetch from snpedia
+    my $object = $self->object;
+    my $snpedia_wiki_results = $object->get_snpedia_data($rs_id);
+    if (!$snpedia_wiki_results->{'pageid'}) {
+      $cache->set($key, 'no_entry', 60*60*24*7);
+      return ();
+    }
     
-    return [
-      'Description from SNPedia',
-      sprintf( '%s...
-                <a title="Click to show synonyms" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
-                <div class="toggleable snpedia_more_desc" style="%s">
-                  %s
-                  %s
-                </div>
-              ',
+    my $snpedia_search_link = $hub->get_ExtURL_link('[More information from SNPedia]', 'SNPEDIA_SEARCH', { 'ID' => $rs_id });
+    if ($#{$snpedia_wiki_results->{desc}} < 0) {
+      $snpedia_wiki_results->{desc}[0] = 'Description not available ' . $snpedia_search_link;
+    }
+
+    my $count = scalar @{$snpedia_wiki_results->{desc}}; 
+    if ($count > 1) {
+      my $show = 0;
+
+      $desc =  sprintf( '%s...
+                    <a title="Click to show synonyms" rel="snpedia_more_desc" href="#" class="toggle_link toggle %s _slide_toggle">%s</a>
+                    <div class="toggleable snpedia_more_desc" style="%s">
+                      %s
+                      %s
+                    </div>
+                  ',
         shift $snpedia_wiki_results->{desc},
         $show ? 'open' : 'closed',        
         $show ? 'Hide' : 'Show',
         $show ? '' : 'display:none',
         join('', map "<p>$_</p>", @{$snpedia_wiki_results->{desc}}),
         $snpedia_search_link
-      )
-    ];
-  }
-  else {
-    return $count ? 
-      [ 'Description from SNPedia', $snpedia_wiki_results->{'desc'}[0] ]
-      : ();
+      );
+
+      $cache->set($key, $desc || 'no_entry', 60*60*24*7);
+
+      return [
+        'Description from SNPedia',
+        $desc
+      ];
+    }
+    else {
+      $desc = $snpedia_wiki_results->{'desc'}[0];
+      $cache->set($key, $desc || 'no_entry', 60*60*24*7);
+      return $count ? 
+        [ 'Description from SNPedia',  $desc]
+        : ();
+    }
   }
 }
 
