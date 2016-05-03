@@ -49,6 +49,7 @@ use EnsEMBL::Web::Session;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
+use EnsEMBL::Web::Tools::FailOver::SNPedia;
 
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::Memcached;
@@ -903,6 +904,18 @@ sub source_url {
 sub ie_version {
   return 0 unless $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
   return $1;
+}
+
+# check to see if SNPedia site is up or down
+# if $out then site is up
+sub snpedia_status {
+
+  my $self = shift;
+
+  my $failover = EnsEMBL::Web::Tools::FailOver::SNPedia->new($self);
+  my $out      = $failover->get_cached;
+
+  return $out;
 }
 
 # Query Store stuff
