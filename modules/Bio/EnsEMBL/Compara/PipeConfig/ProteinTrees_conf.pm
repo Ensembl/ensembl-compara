@@ -2661,32 +2661,6 @@ sub core_pipeline_analyses {
             -rc_name       => '4Gb_job',
         },
 
-        {   -logic_name => 'build_HMM_aa_v2',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -parameters => {
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
-            },
-            -hive_capacity  => $self->o('build_hmm_capacity'),
-            -batch_size     => 5,
-            -priority       => -20,
-            -rc_name        => '250Mb_job',
-            -flow_into      => {
-                -1  => 'build_HMM_aa_v2_himem'
-            },
-        },
-
-        {   -logic_name     => 'build_HMM_aa_v2_himem',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -parameters     => {
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
-            },
-            -hive_capacity  => $self->o('build_hmm_capacity'),
-            -priority       => -20,
-            -rc_name        => '1Gb_job',
-        },
-
         {   -logic_name => 'build_HMM_aa_v3',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters => {
@@ -2814,8 +2788,8 @@ sub core_pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
+                # We don't use build_HMM_aa_v2 because hmmcalibrate takes ages
                 2 => [ 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
-                99 => [ 'build_HMM_aa_v2' ],    # unused branch
             },
         },
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
