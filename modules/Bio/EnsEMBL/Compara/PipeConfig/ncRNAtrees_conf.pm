@@ -201,7 +201,6 @@ sub pipeline_analyses {
             -parameters => {
                 'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name', 'method_link' ],
                 'column_names' => [ 'table' ],
-                'fan_branch_code' => 2,
             },
             -flow_into => {
                 '2->A' => [ 'copy_table'  ],

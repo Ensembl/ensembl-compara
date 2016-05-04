@@ -133,7 +133,6 @@ sub pipeline_analyses {
                 'db_conn'         => $self->o('merged_homology_db'),
                 'skipped_tables'  => $self->o('skipped_tables'),
                 'merged_tables'   => $self->o('merged_tables'),
-                'fan_branch_code' => 2,
                 'inputquery'      => 'SHOW TABLE STATUS WHERE Name NOT IN (#csvq:skipped_tables#) AND Name NOT IN (#csvq:merged_tables#) AND Rows',
             },
             -input_ids => [ {} ],
@@ -156,7 +155,6 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_job_list_topup',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'fan_branch_code' => 2,
                 'merged_tables' => $self->o('merged_tables'),
             },
             -input_ids => [

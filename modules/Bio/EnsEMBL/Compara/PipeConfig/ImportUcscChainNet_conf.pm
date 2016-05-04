@@ -291,7 +291,6 @@ sub pipeline_analyses {
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 	       -parameters => {
 			       'inputquery'    => "SELECT dnafrag_id FROM dnafrag join genome_db using (genome_db_id) WHERE genome_db.name='".$self->o('ref_species')."'",
-				'fan_branch_code' => 2,
 			       },
 		-flow_into => {
 			       '2->A' => [ 'import_nets'  ],

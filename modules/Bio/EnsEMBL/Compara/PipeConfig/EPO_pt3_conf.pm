@@ -462,7 +462,6 @@ return
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
                                 'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id = 0',
-                                'fan_branch_code' => 2,
                                },  
                 -flow_into => {
                                '2->A' => [ 'set_neighbour_nodes' ],

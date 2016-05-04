@@ -226,7 +226,6 @@ sub pipeline_analyses {
                -parameters => {
                                'ref_species' => $self->o('ref_species'),
                                'inputquery'    => "SELECT dnafrag.name as seq_region FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1 AND coord_system_name = 'chromosome'",
-                               'fan_branch_code'   => 2,
                               },
                -flow_into => {
                               '2->A' => [ 'base_age' ],

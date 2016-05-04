@@ -84,7 +84,6 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'           => $self->o('master_db'),
                 'all_current'       => 1,
-                'fan_branch_code'   => 2,
             },
             -input_ids  => [
                 { },    # the input_id template is now fully defined by the query's column_names (hence the need to rename them).

@@ -417,7 +417,6 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'    => $self->o('reuse_db'),
                 'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE genome_db_id = #genome_db_id#',
-			    'fan_branch_code' => 2,
             },
             -hive_capacity => 4,
             -flow_into => {
@@ -474,7 +473,6 @@ sub pipeline_analyses {
             -parameters => {
                 'species_set_id'    => '#nonreuse_ss_id#',
                 'extra_parameters'  => [ 'name' ],
-                'fan_branch_code'   => 2,
             },
             -flow_into => {
                 '2->A' => [ 'paf_create_empty_table' ],

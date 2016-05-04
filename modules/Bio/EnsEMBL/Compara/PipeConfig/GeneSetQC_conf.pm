@@ -141,7 +141,6 @@ sub pipeline_analyses {
                 'inputlist'    => [ 'genome_db', 'species_tree_node', 'species_tree_root', 'species_tree_node_tag', 'split_genes',
                                     'method_link_species_set', 'method_link_species_set_tag', 'species_set', 'ncbi_taxa_node', 'ncbi_taxa_name', 'seq_member', 'gene_member' ],
                 'column_names' => [ 'table' ],
-                'fan_branch_code' => 2,
             },
             -input_ids  => [ { } ],
             -flow_into => {

@@ -602,7 +602,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
                 'column_names' => [ 'table' ],
-                'fan_branch_code' => 2,
             },
             -flow_into => {
                 '2->A' => [ 'copy_ncbi_table'  ],
@@ -898,7 +897,6 @@ sub core_pipeline_analyses {
             -parameters => {
                             'db_conn'    => '#reuse_db#',
                             'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                            'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '500Mb_job',
@@ -963,7 +961,6 @@ sub core_pipeline_analyses {
             -parameters => {
                             'db_conn'    => '#reuse_db#',
                             'inputquery' => 'SELECT s.seq_member_id, s.seq_type, s.length, s.sequence FROM other_member_sequence s JOIN seq_member USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_type IN ("cds", "exon_bounded") AND seq_member_id <= '.$self->o('protein_members_range'),
-                            'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '4Gb_job',
@@ -978,7 +975,6 @@ sub core_pipeline_analyses {
             -parameters => {
                             'db_conn'    => '#reuse_db#',
                             'inputquery' => 'SELECT h.* FROM hmm_annot h JOIN seq_member USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_member_id <= '.$self->o('protein_members_range'),
-                            'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '1Gb_job',
@@ -1192,7 +1188,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'inputlist'    => $self->o('panther_like_databases'),
                 'column_names' => [ 'cm_file_or_directory', 'type', 'include_subfamilies' ],
-                'fan_branch_code' => 2,
             },
             -flow_into => {
                 '2->A' => [ 'load_panther_database_models'  ],
@@ -1205,7 +1200,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'inputlist'    => $self->o('multihmm_files'),
                 'column_names' => [ 'cm_file_or_directory', 'type' ],
-                'fan_branch_code' => 2,
             },
             -flow_into => {
                 '2->A' => [ 'load_multihmm_models'  ],
@@ -1637,7 +1631,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id, COUNT(seq_member_id) AS tree_num_genes FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" AND clusterset_id="default" GROUP BY root_id',
-                'fan_branch_code'   => 2,
             },
             -flow_into  => {
                 '2->A'  => WHEN(
@@ -2785,7 +2778,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
-                'fan_branch_code'   => 2,
             },
             -flow_into  => {
                 # We don't use build_HMM_aa_v2 because hmmcalibrate takes ages
