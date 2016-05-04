@@ -39,6 +39,10 @@ package Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.4;
+
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
      
@@ -123,7 +127,10 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},
         # Trick to overcome the 2-step substitution of parameters (also used below in the "generate_job_list" analysis
         ref($src_db_aliases) ? %$src_db_aliases : (),
+
         'curr_rel_db'   => $self->o('curr_rel_db'),
+        'analyze_optimize'  => $self->o('analyze_optimize'),
+        'backup_tables'     => $self->o('backup_tables'),
     }
 }
 
@@ -173,7 +180,10 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 2      => [ 'copy_table'  ],
-                3      => [ $self->o('backup_tables') ? 'backup_table' : 'merge_factory' ],
+                3      => WHEN(
+                            '#backup_tables#' => 'backup_table',
+                            ELSE 'merge_factory',
+                        ),
             },
         },
 
@@ -185,7 +195,7 @@ sub pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
-            -flow_into     => [ $self->o('analyze_optimize') ? ('analyze_optimize') : () ],
+            -flow_into     => WHEN( '#analyze_optimize#' => ['analyze_optimize'] ),
         },
 
         {   -logic_name => 'merge_factory',
@@ -217,8 +227,8 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
             -flow_into     => [
-                $self->o('analyze_optimize') ? ('analyze_optimize') : (),
-                $self->o('backup_tables') ? ('drop_backup') : ()
+                WHEN( '#analyze_optimize#' => ['analyze_optimize'] ),
+                WHEN( '#backup_tables#' => ['drop_backup'] ),
             ],
         },
 

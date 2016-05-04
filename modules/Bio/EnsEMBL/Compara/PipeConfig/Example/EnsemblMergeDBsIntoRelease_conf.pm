@@ -49,8 +49,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblMergeDBsIntoRelease_c
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-
 use base ('Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf');
 
 

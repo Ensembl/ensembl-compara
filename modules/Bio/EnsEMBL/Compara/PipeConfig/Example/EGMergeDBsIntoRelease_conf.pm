@@ -46,8 +46,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EGMergeDBsIntoRelease_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-
 use base ('Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf');
 
 sub default_options {
@@ -64,7 +62,6 @@ sub default_options {
   # Don't shout about unknown tables
   'die_if_unknown_table'    => 0,
 
-  # Registry file only works with Hive version 2.4, which is currently not a stable release
   'reg_conf' => undef,
 
   # All the source databases
