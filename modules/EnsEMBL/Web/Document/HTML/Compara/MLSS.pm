@@ -359,12 +359,14 @@ some being recent and almost identical, others being much older and indicators o
             <b>Uncovered</b>: %s out of %s<br />
             <b>Matches</b>: %s out of %s<br />
             <b>Mismatches</b>: %s out of %s<br />
-            <b>Insertions</b>: %s out of %s
+            <b>Insertions</b>: %s out of %s<br />
+            <em>Identity over aligned base-pairs: %.1f%%</em>
           </p>',
           $self->thousandify($uncovered), $self->thousandify($total),
           $self->thousandify($matches), $self->thousandify($total),
           $self->thousandify($mismatches), $self->thousandify($total),
           $self->thousandify($insertions), $self->thousandify($total),
+          100 * $matches/($matches+$mismatches+$insertions),
         );
 
         my $match_pc  = round($matches/$total * 100);
