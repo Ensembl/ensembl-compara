@@ -129,7 +129,7 @@ sub pipeline_analyses {
     my %hc_params = (
                      -analysis_capacity => $self->o('hc_capacity'),
                      -priority          => $self->o('hc_priority'),
-                     -bacth_size        => $self->o('hc_batch_size'),
+                     -batch_size        => $self->o('hc_batch_size'),
                     );
 
     my %backbone_params = (
