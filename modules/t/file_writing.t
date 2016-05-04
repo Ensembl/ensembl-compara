@@ -9,7 +9,7 @@ use EnsEMBL::Web::File::Utils::IO qw/:all/;
 
 my $SERVERROOT = dirname( $Bin );
 
-my $test_file = $SERVERROOT."/t/output.txt";
+my $test_file = $SERVERROOT."/t/output/output.txt";
 
 ## Read one line of file
 my $input = [
