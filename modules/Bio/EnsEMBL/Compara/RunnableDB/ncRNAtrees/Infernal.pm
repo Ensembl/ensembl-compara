@@ -176,10 +176,6 @@ sub write_output {
 
     $self->dataflow_output_id ( {
                                  'gene_tree_id' => $gene_tree_id,
-                                },3
-                              );
-    $self->dataflow_output_id ( {
-                                 'gene_tree_id' => $gene_tree_id,
                                  'alignment_id' => $self->param('alignment_id'),
                                 },1
                               );
