@@ -138,7 +138,7 @@ sub create_default_mlss {
 
     #Store in meta table
     $self->dataflow_output_id({'param_name' => 'pairwise_default_mlss',
-			       'param_value' => $default_mlss}, 3);
+			       'param_value' => $default_mlss}, 2);
 }
 
 1;

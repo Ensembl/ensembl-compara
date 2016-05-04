@@ -294,11 +294,10 @@ sub pipeline_analyses {
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
 				'base_location' => $self->o('epo_db'),
 				'reference_species' => $self->o('ref_species'),
-				'fan_branch_code' => 3,
 			       },
 		-flow_into => {
 			       1 => [ 'import_alignment' ],
-			       3 => [ 'mysql:////pipeline_wide_parameters' ],
+			       2 => [ 'mysql:////pipeline_wide_parameters' ],
 			      },
 		-rc_name => '100Mb',
 	    },
