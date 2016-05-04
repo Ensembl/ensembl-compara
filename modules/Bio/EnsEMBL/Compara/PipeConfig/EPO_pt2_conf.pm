@@ -281,7 +281,6 @@ sub pipeline_analyses {
 			'anc_seq_count_cut_off' => $self->o('anc_seq_count_cut_off'),
 			'dont_dump_MT' => $self->o('dont_dump_MT'),
 			'anchor_batch_size' => $self->o('anchor_batch_size'),
-			'fan_branch_code' => 2,
 		},
 		-flow_into => {
 			2 => [ 'map_anchors' ],
