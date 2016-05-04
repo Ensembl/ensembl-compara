@@ -29,12 +29,8 @@ my $slice = create_slice($hub, {
 my $image_config = create_imageconfig($slice, $hub);
 
 ## Also create a fake track configuration
-my $track_config = create_trackconfig({
-              'data_type' => 'Test',
-              'style'     => 'normal',
-              'colour'    => 'green',
-              'caption'   => 'My test',
-                                      });
+my $track_config = create_trackconfig;
+
 ## Create the controller glyphset
 my $glyphset = EnsEMBL::Draw::GlyphSet::marker->new({
                                                           'container' => $slice, 
