@@ -45,7 +45,7 @@ sub render_normal {
   my $logic_name     = $logic_names[0];
   ## Fetch all markers if this isn't a subset, e.g. SATMap
   $logic_name        = undef if $logic_name eq 'marker';
-  my $data           = [{'features' => $self->features($logic_name)}];
+  my $data           = [{'features' => $self->get_data($logic_name)}];
 
   my $config = $self->track_style_config;
   my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
@@ -54,10 +54,10 @@ sub render_normal {
 
 sub render_text {
   my $self = shift;
-  return join '', map $self->_render_text($_, 'Marker', { headers => [ 'id' ], values => [ $_->{'drawing_id'} ] }), @{$self->features};
+  #return join '', map $self->_render_text($_, 'Marker', { headers => [ 'id' ], values => [ $_->{'drawing_id'} ] }), @{$self->features};
 }
 
-sub features {
+sub get_data {
   my ($self, $logic_name) = @_;
 
   my $hub = $self->{'config'}{'hub'}; 
