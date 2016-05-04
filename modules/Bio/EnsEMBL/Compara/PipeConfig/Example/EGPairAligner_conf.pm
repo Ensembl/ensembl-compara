@@ -200,7 +200,6 @@ sub default_options {
 	#
    	'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
 	'pair_aligner_logic_name' => 'LastZ',
-	'pair_aligner_program' => 'lastz',
 	'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
 	'pair_aligner_options' => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', #hsap vs mammal
 	'pair_aligner_hive_capacity' => 100,
