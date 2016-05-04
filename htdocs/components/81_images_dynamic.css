@@ -190,7 +190,7 @@ li.usertrack_highlight:after {
 .hl-icon-link                             { background-image: url(/i/16/link.png); }
 .hover_label a.hl-icon-highlight          { display: block; width: 16px; height: 16px; background: url(/i/16/swp/highlight.png) no-repeat; }
 .hover_label a.hl-icon-highlight:hover    { background-position: 0px -18px; cursor: pointer;}
-.hover_label a.hl-icon-highlight.selected { background-position: 0px -36px; }
+.hover_label a.hl-icon-highlight.selected { background-position: 0px -18px; }
 
 body.ie6 .hover_label div.config li { margin: 5px 0 0; }
 body.ie67 .hover_label a.favourite  { position: relative; top: -2px; left: 3px; }
