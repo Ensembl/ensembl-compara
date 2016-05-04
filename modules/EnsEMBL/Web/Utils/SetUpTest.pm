@@ -29,9 +29,13 @@ use EnsEMBL::Web::ImageConfig;
 use base qw(Exporter);
 
 our @EXPORT = our @EXPORT_OK = qw(create_slice create_imageconfig create_trackconfig);
+our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
 
 sub create_slice {
+### @param hub - EnsEMBL::Web::Hub object
 ### @param args - Hashref containing the following key/value pairs
+###                species          - species to query
+###                db               - type of database (optional)
 ###                cs_name          - coordinate system name
 ###                cs_rank          - coordinate system rank
 ###                assembly         - assembly name
@@ -39,14 +43,21 @@ sub create_slice {
 ###                start            - slice start position
 ###                end              - slice end position
 ###                strand           - strand of slice
-### @return Bio::EnsEMBL::Slice
-  my $args = shift;
-  return unless ($args->{'cs_name'} && $args->{'cs_rank'} && $args->{'assembly'}
-                  && $args->{'seq_region_name'} && $args->{'start'});
+### @return Bio::EnsEMBL::Slice object
+  my ($hub, $args) = @_;
+  return unless ($hub && $args->{'species'} && $args->{'cs_name'} && $args->{'cs_rank'} 
+                  && $args->{'assembly'} && $args->{'seq_region_name'} && $args->{'start'});
+
+  $hub->species = $args->{'species'};
+
+  my $db = $args->{'db'} || 'core';
+  my $adaptor = $hub->get_adaptor('get_CoordSystemAdaptor', $db);
+  return unless $adaptor;
 
   my $cs = Bio::EnsEMBL::CoordSystem->new(-NAME    => $args->{'cs_name'},
                                           -VERSION => $args->{'assembly'},
                                           -RANK    => $args->{'cs_rank'},
+                                          -ADAPTOR => $adaptor,
                                           ); 
   return unless $cs;
   my $slice =  Bio::EnsEMBL::Slice->new(-coord_system     => $cs,
@@ -60,17 +71,15 @@ sub create_slice {
 
 sub create_imageconfig {
 ### @param slice - Bio::EnsEMBL::Slice
-### @param args - Hashref containing the following optional key/value pairs
+### @param hub - EnsEMBL::Web::Hub
+### @param args - Hashref containing the following key/value pairs
 ###                 margin      - margin for image
 ###                 label_width - width for labels
 ###                 image_width - width of test image
 ### @return ImageConfig object
-  my ($slice, $args) = @_;
-  return unless $slice;
+  my ($slice, $hub, $args) = @_;
+  return unless ($slice && $hub);
   $args ||= {};
-
-  my $hub = EnsEMBL::Web::Hub->new;
-  return unless $hub;
 
   my $image_config = EnsEMBL::Web::ImageConfig->new($hub);
   return unless $image_config;
