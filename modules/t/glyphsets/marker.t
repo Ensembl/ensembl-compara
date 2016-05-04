@@ -48,7 +48,8 @@ my $glyphset = EnsEMBL::Draw::GlyphSet::marker->new({
 ok($glyphset, "Glyphset 'marker' created");
 
 my $data = $glyphset->get_data;
-warn ">>> DATA $data";
+use Data::Dumper;
+warn ">>> DATA ".Dumper($data);
 
 ### Check that data matches what we expect
 
