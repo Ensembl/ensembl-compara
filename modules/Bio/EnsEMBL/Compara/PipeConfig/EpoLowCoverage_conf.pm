@@ -398,6 +398,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'   => $self->o('low_epo_mlss_id'),
             },
+            -flow_into  => [ 'register_mlss' ],
         },
 
         {   -logic_name => 'email_stats_report',
@@ -407,6 +408,14 @@ sub pipeline_analyses {
                 'email'     => $self->o('epo_stats_report_email'),
                 'subject' => "EPO LOW Pipeline: ( #expr(\$self->hive_pipeline->display_name)expr# ) Report: ",
             }
+        },
+
+        {   -logic_name => 'register_mlss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
+            -parameters => {
+                'mlss_id'       => $self->o('low_epo_mlss_id'),
+                'master_db'     => $self->o('master_db'),
+            },
         },
 
      ];

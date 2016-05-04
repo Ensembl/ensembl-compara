@@ -522,7 +522,15 @@ return
                 'email'     => $self->o('epo_stats_report_email'),
                 'subject'   => "EPO Pipeline( #expr(\$self->hive_pipeline->display_name)expr# ) has completed", 
             }
+            -flow_into  => [ 'register_mlss' ],
+        },
 
+        {   -logic_name    => 'register_mlss',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
+            -parameters    => {
+                'master_db'     => '#compara_master#',
+                'mlss_id'       => '#epo_mlss_id#',
+            },
         },
 
 ];
