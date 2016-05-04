@@ -475,7 +475,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       },
       click: function(e) {
         // Hide all open menus on clicking new menu except the pinned ones.
-        $(panel.elLk.labelLayers).not('.pinned').find('.hover_label').hide();
+        $(this).siblings().not('.pinned').find('.hover_label').hide();
+        // siblings() doesnt return the current clicked element
+        // So check if the current element is pinned.
+        if ($(this).hasClass('pinned')) {
+          return;
+        }
         // show label
         $(this).find('.hover_label').toggle();
         e.stopPropagation && e.stopPropagation();
@@ -574,8 +579,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
       // On highlight icon click toggle highlight
       $(this).find('.hl-icon-highlight').on('click', function(e) {
-        var track_classname = $(this).data('highlightTrack');
-        panel.toggleHighlight(track_classname);
+        var highlight_class = 'li.' + $(this).data('highlightTrack');
+        var track_element = $($(panel.elLk.boundaries).find(highlight_class));
+        panel.toggleHighlight(track_element);
         $(this).toggleClass('selected');
       });
     })
@@ -592,19 +598,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
   },
 
-  toggleHighlight: function(track_classname) {
-    var panel = this;
-    var highlight_class = 'li.' + track_classname;
-    $($(panel.elLk.boundaries).find(highlight_class)[0]).toggleClass('track_highlight _highlight_on');
-  },
-
-  trackHighlighted: function(track_classname) {
-    var panel = this;
-    var highlight_class = 'li.' + track_classname;
-    if($($(panel.elLk.boundaries).find(highlight_class)[0]).hasClass('track_highlight _highlight_on')) {
-      return true;
-    }
-    return false;    
+  toggleHighlight: function(element) {
+    $(element) && $(element).toggleClass('track_highlight _highlight_on');
   },
 
   highlightLastUploadedUserDataTrack: function() {
