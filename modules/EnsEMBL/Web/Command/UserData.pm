@@ -210,7 +210,7 @@ sub attach {
           my $data = $hub->session->add_data(
                                         type        => 'url',
                                         code        => join('_', md5_hex($name . $current_species . $assembly . $url), 
-                                                                  $hub->session->create_session_id),
+                                                                  $hub->session->session_id),
                                         url         => $url,
                                         name        => $name,
                                         format      => $attachable->name,
