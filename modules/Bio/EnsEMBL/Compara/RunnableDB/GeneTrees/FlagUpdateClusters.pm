@@ -131,6 +131,7 @@ sub run {
         #There is no need for both array and hash structures here. Should change code to use only the hash!
         my @reused_members;
         my %reused_members_hash;
+        my %current_members_hash;
 
         if ($reused_gene_tree) {
             $reused_gene_tree->preload();
@@ -144,20 +145,24 @@ sub run {
 
         foreach my $current_member (@current_members) {
 
+            $current_members_hash{ $current_member->stable_id } = 1;
+
             #updated:
             if ( exists( $updated{ $current_member->stable_id } ) ) {
                 $root_ids_2_update{$gene_tree_id}{ $current_member->stable_id } = 1;
+
                 #print "\t$gene_tree_id:UPD:".$current_member->stable_id."\n";
             }
 
             #added
             if ( exists( $added{ $current_member->stable_id } ) ) {
                 $root_ids_2_add{$gene_tree_id}{ $current_member->stable_id } = 1;
+
                 #print "\t$gene_tree_id:ADD:".$current_member->stable_id."\n";
             }
 
             if ($reused_gene_tree) {
-                if ( !exists( $reused_members_hash{ $current_member->stable_id } ) && ( !exists( $added{ $current_member->stable_id } ) ) ) {
+                if ( !exists( $reused_members_hash{ $current_member->stable_id } ) && ( !exists( $added{ $current_member->stable_id } ) ) && ( !exists( $updated{ $current_member->stable_id } ) ) ) {
                     $root_ids_2_add{$gene_tree_id}{ $current_member->stable_id } = 1;
                 }
             }
@@ -170,6 +175,13 @@ sub run {
                     $root_ids_2_delete{$gene_tree_id}{ $reused_member->stable_id } = 1;
                     #print "\t$gene_tree_id:DEL:" . $reused_member->stable_id . "\n";
                 }
+
+                # Removing members that are present in the reused tree but not in the current tree. But have the same sequence.
+                #  this happens if there were diffences in the clustering, given that the sequences were the same they were not caught by previous MD5 checksum tests.
+                if ( !$current_members_hash{ $reused_member->stable_id } ) {
+                    $root_ids_2_delete{$gene_tree_id}{ $reused_member->stable_id } = 1;
+                }
+
             }
             $reused_gene_tree->release_tree;
         }
