@@ -72,6 +72,9 @@ sub run {
     my $prev_hash = _hash_all_sequences_from_db( $self->param('reuse_compara_dba') );
     print "getting curr_hash\n" if ( $self->debug );
     my $curr_hash = _hash_all_sequences_from_db( $self->param('compara_dba') );
+    print "getting reused vs current seq_member_ids map\n" if ( $self->debug );
+    my $seq_member_id_map = _seq_member_map( $self->param('reuse_compara_dba'), $self->param('compara_dba') );
+    $self->param( 'seq_member_id_map', $seq_member_id_map );
 
     #---------------------------------------------------------------------------------
     #deleted (members that existed in the previous mlss_id but dont exist in the current mlss_id), updated & added arent used by the logic.
@@ -192,6 +195,27 @@ sub write_output {
 
     print "writing outs\n" if ( $self->debug );
 
+    #-----------------------------------------------------------------------------------------------------------------------------------------------
+    # When a genome is updated it may contain the same sequences and stable ids, but the seq_member_ids will be different
+    #   since it was re-inserted into the database.
+    # This will cause the trees copy from the previous database to fail, since the old seq_member_ids will not be the same for the current database.
+    # We just store the mapping now, it will later be used by copy_trees_from_previous_release.
+    #-----------------------------------------------------------------------------------------------------------------------------------------------
+    foreach my $stable_id ( keys %{ $self->param('seq_member_id_map') } ) {
+        my $seq_member_id_reused  = $self->param('seq_member_id_map')->{$stable_id}->{'reused'};
+        my $seq_member_id_current = $self->param('seq_member_id_map')->{$stable_id}->{'current'};
+        if ( ( $seq_member_id_reused ne $seq_member_id_current ) && ($seq_member_id_current) ) {
+            my $sth = $self->param('compara_dba')->dbc->prepare(
+                "INSERT IGNORE INTO seq_member_id_current_reused_map
+                            (stable_id,
+                             seq_member_id_reused,
+                             seq_member_id_current) VALUES (?,?,?)" );
+
+            $sth->execute( $stable_id, $seq_member_id_reused, $seq_member_id_current );
+            $sth->finish;
+        }
+    }
+
     my %flagged;
     foreach my $current_stable_id ( keys %{ $self->param('current_stable_ids') } ) {
 
@@ -301,12 +325,39 @@ sub _get_stable_id_root_id_list {
     my $sth_reused = $reuse_compara_dba->dbc->prepare($sql_reused) || die "Could not prepare query.";
     $sth_reused->execute() || die "Could not execute ($sql_reused)";
 
-    while ( my ($root_id, $reused_stable_id) = $sth_reused->fetchrow() ) {
+    while ( my ( $root_id, $reused_stable_id ) = $sth_reused->fetchrow() ) {
         $reused_stable_ids{$reused_stable_id} = $root_id;
     }
     $sth_reused->finish();
 
-    return (\%current_stable_ids,\%reused_stable_ids);
-}
+    return ( \%current_stable_ids, \%reused_stable_ids );
+} ## end sub _get_stable_id_root_id_list
+
+sub _seq_member_map {
+    my $reuse_compara_dba = shift;
+    my $compara_dba       = shift;
+
+    my %map;
+
+    my $sql_reuse = "SELECT stable_id, seq_member_id FROM seq_member";
+    my $sth_reuse = $reuse_compara_dba->dbc->prepare($sql_reuse);
+    $sth_reuse->execute() || die "Could not execute ($sql_reuse)";
+
+    while ( my ( $stable_id_reuse, $seq_member_id_reuse ) = $sth_reuse->fetchrow() ) {
+        $map{$stable_id_reuse}{'reused'} = $seq_member_id_reuse;
+    }
+    $sth_reuse->finish();
+
+    my $sql_current = "SELECT stable_id, seq_member_id FROM seq_member";
+    my $sth_current = $compara_dba->dbc->prepare($sql_current);
+    $sth_current->execute() || die "Could not execute ($sql_current)";
+
+    while ( my ( $stable_id_current, $seq_member_id_current ) = $sth_current->fetchrow() ) {
+        $map{$stable_id_current}{'current'} = $seq_member_id_current;
+    }
+    $sth_current->finish();
+
+    return \%map;
+} ## end sub _seq_member_map
 
 1;
