@@ -279,3 +279,26 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   right2 INT
             
 )  ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'seq_member_id_current_reused_map'
+--
+-- overview: Add new table to be used by copy_trees_from_previous_release in order to
+--           rename old seq_member_ids with the current ones.
+-- semantics:
+--   stable_id              - EnsEMBL stable ID or external ID (for Uniprot/SWISSPROT and Uniprot/SPTREMBL)
+--   seq_member_id_reused   - seq_member_id for the reused database containing the previous stable_id
+--   seq_member_id_current  - seq_member_id for the current database containing the previous stable_id
+
+CREATE TABLE `seq_member_id_current_reused_map` (
+  stable_id                 varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
+  seq_member_id_reused      int(10) unsigned NOT NULL,
+  seq_member_id_current     int(10) unsigned NOT NULL,
+
+  FOREIGN KEY (seq_member_id_current) REFERENCES seq_member(seq_member_id),
+
+  PRIMARY KEY (stable_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
