@@ -510,6 +510,20 @@ sub core_pipeline_analyses {
         'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
         'input_clusterset_id'       => 'default',
     );
+    my %raxml_update_parameters = (
+        'raxml_exe'                 => $self->o('raxml_exe'),
+        'treebest_exe'              => $self->o('treebest_exe'),
+		'input_clusterset_id'	    => 'copy',
+        'output_clusterset_id'      => 'raxml_update',
+    );
+
+    my %raxml_bl_parameters = (
+        'raxml_exe'                 => $self->o('raxml_exe'),
+        'treebest_exe'              => $self->o('treebest_exe'),
+        'input_clusterset_id'       => 'notung',
+        'output_clusterset_id'      => 'raxml_bl',
+    );
+
     return [
 
 # ---------------------------------------------[backbone]--------------------------------------------------------------------------------
@@ -1746,7 +1760,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mafft_update_capacity'),
             -rc_name    => '2Gb_job',
-            -flow_into      => [ 'raxml_update' ],
+            -flow_into      => [ 'raxml_update_decision' ],
         },
 
         {   -logic_name => 'mcoffee_himem',
@@ -2419,15 +2433,62 @@ sub core_pipeline_analyses {
             }
         },
 
+        {   -logic_name => 'raxml_update_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    #The default value matches the default dataflow we want: _8_cores analysis.
+                    'gene_count'          => 0,
+                },
+            },
+            -flow_into  => {
+                1 => WHEN(
+                    '(#tree_gene_count# <= 500)'                                => 'raxml_update',
+                    '(#tree_gene_count# > 500)  && (#tree_gene_count# <= 1000)' => 'raxml_update_8',
+                    '(#tree_gene_count# > 1000) && (#tree_gene_count# <= 2000)' => 'raxml_update_16',
+                    '(#tree_gene_count# > 3000)'                                => 'raxml_update_32',
+                ),
+            },
+            %decision_analysis_params,
+        },
+
         {   -logic_name => 'raxml_update',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update',
             -parameters => {
-                'raxml_exe'                 => $self->o('raxml_exe'),
-                'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => 'raxml_update',
+                %raxml_update_parameters,
             },
             -hive_capacity        => $self->o('raxml_update_capacity'),
             -rc_name    => '8Gb_job',
+        },
+
+        {   -logic_name => 'raxml_update_8',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update',
+            -parameters => {
+                %raxml_update_parameters,
+                'extra_raxml_args'          => '-T 8',
+            },
+            -hive_capacity        => $self->o('raxml_update_capacity'),
+            -rc_name 	=> '16Gb_8c_job',
+        },
+
+        {   -logic_name => 'raxml_update_16',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update',
+            -parameters => {
+                %raxml_update_parameters,
+                'extra_raxml_args'          => '-T 16',
+            },
+            -hive_capacity        => $self->o('raxml_update_capacity'),
+            -rc_name    => '16Gb_16c_job',
+        },
+
+        {   -logic_name => 'raxml_update_32',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update',
+            -parameters => {
+                %raxml_update_parameters,
+                'extra_raxml_args'          => '-T 32',
+            },
+            -hive_capacity        => $self->o('raxml_update_capacity'),
+            -rc_name    => '32Gb_32c_job',
         },
 
         {   -logic_name => 'treebest_small_families',
@@ -2507,7 +2568,7 @@ sub core_pipeline_analyses {
             -batch_size    => 2,
             -rc_name        => '2Gb_job',
             -flow_into      => {
-                1  => [ 'raxml_bl' ],
+                1  => [ 'raxml_bl_decision' ],
                 -1 => [ 'notung_himem' ],
             },
         },
@@ -2524,38 +2585,77 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('notung_capacity'),
             -rc_name        => '8Gb_job',
-            -flow_into      => [ 'raxml_bl_himem' ],
+            -flow_into      => [ 'raxml_bl_decision' ],
+        },
+
+        {   -logic_name => 'raxml_bl_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    #The default value matches the default dataflow we want: _8_cores analysis.
+                    'gene_count'          => 0,
+                },
+            },
+            -flow_into  => {
+                1 => WHEN(
+                    '(#tree_gene_count# <= 500)'                                => 'raxml_bl',
+                    '(#tree_gene_count# > 500)  && (#tree_gene_count# <= 1000)' => 'raxml_bl_8',
+                    '(#tree_gene_count# > 1000) && (#tree_gene_count# <= 2000)' => 'raxml_bl_16',
+                    '(#tree_gene_count# > 3000)'                                => 'raxml_bl_32',
+                ),
+            },
+            %decision_analysis_params,
         },
 
         {   -logic_name => 'raxml_bl',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
             -parameters => {
-                'raxml_exe'                 => $self->o('raxml_exe'),
-                'treebest_exe'              => $self->o('treebest_exe'),
-                'input_clusterset_id'       => 'notung',
-                'output_clusterset_id'      => 'raxml_bl',
+                %raxml_bl_parameters,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '8Gb_job',
             -flow_into  => {
                 1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
-                -1 => [ 'raxml_bl_himem' ],
                 2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
             }
         },
 
-        {   -logic_name => 'raxml_bl_himem',
+        {   -logic_name => 'raxml_bl_8',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
             -parameters => {
-                'raxml_exe'                 => $self->o('raxml_exe'),
-                'treebest_exe'              => $self->o('treebest_exe'),
-                'input_clusterset_id'       => 'notung',
-                'output_clusterset_id'      => 'raxml_bl',
+                %raxml_bl_parameters,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '16Gb_job',
+            -rc_name    => '16Gb_8c_job',
             -flow_into  => {
                 1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
+                2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_bl_16',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
+            -parameters => {
+                %raxml_bl_parameters,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '16Gb_16c_job',
+            -flow_into  => {
+                1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
+                2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_bl_32',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
+            -parameters => {
+                %raxml_bl_parameters,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '32Gb_32c_job',
+            -flow_into  => {
+                1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
+                2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
             }
         },
 
