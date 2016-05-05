@@ -440,7 +440,7 @@ This section lists some common queries that may help in this aspect.
  > SELECT coord_system_name, count(*) FROM dnafrag WHERE genome_db_id=1 GROUP BY coord_system_name;
 
 * Get tree nodes for a given ref_root_id:
- > SELECT * FROM gene_tree_node WHERE root_id in (SELECT root_id FROM gene_tree_root WHERE ref_root_id=2592155);
+ > SELECT gene_tree_node.* FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE ref_root_id=2592155;
 
 * Delete a tree. Use the Perl API !
  > $gene_tree_adaptor->delete_tree($gene_tree_adaptor->fetch_by_dbID(3));
