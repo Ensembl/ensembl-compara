@@ -582,7 +582,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         var highlight_class = 'li.' + $(this).data('highlightTrack');
         var track_element = $($(panel.elLk.boundaries).find(highlight_class));
         panel.toggleHighlight(track_element);
-        $(this).toggleClass('selected');
+        // highlight the track highlight icon on all the highlighted tracks (f/r generally)
+        $('.hover_label.' + $(this).data('highlightTrack')).find('.hl-icon-highlight').toggleClass('selected');
       });
     })
 
