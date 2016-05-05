@@ -142,7 +142,7 @@ sub get_msa_command_line {
 
     die "Cannot execute '$mafft_exe' in '$mafft_home'" unless ( -x $mafft_home . '/' . $mafft_exe );
 
-    return sprintf( '%s/%s --add %s --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
+    return sprintf( '%s/%s --add %s --anysymbol --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
 } ## end sub get_msa_command_line
 
 1;
