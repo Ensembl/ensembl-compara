@@ -95,9 +95,9 @@ sub run {
 
     #Get list of current_stable_ids:
     print "getting list of roots\n" if ( $self->debug );
-    my ($current_stable_ids,$reused_stable_ids) = $self->_get_stable_id_root_id_list( $self->param('compara_dba'), $self->param('reuse_compara_dba') );
+    my ( $current_stable_ids, $reused_stable_ids ) = $self->_get_stable_id_root_id_list( $self->param('compara_dba'), $self->param('reuse_compara_dba') );
     $self->param( 'current_stable_ids', $current_stable_ids );
-    $self->param( 'reused_stable_ids', $reused_stable_ids);
+    $self->param( 'reused_stable_ids',  $reused_stable_ids );
 
     my %root_ids_2_update;
     $self->param( 'root_ids_2_update', \%root_ids_2_update );
@@ -124,10 +124,11 @@ sub run {
         $self->throw("no input current_gene_tree") unless $current_gene_tree;
         $current_gene_tree->preload();
         my @current_members = @{ $current_gene_tree->get_all_Members };
-        my $num_of_members = scalar(@current_members);
+        my $num_of_members  = scalar(@current_members);
 
         #get reused_gene_tree
         my $reused_gene_tree = $self->param('reused_tree_adaptor')->fetch_by_stable_id($current_stable_id);
+
         #There is no need for both array and hash structures here. Should change code to use only the hash!
         my @reused_members;
         my %reused_members_hash;
@@ -170,9 +171,11 @@ sub run {
 
         if ($reused_gene_tree) {
             foreach my $reused_member (@reused_members) {
+
                 #deleted
                 if ( exists( $deleted{ $reused_member->stable_id } ) ) {
                     $root_ids_2_delete{$gene_tree_id}{ $reused_member->stable_id } = 1;
+
                     #print "\t$gene_tree_id:DEL:" . $reused_member->stable_id . "\n";
                 }
 
@@ -185,12 +188,14 @@ sub run {
             }
             $reused_gene_tree->release_tree;
         }
-        else{
+        else {
+
             #print "Could not fetch reused tree with with stable_id=$current_stable_id. Tree will be build from scratch\n" if ($self->debug);
             $current_gene_tree->store_tag( 'new_build', 1 ) || die "Could not store_tag 'new_build'";
         }
 
         my $members_2_change = scalar( keys( %{ $root_ids_2_add{$gene_tree_id} } ) ) + scalar( keys( %{ $root_ids_2_update{$gene_tree_id} } ) );
+
         #print "Memebers to change (add+update): $members_2_change | members to delete: " . scalar( keys( %{ $root_ids_2_delete{$gene_tree_id} } ) ) . "\n" if ($self->debug);
         if ( ( $members_2_change/scalar(@current_members) ) >= $self->param_required('update_threshold_trees') ) {
             $current_gene_tree->store_tag( 'new_build', 1 ) || die "Could not store_tag 'new_build'";
@@ -199,7 +204,7 @@ sub run {
         #releasing tree from memory
         $current_gene_tree->release_tree;
 
-    } ## end foreach my $gene_tree_id ( ...)
+    } ## end foreach my $current_stable_id...
 } ## end sub run
 
 sub write_output {
@@ -238,36 +243,41 @@ sub write_output {
         #root_ids_2_update
         if ( keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) {
             if ( !$flagged{$gene_tree_id} ) {
-                $gene_tree->store_tag( 'needs_update', 1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
+                $gene_tree->store_tag( 'needs_update',        1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
                 $gene_tree->store_tag( 'only_needs_deleting', 0 ) || die "Could not store_tag 'only_needs_deleting' for $gene_tree_id";
             }
-            $gene_tree->store_tag( 'updated_genes_list', join( ",", keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) )  || die "Could not store_tag 'updated_genes_list' for $gene_tree_id";
+            $gene_tree->store_tag( 'updated_genes_list', join( ",", keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) ) ||
+              die "Could not store_tag 'updated_genes_list' for $gene_tree_id";
             $flagged{$gene_tree_id} = 1;
         }
 
         #root_ids_2_add
         if ( keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) {
             if ( !$flagged{$gene_tree_id} ) {
-                $gene_tree->store_tag( 'needs_update', 1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
+                $gene_tree->store_tag( 'needs_update',        1 ) || die "Could not store_tag 'needs_update' for $gene_tree_id";
                 $gene_tree->store_tag( 'only_needs_deleting', 0 ) || die "Could not store_tag 'only_needs_deleting' for $gene_tree_id";
             }
-            $gene_tree->store_tag( 'added_genes_list', join( ",", keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) ) || die "Could not store_tag 'added_genes_list' for $gene_tree_id";
+            $gene_tree->store_tag( 'added_genes_list', join( ",", keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) ) ||
+              die "Could not store_tag 'added_genes_list' for $gene_tree_id";
             $flagged{$gene_tree_id} = 1;
         }
 
         #root_ids_2_delete
         if ( keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) {
-            if ( (!$gene_tree->has_tag('only_needs_deleting')) && (!$gene_tree->has_tag('needs_update')) ) {
+            if ( ( !$gene_tree->has_tag('only_needs_deleting') ) && ( !$gene_tree->has_tag('needs_update') ) ) {
                 $gene_tree->store_tag( 'only_needs_deleting', 1 ) || die "Could not store_tag 'only_needs_deleting' for $gene_tree_id";
             }
-            $gene_tree->store_tag( 'deleted_genes_list', join( ",", keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) ) || die "Could not store_tag 'deleted_genes_list' for $gene_tree_id";
+            $gene_tree->store_tag( 'deleted_genes_list', join( ",", keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) ) ||
+              die "Could not store_tag 'deleted_genes_list' for $gene_tree_id";
         }
 
-        if ( ( !keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) && ( !keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) && ( !keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) ) {
+        if ( ( !keys( %{ $self->param('root_ids_2_update')->{$gene_tree_id} } ) ) &&
+             ( !keys( %{ $self->param('root_ids_2_add')->{$gene_tree_id} } ) ) &&
+             ( !keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) ) {
             $gene_tree->store_tag( 'identical_copy', 1 ) || die "Could not store_tag 'identical_copy' for $gene_tree_id";
         }
+    } ## end foreach my $current_stable_id...
 
-    }
 } ## end sub write_output
 
 ##########################################
@@ -292,7 +302,7 @@ sub _check_hash_equals {
         }
     }
 
-    foreach my $stable_id ( keys %$prev_hash) {
+    foreach my $stable_id ( keys %$prev_hash ) {
         if ( !exists( $curr_hash->{$stable_id} ) ) {
             $deleted->{$stable_id} = 1;
         }
@@ -317,7 +327,7 @@ sub _hash_all_sequences_from_db {
 }
 
 sub _get_stable_id_root_id_list {
-    my ($self, $compara_dba, $reuse_compara_dba) = @_;
+    my ( $self, $compara_dba, $reuse_compara_dba ) = @_;
 
     my %current_stable_ids;
     my %reused_stable_ids;
@@ -327,7 +337,7 @@ sub _get_stable_id_root_id_list {
     my $sth_current = $compara_dba->dbc->prepare($sql_current) || die "Could not prepare query.";
     $sth_current->execute() || die "Could not execute ($sql_current)";
 
-    while ( my ($root_id,$current_stable_id) = $sth_current->fetchrow() ) {
+    while ( my ( $root_id, $current_stable_id ) = $sth_current->fetchrow() ) {
         $current_stable_ids{$current_stable_id} = $root_id;
     }
     $sth_current->finish();
