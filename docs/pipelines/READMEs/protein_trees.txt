@@ -446,7 +446,7 @@ This section lists some common queries that may help in this aspect.
  > $gene_tree_adaptor->delete_tree($gene_tree_adaptor->fetch_by_dbID(3));
 
 * Create new tree-tags (alignment length, for instance):
- > INSERT INTO gene_tree_root_tag (root_id,tag,value) SELECT root_id, "aln_length", aln_length FROM gene_tree_root JOIN gene_align USING (gene_align_id) WHERE root_id IN (SELECT root_id FROM gene_tree_root_tag WHERE clusterset_id = "default”);
+ > INSERT INTO gene_tree_root_tag (root_id,tag,value) SELECT root_id, "aln_length", aln_length FROM gene_tree_root JOIN gene_align USING (gene_align_id) WHERE clusterset_id = "default”;
 
 * Problems with gene_tree_backup ?  Re-insert all the root_ids:
  > INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = "default”;
