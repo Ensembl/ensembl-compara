@@ -446,10 +446,10 @@ This section lists some common queries that may help in this aspect.
  > $gene_tree_adaptor->delete_tree($gene_tree_adaptor->fetch_by_dbID(3));
 
 * Create new tree-tags (alignment length, for instance):
- > INSERT INTO gene_tree_root_tag (root_id,tag,value) SELECT root_id, "aln_length", aln_length FROM gene_tree_root JOIN gene_align USING (gene_align_id) WHERE clusterset_id = "default”;
+ > INSERT INTO gene_tree_root_tag (root_id,tag,value) SELECT root_id, "aln_length", aln_length FROM gene_tree_root JOIN gene_align USING (gene_align_id) WHERE clusterset_id = "default";
 
 * Problems with gene_tree_backup ?  Re-insert all the root_ids:
- > INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = "default”;
+ > INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = "default";
 
 * Check if all gene_tree_roots are in backup:
  > SELECT * from gene_tree_backup RIGHT JOIN gene_tree_root USING (root_id) WHERE clusterset_id = "default" AND gene_tree_backup.root_id IS NULL;
@@ -483,13 +483,13 @@ SELECT value FROM gene_tree_root_tag WHERE root_id=458053 AND tag = 'model_name�
  > SELECT * FROM lsf_usage WHERE analysis LIKE "raxml(%"
 
 * Get running times and alignment lengths:
- > SELECT stable_id, aln_length, runtime_msec FROM gene_tree_root INNER JOIN job ON job.input_id LIKE CONCAT('%', gene_tree_root.root_id, '%') JOIN gene_align USING (gene_align_id) WHERE analysis_id=84 AND status=“DONE”;
+ > SELECT stable_id, aln_length, runtime_msec FROM gene_tree_root INNER JOIN job ON job.input_id LIKE CONCAT('%', gene_tree_root.root_id, '%') JOIN gene_align USING (gene_align_id) WHERE analysis_id=84 AND status="DONE";
 
 
 	6.2 Hive data / edit the pipeline workflow (only if you know you need to do that !)
 
 * Get all jobs working for a given root_id:
- > SELECT * FROM job WHERE input_id like "%2592155%”;
+ > SELECT * FROM job WHERE input_id like "%2592155%";
 
 * Get all the messages for a specific analysis:
  > SELECT * FROM msg WHERE analysis_id = 47;
@@ -507,10 +507,10 @@ SELECT value FROM gene_tree_root_tag WHERE root_id=458053 AND tag = 'model_name�
     SELECT prev_job_id
     FROM job WHERE analysis_id = 84 AND status = "FAILED"
    ) AS t2 ON (t2.prev_job_id=t1.job_id)
-   SET t1.status = "READY”;
+   SET t1.status = "READY";
 
 * Create new jobs of analysis_id 72 for trees matching a given tag
- > INSERT INTO job (analysis_id, input_id) SELECT 72, CONCAT("{'gene_tree_id' => ", root_id, "}") FROM gene_tree_root_tag WHERE value LIKE "PTHR23155_SF%”;
+ > INSERT INTO job (analysis_id, input_id) SELECT 72, CONCAT("{'gene_tree_id' => ", root_id, "}") FROM gene_tree_root_tag WHERE value LIKE "PTHR23155_SF%";
 
 * Create a new job of analysis_id 85 for each gene-tree
  > INSERT INTO job (analysis_id, input_id) SELECT 85, CONCAT("{'gene_tree_id' => ", root_id, "}") FROM gene_tree_root WHERE clusterset_id="default" AND tree_type="tree";
@@ -519,7 +519,7 @@ SELECT value FROM gene_tree_root_tag WHERE root_id=458053 AND tag = 'model_name�
  > INSERT INTO job (analysis_id, input_id, semaphore_count, semaphored_job_id) SELECT 119, input_id, 0, job_id FROM job WHERE analysis_id=85;
 
 * Create the jobs that would have been created by data flow (on jobs that have failed):
- > INSERT INTO job (analysis_id, input_id, semaphored_job_id) SELECT 84, REPLACE(input_id, "}", ", 'remove_columns' => 0}"), semaphored_job_id FROM job WHERE analysis_id=82 AND status = "FAILED”;
+ > INSERT INTO job (analysis_id, input_id, semaphored_job_id) SELECT 84, REPLACE(input_id, "}", ", 'remove_columns' => 0}"), semaphored_job_id FROM job WHERE analysis_id=82 AND status = "FAILED";
 
 * Find bogus dataflow rules:
  > SELECT * FROM dataflow_rule LEFT JOIN analysis_base ON to_analysis_url = logic_name WHERE logic_name IS NULL;
