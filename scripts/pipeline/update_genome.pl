@@ -211,6 +211,8 @@ if ($species) {
     $species = undef;
     my $names = slurp_to_array($file, "chomp");
     foreach my $species (@$names) {
+        #left and right trim for unwanted spaces
+        $species =~ s/^\s+|\s+$//g
         push @$new_genome_dbs, @{ process_species($species) };
     }
 }
