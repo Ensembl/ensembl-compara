@@ -800,12 +800,12 @@ sub reg_renderer {
     foreach my $node (@{$menu->child_nodes}) {
       my $old = $node->get('display');
       my $renderer = firstidx { $old eq $_ }
-        qw(off compact tiling tiling_feature);
+        qw(off compact signal signal_feature);
       next if $renderer <= 0;
       $renderer |= $mask if $state;
       $renderer &=~ $mask unless $state;
       $renderer = 1 unless $renderer;
-      $renderer = [ qw(off compact tiling tiling_feature) ]->[$renderer];
+      $renderer = [ qw(off compact signal signal_feature) ]->[$renderer];
       $image_config->update_track_renderer($node->id,$renderer);
     }
   }
