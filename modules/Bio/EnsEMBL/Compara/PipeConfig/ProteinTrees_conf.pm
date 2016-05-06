@@ -363,6 +363,7 @@ sub resource_classes {
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '48Gb_job'     => {'LSF' => '-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+         '512Gb_job'     => {'LSF' => '-C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"' },
 
          '16Gb_8c_job' => {'LSF' => '-n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
          '32Gb_8c_job' => {'LSF' => '-n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
@@ -1843,7 +1844,7 @@ sub core_pipeline_analyses {
                     ELSE 'treebest_decision',
                 ),
                 'A->1' => WHEN(
-                    '#use_notung#' => 'notung',
+                    '#use_notung#' => 'notung_decision',
                     ELSE 'hc_post_tree',
                 ),
             },
@@ -2558,6 +2559,27 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[tree reconciliation / rearrangements]-------------------------------------------------------------
 
+        {   -logic_name => 'notung_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    #The default value matches the default dataflow we want: _8_cores analysis.
+                    'gene_count'          => 0,
+                },
+            },
+            -flow_into  => {
+                1 => WHEN(
+                    '(#tree_gene_count# <= 500)'                                    => 'notung',
+                    '(#tree_gene_count# > 500)  && (#tree_gene_count# <= 1000)'     => 'notung_8gb',
+                    '(#tree_gene_count# > 1000) && (#tree_gene_count# <= 2000)'     => 'notung_16gb',
+                    '(#tree_gene_count# > 3000) && (#tree_gene_count# <= 6000)'     => 'notung_32gb',
+                    '(#tree_gene_count# > 6000) && (#tree_gene_count# <= 10000)'    => 'notung_64gb',
+                    '(#tree_gene_count# > 10000)'                                   => 'notung_512gb',
+                ),
+            },
+            %decision_analysis_params,
+        },
+
         {   -logic_name => 'notung',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
             -parameters => {
@@ -2577,7 +2599,7 @@ sub core_pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'notung_himem',
+        {   -logic_name => 'notung_8gb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
             -parameters => {
                 'notung_jar'            => $self->o('notung_jar'),
@@ -2589,6 +2611,66 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('notung_capacity'),
             -rc_name        => '8Gb_job',
+            -flow_into      => [ 'raxml_bl_decision' ],
+        },
+
+        {   -logic_name => 'notung_16gb',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
+            -parameters => {
+                'notung_jar'            => $self->o('notung_jar'),
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'label'                 => 'binary',
+                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
+                'output_clusterset_id'  => 'notung',
+                'notung_memory'         => 7000,
+            },
+            -hive_capacity  => $self->o('notung_capacity'),
+            -rc_name        => '16Gb_job',
+            -flow_into      => [ 'raxml_bl_decision' ],
+        },
+
+        {   -logic_name => 'notung_32gb',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
+            -parameters => {
+                'notung_jar'            => $self->o('notung_jar'),
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'label'                 => 'binary',
+                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
+                'output_clusterset_id'  => 'notung',
+                'notung_memory'         => 7000,
+            },
+            -hive_capacity  => $self->o('notung_capacity'),
+            -rc_name        => '32Gb_job',
+            -flow_into      => [ 'raxml_bl_decision' ],
+        },
+
+        {   -logic_name => 'notung_64gb',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
+            -parameters => {
+                'notung_jar'            => $self->o('notung_jar'),
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'label'                 => 'binary',
+                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
+                'output_clusterset_id'  => 'notung',
+                'notung_memory'         => 7000,
+            },
+            -hive_capacity  => $self->o('notung_capacity'),
+            -rc_name        => '64Gb_job',
+            -flow_into      => [ 'raxml_bl_decision' ],
+        },
+
+        {   -logic_name => 'notung_512gb',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
+            -parameters => {
+                'notung_jar'            => $self->o('notung_jar'),
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'label'                 => 'binary',
+                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
+                'output_clusterset_id'  => 'notung',
+                'notung_memory'         => 7000,
+            },
+            -hive_capacity  => $self->o('notung_capacity'),
+            -rc_name        => '512Gb_job',
             -flow_into      => [ 'raxml_bl_decision' ],
         },
 
