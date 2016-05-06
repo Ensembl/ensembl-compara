@@ -61,7 +61,7 @@ sub content {
     { key => 'text',   title => 'Full text', align => 'left', sort => 'html'    },  
   );
 
-  $table->add_columns( { key => 'ucsc',   title => 'UCSC', align => 'center', sort => 'html', help => 'View publication data in USCS website' }) if $self->hub->species eq 'Homo_sapiens';
+  $table->add_columns( { key => 'ucsc',   title => 'UCSC', align => 'center', sort => 'html', help => 'View publication data in UCSC website' }) if $self->hub->species eq 'Homo_sapiens';
   foreach my $row (@{$table_rows}){  $table->add_rows($row);}
 
   $html .=  $table->render;
