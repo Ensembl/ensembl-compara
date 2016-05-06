@@ -376,6 +376,7 @@ sub resource_classes {
 
          '16Gb_64c_job' => {'LSF' => '-n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
          '32Gb_64c_job' => {'LSF' => '-n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
+         '256Gb_64c_job' => {'LSF' => '-n 64 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"' },
 
          '8Gb_8c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
          '8Gb_16c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
@@ -2601,7 +2602,8 @@ sub core_pipeline_analyses {
                     '(#tree_gene_count# <= 500)'                                => 'raxml_bl',
                     '(#tree_gene_count# > 500)  && (#tree_gene_count# <= 1000)' => 'raxml_bl_8',
                     '(#tree_gene_count# > 1000) && (#tree_gene_count# <= 2000)' => 'raxml_bl_16',
-                    '(#tree_gene_count# > 3000)'                                => 'raxml_bl_32',
+                    '(#tree_gene_count# > 3000) && (#tree_gene_count# <= 10000)' => 'raxml_bl_32',
+                    '(#tree_gene_count# > 10000)'                                => 'raxml_bl_64',
                 ),
             },
             %decision_analysis_params,
@@ -2656,6 +2658,20 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '32Gb_32c_job',
+            -flow_into  => {
+                1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
+                2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_bl_64',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
+            -parameters => {
+                %raxml_bl_parameters,
+                'extra_raxml_args'          => '-T 64',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '256Gb_64c_job',
             -flow_into  => {
                 1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
                 2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
