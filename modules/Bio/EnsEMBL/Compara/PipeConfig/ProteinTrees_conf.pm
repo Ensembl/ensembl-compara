@@ -128,9 +128,9 @@ sub default_options {
             4 => [ 100, 10000000 ], # should really be infinity, but ten million should be big enough
         },
         'all_blast_params' => { # params, evalues to use for each level of length granularity
-            1 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2",    '1e-10' ],
-            2 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2",    '1e-10' ],
-            3 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2", '1e-10'  ],
+            1 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2",    '1e-4' ],
+            2 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2",    '1e-6' ],
+            3 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2", '1e-8'  ],
             4 => [ "-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3", '1e-10'    ],
         },
 
