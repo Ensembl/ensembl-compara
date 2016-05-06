@@ -83,7 +83,7 @@ sub prediction_method {
 
   return ['Prediction method', 'LD values were calculated by a pairwise
     estimation between SNPs genotyped in the same samples and within a
-    100kb window. An established method was used to estimate the maximum
+    given window. An established method was used to estimate the maximum
     likelihood of the proportion that each possible haplotype contributed to the
     double heterozygote.'
   ];
@@ -162,13 +162,8 @@ sub print_pop_info {
       </div>
       $sp_info
     </div>
+    </li>
     };
-
-    if ($v) {
-      my $tagged = $self->tagged_snp($pop->{$pop_name}{'Name'});
-      $info .= qq{SNP in tagged set for this population: $tagged} if $tagged;
-    }
-   $info .= '</li>';
   }
   $info = qq{<ul style="padding-left:1em">$info</ul>} if ($info ne '');
 return $info;
@@ -193,30 +188,6 @@ sub print_super_pop_info {
  
   return $info;
 } 
-
-#-----------------------------------------------------------------------------
-
-sub tagged_snp {
-  ### Arg1 : object
-  ### Arg2 : population name (string)
-  ### Description : Gets the {{EnsEMBL::Web::Object::SNP}} object off the
-  ### proxy object and checks if SNP is tagged in the current population.
-  ### Returns 0 if no SNP.
-  ### Returns "Yes" if SNP is tagged in the population name supplied, else
-  ### returns no
-
-  my ($self, $pop_name)  = @_;
-  my $snp      = $self->builder->object('Variation');   
-  my $snp_data = $snp->tagged_snp;
-  
-  return unless keys %$snp_data;
-
-  for my $pop_id (keys %$snp_data) {
-    return 'Yes' if $pop_id eq $pop_name;
-  }
-  
-  return 'No';
-}
 
 #-----------------------------------------------------------------------------
 sub pop_url {
