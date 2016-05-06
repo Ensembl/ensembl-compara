@@ -1325,6 +1325,9 @@ sub core_pipeline_analyses {
                 'update_threshold_trees' => $self->o('update_threshold_trees'),
 			},
             -rc_name => '16Gb_job',
+            -flow_into => {
+                1 => [ '?table_name=seq_member_id_current_reused_map' ],
+            },
         },
 
 

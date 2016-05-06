@@ -219,18 +219,10 @@ sub write_output {
     # We just store the mapping now, it will later be used by copy_trees_from_previous_release.
     #-----------------------------------------------------------------------------------------------------------------------------------------------
     foreach my $stable_id ( keys %{ $self->param('seq_member_id_map') } ) {
-        my $seq_member_id_reused  = $self->param('seq_member_id_map')->{$stable_id}->{'reused'};
-        my $seq_member_id_current = $self->param('seq_member_id_map')->{$stable_id}->{'current'};
-        if ( ( $seq_member_id_reused ne $seq_member_id_current ) && ($seq_member_id_current) ) {
-            my $sth = $self->param('compara_dba')->dbc->prepare(
-                "INSERT IGNORE INTO seq_member_id_current_reused_map
-                            (stable_id,
-                             seq_member_id_reused,
-                             seq_member_id_current) VALUES (?,?,?)" );
-
-            $sth->execute( $stable_id, $seq_member_id_reused, $seq_member_id_current );
-            $sth->finish;
-        }
+        $self->dataflow_output_id( {  'stable_id'             => $stable_id,
+                                      'seq_member_id_reused'  => $self->param('seq_member_id_map')->{$stable_id}->{'reused'},
+                                      'seq_member_id_current' => $self->param('seq_member_id_map')->{$stable_id}->{'current'} },
+                                   1 );
     }
 
     my %flagged;
