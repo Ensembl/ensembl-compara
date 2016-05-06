@@ -108,16 +108,15 @@ sub _get_shrinking_factor {
 
     my $aln_length = $self->param('gene_tree')->get_value_for_tag('aln_length') || die "Could not fetch tag aln_length for root_id=" . $self->param_required('gene_tree_id');
 
-    if ( $n_removed_columns > 0 ) {
-        my $after_filter_length = $aln_length - $n_removed_columns;
-        $self->param( 'after_filter_length', $after_filter_length );
-        my $ratio = 1 - ( $after_filter_length/$aln_length );
-        return $ratio;
-    }
-    else {
+    #If no columns were removed, the alignment hasn't shrinked at all.
+    if ( $n_removed_columns == 0 ) {
         $self->param( 'after_filter_length', $aln_length );
         return 0;
     }
+    my $after_filter_length = $aln_length - $n_removed_columns;
+    $self->param( 'after_filter_length', $after_filter_length );
+    my $ratio = 1 - ( $after_filter_length/$aln_length );
+    return $ratio;
 }
 
 1;
