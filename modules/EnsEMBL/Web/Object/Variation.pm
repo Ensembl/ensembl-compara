@@ -568,52 +568,6 @@ sub clinical_significance {
 }
 
 
-sub tagged_snp { 
-
-  ### Variation_object_calls
-  ### Args: none
-  ### Example    : my $pops = $object->tagged_snp
-  ### Description: The "is_tagged" call returns an array ref of populations 
-  ###              objects Bio::Ensembl::Variation::Population where this SNP 
-  ###              is a tag SNP
-  ### Returns hashref of pop_name
-
-  my $self = shift;
-  my  @vari_mappings = @{ $self->get_variation_features };
-  return {} unless @vari_mappings;
-
-  my %pops;
-  foreach my $vf ( @vari_mappings ) {
-    foreach my $pop_obj ( @{ $vf->is_tagged } ) {
-      $pops{$self->pop_name($pop_obj)} = "Tagged SNP";
-    }
-  }
-  return \%pops or {};
-}
-
-sub tag_snp { 
-
-  ### Variation_object_calls
-  ### Args: none
-  ### Example    : my $pops = $object->tagged_snp
-  ### Description: The "is_tagged" call returns an array ref of populations 
-  ###              objects Bio::Ensembl::Variation::Population where this SNP 
-  ###              is a tag SNP
-  ### Returns hashref of pop_name
-
-  my $self = shift;
-  my  @vari_mappings = @{ $self->get_variation_features };
-  return {} unless @vari_mappings;
-
-  my %pops;
-  foreach my $vf ( @vari_mappings ) {
-    foreach my $pop_obj ( @{ $vf->is_tag } ) {
-      $pops{$self->pop_name($pop_obj)} = "Tag SNP";
-    }
-  }
-  return \%pops or {};
-}
-
 sub freqs {
 
   ### Population_allele_genotype_frequencies
@@ -1744,7 +1698,7 @@ sub get_allele_genotype_colours {
 
 # Get SNPedia description from snpedia.com
 sub get_snpedia_data {
-  my ($self, $rs_id) = @_;
+  my ($self, $var_id) = @_;
   my $hub = $self->hub;
   my $snpedia_url = $hub->get_ExtURL('SNPEDIA');
   my $rest = EnsEMBL::Web::REST->new($hub, $snpedia_url);
@@ -1752,7 +1706,7 @@ sub get_snpedia_data {
     'url_params' => {
       'action' => 'query',
       'prop' => 'revisions',
-      'titles' => $rs_id,
+      'titles' => $var_id,
       'rvprop' => 'content',
       'maxlag' => '5',
       'format' => 'json',
@@ -1788,9 +1742,9 @@ sub get_snpedia_data {
   # Remove all content inside {{ }} except 'PMIDs inside a paragraph'
   $rev->{'*'} =~s/(\{\{(?!PMID).*?\}\})//g;
 
-  # Link all PMIDs to PUBMED
-  $rev->{'*'} =~s/\{\{PMID\|(\d+)?.*?\}\}/"[" . $hub->get_ExtURL_link("PMID$1", 'PUBMED', { 'ID' => $1 }) . "]"/ge;
-  $rev->{'*'} =~s/PMID\s(\d+)/$hub->get_ExtURL_link("PMID$1", 'PUBMED', { 'ID' => $1 })/ge;
+  # Link all PMIDs to EPMC
+  $rev->{'*'} =~s/\{\{PMID\|(\d+)?.*?\}\}/"[" . $hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => $1 }) . "]"/ge;
+  $rev->{'*'} =~s/PMID\s(\d+)/$hub->get_ExtURL_link("PMID:$1", 'EPMC_MED', { 'ID' => $1 })/ge;
 
   # Remove starting newline characters
   $rev->{'*'} =~s/^(\*{3})+//g;
@@ -1799,8 +1753,8 @@ sub get_snpedia_data {
   $rev->{'*'} =~s/'''(.*)'''/<b>$1<\/b>/g;
 
   # Link content inside [[ rs id ]] back to e!
-  $rev->{'*'} =~s/\[\[(rs\d+?)\]\]/($1 ne $rs_id) ? "<a href=\"" . $hub->url({ v => $1 }) . "\">$1<\/a>" : "<b>$1<\/b>"/ge;
-  $rev->{'*'} =~s/\[\[(?!rs\d+)(.*?)\]\]/($1 ne $rs_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => $1 }) : "<b>$1<\/b>"/ge;
+  $rev->{'*'} =~s/\[\[(rs\d+?)\]\]/($1 ne $var_id) ? "<a href=\"" . $hub->url({ v => $1 }) . "\">$1<\/a>" : "<b>$1<\/b>"/ge;
+  $rev->{'*'} =~s/\[\[(?!rs\d+)(.*?)\]\]/($1 ne $var_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => $1 }) : "<b>$1<\/b>"/ge;
 
   # Create html links for content like [url linktext]
   $rev->{'*'} =~s/\[(http:\/\/.*?)\s(.*?)\]/<a href="$1">$2<\/a>/g;
