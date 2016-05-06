@@ -301,4 +301,4 @@ CREATE TABLE `seq_member_id_current_reused_map` (
 
   PRIMARY KEY (stable_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
