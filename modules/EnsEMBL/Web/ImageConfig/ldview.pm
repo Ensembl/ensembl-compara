@@ -53,7 +53,6 @@ sub init {
 
   $self->add_tracks('ld_population',
     [ 'text',       '', 'text',       { display => 'normal', strand => 'r', menu    => 'no'                                                                                         }],
-    [ 'tagged_snp', '', 'tagged_snp', { display => 'normal', strand => 'r', colours => $colours, caption => 'Tagged SNPs',   name => 'Tagged SNPs',  depth => 10000, style => 'box' }],
     [ 'ld_r2',      '', 'ld',         { display => 'normal', strand => 'r', colours => $colours, caption => "LD ($r2_html)", name => "LD ($r2_tag)", key => 'r2',                   }],
     [ 'ld_d_prime', '', 'ld',         { display => 'normal', strand => 'r', colours => $colours, caption => "LD (D')",       name => "LD (D')",      key => 'd_prime'               }],
   );
