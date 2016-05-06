@@ -59,7 +59,7 @@ sub new {
     species          => $species,
     altered          => [],
     user_track_count => 0,
-    load_threshold   => $hub->species_defs->ENSEMBL_LOAD_THRESHOLD || 2,
+    load_threshold   => $hub->species_defs->ENSEMBL_LOAD_THRESHOLD || 20,
     _tree            => EnsEMBL::Web::Tree->new,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
@@ -652,7 +652,7 @@ sub check_threshold {
 ### @param display String
 ### @return 1 if still OK, 0 if check fails i.e. threshold exceeded
   my ($self, $display) = @_;
-  warn ">>> DISPLAY $display";
+  #warn ">>> DISPLAY $display";
   $display ||= 'off';
   return $display if $display eq 'off';
   ## Track is supposed to be on, so compare with threshold
