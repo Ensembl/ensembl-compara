@@ -11,8 +11,19 @@
       if ('Wasabi' in window) {
       } 
       else {
-        document.getElementById('wasabi_ensembl').innerHTML = '<center><h2>Couldn\'t load Wasabi. Please try after sometime</h2></center>';
-        return false;
+        var fileref=document.createElement('script');
+        fileref.setAttribute("type","text/javascript");
+        fileref.setAttribute("src", '/wasabi/wasabi.js');
+        if (typeof fileref!="undefined") {
+          document.getElementsByTagName("head")[0].appendChild(fileref);
+        }
+
+        if ('Wasabi' in window) {
+        } 
+        else {
+          document.getElementById('wasabi_ensembl').innerHTML = '<center><h2>Couldn\'t load Wasabi. Please try after sometime</h2></center>';
+          return false;
+        }
       }
 
       var dataset      = [];

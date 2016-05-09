@@ -404,7 +404,7 @@ sub content {
       my $rest_url = $hub->species_defs->ENSEMBL_REST_URL
                   .'/genetree/id/'
                   .$gt_id
-                  .'?content-type=application/json&aligned=1';
+                  .'?content-type=text/javascript&aligned=1';
 
       # Fall back to file generation if REST fails.
       # To make it work for e! archives
