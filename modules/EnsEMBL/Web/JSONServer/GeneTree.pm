@@ -57,7 +57,7 @@ sub json_fetch_wasabi {
   my $files;
 
   # Create tree and alingment file for wasabi and return its url paths
-  if($hub->param('treetype') =~m/phyloxml/i) {
+  if($hub->param('treetype') && $hub->param('treetype') =~m/phyloxml/i) {
     $files = create_phyloxml($self, $node, $file);
   }
   else {
