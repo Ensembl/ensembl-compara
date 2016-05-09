@@ -74,9 +74,6 @@ sub new {
   my $function  = $ENV{'ENSEMBL_FUNCTION'}  = $controller->function;
   my $script    = $ENV{'ENSEMBL_SCRIPT'}    = [ split '::', ref($controller) ]->[-1];
 
-  $cookies->{'session_cookie'}  = EnsEMBL::Web::Cookie->retrieve($r, {'name' => $SiteDefs::ENSEMBL_SESSION_COOKIE, 'encrypted' => 1})
-    || EnsEMBL::Web::Cookie->new($r, {'name' => $SiteDefs::ENSEMBL_SESSION_COOKIE, 'encrypted' => 1});
-
   my $self = {
     _species       => $species,
     _species_defs  => $species_defs,
@@ -116,17 +113,24 @@ sub new {
   $species_defs->{'timer'} = $self->timer;
 
   $self->query_store_setup;
-  $self->init_session($cookies->{'session_cookie'});
-
+  $self->init_session;
   $self->set_core_params;
 
   return $self;
 }
 
 sub init_session {
-  my ($self, $cookie) = @_;
+  my $self = shift;
 
-  $self->{'_session'} = EnsEMBL::Web::Session->new($self, $cookie);
+  $self->{'_session'} = EnsEMBL::Web::Session->new($self);
+}
+
+sub session_id {
+  return shift->session->session_id;
+}
+
+sub web_proxy {
+  return shift->species_defs->ENSEMBL_WWW_PROXY || '';
 }
 
 # Accessor functionality
@@ -137,7 +141,7 @@ sub action      :lvalue { $_[0]{'_action'};      }
 sub function    :lvalue { $_[0]{'_function'};    }
 sub builder     :lvalue { $_[0]{'_builder'};     }
 sub factorytype :lvalue { $_[0]{'_factorytype'}; }
-sub session     :lvalue { $_[0]{'_session'};     }
+sub session { $_[0]{'_session'}; }
 sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
 sub timer       :lvalue { $_[0]{'_timer'};       }
