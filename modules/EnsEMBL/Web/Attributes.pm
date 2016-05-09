@@ -34,22 +34,22 @@ use EnsEMBL::Web::Exceptions;
 sub Accessor {
   ## Attribute to declare an accessor method
   ## If default subroutine returns a key name, then this attribute modifies it to set/get value of that key provided object is a blessed hash
-  ## @param Key name to be accessed
+  ## @param Key name to be accessed (defaults to the method name)
   my ($package, $code, $glob, $method, $key) = @_;
   *{$glob} = sub {
     my $object  = shift;
-    $object->{$key} = shift if @_;
-    return $object->{$key};
+    $object->{$key // $method} = shift if @_;
+    return $object->{$key // $method};
   }
 }
 
 sub Getter {
   ## Attribute to declare a getter method
-  ## @param Key name to get value for
+  ## @param Key name to get value for (defaults to the method name)
   my ($package, $code, $glob, $method, $key) = @_;
   *{$glob} = sub {
     my $object = shift;
-    return $object->{$key};
+    return $object->{$key // $method};
   }
 }
 
