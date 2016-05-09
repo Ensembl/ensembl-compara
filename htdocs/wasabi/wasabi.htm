@@ -7,10 +7,18 @@
   <title>Wasabi Tree</title>
   <script>
     window.onload = function() {
-      var dataset   = [];
-      var url_vars  = getUrlVars();
-      var url       = url_vars['url'];
-      var rest_url  = url_vars['rest_url'];
+
+      if ('Wasabi' in window) {
+      } 
+      else {
+        document.getElementById('wasabi_ensembl').innerHTML = '<center><h2>Couldn\'t load Wasabi. Please try after sometime</h2></center>';
+        return false;
+      }
+
+      var dataset      = [];
+      var url_vars     = getUrlVars();
+      var rest_url     = url_vars['rest_url'];
+      var filegen_url  = url_vars['filegen_url'];
       var tree      = url_vars['tree'];
       var alignment = url_vars['alignment'];
 
@@ -23,8 +31,8 @@
         alignment && dataset.push(alignment);
         initTree(dataset);
       }
-      else if (url) {
-        $.get(url, function(data) {
+      else if (filegen_url) {
+        $.get(filegen_url, function(data) {
           var path = JSON.parse(data);
           path.tree && dataset.push(path.tree);
           path.alignment && dataset.push(path.alignment);
@@ -52,14 +60,14 @@
     // Read a page's GET URL variables and return them as an associative array.
     function getUrlVars()
     {
-        var vars   = {};
-        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-        for(var i = 0; i < hashes.length; i++)
-        {
-            hash          = hashes[i].split('=');
-            vars[hash[0]] = unescape(hash[1]);
-        }
-        return vars;
+      var vars   = {};
+      var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+      for(var i = 0; i < hashes.length; i++)
+      {
+          hash          = hashes[i].split('=');
+          vars[hash[0]] = unescape(hash[1]);
+      }
+      return vars;
     }
 
   </script>

@@ -20,6 +20,7 @@ package EnsEMBL::Web::ZMenu::ComparaTreeNode;
 
 use strict;
 
+use LWP::Simple qw($ua head);
 use URI::Escape qw(uri_escape);
 use IO::String;
 use Bio::AlignIO;
@@ -391,24 +392,35 @@ sub content {
                       );
     }
     else {
-      my $rest_url = uri_escape($hub->species_defs->ENSEMBL_REST_URL
+      my $rest_url = $hub->species_defs->ENSEMBL_REST_URL
                   .'/genetree/id/'
                   .$gt_id
-                  .'?content-type=application/json&aligned=1');
+                  .'?content-type=application/json&aligned=1';
 
-      $link = sprintf (
-                        '/wasabi/wasabi.htm?rest_url=%s', $rest_url
-                      );
+      # Fall back to file generation if REST fails.
+      # To make it work for e! archives
+      $ua->timeout(10);
+	  	my $is_success = head($rest_url);
+	  	if ($is_success) {
+	      $link = sprintf (
+	                        '/wasabi/wasabi.htm?rest_url=%s',
+	                        uri_escape($rest_url)
+	                      );
+	  	}
+	  	else {
+	      my $filegen_url = $hub->url('Json', {
+	      										type => 'GeneTree', 
+	      										action => 'fetch_wasabi', 
+	      										node => $node_id, 
+	      										gt => $gt_id, 
+	      										treetype => 'newick'
+	      									});
 
-      # $link = sprintf (
-      #                   '/wasabi/wasabi.htm?url=%s', uri_escape($hub->url('Json', {
-      #                     type => 'GeneTree',
-      #                     action => 'fetch_wasabi',
-      #                     node => $node_id,
-      #                     gt => $gt_id,
-      #                     treetype => 'phyloxml'
-      #                   }))
-      #                 );
+	      $link = sprintf (
+	                        '/wasabi/wasabi.htm?filegen_url=%s',
+	                        uri_escape($filegen_url)
+	                      );
+	  	}
 
     }
 
