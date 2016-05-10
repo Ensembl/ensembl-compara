@@ -242,9 +242,10 @@ sub create_form {
   }
 
   return $self->dom->create_element('div', {
-    'id'        => 'DataExport',
-    'class'     => 'js_panel',
-    'children'  => [ {'node_name' => 'input', 'class' => 'subpanel_type', 'value' => 'DataExport', 'type' => 'hidden' }, $form ]
+    'children'  => [
+      {'node_name' => 'input', 'class' => 'subpanel_type', 'value' => 'DataExport', 'type' => 'hidden' },
+      $form
+    ]
   });
 }
 
