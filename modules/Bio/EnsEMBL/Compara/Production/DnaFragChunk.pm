@@ -149,26 +149,17 @@ sub _fetch_masked_sequence {
   if(defined($self->masking_options)) {
     $masking_options = eval($self->masking_options);
     my $logic_names = $masking_options->{'logic_names'};
-    if(defined($masking_options->{'default_soft_masking'}) and
-       $masking_options->{'default_soft_masking'} == 0)
-    {
-      #print "getting HARD masked sequence...\n";
-      $seq = $slice->get_repeatmasked_seq($logic_names,0,$masking_options);
-    } else {
-      #print "getting SOFT masked sequence...\n";
-      $seq = $slice->get_repeatmasked_seq($logic_names,1,$masking_options);
-    }
+    my $soft_masking = $masking_options->{'default_soft_masking'} // 1;
+    #printf("getting %s masked sequence...\n", $soft_masking ? 'SOFT' : 'HARD');
+
+    my $masked_slice = $slice->get_repeatmasked_seq($logic_names, $soft_masking, $masking_options);
+    $seq = Bio::PrimarySeq->new( -id => $id, -seq => $masked_slice->seq);
   }
   else {  # no masking options set, so get unmasked sequence
     #print "getting UNMASKED sequence...\n";
     $seq = Bio::PrimarySeq->new( -id => $id, -seq => $slice->seq);
   }
 
-  unless($seq->isa('Bio::PrimarySeq')) {
-    #print("seq is a [$seq] not a [Bio::PrimarySeq]\n");
-    my $oldseq = $seq;
-    $seq = Bio::PrimarySeq->new( -id => $id, -seq => $oldseq->seq);
-  }
   #print ((time()-$starttime), " secs\n");
 
   #print STDERR "sequence length : ",$seq->length,"\n";
