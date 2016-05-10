@@ -633,20 +633,10 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
  	       -parameters => { },
 		-flow_into => {
-#			       1 => [ 'set_internal_ids', 'update_max_alignment_length_after_net' ],
-#			       1 => [ 'set_internal_ids', 'remove_inconsistencies_after_net' ], # lg4, 1Apr2015: skipping set_internal_ids to see if set_internal_ids_collection is any faster
-			       1 => [ 'remove_inconsistencies_after_net' ],                     # lg4, 1Apr2015: skipping set_internal_ids to see if set_internal_ids_collection is any faster
+			       1 => [ 'remove_inconsistencies_after_net' ],
 			       2 => [ 'alignment_nets' ],
 			      },
  	       -wait_for => [ 'update_max_alignment_length_after_chain' ],
-	       -rc_name => '1Gb',
- 	    },
- 	    {  -logic_name => 'set_internal_ids',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds',
- 	       -parameters => {
-			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
-			       'skip' => $self->o('patch_alignments'),
-			      },
 	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'alignment_nets',
@@ -657,7 +647,6 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'alignment_nets_himem' ],  # MEMLIMIT
 			     },
-#	       -wait_for => [ 'set_internal_ids' ],                                     # lg4, 1Apr2015: skipping set_internal_ids to see if set_internal_ids_collection is any faster
 	       -rc_name => '1Gb',
  	    },
 	    {  -logic_name => 'alignment_nets_himem',
