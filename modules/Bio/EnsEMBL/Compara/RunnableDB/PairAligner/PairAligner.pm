@@ -138,7 +138,7 @@ sub fetch_input {
       $sth->execute();
       my ($num_alignments) = $sth->fetchrow_array();
       $sth->finish();
-      if ($num_alignments >= $self->max_alignments) {
+      if ($num_alignments >= $self->param('max_alignments')) {
 	  throw("Too many alignments ($num_alignments) have been stored already for MLSS ".$mlss->dbID."\n".
 		"  Try changing the parameters or increase the max_alignments option if you think\n".
 		"  your system can cope with so many alignments.");
