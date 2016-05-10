@@ -236,16 +236,15 @@ sub display_id {
 sub bioseq {
   my $self = shift;
 
-  my $seq = undef;
-  if(not defined($self->sequence())) {
-    $seq = $self->fetch_masked_sequence;
+  my $seq_str = $self->sequence();
+  if(not defined $seq_str) {
+    $seq_str = $self->fetch_masked_sequence;
   }
   
-  $seq = Bio::Seq->new(-seq        => $self->sequence(),
+  return Bio::Seq->new(-seq        => $seq_str,
                        -display_id => $self->display_id(),
                        -primary_id => $self->sequence_id(),
                        );
-  return $seq;
 }
 
 ##########################
