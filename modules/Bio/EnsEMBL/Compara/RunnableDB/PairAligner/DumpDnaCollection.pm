@@ -187,27 +187,13 @@ sub dumpDnaFiles {
   }
 
   if ($self->param('DnaFragChunkSet')) {
-	my $dna_object = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('DnaFragChunkSet'));
+      my $chunk_set = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('DnaFragChunkSet'));
 
-      my $first_dna_object = $dna_object->get_all_DnaFragChunks->[0];
-      my $chunk_array = $dna_object->get_all_DnaFragChunks;
-
+      my $first_dna_object = $chunk_set->get_all_DnaFragChunks->[0];
       my $name = $first_dna_object->dnafrag->name . "_" . $first_dna_object->seq_start . "_" . $first_dna_object->seq_end;
-
       my $fastafile = "$dump_loc/". $name . ".fa";
 
-      #Must always dump new fasta files because different runs call the chunks
-      #different names and the chunk name is what is stored in the fasta file.
-      if (-e $fastafile) {
-	  unlink $fastafile
-      }
-      foreach my $chunk (@$chunk_array) {
-	  #A chunk_set will contain several seq_regions which will be appended
-	  #to a single fastafile. This means I can't use
-	  #dump_chunks_to_fasta_file because this deletes the fastafile each
-	  #time!
-	  $chunk->dump_to_fasta_file(">".$fastafile);
-      }
+      $chunk_set->dump_to_fasta_file($fastafile);
     }
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
