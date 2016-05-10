@@ -250,7 +250,8 @@ sub create_tracks {
     $prioritise   = 1 if $metadata->{'priority'};
 
     my $raw_features  = $parser->cache->{'summary'} || [];
-    my $strand        = $metadata->{'default_strand'} || 1;
+    my $strand_filter = $metadata->{'strand_filter'};
+    my $s  = $metadata->{'omit_unstranded'} ? 
     my $features      = [];
     my $max_score     = 0;
     my $min_score     = 0;
@@ -258,7 +259,7 @@ sub create_tracks {
     foreach my $f (@$raw_features) {
       my ($seqname, $start, $end, $score) = @$f;
       ## Skip features that lie outside the current slice
-      next if ( !(first {$seqname eq $_} @$seq_region_names)
+      next if (!(first {$seqname eq $_} @$seq_region_names)
                 || $end < $slice->start || $start > $slice->end);
       push @$features, {
                         'seq_region' => $seqname,
@@ -273,7 +274,7 @@ sub create_tracks {
     $data->{$track_key}{'metadata'}{'max_score'} = $max_score;
     $data->{$track_key}{'metadata'}{'min_score'} = $min_score;
 
-    $data->{$track_key}{'features'}{$strand} = $features;
+    $data->{$track_key}{'features'} = $features;
   }
   else {
     while ($parser->next) {
@@ -289,6 +290,7 @@ sub create_tracks {
       }
 
       my ($seqname, $start, $end) = $self->coords;
+      my $strand = $strandable ? $self->strand : 0;
       if ($slice && $extra_config->{'pix_per_bp'}) {
         ## Skip if already have something on this pixel
         my $here = int($start*$extra_config->{'pix_per_bp'});
@@ -297,8 +299,10 @@ sub create_tracks {
       }
 
       if ($slice) {
-        ## Skip features that lie outside the current slice
-        next if ( !(first {$seqname eq $_} @$seq_region_names)
+        ## Skip features that are on the 'wrong' strand or lie outside the current slice
+        next if (($strandable && (($strand_filter && $strand == $strand_filter)
+                                    || ($metadata->{'omit_unstrandable'} && $strand == 0)))
+                  || !(first {$seqname eq $_} @$seq_region_names)
                   || $end < $slice->start || $start > $slice->end);
         $self->build_feature($data, $track_key, $slice, $strandable);
       }
@@ -332,7 +336,7 @@ sub create_tracks {
     $order  = ['data'];
     $data   = {'data' => {'metadata' => $extra_config || {}}};
     if ($slice) {
-      $data->{'data'}{'features'} = {'1' => [], '-1' => []};
+      $data->{'data'}{'features'} = [];
     }
     else {
       $data->{'data'}{'bins'} = {};
@@ -392,15 +396,11 @@ sub build_feature {
     $metadata->{'min_score'} = $hash->{'score'} if $hash->{'score'} <= $metadata->{'min_score'};
   }
 
-  my $feature_strand = $data->{$track_key}{'metadata'}{'force_strand'} 
-                          || $hash->{'strand'} 
-                          || $data->{$track_key}{'metadata'}{'default_strand'};
-
-  if ($data->{$track_key}{'features'}{$feature_strand}) {
-    push @{$data->{$track_key}{'features'}{$feature_strand}}, $hash; 
+  if ($data->{$track_key}{'features'}) {
+    push @{$data->{$track_key}{'features'}}, $hash; 
   }
   else {
-    $data->{$track_key}{'features'}{$feature_strand} = [$hash];
+    $data->{$track_key}{'features'} = [$hash];
   }
 }
 

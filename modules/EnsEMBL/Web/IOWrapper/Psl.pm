@@ -57,14 +57,13 @@ sub create_hash {
   my $colour = $self->set_colour($colour_params);
 
   my $label = $self->parser->get_qName;
-  my $feature_strand = $strand || $metadata->{'default_strand'};
   my $href = $self->href({
                         'id'          => $label,
                         'url'         => $metadata->{'url'} || '',
                         'seq_region'  => $seq_region,
                         'start'       => $feature_start,
                         'end'         => $feature_end,
-                        'strand'      => $feature_strand,
+                        'strand'      => $strand,
                         });
 
   ## Start and end need to be relative to slice,

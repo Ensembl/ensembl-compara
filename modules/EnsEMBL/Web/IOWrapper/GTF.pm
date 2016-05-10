@@ -36,7 +36,7 @@ sub build_feature {
   my $attribs       = $self->parser->get_attributes;
   my $transcript_id = $attribs->{'transcript_id'};
   my $type          = $self->parser->get_type;
-  my $strand        = $self->parser->get_strand;
+  my $strand        = $self->parser->get_strand || 0;
 
   if ($transcript_id) { ## Feature is part of a transcript!
     if ($data->{$track_key}{'transcripts'}{$transcript_id}) {
@@ -47,11 +47,11 @@ sub build_feature {
     }
   }
   else { ## Single feature - add to track as normal
-    if ($data->{$track_key}{'features'}{$strand}) {
-      push @{$data->{$track_key}{'features'}{$strand}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
+    if ($data->{$track_key}{'features'}) {
+      push @{$data->{$track_key}{'features'}}, $self->create_hash($slice, $data->{$track_key}{'metadata'});
     }
     else {
-      $data->{$track_key}{'features'}{$strand} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
+      $data->{$track_key}{'features'} = [$self->create_hash($slice, $data->{$track_key}{'metadata'})];
     }
   }
 }
@@ -98,13 +98,12 @@ sub post_process {
       foreach (@ordered_segments) {
         ($args, %transcript) = $self->add_to_transcript($_, $args, %transcript);
       }
-      my $feature_strand = $transcript{'strand'};
 
-      if ($data->{$track_key}{'features'}{$feature_strand}) {
-        push @{$data->{$track_key}{'features'}{$feature_strand}}, \%transcript; 
+      if ($data->{$track_key}{'features'}) {
+        push @{$data->{$track_key}{'features'}}, \%transcript; 
       }
       else {
-        $data->{$track_key}{'features'}{$feature_strand} = [\%transcript]; 
+        $data->{$track_key}{'features'} = [\%transcript]; 
       }
     }
     ## Transcripts will be out of order, owing to being stored in hash
@@ -170,8 +169,6 @@ sub create_hash {
   }
   my $name = $attributes->{'extname'} || $id;
 
-  my $feature_strand = $strand || $metadata->{'default_strand'};
-
   my $feature = {
                   'seq_region'    => $seqname,
                   'strand'        => $strand,
@@ -199,7 +196,7 @@ sub create_hash {
                         'seq_region'  => $seqname,
                         'start'       => $feature_start,
                         'end'         => $feature_end,
-                        'strand'      => $feature_strand,
+                        'strand'      => $strand,
                         };
     if ($attributes->{'exon_number'}) {
       $click_params->{'exon'} = $attributes->{'exon_number'};

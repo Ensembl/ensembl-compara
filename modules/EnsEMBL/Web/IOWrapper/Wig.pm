@@ -54,8 +54,6 @@ sub create_hash {
                         };
 
   my $colour = $self->set_colour($colour_params);
-  my $feature_strand = $metadata->{'default_strand'} || 1;
-
 
   my $feature = {
     'seq_region'    => $seqname,
@@ -76,7 +74,7 @@ sub create_hash {
                                         'seq_region'  => $seqname,
                                         'start'       => $feature_start,
                                         'end'         => $feature_end,
-                                        'strand'      => $feature_strand,
+                                        'strand'      => 0,
                                       });
   }
 

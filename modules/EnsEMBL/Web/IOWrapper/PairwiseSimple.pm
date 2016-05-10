@@ -78,12 +78,11 @@ sub create_hash {
                   {'start' => $feature_2_start, 'end' => $feature_2_end},
                   ];
 
-  my $feature_strand = $metadata->{'default_strand'} || 1;
   my $href = $self->href({
                         'seq_region'  => $seqname,
                         'start'       => $click_start,
                         'end'         => $click_end,
-                        'strand'      => $feature_strand,
+                        'strand'      => 0,
                         });
 
   my $direction = $self->parser->get_direction;

@@ -36,8 +36,8 @@ sub draw_features {
   my $feature_count = 0;
 
   foreach (@$subtracks) {
-    next unless $_->{'features'} && ref $_->{'features'} eq 'HASH';
-    $feature_count += scalar(@{$_->{'features'}{$self->strand}||[]});
+    next unless $_->{'features'} && ref $_->{'features'} eq 'ARRAY';
+    $feature_count += scalar(@{$_->{'features'}||[]});
   }
 
   if ($feature_count < 1) {
@@ -134,14 +134,14 @@ sub draw_features {
 }
 
 sub draw_aggregate {
-  my ($self, $subtracks) = @_;
-  $subtracks ||= $self->{'data'};
-  return unless $subtracks && ref $subtracks eq 'ARRAY';
+  my ($self, $data) = @_;
+  $data ||= $self->{'data'};
+  return unless $data && ref $data eq 'ARRAY';
   my $feature_count = 0;
 
-  foreach (@$subtracks) {
-    next unless $_->{'features'} && ref $_->{'features'} eq 'HASH';
-    $feature_count += scalar(@{$_->{'features'}{$self->strand}||[]});
+  foreach (@$data) {
+    next unless $_->{'features'} && ref $_->{'features'} eq 'ARRAY';
+    $feature_count += scalar(@{$_->{'features'}||[]});
     $_->{'metadata'}{'subtitle'} ||= $self->{'my_config'}->get('longLabel') 
                                       || $self->{'my_config'}->get('caption');
   }
@@ -155,8 +155,6 @@ sub draw_aggregate {
   $config{'bg_href'} = $self->bg_href;
 
   my $drawing_style = $self->{'my_config'}->get('drawing_style') || ['Graph'];
-
-  my $data = $self->data_for_strand($subtracks);
 
   ## Recalculate colours if using the pvalue renderer
   if ($self->{'my_config'}->get('use_pvalue')) {
@@ -243,26 +241,6 @@ sub convert_to_pvalues {
     }
   }
   return (\@gradient, $key);
-}
-
-sub configure_strand {
-  my $self = shift;
-
-  my ($default_strand, $force_strand);
-
-  ## What do we do with unstranded data?
-  $default_strand = $self->{'my_config'}->get('default_strand') || 1;
-
-  ## Do we want to push all data onto one strand only?
-  my $configured_strand = $self->{'my_config'}->get('strand');
-  if ($configured_strand eq 'f') {
-    $force_strand = '1';
-  }
-  elsif ($configured_strand eq 'r') {
-    $force_strand = '-1';
-  }
-
-  return ($default_strand, $force_strand);
 }
 
 1;

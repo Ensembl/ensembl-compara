@@ -79,6 +79,30 @@ The keys of the feature hashref refer to the strand on which we wish to draw the
 =cut
 }
 
+sub get_strand_filters {
+### The strand settings in imageconfig are the reverse of filters,
+### so for clarity we need to convert them here
+  my ($self, $strand_code) = @_;
+  $strand_code ||= $self->{'my_config'}->get('strand');
+  my $filter  = 0;
+  my $skip    = 0;
+
+  if ($strand_code eq 'f') { ## Forward
+    ## Don't filter data, but don't draw in on the reverse strand
+    $skip = '-1';
+  }
+  elsif ($strand_code eq 'r') { ## Reverse
+    ## Don't filter data, but don't draw in on the forward strand
+    $skip = '1';
+  }
+  elsif ($strand_code eq 'b') { ## Both
+    # Don't skip either - we want to split the data by strand 
+    $filter = $self->strand;
+  }
+
+  return ($skip, $filter);
+}
+
 sub my_empty_label {
   my $self = shift;
   return sprintf('No features from %s on this strand', $self->my_config('name'));
