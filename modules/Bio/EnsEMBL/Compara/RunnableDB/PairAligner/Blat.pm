@@ -126,7 +126,8 @@ sub configure_runnable {
 
   my $name = $dnafrag->name . "_" . $db_chunks->[0]->seq_start . "_" . $db_chunks->[0]->seq_end;
 
-  my $dbChunkFile = "" . $self->param('target_fa_dir') . "/" . $name . ".fa";
+  my $target_fa_dir = $self->param('db_DnaFragChunkSet')->dna_collection->dump_loc;
+  my $dbChunkFile = $target_fa_dir . "/" . $name . ".fa";
 
   my $program = $self->require_executable('pair_aligner_exe');
 

@@ -124,9 +124,6 @@ sub createPairAlignerJobs
   if ($self->param('options')) {
       $pairaligner_hash->{'options'} = $self->param('options');
   }
-  if ($self->param('target_collection')->dump_loc) {
-      $pairaligner_hash->{'target_fa_dir'} = $self->param('target_collection')->dump_loc;
-  }
 
   my $count=0;
   foreach my $target_dnafrag_chunk_set (@{$target_dnafrag_chunk_set_list}) {
