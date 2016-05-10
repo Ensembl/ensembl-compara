@@ -614,8 +614,8 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
  	       -parameters => { },
 		-flow_into => {
-			       1 => [ 'remove_inconsistencies_after_net' ],
-			       2 => [ 'alignment_nets' ],
+			       'A->1' => [ 'remove_inconsistencies_after_net' ],
+			       '2->A' => [ 'alignment_nets' ],
 			      },
  	       -wait_for => [ 'update_max_alignment_length_after_chain' ],
 	       -rc_name => '1Gb',
@@ -635,7 +635,6 @@ sub pipeline_analyses {
  	       -batch_size => $self->o('net_batch_size'),
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
  	       -parameters => $self->o('net_parameters'),
-	       -can_be_empty  => 1,
 	       -rc_name => 'crowd',
  	    },
  	    {
@@ -644,7 +643,6 @@ sub pipeline_analyses {
 	       -flow_into => {
 			       1 => [ 'update_max_alignment_length_after_net' ],
 			   },
- 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
 	       -rc_name => '1Gb',
 	    },
  	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory
