@@ -65,6 +65,10 @@ package Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 sub default_options {
@@ -467,7 +471,7 @@ sub pipeline_analyses {
  	       -parameters => { },
  	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
 	        -flow_into => {
-			       2 => [ 'filter_duplicates' ], 
+			       2 => { 'filter_duplicates' => INPUT_PLUS() },
 			     },
 	       -rc_name => '1Gb',
  	    },
@@ -648,7 +652,7 @@ sub pipeline_analyses {
                -parameters => { },
                -wait_for =>  [ 'remove_inconsistencies_after_net' ],
                -flow_into => {
-                              2 => [ 'filter_duplicates_net' ], 
+                              2 => { 'filter_duplicates_net' => INPUT_PLUS() },
                             },
                -can_be_empty  => 1,
                -rc_name => 'crowd',
