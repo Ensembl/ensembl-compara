@@ -273,7 +273,6 @@ sub init { return []; } ## New method used by refactored glyphsets
 
 sub features {
   my $self = shift;
-  warn ">>>> DEPRECATED METHOD 'features' CALLED BY $self - please use 'get_data' instead.";
   return $self->get_data(@_);
 }
 
