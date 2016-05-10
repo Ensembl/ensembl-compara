@@ -294,4 +294,26 @@ sub dump_to_fasta_file {
 }
 
 
+=head2 dump_loc_file
+
+  Example     : $chunk_set->dump_loc_file();
+  Description : Returns the path to this ChunkSet in the dump location of its DnaCollection
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub dump_loc_file {
+    my $self = shift;
+    my $dump_loc = $self->dna_collection->dump_loc;
+    my $first_dna_object = $self->get_all_DnaFragChunks->[0];
+    my $name = $first_dna_object->dnafrag->name . "_" . $first_dna_object->seq_start . "_" . $first_dna_object->seq_end;
+    return sprintf('%s/%s.fa', $dump_loc, $name);
+}
+
+
+
+
 1;

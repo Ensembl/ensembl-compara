@@ -105,8 +105,6 @@ sub configure_runnable {
 
   my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
-  my (@db_chunk) = @{$self->param('db_DnaFragChunkSet')->get_all_DnaFragChunks};
-
   #
   # get the sequences and create the runnable
   #
@@ -117,17 +115,8 @@ sub configure_runnable {
   } else {
       $qyChunkFile = $self->dumpChunkSetToWorkdir($self->param('query_DnaFragChunkSet'));
   }
-  my @db_chunk_files;
 
-  #Grouped seq_regions. Fasta files named after the first seq_region in the set
-  my $db_chunks = $self->param('db_DnaFragChunkSet')->get_all_DnaFragChunks;
-
-  my $dnafrag = $db_chunks->[0]->dnafrag;
-
-  my $name = $dnafrag->name . "_" . $db_chunks->[0]->seq_start . "_" . $db_chunks->[0]->seq_end;
-
-  my $target_fa_dir = $self->param('db_DnaFragChunkSet')->dna_collection->dump_loc;
-  my $dbChunkFile = $target_fa_dir . "/" . $name . ".fa";
+  my $dbChunkFile = $self->param('db_DnaFragChunkSet')->dump_loc_file;
 
   my $program = $self->require_executable('pair_aligner_exe');
 
