@@ -179,10 +179,7 @@ sub delete_fasta_dumps_but_these {
 
   my $work_dir = $self->worker_temp_directory;
 
-  open F, "ls $work_dir|";
-  while (my $file = <F>) {
-    chomp $file;
-    next unless ($file =~ /\.fasta$/);
+  foreach my $file (glob('*.fasta')) {
     my $delete = 1;
     foreach my $fasta_file (@{$fasta_files_not_to_delete}) {
       if ($file eq basename($fasta_file)) {
@@ -192,7 +189,6 @@ sub delete_fasta_dumps_but_these {
     }
     unlink "$work_dir/$file" if ($delete);
   }
-  close F;
 }
 
 sub write_output {
