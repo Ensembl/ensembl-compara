@@ -80,11 +80,6 @@ sub param_defaults {
 sub fetch_input {
   my( $self) = @_;
 
-  #set default store_seq to 0 so that the sequence table is NOT populated during
-  #the chunking process. Have now added separate module StoreSequence to deal
-  #with storing very fragmented genomes.
-  $self->param('store_seq', 0);
-
   #whether to dataflow_output to store_sequence (true) or dump_large_nib_for_chains (false)
   unless (defined $self->param('flow_to_store_sequence')) {
       $self->param('flow_to_store_sequence', 1); 
@@ -357,17 +352,6 @@ sub create_dnafrag_chunks {
     
     #set chunk masking_options
     $chunk->masking_options;
-
-    #Store the sequence at this point, rather than in the blastz analysis
-    #only try to store the sequence if its length is less than that
-    #allowed by myslwd max_allowed_packet=12M
-    if($self->param('store_seq') && 
-       ($chunk->seq_end - $chunk->seq_start + 1) <= 11500000) {
-
-	$chunk->bioseq; #fetches sequence and stores internally in ->sequence variable
-    }
-
-    #print "store chunk " . $chunk->dnafrag->name . " " . $chunk->seq_start . " " . $chunk->seq_end . " " . length($chunk->bioseq->seq) . "\n";
 
     # do grouping if requested but do not group MT chr
     if($self->param('group_set_size') and ($chunk->length < $self->param('group_set_size')) and !$chunk->dnafrag->dna_type) {
