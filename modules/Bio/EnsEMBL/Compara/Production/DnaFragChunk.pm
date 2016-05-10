@@ -406,23 +406,4 @@ sub dump_chunks_to_fasta_file
 }
 
 
-sub cache_sequence
-{
-  my $self = shift;
-  
-  # $self->sequence will load from compara if available, if not go fetch it
-  unless($self->sequence) {
-    $self->fetch_masked_sequence;
-  }
-  
-  # fetching sequence will set $self->sequence but not sequence_id so store it
-  # fetching may have occurred in a previous method call, so keep this logic
-  # separate to make sure it will get stored
-  if($self->sequence_id==0) {
-    $self->adaptor->update_sequence($self);
-  }
-
-  return $self;
-}
-
 1;

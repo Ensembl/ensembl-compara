@@ -273,8 +273,6 @@ sub dumpChunkToWorkdir
 
   if($self->debug){print("dumpChunkToWorkdir : $fastafile\n");}
 
-
-  $chunk->cache_sequence;
   $chunk->dump_to_fasta_file($fastafile);
 
   if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
