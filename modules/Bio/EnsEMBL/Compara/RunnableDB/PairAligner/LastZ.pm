@@ -79,8 +79,6 @@ sub configure_runnable {
 
   my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
-  my (@db_chunk) = @{$self->param('db_DnaFragChunkSet')->get_all_DnaFragChunks};
-
   #
   # get the sequences and create the runnable
   #
