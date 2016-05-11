@@ -49,6 +49,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf;
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+use File::Path;
+
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
@@ -186,7 +189,7 @@ sub write_output {
     #Create dataflows for pair_aligner parts of the pipeline
     $self->create_pair_aligner_dataflows();
 
-    #Write dataflow to chunk_and_group_dna (2) and dump_dna_factory(9)
+    #Write dataflow to chunk_and_group_dna (2)
     foreach my $dna_collection (keys %$pair_aligner_collection_names) {
         #print "dna_collection $dna_collection\n";
 
@@ -209,7 +212,7 @@ sub write_output {
 	}
 	$self->dataflow_output_id($output_hash,2);
         if (defined $dna_collections->{$dna_collection}->{'dump_loc'}) {
-	    $self->dataflow_output_id($output_hash, 9);
+            mkpath($dna_collections->{$dna_collection}->{'dump_loc'});
         }
     }
 

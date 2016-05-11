@@ -244,7 +244,6 @@ sub e_analyses {
                      update_max_alignment_length_after_net
                      alignment_nets
                      update_max_alignment_length_before_FD
-                     dump_dna
                      no_chunk_and_group_dna
                      populate_new_database
                      dump_large_nib_for_chains
@@ -261,7 +260,6 @@ sub e_analyses {
                      set_internal_ids
                      set_internal_ids_collection
                      store_sequence_again
-                     dump_dna_factory
                      create_filter_duplicates_jobs
                      subst pair_aligner_logic_name:
                      update_max_alignment_length_after_chain

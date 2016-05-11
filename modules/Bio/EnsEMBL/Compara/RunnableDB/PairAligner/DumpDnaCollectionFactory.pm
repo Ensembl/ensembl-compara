@@ -71,9 +71,6 @@ sub write_output {
  if ($self->param('dump_nib')) {
       $self->dumpNibFilesFactory;
   }
-  if ($self->param('dump_dna')) {
-      $self->dumpDnaFilesFactory;
-  }
 
   return 1;
 }
@@ -125,28 +122,5 @@ sub dumpNibFilesFactory {
   return 1;
 }
 
-sub dumpDnaFilesFactory {
-  my $self = shift;
-
-   my $dna_collection = $self->compara_dba->get_DnaCollectionAdaptor->fetch_by_set_description($self->param('collection_name'));
-
-  foreach my $dnafrag_chunk_set (@{$dna_collection->get_all_DnaFragChunkSets}) {
-      my $type;
-      my $output_id;
-
-      #Only dump single dnafrag_chunk if it is larger than the dump_min_size - otherwise it gets stored in the database
-      my $dnafrag_chunks = $dnafrag_chunk_set->get_all_DnaFragChunks;
-      next if (@$dnafrag_chunks == 1 && $dnafrag_chunks->[0]->length <= $self->param('dump_min_size'));
-
-      $type = "DnaFragChunkSet";
-      $output_id->{$type} = $dnafrag_chunk_set->dbID;
-      $output_id->{'collection_name'} = $self->param('collection_name');
-
-      #Add dataflow to branch 2
-      $self->dataflow_output_id($output_id,2);
-
-  }
-   return 1;
-}
 
 1;

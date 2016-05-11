@@ -49,6 +49,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence;
 use strict;
 use warnings;
 
+use Time::HiRes qw(time gettimeofday tv_interval);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -87,6 +89,12 @@ sub write_output {
 	  }
       }
   } );
+
+  if (my $dump_loc = $dna_collection->dump_loc) {
+      my $starttime = time();
+      $chunkSet->dump_to_fasta_file($chunkSet->dump_loc_file);
+      if($self->debug){printf("%1.3f secs to dump ChunkSet %d for \"%s\" collection\n", (time()-$starttime), $chunkSet->dbID, $dna_collection->description);}
+  }
 
   return 1;
 }

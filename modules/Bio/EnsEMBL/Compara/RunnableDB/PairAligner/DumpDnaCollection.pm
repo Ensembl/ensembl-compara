@@ -80,8 +80,8 @@ sub fetch_input {
       $self->param('faToNib_exe', 'faToNib');
   }
 
-  #must have dump_nib or dump_dna defined
-  die("Missing dump_nib or dump_dna") unless ($self->param('dump_nib') || $self->param('dump_dna'));
+  #must have dump_nib
+  die("Missing dump_nib") unless $self->param('dump_nib');
 
   return 1;
 }
@@ -95,19 +95,10 @@ sub run
   if ($self->param('dump_nib')) {
       $self->dumpNibFiles;
   }
-  if ($self->param('dump_dna')) {
-      $self->dumpDnaFiles;
-  }
-
 
   return 1;
 }
 
-
-sub write_output {
-  my( $self) = @_;
-  return 1;
-}
 
 
 ##########################################
@@ -159,37 +150,6 @@ sub dumpNibFiles {
           $dna_object = undef;
       }
   }
-
-  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
-
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-
-  return 1;
-}
-
-sub dumpDnaFiles {
-  my $self = shift;
-
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-
-  my $starttime = time();
-
-  my $dna_collection = $self->compara_dba->get_DnaCollectionAdaptor->fetch_by_set_description($self->param('collection_name'));
-  my $dump_loc = $dna_collection->dump_loc;
-  unless (defined $dump_loc) {
-    die("dump_loc directory is not defined, can not dump nib files\n");
-  }
-
-  #Make directory if does not exist
-  if (!-e $dump_loc) {
-      print "$dump_loc does not currently exist. Making directory\n";
-      mkpath($dump_loc); 
-  }
-
-  if ($self->param('DnaFragChunkSet')) {
-      my $chunk_set = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('DnaFragChunkSet'));
-      $chunk_set->dump_to_fasta_file($chunk_set->dump_loc_file);
-    }
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
 
