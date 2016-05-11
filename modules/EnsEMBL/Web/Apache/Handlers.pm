@@ -389,6 +389,8 @@ sub cleanupHandler {
   my $time_taken  = $r->subprocess_env('LOG_REQUEST_TIME');
   my $uri         = $r->subprocess_env('LOG_REQUEST_URI');
 
+  warn sprintf "REQUEST: [served at %s by %s in %ss] %s\n", time_str($start_time), $$, $time_taken, $uri;
+
   if ($time_taken >= $SiteDefs::ENSEMBL_LONGPROCESS_MINTIME) {
 
     my ($size) = $Apache2::SizeLimit::HOW_BIG_IS_IT ? $Apache2::SizeLimit::HOW_BIG_IS_IT->() : Apache2::SizeLimit->_check_size;
@@ -399,8 +401,6 @@ sub cleanupHandler {
       $$, $uri,
       $$, $r->subprocess_env('HTTP_X_FORWARDED_FOR'), $r->headers_in->{'User-Agent'}
     );
-  } else {
-    warn sprintf "REQUEST: [served at %s by %s in %ss] %s\n", time_str($start_time), $$, $time_taken, $uri;
   }
 
   return OK;
