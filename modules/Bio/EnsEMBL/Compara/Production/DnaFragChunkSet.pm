@@ -239,14 +239,11 @@ sub total_basepairs {
 sub load_all_sequences {
     my $self = shift;
 
-    #Masking options are stored in the dna_collection
-    my $dna_collection = $self->dna_collection;
-
     if ($self->count == 1) {
 
         my $chunk = $self->get_all_DnaFragChunks()->[0];
         unless($chunk->sequence) {
-            $chunk->masking_options($dna_collection->masking_options);
+            $chunk->masking_options($self->dna_collection->masking_options);
             # Will fetch the masked sequence from the core db and cache it in the object
             $chunk->fetch_masked_sequence();
         }
@@ -261,7 +258,7 @@ sub load_all_sequences {
                 $chunk->sequence($sequences->{$this_seq_id}); #this sets $chunk->sequence_id=0
                 $chunk->sequence_id($this_seq_id); #reset seq_id
             } else {
-                $chunk->masking_options($dna_collection->masking_options);
+                $chunk->masking_options($self->dna_collection->masking_options);
                 # Will fetch the masked sequence from the core db and cache it in the object
                 $chunk->fetch_masked_sequence();
             }
