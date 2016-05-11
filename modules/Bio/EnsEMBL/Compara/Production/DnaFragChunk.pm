@@ -75,7 +75,7 @@ sub new {
                the this chunks start,end.
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : none
-  Caller     : general, self->fetch_masked_sequence()
+  Caller     : general
 
 =cut
 
