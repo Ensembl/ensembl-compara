@@ -446,7 +446,7 @@ sub redirected_from_nearest_mirror {
     if ($uri =~ s/([\;\?\&])redirectsrc=([^\;\&]+)(.*)$//) {
 
       # save a cookie for JS
-      EnsEMBL::Web::Cookie->bake($r, {'name' => 'redirected_from_url', 'value' => $2});
+      EnsEMBL::Web::Cookie->new($r, {'name' => 'redirected_from_url', 'value' => $2})->bake;
 
       $uri .= $1.($3 =~ s/^[\;\&]*//r);
       $uri  =~ s/[\;\&]*$//;
@@ -471,7 +471,7 @@ sub redirect_to_nearest_mirror {
     my $unparsed_uri    = $r->unparsed_uri;
     my $redirect_flag   = $unparsed_uri =~ /redirect=([^\&\;]+)/ ? $1 : '';
     my $debug_ip        = $unparsed_uri =~ /debugip=([^\&\;]+)/ ?  $1 : '';
-    my $redirect_cookie = EnsEMBL::Web::Cookie->retrieve($r, {'name' => 'redirect_mirror'}) || EnsEMBL::Web::Cookie->new($r, {'name' => 'redirect_mirror'});
+    my $redirect_cookie = EnsEMBL::Web::Cookie->new($r, {'name' => 'redirect_mirror'})->retrieve;
 
     # If the user clicked on a link that's explicitly supposed to take him to
     # another mirror, it should have an extra param 'redirect=no' in it. We save
@@ -482,23 +482,19 @@ sub redirect_to_nearest_mirror {
     if ($redirect_flag eq 'force' || $debug_ip) {
 
       # remove any existing cookie
-      $redirect_cookie->value('');
-      $redirect_cookie->bake;
+      $redirect_cookie->clear;
 
     }
 
     # If the flag says don't redirect, or we have already decided in some previous request not to redirect and have set a cookie for that - don't redirect then
     if ($redirect_flag eq 'no' || $redirect_cookie->value && $redirect_cookie->value eq 'no') {
       if (!$redirect_cookie->value || $redirect_cookie->value ne 'no') { # if not already set, set it for 24 hours
-        $redirect_cookie->value('no');
-        $redirect_cookie->expires('+24h');
-        $redirect_cookie->bake;
+        $redirect_cookie->bake({'expires' => '+24h', 'value' => 'no'});
       }
       return DECLINED;
     }
 
-    $redirect_cookie->value('');
-    $redirect_cookie->bake;
+    $redirect_cookie->clear;
 
     # Getting the correct remote IP address isn't straight forward. We check all the possible
     # ip addresses to get the correct one that is valid and isn't an internal address.
@@ -538,9 +534,7 @@ sub redirect_to_nearest_mirror {
     # If the user is already on the nearest mirror, save a cookie
     # to avoid doing these checks for further requests from the same machine
     if ($destination eq $server_name) {
-      $redirect_cookie->value('no');
-      $redirect_cookie->expires('+24h');
-      $redirect_cookie->bake;
+      $redirect_cookie->bake({'expires' => '+24h', 'value' => 'no'});
       return DECLINED;
     }
 
