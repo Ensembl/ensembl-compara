@@ -240,6 +240,10 @@ sub dumpChunkSetToWorkdir
   my $self      = shift;
   my $chunkSet   = shift;
 
+  if ($chunkSet->dna_collection->dump_loc) {
+      return $chunkSet->dump_loc_file;
+  }
+
   my $starttime = time();
 
   my $fastafile = $self->worker_temp_directory. "chunk_set_". $chunkSet->dbID .".fasta";

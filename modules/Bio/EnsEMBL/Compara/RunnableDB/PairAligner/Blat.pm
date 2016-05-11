@@ -116,7 +116,7 @@ sub configure_runnable {
       $qyChunkFile = $self->dumpChunkSetToWorkdir($self->param('query_DnaFragChunkSet'));
   }
 
-  my $dbChunkFile = $self->param('db_DnaFragChunkSet')->dump_loc_file;
+  my $dbChunkFile = $self->dumpChunkSetToWorkdir($self->param('db_DnaFragChunkSet'));
 
   my $program = $self->require_executable('pair_aligner_exe');
 
