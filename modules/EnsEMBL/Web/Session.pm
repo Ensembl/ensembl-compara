@@ -54,7 +54,7 @@ sub record_type_id {
 sub is_present {
   ## Tells whether session is already present/created or not
   ## @return Boolean
-  return exists $self->{'_session_id'};
+  return !!$self->{'_session_id'};
 }
 
 sub session_id {
