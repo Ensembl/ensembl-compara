@@ -2595,7 +2595,6 @@ sub core_pipeline_analyses {
             -rc_name        => '2Gb_job',
             -flow_into      => {
                 1  => [ 'raxml_bl_decision' ],
-                -1 => [ 'notung_himem' ],
             },
         },
 
