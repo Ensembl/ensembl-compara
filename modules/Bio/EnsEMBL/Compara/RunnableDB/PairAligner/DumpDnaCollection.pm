@@ -158,26 +158,5 @@ sub dumpNibFiles {
   return 1;
 }
 
-#Xreate a ooc file used in blat analysis. Not used for translated blat.
-sub create_ooc_file {
-  my ($dir, $seq_region) = @_;
-
-  my $ooc_file = "$dir/$seq_region/5ooc";
-
-  #make new directory to store 5ooc file for each seq_region
-  if (!-e "$dir/$seq_region") {
-      mkdir("$dir/$seq_region")
-        or die("Directory $dir/$seq_region cannot be created");
-  }
-
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Blat (
-							     -database => "$dir/$seq_region.fa",
-							     -query_type => "dnax",
-							     -target_type => "dnax",
-							     -options => "-ooc=$ooc_file -tileSize=5 -makeOoc=$ooc_file -mask=lower -qMask=lower");
-  $runnable->run;
-
-  return $ooc_file;
-}
 
 1;
