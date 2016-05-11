@@ -250,8 +250,6 @@ sub create_tracks {
     $prioritise   = 1 if $metadata->{'priority'};
 
     my $raw_features  = $parser->cache->{'summary'} || [];
-    my $strand_filter = $metadata->{'strand_filter'};
-    my $s  = $metadata->{'omit_unstranded'} ? 
     my $features      = [];
     my $max_score     = 0;
     my $min_score     = 0;
@@ -290,7 +288,7 @@ sub create_tracks {
       }
 
       my ($seqname, $start, $end) = $self->coords;
-      my $strand = $strandable ? $self->strand : 0;
+      my $strand = $strandable ? $self->parser->get_strand : 0;
       if ($slice && $extra_config->{'pix_per_bp'}) {
         ## Skip if already have something on this pixel
         my $here = int($start*$extra_config->{'pix_per_bp'});
@@ -300,8 +298,9 @@ sub create_tracks {
 
       if ($slice) {
         ## Skip features that are on the 'wrong' strand or lie outside the current slice
+        my $strand_filter = $extra_config->{'strand_filter'};
         next if (($strandable && (($strand_filter && $strand == $strand_filter)
-                                    || ($metadata->{'omit_unstrandable'} && $strand == 0)))
+                                    || ($extra_config->{'omit_unstrandable'} && $strand == 0)))
                   || !(first {$seqname eq $_} @$seq_region_names)
                   || $end < $slice->start || $start > $slice->end);
         $self->build_feature($data, $track_key, $slice, $strandable);

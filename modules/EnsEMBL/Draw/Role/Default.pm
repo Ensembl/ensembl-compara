@@ -67,7 +67,7 @@ sub draw_features {
   my $skipped     = 1;
 
   foreach (@$subtracks) {
-    my $features  = $_->{'features'}{$self->strand};
+    my $features  = $_->{'features'};
     my $metadata  = $_->{'metadata'} || {};
     next unless scalar @{$features||[]};
     $skipped = 0;
