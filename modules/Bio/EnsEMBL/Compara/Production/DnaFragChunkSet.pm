@@ -49,6 +49,8 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
+use Bio::EnsEMBL::Hive::Utils 'dir_revhash';
+
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
 
@@ -308,9 +310,8 @@ sub dump_to_fasta_file {
 sub dump_loc_file {
     my $self = shift;
     my $dump_loc = $self->dna_collection->dump_loc;
-    my $first_dna_object = $self->get_all_DnaFragChunks->[0];
-    my $name = $first_dna_object->dnafrag->name . "_" . $first_dna_object->seq_start . "_" . $first_dna_object->seq_end;
-    return sprintf('%s/%s.fa', $dump_loc, $name);
+    my $sub_dir  = dir_revhash($self->dbID);
+    return sprintf('%s/%s/chunk_set_%s.fa', $dump_loc, $sub_dir, $self->dbID);
 }
 
 
