@@ -107,9 +107,6 @@ sub dumpNibFilesFactory {
           next if (-e $nibfile);
           
           $output_id->{'DnaFragChunk'} = $dnafrag_chunk->dbID;
-          $output_id->{'collection_name'} = $self->param('collection_name');
-          $output_id->{'dump_loc'} = $self->param('dump_loc');
-          $output_id->{'genome_db_id'} = $self->param('genome_db_id');
           
           #Add dataflow to branch 2
           $self->dataflow_output_id($output_id,2);

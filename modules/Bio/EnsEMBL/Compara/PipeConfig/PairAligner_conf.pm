@@ -528,7 +528,7 @@ sub pipeline_analyses {
 			      },
 	       -hive_capacity => 1,
 	       -flow_into => {
-			      2 => [ 'dump_large_nib_for_chains' ],
+			      2 => { 'dump_large_nib_for_chains' => INPUT_PLUS() },
 			     },
 	       -rc_name => '1Gb',
  	    },
