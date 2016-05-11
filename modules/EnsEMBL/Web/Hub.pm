@@ -65,7 +65,7 @@ sub new {
   my $args            = {};
   my $r               = $controller->r;
   my $species_defs    = $controller->species_defs;
-  my $cookies         = EnsEMBL::Web::Cookie->fetch($r);
+  my $cookies         = EnsEMBL::Web::Cookie->new_from_header($r);
 
   # TODO - get rid of %ENV usage
   my $species   = $ENV{'ENSEMBL_SPECIES'}   = $controller->species;
@@ -203,37 +203,54 @@ sub is_dynamic_image_width {
   return shift->get_cookie_value('DYNAMIC_WIDTH') ? 1 : 0;
 }
 
-## Cookie methods
+###### Cookie methods ######
+
 sub get_cookie_value {
+  ## Gets value of a cookie
+  ## @param Cookie name
+  ## @param Flag kept on if cookie is encrypted
+  ## @return Cookie value, possibly an empty string if cookie doesn't exist
   my $self    = shift;
-  my $cookie  = $self->get_cookie(@_);
+  my $cookie  = $self->cookies->{$name} ? $self->get_cookie(@_) : undef; # don't create a new cookie
+
   return $cookie ? $cookie->value : '';
 }
 
 sub get_cookie {
+  ## Gets a cookie object (or creates a new one if one doesn't exist)
+  ## @param Cookie name
+  ## @param Flag kept on if cookie is encrypted
+  ## @return Cookie object (possible newly created)
   my ($self, $name, $is_encrypted) = @_;
-  my $cookies = $self->cookies;
-  $cookies->{$name} = EnsEMBL::Web::Cookie->retrieve($self->apache_handle, {'name' => $name, 'encrypted' => $is_encrypted}) unless $cookies->{$name} && $cookies->{$name}->encrypted eq ($is_encrypted || 0);
-  return $cookies->{$name};
+  my $cookie = $self->cookies->{$name} ||= EnsEMBL::Web::Cookie->new($self->r, {'name' => $name});
+
+  $cookie->encrypted($is_encrypted || 0);
+
+  return $cookie;
 }
 
 sub set_cookie {
-  my ($self, $name, $value, $is_encrypted) = @_;
-  return $self->cookies->{$name} = EnsEMBL::Web::Cookie->bake($self->apache_handle, {'name' => $name, 'value' => $value, 'encrypted' => $is_encrypted});
+  ## Sets a cookie with the given param
+  ## @param Cookie name (OR hashref with keys as accepted by EnsEMBL::Web::Cookie constructor)
+  ## @param Cookie value (if first argument was cookie name)
+  ## @return Cookie object
+  my ($self, $name, $value) = @_;
+
+  my $params  = ref $name ? $name : { 'name' => $name, 'value' => $value };
+  my $cookie  = $self->get_cookie(delete $params->{'name'}, delete $params->{'encrypted'});
+
+  return $cookie->bake($params);
 }
 
 sub clear_cookie {
+  ## Clears a cookie with the given name
+  ## @param Cookie name
+  ## @return Cookie object or undef if no cookie was present with that name
   my ($self, $name) = @_;
-  EnsEMBL::Web::Cookie->clear($self->apache_handle, {'name' => $name});
-  return $self->cookies->{$name} = undef;
-}
 
-sub new_cookie {
-  ## Creates a new EnsEMBL::Web::Cookie object
-  ## @param Hashref as accepted by EnsEMBL::Web::Cookie->new
-  ## @return EnsEMBL::Web::Cookie
-  my ($self, $params) = @_;
-  return EnsEMBL::Web::Cookie->new($self->apache_handle, $params);
+  my $cookie = delete $self->cookies->{'name'};
+
+  return $cookie ? $cookie->clear : undef;
 }
 
 sub problem {

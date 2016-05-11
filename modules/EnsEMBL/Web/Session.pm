@@ -28,15 +28,12 @@ use parent qw(EnsEMBL::Web::RecordManager);
 
 sub init {
   ## Abstract method implementation
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $cookies = $hub->cookies;
+  my $self  = shift;
+  my $hub   = $self->hub;
 
   # retrieve existing session cookie or create a new one
-  $self->{'_session_cookie'} = $cookies->{$SiteDefs::ENSEMBL_SESSION_COOKIE} || $hub->new_cookie({'name' => $SiteDefs::ENSEMBL_SESSION_COOKIE});
-  $self->{'_session_cookie'}->encrypted(1);
-
-  $self->{'_session_id'} = $self->{'_session_cookie'}->value || undef; # if no session cookie exists, session id gets set later on a call to session_id method
+  $self->{'_session_cookie'}  = $hub->get_cookie({'name' => $SiteDefs::ENSEMBL_SESSION_COOKIE, 'encrypted' => 1});
+  $self->{'_session_id'}      = $self->{'_session_cookie'}->value || undef; # if no session cookie exists, session id gets set later on a call to session_id method
 }
 
 sub rose_manager {
