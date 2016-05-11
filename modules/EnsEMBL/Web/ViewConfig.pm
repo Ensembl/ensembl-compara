@@ -380,7 +380,7 @@ sub build_form {
     $fieldset->add_field({
       type   => 'DropDown',
       name   => 'image_width',
-      value  => $hub->is_dynamic_image_width ? 'bestfit' : $hub->image_width,
+      value  => $hub->get_cookie_value('DYNAMIC_WIDTH') ? 'bestfit' : $hub->image_width,
       label  => 'Width of image',
       values => [
         { value => 'bestfit', caption => 'best fit' },

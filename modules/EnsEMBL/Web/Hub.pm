@@ -199,10 +199,6 @@ sub image_width {
   return $self->{'_image_width'} ||= $self->param('image_width') || $self->get_cookie_value('ENSEMBL_WIDTH') || $self->species_defs->ENSEMBL_IMAGE_WIDTH;
 }
 
-sub is_dynamic_image_width {
-  return shift->get_cookie_value('DYNAMIC_WIDTH') ? 1 : 0;
-}
-
 ###### Cookie methods ######
 
 sub get_cookie_value {
