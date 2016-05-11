@@ -945,8 +945,6 @@ sub get_homologies {
   my %homologues;
 
   return unless $database;
-  
-  $self->timer_push('starting to fetch', 6);
 
   my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_stable_id($geneid);
 
@@ -955,8 +953,6 @@ sub get_homologies {
   my $homology_adaptor = $database->get_HomologyAdaptor;
   my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member); # It is faster to get all the Homologues and discard undesired entries than to do fetch_all_by_Member_method_link_type
   #warn ">>> @$homologies_array";
-
-  $self->timer_push('fetched', 6);
 
   # Strategy: get the root node (this method gets the whole lineage without getting sister nodes)
   # We use right - left indexes to get the order in the hierarchy.
@@ -975,9 +971,7 @@ sub get_homologies {
       $node = $node->children->[0];
     }
   }
-  
-  $self->timer_push('classification', 6);
-  
+
   my $ok_homologies = [];
   foreach my $homology (@$homologies_array) {
     push @$ok_homologies, $homology if $homology->description =~ /$homology_description/;
@@ -1013,9 +1007,7 @@ sub fetch_homology_species_hash {
     # There should be a way of retrieving this name correctly instead.
     push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->species_tree_node(), $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID ];
   }
-  
-  $self->timer_push('homologies hacked', 6);
-  
+
   @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;
   
   return \%homologues;

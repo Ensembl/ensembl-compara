@@ -255,9 +255,7 @@ sub new {
     
     $self->{'glyphsets'} = \@glyphsets;
   }
-  
-  $self->timer_push("DrawableContainer->new: End GlyphSets");
-  
+
   return $self;
 }
 
@@ -289,18 +287,12 @@ sub _init {
     spacing                 => $spacing      || $contents->[0][1]->get_parameter('spacing') || 0,
     strandedness            => $strandedness || 0,
     __extra_block_spacing__ => 0,
-    timer                   => $contents->[0][1]->species_defs->timer
   };
 
   $self->{'strandedness'} = 1 if $self->{'config'}->get_parameter('text_export');
 
   bless $self, $class;
   return $self;
-}
-
-sub timer_push {
-  my ($self, $tag, $dep) = @_;
-  $self->{'timer'}->push($tag, $dep, 'draw');
 }
 
 ########## render does clever drawing things

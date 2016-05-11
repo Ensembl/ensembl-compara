@@ -47,8 +47,6 @@ sub init_canvas {
   $self->canvas($canvas);
   my $bgcolor = $self->colour($config->bgcolor);
   $self->{'canvas'}->filledRectangle(0,0, $self->{sf} * $im_height, $self->{sf} * $im_width, $bgcolor );
-
-  $self->{'config'}->species_defs->timer_push( "CANVAS INIT", 1, 'draw' );
 }
 
 1;

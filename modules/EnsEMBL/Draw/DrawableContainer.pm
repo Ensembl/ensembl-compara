@@ -208,9 +208,6 @@ sub new {
         ## don't waste any more time on this row if there's nothing in it
         if ($@ || scalar @{$glyphset->{'glyphs'}} == 0) {
           warn $@ if $@;
-        
-          $self->timer_push('track finished', 3);
-          $self->timer_push(sprintf("INIT: [ ] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
           next;
         }
       }
@@ -260,8 +257,6 @@ sub new {
       }
 
       ## go ahead and do all the database work
-      $self->timer_push('GlyphSet list prepared for config ' . ref($config), 1);
-
       my $next_section_col = 0;
       foreach my $glyphset (@glyphsets) {
         ## load everything from the database
@@ -446,11 +441,7 @@ sub new {
       
         ## translate the top of the next row to the bottom of this one
         $yoffset += $glyphset->height + $trackspacing;
-        $self->timer_push('track finished', 3);
-        $self->timer_push(sprintf("INIT: [X] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
       }
-    
-      $self->timer_push('End of creating glyphs for ' . ref($config), 1);
     
       push @{$self->{'glyphsets'}}, @glyphsets;
     
@@ -459,8 +450,6 @@ sub new {
       $config->{'panel_width'} = undef;
     }
   }
-
-  $self->timer_push('DrawableContainer->new: End GlyphSets');
 
   return $self;
 }
@@ -491,16 +480,10 @@ sub _init {
     'highlights'    => $highlights || [],
     'strandedness'  => $strandedness || 0,
     '__extra_block_spacing__'    => 0,
-    'timer'         => $Contents->[0][1]->species_defs->timer
   };
   
   bless( $self, $class );
   return $self;
-}
-
-sub timer_push {
-  my( $self, $tag, $dep ) = @_;
-  $self->{'timer'}->push( $tag, $dep, 'draw' );
 }
 
 ## render does clever drawing things
@@ -519,7 +502,6 @@ sub render {
     $extra
   );
   my $canvas = $renderer->canvas();
-  $self->timer_push("DrawableContainer->render ending $type",1);
   return $canvas;
 }
 

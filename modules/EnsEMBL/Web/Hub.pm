@@ -37,7 +37,6 @@ use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Draw::Utils::ColourMap;
 
-use EnsEMBL::Web::Timer;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::DBSQL::DBConnection;
@@ -87,7 +86,6 @@ sub new {
     _user_details  => $args->{'user_details'}  || 1,
     _r             => $r,
     _user          => $args->{'user'}          || undef,
-    _timer         => EnsEMBL::Web::Timer->new,
     _databases     => EnsEMBL::Web::DBSQL::DBConnection->new($species, $species_defs),
     _cookies       => $cookies,
     _ext_indexers  => {},
@@ -109,8 +107,6 @@ sub new {
   $self->{'_input'}       = $input;
   $self->{'_factorytype'} = $factorytype;
   $self->{'_controller'}  = $controller;
-
-  $species_defs->{'timer'} = $self->timer;
 
   $self->query_store_setup;
   $self->init_session;
@@ -144,7 +140,6 @@ sub factorytype :lvalue { $_[0]{'_factorytype'}; }
 sub session { $_[0]{'_session'}; }
 sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
-sub timer       :lvalue { $_[0]{'_timer'};       }
 sub components  :lvalue { $_[0]{'_components'};  }
 sub viewconfig  :lvalue { $_[0]{'_viewconfig'};  } # Store viewconfig so we don't have to keep getting it from session
 
@@ -162,7 +157,6 @@ sub user_details   { return $_[0]{'_user_details'};   }
 sub species_defs   { return $_[0]{'_species_defs'};   }
 sub config_adaptor { return $_[0]{'_config_adaptor'} ||= EnsEMBL::Web::DBSQL::ConfigAdaptor->new($_[0]); }
 
-sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
 sub referer           { return shift->controller->referer; }
 sub colourmap         { return $_[0]{'colourmap'} ||= EnsEMBL::Draw::Utils::ColourMap->new($_[0]->species_defs);      }
 sub is_ajax_request   { return $_[0]{'is_ajax'}   //= $_[0]{'_r'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }

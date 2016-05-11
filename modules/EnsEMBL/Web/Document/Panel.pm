@@ -50,7 +50,6 @@ sub status            { return $_[0]->{'status'}; }
 sub code              { return $_[0]->{'code'};   }
 sub print             { shift->renderer->print(@_);  }
 sub printf            { shift->renderer->printf(@_); }
-sub timer_push        { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 3 + $_[2]); }
 sub _is_ajax_request  { return $_[0]->renderer->can('r') && $_[0]->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
 sub ajax_is_available { return 1; }
 

@@ -70,7 +70,6 @@ sub param             { return shift->hub->param(@_);             }
 sub user              { return shift->hub->user(@_);              }
 sub database          { return shift->hub->database(@_);          }
 sub get_adaptor       { return shift->hub->get_adaptor(@_);       }
-sub timer_push        { return shift->hub->timer_push(@_);        }
 sub table_info        { return shift->hub->table_info(@_);        }
 sub data_species      { return shift->hub->data_species(@_);      }
 sub get_imageconfig   { return shift->hub->get_imageconfig(@_);   }

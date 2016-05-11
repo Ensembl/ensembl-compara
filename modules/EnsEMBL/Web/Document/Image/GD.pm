@@ -606,7 +606,6 @@ sub render {
   }
   
   $self->{'width'} = $image->width;
-  $self->hub->species_defs->timer_push('Image->render ending', undef, 'draw');
   
   return $html;
 }

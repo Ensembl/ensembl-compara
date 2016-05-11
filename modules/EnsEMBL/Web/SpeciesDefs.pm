@@ -102,7 +102,6 @@ sub new {
   my $self = bless({
     _start_time => undef,
     _last_time  => undef,
-    timer       => undef
   }, $class);
 
   my $conffile = "$SiteDefs::ENSEMBL_CONF_DIRS[0]/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
@@ -749,23 +748,6 @@ sub _munge_colours {
     }
   }
   return $out;
-}
-
-sub timer {
-  ### Provides easy-access to the ENSEMBL_WEB_REGISTRY's timer
-  my $self = shift;
-  
-  if (!$self->{'timer'}) {
-    $self->dynamic_use('EnsEMBL::Web::RegObj');
-    $self->{'timer'} = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->timer;
-  }
-  
-  return $self->{'timer'};
-}
-
-sub timer_push {
-  my $self = shift;
-  return $self->timer->push(@_);
 }
 
 sub img_url { return $_[0]->ENSEMBL_STATIC_SERVER . ($_[0]->ENSEMBL_IMAGE_ROOT || '/i/'); }
