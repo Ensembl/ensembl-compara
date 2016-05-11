@@ -46,10 +46,8 @@ package Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Utils::Exception;
+
 use Bio::EnsEMBL::Utils::Argument;
-use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
