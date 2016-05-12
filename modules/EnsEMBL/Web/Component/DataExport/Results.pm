@@ -43,15 +43,6 @@ sub content {
   my $path        = $hub->param('file');
   my $html;
 
-
-  $html .= sprintf '<h2>Download</h2><a href="%s">Download your %s file</a>', $hub->url('Download', {
-    'action'      => '',
-    'function'    => '',
-    'filename'    => $filename,
-    'file'        => $path,
-    'compression' => ''
-  }), $format;
-
   my $export_action = $hub->param('export_action');
   my $back_action = $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1});
   my $download_href = $hub->url('Download', {
@@ -77,7 +68,7 @@ sub content {
 
   foreach ($hub->param) {
     my %field_info = ('name' => $_);
-    
+
     unless (grep @core_params, $_) {
       $field_info{'name'} .= '_'.$hub->param('format');
     }
@@ -111,16 +102,18 @@ sub content {
     { name => 'gz', value => $download_compressed_action },
   ]);
 
-  $fieldset->add_field([
-    {
-      inline => 1,
-      elements  => [
-        { type => 'button', value => 'Back', name => 'back', class => 'export_buttons_preview' },
-        { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons_preview' },
-        { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons_preview' },
-      ]
-    }
+  my $buttons = $fieldset->add_element([
+    { type => 'button', value => 'Back', name => 'back', class => 'export_buttons_preview' },
+    { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons_preview' },
+    { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons_preview' },
   ]);
+
+  my $div = $self->dom->create_element('div', {
+    class => 'export_buttons_div',
+    children => $buttons
+  });
+
+  $fieldset->append_child($div);
 
   $html .= $form->render;
 
