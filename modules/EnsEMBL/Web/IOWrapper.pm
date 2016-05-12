@@ -298,8 +298,8 @@ sub create_tracks {
 
       if ($slice) {
         ## Skip features that are on the 'wrong' strand or lie outside the current slice
-        my $strand_filter = $extra_config->{'strand_filter'};
-        next if (($strandable && (($strand_filter && $strand == $strand_filter)
+        my $omit = $extra_config->{'strand_to_omit'};
+        next if (($strandable && (($omit && $strand == $omit)
                                     || ($extra_config->{'omit_unstrandable'} && $strand == 0)))
                   || !(first {$seqname eq $_} @$seq_region_names)
                   || $end < $slice->start || $start > $slice->end);

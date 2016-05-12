@@ -35,8 +35,7 @@ sub get_data {
   my $self         = shift;
   my $data         = [];
   
-  my ($skip, $strand_filter) = $self->get_strand_filters;
-  warn ">>> SKIP $skip, STRAND FILTER $strand_filter";
+  my ($skip, $strand_to_omit) = $self->get_strand_filters;
   return $data if $skip == $self->strand;
 
   my $container    = $self->{'container'};
@@ -62,17 +61,15 @@ sub get_data {
 
   my $file  = EnsEMBL::Web::File::User->new(%args);
   return [] unless $file->exists;
-  warn ">>> FILE EXISTS!";
   
   my $iow   = EnsEMBL::Web::IOWrapper::open($file, 
                                             'hub'         => $hub, 
                                             'config_type' => $self->{'config'}{'type'},
                                             'track'       => $self->{'my_config'}{'id'},
                                             );
-  warn ">>> IOW $iow"; 
   if ($iow) {
     my $extra_config = {
-                        'strand_filter'   => $strand_filter,
+                        'strand_to_omit'  => $strand_to_omit,
                         'display'         => $self->{'display'},
                         'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                         };

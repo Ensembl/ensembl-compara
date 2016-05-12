@@ -84,23 +84,23 @@ sub get_strand_filters {
 ### so for clarity we need to convert them here
   my ($self, $strand_code) = @_;
   $strand_code ||= $self->{'my_config'}->get('strand');
-  my $filter  = 0;
-  my $skip    = 0;
+  my $strand_to_omit  = 0;
+  my $skip            = 0;
 
   if ($strand_code eq 'f') { ## Forward
-    ## Don't filter data, but don't draw in on the reverse strand
+    ## Don't filter data, but don't draw it on the reverse strand
     $skip = '-1';
   }
   elsif ($strand_code eq 'r') { ## Reverse
-    ## Don't filter data, but don't draw in on the forward strand
+    ## Don't filter data, but don't draw it on the forward strand
     $skip = '1';
   }
   elsif ($strand_code eq 'b') { ## Both
-    # Don't skip either - we want to split the data by strand 
-    $filter = $self->strand;
+    # Don't skip either strand - we want to split the data by strand 
+    $strand_to_omit = -$self->strand;
   }
 
-  return ($skip, $filter);
+  return ($skip, $strand_to_omit);
 }
 
 sub my_empty_label {
