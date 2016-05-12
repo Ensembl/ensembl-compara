@@ -43,6 +43,7 @@ sub content {
   my $path        = $hub->param('file');
   my $html;
 
+
   $html .= sprintf '<h2>Download</h2><a href="%s">Download your %s file</a>', $hub->url('Download', {
     'action'      => '',
     'function'    => '',
@@ -50,6 +51,17 @@ sub content {
     'file'        => $path,
     'compression' => ''
   }), $format;
+
+  my $export_action = $hub->param('export_action');
+  my $back_action = $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1});
+  my $download_href = $hub->url('Download', {
+    'action'      => '',
+    'function'    => '',
+    'filename'    => $filename,
+    'file'        => $path,
+    'compression' => ''
+  });
+  my $download_compressed_action = $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1});
 
   ## Hidden form taking you back to the beginning
   my $form      = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => $hub->param('export_action')}), 'method' => 'post'});
@@ -65,7 +77,7 @@ sub content {
 
   foreach ($hub->param) {
     my %field_info = ('name' => $_);
-
+    
     unless (grep @core_params, $_) {
       $field_info{'name'} .= '_'.$hub->param('format');
     }
@@ -88,12 +100,27 @@ sub content {
     $fieldset->add_hidden($params);
   }
 
-  $fieldset->add_button({
-      'type'    => 'Submit',
-      'name'    => 'submit',
-      'value'   => 'Back',
-    });
+  my $buttons_div = $self->dom->create_element('div', {
+    'id'        => 'DataExport'
+  });
 
+  # Keep
+  $fieldset->add_hidden([
+    { name => 'back', value => $back_action },
+    { name => 'uncompressed', value => $download_href },
+    { name => 'gz', value => $download_compressed_action },
+  ]);
+
+  $fieldset->add_field([
+    {
+      inline => 1,
+      elements  => [
+        { type => 'button', value => 'Back', name => 'back', class => 'export_buttons_preview' },
+        { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons_preview' },
+        { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons_preview' },
+      ]
+    }
+  ]);
 
   $html .= $form->render;
 
@@ -102,7 +129,7 @@ sub content {
     my $read = $file->read;
     if ($read->{'content'}) {
       (my $preview = $read->{'content'}) =~ s/\n{2,}/\n/g;
-      $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
+      $html .= '<h2 style="margin-top:1em">File preview ('. $format .')</h2><div class="code"><pre style="color:#333">';
       $html .= encode_entities($preview);
       $html .= '</pre>';
     }

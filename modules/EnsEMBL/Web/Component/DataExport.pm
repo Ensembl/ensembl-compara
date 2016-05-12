@@ -124,15 +124,25 @@ sub create_form {
       },
     ]);
   }
+
+  # Value of download_type and compression hidden inputs are changed using jQuery 
+  # before submit based on the button clicked
+  $fieldset->add_hidden([
+    { 'name'    => 'download_type', 'value'   => '' },
+    { 'name'    => 'compression', 'value'   => '' }
+  ]);
+
   $fieldset->add_field([
     {
-      'type'    => 'Radiolist',
-      'name'    => 'compression',
-      'label'   => 'Output',
-      'values'  => $compress,
-      'notes'   => 'Select "uncompressed" to get a preview of your file',
-    },
+      inline => 1,
+      elements  => [
+        { type => 'button', value => 'Preview', name => 'preview', class => 'export_buttons disabled', disabled => 1 },
+        { type => 'button', value => 'Download', name => 'uncompressed', class => 'export_buttons disabled', disabled => 1 },
+        { type => 'button', value => 'Download Compressed', name => 'gz', class => 'export_buttons disabled', disabled => 1 },
+      ]
+    }
   ]);
+
   ## Hidden fields needed to fetch and process data
   $fieldset->add_hidden([
     {
@@ -220,14 +230,6 @@ sub create_form {
         $settings_fieldset->add_field($params);
       }
     }
-
-    ## Doesn't matter that each fieldset has a submit button, as we only ever
-    ## display one of them - and putting it here forces user to choose format!
-    $settings_fieldset->add_button({
-      'type'    => 'Submit',
-      'name'    => 'submit',
-      'value'   => 'Download',
-    });
   }
 
   ## Add images fieldset
@@ -243,7 +245,6 @@ sub create_form {
 
   return $self->dom->create_element('div', {
     'id'        => 'DataExport',
-    'class'     => 'js_panel',
     'children'  => [ {'node_name' => 'input', 'class' => 'subpanel_type', 'value' => 'DataExport', 'type' => 'hidden' }, $form ]
   });
 }
