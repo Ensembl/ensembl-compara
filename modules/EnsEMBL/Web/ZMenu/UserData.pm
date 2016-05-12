@@ -36,7 +36,8 @@ sub content {
   my $click_data = $self->click_data;
   
   return unless $click_data;
-  $click_data->{'display'} = 'text';
+  $click_data->{'display'}  = 'text';
+  $click_data->{'strand'}   = $hub->param('fake_click_strand');
 
   my $strand = $hub->param('fake_click_strand') || 1;
   my ($caption, @features);
@@ -56,7 +57,7 @@ sub content {
       next unless $track->{'features'};
       $caption ||= $track->{'metadata'}{'zmenu_caption'};
       if ($feature_id) {
-        foreach (@{$track->{'features'}{$strand}||[]}) {
+        foreach (@{$track->{'features'}||[]}) {
           if ($_->{'label'} eq $feature_id) {
             $_->{'track_name'} = $track->{'metadata'}{'name'};
             $_->{'url'}        = $track->{'metadata'}{'url'};
@@ -66,7 +67,7 @@ sub content {
         }
       }
       else {
-        push @features, @{$track->{'features'}{$strand}||[]};
+        push @features, @{$track->{'features'}||[]};
       }
     }
   }
