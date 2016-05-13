@@ -107,7 +107,6 @@ sub create_hash {
   else {
     $feature->{'start'} = $feature_1_start;
     $feature->{'end'}   = $feature_2_end;
-    $feature->{'href'}  = $href;
   }
   return $feature;
 }
