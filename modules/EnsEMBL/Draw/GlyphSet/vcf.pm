@@ -47,13 +47,13 @@ sub init {
 
 sub render_histogram {
   my $self = shift;
-  my $features = $self->get_data->[0]{'features'}{'1'};
+  my $features = $self->get_data->[0]{'features'};
   return scalar @{$features} > 200 ? $self->render_density_bar : $self->render_simple;
 }
 
 sub render_simple {
   my $self = shift;
-  if (scalar @{$self->get_data->[0]{'features'}{'1'}} > 200) {
+  if (scalar @{$self->get_data->[0]{'features'}} > 200) {
     $self->too_many_features;
     return undef;
   }
@@ -62,7 +62,7 @@ sub render_simple {
     $self->{'my_config'}->set('height', 12);
     $self->{'my_config'}->set('default_strand', 1);
     $self->{'my_config'}->set('drawing_style', ['Feature']);
-    $self->{'data'}[0]{'features'}{'1'} = $self->consensus_features;
+    $self->{'data'}[0]{'features'} = $self->consensus_features;
     $self->draw_features;
   }
 }
@@ -89,7 +89,6 @@ sub render_density_bar {
 sub get_data {
 ### Fetch and cache raw features - we'll process them later as needed
   my $self = shift;
-  $self->{'my_config'}->set('default_strand', 1);
   $self->{'my_config'}->set('show_subtitle', 1);
 
   unless ($self->{'data'} && scalar @{$self->{'data'}}) {
@@ -117,7 +116,7 @@ sub get_data {
                                         'name'    => $self->{'my_config'}->get('name'),
                                         'colour'  => $colour,
                                        }, 
-                        'features' => {'1' => $consensus}
+                        'features' => $consensus
                             }];
   }
   return $self->{'data'};
@@ -127,7 +126,7 @@ sub consensus_features {
 ### Turn raw features into consensus features for drawing
 ### @return Arrayref of hashes
   my $self = shift;
-  my $raw_features  = $self->{'data'}[0]{'features'}{'1'};
+  my $raw_features  = $self->{'data'}[0]{'features'};
   my $config        = $self->{'config'};
   my $slice         = $self->{'container'};
   my $start         = $slice->start;

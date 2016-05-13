@@ -121,7 +121,7 @@ sub _fetch_data {
                                   'track'       => $self->{'my_config'}{'id'},
                                   },
                     'default_strand' => 1,
-                    'drawn_strand' => $self->strand};
+                    };
 
   my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigWig', $args);
   my $data = [];
