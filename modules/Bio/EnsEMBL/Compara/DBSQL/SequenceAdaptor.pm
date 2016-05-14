@@ -58,7 +58,7 @@ sub fetch_by_dbID {
   Example    : my $sequences = $sequence_adaptor->fetch_by_dbIDs($sequence_ids);
   Description: Fetch sequences from the database in batches of $batch_size. Elements with $sequence_id of 0 (have no
                sequence stored in the database) are skipped.
-  Returntype : array ref of strings. These are returned in the same order as the $sequence_ids array.
+  Returntype : Hashref of sequence_id to strings
   Exceptions : none
   Caller     :
   Status     : At risk
@@ -91,13 +91,7 @@ sub fetch_by_dbIDs {
       }
       $sth->finish;
   }
-  #Order sequences according to sequence_ids array
-  foreach my $seq_id (@$sequence_ids) {
-      push @$sequences, $seq_hash{$seq_id} if ($seq_id); #ignore sequence_id of 0
-  }
-
-  #print "num seqs " . @$sequences . "\n";
-  return $sequences;
+  return \%seq_hash;
 }
 
 =head2 fetch_all_by_chunk_set_id

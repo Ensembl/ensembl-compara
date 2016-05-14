@@ -547,9 +547,7 @@ sub _load_all_missing_sequences {
 
         my @seq_ids = keys %seq_id2member;
         my $seqs = $sequence_adaptor->fetch_by_dbIDs(\@seq_ids);
-        while (@$seqs) {
-            my $seq_id = shift @seq_ids;
-            my $seq = shift @$seqs;
+        while (my ($seq_id, $seq) = each %$seqs) {
             $_->{'_sequence'} = $seq for @{$seq_id2member{$seq_id}};
         }
     }
