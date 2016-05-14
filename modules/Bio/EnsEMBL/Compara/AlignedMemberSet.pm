@@ -498,7 +498,7 @@ sub get_SimpleAlign {
 
         $sa->add_seq($seq);
     }
-    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps') and ($remove_gaps or scalar(@{$self->get_all_Members}) != $sa->num_sequences());
+    $sa = $sa->remove_gaps(undef, 1) if $remove_gaps;
     $sa = $sa->remove_columns(@$removed_columns) if $removed_columns and scalar(@$removed_columns);
     return $sa;
 }
@@ -733,7 +733,7 @@ sub get_4D_SimpleAlign {
         $sa->add_seq($seq);
     }
 
-    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps');
+    $sa = $sa->remove_gaps(undef, 1);
 
     return $sa;
 }
