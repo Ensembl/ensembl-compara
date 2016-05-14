@@ -512,44 +512,26 @@ sub _load_all_missing_sequences {
         $random_adaptor = $m->adaptor if $m;
         return unless $random_adaptor;
     }
-
     my $sequence_adaptor = $random_adaptor->db->get_SequenceAdaptor;
 
-    if ($seq_type) {
+    my $internal_sequence_key = $seq_type ? "_sequence_$seq_type" : '_sequence';
+    my $internal_key_for_adaptor = $seq_type ? 'dbID' : '_sequence_id';
 
-        my $key = "_sequence_$seq_type";
-
-        my %member_id2member = ();
-        foreach my $set (@$sets) {
-            foreach my $member (@{$set->get_all_Members}) {
-                next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
-                next if $member->{$key};
-                push @{$member_id2member{$member->seq_member_id}}, $member if $member->seq_member_id;
-            }
+    my %key2member = ();
+    foreach my $set (@$sets) {
+        foreach my $member (@{$set->get_all_Members}) {
+            next if !$member->isa('Bio::EnsEMBL::Compara::SeqMember');
+            next if $member->{$internal_sequence_key};
+            next if !$member->{$internal_key_for_adaptor};
+            push @{$key2member{$member->{$internal_key_for_adaptor}}}, $member;
         }
-        my @member_ids = keys %member_id2member;
-        my $seqs = $sequence_adaptor->fetch_other_sequences_by_member_ids_type(\@member_ids, $seq_type);
-        while (my ($id, $seq) = each %$seqs) {
-            $_->{$key} = $seq for @{$member_id2member{$id}};
-        }
+    }
+    my @all_keys = keys %key2member;
 
-    } else {
-
-        my %seq_id2member = ();
-        foreach my $set (@$sets) {
-            foreach my $member (@{$set->get_all_Members}) {
-                next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
-                next if $member->{'_sequence'};
-                my $seq_id = $member->{'_sequence_id'};
-                push @{$seq_id2member{$seq_id}}, $member if $seq_id;
-            }
-        }
-
-        my @seq_ids = keys %seq_id2member;
-        my $seqs = $sequence_adaptor->fetch_by_dbIDs(\@seq_ids);
-        while (my ($seq_id, $seq) = each %$seqs) {
-            $_->{'_sequence'} = $seq for @{$seq_id2member{$seq_id}};
-        }
+    my $seqs = $seq_type ? $sequence_adaptor->fetch_other_sequences_by_member_ids_type(\@all_keys, $seq_type)
+                         : $sequence_adaptor->fetch_by_dbIDs(\@all_keys);
+    while (my ($id, $seq) = each %$seqs) {
+        $_->{$internal_sequence_key} = $seq for @{$key2member{$id}};
     }
 }
 
