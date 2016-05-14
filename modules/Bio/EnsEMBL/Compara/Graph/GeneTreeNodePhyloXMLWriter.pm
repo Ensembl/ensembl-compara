@@ -55,9 +55,21 @@ sub _write_tree {
   my %attr = (rooted => 'true');
   $attr{type} = $self->tree_type();
 
+  # When the tree is not the entire tree, some columns of the alignment may
+  # be full of gaps. Need to remove them
+  if (!$self->no_sequences && $self->aligned && ($tree->{_root_id} != $tree->{_node_id})) {
+      my $aln = $tree->get_SimpleAlign(-SEQ_TYPE => ($self->cdna ? 'cds' : undef));
+      $self->{_cached_seq_aligns} = {};
+      foreach my $seq ($aln->each_seq) {
+          $self->{_cached_seq_aligns}->{$seq->display_id} = $seq->seq;
+      }
+  };
+
   $w->startTag('phylogeny', %attr);
   $self->_process($tree);
   $w->endTag('phylogeny');
+
+  delete $self->{_cached_seq_aligns};
 
   return;
 }

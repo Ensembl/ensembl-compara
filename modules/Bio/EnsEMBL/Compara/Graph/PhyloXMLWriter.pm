@@ -302,10 +302,12 @@ sub _write_seq_member {
   if(!$self->no_sequences()) {
     my $mol_seq;
     if($self->aligned()) {
-      $mol_seq = ($self->cdna()) ? $protein->alignment_string('cds') : $protein->alignment_string();
+      # alignment_string() is not able to remove gaps found in all the other sequences, so these may need to be cached
+      $mol_seq = $self->{_cached_seq_aligns}->{$protein->stable_id}
+                 || ($self->cdna() ? $protein->alignment_string('cds') : $protein->alignment_string());
     }
     else {
-      $mol_seq = ($self->cdna()) ? $protein->other_sequence('cds') : $protein->sequence();
+      $mol_seq = ($self->cdna() ? $protein->other_sequence('cds') : $protein->sequence());
     }
 
     $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
