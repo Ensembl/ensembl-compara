@@ -123,7 +123,7 @@ sub get_distances_from_genetrees {
     my $self = shift;
 
     my $protein_tree_mlss = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('PROTEIN_TREES')->[0];
-    my $root = $self->{'comparaDBA'}->get_SpeciesTreeAdaptor()->fetch_by_method_link_species_set_id_label($protein_tree_mlss->dbID, 'default')->root;
+    my $root = $protein_tree_mlss->species_tree->root;
 
     # Used to get the average branch lengths from the trees
     my $sql_dist_1 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN gene_tree_node_attr gtna USING (node_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtna.node_type = "speciation" AND gtnap.node_type = "speciation" AND gtnap.species_tree_node_id = ? AND gtna.species_tree_node_id = ?';

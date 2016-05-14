@@ -1419,11 +1419,7 @@ sub get_GenomicAlignTree {
                                                                                               -species_set => $species_set)->newick_format('ncbi_name');
     } else {
         #Multiple alignment 
-        #Get SpeciesTree from database.
-        my $species_tree_adaptor = $self->adaptor->db->get_SpeciesTreeAdaptor;
-        my $label = "default";
-        #Read tree from SpeciesTreeNode table
-        $species_tree_string = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set->dbID, $label)->species_tree();
+        $species_tree_string = $self->method_link_species_set->species_tree->species_tree;
     }
     #print "string $species_tree_string\n";
 

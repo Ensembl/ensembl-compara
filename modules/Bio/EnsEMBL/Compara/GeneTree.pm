@@ -297,7 +297,7 @@ sub gene_align_id {
 sub species_tree {
     my $self = shift;
     if (not defined $self->{_species_tree} and defined $self->adaptor) {
-        $self->{_species_tree} = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set_id, shift || 'default');
+        $self->{_species_tree} = $self->method_link_species_set->species_tree(shift || 'default');
     }
     return $self->{_species_tree};
 }
