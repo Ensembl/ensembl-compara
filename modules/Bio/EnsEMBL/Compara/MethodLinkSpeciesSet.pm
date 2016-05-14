@@ -360,4 +360,30 @@ sub toString {
 }
 
 
+=head2 species_tree
+
+  Arg[1]      : (optional) String $label (default: "default"). The label of the species-tree to retrieve
+  Example     : $mlss->species_tree();
+  Description : Returns the species-tree associated to this MLSS
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesTree
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub species_tree {
+    my ($self, $label) = @_;
+
+    $label ||= 'default';
+    my $key = '_species_tree_'.$label;
+    return $self->{$key} if $self->{$key};
+
+    my $species_tree = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->dbID, $label);
+
+    $self->{$key} = $species_tree;
+    return $species_tree;
+}
+
+
 1;
