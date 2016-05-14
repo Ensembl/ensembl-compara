@@ -425,6 +425,8 @@ if ($print_genes) {
 
 if ($print_variations) {
   foreach my $slice (@{$align_slice->get_all_Slices}) {
+    #skip any ancestral sequences since they don't have a core database
+    next if ($slice->seq_region_name eq "ancestral_sequences");
     my $count = 0;
     my $this_seq = "." x $slice->length;
     my $all_variation_features = $slice->get_all_VariationFeatures();
