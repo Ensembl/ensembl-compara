@@ -29,32 +29,32 @@ my $url = 'mysql://anonymous@ensembldb.ensembl.org/ensembl_compara_'.software_ve
 my $mlss_id;
 my $method = 'PROTEIN_TREES';
 my $ss_name;
+my $label = 'default';
 
 GetOptions(
        'url=s'          => \$url,
        'mlss_id=s'      => \$mlss_id,
        'method=s'       => \$method,
        'ss_name=s'      => \$ss_name,
+       'label=s'        => \$label,
 );
 
 
 my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url => $url) or die "Must define a url";
 
-unless ($mlss_id) {
+my $mlss;
+if ($mlss_id) {
+    $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+} elsif ($method) {
     if ($ss_name) {
-        my $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_species_set_name($method, $ss_name);
-        die "No MLSSs found for the method '$method' and the species-set '$ss_name'\n" unless $mlss;
-        $mlss_id = $mlss->dbID;
+        $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_species_set_name($method, $ss_name);
     } else {
-        my $all_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method);
-        die "No MLSSs found for the method '$method'\n" unless scalar($all_mlss);
-        $mlss_id = $all_mlss->[0]->dbID;
+        $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method)->[0];
     }
 }
+die "Could not fetch a MLSS with these parameters. Check your mlss_id, method and/or ss_name arguments\n" unless $mlss;
 
-my $species_tree = $compara_dba->get_SpeciesTreeAdaptor()->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
-
+my $species_tree = $mlss->species_tree($label);
 print $species_tree->root->newick_format( 'ryo', '%{n}' ), "\n";
-
 
 
