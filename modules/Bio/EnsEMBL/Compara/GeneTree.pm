@@ -413,7 +413,6 @@ sub preload {
     # Loads all the tags in one go
     $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $all_nodes );
 
-    # For retro-compatibility, we need to fill in taxon_id and taxon_name
     my %cache_stns = ();
     foreach my $node (@$all_nodes) {
         if ($node->is_leaf) {
