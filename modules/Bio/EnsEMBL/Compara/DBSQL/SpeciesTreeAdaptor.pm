@@ -69,13 +69,6 @@ sub new_from_newick {
     return $speciesTree;
 }
 
-sub fetch_all {
-    my ($self) = @_;
-
-    my $constraint = "stn.node_id = str.root_id";
-    return $self->generic_fetch($constraint);
-}
-
 sub fetch_by_method_link_species_set_id_label {
     my ($self, $mlss_id, $label) = @_;
 

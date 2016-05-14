@@ -56,12 +56,6 @@ use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor');
 
 
-sub fetch_all {
-    my ($self) = @_;
-
-    return $self->generic_fetch();
-}
-
 sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;
 
