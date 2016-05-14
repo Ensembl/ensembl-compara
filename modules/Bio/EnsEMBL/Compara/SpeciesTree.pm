@@ -134,30 +134,10 @@ sub label {
     return $self->{_label};
 }
 
-# From geneTreeNode
-# sub root {
-#     my $self = shift;
-
-#     if (not defined $self->{'_root'}) {
-#         if (defined $self->{'_root_id'} and defined $self->adaptor) {
-#             # Loads all the nodes in one go
-#             my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
-#             $gtn_adaptor->{'_ref_tree'} = $self;
-#             $self->{'_root'} = $gtn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
-#             delete $gtn_adaptor->{'_ref_tree'};
-
-#         } else {
-#             # Creates a new GeneTreeNode object
-#             $self->{'_root'} = new Bio::EnsEMBL::Compara::GeneTreeNode;
-#             $self->{'_root'}->tree($self);
-#         }
-#     }
-#     return $self->{'_root'};
-# }
 
 sub root {
     my ($self, $node) = @_;
-    ## TODO: Cache root
+
     if (defined $node) {
         throw("Expected Bio::EnsEMBL::Compara::SpeciesTreeNode, not a $node")
             unless ($node->isa("Bio::EnsEMBL::Compara::SpeciesTreeNode"));
@@ -167,23 +147,12 @@ sub root {
     if (not defined $self->{'_root'}) {
         if (defined $self->{'_root_id'} and defined $self->adaptor) {
             my $stn_adaptor = $self->adaptor->db->get_SpeciesTreeNodeAdaptor;
-#            $self->{'_root'} = $stn_adaptor->fetch_node_by_node_id($self->{'_root_id'});
             $self->{'_root'} = $stn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
         }
     }
     return $self->{'_root'};
 }
 
-# sub root {
-#     my ($self, $node) = @_;
-#     if (defined $node) {
-#         throw("Expected Bio::EnsEMBL::Compara::SpeciesTreeNode, not a $node")
-#             unless ($node->isa("Bio::EnsEMBL::Compara::SpeciesTreeNode"));
-#         $self->{'_root'} = $node;
-#     }
-#     return $self->{'_root'};
-
-# }
 
 =head2 species_tree
 
