@@ -151,7 +151,7 @@ sub pipeline_analyses {
                                               create_alignment_nets_jobs
                                               filter_duplicates_net
                                               create_filter_duplicates_net_jobs
-                                              filter_duplicates_new_himem
+                                              filter_duplicates_net_himem
                                               set_internal_ids
                                               alignment_nets
                                               alignment_nets_himem
@@ -161,6 +161,8 @@ sub pipeline_analyses {
                                               healthcheck
                                               pairaligner_stats
                                               master_db
+                                              coding_exon_stats
+                                              coding_exon_stats_summary
                                             );
 
   #get all analyses that we know about
@@ -266,6 +268,8 @@ sub e_analyses {
                      store_sequence_again
                      dump_dna_factory
                      create_filter_duplicates_jobs
+                     check_not_too_many_blocks
+                     delete_trivial_alignments
                      subst pair_aligner_logic_name:
                      update_max_alignment_length_after_chain
                      create_alignment_chains_jobs
