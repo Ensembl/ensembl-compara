@@ -81,7 +81,8 @@ sub fetch_all_by_method_link_species_set_id {
     my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'cafe');
     my $root_id = $species_tree->root->node_id();
 
-    my $constraint = "str.root_id=$root_id";
+    my $constraint = 'str.root_id = ?';
+    $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
     return $self->generic_fetch($constraint);
 }
 
