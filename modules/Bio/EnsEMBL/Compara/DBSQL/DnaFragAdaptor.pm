@@ -223,31 +223,6 @@ sub fetch_by_Slice {
   return $self->fetch_by_GenomeDB_and_name($genome_db, $slice->seq_region_name);
 }
 
-=head2 fetch_all
-
-  Arg         : none
-  Example     : my $all_dnafrags = $dnafrag_adaptor->fetch_all();
-  Description : fetches all Bio::EnsEMBL::Compara::DnaFrag objects for this
-                compara database
-  Returntype  : listref of all Bio::EnsEMBL::Compara::DnaFrag objects
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub fetch_all {
-  my ($self) = @_;
-
-  my $columns = join(", ", $self->_columns);
-  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
-  my $sql = "SELECT $columns FROM $tablenames";
-
-  my $sth = $self->prepare($sql);
-
-  $sth->execute;
-  return $self->_objs_from_sth( $sth );
-}
 
 =head2 _tables
 
