@@ -99,11 +99,12 @@ sub taxon {
         $self->{'_taxon_id'} = $taxon->dbID;
         $self->{'_taxon'} = $taxon;
 
-    } elsif (defined $self->{'_taxon_id'}) {
-       $self->{'_taxon'} = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($self->{'_taxon_id'});
-
-    } else {
-        throw("taxon_id is not defined. Can't fetch Taxon without a taxon_id");
+    } elsif (!$self->{'_taxon'}) {
+        if (defined $self->{'_taxon_id'}) {
+            $self->{'_taxon'} = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($self->{'_taxon_id'});
+        } else {
+            throw("taxon_id is not defined. Can't fetch Taxon without a taxon_id");
+        }
     }
 
     return $self->{'_taxon'};
