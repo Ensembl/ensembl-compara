@@ -95,8 +95,8 @@ sub fetch_node_by_taxon_id {
   my $node = $self->generic_fetch_one($constraint);
 
   unless ($node) {
-    my $join = [[['ncbi_taxa_name', 'n2'], 'n2.name_class = "merged_taxon_id" AND t.taxon_id = n2.taxon_id']];
-    $constraint = 'n2.name = ?';
+    my $join = [[['ncbi_taxa_name', 'n'], 'n.name_class = "merged_taxon_id" AND t.taxon_id = n.taxon_id']];
+    $constraint = 'n.name = ?';
     $node = $self->generic_fetch_one($constraint, $join);
     if ($node) {
       warning("The given taxon_id=$taxon_id is now deprecated and has been merged with taxon_id=".$node->taxon_id."\n");
@@ -128,9 +128,9 @@ sub fetch_all_by_taxon_ids {
     my @missing_taxon_ids = grep {!$seen_taxon_ids{$_}} @$taxon_ids;
 
     if (@missing_taxon_ids) {
-        my $join = [[['ncbi_taxa_name', 'n2'], 'n2.name_class = "merged_taxon_id" AND t.taxon_id = n2.taxon_id']];
+        my $join = [[['ncbi_taxa_name', 'n'], 'n.name_class = "merged_taxon_id" AND t.taxon_id = n.taxon_id']];
         $placeholders = join(',', ('?') x scalar(@missing_taxon_ids));
-        $constraint = "n2.name IN ($placeholders)";
+        $constraint = "n.name IN ($placeholders)";
         $self->bind_param_generic_fetch($_, SQL_VARCHAR) for @missing_taxon_ids;
         my $more_nodes = $self->generic_fetch($constraint, $join);
         push @$nodes, @$more_nodes;
@@ -159,9 +159,10 @@ sub fetch_node_by_name {
     throw ("name is undefined");
   }
 
+  my $join = [[['ncbi_taxa_name', 'n'], 't.taxon_id = n.taxon_id']];
   my $constraint = 'n.name = ?';
   $self->bind_param_generic_fetch($name, SQL_VARCHAR);
-  return $self->generic_fetch_one($constraint);
+  return $self->generic_fetch_one($constraint, $join);
 }
 
 
@@ -209,14 +210,14 @@ sub fetch_all_nodes_by_name {
     my ($self, $name, $name_class) = @_;
 
     if ($name_class) {
-        my $join = [[['ncbi_taxa_name', 'n2'], 'n2.name_class = ? AND t.taxon_id = n2.taxon_id']];
+        my $join = [[['ncbi_taxa_name', 'n'], 'n.name_class = ? AND t.taxon_id = n.taxon_id']];
         $self->bind_param_generic_fetch($name, SQL_VARCHAR);
         $self->bind_param_generic_fetch($name_class, SQL_VARCHAR);
-        return $self->generic_fetch('n2.name LIKE ?', $join);
+        return $self->generic_fetch('n.name LIKE ?', $join);
     } else{
-        my $join = [[['ncbi_taxa_name', 'n2'], 't.taxon_id = n2.taxon_id']];
+        my $join = [[['ncbi_taxa_name', 'n'], 't.taxon_id = n.taxon_id']];
         $self->bind_param_generic_fetch($name, SQL_VARCHAR);
-        return $self->generic_fetch('n2.name LIKE ?', $join);
+        return $self->generic_fetch('n.name LIKE ?', $join);
     }
 }
 
@@ -264,7 +265,6 @@ sub fetch_node_by_node_id {
 
 sub _tables {
   return (['ncbi_taxa_node', 't'],
-          ['ncbi_taxa_name', 'n']
          );
 }
 
@@ -277,13 +277,7 @@ sub _columns {
           't.root_id',
           't.rank',
           't.genbank_hidden_flag',
-          'n.name'
           );
-}
-
-
-sub _default_where_clause {
-    return "t.taxon_id = n.taxon_id AND n.name_class='scientific name'";
 }
 
 
@@ -312,7 +306,6 @@ sub init_instance_from_rowhash {
 
   $self->SUPER::init_instance_from_rowhash($node, $rowhash);
 
-  $node->name($rowhash->{'name'});
   $node->rank($rowhash->{'rank'});
   $node->genbank_hidden_flag($rowhash->{'genbank_hidden_flag'});
   $node->distance_to_parent(0.1);  
