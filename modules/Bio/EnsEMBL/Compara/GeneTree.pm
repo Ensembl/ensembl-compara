@@ -418,8 +418,7 @@ sub preload {
         if ($node->is_leaf) {
             $self->SUPER::add_Member($node) if UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::GeneTreeMember');
         }
-        next unless $node->has_tag('species_tree_node_id');
-        my $stn_id = $node->get_value_for_tag('species_tree_node_id');
+        my $stn_id = $node->_species_tree_node_id;
         if (exists $cache_stns{$stn_id}) {
             $node->{_species_tree_node} = $cache_stns{$stn_id};
         } else {
