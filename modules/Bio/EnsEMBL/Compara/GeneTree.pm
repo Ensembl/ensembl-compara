@@ -422,6 +422,12 @@ sub preload {
         $node->{_species_tree_node} = $stn_id_lookup{$node->_species_tree_node_id};
     }
 
+    my %taxon_ids = map {$_->taxon_id => 1} @$species_tree_nodes;
+    my $taxon_nodes = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_all_by_taxon_ids([keys %taxon_ids]);
+    my %taxon_lookup = map {$_->taxon_id => $_} @$taxon_nodes;
+    $_->{'_taxon'} = $taxon_lookup{$_->{'_taxon_id'}} for @$species_tree_nodes;
+    $_->{'_taxon'} = $taxon_lookup{$_->{'_taxon_id'}} for @{$self->get_all_Members};
+
     # Loads all the gene members in one go
     $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( $self->get_all_Members );
     $self->{_preloaded} = 1;
