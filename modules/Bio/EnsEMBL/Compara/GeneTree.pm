@@ -413,17 +413,13 @@ sub preload {
     # Loads all the tags in one go
     $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $all_nodes );
 
-    my %cache_stns = ();
+    my $species_tree_nodes = $self->method_link_species_set->species_tree->root->get_all_nodes;
+    my %stn_id_lookup = map {$_->node_id => $_} @$species_tree_nodes;
     foreach my $node (@$all_nodes) {
         if ($node->is_leaf) {
             $self->SUPER::add_Member($node) if UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::GeneTreeMember');
         }
-        my $stn_id = $node->_species_tree_node_id;
-        if (exists $cache_stns{$stn_id}) {
-            $node->{_species_tree_node} = $cache_stns{$stn_id};
-        } else {
-            $cache_stns{$stn_id} = $node->species_tree_node;
-        }
+        $node->{_species_tree_node} = $stn_id_lookup{$node->_species_tree_node_id};
     }
 
     # Loads all the gene members in one go
