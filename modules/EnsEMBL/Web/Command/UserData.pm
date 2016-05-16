@@ -183,7 +183,11 @@ sub attach {
 
     foreach (@$assemblies) {
 
-      my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies->{$hub->species.'_'.$_}||[]};
+      ## Try with and without species name, as it depends on format
+      my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies->{$_}
+                                                    || $ensembl_assemblies->{$hub->species.'_'.$_} || []};
+      
+
 
       ## This is a bit messy, but there are so many permutations!
       if ($assembly) {
