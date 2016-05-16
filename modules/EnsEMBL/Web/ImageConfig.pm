@@ -1099,7 +1099,7 @@ sub _add_trackhub_tracks {
       name        => $track->{'track'},
       source_name => $source_name,
       desc_url    => $track->{'description_url'},
-      description => $track->{'longLabel'},
+      description => $name.': '.$track->{'longLabel'},
       longLabel   => $track->{'longLabel'},
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
