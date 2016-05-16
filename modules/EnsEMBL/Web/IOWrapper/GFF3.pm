@@ -35,39 +35,37 @@ sub post_process {
   #warn '>>> ORIGINAL DATA '.Dumper($data);
 
   while (my ($track_key, $content) = each (%$data)) {
-    ## Build a tree of features
-    my $tree = {1 => {}, -1 => {}};
-    foreach my $f (@{$content->{'features'}}) {
+    ## Build a tree of features - use an array, because IDs may not be unique
+    my $tree = [];
+    foreach my $f (@{$content->{'features'}||[]}) {
       if (scalar @{$f->{'parents'}||[]}) {
-        $self->_add_to_parent($tree->, $f, $_) for @{$f->{'parents'}};
+        $self->_add_to_parent($tree, $f, $_) for @{$f->{'parents'}};
       }
       else {
-        $tree->{$f->{'id'}} = $f;
+        push @$tree, $f;
       }
     }
-    #warn Dumper($tree);
+    #warn ">>> TREE ".Dumper($tree);
 
     ## Convert tree into structured features
     my @ok_features;
-    while (my($id, $f) = each(%{$tree})) {
+    foreach my $f (@$tree) {
       ## Add to array (though we don't normally draw genes except in collapsed view)
       $f->{'href'} = $self->href($f->{'href_params'});
       push @ok_features, $self->_drawable_feature($f);
 
-      foreach my $child_id (sort {$f->{'children'}{$a}{'start'} <=> $f->{'children'}{$b}{'start'}} keys %{$f->{'children'}||{}}) {
-        my $child = $f->{'children'}{$child_id};
+      foreach my $child (sort {$a->{'start'} <=> $b->{'start'}} @{$f->{'children'}||{}}) {
         ## Feature ID is inherited from parent
         my $child_href_params       = $child->{'href_params'};
         $child->{'href'}            = $self->href($child_href_params);
 
-        if (scalar keys (%{$child->{'children'}||{}})) {
+        if (scalar @{$child->{'children'}||[]}) {
           ## Object has grandchildren - probably a transcript
           my $args = {'seen' => {}, 'no_separate_transcript' => 0};
           ## Create a new transcript from the current feature
           my %transcript = %$child;
           $transcript{'type'} = 'transcript';
-          foreach my $sub_id (sort {$child->{'children'}{$a}{'start'} <=> $child->{'children'}{$b}{'start'}} keys %{$child->{'children'}||{}}) {
-            my $grandchild        = $child->{'children'}{$sub_id};
+          foreach my $grandchild (sort {$a->{'start'} <=> $b->{'start'}} @{$child->{'children'}||[]}) {
             ($args, %transcript)  = $self->add_to_transcript($grandchild, $args, %transcript);  
           }
           push @ok_features, $self->_drawable_feature(\%transcript);
@@ -107,17 +105,16 @@ sub _drawable_feature {
 sub _add_to_parent {
 ### Recurse into feature tree
   my ($self, $node, $feature, $parent) = @_;
-  ## Is this a child of the current level?
-  if ($node->{$parent}) {
-    $node->{$parent}{'children'}{$feature->{'id'}} = $feature;
-    return;
-  }
-  else {
-    while (my($k, $v) = each(%$node)) {
-      next unless $k && ref $v eq 'HASH';
-      $self->_add_to_parent($v, $feature, $parent);
+  foreach my $child (@$node) {
+    ## Is this a child of the current level?
+    if ($child->{'id'} eq $parent) {
+      push @{$child->{'children'}}, $feature;
+    }
+    elsif ($child->{'children'}) {
+      $self->_add_to_parent($child->{'children'}, $feature, $parent);
     }
   }
+  return;
 }
 
 sub create_hash {
