@@ -254,29 +254,13 @@ sub table_row {
       join ',', map $_ ? "$_=on" : (), $file->{'analyses'} ? split ', ', $file->{'analyses'} : join '_', $user_record ? 'user' : $file->{'type'}, $file->{'code'}
     );
   }
-  
-  if ($file->{'format'} eq 'VEP_OUTPUT' || $file->{'filetype'}) {
-    my %params = $file->{'format'} eq 'VEP_OUTPUT' ? (
-      action       => 'ConsequenceCalculator',
-      data_format  => 'snp',
-      convert_file => "$file->{'filename'}:$file->{'name'}",
-      code         => $file->{'code'},
-    ) : $file->{'filetype'} eq 'ID History Converter' ? (
-      action       => 'IDConversion',
-      data_format  => 'id',
-      convert_file => "upload_$file->{'code'}:$file->{'name'}",
-      id_limit     => 30,
-    ) : (
-      action    => 'PreviewConvert',
-      converted => "$file->{'filename'}:$file->{'name'}",
-    );
-  
-    $name .= sprintf '<a href="%s" class="modal_link">View results</a><br />', $hub->url({ species => $file->{'species'}, __clear => 1, %params });
-    $save  = $self->_no_icon;
-    $share = $self->_no_icon if $file->{'filetype'} eq 'ID History Converter';
+ 
+  if ($file->{'format'} eq 'TRACKHUB') {
+    $name .= $file->{'description'};
   }
-  
-  $name .= $file->{'url'} || sprintf '%s file', $file->{'filetype'} || $file->{'format'};
+  else { 
+    $name .= $file->{'url'} || sprintf '%s file', $file->{'filetype'} || $file->{'format'};
+  }
 
   ## Link for valid datahub  
   my ($config_link, $conf_template);
