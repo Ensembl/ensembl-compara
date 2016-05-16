@@ -89,7 +89,7 @@ sub get_message {
   elsif ($reattach) {
     $message = $messages{'hub_'.$reattach}{'message'};
     ## Internally configured hub
-    if ($reattach = 'preconfig') {
+    if ($reattach == 'preconfig') {
       $trackhub_ok = 0;
       my $link = $hub->url({'type' => 'Config', 'action' => 'Location', 'function' => 'ViewBottom'});
       my $menu = $hub->param('menu') || '';

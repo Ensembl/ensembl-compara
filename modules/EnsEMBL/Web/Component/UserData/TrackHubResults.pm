@@ -86,7 +86,7 @@ sub content {
     my $search_url = $hub->url({
                                 'type'      => 'UserData', 
                                 'action'    => 'TrackHubSearch',
-                                'datatype'  => $hub->param('datatype'),
+                                'datatype'  => $hub->param('datatype') || '',
                                 'query'     => $hub->param('query') || '',
                                 });
     $html .= sprintf('<p>Found %s track hub%s for this assembly - <a href="%s" class="modal_link">Search again</a></p>', $count, $plural, $search_url);
