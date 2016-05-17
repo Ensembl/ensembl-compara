@@ -325,6 +325,7 @@ sub _load_tagvalues {
   while (my ($tag, $value) = $sth->fetchrow_array()) {
     $node->add_tag($tag,$value,1);
   }
+  $node->add_tag('name', $node->get_value_for_tag('scientific name'));
   $sth->finish;
 }
 
