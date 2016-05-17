@@ -42,8 +42,8 @@ BEGIN {
     use Test::Most;
 }
 #load the pre dumped test database
-my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('multi');
-my $dba = $multi_db->get_DBAdaptor('OrthologQM_GeneOrder');
+my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('orth_qm_goc');
+my $dba = $multi_db->get_DBAdaptor('compara');
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 
 # check module can be seen and compiled

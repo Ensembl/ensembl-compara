@@ -7,9 +7,11 @@
  'databases' => { 
     'multi' => { 
     	'compara'                => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
-    	'OrthologQM_GeneOrder'   => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     },
-    'orth_qm_test' => {
+    'orth_qm_goc' => {
+    	'compara'                => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+    },
+    'orth_qm_wga' => {
     	'cc21_pair_species' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     	'cc21_prepare_orth' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
         'cc21_prev_orth_test' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
