@@ -27,11 +27,9 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
     panel.selectOption(this.elLk.form.find('select._export_formats').val(), true)
 
     this.elLk.form.find('input.export_buttons').on('click', function() {
-      var download_type = panel.elLk.form.find('input[name="download_type"]');
       var compression = panel.elLk.form.find('input[name="compression"]');
       if(panel.elLk.form.find('select._export_formats').val() !== '') {
-        $(download_type).val(this.name);
-        this.name === 'gz' && $(compression).val(this.name);
+        $(compression).val(this.name);
         panel.elLk.form.submit();
       }
     });

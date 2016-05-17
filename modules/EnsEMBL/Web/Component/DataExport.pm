@@ -81,13 +81,7 @@ sub create_form {
       {'caption' => '-- Choose Format --'},
       @format_info
     ];
-  ## Don't update this field from params, as there's no back 
-  ## button for compressed formats!
-  my $compress = [
-      {'caption' => 'Uncompressed', 'value' => '', 'checked' => 1},
-      {'caption' => 'Gzip', 'value' => 'gz'},
-      #{'caption' => 'Zip', 'value' => 'zip'},
-  ];
+
   $fieldset->add_field([
     {
       'type'    => 'String',
@@ -128,7 +122,6 @@ sub create_form {
   # Value of download_type and compression hidden inputs are changed using jQuery 
   # before submit based on the button clicked
   $fieldset->add_hidden([
-    { 'name'    => 'download_type', 'value'   => '' },
     { 'name'    => 'compression', 'value'   => '' }
   ]);
 

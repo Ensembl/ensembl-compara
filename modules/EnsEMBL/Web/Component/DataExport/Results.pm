@@ -50,7 +50,8 @@ sub content {
     'function'    => '',
     'filename'    => $filename,
     'file'        => $path,
-    'compression' => ''
+    'compression' => '',
+    'format'      => $format
   });
   my $download_compressed_action = $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1});
 

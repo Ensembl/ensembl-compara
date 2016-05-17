@@ -78,7 +78,12 @@ sub process {
     my $component;
     ($component, $error) = $self->object->create_component;
 
-    $file = EnsEMBL::Web::File::User->new(hub => $hub, name => $filename, extension => $extension, compression => $compression);
+    $file = EnsEMBL::Web::File::User->new(
+      hub => $hub, 
+      name => $filename, 
+      extension => $extension, 
+      compression => $compression eq 'gz' ? 'gz' : 
+    );
 
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
@@ -132,8 +137,8 @@ sub process {
   }
   else {
     ## Parameters for file download
-    $controller                     = 'Download' if $compression || $download_type eq 'uncompressed' || $format eq 'RTF';    # if uncompressed format, user should be able to preview the file
-    $url_params->{'action'}         = $compression || $format eq 'RTF' ? '' : 'Results'; # same as above
+    $controller                     = 'Download' if $compression =~m/gz|uncompressed/ || $format eq 'RTF';    # if uncompressed format, user should be able to preview the file
+    $url_params->{'action'}         = $compression =~m/gz|uncompressed/ || $format eq 'RTF' ? '' : 'Results'; # same as above
     $url_params->{'name'}           = $name;
     $url_params->{'filename'}       = $file->read_name;
     $url_params->{'format'}         = $format;

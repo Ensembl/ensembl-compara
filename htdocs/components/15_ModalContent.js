@@ -163,7 +163,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   updateContent: function (json) {
-  var panel = this;
+    var panel = this;
 
     if (json.wrapper) {
       this.elLk.content.wrapInner(json.wrapper);
@@ -180,6 +180,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         var action = $('input[name="' + this.name + '"]:hidden', panel.el);
         if (this.name === 'uncompressed') {
           window.location = $(action).val();
+          Ensembl.EventManager.trigger('modalClose');
           return;
         }
         else if (this.name === 'gz') {
