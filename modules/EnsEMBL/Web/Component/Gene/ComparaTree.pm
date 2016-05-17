@@ -378,7 +378,6 @@ sub collapsed_nodes {
   my $action                 = shift;
   my $highlight_genome_db_id = shift;
   my $highlight_gene         = shift;
-  return unless $node;
   
   die "Need a GeneTreeNode, not a $tree" unless $tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode');
   die "Need an GeneTreeMember, not a $node" if $node && !$node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
@@ -388,6 +387,7 @@ sub collapsed_nodes {
   
   # View current gene
   if ($action eq 'gene') {
+    return unless $node;
     $collapsed_nodes{$_->node_id} = $_ for @{$node->get_all_adjacent_subtrees};
     
     if ($highlight_gene) {
@@ -403,6 +403,7 @@ sub collapsed_nodes {
       }
     }
   } elsif ($action eq 'paralogs') { # View all paralogs
+    return unless $node;
     my $gdb_id = $node->genome_db_id;
     
     foreach my $leaf (@{$tree->get_all_leaves}) {
