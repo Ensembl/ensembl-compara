@@ -82,7 +82,7 @@ sub process {
       hub => $hub, 
       name => $filename, 
       extension => $extension, 
-      compression => $compression eq 'gz' ? 'gz' : 
+      compression => $compression eq 'gz' ? 'gz' : ''
     );
 
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
