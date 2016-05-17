@@ -33,6 +33,7 @@ sub post_process {
 ### Reassemble sub-features back into features
   my ($self, $data) = @_;
   #warn '>>> ORIGINAL DATA '.Dumper($data);
+  $self->{'ok_features'} = [];
 
   while (my ($track_key, $content) = each (%$data)) {
     ## Build a tree of features - use an array, because IDs may not be unique
@@ -48,36 +49,126 @@ sub post_process {
     #warn ">>> TREE ".Dumper($tree);
 
     ## Convert tree into structured features
-    my @ok_features;
     foreach my $f (@$tree) {
-      ## Add to array (though we don't normally draw genes except in collapsed view)
       $f->{'href'} = $self->href($f->{'href_params'});
-      push @ok_features, $self->_drawable_feature($f);
-
-      foreach my $child (sort {$a->{'start'} <=> $b->{'start'}} @{$f->{'children'}||{}}) {
-        ## Feature ID is inherited from parent
-        my $child_href_params       = $child->{'href_params'};
-        $child->{'href'}            = $self->href($child_href_params);
-
-        if (scalar @{$child->{'children'}||[]}) {
-          ## Object has grandchildren - probably a transcript
-          my $args = {'seen' => {}, 'no_separate_transcript' => 0};
-          ## Create a new transcript from the current feature
-          my %transcript = %$child;
-          $transcript{'type'} = 'transcript';
-          foreach my $grandchild (sort {$a->{'start'} <=> $b->{'start'}} @{$child->{'children'}||[]}) {
-            ($args, %transcript)  = $self->add_to_transcript($grandchild, $args, %transcript);  
-          }
-          push @ok_features, $self->_drawable_feature(\%transcript);
-        }
-        else {
-          push @ok_features, $self->_drawable_feature($child);
-        }
+      $self->{'stored_features'}{$f->{'id'}} = $f;
+      if ($f->{'children'}) {
+        $self->_structured_feature($f);
       }
     }
-    $content->{'features'} = \@ok_features;
+    #warn ">>> STORED ".Dumper($self->{'stored_features'});
+
+    ## Finally, add all structured features to the list
+    foreach my $f (values %{$self->{'stored_features'}}) {
+      $f->{'start'} = $f->{'min_start'} unless $f->{'start'};
+      $f->{'end'}   = $f->{'max_end'} unless $f->{'end'};
+      push @{$self->{'ok_features'}}, $self->_drawable_feature($f);
+    }
+
+    $content->{'features'} = $self->{'ok_features'};
   }
   #warn '################# PROCESSED DATA '.Dumper($data);
+}
+
+sub _structured_feature {
+  my ($self, $f) = @_;
+  #warn "------------ FEATURE ".$f->{'id'}." ---------------";
+  #warn Dumper($f);
+
+  if (scalar @{$f->{'children'}||[]}) {
+    foreach my $child (sort {$a->{'start'} <=> $b->{'start'}} @{$f->{'children'}||{}}) {
+      ## Transcript or similar
+      my $child_href_params       = $child->{'href_params'};
+      $child->{'href'}            = $self->href($child_href_params);
+      #$self->{'stored_features'}{$child->{'id'}} = $child;
+      $self->_structured_feature($child);
+    }
+  }
+  else {
+    ## Exon, intron, CDS, etc
+    #warn ">>> EXON";
+    foreach my $parent (@{$f->{'parents'}}) {
+      #warn "... WITH PARENT $parent";
+      my $transcript = $self->{'stored_features'}{$parent} || {};
+      #warn "... WHICH IS TRANSCRIPT ".$self->{'stored_features'}{$parent}{'id'};
+      $self->_add_to_transcript($transcript, $f);  
+      $self->{'stored_features'}{$parent} = $transcript;
+    }
+  }
+} 
+
+sub _add_to_transcript {
+  my ($self, $transcript, $f) = @_;
+  #warn "############ TRANSCRIPT ##############";
+  #warn Dumper($transcript);
+  #warn "------------ FEATURE ---------------";
+  #warn Dumper($f);
+
+  my $type    = $f->{'type'};
+  my $start   = $f->{'start'};
+  my $end     = $f->{'end'};
+  my $strand  = $f->{'strand'};
+
+  ## Store max and min coordinates in case we don't have a 'real' parent in the file  
+  $transcript->{'min_start'}  = $start if (!$transcript->{'min_start'} || $transcript->{'min_start'} > $start);
+  $transcript->{'max_end'}    = $end if (!$transcript->{'max_end'} || $transcript->{'max_end'} > $end);
+
+  ## Because the children are sorted, we can walk along the transcript to set coding regions
+  if ($type =~ /UTR/) {
+    ## Starts and ends are by coordinates, not transcript direction
+    ## 5' UTR
+    if ($start == $transcript->{'start'} && $strand == 1) {
+      push @{$transcript->{'structure'}}, {'start' => $start, 'utr_5' => $end};
+      $transcript->{'in_cds'} = 1;
+    }
+    elsif ($end == $transcript->{'end'} && $strand == -1) {
+      $transcript->{'structure'}[-1]{'utr_5'} = $start;
+      $transcript->{'structure'}[-1]{'end'} = $end;
+      $transcript->{'in_cds'} = 0;
+    }
+    ## 3' UTR
+    elsif ($start == $transcript->{'start'} && $strand == -1) {
+      push @{$transcript->{'structure'}}, {'start' => $start, 'utr_3' => $end};
+      $transcript->{'in_cds'} = 1;
+    }
+    elsif ($end == $transcript->{'end'} && $strand == 1) {
+      $transcript->{'structure'}[-1]{'utr_3'} = $start;
+      $transcript->{'structure'}[-1]{'end'} = $end;
+      $transcript->{'in_cds'} = 0;
+    } 
+  }
+  elsif ($type eq 'CDS') {
+    $transcript->{'in_cds'} = 1;
+    if (scalar @{$transcript->{'structure'}}) {
+      my ($utr, $val);
+      if ($strand == 1) {
+        $utr = 'utr_5';
+        $val = $start;
+      }
+      else {
+        $utr = 'utr_3';
+        $val = $end;
+      }
+      $transcript->{'structure'}[-1]{$utr} = $val;
+    }
+  }
+  elsif ($type eq 'exon') {
+    my $exon = {'start' => $start, 'end' => $end};
+
+    ## Exon joined to UTR
+    if (scalar @{$transcript->{'structure'}||[]} 
+        && ($transcript->{'structure'}[-1]{'utr_5'} || $transcript->{'structure'}[-1]{'utr_3'})) {
+      $transcript->{'structure'}[-1]{'end'}    = $end;
+    } 
+
+    ## Non-coding exon
+    if ($transcript->{'type'} eq 'transcript' && !$transcript->{'in_cds'}) {
+      $exon->{'non_coding'} = 1;
+    } 
+
+    push @{$transcript->{'structure'}}, $exon;
+  }
+
 }
 
 sub _drawable_feature {
